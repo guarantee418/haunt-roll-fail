@@ -295,6 +295,25 @@ object GoodGame {
                 }
             }
         }
+// create a user database and a journal database
+        implicit val materializer = ActorMaterializer()
+        import akka.stream.scaladsl._  
+        import akka.http.scaladsl.util._
+        import akka.http.scaladsl.model.StatusCodes
+        import akka.http.scaladsl.server.Directives._
+        import akka.http.scaladsl.server.Route
+        import akka.http.scaladsl.settings.ServerSettings
+        import akka.http.scaladsl.Http
+        import hrf.gg.Ssl
+        import scala.util.Using
+        import scala.concurrent.Future
+        import akka.http.scaladsl.model.headers.Location
+    
+
+
+
+
+
 
         val settings = ServerSettings("").withRemoteAddressAttribute(true)
 
