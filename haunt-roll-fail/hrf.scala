@@ -103,7 +103,11 @@ object HRF {
         yarg.Meta -> yarg.UI,
     )
 
-    val metas = metaUIs.lefts.%(_.path != "root" || HRF.lobby.any || offline)
+   val metas = metaUIs.lefts.%(_.path != "root" || HRF.lobby.any || offline)
+
+   HRF.param("meta").or("root")
+  ./~(mn => HRF.metas.%(_.name == mn).single)
+  ./{ m => new HRFMetaUI(this, m, 800).withMeta() }
 
     val html = dom.window.location.origin + "/play/"
     val script = dom.document.getElementById("script").asInstanceOf[dom.html.Script].src
