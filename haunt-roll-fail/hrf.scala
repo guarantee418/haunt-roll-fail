@@ -103,7 +103,7 @@ object HRF {
         yarg.Meta -> yarg.UI,
     )
 
-   val metas = metaUIs.lefts.%(_.path != "root" || HRF.lobby.any || online)
+   val metas = metaUIs.lefts //.%(_.path != "root" || HRF.lobby.any || offline)
 
    HRF.param("meta").or("root")
   ./~(mn => HRF.metas.%(_.name == mn).single)
