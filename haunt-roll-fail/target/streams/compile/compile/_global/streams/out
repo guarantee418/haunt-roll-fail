@@ -1,0 +1,13 @@
+[0m[[0m[33mwarn[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-trader.scala:397:18: non-variable type argument root.WarriorFaction in type pattern List[root.WarriorFaction] (the underlying of hrf.colmat.$[root.WarriorFaction]) is unchecked since it is eliminated by erasure[0m
+[0m[[0m[33mwarn[0m] [0m[0m        case l : $[WarriorFaction] => Some(l)[0m
+[0m[[0m[33mwarn[0m] [0m[0m                 ^[0m
+[0m[[0m[33mwarn[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/serialize.scala:61:29: abstract type pattern Serializer.this.gaming.F is unchecked since it is eliminated by erasure[0m
+[0m[[0m[33mwarn[0m] [0m[0m            case f : gaming.F => writeFaction(f)[0m
+[0m[[0m[33mwarn[0m] [0m[0m                            ^[0m
+[0m[[0m[33mwarn[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-trader.scala:284:56: root.Faction and root.Fund are unrelated: they will most likely never compare equal[0m
+[0m[[0m[33mwarn[0m] [0m[0m        val m = l.distinct./~(o => funds.$.%(_.faction == o).take(l.count(o)))[0m
+[0m[[0m[33mwarn[0m] [0m[0m                                                       ^[0m
+[0m[[0m[33mwarn[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/web.scala:110:50: scala.scalajs.js.Any and String are unrelated: they will most likely always compare unequal[0m
+[0m[[0m[33mwarn[0m] [0m[0m                    if (dom.window.history.state != gizmo) {[0m
+[0m[[0m[33mwarn[0m] [0m[0m                                                 ^[0m
+[0m[[0m[33mwarn[0m] [0m[0mfour warnings found[0m

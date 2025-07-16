@@ -1,0 +1,16 @@
+[0m[[0m[0minfo[0m] [0m[0mFast optimizing /Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/target/scala-2.13/hrf-fastopt[0m
+[0m[[0m[0mdebug[0m] [0m[0mLinker: Compute reachability: 8556161 us[0m
+[0m[[0m[0mdebug[0m] [0m[0mLinker: Assemble LinkedClasses: 529931 us[0m
+[0m[[0m[0mdebug[0m] [0m[0mLinker: 9379418 us[0m
+[0m[[0m[0mdebug[0m] [0m[0mModule Splitter: Calculate Dependency Info: 31780 us[0m
+[0m[[0m[0mdebug[0m] [0m[0mModule Splitter: Analyze Modules: 12838 us[0m
+[0m[[0m[0mdebug[0m] [0m[0mModule Splitter: Assemble Modules: 59172 us[0m
+[0m[[0m[0mdebug[0m] [0m[0mModule Splitter: 107806 us[0m
+[0m[[0m[0mdebug[0m] [0m[0mEmitter: Generate Classes: 28658581 us[0m
+[0m[[0m[0mdebug[0m] [0m[0mEmitter: Write trees: 178444 us[0m
+[0m[[0m[0mdebug[0m] [0m[0mEmitter: Class tree cache stats: reused: 0 -- invalidated: 6290[0m
+[0m[[0m[0mdebug[0m] [0m[0mEmitter: Method tree cache stats: reused: 0 -- invalidated: 92075[0m
+[0m[[0m[0mdebug[0m] [0m[0mEmitter: Pre prints: 112204[0m
+[0m[[0m[0mdebug[0m] [0m[0mEmitter: 29311774 us[0m
+[0m[[0m[0mdebug[0m] [0m[0mBasicBackend: Write result: 2101019 us[0m
+[0m[[0m[0mdebug[0m] [0m[0mBasicBackend: total modules: 1; re-written: 1[0m

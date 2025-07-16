@@ -1,0 +1,1 @@
+package hrf { object BuildInfo { val name = "HRF" ; val version = "0.8.121" ; val time = 66325176 ; val seed = "Stream(q, ?)" } }
