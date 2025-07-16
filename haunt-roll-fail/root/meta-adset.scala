@@ -43,7 +43,7 @@ object MetaAdset extends MetaGame {
 
     val minPlayers = 2
 
-    val realFactions = Meta.official ++ $(NB) ++ $(XC) ++ $(CUv2) ++ $(FH) ++ $(LDvD) ++ $(TCvA) ++ $(KDvA)
+    val realFactions = Meta.official ++ $(NB) ++ $(XC) ++ $(CUv2) ++ $(FH) ++ $(LDvD) ++ $(TCvA) ++ $(KDvA) ++ $(TwilightCouncil)
 
     val options = Meta.options
 

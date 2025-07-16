@@ -42,26 +42,26 @@ trait LegalAAA extends WarriorFaction with CommonLegal {
     def motto = "Debate".styled(this)
 }
 
-case object BatAAA extends Warrior with CommonBatWarrior {
-    override def id = "Bat"
-    override def name = "Bat"
+case object BatAAA extends Warrior {
+  override def id = "Bat"
+  override def name = "Bat"
 }
 
 trait BatTokenAAA extends Token with CommonBatToken
 
-case object AssemblyAAA extends BatTokenAAA {
-    override def id = "Assembly"
-    override def imgid(f : Faction) = f.style + "-" + id
+case object AssemblyAAA extends Token {
+  override def id = "Assembly"
+  override def imgid(f: Faction) = f.style + "-" + id
 }
 
-case object ConvenedAAA extends BatTokenAAA {
-    override def id = "Convened"
-    override def imgid(f : Faction) = f.style + "-" + id
+case object ConvenedAAA extends Token {
+  override def id = "Convened"
+  override def imgid(f: Faction) = f.style + "-" + id
 }
 
-case object CommuneAAA extends Building with CommonBatBuilding {
-    override def id = "Commune"
-    override def imgid(f : Faction) = f.style + "-" + id
+case object CommuneAAA extends Building {
+  override def id = "Commune"
+  override def imgid(f: Faction) = f.style + "-" + id
 }
 
 
@@ -631,4 +631,45 @@ object LegalAAAExpansion extends FactionExpansion[LegalAAA] {
         case _ => UnknownContinue
     }
 
+}
+
+package root
+
+import hrf.colmat._
+import hrf.elem._
+import root.elem._
+
+case object TwilightCouncil extends WarriorFaction {
+  val name = "Twilight Council"
+  val short = "TCvA"
+  val style = "TC"
+  val priority = "S"
+  val warrior = BatAAA
+
+  override def getElem: Elem = super.getElem ~ " " ~ "Twilight Council".hh
+
+  override def note: Elem = HorizontalBreak ~ "Fan Faction"
+
+  def advertising = BatAAA.img(this) ~ AssemblyAAA.img(this)
+  def motto = "Debate".styled(this)
+
+  // Add your custom abilities here
+  def abilities(options: $[Meta.O]) = $("Governors", "Entreating", "Peacekeepers")
+
+  // Pieces: 20 warriors, 12 assemblies, 12 convened, 6 communes
+  def pieces(options: $[Meta.O]) =
+    BatAAA *** 20 ++ AssemblyAAA *** 12 ++ ConvenedAAA *** 12 ++ CommuneAAA *** 6
+
+  // Setup logic, actions, and rules would go here
+}
+
+object TwilightCouncilExpansion extends FactionExpansion[TwilightCouncil.type] {
+  def perform(action: Action, soft: Void)(implicit game: Game) = action @@ {
+    // Implement setup, Birdsong, Daylight, Evening, etc. here
+    // Use your board image and custom logic as needed
+    case FactionSetupAction(f: TwilightCouncil.type) =>
+      // Setup logic here
+      SetupFactionsAction
+    // ...more cases for each phase and ability...
+  }
 }
