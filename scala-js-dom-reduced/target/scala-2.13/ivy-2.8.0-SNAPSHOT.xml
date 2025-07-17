@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ivy-module version="2.0" xmlns:e="http://ant.apache.org/ivy/extra">
-  <info organisation="org.scala-js" module="scalajs-dom_sjs1_2.13" revision="2.8.0-SNAPSHOT" status="integration" publication="20250717025119">
+  <info organisation="org.scala-js" module="scalajs-dom_sjs1_2.13" revision="2.8.0-SNAPSHOT" status="integration" publication="20250717030708">
     <description>Scala.js DOM Reduced</description>
   </info>
   <configurations>

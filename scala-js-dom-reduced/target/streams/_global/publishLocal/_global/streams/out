@@ -1,7 +1,7 @@
-[0m[[0m[0minfo[0m] [0m[0m:: delivering :: org.scala-js#scalajs-dom_sjs1_2.13;2.8.0-SNAPSHOT :: 2.8.0-SNAPSHOT :: integration :: Thu Jul 17 02:51:19 EDT 2025[0m
-[0m[[0m[0mdebug[0m] [0m[0m	options = status=integration pubdate=Thu Jul 17 02:51:19 EDT 2025 validate=true resolveDynamicRevisions=true merge=true resolveId=null pubBranch=null[0m
+[0m[[0m[0minfo[0m] [0m[0m:: delivering :: org.scala-js#scalajs-dom_sjs1_2.13;2.8.0-SNAPSHOT :: 2.8.0-SNAPSHOT :: integration :: Thu Jul 17 03:07:08 EDT 2025[0m
+[0m[[0m[0mdebug[0m] [0m[0m	options = status=integration pubdate=Thu Jul 17 03:07:08 EDT 2025 validate=true resolveDynamicRevisions=true merge=true resolveId=null pubBranch=null[0m
 [0m[[0m[0minfo[0m] [0m[0m	delivering ivy file to /Users/garrettgreene/Downloads/haunt-roll-fail/scala-js-dom-reduced/target/scala-2.13/ivy-2.8.0-SNAPSHOT.xml[0m
-[0m[[0m[0mdebug[0m] [0m[0m	deliver done (23ms)[0m
+[0m[[0m[0mdebug[0m] [0m[0m	deliver done (28ms)[0m
 [0m[[0m[0mdebug[0m] [0m[0mlocal do not support transaction. ivy pattern does not use revision as a directory[0m
 [0m[[0m[0minfo[0m] [0m[0m	published scalajs-dom_sjs1_2.13 to /Users/garrettgreene/.ivy2/local/org.scala-js/scalajs-dom_sjs1_2.13/2.8.0-SNAPSHOT/poms/scalajs-dom_sjs1_2.13.pom[0m
 [0m[[0m[0minfo[0m] [0m[0m	published scalajs-dom_sjs1_2.13 to /Users/garrettgreene/.ivy2/local/org.scala-js/scalajs-dom_sjs1_2.13/2.8.0-SNAPSHOT/jars/scalajs-dom_sjs1_2.13.jar[0m
