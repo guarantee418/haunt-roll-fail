@@ -54,12 +54,12 @@ case object TwilightCouncil extends WarriorFaction {
   val priority = "S"
   val warrior = BatAAA
 
-  def advertising = BatAAA.img(this) ~ AssemblyAAA.img(this)
+  def advertising = BatAAA.img(this) ~ AssemblyAAAToken.img(this)
   def motto = "Debate".styled(this)
 
-  // Pieces: 20 warriors, 6 assemblies, 6 convened, 6 commune
+  // Pieces: 20 warriors, 6 assemblies, 6 convened
   def pieces(options: $[Meta.O]) =
-    BatAAA *** 20 ++ AssemblyAAA *** 6 ++ ConvenedAAA *** 6 ++ CommuneAAA *** 6
+    BatAAA *** 20 ++ AssemblyAAAToken *** 6 ++ ConvenedAAA *** 6
 
   override def note: Elem = HorizontalBreak ~ "Fan Faction"
 
@@ -73,9 +73,7 @@ case object TwilightCouncil extends WarriorFaction {
 
   // Returns true if a clearing is governed by a Twilight Council assembly
   def isGoverned(clearing: Region)(implicit game: Game): Boolean =
-    clearing.tokens.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil && t.state == "Governing")
-    def isGoverned(clearing: Region)(implicit game: Game): Boolean =
-  clearing.pieces.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil && t.state == "Governing")
+    clearing.tokens.of(AssemblyAAA).exists(a => a.faction == TwilightCouncil && a.state == "Governing")
 }
 
 // Expansion logic stub
@@ -407,18 +405,14 @@ case class AssemblyAAA(state: String = "Closed", faction: Faction = TwilightCoun
   override def id = "AssemblyAAA"
   override def name = "Assembly"
 }
+val AssemblyAAAToken = AssemblyAAA("haunt-roll-fail/webp2/root/images/faction/legal/tc-assembly.webp")
 
 case object ConvenedAAA extends Token {
   override def id = "ConvenedAAA"
   override def name = "Convened"
 }
 
-case object CommuneAAA extends Building {
-  override def id = "CommuneAAA"
-  override def name = "Commune"
-}
-
-case object LoyalistToken extends Token {
+case object Loyalist extends Warrior {
   override def id = "Loyalist"
   override def name = "Loyalist"
 }
