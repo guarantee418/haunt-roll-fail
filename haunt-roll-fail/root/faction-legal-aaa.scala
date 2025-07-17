@@ -120,5 +120,27 @@ object TwilightCouncilExpansion extends FactionExpansion[TwilightCouncil.type] {
         tcFaction = TwilightCouncil
       )
       soft()
+
+    // When an enemy removes an assembly, remove 1 Loyalist
+    case RemovePieceAction(f, piece, clearing)
+      if piece == AssemblyAAA && piece.faction == TwilightCouncil && f != TwilightCouncil =>
+        // Remove 1 Loyalist from supply (or board, as per your Loyalist implementation)
+        TwilightCouncil.log("An assembly was removed by", f, "at", clearing, "- remove 1 Loyalist.")
+        // Implement logic to remove 1 Loyalist (from supply or board)
+        // Example:
+        // if (TwilightCouncil.supply.has(LoyalistToken)) TwilightCouncil.supply :-= LoyalistToken
+        // else remove from board if needed
+        soft()
+
+    // Allow Twilight Council to freely remove Loyalists to supply
+    case RemoveLoyalistsToSupplyAction(f: TwilightCouncil.type, from: Region, count: Int) =>
+      // Remove 'count' Loyalist tokens from 'from' and add to supply
+      val removed = from.tokens.take(count).filter(_ == LoyalistToken)
+      removed.foreach(t => {
+        from.tokens :-= t
+        // f.supply :+= t // Uncomment and implement as needed
+      })
+      f.log(s"Removed $count Loyalist(s) from $from to supply.")
+      soft()
   }
 }
