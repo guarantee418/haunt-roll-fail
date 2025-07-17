@@ -247,7 +247,7 @@ object TwilightCouncilExpansion extends FactionExpansion[TwilightCouncil.type] {
 
     // Allow battle as normal (do not block BattleAction)
     // Battle between enemies at an assembly: add TC warriors to defender (not if Vagabond is defender)
-    case BattleAction(attacker, defender, clearing, ...)
+    case BattleAction(attacker, defender, clearing, _*) =>
       if clearing.tokens.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil) &&
          attacker != TwilightCouncil && defender != TwilightCouncil && !defender.isInstanceOf[Vagabond] =>
 
