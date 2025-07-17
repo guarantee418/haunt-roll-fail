@@ -23,11 +23,11 @@ case object TwilightCouncil extends WarriorFaction {
 
   override def note: Elem = HorizontalBreak ~ "Fan Faction"
 
-  def abilities(options: $[Meta.O]) = $(Effect.text("Governors"), Effect.text("Entreating"), Effect.text("Peacekeepers"))
+  def abilities(options: $[Meta.O]) = $("Governors", "Entreating", "Peacekeepers")
 
   // Returns true if a clearing is governed by a Twilight Council assembly
   def isGoverned(clearing: Region)(implicit game: Game): Boolean =
-    clearing.pieces.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil && t.state == "Governing")
+    clearing.tokens.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil && t.state == "Governing")
 }
 
 // Expansion logic stub
