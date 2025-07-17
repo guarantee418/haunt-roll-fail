@@ -1,13 +1,4 @@
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:251:10: '(' expected but identifier found.[0m
-[0m[[0m[31merror[0m] [0m[0m      if clearing.tokens.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil) &&[0m
-[0m[[0m[31merror[0m] [0m[0m         ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:252:69: not a legal formal parameter.[0m
-[0m[[0m[31merror[0m] [0m[0mNote: Tuples cannot be directly destructured in method or function parameters.[0m
-[0m[[0m[31merror[0m] [0m[0m      Either create a single parameter accepting the Tuple1,[0m
-[0m[[0m[31merror[0m] [0m[0m      or consider a pattern matching anonymous function: `{ case (param1, param1) => ... }[0m
-[0m[[0m[31merror[0m] [0m[0m         attacker != TwilightCouncil && defender != TwilightCouncil && !defender.isInstanceOf[Vagabond] =>[0m
-[0m[[0m[31merror[0m] [0m[0m                                                                    ^[0m
 [0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/ui.scala:2537:5: ')' expected but 'val' found.[0m
 [0m[[0m[31merror[0m] [0m[0m    val settingsKey = Meta.settingsKey[0m
 [0m[[0m[31merror[0m] [0m[0m    ^[0m
-[0m[[0m[31merror[0m] [0m[0mthree errors found[0m
+[0m[[0m[31merror[0m] [0m[0mone error found[0m

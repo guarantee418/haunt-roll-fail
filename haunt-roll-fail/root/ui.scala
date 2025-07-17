@@ -2451,7 +2451,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     val zoom = 0.72
 
-    val layouts = $(Layout("base", $(
+    val layouts = $(Layout("base",) $(
                 BasicPane("status", 12.2+0.8+0.8-0.8-0.8, 16.4, Priorities(top = 2, right = 2, maxXscale = 1.8, maxYscale = 1.4)),
                 BasicPane("status-game-a", 10.5+0.5, 10, Priorities(grow = -1, maxXscale = 1.8, maxYscale = 2.4)),
                 BasicPane("status-game-b", 35, 4.4, Priorities(top = 1, grow = -1, maxXscale = 3.0, maxYscale = 3.2)),
