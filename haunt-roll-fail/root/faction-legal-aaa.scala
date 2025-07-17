@@ -47,8 +47,135 @@ object TwilightCouncilExpansion extends FactionExpansion[TwilightCouncil.type] {
       // Example: f.placeAssembly(), f.entreating(), etc.
     case DaylightNAction(0, f: TwilightCouncil.type) =>
         // Handle Daylight actions specific to Twilight Council
+        // Find all assemblies ruled by enemies and flip them to Closed
+        board.clearings.foreach { clearing =>
+          clearing.tokens.of(AssemblyAAA).filter(_.faction == TwilightCouncil).foreach { assembly =>
+            // If this clearing is ruled by an enemy (not TC)
+            if (!clearing.isRuledBy(f)) {
+              assembly.state = "Closed"
+              f.log("Assembly at", clearing, "was flipped to Closed (Sleep).")
+            }
+          }
+        }
+        soft()
     case EveningNAction(0, f: TwilightCouncil.type) =>
-        // Handle Evening actions specific to Twilight Council
+      // 1st: Convene Woodfolk
+      // Prompt to return revealed cards to hand, one by one
+      Ask(f).each(f.revealed)(card =>
+        ConveneWoodfolkAction(f, card)
+      )
+      soft()
+
+    // Handle Convene Woodfolk actions
+    case ConveneWoodfolkAction(f: TwilightCouncil.type, card: Card) =>
+      // Prompt to act at a matching assembly (move, battle, agitate, empower, etc.)
+      val matchingAssemblies = board.clearings.filter(c =>
+        c.suit == card.suit && c.tokens.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil)
+      )
+      Ask(f).each(matchingAssemblies) { clearing =>
+        Ask(f)(
+          "Banish (Battle)" -> BanishAction(f, clearing, card),
+          "Agitate" -> AgitateAction(f, clearing, card),
+          "Empower" -> EmpowerAction(f, clearing, card)
+        )
+      }
+      // Return card to hand after acting
+      f.hand :+= card
+      f.revealed :-= card
+      soft()
+
+    // Banish: Battle, but hits force defending warriors to move instead, ignoring rule
+    case BanishAction(f: TwilightCouncil.type, clearing: Region, card: Card) =>
+      // Implement special battle logic here
+      f.log("Banish: Battled at", clearing, "with", card)
+      soft()
+
+    // Agitate: Spend the card, gain 1 Loyalist, flip assembly to Governing if Closed
+    case AgitateAction(f: TwilightCouncil.type, clearing: Region, card: Card) =>
+      f.hand :-= card
+      f.discard :+= card
+      // Gain 1 Loyalist (implement as needed)
+      // Flip assembly to Governing if Closed
+      clearing.tokens.of(AssemblyAAA).filter(_.faction == TwilightCouncil).foreach { assembly =>
+        if (assembly.state == "Closed") assembly.state = "Governing"
+      }
+      f.log("Agitated at", clearing, "with", card)
+      soft()
+
+    // Empower: Roll a die, remove that many Council warriors. Score if you rule, else place in Loyalists
+    case EmpowerAction(f: TwilightCouncil.type, clearing: Region, card: Card) =>
+      val roll = game.rollDie()
+      val warriors = clearing.pieces.of(f.warrior).take(roll)
+      warriors.foreach(w => clearing.pieces :-= w)
+      if (clearing.isRuledBy(f)) {
+        // Score points (implement as needed)
+        f.log("Empowered at", clearing, "and scored", roll, "points.")
+      } else {
+        // Place removed warriors in Loyalists (implement as needed)
+        f.log("Empowered at", clearing, "and placed", roll, "warriors in Loyalists.")
+      }
+      soft()
+
+    // 2nd: Craft with assemblies, or draw 1 card for every 2 assemblies if you don't craft
+    case EveningNAction(1, f: TwilightCouncil.type) =>
+      // Implement crafting logic here
+      // If not crafting, draw 1 card for every 2 assemblies
+      val assemblies = board.clearings.flatMap(_.tokens.of(AssemblyAAA).filter(_.faction == TwilightCouncil)).size
+      if (!f.crafted) {
+        val drawCount = assemblies / 2
+        (1 to drawCount).foreach(_ => f.draw())
+        f.log("Drew", drawCount, "cards for assemblies.")
+      }
+      // Discard down to 5 cards
+      while (f.hand.size > 5) {
+        Ask(f).each(f.hand)(card => {
+          f.hand :-= card
+          f.discard :+= card
+          f.log("Discarded", card)
+        })
+      }
+      soft()
+
+    // 3rd: Adjourn. Remove any number of assemblies. Flip assemblies you rule to Governing.
+    case EveningNAction(2, f: TwilightCouncil.type) =>
+      // Prompt to remove assemblies (implement as needed)
+      board.clearings.foreach { clearing =>
+        if (clearing.isRuledBy(f)) {
+          clearing.tokens.of(AssemblyAAA).filter(_.faction == TwilightCouncil).foreach(_.state = "Governing")
+        }
+      }
+      f.log("Adjourned: Flipped assemblies you rule to Governing.")
+      soft()
+
+    // 4th: Oversee governing assemblies at enemy buildings/tokens for points
+    case EveningNAction(3, f: TwilightCouncil.type) =>
+      val governed = board.clearings.count { clearing =>
+        clearing.tokens.of(AssemblyAAA).exists(a => a.faction == TwilightCouncil && a.state == "Governing") &&
+        (clearing.buildings.exists(_.faction != TwilightCouncil) || clearing.tokens.exists(t => t.faction != TwilightCouncil && t != AssemblyAAA))
+      }
+      val points = governed match {
+        case 1 => 1
+        case 2 | 3 => 2
+        case 4 => 3
+        case 5 | 6 => 4
+        case _ => 0
+      }
+      if (points > 0) f.score(points)
+      f.log("Oversee: Scored", points, "points for governing assemblies at enemy pieces.")
+      soft()
+
+    // 5th: Draw 1 card, discard down to 5
+    case EveningNAction(4, f: TwilightCouncil.type) =>
+      f.draw()
+      while (f.hand.size > 5) {
+        Ask(f).each(f.hand)(card => {
+          f.hand :-= card
+          f.discard :+= card
+          f.log("Discarded", card)
+        })
+      }
+      soft()
+
     // Handle other actions specific to Twilight Council
     // For example, handling specific actions like placing assemblies, entreating, etc.
     // Ensure to define how each action interacts with the Twilight Council's unique mechanics
@@ -88,6 +215,8 @@ object TwilightCouncilExpansion extends FactionExpansion[TwilightCouncil.type] {
       // Add a Loyalist to supply (implement as needed)
       f.log("Gained 1 Loyalist due to Entreating.")
       // f.supply :+= LoyalistToken
+      // or
+      LoyalistToken --> clearing // If placing on the board
       soft()
 
     // Handle placing Loyalists at a clearing
@@ -138,9 +267,65 @@ object TwilightCouncilExpansion extends FactionExpansion[TwilightCouncil.type] {
       val removed = from.tokens.take(count).filter(_ == LoyalistToken)
       removed.foreach(t => {
         from.tokens :-= t
-        // f.supply :+= t // Uncomment and implement as needed
+        f.supply :+= LoyalistToken
       })
       f.log(s"Removed $count Loyalist(s) from $from to supply.")
+      soft()
+
+    // Prompt to reveal a card for an action
+    case BirdsongNAction(n, f: TwilightCouncil.type) =>
+      Ask(f)(
+        "Move" -> RevealCardForAction(f, "move"),
+        "Recruit" -> RevealCardForAction(f, "recruit"),
+        "Battle" -> RevealCardForAction(f, "battle"),
+        "Assemble" -> RevealCardForAction(f, "assemble")
+      )
+      soft()
+
+    // Reveal a card for a specific action
+    case RevealCardForAction(f: TwilightCouncil.type, action: String) =>
+      // Prompt to select a card to reveal
+      Ask(f).each(f.hand)(card => DoActionWithCard(f, card, action))
+      soft()
+
+    // Do the action in a matching clearing
+    case DoActionWithCard(f: TwilightCouncil.type, card: Card, action: String) =>
+      val matchingClearings = board.clearings.filter(_.suit == card.suit)
+      Ask(f).each(matchingClearings) { clearing =>
+        action match {
+          case "move" =>
+            // Move from this clearing
+            f.log("Moved from", clearing, "by revealing", card)
+          case "recruit" =>
+            // Place 1 warrior in this clearing
+            f.reserve --> f.warrior --> clearing
+            f.log("Recruited in", clearing, "by revealing", card)
+          case "battle" =>
+            // Battle in this clearing
+            // If an assembly is there, discard the revealed card
+            if (clearing.tokens.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil)) {
+              f.hand :-= card
+              f.discard :+= card
+              f.log("Battled in", clearing, "and discarded", card, "because an assembly is present.")
+            } else {
+              f.log("Battled in", clearing, "by revealing", card)
+            }
+          case "assemble" =>
+            // If no assembly, place a Closed assembly and any Loyalists
+            if (!clearing.tokens.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil)) {
+              f.reserve --> AssemblyAAA.copy(state = "Closed", faction = TwilightCouncil) --> clearing
+              // Optionally prompt to place Loyalists here
+              f.log("Placed a Closed Assembly in", clearing, "by revealing", card)
+            }
+            // If you don't rule, discard the card
+            if (!clearing.isRuledBy(f)) {
+              f.hand :-= card
+              f.discard :+= card
+              f.log("Did not rule", clearing, "- discarded", card)
+            }
+          case _ =>
+        }
+      }
       soft()
   }
 }
