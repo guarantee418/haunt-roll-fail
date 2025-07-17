@@ -28,7 +28,7 @@
 [0m[[0m[0mdebug[0m] [0m[0mcompilation cycle 1[0m
 [0m[[0m[0minfo[0m] [0m[0mcompiling 4 Scala sources to /Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/target/scala-2.13/classes ...[0m
 [0m[[0m[0mdebug[0m] [0m[0mReturning already retrieved and compiled bridge: /Users/garrettgreene/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala2-sbt-bridge/2.13.15/scala2-sbt-bridge-2.13.15.jar.[0m
-[0m[[0m[0mdebug[0m] [0m[0m[zinc] Running cached compiler 75869c2d for Scala compiler version 2.13.15[0m
+[0m[[0m[0mdebug[0m] [0m[0m[zinc] Running cached compiler 421cc0ea for Scala compiler version 2.13.15[0m
 [0m[[0m[0mdebug[0m] [0m[0m[zinc] The Scala compiler is invoked with:[0m
 [0m[[0m[0mdebug[0m] [0m[0m	-unchecked[0m
 [0m[[0m[0mdebug[0m] [0m[0m	-deprecation[0m

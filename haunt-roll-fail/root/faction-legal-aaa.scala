@@ -5,7 +5,47 @@ import hrf.elem._
 import root.elem._
 import hrf.options._
 import hrf.meta._
-import hrf.elem.Effect
+
+/*
+Twilight Council
+
+Birdsong actions
+Reveal any cards one by one to Act in a matching clearing.
+Reveal a card to move from a matching clearing. Reveal a card to recruit and place 1 warrior in a matching clearing.
+Reveal a card to battle in a matching clearing; if an assembly is there, discard the revealed card.
+Reveal a card to Assemble in a matching clearing. If it has no assemblies, place a Closed assembly and any Loyalists. Then, discard the revealed card if you don’t rule.
+
+Daylight actions
+Find all assemblies ruled by enemies and flip them to Closed.
+
+Evening Actions
+First - Convene Woodfolk. 
+One by one, return revealed cards to hand. For each returned, you may act at a matching assembly.
+
+Banish. (Battle) Your hits force defending warriors to move instead, ignoring rule. Ignore rolled hits you take.
+Agitate. Spend the returned card. Gain 1 Loyalist. Flip the assembly to Governing if it’s Closed.
+
+Empower.
+Roll a die and remove the rolled number of Council warriors. Either score if you rule, or place the removed warriors in your Loyalists.
+
+Second - Craft with assemblies. If you don’t, Draw 1 card for every 2 assemblies on the board. Discard down to 5 cards.
+
+Third - Adjourn. You may remove any number of assemblies. Flip assemblies you rule to Governing. 
+
+Fourth - Oversee governing assemblies at enemy buildings or tokens
+Score 1 victory point for having 1 governing assembly at enemy buildings or tokens.
+Score 2 victory points for having 2 or 3 governing assemblies at enemy buildings or tokens.
+Score 3 victory points for having 4 governing assemblies at enemy buildings or tokens.
+Score 4 victory points for having 5 or 6 governing assemblies at enemy buildings or tokens.
+
+Fifth - Draw 1 card. Discard down to 5 cards.
+
+
+ADVANCED SETUP 
+First - Choose a homeland clearing. Place  4 warriors and 1 assembly on its Governing side there. 
+Second - Place  2 warriors in a different clearing. 
+Third - Fill your Assemblies track with assemblies on their Closed side.
+*/
 
 case object TwilightCouncil extends WarriorFaction {
   val name = "Twilight Council"
@@ -23,11 +63,19 @@ case object TwilightCouncil extends WarriorFaction {
 
   override def note: Elem = HorizontalBreak ~ "Fan Faction"
 
-  def abilities(options: $[Meta.O]) = $(root.Effect("Governors"), root.Effect("Entreating"), root.Effect("Peacekeepers"))
+  def abilities(options: $[Meta.O]) = $(Governors, Entreating, Peacekeepers)
+  
+  /* Abilities:
+  Governors - Governing assemblies Govern their clearing: enemies cannot cra with, flip, place, or remove pieces there, except in battle. (Vagabond cannot craft)
+  Entreating - On their turn, an enemy may force you to flip an assembly to Closed, but you may gain 1 Loyalist or place any of your Loyalists at it.
+  Peacekeepers - In battle between enemies at an assembly, add your warriors to the defender’s and take hits after theirs. Don’t defend the Vagabond.
+  */
 
   // Returns true if a clearing is governed by a Twilight Council assembly
   def isGoverned(clearing: Region)(implicit game: Game): Boolean =
-    clearing.pieces.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil && t.state == "Governing")
+    clearing.tokens.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil && t.state == "Governing")
+    def isGoverned(clearing: Region)(implicit game: Game): Boolean =
+  clearing.pieces.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil && t.state == "Governing")
 }
 
 // Expansion logic stub
@@ -355,7 +403,7 @@ case object BatAAA extends Warrior {
   override def name = "Bat"
 }
 
-case object AssemblyAAA extends Token {
+case class AssemblyAAA(state: String = "Closed", faction: Faction = TwilightCouncil) extends Token {
   override def id = "AssemblyAAA"
   override def name = "Assembly"
 }
@@ -376,3 +424,7 @@ case object LoyalistToken extends Token {
 }
 
 class PlayerState(f: Faction) extends FactionState
+
+case object Governors extends Effect
+case object Entreating extends Effect
+case object Peacekeepers extends Effect
