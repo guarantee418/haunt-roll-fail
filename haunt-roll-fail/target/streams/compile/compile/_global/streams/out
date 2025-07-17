@@ -1,4 +1,16 @@
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:408:1: expected class or object definition[0m
-[0m[[0m[31merror[0m] [0m[0mval AssemblyAAAToken = AssemblyAAA("haunt-roll-fail/webp2/root/images/faction/legal/tc-assembly.webp")[0m
-[0m[[0m[31merror[0m] [0m[0m^[0m
-[0m[[0m[31merror[0m] [0m[0mone error found[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:57:40: not found: value AssemblyAAAToken[0m
+[0m[[0m[31merror[0m] [0m[0m  def advertising = BatAAA.img(this) ~ AssemblyAAAToken.img(this)[0m
+[0m[[0m[31merror[0m] [0m[0m                                       ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:62:22: not found: value AssemblyAAAToken[0m
+[0m[[0m[31merror[0m] [0m[0m    BatAAA *** 20 ++ AssemblyAAAToken *** 6 ++ ConvenedAAA *** 6[0m
+[0m[[0m[31merror[0m] [0m[0m                     ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:76:14: value tokens is not a member of root.Region[0m
+[0m[[0m[31merror[0m] [0m[0m    clearing.tokens.of(AssemblyAAA).exists(a => a.faction == TwilightCouncil && a.state == "Governing")[0m
+[0m[[0m[31merror[0m] [0m[0m             ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:92:36: value copy is not a member of object root.AssemblyAAA[0m
+[0m[[0m[31merror[0m] [0m[0m        val assembly = AssemblyAAA.copy(state = "Governing", faction = TwilightCouncil)[0m
+[0m[[0m[31merror[0m] [0m[0m                                   ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:92:41: not found: value state[0m
+[0m[[0m[31merror[0m] [0m[0m        val assembly = AssemblyAAA.copy(state = "Governing", faction = TwilightCouncil)[0m
+[0m[[0m[31merror[0m] [0m[0m                                        ^[0m
+[0m[[0m[31merror[0m] [0m[0m100 errors found[0m
