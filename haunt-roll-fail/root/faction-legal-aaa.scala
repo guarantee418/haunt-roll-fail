@@ -22,7 +22,7 @@ case object TwilightCouncil extends WarriorFaction {
 
   override def note: Elem = HorizontalBreak ~ "Fan Faction"
 
-  def abilities(options: $[Meta.O]) = $("Governors", "Entreating", "Peacekeepers")
+  def abilities(options: $[Meta.O]) = $(Effect.text("Governors"), Effect.text("Entreating"), Effect.text("Peacekeepers"))
 
   // Returns true if a clearing is governed by a Twilight Council assembly
   def isGoverned(clearing: Region)(implicit game: Game): Boolean =
@@ -34,7 +34,7 @@ object TwilightCouncilExpansion extends FactionExpansion[TwilightCouncil.type] {
   def perform(action: Action, soft: Void)(implicit game: Game) = action @@ {
     // SETUP
     case CreatePlayerAction(f: TwilightCouncil.type) =>
-      game.states += f -> new PlayerState(f)
+      game.states = game.states + (f -> new PlayerState(f))
       FactionInitAction(f)
 
     case FactionSetupAction(f: TwilightCouncil.type) =>
@@ -373,3 +373,5 @@ case object LoyalistToken extends Token {
   override def id = "Loyalist"
   override def name = "Loyalist"
 }
+
+class PlayerState(f: Faction) extends FactionState(f)

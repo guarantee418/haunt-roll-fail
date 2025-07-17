@@ -1,16 +1,26 @@
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:14:17: not found: value BatAAA[0m
-[0m[[0m[31merror[0m] [0m[0m  val warrior = BatAAA[0m
-[0m[[0m[31merror[0m] [0m[0m                ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:16:21: not found: value BatAAA[0m
-[0m[[0m[31merror[0m] [0m[0m  def advertising = BatAAA.img(this) ~ AssemblyAAA.img(this)[0m
-[0m[[0m[31merror[0m] [0m[0m                    ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:16:40: not found: value AssemblyAAA[0m
-[0m[[0m[31merror[0m] [0m[0m  def advertising = BatAAA.img(this) ~ AssemblyAAA.img(this)[0m
-[0m[[0m[31merror[0m] [0m[0m                                       ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:21:5: not found: value BatAAA[0m
-[0m[[0m[31merror[0m] [0m[0m    BatAAA *** 20 ++ AssemblyAAA *** 6 ++ ConvenedAAA *** 6 ++ CommuneAAA *** 6[0m
-[0m[[0m[31merror[0m] [0m[0m    ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:21:22: not found: value AssemblyAAA[0m
-[0m[[0m[31merror[0m] [0m[0m    BatAAA *** 20 ++ AssemblyAAA *** 6 ++ ConvenedAAA *** 6 ++ CommuneAAA *** 6[0m
-[0m[[0m[31merror[0m] [0m[0m                     ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:25:41: type mismatch;[0m
+[0m[[0m[31merror[0m] [0m[0m found   : String("Governors")[0m
+[0m[[0m[31merror[0m] [0m[0m required: root.Effect[0m
+[0m[[0m[31merror[0m] [0m[0m  def abilities(options: $[Meta.O]) = $("Governors", "Entreating", "Peacekeepers")[0m
+[0m[[0m[31merror[0m] [0m[0m                                        ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:25:54: type mismatch;[0m
+[0m[[0m[31merror[0m] [0m[0m found   : String("Entreating")[0m
+[0m[[0m[31merror[0m] [0m[0m required: root.Effect[0m
+[0m[[0m[31merror[0m] [0m[0m  def abilities(options: $[Meta.O]) = $("Governors", "Entreating", "Peacekeepers")[0m
+[0m[[0m[31merror[0m] [0m[0m                                                     ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:25:68: type mismatch;[0m
+[0m[[0m[31merror[0m] [0m[0m found   : String("Peacekeepers")[0m
+[0m[[0m[31merror[0m] [0m[0m required: root.Effect[0m
+[0m[[0m[31merror[0m] [0m[0m  def abilities(options: $[Meta.O]) = $("Governors", "Entreating", "Peacekeepers")[0m
+[0m[[0m[31merror[0m] [0m[0m                                                                   ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:29:14: value tokens is not a member of root.Region[0m
+[0m[[0m[31merror[0m] [0m[0m    clearing.tokens.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil && t.state == "Governing")[0m
+[0m[[0m[31merror[0m] [0m[0m             ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:37:19: value += is not a member of Map[root.Faction,root.FactionState][0m
+[0m[[0m[31merror[0m] [0m[0mdid you mean ++?[0m
+[0m[[0m[31merror[0m] [0m[0m  Expression does not convert to assignment because:[0m
+[0m[[0m[31merror[0m] [0m[0m    not found: type PlayerState[0m
+[0m[[0m[31merror[0m] [0m[0m    expansion: game.states = game.states.+(f.$minus$greater(new <PlayerState: error>(f)))[0m
+[0m[[0m[31merror[0m] [0m[0m      game.states += f -> new PlayerState(f)[0m
+[0m[[0m[31merror[0m] [0m[0m                  ^[0m
 [0m[[0m[31merror[0m] [0m[0m100 errors found[0m
