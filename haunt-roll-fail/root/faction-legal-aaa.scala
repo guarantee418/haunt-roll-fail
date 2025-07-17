@@ -16,7 +16,7 @@ case object TwilightCouncil extends WarriorFaction {
   def advertising = BatAAA.img(this) ~ AssemblyAAA.img(this)
   def motto = "Debate".styled(this)
 
-  // Pieces: adjust as needed
+  // Pieces: 20 warriors, 6 assemblies, 6 convened, 6 commune
   def pieces(options: $[Meta.O]) =
     BatAAA *** 20 ++ AssemblyAAA *** 6 ++ ConvenedAAA *** 6 ++ CommuneAAA *** 6
 
@@ -38,8 +38,27 @@ object TwilightCouncilExpansion extends FactionExpansion[TwilightCouncil.type] {
       FactionInitAction(f)
 
     case FactionSetupAction(f: TwilightCouncil.type) =>
-      // Place assemblies, loyalists, etc. as per your setup
-      SetupFactionsAction
+      // 1. Choose a homeland clearing
+      Ask(f).each(board.clearings) { homeland =>
+        // Place 4 warriors and 1 Governing assembly
+        (1 to 4).foreach(_ => f.reserve --> f.warrior --> homeland)
+        val assembly = AssemblyAAA.copy(state = "Governing", faction = TwilightCouncil)
+        f.reserve --> assembly --> homeland
+
+        // 2. Place 2 warriors in a different clearing
+        val otherClearings = board.clearings.filter(_ != homeland)
+        Ask(f).each(otherClearings) { other =>
+          (1 to 2).foreach(_ => f.reserve --> f.warrior --> other)
+
+          // 3. Fill your Assemblies track with the remaining 5 assemblies on their Closed side
+          val closedAssemblies = (1 to 5).map(_ => AssemblyAAA.copy(state = "Closed", faction = TwilightCouncil))
+          closedAssemblies.foreach(a => f.reserve :+= a)
+
+          f.log("Setup complete: 4 warriors + 1 Governing assembly in homeland, 2 warriors elsewhere, 5 Closed assemblies in reserve.")
+          SetupFactionsAction
+        }
+      }
+      soft()
 
     // Add Birdsong, Daylight, Evening, and ability logic here
     case BirdsongNAction(0, f: TwilightCouncil.type) =>
