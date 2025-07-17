@@ -1,26 +1,4 @@
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:57:52: value img is not a member of object root.AssemblyAAA[0m
-[0m[[0m[31merror[0m] [0m[0m  def advertising = BatAAA.img(this) ~ AssemblyAAA.img(this)[0m
-[0m[[0m[31merror[0m] [0m[0m                                                   ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:62:61: type mismatch;[0m
-[0m[[0m[31merror[0m] [0m[0m found   : List[Object][0m
-[0m[[0m[31merror[0m] [0m[0m required: hrf.colmat.$[root.Piece][0m
-[0m[[0m[31merror[0m] [0m[0m    (which expands to)  List[root.Piece][0m
-[0m[[0m[31merror[0m] [0m[0mNote: Object >: root.Piece, but class List is invariant in type T.[0m
-[0m[[0m[31merror[0m] [0m[0mYou may wish to investigate a wildcard type such as `_ >: root.Piece`. (SLS 3.2.10)[0m
-[0m[[0m[31merror[0m] [0m[0m    BatAAA *** 20 ++ AssemblyAAA *** 6 ++ ConvenedAAA *** 6 ++ CommuneAAA *** 6[0m
-[0m[[0m[31merror[0m] [0m[0m                                                            ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:76:14: value tokens is not a member of root.Region[0m
-[0m[[0m[31merror[0m] [0m[0m    clearing.tokens.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil && t.state == "Governing")[0m
-[0m[[0m[31merror[0m] [0m[0m             ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:78:12: value pieces is not a member of root.Region[0m
-[0m[[0m[31merror[0m] [0m[0m  clearing.pieces.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil && t.state == "Governing")[0m
-[0m[[0m[31merror[0m] [0m[0m           ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:77:9: method isGoverned is defined twice;[0m
-[0m[[0m[31merror[0m] [0m[0m  the conflicting method isGoverned was defined at line 75:7[0m
-[0m[[0m[31merror[0m] [0m[0m    def isGoverned(clearing: Region)(implicit game: Game): Boolean =[0m
-[0m[[0m[31merror[0m] [0m[0m        ^[0m
-[0m[[0m[33mwarn[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:62:19: a type was inferred to be `Object`; this may indicate a programming error.[0m
-[0m[[0m[33mwarn[0m] [0m[0m    BatAAA *** 20 ++ AssemblyAAA *** 6 ++ ConvenedAAA *** 6 ++ CommuneAAA *** 6[0m
-[0m[[0m[33mwarn[0m] [0m[0m                  ^[0m
-[0m[[0m[33mwarn[0m] [0m[0mone warning found[0m
-[0m[[0m[31merror[0m] [0m[0m100 errors found[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:408:1: expected class or object definition[0m
+[0m[[0m[31merror[0m] [0m[0mval AssemblyAAAToken = AssemblyAAA("haunt-roll-fail/webp2/root/images/faction/legal/tc-assembly.webp")[0m
+[0m[[0m[31merror[0m] [0m[0m^[0m
+[0m[[0m[31merror[0m] [0m[0mone error found[0m

@@ -404,8 +404,8 @@ case object BatAAA extends Warrior {
 case class AssemblyAAA(state: String = "Closed", faction: Faction = TwilightCouncil) extends Token {
   override def id = "AssemblyAAA"
   override def name = "Assembly"
+  override def imgid(f: Faction) = "tc-assembly"
 }
-val AssemblyAAAToken = AssemblyAAA("haunt-roll-fail/webp2/root/images/faction/legal/tc-assembly.webp")
 
 case object ConvenedAAA extends Token {
   override def id = "ConvenedAAA"
