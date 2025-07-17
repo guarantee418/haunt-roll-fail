@@ -1,16 +1,22 @@
 [0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:8:8: object Effect is not a member of package hrf.elem[0m
 [0m[[0m[31merror[0m] [0m[0mimport hrf.elem.Effect[0m
 [0m[[0m[31merror[0m] [0m[0m       ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:26:41: not found: value Effect[0m
-[0m[[0m[31merror[0m] [0m[0m  def abilities(options: $[Meta.O]) = $(Effect.text("Governors"), Effect.text("Entreating"), Effect.text("Peacekeepers"))[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:26:41: type mismatch;[0m
+[0m[[0m[31merror[0m] [0m[0m found   : String("Governors")[0m
+[0m[[0m[31merror[0m] [0m[0m required: root.Effect[0m
+[0m[[0m[31merror[0m] [0m[0m  def abilities(options: $[Meta.O]) = $("Governors", "Entreating", "Peacekeepers")[0m
 [0m[[0m[31merror[0m] [0m[0m                                        ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:26:67: not found: value Effect[0m
-[0m[[0m[31merror[0m] [0m[0m  def abilities(options: $[Meta.O]) = $(Effect.text("Governors"), Effect.text("Entreating"), Effect.text("Peacekeepers"))[0m
-[0m[[0m[31merror[0m] [0m[0m                                                                  ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:26:94: not found: value Effect[0m
-[0m[[0m[31merror[0m] [0m[0m  def abilities(options: $[Meta.O]) = $(Effect.text("Governors"), Effect.text("Entreating"), Effect.text("Peacekeepers"))[0m
-[0m[[0m[31merror[0m] [0m[0m                                                                                             ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:30:14: value pieces is not a member of root.Region[0m
-[0m[[0m[31merror[0m] [0m[0m    clearing.pieces.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil && t.state == "Governing")[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:26:54: type mismatch;[0m
+[0m[[0m[31merror[0m] [0m[0m found   : String("Entreating")[0m
+[0m[[0m[31merror[0m] [0m[0m required: root.Effect[0m
+[0m[[0m[31merror[0m] [0m[0m  def abilities(options: $[Meta.O]) = $("Governors", "Entreating", "Peacekeepers")[0m
+[0m[[0m[31merror[0m] [0m[0m                                                     ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:26:68: type mismatch;[0m
+[0m[[0m[31merror[0m] [0m[0m found   : String("Peacekeepers")[0m
+[0m[[0m[31merror[0m] [0m[0m required: root.Effect[0m
+[0m[[0m[31merror[0m] [0m[0m  def abilities(options: $[Meta.O]) = $("Governors", "Entreating", "Peacekeepers")[0m
+[0m[[0m[31merror[0m] [0m[0m                                                                   ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:30:14: value tokens is not a member of root.Region[0m
+[0m[[0m[31merror[0m] [0m[0m    clearing.tokens.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil && t.state == "Governing")[0m
 [0m[[0m[31merror[0m] [0m[0m             ^[0m
 [0m[[0m[31merror[0m] [0m[0m100 errors found[0m
