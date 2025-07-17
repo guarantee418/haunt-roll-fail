@@ -1,7 +1,16 @@
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/ui.scala:2454:35: illegal start of simple expression[0m
-[0m[[0m[31merror[0m] [0m[0m    val layouts = $(Layout("base",) $([0m
-[0m[[0m[31merror[0m] [0m[0m                                  ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/ui.scala:3400:1: ')' expected but '}' found.[0m
-[0m[[0m[31merror[0m] [0m[0m}[0m
-[0m[[0m[31merror[0m] [0m[0m^[0m
-[0m[[0m[31merror[0m] [0m[0mtwo errors found[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:14:17: not found: value BatAAA[0m
+[0m[[0m[31merror[0m] [0m[0m  val warrior = BatAAA[0m
+[0m[[0m[31merror[0m] [0m[0m                ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:16:21: not found: value BatAAA[0m
+[0m[[0m[31merror[0m] [0m[0m  def advertising = BatAAA.img(this) ~ AssemblyAAA.img(this)[0m
+[0m[[0m[31merror[0m] [0m[0m                    ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:16:40: not found: value AssemblyAAA[0m
+[0m[[0m[31merror[0m] [0m[0m  def advertising = BatAAA.img(this) ~ AssemblyAAA.img(this)[0m
+[0m[[0m[31merror[0m] [0m[0m                                       ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:21:5: not found: value BatAAA[0m
+[0m[[0m[31merror[0m] [0m[0m    BatAAA *** 20 ++ AssemblyAAA *** 6 ++ ConvenedAAA *** 6 ++ CommuneAAA *** 6[0m
+[0m[[0m[31merror[0m] [0m[0m    ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:21:22: not found: value AssemblyAAA[0m
+[0m[[0m[31merror[0m] [0m[0m    BatAAA *** 20 ++ AssemblyAAA *** 6 ++ ConvenedAAA *** 6 ++ CommuneAAA *** 6[0m
+[0m[[0m[31merror[0m] [0m[0m                     ^[0m
+[0m[[0m[31merror[0m] [0m[0m100 errors found[0m

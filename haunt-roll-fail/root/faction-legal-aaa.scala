@@ -348,3 +348,28 @@ object TwilightCouncilExpansion extends FactionExpansion[TwilightCouncil.type] {
       soft()
   }
 }
+
+case object BatAAA extends Warrior {
+  override def id = "BatAAA"
+  override def name = "Bat"
+}
+
+case object AssemblyAAA extends Token {
+  override def id = "AssemblyAAA"
+  override def name = "Assembly"
+}
+
+case object ConvenedAAA extends Token {
+  override def id = "ConvenedAAA"
+  override def name = "Convened"
+}
+
+case object CommuneAAA extends Building {
+  override def id = "CommuneAAA"
+  override def name = "Commune"
+}
+
+case object LoyalistToken extends Token {
+  override def id = "Loyalist"
+  override def name = "Loyalist"
+}
