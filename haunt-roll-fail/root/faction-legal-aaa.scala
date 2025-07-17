@@ -5,6 +5,7 @@ import hrf.elem._
 import root.elem._
 import hrf.options._
 import hrf.meta._
+import hrf.elem.Effect
 
 case object TwilightCouncil extends WarriorFaction {
   val name = "Twilight Council"
@@ -26,7 +27,7 @@ case object TwilightCouncil extends WarriorFaction {
 
   // Returns true if a clearing is governed by a Twilight Council assembly
   def isGoverned(clearing: Region)(implicit game: Game): Boolean =
-    clearing.tokens.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil && t.state == "Governing")
+    clearing.pieces.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil && t.state == "Governing")
 }
 
 // Expansion logic stub
@@ -374,4 +375,4 @@ case object LoyalistToken extends Token {
   override def name = "Loyalist"
 }
 
-class PlayerState(f: Faction) extends FactionState(f)
+class PlayerState(f: Faction) extends FactionState
