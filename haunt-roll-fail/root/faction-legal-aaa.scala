@@ -247,27 +247,27 @@ object TwilightCouncilExpansion extends FactionExpansion[TwilightCouncil.type] {
 
     // Allow battle as normal (do not block BattleAction)
     // Battle between enemies at an assembly: add TC warriors to defender (not if Vagabond is defender)
-    case BattleAction(attacker, defender, clearing, _*) =>
-      if clearing.tokens.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil) &&
-         attacker != TwilightCouncil && defender != TwilightCouncil && !defender.isInstanceOf[Vagabond] =>
+    case ba @ BattleAction(attacker, defender, clearing, _*) =>
+      if (
+        clearing.tokens.exists(t => t == AssemblyAAA && t.faction == TwilightCouncil) &&
+        attacker != TwilightCouncil && defender != TwilightCouncil && !defender.isInstanceOf[Vagabond]
+      ) {
+        val tcWarriors = clearing.pieces.count(p => p.faction == TwilightCouncil && p.isInstanceOf[Warrior])
+        val defenderWarriors = clearing.pieces.count(p => p.faction == defender && p.isInstanceOf[Warrior])
+        val totalDefender = defenderWarriors + tcWarriors
 
-      val tcWarriors = clearing.pieces.count(p => p.faction == TwilightCouncil && p.isInstanceOf[Warrior])
-      val defenderWarriors = clearing.pieces.count(p => p.faction == defender && p.isInstanceOf[Warrior])
+        defender.log(s"Peacekeepers: $tcWarriors Twilight Council warriors join your defense.")
 
-      val totalDefender = defenderWarriors + tcWarriors
-
-      defender.log(s"Peacekeepers: $tcWarriors Twilight Council warriors join your defense.")
-
-      // Apply hits: defender's own pieces take hits first, then TC warriors
-      // (You may need to adjust your battle resolution logic to support this order)
-      BattleResolution(
-        attacker = attacker,
-        defender = defender,
-        clearing = clearing,
-        defenderExtra = tcWarriors, // pass this to your battle logic
-        tcFaction = TwilightCouncil
-      )
-      soft()
+        // Apply hits: defender's own pieces take hits first, then TC warriors
+        BattleResolution(
+          attacker = attacker,
+          defender = defender,
+          clearing = clearing,
+          defenderExtra = tcWarriors,
+          tcFaction = TwilightCouncil
+        )
+        soft()
+      } else soft()
 
     // When an enemy removes an assembly, remove 1 Loyalist
     case RemovePieceAction(f, piece, clearing)
