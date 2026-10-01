@@ -278,7 +278,7 @@ class TraderPlayer(val faction : Trader)(implicit val game : Game) extends Facti
             case s : Purchase => $(Offer(faction, s, prices(s), false))
         })
 
-    def craft = FoxRabbitMouse./~(s => (gone.count(TradePost(s)) + all(TradePost(s)).num).times(s))
+    def craft = FoxRabbitMouse./~(s => (gone.count(TradePost(s)) + Council.governedFor(faction, all(TradePost(s))).num).times(s))
 
     def procure(l : $[Fund]) : $[Figure] = {
         val m = l.distinct./~(o => funds.$.%(_.faction == o).take(l.count(o)))

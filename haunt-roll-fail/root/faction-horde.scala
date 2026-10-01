@@ -162,7 +162,7 @@ class HordePlayer(val faction : Horde)(implicit val game : Game) extends Faction
         case q => None
     }
 
-    def craft = all(Stronghold)./(_.asset)
+    def craft = Council.governedFor(faction, all(Stronghold))./(_.asset)
 
     def actionInfo(style : Style, warlordStyle : Style) = {
         val f = faction

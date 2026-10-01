@@ -142,7 +142,7 @@ class ExpeditionPlayer(val faction : Expedition)(implicit val game : Game) exten
 
     var values : $[Relic] = $
 
-    def craft = faction.wst./~(w => all(w))./(_.asset)
+    def craft = Council.governedFor(faction, faction.wst./~(w => all(w)))./(_.asset)
 }
 
 case object RelicMove extends Transport {

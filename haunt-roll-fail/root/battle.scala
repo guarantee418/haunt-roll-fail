@@ -866,6 +866,8 @@ object BattleExpansion extends MandatoryExpansion {
             val wo = rear.none || ww.num >= n
             val nn = min(n, ww.num + rear.num)
 
+            val peacekeepers = (f == b.defender) && b.codef.?(_.is[Council])
+
             val q =
                 if (s > 0)
                     BattleAssignHitsAction(f, b, 0, s, then)
@@ -875,7 +877,7 @@ object BattleExpansion extends MandatoryExpansion {
             val ask = SelectFiguresAction(
                 f, "Remove " ~ nn.ofb(wo.?("warrior").|("piece")), ww ++ rear, $(HiddenAssignHits, HiddenClearing(b.clearing))
             )(
-                _.num(nn).all(l => l.intersect(rear).none || ww.diff(l).none).all(l => l.intersect(own).num >= l.intersect(merc).num || own.diff(l).none).all(l => l.intersect(merc).num + 1 >= l.intersect(own).num || merc.diff(l).none)
+                _.num(nn).all(l => l.intersect(rear).none || ww.diff(l).none).all(l => l.intersect(own).num >= l.intersect(merc).num || own.diff(l).none).all(l => peacekeepers || l.intersect(merc).num + 1 >= l.intersect(own).num || merc.diff(l).none).all(l => peacekeepers.not || l.intersect(merc).none || own.diff(l).none)
             )(
                 l => BattleDealHitsAction(f, b, l, q)
             )

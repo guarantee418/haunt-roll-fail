@@ -256,6 +256,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case AssemblyAAA => { DrawRect(pr + "assembly", -45, -45, 90, 90) }
             case ConvenedAAA => { DrawRect(pr + "convened", -45, -45, 90, 90) }
             case CommuneAAA => { DrawRect(pr + "commune", -50, -50, 100, 100) }
+            case ClosedAssembly => { DrawRect(pr + "assembly", -45, -45, 90, 90) }
+            case GoverningAssembly => { DrawRect(pr + "convened", -45, -45, 90, 90) }
 
             case SkunkAAACaptain(Birdsong) => { DrawRect(pr + "captain-birdsong", -42, -81, 85, 86) }
             case SkunkAAACaptain(Daylight) => { DrawRect(pr + "captain-daylight", -42, -81, 85, 86) }
@@ -1630,6 +1632,19 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 &((Image(f.style + "-bat-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-bat", styles.wr) *** (f.all(f.warrior).num % 5))) ~
                 &((Image(f.style + "-bat-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-bat-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
 
+            case f : Council =>
+                val placed = f.placedAssemblies
+
+                Hint("Assemblies\n" + f.all(GoverningAssembly).num + " Governing, " + f.all(ClosedAssembly).num + " Closed on the map\n" + (Council.maxAssemblies - placed) + " on the track\n" + (placed / 2) + " card draw icons showing",
+                    0.until(Council.maxAssemblies)./(i => (i < placed).?(Image("empty-token" + (i % 2 == 1).??("-card"), styles.token)).|(Image(f.style + "-assembly", styles.token))).merge) ~ Break ~
+                f.all(GoverningAssembly)./(_ => Image(f.style + "-convened", styles.token)).merge ~ f.all(ClosedAssembly)./(_ => Image(f.style + "-assembly", styles.token)).merge ~ Break ~ Gap ~
+                Hint("Loyalists\n" + f.loyalists.$.num + " of " + Council.maxLoyalists,
+                    (Image(f.style + "-bat", styles.wr) *** f.loyalists.$.num) ~ (Image(f.style + "-bat-empty", styles.wr) *** (Council.maxLoyalists - f.loyalists.$.num))) ~ Break ~
+                f.revealed./(d => dt.CardSuitInfo(d.suit).pointer.onClick.param(d)).merge ~
+                Div(Hint("Bats\n" + f.all(f.warrior).num + " on the map\n" + f.pooled(f.warrior) + " available",
+                &((Image(f.style + "-bat-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-bat", styles.wr) *** (f.all(f.warrior).num % 5))) ~
+                &((Image(f.style + "-bat-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-bat-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
+
             case f : AbductAAA =>
                 f.phases./(p => (Image(f.style + "-captain-" + p, styles.wr) ~ " " ~ f.characters(p).name.hl).div(styles.minister) ~ (f.items(p)./(i => Image(i.imgid, styles.ii)) ++ f.incoming(p)./(i => Image(i.exhaust.imgid, styles.ii))).merge.div(xstyles.smaller85)) ~
                 Div(Hint("Skunks\n" + f.all(f.warrior).num + " on the map\n" + f.pooled(f.warrior) + " available",
@@ -2753,6 +2768,42 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     HGap ~
                     HGap ~
                     HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), {
+                    case (f : Faction, more : Boolean) => onFactionStatus(f, more, None)
+                    case _ =>
+                        overlayPane.invis()
+                        overlayPane.clear()
+                })
+
+            case f : Council =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    f.elem.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    Image("tc-board-a")(styles.factionboard) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Bats".hl.larger) ~
+                    more("Bats".hl.larger, "are", "warriors".hh, Comma, "they", "battle".hh, "and provide", "rule".hh, Dot) ~
+                    desc(f.all(f.warrior).num.hl.larger, "on the map,", f.loyalists.$.num.hl.larger, "loyalists,", f.pooled(f.warrior).hl.larger, "in reserve") ~
+                    HGap ~
+                    warriorLine(f.style + "-bat", f.all(f.warrior).num, f.pooled(f.warrior)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    info() ~
                     HGap ~
                     HGap ~
                     HGap ~

@@ -110,7 +110,7 @@ class FelinePlayer(val faction : Feline)(implicit val game : Game) extends Facti
 
     var plan : $[(DeckCard, HospitalPlan)] = $
 
-    def craft = all(Workshop)./(_.asset)
+    def craft = Council.governedFor(faction, all(Workshop))./(_.asset)
 
     def cost(b : Building) = $(999, 4, 3, 3, 2, 1, 0)
 

@@ -128,7 +128,7 @@ class AviaryPlayer(val faction : Aviary)(implicit val game : Game) extends Facti
 
     def todo = decree.view.mapValues(_./(_.suit)).toMap
 
-    def craft = all(Roost)./(_.asset)
+    def craft = Council.governedFor(faction, all(Roost))./(_.asset)
 }
 
 

@@ -141,7 +141,7 @@ class UndergroundPlayer(val faction : Underground)(implicit val game : Game) ext
 
     var retired : $[Minister] = $
 
-    def craft = all(Citadel)./(_.asset) ++ all(Market)./(_.asset)
+    def craft = Council.governedFor(faction, all(Citadel) ++ all(Market))./(_.asset)
 
     def punchIn(m : Minister, mayor : Boolean) {
         if (mayor) {
