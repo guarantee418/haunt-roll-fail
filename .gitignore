@@ -5,3 +5,7 @@ good-game-database.*
 # Temporary sbt run files
 **/target/bg-jobs/
 **/target/global-logging/
+
+# https: certificate (private key) and Let's Encrypt webroot (created by setup-https.sh)
+good-game/certificate.pkcs12*
+good-game/acme/
