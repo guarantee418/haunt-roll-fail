@@ -5,6 +5,11 @@
 # Default hostname: <public-ip-with-dashes>.sslip.io
 set -euo pipefail
 
+if [ "$(uname)" != Linux ] || ! command -v netfilter-persistent > /dev/null; then
+    echo "Run this on the server, not here: ssh -i ~/.ssh/oracle.key ubuntu@157.151.177.11" >&2
+    exit 1
+fi
+
 HRF_DIR="$(cd "$(dirname "$0")" && pwd)"
 GG_DIR="$HRF_DIR/good-game"
 IP="$(curl -s https://api.ipify.org)"
