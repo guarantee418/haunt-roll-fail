@@ -33,8 +33,8 @@ case object Slumber extends Glyph(true, false)
 case object Sorcery extends Glyph(true, false)
 
 case class Region(name : String, glyph : Glyph) {
-
-
+//    override def toString = if (glyph == Ocean) name.styled("sea") else if (glyph == Deep) GC.styled(name) else name.styled("region")
+//    def +(ia : IceAges) = toString + ia.toString
 }
 
 trait Board {
@@ -107,6 +107,15 @@ object EarthMap4v35 extends Board {
 
     def starting(faction : Faction) = faction match {
         case _ => Nil
+        /*
+        case GC => List(SouthPacific)
+        case CC => List(SouthAsia)
+        case BG => List(WestAfrica)
+        case YS => List(Europe)
+        case SL => List(NorthAmerica)
+        case WW => List(ArcticOcean, Antarctica)
+        case OW => regions
+        */
     }
 }
 
@@ -129,11 +138,11 @@ sealed abstract class Spellbook(val name : String) extends Record {
 }
 
 abstract class NeutralSpellbook(name : String) extends Spellbook(name) {
-    override def full = name
+    override def full = name//.styled("nt")
 }
 
 abstract class FactionSpellbook(val faction : Faction, name : String) extends Spellbook(name) {
-    override def full = faction.name
+    override def full = faction.name//.styled(name)
 }
 
 abstract class Requirement(val text : String, val es : Int = 0)
@@ -201,6 +210,10 @@ case object OW extends Faction {
 
 trait PlayerState {
     def game : Game
+    //def has(e : Effect) = faction.abilities.contains(e) || effects.contains(e) || abilities.contains(e) || services.contains(e)
+    //def can(e : Effect) = has(e) && !used.contains(e) && !ignored.contains(e)
+
+    //def figures(name : String, init : List[Figure] = Nil, rule : Figure => Boolean = (e : Figure) => true) = null //l game.pieces.another[Figure](name + "-" + faction.short, init, rule)
 
     var scorelog : List[Elem] = Nil
 
@@ -213,6 +226,16 @@ trait PlayerState {
     var vp : Int = 0
 
     def faction : Faction
+
+    //val pool = figures("pool", faction.figures, _.faction == faction)
+    //var limbo = figures("limbo", Nil, _.faction == faction)
+
+    //def pooled(p : Piece) = pool.%(_.piece == p).num
+
+    //def inpool(p : Piece) = pool.%(_.piece == p).any
+
+    //def all(p : Piece) = game.board.clearings./~(c => game.xclearings(c).%(_.faction == faction).%(_.piece == p)./(_ => c))
+
 }
 
 trait NoGameOverTrigger { self : Action => }
@@ -239,6 +262,8 @@ class Game(val players : List[Player], val setup : List[Faction], val options : 
     def info(waiting : List[Faction], self : Option[Faction], actions : List[UserAction]) : $[Info] = Nil
 
     def loggedPerform(action : Action, soft : Void) : Continue = {
+        // +++("> " + action)
+
         val c = performInternal(action)
 
         c match {
@@ -246,21 +271,56 @@ class Game(val players : List[Player], val setup : List[Faction], val options : 
                 println("")
                 println("")
                 println("")
+                println("WTF!!!")
                 println("Empty Ask as a result of " + action)
             case _ =>
         }
 
+        // +++("    < " + c)
+
         if (pstates.size == factions.num && !action.is[NoGameOverTrigger]) {
             if (gameover != null)
                 return gameover
+
+                /*
+            val ww = factions.%(f => f.vp >= 30)
+            if (ww.any) {
+                val cw = factions.%(f => ww.%(w => f.coalition == Some(w)).any)
+                val winners = ww ++ cw
+
+                highlights :+= NothingHighlight
+                highlights :+= NothingHighlight
+                highlights :+= NothingHighlight
+
+                log(winners./(_.elem).join(", "), "won")
+
+                gameover = GameOver(winners, "Game Over" ~ Break ~ winners./(f => f.elem ~ " won" ~ Break ~ (of(f).vp >= 0).??(of(f).scorelog.join(Break))).join(Break), (null +: Nil)./(f => {
+                    Ask(f)(winners./~(w =>
+                        $(GameOverWonAction(f, w)) ++ (of(w).vp >= 0).?(GameOverTextAction(f, of(w).scorelog.join(HorizontalBreak)))
+                        ) ++ $(GameOverMapsAction(f)) ++ hrf.HRF.flag("offline").not.?(GameOverSaveReplayAction)
+                    )
+                }))
+
+                return gameover
+            }
+            */
         }
+
+        /*
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        highlightFaction = c match {
+            case Ask(f, _, _) => $(f)
+            case MultiAsk(a) => a./(_.faction)
+            case _ => Nil
+        }
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        */
 
         def fix(f : Faction) = f
 
         c @@ {
             case c : Ask => c.copy(faction = fix(c.faction))
             case c : MultiAsk => c.copy(asks = c.asks./(c => c.copy(faction = fix(c.faction))))
-
             case c => c
         }
     }

@@ -12,17 +12,35 @@ import hrf.logger._
 
 import scala.collection.parallel.CollectionConverters._
 
-object Host extends hrf.host.BaseHost {
+trait BaseHost extends hrf.host.BaseHost {
     val gaming = arcs.gaming
     val path = "arcs"
 
-    def askBot(g : G, f : F, actions: $[UserAction]) =
-        if (f == Red)
-            new BotNew(f).ask(actions, 0)(g)
-        else
-            new BotOld(f).ask(actions, 0)(g)
+    def factionName(f : F) = f.name
+
+    def serializer = arcs.Serialize
+    def start = StartAction(version)
+    def times = 1
+
+
+    type W = Faction
 
     def factions = $(Red, White, Blue, Yellow)
+    def subjects = factions
+
+    def nameWinner(w : Faction) = w.name
+
+    def winners(a : Action)(implicit g : G) = a @@ {
+        case GameOverWonAction(_, f) => $(f)
+    }
+
+    def winnersFromFaction(f : F)(implicit g : G) = $(f)
+
+    def askBot(g : G, f : F, actions: $[UserAction]) =
+        if (f == Red)
+            new BotEOC(f, e => new BotNew(e, false)).ask(actions, 0)(g)
+        else
+            new BotNew(f, true).ask(actions, 0.01)(g)
 
     def batch = {
         val allComb = factions.combinations(4).$
@@ -31,22 +49,58 @@ object Host extends hrf.host.BaseHost {
         def allSeatings(factions : $[Faction]) = factions.permutations.$
         def randomSeating(factions : $[Faction]) = allSeatings(factions).shuffle.head
 
-        val base = repeat./(l => () => new G(l, $(
+        val base = allSeatings(factions)./(l => () => new G(l, $(
             RandomPlayerOrder,
-            LeadersAndLorePreset1,
-            LeadersAndLorePreset2,
-            LeadersAndLorePreset3
-        ))).$
+        )))
+
+        base
+    }
+}
+
+trait CampaignHost extends hrf.host.BaseHost {
+    val gaming = arcs.gaming
+    val path = "arcs"
+
+    def factionName(f : F) = f.name
+
+    def serializer = arcs.Serialize
+    def start = StartAction(version)
+    def times = 10
+
+
+    type W = Fate
+
+    def factions = $(Red, White, Blue, Yellow)
+    def subjects = Fates.act1 // ++ Fates.act2 ++ Fates.act3
+
+    def nameWinner(w : Fate) = w.name
+
+    def winners(a : Action)(implicit g : G) = a @@ {
+        case GameOverWonAction(_, f) => f.past
+    }
+
+    def winnersFromFaction(f : F)(implicit g : G) = f.past
+
+    def askBot(g : G, f : F, actions: $[UserAction]) = new BotNew(f, true).ask(actions, 0)(g)
+
+    def batch = {
+        val allComb = factions.combinations(4).$
+        val repeat = 1.to(20).map(_ => factions)
+
+        def allSeatings(factions : $[Faction]) = factions.permutations.$
+        def randomSeating(factions : $[Faction]) = allSeatings(factions).shuffle.head
+
+        val base = allSeatings(factions)./(l => () => new G(l, $(
+            // NoFate,
+            HostTest,
+            Act1Only,
+            RandomPlayerOrder,
+        )))
 
         base
     }
 
-    def factionName(f : F): String = f.name
+}
 
-    def serializer = arcs.Serialize
-    def start = StartAction(version)
-    def times = 500
-    def winners(a : Action) = a @@ {
-        case GameOverWonAction(_, f) => $(f)
-    }
+object Host extends CampaignHost {
 }

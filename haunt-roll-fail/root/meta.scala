@@ -17,9 +17,8 @@ import hrf.elem._
 import hrf.reflect._
 import hrf.options._
 
-
-
 import helper.&
+
 
 case class UnknownOption(o : String) extends GameOption {
     val group = "Unknown"
@@ -145,6 +144,10 @@ case object DuskDeck extends DeckOption {
         "An alternative deck by " ~ "its_rudimentary".hl ~ " and " ~ "Endgamer1331".hl ~ "!",
         "For " ~ "Service".styled(styles.FoxRabbitMouse) ~ " and " ~ "Phase".styled(styles.phase) ~ " cards optional rules for " ~ VB.elem ~ " interaction are available.",
     )
+}
+
+case object SquiresDeck extends DeckOption {
+    val valueOn = "Squires and Disciples".hh
 }
 
 case object NonBirdPartisans extends GameOption with ToggleOption {
@@ -991,7 +994,7 @@ object Meta extends MetaGame {
     )
 
     val official = $[Faction](MC, ED, WA, VB, LC, RF, UD, CC, LH, KI)
-    val clones = $[Faction](BK, PE, FU, NB, CM, DR, RI, LK)
+    val clones = $[Faction](BK, PE, FU, NB, CM, /*WC,*/ DR, RI, LK)
     val fun = $[Faction](KDvA, TCvA, LDvD, LDvC, LDvB, TD, FH, XC, CUv2, CU, OK, AF, SF, MB)
 
     val factions = official ++ clones ++ fun
@@ -1012,7 +1015,7 @@ object Meta extends MetaGame {
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(MapDefaultLandmarks, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark) ++
         $,
-        $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck) ++
+        $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck) ++
         $(NonBirdPartisans, UnthematicCoffinMakers, UnthematicPropagandaBureau) ++
         l.of[Mischief].any.$(TunnelsIgnoreRaid) ++
         l.of[Trader].any.$(TunnelsIgnoreTradePosts) ++
@@ -1050,7 +1053,7 @@ object Meta extends MetaGame {
         $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
-        $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck) ++
+        $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck) ++
         $(NonBirdPartisans, UnthematicCoffinMakers, UnthematicPropagandaBureau) ++
         l.of[Mischief].any.$(TunnelsIgnoreRaid) ++
         l.of[Trader].any.$(TunnelsIgnoreTradePosts) ++
@@ -1091,6 +1094,8 @@ object Meta extends MetaGame {
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
+    override def mandatoryFor(n : Int, l : $[F]) : $[O] = l./(IncludeFaction)
+
     override def defaultsFor(n : Int, l : $[F]) = $(
         SeatingGiven,
         FactionSeatingGiven,
@@ -1105,7 +1110,7 @@ object Meta extends MetaGame {
         CardDraftStandard,
         MapDefaultLandmarks,
         NoHirelings
-    ) ++ l./(IncludeFaction) ++ hirelings./(IncludeHireling)
+    ) ++ hirelings./(IncludeHireling)
 
     override def presetsFor(n : Int, l : $[F]) = $(
         ("Reset Options".spn, hirelings./(IncludeHireling), $),
@@ -1224,7 +1229,7 @@ object Meta extends MetaGame {
         case _ => $("None")
     }
 
-    override def defaultBots = $("Easy", "None")
+    def defaultBot(f : Faction) = "Easy"
 
     def getBot(f : Faction, b : String) = (f, b) match {
         case (f : Faction, "Easy") => new BotXX(f)
@@ -2448,6 +2453,30 @@ object Meta extends MetaGame {
         ImageAsset("borscht-kitchens"           ) ::
         ImageAsset("swap-meet"                  ) ::
         ImageAsset("tunnels"                    ) ::
+
+        ImageAsset("apprentice") ::
+        ImageAsset("bold-leadership") ::
+        ImageAsset("brazen-demagogue") ::
+        ImageAsset("feather-rufflers") ::
+        ImageAsset("fox-squires") ::
+        ImageAsset("friend-of-the-foxes") ::
+        ImageAsset("friend-of-the-mice") ::
+        ImageAsset("friend-of-the-rabbits") ::
+        ImageAsset("hidden-warrens") ::
+        ImageAsset("lookouts") ::
+        ImageAsset("mice-in-a-bush") ::
+        ImageAsset("mouse-squires") ::
+        ImageAsset("rabbit-squires") ::
+        ImageAsset("raiding-party") ::
+        ImageAsset("riversteads") ::
+        ImageAsset("shadow-council") ::
+        ImageAsset("silver-tongue") ::
+        ImageAsset("sky-couriers") ::
+        ImageAsset("spy-network") ::
+        ImageAsset("standard-bearer") ::
+        ImageAsset("supply-train") ::
+        ImageAsset("tactician") ::
+        ImageAsset("the-faithful") ::
     $) ::
     ConditionalAssetsList((factions, options) => options.has(DuskDeck), "card/dusk", lzy = Laziness.Later)(
         ImageAsset("adventurers"                ) ::

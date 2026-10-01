@@ -90,6 +90,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
                     case Emptiness => ("", North)
                     case HiddenTile(_, tribe, _) => ("hidden-" + tribe, North)
                     case Pending => ("pending", North)
+                    case Removing(_) => ("pending", North)
                     case Revealing => ("revealing", North)
                     case Explored(name, _, dir, _) => (name, dir)
                     case Magma(name, dir) => (name, dir)
@@ -563,6 +564,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         case $(f : Faction, x : Monster) =>
             onClick(x)
 
+        case Left(x) => onClick(x)
+        case Right(x) => onClick(x)
+        case Some(x) => onClick(x)
+        case List(x) => onClick(x)
+
         case x =>
             println("unknown onClick: " + x)
     }
@@ -628,14 +634,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         asker.zask(display)(resources)
     }
 
-    override def wait(self : $[F], factions : $[F]) {
+    override def wait(self : $[F], factions : $[F], message : Elem) {
         lastActions = $
         lastThen = null
         lastFaction = lastFaction || self.single
 
         showNotifications(self)
 
-        super.wait(self, factions)
+        super.wait(self, factions, message)
     }
 
     var lastActions : $[UserAction] = $

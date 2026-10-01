@@ -97,7 +97,7 @@ object Desc {
 case class StartAction(version : String) extends StartGameAction with GameVersion
 case class StartPlayerTurnAction(f : Faction) extends ForcedAction
 case class StartUnitTurnAction(f : Faction) extends ForcedAction
-case class UnitTurnAction(f : Faction, u : Piece, r : UnitRef) extends ForcedAction
+case class UnitTurnAction(f : Faction, u : Piece, r : UnitRef) extends ForcedAction // with Soft
 
 case class CaptainHookMainAction(self : Faction, r : UnitRef, l : List[UnitRef]) extends BaseAction(r)("Удар крюком".styled(self), "(" ~ "ціль " ~ elem.mod(-4) ~ " здоров'я".styled(styles.health) ~ ")") with Soft
 case class CaptainHookAction(self : Faction, r : UnitRef, t : UnitRef) extends BaseAction("Удар крюком".styled(self), "(" ~ "ціль " ~ elem.mod(-4) ~ " здоров'я".styled(styles.health) ~ ")")(t)
@@ -249,6 +249,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 println("")
                 println("")
                 println("")
+                println("WTF!!!")
                 println("Empty Ask as a result of " + action)
             case _ =>
         }
@@ -333,13 +334,13 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 val a = f.units.%!(_.dead).but(r.figure)
 
                 Ask(f)
-                  .add(CaptainHookMainAction(f, r, t).x(t.none))
-                  .add(CaptainOrderMainAction(f, r, t).x(t.none).!(r.reload % 2 == 1, "тільки один раз"))
+                  .add(CaptainHookMainAction(f, r, t).!(t.none))
+                  .add(CaptainOrderMainAction(f, r, t).!(t.none).!(r.reload % 2 == 1, "тільки один раз"))
                   .add(SkipUnitTurnAction(f, r))
                   .needOk
 
             case CaptainHookMainAction(f, r, l) =>
-                Ask(f)(l./(CaptainHookAction(f, r, _))).cancel
+                Ask(f).add(l./(CaptainHookAction(f, r, _))).cancel
 
             case CaptainHookAction(f, r, t) =>
                 log(r, "б'є крюком", t.what)
@@ -380,15 +381,15 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 val t = factions.but(f)./~(_.units).%!(_.dead)
 
                 Ask(f)
-                  .add(ParrotProvokeMainAction(f, r, t).x(t.none))
-                  .add(ParrotTauntMainAction(f, r, t).x(t.none))
-                  .add(ParrotDistractMainAction(f, r, t).x(t.none))
-                  .add(ParrotCurseMainAction(f, r, t).x(t.none).x(r.reload > 0, "тільки один раз").x(r.rage < 7, "недостатньо ярості"))
+                  .add(ParrotProvokeMainAction(f, r, t).!(t.none)/*.!(r.rage >= r.unit.maxRage, "забагато ярості")*/)
+                  .add(ParrotTauntMainAction(f, r, t).!(t.none)/*.!(r.rage >= r.unit.maxRage, "забагато ярості")*/)
+                  .add(ParrotDistractMainAction(f, r, t).!(t.none)/*.!(r.rage >= r.unit.maxRage, "забагато ярості")*/)
+                  .add(ParrotCurseMainAction(f, r, t).!(t.none).!(r.reload > 0, "тільки один раз").!(r.rage < 7, "недостатньо ярості"))
                   .add(SkipUnitTurnAction(f, r))
                   .needOk
 
             case ParrotProvokeMainAction(f, r, l) =>
-                Ask(f)(l./(ParrotProvokeAction(f, r, _))).cancel
+                Ask(f).add(l./(ParrotProvokeAction(f, r, _))).cancel
 
             case ParrotProvokeAction(f, r, t) =>
                 log(r, "дражнив", t.rod)
@@ -400,7 +401,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 AttackDamageAction(t, 1, EndUnitTurnAction(f))
 
             case ParrotTauntMainAction(f, r, l) =>
-                Ask(f)(l./(ParrotTauntAction(f, r, _))).cancel
+                Ask(f).add(l./(ParrotTauntAction(f, r, _))).cancel
 
             case ParrotTauntAction(f, r, t) =>
                 log(r, "кепкував з", t.rod)
@@ -412,7 +413,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 AttackManaAction(t, 1, EndUnitTurnAction(f))
 
             case ParrotDistractMainAction(f, r, l) =>
-                Ask(f)(l./(ParrotDistractAction(f, r, _))).cancel
+                Ask(f).add(l./(ParrotDistractAction(f, r, _))).cancel
 
             case ParrotDistractAction(f, r, t) =>
                 logtemp(r, "відволікає", t.what ~ "...")
@@ -475,14 +476,14 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 val t = factions.but(f)./~(_.units).%!(_.dead)
 
                 Ask(f)
-                  .add(PiratePistolMainAction(f, r, t).x(t.none).x(r.reload > 0, "пістоль розряжений"))
-                  .add(PirateReloadMainAction(f, r).x(t.none).x(r.reload <= 0))
-                  .add(PirateRumMainAction(f, r).x(r.mana <= 0, "замало мани").x(r.health >= r.unit.maxHealth, "повне здоров'я"))
+                  .add(PiratePistolMainAction(f, r, t).!(t.none).!(r.reload > 0, "пістоль розряжений"))
+                  .add(PirateReloadMainAction(f, r).!(t.none).!(r.reload <= 0))
+                  .add(PirateRumMainAction(f, r).!(r.mana <= 0, "замало мани").!(r.health >= r.unit.maxHealth, "повне здоров'я"))
                   .add(SkipUnitTurnAction(f, r))
                   .needOk
 
             case PiratePistolMainAction(f, r, l) =>
-                Ask(f)(l./(PiratePistolAction(f, r, _))).cancel
+                Ask(f).add(l./(PiratePistolAction(f, r, _))).cancel
 
             case PiratePistolAction(f, r, t) =>
                 log(r, "стріляє в", t.what)
@@ -526,14 +527,14 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 val a = f.units.%!(_.dead).but(r.figure)
 
                 Ask(f)
-                  .add(CabinBoySwordMainAction(f, r, t).x(t.none))
-                  .add(CabinBoyPizzaMainAction(f, r).x(r.mana <= 0, "замало мани").x(r.health >= r.unit.maxHealth, "повне здоров'я"))
-                  .add(CabinBoyFeedPizzaMainAction(f, r, a).x(a.none).x(r.mana <= 0, "замало мани").x(a.all(r => r.health >= r.unit.maxHealth), "повне здоров'я"))
+                  .add(CabinBoySwordMainAction(f, r, t).!(t.none))
+                  .add(CabinBoyPizzaMainAction(f, r).!(r.mana <= 0, "замало мани").!(r.health >= r.unit.maxHealth, "повне здоров'я"))
+                  .add(CabinBoyFeedPizzaMainAction(f, r, a).!(a.none).!(r.mana <= 0, "замало мани").!(a.all(r => r.health >= r.unit.maxHealth), "повне здоров'я"))
                   .add(SkipUnitTurnAction(f, r))
                   .needOk
 
             case CabinBoySwordMainAction(f, r, l) =>
-                Ask(f)(l./(CabinBoySwordAction(f, r, _))).cancel
+                Ask(f).add(l./(CabinBoySwordAction(f, r, _))).cancel
 
             case CabinBoySwordAction(f, r, t) =>
                 log(r, "б'є шаблею", t.what)
@@ -561,7 +562,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 EndUnitTurnAction(f)
 
             case CabinBoyFeedPizzaMainAction(f, r, l) =>
-                Ask(f)(l./(CabinBoyFeedPizzaAction(f, r, _))).cancel
+                Ask(f).add(l./(CabinBoyFeedPizzaAction(f, r, _))).cancel
 
             case CabinBoyFeedPizzaAction(f, r, t) =>
                 log(r, "поділився шматочком піцци з", t.obj)
@@ -580,16 +581,16 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 val t = factions.but(f)./~(_.units).%!(_.dead)
 
                 Ask(f)
-                  .add(FireKnightSwordMainAction(f, r, t).x(t.none).x(r.mana < 2, "замало мани"))
-                  .add(FireKnightFireballMainAction(f, r, t).x(t.none).x(r.mana < 3, "замало мани"))
-                  .add(FireKnightFirewallMainAction(f, r, t).x(t.none).x(firewall == turn, "стіна вогню вже стоїть").x(r.mana < 7, "замало мани"))
-                  .add(FireKnightSelfHealMainAction(f, r).x(r.mana >= r.unit.maxMana && r.health >= r.unit.maxHealth, "повна мана і здров'я"))
-                  .add(FireKnightMeditateMainAction(f, r).x(r.mana >= r.unit.maxMana && r.health >= r.unit.maxHealth, "повна мана і здров'я"))
+                  .add(FireKnightSwordMainAction(f, r, t).!(t.none).!(r.mana < 2, "замало мани"))
+                  .add(FireKnightFireballMainAction(f, r, t).!(t.none).!(r.mana < 3, "замало мани"))
+                  .add(FireKnightFirewallMainAction(f, r, t).!(t.none).!(firewall == turn, "стіна вогню вже стоїть").!(r.mana < 7, "замало мани"))
+                  .add(FireKnightSelfHealMainAction(f, r).!(r.mana >= r.unit.maxMana && r.health >= r.unit.maxHealth, "повна мана і здров'я"))
+                  .add(FireKnightMeditateMainAction(f, r).!(r.mana >= r.unit.maxMana && r.health >= r.unit.maxHealth, "повна мана і здров'я"))
                   .add(SkipUnitTurnAction(f, r))
                   .needOk
 
             case FireKnightSwordMainAction(f, r, l) =>
-                Ask(f)(l./(FireKnightSwordAction(f, r, _))).cancel
+                Ask(f).add(l./(FireKnightSwordAction(f, r, _))).cancel
 
             case FireKnightSwordAction(f, r, t) =>
                 log(r, "б'є вогняним мечем", t.what)
@@ -615,7 +616,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 }
 
             case FireKnightFireballMainAction(f, r, l) =>
-                Ask(f)(l./(FireKnightFireballAction(f, r, _))).cancel
+                Ask(f).add(l./(FireKnightFireballAction(f, r, _))).cancel
 
             case FireKnightFireballAction(f, r, t) =>
                 log(r, "запускає вогняний шар у", t.what)
@@ -679,15 +680,15 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 val t = factions.but(f)./~(_.units).%!(_.dead)
 
                 Ask(f)
-                  .add(MageFreezeMainAction(f, r, t).x(t.none).x(r.mana < 1, "замало мани"))
-                  .add(MageRayMainAction(f, r, t).x(t.none).x(r.mana < 2, "замало мани"))
-                  .add(MageSelfHealMainAction(f, r).x(r.mana < 1, "замало мани").x(r.health >= r.unit.maxHealth, "повне здров'я"))
-                  .add(MageManaReserveMainAction(f, r).x(r.reload > 0, "тільки один раз").x(r.mana >= r.unit.maxMana, "повна мана"))
+                  .add(MageFreezeMainAction(f, r, t).!(t.none).!(r.mana < 1, "замало мани"))
+                  .add(MageRayMainAction(f, r, t).!(t.none).!(r.mana < 2, "замало мани"))
+                  .add(MageSelfHealMainAction(f, r).!(r.mana < 1, "замало мани").!(r.health >= r.unit.maxHealth, "повне здров'я"))
+                  .add(MageManaReserveMainAction(f, r).!(r.reload > 0, "тільки один раз").!(r.mana >= r.unit.maxMana, "повна мана"))
                   .add(SkipUnitTurnAction(f, r))
                   .needOk
 
             case MageFreezeMainAction(f, r, l) =>
-                Ask(f)(l./(MageFreezeAction(f, r, _))).cancel
+                Ask(f).add(l./(MageFreezeAction(f, r, _))).cancel
 
             case MageFreezeAction(f, r, t) =>
                 logtemp(r, "заморожує", t.what, "...")
@@ -709,7 +710,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 }
 
             case MageRayMainAction(f, r, l) =>
-                Ask(f)(l./(MageRayAction(f, r, _))).cancel
+                Ask(f).add(l./(MageRayAction(f, r, _))).cancel
 
             case MageRayAction(f, r, t) =>
                 log(r, "б'є енергією", t.what)
@@ -787,7 +788,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 then
 
             case UnitTurnAction(f, u, r) =>
-                Ask(f)(SkipUnitTurnAction(f, r)).needOk
+                Ask(f).add(SkipUnitTurnAction(f, r)).needOk
 
             case SkipUnitTurnAction(f, r) =>
                 log(r, "пропустив хід")
@@ -832,7 +833,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 else {
                     unit += 1
 
-                    Ask(f)(CleanUnitTurnAction(f))
+                    Ask(f).add(CleanUnitTurnAction(f))
                 }
 
             case CleanUnitTurnAction(f) =>

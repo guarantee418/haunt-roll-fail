@@ -4,6 +4,7 @@ package vast
 //
 //
 import hrf.colmat._
+import hrf.compute._
 import hrf.logger._
 //
 //
@@ -11,7 +12,7 @@ import hrf.logger._
 //
 
 class BotKnight(f : Knight.type) extends EvalBot {
-    def eval(actions : $[UserAction])(implicit game : Game) : $[ActionEval] = {
+    def eval(actions : $[UserAction])(implicit game : Game) : Compute[$[ActionEval]] = {
         val ev = new GameEvaluationKnight(f)
         actions./{ a => ActionEval(a, ev.eval(a)) }
     }
@@ -113,7 +114,6 @@ class GameEvaluationKnight(val self : Knight.type)(implicit val game : Game) {
                 p == PixieLantern |=> 20 -> "pixie lantern"
                 p == HeroicBoots |=> 10 -> "heroic boots"
                 self.free > 1 || self.perception > self.encounters |=> 270 -> "more moves"
-
 
             case TakeTreasureAction(_, EquipmentTreasure(q)) =>
                 self.grit > 30    |=> 1000 -> "take anyway"

@@ -204,7 +204,7 @@ object FanaticExpansion extends FactionExpansion[Fanatic] {
                 f.log("got", 2.hl, Acolytes.of(f, 2))
             }
 
-            Ask(f)(FoxRabbitMouse./(ChooseOutcastAction(f, _)))
+            Ask(f).each(FoxRabbitMouse)(s => ChooseOutcastAction(f, s))
 
         case ChooseOutcastAction(f, s) =>
             f.outcast = Some(s)
@@ -265,6 +265,7 @@ object FanaticExpansion extends FactionExpansion[Fanatic] {
             else
                 then
 
+
         // REVENGE
         case BattlePostHitInAction(b, e, f : Fanatic, Lizard, then) =>
             if (f == b.defender && e == b.attacker && e.is[CommonAbduct]) {
@@ -288,6 +289,7 @@ object FanaticExpansion extends FactionExpansion[Fanatic] {
                 e.log("smashed", Lizard.of(f))
 
             then
+
 
         // TURN
         case BirdsongNAction(40, f : Fanatic) =>
@@ -344,13 +346,13 @@ object FanaticExpansion extends FactionExpansion[Fanatic] {
                 actions :+= FanaticCrusadeMainAction(f, 2 - d, mvv).!(mvv.none, "can't move").!(n < 2 - d, "not enough acolytes")
 
                 val cnv = clearings.%(_.cost.matched(outcast)).%(f.canPlace).%(c => f.enemies.%(f.canRemove(c)).%(_.at(c).of[Warrior].notOf[Tenacious].any).any)
-                actions :+= FanaticConvertMainAction(f, 2 - d, cnv).!(cnv.none, "no targets").!(n < 2 - d, "not enough acolytes")
+                actions :+= FanaticConvertMainAction(f, 2 - d, cnv).!(cnv.none, "no targets")/*.!(f.pool(Lizard).not, "maximum")*/.!(n < 2 - d, "not enough acolytes")
 
                 val snf = clearings.%(_.cost.matched(outcast)).%(f.canPlace).%(c => f.enemies.%(f.canRemove(c)).%(_.at(c).of[Building].any).any)
                 actions :+= FanaticSanctifyMainAction(f, 3 - d, snf, outcast).!(snf.none, "no targets").!(f.pool(Garden(outcast)).not, "maximum").!(n < 3 - d, "not enough acolytes")
             }
 
-            Ask(f)(actions).done(Next).birdsong(f)
+            Ask(f).add(actions).done(Next).birdsong(f)
 
         case SpendAcolytesAction(f, n, then) =>
             f.acolytes --> n.times(f.warrior) --> game.recycle
@@ -367,7 +369,9 @@ object FanaticExpansion extends FactionExpansion[Fanatic] {
             BattleInitAction(f, f, Crusade(f.outcast.get), l, $(DoneAction(Repeat)), Repeat)
 
         case FanaticConvertMainAction(f, n, l) =>
-            Ask(f)(l./~(c => f.enemies./~(e => e.at(c).of[Warrior].notOf[Tenacious].distinct./(FanaticConvertAction(f, n, c, e, _))))).cancel
+            Ask(f)
+                .some(l)(c => f.enemies./~(e => e.at(c).of[Warrior].notOf[Tenacious].distinct./(FanaticConvertAction(f, n, c, e, _))))
+                .cancel
 
         case FanaticConvertAction(f, n, c, e, p) =>
             game.highlights :+= BattleHighlight(c)
@@ -390,7 +394,7 @@ object FanaticExpansion extends FactionExpansion[Fanatic] {
 
         case FanaticSanctifyMainAction(f, n, l, s) =>
             val aa = l./~(c => factions.but(f)./~(e => e.at(c).of[Building]./(b => FanaticSanctifyAction(f, n, c, s, e, b))))
-            Ask(f)(aa).cancel
+            Ask(f).add(aa).cancel
 
         case FanaticSanctifyAction(f, n, c, s, e, p) =>
             game.highlights :+= BattleHighlight(c)
@@ -434,7 +438,7 @@ object FanaticExpansion extends FactionExpansion[Fanatic] {
 
             actions :+= FanaticRecruitMainAction(f, s, clearings.%(f.canPlace).%(c => s.exists(_.matches(c.cost)))).!(f.pool(Lizard).not, "maximum").!(s.none, "no matching cards")
 
-            Ask(f)(actions).done(Next).daylight(f)
+            Ask(f).add(actions).done(Next).daylight(f)
 
         case FanaticSacrificeMainAction(f, _) =>
             FanaticRevealCardMainAction(f, $(Bird), FanaticSacrificeAction(f))

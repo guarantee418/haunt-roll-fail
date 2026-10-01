@@ -491,7 +491,6 @@ case class DiscardItemsAction(f : Hero, capacity : Int, then : ForcedAction) ext
 case class DiscardItemsListAction(f : Hero, l : $[ItemRef], then : ForcedAction) extends ForcedAction
 
 case class AdjustItemDamagePrioritiesAction(f : Hero, l : $[ItemRef], d : Int, e : Int, then : ForcedAction) extends ForcedAction with Soft
-
 case class SetItemDamagePriorityAction(f : Hero, l : $[Item], then : ForcedAction) extends ForcedAction with SkipValidate
 
 
@@ -587,7 +586,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
             StartingRegionAction(f)
 
         case StartingRegionAction(f) =>
-            Ask(f)(board.forests./(StartingForestAction(f, _)))
+            Ask(f).each(board.forests)(r => StartingForestAction(f, r))
 
         case StartingForestAction(f : Hero, r) =>
             f.pawn --> r
@@ -624,7 +623,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
 
             val ll = l ++ al
 
-            Ask(self, ll ++ (ll.num != 1).?(CancelAction))
+            Ask(self).add(ll).cancelIf(ll.num != 1)
 
         case MoveListAlliedAction(self, f : Hero, t, m, from, to, List(p : Pawn), a, w, then) if t.has(MoveBoots) =>
             f.exhaust(Boots)
@@ -795,7 +794,8 @@ object HeroExpansion extends FactionExpansion[Hero] {
                     ss.foreach { ref =>
                         f.itemDamagePriorities :-= ref.item
                     }
-                    Ask(f)(VagabondDealHitsAlliesAction(f, b, ss, $, then).as("Done".hl))
+
+                    Ask(f).done(VagabondDealHitsAlliesAction(f, b, ss, $, then))
                 }
             }
             else
@@ -874,10 +874,13 @@ object HeroExpansion extends FactionExpansion[Hero] {
 
             val (t, l) = f.movePlans($(o), $($(Slip)) ** game.transports.but(Roads).appended(ForestRoads)./($))(o)
 
-            Ask(f)(l./(d => {
-                val tt = t.%(_.forall(_.allows(f, o, d)))
-                MoveToAction(f, f, tt, SlipTo, o, d, Next).x(tt.none, "forbidden")
-            }))(Next.as("Stay in", o))(f.birdsong)
+            Ask(f)
+                .each(l) { d =>
+                    val tt = t.%(_.forall(_.allows(f, o, d)))
+                    MoveToAction(f, f, tt, SlipTo, o, d, Next).!(tt.none, "forbidden")
+                }
+                .add(Next.as("Stay in", o))
+                .birdsong(f)
 
         case DaylightNAction(50, f : Hero) =>
             soft()
@@ -885,8 +888,8 @@ object HeroExpansion extends FactionExpansion[Hero] {
             var actions : $[UserAction] = $
 
             actions :+= f.movePlans($(f.region), game.transports./($) ** f.transports ** $($(MoveBoots), $(MoveDoubleBoots))).get(f.region) @@ {
-                case Some((t, l)) => VagabondMoveMainAction(f, t.%(_.has(MoveBoots)).any, t.%(_.has(MoveDoubleBoots)).any).x(f.canMoveFrom(f.region).not, "can't move")
-                case None => VagabondMoveMainAction(f, true, false).x(f.canMoveFrom(f.region).not, "can't move").x(f.lacks(Boots), "no boots").x(f.ready(Boots) == 1, "not enough boots")
+                case Some((t, l)) => VagabondMoveMainAction(f, t.%(_.has(MoveBoots)).any, t.%(_.has(MoveDoubleBoots)).any).!(f.canMoveFrom(f.region).not, "can't move")
+                case None => VagabondMoveMainAction(f, true, false).!(f.canMoveFrom(f.region).not, "can't move").!(f.lacks(Boots), "no boots").!(f.ready(Boots) == 1, "not enough boots")
             }
 
             f.region.as[Clearing].foreach { c =>
@@ -900,52 +903,55 @@ object HeroExpansion extends FactionExpansion[Hero] {
 
                 val eeh = ee ++ hirelings.%(_.present(c))
 
-                actions :+= VagabondExploreMainAction(f, c).x(game.ruins.get(c).none, "no ruins").x(f.lacks(Torch), "no torch")
+                actions :+= VagabondExploreMainAction(f, c).!(game.ruins.get(c).none, "no ruins").!(f.lacks(Torch), "no torch")
 
                 if (f.can(Steal))
-                    actions :+= VagabondStealMainAction(f, ee.%(_.hand.any)).x(ee.none, "no target").x(f.lacks(Torch), "no torch").x(ee.%(_.hand.any).none, "no cards")
+                    actions :+= VagabondStealMainAction(f, ee.%(_.hand.any)).!(ee.none, "no target").!(f.lacks(Torch), "no torch").!(ee.%(_.hand.any).none, "no cards")
 
                 if (f.can(DayLabor))
-                    actions :+= VagabondDayLaborMainAction(f, c).!(pile.exists(_.matches(c.cost)).not, "no matching cards in discard").x(f.lacks(Torch), "no torch")
+                    actions :+= VagabondDayLaborMainAction(f, c).!(pile.exists(_.matches(c.cost)).not, "no matching cards in discard").!(f.lacks(Torch), "no torch")
 
                 if (f.can(Hideout))
-                    actions :+= VagabondHideoutMainAction(f).x(f.inv.damaged.none, "no damaged items").x(f.lacks(Torch), "no torch")
+                    actions :+= VagabondHideoutMainAction(f).!(f.inv.damaged.none, "no damaged items").!(f.lacks(Torch), "no torch")
 
                 if (f.can(ScorchedEarth))
-                    actions :+= VagabondScorchedEarthMainAction(f, c).x(f.lacks(Torch), "no torch").x(!f.canPlace(c), "forbidden").x((factions ++ hirelings).%(_.present(c)).%!(f.canRemove(c)).any, "protector")
+                    actions :+= VagabondScorchedEarthMainAction(f, c).!(f.lacks(Torch), "no torch").!(!f.canPlace(c), "forbidden").!((factions ++ hirelings).%(_.present(c)).%!(f.canRemove(c)).any, "protector")
 
                 if (f.can(Improvise)) {
                     val qq = game.quests.take(3).%(_.suit.matches(c.cost))
                     val inv = f.inv.ready./(_.item)
                     val ss = (inv.num > 1).??(qq.%(q => inv.has(q.a) || inv.has(q.b)).%(q => inv.diff(q.ab).any))
-                    actions :+= VagabondImproviseMainAction(f, c).x(!f.can(Improvise), "once per turn").x(qq.none, "no matching quests").x(inv.num < 2, "not enough items").x(ss.none, "not a single matching item")
+                    actions :+= VagabondImproviseMainAction(f, c).!(!f.can(Improvise), "once per turn").!(qq.none, "no matching quests").!(inv.num < 2, "not enough items").!(ss.none, "not a single matching item")
                 }
 
                 if (f.can(Instigate)) {
                     val l = ee ++ f.canAttackSelf(c).?(f)
-                    actions :+= VagabondInstigateMainAction(f, c, l).x(f.lacks(Torch), "no torch").x(eeh.none, "empty").x(l.none, "no attacker")
+                    actions :+= VagabondInstigateMainAction(f, c, l).!(f.lacks(Torch), "no torch").!(eeh.none, "empty").!(l.none, "no attacker")
                 }
 
-                actions :+= VagabondAidMainAction(f, c.cost, ee.notOf[Hero]).x(ee.notOf[Hero].none, "no target").x(f.inv.ready.none, "no items").x(f.hand.%(_.matches(c.cost)).none, "no matching cards")
+                actions :+= VagabondAidMainAction(f, c.cost, ee.notOf[Hero]).!(ee.notOf[Hero].none, "no target").!(f.inv.ready.none, "no items").!(f.hand.%(_.matches(c.cost)).none, "no matching cards")
 
                 val qq0 = game.quests.take(3).%(_.suit.matches(c.cost))
                 val qq = qq0.%(q => q.ab.diff(f.inv.ready./(_.item)).none)
 
-                actions :+= VagabondQuestMainAction(f, c, qq).x(qq0.none, "wrong suit").x(qq.none, "no items")
+                actions :+= VagabondQuestMainAction(f, c, qq).!(qq0.none, "wrong suit").!(qq.none, "no items")
 
                 val rmm = eeh.%!(f.friends).%(f.canRemove(c))
 
                 actions :+= VagabondStrikeMainAction(f, c, rmm).!(f.lacks(Crossbow), "no crossbow").!(rmm.none, "no target")
 
-                actions :+= VagabondCraftMainAction(f, f.ready(Hammer)).x(f.lacks(Hammer), "no hammer").x(f.hand.none, "no cards").x(f.hand.%(f.craftable).none, "nothing craftable")
+                actions :+= VagabondCraftMainAction(f, f.ready(Hammer)).!(f.lacks(Hammer), "no hammer").!(f.hand.none, "no cards").!(f.hand.%(f.craftable).none, "nothing craftable")
             }
 
             if (f.can(Glide))
-                actions :+= VagabondGlideMainAction(f, clearings.but(f.region.as[Clearing])).x(f.lacks(Torch), "no torch")
+                actions :+= VagabondGlideMainAction(f, clearings.but(f.region.as[Clearing])).!(f.lacks(Torch), "no torch")
 
-            actions :+= VagabondRepairMainAction(f).x(f.inv.damaged.none).x(f.lacks(Hammer), "no hammer")
+            actions :+= VagabondRepairMainAction(f).!(f.inv.damaged.none).!(f.lacks(Hammer), "no hammer")
 
-            Ask(f)(actions)(Next.as("End Turn"))(f.daylight)
+            Ask(f)
+                .add(actions)
+                .add(Next.as("End Turn"))
+                .daylight(f)
 
         case ExhaustItemAction(f, i, then) =>
             f.exhaust(i)
@@ -993,7 +999,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
             Repeat
 
         case VagabondStealMainAction(f, l) =>
-            Ask(f)(l./(StealAction(f, _))).cancel
+            Ask(f).each(l)(e => StealAction(f, e)).cancel
 
         case StealAction(f, e) =>
             f.use(Torch)
@@ -1051,7 +1057,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
             Repeat
 
         case VagabondScorchedEarthMainAction(f, c) =>
-            Ask(f)(ScorchedEarthAction(f, c)).cancel
+            Ask(f).add(ScorchedEarthAction(f, c)).cancel
 
         case ScorchedEarthAction(f, c) =>
             val i = Torch.ref(false, false)
@@ -1070,7 +1076,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
             Repeat
 
         case VagabondGlideMainAction(f, l) =>
-            Ask(f)(l./(GlideAction(f, _))).cancel
+            Ask(f).each(l)(r => GlideAction(f, r)).cancel
 
         case GlideAction(f, to) =>
             val from = f.region
@@ -1084,7 +1090,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
             MoveCompleteAction(f, f, from, to, $(f.pawn.piece), $, Repeat)
 
         case VagabondInstigateMainAction(f, c, l) =>
-            Ask(f)(l./~(a => a.canAttackList(c)./(d => InstigateAction(f, c, a, d)))).cancel
+            Ask(f).some(l)(a => a.canAttackList(c)./(d => InstigateAction(f, c, a, d))).cancel
 
         case InstigateAction(f, c, a, d) =>
             f.use(Torch)
@@ -1099,7 +1105,9 @@ object HeroExpansion extends FactionExpansion[Hero] {
 
             val iq = qq.%(q => q.ab.distinct./~(x => ii.has(x).??(ii.diff(q.ab).but(q.other(x)).distinct)).any)
 
-            Ask(f)(game.quests.take(3)./(q => ImproviseQuestAction(f, c, q, f.inv, (f.quests.count(q.suit) + 1)).!(iq.has(q).not))).cancel
+            Ask(f)
+                .each(game.quests.take(3))(q => ImproviseQuestAction(f, c, q, f.inv, (f.quests.count(q.suit) + 1)).!(iq.has(q).not))
+                .cancel
 
         case ImproviseQuestAction(f, _, q, _, _) =>
             def impr(l : $[Item]) = (l.num < 2) || (l.intersect(q.ab).any && l.diff(q.ab).any)
@@ -1122,7 +1130,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
             QuestCompleteAction(f, q, iex ++ ied)
 
         case VagabondAidMainAction(f, s, ff) =>
-            Ask(f)(ff./(AidFactionAction(f, s, _))).cancel
+            Ask(f).each(ff)(e => AidFactionAction(f, s, e)).cancel
 
         case AidFactionAction(f, s, e) =>
             Ask(f).each(f.hand)(d => AidCardAction(f, s, e, d).!(d.matches(s).not)).cancel
@@ -1142,7 +1150,9 @@ object HeroExpansion extends FactionExpansion[Hero] {
             AidTradeAction(f, i, e)
 
         case AidTradeAction(f, i, e) =>
-            Ask(f)(e.forTrade./(AidTakeItemAction(f, i, e, _)) :+ AidIgnoreItemAction(f, i, e))
+            Ask(f)
+                .each(e.forTrade)(x => AidTakeItemAction(f, i, e, x))
+                .add(AidIgnoreItemAction(f, i, e))
 
         case AidTakeItemAction(f, i, e, n) =>
             f.inv :+= n.pristine
@@ -1210,7 +1220,10 @@ object HeroExpansion extends FactionExpansion[Hero] {
 
             f.quests :+= q.suit
             f.log("completed quest", q, "with", l)
-            Ask(f)((QuestRewardCardsAction(f, q, 2) :: QuestRewardVPAction(f, q, f.quests.count(q.suit))))
+
+            Ask(f)
+                .add(QuestRewardCardsAction(f, q, 2))
+                .add(QuestRewardVPAction(f, q, f.quests.count(q.suit)))
 
         case QuestRewardCardsAction(f, q, n) =>
             DrawCardsAction(f, n, AsAReward, AddCardsAction(f, NewQuestAction(f, q)))

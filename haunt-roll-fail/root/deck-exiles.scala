@@ -147,7 +147,7 @@ object ExilesDeckExpansion extends Expansion {
             val lm = f.moveFrom
             val lb = clearings.%(c => f.canAttackList(c).any)
 
-            + LeagueOfAdventurousMiceMainAction(f, lm, lb, Repeat).x(lm.none && lb.none)
+            + LeagueOfAdventurousMiceMainAction(f, lm, lb, Repeat).!(lm.none && lb.none)
         }
     }
 
@@ -177,7 +177,7 @@ object ExilesDeckExpansion extends Expansion {
 
         // SWAP MEET
         case SwapMeetAction(f, l, then) =>
-            Ask(f)(l./(SwapMeetFactionAction(f, _, then))).cancel
+            Ask(f).each(l)(e => SwapMeetFactionAction(f, e, then)).cancel
 
         case SwapMeetFactionAction(f, o, then) =>
             f.used :+= SwapMeet
@@ -187,7 +187,10 @@ object ExilesDeckExpansion extends Expansion {
             StealCardAction(f, o, SwapMeetReturnAction(f, o, then))
 
         case SwapMeetReturnAction(f, o, then) =>
-            Ask(f)(NoHand).each(f.hand)(d => SwapMeetReturnCardAction(f, o, d, then)).needOk
+            Ask(f)
+                .each(f.hand)(d => SwapMeetReturnCardAction(f, o, d, then))
+                .add(NoHand)
+                .needOk
 
         case SwapMeetReturnCardAction(f, o, d, then) =>
             f.log("gave", o, "a card in return")
@@ -200,7 +203,7 @@ object ExilesDeckExpansion extends Expansion {
 
         // FALSE ORDERS
         case FalseOrdersAction(f, l, then) =>
-            Ask(f)(l./(FalseOrdersFactionAction(f, _, then))).cancel
+            Ask(f).each(l)(e => FalseOrdersFactionAction(f, e, then)).cancel
 
         case FalseOrdersFactionAction(f, e, then) =>
             MoveInitAction(f, e, game.transports./($) ** e.transports./(_.but(RuledMove)) ** $($(HalfWarriors)), OnFalseOrders(f), e.movable, e.movable, $(CancelAction), FalseOrdersCompleteAction(f, then))
@@ -212,7 +215,9 @@ object ExilesDeckExpansion extends Expansion {
 
         // PROPAGANDA BUREAU
         case PropagandaBureauMainAction(f, l, then) =>
-            Ask(f)(l./~(c => f.enemies.%(f.canRemove(c)).of[WarriorFaction]./~(e => e.at(c).of[Warrior].notOf[Tenacious].distinct./(PropagandaBureauSelectAction(f, c, e, _, then))))).cancel
+            Ask(f)
+                .some(l)(c => f.enemies.%(f.canRemove(c)).of[WarriorFaction]./~(e => e.at(c).of[Warrior].notOf[Tenacious].distinct./(PropagandaBureauSelectAction(f, c, e, _, then))))
+                .cancel
 
         case PropagandaBureauSelectAction(f, c, e, p, then) =>
             OptionalDiscardCardAction(f, ToReplace(c, e, p), c.cost, PropagandaBureauAction(f, c, e, p, then))
@@ -264,7 +269,7 @@ object ExilesDeckExpansion extends Expansion {
 
         // CHARM OFFENSIVE
         case CharmOffensiveMainAction(f, l, then) =>
-            Ask(f)(l./(e => CharmOffensiveAction(f, e, then).as(e, "gets", 1.vp)(CharmOffensive))).cancel
+            Ask(f).each(l)(e => CharmOffensiveAction(f, e, then).as(e, "gets", 1.vp)(CharmOffensive)).cancel
 
         case CharmOffensiveAction(f, e, then) =>
             e.oscore(1)("from", CharmOffensive)
@@ -273,10 +278,13 @@ object ExilesDeckExpansion extends Expansion {
 
         // INFORMANTS
         case DrawCardsAction(f, n, m, then) if game.phase == Evening && f.has(Informants) =>
-            Ask(f)(FindAmbushAction(f, m, then))(DrawCardsFromDeckAction(f, n, m, then).as("Draw " ~ n.times(dt.CardBack).merge)).needOk
+            Ask(f)
+                .add(FindAmbushAction(f, m, then))
+                .add(DrawCardsFromDeckAction(f, n, m, then).as("Draw " ~ n.times(dt.CardBack).merge))
+                .needOk
 
         case FindAmbushAction(f, m, then) =>
-            Ask(f)(pile./(d => TakeAmbushAction(f, d, then).x(d @@ { case Ambush(_) => false ; case _ => true }))).cancel
+            Ask(f).each(pile)(d => TakeAmbushAction(f, d, then).!(d @@ { case Ambush(_) => false ; case _ => true })).cancel
 
         case TakeAmbushAction(f, d, then) =>
             pile --> d --> f.drawn

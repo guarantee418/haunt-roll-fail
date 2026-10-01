@@ -50,8 +50,6 @@ trait Spell extends Effect {
 
 case object BattleSpell extends BattleEffect
 
-
-
 case class SkipAllResurrection(f : Caster) extends RemoveEffect
 
 
@@ -87,8 +85,6 @@ trait XCSpellQuestion extends FactionAction {
 
     def question(implicit game : Game) = "Repertoire".styled(self)
 }
-
-
 
 case class Mudmen(f : Caster) extends PawnHireling {
     val name = "Mudman"
@@ -612,7 +608,9 @@ object CasterExpansion extends FactionExpansion[Caster] {
             if (l.all(_.faction == f))
                 TeleportConsentAction(f, from, to, e, l, then)
             else
-                Ask(e)(TeleportConsentAction(f, from, to, e, l, then).as("Teleport".styled(styles.hit))("Teleport", l./(_.elem).comma, "from", from, "to", to))(TeleportNoConsentAction(f, from, to, e, l, then).as("Refuse".hl))
+                Ask(e)
+                    .add(TeleportConsentAction(f, from, to, e, l, then).as("Teleport".styled(styles.hit))("Teleport", l./(_.elem).comma, "from", from, "to", to))
+                    .add(TeleportNoConsentAction(f, from, to, e, l, then).as("Refuse".hl))
 
         case TeleportConsentAction(f, from, to, e, l, then) =>
             f.mana -= l.num
@@ -665,7 +663,7 @@ object CasterExpansion extends FactionExpansion[Caster] {
 
             Ask(f)
                 .add(RollMudmanAction(f, false))
-                .add((f.mana >= 1 && f.spells.has(Dazzle)).?(RollMudmanAction(f, true)))
+                .when(f.mana >= 1 && f.spells.has(Dazzle))(RollMudmanAction(f, true))
                 .needOk
 
         case RollMudmanAction(f, dazzle) =>

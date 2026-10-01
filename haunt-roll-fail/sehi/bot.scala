@@ -4,6 +4,7 @@ package sehi
 //
 //
 import hrf.colmat._
+import hrf.compute._
 import hrf.logger._
 //
 //
@@ -11,15 +12,15 @@ import hrf.logger._
 //
 
 class BotXX(f : Faction) extends EvalBot {
-    def eval(actions : List[UserAction])(implicit game : Game) : List[ActionEval] = {
+    def eval(actions : $[UserAction])(implicit game : Game) : Compute[$[ActionEval]] = {
         val ev = new GameEvaluation(game, f)
         actions./{ a => ActionEval(a, ev.eval(a)) }
     }
 }
 
 class GameEvaluation(val game : Game, val self : Faction) {
-    def eval(a : Action) : List[Evaluation] = {
-        var result : List[Evaluation] = Nil
+    def eval(a : Action) : $[Evaluation] = {
+        var result : $[Evaluation] = $
 
         implicit class condToEval(val bool : Boolean) {
             def |=> (e : (Int, String)) { if (bool) result +:= Evaluation(e._1, e._2) }
@@ -56,7 +57,6 @@ class GameEvaluation(val game : Game, val self : Faction) {
 
             case law if party == Liberal && law.party == Liberal =>
                 true |=> 500 -> "for the win"
-
 
             case law if party == Fascist && law.party == Liberal && liberal.num == 4 =>
                 true |=> -1000 -> "last straw"
@@ -112,7 +112,6 @@ class GameEvaluation(val game : Game, val self : Faction) {
 
             case VoteAction(_, p, c, Yes) =>
                 true |=> 4 -> "yes man"
-
 
             case NominateChancellorAction(_, f) if party == Fascist =>
                 true |=> 0 -> "be vague"

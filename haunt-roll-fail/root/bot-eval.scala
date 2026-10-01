@@ -4,6 +4,7 @@ package root
 //
 //
 import hrf.colmat._
+import hrf.compute._
 import hrf.logger._
 //
 //
@@ -15,7 +16,7 @@ import hrf.bot._
 
 
 class BotAdset(f : PlayerN) extends EvalBot {
-    def eval(actions : $[UserAction])(implicit game : Game) : $[ActionEval] = {
+    def eval(actions : $[UserAction])(implicit game : Game) : Compute[$[ActionEval]] = {
         if (game.ptf.contains(f))
             new BotXX(game.ptf(f)).eval(actions)
         else
@@ -32,7 +33,7 @@ class BotAdset(f : PlayerN) extends EvalBot {
 }
 
 class BotXX(f : Faction) extends EvalBot {
-    def eval(actions : $[UserAction])(implicit game : Game) : $[ActionEval] = {
+    def eval(actions : $[UserAction])(implicit game : Game) : Compute[$[ActionEval]] = {
         val ev = f match {
             case f : Feline => new GameEvaluationFeline(f)
             case f : Aviary => new GameEvaluationAviary(f)

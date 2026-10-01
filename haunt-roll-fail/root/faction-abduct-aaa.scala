@@ -28,7 +28,7 @@ trait AbductAAA extends WarriorFaction with CommonAbduct {
 
     override val transports : $[$[Transport]] = $($(ForestClearingMove, CaptainFirst, CaptainTurf), $(RuledMove, CaptainFirst, CaptainTurf))
 
-    override def getElem : Elem = super.getElem
+    override def getElem : Elem = super.getElem // ~ " " ~ "α".hh
 
     override def note : Elem = HorizontalBreak ~ "Version from " ~ "2024-10-22".hh
 
@@ -204,7 +204,7 @@ object AbductAAAExpansion extends FactionExpansion[AbductAAA] {
             val l = f.phases.%(p => f.pool(SkunkAAACaptain(p)))
 
             if (l.any)
-                Ask(f)(board.forests.%(f.at(_).none)./(AbductAAAStartingForestAction(f, l.first, _)))
+                Ask(f).each(board.forests.%(f.at(_).none))(r => AbductAAAStartingForestAction(f, l.first, r))
             else {
                 val pp = f.phases.%(p => f.items(p).none)
 
@@ -528,6 +528,7 @@ object AbductAAAExpansion extends FactionExpansion[AbductAAA] {
                 if (l.has(Coins)) {
                     + DrawCardsAction(f, 1, AltInLog(OnTurn(game.turn), NoMessage), AddCardsAction(f, use(Coins))).as(Coins.img, dt.Arrow, "Draw".styled(f), dt.CardBack)(g).!(game.deck.none && game.pile.none)
                 }
+
             }
 
             ask(f)
@@ -584,7 +585,7 @@ object AbductAAAExpansion extends FactionExpansion[AbductAAA] {
 
         // STEAL
         case AbductAAAStealMainAction(f, phase, l, then) =>
-            Ask(f)(l./(AbductAAAStealAction(f, phase, _, then))).cancel
+            Ask(f).each(l)(e => AbductAAAStealAction(f, phase, e, then)).cancel
 
         case AbductAAAStealAction(f, phase, e, then) =>
             f.log("stole a card from", e, "with", Torch.exhaust.elem)
@@ -603,7 +604,7 @@ object AbductAAAExpansion extends FactionExpansion[AbductAAA] {
 
         // SCORCHED EARTH
         case AbductAAAScorchedEarthMainAction(f, phase, c) =>
-            Ask(f)(AbductAAAScorchedEarthAction(f, phase, c)).cancel
+            Ask(f).add(AbductAAAScorchedEarthAction(f, phase, c)).cancel
 
         case AbductAAAScorchedEarthAction(f, phase, c) =>
             f.items += phase -> (f.items(phase) :- Torch)

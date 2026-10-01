@@ -897,7 +897,7 @@ object MapsExpansion extends MandatoryExpansion {
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         case ClearPathMainAction(f, then) =>
-            Ask(f)(game.rubble./{ case (a, b) => ClearPathBetweenAction(f, a, b, then).x(f.at(a).none && f.at(b).none, "no presence") }).cancel
+            Ask(f).each(game.rubble){ case (a, b) => ClearPathBetweenAction(f, a, b, then).!(f.at(a).none && f.at(b).none, "no presence") }.cancel
 
         case ClearPathBetweenAction(f, a, b, then) =>
             OptionalDiscardCardAction(f, ToClearPath(a, b), AnySuit, ClearPathAction(f, a, b, then))

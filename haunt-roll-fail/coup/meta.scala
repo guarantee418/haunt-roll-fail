@@ -41,20 +41,21 @@ object Meta extends MetaGame { mmm =>
     }
 
     def validateFactionCombination(factions : $[Faction]) = (factions.num < 2).?(ErrorResult("Select at least two factions")).|((factions.num > 6).?(ErrorResult("Max six factions")).|(InfoResult("")))
-    def validateFactionSeatingOptions(factions : $[Faction], options : List[O]) = InfoResult("")
+    def validateFactionSeatingOptions(factions : $[Faction], options : $[O]) = InfoResult("")
 
     def factionName(f : Faction) = f.name
     def factionElem(f : Faction) = f.name.styled(f)
 
     def createGame(factions : $[Faction], options : $[O]) = new Game(factions)
 
-    def getBots(f : Faction) = $("Normal")
+    def getBots(f : Faction) = $("Easy", "DL")
 
     def getBot(f : Faction, b : String) = (f, b) match {
-        case (f : Faction, "Normal") => new BotXX(f)
+        case (f : Faction, "Easy") => new BotXX(f)
+        case (f : Faction, "DL") => new BotDL(f, 0.5, 0.5, 0.5)
     }
 
-    def defaultBots : $[String] = $("Normal")
+    def defaultBot(f : Faction) = "Easy"
 
     def writeFaction(f : Faction) = f.short
     def parseFaction(s : String) : |[Faction] = factions.%(_.short == s).single
@@ -70,7 +71,7 @@ object Meta extends MetaGame { mmm =>
     override def bodyFont = Some("ethnocentric")
 
     val assets =
-    ConditionalAssetsList((factions : List[Faction], options : List[O]) => true)(
+    ConditionalAssetsList((factions : $[Faction], options : $[O]) => true)(
         ImageAsset("ambassador" ) ::
         ImageAsset("assassin" ) ::
         ImageAsset("captain" ) ::
@@ -110,5 +111,5 @@ object Meta extends MetaGame { mmm =>
         ImageAsset("hidden" ) ::
         ImageAsset("token" ) ::
         ImageAsset("aid" ) ::
-    Nil) :: Nil
+    $) :: $
 }

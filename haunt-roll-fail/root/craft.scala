@@ -48,7 +48,7 @@ object CraftExpansion extends MandatoryExpansion {
                 else
                     $()
 
-            Ask(f)(a)(Next.as("End Craft"))(extra)
+            Ask(f).add(a).add(Next.as("End Craft")).add(extra)//.needOkIf(f.hand.any)
 
         case NiceCraftMainAction(f, _, _, _) =>
             Force(CraftMenuAction(f))
@@ -93,7 +93,7 @@ object CraftExpansion extends MandatoryExpansion {
             if (f.has(MoleArtisians)) {
                 f.hand --> d --> MoleArtisians.display
 
-                Ask(f)(MoleArtisiansRevealAction(f, d, q))(MoleArtisiansDiscardAction(f, d, q))
+                Ask(f).add(MoleArtisiansRevealAction(f, d, q)).add(MoleArtisiansDiscardAction(f, d, q))
             }
             else {
                 f.hand --> d --> discard.quiet

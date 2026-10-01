@@ -31,7 +31,7 @@ import scala.collection.mutable
 
 trait GreyMapUI extends GreyUI { self : Gaming =>
     trait MapGUI extends GUI {
-        def img(s : String) = resources.images.get(s)
+        // def img(s : ImageId) = resources.images.get(s.id)
 
         val mapSmall = newPane("map-small", Content)
         val overlayPane = newOuterPane("map-small-overlay", Content)
@@ -73,8 +73,12 @@ trait GreyMapUI extends GreyUI { self : Gaming =>
 
                     b.canvas.style.width = "100%"
                     b.canvas.style.height = "100%"
+
                     b.canvas.style.touchAction = "none"
                     b.canvas.style.pointerEvents = "none"
+
+                    // b.canvas.parentElement.style.touchAction = "none"
+                    // b.canvas.parentElement.style.pointerEvents = "none"
 
                     b
                 }
@@ -256,3 +260,4 @@ trait GreyMapUI extends GreyUI { self : Gaming =>
         }
     }
 }
+

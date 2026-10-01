@@ -335,9 +335,10 @@ trait ViewService extends ViewObject[Service] { self : UserAction =>
 
 case class UdjustPricesMainAction(f : Trader, l : $[Service], values : $[Int], m : SortedMap[Service, Int], then : ForcedAction) extends ForcedAction with Soft with SelfPerform {
     def perform(soft : Void)(implicit game : Game) = {
-        Ask(f)(f.services./(s => UdjustServicePriceAction(f, l, values, m, then, s))
-            ++ $(UdjustPricesAction(f, l, m, then).x(m.values.%(_ == 0).any))
-            ++ $(UdjustPricesExplodeAction(f, l, values, then)))
+        Ask(f)
+            .each(f.services)(s => UdjustServicePriceAction(f, l, values, m, then, s))
+            .add(UdjustPricesAction(f, l, m, then).!(m.values.%(_ == 0).any))
+            .add(UdjustPricesExplodeAction(f, l, values, then))
     }
 }
 
@@ -356,7 +357,7 @@ case class UdjustServicePriceAction(self : Trader, l : $[Service], values : $[In
 }
 
 case class UdjustPricesExplodeAction(f : Trader, l : $[Service], values : $[Int], then : ForcedAction) extends HiddenChoice with SelfExplode {
-    def explode(withSoft : Boolean) = {
+    def explode(withSoft : Boolean)(implicit game : Game) = {
         val mm = l.foldLeft($(SortedMap[Service, Int]()))((l, s) => l./~(m => (0 :: values)./(n => m + (s -> n))))
 
         mm.%(_.values.%(_ == 0).none)./(m => UdjustPricesAction(f, l, m, then)) ++ withSoft.??(mm./~(m => l./(s => UdjustServicePriceAction(f, l, values, m, then, s))))
@@ -398,7 +399,7 @@ case class TraderCurrencyAction(self : Trader, oldc : $[WarriorFaction], ll : $[
         case _ => None
     }
 
-    def perform(soft : Void)(implicit game : Game) = Ask(self)(TraderMainCurrencyAction(self, c))
+    def perform(soft : Void)(implicit game : Game) = Ask(self).add(TraderMainCurrencyAction(self, c))
 
     def expand(target : |[Action]) = values./(TraderMainCurrencyAction(self, _)) ++ (c == oldc).?(values./(TraderCurrencyAction(self, oldc, ll, _))).|($(DoAction(TraderMainAction(self, c))))
 }
@@ -438,7 +439,7 @@ object TraderExpansion extends FactionExpansion[Trader] {
             traders.foreach { s =>
                 if (f.can(TalentScout(s))) {
                     val cc = s.tradeposts.%(f.canPlace)
-                    + TalentScoutMainAction(f, s, cc, Repeat).x(cc.none, "no clearings").x(f.pool(f.warrior).not, "no warriors")
+                    + TalentScoutMainAction(f, s, cc, Repeat).!(cc.none, "no clearings").!(f.pool(f.warrior).not, "no warriors")
                 }
             }
         }
@@ -453,7 +454,7 @@ object TraderExpansion extends FactionExpansion[Trader] {
 
         case FactionSetupAction(f : Trader) =>
             if (f.all(f.warrior).num < 4) {
-                Ask(f)(f.recruitIn(game).%(f.canPlace)./(c => PlacePieceAction(f, c, f.warrior, FactionSetupAction(f))))
+                Ask(f).each(f.recruitIn(game).%(f.canPlace))(c => PlacePieceAction(f, c, f.warrior, FactionSetupAction(f)))
             }
             else {
                 f.reserve --> 3.times(f.warrior) --> f.payments
@@ -504,7 +505,7 @@ object TraderExpansion extends FactionExpansion[Trader] {
 
                 val c = a.combinations(n).$
 
-                Ask(f)(c./(zz => DiscardLostFundsAction(f, zz, then)))
+                Ask(f).each(c)(zz => DiscardLostFundsAction(f, zz, then))
             }
             else
                 then
@@ -567,7 +568,7 @@ object TraderExpansion extends FactionExpansion[Trader] {
             TraderMainAction(f, currency)
 
         case TraderMainAction(f, currency) if f.funds.$.num == 0 =>
-            Ask(f)(Next.as("End Turn".hl)).daylight(f)
+            Ask(f).add(Next.as("End Turn".hl)).daylight(f)
 
         case TraderMainAction(f, currency) =>
             implicit val ask = builder
@@ -577,22 +578,22 @@ object TraderExpansion extends FactionExpansion[Trader] {
             + TraderCurrencyAction(f, f.current, f.ffunds.groupBy(x => x).values.$, currency)
 
             val att = clearings.%(f.canAttackIn)
-            + TraderAttackAction(f, att, cc.take(1)).x(currency.num < 1).x(att.none)
+            + TraderAttackAction(f, att, cc.take(1)).!(currency.num < 1).!(att.none)
 
             val mvv = f.moveFrom.of[Clearing]
-            + TraderMoveAction(f, mvv, cc.take(1)).x(currency.num < 1).x(mvv.none)
+            + TraderMoveAction(f, mvv, cc.take(1)).!(currency.num < 1).!(mvv.none)
 
-            + TraderRecruitAction(f, f.recruitIn(game).%(f.canPlace), cc.take(1)).x(currency.num < 1).x(f.pool(f.warrior).not && cc.take(1).has(f).not && f.totalWar.not, "maximum")
+            + TraderRecruitAction(f, f.recruitIn(game).%(f.canPlace), cc.take(1)).!(currency.num < 1).!(f.pool(f.warrior).not && cc.take(1).has(f).not && f.totalWar.not, "maximum")
 
             val spec = f.funds
             val l = clearings.%(f.canPlace).%(c => c.suits.exists(s => f.pool(TradePost(s)))).diff(f.tradeposts).%(c => factions.%(_.rules(c)).%(f => currency.%(_.faction == f).num > 1).any)
-            + TraderEstablishTradePostAction(f, l, l./~(_.suits.%(s => f.pool(TradePost(s)))).distinct, cc.take(2)).x(currency.num < 2).x(l.none)
+            + TraderEstablishTradePostAction(f, l, l./~(_.suits.%(s => f.pool(TradePost(s)))).distinct, cc.take(2)).!(currency.num < 2).!(l.none)
 
-            + TraderDrawAction(f, cc.take(1)).x(currency.num < 1).x(deck.none && pile.none)
+            + TraderDrawAction(f, cc.take(1)).!(currency.num < 1).!(deck.none && pile.none)
 
             val c = f.hand.%(f.craftable)
-            + NiceCraftMainAction(f, f.craft ++ f.frogCraft ++ f.extraCraft, f.crafted, Empty).x(f.hand.none).x(c.none, "nothing craftable")
-            + TraderExportMainAction(f).x(c.none).x(f.pool(f.warrior).not, "maximum")
+            + NiceCraftMainAction(f, f.craft ++ f.frogCraft ++ f.extraCraft, f.crafted, Empty).!(f.hand.none).!(c.none, "nothing craftable")
+            + TraderExportMainAction(f).!(c.none).!(f.pool(f.warrior).not, "maximum")
 
             + EndTurnSoftAction(f, "Turn", LeaveFunds(f.funds.$.num))
 
@@ -605,7 +606,7 @@ object TraderExpansion extends FactionExpansion[Trader] {
             MoveInitAction(f, f, $, AltInLog(WithFunds(zz), WithFundsText(zz)), l, f.movable, $(CancelAction), CommitFundsAction(f, zz, Repeat))
 
         case TraderRecruitAction(f, l, zz) =>
-            Ask(f)(l./(TraderRecruitClearingAction(f, _, zz))).cancel
+            Ask(f).each(l)(TraderRecruitClearingAction(f, _, zz)).cancel
 
         case TraderRecruitClearingAction(f, c, zz) =>
             game.highlights :+= PlaceHighlight($(c))
@@ -737,7 +738,7 @@ object TraderExpansion extends FactionExpansion[Trader] {
                 })
 
             if (actions.any)
-                Ask(f)(actions ++ f.expose).bail(Next)
+                Ask(f).add(actions).add(f.expose).bail(Next)
             else
                 Next
 
@@ -766,14 +767,14 @@ object TraderExpansion extends FactionExpansion[Trader] {
                     MoveInitAction(f, f, f.transports./(_.but(RuledMove)) ** $($(Balloon)), OnBalloon, l.intersect(cc), cc, extra, BalloonAction(f, s)).as(Balloon(s))
                 }
                 else
-                    MoveInitAction(f, f, $, OnBalloon, $, $, $, BalloonAction(f, s)).as(Balloon(s)).x(true, "no units at a tradepost")
+                    MoveInitAction(f, f, $, OnBalloon, $, $, $, BalloonAction(f, s)).as(Balloon(s)).!(true, "no units at a tradepost")
             }
 
             if (sss.num > 1)
-                Ask(f)(actions)(f.expose)(Next.as("Skip", Balloon))
+                Ask(f).add(actions).add(f.expose).add(Next.as("Skip", Balloon))
             else
             if (sss.num == 1)
-                Ask(f)(actions)
+                Ask(f).add(actions)
             else
                 Next
 
@@ -783,7 +784,7 @@ object TraderExpansion extends FactionExpansion[Trader] {
             Repeat
 
         case TalentScoutMainAction(f, s, l, then) =>
-            Ask(f)(l./(c => TalentScoutAction(f, s, c, f.warrior, then))).cancel
+            Ask(f).each(l)(c => TalentScoutAction(f, s, c, f.warrior, then)).cancel
 
         case TalentScoutAction(f, s, c, p, then) =>
             f.used :+= TalentScout(s)
@@ -873,7 +874,7 @@ object TraderExpansion extends FactionExpansion[Trader] {
 
         case PayForServicesAction(f : WarriorFaction, s, l, then) =>
             val n = l./(_.cost).sum
-            Ask(f)(PayGiveWarriorsAction(f, s, n, n.times(f.warrior), then))
+            Ask(f).add(PayGiveWarriorsAction(f, s, n, n.times(f.warrior), then))
 
         case PayForServicesAction(f : Hero, s, l, then) =>
             val n = l./(_.cost).sum

@@ -379,12 +379,13 @@ object InsurgentExpansion extends FactionExpansion[Insurgent] {
             val ll = l.%(c => f.supporters.%(_.matches(c.cost)).num >= cost(c))
 
             if (l.any)
-                Ask(f)(HiSupporters)
-                  .each(l)(c => RevoltClearingAction(f, c, c.cost, cost(c), f.supporters./(_.suit), f.bases.none && f.has(SupportersLimit)).x(ll.has(c).not))
-                  .birdsong(f)
-                  .done(Next)
+                Ask(f)
+                    .each(l)(c => RevoltClearingAction(f, c, c.cost, cost(c), f.supporters./(_.suit), f.bases.none && f.has(SupportersLimit)).!(ll.has(c).not))
+                    .add(HiSupporters)
+                    .birdsong(f)
+                    .done(Next)
             else
-                Ask(f)(Next.as("No Revolt"))
+                Ask(f).add(Next.as("No Revolt"))
 
         case RevoltClearingAction(f, c, _, n, _, _) =>
             (XXSelectObjectsAction(f, f.supporters)
@@ -439,12 +440,13 @@ object InsurgentExpansion extends FactionExpansion[Insurgent] {
             val l = g.%(c => f.supporters.%(_.matches(c.cost)).num >= cost(c))
 
             if (f.supporters.any || f.birdsongNewSupporter)
-                Ask(f)(HiSupporters)
-                  .each(g)(c => SpreadSympathyClearingAction(f, c, c.cost, cost(c), f.reward(f.pooled(Sympathy)), f.supporters./(_.suit), f.bases.none && f.has(SupportersLimit)).x(l.has(c).not))
-                  .birdsong(f)
-                  .done(Next)
+                Ask(f)
+                    .each(g)(c => SpreadSympathyClearingAction(f, c, c.cost, cost(c), f.reward(f.pooled(Sympathy)), f.supporters./(_.suit), f.bases.none && f.has(SupportersLimit)).!(l.has(c).not))
+                    .add(HiSupporters)
+                    .birdsong(f)
+                    .done(Next)
             else
-                Ask(f)(Next.as("No Spread Sympathy"))
+                Ask(f).add(Next.as("No Spread Sympathy"))
 
         case SpreadSympathyClearingAction(f, c, _, n, _, _, _) =>
             XXSelectObjectsAction(f, f.supporters)
@@ -473,19 +475,19 @@ object InsurgentExpansion extends FactionExpansion[Insurgent] {
         case InsurgentMainAction(f) =>
             soft()
 
-            var actions : $[UserAction] = $
+            implicit val ask = builder
 
-            actions :+= MobilizeMainAction(f, f.hand).x(f.hand.none, "no cards").x(f.has(SupportersLimit) && f.bases.none && f.supporters.num >= 5, "supporters limit")
+            + MobilizeMainAction(f, f.hand).!(f.hand.none, "no cards").!(f.has(SupportersLimit) && f.bases.none && f.supporters.num >= 5, "supporters limit")
 
-            actions :+= TrainMainAction(f, f.suits).!(f.pool(f.warrior).not, "maximum").!(f.bases.none, "no bases").!(f.hand.none, "no cards").!(f.suits.%(s => f.hand.%(_.matches(s)).any).none, "no matching suit")
+            + TrainMainAction(f, f.suits).!(f.pool(f.warrior).not, "maximum").!(f.bases.none, "no bases").!(f.hand.none, "no cards").!(f.suits.%(s => f.hand.%(_.matches(s)).any).none, "no matching suit")
 
             if (f.has(Terror))
-                actions :+= TerrorizeMainAction(f).x(f.hand.%(_.suit == Bird).none, "no bird cards").x(f.supporters.num < 1, "no supporters")
+                + TerrorizeMainAction(f).!(f.hand.%(_.suit == Bird).none, "no bird cards").!(f.supporters.num < 1, "no supporters")
 
             val c = f.hand.%(f.craftable)
-            actions :+= NiceCraftMainAction(f, f.craft ++ f.frogCraft ++ f.extraCraft, f.crafted, Empty).x(f.hand.none).x(c.none, "nothing craftable")
+            + NiceCraftMainAction(f, f.craft ++ f.frogCraft ++ f.extraCraft, f.crafted, Empty).!(f.hand.none).!(c.none, "nothing craftable")
 
-            Ask(f)(actions).daylight(f).add(Next.as("End", "Daylight".styled(styles.phase)))
+            ask(f).daylight(f).add(Next.as("End", "Daylight".styled(styles.phase)))
 
         case MobilizeMainAction(f, _) =>
             val max = min(f.hand.num, (f.has(SupportersLimit) && f.bases.none).?(5).|(999) - f.supporters.num)
@@ -525,7 +527,7 @@ object InsurgentExpansion extends FactionExpansion[Insurgent] {
             Repeat
 
         case TerrorizeMainAction(f : Insurgent) =>
-            Ask(f)(f.supporters./(TerrorizeAction(f, _))).cancel
+            Ask(f).each(f.supporters)(d => TerrorizeAction(f, d)).cancel
 
         case TerrorizeAction(f : Insurgent, d) =>
             OptionalDiscardCardAction(f, TakeCard(d), Bird, TerrorizeTakeAction(f, d))
@@ -540,13 +542,13 @@ object InsurgentExpansion extends FactionExpansion[Insurgent] {
             InsurgentEveningAction(f)
 
         case InsurgentEveningAction(f) if f.acted >= f.officers.$.num =>
-            Ask(f)(Next.as("End Turn".hl)).evening(f)
+            Ask(f).add(Next.as("End Turn".hl)).evening(f)
 
         case InsurgentEveningAction(f) =>
             implicit val ask = builder
 
             val att = clearings.%(f.canAttackIn)
-            + InsurgentAttackAction(f, att).x(att.none)
+            + InsurgentAttackAction(f, att).!(att.none)
 
             val rll = f.bases.%(f.canPlace)
             if (rll.any && f.pool(f.warrior).not && f.totalWar)
@@ -558,11 +560,11 @@ object InsurgentExpansion extends FactionExpansion[Insurgent] {
                     .!(f.pool(f.warrior).not, "maximum")
 
             val mvv = f.moveFrom.of[Clearing]
-            + InsurgentMoveAction(f, mvv).x(mvv.none)
+            + InsurgentMoveAction(f, mvv).!(mvv.none)
 
             val orr = f.all(f.warrior).distinct.diff(f.all(Sympathy)).%(f.canPlace)
             val vp = (f.pool(Sympathy) && f.has(DelayedScoring).not).??(f.reward(f.pooled(Sympathy)))
-            + InsurgentOrganizeAction(f, orr, vp).x(f.pool(Sympathy).not, "maximum").x(orr.none)
+            + InsurgentOrganizeAction(f, orr, vp).!(f.pool(Sympathy).not, "maximum").!(orr.none)
 
             + EndTurnSoftAction(f, "Turn", ForfeitActions(f.officers.$.num - f.acted))
 
@@ -583,7 +585,7 @@ object InsurgentExpansion extends FactionExpansion[Insurgent] {
             InsurgentDoneAction(f)
 
         case InsurgentRecruitAction(f, l) =>
-            Ask(f)(l./(InsurgentRecruitClearingAction(f, _))).cancel
+            Ask(f).each(l)(c => InsurgentRecruitClearingAction(f, c)).cancel
 
         case InsurgentRecruitClearingAction(f : Insurgent, c) =>
             game.highlights :+= PlaceHighlight($(c))

@@ -4,6 +4,7 @@ package root
 //
 //
 import hrf.colmat._
+import hrf.compute._
 import hrf.logger._
 //
 //
@@ -15,7 +16,7 @@ import hrf.bot._
 
 
 class BotOT(f : Faction, b : Faction => Bot) extends EvalBot {
-    def eval(actions : $[UserAction])(implicit game : Game) : $[ActionEval] = {
+    def eval(actions : $[UserAction])(implicit game : Game) : Compute[$[ActionEval]] = {
         val gc = game.cloned().cleanFor(f)
 
         val bots = game.factions./(f => f -> b(f)).toMap
@@ -33,7 +34,7 @@ class BotOT(f : Faction, b : Faction => Bot) extends EvalBot {
 
             while (vp(c).none) {
                 c = c match {
-                    case Ask(o, actions) => game.performContinue(None, bots(o.as[Faction].get).ask(actions, 0), false).continue
+                    case Ask(o, actions) => game.performContinue(None, bots(o.as[Faction].get).ask(actions, 0).as[Just[Action]].get.value, false).continue
                     case DelayedContinue(_, c) => c
                     case Roll(dice, roll, _) => game.performContinue(None, roll(dice./(_.roll())), false).continue
                 }

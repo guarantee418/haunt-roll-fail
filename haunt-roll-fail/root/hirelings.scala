@@ -116,7 +116,6 @@ case object FelinePhysicians extends Hireling {
 }
 
 class FelinePhysiciansState(val faction : FelinePhysicians.type)(implicit val game : Game) extends HirelingState {
-
 }
 
 
@@ -510,7 +509,6 @@ case object FlameBearers extends Hireling with WarriorFaction {
 
 trait RockStar extends Warrior {
     override def id = "rock-star"
-
     override def plural = "Rock Stars"
 }
 
@@ -578,9 +576,6 @@ case object PopularBand extends Hireling with WarriorFaction {
 
 
 case object Studio extends SpecialRegion {
-
-
-
 }
 
 class PopularBandState(val faction : PopularBand.type)(implicit val game : Game) extends HirelingState {
@@ -697,7 +692,6 @@ case class SpringUprisingNukeAction(self : Faction, h : SpringUprising.type, c :
 case class SpringUprisingRemoveAction(self : Faction, h : SpringUprising.type, c : Clearing) extends BaseAction("Remove", h.warrior.of(h), "from")(c)
 
 case class AidTheExileMainAction(self : Faction, h : TheExile.type) extends BaseAction(Hirelings)("Aid", TheExile) with Soft
-
 case class AidTheExileAction(self : Faction, h : TheExile.type, i : ItemRef) extends ForcedAction
 case class TheExileMainAction(self : Faction, h : TheExile.type) extends BaseAction(Hirelings)(TheExile) with Soft
 case class TheExileMoveAction(self : Faction, h : TheExile.type) extends BaseAction(TheExile)("Move".styled(TheExile), dt.Move) with Soft
@@ -764,7 +758,7 @@ object HirelingsExpansion extends Expansion {
             val rr = game.ruins.keys.$
             val rrr = rr.%(f.present)
 
-            + BrigandExploreMainAction(f, rrr, Repeat).x(f.used.has(BrigandExplore), "used").x(rr.none, "no ruins").x(rrr.none, "no presence")
+            + BrigandExploreMainAction(f, rrr, Repeat).!(f.used.has(BrigandExplore), "used").!(rr.none, "no ruins").!(rrr.none, "no presence")
         }
 
         if (f.has(Brigand)) {
@@ -870,7 +864,7 @@ object HirelingsExpansion extends Expansion {
         case OnTakeHirelingAction(f, h @ StoicProtector, then) =>
             if (h.presence.none) {
                 val l = clearings.%(f.present).%(f.canPlace)
-                Ask(f)(l./(PlaceHirelingWarriorAction(f, h, Deer, _, then))).bail(then)
+                Ask(f).each(l)(PlaceHirelingWarriorAction(f, h, Deer, _, then)).bail(then)
             }
             else
                 then
@@ -904,7 +898,7 @@ object HirelingsExpansion extends Expansion {
         case OnTakeHirelingAction(f, h @ BanditGangs, then) =>
             if (h.presence.none) {
                 val l = clearings.%(f.present).%(f.canPlace)
-                Ask(f)(l./(PlaceHirelingWarriorAction(f, h, Porcupine, _, then))).bail(then)
+                Ask(f).each(l)(PlaceHirelingWarriorAction(f, h, Porcupine, _, then)).bail(then)
             }
             else
                 NoAsk(f)(then)
@@ -960,7 +954,7 @@ object HirelingsExpansion extends Expansion {
 
         //  BRIGAND
         case BrigandExploreMainAction(f, l, then) =>
-            Ask(f)(l./(BrigandExploreAction(f, _, then))).cancel
+            Ask(f).each(l)(BrigandExploreAction(f, _, then)).cancel
 
         case BrigandExploreAction(f, c, then) =>
             game.highlights :+= PlaceHighlight($(c))
@@ -977,9 +971,10 @@ object HirelingsExpansion extends Expansion {
                 case _ => Nil
             }
 
-            val aa = game.ruins(c).items./(i => BrigandTakeRuinItemAction(f, c, i, then).!(fromRuins.contains(i)))
-
-            Ask(f)(aa)(BrigandIgnoreRuinItemAction(f, c, then)).needOk
+            Ask(f)
+                .each(game.ruins(c).items)(i => BrigandTakeRuinItemAction(f, c, i, then).!(fromRuins.contains(i)))
+                .add(BrigandIgnoreRuinItemAction(f, c, then))
+                .needOk
 
         case BrigandTakeRuinItemAction(f, c, i, then) =>
             val rest = game.ruins(c).items :- i
@@ -1266,7 +1261,7 @@ object HirelingsExpansion extends Expansion {
         case PlaceUprisingWarriorsAction(f, h, l, done, then) =>
             val rest = l.diff(done./~(_.suits.single))
 
-            Ask(f).each(clearings)(c => PlaceHirelingWarriorAction(f, SpringUprising, Animal, c, PlaceUprisingWarriorsAction(f, h, l, done :+ c, then)).!(rest.exists(_.matches(c.cost)).not))//.cancel
+            Ask(f).each(clearings)(c => PlaceHirelingWarriorAction(f, SpringUprising, Animal, c, PlaceUprisingWarriorsAction(f, h, l, done :+ c, then)).!(rest.exists(_.matches(c.cost)).not))
 
         case SpringUprisingMainAction(f, h) =>
             Roll[BaseSuit]($(BaseSuitDie), l => SpringUprisingAction(f, h, l(0)), f.elem ~ " rolls an uprising die")
@@ -1421,7 +1416,7 @@ object HirelingsExpansion extends Expansion {
                 case None => MoveFromAction(f, h, $, JustElem(RiverfolkFlotilla), o, $, Repeat).!(f.canMoveFrom(o).not, "snared").!(true)
             })
 
-            Ask(f)(l)
+            Ask(f).add(l)
 
         case RiverfolkFlotillaBattleAction(f, h : RiverfolkFlotilla.type) =>
             BattleInitAction(f, h, NoMessage, h.all(Flotilla), $(Repeat.as("Skip", "Battle".hh)), Repeat)

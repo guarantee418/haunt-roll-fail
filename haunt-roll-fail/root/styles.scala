@@ -180,7 +180,6 @@ package object elem {
         object selquasi extends CustomStyle(border.color("#ffffff"), border.radius("1.6ch"))
         object selfigure extends CustomStyle(border.color("#dc143c"), border.radius("1.6ch"))
         object unquasi extends CustomStyle(filter("brightness(0.9)"))
-        object discard extends CustomStyle(filter("brightness(0.8) greyscale(1)"))
 
         object columns3 extends CustomStyle(width("24ch"), height("1ch"))
         object columns4 extends CustomStyle(width("32ch"), height("1ch"))
@@ -329,7 +328,6 @@ package object elem {
         object rollIn extends CustomStyle(background.color("#000000"), width("3.6ex"), height("3.6ex"), display("inline-flex"), justify.content("center"), align.items("center"))
         object expandRoll extends CustomStyle(margin.top("0"), margin.bottom("0"))
         object hexagon extends CustomStyle(clip.path("polygon(50% 10%, 88% 37%, 74% 80%, 26% 80%, 12% 37%)"))
-
 
         object hit extends CustomStyle(color("#dc143c"))
 

@@ -165,9 +165,9 @@ object BattleExpansion extends MandatoryExpansion {
             val xx = (ff ++ aa ++ mm)./(a => BattleAllyAction(self, f, a, m, c, l.but(a), true, then))
 
             if (xx.num == 1)
-                Ask(f)(xx.head.copy(avoid = avoid))
+                Ask(f).add(xx.head.copy(avoid = avoid))
             else
-                Ask(f)(xx).cancelIf(avoid)
+                Ask(f).add(xx).cancelIf(avoid)
 
         case BattleAllyAction(self, f, a, m, c, l, avoid, then) =>
             val ee = f.enemies.%(_.present(c)).diff(l)
@@ -312,9 +312,12 @@ object BattleExpansion extends MandatoryExpansion {
             else
                 BattleCleanupAction(b)
 
+        // case BattleAskAmbushAction(b, then) if options.has(BrutalHonesty) && b.defender.is[Mischief] && b.defender.at(b.clearing).has(Bomb) =>
+        //     ???
+
         case BattleAskAmbushAction(b, then) =>
             def canAmbush(d : DeckCard) = canAmbushWith(b.defender, b.clearing, b.attacker)(d)
-            def skip = Ask(b.defender)(then.as("No " ~ "Ambush".hl))
+            def skip = Ask(b.defender).add(then.as("No " ~ "Ambush".hl))
 
             val ask =
             if (b.attacker.has(ScoutingParty))
@@ -351,9 +354,20 @@ object BattleExpansion extends MandatoryExpansion {
                 val h = f.hand./(d => BattleAmbushAction(f, b, d, q.any, q.contains(d), then).!(q.contains(d).not))
 
                 if (q.any)
-                    Ask(f)(h)(then.as("Skip " ~ "Ambush".hl))(NoHand)(HiddenAmbush)(HiddenClearing(b.clearing))
+                    Ask(f)
+                        .add(h)
+                        .add(then.as("Skip " ~ "Ambush".hl))
+                        .add(NoHand)
+                        .add(HiddenAmbush)
+                        .add(HiddenClearing(b.clearing))
                 else
-                    Ask(f)(then.as("No " ~ "Ambush".hl))(h)(NoHand)(HiddenAmbush)(HiddenClearing(b.clearing)).needOk
+                    Ask(f)
+                        .add(then.as("No " ~ "Ambush".hl))
+                        .add(h)
+                        .add(NoHand)
+                        .add(HiddenAmbush)
+                        .add(HiddenClearing(b.clearing))
+                        .needOk
             }
 
             if (options.has(BrutalHonesty) && b.defender.is[Mischief] && (b.defender.at(b.clearing).has(Bomb) || b.defender.at(b.clearing).has(HiddenPlot))) {
@@ -383,7 +397,7 @@ object BattleExpansion extends MandatoryExpansion {
             def canAmbush(d : DeckCard) = canAmbushWith(b.attacker, b.clearing, b.defender)(d)
 
             val pass = BattleAmbushHitsAction(b, 2, then)
-            val skip = Ask(b.attacker)(pass.as("No " ~ "Ambush".hl))
+            val skip = Ask(b.attacker).add(pass.as("No " ~ "Ambush".hl))
 
             val ask =
             if (b.attacker.hand.none)
@@ -412,12 +426,23 @@ object BattleExpansion extends MandatoryExpansion {
                 val f = b.attacker
                 val z = f.hand.any
                 val q = f.hand.%(d => d == Ambush(Bird) || b.clearing.suits.exists(s => d == Ambush(s)))
-                val h = f.hand./(d => BattleCounterAmbushAction(f, b, d, q.any, q.contains(d), then).x(q.contains(d).not))
+                val h = f.hand./(d => BattleCounterAmbushAction(f, b, d, q.any, q.contains(d), then).!(q.contains(d).not))
 
                 if (q.any)
-                    Ask(f)(h)(pass.as("Skip " ~ "Counter-Ambush".hl))(NoHand)(HiddenAmbush)(HiddenClearing(b.clearing))
+                    Ask(f)
+                        .add(h)
+                        .add(pass.as("Skip " ~ "Counter-Ambush".hl))
+                        .add(NoHand)
+                        .add(HiddenAmbush)
+                        .add(HiddenClearing(b.clearing))
                 else
-                    Ask(f)(pass.as("No " ~ "Counter-Ambush".hl))(h)(NoHand)(HiddenAmbush)(HiddenClearing(b.clearing)).needOk
+                    Ask(f)
+                        .add(pass.as("No " ~ "Counter-Ambush".hl))
+                        .add(h)
+                        .add(NoHand)
+                        .add(HiddenAmbush)
+                        .add(HiddenClearing(b.clearing))
+                        .needOk
             }
 
             if (options.has(BrutalHonesty) && b.attacker.is[Mischief] && (b.attacker.at(b.clearing).has(Bomb) || b.attacker.at(b.clearing).has(HiddenPlot))) {
@@ -468,14 +493,14 @@ object BattleExpansion extends MandatoryExpansion {
                 case _ => throw new Error("funds defense is for traders")
             })
 
-            val scouts = (f.has(GuerillaTactics).not && f.can(RabbitScouts) && f.hand.%(_.matches(b.clearing.cost)).any).?(RabbitScouts)
+            val scouts = (f.has(GuerillaTactics).not && f.can(RabbitScouts) && f.hand.%(_.matches(b.clearing.cost)).any).?(RabbitScouts)//.||(Some(RabbitScouts))//.%(s => b.defender.used.has(s).not)
 
             val e = arbiter./(BattleEnlistArbiterAction(f, b, _)) ++ codefender./(BattleEnlistDefenderAction(f, b, _)) ++ scouts./(_ => BattleEnlistScoutsAction(f, b))
 
             if (e.none)
                 BattleAttackerPreRollAction(b)
             else
-                Ask(f)(e).done(BattleAttackerPreRollAction(b))
+                Ask(f).add(e).done(BattleAttackerPreRollAction(b))
 
         case BattleEnlistArbiterAction(f, b, a) =>
             b.defender.log("asked", a, "protection")
@@ -499,9 +524,9 @@ object BattleExpansion extends MandatoryExpansion {
 
         case BattleEnlistScoutsAction(f, b) =>
             val q = f.hand.%(d => d.matches(b.clearing.cost))
-            val h = f.hand./(d => BattleEnlistScoutsCardAction(f, b, d, q.contains(d)).x(q.contains(d).not))
+            val h = f.hand./(d => BattleEnlistScoutsCardAction(f, b, d, q.contains(d)).!(q.contains(d).not))
 
-            Ask(f)(h).cancel
+            Ask(f).add(h).cancel
 
         case BattleEnlistScoutsCardAction(f, b, d, _) =>
             f.hand --> d --> discard.quiet
@@ -715,9 +740,9 @@ object BattleExpansion extends MandatoryExpansion {
                 val auto = (game.current != f && options.has(ForcedAsyncMode)).??(actions.of[PartisansAction].%(_.l.none))
 
                 if (auto.any)
-                    Ask(f)(auto.head)
+                    Ask(f).add(auto.head)
                 else
-                    Ask(f)(actions).done(BattlePostRollAction(b, fh, oh, fe, oe, ask.drop(1)))
+                    Ask(f).add(actions).done(BattlePostRollAction(b, fh, oh, fe, oe, ask.drop(1)))
             }
 
         case ArmorersAction(f, then) =>
@@ -761,7 +786,11 @@ object BattleExpansion extends MandatoryExpansion {
             then
 
         case GuardMainAction(f, s, then) =>
-            Ask(f).each(f.hand)(d => GuardAction(f, s, d, then).!(d.matches(s).not))(GuardSelfAction(f, s, then)).cancel.needOk
+            Ask(f)
+                .each(f.hand)(d => GuardAction(f, s, d, then).!(d.matches(s).not))
+                .add(GuardSelfAction(f, s, then))
+                .cancel
+                .needOk
 
         case GuardAction(f, s, d, then) =>
             f.hand --> d --> discard.quiet
@@ -886,7 +915,7 @@ object BattleExpansion extends MandatoryExpansion {
 
                 val priorities : $[Piece] = f.damagePriorities
 
-                Ask(f)(variants.minBy(_.values.indexed./((f, n) => priorities.indexOf(f.piece) * 100 * 100 + pow((priorities.indexOf(f.piece) - n).abs, 2)).sum))(explode)
+                Ask(f).add(variants.minBy(_.values.indexed./((f, n) => priorities.indexOf(f.piece) * 100 * 100 + pow((priorities.indexOf(f.piece) - n).abs, 2)).sum)).add(explode)
             }
             else
             if (options.has(AutoHitsAssignmentMode)) {
@@ -896,7 +925,7 @@ object BattleExpansion extends MandatoryExpansion {
                 val d = variants.distinctBy(_.values./(u => u.piece -> u.faction))
 
                 if (d.num == 1)
-                    Ask(f)(d)(explode)
+                    Ask(f).add(d).add(explode)
                 else
                     ask
             }

@@ -139,12 +139,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         if (!game.roles.contains(f))
             return
 
+        // val _state = game
+
+        // import _state.faction2player
+
         var friends = game.friends(f).%(game.alive.has)
         var enemies = game.enemies(f).%(game.alive.has)
         var others = game.alive.diff(friends).diff(enemies).but(f).shuffle.sortBy(game.karma)
 
         if (game.roles(f).party == Liberal)
         while (others.num > 1) {
+            //if (enemies.none)
             enemies :+= others.head
             friends :+= others.last
             others = others.drop(1).dropRight(1)
@@ -157,12 +162,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             val name = game.alive.contains(f).?(f.name.styled(f) : Elem).|(" ".pre ~ (" " + f.name + "  ").pre.styled(styles.dead).styled(styles.used)).styled(styles.name)
             val faction = (user != f.name).?(Text(user)).|(" ".pre).styled(styles.username)
 
+//            val karma = div("")("Karma: (" + game.karma(f).hl + ")")
+//            val fof = div("")("Fr: " + friends./(_.ss).htmls(", ")) + div("")("En: " + enemies./(_.ss).htmls(", "))
+
             val vote = (game.votes.num == game.alive.num).??(game.votes.get(f)./(_.elem)).|(" ".pre)
 
             val open = Div(game.roles(f).img, styles.viewcard)
 
             if (game.over.not)
                 container.replace(name ~ Break ~ limited ~ Break ~ faction ~ Break ~ vote, resources)
+                // container.replace(Break ~ Break ~ name ~ Break ~ limited ~ Break ~ faction ~ Break ~ vote, resources)
             else
                 container.replace(name ~ Break ~ open, resources)
         }
@@ -176,6 +185,21 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         drawMap()
     }
 
+    /*
+    def layout(width : Int, height : Int) : $[PanePlacement] = {
+        val font = FontDimensionInfo(72, 40, 72)
+
+        val statuses = 1.to(arity)./(i => "status-" + i)
+
+        val panes = statuses./(s => s -> new TextPane(12, font, 100, 10, 8)).toMap + ("map-small" -> new ImagePane(10, 3975, 2625)) + ("log" -> new TextPane(10, font, 100, 40, 10)) + ("action" -> new TextPane(10, font, 100, 50, 22))
+
+        SplitVer(SplitEven(statuses./(panes)), SplitX(panes("map-small"), SplitX(panes("log"), panes("action"))))
+            .dim(0, 0, width, height)
+
+        panes.view.mapValues(p => (Rect(p.x, p.y, p.w, p.h), p.is[TextPane].?(p.asInstanceOf[TextPane].fontSize))).$./{ case (a, (b, c)) => PanePlacement(a, b, c) }
+    }
+    */
+
     val zoom = 0.72 * 0.5
 
     val layouts = $(Layout("base",
@@ -185,7 +209,28 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             BasicPane("log", 18, 6+arity, Priorities(grow = 3+1, maxYscale = 4)),
             BasicPane("action", 19 - (arity < 9).??(4), 19+1+1, Priorities(bottom = 1, right = 1, grow = 2+2, maxXscale = 1.8+2, maxYscale = 1.2+2))
         )
+        // ./(p => p.copy(kX = p.kX * zoom, kY = p.kY * zoom))
     ))./~(l =>
+        // l.copy(name = l.name + "-verdouble", boost = l.boost * 1.04 * (1 - arity % 2), panes = l.panes./~{
+        //     case p : BasicPane if p.name == "status" => Some(p.copy(name = "status-verdouble", kY = p.kY * ((arity + 1) / 2), kX = p.kX * 2))
+        //     case p => Some(p)
+        // }) ::
+        // l.copy(name = l.name + "-hordouble", boost = l.boost * 1.04 * (1 - arity % 2), panes = l.panes./~{
+        //     case p : BasicPane if p.name == "status" => Some(p.copy(name = "status-hordouble", kX = p.kX * ((arity + 1) / 2), kY = p.kY * 2))
+        //     case p => Some(p)
+        // }) ::
+        // l.copy(name = l.name + "-verdouble", boost = l.boost * 1.04 * (arity % 2), panes = l.panes./~{
+        //     case p : BasicPane if p.name == "status" => Some(p.copy(name = "status-verdouble", kY = p.kY * ((arity + 1) / 2), kX = p.kX * 2))
+        //     case p : BasicPane if p.name == "log" && arity % 2 == 1 => None
+        //     case p : BasicPane if p.name == "aid" && arity % 2 == 1 => None
+        //     case p => Some(p)
+        // }) ::
+        // l.copy(name = l.name + "-hordouble", boost = l.boost * 1.04 * (arity % 2), panes = l.panes./~{
+        //     case p : BasicPane if p.name == "status" => Some(p.copy(name = "status-hordouble", kX = p.kX * ((arity + 1) / 2), kY = p.kY * 2))
+        //     case p : BasicPane if p.name == "log" && arity % 2 == 1 => None
+        //     case p : BasicPane if p.name == "aid" && arity % 2 == 1 => None
+        //     case p => Some(p)
+        // }) ::
         l.copy(name = l.name + "-horizontal", boost = l.boost * 1.00, panes = l.panes./{
             case p : BasicPane if p.name == "status" => p.copy(name = "status-horizontal", kX = p.kX * arity)
             case p => p
@@ -201,19 +246,44 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     _./~{
         case f if f.name == "status-horizontal" => 1.to(arity)./(n => f.copy(name = "status-" + n, x = f.x + ((n - 1) * f.width  /~/ arity), width  = (n * f.width  /~/ arity) - ((n - 1) * f.width  /~/ arity)))
         case f if f.name == "status-vertical"   => 1.to(arity)./(n => f.copy(name = "status-" + n, y = f.y + ((n - 1) * f.height /~/ arity), height = (n * f.height /~/ arity) - ((n - 1) * f.height /~/ arity)))
+        // case f if f.name == "status-hordouble"  =>
+        //     val c = ((arity + 1) / 2)
+        //     1.to(c * 2)./(n => f.copy(name = (n > arity).?("aid-log").|("status-" + n.toString),
+        //         x = f.x + (((n - 1) % c) * f.width /~/ c),
+        //         width = (n * f.width /~/ c) - ((n - 1) * f.width /~/ c),
+        //         y = f.y + (n - 1) / c * (f.height / 2),
+        //         height = (n > c).?(f.height - f.height / 2).|(f.height / 2))
+        //     )
+        // case f if f.name == "status-verdouble"  =>
+        //     val c = ((arity + 1) / 2)
+        //     1.to(c * 2)./(n => f.copy(name = (n > arity).?("aid-log").|("status-" + (((n - 1) % c) * 2 + (n - 1) / c + 1).toString),
+        //         y = f.y + (((n - 1) % c) * f.height /~/ c),
+        //         height = (n * f.height /~/ c) - ((n - 1) * f.height /~/ c),
+        //         x = f.x + (n - 1) / c * (f.width / 2),
+        //         width = (n > c).?(f.width - f.width / 2).|(f.width / 2))
+        //     )
         case f => $(f)
     },
     _./~{
+        // case f if f.name == "aid-log" => f.copy(name = "aid", height = 6 * f.height / 16) :: f.copy(name = "log", y = f.y + 6 * f.height / 16, height = f.height - 6 * f.height / 16)
         case f => $(f)
     },
     ff => ff ++ true.not.? {
-        val ss = ff
+        val ss = ff//.%(f => 1.to(arity)./("status-" + _).contains(f.name))
         Fit("overlay", ss./(_.x).min, ss./(_.y).min, ss./(_.right).max - ss./(_.x).min, ss./(_.bottom).max - ss./(_.y).min)
     })
 
     val settingsKey = Meta.settingsKey
 
     val layoutKey = "v" + 1 + "." + "arity-" + arity
+
+    /*
+    def layout(width : Int, height : Int) : $[PanePlacement] = {
+        val lr = layouter.get(width, height)
+
+        lr.panes./(p => PanePlacement(p.name, Rect(p.x, p.y, p.width, p.height), Some(lr.fontSize)))
+    }
+    */
 
     def onClick : Any => Unit = {
         case _ =>
@@ -275,8 +345,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
                     case _ => Nil
                 }) ++
                 view @@ {
-                    case Some(_) => Nil
-                    case _ => Nil
+                    case Some(_) => Nil//$(styles.inline)
+                    case _ => Nil//$(xstyles.thu, xstyles.thumargin, xlo.fullwidth)
                 }
 
 
@@ -286,8 +356,27 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             }
 
             ss
+
+            // a match {
+            //     case a : Hidden => None
+
+            //     case a : OnClickInfo              => Some(ZOption(q, wrap(OnClick(Div(o, ss))), _ => { onClick(a.param) }, clear))
+            //     case a : Info                     => Some(ZOption(q, wrap(        Div(o, ss))))
+
+            //     case a if then == null => None
+
+            //     case a : Extra[_]                 => Some(ZOption(q, wrap(Div(o, ss)), s => {
+            //         val v = a.fromAny(s)./~(v => a.validate(v).?(v))
+            //         if (v.any)
+            //             then(a.update(v.get))
+            //         else
+            //             throw new Error("invalid extra value")
+            //     }, clear))
+            //     case a                            => Some(ZOption(q, wrap(OnOverOut(OnClick(Div(o, ss)))), _ => then(a), clear, _ => { updateHighlight(Some(a)) }, _ => { updateHighlight(None) } ))
+            // }
     }
 
+    // override def convertActions(faction : Option[Faction], actions : List[UserAction], then : UserAction => Unit = null) = {
     def convertActionsX(faction : Option[Faction], actions : List[UserAction], then : UserAction => Unit = null) = {
         actions./~{ a =>
             def q = {

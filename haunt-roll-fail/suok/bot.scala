@@ -4,6 +4,7 @@ package suok
 //
 //
 import hrf.colmat._
+import hrf.compute._
 import hrf.logger._
 //
 //
@@ -11,7 +12,7 @@ import hrf.logger._
 //
 
 class BotXX(f : Faction) extends EvalBot {
-    def eval(actions : List[UserAction])(implicit game : Game) : List[ActionEval] = {
+    def eval(actions : List[UserAction])(implicit game : Game) : Compute[$[ActionEval]] = {
         val ev = new GameEvaluation(game, f)
         actions./{ a => ActionEval(a, ev.eval(a)) }
     }
@@ -34,6 +35,15 @@ class GameEvaluation(val game : Game, val self : Faction) {
             val f = self
 
             val roles : List[Role] = (f.expectation.neutrals.num == game.roles.%(_.side == Neutral).num).?(game.roles).|(game.roles.%(_.side != Neutral) ++ Roles.neutrals)
+
+            /*
+            val initial : Map[Faction, List[Role]] = (game.factions./(e => e -> e.open.?(e.role.list).|(f.knowledge.full.has(e).?(e.role.list).|(f.knowledge.notSlave.has(e).?(roles.but(Slave)).|(roles)))) :+
+                (HiddenRole -> f.knowledge.full.has(HiddenRole).?(game.hidden.list).|(f.knowledge.notSlave.has(HiddenRole).?(roles.but(Slave)).|(roles)))).toMap
+
+            val claimed = initial.values./~(_.distinct.single).$
+
+            val rr = initial.view.mapValues(l => l.single./(_.list).|(l.diff(claimed))).mapValues(_.distinct).toMap
+            */
 
             val rm = roles.diff(factions.%(_.alive.not)./(_.role))
 
@@ -61,6 +71,15 @@ class GameEvaluation(val game : Game, val self : Faction) {
                 e.prev.prev.active(Slave) && e.prev.active(Slave) && e.next.active(Slave) |=> -500 -> "accidental revolt"
                 e.active(Slave) |=> 200 -> "ok i guess"
                 e.is(Slave) |=> 100 -> "whatever"
+
+                /*
+            case RevealMainAction(f) if f.role == Sultan =>
+                if (result.none) {
+                    val t = alive.but(f).%(_.open).%(_.role.side == Rebel)
+                    if (t.any)
+                        return t./(e => eval(ExecuteAction(f, e))).maxBy(_.starting./(_.weight).|(0))
+                }
+                */
 
             case AvoidArrestAction(f) if f.role == Sultan =>
                 return eval(RoyalClaimAction(f, null))
@@ -104,6 +123,12 @@ class GameEvaluation(val game : Game, val self : Faction) {
                 e.can(Dancer) |=> -600 -> "bad"
                 e.can(Hunter) |=> 500 -> "ok"
 
+                /*
+            case RevealMainAction(f) if f.role == Assassin =>
+                if (result.none)
+                    return alive.but(f)./(e => eval(AssassinateAction(f, e))).maxBy(_.starting./(_.weight).|(0))
+                    */
+
             case InterceptAction(f, a, e) =>
                 true |=> 1000 -> "why not"
 
@@ -126,6 +151,17 @@ class GameEvaluation(val game : Game, val self : Faction) {
                     e.can(Slave) |=> 500 -> "just in case"
                 }
 
+                /*
+            case RevealMainAction(f) if f.role == Guard =>
+                f.next.coronation |=> 1000 -> "sure win"
+                f.next.next.coronation |=> 900 -> "almost sure win"
+
+                alive.%(_.coronation).any |=> 800 -> "protect"
+
+                if (result.none)
+                    return alive.but(f)./(e => eval(ArrestAction(f, e))).maxBy(_.starting./(_.weight).|(0))
+                */
+
             case SupportRevoltAction(f, _) =>
                 roles.%(_ == Slave).num > 3 && alive.%(e => e.active(Slave) && e.prev.active(Slave) && e.next.active(Slave)).any |=> 10000 -> "join win"
                 f.prev.active(Slave) && f.next.active(Slave) |=> 10000 -> "win"
@@ -133,6 +169,15 @@ class GameEvaluation(val game : Game, val self : Faction) {
                 f.next.active(Slave) && f.prev.can(Slave) && f.prev.jailed.not |=> 1000 -> "try at least"
 
                 f.next.coronation |=> 1000 -> "nothing to lose"
+
+                /*
+            case RevealMainAction(f) if f.role == Slave =>
+                alive.%(e => e.can(Sultan) || e.can(Guard)).none |=> 10000 -> "path clear"
+
+                if (result.none)
+                    return eval((SupportRevoltAction(f, null)))
+                */
+
 
             case PeekAction(f, e) =>
                 variants(e).num == 1 |=> -1000 -> "stupid"

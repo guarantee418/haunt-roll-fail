@@ -23,11 +23,11 @@ object Meta extends MetaGame { mmm =>
     val name = "sehi"
     val label = "Secret Hitler"
 
-    val factions = List(Red, Green, Blue, Yellow, White, Purple, Azure, Lime, Orange, Electric)
+    val factions = $(Red, Green, Blue, Yellow, White, Purple, Azure, Lime, Orange, Electric)
 
     val minPlayers = 5
 
-    val options = Nil
+    val options = $
 
     override val gradualFactions : Boolean = true
 
@@ -35,8 +35,8 @@ object Meta extends MetaGame { mmm =>
     val quickMax = 10
 
     def randomGameName() = {
-        val n = List("Goverment", "Coup", "Elections", "Politics", "Mutiny").shuffle
-        val c = List("for", "against", "versus", "through", "and", "of", "in", "as").shuffle
+        val n = $("Goverment", "Coup", "Elections", "Politics", "Mutiny").shuffle
+        val c = $("for", "against", "versus", "through", "and", "of", "in", "as").shuffle
         n.head + " " + c.head + " " + n.last
     }
 
@@ -54,7 +54,7 @@ object Meta extends MetaGame { mmm =>
         case (f : Faction, "Normal") => new BotXX(f)
     }
 
-    def defaultBots : $[String] = $("Normal")
+    def defaultBot(f : Faction) = "Normal"
 
     def writeFaction(f : Faction) = f.short
     def parseFaction(s : String) : |[Faction] = factions.%(_.short == s).single
@@ -70,16 +70,16 @@ object Meta extends MetaGame { mmm =>
     override def bodyFont = Some("eskapade-fraktur-black")
 
     val assets =
-    ConditionalAssetsList((factions : List[Faction], options : List[O]) => factions.num.between(1, 6))(
+    ConditionalAssetsList((factions : $[Faction], options : $[O]) => factions.num.between(1, 6))(
         ImageAsset("board", "board-5-6", "png" ) ::
-    Nil) ::
-    ConditionalAssetsList((factions : List[Faction], options : List[O]) => factions.num.between(7, 8))(
+    $) ::
+    ConditionalAssetsList((factions : $[Faction], options : $[O]) => factions.num.between(7, 8))(
         ImageAsset("board", "board-7-8", "png" ) ::
-    Nil) ::
-    ConditionalAssetsList((factions : List[Faction], options : List[O]) => factions.num.between(9, 10))(
+    $) ::
+    ConditionalAssetsList((factions : $[Faction], options : $[O]) => factions.num.between(9, 10))(
         ImageAsset("board", "board-9-10", "png" ) ::
-    Nil) ::
-    ConditionalAssetsList((factions : List[Faction], options : List[O]) => true)(
+    $) ::
+    ConditionalAssetsList((factions : $[Faction], options : $[O]) => true)(
         ImageAsset("marker" ) ::
 
         ImageAsset("liberal-article-jury-trial"               ) ::
@@ -114,6 +114,6 @@ object Meta extends MetaGame { mmm =>
         ImageAsset("fascist-b" ) ::
         ImageAsset("fascist-c" ) ::
         ImageAsset("hitler" ) ::
-    Nil)
+    $)
 
 }

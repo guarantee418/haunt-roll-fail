@@ -55,6 +55,7 @@ case class AddRuinItemsAction(then : ForcedAction) extends ForcedAction
 case class ShuffleRuinItemsAction(shuffled : $[Item], then : ForcedAction) extends ShuffledAction[Item]
 
 case class SelectFactionAction(self : Player, n : Int, f : PlayChoice) extends ForcedAction
+// case class SelectPreferredFactionAction(self : Player, n : Int, f : PlayChoice) extends ForcedAction
 
 case class CreatePlayerAction(f : Faction) extends ForcedAction
 case class FactionInitAction(f : Faction) extends ForcedAction
@@ -349,7 +350,7 @@ object SetupExpansion extends MandatoryExpansion {
                 val f = game.unhired./~(_ => game.seating).reverse.drop(game.unhired.num - l.num)(0)
 
                 if (l.%(_.setup).any)
-                    Ask(f)(l.%(_.setup)./(SetupHirelingAction(f, _))).needOk
+                    Ask(f).each(l.%(_.setup))(SetupHirelingAction(f, _)).needOk
                 else
                     Force(SetupHirelingAction(f, l(0)))
             }
@@ -518,15 +519,21 @@ object SetupExpansion extends MandatoryExpansion {
         case AfterSetupAction(f : RF.type, then) if options.has(MixedDeck) && deck.$.of[CraftEffectCard].exists(_.effect == BoatBuilders) =>
             deck --> deck.$.of[CraftEffectCard].%(_.effect == BoatBuilders) --> game.outOfGameCards
 
+            // log(BoatBuilders, "float away")
+
             then
 
         case AfterSetupAction(f : CommonInvasive, then) if options.has(MixedDeck) && deck.$.of[CraftEffectCard].exists(_.effect == BoatBuilders) =>
             deck --> deck.$.of[CraftEffectCard].%(_.effect == BoatBuilders) --> game.outOfGameCards
 
+            // log(BoatBuilders, "float away")
+
             then
 
         case AfterSetupAction(f : Mischief, then) if options.has(MixedDeck) && deck.$.of[CraftEffectCard].exists(_.effect == CorvidPlanners) =>
             deck --> deck.$.of[CraftEffectCard].%(_.effect == CorvidPlanners) --> game.outOfGameCards
+
+            // log(CorvidPlanners, "fly away")
 
             then
 

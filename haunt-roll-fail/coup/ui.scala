@@ -67,7 +67,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             container.attach.parent.style.outline = "3px dotted #aaaaaa"
         else
         if (game.highlightFaction.has(f))
-            {}
+            {} // container.attach.parent.style.outline = "1px dotted #888888"
         else
             container.attach.parent.style.outline = ""
     }
@@ -184,9 +184,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         case f => $(f)
     },
     ff => ff ++ true.? {
-        val ss = ff
+        val ss = ff//.%(f => 1.to(arity)./("status-" + _).contains(f.name))
         Fit("overlay", ss./(_.x).min, ss./(_.y).min, ss./(_.right).max - ss./(_.x).min, ss./(_.bottom).max - ss./(_.y).min)
     })
+
 
     val settingsKey = Meta.settingsKey
 
@@ -200,8 +201,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     override def info(self : |[Faction], aa : $[UserAction]) = {
         (currentGame.isOver && hrf.HRF.flag("replay").not).$(
             ZBasic(Break ~ Break ~ Break, "Save Replay".hh, () => {
-                callbacks.saveReplay {
-                }
+                callbacks.saveReplay {}
             }).copy(clear = false)
         ) ++
         (currentGame.isOver && callbacks.canPlayAgain).$(

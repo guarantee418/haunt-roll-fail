@@ -15,39 +15,55 @@ import hrf.elem._
 
 
 object OptionsState {
-    def apply[O <: BaseOption](all : $[O], selected : $[O], dimmed : $[O]) : OptionsState[O] = new OptionsState[O](all, selected.intersect(all), dimmed.intersect(all))
+    def apply[O <: BaseOption](all : $[O], mandatory : $[O], selected : $[O], dimmed : $[O]) : OptionsState[O] = new OptionsState[O](all, all.intersect(mandatory), all.intersect(selected), dimmed.intersect(all))
 }
 
-case class OptionsState[O <: BaseOption] private (all : $[O], selected : $[O], dimmed : $[O]) {
+case class OptionsState[O <: BaseOption] private (all : $[O], mandatory : $[O], selected : $[O], dimmed : $[O]) {
+    // ---
+    // ---
+    // ---
+    // +++("all", all)
+    // +++("selected", selected)
+    // +++("dimmed", dimmed)
+    // ---
+    // ---
+    // ---
+    val actual = mandatory ++ selected
+
     def filtered(options : $[O]): $[O] = {
         var remaining = all.intersect(options)
+        var resulting = mandatory ++ remaining
 
         var found = true
         while (found) {
-            val x = remaining.%(o => o.required(all).forall(_.diff(remaining).any))
+            val x = remaining.%(o => o.required(all).forall(_.diff(resulting).any))
             found = x.any
             remaining = remaining.diff(x)
+            resulting = mandatory ++ remaining
         }
 
         found = true
         while (found) {
-            val x = remaining.%(o => o.blocked(all).exists(_.diff(remaining).none))
+            val x = remaining.%(o => o.blocked(all).exists(_.diff(resulting).none))
             found = x.any
             remaining = remaining.diff(x)
+            resulting = mandatory ++ remaining
         }
 
         found = true
         while (found) {
-            val x = remaining.%(o => o.forcedOn(all).diff(remaining).any)
+            val x = remaining.%(o => o.forcedOn(all).diff(resulting).any)
             found = x.any
             remaining = remaining.diff(x)
+            resulting = mandatory ++ remaining
         }
 
         found = true
         while (found) {
-            val x = remaining.%(o => o.forcedOff(all).intersect(remaining).any)
+            val x = remaining.%(o => o.forcedOff(all).intersect(resulting).any)
             found = x.any
             remaining = remaining.diff(x)
+            resulting = mandatory ++ remaining
         }
 
         if (remaining != options)
@@ -57,10 +73,13 @@ case class OptionsState[O <: BaseOption] private (all : $[O], selected : $[O], d
     }
 
     def enabled(o : O) : Boolean = {
+        if (mandatory.has(o))
+            false
+        else
         if (selected.has(o))
             o.toggle
         else
-            o.required(all).exists(_.diff(selected).none) && o.blocked(all).forall(_.diff(selected).any)
+            o.required(all).exists(_.diff(actual).none) && o.blocked(all).forall(_.diff(actual).any)
     }
 
     def click(o : O) : OptionsState[O] = {
@@ -69,7 +88,6 @@ case class OptionsState[O <: BaseOption] private (all : $[O], selected : $[O], d
                 return this
 
             copy(selected = selected.but(o)).checkDimmed()
-
         }
         else {
             val on = all.intersect(o.forcedOn(all))
@@ -81,8 +99,12 @@ case class OptionsState[O <: BaseOption] private (all : $[O], selected : $[O], d
     }
 
     def checkDimmed() : OptionsState[O] = {
+        // warn("checkDimmed")
+        // +++("selected", selected)
         var remaining = filtered(selected)
+        // +++("remaining", remaining)
         var candidates = selected.diff(remaining) ++ dimmed
+        // +++("candidates", candidates)
 
         var found = true
 
@@ -101,8 +123,9 @@ case class OptionsState[O <: BaseOption] private (all : $[O], selected : $[O], d
         }
 
         val retired = selected.diff(remaining)
+        // +++("retired", retired)
 
-        OptionsState(all, remaining, retired ++ dimmed.diff(remaining))
+        OptionsState(all, mandatory, remaining, retired ++ dimmed.diff(remaining))
     }
 
 }

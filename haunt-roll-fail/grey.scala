@@ -33,7 +33,7 @@ trait GreyUI { gui : Gaming =>
 
     abstract class CanvasPaneX(pane : Container, upscale : Int, touch : Touch)(implicit resources : Resources) extends CanvasPane {
         def container = pane
-        def makeScene() : |[Scene]
+        def makeScene(reposition : Boolean) : |[Scene]
 
         var zoomBase = 0.0
 
@@ -61,8 +61,10 @@ trait GreyUI { gui : Gaming =>
 
         val cachedBitmap = new hrf.canvas.CachedBitmap(pane.attach.parent)
 
+        var lastInteraction = -1000
+
         def draw() {
-            makeScene().foreach { scene =>
+            makeScene(hrf.HRF.uptime() - lastInteraction > 500).foreach { scene =>
                 lastScene = |(scene)
 
                 adjustCenterZoom()
@@ -108,6 +110,8 @@ trait GreyUI { gui : Gaming =>
 
                     draw()
 
+                    lastInteraction = hrf.HRF.uptime()
+
                     moving = true
                     moved = false
                     movingFrom = |(scene.toSceneCoordinates(offsetX, offsetY, width.~, height.~, zoom / moveSpeedUp, dX, dY))
@@ -143,6 +147,8 @@ trait GreyUI { gui : Gaming =>
                     }
 
                     draw()
+
+                    lastInteraction = hrf.HRF.uptime()
                 }
             }
 
@@ -163,6 +169,8 @@ trait GreyUI { gui : Gaming =>
         }
 
         pane.attach.parent.onclick = (e) => {
+            lastInteraction = hrf.HRF.uptime()
+
             val offsetX = e.offsetX * dom.window.devicePixelRatio
             val offsetY = e.offsetY * dom.window.devicePixelRatio
 
@@ -211,6 +219,8 @@ trait GreyUI { gui : Gaming =>
                         zoomBase = zoomFrom - math.log(expanse(touchFrom) / expanse(touchTo)) / math.log(1.0007)
 
                     draw()
+
+                    lastInteraction = hrf.HRF.uptime()
                 }
             }
         }
@@ -225,6 +235,8 @@ trait GreyUI { gui : Gaming =>
                 zoomBase += e.deltaY
 
                 draw()
+
+                lastInteraction = hrf.HRF.uptime()
             }
         }
 
@@ -255,7 +267,10 @@ trait GreyUI { gui : Gaming =>
         val uir : ElementAttachmentPoint
         val resources : Resources
 
+        def img(s : ImageId) = resources.images.get(s.id)
+
         def randomTip() : |[Elem] = None
+
 
         var panes = Map[String, Container]()
 
@@ -361,7 +376,7 @@ trait GreyUI { gui : Gaming =>
 
                 val ll = layouter.layouts./(l => l.copy(panes = l.panes.%(l => panes.has(l.name)))).%(l => panes.diff(l.panes./(_.name)).none)
 
-                hrf.ui.again.Layouter(ll, layouter.process : _*).get(width, height)(new hrf.Quants(500, 200).continue) { lr =>
+                hrf.ui.again.Layouter(ll, layouter.process : _*).get(width, height)(new hrf.Quants(500, 200, () => true).continue) { lr =>
                     +++(lr.panes)
 
                     val result = lr.panes./(p => PanePlacement(p.name, Rect(p.x, p.y, p.width, p.height), Some(lr.fontSize)))
@@ -391,7 +406,7 @@ trait GreyUI { gui : Gaming =>
                     )))
 
                     setTimeout(1) {
-                        layouter.get(width, height)(new hrf.Quants(500, 200).continue) { lr =>
+                        layouter.get(width, height)(new hrf.Quants(500, 200, () => newLayout.width == width && newLayout.height == height).continue) { lr =>
                             val result = lr.panes./(p => PanePlacement(p.name, Rect(p.x, p.y, p.width, p.height), Some(lr.fontSize)))
 
                             if (newLayout.width == width && newLayout.height == height) {
@@ -403,7 +418,8 @@ trait GreyUI { gui : Gaming =>
                                 onLayout(result)
                             }
 
-                            hrf.web.Local.set(key, hrf.serialize.DefaultSerialize.write(result))
+                            if (hrf.HRF.flag("shrink").not)
+                                hrf.web.Local.set(key, hrf.serialize.DefaultSerialize.write(result))
                         }
                     } : Unit
             }
@@ -485,6 +501,10 @@ trait GreyUI { gui : Gaming =>
                 ) ++
                 speeds./((s, n) => ZBasic("Speed" ~ HorizontalBreak, (n == speed).?(s.hlb).|(s.txt), () => setSpeed(n), ZBasic.choice ++ $(xstyles.shorter))) ++
                 targets./((e, n) => ZBasic("Jump To", e, () => jump(n))) ++
+                // $(
+                //     ZBasic("Alternative timelines", skip.?("Skip".hlb).|("Skip".txt), () => setSkip(true), ZBasic.choice ++ $()),
+                //     ZBasic("Alternative timelines", skip.not.?("Enter".hlb).|("Enter".txt), () => setSkip(false), ZBasic.choice ++ $()),
+                // ) ++
                 $(
                     ZBasic("", "Exit", () => {
                         undoPane.invis()
@@ -551,7 +571,7 @@ trait GreyUI { gui : Gaming =>
                         playback(hrf.HRF.paramInt("replay-speed").|(300))
                         top()
                     }),
-                    ZBasic(" ", "Undo to here".styled(xstyles.warning), () => {
+                    ZBasic(g, "Undo to here".styled(xstyles.warning), () => {
                         val dd = actions.drop(n)./~(describeActionForUndo(_, None))
                         val ee = (dd.distinct.num > 1).?(", including ").|((dd.distinct.num > 0).?(", namely ").|("")).spn ~ dd.distinct./(d => (dd.count(d) > 3).?("multple ".spn) ~ d.elem(dd.count(d))).join(", ")
 
@@ -568,12 +588,12 @@ trait GreyUI { gui : Gaming =>
                             }))
                         )(resources)
                     }),
-                    ZBasic("", "Back", () => {
+                    ZBasic(g, "Back", () => {
                         undoPane.invis()
                         actionPane.vis()
                         latest()
                     })
-                ) ++ info(lastSelf, $))(resources)
+                ) ++ info(lastSelf || (game.as[arcs.Game]./~(_.current)).as[|[F]].get, $))(resources)
             }
 
             top()
@@ -602,11 +622,13 @@ trait GreyUI { gui : Gaming =>
             hideSwitches()
         }
 
-        def wait(self : $[F], factions : $[F]) {
+        def wait(self : $[F], factions : $[F], message : Elem) {
             lastSelf = self.single
 
+            val m = message // (message != Empty).?(message).|("z... z... z...".txt)
+
             if (factions.any) {
-                val waiting = factions.any.$(ZOption(Div("Waiting for " ~ convertDesc(factions./(f => factionElem(f)).comma).apply(game))(xlo.fullwidth), Div(Text("z... z... z..."), ZBasic.info)(xlo.fullwidth)))
+                val waiting = factions.any.$(ZOption(Div("Waiting for " ~ convertDesc(factions./(f => factionElem(f)).comma).apply(game))(xlo.fullwidth), Div(m, ZBasic.info)(xlo.fullwidth)))
 
                 preasker.zask(preinfo(self.single, $))(resources)
                 asker.zask(waiting)(resources)
@@ -667,16 +689,16 @@ trait GreyUI { gui : Gaming =>
 
         def styleAction(faction : Option[F], actions : $[UserAction], a : UserAction, unavailable : Boolean, view : |[Any]) : $[Style] = Nil
 
-        def fixActionOption(e : Elem) : Elem = e
+        def fixActionElem(e : Elem) : Elem = e
 
         def convertActions(faction : Option[F], actions : $[UserAction], then : UserAction => Unit = null) : $[ZOption] = {
             actions./~{ a =>
                 def q = {
-                    val q = a.question(currentGame)
+                    val q = fixActionElem(a.question(currentGame))
                     (q == Empty).?(q).|(Div(q)(xlo.fullwidth))
                 }
 
-                def o = fixActionOption(a.option(currentGame)) ~ (a @@ {
+                def o = fixActionElem(a.option(currentGame)) ~ (a @@ {
                     case UnavailableReasonAction(a, reason) if reason != "" => reason.startsWith("|").?(Break).|(SpaceSpan) ~ Span(Text("(" + reason.substring(reason.startsWith("|").??(1)) + ")"), xstyles.smaller85)
                     case _ => Empty
                 })

@@ -33,33 +33,9 @@ package object elem {
         object mana extends CustomStyle(color("#0b3dcc"))
         object rage extends CustomStyle(color("#c4c400"))
 
-        object inline extends CustomStyle(display("inline-block"))
-        object margined extends CustomStyle(margin("0.3ch"))
-
         object selected extends CustomStyle(filter("brightness(1.1) saturate(1.1)"), outline.color("#ffffff"), outline.style("solid"), outline.width("0.3vmin"))
 
-        object card extends CustomStyle(display("block"), width("9ch"))
-
-        object dead extends CustomStyle(color("#707070"))
-        object used extends CustomStyle(color("darkred"), text.decoration.line("line-through"), text.decoration.style("wavy"))
-
-        object kill extends CustomStyle(color("crimson"))
-
-        object name extends CustomStyle(font.weight("bold"))
-        object username extends CustomStyle(font.size("60%"))
-
         object board extends CustomStyle(border.width("1vmin"))
-
-        object yes extends CustomStyle(border.width("1px"), border.style("solid"), color("black"), background.color("white"))
-        object no extends CustomStyle(border.width("1px"), border.style("solid"), color("white"), background.color("black"))
-        object vote extends CustomStyle(display("inline-block"), width("5ch"), text.align("center"))
-        object widevote extends CustomStyle(box.sizing("border.box"), width("100%"))
-
-        object president extends CustomStyle(border.width("1px"), border.style("solid"), color("black"), background.color("#cccccc"), font.weight("bold"))
-        object chancellor extends CustomStyle(border.width("1px"), border.style("solid"), color("white"), background.color("#444444"), font.style("italic"))
-        object title extends CustomStyle(font.variant("small-caps"), font.size("80%"), display("inline-block"), width("11ch"), text.align("center"))
-
-        object limited extends CustomStyle(font.style("italic"), color("gray"), font.size("60%"))
 
         object status extends CustomStyle(
             border.width("4px"),

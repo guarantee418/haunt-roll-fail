@@ -42,7 +42,6 @@ object Meta extends MetaGame {
 
     def validateFactionCombination(ff : $[Faction]) = InfoResult("Vast") &&
         (ff.has(Thief)).?(ErrorResult("Thief not implemented yet")) &&
-        // (ff.intersect(factions) != factions.intersect(ff)).?(ErrorResult("Incorrect faction order")) &&
         (ff.num < 4).?(ErrorResult("Select at least four factions")) &&
         (ff.num > 4).?(ErrorResult("Max four factions"))
 
@@ -52,6 +51,10 @@ object Meta extends MetaGame {
 
     def factionName(f : Faction) = f.name
     def factionElem(f : Faction) = f.name.styled(f)
+
+    // override def glyph(g : G) : |[String] = g.current.?./(_.style + "-glyph")
+    // override def glyph(f : F) : |[String] = |(f.style + "-glyph")
+    // override def glyph(g : G, f : F) : |[String] = glyph(f).%!(_ => g.highlightFaction.has(f) && hrf.HRF.uptime() / 1000 % 2 == 1)
 
     def createGame(factions : $[Faction], options : $[O]) = new Game(factions, options)
 
@@ -63,7 +66,7 @@ object Meta extends MetaGame {
         case (f : Faction, "Easy") => new BotXX(f)
     }
 
-    def defaultBots : $[String] = $("Easy")
+    def defaultBot(f : Faction) = "Easy"
 
     def writeFaction(f : Faction) = f.short
     def parseFaction(s : String) : Option[Faction] = factions.%(_.short == s).single

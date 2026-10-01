@@ -13,13 +13,10 @@ import hrf.logger._
 import hrf.meta._
 import hrf.elem._
 
-
-
 object Meta extends MetaGame { mmm =>
     val gaming = dwam.gaming
 
     type F = Faction
-
 
     def tagF = implicitly
 
@@ -69,7 +66,7 @@ object Meta extends MetaGame { mmm =>
         case (f : Faction, "Normal") => new BotXX(f)
     }
 
-    def defaultBots : $[String] = $("Normal")
+    def defaultBot(f : Faction) = "Normal"
 
     def writeFaction(f : Faction) = f.short
     def parseFaction(s : String) : Option[Faction] = factions.%(_.short == s).single
@@ -81,7 +78,6 @@ object Meta extends MetaGame { mmm =>
     def writeAction(a : Action) : String = Serialize.write(a)
 
     val start = StartAction(gaming.version)
-
 
     override def bodyFont = Some("tico")
 

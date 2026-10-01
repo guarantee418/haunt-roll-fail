@@ -55,11 +55,11 @@ trait SelectSubset { self : Gaming =>
             override def prefix(l : $[T]) = l.forall(f)
         }
 
-        def all(f : $[T] => Boolean) = new Same {
+        def all(f : $[T] => Boolean) : ObjectSetRule[T] = new Same {
             override def prefix(l : $[T]) = f(l)
         }
 
-        def matches(f : $[T] => Boolean) = new Same {
+        def matches(f : $[T] => Boolean) : ObjectSetRule[T] = new Same {
             override def set(l : $[T]) = f(l)
         }
 
@@ -71,16 +71,16 @@ trait SelectSubset { self : Gaming =>
             override def prefix(l : $[T]) = l.diff(x).none
         }
 
-        def num(n : Int) = new Same {
+        def num(n : Int) : ObjectSetRule[T] = new Same {
             override def prefix(l : $[T]) = l.num <= n
             override def set(l : $[T]) = l.num == n
         }
 
-        def upTo(n : Int) = new Same {
+        def upTo(n : Int) : ObjectSetRule[T] = new Same {
             override def prefix(l : $[T]) = l.num <= n
         }
 
-        def atLeast(n : Int) = new Same {
+        def atLeast(n : Int) : ObjectSetRule[T] = new Same {
             override def set(l : $[T]) = l.num >= n
         }
     }
@@ -160,10 +160,10 @@ trait SelectSubset { self : Gaming =>
             val q = game.desc(group(game, r))
             val v = rule.validPrefix(r) && rule.validSet(r)
 
-            val a = v.??(config.auto(values, selecting))
+            val a = v.??(config.auto(r, selecting))
 
             if (a.any)
-                Ask(self)(a.get)
+                Ask(self).add(a.get)
             else
                 Ask(self)
                     .add(XXSelectObjectsExplodeAction(self, values, order)(config))
@@ -311,12 +311,13 @@ trait SelectSubset { self : Gaming =>
                     }
                     else {
                         val o = YYSelectObjectAction(self, values, d, n, selecting)(config)
-                        o.x(rule.validOne(values(n)).not)
+                        o.!(rule.validOne(values(n)).not)
                     }) ++ splitAt.indexed.%(_ == n).indices./(i => RawElemInfo(Empty)(break(i)))
                 }} ++
-                thens(values, selecting)./(then => then.x(v.not)) ++
+                thens(values, selecting)./(then => then.!(v.not)) ++
                 extra ++
-                values.exists(rule.validOne).not.??(bail)
+                values.exists(rule.validOne).not.??(bail) ++
+                $(HiddenCancelAction)
             )
         }
 

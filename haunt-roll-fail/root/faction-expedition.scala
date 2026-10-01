@@ -235,7 +235,7 @@ case class RetinueCardAction(self : Expedition, h : $[Card], q : $[Elem], o : $[
 }
 
 case class RetinueExplodeAction(self : Expedition, h : $[Card], o : $[Option[Retinue]], max : Int) extends HiddenChoice with SelfExplode {
-    def explode(withSoft : Boolean) = {
+    def explode(withSoft : Boolean)(implicit game : Game) = {
         val iii = 1.to(max)./~(h.indices.combinations).flatMap { l =>
             l.foldLeft($(SortedMap[Int, Retinue]()))((mm, n) => mm./~(m => Retinue.all./(c => m + (n -> c))))
         }
@@ -271,7 +271,9 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
             val ll = l.diff(board.inner).some.%(hasPair).|(l)
             val lll = ll.diff(hh).diff(hhh).some.%(hasPair).||(ll.diff(hh).some.%(hasPair)).|(ll)
 
-            Ask(f)(lll.combinations(2).$.%(p => game.connected(p(0)).has(p(1)))./(p => StartingClearingsAction(f, p).as(p.comma)(f, "starts in"))).needOk
+            Ask(f)
+                .each(lll.combinations(2).$.%(p => game.connected(p(0)).has(p(1))))(p => StartingClearingsAction(f, p).as(p.comma)(f, "starts in"))
+                .needOk
 
         case FactionSetupAction(f : Expedition) =>
             StartingCornerAction(f)
@@ -296,7 +298,7 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
             f.log("placed", 4.times(Badger.of(f)).comma, "in", r)
 
             if (k == r)
-                Ask(f)(game.connected(k).diff(board.inner)./(PlaceStartingPiecesAction(f, k, _, 4.times(Badger))))
+                Ask(f).each(game.connected(k).diff(board.inner))(c => PlaceStartingPiecesAction(f, k, c, 4.times(Badger)))
             else
                 Roll[Int](0.until(36)./(_ => OrderingDie), x => RelicRandomnessAction(f, k, r, x))
 
@@ -370,12 +372,18 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
             val ww = w.%(ws => w.has(WayStation(ws.passive, ws.active)))
 
             if (ww.any)
-                Ask(f)(f.all(f.warrior).distinct.%(f.canBuild)./(c => EncampClearingAction(f, c, ww).x(f.encamped.has(c))))(f.birdsong)(Next.as("Done"))
+                Ask(f)
+                    .each(f.all(f.warrior).distinct.%(f.canBuild))(c => EncampClearingAction(f, c, ww).!(f.encamped.has(c)))
+                    .add(f.birdsong)
+                    .done(Next)
             else
                 Next
 
         case EncampClearingAction(f, c, l) =>
-            Ask(f)(l./(w => EncampAction(f, c, w)))(f.birdsong).cancel
+            Ask(f)
+                .each(l)(w => EncampAction(f, c, w))
+                .add(f.birdsong)
+                .cancel
 
         case EncampAction(f, c, w) =>
             f.from(c) --> f.warrior --> game.recycle
@@ -390,7 +398,10 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
 
         // DECAMP
         case BirdsongNAction(50, f : Expedition) =>
-            Ask(f)(f.wst./~(w => f.all(w).%(f.canPlace)./(c => DecampAction(f, c, w).x(f.decamped.has(c)).x(f.pool(f.warrior).not, "no warriors"))))(f.birdsong)(Next.as("Done"))
+            Ask(f)
+                .some(f.wst)(w => f.all(w).%(f.canPlace)./(c => DecampAction(f, c, w).!(f.decamped.has(c)).!(f.pool(f.warrior).not, "no warriors")))
+                .add(f.birdsong)
+                .done(Next)
 
         case DecampAction(f, c, w) =>
             f.from(c) --> w --> f.reserve
@@ -413,7 +424,10 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
         case BirdsongNAction(70, f : Expedition) =>
             if (f.hand.any && (f.pool(f.warrior) || f.totalWar)) {
                 val l = f.wst./~(w => f.all(w)).distinct
-                Ask(f)(l./(c => ExpeditionRecruitClearingAction(f, c).!(f.canPlace(c).not, "can't place").!(f.hand.%(_.matches(c.cost)).none))).done(Next).birdsong(f)
+                Ask(f)
+                    .each(l)(c => ExpeditionRecruitClearingAction(f, c).!(f.canPlace(c).not, "can't place").!(f.hand.%(_.matches(c.cost)).none))
+                    .done(Next)
+                    .birdsong(f)
             }
             else
                 Next
@@ -450,7 +464,10 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
         // MOVE
         case DaylightNAction(40, f : Expedition) =>
             if (f.retinue(RetinueMove).any)
-                Ask(f)(f.retinue(RetinueMove)./(RetinueMoveAction(f, _)))(EndTurnSoftAction(f, RetinueMove.elem, ForfeitActions(f.retinue(RetinueMove).num)))(f.daylight)
+                Ask(f)
+                    .each(f.retinue(RetinueMove))(d => RetinueMoveAction(f, d))
+                    .add(EndTurnSoftAction(f, RetinueMove.elem, ForfeitActions(f.retinue(RetinueMove).num)))
+                    .daylight(f)
             else
                 Next
 
@@ -468,7 +485,10 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
         // DELVE
         case DaylightNAction(50, f : Expedition) =>
             if (f.retinue(BattleThenDelve).any)
-                Ask(f)(f.retinue(BattleThenDelve)./(RetinueBattleThenDelveAction(f, _)))(EndTurnSoftAction(f, BattleThenDelve.elem, ForfeitActions(f.retinue(BattleThenDelve).num)))(f.daylight)
+                Ask(f)
+                    .each(f.retinue(BattleThenDelve))(d => RetinueBattleThenDelveAction(f, d))
+                    .add(EndTurnSoftAction(f, BattleThenDelve.elem, ForfeitActions(f.retinue(BattleThenDelve).num)))
+                    .daylight(f)
             else
                 Next
 
@@ -492,7 +512,10 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
 
         case RetinueDelveAction(f, d, c, cancel, then) =>
             if (f.rules(c) && f.at(c).of[Warrior].any)
-                Ask(f)(board.forests.%(game.fromForest(_).has(c))./~(r => f.at(r).of[AnyRelic]./(RetinueDelveRelicAction(f, d, c, r, _, cancel, then))))(cancel.?(CancelAction).|(then.as("Done")))
+                Ask(f)
+                    .some(board.forests.%(game.fromForest(_).has(c)))(r => f.at(r).of[AnyRelic]./(RetinueDelveRelicAction(f, d, c, r, _, cancel, then)))
+                    .cancelIf(cancel)
+                    .doneIf(cancel.not)(then)
             else
                 then
 
@@ -531,7 +554,10 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
         // RECOVER
         case DaylightNAction(60, f : Expedition) =>
             if (f.retinue(MoveOrRecover).any)
-                Ask(f)(f.retinue(MoveOrRecover)./(RetinueMoveOrRecoverAction(f, _)))(EndTurnSoftAction(f, MoveOrRecover.elem, ForfeitActions(f.retinue(MoveOrRecover).num)))(f.daylight)
+                Ask(f)
+                    .each(f.retinue(MoveOrRecover))(d => RetinueMoveOrRecoverAction(f, d))
+                    .add(EndTurnSoftAction(f, MoveOrRecover.elem, ForfeitActions(f.retinue(MoveOrRecover).num)))
+                    .daylight(f)
             else
                 Next
 
@@ -625,8 +651,8 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
 
         case EveningNAction(40, f : Expedition) =>
             Ask(f)
-              .add(RetinueAddAction(f).x(Retinue.all./~(f.retinue.apply).num >= 10, "max").x(f.hand.none, "no cards"))
-              .add(RetinueShiftAction(f).x(Retinue.all./~(f.retinue.apply).num == 0, "no retinue"))
+              .add(RetinueAddAction(f).!(Retinue.all./~(f.retinue.apply).num >= 10, "max").!(f.hand.none, "no cards"))
+              .add(RetinueShiftAction(f).!(Retinue.all./~(f.retinue.apply).num == 0, "no retinue"))
               .add(Next.as("Skip"))
               .evening(f)
 
@@ -636,7 +662,7 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
         case RetinueMainAction(f, h, q, o, max, m) =>
             Ask(f)
               .each(0.until(h.num).$)(n => RetinueCardAction(f, h, q, o, max, m, n))
-              .add(RetinueAction(f, h, m.to(ListMap), o).x(m.none))
+              .add(RetinueAction(f, h, m.to(ListMap), o).!(m.none))
               .add((RetinueExplodeAction(f, h, o, max)))
               .evening(f)
               .cancel

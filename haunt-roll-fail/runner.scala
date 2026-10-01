@@ -4,6 +4,7 @@ package hrf
 //
 //
 import hrf.colmat._
+import hrf.compute._
 import hrf.logger._
 //
 //
@@ -28,11 +29,14 @@ object Runner {
 
         sealed trait UIState
         case class UIContinue(c : Continue, aa : $[ExternalAction]) extends UIState
-        case class UIStop(token : StopToken, launch : ((() => UIState) => Unit) => Unit) extends UIState
+        case class UIStop(token : StopToken, launch : ((() => UIState) => Boolean) => Unit) extends UIState
+        case object UIStopTest extends UIState
         case class UIAsk(c : Continue, faction : Option[F], actions : $[UserAction], waiting : $[meta.gaming.F]) extends UIState
         case class UIAskDebug(c : Continue, faction : F, actions : $[ActionEval]) extends UIState
+        case class UIAskDebugCompute(c : Continue, faction : F, actions : Compute[$[ActionEval]]) extends UIState
         case class UIPerform(a : Action, aa : $[ExternalAction]) extends UIState
         case class UIRecord(info : String, c : Continue, a : ExternalAction) extends UIState
+        case class UIRecordCompute(info : String, c : Continue, f : meta.gaming.F, a : Compute[ExternalAction]) extends UIState
         case class UIRecordUndo(a : UndoAction) extends UIState
         case class UIInteractive(c : Continue, a : UserAction) extends UIState
         case class UIWait(c : Continue, factions : $[F]) extends UIState
@@ -42,7 +46,7 @@ object Runner {
 
         class StopToken(value : Double)
 
-        def stop(launch : ((() => UIState) => Unit) => Unit) = {
+        def stop(launch : ((() => UIState) => Boolean) => Unit) = {
             var token = new StopToken(0)
 
             UIStop(token, launch)
@@ -371,9 +375,10 @@ object Runner {
                 line = lines.takeWhile(_.action <= k).num
 
                 setTimeout(0) {
-                    ui.rewind(k, actions, None, scrollActionToLatest, undoTo, replayNext)
-
+                    // TEST CLONE // ui.overrideGame = generateGameVoid(k).?./(_.as[arcs.Game]./(_.cloned()).get.asInstanceOf[meta.gaming.G])
                     ui.overrideGame = generateGameVoid(k).?
+
+                    ui.rewind(k, actions, None, scrollActionToLatest, undoTo, replayNext)
                     ui.updateStatus()
                 }
             }
@@ -399,7 +404,7 @@ object Runner {
 
                 if (line > 0) {
                     if (lines(line - 1).action != lines(line).action) {
-                        ui.overrideGame = ui.overrideGame./(g => advanceGame(g, lines(line - 1).action, lines(line).action))
+                        ui.overrideGame = ui.overrideGame./(g => advanceGame(g, lines(line - 1).action, lines(line).action))./(_.as[arcs.Game]./(_.cloned()).get.asInstanceOf[meta.gaming.G])
                         ui.updateStatus()
                     }
                 }
@@ -473,6 +478,8 @@ object Runner {
         }
 
         def handleState() : Boolean = {
+            // println(state)
+
             state = state match {
                 case UIContinue(c @ ErrorContinue(e, msg), aa) =>
                     warn("ErrorContinue:", msg)
@@ -580,9 +587,9 @@ object Runner {
                         case AskHuman => UIAsk(c, Some(faction), actions, $)
                         case AskBot(q) =>
                             waitingFor = $(faction)
-                            ui.wait(self, waitingFor)
-                            UIRecord("#bot " + faction, c, q(actions))
-                        case DebugBot(q) => UIAskDebug(c, faction, q(actions))
+                            ui.wait(self, waitingFor, "z... z... z...".txt)
+                            UIRecordCompute("#bot " + faction, c, faction, q(actions))
+                        case DebugBot(q) => UIAskDebugCompute(c, faction, q(actions))
                         case WaitRemote => UIWait(c, $(faction))
                     }
 
@@ -599,7 +606,7 @@ object Runner {
                     })
 
                     lazy val debug = asks./~(ask => auto(game, ask.faction) match {
-                        case DebugBot(q) => Some(UIAskDebug(c, ask.faction, q(ask.actions)))
+                        case DebugBot(q) => Some(UIAskDebugCompute(c, ask.faction, q(ask.actions)))
                         case _ => None
                     }).take(1).single
 
@@ -609,9 +616,9 @@ object Runner {
                     }).take(1).single
 
                     lazy val bot = asks./~(ask => auto(game, ask.faction) match {
-                        case AskBot(q) => Some(UIRecord("#bot multi-ask", c, q(ask.actions)))
+                        case AskBot(q) => Some(UIRecordCompute("#bot multi-ask", c, ask.faction, q(ask.actions)))
                         case _ => None
-                    }).take(1).single
+                    }).shuffle.take(1).single // shuffle !!
 
                     debug || human || bot | UIWait(c, waits)
 
@@ -714,7 +721,8 @@ object Runner {
 
                     val nl = ui.alog(l, actions.num, {
                         case n : Int => scrollActionToNum(n)
-                        case List(n : Int, a : Any) if current >= n => ui.onClick(a)
+                        case (n : Int) :: _ if current < n => scrollActionToNum(n)
+                        case _ :: a => ui.onClick(a)
                     }, check.none)
 
                     lines :+= LogLine(nl, actions.num, k == LogKind.Temp)
@@ -753,7 +761,7 @@ object Runner {
                     if (waitingFor != ff) {
                         waitingFor = ff
 
-                        ui.wait(self, waitingFor)
+                        ui.wait(self, waitingFor, "z... z... z...".txt)
 
                         setTimeout(0) { hrf.web.timed(0)("scrollActionToLatest()") { scrollActionToLatest() } }
                     }
@@ -795,6 +803,17 @@ object Runner {
                         } {
                             later(() => UIRead(game.continue))
                         }
+                    }
+
+                case UIRecordCompute(m, c, f, a) =>
+                    var n = 0
+
+                    stop { later =>
+                        a.get(new hrf.Quants(500, 200, () => later(() => {
+                            n += 1
+                            ui.wait(self, $(f), Empty)
+                            UIStopTest
+                        })).continue)(l => later(() => UIRecord(m, c, l)))
                     }
 
                 case UIRecord(m, c, a) =>
@@ -913,17 +932,22 @@ object Runner {
                         case _ =>
                     }
 
+                    if (a.is[Cancel])
+                        softMaps = Map()
+
                     UIContinue(c, aa)
 
                 case UIPerform(a, aa) =>
+                    val validate = HRF.flag("full-valid") || aa.num < 40
+
                     if (check.any) {
                         a match {
                             case a : ExternalAction if a.isSoft =>
-                            case _ => check.get.performContinue(|(check.get.continue), a, true).nest
+                            case _ => check.get.performContinue(|(check.get.continue), a, validate).nest
                         }
                     }
 
-                    var c = game.performContinue(|(game.continue), a, true).nest
+                    var c = game.performContinue(|(game.continue), a, validate).nest
 
                     UIContinue(c, aa)
 
@@ -964,6 +988,17 @@ object Runner {
                         waitForInteraction()
                     }
 
+                case UIAskDebugCompute(c, f, a) =>
+                    var n = 0
+
+                    stop { later =>
+                        a.get(new hrf.Quants(500, 200, () => later(() => {
+                            n += 1
+                            ui.wait(self, $(f), ui.factionElem(f) ~ " thinks " ~ n.hlb)
+                            UIStopTest
+                        })).continue)(l => later(() => UIAskDebug(c, f, l)))
+                    }
+
                 case UIAskDebug(c, f, actions) =>
                     scrollActionToLatest()
 
@@ -997,7 +1032,7 @@ object Runner {
 
                 case UIContinue(_, Nil) =>
                     if (dirty)
-                        ui.wait(self, waitingFor)
+                        ui.wait(self, waitingFor, "z... z... z...".txt)
                     redrawIfDirty()
                     true
 
@@ -1009,10 +1044,15 @@ object Runner {
                     launch(action => {
                         state match {
                             case UIStop(t, _) if t == token =>
-                                state = action()
-                                continueHandleState()
+                                val s = action()
+                                if (s != UIStopTest) {
+                                    state = s
+                                    continueHandleState()
+                                }
+                                true
                             case _ =>
                                 +++("later failed")
+                                false
                         }
                     })
                     false

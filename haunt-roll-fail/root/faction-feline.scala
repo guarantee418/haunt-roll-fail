@@ -255,7 +255,7 @@ case class HospitalPlanCardAction(self : Feline, h : $[DeckCard], q : $[Elem], o
 }
 
 case class HospitalPlanExplodeAction(self : Feline, h : $[DeckCard], o : $[Option[HospitalPlan]], max : Int) extends HiddenChoice with SelfExplode {
-    def explode(withSoft : Boolean) = {
+    def explode(withSoft : Boolean)(implicit game : Game) = {
         val iii = 1.to(max)./~(h.indices.combinations).flatMap { l =>
             l.foldLeft($(SortedMap[Int, HospitalPlan]()))((mm, n) => mm./~(m => HospitalPlan.all./(c => m + (n -> c))))
         }
@@ -308,10 +308,13 @@ object FelineExpansion extends FactionExpansion[Feline] {
 
             val l = clusters.%(_.num >= 3)./~(x => x)
 
-            Ask(f)(StartingBuildingMainAction(f, l, Sawmill))(StartingBuildingMainAction(f, l, Workshop))(StartingBuildingMainAction(f, l, Recruiter))
+            Ask(f)
+                .add(StartingBuildingMainAction(f, l, Sawmill))
+                .add(StartingBuildingMainAction(f, l, Workshop))
+                .add(StartingBuildingMainAction(f, l, Recruiter))
 
         case StartingBuildingMainAction(f : Feline, l, p) =>
-            Ask(f)(l./(StartingBuildingAction(f, _, p))).cancel
+            Ask(f).each(l)(c => StartingBuildingAction(f, c, p)).cancel
 
         case StartingBuildingAction(f : Feline, c, p) =>
             game.homelands :+= c
@@ -346,13 +349,16 @@ object FelineExpansion extends FactionExpansion[Feline] {
             if (s.none || w.none || r.none) {
                 val l = (s ++ w ++ r)./~(game.connected).distinct.diff(game.homelands).%(f.canBuild)
 
-                Ask(f)(s.none.?(StartingBuildingMainAction(f, l, Sawmill)))(w.none.?(StartingBuildingMainAction(f, l, Workshop)))(r.none.?(StartingBuildingMainAction(f, l, Recruiter)))
+                Ask(f)
+                    .when(s.none)(StartingBuildingMainAction(f, l, Sawmill))
+                    .when(w.none)(StartingBuildingMainAction(f, l, Workshop))
+                    .when(r.none)(StartingBuildingMainAction(f, l, Recruiter))
             }
             else {
                 val l = s ++ w ++ r
                 val ll = l.diff(game.homelands.diff(l)./~(game.connected)).some.|(l)
 
-                Ask(f)(ll./(c => StartingClearingAction(f, c).as(c)(f, "places", Keep.of(f), Keep.imgd(f), "in"))).needOk
+                Ask(f).each(ll)(c => StartingClearingAction(f, c).as(c)(f, "places", Keep.of(f), Keep.imgd(f), "in")).needOk
             }
 
         case StartingClearingAction(f : Feline, c) if options.has(SetupTypeHomelands) =>
@@ -414,7 +420,7 @@ object FelineExpansion extends FactionExpansion[Feline] {
         case StartingBuildingsNextAction(f : Feline, k, p) =>
             soft()
 
-            Ask(f)((k +: game.connected(k)).%(f.canBuild)./(PlaceStartingBuildingAction(f, k, _, p)))
+            Ask(f).each((k +: game.connected(k)).%(f.canBuild))(c => PlaceStartingBuildingAction(f, k, c, p))
 
         case PlaceStartingBuildingAction(f : Feline, k, r, p) =>
             f.reserve --> p --> r
@@ -549,11 +555,11 @@ object FelineExpansion extends FactionExpansion[Feline] {
 
                     f.hand --> mm.head --> f.drawn
 
-                    Ask(f)(DoAction(FieldHospitalsAction(f, c, q)))
+                    Ask(f).add(DoAction(FieldHospitalsAction(f, c, q)))
                 }
                 else
                 if (ask.none) {
-                    Ask(f)(DoAction(FieldHospitalsIgnoreAction(f, c, q)))
+                    Ask(f).add(DoAction(FieldHospitalsIgnoreAction(f, c, q)))
                 }
                 else
                     OpportunityDiscardCardAction(f, ToHeal(f, n), c.cost, FieldHospitalsAction(f, c, q), FieldHospitalsIgnoreAction(f, c, q))
@@ -583,7 +589,9 @@ object FelineExpansion extends FactionExpansion[Feline] {
         case BattleStartedAction(b) if b.attacker.can(Siege) && b.attacker.at(b.clearing).has(Catapult) && b.attacker.rules(b.clearing) && b.defender.at(b.clearing).of[Scoring].any =>
             val f = b.attacker
             val e = b.defender
-            Ask(f)((BattleSiegeAction(f, e, b, b.attacker.at(b.clearing).of[Catapult.type]) :: BattleNoSiegeAction(f, e, b)))
+            Ask(f)
+                .add(BattleSiegeAction(f, e, b, b.attacker.at(b.clearing).of[Catapult.type]))
+                .add(BattleNoSiegeAction(f, e, b))
 
         case BattleSiegeAction(f, e, b, l) =>
             f.used :+= Siege
@@ -606,7 +614,7 @@ object FelineExpansion extends FactionExpansion[Feline] {
                 Ask(f).done(Next).birdsong(f)
             else
             if (t >= r.num)
-                Ask(f)(ProduceMultiWoodAction(f, r))
+                Ask(f).add(ProduceMultiWoodAction(f, r))
             else
                 Ask(f).each(r.combinations(t).$)(ProduceMultiWoodAction(f, _)).birdsong(f)
 
@@ -733,12 +741,12 @@ object FelineExpansion extends FactionExpansion[Feline] {
             val r = f.all(Recruiter).%(f.canPlace)
 
             if (t >= r.num)
-                Ask(f)(RecruitCatsAction(f, r, r))
+                Ask(f).add(RecruitCatsAction(f, r, r))
             else
             if (t == 0)
-                Ask(f)(RecruitCatsAction(f, $, r))
+                Ask(f).add(RecruitCatsAction(f, $, r))
             else
-                Ask(f)(r.combinations(t).$./(RecruitCatsAction(f, _, r))).cancel
+                Ask(f).each(r.combinations(t).$)(l => RecruitCatsAction(f, l, r)).cancel
 
         case RecruitCatsAction(f, l, r) =>
             game.highlights :+= PlaceHighlight(l.distinct)
@@ -759,7 +767,7 @@ object FelineExpansion extends FactionExpansion[Feline] {
             CatDoneAction(f, Repeat)
 
         case BuildMainAction(f, b, cost, vp, _, cc) =>
-            Ask(f)(cc./~(l => l.%(f.canBuild)./(BuildAction(f, b, cost, vp, _, l)))).cancel
+            Ask(f).some(cc)(l => l.%(f.canBuild)./(BuildAction(f, b, cost, vp, _, l))).cancel
 
         case BuildCatapultAction(f, cost, workshops, supply) =>
             Ask(f).some(supply)(l => l.%(workshops.has)./(BuildAction(f, Catapult, cost, 0, _, l))).cancel
@@ -769,7 +777,7 @@ object FelineExpansion extends FactionExpansion[Feline] {
 
             val cm = logs.combinations(cost).$
 
-            Ask(f)(cm./(BuildPayAction(f, b, vp, c, _))).cancelIf(cm.num > 1)
+            Ask(f).each(cm)(l => BuildPayAction(f, b, vp, c, l)).cancelIf(cm.num > 1)
 
         case BuildPayAction(f, b, vp, c, l) =>
             game.highlights :+= PlaceHighlight($(c))
@@ -795,9 +803,9 @@ object FelineExpansion extends FactionExpansion[Feline] {
                 CatDoneAction(f, Repeat)
             else
             if (z.none)
-                Ask(f)(a).cancel
+                Ask(f).add(a).cancel
             else
-                Ask(f)(a).done(CatDoneAction(f, Repeat))
+                Ask(f).add(a).done(CatDoneAction(f, Repeat))
 
         case OverworkDiscardAction(f, c, l, z) =>
             OptionalDiscardCardAction(f, OverworksIn(c), c.cost, OverworkWoodAction(f, c, l, z))
@@ -865,7 +873,7 @@ object FelineExpansion extends FactionExpansion[Feline] {
         case HospitalPlanMainAction(f, h, q, o, max, m) =>
             Ask(f)
               .each(0.until(h.num).$)(n => HospitalPlanCardAction(f, h, q, o, max, m, n))
-              .add(HospitalPlanAction(f, h, m.to(ListMap), o).x(m.none))
+              .add(HospitalPlanAction(f, h, m.to(ListMap), o).!(m.none))
               .add((HospitalPlanExplodeAction(f, h, o, max)))
 
         case HospitalPlanCardAction(f, h, q, o, max, m, _) =>
@@ -877,6 +885,7 @@ object FelineExpansion extends FactionExpansion[Feline] {
             f.used :+= FieldHospitals
 
             AfterTurnAction(f)
+
 
         case _ => UnknownContinue
     }

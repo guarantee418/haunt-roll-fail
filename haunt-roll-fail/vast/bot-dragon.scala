@@ -4,6 +4,7 @@ package vast
 //
 //
 import hrf.colmat._
+import hrf.compute._
 import hrf.logger._
 //
 //
@@ -11,7 +12,7 @@ import hrf.logger._
 //
 
 class BotDragon(f : Dragon.type) extends EvalBot {
-    def eval(actions : $[UserAction])(implicit game : Game) : $[ActionEval] = {
+    def eval(actions : $[UserAction])(implicit game : Game) : Compute[$[ActionEval]] = {
         val ev = new GameEvaluationDragon(f)
         actions./{ a => ActionEval(a, ev.eval(a)) }
     }
@@ -63,10 +64,6 @@ class GameEvaluationDragon(val self : Dragon.type)(implicit val game : Game) {
                     board.pattern(dest, Diamond).but(position).exists(p => board.list(p).count(Chest) > n) |=> 300 -> "move closer to chests"
                     board.list(dest).count(Chest) < n |=> -1100 -> "dont move from chest"
                 }
-
-                // if (self.prideE.available) {
-                //     board.pattern(dest, Around).but(position).count(p => board.list(p).count(Chest) > board.list(position).count(Chest)) |=> 1300 -> "move to chest"
-                // }
 
                 if (self.awake && self.underground) {
                     val l = board.inner.%(p => board.get(p).as[Explored].?(_.original.?(_.tokens.has(Crystal))))

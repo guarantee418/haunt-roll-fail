@@ -50,7 +50,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         (regions, pieces, scene)
     }
 
-
     def drawMap() {
         val bitmap = {
             val width = mapBitmap.node.clientWidth * dom.window.devicePixelRatio
@@ -76,7 +75,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     def factionStatus(f : Faction, container : Container) {
         if (!game.players.contains(f))
             return
-
 
         val p = game.pstates(f)
 
@@ -142,7 +140,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             case p : BasicPane if p.name == "status" => p.copy(name = "status-vertical", kY = p.kY * arity)
             case p => p
         }) ::
-        Nil
+        $
     ).%(_.boost > 0)
 
     val layouter = Layouter(layouts,
@@ -180,33 +178,35 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     val layoutKey = "v" + 1 + "." + "arity-" + arity
 
     override def preinfo(self : Option[Faction], aa : List[UserAction]) = {
-        val ii = currentGame.info(Nil, self, aa)
+        val ii = currentGame.info($, self, aa)
         ii.any.??(convertActions(self, ii))
     }
 
     override def styleAction(faction : Option[Faction], actions : List[UserAction], a : UserAction, unavailable : Boolean, view : Option[Any]) = {
         val img = view @@ {
+            // case Some(_ : Card) => true
             case _ => false
         } || a @@ {
+            // case _ : ViewToken => true
             case _ => false
         }
 
         a @@ {
             case _ if unavailable && img => $(xstyles.unavailableCard)
             case _ if unavailable => $(xstyles.unavailableText)
-            case _ => Nil
+            case _ => $()
         } ++
         a @@ {
-            case _ if img => Nil
+            case _ if img => $()
             case _ : Info => $(xstyles.info, xstyles.xx, xstyles.thu)
             case _ => $(xstyles.choice, xstyles.xx, xstyles.thu)
         } ++
         a @@ {
-            case _ : Extra[_] => Nil
+            case _ : Extra[_] => $()
             case _ : Choice => $(xlo.pointer)
             case _ : Cancel => $(xlo.pointer)
             case _ : OnClickInfo => $(xlo.pointer)
-            case _ => Nil
+            case _ => $()
         } ++
         a @@ {
             case _ if img => $(styles.viewcard)
@@ -214,14 +214,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         } ++
         faction @@ {
             case Some(f) => $(elem.borders.get(f))
-            case _ => Nil
+            case _ => $()
         } ++
         a @@ {
-            case _ => Nil
+            // case _ if img && actions.has(NoHand) => $(xlo.first)
+            case _ => $()
         } ++
         a @@ {
-            case _ => Nil
+            // case a : Selectable if a.selected => $(styles.selected)
+            case _ => $()
         }
     }
-
 }

@@ -182,7 +182,7 @@ object MetaAdset extends MetaGame {
 
     def getBots(f : F) = $("None")
 
-    override def defaultBots = $("None")
+    override def defaultBot(f : PlayerN) = "None"
 
     def getBot(f : F, b : String) = new BotAdset(f)
 

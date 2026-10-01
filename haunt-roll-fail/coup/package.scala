@@ -1,4 +1,4 @@
-package object coup extends hrf.base.Gaming with hrf.bot.BotGaming with hrf.base.SelectSubset with  hrf.ui.GreyUI {
+package object coup extends hrf.base.Gaming with hrf.bot.BotGaming with hrf.base.SelectSubset with hrf.ui.GreyUI {
     type F = Faction
     type G = Game
 

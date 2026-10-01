@@ -17,8 +17,9 @@ import hrf.elem._
 import arcs.elem._
 
 
-abstract class Lore(val id : String, val name : String) extends CourtCard with Record with Effect with Elementary {
-}
+abstract class Lore(val id : String, val name : String) extends CourtCard with Record with Effect with Elementary
+
+trait UnofficialLore extends Lore
 
 case object ToolPriests       extends Lore("lore01", "Tool Priests")
 case object GalacticRifles    extends Lore("lore02", "Galactic Rifles")
@@ -48,8 +49,8 @@ case object TyrantsEgo        extends Lore("lore25", "Tyrant's Ego")
 case object TyrantsAuthority  extends Lore("lore26", "Tyrant's Authority")
 case object TycoonsAmbition   extends Lore("lore27", "Tycoon's Ambition")
 case object TycoonsCharm      extends Lore("lore28", "Tycoon's Charm")
-case object GuildLoyaltyLL      extends Lore("lore29", "Guild Loyalty")
-case object CatapultOverdriveLL extends Lore("lore30", "Catapult Overdrive")
+case object GuildLoyaltyLL      extends Lore("lore29", "Guild Loyalty") with UnofficialLore
+case object CatapultOverdriveLL extends Lore("lore30", "Catapult Overdrive") with UnofficialLore
 
 object Lores {
     def all = $(
@@ -104,7 +105,11 @@ object Lores {
         ForceBeams,
         RaiderExosuits,
         SurvivalOverrides,
+        EmpathsVision,
+        KeepersTrust,
         WarlordsCruelty,
+        TyrantsEgo,
+        TycoonsCharm,
         GuildLoyaltyLL,
         CatapultOverdriveLL
     )
@@ -113,8 +118,8 @@ object Lores {
     def preset2 = $(LivingStructures, CloudCities, GateStations, GatePorts, ToolPriests) // Buildings
     def preset3 = $(SignalBreaker, RailgunArrays, SeekerTorpedoes, MirrorPlating, GalacticRifles) // Battle
     def preset4 = $(GuildLoyaltyLL, AncientHoldings, HiddenHarbors, RaiderExosuits, RepairDrones) // Archivist
-    def preset5 = $(WarlordsTerror) // Ambitions
-    def preset6 = $(WarlordsCruelty) // Clear Outrage
+    def preset5 = $(TycoonsCharm, TyrantsEgo, WarlordsCruelty, KeepersTrust, EmpathsVision) // Clear Outrage
+    def preset6 = $(TycoonsAmbition, TyrantsAuthority, WarlordsTerror, KeepersSolidarity, EmpathsBond) // Ambitions
 }
 
 case class DiscardLoreCardAction(self : Faction, c : Lore, then : ForcedAction) extends ForcedAction
@@ -122,16 +127,18 @@ case class DiscardLoreCardAction(self : Faction, c : Lore, then : ForcedAction) 
 case class NurtureMainAction(self : Faction, cost : Cost, then : ForcedAction) extends ForcedAction with Soft
 
 case class PruneMainAction(self : Faction, cost : Cost, then : ForcedAction) extends ForcedAction with Soft
-case class PruneCityAction(self : Faction, cost : Cost, s : System, u : Figure, then : ForcedAction) extends ForcedAction
-case class PruneStarportAction(self : Faction, cost : Cost, s : System, u : Figure, then : ForcedAction) extends ForcedAction
+case class PruneCityAction(self : Faction, cost : Cost, s : Region, u : Figure, then : ForcedAction) extends ForcedAction
+case class PruneStarportAction(self : Faction, cost : Cost, s : Region, u : Figure, then : ForcedAction) extends ForcedAction
 
 case class MartyrMainAction(self : Faction, cost : Cost, then : ForcedAction) extends ForcedAction with Soft
 case class MartyrAction(self : Faction, cost : Cost, s : System, u : Figure, t : Figure, then : ForcedAction) extends ForcedAction
 
 case class FireRiflesMainAction(self : Faction, cost : Cost, then : ForcedAction) extends ForcedAction with Soft
 case class FireRiflesFromAction(self : Faction, cost : Cost, s : System, then : ForcedAction) extends ForcedAction with Soft
-case class FireRiflesAction(self : Faction, cost : Cost, s : System, e : Faction, t : System, then : ForcedAction) extends ForcedAction
-case class FireRiflesRolledAction(self : Faction, e : Faction, t : System, rolled : Rolled, then : ForcedAction) extends RolledAction[$[BattleResult]]
+case class FireRiflesAction(self : Faction, cost : Cost, s : System, e : Color, t : System, then : ForcedAction) extends ForcedAction
+case class FireRiflesRolledAction(self : Faction, e : Color, t : System, rolled : Rolled, then : ForcedAction) extends RolledAction[$[BattleResult]]
+case class EmpathsVisionFireRiflesAction(self : Faction, s : System, e : Color, skirmish : Rolled, reroll : Rolled, then : ForcedAction) extends ForcedAction
+case class EmpathsVisionFireRiflesRolledAction(self : Faction, s : System, e : Color, skirmish : Rolled, rolled : Rolled, then : ForcedAction) extends RolledAction[$[BattleResult]]
 
 case class PredictiveSensorsAction(self : Faction, s : System, u : Figure, t : System, then : ForcedAction) extends ForcedAction
 
@@ -141,15 +148,22 @@ case class GuideToAction(self : Faction, cost : Cost, s : System, l : $[System],
 case class GuidePathAction(self : Faction, cost : Cost, s : System, t : System, cancel : Boolean, then : ForcedAction) extends ForcedAction with Soft
 case class GuideAction(self : Faction, cost : Cost, s : System, t : System, l : $[Figure], then : ForcedAction) extends ForcedAction
 
+case class TyrantsEgoMainAction(self : Faction, then : ForcedAction) extends ForcedAction with Soft
+case class WarlordsTerrorMainAction(self : Faction, then : ForcedAction) extends ForcedAction with Soft
+
+case class AnnexMainAction(self : Faction, cost : Cost, then : ForcedAction) extends ForcedAction with Soft
+case class AnnexAction(self : Faction, cost : Cost, s : System, u : Figure, then : ForcedAction) extends ForcedAction
+
+
 object LoreExpansion extends Expansion {
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
-        case DiscardLoreCardAction(f, c, then) =>
-            f.lores :-= c
+        // DISCARD
+        case DiscardLoreCardAction(f, l, then) =>
+            f.lores --> l --> game.unusedLores
 
-            f.log("discarded", c)
+            f.log("discarded", l)
 
             then
-
 
         // SURVIVAL OVERRIDES
         case MartyrMainAction(f, x, then) =>
@@ -157,9 +171,8 @@ object LoreExpansion extends Expansion {
 
             Ask(f).group("Martyr".hl, x)
                 .some(systems./~(s => f.at(s).ships.fresh.take(1)./(s -> _))) { case (s, u) =>
-                    f.others./~(_.at(s).ships./(t =>
+                    f.others.%(f.canHarm(_, s))./~(_.at(s).ships./(t =>
                         MartyrAction(f, x, s, u, t, then).as(convert(t))("Martyr".hh, "in", s)
-                            .!(f.regent && t.faction.regent && Empire.at(s).any, "truce")
                     ))
                 }
                 .cancel
@@ -171,9 +184,9 @@ object LoreExpansion extends Expansion {
 
             t.faction.damaged :-= t
 
-            u --> f.reserve
+            u --> game.laws.has(TheDeadLive).?(TheDeadLive).|(f.reserve)
 
-            f.log("martyred", t, "in", s, "with", u)
+            f.log("martyred", t, "in", s, "with", u, x)
 
             then
 
@@ -183,60 +196,70 @@ object LoreExpansion extends Expansion {
 
         case PruneMainAction(f, x, then) =>
             val prefix = f.short + "-"
-            def suffix(s : System) = f.rivals.exists(_.rules(s)).??("-damaged")
 
             Ask(f)
                 .group("Prune".hl)
-                .some(systems)(s => f.pool(Starport).??(f.at(s).cities)./(u => PruneCityAction(f, x, s, u, then).as(City.of(f), Image(prefix + "city" + f.damaged.has(u).??("-damaged"), styles.qbuilding), "in", s)))
-                .some(systems)(s => f.pool(City).??(f.at(s).starports)./(u => PruneStarportAction(f, x, s, u, then).as(Starport.of(f), Image(prefix + "starport" + f.damaged.has(u).??("-damaged"), styles.qbuilding), "in", s)))
+                .some(systems)(s => f.pool(Starport).??(f.at(s).cities)./(u => PruneCityAction(f, x, s, u, then).as(City.of(f), game.showFigure(u), "in", s)))
+                .some(systems)(s => f.pool(City).??(f.at(s).starports)./(u => PruneStarportAction(f, x, s, u, then).as(Starport.of(f), game.showFigure(u), "in", s)))
+                .some(f.flagship.any.??(Flagship.scheme(f)))(s => f.pool(Starport).??(s.$.cities)./(u => PruneCityAction(f, x, s, u, then).as(City.of(f), game.showFigure(u), "in", s)))
+                .some(f.flagship.any.??(Flagship.scheme(f)))(s => f.pool(City).??(s.$.starports)./(u => PruneStarportAction(f, x, s, u, then).as(City.of(f), game.showFigure(u), "in", s)))
                 .cancel
 
         case PruneCityAction(f, x, s, u, then) =>
             f.pay(x)
 
-            val u2 = f.reserve --> Starport.of(f)
+            if (f.taxed.cities.has(u))
+                f.taxed.cities :-= u
+
+            val n = f.reserve --> Starport.of(f)
 
             if (f.damaged.has(u)) {
-                f.damaged :+= u2
                 f.damaged :-= u
+                f.damaged :+= n
             }
 
             if (game.unslotted.has(u)) {
-                game.unslotted :+= u2
                 game.unslotted :-= u
+                game.unslotted :+= n
             }
 
             u --> f.reserve
 
-            u2 --> s
+            n --> s
+
+            game.onRemoveFigure(u)
 
             f.log("pruned", u, "in", s, x)
 
-            if (f.pooled(City) > 2)
-                f.adjust = true
+            f.recalculateSlots()
 
             AdjustResourcesAction(then)
 
         case PruneStarportAction(f, x, s, u, then) =>
             f.pay(x)
 
-            val u2 = f.reserve --> City.of(f)
+            if (f.worked.has(u))
+                f.worked :-= u
+
+            val n = f.reserve --> City.of(f)
 
             if (f.damaged.has(u)) {
-                f.damaged :+= u2
                 f.damaged :-= u
+                f.damaged :+= n
             }
 
             if (game.unslotted.has(u)) {
-                game.unslotted :+= u2
                 game.unslotted :-= u
+                game.unslotted :+= n
             }
 
             u --> f.reserve
 
-            u2 --> s
+            n --> s
 
             f.log("pruned", u, "in", s, x)
+
+            f.recalculateSlots()
 
             then
 
@@ -249,21 +272,45 @@ object LoreExpansion extends Expansion {
                 .cancel
 
         case FireRiflesFromAction(f, x, s, then) =>
-            Ask(f).group("Fire Rifles".hl, x, "from")
-                .some(board.connected(s))(t => factions.but(f).%(_.at(t).any)./(e => FireRiflesAction(f, x, s, e, t, then).as(e, "in", t)))
+            Ask(f).group("Fire Rifles".hl, x, "from", s)
+                .some(game.connected(s))(t => game.colors.but(f).%(_.at(t).any).%(f.canHarm(_, s))./(e => FireRiflesAction(f, x, s, e, t, then).as(e, "in", t)))
                 .cancel
 
         case FireRiflesAction(f, x, s, e, t, then) =>
             f.pay(x)
 
-            f.log("fired rifles from", s, "at", e, "in", t)
+            f.log("fired rifles from", s, "at", e, "in", t, x)
 
-            Roll[$[BattleResult]](f.at(s).ships.fresh.num.times(Skirmish.die), l => FireRiflesRolledAction(f, e, t, l, then))
+            Roll[$[BattleResult]](min(f.at(s).ships.fresh.num, 6).times(Skirmish.die), l => FireRiflesRolledAction(f, e, t, l, then))
 
         case FireRiflesRolledAction(f, e, t, l, then) =>
             f.log("rolled", l./(x => Image("skirmish-die-" + (Skirmish.die.values.indexed.%(_ == x).indices.shuffle(0) + 1), styles.token)))
 
-            AssignHitsAction(f, t, f, e, e.at(t), l.flatten.count(HitShip), 0, 0, |(GalacticRifles), $, then)
+            val next = AssignHitsAction(f, t, f, e, e.at(t), l.flatten.count(HitShip), 0, 0, |(GalacticRifles), $, then)
+
+            if (game.declared.contains(Empath) && f.hasLore(EmpathsVision)) {
+                val rerollable = 1.to(l.num).reverse./~(n => l.combinations(n).$)
+
+                Ask(f)
+                    .group(EmpathsVision)
+                    .each(rerollable) { q =>
+                        EmpathsVisionFireRiflesAction(f, t, e, l.diff(q), q, then)
+                            .as("Reroll", q./(x => Image("skirmish-die-" + (Skirmish.die.values.indexed.%(_ == x).indices.shuffle(0) + 1), styles.token)))
+                    }
+                    .skip(next)
+            }
+            else
+                Then(next)
+
+        case EmpathsVisionFireRiflesAction(f, t, e, o, q, then) =>
+            f.log("rerolled", q./(x => Image("skirmish-die-" + (Skirmish.die.values.indexed.%(_ == x).indices.shuffle(0) + 1), styles.token)), "with", EmpathsVision)
+
+            Roll[$[BattleResult]](q.num.times(Skirmish.die), l => EmpathsVisionFireRiflesRolledAction(f, t, e, o, l, then))
+
+        case EmpathsVisionFireRiflesRolledAction(f, t, e, o, n, then) =>
+            f.log("rolled", n./(x => Image("skirmish-die-" + (Skirmish.die.values.indexed.%(_ == x).indices.shuffle(0) + 1), styles.token)))
+
+            AssignHitsAction(f, t, f, e, e.at(t), (o ++ n).flatten.count(HitShip), 0, 0, |(GalacticRifles), $(EmpathsVision), then)
 
         // PREDICTIVE SENSORS
         case PredictiveSensorsAction(f, s, u, t, then) =>
@@ -278,8 +325,8 @@ object LoreExpansion extends Expansion {
             val l = systems.%(s => f.at(s).starports.fresh.any)
 
             Ask(f)
-                .group("Guide from").each(l)(s => GuideFromAction(f, x, s, board.connected(s), then).as(s).!!!)
-                .group("Guide to").each(l)(s => GuideToAction(f, x, s, board.connected(s), then).as(s).!!!)
+                .group("Guide from").each(l)(s => GuideFromAction(f, x, s, game.connected(s), then).as(s).!!!)
+                .group("Guide to").each(l)(s => GuideToAction(f, x, s, game.connected(s), then).as(s).!!!)
                 .cancel
 
         case GuideFromAction(f, x, s, l, then) =>
@@ -318,6 +365,68 @@ object LoreExpansion extends Expansion {
 
             GuidePathAction(f, AlreadyPaid, s, t, false, then)
 
+        // TYRANT'S EGO
+        case TyrantsEgoMainAction(f, then) =>
+            implicit def convert(u : Figure, selected : Boolean) = game.showFigure(u, selected.??(2))
+
+            XXSelectObjectsAction(f, f.captives)
+                .withGroup("Secure".hl, "with", TyrantsEgo)
+                .withRule(_.num(1))
+                .withAuto(u => SecureMainAction(f, ReleaseCaptive(u.only), |(TyrantsEgo), false, true, then).as("Secure"))
+                .withExtras(CancelAction)
+
+
+        // WARLORD'S TERROR
+        case WarlordsTerrorMainAction(f, then) =>
+            implicit def convert(u : Figure, selected : Boolean) = game.showFigure(u, selected.?(2).|(1))
+
+            XXSelectObjectsAction(f, f.trophies)
+                .withGroup("Influence".hl, "with", WarlordsTerror)
+                .withRule(_.num(1))
+                .withAuto(u => InfluenceMainAction(f, ReleaseTrophy(u.only), |(WarlordsTerror), false, true, then).as("Influence"))
+                .withExtras(CancelAction)
+
+        // TYRANT'S AUTHORITY
+        case AnnexMainAction(f, x, then) =>
+            var targets = systems.%(f.rules)./~(s => s.$.buildings.%(_.faction != f)./(_ -> s))
+
+            Ask(f).group("Annex".hl, x)
+                .each(targets) { case (u, s) => AnnexAction(f, x, s, u, then).as(u, game.showFigure(u), "in", s).!(f.pool(u.piece).not, "max") }
+                .cancel
+
+        case AnnexAction(f, x, s, u, then) =>
+            f.pay(x)
+
+            f.log("annexed", u, x)
+
+            u --> u.faction.reserve
+
+            val n = f.reserve.$.piece(u.piece).first
+
+            n --> s
+
+            if (u.damaged) {
+                u.faction.damaged :-= u
+                f.damaged :+= n
+            }
+
+            if (u.piece == City) {
+                game.seats.keys.foreach { i =>
+                    if (game.seats.get(i).has(u))
+                        game.seats += i -> n
+                }
+
+                u.faction.as[Faction].foreach { e =>
+                    e.recalculateSlots()
+                }
+
+                f.recalculateSlots()
+            }
+
+            AdjustResourcesAction(then)
+
+
+        // ...
         case _ => UnknownContinue
     }
 }

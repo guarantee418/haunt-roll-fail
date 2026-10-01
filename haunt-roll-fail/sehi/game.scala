@@ -91,6 +91,35 @@ object Deck {
         Card(Fascist, "Punitive Psychiatry", "punitive-psychiatry")
 }
 
+
+// MASS SURVEILLANCE
+// MANDATORY MEDICAL PROCEDURES
+// ABORTIONS BAN
+// ASSET FORFEITURE
+// CONCENTRATION CAMPS
+// AFFIRMATIVE ACTION
+// MARTIAL LAW
+// EXTRAJUDICIAL PUNISHMENT
+// CENSORSHIP
+// FORCED DISAPPEARANCES
+// PUNITIVE PSYCHIATRY
+
+
+// fascist-article-mass-surveillance
+// fascist-article-mandatory-medical-procedures
+// fascist-article-abortions-ban
+// fascist-article-asset-forfeiture
+// fascist-article-concentration-camps
+// fascist-article-affirmative-action
+// fascist-article-martial-law
+// fascist-article-extrajudicial-punishment
+// fascist-article-censorship
+// fascist-article-forced-disappearances
+// fascist-article-punitive-psychiatry
+
+
+
+
 sealed trait Vote extends Record with Elementary {
     def wide : Elem
 }
@@ -199,6 +228,8 @@ trait GameImplicits {
 }
 
 class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with LoggedGame {
+    // type F = Faction
+
     private implicit val game = this
 
     var roles = Map[Faction, Role]()
@@ -258,6 +289,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 println("")
                 println("")
                 println("")
+                println("WTF!!!")
                 println("Empty Ask as a result of " + action)
             case _ =>
         }
@@ -372,7 +404,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                     chancellor = null
 
                     log(f, "ran for", President)
-                    Ask(f)(alive.but(f).diff(limited)./(NominateChancellorAction(f, _)))
+                    Ask(f).add(alive.but(f).diff(limited)./(NominateChancellorAction(f, _)))
                 }
 
             case NominateChancellorAction(f, c) =>
@@ -450,10 +482,15 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
             case LegislationAction(p, c) =>
                 deck --> deck.take(3) --> drawn
 
+                //log(p, "is choosing policies")
+
                 XXSelectObjectsAction(p, drawn.get)
                     .withGroup("Select policies for " ~ c.elem)
                     .withRule(_.num(2))
                     .withThen(l => PresidentialSelectedAction(p, c, l(0), l(1)))(l => "Confirm " ~ desc(l./(_.elem).comma))
+                    // .withExtra((fascist.num == 5).?(ChancellorVetoAction(p, c)).$)
+
+                // PresidentialPolicyAction(p, c)
 
             case PresidentialPolicyAction(p, c) =>
                 Ask(p, drawn.get./(a => SelectPolicyAction(p, a, "Select policies", PresidentialSecondPolicyAction(p, c, a))))
@@ -470,8 +507,15 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
 
                 YYSelectObjectsAction(c, drawn.get)
                     .withGroup("Select policy from " ~ p.elem)
+                    // .withRule(_.num(n))
                     .withThen(a => ChancellorSelectedAction(p, c, a))(a => "Confirm " ~ a.elem)("Confirm")
                     .withExtra((fascist.num == 5).?(ChancellorVetoAction(p, c)).$)
+
+
+                // if (fascist.num == 5)
+                //     ChancellorPolicyVetoAction(p, c)
+                // else
+                //     ChancellorPolicyAction(p, c)
 
             case ChancellorPolicyAction(p, c) =>
                 Ask(c, drawn.get./(a => SelectPolicyAction(p, a, "Select policy", ChancellorSelectedAction(p, c, a))))
@@ -581,7 +625,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 if (roles(f) == Hitler)
                     GameOverAction(Liberal, Hitler.elem ~ " was killed")
                 else
-                    Ask(f)(ExecutedAction(f, p))(TurnStartAction.as("Ouch")).needOk
+                    Ask(f).add(ExecutedAction(f, p)).add(TurnStartAction.as("Ouch")).needOk
 
             case SpecialElectionAction(p) =>
                 Ask(p, alive.but(p)./(f => NominateNextPresidentAction(p, f)))
@@ -606,7 +650,16 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 else
                     enemies += p -> (enemies(p) :+ f)
 
-                Ask(p)(ViewPartyAction(p, f, roles(f).party)).done(TurnStartAction).needOk
+                Ask(p).add(ViewPartyAction(p, f, roles(f).party)).done(TurnStartAction).needOk
+
+                /*
+            case GameOverAction(s, m) =>
+                over = true
+                log(m)
+                log((s.toString + "s").styled(s), "won")
+                val winners = factions.%(roles(_).party == s)
+                GameOver(winners, "Game Over" ~ Break ~ winners./(f => f.elem ~ " won").join(Break), Nil)
+                */
 
             case GameOverAction(s, m) =>
                 over = true

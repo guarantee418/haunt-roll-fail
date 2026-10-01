@@ -62,6 +62,22 @@ package object html {
         def clear() {
             attach.clear()
         }
+
+        var hash : |[String] = None
+        var cached : |[HtmlBlock] = None
+
+        def replaceCached(hash : String, elem : Elem, resources : Resources, click : Any => Unit = null, over : Any => Unit = null, out : Any => Unit = null) : HtmlBlock = {
+            if (this.hash.has(hash) && cached.any)
+                return cached.get
+
+            this.hash = |(hash)
+
+            attach.clear()
+
+            this.cached = |(attach.append(elem, resources, click, over, out))
+
+            this.cached.get
+        }
     }
 
     class HtmlBlock(val parent : dom.html.Element, val nodes : $[dom.html.Element]) {

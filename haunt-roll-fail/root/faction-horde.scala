@@ -329,7 +329,7 @@ object HordeExpansion extends FactionExpansion[Horde] {
             val ll = l.diff(board.inner).some.|(l)
             val lll = ll.diff(hh).diff(hhh).some.||(ll.diff(hh).some).|(ll)
 
-            Ask(f)(lll./(c => StartingClearingAction(f, c).as(c)(f, "starts in"))).needOk
+            Ask(f).each(lll)(c => StartingClearingAction(f, c).as(c)(f, "starts in")).needOk
 
         case FactionSetupAction(f : Horde) =>
             StartingCornerAction(f)
@@ -372,7 +372,10 @@ object HordeExpansion extends FactionExpansion[Horde] {
                 && b.attacker.all(Mob).%(c => c == b.clearing || b.attacker.connectedFor(b.clearing).has(c)).any =>
 
             val f = b.attacker.asInstanceOf[Horde]
-            Ask(f)(f.all(Mob).%(c => c == b.clearing || b.attacker.connectedFor(b.clearing).has(c))./(c => BattleMobAction(f, b.clearing, c, BattleAttackerPreRollAction(b))) :+ BattleNoMobAction(f, BattleAttackerPreRollAction(b)))
+
+            Ask(f)
+                .each(f.all(Mob).%(c => c == b.clearing || b.attacker.connectedFor(b.clearing).has(c)))(c => BattleMobAction(f, b.clearing, c, BattleAttackerPreRollAction(b)))
+                .add(BattleNoMobAction(f, BattleAttackerPreRollAction(b)))
 
         case BattleDefenderPreRollAction(b)
                 if b.defender.can(Bitter)
@@ -381,7 +384,10 @@ object HordeExpansion extends FactionExpansion[Horde] {
                 && b.defender.all(Mob).%(c => c == b.clearing || b.defender.connectedFor(b.clearing).has(c)).any =>
 
             val f = b.defender.asInstanceOf[Horde]
-            Ask(f)(f.all(Mob).%(c => c == b.clearing || b.defender.connectedFor(b.clearing).has(c))./(c => BattleMobAction(f, b.clearing, c, BattleDefenderPreRollAction(b))) :+ BattleNoMobAction(f, BattleDefenderPreRollAction(b)))
+
+            Ask(f)
+                .each(f.all(Mob).%(c => c == b.clearing || b.defender.connectedFor(b.clearing).has(c)))(c => BattleMobAction(f, b.clearing, c, BattleDefenderPreRollAction(b)))
+                .add(BattleNoMobAction(f, BattleDefenderPreRollAction(b)))
 
         case BattleMobAction(f, c, m, then) =>
             f.from(m) --> Mob --> f.reserve
@@ -399,7 +405,9 @@ object HordeExpansion extends FactionExpansion[Horde] {
         case BattleStartedAction(b) if b.attacker.can(Looters) && b.defender.forTrade.any =>
             val f = b.attacker
             val e = b.defender
-            Ask(f)((BattleLootAction(f, e, b, b.defender.forTrade) :: BattleNoLootAction(f, e, b)))
+            Ask(f)
+                .add(BattleLootAction(f, e, b, b.defender.forTrade))
+                .add(BattleNoLootAction(f, e, b))
 
         case BattleLootAction(f, e, b, _) =>
             f.used :+= Looters
@@ -412,7 +420,7 @@ object HordeExpansion extends FactionExpansion[Horde] {
             b.attacker.used :-= Looters
 
             if (b.defender.forTrade.any && b.attacker.rules(b.clearing))
-                Ask(b.attacker, b.defender.forTrade./(BattleLootItemAction(b.attacker, b.defender, b, _)))
+                Ask(b.attacker).each(b.defender.forTrade)(i => BattleLootItemAction(b.attacker, b.defender, b, i))
             else {
                 b.attacker.log("failed to loot", b.defender)
 
@@ -450,7 +458,9 @@ object HordeExpansion extends FactionExpansion[Horde] {
             then
 
         case CraftScoreAction(f : Horde, d, n, m, then) if f.forTrade.any =>
-            Ask(f)((CraftRewardItemAction(f, d, then) :: CraftRewardVPAction(f, d, CraftScoreAction(f, d, n, m, then))))
+            Ask(f)
+                .add(CraftRewardItemAction(f, d, then))
+                .add(CraftRewardVPAction(f, d, CraftScoreAction(f, d, n, m, then)))
 
         case CraftRewardItemAction(f, d, then) =>
             f.log("crafted", d.item, d, "(" ~ d.cost.ss ~ ")", "for himself")
@@ -476,7 +486,7 @@ object HordeExpansion extends FactionExpansion[Horde] {
             val d = (f.hoard.command.num > 4).??(f.hoard.command) ++ (f.hoard.prowess.num > 4).??(f.hoard.prowess)
 
             if (d.any)
-                Ask(f)(d./(DiscardHoardItemAction(f, _, HoardCapacityAction(f, then))))
+                Ask(f).each(d)(i => DiscardHoardItemAction(f, i, HoardCapacityAction(f, then)))
             else
                 then
 
@@ -585,7 +595,7 @@ object HordeExpansion extends FactionExpansion[Horde] {
             val r = f.all(Stronghold).%(f.canPlace)
 
             if (t >= r.num)
-                Ask(f)(HordeRecruitAction(f, r, r))
+                Ask(f).add(HordeRecruitAction(f, r, r))
             else
             if (t == 0)
                 Next
@@ -698,18 +708,18 @@ object HordeExpansion extends FactionExpansion[Horde] {
 
         case HordeMainAction(f) if f.acted >= f.command =>
             if (f.can(Grandiose))
-                Ask(f)(Next.as("End Turn".hl)).daylight(f)
+                Ask(f).add(Next.as("End Turn".hl)).daylight(f)
             else
                 Next
 
         case HordeMainAction(f) =>
-            var ask = Ask(f)
+            implicit val ask = builder
 
             val att = clearings.%(f.canAttackIn)
-            ask += HordeAttackAction(f, att).!(att.none)
+            + HordeAttackAction(f, att).!(att.none)
 
             val mvv = f.moveFrom.of[Clearing]
-            ask += HordeMoveAction(f, mvv).!(mvv.none)
+            + HordeMoveAction(f, mvv).!(mvv.none)
 
             val b0 = clearings
             val b1 = b0.%(f.rules)
@@ -717,11 +727,11 @@ object HordeExpansion extends FactionExpansion[Horde] {
             val b3 = b2.%(f.canPlace)
             val b4 = b3.%(c => f.hand.%(_.matches(c.cost)).any)
 
-            ask += HordeBuildAction(f, b4).!(f.pool(Stronghold).not, "max").!(b1.none, "no rule").!(b2.none, "no place").!(b3.none, "can't place").!(b4.none, "no matching cards")
+            + HordeBuildAction(f, b4).!(f.pool(Stronghold).not, "max").!(b1.none, "no rule").!(b2.none, "no place").!(b3.none, "can't place").!(b4.none, "no matching cards")
 
-            ask += EndTurnSoftAction(f, "Command".styled(f), ForfeitActions(f.command - f.acted))
+            + EndTurnSoftAction(f, "Command".styled(f), ForfeitActions(f.command - f.acted))
 
-            ask.daylight(f)
+            ask(f).daylight(f)
 
         case HordeAttackAction(f, l) =>
             BattleInitAction(f, f, NoMessage, l, $(CancelAction), HordeDoneAction(f, Repeat))
@@ -730,10 +740,12 @@ object HordeExpansion extends FactionExpansion[Horde] {
             MoveInitAction(f, f, $, NoMessage, l, f.movable, $(CancelAction), HordeDoneAction(f, Repeat))
 
         case HordeBuildAction(f, l) =>
-            Ask(f)(l./(c => BuildStrongholdClearingAction(f, c).!(f.hand.%(_.matches(c.cost)).none, "no matching card"))).cancel
+            Ask(f)
+                .each(l)(c => BuildStrongholdClearingAction(f, c).!(f.hand.%(_.matches(c.cost)).none, "no matching card"))
+                .cancel
 
         case BuildStrongholdClearingAction(f, c) =>
-                OptionalDiscardCardAction(f, ToBuildStronghold(f, c), c.cost, BuildStrongholdAction(f, c))
+            OptionalDiscardCardAction(f, ToBuildStronghold(f, c), c.cost, BuildStrongholdAction(f, c))
 
         case BuildStrongholdAction(f, c) =>
             game.highlights :+= PlaceHighlight($(c))
@@ -765,32 +777,32 @@ object HordeExpansion extends FactionExpansion[Horde] {
 
         // ADVANCE
         case HordeAdvanceAction(f, bonus) if f.region.none =>
-            Ask(f)(Next.as("End Turn".hl)).daylight(f)
+            Ask(f).add(Next.as("End Turn".hl)).daylight(f)
 
         case HordeAdvanceAction(f, bonus) if f.acted >= f.prowess * 2 && bonus.not =>
             if (f.can(Grandiose))
                 Next
             else
-                Ask(f)(Next.as("End Turn".hl)).daylight(f)
+                Ask(f).add(Next.as("End Turn".hl)).daylight(f)
 
         case HordeAdvanceAction(f, bonus) =>
             val r = f.region.get
 
-            var ask = Ask(f)
+            implicit val ask = builder
 
-            ask += HordeAdvanceAttackAction(f, $(r)).!(f.canAttackIn(r).not)
+            + HordeAdvanceAttackAction(f, $(r)).!(f.canAttackIn(r).not)
 
-            ask += HordeAdvanceMoveAction(f, $(r)).!(f.moveFrom.has(r).not).!(f.acted == f.prowess * 2 - 1 && bonus.not)
+            + HordeAdvanceMoveAction(f, $(r)).!(f.moveFrom.has(r).not).!(f.acted == f.prowess * 2 - 1 && bonus.not)
 
             if (bonus && f.prowess * 2 > f.acted)
-                ask += HordeAdvanceSkipAction(f)
+                + HordeAdvanceSkipAction(f)
 
-            ask += EndTurnSoftAction(f, "Advance".styled(f), ForfeitActions(f.prowess * 2 + bonus.??(1) - f.acted))
+            + EndTurnSoftAction(f, "Advance".styled(f), ForfeitActions(f.prowess * 2 + bonus.??(1) - f.acted))
 
             if (f.acted % 2 == 0)
-                ask.daylight(f)
+                ask(f).daylight(f)
             else
-                ask
+                ask(f)
 
         case HordeAdvanceAttackAction(f, l) =>
             BattleInitAction(f, f, NoMessage, l, $(CancelAction), HordeAdvanceAttackDoneAction(f, Repeat))
@@ -881,7 +893,7 @@ object HordeExpansion extends FactionExpansion[Horde] {
                 PeerPressureAction(c, Repeat)
 
         case JubilantAction(f) =>
-            Ask(f)(JubilantContinueAction(f)).done(Repeat)
+            Ask(f).add(JubilantContinueAction(f)).done(Repeat)
 
         case JubilantContinueAction(f) =>
             RazeSpreadAction(f, JubilantDoneAction(f))
@@ -937,7 +949,7 @@ object HordeExpansion extends FactionExpansion[Horde] {
                     val tt = hh.but(f).% { e =>
                         val l = e.at(c)
                         l.any && l.has(Stronghold).not && l.has(Warlord).not
-                    }.sortBy(_.at(c).num)
+                    }.sortBy(_.at(c).num)//./~(_.from(c).$.%(_.piece.is[Warrior]))
 
                     tt.foreach { e =>
                         val n = min(e.at(c).count(e.warrior), f.pooled(f.warrior))

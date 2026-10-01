@@ -241,7 +241,7 @@ object UndergroundExpansion extends FactionExpansion[Underground] {
             val l = clearings.diff(game.homelands)
             val ll = l.diff(game.homelands./~(game.connected)).some.|(l)
 
-            Ask(f)(ll./(c => StartingClearingAction(f, c).as(c)(f, "starts in"))).needOk
+            Ask(f).each(ll)(c => StartingClearingAction(f, c).as(c)(f, "starts in")).needOk
 
         case StartingClearingAction(f : Underground, c) if options.has(SetupTypeHomelands) =>
             game.homelands :+= c
@@ -375,7 +375,7 @@ object UndergroundExpansion extends FactionExpansion[Underground] {
         case BirdsongNAction(60, f : Underground) =>
             soft()
 
-            Ask(f)(f.birdsong).done(Next)
+            Ask(f).birdsong(f).done(Next)
 
         case DaylightNAction(30, f : Underground) =>
             log("Assembly".styled(f))
@@ -386,7 +386,7 @@ object UndergroundExpansion extends FactionExpansion[Underground] {
             AssemblyMainAction(f, false)
 
         case AssemblyMainAction(f : Underground, false) if f.acted >= 2 =>
-            Ask(f)(Next.as("End".hl, "Assembly".styled(f))).daylight(f)
+            Ask(f).add(Next.as("End".hl, "Assembly".styled(f))).daylight(f)
 
         case AssemblyMainAction(f : Underground, mayor) =>
             implicit val ask = builder
@@ -502,51 +502,51 @@ object UndergroundExpansion extends FactionExpansion[Underground] {
             WorkMainAction(f, false)
 
         case WorkMainAction(f, mayor) =>
-            var actions : $[UserAction] = $
+            implicit val ask = builder
 
             val mm = mayor.?(f.swayed.%(_.rank <= 3).but(Mayor)).|(f.swayed)
             val ww = mayor.not.??(f.worked)
 
             if (mm.has(Foremole)) {
                 val bll = clearings.%(f.rules).%(f.canBuild)
-                actions :+= WorkAction(f, Foremole, mayor).!(ww.has(Foremole)).!(f.pool(Citadel).not && f.pool(Market).not, "maximum").!(f.hand.none, "no cards").!(bll.none, "no place")
+                + WorkAction(f, Foremole, mayor).!(ww.has(Foremole)).!(f.pool(Citadel).not && f.pool(Market).not, "maximum").!(f.hand.none, "no cards").!(bll.none, "no place")
             }
 
             val att = clearings.%(f.canAttackIn)
             val mvv = f.moveFrom
 
             if (mm.has(Captain))
-                actions :+= WorkAction(f, Captain, mayor).!(ww.has(Captain)).!(att.none)
+                + WorkAction(f, Captain, mayor).!(ww.has(Captain)).!(att.none)
 
             if (mm.has(Marshal))
-                actions :+= WorkAction(f, Marshal, mayor).!(ww.has(Marshal)).!(mvv.none)
+                + WorkAction(f, Marshal, mayor).!(ww.has(Marshal)).!(mvv.none)
 
             if (mm.has(Brigadier))
-                actions :+= WorkAction(f, Brigadier, mayor).!(ww.has(Brigadier)).!(att.none && mvv.none)
+                + WorkAction(f, Brigadier, mayor).!(ww.has(Brigadier)).!(att.none && mvv.none)
 
             if (mm.has(Banker))
-                actions :+= WorkAction(f, Banker, mayor).!(ww.has(Banker)).!(f.hand.none, "no cards")
+                + WorkAction(f, Banker, mayor).!(ww.has(Banker)).!(f.hand.none, "no cards")
 
             if (mm.has(Mayor)) {
                 if (options.has(MayorAssemblyAction))
-                    actions :+= WorkAction(f, Mayor, mayor).!(ww.has(Mayor))
+                    + WorkAction(f, Mayor, mayor).!(ww.has(Mayor))
                 else
-                    actions :+= WorkAction(f, Mayor, mayor).!(ww.has(Mayor)).!(f.swayed.%(_.rank <= 3).but(Mayor).none, "no minister")
+                    + WorkAction(f, Mayor, mayor).!(ww.has(Mayor)).!(f.swayed.%(_.rank <= 3).but(Mayor).none, "no minister")
             }
 
             if (mm.has(Duchess))
-                actions :+= WorkVPAction(f, Duchess, Tunnel, (f.pool(Tunnel).not).??(2)).!(ww.has(Duchess)).!(f.pool(Tunnel), "not all tunnels")
+                + WorkVPAction(f, Duchess, Tunnel, (f.pool(Tunnel).not).??(2)).!(ww.has(Duchess)).!(f.pool(Tunnel), "not all tunnels")
 
             if (mm.has(Baron))
-                actions :+= WorkVPAction(f, Baron, Market, f.all(Market).num).!(ww.has(Baron)).!(f.all(Market).none, "no markets")
+                + WorkVPAction(f, Baron, Market, f.all(Market).num).!(ww.has(Baron)).!(f.all(Market).none, "no markets")
 
             if (mm.has(Earl))
-                actions :+= WorkVPAction(f, Earl, Citadel, f.all(Citadel).num).!(ww.has(Earl)).!(f.all(Citadel).none, "no citadels")
+                + WorkVPAction(f, Earl, Citadel, f.all(Citadel).num).!(ww.has(Earl)).!(f.all(Citadel).none, "no citadels")
 
             if (mayor)
-                Ask(f)(actions).refuse(Repeat)
+                ask(f).refuse(Repeat)
             else
-                Ask(f)(actions).done(Next).daylight(f)
+                ask(f).done(Next).daylight(f)
 
         case WorkVPAction(f, m, p, n) =>
             f.punchIn(m, false)
@@ -556,7 +556,7 @@ object UndergroundExpansion extends FactionExpansion[Underground] {
         case WorkAction(f, Foremole, mayor) =>
             val l = clearings.%(f.rules).%(f.canBuild)
             val bb = $(Citadel, Market).%(f.pool(_))
-            Ask(f)(bb./~(b => l./(ForemoleBuildClearingAction(f, _, b, mayor)))).cancel
+            Ask(f).some(bb)(b => l./(ForemoleBuildClearingAction(f, _, b, mayor))).cancel
 
         case ForemoleBuildClearingAction(f, c, b, mayor) =>
             UndergroundRevealCardMainAction(f, AnySuit, ForemoleBuildAction(f, c, b, mayor))
@@ -581,11 +581,10 @@ object UndergroundExpansion extends FactionExpansion[Underground] {
             Repeat
 
         case WorkAction(f, Brigadier, mayor) =>
-            val cc = f.moveFrom
             val aa = BrigadierWageWarAction(f, mayor).!(clearings.%(f.canAttackIn).none)
             val mm = BrigadierMarchAction(f, mayor).!(f.moveFrom.none)
 
-            Ask(f)(aa)(mm).cancel
+            Ask(f).add(aa).add(mm).cancel
 
         case BrigadierWageWarAction(f, mayor) =>
             WageWarAction(f, 1, 2, WorkDoneAction(f, Brigadier, mayor))
@@ -621,7 +620,7 @@ object UndergroundExpansion extends FactionExpansion[Underground] {
 
             val c = clearings.%(f.present)./(_.cost)
             val h = f.hand./(_.suit)
-            val s = h
+            val s = h // h.intersect(c) ++ h.intersect(c.diff(h)./(_ => Bird))
 
             val iii = f.ministers.diff(f.swayed).sortBy(cost)
             val ii = iii.%(m => cost(m) <= s.num)

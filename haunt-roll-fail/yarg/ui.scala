@@ -343,8 +343,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     override def layout(width : Int, height : Int)(onLayout : $[PanePlacement] => Unit) {
         val font = FontDimensionInfo(72, 40, 72)
 
+        //val statuses = 1.to(game.setup.num)./(i => "status-" + i)
+
+        //val panes = statuses./(s => s -> new TextPane(10, font, 100, 28, 14.3)).toMap + ("log" -> new TextPane(10, font, 80, 44, 10)) + ("action" -> new TextPane(10, font, 100, 36, 16))
         val panes = (("map-small" -> new ImagePane(10, 3975, 2625)) :: ("log" -> new TextPane(10, font, 100, 58, 12)) :: ("action" -> new TextPane(10, font, 100, 58, 18))).toMap
 
+        //SplitX(SplitEven(statuses./(panes)), SplitX(panes("log"), panes("action")))
         SplitX(panes("map-small"), SplitX(panes("log"), panes("action")))
             .dim(0, 0, width, height)
 
@@ -352,7 +356,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
         onLayout(l)
     }
-
 
     def onClick : Any => Unit = {
         case _ =>

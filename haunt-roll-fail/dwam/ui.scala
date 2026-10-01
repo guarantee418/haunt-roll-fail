@@ -78,7 +78,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         val background = new OrderedLayer
         background.add(Sprite($(ImageRect(new RawImage(mp), Rectangle(0, 0, mp.width, mp.height), 1.0)), $))(0, 0)
 
-
         val areas = new HitLayer(regions.select)
 
         new Scene($(background, highlighted, areas, pieces), mp.width, mp.height, margins)
@@ -111,7 +110,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     var highlightAreas = $[Area]()
 
     def processRightClick(target : $[Any], xy : XY) {
-
+        // lastActions.of[Cancel].single.foreach(onClick)
     }
 
     def processHighlight(target : $[Any], xy : XY) {
@@ -141,11 +140,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             case (r : Area, f : Figure) :: _ if keys.of[MoveKey].exists(k => k.color == f.faction && k.from == r && k.index == f.index) => $(f)
             case x => $
         }
-
-
-
-
-
 
         highlightRemoveTrouble = target match {
             case (r : Area, f : Figure) :: _ if keys.of[RemoveTroubleKey].exists(k => f.faction == Troubles && k.area == r) => $(f)
@@ -224,11 +218,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             }
         }
 
-
-
-
-
-
+        // target.of[(Area, Figure)].single.foreach { case (r, f) =>
+        //     keys.of[SpreadTroubleKey].%(k => f.faction == Troubles && k.area == r).single.foreach { k =>
+        //         return onClick(k)
+        //     }
+        // }
 
         target.of[Area].single.foreach { case r =>
             keys.of[RecruitKey].%(k => k.area == r).single.foreach { k =>
@@ -296,13 +290,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
             import hrf.ui.sprites._
 
-
-            pieces.addFixed(r, Figure(Troubles, Trouble, game.board.areas.indexOf(r) + 1000))(Sprite($, $(Rectangle(-120, -60, 240, 60)), $(Plaque(r))))(regions.centers(r).x, regions.centers(r).y)
+            // pieces.addFixed(r, Figure(Troubles, Trouble, game.board.areas.indexOf(r) + 1000))(Sprite($, $(Rectangle(-100, -45, 200, 30)), |(r)))(regions.center(r).x, regions.center(r).y)
+            pieces.addFixed(r, Figure(Troubles, Trouble, game.board.areas.indexOf(r) + 1000), 0)(Sprite($, $(Rectangle(-120, -60, 240, 60)), $(Plaque(r))))(regions.centers(r).x, regions.centers(r).y)
 
             (extra ++ figures).foreach { p =>
                 def prefix = p.faction.?./(_.short.toLowerCase + "-").|("")
 
-
+                // val index = figures.
 
                 val assassinationTarget = keys.of[AssassinateKey].exists(k => k.color == p.faction && k.area == r && k.index == p.index)
                 val moveTarget = keys.of[MoveKey].exists(k => k.color == p.faction && k.from == r && k.index == p.index)
@@ -310,8 +304,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
                 val selected = extra.has(p) || keys.of[SelectedKey].exists(k => k.sColor == p.faction && k.sArea == r && k.sIndex == p.index)
 
-
-
+                // println(selected)
+                // println(keys.of[SelectedKey])
 
                 val a = p.piece match {
                     case Building => ImageRect(img(prefix + "building"), 72, 222, 1.0 + 0.4 * selected.??(1))
@@ -361,11 +355,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
                     z = 4
                 }
 
-
-
-
-
-
+                // if (highlightMove.has(p)) {
+                //     val kill = ImageRect(img("assassinate"), 76, 146, 0.7)
+                //     q = q.copy(images = q.images :+ kill)
+                //     z = 4
+                // }
 
                 if (highlightRemoveTrouble.has(p)) {
                     val remove = ImageRect(img("remove-trouble"), 70, 70, 0.7)
@@ -378,13 +372,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
                     pieces.addFixed(r, p, z + 8)(q)(highlightCoordinates.get.x, highlightCoordinates.get.y)
                 }
                 else {
-                    val xy = pieces.addFloat(r, p, z)(q)
+                    val xy = pieces.addFloat(r, p, z, true)(q)
 
-
-
-
-
-
+                    // if (p.piece == Building) {
+                    //     game.factions.but(p.faction.as[Faction]).foreach { e =>
+                    //         pieces.addHint(r, p.copy(faction = e))(xy.x, xy.y)
+                    //     }
+                    // }
                 }
 
 
@@ -434,15 +428,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
         val penalties = f.penalties./(d => " Penalty ".hl).merge
 
-
+        // val actions = keys.of[FactionKey].%(_.target == f)./(k => k.verb.hlb.onClick.param(k).div)
         val actions = keys.of[FactionKey].%(_.target == f)./(k => k.verb.txt.div($(
             xstyles.choice,
             xstyles.xx,
             xstyles.chm,
-
-
-
-
+            // xstyles.chp,
+            // xstyles.thu,
+            // xstyles.thumargin,
+            // xlo.fullwidth,
             elem.borders.get(k.self)
         )).pointer.onClick.param(k))
 
@@ -487,11 +481,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     val layouts = $(Layout("base", 
         $(
             BasicPane("status", 13+2, 6+4, Priorities(top = 3, right = 2, maxXscale = 1.8, maxYscale = 1.8)),
-
+            // BasicPane("status-game", 14, 24, Priorities(maxXscale = 1.8, maxYscale = 1.4)),
             BasicPane("status-game", 18, 32+1, Priorities(maxXscale = 1.1, maxYscale = 1.1)),
-
+            // BasicPane("status-game", 14, 24, Priorities()),
             BasicPane("log", 30+2, 13, Priorities(right = 1)),
-
+            //BasicPane("map-small", 42, 50, Priorities(top = 2, left = 1, grow = -1)),
             BasicPane("map-small", 42+21, 42+21, Priorities(top = 2, left = 1, grow = -1)),
             BasicPane("action-a", 64, 26, Priorities(bottom = 1, right = 3, grow = 1)),
             BasicPane("action-b", 40+1+1+1+1+11, 46+1, Priorities(bottom = 1, right = 3, grow = 1, maxXscale = 1.2))
@@ -591,7 +585,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
         case card : DeckCard =>
             val actions = lastActions.%(_.unwrap @@ {
-
+                // case PlayCardAction(_, d, _) if card == d => true
                 case GiveCardsAction(_, _, $(d), _) if card == d => true
                 case DiscardCardsAction(_, $(d), _) if card == d => true
                 case a : CardKey if a.card == card => true
@@ -626,7 +620,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             asker.clear()
 
             then(action.as[UserAction].||(action.as[ForcedAction]./(_.as("Do Action On Click"))).|(throw new Error("non-user non-forced action in on click handler")))
-
+            // then(action)
 
         case "view-discard" =>
             showOverlay(overlayScrollX(Div("Discard Pile") ~
@@ -706,18 +700,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
         val ol = overlayPane.attach.appendContainer(overlayScrollX(Content), resources, onClick)
 
-        val asker = new NewAsker(ol, img)
+        val asker = new NewAsker(ol, s => img(s))
 
         asker.zask(display)(resources)
     }
 
-    override def wait(self : $[F], factions : $[F]) {
+    override def wait(self : $[F], factions : $[F], message : Elem) {
         lastActions = $
         lastThen = null
 
         showNotifications(self)
 
-        super.wait(self, factions)
+        super.wait(self, factions, message)
     }
 
     var lastActions : $[UserAction] = $
@@ -739,6 +733,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         })
 
         updateStatus()
+        // drawMap()
 
         super.ask(faction, actions, a => {
             clearOverlay()
@@ -751,7 +746,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         actions./~{ a =>
             def q = {
                 val q = a.question(currentGame)
-
+                // (q == Empty).?(q).|(Div(q, styles.group))
                 (q == Empty).?(q).|(Div(q)(xlo.fullwidth)(styles.group))
             }
 

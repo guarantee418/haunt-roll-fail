@@ -190,7 +190,7 @@ case class DecreeCardAction(self : Aviary, h : $[DeckCard], m : SortedMap[Int, D
 }
 
 case class DecreeExplodeAction(self : Aviary, h : $[DeckCard], l : Leader) extends HiddenChoice with SelfExplode {
-    def explode(withSoft : Boolean) = {
+    def explode(withSoft : Boolean)(implicit game : Game) = {
         val iii = 0.to(2)./~(h.indices.combinations).flatMap { l =>
             l.foldLeft($(SortedMap[Int, Decree]()))((mm, n) => mm./~(m => Decree.all./(c => m + (n -> c))))
         }
@@ -249,7 +249,7 @@ object AviaryExpansion extends FactionExpansion[Aviary] {
             val ll = l.diff(board.inner).some.|(l)
             val lll = ll.diff(hh).diff(hhh).some.||(ll.diff(hh).some).|(ll)
 
-            Ask(f)(lll./(c => StartingClearingAction(f, c).as(c)(f, "starts in"))).needOk
+            Ask(f).each(lll)(c => StartingClearingAction(f, c).as(c)(f, "starts in")).needOk
 
         case FactionSetupAction(f : Aviary) =>
             StartingCornerAction(f)
@@ -306,16 +306,6 @@ object AviaryExpansion extends FactionExpansion[Aviary] {
 
             TryForcedRemoveAction(e, c, f, p, x + 1, AsDespot(m), then, fail)
 
-        // case BattlePostHitOutAction(b, e : Aviary, f, p : Scoring, then) if b.instigator.none =>
-        //     println(action)
-        //     ???
-        //     if (e.can(Despot)) {
-        //         e.used :+= Despot
-        //         e.oscore(1)("for destruction as", Despot)
-        //     }
-        //     then
-
-
         case CraftScoreAction(f : Aviary, d, n, m, then) if n > 1 && f.has(Builder).not =>
             CraftScoreAction(f, d, 1, m, then)
 
@@ -359,10 +349,11 @@ object AviaryExpansion extends FactionExpansion[Aviary] {
             }
 
         case DecreeMainAction(f, h, m) =>
-            Ask(f)(NoHand)
+            Ask(f)
               .each(0.until(h.num).$)(n => DecreeCardAction(f, h, m, f.leader.get, n))
-              .add(DecreeAction(f, h, m.keys.$, m.values.$).x(m.none))
+              .add(DecreeAction(f, h, m.keys.$, m.values.$).!(m.none))
               .add(DecreeExplodeAction(f, h, f.leader.get))
+              .add(NoHand)
               .birdsong(f)
 
         case DecreeCardAction(f, h, m, _, _) =>
@@ -384,8 +375,6 @@ object AviaryExpansion extends FactionExpansion[Aviary] {
             AviaryMainAction(f)
 
         case AviaryMainAction(f : Aviary) if soft =>
-            // +++(" \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ")
-
             var dd = Decree.all
             while (dd.any && f.done(dd.head).num == f.todo(dd.head).num)
                 dd = dd.drop(1)
@@ -405,7 +394,7 @@ object AviaryExpansion extends FactionExpansion[Aviary] {
             val l = f.all(Roost).%(f.canPlace).%(c => r.exists(c.cost.matched))
 
             if (l.any && (f.pooled(Hawk) > f.has(Charismatic).??(1) || f.totalWar))
-                Ask(f)(AviaryRecruitMainAction(f, l, r)).daylight(f)
+                Ask(f).add(AviaryRecruitMainAction(f, l, r)).daylight(f)
             else
                 TurmoilLoomingAction(f, d, r)
 
@@ -413,7 +402,7 @@ object AviaryExpansion extends FactionExpansion[Aviary] {
             val l = f.moveFrom.of[Clearing].%(c => r.exists(c.cost.matched))
 
             if (l.any)
-                Ask(f)(AviaryMoveMainAction(f, l, r)).daylight(f)
+                Ask(f).add(AviaryMoveMainAction(f, l, r)).daylight(f)
             else
                 TurmoilLoomingAction(f, d, r)
 
@@ -421,7 +410,7 @@ object AviaryExpansion extends FactionExpansion[Aviary] {
             val l = clearings.%(f.canAttackIn).%(c => r.exists(c.cost.matched))
 
             if (l.any)
-                Ask(f)(AviaryBattleMainAction(f, l, r)).daylight(f)
+                Ask(f).add(AviaryBattleMainAction(f, l, r)).daylight(f)
             else
                 TurmoilLoomingAction(f, d, r)
 
@@ -429,7 +418,7 @@ object AviaryExpansion extends FactionExpansion[Aviary] {
             val l = clearings.%(f.rules).%(f.canBuild).diff(f.all(Roost)).%(f.canPlace).%(c => r.exists(c.cost.matched))
 
             if (l.any && f.pool(Roost))
-                Ask(f)(BuildRoostMainAction(f, l, r)).daylight(f)
+                Ask(f).add(BuildRoostMainAction(f, l, r)).daylight(f)
             else
                 TurmoilLoomingAction(f, d, r)
 
@@ -519,9 +508,9 @@ object AviaryExpansion extends FactionExpansion[Aviary] {
             f.logtemp("could not", d.name.hl, (r.distinct.num < 3).$("in", r.distinct./(_.elem).commaOr, "clearing"))
 
             if (f.tolerance >= f.skipped + r.num)
-                Ask(f)(TurmoilAvoidAction(f, d, r)).needOk.daylight(f)
+                Ask(f).add(TurmoilAvoidAction(f, d, r)).needOk.daylight(f)
             else
-                Ask(f)(TurmoilMainAction(f, d, r)).needOk.daylight(f)
+                Ask(f).add(TurmoilMainAction(f, d, r)).needOk.daylight(f)
 
         case TurmoilMainAction(f, d, r) =>
             f.log("could not", d.name.hl, (r.distinct.num < 3).$("in", r.distinct./(_.elem).commaOr, " clearing"), "and fell into", "Turmoil".hl)
@@ -606,7 +595,6 @@ object AviaryExpansion extends FactionExpansion[Aviary] {
 
         case FactionCleanUpAction(f : Aviary) =>
             f.done = Decree.clean
-            // f.skipped = 0
 
             CleanUpAction(f)
 

@@ -108,6 +108,7 @@ object Deck {
         case ExilesDeck => ambushes ++ items ++ effectsExiles ++ (arity > 2).??(dominances)
         case MixedDeck => ambushes ++ items ++ mixed(known) ++ (arity > 2).??(dominances)
         case DuskDeck => ambushes ++ items ++ effectsDusk ++ (arity > 2).??(dominances)
+        case SquiresDeck => ambushes ++ items ++ effectsSquires ++ (arity > 2).??(dominances)
     }
 
     val ambushes = $[DeckCard](
@@ -282,7 +283,36 @@ object Deck {
         CraftEffectCard(Bird, "night-terrors", $(AnySuit, AnySuit), NightTerrors),
         CraftEffectCard(Bird, "night-terrors", $(AnySuit, AnySuit), NightTerrors),
         CraftEffectCard(Bird, "forest-vigil", $(Fox, Rabbit, Mouse), ForestVigil),
+        // CraftEffectCard(Bird, "fowl-play", $(AnySuit), FowlPlay),
         CraftEffectCard(Bird, "hoarders", $(AnySuit), Hoarders),
+    )
+
+    val effectsSquires = $[DeckCard](
+        CraftEffectCard(Bird, "sky-couriers", $(AnySuit), SkyCouriers),
+        CraftEffectCard(Bird, "sky-couriers", $(AnySuit), SkyCouriers),
+        CraftEffectCard(Bird, "spy-network", $(AnySuit), SpyNetwork),
+        CraftEffectCard(Bird, "silver-tongue", $(AnySuit, AnySuit), SilverTongue),
+        CraftEffectCard(Bird, "shadow-council", $(AnySuit, AnySuit), ShadowCouncil),
+        CraftEffectCard(Bird, "feather-rufflers", $(AnySuit, AnySuit), FeatherRufflers),
+        CraftEffectCard(Bird, "feather-rufflers", $(AnySuit, AnySuit), FeatherRufflers),
+        CraftEffectCard(Fox, "fox-squires", $(Fox), Squires(Fox)),
+        CraftEffectCard(Fox, "bold-leadership", $(Fox), BoldLeadership),
+        CraftEffectCard(Fox, "supply-train", $(Fox), SupplyTrain),
+        CraftEffectCard(Fox, "tactitian", $(Fox, AnySuit), Tactitian),
+        CraftEffectCard(Fox, "apprentice", $(Fox), Apprentice),
+        CraftEffectCard(Fox, "friend-of-the-foxes", $(Fox, AnySuit), FriendOfTheFoxes),
+        CraftEffectCard(Rabbit, "rabbit-squires", $(Rabbit), Squires(Rabbit)),
+        CraftEffectCard(Rabbit, "lookouts", $(Rabbit, AnySuit), Lookouts),
+        CraftEffectCard(Rabbit, "hidden-warrens", $(Rabbit, AnySuit), HiddenWarrens),
+        CraftEffectCard(Rabbit, "the-faithful", $(Rabbit), TheFaithful),
+        CraftEffectCard(Rabbit, "riversteads", $(Rabbit, AnySuit), Riversteads),
+        CraftEffectCard(Rabbit, "standard-bearer", $(Rabbit), StandardBearer),
+        CraftEffectCard(Rabbit, "friend-of-the-rabbits", $(Rabbit, AnySuit), FriendOfTheRabbits),
+        CraftEffectCard(Mouse, "mouse-squires", $(Mouse), Squires(Mouse)),
+        CraftEffectCard(Mouse, "raiding-party", $(Mouse), RaidingParty),
+        CraftEffectCard(Mouse, "mice-in-a-bush", $(Mouse), MiceInABush),
+        CraftEffectCard(Mouse, "brazen-demagogue", $(Mouse), BrazenDemagogue),
+        CraftEffectCard(Mouse, "friend-of-the-mice", $(Mouse, AnySuit), FriendOfTheMice),
     )
 
     val effectsRemixRedawn = $[DeckCard](
@@ -352,7 +382,7 @@ object Deck {
         CraftEffectCard(Frog, "incite-conflict", $(Frog, AnySuit), InciteConflict(LDvD)),
     )
 
-    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA
+    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ effectsSquires ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA
 }
 
 
@@ -486,12 +516,13 @@ object CardsExpansion extends MandatoryExpansion {
                 else {
                     soft()
 
-                    Ask(f)(NoHand)
-                      .each(h)(d =>
-                        OpportunityDiscardSelectCardAction(f, IofN(m, l.num + 1, n), t, d,
-                          OpportunityDiscardCardsAction(f, m, n, d +: l, t, then, alt)
-                        ).x(d.matches(t).not))
-                      .skip(alt)
+                    Ask(f)
+                        .each(h)(d =>
+                            OpportunityDiscardSelectCardAction(f, IofN(m, l.num + 1, n), t, d,
+                                OpportunityDiscardCardsAction(f, m, n, d +: l, t, then, alt)
+                            ).!(d.matches(t).not))
+                        .add(NoHand)
+                        .skip(alt)
                 }
             }
 
@@ -499,28 +530,30 @@ object CardsExpansion extends MandatoryExpansion {
             val h = f.hand.get
 
             if (h.%(_.matches(t)).none)
-                Ask(f)(alt.as("Skip"))
+                Ask(f).add(alt.as("Skip"))
             else {
                 soft()
 
-                Ask(f)(NoHand)
-                  .each(h)(d =>
-                    OpportunityDiscardSelectCardAction(f, IofN(m, 1, 1), t, d,
-                      PrepareDiscardCardsAction(f, $(d), then)
-                    ).x(d.matches(t).not))
-                  .skip(alt)
+                Ask(f)
+                    .each(h)(d =>
+                        OpportunityDiscardSelectCardAction(f, IofN(m, 1, 1), t, d,
+                            PrepareDiscardCardsAction(f, $(d), then)
+                        ).!(d.matches(t).not))
+                    .add(NoHand)
+                    .skip(alt)
             }
 
         case OptionalDiscardCardAction(f, m, t, then) if f.hand.%(_.matches(t)).none =>
             Ask(f).cancel
 
         case OptionalDiscardCardAction(f, m, t, then) =>
-            Ask(f)(NoHand)
-              .each(f.hand.get)(d =>
-                OpportunityDiscardSelectCardAction(f, IofN(m, 1, 1), t, d,
-                  PrepareDiscardCardsAction(f, $(d), then)
-                ).!(d.matches(t).not))
-              .cancel
+            Ask(f)
+                .each(f.hand.get)(d =>
+                    OpportunityDiscardSelectCardAction(f, IofN(m, 1, 1), t, d,
+                        PrepareDiscardCardsAction(f, $(d), then)
+                    ).!(d.matches(t).not))
+                .add(NoHand)
+                .cancel
 
         case PrepareDiscardCardsAction(f, l, then) =>
             f.hand --> l --> f.drawn

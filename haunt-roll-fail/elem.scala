@@ -24,6 +24,8 @@ package object elem {
     val DoubleDagger = 0x2021.toChar.toString
     val LowAsterisk = 0x204E.toChar.toString
     val DoubleAsterisk = 0x2051.toChar.toString
+    val Checkmark = 0x2713.toChar.toString
+    val Failmark = 0x2718.toChar.toString
 
     trait Postfix extends Elem
 
@@ -390,13 +392,16 @@ package object elem {
         def +(o : ImageIdPart) = ImageId(id + o.name)
         def +(s : String) = ImageId(id + s)
         def +(n : Int) = ImageId(id + n)
+        def v(s : String) : Boolean = id == s
+        // def +(o : |[ImageIdPart]) = o./(o => ImageId(id + o.name)).|(this)
+        // def +(s : |[String]) = s./(s => ImageId(id + s)).|(this)
     }
 
     implicit def stringToImageId(s : String) = ImageId(s)
     implicit def imageIdPartToImageId(s : ImageIdPart) = ImageId(s.name)
 
     case class Image(image : ImageId, styles : $[Style], description : |[String] = None) extends Elem {
-        def text = description.|(image.id.split('-').dropWhile(_.length < 3).join(" "))
+        def text = description.|(image.id.split('-').dropWhile(_.length < 3).join(" "))//.|("@")
         def variants = styles.some.$
         def apply(s : Style) = copy(styles = styles :+ s)
         def apply(s : |[Style]) = copy(styles = styles ++ s)
@@ -508,6 +513,7 @@ package object elem {
         def hl  = styled(xstyles.highlight)
         def hh  = styled(xstyles.halfhigh)
         def hlb = styled(xstyles.highlight, xstyles.bold)
+        def hhb = styled(xstyles.halfhigh, xstyles.bold)
     }
 
     implicit class ElementString(val s : String) extends AnyVal {
@@ -515,6 +521,7 @@ package object elem {
         def hl  = styled(xstyles.highlight)
         def hh  = styled(xstyles.halfhigh)
         def hlb = styled(xstyles.highlight, xstyles.bold)
+        def hhb = styled(xstyles.halfhigh, xstyles.bold)
         def hlIf(v : Boolean) = v.?(styled(xstyles.highlight)).|(Text(s))
         def spn = Span(s)
         def txt = Text(s)
@@ -531,6 +538,7 @@ package object elem {
         def hl = spn(xstyles.highlight)
         def hh = spn(xstyles.halfhigh)
         def hlb = spn(xstyles.highlight)(xstyles.bold)
+        def hhb = spn(xstyles.halfhigh)(xstyles.bold)
         def block = spn(xlo.inlineBlock)
         def & = spn(xlo.inlineBlock)
     }
