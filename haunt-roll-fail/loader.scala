@@ -191,7 +191,8 @@ class WrappedEmbeddedImageLoader(url2id : String => String) extends Loader[Image
 }
 
 class CachedBlobImageLoader(id : String) extends Loader[ImageWrapper] {
-    val open = dom.window.caches.toOption.get.open(id)
+    // Cache Storage is only available in secure contexts (https or localhost)
+    val open = dom.window.caches.toOption.map(_.open(id))
 
     var requests = 0
 
@@ -202,7 +203,18 @@ class CachedBlobImageLoader(id : String) extends Loader[ImageWrapper] {
     def process(url : String, tries : Int) {
         // println("process " + url + " (x" + tries + ")")
 
-        open.then { cache =>
+        if (open.isEmpty) {
+            dom.fetch(url).then { response : dom.Response =>
+                response.blob().then { blob : dom.Blob =>
+                    put(url, new BlobImageWrapper(url, blob))
+                    null
+                }
+                null
+            }
+            return
+        }
+
+        open.get.then { cache =>
             cache.`match`(url).then({ response =>
                 // println("cached response " + response)
 
@@ -247,7 +259,8 @@ class CachedBlobImageLoader(id : String) extends Loader[ImageWrapper] {
 }
 
 class CachedImageLoader(id : String) extends Loader[html.Image] {
-    val open = dom.window.caches.toOption.get.open(id)
+    // Cache Storage is only available in secure contexts (https or localhost)
+    val open = dom.window.caches.toOption.map(_.open(id))
 
     var requests = 0
 
@@ -258,7 +271,12 @@ class CachedImageLoader(id : String) extends Loader[html.Image] {
     def process(url : String, tries : Int) {
         // println("process " + url + " (x" + tries + ")")
 
-        open.then { cache =>
+        if (open.isEmpty) {
+            ImageLoader.load(url)(img => put(url, img))
+            return
+        }
+
+        open.get.then { cache =>
             cache.`match`(url).then({ response =>
                 // println("cached response " + response)
 
@@ -307,7 +325,8 @@ class CachedImageLoader(id : String) extends Loader[html.Image] {
 
 
 class CachedStringLoader(id : String) extends Loader[String] {
-    val open = dom.window.caches.toOption.get.open(id)
+    // Cache Storage is only available in secure contexts (https or localhost)
+    val open = dom.window.caches.toOption.map(_.open(id))
 
     def process(url : String) {
         process(url, 0)
@@ -316,7 +335,18 @@ class CachedStringLoader(id : String) extends Loader[String] {
     def process(url : String, tries : Int) {
         // println("process " + url + " (x" + tries + ")")
 
-        open.then { cache =>
+        if (open.isEmpty) {
+            dom.fetch(url).then { response : dom.Response =>
+                response.text().then { s : String =>
+                    put(url, s)
+                    null
+                }
+                null
+            }
+            return
+        }
+
+        open.get.then { cache =>
             cache.`match`(url).then({ response =>
                 // println("cached response " + response)
 
