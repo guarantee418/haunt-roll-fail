@@ -232,7 +232,10 @@ object InvasiveCCCExpansion extends FactionExpansion[InvasiveCCC] {
             if (h.none)
                 Ask(f).done(then)
             else
-                Ask(f).each(f.hand)(d => InvasiveCCCDiscardFrogCardAction(f, d, then).!(h.has(d).not))(NoHand).needOk
+                Ask(f)
+                    .each(f.hand)(d => InvasiveCCCDiscardFrogCardAction(f, d, then).!(h.has(d).not))
+                    .add(NoHand)
+                    .needOk
 
         case InvasiveCCCDiscardFrogCardAction(f, d, then) =>
             f.hand --> d --> discard(f)
@@ -269,7 +272,9 @@ object InvasiveCCCExpansion extends FactionExpansion[InvasiveCCC] {
             if (f.has(MoleArtisians)) {
                 f.hand --> d --> MoleArtisians.display
 
-                Ask(f)(MoleArtisiansRevealAction(f, d, q))(MoleArtisiansDiscardAction(f, d, q))
+                Ask(f)
+                    .add(MoleArtisiansRevealAction(f, d, q))
+                    .add(MoleArtisiansDiscardAction(f, d, q))
             }
             else {
                 f.hand --> d --> discard.quiet
@@ -324,15 +329,20 @@ object InvasiveCCCExpansion extends FactionExpansion[InvasiveCCC] {
 
         case InvasiveCCCReconcileMainAction(f) =>
             val ee = f.enemies
-            val l = clearings.%(f.at(_).of[MilitantCCC].any)
+            val l = clearings.%(f.at(_).of[MilitantCCC].any) // TODO // .%(c => ee.exists(_.present(c)))
 
             InvasiveCCCReconcileContinueAction(f, l, true)
 
         case InvasiveCCCReconcileContinueAction(f, l, first) =>
             if (l.any)
-                Ask(f).each(l)(c => InvasiveCCCReconcileClearingAction(f, c, InvasiveCCCReconcileContinueAction(f, l.but(c), false)).as(c)("Reconcile in")).use(a => first.?(a.birdsong(f)).|(a)).needOk
+                Ask(f)
+                    .each(l)(c => InvasiveCCCReconcileClearingAction(f, c, InvasiveCCCReconcileContinueAction(f, l.but(c), false)).as(c)("Reconcile in"))
+                    .useIf(first)(_.birdsong(f))
+                    .needOk
             else
-                Ask(f)(Next.as("Done")("Reconcile")).birdsong(f)
+                Ask(f)
+                    .add(Next.as("Done")("Reconcile"))
+                    .birdsong(f)
 
         case InvasiveCCCReconcileClearingAction(f, c, then) =>
             f.log("tried to reconcile in", c)
@@ -350,7 +360,7 @@ object InvasiveCCCExpansion extends FactionExpansion[InvasiveCCC] {
                 if (r.any)
                     q
                 else
-                    Ask(f)(then.as("Done")("Failed to reconcile in", c))
+                    Ask(f).add(then.as("Done")("Failed to reconcile in", c))
             }
             else
                 MultiAsk(
@@ -406,7 +416,7 @@ object InvasiveCCCExpansion extends FactionExpansion[InvasiveCCC] {
             if (l.any)
                 Ask(f).each(l)(c => InvasiveCCCReprisalsAction(f, c).as(c)("Reprisals in"))
             else
-                Ask(f)(Next.as("Done"))
+                Ask(f).done(Next)
 
         case InvasiveCCCReprisalsAction(f, c) =>
             log("Reprisals in", c)
@@ -426,7 +436,7 @@ object InvasiveCCCExpansion extends FactionExpansion[InvasiveCCC] {
                         .ask
                 ))
             else
-                Ask(f)(InvasiveCCCReprisalsFlipAction(f, c).as("Flip"))
+                Ask(f).add(InvasiveCCCReprisalsFlipAction(f, c).as("Flip"))
 
         case InvasiveCCCReprisalsCardAction(f, c, e, d) =>
             e.hand --> d --> e.drawn
@@ -464,10 +474,11 @@ object InvasiveCCCExpansion extends FactionExpansion[InvasiveCCC] {
             val sm = f.all(PeacefulCCC(Mouse))
 
             Ask(f)
-                .add(sf.any.?(InvasiveCCCAngerAction(f, Fox, sf)))
-                .add(sr.any.?(InvasiveCCCAngerAction(f, Rabbit, sr)))
-                .add(sm.any.?(InvasiveCCCAngerAction(f, Mouse, sm)))
-                .add(ml.any.?(InvasiveCCCSootheAction(f, ml)))((sf.none || sr.none || sm.none || ml.none).?(Next.as("Skip")))
+                .when(sf.any)(InvasiveCCCAngerAction(f, Fox, sf))
+                .when(sr.any)(InvasiveCCCAngerAction(f, Rabbit, sr))
+                .when(sm.any)(InvasiveCCCAngerAction(f, Mouse, sm))
+                .when(ml.any)(InvasiveCCCSootheAction(f, ml))
+                .skipIf(sf.none || sr.none || sm.none || ml.none)(Next)
                 .daylight(f)
 
         case InvasiveCCCAngerAction(f, s, l) =>
@@ -501,10 +512,10 @@ object InvasiveCCCExpansion extends FactionExpansion[InvasiveCCC] {
             val r = clearings.%(f.at(_).of[MilitantCCC].any).%(f.canPlace)
 
             if (t == 0 || r.none)
-                Ask(f)(Next.as("No Recruit"))
+                Ask(f).add(Next.as("No Recruit"))
             else
             if (t >= r.num)
-                Ask(f)(InvasiveCCCFrogRecruitAction(f, r, r))
+                Ask(f).add(InvasiveCCCFrogRecruitAction(f, r, r))
             else
                 Ask(f)
                   .each(r.combinations(t).$)(InvasiveCCCFrogRecruitAction(f, _, r))
@@ -571,7 +582,7 @@ object InvasiveCCCExpansion extends FactionExpansion[InvasiveCCC] {
                     .ask
                     .evening(f)
             else
-                Ask(f)(Next.as("Done")("Settle".styled(f))).evening(f)
+                Ask(f).add(Next.as("Done")("Settle".styled(f))).evening(f)
 
 
         case InvasiveCCCSettleAction(f, d, c, s) =>
@@ -600,7 +611,7 @@ object InvasiveCCCExpansion extends FactionExpansion[InvasiveCCC] {
                     .ask
                     .use(a => (l == FoxRabbitMouse).?(a.evening(f)).|(a))
             else
-                Ask(f)(Next.as("Done"))
+                Ask(f).done(Next)
 
         case EveningNAction(60, f : InvasiveCCC) =>
             soft()

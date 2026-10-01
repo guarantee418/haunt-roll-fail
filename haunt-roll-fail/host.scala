@@ -4,6 +4,7 @@ package hrf.host
 //
 //
 import hrf.colmat._
+import hrf.compute._
 import hrf.logger._
 //
 //
@@ -19,9 +20,13 @@ trait BaseHost {
 
     import gaming._
 
-    case class HostGameOverAction(winners : $[F]) extends ForcedAction
+    type W
 
-    def askBot(g : G, f : F, actions : $[UserAction]) : Action
+    case class HostGameOverAction(winners : $[W]) extends ForcedAction
+
+    def nameWinner(w : W) : String
+
+    def askBot(g : G, f : F, actions : $[UserAction]) : Compute[Action]
 
     def askFaction(g : G, c : Continue) : Action = {
         c match {
@@ -104,9 +109,9 @@ trait BaseHost {
                 askFaction(g, l.shuffle.last)
 
             case Ask(f : F, actions) =>
-                askBot(g, f, actions)
+                askBot(g, f, actions).immediate
 
-            case GameOver(winners, _, _) => HostGameOverAction(winners)
+            case GameOver(winners, _, _) => HostGameOverAction(winners./~(f => winnersFromFaction(f)(g)))
         }
     }
 
@@ -116,21 +121,23 @@ trait BaseHost {
 
     def start : StartGameAction
 
-    def winners(a : Action) : $[F]
+    def winners(a : Action)(implicit g : G) : $[W]
+
+    def winnersFromFaction(f : F)(implicit g : G) : $[W]
 
     def serializer : hrf.serialize.Serializer
 
     def factionName(f : F) : String
 
-    def factions : $[F]
+    def subjects : $[W]
 
-    val limit : Int = 3000
+    val limit : Int = 4000
 
     def main(args : Array[String]) {
-        var results : $[$[F]] = $
+        var results : $[$[W]] = $
 
         1.to(times).foreach { i =>
-            results = results ++ batch.par.map { g =>
+            results = results ++ batch/*.par*/.map { g =>
                 var log : $[String] = Nil
                 def writeLog(s : String) {
                     log = s :: log
@@ -139,6 +146,8 @@ trait BaseHost {
                 var aa : $[Action] = $
 
                 try {
+                    java.lang.System.gc()
+
                     val game = g()
 
                     var continue : Continue = StartContinue
@@ -214,19 +223,20 @@ trait BaseHost {
                         if (n > limit)
                             throw null
 
-                        continue = game.performContinue(|(continue), a, true).continue
+                        continue = game.performContinue(|(continue), a, !true).continue
 
                         aa :+= a
 
                         a = askFaction(game, continue)
                     }
 
-                    val w = a.as[HostGameOverAction]./(_.winners).|(winners(a))
-                    println(w.any.?(w./(factionName).mkString(", ")).|("Humanity") + " won (" + n + ")")
+                    val w = a.as[HostGameOverAction]./(_.winners).|(winners(a)(game))
+                    println(w.any.?(w./(nameWinner).mkString(", ")).|("Humanity") + " won (" + n + ")")
+
                     w
                 }
                 catch {
-                    case e : Throwable if false.not =>
+                    case e : Throwable =>
                         println(e)
 
                         import java.nio.file.{Paths, Files}
@@ -234,7 +244,6 @@ trait BaseHost {
 
                         Files.write(Paths.get(path + "/game-error-" + java.lang.System.currentTimeMillis + ".txt"), (
                             aa./(_.unwrap)./(serializer.write).mkString("\n") + "\n\n" +
-                            aa./(serializer.write).mkString("\n") + "\n\n" +
                             (e.getMessage + "\n" + e.getStackTrace.mkString("\n")) + "\n\n" +
                             log.reverse.map("<div class='p'>" + _ + "</div>").mkString("\n")
                         ).getBytes(StandardCharsets.UTF_8))
@@ -247,16 +256,16 @@ trait BaseHost {
             println()
 
             wins.keys.$.sortBy(k => wins(k)).reverse.foreach { k =>
-                println(k.any.?(k./(factionName).mkString(", ")).|("Humanity") + ": " + wins(k) + " " + "%6.0f".format(wins(k) * 100.0 / wins.values.sum) + "%")
+                println(k.any.?(k./(nameWinner).mkString(", ")).|("Humanity") + ": " + wins(k) + " " + "%6.0f".format(wins(k) * 100.0 / wins.values.sum) + "%")
             }
 
             println()
 
-            factions.map { f =>
+            subjects.map { f =>
                 val ww = wins.filterKeys(_.contains(f))
                 val solo = ww.filterKeys(_.size == 1).values.sum
                 val tie = ww.filterKeys(_.size > 1).values.sum
-                (solo + tie) -> (factionName(f) + ": " + solo + "+" + tie + " " + "%6.0f".format((solo + tie) * 100.0 / wins.values.sum) + "%")
+                (solo + tie) -> (nameWinner(f) + ": " + solo + "+" + tie + " " + "%6.0f".format((solo + tie) * 100.0 / wins.values.sum) + "%")
             }.sortBy(_._1).map(_._2).reverse.foreach(println)
 
             println("Humanity" + ": " + wins.filterKeys(_.size == 0).values.sum + " " + "%6.0f".format(wins.filterKeys(_.size == 0).values.sum * 100.0 / wins.values.sum) + "%")

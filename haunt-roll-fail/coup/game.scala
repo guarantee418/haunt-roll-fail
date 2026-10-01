@@ -126,11 +126,20 @@ object Deck {
 
 }
 
-trait Faction extends BasePlayer with Named with Styling {
+trait Faction extends BasePlayer with Named with Styling with Record {
     def name = toString
     def short = name.take(1)
     def style = name.toLowerCase
 }
+
+/*
+case object Thunder extends Faction
+case object Rain extends Faction
+case object Cloud extends Faction
+case object Moon extends Faction
+case object Sky extends Faction
+case object Sun extends Faction
+*/
 
 case object Amalthea extends Faction
 case object Thebe extends Faction
@@ -207,6 +216,7 @@ case class BlockFailedAction(f : Faction, self : Faction, r : Role, then : Force
 case class BlockSuccessAction(f : Faction, self : Faction, r : Role, fail : ForcedAction) extends ForcedAction
 case class TakeForeignAidAction(f : Faction) extends ForcedAction
 
+
 case class ChallengeAction(self : Faction, f : Faction, r : Role, then : ForcedAction, fail : ForcedAction) extends BaseAction(f, "claims", r)("Challenge".hl) with Retry
 case class PassAction(self : Faction, f : Faction, r : Role, then : ForcedAction, fail : ForcedAction) extends BaseAction(f, "claims", r)("Pass") with Retry
 
@@ -231,8 +241,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
 
     val cards = new ValueTracker[Card]
 
-    val box = cards.another[Card]("deck", Deck.alt)
-
+    val box = cards.another[Card]("deck", Deck.weighted)
     val deck = cards.another[Card]("deck", Nil)
 
     class Player(f : Faction) {
@@ -240,6 +249,9 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
         val reveal = cards.another[Card]("reveal-" + f)
         val lost = cards.another[Card]("lost-" + f)
         var money = 2
+
+        var claimed : $[Role] = $
+        var grudges : Map[Faction, Double] = setup.but(f)./(_ -> 0.0).toMap
     }
 
     val players = factions./(f => f -> new Player(f)).toMap
@@ -259,6 +271,11 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
     }
 
     def claim(f : Faction, c : Elem) { claims += f -> (claims.get(f).|(Nil) :+ c) }
+
+    def grudge(f : Faction, e : Faction, v : Double) {
+        f.grudges += e -> (f.grudges(e) + v)
+        e.grudges += f -> (e.grudges(f) - v * 0.75)
+    }
 
     var over = false
 
@@ -291,6 +308,8 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
     var turn : Int = 0
 
     def loggedPerform(action : Action, soft : Void) : Continue = {
+        // +++("> " + action)
+
         val c = performInternal(action, soft)
 
         c match {
@@ -298,9 +317,11 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 println("")
                 println("")
                 println("")
-                println("Empty Ask as a result of " + action)
+                println("empty ask as a result of " + action)
             case _ =>
         }
+
+        // +++("    < " + c)
 
         highlightFaction = c match {
             case Ask(f, _) => $(f)
@@ -398,16 +419,16 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
 
                 actions :+= TaxAction(f)
 
-                actions :+= StealAction(f).x(factions.but(f).%(players(_).money > 0).none)
+                actions :+= StealAction(f).!(factions.but(f).%(players(_).money > 0).none)
 
-                actions :+= AssassinateAction(f).x(f.money < 3)
+                actions :+= AssassinateAction(f).!(f.money < 3)
 
                 actions :+= ExchangeAction(f)
 
                 if (f.money >= 10)
                     actions = Nil
 
-                actions :+= CoupAction(f).x(f.money < 7)
+                actions :+= CoupAction(f).!(f.money < 7)
 
                 Ask(f, actions)
 
@@ -438,7 +459,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 if (blockers.none)
                     then
                 else
-                    MultiAsk(blockers./(b => Ask(b)(PassBlockAction(b, f, r, then, fail))(BlockAction(b, f, r, then, fail))))
+                    MultiAsk(blockers./(b => Ask(b).add(PassBlockAction(b, f, r, then, fail)).add(BlockAction(b, f, r, then, fail))))
 
             case PassBlockAction(b, f, r, then, fail) =>
                 BlockFailedAction(b, f, r, then, fail)
@@ -492,12 +513,16 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 claim(f, Captain)
                 targetOf(v, Captain)
 
+                grudge(v, f, 3)
+
                 log(f, "stole from", v)
 
                 CheckInfluenceAction(f, Captain, StealBlockAction(f, v), TurnEndAction)
 
             case StealBlockAction(f, v) =>
-                Ask(v)(v.hand.any.$(StealBlockWithAction(f, v, Captain), StealBlockWithAction(f, v, Ambassador))).refuse(StealMoneyAction(f, v))
+                Ask(v)
+                    .listIf(v.hand.any)(StealBlockWithAction(f, v, Captain), StealBlockWithAction(f, v, Ambassador))
+                    .refuse(StealMoneyAction(f, v))
 
             case StealBlockWithAction(f, v, r) =>
                 claim(v, r)
@@ -540,9 +565,11 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
 
                 f.money -= 3
 
+                grudge(v, f, 10)
+
                 claim(f, ("-" + 3).hl)
 
-                Ask(v)(v.hand.any.?(KillBlockWithAction(f, v, Contessa))).refuse(KillKillAction(f, v))
+                Ask(v).when(v.hand.any)(KillBlockWithAction(f, v, Contessa)).refuse(KillKillAction(f, v))
 
             case KillBlockWithAction(f, v, r) =>
                 claim(v, Contessa)
@@ -605,7 +632,9 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
 
                 f.money -= 7
 
-                    log(f, "launched", "coup".hl, "against", v)
+                grudge(v, f, 10)
+
+                log(f, "launched", "coup".hl, "against", v)
                 log(f, "paid", 7.hl, "credits")
 
                 LoseInfluenceAction(v, (f, "launched", "coup".hl, "against", v), TurnEndAction)
@@ -616,10 +645,13 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 ChallengeInfluenceAction(f, r, then, fail)
 
             case ChallengeInfluenceAction(f, r, then, fail) =>
-                if (challengers.none)
+                if (challengers.none) {
+                    f.claimed :+= r
+
                     then
+                }
                 else
-                    MultiAsk(challengers./(c => Ask(c)(PassAction(c, f, r, then, fail))(ChallengeAction(c, f, r, then, fail))))
+                    MultiAsk(challengers./(c => Ask(c).add(PassAction(c, f, r, then, fail)).add(ChallengeAction(c, f, r, then, fail))))
 
             case PassAction(c, f, r, then, fail) =>
                 challengers = challengers.but(c)
@@ -628,6 +660,10 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
 
             case ChallengeAction(e, f, r, then, fail) =>
                 challengers = Nil
+
+                f.claimed = f.claimed.but(r)
+
+                grudge(f, e, 5)
 
                 claim(e, "Challenge")
 
@@ -684,7 +720,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
 
             case LoseInfluenceAction(f, e, then) =>
                 if (f.hand.num == 1)
-                    Ask(f)(DoAction(RevealCardAction(f, f.hand(0), LoseRevealedInfluenceAction(f, then))))
+                    Ask(f).add(DoAction(RevealCardAction(f, f.hand(0), LoseRevealedInfluenceAction(f, then))))
                 else {
                     YYSelectObjectsAction(f, f.hand)
                         .withGroup(e)

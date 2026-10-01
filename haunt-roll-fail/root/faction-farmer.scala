@@ -201,7 +201,7 @@ object FarmerExpansion extends FactionExpansion[Farmer] {
             val r = f.all(Farm).%(f.canPlace)
 
             if (t >= r.num)
-                Ask(f)(ProduceMultiGrainAction(f, r))
+                Ask(f).add(ProduceMultiGrainAction(f, r))
             else
                 Ask(f).each(r.combinations(t).$)(ProduceMultiGrainAction(f, _)).birdsong(f)
 

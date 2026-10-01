@@ -55,7 +55,6 @@ sealed trait SuitAsset extends AbstractSuit {
         case _ if target == AnySuit => true
         case s if target == s => true
         case Bird => true
-
         case OneOf(l) => l.exists(_.matches(target))
         case s => target @@ {
             case AnyOf(l) if l.exists(matches) => true
@@ -154,7 +153,6 @@ trait Board {
     def corners = diagonals.lefts ++ diagonals.rights
     val rubble : $[(Clearing, Clearing)] = $
     val blizzard : $[(Clearing, Clearing)] = $
-
     val ferry : $[Clearing] = $
     val tower : $[Clearing] = $
 
@@ -330,7 +328,6 @@ sealed trait Piece extends Record {
     def plural = name + "s"
     def of(f : Faction) : Elem = name.styled(f)
     def ofg(f : Faction)(implicit game : Game) : Elem = of(f)
-
     def sof(f : Faction) = plural.styled(f)
     def nof(n : Int)(f : Faction) = (n == 1).?(name).|(plural).styled(f)
 
@@ -461,9 +458,7 @@ trait FactionState {
 
     val reserve = location(Pool, content = Figure.generate(faction, faction.pieces(options)))
 
-
     def limbo(c : Clearing) = faction -> Limbo(c)
-
 
     def from(r : Region) = faction -> r
 
@@ -482,8 +477,6 @@ trait FactionState {
     def all(p : Piece) = clearings./~(c => at(c).count(p).times(c))
 
     def hasOnMap(p : Piece) = clearings.exists(c => from(c).$.exists(_.piece == p))
-
-
 }
 
 case object MorningCraft extends HiddenEffect
@@ -652,23 +645,6 @@ trait BirdsongQuestion extends FactionAction {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 case class SelectFiguresAction(f : Faction, m : Elem, figures : $[Figure], extra : $[UserAction])(r : ObjectSetRule[Figure] => ObjectSetRule[Figure])(then : $[Figure] => ForcedAction) extends ForcedAction with Soft with SelfPerform {
     def perform(soft : Void)(implicit game : Game) = {
         implicit val convF = (x : Figure, s : Boolean) => FigureRemove(x).elem(s)(styles.iii)
@@ -681,7 +657,6 @@ case class SelectFiguresAction(f : Faction, m : Elem, figures : $[Figure], extra
                 case _ => HorizontalBreak
             })
             .withRule(rule => r(rule.each(_ => true)))
-
             .withThen(l => then(l))(l => game.desc("Remove", l./(u => u.piece.ofg(u.faction)).commaAnd))
             .withExtra(extra)
             .ask
@@ -713,7 +688,7 @@ case object Crivens extends Reaction {
 }
 
 case object WellBeBack extends Reaction {
-    val name = "We'll Be Back" // ED
+    val name = "We'll Be Back" // ED, schwarznegger
 }
 
 case object NoDiscount extends Reaction {
@@ -721,15 +696,15 @@ case object NoDiscount extends Reaction {
 }
 
 case object DialingCthulhu extends Reaction {
-    val name = "Dialing Cthulhu Octopuss" // WA
+    val name = "Dialing Cthulhu Octopuss" // WA, tone code
 }
 
 case object Hallelujah extends Reaction {
-    val name = "Hallelujah!" // LC
+    val name = "Hallelujah!" // LC, cohen chorus
 }
 
 case object FlipBombs extends Reaction {
-    val name = "Flip Bombs, Not Tables" // CC
+    val name = "Flip Bombs, Not Tables" // CC, crows croaking
 }
 
 case object AbandonShip extends Reaction {
@@ -800,6 +775,7 @@ trait GameImplicits {
     implicit def invasiveBBBState(f : InvasiveBBB)(implicit game : Game) = game.states(f).as[InvasiveBBBPlayer].get
     implicit def invasiveAAAState(f : InvasiveAAA)(implicit game : Game) = game.states(f).as[InvasiveAAAPlayer].get
     implicit def legalAAAState(f : LegalAAA)(implicit game : Game) = game.states(f).as[LegalAAAPlayer].get
+    implicit def councilState(f : Council)(implicit game : Game) = game.states(f).as[CouncilPlayer].get
     implicit def abductorAAAState(f : AbductAAA)(implicit game : Game) = game.states(f).as[AbductAAAPlayer].get
 
     implicit def streetBandState(f : StreetBand.type)(implicit game : Game) = game.states(f).as[StreetBandState].get
@@ -920,9 +896,6 @@ trait GameImplicits {
             val ttt = transports.%(_.forall(_.allows(f)))
             val dest = f.validDest
 
-
-
-
             from./~{ o =>
                 val tt = ttt.%(_.forall(_.allows(f, o)))
                 val l = dest.but(o).%(d => tt.exists(_.forall(_.allows(f, o, d))))
@@ -995,8 +968,6 @@ trait GameImplicits {
 
             if (l.none)
                 return false
-
-
 
             l.of[Attacking].any
         }
@@ -1079,6 +1050,9 @@ trait GameImplicits {
                 factions.but(f).of[Mischief].%(e => e.at(c).has(Snare) && e.hidden.has(c).not).foreach { f =>
                     return Snare.of(f)
                 }
+
+                if (Council.governs(f, c))
+                    return CouncilGovernors.of(TC)
             }
 
             "No Reason"
@@ -1088,7 +1062,8 @@ trait GameImplicits {
             game.scorched.has(c).not &&
             game.flooded.has(c).not &&
             factions.but(f).of[Feline].%(_.keep.has(c)).none &&
-            factions.but(f).of[Mischief].%(e => e.at(c).has(Snare) && e.hidden.has(c).not).none
+            factions.but(f).of[Mischief].%(e => e.at(c).has(Snare) && e.hidden.has(c).not).none &&
+            Council.governs(f, c).not
 
         def ruleValue(c : Region, mercenaries : $[Trader], friends : $[Faction]) : Int = {
             if (game.states.contains(f).not)
@@ -1137,8 +1112,6 @@ trait GameImplicits {
             val result = own + borscht + vigil + merced + hired + friended
 
             val breaker = result > 0 && (f.has(RuleIfTied) || f.has(BluebirdNobles))
-
-
 
             result + breaker.??(1)
         }
@@ -1494,11 +1467,13 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
             InvasiveBBBExpansion,
             InvasiveAAAExpansion,
             LegalAAAExpansion,
+            CouncilExpansion,
             AbductAAAExpansion,
 
             StandardDeckExpansion,
             ExilesDeckExpansion,
             DuskDeckExpansion,
+            SquiresDeckExpansion,
 
             SetupExpansion,
             MapsExpansion,
@@ -1784,29 +1759,42 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var repeat : |[TopLevelAction] = None
 
     def loggedPerform(action : Action, soft : Void) : Continue = {
-        def fixPlayer(f : Player) = f @@ {
-            case h : Hireling => ftp(h.owner.|(current))
-            case f : Faction => ftp(f)
-            case _ => f
+        /*hrf.web.timed(100)("> " + action @@ {
+            case root.Repeat => this.repeat.get
+            case root.Next => this.repeat.get.next
+            case a => a
+        })*/ {
+
+            def fixPlayer(f : Player) = f @@ {
+                case h : Hireling => ftp(h.owner.|(current))
+                case f : Faction => ftp(f)
+                case _ => f
+            }
+
+            val c = action.as[SelfPerform]./(_.perform(soft)).|(internalPerform(action, soft)) @@ {
+                case c : Ask => c.copy(faction = fixPlayer(c.faction))
+                case c : MultiAsk => c.copy(asks = c.asks./(c => c.copy(faction = fixPlayer(c.faction))))
+                case c => c
+            }
+
+            highlightFaction = (c @@ {
+                case Ask(_, Nil) => println("empty ask as a result of " + action); throw new Error("empty ask")
+                case Ask(f, _) => $(f)
+                case MultiAsk(a, _) => a./(_.faction)
+                case _ => $()
+            }).of[Faction]
+
+            c
+
         }
-
-        val c = action.as[SelfPerform]./(_.perform(soft)).|(internalPerform(action, soft)) @@ {
-            case c : Ask => c.copy(faction = fixPlayer(c.faction))
-            case c : MultiAsk => c.copy(asks = c.asks./(c => c.copy(faction = fixPlayer(c.faction))))
-            case c => c
-        }
-
-        highlightFaction = (c @@ {
-            case Ask(_, Nil) => println("empty ask as a result of " + action); throw new Error("empty ask")
-            case Ask(f, _) => $(f)
-            case MultiAsk(a, _) => a./(_.faction)
-            case _ => $()
-        }).of[Faction]
-
-        c
     }
 
     def internalPerform(action : Action, soft : Void) : Continue = {
+        // +++(">", (action @@ {
+        //     case root.Next => this.repeat.get.next
+        //     case a => a
+        // }).toString)
+
         expansions.foreach { e =>
             e.perform(action, soft) @@ {
                 case UnknownContinue =>

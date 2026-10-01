@@ -64,6 +64,7 @@ case class MilitantFavor(f : CommonInvasive) extends CardEffect {
     override val name = "Favor of the Militant Frogs"
 }
 
+
 case object LDvB extends InvasiveBBB {
     val name = "Lilypad Diaspora"
     override def funName = NameReference(name, this) ~ " Diaspora"
@@ -244,7 +245,9 @@ object InvasiveBBBExpansion extends FactionExpansion[InvasiveBBB] {
             if (f.has(MoleArtisians)) {
                 f.hand --> d --> MoleArtisians.display
 
-                Ask(f)(MoleArtisiansRevealAction(f, d, q))(MoleArtisiansDiscardAction(f, d, q))
+                Ask(f)
+                    .add(MoleArtisiansRevealAction(f, d, q))
+                    .add(MoleArtisiansDiscardAction(f, d, q))
             }
             else {
                 f.hand --> d --> discard.quiet
@@ -299,7 +302,7 @@ object InvasiveBBBExpansion extends FactionExpansion[InvasiveBBB] {
                     .withThens(d => ll./(c => InvasiveBBBReconcileClearingAction(f, l, e, c, d, ee).as("In", c, "with", d)))
                     .withExtras(InvasiveBBBReconcileFactionsAction(f, l, ee).as("Skip"), NoHand)
             else
-                Ask(f)(InvasiveBBBReconcileFactionsAction(f, l, ee).as("Skip"))
+                Ask(f).skip(InvasiveBBBReconcileFactionsAction(f, l, ee))
 
         case InvasiveBBBReconcileClearingAction(f, l, e, c, d, ee) =>
             e.log("reconciled in", c, "with", d)
@@ -362,10 +365,11 @@ object InvasiveBBBExpansion extends FactionExpansion[InvasiveBBB] {
             val sm = f.all(PeacefulBBB(Mouse))
 
             Ask(f)
-                .add(sf.any.?(InvasiveBBBAngerAction(f, Fox, sf)))
-                .add(sr.any.?(InvasiveBBBAngerAction(f, Rabbit, sr)))
-                .add(sm.any.?(InvasiveBBBAngerAction(f, Mouse, sm)))
-                .add(ml.any.?(InvasiveBBBSootheAction(f, ml)))((sf.none || sr.none || sm.none || ml.none).?(Next.as("Done")))
+                .when(sf.any)(InvasiveBBBAngerAction(f, Fox, sf))
+                .when(sr.any)(InvasiveBBBAngerAction(f, Rabbit, sr))
+                .when(sm.any)(InvasiveBBBAngerAction(f, Mouse, sm))
+                .when(ml.any)(InvasiveBBBSootheAction(f, ml))
+                .doneIf(sf.none || sr.none || sm.none || ml.none)(Next)
                 .daylight(f)
 
         case InvasiveBBBAngerAction(f, s, l) =>
@@ -399,10 +403,10 @@ object InvasiveBBBExpansion extends FactionExpansion[InvasiveBBB] {
             val r = clearings.%(f.at(_).of[MilitantBBB].any).%(f.canPlace)
 
             if (t == 0 || r.none)
-                Ask(f)(Next.as("No Recruit"))
+                Ask(f).add(Next.as("No Recruit"))
             else
             if (t >= r.num)
-                Ask(f)(InvasiveBBBFrogRecruitAction(f, r, r))
+                Ask(f).add(InvasiveBBBFrogRecruitAction(f, r, r))
             else
                 Ask(f)
                   .each(r.combinations(t).$)(InvasiveBBBFrogRecruitAction(f, _, r))
@@ -466,7 +470,7 @@ object InvasiveBBBExpansion extends FactionExpansion[InvasiveBBB] {
                     .evening(f)
 
             else
-                Ask(f)(Next.as("Done")("Settle".styled(f))).evening(f)
+                Ask(f).add(Next.as("Done")("Settle".styled(f))).evening(f)
 
 
         case InvasiveBBBSettleAction(f, d, c, s) =>

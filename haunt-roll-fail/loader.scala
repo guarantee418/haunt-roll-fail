@@ -72,6 +72,8 @@ abstract class Loader[T] {
     var onLoad : (String, T) => Unit = null
 
     def put(url : String, result : T) {
+        // +++("loaded", url)
+
         results += url -> Done(result)
 
         if (onLoad != null)
@@ -189,7 +191,8 @@ class WrappedEmbeddedImageLoader(url2id : String => String) extends Loader[Image
 }
 
 class CachedBlobImageLoader(id : String) extends Loader[ImageWrapper] {
-    val open = dom.window.caches.toOption.get.open(id)
+    // Cache Storage is only available in secure contexts (https or localhost)
+    val open = dom.window.caches.toOption.map(_.open(id))
 
     var requests = 0
 
@@ -198,12 +201,29 @@ class CachedBlobImageLoader(id : String) extends Loader[ImageWrapper] {
     }
 
     def process(url : String, tries : Int) {
-        open.then { cache =>
+        // println("process " + url + " (x" + tries + ")")
+
+        if (open.isEmpty) {
+            dom.fetch(url).then { response : dom.Response =>
+                response.blob().then { blob : dom.Blob =>
+                    put(url, new BlobImageWrapper(url, blob))
+                    null
+                }
+                null
+            }
+            return
+        }
+
+        open.get.then { cache =>
             cache.`match`(url).then({ response =>
+                // println("cached response " + response)
+
                 if (js.isUndefined(response)) {
                     try {
                         if (tries == 0) {
+                            // println("add " + url)
                             cache.add(url).then { x =>
+                                // println("then " + x)
                                 setTimeout(tries * 400) {
                                     process(url, tries + 1)
                                 }
@@ -211,6 +231,7 @@ class CachedBlobImageLoader(id : String) extends Loader[ImageWrapper] {
                             }
                         }
                         else {
+                            // println("wait")
                             setTimeout(tries * 400) {
                                 process(url, tries + 1)
                             }
@@ -218,6 +239,7 @@ class CachedBlobImageLoader(id : String) extends Loader[ImageWrapper] {
                     }
                     catch {
                         case e : Throwable =>
+                            // println("error")
                             setTimeout(1000) {
                                 process(url, 0)
                             }
@@ -237,7 +259,8 @@ class CachedBlobImageLoader(id : String) extends Loader[ImageWrapper] {
 }
 
 class CachedImageLoader(id : String) extends Loader[html.Image] {
-    val open = dom.window.caches.toOption.get.open(id)
+    // Cache Storage is only available in secure contexts (https or localhost)
+    val open = dom.window.caches.toOption.map(_.open(id))
 
     var requests = 0
 
@@ -246,12 +269,23 @@ class CachedImageLoader(id : String) extends Loader[html.Image] {
     }
 
     def process(url : String, tries : Int) {
-        open.then { cache =>
+        // println("process " + url + " (x" + tries + ")")
+
+        if (open.isEmpty) {
+            ImageLoader.load(url)(img => put(url, img))
+            return
+        }
+
+        open.get.then { cache =>
             cache.`match`(url).then({ response =>
+                // println("cached response " + response)
+
                 if (js.isUndefined(response)) {
                     try {
                         if (tries == 0) {
+                            // println("add " + url)
                             cache.add(url).then { x =>
+                                // println("then " + x)
                                 setTimeout(tries * 400) {
                                     process(url, tries + 1)
                                 }
@@ -259,6 +293,7 @@ class CachedImageLoader(id : String) extends Loader[html.Image] {
                             }
                         }
                         else {
+                            // println("wait")
                             setTimeout(tries * 400) {
                                 process(url, tries + 1)
                             }
@@ -266,6 +301,7 @@ class CachedImageLoader(id : String) extends Loader[html.Image] {
                     }
                     catch {
                         case e : Throwable =>
+                            // println("error")
                             setTimeout(1000) {
                                 process(url, 0)
                             }
@@ -289,19 +325,37 @@ class CachedImageLoader(id : String) extends Loader[html.Image] {
 
 
 class CachedStringLoader(id : String) extends Loader[String] {
-    val open = dom.window.caches.toOption.get.open(id)
+    // Cache Storage is only available in secure contexts (https or localhost)
+    val open = dom.window.caches.toOption.map(_.open(id))
 
     def process(url : String) {
         process(url, 0)
     }
 
     def process(url : String, tries : Int) {
-        open.then { cache =>
+        // println("process " + url + " (x" + tries + ")")
+
+        if (open.isEmpty) {
+            dom.fetch(url).then { response : dom.Response =>
+                response.text().then { s : String =>
+                    put(url, s)
+                    null
+                }
+                null
+            }
+            return
+        }
+
+        open.get.then { cache =>
             cache.`match`(url).then({ response =>
+                // println("cached response " + response)
+
                 if (js.isUndefined(response)) {
                     try {
                         if (tries == 0) {
+                            // println("add " + url)
                             cache.add(url).then { x =>
+                                // println("then " + x)
                                 setTimeout(tries * 400) {
                                     process(url, tries + 1)
                                 }
@@ -309,6 +363,7 @@ class CachedStringLoader(id : String) extends Loader[String] {
                             }
                         }
                         else {
+                            // println("wait")
                             setTimeout(tries * 400) {
                                 process(url, tries + 1)
                             }
@@ -316,6 +371,7 @@ class CachedStringLoader(id : String) extends Loader[String] {
                     }
                     catch {
                         case e : Throwable =>
+                            // println("error")
                             setTimeout(1000) {
                                 process(url, 0)
                             }
@@ -337,6 +393,7 @@ class CachedStringLoader(id : String) extends Loader[String] {
 object ImageLoader extends Loader[html.Image] {
     def process(url : String) {
         if (js.typeOf(dom.URL) == "undefined" || js.typeOf(dom.window.asInstanceOf[js.Dynamic].FormData) != "undefined") {
+            // Doesn't work in IE 10
             var img = new njs.Image()
             img.crossOrigin = "Anonymous"
             img.onerror = (e : dom.ErrorEvent) => fail(url)
@@ -344,6 +401,7 @@ object ImageLoader extends Loader[html.Image] {
             img.src = url
         }
         else {
+            // Workaround for IE 10
             var xhr = new dom.XMLHttpRequest()
             xhr.onerror = (e : dom.ProgressEvent) => fail(url)
             xhr.onload = (e : dom.Event) => {

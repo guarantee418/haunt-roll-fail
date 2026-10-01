@@ -38,7 +38,7 @@ trait InvasiveDDD extends WarriorFaction with CommonInvasive {
 
     override val transports : $[$[Transport]] = $($(RuledMove), $(Waterway))
 
-    override def getElem : Elem = super.getElem
+    override def getElem : Elem = super.getElem // ~ " " ~ "ẟ".hh
 
     override def note : Elem = HorizontalBreak ~ "Version from " ~ "2024-10-24".hh
 
@@ -253,7 +253,10 @@ object InvasiveDDDExpansion extends FactionExpansion[InvasiveDDD] {
             if (h.none)
                 Ask(f).done(then)
             else
-                Ask(f).each(f.hand)(d => InvasiveDDDDiscardFrogCardAction(f, d, then).!(h.has(d).not))(NoHand).needOk
+                Ask(f)
+                    .each(f.hand)(d => InvasiveDDDDiscardFrogCardAction(f, d, then).!(h.has(d).not))
+                    .add(NoHand)
+                    .needOk
 
         case InvasiveDDDDiscardFrogCardAction(f, d, then) =>
             f.hand --> d --> discard(f)
@@ -420,7 +423,7 @@ object InvasiveDDDExpansion extends FactionExpansion[InvasiveDDD] {
             if (l.any)
                 Ask(f).each(l)(c => InvasiveDDDReprisalsAction(f, c).as(c)("Reprisals in"))
             else
-                Ask(f)(Next.as("Done"))
+                Ask(f).done(Next)
 
         case InvasiveDDDReprisalsAction(f, c) =>
             log("Reprisals in", c)
@@ -440,7 +443,7 @@ object InvasiveDDDExpansion extends FactionExpansion[InvasiveDDD] {
                         .ask
                 ))
             else
-                Ask(f)(InvasiveDDDReprisalsFlipAction(f, c).as("Flip"))
+                Ask(f).add(InvasiveDDDReprisalsFlipAction(f, c).as("Flip"))
 
         case InvasiveDDDReprisalsCardAction(f, c, e, d) =>
             e.hand --> d --> e.drawn
@@ -477,9 +480,9 @@ object InvasiveDDDExpansion extends FactionExpansion[InvasiveDDD] {
             val sm = f.all(PeacefulDDD(Mouse))
 
             Ask(f)
-                .add(sf.any.?(InvasiveDDDAngerAction(f, Fox, sf)))
-                .add(sr.any.?(InvasiveDDDAngerAction(f, Rabbit, sr)))
-                .add(sm.any.?(InvasiveDDDAngerAction(f, Mouse, sm)))
+                .when(sf.any)(InvasiveDDDAngerAction(f, Fox, sf))
+                .when(sr.any)(InvasiveDDDAngerAction(f, Rabbit, sr))
+                .when(sm.any)(InvasiveDDDAngerAction(f, Mouse, sm))
                 .skip(Next)
                 .daylight(f)
 
@@ -500,10 +503,10 @@ object InvasiveDDDExpansion extends FactionExpansion[InvasiveDDD] {
             val r = clearings.%(f.at(_).of[MilitantDDD].any).%(f.canPlace)
 
             if (t == 0 || r.none)
-                Ask(f)(Next.as("No Recruit"))
+                Ask(f).add(Next.as("No Recruit"))
             else
             if (t >= r.num)
-                Ask(f)(InvasiveDDDFrogRecruitAction(f, r, r))
+                Ask(f).add(InvasiveDDDFrogRecruitAction(f, r, r))
             else
                 Ask(f)
                   .each(r.combinations(t).$)(InvasiveDDDFrogRecruitAction(f, _, r))
@@ -578,7 +581,7 @@ object InvasiveDDDExpansion extends FactionExpansion[InvasiveDDD] {
                     .ask
                     .evening(f)
             else
-                Ask(f)(Next.as("Done")("Settle".styled(f))).evening(f)
+                Ask(f).add(Next.as("Done")("Settle".styled(f))).evening(f)
 
         case InvasiveDDDSootheAction(f, d, c, s) =>
             d.foreach(d => f.hand --> d --> discard.quiet)
@@ -622,7 +625,7 @@ object InvasiveDDDExpansion extends FactionExpansion[InvasiveDDD] {
                     .ask
                     .use(a => (l == FoxRabbitMouse).?(a.evening(f)).|(a))
             else
-                Ask(f)(Next.as("Done"))
+                Ask(f).done(Next)
 
         case EveningNAction(60, f : InvasiveDDD) =>
             soft()

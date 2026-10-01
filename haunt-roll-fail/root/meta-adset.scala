@@ -43,7 +43,7 @@ object MetaAdset extends MetaGame {
 
     val minPlayers = 2
 
-    val realFactions = Meta.official ++ $(NB) ++ $(XC) ++ $(CUv2) ++ $(FH) ++ $(LDvD) ++ $(TCvA) ++ $(KDvA) ++ $(TwilightCouncil)
+    val realFactions = Meta.official ++ $(NB) ++ $(XC) ++ $(CUv2) ++ $(FH) ++ $(LDvD) ++ $(TCvA) ++ $(KDvA)
 
     val options = Meta.options
 
@@ -182,7 +182,7 @@ object MetaAdset extends MetaGame {
 
     def getBots(f : F) = $("None")
 
-    override def defaultBots = $("None")
+    override def defaultBot(f : PlayerN) = "None"
 
     def getBot(f : F, b : String) = new BotAdset(f)
 

@@ -196,6 +196,17 @@ class XKnowledge(val roles : List[Role], val nn : Int, val parent : XKnowledge) 
 
         optimize()
 
+        /*
+        states.foreach { s =>
+            println("")
+
+            s.keys.foreach(f => println(f + " " + s(f)./(r => (r == Slave).?("X").|(r.name.take(1))).mkString("")))
+        }
+
+        println("")
+        println("OPTIMIZE ^^^^^^^")
+        */
+
         children.foreach(_.is(e, r))
     }
 
@@ -304,6 +315,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 println("")
                 println("")
                 println("")
+                println("WTF!!!")
                 println("Empty Ask as a result of " + action)
             case _ =>
         }
@@ -316,7 +328,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
     implicit class ActionEx(action : Action) {
         def vr(f : Faction) : List[UserAction] = action match {
             case fa : ForcedAction =>
-                Nil
+                Nil //++ vrl(f, fa)
             case _ => log("Why " + action + " isn't forced?"); Nil
         }
 
@@ -460,7 +472,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                     val l = factions.%(_.alive).%(_.open.not).%(_.jailed.not).%(_.marked.not)
 
                     if (l.any)
-                        withClaim(MultiAsk(l./(f => Ask(f)((f.role == Slave).?(SupportRevoltAction(f, then) :: IgnoreRevoltAction(f, then)).|(IgnoreRevoltAction(f, then) :: HiddenOkAction)))))
+                        withClaim(MultiAsk(l./(f => Ask(f).add((f.role == Slave).?(SupportRevoltAction(f, then) :: IgnoreRevoltAction(f, then)).|(IgnoreRevoltAction(f, then) :: HiddenOkAction)))))
                     else
                         then
                 }
@@ -493,7 +505,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 ContinueRevoltAction(then)
 
             case AssassinateMainAction(f) =>
-                Ask(f)(factions.but(f).%(_.alive)./(e => AssassinateAction(f, e))).cancel
+                Ask(f).add(factions.but(f).%(_.alive)./(e => AssassinateAction(f, e))).cancel
 
             case AssassinateAction(f, e) =>
                 reveal(f)
@@ -546,7 +558,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 ContinueAssassinateAction(a, e)
 
             case ExecuteMainAction(f) =>
-                Ask(f)(factions.but(f).%(_.alive).%(_.open).%(_.role.side == Rebel)./(e => ExecuteAction(f, e))).cancel
+                Ask(f).add(factions.but(f).%(_.alive).%(_.open).%(_.role.side == Rebel)./(e => ExecuteAction(f, e))).cancel
 
             case ExecuteAction(f, e) =>
                 reveal(f)
@@ -560,7 +572,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 TurnEndAction
 
             case ArrestMainAction(f) =>
-                Ask(f)(factions.but(f).%(_.alive).%(_.jailed.not).%(e => e.open.not || e.role.side != Loyal)./(e => ArrestAction(f, e))).cancel
+                Ask(f).add(factions.but(f).%(_.alive).%(_.jailed.not).%(e => e.open.not || e.role.side != Loyal)./(e => ArrestAction(f, e))).cancel
 
             case ArrestAction(f, e) =>
                 reveal(f)
@@ -612,7 +624,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 then
 
             case ManipulateRevealAction(f) =>
-                Ask(f)((ChooseSideAction(f, Loyal, ManipulateForcedAction(f)) :: ChooseSideAction(f, Rebel, ManipulateForcedAction(f)))).cancel
+                Ask(f).add((ChooseSideAction(f, Loyal, ManipulateForcedAction(f)) :: ChooseSideAction(f, Rebel, ManipulateForcedAction(f)))).cancel
 
             case ManipulateForcedAction(f) =>
                 f.marked = true
@@ -620,7 +632,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 Force(ManipulateMainAction(f))
 
             case ManipulateMainAction(f) =>
-                Ask(f)(factions.but(f).%(_.alive).%(_.open.not)./(e => ManipulateAction(f, e)) ++ f.marked.not.?(CancelAction))
+                Ask(f).add(factions.but(f).%(_.alive).%(_.open.not)./(e => ManipulateAction(f, e)) ++ f.marked.not.?(CancelAction))
 
             case ManipulateAction(f, e) =>
                 log(f, "manipulated", e)
@@ -637,9 +649,9 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 val l = factions.but(f).filter(_.open.not)
 
                 if (l.num <= 3)
-                    Ask(f)(ViewRolesAction(f, l))
+                    Ask(f).add(ViewRolesAction(f, l))
                 else
-                    Ask(f)(l.combinations(3).$./(ViewRolesAction(f, _)))
+                    Ask(f).add(l.combinations(3).$./(ViewRolesAction(f, _)))
 
             case ViewRolesAction(f, l) =>
                 reveal(f)
@@ -651,10 +663,10 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 ViewingRolesAction(f, l)
 
             case ViewingRolesAction(f, l) =>
-                withClaim(Ask(f)(l./(e => ViewRoleInfoAction(f, e, e.role)) :+ ChooseSideAction(f, Loyal, TurnEndAction) :+ ChooseSideAction(f, Rebel, TurnEndAction)))
+                withClaim(Ask(f).add(l./(e => ViewRoleInfoAction(f, e, e.role)) :+ ChooseSideAction(f, Loyal, TurnEndAction) :+ ChooseSideAction(f, Rebel, TurnEndAction)))
 
             case HunterMainAction(f) =>
-                Ask(f)(factions.but(f).%(_.alive).%(_.chained.not).%(e => e.open.not || e.role == Slave)./(e => HunterAction(f, e))).cancel
+                Ask(f).add(factions.but(f).%(_.alive).%(_.chained.not).%(e => e.open.not || e.role == Slave)./(e => HunterAction(f, e))).cancel
 
             case HunterAction(f, e) if e.open && e.role == Slave =>
                 e.chained = true
@@ -688,7 +700,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
 
             // COMMON
             case PeekMainAction(f) =>
-                Ask(f)(factions.but(f).%(_.alive).%(_.open.not)./(e => PeekAction(f, e))).cancel
+                Ask(f).add(factions.but(f).%(_.alive).%(_.open.not)./(e => PeekAction(f, e))).cancel
 
             case PeekAction(f, e) =>
                 log(f, "peeked at", e)
@@ -700,10 +712,10 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 PeekViewAction(f, e)
 
             case PeekViewAction(f, e) =>
-                withClaim(Ask(f)(ViewRoleInfoAction(f, e, e.role)).done(TurnEndAction))
+                withClaim(Ask(f).add(ViewRoleInfoAction(f, e, e.role)).done(TurnEndAction))
 
             case OpenExchangeMainAction(f) =>
-                Ask(f)((factions.but(f).%(_.alive).%(_.open.not).%(_.jailed.not).diff(f.blocked)./(e => OpenExchangeAction(f, e)) :+ OpenExchangeHiddenAction(f))).cancel
+                Ask(f).add((factions.but(f).%(_.alive).%(_.open.not).%(_.jailed.not).diff(f.blocked)./(e => OpenExchangeAction(f, e)) :+ OpenExchangeHiddenAction(f))).cancel
 
             case OpenExchangeAction(f, e) =>
                 val r = f.role
@@ -752,10 +764,10 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 if (exchange) {
                     log(f, "went into hiding and secretly exchanged role")
 
-                    Ask(f)((factions.but(f).%(_.alive).%(_.open.not).%(_.jailed.not).diff(f.blocked)./(e => SecretExchangeAction(f, e)) :+ SecretExchangeHiddenAction(f) :+ SecretExchangeNoExchangeAction(f)))
+                    Ask(f).add((factions.but(f).%(_.alive).%(_.open.not).%(_.jailed.not).diff(f.blocked)./(e => SecretExchangeAction(f, e)) :+ SecretExchangeHiddenAction(f) :+ SecretExchangeNoExchangeAction(f)))
                 }
                 else {
-                    log(f, "went into hiding")
+                    log(f, "went into hiding") // ?? RULES QUESTION
 
                     TurnEndAction
                 }
@@ -912,7 +924,7 @@ class Game(val setup : List[Faction]) extends BaseGame with ContinueGame with Lo
                 if (actions.none || f.tired.not)
                     actions :+= DoneAction(TurnEndAction)
 
-                withClaim(Ask(f)(actions))
+                withClaim(Ask(f).add(actions))
 
             case TurnEndAction =>
                 factions.foreach(_.marked = false)

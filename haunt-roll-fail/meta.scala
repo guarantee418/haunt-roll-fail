@@ -79,6 +79,8 @@ trait MetaBase {
     val name : String
     val label : String
 
+    val recommendedVersion : |[String] = None
+
     def settingsKey : String = name
     def settingsList : $[hrf.Setting] =
         $(hrf.ShowTips, hrf.HideTips) ++
@@ -101,6 +103,7 @@ trait MetaBase {
     def optionPages(n : Int, l : $[F]) : $[$[O]] = $(optionsFor(n, l))
     def presetsFor(n : Int, l : $[F]) : $[(Elem, $[O], $[O])] = $()
     def defaultsFor(n : Int, l : $[F]) : $[O] = $
+    def mandatoryFor(n : Int, l : $[F]) : $[O] = $
     def hiddenOptions : $[O] = $
 
     val indistinguishableFactions : Boolean = false
@@ -189,7 +192,12 @@ trait MetaBase {
 
     def intLinks : $[(Elem, String)] = $
 
-    def extLinks : $[(Elem, String)] = $
+    def extLinksName : Elem = "External Links"
+
+    def extLinks : $[(Elem, String)] = $(
+        // "If you want to support HRF development, please help bring this project to live" ~ Break ~ 
+        // ("Straytones: Live At 24:1900 Festival - Vinyl Run Kickstarter".hl -> "https://www.kickstarter.com/projects/122musicmanagement/straytones-live-at-24-1900-festival-vinyl-run-kickstarter"),
+    )
 
     def support : $[(String, String)] = $
 
@@ -212,9 +220,9 @@ trait MetaBots extends MetaBase {
 
     import gaming._
 
-    def getBots(g : F) : $[String]
-    def getBot(g : F, bot : String) : gaming.Bot
-    def defaultBots : $[String]
+    def getBots(f : F) : $[String]
+    def getBot(f : F, bot : String) : gaming.Bot
+    def defaultBot(f : F) : String
 
     val quickMin : Int
     val quickMax : Int
@@ -228,14 +236,15 @@ trait MetaBots extends MetaBase {
             val f = l.shuffle.first
             val all = optionsFor(n, l)
             val defaults = defaultsFor(n, l)
+            val mandatory = mandatoryFor(n, l)
 
             val o = all./~(o => quickOptions.get(o).%(_ > random())./(_ => o))
-            val r = OptionsState(all, o.shuffle, defaults).checkDimmed().selected
+            val r = OptionsState(all, mandatory, o.shuffle, defaults).checkDimmed().selected
 
             validateFactionSeatingOptions(l, r) @@ {
                 case ErrorResult(_) =>
                 case _ =>
-                    val d = l.but(f)./(e => e -> getBots(e).shuffle.first).toMap
+                    val d = l.but(f)./(e => e -> defaultBot(e)).toMap
                     return (f, l, d, r)
             }
         }

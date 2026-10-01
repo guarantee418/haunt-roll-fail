@@ -39,4 +39,6 @@ object Serialize extends Serializer {
 
         r
     }
+
+    //def parseRegion(s : String) : Option[Region] = List(AutumnBoard, WinterBoard, LakeBoard, MountainBoard)./~(_.regions).%(_.name == s).single
 }

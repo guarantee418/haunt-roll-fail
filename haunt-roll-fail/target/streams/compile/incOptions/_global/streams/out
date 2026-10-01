@@ -1,397 +1,92 @@
-[0m[[0m[0mdebug[0m] [0m[0mCreated transactional ClassFileManager with tempDir = /Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/target/scala-2.13/classes.bak[0m
-[0m[[0m[0mdebug[0m] [0m[0mAbout to delete class files:[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$10.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAASetupWarriorsAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	BatAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAttackerAdjustAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAssembliesAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictsMainAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitMainAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$2.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	DebateEffect.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$DrawItem.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAPlayer.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAExpansion$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	ConveneInstead.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployMainAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitSuitAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$4.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAScoreConvenedAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAssembliesAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	AwakenThePeople.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitSuitAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAABuildConvenedAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictCardAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneFinishedAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommonBatWarrior.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployMainAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	RouseLoyalists$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAttackerCardAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$DrawRect.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	RouseLoyalists.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	MightMakesRight.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$1.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$CardPeekByDesc$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommonLegal.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$layers$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$8.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommonBatBuilding.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAScoreAssembliesAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAOutrageAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	BatAAA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IntensifyPacifism$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UIAdset$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$11.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAScoreConvenedAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneDefenderCardAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$7.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$3.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneMainAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	BuildInfo.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAASetupAssembliesAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAASetupWarriorsAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommonBatToken.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	ConveneInstead$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneResolveAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	PacificyThreats.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	EdictsAAA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	MetaAdset$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	AssemblyAAA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneMainAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	EdictAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$Placement$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IntensifyPacifism.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	TCvA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UIAdset.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictCardAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	TCvA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	BuildInfo$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$DrawRect$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAOutrageCardAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	AwakenThePeople$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAOutrageAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	BatTokenAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$6.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneResolveAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAttackerAdjustAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$Nuke$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	MightMakesRight$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAPlaceAssembliesAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployFromAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	OvertimeDebates.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CanvassSupport.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAExpansion.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAPlaceAssembliesAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$DrawItem$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IgnoreWarriorRemovalEffects.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$5.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitMainAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	OvertimeDebates$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAScoreAssembliesAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	AssemblyAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictsMainAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAttackerCardAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IgnoreWarriorRemovalEffects$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$CardPeekByDesc.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneFinishedAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CanvassSupport$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneRolledAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAASetupAssembliesAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitListAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IncludeFaction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommuneAAA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAOutrageCardAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	EdictsAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneDefenderAdjustAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	MetaAdset.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	ConvenedAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	ConvenedAAA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$FreeBuildingSlot$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	PacificyThreats$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneRolledAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAABuildConvenedAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitListAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$Battle$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IncludeFaction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$9.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneDefenderCardAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneDefenderAdjustAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anonfun$1.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployFromAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommuneAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0mWe backup class files:[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$10.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAASetupWarriorsAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	BatAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAttackerAdjustAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAssembliesAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictsMainAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitMainAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$2.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	DebateEffect.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$DrawItem.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAPlayer.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAExpansion$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	ConveneInstead.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployMainAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitSuitAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$4.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAScoreConvenedAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAssembliesAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	AwakenThePeople.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitSuitAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAABuildConvenedAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictCardAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneFinishedAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommonBatWarrior.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployMainAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	RouseLoyalists$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAttackerCardAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$DrawRect.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	RouseLoyalists.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	MightMakesRight.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$1.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$CardPeekByDesc$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommonLegal.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$layers$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$8.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommonBatBuilding.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAScoreAssembliesAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAOutrageAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	BatAAA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IntensifyPacifism$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UIAdset$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$11.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAScoreConvenedAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneDefenderCardAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$7.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$3.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneMainAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	BuildInfo.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAASetupAssembliesAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAASetupWarriorsAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommonBatToken.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	ConveneInstead$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneResolveAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	PacificyThreats.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	EdictsAAA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	MetaAdset$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	AssemblyAAA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneMainAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	EdictAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$Placement$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IntensifyPacifism.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	TCvA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UIAdset.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictCardAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	TCvA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	BuildInfo$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$DrawRect$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAOutrageCardAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	AwakenThePeople$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAOutrageAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	BatTokenAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$6.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneResolveAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAttackerAdjustAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$Nuke$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	MightMakesRight$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAPlaceAssembliesAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployFromAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	OvertimeDebates.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CanvassSupport.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAExpansion.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAPlaceAssembliesAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$DrawItem$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IgnoreWarriorRemovalEffects.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$5.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitMainAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	OvertimeDebates$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAScoreAssembliesAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	AssemblyAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictsMainAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAttackerCardAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IgnoreWarriorRemovalEffects$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$CardPeekByDesc.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneFinishedAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CanvassSupport$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneRolledAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAASetupAssembliesAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitListAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IncludeFaction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommuneAAA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAOutrageCardAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	EdictsAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneDefenderAdjustAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	MetaAdset.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	ConvenedAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	ConvenedAAA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$FreeBuildingSlot$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	PacificyThreats$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneRolledAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAABuildConvenedAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitListAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$Battle$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IncludeFaction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$9.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneDefenderCardAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneDefenderAdjustAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anonfun$1.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployFromAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommuneAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0mRolling back changes to class files.[0m
-[0m[[0m[0mdebug[0m] [0m[0mRemoving generated classes:[0m
-[0m[[0m[0mdebug[0m] [0m[0mRestoring class files: [0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitMainAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	ConveneInstead.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$CardPeekByDesc$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$Nuke$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UIAdset.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommuneAAA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IntensifyPacifism$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UIAdset$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommonBatBuilding.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	TCvA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$4.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	DebateEffect.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneFinishedAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAScoreAssembliesAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitSuitAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IncludeFaction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	AwakenThePeople.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$9.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommonLegal.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	RouseLoyalists$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IgnoreWarriorRemovalEffects.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAPlayer.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$Placement$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	BatAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitListAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAABuildConvenedAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$10.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAOutrageCardAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictsMainAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAScoreConvenedAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneDefenderAdjustAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAssembliesAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAttackerCardAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anonfun$1.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployFromAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	BatAAA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAScoreConvenedAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$7.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	EdictsAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictsMainAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneDefenderCardAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneDefenderCardAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CanvassSupport.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitListAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	MightMakesRight$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	BatTokenAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	MetaAdset.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneResolveAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAExpansion$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$6.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$layers$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneMainAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAttackerCardAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneRolledAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictCardAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneMainAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAPlaceAssembliesAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAASetupAssembliesAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAttackerAdjustAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	ConveneInstead$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAExpansion.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$DrawRect$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	PacificyThreats$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitMainAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	BuildInfo$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	TCvA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	EdictAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAOutrageAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	AssemblyAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	OvertimeDebates.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAABuildConvenedAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	ConvenedAAA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$3.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$FreeBuildingSlot$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAEdictCardAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAssembliesAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	PacificyThreats.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$11.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	ConvenedAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAASetupWarriorsAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IgnoreWarriorRemovalEffects$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAASetupAssembliesAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployMainAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$8.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAASetupWarriorsAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$DrawItem.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$CardPeekByDesc.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$DrawRect.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	BuildInfo.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$Battle$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitSuitAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	OvertimeDebates$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	AwakenThePeople$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$DrawItem$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	AssemblyAAA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	MightMakesRight.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IntensifyPacifism.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CanvassSupport$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneDefenderAdjustAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneFinishedAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAScoreAssembliesAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	RouseLoyalists.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneResolveAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	MetaAdset$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	IncludeFaction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$5.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$1.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommonBatToken.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARecruitAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAOutrageAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommonBatWarrior.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployFromAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	EdictsAAA$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAOutrageCardAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAARedeployMainAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAPlaceAssembliesAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneAttackerAdjustAction$.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	UI$$anon$2.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	LegalAAAConveneRolledAction.class[0m
-[0m[[0m[0mdebug[0m] [0m[0m	CommuneAAA.class[0m
-[0m[[0m[0mdebug[0m] [0m[0mRemoving the temporary directory used for backing up class files: /Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/target/scala-2.13/classes.bak[0m
+[debug] Created transactional ClassFileManager with tempDir = /home/user/haunt-roll-fail/haunt-roll-fail/target/scala-2.13/classes.bak
+[debug] About to delete class files:
+[debug] 	UI$$anon$10.class
+[debug] 	UI$$anon$2.class
+[debug] 	UI$DrawItem.class
+[debug] 	UI$$anon$4.class
+[debug] 	UI$DrawRect.class
+[debug] 	UI$$anon$1.class
+[debug] 	UI$CardPeekByDesc$.class
+[debug] 	UI$layers$.class
+[debug] 	UI$$anon$8.class
+[debug] 	UIAdset$.class
+[debug] 	UI$$anon$11.class
+[debug] 	UI.class
+[debug] 	UI$$anon$7.class
+[debug] 	UI$$anon$3.class
+[debug] 	BuildInfo.class
+[debug] 	UI$Placement$.class
+[debug] 	UIAdset.class
+[debug] 	BuildInfo$.class
+[debug] 	UI$DrawRect$.class
+[debug] 	UI$$anon$6.class
+[debug] 	UI$Nuke$.class
+[debug] 	UI$DrawItem$.class
+[debug] 	UI$$anon$5.class
+[debug] 	UI$CardPeekByDesc.class
+[debug] 	UI$FreeBuildingSlot$.class
+[debug] 	UI$Battle$.class
+[debug] 	UI$.class
+[debug] 	UI$$anon$9.class
+[debug] 	UI$$anonfun$1.class
+[debug] We backup class files:
+[debug] 	UI$$anon$10.class
+[debug] 	UI$$anon$2.class
+[debug] 	UI$DrawItem.class
+[debug] 	UI$$anon$4.class
+[debug] 	UI$DrawRect.class
+[debug] 	UI$$anon$1.class
+[debug] 	UI$CardPeekByDesc$.class
+[debug] 	UI$layers$.class
+[debug] 	UI$$anon$8.class
+[debug] 	UIAdset$.class
+[debug] 	UI$$anon$11.class
+[debug] 	UI.class
+[debug] 	UI$$anon$7.class
+[debug] 	UI$$anon$3.class
+[debug] 	BuildInfo.class
+[debug] 	UI$Placement$.class
+[debug] 	UIAdset.class
+[debug] 	BuildInfo$.class
+[debug] 	UI$DrawRect$.class
+[debug] 	UI$$anon$6.class
+[debug] 	UI$Nuke$.class
+[debug] 	UI$DrawItem$.class
+[debug] 	UI$$anon$5.class
+[debug] 	UI$CardPeekByDesc.class
+[debug] 	UI$FreeBuildingSlot$.class
+[debug] 	UI$Battle$.class
+[debug] 	UI$.class
+[debug] 	UI$$anon$9.class
+[debug] 	UI$$anonfun$1.class
+[debug] Registering generated classes:
+[debug] 	UI$$anon$10.class
+[debug] 	UI$$anon$2.class
+[debug] 	UI$DrawItem.class
+[debug] 	UI$$anon$4.class
+[debug] 	UI$DrawRect.class
+[debug] 	UI$$anon$1.class
+[debug] 	UI$CardPeekByDesc$.class
+[debug] 	UI$layers$.class
+[debug] 	UI$$anon$8.class
+[debug] 	UIAdset$.class
+[debug] 	UI$$anon$11.class
+[debug] 	UI.class
+[debug] 	UI$$anon$7.class
+[debug] 	UI$$anon$3.class
+[debug] 	BuildInfo.class
+[debug] 	UI$Placement$.class
+[debug] 	UIAdset.class
+[debug] 	BuildInfo$.class
+[debug] 	UI$DrawRect$.class
+[debug] 	UI$$anon$6.class
+[debug] 	UI$Nuke$.class
+[debug] 	UI$DrawItem$.class
+[debug] 	UI$$anon$5.class
+[debug] 	UI$CardPeekByDesc.class
+[debug] 	UI$FreeBuildingSlot$.class
+[debug] 	UI$Battle$.class
+[debug] 	UI$.class
+[debug] 	UI$$anon$9.class
+[debug] 	UI$$anonfun$1.class
+[debug] Removing the temporary directory used for backing up class files: /home/user/haunt-roll-fail/haunt-roll-fail/target/scala-2.13/classes.bak

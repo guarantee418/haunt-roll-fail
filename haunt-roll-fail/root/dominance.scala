@@ -161,7 +161,7 @@ object DominanceExpansion extends MandatoryExpansion {
 
         // DOMINANCE CARDS
         case TakeDominanceMainAction(f, l, then) =>
-            Ask(f)(l./(TakeDominanceAction(f, _, then))).cancel
+            Ask(f).each(l)(d => TakeDominanceAction(f, d, then)).cancel
 
         case TakeDominanceAction(f, d, then) =>
             OptionalDiscardCardAction(f, TakeCard(d), d.suit, TakeDominanceTakeAction(f, d, then))

@@ -4,6 +4,7 @@ package root
 //
 //
 import hrf.colmat._
+import hrf.compute._
 import hrf.logger._
 //
 //
@@ -38,7 +39,7 @@ class BotTT(faction : Faction, look : Int, universes : Int, breadth : Int, b : F
         score(f) - factions.but(f).but(f.coalition).%(v => v.coalition != Some(f)).%(e => e.vp > 9 || e.dominance.any)./(score).maxOr(0)
     }
 
-    def eval(actions : $[UserAction])(implicit game : Game) : $[ActionEval] = {
+    def eval(actions : $[UserAction])(implicit game : Game) : Compute[$[ActionEval]] = {
         if (actions.num == 0)
             return actions./(ActionEval(_, $(Evaluation(0, "single"))))
 
@@ -55,7 +56,7 @@ class BotTT(faction : Faction, look : Int, universes : Int, breadth : Int, b : F
         var aa = actions.take(0)
 
         while (aa.num < breadth && aa.num < actions.num) {
-            aa :+= bots(faction).ask(actions.diff(aa), 0)
+            aa :+= bots(faction).ask(actions.diff(aa), 0).as[Just[UserAction]].get.value
         }
 
         aa./(a => ActionEval(a, ${
@@ -76,7 +77,7 @@ class BotTT(faction : Faction, look : Int, universes : Int, breadth : Int, b : F
 
                 while (vp(c).none) {
                     c = c match {
-                        case Ask(o, actions) => g.performContinue(None, bots(o.asInstanceOf[Faction]).ask(actions, 0)(g), false).continue
+                        case Ask(o, actions) => g.performContinue(None, bots(o.asInstanceOf[Faction]).ask(actions, 0)(g).as[Just[UserAction]].get.value, false).continue
                         case DelayedContinue(_, c) => c
                         case Roll(dice, roll, _) => g.performContinue(None, roll(dice./(_.roll())), false).continue
                         case Shuffle(l, s, _) => g.performContinue(None, s(l.shuffle), false).continue

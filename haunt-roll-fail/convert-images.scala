@@ -23,6 +23,8 @@ object ConvertImages {
         dwam.Meta,
         vast.Meta,
         arcs.Meta,
+        doms.Meta,
+        inis.Meta,
         coup.Meta,
         sehi.Meta,
         suok.Meta,

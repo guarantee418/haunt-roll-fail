@@ -4,6 +4,7 @@ package dwam
 //
 //
 import hrf.colmat._
+import hrf.compute._
 import hrf.logger._
 //
 //
@@ -11,7 +12,7 @@ import hrf.logger._
 //
 
 class BotXX(f : Faction) extends EvalBot {
-    def eval(actions : $[UserAction])(implicit game : Game) : $[ActionEval] = {
+    def eval(actions : $[UserAction])(implicit game : Game) : Compute[$[ActionEval]] = {
         val ev = new GameEvaluation(game, f)
         actions./{ a => ActionEval(a, ev.eval(a)) }
     }

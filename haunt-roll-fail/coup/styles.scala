@@ -42,7 +42,7 @@ package object elem {
         object kill extends CustomStyle(color("crimson"))
 
         object name extends CustomStyle(font.weight("bold"), padding("0"), font.size("150%"))
-        object username extends CustomStyle(font.size("60%"))
+        object username extends CustomStyle(font.size("60%"), position("absolute"), top("3.5ex"))
 
         object viewcard extends CustomStyle(display("inline-block"), margin("0.3ex"))
 

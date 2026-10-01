@@ -31,6 +31,7 @@ trait Mischief extends WarriorFaction { self =>
         Raid      *** n ++
         Diversion *** options.has(DiversionPlot).??(n) ++
         HiddenPlot      *** (n * (4 + options.has(DiversionPlot).??(1)))
+        // options.has(BrutalHonesty).$(OpenBomb)
     }
 
     def kinds(implicit game : Game) = pieces(game.options).of[RealPlot].distinct ++ game.options.has(BrutalHonesty).$(OpenBomb)
@@ -202,15 +203,15 @@ object MischiefExpansion extends FactionExpansion[Mischief] {
 
                 val ptt = clearings.diff(game.homelands).%(f.canPlace).%(c => factions.but(f)./~(_.at(c)).of[Scoring].none)
 
-                Ask(f)(f.kinds./(p => MischiefPlotSetupAction(f, p, ptt).!(f.pooled(p.real) == f.secret.values.$.count(p), "maximum").!(ptt.none)))
+                Ask(f).each(f.kinds)(p => MischiefPlotSetupAction(f, p, ptt).!(f.pooled(p.real) == f.secret.values.$.count(p), "maximum").!(ptt.none))
             }
             else
             if (f.all(Raven).num - f.plots.num < 3) {
                 val costs = f.all(Raven).diff(f.plots)./(_.cost)
 
-                Ask(f)(clearings.%(f.canPlace)./(c => PlacePieceAction(f, c, Raven, FactionSetupAction(f)).!(
+                Ask(f).each(clearings.%(f.canPlace))(c => PlacePieceAction(f, c, Raven, FactionSetupAction(f)).!(
                     FoxRabbitMouse.permutations.exists(_.lazyZip(c.cost +: costs).forall((a, c) => a.matches(c))).not
-                )))
+                ))
             }
             else
                 SetupFactionsAction
@@ -261,7 +262,7 @@ object MischiefExpansion extends FactionExpansion[Mischief] {
                 .cancel
 
         case ExposeClearingAction(f, e, c, then) =>
-            Ask(f)(Plot.guessable./(ExposePlotAction(f, e, c, _, then))).cancel
+            Ask(f).each(Plot.guessable)(ExposePlotAction(f, e, c, _, then)).cancel
 
         case ExposePlotAction(f, e, c, p, then) =>
             OptionalDiscardCardAction(f, ToExpose(e, p, c), c.cost, ExposeAction(f, e, c, p, then))
@@ -287,10 +288,11 @@ object MischiefExpansion extends FactionExpansion[Mischief] {
             XCraftMainAction(f)
 
         case BirdsongNAction(50, f : Mischief) =>
-            Ask(f)(NoPlots)
-              .each(f.plots.%(_.in(f.hidden)).%(c => f.at(c).of[Warrior].any))(c => FlipAction(f, f.secret(c), c).!(Plot.flippable.has(f.secret(c)).not))
-              .done(Next)
-              .birdsong(f)
+            Ask(f)
+                .each(f.plots.%(_.in(f.hidden)).%(c => f.at(c).of[Warrior].any))(c => FlipAction(f, f.secret(c), c).!(Plot.flippable.has(f.secret(c)).not))
+                .add(NoPlots)
+                .done(Next)
+                .birdsong(f)
 
         case FlipAction(f, p, c) =>
             game.highlights :+= PlaceHighlight($(c))
@@ -326,13 +328,13 @@ object MischiefExpansion extends FactionExpansion[Mischief] {
         case BirdsongNAction(60, f : Mischief) =>
             if (f.pool(Raven) || f.totalWar) {
                 Ask(f)
-                  .each(FoxRabbitMouse ++ factions.of[CommonInvasive].any.$(Frog))(s => {
-                    val d = f.hand.%(_.matches(s)).any
-                    val l = d.??(clearings.%(_.cost.matched(s)).%(f.canPlace))
-                    MischiefRecruitSuitAction(f, s, l, f.pooled(Raven)).!(d.not, "no cards").!(l.none, "can't place")
-                  })
-                  .skip(Next)
-                  .birdsong(f)
+                    .each(FoxRabbitMouse ++ factions.of[CommonInvasive].any.$(Frog))(s => {
+                        val d = f.hand.%(_.matches(s)).any
+                        val l = d.??(clearings.%(_.cost.matched(s)).%(f.canPlace))
+                        MischiefRecruitSuitAction(f, s, l, f.pooled(Raven)).!(d.not, "no cards").!(l.none, "can't place")
+                    })
+                    .skip(Next)
+                    .birdsong(f)
             }
             else
                 Next
@@ -341,7 +343,7 @@ object MischiefExpansion extends FactionExpansion[Mischief] {
             if (f.pooled(Raven) >= l.num)
                 Force(MischiefRecruitListAction(f, s, l, l))
             else
-                Ask(f)(l.combinations(f.pooled(Raven)).$./(MischiefRecruitListAction(f, s, _, l))).cancel
+                Ask(f).each(l.combinations(f.pooled(Raven)).$)(MischiefRecruitListAction(f, s, _, l)).cancel
 
         case MischiefRecruitListAction(f, s, l, r) =>
             OptionalDiscardCardAction(f, RecruitsIn(l), s, MischiefRecruitAction(f, s, l, r))
@@ -358,6 +360,8 @@ object MischiefExpansion extends FactionExpansion[Mischief] {
 
             if (r.num > l.num && f.totalWar)
                 f.oscore(r.num - l.num)("recruiting")
+
+            // DaylightNAction(50, f : Mischief)
 
             Next
 
@@ -381,7 +385,7 @@ object MischiefExpansion extends FactionExpansion[Mischief] {
             if (f.pooled(Raven) >= l.num)
                 Force(MischiefRaidAction(f, c, l, then))
             else
-                Ask(f)(l.combinations(f.pooled(Raven))./(MischiefRaidAction(f, c, _, then)))
+                Ask(f).each(l.combinations(f.pooled(Raven)).$)(MischiefRaidAction(f, c, _, then))
 
         case MischiefRaidAction(f, c, l, then) =>
             l.foreach(c => f.reserve --> Raven --> c)
@@ -413,36 +417,36 @@ object MischiefExpansion extends FactionExpansion[Mischief] {
         case MischiefMainAction(f) =>
             var actions : $[UserAction] = $
 
+            implicit val ask = builder
+
             val att = clearings.%(f.canAttackIn)
-            actions :+= MischiefAttackAction(f, att).!(att.none)
+            + MischiefAttackAction(f, att).!(att.none)
 
             val mvv = f.moveFrom.of[Clearing]
-            actions :+= MischiefMoveAction(f, mvv).!(mvv.none)
+            + MischiefMoveAction(f, mvv).!(mvv.none)
 
             val ptt = clearings.diff(f.plots).%(f.canPlace).%(c => f.at(c).of[Warrior].num > f.placed)
 
             f.kinds.foreach { p =>
-                actions :+= MischiefPlotMainAction(f, p, ptt, f.placed + 1).!(f.pooled(p.real) == f.secret.values.$.count(p), "maximum").!(ptt.none)
+                + MischiefPlotMainAction(f, p, ptt, f.placed + 1).!(f.pooled(p.real) == f.secret.values.$.count(p), "maximum").!(ptt.none)
             }
 
             val thh = (f.hidden.num > 1).??(f.hidden)
             val trr = (f.plots.diff(f.hidden)./(c => f.at(c).of[RealPlot].only).distinct.num > 1).??(f.plots.diff(f.hidden))
 
-            actions :+= MischiefTrickMainAction(f, thh, trr).!(thh.none && trr.none)
+            + MischiefTrickMainAction(f, thh, trr).!(thh.none && trr.none)
 
             if (f.exert) {
-                Ask(f)(NoExertAction(f, 1 + f.all(Extortion).diff(f.hidden).num))(actions).evening(f)
+                ask(f).prepend(NoExertAction(f, 1 + f.all(Extortion).diff(f.hidden).num)).evening(f)
             }
             else {
-                if (f.acted >= 3) {
-                    actions = $
+                if (f.acted >= 3)
+                    Ask(f).add(Next.as("End".hl, "Daylight".styled(styles.phase))).daylight(f)
+                else {
+                    + EndTurnSoftAction(f, "Daylight".styled(styles.phase), ForfeitActions(3 - f.acted))
 
-                    actions :+= Next.as("End".hl, "Daylight".styled(styles.phase))
+                    ask(f).daylight(f)
                 }
-                else
-                    actions :+= EndTurnSoftAction(f, "Daylight".styled(styles.phase), ForfeitActions(3 - f.acted))
-
-                Ask(f)(actions).daylight(f)
             }
 
         case NoExertAction(f, _) =>
@@ -455,10 +459,10 @@ object MischiefExpansion extends FactionExpansion[Mischief] {
             MoveInitAction(f, f, $, NoMessage, l, f.movable, $(CancelAction), MischiefDoneAction(f, Repeat))
 
         case MischiefPlotMainAction(f, p, l, n) =>
-            Ask(f)(l./(MischiefPlotAction(f, p, n, _))).cancel
+            Ask(f).each(l)(MischiefPlotAction(f, p, n, _)).cancel
 
         case MischiefPlotSetupAction(f, p, l) =>
-            Ask(f)(l./(MischiefPlotAction(f, p, -1, _))).cancel
+            Ask(f).each(l)(MischiefPlotAction(f, p, -1, _)).cancel
 
         case MischiefPlotAction(f, p, n, c) =>
             game.highlights :+= PlaceHighlight($(c))

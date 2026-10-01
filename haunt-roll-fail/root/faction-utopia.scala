@@ -143,6 +143,7 @@ case class ActivateLivingShieldAction(self : Utopia, c : Clearing, d : DeckCard,
 
 case class ExcessiveForceAction(self : Faction, b : Battle) extends ForcedAction
 case class ExcessiveForceIgnoreAction(self : Faction, b : Battle) extends ForcedAction
+// case class BattleExcessiveForceAction(self : Faction, e : Faction, b : Battle) extends BaseAction(None)("Cancel")
 
 
 case class ToActivateLivingShield(f : Utopia, c : Clearing) extends Message {
@@ -284,7 +285,9 @@ object UtopiaExpansion extends FactionExpansion[Utopia] {
 
         case BattleCleanupAction(b) if b.attacker.can(ExcessiveForce) =>
             if (b.attacker.rules(b.clearing) && b.defender.present(b.clearing))
-                Ask(b.attacker)(CorruptAction(b.attacker.as[Utopia].get, ExcessiveForceAction(b.attacker, b)).as("Apply " ~ "(" ~ "corrupt".styled(styles.hit) ~ ")")("Excessive Force".hl)).skip(ExcessiveForceIgnoreAction(b.attacker, b))
+                Ask(b.attacker)
+                    .add(CorruptAction(b.attacker.as[Utopia].get, ExcessiveForceAction(b.attacker, b)).as("Apply " ~ "(" ~ "corrupt".styled(styles.hit) ~ ")")("Excessive Force".hl))
+                    .skip(ExcessiveForceIgnoreAction(b.attacker, b))
             else
                 ExcessiveForceIgnoreAction(b.attacker, b)
 
@@ -308,6 +311,8 @@ object UtopiaExpansion extends FactionExpansion[Utopia] {
 
         case CheckLivingShieldAction(f, c, yes, no) =>
             Ask(f).each(f.hand)(d => ActivateLivingShieldAction(f, c, d, yes)).skip(no)
+
+            // OpportunityDiscardCardAction(f, ToActivateLivingShield(f, c), c.cost, CorruptAction(f, ActivateLivingShieldAction(f, c, yes)), no)
 
         case ActivateLivingShieldAction(f, c, d, then) =>
             f.from(c) --> Palace --> f.reserve
@@ -376,10 +381,14 @@ object UtopiaExpansion extends FactionExpansion[Utopia] {
                 a.birdsong(f)
 
         case BirdsongNAction(70, f : CU.type) =>
-            Ask(f)(CorruptAction(f, UtopiaRecruitAction(f, min(7, f.corruption + 1), true, Next)).as("Recruit".hl, "(" ~ "corrupt".styled(styles.hit) ~ ")")("Recruit again")).skip(Next)
+            Ask(f)
+                .add(CorruptAction(f, UtopiaRecruitAction(f, min(7, f.corruption + 1), true, Next)).as("Recruit".hl, "(" ~ "corrupt".styled(styles.hit) ~ ")")("Recruit again"))
+                .skip(Next)
 
         case BirdsongNAction(70, f : CUv2.type) =>
-            Ask(f)(CorruptAction(f, UtopiaRecruitAction(f, f.all(Palace).%(f.canPlace).num, true, Next)).as("Recruit".hl, "(" ~ "corrupt".styled(styles.hit) ~ ")")("Recruit at each", Palace.of(f))).skip(Next)
+            Ask(f)
+                .add(CorruptAction(f, UtopiaRecruitAction(f, f.all(Palace).%(f.canPlace).num, true, Next)).as("Recruit".hl, "(" ~ "corrupt".styled(styles.hit) ~ ")")("Recruit at each", Palace.of(f)))
+                .skip(Next)
 
         // COMMAND
         case DaylightNAction(30, f : Utopia) =>
@@ -389,16 +398,16 @@ object UtopiaExpansion extends FactionExpansion[Utopia] {
             Next
 
         case DaylightNAction(40, f : Utopia) =>
-            var ask = Ask(f)
+            implicit val ask = builder
 
             if (f.extra < 3) {
                 val corrupt = f.acted >= f.corruption || f.extra > 0
 
                 val att = clearings.%(f.canAttackIn)
-                ask += UtopiaAttackAction(f, att, corrupt).!(att.none)
+                + UtopiaAttackAction(f, att, corrupt).!(att.none)
 
                 val mvv = f.moveFrom.of[Clearing]
-                ask += UtopiaMoveAction(f, mvv, corrupt).!(mvv.none)
+                + UtopiaMoveAction(f, mvv, corrupt).!(mvv.none)
 
                 val b0 = clearings
                 val b1 = b0.%(f.at(_).has(Palace).not)
@@ -407,7 +416,7 @@ object UtopiaExpansion extends FactionExpansion[Utopia] {
                 val b4 = b3.%(f.canPlace)
                 val b5 = b4.%(f.canBuild)
 
-                ask += UtopiaBuildAction(f, b5, corrupt)
+                + UtopiaBuildAction(f, b5, corrupt)
                     .!(f.pooled(Palace) <= f.all(LivingShield).num, "max")
                     .!(b2.none, "no place")
                     .!(b3.none, "no rule")
@@ -415,9 +424,9 @@ object UtopiaExpansion extends FactionExpansion[Utopia] {
                     .!(b5.none, "no slot")
             }
 
-            ask += EndTurnSoftAction(f, "Daylight".styled(styles.phase), ForfeitActions((f.extra == 0).??(f.corruption - f.acted)))
+            + EndTurnSoftAction(f, "Daylight".styled(styles.phase), ForfeitActions((f.extra == 0).??(f.corruption - f.acted)))
 
-            ask.daylight(f)
+            ask(f).daylight(f)
 
         case UtopiaAttackAction(f, l, _) =>
             BattleInitAction(f, f, NoMessage, l, $(CancelAction), UtopiaDoneAction(f, Repeat))
@@ -426,7 +435,7 @@ object UtopiaExpansion extends FactionExpansion[Utopia] {
             MoveInitAction(f, f, $, NoMessage, l, f.movable, $(CancelAction), UtopiaDoneAction(f, Repeat))
 
         case UtopiaBuildAction(f, l, _) =>
-            Ask(f)(l./(c => BuildPalaceClearingAction(f, c))).cancel
+            Ask(f).each(l)(c => BuildPalaceClearingAction(f, c)).cancel
 
         case BuildPalaceClearingAction(f, c) =>
             game.highlights :+= PlaceHighlight($(c))
@@ -451,30 +460,28 @@ object UtopiaExpansion extends FactionExpansion[Utopia] {
 
         // EVENING
         case EveningNAction(40, f : CU.type) =>
-            var actions : $[UserAction] = $
-
-            FoxRabbitMouse.foreach { s =>
-                val ll = f.all(Palace).%(_.cost.matched(s))
-                val l = ll.%(f.rules)
-                actions :+= UtopiaScoreSuitMainAction(f, s, l.num, f.freedom).!(ll.none, "no palaces").!(l.none, "not ruled").!(f.scoredSuits.contains(s), "once per turn")
-            }
-
-            Ask(f)(actions).done(Next).evening(f)
+            Ask(f)
+                .each(FoxRabbitMouse) { s =>
+                    val ll = f.all(Palace).%(_.cost.matched(s))
+                    val l = ll.%(f.rules)
+                    UtopiaScoreSuitMainAction(f, s, l.num, f.freedom).!(ll.none, "no palaces").!(l.none, "not ruled").!(f.scoredSuits.contains(s), "once per turn")//.!(f.hand.%(_.matches(s)).none, "no matching cards")
+                }
+                .done(Next)
+                .evening(f)
 
         case EveningNAction(40, f : CUv2.type) =>
-            var actions : $[UserAction] = $
-
-            f.all(Palace).diff(f.scored).foreach { c =>
-                actions :+= UtopiaScoreMainAction(f, c, f.freedom).!(f.rules(c).not, "not ruled").!(f.hand.none)
-            }
-
-            Ask(f)(actions).done(Next).evening(f)
+            Ask(f)
+                .each(f.all(Palace).diff(f.scored)) { c =>
+                    UtopiaScoreMainAction(f, c, f.freedom).!(f.rules(c).not, "not ruled").!(f.hand.none)//.!(f.hand.%(_.matches(s)).none, "no matching cards")
+                }
+                .done(Next)
+                .evening(f)
 
         case UtopiaScoreSuitMainAction(f, s, n, _) =>
             UtopiaRevealDiscardCardSuitMainAction(f, s, n)
 
         case UtopiaRevealDiscardCardSuitMainAction(f, s, n) =>
-            Ask(f).each(f.hand)(d => UtopiaRevealDiscardCardSuitAction(f, s, n, d)).cancel
+            Ask(f).each(f.hand)(d => UtopiaRevealDiscardCardSuitAction(f, s, n, d)/*.!(d.matches(s).not)*/).cancel
 
         case UtopiaRevealDiscardCardSuitAction(f, s, n, d) =>
             if (d.matches(s).not)
@@ -497,7 +504,7 @@ object UtopiaExpansion extends FactionExpansion[Utopia] {
             UtopiaRevealDiscardCardMainAction(f, c, n)
 
         case UtopiaRevealDiscardCardMainAction(f, c, vp) =>
-            Ask(f).each(f.hand)(d => UtopiaRevealDiscardCardAction(f, c, d, vp)).cancel
+            Ask(f).each(f.hand)(d => UtopiaRevealDiscardCardAction(f, c, d, vp)/*.!(d.matches(c).not)*/).cancel
 
         case UtopiaRevealDiscardCardAction(f, c, d, _) =>
             if (d.matches(c.cost).not)
@@ -520,7 +527,7 @@ object UtopiaExpansion extends FactionExpansion[Utopia] {
             val d = f.draw
             val t = f.all(Palace).%(f.rules).num
 
-            Ask(f)(UtopiaDrawAction(f, d))(UtopiaTaxAction(f, t)).evening(f)
+            Ask(f).add(UtopiaDrawAction(f, d)).add(UtopiaTaxAction(f, t)).evening(f)
 
         case UtopiaDrawAction(f, d) =>
             EveningDrawAction(f, d)

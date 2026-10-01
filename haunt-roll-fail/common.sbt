@@ -1,8 +1,8 @@
 name := "HRF"
 
-version := "0.8.121"
+version := "0.8.140"
 
-scalaVersion := "2.13.15"
+scalaVersion := "2.13.16"
 
 scalacOptions := Seq(
     "-unchecked",
@@ -35,6 +35,8 @@ Compile / unmanagedSourceDirectories += baseDirectory.value / "vast"
 Compile / unmanagedSourceDirectories += baseDirectory.value / "arcs"
 
 Compile / unmanagedSourceDirectories += baseDirectory.value / "doms"
+
+Compile / unmanagedSourceDirectories += baseDirectory.value / "inis"
 
 Compile / unmanagedSourceDirectories += baseDirectory.value / "coup"
 

@@ -10,204 +10,56 @@ import hrf.logger._
 //
 //
 
-import scala.collection.parallel.CollectionConverters._
+object Host extends hrf.host.BaseHost {
+    val gaming = coup.gaming
+    val path = "coup"
 
-object Host {
-    def writeLog(s : String) {
+    type W = Faction
 
+    def botFor(f : F) = {
+        val DL = new BotDL(f, 0.5, 0.5, 0.5)
+        val Honest = new BotDL(f, 0.5, 1.0, 0.0)
+        val HRF = new BotXX(f)
 
-
-    }
-
-    case class GameOverAction(go : GameOver) extends OracleAction
-
-    def askFaction(g : Game, c : Continue) : Action = {
-        c match {
-            case Force(action) =>
-                action
-
-
-
-
-            case Milestone(_, action) =>
-                action
-
-
-
-
-            case DelayedContinue(_, continue) =>
-                askFaction(g, continue)
-
-            case Roll(dice, rolled, tag) =>
-                rolled(dice./(_.roll()))
-
-            case Shuffle(list, shuffled, tag) =>
-                shuffled(list.shuffle)
-
-            case ShuffleUntil(list, shuffled, condition, tag) =>
-                var r = list.shuffle
-
-                while (!condition(r))
-                    r = list.shuffle
-
-                shuffled(r)
-
-            case Random(list, chosen, tag) =>
-                chosen(list.shuffle(0))
-
-            case go : GameOver =>
-                GameOverAction(go)
-
-            case Ask(_, List(action)) =>
-                action
-
-            case MultiAsk(aa, _) =>
-                askFaction(g, aa.shuffle(0))
-
-            case Ask(f, actions) =>
-                new BotXX(f).ask(g, actions, 0)
+        f match {
+            case Amalthea => Honest
+            // case Thebe => Honest
+            // case Io => Honest
+            // case Europa => Honest
+            // case Ganymede => Honest
+            // case Amalthea => DL
+            // case Thebe => DL
+            // case Io => DL
+            // case Europa => DL
+            // case Ganymede => DL
+            case Callisto => DL
+            // case Europa => HRF
+            // case Ganymede => HRF
+            // case Callisto => HRF
+            case _ => null
         }
     }
 
-    def main(args:Array[String]) {
-        val allFactions : $[Faction] = Meta.factions.take(4)
-        val allComb = allFactions.combinations(4).$
-        val factions = Meta.factions.take(4)
-        val repeat = 0.to(400).map(_ => factions)
+    def askBot(g : G, f : F, actions : $[UserAction]) = botFor(f).ask(actions, 0)(g)
 
-        def allSeatings(factions : $[Faction]) = factions.permutations.$
-        def randomSeating(factions : $[Faction]) = allSeatings(factions).shuffle.head
+    def factions = $(Amalthea, Thebe, Io, Europa, Ganymede, Callisto)
+    def subjects = factions
 
-        var results : $[$[Faction]] = Nil
+    def batch = factions.%(botFor(_) != null).permutations.$./(l => () => new G(l))
 
-        val base = allSeatings(factions).flatMap(l => 20.times(l))
+    def factionName(f : F) = f.name
+    def nameWinner(f : F) = f.name
 
-        1.to(20).foreach { i =>
-            results = results ++ base.par.map { ff =>
-                var log : $[String] = Nil
-                def writeLog(s : String) {
-                    log = s :: log
-                }
+    def winners(a : Action)(implicit g : G) = a @@ {
+        case GameOverWonAction(_, f) => $(f)
+    }
 
-                try {
-                    val game = new Game(randomSeating(ff))
+    def winnersFromFaction(f : F)(implicit g : G) = $(f)
 
-
-
-                    var aa : $[Action] = $
-
-                    var continue : Continue = StartContinue
-                    var a : Action = StartAction(gaming.version)
-
-                    var n = 0
-                    while (a.is[GameOverAction].not) {
-                        n += 1
-
-
-                        a match {
-                            case a : Soft =>
-                            case a : ExternalAction =>
-                                try {
-
-                                val sss = Serialize.write(a.unwrap)
-                                val ppp = Serialize.parseAction(sss)
-                                val aaa = Serialize.write(ppp)
-
-                                if (sss != aaa) {
-                                    println()
-                                    println()
-                                    println(a)
-                                    println(sss)
-                                    println(ppp)
-                                    println(aaa)
-                                    println()
-                                    println()
-                                }
-
-                                }
-                                catch {
-                                    case e =>
-                                        println()
-                                        println("*")
-                                        println("**")
-                                        println("*")
-                                        println()
-                                        println()
-                                        println()
-                                        println()
-                                        println()
-                                        println()
-                                        println()
-                                        println()
-                                        println()
-
-                                        println(a)
-
-                                        println()
-
-                                        val sss = Serialize.write(a)
-
-                                        println(sss)
-
-                                        val ppp = Serialize.parseAction(sss)
-
-                                        println(ppp)
-
-                                        val aaa = Serialize.write(ppp)
-
-                                        println(aaa)
-                                }
-
-                            case _ =>
-                        }
-
-
-                        if (n > 1000000)
-                            throw null
-
-                        continue = game.performContinue(|(continue), a, true).continue
-
-                        aa :+= a
-
-                        a = askFaction(game, continue)
-                    }
-
-                    val w = a.asInstanceOf[GameOverAction].go.winners
-
-                    w
-                }
-                catch {
-                    case e : Throwable if false =>
-                        println(e)
-
-                        import java.nio.file.{Paths, Files}
-                        import java.nio.charset.StandardCharsets
-
-                        Files.write(Paths.get("game-error-" + System.currentTimeMillis + ".txt"), (e.getMessage + "\n" + e.getStackTrace.mkString("\n") + log.reverse.map("<div class='p'>" + _ + "</div>").mkString("\n")).getBytes(StandardCharsets.UTF_8))
-                    Nil
-                }
-            }
-
-            val wins = results.groupBy(w => w).mapValues(_.size)
-
-            println()
-
-            wins.keys.$.sortBy(k => wins(k)).reverse.foreach { k =>
-                println(k.any.?(k./(_.name).mkString(", ")).|("Humanity") + ": " + wins(k) + " " + "%6.0f".format(wins(k) * 100.0 / wins.values.sum) + "%")
-            }
-
-            println()
-
-            allFactions.map { f =>
-                val ww = wins.filterKeys(_.contains(f))
-                val solo = ww.filterKeys(_.size == 1).values.sum
-                val tie = ww.filterKeys(_.size > 1).values.sum
-                (solo + tie) -> (f.name + ": " + solo + "+" + tie + " " + "%6.0f".format((solo + tie) * 100.0 / wins.values.sum) + "%")
-            }.sortBy(_._1).map(_._2).reverse.foreach(println)
-
-            println("Humanity" + ": " + wins.filterKeys(_.size == 0).values.sum + " " + "%6.0f".format(wins.filterKeys(_.size == 0).values.sum * 100.0 / wins.values.sum) + "%")
-            println("Total: " + results.num)
-            println()
-        }
+    def serializer = coup.Serialize
+    def start = StartAction(version)
+    def times = 1000 / batch.num
+    def winners(a : Action) = a @@ {
+        case GameOverAction(f, _) => $(f)
     }
 }

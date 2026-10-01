@@ -1,0 +1,7 @@
+
+# Local game server database (created by start-server.sh)
+good-game-database.*
+
+# Temporary sbt run files
+**/target/bg-jobs/
+**/target/global-logging/

@@ -19,16 +19,68 @@ case class UnknownOption(o : String) extends GameOption {
     val valueOn = "Unknown Option " ~ o
 }
 
+trait ObsoleteOption extends GameOption {
+    val group = "Obsolete".hh
+    val valueOn = this.toString.hh
+}
+
 trait OldIncorrectBehaviour extends GameOption with ToggleOption {
     val group = "Old Incorrect Behaviour"
+}
+
+case object LeadersAndLorePreset1 extends ObsoleteOption
+case object LeadersAndLorePreset2 extends ObsoleteOption
+case object LeadersAndLorePreset3 extends ObsoleteOption
+case object LeadersAndLorePreset4 extends ObsoleteOption
+case object LeadersAndLorePreset5 extends ObsoleteOption
+case object LeadersAndLorePreset6 extends ObsoleteOption
+
+case object HostTest extends GameOption with ToggleOption {
+    val group = "Host Test".hh
+    val valueOn = "Host Test".hh
+}
+
+case object DebugInterface extends GameOption with ToggleOption {
+    val group = "Development".hh
+    val valueOn = "Debug Interface".hh
 }
 
 trait SetupOption extends GameOption with ToggleOption {
     val group = "Setup".hh
 }
 
+trait SetupCardOption extends GameOption with OneOfGroup {
+    val group = "Setup Card".hh
+    val count = $(3, 4)
+}
+
+case object Setup3PMixUp extends SetupCardOption {
+    val valueOn = "Mix Up".hh
+    override val count = $(3)
+}
+
+case object Setup3PFrontiers extends SetupCardOption {
+    val valueOn = "Frontiers".hh
+    override val count = $(3)
+}
+
+case object Setup3PCoreConflict extends SetupCardOption {
+    val valueOn = "Core Conflict".hh
+    override val count = $(3)
+}
+
+case object Setup4PMixUp1 extends SetupCardOption {
+    val valueOn = "Mix Up 1".hh
+    override val count = $(4)
+}
+
+case object Setup4PMixUp2 extends SetupCardOption {
+    val valueOn = "Mix Up 2".hh
+    override val count = $(4)
+}
+
 case object RandomPlayerOrder extends SetupOption {
-    val valueOn = "Random Player Order".hh
+    val valueOn = "Random Seating Order".hh
 }
 
 case object RandomizePlanetResources extends SetupOption {
@@ -38,8 +90,6 @@ case object RandomizePlanetResources extends SetupOption {
 case object RandomizeStartingSystems extends SetupOption {
     val valueOn = "Randomize Starting Systems".hh
     override def blocked(all : $[BaseOption]) = all.of[CampaignOption]./($(_))
-    override val explain = $(
-    )
 }
 
 
@@ -48,76 +98,67 @@ trait LeadersAndLoreOption extends GameOption with ToggleOption with ImportantOp
     override def blocked(all : $[BaseOption]) : $[$[BaseOption]]  = all.of[CampaignOption]./($(_))
 }
 
-case object LeadersAndLorePreset1 extends LeadersAndLoreOption {
-    val valueOn = "Preset".hh ~ " " ~ "#1".hlb ~ " (Movement/Influence)"
-    override val explain = $(
-        "Preset of " ~ "five".hh ~ " leader cards and " ~ "five".hh ~ " lore cards.",
-        $(Elder, Mystic, Feastbringer, Noble, Demagogue)./(_.elem).join(", "),
-        $(SprinterDrives, PredictiveSensors, ForceBeams, CatapultOverdriveLL, SurvivalOverrides)./(_.elem).join(", "),
-        "Developed by " ~ "whichwit".hlb ~ " and " ~ "JT".hlb
-    )
+case object LeadersAndLore extends LeadersAndLoreOption {
+    val valueOn = "Leaders and Lore".hh
 }
 
-case object LeadersAndLorePreset2 extends LeadersAndLoreOption {
-    val valueOn = "Preset".hh ~ " " ~ "#2".hlb ~ " (Buildings/Planets)"
-    override val explain = $(
-        "Preset of " ~ "five".hh ~ " leader cards and " ~ "five".hh ~ " lore cards.",
-        $(Agitator, Feastbringer, Warrior, Noble, Upstart)./(_.elem).join(", "),
-        $(LivingStructures, CloudCities, GateStations, GatePorts, ToolPriests)./(_.elem).join(", "),
-        "Developed by " ~ "whichwit".hlb ~ " and " ~ "JT".hlb
-    )
-}
-
-case object LeadersAndLorePreset3 extends LeadersAndLoreOption {
-    val valueOn = "Preset".hh ~ " " ~ "#3".hlb ~ " (Offense/Defense)"
-    override val explain = $(
-        "Preset of " ~ "five".hh ~ " leader cards and " ~ "five".hh ~ " lore cards.",
-        $(Overseer, Corsair, Anarchist, Shaper, Quartermaster)./(_.elem).join(", "),
-        $(SignalBreaker, RailgunArrays, SeekerTorpedoes, MirrorPlating, GalacticRifles)./(_.elem).join(", "),
-        "Developed by " ~ "whichwit".hlb ~ " and " ~ "JT".hlb
-    )
-}
-
-case object LeadersAndLorePreset4 extends LeadersAndLoreOption {
-    val valueOn = "Archivist".hh ~ " & " ~ "Lores".hh
-
-    override def required(all : $[BaseOption]) = $($(LeadersAndLorePreset1), $(LeadersAndLorePreset2), $(LeadersAndLorePreset3))
-
-    override val explain = $(
-        Archivist.elem ~ " leader card.",
-        $(GuildLoyaltyLL, AncientHoldings, HiddenHarbors, RaiderExosuits, RepairDrones)./(_.elem).join(", "),
-        "Developed by " ~ "whichwit".hlb ~ " and " ~ "JT".hlb
-    )
-}
 
 case object DoubleLore extends LeadersAndLoreOption {
     val valueOn = "Double Lore".hh
 
-    override def blocked(all : $[BaseOption]) = super.blocked(all) ++ $($(TripleLore))
-    override def required(all : $[BaseOption]) = $($(LeadersAndLorePreset1, LeadersAndLorePreset2), $(LeadersAndLorePreset2, LeadersAndLorePreset3), $(LeadersAndLorePreset1, LeadersAndLorePreset3))
+    override def blocked(all : $[BaseOption]) = super.blocked(all) ++ $($(TripleLore), $(QuadLore), $(PentaLore))
+    override def required(all : $[BaseOption]) = $($(LeadersAndLore))
 }
 
 case object TripleLore extends LeadersAndLoreOption {
     val valueOn = "Triple Lore".hh
 
-    override def blocked(all : $[BaseOption]) = super.blocked(all) ++ $($(DoubleLore))
-    override def required(all : $[BaseOption]) = $($(LeadersAndLorePreset1, LeadersAndLorePreset2, LeadersAndLorePreset3))
+    override def blocked(all : $[BaseOption]) = super.blocked(all) ++ $($(DoubleLore), $(QuadLore), $(PentaLore))
+    override def required(all : $[BaseOption]) = $($(LeadersAndLore))
+}
+
+case object QuadLore extends LeadersAndLoreOption {
+    val valueOn = "Quad Lore".hh
+
+    override def blocked(all : $[BaseOption]) = super.blocked(all) ++ $($(DoubleLore), $(TripleLore), $(PentaLore))
+    override def required(all : $[BaseOption]) = $($(LeadersAndLore))
+}
+
+case object PentaLore extends LeadersAndLoreOption {
+    val valueOn = "Penta Lore".hh
+
+    override def blocked(all : $[BaseOption]) = super.blocked(all) ++ $($(DoubleLore), $(TripleLore), $(QuadLore))
+    override def required(all : $[BaseOption]) = $($(LeadersAndLore))
 }
 
 
-trait CampaignOption extends GameOption with ImportantOption {
+trait CampaignOption extends GameOption
+
+trait CampaignModeOption extends CampaignOption with ImportantOption {
     val group = "Campaign Mode".hh
     override def blocked(all : $[BaseOption]) = all.of[LeadersAndLoreOption]./($(_))
 }
 
-case object NoFate extends CampaignOption with ToggleOption {
+case object NoFate extends CampaignModeOption with ToggleOption {
     val valueOn = "No Fate".hlb
+
+    override val explain = $(
+        ("During " ~ "Intermission".styled(styles.title)(styles.intermission) ~ " players always draw and select among two new fates,").& ~ " " ~ ("regardless of whether they succeeded or failed their current fate.").&
+    )
+}
+
+case object Act1Only extends CampaignModeOption with ToggleOption {
+    val valueOn = "Act I Only".hlb
 }
 
 
-case object SplitDiscardPile extends GameOption with ToggleOption {
-    val group = "Other Options".hh
-    val valueOn = "Split Discard Piles".hh
+trait CampaignSetupOption extends CampaignOption with ImportantOption {
+    val group = "Manual Setup".hh
+    override def blocked(all : $[BaseOption]) = all.of[LeadersAndLoreOption]./($(_))
+}
+
+case object SetupActTwo extends CampaignSetupOption with ToggleOption {
+    val valueOn = "Continue from Act II".hlb
 }
 
 
@@ -172,6 +213,19 @@ case object HorizontalFactionPanes extends FactionPanesOption {
 }
 
 
+trait LogPaneOption extends hrf.Setting with OneOfGroup {
+    val group = "Log Pane"
+}
+
+case object AutoLogPane extends LogPaneOption {
+    val valueOn = "Auto".hlb
+}
+
+case object ExpandedLogPane extends LogPaneOption {
+    val valueOn = "Expanded".hlb
+}
+
+
 trait EndOfTurnOption extends hrf.Setting with OneOfGroup {
     val group = "End of Turn"
 }
@@ -185,7 +239,111 @@ case object ConfirmEndOfTurn extends EndOfTurnOption {
 }
 
 
-object Meta extends MetaGame { mmm =>
+trait EndOfRoundOption extends hrf.Setting with OneOfGroup {
+    val group = "End of Round"
+}
+
+case object AutoEndOfRound extends EndOfRoundOption {
+    val valueOn = "Auto".hlb
+}
+
+case object ConfirmEndOfRound extends EndOfRoundOption {
+    val valueOn = "Confirm".hlb
+}
+
+
+trait DiceRollsOption extends hrf.Setting with OneOfGroup {
+    val group = "Dice Rolls"
+}
+
+case object AutoDiceRolls extends DiceRollsOption {
+    val valueOn = "Auto".hlb
+}
+
+case object ConfirmDiceRolls extends DiceRollsOption {
+    val valueOn = "Confirm".hlb
+}
+
+
+trait SortCardsOption extends hrf.Setting with OneOfGroup {
+    val group = "Sort Cards"
+}
+
+case object UnsortedCards extends SortCardsOption {
+    val valueOn = "Unsorted".hlb
+}
+
+case object SortBySuitCards extends SortCardsOption {
+    val valueOn = "Sort by Suit".hlb
+}
+
+case object SortByValueCards extends SortCardsOption {
+    val valueOn = "Sort by Value".hlb
+}
+
+
+object Meta extends CommonMeta {
+    lazy val options =
+        $(LeadersAndLore, DoubleLore, TripleLore, QuadLore, PentaLore) ++
+        $(Setup3PMixUp, Setup3PFrontiers, Setup3PCoreConflict) ++
+        $(Setup4PMixUp1, Setup4PMixUp2) ++
+        $(RandomPlayerOrder, RandomizePlanetResources, RandomizeStartingSystems) ++
+        hiddenOptions
+
+    override def validateFactionSeatingOptions(factions : $[Faction], options : $[O]) = None ||
+        (options.of[SetupCardOption].none).?(ErrorResult("Select a Setup Card")) |
+        validateFactionCombination(factions)
+
+    override def optionsFor(n : Int, l : $[F]) = options.%!(_.as[SetupCardOption].?(_.count.has(l.num).not))
+
+    override val quickOptions = Map(
+        LeadersAndLore -> 0.50,
+        DoubleLore -> 0.10,
+        TripleLore -> 0.03,
+        Setup3PMixUp -> 0.20,
+        Setup3PFrontiers -> 0.20,
+        Setup3PCoreConflict -> 0.20,
+        Setup4PMixUp1 -> 0.20,
+        Setup4PMixUp2 -> 0.20,
+        RandomPlayerOrder -> 1,
+    )
+}
+
+object MetaBR extends CommonMeta {
+    def development = hrf.HRF.version.startsWith("test")
+
+    override val name = "arcs-br"
+    override val label = "Arcs: The Blighted Reach " + development.?("(No Fate Mode)").|("(Act I Only)")
+    override val path = Meta.path
+
+    override val hiddenOptions = development.not.$(Act1Only)
+
+    override def mandatoryFor(n : Int, l : $[F]) = development.not.$(Act1Only)
+
+    override lazy val options =
+        development.$(NoFate) ++
+        development.$(SetupActTwo) ++
+        $(RandomPlayerOrder, RandomizePlanetResources) ++
+        development.$(DebugInterface) ++
+        hiddenOptions
+
+    override val quickOptions = Map(
+        NoFate -> development.??(1),
+        Act1Only -> development.not.??(1),
+        RandomPlayerOrder -> 1,
+    )
+
+    override def validateFactionSeatingOptions(factions : $[Faction], options : $[O]) = None ||
+        (options.of[CampaignModeOption].none && development).?(ErrorResult("Select a campaign option")) |
+        validateFactionCombination(factions)
+
+    override def extLinks : $[(Elem, String)] = $(
+        ("Rulebook".hl -> "https://cdn.shopify.com/s/files/1/0106/0162/7706/files/Arcs_Campaign_Rulebook_for_web.pdf"),
+        ("Arcs Fates".hl -> "https://cmckenz87.github.io/ArcsFates/"),
+    ) ++ super.extLinks
+}
+
+trait CommonMeta extends MetaGame {
     val gaming = arcs.gaming
 
     type F = Faction
@@ -195,35 +353,69 @@ object Meta extends MetaGame { mmm =>
     val name = "arcs"
     val label = "Arcs"
 
-    val factions = $(Red, Yellow, White, Blue)
+    // override val recommendedVersion = |("0.8.139")
+
+    val factions = $(Red, Yellow, Blue, White)
 
     val minPlayers = 3
-
-    override val hiddenOptions = $
-
-    val options =
-        $(LeadersAndLorePreset1, LeadersAndLorePreset2, LeadersAndLorePreset3, LeadersAndLorePreset4, DoubleLore, TripleLore) ++
-        $(RandomPlayerOrder, RandomizePlanetResources, RandomizeStartingSystems) ++
-        $(SplitDiscardPile) ++
-        hiddenOptions
 
     override val gradualFactions : Boolean = true
 
     val quickMin = 3
     val quickMax = 4
 
-    override val quickOptions = Map(
-        LeadersAndLorePreset1 -> 0.23,
-        LeadersAndLorePreset2 -> 0.23,
-        LeadersAndLorePreset3 -> 0.23,
-        LeadersAndLorePreset4 -> 0.50,
-        DoubleLore -> 0.10,
-        RandomPlayerOrder -> 1.0,
-    )
-
     def randomGameName() = {
-        val n = $("Space", "Politics", "Betrayal", "Explosion", "Conquest", "Warp", "Renegade", "Sway", "Diplomacy", "Conflict", "Expanse", "Treachery", "Catastrophe", "Zero Gravity", "Wormhole", "Negotiation", "Control", "Force", "Galaxy", "Singularity").shuffle
-        val c = $("for", "against", "versus", "through", "and", "of", "in", "as", "by").shuffle
+        val n = $(
+            "Space",
+            "Politics",
+            "Betrayal",
+            "Explosion",
+            "Conquest",
+            "Warp",
+            "Renegade",
+            "Sway",
+            "Diplomacy",
+            "Conflict",
+            "Expanse",
+            "Treachery",
+            "Intrigue",
+            "Liberation",
+            "Revolution",
+            "Secret",
+            "Insurgency",
+            "Catastrophe",
+            "Collision",
+            "Struggle",
+            "Zero Gravity",
+            "Wormhole",
+            "Negotiation",
+            "Control",
+            "Force",
+            "Galaxy",
+            "Singularity",
+            "Raid",
+            "Power",
+            "Glory",
+            "Pivot",
+            "Prosperity",
+            "Incident",
+            "Crisis",
+            "Violence",
+            "Provocation",
+            "Unity",
+            "Exploration",
+            "Extermination",
+            "Expansion",
+            "Excuse",
+            "Example",
+            "Fight",
+            "Coercion",
+            "Fiasco",
+            "Corruption",
+            "Bribery",
+            "Arbitrage",
+        ).shuffle
+        val c = $("for", "against", "versus", "through", "and", "of", "in", "as", "by", "to", "from", "via", "out of").shuffle
         n.head + " " + c.head + " " + n.last
     }
 
@@ -244,14 +436,15 @@ object Meta extends MetaGame { mmm =>
 
     def createGame(factions : $[Faction], options : $[O]) = new Game(factions, options)
 
-    def getBots(f : Faction) = $("Easy")
+    def getBots(f : Faction) = $("Easy"/*, "Normal"*/)
 
     def getBot(f : Faction, b : String) = (f, b) match {
-        case (f, "Easy") => new BotNew(f)
+        case (f, "Easy") => new BotNew(f, true)
+        case (f, "Normal") => new BotEOC(f, e => new BotNew(e, false))
         case (f, _) => new BotOld(f)
     }
 
-    def defaultBots : $[String] = $("Easy")
+    def defaultBot(f : Faction) = "Easy"
 
     def writeFaction(f : Faction) = f.short
     def parseFaction(s : String) : |[Faction] = factions.%(_.short == s).single
@@ -270,10 +463,14 @@ object Meta extends MetaGame { mmm =>
     override def settingsList = super.settingsList ++
         $(StarStarports, TriangleStarports) ++
         $(AutoEndOfTurn, ConfirmEndOfTurn) ++
+        $(AutoEndOfRound, ConfirmEndOfRound) ++
+        $(AutoDiceRolls, ConfirmDiceRolls) ++
         $(StandardShipsSize, SmallShipsSize, SmallerShipsSize, SmallestShipsSize) ++
-        $(AutoFactionPanes, HorizontalFactionPanes, VerticalFactionPanes)
+        $(UnsortedCards, SortBySuitCards, SortByValueCards) ++
+        $(AutoFactionPanes, HorizontalFactionPanes, VerticalFactionPanes) ++
+        $(AutoLogPane, ExpandedLogPane)
 
-    override def settingsDefaults = super.settingsDefaults ++ $(StarStarports, AutoEndOfTurn, StandardShipsSize, AutoFactionPanes)
+    override def settingsDefaults = super.settingsDefaults ++ $(StarStarports, AutoEndOfTurn, ConfirmEndOfRound, AutoDiceRolls, StandardShipsSize, UnsortedCards, AutoFactionPanes, AutoLogPane)
 
     override def tips = super.tips ++ $(
         "You can change Starport token shape in the settings.",
@@ -281,30 +478,80 @@ object Meta extends MetaGame { mmm =>
         "You can enable End-of-Turn confirmation in the settings.",
     )
 
+    val easterEgg =
+        if (random() < 0.121)
+            "map-out-3-betrayal"
+        else
+        if (random() < 0.012)
+            "map-out-3-catan"
+        else
+            "map-out-3"
+
     val assets =
     ConditionalAssetsList((factions : $[F], options : $[O]) => true)(
         ImageAsset("map-no-slots") ::
         ImageAsset("map-regions").makeLossless ::
         ImageAsset("map-regions-select").makeLossless ::
 
+        ImageAsset("map-broken-gate-1-arrow").makeLossless ::
+        ImageAsset("map-broken-gate-2-arrow").makeLossless ::
+        ImageAsset("map-broken-gate-3-arrow").makeLossless ::
+        ImageAsset("map-broken-gate-4-arrow").makeLossless ::
+        ImageAsset("map-broken-gate-5-arrow").makeLossless ::
+        ImageAsset("map-broken-gate-6-arrow").makeLossless ::
+
+        ImageAsset("map-broken-gate-1-crescent").makeLossless ::
+        ImageAsset("map-broken-gate-2-crescent").makeLossless ::
+        ImageAsset("map-broken-gate-3-crescent").makeLossless ::
+        ImageAsset("map-broken-gate-4-crescent").makeLossless ::
+        ImageAsset("map-broken-gate-5-crescent").makeLossless ::
+        ImageAsset("map-broken-gate-6-crescent").makeLossless ::
+
+        ImageAsset("map-broken-gate-1-hex").makeLossless ::
+        ImageAsset("map-broken-gate-2-hex").makeLossless ::
+        ImageAsset("map-broken-gate-3-hex").makeLossless ::
+        ImageAsset("map-broken-gate-4-hex").makeLossless ::
+        ImageAsset("map-broken-gate-5-hex").makeLossless ::
+        ImageAsset("map-broken-gate-6-hex").makeLossless ::
+
+
+        ImageAsset("map-twisted-passage").makeLossless ::
+
         ImageAsset("map-out-1") ::
         ImageAsset("map-out-2") ::
-        ImageAsset("map-out-3", {
-            if (random() < 0.121)
-                "map-out-3-betrayal"
-            else
-            if (random() < 0.012)
-                "map-out-3-catan"
-            else
-                "map-out-3"
-        }) ::
+        ImageAsset("map-out-3", easterEgg) ::
         ImageAsset("map-out-4") ::
         ImageAsset("map-out-5") ::
         ImageAsset("map-out-6") ::
 
         ImageAsset("map-ambitions-3") ::
+        ImageAsset("map-ambitions-4") ::
+
+        ImageAsset("flagship-panel").scaled(46) ::
+        ImageAsset("flagship-overlay").scaled(46) ::
+
+        ImageAsset("chapter-1").scaled(50) ::
+        ImageAsset("chapter-2").scaled(50) ::
+        ImageAsset("chapter-3").scaled(50) ::
+        ImageAsset("chapter-4").scaled(50) ::
+        ImageAsset("chapter-5").scaled(50) ::
+
+        ImageAsset("act-1").scaled(50) ::
+        ImageAsset("act-2").scaled(50) ::
+        ImageAsset("act-3").scaled(50) ::
+
+        ImageAsset("grand-ambitions-4").scaled(50) ::
+        ImageAsset("grand-ambitions-3").scaled(50) ::
+        ImageAsset("grand-ambitions-1").scaled(50) ::
+        ImageAsset("grand-ambitions-2").scaled(50) ::
+
+        ImageAsset("goal-27").scaled(50) ::
+        ImageAsset("goal-30").scaled(50) ::
+        ImageAsset("goal-33").scaled(50) ::
 
         ImageAsset("ambitions").scaled(50) ::
+        ImageAsset("ambition-blightkin").scaled(50) ::
+        ImageAsset("ambition-edenguard").scaled(50) ::
         ImageAsset("resources").scaled(50) ::
         ImageAsset("edicts").scaled(50) ::
         ImageAsset("laws").scaled(50) ::
@@ -325,15 +572,29 @@ object Meta extends MetaGame { mmm =>
         ImageAsset("relic-outrage").scaled(40) ::
         ImageAsset("psionic-outrage").scaled(40) ::
 
+        ImageAsset("golem-sleep").scaled(47) ::
+        ImageAsset("golem-warrior").scaled(47) ::
+        ImageAsset("golem-protector").scaled(47) ::
+        ImageAsset("golem-seeker").scaled(47) ::
+        ImageAsset("golem-harvester").scaled(47) ::
+
+        ImageAsset("objective") ::
+
         ImageAsset("keys-1").scaled(12.5) ::
         ImageAsset("keys-2").scaled(12.5) ::
+        ImageAsset("keys-2-golem").scaled(12.5) ::
+        ImageAsset("keys-2-hoard").scaled(12.5) ::
+        ImageAsset("keys-2-empathy").scaled(12.5) ::
+        ImageAsset("keys-2-arsenal").scaled(12.5) ::
         ImageAsset("keys-3").scaled(12.5) ::
         ImageAsset("keys-4").scaled(12.5) ::
+        ImageAsset("keys-x").scaled(12.5) ::
         ImageAsset("half-keys-1").scaled(12.5) ::
         ImageAsset("half-keys-2").scaled(12.5) ::
         ImageAsset("half-keys-3").scaled(12.5) ::
         ImageAsset("half-keys-4").scaled(12.5) ::
         ImageAsset("card-back-small") ::
+        ImageAsset("card-back-small-faithful") ::
         ImageAsset("card-back-5") ::
         ImageAsset("b-glyph") ::
         ImageAsset("r-glyph") ::
@@ -365,6 +626,13 @@ object Meta extends MetaGame { mmm =>
         ImageAsset("skirmish-die-5") ::
         ImageAsset("skirmish-die-6") ::
         ImageAsset("skirmish-die") ::
+
+        ImageAsset("feudal-court-1") ::
+        ImageAsset("feudal-court-2") ::
+        ImageAsset("feudal-court-3") ::
+        ImageAsset("feudal-court-4") ::
+        ImageAsset("feudal-court-5") ::
+        ImageAsset("feudal-court-6") ::
     $) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "action")(
         ImageAsset("card-back") ::
@@ -414,7 +682,7 @@ object Meta extends MetaGame { mmm =>
         ImageAsset("administration-pips-4") ::
         ImageAsset("administration-pips-copy") ::
         ImageAsset("administration-pips-pivot") ::
-        ImageAsset("administration-plaque") ::
+        ImageAsset("administration-plaque-new") ::
 
         ImageAsset("aggression-number-1") ::
         ImageAsset("aggression-number-2") ::
@@ -428,7 +696,7 @@ object Meta extends MetaGame { mmm =>
         ImageAsset("aggression-pips-3") ::
         ImageAsset("aggression-pips-copy") ::
         ImageAsset("aggression-pips-pivot") ::
-        ImageAsset("aggression-plaque") ::
+        ImageAsset("aggression-plaque-new") ::
 
         ImageAsset("construction-number-1") ::
         ImageAsset("construction-number-2") ::
@@ -443,7 +711,7 @@ object Meta extends MetaGame { mmm =>
         ImageAsset("construction-pips-4") ::
         ImageAsset("construction-pips-copy") ::
         ImageAsset("construction-pips-pivot") ::
-        ImageAsset("construction-plaque") ::
+        ImageAsset("construction-plaque-new") ::
 
         ImageAsset("mobilization-number-1") ::
         ImageAsset("mobilization-number-2") ::
@@ -458,10 +726,45 @@ object Meta extends MetaGame { mmm =>
         ImageAsset("mobilization-pips-4") ::
         ImageAsset("mobilization-pips-copy") ::
         ImageAsset("mobilization-pips-pivot") ::
-        ImageAsset("mobilization-plaque") ::
+        ImageAsset("mobilization-plaque-new") ::
+
+        ImageAsset("zeal-number-1") ::
+        ImageAsset("zeal-number-2") ::
+        ImageAsset("zeal-number-3") ::
+        ImageAsset("zeal-number-4") ::
+        ImageAsset("zeal-number-5") ::
+        ImageAsset("zeal-number-6") ::
+        ImageAsset("zeal-number-7") ::
+        ImageAsset("zeal-number-8") ::
+        ImageAsset("zeal-number-9") ::
+        ImageAsset("zeal-pips-1") ::
+        ImageAsset("zeal-pips-2") ::
+        ImageAsset("zeal-pips-3") ::
+        ImageAsset("zeal-pips-4") ::
+        ImageAsset("zeal-pips-copy") ::
+        ImageAsset("zeal-pips-pivot") ::
+        ImageAsset("zeal-plaque-new") ::
+
+        ImageAsset("wisdom-number-1") ::
+        ImageAsset("wisdom-number-2") ::
+        ImageAsset("wisdom-number-3") ::
+        ImageAsset("wisdom-number-4") ::
+        ImageAsset("wisdom-number-5") ::
+        ImageAsset("wisdom-number-6") ::
+        ImageAsset("wisdom-number-7") ::
+        ImageAsset("wisdom-number-8") ::
+        ImageAsset("wisdom-number-9") ::
+        ImageAsset("wisdom-pips-1") ::
+        ImageAsset("wisdom-pips-2") ::
+        ImageAsset("wisdom-pips-3") ::
+        ImageAsset("wisdom-pips-4") ::
+        ImageAsset("wisdom-pips-copy") ::
+        ImageAsset("wisdom-pips-pivot") ::
+        ImageAsset("wisdom-plaque-new") ::
 
         ImageAsset("zeroed") ::
         ImageAsset("hidden") ::
+        ImageAsset("hidden-faithful") ::
     $) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "court")(
         ImageAsset("bc01") ::
@@ -598,6 +901,9 @@ object Meta extends MetaGame { mmm =>
         ImageAsset("aid12b") ::
         ImageAsset("aid13a") ::
         ImageAsset("aid13b") ::
+        ImageAsset("aid14") ::
+        ImageAsset("aid15") ::
+        ImageAsset("aid16") ::
     $) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "fate")(
         ImageAsset("no-fate") ::
@@ -619,6 +925,12 @@ object Meta extends MetaGame { mmm =>
         ImageAsset("fate16") ::
         ImageAsset("fate17") ::
         ImageAsset("fate18") ::
+        ImageAsset("fate19") ::
+        ImageAsset("fate20") ::
+        ImageAsset("fate21") ::
+        ImageAsset("fate22") ::
+        ImageAsset("fate23") ::
+        ImageAsset("fate24") ::
     $) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "f01")(
         ImageAsset("f01-01a") ::
@@ -835,15 +1147,17 @@ object Meta extends MetaGame { mmm =>
         ImageAsset("f08-01b") ::
         ImageAsset("f08-02") ::
         ImageAsset("f08-03") ::
-        ImageAsset("f08-04") ::
-        ImageAsset("f08-05") ::
-        ImageAsset("f08-06") ::
-        ImageAsset("f08-07") ::
-        ImageAsset("f08-08") ::
-        ImageAsset("f08-09") ::
-        ImageAsset("f08-10") ::
-        ImageAsset("f08-11") ::
-        ImageAsset("f08-12") ::
+
+        ImageAsset("faithful-9", "f08-04") ::
+        ImageAsset("faithful-8", "f08-05") ::
+        ImageAsset("faithful-7", "f08-06") ::
+        ImageAsset("faithful-6", "f08-07") ::
+        ImageAsset("faithful-5", "f08-08") ::
+        ImageAsset("faithful-4", "f08-09") ::
+        ImageAsset("faithful-3", "f08-10") ::
+        ImageAsset("faithful-2", "f08-11") ::
+        ImageAsset("faithful-1", "f08-12") ::
+
         ImageAsset("f08-13") ::
         ImageAsset("f08-14") ::
         ImageAsset("f08-15") ::
@@ -867,6 +1181,201 @@ object Meta extends MetaGame { mmm =>
         ImageAsset("f08-30") ::
         ImageAsset("f08-31") ::
     $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "f09")(
+        ImageAsset("f09-01a") ::
+        ImageAsset("f09-01b") ::
+        ImageAsset("f09-02") ::
+        ImageAsset("f09-03") ::
+        ImageAsset("f09-04") ::
+        ImageAsset("f09-05") ::
+        ImageAsset("f09-06") ::
+        ImageAsset("f09-07a") ::
+        ImageAsset("f09-07b") ::
+        ImageAsset("f09-08") ::
+        ImageAsset("f09-09") ::
+        ImageAsset("f09-10") ::
+        ImageAsset("f09-11") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "f10")(
+        ImageAsset("f10-01a") ::
+        ImageAsset("f10-01b") ::
+        ImageAsset("f10-02") ::
+        ImageAsset("f10-03") ::
+        ImageAsset("f10-04") ::
+        ImageAsset("f10-05") ::
+        ImageAsset("f10-06") ::
+        ImageAsset("f10-07") ::
+        ImageAsset("f10-08") ::
+        ImageAsset("f10-09") ::
+        ImageAsset("f10-10") ::
+        ImageAsset("f10-11a") ::
+        ImageAsset("f10-11b") ::
+        ImageAsset("f10-12") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "f11")(
+        ImageAsset("f11-01a") ::
+        ImageAsset("f11-01b") ::
+        ImageAsset("f11-02") ::
+        ImageAsset("f11-03a") ::
+        ImageAsset("f11-03b") ::
+        ImageAsset("f11-04") ::
+        ImageAsset("f11-05") ::
+        ImageAsset("f11-06") ::
+        ImageAsset("f11-07") ::
+        ImageAsset("f11-08") ::
+        ImageAsset("f11-09") ::
+        ImageAsset("f11-10") ::
+        ImageAsset("f11-11") ::
+        ImageAsset("f11-12a") ::
+        ImageAsset("f11-12b") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "f12")(
+        ImageAsset("f12-01a") ::
+        ImageAsset("f12-01b") ::
+        ImageAsset("f12-02") ::
+        ImageAsset("f12-03") ::
+        ImageAsset("f12-04") ::
+        ImageAsset("f12-05") ::
+        ImageAsset("f12-06") ::
+        ImageAsset("f12-07") ::
+        ImageAsset("f12-08a") ::
+        ImageAsset("f12-08b") ::
+        ImageAsset("f12-09") ::
+        ImageAsset("f12-10") ::
+        ImageAsset("f12-11") ::
+        ImageAsset("f12-12") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "f13")(
+        ImageAsset("f13-01a") ::
+        ImageAsset("f13-01b") ::
+        ImageAsset("f13-02") ::
+        ImageAsset("f13-03") ::
+        ImageAsset("f13-04") ::
+        ImageAsset("f13-05") ::
+        ImageAsset("f13-06") ::
+        ImageAsset("f13-07") ::
+        ImageAsset("f13-08") ::
+        ImageAsset("f13-09") ::
+        ImageAsset("f13-10") ::
+        ImageAsset("f13-11") ::
+        ImageAsset("f13-12a") ::
+        ImageAsset("f13-12b") ::
+        ImageAsset("f13-13") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "f14")(
+        ImageAsset("f14-01a") ::
+        ImageAsset("f14-01b") ::
+        ImageAsset("f14-02") ::
+        ImageAsset("f14-03") ::
+        ImageAsset("f14-04") ::
+        ImageAsset("f14-05") ::
+        ImageAsset("f14-06") ::
+        ImageAsset("f14-07") ::
+        ImageAsset("f14-08a") ::
+        ImageAsset("f14-08b") ::
+        ImageAsset("f14-09") ::
+        ImageAsset("f14-10") ::
+        ImageAsset("f14-11") ::
+        ImageAsset("f14-12") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "f15")(
+        ImageAsset("f15-01a") ::
+        ImageAsset("f15-01b") ::
+        ImageAsset("f15-02") ::
+        ImageAsset("f15-03") ::
+        ImageAsset("f15-04") ::
+        ImageAsset("f15-05") ::
+        ImageAsset("f15-06") ::
+        ImageAsset("f15-07a") ::
+        ImageAsset("f15-07b") ::
+        ImageAsset("f15-08") ::
+        ImageAsset("f15-09") ::
+        ImageAsset("f15-10") ::
+        ImageAsset("f15-11") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "f16")(
+        ImageAsset("f16-01a") ::
+        ImageAsset("f16-01b") ::
+        ImageAsset("f16-02") ::
+        ImageAsset("f16-03") ::
+        ImageAsset("f16-04") ::
+        ImageAsset("f16-05") ::
+        ImageAsset("f16-06") ::
+        ImageAsset("f16-07") ::
+        ImageAsset("f16-08") ::
+        ImageAsset("f16-09") ::
+        ImageAsset("f16-10") ::
+        ImageAsset("f16-11") ::
+        ImageAsset("f16-12") ::
+        ImageAsset("f16-13") ::
+        ImageAsset("f16-14") ::
+        ImageAsset("f16-15") ::
+        ImageAsset("f16-16") ::
+        ImageAsset("f16-17a") ::
+        ImageAsset("f16-17b") ::
+        ImageAsset("f16-18") ::
+        ImageAsset("f16-19") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "f17")(
+        ImageAsset("f17-01a") ::
+        ImageAsset("f17-01b") ::
+        ImageAsset("f17-02") ::
+        ImageAsset("f17-03") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "f18")(
+        ImageAsset("f18-01a") ::
+        ImageAsset("f18-01b") ::
+        ImageAsset("f18-02") ::
+        ImageAsset("f18-03") ::
+        ImageAsset("f18-04") ::
+        ImageAsset("f18-05") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "f19")(
+        ImageAsset("f19-01a") ::
+        ImageAsset("f19-01b") ::
+        ImageAsset("f19-02") ::
+        ImageAsset("f19-03") ::
+        ImageAsset("f19-04") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "f20")(
+        ImageAsset("f20-01a") ::
+        ImageAsset("f20-01b") ::
+        ImageAsset("f20-02") ::
+        ImageAsset("f20-03") ::
+        ImageAsset("f20-04") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "f21")(
+        ImageAsset("f21-01a") ::
+        ImageAsset("f21-01b") ::
+        ImageAsset("f21-02") ::
+        ImageAsset("f21-03") ::
+        ImageAsset("f21-04") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "f22")(
+        ImageAsset("f22-01a") ::
+        ImageAsset("f22-01b") ::
+        ImageAsset("f22-02") ::
+        ImageAsset("f22-03") ::
+        ImageAsset("f22-04") ::
+        ImageAsset("f22-05") ::
+        ImageAsset("f22-06") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "f23")(
+        ImageAsset("f23-01a") ::
+        ImageAsset("f23-01b") ::
+        ImageAsset("f23-02") ::
+        ImageAsset("f23-03") ::
+        ImageAsset("f23-04") ::
+        ImageAsset("f23-05") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "f24")(
+        ImageAsset("f24-01a") ::
+        ImageAsset("f24-01b") ::
+        ImageAsset("f24-02") ::
+        ImageAsset("f24-03") ::
+        ImageAsset("f24-04") ::
+        ImageAsset("f24-05") ::
+    $) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "ambition", scale = 41.4)(
         ImageAsset("ambition-values-6-3") ::
         ImageAsset("ambition-values-9-4") ::
@@ -874,6 +1383,11 @@ object Meta extends MetaGame { mmm =>
         ImageAsset("ambition-values-4-2") ::
         ImageAsset("ambition-values-5-3") ::
         ImageAsset("ambition-values-2-0") ::
+        ImageAsset("conspiracy") ::
+        ImageAsset("conspiracy-b") ::
+        ImageAsset("conspiracy-r") ::
+        ImageAsset("conspiracy-w") ::
+        ImageAsset("conspiracy-y") ::
     $) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "figure", scale = 11)(
         ImageAsset("ship-empty") ::
@@ -892,6 +1406,36 @@ object Meta extends MetaGame { mmm =>
         ImageAsset("blight-damaged") ::
         ImageAsset("blight-empty") ::
     $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "figure", scale = 14)(
+        ImageAsset("b-flagship") ::
+        ImageAsset("r-flagship") ::
+        ImageAsset("w-flagship") ::
+        ImageAsset("y-flagship") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "figure", scale = 54.3)(
+        ImageAsset("banner") ::
+        ImageAsset("banner-damaged") ::
+        ImageAsset("banner-empty") ::
+        ImageAsset("witness") ::
+        ImageAsset("clue-right") ::
+        ImageAsset("clue-wrong") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "figure", scale = 47)(
+        ImageAsset("hammer") ::
+        ImageAsset("broken-world") ::
+        ImageAsset("portal") ::
+        ImageAsset("bunker") ::
+        ImageAsset("bunker-damaged") ::
+        ImageAsset("bunker-empty", "banner-empty") :: // TODO ALIGN RESOLUTION
+
+        ImageAsset("pilgrim") ::
+        ImageAsset("rumor") ::
+        ImageAsset("rumor-correct-cluster") ::
+        ImageAsset("rumor-correct-symbol") ::
+        ImageAsset("rumor-false-clue") ::
+        ImageAsset("ceasefire-peace") ::
+        ImageAsset("ceasefire-war") ::
+    $) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "figure", scale = 11)(
         ImageAsset("agent-empty") ::
         ImageAsset("b-agent") ::
@@ -899,21 +1443,25 @@ object Meta extends MetaGame { mmm =>
         ImageAsset("b-agent-a") ::
         ImageAsset("b-agent-b") ::
         ImageAsset("b-agent-c") ::
+        ImageAsset("b-agent-star") ::
         ImageAsset("r-agent") ::
         ImageAsset("r-agent-damaged") ::
         ImageAsset("r-agent-a") ::
         ImageAsset("r-agent-b") ::
         ImageAsset("r-agent-c") ::
+        ImageAsset("r-agent-star") ::
         ImageAsset("w-agent") ::
         ImageAsset("w-agent-damaged") ::
         ImageAsset("w-agent-a") ::
         ImageAsset("w-agent-b") ::
         ImageAsset("w-agent-c") ::
+        ImageAsset("w-agent-star") ::
         ImageAsset("y-agent") ::
         ImageAsset("y-agent-damaged") ::
         ImageAsset("y-agent-a") ::
         ImageAsset("y-agent-b") ::
         ImageAsset("y-agent-c") ::
+        ImageAsset("y-agent-star") ::
     $) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "figure", scale = 38)(
         ImageAsset("building-empty-keys-1") ::
@@ -922,29 +1470,38 @@ object Meta extends MetaGame { mmm =>
         ImageAsset("building-empty-plus-2") ::
         ImageAsset("building-empty-plus-3") ::
 
-        ImageAsset("city-empty",     "building-empty") ::
-        ImageAsset("starport-empty", "building-empty") ::
+        ImageAsset("city-empty",      "building-empty") ::
+        ImageAsset("city-seat-empty", "building-empty") ::
+        ImageAsset("starport-empty",  "building-empty") ::
         ImageAsset("starport-alt-empty") ::
         ImageAsset("b-city") ::
         ImageAsset("b-city-damaged") ::
+        ImageAsset("b-city-seat") ::
+        ImageAsset("b-city-seat-damaged") ::
         ImageAsset("b-starport") ::
         ImageAsset("b-starport-damaged") ::
         ImageAsset("b-starport-alt") ::
         ImageAsset("b-starport-alt-damaged") ::
         ImageAsset("r-city") ::
         ImageAsset("r-city-damaged") ::
+        ImageAsset("r-city-seat") ::
+        ImageAsset("r-city-seat-damaged") ::
         ImageAsset("r-starport") ::
         ImageAsset("r-starport-damaged") ::
         ImageAsset("r-starport-alt") ::
         ImageAsset("r-starport-alt-damaged") ::
         ImageAsset("w-city") ::
         ImageAsset("w-city-damaged") ::
+        ImageAsset("w-city-seat") ::
+        ImageAsset("w-city-seat-damaged") ::
         ImageAsset("w-starport") ::
         ImageAsset("w-starport-damaged") ::
         ImageAsset("w-starport-alt") ::
         ImageAsset("w-starport-alt-damaged") ::
         ImageAsset("y-city") ::
         ImageAsset("y-city-damaged") ::
+        ImageAsset("y-city-seat") ::
+        ImageAsset("y-city-seat-damaged") ::
         ImageAsset("y-starport") ::
         ImageAsset("y-starport-damaged") ::
         ImageAsset("y-starport-alt") ::
@@ -957,8 +1514,5 @@ object Meta extends MetaGame { mmm =>
         ImageAsset("free-starport-alt-damaged") ::
     $) ::
     $
-
-    override def extLinks = $(
-    ) ++ super.extLinks
 
 }

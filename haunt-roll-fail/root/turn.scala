@@ -86,7 +86,7 @@ case class ExplodeDamagePriorityAction(self : Faction, l : $[Piece]) extends Hid
         case _ => false
     }
 
-    def explode(withSoft : Boolean) = {
+    def explode(withSoft : Boolean)(implicit game : Game) = {
         val c = l.permutations.$
 
         c./(SetDamagePriorityAction(self, _).as("Done")) ++ withSoft.??(c./(AdjustDamagePrioritiesAction(self, _)))
@@ -151,6 +151,9 @@ object TurnExpansion extends MandatoryExpansion {
             val mandatory =
                 FoxRabbitMouse.%(s => f.can(ServiceOfThe(s)))./(s => ServiceOfMainAction(f, s)) ++
                 f.can(BetterBurrowBank).??(factions.but(f)./(BetterBurrowBankAction(f, _))) ++
+                f.can(ShadowCouncil).?(ShadowCouncilMainAction(f).!(f.hand.none)) ++
+                f.can(Apprentice).?(ApprenticeMainAction(f)) ++
+                f.can(Riversteads).?(RiversteadsAction(f)) ++
                 f.can(StoicProtector).?? {
                     val h = StoicProtector
                     val from = h.all(Deer)
@@ -165,23 +168,25 @@ object TurnExpansion extends MandatoryExpansion {
                 f.can(RiverfolkFlotilla).$(RiverfolkFlotillaAction(f, RiverfolkFlotilla))
 
             val optional = $ ++
-                f.can(LizardEnvoys).?(LizardEnvoysMainAction(f).!(pile.none)) ++
+                f.can(Saboteurs).??(factions.but(f)./~(e => e.stuck.$.of[CraftEffectCard]./(d => SaboteurAction(f, e, d)))) ++
                 f.can(BreakingDawn).?(BreakingDawnMainAction(f, f.as[WarriorFaction].?(f => f.pool(f.warrior)), game.dawn.num, Repeat).as(BreakingDawn)) ++
                 f.can(MilitarySupplies).?(WageWarAction(f, 1, 2, UsedEffectAction(f, MilitarySupplies, Repeat)).as(MilitarySupplies)) ++
-                f.can(Saboteurs).??(factions.but(f)./~(e => e.stuck.$.of[CraftEffectCard]./(d => SaboteurAction(f, e, d))))
+                f.can(SkyCouriers).?(SkyCouriersMainAction(f).!(f.hand.none)) ++
+                f.can(HiddenWarrens).?(HiddenWarrensMainAction(f)) ++
+                f.can(LizardEnvoys).?(LizardEnvoysMainAction(f).!(pile.none))
 
-            val ask = Ask(f)(RawElemGroup("Start of " ~ Birdsong.elem))(mandatory)
+            val ask = Ask(f).add(RawElemGroup("Start of " ~ Birdsong.elem)).add(mandatory)
 
             if (ask.available)
-                ask(optional).needOk
+                ask.add(optional).needOk
             else
-                ask(optional)(Next.as("Skip"))
+                ask.add(optional).skip(Next)
 
         case BirdsongNAction(98, f) =>
             soft()
 
             if (f.birdsongOnly)
-                Ask(f)(f.birdsong)(Next.as("End " ~ Birdsong.elem))
+                Ask(f).birdsong(f).add(Next.as("End " ~ Birdsong.elem))
             else
                 NoAsk(f)(Next)
 
@@ -216,9 +221,9 @@ object TurnExpansion extends MandatoryExpansion {
 
             if (f.can(Cobbler) || f.can(CharmOffensive)) {
                 Ask(f)
-                    .add(f.can(Cobbler).?(MoveInitAction(f, f, $, WithEffect(Cobbler), f.moveFrom, f.movable, $(CancelAction), UsedEffectAction(f, Cobbler, Repeat)).as(Cobbler)(Evening)))
-                    .add(f.can(CharmOffensive).?(CharmOffensiveMainAction(f, factions.but(f), Repeat).as(CharmOffensive)(Evening)))
-                    .add(Next.as("Skip"))
+                    .when(f.can(Cobbler))(MoveInitAction(f, f, $, WithEffect(Cobbler), f.moveFrom, f.movable, $(CancelAction), UsedEffectAction(f, Cobbler, Repeat)).as(Cobbler)(Evening))
+                    .when(f.can(CharmOffensive))(CharmOffensiveMainAction(f, factions.but(f), Repeat).as(CharmOffensive)(Evening))
+                    .skip(Next)
                     .evening(f)
             }
             else
@@ -270,7 +275,7 @@ object TurnExpansion extends MandatoryExpansion {
                 + MilitarySuppliesPayAction(f, IgnoredEffectAction(f, MilitarySupplies, Repeat)).as(MilitarySupplies)(group)
             }
 
-            ask(f).done(skip.?(EveningTowerScoreAction(f))).needOkIf(skip.not)
+            ask(f).doneIf(skip)(EveningTowerScoreAction(f)).needOkIf(skip.not)
 
         case EveningAfterHandLimitAction(f) =>
             EveningTowerScoreAction(f)
@@ -330,7 +335,9 @@ object TurnExpansion extends MandatoryExpansion {
                 HirelingPurchasesAction(f)
 
         case GiveAwayHirelingAction(f, going, h) =>
-            Ask(f)(factions.but(f)./(GiveAwayHirelingToAction(f, h, _))).cancelIf(going.num > 1 && factions.but(f).num > 1)
+            Ask(f)
+                .each(factions.but(f))(GiveAwayHirelingToAction(f, h, _))
+                .cancelIf(going.num > 1 && factions.but(f).num > 1)
 
         case GiveAwayHirelingToAction(f, h, e) =>
             f.log("gave", h, "to", e)
@@ -419,19 +426,20 @@ object TurnExpansion extends MandatoryExpansion {
         // END
         case WarnAction(f, then, q, proceed, cancel) =>
             if (hrf.HRF.flag("fastsetup"))
-                Ask(f)(then.as(proceed)(q))
+                Ask(f).add(then.as(proceed)(q))
             else
-                Ask(f)(Cancel.as(cancel)(q))(then.as(proceed)(q))
+                Ask(f).add(Cancel.as(cancel)(q)).add(then.as(proceed)(q))
 
         case EndTurnAction(f) =>
             Next
 
         case EndTurnSoftAction(f, e, m) =>
             if (m.real.not)
-                Ask(f)(Next.as(e))
+                Ask(f).add(Next.as(e))
             else
                 WarnAction(f, Next, m.elem, ("End Anyway").styled(styles.hit), "Continue" ~ " " ~ e)
 
+        // TOP LEVEL
         case a : TopLevelAction =>
             a.next
 

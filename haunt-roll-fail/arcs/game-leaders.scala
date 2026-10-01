@@ -18,9 +18,8 @@ import arcs.elem._
 
 
 trait LeaderEffect extends Effect with NamedToString with Elementary {
-    override def elem = name.styled(styles.title).hl
+    override def elem = name.styled(styles.titleW)
 }
-
 
 case object Beloved extends LeaderEffect
 case object Just extends LeaderEffect
@@ -81,7 +80,7 @@ case object DefenderResilient extends LeaderEffect {
 
 abstract class Leader(val id : String, val name : String, val effects : $[Effect], val resources : $[Resource], val setupA : $[Piece], val setupB : $[Piece], val setupC : $[Piece]) extends Record with Elementary {
     def img = Image(id, styles.leaderCard)
-    def elem = name.styled(styles.title).hl
+    def elem = name.styled(styles.titleW)
 }
 
 
@@ -94,7 +93,7 @@ case object Warrior       extends Leader("leader06", "Warrior",       $(Tactical
 case object Feastbringer  extends Leader("leader07", "Feastbringer",  $(Charismatic, Generous), $(Relic, Material), $(City, Ship, Ship, Ship), $(City, Ship, Ship, Ship), $(Ship, Ship, Ship))
 case object Demagogue     extends Leader("leader08", "Demagogue",     $(Bold, Paranoid), $(Psionic, Weapon), $(City, Ship, Ship, Ship), $(Starport, Ship, Ship, Ship), $(Ship, Ship))
 case object Archivist     extends Leader("leader09", "Archivist",     $(Learned, Academic), $(Relic, Relic), $(City, Ship, Ship, Ship), $(City, Ship, Ship, Ship), $(Ship, Ship))
-case object Overseer      extends Leader("leader10", "Overseer",      $(Ruthless, Hated), $(Fuel, Material), $(Starport, Ship, Ship, Ship), $(City, Ship, Ship, Ship), $(Ship, Ship))
+case object Overseer      extends Leader("leader10", "Overseer",      $(Ruthless, Hated), $(Fuel, Material), $(City, Ship, Ship, Ship), $(Starport, Ship, Ship, Ship), $(Ship, Ship))
 case object Corsair       extends Leader("leader11", "Corsair",       $(Tricky, Wary), $(Fuel, Weapon), $(Starport, Ship, Ship, Ship, Ship), $(Ship, Ship, Ship), $(Ship, Ship))
 case object Noble         extends Leader("leader12", "Noble",         $(Connected, Influential, Proud), $(Psionic, Psionic), $(City, Ship, Ship, Ship), $(Starport, Ship, Ship, Ship), $(Ship, Ship))
 case object Anarchist     extends Leader("leader13", "Anarchist",     $(Decentralized, Inspiring, Principled), $(Relic, Weapon), $(Ship, Ship, Ship, Ship), $(Ship, Ship, Ship), $(Ship, Ship))
@@ -135,6 +134,8 @@ case class DraftNextAction(f : Faction) extends ForcedAction
 case class AssignLeaderAction(f : Faction, l : Leader, then : ForcedAction) extends ForcedAction
 case class AssignLoreAction(f : Faction, l : Lore, then : ForcedAction) extends ForcedAction
 case object LeadersFactionsSetupAction extends ForcedAction
+case class LeaderFactionSetupAction(f : Faction) extends ForcedAction
+case object LeadersFactionsSetupDoneAction extends ForcedAction
 
 
 case class BelovedAction(self : Faction, then : ForcedAction) extends ForcedAction
@@ -143,10 +144,9 @@ case class LearnedAction(self : Faction, l : $[Lore], then : ForcedAction) exten
 
 case class ConnectedAction(self : Faction, then : ForcedAction) extends ForcedAction
 
-case class MythicAction(self : Faction, s : System, r : Resource, k : Int, then : ForcedAction) extends ForcedAction
+case class MythicAction(self : Faction, s : System, r : ResourceToken, then : ForcedAction) extends ForcedAction
 
-case class BoldMainAction(self : Faction, influenced : $[CourtCard], then : ForcedAction) extends ForcedAction with Soft
-case class GiveGuildCardAction(self : Faction, e : Faction, c : CourtCard, then : ForcedAction) extends ForcedAction
+case class BoldMainAction(self : Faction, influenced : $[Int], then : ForcedAction) extends ForcedAction with Soft
 
 
 object LeadersExpansion extends Expansion {
@@ -154,8 +154,15 @@ object LeadersExpansion extends Expansion {
         // SETUP
         case LeadersLoresShuffledAction(l1, l2) =>
             game.leaders = l1.take(factions.num + 1)
-            game.lores = l2.take(factions.num + 1 + options.has(DoubleLore).??(factions.num) + options.has(TripleLore).??(factions.num) * 2)
-            game.unusedLores = l2.drop(game.lores.num)
+
+            game.allLores --> l2.take(factions.num + 1
+                + options.has(DoubleLore).??(factions.num)
+                + options.has(TripleLore).??(factions.num) * 2
+                + options.has(QuadLore).??(factions.num) * 3
+                + options.has(PentaLore).??(factions.num) * 4
+            ) --> game.lores
+
+            game.allLores --> l2.drop(game.lores.num) --> game.unusedLores
 
             log("Leaders".hh, "and", "Lores".hh, "were shuffled")
 
@@ -172,7 +179,7 @@ object LeadersExpansion extends Expansion {
         case DraftNextAction(f) =>
             if (game.leaders.num <= 1 && game.lores.num <= 1) {
                 game.leaders = $
-                game.lores = $
+                game.lores --> game.unusedLores
 
                 Milestone(LeadersFactionsSetupAction)
             }
@@ -186,12 +193,12 @@ object LeadersExpansion extends Expansion {
 
                 game.current = |(f)
 
-                YYSelectObjectsAction(f, game.leaders./(Left(_)) ++ game.lores./(Right(_)))
+                YYSelectObjectsAction(f, game.leaders./(Left(_)) ++ game.lores.$.of[Lore]./(Right(_)))
                     .withGroup("Leaders and Lores".hl)
                     .withSplit($(game.leaders.num))
                     .withRule({
                         case Left(l) => f.leader.none
-                        case Right(l) => f.lores.num < 1 + options.has(DoubleLore).??(1) + options.has(TripleLore).??(2)
+                        case Right(l) => f.lores.num < 1 + options.has(DoubleLore).??(1) + options.has(TripleLore).??(2) + options.has(QuadLore).??(3) + options.has(PentaLore).??(4)
                     })
                     .withThen({
                         case Left(l) => AssignLeaderAction(f, l, next)
@@ -213,18 +220,24 @@ object LeadersExpansion extends Expansion {
             then
 
         case AssignLoreAction(f, l, then) =>
-            game.lores :-= l
+            game.lores --> l --> f.lores
 
-            f.lores :+= l
+            f.recalculateSlots()
 
             f.log("took", l)
 
             then
 
         case LeadersFactionsSetupAction =>
-            var archivist: |[Faction] = None
+            val f = factions.%(_.adjust).starting
 
-            factions.lazyZip(game.starting).foreach { case (f, (a, b, cc)) =>
+            if (f.any)
+                Then(LeaderFactionSetupAction(f.get))
+            else
+                Then(LeadersFactionsSetupDoneAction)
+
+        case LeaderFactionSetupAction(f) =>
+            factions.zp(game.starting).toList.%<(_ == f).starting.foreach { case (f, (a, b, cc)) =>
                 val leader = f.leader.get
 
                 leader.setupA.foreach { p =>
@@ -247,27 +260,26 @@ object LeadersExpansion extends Expansion {
                     f.log("placed", leader.setupC./(_.of(f)).comma, "in", c)
                 }
 
-                f.resources = leader.resources
+                leader.resources.foreach { r =>
+                    Supply(r).first --> f.spendable.of[CityResourceSlot].%(_.none).first
+                }
+
+                f.adjust = false
 
                 f.log("took", leader.resources.lift(0), "and", leader.resources.lift(1))
 
-                if (f.can(Cryptic))
+                if (f.hasTrait(Cryptic))
                     f.outraged ++= $(Material, Fuel)
 
-                if (f.can(Greedy))
+                if (f.hasTrait(Greedy))
                     f.outraged ++= $(Material)
 
-                if (f.can(AncientHoldings)) {
-                    f.extraKeys = $(4) ++ f.extraKeys
-                    f.resources = $(Nothingness) ++ f.resources
-                }
-
-                if (f.can(Decentralized)) {
+                if (f.hasTrait(Decentralized)) {
                     f.reserve --> City.of(f) --> game.scrap
                     f.reserve --> City.of(f) --> game.scrap
                 }
 
-                if (f.can(Hated)) {
+                if (f.hasTrait(Hated)) {
                     f.reserve --> Ship.of(f) --> game.scrap
                     f.reserve --> Ship.of(f) --> game.scrap
                     f.reserve --> Agent.of(f) --> game.scrap
@@ -275,23 +287,23 @@ object LeadersExpansion extends Expansion {
                     f.reserve --> Agent.of(f) --> game.scrap
                 }
 
-                if (f.can(Learned)) {
-                    archivist = |(f)
-                }
+                f.recalculateSlots()
             }
 
-            if (archivist.any) {
-                implicit def convert(u : Lore) = u.img
+            LeadersFactionsSetupAction
 
-                XXSelectObjectsAction(archivist.get, game.unusedLores.take(5))
+        case LeadersFactionsSetupDoneAction =>
+            if (factions.exists(_.hasTrait(Learned))) {
+                val f = factions.%(_.hasTrait(Learned)).only
+
+                XXSelectObjectsAction(f, game.unusedLores.$.of[Lore].take(5))
                     .withGroup("Select", "2".hlb, "extra lore cards")
                     .withRule(_.num(2))
-                    .withThen(l => LearnedAction(archivist.get, l, StartChapterAction).as("Keep", l.comma))
+                    .withThen(l => LearnedAction(f, l, StartChapterAction).as("Keep", l.comma))
                     .ask
             }
-            else {
+            else
                 StartChapterAction
-            }
 
         // ELDER
         case BelovedAction(f, then) =>
@@ -300,10 +312,12 @@ object LeadersExpansion extends Expansion {
         // ARCHIVIST
         case LearnedAction(f, l, then) =>
             l.foreach { u =>
-                // game.unusedLores :-= u
-                f.lores :+= u
+                game.unusedLores --> u --> f.lores
+
                 f.log("gained", u, "from", Learned)
             }
+
+            f.recalculateSlots()
 
             then
 
@@ -311,38 +325,36 @@ object LeadersExpansion extends Expansion {
         case ConnectedAction(f, then) =>
             val c = game.court.first
 
-            c --> market
+            c --> game.extraMarket
 
-            SecureAction(f, NoCost, |(Connected), c, then)
+            f.secured ++= c.as[GuildCard]
+
+            f.log("secured", c, "with", Connected)
+
+            GainCourtCardAction(f, c, game.extraMarket.index, true, then)
 
         // DEMAGOGUE
         case BoldMainAction(f, influenced, then) =>
             Ask(f).group("Influence".hl)
-                .each(market)(c => InfluenceAction(f, NoCost, c, |(Bold), BoldMainAction(f, influenced :+ c, then)).as(c)
-                    .!(influenced.has(c), "influenced")
+                .each(game.market)(m => InfluenceAction(f, NoCost, m.index, |(Bold), BoldMainAction(f, influenced :+ m.index, then)).as(m.$)
+                    .!(influenced.has(m.index), "influenced")
                     .!(f.pool(Agent).not, "no agents")
                 )
                 .cancelIf(influenced.none)
-                .done(influenced.any.?(then))
-
-        // FEASTBRINGER
-        case GiveGuildCardAction(f, e, c, then) =>
-            f.loyal --> c --> e.loyal
-
-            f.log("gave", c, "to", e)
-
-            GainCourtCardAction(e, c, None, then)
+                .doneIf(influenced.any)(then)
 
         // SHAPER
-        case MythicAction(f, s, r, k, then) =>
-            game.overridesHard += s -> r
+        case MythicAction(f, s, r, then) =>
+            game.overridesHard += s -> r.resource
 
-            f.remove(ResourceRef(r, |(k)))
+            r --> PlanetResourcesOverrides
 
             f.log("changed", s, "type to", r, "with", Mythic)
 
             then
 
+
+        // ...
         case _ => UnknownContinue
     }
 }

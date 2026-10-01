@@ -12,7 +12,7 @@ import hrf.logger._
 
 class GameEvaluation00(val game : Game, val self : Faction) extends GEvaluation {
     def eval(a : Action) : $[Evaluation] = {
-        var result : $[Evaluation] = Nil
+        var result : $[Evaluation] = $
 
         implicit class condToEval(val bool : Boolean) {
             def |=> (e : (Int, String)) { if (bool) result +:= Evaluation(e._1, e._2) }
@@ -142,12 +142,8 @@ class GameEvaluation00(val game : Game, val self : Faction) extends GEvaluation 
             case CoupWhomAction(_, f) =>
                 true |=> (threat(f) * 40) -> "coup higher threat"
 
-
-
             case _ : Soft =>
         }
-
-
 
         result.none |=> 0 -> "none"
 

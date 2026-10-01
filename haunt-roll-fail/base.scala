@@ -4,6 +4,7 @@ package hrf.base
 //
 //
 import hrf.colmat._
+import hrf.compute._
 import hrf.logger._
 //
 //
@@ -71,6 +72,10 @@ trait Gaming extends Timelines {
         def elem : Elem
     }
 
+    trait PairElementary extends GoodMatch {
+        def pairElem(b : Any) : |[Any]
+    }
+
     implicit class ElementaryList(val l : $[Elementary]) {
         private def ll = l./(_.elem)
         def spaced : $[Elem] = ll./~(e => $(Space, e)).drop(1)
@@ -109,8 +114,6 @@ trait Gaming extends Timelines {
     case class AltInLog(m : Message, alt : Message) extends Message {
         def elem(implicit game : G) = m.elem
     }
-
-
 
 
     trait Named extends ImageIdPart {
@@ -332,9 +335,9 @@ trait Gaming extends Timelines {
         }
     }
 
-    trait SelfExplode extends Soft { self : Action with Soft =>
-        def explode(withSoft : Boolean) : $[UserAction]
-        def verifyX(a : UserAction) = a @@ {
+    trait SelfExplode extends Soft { self : Action =>
+        def explode(withSoft : Boolean)(implicit g : G) : $[UserAction]
+        def verifyXXQ(a : UserAction)(implicit g : G) = a @@ {
             case a : Choice if a.isSoft => explode(true).has(a)
             case _ => explode(false).has(a)
         }
@@ -345,7 +348,7 @@ trait Gaming extends Timelines {
     }
 
     trait NoExplode extends SelfExplode { self : Choice with Soft =>
-        def explode(withSoft : Boolean) = withSoft.$(self)
+        def explode(withSoft : Boolean)(implicit g : G) = withSoft.$(self)
     }
 
     trait Key { self : Action => }
@@ -375,6 +378,14 @@ trait Gaming extends Timelines {
             case _ => None
         }
     }
+
+    // case class AskRoll[T](f : F, m : Message, dice : $[Die[T]], roll : $[T] => RolledAction[T], extra : $[Choice]) extends ForcedAction with SelfPerform with Soft {
+    //     def perform(soft : Void)(implicit g : G) = Ask(f)(PerformRoll(f, m, dice, roll).as(m)("Wanna roll?")).add(extra).needOk
+    // }
+
+    // case class PerformRoll[T](f : F, m : Message, dice : $[Die[T]], roll : $[T] => RolledAction[T]) extends ForcedAction with SelfPerform with Soft {
+    //     def perform(soft : Void)(implicit g : G) = Roll[T](dice, roll, None)
+    // }
 
     trait ActionCollector {
         def add(action : UserAction) : Unit
@@ -425,35 +436,29 @@ trait Gaming extends Timelines {
         def prepend(a : UserAction) = copy(actions = a +: actions)
         def add(l : $[UserAction]) = copy(actions = actions ++ l)
         def add(a : UserAction) = copy(actions = actions :+ a)
-        def when(cond : Boolean)(a : => UserAction) = if (cond) copy(actions = actions :+ a) else this
-        def add(a : |[UserAction]) = copy(actions = actions ++ a)
-        def +(l : $[UserAction]) = add(l)
-        def +(a : UserAction) = add(a)
-        def +(a : |[UserAction]) = add(a)
-        def apply(l : $[UserAction]) = add(l)
-        def apply(a : UserAction) = add(a)
-        def apply(a : |[UserAction]) = add(a)
+        def when(cond : Boolean)(a : => UserAction) = cond.?(copy(actions = actions :+ a)).|(this)
+        def listIf(cond : Boolean)(l : UserAction*) = cond.?(copy(actions = actions ++ l)).|(this)
         def each[T](l : $[T])(f : T => UserAction) = add(l./(f))
         def each[T, U](l : $[(T, U)])(f : (T, U) => UserAction) = add(l./(f))
         def some[T](l : $[T])(f : T => IterableOnce[UserAction]) = add(l./~(f))
+        def some[T, U](l : $[(T, U)])(f : (T, U) => IterableOnce[UserAction]) = add(l./~(f))
         def needOk = add(HiddenOkAction)
         def needOkIf(b : Boolean) = b.?(needOk).|(this)
         def cancel = add(CancelAction)
-        def ocancel = add(choice.?(CancelAction))
+        def ocancel = when(choice)(CancelAction)
         def cancelIf(cond : Boolean) = cond.?(cancel).|(this)
         def bail(then : => ForcedAction) = available.?(this).|(add(then.as("Cherry Bail Bonds")))
         def bailHard(then : => Action) = available.?(this).|(Force(then))
         def bailw(then : => Action)(before : => Unit) = available.?(this).|{ before ; Force(then) }
         def bailout(a : => UserAction) = available.?(this).|(add(a))
         def done(then : ForcedAction) = add(DoneAction(then))
-        def done(then : |[ForcedAction]) = add(then./(x => DoneAction(x)))
         def doneIf(cond : Boolean)(then : ForcedAction) = cond.?(done(then)).|(this)
         def refuse(then : ForcedAction) = add(RefuseAction(then))
         def back(then : ForcedAction) = add(BackAction(then))
         def skip(then : ForcedAction) = add(SkipAction(then))
-        def skip(then : |[ForcedAction]) = add(then./(x => SkipAction(x)))
+        def skipIf(cond : Boolean)(then : ForcedAction) = cond.?(add(SkipAction(then))).|(this)
 
-        val exploded = scala.collection.mutable.Map[G, $[Action]]()
+        // val exploded = scala.collection.mutable.Map[G, $[Action]]()
     }
 
     case class MultiAsk(asks : $[Ask], policy : MultiAskPolicy = MultiAskPolicy.HumanPriority) extends Continue
@@ -550,39 +555,47 @@ trait Gaming extends Timelines {
 
     implicit val mode : ConvertMode = ModeDefault
 
-    def convertDesc(o : Any)(implicit styles : StyleMapping, mode : ConvertMode) : G => Elem = (g : G) => o @@ {
-        case _ if o == null => throw new Error("DEADBEEF")
+    def convertDesc(o : Any)(implicit styles : StyleMapping, mode : ConvertMode) : G => Elem = (g : G) =>
+        try {
+            o @@ {
+                case _ if o == null => throw new Error("DEADBEEF")
 
-        case e : Elem => e
-        case e : GameModeElementary => e.elem(g, mode)
-        case e : GameElementary => e.elem(g)
-        case e : Elementary => e.elem
+                case e : Elem => e
+                case e : GameModeElementary => e.elem(g, mode)
+                case e : GameElementary => e.elem(g)
+                case e : Elementary => e.elem
 
-        case ns : Named with Styling => Span(Text(ns.name), styles.get(ns))
+                case ns : Named with Styling => Span(Text(ns.name), styles.get(ns))
 
-        case s : String => Text(s)
-        case n : Int => Text(n.toString)
+                case s : String => Text(s)
+                case n : Int => Text(n.toString)
 
-        case None => Empty
-        case Some(v) => convertDesc(v)(styles, mode)(g)
+                case None => Empty
+                case Some(v) => convertDesc(v)(styles, mode)(g)
 
-        case List(v) => convertDesc(v)(styles, mode)(g)
+                case List(v) => convertDesc(v)(styles, mode)(g)
 
-        case l : List[_] => List.unfold[$[Elem], $[Elem]](l.%(_ != "").%(_ != None).%(_ != Nil).%(_ != Empty)./(convertDesc)./(_(g))) {
-            case Nil => None
-            case Break :: tail => Some(tail.span(_ != Break))
-            case l => Some(l.span(_ != Break))
-        }./(_./~($(_, Join)).sliding(2).flatMap[Elem] {
-            case Join :: (_ : Postfix) :: _ => None
-            case a :: _ :: _ => Some(a)
-        }.$.merge).join(Break)
+                case l : List[_] => List.unfold[$[Elem], $[Elem]](l.%(_ != "").%(_ != None).%(_ != Nil).%(_ != Empty)./(convertDesc)./(_(g))) {
+                    case Nil => None
+                    case Break :: tail => Some(tail.span(_ != Break))
+                    case l => Some(l.span(_ != Break))
+                }./(_./~($(_, Join)).sliding(2).flatMap[Elem] {
+                    case Join :: (_ : Postfix) :: _ => None
+                    case a :: _ :: _ => Some(a)
+                }.$.merge).join(Break)
 
-        case t : Product if t.productIterator.isEmpty => throw new Error("empty product, maybe object " + o.getClass.getName + " " + o.toString)
+                case t : Product if t.productIterator.isEmpty => throw new Error("empty product, maybe object " + o.getClass.getName + " " + o.toString)
 
-        case t : Product => convertDesc(t.productIterator.$)(styles, mode)(g)
+                case (a : PairElementary, b) => convertDesc(a.pairElem(b).|($(a, b)))(styles, mode)(g)
 
-        case _ => ("[[unelementable undescribable " + o.getClass.getName + " " + o.toString + "]]").hl
-    }
+                case t : Product => convertDesc(t.productIterator.$)(styles, mode)(g)
+
+                case _ => ("[[unelementable undescribable " + o.getClass.getName + " " + o.toString + "]]").hl
+            }
+        }
+        catch {
+            case e : Error => ("[[error " + e.getClass.getName + " " + e.getMessage + "]]").styled(xstyles.error)
+        }
 
     object BaseGame {
         implicit def anyToDescE(o : Any)(implicit styles : StyleMapping, mode : ConvertMode) : G => Elem = convertDesc(o)
@@ -635,6 +648,8 @@ trait Gaming extends Timelines {
                             +++("soft-cut on soft action " + a)
                             throw new Error("soft-cut on soft action " + a)
                         }
+
+                        // +++("soft cut ok call on", void, "\n", a)
                     })
 
                     c = loggedPerform(a, break)
@@ -679,11 +694,21 @@ trait Gaming extends Timelines {
 
         def performRaw(a : Action, void : Boolean) : PerformResult
 
+        private var actionsReverseList : $[Action] = $
+
+        def performRawRecord(a : Action, void : Boolean) : PerformResult = {
+            actionsReverseList = a +: actionsReverseList
+
+            performRaw(a, void)
+        }
+
+        def actions = actionsReverseList.reverse
+
         def mapForceLog(c : Continue) : Unit = c @@ {
             case e : ErrorContinue => continue = e
-            case Force(a) => mapForceLog(performRaw(a, true).continue)
+            case Force(a) => mapForceLog(performRawRecord(a, true).continue)
             case Log(l, k, c) => mapForceLog(c)
-            case DelayedContinue(_, Force(then)) => mapForceLog(performRaw(then, true).continue)
+            case DelayedContinue(_, Force(then)) => mapForceLog(performRawRecord(then, true).continue)
             case _ =>
         }
 
@@ -691,42 +716,49 @@ trait Gaming extends Timelines {
             mapForceLog(a @@ {
                 case _ if continue.is[ErrorContinue] => continue
                 case a : CommentAction => UnknownContinue
-                case ForceInvalidAction(a) => performRaw(a, true).continue
-                case a : ForcedAction => performRaw(a, true).continue
-                case a : ExternalAction => performRaw(a, true).continue
+                case ForceInvalidAction(a) => performRawRecord(a, true).continue
+                case a : ForcedAction => performRawRecord(a, true).continue
+                case a : ExternalAction => performRawRecord(a, true).continue
                 case a => throw new Error("non-soft non-forced non-external action " + a)
             })
         }
 
-        def performContinue(old : |[Continue], a : Action, validating : Boolean) : PerformResult = {
+        def performContinue(old : |[Continue], action : Action, validating : Boolean) : PerformResult = {
             try {
                 old @@ {
-                    case Some(ErrorContinue(e, m)) => return PerformResult(MultiAsk($), $(PrintLog(a.unwrap.toString.takeWhile(_ != '(').flatMap(c => c.isUpper.?(" " + c).|("o0oOo0oOo".toList.shuffle.take(2).mkString)))))
+                    case Some(ErrorContinue(e, m)) => return PerformResult(MultiAsk($), $(PrintLog(action.unwrap.toString.takeWhile(_ != '(').flatMap(c => c.isUpper.?(" " + c).|("o0oOo0oOo".toList.shuffle.take(2).mkString)))))
                     case _ =>
                 }
 
                 // VALIDATE
                 if (validating && old.any) {
-                    val valid = a.unwrap @@ {
+                    val valid = action.unwrap @@ {
                         case _ : OutOfTurn => true
                         case _ : SkipValidate => true
                         case _ if hrf.HRF.flag("valid-skip") || hrf.HRF.flag("skip-valid") => true
-                        case _ => validate(old.get, a)
+                        case _ => validate(old.get, action)
                     }
 
                     if (valid.not) {
+                        def show(a : Action) : String = {
+                            (self : Any) match {
+                                case g : arcs.Game => arcs.Serialize.write(a.unwrap)
+                                case _ => throw new Error("" + self)// a.unwrap.toString
+                            }
+                        }
+
                         if (hrf.HRF.flag("valid-ignore").not) {
-                            val e = "perform validation failed\n" + a + "\n on \n" + continue.unwrap @@ {
-                                case Ask(f, l) => "Ask(" + f + "\n  " + l.mkString("\n  ") + "\n)\nExplode:\n  " + explode(l, true, None).mkString("\n  ") + "\nRe-Explode:\n  " + explode(l, false, None).mkString("\n  ")
-                                case Roll(l, x, _) => a @@ {
+                            val e = "perform validation failed\n" + action.use(show) + "\n on \n" + continue.unwrap @@ {
+                                case Ask(f, l) => "Ask(" + f + "\n  " + l./(show).mkString("\n  ") + "\n)\nExplode:\n  " + explode(l, true, None)./(show).mkString("\n  ") + "\nRe-Explode:\n  " + explode(l, false, None)./(show).mkString("\n  ")
+                                case Roll(l, x, _) => action @@ {
                                     case a : RolledAction[_] => "expecting " + x(a.rolled)
                                     case _ => "(not a roll)"
                                 }
-                                case Random(l, x, _) => a @@ {
+                                case Random(l, x, _) => action @@ {
                                     case a : RandomAction[_] => "expecting " + x(a.random)
                                     case _ => "(not a random)"
                                 }
-                                case Shuffle(l, x, _) => a @@ {
+                                case Shuffle(l, x, _) => action @@ {
                                     case a : ShuffledAction[_] => "expecting " + x(a.shuffled)
                                     case _ => "(not a shuffle)"
                                 }
@@ -739,17 +771,17 @@ trait Gaming extends Timelines {
                         this @@ {
                             case g : LoggedGame =>
                                 g.log("perform validation failed:")
-                                g.log(a.toString)
+                                g.log(action.toString)
                             case _ =>
                                 error("perform validation failed:")
-                                error(a)
+                                error(action)
                         }
                     }
                 }
 
                 // CANCEL BAIL
-                a @@ {
-                    case a : Cancel => return PerformResult(continue.unwrap, $)
+                action @@ {
+                    case _ : Cancel => return PerformResult(continue.unwrap, $)
                     case _ =>
                 }
 
@@ -761,10 +793,10 @@ trait Gaming extends Timelines {
                 }
 
                 // SOFT EXTERNAL DON'T MODIFY CONTINUE
-                a @@ {
+                action @@ {
                     case a : ExternalAction if a.isSoft && isAsk(continue) =>
                         def mapForceSoft(c : Continue) : Continue = c @@ {
-                            case Force(a) if a.isSoft => mapForceSoft(performRaw(a, false).nest)
+                            case Force(a) if a.isSoft => mapForceSoft(performRawRecord(a, false).nest)
                             case Force(a) => throw new Error("map force non-soft from soft external " + a)
                             case c => c
                         }
@@ -783,7 +815,7 @@ trait Gaming extends Timelines {
                 }
 
                 // PERFORM
-                continue = a @@ {
+                continue = action @@ {
                     case CommentAction(m) => continue.unwrap
                     case ForceInvalidAction(a) =>
                         val invalid = validating && old.any && validate(old.get, a).not
@@ -791,20 +823,21 @@ trait Gaming extends Timelines {
                         if (invalid) {
                             warn("invalid action forced", a)
 
-                            Log("Warning: ".spn ~ "invalid action forced".spn(xstyles.warning), LogKind.Normal, performRaw(a, false).nest)
+                            Log("Warning: ".spn ~ "invalid action forced".spn(xstyles.warning), LogKind.Normal, performRawRecord(a, false).nest)
                         }
                         else
-                            performRaw(a, false).nest
+                            performRawRecord(a, false).nest
 
-                    case a : ForcedAction => performRaw(a, false).nest
-                    case a : ExternalAction => performRaw(a, false).nest
+                    case a : ForcedAction => performRawRecord(a, false).nest
+                    case a : ExternalAction => performRawRecord(a, false).nest
                     case a => throw new Error("non-soft non-forced non-external action " + a)
                 }
 
                 // CANCEL ERROR CHECK -- maybe back as well??
-                a @@ {
+                action @@ {
                     case a : ExternalAction => continue @@ {
                         case Ask(_, l) => l.foreach {
+                            case _ : Hidden =>
                             case b : Cancel => throw new Error("cancel on non-soft external action " + a)
                             case _ =>
                         }
@@ -823,7 +856,7 @@ trait Gaming extends Timelines {
                 val result = mapForceLog(continue)
 
                 // WARN IF NO LOG
-                a @@ {
+                action @@ {
                     case a : ExternalAction => result @@ {
                         case Log(_, _, _) =>
                         case _ =>
@@ -845,7 +878,7 @@ trait Gaming extends Timelines {
                 if (action.isSoft.not)
                     throw new Error("perform repeat non-soft action" + desc)
 
-                val l : $[UserAction] = performRaw(action, false).continue @@ {
+                val l : $[UserAction] = performRawRecord(action, false).continue @@ {
                     case ErrorContinue(e, m) => throw e
                     case Force(a) => performRepeat(a)
                     case Then(a) => $(a.wrap)
@@ -862,6 +895,7 @@ trait Gaming extends Timelines {
 
             def process(actions : $[UserAction], filtered : $[UserAction]) : $[UserAction] = {
                 actions./~{
+                    case a : Cancel with Hidden => $
                     case a : Cancel => withSoft.$(a)
                     case a : Back => withSoft.$(a)
                     case a : SelfExplode => $(a)
@@ -876,7 +910,7 @@ trait Gaming extends Timelines {
                 }.distinct.diff(filtered)./~{
                     case a : Cancel => withSoft.$(a)
                     case a : Back => withSoft.$(a)
-                    case a : SelfExplode => a.explode(withSoft)
+                    case a : SelfExplode => a.explode(withSoft)(this)
                     case a : HalfExplode => withSoft.$(a) ++ process(a.expand(target), a +: filtered)
                     case a : SelfValidate => $(a)
                     case a : WrappedAction if a.then.is[SelfValidate] => $(a)
@@ -887,6 +921,7 @@ trait Gaming extends Timelines {
 
             val result = process(actions, $)./~{
                 case a if !withSoft && a.isSoft =>
+                    // warn("soft action from non-soft explode:\n    " + a + "\nfrom" + actions./("\n    " + _))
                     None
                 case a =>
                     Some(a)
@@ -917,7 +952,10 @@ trait Gaming extends Timelines {
             true
         }
 
-        protected def validate(c : Continue, action : Action, expandAll : Boolean) : Boolean = c @@ {
+        protected def validate(c : Continue, action : Action, expandAll : Boolean) : Boolean = {
+            // +++("validate " + " " + action + " against " + c)
+            c
+        } @@ {
             case StartContinue if action.is[StartGameAction] => true
             case _ if action.unwrap.is[SkipValidate] => true
             case _ if action.unwrap.is[OutOfTurn] => true
@@ -940,9 +978,9 @@ trait Gaming extends Timelines {
                     return false
 
                 val lll =
-                    if (expandAll)
-                        ask.exploded.getOrElseUpdate(this, explode(ll, true, None))
-                    else
+                    // if (expandAll)
+                    //     ask.exploded.getOrElseUpdate(this, explode(ll, true, None))
+                    // else
                         explode(ll, true, |(action))
 
                 lll.contains(action) || lll.exists(_.unwrap == aa) || lll./(_.unwrap).of[SelfValidate].exists(_.validate(aa))
@@ -1032,7 +1070,10 @@ trait Gaming extends Timelines {
 
     case class InfoGroupAction(q : (G => Elem)*)(o : (G => Elem)*) extends BaseUserAction(q : _*)(o : _*) with Info
 
+    case class OnClickInfoAction(param : Any)(o : (G => Elem)*) extends BaseUserAction()(o : _*) with Info with OnClickInfo
+
     case object CancelAction extends ElemAction(Empty)("Cancel") with Cancel
+    case object HiddenCancelAction extends UserAction with Cancel with Hidden
     case class BackAction(then : ForcedAction) extends HelperAction("Back") with Back
     case class RefuseAction(then : ForcedAction) extends HelperAction("Refuse") with Choice
     case class SkipAction(then : ForcedAction) extends HelperAction("Skip") with Choice
@@ -1071,12 +1112,7 @@ trait Gaming extends Timelines {
 
 
     implicit class FactionActionEx(a : UserAction) {
-        def x(b : Boolean, reason : String = "") = a @@ {
-            case a : Choice => b.not.?(a).|(UnavailableReasonAction(a, reason))
-            case _ => a
-        }
-
-        def !(b : Boolean, reason : String = "") = a @@ {
+        def !(b : => Boolean, reason : String = "") = a @@ {
             case a : Choice => b.not.?(a).|(UnavailableReasonAction(a, reason))
             case _ => a
         }
@@ -1107,7 +1143,7 @@ trait Gaming extends Timelines {
     trait AskResult
     case object AskHuman extends AskResult
     case object WaitRemote extends AskResult
-    case class AskBot(action : $[UserAction] => UserAction) extends AskResult
+    case class AskBot(action : $[UserAction] => Compute[UserAction]) extends AskResult
 
     trait GameUI {
         var currentGame : G = _
@@ -1118,7 +1154,7 @@ trait Gaming extends Timelines {
         def updateStatus() : Unit
         def updateHighlight(a : |[UserAction]) : Unit = {}
         def onClick(a : Any) : Unit
-        def wait(self : $[F], factions : $[F])
+        def wait(self : $[F], factions : $[F], message : Elem)
         def ask(faction : |[F], actions : $[UserAction], then : UserAction => Unit)
         def shadowAsk(faction : F, actions : $[UserAction]) : |[UserAction] = None
         def alog(e : Elem, n : Int, onClick : Any => Unit, delayed : Boolean = false) : hrf.ui.LazyBlock
@@ -1148,10 +1184,14 @@ trait Gaming extends Timelines {
         }
     }
 
-    trait NoClear { self : UserAction => }
+    trait NoClear { self : Action => }
 
-    trait OnClickInfo extends NoClear { self : UserAction =>
+    trait OnClickInfo extends NoClear { self : Action =>
         def param : Any
+    }
+
+    object OnClickInfo {
+        def apply(param : Any)(o : (G => Elem)*) = OnClickInfoAction(param)(o : _*)
     }
 
     trait ViewObject[T] { self : UserAction =>
@@ -1176,6 +1216,32 @@ trait Gaming extends Timelines {
 
     case object BreakAction extends ElemAction(Empty)(HorizontalBreak) with Info with ElemWrap {
         def wrap(g : G)(e : Elem) = HorizontalBreak
+    }
+
+
+    // unused
+    trait Actor
+
+    case class HumanActor(faction : F) extends Actor
+    case class BotActor(faction : F) extends Actor
+    case class DiceRoll(entity : |[String], count : Int) extends Actor
+    case class ShuffleObjects(entity : |[String]) extends Actor
+    case class RandomSelect(entity : |[String]) extends Actor
+    case class RevealFor(entity : |[String], factions : $[F]) extends Actor
+
+    object NewEQ {
+        trait SideEffect
+        case class LogEffect(message : Elem) extends SideEffect
+        case class TempLogEffect(message : Elem) extends SideEffect
+
+        trait ExternalQuery
+        case object Start extends ExternalQuery
+        case class Ask(faction : F, actions : $[UserAction]) extends ExternalQuery
+        case class Roll[T](xquestion : Any, dice : $[Die[T]], roll : $[T] => RolledAction[T]) extends ExternalQuery
+        case class Shuffle[T](xquestion : Any, cards : $[T], shuffle : $[T] => ShuffledAction[T]) extends ExternalQuery
+        case class ShuffleUntil[T](xquestion : Any, cards : $[T], shuffle : $[T] => ShuffledAction[T], condition : $[T] => Boolean) extends ExternalQuery
+        case class Random[T](xquestion : Any, values : $[T], random : T => RandomAction[T]) extends ExternalQuery
+        case class MultiAsk(asks : $[Ask]) extends ExternalQuery
     }
 
 }

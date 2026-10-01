@@ -17,6 +17,7 @@ object Meta extends MetaGame { mmm =>
     val gaming = yarg.gaming
 
     type F = Faction
+    // type G = Game
 
     def tagF = implicitly
 
@@ -53,7 +54,7 @@ object Meta extends MetaGame { mmm =>
         case (f : Faction, "Normal") => new BotXX(f)
     }
 
-    def defaultBots : $[String] = $("Normal")
+    def defaultBot(f : Faction) = "Normal"
 
     def writeFaction(f : Faction) = f.short
     def parseFaction(s : String) : Option[Faction] = s match {

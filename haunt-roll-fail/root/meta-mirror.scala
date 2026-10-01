@@ -107,7 +107,7 @@ object MetaMirror extends MetaGame {
 
     def getBots(f : F) = Meta.getBots(f)
 
-    override def defaultBots = Meta.defaultBots
+    def defaultBot(f : F) = Meta.defaultBot(f)
 
     def getBot(f : F, b : String) = Meta.getBot(f, b)
 

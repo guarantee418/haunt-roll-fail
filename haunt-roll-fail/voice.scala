@@ -84,7 +84,7 @@ object Speech {
 
         val voices = SpeechSynthesis.getVoices()
 
-        val s = text.replace("@", "").replace(0x2192.toChar.toString, "").replace(hrf.elem.DoubleLine.text, "").replace(hrf.elem.SingleLine.text, "")
+        val s = text.replace("@", "").replace(0x2192.toChar.toString, "").replace(hrf.elem.DoubleLine.text, "").replace(hrf.elem.SingleLine.text, "").replace(hrf.elem.DottedLine.text, "")
 
         val u = new Utterance(s)
         u.pitch = pitch

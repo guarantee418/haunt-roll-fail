@@ -97,7 +97,7 @@ object StandardDeckExpansion extends Expansion {
             val n = clearings.%(f.ruleSelf).num
 
             if (f.can(RoyalClaim) && n > 0)
-                Ask(f)(RoyalClaimAction(f, n)).skip(Next)
+                Ask(f).add(RoyalClaimAction(f, n)).skip(Next)
             else
                 Next
 
@@ -118,7 +118,7 @@ object StandardDeckExpansion extends Expansion {
 
         // STAND AND DELIVER
         case StandAndDeliverAction(f, o, then) =>
-            Ask(f)(o./(StandAndDeliverFactionAction(f, _, then))).cancel
+            Ask(f).each(o)(e => StandAndDeliverFactionAction(f, e, then)).cancel
 
         case StandAndDeliverFactionAction(f, o, then) =>
             f.used :+= StandAndDeliver
@@ -131,7 +131,7 @@ object StandardDeckExpansion extends Expansion {
 
         // TAX COLLECTOR
         case TaxCollectorMainAction(f, l, then) =>
-            Ask(f)(l./~(c => f.at(c).of[Warrior].notOf[Tenacious].distinct./(p => TaxCollectorAction(f, c, p, then)))).cancel
+            Ask(f).some(l)(c => f.at(c).of[Warrior].notOf[Tenacious].distinct./(p => TaxCollectorAction(f, c, p, then))).cancel
 
         case TaxCollectorAction(f, c, p, then) =>
             f.used :+= TaxCollector
@@ -142,12 +142,14 @@ object StandardDeckExpansion extends Expansion {
 
         // CODEBREAKERS
         case CodebreakersMainAction(f, l, then) =>
-            Ask(f)(l./(CodebreakersAction(f, _, then))).cancel
+            Ask(f).each(l)(e => CodebreakersAction(f, e, then)).cancel
 
         case CodebreakersAction(f, o, then) =>
             f.used :+= Codebreakers
+
             f.log("employed", Codebreakers, "to look at", o, "cards")
-            Ask(f).each(o.hand)(CodebreakersNotifyAction(f, o, _)).done(then).needOk
+
+            Ask(f).each(o.hand)(d => CodebreakersNotifyAction(f, o, d)).done(then).needOk
 
         case _ => UnknownContinue
     }

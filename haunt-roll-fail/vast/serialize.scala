@@ -19,15 +19,4 @@ object Serialize extends Serializer {
     def parseFaction(s : String) = Meta.parseFaction(s)
 
     val prefix = "vast."
-
-    override def write(o : Any) : String = o match {
-        case _ => super.write(o)
-    }
-
-    override def parseAction(s : String) = {
-        val r = super.parseAction(s)
-
-        r
-    }
-
 }

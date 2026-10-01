@@ -151,6 +151,14 @@ trait Renderable {
     def render(g : dom.CanvasRenderingContext2D) : Unit
 }
 
+case class RenderableOffset(r : Renderable, xy : XY) extends Renderable {
+    def render(g : dom.CanvasRenderingContext2D) {
+        g.translate(xy.x, xy.y)
+        r.render(g)
+        g.translate(-xy.x, -xy.y)
+    }
+}
+
 case class RenderableSprite(sprite : Sprite, x : Double, y : Double, z : Double, scale : Double) extends Renderable {
     def render(g : dom.CanvasRenderingContext2D) {
         sprite.images.foreach { ir =>
@@ -216,7 +224,7 @@ class FitLayer[K, T](regions : Regions[K], options : FitOptions) extends Layer {
     private var prev = Map[T, (K, RenderableSprite)]()
     private var curr = Map[T, (K, RenderableSprite)]()
 
-    def addFixed(key : K, tag : T, z : Double = 0)(sprite : Sprite, scale : Double = 1.0)(x : Double, y : Double) {
+    def addFixed(key : K, tag : T, z : Double)(sprite : Sprite, scale : Double = 1.0)(x : Double, y : Double) {
         curr += tag -> (key -> RenderableSprite(sprite, x, y, z, scale))
     }
 
@@ -224,7 +232,7 @@ class FitLayer[K, T](regions : Regions[K], options : FitOptions) extends Layer {
         curr += tag -> (key -> RenderableSprite(new Sprite($, $, $), x, y, 0, 1.0))
     }
 
-    def addFloat(key : K, tag : T, z : Double = 0)(sprite : Sprite, scale : Double = 1.0) : XY = {
+    def addFloat(key : K, tag : T, z : Double, reposition : Boolean)(sprite : Sprite, scale : Double = 1.0) : XY = {
         val old = prev.get(tag).%(_._1 == key)./(_._2)./(o => XY(o.x, o.y))
 
         def penalty(p : XY) = {
@@ -246,13 +254,13 @@ class FitLayer[K, T](regions : Regions[K], options : FitOptions) extends Layer {
            }.sum
         }
 
-        old.%(o => regions.regionAt(o).has(key)).%(s => penalty(s) < options.threshold).foreach { s =>
+        old.%(o => regions.regionAt(o).has(key)).%(s => penalty(s) < options.threshold || reposition.not).foreach { s =>
             curr += tag -> (key -> RenderableSprite(sprite, s.x, s.y, z, scale))
             return XY(s.x, s.y)
         }
 
         val ctr = old.|(regions.center(key))
-        val rnd = 1.to(options.tries)./(_ => regions.random(key))
+        val rnd = old.$ ++ 1.to(options.tries)./(_ => regions.random(key))
         val r = rnd./(p => p -> ((p.x - ctr.x) * (p.x - ctr.x) * options.kX + (p.y - ctr.y) * (p.y - ctr.y) * options.kY) * (0.4 + 0.6 * random())).sortBy(_._2).map(_._1).minBy(penalty)
         val s = old.%(o => regions.regionAt(o).has(key)).%(o => penalty(o) < penalty(r) + options.threshold).|(r)
 
@@ -338,8 +346,14 @@ trait Touch
 case object Inside extends Touch
 case object Outside extends Touch
 
-class Scene(layers : $[Layer], width : Double, height : Double, margins : Margins) {
+class Scene(layers : $[Layer], width : Double, height : Double, margins : Margins, offsets : Map[Layer, XY] = Map.empty) {
     def render(g : dom.CanvasRenderingContext2D, ww : Int, hh : Int, zoom : Double, dx : Double, dy : Double, touch : Touch) {
+        // println(g.imageSmoothingQuality)
+        // println(g.imageSmoothingEnabled)
+
+        // if (g.imageSmoothingQuality == "low")
+        //     g.imageSmoothingQuality = "high"
+
         object canvas {
             val width = ww
             val height = hh
@@ -372,7 +386,10 @@ class Scene(layers : $[Layer], width : Double, height : Double, margins : Margin
         g.translate(margins.left, margins.top)
         g.translate(dx, dy)
 
-        layers./~(_.renderables).sortBy(_.z).foreach { r =>
+        // layers./~(l => offsets.get(l)./(xy => l.renderables./(RenderableOffset(_, xy))).|(l.renderables)).sortBy(_.z).foreach { r =>
+        //     r.render(g)
+        // }
+        layers./~(l => offsets.get(l)./(xy => l.renderables./(r => r.copy(x = r.x + xy.x, y = r.y + xy.y))).|(l.renderables)).sortBy(_.z).foreach { r =>
             r.render(g)
         }
     }

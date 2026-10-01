@@ -17,6 +17,7 @@ object Meta extends MetaGame { mmm =>
     val gaming = suok.gaming
 
     type F = Faction
+    // type G = Game
 
     def tagF = implicitly
 
@@ -43,7 +44,10 @@ object Meta extends MetaGame { mmm =>
     def validateFactionCombination(factions : List[Faction]) = (factions.num < 5).?(ErrorResult("Select at least five factions")).|((factions.num > 10).?(ErrorResult("Max ten factions")).|(InfoResult("")))
     def validateFactionSeatingOptions(factions : List[Faction], options : List[O]) = InfoResult("---")
 
+//    def convert(o : Any) = converter.elem(o)
+
     def factionName(f : Faction) = f.name
+//    def factionShort(f : Faction) = f.short
     def factionElem(f : Faction) = f.name.styled(f)
 
 
@@ -55,7 +59,7 @@ object Meta extends MetaGame { mmm =>
         case (f : Faction, "Normal") => new BotXX(f)
     }
 
-    def defaultBots : $[String] = $("Normal")
+    def defaultBot(f : Faction) = "Normal"
 
     def writeFaction(f : Faction) = f.short
     def parseFaction(s : String) : Option[Faction] = factions.%(_.short == s).single

@@ -56,11 +56,14 @@ object Host {
             case Ask(_, List(action)) =>
                 action
 
+            case Ask(f : Knight.type, actions) =>
+                new BotKnight(f).ask(actions, 0)(g)
+
             case Ask(f : Dragon.type, actions) =>
-                new BotDragon(f).ask(actions, 0)(g)
+                new BotDragon(f).ask(actions, 0)(g).immediate
 
             case Ask(f : Faction, actions) =>
-                new BotXX(f).ask(actions, 0)(g)
+                new BotXX(f).ask(actions, 0)(g).immediate
         }
     }
 
@@ -94,6 +97,7 @@ object Host {
                     while (a.is[GameOverAction].not) {
                         n += 1
 
+//                        /*
                         a match {
                             case a if a.isSoft =>
                             case a : ExternalAction =>
@@ -156,6 +160,7 @@ object Host {
 
                             case _ =>
                         }
+//                        */
 
                         if (n > 2000)
                             throw null

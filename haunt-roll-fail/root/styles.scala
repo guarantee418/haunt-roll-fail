@@ -116,6 +116,7 @@ package object elem {
         LDvD --> color("#3c7174")
 
         TCvA --> color("#954a2e")
+        TC --> color("#954a2e")
 
         KDvA --> color("#d1d2d4")
 
@@ -180,7 +181,6 @@ package object elem {
         object selquasi extends CustomStyle(border.color("#ffffff"), border.radius("1.6ch"))
         object selfigure extends CustomStyle(border.color("#dc143c"), border.radius("1.6ch"))
         object unquasi extends CustomStyle(filter("brightness(0.9)"))
-        object discard extends CustomStyle(filter("brightness(0.8) greyscale(1)"))
 
         object columns3 extends CustomStyle(width("24ch"), height("1ch"))
         object columns4 extends CustomStyle(width("32ch"), height("1ch"))
@@ -330,7 +330,6 @@ package object elem {
         object expandRoll extends CustomStyle(margin.top("0"), margin.bottom("0"))
         object hexagon extends CustomStyle(clip.path("polygon(50% 10%, 88% 37%, 74% 80%, 26% 80%, 12% 37%)"))
 
-
         object hit extends CustomStyle(color("#dc143c"))
 
         object log extends CustomStyle(font.size("108%"))
@@ -392,6 +391,7 @@ package object elem {
         LDvC --> outline.color("#1e383a")
         LDvD --> outline.color("#1e383a")
         TCvA --> outline.color("#4a2517")
+        TC --> outline.color("#4a2517")
         KDvA --> outline.color("#68696a")
     }
 
@@ -430,6 +430,7 @@ package object elem {
         LDvC --> $(width("15ch"), top("-0.8ch"))
         LDvD --> $(width("15ch"), top("-0.8ch"))
         TCvA --> $(width("15ch"), top("-1.5ch"))
+        TC --> $(width("15ch"), top("-1.5ch"))
         KDvA --> $(width("22ch"), top("-0.8ch"), clip.path("polygon(0% 0%, 86% 0%, 100% 23%, 100% 40%, 71% 100%, 0% 100%)"))
     }
 

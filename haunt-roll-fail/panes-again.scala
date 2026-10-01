@@ -4,6 +4,7 @@ package hrf.ui.again
 //
 //
 import hrf.colmat._
+import hrf.compute._
 import hrf.logger._
 //
 //
@@ -12,7 +13,7 @@ import hrf.logger._
 
 import scala.collection.mutable
 
-
+/*
 trait Heavy[T] {
     private var result : |[T] = None
     def work() : |[T]
@@ -29,6 +30,7 @@ trait Heavy[T] {
         }
     }
 }
+*/
 
 
 case class FitResult(layout : Layout, panes : $[Fit], fontSize : Double, scaleCheck : Double, score : Double)
@@ -43,69 +45,69 @@ case class Layouter(layouts : $[Layout], process : ($[Fit] => $[Fit])*) {
 
     private val cached = mutable.Map[(Int, Int), Heavy[FitResult]]()
 
-    private def generate(width : Int, height : Int) : Heavy[FitResult] = {
+    private def generate(width : Int, height : Int) : Heavy[FitResult] = new Heavy[FitResult] {
+        var runs = layouts./(l => new FitRun(l, 24, 280, 0, Nil, 0))
+        var best : $[FitRun] = $
 
-        new Heavy[FitResult] {
-            var runs = layouts./(l => new FitRun(l, 24, 280, 0, Nil, 0))
-            var best : $[FitRun] = $
+        def fs(i : Int) = pow(65 / 64.0, i)
+        def sc(i : Int) = pow(17 / 16.0, i)
 
-            def fs(i : Int) = pow(65 / 64.0, i)
-            def sc(i : Int) = pow(17 / 16.0, i)
+        def work() : |[FitResult] = {
+            // +++("runs")
+            // +++(runs)
 
-            def work() : |[FitResult] = {
-                if (runs.any) {
-                    var run = runs.maxBy(_.hi)
+            if (runs.any) {
+                var run = runs.maxBy(_.hi)
 
-                    val mid = (run.hi + run.lo) / 2
+                val mid = (run.hi + run.lo) / 2
 
-                    if (mid > run.lo) {
-                        val fit = Fitter.fit(width, height, run.layout.panes./(_.pane(width, height, fs(mid))))
+                if (mid > run.lo) {
+                    val fit = Fitter.fit(width, height, run.layout.panes./(_.pane(width, height, fs(mid))))
 
-                        if (fit.none) {
-                            run.hi = mid
-                            if (fs(run.hi - 1) * run.layout.boost < best./(_.score).maxOr(0))
-                                runs :-= run
-                        }
-                        else {
-                            run.lo = mid
-                        }
+                    if (fit.none) {
+                        run.hi = mid
+                        if (fs(run.hi - 1) * run.layout.boost < best./(_.score).maxOr(0))
+                            runs :-= run
                     }
                     else {
-                        runs :-= run
+                        run.lo = mid
+                    }
+                }
+                else {
+                    runs :-= run
 
-                        val panes = run.layout.panes./(_.pane(width, height, fs(run.lo)))
-                        var i = 0
+                    val panes = run.layout.panes./(_.pane(width, height, fs(run.lo)))
+                    var i = 0
 
-                        while (run.fit.none) {
-                            val fit = Fitter.fit(width, height, panes, sc(i))
+                    while (run.fit.none) {
+                        val fit = Fitter.fit(width, height, panes, sc(i))
 
-                            if (fit.any) {
-                                run.fit = fit.get
-                                run.scaleCheck = i
-                            }
-                            else {
-                                i += 1
-                            }
+                        if (fit.any) {
+                            run.fit = fit.get
+                            run.scaleCheck = i
                         }
-
-                        run.score = fs(run.lo) / sc(run.scaleCheck) * run.layout.boost
-
-                        if (run.score >= best./(_.score).maxOr(0)) {
-                            if (run.score > best./(_.score).maxOr(0)) {
-                                best = Nil
-                                runs = runs.%(r => fs(r.hi - 1) * r.layout.boost >= run.score)
-                            }
-                            best :+= run
+                        else {
+                            i += 1
                         }
                     }
 
-                    return None
+                    run.score = fs(run.lo) / sc(run.scaleCheck) * run.layout.boost
+
+                    if (run.score >= best./(_.score).maxOr(0)) {
+                        if (run.score > best./(_.score).maxOr(0)) {
+                            best = Nil
+                            runs = runs.%(r => fs(r.hi - 1) * r.layout.boost >= run.score)
+                        }
+                        best :+= run
+                    }
                 }
 
-                val r = best(0)
-
-                Some(FitResult(r.layout, r.fit, fs(r.lo), sc(r.scaleCheck), r.score))
+                return None
             }
+
+            val r = best(0)
+
+            Some(FitResult(r.layout, r.fit, fs(r.lo), sc(r.scaleCheck), r.score))
         }
     }
 }

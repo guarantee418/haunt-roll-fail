@@ -92,7 +92,7 @@ class GameEvaluation02(val game : Game, val self : Faction) extends GEvaluation 
             case PassAction(_, f, r, action, then) =>
                 true |=> 100 -> "i want to believe"
 
-
+                // maxthreat(self) |=> -900 -> "stay low minthreat"
 
             case StealBlockWithAction(_, _, Captain) =>
                 has(Captain) |=> 1000 -> "block with captain"
@@ -122,10 +122,7 @@ class GameEvaluation02(val game : Game, val self : Faction) extends GEvaluation 
                 c.role == Contessa |=> 600 -> "reveal contessa"
 
             case KeepCardsAction(_, ll, _) =>
-
-
                 val keep = ll./(_.role)
-
 
                 keep.distinct.num == keep.num |=> 2000 -> "distinct"
                 keep.has(Duke) |=> 600 -> "keep duke"
@@ -155,12 +152,8 @@ class GameEvaluation02(val game : Game, val self : Faction) extends GEvaluation 
                 true |=> (threat(f) * 400) -> "coup higher threat"
                 duel |=> 10000 -> "showdown"
 
-
-
             case _ : Soft =>
         }
-
-
 
         result.none |=> 0 -> "none"
 

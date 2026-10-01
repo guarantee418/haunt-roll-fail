@@ -99,6 +99,7 @@ case object Pending extends Cell
 case object Revealing extends Cell
 case class HiddenTile(tile : Tile, tribe : Tribe, tokens : $[Token]) extends Cell with Record
 case class Explored(img : String, walls : Walls, bearing : Bearing, original : |[HiddenTile]) extends Cell
+case class Removing(cell : Cell) extends Cell
 case class River(id : String, bearing : Bearing) extends Cell
 case class Magma(id : String, bearing : Bearing) extends Cell
 case class CanyonBrigde(bearing : Bearing) extends Cell
@@ -207,6 +208,7 @@ case class FlameWall(f : Dragon.type) extends Token
 case class TokenAt(token : Token, position : Relative) extends AttackTarget with Record with Elementary {
     def elem = token.elem
 }
+
 
 abstract class SideQuest(val name : String, val id : String, val grit : Int) extends Record with Elementary {
     def elem = name.styled(Knight)
@@ -646,6 +648,24 @@ trait Player {
     def positions : $[Relative]
 }
 
+// class AssignedStamina {
+//     var movement = 0
+//     var perception = 0
+//     var strength = 0
+//     var bomb = 0
+//     var bow = 0
+//     var map = 0
+//     var shield = 0
+//     var sword = 0
+//     var axe = 0
+//     var ebow = 0
+//     var boots = 0
+//     var lantern = 0
+//     var aside = 0
+//
+//     def total = movement + perception + strength + bomb + bow + map + shield + sword + axe + ebow + boots + lantern + aside
+// }
+
 object Stamina extends Elementary {
     def elem = "Stamina".styled(Knight)
 }
@@ -754,7 +774,7 @@ class KnightPlayer(val game : Game, val faction : Knight.type) extends Player {
     var lost = 0
     var poison = 0
 
-    var assigned : $[Equipment] = $
+    var assigned : $[Equipment] = $ // new AssignedStamina
 
     def free = stamina - lost - poison - assigned.num
 
@@ -844,6 +864,8 @@ object Monsters {
 
 
 class Village(player : GoblinsPlayer, val tribe : Tribe) {
+    val faction = player.faction
+
     var activated = false
     var halflight = false
     var smashing = false
@@ -954,9 +976,11 @@ case object FreeMove extends DragonCard {
     def elem = "Free Move".hh
 }
 
+
 object DragonCards {
     def basic : $[DragonCard] = 1.to(6)./(i => PowerCard(i.toString, Claw)) ++ 1.to(6)./(i => PowerCard(i.toString, Flame)) ++ 1.to(6)./(i => PowerCard(i.toString, Wing))
 }
+
 
 abstract class Track(val name : String, val min : Int, val max : Int) extends Record with Elementary {
     def elem = name.styled(Dragon)
@@ -1198,7 +1222,7 @@ case class ForceMoveStraightStepAction(f : Faction, t : AttackTarget, direction 
 
 case class ForceMoveMainAction(f : Faction, t : AttackTarget, n : Int, then : ForcedAction) extends ForcedAction
 case class ForceMoveAction(self : Faction, t : AttackTarget, k : Int, n : Int, path : $[Relative], then : ForcedAction) extends ForcedAction
-case class ForceMoveStepAction(self : Faction, t : AttackTarget, direction : Bearing, k : Int, n : Int, path : $[Relative], then : ForcedAction) extends BaseAction("Move", t, (n - k + 1).hl, "tile".s(n - k + 1).hl)("Move", direction, (Image("move-deg-" + direction.rotation * 90, styles.token, ""))) with MoveAction
+case class ForceMoveStepAction(self : Faction, t : AttackTarget, direction : Bearing, k : Int, n : Int, path : $[Relative], then : ForcedAction) extends BaseAction("Move", t, (n - k + 1).hl, "tile".s(n - k + 1).hl)("Move", direction, Image("move-deg-" + direction.rotation * 90, styles.token, "")) with MoveAction
 
 case class FreshHealAction(f : Knight.type, then : ForcedAction) extends ForcedAction
 case class LightHealAction(f : Knight.type, then : ForcedAction) extends ForcedAction
@@ -1240,7 +1264,7 @@ case class RevealSecretAction(self : Goblins.type, s : Secret, then : ForcedActi
 case class HexAction(self : Goblins.type, e : Faction, then : ForcedAction) extends ForcedAction
 
 case class CaveInMainAction(self : Goblins.type, then : ForcedAction) extends ForcedAction
-case class CaveInListAction(self : Goblins.type, l : $[Relative], t : $[Relative], then : ForcedAction) extends ForcedAction
+case class CaveInListAction(self : Goblins.type, l : $[Relative], t : $[Relative], then : ForcedAction) extends ForcedAction // with TileKey { val position = t.lastOption | null }
 case class CaveInSelectAction(self : Goblins.type, l : $[Relative], t : $[Relative], position : Relative, then : ForcedAction) extends BaseAction("Cave-In")("Tile", g => g.board.read(self, position).|("?").hl) with Soft with NoClear with TileKey
 case class CaveInCancelAction(self : Goblins.type, then : ForcedAction) extends ForcedAction
 case class CaveInAction(self : Goblins.type, t : $[Relative], then : ForcedAction) extends ForcedAction
@@ -1521,6 +1545,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     }
 
     def loggedPerform(action : Action, soft : Void) : Continue = {
+        // println("> " + action)
+
         val c = performInternal(action, soft)
 
         factions.foreach { f =>
@@ -1631,9 +1657,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
                     SetupFactionAction(f)
                 }
-                else {
+                else
                     InitDoneAction
-                }
 
             case SetupFactionAction(f : Knight.type) =>
                 states += f -> new KnightPlayer(game, f)
@@ -1766,8 +1791,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         .%(_.armor <= maxStr(f.free))
                         .%(e => e.underground.not || f.attacked.has(e).not)
                         .%(e => e.underground.not || collapse || f.invertory.has(Javelin) || (f.assigned.has(Bomb).not && f.free > 0 && e.armor <= maxStr(f.free - 1)))
-                        .any) {
-
+                        .any
+                    ) {
                         r :+= "Attack " ~ Dragon.elem
                     }
 
@@ -1923,7 +1948,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 DragonDiscardPowersMainAction(e, min(3, f.strength - 1), ClaimQuestsAction(f, f.quests.of[EagleEyed.type], KnightTurnAction(f)))
 
            case DragonDiscardPowersMainAction(f, n, then) if f.powers.of[PowerCard].none =>
-               Ask(f)(then.as("No power cards"))
+               Ask(f).add(then.as("No power cards"))
 
            case DragonDiscardPowersMainAction(f, n, then) =>
                 implicit def convert(c : DragonCard, selected : Boolean) = selected.?(c.imgs).|(c.img)
@@ -2039,7 +2064,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             case ExecuteEventAction(f, e : Ambush) =>
                 f.log("got into", e)
 
-                Ask(f)(ProcessAmbushAction(f, EncounterTileAction(f)).as("Ambush!")(e.img)).needOk
+                Ask(f).add(ProcessAmbushAction(f, EncounterTileAction(f)).as("Ambush!")(e.img)).needOk
 
             case ExecuteEventAction(f, e : Fresh) =>
                 f.log("found", e)
@@ -2128,7 +2153,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 if (l.none) {
                     f.log("had nothing to reveal")
 
-                    Ask(f)(EncounterTileAction(f).as("Nice view")(e.img)).needOk
+                    Ask(f).add(EncounterTileAction(f).as("Nice view")(e.img)).needOk
                 }
                 else
                     VantagePointAction(f, l, EncounterTileAction(f))
@@ -2240,7 +2265,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 if (target)
                     assignStamina(f, EncounterAttacksAction(f, l, then), false, false, true)
 
-                ask(f).done(skip.?(then)).needOkIf(target)
+                ask(f).doneIf(skip)(then).needOkIf(target)
 
             case AttackAction(f, Crystal, q, _, then) =>
                 q.foreach {
@@ -2322,7 +2347,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     Milestone(GameOverAction($(f)))
                 }
                 else
-                    Ask(f).when(f.assigned.has(MightyAxe) && q.has(Bomb).not)(MightyAxeAction(f, e, q, then).!(f.stamina - f.lost - f.poison <= 2))(ClaimQuestsAction(f, f.quests.of[Daring.type].%(_ => current == f), then).as("Skip"))
+                    Ask(f)
+                        .when(f.assigned.has(MightyAxe) && q.has(Bomb).not)(MightyAxeAction(f, e, q, then).!(f.stamina - f.lost - f.poison <= 2))
+                        .skip(ClaimQuestsAction(f, f.quests.of[Daring.type].%(_ => current == f), then))
 
             case MightyAxeAction(f, e : Dragon.type, q, then) =>
                 f.lost += 1
@@ -2418,7 +2445,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 EvaluateTreasureAction(k, t)
 
             case EvaluateTreasureAction(f, t) =>
-                Ask(f)(TakeTreasureAction(f, t))(DeclineTreasureAction(f))
+                Ask(f).add(TakeTreasureAction(f, t)).add(DeclineTreasureAction(f))
 
             case TakeTreasureAction(f, t) =>
                 f.log("took", "Treasure".styled(f))
@@ -2584,14 +2611,17 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         .!(board.wall(p, dir))
                 }
 
-                ask(f)((t == Chest).?(HighlightChestAt(p))).done((others.has(p).not || k == 0).?(then)).needOk
-                .bailw(ForceMoveAction(f, TokenAt(t, l(0)), 0, n, l.take(1), then)) {
-                    board.remove(p, t)
+                ask(f)
+                    .when(t == Chest)(HighlightChestAt(p))
+                    .doneIf(others.has(p).not || k == 0)(then)
+                    .needOk
+                    .bailw(ForceMoveAction(f, TokenAt(t, l(0)), 0, n, l.take(1), then)) {
+                        board.remove(p, t)
 
-                    board.place(l(0), t)
+                        board.place(l(0), t)
 
-                    f.log("could not move", t, "to another player")
-                }
+                        f.log("could not move", t, "to another player")
+                    }
 
             case ForceMoveStepAction(f, TokenAt(t, p), dir, k, n, l, then) =>
                 board.remove(p, t)
@@ -2887,7 +2917,12 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         .withExtras(NoHand)
                 else
                 if (drawn > 0)
-                    Ask(f).each(f.hand.takeRight(drawn))(SecretDrawnInfoAction(f, _))(NoHand)(then.as("Ok")).each(f.hand.dropRight(drawn))(SecretInfoAction(f, _)).needOk
+                    Ask(f)
+                        .each(f.hand.takeRight(drawn))(SecretDrawnInfoAction(f, _))
+                        .add(then.as("Ok"))
+                        .each(f.hand.dropRight(drawn))(SecretInfoAction(f, _))
+                        .needOk
+                        .add(NoHand)
                 else
                     then
 
@@ -2958,7 +2993,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
                     board.writeAll(f, found)
 
-                    Ask(f).each(found)(p => RevealTribeCellAction(f, t, p).as(board.read(f, p)./("At " ~ _.hl))(f, "reveals", t))(RevealTribeCancelAction(f, t, then).as("Cancel"))
+                    Ask(f)
+                        .each(found)(p => RevealTribeCellAction(f, t, p).as(board.read(f, p)./("At " ~ _.hl))(f, "reveals", t))
+                        .add(RevealTribeCancelAction(f, t, then).as("Cancel"))
                 }
 
            case RevealTribeCancelAction(f, t, then) =>
@@ -3028,7 +3065,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         else
                             GoblinsMoveAction(f, t, dir, reduce, TribeTurnAction(f, t))
 
-                    +action
+                    + action
                         .!(wall && f.tribe(t).monsters.has(Golem).not, "wall")
                         .!(attack.any && f.tribe(t).strength <= Knight.strength, "not enough strength")
                         .!(unlurk && attack.any)
@@ -3154,7 +3191,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
                     log(t, "attacked", e)
 
-                    Ask(f)(GoblinsAttackAction(f, t, e, then).as("Attack".styled(styles.hit))("Target", e))
+                    Ask(f).add(GoblinsAttackAction(f, t, e, then).as("Attack".styled(styles.hit))("Target", e))
                 }
                 else {
                     e.health -= 1
@@ -3183,10 +3220,10 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         if (f.hand.has(Poison)) {
                             val d = min(e.stamina - 2, (f.tribe(t).strength > e.strength + 1).?(2).|(1))
 
-                            Ask(f)(ApplyPoisonAction(f, e, d, q).as("Apply", Poison).!(d <= 0, "minimum stamina"))(q.as("Skip")).needOk
+                            Ask(f).add(ApplyPoisonAction(f, e, d, q).as("Apply", Poison).!(d <= 0, "minimum stamina")).skip(q).needOk
                         }
                         else
-                            Ask(f)(q.as("No Poison"))
+                            Ask(f).add(q.as("No Poison"))
                     }
                 }
 
@@ -3309,7 +3346,12 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
                 board.writeAll(f, ll)
 
-                Ask(f).each(ll)(p => UnderwormAction(f, t, reduce, p).as("To", board.read(f, p).|("?").hl)(t, "rides", Underworm).!(factions.of[Knight.type].exists(e => e.position == p && e.strength >= f.tribe(t).strength - (reduce && f.tribe(t).monsters.has(BrightBeetles).not).??(1)), "not enought strength")).add(UnderwormCancelAction(f, t).as("Cancel"))
+                Ask(f)
+                    .each(ll)(p =>
+                        UnderwormAction(f, t, reduce, p).as("To", board.read(f, p).|("?").hl)(t, "rides", Underworm)
+                            .!(factions.of[Knight.type].exists(e => e.position == p && e.strength >= f.tribe(t).strength - (reduce && f.tribe(t).halflight && f.tribe(t).monsters.has(BrightBeetles).not).??(1)), "not enought strength")
+                    )
+                    .add(UnderwormCancelAction(f, t).as("Cancel"))
 
             case UnderwormAction(f, t, reduce, p) =>
                 board.writeAll(f, $)
@@ -3383,15 +3425,18 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
             case CaveInListAction(f, l, t, then) =>
                 t.foreach { p =>
-                    board.set(p, Pending)
+                    if (board.get(p).is[Removing].not)
+                        board.set(p, Removing(board.get(p)))
                 }
 
                 val n = f.eye.population
 
-                Ask(f).each(l)(p => CaveInSelectAction(f, l, t, p, then).!(t.has(p)).!(t.num >= n))(t.any.?(CaveInAction(f, t, then).as("Collapse Tiles")))
+                Ask(f)
+                    .each(l)(p => CaveInSelectAction(f, l, t, p, then).!(t.has(p)).!(t.num >= n))
+                    .when(t.any)(CaveInAction(f, t, then).as("Collapse Tiles"))
 
             case CaveInSelectAction(f, l, t, p, then) =>
-                Ask(f)(CaveInListAction(f, l, t :+ p, then).as("Test"))
+                Ask(f).add(CaveInListAction(f, l, t :+ p, then).as("Test"))
 
             case CaveInAction(f, t, then) =>
                 t.foldLeft(ReconnectMapAction(f, true, then) : ForcedAction)((q, p) => CollapseTileAction(f, p, q, q))
@@ -3414,7 +3459,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 CaveDiscardOmensMainAction(e, f.eye.population, then)
 
             case CaveDiscardOmensMainAction(f, n, then) if f.omens.none =>
-                Ask(f)(then.as("No omens to discard"))
+                Ask(f).add(then.as("No omens to discard"))
 
             case CaveDiscardOmensMainAction(f, n, then) =>
                 implicit def convert(c : OmenCard, selected : Boolean) = selected.?(c.imgs).|(c.img)
@@ -3728,7 +3773,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             case DragonRevealRolledAction(f, x) =>
                 f.log("rolled", x, dt.Pattern(x))
 
-                Ask(f)(DragonRevealAction(f, x).as("Keep", x)(Image(Flame.img, styles.power, styles.inline) ~ " " ~ Image("pattern-" + x.toString, styles.power, styles.inline)))(f.shriek.?(DragonRevealRollAction(f, true).as("Reroll")))
+                Ask(f)
+                    .add(DragonRevealAction(f, x).as("Keep", x)(Image(Flame.img, styles.power, styles.inline) ~ " " ~ Image("pattern-" + x.toString, styles.power, styles.inline)))
+                    .when(f.shriek)(DragonRevealRollAction(f, true).as("Reroll"))
 
             case DragonRevealAction(f, x) =>
                 val l = board.pattern(f.position.get, x).%(board.get(_).is[HiddenTile])
@@ -3738,7 +3785,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 if (l.none) {
                     f.log("had nothing to reveal")
 
-                    Ask(f)(DragonTurnAction(f).as("Slow Burn")(Image(Flame.img, styles.power, styles.inline) ~ " " ~ Image("pattern-" + x.toString, styles.power, styles.inline))).needOk
+                    Ask(f)
+                        .add(DragonTurnAction(f).as("Slow Burn")(Image(Flame.img, styles.power, styles.inline) ~ " " ~ Image("pattern-" + x.toString, styles.power, styles.inline)))
+                        .needOk
                 }
                 else
                     DragonRevealListAction(f, l, x)
@@ -3786,7 +3835,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             case DragonAttackRolledAction(f, x) =>
                 f.log("rolled", x, dt.Pattern(x))
 
-                Ask(f)(DragonAttackAction(f, x).as("Keep", x)(Image(Claw.img, styles.power, styles.inline) ~ " " ~ Image("pattern-" + x.toString, styles.power, styles.inline)))(f.shriek.?(DragonAttackRollAction(f, true).as("Reroll")))
+                Ask(f)
+                    .add(DragonAttackAction(f, x).as("Keep", x)(Image(Claw.img, styles.power, styles.inline) ~ " " ~ Image("pattern-" + x.toString, styles.power, styles.inline)))
+                    .when(f.shriek)(DragonAttackRollAction(f, true).as("Reroll"))
 
             case DragonAttackAction(f, x) =>
                 val l = board.pattern(f.position.get, x)
@@ -3806,7 +3857,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
             case DragonAttackTargetAction(f, t : Tribe, then) if t.faction.revealed.has(Trap) && t.faction.ignored.has(Trap).not =>
                 val e = t.faction
-                Ask(e)(UseTrapAction(e, then).as("Use", Trap, "to ignore", "Hiss".styled(f), "at", t))(IgnoreTrapAction(e, DragonAttackTargetAction(f, t, then)).as("Skip"))
+                Ask(e)
+                    .add(UseTrapAction(e, then).as("Use", Trap, "to ignore", "Hiss".styled(f), "at", t))
+                    .skip(IgnoreTrapAction(e, DragonAttackTargetAction(f, t, then)))
 
             case DragonAttackTargetAction(f, t : Tribe, then) =>
                 f.log("attacked", t)
@@ -3836,7 +3889,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 Ask(f).some(factions.of[Goblins.type])(e => e.tribes.%(_.hidden.not)./(t => DragonHissAction(f, e, t.tribe, c))).cancel
 
             case DragonHissAction(f, e, t, c) if e.revealed.has(Trap) && e.ignored.has(Trap).not =>
-                Ask(e)(DragonHissIgnoreAction(f, e, t, c, UseTrapAction(e, DragonTurnAction(f))).as("Use", Trap, "to ignore", "Hiss".styled(f), "at", t))(IgnoreTrapAction(e, ForceAction(DragonHissAction(f, e, t, c))).as("Skip"))
+                Ask(e)
+                    .add(DragonHissIgnoreAction(f, e, t, c, UseTrapAction(e, DragonTurnAction(f))).as("Use", Trap, "to ignore", "Hiss".styled(f), "at", t))
+                    .skip(IgnoreTrapAction(e, ForceAction(DragonHissAction(f, e, t, c))))
 
             case DragonHissAction(f, e, t, c) =>
                 f.powers = f.powers.diff(c)
@@ -3954,9 +4009,11 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 f.log("scratched", e)
 
                 if (e.revealed.has(Trap))
-                    Ask(e)(UseTrapAction(e, DragonTurnAction(f)).as("Use", Trap, "to ignore", "Scratch".styled(f)))(DragonScratchEatAction(f, e).as("Skip"))
+                    Ask(e)
+                        .add(UseTrapAction(e, DragonTurnAction(f)).as("Use", Trap, "to ignore", "Scratch".styled(f)))
+                        .skip(DragonScratchEatAction(f, e))
                 else
-                    Ask(e)(DragonScratchEatAction(f, e).as("No Trap"))
+                    Ask(e).add(DragonScratchEatAction(f, e).as("No Trap"))
 
             case DragonScratchEatAction(f, e) =>
                 e.tribes.%(_.position.has(f.position.get)).foldLeft(DragonTurnAction(f) : ForcedAction)((q, t) => ReducePopulationAction(e, t.tribe, t.population, q))
@@ -4015,7 +4072,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             case DragonWrathRolledAction(f, x) =>
                 f.log("rolled", x, dt.Pattern(x))
 
-                Ask(f)(DragonWrathAction(f, x).as("Keep", x)(4.times(Image("power-any", styles.power, styles.inline) ~ " ") ~ Image("pattern-" + x.toString, styles.power, styles.inline)))(f.shriek.?(DragonWrathRollAction(f, true).as("Reroll")))
+                Ask(f)
+                    .add(DragonWrathAction(f, x).as("Keep", x)(4.times(Image("power-any", styles.power, styles.inline) ~ " ") ~ Image("pattern-" + x.toString, styles.power, styles.inline)))
+                    .when(f.shriek)(DragonWrathRollAction(f, true).as("Reroll"))
 
             case DragonWrathAction(f, x) =>
                 val l = board.pattern(f.position.get, x).%(board.get(_).is[Emptiness.type].not)
@@ -4024,11 +4083,15 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
                 val ll = l.diff(positions) ++ l.intersect(positions)
 
-                ll.foldRight(ReconnectMapAction(f, true, DragonTurnAction(f)) : ForcedAction)((p, q) => CollapseTileAction(f, p, q, q))
+                val next : ForcedAction = ll.foldRight(ReconnectMapAction(f, true, DragonTurnAction(f)) : ForcedAction)((p, q) => CollapseTileAction(f, p, q, q))
+
+                setup.of[Goblins.type]./~(_.tribes.%(_.position.exists(l.has))).foldLeft(next)((q, t) => ScatterTribeAction(t.faction, t.tribe, q))
 
             // END OF TURN
             case DragonDoneForfeitAction(f) =>
-                Ask(f)(DragonEndAction(f).as("End Turn".styled(styles.hit))(f.powers.num.hl, "Power".s(f.powers.num).styled(f), "remaining")).cancelIf(f.powers.any)
+                Ask(f)
+                    .add(DragonEndAction(f).as("End Turn".styled(styles.hit))(f.powers.num.hl, "Power".s(f.powers.num).styled(f), "remaining"))
+                    .cancelIf(f.powers.any)
 
             case DragonEndAction(f) =>
                 if (f.path.none && f.prideS.available) {
@@ -4604,11 +4667,26 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 }
 
             case CollapseTileAction(f, p, then, fail) if setup.of[Goblins.type].exists(_.positions.has(p)) =>
+                implicit val ask = builder
+
                 val t = setup.of[Goblins.type].%(_.positions.has(p)).first
 
                 val tt = t.tribes.%(_.position.has(p)).first
 
-                ScatterTribeAction(t, tt.tribe, CollapseTileAction(f, p, then, fail))
+                val others = factions.but(t)./~(_.positions)
+
+                Bearings.wnes.foreach { dir =>
+                    val dest = p.add(dir)
+
+                    + ForceMoveStepAction(f, t, dir, 1, 1, $(dest), CollapseTileAction(f, p, then, fail))
+                        .!(board.get(dest).is[Emptiness.type])
+                        .!(board.wall(p, dir))
+                        .!(others.has(dest))
+                }
+
+                ask(f).needOk.bailw(fail) {
+                    f.log("could not collapse a tile and move away", t)
+                }
 
             case CollapseTileAction(f, p, then, fail) =>
                 val t = board.get(p)
@@ -4621,10 +4699,14 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 f.log("collapsed a tile")
 
                 val dark = t match {
-                    case t : HiddenTile => |(t)
-                    case t : Explored => t.original
+                    case Removing(t : HiddenTile) => |(t)
+                    case Removing(t : Explored) => t.original
                     case _ => None
                 }
+
+                log(">>>", t.toString)
+
+                log("Hiiden Tile", dark.toString)
 
                 dark.foreach { t =>
                     if (t.tokens.has(Crystal)) {
@@ -4912,7 +4994,6 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     .withRule(t => current != f || t.tokens.has(Crystal) || tiles.take(3).exists(_.tokens.has(Crystal)).not)
                     .withGroup(f, "places a tile")
                     .withThens(t => l./(p => PlaceHiddenTileAction(f, p, t, FillOpenEdgesAction(f, l.but(p), then)).as("Place" ~ board.read(f, p)./(" at " ~ _.hl))))
-
 
             case FillOpenEdgesAction(f, l, then) =>
                 implicit def convert(h : HiddenTile) = {

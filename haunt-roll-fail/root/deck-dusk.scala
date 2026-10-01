@@ -265,7 +265,10 @@ object DuskDeckExpansion extends Expansion {
             DrawCardsAction(f, 2, WithEffect(Merchants), AddCardsAction(f, MerchantsContinueAction(f, then)))
 
         case MerchantsContinueAction(f, then) =>
-            Ask(f)(NoHand).each(f.hand)(d => MerchantsDiscardAction(f, d, then)).needOk
+            Ask(f)
+                .each(f.hand)(d => MerchantsDiscardAction(f, d, then))
+                .add(NoHand)
+                .needOk
 
         case MerchantsDiscardAction(f, d, then) =>
             f.hand --> d --> discard(f)
@@ -285,7 +288,7 @@ object DuskDeckExpansion extends Expansion {
                 .skip(then)
 
         case CharmOffensiveMainAction(f, l, then) =>
-            Ask(f)(l./(e => CharmOffensiveAction(f, e, then).as(e, "gets", 1.vp)(CharmOffensive))).cancel
+            Ask(f).each(l)(e => CharmOffensiveAction(f, e, then).as(e, "gets", 1.vp)(CharmOffensive)).cancel
 
         case CharmOffensiveAction(f, e, then) =>
             e.oscore(1)("from", CharmOffensive)
@@ -294,7 +297,7 @@ object DuskDeckExpansion extends Expansion {
 
         // MILITARY SUPPLIES
         case MilitarySuppliesPayAction(f, then) =>
-            Ask(f).each(f.hand)(d => MilitarySuppliesAction(f, d, then))(MilitarySuppliesSelfAction(f, then)).cancel.needOk
+            Ask(f).each(f.hand)(d => MilitarySuppliesAction(f, d, then)).add(MilitarySuppliesSelfAction(f, then)).cancel.needOk
 
         case MilitarySuppliesAction(f, d, then) =>
             f.hand --> d --> discard.quiet
@@ -312,18 +315,18 @@ object DuskDeckExpansion extends Expansion {
 
         // BREAKING DAWN
         case BreakingDawnMainAction(f : WarriorFaction, feed, milk, then) =>
-            Ask(f)
-                .add(feed.?(BreakingDawnFeedAction(f, then).as("Add", f.warrior.of(f), f.warrior.imgd(f), "to", BreakingDawn)(BreakingDawn)))
-                .add(feed.?(BreakingDawnFeedAction(f, BreakingDawnMilkAction(f, then)).as("Add", f.warrior.of(f), f.warrior.imgd(f), "to", BreakingDawn, "then", "score", (milk + 1).vp, "and discard")(BreakingDawn)))
-                .add((milk > 0).?(BreakingDawnMilkAction(f, then).as("Score just", milk.vp, "and discard")(BreakingDawn)))
+            Ask(f).group(BreakingDawn)
+                .when(feed)(BreakingDawnFeedAction(f, then).as("Add", f.warrior.of(f), f.warrior.imgd(f), "to", BreakingDawn))
+                .when(feed)(BreakingDawnFeedAction(f, BreakingDawnMilkAction(f, then)).as("Add", f.warrior.of(f), f.warrior.imgd(f), "to", BreakingDawn, "then", "score", (milk + 1).vp, "and discard"))
+                .when(milk > 0)(BreakingDawnMilkAction(f, then).as("Score just", milk.vp, "and discard"))
                 .cancel
                 .needOk
 
         case BreakingDawnMainAction(f : Hero, feed, milk, then) =>
-            Ask(f)
-                .add(BreakingDawnFeedAction(f, then).as("Put effort", Image("attitude-heart-full", styles.attitude), "into", BreakingDawn)(BreakingDawn))
-                .add(BreakingDawnFeedAction(f, BreakingDawnMilkAction(f, then)).as("Put effort", Image("attitude-heart-full", styles.attitude), "into", BreakingDawn, "then", "score", (milk + 1).vp, "and discard")(BreakingDawn))
-                .add((milk > 0).?(BreakingDawnMilkAction(f, then).as("Score just", milk.vp, "and discard")(BreakingDawn)))
+            Ask(f).group(BreakingDawn)
+                .add(BreakingDawnFeedAction(f, then).as("Put effort", Image("attitude-heart-full", styles.attitude), "into", BreakingDawn))
+                .add(BreakingDawnFeedAction(f, BreakingDawnMilkAction(f, then)).as("Put effort", Image("attitude-heart-full", styles.attitude), "into", BreakingDawn, "then", "score", (milk + 1).vp, "and discard"))
+                .when(milk > 0)(BreakingDawnMilkAction(f, then).as("Score just", milk.vp, "and discard"))
                 .cancel
                 .needOk
 
@@ -363,18 +366,18 @@ object DuskDeckExpansion extends Expansion {
 
         // HIGH NOON
         case HighNoonMainAction(f : WarriorFaction, feed, milk, then) =>
-            Ask(f)
-                .add(feed.?(HighNoonFeedAction(f, then).as("Add", f.warrior.of(f), "to", f.warrior.imgd(f))(HighNoon)))
-                .add(feed.?(HighNoonFeedAction(f, HighNoonMilkAction(f, then)).as("Add", f.warrior.of(f), f.warrior.imgd(f), "to", HighNoon, "then", "place", (milk + 1).warriors, "and discard")(HighNoon)))
-                .add((milk > 0).?(HighNoonMilkAction(f, then).as("Just place", milk.warriors, "and discard")(HighNoon)))
+            Ask(f).group(HighNoon)
+                .when(feed)(HighNoonFeedAction(f, then).as("Add", f.warrior.of(f), "to", f.warrior.imgd(f)))
+                .when(feed)(HighNoonFeedAction(f, HighNoonMilkAction(f, then)).as("Add", f.warrior.of(f), f.warrior.imgd(f), "to", HighNoon, "then", "place", (milk + 1).warriors, "and discard"))
+                .when(milk > 0)(HighNoonMilkAction(f, then).as("Just place", milk.warriors, "and discard"))
                 .cancel
                 .needOk
 
         case HighNoonMainAction(f : Hero, feed, milk, then) =>
-            Ask(f)
-                .add(HighNoonFeedAction(f, then).as("Put effort", Image("attitude-heart-full", styles.attitude), "into", HighNoon)(HighNoon))
-                .add(HighNoonFeedAction(f, HighNoonMilkAction(f, then)).as("Put effort", Image("attitude-heart-full", styles.attitude), "into", HighNoon, "then", "battle", (milk + 1).stimes, "and discard")(HighNoon))
-                .add((milk > 0).?(HighNoonMilkAction(f, then).as("Just battle", milk.stimes, "and discard")(HighNoon)))
+            Ask(f).group(HighNoon)
+                .add(HighNoonFeedAction(f, then).as("Put effort", Image("attitude-heart-full", styles.attitude), "into", HighNoon))
+                .add(HighNoonFeedAction(f, HighNoonMilkAction(f, then)).as("Put effort", Image("attitude-heart-full", styles.attitude), "into", HighNoon, "then", "battle", (milk + 1).stimes, "and discard"))
+                .when(milk > 0)(HighNoonMilkAction(f, then).as("Just battle", milk.stimes, "and discard"))
                 .cancel
                 .needOk
 
@@ -425,18 +428,18 @@ object DuskDeckExpansion extends Expansion {
 
         // DUSK AWAKENING
         case DuskAwakeningMainAction(f : WarriorFaction, feed, milk, then) =>
-            Ask(f)
-                .add(feed.?(DuskAwakeningFeedAction(f, then).as("Add", f.warrior.of(f), "to", f.warrior.imgd(f))(DuskAwakening)))
-                .add(feed.?(DuskAwakeningFeedAction(f, DuskAwakeningMilkAction(f, then)).as("Add", f.warrior.of(f), f.warrior.imgd(f), "to", DuskAwakening, "then", "draw", (milk + 1).cards, "and discard")(DuskAwakening)))
-                .add((milk > 0).?(DuskAwakeningMilkAction(f, then).as("Draw just", milk.cards, "and discard")(DuskAwakening)))
+            Ask(f).group(DuskAwakening)
+                .when(feed)(DuskAwakeningFeedAction(f, then).as("Add", f.warrior.of(f), "to", f.warrior.imgd(f)))
+                .when(feed)(DuskAwakeningFeedAction(f, DuskAwakeningMilkAction(f, then)).as("Add", f.warrior.of(f), f.warrior.imgd(f), "to", DuskAwakening, "then", "draw", (milk + 1).cards, "and discard"))
+                .when(milk > 0)(DuskAwakeningMilkAction(f, then).as("Draw just", milk.cards, "and discard"))
                 .cancel
                 .needOk
 
         case DuskAwakeningMainAction(f : Hero, feed, milk, then) =>
-            Ask(f)
-                .add(DuskAwakeningFeedAction(f, then).as("Put effort", Image("attitude-heart-full", styles.attitude), "into", DuskAwakening)(DuskAwakening))
-                .add(DuskAwakeningFeedAction(f, DuskAwakeningMilkAction(f, then)).as("Put effort", Image("attitude-heart-full", styles.attitude), "into", DuskAwakening, "then", "draw", (milk + 1).cards, "and discard")(DuskAwakening))
-                .add((milk > 0).?(DuskAwakeningMilkAction(f, then).as("Draw just", milk.cards, "and discard")(DuskAwakening)))
+            Ask(f).group(DuskAwakening)
+                .add(DuskAwakeningFeedAction(f, then).as("Put effort", Image("attitude-heart-full", styles.attitude), "into", DuskAwakening))
+                .add(DuskAwakeningFeedAction(f, DuskAwakeningMilkAction(f, then)).as("Put effort", Image("attitude-heart-full", styles.attitude), "into", DuskAwakening, "then", "draw", (milk + 1).cards, "and discard"))
+                .when(milk > 0)(DuskAwakeningMilkAction(f, then).as("Draw just", milk.cards, "and discard"))
                 .cancel
                 .needOk
 
@@ -474,10 +477,15 @@ object DuskDeckExpansion extends Expansion {
 
         // OLD FRIEND
         case DrawCardsAction(f, n, m, then) if f.has(OldFriend) =>
-            Ask(f)(FindAnyCardAction(f, m, then))(DrawCardsFromDeckAction(f, n, m, then).as("Draw " ~ n.times(dt.CardBack).merge)).needOk
+            Ask(f)
+                .add(FindAnyCardAction(f, m, then))
+                .add(DrawCardsFromDeckAction(f, n, m, then).as("Draw " ~ n.times(dt.CardBack).merge))
+                .needOk
 
         case FindAnyCardAction(f, m, then) =>
-            Ask(f)(pile./(d => TakeAnyCardAction(f, d, then))).cancel
+            Ask(f)
+                .each(pile)(d => TakeAnyCardAction(f, d, then))
+                .cancel
 
         case TakeAnyCardAction(f, d, then) =>
             pile --> d --> f.drawn

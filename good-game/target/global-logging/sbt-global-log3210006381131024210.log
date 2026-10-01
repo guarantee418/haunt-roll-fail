@@ -1,0 +1,94 @@
+[debug] > Exec(early(addDefaultCommands), None, None)
+[debug] > Exec(addDefaultCommands, None, None)
+[debug] > Exec(early(initialize), None, None)
+[debug] > Exec(initialize, None, None)
+[debug] > Exec(boot, None, None)
+[debug] > Exec(writeSbtVersion, None, None)
+[debug] > Exec(reload, None, None)
+[debug] > Exec(sbtStashOnFailure, None, None)
+[debug] > Exec(onFailure loadFailed, None, None)
+[debug] > Exec(loadp, None, None)
+[info] welcome to sbt 1.10.5 (Ubuntu Java 21.0.11)
+[debug] Load.defaultLoad until apply took 79.407211ms
+[debug]           Load.loadUnit: plugins took 43.023734ms
+[debug]           Load.loadUnit: defsScala took 0.310553ms
+[debug] [Loading] Scanning directory /home/user/haunt-roll-fail/good-game/project
+[debug]             Load.loadUnit: mkEval took 4.129901ms
+[debug] [Loading] Found non-root projects 
+[debug] [Loading] Done in /home/user/haunt-roll-fail/good-game/project, returning: ()
+[debug] deducing auto plugins based on known facts Set(Atom(sbt.plugins.CorePlugin)) and clauses Clauses(Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.IvyPlugin)))
+[debug] Clause(Atom(sbt.ScriptedPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.SbtPlugin),Set(Atom(sbt.ScriptedPlugin)))
+[debug] Clause(Atom(sbt.plugins.SemanticdbPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.JUnitXmlReportPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.MiniDependencyTreePlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.IvyPlugin)))
+[debug] Clause(Atom(sbt.plugins.IvyPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.SemanticdbPlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.JUnitXmlReportPlugin)))
+[debug] Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.Giter8TemplatePlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.MiniDependencyTreePlugin))))
+[debug]   :: deduced result: Matched(sbt.plugins.CorePlugin,sbt.plugins.Giter8TemplatePlugin,sbt.plugins.IvyPlugin,sbt.plugins.JvmPlugin,sbt.plugins.MiniDependencyTreePlugin,sbt.plugins.JUnitXmlReportPlugin,sbt.plugins.SemanticdbPlugin)
+[debug] Plugins.deducer#function took 16.538228 ms
+[info] loading settings for project good-game-build from plugins.sbt ...
+[debug]               Load.resolveProject(good-game-build) took 40.61168ms
+[debug]             Load.loadTransitive: finalizeProject(Project(id good-game-build, base: /home/user/haunt-roll-fail/good-game/project, plugins: List(<none>))) took 74.539806ms
+[debug] [Loading] Done in /home/user/haunt-roll-fail/good-game/project, returning: (good-game-build)
+[debug]           Load.loadUnit: loadedProjectsRaw took 566.098702ms
+[debug]           Load.loadUnit: cleanEvalClasses took 6.903778ms
+[debug]         Load.loadUnit(file:/home/user/haunt-roll-fail/good-game/project/, ...) took 621.97671ms
+[debug]       Load.apply: load took 760.459769ms
+[debug]       Load.apply: resolveProjects took 4.2484ms
+[debug]       Load.apply: finalTransforms took 56.708234ms
+[debug]       Load.apply: config.delegates took 5.777335ms
+[debug]       Load.apply: Def.make(settings)... took 453.786503ms
+[debug]       Load.apply: structureIndex took 90.022778ms
+[debug]       Load.apply: mkStreams took 1.641128ms
+[info] loading project definition from /home/user/haunt-roll-fail/good-game/project
+[debug] Running task... Cancel: Signal, check cycles: false, forcegc: true
+[debug]     Load.loadUnit: plugins took 2379.738769ms
+[debug]     Load.loadUnit: defsScala took 0.006581ms
+[debug] [Loading] Scanning directory /home/user/haunt-roll-fail/good-game
+[debug]       Load.loadUnit: mkEval took 0.276447ms
+[debug] [Loading] Found non-root projects 
+[debug] [Loading] Done in /home/user/haunt-roll-fail/good-game, returning: ()
+[debug] deducing auto plugins based on known facts Set(Atom(sbt.plugins.CorePlugin)) and clauses Clauses(Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.IvyPlugin)))
+[debug] Clause(Atom(sbt.ScriptedPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.SbtPlugin),Set(Atom(sbt.ScriptedPlugin)))
+[debug] Clause(Atom(sbt.plugins.SemanticdbPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.JUnitXmlReportPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.MiniDependencyTreePlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(spray.revolver.RevolverPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbtassembly.AssemblyPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.IvyPlugin)))
+[debug] Clause(Atom(sbt.plugins.IvyPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.SemanticdbPlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.JUnitXmlReportPlugin)))
+[debug] Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.Giter8TemplatePlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.MiniDependencyTreePlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(spray.revolver.RevolverPlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbtassembly.AssemblyPlugin))))
+[debug]   :: deduced result: Matched(sbt.plugins.CorePlugin,sbt.plugins.Giter8TemplatePlugin,sbt.plugins.IvyPlugin,sbt.plugins.JvmPlugin,sbt.plugins.SemanticdbPlugin,sbt.plugins.JUnitXmlReportPlugin,sbtassembly.AssemblyPlugin,spray.revolver.RevolverPlugin,sbt.plugins.MiniDependencyTreePlugin)
+[debug] Plugins.deducer#function took 2.364013 ms
+[info] loading settings for project good-game from build.sbt ...
+[debug]         Load.resolveProject(good-game) took 9.657396ms
+[debug]       Load.loadTransitive: finalizeProject(Project(id good-game, base: /home/user/haunt-roll-fail/good-game, plugins: List(<none>))) took 12.788873ms
+[debug] [Loading] Done in /home/user/haunt-roll-fail/good-game, returning: (good-game)
+[debug]     Load.loadUnit: loadedProjectsRaw took 135.212331ms
+[debug]     Load.loadUnit: cleanEvalClasses took 1.898019ms
+[debug]   Load.loadUnit(file:/home/user/haunt-roll-fail/good-game/, ...) took 2518.377018ms
+[debug] Load.apply: load took 2533.284065ms
+[debug] Load.apply: resolveProjects took 0.165631ms
+[debug] Load.apply: finalTransforms took 13.567045ms
+[debug] Load.apply: config.delegates took 0.363613ms
+[debug] Load.apply: Def.make(settings)... took 133.238391ms
+[debug] Load.apply: structureIndex took 37.860825ms
+[debug] Load.apply: mkStreams took 0.004784ms
+[info] set current project to HRF Good Game (in build file:/home/user/haunt-roll-fail/good-game/)
+[debug] > Exec(sbtPopOnFailure, None, None)
+[debug] > Exec(resumeFromFailure, None, None)
+[debug] > Exec(notifyUsersAboutShell, None, None)
+[debug] > Exec(iflast shell, None, None)
+[debug] > Exec(run run ../good-game-database ../haunt-roll-fail http://localhost:7070 http://localhost:7070/hrf/ 7070, None, None)
+[debug] Evaluating tasks: Compile / run
+[debug] Running task... Cancel: Signal, check cycles: false, forcegc: true

@@ -52,23 +52,43 @@ class UI(uir : ElementAttachmentPoint, arity : Int, resources : Resources) exten
 
         val info = ename.styled(styles.name)
 
+        /*
         val knowledge = {
+            val roles : List[Role] = (f.knowledge.roles.%(_.side == Neutral).num == game.roles.%(_.side == Neutral).num).?(game.roles).|(game.roles.%(_.side != Neutral) ++ Roles.neutrals)
+
+            val initial : Map[Faction, List[Role]] = (game.factions./(e => e -> e.open.?(e.role.list).|(f.knowledge.full.has(e).?(e.role.list).|(f.knowledge.notSlave.has(e).?(roles.but(Slave)).|(roles)))) :+
+                (HiddenRole -> f.knowledge.full.has(HiddenRole).?(game.hidden.list).|(f.knowledge.notSlave.has(HiddenRole).?(roles.but(Slave)).|(roles)))).toMap
+
+            val claimed = initial.values./~(_.distinct.single).$
+
+            val rr = initial.view.mapValues(l => l.single./(_.list).|(l.diff(claimed))).mapValues(_.distinct).toMap
+
+            BreakList((game.factions :+ HiddenRole)./(f =>
+                f.elem ~ " = " ~ rr(f)./(_.short)
+            ))
+        }*/
+
+        val knowledge = {
+            //val expectation = (game.factions :+ HiddenRole)./(e => e -> (e == HiddenRole || e.alive).?(f.expectation.states./~(_(e)).distinct).|(Nil)).toMap
+            //val knowledge = (game.factions :+ HiddenRole)./(e => e -> (e == HiddenRole || e.alive).?(f.xknowledge.states./~(_(e)).distinct).|(Nil)).toMap
+
             val expectation = (game.factions :+ HiddenRole)./(e => e -> f.expectation.states./~(_(e)).distinct).toMap
             val knowledge = (game.factions :+ HiddenRole)./(e => e -> f.xknowledge.states./~(_(e)).distinct).toMap
 
             f.alive.?(
-                (game.factions :+ HiddenRole)./(e =>
+                (game.factions/*.%(_.alive)*/ :+ HiddenRole)./(e =>
                     e.elem ~ " = " ~ (expectation(e)./(_.short)).merge ~ knowledge(e).diff(expectation(e)).any.?(" | " ~ knowledge(e).diff(expectation(e))./(_.short).merge)
                 ).join(Break)
             ).|(
-                (game.factions :+ HiddenRole)./(e =>
+                (game.factions/*.%(_.alive)*/ :+ HiddenRole)./(e =>
                     e.name ~ " = " ~ (e == HiddenRole).?(game.hidden).|(e.role).short
                 ).join(Break)
             )
 
         }
 
-        var over = game.over
+
+        var over = game.over //|| true
 
         val cards = Div(f.open.?(f.alive.?(f.role.long).|(Image(f.role.image, styles.rcard, styles.dead))).|(over.?(Image(f.role.image, styles.rcard, styles.hidden)).|(Image("hidden", styles.rcard))), styles.viewcard)
 
@@ -108,7 +128,7 @@ class UI(uir : ElementAttachmentPoint, arity : Int, resources : Resources) exten
         val panes = statuses./(s => s -> new TextPane(10, font, 100, 22, 18.2+9)).toMap + (logDiv -> new TextPane(10, font, 80, 44, 10)) + (actionDiv -> new TextPane(10, font, 100, 36, 18))
 
         SplitX(SplitEven(statuses./(panes)), SplitX(panes(logDiv), panes(actionDiv)))
-            .dim(0, 0, w.toInt, h.toInt)
+            .dim(0, 0, w.toInt, h.toInt/*, 0*/)
 
         panes.keys.foreach { p =>
             val c = p.node
@@ -141,8 +161,8 @@ class UI(uir : ElementAttachmentPoint, arity : Int, resources : Resources) exten
         ii.any.??(convertActions(self, ii))
     }
 
-    def wait(self : List[Faction], factions : List[Faction]) {
-        val zw = List(ZOption("Waiting for " ~ factions./(f => Meta.factionElem(f)).comma, Div(Text("z... z... z..."), $(xstyles.info))))
+    def wait(self : List[Faction], factions : List[Faction], message : Elem) {
+        val zw = List(ZOption("Waiting for " ~ factions./(f => Meta.factionElem(f)).comma, Div(message, $(xstyles.info))))
 
         if (self.any)
             asker.zask(zw ++ info(self.single, Nil))(resources)
@@ -183,6 +203,8 @@ class UI(uir : ElementAttachmentPoint, arity : Int, resources : Resources) exten
                     case _ => Nil
                 }) ++
                 (a match {
+//                    case UnavailableReasonAction(_ : ViewCard, _) => Nil
+//                    case _ : ViewCard => Nil
                     case _ : Info => List(xstyles.info)
                     case _ => List(xstyles.choice, xstyles.xx)
                 }) ++
@@ -231,13 +253,17 @@ class UI(uir : ElementAttachmentPoint, arity : Int, resources : Resources) exten
         }
     }
 
-    def alog(e : Elem, n : Int, onClick : Any => Unit, delayed : Boolean = false) : LazyBlock = {
-        logger.alog(OnClick(n, Hint("Action #" + n, Div(e, xlo.pointer))), onClick, delayed)(resources)
-    }
+    // def zlog(e : Elem, onClick : Any => Unit = null) : List[dom.Node] = {
+    //     logger.zlog(e, onClick)(resources)
+    // }
 
-    def blog() : Container = {
-        logger.blog()(resources)
-    }
+        def alog(e : Elem, n : Int, onClick : Any => Unit, delayed : Boolean = false) : LazyBlock = {
+            logger.alog(OnClick(n, Hint("Action #" + n, Div(e, xlo.pointer))), onClick, delayed)(resources)
+        }
+
+        def blog() : Container = {
+            logger.blog()(resources)
+        }
 
     def start() {
         resize()

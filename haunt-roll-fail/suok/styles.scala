@@ -34,7 +34,7 @@ package object elem {
         Effect --> color("#4a3a2a")
 
         object inline extends CustomStyle(display("inline-block"))
-        object margined extends CustomStyle(margin("0.3ch"))
+        object margined extends CustomStyle(/*display("inline-block"),*/ margin("0.3ch"))
 
         object selected extends CustomStyle(filter("brightness(1.1) saturate(1.1)"), outline.color("#ffffff"), outline.style("solid"), outline.width("0.3vmin"))
 

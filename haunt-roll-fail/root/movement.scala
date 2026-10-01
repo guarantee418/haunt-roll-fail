@@ -218,10 +218,13 @@ object MovementExpansion extends MandatoryExpansion {
         case MoveInitAction(self, f, ttt, m, from, allfrom, extra, then) =>
             val plans = f.movePlans(from.%(f.canMoveFrom), ttt.some.|(game.transports./($) ** f.transports))
 
-            Ask(self)(extra.of[PreMove])(allfrom./(o => plans.get(o) @@ {
-                case Some((t, l)) => MoveFromAction(self, f, t, m, o, l, then)
-                case None => MoveFromAction(self, f, Nil, m, o, Nil, then).!(f.canMoveFrom(o).not, "snared").!(true)
-            }))(extra.notOf[PreMove])
+            Ask(self)
+                .add(extra.of[PreMove])
+                .each(allfrom)(o => plans.get(o) @@ {
+                    case Some((t, l)) => MoveFromAction(self, f, t, m, o, l, then)
+                    case None => MoveFromAction(self, f, Nil, m, o, Nil, then).!(f.canMoveFrom(o).not, "snared").!(true)
+                })
+                .add(extra.notOf[PreMove])
 
         case MoveFromAction(self, f, tt, m, from, to, then) =>
             Ask(self)
@@ -241,7 +244,10 @@ object MovementExpansion extends MandatoryExpansion {
             val cm = 1.to(mv.num)./~(n => mv.combinations(n))
             val pp = tt./~(t => cm.%(l => t.forall(_.allows(f, from, to, l)))./(l => l.sortBy(m => t./(_.sortBy(m)).sum))./(Party(t, _))).sortBy(p => p.transport./(t => t.order(p.movable)).sum)
 
-            Ask(self)(pp./(p => MoveListAction(self, f, p.transport, m, from, to, p.movable, then))).ocancel.bailout(CantMoveAction(self, f, tt, m, from, to, then))
+            Ask(self)
+                .each(pp)(p => MoveListAction(self, f, p.transport, m, from, to, p.movable, then))
+                .ocancel
+                .bailout(CantMoveAction(self, f, tt, m, from, to, then))
 
         case CantMoveAction(self, f, t, m, from, to, then) =>
             f.log("could not move from", from, "to", to, m)
@@ -307,10 +313,10 @@ object MovementExpansion extends MandatoryExpansion {
         case MarchAction(f, n, total, then) =>
             val cc = f.moveFrom
             if (n > total)
-                then
+                then // Ask(f)(then.as("Then"))
             else
             if (cc.none)
-                then
+                then // Ask(f)(then.as("Can't Move".hl))
             else
                 MoveInitAction(f, f, Nil, (total > 1).?(March(n, total)).|(NoMessage), cc, f.movable, $((n == 1).?(CancelAction).|(then.as("Forfeit " ~ (total - n + 1).of("move")))), MarchAction(f, n + 1, total, then))
 

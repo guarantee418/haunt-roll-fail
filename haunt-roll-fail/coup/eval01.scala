@@ -141,12 +141,8 @@ class GameEvaluation01(val game : Game, val self : Faction) extends GEvaluation 
             case CoupWhomAction(_, f) =>
                 true |=> (threat(f) * 400) -> "coup higher threat"
 
-
-
             case _ : Soft =>
         }
-
-
 
         result.none |=> 0 -> "none"
 

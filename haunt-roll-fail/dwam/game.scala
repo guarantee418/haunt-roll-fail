@@ -1002,10 +1002,7 @@ case class MysteriousMurdersAction(self : Faction, color : Color, area : Area, i
 case class RemoveRolledBuildingsAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class FloodAreasAction(f : Faction, then : ForcedAction) extends ForcedAction
 
-
-
 case class RemoveRolledEverythingAction(f : Faction, then : ForcedAction) extends ForcedAction
-
 case class RemoveRolledBuildingIfNearAction(f : Faction, o : |[Area], then : ForcedAction) extends ForcedAction
 case class BuildingMalfunctionAction(f : Faction, then : ForcedAction) extends ForcedAction
 
@@ -1342,7 +1339,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
     }
 
     def loggedPerform(action : Action, soft : Void) : Continue = {
-
+        // println("> " + action)
 
         val c = performInternal(action, soft)
 
@@ -1397,8 +1394,6 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 log("Shuffled deck")
 
                 board.starting.foreach { r => pool --> Trouble --> r }
-
-
 
                 Force(then)
 
@@ -1545,7 +1540,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                             case _ : Interrupt => false
                             case _ => true
                         }).none =>
-                            Ask(f)(CantPlayMainAction(f))(extra(f)).needOk
+                            Ask(f).add(CantPlayMainAction(f)).add(extra(f)).needOk
 
                         case PlayCard =>
                             Force(PlayCardMainAction(f))
@@ -1563,7 +1558,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                             CompleteActionTurnAction(f)
 
                         case RefillCards =>
-                            Ask(f)(RefillAction(f, CompleteActionTurnAction(f)))(extra(f)).needOk
+                            Ask(f).add(RefillAction(f, CompleteActionTurnAction(f))).add(extra(f)).needOk
 
                         case a =>
                             var actions : $[UserAction] = $
@@ -1593,7 +1588,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                                 case Scroll(a) => ScrollMainAction(f, playing, a, CompleteActionTurnAction(f))
                                 case RandomEvent => RandomEventMainAction(f, playing)
                                 case TakeBackCheck => HiddenCheck
-
+                                //case x => log("skipping", x.toString.hl) ; SkipActionMainAction(f)
                             })
 
                             actions ++= fill(stack.drop(1))
@@ -1603,7 +1598,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                             actions ++= extra(f)
 
                             if (actions.any)
-                                Ask(f)(actions).needOk
+                                Ask(f).add(actions).needOk
                             else
                                 ContinuePlayerTurnAction(f)
                         }
@@ -1664,7 +1659,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 CompleteActionTurnAction(f)
 
             case AssassinateMainAction(f, _, then) =>
-                Ask(f)(board.areas./~{ r =>
+                Ask(f).add(board.areas./~{ r =>
                     Troubles.at(r).any.??(colors.but(f)./~{ e =>
                         e.at(r).minion./(m => AssassinateAction(f, e, r, m.index, false, then))
                     })
@@ -1676,7 +1671,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 ProcessEffectsAction($(e).of[Faction], false, text, $(RemoveMinionEffect(r, e, |(index))), then)
 
             case RemoveTroubleMainAction(f, _, m, then) =>
-                Ask(f)(board.areas./~{ r =>
+                Ask(f).add(board.areas./~{ r =>
                     Troubles.at(r).any.?(RemoveTroubleAction(f, r, m, then))
                 }).cancel.needOk
 
@@ -1689,7 +1684,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             case RemoveMinionIfMaxAction(f, m, then) =>
                 if (f.all(Minion).num == f.pieces.count(Minion))
-                    Ask(f)(f.all(Minion)./(r => RemoveMinionMaxAction(f, |(r), m, then))).cancel
+                    Ask(f).add(f.all(Minion)./(r => RemoveMinionMaxAction(f, |(r), m, then))).cancel
                 else
                     Force(RemoveMinionMaxAction(f, None, m, then))
 
@@ -1698,7 +1693,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             case RemoveMinionMaxAction(_, o, _, PlaceMinionMainAction(f, d, m, then)) =>
                 val g = f.all(Minion).distinct.some./(e => (e ++ e./~(board.connected)).distinct).|(board.areas)
-                Ask(f)(board.areas.%(g.has).but(o)./(PlaceMinionAction(f, o, _, true, m, then))).cancel
+                Ask(f).add(board.areas.%(g.has).but(o)./(PlaceMinionAction(f, o, _, true, m, then))).cancel
 
             case PlaceMinionAction(f, o, r, trouble, m, then) =>
                 o.foreach { o =>
@@ -1724,7 +1719,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 then
 
             case BuildMainAction(f, _, then) =>
-                Ask(f)(board.areas./(r => BuildAction(f, r, r.cost, then).x(factions.%(_.at(r).building.any).any, "exists").x(f.at(r).minion.none, "no minion").x(Troubles.at(r).any, "trouble").x(r.cost > f.money, "not enough money"))).cancel.needOk
+                Ask(f).add(board.areas./(r => BuildAction(f, r, r.cost, then).!(factions.%(_.at(r).building.any).any, "exists").!(f.at(r).minion.none, "no minion").!(Troubles.at(r).any, "trouble").!(r.cost > f.money, "not enough money"))).cancel.needOk
 
             case BuildAction(f, r, cost, then) =>
                 f.pool --> Building.of(f) --> r
@@ -1796,7 +1791,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
                 f.log("took back", d, "with", DoctorMossyLawn)
 
-                Ask(f)(EndPlayerTurnAction(f).as("End Turn"))
+                Ask(f).add(EndPlayerTurnAction(f).as("End Turn"))
 
             // HELPERS
             case ScrollMainAction(f, _, a, then) =>
@@ -1848,7 +1843,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
                 f.log("rolled", r./(_.roll).merge, areas.$(MDash, r./(board.indexed)./(_.elem).comma))
 
-                Ask(f)(then.as("Ok")("Rolled", r./(_.roll(styles.expandRoll)), areas.$(MDash, r./(board.indexed)./(_.elem).comma))).needOk
+                Ask(f).add(then.as("Ok")("Rolled", r./(_.roll(styles.expandRoll)), areas.$(MDash, r./(board.indexed)./(_.elem).comma))).needOk
 
             // SCROLLS
             case StealFromAction(f, t, x, then) =>
@@ -1865,13 +1860,13 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // MOVE
             case MoveMinionFromAction(f, e, r, i, l, m, then) =>
-                Ask(f)(l./(MoveMinionToAction(f, e, r, i, _, m, then))).cancel
+                Ask(f).add(l./(MoveMinionToAction(f, e, r, i, _, m, then))).cancel
 
             case MoveMinionToAction(f, e : Faction, r, i, t, m, then) if f != e =>
                 Ask(e).group("Prevent moving", Minion.of(e), "from", r, "to", t)
-                    .add(e.hand.has(Gaspode).?(InterruptCardAction(e, Gaspode, then).as(dt.Interrupt, Gaspode)))
-                    .add(e.hand.has(WallaceSonky).?(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)))
-                    .add(MoveMinionAction(f, e, r, i, t, m, then).as("Skip"))
+                    .when(e.hand.has(Gaspode))(InterruptCardAction(e, Gaspode, then).as(dt.Interrupt, Gaspode))
+                    .when(e.hand.has(WallaceSonky))(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky))
+                    .skip(MoveMinionAction(f, e, r, i, t, m, then))
 
             case MoveMinionToAction(f, e, r, i, t, m, then) =>
                 MoveMinionAction(f, e, r, i, t, m, then)
@@ -1972,7 +1967,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 RemoveMinionIfMaxAction(f, NoMessage, ScrollPerformAction(f, SpreadMinion(r), then))
 
             case RemoveMinionMaxAction(_, o, _, ScrollPerformAction(f, SpreadMinion(r), then)) =>
-                Ask(f)((r +: board.connected(r)).but(o)./(r => PlaceMinionAction(f, o, r, true, NoMessage, then))).cancel.needOk
+                Ask(f).add((r +: board.connected(r)).but(o)./(r => PlaceMinionAction(f, o, r, true, NoMessage, then))).cancel.needOk
 
 
             // SPREAD MINION FOR $
@@ -1980,7 +1975,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 RemoveMinionIfMaxAction(f, NoMessage, ScrollPerformAction(f, SpreadMinionForN(r, n), then))
 
             case RemoveMinionMaxAction(_, o, _, ScrollPerformAction(f, SpreadMinionForN(r, n), then)) =>
-                Ask(f)((r +: board.connected(r)).but(o)./(r => PlaceMinionAction(f, o, r, true, ForN(3), PayNQuietAction(f, 3, then)).x(f.money < 3, "not enough money"))).cancel.needOk
+                Ask(f).add((r +: board.connected(r)).but(o)./(r => PlaceMinionAction(f, o, r, true, ForN(3), PayNQuietAction(f, 3, then)).!(f.money < 3, "not enough money"))).cancel.needOk
 
 
             // MINION AT BUILDING
@@ -1988,7 +1983,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 RemoveMinionIfMaxAction(f, NoMessage, ScrollPerformAction(f, MinionAtBuilding, then))
 
             case RemoveMinionMaxAction(_, o, _, ScrollPerformAction(f, MinionAtBuilding, then)) =>
-                Ask(f)(f.all(Building).but(o)./(r => PlaceMinionAction(f, o, r, true, NoMessage, then))).cancel.needOk
+                Ask(f).add(f.all(Building).but(o)./(r => PlaceMinionAction(f, o, r, true, NoMessage, then))).cancel.needOk
 
 
             // MINION AT TROUBLE
@@ -1996,7 +1991,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 RemoveMinionIfMaxAction(f, NoMessage, ScrollPerformAction(f, MinionAtTrouble, then))
 
             case RemoveMinionMaxAction(_, o, _, ScrollPerformAction(f, MinionAtTrouble, then)) =>
-                Ask(f)(Troubles.all(Trouble).but(o)./(r => PlaceMinionAction(f, o, r, true, NoMessage, then))).cancel.needOk
+                Ask(f).add(Troubles.all(Trouble).but(o)./(r => PlaceMinionAction(f, o, r, true, NoMessage, then))).cancel.needOk
 
 
             // MINION ANYWHERE
@@ -2004,13 +1999,13 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 RemoveMinionIfMaxAction(f, NoMessage, ScrollPerformAction(f, MinionNoTrouble, then))
 
             case RemoveMinionMaxAction(_, o, _, ScrollPerformAction(f, MinionNoTrouble, then)) =>
-                Ask(f)(board.areas.but(o)./(r => PlaceMinionAction(f, o, r, false, NoMessage, then))).cancel.needOk
+                Ask(f).add(board.areas.but(o)./(r => PlaceMinionAction(f, o, r, false, NoMessage, then))).cancel.needOk
 
 
             // CLEAR TROUBLE
             case ScrollPerformAction(f, RemoveTroubleForN(n), then) =>
-                Ask(f)(board.areas./~{ r =>
-                    Troubles.at(r).any.?(RemoveTroubleAction(f, r, ForN(n), PayNAction(f, n, then)).x(f.money < n, "not enough money"))
+                Ask(f).add(board.areas./~{ r =>
+                    Troubles.at(r).any.?(RemoveTroubleAction(f, r, ForN(n), PayNAction(f, n, then)).!(f.money < n, "not enough money"))
                 }).cancel.needOk
 
 
@@ -2018,7 +2013,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
             case ScrollPerformAction(f, PlaceTrouble, then) =>
                 val ll = Troubles.all(Trouble)
                 val l = board.areas.diff(ll)
-                Ask(f)(l./(t => SpreadTroubleToAction(f, t, then).x(Troubles.at(t).any).x(colors.%(_.at(t).minion.any).none, "no minions"))).cancel.needOk
+                Ask(f).add(l./(t => SpreadTroubleToAction(f, t, then).!(Troubles.at(t).any).!(colors.%(_.at(t).minion.any).none, "no minions"))).cancel.needOk
 
             case SpreadTroubleToAction(f, r, then) =>
                 pool --> Trouble --> r
@@ -2032,20 +2027,22 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
             case ScrollPerformAction(f, SpreadTrouble, then) =>
                 val ll = Troubles.all(Trouble)
                 val l = ll./~(board.connected).diff(ll)
-                Ask(f)(board.areas.%(l.has)./(t => SpreadTroubleToAction(f, t, then).x(Troubles.at(t).any).x(colors.%(_.at(t).minion.any).none, "no minions"))).cancel.needOk
+                Ask(f).add(board.areas.%(l.has)./(t => SpreadTroubleToAction(f, t, then).!(Troubles.at(t).any).!(colors.%(_.at(t).minion.any).none, "no minions"))).cancel.needOk
 
 
             // SPREAD TROUBLE FROM
             case ScrollPerformAction(f, SpreadTroubleFrom(r), then) =>
-                Ask(f)((r +: board.connected(r))./(t => SpreadTroubleToAction(f, t, then).x(Troubles.at(t).any).x(colors.%(_.at(t).minion.any).none, "no minions"))).cancel.needOk
+                Ask(f).add((r +: board.connected(r))./(t => SpreadTroubleToAction(f, t, then).!(Troubles.at(t).any).!(colors.%(_.at(t).minion.any).none, "no minions"))).cancel.needOk
 
 
             // STEAL $
             case ScrollPerformAction(f, StealN(n), then) =>
-                Ask(f)(factions.but(f)./(e => TakeFromAskAction(f, e, n, then).x(e.money <= 0))).ocancel
+                Ask(f).add(factions.but(f)./(e => TakeFromAskAction(f, e, n, then).!(e.money <= 0))).ocancel
 
             case TakeFromAskAction(f, e, x, then) =>
-                Ask(e)(e.hand.has(WallaceSonky).?(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)("Prevent", f, "stealing", x.money)))(TakeFromAction(f, e, x, then).as("Skip"))
+                Ask(e)
+                    .when(e.hand.has(WallaceSonky))(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)("Prevent", f, "stealing", x.money))
+                    .skip(TakeFromAction(f, e, x, then))
 
             case TakeFromAction(f, e, x, then) =>
                 StealFromAction(f, e, x, then)
@@ -2067,10 +2064,14 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // STEAL FROM ALL
             case ScrollPerformAction(f, ForcePay(n), then) =>
-                Ask(f)(factions.but(f)./~(a => factions.but(f).but(a)./(b => ForcePayAskAction(f, a, b, min(a.money, n), then)))).cancel
+                Ask(f)
+                    .add(factions.but(f)./~(a => factions.but(f).but(a)./(b => ForcePayAskAction(f, a, b, min(a.money, n), then))))
+                    .cancel
 
             case ForcePayAskAction(f, e, t, n, then) =>
-                Ask(e)(e.hand.has(WallaceSonky).?(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)("Prevent giving", n.money, "to", t)))(ForcePayAction(f, e, t, n, then).as("Skip"))
+                Ask(e)
+                    .when(e.hand.has(WallaceSonky))(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)("Prevent giving", n.money, "to", t))
+                    .skip(ForcePayAction(f, e, t, n, then))
 
             case ForcePayAction(f, e, t, n, then) =>
                 e.money -= n
@@ -2083,7 +2084,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // ENEMY GIVES CARDS
             case ScrollPerformAction(f, AnotherPlayerGivesNCards(n), then) =>
-                Ask(f)(factions.but(f)./(t => AnotherPlayerGivesNCardsAction(f, t, min(n, t.hand.num), then).x(t.hand.none))).ocancel
+                Ask(f).add(factions.but(f)./(t => AnotherPlayerGivesNCardsAction(f, t, min(n, t.hand.num), then).!(t.hand.none))).ocancel
 
             case AnotherPlayerGivesNCardsAction(f, e, n, then) =>
                 f.log("asked", e, "for", n.hl, "card")
@@ -2135,7 +2136,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
             // GIVE CARD TAKE $
             case ScrollPerformAction(f, GiveCardTakeN(n), then) =>
                 if (f.hand.none)
-                    Ask(f)(Info("No cards in hand to give"))(CancelAction).needOk
+                    Ask(f).add(Info("No cards in hand to give")).cancel.needOk
                 else
                     YYSelectObjectsAction(f, f.hand)
                         .withGroup(f.elem ~ " gives a card to take " ~ n.money)
@@ -2143,7 +2144,9 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                         .withExtras(NoHand, CancelAction)
 
             case SellCardAskAction(f, e, d, n, then) =>
-                Ask(e)(e.hand.has(WallaceSonky).?(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)("Prevent giving", n.money, "to", e, "for", d)))(SellCardAction(f, e, d, n, then).as("Skip"))
+                Ask(e)
+                    .when(e.hand.has(WallaceSonky))(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)("Prevent giving", n.money, "to", e, "for", d))
+                    .skip(SellCardAction(f, e, d, n, then))
 
             case SellCardAction(f, e, d, n, then) =>
                 GiveCardsAction(f, e, $(d), StealFromAction(f, e, n, then))
@@ -2151,10 +2154,12 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // STEAL CARDS TAKE ONE
             case ScrollPerformAction(f, StealNCardsTakeOne(n), then) =>
-                Ask(f)(factions.but(f)./(e => StealNCardsMainAskAction(f, e, n, then).x(e.hand.none))).ocancel
+                Ask(f).add(factions.but(f)./(e => StealNCardsMainAskAction(f, e, n, then).!(e.hand.none))).ocancel
 
             case StealNCardsMainAskAction(f, e, n, then) =>
-                Ask(e)(e.hand.has(WallaceSonky).?(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)("Prevent", e, "stealing", 1.hl, "of", n.hl, "cards")))(StealNCardsMainAction(f, e, n, then).as("Skip"))
+                Ask(e)
+                    .when(e.hand.has(WallaceSonky))(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)("Prevent", e, "stealing", 1.hl, "of", n.hl, "cards"))
+                    .skip(StealNCardsMainAction(f, e, n, then))
 
             case StealNCardsMainAction(f, e, n, then) =>
                 Shuffle[DeckCard](e.hand, StealNCardsAction(f, e, n, _, then))
@@ -2187,10 +2192,14 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // DISCARD ENEMY CARD
             case ScrollPerformAction(f, DiscardEnemyCard, then) =>
-                Ask(f)(factions.but(f)./(e => DiscardEnemyCardAskAction(f, e, then).x(e.hand.none))).ocancel
+                Ask(f)
+                    .each(factions.but(f))(e => DiscardEnemyCardAskAction(f, e, then).!(e.hand.none))
+                    .ocancel
 
             case DiscardEnemyCardAskAction(f, e, then) =>
-                Ask(e)(e.hand.has(WallaceSonky).?(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)("Prevent", f, "discarding card")))(DiscardEnemyCardMainAction(f, e, then).as("Skip"))
+                Ask(e)
+                    .when(e.hand.has(WallaceSonky))(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)("Prevent", f, "discarding card"))
+                    .skip(DiscardEnemyCardMainAction(f, e, then))
 
             case DiscardEnemyCardMainAction(f, e, then) =>
                 Shuffle(e.hand, DiscardEnemyCardAction(f, e, _, then))
@@ -2213,10 +2222,12 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // EXCHANGE HAND
             case ScrollPerformAction(f, ExchangeHands, then) =>
-                Ask(f)(factions.but(f)./(e => ExchangeHandsMainAskAction(f, e, then))).ocancel
+                Ask(f).add(factions.but(f)./(e => ExchangeHandsMainAskAction(f, e, then))).ocancel
 
             case ExchangeHandsMainAskAction(f, e, then) =>
-                Ask(e)(e.hand.has(WallaceSonky).?(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)("Prevent exchanging hands with", f)))(ExchangeHandsMainAction(f, e, then).as("Skip"))
+                Ask(e)
+                    .when(e.hand.has(WallaceSonky))(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)("Prevent exchanging hands with", f))
+                    .skip(ExchangeHandsMainAction(f, e, then))
 
             case ExchangeHandsMainAction(f, e, then) =>
                 val fh = f.hand.get
@@ -2238,12 +2249,15 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // HAND PENALTY
             case ScrollPerformAction(f, HandPenalty, then) =>
-                Ask(f)(factions.but(f)./(t => HandPenaltyAction(f, t, then))).ocancel
+                Ask(f).add(factions.but(f)./(t => HandPenaltyAction(f, t, then))).ocancel
 
             case HandPenaltyAction(f, e, then) =>
                 f.log("threatened", e, "with", playing.name.hl)
 
-                Ask(e)(HandPenaltyAcceptAction(e, then))(OrGiveMoneyAction(e, f, 5, then).!(e.money < 5, "not enough money"))(e.hand.has(WallaceSonky).?(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)))
+                Ask(e)
+                    .add(HandPenaltyAcceptAction(e, then))
+                    .add(OrGiveMoneyAction(e, f, 5, then).!(e.money < 5, "not enough money"))
+                    .when(e.hand.has(WallaceSonky))(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky))
 
             case HandPenaltyAcceptAction(f, then) =>
                 f.log("accepted", playing.name.hl)
@@ -2251,6 +2265,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 play --> f.penalties
 
                 then
+
 
             // FIRE BRIGADE
             case ScrollPerformAction(f, FireBrigade, then) =>
@@ -2265,13 +2280,13 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 Ask(e)
                     .add(FireBrigadeAcceptAction(e, f, then))
                     .add(OrGiveMoneyAction(e, f, 5, then).!(e.money < 5, "not enough money"))
-                    .add(e.hand.has(WallaceSonky).?(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)))
+                    .when(e.hand.has(WallaceSonky))(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky))
                     .needOk
 
             case FireBrigadeAcceptAction(f, e, then) =>
                 f.log("refused to pay")
 
-                Ask(e)(f.all(Building)./(FireBrigadeBurnAction(e, f, _, then))).refuse(then)
+                Ask(e).add(f.all(Building)./(FireBrigadeBurnAction(e, f, _, then))).refuse(then)
 
             case FireBrigadeBurnAction(f, e, r, then) =>
                 r --> Building.of(e) --> e.pool
@@ -2309,7 +2324,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // EARN FOR MINIONS IN TROUBLE
             case ScrollPerformAction(f, ScoreMinionsInTrouble(k), then) =>
-                Ask(f)(board.areas./(r => ScoreMinionsAction(f, r, k, then).x(Troubles.at(r).none, "no trouble"))).cancel.needOk
+                Ask(f).add(board.areas./(r => ScoreMinionsAction(f, r, k, then).!(Troubles.at(r).none, "no trouble"))).cancel.needOk
 
             case ScoreMinionsAction(f, r, k, then) =>
                 val n = colors./(_.at(r).minion.num).sum * k
@@ -2342,7 +2357,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // ROLL TO REMOVE MINION
             case ScrollPerformAction(f, RollToRemoveMinion, then) =>
-                Ask(f)(RollDiceAction(f, 1, For(playing), RollToRemoveMinionAction(f, then))).cancel
+                Ask(f).add(RollDiceAction(f, 1, For(playing), RollToRemoveMinionAction(f, then))).cancel
 
             case RollToRemoveMinionAction(f, then) =>
                 Roll[Int]($(D12), l => RolledToRemoveMinionAction(f, l.only, then))
@@ -2350,11 +2365,11 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
             case RolledToRemoveMinionAction(f, roll, then) =>
                 f.log("rolled", roll.roll)
 
-                Ask(f)(RolledDiceAction(f, $(roll), For(playing), OkRolledMessage, RemoveMinionAction(f, roll, then))).needOk
+                Ask(f).add(RolledDiceAction(f, $(roll), For(playing), OkRolledMessage, RemoveMinionAction(f, roll, then))).needOk
 
             case RemoveMinionAction(f, roll, then) =>
                 if (roll >= 7) {
-                    Ask(f)(board.areas./~{ r =>
+                    Ask(f).add(board.areas./~{ r =>
                         Troubles.at(r).any.??(colors./~{ e =>
                             e.at(r).minion./(m => AssassinateAction(f, e, r, m.index, true, then))
                         })
@@ -2378,7 +2393,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // ROLL TO STEAL OR LOSE MINION
             case ScrollPerformAction(f, RollToTakeNOrRemoveMinion(n), then) =>
-                Ask(f)(RollDiceAction(f, 1, For(playing), RollToTakeNOrRemoveMinionAction(f, n, then))).cancel
+                Ask(f).add(RollDiceAction(f, 1, For(playing), RollToTakeNOrRemoveMinionAction(f, n, then))).cancel
 
             case RollToTakeNOrRemoveMinionAction(f, n, then) =>
                 Roll[Int]($(D12), l => RolledToTakeNOrRemoveMinionAction(f, l.only, n, then))
@@ -2386,11 +2401,11 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
             case RolledToTakeNOrRemoveMinionAction(f, roll, n, then) =>
                 f.log("rolled", roll.roll)
 
-                Ask(f)(RolledDiceAction(f, $(roll), For(playing), OkRolledMessage, TakeNOrRemoveMinionAction(f, roll, n, then))).needOk
+                Ask(f).add(RolledDiceAction(f, $(roll), For(playing), OkRolledMessage, TakeNOrRemoveMinionAction(f, roll, n, then))).needOk
 
             case TakeNOrRemoveMinionAction(f, roll, n, then) =>
                 if (roll >= 7)
-                    Ask(f)(factions.but(f)./(t => TakeFromAskAction(f, t, n, then).!(t.money <= 0))).bailHard(then)
+                    Ask(f).add(factions.but(f)./(t => TakeFromAskAction(f, t, n, then).!(t.money <= 0))).bailHard(then)
                 else
                 if (roll >= 2 + hrf.HRF.flag("test").??(3)) {
                     log("No effect")
@@ -2399,7 +2414,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 }
                 else
                 if (f.all(Minion).any)
-                    Ask(f)(board.areas./~(r => f.minions(r)./(m => AssassinateAction(f, f, r, m.index, true, then)))).needOk
+                    Ask(f).add(board.areas./~(r => f.minions(r)./(m => AssassinateAction(f, f, r, m.index, true, then)))).needOk
                 else {
                     f.log("had no minions")
 
@@ -2422,7 +2437,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 then
 
             case RollNKillContinueAction(f, l, then) =>
-                Ask(f)(board.areas.%(l.has)./~{ r =>
+                Ask(f).add(board.areas.%(l.has)./~{ r =>
                     (colors.but(f) :+ f)./~{ e =>
                         e.at(r).minion./(m => RollNKillAction(f, e, r, m.index, l, then))
                     }
@@ -2434,7 +2449,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // BUSINESS PLAN
             case ScrollPerformAction(f, BusinessPlan, then) =>
-                Ask(f)(RollDiceAction(f, 1, For(playing), RollToTakeNOrPayNOrRemoveMinionAction(f, 4, 2, then))).cancel
+                Ask(f).add(RollDiceAction(f, 1, For(playing), RollToTakeNOrPayNOrRemoveMinionAction(f, 4, 2, then))).cancel
 
             case RollToTakeNOrPayNOrRemoveMinionAction(f, n, k, then) =>
                 Roll[Int]($(D12), l => RolledToTakeNOrPayNOrRemoveMinionAction(f, l.only, n, k, then))
@@ -2442,7 +2457,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
             case RolledToTakeNOrPayNOrRemoveMinionAction(f, roll, n, k, then) =>
                 f.log("rolled", roll.roll)
 
-                Ask(f)(RolledDiceAction(f, $(roll), For(playing), CMOTRolledMessage, TakeNOrPayNOrRemoveMinionAction(f, roll, n, k, then))).needOk
+                Ask(f).add(RolledDiceAction(f, $(roll), For(playing), CMOTRolledMessage, TakeNOrPayNOrRemoveMinionAction(f, roll, n, k, then))).needOk
 
             case TakeNOrPayNOrRemoveMinionAction(f, roll, n, k, then) =>
                 if (roll >= 7)
@@ -2463,7 +2478,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                     f.log("had no minions and not enough money")
 
                     if (f.money > 0)
-                        Ask(f)(PayNMainAction(f, f.money, then)).needOk
+                        Ask(f).add(PayNMainAction(f, f.money, then)).needOk
                     else
                         then
                 }
@@ -2488,7 +2503,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
             case ViewUnusedCharactersAction(f, l, then) =>
                 f.log("viewed unused", "Personalities".hl)
 
-                Ask(f)(l.drop(1)./(ViewCharacterInfoAction(f, UnusedChars, _)))(OkAction(then)).needOk
+                Ask(f).each(l.drop(1))(ViewCharacterInfoAction(f, UnusedChars, _)).add(OkAction(then)).needOk
 
 
             // REROLL CHARACTER
@@ -2506,7 +2521,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // REMOVE MINION
             case ScrollPerformAction(f, RemoveMinion(r), then) =>
-                Ask(f)(colors./~{ t =>
+                Ask(f).add(colors./~{ t =>
                     t.at(r).minion./(m => AssassinateAction(f, t, r, m.index, true, then))
                 }).needOk.cancel
 
@@ -2519,14 +2534,14 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 then
 
             case RemoveOwnMinionsContinueAction(f :: l, then) =>
-                Ask(f)(board.areas./~{ r =>
+                Ask(f).add(board.areas./~{ r =>
                     f.at(r).minion./(m => AssassinateAction(f, f, r, m.index, true, RemoveOwnMinionsContinueAction(l, then)))
                 }).needOk.bailw(then) { f.log("has no minions") }
 
 
             // PAY TO ASSASSINATE
             case ScrollPerformAction(f, PayNToAssassinate(n), then) =>
-                Ask(f)(factions.but(f)./(e => PayNToAssassinateAction(f, e, n, then).x(f.money < n, "not enough money"))).ocancel.needOk
+                Ask(f).add(factions.but(f)./(e => PayNToAssassinateAction(f, e, n, then).!(f.money < n, "not enough money"))).ocancel.needOk
 
             case PayNToAssassinateAction(f, e, n, then) =>
                 f.money -= n
@@ -2534,7 +2549,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
                 f.log("paid", n.money, "to", e)
 
-                Ask(f)(board.areas./~{ r =>
+                Ask(f).add(board.areas./~{ r =>
                     Troubles.at(r).any.??(colors.but(f)./~{ t =>
                         t.at(r).minion./(m => AssassinateAction(f, t, r, m.index, true, then))
                     })
@@ -2543,7 +2558,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // PAY TO MAKE ASSASSINATE
             case ScrollPerformAction(f, PayNToMakeAssassinate(n), then) =>
-                Ask(f)(factions.but(f)./(e => PayNToMakeAssassinateAction(f, e, n, then).x(f.money < n, "not enough money"))).ocancel.needOk
+                Ask(f).add(factions.but(f)./(e => PayNToMakeAssassinateAction(f, e, n, then).!(f.money < n, "not enough money"))).ocancel.needOk
 
             case PayNToMakeAssassinateAction(f, e, n, then) =>
                 f.money -= n
@@ -2560,25 +2575,25 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // PAY TO MOVE
             case ScrollPerformAction(f, PayNToMove(n), then) =>
-                Ask(f)(factions.but(f)./(e => PayNToMoveAction(f, e, n, then).x(f.money < n, "not enough money"))).ocancel.needOk
+                Ask(f).add(factions.but(f)./(e => PayNToMoveAction(f, e, n, then).!(f.money < n, "not enough money"))).ocancel.needOk
 
             case PayNToMoveAction(f, e, n, then) =>
-                Ask(f)(f.allx(Minion)./((r, u) => MoveMinionFromAction(f, f, r, u.index, board.areas.but(r), NoMessage, PayNToAction(f, e, n, then)))).cancel
+                Ask(f).add(f.allx(Minion)./((r, u) => MoveMinionFromAction(f, f, r, u.index, board.areas.but(r), NoMessage, PayNToAction(f, e, n, then)))).cancel
 
 
             // MOVE ANYWHERE
             case ScrollPerformAction(f, MoveMinionAnywhere, then) =>
-                Ask(f)(f.allx(Minion)./((r, u) => MoveMinionFromAction(f, f, r, u.index, board.areas.but(r), NoMessage, then))).cancel
+                Ask(f).add(f.allx(Minion)./((r, u) => MoveMinionFromAction(f, f, r, u.index, board.areas.but(r), NoMessage, then))).cancel
 
 
             // MOVE OWN MINION FROM TROUBLE
             case ScrollPerformAction(f, MoveMinionFromTrouble, then) =>
-                Ask(f)(f.allx(Minion)./((r, u) => MoveMinionFromAction(f, f, r, u.index, board.connected(r), NoMessage, then).!(Troubles.at(r).none))).cancel
+                Ask(f).add(f.allx(Minion)./((r, u) => MoveMinionFromAction(f, f, r, u.index, board.connected(r), NoMessage, then).!(Troubles.at(r).none))).cancel
 
 
             // MOVE ENEMY MINION
             case ScrollPerformAction(f, MoveEnemyMinion, then) =>
-                Ask(f)(board.areas./~(r =>
+                Ask(f).add(board.areas./~(r =>
                     colors.but(f)./~(e =>
                         e.at(r).minion./(u => MoveMinionFromAction(f, e, r, u.index, board.connected(r), NoMessage, then))
                     )
@@ -2587,14 +2602,14 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // MOVE EXCHANGE
             case ScrollPerformAction(f, ExchangeMinions, then) =>
-                Ask(f)(board.areas./~(r =>
+                Ask(f).add(board.areas./~(r =>
                     colors./~(e =>
                         e.at(r).minion./(u => ExchangeMinionsFromAction(f, e, r, u.index, then))
                     )
                 )).needOk.cancel
 
             case ExchangeMinionsFromAction(f, e1, r1, i1, then) =>
-                Ask(f)(board.areas.but(r1)./~(r =>
+                Ask(f).add(board.areas.but(r1)./~(r =>
                     colors./~(e =>
                         e.at(r).minion./(u => ExchangeMinionsToAction(f, e1, r1, i1, e, r, u.index, then))
                     )
@@ -2605,9 +2620,9 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             case ExchangeMinionsAskAction(f, e :: l, e1, r1, i1, e2, r2, i2, then) =>
                 Ask(e).group("Prevent exchange", Minion.of(e1), "in", r1, "and", Minion.of(e2), "in", r2)
-                    .add(e.hand.has(Gaspode).?(InterruptCardAction(e, Gaspode, then).as(dt.Interrupt, Gaspode)))
-                    .add(e.hand.has(WallaceSonky).?(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)))
-                    .add(ExchangeMinionsAskAction(f, l, e1, r1, i1, e2, r2, i2, then).as("Skip"))
+                    .when(e.hand.has(Gaspode))(InterruptCardAction(e, Gaspode, then).as(dt.Interrupt, Gaspode))
+                    .when(e.hand.has(WallaceSonky))(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky))
+                    .skip(ExchangeMinionsAskAction(f, l, e1, r1, i1, e2, r2, i2, then))
 
             case ExchangeMinionsAskAction(f, Nil, e1, r1, i1, e2, r2, i2, then) =>
                 ExchangeMinionsAction(f, e1, r1, i1, e2, r2, i2, then)
@@ -2640,14 +2655,16 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // BUY BUILDING
             case ScrollPerformAction(f, BuyBuilding(trouble), then) =>
-                Ask(f)(board.areas./~(r =>
+                Ask(f).add(board.areas./~(r =>
                     factions.but(f)./~(e =>
-                        e.at(r).building./(_ => BuyBuildingAskAction(f, e, r, then).x(Troubles.at(r).any != trouble, trouble.??("no ") + "trouble").x(r.cost > f.money, "not enough money"))
+                        e.at(r).building./(_ => BuyBuildingAskAction(f, e, r, then).!(Troubles.at(r).any != trouble, trouble.??("no ") + "trouble").!(r.cost > f.money, "not enough money"))
                     )
                 )).cancel
 
             case BuyBuildingAskAction(f, e, r, then) =>
-                Ask(e)(e.hand.has(WallaceSonky).?(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)("Prevent", f, "buying", Building.of(e), "in", r)))(BuyBuildingAction(f, e, r, then).as("Skip"))
+                Ask(e)
+                    .when(e.hand.has(WallaceSonky))(InterruptCardAction(e, WallaceSonky, then).as(dt.Interrupt, WallaceSonky)("Prevent", f, "buying", Building.of(e), "in", r))
+                    .skip(BuyBuildingAction(f, e, r, then))
 
             case BuyBuildingAction(f, e, r, then) =>
                 r --> Building.of(e) --> e.pool
@@ -2666,7 +2683,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // BUILD HALF PRICE
             case ScrollPerformAction(f, BuildHalfPrice, then) =>
-                Ask(f)(board.areas./(r => BuildAction(f, r, r.cost / 2, then).x(factions.%(_.at(r).building.any).any, "exists").x(f.at(r).minion.none, "no minion").x(Troubles.at(r).any, "trouble").x(r.cost / 2 > f.money, "not enough money"))).cancel.needOk
+                Ask(f).add(board.areas./(r => BuildAction(f, r, r.cost / 2, then).!(factions.%(_.at(r).building.any).any, "exists").!(f.at(r).minion.none, "no minion").!(Troubles.at(r).any, "trouble").!(r.cost / 2 > f.money, "not enough money"))).cancel.needOk
 
 
             // --- RANDOM EVENTS ---
@@ -2696,11 +2713,11 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // DEMONS
             case RandomEventAction(f, DemonsFromTheDungeonDimensions, then) =>
-                Ask(f)(XRollDiceAction(f, $, 4, ForEvent(DemonsFromTheDungeonDimensions), true, PlaceMinionsAction(f, Demons, then))).needOk
+                Ask(f).add(XRollDiceAction(f, $, 4, ForEvent(DemonsFromTheDungeonDimensions), true, PlaceMinionsAction(f, Demons, then))).needOk
 
             // TROLLS
             case RandomEventAction(f, TheTrolls, then) =>
-                Ask(f)(XRollDiceAction(f, $, 3, ForEvent(TheTrolls), true, PlaceMinionsAction(f, Trolls, then))).needOk
+                Ask(f).add(XRollDiceAction(f, $, 3, ForEvent(TheTrolls), true, PlaceMinionsAction(f, Trolls, then))).needOk
 
             case PlaceMinionsAction(f, e, then) =>
                 val l = rolled./(board.indexed)
@@ -2709,11 +2726,11 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // EXPLOSION
             case RandomEventAction(f, Explosion, then) =>
-                Ask(f)(XRollDiceAction(f, $, 1, ForEvent(Explosion), true, RemoveRolledBuildingsAction(f, then))).needOk
+                Ask(f).add(XRollDiceAction(f, $, 1, ForEvent(Explosion), true, RemoveRolledBuildingsAction(f, then))).needOk
 
             // EARTHQUAKE
             case RandomEventAction(f, Earthquake, then) =>
-                Ask(f)(XRollDiceAction(f, $, 2, ForEvent(Earthquake), true, RemoveRolledBuildingsAction(f, then))).needOk
+                Ask(f).add(XRollDiceAction(f, $, 2, ForEvent(Earthquake), true, RemoveRolledBuildingsAction(f, then))).needOk
 
             case RemoveRolledBuildingsAction(f, then) =>
                 val l = rolled./(board.indexed).distinct
@@ -2725,7 +2742,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // FLOOD
             case RandomEventAction(f, Flood, then) =>
-                Ask(f)(XRollDiceAction(f, $, 2, ForEvent(Flood), true, FloodAreasAction(f, then))).needOk
+                Ask(f).add(XRollDiceAction(f, $, 2, ForEvent(Flood), true, FloodAreasAction(f, then))).needOk
 
             case FloodAreasAction(f, then) =>
                 val l = rolled./(board.indexed)
@@ -2739,7 +2756,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // DRAGON
             case RandomEventAction(f, TheDragon, then) =>
-                Ask(f)(XRollDiceAction(f, $, 1, ForEvent(TheDragon), true, RemoveRolledEverythingAction(f, then))).needOk
+                Ask(f).add(XRollDiceAction(f, $, 1, ForEvent(TheDragon), true, RemoveRolledEverythingAction(f, then))).needOk
 
             case RemoveRolledEverythingAction(f, then) =>
                 val r = rolled./(board.indexed).only
@@ -2756,7 +2773,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // FIRE
             case RandomEventAction(f, Fire, then) =>
-                Ask(f)(XRollDiceAction(f, $, 1, ForEvent(Fire), true, RemoveRolledBuildingIfNearAction(f, None, then))).needOk
+                Ask(f).add(XRollDiceAction(f, $, 1, ForEvent(Fire), true, RemoveRolledBuildingIfNearAction(f, None, then))).needOk
 
             case RemoveRolledBuildingIfNearAction(f, o, then) =>
                 val r = board.indexed(rolled.last)
@@ -2764,7 +2781,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 val t = o./(o => board.connected(o).has(r).?(r)).|(|(r))
 
                 if (t.exists(r => factions.exists(e => e.at(r).building.any)))
-                    Ask(f)(XRollDiceAction(f, rolled, 1, ForEvent(Fire), true, RemoveRolledBuildingIfNearAction(f, |(r), then))).needOk
+                    Ask(f).add(XRollDiceAction(f, rolled, 1, ForEvent(Fire), true, RemoveRolledBuildingIfNearAction(f, |(r), then))).needOk
                 else {
                     if (rolled.dropRight(1).none)
                         log("No effect")
@@ -2781,14 +2798,14 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 q
 
             case MysteriousMurdersNextAction(f, then) =>
-                Ask(f)(XRollDiceAction(f, $, 1, ForEvent(MysteriousMurders), true, MysteriousMurdersMainAction(f, then))).needOk
+                Ask(f).add(XRollDiceAction(f, $, 1, ForEvent(MysteriousMurders), true, MysteriousMurdersMainAction(f, then))).needOk
 
             case MysteriousMurdersMainAction(f, then) =>
                 highlightAreas = $
 
                 val r = rolled./(board.indexed).only
 
-                Ask(f)((colors.but(f) :+ f)./~(e => e.at(r).minion./(u => MysteriousMurdersAction(f, e, r, u.index, then)))).needOk.bailw(then) { log("No minions") }
+                Ask(f).add((colors.but(f) :+ f)./~(e => e.at(r).minion./(u => MysteriousMurdersAction(f, e, r, u.index, then)))).needOk.bailw(then) { log("No minions") }
 
             case MysteriousMurdersAction(f, e, r, index, then) =>
                 ProcessEffectsAction(factions, true, false, $(RemoveMinionEffect(r, e, |(index))), then)
@@ -2832,21 +2849,14 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                     case _ => None
                 }
 
-                Ask(f)(
-                    sg./(e => CancelEffectMoneyAction(f, event, text, l, e, 3, then).x(f.money < 3, "no money"))
-                )(
-                    ss./(e => CancelEffectCardAction(f, event, text, l, e, Susan, then))
-                )(
-                    gp./(e => CancelEffectCardAction(f, event, text, l, e, Gaspode, then))
-                )(
-                    ws./(e => CancelEffectCardAction(f, event, text, l, e, WallaceSonky, then))
-                )(
-                    fs./(e => ReplaceEffectCardAction(f, event, text, l, e, FreshStartClub, then))
-                )(
-                    ig./(e => ReplaceEffectCardAction(f, event, text, l, e, Igor, then))
-                )(
-                    ProcessEffectsAction(ff, event, text, l, then).as("Skip")
-                )
+                Ask(f)
+                    .each(sg)(e => CancelEffectMoneyAction(f, event, text, l, e, 3, then).!(f.money < 3, "no money"))
+                    .each(ss)(e => CancelEffectCardAction(f, event, text, l, e, Susan, then))
+                    .each(gp)(e => CancelEffectCardAction(f, event, text, l, e, Gaspode, then))
+                    .each(ws)(e => CancelEffectCardAction(f, event, text, l, e, WallaceSonky, then))
+                    .each(fs)(e => ReplaceEffectCardAction(f, event, text, l, e, FreshStartClub, then))
+                    .each(ig)(e => ReplaceEffectCardAction(f, event, text, l, e, Igor, then))
+                    .skip(ProcessEffectsAction(ff, event, text, l, then))
 
             case CancelEffectMoneyAction(f, event, text, l, e, n, then) =>
                 f.money -= n
@@ -2877,7 +2887,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 q
 
             case PerformEffectAction(MoveAwayMinionEffect(r, f, index, l), then) =>
-                Ask(f)(l./(MoveMinionToAction(f, f, r, index,  _, NoMessage, then)))
+                Ask(f).each(l)(MoveMinionToAction(f, f, r, index,  _, NoMessage, then))
 
             case PerformEffectAction(RemoveMinionEffect(r, f, n), then) =>
                 removeMinion(f, r, n)
@@ -2932,7 +2942,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
                 if (l.none)
                     then
                 else
-                    Ask(f)(PayNMainAction(f, l.num * 2, then).x(f.money < l.num * 2) :: l./(RemoveBuildingAction(f, f, _, SubsidenceContinueAction(f, then))))
+                    Ask(f).add(PayNMainAction(f, l.num * 2, then).!(f.money < l.num * 2) :: l./(RemoveBuildingAction(f, f, _, SubsidenceContinueAction(f, then))))
 
             case RemoveBuildingAction(f, e, r, then) =>
                 r --> Building.of(e) --> e.pool
@@ -2943,7 +2953,7 @@ class Game(val board : Board, val setup : $[Faction], val options : $[Meta.O])  
 
             // BSJ
             case RandomEventAction(f, BloodyStupidJohnson, then) =>
-                Ask(f)(XRollDiceAction(f, $, 1, ForEvent(BloodyStupidJohnson), true, BuildingMalfunctionAction(f, then))).needOk
+                Ask(f).add(XRollDiceAction(f, $, 1, ForEvent(BloodyStupidJohnson), true, BuildingMalfunctionAction(f, then))).needOk
 
             case BuildingMalfunctionAction(f, then) =>
                 val r = rolled./(board.indexed).only

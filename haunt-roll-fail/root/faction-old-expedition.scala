@@ -235,7 +235,7 @@ object OldExpeditionExpansion extends FactionExpansion[OldExpedition] {
             f.log("placed", $(Caravan.of(f), OldBadger.of(f), OldBadger.of(f)).comma, "in", c)
 
             if (r == c)
-                Ask(f)(game.connected(c).diff(board.inner)./(PlaceStartingTokenAction(f, c, _, Caravan)))
+                Ask(f).each(game.connected(c).diff(board.inner))(PlaceStartingTokenAction(f, c, _, Caravan))
             else
                 Roll[Int](0.until(24)./(_ => OldD1000), l => OldRelicRandomnessAction(f, r, l))
 
@@ -258,7 +258,7 @@ object OldExpeditionExpansion extends FactionExpansion[OldExpedition] {
 
         // HELPER
         case OldBadgerRevealCardMainAction(f, s, then, alt) =>
-            Ask(f)(f.hand./(d => OldBadgerRevealCardAction(f, s, d, then).x(d.matches(s).not)).:+(alt))
+            Ask(f).each(f.hand)(d => OldBadgerRevealCardAction(f, s, d, then).!(d.matches(s).not)).add(alt)
 
         case OldBadgerRevealCardAction(f, _, d, then) =>
             f.hand --> d --> f.revealed
@@ -268,7 +268,10 @@ object OldExpeditionExpansion extends FactionExpansion[OldExpedition] {
             then
 
         case ChooseMissionAction(f, then) =>
-            Ask(f)(SelectMissionAction(f, MissionCraft, then) :: SelectMissionAction(f, MissionMoveBattle, then) :: SelectMissionAction(f, MissionEscort, then))
+            Ask(f)
+                .add(SelectMissionAction(f, MissionCraft, then))
+                .add(SelectMissionAction(f, MissionMoveBattle, then))
+                .add(SelectMissionAction(f, MissionEscort, then))
 
         case SelectMissionAction(f, m, then) =>
             f.mission = m
@@ -329,8 +332,8 @@ object OldExpeditionExpansion extends FactionExpansion[OldExpedition] {
             val st = f.pool(Station).??(clearings.diff(f.stationed).%(f.canBuild).%(c => f.at(c).of[Warrior].any).%(c => f.at(c).has(Caravan)))
 
             Ask(f)
-              .each(ct)(c => PlaceCaravanMainAction(f, c).x(f.hand.%(_.matches(c.cost)).none, "no matching card"))
-              .each(st)(c => OldBuildStationMainAction(f, c).x(f.hand.%(_.matches(c.cost)).none, "no matching card"))
+              .each(ct)(c => PlaceCaravanMainAction(f, c).!(f.hand.%(_.matches(c.cost)).none, "no matching card"))
+              .each(st)(c => OldBuildStationMainAction(f, c).!(f.hand.%(_.matches(c.cost)).none, "no matching card"))
               .done(Next)
               .birdsong(f)
 
@@ -370,7 +373,7 @@ object OldExpeditionExpansion extends FactionExpansion[OldExpedition] {
             val r = f.all(Station).%(f.canPlace)
 
             if (t >= r.num)
-                Ask(f)(RecruitOldBadgersAction(f, r, r))
+                Ask(f).add(RecruitOldBadgersAction(f, r, r))
             else {
                 val c = r.combinations(t).$
                 if (c.num > 1)
@@ -401,15 +404,15 @@ object OldExpeditionExpansion extends FactionExpansion[OldExpedition] {
 
 
             val att = clearings.%(f.canAttackIn)
-            actions :+= OldBadgerAttackAction(f, att).x(att.none)
+            actions :+= OldBadgerAttackAction(f, att).!(att.none)
 
 
             val mvv = f.moveFrom.of[Clearing]
-            actions :+= OldBadgerMoveAction(f, mvv).x(mvv.none)
+            actions :+= OldBadgerMoveAction(f, mvv).!(mvv.none)
 
 
             val esc = clearings.%(c => f.at(c).of[Warrior].any)
-            actions :+= OldBadgerEscortMainAction(f, esc).x(esc.none, "no warriors").x(deck.none && pile.none, "no cards available")
+            actions :+= OldBadgerEscortMainAction(f, esc).!(esc.none, "no warriors").!(deck.none && pile.none, "no cards available")
 
 
             val dlv0 = clearings
@@ -417,7 +420,7 @@ object OldExpeditionExpansion extends FactionExpansion[OldExpedition] {
             val dlv2 = dlv1.%(f.rules)
             val dlv3 = dlv2.%(c => f.hand.%(_.matches(c.cost)).any)
 
-            actions :+= OldBadgerDelveMainAction(f, dlv3).x(dlv1.none, "no relics").x(dlv2.none, "no rule").x(dlv3.none, "no matching cards")
+            actions :+= OldBadgerDelveMainAction(f, dlv3).!(dlv1.none, "no relics").!(dlv2.none, "no rule").!(dlv3.none, "no matching cards")
 
 
             val relics = OldRelics.all./(r => r -> f.all(r)).toMap
@@ -435,17 +438,15 @@ object OldExpeditionExpansion extends FactionExpansion[OldExpedition] {
             if (f.acted >= 4)
                 actions = $
 
-
             if (f.mission == MissionMoveBattle) {
                 val att = clearings.%(f.canAttackIn)
-                actions :+= OldBadgerMissionAttackAction(f, att).x(att.none).x(att.%(c => f.hand.exists(_.matches(c.cost))).none, "no matching cards")
+                actions :+= OldBadgerMissionAttackAction(f, att).!(att.none).!(att.%(c => f.hand.exists(_.matches(c.cost))).none, "no matching cards")
 
                 val mvv = f.moveFrom.of[Clearing]
-                actions :+= OldBadgerMissionMoveAction(f, mvv).x(mvv.none).x(mvv./(c => f.hand.exists(_.matches(c.cost))).none, "no matching cards")
+                actions :+= OldBadgerMissionMoveAction(f, mvv).!(mvv.none).!(mvv./(c => f.hand.exists(_.matches(c.cost))).none, "no matching cards")
             }
 
-
-            Ask(f)(actions).done(Next).daylight(f)
+            Ask(f).add(actions).done(Next).daylight(f)
 
         case OldBadgerAttackAction(f, l) =>
             BattleInitAction(f, f, NoMessage, l, $(CancelAction), OldBadgerMainDoneAction(f))
@@ -454,7 +455,7 @@ object OldExpeditionExpansion extends FactionExpansion[OldExpedition] {
             MoveInitAction(f, f, $, NoMessage, l, f.movable, CancelAction +: f.daylight, OldBadgerMainDoneAction(f))
 
         case OldBadgerMissionAttackAction(f, l) =>
-            Ask(f)(l./(c => MissionBattleFromAction(f, c).x(f.hand.%(_.matches(c.cost)).none))).cancel
+            Ask(f).each(l)(c => MissionBattleFromAction(f, c).!(f.hand.%(_.matches(c.cost)).none)).cancel
 
         case MissionBattleFromAction(f, c) =>
             OptionalDiscardCardAction(f, ForMissionBattle(c), c.cost, MissionBattleFromDiscardAction(f, c))
@@ -465,7 +466,7 @@ object OldExpeditionExpansion extends FactionExpansion[OldExpedition] {
             BattleInitAction(f, f, NoMessage, $(c), $(DoneAction(OldBadgerMainAction(f))), OldBadgerMainAction(f))
 
         case OldBadgerMissionMoveAction(f, l) =>
-            Ask(f)(l./(c => MissionMoveFromAction(f, c).x(f.hand.%(_.matches(c.cost)).none))).cancel
+            Ask(f).each(l)(c => MissionMoveFromAction(f, c).!(f.hand.%(_.matches(c.cost)).none)).cancel
 
         case MissionMoveFromAction(f, c) =>
             OptionalDiscardCardAction(f, ForMissionMove(c), c.cost, MissionMoveFromDiscardAction(f, c))
@@ -476,7 +477,7 @@ object OldExpeditionExpansion extends FactionExpansion[OldExpedition] {
             MoveInitAction(f, f, $, NoMessage, $(c), f.movable, DoneAction(OldBadgerMainAction(f)) +: f.daylight, OldBadgerMainAction(f))
 
         case OldBadgerEscortMainAction(f, l) =>
-            Ask(f)(l./(OldBadgerEscortAction(f, _))).cancel
+            Ask(f).each(l)(OldBadgerEscortAction(f, _)).cancel
 
         case OldBadgerEscortAction(f, c) =>
             f.from(c) --> OldBadger --> f.reserve
@@ -484,15 +485,16 @@ object OldExpeditionExpansion extends FactionExpansion[OldExpedition] {
             DrawCardsAction(f, 1 + (f.mission == MissionEscort).??(1), NoMessage, AddCardsAction(f, OldBadgerMainDoneAction(f)))
 
         case OldBadgerDelveMainAction(f, l) =>
-            Ask(f)(l./(OldBadgerDelveAction(f, _))).cancel
+            Ask(f).each(l)(OldBadgerDelveAction(f, _)).cancel
 
         case OldBadgerDelveAction(f, c) =>
             OldBadgerDelveContinueAction(f, c)
 
         case OldBadgerDelveContinueAction(f, c) =>
-            Ask(f)(f.hand.%(_.matches(c.cost)).any.??(board.forests.%(q => game.fromForest(q).has(c))./~(q => f.at(q)./(p => OldBadgerDelveSelectAction(f, c, q, p.asInstanceOf[OldRelic])))))
+            Ask(f)
+              .useIf(f.hand.%(_.matches(c.cost)).any)(_.some(board.forests.%(q => game.fromForest(q).has(c)))(q => f.at(q)./(p => OldBadgerDelveSelectAction(f, c, q, p.asInstanceOf[OldRelic]))))
               .cancelIf(f.delving.not)
-              .done(f.delving.?(OldBadgerMainDoneAction(f)))
+              .doneIf(f.delving)(OldBadgerMainDoneAction(f))
 
         case OldBadgerDelveSelectAction(f, c, q, r) =>
             OldBadgerRevealCardMainAction(f, c.cost, OldBadgerDelveRelicAction(f, c, q, r), f.delving.?(CancelAction).|(CancelAction))
@@ -514,10 +516,11 @@ object OldExpeditionExpansion extends FactionExpansion[OldExpedition] {
             val rcv1 = rcv0.%(c => OldRelics.all./(r => f.all(r)).%(_.has(c)).any)
             val rcv2 = rcv1.%(c => OldRelics.all./(r => f.all(r).has(c) && (c.suits.exists(s => f.rewards.contains((r, s))) || f.rewards.contains((r, Bird)))).any)
 
-            Ask(f)(f.all(Station).distinct./~(c => OldRelics.all./~(r => 1.to(f.at(c).count(r) - f.unrecovered.count((c, r)))./(_ => OldBadgerRecoverAction(f, c, r).x(c.suits.exists(s => f.rewards.contains((r, s))).not && f.rewards.contains((r, Bird)).not, "no slot")))))
-              .cancelIf(f.recovering.not)
-              .done(f.recovering.?(OldBadgerMainDoneAction(f)))
-              .needOk
+            Ask(f)
+                .some(f.all(Station).distinct)(c => OldRelics.all./~(r => 1.to(f.at(c).count(r) - f.unrecovered.count((c, r)))./(_ => OldBadgerRecoverAction(f, c, r).!(c.suits.exists(s => f.rewards.contains((r, s))).not && f.rewards.contains((r, Bird)).not, "no slot"))))
+                .cancelIf(f.recovering.not)
+                .doneIf(f.recovering)(OldBadgerMainDoneAction(f))
+                .needOk
 
         case OldBadgerRecoverAction(f, c, r) =>
             Roll[Int](D4 :: D4, l => OldBadgerRecoverRolledAction(f, c, r, l(0), l(1)), f.elem ~ " recovers " ~ r.of(f) ~ " in " ~ c.elem(game))
@@ -539,7 +542,7 @@ object OldExpeditionExpansion extends FactionExpansion[OldExpedition] {
         case OldBadgerRecoverSuccessAction(f, c, r) =>
             f.drawn --> discard(f)
 
-            Ask(f)((c.suits./(s => (r, s)) :+ (r, Bird)).filter(f.rewards.contains).rights./(s => OldBadgerRecoverAsAction(f, c, r, s)))
+            Ask(f).each((c.suits./(s => (r, s)) :+ (r, Bird)).filter(f.rewards.contains).rights)(s => OldBadgerRecoverAsAction(f, c, r, s))
 
         case OldBadgerRecoverAsAction(f, c, r, s) =>
             f.from(c) --> r --> f.reserve

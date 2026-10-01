@@ -30,9 +30,6 @@ case class DrewFromTheFrogDeck(f : Faction, e : CommonInvasive, m : Message with
 trait TillEndOfTurn { self : CardEffect => }
 
 
-
-
-
 case object FrogEngineers extends CardEffect with TillEndOfTurn {
     override val name = "Frog Engineers"
 }
@@ -103,7 +100,6 @@ class InvasiveAAAPlayer(val faction : InvasiveAAA)(implicit val game : Game) ext
 
     def craft = FoxRabbitMouse./~(s => all(PeacefulAAA(s))./(_.asset)) ++ can(FrogEngineers).??(FoxRabbitMouse./~(s => all(MilitantAAA(s))./(_.asset)))
 }
-
 
 
 case class InvasiveAAASetupClearingAction(self : InvasiveAAA, s : BaseSuit, c : Clearing) extends BaseAction(self, "starts in")(c, "(" ~ s.elem ~ ")")
@@ -347,8 +343,9 @@ object InvasiveAAAExpansion extends FactionExpansion[InvasiveAAA] {
                     .daylight(f)
 
             else
-                Ask(f)(Next.as("Skip")("Settle".styled(f) ~ " in ruled clearings")).daylight(f)
-
+                Ask(f)
+                    .add(Next.as("Skip")("Settle".styled(f) ~ " in ruled clearings"))
+                    .daylight(f)
 
         case InvasiveAAASettleAction(f, d, s, l) =>
             f.hand --> d --> discard.quiet
@@ -388,7 +385,7 @@ object InvasiveAAAExpansion extends FactionExpansion[InvasiveAAA] {
                     .withThens(d => l./(c => InvasiveAAAReconcileAction(f, e, d, c, then).as("Reconcile in", c)))
                     .withExtra($(then.as("Skip")))
             else
-                Ask(f)(then.as("Skip"))
+                Ask(f).skip(then)
 
         case InvasiveAAAReconcileAction(f, e, d, c, then) =>
             FoxRabbitMouse.foreach { s =>
