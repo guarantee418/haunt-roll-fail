@@ -63,7 +63,7 @@ case object TwilightCouncil extends WarriorFaction {
 
   override def note: Elem = HorizontalBreak ~ "Fan Faction"
 
-  def abilities(options: $[Meta.O]) = $(Governors, Entreating, Peacekeepers)
+  def abilities(options: $[Meta.O]) = $(Governors, Entreating, TCPeacekeepers)
   
   /* Abilities:
   Governors - Governing assemblies Govern their clearing: enemies cannot cra with, flip, place, or remove pieces there, except in battle. (Vagabond cannot craft)
@@ -421,4 +421,4 @@ class PlayerState(f: Faction) extends FactionState
 
 case object Governors extends Effect
 case object Entreating extends Effect
-case object Peacekeepers extends Effect
+case object TCPeacekeepers extends Effect
