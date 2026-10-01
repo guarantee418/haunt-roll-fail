@@ -160,7 +160,9 @@ object GoodGame {
             (pathPrefix("hrf")) {
                 optionalHeaderValueByName("Referer") { referer =>
                     if (referer.exists(_.startsWith(url)))
-                        getFromDirectory(directory)
+                        encodeResponse {
+                            getFromDirectory(directory)
+                        }
                     else
                         complete(StatusCodes.NotFound, "")
                 }
