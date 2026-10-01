@@ -1,16 +1,13 @@
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:57:40: not found: value AssemblyAAAToken[0m
-[0m[[0m[31merror[0m] [0m[0m  def advertising = BatAAA.img(this) ~ AssemblyAAAToken.img(this)[0m
-[0m[[0m[31merror[0m] [0m[0m                                       ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:62:22: not found: value AssemblyAAAToken[0m
-[0m[[0m[31merror[0m] [0m[0m    BatAAA *** 20 ++ AssemblyAAAToken *** 6 ++ ConvenedAAA *** 6[0m
-[0m[[0m[31merror[0m] [0m[0m                     ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:76:14: value tokens is not a member of root.Region[0m
-[0m[[0m[31merror[0m] [0m[0m    clearing.tokens.of(AssemblyAAA).exists(a => a.faction == TwilightCouncil && a.state == "Governing")[0m
-[0m[[0m[31merror[0m] [0m[0m             ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:92:36: value copy is not a member of object root.AssemblyAAA[0m
-[0m[[0m[31merror[0m] [0m[0m        val assembly = AssemblyAAA.copy(state = "Governing", faction = TwilightCouncil)[0m
-[0m[[0m[31merror[0m] [0m[0m                                   ^[0m
-[0m[[0m[31merror[0m] [0m[0m/Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/root/faction-legal-aaa.scala:92:41: not found: value state[0m
-[0m[[0m[31merror[0m] [0m[0m        val assembly = AssemblyAAA.copy(state = "Governing", faction = TwilightCouncil)[0m
-[0m[[0m[31merror[0m] [0m[0m                                        ^[0m
-[0m[[0m[31merror[0m] [0m[0m100 errors found[0m
+[warn] /home/user/haunt-roll-fail/haunt-roll-fail/root/faction-trader.scala:397:18: non-variable type argument root.WarriorFaction in type pattern List[root.WarriorFaction] (the underlying of hrf.colmat.$[root.WarriorFaction]) is unchecked since it is eliminated by erasure
+[warn]         case l : $[WarriorFaction] => Some(l)
+[warn]                  ^
+[warn] /home/user/haunt-roll-fail/haunt-roll-fail/serialize.scala:61:29: abstract type pattern Serializer.this.gaming.F is unchecked since it is eliminated by erasure
+[warn]             case f : gaming.F => writeFaction(f)
+[warn]                             ^
+[warn] /home/user/haunt-roll-fail/haunt-roll-fail/root/faction-trader.scala:284:56: root.Faction and root.Fund are unrelated: they will most likely never compare equal
+[warn]         val m = l.distinct./~(o => funds.$.%(_.faction == o).take(l.count(o)))
+[warn]                                                        ^
+[warn] /home/user/haunt-roll-fail/haunt-roll-fail/web.scala:110:50: scala.scalajs.js.Any and String are unrelated: they will most likely always compare unequal
+[warn]                     if (dom.window.history.state != gizmo) {
+[warn]                                                  ^
+[warn] four warnings found
