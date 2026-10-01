@@ -108,7 +108,7 @@ class InsurgentPlayer(val faction : Insurgent)(implicit val game : Game) extends
 
     var acted = 0
 
-    def craft = all(Sympathy)./(_.asset)
+    def craft = Council.governedFor(faction, all(Sympathy))./(_.asset)
 
     def bases = all(Base(Fox)) ++ all(Base(Rabbit)) ++ all(Base(Mouse))
 

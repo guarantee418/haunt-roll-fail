@@ -1,16 +1,16 @@
-[0m[[0m[0minfo[0m] [0m[0mFast optimizing /Users/garrettgreene/Downloads/haunt-roll-fail/haunt-roll-fail/target/scala-2.13/hrf-fastopt[0m
-[0m[[0m[0mdebug[0m] [0m[0mLinker: Compute reachability: 8556161 us[0m
-[0m[[0m[0mdebug[0m] [0m[0mLinker: Assemble LinkedClasses: 529931 us[0m
-[0m[[0m[0mdebug[0m] [0m[0mLinker: 9379418 us[0m
-[0m[[0m[0mdebug[0m] [0m[0mModule Splitter: Calculate Dependency Info: 31780 us[0m
-[0m[[0m[0mdebug[0m] [0m[0mModule Splitter: Analyze Modules: 12838 us[0m
-[0m[[0m[0mdebug[0m] [0m[0mModule Splitter: Assemble Modules: 59172 us[0m
-[0m[[0m[0mdebug[0m] [0m[0mModule Splitter: 107806 us[0m
-[0m[[0m[0mdebug[0m] [0m[0mEmitter: Generate Classes: 28658581 us[0m
-[0m[[0m[0mdebug[0m] [0m[0mEmitter: Write trees: 178444 us[0m
-[0m[[0m[0mdebug[0m] [0m[0mEmitter: Class tree cache stats: reused: 0 -- invalidated: 6290[0m
-[0m[[0m[0mdebug[0m] [0m[0mEmitter: Method tree cache stats: reused: 0 -- invalidated: 92075[0m
-[0m[[0m[0mdebug[0m] [0m[0mEmitter: Pre prints: 112204[0m
-[0m[[0m[0mdebug[0m] [0m[0mEmitter: 29311774 us[0m
-[0m[[0m[0mdebug[0m] [0m[0mBasicBackend: Write result: 2101019 us[0m
-[0m[[0m[0mdebug[0m] [0m[0mBasicBackend: total modules: 1; re-written: 1[0m
+[info] Fast optimizing /home/user/haunt-roll-fail/haunt-roll-fail/target/scala-2.13/hrf-fastopt
+[debug] Linker: Compute reachability: 4170690 us
+[debug] Linker: Assemble LinkedClasses: 307059 us
+[debug] Linker: 4512463 us
+[debug] Module Splitter: Calculate Dependency Info: 13696 us
+[debug] Module Splitter: Analyze Modules: 2665 us
+[debug] Module Splitter: Assemble Modules: 45389 us
+[debug] Module Splitter: 63538 us
+[debug] Emitter: Generate Classes: 6614002 us
+[debug] Emitter: Write trees: 87601 us
+[debug] Emitter: Class tree cache stats: reused: 0 -- invalidated: 6334
+[debug] Emitter: Method tree cache stats: reused: 0 -- invalidated: 92979
+[debug] Emitter: Pre prints: 113273
+[debug] Emitter: 6929555 us
+[debug] BasicBackend: Write result: 967334 us
+[debug] BasicBackend: total modules: 1; re-written: 1

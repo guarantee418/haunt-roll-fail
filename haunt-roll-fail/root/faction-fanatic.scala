@@ -76,7 +76,7 @@ class FanaticPlayer(val faction : Fanatic)(implicit val game : Game) extends Fac
 
     val rubble = location(Rubble, u => u.faction == faction && u.piece.is[Garden])
 
-    def craft = outcast./~(s => all(Garden(s))./(_ => s))
+    def craft = outcast./~(s => Council.governedFor(faction, all(Garden(s)))./(_ => s))
 }
 
 

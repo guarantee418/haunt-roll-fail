@@ -994,12 +994,13 @@ object Meta extends MetaGame {
     )
 
     val official = $[Faction](MC, ED, WA, VB, LC, RF, UD, CC, LH, KI)
+    val homeland = $[Faction](TC)
     val clones = $[Faction](BK, PE, FU, NB, CM, /*WC,*/ DR, RI, LK)
     val fun = $[Faction](KDvA, TCvA, LDvD, LDvC, LDvB, TD, FH, XC, CUv2, CU, OK, AF, SF, MB)
 
-    val factions = official ++ clones ++ fun
+    val factions = official ++ homeland ++ clones ++ fun
 
-    override def factionGroup(f : F) : |[Elem] = clones.has(f).?("Mirror Factions".txt) || fun.has(f).?("Fun Factions".txt)
+    override def factionGroup(f : F) : |[Elem] = homeland.has(f).?("Homeland".txt) || clones.has(f).?("Mirror Factions".txt) || fun.has(f).?("Fun Factions".txt)
 
     val minPlayers = 2
 
@@ -2821,6 +2822,21 @@ object Meta extends MetaGame {
         ImageAsset("awaken-the-people") ::
         ImageAsset("might-makes-right") ::
         ImageAsset("intensify-pacifism") ::
+    $) ::
+    ConditionalAssetsList((factions, options) => factions.of[Council].any, "faction/legal")(
+        ImageAsset("tc-glyph"            ) ::
+        ImageAsset("tc-title"            ) ::
+        ImageAsset("tc-char"             ) ::
+        ImageAsset("tc-board-a"          ).scaled(50) ::
+        ImageAsset("tc-board-a-back"     ).scaled(50) ::
+
+        ImageAsset("tc-bat"          ) ::
+        ImageAsset("tc-bat-empty"    ) ::
+        ImageAsset("tc-bat-x5"       ) ::
+        ImageAsset("tc-bat-x5-empty" ) ::
+
+        ImageAsset("tc-assembly"     ) ::
+        ImageAsset("tc-convened"     ) ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[AbductAAA].any, "faction/abduct")(
         ImageAsset("kd-glyph"            ) ::

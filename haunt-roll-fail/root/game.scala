@@ -775,6 +775,7 @@ trait GameImplicits {
     implicit def invasiveBBBState(f : InvasiveBBB)(implicit game : Game) = game.states(f).as[InvasiveBBBPlayer].get
     implicit def invasiveAAAState(f : InvasiveAAA)(implicit game : Game) = game.states(f).as[InvasiveAAAPlayer].get
     implicit def legalAAAState(f : LegalAAA)(implicit game : Game) = game.states(f).as[LegalAAAPlayer].get
+    implicit def councilState(f : Council)(implicit game : Game) = game.states(f).as[CouncilPlayer].get
     implicit def abductorAAAState(f : AbductAAA)(implicit game : Game) = game.states(f).as[AbductAAAPlayer].get
 
     implicit def streetBandState(f : StreetBand.type)(implicit game : Game) = game.states(f).as[StreetBandState].get
@@ -1049,6 +1050,9 @@ trait GameImplicits {
                 factions.but(f).of[Mischief].%(e => e.at(c).has(Snare) && e.hidden.has(c).not).foreach { f =>
                     return Snare.of(f)
                 }
+
+                if (Council.governs(f, c))
+                    return CouncilGovernors.of(TC)
             }
 
             "No Reason"
@@ -1058,7 +1062,8 @@ trait GameImplicits {
             game.scorched.has(c).not &&
             game.flooded.has(c).not &&
             factions.but(f).of[Feline].%(_.keep.has(c)).none &&
-            factions.but(f).of[Mischief].%(e => e.at(c).has(Snare) && e.hidden.has(c).not).none
+            factions.but(f).of[Mischief].%(e => e.at(c).has(Snare) && e.hidden.has(c).not).none &&
+            Council.governs(f, c).not
 
         def ruleValue(c : Region, mercenaries : $[Trader], friends : $[Faction]) : Int = {
             if (game.states.contains(f).not)
@@ -1462,6 +1467,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
             InvasiveBBBExpansion,
             InvasiveAAAExpansion,
             LegalAAAExpansion,
+            CouncilExpansion,
             AbductAAAExpansion,
 
             StandardDeckExpansion,

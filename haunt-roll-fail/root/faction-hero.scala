@@ -309,7 +309,7 @@ class HeroPlayer(val faction : Hero)(implicit val game : Game) extends FactionSt
 
     def swords = inv.notDamaged.count(Sword)
 
-    def craft = region.as[Clearing]./(c => ready(Hammer).times(c.asset)).|($)
+    def craft = region.as[Clearing].%(c => Council.governs(faction, c).not)./(c => ready(Hammer).times(c.asset)).|($)
 
     var itemDamagePriorities : $[Item] = $
 }
