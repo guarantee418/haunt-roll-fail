@@ -36,7 +36,8 @@ cd haunt-roll-fail && sbt fastOptJS
 - The server runs in a tmux session named `hrf`
 - Port 7070 is open in the Oracle security list and in the instance's
   iptables (rule placed above the `REJECT` line, saved with
-  `netfilter-persistent save`)
+  `netfilter-persistent save`). Ports 80 and 443 are also open in the
+  security list; `setup-https.sh` opens them in iptables
 
 ### Deploying a change
 
@@ -70,8 +71,7 @@ Encrypt challenges from `good-game/acme/` and redirects everything else to
 the URL argument, keeping the path. The free hostname
 `157-151-177-11.sslip.io` resolves to the server's IP.
 
-1. In the Oracle console, add ingress rules for TCP 80 and 443 to the
-   instance's security list (like the existing 7070 rule).
+1. Done: the Oracle security list has ingress rules for TCP 80 and 443.
 2. Deploy this code, then run `~/hrf/setup-https.sh` (optional
    arguments: hostname, email for expiry notices). It allows non-root use of
    ports 80/443, opens them in iptables, installs certbot and a renewal hook,
