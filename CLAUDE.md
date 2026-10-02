@@ -88,6 +88,7 @@ ssh -i ~/.ssh/oracle.key ubuntu@157.151.177.11 '~/hrf/live-server.sh deploy'
 - `deploy`: stop the server, check out `origin/main` (`git checkout -f -B hrf
   origin/main`; `-f` because builds on the server modify committed `target/`
   files), then start it and wait until it prints `Started server.`
+  `deploy <commit>` deploys that commit instead (used by auto-deploy, below).
 - `start`, `stop`, `restart`: as named. `start` does nothing if the tmux
   session already exists.
 - `log`: the last 40 lines of server output, e.g. after an error page.
@@ -108,6 +109,32 @@ ssh -i ~/.ssh/oracle.key ubuntu@157.151.177.11 '~/hrf/live-server.sh deploy'
   from matching the command line of the shell running it.
 - `Address already in use` on start means an old server is still running:
   `live-server.sh stop`, then `start`.
+
+### Deploying from GitHub (auto-deploy)
+
+Cloud Claude sessions can't ssh to the server, so the server watches the
+GitHub branch `deploy` instead. To deploy what is on `main`:
+
+```
+git fetch origin main && git push origin origin/main:refs/heads/deploy
+```
+
+- A crontab entry runs `live-server.sh auto-deploy` every 2 minutes. When
+  `deploy` points at a commit it hasn't handled, it runs `deploy` for that
+  commit: the same stop, checkout and start as above, so the server restarts.
+- It only deploys commits that are on `main`; a `deploy` branch pointing
+  anywhere else is logged as `Not deploying ...: not on main` and skipped.
+- `~/hrf-deployed` holds the last `deploy` commit it handled (written before
+  deploying, so a commit that fails to start isn't retried every 2 minutes;
+  push a new commit or delete the file to retry). Output goes to
+  `~/hrf-auto-deploy.log`. Runs don't overlap (`flock` on
+  `~/.hrf-auto-deploy.lock`).
+- No `deploy` branch on GitHub means nothing happens.
+- `install-auto-deploy` adds the crontab entry. Running it again changes
+  nothing. To turn auto-deploy off, remove the `auto-deploy` line with
+  `crontab -e`.
+- A manual `live-server.sh deploy` still deploys `origin/main`; auto-deploy
+  only acts when `deploy` moves.
 
 ### Bug reports
 
