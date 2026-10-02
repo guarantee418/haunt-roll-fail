@@ -59,7 +59,14 @@ class BotXX(f : Faction) extends EvalBot {
             case f : AbductAAA => new GameEvaluationAbductAAA(f)
             case f : Knaves => new GameEvaluationKnaves(f)
         }
-        actions./{ a => ActionEval(a, ev.eval(a)) }
+        actions./{ a => ActionEval(a, entreat(a.unwrap) ++ ev.eval(a)) }
+    }
+
+    // Entreating gives the Council a Loyalist, so only do it to act in that clearing
+    def entreat(a : Action)(implicit game : Game) : $[Evaluation] = a match {
+        case CouncilEntreatMainAction(f, t, _) if t.all(GoverningAssembly).exists(c => Council.entreatNeeded(f, c)).not => $(Evaluation(-1000, "no need to entreat"))
+        case CouncilEntreatAction(f, t, c, _) if Council.entreatNeeded(f, c).not => $(Evaluation(-1000, "no need to entreat"))
+        case _ => $
     }
 }
 
