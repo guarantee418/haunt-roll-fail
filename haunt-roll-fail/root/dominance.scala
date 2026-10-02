@@ -55,6 +55,7 @@ object DominanceExpansion extends MandatoryExpansion {
                         val l =
                             (f.vp >= 10).??(f.hand.$.of[BaseSuitDominance]) ++
                             (f.vp >= 10).??(f.hand.$.of[CornersDominance]) ++
+                            (f.vp >= 10).??(f.hand.$.of[EnclaveDominance.type]) ++
                             (clearings.%(_.asset.use(a => a.matches(Frog) && FoxRabbitMouse.exists(a.matches).not)).num * 2 >= clearings.num).??(f.hand.$.of[FrogDominance.type])
 
 
@@ -81,6 +82,9 @@ object DominanceExpansion extends MandatoryExpansion {
                 case Some(BaseSuitDominance(s)) if clearings.%(_.asset.matches(s)).%(f.rules).num >= 3 =>
                     f.vp = 999
                     f.log("achieved", (s.name + " Dominance").styled(s))
+                case Some(EnclaveDominance) if factions.of[InvasiveEEE].exists(e => e.enclaves.%(game.riverside.has).%(f.rules).num >= 2) =>
+                    f.vp = 999
+                    f.log("achieved", ("Frog Dominance").styled(Frog))
                 case Some(FrogDominance) if clearings.%(_.asset.matches(Frog)).use(l => l.%(f.rules).num > f.enemies.notOf[Hireling]./(e => l.%(e.rules).num).max) =>
                     f.vp = 999
                     f.log("achieved", ("Frog Dominance").styled(Frog))

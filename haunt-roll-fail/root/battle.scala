@@ -332,7 +332,7 @@ object BattleExpansion extends MandatoryExpansion {
             if (b.defender.canRemove(b.clearing)(b.attacker).not)
                 skip
             else
-            if (game.playingDeck.%(canAmbush)
+            if ((game.playingDeck ++ factions.of[InvasiveEEE].any.??(Deck.frogEEE)).%(canAmbush)
                 .diff(game.pile.$)
                 .diff(factions.of[Aviary]./~(f => Decree.all./~(d => f.decree(d).$).but(LoyalVizier)))
                 .diff(factions.of[Expedition]./~(f => Retinue.all./~(r => f.retinue(r).$).but(FaithfulRetainer)))
@@ -406,7 +406,7 @@ object BattleExpansion extends MandatoryExpansion {
             if (b.attacker.is[Trader] && b.attacker.hand.%(canAmbush).none)
                 skip
             else
-            if (game.playingDeck.%(canAmbush)
+            if ((game.playingDeck ++ factions.of[InvasiveEEE].any.??(Deck.frogEEE)).%(canAmbush)
                 .diff(game.pile.$)
                 .diff(factions.of[Aviary]./~(f => Decree.all./~(d => f.decree(d).$).but(LoyalVizier)))
                 .diff(factions.of[Expedition]./~(f => Retinue.all./~(r => f.retinue(r).$).but(FaithfulRetainer)))
@@ -895,7 +895,7 @@ object BattleExpansion extends MandatoryExpansion {
             val wo = rear.none || ww.num >= n
             val nn = min(n, ww.num + rear.num)
 
-            val peacekeepers = (f == b.defender) && b.codef.?(_.is[Council])
+            val peacekeepers = (f == b.defender) && b.codef.?(d => d.is[Council] || (b.defender.is[InvasiveEEE] && d.dominance.has(EnclaveDominance)))
 
             val q =
                 if (s > 0)
