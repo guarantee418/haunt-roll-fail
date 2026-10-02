@@ -777,6 +777,7 @@ trait GameImplicits {
     implicit def legalAAAState(f : LegalAAA)(implicit game : Game) = game.states(f).as[LegalAAAPlayer].get
     implicit def councilState(f : Council)(implicit game : Game) = game.states(f).as[CouncilPlayer].get
     implicit def abductorAAAState(f : AbductAAA)(implicit game : Game) = game.states(f).as[AbductAAAPlayer].get
+    implicit def knavesState(f : Knaves)(implicit game : Game) = game.states(f).as[KnavesPlayer].get
 
     implicit def streetBandState(f : StreetBand.type)(implicit game : Game) = game.states(f).as[StreetBandState].get
     implicit def popularBandState(f : PopularBand.type)(implicit game : Game) = game.states(f).as[PopularBandState].get
@@ -882,7 +883,7 @@ trait GameImplicits {
     implicit class FactionEx(f : Faction)(implicit game : Game) {
         def validDest : $[Region] = (f @@ {
             case f : Hero => game.board.forests
-            case f : AbductAAA => game.board.forests
+            case f : CommonAbduct => game.board.forests
             case f : TheExile.type => game.board.forests
             case f : Underground => $(f.burrow)
             case _ => $()
@@ -1469,6 +1470,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
             LegalAAAExpansion,
             CouncilExpansion,
             AbductAAAExpansion,
+            KnavesExpansion,
 
             StandardDeckExpansion,
             ExilesDeckExpansion,

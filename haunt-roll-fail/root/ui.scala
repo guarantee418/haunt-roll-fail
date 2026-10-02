@@ -259,6 +259,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case SkunkAAACaptain(Birdsong) => { DrawRect(pr + "captain-birdsong", -42, -81, 85, 86) }
             case SkunkAAACaptain(Daylight) => { DrawRect(pr + "captain-daylight", -42, -81, 85, 86) }
             case SkunkAAACaptain(Evening)  => { DrawRect(pr + "captain-evening" , -42, -81, 85, 86) }
+            case KnavesCaptain(0) => { DrawRect(pr + "captain-birdsong", -42, -81, 85, 86) }
+            case KnavesCaptain(1) => { DrawRect(pr + "captain-daylight", -42, -81, 85, 86) }
+            case KnavesCaptain(_) => { DrawRect(pr + "captain-evening" , -42, -81, 85, 86) }
+            case Acclaim => { DrawRect(pr + "acclaim", -45, -45, 90, 90) }
             case _ : CommonSkunkWarrior => { DrawRect(pr + "skunk", -36, -81, 70, 86) }
 
             case _ =>
@@ -1646,6 +1650,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 &((Image(f.style + "-skunk-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-skunk-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline) ~
                 Gap ~ Gap ~ f.bag./(i => Image(i.exhaust.imgid, styles.ii)).merge.div(xstyles.smaller75)
 
+            case f : Knaves =>
+                f.captains.indexed./((k, i) => Hint(k.name + "\n" + k.text, (Image(KnavesCaptain(i).imgid(f), styles.wr) ~ " " ~ f.is(k).?(k.name.hl).|(f.retired.has(k).?(k.name.txt).|(k.name.styled(f))) ~ f.retired.has(k).?(" (retired)".txt)).div(styles.minister))).merge ~
+                Hint("Acclaim\n" + f.all(Acclaim).num + " on the map\n" + f.pooled(Acclaim) + " available",
+                    (Image("empty-token", styles.token) *** f.all(Acclaim).num) ~ (Image(f.style + "-acclaim", styles.token) *** f.pooled(Acclaim))) ~ Break ~
+                Hint("Prisoners\n" + f.prisoners.num + " in the forests", ("Prisoners ".txt ~ f.prisoners.num.hl).div) ~
+                Div(Hint("Skunks\n" + f.allr(f.warrior).num + " on the map\n" + f.pooled(f.warrior) + " available",
+                &((Image(f.style + "-skunk-x5", styles.wr) *** (f.allr(f.warrior).num / 5)) ~ (Image(f.style + "-skunk", styles.wr) *** (f.allr(f.warrior).num % 5))) ~
+                &((Image(f.style + "-skunk-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-skunk-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
+
             case f : Hero =>
                 val track = f.inv.intersect(Item.track).sort./(_.item)
                 val satchel = f.inv.diff(Item.track).sort
@@ -2790,6 +2803,43 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     desc(f.all(f.warrior).num.hl.larger, "on the map,", f.loyalists.$.num.hl.larger, "loyalists,", f.pooled(f.warrior).hl.larger, "in reserve") ~
                     HGap ~
                     warriorLine(f.style + "-bat", f.all(f.warrior).num, f.pooled(f.warrior)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), {
+                    case (f : Faction, more : Boolean) => onFactionStatus(f, more, None)
+                    case _ =>
+                        overlayPane.invis()
+                        overlayPane.clear()
+                })
+
+            case f : Knaves =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    f.elem.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    f.captains./(k => desc(k.elem.larger, k.items./(i => Image(i.imgid, styles.ii)).merge, f.is(k).?("(acting)".hl), f.retired.has(k).?("(retired)".txt)) ~ desc(k.text) ~ HGap).merge ~
+                    HGap ~
+                    HGap ~
+                    less("Skunks".hl.larger) ~
+                    more("Skunks".hl.larger, "are", "warriors".hh, Comma, "they", "battle".hh, "and provide", "rule".hh, Dot) ~
+                    desc(f.allr(f.warrior).num.hl.larger, "on the map,", f.pooled(f.warrior).hl.larger, "in reserve") ~
+                    HGap ~
+                    warriorLine(f.style + "-skunk", f.allr(f.warrior).num, f.pooled(f.warrior)) ~
+                    HGap ~
+                    HGap ~
+                    desc(f.all(Acclaim).num.hl.larger, "acclaim on the map,", f.pooled(Acclaim).hl.larger, "in reserve,", f.prisoners.num.hl.larger, "prisoners") ~
                     HGap ~
                     HGap ~
                     HGap ~

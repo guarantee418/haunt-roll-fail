@@ -119,6 +119,7 @@ package object elem {
         TC --> color("#954a2e")
 
         KDvA --> color("#d1d2d4")
+        KD --> color("#d1d2d4")
 
         StreetBand --> color("#0c93de")
         StoicProtector --> color("#d2a02a")
@@ -393,6 +394,7 @@ package object elem {
         TCvA --> outline.color("#4a2517")
         TC --> outline.color("#4a2517")
         KDvA --> outline.color("#68696a")
+        KD --> outline.color("#68696a")
     }
 
     object charstyles extends BaseStyleMapping("root-border") {
@@ -432,6 +434,7 @@ package object elem {
         TCvA --> $(width("15ch"), top("-1.5ch"))
         TC --> $(width("15ch"), top("-1.5ch"))
         KDvA --> $(width("22ch"), top("-0.8ch"), clip.path("polygon(0% 0%, 86% 0%, 100% 23%, 100% 40%, 71% 100%, 0% 100%)"))
+        KD --> $(width("22ch"), top("-0.8ch"), clip.path("polygon(0% 0%, 86% 0%, 100% 23%, 100% 40%, 71% 100%, 0% 100%)"))
     }
 
     implicit class ElemElem(val elem : Elem) extends AnyVal {
