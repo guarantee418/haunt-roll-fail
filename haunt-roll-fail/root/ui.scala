@@ -1143,7 +1143,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 )
         }).pointer.onClick.param(("view-hand", f))
 
-        val vp = f.coalition./(a => Hint("Coalition with " + a.name + ": wins if " + a.name + " wins", a.ss)).||(f.dominance./(d => Hint(domHint(d.suit), ("(" + d.suit.name + ")").styled(d.suit)))).|(Hint("Victory points: " + f.vp, f.vp.vp)).pointer.onClick.param(("view-scorelog", f))
+        val vp = f.coalition./(a => Hint("Coalition with " + a.name + ": wins if " + a.name + " wins", a.ss)).||(f.dominance.%(_ => f.demagogue)./(d => Hint(domHint(d.suit) + ", or by victory points: " + f.vp, ("(" + d.suit.name + ")").styled(d.suit) ~ " " ~ f.vp.vp))).||(f.dominance./(d => Hint(domHint(d.suit), ("(" + d.suit.name + ")").styled(d.suit)))).|(Hint("Victory points: " + f.vp, f.vp.vp)).pointer.onClick.param(("view-scorelog", f))
 
         val vphand = Div(vp ~ Image("card-separator", styles.cardbackinfo) ~ hand)
 
