@@ -86,6 +86,10 @@ object Council {
         factions.but(f).of[Council].%(game.states.contains).exists(t => t.at(c).has(GoverningAssembly) && t.friends(f).not)
 
     def governedFor(f : Faction, l : $[Clearing])(implicit game : Game) : $[Clearing] = l.%!(c => governs(f, c))
+
+    // For bots: entreat only where the faction has something to do, that is, it has pieces there or rules the clearing
+    def entreatNeeded(f : Faction, c : Clearing)(implicit game : Game) : Boolean =
+        (f.present(c) || f.rules(c)) && game.scorched.has(c).not && game.flooded.has(c).not
 }
 
 

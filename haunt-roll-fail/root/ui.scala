@@ -492,6 +492,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             }
 
             if (game.clearings.forall(game.mapping.contains)) {
+                // Homeland Lilypad Diaspora: frog clearings in the faction's color
+                val hl = factions.of[InvasiveEEE].any
+
                 game.clearings.foreach { c =>
                     val (x, y) = game.board.center(c)
                     val dx = c.name.length * 12 + 38
@@ -499,7 +502,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     val nmn = c.name.replace(' ', '-')
                     val nmi = resources.images.get(mapid + "clearing-name-" + nmn)
                     val stn = game.mapping(c)./(_.name).distinct.join("-")
-                    val sti = resources.images.get("text-tint:" + stn)
+                    val sti = resources.images.get("text-tint:" + stn + (hl && game.mapping(c).has(Frog)).??("-hl"))
 
                     if (nmi.complete && sti.complete) {
                         val nmt = new Bitmap(nmi.width, nmi.height)
@@ -517,8 +520,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     val suits = game.mapping(c)
 
                     suits.indexed.foreach { (s, n) =>
-                        g.drawImage(resources.images.get("clearing-suit-" + s), x - 30 + dx + 40 * n + (n > 0).??(5) + (n > 2).??(5), y + 165)
-                        g.drawImage(resources.images.get("clearing-suit-" + s), x - 30 - dx - 40 * n - (n > 0).??(5) - (n > 2).??(5), y + 165)
+                        val si = resources.images.get("clearing-suit-" + s + (hl && s == Frog).??("-hl"))
+                        g.drawImage(si, x - 30 + dx + 40 * n + (n > 0).??(5) + (n > 2).??(5), y + 165)
+                        g.drawImage(si, x - 30 - dx - 40 * n - (n > 0).??(5) - (n > 2).??(5), y + 165)
                     }
 
                     val offs = game.original(c).diff(suits)

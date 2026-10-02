@@ -1282,6 +1282,7 @@ object Meta extends MetaGame {
         ImageAsset("clearing-suit-rabbit" ) ::
         ImageAsset("clearing-suit-mouse"  ) ::
         ImageAsset("clearing-suit-frog"   ) ::
+        ImageAsset("clearing-suit-frog-hl") ::
 
         ImageAsset("clearing-suit-fox-off"    ) ::
         ImageAsset("clearing-suit-rabbit-off" ) ::
@@ -1346,6 +1347,11 @@ object Meta extends MetaGame {
         ImageAsset("mouse-frog") ::
         ImageAsset("fox-rabbit-mouse") ::
         ImageAsset("fox-rabbit-mouse-frog") ::
+        ImageAsset("frog-hl") ::
+        ImageAsset("fox-frog-hl") ::
+        ImageAsset("rabbit-frog-hl") ::
+        ImageAsset("mouse-frog-hl") ::
+        ImageAsset("fox-rabbit-mouse-frog-hl") ::
     $) ::
     ConditionalAssetsList((factions, options) => true, "icon/craft")(
         ImageAsset("craft-suit-anysuit"  ) ::
@@ -2820,8 +2826,8 @@ object Meta extends MetaGame {
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[InvasiveEEE].any, "faction/invasive")(
         ImageAsset("hld-glyph"                                   ) ::
-        ImageAsset("hld-title"           , "ld-title"            ) ::
-        ImageAsset("hld-char"            , "td-char"             ) ::
+        ImageAsset("hld-title"                                   ) ::
+        ImageAsset("hld-char"                                    ) ::
         ImageAsset("hld-board"                                   ) ::
 
         ImageAsset("hld-frog"                              ) ::
