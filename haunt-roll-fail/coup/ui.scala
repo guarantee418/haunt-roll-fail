@@ -225,7 +225,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             }, ZBasic.infoch).copy(clear = false)
         ) ++
         $(ZBasic(Break ~ Break, "Notifications".spn, () => { onClick("notifications", self) }, ZBasic.infoch).copy(clear = false)).%(_ => self.any || game.isOver) ++
-        $(ZBasic(Break ~ Break, "Interface".spn, () => { callbacks.editSettings { updateStatus() } }, ZBasic.infoch).copy(clear = false))
+        $(ZBasic(Break ~ Break, "Interface".spn, () => { callbacks.editSettings { updateStatus() } }, ZBasic.infoch).copy(clear = false)) ++
+        $(ZBasic(Break ~ Break, "Report a Bug".spn, () => { callbacks.reportBug() }, ZBasic.infoch).copy(clear = false)).%(_ => callbacks.canReportBug)
     }
 
     override def styleAction(faction : Option[Faction], actions : List[UserAction], a : UserAction, unavailable : Boolean, view : Option[Any]) = {

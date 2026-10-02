@@ -14,7 +14,7 @@ export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
 
 HRF_DIR="$(cd "$(dirname "$0")" && pwd)"
 SESSION=hrf
-PORT=7070
+PORT=443
 URL="https://games.clean5110.com"
 ARGS="../good-game-database ../haunt-roll-fail $URL $URL/hrf/ $PORT"
 
