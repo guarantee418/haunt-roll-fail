@@ -298,7 +298,7 @@ object Deck {
         CraftEffectCard(Fox, "fox-squires", $(Fox), Squires(Fox)),
         CraftEffectCard(Fox, "bold-leadership", $(Fox), BoldLeadership),
         CraftEffectCard(Fox, "supply-train", $(Fox), SupplyTrain),
-        CraftEffectCard(Fox, "tactitian", $(Fox, AnySuit), Tactitian),
+        CraftEffectCard(Fox, "tactician", $(Fox, AnySuit), Tactitian),
         CraftEffectCard(Fox, "apprentice", $(Fox), Apprentice),
         CraftEffectCard(Fox, "friend-of-the-foxes", $(Fox, AnySuit), FriendOfTheFoxes),
         CraftEffectCard(Rabbit, "rabbit-squires", $(Rabbit), Squires(Rabbit)),
