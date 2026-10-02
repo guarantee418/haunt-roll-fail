@@ -8,8 +8,8 @@ PORT=7070
 URL="http://localhost:$PORT"
 ARGS="../good-game-database ../haunt-roll-fail $URL $URL/hrf/ $PORT"
 
-if [ ! -f "$HRF_DIR/haunt-roll-fail/target/scala-2.13/hrf-fastopt.js" ]; then
-    echo "Client not built. Run: cd \"$HRF_DIR/haunt-roll-fail\" && sbt fastOptJS" >&2
+if [ ! -f "$HRF_DIR/haunt-roll-fail/target/scala-2.13/hrf-opt.js" ]; then
+    echo "Client not built. Run: cd \"$HRF_DIR/haunt-roll-fail\" && sbt fullOptJS" >&2
     exit 1
 fi
 
