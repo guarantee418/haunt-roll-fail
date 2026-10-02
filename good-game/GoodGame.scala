@@ -437,14 +437,25 @@ object GoodGame {
 
         println("Started server.")
 
-        if (port != 80 && keyFile.exists()) {
+        // Webroot for Let's Encrypt HTTP-01 challenges (certbot --webroot -w good-game/acme)
+        val acmeDir = new java.io.File("acme")
+
+        if (port != 80 && (keyFile.exists() || acmeDir.isDirectory())) {
+            val base = Uri(url)
+
             val redirroute = get {
-                redirect(url, StatusCodes.MovedPermanently)
+                pathPrefix(".well-known" / "acme-challenge") {
+                    getFromDirectory("acme/.well-known/acme-challenge")
+                } ~
+                extractUri { uri =>
+                    redirect(uri.withScheme(base.scheme).withAuthority(base.authority), StatusCodes.MovedPermanently)
+                }
             }
 
-            Http().newServerAt("0.0.0.0", 80).bind(redirroute)
-
-            println("Started redirect server.")
+            Http().newServerAt("0.0.0.0", 80).bind(redirroute).onComplete {
+                case scala.util.Success(_) => println("Started redirect server.")
+                case scala.util.Failure(e) => println("Failed to start redirect server: " + e)
+            }
         }
 
         while (true)

@@ -34,35 +34,47 @@ cd haunt-roll-fail && sbt fullOptJS
 
 ## Live server
 
-- URL: https://games.clean5110.com/play (`games.clean5110.com` points at the
-  server's IP). Links with `:7070` also work.
+- URL: https://games.clean5110.com/play (Let's Encrypt certificate).
+  `http://` links redirect to it.
 - Oracle Cloud Always Free instance `hrf-server`: Ubuntu 24.04 aarch64,
-  2 OCPUs, 12 GB RAM, ephemeral public IP 157.151.177.11. If the IP changes,
-  update the DNS record for `games.clean5110.com`.
+  2 OCPUs, 12 GB RAM, ephemeral public IP 157.151.177.11
+- DNS: A record `games` -> 157.151.177.11 under Custom Records in the
+  Squarespace DNS settings for `clean5110.com`. The bare domain and `www`
+  are a Squarespace website; leave the Squarespace presets alone. If the IP
+  changes, update the `games` record.
 - SSH from the owner's Mac: `ssh -i ~/.ssh/oracle.key ubuntu@157.151.177.11`
 - Checkout at `~/hrf` on a local branch `hrf`; database at
   `~/hrf/good-game-database*`; `SBT_OPTS` is set in `~/.bashrc`
-- The server runs in a tmux session named `hrf`, listening on port 7070
-- Port 7070 is open in the Oracle security list and in the instance's
-  iptables (rule placed above the `REJECT` line, saved with
-  `netfilter-persistent save`). Port 443 is open in the security list, and
-  an iptables NAT rule forwards it to 7070
-  (`iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-ports 7070`,
-  also saved). The server itself does not bind 443.
+- The server runs in a tmux session named `hrf`, listening on port 443, with
+  a redirect server on port 80
+- Ports 80, 443 and 7070 are open in the Oracle security list and in the
+  instance's iptables (rules placed above the `REJECT` line, saved with
+  `netfilter-persistent save`). `/etc/sysctl.d/50-hrf-ports.conf` lets the
+  non-root server bind ports below 1024.
 
 ### https
 
 - The server turns on https when `certificate.pkcs12` (PKCS12, empty
-  password) exists in its working directory, `~/hrf/good-game`. It then
-  serves https only, so `http://` links stop working.
-- The certificate is for `games.clean5110.com` and expires 2026-12-30.
-  `certificate.pkcs12.off` next to it is a copy of the same file. Renewal is
-  not set up yet: a renewed certificate has to be converted to PKCS12 and
-  copied to `~/hrf/good-game/certificate.pkcs12`, then the server restarted.
+  password) exists in its working directory, `~/hrf/good-game`, and rereads
+  that file within a minute when it changes, so renewals need no restart.
+- When it runs on a port other than 80 and that file or `good-game/acme/`
+  exists, it also starts a port 80 server. That server serves Let's Encrypt
+  challenges from `good-game/acme/` and redirects everything else to the URL
+  argument, keeping the path.
+- Set up with `~/hrf/setup-https.sh games.clean5110.com` (arguments:
+  hostname, optional email for expiry notices). It allows non-root use of
+  ports 80/443, opens them in iptables, installs certbot and the renewal
+  hook, and gets the certificate. It is safe to run again, for example for a
+  new hostname; then change `URL` in `live-server.sh`, restart, and
+  `sudo certbot delete --cert-name <old name>`.
+- Certbot renews through `certbot.timer`. Its hook
+  `/etc/letsencrypt/renewal-hooks/deploy/hrf-pkcs12.sh` rewrites
+  `certificate.pkcs12` for the hostname it was set up for.
 - `certificate.pkcs12` holds the private key and is gitignored. Never commit it.
-- Port 80 is not set up, so `http://games.clean5110.com` does not redirect to
-  https. The server logs "Started redirect server." whenever the certificate
-  exists, even if it can't bind port 80.
+- Old `http://157.151.177.11:7070` links can be sent to the redirect server
+  (only while the server is not on 7070, or it makes a redirect loop):
+  `sudo iptables -t nat -A PREROUTING -p tcp --dport 7070 -j REDIRECT --to-ports 80`
+  then `sudo netfilter-persistent save`.
 
 ### Starting, stopping and deploying
 
@@ -96,7 +108,6 @@ ssh -i ~/.ssh/oracle.key ubuntu@157.151.177.11 '~/hrf/live-server.sh deploy'
   from matching the command line of the shell running it.
 - `Address already in use` on start means an old server is still running:
   `live-server.sh stop`, then `start`.
-- Not yet set up: certificate renewal.
 
 ### Bug reports
 
