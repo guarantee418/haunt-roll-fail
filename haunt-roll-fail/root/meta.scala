@@ -885,6 +885,10 @@ case object ShowRule extends RuleOption {
     val valueOn = "Show".hlb
 }
 
+case object FlagRule extends RuleOption {
+    val valueOn = "Flag".hlb
+}
+
 case object HideRule extends RuleOption {
     val valueOn = "Hide".hlb
 }
@@ -947,7 +951,7 @@ object Meta extends MetaGame {
     val name = "root"
     val label = "Root"
 
-    override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, HideRule, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone)
+    override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone)
     override def settingsDefaults = super.settingsDefaults ++ $(PromptAssignHits, PromptAmbush, ShowRule, NoOutOfTurn, HighlightNone)
 
     override val about = $(
@@ -1277,6 +1281,23 @@ object Meta extends MetaGame {
         ImageAsset("clearing-highlight-placement" ) ::
         ImageAsset("clearing-highlight-battle"    ) ::
         ImageAsset("clearing-highlight-nuke"      ) ::
+
+        ImageAsset("flag-cloth"           ) ::
+        ImageAsset("flag-cloth-detail"    ) ::
+        ImageAsset("flag-pole"            ) ::
+        ImageAsset("flag-bg-alliance"  ) ::
+        ImageAsset("flag-bg-badgers"   ) ::
+        ImageAsset("flag-bg-bats"      ) ::
+        ImageAsset("flag-bg-birds"     ) ::
+        ImageAsset("flag-bg-cats"      ) ::
+        ImageAsset("flag-bg-crows"     ) ::
+        ImageAsset("flag-bg-frogs"     ) ::
+        ImageAsset("flag-bg-knaves"    ) ::
+        ImageAsset("flag-bg-lizards"   ) ::
+        ImageAsset("flag-bg-moles"     ) ::
+        ImageAsset("flag-bg-otters"    ) ::
+        ImageAsset("flag-bg-rats"      ) ::
+        ImageAsset("flag-bg-vagabond"  ) ::
 
         ImageAsset("clearing-suit-fox"    ) ::
         ImageAsset("clearing-suit-rabbit" ) ::
