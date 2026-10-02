@@ -105,6 +105,7 @@ class CouncilPlayer(val faction : Council)(implicit val game : Game) extends Fac
 case class CouncilRevealMainAction(f : Council) extends ForcedAction with Soft
 case class CouncilRevealAction(self : Council, d : DeckCard) extends BaseAction("Reveal a card to act")(d.img) with ViewCard with Soft
 case class CouncilRevealedAction(f : Council, d : DeckCard, spend : Boolean, then : ForcedAction) extends ForcedAction
+case class CouncilRevealCardAction(f : Council, d : DeckCard, then : ForcedAction) extends ForcedAction
 
 case class CouncilRecruitAction(self : Council, d : DeckCard, c : Clearing) extends ForcedAction
 case class CouncilBattleAction(self : Council, d : DeckCard, c : Clearing) extends ForcedAction with Soft
@@ -334,13 +335,40 @@ object CouncilExpansion extends FactionExpansion[Council] {
                 .each(asm)(c => CouncilAssembleAction(f, d, c).as("Assemble".styled(f), ClosedAssembly.imgd(f), "in", c).!(f.placedAssemblies >= Council.maxAssemblies))
                 .cancel
 
+        // Revealed cards go into the play area before the action and cannot be used for any other purposes during Birdsong,
+        // so move the card out of the hand once a move or battle is committed (not in the soft steps before it)
+        case MoveListAction(self, f : Council, t, m, from, to, l, then @ CouncilRevealedAction(_, d, _, _)) if f.hand.has(d) =>
+            CouncilRevealCardAction(f, d, ForceAction(MoveListAction(self, f, t, m, from, to, l, then)))
+
+        case MoveListAlliedAction(self, f : Council, t, m, from, to, l, a, al, then @ CouncilRevealedAction(_, d, _, _)) if f.hand.has(d) =>
+            CouncilRevealCardAction(f, d, ForceAction(MoveListAlliedAction(self, f, t, m, from, to, l, a, al, then)))
+
+        case BattleStartAction(self, f : Council, a, m, c, o, i, then @ CouncilRevealedAction(_, d, _, _)) if f.hand.has(d) =>
+            CouncilRevealCardAction(f, d, BattleStartAction(self, f, a, m, c, o, i, then))
+
+        case CouncilRevealCardAction(f, d, then) =>
+            if (f.hand.has(d)) {
+                f.hand --> d --> f.revealed
+
+                f.log("revealed", d)
+            }
+
+            then
+
         case CouncilRevealedAction(f, d, spend, then) =>
-            if (spend) {
+            if (spend && f.hand.has(d)) {
                 f.hand --> d --> discard.quiet
 
                 f.log("discarded", d)
             }
-            else {
+            else
+            if (spend && f.revealed.has(d)) {
+                f.revealed --> d --> discard.quiet
+
+                f.log("discarded", d)
+            }
+            else
+            if (spend.not && f.hand.has(d)) {
                 f.hand --> d --> f.revealed
 
                 f.log("revealed", d)
