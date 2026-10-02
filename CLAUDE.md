@@ -108,10 +108,16 @@ ssh -i ~/.ssh/oracle.key ubuntu@157.151.177.11 '~/hrf/live-server.sh deploy'
   with `None.get` in the console. Test changes to the loaders both on
   `localhost` (cache path) and through a non-localhost http address (no
   cache).
-- The 23 Homeland deck cards in the `card/deck` assets in
-  `haunt-roll-fail/root/meta.scala`, `apprentice` through `the-faithful`,
-  have no images in `webp2/root/images/card/deck/`. They 404 and the
-  cards show without pictures.
+- The 23 Squires and Disciples deck cards (`SquiresDeck`, listed in
+  `effectsSquires` in `haunt-roll-fail/root/cards.scala`) have images in
+  `webp2/root/images/card/deck/`, `apprentice.webp` through
+  `the-faithful.webp`. They come from the Leder Card Library
+  (https://cards.ledergames.com/, data at
+  `https://ledercards.netlify.app/cards.min.json`, images under
+  `https://ledercards.netlify.app/cards/root/en-US/`), cropped and resized
+  to the 512x708 size of the other deck cards. The card effects themselves
+  are not implemented yet: `SquiresDeckExpansion` in `root/deck-squires.scala`
+  does nothing.
 - Each online game has a Spectator link and one link per player. Spectator
   accounts can read the game but not add moves. A move posted by one gets a
   500 with `empty result set ... "right" = 'append'` in the server log.

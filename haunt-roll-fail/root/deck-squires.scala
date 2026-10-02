@@ -26,7 +26,7 @@ case object SpyNetwork extends CardEffect {
 }
 
 case object SilverTongue extends CardEffect {
-    override val name = "Silver Tongue"
+    override val name = "Silver-Tongue"
 }
 
 case object ShadowCouncil extends CardEffect {
@@ -46,7 +46,7 @@ case object SupplyTrain extends CardEffect {
 }
 
 case object Tactitian extends CardEffect with BattleEffect {
-    override val name = "Tactitian"
+    override val name = "Tactician"
 }
 
 case object Apprentice extends CardEffect {
