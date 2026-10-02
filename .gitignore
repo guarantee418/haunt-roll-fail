@@ -11,3 +11,7 @@ haunt-roll-fail/target/scala-2.13/hrf-fastopt*
 
 # https certificate for the live server (holds the private key)
 good-game/certificate.pkcs12*
+
+# Bug reports saved by the server, and its GitHub token for posting them
+good-game/bug-reports/
+good-game/github-token

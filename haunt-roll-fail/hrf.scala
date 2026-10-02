@@ -235,6 +235,8 @@ trait Callbacks {
     def saveReplayOnline(replaceBots : Boolean, mergeHumans : Boolean)(onSave : String => Unit) : Unit
     def settings : $[Setting]
     def editSettings(onEdit : => Unit) : Unit
+    def canReportBug : Boolean
+    def reportBug() : Unit
 }
 
 sealed trait Difficulty
@@ -1385,6 +1387,27 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(implic
                     }
                 }
                 def settings = main.settings
+                def canReportBug = HRF.server.any && HRF.offline.not
+                def reportBug() = {
+                    journal.read(0) { actions =>
+                        val details = () =>
+                            "### Game\n\n" +
+                            "- Game: " + meta.label + " (" + meta.name + "), HRF " + HRF.version + "\n" +
+                            "- Title: " + title + "\n" +
+                            "- Factions: " + seating./(f => meta.factionName(f) + " (" + (difficulties.get(f) match {
+                                case Some(Bot(d)) => "bot " + d
+                                case Some(d) => d.toString.toLowerCase
+                                case None => "?"
+                            }) + ")").join(", ") + "\n" +
+                            self.any.??("- Reporter plays: " + self./(meta.factionName).join(", ") + "\n") +
+                            "- Options: " + options./(meta.writeOption).join(" ").some.|("none") + "\n" +
+                            "- Online game: " + HRF.lobby.|("no (local game)") + "\n" +
+                            "- Moves: " + actions.num + "\n\n" +
+                            "<details><summary>Moves so far (last 300)</summary>\n\n```\n" + actions.takeRight(300)./(meta.writeActionExternal).join("\n").takeRight(30000) + "\n```\n\n</details>"
+
+                        BugReport.show(HRF.server.get, details, () => {})
+                    }
+                }
             }
 
             val gui = HRF.metaUIs.toMap.apply(meta).asInstanceOf[BaseUI { val mmeta : meta.type }]
