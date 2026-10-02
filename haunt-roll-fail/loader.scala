@@ -13,6 +13,7 @@ import hrf.logger._
 import scalajs.js
 import scalajs.js.typedarray._
 import scalajs.js.timers.setTimeout
+import scalajs.js.|
 
 import org.scalajs.dom
 import org.scalajs.dom.html
@@ -196,6 +197,20 @@ class CachedBlobImageLoader(id : String) extends Loader[ImageWrapper] {
 
     var requests = 0
 
+    // Load without the cache; a network error gives an empty image instead of never finishing
+    def direct(url : String) {
+        dom.fetch(url).`then`[Null]({ response : dom.Response =>
+            response.blob().then { blob : dom.Blob =>
+                put(url, new BlobImageWrapper(url, blob))
+                null
+            }
+            null
+        }, js.defined({ e : Any =>
+            put(url, new BlobImageWrapper(url, new dom.Blob(js.Array())))
+            null
+        } : js.Function1[Any, Null | js.Thenable[Null]]))
+    }
+
     def process(url : String) {
         process(url, 0)
     }
@@ -203,16 +218,8 @@ class CachedBlobImageLoader(id : String) extends Loader[ImageWrapper] {
     def process(url : String, tries : Int) {
         // println("process " + url + " (x" + tries + ")")
 
-        if (open.isEmpty) {
-            dom.fetch(url).then { response : dom.Response =>
-                response.blob().then { blob : dom.Blob =>
-                    put(url, new BlobImageWrapper(url, blob))
-                    null
-                }
-                null
-            }
-            return
-        }
+        if (open.isEmpty)
+            return direct(url)
 
         open.get.then { cache =>
             cache.`match`(url).then({ response =>
@@ -222,13 +229,18 @@ class CachedBlobImageLoader(id : String) extends Loader[ImageWrapper] {
                     try {
                         if (tries == 0) {
                             // println("add " + url)
-                            cache.add(url).then { x =>
+                            // cache.add rejects when the file is missing (404) or the request fails;
+                            // without this the url stays Loading forever and "Loading assets" never finishes
+                            cache.add(url).`then`[Null]({ x : Unit =>
                                 // println("then " + x)
                                 setTimeout(tries * 400) {
                                     process(url, tries + 1)
                                 }
                                 null
-                            }
+                            }, js.defined({ e : Any =>
+                                direct(url)
+                                null
+                            } : js.Function1[Any, Null | js.Thenable[Null]]))
                         }
                         else {
                             // println("wait")
@@ -264,6 +276,16 @@ class CachedImageLoader(id : String) extends Loader[html.Image] {
 
     var requests = 0
 
+    // Load without the cache
+    def direct(url : String) {
+        ImageLoader.wait($(url)) {
+            if (ImageLoader.error(url))
+                fail(url)
+            else
+                put(url, ImageLoader.get(url))
+        }
+    }
+
     def process(url : String) {
         process(url, 0)
     }
@@ -271,10 +293,8 @@ class CachedImageLoader(id : String) extends Loader[html.Image] {
     def process(url : String, tries : Int) {
         // println("process " + url + " (x" + tries + ")")
 
-        if (open.isEmpty) {
-            ImageLoader.load(url)(img => put(url, img))
-            return
-        }
+        if (open.isEmpty)
+            return direct(url)
 
         open.get.then { cache =>
             cache.`match`(url).then({ response =>
@@ -284,13 +304,18 @@ class CachedImageLoader(id : String) extends Loader[html.Image] {
                     try {
                         if (tries == 0) {
                             // println("add " + url)
-                            cache.add(url).then { x =>
+                            // cache.add rejects when the file is missing (404) or the request fails;
+                            // without this the url stays Loading forever and "Loading assets" never finishes
+                            cache.add(url).`then`[Null]({ x : Unit =>
                                 // println("then " + x)
                                 setTimeout(tries * 400) {
                                     process(url, tries + 1)
                                 }
                                 null
-                            }
+                            }, js.defined({ e : Any =>
+                                direct(url)
+                                null
+                            } : js.Function1[Any, Null | js.Thenable[Null]]))
                         }
                         else {
                             // println("wait")
@@ -328,6 +353,20 @@ class CachedStringLoader(id : String) extends Loader[String] {
     // Cache Storage is only available in secure contexts (https or localhost)
     val open = dom.window.caches.toOption.map(_.open(id))
 
+    // Load without the cache
+    def direct(url : String) {
+        dom.fetch(url).`then`[Null]({ response : dom.Response =>
+            response.text().then { s : String =>
+                put(url, s)
+                null
+            }
+            null
+        }, js.defined({ e : Any =>
+            fail(url)
+            null
+        } : js.Function1[Any, Null | js.Thenable[Null]]))
+    }
+
     def process(url : String) {
         process(url, 0)
     }
@@ -335,16 +374,8 @@ class CachedStringLoader(id : String) extends Loader[String] {
     def process(url : String, tries : Int) {
         // println("process " + url + " (x" + tries + ")")
 
-        if (open.isEmpty) {
-            dom.fetch(url).then { response : dom.Response =>
-                response.text().then { s : String =>
-                    put(url, s)
-                    null
-                }
-                null
-            }
-            return
-        }
+        if (open.isEmpty)
+            return direct(url)
 
         open.get.then { cache =>
             cache.`match`(url).then({ response =>
@@ -354,13 +385,18 @@ class CachedStringLoader(id : String) extends Loader[String] {
                     try {
                         if (tries == 0) {
                             // println("add " + url)
-                            cache.add(url).then { x =>
+                            // cache.add rejects when the file is missing (404) or the request fails;
+                            // without this the url stays Loading forever and "Loading assets" never finishes
+                            cache.add(url).`then`[Null]({ x : Unit =>
                                 // println("then " + x)
                                 setTimeout(tries * 400) {
                                     process(url, tries + 1)
                                 }
                                 null
-                            }
+                            }, js.defined({ e : Any =>
+                                direct(url)
+                                null
+                            } : js.Function1[Any, Null | js.Thenable[Null]]))
                         }
                         else {
                             // println("wait")
