@@ -5,3 +5,6 @@ good-game-database.*
 # Temporary sbt run files
 **/target/bg-jobs/
 **/target/global-logging/
+
+# Development client build (sbt fastOptJS); the site loads the optimized hrf-opt.js
+haunt-roll-fail/target/scala-2.13/hrf-fastopt*
