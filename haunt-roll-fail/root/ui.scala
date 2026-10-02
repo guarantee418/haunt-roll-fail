@@ -596,12 +596,20 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
                     val rulers = (factions ++ game.unhired).%(game.states.contains).%(_.rules(c))
 
-                    if (callbacks.settings.has(FlagRule))
+                    if (callbacks.settings.has(FlagRule)) {
+                        // Flags are drawn at 60% of the asset size; a clearing nobody rules gets a bare pole
+                        val w = 144
+                        val h = 240
+
+                        if (rulers.none)
+                            g.drawImage(resources.images.get("flag-pole"), x - w / 2, y - h / 2, w, h)
+
                         rulers.indexed.foreach { (f, i) =>
                             flag(f).foreach { b =>
-                                g.drawImage(b.canvas, x - b.width / 2 + (i * 2 - rulers.num + 1) * b.width / 2, y - b.height / 2)
+                                g.drawImage(b.canvas, x - w / 2 + (i * 2 - rulers.num + 1) * w / 2, y - h / 2, w, h)
                             }
                         }
+                    }
 
                     rulers.foreach { f =>
                         {
