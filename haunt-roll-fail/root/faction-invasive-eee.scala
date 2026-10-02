@@ -103,7 +103,7 @@ case object LDvE extends InvasiveEEE {
     val name = "Lilypad Diaspora"
     override def funName = NameReference(name, this) ~ " Diaspora"
     val short = "LDvE"
-    val style = "LD"
+    val style = "hld"
     val priority = "T"
 }
 
@@ -299,7 +299,8 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
             FactionInitAction(f)
 
         case FactionSetupAction(f : InvasiveEEE) =>
-            val l = game.riverside.diff(game.homelands).%(f.canPlace)
+            val river = game.riverside.diff(game.homelands).%(f.canPlace)
+            val l = river.some.|(clearings.diff(game.homelands).%(c => game.connected(c).exists(game.riverside.has)).%(f.canPlace))
 
             Ask(f).each(l)(c => InvasiveEEESetupClearingAction(f, c)).needOk.bail(SetupFactionsAction)
 
