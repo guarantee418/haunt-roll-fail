@@ -182,7 +182,8 @@ case class InvasiveEEEProvokePlaceAction(self : InvasiveEEE, c : Clearing) exten
 
 case class InvasiveEEEDoneAction(f : InvasiveEEE, then : ForcedAction) extends ForcedAction
 
-case class InvasiveEEEMusterAction(f : InvasiveEEE, m : Message, then : ForcedAction) extends ForcedAction with Soft
+// Not Soft: it often places warriors right away, which undo replays must repeat
+case class InvasiveEEEMusterAction(f : InvasiveEEE, m : Message, then : ForcedAction) extends ForcedAction
 case class InvasiveEEEMusterClearingsAction(self : InvasiveEEE, m : Message, l : $[Clearing], then : ForcedAction) extends ForcedAction
 
 case class InvasiveEEERallyAction(self : InvasiveEEE) extends BaseAction("Rally".styled(self), "or", "Reconcile".styled(self))("Rally".styled(self))

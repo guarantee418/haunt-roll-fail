@@ -2,7 +2,7 @@ enablePlugins(ScalaJSPlugin)
 
 Compile / mainClass := Some("hrf.HRF")
 
-unmanagedSources / excludeFilter := "reflect-jvm.scala" || "log-jvm.scala" || "host-jvm.scala" || "grey-jvm.scala" || "timeline-jvm.scala" || "host.scala" || "convert-images.scala" || "extract-logs.scala"
+unmanagedSources / excludeFilter := "reflect-jvm.scala" || "log-jvm.scala" || "host-jvm.scala" || "grey-jvm.scala" || "timeline-jvm.scala" || "host.scala" || "replay-check.scala" || "convert-images.scala" || "extract-logs.scala"
 
 scalaJSUseMainModuleInitializer := true
 
