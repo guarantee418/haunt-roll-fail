@@ -994,7 +994,7 @@ object Meta extends MetaGame {
     )
 
     val official = $[Faction](MC, ED, WA, VB, LC, RF, UD, CC, LH, KI)
-    val homeland = $[Faction](LDvE, TC)
+    val homeland = $[Faction](LDvE, TC, KD)
     val clones = $[Faction](BK, PE, FU, NB, CM, /*WC,*/ DR, RI, LK)
     val fun = $[Faction](KDvA, TCvA, LDvD, LDvC, LDvB, TD, FH, XC, CUv2, CU, OK, AF, SF, MB)
 
@@ -1183,6 +1183,7 @@ object Meta extends MetaGame {
         factions.of[Mischief].num * 3 +
         factions.of[Expedition].num * 8 +
         factions.of[Horde].num * 9 +
+        factions.of[Knaves].num * 4 +
         (0 :: 5 :: 7 :: 9)(factions.of[Hero].num)
 
     def validateFactionCombination(factions : $[Faction]) = {
@@ -1191,6 +1192,9 @@ object Meta extends MetaGame {
         else
         if (factions.num > 8)
             ErrorResult("Max eight factions")
+        else
+        if (factions.of[Knaves].any && factions.of[Hero].any)
+            ErrorResult("Knaves of the Deepwood can't play with the Vagabond")
         else
         if (reach(factions) < factions.num.of(0 :: 0 :: 17 :: 18 :: 21 :: 25 :: 28 :: 28 :: 28))
             WarningResult("Reach " + reach(factions))
@@ -2869,7 +2873,7 @@ object Meta extends MetaGame {
         ImageAsset("tc-assembly"     ) ::
         ImageAsset("tc-convened"     ) ::
     $) ::
-    ConditionalAssetsList((factions, options) => factions.of[AbductAAA].any, "faction/abduct")(
+    ConditionalAssetsList((factions, options) => factions.of[CommonAbduct].any, "faction/abduct")(
         ImageAsset("kd-glyph"            ) ::
         ImageAsset("kd-title"            ) ::
         ImageAsset("kd-char"             ).scaled(20) ::
@@ -2887,6 +2891,8 @@ object Meta extends MetaGame {
         ImageAsset("kd-captain-birdsong-empty" , "kd-captain-empty" ) ::
         ImageAsset("kd-captain-daylight-empty" , "kd-captain-empty" ) ::
         ImageAsset("kd-captain-evening-empty"  , "kd-captain-empty" ) ::
+
+        ImageAsset("kd-acclaim"          ) ::
     $)
 
     override def intLinks = $(("Root: Advanced Setup".spn -> "root-adset"), ("Root: Mirror".spn -> "root-mirror"))

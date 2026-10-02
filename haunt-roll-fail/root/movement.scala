@@ -45,6 +45,7 @@ case object Roads extends Transport {
 
         case (o : Forest, d : Clearing) => game.fromForest(o).has(d)
         case (o : Clearing, d : Forest) => board.fromForest(d).has(o)
+        case (o : Forest, d : Forest) => f.is[Knaves] && game.board.forestsConnected(o, d)
         case _ => false
     }
 }
@@ -194,6 +195,7 @@ object MovementExpansion extends MandatoryExpansion {
     def describe(self : Faction, f : Faction, t : $[Elementary], l : $[Piece])(implicit game : Game) : $[Elem] = {
         val prefix = f @@ {
             case f : AbductAAA if self == f && l.of[SkunkAAACaptain].single.any => $(f.characters(l.of[SkunkAAACaptain].only.phase).name.styled(f), "moved".txt)
+            case f : Knaves if self == f && l.of[KnavesCaptain].single.any => $(l.of[KnavesCaptain].only.ofg(f), "moved".txt)
             case f => $(f.elem, "moved".txt, t./(_.elem ~ ", ").merge)
         }
 
@@ -207,6 +209,8 @@ object MovementExpansion extends MandatoryExpansion {
                 l./{
                     case SkunkAAACaptain(_) if self == f => Empty
                     case SkunkAAACaptain(phase) => f.as[AbductAAA]./(_.characters(phase).name.styled(f)).|("Captain".styled(f))
+                    case p : KnavesCaptain if self == f => Empty
+                    case p : KnavesCaptain => p.ofg(f)
                     case p => p.of(f)
                 }.but(Empty).comma
 

@@ -1,7 +1,9 @@
 # HRF (haunt-roll-fail) fork
 
-Fork of the HRF board game site (hrf.im), with the Twilight Council faction
-(playtest and official Root: Homeland versions). Written in Scala:
+Fork of the HRF board game site (hrf.im), with the Twilight Council and
+Knaves of the Deepwood factions (playtest and official Root: Homeland
+versions; the Homeland ones are `faction-council.scala` and
+`faction-knaves.scala`). Written in Scala:
 
 - `haunt-roll-fail/` — the game client, compiled to JavaScript with Scala.js
   (`target/scala-2.13/hrf-opt.js`, about 8 MB, 1.8 MB gzipped)
