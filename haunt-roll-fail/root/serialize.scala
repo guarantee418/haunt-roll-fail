@@ -43,6 +43,7 @@ object Serialize extends Serializer {
         case m : Minister => m.toString
         case i : Item => i.name
         case i : ItemRef => "%" + i.exhausted.??("%") + i.damaged.??("%%") + i.item.name
+        case d : FriendCard => "FriendCard(" + write(d.card) + ", " + write(d.disguise) + ")"
         case d : DeckCard => "#" + Deck.catalog.indexOf(d)
         case q : Quest => "&" + Quest.all.indexOf(q)
         case _ => super.write(o)

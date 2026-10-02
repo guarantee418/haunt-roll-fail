@@ -137,6 +137,8 @@ class ValueTracker[T] extends Tracker[T] {
 
     def get[S <: T](location : Location[T]) : $[S] = l2e(location).map(_.asInstanceOf[S])
 
+    def locationsOf(entity : T) : $[Location[T]] = locations.filter(l => l2e(l).contains(entity))
+
     def dump() {
         +++("")
         +++("--------------------------------------------------------------------------")

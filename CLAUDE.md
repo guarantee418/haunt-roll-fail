@@ -115,9 +115,26 @@ ssh -i ~/.ssh/oracle.key ubuntu@157.151.177.11 '~/hrf/live-server.sh deploy'
   (https://cards.ledergames.com/, data at
   `https://ledercards.netlify.app/cards.min.json`, images under
   `https://ledercards.netlify.app/cards/root/en-US/`), cropped and resized
-  to the 512x708 size of the other deck cards. The card effects themselves
-  are not implemented yet: `SquiresDeckExpansion` in `root/deck-squires.scala`
-  does nothing.
+  to the 512x708 size of the other deck cards.
+- The Squires and Disciples card effects are in `root/deck-squires.scala`
+  (`SquiresDeckExpansion`), with small hooks in `turn.scala` (Shadow Council,
+  Brazen Demagogue), `battle.scala` (The Faithful, Friend ambushes),
+  `game.scala` (Silver-Tongue rule, Brazen Demagogue scoring, Friend crafting
+  limit) and `ui.scala`. Rulings follow the Root Database FAQ. Deliberate
+  simplifications:
+  - Friend of the ___: once per turn, on your turn, an X card in hand is
+    replaced by a `FriendCard` of the chosen suit until the end of the turn
+    (`revertDisguises` at `CleanUpAction`). On other players' turns it only
+    works for ambushes.
+  - Silver-Tongue: the chosen clearing counts as ruled until the end of the
+    current phase, not for a single effect.
+  - Brazen Demagogue: the dominance can be activated only right when it is
+    taken; the player keeps scoring (`demagogue` flag in `FactionState`).
+  - Feather Rufflers, Spy Network, Silver-Tongue and Friend are usable from
+    the Birdsong, Daylight and Evening menus on your own turn.
+- Bot games can be run headless on the JVM with `root/host.scala` (see
+  `host.xsbt` for the source exclusions); it also checks that every action
+  serializes and parses back.
 - Each online game has a Spectator link and one link per player. Spectator
   accounts can read the game but not add moves. A move posted by one gets a
   500 with `empty result set ... "right" = 'append'` in the server log.
