@@ -948,7 +948,7 @@ object Meta extends MetaGame {
     val label = "Root"
 
     override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, HideRule, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone)
-    override def settingsDefaults = super.settingsDefaults ++ $(PromptAssignHits, PromptAmbush, ShowRule, NoOutOfTurn, HighlightNone)
+    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, ShowRule, NoOutOfTurn, HighlightNone)
 
     override val about = $(
         "A quaint and quirky adaptation of the " ~ "R".styled(Fox).larger ~ "O".styled(Rabbit).larger ~ "O".styled(Mouse).larger ~ "T".styled(Bird).larger ~ " board game.",
