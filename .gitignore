@@ -8,3 +8,6 @@ good-game-database.*
 
 # Development client build (sbt fastOptJS); the site loads the optimized hrf-opt.js
 haunt-roll-fail/target/scala-2.13/hrf-fastopt*
+
+# https certificate for the live server (holds the private key)
+good-game/certificate.pkcs12*
