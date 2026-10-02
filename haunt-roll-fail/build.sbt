@@ -9,6 +9,9 @@ scalaJSUseMainModuleInitializer := true
 scalaJSLinkerConfig ~= { _.withOptimizer(false) }
 // scalaJSLinkerConfig ~= { _.withOptimizer(true) }
 
+// fullOptJS (hrf-opt.js) is the build the site loads: optimizer and Closure Compiler on
+Compile / fullLinkJS / scalaJSLinkerConfig ~= { _.withOptimizer(true) }
+
 // scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
 
 // Compile / fullLinkJS / scalaJSLinkerConfig ~= { _.withClosureCompiler(false) }
