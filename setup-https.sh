@@ -63,6 +63,8 @@ sudo tee "$HOOK" > /dev/null <<EOF
 # The server notices the new file within a minute; no restart needed.
 set -e
 LINEAGE="\${RENEWED_LINEAGE:-/etc/letsencrypt/live/$HOST}"
+# Only the certificate for the hostname the server runs on
+[ "\$LINEAGE" = "/etc/letsencrypt/live/$HOST" ] || exit 0
 OUT="$GG_DIR/certificate.pkcs12"
 openssl pkcs12 -export -in "\$LINEAGE/fullchain.pem" -inkey "\$LINEAGE/privkey.pem" -out "\$OUT.tmp" -passout pass:
 chown $USER_NAME: "\$OUT.tmp"
