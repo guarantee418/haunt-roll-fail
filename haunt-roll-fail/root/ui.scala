@@ -304,16 +304,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         "kd" -> "knaves",
     )
 
-    // Clearing rule flag: the cloth filled with the faction background (or colour) and shaded, the faction glyph on it, then the cloth details and the pole
+    // Clearing rule flag: the cloth filled with the faction background (or colour) and shaded, then the cloth details and the pole
     def flag(f : Faction) : |[Bitmap] = flags.get(f).orElse {
         val cloth = resources.images.get("flag-cloth")
         val detail = resources.images.get("flag-cloth-detail")
         val pole = resources.images.get("flag-pole")
-        val glyph = resources.images.has(f.style + "-glyph").?(resources.images.get(f.style + "-glyph"))
         val background = flagBackgrounds.get(f.style.toLowerCase)./(b => resources.images.get("flag-bg-" + b))
         val color = scala.util.Try(styles.get(f)).toOption.flatMap(_.rules.flatMap(_.get).find(_.name == "color"))./(_.value).|("#888888")
 
-        if ((cloth :: detail :: pole :: glyph.toList ++ background.toList).forall(_.complete)) {
+        if ((cloth :: detail :: pole :: background.toList).forall(_.complete)) {
             val b = new Bitmap(cloth.width, cloth.height)
             val t = new Bitmap(cloth.width, cloth.height)
 
@@ -334,7 +333,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             t.context.drawImage(cloth, 0, 0)
 
             b.context.drawImage(t.canvas, 0, 0)
-            glyph.foreach(b.context.drawImage(_, 140, 76, 80, 80))
             b.context.drawImage(detail, 0, 0)
             b.context.drawImage(pole, 0, 0)
 
