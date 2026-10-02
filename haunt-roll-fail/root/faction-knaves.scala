@@ -184,6 +184,7 @@ class KnavesPlayer(val faction : Knaves)(implicit val game : Game) extends Facti
     val figures : $[Figure] = 0.until(3).$./(i => reserve.$.%(_.piece == KnavesCaptain(i)).only)
 
     var captains : $[KnaveCaptain] = $
+    var dealt : $[KnaveCaptain] = $
     var retired : $[KnaveCaptain] = $
     var acting : |[KnaveCaptain] = None
 
@@ -228,6 +229,7 @@ class KnavesPlayer(val faction : Knaves)(implicit val game : Game) extends Facti
 }
 
 
+case class KnavesDealCaptainsAction(self : Knaves, shuffled : $[KnaveCaptain]) extends ShuffledAction[KnaveCaptain]
 case class KnavesChooseCaptainAction(self : Knaves, k : KnaveCaptain) extends BaseAction("Choose", 3.hl, "Captains")(k.elem, k.items./(_.img).merge, Break, k.text)
 case class KnavesStartingForestAction(self : Knaves, k : KnaveCaptain, r : Forest) extends BaseAction(implicit g => k.elem, "and a", "Skunk".styled(self), "start in")(implicit g => board.forestName(r))
 
@@ -351,8 +353,19 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
 
             FactionInitAction(f)
 
+        // Advanced Setup deals 4 random Captain cards to choose 3 from
+        case FactionSetupAction(f : Knaves) if f.captains.none && f.dealt.none && game.players.of[PlayerN].any =>
+            Shuffle[KnaveCaptain](Knaves.captains, l => KnavesDealCaptainsAction(f, l))
+
+        case KnavesDealCaptainsAction(f, l) =>
+            f.dealt = l.take(4)
+
+            f.log("drew", f.dealt./(_.elem).comma, "as Captain cards")
+
+            FactionSetupAction(f)
+
         case FactionSetupAction(f : Knaves) if f.captains.num < 3 =>
-            Ask(f).each(Knaves.captains.diff(f.captains))(k => KnavesChooseCaptainAction(f, k)).needOk
+            Ask(f).each(f.dealt.some.|(Knaves.captains).diff(f.captains))(k => KnavesChooseCaptainAction(f, k)).needOk
 
         case KnavesChooseCaptainAction(f, k) =>
             f.captains :+= k
