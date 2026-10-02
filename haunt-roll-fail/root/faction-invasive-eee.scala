@@ -129,7 +129,7 @@ class InvasiveEEEPlayer(val faction : InvasiveEEE)(implicit val game : Game) ext
 
     // frog cards turned into another suit with Companions, and their stand-ins
     val companions = cards("companions")
-    val disguises = cards("disguises", Deck.frogEEE./~(d => InvasiveEEEExpansion.disguiseSuits./(DisguisedCard(d, _))))
+    val standins = cards("standins", Deck.frogEEE./~(d => InvasiveEEEExpansion.disguiseSuits./(DisguisedCard(d, _))))
 
     var retaliated : $[Clearing] = $
     var integrated = false
@@ -765,7 +765,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
 
         case InvasiveEEECompanionsAction(f, e, d, s, then) =>
             f.hand --> d --> e.companions
-            e.disguises --> DisguisedCard(d, s) --> f.hand
+            e.standins --> DisguisedCard(d, s) --> f.hand
 
             f.log("turned", d, "into a", s, "card with", FrogCompanions(e))
 
