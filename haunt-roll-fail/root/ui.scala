@@ -285,6 +285,65 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     lazy val mp = resources.images.get(mapid + "map")
     var deadmp : Bitmap = null
 
+    val flags = mutable.Map[Faction, Bitmap]()
+
+    // Clearing rule flag backgrounds by faction style; factions without one get a plain cloth in their colour
+    val flagBackgrounds = Map(
+        "mc" -> "cats", "bk" -> "cats", "fph" -> "cats", "frp" -> "cats",
+        "ed" -> "birds", "pe" -> "birds", "bbn" -> "birds", "ldn" -> "birds",
+        "wa" -> "alliance", "fu" -> "alliance", "af" -> "alliance", "rsc" -> "alliance", "sup" -> "alliance",
+        "vb" -> "vagabond", "nb" -> "vagabond", "mb" -> "vagabond", "bri" -> "vagabond", "exl" -> "vagabond",
+        "rf" -> "otters", "wc" -> "otters", "sf" -> "otters", "odv" -> "otters", "rff" -> "otters",
+        "lc" -> "lizards", "cm" -> "lizards", "len" -> "lizards", "wsp" -> "lizards",
+        "ud" -> "moles", "dr" -> "moles", "mar" -> "moles", "vlk" -> "moles",
+        "cc" -> "crows", "ri" -> "crows", "rsn" -> "crows", "csp" -> "crows",
+        "lh" -> "rats", "lk" -> "rats", "rsm" -> "rats", "fmb" -> "rats",
+        "ki" -> "badgers", "ok" -> "badgers", "bbg" -> "badgers", "swe" -> "badgers",
+        "td" -> "frogs", "ld" -> "frogs", "hld" -> "frogs",
+        "tc" -> "bats",
+        "kd" -> "knaves",
+    )
+
+    // Clearing rule flag: the cloth filled with the faction background (or colour) and shaded, then the cloth details and the pole
+    def flag(f : Faction) : |[Bitmap] = flags.get(f).orElse {
+        val cloth = resources.images.get("flag-cloth")
+        val detail = resources.images.get("flag-cloth-detail")
+        val pole = resources.images.get("flag-pole")
+        val background = flagBackgrounds.get(f.style.toLowerCase)./(b => resources.images.get("flag-bg-" + b))
+        val color = scala.util.Try(styles.get(f)).toOption.flatMap(_.rules.flatMap(_.get).find(_.name == "color"))./(_.value).|("#888888")
+
+        if ((cloth :: detail :: pole :: background.toList).forall(_.complete)) {
+            val b = new Bitmap(cloth.width, cloth.height)
+            val t = new Bitmap(cloth.width, cloth.height)
+
+            background match {
+                case Some(bg) =>
+                    t.context.drawImage(bg, 122, 28)
+                    t.context.globalCompositeOperation = "multiply"
+                    t.context.drawImage(cloth, 0, 0)
+
+                case None =>
+                    t.context.drawImage(cloth, 0, 0)
+                    t.context.globalCompositeOperation = "multiply"
+                    t.context.fillStyle = color
+                    t.context.fillRect(0, 0, t.width, t.height)
+            }
+
+            t.context.globalCompositeOperation = "destination-in"
+            t.context.drawImage(cloth, 0, 0)
+
+            b.context.drawImage(t.canvas, 0, 0)
+            b.context.drawImage(detail, 0, 0)
+            b.context.drawImage(pole, 0, 0)
+
+            flags(f) = b
+
+            |(b)
+        }
+        else
+            None
+    }
+
     def drawMap() {
         // The map images may still be loading (slow connections, phones);
         // retry instead of leaving the map blank until the next update
@@ -533,9 +592,25 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                         g.drawImage(resources.images.get("clearing-suit-" + s + "-off"), x - 30 - dx - 40 * n - (n > 0).??(10) - (n > 2).??(5), y + 165)
                     }
 
-                    (factions ++ game.unhired).foreach { f =>
-                        if (game.states.contains(f))
-                        if (f.rules(c)) {
+                    val rulers = (factions ++ game.unhired).%(game.states.contains).%(_.rules(c))
+
+                    if (callbacks.settings.has(FlagRule)) {
+                        // Flags are drawn at 60% of the asset size; a clearing nobody rules gets a bare pole
+                        val w = 144
+                        val h = 240
+
+                        if (rulers.none)
+                            g.drawImage(resources.images.get("flag-pole"), x - w / 2, y - h / 2, w, h)
+
+                        rulers.indexed.foreach { (f, i) =>
+                            flag(f).foreach { b =>
+                                g.drawImage(b.canvas, x - w / 2 + (i * 2 - rulers.num + 1) * w / 2, y - h / 2, w, h)
+                            }
+                        }
+                    }
+
+                    rulers.foreach { f =>
+                        {
                             f match {
                                 case f : WarriorFaction =>
                                     if (callbacks.settings.has(ShowRule)) {
