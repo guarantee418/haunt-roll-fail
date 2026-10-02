@@ -2605,6 +2605,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     HGap ~
                     HGap ~
                     HGap ~
+                    Image("hld-board")(styles.factionboard) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
                     less("Frogs".hl.larger) ~
                     more("Frogs".hl.larger, "are", "warriors".hh, Comma, "they", "battle".hh, "and provide", "rule".hh, Dot) ~
                     desc(f.all(f.warrior).num.hl.larger, "on the map,", f.pooled(f.warrior).hl.larger, "in reserve") ~

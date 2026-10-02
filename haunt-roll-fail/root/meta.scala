@@ -2772,37 +2772,6 @@ object Meta extends MetaGame {
         ImageAsset("outcast-rabbit"      , "../fanatic/outcast-rabbit") ::
         ImageAsset("outcast-mouse"       , "../fanatic/outcast-mouse") ::
     $) ::
-    ConditionalAssetsList((factions, options) => factions.of[InvasiveEEE].any, "faction/invasive/card", lzy = Laziness.Later, scale = 50)(
-        ImageAsset("card-frog-back-art") ::
-        ImageAsset("frog-ambush", "hl-frog-ambush") ::
-        ImageAsset("hl-frog-dominance") ::
-        ImageAsset("hl-rabbit-laborers") ::
-        ImageAsset("hl-mouse-laborers") ::
-        ImageAsset("hl-fox-laborers") ::
-        ImageAsset("hl-settlers") ::
-        ImageAsset("hl-stewards") ::
-        ImageAsset("hl-companions") ::
-        ImageAsset("hl-agitators") ::
-        ImageAsset("hl-advocates") ::
-        ImageAsset("hl-militias") ::
-        ImageAsset("hl-assimilationists") ::
-        ImageAsset("hl-frog-partisans") ::
-    $) ::
-    ConditionalAssetsList((factions, options) => factions.of[InvasiveEEE].any, "faction/invasive")(
-        ImageAsset("ld-glyph"            , "td-glyph"            ) ::
-        ImageAsset("ld-title"                                    ) ::
-        ImageAsset("ld-char"             , "td-char"             ) ::
-
-        ImageAsset("ld-frog"          , "td-frog"          ) ::
-        ImageAsset("ld-frog-empty"    , "td-frog-empty"    ) ::
-        ImageAsset("ld-frog-x5"       , "td-frog-x5"       ) ::
-        ImageAsset("ld-frog-x5-empty" , "td-frog-x5-empty" ) ::
-        ImageAsset("ld-peaceful"      , "td-peaceful"      ) ::
-        ImageAsset("ld-militant"      , "td-militant"      ) ::
-
-        ImageAsset("ld-action"        , "td-action"        ) ::
-        ImageAsset("ld-action-done"   , "td-action-done"   ) ::
-    $) ::
     ConditionalAssetsList((factions, options) => factions.of[InvasiveDDD].any, "faction/invasive/card", lzy = Laziness.Later, scale = 50)(
         ImageAsset("card-frog-back-art") ::
         ImageAsset("frog-ambush") ::
@@ -2832,6 +2801,38 @@ object Meta extends MetaGame {
         ImageAsset("outcast-fox"         , "../fanatic/outcast-fox") ::
         ImageAsset("outcast-rabbit"      , "../fanatic/outcast-rabbit") ::
         ImageAsset("outcast-mouse"       , "../fanatic/outcast-mouse") ::
+    $) ::
+    ConditionalAssetsList((factions, options) => factions.of[InvasiveEEE].any, "faction/invasive/card", lzy = Laziness.Later, scale = 50)(
+        ImageAsset("card-frog-back-art") ::
+        ImageAsset("frog-ambush", "hl-frog-ambush") ::
+        ImageAsset("hl-frog-dominance") ::
+        ImageAsset("hl-rabbit-laborers") ::
+        ImageAsset("hl-mouse-laborers") ::
+        ImageAsset("hl-fox-laborers") ::
+        ImageAsset("hl-settlers") ::
+        ImageAsset("hl-stewards") ::
+        ImageAsset("hl-companions") ::
+        ImageAsset("hl-agitators") ::
+        ImageAsset("hl-advocates") ::
+        ImageAsset("hl-militias") ::
+        ImageAsset("hl-assimilationists") ::
+        ImageAsset("hl-frog-partisans") ::
+    $) ::
+    ConditionalAssetsList((factions, options) => factions.of[InvasiveEEE].any, "faction/invasive")(
+        ImageAsset("hld-glyph"                                   ) ::
+        ImageAsset("hld-title"           , "ld-title"            ) ::
+        ImageAsset("hld-char"            , "td-char"             ) ::
+        ImageAsset("hld-board"                                   ) ::
+
+        ImageAsset("hld-frog"                              ) ::
+        ImageAsset("hld-frog-empty"                        ) ::
+        ImageAsset("hld-frog-x5"                           ) ::
+        ImageAsset("hld-frog-x5-empty"                     ) ::
+        ImageAsset("hld-peaceful"                          ) ::
+        ImageAsset("hld-militant"                          ) ::
+
+        ImageAsset("hld-action"                            ) ::
+        ImageAsset("hld-action-done"                       ) ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[LegalAAA].any, "faction/legal")(
         ImageAsset("tc-glyph"            ) ::
