@@ -98,12 +98,19 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     })
 
 
-    lazy val findAnother = {
+    lazy val place = {
         val mplace = resources.images.get(mapid + "map-regions")
         val placeb = new Bitmap(mplace.width, mplace.height)
         placeb.context.drawImage(mplace, 0, 0)
         val placed = placeb.context.getImageData(0, 0, placeb.width, placeb.height).data
-        val place = Array.tabulate(placeb.width, placeb.height)((x, y) => placed((y * placeb.width + x) * 4) * 0x010000 + placed((y * placeb.width + x) * 4 + 1) * 0x0100 + placed((y * placeb.width + x) * 4 + 2))
+        Array.tabulate(placeb.width, placeb.height)((x, y) => placed((y * placeb.width + x) * 4) * 0x010000 + placed((y * placeb.width + x) * 4 + 1) * 0x0100 + placed((y * placeb.width + x) * 4 + 2))
+    }
+
+    def sameRegion(x : Int, y : Int, xx : Int, yy : Int) = xx >= 0 && yy >= 0 && xx < place.length && yy < place(0).length && place(xx)(yy) == place(x)(y)
+
+    lazy val findAnother = {
+        val width = place.length
+        val height = place(0).length
 
         (x : Int, y : Int) => {
             val p = place(x)(y)
@@ -115,8 +122,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             var yy = 0
 
             do {
-                xx = (placeb.width * math.random()).toInt
-                yy = (placeb.height * math.random()).toInt
+                xx = (width * math.random()).toInt
+                yy = (height * math.random()).toInt
             }
             while (place(xx)(yy) != p)
 
@@ -286,6 +293,33 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     var deadmp : Bitmap = null
 
     val flags = mutable.Map[Faction, Bitmap]()
+
+    // Clearing rule flags are drawn at 60% of the asset size, standing on a spot chosen per clearing
+    val flagWidth = 144
+    val flagHeight = 240
+    val flagSpots = mutable.Map[Region, (Int, Int)]()
+
+    // The part of a flag standing at (x, y) that pieces should keep clear of: the cloth, the pole and the mound
+    def flagRect(x : Int, y : Int) = DrawRect("", x - 22, y - 230, 94, 230)
+
+    def overlap(a : DrawRect, b : DrawRect) : Double = {
+        val w = min(a.x + a.width, b.x + b.width) - max(a.x, b.x)
+        val h = min(a.y + a.height, b.y + b.height) - max(a.y, b.y)
+        (w > 0 && h > 0).?(w * h).|(0)
+    }
+
+    // The spot in the clearing nearest its centre where the flag covers the fewest building slots and none of the clearing name
+    def findFlagSpot(px : Int, py : Int, fixed : $[DrawItem]) : (Int, Int) = {
+        val obstacles = fixed.%(_.piece != Keep)./(_.rect).%(_ != null) :+ DrawRect("", px - 240, py + 155, 480, 60)
+
+        val spots = for (dx <- -200.to(200, 20); dy <- -120.to(220, 20) if sameRegion(px, py, px + dx, py + dy)) yield (px + dx, py + dy)
+
+        (spots :+ (px, py + flagHeight / 2)).minBy { case (x, y) =>
+            obstacles./(o => overlap(flagRect(x, y), o)).sum * 10 +
+            sameRegion(px, py, x + 36, y - 170).not.??(50000) +
+            math.sqrt((x - px) * (x - px) + (y - py - flagHeight / 2) * (y - py - flagHeight / 2))
+        }
+    }
 
     // Clearing rule flag backgrounds by faction style; factions without one get a plain cloth in their colour
     val flagBackgrounds = Map(
@@ -595,16 +629,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     val rulers = (factions ++ game.unhired).%(game.states.contains).%(_.rules(c))
 
                     if (callbacks.settings.has(FlagRule)) {
-                        // Flags are drawn at 60% of the asset size; a clearing nobody rules gets a bare pole
-                        val w = 144
-                        val h = 240
+                        // A clearing nobody rules gets a bare pole
+                        val w = flagWidth
+                        val h = flagHeight
+                        val (fx, fy) = flagSpots.get(c).|((x, y + h / 2))
 
                         if (rulers.none)
-                            g.drawImage(resources.images.get("flag-pole"), x - w / 2, y - h / 2, w, h)
+                            g.drawImage(resources.images.get("flag-pole"), fx - w / 2, fy - h, w, h)
 
                         rulers.indexed.foreach { (f, i) =>
                             flag(f).foreach { b =>
-                                g.drawImage(b.canvas, x - w / 2 + (i * 2 - rulers.num + 1) * w / 2, y - h / 2, w, h)
+                                g.drawImage(b.canvas, fx - w / 2 + (i * 2 - rulers.num + 1) * w / 2, fy - h, w, h)
                             }
                         }
                     }
@@ -744,6 +779,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
             val (px, py) = game.board.center(r)
 
+            if (callbacks.settings.has(FlagRule) && r.is[Clearing] && game.clearings.contains(r))
+                flagSpots(r) = findFlagSpot(px, py, fixed)
+            else
+                flagSpots -= r
+
+            val flag = flagSpots.get(r)./((flagRect _).tupled)
+
             free.sortBy(d => -rank(d)).foreach { d =>
                 sticking +:= Array.tabulate(40)(n => findAnother(px, py))
                   .sortBy { case (x, y) => ((x - px).abs * 5 + (y - py).abs) }
@@ -756,7 +798,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                         val h = min(o.y + o.height, d.y + d.height) - max(o.y, d.y)
                         val s = (w > 0 && h > 0).?(w * h).|(0)
                         s * (1.0 / (o.width * o.height) + 1.0 / (d.width * d.height))
-                    }.sum
+                    }.sum + flag./(f => overlap(dd.rect, f) * 3.0 / (dd.rect.width * dd.rect.height)).|(0.0)
                 }
             }
 
