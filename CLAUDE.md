@@ -198,6 +198,16 @@ git fetch origin main && git push origin origin/main:refs/heads/deploy
 - Bot games can be run headless on the JVM with `root/host.scala` (see
   `host.xsbt` for the source exclusions); it also checks that every action
   serializes and parses back.
+- Undo, and loading a game, rebuild it by replaying the recorded actions
+  with `performVoid`, which stops at the first `Soft` action in a chain.
+  So an action marked `with Soft` must only offer choices (return an `Ask`);
+  if it changes the game (places pieces, moves on with `Next`), replays
+  skip that and the game breaks (blank map, `... not found among ...` in
+  the console). Lilypad Diaspora's `InvasiveEEEMusterAction` had this bug.
+  `root/replay-check.scala` plays bot games and checks that replaying every
+  prefix of the recorded actions matches the live game:
+  `sbt "runMain root.ReplayCheck <games> [base|ld|tc|kd] [dense]"` with the
+  `host.xsbt` setup.
 - Each online game has a Spectator link and one link per player. Spectator
   accounts can read the game but not add moves. A move posted by one gets a
   500 with `empty result set ... "right" = 'append'` in the server log.
