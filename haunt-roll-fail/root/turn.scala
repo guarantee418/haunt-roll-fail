@@ -151,7 +151,7 @@ object TurnExpansion extends MandatoryExpansion {
             val mandatory =
                 FoxRabbitMouse.%(s => f.can(ServiceOfThe(s)))./(s => ServiceOfMainAction(f, s)) ++
                 f.can(BetterBurrowBank).??(factions.but(f)./(BetterBurrowBankAction(f, _))) ++
-                f.can(ShadowCouncil).?(ShadowCouncilMainAction(f).!(f.hand.none)) ++
+                f.can(ShadowCouncil).?(ShadowCouncilMainAction(f)) ++
                 f.can(Apprentice).?(ApprenticeMainAction(f)) ++
                 f.can(Riversteads).?(RiversteadsAction(f)) ++
                 f.can(StoicProtector).?? {
@@ -267,6 +267,12 @@ object TurnExpansion extends MandatoryExpansion {
                 val milk = game.dusk.num
 
                 + DuskAwakeningMainAction(f, feed, milk, UsedEffectAction(f, DuskAwakening, Repeat)).as(DuskAwakening)(group)
+            }
+
+            if (f.has(BrazenDemagogue)) {
+                skip = false
+
+                + BrazenDemagogueMainAction(f, Repeat).as(BrazenDemagogue)(group)
             }
 
             if (f.has(MilitarySupplies) && f.ignored.has(MilitarySupplies).not) {

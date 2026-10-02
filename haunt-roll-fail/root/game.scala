@@ -435,6 +435,11 @@ trait FactionState {
     val hand = cards("hand")
     val stuck = cards("stuck")
     val drawn = cards("drawn")
+    val disguised = cards("disguised")
+    val friendTrash = cards("friend-trash")
+    var disguises : $[FriendCard] = $
+    var silverTongue : |[(Clearing, Int, Phase)] = None
+    var demagogue : Boolean = false
     var dominance : |[Dominance] = None
     var coalition : |[Faction] = None
     var contracts : $[Hireling] = $
@@ -831,7 +836,7 @@ trait GameImplicits {
             if (f.is[Hireling])
                 return
 
-            val vpcond = f.dominance.none && f.coalition.none
+            val vpcond = (f.dominance.none || f.demagogue) && f.coalition.none
 
             val real = (vpcond || game.options.has(TotalWarDominance)) && vp != 0
 
@@ -1119,6 +1124,7 @@ trait GameImplicits {
 
 
         def rules(c : Region) : Boolean = f @@ {
+            case f if SquiresDeckExpansion.silverTongueRules(f, c) => true
             case h : Hireling if factions.%(_.has(h)).%(f => f.rules(c)).any => true
             case f =>
                 val mercs = traders.%(s => f.has(Mercenaries(s)) || f.has(Peacekeepers(s)))
@@ -1127,7 +1133,7 @@ trait GameImplicits {
                 f.ruleValue(c, mercs, friends) > (factions ++ game.unhired).but(f).diff(mercs).diff(friends)./(e => e.ruleValue(c, $, $)).maxOr(0)
         }
 
-        def ruleSelf(c : Clearing) = f.ruleValue(c, $, $) > (factions ++ game.unhired).but(f)./(e => e.ruleValue(c, $, $)).maxOr(0)
+        def ruleSelf(c : Clearing) = SquiresDeckExpansion.silverTongueRules(f, c) || f.ruleValue(c, $, $) > (factions ++ game.unhired).but(f)./(e => e.ruleValue(c, $, $)).maxOr(0)
 
         def removeStuckEffect(effect : Effect) {
             f.effects :-= effect
@@ -1154,6 +1160,7 @@ trait GameImplicits {
             case d if d.suit == Frog && f.is[InvasiveDDD] => false
             case d : CraftItemCard if game.uncrafted.has(d.item).not => false
             case d : CraftEffectCard if f.has(d.effect) => false
+            case d : CraftEffectCard if d.effect.is[FriendOfThe] && f.effects.of[FriendOfThe].any => false
             case d : CraftCard if d.cost.num > limit => false
             case d : CraftCard if (d.cost ++ used).num > craft.num => false
             case d : CraftCard =>

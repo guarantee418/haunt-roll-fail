@@ -133,7 +133,7 @@ object BattleExpansion extends MandatoryExpansion {
         case Ambush(Frog) if opponent.is[InvasiveCCC] => false
         case Ambush(Frog) if opponent.is[InvasiveBBB] => false
         case Ambush(Frog) if opponent.is[InvasiveAAA] => false
-        case Ambush(s) => clearing.cost.matched(s)
+        case Ambush(s) => clearing.cost.matched(s) || SquiresDeckExpansion.friendAmbush(faction, clearing)(d)
         case CraftItemCard(_, _, _, Sword, _, _)  => faction.has(TrickyClaws) && clearing.cost.matched(Fox)
         case CraftItemCard(_, _, _, Coins, _, _)  => faction.has(TrickyEars)  && clearing.cost.matched(Rabbit)
         case CraftItemCard(_, _, _, Teapot, _, _) => faction.has(TrickyTails) && clearing.cost.matched(Mouse)
@@ -428,7 +428,7 @@ object BattleExpansion extends MandatoryExpansion {
             else {
                 val f = b.attacker
                 val z = f.hand.any
-                val q = f.hand.%(d => d == Ambush(Bird) || b.clearing.suits.exists(s => d == Ambush(s)))
+                val q = f.hand.%(d => d == Ambush(Bird) || b.clearing.suits.exists(s => d == Ambush(s)) || SquiresDeckExpansion.friendAmbush(f, b.clearing)(d))
                 val h = f.hand./(d => BattleCounterAmbushAction(f, b, d, q.any, q.contains(d), then).!(q.contains(d).not))
 
                 if (q.any)
@@ -717,6 +717,14 @@ object BattleExpansion extends MandatoryExpansion {
                     if (f.has(Sappers))
                         if (f == b.defender && oh + oe < ft)
                             actions :+= SappersAction(f, BattlePostRollAction(b, fh, oh, fe, oe + 1, full))
+
+                    if (f.can(TheFaithful)) {
+                        if (f == b.attacker && fh + fe < ot)
+                            actions :+= TheFaithfulAction(f, b.clearing, BattlePostRollAction(b, fh, oh, fe + 1, oe, full))
+
+                        if (f == b.defender && oh + oe < ft)
+                            actions :+= TheFaithfulAction(f, b.clearing, BattlePostRollAction(b, fh, oh, fe, oe + 1, full))
+                    }
 
                     b.clearing.suits.%(s => f.can(Partisans(s))).foreach { s =>
                         def x = f.hand.%!(d => d.matches(s) && (d.suit != Bird || options.has(NonBirdPartisans).not))
