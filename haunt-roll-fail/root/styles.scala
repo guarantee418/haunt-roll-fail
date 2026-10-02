@@ -114,6 +114,7 @@ package object elem {
         LDvB --> color("#3c7174")
         LDvC --> color("#3c7174")
         LDvD --> color("#3c7174")
+        LDvE --> color("#3c7174")
 
         TCvA --> color("#954a2e")
         TC --> color("#954a2e")
@@ -390,6 +391,7 @@ package object elem {
         LDvB --> outline.color("#1e383a")
         LDvC --> outline.color("#1e383a")
         LDvD --> outline.color("#1e383a")
+        LDvE --> outline.color("#1e383a")
         TCvA --> outline.color("#4a2517")
         TC --> outline.color("#4a2517")
         KDvA --> outline.color("#68696a")
@@ -429,6 +431,7 @@ package object elem {
         LDvB --> $(width("15ch"), top("-0.8ch"))
         LDvC --> $(width("15ch"), top("-0.8ch"))
         LDvD --> $(width("15ch"), top("-0.8ch"))
+        LDvE --> $(width("15ch"), top("-0.8ch"))
         TCvA --> $(width("15ch"), top("-1.5ch"))
         TC --> $(width("15ch"), top("-1.5ch"))
         KDvA --> $(width("22ch"), top("-0.8ch"), clip.path("polygon(0% 0%, 86% 0%, 100% 23%, 100% 40%, 71% 100%, 0% 100%)"))
