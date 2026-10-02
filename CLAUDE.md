@@ -96,6 +96,29 @@ ssh -i ~/.ssh/oracle.key ubuntu@157.151.177.11 '~/hrf/live-server.sh deploy'
   `live-server.sh stop`, then `start`.
 - Not yet set up: certificate renewal.
 
+### Bug reports
+
+- The in-game menu (under "Interface") has a "Report a Bug" button. The
+  player types a summary and description; the client adds the game, factions,
+  options, online game id, the last 300 moves, the last 50 console errors and
+  warnings (collected by the `console-capture` script in `index.html`) and the
+  browser. It posts that to `/report-bug`, and the server opens a GitHub issue
+  labeled `bug report` and shows the player its link (to add a screenshot).
+- The server saves every report to `~/hrf/good-game/bug-reports/` first, so
+  none are lost if posting fails.
+- Posting needs a GitHub token: a fine-grained personal access token for
+  `guarantee418/haunt-roll-fail` with Issues: read and write. Put it in
+  `~/hrf/good-game/github-token` (or the `HRF_GITHUB_TOKEN` environment
+  variable) and `chmod 600` it; the server reads it for each report, so no
+  restart is needed. `github-repo` / `HRF_GITHUB_REPO` overrides the
+  repository. Without a token the reports are only saved on the server.
+  `github-token` and `bug-reports/` are gitignored. Never commit the token.
+- Limits: 10 reports per IP address per hour, 60,000 characters per report,
+  and only from pages whose `Referer` starts with the server URL. A failed
+  post is logged as `Bug report not posted: ...` (see `live-server.sh log`).
+- Reports never include the page URL, because player links contain the
+  player's secret.
+
 ## Gotchas
 
 - Over https (or on `localhost`), the loaders in
