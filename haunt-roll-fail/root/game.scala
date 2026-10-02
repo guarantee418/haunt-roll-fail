@@ -775,6 +775,7 @@ trait GameImplicits {
     implicit def utopiaState(f : Utopia)(implicit game : Game) = game.states(f).as[UtopiaPlayer].get
     implicit def casterState(f : Caster)(implicit game : Game) = game.states(f).as[CasterPlayer].get
     implicit def farmerState(f : Farmer)(implicit game : Game) = game.states(f).as[FarmerPlayer].get
+    implicit def invasiveEEEState(f : InvasiveEEE)(implicit game : Game) = game.states(f).as[InvasiveEEEPlayer].get
     implicit def invasiveDDDState(f : InvasiveDDD)(implicit game : Game) = game.states(f).as[InvasiveDDDPlayer].get
     implicit def invasiveCCCState(f : InvasiveCCC)(implicit game : Game) = game.states(f).as[InvasiveCCCPlayer].get
     implicit def invasiveBBBState(f : InvasiveBBB)(implicit game : Game) = game.states(f).as[InvasiveBBBPlayer].get
@@ -782,6 +783,7 @@ trait GameImplicits {
     implicit def legalAAAState(f : LegalAAA)(implicit game : Game) = game.states(f).as[LegalAAAPlayer].get
     implicit def councilState(f : Council)(implicit game : Game) = game.states(f).as[CouncilPlayer].get
     implicit def abductorAAAState(f : AbductAAA)(implicit game : Game) = game.states(f).as[AbductAAAPlayer].get
+    implicit def knavesState(f : Knaves)(implicit game : Game) = game.states(f).as[KnavesPlayer].get
 
     implicit def streetBandState(f : StreetBand.type)(implicit game : Game) = game.states(f).as[StreetBandState].get
     implicit def popularBandState(f : PopularBand.type)(implicit game : Game) = game.states(f).as[PopularBandState].get
@@ -887,7 +889,7 @@ trait GameImplicits {
     implicit class FactionEx(f : Faction)(implicit game : Game) {
         def validDest : $[Region] = (f @@ {
             case f : Hero => game.board.forests
-            case f : AbductAAA => game.board.forests
+            case f : CommonAbduct => game.board.forests
             case f : TheExile.type => game.board.forests
             case f : Underground => $(f.burrow)
             case _ => $()
@@ -1301,7 +1303,12 @@ trait GameImplicits {
         def -->(dest : DirectDiscard.type) {
             d @@ {
                 case d : Dominance => source --> d --> game.dominances
+                case d : DisguisedCard if factions.of[InvasiveEEE].any =>
+                    val e = factions.of[InvasiveEEE].first
+                    source --> d --> e.standins
+                    e.companions --> d.card --> e.pond
                 case d if d.suit == Frog => source --> d -->{
+                    factions.of[InvasiveEEE].single./(_.pond) ||
                     factions.of[InvasiveDDD].single./(_.deck) ||
                     factions.of[InvasiveCCC].single./(_.pile) ||
                     factions.of[InvasiveBBB].single./(_.pile) ||
@@ -1469,6 +1476,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
             UtopiaExpansion,
             CasterExpansion,
             FarmerExpansion,
+            InvasiveEEEExpansion,
             InvasiveDDDExpansion,
             InvasiveCCCExpansion,
             InvasiveBBBExpansion,
@@ -1476,6 +1484,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
             LegalAAAExpansion,
             CouncilExpansion,
             AbductAAAExpansion,
+            KnavesExpansion,
 
             StandardDeckExpansion,
             ExilesDeckExpansion,

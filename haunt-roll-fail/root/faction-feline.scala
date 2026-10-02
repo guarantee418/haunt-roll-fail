@@ -281,6 +281,7 @@ object FelineExpansion extends FactionExpansion[Feline] {
         case c : CraftItemCard => f.craftableWith(f.craft, $)(c).?(c.vp * 100).|(c.vp * 10)
         case c : CraftEffectCard => f.craftableWith(f.craft, $)(c).?(200).|(50)
         case d : Dominance => 1
+        case _ : DisguisedCard => 100
         case _ => throw new Error("card with no value " + d)
     }
 

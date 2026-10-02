@@ -259,6 +259,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case SkunkAAACaptain(Birdsong) => { DrawRect(pr + "captain-birdsong", -42, -81, 85, 86) }
             case SkunkAAACaptain(Daylight) => { DrawRect(pr + "captain-daylight", -42, -81, 85, 86) }
             case SkunkAAACaptain(Evening)  => { DrawRect(pr + "captain-evening" , -42, -81, 85, 86) }
+            case KnavesCaptain(0) => { DrawRect(pr + "captain-birdsong", -42, -81, 85, 86) }
+            case KnavesCaptain(1) => { DrawRect(pr + "captain-daylight", -42, -81, 85, 86) }
+            case KnavesCaptain(_) => { DrawRect(pr + "captain-evening" , -42, -81, 85, 86) }
+            case Acclaim => { DrawRect(pr + "acclaim", -45, -45, 90, 90) }
             case _ : CommonSkunkWarrior => { DrawRect(pr + "skunk", -36, -81, 70, 86) }
 
             case _ =>
@@ -1521,6 +1525,22 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 &((Image(f.style + "-hamster-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-hamster", styles.wr) *** (f.all(f.warrior).num % 5))) ~
                 &((Image(f.style + "-hamster-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-hamster-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
 
+            case f : InvasiveEEE =>
+                Hint("Enclaves\n" + f.peaceful.num + " Peaceful, " + f.militant.num + " Militant on the map\n" + f.available + " available",
+                    (Image(f.style + "-peaceful", styles.token) *** f.peaceful.num) ~
+                    (Image(f.style + "-militant", styles.token) *** f.militant.num) ~
+                    (Image("empty-token", styles.token) *** f.available)) ~
+                Gap ~
+                Hint("Pond\n" + f.pond.num + " " + Frog.name + " cards, top card shown",
+                    (
+                        (f.pond.num.formatted("%2d").hl.styled(styles.doubleFigures) ~ Image(f.pond.any.?("pile-frog").|("pile-empty"), styles.pile))
+                    ).&.pointer.onClick.param("view-frog-deck", f)
+                ).div(xstyles.smaller75) ~
+                (game.current == f).?(Gap ~ 1.to(3)./(_ => Image("action-black", styles.building)).take(f.acted) ~ (1.to(3)./(_ => Image(f.style + "-action", styles.building))).drop(f.acted)) ~
+                Div(Hint("Frogs\n" + f.all(f.warrior).num + " on the map\n" + f.pooled(f.warrior) + " available",
+                &((Image(f.style + "-frog-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-frog", styles.wr) *** (f.all(f.warrior).num % 5))) ~
+                &((Image(f.style + "-frog-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-frog-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
+
             case f : InvasiveDDD =>
                 FoxRabbitMouse./{ s =>
                     val p = 4 - f.pooled(PeacefulDDD(s))
@@ -1645,6 +1665,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 &((Image(f.style + "-skunk-x5", styles.wr) *** (f.allr(f.warrior).num / 5)) ~ (Image(f.style + "-skunk", styles.wr) *** (f.allr(f.warrior).num % 5))) ~
                 &((Image(f.style + "-skunk-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-skunk-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline) ~
                 Gap ~ Gap ~ f.bag./(i => Image(i.exhaust.imgid, styles.ii)).merge.div(xstyles.smaller75)
+
+            case f : Knaves =>
+                f.captains.indexed./((k, i) => Hint(k.name + "\n" + k.text, (Image(KnavesCaptain(i).imgid(f), styles.wr) ~ " " ~ f.is(k).?(k.name.hl).|(f.retired.has(k).?(k.name.txt).|(k.name.styled(f))) ~ f.retired.has(k).?(" (retired)".txt)).div(styles.minister))).merge ~
+                Hint("Acclaim\n" + f.all(Acclaim).num + " on the map\n" + f.pooled(Acclaim) + " available",
+                    (Image("empty-token", styles.token) *** f.all(Acclaim).num) ~ (Image(f.style + "-acclaim", styles.token) *** f.pooled(Acclaim))) ~ Break ~
+                Hint("Prisoners\n" + f.prisoners.num + " in the forests", ("Prisoners ".txt ~ f.prisoners.num.hl).div) ~
+                Div(Hint("Skunks\n" + f.allr(f.warrior).num + " on the map\n" + f.pooled(f.warrior) + " available",
+                &((Image(f.style + "-skunk-x5", styles.wr) *** (f.allr(f.warrior).num / 5)) ~ (Image(f.style + "-skunk", styles.wr) *** (f.allr(f.warrior).num % 5))) ~
+                &((Image(f.style + "-skunk-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-skunk-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
 
             case f : Hero =>
                 val track = f.inv.intersect(Item.track).sort./(_.item)
@@ -2562,6 +2591,54 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                         overlayPane.clear()
                 })
 
+            case f : InvasiveEEE if chapter.has("deck") =>
+                showOverlay(overlayScrollX((Frog.elem ~ " Cards").hl.div ~
+                    Deck.frogEEE./{ d => OnClick(d, Div(d.img, xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined)) }.merge), onClick)
+
+            case f : InvasiveEEE =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    f.elem.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Frogs".hl.larger) ~
+                    more("Frogs".hl.larger, "are", "warriors".hh, Comma, "they", "battle".hh, "and provide", "rule".hh, Dot) ~
+                    desc(f.all(f.warrior).num.hl.larger, "on the map,", f.pooled(f.warrior).hl.larger, "in reserve") ~
+                    HGap ~
+                    warriorLine(f.style + "-frog", f.all(f.warrior).num, f.pooled(f.warrior)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Enclaves".hl.larger) ~
+                    more(PeacefulEEE.of(f), "add the", Frog, "suit to their clearing,", MilitantEEE.of(f), "cover it with the", Frog, "suit", Dot) ~
+                    desc(f.peaceful.num.hl.larger, "Peaceful,", f.militant.num.hl.larger, "Militant,", f.available.hl.larger, "available") ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    ("Frog Cards".styled(f)).div.div(xstyles.choice)(xstyles.xx)(xstyles.chm)(xstyles.chp)(xstyles.thu)(xlo.fullwidth)(new CustomStyle(rules.width("60ex"))(new StylePrefix("test")){}).pointer.onClick.param(f, "deck") ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), {
+                    case (f : Faction, "deck") => onFactionStatus(f, false, Some("deck"))
+                    case (f : Faction, more : Boolean) => onFactionStatus(f, more, None)
+                    case _ =>
+                        overlayPane.invis()
+                        overlayPane.clear()
+                })
+
             case f : InvasiveDDD if chapter.has("deck") =>
                 showOverlay(overlayScrollX((Frog.elem ~ " Cards").hl.div ~
                     Deck.frogDDD./{ d => OnClick(d, Div(d.img, xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined)) }.merge), onClick)
@@ -2790,6 +2867,43 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     desc(f.all(f.warrior).num.hl.larger, "on the map,", f.loyalists.$.num.hl.larger, "loyalists,", f.pooled(f.warrior).hl.larger, "in reserve") ~
                     HGap ~
                     warriorLine(f.style + "-bat", f.all(f.warrior).num, f.pooled(f.warrior)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), {
+                    case (f : Faction, more : Boolean) => onFactionStatus(f, more, None)
+                    case _ =>
+                        overlayPane.invis()
+                        overlayPane.clear()
+                })
+
+            case f : Knaves =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    f.elem.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    f.captains./(k => desc(k.elem.larger, k.items./(i => Image(i.imgid, styles.ii)).merge, f.is(k).?("(acting)".hl), f.retired.has(k).?("(retired)".txt)) ~ desc(k.text) ~ HGap).merge ~
+                    HGap ~
+                    HGap ~
+                    less("Skunks".hl.larger) ~
+                    more("Skunks".hl.larger, "are", "warriors".hh, Comma, "they", "battle".hh, "and provide", "rule".hh, Dot) ~
+                    desc(f.allr(f.warrior).num.hl.larger, "on the map,", f.pooled(f.warrior).hl.larger, "in reserve") ~
+                    HGap ~
+                    warriorLine(f.style + "-skunk", f.allr(f.warrior).num, f.pooled(f.warrior)) ~
+                    HGap ~
+                    HGap ~
+                    desc(f.all(Acclaim).num.hl.larger, "acclaim on the map,", f.pooled(Acclaim).hl.larger, "in reserve,", f.prisoners.num.hl.larger, "prisoners") ~
                     HGap ~
                     HGap ~
                     HGap ~
@@ -3616,6 +3730,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         case "view-deck" =>
             showOverlay(overlayScrollX("Draw Deck".hl.div ~
                 1.to(game.deck.num)./{ n => Div(Image("card-back-art", styles.card), xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined) }.merge), onClick)
+
+        case ("view-frog-deck", f : InvasiveEEE) =>
+            showOverlay(overlayScrollX(("Pond".styled(f) ~ " (top card first)").div ~
+                f.pond.get.reverse./{ d => OnClick(d, Div(d.img, xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined)) }.merge), onClick)
 
         case ("view-frog-deck", f : InvasiveDDD) =>
             showOverlay(overlayScrollX((Frog.elem ~ " Deck").hl.div ~

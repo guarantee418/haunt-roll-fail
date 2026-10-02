@@ -51,6 +51,9 @@ case object Hatred extends BattleEffect with FactionEffect {
 
 case object IgnoreFirstHit extends BattleEffect
 
+// warriors that can only be hit once no other warriors of their faction remain in the battle
+trait Rearguard
+
 
 case class BattleInitAction(self : Faction, f : Faction, m : Message, l : $[Clearing], extra : $[UserAction], then : ForcedAction) extends ForcedAction with Soft
 case class BattleImpossibleAction(self : Faction, f : Faction, l : $[Clearing], then : ForcedAction) extends BaseAction()(f, "can't battle in", l)
@@ -332,7 +335,7 @@ object BattleExpansion extends MandatoryExpansion {
             if (b.defender.canRemove(b.clearing)(b.attacker).not)
                 skip
             else
-            if (game.playingDeck.%(canAmbush)
+            if ((game.playingDeck ++ factions.of[InvasiveEEE].any.??(Deck.frogEEE)).%(canAmbush)
                 .diff(game.pile.$)
                 .diff(factions.of[Aviary]./~(f => Decree.all./~(d => f.decree(d).$).but(LoyalVizier)))
                 .diff(factions.of[Expedition]./~(f => Retinue.all./~(r => f.retinue(r).$).but(FaithfulRetainer)))
@@ -406,7 +409,7 @@ object BattleExpansion extends MandatoryExpansion {
             if (b.attacker.is[Trader] && b.attacker.hand.%(canAmbush).none)
                 skip
             else
-            if (game.playingDeck.%(canAmbush)
+            if ((game.playingDeck ++ factions.of[InvasiveEEE].any.??(Deck.frogEEE)).%(canAmbush)
                 .diff(game.pile.$)
                 .diff(factions.of[Aviary]./~(f => Decree.all./~(d => f.decree(d).$).but(LoyalVizier)))
                 .diff(factions.of[Expedition]./~(f => Retinue.all./~(r => f.retinue(r).$).but(FaithfulRetainer)))
@@ -898,12 +901,13 @@ object BattleExpansion extends MandatoryExpansion {
             val own = all.%(_.piece.is[Warrior]).%(_.piece.is[Scoring].not)
             val merc = ((f == b.attacker).??(b.ally./~(_.from(b.clearing).$.%(_.piece.is[Warrior]))) ++ (f == b.defender).??(b.codef./~(_.from(b.clearing).$.%(_.piece.is[Warrior])))).sortBy(_.piece.priority)
             val rear = all.diff(own)
+            val guard = own.%(_.piece.is[Rearguard])
 
             val ww = own ++ merc
             val wo = rear.none || ww.num >= n
             val nn = min(n, ww.num + rear.num)
 
-            val peacekeepers = (f == b.defender) && b.codef.?(_.is[Council])
+            val peacekeepers = (f == b.defender) && b.codef.?(d => d.is[Council] || (b.defender.is[InvasiveEEE] && d.dominance.has(EnclaveDominance)))
 
             val q =
                 if (s > 0)
@@ -914,7 +918,7 @@ object BattleExpansion extends MandatoryExpansion {
             val ask = SelectFiguresAction(
                 f, "Remove " ~ nn.ofb(wo.?("warrior").|("piece")), ww ++ rear, $(HiddenAssignHits, HiddenClearing(b.clearing))
             )(
-                _.num(nn).all(l => l.intersect(rear).none || ww.diff(l).none).all(l => l.intersect(own).num >= l.intersect(merc).num || own.diff(l).none).all(l => peacekeepers || l.intersect(merc).num + 1 >= l.intersect(own).num || merc.diff(l).none).all(l => peacekeepers.not || l.intersect(merc).none || own.diff(l).none)
+                _.num(nn).all(l => l.intersect(rear).none || ww.diff(l).none).all(l => l.intersect(guard).none || own.diff(guard).diff(l).none).all(l => l.intersect(own).num >= l.intersect(merc).num || own.diff(l).none).all(l => peacekeepers || l.intersect(merc).num + 1 >= l.intersect(own).num || merc.diff(l).none).all(l => peacekeepers.not || l.intersect(merc).none || own.diff(l).none)
             )(
                 l => BattleDealHitsAction(f, b, l, q)
             )

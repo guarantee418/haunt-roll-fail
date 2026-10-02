@@ -994,7 +994,7 @@ object Meta extends MetaGame {
     )
 
     val official = $[Faction](MC, ED, WA, VB, LC, RF, UD, CC, LH, KI)
-    val homeland = $[Faction](TC)
+    val homeland = $[Faction](LDvE, TC, KD)
     val clones = $[Faction](BK, PE, FU, NB, CM, /*WC,*/ DR, RI, LK)
     val fun = $[Faction](KDvA, TCvA, LDvD, LDvC, LDvB, TD, FH, XC, CUv2, CU, OK, AF, SF, MB)
 
@@ -1183,6 +1183,7 @@ object Meta extends MetaGame {
         factions.of[Mischief].num * 3 +
         factions.of[Expedition].num * 8 +
         factions.of[Horde].num * 9 +
+        factions.of[Knaves].num * 4 +
         (0 :: 5 :: 7 :: 9)(factions.of[Hero].num)
 
     def validateFactionCombination(factions : $[Faction]) = {
@@ -1191,6 +1192,9 @@ object Meta extends MetaGame {
         else
         if (factions.num > 8)
             ErrorResult("Max eight factions")
+        else
+        if (factions.of[Knaves].any && factions.of[Hero].any)
+            ErrorResult("Knaves of the Deepwood can't play with the Vagabond")
         else
         if (reach(factions) < factions.num.of(0 :: 0 :: 17 :: 18 :: 21 :: 25 :: 28 :: 28 :: 28))
             WarningResult("Reach " + reach(factions))
@@ -2768,6 +2772,37 @@ object Meta extends MetaGame {
         ImageAsset("outcast-rabbit"      , "../fanatic/outcast-rabbit") ::
         ImageAsset("outcast-mouse"       , "../fanatic/outcast-mouse") ::
     $) ::
+    ConditionalAssetsList((factions, options) => factions.of[InvasiveEEE].any, "faction/invasive/card", lzy = Laziness.Later, scale = 50)(
+        ImageAsset("card-frog-back-art") ::
+        ImageAsset("frog-ambush", "hl-frog-ambush") ::
+        ImageAsset("hl-frog-dominance") ::
+        ImageAsset("hl-rabbit-laborers") ::
+        ImageAsset("hl-mouse-laborers") ::
+        ImageAsset("hl-fox-laborers") ::
+        ImageAsset("hl-settlers") ::
+        ImageAsset("hl-stewards") ::
+        ImageAsset("hl-companions") ::
+        ImageAsset("hl-agitators") ::
+        ImageAsset("hl-advocates") ::
+        ImageAsset("hl-militias") ::
+        ImageAsset("hl-assimilationists") ::
+        ImageAsset("hl-frog-partisans") ::
+    $) ::
+    ConditionalAssetsList((factions, options) => factions.of[InvasiveEEE].any, "faction/invasive")(
+        ImageAsset("ld-glyph"            , "td-glyph"            ) ::
+        ImageAsset("ld-title"                                    ) ::
+        ImageAsset("ld-char"             , "td-char"             ) ::
+
+        ImageAsset("ld-frog"          , "td-frog"          ) ::
+        ImageAsset("ld-frog-empty"    , "td-frog-empty"    ) ::
+        ImageAsset("ld-frog-x5"       , "td-frog-x5"       ) ::
+        ImageAsset("ld-frog-x5-empty" , "td-frog-x5-empty" ) ::
+        ImageAsset("ld-peaceful"      , "td-peaceful"      ) ::
+        ImageAsset("ld-militant"      , "td-militant"      ) ::
+
+        ImageAsset("ld-action"        , "td-action"        ) ::
+        ImageAsset("ld-action-done"   , "td-action-done"   ) ::
+    $) ::
     ConditionalAssetsList((factions, options) => factions.of[InvasiveDDD].any, "faction/invasive/card", lzy = Laziness.Later, scale = 50)(
         ImageAsset("card-frog-back-art") ::
         ImageAsset("frog-ambush") ::
@@ -2838,7 +2873,7 @@ object Meta extends MetaGame {
         ImageAsset("tc-assembly"     ) ::
         ImageAsset("tc-convened"     ) ::
     $) ::
-    ConditionalAssetsList((factions, options) => factions.of[AbductAAA].any, "faction/abduct")(
+    ConditionalAssetsList((factions, options) => factions.of[CommonAbduct].any, "faction/abduct")(
         ImageAsset("kd-glyph"            ) ::
         ImageAsset("kd-title"            ) ::
         ImageAsset("kd-char"             ).scaled(20) ::
@@ -2856,6 +2891,8 @@ object Meta extends MetaGame {
         ImageAsset("kd-captain-birdsong-empty" , "kd-captain-empty" ) ::
         ImageAsset("kd-captain-daylight-empty" , "kd-captain-empty" ) ::
         ImageAsset("kd-captain-evening-empty"  , "kd-captain-empty" ) ::
+
+        ImageAsset("kd-acclaim"          ) ::
     $)
 
     override def intLinks = $(("Root: Advanced Setup".spn -> "root-adset"), ("Root: Mirror".spn -> "root-mirror"))
