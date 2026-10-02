@@ -312,7 +312,8 @@ object CouncilExpansion extends FactionExpansion[Council] {
 
             t.log("banished", l./(_.elem).comma, "from", b.clearing, "to", d)
 
-            then
+            // Banished warriors are forced to move, treated as a single move by their owner for other effects (Outrage)
+            MoveCompleteAction(o, o, b.clearing, d, l./(_.piece), $, then)
 
         // BIRDSONG
         case BirdsongNAction(30, f : Council) =>
