@@ -62,35 +62,39 @@ cd haunt-roll-fail && sbt fullOptJS
   https. The server logs "Started redirect server." whenever the certificate
   exists, even if it can't bind port 80.
 
-### Deploying a change
+### Starting, stopping and deploying
 
-Run from the owner's Mac. It stops the server, checks out `main` and starts
-the server again in the background:
-
-```
-ssh -i ~/.ssh/oracle.key ubuntu@157.151.177.11 'tmux kill-session -t hrf; pkill -f "hrf[.]gg[.]GoodGame"; cd ~/hrf && git fetch -q origin main && git checkout -q -f -B hrf origin/main && tmux new -d -s hrf -c ~/hrf/good-game && tmux send-keys -t hrf "sbt \"run run ../good-game-database ../haunt-roll-fail https://games.clean5110.com https://games.clean5110.com/hrf/ 7070\"" Enter'
-```
-
-Check that it started (look for `Started server.`) and read its log with:
+`live-server.sh` in the checkout runs the server in the tmux session `hrf`
+with the right arguments. Run it from the owner's Mac over ssh:
 
 ```
-ssh -i ~/.ssh/oracle.key ubuntu@157.151.177.11 'tmux capture-pane -pt hrf -S -200 | tail -40'
+ssh -i ~/.ssh/oracle.key ubuntu@157.151.177.11 '~/hrf/live-server.sh deploy'
 ```
 
-- `-f` is needed because builds on the server modify committed `target/` files.
-- `run create ...` (same arguments) only creates the database, then exits. It
-  was already run once; don't run it again.
-- The URL arguments must be the public address, not `localhost` or the IP.
-  The server writes them into every page, and only serves `/hrf/` files to
-  requests whose `Referer` starts with that URL. Starting it with a different
-  address than people use gives a blank page or a "Loading assets" hang.
-- `pkill -f "hrf[.]gg[.]GoodGame"`: the brackets stop `pkill` from matching
-  the ssh command's own shell. Plain `pkill -f hrf.gg.GoodGame` is fine when
-  typed on the server.
+- `deploy`: stop the server, check out `origin/main` (`git checkout -f -B hrf
+  origin/main`; `-f` because builds on the server modify committed `target/`
+  files), then start it and wait until it prints `Started server.`
+- `start`, `stop`, `restart`: as named. `start` does nothing if the tmux
+  session already exists.
+- `log`: the last 40 lines of server output, e.g. after an error page.
+- `install-autostart`: adds a crontab entry
+  `@reboot sleep 30 && ~/hrf/live-server.sh start`, so the server starts
+  after a reboot. Installed once; output of those starts goes to
+  `~/hrf-autostart.log`. Running it again changes nothing.
+- The script starts tmux with a login shell, so `sbt` and `SBT_OPTS` come
+  from the profile and `~/.bashrc` even under cron.
+- `run create ...` (same arguments as the server) only creates the database,
+  then exits. It was already run once; don't run it again.
+- The URL arguments (`URL` in the script) must be the public address, not
+  `localhost` or the IP. The server writes them into every page, and only
+  serves `/hrf/` files to requests whose `Referer` starts with that URL.
+  Starting it with a different address than people use gives a blank page or
+  a "Loading assets" hang.
+- `pkill -f "hrf[.]gg[.]GoodGame"` in the script: the brackets stop `pkill`
+  from matching the command line of the shell running it.
 - `Address already in use` on start means an old server is still running:
-  run the `tmux kill-session` and `pkill` part again, then start it again.
-- Not yet set up: starting automatically after a reboot, and certificate
-  renewal.
+  `live-server.sh stop`, then `start`.
+- Not yet set up: certificate renewal.
 
 ## Gotchas
 
