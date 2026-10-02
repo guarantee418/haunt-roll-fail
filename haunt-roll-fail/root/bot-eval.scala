@@ -59,7 +59,15 @@ class BotXX(f : Faction) extends EvalBot {
             case f : AbductAAA => new GameEvaluationAbductAAA(f)
             case f : Knaves => new GameEvaluationKnaves(f)
         }
-        actions./{ a => ActionEval(a, entreat(a.unwrap) ++ ev.eval(a)) }
+        actions./{ a => ActionEval(a, entreat(a.unwrap) ++ freePrisoners(a.unwrap) ++ ev.eval(a)) }
+    }
+
+    // When the Knaves Take It Easy, always free your prisoners, into the clearing that frees the most
+    def freePrisoners(a : Action)(implicit game : Game) : $[Evaluation] = a match {
+        case KnavesFreePrisonersAction(e, k, c) =>
+            val n = KnavesExpansion.adjacentForests(c)./~(r => k.from(Cage(r)).$.%(_.faction == e)).num
+            $(Evaluation(1000 + n * 10 + e.canPlace(c).??(5), "free prisoners"))
+        case _ => $
     }
 
     // Entreating gives the Council a Loyalist, so only do it to act in that clearing
