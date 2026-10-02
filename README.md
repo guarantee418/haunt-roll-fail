@@ -8,7 +8,7 @@ sbt publishLocal
 
 In **haunt-roll-fail** dir
 ```
-sbt fastOptJS
+sbt fullOptJS
 ```
 
 In **good-game** dir

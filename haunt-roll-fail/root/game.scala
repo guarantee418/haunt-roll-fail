@@ -435,6 +435,11 @@ trait FactionState {
     val hand = cards("hand")
     val stuck = cards("stuck")
     val drawn = cards("drawn")
+    val disguised = cards("disguised")
+    val friendTrash = cards("friend-trash")
+    var disguises : $[FriendCard] = $
+    var silverTongue : |[(Clearing, Int, Phase)] = None
+    var demagogue : Boolean = false
     var dominance : |[Dominance] = None
     var coalition : |[Faction] = None
     var contracts : $[Hireling] = $
@@ -770,6 +775,7 @@ trait GameImplicits {
     implicit def utopiaState(f : Utopia)(implicit game : Game) = game.states(f).as[UtopiaPlayer].get
     implicit def casterState(f : Caster)(implicit game : Game) = game.states(f).as[CasterPlayer].get
     implicit def farmerState(f : Farmer)(implicit game : Game) = game.states(f).as[FarmerPlayer].get
+    implicit def invasiveEEEState(f : InvasiveEEE)(implicit game : Game) = game.states(f).as[InvasiveEEEPlayer].get
     implicit def invasiveDDDState(f : InvasiveDDD)(implicit game : Game) = game.states(f).as[InvasiveDDDPlayer].get
     implicit def invasiveCCCState(f : InvasiveCCC)(implicit game : Game) = game.states(f).as[InvasiveCCCPlayer].get
     implicit def invasiveBBBState(f : InvasiveBBB)(implicit game : Game) = game.states(f).as[InvasiveBBBPlayer].get
@@ -777,6 +783,7 @@ trait GameImplicits {
     implicit def legalAAAState(f : LegalAAA)(implicit game : Game) = game.states(f).as[LegalAAAPlayer].get
     implicit def councilState(f : Council)(implicit game : Game) = game.states(f).as[CouncilPlayer].get
     implicit def abductorAAAState(f : AbductAAA)(implicit game : Game) = game.states(f).as[AbductAAAPlayer].get
+    implicit def knavesState(f : Knaves)(implicit game : Game) = game.states(f).as[KnavesPlayer].get
 
     implicit def streetBandState(f : StreetBand.type)(implicit game : Game) = game.states(f).as[StreetBandState].get
     implicit def popularBandState(f : PopularBand.type)(implicit game : Game) = game.states(f).as[PopularBandState].get
@@ -830,7 +837,7 @@ trait GameImplicits {
             if (f.is[Hireling])
                 return
 
-            val vpcond = f.dominance.none && f.coalition.none
+            val vpcond = (f.dominance.none || f.demagogue) && f.coalition.none
 
             val real = (vpcond || game.options.has(TotalWarDominance)) && vp != 0
 
@@ -882,7 +889,7 @@ trait GameImplicits {
     implicit class FactionEx(f : Faction)(implicit game : Game) {
         def validDest : $[Region] = (f @@ {
             case f : Hero => game.board.forests
-            case f : AbductAAA => game.board.forests
+            case f : CommonAbduct => game.board.forests
             case f : TheExile.type => game.board.forests
             case f : Underground => $(f.burrow)
             case _ => $()
@@ -1118,6 +1125,7 @@ trait GameImplicits {
 
 
         def rules(c : Region) : Boolean = f @@ {
+            case f if SquiresDeckExpansion.silverTongueRules(f, c) => true
             case h : Hireling if factions.%(_.has(h)).%(f => f.rules(c)).any => true
             case f =>
                 val mercs = traders.%(s => f.has(Mercenaries(s)) || f.has(Peacekeepers(s)))
@@ -1126,7 +1134,7 @@ trait GameImplicits {
                 f.ruleValue(c, mercs, friends) > (factions ++ game.unhired).but(f).diff(mercs).diff(friends)./(e => e.ruleValue(c, $, $)).maxOr(0)
         }
 
-        def ruleSelf(c : Clearing) = f.ruleValue(c, $, $) > (factions ++ game.unhired).but(f)./(e => e.ruleValue(c, $, $)).maxOr(0)
+        def ruleSelf(c : Clearing) = SquiresDeckExpansion.silverTongueRules(f, c) || f.ruleValue(c, $, $) > (factions ++ game.unhired).but(f)./(e => e.ruleValue(c, $, $)).maxOr(0)
 
         def removeStuckEffect(effect : Effect) {
             f.effects :-= effect
@@ -1153,6 +1161,7 @@ trait GameImplicits {
             case d if d.suit == Frog && f.is[InvasiveDDD] => false
             case d : CraftItemCard if game.uncrafted.has(d.item).not => false
             case d : CraftEffectCard if f.has(d.effect) => false
+            case d : CraftEffectCard if d.effect.is[FriendOfThe] && f.effects.of[FriendOfThe].any => false
             case d : CraftCard if d.cost.num > limit => false
             case d : CraftCard if (d.cost ++ used).num > craft.num => false
             case d : CraftCard =>
@@ -1294,7 +1303,12 @@ trait GameImplicits {
         def -->(dest : DirectDiscard.type) {
             d @@ {
                 case d : Dominance => source --> d --> game.dominances
+                case d : DisguisedCard if factions.of[InvasiveEEE].any =>
+                    val e = factions.of[InvasiveEEE].first
+                    source --> d --> e.standins
+                    e.companions --> d.card --> e.pond
                 case d if d.suit == Frog => source --> d -->{
+                    factions.of[InvasiveEEE].single./(_.pond) ||
                     factions.of[InvasiveDDD].single./(_.deck) ||
                     factions.of[InvasiveCCC].single./(_.pile) ||
                     factions.of[InvasiveBBB].single./(_.pile) ||
@@ -1462,6 +1476,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
             UtopiaExpansion,
             CasterExpansion,
             FarmerExpansion,
+            InvasiveEEEExpansion,
             InvasiveDDDExpansion,
             InvasiveCCCExpansion,
             InvasiveBBBExpansion,
@@ -1469,6 +1484,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
             LegalAAAExpansion,
             CouncilExpansion,
             AbductAAAExpansion,
+            KnavesExpansion,
 
             StandardDeckExpansion,
             ExilesDeckExpansion,

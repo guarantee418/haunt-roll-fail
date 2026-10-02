@@ -91,9 +91,8 @@ cat <<EOF
 Done. certificate.pkcs12 is in $GG_DIR.
 Certbot renews it automatically (systemd certbot.timer).
 
-Now restart the server on port 443 (Ctrl-C it in 'tmux attach -t hrf', then):
-  cd $GG_DIR
-  sbt "run run ../good-game-database ../haunt-roll-fail https://$HOST https://$HOST/hrf/ 443"
+Now restart the server: ~/hrf/live-server.sh restart
+(URL in live-server.sh must be https://$HOST.)
 
 The site is then at https://$HOST/play
 EOF

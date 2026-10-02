@@ -53,9 +53,11 @@ class BotXX(f : Faction) extends EvalBot {
             case f : InvasiveBBB => new GameEvaluationInvasiveBBB(f)
             case f : InvasiveCCC => new GameEvaluationInvasiveCCC(f)
             case f : InvasiveDDD => new GameEvaluationInvasiveDDD(f)
+            case f : InvasiveEEE => new GameEvaluationInvasiveEEE(f)
             case f : LegalAAA => new GameEvaluationLegalAAA(f)
             case f : Council => new GameEvaluationCouncil(f)
             case f : AbductAAA => new GameEvaluationAbductAAA(f)
+            case f : Knaves => new GameEvaluationKnaves(f)
         }
         actions./{ a => ActionEval(a, ev.eval(a)) }
     }

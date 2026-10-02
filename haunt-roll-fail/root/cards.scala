@@ -101,6 +101,14 @@ case object FrogDominance extends Dominance {
     def altL = name + " - change own win condition - now win only if ruling more Frog clearings than each other player"
 }
 
+case object EnclaveDominance extends Dominance {
+    val suit = Frog
+    def name = "Frog Dominance"
+    def id = "hl-frog-dominance"
+    override def altS = name
+    def altL = name + " - change own win condition - now win only if ruling at least two enclaves on the river at the start of Birdsong"
+}
+
 
 object Deck {
     def fromOptions(l : $[Meta.O], arity : Int, known : $[Faction]) = l.of[DeckOption].last @@ {
@@ -298,7 +306,7 @@ object Deck {
         CraftEffectCard(Fox, "fox-squires", $(Fox), Squires(Fox)),
         CraftEffectCard(Fox, "bold-leadership", $(Fox), BoldLeadership),
         CraftEffectCard(Fox, "supply-train", $(Fox), SupplyTrain),
-        CraftEffectCard(Fox, "tactitian", $(Fox, AnySuit), Tactitian),
+        CraftEffectCard(Fox, "tactician", $(Fox, AnySuit), Tactitian),
         CraftEffectCard(Fox, "apprentice", $(Fox), Apprentice),
         CraftEffectCard(Fox, "friend-of-the-foxes", $(Fox, AnySuit), FriendOfTheFoxes),
         CraftEffectCard(Rabbit, "rabbit-squires", $(Rabbit), Squires(Rabbit)),
@@ -382,7 +390,26 @@ object Deck {
         CraftEffectCard(Frog, "incite-conflict", $(Frog, AnySuit), InciteConflict(LDvD)),
     )
 
-    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ effectsSquires ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA
+    val frogEEE = $[DeckCard](
+        CraftEffectCard(Frog, "hl-rabbit-laborers", $(Rabbit), EnclaveLaborers(LDvE, Rabbit)),
+        CraftEffectCard(Frog, "hl-mouse-laborers", $(Mouse), EnclaveLaborers(LDvE, Mouse)),
+        CraftEffectCard(Frog, "hl-fox-laborers", $(Fox), EnclaveLaborers(LDvE, Fox)),
+        CraftEffectCard(Frog, "hl-settlers", $(Frog), FrogSettlers(LDvE)),
+        CraftEffectCard(Frog, "hl-stewards", $(AnySuit), FrogStewards(LDvE)),
+        CraftEffectCard(Frog, "hl-companions", $(AnySuit, Frog), FrogCompanions(LDvE)),
+        CraftEffectCard(Frog, "hl-agitators", $(Frog), FrogAgitators(LDvE)),
+        CraftEffectCard(Frog, "hl-advocates", $(AnySuit, Frog), FrogAdvocates(LDvE)),
+        CraftEffectCard(Frog, "hl-militias", $(Frog), FrogMilitias(LDvE)),
+        CraftEffectCard(Frog, "hl-militias", $(Frog), FrogMilitias(LDvE)),
+        CraftEffectCard(Frog, "hl-assimilationists", $(AnySuit, AnySuit), FrogAssimilationists(LDvE)),
+        CraftEffectCard(Frog, "hl-frog-partisans", $(Frog), Partisans(Frog)),
+        EnclaveDominance,
+        Ambush(Frog),
+    )
+
+    val disguisedEEE = frogEEE.distinct./~(d => InvasiveEEEExpansion.disguiseSuits./(DisguisedCard(d, _)))
+
+    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ effectsSquires ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA ++ frogEEE ++ disguisedEEE
 }
 
 

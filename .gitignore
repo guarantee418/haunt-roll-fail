@@ -1,4 +1,3 @@
-
 # Local game server database (created by start-server.sh)
 good-game-database.*
 
@@ -6,6 +5,9 @@ good-game-database.*
 **/target/bg-jobs/
 **/target/global-logging/
 
-# https: certificate (private key) and Let's Encrypt webroot (created by setup-https.sh)
+# Development client build (sbt fastOptJS); the site loads the optimized hrf-opt.js
+haunt-roll-fail/target/scala-2.13/hrf-fastopt*
+
+# https: certificate (holds the private key) and Let's Encrypt webroot (created by setup-https.sh)
 good-game/certificate.pkcs12*
 good-game/acme/

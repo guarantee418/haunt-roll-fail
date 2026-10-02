@@ -508,7 +508,7 @@
             const version = (window.location.search + "&version=").split("version=")[1].split("&")[0];
 
             const load = (v) => {
-                js.src = "./target/scala-2.13/hrf-fastopt" + ((v == "") ? "" : "-" + v) + ".js?" + code;
+                js.src = "./target/scala-2.13/hrf-opt" + ((v == "") ? "" : "-" + v) + ".js?" + code;
                 document.head.appendChild(js);
             }
 

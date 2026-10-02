@@ -1,10 +1,12 @@
 # HRF (haunt-roll-fail) fork
 
-Fork of the HRF board game site (hrf.im), with the Twilight Council faction
-(playtest and official Root: Homeland versions). Written in Scala:
+Fork of the HRF board game site (hrf.im), with the Twilight Council and
+Knaves of the Deepwood factions (playtest and official Root: Homeland
+versions; the Homeland ones are `faction-council.scala` and
+`faction-knaves.scala`). Written in Scala:
 
 - `haunt-roll-fail/` — the game client, compiled to JavaScript with Scala.js
-  (`target/scala-2.13/hrf-fastopt.js`, about 49 MB)
+  (`target/scala-2.13/hrf-opt.js`, about 8 MB, 1.8 MB gzipped)
 - `good-game/` — the Akka HTTP server (`GoodGame.scala`) that serves the client
   and stores games in an HSQLDB database
 - `scala-js-dom-reduced/` — DOM library the client depends on
@@ -14,88 +16,140 @@ Fork of the HRF board game site (hrf.im), with the Twilight Council faction
 
 ```
 cd scala-js-dom-reduced && sbt publishLocal
-cd haunt-roll-fail && sbt fastOptJS
+cd haunt-roll-fail && sbt fullOptJS
 ```
 
+- `index.html` loads the optimized build `hrf-opt.js` from `sbt fullOptJS`
+  (Scala.js optimizer plus Closure Compiler, about 4 minutes from scratch).
+  `sbt fastOptJS` still works for quick local builds, but its 49 MB
+  `hrf-fastopt.js` is not used by the site and is git-ignored; to try it,
+  temporarily point the script in `index.html` at `hrf-fastopt`.
 - The client build needs more than sbt's default 1 GB heap or it fails with
   `OutOfMemoryError`. Use `SBT_OPTS="-Xmx6G -Xss4M"`.
-- Build output under `target/` is committed, including `hrf-fastopt.js`.
-  After changing client code, rebuild and commit `hrf-fastopt.js`,
-  `hrf-fastopt.js.map`, `hrf-fastopt/main.js` and `hrf-fastopt/main.js.map`
+- Build output under `target/` is committed, including `hrf-opt.js`.
+  After changing client code, run `sbt fullOptJS` and commit `hrf-opt.js`,
+  `hrf-opt.js.map`, `hrf-opt/main.js` and `hrf-opt/main.js.map`
   so the server can run without rebuilding. Don't commit the rest of the
   `target/` churn a build produces.
 
 ## Live server
 
-- URL: https://games.clean5110.com/play (Let's Encrypt certificate)
+- URL: https://games.clean5110.com/play (Let's Encrypt certificate).
+  `http://` links redirect to it.
 - Oracle Cloud Always Free instance `hrf-server`: Ubuntu 24.04 aarch64,
   2 OCPUs, 12 GB RAM, ephemeral public IP 157.151.177.11
 - DNS: A record `games` -> 157.151.177.11 under Custom Records in the
   Squarespace DNS settings for `clean5110.com`. The bare domain and `www`
-  are a Squarespace website; leave the Squarespace presets alone
+  are a Squarespace website; leave the Squarespace presets alone. If the IP
+  changes, update the `games` record.
 - SSH from the owner's Mac: `ssh -i ~/.ssh/oracle.key ubuntu@157.151.177.11`
 - Checkout at `~/hrf` on a local branch `hrf`; database at
   `~/hrf/good-game-database*`; `SBT_OPTS` is set in `~/.bashrc`
-- The server runs in a tmux session named `hrf`, on port 443, with a
-  redirect server on port 80
+- The server runs in a tmux session named `hrf`, listening on port 443, with
+  a redirect server on port 80
 - Ports 80, 443 and 7070 are open in the Oracle security list and in the
   instance's iptables (rules placed above the `REJECT` line, saved with
-  `netfilter-persistent save`)
-
-### Deploying a change
-
-```
-tmux attach -t hrf        # then Ctrl-C to stop the running server
-cd ~/hrf
-git fetch origin main
-git checkout -f -B hrf origin/main
-cd ~/hrf/good-game
-sbt "run run ../good-game-database ../haunt-roll-fail https://games.clean5110.com https://games.clean5110.com/hrf/ 443"
-```
-
-- `-f` is needed because builds on the server modify committed `target/` files.
-- `run create ...` (same arguments) only creates the database, then exits. It
-  was already run once; don't run it again.
-- The URL arguments must be the public address, not `localhost`. The server
-  only serves `/hrf/` files to requests whose `Referer` starts with that URL.
-- `Address already in use` on start means an old server is still running:
-  `tmux kill-session -t hrf; pkill -f hrf.gg.GoodGame`, then start again in
-  a new `tmux new -s hrf`.
-- Not yet set up: starting automatically after a reboot.
+  `netfilter-persistent save`). `/etc/sysctl.d/50-hrf-ports.conf` lets the
+  non-root server bind ports below 1024.
 
 ### https
 
-The server turns on https when `good-game/certificate.pkcs12` exists
-(PKCS12, empty password), and rereads that file within a minute when it
-changes. When it runs on a port other than 80 and that file or
-`good-game/acme/` exists, it also starts a port 80 server that serves Let's
-Encrypt challenges from `good-game/acme/` and redirects everything else to
-the URL argument, keeping the path.
-
+- The server turns on https when `certificate.pkcs12` (PKCS12, empty
+  password) exists in its working directory, `~/hrf/good-game`, and rereads
+  that file within a minute when it changes, so renewals need no restart.
+- When it runs on a port other than 80 and that file or `good-game/acme/`
+  exists, it also starts a port 80 server. That server serves Let's Encrypt
+  challenges from `good-game/acme/` and redirects everything else to the URL
+  argument, keeping the path.
 - Set up with `~/hrf/setup-https.sh games.clean5110.com` (arguments:
   hostname, optional email for expiry notices). It allows non-root use of
-  ports 80/443 (`/etc/sysctl.d/50-hrf-ports.conf`), opens them in iptables,
-  installs certbot and the renewal hook, and gets the certificate. It is safe
-  to run again, for example for a new hostname; then restart the server with
-  the new URL and `sudo certbot delete --cert-name <old name>`.
+  ports 80/443, opens them in iptables, installs certbot and the renewal
+  hook, and gets the certificate. It is safe to run again, for example for a
+  new hostname; then change `URL` in `live-server.sh`, restart, and
+  `sudo certbot delete --cert-name <old name>`.
 - Certbot renews through `certbot.timer`. Its hook
   `/etc/letsencrypt/renewal-hooks/deploy/hrf-pkcs12.sh` rewrites
-  `certificate.pkcs12` for the hostname it was set up for, so no restart is
-  needed.
+  `certificate.pkcs12` for the hostname it was set up for.
 - `certificate.pkcs12` holds the private key and is gitignored. Never commit it.
 - Old `http://157.151.177.11:7070` links can be sent to the redirect server
   (only while the server is not on 7070, or it makes a redirect loop):
   `sudo iptables -t nat -A PREROUTING -p tcp --dport 7070 -j REDIRECT --to-ports 80`
   then `sudo netfilter-persistent save`.
-- If the public IP changes, update the `games` A record in Squarespace.
+
+### Starting, stopping and deploying
+
+`live-server.sh` in the checkout runs the server in the tmux session `hrf`
+with the right arguments. Run it from the owner's Mac over ssh:
+
+```
+ssh -i ~/.ssh/oracle.key ubuntu@157.151.177.11 '~/hrf/live-server.sh deploy'
+```
+
+- `deploy`: stop the server, check out `origin/main` (`git checkout -f -B hrf
+  origin/main`; `-f` because builds on the server modify committed `target/`
+  files), then start it and wait until it prints `Started server.`
+- `start`, `stop`, `restart`: as named. `start` does nothing if the tmux
+  session already exists.
+- `log`: the last 40 lines of server output, e.g. after an error page.
+- `install-autostart`: adds a crontab entry
+  `@reboot sleep 30 && ~/hrf/live-server.sh start`, so the server starts
+  after a reboot. Installed once; output of those starts goes to
+  `~/hrf-autostart.log`. Running it again changes nothing.
+- The script starts tmux with a login shell, so `sbt` and `SBT_OPTS` come
+  from the profile and `~/.bashrc` even under cron.
+- `run create ...` (same arguments as the server) only creates the database,
+  then exits. It was already run once; don't run it again.
+- The URL arguments (`URL` in the script) must be the public address, not
+  `localhost` or the IP. The server writes them into every page, and only
+  serves `/hrf/` files to requests whose `Referer` starts with that URL.
+  Starting it with a different address than people use gives a blank page or
+  a "Loading assets" hang.
+- `pkill -f "hrf[.]gg[.]GoodGame"` in the script: the brackets stop `pkill`
+  from matching the command line of the shell running it.
+- `Address already in use` on start means an old server is still running:
+  `live-server.sh stop`, then `start`.
 
 ## Gotchas
 
-- Over plain http from a non-localhost address (not a secure context),
-  `window.caches` (Cache Storage) is undefined. The live site is https now,
-  but the loaders in `haunt-roll-fail/loader.scala` still fall back to
-  fetching directly when it is missing. Never call
-  `dom.window.caches.toOption.get` unguarded: it gives a black screen with
-  `None.get` in the console.
-- `good-game` wraps static files in `encodeResponse`, so the 49 MB client is
-  sent gzipped (about 4.3 MB).
+- Over https (or on `localhost`), the loaders in
+  `haunt-roll-fail/loader.scala` store files in Cache Storage with
+  `cache.add`. When that rejects (a missing file or a failed request) they
+  load the file directly instead. Without that fallback the game hangs on
+  "Loading assets". Over plain http from an IP there is no secure context,
+  `window.caches` is undefined, and the loaders always fetch directly. Never
+  call `dom.window.caches.toOption.get` unguarded: it gives a black screen
+  with `None.get` in the console. Test changes to the loaders both on
+  `localhost` (cache path) and through a non-localhost http address (no
+  cache).
+- The 23 Squires and Disciples deck cards (`SquiresDeck`, listed in
+  `effectsSquires` in `haunt-roll-fail/root/cards.scala`) have images in
+  `webp2/root/images/card/deck/`, `apprentice.webp` through
+  `the-faithful.webp`. They come from the Leder Card Library
+  (https://cards.ledergames.com/, data at
+  `https://ledercards.netlify.app/cards.min.json`, images under
+  `https://ledercards.netlify.app/cards/root/en-US/`), cropped and resized
+  to the 512x708 size of the other deck cards.
+- The Squires and Disciples card effects are in `root/deck-squires.scala`
+  (`SquiresDeckExpansion`), with small hooks in `turn.scala` (Shadow Council,
+  Brazen Demagogue), `battle.scala` (The Faithful, Friend ambushes),
+  `game.scala` (Silver-Tongue rule, Brazen Demagogue scoring, Friend crafting
+  limit) and `ui.scala`. Rulings follow the Root Database FAQ. Deliberate
+  simplifications:
+  - Friend of the ___: once per turn, on your turn, an X card in hand is
+    replaced by a `FriendCard` of the chosen suit until the end of the turn
+    (`revertDisguises` at `CleanUpAction`). On other players' turns it only
+    works for ambushes.
+  - Silver-Tongue: the chosen clearing counts as ruled until the end of the
+    current phase, not for a single effect.
+  - Brazen Demagogue: the dominance can be activated only right when it is
+    taken; the player keeps scoring (`demagogue` flag in `FactionState`).
+  - Feather Rufflers, Spy Network, Silver-Tongue and Friend are usable from
+    the Birdsong, Daylight and Evening menus on your own turn.
+- Bot games can be run headless on the JVM with `root/host.scala` (see
+  `host.xsbt` for the source exclusions); it also checks that every action
+  serializes and parses back.
+- Each online game has a Spectator link and one link per player. Spectator
+  accounts can read the game but not add moves. A move posted by one gets a
+  500 with `empty result set ... "right" = 'append'` in the server log.
+- `good-game` wraps static files in `encodeResponse`, so the 8 MB client is
+  sent gzipped (about 1.8 MB).
