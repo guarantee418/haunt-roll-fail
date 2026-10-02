@@ -1900,7 +1900,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, title : String, val opti
                     else
                         updateStatus()
                 }
-            }).copy(clear = false))
+            }).copy(clear = false)) ++
+            $(ZBasic(Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug)
     }
 
     var shown : $[Notification] = $

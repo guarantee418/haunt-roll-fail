@@ -11,3 +11,7 @@ haunt-roll-fail/target/scala-2.13/hrf-fastopt*
 # https: certificate (holds the private key) and Let's Encrypt webroot (created by setup-https.sh)
 good-game/certificate.pkcs12*
 good-game/acme/
+
+# Bug reports saved by the server, and its GitHub token for posting them
+good-game/bug-reports/
+good-game/github-token
