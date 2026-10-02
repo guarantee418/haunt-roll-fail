@@ -94,6 +94,8 @@ trait MetaBase {
 
     val about : $[Elem] = $
 
+    val underConstruction : Boolean = false
+
     val factions : $[F]
 
     def factionGroup(f : F) : |[Elem] = None

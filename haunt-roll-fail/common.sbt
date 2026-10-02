@@ -46,6 +46,8 @@ Compile / unmanagedSourceDirectories += baseDirectory.value / "sehi"
 
 Compile / unmanagedSourceDirectories += baseDirectory.value / "yarg"
 
+Compile / unmanagedSourceDirectories += baseDirectory.value / "nort"
+
 Compile / unmanagedSourceDirectories += baseDirectory.value / "bsg"
 
 libraryDependencies += "com.lihaoyi" %%% "fastparse" % "3.0.2"

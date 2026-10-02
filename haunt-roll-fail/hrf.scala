@@ -106,6 +106,7 @@ object HRF {
         sehi.Meta -> sehi.UI,
         suok.Meta -> suok.UI,
         yarg.Meta -> yarg.UI,
+        nort.Meta -> nort.UI,
     )
 
     val metas = metaUIs.lefts
@@ -361,12 +362,18 @@ class HRFUI(implicit resources : Resources) {
     logger.alog(Empty ~ BuildInfo.name ~ " " ~ BuildInfo.version)
 
     def topMenu() {
-        action.asker.zask(HRF.metas./(m => ZBasic("Haunt Roll Fail".hh(xstyles.larger110)(ExternalStyle("consolas")), m.label.spn(xstyles.larger110)(ExternalStyle(m.titleFont.|(""))), () => new HRFMetaUI(this, m, 0).withMeta(), ZBasic.choice.but(xstyles.thumargin))))
+        action.asker.zask(HRF.metas./(m => ZBasic("Haunt Roll Fail".hh(xstyles.larger110)(ExternalStyle("consolas")), metaLabel(m), () => new HRFMetaUI(this, m, 0).withMeta(), ZBasic.choice.but(xstyles.thumargin))))
     }
 
     def topInfo() {
-        action.asker.zask(HRF.metas./(m => ZBasic("Haunt Roll Fail".hh(xstyles.larger110)(ExternalStyle("consolas")), m.label.spn(xstyles.larger110)(ExternalStyle(m.titleFont.|(""))), null, ZBasic.info.but(xstyles.thumargin))))
+        action.asker.zask(HRF.metas./(m => ZBasic("Haunt Roll Fail".hh(xstyles.larger110)(ExternalStyle("consolas")), metaLabel(m), null, ZBasic.info.but(xstyles.thumargin))))
     }
+
+    def metaLabel(m : MetaGame) : Elem =
+        if (m.underConstruction)
+            m.label.spn(xstyles.larger110)(ExternalStyle(m.titleFont.|(""))) ~ Break ~ "Under Construction".styled(xstyles.warning)
+        else
+            m.label.spn(xstyles.larger110)(ExternalStyle(m.titleFont.|("")))
 
     HRF.param("meta")./~(mn => HRF.metas.%(_.name == mn).single)./{m =>
         new HRFMetaUI(this, m, 800).withMeta()
@@ -860,6 +867,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(implic
         }
 
         ui.action.asker.zask(
+            meta.underConstruction.$(ZOption(title, Div("This game is very much " ~ "under construction".styled(xstyles.warning) ~ "." ~ Break ~ "Expect missing rules, bugs and placeholder art.", ZBasic.info))) ++
             (
                 ZBasic(title, "Quick Game".hlb, meta.factions.%(f => meta.getBots(f).has(meta.defaultBot(f))).any.??(() => goQuickGame())) ::
                 ZBasic(title, "Local Game".hhb, () => goHotseat()) ::

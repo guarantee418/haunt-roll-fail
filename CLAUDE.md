@@ -12,6 +12,14 @@ versions; the Homeland ones are `faction-council.scala` and
 - `scala-js-dom-reduced/` — DOM library the client depends on
   (`sbt publishLocal` once before building the client)
 
+Northgard: Uncharted Lands is being added in `haunt-roll-fail/nort/`
+(meta name `nort`, URL `/play/nort`). It is a placeholder so far: the base
+game's four clans (Stag, Goat, Wolf, Raven, with placeholder colors), no map
+or rules, and a game that only offers "End Game". `underConstruction = true`
+in its `Meta` puts an "Under Construction" note under its name on the game
+list and a disclaimer at the top of its menu. Build the base game first, then
+the expansions. Its images go in `webp2/nort/images/`, listed in `assets`.
+
 ## Building
 
 ```
