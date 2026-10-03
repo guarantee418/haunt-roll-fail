@@ -52,6 +52,9 @@ used yet).
 - Tile positions in `tiles.scala` were read from the art by eye, then checked
   with overlays. If a building token or unit marker sits off its space, fix
   the numbers there.
+  Commit `3760f8c7` (another session) already moved the label points of
+  13 tiles inside their areas; tile-01's east area had been drawn in the
+  wrong territory.
 
 ## Known simplifications and gaps
 
