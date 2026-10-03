@@ -86,6 +86,19 @@ object GoodGame {
 
 
     def main(args : Array[String]) {
+        // gg restore <database> <directory>: a new database from a copy made by Backup
+        if (args.size == 3 && args(0) == "restore") {
+            if (new java.io.File(args(1) + ".script").exists() || new java.io.File(args(1) + ".properties").exists()) {
+                println("Database " + args(1) + " already exists.")
+                return
+            }
+
+            val db = Database.forURL("jdbc:hsqldb:file:" + args(1) + ";hsqldb.cache_rows=10000;hsqldb.nio_data_file=false;shutdown=true", driver="org.hsqldb.jdbcDriver")
+            Backup.restore(db, java.nio.file.Paths.get(args(2)))
+            db.close()
+            return
+        }
+
         if (args.size != 6) {
             println("gg <create|run> <directory> <database> <url> <cdn> <port>")
             return
@@ -389,10 +402,17 @@ object GoodGame {
                         val ss = body.split('\n').toList.map(_.asciiplus)
 
                         try {
-                            execute(hasRight(userId, userSecret, journalId, "append") {
-                                entries ++= 0.until(ss.size).map(n => Entry(journalId, from + n, userId, ss(n)))
-                            })
-                            complete(StatusCodes.Accepted)
+                            // No gaps: a player who has not reloaded since a game fix shortened the log gets a conflict
+                            val next = execute(entries.filter(_.journalId === journalId).map(_.index).max.result).map(_ + 1).getOrElse(0)
+
+                            if (from > next)
+                                complete(StatusCodes.Conflict)
+                            else {
+                                execute(hasRight(userId, userSecret, journalId, "append") {
+                                    entries ++= 0.until(ss.size).map(n => Entry(journalId, from + n, userId, ss(n)))
+                                })
+                                complete(StatusCodes.Accepted)
+                            }
                         }
                         catch {
                             case e : java.sql.SQLIntegrityConstraintViolationException => complete(StatusCodes.Conflict)
@@ -436,6 +456,8 @@ object GoodGame {
         val bindingFuture = server.bind(route)
 
         println("Started server.")
+
+        Backup.start(db)
 
         // Webroot for Let's Encrypt HTTP-01 challenges (certbot --webroot -w good-game/acme)
         val acmeDir = new java.io.File("acme")
