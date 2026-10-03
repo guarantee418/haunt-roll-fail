@@ -19,9 +19,10 @@ these rules ("the cards are always right").
 | Winter costs and Unrest cards | done (counts units, which never change yet) |
 | End-of-game fame scoring | done (no territory fame yet; of the Achievements only Warlord scores) |
 | Card effects that need the map, opponents' hands or combat | not started |
-| Map tiles, territories, borders, exploring | not started; all core tile images are in `webp2/nort/images/tile/`: `start`, `start-5` (5-player) and `tile-01` to `tile-33`. `tile-31` to `tile-33` and `start-5` are cut from a photo of the owner's copy (lower quality). Expansion tiles, clan boards and tokens are in `expansion/` |
+| Map tiles, territories, borders, exploring | done: tile data in `tiles.scala`, territories and placement rules in `board.scala`, setup, Recruit, Move, Explore, Build, Feast and combat in `map.scala`. Tile images in `webp2/nort/images/tile/` (`tile-31` to `tile-33` and `start-5` from the owner's photos) |
+| Card display (like Arcs): Development and Achievement cards in the `court` pane on top for everyone, your hand (and played cards) in the `hand` pane at the bottom | done |
 | Player colors (blue, red, yellow, purple, green by seat) | done; no green starting card images, green uses the blue ones |
-| Buildings, combat, clan powers, three-closed-territories win | not started |
+| Buildings, combat, three-closed-territories win | done; clan powers: Stag, Wolf, Goat, Raven, Boar done, Bear (Kaija) and Snake (Scorched Earth) not yet |
 | Starting card list | Recruit, Move, Explore, Build, Feast ×2 (from the cards) |
 
 ## Components (core box)

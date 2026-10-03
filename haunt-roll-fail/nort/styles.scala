@@ -41,6 +41,18 @@ package object elem {
         object title extends CustomStyle()
 
         object card extends CustomStyle(display("inline-block"), width("12ex"), margin("0.3ex"))
+        object table extends CustomStyle(height("100%"), width("100%"), overflow.y("auto"), overflow.x("hidden"), padding("1ex"), box.sizing("border-box"), text.align("center"))
+        object tableRow extends CustomStyle(margin.bottom("1.5ex"))
+        object tableCard extends CustomStyle(display("inline-block"), width("10%"), min.width("8ex"), max.width("20ex"), margin("0.5%"), vertical.align("top"))
+
+        object strip extends CustomStyle(height("100%"), overflow.x("auto"), overflow.y("hidden"))
+        object stripRow extends CustomStyle(display("flex"), justify.content("safe center"), height("100%"), padding("0.5ex"), box.sizing("border-box"))
+        object stripGroup extends CustomStyle(display("flex"), flex.direction("column"), flex.shrink("1"), height("100%"), margin.left("1ex"), margin.right("1ex"), min.width("0"))
+        object stripTitle extends CustomStyle(text.align("center"), white.space("nowrap"), margin.bottom("0.3ex"))
+        object stripCards extends CustomStyle(display("flex"), justify.content("center"), align.items("center"), flex.grow("1"), min.height("0"), min.width("0"))
+        object stripCard extends CustomStyle(height("100%"), width("auto"), min.width("0"), flex.shrink("1"), objectFit("contain"), margin.left("0.3ex"), margin.right("0.3ex"))
+        object stripEmpty extends CustomStyle(font.style("italic"))
+
         object fame extends CustomStyle(color("#e8b84a"))
 
         object tile extends CustomStyle(display("inline-block"), width("8ex"), vertical.align("middle"), margin("0.3ex"))
