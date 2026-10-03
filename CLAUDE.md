@@ -240,6 +240,15 @@ file covers the build, server and deploy. No session can ssh to the server
     taken; the player keeps scoring (`demagogue` flag in `FactionState`).
   - Feather Rufflers, Spy Network, Silver-Tongue and Friend are usable from
     the Birdsong, Daylight and Evening menus on your own turn.
+- The Gorge map (`GorgeBoard` in `root/maps.scala`, option `GorgeMap`) uses
+  the board image the owner uploaded, scaled to the 2416x2214 size of the
+  other maps (score track included). The board prints no clearing names, so
+  the names (Ranch, Bluff, ...) are made up from the art; the layout card's
+  numbers are 1 Ranch, 2 Mesa, 3 Camp, 4 Chapel, 5 Bluff, 6 Saloon,
+  7 Lookout, 8 Rapids, 9 Homestead, 10 Forge, 11 Fork, 12 Pueblo. The dam
+  path (Forge - Saloon) divides forests and is crossed by the Fork - Pueblo
+  path, so the four forests around that crossing are adjacent in pairs
+  (`damCrossing`); the bridge path (Homestead - Lookout) divides nothing.
 - Bot games can be run headless on the JVM with `root/host.scala` (see
   `host.xsbt` for the source exclusions); it also checks that every action
   serializes and parses back.
