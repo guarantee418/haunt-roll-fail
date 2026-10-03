@@ -450,15 +450,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     def factionStatus(f : Faction) {
         val container = statuses(game.setup.indexOf(f))
 
-        // The clan's name, in its player's color
-        val name = f.name
+        // The player's name (human players in online games), then the clan's, in the player's color
+        val name = resources.getName(f)./(n => n.styled(colorOf(f))(styles.title) ~ " " ~ f.name.txt).|(f.name.styled(colorOf(f))(styles.title))
 
         if (!game.states.contains(f)) {
-            container.replace(Div(Div(name).styled(colorOf(f))(styles.title), styles.smallname, xlo.pointer), resources)
+            container.replace(Div(Div(name), styles.smallname, xlo.pointer), resources)
             return
         }
 
-        val title = Div(Div(name.styled(colorOf(f))(styles.title)), styles.smallname, styles.titleLine, xlo.pointer)
+        val title = Div(Div(name), styles.smallname, styles.titleLine, xlo.pointer)
 
         val state = game.states(f)
 
@@ -525,14 +525,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         }, boost = 1.1) ::
         l.copy(name = l.name + "-normal")
     )./~(l =>
-        l.copy(name = l.name + "-horizontal", boost = l.boost * 1.02, panes = l.panes./{
+        // The player panels always go in a row along the top
+        l.copy(name = l.name + "-horizontal", panes = l.panes./{
             case p : BasicPane if p.name == "status" => p.copy(name = "status-horizontal", kX = p.kX * arity)
             case p => p
-        }) ::
-        l.copy(name = l.name + "-vertical", panes = l.panes./{
-            case p : BasicPane if p.name == "status" => p.copy(name = "status-vertical", kY = p.kY * arity)
-            case p => p
-        })
+        }) :: Nil
     )./~(l =>
         l.copy(name = l.name + "-actionA", panes = l.panes./~{
             case p : BasicPane if p.name == "action-a" => Some(p.copy(name = "action"))
@@ -559,7 +556,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val settingsKey = Meta.settingsKey
 
-    val layoutKey = "v" + 6 + "." + "arity-" + arity
+    val layoutKey = "v" + 7 + "." + "arity-" + arity
 
     def overlayScrollX(e : Elem) = overlayScroll(e)(styles.seeThroughInner).onClick
     def overlayFitX(e : Elem) = overlayFit(e)(styles.seeThroughInner).onClick
