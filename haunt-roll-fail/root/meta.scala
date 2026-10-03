@@ -1752,7 +1752,8 @@ object Meta extends MetaGame {
     ConditionalAssetsList((factions, options) => options.has(GorgeMap), "gorge", "gorge:")(
         ImageAsset("map"          , "map-bright" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
-        ImageAsset("map-woods"    ) ::
+        // a new file name, so browsers don't keep the cached image with the lowercase "e" label
+        ImageAsset("map-woods"    , "map-woods-e") ::
 
         ImageAsset("building-slot", "empty-building-white") ::
 

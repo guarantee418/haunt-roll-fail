@@ -893,9 +893,9 @@ object GorgeBoard extends Board {
     object Saloon extends Clearing(2)
     object Lookout extends Clearing(2)
     object Rapids extends Clearing(2)
-    object Homestead extends Clearing(1)
+    object Homestead extends Clearing(2)
     object Forge extends Clearing(2)
-    object Fork extends Clearing(2)
+    object Fork extends Clearing(3)
     object Pueblo extends Clearing(3)
 
     val clearings = $(Ranch, Mesa, Camp, Chapel, Bluff, Saloon, Lookout, Rapids, Homestead, Forge, Fork, Pueblo)
@@ -993,18 +993,18 @@ object GorgeBoard extends Board {
     }
 
     override def gates(r : Region) = r @@ {
-        case Ranch => $((310, 345))
-        case Bluff => $((1465, 325))
-        case Mesa => $((2016, 370), (2137, 363))
-        case Fork => $((1241, 831), (1231, 657))
-        case Forge => $((516, 816), (435, 919))
-        case Saloon => $((1820, 907), (1937, 828))
-        case Homestead => $((427, 1292))
-        case Pueblo => $((1288, 1421), (1271, 1298), (1188, 1359))
-        case Lookout => $((2129, 1262), (2046, 1350))
-        case Rapids => $((1128, 1756), (1145, 1909))
-        case Chapel => $((393, 1954))
-        case Camp => $((1721, 1972))
+        case Ranch => $((302, 346))
+        case Bluff => $((1466, 321))
+        case Mesa => $((2015, 369), (2138, 355))
+        case Fork => $((1241, 836), (1231, 659), (1128, 693))
+        case Forge => $((518, 814), (435, 921))
+        case Saloon => $((1822, 906), (1938, 827))
+        case Homestead => $((429, 1296), (292, 1364))
+        case Pueblo => $((1287, 1419), (1271, 1297), (1188, 1359))
+        case Lookout => $((2131, 1263), (2045, 1349))
+        case Rapids => $((1129, 1756), (1146, 1909))
+        case Chapel => $((395, 1954))
+        case Camp => $((1721, 1974))
         case _ => super.gates(r)
     }
 }
