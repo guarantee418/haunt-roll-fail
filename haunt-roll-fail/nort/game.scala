@@ -83,8 +83,8 @@ class FactionState(val faction : Faction)(implicit game : Game) {
     var lore = 0
     var fame = 0
 
-    // Units on the map; placement comes with the map
-    var units = 0
+    // Units on the map
+    def units = game.onMap(faction)
 
     var draw : $[Card] = $
     var hand : $[Card] = $
@@ -172,6 +172,8 @@ case class TradeForAction(self : Faction, pay : $[Resource], gain : Resource, th
 case object WinterAction extends ForcedAction
 case object EndOfYearAction extends ForcedAction
 case object GameEndAction extends ForcedAction
+case object NewYearAction extends ForcedAction
+case class DominationAction(rulers : $[Faction]) extends ForcedAction
 
 case class GameOverWonAction(self : Faction, f : Faction) extends BaseInfo("Game Over")(f, "won")
 
@@ -190,7 +192,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     var isOver = false
 
-    val expansions : $[Expansion] = $(CommonExpansion)
+    val expansions : $[Expansion] = $(MapExpansion, CommonExpansion)
 
     var seating : $[Faction] = setup
 
@@ -204,6 +206,68 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     var year = 0
     var first : Faction = setup.first
+
+    val board = new Board
+
+    // Map tiles still to be drawn, and each player's tiles during setup
+    var pile : $[String] = $
+    var tileHand : Map[Faction, $[String]] = Map()
+    // Tiles drawn by an Explore action, before one is placed
+    var exploring : $[String] = $
+
+    var units : Map[AreaRef, Map[Faction, Int]] = Map()
+    var buildings : Map[SpaceRef, Building] = Map()
+
+    // Territories where a Move action started a fight
+    var combats : $[AreaRef] = $
+
+    // Fights so far, for statistics
+    var fights = 0
+
+    // Units per player
+    val unitLimit = 14
+
+    def unitsAt(a : AreaRef) : Map[Faction, Int] = units.getOrElse(a, Map())
+
+    def count(t : Territory, f : Faction) : Int = t.areas./(a => unitsAt(a).getOrElse(f, 0)).sum
+
+    def present(t : Territory) : $[Faction] = seating.%(f => count(t, f) > 0)
+
+    def controlled(f : Faction) : $[Territory] = board.territories.%(t => present(t) == $(f))
+
+    def onMap(f : Faction) : Int = units.values./(_.getOrElse(f, 0)).sum
+
+    def reserve(f : Faction) : Int = unitLimit - onMap(f)
+
+    def addUnits(a : AreaRef, f : Faction, n : Int) {
+        val m = unitsAt(a)
+        units += a -> (m + (f -> (m.getOrElse(f, 0) + n)))
+    }
+
+    def removeUnits(t : Territory, f : Faction, n : Int) {
+        var left = n
+        t.areas.foreach { a =>
+            val m = unitsAt(a)
+            val k = math.min(left, m.getOrElse(f, 0))
+            if (k > 0) {
+                left -= k
+                val v = m.getOrElse(f, 0) - k
+                units += a -> ((v > 0).?(m + (f -> v)).|(m - f))
+            }
+        }
+    }
+
+    def buildingsIn(t : Territory) : $[(SpaceRef, Building)] = buildings.toList.%{ case (s, _) => t.areas.contains(s.area) }.sortBy(_._2.toString)
+
+    // Food, wood and lore shown on a territory and its buildings
+    def produce(t : Territory) : (Int, Int, Int) = {
+        val specs = t.areas./(board.spec)
+        val here = buildingsIn(t).map(_._2)
+        (specs./(_.food).sum + here.count(_ == FoodSilo), specs./(_.wood).sum + here.count(_ == WoodcutterLodge), specs./(_.lore).sum + here.count(_ == CarvedStone))
+    }
+
+    // Closed controlled territories with at least one large building
+    def strongholds(f : Faction) : $[Territory] = controlled(f).%(board.closed).%(t => buildingsIn(t).exists(_._2.large))
 
     var developments : $[Card] = $
     var achievements : $[Card] = $
@@ -221,8 +285,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         (year > 0).$(Info("Year", year.hlb, "of", lastYear.hl)) ++
         display.any.$(Info((year == lastYear).?("Achievements").|("Developments") ~ Break ~ display./(_.img).merge)) ++
         self.%(states.contains)./~(f =>
-            $(Info("Hand" ~ Break ~ f.hand.any.?(f.hand./(_.img).merge).|("empty".txt))) ++
-            f.active.any.$(Info("Played" ~ Break ~ f.active./(_.img).merge)) ++
+            $(Info("Hand:", f.hand.any.?(Break ~ f.hand./(_.img).merge).|("empty".txt))) ++
+            f.active.any.$(Info("Played:", Break ~ f.active./(_.img).merge)) ++
             $(Info("Fame", f.fame.hlb))
         )
     }
@@ -269,6 +333,17 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     }
 }
 
+// Set by the headless host to print a summary of each game
+object Debug {
+    var stats = false
+
+    def summary(g : Game) {
+        if (stats)
+            println("  year " + g.year + ", " + g.board.placements.size + " tiles, " + g.buildings.size + " buildings, " + g.fights + " fights, " +
+                g.factions.map(f => f.name + " " + g.onMap(f) + "u " + g.states(f).fame + "f " + g.strongholds(f).size + "s").mkString(", "))
+    }
+}
+
 object CommonExpansion extends Expansion {
     // All ways to pay three resources out of what f has
     def payments(f : Faction)(implicit game : Game) : $[$[Resource]] =
@@ -284,7 +359,7 @@ object CommonExpansion extends Expansion {
         case CollectEffect(_, _) => true
         case NegotiationEffect => available(f) > 0
         case ResourcefulEffect => available(f) >= 2
-        case _ => false
+        case e => MapExpansion.playable(f, e)
     }
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
@@ -344,13 +419,10 @@ object CommonExpansion extends Expansion {
                 f.food = (i < 3).?(2).|(3)
                 f.wood = 2
 
-                // Two groups of three units; placing them comes with the map
-                f.units = 6
-
                 f.log("plays", game.colors(f), "and starts with", f.food.hl, Food, "and", f.wood.hl, Wood)
             }
 
-            Then(StartYearAction)
+            Shuffle[String](Tiles.regular./(_.id), ShuffledTilesAction(_))
 
         // DRAWING
         case DrawTempAction(f, n, then) =>
@@ -496,8 +568,8 @@ object CommonExpansion extends Expansion {
                 f.passed = false
             }
 
-            // Forges add one card each, once there is a map
-            Then(game.from(game.first).foldRight(RevealDevelopmentsAction : ForcedAction)((f, then) => DrawCardsAction(f, 4, then)))
+            // Each controlled Forge draws one more card
+            Then(game.from(game.first).foldRight(RevealDevelopmentsAction : ForcedAction)((f, then) => DrawCardsAction(f, 4 + game.controlled(f)./~(game.buildingsIn).map(_._2).count(_ == Forge), then)))
 
         case RevealDevelopmentsAction =>
             if (game.year == game.lastYear) {
@@ -567,8 +639,8 @@ object CommonExpansion extends Expansion {
                 case ResourcefulEffect =>
                     Then(DrawCardsAction(f, 2, ResourcefulAction(f, after)))
 
-                case _ =>
-                    Then(after)
+                case e =>
+                    MapExpansion.resolve(f, e, after)
             }
 
         case EndTurnAction(f) =>
@@ -657,7 +729,28 @@ object CommonExpansion extends Expansion {
             log(SingleLine)
             log("Harvest")
 
-            // Fame and resources from territories and buildings come with the map
+            game.from(game.first).foreach { f =>
+                val territories = game.controlled(f)
+
+                val fame = territories.%(game.board.closed)./(t => (game.board.tiles(t) >= 3).?(2).|(1)).sum
+                if (fame > 0) {
+                    f.fame += fame
+                    f.log("gained", fame.hl, "fame from closed territories")
+                }
+
+                val altars = territories./~(game.buildingsIn).map(_._2).count(_ == AltarOfKings)
+                if (altars > 0) {
+                    f.fame += 3 * altars
+                    f.log("gained", (3 * altars).hl, "fame from", AltarOfKings)
+                }
+
+                val (food, wood, lore) = territories./(game.produce).foldLeft((0, 0, 0))((a, b) => (a._1 + b._1, a._2 + b._2, a._3 + b._3))
+                f.food += food
+                f.wood += wood
+                f.lore += lore
+                f.log("collected", food.hl, Food, Comma, wood.hl, Wood, "and", lore.hl, Lore)
+            }
+
             Then(game.from(game.first).foldRight(WinterAction : ForcedAction)((f, then) => TradeAction(f, then)))
 
         case TradeAction(f, then) =>
@@ -708,19 +801,57 @@ object CommonExpansion extends Expansion {
 
         // 5. END OF YEAR
         case EndOfYearAction =>
-            // Three closed territories with large buildings come with the map
+            val rulers = factions.%(f => game.strongholds(f).num >= 3)
+
+            if (rulers.any)
+                Then(DominationAction(rulers))
+            else
             if (game.year >= game.lastYear)
                 Then(GameEndAction)
             else
-                Milestone(StartYearAction)
+                Then(game.from(game.first).foldRight(NewYearAction : ForcedAction)((f, then) => ReturnUnitsAction(f, then)))
+
+        case NewYearAction =>
+            Milestone(StartYearAction)
+
+        case DominationAction(rulers) =>
+            log(DoubleLine)
+
+            rulers.foreach(f => f.log("controls three closed territories with large buildings"))
+
+            // Ties: fame, then territories controlled, then units, then buildings
+            val winners = rulers.%(f => f.fame == rulers./(_.fame).max) @@ { l =>
+                val t = l.%(f => game.controlled(f).num == l./(game.controlled(_).num).max)
+                val u = t.%(f => f.units == t./(_.units).max)
+                u.%(f => game.controlled(f)./~(game.buildingsIn).num == u./(game.controlled(_)./~(game.buildingsIn).num).max)
+            }
+
+            game.isOver = true
+            game.highlight.current = winners.single
+
+            winners.foreach(f => f.log("won"))
+
+            Debug.summary(game)
+
+            GameOver(winners, "Game Over" ~ Break ~ winners./(_.elem).join(Break) ~ Break ~ "won", winners./(f => GameOverWonAction(null, f)))
 
         case GameEndAction =>
             log(DoubleLine)
             log("End of the game")
 
             val totals = factions./{ f =>
-                // Achievements other than Warlord need the map
+                val territories = game.controlled(f)
+                val built = territories./~(game.buildingsIn).map(_._2)
+                val spaces = territories./~(_.areas)./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not)
+                val (food, wood, lore) = territories./(game.produce).foldLeft((0, 0, 0))((a, b) => (a._1 + b._1, a._2 + b._2, a._3 + b._3))
+
                 val cards = f.deck./{
+                    case Achievement("builder") => built.count(_.large.not) + 3 * built.count(_.large)
+                    case Achievement("explorer") => spaces.count(s => game.board.spec(s.area).spaces(s.index).kind != LargeSpace) + 3 * spaces.count(s => game.board.spec(s.area).spaces(s.index).kind == LargeSpace)
+                    case Achievement("food-trader") => 2 * food
+                    case Achievement("wood-trader") => 2 * wood
+                    case Achievement("scholar") => 2 * lore
+                    case Achievement("trapper") => 3 * territories./~(_.areas).count(a => game.board.spec(a).lair)
                     case Achievement("warlord") => f.units
                     case c => c.fame
                 }.sum
@@ -732,15 +863,21 @@ object CommonExpansion extends Expansion {
                 f -> total
             }.toMap
 
-            // Ties: territories and buildings come with the map
+            // Ties: territories controlled, then units, then buildings
             val best = factions.%(f => totals(f) == totals.values.max)
-            val winners = best.%(f => f.units == best./(_.units).max)
+            val t = best.%(f => game.controlled(f).num == best./(game.controlled(_).num).max)
+            val u = t.%(f => f.units == t./(_.units).max)
+            val winners = u.%(f => game.controlled(f)./~(game.buildingsIn).num == u./(game.controlled(_)./~(game.buildingsIn).num).max)
 
             game.isOver = true
             game.highlight.current = winners.single
 
             winners.foreach(f => f.log("won"))
 
+            Debug.summary(game)
+
             GameOver(winners, "Game Over" ~ Break ~ winners./(_.elem).join(Break) ~ Break ~ "won", winners./(f => GameOverWonAction(null, f)))
+
+        case _ => UnknownContinue
     }
 }

@@ -43,6 +43,13 @@ package object elem {
         object card extends CustomStyle(display("inline-block"), width("12ex"), margin("0.3ex"))
         object fame extends CustomStyle(color("#e8b84a"))
 
+        object tile extends CustomStyle(display("inline-block"), width("8ex"), vertical.align("middle"), margin("0.3ex"))
+        object rot0 extends CustomStyle()
+        object rot1 extends CustomStyle(transform("rotate(90deg)"))
+        object rot2 extends CustomStyle(transform("rotate(180deg)"))
+        object rot3 extends CustomStyle(transform("rotate(270deg)"))
+        def rotate(r : Int) = $(rot0, rot1, rot2, rot3)(r % 4)
+
         object group extends CustomStyle(margin.top("0.5ex"), margin.bottom("0.5ex"))
         object inline extends CustomStyle(display("inline-block"))
         object nomargin extends CustomStyle(margin("0"))

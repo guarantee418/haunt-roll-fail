@@ -26,6 +26,8 @@ object Host extends hrf.host.BaseHost {
     def factionName(f : F) = f.name
     def nameWinner(f : F) = f.name
 
+    Debug.stats = true
+
     def winners(a : Action)(implicit g : G) = a @@ {
         case GameOverWonAction(_, f) => $(f)
     }

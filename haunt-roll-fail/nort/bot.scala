@@ -27,6 +27,11 @@ class GameEvaluation(val self : Faction)(implicit val game : Game) {
         }
 
         a.unwrap @@ {
+            case CancelAction => true |=> -1000 -> "cancel"
+            case PlayCardAction(_, _, _) => true |=> 20 -> "play a card"
+            case MoveDoneAction(_, _, _) => true |=> -5 -> "stop moving early"
+            case RecruitDoneAction(_, _, _) => true |=> -5 -> "stop recruiting early"
+            case BuildDoneAction(_, _) => true |=> -5 -> "stop building"
             case _ =>
         }
 
