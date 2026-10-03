@@ -4,6 +4,14 @@ Working notes for the HRF adaptation (package `nort`), summarized from the
 core rulebook. The rulebook PDFs are not in the repo. Card text overrides
 these rules ("the cards are always right").
 
+On 2026-10-03 the code was checked against the English core rulebook (24
+pages, including the Creatures module on pages 18–24) from the owner's
+Dropbox. Fixed then: Scorched Earth may also go to a neutral territory; the
+first setup tile must touch the starting tile itself; Boar's lore needs the
+tile to close no territory at all (anyone's); Kaija counts when a tile would
+join two players' units; the ten-card Unrest supply; and the second chance
+draws a tile when no neutral territory is left.
+
 ## Status
 
 | Part | State |
@@ -22,11 +30,13 @@ these rules ("the cards are always right").
 | Card display (like Arcs): Development and Achievement cards in the `court` pane on top for everyone, your hand (and played cards) in the `hand` pane at the bottom; click or tap a card to see it full screen | done |
 | Player colors, chosen per clan on the setup screen (default blue, red, yellow, purple, green by seat) | done; no green starting card images, green uses the blue ones |
 | Game length 5–10 years (10-year variant: 3 Early + 6 Advanced per player), Fame victory only, First seat goes first | done (options) |
-| Modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
+| Creatures module (core box), with the More Creatures variant | done 2026-10-03 (`creatures.scala`) |
+| Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
 | Tile data checked against the art | done 2026-10-03 for all 35 core tiles (numbers, unit markers, building spaces) |
-| No units at the end of a year and no neutral territory | not done (should draw a tile to make one) |
+| No units at the end of a year and no neutral territory | done: a tile is drawn and placed anywhere it fits with an empty territory |
+| Unrest supply (10 cards; then −5 fame and discard the top card) | done |
 | Starting card list | Recruit, Move, Explore, Build, Feast ×2 (from the cards) |
 
 ## Components (core box)
@@ -183,11 +193,59 @@ Variants: a 10-year game (3 Early + 6 Advanced per player, fame win only);
 - **Raven**: closing their own territories by exploring collects those
   territories' resources (tiles and buildings) right away.
 - **Snake**: before resolving a clan card, may move the Scorched Earth token
-  to an enemy territory adjacent to one they control. +1 combat point fighting
+  to a neutral or enemy territory adjacent to one they control. +1 combat point fighting
   there (attacking or defending); at harvest may take one resource from that
   territory instead of its owner.
 - **Stag**: +1 fame per territory conquered in combat or closed by exploring.
 - **Wolf**: winning a combat as the attacker gives 1 food.
+
+## Creatures module (core box, pages 18–24)
+
+Nine creature cards and miniatures; the card shows the combat value, the
+fame for defeating it, and the move priorities from left to right.
+
+| Creature | Copies (colors) | Value | Fame | Priorities | Effect |
+|---|---|---|---|---|---|
+| Wolf | 3 (beige, brown, dark brown) | 4 | 1 | resources, buildings, units | Its territory gives no fame or resources at harvest, except from buildings (Snake can't take a tile resource there) |
+| Brown Bear | 2 (beige, brown) | 6 | 3 | buildings, resources, units | No building or recruiting in its territory, and no exploring or moving units out of it (retreating after losing to a player is allowed) |
+| Draugr | 2 (beige, brown) | 5 | 2 | units, buildings, resources | When it appears or moves into a controlled territory, that player removes 1 unit |
+| Fallen Valkyrie | 2 (beige, brown) | 7 | 4 | resources, buildings, units | Doesn't share its territory: attacks the units there when it appears or moves; units moving in must stop and fight it |
+
+- **Setup** (after K, before L): shuffle the cards of value 6 or less, put
+  N+1 (N players) on top; shuffle the rest (with the Valkyries) below.
+- **Apparition**: when a tile with a lair is placed (setup or Explore), the
+  current player draws the top creature card, adds it to the right end of the
+  creature line, and puts the creature on the lair. In setup that happens
+  before the player's units go on the tile, and the creature does nothing
+  else. From an Explore the creature doesn't move but acts at once. Empty
+  draw pile: shuffle the creature discard pile.
+- **Creature phase** (2.5, after the Actions, before the Harvest): from left
+  to right each creature moves, then acts. It must move if it can, to an
+  adjacent territory (Rough borders ignored) with no creature in it; first to
+  territories with units, otherwise any; then by its priorities (building
+  points: small 1, large 3; units; resources on tiles and buildings); the
+  first player breaks remaining ties.
+- **Attacking creatures**: only with a Move action (even one that moves no
+  units), in neutral or friendly territories. After all moves and before the
+  fights, the player declares up to one creature per territory they share
+  with creatures. Those fights are ordered with the player fights, and
+  nobody may retreat into their territories.
+- **Combat**: the player counts units, card or building bonuses, clan powers
+  and food (max 1 per unit) as usual; the creature its value. Each rolls a
+  die (another player rolls the creature's). Casualties inflicted on a
+  creature don't count; a creature always takes the point on the
+  point-or-casualty face. A player who takes casualties equal to their units
+  loses. Otherwise higher score wins, ties to the defender. A defeated
+  creature's card goes to the creature discard pile and the player gains its
+  fame. An attacking player who loses stays in the territory, unless the
+  creature doesn't share its territory (then retreat); a player attacked by a
+  creature retreats normally when losing. An attacker gets no building
+  bonuses.
+- **Variant, More Creatures!**: after picking their card when passing, a
+  player may make a creature appear, unless there are already at least as
+  many creatures on the map as players: on a lair without a creature, or
+  if there is none, in any territory without a creature. It doesn't move but
+  acts.
 
 ## Expansions (later)
 
@@ -241,3 +299,28 @@ Check these against the rulebook when it is at hand.
   Carved Stone space.
 - **Annexation**: the player chooses Explore first or Move first; exploring
   is optional.
+- **Boar Clan**: "explores without closing any territory" is read literally:
+  closing anyone's territory (or a neutral one) costs the lore.
+- **Creatures**, where the rulebook says nothing:
+  - Kaija counts as a unit for the Draugr (units go first) and as 2 combat
+    points; a Fallen Valkyrie in a territory makes a tile placement illegal
+    if it would join it with units.
+  - Setup units don't go in a Fallen Valkyrie's territory unless the tile has
+    no other empty territory.
+  - A Fallen Valkyrie must be fought by the units that share its territory at
+    the end of any Move action; they can't move out before.
+  - Two creatures in a territory both block nobody, but nobody may enter a
+    territory with two Fallen Valkyries.
+  - A player's own die: the point-or-casualty face is always taken as the
+    point (a casualty does nothing to a creature). Axe Throwers adds 1 point,
+    Shieldbearers cancel 1 casualty, Defense Towers do nothing (they only
+    add casualties), Fortresses add 2 to a defender, Scorched Earth adds 1.
+  - Wolf Clan collects 1 food for beating a creature as the attacker; Stag
+    Clan gains 1 fame only for beating a Fallen Valkyrie (it takes the
+    territory).
+  - Recruiting into a neutral territory (no units on the map, some cards)
+    can't use a Brown Bear's or Fallen Valkyrie's territory; Hidden Ways,
+    Bribery, Intimidate and retreats can't go into a Fallen Valkyrie's.
+  - The Wolf's harvest rule also applies to collecting "as at harvest"
+    (Raven Clan closing, Glory of the Clan).
+  - With the second chance tile, a lair creature acts as from an Explore.

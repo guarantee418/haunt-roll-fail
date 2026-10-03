@@ -51,6 +51,10 @@ case class SetupTurnAction(self : Faction, round : Int, l : $[Faction], tile : S
 case class SetupUnitsAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place three units in")(area) with MapTarget { def target = area }
 case class SetupKaijaAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place two units and Kaija in")(area)
 case class ShuffledTilesBackAction(shuffled : $[String]) extends ShuffledAction[String]
+case class SetupUnitsAskAction(f : Faction, round : Int, l : $[Faction], tile : String, spot : Spot) extends ForcedAction
+
+// A tile was placed (setup, exploring or a second chance); the Creatures module makes a creature appear on a lair
+case class TilePlacedAction(f : Faction, tile : String, spot : Spot, setup : Boolean, then : ForcedAction) extends ForcedAction
 
 // RECRUIT
 case class RecruitAction(f : Faction, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends ForcedAction
@@ -65,6 +69,8 @@ case class MoveFromAction(self : Faction, from : AreaRef, left : Int, e : MoveEf
 case class MoveToAction(self : Faction, from : AreaRef, to : AreaRef, cost : Int, left : Int, e : MoveEffect, then : ForcedAction) extends BaseAction("Move from", from, "to")(to, (cost > 1).?("(Rough border)").|("")) with Soft with MapTarget { def target = to }
 case class MoveUnitsAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, cost : Int, left : Int, e : MoveEffect, then : ForcedAction) extends BaseAction("Move from", from, "to", to)(Figures(n, kaija))
 case class MoveDoneAction(self : Faction, e : MoveEffect, then : ForcedAction) extends BaseAction("Move")("Done")
+// All moves are made; the Creatures module asks which creatures are attacked before the fights
+case class MoveEndAction(f : Faction, e : MoveEffect, then : ForcedAction) extends ForcedAction
 case class CombatsAction(f : Faction, e : MoveEffect, then : ForcedAction) extends ForcedAction
 case class FightAction(self : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends BaseAction("Fight in")(area) with MapTarget { def target = area }
 case class FightStartAction(f : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends ForcedAction
@@ -121,6 +127,11 @@ object FeastLabel {
 // END OF YEAR
 case class ReturnUnitsAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class ReturnUnitsToAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction(self, "has no units left; place three in")(area) with MapTarget { def target = area }
+// No neutral territory left: draw a tile to make one
+case class SecondChanceDrawAction(f : Faction, tries : Int, then : ForcedAction) extends ForcedAction
+case class SecondChanceSpotAction(self : Faction, tile : String, spot : Spot, then : ForcedAction) extends BaseAction(self, "has no units and no neutral territory is left; place", TileRef(tile), "at")(spot) with Soft with MapTarget { def target = spot }
+case class SecondChanceRotateAction(self : Faction, tile : String, spot : Spot, r : Int, d : Int, then : ForcedAction) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft
+case class SecondChanceTurnAction(self : Faction, tile : String, spot : Spot, r : Int, then : ForcedAction) extends BaseAction("Place the tile at", spot)("Confirm") with TilePreview
 
 
 // Some units, maybe with Kaija
@@ -173,15 +184,26 @@ object MapExpansion extends Expansion {
             case _ => false
         }
 
+        // Creatures: no recruiting with a Brown Bear, and a Fallen Valkyrie shares its territory with nobody
+        val r = l.%(t => game.bearIn(t).not && game.hostileIn(t).not)
+
         if (same && placed.any)
-            l.%(t => t.areas.contains(placed.head) || game.board.territory(placed.head) == t)
+            r.%(t => t.areas.contains(placed.head) || game.board.territory(placed.head) == t)
         else
-            l
+            r
     }
 
     // Territories f can move out of: their own, not fighting; with Infiltration also enemy territories they moved into
+    // No moving out of a Brown Bear's territory, nor out of a Fallen Valkyrie's before fighting it
     def moveSources(f : Faction, e : MoveEffect = MoveEffect(1))(implicit game : Game) =
-        (e.special == InfiltrateMove).?(game.board.territories.%(t => game.figures(t, f) > 0)).|(game.controlled(f))
+        (e.special == InfiltrateMove).?(game.board.territories.%(t => game.figures(t, f) > 0)).|(game.controlled(f)).%(t => game.bearIn(t).not && game.hostileIn(t).not)
+
+    // Two creatures that don't share their territory can't both be fought: nobody may enter
+    def enterable(t : Territory)(implicit game : Game) = game.creaturesIn(t).count(_.kind.shares.not) < 2
+
+    // Tiles a setup placement may go next to: the starting tile(s) in the first round, any tile in the second
+    def setupPlacements(tile : String, round : Int)(implicit game : Game) : $[(Spot, Int)] =
+        placements(tile, None, true).%{ case (s, _) => round > 1 || Side.all.exists(d => game.board.at(s.x + d.dx, s.y + d.dy).exists(_.tile.startsWith("start"))) }
 
     def moveCost(rough : Boolean, ignoreRough : Boolean) = (rough && ignoreRough.not).?(2).|(1)
 
@@ -225,7 +247,11 @@ object MapExpansion extends Expansion {
                     None
                 else {
                     val preview = board.preview(p)
-                    val mixed = preview.exists(t => t.areas./~(a => game.unitsAt(a).keys).distinct.num > 1)
+                    // Kaija counts as Bear Clan's, and a Fallen Valkyrie shares its territory with nobody
+                    val mixed = preview.exists { t =>
+                        val players = (t.areas./~(a => game.unitsAt(a).keys) ++ game.kaija.%(t.areas.contains)./(_ => Bear)).distinct
+                        players.num > 1 || players.any && game.creatureLine.exists(c => c.kind.shares.not && t.areas.contains(game.creatureAt(c)))
+                    }
                     val room = setup.not || p.spec.areas.exists(a => preview.find(_.areas.contains(AreaRef(x, y, a.id))).get.areas.forall(b => game.unitsAt(b).isEmpty))
                     (mixed.not && room).?(Spot(x, y) -> r)
                 }
@@ -234,10 +260,10 @@ object MapExpansion extends Expansion {
     }
 
     def explorable(f : Faction, anywhere : Boolean)(implicit game : Game) : $[Territory] =
-        anywhere.?(game.board.territories.%(game.board.open)).|(game.controlled(f).%(game.board.open))
+        anywhere.?(game.board.territories.%(game.board.open)).|(game.controlled(f).%(game.board.open)).%(t => game.bearIn(t).not)
 
     def buildOptions(f : Faction, e : BuildEffect, smallOnly : Boolean)(implicit game : Game) : $[(AreaRef, Building, SpaceRef, Int)] = {
-        game.controlled(f)./~{ t =>
+        game.controlled(f).%(t => game.bearIn(t).not)./~{ t =>
             val here = game.buildingsIn(t).map(_._2)
             val free = t.areas./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not)
 
@@ -272,10 +298,10 @@ object MapExpansion extends Expansion {
     // Closed territories of 3 or more tiles, for Protector of the Land
     def bigClosed(f : Faction)(implicit game : Game) = game.controlled(f).%(game.board.closed).%(t => game.board.tiles(t) >= 3)
 
-    // Enemy territories next to f's, where the Scorched Earth token can go
+    // Neutral or enemy territories next to f's, where the Scorched Earth token can go
     def scorchable(f : Faction)(implicit game : Game) : $[Territory] = {
         val mine = game.controlled(f)
-        game.board.territories.%(t => game.present(t).but(f).any && game.present(t).has(f).not)
+        game.board.territories.%(t => game.present(t).has(f).not)
             .%(t => mine.exists(m => game.board.adjacent(m).exists(_._1 == t)))
             .%(t => game.scorchedIn(t).not)
     }
@@ -284,7 +310,8 @@ object MapExpansion extends Expansion {
         case RecruitEffect(_, mode) => canRecruit(f) && recruitTargets(f, mode, $).any
         case AwakenEffect => true
         case ProtectorEffect => bigClosed(f).any && CommonExpansion.available(f) > 0
-        case MoveEffect(_, _, _, _) => moveSources(f).any
+        // A Move action may be played just to attack creatures
+        case MoveEffect(_, _, _, _) => moveSources(f).any || CreaturesExpansion.attackable(f).any
         case e : ExploreEffect => game.pile.any && explorable(f, e.anywhere).any
         case e : BuildEffect => buildOptions(f, e, false).any
         case FeastEffect => $(RecruitEffect(1), MoveEffect(1), ExploreEffect(), BuildEffect()).exists(playable(f, _))
@@ -316,9 +343,9 @@ object MapExpansion extends Expansion {
         else
             Then(CombatRollAction(attacker, defender, a, e, food, faces :+ face, then))
 
-    // Collect what a territory produces
+    // Collect what a territory produces, as at harvest
     def collect(f : Faction, t : Territory, reason : Elem)(implicit game : Game) {
-        val (food, wood, lore) = game.produce(t)
+        val (food, wood, lore) = game.harvest(t)
         f.food += food
         f.wood += wood
         f.lore += lore
@@ -364,29 +391,19 @@ object MapExpansion extends Expansion {
             Then(StartYearAction)
 
         case SetupPlaceAction(round, f :: rest) =>
-            val starts = game.board.territories.%(t => t.areas.exists(a => game.board.at(a.x, a.y).get.tile.startsWith("start")))
-            val near = (round == 1).?(starts)
-
-            Ask(f).each(game.tileHand(f).%(t => placements(t, near, true).any))(t => SetupTileAction(f, round, f :: rest, t))
+            Ask(f).each(game.tileHand(f).%(t => setupPlacements(t, round).any))(t => SetupTileAction(f, round, f :: rest, t))
                 .bailHard(SetupPlaceAction(round, rest))
 
         case SetupTileAction(f, round, l, tile) =>
-            val starts = game.board.territories.%(t => t.areas.exists(a => game.board.at(a.x, a.y).get.tile.startsWith("start")))
-            val near = (round == 1).?(starts)
-
-            Ask(f).each(placements(tile, near, true).map(_._1).distinct)(s => SetupSpotAction(f, round, l, tile, s)).cancel
+            Ask(f).each(setupPlacements(tile, round).map(_._1).distinct)(s => SetupSpotAction(f, round, l, tile, s)).cancel
 
         case SetupSpotAction(f, round, l, tile, spot) =>
-            val starts = game.board.territories.%(t => t.areas.exists(a => game.board.at(a.x, a.y).get.tile.startsWith("start")))
-            val near = (round == 1).?(starts)
-            val rs = rotations(placements(tile, near, true), spot)
+            val rs = rotations(setupPlacements(tile, round), spot)
 
             setupPreview(f, round, l, tile, spot, rs, rs.head)
 
         case SetupRotateAction(f, round, l, tile, spot, r, d) =>
-            val starts = game.board.territories.%(t => t.areas.exists(a => game.board.at(a.x, a.y).get.tile.startsWith("start")))
-            val near = (round == 1).?(starts)
-            val rs = rotations(placements(tile, near, true), spot)
+            val rs = rotations(setupPlacements(tile, round), spot)
 
             setupPreview(f, round, l, tile, spot, rs, rotate(rs, r, d))
 
@@ -396,10 +413,18 @@ object MapExpansion extends Expansion {
 
             f.log("placed a tile")
 
-            val empty = Tiles(tile).areas./(a => game.board.territory(AreaRef(spot.x, spot.y, a.id))).distinct.%(t => game.present(t).none)
+            Then(TilePlacedAction(f, tile, spot, true, SetupUnitsAskAction(f, round, l, tile, spot)))
+
+        case SetupUnitsAskAction(f, round, l, tile, spot) =>
+            val all = Tiles(tile).areas./(a => game.board.territory(AreaRef(spot.x, spot.y, a.id))).distinct.%(t => game.present(t).none)
+            // Not with a Fallen Valkyrie, unless there is no other choice
+            val empty = all.exists(t => game.hostileIn(t).not).?(all.%(t => game.hostileIn(t).not)).|(all)
 
             Ask(f).each(empty)(t => SetupUnitsAction(f, round, l, t.anchor))
                 .some(empty.%(_ => game.kaijaReady(f)))(t => $(SetupKaijaAction(f, round, l, t.anchor)))
+
+        case TilePlacedAction(f, tile, spot, setup, then) =>
+            Then(then)
 
         case SetupUnitsAction(f, round, l, a) =>
             game.addUnits(a, f, 3)
@@ -467,7 +492,7 @@ object MapExpansion extends Expansion {
             val sources = (left > 0).??(moveSources(f, e).%(t => game.board.adjacent(t).exists { case (_, regular) => moveCost(regular.not, e.ignoreRough) <= left }))
 
             if (sources.none)
-                Then(CombatsAction(f, e, then))
+                Then(MoveEndAction(f, e, then))
             else
                 Ask(f).each(sources)(t => MoveFromAction(f, t.anchor, left, e, then))
                     .add(MoveDoneAction(f, e, then))
@@ -475,7 +500,7 @@ object MapExpansion extends Expansion {
         case MoveFromAction(f, from, left, e, then) =>
             val t = game.board.territory(from)
 
-            Ask(f).some(game.board.adjacent(t)) { case (o, regular) =>
+            Ask(f).some(game.board.adjacent(t).filter(x => enterable(x._1))) { case (o, regular) =>
                 val cost = moveCost(regular.not, e.ignoreRough)
                 (cost <= left).$(MoveToAction(f, from, o.anchor, cost, left, e, then))
             }.cancel
@@ -523,12 +548,18 @@ object MapExpansion extends Expansion {
             Then(MoveAction(f, left - cost, e, then))
 
         case MoveDoneAction(f, e, then) =>
+            Then(MoveEndAction(f, e, then))
+
+        case MoveEndAction(f, e, then) =>
             Then(CombatsAction(f, e, then))
 
         case CombatsAction(f, e, then) =>
             val l = game.combats.%(a => game.present(game.board.territory(a)).num > 1)
+            // Creatures attacked by this Move action (Creatures module)
+            val cl = game.creatureFights.%(x => game.creatureLine.has(x.creature) && game.figures(game.board.territory(x.area), f) > 0)
 
-            if (l.none) {
+            if (l.none && cl.none) {
+                game.creatureFights = $
                 game.combats = $
                 // Snake Clan card: the token may move after the move
                 if (e.special == SnakeMove)
@@ -537,20 +568,24 @@ object MapExpansion extends Expansion {
                     Then(then)
             }
             else
-            if (l.num == 1)
+            if (l.num == 1 && cl.none)
                 Then(FightAction(f, l.head, e, CombatsAction(f, e, then)))
             else
+            if (l.none && cl.num == 1)
+                Then(CreatureFightAction(f, cl.head.area, cl.head.creature, e, CombatsAction(f, e, then)))
+            else
                 Ask(f).each(l)(a => FightAction(f, a, e, CombatsAction(f, e, then)))
+                    .each(cl)(x => CreatureFightAction(f, x.area, x.creature, e, CombatsAction(f, e, then)))
 
         case FightAction(f, a, e, then) =>
             game.combats = game.combats.but(a)
 
             val t = game.board.territory(a)
             val defender = game.present(t).but(f).head
-            val fighting = game.combats./(game.board.territory)
+            val fighting = (game.combats ++ game.creatureFights./(_.area))./(game.board.territory)
 
             // Intimidate: one defending unit may be pushed to a neutral or defender territory next door
-            val push = (e.special == IntimidateMove && game.count(t, defender) > 0).??(game.board.adjacent(t).map(_._1).%(o => fighting.has(o).not).%(o => game.present(o).but(defender).none))
+            val push = (e.special == IntimidateMove && game.count(t, defender) > 0).??(game.board.adjacent(t).map(_._1).%(o => fighting.has(o).not).%(o => game.present(o).but(defender).none).%(o => game.hostileIn(o).not))
 
             if (push.any)
                 Ask(f).each(push)(o => IntimidateAction(f, a, o.anchor, e, then)).add(IntimidateSkipAction(f, a, e, then))
@@ -716,8 +751,9 @@ object MapExpansion extends Expansion {
             if (n == 0 && kaija.not)
                 Then(then)
             else {
-                val fighting = game.combats./(game.board.territory)
-                val to = game.board.adjacent(t).filter(rough || _._2).map(_._1).%(o => fighting.has(o).not).%(o => game.present(o).but(f).none)
+                // Not into a fight, nor where a creature is being attacked or a Fallen Valkyrie is
+                val fighting = (game.combats ++ game.creatureFights./(_.area))./(game.board.territory)
+                val to = game.board.adjacent(t).filter(rough || _._2).map(_._1).%(o => fighting.has(o).not).%(o => game.present(o).but(f).none).%(o => game.hostileIn(o).not)
 
                 if (to.none) {
                     game.removeFigures(t, f, game.figures(t, f))
@@ -838,7 +874,9 @@ object MapExpansion extends Expansion {
 
             f.log("explored")
 
-            val closed = game.board.territories.%(game.board.closed).%(t => before.exists(b => b.areas.exists(t.areas.contains))).%(t => game.present(t) == $(f))
+            // Territories this tile closed, and those of them f controls
+            val closing = game.board.territories.%(game.board.closed).%(t => before.exists(b => b.areas.exists(t.areas.contains)))
+            val closed = closing.%(t => game.present(t) == $(f))
 
             closed.foreach { t =>
                 val n = game.board.tiles(t)
@@ -854,12 +892,13 @@ object MapExpansion extends Expansion {
                     collect(f, t, "from the closed territory")
             }
 
-            if (closed.none && f == Boar) {
+            // Boar Clan: exploring without closing any territory
+            if (closing.none && f == Boar) {
                 f.lore += 1
                 f.log("collected", 1.hl, Lore, "for exploring without closing a territory")
             }
 
-            Then(ExploreAction(f, 1, times - 1, false, e, then))
+            Then(TilePlacedAction(f, tile, spot, false, ExploreAction(f, 1, times - 1, false, e, then)))
 
         // BUILD
         case BuildAction(f, e, times, smallOnly, then) =>
@@ -919,12 +958,59 @@ object MapExpansion extends Expansion {
 
         // NO UNITS LEFT
         case ReturnUnitsAction(f, then) =>
-            val neutral = game.board.territories.%(t => game.present(t).none)
+            val neutral = game.board.territories.%(t => game.present(t).none).%(t => game.hostileIn(t).not)
 
-            if (game.anyOnMap(f) || neutral.none)
+            if (game.anyOnMap(f))
                 Then(then)
             else
+            if (neutral.none)
+                Then(SecondChanceDrawAction(f, game.pile.num, then))
+            else
                 Ask(f).each(neutral)(t => ReturnUnitsToAction(f, t.anchor, then))
+
+        // A tile with an empty territory, placed anywhere it fits
+        case SecondChanceDrawAction(f, tries, then) =>
+            if (tries <= 0 || game.pile.none) {
+                f.log("found no tile to make a neutral territory")
+                Then(then)
+            }
+            else {
+                val tile = game.pile.head
+                game.pile = game.pile.drop(1)
+
+                val l = placements(tile, None, true)
+
+                if (l.none) {
+                    game.pile :+= tile
+                    Then(SecondChanceDrawAction(f, tries - 1, then))
+                }
+                else
+                    Ask(f).each(l.map(_._1).distinct)(s => SecondChanceSpotAction(f, tile, s, then))
+            }
+
+        case SecondChanceSpotAction(f, tile, spot, then) =>
+            val rs = rotations(placements(tile, None, true), spot)
+
+            Ask(f)
+                .when(rs.num > 1)(SecondChanceRotateAction(f, tile, spot, rs.head, 1, then))
+                .when(rs.num > 1)(SecondChanceRotateAction(f, tile, spot, rs.head, -1, then))
+                .add(SecondChanceTurnAction(f, tile, spot, rs.head, then))
+
+        case SecondChanceRotateAction(f, tile, spot, r, d, then) =>
+            val rs = rotations(placements(tile, None, true), spot)
+            val n = rotate(rs, r, d)
+
+            Ask(f)
+                .add(SecondChanceRotateAction(f, tile, spot, n, 1, then))
+                .add(SecondChanceRotateAction(f, tile, spot, n, -1, then))
+                .add(SecondChanceTurnAction(f, tile, spot, n, then))
+
+        case SecondChanceTurnAction(f, tile, spot, r, then) =>
+            game.board.place(Placement(tile, spot.x, spot.y, r))
+
+            f.log("drew and placed a tile to make a neutral territory")
+
+            Then(TilePlacedAction(f, tile, spot, false, ReturnUnitsAction(f, then)))
 
         case ReturnUnitsToAction(f, a, then) =>
             game.addUnits(a, f, math.min(3, game.reserve(f)))

@@ -57,6 +57,7 @@ package object elem {
         object stripEmpty extends CustomStyle(font.style("italic"))
 
         object fame extends CustomStyle(color("#e8b84a"))
+        object creature extends CustomStyle(color("#c9a27a"), font.weight("bold"))
 
         object tile extends CustomStyle(display("inline-block"), width("12ex"), vertical.align("middle"), margin("0.3ex"))
         object rot0 extends CustomStyle()

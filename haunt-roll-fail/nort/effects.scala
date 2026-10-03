@@ -129,23 +129,29 @@ object CardsExpansion extends Expansion {
         enemyUnits(f).%{ case (t, _) => game.present(t).has(f).not && mine.exists(m => game.board.adjacent(m).exists(_._1 == t)) }
     }
 
+    // Territories f can recruit in: not with a Brown Bear (Creatures module)
+    def recruitable(f : Faction)(implicit game : Game) = game.controlled(f).%(t => game.bearIn(t).not && game.hostileIn(t).not)
+
     def perCaps(f : Faction, r : Resource)(implicit game : Game) : $[Cap] =
-        game.controlled(f)./{ t =>
+        recruitable(f)./{ t =>
             val (food, wood, lore) = game.produce(t)
             Cap(t.anchor, r match { case Food => food; case Wood => wood; case Lore => lore })
         }.%(_.n > 0)
 
     def callToWarCaps(f : Faction)(implicit game : Game) : $[Cap] =
-        game.controlled(f).%(t => game.board.adjacent(t).exists { case (o, _) => game.present(o).but(f).any })./(t => Cap(t.anchor, 1))
+        recruitable(f).%(t => game.board.adjacent(t).exists { case (o, _) => game.present(o).but(f).any })./(t => Cap(t.anchor, 1))
 
-    def hiddenSources(f : Faction)(implicit game : Game) = game.controlled(f).%(t => game.board.territories.exists(o => o != t && game.board.open(o)))
+    def hiddenSources(f : Faction)(implicit game : Game) = MapExpansion.moveSources(f).%(t => hiddenTargets(t).any)
+
+    // Open territories, not with a Fallen Valkyrie
+    def hiddenTargets(t : Territory)(implicit game : Game) = game.board.territories.%(o => o != t && game.board.open(o) && game.hostileIn(o).not)
 
     def briberySources(f : Faction)(implicit game : Game) : $[(Territory, Faction)] =
         enemyUnits(f).%{ case (t, g) => briberyTargets(t, g).any }
 
     // Adjacent territories enemy units can be moved to, not making a three-way territory
     def briberyTargets(t : Territory, g : Faction)(implicit game : Game) : $[Territory] =
-        game.board.adjacent(t).map(_._1).%(o => game.present(o).but(g).num <= 1)
+        game.board.adjacent(t).map(_._1).%(o => game.present(o).but(g).num <= 1).%(o => game.hostileIn(o).not)
 
     def futureSightCards(f : Faction)(implicit game : Game) : $[Card] =
         f.foresaw.not.??(game.display ++ (game.year < game.lastYear).??(game.achievements))
@@ -312,7 +318,7 @@ object CardsExpansion extends Expansion {
             game.removeUnits(game.board.territory(a), g, 1)
             f.log("removed a unit of", g, "in", a)
 
-            val mine = game.controlled(f)
+            val mine = recruitable(f)
             if (mine.none || game.reserve(f) == 0)
                 Then(then)
             else
@@ -355,7 +361,7 @@ object CardsExpansion extends Expansion {
         // HIDDEN WAYS
         case HiddenFromAction(f, from, then) =>
             val t = game.board.territory(from)
-            Ask(f).each(game.board.territories.%(o => o != t && game.board.open(o)))(o => HiddenToAction(f, from, o.anchor, then)).cancel
+            Ask(f).each(hiddenTargets(t))(o => HiddenToAction(f, from, o.anchor, then)).cancel
 
         case HiddenToAction(f, from, to, then) =>
             val t = game.board.territory(from)

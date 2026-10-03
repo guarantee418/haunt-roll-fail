@@ -25,7 +25,10 @@ object Host extends hrf.host.BaseHost {
     def batch = $(2, 3, 4, 5)./(n => () => {
         val l = factions.shuffle.take(n)
         val colors = l.zip(PlayerColor.all.shuffle)./{ case (f, c) => ColorOption(f, c) }
-        val options = colors ++ $(YearsOption.all.shuffle.head) ++ (random() < 0.3).$(FameOnly) ++ (random() < 0.3).$(FirstSeatStarts)
+        // NORT_CREATURES=1: always with the Creatures module (and the More Creatures variant half the time)
+        val creatures = sys.env.get("NORT_CREATURES").has("1") || random() < 0.5
+        val options = colors ++ $(YearsOption.all.shuffle.head) ++ (random() < 0.3).$(FameOnly) ++ (random() < 0.3).$(FirstSeatStarts) ++
+            creatures.$(ModuleOption(Creatures)) ++ (creatures && random() < 0.5).$(MoreCreatures)
         options.foreach(o => assert(Meta.parseOption(Meta.writeOption(o)) == $(o), o))
         new G(l, options)
     })
@@ -47,4 +50,7 @@ object Host extends hrf.host.BaseHost {
     def serializer = nort.Serialize
     def start = StartAction(version)
     def times = 5
+
+    // Five-player ten-year games with creatures take more than the default 4000 steps
+    override val limit = 12000
 }

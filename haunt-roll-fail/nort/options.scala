@@ -77,6 +77,8 @@ abstract class Module(val label : String, val box : String) extends NamedToStrin
 }
 
 case object Creatures extends Module("Creatures", "core box") {
+    override def ready = true
+    override def expansion = |(CreaturesExpansion)
     def about = $("Creature cards (Wolves, Brown Bears, Draugr, Fallen Valkyries) and the creature lairs printed on the map tiles.")
 }
 
