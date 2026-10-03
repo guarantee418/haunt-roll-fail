@@ -1468,6 +1468,12 @@ object Meta extends MetaGame {
         ImageAsset("action-black" ) ::
         ImageAsset("action-bird" ) ::
     $) ::
+    // Official VP markers, from the Homeland component sheet (root-factions/, page 17)
+    ConditionalAssetsList((factions, options) => true, "vp")(
+        ImageAsset("vp-tc") ::
+        ImageAsset("vp-kd") ::
+        ImageAsset("vp-ld") ::
+    $) ::
     ConditionalAssetsList((factions, options) => true, "item")(
         ImageAsset("item-x-spacer"     ) ::
         ImageAsset("item-x-placeholder" ) ::

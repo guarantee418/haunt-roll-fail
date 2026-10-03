@@ -912,6 +912,8 @@ object GorgeBoard extends Board {
     // The 0-30 track along the bottom edge of the board image
     override val scoreTrack = |((88.3, 2122.0, 74.63))
 
+    override val itemSlots = itemGrid(425.0, 88.0, 89.5, 173.5)
+
     object GorgeNW extends NamedForest("North-West")
     object GorgeN extends NamedForest("North")
     object GorgeNE extends NamedForest("North-East")
@@ -1047,6 +1049,9 @@ object MarshBoard extends Board {
     val diagonals = $((Thatch, Bayou), (Jetty, Delta))
 
     val inner = $(Peat, Crossing, Mire, Confluence, Fen)
+
+    // The item slots in the top left corner of the board image
+    override val itemSlots = itemGrid(423.5, 87.4, 90.0, 173.5)
 
     override val floodPairs = $((Weir, Mudflat), (Mire, Fen), (Bulrush, Peat))
 

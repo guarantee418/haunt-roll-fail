@@ -403,7 +403,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         g.restore()
     }
 
-    // Faction glyphs on the score track printed on the board (only some boards have one).
+    // The official VP markers we have art for (from the Homeland component sheet), by faction style;
+    // other factions are shown by their glyph
+    val officialVP = Map("TC" -> "vp-tc", "KD" -> "vp-kd", "hld" -> "vp-ld", "LD" -> "vp-ld")
+
+    // Faction VP markers on the score track printed on the board (only some boards have one).
     // Factions on the same score are stacked upwards; a faction with a dominance or in a coalition has no marker.
     def drawScoreTrack(g : dom.CanvasRenderingContext2D) {
         game.board.scoreTrack.foreach { case (x0, y0, step) =>
@@ -417,8 +421,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
                 l.sortBy(factions.indexOf).indexed.foreach { (f, i) =>
                     val y = y0 - i * size * 0.7
+                    val marker = officialVP.get(f.style)
                     val glyph = f.style + "-glyph"
 
+                    if (marker.any)
+                        g.drawImage(resources.images.get(marker.get), x - size / 2, y - size / 2, size, size)
+                    else
                     if (resources.images.has(glyph))
                         g.drawImage(resources.images.get(glyph), x - size / 2, y - size / 2, size, size)
                     else {
@@ -435,6 +443,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     if (vp != f.vp)
                         drawCount(g, f.vp, x + size / 2 - 6, y + size / 2 - 6)
                 }
+            }
+        }
+    }
+
+    // The items still available to craft, on the item slots printed on the board (only some boards have them)
+    def drawItemSlots(g : dom.CanvasRenderingContext2D) {
+        val size = 62
+
+        game.board.itemSlots.groupBy(_._1).foreach { case (item, slots) =>
+            slots.take(game.uncrafted.count(item)).foreach { case (_, x, y) =>
+                g.drawImage(resources.images.get(item.imgid), x - size / 2, y - size / 2, size, size)
             }
         }
     }
@@ -923,6 +942,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         }
 
         drawScoreTrack(g)
+
+        drawItemSlots(g)
 
         hhh.foreach { h =>
             g.globalAlpha = h._2

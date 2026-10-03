@@ -161,6 +161,15 @@ trait Board {
     val scoreTrack : |[(Double, Double, Double)] = None
     val scoreTrackMax = 30
 
+    // Item slots printed on the board: each slot's item and centre
+    val itemSlots : $[(Item, Double, Double)] = $
+
+    // The usual two rows of six slots: Bag, Boots, Crossbow (Hammer below), Sword, Teapot, Coins
+    def itemGrid(x0 : Double, dx : Double, y0 : Double, y1 : Double) : $[(Item, Double, Double)] =
+        $(y0, y1).zipWithIndex.flatMap { case (y, row) =>
+            $[Item](Bag, Boots, (row == 0).?(Crossbow).|(Hammer), Sword, Teapot, Coins).zipWithIndex.map { case (item, i) => (item, x0 + i * dx, y) }
+        }
+
     // Homeland Marsh: clearings that can be flooded, in pairs (one of each pair is
     // flooded with 1-4 players, or left without a suit with 5+), and the paths
     // a flood marker links through a flooded clearing
