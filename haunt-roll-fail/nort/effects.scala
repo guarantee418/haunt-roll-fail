@@ -83,7 +83,9 @@ case class FutureSightAction(self : Faction, card : Card, then : ForcedAction) e
 
 case class HiddenFromAction(self : Faction, from : AreaRef, then : ForcedAction) extends BaseAction("Hidden Ways", "move from")(from) with Soft with MapTarget { def target = from }
 case class HiddenToAction(self : Faction, from : AreaRef, to : AreaRef, then : ForcedAction) extends BaseAction("Hidden Ways", "move from", from, "to")(to) with Soft with MapTarget { def target = to }
-case class HiddenUnitsAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, then : ForcedAction) extends BaseAction("Hidden Ways", "move from", from, "to", to)(Figures(n, kaija))
+case class HiddenUnitsAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean, then : ForcedAction) extends BaseAction("Hidden Ways", "move from", from, "to", to)(Figures(n, kaija, chief)) {
+    def this(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, then : ForcedAction) = this(self, from, to, n, kaija, false, then)
+}
 
 case class BriberyFromAction(self : Faction, from : AreaRef, enemy : Faction, then : ForcedAction) extends BaseAction("Bribery", "move units from")(from, InParens(enemy)) with Soft with MapTarget { def target = from }
 case class BriberyToAction(self : Faction, from : AreaRef, enemy : Faction, to : AreaRef, then : ForcedAction) extends BaseAction("Bribery", "move", enemy, "units from", from, "to")(to) with Soft with MapTarget { def target = to }
@@ -367,13 +369,16 @@ object CardsExpansion extends Expansion {
             val t = game.board.territory(from)
             val n = game.count(t, f)
             val kaija = game.kaijaIn(t, f) && (game.awakened || game.present(game.board.territory(to)).but(f).none)
+            val chief = game.chiefIn(t, f)
 
             Ask(f)
-                .each(n.to(1, -1).$)(k => HiddenUnitsAction(f, from, to, k, false, then))
-                .some(kaija.$(n.to(0, -1).$).flatten)(k => $(HiddenUnitsAction(f, from, to, k, true, then)))
+                .each(n.to(1, -1).$)(k => HiddenUnitsAction(f, from, to, k, false, false, then))
+                .some(kaija.$(n.to(0, -1).$).flatten)(k => $(HiddenUnitsAction(f, from, to, k, true, false, then)))
+                .some(chief.$(n.to(0, -1).$).flatten)(k => $(HiddenUnitsAction(f, from, to, k, false, true, then)))
+                .some((chief && kaija).$(n.to(0, -1).$).flatten)(k => $(HiddenUnitsAction(f, from, to, k, true, true, then)))
                 .cancel
 
-        case HiddenUnitsAction(f, from, to, n, kaija, then) =>
+        case HiddenUnitsAction(f, from, to, n, kaija, chief, then) =>
             val src = game.board.territory(from)
             val dst = game.board.territory(to)
 
@@ -381,10 +386,12 @@ object CardsExpansion extends Expansion {
             game.addUnits(dst.anchor, f, n)
             if (kaija)
                 game.kaija = |(dst.anchor)
+            if (chief)
+                game.chiefs += f -> dst.anchor
 
             val enemy = game.present(dst).but(f)
 
-            f.log("moved", Figures(n, kaija), "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty))
+            f.log("moved", Figures(n, kaija, chief), "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty))
 
             if (enemy.any)
                 game.combats :+= dst.anchor
