@@ -1,0 +1,437 @@
+package nort
+//
+//
+//
+//
+import hrf.colmat._
+import hrf.logger._
+//
+//
+//
+//
+
+import hrf.elem._
+import hrf.meta._
+import hrf.options._
+
+import nort.elem._
+
+
+// Creatures module (core box, rulebook pages 18-24): nine creatures appear on the lairs printed on the map tiles,
+// move and act in the Creature phase between the Actions and the Harvest, and can be fought for fame
+
+
+// How a creature picks between territories it could move to, in order
+trait CreaturePriority extends NamedToString with Record
+// Building points: 1 per small building, 3 per large one
+case object MostBuildings extends CreaturePriority
+case object MostUnits extends CreaturePriority
+// Resources on the tiles and buildings
+case object MostResources extends CreaturePriority
+
+trait CreatureKind extends NamedToString with Record {
+    def id : String
+    def title : String
+    // Combat value
+    def value : Int
+    // Fame for defeating it
+    def fame : Int
+    // Whether it can be in a territory with units without fighting them
+    def shares : Boolean
+    def priorities : $[CreaturePriority]
+    def text : String
+}
+
+case object BrownBear extends CreatureKind {
+    val id = "brown-bear"
+    val title = "Brown Bear"
+    val value = 6
+    val fame = 3
+    val shares = true
+    val priorities = $(MostBuildings, MostResources, MostUnits)
+    val text = "A player cannot build or recruit in a territory with this creature, and they cannot explore or move units from it."
+}
+
+case object Draugr extends CreatureKind {
+    val id = "draugr"
+    val title = "Draugr"
+    val value = 5
+    val fame = 2
+    val shares = true
+    val priorities = $(MostUnits, MostBuildings, MostResources)
+    val text = "When this creature appears or moves in a controlled territory, that player removes 1 unit from it."
+}
+
+case object FallenValkyrie extends CreatureKind {
+    val id = "fallen-valkyrie"
+    val title = "Fallen Valkyrie"
+    val value = 7
+    val fame = 4
+    val shares = false
+    val priorities = $(MostResources, MostBuildings, MostUnits)
+    val text = "This creature does not share its territory with a player and attacks them when it appears or moves into a territory."
+}
+
+// Not to be confused with the Wolf Clan
+case object CreatureWolf extends CreatureKind {
+    val id = "wolf"
+    val title = "Wolf"
+    val value = 4
+    val fame = 1
+    val shares = true
+    val priorities = $(MostResources, MostBuildings, MostUnits)
+    val text = "A territory with this creature on it does not generate any fame or resources during the Harvest phase (except from buildings)."
+}
+
+// A creature card and its miniature; n is the color: 1 beige, 2 brown, 3 dark brown
+case class Creature(kind : CreatureKind, n : Int) extends Card {
+    def info = CardInfo(kind.title, "card-creature-" + kind.id + "-" + n, kind.fame, false, MapEffect, kind.text)
+    def color = n match { case 1 => "beige" ; case 2 => "brown" ; case _ => "dark brown" }
+    def token = "creature-" + kind.id + "-" + n
+    override def removable = false
+    override def elem : Elem = kind.title.styled(styles.creature) ~ " (" ~ color.txt ~ ")"
+}
+
+object Creature {
+    val all : $[Creature] = $(Creature(CreatureWolf, 1), Creature(CreatureWolf, 2), Creature(CreatureWolf, 3), Creature(BrownBear, 1), Creature(BrownBear, 2), Creature(Draugr, 1), Creature(Draugr, 2), Creature(FallenValkyrie, 1), Creature(FallenValkyrie, 2))
+}
+
+// A creature attacked by the current Move action, in the territory with this anchor
+case class CreatureFight(area : AreaRef, creature : Creature) extends Record
+
+
+// The More Creatures variant: after passing, a player may make a creature appear
+case object MoreCreatures extends GameOption with ToggleOption {
+    val group = "Creatures".txt
+    def valueOn = "More creatures!".txt
+    override val explain = $(
+        "Rulebook variant: after taking their Development card, a player may make a creature appear on a free lair (or in any territory without a creature), unless there are already as many creatures on the map as players.",
+        "Needs the " ~ "Creatures".hl ~ " module.",
+    )
+    override def required(all : $[BaseOption]) = $($(ModuleOption(Creatures)))
+}
+
+
+// SETUP
+case class ShuffledCreaturesAction(shuffled : $[Creature], tiles : $[String]) extends ShuffledAction[Creature]
+case class ShuffledCreaturesRestAction(top : $[Creature], shuffled : $[Creature], tiles : $[String]) extends ShuffledAction[Creature]
+
+// APPARITION
+case class CreatureAppearAction(f : Faction, area : AreaRef, activate : Boolean, then : ForcedAction) extends ForcedAction
+case class ShuffledCreatureDiscardAction(shuffled : $[Creature], f : Faction, area : AreaRef, activate : Boolean, then : ForcedAction) extends ShuffledAction[Creature]
+case class CreatureEffectAction(c : Creature, then : ForcedAction) extends ForcedAction
+
+// CREATURE PHASE
+case class CreatureActivateAction(l : $[Creature]) extends ForcedAction
+case class CreatureMoveChoiceAction(self : Faction, c : Creature, to : AreaRef, l : $[Creature]) extends BaseAction("Creature phase:", c, "is tied between territories; move it to")(to) with MapTarget { def target = to }
+case class CreatureMoveAction(c : Creature, to : AreaRef, l : $[Creature]) extends ForcedAction
+
+// COMBAT
+case class CreatureDeclareAction(f : Faction, e : MoveEffect, left : $[AreaRef], then : ForcedAction) extends ForcedAction
+case class CreatureAttackAction(self : Faction, area : AreaRef, c : Creature, e : MoveEffect, left : $[AreaRef], then : ForcedAction) extends BaseAction("Attack a creature")(c, "in", area) with MapTarget { def target = area }
+case class CreatureDeclareDoneAction(self : Faction, e : MoveEffect, then : ForcedAction) extends BaseAction("Attack a creature")("Attack no more creatures")
+case class CreatureFightAction(self : Faction, area : AreaRef, c : Creature, e : MoveEffect, then : ForcedAction) extends BaseAction("Fight in")(area, "against", c) with MapTarget { def target = area }
+// attacking: the player attacks the creature; otherwise the creature attacks the player
+case class CreatureCombatAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, then : ForcedAction) extends ForcedAction
+case class CreatureFoodAction(self : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, then : ForcedAction) extends BaseAction(self, "spends food for the fight against", c)((food == 0).?("No food".txt).|(food.hl ~ " " ~ Food.elem))
+case class CreaturePlayerRolledAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
+case class CreatureRolledAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, face : DieFace, random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
+
+// MORE CREATURES VARIANT
+case class MoreCreaturesAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("More creatures!", "a new creature appears in")(area) with MapTarget { def target = area }
+case class MoreCreaturesSkipAction(self : Faction, then : ForcedAction) extends BaseAction("More creatures!")("No new creature")
+
+
+object CreaturesExpansion extends Expansion {
+    // Territories f controls that hold creatures it could attack with a Move action
+    def attackable(f : Faction)(implicit game : Game) : $[Territory] =
+        game.has(Creatures).??(game.controlled(f).%(t => game.creaturesIn(t).any))
+
+    def buildingPoints(t : Territory)(implicit game : Game) = game.buildingsIn(t).map(x => x._2.large.?(3).|(1)).sum
+
+    def score(p : CreaturePriority, t : Territory)(implicit game : Game) : Int = p match {
+        case MostBuildings => buildingPoints(t)
+        case MostUnits => game.seating./(game.figures(t, _)).sum
+        case MostResources =>
+            val (food, wood, lore) = game.produce(t)
+            food + wood + lore
+    }
+
+    // Where a creature moves: an adjacent territory (Rough borders don't matter) without a creature,
+    // with units if possible, then by its priorities; the first player breaks the remaining ties
+    def destinations(c : Creature)(implicit game : Game) : $[Territory] = {
+        val t = game.board.territory(game.creatureAt(c))
+        val free = game.board.adjacent(t).map(_._1).%(o => game.creaturesIn(o).none)
+        val peopled = free.%(o => game.present(o).any)
+
+        c.kind.priorities.foldLeft(peopled.any.?(peopled).|(free)) { (l, p) =>
+            if (l.none) l else { val m = l./(score(p, _)).max ; l.%(score(p, _) == m) }
+        }
+    }
+
+    def removeCreature(c : Creature)(implicit game : Game) {
+        game.creatureLine = game.creatureLine.but(c)
+        game.creatureAt -= c
+        game.creatureDiscard :+= c
+    }
+
+    def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
+        // SETUP: N+1 creatures of value 6 or less on top, the rest shuffled below
+        case ShuffledTilesAction(tiles) =>
+            Shuffle[Creature](Creature.all.%(_.kind.value <= 6), ShuffledCreaturesAction(_, tiles))
+
+        case ShuffledCreaturesAction(low, tiles) =>
+            val top = low.take(factions.num + 1)
+            Shuffle[Creature](low.drop(top.num) ++ Creature.all.%(_.kind.value > 6), ShuffledCreaturesRestAction(top, _, tiles))
+
+        case ShuffledCreaturesRestAction(top, rest, tiles) =>
+            game.creatureDeck = top ++ rest
+
+            log("The creature cards were shuffled")
+
+            MapExpansion.perform(ShuffledTilesAction(tiles), soft)
+
+        // A tile with a lair: a creature appears there; during setup it does nothing else
+        case TilePlacedAction(f, tile, spot, setup, then) =>
+            Then(Tiles(tile).areas.%(_.lair).foldRight(then)((a, next) => CreatureAppearAction(f, AreaRef(spot.x, spot.y, a.id), setup.not, next)))
+
+        // APPARITION
+        case CreatureAppearAction(f, area, activate, then) =>
+            if (game.creatureDeck.none && game.creatureDiscard.any)
+                Shuffle[Creature](game.creatureDiscard, ShuffledCreatureDiscardAction(_, f, area, activate, then))
+            else
+            if (game.creatureDeck.none) {
+                log("No creature card was left to appear")
+                Then(then)
+            }
+            else {
+                val c = game.creatureDeck.head
+                game.creatureDeck = game.creatureDeck.drop(1)
+                game.creatureLine :+= c
+                game.creatureAt += c -> area
+
+                log(c, "appeared in", game.board.territory(area).anchor)
+
+                if (activate)
+                    Then(CreatureEffectAction(c, then))
+                else
+                    Then(then)
+            }
+
+        case ShuffledCreatureDiscardAction(l, f, area, activate, then) =>
+            game.creatureDeck = l
+            game.creatureDiscard = $
+
+            log("The creature discard pile was shuffled into a new draw pile")
+
+            Then(CreatureAppearAction(f, area, activate, then))
+
+        // What a creature does when it appears or moves
+        case CreatureEffectAction(c, then) =>
+            val t = game.board.territory(game.creatureAt(c))
+            val owner = game.present(t).single
+
+            (c.kind, owner) match {
+                case (Draugr, Some(o)) =>
+                    game.removeFigures(t, o, 1)
+                    game.note("draugr")
+                    o.log("lost a unit to", c, "in", t.anchor)
+                    Then(then)
+
+                case (FallenValkyrie, Some(o)) =>
+                    log(c, "attacks", o, "in", t.anchor)
+                    Then(CreatureCombatAction(o, t.anchor, c, MoveEffect(0), false, then))
+
+                case _ =>
+                    Then(then)
+            }
+
+        // 2.5 CREATURE PHASE: from left to right, each creature moves, then acts
+        case CreaturePhaseAction =>
+            if (game.creatureLine.any) {
+                log(SingleLine)
+                log("Creature phase")
+            }
+
+            Then(CreatureActivateAction(game.creatureLine))
+
+        case CreatureActivateAction(Nil) =>
+            Then(ScorchedHarvestAction)
+
+        case CreatureActivateAction(c :: rest) =>
+            if (game.creatureLine.has(c).not)
+                Then(CreatureActivateAction(rest))
+            else {
+                val l = destinations(c)
+
+                if (l.none) {
+                    log(c, "could not move")
+                    Then(CreatureEffectAction(c, CreatureActivateAction(rest)))
+                }
+                else
+                if (l.num == 1)
+                    Then(CreatureMoveAction(c, l.head.anchor, rest))
+                else
+                    Ask(game.first).each(l)(t => CreatureMoveChoiceAction(game.first, c, t.anchor, rest))
+            }
+
+        case CreatureMoveChoiceAction(f, c, to, rest) =>
+            Then(CreatureMoveAction(c, to, rest))
+
+        case CreatureMoveAction(c, to, rest) =>
+            game.creatureAt += c -> to
+            game.note("creature-move")
+
+            log(c, "moved to", to)
+
+            Then(CreatureEffectAction(c, CreatureActivateAction(rest)))
+
+        // COMBAT: once the moves are made, a Fallen Valkyrie with the player's units must be fought,
+        // and the player may attack one other creature in each territory they share with creatures
+        case MoveEndAction(f, e, then) =>
+            val l = game.board.territories.%(t => game.present(t) == $(f) && game.creaturesIn(t).any)
+            val forced = l.%(game.hostileIn)
+
+            game.creatureFights = forced./(t => CreatureFight(t.anchor, game.creaturesIn(t).%(_.kind.shares.not).head))
+
+            game.creatureFights.foreach(x => f.log("must fight", x.creature, "in", x.area))
+
+            Then(CreatureDeclareAction(f, e, l.diff(forced)./(_.anchor), then))
+
+        case CreatureDeclareAction(f, e, left, then) =>
+            if (left.none)
+                Then(CombatsAction(f, e, then))
+            else
+                Ask(f)
+                    .some(left)(a => game.creaturesIn(game.board.territory(a))./(c => CreatureAttackAction(f, a, c, e, left, then)))
+                    .add(CreatureDeclareDoneAction(f, e, then))
+
+        case CreatureAttackAction(f, a, c, e, left, then) =>
+            game.creatureFights :+= CreatureFight(a, c)
+
+            f.log("will attack", c, "in", a)
+
+            Then(CreatureDeclareAction(f, e, left.but(a), then))
+
+        case CreatureDeclareDoneAction(f, e, then) =>
+            Then(CombatsAction(f, e, then))
+
+        case CreatureFightAction(f, a, c, e, then) =>
+            game.creatureFights = game.creatureFights.%(_.area != a)
+
+            log(f, "attacks", c, "in", a)
+
+            Then(CreatureCombatAction(f, a, c, e, true, then))
+
+        // The player may spend food; the creature can't
+        case CreatureCombatAction(f, a, c, e, attacking, then) =>
+            game.fights += 1
+            game.note("creature-fight")
+
+            val t = game.board.territory(a)
+            val max = math.min(f.food, game.figures(t, f))
+
+            if (max == 0)
+                Then(CreatureFoodAction(f, a, c, e, attacking, 0, then))
+            else
+                Ask(f).each(0.to(max).$)(k => CreatureFoodAction(f, a, c, e, attacking, k, then))
+
+        case CreatureFoodAction(f, a, c, e, attacking, food, then) =>
+            f.food -= food
+
+            if (food > 0)
+                f.log("spent", food.hl, Food)
+
+            Random[DieFace](NorthgardDie.faces, CreaturePlayerRolledAction(f, a, c, e, attacking, food, _, then))
+
+        // Casualties don't hurt creatures, so a player always takes the point
+        case CreaturePlayerRolledAction(f, a, c, e, attacking, food, face, then) =>
+            f.log("rolled", face)
+
+            Random[DieFace](NorthgardDie.faces, CreatureRolledAction(f, a, c, e, attacking, food, face.choice.?(NorthgardDie.point).|(face), _, then))
+
+        // A creature's die is rolled by another player; it always takes the point
+        case CreatureRolledAction(f, a, c, e, attacking, food, face, random, then) =>
+            log(c, "rolled", random)
+
+            val cface = random.choice.?(NorthgardDie.point).|(random)
+
+            val t = game.board.territory(a)
+            val here = game.buildingsIn(t).map(_._2)
+            val units = game.figures(t, f)
+
+            // The attacker's card bonus or the defender's Fortresses; Defense Towers only add casualties, which creatures ignore
+            val bonus = attacking.?(e.bonus).|(0)
+            val axe = (attacking && e.special == AxeMove).??(1)
+            val fortress = attacking.not.??(2 * here.count(_ == Fortress))
+            val snake = (f == Snake && game.scorchedIn(t)).??(1)
+            val ps = game.strength(t, f) + bonus + axe + fortress + snake + food + face.points
+            val shield = (attacking && e.special == ShieldMove && cface.casualties > 0).??(1)
+            val pc = cface.casualties - shield
+            val cs = c.kind.value + cface.points
+
+            def extra(l : (Int, Elem)*) : Elem = l.toList.filter(_._1 > 0).map { case (n, what) => "(" ~ n.hl ~ " from " ~ what ~ ")" }.join(" ")
+
+            f.log("scored", ps.hl, extra(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl))
+            log(c, "scored", cs.hl, "and inflicted", pc.hl, (pc == 1).?("casualty").|("casualties"), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
+
+            // Losing all units loses the fight; otherwise ties go to the defender
+            val won = pc < units && attacking.?(ps > cs).|(ps >= cs)
+
+            game.removeFigures(t, f, math.min(pc, units))
+
+            if (won) {
+                removeCreature(c)
+                f.fame += c.kind.fame
+                game.note("creature-defeated")
+
+                f.log("defeated", c, "and gained", c.kind.fame.hl, "fame")
+
+                if (attacking && f == Wolf) {
+                    f.food += 1
+                    f.log("collected", 1.hl, Food, "for winning as the attacker")
+                }
+
+                // Beating a Fallen Valkyrie takes its territory
+                if (attacking && f == Stag && c.kind.shares.not) {
+                    f.fame += 1
+                    f.log("gained", 1.hl, "fame for conquering a territory")
+                }
+
+                Then(then)
+            }
+            else {
+                log(c, "won the fight in", a)
+
+                // Attacking a creature that shares its territory, the units simply stay
+                if (game.figures(t, f) > 0 && (attacking.not || c.kind.shares.not))
+                    Then(RetreatAction(f, a, false, then))
+                else
+                    Then(then)
+            }
+
+        // MORE CREATURES VARIANT
+        case PassedAction(f) if options.has(MoreCreatures) =>
+            val free = game.board.territories.%(t => game.creaturesIn(t).none)
+            val lairs = free.%(t => t.areas.exists(a => game.board.spec(a).lair))
+
+            if (game.creatureLine.num < factions.num && (game.creatureDeck.any || game.creatureDiscard.any) && free.any)
+                Ask(f).each(lairs.any.?(lairs).|(free))(t => MoreCreaturesAction(f, t.anchor, NextTurnAction(f))).add(MoreCreaturesSkipAction(f, NextTurnAction(f)))
+            else
+                Then(NextTurnAction(f))
+
+        // On the lair if there is one; the creature doesn't move but acts
+        case MoreCreaturesAction(f, a, then) =>
+            val t = game.board.territory(a)
+            val area = t.areas.find(x => game.board.spec(x).lair).|(a)
+
+            game.note("more-creatures")
+
+            Then(CreatureAppearAction(f, area, true, then))
+
+        case MoreCreaturesSkipAction(f, then) =>
+            Then(then)
+
+        case _ => UnknownContinue
+    }
+}

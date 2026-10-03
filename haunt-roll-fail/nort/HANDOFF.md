@@ -4,11 +4,12 @@ Notes for the next agent working on Northgard: Uncharted Lands (package
 `nort`). Read this file, then `RULES.md` (the rules summary and status table),
 then the Northgard paragraph in the top-level `CLAUDE.md`.
 
-State on 2026-10-03 (second session): the base game is playable end to end,
-with every card effect and all seven clan powers. This session's work is on
-the branch `claude/nort-playtest-powers-cards`, not yet merged or deployed
-(the owner says "merge and deploy" when they want it live). The live site
-still runs the earlier version.
+State on 2026-10-03 (third session): the base game is playable end to end,
+with every card effect and all seven clan powers, and was checked against the
+English core rulebook (the owner shared the rulebook PDFs in a Dropbox
+folder; `RULES.md` lists what that check fixed). The Creatures module and its
+More Creatures variant are done (`creatures.scala`), on the branch
+`claude/nort-creatures`.
 
 ## What exists
 
@@ -23,6 +24,7 @@ still runs the earlier version.
 | `board.scala` | `Board`: placements, joining areas into territories, adjacency, closed/open, legal placements (`consistent`), drawing positions |
 | `map.scala` | `MapExpansion`: setup tile/unit placement, Recruit (with Kaija), Move (with the Move specials), combat and retreat, Scorched Earth, Explore, Build (with the Build specials), Feast, units returning at end of year |
 | `ui.scala` | Status panels (clan names in the player's color), the court strip on top, the board canvas, map clicks. Your hand is in the action pane, as in Arcs and Root: on your turn each card is a `CardMenuAction` (Soft) that opens Play / Wait / Replace / Remove / Upgrade; otherwise `Game.info` shows it as `CardInfoAction` pictures, with the Played cards |
+| `creatures.scala` | Creatures module: creature kinds and cards, setup deck, apparition on lairs (`TilePlacedAction`), the Creature phase (`CreaturePhaseAction`), declaring and fighting creatures (`MoveEndAction`, `CreatureFightAction`), the More Creatures variant (`PassedAction`) |
 | `bot.scala` | `BotXX`: random, with a bias to play cards and never cancel |
 | `host.scala` | Headless bot games on the JVM; prints a summary per game, with event counts (cards played, Kaija and Scorched Earth events) |
 | `RULES.md` | Rules summary from the rulebook, plus the status table |
@@ -100,6 +102,28 @@ on. To implement one:
    New Blood module" in `validateFactionSeatingOptions`.
 4. Write the rules summary in `RULES.md` first; the rulebooks aren't in the repo.
 
+## Creatures module
+
+- State is in `Game`: `creatureDeck`, `creatureDiscard`, `creatureLine` (the
+  creatures on the map, in activation order), `creatureAt` (the area each one
+  is in: the lair area, or a territory anchor after moving) and
+  `creatureFights` (declared for the current Move). Helpers: `creaturesIn`,
+  `hostileIn` (a Fallen Valkyrie), `bearIn`, `wolfIn`, `harvest` (`produce`
+  without tile resources under a Wolf).
+- The core code calls hooks that do nothing without the module:
+  `TilePlacedAction` after setup, Explore and second chance tiles,
+  `MoveEndAction` after the moves of a Move action, `CreaturePhaseAction`
+  between Actions and Harvest, `PassedAction` after passing. The core's
+  `CombatsAction` and retreats already know about `creatureFights`, and the
+  recruit/move/build/explore filters about Brown Bears and Valkyries.
+- `ShuffledTilesAction` is intercepted to shuffle the creature deck first;
+  the last step calls `MapExpansion.perform` directly (an oracle action can't
+  go through `Then`).
+- Creature figures on the map are round tokens cut from the card art
+  (`token/creature/`, ring color = the card's color code), drawn above the
+  territory number. The creature line is a group in the court strip on top.
+- `NORT_CREATURES=1` makes the headless host always use the module.
+
 ## Known simplifications and gaps
 
 The status table and the Interpretations section in `RULES.md` are the full
@@ -108,8 +132,6 @@ list. In short:
 - **Rule choices** for Kaija, Scorched Earth and many cards are listed under
   Interpretations in `RULES.md`; check them against the rulebook.
 - **Scout Camp:** the redraw happens before the tile is shown on the map.
-- **No units at the end of a year:** if no neutral territory is left, the
-  rulebook's "draw a tile to make one" isn't done.
 - **Defensive Strategy** prompts show who holds the card.
 - **Missing assets:** one Advanced development card (51 of 52 in the data and
   images; nobody knows which), and green starting cards (green uses blue's).
@@ -139,9 +161,7 @@ list. In short:
 3. **A better bot** that recruits, builds and explores on purpose.
 4. **A replay check** like `root/replay-check.scala`, to confirm undo and
    loading rebuild the same game.
-5. **No units at the end of a year:** draw a tile when no neutral territory
-   is left.
-6. **Expansions** (after the base game is solid): assets are in
+5. **Expansions** (after the base game is solid): assets are in
    `expansion/`; the rulebooks are summarized nowhere yet.
 
 ## How to build and test (in a cloud session)

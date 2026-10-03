@@ -42,7 +42,7 @@ object Meta extends MetaGame { mmm =>
 
     override val hiddenOptions = $
 
-    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(FameOnly, FirstSeatStarts) ++ Module.all./(ModuleOption) ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(FameOnly, FirstSeatStarts) ++ Module.all./(ModuleOption) ++ $(MoreCreatures) ++ hiddenOptions
 
     // Colors only for the clans in the game
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -159,6 +159,9 @@ object Meta extends MetaGame { mmm =>
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token", "token-", "webp")(
         $(ImageAsset("kaija"), ImageAsset("scorched-earth"))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Creatures), "token/creature", "creature-", "webp")(
+        Creature.all./(c => ImageAsset(c.token.drop("creature-".length)))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/building", "building-", "webp")(
         Building.all./(b => ImageAsset(b.image.drop("building-".length)))

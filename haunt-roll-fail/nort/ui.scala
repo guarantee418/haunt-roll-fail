@@ -425,6 +425,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 val (x, y) = board.point(t.anchor)
                 pieces.add(Sprite($(at("token-scorched-earth", 150)), $(Rectangle(-75, -75, 150, 150)), tag))(sx(x) - 40, sy(y) + 110)
             }
+
+            // Creatures, above the territory number, side by side
+            val creatures = game.creaturesIn(t)
+            creatures.zipWithIndex.foreach { case (c, i) =>
+                val (x, y) = board.point(t.anchor)
+                val z = 170
+                pieces.add(Sprite($(at(c.token, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag))(sx(x) + (i - (creatures.num - 1) / 2.0) * 150, sy(y) - 140)
+            }
         }
 
         |(new Scene($(background, pieces), sceneWidth, sceneHeight, margins))
@@ -451,7 +459,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val achievements = $(("Achievements" ~ last.not.?(", year " ~ game.lastYear.hl).|(Empty)) -> last.?(game.display).|(game.achievements))
 
-        court.replaceCached((game.year, game.display, game.achievements).toString, strip((developments ++ achievements)./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
+        // Creatures module: the creature line, in activation order
+        val creatures = game.has(Creatures).$(("Creatures" ~ " (left to right)".spn(xstyles.smaller85)) -> game.creatureLine)
+
+        court.replaceCached((game.year, game.display, game.achievements, game.creatureLine).toString, strip((developments ++ achievements ++ creatures)./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
     }
 
     def factionStatus(f : Faction) {

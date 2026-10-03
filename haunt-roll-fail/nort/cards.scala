@@ -124,6 +124,9 @@ case object UnrestCard extends Card {
     val info = CardInfo("Unrest", "card-unrest", 0, false, MapEffect, "This card may not be removed from your deck.")
     override val removable = false
     override def elem = name.styled(xstyles.error)
+
+    // Cards in the box
+    val supply = 10
 }
 
 

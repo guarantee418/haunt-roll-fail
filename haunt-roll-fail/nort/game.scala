@@ -184,6 +184,8 @@ case class PickCardAction(self : Faction, card : Card) extends BaseAction("Take 
 
 // Snake Clan may take one resource from the territory with its Scorched Earth token
 case object ScorchedHarvestAction extends ForcedAction
+case object CreaturePhaseAction extends ForcedAction
+case class PassedAction(f : Faction) extends ForcedAction
 case class ScorchedTakeAction(self : Faction, r : |[Resource]) extends BaseAction("Scorched Earth".hl, "take one resource from", ScorchedEarthPlace)(r./(_.elem).|("Take nothing".txt))
 case class HarvestAction(take : |[Resource]) extends ForcedAction
 case class TradeAction(f : Faction, then : ForcedAction) extends ForcedAction
@@ -283,6 +285,26 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // Snake Clan's Scorched Earth token
     var scorched : |[AreaRef] = None
 
+    // Creatures module: the draw and discard piles, the creature line (the creatures on the map, in activation order),
+    // where each one is, and the creatures attacked by the current Move action
+    var creatureDeck : $[Creature] = $
+    var creatureDiscard : $[Creature] = $
+    var creatureLine : $[Creature] = $
+    var creatureAt : Map[Creature, AreaRef] = Map()
+    var creatureFights : $[CreatureFight] = $
+    var creaturesShuffled = false
+
+    def creaturesIn(t : Territory) : $[Creature] = creatureLine.%(c => t.areas.contains(creatureAt(c)))
+
+    // A Fallen Valkyrie: units can't stay there without fighting it
+    def hostileIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind.shares.not)
+
+    // A Brown Bear: no building, recruiting, exploring or moving out
+    def bearIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == BrownBear)
+
+    // A Wolf: no fame or resources at harvest except from buildings
+    def wolfIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == CreatureWolf)
+
     def unitsAt(a : AreaRef) : Map[Faction, Int] = units.getOrElse(a, Map())
 
     // Units only; Kaija is counted separately
@@ -345,6 +367,15 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         val specs = t.areas./(board.spec)
         val here = buildingsIn(t).map(_._2)
         (specs./(_.food).sum + here.count(_ == FoodSilo), specs./(_.wood).sum + here.count(_ == WoodcutterLodge), specs./(_.lore).sum + here.count(_ == CarvedStone))
+    }
+
+    // What a territory gives at harvest (and when collecting as at harvest): a Wolf leaves only the buildings' resources
+    def harvest(t : Territory) : (Int, Int, Int) = {
+        if (wolfIn(t).not)
+            return produce(t)
+
+        val here = buildingsIn(t).map(_._2)
+        (here.count(_ == FoodSilo), here.count(_ == WoodcutterLodge), here.count(_ == CarvedStone))
     }
 
     // Closed controlled territories with at least one large building
@@ -832,7 +863,7 @@ object CommonExpansion extends Expansion {
             if (game.display.any && f.foresaw.not)
                 Ask(f).each(game.display)(c => PickCardAction(f, c))
             else
-                Then(NextTurnAction(f))
+                Then(PassedAction(f))
 
         case PickCardAction(f, c) =>
             game.display = game.display.diff($(c))
@@ -840,6 +871,10 @@ object CommonExpansion extends Expansion {
 
             f.log("took", c, "and placed it on top of their draw pile")
 
+            Then(PassedAction(f))
+
+        // After passing (the More Creatures variant may add a creature here)
+        case PassedAction(f) =>
             Then(NextTurnAction(f))
 
         case NextTurnAction(f) =>
@@ -848,13 +883,17 @@ object CommonExpansion extends Expansion {
                 case None =>
                     game.highlight.current = None
                     game.display = $
-                    Then(ScorchedHarvestAction)
+                    Then(CreaturePhaseAction)
             }
+
+        // 2.5 CREATURE PHASE (Creatures module, CreaturesExpansion)
+        case CreaturePhaseAction =>
+            Then(ScorchedHarvestAction)
 
         // 3. HARVEST
         case ScorchedHarvestAction =>
             val owner = game.scorched./(game.board.territory)./(game.present).|($).single.%(_ != Snake)
-            val (food, wood, lore) = game.scorched./(game.board.territory)./(game.produce).|((0, 0, 0))
+            val (food, wood, lore) = game.scorched./(game.board.territory)./(game.harvest).|((0, 0, 0))
             val l = $[(Resource, Int)](Food -> food, Wood -> wood, Lore -> lore).filter(_._2 > 0).map(_._1)
 
             if (factions.has(Snake) && owner.any && l.any)
@@ -874,7 +913,8 @@ object CommonExpansion extends Expansion {
             game.from(game.first).foreach { f =>
                 val territories = game.controlled(f)
 
-                val fame = territories.%(game.board.closed)./(t => (game.board.tiles(t) >= 3).?(2).|(1)).sum
+                // A Wolf creature leaves only the buildings' fame and resources
+                val fame = territories.%(game.board.closed).%(t => game.wolfIn(t).not)./(t => (game.board.tiles(t) >= 3).?(2).|(1)).sum
                 if (fame > 0) {
                     f.fame += fame
                     f.log("gained", fame.hl, "fame from closed territories")
@@ -886,7 +926,7 @@ object CommonExpansion extends Expansion {
                     f.log("gained", (3 * altars).hl, "fame from", AltarOfKings)
                 }
 
-                val (food, wood, lore) = territories./(game.produce).foldLeft((0, 0, 0))((a, b) => (a._1 + b._1, a._2 + b._2, a._3 + b._3))
+                val (food, wood, lore) = territories./(game.harvest).foldLeft((0, 0, 0))((a, b) => (a._1 + b._1, a._2 + b._2, a._3 + b._3))
                 f.food += food
                 f.wood += wood
                 f.lore += lore
@@ -942,9 +982,20 @@ object CommonExpansion extends Expansion {
                 else {
                     f.food = math.max(0, f.food - food)
                     f.wood = math.max(0, f.wood - wood)
-                    f.draw = UnrestCard +: f.draw
 
-                    f.log("could not pay for", f.units.hl, "units and took", UnrestCard)
+                    // Ten Unrest cards; with none left, lose 5 fame and discard the top card of the draw pile
+                    if (factions./(_.unrest).sum < UnrestCard.supply) {
+                        f.draw = UnrestCard +: f.draw
+
+                        f.log("could not pay for", f.units.hl, "units and took", UnrestCard)
+                    }
+                    else {
+                        f.fame -= 5
+                        f.discard ++= f.draw.take(1)
+                        f.draw = f.draw.drop(1)
+
+                        f.log("could not pay for", f.units.hl, "units; with no", UnrestCard, "left, lost", 5.hl, "fame and discarded the top card of their draw pile")
+                    }
                 }
             }
 
