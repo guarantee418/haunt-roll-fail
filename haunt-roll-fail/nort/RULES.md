@@ -356,7 +356,8 @@ Check these against the rulebook when it is at hand.
   - The Wolf's harvest rule also applies to collecting "as at harvest"
     (Raven Clan closing, Glory of the Clan).
   - With the second chance tile, a lair creature acts as from an Explore.
-- **Warchiefs**, where the rulebook says nothing or the game simplifies:
+- **Warchiefs**, where the rulebook says nothing or the game simplifies
+  (confirmed by the owner on 2026-10-03):
   - Casualties take units first, then the warchief, then Kaija (the
     rulebook lets the player choose; keeping the warchief is the usual
     choice).
