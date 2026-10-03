@@ -50,4 +50,7 @@ object Host extends hrf.host.BaseHost {
     def serializer = nort.Serialize
     def start = StartAction(version)
     def times = 5
+
+    // Five-player ten-year games with creatures take more than the default 4000 steps
+    override val limit = 12000
 }
