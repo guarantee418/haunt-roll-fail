@@ -506,7 +506,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val layouts = $(Layout("base",
         $(
-            BasicPane("status", 15, 8.5, Priorities(top = 3, left = 2, maxXscale = 1.8, maxYscale = 1.8, grow = 1)),
+            BasicPane("status", 15, (arity >= 4).?(18).|(13), Priorities(top = 3, left = 2, maxXscale = 1.8, maxYscale = 1.8, grow = 1)),
             BasicPane("court", 80, 20, Priorities(top = 3, right = 3, maxXscale = 1.5, maxYscale = 1.5, grow = -2)),
             BasicPane("log", 32, 16, Priorities(right = 1)),
             BasicPane("map-small", 73, 70, Priorities(top = 2, left = 1, grow = 3)),
@@ -559,7 +559,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val settingsKey = Meta.settingsKey
 
-    val layoutKey = "v" + 5 + "." + "arity-" + arity
+    val layoutKey = "v" + 6 + "." + "arity-" + arity
 
     def overlayScrollX(e : Elem) = overlayScroll(e)(styles.seeThroughInner).onClick
     def overlayFitX(e : Elem) = overlayFit(e)(styles.seeThroughInner).onClick
