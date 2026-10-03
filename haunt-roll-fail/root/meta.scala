@@ -2332,6 +2332,11 @@ object Meta extends MetaGame {
         ImageAsset("nb-vagabond"       ) ::
         ImageAsset("mb-vagabond"       ) ::
         ImageAsset("vagabond-harrier"  ) ::
+        ImageAsset("vagabond-ronin"     ) ::
+        ImageAsset("vagabond-adventurer") ::
+        ImageAsset("vagabond-scoundrel" ) ::
+        ImageAsset("vagabond-arbiter"   ) ::
+        ImageAsset("vagabond-vagrant"   ) ::
 
         ImageAsset("quest-fox"         ) ::
         ImageAsset("quest-rabbit"      ) ::
@@ -2926,11 +2931,11 @@ object Meta extends MetaGame {
         ImageAsset("kd-captain-cheat"      ) ::
         ImageAsset("kd-captain-jailor"     ) ::
         ImageAsset("kd-captain-harrier"    ) ::
-        ImageAsset("kd-captain-ronin"      , "kd-captain-birdsong" ) ::
-        ImageAsset("kd-captain-adventurer" , "kd-captain-daylight" ) ::
-        ImageAsset("kd-captain-scoundrel"  , "kd-captain-evening"  ) ::
-        ImageAsset("kd-captain-arbiter"    , "kd-captain-birdsong" ) ::
-        ImageAsset("kd-captain-vagrant"    , "kd-captain-daylight" ) ::
+        ImageAsset("kd-captain-ronin"      ) ::
+        ImageAsset("kd-captain-adventurer" ) ::
+        ImageAsset("kd-captain-scoundrel"  ) ::
+        ImageAsset("kd-captain-arbiter"    ) ::
+        ImageAsset("kd-captain-vagrant"    ) ::
         ImageAsset("kd-captain-ranger"     , "kd-captain-evening"  ) ::
         ImageAsset("kd-captain-tinker"     , "kd-captain-birdsong" ) ::
         ImageAsset("kd-captain-thief"      , "kd-captain-daylight" ) ::

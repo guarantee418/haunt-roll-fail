@@ -34,7 +34,7 @@ import scalajs.js.timers.setTimeout
 
 object UI extends BaseUI {
     // Characters with their own Vagabond meeple (vagabond-<id>.webp in faction/hero); others use the player's colored vagabond
-    val vagabondMeeples = $("harrier")
+    val vagabondMeeples = $("harrier", "ronin", "adventurer", "scoundrel", "arbiter", "vagrant")
 
     val mmeta = Meta
 
