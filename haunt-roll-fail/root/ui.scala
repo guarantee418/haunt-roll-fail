@@ -407,6 +407,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     val officialVP = Map(
         "mc" -> "vp-mc", "ed" -> "vp-ed", "wa" -> "vp-wa", "vb" -> "vp-vb", "rf" -> "vp-rf",
         "lc" -> "vp-lc", "ud" -> "vp-ud", "cc" -> "vp-cc", "lh" -> "vp-lh", "ki" -> "vp-ki",
+        "bk" -> "vp-bk", "pe" -> "vp-pe", "fu" -> "vp-fu", "nb" -> "vp-nb", "cm" -> "vp-cm",
+        "dr" -> "vp-dr", "ri" -> "vp-ri", "lk" -> "vp-lk",
         "TC" -> "vp-tc", "KD" -> "vp-kd", "hld" -> "vp-ld", "LD" -> "vp-ld")
 
     // Faction VP markers on the score track printed on the board (only some boards have one).

@@ -1482,6 +1482,15 @@ object Meta extends MetaGame {
         ImageAsset("vp-cc") ::
         ImageAsset("vp-lh") ::
         ImageAsset("vp-ki") ::
+        // Mirror factions: the same heads recoloured (Negabond's in negative)
+        ImageAsset("vp-bk") ::
+        ImageAsset("vp-pe") ::
+        ImageAsset("vp-fu") ::
+        ImageAsset("vp-nb") ::
+        ImageAsset("vp-cm") ::
+        ImageAsset("vp-dr") ::
+        ImageAsset("vp-ri") ::
+        ImageAsset("vp-lk") ::
         ImageAsset("vp-tc") ::
         ImageAsset("vp-kd") ::
         ImageAsset("vp-ld") ::

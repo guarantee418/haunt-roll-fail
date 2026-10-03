@@ -305,7 +305,9 @@ file covers the build, server and deploy. No session can ssh to the server
   `/media/small_component_icons/custom/<animal>100.webp`, the same heads the
   official markers print). They aren't official art; swap in the official
   markers from Leder's print-and-play files if they become available.
-  Mirror and fan factions fall back to their `-glyph` head icon.
+  The mirror factions' markers recolour those heads to the mirror colour
+  (Negabond's head is the Vagabond's in negative; Longtail Kaliph is a black
+  rat on red). Fan factions are deliberately left on their `-glyph` head icon.
 - Boards with printed item slots (Gorge, Marsh) set `itemSlots` (`itemGrid`
   for the usual 2x6 layout); `drawItemSlots` draws `game.uncrafted` on them.
 - The Homeland Marsh map is `MarshBoard` in `root/maps.scala` (option
