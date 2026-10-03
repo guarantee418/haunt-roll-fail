@@ -68,10 +68,15 @@ case class RecruitCapAction(self : Faction, area : AreaRef, caps : $[Cap], place
 case class MercenariesExtraAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class MercenariesPayAction(self : Faction, pay : $[Resource], area : AreaRef, then : ForcedAction) extends BaseAction("Raven Mercenaries", "one more unit in", area)("Pay", pay./(_.elem).join(" "))
 
-case class PlunderAction(self : Faction, area : AreaRef, enemy : Faction, then : ForcedAction) extends BaseAction("Plunder", "remove a unit in")(area, "(" ~ enemy.elem ~ ")") with MapTarget { def target = area }
-case class CaptureAction(self : Faction, area : AreaRef, enemy : Faction, then : ForcedAction) extends BaseAction("Capture", "remove a unit in")(area, "(" ~ enemy.elem ~ ")") with MapTarget { def target = area }
+// A clan in parentheses, in its player's color
+case class InParens(f : Faction) extends GameElementary {
+    def elem(implicit game : Game) = "(" ~ f.elem ~ ")"
+}
+
+case class PlunderAction(self : Faction, area : AreaRef, enemy : Faction, then : ForcedAction) extends BaseAction("Plunder", "remove a unit in")(area, InParens(enemy)) with MapTarget { def target = area }
+case class CaptureAction(self : Faction, area : AreaRef, enemy : Faction, then : ForcedAction) extends BaseAction("Capture", "remove a unit in")(area, InParens(enemy)) with MapTarget { def target = area }
 case class CaptureAddAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("Capture", "add a unit in")(area) with MapTarget { def target = area }
-case class RaidAction(self : Faction, area : AreaRef, enemy : Faction, then : ForcedAction) extends BaseAction("Raiding Party", "remove a unit in")(area, "(" ~ enemy.elem ~ ")") with MapTarget { def target = area }
+case class RaidAction(self : Faction, area : AreaRef, enemy : Faction, then : ForcedAction) extends BaseAction("Raiding Party", "remove a unit in")(area, InParens(enemy)) with MapTarget { def target = area }
 case class RaidCollectAction(self : Faction, r : Resource, then : ForcedAction) extends BaseAction("Raiding Party", "collect")(r)
 
 case class FutureSightAction(self : Faction, card : Card, then : ForcedAction) extends BaseAction("Future Sight", "take a card")(card.img, Break, card)
@@ -80,7 +85,7 @@ case class HiddenFromAction(self : Faction, from : AreaRef, then : ForcedAction)
 case class HiddenToAction(self : Faction, from : AreaRef, to : AreaRef, then : ForcedAction) extends BaseAction("Hidden Ways", "move from", from, "to")(to) with Soft with MapTarget { def target = to }
 case class HiddenUnitsAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, then : ForcedAction) extends BaseAction("Hidden Ways", "move from", from, "to", to)(Figures(n, kaija))
 
-case class BriberyFromAction(self : Faction, from : AreaRef, enemy : Faction, then : ForcedAction) extends BaseAction("Bribery", "move units from")(from, "(" ~ enemy.elem ~ ")") with Soft with MapTarget { def target = from }
+case class BriberyFromAction(self : Faction, from : AreaRef, enemy : Faction, then : ForcedAction) extends BaseAction("Bribery", "move units from")(from, InParens(enemy)) with Soft with MapTarget { def target = from }
 case class BriberyToAction(self : Faction, from : AreaRef, enemy : Faction, to : AreaRef, then : ForcedAction) extends BaseAction("Bribery", "move", enemy, "units from", from, "to")(to) with Soft with MapTarget { def target = to }
 case class BriberyUnitsAction(self : Faction, from : AreaRef, enemy : Faction, to : AreaRef, n : Int, then : ForcedAction) extends BaseAction("Bribery", "move", enemy, "units from", from, "to", to)(Figures(n, false))
 

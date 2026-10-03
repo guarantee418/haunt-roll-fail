@@ -37,7 +37,10 @@ object UI extends BaseUI {
 }
 
 class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta.GameOption], val resources : Resources, callbacks : hrf.Callbacks) extends MapGUI {
-    def factionElem(f : Faction) = f.name.styled(f)
+    def factionElem(f : Faction) = f.name.styled(colorOf(f))
+
+    // The style of the color a clan's player picked
+    def colorOf(f : Faction) : Style = elem.styles.get(game.colors.get(f)./(c => c : Styling).|(f))
 
     val statuses = 1.to(arity)./(i => newPane("status-" + i, Content, styles.status, styles.fstatus, ExternalStyle("hide-scrollbar")))
 
@@ -208,14 +211,28 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // Like the Arcs hand: your cards, always at the bottom
     val hand = newPane("hand", Content, styles.strip)
 
-    def strip(groups : $[(Elem, $[Card])]) =
-        Div(groups./{ case (title, cards) =>
-            Div(Div(title, styles.stripTitle) ~ Div(cards.any.?(cards./(c => OnClick(c, Image(c.info.image, styles.stripCard, xlo.pointer))).merge).|(Div("none".txt, styles.stripEmpty)), styles.stripCards), styles.stripGroup)
+    def stripCard(c : Card) : Elem = OnClick(c, Image(c.info.image, styles.stripCard, xlo.pointer))
+
+    def stripTile(t : TileRef) : Elem = OnClick(t, Image("tile-" + t.id, styles.stripCard, styles.stripTile, xlo.pointer))
+
+    def strip(groups : $[(Elem, $[Elem])]) =
+        Div(groups./{ case (title, items) =>
+            Div(Div(title, styles.stripTitle) ~ Div(items.any.?(items.merge).|(Div("none".txt, styles.stripEmpty)), styles.stripCards), styles.stripGroup)
         }.merge, styles.stripRow)
 
+    // The map tiles this client's player holds: the three drawn at setup, or the ones drawn to explore
+    def heldTiles(f : Faction) : $[String] =
+        game.tileHand.get(f).%(_.any).||(lastActions./~(_.unwrap.as[ExploreTileAction]).%(_.self == f)./(_.tile).some).|($)
+
     def drawCards() {
-        if (game.year == 0)
+        val self = viewer.%(game.states.contains)
+
+        val tiles = self./~(f => heldTiles(f).any.$(("Your tiles".styled(colorOf(f)) : Elem) -> heldTiles(f)./(t => stripTile(TileRef(t)))))
+
+        if (game.year == 0) {
+            hand.replaceCached(("tiles", self, tiles.any.??(self./(heldTiles))).toString, strip(tiles), resources, onClick)
             return
+        }
 
         val last = game.year == game.lastYear
 
@@ -223,26 +240,25 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val achievements = $(("Achievements" ~ last.not.?(", year " ~ game.lastYear.hl).|(Empty)) -> last.?(game.display).|(game.achievements))
 
-        court.replaceCached((game.year, game.display, game.achievements).toString, strip(developments ++ achievements), resources, onClick)
+        court.replaceCached((game.year, game.display, game.achievements).toString, strip((developments ++ achievements)./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
 
-        val self = viewer.%(game.states.contains)
+        val cards = self./~(f => $(("Your hand".styled(colorOf(f)) : Elem) -> f.hand./(stripCard)) ++ f.active.any.$(("Played".styled(colorOf(f)) : Elem) -> f.active./(stripCard))) ++ tiles
 
-        val cards = self./~(f => $(("Your hand".styled(f) : Elem) -> f.hand) ++ f.active.any.$(("Played".styled(f) : Elem) -> f.active))
-
-        hand.replaceCached((self, self./(_.hand), self./(_.active)).toString, strip(cards), resources, onClick)
+        hand.replaceCached((self, self./(_.hand), self./(_.active), tiles.any.??(self./(heldTiles))).toString, strip(cards), resources, onClick)
     }
 
     def factionStatus(f : Faction) {
         val container = statuses(game.setup.indexOf(f))
 
-        val name = resources.getName(f).|(f.name)
+        // The clan's name, in its player's color
+        val name = f.name
 
         if (!game.states.contains(f)) {
-            container.replace(Div(Div(name).styled(f)(styles.title), styles.smallname, xlo.pointer), resources)
+            container.replace(Div(Div(name).styled(colorOf(f))(styles.title), styles.smallname, xlo.pointer), resources)
             return
         }
 
-        val title = Div(Div(name.styled(f)(styles.title) ~ " " ~ game.colors(f).elem), styles.smallname, styles.titleLine, xlo.pointer)
+        val title = Div(Div(name.styled(colorOf(f))(styles.title)), styles.smallname, styles.titleLine, xlo.pointer)
 
         val state = game.states(f)
 
@@ -383,6 +399,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
             then(action.as[UserAction].||(action.as[ForcedAction]./(_.as("Do Action On Click"))).|(throw new Error("non-user non-forced action in on click handler")))
 
+
+        // A held tile picks it when that is offered, otherwise opens full screen
+        case t : TileRef =>
+            lastActions.%(a => a.unwrap.as[ViewObject[_]].exists(_.obj == t)).single./(onClick).|(
+                showOverlay(overlayFitX(Image("tile-" + t.id, styles.zoomCard)).onClick, onClick))
 
         // Any card on the table opens full screen; clicking again closes it
         case c : Card =>
