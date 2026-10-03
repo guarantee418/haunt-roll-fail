@@ -397,20 +397,20 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
             // A second player's units (during a fight) go next to the first, towards the middle of the tile
             val (px, py) = board.unitPoint(t.anchor)
-            val step = (px - math.floor(px) < 0.5).?(190).|(-190)
+            val step = (px - math.floor(px) < 0.5).?(290).|(-290)
 
             game.present(t).zipWithIndex.foreach { case (f, k) =>
                 val n = game.count(t, f)
                 val ux = sx(px) + k * step
                 val uy = sy(py)
                 if (n > 0) {
-                    pieces.add(Sprite($(at("unit-" + game.colors(f).id, 200)), $(Rectangle(-100, -100, 200, 200)), tag))(ux, uy)
+                    pieces.add(Sprite($(at("unit-" + game.colors(f).id, 300)), $(Rectangle(-150, -150, 300, 300)), tag))(ux, uy)
                     if (n <= 15)
-                        pieces.add(Sprite($(at("ui-count-" + n, 90)), $))(ux + 60, uy + 70)
+                        pieces.add(Sprite($(at("ui-count-" + n, 120)), $))(ux + 90, uy + 105)
                 }
                 // Kaija next to Bear Clan's units, or in their place
                 if (game.kaijaIn(t, f))
-                    pieces.add(Sprite($(at("token-kaija", (n > 0).?(130).|(180))), $(Rectangle(-80, -80, 160, 160)), tag))((n > 0).?(ux - 85).|(ux), (n > 0).?(uy + 55).|(uy))
+                    pieces.add(Sprite($(at("token-kaija", (n > 0).?(150).|(220))), $(Rectangle(-100, -100, 200, 200)), tag))((n > 0).?(ux - 125).|(ux), (n > 0).?(uy + 80).|(uy))
             }
 
             // Snake Clan's Scorched Earth token, by the territory number
@@ -506,10 +506,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val layouts = $(Layout("base",
         $(
-            BasicPane("status", 15, (arity >= 4).?(18).|(13), Priorities(top = 3, left = 2, maxXscale = 1.8, maxYscale = 1.8, grow = 1)),
+            BasicPane("status", 15, (arity >= 4).?(24).|(18), Priorities(top = 3, left = 2, maxXscale = 1.8, maxYscale = 1.8, grow = 1)),
             BasicPane("court", 80, 20, Priorities(top = 3, right = 3, maxXscale = 1.5, maxYscale = 1.5, grow = -2)),
             BasicPane("log", 32, 16, Priorities(right = 1)),
-            BasicPane("map-small", 73, 70, Priorities(top = 2, left = 1, grow = 3)),
+            BasicPane("map-small", 73, 64, Priorities(top = 2, left = 1, grow = 3)),
             BasicPane("action-a", 64/1.5, 36, Priorities(bottom = 1, right = 3, grow = 2)),
             BasicPane("action-b", 55/1.5, 47, Priorities(bottom = 1, right = 3, grow = 2, maxXscale = 1.2)),
         )
@@ -556,7 +556,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val settingsKey = Meta.settingsKey
 
-    val layoutKey = "v" + 7 + "." + "arity-" + arity
+    val layoutKey = "v" + 8 + "." + "arity-" + arity
 
     def overlayScrollX(e : Elem) = overlayScroll(e)(styles.seeThroughInner).onClick
     def overlayFitX(e : Elem) = overlayFit(e)(styles.seeThroughInner).onClick
