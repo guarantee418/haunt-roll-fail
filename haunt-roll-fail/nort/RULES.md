@@ -19,7 +19,7 @@ these rules ("the cards are always right").
 | Winter costs and Unrest cards | done (counts units, which never change yet) |
 | End-of-game fame scoring | done (no territory fame yet; of the Achievements only Warlord scores) |
 | Card effects that need the map, opponents' hands or combat | not started |
-| Map tiles, territories, borders, exploring | not started; 20 of the 35 tile images are in (`webp2/nort/images/tile/`) |
+| Map tiles, territories, borders, exploring | not started; images for the starting tile, the 5-player starting tile and 30 of the 34 other core tiles are in `webp2/nort/images/tile/` (expansion tiles, clan boards and tokens in `expansion/`) |
 | Buildings, combat, clan powers, three-closed-territories win | not started |
 | Starting card list | Recruit, Move, Explore, Build, Feast ×2 (from the cards) |
 
