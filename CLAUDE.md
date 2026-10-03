@@ -295,9 +295,13 @@ file covers the build, server and deploy. No session can ssh to the server
   `root/maps.scala`; `drawScoreTrack` puts each faction's VP marker on its
   score, stacked upwards when tied, with a count badge past 30. Only Gorge has
   one. Official VP marker art (`webp2/root/images/vp/`, `officialVP` in
-  `root/ui.scala`) exists only for the Homeland Twilight Council, Knaves and
-  Lilypad Diaspora, cut from page 17 of `root-factions/`; other factions fall
-  back to their `-glyph` head icon until their marker images are added.
+  `root/ui.scala`) exists for the Homeland Twilight Council, Knaves and
+  Lilypad Diaspora, cut from page 17 of `root-factions/`, and the Marquise:
+  the Council marker's laurel frame recoloured, with the Marquise head
+  (`cat100.webp`) from the Root Database (https://www.therootdatabase.com/,
+  `/media/small_component_icons/custom/<animal>100.webp`, the same heads the
+  official markers print). Other factions fall back to their `-glyph` head
+  icon until their markers are added.
 - Boards with printed item slots (Gorge, Marsh) set `itemSlots` (`itemGrid`
   for the usual 2x6 layout); `drawItemSlots` draws `game.uncrafted` on them.
 - The Homeland Marsh map is `MarshBoard` in `root/maps.scala` (option

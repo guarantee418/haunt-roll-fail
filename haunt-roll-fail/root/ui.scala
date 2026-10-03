@@ -403,9 +403,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         g.restore()
     }
 
-    // The official VP markers we have art for (from the Homeland component sheet), by faction style;
-    // other factions are shown by their glyph
-    val officialVP = Map("TC" -> "vp-tc", "KD" -> "vp-kd", "hld" -> "vp-ld", "LD" -> "vp-ld")
+    // The VP markers we have art for, by faction style; other factions are shown by their glyph
+    val officialVP = Map("mc" -> "vp-mc", "TC" -> "vp-tc", "KD" -> "vp-kd", "hld" -> "vp-ld", "LD" -> "vp-ld")
 
     // Faction VP markers on the score track printed on the board (only some boards have one).
     // Factions on the same score are stacked upwards; a faction with a dominance or in a coalition has no marker.

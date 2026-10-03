@@ -1468,8 +1468,10 @@ object Meta extends MetaGame {
         ImageAsset("action-black" ) ::
         ImageAsset("action-bird" ) ::
     $) ::
-    // Official VP markers, from the Homeland component sheet (root-factions/, page 17)
+    // VP markers: the Homeland ones from the component sheet (root-factions/, page 17); the Marquise one is
+    // that sheet's laurel frame with the Marquise head from the Root Database (therootdatabase.com, cat100.webp)
     ConditionalAssetsList((factions, options) => true, "vp")(
+        ImageAsset("vp-mc") ::
         ImageAsset("vp-tc") ::
         ImageAsset("vp-kd") ::
         ImageAsset("vp-ld") ::
