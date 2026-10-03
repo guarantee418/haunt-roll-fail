@@ -395,22 +395,29 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     pieces.add(Sprite($(at("ui-label-" + (i + 1), 110)), box, tag))(sx(x), sy(y))
             }
 
-            // A second player's units (during a fight) go next to the first, towards the middle of the tile
+            // The unit point is clear of resources and buildings for one full size figure, with its count and Kaija
+            // inside its outline; during a fight the clans' figures share that space at a smaller size
             val (px, py) = board.unitPoint(t.anchor)
-            val step = (px - math.floor(px) < 0.5).?(290).|(-290)
+            val present = game.present(t)
+            val k = present.num
+            val scale = k match { case 0 | 1 => 1.0 ; case 2 => 0.6 ; case 3 => 0.45 ; case _ => 0.36 }
+            val step = 160 * scale
 
-            game.present(t).zipWithIndex.foreach { case (f, k) =>
+            present.zipWithIndex.foreach { case (f, i) =>
                 val n = game.count(t, f)
-                val ux = sx(px) + k * step
-                val uy = sy(py)
+                val ux = sx(px) + (k > 1).?(9 + (i - (k - 1) / 2.0) * step).|(0.0)
+                val uy = sy(py) + (k > 1).?(20.0).|(0.0)
+                val z = 300 * scale
                 if (n > 0) {
-                    pieces.add(Sprite($(at("unit-" + game.colors(f).id, 300)), $(Rectangle(-150, -150, 300, 300)), tag))(ux, uy)
+                    pieces.add(Sprite($(at("unit-" + game.colors(f).id, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag))(ux, uy)
                     if (n <= 15)
-                        pieces.add(Sprite($(at("ui-count-" + n, 120)), $))(ux + 90, uy + 105)
+                        pieces.add(Sprite($(at("ui-count-" + n, 96 * scale)), $))(ux + 62 * scale, uy + 62 * scale)
                 }
-                // Kaija next to Bear Clan's units, or in their place
-                if (game.kaijaIn(t, f))
-                    pieces.add(Sprite($(at("token-kaija", (n > 0).?(150).|(220))), $(Rectangle(-100, -100, 200, 200)), tag))((n > 0).?(ux - 125).|(ux), (n > 0).?(uy + 80).|(uy))
+                // Kaija in front of Bear Clan's figure, or in its place
+                if (game.kaijaIn(t, f)) {
+                    val kz = (n > 0).?(110).|(180) * scale
+                    pieces.add(Sprite($(at("token-kaija", kz)), $(Rectangle(-kz / 2, -kz / 2, kz, kz)), tag))((n > 0).?(ux - 40 * scale).|(ux), (n > 0).?(uy + 55 * scale).|(uy))
+                }
             }
 
             // Snake Clan's Scorched Earth token, by the territory number
