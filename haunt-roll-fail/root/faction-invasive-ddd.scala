@@ -538,7 +538,7 @@ object InvasiveDDDExpansion extends FactionExpansion[InvasiveDDD] {
                 + InvasiveDDDMoveAction(f, mvv).!(mvv.none)
             }
 
-            + EndTurnSoftAction(f, "Turn", ForfeitActions(3 - f.acted))
+            + EndTurnSoftAction(f, "Daylight".styled(styles.phase), ForfeitActions(3 - f.acted))
 
             ask(f).daylight(f)
 

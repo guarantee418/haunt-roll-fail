@@ -542,7 +542,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
                 + InvasiveEEEProvokeMainAction(f).!(provokeFlip(f).none && provokePlace(f).none)
             }
 
-            + EndTurnSoftAction(f, "Turn", ForfeitActions(3 - f.acted))
+            + EndTurnSoftAction(f, "Daylight".styled(styles.phase), ForfeitActions(3 - f.acted))
 
             ask(f).daylight(f)
 

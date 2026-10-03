@@ -297,7 +297,7 @@ object InvasiveAAAExpansion extends FactionExpansion[InvasiveAAA] {
             + InvasiveAAAExtraFrogMainAction(f, f.hand.%(_.suit.matches(Frog)).num)
                 .!(f.hand.%(_.suit.matches(Frog)).none, "no frog cards")
 
-            + EndTurnSoftAction(f, "Turn", ForfeitActions(3 + f.extra - f.acted))
+            + EndTurnSoftAction(f, "Daylight".styled(styles.phase), ForfeitActions(3 + f.extra - f.acted))
 
             ask(f).daylight(f)
 
