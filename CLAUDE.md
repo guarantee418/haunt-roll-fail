@@ -166,6 +166,40 @@ git fetch origin main && git push origin origin/main:refs/heads/deploy
 - A manual `live-server.sh deploy` still deploys `origin/main`; auto-deploy
   only acts when `deploy` moves.
 
+### Game copies, fixes and backups
+
+Cloud sessions can't reach the server, so the games are copied to a private
+GitHub repository, `guarantee418/hrf-games`, and fixed through it.
+
+- Every minute the server (`good-game/Backup.scala`) writes every game as
+  text to the directory named in `good-game/backup-dir` (or
+  `HRF_BACKUP_DIR`), `~/hrf-games`, a clone of that repository, and applies
+  the fixes committed to its `fixes/`. `live-server.sh backup-sync` (cron,
+  every 5 minutes, log in `~/hrf-backup.log`) commits that copy, pulls and
+  pushes; the server's files win conflicts. `good-game/games-README.md` is
+  copied into the repository as its README: it describes the files and how
+  to fix a game.
+- To fix a game from a cloud session: add `guarantee418/hrf-games` with
+  `add_repo`, copy `games/<id>.tsv` to `fixes/<id>.tsv`, edit the moves,
+  keep the first line (`# game <id> entries <n>`), commit and push to its
+  `main`. The server applies it only if the game still has `<n>` entries,
+  and writes `fixes/<id>.result` and the old log `fixes/<id>.before.tsv`.
+  Players reload afterwards: the server refuses moves that would leave a gap
+  in a game's log, so a stale browser can't corrupt it.
+- The repository holds the player secrets (`users.tsv`, `plays.tsv`): the
+  owner chose that so a restore keeps every link working. It must stay
+  private; never copy those files anywhere public, including this repo.
+- Set up once with `~/hrf/live-server.sh install-backup`: it makes the deploy
+  key `~/.ssh/hrf-games`, clones the repository (or prints the key to add
+  under the repository's Settings > Deploy keys, with write access), writes
+  `good-game/backup-dir` and adds the cron entry. The server reads
+  `backup-dir` each minute, so no restart is needed.
+- Once a day the server also saves a database copy in
+  `~/hrf/good-game/db-backups/` (`.tar.gz`), kept 14 days.
+- `sbt "run restore <database> <directory>"` in `good-game` rebuilds a new
+  database from a copy of the repository.
+- `backup-dir` and `db-backups/` are gitignored.
+
 ### Bug reports
 
 - The in-game menu (under "Interface") has a "Report a Bug" button. The

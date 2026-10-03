@@ -15,3 +15,7 @@ good-game/acme/
 # Bug reports saved by the server, and its GitHub token for posting them
 good-game/bug-reports/
 good-game/github-token
+
+# Games copy settings and the server's daily database copies (good-game/Backup.scala)
+good-game/backup-dir
+good-game/db-backups/
