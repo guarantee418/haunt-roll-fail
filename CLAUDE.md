@@ -15,7 +15,8 @@ versions; the Homeland ones are `faction-council.scala` and
 Northgard: Uncharted Lands is being added in `haunt-roll-fail/nort/`
 (meta name `nort`, URL `/play/nort`), base game first, expansions later.
 `nort/RULES.md` summarizes the rules (the rulebook PDFs aren't in the repo)
-and tracks what is done. So far: the 7 clans, 2–5 players, the year loop with
+and tracks what is done. `nort/HANDOFF.md` has the state, design notes,
+known gaps, next steps and how to build and test it. So far: the 7 clans, 2–5 players, the year loop with
 decks, Wait/Replace/Remove/Upgrade/Pass, Flash cards, harvest trading, winter
 and Unrest, end-of-game scoring, and the real card list in `nort/cards.scala`
 (names, fame, text, images). Only card effects that don't need the map work
