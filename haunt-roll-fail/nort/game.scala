@@ -84,8 +84,8 @@ class FactionState(val faction : Faction)(implicit game : Game) {
     var lore = 0
     var fame = 0
 
-    // Units on the map
-    def units = game.onMap(faction)
+    // Units on the map, with the warchief (Warchiefs module)
+    def units = game.onMap(faction) + game.chiefs.contains(faction).??(1)
 
     var draw : $[Card] = $
     var hand : $[Card] = $
@@ -316,11 +316,19 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     def kaijaIn(t : Territory, f : Faction) : Boolean = f == Bear && kaija.exists(t.areas.contains)
 
-    // Units and Kaija
-    def figures(t : Territory, f : Faction) : Int = count(t, f) + kaijaIn(t, f).??(1)
+    // Warchiefs module: where each clan's warchief is (none while in the reserve)
+    var chiefs : Map[Faction, AreaRef] = Map()
 
-    // Combat points of the figures: Kaija is worth 2
-    def strength(t : Territory, f : Faction) : Int = count(t, f) + kaijaIn(t, f).??(2)
+    def chiefIn(t : Territory, f : Faction) : Boolean = chiefs.get(f).exists(t.areas.contains)
+
+    // The warchief is in the reserve and can be recruited
+    def chiefReady(f : Faction) : Boolean = has(Warchiefs) && chiefs.contains(f).not && setup.has(f)
+
+    // Units, Kaija and the warchief
+    def figures(t : Territory, f : Faction) : Int = count(t, f) + kaijaIn(t, f).??(1) + chiefIn(t, f).??(1)
+
+    // Combat points of the figures: Kaija is worth 2, a warchief 2 or 3 depending on its power
+    def strength(t : Territory, f : Faction, attacking : Boolean) : Int = count(t, f) + kaijaIn(t, f).??(2) + Warchief.strength(t, f, attacking)
 
     // Kaija is in Bear Clan's reserve and can be recruited
     def kaijaReady(f : Faction) : Boolean = f == Bear && kaija.none && setup.has(Bear)
@@ -330,7 +338,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def present(t : Territory) : $[Faction] = seating.%(f => figures(t, f) > 0)
 
     // Units or Kaija anywhere on the map
-    def anyOnMap(f : Faction) : Boolean = onMap(f) > 0 || (f == Bear && kaija.any)
+    def anyOnMap(f : Faction) : Boolean = onMap(f) > 0 || (f == Bear && kaija.any) || chiefs.contains(f)
 
     def controlled(f : Faction) : $[Territory] = board.territories.%(t => present(t) == $(f))
 
@@ -343,11 +351,16 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         units += a -> (m + (f -> (m.getOrElse(f, 0) + n)))
     }
 
-    // Casualties: units first, Kaija last
+    // Casualties: units first, then the warchief, Kaija last
     def removeFigures(t : Territory, f : Faction, n : Int) {
         val k = math.min(n, count(t, f))
         removeUnits(t, f, k)
-        if (n > k && kaijaIn(t, f))
+        var left = n - k
+        if (left > 0 && chiefIn(t, f)) {
+            chiefs -= f
+            left -= 1
+        }
+        if (left > 0 && kaijaIn(t, f))
             kaija = None
     }
 

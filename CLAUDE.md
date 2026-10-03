@@ -25,7 +25,9 @@ and placement rules in `nort/board.scala`, and setup, Recruit, Move,
 Explore, Build, Feast, combat and retreat in `nort/map.scala`. Every card
 effect works (special ones in `nort/effects.scala`) and all seven clan
 powers, including Bear's Kaija and Snake's Scorched Earth; the Creatures
-module (with its More Creatures variant) is in `nort/creatures.scala`. The
+module (with its More Creatures variant) is in `nort/creatures.scala`, the
+Warchiefs module in `nort/warchiefs.scala` (the clan picker's Warchief
+button shows each clan's warchief board). The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.
@@ -40,7 +42,7 @@ players, not clans: each clan's player picks one on its row of the setup screen
 (`ColorOption`, default blue, red, yellow, purple, green by seat;
 `game.colors`); starting cards show that color's banner. The setup options
 (colors, game length, fame-only victory, first player, and the modules and
-expansions; only Creatures is implemented, the others are shown but disabled) are in `nort/options.scala`. `underConstruction = true` in its `Meta` puts
+expansions; Creatures and Warchiefs are implemented, the others are shown but disabled) are in `nort/options.scala`. `underConstruction = true` in its `Meta` puts
 an "Under Construction" note under its name on the game list and a disclaimer
 at the top of its menu. `nort/host.scala` runs bot games headless (JVM only,
 like the other `host.scala` files).

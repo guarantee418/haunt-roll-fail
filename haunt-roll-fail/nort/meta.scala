@@ -104,10 +104,18 @@ object Meta extends MetaGame { mmm =>
     // Once picked, just the clan's emblem
     override def factionChosenElem(f : Faction) = Image("clan-" + f.style, styles.menuIcon) ~ factionElem(f).spn(xstyles.bold)
 
+    // The clan picker's Warchief button: the clan board with the warchief's portrait and power (Warchiefs module)
+    override def factionInfo(f : Faction) = |((
+        "Warchief".txt,
+        Warchief.name(f).hlb ~ ", " ~ factionName(f) ~ " warchief",
+        $(Image(Warchief.board(f), styles.menuBoard), ("Warchief power: ".hl ~ Warchief.power(f)).div(styles.menuText))
+    ))
+
     // Images shown in the menus, before the game's assets are loaded
     override def menuImages = (
         factions./~(f => $(0, 1, 2)./(n => ClanCard(f, n).info.image)./(i => i -> ("/hrf/webp2/nort/images/card/clan/" + i.drop("card-clan-".length) + ".webp"))) ++
-        factions./(f => ("clan-" + f.style) -> ("/hrf/webp2/nort/images/clan/" + f.style + ".webp"))
+        factions./(f => ("clan-" + f.style) -> ("/hrf/webp2/nort/images/clan/" + f.style + ".webp")) ++
+        factions./(f => Warchief.board(f) -> ("/hrf/webp2/nort/images/expansion/board/" + f.style + ".webp"))
     ).toMap
 
     def createGame(factions : $[Faction], options : $[O]) = new Game(factions, options)
@@ -156,6 +164,9 @@ object Meta extends MetaGame { mmm =>
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/unit", "unit-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "unit-" + c.id))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Warchiefs), "token/unit", "warchief-", "webp")(
+        PlayerColor.all./(c => ImageAsset(c.id, "warchief-" + c.id))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token", "token-", "webp")(
         $(ImageAsset("kaija"), ImageAsset("scorched-earth"))

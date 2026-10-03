@@ -413,6 +413,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     if (n <= 15)
                         pieces.add(Sprite($(at("ui-count-" + n, 96 * scale)), $))(ux + 62 * scale, uy + 62 * scale)
                 }
+                // The warchief beside the clan's figure, or in its place (Warchiefs module)
+                if (game.chiefIn(t, f)) {
+                    val cz = (n > 0).?(210).|(280) * scale
+                    pieces.add(Sprite($(at("warchief-" + game.colors(f).id, cz)), $(Rectangle(-cz / 2, -cz / 2, cz, cz)), tag))((n > 0).?(ux + 95 * scale).|(ux), (n > 0).?(uy - 30 * scale).|(uy))
+                }
                 // Kaija in front of Bear Clan's figure, or in its place
                 if (game.kaijaIn(t, f)) {
                     val kz = (n > 0).?(110).|(180) * scale
@@ -484,11 +489,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val units = (state.units.hl ~ " units, " ~ state.fame.hl ~ " fame").div
 
+        // Warchiefs module: the warchief's name, dimmed while in the reserve
+        val chief = game.has(Warchiefs).?(game.chiefs.contains(f).?(Warchief.elem(f)).|(Warchief.name(f).txt ~ " (reserve)".spn(xstyles.smaller85)).div).|(Empty)
+
         val cards = (state.hand.num.hl ~ " in hand, " ~ state.draw.num.hl ~ " to draw").div
 
         val marks = ((game.first == f).?("First player".hh).|(Empty) ~ (state.passed && game.isOver.not).?(" Passed".txt).|(Empty)).div
 
-        val content = (title.div ~ res ~ units ~ cards ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
+        val content = (title.div ~ res ~ units ~ chief ~ cards ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
 
         container.replace(content, resources, {
             case x => onClick(x)
