@@ -19,11 +19,18 @@ package object elem {
 
         val color = rules.color
 
-        // Placeholder colors until the clan colors from the rulebook are in
+        // Placeholder clan colors
+        Bear --> color("#c08a52")
+        Boar --> color("#8fbf4a")
+        Goat --> color("#e3d28a")
+        Raven --> color("#7f93e6")
+        Snake --> color("#45b89f")
         Stag --> color("#e0b13a")
-        Goat --> color("#6fb04a")
-        Wolf --> color("#d0473a")
-        Raven --> color("#5b8fd6")
+        Wolf --> color("#d9574a")
+
+        Food --> color("#e04848")
+        Wood --> color("#c98a4b")
+        Lore --> color("#8fa8d6")
 
         object title extends CustomStyle()
 
@@ -71,9 +78,12 @@ package object elem {
     object borders extends BaseStyleMapping("nort-border") {
         import rules._
 
+        Bear --> outline.color("#5a3d1e")
+        Boar --> outline.color("#3d5a1c")
+        Goat --> outline.color("#6b5f2c")
+        Raven --> outline.color("#2a3570")
+        Snake --> outline.color("#1d5a4c")
         Stag --> outline.color("#6b4f10")
-        Goat --> outline.color("#2f5a1c")
         Wolf --> outline.color("#6b1a12")
-        Raven --> outline.color("#1d3a66")
     }
 }

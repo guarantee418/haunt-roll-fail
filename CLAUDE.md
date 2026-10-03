@@ -13,12 +13,16 @@ versions; the Homeland ones are `faction-council.scala` and
   (`sbt publishLocal` once before building the client)
 
 Northgard: Uncharted Lands is being added in `haunt-roll-fail/nort/`
-(meta name `nort`, URL `/play/nort`). It is a placeholder so far: the base
-game's four clans (Stag, Goat, Wolf, Raven, with placeholder colors), no map
-or rules, and a game that only offers "End Game". `underConstruction = true`
-in its `Meta` puts an "Under Construction" note under its name on the game
-list and a disclaimer at the top of its menu. Build the base game first, then
-the expansions. Its images go in `webp2/nort/images/`, listed in `assets`.
+(meta name `nort`, URL `/play/nort`), base game first, expansions later.
+`nort/RULES.md` summarizes the rules (the rulebook PDFs aren't in the repo)
+and tracks what is done. So far: the 7 clans, 2–5 players, the year loop with
+decks, Wait/Replace/Remove/Upgrade/Pass, harvest trading, winter and Unrest,
+and end-of-game scoring. No map, card effects or combat yet; Development and
+Achievement cards are placeholders and the starting deck is provisional.
+`underConstruction = true` in its `Meta` puts an "Under Construction" note
+under its name on the game list and a disclaimer at the top of its menu. Its
+images go in `webp2/nort/images/`, listed in `assets`. `nort/host.scala` runs
+bot games headless (JVM only, like the other `host.scala` files).
 
 ## Building
 

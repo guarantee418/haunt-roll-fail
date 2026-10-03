@@ -33,9 +33,10 @@ object Meta extends MetaGame { mmm =>
 
     override val underConstruction = true
 
-    val factions = $(Stag, Goat, Wolf, Raven)
+    val factions = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf)
 
     val minPlayers = 2
+    override val maxPlayers = 5
 
     override val hiddenOptions = $
 
@@ -52,17 +53,13 @@ object Meta extends MetaGame { mmm =>
 
     def validateFactionCombination(factions : $[Faction]) = None ||
         (factions.num < 2).?(ErrorResult("Minimum two clans")) ||
-        (factions.num > 4).?(ErrorResult("Maximum four clans")) |
+        (factions.num > 5).?(ErrorResult("Maximum five clans")) |
         InfoResult("Northgard: Uncharted Lands")
 
     def validateFactionSeatingOptions(factions : $[Faction], options : $[O]) = validateFactionCombination(factions)
 
-    def factionName(f : Faction) = f.name
+    def factionName(f : Faction) = f.name + " Clan"
     def factionElem(f : Faction) = f.name.styled(f)
-
-    override def glyph(g : G) : |[String] = g.highlight.current./(_.style + "-glyph")
-    override def glyph(f : F) : |[String] = |(f.style + "-glyph")
-    override def glyph(g : G, f : F) : |[String] = glyph(f).%!(_ => g.highlight.faction.has(f) && hrf.HRF.uptime() / 1000 % 2 == 1)
 
     def createGame(factions : $[Faction], options : $[O]) = new Game(factions, options)
 

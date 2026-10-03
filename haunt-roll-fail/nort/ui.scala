@@ -99,7 +99,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val title = Div(Div(name.styled(f)(styles.title)), styles.smallname, styles.titleLine, xlo.pointer)
 
-        val content = (title.div).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
+        val state = game.states(f)
+
+        val res = Resource.all./(r => state.has(r).hl ~ " " ~ r.elem).join(" ").div
+
+        val units = (state.units.hl ~ " units, " ~ state.draw.num.hl ~ " draw, " ~ state.hand.num.hl ~ " hand, " ~ state.discard.num.hl ~ " discard" ~ (game.first == f).?(", " ~ "first".hh).|(Empty) ~ (state.passed && game.isOver.not).?(", passed".txt).|(Empty)).div
+
+        val content = (title.div ~ res ~ units).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
 
         container.replace(content, resources, {
             case x => onClick(x)
