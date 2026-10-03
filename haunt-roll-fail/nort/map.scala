@@ -663,6 +663,9 @@ object MapExpansion extends Expansion {
         case EgilFurySkipAction(f, e, then) =>
             Then(MoveEndAction(f, e, then))
 
+        case HalvardCraftSkipAction(f, then) =>
+            Then(then)
+
         case MoveEndAction(f, e, then) =>
             Then(CombatsAction(f, e, then))
 
