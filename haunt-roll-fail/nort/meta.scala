@@ -42,7 +42,7 @@ object Meta extends MetaGame { mmm =>
 
     override val hiddenOptions = $
 
-    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(FameOnly, FirstSeatStarts) ++ Module.all./(ModuleOption) ++ $(MoreCreatures) ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(FameOnly, FirstSeatStarts, WarchiefCards) ++ Module.all./(ModuleOption) ++ $(MoreCreatures) ++ hiddenOptions
 
     // Colors only for the clans in the game
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -104,16 +104,21 @@ object Meta extends MetaGame { mmm =>
     // Once picked, just the clan's emblem
     override def factionChosenElem(f : Faction) = Image("clan-" + f.style, styles.menuIcon) ~ factionElem(f).spn(xstyles.bold)
 
-    // The clan picker's Warchief button: the clan board with the warchief's portrait and power (Warchiefs module)
+    // The clan picker's Warchief button: the clan board with the warchief's portrait and power, and the warchief's upgrade card (Warchiefs box)
     override def factionInfo(f : Faction) = |((
         "Warchief".txt,
         Warchief.name(f).hlb ~ ", " ~ factionName(f) ~ " warchief",
-        $(Image(Warchief.board(f), styles.menuBoard), ("Warchief power: ".hl ~ Warchief.power(f)).div(styles.menuText))
+        $(
+            Image(Warchief.board(f), styles.menuBoard),
+            ("Warchief power: ".hl ~ Warchief.power(f)).div(styles.menuText),
+            Image(ClanCard(f, 3).info.image, styles.menuWarchiefCard),
+            (ClanCard(f, 3).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 3).info.text).div(styles.menuText),
+        )
     ))
 
     // Images shown in the menus, before the game's assets are loaded
     override def menuImages = (
-        factions./~(f => $(0, 1, 2)./(n => ClanCard(f, n).info.image)./(i => i -> ("/hrf/webp2/nort/images/card/clan/" + i.drop("card-clan-".length) + ".webp"))) ++
+        factions./~(f => $(0, 1, 2, 3)./(n => ClanCard(f, n).info.image)./(i => i -> ("/hrf/webp2/nort/images/card/clan/" + i.drop("card-clan-".length) + ".webp"))) ++
         factions./(f => ("clan-" + f.style) -> ("/hrf/webp2/nort/images/clan/" + f.style + ".webp")) ++
         factions./(f => Warchief.board(f) -> ("/hrf/webp2/nort/images/expansion/board/" + f.style + ".webp"))
     ).toMap

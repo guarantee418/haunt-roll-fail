@@ -56,6 +56,16 @@ case object FameOnly extends GameOption with ToggleOption with ImportantOption {
     )
 }
 
+// The Warchiefs box's 7 extra clan upgrade cards, which the rulebook allows without the Warchiefs module
+case object WarchiefCards extends GameOption with ToggleOption {
+    val group = "Warchief upgrade cards".txt
+    def valueOn = "Warchief upgrade cards without the module".txt
+    override val explain = $(
+        "The Warchiefs box adds a third clan upgrade card for each clan (Egil's Fury, Brand's Bravery, Borgild's Shield, Signy's Celerity, Liv's Cunning, Halvard's Craft, Svarn's Menders).",
+        "They are always in the game with the " ~ "Warchiefs".hl ~ " module. With this option they are also used without it; Borgild's Shield then ignores its Kaija and Borgild part.",
+    )
+}
+
 case object FirstSeatStarts extends GameOption with ToggleOption {
     val group = "First player".txt
     def valueOn = "First seat goes first".txt

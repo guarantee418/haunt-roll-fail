@@ -42,6 +42,7 @@ package object elem {
 
         object menuIcon extends CustomStyle(height("2.4em"), vertical.align("middle"), margin.right("1ex"))
         object menuBoard extends CustomStyle(display("block"), width("60ex"), max.width("100%"), margin.left("auto"), margin.right("auto"))
+        object menuWarchiefCard extends CustomStyle(display("block"), width("24ex"), max.width("60%"), margin.left("auto"), margin.right("auto"), margin.top("2ex"))
         object menuText extends CustomStyle(max.width("60ex"), margin.left("auto"), margin.right("auto"), margin.top("1ex"), text.align("center"))
         object menuCard extends CustomStyle(display("inline-block"), width("30%"), max.width("15ex"), margin("0.5ex"), vertical.align("top"))
         object card extends CustomStyle(display("inline-block"), width("12ex"), margin("0.3ex"))

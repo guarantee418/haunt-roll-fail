@@ -59,6 +59,21 @@ case object InfiltrateMove extends MoveSpecial
 case object AxeMove extends MoveSpecial
 // Intimidate: before each combat, may push 1 defending unit out
 case object IntimidateMove extends MoveSpecial
+// The warchief upgrade cards (Warchiefs box), one per clan:
+// Egil's Fury: +1 casualty; before the combats, may remove 1 building from an attacked territory
+case object EgilMove extends MoveSpecial
+// Brand's Bravery: the winner chooses where the enemy retreats
+case object BrandMove extends MoveSpecial
+// Borgild's Shield: before moving, Kaija and Borgild may join each other; cancel 1 casualty inflicted by the defender
+case object BorgildMove extends MoveSpecial
+// Signy's Celerity: may move through the territory with the Scorched Earth token without stopping
+case object SignyMove extends MoveSpecial
+// Liv's Cunning: may spend wood or lore instead of food in combat
+case object LivMove extends MoveSpecial
+// Halvard's Craft: a free small building in a territory newly controlled after the move
+case object HalvardMove extends MoveSpecial
+// Svarn's Menders: friendly casualties come back after the combats, in any of the player's territories
+case object SvarnMove extends MoveSpecial
 
 case class MoveEffect(n : Int, bonus : Int = 0, ignoreRough : Boolean = false, special : MoveSpecial = PlainMove) extends Effect
 // Draw tiles and keep one; redraw: may put the drawn tile back once; anywhere: from any open territory
@@ -151,36 +166,43 @@ object Cards {
             "bear" -> CardInfo("Bear Clan", "", 0, true, MoveEffect(1, special = BearMove), "Move 1. If Kaija is part of this Move action, before it is resolved collect all food and wood from the territory it leaves."),
             "bear-the-bear-awakens" -> CardInfo("The Bear Awakens", "", 0, true, AwakenEffect, "Recruit 2. For the rest of this year, Kaija can also move in enemy territories."),
             "bear-protector-of-the-land" -> CardInfo("Protector of the Land", "", 0, false, ProtectorEffect, "Draw 1 card for each of your closed territories of at least 3 tiles in size."),
+            "bear-borgilds-shield" -> CardInfo("Borgild's Shield", "", 0, false, MoveEffect(2, special = BorgildMove), "Move 2. Before your Move action, you may place Kaija into Borgild's territory or vice versa. During each combat, cancel 1 casualty inflicted by the defender."),
         ),
         clanCards(Boar,
             "boar" -> CardInfo("Boar Clan", "", 0, true, BuildEffect(discount = 1), "Build. You may build for 1 less wood (a small building becomes free)."),
             "boar-osmosis" -> CardInfo("Osmosis", "", 0, false, OsmosisEffect, "Recruit 1 unit in up to 3 of your different territories. Each territory chosen this way must be open or contain wood (excluding buildings)."),
             "boar-lay-of-the-land" -> CardInfo("Lay of the Land", "", 0, false, ExploreEffect(draw = 3, collect = true), "Explore. Draw 3 tiles: choose 1 and place the rest at the bottom of the pile. Before placing the chosen tile, collect all resources on it."),
+            "boar-svarns-menders" -> CardInfo("Svarn's Menders", "", 0, false, MoveEffect(2, special = SvarnMove), "Move 2. During each combat, place friendly casualties on this card, and after all combats are resolved, place them in any number of your territories."),
         ),
         clanCards(Goat,
             "goat" -> CardInfo("Goat Clan", "", 0, true, BuildEffect(duplicate = true), "Build. The new building being placed can be identical to any building already in the same territory."),
             "goat-teamwork" -> CardInfo("Teamwork", "", 0, false, TeamworkEffect, "Choose 2 different actions and resolve them in any order: Recruit, Move, Explore, Build."),
             "goat-resourceful-people" -> CardInfo("Resourceful People", "", 0, false, ResourcefulEffect, "Draw 2 cards. You may pay any 3 resources to draw 1 additional card."),
+            "goat-halvards-craft" -> CardInfo("Halvard's Craft", "", 0, false, MoveEffect(2, special = HalvardMove), "Move 2. If you control new territories after this Move action, you may place 1 small building in one of them at no cost."),
         ),
         clanCards(Raven,
             "raven" -> CardInfo("Raven Clan", "", 0, true, ExploreEffect(draw = 2), "Explore. Draw 2 tiles: choose 1, and place the other one on the bottom of the pile."),
             "raven-raiding-party" -> CardInfo("Raiding Party", "", 0, true, RaidEffect, "Remove 1 enemy unit and collect 1 resource displayed on its territory."),
             "raven-mercenaries" -> CardInfo("Raven Mercenaries", "", 0, false, MercenariesEffect, "Recruit 2 units in 1 neutral territory. You may spend any 2 resources to recruit 1 additional unit in that same territory."),
+            "raven-livs-cunning" -> CardInfo("Liv's Cunning", "", 0, false, MoveEffect(4, special = LivMove), "Move 4. During combat, you may discard wood or lore instead of food to gain bonus points."),
         ),
         clanCards(Snake,
             "snake" -> CardInfo("Snake Clan", "", 0, true, MoveEffect(1, special = SnakeMove), "Move 1. After this Move action you may place the Scorched Earth token."),
             "snake-rapacious-exploitation" -> CardInfo("Rapacious Exploitation", "", 0, false, RapaciousEffect, "Look at an opponent's hand and choose 1 card from it. They choose either to discard it or give you any 2 resources of their choice (if they don't have enough resources, they must discard)."),
             "snake-stolen-lore" -> CardInfo("Stolen Lore", "", 0, true, StolenLoreEffect, "Copy the effect of any 1 card in the active area belonging to the opponent with the Scorched Earth token."),
+            "snake-signys-celerity" -> CardInfo("Signy's Celerity", "", 0, false, MoveEffect(3, special = SignyMove), "Move 3. You may move through the territory with the Scorched Earth token without stopping."),
         ),
         clanCards(Stag,
             "stag" -> CardInfo("Stag Clan", "", 0, true, RecruitEffect(1), "Recruit 1. After this Recruit action, you can move 1 of your units from an adjacent territory into this one (ignoring Rough borders)."),
             "stag-glory-of-the-clan" -> CardInfo("Glory of the Clan", "", 0, false, BuildEffect(special = GloryBuild), "Build. Before or after this Build action, you may collect resources in this territory as if it were the Harvest phase."),
             "stag-annexation" -> CardInfo("Annexation", "", 0, true, AnnexationEffect, "Move 1. Before or after this Move action, you may do an Explore action."),
+            "stag-brands-bravery" -> CardInfo("Brand's Bravery", "", 0, false, MoveEffect(2, bonus = 1, special = BrandMove), "Move 2, +1 combat point. For each combat won, you choose which territory the enemy retreats to (the retreat move must be legal)."),
         ),
         clanCards(Wolf,
             "wolf" -> CardInfo("Wolf Clan", "", 0, true, MoveEffect(1, ignoreRough = true), "Move 1. During this Move action, you can cross Rough borders with no penalty (including during retreat)."),
             "wolf-plunder" -> CardInfo("Plunder", "", 0, true, PlunderEffect, "Remove 1 unit from an adjacent enemy territory to draw 1 card."),
             "wolf-call-to-war" -> CardInfo("Call to War", "", 0, false, CallToWarEffect, "Recruit 1 unit in each of your territories adjacent to an enemy territory."),
+            "wolf-egils-fury" -> CardInfo("Egil's Fury", "", 0, false, MoveEffect(3, special = EgilMove), "Move 3, +1 casualty. Before combats are resolved, you may remove 1 building from a territory which is being attacked. Place it back in the reserve."),
         ),
     ).toMap
 

@@ -29,7 +29,7 @@ object Host extends hrf.host.BaseHost {
         val creatures = sys.env.get("NORT_CREATURES").has("1") || random() < 0.5
         val options = colors ++ $(YearsOption.all.shuffle.head) ++ (random() < 0.3).$(FameOnly) ++ (random() < 0.3).$(FirstSeatStarts) ++
             creatures.$(ModuleOption(Creatures)) ++ (creatures && random() < 0.5).$(MoreCreatures) ++
-            (sys.env.get("NORT_WARCHIEFS").has("1") || random() < 0.5).$(ModuleOption(Warchiefs))
+            (sys.env.get("NORT_WARCHIEFS").has("1") || random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.3).$(WarchiefCards)
         options.foreach(o => assert(Meta.parseOption(Meta.writeOption(o)) == $(o), o))
         new G(l, options)
     })

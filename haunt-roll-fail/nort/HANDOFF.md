@@ -11,8 +11,13 @@ folder; `RULES.md` lists what that check fixed). The Creatures module and its
 More Creatures variant are done (`creatures.scala`, merged and deployed).
 The Warchiefs module is done (`warchiefs.scala`, branch
 `claude/nort-warchiefs`), from the Warchiefs expansion rulebook found online
-(`Warchief_Expansion_rules_EN_light.pdf`); its 7 new clan upgrade cards are
-missing (no images or text).
+(`Warchief_Expansion_rules_EN_light.pdf`); its 7 extra clan upgrade cards
+(Egil's Fury, ...) were found in a Tabletop Simulator mod and are in the game
+(`MoveSpecial`s `EgilMove` ... `SvarnMove` in `cards.scala`, effects in
+`map.scala` and `creatures.scala`). TTS workshop saves can be downloaded
+without Steam: `ISteamRemoteStorage/GetPublishedFileDetails` gives the
+save's `file_url`; the save is BSON (`pip install pymongo`, `bson.decode`),
+and each deck's `CustomDeck` has the `FaceURL` of its card sheet.
 
 ## What exists
 

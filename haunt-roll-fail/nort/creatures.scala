@@ -139,6 +139,10 @@ case class CreaturePlayerRolledAction(f : Faction, area : AreaRef, c : Creature,
 case class CreatureRerollAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, then : ForcedAction) extends ForcedAction
 case class CreatureRerolledAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
 case class CreatureFaceAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, face : DieFace, then : ForcedAction) extends ForcedAction
+case class CreatureCunningAskAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, spent : $[Resource], then : ForcedAction) extends ForcedAction
+case class CreatureCunningAction(self : Faction, area : AreaRef, c : Creature, e : MoveEffect, r : Resource, spent : $[Resource], then : ForcedAction) extends BaseAction("Liv's Cunning".hl, "spend for the fight", spent.any.?("(" ~ spent./(_.elem).join(" ") ~ " so far)").|(Empty))("1", r)
+case class CreatureCunningDoneAction(self : Faction, area : AreaRef, c : Creature, e : MoveEffect, spent : $[Resource], then : ForcedAction) extends BaseAction("Liv's Cunning".hl)(spent.none.?("Spend nothing").|("Done"))
+case class CreatureFoodPaidAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, then : ForcedAction) extends ForcedAction
 case class CreatureFoodStartAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, then : ForcedAction) extends ForcedAction
 case class CreatureRolledAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, face : DieFace, random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
 
@@ -339,6 +343,28 @@ object CreaturesExpansion extends Expansion {
             else
                 Then(CreatureFoodStartAction(f, a, c, e, attacking, then))
 
+        // Liv's Cunning: wood or lore may be spent like food, one at a time
+        case CreatureFoodStartAction(f, a, c, e, attacking, then) if attacking && e.special == LivMove =>
+            Then(CreatureCunningAskAction(f, a, c, e, $, then))
+
+        case CreatureCunningAskAction(f, a, c, e, spent, then) =>
+            val max = game.figures(game.board.territory(a), f)
+
+            Ask(f)
+                .some(Resource.all.%(r => f.has(r) > 0 && spent.num < max))(r => $(CreatureCunningAction(f, a, c, e, r, spent, then)))
+                .add(CreatureCunningDoneAction(f, a, c, e, spent, then))
+
+        case CreatureCunningAction(f, a, c, e, r, spent, then) =>
+            f.gain(r, -1)
+
+            Then(CreatureCunningAskAction(f, a, c, e, spent :+ r, then))
+
+        case CreatureCunningDoneAction(f, a, c, e, spent, then) =>
+            if (spent.any)
+                f.log("spent", spent./(_.elem).join(" "), "with", "Liv's Cunning".hl)
+
+            Then(CreatureFoodPaidAction(f, a, c, e, true, spent.num, then))
+
         case CreatureFoodStartAction(f, a, c, e, attacking, then) =>
             val t = game.board.territory(a)
             val max = math.min(f.food, game.figures(t, f))
@@ -354,6 +380,9 @@ object CreaturesExpansion extends Expansion {
             if (food > 0)
                 f.log("spent", food.hl, Food)
 
+            Then(CreatureFoodPaidAction(f, a, c, e, attacking, food, then))
+
+        case CreatureFoodPaidAction(f, a, c, e, attacking, food, then) =>
             Random[DieFace](NorthgardDie.faces, CreaturePlayerRolledAction(f, a, c, e, attacking, food, _, then))
 
         // Casualties don't hurt creatures, so a player always takes the point
@@ -396,7 +425,7 @@ object CreaturesExpansion extends Expansion {
             val snake = (f == Snake && game.scorchedIn(t)).??(1)
             val ps = game.strength(t, f, attacking) + bonus + axe + fortress + snake + food + face.points
             // Shieldbearers cancel 1 casualty; Halvard defending ignores 1 inflicted by the attacking creature
-            val shield = math.min(cface.casualties, (attacking && e.special == ShieldMove).??(1) + Warchief.shield(t, f, attacking))
+            val shield = math.min(cface.casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1) + Warchief.shield(t, f, attacking))
             val pc = cface.casualties - shield
             val cs = c.kind.value + cface.points
 
@@ -408,7 +437,12 @@ object CreaturesExpansion extends Expansion {
             // Losing all units loses the fight; otherwise ties go to the defender
             val won = pc < units && attacking.?(ps > cs).|(ps >= cs)
 
+            val before = game.count(t, f)
             game.removeFigures(t, f, math.min(pc, units))
+
+            // Svarn's Menders: the attacker's casualties wait on the card
+            if (attacking && e.special == SvarnMove)
+                game.mended += before - game.count(t, f)
 
             if (won) {
                 removeCreature(c)
