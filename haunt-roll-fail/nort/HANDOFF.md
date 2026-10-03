@@ -22,7 +22,7 @@ still runs the earlier version.
 | `tiles.scala` | All 35 core tiles as data: areas, the sides each area owns, resources, lairs, building spaces, and borders (regular or rough) |
 | `board.scala` | `Board`: placements, joining areas into territories, adjacency, closed/open, legal placements (`consistent`), drawing positions |
 | `map.scala` | `MapExpansion`: setup tile/unit placement, Recruit (with Kaija), Move (with the Move specials), combat and retreat, Scorched Earth, Explore, Build (with the Build specials), Feast, units returning at end of year |
-| `ui.scala` | Status panels, card strips (court on top, hand at the bottom; added by another session), the board canvas, map clicks |
+| `ui.scala` | Status panels (clan names in the player's color), the court strip on top, the board canvas, map clicks. Your hand is in the action pane, as in Arcs and Root: on your turn each card is a `CardMenuAction` (Soft) that opens Play / Wait / Replace / Remove / Upgrade; otherwise `Game.info` shows it as `CardInfoAction` pictures, with the Played cards |
 | `bot.scala` | `BotXX`: random, with a bias to play cards and never cancel |
 | `host.scala` | Headless bot games on the JVM; prints a summary per game, with event counts (cards played, Kaija and Scorched Earth events) |
 | `RULES.md` | Rules summary from the rulebook, plus the status table |

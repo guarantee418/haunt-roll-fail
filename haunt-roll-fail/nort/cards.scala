@@ -97,6 +97,7 @@ trait Card extends Elementary with Record {
     def removable : Boolean = true
     def elem : Elem = name.hl
     def img = Image(info.image, styles.card)
+    def handImg = Image(info.image, styles.handCard)
 }
 
 // Starting cards: Recruit, Move, Explore, Build and two Feasts per player
