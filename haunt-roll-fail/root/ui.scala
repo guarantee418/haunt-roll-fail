@@ -147,6 +147,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         val forest = region.is[Forest]
 
         val icon : DrawRect = piece match {
+            // the Gorge board prints smaller slot outlines; draw over them, not around them
+            case FreeBuildingSlot if game.board == GorgeBoard => { DrawRect(mapid + "building-slot", -36, -36, 72, 72) }
             case FreeBuildingSlot => { DrawRect(mapid + "building-slot", -50, -50, 100, 100) }
             case Battle => { DrawRect("clearing-battle", -50, -50, 100, 100) }
             case Placement => { DrawRect("clearing-placement", -50, -50, 100, 100) }

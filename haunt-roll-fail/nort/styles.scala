@@ -41,9 +41,8 @@ package object elem {
         object title extends CustomStyle()
 
         object card extends CustomStyle(display("inline-block"), width("12ex"), margin("0.3ex"))
-        object table extends CustomStyle(height("100%"), width("100%"), overflow.y("auto"), overflow.x("hidden"), padding("1ex"), box.sizing("border-box"), text.align("center"))
-        object tableRow extends CustomStyle(margin.bottom("1.5ex"))
-        object tableCard extends CustomStyle(display("inline-block"), width("10%"), min.width("8ex"), max.width("20ex"), margin("0.5%"), vertical.align("top"))
+
+        object zoomCard extends CustomStyle(height("100%"), width("100%"), objectFit("contain"))
 
         object strip extends CustomStyle(height("100%"), overflow.x("auto"), overflow.y("hidden"))
         object stripRow extends CustomStyle(display("flex"), justify.content("safe center"), height("100%"), padding("0.5ex"), box.sizing("border-box"))

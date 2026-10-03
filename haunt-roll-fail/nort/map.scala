@@ -24,8 +24,15 @@ case class TileRef(id : String) extends Elementary with Record {
     def elem = Image("tile-" + id, styles.tile)
 }
 
-case class Turn(tile : String, r : Int) extends Elementary with Record {
-    def elem = Image("tile-" + tile, styles.tile, styles.rotate(r)) ~ " " ~ (r == 0).?("as drawn").|("turned " + (r * 90) + "°")
+// A tile being placed, shown on the map at its spot until confirmed
+trait TilePreview {
+    def tile : String
+    def spot : Spot
+    def r : Int
+}
+
+case class RotateLabel(d : Int) extends Elementary {
+    def elem = (d > 0).?("Rotate right (90°)").|("Rotate left (−90°)").txt
 }
 
 // Actions the map can be clicked for
@@ -39,7 +46,8 @@ case class ShuffledTilesAction(shuffled : $[String]) extends ShuffledAction[Stri
 case class SetupPlaceAction(round : Int, l : $[Faction]) extends ForcedAction
 case class SetupTileAction(self : Faction, round : Int, l : $[Faction], tile : String) extends BaseAction(self, "places a tile")(TileRef(tile)) with Soft
 case class SetupSpotAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot) extends BaseAction("Place the tile at")(spot) with Soft with MapTarget { def target = spot }
-case class SetupTurnAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot, r : Int) extends BaseAction("Place the tile at", spot)(Turn(tile, r)) with MapTarget { def target = spot }
+case class SetupRotateAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot, r : Int, d : Int) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft
+case class SetupTurnAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot, r : Int) extends BaseAction("Place the tile at", spot)("Confirm") with TilePreview
 case class SetupUnitsAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place three units in")(area) with MapTarget { def target = area }
 case class SetupKaijaAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place two units and Kaija in")(area)
 case class ShuffledTilesBackAction(shuffled : $[String]) extends ShuffledAction[String]
@@ -85,7 +93,8 @@ case class ExploreDrawAction(f : Faction, draw : Int, tries : Int, times : Int, 
 case class ExploreChooseAction(f : Faction, times : Int, redraw : Boolean, e : ExploreEffect, then : ForcedAction) extends ForcedAction
 case class ExploreTileAction(self : Faction, tile : String, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Explore with")(TileRef(tile)) with Soft
 case class ExploreSpotAction(self : Faction, tile : String, spot : Spot, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at")(spot) with Soft with MapTarget { def target = spot }
-case class ExploreTurnAction(self : Faction, tile : String, spot : Spot, r : Int, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at", spot)(Turn(tile, r)) with MapTarget { def target = spot }
+case class ExploreRotateAction(self : Faction, tile : String, spot : Spot, r : Int, d : Int, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft
+case class ExploreTurnAction(self : Faction, tile : String, spot : Spot, r : Int, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at", spot)("Confirm") with TilePreview
 case class ExploreRedrawAction(self : Faction, tile : String, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Scout Camp")("Put", TileRef(tile), "at the bottom and draw another")
 
 // BUILD
@@ -175,6 +184,27 @@ object MapExpansion extends Expansion {
         (e.special == InfiltrateMove).?(game.board.territories.%(t => game.figures(t, f) > 0)).|(game.controlled(f))
 
     def moveCost(rough : Boolean, ignoreRough : Boolean) = (rough && ignoreRough.not).?(2).|(1)
+
+    // The legal turns of a tile at a spot
+    def rotations(l : $[(Spot, Int)], spot : Spot) : $[Int] = l.filter(_._1 == spot).map(_._2).distinct.sorted
+
+    // The next legal turn from r, clockwise (d = 1) or counterclockwise (d = -1)
+    def rotate(rs : $[Int], r : Int, d : Int) : Int = 1.to(3).map(i => (r + d * i + 4) % 4).find(rs.has).|(r)
+
+    // The tile shown at its spot, with Rotate buttons when it can be turned, and Confirm
+    def setupPreview(f : Faction, round : Int, l : $[Faction], tile : String, spot : Spot, rs : $[Int], r : Int) =
+        Ask(f)
+            .when(rs.num > 1)(SetupRotateAction(f, round, l, tile, spot, r, 1))
+            .when(rs.num > 1)(SetupRotateAction(f, round, l, tile, spot, r, -1))
+            .add(SetupTurnAction(f, round, l, tile, spot, r))
+            .cancel
+
+    def explorePreview(f : Faction, tile : String, spot : Spot, rs : $[Int], r : Int, times : Int, e : ExploreEffect, then : ForcedAction) =
+        Ask(f)
+            .when(rs.num > 1)(ExploreRotateAction(f, tile, spot, r, 1, times, e, then))
+            .when(rs.num > 1)(ExploreRotateAction(f, tile, spot, r, -1, times, e, then))
+            .add(ExploreTurnAction(f, tile, spot, r, times, e, then))
+            .cancel
 
     // Legal tile placements: next to tiles in `next` (any placed tile when None), keeping borders continuous,
     // never joining units of two players, with units placed in setup needing an empty area on the new tile
@@ -349,8 +379,16 @@ object MapExpansion extends Expansion {
         case SetupSpotAction(f, round, l, tile, spot) =>
             val starts = game.board.territories.%(t => t.areas.exists(a => game.board.at(a.x, a.y).get.tile.startsWith("start")))
             val near = (round == 1).?(starts)
+            val rs = rotations(placements(tile, near, true), spot)
 
-            Ask(f).each(placements(tile, near, true).filter(_._1 == spot).map(_._2))(r => SetupTurnAction(f, round, l, tile, spot, r)).cancel
+            setupPreview(f, round, l, tile, spot, rs, rs.head)
+
+        case SetupRotateAction(f, round, l, tile, spot, r, d) =>
+            val starts = game.board.territories.%(t => t.areas.exists(a => game.board.at(a.x, a.y).get.tile.startsWith("start")))
+            val near = (round == 1).?(starts)
+            val rs = rotations(placements(tile, near, true), spot)
+
+            setupPreview(f, round, l, tile, spot, rs, rotate(rs, r, d))
 
         case SetupTurnAction(f, round, l, tile, spot, r) =>
             game.tileHand += f -> game.tileHand(f).diff($(tile))
@@ -767,7 +805,14 @@ object MapExpansion extends Expansion {
             Ask(f).each(placements(tile, |(explorable(f, e.anywhere)), false).map(_._1).distinct)(s => ExploreSpotAction(f, tile, s, times, e, then)).cancel
 
         case ExploreSpotAction(f, tile, spot, times, e, then) =>
-            Ask(f).each(placements(tile, |(explorable(f, e.anywhere)), false).filter(_._1 == spot).map(_._2))(r => ExploreTurnAction(f, tile, spot, r, times, e, then)).cancel
+            val rs = rotations(placements(tile, |(explorable(f, e.anywhere)), false), spot)
+
+            explorePreview(f, tile, spot, rs, rs.head, times, e, then)
+
+        case ExploreRotateAction(f, tile, spot, r, d, times, e, then) =>
+            val rs = rotations(placements(tile, |(explorable(f, e.anywhere)), false), spot)
+
+            explorePreview(f, tile, spot, rs, rotate(rs, r, d), times, e, then)
 
         case ExploreTurnAction(f, tile, spot, r, times, e, then) =>
             val before = game.board.territories.%(game.board.open)
