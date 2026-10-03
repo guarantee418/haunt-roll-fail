@@ -439,7 +439,8 @@ object MapExpansion extends Expansion {
 
             Ask(f).each(empty)(t => SetupUnitsAction(f, round, l, t.anchor))
                 .some(empty.%(_ => game.kaijaReady(f)))(t => $(SetupKaijaAction(f, round, l, t.anchor)))
-                .some(empty.%(_ => game.chiefReady(f)))(t => $(SetupChiefAction(f, round, l, t.anchor, false)) ++ game.kaijaReady(f).$(SetupChiefAction(f, round, l, t.anchor, true)))
+                .some(empty.%(_ => game.chiefReady(f)))(t => $(SetupChiefAction(f, round, l, t.anchor, false)))
+                .some(empty.%(_ => game.chiefReady(f) && game.kaijaReady(f)))(t => $(SetupChiefAction(f, round, l, t.anchor, true)))
 
         case TilePlacedAction(f, tile, spot, setup, then) =>
             Then(then)
