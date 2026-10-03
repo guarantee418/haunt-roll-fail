@@ -438,7 +438,7 @@ object InvasiveBBBExpansion extends FactionExpansion[InvasiveBBB] {
                 + InvasiveBBBMoveAction(f, mvv).!(mvv.none)
             }
 
-            + EndTurnSoftAction(f, "Turn", ForfeitActions(3 + f.extra - f.acted))
+            + EndTurnSoftAction(f, "Daylight".styled(styles.phase), ForfeitActions(3 + f.extra - f.acted))
 
             ask(f).daylight(f)
 
