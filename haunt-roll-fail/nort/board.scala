@@ -173,6 +173,14 @@ class Board {
         (a.x + x, a.y + y)
     }
 
+    // Where the units of an area's territory are drawn
+    def unitPoint(a : AreaRef) : (Double, Double) = {
+        val p = at(a.x, a.y).get
+        val s = spec(a)
+        val (x, y) = rotate(s.ux, s.uy, p.r)
+        (a.x + x, a.y + y)
+    }
+
     def point(s : SpaceRef) : (Double, Double) = {
         val p = at(s.area.x, s.area.y).get
         val sp = spec(s.area).spaces(s.index)

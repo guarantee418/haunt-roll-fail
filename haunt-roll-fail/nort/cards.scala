@@ -42,13 +42,25 @@ case object RecruitNeutralSame extends RecruitMode
 case object RecruitSameAny extends RecruitMode
 
 case class RecruitEffect(n : Int, mode : RecruitMode = RecruitNormal) extends Effect
-case class MoveEffect(n : Int, bonus : Int = 0, ignoreRough : Boolean = false) extends Effect
+// What a Move card does besides moving
+trait MoveSpecial extends Record
+case object PlainMove extends MoveSpecial
+// Bear Clan: Kaija collects food and wood from the territory it leaves
+case object BearMove extends MoveSpecial
+// Snake Clan: may place the Scorched Earth token after the move
+case object SnakeMove extends MoveSpecial
+
+case class MoveEffect(n : Int, bonus : Int = 0, ignoreRough : Boolean = false, special : MoveSpecial = PlainMove) extends Effect
 // Draw tiles and keep one; redraw: may put the drawn tile back once; anywhere: from any open territory
 case class ExploreEffect(draw : Int = 1, times : Int = 1, redraw : Boolean = false, anywhere : Boolean = false) extends Effect
 // discount: wood saved; duplicate: may match a building already in the territory
 case class BuildEffect(discount : Int = 0, times : Int = 1, duplicate : Boolean = false) extends Effect
 // Recruit 1, Move 1, Explore or Build
 case object FeastEffect extends Effect
+// The Bear Awakens: Recruit 2, and Kaija may enter enemy territories this year
+case object AwakenEffect extends Effect
+// Protector of the Land: draw 1 per closed territory of 3 or more tiles
+case object ProtectorEffect extends Effect
 
 
 case class CardInfo(name : String, image : String, fame : Int, flash : Boolean, effect : Effect, text : String)
@@ -85,7 +97,7 @@ case class Achievement(id : String) extends Card {
 }
 
 case object UnrestCard extends Card {
-    val info = CardInfo("Unrest", "unrest", 0, false, MapEffect, "This card may not be removed from your deck.")
+    val info = CardInfo("Unrest", "card-unrest", 0, false, MapEffect, "This card may not be removed from your deck.")
     override val removable = false
     override def elem = name.styled(xstyles.error)
 }
@@ -109,9 +121,9 @@ object Cards {
 
     val clan : Map[Faction, $[CardInfo]] = $(
         clanCards(Bear,
-            "bear" -> CardInfo("Bear Clan", "", 0, true, MoveEffect(1), "Move 1. If Kaija is part of this Move action, before it is resolved collect all food and wood from the territory it leaves."),
-            "bear-the-bear-awakens" -> CardInfo("The Bear Awakens", "", 0, true, RecruitEffect(2), "Recruit 2. For the rest of this year, Kaija can also move in enemy territories."),
-            "bear-protector-of-the-land" -> CardInfo("Protector of the Land", "", 0, false, MapEffect, "Draw 1 card for each of your closed territories of at least 3 tiles in size."),
+            "bear" -> CardInfo("Bear Clan", "", 0, true, MoveEffect(1, special = BearMove), "Move 1. If Kaija is part of this Move action, before it is resolved collect all food and wood from the territory it leaves."),
+            "bear-the-bear-awakens" -> CardInfo("The Bear Awakens", "", 0, true, AwakenEffect, "Recruit 2. For the rest of this year, Kaija can also move in enemy territories."),
+            "bear-protector-of-the-land" -> CardInfo("Protector of the Land", "", 0, false, ProtectorEffect, "Draw 1 card for each of your closed territories of at least 3 tiles in size."),
         ),
         clanCards(Boar,
             "boar" -> CardInfo("Boar Clan", "", 0, true, BuildEffect(discount = 1), "Build. You may build for 1 less wood (a small building becomes free)."),
@@ -129,7 +141,7 @@ object Cards {
             "raven-mercenaries" -> CardInfo("Raven Mercenaries", "", 0, false, RecruitEffect(2, RecruitNeutralSame), "Recruit 2 units in 1 neutral territory. You may spend any 2 resources to recruit 1 additional unit in that same territory."),
         ),
         clanCards(Snake,
-            "snake" -> CardInfo("Snake Clan", "", 0, true, MoveEffect(1), "Move 1. After this Move action you may place the Scorched Earth token."),
+            "snake" -> CardInfo("Snake Clan", "", 0, true, MoveEffect(1, special = SnakeMove), "Move 1. After this Move action you may place the Scorched Earth token."),
             "snake-rapacious-exploitation" -> CardInfo("Rapacious Exploitation", "", 0, false, MapEffect, "Look at an opponent's hand and choose 1 card from it. They choose either to discard it or give you any 2 resources of their choice (if they don't have enough resources, they must discard)."),
             "snake-stolen-lore" -> CardInfo("Stolen Lore", "", 0, true, MapEffect, "Copy the effect of any 1 card in the active area belonging to the opponent with the Scorched Earth token."),
         ),
