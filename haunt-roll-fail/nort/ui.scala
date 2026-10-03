@@ -206,6 +206,91 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     mapControl
 
+    // Buttons over the map's bottom right corner: zoom in and out (magnifying glasses),
+    // arrows to move the map, and the middle one to reset the view
+    object mapButtons {
+        val node = mapSmall.attach.parent
+
+        def svg(body : String) = "<svg viewBox='0 0 24 24' width='70%' height='70%' fill='none' stroke='#dddddd' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'>" + body + "</svg>"
+
+        val glass = "<circle cx='10' cy='10' r='6.5'/><line x1='15' y1='15' x2='21' y2='21'/>"
+        val plus = glass + "<line x1='7' y1='10' x2='13' y2='10'/><line x1='10' y1='7' x2='10' y2='13'/>"
+        val minus = glass + "<line x1='7' y1='10' x2='13' y2='10'/>"
+        def arrow(r : Int) = "<g transform='rotate(" + r + " 12 12)'><polyline points='6,14 12,8 18,14'/></g>"
+        val reset = "<rect x='6' y='6' width='12' height='12' rx='1.5'/><line x1='12' y1='9' x2='12' y2='15'/><line x1='9' y1='12' x2='15' y2='12'/>"
+
+        val box = dom.document.createElement("div").asInstanceOf[dom.html.Div]
+        box.style.position = "absolute"
+        box.style.right = "1.2vmin"
+        box.style.bottom = "1.2vmin"
+        box.style.zIndex = "10"
+        box.style.display = "grid"
+        box.style.setProperty("grid-template-columns", "repeat(3, max(4.6vmin, 36px))")
+        box.style.setProperty("grid-auto-rows", "max(4.6vmin, 36px)")
+        box.style.setProperty("gap", "0.5vmin")
+        box.style.setProperty("touch-action", "manipulation")
+
+        // An arrow shows more of the map on its side, by a quarter of the pane
+        def pan(fx : Double, fy : Double) {
+            val r = node.getBoundingClientRect()
+            val c = XY(r.left + r.width / 2, r.top + r.height / 2)
+            val t = XY(c.x + fx * r.width / 4, c.y + fy * r.height / 4)
+
+            for (a <- mapControl.scene(c, zoom, 0, 0) ; b <- mapControl.scene(t, zoom, 0, 0)) {
+                dX -= b.x - a.x
+                dY -= b.y - a.y
+            }
+
+            drawMap()
+        }
+
+        def zoomBy(d : Double) {
+            val r = node.getBoundingClientRect()
+            val c = XY(r.left + r.width / 2, r.top + r.height / 2)
+            mapControl.zoomAt(c, c, zoomBase + d)
+        }
+
+        def button(icon : String, title : String, col : Int, row : Int)(action : => Unit) {
+            val b = dom.document.createElement("div").asInstanceOf[dom.html.Div]
+            b.innerHTML = svg(icon)
+            b.title = title
+            b.style.setProperty("grid-column", col.toString)
+            b.style.setProperty("grid-row", row.toString)
+            b.style.display = "flex"
+            b.style.setProperty("align-items", "center")
+            b.style.setProperty("justify-content", "center")
+            b.style.background = "#222222c0"
+            b.style.border = "1px solid #aaaaaa80"
+            b.style.borderRadius = "0.8vmin"
+            b.style.cursor = "pointer"
+            b.style.setProperty("user-select", "none")
+
+            // Don't let the map take these as drags or clicks on it
+            b.onpointerdown = (e : dom.PointerEvent) => e.stopPropagation()
+            b.onpointerup = (e : dom.PointerEvent) => e.stopPropagation()
+            b.onwheel = (e : dom.WheelEvent) => e.stopPropagation()
+            b.ontouchmove = (e : dom.TouchEvent) => e.stopPropagation()
+            b.onclick = (e : dom.MouseEvent) => {
+                e.stopPropagation()
+                action
+            }
+
+            box.appendChild(b)
+        }
+
+        button(plus, "Zoom in", 1, 1)(zoomBy(350))
+        button(minus, "Zoom out", 3, 1)(zoomBy(-350))
+        button(arrow(0), "Move up", 2, 2)(pan(0, -1))
+        button(arrow(270), "Move left", 1, 3)(pan(-1, 0))
+        button(reset, "Reset the view", 2, 3) { zoomBase = 0 ; dX = 0 ; dY = 0 ; drawMap() }
+        button(arrow(90), "Move right", 3, 3)(pan(1, 0))
+        button(arrow(180), "Move down", 2, 4)(pan(0, 1))
+
+        node.appendChild(box)
+    }
+
+    mapButtons
+
     class Highlights {
         var coordinates : |[XY] = None
         var target : $[Any] = $
