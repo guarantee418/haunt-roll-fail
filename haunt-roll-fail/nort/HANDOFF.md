@@ -60,14 +60,18 @@ used yet).
 ## Setup screen and options
 
 - The clan picker shows each clan by name (no color) with its initial clan
-  card and two upgrades. The images come from `Meta.menuImages` (a hook added
-  to the framework's `MetaBase`), because the game's assets aren't loaded yet
-  in the menus.
-- Setup page 1: seating and one color row per clan (`ColorOption`; picking a
-  color takes it from any other clan; a clan left without one gets a free
-  color in seating order). Five buttons fit on a row through
-  `BaseOption.buttonStyles`, another small framework hook.
-- Setup page 2: game length (the Development deck scales: one card per player
+  card and two upgrades; clans already picked show only their round emblem
+  (`webp2/nort/images/clan/`, cut from the New Blood clan boards). The images
+  come from `Meta.menuImages`, a hook added to the framework's `MetaBase`,
+  because the game's assets aren't loaded yet in the menus. Picked clans use
+  another hook, `factionChosenElem`.
+- The setup screen (one page): each clan's row has Human/Bot and a color
+  button; clicking the color cycles it, and a clan that had the new color
+  takes the old one. This is the framework's `factionRowOptions` /
+  `factionRowClick` hook; the colors are still `ColorOption` game options,
+  just not listed with the others. A clan left without a color (only possible
+  from old saved settings) gets a free one in seating order.
+- Below that: game length (the Development deck scales: one card per player
   per year except the last, about a third Early, so 7 years is 2 + 4 and
   10 years 3 + 6 as in the rulebook), Fame victory only, First seat goes
   first, and the modules.

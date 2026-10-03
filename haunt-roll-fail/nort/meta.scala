@@ -50,10 +50,22 @@ object Meta extends MetaGame { mmm =>
         case _ => true
     }
 
-    // Clans and colors on the first page, the rest on the second
+    // Colors are chosen on each clan's row of the setup screen, the rest below
     override def optionPages(n : Int, l : $[F]) = {
         val all = optionsFor(n, l)
-        $(all.of[ColorOption], all.diff(all.of[ColorOption]))
+        $(all.diff(all.of[ColorOption]))
+    }
+
+    override def factionRowOptions(f : F, l : $[F]) = PlayerColor.all./(ColorOption(f, _))
+
+    override def factionRowNone = "No color".txt
+
+    // Next color; a clan that had it takes this clan's old color
+    override def factionRowClick(f : F, l : $[F], selected : $[O]) = {
+        val current = selected.of[ColorOption].%(_.clan == f)./(_.color).single
+        val next = current./(c => (PlayerColor.all ++ PlayerColor.all).dropWhile(_ != c).drop(1).head).|(PlayerColor.all.first)
+        val other = selected.of[ColorOption].%(o => o.color == next && o.clan != f)./(_.clan).single
+        $(ColorOption(f, next)) ++ other./~(g => current./(ColorOption(g, _)))
     }
 
     // Colors by seat, as before colors could be chosen
@@ -89,9 +101,14 @@ object Meta extends MetaGame { mmm =>
     def factionElem(f : Faction) = factionName(f).txt
     // The initial clan card and its two upgrades
     override def factionNote(f : Faction) = HorizontalBreak ~ $(0, 1, 2)./(n => Image(ClanCard(f, n).info.image, styles.menuCard)).merge
+    // Once picked, just the clan's emblem
+    override def factionChosenElem(f : Faction) = Image("clan-" + f.style, styles.menuIcon) ~ factionElem(f).spn(xstyles.bold)
 
     // Images shown in the menus, before the game's assets are loaded
-    override def menuImages = factions./~(f => $(0, 1, 2)./(n => ClanCard(f, n).info.image)./(i => i -> ("/hrf/webp2/nort/images/card/clan/" + i.drop("card-clan-".length) + ".webp"))).toMap
+    override def menuImages = (
+        factions./~(f => $(0, 1, 2)./(n => ClanCard(f, n).info.image)./(i => i -> ("/hrf/webp2/nort/images/card/clan/" + i.drop("card-clan-".length) + ".webp"))) ++
+        factions./(f => ("clan-" + f.style) -> ("/hrf/webp2/nort/images/clan/" + f.style + ".webp"))
+    ).toMap
 
     def createGame(factions : $[Faction], options : $[O]) = new Game(factions, options)
 

@@ -23,7 +23,6 @@ import nort.elem._
 case class ColorOption(clan : Faction, color : PlayerColor) extends GameOption {
     val group = (clan.name + " Clan color").txt
     def valueOn = color.elem
-    override def buttonStyles = $(styles.colorButton)
     override def forcedOff(all : $[BaseOption]) = all.of[ColorOption].%(o => o != this && (o.clan == clan || o.color == color))
 }
 

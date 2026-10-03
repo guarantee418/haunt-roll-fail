@@ -32,7 +32,7 @@ of the 52 development cards; expansion tiles, clan
 boards and tokens are in `expansion/` for later. Unit figures are in
 `token/unit/` (`unit-<color>`, and `warchief-<color>` for the Warchiefs
 expansion), recolored from the `-original` images. Colors belong to
-players, not clans: each clan's player picks one on the setup screen
+players, not clans: each clan's player picks one on its row of the setup screen
 (`ColorOption`, default blue, red, yellow, purple, green by seat;
 `game.colors`); starting cards show that color's banner. The setup options
 (colors, game length, fame-only victory, first player, and the modules and

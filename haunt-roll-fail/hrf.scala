@@ -1158,7 +1158,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
                 ui.action.asker.zask(
                     $(ZOption(t, Empty)) ++
-                    opponents./(f => ZBasic(t, meta.factionElem(f).spn(xstyles.bold) ~ meta.factionNote(f), () => {
+                    opponents./(f => ZBasic(t, meta.factionChosenElem(f), () => {
                         opponents :-= f
                         askAdd()
                     }, ZBasic.infoch ++ $(xstyles.optionOn))) ++
@@ -1223,6 +1223,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                             case Human  => " Human ".pre.hl
                             case Bot(s) => " Bot / ".pre ~ (s + " ").pre.hl
                         }).div(xstyles.width14ex), xstyles.outlined))) ~
+                        meta.factionRowOptions(f, seating).some./(l => " " ~ Parameter("row-option", OnClick(Span(l.find(options.selected.has)./(o => o.valueOn).|(meta.factionRowNone).div(xstyles.width14ex), xstyles.outlined)))).|(Empty) ~
                         Div(
                             (seating.head == f).?("   ".pre.spn(xstyles.larger125)).|(OnClick("up",   Span(" ▲ ".pre.spn(xstyles.larger125), xstyles.outlined))) ~
                             (seating.last == f).?("   ".pre.spn(xstyles.larger125)).|(OnClick("down", Span(" ▼ ".pre.spn(xstyles.larger125), xstyles.outlined))),
@@ -1230,6 +1231,13 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         , ZBasic.choice :+ xstyles.player), {
                         case "difficulty" =>
                             difficulties += f -> ($(Human) ++ meta.getBots(f)./(Bot) ++ $(Human)).dropWhile(_ != difficulties(f)).drop(1).head
+                            setupQuestions(page)
+                        case "row-option" =>
+                            meta.factionRowClick(f, seating, options.selected).foreach { o =>
+                                if (options.selected.has(o).not)
+                                    options = options.click(o)
+                            }
+                            hrf.web.Local.set(optionsSaveKey, (options.selected ++ options.dimmed ++ unneeded)./(meta.writeOption).join(" "))
                             setupQuestions(page)
                         case "up" =>
                             val a = seating.takeWhile(_ != f)
@@ -1256,7 +1264,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     val active = enabled
                     ZOption(o.group.styled(xstyles.larger125),
                         OnClick(Div(state.?(o.decorate(o.valueOn).styled(xstyles.bold)).|(o.decorate(o.valueOff))
-                        ~ (o.explain.any).?(Parameter(o, OnClick(Image("question-mark")(xstyles.explain)))), (active || state).?(ZBasic.choice).|(ZBasic.info) ++ state.$(xstyles.optionOn) ++ $(xstyles.optionE) ++ o.buttonStyles)), {
+                        ~ (o.explain.any).?(Parameter(o, OnClick(Image("question-mark")(xstyles.explain)))), (active || state).?(ZBasic.choice).|(ZBasic.info) ++ state.$(xstyles.optionOn) ++ $(xstyles.optionE))), {
                             case o : GameOption if o.explain.any =>
                                 showOverlay(o.explain./(ZBasic(o.group ~ " " ~ MDash ~ " " ~ o.valueOn, _)), o.grow)
                                 setTimeout(0) { setupQuestions(page) }
