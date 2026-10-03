@@ -44,7 +44,6 @@ package object elem {
         object menuCard extends CustomStyle(display("inline-block"), width("30%"), max.width("15ex"), margin("0.5ex"), vertical.align("top"))
         object card extends CustomStyle(display("inline-block"), width("22ex"), max.width("90%"), margin("0.3ex"))
         object handCard extends CustomStyle(display("block"), width("22ex"))
-        object bigCard extends CustomStyle(display("block"), width("32ex"), max.width("90%"), margin.top("0.5ex"), margin.bottom("0.5ex"), margin.left("auto"), margin.right("auto"))
 
         object zoomCard extends CustomStyle(height("100%"), width("100%"), objectFit("contain"))
 
