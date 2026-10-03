@@ -192,7 +192,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     def strip(groups : $[(Elem, $[Card])]) =
         Div(groups./{ case (title, cards) =>
-            Div(Div(title, styles.stripTitle) ~ Div(cards.any.?(cards./(c => Image(c.info.image, styles.stripCard)).merge).|(Div("none".txt, styles.stripEmpty)), styles.stripCards), styles.stripGroup)
+            Div(Div(title, styles.stripTitle) ~ Div(cards.any.?(cards./(c => OnClick(c, Image(c.info.image, styles.stripCard, xlo.pointer))).merge).|(Div("none".txt, styles.stripEmpty)), styles.stripCards), styles.stripGroup)
         }.merge, styles.stripRow)
 
     def drawCards() {
@@ -205,13 +205,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val achievements = $(("Achievements" ~ last.not.?(", year " ~ game.lastYear.hl).|(Empty)) -> last.?(game.display).|(game.achievements))
 
-        court.replaceCached((game.year, game.display, game.achievements).toString, strip(developments ++ achievements), resources)
+        court.replaceCached((game.year, game.display, game.achievements).toString, strip(developments ++ achievements), resources, onClick)
 
         val self = viewer.%(game.states.contains)
 
         val cards = self./~(f => $(("Your hand".styled(f) : Elem) -> f.hand) ++ f.active.any.$(("Played".styled(f) : Elem) -> f.active))
 
-        hand.replaceCached((self, self./(_.hand), self./(_.active)).toString, strip(cards), resources)
+        hand.replaceCached((self, self./(_.hand), self./(_.active)).toString, strip(cards), resources, onClick)
     }
 
     def factionStatus(f : Faction) {
@@ -316,15 +316,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val layouter = Layouter(layouts, _./~{
         case f if f.name == "action" => $(f, f.copy(name = "undo"), f.copy(name = "settings"))
-        case f if f.name == "map-small" => $(f, f.copy(name = "map-small-overlay"))
         case f if f.name == "status-horizontal" => 1.to(arity)./(n => f.copy(name = "status-" + n, x = f.x + ((n - 1) * f.width  /~/ arity), width  = (n * f.width  /~/ arity) - ((n - 1) * f.width  /~/ arity)))
         case f if f.name == "status-vertical"   => 1.to(arity)./(n => f.copy(name = "status-" + n, y = f.y + ((n - 1) * f.height /~/ arity), height = (n * f.height /~/ arity) - ((n - 1) * f.height /~/ arity)))
         case f => $(f)
-    })
+    },
+    x => x,
+    // The overlay (zoomed cards, notifications) covers the whole screen
+    ff => ff :+ Fit("map-small-overlay", ff./(_.x).min, ff./(_.y).min, ff./(_.right).max - ff./(_.x).min, ff./(_.bottom).max - ff./(_.y).min))
 
     val settingsKey = Meta.settingsKey
 
-    val layoutKey = "v" + 3 + "." + "arity-" + arity
+    val layoutKey = "v" + 4 + "." + "arity-" + arity
 
     def overlayScrollX(e : Elem) = overlayScroll(e)(styles.seeThroughInner).onClick
     def overlayFitX(e : Elem) = overlayFit(e)(styles.seeThroughInner).onClick
@@ -363,6 +365,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
             then(action.as[UserAction].||(action.as[ForcedAction]./(_.as("Do Action On Click"))).|(throw new Error("non-user non-forced action in on click handler")))
 
+
+        // Any card on the table opens full screen; clicking again closes it
+        case c : Card =>
+            showOverlay(overlayFitX(Image(c.info.image, styles.zoomCard)).onClick, onClick)
 
         case Nil =>
             clearOverlay()
