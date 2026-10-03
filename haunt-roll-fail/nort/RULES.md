@@ -19,10 +19,10 @@ these rules ("the cards are always right").
 | Winter costs and Unrest cards | done (counts units, which never change yet) |
 | End-of-game fame scoring | done (no territory fame yet; of the Achievements only Warlord scores) |
 | Card effects that need the map, opponents' hands or combat | not started |
-| Map tiles, territories, borders, exploring | not started; images for the starting tile and 30 of the 34 other core tiles are in `webp2/nort/images/tile/` (expansion tiles, clan boards and tokens in `expansion/`). Missing: 4 core tiles and the 5-player starting tile (lake and food, "5" on its top and bottom edges) |
-| Card display (like Arcs): Development and Achievement cards in the `court` pane on top for everyone, your hand (and played cards) in the `hand` pane at the bottom; the map pane shows the others' played cards until there is a map | done |
+| Map tiles, territories, borders, exploring | done: tile data in `tiles.scala`, territories and placement rules in `board.scala`, setup, Recruit, Move, Explore, Build, Feast and combat in `map.scala`. Tile images in `webp2/nort/images/tile/` (`tile-31` to `tile-33` and `start-5` from the owner's photos) |
+| Card display (like Arcs): Development and Achievement cards in the `court` pane on top for everyone, your hand (and played cards) in the `hand` pane at the bottom; click or tap a card to see it full screen | done |
 | Player colors (blue, red, yellow, purple, green by seat) | done; no green starting card images, green uses the blue ones |
-| Buildings, combat, clan powers, three-closed-territories win | not started |
+| Buildings, combat, three-closed-territories win | done; clan powers: Stag, Wolf, Goat, Raven, Boar done, Bear (Kaija) and Snake (Scorched Earth) not yet |
 | Starting card list | Recruit, Move, Explore, Build, Feast ×2 (from the cards) |
 
 ## Components (core box)
@@ -33,7 +33,8 @@ these rules ("the cards are always right").
   banner).
 - Clan cards: 1 initial + 2 upgrades per clan.
 - 16 Early Development, 36 Advanced Development, 7 Achievement, 10 Unrest cards.
-- 35 map tiles including the starting tile; a second starting tile for 5 players.
+- 35 map tiles: the starting tile (its own back), the 5-player starting tile
+  (regular back, "5" marks) and 33 others.
 - Buildings: 7 tokens of each of 8 types.
 - Resources: food, wood, lore. Fame tokens are kept face down (hidden).
 - Two Northgard dice.

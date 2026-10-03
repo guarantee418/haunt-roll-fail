@@ -42,21 +42,26 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     val statuses = 1.to(arity)./(i => newPane("status-" + i, Content, styles.status, styles.fstatus, ExternalStyle("hide-scrollbar")))
 
     val background = new OrderedLayer
+    val pieces = new OrderedLayer
 
-    val width = 2528
-    val height = 1776
-    val margins = Margins(0, 0, 0, 0)
-    zoomBase = 800
+    // Scene units per map tile
+    val T = 948.0
+    val margins = Margins(60, 60, 60, 60)
+    zoomBase = 0
+
+    // Scene size, updated with the map
+    var sceneWidth = 3 * T
+    var sceneHeight = 3 * T
 
     override def adjustCenterZoomX() {
         zoomBase = zoomBase.clamp(-990, 990*2)
 
-        val qX = (width + margins.left + margins.right) * (1 - 1 / zoom) / 2
+        val qX = (sceneWidth + margins.left + margins.right) * (1 - 1 / zoom) / 2
         val minX = -qX + margins.right - zoomBase / 5
         val maxX = qX - margins.left + zoomBase / 5
         dX = dX.clamp(minX, maxX)
 
-        val qY = (height + margins.top + margins.bottom) * (1 - 1 / zoom) / 2
+        val qY = (sceneHeight + margins.top + margins.bottom) * (1 - 1 / zoom) / 2
         val minY = -qY + margins.bottom - zoomBase / 5
         val maxY = qY - margins.top + zoomBase / 5
         dY = dY.clamp(minY, maxY)
@@ -76,16 +81,100 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     def processHighlight(target : $[Any], xy : XY) {
         highlight.coordinates = |(xy)
         highlight.target = target
+
+        mapSmall.attach.parent.style.cursor = clickable(target).any.?("pointer").|("default")
+    }
+
+    // The single offered action a click on the map stands for
+    def clickable(target : $[Any]) : |[UserAction] = {
+        target.foreach { t =>
+            val l = lastActions.%(a => a.unwrap.as[MapTarget].exists(_.target == t))
+            if (l.num == 1)
+                return l.headOption
+        }
+        None
     }
 
     def processTargetClick(target : $[Any], xy : XY) {
-        // lastActions.of[Cancel].single.foreach { a =>
-        //     return onClick(a)
-        // }
+        clickable(target).foreach(onClick)
     }
 
-    // No map yet: the board will be drawn once the base game assets are in
-    def makeScene() : |[Scene] = None
+    // Rotated tile images, made once
+    val rotated = scala.collection.mutable.Map[(String, Int), hrf.ui.sprites.Image]()
+
+    def tileImage(tile : String, r : Int) : hrf.ui.sprites.Image = rotated.getOrElseUpdate((tile, r % 4), {
+        val i = img("tile-" + tile)
+        (r % 4) match {
+            case 0 => new RawImage(i)
+            case 1 => new RawImageRotated90(i)
+            case 2 => new RawImageRotated180(i)
+            case 3 => new RawImageRotated270(i)
+        }
+    })
+
+    def at(image : String, size : Double, alpha : Double = 1.0) : ImageRect = ImageRect(new RawImage(img(image)), Rectangle(-size / 2, -size / 2, size, size), alpha)
+
+    def makeScene() : |[Scene] = {
+        if (game.states.none || game.board.placements.none)
+            return None
+
+        val board = game.board
+
+        val (x0, y0, x1, y1) = board.bounds
+
+        // One spare row and column around the map for new tiles
+        def sx(x : Double) = (x - x0 + 1) * T
+        def sy(y : Double) = (y - y0 + 1) * T
+
+        sceneWidth = (x1 - x0 + 3) * T
+        sceneHeight = (y1 - y0 + 3) * T
+
+        background.clear()
+        pieces.clear()
+
+        board.placements.foreach { p =>
+            background.add(Sprite($(ImageRect(tileImage(p.tile, p.r), Rectangle(0, 0, T, T), 1.0)), $))(sx(p.x), sy(p.y))
+        }
+
+        val targets = lastActions./~(_.unwrap.as[MapTarget])./(_.target)
+
+        // Empty spots offered for a new tile
+        targets.of[Spot].distinct.foreach { s =>
+            val n = board.spotLabel(s.x, s.y)
+            if (n > 0 && n <= 40)
+                pieces.add(Sprite($(at("ui-spot-" + n, T * 0.9)), $(Rectangle(-T * 0.45, -T * 0.45, T * 0.9, T * 0.9)), $(s)))(sx(s.x + 0.5), sy(s.y + 0.5))
+        }
+
+        // Buildings on their spaces
+        game.buildings.foreach { case (s, b) =>
+            val (x, y) = board.point(s)
+            pieces.add(Sprite($(at(b.image, 190)), $))(sx(x), sy(y))
+        }
+
+        // Territory numbers, highlighted when they can be chosen, and units next to them
+        board.territories.zipWithIndex.foreach { case (t, i) =>
+            val (x, y) = board.point(t.anchor)
+            val tag = $(t.anchor)
+            val box = $(Rectangle(-70, -70, 140, 140))
+
+            if (targets.has(t.anchor))
+                pieces.add(Sprite($(at("ui-target", 230)), box, tag))(sx(x), sy(y))
+
+            if (i < 99)
+                pieces.add(Sprite($(at("ui-label-" + (i + 1), 110)), box, tag))(sx(x), sy(y))
+
+            game.present(t).zipWithIndex.foreach { case (f, k) =>
+                val n = game.count(t, f)
+                val ux = sx(x) + 150 + k * 190
+                val uy = sy(y)
+                pieces.add(Sprite($(at("unit-" + game.colors(f).id, 200)), $(Rectangle(-100, -100, 200, 200)), tag))(ux, uy)
+                if (n <= 15)
+                    pieces.add(Sprite($(at("ui-count-" + n, 90)), $))(ux + 60, uy + 70)
+            }
+        }
+
+        |(new Scene($(background, pieces), sceneWidth, sceneHeight, margins))
+    }
 
     // The player this client shows the hand of (none for spectators)
     var viewer : |[Faction] = None
@@ -118,11 +207,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val cards = self./~(f => $(("Your hand".styled(f) : Elem) -> f.hand) ++ f.active.any.$(("Played".styled(f) : Elem) -> f.active))
 
         hand.replaceCached((self, self./(_.hand), self./(_.active)).toString, strip(cards), resources, onClick)
-
-        // Until there is a map, its pane shows what the others played this year
-        val others = game.factions.%(f => self.has(f).not && f.active.any)
-
-        mapSmall.replaceCached(others./(f => (f, f.active)).toString, Div(others./(f => Div(Div(factionElem(f) ~ " played", styles.stripTitle) ~ f.active./(c => OnClick(c, Image(c.info.image, styles.tableCard, xlo.pointer))).merge, styles.tableRow)).merge, styles.table), resources, onClick)
     }
 
     def factionStatus(f : Faction) {
@@ -141,9 +225,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val res = Resource.all./(r => state.has(r).hl ~ " " ~ r.elem).join(" ").div
 
-        val units = (state.units.hl ~ " units, " ~ state.draw.num.hl ~ " draw, " ~ state.hand.num.hl ~ " hand, " ~ state.discard.num.hl ~ " discard" ~ (game.first == f).?(", " ~ "first".hh).|(Empty) ~ (state.passed && game.isOver.not).?(", passed".txt).|(Empty)).div
+        val units = (state.units.hl ~ " units, " ~ state.fame.hl ~ " fame").div
 
-        val content = (title.div ~ res ~ units).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
+        val cards = (state.hand.num.hl ~ " in hand, " ~ state.draw.num.hl ~ " to draw").div
+
+        val marks = ((game.first == f).?("First player".hh).|(Empty) ~ (state.passed && game.isOver.not).?(" Passed".txt).|(Empty)).div
+
+        val content = (title.div ~ res ~ units ~ cards ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
 
         container.replace(content, resources, {
             case x => onClick(x)

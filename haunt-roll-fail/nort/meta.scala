@@ -99,6 +99,18 @@ object Meta extends MetaGame { mmm =>
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card", "card-", "webp")(
         $(ImageAsset("unrest"))
     ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "tile", "tile-", "webp")(
+        Tiles.all./(t => ImageAsset(t.id))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/unit", "unit-", "webp")(
+        PlayerColor.all./(c => ImageAsset(c.id, "unit-" + c.id))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/building", "building-", "webp")(
+        Building.all./(b => ImageAsset(b.image.drop("building-".length)))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "ui", "ui-", "webp")(
+        (1.to(99).map(n => ImageAsset("label-" + n)) ++ 1.to(15).map(n => ImageAsset("count-" + n)) ++ 1.to(40).map(n => ImageAsset("spot-" + n))).toList :+ ImageAsset("target")
+    ) ::
     $
 
     override val about = $(
