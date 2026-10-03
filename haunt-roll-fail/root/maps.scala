@@ -919,7 +919,7 @@ object GorgeBoard extends Board {
 
     // The path from Fork to Pueblo goes through the dam, crossing the dam path from Forge to Saloon,
     // so the four forests around the crossing touch the forests on either side of each half-path
-    val damCrossing = $((GorgeW, GorgeN), (GorgeN, GorgeE), (GorgeE, GorgeC), (GorgeC, GorgeW))
+    val damCrossing = $[(Forest, Forest)]((GorgeW, GorgeN), (GorgeN, GorgeE), (GorgeE, GorgeC), (GorgeC, GorgeW))
 
     override def forestsConnected(o : Forest, d : Forest) : Boolean = super.forestsConnected(o, d) ||
         damCrossing.has((o, d)) || damCrossing.has((d, o))
