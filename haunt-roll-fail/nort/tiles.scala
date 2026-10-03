@@ -97,7 +97,7 @@ object Tiles {
     val regular : $[TileSpec] = $(
         tile("tile-01")(
             area("n", "N", 0.5, 0.15)(food),
-            area("e", "E", 0.62, 0.35)(small(0.82, 0.53)),
+            area("e", "E", 0.85, 0.3)(small(0.82, 0.53)),
             area("s", "S", 0.6, 0.9)(small(0.39, 0.81)),
             area("w", "W", 0.15, 0.6)(lair),
         )(border("n", "w"), border("n", "e"), border("w", "e"), border("w", "s"), rough("e", "s")),
@@ -114,7 +114,7 @@ object Tiles {
         tile("tile-04")(
             area("n", "NW", 0.55, 0.15)(large(0.27, 0.32)),
             area("e", "E", 0.88, 0.4)(lair),
-            area("s", "S", 0.65, 0.72)(carved(0.44, 0.83)),
+            area("s", "S", 0.62, 0.92)(carved(0.44, 0.83)),
         )(border("n", "e"), border("n", "s"), border("e", "s")),
         tile("tile-05")(
             area("n", "NW", 0.2, 0.55)(carved(0.27, 0.25)),
@@ -122,7 +122,7 @@ object Tiles {
         )(border("n", "s")),
         tile("tile-06")(
             area("n", "N", 0.7, 0.15)(small(0.45, 0.2)),
-            area("e", "E", 0.6, 0.45)(small(0.8, 0.6)),
+            area("e", "E", 0.9, 0.45)(small(0.8, 0.6)),
             area("s", "S", 0.5, 0.75)(lore),
             area("w", "W", 0.1, 0.45)(wood),
         )(border("n", "w"), border("n", "e"), border("w", "e"), rough("w", "s"), border("e", "s")),
@@ -138,12 +138,12 @@ object Tiles {
         )(rough("n", "m"), border("m", "s")),
         tile("tile-09")(
             area("n", "NW", 0.35, 0.45)(small(0.2, 0.2), food),
-            area("e", "E", 0.75, 0.25)(carved(0.85, 0.5)),
+            area("e", "E", 0.9, 0.3)(carved(0.85, 0.5)),
             area("s", "S", 0.6, 0.65)(small(0.35, 0.79)),
         )(border("n", "e"), border("n", "s"), border("e", "s")),
         tile("tile-10")(
             area("n", "NW", 0.5, 0.3)(food, small(0.2, 0.39)),
-            area("e", "E", 0.65, 0.55)(small(0.79, 0.58)),
+            area("e", "E", 0.88, 0.55)(small(0.79, 0.58)),
             area("s", "S", 0.15, 0.85)(small(0.4, 0.82)),
         )(border("n", "e"), border("n", "s"), border("e", "s")),
         tile("tile-11")(
@@ -170,7 +170,7 @@ object Tiles {
         )(border("n", "e"), border("n", "s"), border("e", "s")),
         tile("tile-16")(
             area("n", "NW", 0.3, 0.5)(small(0.3, 0.29), food),
-            area("e", "E", 0.6, 0.6)(small(0.81, 0.55)),
+            area("e", "E", 0.7, 0.5)(small(0.81, 0.55)),
             area("s", "S", 0.25, 0.9)(lore),
         )(border("n", "e"), rough("n", "s"), border("e", "s")),
         tile("tile-17")(
@@ -179,7 +179,7 @@ object Tiles {
         )(border("n", "s")),
         tile("tile-18")(
             area("n", "NW", 0.15, 0.45)(carved(0.34, 0.25)),
-            area("e", "E", 0.6, 0.35)(small(0.81, 0.5)),
+            area("e", "E", 0.75, 0.3)(small(0.81, 0.5)),
             area("s", "S", 0.6, 0.9)(wood),
         )(border("n", "e"), rough("n", "s"), rough("e", "s")),
         tile("tile-19")(
@@ -196,19 +196,19 @@ object Tiles {
             area("s", "ES", 0.85, 0.25)(large(0.59, 0.74)),
         )(border("n", "s")),
         tile("tile-22")(
-            area("n", "N", 0.3, 0.25)(small(0.42, 0.18)),
+            area("n", "N", 0.6, 0.12)(small(0.42, 0.18)),
             area("e", "E", 0.6, 0.6)(lair),
             area("s", "S", 0.35, 0.88)(lore),
             area("w", "W", 0.12, 0.75)(carved(0.16, 0.48)),
         )(rough("n", "w"), rough("n", "e"), border("w", "e"), border("w", "s"), border("e", "s")),
         tile("tile-23")(
             area("n", "NW", 0.25, 0.45)(small(0.4, 0.19), lore),
-            area("e", "E", 0.6, 0.4)(small(0.83, 0.59)),
+            area("e", "E", 0.85, 0.4)(small(0.83, 0.59)),
             area("s", "S", 0.8, 0.85)(lair),
         )(border("n", "e"), border("n", "s"), border("e", "s")),
         tile("tile-24")(
             area("n", "NW", 0.5, 0.15)(large(0.24, 0.35)),
-            area("e", "E", 0.6, 0.45)(small(0.79, 0.59)),
+            area("e", "E", 0.85, 0.45)(small(0.79, 0.59)),
             area("s", "S", 0.6, 0.9)(small(0.36, 0.82)),
         )(border("n", "e"), border("n", "s"), border("e", "s")),
         tile("tile-25")(
@@ -218,12 +218,12 @@ object Tiles {
         )(border("n", "e"), border("n", "s"), rough("e", "s")),
         tile("tile-26")(
             area("n", "NW", 0.3, 0.45)(food),
-            area("e", "E", 0.6, 0.35)(small(0.8, 0.45)),
+            area("e", "E", 0.88, 0.25)(small(0.8, 0.45)),
             area("s", "S", 0.6, 0.75)(small(0.3, 0.82), wood),
         )(border("n", "e"), rough("n", "s"), border("e", "s")),
         tile("tile-27")(
             area("n", "NW", 0.15, 0.55)(large(0.25, 0.3)),
-            area("e", "E", 0.6, 0.15)(wood, small(0.82, 0.6)),
+            area("e", "E", 0.9, 0.4)(wood, small(0.82, 0.6)),
             area("s", "S", 0.45, 0.9)(lair),
         )(border("n", "e"), border("n", "s"), border("e", "s")),
         tile("tile-28")(
@@ -248,7 +248,7 @@ object Tiles {
         )(rough("n", "e"), rough("n", "s"), border("e", "s")),
         tile("tile-32")(
             area("n", "NW", 0.2, 0.55)(small(0.3, 0.32)),
-            area("e", "E", 0.75, 0.25)(wood),
+            area("e", "E", 0.88, 0.3)(wood),
             area("s", "S", 0.6, 0.85)(small(0.41, 0.82)),
         )(border("n", "e"), border("n", "s"), rough("e", "s")),
         tile("tile-33")(
