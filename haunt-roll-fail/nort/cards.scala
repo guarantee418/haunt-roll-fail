@@ -42,8 +42,8 @@ trait Card extends Elementary with Record {
 }
 
 // Starting cards: Recruit, Move, Explore, Build and two Feasts per player
-case class StartCard(id : String) extends Card {
-    def info = Cards.start(id)
+case class StartCard(color : PlayerColor, id : String) extends Card {
+    def info = Cards.start(id).copy(image = "card-start-" + color.id + "-" + id)
 }
 
 // Clan cards: n = 0 is the initial card, 1 and 2 the upgrades
@@ -80,7 +80,7 @@ object Cards {
         card("card-start-")("feast", "Feast", 0, false, MapEffect, "Recruit 1, Move 1, Explore or Build."),
     ).toMap
 
-    val starting : $[Card] = $("recruit", "move", "explore", "build", "feast", "feast")./(StartCard(_))
+    def starting(color : PlayerColor) : $[Card] = $("recruit", "move", "explore", "build", "feast", "feast")./(StartCard(color, _))
 
     private def clanCards(f : Faction, cards : (String, CardInfo)*) = f -> cards./{ case (id, c) => c.copy(image = "card-clan-" + id) }.$
 

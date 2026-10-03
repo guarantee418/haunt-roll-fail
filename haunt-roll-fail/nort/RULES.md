@@ -19,14 +19,17 @@ these rules ("the cards are always right").
 | Winter costs and Unrest cards | done (counts units, which never change yet) |
 | End-of-game fame scoring | done (no territory fame yet; of the Achievements only Warlord scores) |
 | Card effects that need the map, opponents' hands or combat | not started |
-| Map tiles, territories, borders, exploring | not started; images for the starting tile, the 5-player starting tile and 30 of the 34 other core tiles are in `webp2/nort/images/tile/` (expansion tiles, clan boards and tokens in `expansion/`) |
+| Map tiles, territories, borders, exploring | not started; images for the starting tile and 30 of the 34 other core tiles are in `webp2/nort/images/tile/` (expansion tiles, clan boards and tokens in `expansion/`). Missing: 4 core tiles and the 5-player starting tile (lake and food, "5" on its top and bottom edges) |
+| Player colors (blue, red, yellow, purple, green by seat) | done; no green starting card images, green uses the blue ones |
 | Buildings, combat, clan powers, three-closed-territories win | not started |
 | Starting card list | Recruit, Move, Explore, Build, Feast ×2 (from the cards) |
 
 ## Components (core box)
 
 - 7 clans: Bear, Boar, Goat, Raven, Snake, Stag, Wolf. 2–5 players.
-  Each player also picks a color (14 units, 6 starting cards of that color).
+  Each player also picks a color, independent of the clan: blue, red,
+  yellow, purple or green (14 units, 6 starting cards with that color's
+  banner).
 - Clan cards: 1 initial + 2 upgrades per clan.
 - 16 Early Development, 36 Advanced Development, 7 Achievement, 10 Unrest cards.
 - 35 map tiles including the starting tile; a second starting tile for 5 players.

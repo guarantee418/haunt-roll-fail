@@ -28,6 +28,12 @@ package object elem {
         Stag --> color("#e0b13a")
         Wolf --> color("#d9574a")
 
+        Blue --> color("#4e78bc")
+        Red --> color("#e8410d")
+        Yellow --> color("#f79c01")
+        Purple --> color("#a56ca5")
+        Green --> color("#4f9e3a")
+
         Food --> color("#e04848")
         Wood --> color("#c98a4b")
         Lore --> color("#8fa8d6")

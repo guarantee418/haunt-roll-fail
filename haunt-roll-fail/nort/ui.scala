@@ -97,7 +97,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             return
         }
 
-        val title = Div(Div(name.styled(f)(styles.title)), styles.smallname, styles.titleLine, xlo.pointer)
+        val title = Div(Div(name.styled(f)(styles.title) ~ " " ~ game.colors(f).elem), styles.smallname, styles.titleLine, xlo.pointer)
 
         val state = game.states(f)
 

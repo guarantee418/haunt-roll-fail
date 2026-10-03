@@ -31,6 +31,23 @@ case object Stag extends Faction
 case object Wolf extends Faction
 
 
+// Player colors mark a player's units and starting cards; they are not tied to the clan
+trait PlayerColor extends NamedToString with Styling with Elementary with Record {
+    def id = name.toLowerCase
+    override def elem : Elem = name.styled(this)
+}
+
+case object Blue extends PlayerColor
+case object Red extends PlayerColor
+case object Yellow extends PlayerColor
+case object Purple extends PlayerColor
+case object Green extends PlayerColor
+
+object PlayerColor {
+    val all : $[PlayerColor] = $(Blue, Red, Yellow, Purple, Green)
+}
+
+
 trait Resource extends NamedToString with Styling with Elementary with Record {
     override def elem : Elem = name.styled(this)
 }
@@ -180,6 +197,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     var factions : $[Faction] = setup
     var states = Map[Faction, FactionState]()
 
+    // Colors go round the table in seating order
+    val colors : Map[Faction, PlayerColor] = setup.zip(PlayerColor.all).toMap
+
     val lastYear = 7
 
     var year = 0
@@ -308,7 +328,7 @@ object CommonExpansion extends Expansion {
         case ShuffleStartingDecksAction(f :: rest) =>
             f.upgrades = $(ClanCard(f, 1), ClanCard(f, 2))
 
-            Shuffle[Card](Cards.starting :+ ClanCard(f, 0), ShuffledStartingDeckAction(f, _, rest))
+            Shuffle[Card](Cards.starting(game.colors(f)) :+ ClanCard(f, 0), ShuffledStartingDeckAction(f, _, rest))
 
         case ShuffledStartingDeckAction(f, l, rest) =>
             f.draw = l
@@ -327,7 +347,7 @@ object CommonExpansion extends Expansion {
                 // Two groups of three units; placing them comes with the map
                 f.units = 6
 
-                f.log("starts with", f.food.hl, Food, "and", f.wood.hl, Wood)
+                f.log("plays", game.colors(f), "and starts with", f.food.hl, Food, "and", f.wood.hl, Wood)
             }
 
             Then(StartYearAction)
