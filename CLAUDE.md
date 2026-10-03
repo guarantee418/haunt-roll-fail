@@ -15,19 +15,28 @@ versions; the Homeland ones are `faction-council.scala` and
 Northgard: Uncharted Lands is being added in `haunt-roll-fail/nort/`
 (meta name `nort`, URL `/play/nort`), base game first, expansions later.
 `nort/RULES.md` summarizes the rules (the rulebook PDFs aren't in the repo)
-and tracks what is done. So far: the 7 clans, 2–5 players, the year loop with
+and tracks what is done. `nort/HANDOFF.md` has the state, design notes,
+known gaps, next steps and how to build and test it. So far: the 7 clans, 2–5 players, the year loop with
 decks, Wait/Replace/Remove/Upgrade/Pass, Flash cards, harvest trading, winter
 and Unrest, end-of-game scoring, and the real card list in `nort/cards.scala`
 (names, fame, text, images). Only card effects that don't need the map work
-(Draw, Collect, Negociation, Resourceful People); no map or combat yet.
+(Draw, Collect, Negociation, Resourceful People), plus the map: tile data
+in `nort/tiles.scala` (areas, borders, resources, spaces), territories and
+placement rules in `nort/board.scala`, and setup, Recruit, Move, Explore,
+Build, Feast, combat and retreat in `nort/map.scala`. 21 special-rule cards
+and most clan powers are still unimplemented.
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
-Tabletopia export the owner uploaded: the starting tiles, 30 of the 34 other
-core map tiles and 51 of the 52 development cards; expansion tiles, clan
+Tabletopia export the owner uploaded, plus `tile-31` to `tile-33` and
+`start-5` cut from a photo of the owner's copy: all 35 core map tiles and 51
+of the 52 development cards; expansion tiles, clan
 boards and tokens are in `expansion/` for later. Unit figures are in
 `token/unit/` (`unit-<color>`, and `warchief-<color>` for the Warchiefs
 expansion), recolored from the `-original` images. Colors belong to
-players, not clans: blue, red, yellow, purple, green by seat
-(`game.colors`); starting cards show that color's banner. `underConstruction = true` in its `Meta` puts
+players, not clans: each clan's player picks one on its row of the setup screen
+(`ColorOption`, default blue, red, yellow, purple, green by seat;
+`game.colors`); starting cards show that color's banner. The setup options
+(colors, game length, fame-only victory, first player, and the modules and
+expansions, shown but disabled until implemented) are in `nort/options.scala`. `underConstruction = true` in its `Meta` puts
 an "Under Construction" note under its name on the game list and a disclaimer
 at the top of its menu. `nort/host.scala` runs bot games headless (JVM only,
 like the other `host.scala` files).
@@ -179,6 +188,26 @@ git fetch origin main && git push origin origin/main:refs/heads/deploy
 - Reports never include the page URL, because player links contain the
   player's secret.
 
+## Several sessions or accounts
+
+More than one Claude account (or person) can work on the site. Each needs
+write access to `guarantee418/haunt-roll-fail` (a GitHub collaborator) and
+GitHub connected in Claude (https://claude.ai/connect-github); the Claude
+GitHub App is already installed on the repo. Nothing else is needed: this
+file covers the build, server and deploy. No session can ssh to the server
+(the key is only on the owner's Mac), and none needs to.
+
+- Anyone with write access can deploy, and so restart the live server, by
+  pushing the `deploy` branch. Only give write access to people trusted with
+  that.
+- Work on separate branches and merge through pull requests; don't have two
+  sessions pushing to `main`.
+- Don't edit the same area in parallel (e.g. two sessions both in `nort/`).
+- The committed build output (`hrf-opt.js`, `hrf-opt.js.map`,
+  `hrf-opt/main.js`, `hrf-opt/main.js.map`) conflicts whenever two branches
+  both change client code. Never merge those files by hand: resolve the
+  source conflicts, run `sbt fullOptJS` again, and commit the new build.
+
 ## Gotchas
 
 - Over https (or on `localhost`), the loaders in
@@ -215,17 +244,28 @@ git fetch origin main && git push origin origin/main:refs/heads/deploy
     taken; the player keeps scoring (`demagogue` flag in `FactionState`).
   - Feather Rufflers, Spy Network, Silver-Tongue and Friend are usable from
     the Birdsong, Daylight and Evening menus on your own turn.
+- The Gorge map (`GorgeBoard` in `root/maps.scala`, option `GorgeMap`) uses
+  the board image the owner uploaded, scaled to the 2416x2214 size of the
+  other maps (score track included). The board prints no clearing names, so
+  the names (Ranch, Bluff, ...) are made up from the art; the layout card's
+  numbers are 1 Ranch, 2 Mesa, 3 Camp, 4 Chapel, 5 Bluff, 6 Saloon,
+  7 Lookout, 8 Rapids, 9 Homestead, 10 Forge, 11 Fork, 12 Pueblo. The dam
+  path (Forge - Saloon) divides forests and is crossed by the Fork - Pueblo
+  path, so the four forests around that crossing are adjacent in pairs
+  (`damCrossing`); the bridge path (Homestead - Lookout) divides nothing.
 - The Homeland Marsh map is `MarshBoard` in `root/maps.scala` (option
   `MarshMap`, images in `webp2/root/images/marsh/`, from the board image and
   the flood markers in the Homeland print-and-play PDF). The printed board
   has no clearing names, so the names (Thatch, Sedge, Weir, ...) are made up;
-  comments give the Law of Root diagram numbers. Rules follow Law of Root
-  M.5: with 1-4 players one clearing of each colored pair (`floodPairs`) is
+  comments give the Law of Root diagram numbers.
+  Region ids must be unique across all boards (`Serialize.parseRegion`),
+  so the Marsh river fork is Confluence, not Fork (Gorge has a Fork).
+  Rules follow Law of Root M.5: with 1-4 players one clearing of each colored pair (`floodPairs`) is
   flooded at random and the paths on its flood marker (`floodPaths`) link its
   neighbours (`game.floodLinked`, used by `game.connected` and `Roads`); with
   5+ players one of each pair is left without a suit (`game.unsuited`) and
   gets Mousehold, Foxburrow or Rabbittown at random. Ruins go in Crossing and
-  Fork plus the two lowest numbered slots not flooded (`ruinsIn`).
+  Confluence plus the two lowest numbered slots not flooded (`ruinsIn`).
 - The Homeland landmarks Mousehold, Foxburrow and Rabbittown are landmark
   options on any map (`MouseholdLandmark` etc. in `root/meta.scala`). Each
   adds its suit to its clearing, kept when a Lilypad enclave covers the suit

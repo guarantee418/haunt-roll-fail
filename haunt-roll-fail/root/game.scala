@@ -1563,6 +1563,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
         case TundraMap => Some(TundraBoard)
         case GloomMap => Some(GloomBoard)
         case MarshMap => Some(MarshBoard)
+        case GorgeMap => Some(GorgeBoard)
         case _ => None
     }.only
 

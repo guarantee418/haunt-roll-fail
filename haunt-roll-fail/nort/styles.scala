@@ -40,10 +40,11 @@ package object elem {
 
         object title extends CustomStyle()
 
+        object menuIcon extends CustomStyle(height("2.4em"), vertical.align("middle"), margin.right("1ex"))
+        object menuCard extends CustomStyle(display("inline-block"), width("30%"), max.width("15ex"), margin("0.5ex"), vertical.align("top"))
         object card extends CustomStyle(display("inline-block"), width("12ex"), margin("0.3ex"))
-        object table extends CustomStyle(height("100%"), width("100%"), overflow.y("auto"), overflow.x("hidden"), padding("1ex"), box.sizing("border-box"), text.align("center"))
-        object tableRow extends CustomStyle(margin.bottom("1.5ex"))
-        object tableCard extends CustomStyle(display("inline-block"), width("10%"), min.width("8ex"), max.width("20ex"), margin("0.5%"), vertical.align("top"))
+
+        object zoomCard extends CustomStyle(height("100%"), width("100%"), objectFit("contain"))
 
         object strip extends CustomStyle(height("100%"), overflow.x("auto"), overflow.y("hidden"))
         object stripRow extends CustomStyle(display("flex"), justify.content("safe center"), height("100%"), padding("0.5ex"), box.sizing("border-box"))
@@ -54,6 +55,13 @@ package object elem {
         object stripEmpty extends CustomStyle(font.style("italic"))
 
         object fame extends CustomStyle(color("#e8b84a"))
+
+        object tile extends CustomStyle(display("inline-block"), width("8ex"), vertical.align("middle"), margin("0.3ex"))
+        object rot0 extends CustomStyle()
+        object rot1 extends CustomStyle(transform("rotate(90deg)"))
+        object rot2 extends CustomStyle(transform("rotate(180deg)"))
+        object rot3 extends CustomStyle(transform("rotate(270deg)"))
+        def rotate(r : Int) = $(rot0, rot1, rot2, rot3)(r % 4)
 
         object group extends CustomStyle(margin.top("0.5ex"), margin.bottom("0.5ex"))
         object inline extends CustomStyle(display("inline-block"))

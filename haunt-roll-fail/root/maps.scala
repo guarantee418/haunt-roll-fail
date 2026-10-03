@@ -884,6 +884,134 @@ object GloomBoard extends Board {
     }
 }
 
+object GorgeBoard extends Board {
+    val id = "gorge"
+    val name = "Gorge"
+
+    object Ranch extends Clearing(1)
+    object Mesa extends Clearing(2)
+    object Camp extends Clearing(1)
+    object Chapel extends Clearing(1)
+    object Bluff extends Clearing(1)
+    object Saloon extends Clearing(2)
+    object Lookout extends Clearing(2)
+    object Rapids extends Clearing(2)
+    object Homestead extends Clearing(2)
+    object Forge extends Clearing(2)
+    object Fork extends Clearing(3)
+    object Pueblo extends Clearing(3)
+
+    val clearings = $(Ranch, Mesa, Camp, Chapel, Bluff, Saloon, Lookout, Rapids, Homestead, Forge, Fork, Pueblo)
+
+    val ruins = $(Saloon, Homestead, Fork, Pueblo)
+
+    val diagonals = $((Ranch, Camp), (Mesa, Chapel))
+
+    val inner = $(Fork, Pueblo)
+
+    object GorgeNW extends NamedForest("North-West")
+    object GorgeN extends NamedForest("North")
+    object GorgeNE extends NamedForest("North-East")
+    object GorgeW extends NamedForest("West")
+    object GorgeC extends NamedForest("Center")
+    object GorgeE extends NamedForest("East")
+    object GorgeSW extends NamedForest("South-West")
+    object GorgeS extends NamedForest("South")
+
+    val forests = $(GorgeNW, GorgeN, GorgeNE, GorgeW, GorgeC, GorgeE, GorgeSW, GorgeS)
+
+    // The path from Fork to Pueblo goes through the dam, crossing the dam path from Forge to Saloon,
+    // so the four forests around the crossing touch the forests on either side of each half-path
+    val damCrossing = $[(Forest, Forest)]((GorgeW, GorgeN), (GorgeN, GorgeE), (GorgeE, GorgeC), (GorgeC, GorgeW))
+
+    override def forestsConnected(o : Forest, d : Forest) : Boolean = super.forestsConnected(o, d) ||
+        damCrossing.has((o, d)) || damCrossing.has((d, o))
+
+    // Forge - Saloon is the dam path, Homestead - Lookout is the bridge path
+    def connected(c : Clearing) = c @@ {
+        case Ranch => $(Bluff, Forge, Fork)
+        case Bluff => $(Ranch, Mesa, Fork, Saloon)
+        case Mesa => $(Bluff, Saloon)
+        case Fork => $(Ranch, Bluff, Pueblo)
+        case Forge => $(Ranch, Homestead, Saloon)
+        case Saloon => $(Bluff, Mesa, Forge, Lookout)
+        case Pueblo => $(Fork, Rapids, Camp)
+        case Homestead => $(Forge, Chapel, Rapids, Lookout)
+        case Lookout => $(Saloon, Homestead, Camp)
+        case Rapids => $(Homestead, Pueblo, Chapel, Camp)
+        case Chapel => $(Homestead, Rapids)
+        case Camp => $(Pueblo, Lookout, Rapids)
+    }
+
+    // The dam path divides forests, the bridge path does not, and neither do the gorge sides
+    def fromForest(f : Forest) = f @@ {
+        case GorgeNW => $(Ranch, Bluff, Fork)
+        case GorgeN => $(Bluff, Fork, Saloon)
+        case GorgeNE => $(Bluff, Mesa, Saloon)
+        case GorgeW => $(Ranch, Fork, Forge)
+        case GorgeC => $(Forge, Pueblo, Rapids, Homestead)
+        case GorgeE => $(Saloon, Lookout, Camp, Pueblo)
+        case GorgeSW => $(Homestead, Chapel, Rapids)
+        case GorgeS => $(Pueblo, Rapids, Camp)
+    }
+
+    def byRiver(c : Clearing) = c @@ {
+        case Mesa => $(Fork)
+        case Forge => $(Fork)
+        case Fork => $(Mesa, Forge, Rapids)
+        case Rapids => $(Fork)
+        case _ => $()
+    }
+
+    def center(r : Region) : (Int, Int) = r @@ {
+        case Ranch => (310, 325)
+        case Bluff => (1472, 317)
+        case Mesa => (2076, 378)
+        case Fork => (1193, 725)
+        case Forge => (476, 854)
+        case Saloon => (1880, 861)
+        case Homestead => (378, 1315)
+        case Pueblo => (1246, 1353)
+        case Lookout => (2091, 1307)
+        case Rapids => (1136, 1829)
+        case Chapel => (385, 1850)
+        case Camp => (1721, 1870)
+
+        case GorgeNW => (710, 370)
+        case GorgeW => (390, 600)
+        case GorgeNE => (1797, 499)
+        case GorgeN => (1525, 710)
+        case GorgeC => (846, 1572)
+        case GorgeE => (1737, 1542)
+        case GorgeSW => (544, 1768)
+        case GorgeS => (1344, 1753)
+
+        case Burrow(_) => (1208, 999999)
+        case _ => (0, 0); throw new Error("no center for " + r)
+    }
+
+    override def mid(a : Region, b : Region) = (a, b) @@ {
+        case (Homestead, Lookout) | (Lookout, Homestead) => (1057, 1526)
+        case _ => super.mid(a, b)
+    }
+
+    override def gates(r : Region) = r @@ {
+        case Ranch => $((302, 346))
+        case Bluff => $((1466, 321))
+        case Mesa => $((2015, 369), (2138, 355))
+        case Fork => $((1241, 836), (1231, 659), (1128, 693))
+        case Forge => $((518, 814), (435, 921))
+        case Saloon => $((1822, 906), (1938, 827))
+        case Homestead => $((429, 1296), (292, 1364))
+        case Pueblo => $((1287, 1419), (1271, 1297), (1188, 1359))
+        case Lookout => $((2131, 1263), (2045, 1349))
+        case Rapids => $((1129, 1756), (1146, 1909))
+        case Chapel => $((395, 1954))
+        case Camp => $((1721, 1974))
+        case _ => super.gates(r)
+    }
+}
+
 // Root: Homeland Marsh map. The printed board has no clearing names.
 // Numbers in comments are the ones on the Law of Root map diagram.
 object MarshBoard extends Board {
@@ -903,19 +1031,19 @@ object MarshBoard extends Board {
     object Peat extends Clearing(1)     // 11, brown
     object Mire extends Clearing(2)     // 12, light green
     object Fen extends Clearing(2)      // 13, light green
-    object Fork extends Clearing(3)     // 14
+    object Confluence extends Clearing(3)     // 14
     object Crossing extends Clearing(3) // 15
 
-    val clearings = $(Thatch, Jetty, Bayou, Delta, Sedge, Weir, Heron, Mudflat, Cattail, Bulrush, Peat, Mire, Fen, Fork, Crossing)
+    val clearings = $(Thatch, Jetty, Bayou, Delta, Sedge, Weir, Heron, Mudflat, Cattail, Bulrush, Peat, Mire, Fen, Confluence, Crossing)
 
     // "R" slots: two without numbers always get ruins, then the two lowest numbers not flooded (R1 Mire, R2 Fen, R3 Weir, R4 Mudflat)
-    val ruins = $(Crossing, Fork, Mire, Fen, Weir, Mudflat)
+    val ruins = $(Crossing, Confluence, Mire, Fen, Weir, Mudflat)
 
-    override def ruinsIn(l : $[Clearing]) = $(Crossing, Fork).intersect(l) ++ $(Mire, Fen, Weir, Mudflat).intersect(l).take(2)
+    override def ruinsIn(l : $[Clearing]) = $(Crossing, Confluence).intersect(l) ++ $(Mire, Fen, Weir, Mudflat).intersect(l).take(2)
 
     val diagonals = $((Thatch, Bayou), (Jetty, Delta))
 
-    val inner = $(Peat, Crossing, Mire, Fork, Fen)
+    val inner = $(Peat, Crossing, Mire, Confluence, Fen)
 
     override val floodPairs = $((Weir, Mudflat), (Mire, Fen), (Bulrush, Peat))
 
@@ -923,9 +1051,9 @@ object MarshBoard extends Board {
         case Weir => $((Sedge, Jetty))
         case Mudflat => $((Cattail, Bayou))
         case Mire => $((Crossing, Jetty), (Crossing, Fen), (Jetty, Fen))
-        case Fen => $((Fork, Mire), (Fork, Bayou), (Mire, Bayou))
+        case Fen => $((Confluence, Mire), (Confluence, Bayou), (Mire, Bayou))
         case Bulrush => $((Thatch, Delta))
-        case Peat => $((Thatch, Fork))
+        case Peat => $((Thatch, Confluence))
         case _ => $()
     }
 
@@ -948,32 +1076,32 @@ object MarshBoard extends Board {
         case Weir => $(Sedge, Jetty)
         case Heron => $(Jetty, Bayou)
         case Mudflat => $(Cattail, Bayou)
-        case Cattail => $(Fork, Delta, Mudflat)
-        case Bulrush => $(Thatch, Fork, Delta)
-        case Peat => $(Thatch, Crossing, Fork)
+        case Cattail => $(Confluence, Delta, Mudflat)
+        case Bulrush => $(Thatch, Confluence, Delta)
+        case Peat => $(Thatch, Crossing, Confluence)
         case Mire => $(Jetty, Crossing, Fen)
-        case Fen => $(Mire, Fork, Bayou)
-        case Fork => $(Peat, Bulrush, Fen, Cattail)
+        case Fen => $(Mire, Confluence, Bayou)
+        case Confluence => $(Peat, Bulrush, Fen, Cattail)
         case Crossing => $(Sedge, Peat, Mire)
     }
 
     // Flooded paths divide forests like paths, so forests keep their shapes when a clearing floods
     def fromForest(f : Forest) = f @@ {
         case MarshNW => $(Thatch, Sedge, Crossing, Peat)
-        case MarshW => $(Thatch, Peat, Fork, Bulrush)
+        case MarshW => $(Thatch, Peat, Confluence, Bulrush)
         case MarshN => $(Sedge, Weir, Jetty, Mire, Crossing)
-        case MarshC => $(Peat, Crossing, Mire, Fen, Fork)
+        case MarshC => $(Peat, Crossing, Mire, Fen, Confluence)
         case MarshE => $(Jetty, Heron, Bayou, Fen, Mire)
-        case MarshSW => $(Bulrush, Fork, Cattail, Delta)
-        case MarshS => $(Fork, Fen, Bayou, Mudflat, Cattail)
+        case MarshSW => $(Bulrush, Confluence, Cattail, Delta)
+        case MarshS => $(Confluence, Fen, Bayou, Mudflat, Cattail)
     }
 
     def byRiver(c : Clearing) = c @@ {
         case Weir => $(Crossing)
-        case Crossing => $(Weir, Fork)
-        case Fork => $(Crossing, Delta, Mudflat)
-        case Delta => $(Fork)
-        case Mudflat => $(Fork)
+        case Crossing => $(Weir, Confluence)
+        case Confluence => $(Crossing, Delta, Mudflat)
+        case Delta => $(Confluence)
+        case Mudflat => $(Confluence)
         case _ => $()
     }
 
@@ -991,7 +1119,7 @@ object MarshBoard extends Board {
         case Peat => (658, 751)
         case Mire => (1950, 920)
         case Fen => (1540, 1432)
-        case Fork => (930, 1140)
+        case Confluence => (930, 1140)
         case Crossing => (1305, 818)
 
         case MarshNW => (705, 465)
@@ -1021,7 +1149,7 @@ object MarshBoard extends Board {
         case Peat => $((668, 693))
         case Mire => $((1875, 915), (2010, 862))
         case Fen => $((1490, 1410), (1582, 1462))
-        case Fork => $((1005, 1208), (858, 1065), (972, 1118))
+        case Confluence => $((1005, 1208), (858, 1065), (972, 1118))
         case Crossing => $((1407, 758), (1205, 788), (1372, 888))
         case _ => super.gates(r)
     }

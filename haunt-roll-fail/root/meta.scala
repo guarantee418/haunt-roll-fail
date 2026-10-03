@@ -72,6 +72,15 @@ case object GloomMap extends MapOption {
     )
 }
 
+case object GorgeMap extends MapOption {
+    val valueOn = "Gorge".styled(Fox)
+    override val explain = $(
+        "The " ~ "Dam".hl ~ " path between " ~ "Forge".hh ~ " and " ~ "Saloon".hh ~ " divides forests.",
+        "The " ~ "Bridge".hl ~ " path between " ~ "Homestead".hh ~ " and " ~ "Lookout".hh ~ " does not divide forests,",
+        "and neither do the gorge sides."
+    )
+}
+
 case object MarshMap extends MapOption {
     val valueOn = "Marsh".styled(LDvE)
     override val explain = $(
@@ -1059,7 +1068,7 @@ object Meta extends MetaGame {
         $(SetupTypeCorners, SetupTypeHomelands) ++
         (n > 2).?(TotalWarDominance) ++
         $,
-        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, MarshMap) ++
+        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(MapDefaultLandmarks, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         $,
@@ -1098,7 +1107,7 @@ object Meta extends MetaGame {
 
     override def optionsFor(n : Int, l : $[F]) =
         hiddenOptions ++
-        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, MarshMap) ++
+        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck) ++
@@ -1793,7 +1802,7 @@ object Meta extends MetaGame {
         ImageAsset("clearing-name-peat" ) ::
         ImageAsset("clearing-name-mire" ) ::
         ImageAsset("clearing-name-fen" ) ::
-        ImageAsset("clearing-name-fork" ) ::
+        ImageAsset("clearing-name-confluence" ) ::
         ImageAsset("clearing-name-crossing" ) ::
     $) ::
     ConditionalAssetsList((factions, options) => options.has(GloomMap), "gloom", "gloom:")(
@@ -1815,6 +1824,27 @@ object Meta extends MetaGame {
         ImageAsset("clearing-name-bog" ) ::
         ImageAsset("clearing-name-tailbone" ) ::
         ImageAsset("clearing-name-effigy" ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => options.has(GorgeMap), "gorge", "gorge:")(
+        ImageAsset("map"          , "map-bright" ) ::
+        ImageAsset("map-regions"  ).makeLossless ::
+        // a new file name, so browsers don't keep the cached image with the lowercase "e" label
+        ImageAsset("map-woods"    , "map-woods-e") ::
+
+        ImageAsset("building-slot", "empty-building-white") ::
+
+        ImageAsset("clearing-name-ranch" ) ::
+        ImageAsset("clearing-name-mesa" ) ::
+        ImageAsset("clearing-name-camp" ) ::
+        ImageAsset("clearing-name-chapel" ) ::
+        ImageAsset("clearing-name-bluff" ) ::
+        ImageAsset("clearing-name-saloon" ) ::
+        ImageAsset("clearing-name-lookout" ) ::
+        ImageAsset("clearing-name-rapids" ) ::
+        ImageAsset("clearing-name-homestead" ) ::
+        ImageAsset("clearing-name-forge" ) ::
+        ImageAsset("clearing-name-fork" ) ::
+        ImageAsset("clearing-name-pueblo" ) ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[Feline].any, "faction/feline")(
         ImageAsset("castle"            ) ::
