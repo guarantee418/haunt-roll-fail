@@ -44,50 +44,6 @@ object Resource {
 }
 
 
-trait Card extends Elementary with Record {
-    def name : String
-    // Fame printed on the card, counted at the end of the game
-    def fame : Int = 0
-    def removable : Boolean = true
-    def elem : Elem = name.hl
-}
-
-// Starting cards (six per player)
-case object RecruitCard extends Card { val name = "Recruit" }
-case object ExploreCard extends Card { val name = "Explore" }
-case object MoveCard extends Card { val name = "Move" }
-case object BuildCard extends Card { val name = "Build" }
-case object FeastCard extends Card { val name = "Feast" }
-
-// Clan cards: n = 0 is the initial card, 1 and 2 the upgrades
-case class ClanCard(clan : Faction, n : Int) extends Card {
-    def name = (n == 0).?(clan.name + " Clan").|(clan.name + " Clan Upgrade " + n)
-    override def elem = name.styled(clan)
-}
-
-// Placeholders until the card list is entered
-case class EarlyDevelopment(n : Int) extends Card { def name = "Early Development " + n }
-case class AdvancedDevelopment(n : Int) extends Card { def name = "Advanced Development " + n }
-case class Achievement(n : Int) extends Card { def name = "Achievement " + n }
-
-case object UnrestCard extends Card {
-    val name = "Unrest"
-    override val removable = false
-    override def elem = name.styled(xstyles.error)
-}
-
-object Cards {
-    // Provisional: the rulebook names Recruit, Explore, Move and Build as the
-    // starting card actions, with Feast as a wild card; the exact six still
-    // have to be checked against the cards
-    val starting : $[Card] = $(RecruitCard, RecruitCard, ExploreCard, MoveCard, BuildCard, FeastCard)
-
-    val early : $[Card] = 1.to(16)./(EarlyDevelopment(_))
-    val advanced : $[Card] = 1.to(36)./(AdvancedDevelopment(_))
-    val achievements : $[Card] = 1.to(7)./(Achievement(_))
-}
-
-
 trait GameImplicits {
     implicit def factionToState(f : Faction)(implicit game : Game) : FactionState = game.states(f)
 
@@ -119,6 +75,9 @@ class FactionState(val faction : Faction)(implicit game : Game) {
     var discard : $[Card] = $
 
     var upgrades : $[Card] = $
+
+    // Cards drawn by a card effect, before choosing what to keep
+    var drawn : $[Card] = $
 
     var passed = false
 
@@ -162,20 +121,33 @@ case class ShuffledStartingDeckAction(f : Faction, shuffled : $[Card], l : $[Fac
 case class FirstPlayerAction(random : Faction) extends RandomAction[Faction]
 
 case class DrawCardsAction(f : Faction, n : Int, then : ForcedAction) extends ForcedAction
+case class DrawTempAction(f : Faction, n : Int, then : ForcedAction) extends ForcedAction
 case class ShuffledDiscardAction(f : Faction, shuffled : $[Card], then : ForcedAction) extends ShuffledAction[Card]
 
 case object StartYearAction extends ForcedAction
 case object RevealDevelopmentsAction extends ForcedAction
 case object ActionsPhaseAction extends ForcedAction
-case class TurnAction(f : Faction) extends ForcedAction
+// stage 0: start of the turn, 1: a Flash card was played, 2: the main card was played
+case class TurnAction(f : Faction, stage : Int) extends ForcedAction
 case class NextTurnAction(f : Faction) extends ForcedAction
 
+case class PlayCardAction(self : Faction, card : Card, stage : Int) extends BaseAction(card)("Play", card.flash.?("(Flash)").|(""))
 case class WaitCardAction(self : Faction, card : Card) extends BaseAction(card)("Wait")
 case class ReplaceCardAction(self : Faction, card : Card) extends BaseAction(card)("Replace", "(" ~ 1.hl ~ " " ~ Lore.elem ~ ")")
 case class RemoveCardAction(self : Faction, card : Card) extends BaseAction(card)("Remove", "(" ~ 2.hl ~ " " ~ Lore.elem ~ ")")
 case class UpgradeCardAction(self : Faction, card : Card, upgrade : Card, remove : Boolean) extends BaseAction(card)("Upgrade to", upgrade, remove.?("and remove").|("and wait"), "(" ~ 3.hl ~ " " ~ Lore.elem ~ ")")
 case class PassAction(self : Faction) extends BaseAction("Actions")("Pass")
-case class PickCardAction(self : Faction, card : Card) extends BaseAction("Take a card")(card)
+case class EndTurnAction(self : Faction) extends BaseAction("Actions")("End turn")
+
+case class ResolveDrawnAction(f : Faction, keep : Int, discard : Int, back : Int, then : ForcedAction) extends ForcedAction
+case class KeepDrawnAction(self : Faction, card : Card, keep : Int, discard : Int, back : Int, then : ForcedAction) extends BaseAction("Keep", (keep > 1).?(keep.hl ~ " cards").|("a card"))(card)
+case class DiscardDrawnAction(self : Faction, card : Card, keep : Int, discard : Int, back : Int, then : ForcedAction) extends BaseAction("Discard", (discard > 1).?(discard.hl ~ " cards").|("a card"))(card)
+case class ReturnDrawnAction(self : Faction, card : Card, keep : Int, discard : Int, back : Int, then : ForcedAction) extends BaseAction("Return to the top of the draw pile", "(the last one ends on top)")(card)
+case class NegotiationTakeAction(self : Faction, card : Card, then : ForcedAction) extends BaseAction("Negociation", "take a card from the discard pile")(card)
+case class NegotiationDrawAction(self : Faction, then : ForcedAction) extends BaseAction("Negociation")("Draw a card")
+case class ResourcefulAction(f : Faction, then : ForcedAction) extends ForcedAction
+case class ResourcefulPayAction(self : Faction, pay : $[Resource], then : ForcedAction) extends BaseAction("Resourceful People", "pay any 3 resources to draw 1 more card")("Pay", pay./(_.elem).join(" "))
+case class PickCardAction(self : Faction, card : Card) extends BaseAction("Take a card")(card.img, Break, card)
 
 case object HarvestAction extends ForcedAction
 case class TradeAction(f : Faction, then : ForcedAction) extends ForcedAction
@@ -227,9 +199,10 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     def info(waiting : $[Faction], self : |[Faction], actions : $[UserAction]) : $[Info] = {
         (year > 0).$(Info("Year", year.hlb, "of", lastYear.hl)) ++
-        display.any.$(Info((year == lastYear).?("Achievements").|("Developments"), display./(_.elem).join(", "))) ++
+        display.any.$(Info((year == lastYear).?("Achievements").|("Developments") ~ Break ~ display./(_.img).merge)) ++
         self.%(states.contains)./~(f =>
-            $(Info("Hand", f.hand.any.?(f.hand./(_.elem).join(", ")).|("empty".txt))) ++
+            $(Info("Hand" ~ Break ~ f.hand.any.?(f.hand./(_.img).merge).|("empty".txt))) ++
+            f.active.any.$(Info("Played" ~ Break ~ f.active./(_.img).merge)) ++
             $(Info("Fame", f.fame.hlb))
         )
     }
@@ -283,6 +256,17 @@ object CommonExpansion extends Expansion {
             ./(_.sortBy(Resource.all.indexOf(_))).distinct
             .%(p => Resource.all.forall(r => p.count(_ == r) <= f.has(r)))
 
+    def available(f : Faction)(implicit game : Game) = f.draw.num + f.discard.num
+
+    // Only cards whose effect is implemented can be played
+    def playable(f : Faction, c : Card)(implicit game : Game) = c.effect match {
+        case DrawEffect(n, _, _, _) => available(f) >= n
+        case CollectEffect(_, _) => true
+        case NegotiationEffect => available(f) > 0
+        case ResourcefulEffect => available(f) >= 2
+        case _ => false
+    }
+
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         // SETUP
         case StartAction(version) =>
@@ -301,17 +285,17 @@ object CommonExpansion extends Expansion {
                 game.states += f -> new FactionState(f)
             }
 
-            Shuffle[Card](Cards.early, ShuffledEarlyAction(_))
+            Shuffle[Card](Cards.earlyCards, ShuffledEarlyAction(_))
 
         case ShuffledEarlyAction(l) =>
             game.developments = l.take(2 * factions.num)
 
-            Shuffle[Card](Cards.advanced, ShuffledAdvancedAction(_))
+            Shuffle[Card](Cards.advancedCards, ShuffledAdvancedAction(_))
 
         case ShuffledAdvancedAction(l) =>
             game.developments ++= l.take(4 * factions.num)
 
-            Shuffle[Card](Cards.achievements, ShuffledAchievementsAction(_))
+            Shuffle[Card](Cards.achievementCards, ShuffledAchievementsAction(_))
 
         case ShuffledAchievementsAction(l) =>
             game.achievements = l.take(factions.num)
@@ -349,6 +333,114 @@ object CommonExpansion extends Expansion {
             Then(StartYearAction)
 
         // DRAWING
+        case DrawTempAction(f, n, then) =>
+            if (n <= 0)
+                Then(then)
+            else
+            if (f.draw.any) {
+                f.drawn :+= f.draw.head
+                f.draw = f.draw.drop(1)
+
+                Then(DrawTempAction(f, n - 1, then))
+            }
+            else
+            if (f.discard.any)
+                Shuffle[Card](f.discard, ShuffledDiscardAction(f, _, DrawTempAction(f, n, then)))
+            else
+                Then(then)
+
+        case ResolveDrawnAction(f, k, d, b, then) =>
+            val n = f.drawn.num
+
+            if (n == 0)
+                Then(then)
+            else
+            if (k >= n) {
+                f.hand ++= f.drawn
+                f.drawn = $
+
+                f.log("kept", n.cards)
+
+                Then(then)
+            }
+            else
+            if (k == 0 && d >= n) {
+                f.discard ++= f.drawn
+                f.log("discarded", f.drawn./(_.elem).join(", "))
+                f.drawn = $
+
+                Then(then)
+            }
+            else
+            if (k == 0 && d == 0 && f.drawn.distinct.num == 1) {
+                f.draw = f.drawn ++ f.draw
+                f.drawn = $
+
+                f.log("returned", n.cards, "to the top of their draw pile")
+
+                Then(then)
+            }
+            else
+            if (k > 0)
+                Ask(f).each(f.drawn.distinct)(c => KeepDrawnAction(f, c, k, d, b, then))
+            else
+            if (d > 0)
+                Ask(f).each(f.drawn.distinct)(c => DiscardDrawnAction(f, c, k, d, b, then))
+            else
+                Ask(f).each(f.drawn.distinct)(c => ReturnDrawnAction(f, c, k, d, b, then))
+
+        case KeepDrawnAction(f, c, k, d, b, then) =>
+            f.drawn = f.drawn.diff($(c))
+            f.hand :+= c
+
+            f.log("kept a card")
+
+            Then(ResolveDrawnAction(f, k - 1, d, b, then))
+
+        case DiscardDrawnAction(f, c, k, d, b, then) =>
+            f.drawn = f.drawn.diff($(c))
+            f.discard :+= c
+
+            f.log("discarded", c)
+
+            Then(ResolveDrawnAction(f, k, d - 1, b, then))
+
+        case ReturnDrawnAction(f, c, k, d, b, then) =>
+            f.drawn = f.drawn.diff($(c))
+            f.draw = c +: f.draw
+
+            f.log("returned a card to the top of their draw pile")
+
+            Then(ResolveDrawnAction(f, k, d, b - 1, then))
+
+        case NegotiationTakeAction(f, c, then) =>
+            f.discard = f.discard.diff($(c))
+            f.hand :+= c
+
+            f.log("took", c, "from their discard pile")
+
+            Then(then)
+
+        case NegotiationDrawAction(f, then) =>
+            f.log("drew a card")
+
+            Then(DrawCardsAction(f, 1, then))
+
+        case ResourcefulAction(f, then) =>
+            val pp = payments(f)
+
+            if (pp.none || f.draw.none && f.discard.none)
+                Then(then)
+            else
+                Ask(f).each(pp)(p => ResourcefulPayAction(f, p, then)).skip(then)
+
+        case ResourcefulPayAction(f, p, then) =>
+            p.foreach(x => f.gain(x, -1))
+
+            f.log("paid", p./(_.elem).join(" "), "to draw another card")
+
+            Then(DrawCardsAction(f, 1, then))
+
         case DrawCardsAction(f, n, then) =>
             if (n <= 0)
                 Then(then)
@@ -406,21 +498,61 @@ object CommonExpansion extends Expansion {
 
         // 2. ACTIONS
         case ActionsPhaseAction =>
-            Then(TurnAction(game.first))
+            Then(TurnAction(game.first, 0))
 
-        case TurnAction(f) =>
+        case TurnAction(f, stage) =>
             game.highlight.current = |(f)
 
             val cards = f.hand.distinct
 
-            Ask(f)
-                .some(cards)(c =>
-                    $(WaitCardAction(f, c)) ++
-                    (f.lore >= 1).$(ReplaceCardAction(f, c)) ++
-                    (f.lore >= 2 && c.removable).$(RemoveCardAction(f, c)) ++
-                    (f.lore >= 3).??(f.upgrades./~(u => $(UpgradeCardAction(f, c, u, false)) ++ c.removable.$(UpgradeCardAction(f, c, u, true))))
-                )
-                .add(PassAction(f))
+            if (stage == 0)
+                Ask(f)
+                    .some(cards)(c =>
+                        playable(f, c).$(PlayCardAction(f, c, stage)) ++
+                        $(WaitCardAction(f, c)) ++
+                        (f.lore >= 1).$(ReplaceCardAction(f, c)) ++
+                        (f.lore >= 2 && c.removable).$(RemoveCardAction(f, c)) ++
+                        (f.lore >= 3).??(f.upgrades./~(u => $(UpgradeCardAction(f, c, u, false)) ++ c.removable.$(UpgradeCardAction(f, c, u, true))))
+                    )
+                    .add(PassAction(f))
+            else
+                Ask(f)
+                    .each(cards.%(c => playable(f, c) && (stage == 1 || c.flash)))(c => PlayCardAction(f, c, stage))
+                    .add(EndTurnAction(f))
+
+        case PlayCardAction(f, c, stage) =>
+            f.hand = f.hand.diff($(c))
+            f.active :+= c
+
+            f.log("played", c)
+
+            val after = TurnAction(f, (c.flash && stage < 2).?(1).|(2))
+
+            c.effect match {
+                case DrawEffect(n, k, d, b) =>
+                    Then(DrawTempAction(f, n, ResolveDrawnAction(f, k, d, b, after)))
+
+                case CollectEffect(r, n) =>
+                    f.gain(r, n)
+
+                    f.log("collected", n.hl, r)
+
+                    Then(after)
+
+                case NegotiationEffect =>
+                    Ask(f)
+                        .each(f.discard.distinct)(c => NegotiationTakeAction(f, c, after))
+                        .when(f.draw.any || f.discard.any)(NegotiationDrawAction(f, after))
+
+                case ResourcefulEffect =>
+                    Then(DrawCardsAction(f, 2, ResourcefulAction(f, after)))
+
+                case _ =>
+                    Then(after)
+            }
+
+        case EndTurnAction(f) =>
+            Then(NextTurnAction(f))
 
         case WaitCardAction(f, c) =>
             f.hand = f.hand.diff($(c))
@@ -493,7 +625,7 @@ object CommonExpansion extends Expansion {
 
         case NextTurnAction(f) =>
             game.from(f).drop(1).:+(f).%(_.passed.not).headOption match {
-                case Some(n) => Then(TurnAction(n))
+                case Some(n) => Then(TurnAction(n, 0))
                 case None =>
                     game.highlight.current = None
                     game.display = $
@@ -567,7 +699,11 @@ object CommonExpansion extends Expansion {
             log("End of the game")
 
             val totals = factions./{ f =>
-                val cards = f.deck./(_.fame).sum
+                // Achievements other than Warlord need the map
+                val cards = f.deck./{
+                    case Achievement("warlord") => f.units
+                    case c => c.fame
+                }.sum
                 val sets = f.resources / 3
                 val total = f.fame + cards + sets - 5 * f.unrest
 

@@ -16,13 +16,16 @@ Northgard: Uncharted Lands is being added in `haunt-roll-fail/nort/`
 (meta name `nort`, URL `/play/nort`), base game first, expansions later.
 `nort/RULES.md` summarizes the rules (the rulebook PDFs aren't in the repo)
 and tracks what is done. So far: the 7 clans, 2–5 players, the year loop with
-decks, Wait/Replace/Remove/Upgrade/Pass, harvest trading, winter and Unrest,
-and end-of-game scoring. No map, card effects or combat yet; Development and
-Achievement cards are placeholders and the starting deck is provisional.
-`underConstruction = true` in its `Meta` puts an "Under Construction" note
-under its name on the game list and a disclaimer at the top of its menu. Its
-images go in `webp2/nort/images/`, listed in `assets`. `nort/host.scala` runs
-bot games headless (JVM only, like the other `host.scala` files).
+decks, Wait/Replace/Remove/Upgrade/Pass, Flash cards, harvest trading, winter
+and Unrest, end-of-game scoring, and the real card list in `nort/cards.scala`
+(names, fame, text, images). Only card effects that don't need the map work
+(Draw, Collect, Negociation, Resourceful People); no map or combat yet.
+Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
+Tabletopia export the owner uploaded; 20 of the 35 map tiles and 51 of the
+52 development cards are there. `underConstruction = true` in its `Meta` puts
+an "Under Construction" note under its name on the game list and a disclaimer
+at the top of its menu. `nort/host.scala` runs bot games headless (JVM only,
+like the other `host.scala` files).
 
 ## Building
 

@@ -82,8 +82,24 @@ object Meta extends MetaGame { mmm =>
 
     val start = StartAction(gaming.version)
 
-    // Images go in webp2/nort/images/
-    val assets = $[ConditionalAssetsList]()
+    // Images are in webp2/nort/images/; the starting cards use the blue set
+    val assets =
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card/start", "card-start-", "webp")(
+        $("recruit", "move", "explore", "build")./(n => ImageAsset(n, "blue-" + n)) :+ ImageAsset("feast", "blue-feast-1")
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card/clan", "card-clan-", "webp")(
+        Cards.clan.values.$.flatten./(_.image.drop("card-clan-".length))./(ImageAsset(_))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card/dev", "card-dev-", "webp")(
+        Cards.developments.keys.$./(ImageAsset(_))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card/achievement", "card-achievement-", "webp")(
+        Cards.achievements.keys.$./(ImageAsset(_))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card", "card-", "webp")(
+        $(ImageAsset("unrest"))
+    ) ::
+    $
 
     override val about = $(
         "An adaptation of the " ~ "Northgard: Uncharted Lands".hl ~ " board game.",

@@ -11,15 +11,17 @@ these rules ("the cards are always right").
 | Year loop (phases 1–5), seven years | done |
 | Decks: draw / hand / active / discard, reshuffle only when drawing from an empty pile | done |
 | Wait, Replace (1 lore), Remove (2 lore), Upgrade (3 lore), Pass | done |
-| Development deck (2 Early + 4 Advanced per player), Achievements in year 7 | done, cards are placeholders |
+| Development deck (2 Early + 4 Advanced per player), Achievements in year 7 | done |
+| Card list with names, fame, text and images (`cards.scala`) | done: 21 clan, 16 Early + 35 Advanced (one Advanced card missing from the images), 7 Achievement |
+| Playing cards: Flash cards before/after the main card | done |
+| Card effects without the map: Draw (keep/discard/return), Collect, Negociation, Resourceful People | done |
 | Harvest trade (any 3 resources for 1) | done |
 | Winter costs and Unrest cards | done (counts units, which never change yet) |
-| End-of-game fame scoring | done (no territory fame yet) |
-| Playing cards (Recruit, Explore, Move, Build, Feast, Draw, Special) | not started — needs the map and card list |
-| Map tiles, territories, borders, exploring | not started — needs tile data |
+| End-of-game fame scoring | done (no territory fame yet; of the Achievements only Warlord scores) |
+| Card effects that need the map, opponents' hands or combat | not started |
+| Map tiles, territories, borders, exploring | not started; 20 of the 35 tile images are in (`webp2/nort/images/tile/`) |
 | Buildings, combat, clan powers, three-closed-territories win | not started |
-| Starting card list | provisional: Recruit ×2, Explore, Move, Build, Feast |
-| Development, Achievement, clan initial/upgrade card contents | missing |
+| Starting card list | Recruit, Move, Explore, Build, Feast ×2 (from the cards) |
 
 ## Components (core box)
 

@@ -34,6 +34,9 @@ package object elem {
 
         object title extends CustomStyle()
 
+        object card extends CustomStyle(display("inline-block"), width("12ex"), margin("0.3ex"))
+        object fame extends CustomStyle(color("#e8b84a"))
+
         object group extends CustomStyle(margin.top("0.5ex"), margin.bottom("0.5ex"))
         object inline extends CustomStyle(display("inline-block"))
         object nomargin extends CustomStyle(margin("0"))
