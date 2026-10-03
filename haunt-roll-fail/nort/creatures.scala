@@ -135,6 +135,11 @@ case class CreatureFightAction(self : Faction, area : AreaRef, c : Creature, e :
 case class CreatureCombatAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, then : ForcedAction) extends ForcedAction
 case class CreatureFoodAction(self : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, then : ForcedAction) extends BaseAction(self, "spends food for the fight against", c)((food == 0).?("No food".txt).|(food.hl ~ " " ~ Food.elem))
 case class CreaturePlayerRolledAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
+// Liv's reroll (Warchiefs module), and going on with the player's face
+case class CreatureRerollAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, then : ForcedAction) extends ForcedAction
+case class CreatureRerolledAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
+case class CreatureFaceAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, face : DieFace, then : ForcedAction) extends ForcedAction
+case class CreatureFoodStartAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, then : ForcedAction) extends ForcedAction
 case class CreatureRolledAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, face : DieFace, random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
 
 // MORE CREATURES VARIANT
@@ -328,6 +333,13 @@ object CreaturesExpansion extends Expansion {
             game.fights += 1
             game.note("creature-fight")
 
+            // Step 1: Signy and Brand (Warchiefs module)
+            if (game.has(Warchiefs))
+                Then(ChiefStepOneAction($(f), a, CreatureFoodStartAction(f, a, c, e, attacking, then)))
+            else
+                Then(CreatureFoodStartAction(f, a, c, e, attacking, then))
+
+        case CreatureFoodStartAction(f, a, c, e, attacking, then) =>
             val t = game.board.territory(a)
             val max = math.min(f.food, game.figures(t, f))
 
@@ -348,6 +360,23 @@ object CreaturesExpansion extends Expansion {
         case CreaturePlayerRolledAction(f, a, c, e, attacking, food, face, then) =>
             f.log("rolled", face)
 
+            // Liv may reroll once (Warchiefs module)
+            if (Warchief.reroll(game.board.territory(a), f))
+                Ask(f)
+                    .add(LivRerollAction(f, CreatureRerollAction(f, a, c, e, attacking, food, then)))
+                    .add(LivKeepAction(f, CreatureFaceAction(f, a, c, e, attacking, food, face, then)))
+            else
+                Then(CreatureFaceAction(f, a, c, e, attacking, food, face, then))
+
+        case CreatureRerollAction(f, a, c, e, attacking, food, then) =>
+            Random[DieFace](NorthgardDie.faces, CreatureRerolledAction(f, a, c, e, attacking, food, _, then))
+
+        case CreatureRerolledAction(f, a, c, e, attacking, food, face, then) =>
+            f.log("rolled", face)
+
+            Then(CreatureFaceAction(f, a, c, e, attacking, food, face, then))
+
+        case CreatureFaceAction(f, a, c, e, attacking, food, face, then) =>
             Random[DieFace](NorthgardDie.faces, CreatureRolledAction(f, a, c, e, attacking, food, face.choice.?(NorthgardDie.point).|(face), _, then))
 
         // A creature's die is rolled by another player; it always takes the point
@@ -365,15 +394,16 @@ object CreaturesExpansion extends Expansion {
             val axe = (attacking && e.special == AxeMove).??(1)
             val fortress = attacking.not.??(2 * here.count(_ == Fortress))
             val snake = (f == Snake && game.scorchedIn(t)).??(1)
-            val ps = game.strength(t, f) + bonus + axe + fortress + snake + food + face.points
-            val shield = (attacking && e.special == ShieldMove && cface.casualties > 0).??(1)
+            val ps = game.strength(t, f, attacking) + bonus + axe + fortress + snake + food + face.points
+            // Shieldbearers cancel 1 casualty; Halvard defending ignores 1 inflicted by the attacking creature
+            val shield = math.min(cface.casualties, (attacking && e.special == ShieldMove).??(1) + Warchief.shield(t, f, attacking))
             val pc = cface.casualties - shield
             val cs = c.kind.value + cface.points
 
             def extra(l : (Int, Elem)*) : Elem = l.toList.filter(_._1 > 0).map { case (n, what) => "(" ~ n.hl ~ " from " ~ what ~ ")" }.join(" ")
 
             f.log("scored", ps.hl, extra(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl))
-            log(c, "scored", cs.hl, "and inflicted", pc.hl, (pc == 1).?("casualty").|("casualties"), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
+            log(c, "scored", cs.hl, "and inflicted", pc.hl, (pc == 1).?("casualty").|("casualties"), (shield > 0).?("(" ~ shield.hl ~ " cancelled by " ~ attacking.?("Shieldbearers".hl).|(Warchief.elem(Goat)) ~ ")").|(Empty))
 
             // Losing all units loses the fight; otherwise ties go to the defender
             val won = pc < units && attacking.?(ps > cs).|(ps >= cs)

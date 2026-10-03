@@ -31,6 +31,7 @@ draws a tile when no neutral territory is left.
 | Player colors, chosen per clan on the setup screen (default blue, red, yellow, purple, green by seat) | done; no green starting card images, green uses the blue ones |
 | Game length 5–10 years (10-year variant: 3 Early + 6 Advanced per player), Fame victory only, First seat goes first | done (options) |
 | Creatures module (core box), with the More Creatures variant | done 2026-10-03 (`creatures.scala`) |
+| Warchiefs module (Warchiefs expansion) | done 2026-10-03 (`warchiefs.scala`), except the expansion's 7 new clan upgrade cards (no images or text yet) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -247,6 +248,37 @@ fame for defeating it, and the move priorities from left to right.
   if there is none, in any territory without a creature. It doesn't move but
   acts.
 
+## Warchiefs module (Warchiefs expansion rulebook, 4 pages)
+
+From the English rulebook (`Warchief_Expansion_rules_EN_light.pdf`, found
+online). The box also has modular player and clan boards, a Kaija miniature
+and 7 new clan upgrade cards (one per clan, illustrated with the warchief,
+usable without the module); the boards are in `expansion/board/` and shown
+by the clan picker's Warchief button, the cards are not in the game yet.
+
+- Setup: each clan's warchief goes to its reserve (phase H). In phase L a
+  player may place the warchief instead of one unit (two units and the
+  warchief).
+- A warchief follows all unit rules: recruited (instead of a unit), moved,
+  fights. When it dies it goes back to the reserve and can be recruited
+  again. Card actions or abilities on an enemy unit can't target it
+  (Raiding Party, Plunder, ...).
+- Combat: worth 2 combat points (more with some powers); one unit for the
+  food limit and for casualties (one casualty removes it). A player removing
+  casualties may choose whether the warchief goes, unless all must.
+- Powers (only in a combat the warchief is in; attacker's first when two
+  apply in the same step):
+
+| Clan | Warchief | Power |
+|---|---|---|
+| Bear | Borgild | Defending, worth 3 |
+| Boar | Svarn | In an open territory or one with wood (not from buildings), worth 3 |
+| Goat | Halvard | Defending, ignore 1 casualty inflicted by the attacker |
+| Raven | Liv | Step 4: may reroll the combat die once and must accept it; attacking, before the defender rolls |
+| Snake | Signy | Step 1: may place the Scorched Earth token in Signy's territory |
+| Stag | Brand | Step 1: may move 1 friendly unit from an adjacent territory into Brand's (Rough borders ignored) |
+| Wolf | Egil | Attacking, worth 3 |
+
 ## Expansions (later)
 
 Wilderness (creatures, Environment tiles), Wastelands (creatures, Environment
@@ -324,3 +356,16 @@ Check these against the rulebook when it is at hand.
   - The Wolf's harvest rule also applies to collecting "as at harvest"
     (Raven Clan closing, Glory of the Clan).
   - With the second chance tile, a lair creature acts as from an Explore.
+- **Warchiefs**, where the rulebook says nothing or the game simplifies:
+  - Casualties take units first, then the warchief, then Kaija (the
+    rulebook lets the player choose; keeping the warchief is the usual
+    choice).
+  - The warchief counts as a unit for winter, control, Warlord and ties, but
+    not for the 14-unit supply (it's its own miniature) or Training Camps.
+  - At setup a Bear player may place one unit, Kaija and Borgild together.
+  - A retreating warchief goes with the first group (like Kaija).
+  - The Draugr removes units before the warchief.
+  - Powers also work in fights against creatures. Brand brings a unit from
+    an adjacent territory held only by Stag.
+  - Liv's reroll is offered after seeing the roll; the point-or-casualty
+    choice comes after the reroll decision.

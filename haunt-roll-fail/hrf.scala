@@ -1180,9 +1180,13 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     ZBasic(t, v.ok.?("Start Setup".hl ~ v.message.any.??(" | ")).|(Empty) ~ v.message.styled(v.style), (v.ok).??(() => {
                         startSetup(opponents, online)
                     })).? ++
-                    ff.diff(opponents)./(f => ZOption(Div(meta.factionGroup(f).|("Play as".txt)), OnClick(Div(meta.factionElem(f) ~ meta.factionNote(f), ZBasic.choice)), _ => {
-                        opponents :+= f
-                        askAdd()
+                    ff.diff(opponents)./(f => ZOption(Div(meta.factionGroup(f).|("Play as".txt)), OnClick(Div(meta.factionElem(f) ~ meta.factionInfo(f)./{ case (label, _, _) => " " ~ Parameter("faction-info", OnClick(Span(label, xstyles.outlined))) }.|(Empty) ~ meta.factionNote(f), ZBasic.choice)), {
+                        case "faction-info" =>
+                            meta.factionInfo(f).foreach { case (_, title, l) => showOverlayRaw(title, l) }
+                            setTimeout(0) { askAdd() }
+                        case _ =>
+                            opponents :+= f
+                            askAdd()
                     })) ++
                     ZBasic(" ", "Cancel", () => {
                         // metaMenu()
