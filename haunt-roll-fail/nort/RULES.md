@@ -19,7 +19,7 @@ these rules ("the cards are always right").
 | Winter costs and Unrest cards | done (counts units, which never change yet) |
 | End-of-game fame scoring | done (no territory fame yet; of the Achievements only Warlord scores) |
 | Card effects that need the map, opponents' hands or combat | not started |
-| Map tiles, territories, borders, exploring | not started; images for the starting tile and 30 of the 34 other core tiles are in `webp2/nort/images/tile/` (expansion tiles, clan boards and tokens in `expansion/`). Missing: 4 core tiles and the 5-player starting tile (lake and food, "5" on its top and bottom edges) |
+| Map tiles, territories, borders, exploring | not started; all core tile images are in `webp2/nort/images/tile/`: `start`, `start-5` (5-player) and `tile-01` to `tile-33`. `tile-31` to `tile-33` and `start-5` are cut from a photo of the owner's copy (lower quality). Expansion tiles, clan boards and tokens are in `expansion/` |
 | Player colors (blue, red, yellow, purple, green by seat) | done; no green starting card images, green uses the blue ones |
 | Buildings, combat, clan powers, three-closed-territories win | not started |
 | Starting card list | Recruit, Move, Explore, Build, Feast ×2 (from the cards) |
@@ -32,7 +32,8 @@ these rules ("the cards are always right").
   banner).
 - Clan cards: 1 initial + 2 upgrades per clan.
 - 16 Early Development, 36 Advanced Development, 7 Achievement, 10 Unrest cards.
-- 35 map tiles including the starting tile; a second starting tile for 5 players.
+- 35 map tiles: the starting tile (its own back), the 5-player starting tile
+  (regular back, "5" marks) and 33 others.
 - Buildings: 7 tokens of each of 8 types.
 - Resources: food, wood, lore. Fame tokens are kept face down (hidden).
 - Two Northgard dice.

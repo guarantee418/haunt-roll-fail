@@ -21,8 +21,9 @@ and Unrest, end-of-game scoring, and the real card list in `nort/cards.scala`
 (names, fame, text, images). Only card effects that don't need the map work
 (Draw, Collect, Negociation, Resourceful People); no map or combat yet.
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
-Tabletopia export the owner uploaded: the starting tiles, 30 of the 34 other
-core map tiles and 51 of the 52 development cards; expansion tiles, clan
+Tabletopia export the owner uploaded, plus `tile-31` to `tile-33` and
+`start-5` cut from a photo of the owner's copy: all 35 core map tiles and 51
+of the 52 development cards; expansion tiles, clan
 boards and tokens are in `expansion/` for later. Unit figures are in
 `token/unit/` (`unit-<color>`, and `warchief-<color>` for the Warchiefs
 expansion), recolored from the `-original` images. Colors belong to
