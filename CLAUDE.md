@@ -288,6 +288,28 @@ file covers the build, server and deploy. No session can ssh to the server
   path (Forge - Saloon) divides forests and is crossed by the Fork - Pueblo
   path, so the four forests around that crossing are adjacent in pairs
   (`damCrossing`); the bridge path (Homestead - Lookout) divides nothing.
+- Root map drawing (`drawMap` in `root/ui.scala`): warriors of the same
+  faction and kind in a region are drawn as one figure with a count badge
+  (`stacks`, `drawCount`), like the Northgard unit counts. Boards with a
+  printed score track set `scoreTrack` (centre of the 0 box, box spacing) in
+  `root/maps.scala`; `drawScoreTrack` puts each faction's VP marker on its
+  score, stacked upwards when tied, with a count badge past 30. Only Gorge has
+  one. Official VP marker art (`webp2/root/images/vp/`, `officialVP` in
+  `root/ui.scala`) exists for the Homeland Twilight Council, Knaves and
+  Lilypad Diaspora, cut from page 17 of `root-factions/`. The ten other Leder
+  factions (Marquise, Eyrie, Alliance, Vagabond, Riverfolk, Lizards, Duchy,
+  Corvids, Hundreds, Keepers) have markers made in the same style: the
+  Council marker's laurel separated from its background, on a tile of the
+  faction colour (the head colour darkened 8%), with the faction head from
+  the Root Database (https://www.therootdatabase.com/,
+  `/media/small_component_icons/custom/<animal>100.webp`, the same heads the
+  official markers print). They aren't official art; swap in the official
+  markers from Leder's print-and-play files if they become available.
+  The mirror factions' markers recolour those heads to the mirror colour
+  (Negabond's head is the Vagabond's in negative; Longtail Kaliph is a black
+  rat on red). Fan factions are deliberately left on their `-glyph` head icon.
+- Boards with printed item slots (Gorge, Marsh) set `itemSlots` (`itemGrid`
+  for the usual 2x6 layout); `drawItemSlots` draws `game.uncrafted` on them.
 - The Homeland Marsh map is `MarshBoard` in `root/maps.scala` (option
   `MarshMap`, images in `webp2/root/images/marsh/`, from the board image and
   the flood markers in the Homeland print-and-play PDF). The printed board

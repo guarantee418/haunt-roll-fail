@@ -1468,6 +1468,33 @@ object Meta extends MetaGame {
         ImageAsset("action-black" ) ::
         ImageAsset("action-bird" ) ::
     $) ::
+    // VP markers: the Homeland ones from the component sheet (root-factions/, page 17); the others are
+    // that sheet's laurel frame on the faction colour with the faction head from the Root Database
+    // (therootdatabase.com, /media/small_component_icons/custom/<animal>100.webp)
+    ConditionalAssetsList((factions, options) => true, "vp")(
+        ImageAsset("vp-mc") ::
+        ImageAsset("vp-ed") ::
+        ImageAsset("vp-wa") ::
+        ImageAsset("vp-vb") ::
+        ImageAsset("vp-rf") ::
+        ImageAsset("vp-lc") ::
+        ImageAsset("vp-ud") ::
+        ImageAsset("vp-cc") ::
+        ImageAsset("vp-lh") ::
+        ImageAsset("vp-ki") ::
+        // Mirror factions: the same heads recoloured (Negabond's in negative)
+        ImageAsset("vp-bk") ::
+        ImageAsset("vp-pe") ::
+        ImageAsset("vp-fu") ::
+        ImageAsset("vp-nb") ::
+        ImageAsset("vp-cm") ::
+        ImageAsset("vp-dr") ::
+        ImageAsset("vp-ri") ::
+        ImageAsset("vp-lk") ::
+        ImageAsset("vp-tc") ::
+        ImageAsset("vp-kd") ::
+        ImageAsset("vp-ld") ::
+    $) ::
     ConditionalAssetsList((factions, options) => true, "item")(
         ImageAsset("item-x-spacer"     ) ::
         ImageAsset("item-x-placeholder" ) ::
