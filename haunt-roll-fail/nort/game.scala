@@ -218,11 +218,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def from(f : Faction) = seating.dropWhile(_ != f) ++ seating.takeWhile(_ != f)
 
     def info(waiting : $[Faction], self : |[Faction], actions : $[UserAction]) : $[Info] = {
+        // The cards themselves are shown in the court and hand panes (UI.drawCards)
         (year > 0).$(Info("Year", year.hlb, "of", lastYear.hl)) ++
-        display.any.$(Info((year == lastYear).?("Achievements").|("Developments") ~ Break ~ display./(_.img).merge)) ++
         self.%(states.contains)./~(f =>
-            $(Info("Hand" ~ Break ~ f.hand.any.?(f.hand./(_.img).merge).|("empty".txt))) ++
-            f.active.any.$(Info("Played" ~ Break ~ f.active./(_.img).merge)) ++
             $(Info("Fame", f.fame.hlb))
         )
     }

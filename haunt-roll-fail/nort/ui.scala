@@ -87,6 +87,44 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // No map yet: the board will be drawn once the base game assets are in
     def makeScene() : |[Scene] = None
 
+    // The player this client shows the hand of (none for spectators)
+    var viewer : |[Faction] = None
+
+    // Like the Arcs court: the cards everyone can see, always on top
+    val court = newPane("court", Content, styles.strip)
+
+    // Like the Arcs hand: your cards, always at the bottom
+    val hand = newPane("hand", Content, styles.strip)
+
+    def strip(groups : $[(Elem, $[Card])]) =
+        Div(groups./{ case (title, cards) =>
+            Div(Div(title, styles.stripTitle) ~ Div(cards.any.?(cards./(c => Image(c.info.image, styles.stripCard)).merge).|(Div("none".txt, styles.stripEmpty)), styles.stripCards), styles.stripGroup)
+        }.merge, styles.stripRow)
+
+    def drawCards() {
+        if (game.year == 0)
+            return
+
+        val last = game.year == game.lastYear
+
+        val developments = last.not.$(("Developments, year " ~ game.year.hlb ~ " of " ~ game.lastYear.hl) -> game.display)
+
+        val achievements = $(("Achievements" ~ last.not.?(", year " ~ game.lastYear.hl).|(Empty)) -> last.?(game.display).|(game.achievements))
+
+        court.replaceCached((game.year, game.display, game.achievements).toString, strip(developments ++ achievements), resources)
+
+        val self = viewer.%(game.states.contains)
+
+        val cards = self./~(f => $(("Your hand".styled(f) : Elem) -> f.hand) ++ f.active.any.$(("Played".styled(f) : Elem) -> f.active))
+
+        hand.replaceCached((self, self./(_.hand), self./(_.active)).toString, strip(cards), resources)
+
+        // Until there is a map, its pane shows what the others played this year
+        val others = game.factions.%(f => self.has(f).not && f.active.any)
+
+        mapSmall.replaceCached(others./(f => (f, f.active)).toString, Div(others./(f => Div(Div(factionElem(f) ~ " played", styles.stripTitle) ~ f.active./(c => Image(c.info.image, styles.tableCard)).merge, styles.tableRow)).merge, styles.table), resources)
+    }
+
     def factionStatus(f : Faction) {
         val container = statuses(game.setup.indexOf(f))
 
@@ -131,6 +169,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             overlayPane.invis()
 
         drawMap()
+
+        drawCards()
     }
 
     val layoutZoom = 0.49 * 0.88
@@ -140,6 +180,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     val layouts = $(Layout("base",
         $(
             BasicPane("status", 15, 8.5, Priorities(top = 3, left = 2, maxXscale = 1.8, maxYscale = 1.8, grow = 1)),
+            BasicPane("court", 80, 20, Priorities(top = 3, right = 3, maxXscale = 1.5, maxYscale = 1.5, grow = -2)),
+            BasicPane("hand", 60, 22, Priorities(bottom = 2, left = 1, maxXscale = 1.5, maxYscale = 1.5, grow = -2)),
             BasicPane("log", 32, 16, Priorities(right = 1)),
             BasicPane("map-small", 73, 70, Priorities(top = 2, left = 1, grow = 3)),
             BasicPane("action-a", 64/1.5, 36, Priorities(bottom = 1, right = 3, grow = 2)),
@@ -189,7 +231,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val settingsKey = Meta.settingsKey
 
-    val layoutKey = "v" + 2 + "." + "arity-" + arity
+    val layoutKey = "v" + 3 + "." + "arity-" + arity
 
     def overlayScrollX(e : Elem) = overlayScroll(e)(styles.seeThroughInner).onClick
     def overlayFitX(e : Elem) = overlayFit(e)(styles.seeThroughInner).onClick
@@ -304,6 +346,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         lastActions = $
         lastThen = null
 
+        viewer = self.single || self.intersect(game.highlight.current.$).single || viewer.%(self.has)
+
+        drawCards()
+
         showNotifications(self)
 
         super.wait(self, factions, message)
@@ -321,6 +367,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     override def ask(faction : |[F], actions : $[UserAction], then : UserAction => Unit) {
         lastActions = actions
         lastThen = then
+
+        viewer = faction
 
         showNotifications(faction.$)
 
