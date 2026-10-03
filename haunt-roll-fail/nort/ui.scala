@@ -430,8 +430,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             val creatures = game.creaturesIn(t)
             creatures.zipWithIndex.foreach { case (c, i) =>
                 val (x, y) = board.point(t.anchor)
-                val z = 170
-                pieces.add(Sprite($(at(c.token, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag))(sx(x) + (i - (creatures.num - 1) / 2.0) * 150, sy(y) - 140)
+                val z = 220
+                pieces.add(Sprite($(at(c.token, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag))(sx(x) + (i - (creatures.num - 1) / 2.0) * 190, sy(y) - 160)
             }
         }
 
