@@ -111,6 +111,10 @@ object HRF {
 
     val metas = metaUIs.lefts
 
+    val rootMetas = $[MetaGame](root.Meta, root.MetaAdset, root.MetaMirror)
+
+    val menuMetas = $[MetaGame](root.Meta, nort.Meta)
+
     val html = dom.window.location.origin + "/play/"
     val script = dom.document.getElementById("script").asInstanceOf[dom.html.Script].src
 
@@ -359,14 +363,25 @@ class HRFUI(implicit resources : Resources) {
         hook.remove()
     }
 
-    logger.alog(Empty ~ BuildInfo.name ~ " " ~ BuildInfo.version)
+    logger.alog(Empty ~ "John 3:16")
 
     def topMenu() {
-        action.asker.zask(HRF.metas./(m => ZBasic("Haunt Roll Fail".hh(xstyles.larger110)(ExternalStyle("consolas")), metaLabel(m), () => new HRFMetaUI(this, m, 0)(resources).withMeta(), ZBasic.choice.but(xstyles.thumargin))))
+        action.asker.zask(HRF.menuMetas./(m => ZBasic("Kings and Chronicles".hh(xstyles.larger110)(ExternalStyle("consolas")), metaLabel(m), () => if (m == root.Meta) rootMenu() else new HRFMetaUI(this, m, 0)(resources).withMeta(), ZBasic.choice.but(xstyles.thumargin))))
     }
 
+    def rootMenu() {
+        action.asker.zask(HRF.rootMetas./(m => ZBasic("Root".hh(xstyles.larger110)(ExternalStyle(root.Meta.titleFont.|(""))), rootLabel(m), () => new HRFMetaUI(this, m, 0)(resources).withMeta(), ZBasic.choice.but(xstyles.thumargin))) :+
+            ZBasic(" ", "Back", () => topMenu()))
+    }
+
+    def rootLabel(m : MetaGame) : Elem = (m match {
+        case root.MetaAdset => "Advanced Setup"
+        case root.MetaMirror => "Mirror"
+        case _ => "Standard"
+    }).spn(xstyles.larger110)(ExternalStyle(m.titleFont.|("")))
+
     def topInfo() {
-        action.asker.zask(HRF.metas./(m => ZBasic("Haunt Roll Fail".hh(xstyles.larger110)(ExternalStyle("consolas")), metaLabel(m), null, ZBasic.info.but(xstyles.thumargin))))
+        action.asker.zask(HRF.menuMetas./(m => ZBasic("Kings and Chronicles".hh(xstyles.larger110)(ExternalStyle("consolas")), metaLabel(m), null, ZBasic.info.but(xstyles.thumargin))))
     }
 
     def metaLabel(m : MetaGame) : Elem =
