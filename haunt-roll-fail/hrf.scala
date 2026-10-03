@@ -363,10 +363,10 @@ class HRFUI(implicit resources : Resources) {
         hook.remove()
     }
 
-    logger.alog(Empty ~ BuildInfo.name ~ " " ~ BuildInfo.version)
+    logger.alog(Empty ~ "John 3:16")
 
     def topMenu() {
-        action.asker.zask(HRF.menuMetas./(m => ZBasic("Haunt Roll Fail".hh(xstyles.larger110)(ExternalStyle("consolas")), metaLabel(m), () => if (m == root.Meta) rootMenu() else new HRFMetaUI(this, m, 0).withMeta(), ZBasic.choice.but(xstyles.thumargin))))
+        action.asker.zask(HRF.menuMetas./(m => ZBasic("Kings and Chronicles".hh(xstyles.larger110)(ExternalStyle("consolas")), metaLabel(m), () => if (m == root.Meta) rootMenu() else new HRFMetaUI(this, m, 0).withMeta(), ZBasic.choice.but(xstyles.thumargin))))
     }
 
     def rootMenu() {
@@ -381,7 +381,7 @@ class HRFUI(implicit resources : Resources) {
     }).spn(xstyles.larger110)(ExternalStyle(m.titleFont.|("")))
 
     def topInfo() {
-        action.asker.zask(HRF.menuMetas./(m => ZBasic("Haunt Roll Fail".hh(xstyles.larger110)(ExternalStyle("consolas")), metaLabel(m), null, ZBasic.info.but(xstyles.thumargin))))
+        action.asker.zask(HRF.menuMetas./(m => ZBasic("Kings and Chronicles".hh(xstyles.larger110)(ExternalStyle("consolas")), metaLabel(m), null, ZBasic.info.but(xstyles.thumargin))))
     }
 
     def metaLabel(m : MetaGame) : Elem =
