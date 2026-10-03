@@ -138,6 +138,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val targets = lastActions./~(_.unwrap.as[MapTarget])./(_.target)
 
+        // The tile being placed, previewed at its spot
+        lastActions./~(_.unwrap.as[TilePreview]).take(1).foreach { p =>
+            background.add(Sprite($(ImageRect(tileImage(p.tile, p.r), Rectangle(0, 0, T, T), 0.85)), $))(sx(p.spot.x), sy(p.spot.y))
+        }
+
         // Empty spots offered for a new tile
         targets.of[Spot].distinct.foreach { s =>
             val n = board.spotLabel(s.x, s.y)
