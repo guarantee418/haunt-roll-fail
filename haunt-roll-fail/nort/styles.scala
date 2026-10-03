@@ -52,11 +52,12 @@ package object elem {
         object stripTitle extends CustomStyle(text.align("center"), white.space("nowrap"), margin.bottom("0.3ex"))
         object stripCards extends CustomStyle(display("flex"), justify.content("center"), align.items("center"), flex.grow("1"), min.height("0"), min.width("0"))
         object stripCard extends CustomStyle(height("100%"), width("auto"), min.width("0"), flex.shrink("1"), objectFit("contain"), margin.left("0.3ex"), margin.right("0.3ex"))
+        object stripTile extends CustomStyle(border.radius("0.6ex"))
         object stripEmpty extends CustomStyle(font.style("italic"))
 
         object fame extends CustomStyle(color("#e8b84a"))
 
-        object tile extends CustomStyle(display("inline-block"), width("8ex"), vertical.align("middle"), margin("0.3ex"))
+        object tile extends CustomStyle(display("inline-block"), width("12ex"), vertical.align("middle"), margin("0.3ex"))
         object rot0 extends CustomStyle()
         object rot1 extends CustomStyle(transform("rotate(90deg)"))
         object rot2 extends CustomStyle(transform("rotate(180deg)"))

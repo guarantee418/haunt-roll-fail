@@ -44,7 +44,7 @@ trait MapTarget {
 // SETUP
 case class ShuffledTilesAction(shuffled : $[String]) extends ShuffledAction[String]
 case class SetupPlaceAction(round : Int, l : $[Faction]) extends ForcedAction
-case class SetupTileAction(self : Faction, round : Int, l : $[Faction], tile : String) extends BaseAction(self, "places a tile")(TileRef(tile)) with Soft
+case class SetupTileAction(self : Faction, round : Int, l : $[Faction], tile : String) extends BaseAction(self, "places a tile")(TileRef(tile)) with Soft with ViewObject[TileRef] { def obj = TileRef(tile) }
 case class SetupSpotAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot) extends BaseAction("Place the tile at")(spot) with Soft with MapTarget { def target = spot }
 case class SetupRotateAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot, r : Int, d : Int) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft
 case class SetupTurnAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot, r : Int) extends BaseAction("Place the tile at", spot)("Confirm") with TilePreview
@@ -91,7 +91,7 @@ case class ScorchedSkipAction(self : Faction, then : ForcedAction) extends BaseA
 case class ExploreAction(f : Faction, draw : Int, times : Int, redraw : Boolean, e : ExploreEffect, then : ForcedAction) extends ForcedAction
 case class ExploreDrawAction(f : Faction, draw : Int, tries : Int, times : Int, redraw : Boolean, e : ExploreEffect, then : ForcedAction) extends ForcedAction
 case class ExploreChooseAction(f : Faction, times : Int, redraw : Boolean, e : ExploreEffect, then : ForcedAction) extends ForcedAction
-case class ExploreTileAction(self : Faction, tile : String, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Explore with")(TileRef(tile)) with Soft
+case class ExploreTileAction(self : Faction, tile : String, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Explore with")(TileRef(tile)) with Soft with ViewObject[TileRef] { def obj = TileRef(tile) }
 case class ExploreSpotAction(self : Faction, tile : String, spot : Spot, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at")(spot) with Soft with MapTarget { def target = spot }
 case class ExploreRotateAction(self : Faction, tile : String, spot : Spot, r : Int, d : Int, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft
 case class ExploreTurnAction(self : Faction, tile : String, spot : Spot, r : Int, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at", spot)("Confirm") with TilePreview

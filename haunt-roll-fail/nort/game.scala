@@ -15,10 +15,11 @@ import hrf.elem._
 import nort.elem._
 
 
-trait Faction extends NamedToString with Styling with Elementary with BasePlayer with Record {
+// A clan's name shows in the color its player picked
+trait Faction extends NamedToString with Styling with GameElementary with BasePlayer with Record {
     def short = name
     def style = name.toLowerCase
-    override def elem : Elem = (name + " Clan").styled(this)(styles.title)(xstyles.bold)
+    def elem(implicit game : Game) : Elem = (name + " Clan").styled(game.colors.get(this)./(c => c : Styling).|(this))(styles.title)(xstyles.bold)
 }
 
 // The seven clans of the core game
