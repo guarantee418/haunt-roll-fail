@@ -395,22 +395,29 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     pieces.add(Sprite($(at("ui-label-" + (i + 1), 110)), box, tag))(sx(x), sy(y))
             }
 
-            // A second player's units (during a fight) go next to the first, towards the middle of the tile
+            // The unit point is clear of resources and buildings for one full size figure, with its count and Kaija
+            // inside its outline; during a fight the clans' figures share that space at a smaller size
             val (px, py) = board.unitPoint(t.anchor)
-            val step = (px - math.floor(px) < 0.5).?(190).|(-190)
+            val present = game.present(t)
+            val k = present.num
+            val scale = k match { case 0 | 1 => 1.0 ; case 2 => 0.6 ; case 3 => 0.45 ; case _ => 0.36 }
+            val step = 160 * scale
 
-            game.present(t).zipWithIndex.foreach { case (f, k) =>
+            present.zipWithIndex.foreach { case (f, i) =>
                 val n = game.count(t, f)
-                val ux = sx(px) + k * step
-                val uy = sy(py)
+                val ux = sx(px) + (k > 1).?(9 + (i - (k - 1) / 2.0) * step).|(0.0)
+                val uy = sy(py) + (k > 1).?(20.0).|(0.0)
+                val z = 300 * scale
                 if (n > 0) {
-                    pieces.add(Sprite($(at("unit-" + game.colors(f).id, 200)), $(Rectangle(-100, -100, 200, 200)), tag))(ux, uy)
+                    pieces.add(Sprite($(at("unit-" + game.colors(f).id, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag))(ux, uy)
                     if (n <= 15)
-                        pieces.add(Sprite($(at("ui-count-" + n, 90)), $))(ux + 60, uy + 70)
+                        pieces.add(Sprite($(at("ui-count-" + n, 96 * scale)), $))(ux + 62 * scale, uy + 62 * scale)
                 }
-                // Kaija next to Bear Clan's units, or in their place
-                if (game.kaijaIn(t, f))
-                    pieces.add(Sprite($(at("token-kaija", (n > 0).?(130).|(180))), $(Rectangle(-80, -80, 160, 160)), tag))((n > 0).?(ux - 85).|(ux), (n > 0).?(uy + 55).|(uy))
+                // Kaija in front of Bear Clan's figure, or in its place
+                if (game.kaijaIn(t, f)) {
+                    val kz = (n > 0).?(110).|(180) * scale
+                    pieces.add(Sprite($(at("token-kaija", kz)), $(Rectangle(-kz / 2, -kz / 2, kz, kz)), tag))((n > 0).?(ux - 40 * scale).|(ux), (n > 0).?(uy + 55 * scale).|(uy))
+                }
             }
 
             // Snake Clan's Scorched Earth token, by the territory number
@@ -506,10 +513,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val layouts = $(Layout("base",
         $(
-            BasicPane("status", 15, (arity >= 4).?(18).|(13), Priorities(top = 3, left = 2, maxXscale = 1.8, maxYscale = 1.8, grow = 1)),
+            BasicPane("status", 15, (arity >= 4).?(24).|(18), Priorities(top = 3, left = 2, maxXscale = 1.8, maxYscale = 1.8, grow = 1)),
             BasicPane("court", 80, 20, Priorities(top = 3, right = 3, maxXscale = 1.5, maxYscale = 1.5, grow = -2)),
             BasicPane("log", 32, 16, Priorities(right = 1)),
-            BasicPane("map-small", 73, 70, Priorities(top = 2, left = 1, grow = 3)),
+            BasicPane("map-small", 73, 64, Priorities(top = 2, left = 1, grow = 3)),
             BasicPane("action-a", 64/1.5, 36, Priorities(bottom = 1, right = 3, grow = 2)),
             BasicPane("action-b", 55/1.5, 47, Priorities(bottom = 1, right = 3, grow = 2, maxXscale = 1.2)),
         )
@@ -556,7 +563,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val settingsKey = Meta.settingsKey
 
-    val layoutKey = "v" + 7 + "." + "arity-" + arity
+    val layoutKey = "v" + 8 + "." + "arity-" + arity
 
     def overlayScrollX(e : Elem) = overlayScroll(e)(styles.seeThroughInner).onClick
     def overlayFitX(e : Elem) = overlayFit(e)(styles.seeThroughInner).onClick

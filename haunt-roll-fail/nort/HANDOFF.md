@@ -170,7 +170,13 @@ list. In short:
 - **Tile overlays:** to check tile data against the art, draw each area's
   number point, unit point and spaces on the tile image (Pillow:
   `pip install pillow`) with a 0.1 grid; that's how the 2026-10-03 fixes
-  were made.
+  were made. The unit points (`ux`, `uy`) were then placed by a search that
+  keeps the full size unit figure (300 px of a 948 px tile, with its count
+  and Kaija inside its outline) clear of the resource icons (found on the
+  art: they have a white outline), the building spaces, the territory
+  numbers and the tile's other figures, as close as possible to the old
+  point and inside the area; check a changed tile the same way. In a fight
+  the clans' figures share that spot at a smaller size.
 - **Browser driving:** a small Node server around Playwright that keeps one
   page open and takes `goto`/`click`/`text`/`screenshot` commands over HTTP
   makes step-by-step play from the shell practical. Option buttons with
