@@ -94,6 +94,8 @@ trait MetaBase {
 
     val about : $[Elem] = $
 
+    val showAbout : Boolean = true
+
     val underConstruction : Boolean = false
 
     val factions : $[F]

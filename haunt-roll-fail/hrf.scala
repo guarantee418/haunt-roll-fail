@@ -898,7 +898,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             meta.extLinks./((t, l) => ZOption(Div(meta.extLinksName), Link(l, t.div(xstyles.divint) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough), ZBasic.infoch ++ $(xstyles.link)))) ++
             // $(ZOption(Div(Empty, xlo.grow6), Empty)) ++
             $(ZBasic(" ", Div("Settings"), () => miscellaneous())) ++
-            $(ZBasic(" ", Div("About"), () => aboutMenu()))
+            meta.showAbout.$(ZBasic(" ", Div("About"), () => aboutMenu()))
         )
 
         if (HRF.segments.startsWith($("quick")))
