@@ -56,19 +56,155 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     var sceneWidth = 3 * T
     var sceneHeight = 3 * T
 
+    // Zoom from half size to about six times; the map can be dragged until its middle reaches the edge
     override def adjustCenterZoomX() {
-        zoomBase = zoomBase.clamp(-990, 990*2)
+        zoomBase = zoomBase.clamp(-990, 2560)
 
-        val qX = (sceneWidth + margins.left + margins.right) * (1 - 1 / zoom) / 2
-        val minX = -qX + margins.right - zoomBase / 5
-        val maxX = qX - margins.left + zoomBase / 5
-        dX = dX.clamp(minX, maxX)
-
-        val qY = (sceneHeight + margins.top + margins.bottom) * (1 - 1 / zoom) / 2
-        val minY = -qY + margins.bottom - zoomBase / 5
-        val maxY = qY - margins.top + zoomBase / 5
-        dY = dY.clamp(minY, maxY)
+        dX = dX.clamp(-sceneWidth / 2, sceneWidth / 2)
+        dY = dY.clamp(-sceneHeight / 2, sceneHeight / 2)
     }
+
+    // Pan and zoom, replacing the MapGUI handlers: drag (mouse or one finger) pans at any zoom,
+    // the mouse wheel zooms around the cursor, and two fingers pinch-zoom and pan together
+    object mapControl {
+        val node = mapSmall.attach.parent
+
+        // Screen point (client coordinates) to scene coordinates, for a zoom and offset
+        def scene(c : XY, zoom : Double, dx : Double, dy : Double) : |[XY] = lastScene./{ scene =>
+            val r = node.getBoundingClientRect()
+            val k = dom.window.devicePixelRatio
+            scene.toSceneCoordinates((c.x - r.left) * k, (c.y - r.top) * k, (node.clientWidth * k * upscale).~, (node.clientHeight * k * upscale).~, zoom, dx, dy)
+        }
+
+        // Change the zoom keeping the scene point under `from` under `to`
+        def zoomAt(from : XY, to : XY, base : Double) {
+            scene(from, zoom, dX, dY).foreach { p =>
+                zoomBase = base.clamp(-990, 2560)
+                scene(to, zoom, 0, 0).foreach { q =>
+                    dX = q.x - p.x
+                    dY = q.y - p.y
+                }
+            }
+            drawMap()
+        }
+
+        val pointers = scala.collection.mutable.Map[Double, XY]()
+
+        var down : |[XY] = None
+        var grabbed : |[XY] = None
+        var dragged = false
+
+        def center = XY(pointers.values.map(_.x).sum / pointers.size, pointers.values.map(_.y).sum / pointers.size)
+        def spread = { val c = center ; pointers.values.map(p => math.sqrt((p.x - c.x) * (p.x - c.x) + (p.y - c.y) * (p.y - c.y))).sum / pointers.size }
+
+        def regrab() {
+            grabbed = (pointers.size == 1).??(scene(pointers.values.head, zoom, dX, dY))
+        }
+
+        node.style.touchAction = "none"
+
+        node.onpointerdown = (e : dom.PointerEvent) => {
+            val c = XY(e.clientX, e.clientY)
+            pointers(e.pointerId) = c
+
+            // Keep getting the moves and the release when the pointer leaves the map
+            node.setPointerCapture(e.pointerId)
+
+            if (pointers.size == 1) {
+                down = |(c)
+                dragged = false
+
+                scene(c, zoom, dX, dY).foreach { xy =>
+                    lastScene.foreach(s => processHighlight(s.pick(xy), xy))
+                }
+            }
+            else
+                dragged = true
+
+            regrab()
+        }
+
+        node.onpointermove = (e : dom.PointerEvent) => {
+            val c = XY(e.clientX, e.clientY)
+
+            if (pointers.contains(e.pointerId)) {
+                val before = (center, spread)
+
+                pointers(e.pointerId) = c
+
+                if (pointers.size == 1) {
+                    if (down.exists(d => math.abs(d.x - c.x) + math.abs(d.y - c.y) > 6))
+                        dragged = true
+
+                    if (dragged) {
+                        grabbed.foreach { g =>
+                            scene(c, zoom, 0, 0).foreach { q =>
+                                dX = q.x - g.x
+                                dY = q.y - g.y
+                            }
+                        }
+
+                        node.style.cursor = "grabbing"
+
+                        drawMap()
+                    }
+                }
+                else {
+                    val (c0, s0) = before
+                    val s1 = spread
+
+                    if (s0 > 8 && s1 > 8)
+                        zoomAt(c0, center, zoomBase + math.log(s1 / s0) / math.log(1.0007))
+                }
+            }
+            else
+            if (e.pointerType == "mouse")
+                scene(c, zoom, dX, dY).foreach { xy =>
+                    lastScene.foreach(s => processHighlight(s.pick(xy), xy))
+                }
+        }
+
+        def release(e : dom.PointerEvent) {
+            pointers.remove(e.pointerId)
+
+            if (pointers.isEmpty) {
+                down = None
+                node.style.cursor = "default"
+            }
+
+            regrab()
+        }
+
+        node.onpointerup = (e : dom.PointerEvent) => release(e)
+        node.onpointercancel = (e : dom.PointerEvent) => release(e)
+        node.onpointerout = null
+
+        // A click that ended a drag or a pinch doesn't pick anything
+        node.onclick = (e : dom.MouseEvent) => {
+            if (dragged.not)
+                scene(XY(e.clientX, e.clientY), zoom, dX, dY).foreach { xy =>
+                    lastScene.foreach(s => processTargetClick(s.pick(xy), xy))
+                }
+
+            dragged = false
+        }
+
+        node.ontouchstart = null
+        node.ontouchmove = (e : dom.TouchEvent) => e.preventDefault()
+
+        // Wheel up zooms in; pinching a trackpad comes as a wheel event with Ctrl held
+        node.onwheel = (e : dom.WheelEvent) => {
+            e.preventDefault()
+
+            val lines = (e.deltaMode == 1).?(40.0).|((e.deltaMode == 2).?(800.0).|(1.0))
+            val k = e.ctrlKey.?(8.0).|(1.0)
+            val c = XY(e.clientX, e.clientY)
+
+            zoomAt(c, c, zoomBase - (e.deltaY * lines * k).clamp(-300.0, 300.0))
+        }
+    }
+
+    mapControl
 
     class Highlights {
         var coordinates : |[XY] = None
