@@ -4121,11 +4121,19 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         val quests = game.quests.any.?((game.quests.take(3)./(q => Image("quest-" + q.suit.name, styles.token) ~ " " ~ q.elem).join(Break).div(hor.not.?(styles.centerquest))).pointer.onClick.param("view-quests"))
 
+        // Homeland Lilypad Diaspora: Frog cards have their own back, so a Frog card on top of the shared deck shows
+        val diaspora = factions.of[InvasiveEEE].%(game.states.contains).starting
+        val frogOnTop = diaspora.any && game.deck.get.headOption.exists(Deck.frogEEE.has)
+
+        val pond = diaspora./(f => Hint("Pond\n" + f.pond.num + " " + Frog.name + " cards",
+            (f.pond.num.formatted("%2d").hl.styled(styles.doubleFigures) ~ Image(f.pond.any.?("pile-frog").|("pile-empty"), styles.pile)).&.pointer.onClick.param("view-frog-deck", f)))
+
         val discard =
             (
-                (game.deck.num.formatted("%2d").hl.styled(styles.doubleFigures) ~ Image("deck", styles.pile)).pointer.onClick.param("view-deck") ~
+                (game.deck.num.formatted("%2d").hl.styled(styles.doubleFigures) ~ Image(frogOnTop.?("deck-frog").|("deck"), styles.pile)).pointer.onClick.param("view-deck") ~
                 Gap ~
-                (game.pile.num.formatted("%2d").hl.styled(styles.doubleFigures) ~ Image("pile-" + game.pile.any.?(game.pile.last.suit).|("empty"), styles.pile)).pointer.onClick.param("view-discard")
+                (game.pile.num.formatted("%2d").hl.styled(styles.doubleFigures) ~ Image("pile-" + game.pile.any.?(game.pile.last.suit).|("empty"), styles.pile)).pointer.onClick.param("view-discard") ~
+                pond.filter(_ => hor.not)./(Gap ~ _)
             ).div(xlo.flexhcenter)(hor.?(styles.verdeck))
 
         val dominances = game.dominances./(d => Image(d.id, styles.dominance)).merge.pointer.onClick.param("view-dominances")
@@ -4146,7 +4154,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         val items = (uncrafted.take(6).merge.div(xlo.flexhcenter)(xlo.flexnowrap) ~ uncrafted.drop(6).merge.div(xlo.flexhcenter)(xlo.flexnowrap)).div(xlo.pointer).onClick.param("view-items")
 
-        val s = $(|(items), quests, |(discard), |(dominances)).flatten.but(Empty)./(_.div(styles.skipline)).merge
+        val s = $(|(items), quests, |(discard), pond.filter(_ => hor)./(_.div(xlo.flexhcenter)), |(dominances)).flatten.but(Empty)./(_.div(styles.skipline)).merge
 
         container.replace((s.div(xlo.flexhcenter)(styles.gstatus)), resources, onClick)
     }
