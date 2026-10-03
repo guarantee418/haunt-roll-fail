@@ -82,8 +82,13 @@ case object Creatures extends Module("Creatures", "core box") {
     def about = $("Creature cards (Wolves, Brown Bears, Draugr, Fallen Valkyries) and the creature lairs printed on the map tiles.")
 }
 
-case object Warchiefs extends Module("Warchiefs", "New Blood") {
-    def about = $("A Warchief figure for each player, in their color.")
+case object Warchiefs extends Module("Warchiefs", "Warchiefs expansion") {
+    override def ready = true
+    override def expansion = |(WarchiefsExpansion)
+    def about = $(
+        "Each clan gets its warchief: a unit worth 2 combat points with a power of its own (see the Warchief button when picking clans).",
+        "It can be placed at setup instead of one unit, or recruited instead of a unit, and goes back to the reserve when it dies. Card effects on enemy units can't target it.",
+    )
 }
 
 case object Wilderness extends Module("Wilderness", "expansion") {

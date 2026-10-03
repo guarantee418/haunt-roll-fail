@@ -41,25 +41,28 @@ package object elem {
         object title extends CustomStyle()
 
         object menuIcon extends CustomStyle(height("2.4em"), vertical.align("middle"), margin.right("1ex"))
+        object menuBoard extends CustomStyle(display("block"), width("60ex"), max.width("100%"), margin.left("auto"), margin.right("auto"))
+        object menuText extends CustomStyle(max.width("60ex"), margin.left("auto"), margin.right("auto"), margin.top("1ex"), text.align("center"))
         object menuCard extends CustomStyle(display("inline-block"), width("30%"), max.width("15ex"), margin("0.5ex"), vertical.align("top"))
-        object card extends CustomStyle(display("inline-block"), width("12ex"), margin("0.3ex"))
-        object handCard extends CustomStyle(display("block"), width("8.5ex"))
-        object bigCard extends CustomStyle(display("block"), width("13ex"), max.width("90%"), margin.top("0.5ex"), margin.bottom("0.5ex"), margin.left("auto"), margin.right("auto"))
+        object card extends CustomStyle(display("inline-block"), width("22ex"), max.width("90%"), margin("0.3ex"))
+        object handCard extends CustomStyle(display("block"), width("22ex"))
 
         object zoomCard extends CustomStyle(height("100%"), width("100%"), objectFit("contain"))
 
-        object strip extends CustomStyle(height("100%"), overflow.x("auto"), overflow.y("hidden"))
+        // The court strip keeps its cards at full height and scrolls sideways when they don't fit. The cards' height comes from
+        // the pane (container query units), not a percentage, so their width isn't sized from the images' natural size
+        object strip extends CustomStyle(height("100%"), overflow.x("auto"), overflow.y("hidden"), SimpleCSSRule("container-type", "size"))
         object stripRow extends CustomStyle(display("flex"), justify.content("safe center"), height("100%"), padding("0.5ex"), box.sizing("border-box"))
-        object stripGroup extends CustomStyle(display("flex"), flex.direction("column"), flex.shrink("1"), height("100%"), margin.left("1ex"), margin.right("1ex"), min.width("0"))
+        object stripGroup extends CustomStyle(display("flex"), flex.direction("column"), flex.shrink("0"), height("100%"), margin.left("1ex"), margin.right("1ex"))
         object stripTitle extends CustomStyle(text.align("center"), white.space("nowrap"), margin.bottom("0.3ex"))
-        object stripCards extends CustomStyle(display("flex"), justify.content("center"), align.items("center"), flex.grow("1"), min.height("0"), min.width("0"))
-        object stripCard extends CustomStyle(height("100%"), width("auto"), min.width("0"), flex.shrink("1"), objectFit("contain"), margin.left("0.3ex"), margin.right("0.3ex"))
+        object stripCards extends CustomStyle(display("flex"), justify.content("center"), align.items("center"), flex.grow("1"), min.height("0"))
+        object stripCard extends CustomStyle(height("calc(100cqh - 1.2em - 1.6ex)"), max.height("100%"), width("auto"), flex.shrink("0"), margin.left("0.3ex"), margin.right("0.3ex"))
         object stripEmpty extends CustomStyle(font.style("italic"))
 
         object fame extends CustomStyle(color("#e8b84a"))
         object creature extends CustomStyle(color("#c9a27a"), font.weight("bold"))
 
-        object tile extends CustomStyle(display("inline-block"), width("12ex"), vertical.align("middle"), margin("0.3ex"))
+        object tile extends CustomStyle(display("inline-block"), width("26ex"), max.width("90%"), vertical.align("middle"), margin("0.3ex"))
         object rot0 extends CustomStyle()
         object rot1 extends CustomStyle(transform("rotate(90deg)"))
         object rot2 extends CustomStyle(transform("rotate(180deg)"))

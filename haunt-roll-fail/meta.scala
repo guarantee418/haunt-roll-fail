@@ -140,6 +140,9 @@ trait MetaBase {
         (all ++ all).dropWhile(o => selected.has(o).not).drop(1).take(1).some.|(all.take(1))
     }
 
+    // A button next to a faction in the faction picker that opens a pop-up about it: the button's label, the pop-up's title and contents
+    def factionInfo(f : F) : |[(Elem, Elem, $[Elem])] = None
+
     // Image name -> URL for images used in the menus (faction notes, option explanations), before the game's assets load
     def menuImages : Map[String, String] = Map()
 

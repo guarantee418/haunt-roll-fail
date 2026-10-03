@@ -8,8 +8,11 @@ State on 2026-10-03 (third session): the base game is playable end to end,
 with every card effect and all seven clan powers, and was checked against the
 English core rulebook (the owner shared the rulebook PDFs in a Dropbox
 folder; `RULES.md` lists what that check fixed). The Creatures module and its
-More Creatures variant are done (`creatures.scala`), on the branch
-`claude/nort-creatures`.
+More Creatures variant are done (`creatures.scala`, merged and deployed).
+The Warchiefs module is done (`warchiefs.scala`, branch
+`claude/nort-warchiefs`), from the Warchiefs expansion rulebook found online
+(`Warchief_Expansion_rules_EN_light.pdf`); its 7 new clan upgrade cards are
+missing (no images or text).
 
 ## What exists
 
@@ -23,8 +26,9 @@ More Creatures variant are done (`creatures.scala`), on the branch
 | `tiles.scala` | All 35 core tiles as data: areas, the sides each area owns, resources, lairs, building spaces, and borders (regular or rough) |
 | `board.scala` | `Board`: placements, joining areas into territories, adjacency, closed/open, legal placements (`consistent`), drawing positions |
 | `map.scala` | `MapExpansion`: setup tile/unit placement, Recruit (with Kaija), Move (with the Move specials), combat and retreat, Scorched Earth, Explore, Build (with the Build specials), Feast, units returning at end of year |
-| `ui.scala` | Status panels (clan names in the player's color), the court strip on top, the board canvas, map clicks. Your hand is in the action pane, as in Arcs and Root: on your turn each card is a `CardMenuAction` (Soft) that opens Play / Wait / Replace / Remove / Upgrade; otherwise `Game.info` shows it as `CardInfoAction` pictures, with the Played cards |
+| `ui.scala` | Status panels (clan names in the player's color), the court strip on top (cards keep the pane's height and the strip scrolls sideways; see `styles.strip`), the board canvas, map clicks. Your hand is in the action pane, as in Arcs and Root: on your turn each card is a `CardMenuAction` (Soft) that selects it in place (`CardSelectedAction`, tap again for full screen; the other cards become `CardSwitchAction`, `NoExplode` so explode doesn't walk every order of the hand) with Play / Wait / Replace / Remove / Upgrade below; otherwise `Game.info` shows it as `CardInfoAction` pictures, with the Played cards |
 | `creatures.scala` | Creatures module: creature kinds and cards, setup deck, apparition on lairs (`TilePlacedAction`), the Creature phase (`CreaturePhaseAction`), declaring and fighting creatures (`MoveEndAction`, `CreatureFightAction`), the More Creatures variant (`PassedAction`) |
+| `warchiefs.scala` | Warchiefs module: names and powers (`Warchief`), step 1 powers (Signy, Brand), Liv's reroll prompts |
 | `bot.scala` | `BotXX`: random, with a bias to play cards and never cancel |
 | `host.scala` | Headless bot games on the JVM; prints a summary per game, with event counts (cards played, Kaija and Scorched Earth events) |
 | `RULES.md` | Rules summary from the rulebook, plus the status table |
@@ -123,6 +127,28 @@ on. To implement one:
   (`token/creature/`, ring color = the card's color code), drawn above the
   territory number. The creature line is a group in the court strip on top.
 - `NORT_CREATURES=1` makes the headless host always use the module.
+
+## Warchiefs module
+
+- `game.chiefs` maps a clan to its warchief's area while it is on the map;
+  `chiefIn`, `chiefReady`. `figures` counts it, `strength(t, f, attacking)`
+  adds 2 or 3 (`Warchief.strength`), `removeFigures` takes it after the
+  units. `FactionState.units` includes it (winter, Warlord, ties).
+- Card effects on enemy units use `count` (units only), so they can't touch
+  warchiefs.
+- `MoveUnitsAction` and `HiddenUnitsAction` gained a `chief` field; each has
+  a second constructor with the old arity, because saved games are parsed
+  by constructor arity (`Serialize`). Do the same whenever a field is added
+  to an action that is already in saved games.
+- Combat: `ChiefStepOneAction` (Signy, Brand) runs before food, for player
+  and creature fights; Liv's reroll is offered in `CombatRolledAction` and
+  `CreaturePlayerRolledAction`.
+- Clan picker: the framework hook `MetaGame.factionInfo` (label, title,
+  contents) adds a button next to each faction in the "Play as" list
+  (`hrf.scala`); Northgard's shows the clan board
+  (`expansion/board/<clan>.webp`, through `menuImages`) and the warchief
+  power. The warchief figures are `token/unit/warchief-<color>`.
+- `NORT_WARCHIEFS=1` makes the headless host always use the module.
 
 ## Known simplifications and gaps
 
