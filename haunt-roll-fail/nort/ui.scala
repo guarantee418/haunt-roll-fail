@@ -202,37 +202,20 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         |(new Scene($(background, pieces), sceneWidth, sceneHeight, margins))
     }
 
-    // The player this client shows the hand of (none for spectators)
-    var viewer : |[Faction] = None
-
     // Like the Arcs court: the cards everyone can see, always on top
     val court = newPane("court", Content, styles.strip)
 
-    // Like the Arcs hand: your cards, always at the bottom
-    val hand = newPane("hand", Content, styles.strip)
-
     def stripCard(c : Card) : Elem = OnClick(c, Image(c.info.image, styles.stripCard, xlo.pointer))
-
-    def stripTile(t : TileRef) : Elem = OnClick(t, Image("tile-" + t.id, styles.stripCard, styles.stripTile, xlo.pointer))
 
     def strip(groups : $[(Elem, $[Elem])]) =
         Div(groups./{ case (title, items) =>
             Div(Div(title, styles.stripTitle) ~ Div(items.any.?(items.merge).|(Div("none".txt, styles.stripEmpty)), styles.stripCards), styles.stripGroup)
         }.merge, styles.stripRow)
 
-    // The map tiles this client's player holds: the three drawn at setup, or the ones drawn to explore
-    def heldTiles(f : Faction) : $[String] =
-        game.tileHand.get(f).%(_.any).||(lastActions./~(_.unwrap.as[ExploreTileAction]).%(_.self == f)./(_.tile).some).|($)
-
+    // Your hand and played cards are in the action pane, like in Arcs and Root (Game.info, CardMenuAction)
     def drawCards() {
-        val self = viewer.%(game.states.contains)
-
-        val tiles = self./~(f => heldTiles(f).any.$(("Your tiles".styled(colorOf(f)) : Elem) -> heldTiles(f)./(t => stripTile(TileRef(t)))))
-
-        if (game.year == 0) {
-            hand.replaceCached(("tiles", self, tiles.any.??(self./(heldTiles))).toString, strip(tiles), resources, onClick)
+        if (game.year == 0)
             return
-        }
 
         val last = game.year == game.lastYear
 
@@ -241,10 +224,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val achievements = $(("Achievements" ~ last.not.?(", year " ~ game.lastYear.hl).|(Empty)) -> last.?(game.display).|(game.achievements))
 
         court.replaceCached((game.year, game.display, game.achievements).toString, strip((developments ++ achievements)./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
-
-        val cards = self./~(f => $(("Your hand".styled(colorOf(f)) : Elem) -> f.hand./(stripCard)) ++ f.active.any.$(("Played".styled(colorOf(f)) : Elem) -> f.active./(stripCard))) ++ tiles
-
-        hand.replaceCached((self, self./(_.hand), self./(_.active), tiles.any.??(self./(heldTiles))).toString, strip(cards), resources, onClick)
     }
 
     def factionStatus(f : Faction) {
@@ -308,7 +287,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         $(
             BasicPane("status", 15, 8.5, Priorities(top = 3, left = 2, maxXscale = 1.8, maxYscale = 1.8, grow = 1)),
             BasicPane("court", 80, 20, Priorities(top = 3, right = 3, maxXscale = 1.5, maxYscale = 1.5, grow = -2)),
-            BasicPane("hand", 60, 22, Priorities(bottom = 2, left = 1, maxXscale = 1.5, maxYscale = 1.5, grow = -2)),
             BasicPane("log", 32, 16, Priorities(right = 1)),
             BasicPane("map-small", 73, 70, Priorities(top = 2, left = 1, grow = 3)),
             BasicPane("action-a", 64/1.5, 36, Priorities(bottom = 1, right = 3, grow = 2)),
@@ -360,7 +338,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val settingsKey = Meta.settingsKey
 
-    val layoutKey = "v" + 4 + "." + "arity-" + arity
+    val layoutKey = "v" + 5 + "." + "arity-" + arity
 
     def overlayScrollX(e : Elem) = overlayScroll(e)(styles.seeThroughInner).onClick
     def overlayFitX(e : Elem) = overlayFit(e)(styles.seeThroughInner).onClick
@@ -399,11 +377,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
             then(action.as[UserAction].||(action.as[ForcedAction]./(_.as("Do Action On Click"))).|(throw new Error("non-user non-forced action in on click handler")))
 
-
-        // A held tile picks it when that is offered, otherwise opens full screen
-        case t : TileRef =>
-            lastActions.%(a => a.unwrap.as[ViewObject[_]].exists(_.obj == t)).single./(onClick).|(
-                showOverlay(overlayFitX(Image("tile-" + t.id, styles.zoomCard)).onClick, onClick))
 
         // Any card on the table opens full screen; clicking again closes it
         case c : Card =>
@@ -484,8 +457,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         lastActions = $
         lastThen = null
 
-        viewer = self.single || self.intersect(game.highlight.current.$).single || viewer.%(self.has)
-
         drawCards()
 
         showNotifications(self)
@@ -505,8 +476,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     override def ask(faction : |[F], actions : $[UserAction], then : UserAction => Unit) {
         lastActions = actions
         lastThen = then
-
-        viewer = faction
 
         showNotifications(faction.$)
 

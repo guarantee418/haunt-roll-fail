@@ -43,6 +43,8 @@ package object elem {
         object menuIcon extends CustomStyle(height("2.4em"), vertical.align("middle"), margin.right("1ex"))
         object menuCard extends CustomStyle(display("inline-block"), width("30%"), max.width("15ex"), margin("0.5ex"), vertical.align("top"))
         object card extends CustomStyle(display("inline-block"), width("12ex"), margin("0.3ex"))
+        object handCard extends CustomStyle(display("block"), width("8.5ex"))
+        object bigCard extends CustomStyle(display("block"), width("13ex"), max.width("90%"), margin.top("0.5ex"), margin.bottom("0.5ex"), margin.left("auto"), margin.right("auto"))
 
         object zoomCard extends CustomStyle(height("100%"), width("100%"), objectFit("contain"))
 
@@ -52,7 +54,6 @@ package object elem {
         object stripTitle extends CustomStyle(text.align("center"), white.space("nowrap"), margin.bottom("0.3ex"))
         object stripCards extends CustomStyle(display("flex"), justify.content("center"), align.items("center"), flex.grow("1"), min.height("0"), min.width("0"))
         object stripCard extends CustomStyle(height("100%"), width("auto"), min.width("0"), flex.shrink("1"), objectFit("contain"), margin.left("0.3ex"), margin.right("0.3ex"))
-        object stripTile extends CustomStyle(border.radius("0.6ex"))
         object stripEmpty extends CustomStyle(font.style("italic"))
 
         object fame extends CustomStyle(color("#e8b84a"))

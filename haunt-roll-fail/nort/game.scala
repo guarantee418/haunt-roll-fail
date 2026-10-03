@@ -161,6 +161,10 @@ case class WaitCardAction(self : Faction, card : Card) extends BaseAction(card)(
 case class ReplaceCardAction(self : Faction, card : Card) extends BaseAction(card)("Replace", "(" ~ 1.hl ~ " " ~ Lore.elem ~ ")")
 case class RemoveCardAction(self : Faction, card : Card) extends BaseAction(card)("Remove", "(" ~ 2.hl ~ " " ~ Lore.elem ~ ")")
 case class UpgradeCardAction(self : Faction, card : Card, upgrade : Card, remove : Boolean) extends BaseAction(card)("Upgrade to", upgrade, remove.?("and remove").|("and wait"), "(" ~ 3.hl ~ " " ~ Lore.elem ~ ")")
+// A card in hand, shown as its image; clicking it offers what can be done with it
+case class CardMenuAction(self : Faction, card : Card, stage : Int) extends BaseAction("Your hand")(card.handImg) with Soft with ViewObject[Card] { def obj = card }
+// Cards shown while there is nothing to do with them; clicking one opens it full screen
+case class CardInfoAction(self : Faction, title : Elem, card : Card) extends BaseInfo(title)(card.handImg) with ViewObject[Card] with OnClickInfo { def obj = card ; def param = card }
 case class PassAction(self : Faction) extends BaseAction("Actions")("Pass")
 case class EndTurnAction(self : Faction) extends BaseAction("Actions")("End turn")
 // Resolve a played card that nobody cancelled
@@ -359,9 +363,14 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def from(f : Faction) = seating.dropWhile(_ != f) ++ seating.takeWhile(_ != f)
 
     def info(waiting : $[Faction], self : |[Faction], actions : $[UserAction]) : $[Info] = {
-        // The cards themselves are shown in the court and hand panes (UI.drawCards)
+        // The developments and achievements are shown in the court pane (UI.drawCards);
+        // your hand is in the action pane, as choices on your turn and as pictures otherwise
+        val choosing = actions.exists(_.unwrap.is[CardMenuAction])
+
         (year > 0).$(Info("Year", year.hlb, "of", lastYear.hl)) ++
         self.%(states.contains)./~(f =>
+            choosing.not.??(f.hand./(c => CardInfoAction(f, "Your hand".styled(colors(f)), c))) ++
+            f.active./(c => CardInfoAction(f, "Played".styled(colors(f)), c)) ++
             $(Info("Fame", f.fame.hlb))
         )
     }
@@ -691,18 +700,28 @@ object CommonExpansion extends Expansion {
 
             if (stage == 0)
                 Ask(f)
-                    .some(cards)(c =>
-                        playable(f, c).$(PlayCardAction(f, c, stage)) ++
-                        $(WaitCardAction(f, c)) ++
-                        (f.lore >= 1).$(ReplaceCardAction(f, c)) ++
-                        (f.lore >= 2 && c.removable).$(RemoveCardAction(f, c)) ++
-                        (f.lore >= 3).??(f.upgrades./~(u => $(UpgradeCardAction(f, c, u, false)) ++ c.removable.$(UpgradeCardAction(f, c, u, true))))
-                    )
+                    .each(cards)(c => CardMenuAction(f, c, stage))
                     .add(PassAction(f))
             else
                 Ask(f)
-                    .each(cards.%(c => playable(f, c) && (stage == 1 || c.flash)))(c => PlayCardAction(f, c, stage))
+                    .each(cards.%(c => playable(f, c) && (stage == 1 || c.flash)))(c => CardMenuAction(f, c, stage))
                     .add(EndTurnAction(f))
+
+        case CardMenuAction(f, c, stage) =>
+            if (stage == 0)
+                Ask(f)
+                    .group(Image(c.info.image, styles.bigCard))
+                    .add(playable(f, c).$(PlayCardAction(f, c, stage)))
+                    .add(WaitCardAction(f, c))
+                    .when(f.lore >= 1)(ReplaceCardAction(f, c))
+                    .when(f.lore >= 2 && c.removable)(RemoveCardAction(f, c))
+                    .add((f.lore >= 3).??(f.upgrades./~(u => $(UpgradeCardAction(f, c, u, false)) ++ c.removable.$(UpgradeCardAction(f, c, u, true)))))
+                    .cancel
+            else
+                Ask(f)
+                    .group(Image(c.info.image, styles.bigCard))
+                    .add(PlayCardAction(f, c, stage))
+                    .cancel
 
         case PlayCardAction(f, c, stage) =>
             f.hand = f.hand.diff($(c))
