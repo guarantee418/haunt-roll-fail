@@ -215,6 +215,23 @@ git fetch origin main && git push origin origin/main:refs/heads/deploy
     taken; the player keeps scoring (`demagogue` flag in `FactionState`).
   - Feather Rufflers, Spy Network, Silver-Tongue and Friend are usable from
     the Birdsong, Daylight and Evening menus on your own turn.
+- The Homeland Marsh map is `MarshBoard` in `root/maps.scala` (option
+  `MarshMap`, images in `webp2/root/images/marsh/`, from the board image and
+  the flood markers in the Homeland print-and-play PDF). The printed board
+  has no clearing names, so the names (Thatch, Sedge, Weir, ...) are made up;
+  comments give the Law of Root diagram numbers. Rules follow Law of Root
+  M.5: with 1-4 players one clearing of each colored pair (`floodPairs`) is
+  flooded at random and the paths on its flood marker (`floodPaths`) link its
+  neighbours (`game.floodLinked`, used by `game.connected` and `Roads`); with
+  5+ players one of each pair is left without a suit (`game.unsuited`) and
+  gets Mousehold, Foxburrow or Rabbittown at random. Ruins go in Crossing and
+  Fork plus the two lowest numbered slots not flooded (`ruinsIn`).
+- The Homeland landmarks Mousehold, Foxburrow and Rabbittown are landmark
+  options on any map (`MouseholdLandmark` etc. in `root/meta.scala`). Each
+  adds its suit to its clearing, kept when a Lilypad enclave covers the suit
+  (`game.landmarkSuits`). Foxburrow is the `FoxburrowRoads` transport,
+  Rabbittown a Daylight action and Mousehold a hook in `battle.scala`; the
+  effects are in `MapsExpansion` in `root/maps.scala`.
 - Bot games can be run headless on the JVM with `root/host.scala` (see
   `host.xsbt` for the source exclusions); it also checks that every action
   serializes and parses back.
@@ -227,7 +244,8 @@ git fetch origin main && git push origin origin/main:refs/heads/deploy
   `root/replay-check.scala` plays bot games and checks that replaying every
   prefix of the recorded actions matches the live game:
   `sbt "runMain root.ReplayCheck <games> [base|ld|tc|kd] [dense]"` with the
-  `host.xsbt` setup.
+  `host.xsbt` setup. `ReplayCheck <games> marsh` or `marsh5` plays the
+  Marsh map with 4 or 5 players and the three Homeland landmarks.
 - Each online game has a Spectator link and one link per player. Spectator
   accounts can read the game but not add moves. A move posted by one gets a
   500 with `empty result set ... "right" = 'append'` in the server log.

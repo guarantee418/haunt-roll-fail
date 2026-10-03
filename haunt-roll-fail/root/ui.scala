@@ -169,6 +169,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case Tower => { DrawRect("tower", -49, -145, 97, 153) }
             case Ferry => { DrawRect("ferry", -74, -53, 145, 109) }
             case LostCity => { DrawRect("lost-city", -80, -101, 160, 106) }
+            case Mousehold => { DrawRect("mousehold", -80, -98, 160, 102) }
+            case Foxburrow => { DrawRect("foxburrow", -85, -98, 170, 102) }
+            case Rabbittown => { DrawRect("rabbittown", -77, -98, 154, 102) }
 
             case Wood => { DrawRect(pr + "wood", -45, -45, 90, 90) }
             case Sympathy => { DrawRect(pr + "sympathy", -45, -45, 90, 90) }
@@ -579,6 +582,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     case TidalBoard.HouseBoat => g.drawImage(resources.images.get(mapid + "flood-north"), 0, 0)
                     case TidalBoard.Stilts => g.drawImage(resources.images.get(mapid + "flood-south-east"), 0, 0)
                     case TidalBoard.Wetlands => g.drawImage(resources.images.get(mapid + "flood-south-west"), 0, 0)
+                    case c if game.board == MarshBoard =>
+                        val (x, y) = game.board.center(c)
+                        g.drawImage(resources.images.get(mapid + "flood-" + c.name.toLowerCase), x - 180, y - 180, 360, 360)
                     case c =>
                         val (x, y) = game.board.center(c)
                         g.drawImage(resources.images.get(mapid + "flood"), x - 248 - 40, y - 213 + 10 - (c != TidalBoard.HouseBoat).??(30))
@@ -596,19 +602,27 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     val nmn = c.name.replace(' ', '-')
                     val nmi = resources.images.get(mapid + "clearing-name-" + nmn)
                     val stn = game.mapping(c)./(_.name).distinct.join("-")
-                    val sti = resources.images.get("text-tint:" + stn + (hl && game.mapping(c).has(Frog)).??("-hl"))
 
-                    if (nmi.complete && sti.complete) {
-                        val nmt = new Bitmap(nmi.width, nmi.height)
-                        nmt.context.drawImage(nmi, 0, 0)
+                    // Marsh: a clearing without a suit (until its landmark is placed) gets an untinted name
+                    if (stn == "") {
+                        if (nmi.complete)
+                            g.drawImage(nmi, x - 240, y + 165)
+                    }
+                    else {
+                        val sti = resources.images.get("text-tint:" + stn + (hl && game.mapping(c).has(Frog)).??("-hl"))
 
-                        nmt.context.globalCompositeOperation = "multiply"
-                        nmt.context.drawImage(sti, 0, 0)
+                        if (nmi.complete && sti.complete) {
+                            val nmt = new Bitmap(nmi.width, nmi.height)
+                            nmt.context.drawImage(nmi, 0, 0)
 
-                        nmt.context.globalCompositeOperation = "destination-in"
-                        nmt.context.drawImage(nmi, 0, 0)
+                            nmt.context.globalCompositeOperation = "multiply"
+                            nmt.context.drawImage(sti, 0, 0)
 
-                        g.drawImage(nmt.canvas, x - 240, y + 165)
+                            nmt.context.globalCompositeOperation = "destination-in"
+                            nmt.context.drawImage(nmi, 0, 0)
+
+                            g.drawImage(nmt.canvas, x - 240, y + 165)
+                        }
                     }
 
                     val suits = game.mapping(c)

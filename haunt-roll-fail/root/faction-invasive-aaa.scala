@@ -435,7 +435,7 @@ object InvasiveAAAExpansion extends FactionExpansion[InvasiveAAA] {
 
         case InvasiveAAAReprisalsFlipAction(f, l) =>
             l.foreach { c =>
-                game.mapping += c -> $(Frog)
+                game.mapping += c -> (game.landmarkSuits(c) ++ $(Frog))
             }
 
             Next

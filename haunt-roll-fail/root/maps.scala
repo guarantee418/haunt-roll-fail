@@ -10,6 +10,9 @@ import hrf.logger._
 //
 //
 
+import hrf.elem._
+import root.elem._
+
 object AutumnBoard extends Board {
     val id = "autumn"
     val name = "Autumn"
@@ -881,6 +884,149 @@ object GloomBoard extends Board {
     }
 }
 
+// Root: Homeland Marsh map. The printed board has no clearing names.
+// Numbers in comments are the ones on the Law of Root map diagram.
+object MarshBoard extends Board {
+    val id = "marsh"
+    val name = "Marsh"
+
+    object Thatch extends Clearing(1)   // 1
+    object Jetty extends Clearing(2)    // 2
+    object Bayou extends Clearing(1)    // 3
+    object Delta extends Clearing(2)    // 4
+    object Sedge extends Clearing(1)    // 5
+    object Weir extends Clearing(2)     // 6, dark green
+    object Heron extends Clearing(1)    // 7
+    object Mudflat extends Clearing(2)  // 8, dark green
+    object Cattail extends Clearing(2)  // 9
+    object Bulrush extends Clearing(1)  // 10, brown
+    object Peat extends Clearing(1)     // 11, brown
+    object Mire extends Clearing(2)     // 12, light green
+    object Fen extends Clearing(2)      // 13, light green
+    object Fork extends Clearing(3)     // 14
+    object Crossing extends Clearing(3) // 15
+
+    val clearings = $(Thatch, Jetty, Bayou, Delta, Sedge, Weir, Heron, Mudflat, Cattail, Bulrush, Peat, Mire, Fen, Fork, Crossing)
+
+    // "R" slots: two without numbers always get ruins, then the two lowest numbers not flooded (R1 Mire, R2 Fen, R3 Weir, R4 Mudflat)
+    val ruins = $(Crossing, Fork, Mire, Fen, Weir, Mudflat)
+
+    override def ruinsIn(l : $[Clearing]) = $(Crossing, Fork).intersect(l) ++ $(Mire, Fen, Weir, Mudflat).intersect(l).take(2)
+
+    val diagonals = $((Thatch, Bayou), (Jetty, Delta))
+
+    val inner = $(Peat, Crossing, Mire, Fork, Fen)
+
+    override val floodPairs = $((Weir, Mudflat), (Mire, Fen), (Bulrush, Peat))
+
+    override def floodPaths(c : Clearing) = c @@ {
+        case Weir => $((Sedge, Jetty))
+        case Mudflat => $((Cattail, Bayou))
+        case Mire => $((Crossing, Jetty), (Crossing, Fen), (Jetty, Fen))
+        case Fen => $((Fork, Mire), (Fork, Bayou), (Mire, Bayou))
+        case Bulrush => $((Thatch, Delta))
+        case Peat => $((Thatch, Fork))
+        case _ => $()
+    }
+
+    object MarshNW extends UnnamedForest
+    object MarshW extends UnnamedForest
+    object MarshN extends UnnamedForest
+    object MarshC extends UnnamedForest
+    object MarshE extends UnnamedForest
+    object MarshSW extends UnnamedForest
+    object MarshS extends UnnamedForest
+
+    val forests = $(MarshNW, MarshW, MarshN, MarshC, MarshE, MarshSW, MarshS)
+
+    def connected(c : Clearing) = c @@ {
+        case Thatch => $(Sedge, Peat, Bulrush)
+        case Jetty => $(Weir, Mire, Heron)
+        case Bayou => $(Heron, Fen, Mudflat)
+        case Delta => $(Bulrush, Cattail)
+        case Sedge => $(Thatch, Weir, Crossing)
+        case Weir => $(Sedge, Jetty)
+        case Heron => $(Jetty, Bayou)
+        case Mudflat => $(Cattail, Bayou)
+        case Cattail => $(Fork, Delta, Mudflat)
+        case Bulrush => $(Thatch, Fork, Delta)
+        case Peat => $(Thatch, Crossing, Fork)
+        case Mire => $(Jetty, Crossing, Fen)
+        case Fen => $(Mire, Fork, Bayou)
+        case Fork => $(Peat, Bulrush, Fen, Cattail)
+        case Crossing => $(Sedge, Peat, Mire)
+    }
+
+    // Flooded paths divide forests like paths, so forests keep their shapes when a clearing floods
+    def fromForest(f : Forest) = f @@ {
+        case MarshNW => $(Thatch, Sedge, Crossing, Peat)
+        case MarshW => $(Thatch, Peat, Fork, Bulrush)
+        case MarshN => $(Sedge, Weir, Jetty, Mire, Crossing)
+        case MarshC => $(Peat, Crossing, Mire, Fen, Fork)
+        case MarshE => $(Jetty, Heron, Bayou, Fen, Mire)
+        case MarshSW => $(Bulrush, Fork, Cattail, Delta)
+        case MarshS => $(Fork, Fen, Bayou, Mudflat, Cattail)
+    }
+
+    def byRiver(c : Clearing) = c @@ {
+        case Weir => $(Crossing)
+        case Crossing => $(Weir, Fork)
+        case Fork => $(Crossing, Delta, Mudflat)
+        case Delta => $(Fork)
+        case Mudflat => $(Fork)
+        case _ => $()
+    }
+
+    def center(r : Region) : (Int, Int) = r @@ {
+        case Thatch => (322, 322)
+        case Jetty => (2190, 420)
+        case Bayou => (2030, 1890)
+        case Delta => (195, 1882)
+        case Sedge => (1020, 248)
+        case Weir => (1560, 297)
+        case Heron => (2220, 1418)
+        case Mudflat => (1239, 1897)
+        case Cattail => (840, 1740)
+        case Bulrush => (207, 1227)
+        case Peat => (658, 751)
+        case Mire => (1950, 920)
+        case Fen => (1540, 1432)
+        case Fork => (930, 1140)
+        case Crossing => (1305, 818)
+
+        case MarshNW => (705, 465)
+        case MarshW => (435, 900)
+        case MarshN => (1725, 630)
+        case MarshC => (1320, 1140)
+        case MarshE => (1950, 1320)
+        case MarshSW => (495, 1500)
+        case MarshS => (1350, 1620)
+
+        case Burrow(_) => (1208, 999999)
+        case _ => (0, 0); throw new Error("no center for " + r)
+    }
+
+    // Ruins slots first, ruins take the first free slot
+    override def gates(r : Region) = r @@ {
+        case Thatch => $((294, 273))
+        case Jetty => $((2145, 378), (2242, 428))
+        case Bayou => $((2018, 1974))
+        case Delta => $((132, 1920), (258, 1852))
+        case Sedge => $((1022, 210))
+        case Weir => $((1580, 368), (1512, 292))
+        case Heron => $((2246, 1413))
+        case Mudflat => $((1218, 2010), (1192, 1924))
+        case Cattail => $((818, 1680), (852, 1792))
+        case Bulrush => $((180, 1230))
+        case Peat => $((668, 693))
+        case Mire => $((1875, 915), (2010, 862))
+        case Fen => $((1490, 1410), (1582, 1462))
+        case Fork => $((1005, 1208), (858, 1065), (972, 1118))
+        case Crossing => $((1407, 758), (1205, 788), (1372, 888))
+        case _ => super.gates(r)
+    }
+}
+
 case class ClearPathMainAction(self : Faction, then : ForcedAction) extends BaseAction(None)(ClearPath) with Soft
 case class ClearPathBetweenAction(self : Faction, a : Clearing, b : Clearing, then : ForcedAction) extends BaseAction(ClearPath)("Clear path between", a, "and", b) with Soft
 case class ClearPathAction(self : Faction, a : Clearing, b : Clearing, then : ForcedAction) extends ForcedAction
@@ -889,10 +1035,39 @@ case object ClearPath extends DisplayEffect {
     override val name = "Clear Path"
 }
 
+// Homeland landmarks
+case object RabbittownMuster extends DisplayEffect {
+    override val name = "Rabbittown"
+}
+
+case class ToRabbittown(c : Clearing) extends Message {
+    def elem(implicit game : Game) = "to place warriors in " ~ c.elem
+}
+
+case class RabbittownMainAction(self : WarriorFaction, c : Clearing, n : Int, then : ForcedAction) extends BaseAction(None)("Rabbittown".styled(Rabbit), "(" ~ n.of("warrior") ~ ")") with Soft
+case class RabbittownAction(self : WarriorFaction, c : Clearing, then : ForcedAction) extends ForcedAction
+case class MouseholdAction(b : Battle) extends ForcedAction
+case class MouseholdPlaceAction(self : Faction, c : Clearing, l : $[Piece], then : ForcedAction) extends BaseAction(self, "can place warriors removed in battle at", "Mousehold".styled(Mouse))(l.none.?("Skip").|("Place " ~ l./(_.of(self)).comma))
+
 object MapsExpansion extends MandatoryExpansion {
+    def rabbittownWarriors(f : Faction, c : Clearing)(implicit game : Game) = clearings.but(c).%(x => game.mapping.get(x).?(_.has(Rabbit))).%(x => f.at(x).any).num
+
     override def daylight(f : Faction)(implicit game : Game, ask : ActionCollector) {
         if (game.rubble.any && f.used.has(ClearPath).not)
             + ClearPathMainAction(f, Repeat).!(f.hand.none, "no cards").!(game.rubble.forall { case (a, b) => f.at(a).none && f.at(b).none })
+
+        f.as[WarriorFaction].foreach { f =>
+            if (f.is[Hero].not && f.used.has(RabbittownMuster).not)
+                game.rabbittown.foreach { c =>
+                    val n = rabbittownWarriors(f, c)
+
+                    + RabbittownMainAction(f, c, n, Repeat)
+                        .!(f.hand.none, "no cards")
+                        .!(n == 0, "no other rabbit clearings")
+                        .!(f.pooled(f.warrior) == 0, "no warriors")
+                        .!(f.canPlace(c).not, "can't place")
+                }
+        }
     }
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
@@ -901,6 +1076,57 @@ object MapsExpansion extends MandatoryExpansion {
 
         case ClearPathBetweenAction(f, a, b, then) =>
             OptionalDiscardCardAction(f, ToClearPath(a, b), AnySuit, ClearPathAction(f, a, b, then))
+
+        case RabbittownMainAction(f, c, _, then) =>
+            OptionalDiscardCardAction(f, ToRabbittown(c), Rabbit, RabbittownAction(f, c, then))
+
+        case RabbittownAction(f, c, then) =>
+            f.drawn --> discard.quiet
+
+            f.used :+= RabbittownMuster
+
+            val n = min(rabbittownWarriors(f, c), f.pooled(f.warrior))
+
+            1.to(n).foreach(_ => f.reserve --> f.warrior --> c)
+
+            f.log("placed", n.times(f.warrior)./(_.of(f)).comma, "in", c, "with", RabbittownMuster)
+
+            if (f.canAttackIn(c))
+                BattleInitAction(f, f, NoMessage, $(c), $, then)
+            else
+                then
+
+        // Mousehold: removed warriors may be placed there, one faction at a time
+        case MouseholdAction(b) =>
+            val c = game.mousehold.head
+
+            val ff = game.mouseholdPending./(_.faction).distinct.%(_.canPlace(c))
+
+            if (ff.none) {
+                game.mouseholdPending = $
+
+                BattleFinishedAction(b)
+            }
+            else {
+                val f = ff.head
+                val pp = game.mouseholdPending.%(_.faction == f)./(_.piece)
+                game.mouseholdPending = game.mouseholdPending.%(_.faction != f)
+
+                val l = pp.distinct./~(p => pp.%(_ == p).take(f.pooled(p)))
+
+                if (l.any)
+                    Ask(f).each(l.num.to(1, -1).$)(n => MouseholdPlaceAction(f, c, l.take(n), MouseholdAction(b))).add(MouseholdPlaceAction(f, c, $, MouseholdAction(b)))
+                else
+                    MouseholdAction(b)
+            }
+
+        case MouseholdPlaceAction(f, c, l, then) =>
+            l.foreach(p => f.reserve --> p --> c)
+
+            if (l.any)
+                f.log("placed", l./(_.of(f)).comma, "at", "Mousehold".styled(Mouse), "in", c)
+
+            then
 
         case ClearPathAction(f, a, b, then) =>
             f.nscore(1)("clearing path")(f, "cleared path between", a, "and", b, "with", f.drawn.get, ForVP)

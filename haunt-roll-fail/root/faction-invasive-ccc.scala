@@ -455,7 +455,7 @@ object InvasiveCCCExpansion extends FactionExpansion[InvasiveCCC] {
                 }
             }
 
-            game.mapping += c -> $(Frog)
+            game.mapping += c -> (game.landmarkSuits(c) ++ $(Frog))
 
             InvasiveCCCReprisalsMainAction(f)
 

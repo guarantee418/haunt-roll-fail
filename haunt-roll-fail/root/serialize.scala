@@ -101,7 +101,7 @@ object Serialize extends Serializer {
         r
     }
 
-    def parseRegion(s : String) : Option[Region] = $(AutumnBoard, WinterBoard, LakeBoard, MountainBoard, TidalBoard, TundraBoard, GloomBoard)./~(_.regions).%(_.id == s).single
+    def parseRegion(s : String) : Option[Region] = $(AutumnBoard, WinterBoard, LakeBoard, MountainBoard, TidalBoard, TundraBoard, GloomBoard, MarshBoard)./~(_.regions).%(_.id == s).single
 
     def parseDecree(s : String) : Option[Decree] = Decree.all.%(_.name == s).single
 
