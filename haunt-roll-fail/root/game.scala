@@ -1551,6 +1551,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
         case TidalMap => Some(TidalBoard)
         case TundraMap => Some(TundraBoard)
         case GloomMap => Some(GloomBoard)
+        case GorgeMap => Some(GorgeBoard)
         case _ => None
     }.only
 

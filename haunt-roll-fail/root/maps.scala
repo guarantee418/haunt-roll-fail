@@ -881,6 +881,134 @@ object GloomBoard extends Board {
     }
 }
 
+object GorgeBoard extends Board {
+    val id = "gorge"
+    val name = "Gorge"
+
+    object Ranch extends Clearing(1)
+    object Mesa extends Clearing(2)
+    object Camp extends Clearing(1)
+    object Chapel extends Clearing(1)
+    object Bluff extends Clearing(1)
+    object Saloon extends Clearing(2)
+    object Lookout extends Clearing(2)
+    object Rapids extends Clearing(2)
+    object Homestead extends Clearing(1)
+    object Forge extends Clearing(2)
+    object Fork extends Clearing(2)
+    object Pueblo extends Clearing(3)
+
+    val clearings = $(Ranch, Mesa, Camp, Chapel, Bluff, Saloon, Lookout, Rapids, Homestead, Forge, Fork, Pueblo)
+
+    val ruins = $(Saloon, Homestead, Fork, Pueblo)
+
+    val diagonals = $((Ranch, Camp), (Mesa, Chapel))
+
+    val inner = $(Fork, Pueblo)
+
+    object GorgeNW extends NamedForest("North-West")
+    object GorgeN extends NamedForest("North")
+    object GorgeNE extends NamedForest("North-East")
+    object GorgeW extends NamedForest("West")
+    object GorgeC extends NamedForest("Center")
+    object GorgeE extends NamedForest("East")
+    object GorgeSW extends NamedForest("South-West")
+    object GorgeS extends NamedForest("South")
+
+    val forests = $(GorgeNW, GorgeN, GorgeNE, GorgeW, GorgeC, GorgeE, GorgeSW, GorgeS)
+
+    // The path from Fork to Pueblo goes through the dam, crossing the dam path from Forge to Saloon,
+    // so the four forests around the crossing touch the forests on either side of each half-path
+    val damCrossing = $((GorgeW, GorgeN), (GorgeN, GorgeE), (GorgeE, GorgeC), (GorgeC, GorgeW))
+
+    override def forestsConnected(o : Forest, d : Forest) : Boolean = super.forestsConnected(o, d) ||
+        damCrossing.has((o, d)) || damCrossing.has((d, o))
+
+    // Forge - Saloon is the dam path, Homestead - Lookout is the bridge path
+    def connected(c : Clearing) = c @@ {
+        case Ranch => $(Bluff, Forge, Fork)
+        case Bluff => $(Ranch, Mesa, Fork, Saloon)
+        case Mesa => $(Bluff, Saloon)
+        case Fork => $(Ranch, Bluff, Pueblo)
+        case Forge => $(Ranch, Homestead, Saloon)
+        case Saloon => $(Bluff, Mesa, Forge, Lookout)
+        case Pueblo => $(Fork, Rapids, Camp)
+        case Homestead => $(Forge, Chapel, Rapids, Lookout)
+        case Lookout => $(Saloon, Homestead, Camp)
+        case Rapids => $(Homestead, Pueblo, Chapel, Camp)
+        case Chapel => $(Homestead, Rapids)
+        case Camp => $(Pueblo, Lookout, Rapids)
+    }
+
+    // The dam path divides forests, the bridge path does not, and neither do the gorge sides
+    def fromForest(f : Forest) = f @@ {
+        case GorgeNW => $(Ranch, Bluff, Fork)
+        case GorgeN => $(Bluff, Fork, Saloon)
+        case GorgeNE => $(Bluff, Mesa, Saloon)
+        case GorgeW => $(Ranch, Fork, Forge)
+        case GorgeC => $(Forge, Pueblo, Rapids, Homestead)
+        case GorgeE => $(Saloon, Lookout, Camp, Pueblo)
+        case GorgeSW => $(Homestead, Chapel, Rapids)
+        case GorgeS => $(Pueblo, Rapids, Camp)
+    }
+
+    def byRiver(c : Clearing) = c @@ {
+        case Mesa => $(Fork)
+        case Forge => $(Fork)
+        case Fork => $(Mesa, Forge, Rapids)
+        case Rapids => $(Fork)
+        case _ => $()
+    }
+
+    def center(r : Region) : (Int, Int) = r @@ {
+        case Ranch => (310, 325)
+        case Bluff => (1472, 317)
+        case Mesa => (2076, 378)
+        case Fork => (1193, 725)
+        case Forge => (476, 854)
+        case Saloon => (1880, 861)
+        case Homestead => (378, 1315)
+        case Pueblo => (1246, 1353)
+        case Lookout => (2091, 1307)
+        case Rapids => (1136, 1829)
+        case Chapel => (385, 1850)
+        case Camp => (1721, 1870)
+
+        case GorgeNW => (710, 370)
+        case GorgeW => (390, 600)
+        case GorgeNE => (1797, 499)
+        case GorgeN => (1525, 710)
+        case GorgeC => (846, 1572)
+        case GorgeE => (1737, 1542)
+        case GorgeSW => (544, 1768)
+        case GorgeS => (1344, 1753)
+
+        case Burrow(_) => (1208, 999999)
+        case _ => (0, 0); throw new Error("no center for " + r)
+    }
+
+    override def mid(a : Region, b : Region) = (a, b) @@ {
+        case (Homestead, Lookout) | (Lookout, Homestead) => (1057, 1526)
+        case _ => super.mid(a, b)
+    }
+
+    override def gates(r : Region) = r @@ {
+        case Ranch => $((310, 345))
+        case Bluff => $((1465, 325))
+        case Mesa => $((2016, 370), (2137, 363))
+        case Fork => $((1241, 831), (1231, 657))
+        case Forge => $((516, 816), (435, 919))
+        case Saloon => $((1820, 907), (1937, 828))
+        case Homestead => $((427, 1292))
+        case Pueblo => $((1288, 1421), (1271, 1298), (1188, 1359))
+        case Lookout => $((2129, 1262), (2046, 1350))
+        case Rapids => $((1128, 1756), (1145, 1909))
+        case Chapel => $((393, 1954))
+        case Camp => $((1721, 1972))
+        case _ => super.gates(r)
+    }
+}
+
 case class ClearPathMainAction(self : Faction, then : ForcedAction) extends BaseAction(None)(ClearPath) with Soft
 case class ClearPathBetweenAction(self : Faction, a : Clearing, b : Clearing, then : ForcedAction) extends BaseAction(ClearPath)("Clear path between", a, "and", b) with Soft
 case class ClearPathAction(self : Faction, a : Clearing, b : Clearing, then : ForcedAction) extends ForcedAction
