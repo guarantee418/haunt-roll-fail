@@ -2331,6 +2331,15 @@ object Meta extends MetaGame {
         ImageAsset("vb-vagabond"       ) ::
         ImageAsset("nb-vagabond"       ) ::
         ImageAsset("mb-vagabond"       ) ::
+        ImageAsset("vagabond-harrier"  ) ::
+        ImageAsset("vagabond-ronin"     ) ::
+        ImageAsset("vagabond-adventurer") ::
+        ImageAsset("vagabond-scoundrel" ) ::
+        ImageAsset("vagabond-arbiter"   ) ::
+        ImageAsset("vagabond-vagrant"   ) ::
+        ImageAsset("vagabond-ranger"    ) ::
+        ImageAsset("vagabond-tinker"    ) ::
+        ImageAsset("vagabond-thief"     ) ::
 
         ImageAsset("quest-fox"         ) ::
         ImageAsset("quest-rabbit"      ) ::
@@ -2919,6 +2928,20 @@ object Meta extends MetaGame {
         ImageAsset("kd-captain-birdsong-empty" , "kd-captain-empty" ) ::
         ImageAsset("kd-captain-daylight-empty" , "kd-captain-empty" ) ::
         ImageAsset("kd-captain-evening-empty"  , "kd-captain-empty" ) ::
+
+        // Knaves of the Deepwood: one piece per Captain
+        ImageAsset("kd-captain-gladiator"  ) ::
+        ImageAsset("kd-captain-cheat"      ) ::
+        ImageAsset("kd-captain-jailor"     ) ::
+        ImageAsset("kd-captain-harrier"    ) ::
+        ImageAsset("kd-captain-ronin"      ) ::
+        ImageAsset("kd-captain-adventurer" ) ::
+        ImageAsset("kd-captain-scoundrel"  ) ::
+        ImageAsset("kd-captain-arbiter"    ) ::
+        ImageAsset("kd-captain-vagrant"    ) ::
+        ImageAsset("kd-captain-ranger"     ) ::
+        ImageAsset("kd-captain-tinker"     ) ::
+        ImageAsset("kd-captain-thief"      ) ::
 
         ImageAsset("kd-acclaim"          ) ::
     $)
