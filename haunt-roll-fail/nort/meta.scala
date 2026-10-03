@@ -168,10 +168,5 @@ object Meta extends MetaGame { mmm =>
     ) ::
     $
 
-    override val about = $(
-        "An adaptation of the " ~ "Northgard: Uncharted Lands".hl ~ " board game.",
-        " ".pre.div,
-        "Very much " ~ "under construction".styled(xstyles.warning) ~ ".",
-        "The base game comes first; the expansions after that.",
-    )
+    override val showAbout = false
 }
