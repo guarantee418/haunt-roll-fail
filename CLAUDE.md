@@ -296,12 +296,16 @@ file covers the build, server and deploy. No session can ssh to the server
   score, stacked upwards when tied, with a count badge past 30. Only Gorge has
   one. Official VP marker art (`webp2/root/images/vp/`, `officialVP` in
   `root/ui.scala`) exists for the Homeland Twilight Council, Knaves and
-  Lilypad Diaspora, cut from page 17 of `root-factions/`, and the Marquise:
-  the Council marker's laurel frame recoloured, with the Marquise head
-  (`cat100.webp`) from the Root Database (https://www.therootdatabase.com/,
+  Lilypad Diaspora, cut from page 17 of `root-factions/`. The ten other Leder
+  factions (Marquise, Eyrie, Alliance, Vagabond, Riverfolk, Lizards, Duchy,
+  Corvids, Hundreds, Keepers) have markers made in the same style: the
+  Council marker's laurel separated from its background, on a tile of the
+  faction colour (the head colour darkened 8%), with the faction head from
+  the Root Database (https://www.therootdatabase.com/,
   `/media/small_component_icons/custom/<animal>100.webp`, the same heads the
-  official markers print). Other factions fall back to their `-glyph` head
-  icon until their markers are added.
+  official markers print). They aren't official art; swap in the official
+  markers from Leder's print-and-play files if they become available.
+  Mirror and fan factions fall back to their `-glyph` head icon.
 - Boards with printed item slots (Gorge, Marsh) set `itemSlots` (`itemGrid`
   for the usual 2x6 layout); `drawItemSlots` draws `game.uncrafted` on them.
 - The Homeland Marsh map is `MarshBoard` in `root/maps.scala` (option

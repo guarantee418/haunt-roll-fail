@@ -404,7 +404,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     }
 
     // The VP markers we have art for, by faction style; other factions are shown by their glyph
-    val officialVP = Map("mc" -> "vp-mc", "TC" -> "vp-tc", "KD" -> "vp-kd", "hld" -> "vp-ld", "LD" -> "vp-ld")
+    val officialVP = Map(
+        "mc" -> "vp-mc", "ed" -> "vp-ed", "wa" -> "vp-wa", "vb" -> "vp-vb", "rf" -> "vp-rf",
+        "lc" -> "vp-lc", "ud" -> "vp-ud", "cc" -> "vp-cc", "lh" -> "vp-lh", "ki" -> "vp-ki",
+        "TC" -> "vp-tc", "KD" -> "vp-kd", "hld" -> "vp-ld", "LD" -> "vp-ld")
 
     // Faction VP markers on the score track printed on the board (only some boards have one).
     // Factions on the same score are stacked upwards; a faction with a dominance or in a coalition has no marker.
