@@ -94,8 +94,11 @@ object Backup {
 
         def run[R](a : DBIOAction[R, NoStream, Nothing]) : R = Await.result(db.run(a), Duration.Inf)
 
-        // Entry count and last index of each exported game
-        var exported = Map[String, (Int, Int)]()
+        // Entry count, last index and file time of each exported game; a file
+        // changed by something else (a git pull) is written again
+        var exported = Map[String, (Int, Int, Long)]()
+
+        def modified(path : Path) = if (Files.exists(path)) Files.getLastModifiedTime(path).toMillis else 0L
 
         def gameLog(id : String) : (Int, String) = {
             val l = run(entries.filter(_.journalId === id).sortBy(_.index).result)
@@ -118,12 +121,12 @@ object Backup {
                 run(plays.sortBy(p => (p.journalId, p.userId)).result).map(p => row(p.journalId, p.userId, p.secret))))
 
             js.foreach { j =>
-                val s = stats.getOrElse(j.id, (0, -1))
+                val (n, last) = stats.getOrElse(j.id, (0, -1))
                 val path = dir.resolve("games").resolve(j.id + ".tsv")
 
-                if (exported.get(j.id) != Some(s) || !Files.exists(path)) {
+                if (exported.get(j.id) != Some((n, last, modified(path))) || !Files.exists(path)) {
                     write(path, gameLog(j.id)._2)
-                    exported += j.id -> s
+                    exported += j.id -> (n, last, modified(path))
                 }
             }
         }
