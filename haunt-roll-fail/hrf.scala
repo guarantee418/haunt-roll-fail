@@ -366,11 +366,11 @@ class HRFUI(implicit resources : Resources) {
     logger.alog(Empty ~ "John 3:16")
 
     def topMenu() {
-        action.asker.zask(HRF.menuMetas./(m => ZBasic("Kings and Chronicles".hh(xstyles.larger110)(ExternalStyle("consolas")), metaLabel(m), () => if (m == root.Meta) rootMenu() else new HRFMetaUI(this, m, 0).withMeta(), ZBasic.choice.but(xstyles.thumargin))))
+        action.asker.zask(HRF.menuMetas./(m => ZBasic("Kings and Chronicles".hh(xstyles.larger110)(ExternalStyle("consolas")), metaLabel(m), () => if (m == root.Meta) rootMenu() else new HRFMetaUI(this, m, 0)(resources).withMeta(), ZBasic.choice.but(xstyles.thumargin))))
     }
 
     def rootMenu() {
-        action.asker.zask(HRF.rootMetas./(m => ZBasic("Root".hh(xstyles.larger110)(ExternalStyle(root.Meta.titleFont.|(""))), rootLabel(m), () => new HRFMetaUI(this, m, 0).withMeta(), ZBasic.choice.but(xstyles.thumargin))) :+
+        action.asker.zask(HRF.rootMetas./(m => ZBasic("Root".hh(xstyles.larger110)(ExternalStyle(root.Meta.titleFont.|(""))), rootLabel(m), () => new HRFMetaUI(this, m, 0)(resources).withMeta(), ZBasic.choice.but(xstyles.thumargin))) :+
             ZBasic(" ", "Back", () => topMenu()))
     }
 
@@ -391,14 +391,16 @@ class HRFUI(implicit resources : Resources) {
             m.label.spn(xstyles.larger110)(ExternalStyle(m.titleFont.|("")))
 
     HRF.param("meta")./~(mn => HRF.metas.%(_.name == mn).single)./{m =>
-        new HRFMetaUI(this, m, 800).withMeta()
+        new HRFMetaUI(this, m, 800)(resources).withMeta()
     }.|{
         topMenu()
     }
 
 }
 
-class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(implicit resources : Resources) {
+class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseResources : Resources) {
+    implicit val resources : Resources = meta.menuImages.any.?(baseResources.copy(images = baseResources.images.copy(sources = baseResources.images.sources ++ meta.menuImages.map { case (k, v) => k.toLowerCase -> v }))).|(baseResources)
+
     var settings : $[Setting] = $
 
     var history = new web.History("/play/" + meta.name, dom.window.location.search, dom.window.location.hash)
@@ -890,7 +892,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(implic
             ) ++
             meta.intLinks./((t, l) => ZBasic("Other", t, () => {
                 HRF.metas.%(_.name == l).single./{ m =>
-                    new HRFMetaUI(ui, m, 800).withMeta()
+                    new HRFMetaUI(ui, m, 800)(baseResources).withMeta()
                 }.|(throw new Error("meta not found " + l))
             })) ++
             meta.extLinks./((t, l) => ZOption(Div(meta.extLinksName), Link(l, t.div(xstyles.divint) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough), ZBasic.infoch ++ $(xstyles.link)))) ++
@@ -1171,7 +1173,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(implic
 
                 ui.action.asker.zask(
                     $(ZOption(t, Empty)) ++
-                    opponents./(f => ZBasic(t, meta.factionElem(f).spn(xstyles.bold) ~ meta.factionNote(f), () => {
+                    opponents./(f => ZBasic(t, meta.factionChosenElem(f), () => {
                         opponents :-= f
                         askAdd()
                     }, ZBasic.infoch ++ $(xstyles.optionOn))) ++
@@ -1236,6 +1238,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(implic
                             case Human  => " Human ".pre.hl
                             case Bot(s) => " Bot / ".pre ~ (s + " ").pre.hl
                         }).div(xstyles.width14ex), xstyles.outlined))) ~
+                        meta.factionRowOptions(f, seating).some./(l => " " ~ Parameter("row-option", OnClick(Span(l.find(options.selected.has)./(o => o.valueOn).|(meta.factionRowNone).div(xstyles.width14ex), xstyles.outlined)))).|(Empty) ~
                         Div(
                             (seating.head == f).?("   ".pre.spn(xstyles.larger125)).|(OnClick("up",   Span(" ▲ ".pre.spn(xstyles.larger125), xstyles.outlined))) ~
                             (seating.last == f).?("   ".pre.spn(xstyles.larger125)).|(OnClick("down", Span(" ▼ ".pre.spn(xstyles.larger125), xstyles.outlined))),
@@ -1243,6 +1246,13 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(implic
                         , ZBasic.choice :+ xstyles.player), {
                         case "difficulty" =>
                             difficulties += f -> ($(Human) ++ meta.getBots(f)./(Bot) ++ $(Human)).dropWhile(_ != difficulties(f)).drop(1).head
+                            setupQuestions(page)
+                        case "row-option" =>
+                            meta.factionRowClick(f, seating, options.selected).foreach { o =>
+                                if (options.selected.has(o).not)
+                                    options = options.click(o)
+                            }
+                            hrf.web.Local.set(optionsSaveKey, (options.selected ++ options.dimmed ++ unneeded)./(meta.writeOption).join(" "))
                             setupQuestions(page)
                         case "up" =>
                             val a = seating.takeWhile(_ != f)

@@ -8,7 +8,7 @@ these rules ("the cards are always right").
 
 | Part | State |
 |---|---|
-| Year loop (phases 1–5), seven years | done |
+| Year loop (phases 1–5), seven years (or as set in the options) | done |
 | Decks: draw / hand / active / discard, reshuffle only when drawing from an empty pile | done |
 | Wait, Replace (1 lore), Remove (2 lore), Upgrade (3 lore), Pass | done |
 | Development deck (2 Early + 4 Advanced per player), Achievements in year 7 | done |
@@ -21,7 +21,9 @@ these rules ("the cards are always right").
 | Card effects that need the map, opponents' hands or combat | not started |
 | Map tiles, territories, borders, exploring | done: tile data in `tiles.scala`, territories and placement rules in `board.scala`, setup, Recruit, Move, Explore, Build, Feast and combat in `map.scala`. Tile images in `webp2/nort/images/tile/` (`tile-31` to `tile-33` and `start-5` from the owner's photos) |
 | Card display (like Arcs): Development and Achievement cards in the `court` pane on top for everyone, your hand (and played cards) in the `hand` pane at the bottom; click or tap a card to see it full screen | done |
-| Player colors (blue, red, yellow, purple, green by seat) | done; no green starting card images, green uses the blue ones |
+| Player colors, chosen per clan on the setup screen (default blue, red, yellow, purple, green by seat) | done; no green starting card images, green uses the blue ones |
+| Game length 5–10 years (10-year variant: 3 Early + 6 Advanced per player), Fame victory only, First seat goes first | done (options) |
+| Modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done; clan powers: Stag, Wolf, Goat, Raven, Boar done, Bear (Kaija) and Snake (Scorched Earth) not yet |
 | Starting card list | Recruit, Move, Explore, Build, Feast ×2 (from the cards) |
 

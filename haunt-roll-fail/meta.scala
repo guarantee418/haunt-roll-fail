@@ -125,6 +125,21 @@ trait MetaBase {
     def factionName(f : F) : String
     def factionElem(f : F) : Elem
     def factionNote(f : F) : Elem = Empty
+    // A faction already picked for the game, in the faction picker
+    def factionChosenElem(f : F) : Elem = factionElem(f).spn(xstyles.bold) ~ factionNote(f)
+
+    // Options chosen on the faction's own row of the setup screen (like a player color): the current one is shown, clicking changes it.
+    // They should be left out of optionPages.
+    def factionRowOptions(f : F, l : $[F]) : $[O] = $
+    def factionRowNone : Elem = "None".txt
+    // The options to turn on, in order, when the row is clicked; by default the next one
+    def factionRowClick(f : F, l : $[F], selected : $[O]) : $[O] = {
+        val all = factionRowOptions(f, l)
+        (all ++ all).dropWhile(o => selected.has(o).not).drop(1).take(1).some.|(all.take(1))
+    }
+
+    // Image name -> URL for images used in the menus (faction notes, option explanations), before the game's assets load
+    def menuImages : Map[String, String] = Map()
 
     def glyph() : |[String] = None
     def glyph(g : G) : |[String] = glyph()
