@@ -184,6 +184,26 @@ git fetch origin main && git push origin origin/main:refs/heads/deploy
 - Reports never include the page URL, because player links contain the
   player's secret.
 
+## Several sessions or accounts
+
+More than one Claude account (or person) can work on the site. Each needs
+write access to `guarantee418/haunt-roll-fail` (a GitHub collaborator) and
+GitHub connected in Claude (https://claude.ai/connect-github); the Claude
+GitHub App is already installed on the repo. Nothing else is needed: this
+file covers the build, server and deploy. No session can ssh to the server
+(the key is only on the owner's Mac), and none needs to.
+
+- Anyone with write access can deploy, and so restart the live server, by
+  pushing the `deploy` branch. Only give write access to people trusted with
+  that.
+- Work on separate branches and merge through pull requests; don't have two
+  sessions pushing to `main`.
+- Don't edit the same area in parallel (e.g. two sessions both in `nort/`).
+- The committed build output (`hrf-opt.js`, `hrf-opt.js.map`,
+  `hrf-opt/main.js`, `hrf-opt/main.js.map`) conflicts whenever two branches
+  both change client code. Never merge those files by hand: resolve the
+  source conflicts, run `sbt fullOptJS` again, and commit the new build.
+
 ## Gotchas
 
 - Over https (or on `localhost`), the loaders in
