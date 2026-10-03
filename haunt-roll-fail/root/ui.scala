@@ -266,9 +266,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case SkunkAAACaptain(Birdsong) => { DrawRect(pr + "captain-birdsong", -42, -81, 85, 86) }
             case SkunkAAACaptain(Daylight) => { DrawRect(pr + "captain-daylight", -42, -81, 85, 86) }
             case SkunkAAACaptain(Evening)  => { DrawRect(pr + "captain-evening" , -42, -81, 85, 86) }
-            case KnavesCaptain(0) => { DrawRect(pr + "captain-birdsong", -42, -81, 85, 86) }
-            case KnavesCaptain(1) => { DrawRect(pr + "captain-daylight", -42, -81, 85, 86) }
-            case KnavesCaptain(_) => { DrawRect(pr + "captain-evening" , -42, -81, 85, 86) }
+            case KnavesCaptain(i) => { DrawRect(faction.as[Knaves]./~(_.captains.lift(i))./(k => pr + "captain-" + k.name.toLowerCase).|(pr + "captain-evening"), -42, -81, 85, 86) }
             case Acclaim => { DrawRect(pr + "acclaim", -45, -45, 90, 90) }
             case _ : CommonSkunkWarrior => { DrawRect(pr + "skunk", -36, -81, 70, 86) }
 
@@ -1792,7 +1790,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 Gap ~ Gap ~ f.bag./(i => Image(i.exhaust.imgid, styles.ii)).merge.div(xstyles.smaller75)
 
             case f : Knaves =>
-                f.captains.indexed./((k, i) => Hint(k.name + "\n" + k.text, (Image(KnavesCaptain(i).imgid(f), styles.wr) ~ " " ~ f.is(k).?(k.name.hl).|(f.retired.has(k).?(k.name.txt).|(k.name.styled(f))) ~ f.retired.has(k).?(" (retired)".txt)).div(styles.minister))).merge ~
+                f.captains.indexed./((k, i) => Hint(k.name + "\n" + k.text, (Image(f.style + "-captain-" + k.name.toLowerCase, styles.wr) ~ " " ~ f.is(k).?(k.name.hl).|(f.retired.has(k).?(k.name.txt).|(k.name.styled(f))) ~ f.retired.has(k).?(" (retired)".txt)).div(styles.minister))).merge ~
                 Hint("Acclaim\n" + f.all(Acclaim).num + " on the map\n" + f.pooled(Acclaim) + " available",
                     (Image("empty-token", styles.token) *** f.all(Acclaim).num) ~ (Image(f.style + "-acclaim", styles.token) *** f.pooled(Acclaim))) ~ Break ~
                 Hint("Prisoners\n" + f.prisoners.num + " in the forests", ("Prisoners ".txt ~ f.prisoners.num.hl).div) ~

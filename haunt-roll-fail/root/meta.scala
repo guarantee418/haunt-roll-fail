@@ -2920,6 +2920,20 @@ object Meta extends MetaGame {
         ImageAsset("kd-captain-daylight-empty" , "kd-captain-empty" ) ::
         ImageAsset("kd-captain-evening-empty"  , "kd-captain-empty" ) ::
 
+        // Knaves of the Deepwood: one piece per Captain; ones without their own art yet use a playtest captain
+        ImageAsset("kd-captain-gladiator"  ) ::
+        ImageAsset("kd-captain-cheat"      ) ::
+        ImageAsset("kd-captain-jailor"     ) ::
+        ImageAsset("kd-captain-harrier"    ) ::
+        ImageAsset("kd-captain-ronin"      , "kd-captain-birdsong" ) ::
+        ImageAsset("kd-captain-adventurer" , "kd-captain-daylight" ) ::
+        ImageAsset("kd-captain-scoundrel"  , "kd-captain-evening"  ) ::
+        ImageAsset("kd-captain-arbiter"    , "kd-captain-birdsong" ) ::
+        ImageAsset("kd-captain-vagrant"    , "kd-captain-daylight" ) ::
+        ImageAsset("kd-captain-ranger"     , "kd-captain-evening"  ) ::
+        ImageAsset("kd-captain-tinker"     , "kd-captain-birdsong" ) ::
+        ImageAsset("kd-captain-thief"      , "kd-captain-daylight" ) ::
+
         ImageAsset("kd-acclaim"          ) ::
     $)
 
