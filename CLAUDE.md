@@ -288,6 +288,12 @@ file covers the build, server and deploy. No session can ssh to the server
   path (Forge - Saloon) divides forests and is crossed by the Fork - Pueblo
   path, so the four forests around that crossing are adjacent in pairs
   (`damCrossing`); the bridge path (Homestead - Lookout) divides nothing.
+- Root map drawing (`drawMap` in `root/ui.scala`): warriors of the same
+  faction and kind in a region are drawn as one figure with a count badge
+  (`stacks`, `drawCount`), like the Northgard unit counts. Boards with a
+  printed score track set `scoreTrack` (centre of the 0 box, box spacing) in
+  `root/maps.scala`; `drawScoreTrack` puts each faction's glyph on its score,
+  stacked upwards when tied, with a count badge past 30. Only Gorge has one.
 - The Homeland Marsh map is `MarshBoard` in `root/maps.scala` (option
   `MarshMap`, images in `webp2/root/images/marsh/`, from the board image and
   the flood markers in the Homeland print-and-play PDF). The printed board

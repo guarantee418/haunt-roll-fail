@@ -384,6 +384,61 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             None
     }
 
+    // A count badge like the Northgard unit counts: a dark disc with a light rim and a white number
+    def drawCount(g : dom.CanvasRenderingContext2D, n : Int, x : Double, y : Double) {
+        g.save()
+        g.globalAlpha = 1.0
+        g.beginPath()
+        g.arc(x, y, 25, 0, 2 * math.Pi)
+        g.fillStyle = "#2b2b2b"
+        g.fill()
+        g.lineWidth = 4
+        g.strokeStyle = "#f4f0e6"
+        g.stroke()
+        g.fillStyle = "#ffffff"
+        g.font = "bold " + (n >= 10).?(28).|(34) + "px sans-serif"
+        g.textAlign = "center"
+        g.textBaseline = "middle"
+        g.fillText(n.toString, x, y + 2)
+        g.restore()
+    }
+
+    // Faction glyphs on the score track printed on the board (only some boards have one).
+    // Factions on the same score are stacked upwards; a faction with a dominance or in a coalition has no marker.
+    def drawScoreTrack(g : dom.CanvasRenderingContext2D) {
+        game.board.scoreTrack.foreach { case (x0, y0, step) =>
+            val size = 64
+            val max = game.board.scoreTrackMax
+
+            val scoring = factions.%(game.states.contains).%(f => (f.dominance.none || f.demagogue) && f.coalition.none)
+
+            scoring.groupBy(f => f.vp.clamp(0, max)).foreach { case (vp, l) =>
+                val x = x0 + vp * step
+
+                l.sortBy(factions.indexOf).indexed.foreach { (f, i) =>
+                    val y = y0 - i * size * 0.7
+                    val glyph = f.style + "-glyph"
+
+                    if (resources.images.has(glyph))
+                        g.drawImage(resources.images.get(glyph), x - size / 2, y - size / 2, size, size)
+                    else {
+                        g.save()
+                        g.fillStyle = "#2b2b2b"
+                        g.font = "bold 30px sans-serif"
+                        g.textAlign = "center"
+                        g.textBaseline = "middle"
+                        g.fillText(f.short, x, y)
+                        g.restore()
+                    }
+
+                    // Scores off the end of the track (or below 0) keep the real number
+                    if (vp != f.vp)
+                        drawCount(g, f.vp, x + size / 2 - 6, y + size / 2 - 6)
+                }
+            }
+        }
+    }
+
     def drawMap() {
         // The map images may still be loading (slow connections, phones);
         // retry instead of leaving the map blank until the next update
@@ -718,6 +773,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         val noruins = (game.turn > 0) && factions.of[Hero].none && factions.of[Horde].none && game.hirelings.has(Brigand).not
 
+        // How many warriors each stacked warrior figure stands for
+        val stacks = mutable.Map[(Region, Faction, Piece), Int]()
+
         game.board.regions.foreach { r =>
             var fixed : $[DrawItem] = $
             var tofix : $[DrawItem] = $
@@ -725,7 +783,19 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             var sticking : $[DrawItem] = $
             var free : $[DrawItem] = $
 
-            val (unruins, figures) = currentGame.ui.graveyard.?(game.graveyard.get(r).|(Nil)).|(game.displayRegion(r)).partition(_.piece.is[Ruins] && noruins)
+            val (unruins, shown) = currentGame.ui.graveyard.?(game.graveyard.get(r).|(Nil)).|(game.displayRegion(r)).partition(_.piece.is[Ruins] && noruins)
+
+            // Warriors of the same faction and kind in a region are drawn as one figure with a count
+            val (warriors, others) = shown.partition(_.piece.is[Warrior])
+            val kinds = warriors./(w => (w.faction, w.piece)).distinct
+
+            kinds.foreach { case (f, p) =>
+                val n = warriors.count(w => w.faction == f && w.piece == p)
+                if (n > 1)
+                    stacks((r, f, p)) = n
+            }
+
+            val figures = others ++ kinds./{ case (f, p) => warriors.find(w => w.faction == f && w.piece == p).get }
 
             var gates = game.board.slots.get(r).|(Nil).take(r.as[Clearing].?(game.slots)).drop(unruins.num)
 
@@ -844,6 +914,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         draws.%(_.piece != Keep).sortBy(d => d.y - (d.piece.is[Token]).??(10000) - (d.piece == FreeBuildingSlot).??(20000) - (d.piece == Keep).??(40000)).foreach { d =>
             g.drawImage(resources.images.get(d.rect.key), d.rect.x, d.rect.y)
         }
+
+        // Counts on stacked warriors, at the lower right of the figure
+        draws.foreach { d =>
+            stacks.get((d.region, d.faction, d.piece)).foreach { n =>
+                drawCount(g, n, d.rect.x + d.rect.width - 10, d.rect.y + d.rect.height - 18)
+            }
+        }
+
+        drawScoreTrack(g)
 
         hhh.foreach { h =>
             g.globalAlpha = h._2

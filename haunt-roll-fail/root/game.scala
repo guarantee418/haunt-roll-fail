@@ -156,6 +156,11 @@ trait Board {
     val ferry : $[Clearing] = $
     val tower : $[Clearing] = $
 
+    // A score track printed on the board: the centre of the 0 box and the distance between boxes,
+    // with boxes 0 to scoreTrackMax in a row
+    val scoreTrack : |[(Double, Double, Double)] = None
+    val scoreTrackMax = 30
+
     // Homeland Marsh: clearings that can be flooded, in pairs (one of each pair is
     // flooded with 1-4 players, or left without a suit with 5+), and the paths
     // a flood marker links through a flooded clearing

@@ -909,6 +909,9 @@ object GorgeBoard extends Board {
 
     val inner = $(Fork, Pueblo)
 
+    // The 0-30 track along the bottom edge of the board image
+    override val scoreTrack = |((88.3, 2122.0, 74.63))
+
     object GorgeNW extends NamedForest("North-West")
     object GorgeN extends NamedForest("North")
     object GorgeNE extends NamedForest("North-East")
