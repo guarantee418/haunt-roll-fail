@@ -233,7 +233,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
         val original = game.original(c)
 
         if (f.at(c).has(MilitantEEE))
-            game.mapping += c -> (game.lostCity.has(c).??(original) ++ $(Frog))
+            game.mapping += c -> ((game.lostCity.has(c).??(original) ++ game.landmarkSuits(c)).distinct ++ $(Frog))
         else
         if (f.at(c).has(PeacefulEEE))
             game.mapping += c -> (original ++ $(Frog))

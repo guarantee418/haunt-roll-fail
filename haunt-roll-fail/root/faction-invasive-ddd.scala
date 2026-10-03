@@ -462,7 +462,7 @@ object InvasiveDDDExpansion extends FactionExpansion[InvasiveDDD] {
                 }
             }
 
-            game.mapping += c -> $(Frog)
+            game.mapping += c -> (game.landmarkSuits(c) ++ $(Frog))
 
             InvasiveDDDReprisalsMainAction(f)
 

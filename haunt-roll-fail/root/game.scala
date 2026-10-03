@@ -156,6 +156,14 @@ trait Board {
     val ferry : $[Clearing] = $
     val tower : $[Clearing] = $
 
+    // Homeland Marsh: clearings that can be flooded, in pairs (one of each pair is
+    // flooded with 1-4 players, or left without a suit with 5+), and the paths
+    // a flood marker links through a flooded clearing
+    val floodPairs : $[(Clearing, Clearing)] = $
+    def floodPaths(c : Clearing) : $[(Clearing, Clearing)] = $
+
+    def ruinsIn(l : $[Clearing]) : $[Clearing] = ruins.intersect(l)
+
     def opposite(r : Clearing) = diagonals./~{
         case (a, b) if a == r => Some(b)
         case (a, b) if b == r => Some(a)
@@ -400,6 +408,9 @@ case class Ruins(items : $[Item]) extends Building with Tenacious {
 
 case object Tower extends Pawn with Tenacious
 case object LostCity extends Pawn with Tenacious
+case object Mousehold extends Pawn with Tenacious
+case object Foxburrow extends Pawn with Tenacious
+case object Rabbittown extends Pawn with Tenacious
 
 
 
@@ -918,7 +929,7 @@ trait GameImplicits {
         }
 
         def connectedFor(o : Region) = {
-            val tt = game.transports.but(Ferry).but(OffTrail).%(_.allows(f, o))
+            val tt = game.transports.but(Ferry).but(OffTrail).but(FoxburrowRoads).%(_.allows(f, o))
             f.validDest.but(o).%(d => tt.exists(_.allows(f, o, d)))
         }
 
@@ -1551,6 +1562,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
         case TidalMap => Some(TidalBoard)
         case TundraMap => Some(TundraBoard)
         case GloomMap => Some(GloomBoard)
+        case MarshMap => Some(MarshBoard)
         case GorgeMap => Some(GorgeBoard)
         case _ => None
     }.only
@@ -1563,21 +1575,41 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var ferry : $[Clearing] = $
     var tower : $[Clearing] = $
     var lostCity : $[Clearing] = $
+    var mousehold : $[Clearing] = $
+    var foxburrow : $[Clearing] = $
+    var rabbittown : $[Clearing] = $
 
-    def landmarks : $[Clearing] = ferry ++ tower ++ lostCity
+    def landmarks : $[Clearing] = ferry ++ tower ++ lostCity ++ mousehold ++ foxburrow ++ rabbittown
+
+    // Suits the Homeland landmarks add to their clearings, kept even when the printed suit is covered
+    def landmarkSuits(c : Clearing) : $[BaseSuit] = mousehold.has(c).$(Mouse) ++ foxburrow.has(c).$(Fox) ++ rabbittown.has(c).$(Rabbit)
+
+    // Marsh with 5+ players: clearings without a suit marker
+    var unsuited : $[Clearing] = $
+
+    // Mousehold: warriors removed in battle in other mouse clearings during the current battle
+    var mouseholdPending : $[Figure] = $
 
     var used : $[Effect] = $
 
     def clearings = board.clearings.diff(scorched).diff(flooded)
+    def suited = clearings.diff(unsuited)
+
+    // Marsh: clearings linked through a flooded clearing by the paths on its flood marker
+    def floodLinked(c : Clearing) : $[Clearing] = flooded./~(board.floodPaths)./~{
+        case (a, b) if a == c => $(b)
+        case (a, b) if b == c => $(a)
+        case _ => $()
+    }
     def riverside = clearings.%(c => byRiver(c).any || board.byRiver(c).any)
 
     def fromForest(f : Forest) = board.fromForest(f).diff(scorched).diff(flooded)
 
-    def byRiver(c : Clearing) = (board.byRiver(c) ++ board.connected(c).intersect(flooded)./~(board.connected).but(c)).distinct.diff(scorched).%(o => blizzard.has((c, o)).not && blizzard.has((o, c)).not)
+    def byRiver(c : Clearing) = (board.byRiver(c) ++ board.connected(c).intersect(flooded.%(board.floodPaths(_).none))./~(board.connected).but(c)).distinct.diff(scorched).%(o => blizzard.has((c, o)).not && blizzard.has((o, c)).not)
 
     def connected(c : Clearing) = {
         val ll =
-        board.connected(c)
+        (board.connected(c) ++ floodLinked(c)).distinct
             .diff(scorched)
             .diff(flooded)
             .%!(o => rubble  .has((c, o)) || rubble  .has((o, c)))
@@ -1636,7 +1668,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var corners : $[Clearing] = $
     var homelands : $[Clearing] = $
 
-    val transports = $[Transport](Roads, Riverboat, Ferry, Swimmers, BurrowRoads, TunnelRoads, OffTrail)
+    val transports = $[Transport](Roads, Riverboat, Ferry, Swimmers, BurrowRoads, TunnelRoads, OffTrail, FoxburrowRoads)
 
     def slots(c : Clearing) = c.capacity + options.has(KeepExtraBuildingSlot).??(factions.of[Feline].%(game.states.contains).%(_.at(c).has(Keep)).num)
 
@@ -1703,6 +1735,9 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
             (tower.contains(c)).?(Figure(Neutral, Tower, 0)) ++
             (ferry.contains(c)).?(Figure(Neutral, Ferry, 0)) ++
             (lostCity.has(c)).?(Figure(Neutral, LostCity, 0)) ++
+            (mousehold.has(c)).?(Figure(Neutral, Mousehold, 0)) ++
+            (foxburrow.has(c)).?(Figure(Neutral, Foxburrow, 0)) ++
+            (rabbittown.has(c)).?(Figure(Neutral, Rabbittown, 0)) ++
             (scorched.contains(c)).??(0.to(11)./(n => Figure(Neutral, ScorchedEarthMarker(n % 6 + 1), n)))
     }
 

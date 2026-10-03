@@ -453,7 +453,9 @@ package object elem {
             case $(Mouse, Frog) => str.styled(styles.MouseFrog)
             case $(Fox, Rabbit, Mouse) => str.styled(styles.FoxRabbitMouse)
             case $(Fox, Rabbit, Mouse, Frog) => str.styled(styles.FoxRabbitMouseFrog)
-            case _ => (str + "?" + l.mkString("|")).hl
+            // Homeland landmarks add a second suit; a Marsh clearing can briefly have none
+            case Nil => str.hl
+            case l => str.styled(styles.get(l.head))
         }
     }
 

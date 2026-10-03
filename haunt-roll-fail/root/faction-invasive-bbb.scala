@@ -350,7 +350,7 @@ object InvasiveBBBExpansion extends FactionExpansion[InvasiveBBB] {
 
         case InvasiveBBBReprisalsFlipAction(f, l) =>
             l.foreach { c =>
-                game.mapping += c -> $(Frog)
+                game.mapping += c -> (game.landmarkSuits(c) ++ $(Frog))
             }
 
             Next

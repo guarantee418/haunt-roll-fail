@@ -36,7 +36,7 @@ case class Party(transport : $[Transport], movable : $[Movable])
 
 case object Roads extends Transport {
     override def allows(f : Faction, o : Region, d : Region)(implicit game : Game) = (o, d) @@ {
-        case (o : Clearing, d : Clearing) => board.connected(o).has(d) &&
+        case (o : Clearing, d : Clearing) => (board.connected(o).has(d) || game.floodLinked(o).has(d)) &&
             game.rubble.has((o, d)).not &&
             game.rubble.has((d, o)).not &&
             game.blizzard.has((o, d)).not &&
@@ -156,6 +156,21 @@ case object Ferry extends Transport with DisplayEffect with Pawn with Tenacious 
 
     override def allows(f : Faction, o : Region, d : Region)(implicit game : Game) = allows(f, o) && (o, d) @@ {
         case (o : Clearing, d : Clearing) => game.byRiver(o).has(d)
+        case _ => false
+    }
+}
+
+// Homeland Foxburrow landmark: fox clearings count as adjacent to it while moving, ignoring paths
+case object FoxburrowRoads extends Transport with DisplayEffect {
+    override def img = Image("foxburrow", styles.widepiece)
+    override val name = "Foxburrow"
+
+    override def allows(f : Faction)(implicit game : Game) = game.foxburrow.any
+
+    override def allows(f : Faction, o : Region, d : Region)(implicit game : Game) = allows(f, o) && (o, d) @@ {
+        case (o : Clearing, d : Clearing) => o != d && (
+            (game.foxburrow.has(o) && game.mapping.get(d).?(_.has(Fox))) ||
+            (game.foxburrow.has(d) && game.mapping.get(o).?(_.has(Fox))))
         case _ => false
     }
 }

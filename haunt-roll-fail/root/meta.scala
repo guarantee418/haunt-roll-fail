@@ -81,6 +81,16 @@ case object GorgeMap extends MapOption {
     )
 }
 
+case object MarshMap extends MapOption {
+    val valueOn = "Marsh".styled(LDvE)
+    override val explain = $(
+        "The " ~ "Homeland".hh ~ " marsh map, with 15 clearings.",
+        "With up to 4 players, one clearing of each colored pair is " ~ "Flooded".styled(ED) ~ ": it is no longer a clearing, and the paths on its flood marker link its neighbours.",
+        "With 5 or more players, no clearing is flooded, and one of each pair has no suit and gets " ~ "Mousehold".styled(Mouse) ~ ", " ~ "Foxburrow".styled(Fox) ~ " or " ~ "Rabbittown".styled(Rabbit) ~ ".",
+        "Two ruins go in the unnumbered ruin slots, two in the lowest numbered slots that are not flooded."
+    )
+}
+
 
 trait ClearingsOption extends GameOption with OneOfGroup {
     val group = "Clearings"
@@ -772,6 +782,39 @@ case object TowerLandmark extends Landmark {
     override def forcedOff(all : $[BaseOption]) = $(MapDefaultLandmarks, NoLandmarks)
 }
 
+case object MouseholdLandmark extends Landmark {
+    val name = "Mousehold"
+    override def elem = name.styled(Mouse)
+    override def forcedOff(all : $[BaseOption]) = $(MapDefaultLandmarks, NoLandmarks)
+    override val explain = $(
+        "Homeland".hh ~ " landmark, placed in a " ~ "mouse".styled(Mouse) ~ " clearing.",
+        "Adds the " ~ "mouse".styled(Mouse) ~ " suit to its clearing.",
+        "In battle, when warriors are removed from a different " ~ "mouse".styled(Mouse) ~ " clearing, their player may place them at " ~ "Mousehold".styled(Mouse) ~ "."
+    )
+}
+
+case object FoxburrowLandmark extends Landmark {
+    val name = "Foxburrow"
+    override def elem = name.styled(Fox)
+    override def forcedOff(all : $[BaseOption]) = $(MapDefaultLandmarks, NoLandmarks)
+    override val explain = $(
+        "Homeland".hh ~ " landmark, placed in a " ~ "fox".styled(Fox) ~ " clearing.",
+        "Adds the " ~ "fox".styled(Fox) ~ " suit to its clearing.",
+        "While moving, " ~ "fox".styled(Fox) ~ " clearings count as adjacent to " ~ "Foxburrow".styled(Fox) ~ ", ignoring paths."
+    )
+}
+
+case object RabbittownLandmark extends Landmark {
+    val name = "Rabbittown"
+    override def elem = name.styled(Rabbit)
+    override def forcedOff(all : $[BaseOption]) = $(MapDefaultLandmarks, NoLandmarks)
+    override val explain = $(
+        "Homeland".hh ~ " landmark, placed in a " ~ "rabbit".styled(Rabbit) ~ " clearing.",
+        "Adds the " ~ "rabbit".styled(Rabbit) ~ " suit to its clearing.",
+        "Once in Daylight, spend a " ~ "rabbit".styled(Rabbit) ~ " card to place a warrior in " ~ "Rabbittown".styled(Rabbit) ~ " for each other " ~ "rabbit".styled(Rabbit) ~ " clearing with your pieces, then battle there."
+    )
+}
+
 
 
 trait HirelingsOption extends GameOption with OneOfGroup {
@@ -1025,9 +1068,9 @@ object Meta extends MetaGame {
         $(SetupTypeCorners, SetupTypeHomelands) ++
         (n > 2).?(TotalWarDominance) ++
         $,
-        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap) ++
+        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
-        $(MapDefaultLandmarks, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark) ++
+        $(MapDefaultLandmarks, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         $,
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck) ++
         $(NonBirdPartisans, UnthematicCoffinMakers, UnthematicPropagandaBureau) ++
@@ -1064,7 +1107,7 @@ object Meta extends MetaGame {
 
     override def optionsFor(n : Int, l : $[F]) =
         hiddenOptions ++
-        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap) ++
+        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck) ++
@@ -1094,7 +1137,7 @@ object Meta extends MetaGame {
         l.of[Mischief].any.$(ThreeOfEachPlot, EmbeddedAgentsBeforeBattle, DiversionPlot, BrutalHonesty) ++
         l.of[Expedition].any.$(ColumnBonusCardVP) ++
         l.of[Horde].any.$(SeparateItemsInRuins) ++
-        $(MapDefaultLandmarks, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark) ++
+        $(MapDefaultLandmarks, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         $(NoHirelings, ThreeDemotedHirelings, TwoDemotedOneNormalHirelings, OneDemotedTwoNormalHirelings, ThreeNormalHirelings, ThreeRandomHirelings, SelectedHirelings) ++
         $(HirelingHirelingClash, FactionHirelingClash) ++
         hirelings./(IncludeHireling)
@@ -1285,6 +1328,9 @@ object Meta extends MetaGame {
         ImageAsset("ferry"                ) ::
         ImageAsset("tower"                ) ::
         ImageAsset("lost-city"            ) ::
+        ImageAsset("mousehold"            ) ::
+        ImageAsset("foxburrow"            ) ::
+        ImageAsset("rabbittown"           ) ::
 
 
         ImageAsset("clearing-highlight-placement" ) ::
@@ -1728,6 +1774,36 @@ object Meta extends MetaGame {
         ImageAsset("clearing-name-seaside" ) ::
         ImageAsset("clearing-name-hovel" ) ::
         ImageAsset("clearing-name-deep-woods" ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => options.has(MarshMap), "marsh", "marsh:")(
+        ImageAsset("map"          , "map-bright" ) ::
+        ImageAsset("map-regions"  ).makeLossless ::
+        ImageAsset("map-woods"    ) ::
+
+        ImageAsset("building-slot", "empty-building-white") ::
+
+        ImageAsset("flood-weir" ) ::
+        ImageAsset("flood-mudflat" ) ::
+        ImageAsset("flood-mire" ) ::
+        ImageAsset("flood-fen" ) ::
+        ImageAsset("flood-bulrush" ) ::
+        ImageAsset("flood-peat" ) ::
+
+        ImageAsset("clearing-name-thatch" ) ::
+        ImageAsset("clearing-name-jetty" ) ::
+        ImageAsset("clearing-name-bayou" ) ::
+        ImageAsset("clearing-name-delta" ) ::
+        ImageAsset("clearing-name-sedge" ) ::
+        ImageAsset("clearing-name-weir" ) ::
+        ImageAsset("clearing-name-heron" ) ::
+        ImageAsset("clearing-name-mudflat" ) ::
+        ImageAsset("clearing-name-cattail" ) ::
+        ImageAsset("clearing-name-bulrush" ) ::
+        ImageAsset("clearing-name-peat" ) ::
+        ImageAsset("clearing-name-mire" ) ::
+        ImageAsset("clearing-name-fen" ) ::
+        ImageAsset("clearing-name-confluence" ) ::
+        ImageAsset("clearing-name-crossing" ) ::
     $) ::
     ConditionalAssetsList((factions, options) => options.has(GloomMap), "gloom", "gloom:")(
         ImageAsset("map"          , "map-bright" ) ::

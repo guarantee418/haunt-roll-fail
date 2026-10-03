@@ -211,17 +211,34 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     var isOver = false
 
-    val expansions : $[Expansion] = $(MapExpansion, CardsExpansion, CommonExpansion)
+    // Modules and expansions turned on in the options
+    val modules : $[Module] = Module.all.%(m => options.has(ModuleOption(m)))
+
+    def has(m : Module) = modules.has(m)
+
+    // Module expansions come first, so they can take over any core action
+    val expansions : $[Expansion] = modules./~(_.expansion) ++ $(MapExpansion, CardsExpansion, CommonExpansion)
 
     var seating : $[Faction] = setup
 
     var factions : $[Faction] = setup
     var states = Map[Faction, FactionState]()
 
-    // Colors go round the table in seating order
-    val colors : Map[Faction, PlayerColor] = setup.zip(PlayerColor.all).toMap
+    // Colors chosen on the setup screen; clans without one get the free colors in seating order
+    val colors : Map[Faction, PlayerColor] = {
+        val chosen = options.of[ColorOption].%(o => setup.has(o.clan)).groupBy(_.clan)./{ case (f, l) => f -> l.head.color }.toMap
+        val free = PlayerColor.all.diff(chosen.values.$)
+        chosen ++ setup.%(f => chosen.contains(f).not).zip(free).toMap
+    }
 
-    val lastYear = 7
+    val lastYear = options.of[YearsOption].single./(_.years).|(YearsOption.standard.years)
+
+    // One Development card per player each year but the last; about a third are Early cards (2 + 4 in the standard 7-year game, 3 + 6 in the 10-year one)
+    val earlyPerPlayer = (lastYear - 1 + 2) / 3
+    val advancedPerPlayer = lastYear - 1 - earlyPerPlayer
+
+    // Three closed territories with large buildings win at the end of a year
+    val domination = options.has(FameOnly).not
 
     var year = 0
     var first : Faction = setup.first
@@ -435,7 +452,7 @@ object CommonExpansion extends Expansion {
             if (version != gaming.version)
                 log("Saved game version", version.hlb)
 
-            options.foreach { o =>
+            options.%(_.is[ColorOption].not).foreach { o =>
                 log(o.group, o.valueOn)
             }
 
@@ -446,12 +463,12 @@ object CommonExpansion extends Expansion {
             Shuffle[Card](Cards.earlyCards, ShuffledEarlyAction(_))
 
         case ShuffledEarlyAction(l) =>
-            game.developments = l.take(2 * factions.num)
+            game.developments = l.take(game.earlyPerPlayer * factions.num)
 
             Shuffle[Card](Cards.advancedCards, ShuffledAdvancedAction(_))
 
         case ShuffledAdvancedAction(l) =>
-            game.developments ++= l.take(4 * factions.num)
+            game.developments ++= l.take(game.advancedPerPlayer * factions.num)
 
             Shuffle[Card](Cards.achievementCards, ShuffledAchievementsAction(_))
 
@@ -461,7 +478,10 @@ object CommonExpansion extends Expansion {
             Then(ShuffleStartingDecksAction(factions))
 
         case ShuffleStartingDecksAction(Nil) =>
-            Random[Faction](factions, FirstPlayerAction(_))
+            if (options.has(FirstSeatStarts))
+                Then(FirstPlayerAction(game.seating.first))
+            else
+                Random[Faction](factions, FirstPlayerAction(_))
 
         case ShuffleStartingDecksAction(f :: rest) =>
             f.upgrades = $(ClanCard(f, 1), ClanCard(f, 2))
@@ -912,7 +932,7 @@ object CommonExpansion extends Expansion {
 
         // 5. END OF YEAR
         case EndOfYearAction =>
-            val rulers = factions.%(f => game.strongholds(f).num >= 3)
+            val rulers = game.domination.??(factions.%(f => game.strongholds(f).num >= 3))
 
             if (rulers.any)
                 Then(DominationAction(rulers))

@@ -14,10 +14,15 @@ import hrf.logger._
 // checks that rebuilding the game from a prefix of them (what undo does, via
 // performVoid) gives the same state as the live game at that point.
 object ReplayCheck {
-    def options(seating : $[Faction]) : $[Meta.O] = $(
+    var marsh = false
+
+    def options(seating : $[Faction]) : $[Meta.O] = marsh.?($[Meta.O](
+        MarshMap, AllRandomClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
+        MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark, SeatingGiven, FactionSeatingGiven, SetupOrderPriority, CardDraftStandard,
+    )).|($[Meta.O](
         AutumnMap, DefaultClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
         FerryLandmark, LostCityLandmark, SeatingGiven, FactionSeatingGiven, SetupOrderPriority, CardDraftStandard,
-    ) ++ seating./(IncludeFaction)
+    )) ++ seating./(IncludeFaction)
 
     def privateMap(o : AnyRef, suffix : String) : Map[Any, Any] = {
         val f = o.getClass.getDeclaredFields.filter(_.getName.endsWith(suffix)).head
@@ -87,11 +92,14 @@ object ReplayCheck {
 
     def main(args : Array[String]) {
         val games = args.lift(0)./(_.toInt).|(6)
+        marsh = args.exists(_.startsWith("marsh"))
         val pool : $[$[Faction]] = args.lift(1)./(_ match {
             case "base" => $($(MC, ED, WA, VB), $(MC, ED, WA, LC), $(MC, ED, RF, UD))
             case "ld" => $($(MC, ED, WA, LDvE))
             case "tc" => $($(MC, ED, WA, TC))
             case "kd" => $($(MC, ED, WA, KD))
+            case "marsh5" => $($(MC, ED, WA, VB, LDvE), $(MC, ED, WA, KD, TC))
+            case "marsh" => $($(MC, ED, WA, VB), $(MC, ED, WA, LDvE), $(MC, WA, KD, TC))
         }).|($($(MC, WA, LDvE, KD), $(MC, ED, LDvE, KD), $(MC, WA, KD, TC), $(MC, WA, LDvE, TC)))
         var failures = 0
 

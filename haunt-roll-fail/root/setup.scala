@@ -21,6 +21,9 @@ case class OptionsAction(players : $[Player], setup : $[Faction], options : $[Me
 case object SetupMapAction extends ForcedAction
 case object DraftFactionsAction extends ForcedAction with Soft with OutOfTurn
 case class FloodedAction(random : Clearing, then : ForcedAction) extends RandomAction[Clearing]
+case class MarshFloodedAction(random : Clearing, then : ForcedAction) extends RandomAction[Clearing]
+case class MarshUnsuitedAction(random : Clearing, then : ForcedAction) extends RandomAction[Clearing]
+case class MarshLandmarksAction(shuffled : $[Clearing]) extends ShuffledAction[Clearing]
 case class BlizzardAction(a : Clearing, b : Clearing, then : ForcedAction) extends RandomAction[(Clearing, Clearing)] { def random = (a, b) }
 case class SaveMappingAction(shuffled : $[Clearing]) extends ShuffledAction[Clearing]
 case class ThreeFourFiveMappingAction(shuffled : $[Clearing]) extends ShuffledAction[Clearing]
@@ -116,6 +119,25 @@ case class PlayChoiceDescAction(obj : PlayChoice, remaining : $[Faction]) extend
 
 
 object SetupExpansion extends MandatoryExpansion {
+    def homelandPlaced(l : Landmark)(implicit game : Game) = l @@ {
+        case MouseholdLandmark => game.mousehold.any
+        case FoxburrowLandmark => game.foxburrow.any
+        case RabbittownLandmark => game.rabbittown.any
+        case _ => false
+    }
+
+    // Homeland landmarks add their suit to the clearing (a clearing without a suit gets just that one)
+    def placeHomelandLandmark(l : Landmark, c : Clearing)(implicit game : Game) {
+        val s = l @@ {
+            case MouseholdLandmark => game.mousehold :+= c; Mouse
+            case FoxburrowLandmark => game.foxburrow :+= c; Fox
+            case RabbittownLandmark => game.rabbittown :+= c; Rabbit
+        }
+
+        game.original += c -> (game.original.get(c).|($) :+ s).distinct
+        game.mapping += c -> (game.mapping.get(c).|($) :+ s).distinct
+    }
+
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         // INIT
         case StartAction(version) =>
@@ -150,6 +172,29 @@ object SetupExpansion extends MandatoryExpansion {
         case SetupMapAction if board == TidalBoard && game.flooded.none =>
             Random[Clearing](board.inner, c => FloodedAction(c, SetupMapAction))
 
+        // Homeland Marsh: one of each colored pair is flooded with 1-4 players, or left without a suit with 5+
+        case SetupMapAction if board == MarshBoard && game.flooded.num + game.unsuited.num < board.floodPairs.num =>
+            val (a, b) = board.floodPairs(game.flooded.num + game.unsuited.num)
+
+            if (game.players.num <= 4)
+                Random[Clearing]($(a, b), c => MarshFloodedAction(c, SetupMapAction))
+            else
+                Random[Clearing]($(a, b), c => MarshUnsuitedAction(c, SetupMapAction))
+
+        case MarshFloodedAction(c, then) =>
+            game.flooded :+= c
+
+            log(c.name.styled(ED), "was", "flooded".hl ~ ",", board.floodPaths(c)./{ case (a, b) => a.name.hl ~ " and " ~ b.name.hl }.comma, "became adjacent")
+
+            then
+
+        case MarshUnsuitedAction(c, then) =>
+            game.unsuited :+= c
+
+            log(c.name.hl, "had no suit")
+
+            then
+
         case FloodedAction(c, then) =>
             log(c.name.styled(ED), "was", "flooded".hl ~ ",", "water connected", board.connected(c).dropRight(1)./(_.name.hl).comma, "and", board.connected(c).last.name.hl)
 
@@ -161,64 +206,64 @@ object SetupExpansion extends MandatoryExpansion {
             game.original = AutumnBoard.defaultMapping
             game.mapping = game.original
 
-            game.ruins = board.ruins.intersect(clearings)./(_ -> Ruins($)).toMap
+            game.ruins = board.ruinsIn(clearings)./(_ -> Ruins($)).toMap
 
             MappingDoneAction
 
         case SetupMapAction if options.has(AllRandomClearings) =>
-            Shuffle[Clearing](clearings, SaveMappingAction(_))
+            Shuffle[Clearing](game.suited, SaveMappingAction(_))
 
         case SetupMapAction if options.has(NoClustersClearings) =>
-            ShuffleUntil[Clearing](clearings, l => {
+            ShuffleUntil[Clearing](game.suited, l => {
                 val mapping = l.zip($(Fox, Fox, Fox, Fox, Rabbit, Rabbit, Rabbit, Rabbit, Mouse, Mouse, Mouse, Mouse)).toMap
 
                 def z(c : Clearing) = game.connected(c).%(mapping(_) == mapping(c)).num
 
-                clearings./(z).max == 0
+                game.suited./(z).max == 0
             }, SaveMappingAction(_))
 
         case SetupMapAction if options.has(SuitPairsClearings) =>
-            ShuffleUntil[Clearing](clearings, l => {
+            ShuffleUntil[Clearing](game.suited, l => {
                 val mapping = l.zip($(Fox, Fox, Fox, Fox, Rabbit, Rabbit, Rabbit, Rabbit, Mouse, Mouse, Mouse, Mouse)).toMap
 
                 def z(c : Clearing) = game.connected(c).%(mapping(_) == mapping(c)).num
 
-                clearings./(z).%(_ != 1).none
+                game.suited./(z).%(_ != 1).none
             }, SaveMappingAction(_))
 
         case SetupMapAction if options.has(ConnectedClearings) =>
-            ShuffleUntil[Clearing](clearings, l => {
+            ShuffleUntil[Clearing](game.suited, l => {
                 val mapping = l.zip($(Fox, Fox, Fox, Fox, Rabbit, Rabbit, Rabbit, Rabbit, Mouse, Mouse, Mouse, Mouse)).toMap
 
                 def z(c : Clearing) = game.connected(c).%(mapping(_) == mapping(c)).num
 
-                clearings./(z).min > 0 && FoxRabbitMouse.%(s => board.clearings.%(mapping(_) == s)./(z).max < 2).none
+                game.suited./(z).min > 0 && FoxRabbitMouse.%(s => game.suited.%(mapping(_) == s)./(z).max < 2).none
             }, SaveMappingAction(_))
 
         case SetupMapAction if options.has(ThreeFourFiveClearings) =>
-            Shuffle[Clearing](clearings, ThreeFourFiveMappingAction(_))
+            Shuffle[Clearing](game.suited, ThreeFourFiveMappingAction(_))
 
         case ThreeFourFiveMappingAction(l) =>
             Shuffle[BaseSuit](FoxRabbitMouse, ThreeFourFiveSuitMappingAction(_, l))
 
         case ThreeFourFiveSuitMappingAction(s, l) =>
-            game.original = l.sortBy(c => c.capacity * 2 - board.ruins.has(c).??(1)).zip(5.times($(s(0))) ++ 4.times($(s(1))) ++ 3.times($(s(2)))).toMap
+            game.original = l.sortBy(c => c.capacity * 2 - board.ruinsIn(clearings).has(c).??(1)).zip(5.times($(s(0))) ++ 4.times($(s(1))) ++ 3.times($(s(2)))).toMap[Suitable, $[BaseSuit]] ++ game.unsuited./(c => (c : Suitable) -> $[BaseSuit]())
             game.mapping = game.original
 
             ReportMappingAction
 
         case SaveMappingAction(l) =>
-            game.original = l.zip($(Fox, Fox, Fox, Fox, Rabbit, Rabbit, Rabbit, Rabbit, Mouse, Mouse, Mouse, Mouse)./($)).toMap
+            game.original = l.zip($(Fox, Fox, Fox, Fox, Rabbit, Rabbit, Rabbit, Rabbit, Mouse, Mouse, Mouse, Mouse)./($)).toMap[Suitable, $[BaseSuit]] ++ game.unsuited./(c => (c : Suitable) -> $[BaseSuit]())
             game.mapping = game.original
 
             ReportMappingAction
 
         case ReportMappingAction =>
-            clearings.foreach { c =>
+            game.suited.foreach { c =>
                 log(c, "was", game.mapping(c))
             }
 
-            game.ruins = board.ruins.intersect(clearings)./(_ -> Ruins($)).toMap
+            game.ruins = board.ruinsIn(clearings)./(_ -> Ruins($)).toMap
 
             MappingDoneAction
 
@@ -235,8 +280,21 @@ object SetupExpansion extends MandatoryExpansion {
         case MappingDoneAction =>
             SetupLandmarksAction
 
+        // Marsh with 5+ players: the Homeland landmarks go in the clearings without a suit
+        case SetupLandmarksAction if game.unsuited.any && game.mousehold.none && game.foxburrow.none && game.rabbittown.none =>
+            Shuffle[Clearing](game.unsuited, MarshLandmarksAction(_))
+
+        case MarshLandmarksAction(l) =>
+            $(MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark).lazyZip(l).foreach { (m, c) =>
+                placeHomelandLandmark(m, c)
+
+                log(m, "was placed in", c)
+            }
+
+            SetupLandmarksAction
+
         case SetupLandmarksAction =>
-            if (options.of[Landmark].any)
+            if (options.of[Landmark].%!(l => homelandPlaced(l)).any)
                 SetupNextLandmarkAction
             else
             {
@@ -254,6 +312,7 @@ object SetupExpansion extends MandatoryExpansion {
                 case FerryLandmark => game.ferry.any
                 case LostCityLandmark => game.lostCity.any
                 case TowerLandmark => game.tower.any
+                case l => homelandPlaced(l)
             }
 
             val remaining = landmarks.diff(done)
@@ -300,6 +359,25 @@ object SetupExpansion extends MandatoryExpansion {
             game.original = game.mapping
 
             log(f, "placed", LostCityLandmark, "in", c)
+
+            SetupNextLandmarkAction
+
+        case SetupLandmarkAction(f, l @ (MouseholdLandmark | FoxburrowLandmark | RabbittownLandmark), more) =>
+            val s = l @@ {
+                case MouseholdLandmark => Mouse
+                case FoxburrowLandmark => Fox
+                case _ => Rabbit
+            }
+
+            val free = clearings.diff(game.landmarks).diff(game.landmarks./~(game.connected))
+            val l1 = free.%(c => game.mapping.get(c).?(_.has(s)))
+
+            Ask(f).each(l1.some.|(free).some.|(clearings.diff(game.landmarks)))(c => SetupLandmarkClearingAction(f, l, c)).cancelIf(more)
+
+        case SetupLandmarkClearingAction(f, l @ (MouseholdLandmark | FoxburrowLandmark | RabbittownLandmark), c) =>
+            placeHomelandLandmark(l, c)
+
+            log(f, "placed", l, "in", c)
 
             SetupNextLandmarkAction
 

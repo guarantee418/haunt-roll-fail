@@ -33,8 +33,11 @@ of the 52 development cards; expansion tiles, clan
 boards and tokens are in `expansion/` for later. Unit figures are in
 `token/unit/` (`unit-<color>`, and `warchief-<color>` for the Warchiefs
 expansion), recolored from the `-original` images. Colors belong to
-players, not clans: blue, red, yellow, purple, green by seat
-(`game.colors`); starting cards show that color's banner. `underConstruction = true` in its `Meta` puts
+players, not clans: each clan's player picks one on its row of the setup screen
+(`ColorOption`, default blue, red, yellow, purple, green by seat;
+`game.colors`); starting cards show that color's banner. The setup options
+(colors, game length, fame-only victory, first player, and the modules and
+expansions, shown but disabled until implemented) are in `nort/options.scala`. `underConstruction = true` in its `Meta` puts
 an "Under Construction" note under its name on the game list and a disclaimer
 at the top of its menu. `nort/host.scala` runs bot games headless (JVM only,
 like the other `host.scala` files).
@@ -251,6 +254,25 @@ file covers the build, server and deploy. No session can ssh to the server
   path (Forge - Saloon) divides forests and is crossed by the Fork - Pueblo
   path, so the four forests around that crossing are adjacent in pairs
   (`damCrossing`); the bridge path (Homestead - Lookout) divides nothing.
+- The Homeland Marsh map is `MarshBoard` in `root/maps.scala` (option
+  `MarshMap`, images in `webp2/root/images/marsh/`, from the board image and
+  the flood markers in the Homeland print-and-play PDF). The printed board
+  has no clearing names, so the names (Thatch, Sedge, Weir, ...) are made up;
+  comments give the Law of Root diagram numbers.
+  Region ids must be unique across all boards (`Serialize.parseRegion`),
+  so the Marsh river fork is Confluence, not Fork (Gorge has a Fork).
+  Rules follow Law of Root M.5: with 1-4 players one clearing of each colored pair (`floodPairs`) is
+  flooded at random and the paths on its flood marker (`floodPaths`) link its
+  neighbours (`game.floodLinked`, used by `game.connected` and `Roads`); with
+  5+ players one of each pair is left without a suit (`game.unsuited`) and
+  gets Mousehold, Foxburrow or Rabbittown at random. Ruins go in Crossing and
+  Confluence plus the two lowest numbered slots not flooded (`ruinsIn`).
+- The Homeland landmarks Mousehold, Foxburrow and Rabbittown are landmark
+  options on any map (`MouseholdLandmark` etc. in `root/meta.scala`). Each
+  adds its suit to its clearing, kept when a Lilypad enclave covers the suit
+  (`game.landmarkSuits`). Foxburrow is the `FoxburrowRoads` transport,
+  Rabbittown a Daylight action and Mousehold a hook in `battle.scala`; the
+  effects are in `MapsExpansion` in `root/maps.scala`.
 - Bot games can be run headless on the JVM with `root/host.scala` (see
   `host.xsbt` for the source exclusions); it also checks that every action
   serializes and parses back.
@@ -263,7 +285,8 @@ file covers the build, server and deploy. No session can ssh to the server
   `root/replay-check.scala` plays bot games and checks that replaying every
   prefix of the recorded actions matches the live game:
   `sbt "runMain root.ReplayCheck <games> [base|ld|tc|kd] [dense]"` with the
-  `host.xsbt` setup.
+  `host.xsbt` setup. `ReplayCheck <games> marsh` or `marsh5` plays the
+  Marsh map with 4 or 5 players and the three Homeland landmarks.
 - Each online game has a Spectator link and one link per player. Spectator
   accounts can read the game but not add moves. A move posted by one gets a
   500 with `empty result set ... "right" = 'append'` in the server log.

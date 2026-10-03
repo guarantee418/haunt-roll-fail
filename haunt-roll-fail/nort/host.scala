@@ -21,7 +21,14 @@ object Host extends hrf.host.BaseHost {
     def factions = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf)
     def subjects = factions
 
-    def batch = $(2, 3, 4, 5)./(n => () => new G(factions.shuffle.take(n), $))
+    // Random colors, game length and victory options
+    def batch = $(2, 3, 4, 5)./(n => () => {
+        val l = factions.shuffle.take(n)
+        val colors = l.zip(PlayerColor.all.shuffle)./{ case (f, c) => ColorOption(f, c) }
+        val options = colors ++ $(YearsOption.all.shuffle.head) ++ (random() < 0.3).$(FameOnly) ++ (random() < 0.3).$(FirstSeatStarts)
+        options.foreach(o => assert(Meta.parseOption(Meta.writeOption(o)) == $(o), o))
+        new G(l, options)
+    })
 
     def factionName(f : F) = f.name
     def nameWinner(f : F) = f.name

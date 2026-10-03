@@ -979,6 +979,9 @@ object BattleExpansion extends MandatoryExpansion {
 
             val s = b.instigator.|(o)
 
+            if (game.mousehold.any && game.mousehold.has(b.clearing).not && game.mapping.get(b.clearing).?(_.has(Mouse)) && p.is[Warrior] && p.is[Tenacious].not && a.is[Hireling].not)
+                game.mouseholdPending :+= x
+
             BattlePostHitInAction(b, o, a, p, BattlePostHitOutAction(b, o, a, p, TryForcedRemoveAction(s, b.clearing, a, p, (p.is[Scoring] && s != a).??(1), Removing, then, then)))
 
         case BattlePostHitInAction(b, e, f, p, then) =>
@@ -1010,7 +1013,10 @@ object BattleExpansion extends MandatoryExpansion {
             ForcedRemoveFinishedAction(b.instigator | b.attacker, q)
 
         case BattleResolvedAction(b) =>
-            BattleFinishedAction(b)
+            if (game.mouseholdPending.any)
+                MouseholdAction(b)
+            else
+                BattleFinishedAction(b)
 
         case BattleFinishedAction(b) =>
             factions.foreach { f =>
