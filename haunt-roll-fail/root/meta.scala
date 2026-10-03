@@ -2331,6 +2331,7 @@ object Meta extends MetaGame {
         ImageAsset("vb-vagabond"       ) ::
         ImageAsset("nb-vagabond"       ) ::
         ImageAsset("mb-vagabond"       ) ::
+        ImageAsset("vagabond-harrier"  ) ::
 
         ImageAsset("quest-fox"         ) ::
         ImageAsset("quest-rabbit"      ) ::

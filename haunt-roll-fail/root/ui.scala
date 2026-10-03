@@ -33,6 +33,9 @@ import scalajs.js.timers.setTimeout
 
 
 object UI extends BaseUI {
+    // Characters with their own Vagabond meeple (vagabond-<id>.webp in faction/hero); others use the player's colored vagabond
+    val vagabondMeeples = $("harrier")
+
     val mmeta = Meta
 
     def create(uir : ElementAttachmentPoint, arity : Int, options : $[mmeta.O], resources : Resources, title : String, callbacks : hrf.Callbacks) = new UI(uir, arity, options, resources, title, callbacks)
@@ -212,7 +215,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case Warlord => { DrawRect(pr + "warlord", -44, -119, 108, 122) }
             case Badger => { DrawRect(pr + "badger", -52, -97, 91, 103) }
             case OldBadger => { DrawRect(pr + "badger", -37, -92, 86, 97) }
-            case Vagabond => { DrawRect(pr + "vagabond", -46, -81, 91, 92) }
+            case Vagabond => { DrawRect(faction.as[Hero]./~(_.character).%(c => UI.vagabondMeeples.has(c.id.toLowerCase))./("vagabond-" + _.id.toLowerCase).|(pr + "vagabond"), -46, -81, 91, 92) }
             case Squirrel => { DrawRect(pr + "squirrel", -54, -91, 92, 97) }
 
             case Porcupine => { DrawRect(pr + "porcupine", -51, -100, 102, 105) }
