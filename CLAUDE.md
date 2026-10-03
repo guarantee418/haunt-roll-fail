@@ -23,7 +23,9 @@ and Unrest, end-of-game scoring, and the real card list in `nort/cards.scala`
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
 Tabletopia export the owner uploaded: the starting tiles, 30 of the 34 other
 core map tiles and 51 of the 52 development cards; expansion tiles, clan
-boards and tokens are in `expansion/` for later. No unit (meeple) images. `underConstruction = true` in its `Meta` puts
+boards and tokens are in `expansion/` for later. Unit figures are in
+`token/unit/` (`unit-<clan>`, and `warchief-<clan>` for the Warchiefs
+expansion), recolored per clan from the `-original` images. `underConstruction = true` in its `Meta` puts
 an "Under Construction" note under its name on the game list and a disclaimer
 at the top of its menu. `nort/host.scala` runs bot games headless (JVM only,
 like the other `host.scala` files).
