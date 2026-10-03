@@ -25,8 +25,12 @@ case class AreaRef(x : Int, y : Int, id : String) extends GameElementary with Re
     def elem(implicit game : Game) = ("Territory " + game.board.label(this)).hl
 }
 
-// A building space: area and index into its spaces
+// A building space: area and index into its spaces; from SpaceRef.extra on, buildings that take no space (Amenities)
 case class SpaceRef(area : AreaRef, index : Int) extends Record
+
+object SpaceRef {
+    val extra = 100
+}
 
 
 trait Building extends NamedToString with Elementary with Record {
@@ -173,7 +177,22 @@ class Board {
         (a.x + x, a.y + y)
     }
 
+    // Where the units of an area's territory are drawn
+    def unitPoint(a : AreaRef) : (Double, Double) = {
+        val p = at(a.x, a.y).get
+        val s = spec(a)
+        val (x, y) = rotate(s.ux, s.uy, p.r)
+        (a.x + x, a.y + y)
+    }
+
     def point(s : SpaceRef) : (Double, Double) = {
+        if (s.index >= SpaceRef.extra) {
+            // Next to the area's number
+            val (x, y) = point(s.area)
+            val k = s.index - SpaceRef.extra
+            return (x - 0.2 - 0.2 * (k % 2), y + 0.2 * (k / 2))
+        }
+
         val p = at(s.area.x, s.area.y).get
         val sp = spec(s.area).spaces(s.index)
         val (x, y) = rotate(sp.x, sp.y, p.r)

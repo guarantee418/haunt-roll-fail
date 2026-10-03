@@ -49,46 +49,62 @@ case class SetupSpotAction(self : Faction, round : Int, l : $[Faction], tile : S
 case class SetupRotateAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot, r : Int, d : Int) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft
 case class SetupTurnAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot, r : Int) extends BaseAction("Place the tile at", spot)("Confirm") with TilePreview
 case class SetupUnitsAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place three units in")(area) with MapTarget { def target = area }
+case class SetupKaijaAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place two units and Kaija in")(area)
 case class ShuffledTilesBackAction(shuffled : $[String]) extends ShuffledAction[String]
 
 // RECRUIT
 case class RecruitAction(f : Faction, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends ForcedAction
 case class RecruitPlaceAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit", (left > 1).?("(" ~ left.hl ~ " left)").|(""), "in")(area) with MapTarget { def target = area }
+case class RecruitKaijaAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit", "Kaija".hl, "in")(area)
 case class RecruitDoneAction(self : Faction, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit")("Done")
 case class TrainingCampsAction(f : Faction, placed : $[AreaRef], then : ForcedAction) extends ForcedAction
 
 // MOVE
-case class MoveAction(f : Faction, left : Int, bonus : Int, ignoreRough : Boolean, then : ForcedAction) extends ForcedAction
-case class MoveFromAction(self : Faction, from : AreaRef, left : Int, bonus : Int, ignoreRough : Boolean, then : ForcedAction) extends BaseAction("Move", "(" ~ left.hl ~ " left)", "from")(from) with Soft with MapTarget { def target = from }
-case class MoveToAction(self : Faction, from : AreaRef, to : AreaRef, cost : Int, left : Int, bonus : Int, ignoreRough : Boolean, then : ForcedAction) extends BaseAction("Move from", from, "to")(to, (cost > 1).?("(Rough border)").|("")) with Soft with MapTarget { def target = to }
-case class MoveUnitsAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, cost : Int, left : Int, bonus : Int, ignoreRough : Boolean, then : ForcedAction) extends BaseAction("Move from", from, "to", to)((n == 1).?("1 unit").|(n.toString + " units"))
-case class MoveDoneAction(self : Faction, bonus : Int, then : ForcedAction) extends BaseAction("Move")("Done")
-case class CombatsAction(f : Faction, bonus : Int, then : ForcedAction) extends ForcedAction
-case class FightAction(self : Faction, area : AreaRef, bonus : Int, then : ForcedAction) extends BaseAction("Fight in")(area) with MapTarget { def target = area }
+case class MoveAction(f : Faction, left : Int, e : MoveEffect, then : ForcedAction) extends ForcedAction
+case class MoveFromAction(self : Faction, from : AreaRef, left : Int, e : MoveEffect, then : ForcedAction) extends BaseAction("Move", "(" ~ left.hl ~ " left)", "from")(from) with Soft with MapTarget { def target = from }
+case class MoveToAction(self : Faction, from : AreaRef, to : AreaRef, cost : Int, left : Int, e : MoveEffect, then : ForcedAction) extends BaseAction("Move from", from, "to")(to, (cost > 1).?("(Rough border)").|("")) with Soft with MapTarget { def target = to }
+case class MoveUnitsAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, cost : Int, left : Int, e : MoveEffect, then : ForcedAction) extends BaseAction("Move from", from, "to", to)(Figures(n, kaija))
+case class MoveDoneAction(self : Faction, e : MoveEffect, then : ForcedAction) extends BaseAction("Move")("Done")
+case class CombatsAction(f : Faction, e : MoveEffect, then : ForcedAction) extends ForcedAction
+case class FightAction(self : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends BaseAction("Fight in")(area) with MapTarget { def target = area }
+case class FightStartAction(f : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends ForcedAction
+case class IntimidateAction(self : Faction, area : AreaRef, to : AreaRef, e : MoveEffect, then : ForcedAction) extends BaseAction("Intimidate", "push a defending unit from", area, "to")(to) with MapTarget { def target = to }
+case class IntimidateSkipAction(self : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends BaseAction("Intimidate")("Fight them all")
+case class AxeAction(self : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], face : DieFace, then : ForcedAction) extends BaseAction("Axe Throwers")(face)
 
 // COMBAT
-case class CombatFoodAction(self : Faction, attacker : Faction, defender : Faction, area : AreaRef, bonus : Int, food : $[Int], then : ForcedAction) extends BaseAction(self, "spends food for the fight")((food.last == 0).?("No food").|(food.last.hl ~ " " ~ Food.elem))
-case class CombatRollAction(attacker : Faction, defender : Faction, area : AreaRef, bonus : Int, food : $[Int], faces : $[DieFace], then : ForcedAction) extends ForcedAction
-case class CombatRolledAction(attacker : Faction, defender : Faction, area : AreaRef, bonus : Int, food : $[Int], faces : $[DieFace], random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
-case class CombatChooseAction(self : Faction, attacker : Faction, defender : Faction, area : AreaRef, bonus : Int, food : $[Int], faces : $[DieFace], choice : DieFace, then : ForcedAction) extends BaseAction(self, "rolled", DieChoice)(choice)
-case class CombatResolveAction(attacker : Faction, defender : Faction, area : AreaRef, bonus : Int, food : $[Int], faces : $[DieFace], then : ForcedAction) extends ForcedAction
-case class RetreatAction(f : Faction, from : AreaRef, then : ForcedAction) extends ForcedAction
-case class RetreatToAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, then : ForcedAction) extends BaseAction("Retreat from", from, "to")(to, "(" ~ (n == 1).?("1 unit").|(n.toString + " units") ~ ")") with MapTarget { def target = to }
+case class CombatFoodAction(self : Faction, attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], then : ForcedAction) extends BaseAction(self, "spends food for the fight")((food.last == 0).?("No food").|(food.last.hl ~ " " ~ Food.elem))
+case class CombatRollAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], then : ForcedAction) extends ForcedAction
+case class CombatRolledAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
+case class CombatChooseAction(self : Faction, attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], choice : DieFace, then : ForcedAction) extends BaseAction(self, "rolled", DieChoice)(choice)
+case class CombatResolveAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], then : ForcedAction) extends ForcedAction
+// rough: the retreating units may cross Rough borders (Wolf Clan card)
+case class RetreatAction(f : Faction, from : AreaRef, rough : Boolean, then : ForcedAction) extends ForcedAction
+case class RetreatToAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to")(to, "(" ~ Figures(n, kaija).elem ~ ")") with MapTarget { def target = to }
+
+// SNAKE CLAN
+case class ScorchedAction(f : Faction, then : ForcedAction) extends ForcedAction
+case class ScorchedPlaceAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("Scorched Earth".hl, "token to")(area) with MapTarget { def target = area }
+case class ScorchedSkipAction(self : Faction, then : ForcedAction) extends BaseAction("Scorched Earth".hl)("Leave the token where it is")
 
 // EXPLORE
-case class ExploreAction(f : Faction, draw : Int, times : Int, redraw : Boolean, anywhere : Boolean, then : ForcedAction) extends ForcedAction
-case class ExploreDrawAction(f : Faction, draw : Int, tries : Int, times : Int, redraw : Boolean, anywhere : Boolean, then : ForcedAction) extends ForcedAction
-case class ExploreChooseAction(f : Faction, times : Int, redraw : Boolean, anywhere : Boolean, then : ForcedAction) extends ForcedAction
-case class ExploreTileAction(self : Faction, tile : String, times : Int, anywhere : Boolean, then : ForcedAction) extends BaseAction("Explore with")(TileRef(tile)) with Soft
-case class ExploreSpotAction(self : Faction, tile : String, spot : Spot, times : Int, anywhere : Boolean, then : ForcedAction) extends BaseAction("Place the tile at")(spot) with Soft with MapTarget { def target = spot }
-case class ExploreRotateAction(self : Faction, tile : String, spot : Spot, r : Int, d : Int, times : Int, anywhere : Boolean, then : ForcedAction) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft
-case class ExploreTurnAction(self : Faction, tile : String, spot : Spot, r : Int, times : Int, anywhere : Boolean, then : ForcedAction) extends BaseAction("Place the tile at", spot)("Confirm") with TilePreview
-case class ExploreRedrawAction(self : Faction, tile : String, times : Int, anywhere : Boolean, then : ForcedAction) extends BaseAction("Scout Camp")("Put", TileRef(tile), "at the bottom and draw another")
+case class ExploreAction(f : Faction, draw : Int, times : Int, redraw : Boolean, e : ExploreEffect, then : ForcedAction) extends ForcedAction
+case class ExploreDrawAction(f : Faction, draw : Int, tries : Int, times : Int, redraw : Boolean, e : ExploreEffect, then : ForcedAction) extends ForcedAction
+case class ExploreChooseAction(f : Faction, times : Int, redraw : Boolean, e : ExploreEffect, then : ForcedAction) extends ForcedAction
+case class ExploreTileAction(self : Faction, tile : String, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Explore with")(TileRef(tile)) with Soft
+case class ExploreSpotAction(self : Faction, tile : String, spot : Spot, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at")(spot) with Soft with MapTarget { def target = spot }
+case class ExploreRotateAction(self : Faction, tile : String, spot : Spot, r : Int, d : Int, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft
+case class ExploreTurnAction(self : Faction, tile : String, spot : Spot, r : Int, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at", spot)("Confirm") with TilePreview
+case class ExploreRedrawAction(self : Faction, tile : String, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Scout Camp")("Put", TileRef(tile), "at the bottom and draw another")
 
 // BUILD
-case class BuildAction(f : Faction, discount : Int, times : Int, duplicate : Boolean, then : ForcedAction) extends ForcedAction
-case class BuildPlaceAction(self : Faction, area : AreaRef, building : Building, space : SpaceRef, cost : Int, times : Int, discount : Int, duplicate : Boolean, then : ForcedAction) extends BaseAction("Build in", area)(building, "(" ~ (cost == 0).?("free".txt).|(cost.hl ~ " " ~ Wood.elem) ~ ")") with MapTarget { def target = area }
-case class BuildDoneAction(self : Faction, then : ForcedAction) extends BaseAction("Build")("Done")
+// smallOnly: Carpentry Mastery after a large building
+case class BuildAction(f : Faction, e : BuildEffect, times : Int, smallOnly : Boolean, then : ForcedAction) extends ForcedAction
+case class BuildPlaceAction(self : Faction, area : AreaRef, building : Building, space : SpaceRef, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build in", area)(building, "(" ~ (cost == 0).?("free".txt).|(cost.hl ~ " " ~ Wood.elem) ~ ")") with MapTarget { def target = area }
+case class BuildDoneAction(self : Faction, e : BuildEffect, then : ForcedAction) extends BaseAction("Build")("Done")
+case class BuildFinishAction(f : Faction, e : BuildEffect, then : ForcedAction) extends ForcedAction
+case class ReplaceBuildingAction(self : Faction, area : AreaRef, space : SpaceRef, building : Building, then : ForcedAction) extends BaseAction("Industrious Villagers", "replace a building in", area, "with")(building) with MapTarget { def target = area }
+case class ReplaceSkipAction(self : Faction, then : ForcedAction) extends BaseAction("Industrious Villagers")("Keep the buildings")
 
 // FEAST
 case class FeastChoiceAction(self : Faction, effect : Effect, then : ForcedAction) extends BaseAction("Feast")(FeastLabel(effect))
@@ -96,8 +112,8 @@ case class FeastChoiceAction(self : Faction, effect : Effect, then : ForcedActio
 object FeastLabel {
     def apply(e : Effect) : String = e match {
         case RecruitEffect(_, _) => "Recruit 1"
-        case MoveEffect(_, _, _) => "Move 1"
-        case ExploreEffect(_, _, _, _) => "Explore"
+        case MoveEffect(_, _, _, _) => "Move 1"
+        case ExploreEffect(_, _, _, _, _) => "Explore"
         case _ => "Build"
     }
 }
@@ -105,6 +121,12 @@ object FeastLabel {
 // END OF YEAR
 case class ReturnUnitsAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class ReturnUnitsToAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction(self, "has no units left; place three in")(area) with MapTarget { def target = area }
+
+
+// Some units, maybe with Kaija
+case class Figures(n : Int, kaija : Boolean) extends Elementary with Record {
+    def elem : Elem = ((n > 0).$((n == 1).?("1 unit").|(n.toString + " units")) ++ kaija.$("Kaija")).mkString(" and ").txt
+}
 
 
 // The Northgard die
@@ -134,13 +156,16 @@ object MapExpansion extends Expansion {
         val neutral = game.board.territories.%(t => game.present(t).none)
         val mine = game.controlled(f)
 
+        val none = game.anyOnMap(f).not
+
         val l = mode match {
-            case RecruitNormal => (game.onMap(f) == 0).?(neutral).|(mine)
-            case RecruitSame => (game.onMap(f) == 0).?(neutral).|(mine)
+            case RecruitNormal => none.?(neutral).|(mine)
+            case RecruitSame => none.?(neutral).|(mine)
             case RecruitNeutral => mine ++ neutral
             case RecruitNeutralOnly => neutral
             case RecruitNeutralSame => neutral
             case RecruitSameAny => mine ++ neutral
+            case RecruitOsmosis => mine.%(t => game.board.open(t) || t.areas.exists(a => game.board.spec(a).wood > 0)).%(t => placed.forall(p => t.areas.contains(p).not))
         }
 
         val same = mode @@ {
@@ -154,8 +179,9 @@ object MapExpansion extends Expansion {
             l
     }
 
-    // Territories f can move out of: their own, not fighting
-    def moveSources(f : Faction)(implicit game : Game) = game.controlled(f)
+    // Territories f can move out of: their own, not fighting; with Infiltration also enemy territories they moved into
+    def moveSources(f : Faction, e : MoveEffect = MoveEffect(1))(implicit game : Game) =
+        (e.special == InfiltrateMove).?(game.board.territories.%(t => game.figures(t, f) > 0)).|(game.controlled(f))
 
     def moveCost(rough : Boolean, ignoreRough : Boolean) = (rough && ignoreRough.not).?(2).|(1)
 
@@ -173,11 +199,11 @@ object MapExpansion extends Expansion {
             .add(SetupTurnAction(f, round, l, tile, spot, r))
             .cancel
 
-    def explorePreview(f : Faction, tile : String, spot : Spot, rs : $[Int], r : Int, times : Int, anywhere : Boolean, then : ForcedAction) =
+    def explorePreview(f : Faction, tile : String, spot : Spot, rs : $[Int], r : Int, times : Int, e : ExploreEffect, then : ForcedAction) =
         Ask(f)
-            .when(rs.num > 1)(ExploreRotateAction(f, tile, spot, r, 1, times, anywhere, then))
-            .when(rs.num > 1)(ExploreRotateAction(f, tile, spot, r, -1, times, anywhere, then))
-            .add(ExploreTurnAction(f, tile, spot, r, times, anywhere, then))
+            .when(rs.num > 1)(ExploreRotateAction(f, tile, spot, r, 1, times, e, then))
+            .when(rs.num > 1)(ExploreRotateAction(f, tile, spot, r, -1, times, e, then))
+            .add(ExploreTurnAction(f, tile, spot, r, times, e, then))
             .cancel
 
     // Legal tile placements: next to tiles in `next` (any placed tile when None), keeping borders continuous,
@@ -210,43 +236,85 @@ object MapExpansion extends Expansion {
     def explorable(f : Faction, anywhere : Boolean)(implicit game : Game) : $[Territory] =
         anywhere.?(game.board.territories.%(game.board.open)).|(game.controlled(f).%(game.board.open))
 
-    def buildOptions(f : Faction, discount : Int, duplicate : Boolean)(implicit game : Game) : $[(AreaRef, Building, SpaceRef, Int)] = {
+    def buildOptions(f : Faction, e : BuildEffect, smallOnly : Boolean)(implicit game : Game) : $[(AreaRef, Building, SpaceRef, Int)] = {
         game.controlled(f)./~{ t =>
             val here = game.buildingsIn(t).map(_._2)
             val free = t.areas./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not)
 
-            Building.all.%(b => duplicate || here.has(b).not).%(b => game.buildings.values.count(_ == b) < Building.tokens)./~{ b =>
+            Building.all.%(b => e.duplicate || here.has(b).not).%(b => game.buildings.values.count(_ == b) < Building.tokens).%(b => smallOnly.not || b.large.not)./~{ b =>
                 val kinds = b match {
                     case CarvedStone => $(CarvedSpace)
                     case b if b.large => $(LargeSpace)
                     case _ => $(SmallSpace, CarvedSpace)
                 }
                 // Keep Carved Stone spaces for Carved Stones when possible
-                val space = kinds./~(k => free.%(s => game.board.spec(s.area).spaces(s.index).kind == k)).headOption
-                val cost = math.max(0, b.cost - discount)
+                val space =
+                    // Amenities: small buildings take no space
+                    if (e.special == AmenitiesBuild && b.large.not)
+                        |(SpaceRef(t.anchor, SpaceRef.extra + game.buildings.keys.count(s => s.area == t.anchor && s.index >= SpaceRef.extra)))
+                    else
+                        kinds./~(k => free.%(s => game.board.spec(s.area).spaces(s.index).kind == k)).headOption
+                val cost = math.max(0, b.cost - e.discount)
                 space.%(_ => f.wood >= cost)./(s => (t.anchor, b, s, cost))
             }
         }
     }
 
+    // Industrious Villagers: f's buildings and what each could become
+    def replacements(f : Faction)(implicit game : Game) : $[(SpaceRef, Building)] =
+        game.controlled(f)./~(game.buildingsIn)./~{ case (s, old) =>
+            val carved = s.index >= SpaceRef.extra || game.board.spec(s.area).spaces(s.index).kind == CarvedSpace
+            Building.all.%(_ != old).%(_.large == old.large).%(b => b != CarvedStone || carved).%(b => game.buildings.values.count(_ == b) < Building.tokens)./(b => s -> b)
+        }
+
+    def canRecruit(f : Faction)(implicit game : Game) = game.reserve(f) > 0 || game.kaijaReady(f)
+
+    // Closed territories of 3 or more tiles, for Protector of the Land
+    def bigClosed(f : Faction)(implicit game : Game) = game.controlled(f).%(game.board.closed).%(t => game.board.tiles(t) >= 3)
+
+    // Enemy territories next to f's, where the Scorched Earth token can go
+    def scorchable(f : Faction)(implicit game : Game) : $[Territory] = {
+        val mine = game.controlled(f)
+        game.board.territories.%(t => game.present(t).but(f).any && game.present(t).has(f).not)
+            .%(t => mine.exists(m => game.board.adjacent(m).exists(_._1 == t)))
+            .%(t => game.scorchedIn(t).not)
+    }
+
     def playable(f : Faction, e : Effect)(implicit game : Game) : Boolean = e match {
-        case RecruitEffect(_, mode) => game.reserve(f) > 0 && recruitTargets(f, mode, $).any
-        case MoveEffect(_, _, _) => moveSources(f).any
-        case ExploreEffect(_, _, _, anywhere) => game.pile.any && explorable(f, anywhere).any
-        case BuildEffect(discount, _, duplicate) => buildOptions(f, discount, duplicate).any
+        case RecruitEffect(_, mode) => canRecruit(f) && recruitTargets(f, mode, $).any
+        case AwakenEffect => true
+        case ProtectorEffect => bigClosed(f).any && CommonExpansion.available(f) > 0
+        case MoveEffect(_, _, _, _) => moveSources(f).any
+        case e : ExploreEffect => game.pile.any && explorable(f, e.anywhere).any
+        case e : BuildEffect => buildOptions(f, e, false).any
         case FeastEffect => $(RecruitEffect(1), MoveEffect(1), ExploreEffect(), BuildEffect()).exists(playable(f, _))
-        case _ => false
+        case e => CardsExpansion.playable(f, e)
     }
 
     def resolve(f : Faction, e : Effect, then : ForcedAction)(implicit game : Game) : Continue = e match {
         case RecruitEffect(n, mode) => Then(RecruitAction(f, n, mode, $, then))
-        case MoveEffect(n, bonus, ignoreRough) => Then(MoveAction(f, n, bonus, ignoreRough, then))
-        case ExploreEffect(draw, times, redraw, anywhere) => Then(ExploreAction(f, draw, times, redraw, anywhere, then))
-        case BuildEffect(discount, times, duplicate) => Then(BuildAction(f, discount, times, duplicate, then))
+        case AwakenEffect =>
+            game.awakened = true
+            f.log("woke Kaija: it can enter enemy territories this year")
+            Then(RecruitAction(f, 2, RecruitNormal, $, then))
+        case ProtectorEffect =>
+            val n = bigClosed(f).num
+            f.log("drew", n.hl, (n == 1).?("card").|("cards"), "for closed territories of 3 or more tiles")
+            Then(DrawCardsAction(f, n, then))
+        case e : MoveEffect => Then(MoveAction(f, e.n, e, then))
+        case e : ExploreEffect => Then(ExploreAction(f, e.draw, e.times, e.redraw, e, then))
+        case e : BuildEffect => Then(BuildAction(f, e, e.times, false, then))
         case FeastEffect =>
             Ask(f).each($(RecruitEffect(1), MoveEffect(1), ExploreEffect(), BuildEffect()).%(playable(f, _)))(e => FeastChoiceAction(f, e, then))
-        case _ => Then(then)
+        case e => CardsExpansion.resolve(f, e, then)
     }
+
+    // A die result is in; Axe Throwers adds 1 point or 1 casualty to the attacker's
+    def rolled(attacker : Faction, defender : Faction, a : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], face : DieFace, then : ForcedAction)(implicit game : Game) : Continue =
+        if (faces.none && e.special == AxeMove)
+            Ask(attacker).add(AxeAction(attacker, defender, a, e, food, face.copy(points = face.points + 1), then)).add(AxeAction(attacker, defender, a, e, food, face.copy(casualties = face.casualties + 1), then))
+        else
+            Then(CombatRollAction(attacker, defender, a, e, food, faces :+ face, then))
 
     // Collect what a territory produces
     def collect(f : Faction, t : Territory, reason : Elem)(implicit game : Game) {
@@ -331,6 +399,7 @@ object MapExpansion extends Expansion {
             val empty = Tiles(tile).areas./(a => game.board.territory(AreaRef(spot.x, spot.y, a.id))).distinct.%(t => game.present(t).none)
 
             Ask(f).each(empty)(t => SetupUnitsAction(f, round, l, t.anchor))
+                .some(empty.%(_ => game.kaijaReady(f)))(t => $(SetupKaijaAction(f, round, l, t.anchor)))
 
         case SetupUnitsAction(f, round, l, a) =>
             game.addUnits(a, f, 3)
@@ -339,14 +408,26 @@ object MapExpansion extends Expansion {
 
             Then(SetupPlaceAction(round, l.drop(1)))
 
+        case SetupKaijaAction(f, round, l, a) =>
+            game.addUnits(a, f, 2)
+            game.kaija = |(a)
+            game.note("kaija-setup")
+
+            f.log("placed two units and Kaija in", a)
+
+            Then(SetupPlaceAction(round, l.drop(1)))
+
         // RECRUIT
         case RecruitAction(f, left, mode, placed, then) =>
-            val targets = (left > 0 && game.reserve(f) > 0).??(recruitTargets(f, mode, placed))
+            val targets = (left > 0 && canRecruit(f)).??(recruitTargets(f, mode, placed))
 
             if (targets.none)
                 Then(TrainingCampsAction(f, placed, then))
             else
-                Ask(f).each(targets)(t => RecruitPlaceAction(f, t.anchor, left, mode, placed, then))
+                Ask(f).some(targets)(t =>
+                    (game.reserve(f) > 0).$(RecruitPlaceAction(f, t.anchor, left, mode, placed, then)) ++
+                    game.kaijaReady(f).$(RecruitKaijaAction(f, t.anchor, left, mode, placed, then))
+                )
                     .when(placed.any)(RecruitDoneAction(f, placed, then))
 
         case RecruitPlaceAction(f, a, left, mode, placed, then) =>
@@ -356,10 +437,20 @@ object MapExpansion extends Expansion {
 
             Then(RecruitAction(f, left - 1, mode, placed :+ a, then))
 
+        case RecruitKaijaAction(f, a, left, mode, placed, then) =>
+            game.kaija = |(a)
+            game.note("kaija-recruit")
+
+            f.log("recruited", "Kaija".hl, "in", a)
+
+            Then(RecruitAction(f, left - 1, mode, placed :+ a, then))
+
         case RecruitDoneAction(f, placed, then) =>
             Then(TrainingCampsAction(f, placed, then))
 
         case TrainingCampsAction(f, placed, then) =>
+            game.recruited = placed
+
             placed./(game.board.territory).distinct.foreach { t =>
                 val camps = game.buildingsIn(t).count(_._2 == TrainingCamp)
                 val n = math.min(camps, game.reserve(f))
@@ -372,77 +463,137 @@ object MapExpansion extends Expansion {
             Then(then)
 
         // MOVE
-        case MoveAction(f, left, bonus, ignoreRough, then) =>
-            val sources = (left > 0).??(moveSources(f).%(t => game.board.adjacent(t).exists { case (_, regular) => moveCost(regular.not, ignoreRough) <= left }))
+        case MoveAction(f, left, e, then) =>
+            val sources = (left > 0).??(moveSources(f, e).%(t => game.board.adjacent(t).exists { case (_, regular) => moveCost(regular.not, e.ignoreRough) <= left }))
 
             if (sources.none)
-                Then(CombatsAction(f, bonus, then))
+                Then(CombatsAction(f, e, then))
             else
-                Ask(f).each(sources)(t => MoveFromAction(f, t.anchor, left, bonus, ignoreRough, then))
-                    .add(MoveDoneAction(f, bonus, then))
+                Ask(f).each(sources)(t => MoveFromAction(f, t.anchor, left, e, then))
+                    .add(MoveDoneAction(f, e, then))
 
-        case MoveFromAction(f, from, left, bonus, ignoreRough, then) =>
+        case MoveFromAction(f, from, left, e, then) =>
             val t = game.board.territory(from)
 
             Ask(f).some(game.board.adjacent(t)) { case (o, regular) =>
-                val cost = moveCost(regular.not, ignoreRough)
-                (cost <= left).$(MoveToAction(f, from, o.anchor, cost, left, bonus, ignoreRough, then))
+                val cost = moveCost(regular.not, e.ignoreRough)
+                (cost <= left).$(MoveToAction(f, from, o.anchor, cost, left, e, then))
             }.cancel
 
-        case MoveToAction(f, from, to, cost, left, bonus, ignoreRough, then) =>
-            val n = game.count(game.board.territory(from), f)
+        case MoveToAction(f, from, to, cost, left, e, then) =>
+            val t = game.board.territory(from)
+            val n = game.count(t, f)
+            // Kaija can't enter enemy territories unless awakened
+            val kaija = game.kaijaIn(t, f) && (game.awakened || game.present(game.board.territory(to)).but(f).none)
 
-            Ask(f).each(n.to(1, -1).$)(k => MoveUnitsAction(f, from, to, k, cost, left, bonus, ignoreRough, then)).cancel
+            Ask(f)
+                .each(n.to(1, -1).$)(k => MoveUnitsAction(f, from, to, k, false, cost, left, e, then))
+                .some(kaija.$(n.to(0, -1).$).flatten)(k => $(MoveUnitsAction(f, from, to, k, true, cost, left, e, then)))
+                .cancel
 
-        case MoveUnitsAction(f, from, to, n, cost, left, bonus, ignoreRough, then) =>
+        case MoveUnitsAction(f, from, to, n, kaija, cost, left, e, then) =>
             val src = game.board.territory(from)
             val dst = game.board.territory(to)
 
+            // Bear Clan card: Kaija collects the food and wood of the territory it leaves
+            if (kaija)
+                game.note("kaija-move")
+
+            if (kaija && e.special == BearMove) {
+                game.note("kaija-collect")
+                val (food, wood, _) = game.produce(src)
+                f.food += food
+                f.wood += wood
+                if (food + wood > 0)
+                    f.log("collected", food.hl, Food, "and", wood.hl, Wood, "with", "Kaija".hl)
+            }
+
             game.removeUnits(src, f, n)
             game.addUnits(dst.anchor, f, n)
+            if (kaija)
+                game.kaija = |(dst.anchor)
 
             val enemy = game.present(dst).but(f)
 
-            f.log("moved", (n == 1).?("1 unit").|(n.hl ~ " units"), "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty))
+            f.log("moved", Figures(n, kaija), "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty))
 
             if (enemy.any && game.combats.has(dst.anchor).not)
                 game.combats :+= dst.anchor
 
-            Then(MoveAction(f, left - cost, bonus, ignoreRough, then))
+            Then(MoveAction(f, left - cost, e, then))
 
-        case MoveDoneAction(f, bonus, then) =>
-            Then(CombatsAction(f, bonus, then))
+        case MoveDoneAction(f, e, then) =>
+            Then(CombatsAction(f, e, then))
 
-        case CombatsAction(f, bonus, then) =>
+        case CombatsAction(f, e, then) =>
             val l = game.combats.%(a => game.present(game.board.territory(a)).num > 1)
 
             if (l.none) {
                 game.combats = $
-                Then(then)
+                // Snake Clan card: the token may move after the move
+                if (e.special == SnakeMove)
+                    Then(ScorchedAction(f, then))
+                else
+                    Then(then)
             }
             else
             if (l.num == 1)
-                Then(FightAction(f, l.head, bonus, CombatsAction(f, bonus, then)))
+                Then(FightAction(f, l.head, e, CombatsAction(f, e, then)))
             else
-                Ask(f).each(l)(a => FightAction(f, a, bonus, CombatsAction(f, bonus, then)))
+                Ask(f).each(l)(a => FightAction(f, a, e, CombatsAction(f, e, then)))
 
-        case FightAction(f, a, bonus, then) =>
+        case FightAction(f, a, e, then) =>
             game.combats = game.combats.but(a)
-            game.fights += 1
 
             val t = game.board.territory(a)
             val defender = game.present(t).but(f).head
+            val fighting = game.combats./(game.board.territory)
 
-            log(f, "fights", defender, "in", a)
+            // Intimidate: one defending unit may be pushed to a neutral or defender territory next door
+            val push = (e.special == IntimidateMove && game.count(t, defender) > 0).??(game.board.adjacent(t).map(_._1).%(o => fighting.has(o).not).%(o => game.present(o).but(defender).none))
 
-            val max = math.min(f.food, game.count(t, f))
-
-            if (max == 0)
-                Then(CombatFoodAction(f, f, defender, a, bonus, $(0), then))
+            if (push.any)
+                Ask(f).each(push)(o => IntimidateAction(f, a, o.anchor, e, then)).add(IntimidateSkipAction(f, a, e, then))
             else
-                Ask(f).each(0.to(max).$)(k => CombatFoodAction(f, f, defender, a, bonus, $(k), then))
+                Then(FightStartAction(f, a, e, then))
 
-        case CombatFoodAction(self, attacker, defender, a, bonus, food, then) =>
+        case IntimidateAction(f, a, to, e, then) =>
+            val t = game.board.territory(a)
+            val defender = game.present(t).but(f).head
+
+            game.removeUnits(t, defender, 1)
+            game.addUnits(to, defender, 1)
+
+            f.log("pushed a unit of", defender, "from", a, "to", to)
+
+            Then(FightStartAction(f, a, e, then))
+
+        case IntimidateSkipAction(f, a, e, then) =>
+            Then(FightStartAction(f, a, e, then))
+
+        case FightStartAction(f, a, e, then) =>
+            val t = game.board.territory(a)
+
+            if (game.present(t).but(f).none) {
+                f.log("took", a, "without a fight")
+                Then(then)
+            }
+            else {
+                game.fights += 1
+
+                val defender = game.present(t).but(f).head
+
+                log(f, "fights", defender, "in", a)
+
+                val max = math.min(f.food, game.figures(t, f))
+
+                if (max == 0)
+                    Then(CombatFoodAction(f, f, defender, a, e, $(0), then))
+                else
+                    Ask(f).each(0.to(max).$)(k => CombatFoodAction(f, f, defender, a, e, $(k), then))
+            }
+
+        case CombatFoodAction(self, attacker, defender, a, e, food, then) =>
             self.food -= food.last
 
             if (food.last > 0)
@@ -450,54 +601,74 @@ object MapExpansion extends Expansion {
 
             if (food.num == 1) {
                 val t = game.board.territory(a)
-                val max = math.min(defender.food, game.count(t, defender))
+                val max = math.min(defender.food, game.figures(t, defender))
 
                 if (max == 0)
-                    Then(CombatFoodAction(defender, attacker, defender, a, bonus, food :+ 0, then))
+                    Then(CombatFoodAction(defender, attacker, defender, a, e, food :+ 0, then))
                 else
-                    Ask(defender).each(0.to(max).$)(k => CombatFoodAction(defender, attacker, defender, a, bonus, food :+ k, then))
+                    Ask(defender).each(0.to(max).$)(k => CombatFoodAction(defender, attacker, defender, a, e, food :+ k, then))
             }
             else
-                Then(CombatRollAction(attacker, defender, a, bonus, food, $, then))
+                Then(CombatRollAction(attacker, defender, a, e, food, $, then))
 
-        case CombatRollAction(attacker, defender, a, bonus, food, faces, then) =>
+        case CombatRollAction(attacker, defender, a, e, food, faces, then) =>
             if (faces.num == 2)
-                Then(CombatResolveAction(attacker, defender, a, bonus, food, faces, then))
+                Then(CombatResolveAction(attacker, defender, a, e, food, faces, then))
             else
-                Random[DieFace](NorthgardDie.faces, CombatRolledAction(attacker, defender, a, bonus, food, faces, _, then))
+                Random[DieFace](NorthgardDie.faces, CombatRolledAction(attacker, defender, a, e, food, faces, _, then))
 
-        case CombatRolledAction(attacker, defender, a, bonus, food, faces, face, then) =>
+        case CombatRolledAction(attacker, defender, a, e, food, faces, face, then) =>
             val self = (faces.num == 0).?(attacker).|(defender)
 
             self.log("rolled", face)
 
             if (face.choice)
-                Ask(self).add(CombatChooseAction(self, attacker, defender, a, bonus, food, faces, NorthgardDie.point, then))
-                    .add(CombatChooseAction(self, attacker, defender, a, bonus, food, faces, NorthgardDie.casualty, then))
+                Ask(self).add(CombatChooseAction(self, attacker, defender, a, e, food, faces, NorthgardDie.point, then))
+                    .add(CombatChooseAction(self, attacker, defender, a, e, food, faces, NorthgardDie.casualty, then))
             else
-                Then(CombatRollAction(attacker, defender, a, bonus, food, faces :+ face, then))
+                rolled(attacker, defender, a, e, food, faces, face, then)
 
-        case CombatChooseAction(self, attacker, defender, a, bonus, food, faces, choice, then) =>
+        case CombatChooseAction(self, attacker, defender, a, e, food, faces, choice, then) =>
             self.log("took", choice)
 
-            Then(CombatRollAction(attacker, defender, a, bonus, food, faces :+ choice, then))
+            rolled(attacker, defender, a, e, food, faces, choice, then)
 
-        case CombatResolveAction(attacker, defender, a, bonus, food, faces, then) =>
+        case AxeAction(attacker, defender, a, e, food, face, then) =>
+            attacker.log("took", face, "with", "Axe Throwers".hl)
+
+            Then(CombatRollAction(attacker, defender, a, e, food, $(face), then))
+
+        case CombatResolveAction(attacker, defender, a, e, food, faces, then) =>
             val t = game.board.territory(a)
             val here = game.buildingsIn(t).map(_._2)
-            val au = game.count(t, attacker)
-            val du = game.count(t, defender)
-            val fortress = 2 * here.count(_ == Fortress)
-            val towers = here.count(_ == DefenseTower)
+            val au = game.figures(t, attacker)
+            val du = game.figures(t, defender)
+            // Conqueror: the attacker ignores Fortresses and Defense Towers
+            val fortress = attacker.conqueror.?(0).|(2 * here.count(_ == Fortress))
+            val towers = attacker.conqueror.?(0).|(here.count(_ == DefenseTower))
+            // Snake Clan fights better on its Scorched Earth
+            val scorched = game.scorchedIn(t)
+            val ab = (attacker == Snake && scorched).??(1)
+            val db = (defender == Snake && scorched).??(1)
 
-            val as = au + bonus + food(0) + faces(0).points
-            val ds = du + fortress + food(1) + faces(1).points
+            val as = game.strength(t, attacker) + e.bonus + ab + food(0) + faces(0).points
+            val ds = game.strength(t, defender) + fortress + db + food(1) + faces(1).points
             // Casualties each side inflicts
             val ac = faces(0).casualties
-            val dc = faces(1).casualties + towers
+            // Shieldbearers cancel 1 casualty inflicted by the defender
+            val shield = (e.special == ShieldMove && faces(1).casualties + towers > 0).??(1)
+            val dc = faces(1).casualties + towers - shield
 
-            attacker.log("scored", as.hl, (bonus > 0).?("(" ~ bonus.hl ~ " from the card)").|(Empty), "and inflicted", ac.hl, (ac == 1).?("casualty").|("casualties"))
-            defender.log("scored", ds.hl, (fortress > 0).?("(" ~ fortress.hl ~ " from " ~ Fortress.elem ~ ")").|(Empty), "and inflicted", dc.hl, (dc == 1).?("casualty").|("casualties"), (towers > 0).?("(" ~ towers.hl ~ " from " ~ DefenseTower.elem ~ ")").|(Empty))
+            if (game.kaijaIn(t, attacker) || game.kaijaIn(t, defender))
+                game.note("kaija-fight")
+            if (ab + db > 0)
+                game.note("scorched-fight")
+
+            def extra(l : (Int, Elem)*) : Elem = l.toList.filter(_._1 > 0).map { case (n, what) => "(" ~ n.hl ~ " from " ~ what ~ ")" }.join(" ")
+            def kaija(f : Faction) = game.kaijaIn(t, f).?("(" ~ 2.hl ~ " from " ~ "Kaija".hl ~ ")").|(Empty)
+
+            attacker.log("scored", as.hl, kaija(attacker), extra(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl), "and inflicted", ac.hl, (ac == 1).?("casualty").|("casualties"))
+            defender.log("scored", ds.hl, kaija(defender), extra(fortress -> Fortress.elem, db -> "Scorched Earth".hl), "and inflicted", dc.hl, (dc == 1).?("casualty").|("casualties"), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
 
             val winner =
                 if (ac >= du && dc >= au) None
@@ -506,8 +677,8 @@ object MapExpansion extends Expansion {
                 else if (as > ds) |(attacker)
                 else |(defender)
 
-            game.removeUnits(t, attacker, math.min(dc, au))
-            game.removeUnits(t, defender, math.min(ac, du))
+            game.removeFigures(t, attacker, math.min(dc, au))
+            game.removeFigures(t, defender, math.min(ac, du))
 
             winner match {
                 case None =>
@@ -531,95 +702,119 @@ object MapExpansion extends Expansion {
                         }
                     }
 
-                    if (game.count(t, loser) > 0)
-                        Then(RetreatAction(loser, a, then))
+                    if (game.figures(t, loser) > 0)
+                        Then(RetreatAction(loser, a, loser == attacker && e.ignoreRough, then))
                     else
                         Then(then)
             }
 
-        case RetreatAction(f, a, then) =>
+        case RetreatAction(f, a, rough, then) =>
             val t = game.board.territory(a)
             val n = game.count(t, f)
+            val kaija = game.kaijaIn(t, f)
 
-            if (n == 0)
+            if (n == 0 && kaija.not)
                 Then(then)
             else {
                 val fighting = game.combats./(game.board.territory)
-                val to = game.board.adjacent(t).filter(_._2).map(_._1).%(o => fighting.has(o).not).%(o => game.present(o).but(f).none)
+                val to = game.board.adjacent(t).filter(rough || _._2).map(_._1).%(o => fighting.has(o).not).%(o => game.present(o).but(f).none)
 
                 if (to.none) {
-                    game.removeUnits(t, f, n)
-                    f.log("had nowhere to retreat and lost", n.hl, (n == 1).?("unit").|("units"))
+                    game.removeFigures(t, f, game.figures(t, f))
+                    f.log("had nowhere to retreat and lost", Figures(n, kaija))
                     Then(then)
                 }
                 else
-                    Ask(f).some(to)(o => $(RetreatToAction(f, a, o.anchor, n, then)) ++ (n > 1).$(RetreatToAction(f, a, o.anchor, 1, then)))
+                    // Kaija goes with the first group
+                    Ask(f).some(to)(o => $(RetreatToAction(f, a, o.anchor, n, kaija, rough, then)) ++ (n > 1).$(RetreatToAction(f, a, o.anchor, 1, kaija, rough, then)))
             }
 
-        case RetreatToAction(f, from, to, n, then) =>
+        case RetreatToAction(f, from, to, n, kaija, rough, then) =>
             game.removeUnits(game.board.territory(from), f, n)
             game.addUnits(to, f, n)
+            if (kaija)
+                game.kaija = |(to)
 
-            f.log("retreated", (n == 1).?("1 unit").|(n.hl ~ " units"), "to", to)
+            f.log("retreated", Figures(n, kaija), "to", to)
 
-            Then(RetreatAction(f, from, then))
+            Then(RetreatAction(f, from, rough, then))
 
-        // EXPLORE
-        case ExploreAction(f, draw, times, redraw, anywhere, then) =>
-            if (times <= 0 || game.pile.none || explorable(f, anywhere).none)
+        // SNAKE CLAN
+        case ScorchedAction(f, then) =>
+            val l = scorchable(f)
+
+            if (l.none)
                 Then(then)
             else
-                Then(ExploreDrawAction(f, draw, game.pile.num, times, redraw, anywhere, then))
+                Ask(f).each(l)(t => ScorchedPlaceAction(f, t.anchor, then)).add(ScorchedSkipAction(f, then))
 
-        case ExploreDrawAction(f, draw, tries, times, redraw, anywhere, then) =>
+        case ScorchedPlaceAction(f, a, then) =>
+            game.scorched = |(a)
+            game.note("scorched-place")
+
+            f.log("moved the", "Scorched Earth".hl, "token to", a)
+
+            Then(then)
+
+        case ScorchedSkipAction(f, then) =>
+            Then(then)
+
+        // EXPLORE
+        case ExploreAction(f, draw, times, redraw, e, then) =>
+            if (times <= 0 || game.pile.none || explorable(f, e.anywhere).none)
+                Then(then)
+            else
+                Then(ExploreDrawAction(f, draw, game.pile.num, times, redraw, e, then))
+
+        case ExploreDrawAction(f, draw, tries, times, redraw, e, then) =>
             if (game.exploring.num >= draw || game.pile.none || tries <= 0)
-                Then(ExploreChooseAction(f, times, redraw, anywhere, then))
+                Then(ExploreChooseAction(f, times, redraw, e, then))
             else {
                 val tile = game.pile.head
                 game.pile = game.pile.drop(1)
 
-                if (placements(tile, |(explorable(f, anywhere)), false).any) {
+                if (placements(tile, |(explorable(f, e.anywhere)), false).any) {
                     game.exploring :+= tile
-                    Then(ExploreDrawAction(f, draw, tries - 1, times, redraw, anywhere, then))
+                    Then(ExploreDrawAction(f, draw, tries - 1, times, redraw, e, then))
                 }
                 else {
                     game.pile :+= tile
                     log("A tile that could not be placed went to the bottom of the pile")
-                    Then(ExploreDrawAction(f, draw, tries - 1, times, redraw, anywhere, then))
+                    Then(ExploreDrawAction(f, draw, tries - 1, times, redraw, e, then))
                 }
             }
 
-        case ExploreChooseAction(f, times, redraw, anywhere, then) =>
+        case ExploreChooseAction(f, times, redraw, e, then) =>
             if (game.exploring.none) {
                 f.log("found no tile to explore with")
                 Then(then)
             }
             else
-                Ask(f).each(game.exploring)(t => ExploreTileAction(f, t, times, anywhere, then))
-                    .when(redraw && game.exploring.num == 1 && game.pile.any)(ExploreRedrawAction(f, game.exploring.head, times, anywhere, then))
+                Ask(f).each(game.exploring)(t => ExploreTileAction(f, t, times, e, then))
+                    .when(redraw && game.exploring.num == 1 && game.pile.any)(ExploreRedrawAction(f, game.exploring.head, times, e, then))
 
-        case ExploreRedrawAction(f, tile, times, anywhere, then) =>
+        case ExploreRedrawAction(f, tile, times, e, then) =>
             game.exploring = $
             game.pile :+= tile
 
             f.log("put a tile at the bottom of the pile")
 
-            Then(ExploreDrawAction(f, 1, game.pile.num, times, false, anywhere, then))
+            Then(ExploreDrawAction(f, 1, game.pile.num, times, false, e, then))
 
-        case ExploreTileAction(f, tile, times, anywhere, then) =>
-            Ask(f).each(placements(tile, |(explorable(f, anywhere)), false).map(_._1).distinct)(s => ExploreSpotAction(f, tile, s, times, anywhere, then)).cancel
+        case ExploreTileAction(f, tile, times, e, then) =>
+            Ask(f).each(placements(tile, |(explorable(f, e.anywhere)), false).map(_._1).distinct)(s => ExploreSpotAction(f, tile, s, times, e, then)).cancel
 
-        case ExploreSpotAction(f, tile, spot, times, anywhere, then) =>
-            val rs = rotations(placements(tile, |(explorable(f, anywhere)), false), spot)
+        case ExploreSpotAction(f, tile, spot, times, e, then) =>
+            val rs = rotations(placements(tile, |(explorable(f, e.anywhere)), false), spot)
 
-            explorePreview(f, tile, spot, rs, rs.head, times, anywhere, then)
+            explorePreview(f, tile, spot, rs, rs.head, times, e, then)
 
-        case ExploreRotateAction(f, tile, spot, r, d, times, anywhere, then) =>
-            val rs = rotations(placements(tile, |(explorable(f, anywhere)), false), spot)
+        case ExploreRotateAction(f, tile, spot, r, d, times, e, then) =>
+            val rs = rotations(placements(tile, |(explorable(f, e.anywhere)), false), spot)
 
-            explorePreview(f, tile, spot, rs, rotate(rs, r, d), times, anywhere, then)
+            explorePreview(f, tile, spot, rs, rotate(rs, r, d), times, e, then)
 
-        case ExploreTurnAction(f, tile, spot, r, times, anywhere, then) =>
+        case ExploreTurnAction(f, tile, spot, r, times, e, then) =>
             val before = game.board.territories.%(game.board.open)
             val rest = game.exploring.diff($(tile))
 
@@ -628,6 +823,16 @@ object MapExpansion extends Expansion {
 
             if (rest.any)
                 log("The other tiles went to the bottom of the pile")
+
+            // Lay of the Land: collect everything shown on the tile
+            if (e.collect) {
+                val spec = Tiles(tile)
+                val (food, wood, lore) = (spec.areas./(_.food).sum, spec.areas./(_.wood).sum, spec.areas./(_.lore).sum)
+                f.food += food
+                f.wood += wood
+                f.lore += lore
+                f.log("collected", food.hl, Food, Comma, wood.hl, Wood, "and", lore.hl, Lore, "from the tile")
+            }
 
             game.board.place(Placement(tile, spot.x, spot.y, r))
 
@@ -654,19 +859,19 @@ object MapExpansion extends Expansion {
                 f.log("collected", 1.hl, Lore, "for exploring without closing a territory")
             }
 
-            Then(ExploreAction(f, 1, times - 1, false, false, then))
+            Then(ExploreAction(f, 1, times - 1, false, e, then))
 
         // BUILD
-        case BuildAction(f, discount, times, duplicate, then) =>
-            val options = (times > 0).??(buildOptions(f, discount, duplicate))
+        case BuildAction(f, e, times, smallOnly, then) =>
+            val options = (times > 0).??(buildOptions(f, e, smallOnly))
 
             if (options.none)
-                Then(then)
+                Then(BuildFinishAction(f, e, then))
             else
-                Ask(f).each(options) { case (a, b, s, cost) => BuildPlaceAction(f, a, b, s, cost, times, discount, duplicate, then) }
-                    .add(BuildDoneAction(f, then))
+                Ask(f).each(options) { case (a, b, s, cost) => BuildPlaceAction(f, a, b, s, cost, times, e, smallOnly, then) }
+                    .add(BuildDoneAction(f, e, then))
 
-        case BuildPlaceAction(f, a, b, s, cost, times, discount, duplicate, then) =>
+        case BuildPlaceAction(f, a, b, s, cost, times, e, smallOnly, then) =>
             f.wood -= cost
             game.buildings += s -> b
 
@@ -678,9 +883,34 @@ object MapExpansion extends Expansion {
                 f.log("collected", n.hl, Food, "for building")
             }
 
-            Then(BuildAction(f, discount, times - 1, duplicate, then))
+            // Glory of the Clan: collect the territory's resources as at harvest
+            if (e.special == GloryBuild)
+                collect(f, game.board.territory(a), "from the territory")
 
-        case BuildDoneAction(f, then) =>
+            // Carpentry Mastery: once a large building is built, the other must be small
+            Then(BuildAction(f, e, times - 1, smallOnly || (e.special == CarpentryBuild && b.large), then))
+
+        case BuildDoneAction(f, e, then) =>
+            Then(BuildFinishAction(f, e, then))
+
+        case BuildFinishAction(f, e, then) =>
+            // Industrious Villagers: may replace one of f's buildings by another of the same size
+            val l = (e.special == IndustriousBuild).??(replacements(f))
+
+            if (l.none)
+                Then(then)
+            else
+                Ask(f).each(l) { case (s, b) => ReplaceBuildingAction(f, s.area, s, b, then) }.add(ReplaceSkipAction(f, then))
+
+        case ReplaceBuildingAction(f, a, s, b, then) =>
+            val old = game.buildings(s)
+            game.buildings += s -> b
+
+            f.log("replaced", old, "with", b, "in", a)
+
+            Then(then)
+
+        case ReplaceSkipAction(f, then) =>
             Then(then)
 
         // FEAST
@@ -691,7 +921,7 @@ object MapExpansion extends Expansion {
         case ReturnUnitsAction(f, then) =>
             val neutral = game.board.territories.%(t => game.present(t).none)
 
-            if (game.onMap(f) > 0 || neutral.none)
+            if (game.anyOnMap(f) || neutral.none)
                 Then(then)
             else
                 Ask(f).each(neutral)(t => ReturnUnitsToAction(f, t.anchor, then))

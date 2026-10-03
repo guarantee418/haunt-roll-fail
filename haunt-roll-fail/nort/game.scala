@@ -98,6 +98,13 @@ class FactionState(val faction : Faction)(implicit game : Game) {
 
     var passed = false
 
+    // Cards played this year (Legendary Heroes)
+    var played : $[Card] = $
+    // Future Sight was played this year: no card when passing
+    var foresaw = false
+    // Conqueror was played this year
+    var conqueror = false
+
     def deck = draw ++ hand ++ active ++ discard
 
     def unrest = deck.count(_ == UnrestCard)
@@ -155,6 +162,10 @@ case class RemoveCardAction(self : Faction, card : Card) extends BaseAction(card
 case class UpgradeCardAction(self : Faction, card : Card, upgrade : Card, remove : Boolean) extends BaseAction(card)("Upgrade to", upgrade, remove.?("and remove").|("and wait"), "(" ~ 3.hl ~ " " ~ Lore.elem ~ ")")
 case class PassAction(self : Faction) extends BaseAction("Actions")("Pass")
 case class EndTurnAction(self : Faction) extends BaseAction("Actions")("End turn")
+// Resolve a played card that nobody cancelled
+case class PlayResolveAction(f : Faction, card : Card, stage : Int) extends ForcedAction
+// Resolve a card's effect (also for effects copied from other cards)
+case class ResolveEffectAction(f : Faction, e : Effect, then : ForcedAction) extends ForcedAction
 
 case class ResolveDrawnAction(f : Faction, keep : Int, discard : Int, back : Int, then : ForcedAction) extends ForcedAction
 case class KeepDrawnAction(self : Faction, card : Card, keep : Int, discard : Int, back : Int, then : ForcedAction) extends BaseAction("Keep", (keep > 1).?(keep.hl ~ " cards").|("a card"))(card)
@@ -166,7 +177,10 @@ case class ResourcefulAction(f : Faction, then : ForcedAction) extends ForcedAct
 case class ResourcefulPayAction(self : Faction, pay : $[Resource], then : ForcedAction) extends BaseAction("Resourceful People", "pay any 3 resources to draw 1 more card")("Pay", pay./(_.elem).join(" "))
 case class PickCardAction(self : Faction, card : Card) extends BaseAction("Take a card")(card.img, Break, card)
 
-case object HarvestAction extends ForcedAction
+// Snake Clan may take one resource from the territory with its Scorched Earth token
+case object ScorchedHarvestAction extends ForcedAction
+case class ScorchedTakeAction(self : Faction, r : |[Resource]) extends BaseAction("Scorched Earth".hl, "take one resource from", ScorchedEarthPlace)(r./(_.elem).|("Take nothing".txt))
+case class HarvestAction(take : |[Resource]) extends ForcedAction
 case class TradeAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class TradeForAction(self : Faction, pay : $[Resource], gain : Resource, then : ForcedAction) extends BaseAction("Trade", "three resources for one")("Pay", pay./(_.elem).join(" "), "for", gain)
 case object WinterAction extends ForcedAction
@@ -176,6 +190,11 @@ case object NewYearAction extends ForcedAction
 case class DominationAction(rulers : $[Faction]) extends ForcedAction
 
 case class GameOverWonAction(self : Faction, f : Faction) extends BaseInfo("Game Over")(f, "won")
+
+
+case object ScorchedEarthPlace extends GameElementary {
+    def elem(implicit game : Game) = game.scorched./(_.elem).|(Empty)
+}
 
 
 trait Expansion {
@@ -198,7 +217,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def has(m : Module) = modules.has(m)
 
     // Module expansions come first, so they can take over any core action
-    val expansions : $[Expansion] = modules./~(_.expansion) ++ $(MapExpansion, CommonExpansion)
+    val expansions : $[Expansion] = modules./~(_.expansion) ++ $(MapExpansion, CardsExpansion, CommonExpansion)
 
     var seating : $[Faction] = setup
 
@@ -238,17 +257,49 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // Territories where a Move action started a fight
     var combats : $[AreaRef] = $
 
+    // Where the last Recruit action placed units (Raven Mercenaries)
+    var recruited : $[AreaRef] = $
+
     // Fights so far, for statistics
     var fights = 0
+
+    // Rule events for the headless host's summary (Kaija recruited, cards resolved, ...)
+    var events : Map[String, Int] = Map()
+
+    def note(k : String) { events += k -> (events.getOrElse(k, 0) + 1) }
 
     // Units per player
     val unitLimit = 14
 
+    // Bear Clan's Kaija: where it is (None while in the reserve), and whether it may enter enemy territories this year
+    var kaija : |[AreaRef] = None
+    var awakened = false
+
+    // Snake Clan's Scorched Earth token
+    var scorched : |[AreaRef] = None
+
     def unitsAt(a : AreaRef) : Map[Faction, Int] = units.getOrElse(a, Map())
 
+    // Units only; Kaija is counted separately
     def count(t : Territory, f : Faction) : Int = t.areas./(a => unitsAt(a).getOrElse(f, 0)).sum
 
-    def present(t : Territory) : $[Faction] = seating.%(f => count(t, f) > 0)
+    def kaijaIn(t : Territory, f : Faction) : Boolean = f == Bear && kaija.exists(t.areas.contains)
+
+    // Units and Kaija
+    def figures(t : Territory, f : Faction) : Int = count(t, f) + kaijaIn(t, f).??(1)
+
+    // Combat points of the figures: Kaija is worth 2
+    def strength(t : Territory, f : Faction) : Int = count(t, f) + kaijaIn(t, f).??(2)
+
+    // Kaija is in Bear Clan's reserve and can be recruited
+    def kaijaReady(f : Faction) : Boolean = f == Bear && kaija.none && setup.has(Bear)
+
+    def scorchedIn(t : Territory) : Boolean = scorched.exists(t.areas.contains)
+
+    def present(t : Territory) : $[Faction] = seating.%(f => figures(t, f) > 0)
+
+    // Units or Kaija anywhere on the map
+    def anyOnMap(f : Faction) : Boolean = onMap(f) > 0 || (f == Bear && kaija.any)
 
     def controlled(f : Faction) : $[Territory] = board.territories.%(t => present(t) == $(f))
 
@@ -259,6 +310,14 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def addUnits(a : AreaRef, f : Faction, n : Int) {
         val m = unitsAt(a)
         units += a -> (m + (f -> (m.getOrElse(f, 0) + n)))
+    }
+
+    // Casualties: units first, Kaija last
+    def removeFigures(t : Territory, f : Faction, n : Int) {
+        val k = math.min(n, count(t, f))
+        removeUnits(t, f, k)
+        if (n > k && kaijaIn(t, f))
+            kaija = None
     }
 
     def removeUnits(t : Territory, f : Faction, n : Int) {
@@ -352,24 +411,30 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 object Debug {
     var stats = false
 
+    // Headless testing only: starting decks also hold both clan upgrades
+    var upgradesInDeck = false
+
     def summary(g : Game) {
         if (stats)
             println("  year " + g.year + ", " + g.board.placements.size + " tiles, " + g.buildings.size + " buildings, " + g.fights + " fights, " +
-                g.factions.map(f => f.name + " " + g.onMap(f) + "u " + g.states(f).fame + "f " + g.strongholds(f).size + "s").mkString(", "))
+                g.factions.map(f => f.name + " " + g.onMap(f) + "u " + g.states(f).fame + "f " + g.strongholds(f).size + "s").mkString(", ") +
+                g.events.any.??("\n    " + g.events.toList.sortBy(_._1).map { case (k, n) => k + " " + n }.mkString(", ")))
     }
 }
 
 object CommonExpansion extends Expansion {
-    // All ways to pay three resources out of what f has
-    def payments(f : Faction)(implicit game : Game) : $[$[Resource]] =
-        Resource.all./~(a => Resource.all./~(b => Resource.all./(c => $(a, b, c))))
+    // All ways to pay n (3 by default) resources out of what f has
+    def payments(f : Faction, n : Int = 3)(implicit game : Game) : $[$[Resource]] =
+        1.to(n).foldLeft($($[Resource]()))((l, _) => l./~(p => Resource.all./(r => p :+ r)))
             ./(_.sortBy(Resource.all.indexOf(_))).distinct
             .%(p => Resource.all.forall(r => p.count(_ == r) <= f.has(r)))
 
     def available(f : Faction)(implicit game : Game) = f.draw.num + f.discard.num
 
     // Only cards whose effect is implemented can be played
-    def playable(f : Faction, c : Card)(implicit game : Game) = c.effect match {
+    def playable(f : Faction, c : Card)(implicit game : Game) : Boolean = playableEffect(f, c.effect)
+
+    def playableEffect(f : Faction, e : Effect)(implicit game : Game) : Boolean = e match {
         case DrawEffect(n, _, _, _) => available(f) >= n
         case CollectEffect(_, _) => true
         case NegotiationEffect => available(f) > 0
@@ -421,7 +486,10 @@ object CommonExpansion extends Expansion {
         case ShuffleStartingDecksAction(f :: rest) =>
             f.upgrades = $(ClanCard(f, 1), ClanCard(f, 2))
 
-            Shuffle[Card](Cards.starting(game.colors(f)) :+ ClanCard(f, 0), ShuffledStartingDeckAction(f, _, rest))
+            if (Debug.upgradesInDeck)
+                f.upgrades = $
+
+            Shuffle[Card]((Cards.starting(game.colors(f)) :+ ClanCard(f, 0)) ++ Debug.upgradesInDeck.??($(ClanCard(f, 1), ClanCard(f, 2))), ShuffledStartingDeckAction(f, _, rest))
 
         case ShuffledStartingDeckAction(f, l, rest) =>
             f.draw = l
@@ -584,7 +652,12 @@ object CommonExpansion extends Expansion {
 
             factions.foreach { f =>
                 f.passed = false
+                f.played = $
+                f.foresaw = false
+                f.conqueror = false
             }
+
+            game.awakened = false
 
             // Each controlled Forge draws one more card
             Then(game.from(game.first).foldRight(RevealDevelopmentsAction : ForcedAction)((f, then) => DrawCardsAction(f, 4 + game.controlled(f)./~(game.buildingsIn).map(_._2).count(_ == Forge), then)))
@@ -634,11 +707,26 @@ object CommonExpansion extends Expansion {
             f.hand = f.hand.diff($(c))
             f.active :+= c
 
+            f.played :+= c
+
             f.log("played", c)
 
+            game.note(c.name.replace(" ", "-"))
+
+            // Opponents holding Defensive Strategy may cancel the card
+            Then(DefensiveAskAction(f, c, stage, game.from(f).drop(1)))
+
+        case PlayResolveAction(f, c, stage) =>
             val after = TurnAction(f, (c.flash && stage < 2).?(1).|(2))
 
-            c.effect match {
+            // Snake Clan may move the Scorched Earth token before resolving a clan card
+            if (f == Snake && c.is[ClanCard] && MapExpansion.scorchable(f).any)
+                Then(ScorchedAction(f, ResolveEffectAction(f, c.effect, after)))
+            else
+                Then(ResolveEffectAction(f, c.effect, after))
+
+        case ResolveEffectAction(f, e, after) =>
+            e match {
                 case DrawEffect(n, k, d, b) =>
                     Then(DrawTempAction(f, n, ResolveDrawnAction(f, k, d, b, after)))
 
@@ -720,7 +808,8 @@ object CommonExpansion extends Expansion {
 
             f.passed = true
 
-            if (game.display.any)
+            // After Future Sight there is no card to take
+            if (game.display.any && f.foresaw.not)
                 Ask(f).each(game.display)(c => PickCardAction(f, c))
             else
                 Then(NextTurnAction(f))
@@ -739,13 +828,28 @@ object CommonExpansion extends Expansion {
                 case None =>
                     game.highlight.current = None
                     game.display = $
-                    Then(HarvestAction)
+                    Then(ScorchedHarvestAction)
             }
 
         // 3. HARVEST
-        case HarvestAction =>
+        case ScorchedHarvestAction =>
+            val owner = game.scorched./(game.board.territory)./(game.present).|($).single.%(_ != Snake)
+            val (food, wood, lore) = game.scorched./(game.board.territory)./(game.produce).|((0, 0, 0))
+            val l = $[(Resource, Int)](Food -> food, Wood -> wood, Lore -> lore).filter(_._2 > 0).map(_._1)
+
+            if (factions.has(Snake) && owner.any && l.any)
+                Ask(Snake).each(l)(r => ScorchedTakeAction(Snake, |(r))).add(ScorchedTakeAction(Snake, None))
+            else
+                Then(HarvestAction(None))
+
+        case ScorchedTakeAction(f, r) =>
+            Then(HarvestAction(r))
+
+        case HarvestAction(take) =>
             log(SingleLine)
             log("Harvest")
+
+            val victim = take.any.??(game.scorched./(game.board.territory)./(game.present).|($).single)
 
             game.from(game.first).foreach { f =>
                 val territories = game.controlled(f)
@@ -767,6 +871,15 @@ object CommonExpansion extends Expansion {
                 f.wood += wood
                 f.lore += lore
                 f.log("collected", food.hl, Food, Comma, wood.hl, Wood, "and", lore.hl, Lore)
+
+                // The Scorched Earth resource goes to Snake Clan instead
+                if (victim.has(f))
+                    take.foreach { r =>
+                        game.note("scorched-harvest")
+                        f.gain(r, -1)
+                        Snake.gain(r, 1)
+                        Snake.log("took", 1.hl, r, "from", f, "with the", "Scorched Earth".hl, "token")
+                    }
             }
 
             Then(game.from(game.first).foldRight(WinterAction : ForcedAction)((f, then) => TradeAction(f, then)))

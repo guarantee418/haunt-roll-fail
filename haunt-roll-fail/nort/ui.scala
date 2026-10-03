@@ -156,25 +156,43 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             pieces.add(Sprite($(at(b.image, 190)), $))(sx(x), sy(y))
         }
 
-        // Territory numbers, highlighted when they can be chosen, and units next to them
+        // Territory numbers on every area of the territory, highlighted when it can be chosen; units at its first area
         board.territories.zipWithIndex.foreach { case (t, i) =>
-            val (x, y) = board.point(t.anchor)
             val tag = $(t.anchor)
             val box = $(Rectangle(-70, -70, 140, 140))
 
-            if (targets.has(t.anchor))
-                pieces.add(Sprite($(at("ui-target", 230)), box, tag))(sx(x), sy(y))
+            t.areas.foreach { a =>
+                val (x, y) = board.point(a)
 
-            if (i < 99)
-                pieces.add(Sprite($(at("ui-label-" + (i + 1), 110)), box, tag))(sx(x), sy(y))
+                if (targets.has(t.anchor))
+                    pieces.add(Sprite($(at("ui-target", 230)), box, tag))(sx(x), sy(y))
+
+                if (i < 99)
+                    pieces.add(Sprite($(at("ui-label-" + (i + 1), 110)), box, tag))(sx(x), sy(y))
+            }
+
+            // A second player's units (during a fight) go next to the first, towards the middle of the tile
+            val (px, py) = board.unitPoint(t.anchor)
+            val step = (px - math.floor(px) < 0.5).?(190).|(-190)
 
             game.present(t).zipWithIndex.foreach { case (f, k) =>
                 val n = game.count(t, f)
-                val ux = sx(x) + 150 + k * 190
-                val uy = sy(y)
-                pieces.add(Sprite($(at("unit-" + game.colors(f).id, 200)), $(Rectangle(-100, -100, 200, 200)), tag))(ux, uy)
-                if (n <= 15)
-                    pieces.add(Sprite($(at("ui-count-" + n, 90)), $))(ux + 60, uy + 70)
+                val ux = sx(px) + k * step
+                val uy = sy(py)
+                if (n > 0) {
+                    pieces.add(Sprite($(at("unit-" + game.colors(f).id, 200)), $(Rectangle(-100, -100, 200, 200)), tag))(ux, uy)
+                    if (n <= 15)
+                        pieces.add(Sprite($(at("ui-count-" + n, 90)), $))(ux + 60, uy + 70)
+                }
+                // Kaija next to Bear Clan's units, or in their place
+                if (game.kaijaIn(t, f))
+                    pieces.add(Sprite($(at("token-kaija", (n > 0).?(130).|(180))), $(Rectangle(-80, -80, 160, 160)), tag))((n > 0).?(ux - 85).|(ux), (n > 0).?(uy + 55).|(uy))
+            }
+
+            // Snake Clan's Scorched Earth token, by the territory number
+            if (game.scorchedIn(t)) {
+                val (x, y) = board.point(t.anchor)
+                pieces.add(Sprite($(at("token-scorched-earth", 150)), $(Rectangle(-75, -75, 150, 150)), tag))(sx(x) - 40, sy(y) + 110)
             }
         }
 
