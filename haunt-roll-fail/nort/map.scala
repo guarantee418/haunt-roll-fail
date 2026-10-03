@@ -266,7 +266,7 @@ object MapExpansion extends Expansion {
                     val preview = board.preview(p)
                     // Kaija counts as Bear Clan's, and a Fallen Valkyrie shares its territory with nobody
                     val mixed = preview.exists { t =>
-                        val players = (t.areas./~(a => game.unitsAt(a).keys) ++ game.kaija.%(t.areas.contains)./(_ => Bear) ++ game.chiefs.toList.%(x => t.areas.contains(x._2))./(_._1)).distinct
+                        val players = (t.areas./~(a => game.unitsAt(a).keys) ++ game.kaija.%(t.areas.contains)./(_ => Bear) ++ game.chiefs.toList.filter(x => t.areas.contains(x._2)).map(_._1)).distinct
                         players.num > 1 || players.any && game.creatureLine.exists(c => c.kind.shares.not && t.areas.contains(game.creatureAt(c)))
                     }
                     val room = setup.not || p.spec.areas.exists(a => preview.find(_.areas.contains(AreaRef(x, y, a.id))).get.areas.forall(b => game.unitsAt(b).isEmpty))
