@@ -138,6 +138,8 @@ trait BaseOption extends Record {
     val explain : $[Elem] = $
     val grow : Style = xlo.grow4
     val links : $[(String, String)] = $
+    // Extra styles for the option's button on the setup screen, e.g. a width so several fit on one row
+    def buttonStyles : $[Style] = $
 
     val toggle : Boolean = false
 

@@ -12,7 +12,8 @@ are at `667d5ec4`. The work was done on the branch `claude/dazzling-faraday-mqwi
 
 | File | What it holds |
 |---|---|
-| `meta.scala` | Clans, 2–5 players, the asset lists (cards, tiles, units, buildings, `ui-` markers), `underConstruction = true` |
+| `meta.scala` | Clans (picked by name, with their three clan cards shown), 2–5 players, which options go on which setup page, the asset lists (cards, tiles, units, buildings, `ui-` markers), `underConstruction = true` |
+| `options.scala` | Setup options: `ColorOption` per clan, `YearsOption` (5–10, default 7), `FameOnly`, `FirstSeatStarts`; `Module` and `ModuleOption` for modules and expansions |
 | `game.scala` | Factions, player colors by seat, resources, `FactionState`, `Game` (map state and helpers), `CommonExpansion` (setup, decks, the year loop, harvest, winter, end of year, scoring), `Debug.summary` |
 | `cards.scala` | Every core card (name, fame, Flash, text, image) and its `Effect`; `MapEffect` means not implemented |
 | `tiles.scala` | All 35 core tiles as data: areas, the sides each area owns, resources, lairs, building spaces, and borders (regular or rough) |
@@ -55,6 +56,42 @@ used yet).
   Commit `3760f8c7` (another session) already moved the label points of
   13 tiles inside their areas; tile-01's east area had been drawn in the
   wrong territory.
+
+## Setup screen and options
+
+- The clan picker shows each clan by name (no color) with its initial clan
+  card and two upgrades. The images come from `Meta.menuImages` (a hook added
+  to the framework's `MetaBase`), because the game's assets aren't loaded yet
+  in the menus.
+- Setup page 1: seating and one color row per clan (`ColorOption`; picking a
+  color takes it from any other clan; a clan left without one gets a free
+  color in seating order). Five buttons fit on a row through
+  `BaseOption.buttonStyles`, another small framework hook.
+- Setup page 2: game length (the Development deck scales: one card per player
+  per year except the last, about a third Early, so 7 years is 2 + 4 and
+  10 years 3 + 6 as in the rulebook), Fame victory only, First seat goes
+  first, and the modules.
+- In the game, clan names are still drawn in the placeholder clan colors
+  (`styles.scala`) next to the player's color.
+
+## Modules (groundwork)
+
+`Module` in `options.scala` lists Creatures, Warchiefs, Wilderness,
+Wastelands, New Blood, Uncharted Horizons and the 2v2 Teams variant. Each has
+a `ModuleOption`, shown on setup page 2 as "coming later" and impossible to
+turn on while `ready` is false. `game.modules` / `game.has(m)` tell which are
+on. To implement one:
+
+1. Set `ready = true` and give it an `expansion`. `Game.expansions` puts
+   module expansions before `MapExpansion` and `CommonExpansion`, so a module
+   can handle any core action first (return `UnknownContinue` to let the core
+   handle it) or add its own actions.
+2. Add its assets to `Meta.assets` with `has(options, module)` as the
+   condition (done for the creature cards in `card/creature/`).
+3. New Blood's clans go in `Meta.factions` (and `ColorOption.all` follows).
+   Clans are picked before options, so check "New Blood clan without the
+   New Blood module" in `validateFactionSeatingOptions`.
+4. Write the rules summary in `RULES.md` first; the rulebooks aren't in the repo.
 
 ## Known simplifications and gaps
 
@@ -122,7 +159,8 @@ The status table in `RULES.md` is the full list. In short:
 - **Bot games on the JVM:** make a separate project directory with
   `common.sbt` (change `%%%` to `%%`) plus `host.xsbt` as `build.sbt`,
   symlink the sources, then `sbt "runMain nort.Host"`. It plays 20 games with
-  2–5 players and checks that every action serializes and parses back. Leave
+  2–5 players and random colors, game lengths and victory options, and checks
+  that every action and option serializes and parses back. Leave
   out `vast/host.scala`, which doesn't compile.
 - **Browser:** serve `/play` (from `index.html` with
   `<base href="http://localhost:PORT/hrf/"/>`) and `/hrf/*` (files under

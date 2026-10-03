@@ -32,8 +32,11 @@ of the 52 development cards; expansion tiles, clan
 boards and tokens are in `expansion/` for later. Unit figures are in
 `token/unit/` (`unit-<color>`, and `warchief-<color>` for the Warchiefs
 expansion), recolored from the `-original` images. Colors belong to
-players, not clans: blue, red, yellow, purple, green by seat
-(`game.colors`); starting cards show that color's banner. `underConstruction = true` in its `Meta` puts
+players, not clans: each clan's player picks one on the setup screen
+(`ColorOption`, default blue, red, yellow, purple, green by seat;
+`game.colors`); starting cards show that color's banner. The setup options
+(colors, game length, fame-only victory, first player, and the modules and
+expansions, shown but disabled until implemented) are in `nort/options.scala`. `underConstruction = true` in its `Meta` puts
 an "Under Construction" note under its name on the game list and a disclaimer
 at the top of its menu. `nort/host.scala` runs bot games headless (JVM only,
 like the other `host.scala` files).

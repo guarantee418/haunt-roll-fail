@@ -40,6 +40,8 @@ package object elem {
 
         object title extends CustomStyle()
 
+        object colorButton extends CustomStyle(width("15%"), margin.left("0.5%"), margin.right("0.5%"), padding.left("0.5ex"), padding.right("0.5ex"))
+        object menuCard extends CustomStyle(display("inline-block"), width("30%"), max.width("15ex"), margin("0.5ex"), vertical.align("top"))
         object card extends CustomStyle(display("inline-block"), width("12ex"), margin("0.3ex"))
         object table extends CustomStyle(height("100%"), width("100%"), overflow.y("auto"), overflow.x("hidden"), padding("1ex"), box.sizing("border-box"), text.align("center"))
         object tableRow extends CustomStyle(margin.bottom("1.5ex"))

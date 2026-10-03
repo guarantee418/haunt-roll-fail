@@ -126,6 +126,9 @@ trait MetaBase {
     def factionElem(f : F) : Elem
     def factionNote(f : F) : Elem = Empty
 
+    // Image name -> URL for images used in the menus (faction notes, option explanations), before the game's assets load
+    def menuImages : Map[String, String] = Map()
+
     def glyph() : |[String] = None
     def glyph(g : G) : |[String] = glyph()
     def glyph(f : F) : |[String] = glyph()

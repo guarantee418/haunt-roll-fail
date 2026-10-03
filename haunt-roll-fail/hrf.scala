@@ -362,7 +362,7 @@ class HRFUI(implicit resources : Resources) {
     logger.alog(Empty ~ BuildInfo.name ~ " " ~ BuildInfo.version)
 
     def topMenu() {
-        action.asker.zask(HRF.metas./(m => ZBasic("Haunt Roll Fail".hh(xstyles.larger110)(ExternalStyle("consolas")), metaLabel(m), () => new HRFMetaUI(this, m, 0).withMeta(), ZBasic.choice.but(xstyles.thumargin))))
+        action.asker.zask(HRF.metas./(m => ZBasic("Haunt Roll Fail".hh(xstyles.larger110)(ExternalStyle("consolas")), metaLabel(m), () => new HRFMetaUI(this, m, 0)(resources).withMeta(), ZBasic.choice.but(xstyles.thumargin))))
     }
 
     def topInfo() {
@@ -376,14 +376,16 @@ class HRFUI(implicit resources : Resources) {
             m.label.spn(xstyles.larger110)(ExternalStyle(m.titleFont.|("")))
 
     HRF.param("meta")./~(mn => HRF.metas.%(_.name == mn).single)./{m =>
-        new HRFMetaUI(this, m, 800).withMeta()
+        new HRFMetaUI(this, m, 800)(resources).withMeta()
     }.|{
         topMenu()
     }
 
 }
 
-class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(implicit resources : Resources) {
+class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseResources : Resources) {
+    implicit val resources : Resources = meta.menuImages.any.?(baseResources.copy(images = baseResources.images.copy(sources = baseResources.images.sources ++ meta.menuImages.map { case (k, v) => k.toLowerCase -> v }))).|(baseResources)
+
     var settings : $[Setting] = $
 
     var history = new web.History("/play/" + meta.name, dom.window.location.search, dom.window.location.hash)
@@ -875,7 +877,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(implic
             ) ++
             meta.intLinks./((t, l) => ZBasic("Other", t, () => {
                 HRF.metas.%(_.name == l).single./{ m =>
-                    new HRFMetaUI(ui, m, 800).withMeta()
+                    new HRFMetaUI(ui, m, 800)(baseResources).withMeta()
                 }.|(throw new Error("meta not found " + l))
             })) ++
             meta.extLinks./((t, l) => ZOption(Div(meta.extLinksName), Link(l, t.div(xstyles.divint) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough), ZBasic.infoch ++ $(xstyles.link)))) ++
@@ -1254,7 +1256,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(implic
                     val active = enabled
                     ZOption(o.group.styled(xstyles.larger125),
                         OnClick(Div(state.?(o.decorate(o.valueOn).styled(xstyles.bold)).|(o.decorate(o.valueOff))
-                        ~ (o.explain.any).?(Parameter(o, OnClick(Image("question-mark")(xstyles.explain)))), (active || state).?(ZBasic.choice).|(ZBasic.info) ++ state.$(xstyles.optionOn) ++ $(xstyles.optionE))), {
+                        ~ (o.explain.any).?(Parameter(o, OnClick(Image("question-mark")(xstyles.explain)))), (active || state).?(ZBasic.choice).|(ZBasic.info) ++ state.$(xstyles.optionOn) ++ $(xstyles.optionE) ++ o.buttonStyles)), {
                             case o : GameOption if o.explain.any =>
                                 showOverlay(o.explain./(ZBasic(o.group ~ " " ~ MDash ~ " " ~ o.valueOn, _)), o.grow)
                                 setTimeout(0) { setupQuestions(page) }
