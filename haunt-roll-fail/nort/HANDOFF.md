@@ -4,9 +4,11 @@ Notes for the next agent working on Northgard: Uncharted Lands (package
 `nort`). Read this file, then `RULES.md` (the rules summary and status table),
 then the Northgard paragraph in the top-level `CLAUDE.md`.
 
-State on 2026-10-03: the base game is playable end to end on the live site
-(https://games.clean5110.com/play, "Under Construction"). `main` and `deploy`
-are at `667d5ec4`. The work was done on the branch `claude/dazzling-faraday-mqwiwd`.
+State on 2026-10-03 (second session): the base game is playable end to end,
+with every card effect and all seven clan powers. This session's work is on
+the branch `claude/nort-playtest-powers-cards`, not yet merged or deployed
+(the owner says "merge and deploy" when they want it live). The live site
+still runs the earlier version.
 
 ## What exists
 
@@ -14,13 +16,14 @@ are at `667d5ec4`. The work was done on the branch `claude/dazzling-faraday-mqwi
 |---|---|
 | `meta.scala` | Clans, 2–5 players, the asset lists (cards, tiles, units, buildings, `ui-` markers), `underConstruction = true` |
 | `game.scala` | Factions, player colors by seat, resources, `FactionState`, `Game` (map state and helpers), `CommonExpansion` (setup, decks, the year loop, harvest, winter, end of year, scoring), `Debug.summary` |
-| `cards.scala` | Every core card (name, fame, Flash, text, image) and its `Effect`; `MapEffect` means not implemented |
+| `cards.scala` | Every core card (name, fame, Flash, text, image) and its `Effect`; `MoveSpecial` / `BuildSpecial` mark Move and Build cards with extra rules |
+| `effects.scala` | `CardsExpansion`: the card effects that aren't basic actions (recruit per resource, removing enemy units, copying cards, looking at hands, Defensive Strategy, ...) |
 | `tiles.scala` | All 35 core tiles as data: areas, the sides each area owns, resources, lairs, building spaces, and borders (regular or rough) |
 | `board.scala` | `Board`: placements, joining areas into territories, adjacency, closed/open, legal placements (`consistent`), drawing positions |
-| `map.scala` | `MapExpansion`: setup tile/unit placement, Recruit, Move, combat and retreat, Explore, Build, Feast, units returning at end of year |
+| `map.scala` | `MapExpansion`: setup tile/unit placement, Recruit (with Kaija), Move (with the Move specials), combat and retreat, Scorched Earth, Explore, Build (with the Build specials), Feast, units returning at end of year |
 | `ui.scala` | Status panels, card strips (court on top, hand at the bottom; added by another session), the board canvas, map clicks |
 | `bot.scala` | `BotXX`: random, with a bias to play cards and never cancel |
-| `host.scala` | Headless bot games on the JVM; prints a summary per game |
+| `host.scala` | Headless bot games on the JVM; prints a summary per game, with event counts (cards played, Kaija and Scorched Earth events) |
 | `RULES.md` | Rules summary from the rulebook, plus the status table |
 
 Images are in `webp2/nort/images/`: `card/`, `tile/` (`start`, `start-5`,
@@ -58,53 +61,46 @@ used yet).
 
 ## Known simplifications and gaps
 
-The status table in `RULES.md` is the full list. In short:
+The status table and the Interpretations section in `RULES.md` are the full
+list. In short:
 
-- **Cards with `MapEffect` (not playable yet):** Protector of the Land,
-  Osmosis, Teamwork, Raiding Party, Rapacious Exploitation, Stolen Lore,
-  Plunder, Call to War, Future Sight, Spy, Defensive Strategy, Enemy Secrets,
-  Hunters, Hidden Ways, Conqueror, Ancestral Curse, Woodcutters, Bribery,
-  Legendary Heroes, Loremasters, Capture. They can still be Waited, Replaced,
-  Removed or used to Upgrade.
-- **Cards played only in part:** Shieldbearers, Intimidate and Infiltration
-  play as plain Moves; Annexation is a Move 1 without the Explore; Raven
-  Mercenaries has no paid extra unit; Carpentry Mastery doesn't force the
-  second building to be small; Amenities, Industrious Villagers and Glory of
-  the Clan are plain Builds; Bear Clan has no food/wood grab; Lay of the Land
-  doesn't collect resources; Scout Camp's redraw happens once, before the
-  tile is shown on the map.
-- **Clan powers:** Stag, Wolf, Goat, Raven and Boar work. Bear (Kaija token,
-  worth 2, doesn't count for winter) and Snake (Scorched Earth token) don't.
-- **Retreat:** works one group at a time; Wolf Clan's "rough borders in
-  retreat" isn't applied.
+- **Rule choices** for Kaija, Scorched Earth and many cards are listed under
+  Interpretations in `RULES.md`; check them against the rulebook.
+- **Scout Camp:** the redraw happens before the tile is shown on the map.
 - **No units at the end of a year:** if no neutral territory is left, the
   rulebook's "draw a tile to make one" isn't done.
+- **Defensive Strategy** prompts show who holds the card.
 - **Missing assets:** one Advanced development card (51 of 52 in the data and
   images; nobody knows which), and green starting cards (green uses blue's).
-- **Bots:** random. Fine for testing, not for play.
+- **Bots:** random (they now favour upgrading). Fine for testing, not for play.
+- **Big territories** show their number on every area, but units are drawn
+  only at the first area.
+
+## What the 2026-10-03 playtest found
+
+- All 35 tile overlays were checked (`tiles.scala` positions: number `x, y`,
+  units `ux, uy`, building spaces). Many numbers or unit markers sat on a
+  border or off the tile; tile-33's north number was in the wrong area. Fixed.
+- A 3-player Local Game (Stag against two bots) through year 2, and a
+  Bear/Snake game: tile placement and rotation, unit and building positions,
+  fights (food, dice, towers, both sides wiped out), retreats, closing by
+  exploring (+Stag bonus), harvest and winter matched the rules by hand.
+- Bug fixed: the Unrest card's image name, which froze the client when a
+  player took Unrest (`asset unrest not found`).
 
 ## Suggested next steps, in order
 
-1. **Play a full game by hand** in the browser (Local Game, 2–3 players),
-   checking territory numbers, unit and building positions on each tile, and
-   that fights and closing territories score right. Fix the tile data where
-   markers are off.
-2. **Board UI polish:** clicking anywhere in a territory (now only its
-   number badge and units are clickable); a preview of the tile at the chosen
-   spot while picking a rotation; showing the explore tile on the map; a
-   phone-size check.
-3. **Bear and Snake powers** (tokens, drawing them, their combat and harvest
-   effects).
-4. **The 21 unimplemented cards,** easiest first: Hunters, Woodcutters and
-   Loremasters (recruit per icon), Call to War, Plunder, Capture, Future
-   Sight, Conqueror, Hidden Ways, Bribery, Teamwork; then the ones that look
-   at other players' cards (Spy, Ancestral Curse, Rapacious Exploitation,
-   Enemy Secrets, Stolen Lore, Legendary Heroes) and Defensive Strategy
-   (out-of-turn reaction).
-5. **A better bot** that recruits, builds and explores on purpose.
-6. **A replay check** like `root/replay-check.scala`, to confirm undo and
+1. **Check the Interpretations in `RULES.md` with the owner** (they have the
+   rulebook) and adjust.
+2. **Board UI polish:** clicking anywhere in a territory; a preview of the
+   tile at the chosen spot while picking a rotation; showing the explore tile
+   on the map; a phone-size check; the very long separator lines in the log.
+3. **A better bot** that recruits, builds and explores on purpose.
+4. **A replay check** like `root/replay-check.scala`, to confirm undo and
    loading rebuild the same game.
-7. **Expansions** (after the base game is solid): assets are in
+5. **No units at the end of a year:** draw a tile when no neutral territory
+   is left.
+6. **Expansions** (after the base game is solid): assets are in
    `expansion/`; the rulebooks are summarized nowhere yet.
 
 ## How to build and test (in a cloud session)
@@ -123,7 +119,20 @@ The status table in `RULES.md` is the full list. In short:
   `common.sbt` (change `%%%` to `%%`) plus `host.xsbt` as `build.sbt`,
   symlink the sources, then `sbt "runMain nort.Host"`. It plays 20 games with
   2–5 players and checks that every action serializes and parses back. Leave
-  out `vast/host.scala`, which doesn't compile.
+  out `vast/host.scala`, which doesn't compile. Problems show as
+  `UNMATCHING WRITE/PARSE` in the output or as `nort/game-error-*.txt` files
+  (delete them, don't commit them). With `NORT_UPGRADES=1` the clan upgrade
+  cards start in every deck, so their effects get played (bots rarely have
+  3 lore); run both ways. The summary lines list how often each card and
+  power event happened.
+- **Tile overlays:** to check tile data against the art, draw each area's
+  number point, unit point and spaces on the tile image (Pillow:
+  `pip install pillow`) with a 0.1 grid; that's how the 2026-10-03 fixes
+  were made.
+- **Browser driving:** a small Node server around Playwright that keeps one
+  page open and takes `goto`/`click`/`text`/`screenshot` commands over HTTP
+  makes step-by-step play from the shell practical. Option buttons with
+  images (tiles, cards) have no text; click them by position.
 - **Browser:** serve `/play` (from `index.html` with
   `<base href="http://localhost:PORT/hrf/"/>`) and `/hrf/*` (files under
   `haunt-roll-fail/`) from one small local server, and open it on
@@ -147,7 +156,14 @@ The status table in `RULES.md` is the full list. In short:
   `map.scala` the soft ones are the tile, spot, move-from and move-to choices.
 - Every expansion's `perform` must end with `case _ => UnknownContinue`.
 - Everything inside an action must serialize: case classes and objects that
-  extend `Record` (effects, `AreaRef`, `Spot`, `DieFace`).
+  extend `Record` (effects, `AreaRef`, `Spot`, `DieFace`, `Cap`, `Figures`).
+  Tuples don't: use a small `Record` case class instead.
+- A card's effect is resolved through `ResolveEffectAction`, so copied
+  effects (Enemy Secrets, Stolen Lore, Legendary Heroes) work like played
+  ones. Effects that ask for a choice must check for an empty list first
+  (Stolen Lore crashed a bot game when the token move left nothing to copy).
+- `pkill -f` with a pattern that appears in the same shell command line
+  kills that shell too.
 
 ## Owner context
 

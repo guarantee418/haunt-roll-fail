@@ -19,12 +19,13 @@ and tracks what is done. `nort/HANDOFF.md` has the state, design notes,
 known gaps, next steps and how to build and test it. So far: the 7 clans, 2–5 players, the year loop with
 decks, Wait/Replace/Remove/Upgrade/Pass, Flash cards, harvest trading, winter
 and Unrest, end-of-game scoring, and the real card list in `nort/cards.scala`
-(names, fame, text, images). Only card effects that don't need the map work
-(Draw, Collect, Negociation, Resourceful People), plus the map: tile data
-in `nort/tiles.scala` (areas, borders, resources, spaces), territories and
-placement rules in `nort/board.scala`, and setup, Recruit, Move, Explore,
-Build, Feast, combat and retreat in `nort/map.scala`. 21 special-rule cards
-and most clan powers are still unimplemented.
+(names, fame, text, images), the map: tile data in `nort/tiles.scala`
+(areas, borders, resources, spaces, checked against the art), territories
+and placement rules in `nort/board.scala`, and setup, Recruit, Move,
+Explore, Build, Feast, combat and retreat in `nort/map.scala`. Every card
+effect works (special ones in `nort/effects.scala`) and all seven clan
+powers, including Bear's Kaija and Snake's Scorched Earth; rule choices made
+without the rulebook are listed under Interpretations in `nort/RULES.md`.
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
 Tabletopia export the owner uploaded, plus `tile-31` to `tile-33` and
 `start-5` cut from a photo of the owner's copy: all 35 core map tiles and 51

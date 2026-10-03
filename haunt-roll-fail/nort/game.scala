@@ -98,6 +98,13 @@ class FactionState(val faction : Faction)(implicit game : Game) {
 
     var passed = false
 
+    // Cards played this year (Legendary Heroes)
+    var played : $[Card] = $
+    // Future Sight was played this year: no card when passing
+    var foresaw = false
+    // Conqueror was played this year
+    var conqueror = false
+
     def deck = draw ++ hand ++ active ++ discard
 
     def unrest = deck.count(_ == UnrestCard)
@@ -155,6 +162,8 @@ case class RemoveCardAction(self : Faction, card : Card) extends BaseAction(card
 case class UpgradeCardAction(self : Faction, card : Card, upgrade : Card, remove : Boolean) extends BaseAction(card)("Upgrade to", upgrade, remove.?("and remove").|("and wait"), "(" ~ 3.hl ~ " " ~ Lore.elem ~ ")")
 case class PassAction(self : Faction) extends BaseAction("Actions")("Pass")
 case class EndTurnAction(self : Faction) extends BaseAction("Actions")("End turn")
+// Resolve a played card that nobody cancelled
+case class PlayResolveAction(f : Faction, card : Card, stage : Int) extends ForcedAction
 // Resolve a card's effect (also for effects copied from other cards)
 case class ResolveEffectAction(f : Faction, e : Effect, then : ForcedAction) extends ForcedAction
 
@@ -202,7 +211,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     var isOver = false
 
-    val expansions : $[Expansion] = $(MapExpansion, CommonExpansion)
+    val expansions : $[Expansion] = $(MapExpansion, CardsExpansion, CommonExpansion)
 
     var seating : $[Faction] = setup
 
@@ -230,6 +239,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // Territories where a Move action started a fight
     var combats : $[AreaRef] = $
+
+    // Where the last Recruit action placed units (Raven Mercenaries)
+    var recruited : $[AreaRef] = $
 
     // Fights so far, for statistics
     var fights = 0
@@ -382,6 +394,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 object Debug {
     var stats = false
 
+    // Headless testing only: starting decks also hold both clan upgrades
+    var upgradesInDeck = false
+
     def summary(g : Game) {
         if (stats)
             println("  year " + g.year + ", " + g.board.placements.size + " tiles, " + g.buildings.size + " buildings, " + g.fights + " fights, " +
@@ -391,16 +406,18 @@ object Debug {
 }
 
 object CommonExpansion extends Expansion {
-    // All ways to pay three resources out of what f has
-    def payments(f : Faction)(implicit game : Game) : $[$[Resource]] =
-        Resource.all./~(a => Resource.all./~(b => Resource.all./(c => $(a, b, c))))
+    // All ways to pay n (3 by default) resources out of what f has
+    def payments(f : Faction, n : Int = 3)(implicit game : Game) : $[$[Resource]] =
+        1.to(n).foldLeft($($[Resource]()))((l, _) => l./~(p => Resource.all./(r => p :+ r)))
             ./(_.sortBy(Resource.all.indexOf(_))).distinct
             .%(p => Resource.all.forall(r => p.count(_ == r) <= f.has(r)))
 
     def available(f : Faction)(implicit game : Game) = f.draw.num + f.discard.num
 
     // Only cards whose effect is implemented can be played
-    def playable(f : Faction, c : Card)(implicit game : Game) = c.effect match {
+    def playable(f : Faction, c : Card)(implicit game : Game) : Boolean = playableEffect(f, c.effect)
+
+    def playableEffect(f : Faction, e : Effect)(implicit game : Game) : Boolean = e match {
         case DrawEffect(n, _, _, _) => available(f) >= n
         case CollectEffect(_, _) => true
         case NegotiationEffect => available(f) > 0
@@ -449,7 +466,10 @@ object CommonExpansion extends Expansion {
         case ShuffleStartingDecksAction(f :: rest) =>
             f.upgrades = $(ClanCard(f, 1), ClanCard(f, 2))
 
-            Shuffle[Card](Cards.starting(game.colors(f)) :+ ClanCard(f, 0), ShuffledStartingDeckAction(f, _, rest))
+            if (Debug.upgradesInDeck)
+                f.upgrades = $
+
+            Shuffle[Card]((Cards.starting(game.colors(f)) :+ ClanCard(f, 0)) ++ Debug.upgradesInDeck.??($(ClanCard(f, 1), ClanCard(f, 2))), ShuffledStartingDeckAction(f, _, rest))
 
         case ShuffledStartingDeckAction(f, l, rest) =>
             f.draw = l
@@ -612,6 +632,9 @@ object CommonExpansion extends Expansion {
 
             factions.foreach { f =>
                 f.passed = false
+                f.played = $
+                f.foresaw = false
+                f.conqueror = false
             }
 
             game.awakened = false
@@ -664,8 +687,16 @@ object CommonExpansion extends Expansion {
             f.hand = f.hand.diff($(c))
             f.active :+= c
 
+            f.played :+= c
+
             f.log("played", c)
 
+            game.note(c.name.replace(" ", "-"))
+
+            // Opponents holding Defensive Strategy may cancel the card
+            Then(DefensiveAskAction(f, c, stage, game.from(f).drop(1)))
+
+        case PlayResolveAction(f, c, stage) =>
             val after = TurnAction(f, (c.flash && stage < 2).?(1).|(2))
 
             // Snake Clan may move the Scorched Earth token before resolving a clan card
@@ -675,8 +706,6 @@ object CommonExpansion extends Expansion {
                 Then(ResolveEffectAction(f, c.effect, after))
 
         case ResolveEffectAction(f, e, after) =>
-            game.note(e.toString.takeWhile(_ != '(').replace("Effect", ""))
-
             e match {
                 case DrawEffect(n, k, d, b) =>
                     Then(DrawTempAction(f, n, ResolveDrawnAction(f, k, d, b, after)))
@@ -759,7 +788,8 @@ object CommonExpansion extends Expansion {
 
             f.passed = true
 
-            if (game.display.any)
+            // After Future Sight there is no card to take
+            if (game.display.any && f.foresaw.not)
                 Ask(f).each(game.display)(c => PickCardAction(f, c))
             else
                 Then(NextTurnAction(f))

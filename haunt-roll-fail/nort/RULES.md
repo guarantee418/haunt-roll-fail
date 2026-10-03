@@ -14,15 +14,17 @@ these rules ("the cards are always right").
 | Development deck (2 Early + 4 Advanced per player), Achievements in year 7 | done |
 | Card list with names, fame, text and images (`cards.scala`) | done: 21 clan, 16 Early + 35 Advanced (one Advanced card missing from the images), 7 Achievement |
 | Playing cards: Flash cards before/after the main card | done |
-| Card effects without the map: Draw (keep/discard/return), Collect, Negociation, Resourceful People | done |
+| Card effects | done: every card in `cards.scala` has an effect (see Interpretations below for the choices made); only Scout Camp's redraw happens before the tile is shown |
 | Harvest trade (any 3 resources for 1) | done |
 | Winter costs and Unrest cards | done (counts units, which never change yet) |
 | End-of-game fame scoring | done (no territory fame yet; of the Achievements only Warlord scores) |
-| Card effects that need the map, opponents' hands or combat | not started |
 | Map tiles, territories, borders, exploring | done: tile data in `tiles.scala`, territories and placement rules in `board.scala`, setup, Recruit, Move, Explore, Build, Feast and combat in `map.scala`. Tile images in `webp2/nort/images/tile/` (`tile-31` to `tile-33` and `start-5` from the owner's photos) |
 | Card display (like Arcs): Development and Achievement cards in the `court` pane on top for everyone, your hand (and played cards) in the `hand` pane at the bottom | done |
 | Player colors (blue, red, yellow, purple, green by seat) | done; no green starting card images, green uses the blue ones |
-| Buildings, combat, three-closed-territories win | done; clan powers: Stag, Wolf, Goat, Raven, Boar done, Bear (Kaija) and Snake (Scorched Earth) not yet |
+| Buildings, combat, three-closed-territories win | done |
+| Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
+| Tile data checked against the art | done 2026-10-03 for all 35 core tiles (numbers, unit markers, building spaces) |
+| No units at the end of a year and no neutral territory | not done (should draw a tile to make one) |
 | Starting card list | Recruit, Move, Explore, Build, Feast ×2 (from the cards) |
 
 ## Components (core box)
@@ -192,3 +194,48 @@ and Central tiles), New Blood (7 more clans: Dragon, Horse, Kraken, Lynx, Ox,
 Rat, Squirrel, with warchiefs), Uncharted Horizons (Development / Event /
 Raid cards, alternative victory conditions, Training Fields, Solo/Automa,
 drafting setup, more map tiles).
+
+## Interpretations (choices made where the summary above is not enough)
+
+Check these against the rulebook when it is at hand.
+
+- **Kaija** (Bear): one figure. It may be one of the three setup figures
+  (two units and Kaija), or be recruited instead of a unit. It moves like a
+  unit, alone or with others, but not into a territory with enemy figures
+  unless The Bear Awakens was played this year. It counts for control and
+  for "1 food per figure" in combat, adds 2 combat points, and is taken as a
+  casualty after all units. It doesn't count for winter, the 14-unit limit,
+  Warlord or Training Camps. Removed Kaija goes back to the reserve.
+- **Bear Clan card**: when Kaija is in the move, the territory it leaves
+  gives its food and wood (tiles and buildings) before any fight.
+- **Scorched Earth** (Snake): before resolving any Snake clan card, and
+  again after the Snake Clan card's move, Snake may move the token to an
+  enemy-held territory next to one it controls. Snake gets +1 combat point
+  fighting there. At harvest, if another player controls that territory,
+  Snake may take one resource of a kind it produces; that player gets one
+  fewer.
+- **Hunters, Woodcutters, Loremasters**: icons on tiles and buildings count;
+  if the reserve is too small, units are placed one at a time by choice.
+- **Raiding Party**: any enemy unit on the map; the resource comes from
+  what the territory produces (tiles and buildings).
+- **Future Sight**: may take a face-up Achievement before year 7.
+- **Hidden Ways**: to any open territory, also an enemy one (then a fight).
+- **Bribery**: to any adjacent territory (Rough borders ignored) holding at
+  most one other player; the moved units attack whoever is there.
+- **Teamwork**: two of Recruit 1, Move 1, Explore, Build, like Feast.
+- **Enemy Secrets, Stolen Lore, Legendary Heroes** can't copy each other or
+  Defensive Strategy.
+- **Defensive Strategy**: every time a player plays a card, opponents holding
+  it are asked in turn order (so a prompt shows who holds it). The cancelled
+  card goes to the discard pile and the player goes on with their turn.
+- **Glory of the Clan**: the territory's resources are collected after
+  building (so a new Food Silo etc. counts).
+- **Intimidate**: the pushed unit goes to any adjacent territory that is
+  neutral or the defender's and not in a fight; if no defender is left, the
+  territory is taken without a fight (no Stag fame).
+- **Amenities**: small buildings never take a space; they are drawn next to
+  the territory number.
+- **Industrious Villagers**: a Carved Stone can only replace a building on a
+  Carved Stone space.
+- **Annexation**: the player chooses Explore first or Move first; exploring
+  is optional.
