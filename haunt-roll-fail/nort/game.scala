@@ -167,7 +167,18 @@ case class PlayCardAction(self : Faction, card : Card, stage : Int) extends Base
 case class WaitCardAction(self : Faction, card : Card) extends BaseAction(card)("Wait")
 case class ReplaceCardAction(self : Faction, card : Card) extends BaseAction(card)("Replace", "(" ~ 1.hl ~ " " ~ Lore.elem ~ ")")
 case class RemoveCardAction(self : Faction, card : Card) extends BaseAction(card)("Remove", "(" ~ 2.hl ~ " " ~ Lore.elem ~ ")")
-case class UpgradeCardAction(self : Faction, card : Card, upgrade : Card, remove : Boolean) extends BaseAction(card)("Upgrade to", upgrade, remove.?("and remove").|("and wait"), "(" ~ 3.hl ~ " " ~ Lore.elem ~ ")")
+case class UpgradeCardAction(self : Faction, card : Card, upgrade : Card, remove : Boolean) extends BaseAction("Buy", upgrade, "for", 3.hl, Lore)("Confirm:", remove.?("remove").|("wait with"), card, "and take", upgrade)
+// Upgrading goes through the Lore Tree: the button opens the clan upgrades that can be bought, a picked one opens a confirmation
+case class LoreTreeAction(self : Faction, card : Card) extends BaseAction(card)("Lore Tree", "(" ~ 3.hl ~ " " ~ Lore.elem ~ ")") with Soft
+// An upgrade in the Lore Tree, as its image; clicking it opens the confirmation
+case class LoreTreeCardAction(self : Faction, card : Card, upgrade : Card) extends BaseAction("Lore Tree", Comma, "upgrade instead of", card, "for", 3.hl, Lore)(upgrade.handImg) with Soft with ViewObject[Card] { def obj = upgrade }
+// Upgrades shown without enough Lore to buy them; clicking one opens it full screen
+case class LoreTreeInfoAction(self : Faction, lore : Int, upgrade : Card) extends BaseInfo("Lore Tree", Comma, "needs", 3.hl, Lore, "(you have", lore.hl ~ ")")(upgrade.handImg) with ViewObject[Card] with OnClickInfo { def obj = upgrade ; def param = upgrade }
+// The upgrade being bought, larger; clicking it, or the button below, opens it full screen
+case class LoreTreeSelectedAction(self : Faction, upgrade : Card) extends BaseInfo("Buy", upgrade, "for", 3.hl, Lore)(Image(upgrade.info.image, styles.loreCard)) with OnClickInfo { def param = upgrade }
+case class FullScreenAction(self : Faction, upgrade : Card) extends BaseInfo("Buy", upgrade, "for", 3.hl, Lore)("View full screen") with OnClickInfo { def param = upgrade }
+// Back to the Lore Tree (upgrade) or to the card's choices (no upgrade); not exploded, so bots don't walk back and forth
+case class LoreTreeBackAction(self : Faction, card : Card, upgrade : |[Card]) extends BaseAction(None)("Back") with Soft with NoExplode
 // A card in hand, shown as its image; clicking it selects it and offers what can be done with it
 case class CardMenuAction(self : Faction, card : Card, stage : Int) extends BaseAction("Your hand")(card.handImg) with Soft with ViewObject[Card] { def obj = card }
 // Another card in hand while one is selected; not exploded, so bots and checks don't walk from card to card
@@ -557,7 +568,7 @@ object CommonExpansion extends Expansion {
                 .add(WaitCardAction(f, c))
                 .when(f.lore >= 1)(ReplaceCardAction(f, c))
                 .when(f.lore >= 2 && c.removable)(RemoveCardAction(f, c))
-                .add((f.lore >= 3).??(f.upgrades./~(u => $(UpgradeCardAction(f, c, u, false)) ++ c.removable.$(UpgradeCardAction(f, c, u, true)))))
+                .when(f.upgrades.any)(LoreTreeAction(f, c))
                 .cancel
         else
             Ask(f)
@@ -565,6 +576,26 @@ object CommonExpansion extends Expansion {
                 .add(PlayCardAction(f, c, stage))
                 .cancel
     }
+
+    // The clan upgrades not bought yet, to buy for 3 Lore in place of the selected card
+    def loreTree(f : Faction, c : Card)(implicit game : Game) : Continue =
+        if (f.lore >= 3)
+            Ask(f)
+                .each(f.upgrades)(u => LoreTreeCardAction(f, c, u))
+                .add(LoreTreeBackAction(f, c, None))
+        else
+            Ask(f)
+                .each(f.upgrades)(u => LoreTreeInfoAction(f, f.lore, u))
+                .add(LoreTreeBackAction(f, c, None))
+
+    // Confirming an upgrade: the card large, a full screen view, and the ways to buy it
+    def loreTreeConfirm(f : Faction, c : Card, u : Card)(implicit game : Game) : Continue =
+        Ask(f)
+            .add(LoreTreeSelectedAction(f, u))
+            .add(FullScreenAction(f, u))
+            .add(UpgradeCardAction(f, c, u, false))
+            .when(c.removable)(UpgradeCardAction(f, c, u, true))
+            .add(LoreTreeBackAction(f, c, |(u)))
 
     // The cards in hand that can be chosen on a turn: any at the start, then only playable ones (only Flash cards after the first)
     def handChoices(f : Faction, stage : Int)(implicit game : Game) : $[Card] =
@@ -841,6 +872,18 @@ object CommonExpansion extends Expansion {
 
         case CardMenuAction(f, c, stage) =>
             cardMenu(f, c, stage)
+
+        case LoreTreeAction(f, c) =>
+            loreTree(f, c)
+
+        case LoreTreeCardAction(f, c, u) =>
+            loreTreeConfirm(f, c, u)
+
+        case LoreTreeBackAction(f, c, Some(_)) =>
+            loreTree(f, c)
+
+        case LoreTreeBackAction(f, c, None) =>
+            cardMenu(f, c, 0)
 
         case PlayCardAction(f, c, stage) =>
             f.hand = f.hand.diff($(c))

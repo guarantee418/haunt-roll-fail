@@ -2016,6 +2016,22 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         helper.&(Image(id, styles.wr3x) *** count) ~ helper.&(Image(id + "-empty", styles.wr3x) *** rest)
     )
 
+    def boardImage(f : Faction) : |[String] = f @@ {
+        case _ : Feline => Some("mc-board")
+        case _ : Aviary => Some("ed-board")
+        case _ : Insurgent => Some("wa-board")
+        case _ : Hero => Some("vb-board")
+        case _ : Trader => Some("rf-board")
+        case _ : Fanatic => Some("lc-board")
+        case _ : Mischief => Some("cc-board")
+        case _ : Underground => Some("ud-board")
+        case _ : Horde => Some("lh-board")
+        case _ : Expedition => Some("ki-board")
+        case _ : Council => Some("tc-board-h")
+        case _ : Knaves => Some("kd-board-h")
+        case _ => None
+    }
+
     def onFactionStatus(implicit faction : Faction, isMore : Boolean, chapter : |[String] = None) : Unit = {
         def desc(l : Any*) = game.desc(l : _*).div
         def more(l : Any*) = isMore.?(desc(l : _*))
@@ -2086,6 +2102,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     HGap ~
                     HGap ~
                     f.name.f.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    boardImage(f)./(Image(_)(styles.factionboard)) ~
                     HGap ~
                     HGap ~
                     HGap ~
@@ -2267,6 +2288,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     HGap ~
                     HGap ~
                     f.name.f.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    boardImage(f)./(Image(_)(styles.factionboard)) ~
                     HGap ~
                     HGap ~
                     HGap ~
@@ -2456,6 +2482,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     HGap ~
                     HGap ~
                     f.name.f.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    boardImage(f)./(Image(_)(styles.factionboard)) ~
                     HGap ~
                     HGap ~
                     HGap ~
@@ -3108,7 +3139,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     HGap ~
                     HGap ~
                     HGap ~
-                    Image("tc-board-a")(styles.factionboard) ~
+                    boardImage(f)./(Image(_)(styles.factionboard)) ~
                     HGap ~
                     HGap ~
                     HGap ~
@@ -3140,6 +3171,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     HGap ~
                     HGap ~
                     f.elem.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    boardImage(f)./(Image(_)(styles.factionboard)) ~
                     HGap ~
                     HGap ~
                     HGap ~
@@ -3277,6 +3313,28 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     HGap
                 ).div(xlo.flexvcenter)), {
                     case (f : Faction, more : Boolean) => onFactionStatus(f, more, None)
+                    case _ =>
+                        overlayPane.invis()
+                        overlayPane.clear()
+                })
+
+            case f if boardImage(f).any =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    f.elem.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    boardImage(f)./(Image(_)(styles.factionboard)) ~
+                    f.as[Hero].flatMap(h => h.character).%(c => resources.images.hasSource(c.img))./(c => HGap ~ HGap ~ HGap ~ HGap ~ Image(c.img)(styles.factionboard)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), {
                     case _ =>
                         overlayPane.invis()
                         overlayPane.clear()

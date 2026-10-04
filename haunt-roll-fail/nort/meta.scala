@@ -138,8 +138,15 @@ object Meta extends MetaGame { mmm =>
     def writeFaction(f : Faction) = f.short
     def parseFaction(s : String) : |[Faction] = factions.%(_.short == s).single
 
-    def writeOption(o : O) = Serialize.write(o)
-    def parseOption(s : String) = $(options.find(o => writeOption(o) == s) || options.find(o => o.toString == s) | (UnknownOption(s)))
+    // Options are stored space-separated (saved setup, the online game's "options" line), so they are written without spaces:
+    // ColorOption(Bear, Red) became two words and every color was lost
+    def writeOption(o : O) = Serialize.write(o).replace(" ", "")
+    // The halves of a color written with a space, in games created before that fix, are dropped: those games keep their colors by seat
+    def parseOption(s : String) =
+        if (s.startsWith("ColorOption(") && s.endsWith(")").not || (s.endsWith(")") && PlayerColor.all.exists(c => s == c.name + ")")))
+            $
+        else
+            $(options.find(o => writeOption(o) == s) || options.find(o => o.toString == s) | (UnknownOption(s)))
 
     def parseAction(s : String) : Action = Serialize.parseAction(s)
     def writeAction(a : Action) : String = Serialize.write(a)
