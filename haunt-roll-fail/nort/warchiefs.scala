@@ -28,6 +28,13 @@ object Warchief {
         case Snake => "Signy"
         case Stag => "Brand"
         case Wolf => "Egil"
+        case Dragon => "Surtr"
+        case Horse => "Eitria"
+        case Kraken => "Kàra"
+        case Lynx => "Mielikki"
+        case Ox => "Torfin"
+        case Rat => "Eir"
+        case Squirrel => "Andhrimnir"
     }
 
     def power(f : Faction) : String = f match {
@@ -38,6 +45,13 @@ object Warchief {
         case Snake => "During step 1 of combat, you may place the Scorched Earth token in Signy's territory."
         case Stag => "During step 1 of combat, you may move 1 friendly unit from an adjacent territory into Brand's territory (ignoring Rough borders)."
         case Wolf => "If Egil is the attacker, he is worth 3 combat points instead of 2."
+        case Dragon => "During step 4 of a combat involving Surtr: if you didn't roll any casualty, gain 1 casualty; if you didn't roll any point, gain 1 point."
+        case Horse => "The clan has two warchiefs, Eitria and Brok. If both are in the same territory, they are worth 3 combat points instead of 4."
+        case Kraken => "As defender, before the combat starts, Kàra may move a High Tide token to her territory."
+        case Lynx => "If you have at least one Flash card in your active area this year, Mielikki gains 1 more combat point."
+        case Ox => "When Torfin fights, he can use one additional Ancestral Equipment token that was not already used this year."
+        case Rat => "Eir gains 1 combat point when fighting in a territory with at least 1 food in it, excluding Food Silos."
+        case Squirrel => "Before step 1 of a defensive combat involving Andhrimnir, you gain 1 food."
     }
 
     def elem(f : Faction)(implicit game : Game) : Elem = name(f).styled(game.colors.get(f)./(c => c : Styling).|(f))(xstyles.bold)
@@ -45,12 +59,19 @@ object Warchief {
     // The clan board with the warchief's portrait and power
     def board(f : Faction) = "board-" + f.style
 
+    // The board image file: Ox Clan's is the corrected print
+    def boardFile(f : Faction) = (f == Ox).?("ox-2").|(f.style)
+
     // Combat points of the warchief in a fight in t: 2, or 3 with Borgild defending, Egil attacking or Svarn on open or wooded land
     def strength(t : Territory, f : Faction, attacking : Boolean)(implicit game : Game) : Int =
         if (game.chiefIn(t, f).not)
             0
         else
         if (f == Bear && attacking.not || f == Wolf && attacking || f == Boar && (game.board.open(t) || t.areas.exists(a => game.board.spec(a).wood > 0)))
+            3
+        else
+        // Mielikki with a Flash card in the active area, Eir where the tiles show food
+        if (f == Lynx && game.states(f).active.exists(_.flash) || f == Rat && t.areas.exists(a => game.board.spec(a).food > 0))
             3
         else
             2

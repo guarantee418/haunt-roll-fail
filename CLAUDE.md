@@ -16,7 +16,7 @@ Northgard: Uncharted Lands is being added in `haunt-roll-fail/nort/`
 (meta name `nort`, URL `/play/nort`), base game first, expansions later.
 `nort/RULES.md` summarizes the rules (the rulebook PDFs aren't in the repo)
 and tracks what is done. `nort/HANDOFF.md` has the state, design notes,
-known gaps, next steps and how to build and test it. So far: the 7 clans, 2–6 players (six on the five-player rules), the 2v2
+known gaps, next steps and how to build and test it. So far: the 7 clans (14 with New Blood), 2–6 players (six on the five-player rules), the 2v2
 Teams variant and a 3v3 one on the same rules, the year loop with
 decks, Wait/Replace/Remove/Upgrade/Pass, Flash cards, harvest trading, winter
 and Unrest, end-of-game scoring, and the real card list in `nort/cards.scala`
@@ -31,7 +31,10 @@ Warchiefs module in `nort/warchiefs.scala` (the clan picker's Warchief
 button shows each clan's warchief board), the Wilderness expansion
 (Environment tiles with impassable borders, and five more creatures plus
 the Ancestral Graveyard's Spectral Warriors and the Wyvern's Den) in
-`nort/wilderness.scala` (tiles `wild-*` in `Tiles.environment`). The
+`nort/wilderness.scala` (tiles `wild-*` in `Tiles.environment`), and the
+New Blood expansion's seven clans (Dragon, Horse, Kraken, Lynx, Ox, Rat,
+Squirrel, with their warchiefs and 28 clan cards, from the TTS mod
+3597126237) in `nort/newblood.scala`; picking one of them turns it on. The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.

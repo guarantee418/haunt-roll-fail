@@ -27,6 +27,13 @@ package object elem {
         Snake --> color("#45b89f")
         Stag --> color("#e0b13a")
         Wolf --> color("#d9574a")
+        Dragon --> color("#c0392b")
+        Horse --> color("#b07d4f")
+        Kraken --> color("#3fa7c9")
+        Lynx --> color("#b9a07a")
+        Ox --> color("#a0522d")
+        Rat --> color("#8fa060")
+        Squirrel --> color("#d98c3a")
 
         Blue --> color("#4e78bc")
         Red --> color("#e8410d")
@@ -123,5 +130,12 @@ package object elem {
         Snake --> outline.color("#1d5a4c")
         Stag --> outline.color("#6b4f10")
         Wolf --> outline.color("#6b1a12")
+        Dragon --> outline.color("#5e1a12")
+        Horse --> outline.color("#5a3d22")
+        Kraken --> outline.color("#1a4f60")
+        Lynx --> outline.color("#5a4d36")
+        Ox --> outline.color("#50281a")
+        Rat --> outline.color("#43502c")
+        Squirrel --> outline.color("#6b4216")
     }
 }

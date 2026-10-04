@@ -49,9 +49,9 @@ case class SetupSpotAction(self : Faction, round : Int, l : $[Faction], tile : S
 case class SetupRotateAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot, r : Int, d : Int) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft
 case class SetupTurnAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot, r : Int) extends BaseAction("Place the tile at", spot)("Confirm") with TilePreview
 case class SetupUnitsAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place three units in")(area) with MapTarget { def target = area }
-case class SetupKaijaAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place two units and Kaija in")(area)
+case class SetupKaijaAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place two units and", Companion(self), "in")(area)
 // Warchiefs module: the warchief instead of one unit (and Kaija instead of another)
-case class SetupChiefAction(self : Faction, round : Int, l : $[Faction], area : AreaRef, kaija : Boolean) extends BaseAction(kaija.?("Place one unit, Kaija and your warchief in").|("Place two units and your warchief in"))(area)
+case class SetupChiefAction(self : Faction, round : Int, l : $[Faction], area : AreaRef, kaija : Boolean) extends BaseAction(kaija.?("Place one unit, " ~ Companion(self).elem0 ~ " and your warchief in").|("Place two units and your warchief in"))(area)
 case class ShuffledTilesBackAction(shuffled : $[String]) extends ShuffledAction[String]
 case class SetupUnitsAskAction(f : Faction, round : Int, l : $[Faction], tile : String, spot : Spot) extends ForcedAction
 
@@ -61,7 +61,7 @@ case class TilePlacedAction(f : Faction, tile : String, spot : Spot, setup : Boo
 // RECRUIT
 case class RecruitAction(f : Faction, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends ForcedAction
 case class RecruitPlaceAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit", (left > 1).?("(" ~ left.hl ~ " left)").|(""), "in")(area) with MapTarget { def target = area }
-case class RecruitKaijaAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit", "Kaija".hl, "in")(area)
+case class RecruitKaijaAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit", Companion(self), "in")(area)
 case class RecruitChiefAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit", WarchiefElem(self), "in")(area)
 case class RecruitDoneAction(self : Faction, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit")("Done")
 case class TrainingCampsAction(f : Faction, placed : $[AreaRef], then : ForcedAction) extends ForcedAction
@@ -71,7 +71,7 @@ case class MoveAction(f : Faction, left : Int, e : MoveEffect, then : ForcedActi
 case class MoveFromAction(self : Faction, from : AreaRef, left : Int, e : MoveEffect, then : ForcedAction) extends BaseAction("Move", "(" ~ left.hl ~ " left)", "from")(from) with Soft with MapTarget { def target = from }
 case class MoveToAction(self : Faction, from : AreaRef, to : AreaRef, cost : Int, left : Int, e : MoveEffect, then : ForcedAction) extends BaseAction("Move from", from, "to")(to, (cost > 1).?("(Rough border)").|("")) with Soft with MapTarget { def target = to }
 // chief: the warchief moves too (Warchiefs module); saved games from before it have no chief
-case class MoveUnitsAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean, cost : Int, left : Int, e : MoveEffect, then : ForcedAction) extends BaseAction("Move from", from, "to", to)(Figures(n, kaija, chief)) {
+case class MoveUnitsAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean, cost : Int, left : Int, e : MoveEffect, then : ForcedAction) extends BaseAction("Move from", from, "to", to)(Party(self, n, kaija, chief)) {
     def this(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, cost : Int, left : Int, e : MoveEffect, then : ForcedAction) = this(self, from, to, n, kaija, false, cost, left, e, then)
 }
 case class MoveDoneAction(self : Faction, e : MoveEffect, then : ForcedAction) extends BaseAction("Move")("Done")
@@ -123,7 +123,7 @@ case class RetreatToAction(self : Faction, from : AreaRef, to : AreaRef, n : Int
 
 // The units retreating together; the warchief goes with the first group, like Kaija
 case class RetreatGroup(f : Faction, from : AreaRef, n : Int, kaija : Boolean) extends GameElementary {
-    def elem(implicit game : Game) = "(" ~ Figures(n, kaija, game.chiefIn(game.board.territory(from), f)).elem ~ ")"
+    def elem(implicit game : Game) = "(" ~ Party(f, n, kaija, game.chiefIn(game.board.territory(from), f)).elem ~ ")"
 }
 
 // SNAKE CLAN
@@ -172,6 +172,22 @@ case class SecondChanceRotateAction(self : Faction, tile : String, spot : Spot, 
 case class SecondChanceTurnAction(self : Faction, tile : String, spot : Spot, r : Int, then : ForcedAction) extends BaseAction("Place the tile at", spot)("Confirm") with TilePreview
 
 
+// The companion figure of a clan: Kaija (Bear), Brundr and Kaelinn (Lynx), Brok (Horse's second warchief)
+case class Companion(f : Faction) extends Elementary {
+    def name = f match {
+        case Lynx => "Brundr and Kaelinn"
+        case Horse => "Brok"
+        case _ => "Kaija"
+    }
+    def elem0 : Elem = name.hl
+    def elem : Elem = name.hl
+}
+
+// Some units of a clan, maybe with its companion and its warchief
+case class Party(f : Faction, n : Int, kaija : Boolean, chief : Boolean) extends GameElementary {
+    def elem(implicit game : Game) = ((n > 0).$((n == 1).?("1 unit").|(n.toString + " units").txt) ++ kaija.$(Companion(f).elem) ++ chief.$((f == Horse && kaija).?(Warchief.elem(f)).|("the warchief".txt))).join(" and ")
+}
+
 // Some units, maybe with Kaija and the warchief
 case class Figures(n : Int, kaija : Boolean, chief : Boolean = false) extends Elementary with Record {
     def this(n : Int, kaija : Boolean) = this(n, kaija, false)
@@ -216,6 +232,7 @@ object MapExpansion extends Expansion {
             case RecruitNeutralSame => neutral
             case RecruitSameAny => mine ++ neutral
             case RecruitOsmosis => mine.%(t => game.board.open(t) || t.areas.exists(a => game.board.spec(a).wood > 0)).%(t => placed.forall(p => t.areas.contains(p).not))
+            case RecruitClosed => mine.%(game.board.closed).%(t => placed.forall(p => t.areas.contains(p).not))
         }
 
         val same = mode @@ {
@@ -256,7 +273,7 @@ object MapExpansion extends Expansion {
     // Kaija can't enter enemy territories unless awakened; a teammate's territory only to pass through
     def canEnter(f : Faction, o : Territory, rem : Int, e : MoveEffect, kaija : Boolean)(implicit game : Game) : Boolean =
         enterable(o) &&
-        (kaija.not || game.awakened || game.present(o).forall(game.allied(f, _))) &&
+        (kaija.not || game.restrained(f).not || game.present(o).forall(game.allied(f, _))) &&
         (game.passOnly(f, o).not || canPass(f, o, rem, e, kaija))
 
     // Where f's figures in t can move with left moves, and the cost; figures passing through a teammate's territory all move on together
@@ -297,7 +314,7 @@ object MapExpansion extends Expansion {
     // Cached until the board or a figure changes: the bots ask for it again for every spot they look at,
     // and each call rebuilds the territories for every free spot and rotation
     def placements(tile : String, near : Option[$[Territory]], setup : Boolean)(implicit game : Game) : $[(Spot, Int)] = {
-        val key = (tile, near, setup, game.board.placements, game.units, game.kaija, game.chiefs, game.creatureLine, game.creatureAt)
+        val key = (tile, near, setup, game.board.placements, game.units, game.companions, game.chiefs, game.creatureLine, game.creatureAt)
 
         game.placementCache.getOrElse(key, {
             val r = computePlacements(tile, near, setup)
@@ -323,7 +340,7 @@ object MapExpansion extends Expansion {
                 board.tryPlace(p)./~{ preview =>
                     // Kaija counts as Bear Clan's, and a Fallen Valkyrie shares its territory with nobody
                     val mixed = preview.exists { t =>
-                        val players = (t.areas./~(a => game.unitsAt(a).keys) ++ game.kaija.%(t.areas.contains)./(_ => Bear) ++ game.chiefs.toList.filter(x => t.areas.contains(x._2)).map(_._1)).distinct
+                        val players = (t.areas./~(a => game.unitsAt(a).keys) ++ game.companions.filter(x => t.areas.contains(x._2)).map(_._1) ++ game.chiefs.toList.filter(x => t.areas.contains(x._2)).map(_._1)).distinct
                         players.num > 1 || players.any && game.creatureLine.exists(c => c.kind.shares.not && t.areas.contains(game.creatureAt(c)))
                     }
                     val room = setup.not || p.spec.areas.exists(a => preview.find(_.areas.contains(AreaRef(x, y, a.id))).get.areas.forall(b => game.unitsAt(b).isEmpty))
@@ -339,7 +356,8 @@ object MapExpansion extends Expansion {
     def buildOptions(f : Faction, e : BuildEffect, smallOnly : Boolean)(implicit game : Game) : $[(AreaRef, Building, SpaceRef, Int)] = {
         game.controlled(f).%(t => game.bearIn(t).not)./~{ t =>
             val here = game.buildingsIn(t).map(_._2)
-            val free = t.areas./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not)
+            // Ancestral Equipment tokens (Ox Clan) keep their spaces from being built on
+            val free = t.areas./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not && game.gear.contains(s).not)
 
             Building.all.%(b => e.duplicate || here.has(b).not).%(b => game.buildings.values.count(_ == b) < Building.tokens).%(b => smallOnly.not || b.large.not)./~{ b =>
                 val kinds = b match {
@@ -350,7 +368,7 @@ object MapExpansion extends Expansion {
                 // Keep Carved Stone spaces for Carved Stones when possible
                 val space =
                     // Amenities: small buildings take no space
-                    if (e.special == AmenitiesBuild && b.large.not)
+                    if ((e.special == AmenitiesBuild || e.special == HorseBuild) && b.large.not)
                         |(SpaceRef(t.anchor, SpaceRef.extra + game.buildings.keys.count(s => s.area == t.anchor && s.index >= SpaceRef.extra)))
                     else
                         kinds./~(k => free.%(s => game.board.spec(s.area).spaces(s.index).kind == k)).headOption
@@ -411,11 +429,16 @@ object MapExpansion extends Expansion {
     }
 
     // A die result is in; Axe Throwers adds 1 point or 1 casualty to the attacker's
-    def rolled(attacker : Faction, defender : Faction, a : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], face : DieFace, then : ForcedAction)(implicit game : Game) : Continue =
+    def rolled(attacker : Faction, defender : Faction, a : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], rolled : DieFace, then : ForcedAction)(implicit game : Game) : Continue = {
+        // Surtr (Dragon Clan's warchief): a casualty if none was rolled, a point if none was rolled
+        val self = faces.none.?(attacker).|(defender)
+        val face = NewBloodExpansion.surtr(self, game.board.territory(a), rolled)
+
         if (faces.none && e.special == AxeMove)
             Ask(attacker).add(AxeAction(attacker, defender, a, e, food, face.copy(points = face.points + 1), then)).add(AxeAction(attacker, defender, a, e, food, face.copy(casualties = face.casualties + 1), then))
         else
             Then(CombatRollAction(attacker, defender, a, e, food, faces :+ face, then))
+    }
 
     // Collect what a territory produces, as at harvest
     def collect(f : Faction, t : Territory, reason : Elem)(implicit game : Game) {
@@ -512,10 +535,10 @@ object MapExpansion extends Expansion {
 
         case SetupKaijaAction(f, round, l, a) =>
             game.addUnits(a, f, 2)
-            game.kaija = |(a)
+            game.setCompanion(f, |(a))
             game.note("kaija-setup")
 
-            f.log("placed two units and Kaija in", a)
+            f.log("placed two units and", Companion(f), "in", a)
 
             Then(SetupPlaceAction(round, l.drop(1)))
 
@@ -523,10 +546,10 @@ object MapExpansion extends Expansion {
             game.addUnits(a, f, kaija.?(1).|(2))
             game.chiefs += f -> a
             if (kaija)
-                game.kaija = |(a)
+                game.setCompanion(f, |(a))
             game.note("chief-setup")
 
-            f.log(kaija.?("placed one unit, Kaija and").|("placed two units and"), WarchiefElem(f), "in", a)
+            f.log(kaija.?("placed one unit, " ~ Companion(f).elem0 ~ " and").|("placed two units and"), WarchiefElem(f), "in", a)
 
             Then(SetupPlaceAction(round, l.drop(1)))
 
@@ -552,10 +575,10 @@ object MapExpansion extends Expansion {
             Then(RecruitAction(f, left - 1, mode, placed :+ a, then))
 
         case RecruitKaijaAction(f, a, left, mode, placed, then) =>
-            game.kaija = |(a)
+            game.setCompanion(f, |(a))
             game.note("kaija-recruit")
 
-            f.log("recruited", "Kaija".hl, "in", a)
+            f.log("recruited", Companion(f), "in", a)
 
             Then(RecruitAction(f, left - 1, mode, placed :+ a, then))
 
@@ -606,7 +629,7 @@ object MapExpansion extends Expansion {
             val dst = game.board.territory(to)
             val n = game.count(t, f)
             // Kaija can't enter enemy territories unless awakened, nor a teammate's it couldn't move on from
-            val kaija = game.kaijaIn(t, f) && (game.awakened || game.present(dst).forall(game.allied(f, _))) &&
+            val kaija = game.kaijaIn(t, f) && (game.restrained(f).not || game.present(dst).forall(game.allied(f, _))) &&
                 (game.passOnly(f, dst).not || canPass(f, dst, left - cost, e, true))
 
             val chief = game.chiefIn(t, f)
@@ -642,13 +665,13 @@ object MapExpansion extends Expansion {
             game.removeUnits(src, f, n)
             game.addUnits(dst.anchor, f, n)
             if (kaija)
-                game.kaija = |(dst.anchor)
+                game.setCompanion(f, |(dst.anchor))
             if (chief)
                 game.chiefs += f -> dst.anchor
 
             val enemy = game.present(dst).%(game.enemy(f, _))
 
-            f.log("moved", Figures(n, kaija, chief), "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty), game.passOnly(f, dst).?("(passing through)".txt).|(Empty))
+            f.log("moved", Party(f, n, kaija, chief), "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty), game.passOnly(f, dst).?("(passing through)".txt).|(Empty))
 
             // The Swamp (Wilderness): figures going in lose one of them
             if (game.swampIn(dst) && game.swampIn(src).not) {
@@ -804,15 +827,20 @@ object MapExpansion extends Expansion {
 
                 log(f, "fights", defender, "in", a)
 
+                val food = CombatFoodStartAction(f, defender, a, e, FightOverAction(then))
+                // New Blood: Ox Clan's Ancestral Equipment tokens, chosen in step 1
+                val step = game.has(NewBlood).?(GearAskAction(f, defender, a, e, food) : ForcedAction).|(food)
+
                 // Step 1: Signy and Brand (Warchiefs module), the attacker's first
                 if (game.has(Warchiefs))
-                    Then(ChiefStepOneAction($(f, defender), a, CombatFoodStartAction(f, defender, a, e, FightOverAction(then))))
+                    Then(ChiefStepOneAction($(f, defender), a, step))
                 else
-                    Then(CombatFoodStartAction(f, defender, a, e, FightOverAction(then)))
+                    Then(step)
             }
 
         case FightOverAction(then) =>
             game.battle = None
+            game.gearFight = $
 
             Then(then)
 
@@ -885,6 +913,12 @@ object MapExpansion extends Expansion {
                     .add(LivRerollAction(self, CombatRerollAction(attacker, defender, a, e, food, faces, then)))
                     .add(LivKeepAction(self, CombatFaceAction(attacker, defender, a, e, food, faces, face, then)))
             else
+            // Ancestral Equipment 3 (Ox Clan): roll again
+            if (self == Ox && game.gearFight.has(3))
+                Ask(self)
+                    .add(GearRerollAction(self, CombatRerollAction(attacker, defender, a, e, food, faces, then)))
+                    .add(GearKeepAction(self, CombatFaceAction(attacker, defender, a, e, food, faces, face, then)))
+            else
                 Then(CombatFaceAction(attacker, defender, a, e, food, faces, face, then))
 
         case CombatRerollAction(attacker, defender, a, e, food, faces, then) =>
@@ -929,15 +963,24 @@ object MapExpansion extends Expansion {
             val ab = (attacker == Snake && scorched).??(1)
             val db = (defender == Snake && scorched).??(1)
 
-            val as = game.strength(t, attacker, true) + e.bonus + ab + food(0) + faces(0).points
-            val ds = game.strength(t, defender, false) + fortress + db + food(1) + faces(1).points
+            // New Blood: clan powers, warchiefs, upgrade cards and Ancestral Equipment tokens
+            val anb = NewBloodExpansion.points(attacker, t, e, true, food(0))
+            val dnb = NewBloodExpansion.points(defender, t, e, false, food(1))
+
             // Casualties each side inflicts; Halvard defending ignores 1
             val halvard = math.min(faces(0).casualties, Warchief.shield(t, defender, false))
-            // Egil's Fury: +1 casualty
-            val ac = faces(0).casualties - halvard + (e.special == EgilMove).??(1)
+            // Egil's Fury: +1 casualty; New Blood bonuses; Eldrich (Squirrel): the defender's rolled casualties hit them too
+            val eldrich = (e.special == EldrichMove).??(faces(1).casualties)
+            val ac = math.max(0, faces(0).casualties - halvard + (e.special == EgilMove).??(1) + NewBloodExpansion.casualties(attacker, t, e, true) + eldrich - NewBloodExpansion.ignored(defender))
             // Shieldbearers cancel 1 casualty inflicted by the defender
             val shield = ((e.special == ShieldMove || e.special == BorgildMove) && faces(1).casualties + towers > 0).??(1)
-            val dc = faces(1).casualties + towers - shield
+            val dc = math.max(0, faces(1).casualties + towers - shield + NewBloodExpansion.casualties(defender, t, e, false) - NewBloodExpansion.ignored(attacker))
+
+            // The Wise One (Lynx): 1 point per casualty inflicted
+            val wise = (e.special == WiseOneMove).??(math.min(ac, du))
+
+            val as = game.strength(t, attacker, true) + e.bonus + ab + anb + wise + food(0) + faces(0).points
+            val ds = game.strength(t, defender, false) + fortress + db + dnb + food(1) + faces(1).points
 
             if (game.kaijaIn(t, attacker) || game.kaijaIn(t, defender))
                 game.note("kaija-fight")
@@ -945,14 +988,14 @@ object MapExpansion extends Expansion {
                 game.note("scorched-fight")
 
             def extra(l : (Int, Elem)*) : Elem = l.toList.filter(_._1 > 0).map { case (n, what) => "(" ~ n.hl ~ " from " ~ what ~ ")" }.join(" ")
-            def kaija(f : Faction) = game.kaijaIn(t, f).?("(" ~ 2.hl ~ " from " ~ "Kaija".hl ~ ")").|(Empty)
+            def kaija(f : Faction) = game.kaijaIn(t, f).?("(" ~ game.companionStrength(t, f).hl ~ " from " ~ Companion(f).elem ~ ")").|(Empty)
             def chief(f : Faction, attacking : Boolean) = game.chiefIn(t, f).?("(" ~ Warchief.strength(t, f, attacking).hl ~ " from " ~ Warchief.elem(f) ~ ")").|(Empty)
 
             if (game.chiefIn(t, attacker) || game.chiefIn(t, defender))
                 game.note("chief-fight")
 
-            attacker.log("scored", as.hl, kaija(attacker), chief(attacker, true), extra(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl), "and inflicted", ac.hl, (ac == 1).?("casualty").|("casualties"), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
-            defender.log("scored", ds.hl, kaija(defender), chief(defender, false), extra(fortress -> Fortress.elem, db -> "Scorched Earth".hl), "and inflicted", dc.hl, (dc == 1).?("casualty").|("casualties"), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
+            attacker.log("scored", as.hl, kaija(attacker), chief(attacker, true), extra(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt, wise -> "The Wise One".hl), "and inflicted", ac.hl, (ac == 1).?("casualty").|("casualties"), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
+            defender.log("scored", ds.hl, kaija(defender), chief(defender, false), extra(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt), "and inflicted", dc.hl, (dc == 1).?("casualty").|("casualties"), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
 
             val winner =
                 if (ac >= du && dc >= au) None
@@ -962,8 +1005,12 @@ object MapExpansion extends Expansion {
                 else |(defender)
 
             val before = game.count(t, attacker)
+            val dbefore = game.count(t, defender)
             game.removeFigures(t, attacker, math.min(dc, au))
             game.removeFigures(t, defender, math.min(ac, du))
+
+            // Sacrificial Pyre, Blood Ties, Howl from the Sea
+            NewBloodExpansion.afterCombat(attacker, defender, t, e, before - game.count(t, attacker), dbefore - game.count(t, defender), math.min(dc, au), math.min(ac, du), winner)
 
             // Svarn's Menders: the attacker's casualties wait on the card
             if (e.special == SvarnMove)
@@ -1019,7 +1066,7 @@ object MapExpansion extends Expansion {
                 if (to.none) {
                     val chief = game.chiefIn(t, f)
                     game.removeFigures(t, f, game.figures(t, f))
-                    f.log("had nowhere to retreat and lost", Figures(n, kaija, chief))
+                    f.log("had nowhere to retreat and lost", Party(f, n, kaija, chief))
                     game.retreatBy = None
                     Then(then)
                 }
@@ -1060,11 +1107,14 @@ object MapExpansion extends Expansion {
             game.removeUnits(game.board.territory(from), f, n)
             game.addUnits(to, f, n)
             if (kaija)
-                game.kaija = |(to)
+                game.setCompanion(f, |(to))
             if (chief)
                 game.chiefs += f -> to
 
-            f.log("retreated", Figures(n, kaija, chief), "to", to)
+            f.log("retreated", Party(f, n, kaija, chief), "to", to)
+
+            // Howl from the Sea (Kraken): a unit where a lost combat retreats
+            NewBloodExpansion.howl(f, to)
 
             Then(RetreatAction(f, from, rough, then))
 
@@ -1191,7 +1241,16 @@ object MapExpansion extends Expansion {
                 f.log("collected", 1.hl, Lore, "for exploring without closing a territory")
             }
 
-            Then(TilePlacedAction(f, tile, spot, false, ExploreAction(f, 1, times - 1, false, e, then)))
+            game.explored = |(tile)
+
+            // New Blood: Ox Clan's Ancestral Equipment token on the tile, Rat Clan's units in closed territories
+            if (game.has(NewBlood))
+                NewBloodExpansion.explored(f, tile, spot, closed)
+
+            // Horse Clan: 1 wood or a small building for each closed territory
+            val next = ExploreAction(f, 1, times - 1, false, e, then)
+
+            Then(TilePlacedAction(f, tile, spot, false, (f == Horse && closed.any).?(HorseClosedAction(f, closed./(_.anchor), next) : ForcedAction).|(next)))
 
         // BUILD
         case BuildAction(f, e, times, smallOnly, then) =>

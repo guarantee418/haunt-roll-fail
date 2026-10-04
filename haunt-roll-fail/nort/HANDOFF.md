@@ -44,8 +44,8 @@ and each deck's `CustomDeck` has the `FaceURL` of its card sheet.
 Images are in `webp2/nort/images/`: `card/`, `tile/` (`start`, `start-5`,
 `tile-01` to `tile-33`), `token/` (units by color, buildings, other tokens),
 `ui/` (generated number badges, spot frames, target ring) and `expansion/`
-(Wastelands/Uncharted Horizons tiles, New Blood clan boards, extra tokens; not
-used yet).
+(Wastelands/Uncharted Horizons tiles, the clan boards, extra tokens; the
+boards are shown by the clan picker's Warchief button).
 
 ## The map model (read before changing board code)
 
@@ -238,6 +238,53 @@ on. To implement one:
   `wild-*` outputs were committed.
 - `NORT_WILDERNESS=1` makes the headless host always use the module.
 
+## New Blood expansion (2026-10-04)
+
+- Seven clans in `Meta.factions` after the core ones (`NewBlood.clans`). No
+  option: `Game.modules` adds `NewBlood` when one of them plays, and
+  `NewBloodExpansion` (priority -2, before Wilderness, Creatures and
+  Warchiefs) handles them. Rules and choices in `RULES.md` (New Blood, and
+  Interpretations).
+- Sources: TTS mod 3597126237 ("Northgard: Uncharted Horizons + all DLC
+  [ENG]", made from the Tabletopia module): card sheet `deck240` (6x6, the 28
+  cards plus three core repeats), all 14 clan boards, the Sacrificial Pyre,
+  the Ox tokens (both faces, as `Custom_Token` states) and the High Tide
+  token. Images: `card/clan/<clan>-<card>.webp`, `clan/<clan>.webp` (emblems
+  cut from the boards like the core ones), `token/ox-<n>` (face up, effect)
+  and `token/ox-back-<n>`, `token/high-tide`, `token/pyre` (not drawn yet),
+  `token/lynx` (Brundr and Kaelinn: the Lynx emblem; no figure art exists).
+  Tabletopia itself only has the Uncharted Horizons rulebook (WIP) with five
+  of the clans; no New Blood rulebook was found.
+- Companions: Kaija's plumbing is shared. `game.companion(f)` is Kaija
+  (Bear), `game.lynx` (Lynx's Brundr and Kaelinn) or `game.brok` (Horse's
+  second warchief, Warchiefs module only); `kaijaIn`, `kaijaReady`,
+  `setCompanion`, `companionStrength` (2, 1, Brok 2 or 1 next to Eitria) and
+  `restrained` (only Kaija can't enter enemy territories). Labels use
+  `Companion(f)` and `Party(f, n, companion, chief)` instead of `Figures`.
+- State in `Game`: `pyre` (owners of the units on it; `reserve` subtracts
+  them), `dragonHarvest`, `tides`, `gear` (tokens on spaces; `buildOptions`
+  skips those spaces), `gearPile`, `gearReady`, `gearUsed`, `gearFight`,
+  `explored` (Warcraft), `howl`.
+- Hooks in the core: `NewBloodExpansion.points`, `casualties`, `ignored` and
+  `afterCombat` in `CombatResolveAction`; `surtr` in `MapExpansion.rolled`;
+  `explored` and `HorseClosedAction` in `ExploreTurnAction`; `howl` in
+  `RetreatToAction`; `GearAskAction` before the food step (only with New
+  Blood); `AfterHarvestAction` after the Harvest. Other powers intercept
+  core actions (`PlayResolveAction` for Kraken, Ox and Lynx clan cards,
+  `ScorchedHarvestAction` for Dragon, `ChiefStepOneAction` for Kàra and
+  Andhrimnir, `MoveStartAction` for Eitria and Brok's Precision), some only
+  for a side effect before returning `UnknownContinue`.
+- The status panes show Dragon's Pyre, Kraken's tokens in reserve and Ox's
+  ready and used tokens. The map draws High Tide tokens by the territory
+  number, Ox tokens on their spaces, Brundr and Kaelinn as a round token and
+  Brok as a second warchief figure.
+- `NORT_NEWBLOOD=1` makes the headless host use only the New Blood clans;
+  without it all 14 clans are drawn from. With `NORT_UPGRADES=1` every New
+  Blood card was played in bot games without errors.
+- Not done: the Sacrificial Pyre isn't drawn (only listed in Dragon's pane);
+  the clan picker's Warchief button shows the boards, but Brok has no figure
+  of his own (he uses the warchief figure).
+
 ## Map drawing: territory colours and free ground
 
 - Each territory is tinted with the colour of the player who controls it
@@ -337,8 +384,9 @@ list. In short:
 3. **A better bot** that recruits, builds and explores on purpose.
 4. **A replay check** like `root/replay-check.scala`, to confirm undo and
    loading rebuild the same game.
-5. **Expansions**: Wilderness is done; Wastelands, New Blood and Uncharted
-   Horizons are next (assets in `expansion/`, rulebooks not summarized yet).
+5. **Expansions**: Wilderness and New Blood are done; Wastelands and
+   Uncharted Horizons are next (assets in `expansion/`; the TTS mod
+   3597126237 has the Uncharted Horizons cards and Tabletopia its rulebook).
 
 ## How to build and test (in a cloud session)
 

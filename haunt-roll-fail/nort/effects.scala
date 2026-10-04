@@ -85,7 +85,7 @@ case class FutureSightAction(self : Faction, card : Card, then : ForcedAction) e
 
 case class HiddenFromAction(self : Faction, from : AreaRef, then : ForcedAction) extends BaseAction("Hidden Ways", "move from")(from) with Soft with MapTarget { def target = from }
 case class HiddenToAction(self : Faction, from : AreaRef, to : AreaRef, then : ForcedAction) extends BaseAction("Hidden Ways", "move from", from, "to")(to) with Soft with MapTarget { def target = to }
-case class HiddenUnitsAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean, then : ForcedAction) extends BaseAction("Hidden Ways", "move from", from, "to", to)(Figures(n, kaija, chief)) {
+case class HiddenUnitsAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean, then : ForcedAction) extends BaseAction("Hidden Ways", "move from", from, "to", to)(Party(self, n, kaija, chief)) {
     def this(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, then : ForcedAction) = this(self, from, to, n, kaija, false, then)
 }
 
@@ -204,7 +204,7 @@ object CardsExpansion extends Expansion {
         case SecretsEffect => secretsCards(f).any
         case StolenLoreEffect => stolenLoreCards(f).any
         case HeroesEffect => heroesCards(f).any
-        case _ => false
+        case e => NewBloodExpansion.playable(f, e)
     }
 
     def resolve(f : Faction, e : Effect, then : ForcedAction)(implicit game : Game) : Continue = e match {
@@ -278,7 +278,7 @@ object CardsExpansion extends Expansion {
             else
                 Ask(f).each(heroesCards(f))(c => CopyEffectAction(f, f, c, then))
 
-        case _ => Then(then)
+        case e => NewBloodExpansion.resolve(f, e, then)
     }
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
@@ -378,7 +378,7 @@ object CardsExpansion extends Expansion {
         case HiddenToAction(f, from, to, then) =>
             val t = game.board.territory(from)
             val n = game.count(t, f)
-            val kaija = game.kaijaIn(t, f) && (game.awakened || game.present(game.board.territory(to)).forall(game.allied(f, _)))
+            val kaija = game.kaijaIn(t, f) && (game.restrained(f).not || game.present(game.board.territory(to)).forall(game.allied(f, _)))
             val chief = game.chiefIn(t, f)
 
             Ask(f)
@@ -395,13 +395,13 @@ object CardsExpansion extends Expansion {
             game.removeUnits(src, f, n)
             game.addUnits(dst.anchor, f, n)
             if (kaija)
-                game.kaija = |(dst.anchor)
+                game.setCompanion(f, |(dst.anchor))
             if (chief)
                 game.chiefs += f -> dst.anchor
 
             val enemy = game.present(dst).%(game.enemy(f, _))
 
-            f.log("moved", Figures(n, kaija, chief), "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty))
+            f.log("moved", Party(f, n, kaija, chief), "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty))
 
             if (enemy.any)
                 game.combats :+= dst.anchor

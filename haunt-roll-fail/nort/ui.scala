@@ -650,6 +650,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             pieces.add(Sprite($(at(b.image, 190)), $))(sx(x), sy(y))
         }
 
+        // Ox Clan's Ancestral Equipment tokens on their spaces, face up
+        game.gear.foreach { case (s, n) =>
+            val (x, y) = board.point(s)
+            pieces.add(Sprite($(at("token-ox-" + n, 170)), $))(sx(x), sy(y))
+        }
+
         // Territory numbers on every area of the territory, highlighted when it can be chosen; units at its first area
         board.territories.zipWithIndex.foreach { case (t, i) =>
             val tag = $(t.anchor)
@@ -727,13 +733,26 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     taken :+= ((mx(cx), my(cy), 0.13 * scale))
                 }
 
-                // Bear Clan's Kaija; the round token fills its box, so 230 matches a warrior's height
+                // Bear Clan's Kaija and Lynx Clan's Brundr and Kaelinn; the round token fills its box, so 230 matches a warrior's height
+                // Horse Clan's second warchief, Brok, is a warchief figure
                 if (game.kaijaIn(t, f)) {
-                    val kz = 230 * scale
-                    val (kx, ky) = beside(kz / T / 2)
-                    pieces.add(Sprite($(at("token-kaija", kz)), $(Rectangle(-kz / 2, -kz / 2, kz, kz)), tag))(kx, ky)
+                    val kz = (f == Horse).?(300.0).|(230.0) * scale
+                    val image = f match {
+                        case Horse => "warchief-" + game.colors(f).id
+                        case Lynx => "token-lynx"
+                        case _ => "token-kaija"
+                    }
+                    val (kx, ky) = beside((f == Horse).?(0.13 * scale).|(kz / T / 2))
+                    pieces.add(Sprite($(at(image, kz)), $(Rectangle(-kz / 2, -kz / 2, kz, kz)), tag))(kx, ky)
                     taken :+= ((mx(kx), my(ky), kz / T / 2))
                 }
+            }
+
+            // Kraken Clan's High Tide token, by the territory number
+            if (game.tideIn(t)) {
+                val (x, y) = board.point(t.anchor)
+                pieces.add(Sprite($(at("token-high-tide", 150)), $(Rectangle(-75, -75, 150, 150)), tag))(sx(x) + 40, sy(y) - 110)
+                taken :+= ((x + 40 / T, y - 110 / T, 75 / T))
             }
 
             // Snake Clan's Scorched Earth token, by the territory number
@@ -806,10 +825,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val cards = (state.hand.num.hl ~ " in hand, " ~ state.draw.num.hl ~ " to draw").div
 
+        // New Blood: Dragon's Sacrificial Pyre, Kraken's High Tide tokens, Ox's Ancestral Equipment tokens
+        val nb = f match {
+            case Dragon => ("Pyre: ".txt ~ game.pyre.none.?("empty".txt).|(game.pyre./(g => (g == Dragon).?("own".txt).|(g.name.styled(colorOf(g)))).join(", "))).div
+            case Kraken => ("High Tide: ".txt ~ (2 - game.tides.num).hl ~ " in reserve").div
+            case Ox => ("Equipment: ".txt ~ game.gearReady.num.hl ~ " ready, " ~ game.gearUsed.num.hl ~ " used").div
+            case _ => Empty
+        }
+
         // Team play: the player's team
         val marks = (game.teams.?(game.teamName(f) ~ " ").|(Empty) ~ (game.first == f).?("First player".hh).|(Empty) ~ (state.passed && game.isOver.not).?(" Passed".txt).|(Empty)).div
 
-        val content = (title.div ~ res ~ units ~ chief ~ cards ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
+        val content = (title.div ~ res ~ units ~ chief ~ cards ~ nb ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
 
         container.replace(content, resources, {
             case x => onClick(x)

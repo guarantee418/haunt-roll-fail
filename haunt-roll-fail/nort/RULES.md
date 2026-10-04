@@ -36,6 +36,7 @@ draws a tile when no neutral territory is left.
 | Warchiefs module (Warchiefs expansion) | done 2026-10-03 (`warchiefs.scala`) |
 | The Warchiefs box's 7 extra clan upgrade cards | done 2026-10-03: with the module, or alone with the "Warchief upgrade cards" option |
 | Wilderness expansion: Environment tiles and five more creatures, with the Ancestral Graveyard and the Wyvern's Den | done 2026-10-04 (`wilderness.scala`, see Wilderness below) |
+| New Blood: seven more clans with their warchiefs and 28 clan cards | done 2026-10-04 (`newblood.scala`, see New Blood below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -388,17 +389,99 @@ cards (hammer = buildings, viking = units, wood/food/lore = resources):
   territory of one tile and gives 2 fame to a player controlling it at the
   Harvest.
 
+## New Blood (2026-10-04)
+
+Seven more clans, with their warchiefs: Dragon, Horse, Kraken, Lynx, Ox, Rat
+and Squirrel (`newblood.scala`). There is no option: picking one of these
+clans brings the expansion in (`Game.modules`).
+
+Sources: the clan boards (`expansion/board/`, matching the boards in the TTS
+mod) and the 28 clan cards, from the Tabletop Simulator mod "Northgard:
+Uncharted Horizons + all DLC [ENG]" (Steam Workshop 3597126237, whose
+Uncharted Horizons parts come from the Tabletopia module; card sheet
+`deck240`, 6x6). Five of the clans (all but Horse and Rat) are also
+described in the work-in-progress Uncharted Horizons rulebook on Tabletopia
+(`northgard-uncharted-horizons-rulebook-light-en`); where it and the boards
+differ (Kraken's High Tide, Squirrel's power), the boards are followed. No
+New Blood rulebook was found on Tabletopia or in the TTS mods.
+
+| Clan | Warchief | Clan power | Warchief power |
+|---|---|---|---|
+| Dragon | Surtr | Sacrificial Pyre (2 units). After each combat, enemy units lost go on it while there is room. To harvest, sacrifice a unit from it (back to its owner's reserve) or place one of your deployed units on it; then collect 1 extra food or wood. Setup: one own unit on it | Step 4: no casualty rolled → +1 casualty; no point rolled → +1 point |
+| Horse | Eitria and Brok (two figures) | When you close a territory: collect 1 wood, or build 1 small building in it paying its cost | Both in the same territory: worth 3 instead of 4 |
+| Kraken | Kàra | Before playing a Kraken card, may place a High Tide token (2) in a territory you control; it goes back when you no longer control it. Step 4: enemies fighting Kraken in a High Tide territory suffer 1 casualty | Defending, before the combat: may move a High Tide token to her territory |
+| Lynx | Mielikki | Brundr and Kaelinn: a special unit worth 1 point, recruited like a unit (also at setup). Whenever you play a Lynx card, may Move 1 with it and any units with it, to a neutral or friendly territory, before or after the card | +1 point with a Flash card in your active area this year |
+| Ox | Torfin | 7 Ancestral Equipment tokens (face-down pile, 1 on top). When you Explore, the top one goes face up on an available small building space of the tile (no building there; it stays when the territory changes hands). Before playing an Ox card, may take one from a territory you control into your reserve. Step 1: may use one face-up token, then flip it face down; they turn face up at the start of the next year | May use one more token |
+| Rat | Eir | When you close territories you control, may place 1 unit from reserve in each | +1 point in a territory with food on its tiles (not Food Silos) |
+| Squirrel | Andhrimnir | After harvesting: with at least 1 food, gain 1 food, or with at least 1 wood, gain 1 wood | Before step 1 of a defensive combat: gain 1 food |
+
+Ancestral Equipment tokens: 1 step 2, +1 point if you spent food; 2 step 1,
++1 point; 3 step 4, reroll your die; 4 step 1, +2 points; 5 step 2, +2
+points per food (instead of +1); 6 step 6, +1 casualty to the enemy; 7 step
+6, ignore one of your casualties.
+
+Clan cards (initial, two upgrades, and the warchief upgrade card; Flash
+marked ⚡):
+
+| Clan | Initial | Upgrade | Upgrade | Warchief upgrade |
+|---|---|---|---|---|
+| Dragon | ⚡ Dragon Clan: sacrifice 1 unit or place 1 deployed unit on the Pyre, then draw 1 and collect 1 food | ⚡ Capture for Sacrifice: from a territory you control, remove 1 enemy unit from an adjacent territory and put it on the Pyre; you may return 1 own unit from the Pyre to a territory you control | Reluctant Workforce: draw 1; sacrifice up to 2 units, 1 card each | Tenacious Grudge: Move 3, +1 point per unit on the Pyre |
+| Horse | ⚡ Horse Clan: Build; small buildings (Carved Stone too) need no space | Craftsmen: Recruit 2, then may replace a building you control with another of the same size | ⚡ Quality of Life: may build a free Defense Tower needing no space, then collect a resource from each of your territories with a Defense Tower | Eitria and Brok's Precision: Move 2; before, may pay any 1 resource for +1 point and Move 3 |
+| Kraken | ⚡ Kraken Clan: collect 1 food or 1 wood from a territory you control with a High Tide token; may draw 1 | ⚡ Endless Tide: may remove 1 enemy unit from an open territory for 1 lore; may draw 1 | Knowledge from Beyond: per High Tide territory you control, one of Recruit 1, Collect 1 resource, Draw 1 (each once) | Howl from the Sea: Move 2; where you win, add 1 unit per casualty inflicted; for each combat lost, 1 unit where you retreat |
+| Lynx | ⚡ Lynx Clan: Explore; may put the tile at the bottom and draw another | ⚡ Fire Arrows: Move 1, +1 point and +1 casualty | Poaching: draw 2; if either is Flash, reveal it and draw 1 more | The Wise One: Move 2, +1 point per casualty inflicted |
+| Ox | ⚡ Ox Clan: Move 1; the token may be taken after the card instead | Warcraft: Explore; 1 lore if the tile shows lore, otherwise another Explore | City Builder: Build, then 1 lore and may draw 1 | The True Hero: Move 2; before a combat with Torfin, may give up his power to remove a building there |
+| Rat | ⚡ Rat Clan: Build; may first remove up to 2 units from your territories for 1 wood each | ⚡ Overwork: may remove 1 unit to collect everything from 1 territory you control (buildings too); may draw 1 | Proliferation: Recruit 1 in up to 3 closed territories you control | Blood Ties: Move 2, 1 lore per casualty suffered |
+| Squirrel | ⚡ Squirrel Clan: Recruit 1, then 1 food or fame equal to your units in your territories / 4 | Cooking Mastery: Build, then may build a free Food Silo in a territory you control, even next to another | Economics: draw 1; pay up to 2 food, 1 card each | Eldrich: Move 2; each casualty the enemy rolls also hits their own units |
+
+The warchief upgrade cards follow the Warchiefs box's rule: a third upgrade
+with the Warchiefs module or the "Warchief upgrade cards" option.
+
 ## Expansions (later)
 
-Wastelands (creatures, Environment
-and Central tiles), New Blood (7 more clans: Dragon, Horse, Kraken, Lynx, Ox,
-Rat, Squirrel, with warchiefs), Uncharted Horizons (Development / Event /
-Raid cards, alternative victory conditions, Training Fields, Solo/Automa,
-drafting setup, more map tiles).
+Wastelands (creatures, Environment and Central tiles), Uncharted Horizons
+(Development / Event / Raid cards, alternative victory conditions, Training
+Fields, Solo/Automa, drafting setup, more map tiles). The TTS mod 3597126237
+has the Uncharted Horizons cards (Development, Event, Raid, Wealth) and its
+rulebook is on Tabletopia.
 
 ## Interpretations (choices made where the summary above is not enough)
 
 Check these against the rulebook when it is at hand.
+
+- **New Blood** (no rulebook; the boards and cards are the source):
+  - Brundr and Kaelinn, and Horse's second warchief Brok (Warchiefs module
+    only), use Kaija's rules: one figure, moves with the units, taken as a
+    casualty after the units and the warchief, can't be targeted by card
+    effects on enemy units, doesn't count for the 14-unit limit. Unlike
+    Kaija they may enter enemy territories. Brundr and Kaelinn don't count
+    for winter (Uncharted Horizons rulebook); Brok does, like a warchief.
+    Without the Warchiefs module Horse has no warchief and no Brok.
+  - Brundr and Kaelinn's Move 1 doesn't cross Rough borders; the units with
+    it may stay behind (any number go). It is offered before the card (or
+    after it), and only for clan cards played, not copied ones.
+  - Dragon: only units (not warchiefs or companions) go on the Pyre, and only
+    from fights between players. Units on the Pyre are neither on the map
+    nor in the reserve (Dragon starts with 13 in reserve). Without a
+    sacrifice Dragon gets nothing at the Harvest (no fame, no resources); the
+    choice is made before the Harvest. The extra food or wood needs a
+    territory Dragon controls. A captured unit with the Pyre full just goes
+    back to its owner's reserve.
+  - Kraken: a High Tide token goes back as soon as Kraken has no figures in
+    its territory. Its casualty applies to fights between players only. The
+    Kraken Clan card's food or wood doesn't depend on the territory's icons.
+  - Ox: the token goes on the first free small building space (not Carved
+    Stone spaces) of the explored tile, even in a neutral or enemy territory;
+    none if the tile has no such space. Tokens are used in fights between
+    players only, chosen before food is spent. A space with a token can't be
+    built on.
+  - Horse: "close a territory" means one Horse controls, closed by Horse's
+    Explore; one choice per territory. Quality of Life's resource is one of
+    the kinds the territory produces.
+  - Rat: the closing units are placed automatically (while the reserve
+    lasts). Rat Clan's wood stays with Rat if the build doesn't use it.
+  - Squirrel's after-harvest gain comes before the trades.
+  - Howl from the Sea's unit for a lost combat goes where the first group
+    retreats.
 
 - **Wilderness**, where the rulebook says nothing:
   - The Swamp's unit is lost when the figures enter it (units first, then

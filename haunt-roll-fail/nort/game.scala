@@ -31,6 +31,15 @@ case object Snake extends Faction
 case object Stag extends Faction
 case object Wolf extends Faction
 
+// The seven clans of the New Blood expansion (newblood.scala)
+case object Dragon extends Faction
+case object Horse extends Faction
+case object Kraken extends Faction
+case object Lynx extends Faction
+case object Ox extends Faction
+case object Rat extends Faction
+case object Squirrel extends Faction
+
 
 // Player colors mark a player's units and starting cards; they are not tied to the clan
 trait PlayerColor extends NamedToString with Styling with Elementary with Record {
@@ -91,8 +100,8 @@ class FactionState(val faction : Faction)(implicit game : Game) {
     var lore = 0
     var fame = 0
 
-    // Units on the map, with the warchief (Warchiefs module)
-    def units = game.onMap(faction) + game.chiefs.contains(faction).??(1)
+    // Units on the map, with the warchief (Warchiefs module); Horse Clan's second warchief, Brok, counts too
+    def units = game.onMap(faction) + game.chiefs.contains(faction).??(1) + (faction == Horse && game.brok.any).??(1)
 
     var draw : $[Card] = $
     var hand : $[Card] = $
@@ -210,6 +219,7 @@ case object CreaturePhaseAction extends ForcedAction
 case class PassedAction(f : Faction) extends ForcedAction
 case class ScorchedTakeAction(self : Faction, r : |[Resource]) extends BaseAction("Scorched Earth".hl, "take one resource from", ScorchedEarthPlace)(r./(_.elem).|("Take nothing".txt))
 case class HarvestAction(take : |[Resource]) extends ForcedAction
+case class AfterHarvestAction(then : ForcedAction) extends ForcedAction
 case class TradeAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class TradeForAction(self : Faction, pay : $[Resource], gain : Resource, then : ForcedAction) extends BaseAction("Trade", "three resources for one")("Pay", pay./(_.elem).join(" "), "for", gain)
 // Team play: one resource for one of a teammate's
@@ -243,7 +253,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     var isOver = false
 
     // Modules and expansions turned on in the options
-    val modules : $[Module] = Module.all.%(m => options.has(ModuleOption(m)))
+    // New Blood is on whenever one of its clans plays
+    val modules : $[Module] = Module.all.%(m => options.has(ModuleOption(m)) || (m == NewBlood && setup.exists(NewBlood.clans.has)))
 
     def has(m : Module) = modules.has(m)
 
@@ -339,6 +350,27 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // Snake Clan's Scorched Earth token
     var scorched : |[AreaRef] = None
 
+    // NEW BLOOD (newblood.scala)
+    // Dragon Clan's Sacrificial Pyre: the owner of each unit on it (at most 2)
+    var pyre : $[Faction] = $
+    // Dragon Clan may harvest this year (it sacrificed or placed a unit on the Pyre); None until it has chosen
+    var dragonHarvest : |[Boolean] = None
+    // Kraken Clan's High Tide tokens (2 at most), each in a territory with Kraken figures
+    var tides : $[AreaRef] = $
+    // Ox Clan's Ancestral Equipment tokens: on the map (face up), the face-down pile, face up in the reserve, and used this year
+    var gear : Map[SpaceRef, Int] = Map()
+    var gearPile : $[Int] = 1.to(7).$
+    var gearReady : $[Int] = $
+    var gearUsed : $[Int] = $
+    // The tokens Ox Clan uses in the fight being resolved
+    var gearFight : $[Int] = $
+    // The tile placed by the last Explore action (Warcraft)
+    var explored : |[String] = None
+    // Howl from the Sea: Kraken's first retreating group adds a unit where it goes
+    var howl = false
+
+    def tideIn(t : Territory) : Boolean = tides.exists(t.areas.contains)
+
     // Creatures module: the draw and discard piles, the creature line (the creatures on the map, in activation order),
     // where each one is, and the creatures attacked by the current Move action
     var creatureDeck : $[Creature] = $
@@ -379,7 +411,41 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // Units only; Kaija is counted separately
     def count(t : Territory, f : Faction) : Int = t.areas./(a => unitsAt(a).getOrElse(f, 0)).sum
 
-    def kaijaIn(t : Territory, f : Faction) : Boolean = f == Bear && kaija.exists(t.areas.contains)
+    def kaijaIn(t : Territory, f : Faction) : Boolean = companion(f).exists(t.areas.contains)
+
+    // New Blood: Lynx Clan's Brundr and Kaelinn token, and Horse Clan's second warchief, Brok (Warchiefs module),
+    // follow Kaija's rules as each clan's companion figure (moved, recruited and removed like it)
+    var lynx : |[AreaRef] = None
+    var brok : |[AreaRef] = None
+
+    def companion(f : Faction) : |[AreaRef] = f match {
+        case Bear => kaija
+        case Lynx => lynx
+        case Horse => brok
+        case _ => None
+    }
+
+    def setCompanion(f : Faction, a : |[AreaRef]) = f match {
+        case Bear => kaija = a
+        case Lynx => lynx = a
+        case Horse => brok = a
+        case _ =>
+    }
+
+    // Every companion on the map, with its clan
+    def companions : $[(Faction, AreaRef)] = $(Bear, Lynx, Horse)./~(f => companion(f)./(f -> _))
+
+    // Combat points of the companion: Kaija 2, Brundr and Kaelinn 1, Brok 2 (Eitria and Brok together are worth 3)
+    def companionStrength(t : Territory, f : Faction) : Int =
+        if (kaijaIn(t, f).not) 0
+        else f match {
+            case Lynx => 1
+            case Horse => chiefIn(t, f).?(1).|(2)
+            case _ => 2
+        }
+
+    // Kaija's rule: no entering enemy territories unless awakened (the other companions may)
+    def restrained(f : Faction) : Boolean = f == Bear && awakened.not
 
     // Warchiefs module: where each clan's warchief is (none while in the reserve)
     var chiefs : Map[Faction, AreaRef] = Map()
@@ -396,17 +462,18 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def figures(t : Territory, f : Faction) : Int = count(t, f) + kaijaIn(t, f).??(1) + chiefIn(t, f).??(1)
 
     // Combat points of the figures: Kaija is worth 2, a warchief 2 or 3 depending on its power
-    def strength(t : Territory, f : Faction, attacking : Boolean) : Int = count(t, f) + kaijaIn(t, f).??(2) + Warchief.strength(t, f, attacking)
+    def strength(t : Territory, f : Faction, attacking : Boolean) : Int = count(t, f) + companionStrength(t, f) + Warchief.strength(t, f, attacking)
 
     // Kaija is in Bear Clan's reserve and can be recruited
-    def kaijaReady(f : Faction) : Boolean = f == Bear && kaija.none && setup.has(Bear)
+    // Brundr and Kaelinn likewise; Brok only with the Warchiefs module
+    def kaijaReady(f : Faction) : Boolean = (f == Bear || f == Lynx || f == Horse && has(Warchiefs)) && companion(f).none && setup.has(f)
 
     def scorchedIn(t : Territory) : Boolean = scorched.exists(t.areas.contains)
 
     def present(t : Territory) : $[Faction] = seating.%(f => figures(t, f) > 0)
 
     // Units or Kaija anywhere on the map
-    def anyOnMap(f : Faction) : Boolean = onMap(f) > 0 || (f == Bear && kaija.any) || chiefs.contains(f)
+    def anyOnMap(f : Faction) : Boolean = onMap(f) > 0 || companion(f).any || chiefs.contains(f)
 
     def controlled(f : Faction) : $[Territory] = board.territories.%(t => present(t) == $(f))
 
@@ -418,7 +485,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     def onMap(f : Faction) : Int = units.values./(_.getOrElse(f, 0)).sum
 
-    def reserve(f : Faction) : Int = unitLimit - onMap(f)
+    // Units on Dragon Clan's Sacrificial Pyre are neither on the map nor in the reserve
+    def reserve(f : Faction) : Int = unitLimit - onMap(f) - pyre.count(f)
 
     def addUnits(a : AreaRef, f : Faction, n : Int) {
         val m = unitsAt(a)
@@ -435,7 +503,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             left -= 1
         }
         if (left > 0 && kaijaIn(t, f))
-            kaija = None
+            setCompanion(f, None)
     }
 
     def removeUnits(t : Territory, f : Faction, n : Int) {
@@ -1060,7 +1128,8 @@ object CommonExpansion extends Expansion {
 
             val victim = take.any.??(game.scorched./(game.board.territory)./(game.present).|($).single)
 
-            game.from(game.first).foreach { f =>
+            // Dragon Clan harvests nothing without a sacrifice on its Pyre
+            game.from(game.first).%(f => f != Dragon || game.dragonHarvest.has(false).not).foreach { f =>
                 val territories = game.controlled(f)
 
                 // A Wolf creature leaves only the buildings' fame and resources
@@ -1097,7 +1166,11 @@ object CommonExpansion extends Expansion {
                     }
             }
 
-            Then(game.from(game.first).foldRight(WinterAction : ForcedAction)((f, then) => TradeAction(f, then)))
+            // New Blood's powers after harvesting (Dragon, Squirrel), then the trades
+            Then(AfterHarvestAction(game.from(game.first).foldRight(WinterAction : ForcedAction)((f, then) => TradeAction(f, then))))
+
+        case AfterHarvestAction(then) =>
+            Then(then)
 
         case TradeAction(f, then) =>
             val pp = payments(f)

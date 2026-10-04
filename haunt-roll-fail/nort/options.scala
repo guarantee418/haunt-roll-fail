@@ -118,8 +118,15 @@ case object Wastelands extends Module("Wastelands", "expansion") {
     def about = $("Creatures, Environment tiles and Central tiles.")
 }
 
+// Seven more clans; on whenever one of them plays (Game.modules), so its option isn't listed
 case object NewBlood extends Module("New Blood", "expansion") {
+    override def ready = true
+    override def expansion = |(NewBloodExpansion)
+    // Before Wilderness, Creatures and Warchiefs, so the clans' powers can act first
+    override def priority = -2
     def about = $("Seven more clans: Dragon, Horse, Kraken, Lynx, Ox, Rat and Squirrel.")
+
+    val clans : $[Faction] = $(Dragon, Horse, Kraken, Lynx, Ox, Rat, Squirrel)
 }
 
 case object UnchartedHorizons extends Module("Uncharted Horizons", "expansion") {

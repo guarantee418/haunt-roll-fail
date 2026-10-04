@@ -33,7 +33,8 @@ object Meta extends MetaGame { mmm =>
     val name = "nort"
     val label = "Northgard: Uncharted Lands"
 
-    val factions = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf)
+    // The core clans, then New Blood's
+    val factions = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf) ++ NewBlood.clans
 
     val minPlayers = 2
     // Six players build on the five-player rules
@@ -41,7 +42,8 @@ object Meta extends MetaGame { mmm =>
 
     override val hiddenOptions = $
 
-    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(FameOnly, FirstSeatStarts, WarchiefCards) ++ Module.all./(ModuleOption) ++ $(MoreCreatures) ++ hiddenOptions
+    // New Blood has no option: picking one of its clans brings it in
+    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(FameOnly, FirstSeatStarts, WarchiefCards) ++ Module.all.but(NewBlood)./(ModuleOption) ++ $(MoreCreatures) ++ hiddenOptions
 
     // Colors only for the clans in the game; 2v2 Teams only with four players, 3v3 Teams only with six
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -122,7 +124,7 @@ object Meta extends MetaGame { mmm =>
     override def menuImages = (
         factions./~(f => $(0, 1, 2, 3)./(n => ClanCard(f, n).info.image)./(i => i -> ("/hrf/webp2/nort/images/card/clan/" + i.drop("card-clan-".length) + ".webp"))) ++
         factions./(f => ("clan-" + f.style) -> ("/hrf/webp2/nort/images/clan/" + f.style + ".webp")) ++
-        factions./(f => Warchief.board(f) -> ("/hrf/webp2/nort/images/expansion/board/" + f.style + ".webp"))
+        factions./(f => Warchief.board(f) -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.boardFile(f) + ".webp"))
     ).toMap
 
     def createGame(factions : $[Faction], options : $[O]) = new Game(factions, options)
@@ -198,6 +200,10 @@ object Meta extends MetaGame { mmm =>
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token", "token-", "webp")(
         $(ImageAsset("kaija"), ImageAsset("scorched-earth"))
+    ) ::
+    // New Blood: Brundr and Kaelinn, the High Tide tokens, the Ancestral Equipment tokens
+    ConditionalAssetsList((factions : $[F], options : $[O]) => factions.exists(NewBlood.clans.has), "token", "token-", "webp")(
+        $(ImageAsset("lynx"), ImageAsset("high-tide"), ImageAsset("pyre")) ++ 1.to(7).$./~(n => $(ImageAsset("ox-" + n), ImageAsset("ox-back-" + n)))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Creatures), "token/creature", "creature-", "webp")(
         Creature.all./(c => ImageAsset(c.token.drop("creature-".length)))

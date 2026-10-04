@@ -42,6 +42,8 @@ case object RecruitNeutralSame extends RecruitMode
 case object RecruitSameAny extends RecruitMode
 // Osmosis: different territories, each open or with wood on its tiles
 case object RecruitOsmosis extends RecruitMode
+// Proliferation: different closed territories f controls
+case object RecruitClosed extends RecruitMode
 
 case class RecruitEffect(n : Int, mode : RecruitMode = RecruitNormal) extends Effect
 // What a Move card does besides moving
@@ -75,6 +77,24 @@ case object HalvardMove extends MoveSpecial
 // Svarn's Menders: friendly casualties come back after the combats, in any of the player's territories
 case object SvarnMove extends MoveSpecial
 
+// New Blood warchief upgrade cards (and Fire Arrows):
+// Eldrich (Squirrel): each casualty the enemy rolls also hits their own units
+case object EldrichMove extends MoveSpecial
+// The True Hero (Ox): before a combat with Torfin, may give up his extra token to remove a building there
+case object TrueHeroMove extends MoveSpecial
+// Tenacious Grudge (Dragon): +1 combat point per unit on the Sacrificial Pyre
+case object GrudgeMove extends MoveSpecial
+// Eitria and Brok's Precision (Horse): may pay any 1 resource for +1 combat point and Move 3
+case object PrecisionMove extends MoveSpecial
+// Howl from the Sea (Kraken): units for casualties inflicted in won combats, 1 where a lost combat retreats
+case object HowlMove extends MoveSpecial
+// Blood Ties (Rat): 1 lore per casualty suffered
+case object BloodTiesMove extends MoveSpecial
+// Fire Arrows (Lynx): +1 combat point and +1 casualty
+case object FireArrowsMove extends MoveSpecial
+// The Wise One (Lynx): +1 combat point per casualty inflicted
+case object WiseOneMove extends MoveSpecial
+
 case class MoveEffect(n : Int, bonus : Int = 0, ignoreRough : Boolean = false, special : MoveSpecial = PlainMove) extends Effect
 // Draw tiles and keep one; redraw: may put the drawn tile back once; anywhere: from any open territory
 // collect: Lay of the Land collects the resources shown on the tile
@@ -90,6 +110,9 @@ case object AmenitiesBuild extends BuildSpecial
 case object GloryBuild extends BuildSpecial
 // Industrious Villagers: may replace a building afterwards
 case object IndustriousBuild extends BuildSpecial
+
+// Horse Clan: small buildings need no space (like Amenities)
+case object HorseBuild extends BuildSpecial
 
 // discount: wood saved; duplicate: may match a building already in the territory
 case class BuildEffect(discount : Int = 0, times : Int = 1, duplicate : Boolean = false, special : BuildSpecial = PlainBuild) extends Effect
@@ -203,6 +226,49 @@ object Cards {
             "wolf-plunder" -> CardInfo("Plunder", "", 0, true, PlunderEffect, "Remove 1 unit from an adjacent enemy territory to draw 1 card."),
             "wolf-call-to-war" -> CardInfo("Call to War", "", 0, false, CallToWarEffect, "Recruit 1 unit in each of your territories adjacent to an enemy territory."),
             "wolf-egils-fury" -> CardInfo("Egil's Fury", "", 0, false, MoveEffect(3, special = EgilMove), "Move 3, +1 casualty. Before combats are resolved, you may remove 1 building from a territory which is being attacked. Place it back in the reserve."),
+        ),
+        // New Blood
+        clanCards(Dragon,
+            "dragon" -> CardInfo("Dragon Clan", "", 0, true, DragonClanEffect, "Sacrifice 1 unit or place 1 own deployed unit on your Sacrificial Pyre. Then draw 1 card and collect 1 food."),
+            "dragon-capture-for-sacrifice" -> CardInfo("Capture for Sacrifice", "", 0, true, SacrificeCaptureEffect, "Choose a territory you control: remove 1 enemy unit from an adjacent territory and place it on your Sacrificial Pyre. This allows you to return 1 own unit from your Sacrificial Pyre to a territory you control."),
+            "dragon-reluctant-workforce" -> CardInfo("Reluctant Workforce", "", 0, false, WorkforceEffect, "Draw 1 card. You may sacrifice up to 2 units and draw 1 card for each sacrificed unit."),
+            "dragon-tenacious-grudge" -> CardInfo("Tenacious Grudge", "", 0, false, MoveEffect(3, special = GrudgeMove), "Move 3. At the beginning of each combat triggered by this card, gain 1 combat point for each unit on your Sacrificial Pyre."),
+        ),
+        clanCards(Horse,
+            "horse" -> CardInfo("Horse Clan", "", 0, true, BuildEffect(special = HorseBuild), "Build. Small buildings do not require a building space to be placed on a territory (includes Carved Stones)."),
+            "horse-craftsmen" -> CardInfo("Craftsmen", "", 0, false, CraftsmenEffect, "Recruit 2. After the Recruit action you may replace any building you control with another building of the same size with no other restriction."),
+            "horse-quality-of-life" -> CardInfo("Quality of Life", "", 0, true, QualityEffect, "You may build 1 Defense Tower that does not require a building space for free. Then collect an existing resource from each territory you control with a Defense Tower."),
+            "horse-eitria-and-broks-precision" -> CardInfo("Eitria and Brok's Precision", "", 0, false, MoveEffect(2, special = PrecisionMove), "Move 2. Before the Move action, you can spend any 1 resource to gain 1 combat point in battles triggered by this card, and add Move 1 to this card."),
+        ),
+        clanCards(Kraken,
+            "kraken" -> CardInfo("Kraken Clan", "", 0, true, KrakenClanEffect, "Collect 1 food or 1 wood from a territory you control with a High Tide token on it. Then, you may draw 1 card."),
+            "kraken-endless-tide" -> CardInfo("Endless Tide", "", 0, true, EndlessTideEffect, "You may remove 1 enemy unit from any open territory to gain 1 lore. Then you may draw 1 card."),
+            "kraken-knowledge-from-beyond" -> CardInfo("Knowledge from Beyond", "", 0, false, KnowledgeEffect, "For each territory you control with a High Tide token on it, choose between: Recruit 1 unit, Collect 1 resource, Draw 1 card (each option can only be chosen once)."),
+            "kraken-howl-from-the-sea" -> CardInfo("Howl from the Sea", "", 0, false, MoveEffect(2, special = HowlMove), "Move 2. In each territory where you win a combat, add 1 unit per casualty you've inflicted. However, for each combat lost, add 1 unit on 1 territory you've retreated to."),
+        ),
+        clanCards(Lynx,
+            "lynx" -> CardInfo("Lynx Clan", "", 0, true, ExploreEffect(redraw = true), "Explore. During the Explore action, instead of placing the drawn tile, you may place it at the bottom of the pile and draw 1 new tile."),
+            "lynx-fire-arrows" -> CardInfo("Fire Arrows", "", 0, true, MoveEffect(1, bonus = 1, special = FireArrowsMove), "Move 1. During a combat triggered by this card, you gain 1 combat point and 1 casualty."),
+            "lynx-poaching" -> CardInfo("Poaching", "", 0, false, PoachingEffect, "Draw 2 cards; if either is a Flash card, reveal it to all players and draw 1 additional card."),
+            "lynx-the-wise-one" -> CardInfo("The Wise One", "", 0, false, MoveEffect(2, special = WiseOneMove), "Move 2. During a combat triggered by this card, gain 1 combat point for each casualty you inflict."),
+        ),
+        clanCards(Ox,
+            "ox" -> CardInfo("Ox Clan", "", 0, true, MoveEffect(1), "Move 1. Instead of taking an Ancestral Equipment token before playing this card, you may take it after playing it."),
+            "ox-warcraft" -> CardInfo("Warcraft", "", 0, false, WarcraftEffect, "Explore. During the Explore action, if the newly placed tile has a lore anywhere on it, immediately collect 1 lore. Otherwise, you can immediately do another Explore action."),
+            "ox-city-builder" -> CardInfo("City Builder", "", 0, false, CityBuilderEffect, "Build. After doing the Build action, collect 1 lore and you may also draw 1 card."),
+            "ox-the-true-hero" -> CardInfo("The True Hero", "", 0, false, MoveEffect(2, special = TrueHeroMove), "Move 2. Before starting the combat with Torfin, you can choose to not use his power. If you do, remove a building in the same territory."),
+        ),
+        clanCards(Rat,
+            "rat" -> CardInfo("Rat Clan", "", 0, true, RatClanEffect, "Build. During the Build action, you may remove up to 2 units from territories you control; gain 1 wood for each unit removed and use them for this building action."),
+            "rat-overwork" -> CardInfo("Overwork", "", 0, true, OverworkEffect, "You may remove 1 unit to collect all resources from 1 territory you control, including from buildings. Then, you may draw 1 card."),
+            "rat-proliferation" -> CardInfo("Proliferation", "", 0, false, RecruitEffect(3, RecruitClosed), "Recruit 1 unit in up to 3 closed territories you control."),
+            "rat-blood-ties" -> CardInfo("Blood Ties", "", 0, false, MoveEffect(2, special = BloodTiesMove), "Move 2. Collect 1 lore for each casualty you suffer during combats triggered by this card."),
+        ),
+        clanCards(Squirrel,
+            "squirrel" -> CardInfo("Squirrel Clan", "", 0, true, SquirrelClanEffect, "Recruit 1. After doing the Recruit action, collect either 1 food OR a number of fame equal to the total number of units you own in all territories you control, divided by four (rounded down)."),
+            "squirrel-cooking-mastery" -> CardInfo("Cooking Mastery", "", 0, false, CookingEffect, "Build. After doing the Build action, you may build one additional Food Silo in any territory you control for free, even if there is already a Food Silo in the territory."),
+            "squirrel-economics" -> CardInfo("Economics", "", 0, false, EconomicsEffect, "Draw 1 card. You may pay up to 2 food and draw 1 card for each food paid."),
+            "squirrel-eldrich" -> CardInfo("Eldrich", "", 0, false, MoveEffect(2, special = EldrichMove), "Move 2. During all combats triggered by this card, each casualty rolled by your enemy is also applied to their units."),
         ),
     ).toMap
 

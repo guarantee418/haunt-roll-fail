@@ -18,7 +18,8 @@ object Host extends hrf.host.BaseHost {
 
     def askBot(g : G, f : F, actions : $[UserAction]) = new BotXX(f).ask(actions, 0)(g)
 
-    def factions = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf)
+    // NORT_NEWBLOOD=1: only the New Blood clans
+    def factions = sys.env.get("NORT_NEWBLOOD").has("1").?(NewBlood.clans).|($(Bear, Boar, Goat, Raven, Snake, Stag, Wolf) ++ NewBlood.clans)
     def subjects = factions
 
     // Random colors, game length and victory options; teams half the time with four or six players (NORT_TEAMS=1: always)
