@@ -89,8 +89,11 @@ object Meta extends MetaGame { mmm =>
 
     def has(options : $[O], m : Module) = options.has(ModuleOption(m)) || (m == VictoryModule && VictoryChoice.alternative.exists(options.has))
 
-    val quickMin = 2
-    val quickMax = 4
+    // Quick Game: always three players, core clans and core rules (no option is turned on beyond the defaults)
+    val quickMin = 3
+    val quickMax = 3
+
+    override def quickFactions = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf)
 
     def randomGameName() = {
         val n = $("Winter", "Clan", "Fjord", "Longship", "Saga", "Draugr").shuffle
