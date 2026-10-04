@@ -32,9 +32,14 @@ code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
-Tabletopia export the owner uploaded, plus `tile-31` to `tile-33` and
-`start-5` cut from a photo of the owner's copy: all 35 core map tiles and 51
-of the 52 development cards; expansion tiles, clan
+Tabletopia export the owner uploaded, with gaps filled from two Tabletop
+Simulator mods (Steam Workshop 2838546142 and 2847156187; see
+`nort/HANDOFF.md`): all 35 core map tiles (`tile-31` to `tile-33` and
+`start-5` are TTS scans aligned to the old photo crops), all 52 development
+cards (Veiled Threats from TTS), the warchief upgrade cards, and the creature
+miniatures (`token/creature/figure-*`, rendered from the TTS 3D models in the
+card's color code). Green starting cards are the blue ones with the ribbon
+recoloured to the printed green. Expansion tiles, clan
 boards and tokens are in `expansion/` for later. Unit figures are in
 `token/unit/` (`unit-<color>`, and `warchief-<color>` for the Warchiefs
 expansion), recolored from the `-original` images. Colors belong to

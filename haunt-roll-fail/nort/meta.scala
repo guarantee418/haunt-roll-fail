@@ -144,10 +144,10 @@ object Meta extends MetaGame { mmm =>
 
     val start = StartAction(gaming.version)
 
-    // Images are in webp2/nort/images/; there are no green starting cards, so green uses the blue ones
+    // Images are in webp2/nort/images/; the green starting cards are the blue ones with the ribbon recoloured to the green of the printed cards
     val assets =
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card/start", "card-start-", "webp")(
-        PlayerColor.all./~(c => $("recruit", "move", "explore", "build", "feast")./(n => ImageAsset(c.id + "-" + n, (c == Green).?("blue").|(c.id) + "-" + n + (n == "feast").??("-1"))))
+        PlayerColor.all./~(c => $("recruit", "move", "explore", "build", "feast")./(n => ImageAsset(c.id + "-" + n, c.id + "-" + n + (n == "feast").??("-1"))))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card/clan", "card-clan-", "webp")(
         Cards.clan.values.$.flatten./(_.image.drop("card-clan-".length))./(ImageAsset(_))
@@ -177,7 +177,7 @@ object Meta extends MetaGame { mmm =>
         $(ImageAsset("kaija"), ImageAsset("scorched-earth"))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Creatures), "token/creature", "creature-", "webp")(
-        Creature.all./(c => ImageAsset(c.token.drop("creature-".length)))
+        Creature.all./(c => ImageAsset(c.figure.drop("creature-".length)))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/building", "building-", "webp")(
         Building.all./(b => ImageAsset(b.image.drop("building-".length)))
