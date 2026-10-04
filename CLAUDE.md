@@ -414,3 +414,7 @@ file covers the build, server and deploy. No session can ssh to the server
   shared link. The client sets the real title when it loads.
 - `good-game` wraps static files in `encodeResponse`, so the 8 MB client is
   sent gzipped (about 1.8 MB).
+- The site's icon is a drop (the owner's drawing), not HRF's crow: the
+  favicon is a 64x64 PNG data URI in the `icon` link of `index.html`
+  (`HRF.defaultGlyph`; games swap in faction glyphs), and `drop.png` is the
+  backdrop behind the loading screen, in the crow's old dark red.
