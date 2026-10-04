@@ -275,7 +275,9 @@ object Backup {
         var n = 0
         js.foreach { j =>
             val es = rows(dir.resolve("games").resolve(j.id + ".tsv")).map { case List(i, u, t) => Entry(j.id, i.toInt, u, t) }
-            run(entries ++= es)
+            // An empty batch insert fails in HSQLDB ("statement is not in batch mode"), and a game can have no entries yet
+            if (es.nonEmpty)
+                run(entries ++= es)
             n += es.size
         }
 
