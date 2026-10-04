@@ -432,8 +432,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 else acc.dropRight(1) :+ (acc.last ++ ps)
             }
 
-            val offset = 15.0
-            val margin = 30.0
+            val offset = 26.0
+            val margin = 40.0
             val all = ordered.flatMap(_._1)
             val x0 = all.map(_._1).min - margin
             val y0 = all.map(_._2).min - margin
@@ -451,10 +451,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             g.translate(-x0, -y0)
             g.lineJoin = "round"
 
+            // Dotted, with a dark rim so they show on the light art
             rail.foreach { color =>
-                g.strokeStyle = color
-                g.lineWidth = 4
                 g.lineCap = "round"
+                g.setLineDash(scalajs.js.Array[Double](0.01, 28))
 
                 runs.foreach { ps =>
                     // Each point moved along the normal of the way through it
@@ -467,12 +467,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
                     $(1, -1).foreach { s =>
                         val q = side(s)
-                        g.beginPath()
-                        g.moveTo(q.head._1, q.head._2)
-                        q.drop(1).foreach { case (x, y) => g.lineTo(x, y) }
-                        g.stroke()
+                        $(("rgba(40,25,0,0.8)", 22.0), (color, 15.0)).foreach { case (stroke, width) =>
+                            g.strokeStyle = stroke
+                            g.lineWidth = width
+                            g.beginPath()
+                            g.moveTo(q.head._1, q.head._2)
+                            q.drop(1).foreach { case (x, y) => g.lineTo(x, y) }
+                            g.stroke()
+                        }
                     }
                 }
+
+                g.setLineDash(scalajs.js.Array[Double]())
             }
 
             g.lineCap = "butt"
@@ -534,12 +540,84 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         })
     }
 
+    // The resource icons on the map (nort/icons.scala): centre and radius, in tile units
+    def mapIcons : $[(Double, Double, Double)] = game.board.placements./~{ p =>
+        TileIcons.icons.get(p.tile).|($)./{ i =>
+            val (x, y) = game.board.rotate(i.x, i.y, p.r)
+            (p.x + x, p.y + y, i.r)
+        }
+    }
+
+    // A resource icon cut from its tile's art, turned with the tile, made once: the part of the circle around it
+    // that no area's mask covers (the masks leave the icons out), so it matches the untinted icon exactly;
+    // drawn over the pieces so a figure never hides it
+    val iconImages = scala.collection.mutable.Map[(String, Int, Int), hrf.ui.sprites.Image]()
+
+    def iconImage(tile : String, r : Int, n : Int) : |[hrf.ui.sprites.Image] = {
+        val key = (tile, r % 4, n)
+
+        if (iconImages.contains(key).not) {
+            val i = img("tile-" + tile)
+            val masks = Tiles.byId(tile).areas./(a => img("mask-" + tile + "-" + a.id))
+
+            // Not loaded yet; try again on the next drawing
+            if ((i +: masks).exists(m => m.complete.not || m.width == 0))
+                return None
+
+            val icon = TileIcons.icons(tile)(n)
+            val (cx, cy) = game.board.rotate(icon.x, icon.y, r)
+            val size = (icon.r * T * 2).ceil.toInt
+
+            val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+            canvas.width = size
+            canvas.height = size
+
+            val c = new CanvasImage(canvas)
+            val g = c.context
+            // The tile's art, or its masks added up, under the circle
+            def draw(g : dom.CanvasRenderingContext2D, images : $[dom.html.Image]) {
+                g.translate(size / 2 - cx * T, size / 2 - cy * T)
+                g.translate(T / 2, T / 2)
+                g.rotate(math.Pi / 2 * (r % 4))
+                g.translate(-T / 2, -T / 2)
+                images.foreach(m => g.drawImage(m, 0, 0, T, T))
+                g.setTransform(1, 0, 0, 1, 0, 0)
+            }
+
+            draw(g, $(i))
+
+            val covered = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+            covered.width = size
+            covered.height = size
+            val h = covered.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+            h.globalCompositeOperation = "lighter"
+            draw(h, masks)
+
+            g.globalCompositeOperation = "destination-out"
+            g.drawImage(covered, 0, 0)
+
+            val fade = g.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
+            fade.addColorStop(0, "rgba(0,0,0,1)")
+            fade.addColorStop(0.9, "rgba(0,0,0,1)")
+            fade.addColorStop(1, "rgba(0,0,0,0)")
+            g.globalCompositeOperation = "destination-in"
+            g.fillStyle = fade
+            g.fillRect(0, 0, size, size)
+
+            iconImages(key) = c
+        }
+
+        iconImages.get(key)
+    }
+
     val spots = scala.collection.mutable.Map[Any, (Double, Double)]()
 
     // Where a round token of radius r (tile units) best fits in a territory: on open ground of that territory,
     // clear of the circles already taken, and, with a pull, not far from a point (a warchief by its clan's units)
     def freeSpot(t : Territory, r : Double, taken : $[(Double, Double, Double)], near : |[(Double, Double)], pull : Double) : (Double, Double) = spots.getOrElseUpdate((t.areas, r, taken, near, pull, game.board.placements.num), {
         val gap = 0.03
+
+        val icons = mapIcons
 
         // Sample points over the token: its centre, a ring halfway out and a ring near its edge
         val ring = (0.0, 0.0) +: (0.until(6).$./(i => (math.cos(i * math.Pi / 3) * r * 0.5, math.sin(i * math.Pi / 3) * r * 0.5)) ++
@@ -561,9 +639,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 (d < r + or + gap).?(3000 * (1 - d / (r + or + gap))).|(0.0)
             }.sum
 
+            // Covering a resource icon costs more than hanging over another territory
+            val covered = icons.map { case (ix, iy, ir) =>
+                val d = math.sqrt((x - ix) * (x - ix) + (y - iy) * (y - iy))
+                (d < r + ir).?(20000 * (1 - d / (r + ir))).|(0.0)
+            }.sum
+
             val distance = near.map { case (nx, ny) => pull * math.max(0, math.sqrt((x - nx) * (x - nx) + (y - ny) * (y - ny)) - r) }.|(0.0)
 
-            ground + overlap + distance
+            ground + overlap + covered + distance
         }
 
         cells(t).some./(_.minBy { case (x, y) => score(x, y) }).|(game.board.unitPoint(t.anchor))
@@ -787,6 +871,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             }
         }
 
+        // The resource icons over everything, so a piece that has to overlap one never hides it
+        board.placements.foreach { p =>
+            TileIcons.icons.get(p.tile).|($).indices.foreach { n =>
+                val icon = TileIcons.icons(p.tile)(n)
+                val (x, y) = board.rotate(icon.x, icon.y, p.r)
+                val z = (icon.r * T * 2).ceil
+                iconImage(p.tile, p.r, n).foreach { i =>
+                    pieces.add(Sprite($(ImageRect(i, Rectangle(-z / 2, -z / 2, z, z), 1.0)), $))(sx(p.x + x), sy(p.y + y))
+                }
+            }
+        }
+
         |(new Scene($(background, pieces), sceneWidth, sceneHeight, margins))
     }
 
@@ -938,19 +1034,21 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         Nil
     )
 
-    val layouter = Layouter(layouts, _./~{
+    val layouter = Layouter(layouts,
+    // Mirrored, so the player panels and the hand are on the right and the log on the left
+    ff => { val w = ff./(_.right).max ; ff./(f => f.copy(x = w - f.right)) },
+    _./~{
         case f if f.name == "action" => $(f, f.copy(name = "undo"), f.copy(name = "settings"))
         case f if f.name == "status-horizontal" => 1.to(arity)./(n => f.copy(name = "status-" + n, x = f.x + ((n - 1) * f.width  /~/ arity), width  = (n * f.width  /~/ arity) - ((n - 1) * f.width  /~/ arity)))
         case f if f.name == "status-vertical"   => 1.to(arity)./(n => f.copy(name = "status-" + n, y = f.y + ((n - 1) * f.height /~/ arity), height = (n * f.height /~/ arity) - ((n - 1) * f.height /~/ arity)))
         case f => $(f)
     },
-    x => x,
     // The overlay (zoomed cards, notifications, dialogs) covers the map, as in Root
     ff => ff ++ ff.%(_.name == "map-small")./(_.copy(name = "map-small-overlay")))
 
     val settingsKey = Meta.settingsKey
 
-    val layoutKey = "v" + 9 + "." + "arity-" + arity
+    val layoutKey = "v" + 10 + "." + "arity-" + arity
 
     def overlayScrollX(e : Elem) = overlayScroll(e)(styles.seeThroughInner).onClick
     def overlayFitX(e : Elem) = overlayFit(e)(styles.seeThroughInner).onClick

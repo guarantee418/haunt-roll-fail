@@ -369,8 +369,8 @@ on. To implement one:
   controlled by one player have their border dashes redrawn in that player's
   colour (`UI.lineOf`, opaque). Where two such territories of different
   players meet, the dashes alternate between the two colours; a Rough border
-  also gets a solid yellow line on each side of its dashes (white when one of
-  the colours is yellow). The dashes are vector data in `nort/lines.scala`
+  also gets a dotted yellow line (dark-rimmed dots) on each side of its dashes
+  (white when one of the colours is yellow). The dashes are vector data in `nort/lines.scala`
   (each a bent bar: three points of its centre line and its width, ordered
   along the border), generated from the tile art and masks by
   `java haunt-roll-fail/nort/tools/BorderLines.java [--check DIR]` (run from
@@ -379,6 +379,17 @@ on. To implement one:
   half size. A few junction stubs and dashes on busy art aren't found and
   stay white; the Wilderness walls (orange lines, lake, peaks) aren't
   redrawn.
+- Resource icons: `nort/icons.scala` lists each tile's icons (centre and
+  radius), found as the holes in the masks by
+  `java haunt-roll-fail/nort/tools/ResourceIcons.java` (the Peaks' wood isn't
+  cut from their masks, so the tool adds it by hand). `UI.freeSpot` treats
+  them as obstacles (covering one costs more than hanging over another
+  territory), and `UI.iconImage` cuts each icon from the tile art (where no
+  mask covers it) to draw it again over all the pieces. Rerun the tool after
+  regenerating the masks.
+- The layout is mirrored (the first `Layouter` step in `nort/ui.scala`), so
+  the player panels and the hand are on the right and the log on the left;
+  `layoutKey` was bumped to drop layouts cached in the browser.
 - Both are player settings under "Interface" (in-game menu or the main
   menu's Settings), like Root's Clearing Rule: `TerritoryColorSetting`
   (Show / Fights Only: just the gray and pink / Hide) and
