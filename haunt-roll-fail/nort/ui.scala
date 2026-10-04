@@ -309,9 +309,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         mapSmall.attach.parent.style.cursor = clickable(target).any.?("pointer").|("default")
     }
 
-    // The single offered action a click on the map stands for
+    // The single offered action a click on the map stands for (the cross above a building being confirmed cancels)
     def clickable(target : $[Any]) : |[UserAction] = {
         target.foreach { t =>
+            if (t == BuildCancelMark)
+                return lastActions.of[Cancel].single
             val l = lastActions.%(a => a.unwrap.as[MapTarget].exists(_.target == t))
             if (l.num == 1)
                 return l.headOption
@@ -787,6 +789,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             }
         }
 
+        // The building being confirmed, on its space, with the check mark (confirm) and the cross (cancel) above it, on top of everything
+        lastActions./~(_.unwrap.as[BuildPreview]).take(1).foreach { p =>
+            val (x, y) = board.point(p.space)
+            pieces.add(Sprite($(at(p.building.image, 190, 0.9)), $))(sx(x), sy(y))
+            pieces.add(Sprite($(at("ui-confirm", 220)), $(Rectangle(-110, -110, 220, 220)), $(BuildConfirmMark)))(sx(x) - 120, sy(y) - 225)
+            pieces.add(Sprite($(at("ui-cancel", 220)), $(Rectangle(-110, -110, 220, 220)), $(BuildCancelMark)))(sx(x) + 120, sy(y) - 225)
+        }
+
         |(new Scene($(background, pieces), sceneWidth, sceneHeight, margins))
     }
 
@@ -800,7 +810,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             Div(Div(title, styles.stripTitle) ~ Div(items.any.?(items.merge).|(Div("none".txt, styles.stripEmpty)), styles.stripCards), styles.stripGroup)
         }.merge, styles.stripRow)
 
-    // Your hand and played cards are in the action pane, like in Arcs and Root (Game.info, CardMenuAction)
+    // Your hand and played cards are in the action pane, like in Arcs and Root (Game.info, TurnModeAction)
     def drawCards() {
         if (game.year == 0)
             return
