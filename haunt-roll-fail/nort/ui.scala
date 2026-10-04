@@ -915,7 +915,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val victory = game.has(VictoryModule).$(("Victory: " ~ options.has(VictoryModeOption(true)).?("Jarl").|("Thane")) -> game.victory)
 
-        court.replaceCached((game.year, game.display, game.achievements, game.creatureLine, game.event, game.eventDeck.num, game.victory).toString, strip((events ++ victory ++ developments ++ achievements ++ creatures)./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
+        // Solo: the Automa's cards played this year, the last on the right
+        val automa = game.setup.has(Automa).$(("Automa" ~ " (played this year)".spn(xstyles.smaller85)) -> game.automaPlayed)
+
+        court.replaceCached((game.year, game.display, game.achievements, game.creatureLine, game.event, game.eventDeck.num, game.victory, game.automaPlayed).toString, strip((automa ++ events ++ victory ++ developments ++ achievements ++ creatures)./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
     }
 
     def factionStatus(f : Faction) {

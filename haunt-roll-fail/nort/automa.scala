@@ -17,14 +17,14 @@ import nort.elem._
 
 // Uncharted Horizons' Solo module: the Automa, a neutral clan with two Leaders (Leader 1 is its warchief, Leader 2 its
 // companion figure) that plays one card of its own each turn. Rules from the Uncharted Horizons rulebook on Tabletopia
-// (pages 13-18). The 15 Automa cards themselves are not available yet: AutomaCards.specs is a provisional deck built
-// from the rulebook's example card and its icon list, to be replaced by the printed cards
+// (pages 13-18); the 15 Automa cards transcribed from the Tabletopia module (images in card/automa/)
 
 // PLAYING PRIORITIES: each narrows the candidate territories (or tiles) to the best ones, in order
 trait AutomaPriority extends Record
 case object Richest extends AutomaPriority
 case object Poorest extends AutomaPriority
 case object MostBuildingPoints extends AutomaPriority
+case object LeastBuildingPoints extends AutomaPriority
 case object Largest extends AutomaPriority
 case object Smallest extends AutomaPriority
 case object LeaderThere extends AutomaPriority
@@ -55,14 +55,23 @@ case object LeastRotations extends AutomaPriority
 
 // ACTIONS
 trait AutomaAct extends Record
-case class AutomaRecruit(n : Int, prio : $[AutomaPriority]) extends AutomaAct
-case class AutomaBuild(prio : $[AutomaPriority]) extends AutomaAct
-case class AutomaExplore(spot : $[AutomaPriority], rotate : $[AutomaPriority]) extends AutomaAct
-case class AutomaMove1(prio : $[AutomaPriority]) extends AutomaAct
+// Recruit n, possible with at least need Leaders and units in the reserve
+case class AutomaRecruit(n : Int, need : Int, prio : $[AutomaPriority]) extends AutomaAct
+// Build on a large (3 wood) or small (1 wood) space: the first option possible
+case class AutomaBuild(large : Boolean, options : $[AutomaBuildOption]) extends AutomaAct
+// Explore from the territory chosen by on, turning the tile by rotate
+case class AutomaExplore(on : $[AutomaPriority], rotate : $[AutomaPriority]) extends AutomaAct
+case class AutomaMove1(from : $[AutomaPriority], to : $[AutomaPriority]) extends AutomaAct
 // Leader 1 or 2: reinforcements from an adjacent territory (from), then a Move 1 with the Leader (to)
 case class AutomaMove2(leader : Int, from : $[AutomaPriority], to : $[AutomaPriority]) extends AutomaAct
 
 // The kinds of Development card the Automa takes, in order; Left and Right are the first and last card on display
+trait AutomaBuilding extends Record
+case class BuildThis(b : Building) extends AutomaBuilding
+// A Food Silo if the Automa has at least as much wood as food, otherwise a Woodcutter's Lodge
+case object SiloOrLodge extends AutomaBuilding
+case class AutomaBuildOption(what : AutomaBuilding, prio : $[AutomaPriority]) extends Record
+
 trait AutomaPick extends Record
 case object PickMove extends AutomaPick
 case object PickDraw extends AutomaPick
@@ -74,29 +83,95 @@ case object PickRight extends AutomaPick
 
 case class AutomaSpec(flash : Boolean, pass : Boolean, first : AutomaAct, second : AutomaAct, picks : $[AutomaPick])
 
-case class AutomaCard(n : Int) extends Record {
+case class AutomaCard(n : Int) extends Card {
     def spec = AutomaCards.specs(n - 1)
+    def info = CardInfo("Automa card " + n, "card-automa-" + "%02d".format(n), 0, spec.flash, MapEffect, "")
 }
 
 object AutomaCards {
-    // PROVISIONAL: card 1 is the rulebook's example (Flash; Recruit 1 Leader or unit; Leader 2's reinforcements and Move 1;
-    // Pass; picks Draw, Explore, the left card); the others spread the five actions and the priorities over the deck
+    // The priority rows (left to right) shared by many cards
+    private val reinforce1 = $(NextToLeader, NoLeader, MostAutomaUnits, FarthestPlayer, Poorest, Smallest)
+    private val reinforce2 = $(NextToLeader, NoLeader, FarthestPlayer, MostAutomaUnits, Poorest, Smallest)
+    private val unitFrom = $(NoLeader, MostAutomaUnits, ClosedFirst, FarthestPlayer, Poorest, Smallest)
+    private val carved = AutomaBuildOption(BuildThis(CarvedStone), $(FarthestPlayer, Smallest, Poorest, LeastBuildingPoints, MostSpaces))
+    private val tower = AutomaBuildOption(BuildThis(DefenseTower), $(NearestPlayer, Largest, Richest, MostBuildingPoints, ClosedFirst, LeastAutomaUnits))
+
     val specs : $[AutomaSpec] = $(
-        AutomaSpec(true, true, AutomaRecruit(1, $(LeaderThere, Richest, OpenFirst)), AutomaMove2(2, $(MostAutomaUnits, Richest), $(NearestPlayer, Richest, Largest)), $(PickDraw, PickExplore, PickLeft)),
-        AutomaSpec(false, false, AutomaRecruit(2, $(NextToLeader, Richest, MostSpaces)), AutomaBuild($(MostBuildingPoints, Richest)), $(PickRecruit, PickMove, PickRight)),
-        AutomaSpec(false, false, AutomaExplore($(Easternmost, Northernmost), $(ClosedFirst, LeastRotations)), AutomaMove1($(OpenFirst, Richest)), $(PickExplore, PickDraw, PickLeft)),
-        AutomaSpec(false, true, AutomaMove2(1, $(MostAutomaUnits), $(NearestPlayer, LeastAutomaUnits, MostBuildingPoints)), AutomaRecruit(1, $(LeaderThere, MostAutomaUnits)), $(PickMove, PickSpecial, PickRight)),
-        AutomaSpec(false, false, AutomaBuild($(Richest, LeaderThere)), AutomaExplore($(Northernmost, Westernmost), $(ClosedFirst, LeastRotations)), $(PickSpecial, PickDraw, PickLeft)),
-        AutomaSpec(true, false, AutomaRecruit(1, $(OpenFirst, LeaderThere, MostFood)), AutomaMove1($(MostFood, Richest)), $(PickRecruit, PickExplore, PickRight)),
-        AutomaSpec(false, true, AutomaMove2(2, $(MostAutomaUnits, LeaderThere), $(Richest, NearestPlayer, Largest)), AutomaBuild($(LeaderThere, MostSpaces)), $(PickMove, PickRecruit, PickLeft)),
-        AutomaSpec(false, false, AutomaExplore($(Southernmost, Easternmost), $(LeastRotations)), AutomaRecruit(2, $(Richest, NoLeader)), $(PickExplore, PickSpecial, PickRight)),
-        AutomaSpec(false, false, AutomaRecruit(2, $(Richest, LeaderThere, MostAutomaUnits)), AutomaExplore($(Westernmost, Southernmost), $(ClosedFirst, LeastRotations)), $(PickRecruit, PickDraw, PickLeft)),
-        AutomaSpec(false, false, AutomaMove2(1, $(MostAutomaUnits, Richest), $(Richest, NearestPlayer, ClosedFirst)), AutomaMove1($(NextToLeader, Richest)), $(PickMove, PickDraw, PickRight)),
-        AutomaSpec(true, false, AutomaBuild($(LeaderThere, MostBuildingPoints)), AutomaRecruit(1, $(LeaderThere, LeastAutomaUnits)), $(PickSpecial, PickRecruit, PickLeft)),
-        AutomaSpec(false, true, AutomaExplore($(Easternmost, Southernmost), $(LeastRotations)), AutomaBuild($(MostWood, MostSpaces)), $(PickExplore, PickMove, PickRight)),
-        AutomaSpec(true, false, AutomaMove1($(ClosedFirst, MostWood)), AutomaRecruit(1, $(LeaderThere, Richest)), $(PickDraw, PickRecruit, PickLeft)),
-        AutomaSpec(false, true, AutomaRecruit(3, $(LeaderThere, MostAutomaUnits, Richest)), AutomaMove2(1, $(MostAutomaUnits), $(NearestPlayer, Richest)), $(PickRecruit, PickMove, PickRight)),
-        AutomaSpec(false, true, AutomaMove2(2, $(MostAutomaUnits, Richest), $(NearestPlayer, MostBuildingPoints, Largest)), AutomaExplore($(Northernmost, Easternmost), $(ClosedFirst, LeastRotations)), $(PickMove, PickExplore, PickLeft)),
+        // 1
+        AutomaSpec(false, false,
+            AutomaMove2(1, reinforce1, $(NearestPlayer, MostBuildingPoints, LeastAutomaUnits, Richest, MostSpaces, Largest)),
+            AutomaMove2(2, reinforce2, $(NearestPlayer, LeastAutomaUnits, MostBuildingPoints, Richest, Largest, MostSpaces)),
+            $(PickSpecial, PickMove, PickLeft)),
+        // 2
+        AutomaSpec(false, false,
+            AutomaMove2(1, reinforce1, $(NearestPlayer, MostBuildingPoints, LeastAutomaUnits, Richest, MostSpaces, Largest)),
+            AutomaRecruit(2, 2, $(LeaderThere, LeastAutomaUnits, NearestPlayer, MostCamps, Largest, MostBuildingPoints)),
+            $(PickSpecial, PickRecruit, PickRight)),
+        // 3
+        AutomaSpec(false, false,
+            AutomaRecruit(1, 1, $(Richest, Largest, FarthestPlayer, MostBuildingPoints, MostCamps, OpenFirst)),
+            AutomaExplore($(FarthestPlayer, Largest, LeastSpaces, Poorest, LeastOpenings, Northernmost), $(Richest, MostWood, ClosedFirst, MostSpaces, LeastRotations)),
+            $(PickDraw, PickSpecial, PickLeft)),
+        // 4
+        AutomaSpec(true, false,
+            AutomaRecruit(2, 1, $(NearestPlayer, Richest, MostBuildingPoints, MostCamps, Largest, LeaderThere)),
+            AutomaMove2(1, reinforce1, $(NearestPlayer, Richest, LeastAutomaUnits, MostBuildingPoints, MostSpaces, Largest)),
+            $(PickSpecial, PickMove, PickRight)),
+        // 5
+        AutomaSpec(false, false,
+            AutomaMove2(2, reinforce2, $(NearestPlayer, LeastAutomaUnits, MostBuildingPoints, Richest, Largest, MostSpaces)),
+            AutomaRecruit(2, 2, $(LeaderThere, LeastAutomaUnits, MostCamps, NearestPlayer, Largest, MostBuildingPoints)),
+            $(PickMove, PickExplore, PickRight)),
+        // 6
+        AutomaSpec(false, false,
+            AutomaMove2(2, reinforce2, $(NearestPlayer, LeastAutomaUnits, MostBuildingPoints, Richest, Largest, MostSpaces)),
+            AutomaMove2(1, reinforce1, $(NearestPlayer, Richest, LeastAutomaUnits, MostBuildingPoints, MostSpaces, Largest)),
+            $(PickRecruit, PickMove, PickRight)),
+        // 7
+        AutomaSpec(true, false,
+            AutomaMove1(unitFrom, $(LeastAutomaUnits, Richest, OpenFirst, FarthestPlayer, MostSpaces, Largest)),
+            AutomaRecruit(2, 2, $(LeaderThere, NearestPlayer, Largest, MostBuildingPoints, MostCamps, Richest)),
+            $(PickDraw, PickSpecial, PickRight)),
+        // 8
+        AutomaSpec(false, true,
+            AutomaExplore($(Largest, LeastSpaces, Poorest, LeastOpenings, Southernmost), $(MostWood, ClosedFirst, Richest, MostSpaces, LeastRotations)),
+            AutomaMove1(unitFrom, $(OpenFirst, FarthestPlayer, Richest, MostSpaces, Largest)),
+            $(PickSpecial, PickDraw, PickRight)),
+        // 9
+        AutomaSpec(false, true,
+            AutomaBuild(true, $(AutomaBuildOption(BuildThis(AltarOfKings), $(FarthestPlayer, MostAutomaUnits, Largest, Poorest, LeastBuildingPoints)))),
+            AutomaBuild(false, $(carved, tower)),
+            $(PickDraw, PickRecruit, PickRight)),
+        // 10
+        AutomaSpec(false, false,
+            AutomaRecruit(1, 1, $(Richest, MostBuildingPoints, Largest, FarthestPlayer, MostCamps, OpenFirst)),
+            AutomaExplore($(Largest, LeastSpaces, Poorest, LeastOpenings, Northernmost), $(Richest, MostWood, ClosedFirst, MostSpaces, LeastRotations)),
+            $(PickSpecial, PickExplore, PickLeft)),
+        // 11
+        AutomaSpec(true, false,
+            AutomaExplore($(Largest, LeastOpenings, LeastSpaces, Poorest, Northernmost), $(MostFood, Richest, ClosedFirst, MostSpaces, LeastRotations)),
+            AutomaMove1(unitFrom, $(OpenFirst, Richest, FarthestPlayer, MostSpaces, Largest)),
+            $(PickMove, PickSpecial, PickLeft)),
+        // 12
+        AutomaSpec(false, true,
+            AutomaBuild(true, $(AutomaBuildOption(BuildThis(AltarOfKings), $(FarthestPlayer, ClosedFirst, Largest, Poorest, LeastBuildingPoints)))),
+            AutomaBuild(false, $(AutomaBuildOption(SiloOrLodge, $(FarthestPlayer, Poorest, LeastBuildingPoints, Smallest, MostSpaces)))),
+            $(PickSpecial, PickDraw, PickLeft)),
+        // 13
+        AutomaSpec(true, true,
+            AutomaRecruit(1, 1, $(LeaderThere, MostBuildingPoints, MostCamps, Richest, OpenFirst, NearestPlayer)),
+            AutomaMove2(2, reinforce2, $(NearestPlayer, LeastAutomaUnits, MostBuildingPoints, Richest, Largest, MostSpaces)),
+            $(PickMove, PickExplore, PickLeft)),
+        // 14
+        AutomaSpec(true, false,
+            AutomaBuild(true, $(AutomaBuildOption(BuildThis(Fortress), $(NearestPlayer, ClosedFirst, Largest, Richest, MostBuildingPoints)))),
+            AutomaBuild(false, $(carved, AutomaBuildOption(BuildThis(TrainingCamp), $(NearestPlayer, Largest, Richest, MostBuildingPoints, MostSpaces)))),
+            $(PickMove, PickDraw, PickLeft)),
+        // 15
+        AutomaSpec(false, false,
+            AutomaExplore($(FarthestPlayer, Poorest, LeastOpenings, Largest, LeastSpaces, Easternmost), $(Richest, MostFood, ClosedFirst, MostSpaces, LeastRotations)),
+            AutomaBuild(false, $(tower)),
+            $(PickMove, PickRecruit, PickLeft)),
     )
 
     val all : $[AutomaCard] = 1.to(specs.num).$./(AutomaCard(_))
@@ -123,9 +198,10 @@ case class AutomaPassRevealAction(shuffled : $[AutomaCard]) extends ShuffledActi
 
 // ACTIONS: steps with an area are offered to the player when the priorities leave a tie
 case class AutomaRecruitAction(left : Int, prio : $[AutomaPriority], area : |[AreaRef], then : ForcedAction) extends ForcedAction
-case class AutomaBuildAction(prio : $[AutomaPriority], area : |[AreaRef], then : ForcedAction) extends ForcedAction
-case class AutomaExploreAction(e : AutomaExplore, spot : |[Spot], tries : Int, then : ForcedAction) extends ForcedAction
-case class AutomaMove1Action(prio : $[AutomaPriority], area : |[AreaRef], then : ForcedAction) extends ForcedAction
+case class AutomaBuildAction(b : AutomaBuild, area : |[AreaRef], then : ForcedAction) extends ForcedAction
+// from: the territory it explores from; spot: where the tile goes
+case class AutomaExploreAction(e : AutomaExplore, from : |[AreaRef], spot : |[Spot], tries : Int, then : ForcedAction) extends ForcedAction
+case class AutomaMove1Action(m : AutomaMove1, from : |[AreaRef], to : |[AreaRef], then : ForcedAction) extends ForcedAction
 case class AutomaReinforceAction(m : AutomaMove2, area : |[AreaRef], then : ForcedAction) extends ForcedAction
 case class AutomaLeaderMoveAction(m : AutomaMove2, area : |[AreaRef], then : ForcedAction) extends ForcedAction
 
@@ -186,6 +262,7 @@ object AutomaExpansion extends Expansion {
             case Richest => food + wood + lore
             case Poorest => -(food + wood + lore)
             case MostBuildingPoints => buildingPoints(t)
+            case LeastBuildingPoints => -buildingPoints(t)
             case Largest => game.board.tiles(t)
             case Smallest => -game.board.tiles(t)
             case LeaderThere => leaderIn(t).??(1)
@@ -245,13 +322,33 @@ object AutomaExpansion extends Expansion {
 
     def canRecruit(implicit game : Game) = MapExpansion.canRecruit(Automa) && recruitTargets.any
 
+    // Leaders and units in the reserve
+    def inReserve(implicit game : Game) = game.reserve(Automa) + game.chiefReady(Automa).??(1) + game.kaijaReady(Automa).??(1)
+
     def buildOptions(implicit game : Game) = MapExpansion.buildOptions(Automa, BuildEffect(), false)
+
+    def building(w : AutomaBuilding)(implicit game : Game) : Building = w match {
+        case BuildThis(b) => b
+        case SiloOrLodge => (Automa.wood >= Automa.food).?(FoodSilo).|(WoodcutterLodge)
+    }
+
+    // The first option of a Build action that can be built somewhere
+    def buildChoice(b : AutomaBuild)(implicit game : Game) : |[AutomaBuildOption] =
+        b.options.find(o => buildOptions.exists(x => x._2 == building(o.what) && x._2.large == b.large))
+
+    // Explore: the Automa's open territories with a free spot next to them
+    def exploreFrom(implicit game : Game) : $[Territory] = explorable.%(t => spotsNext(t).any)
+
+    def spotsNext(t : Territory)(implicit game : Game) : $[Spot] =
+        game.board.frontier.%{ case (x, y) => Side.all.exists(s => game.board.areaAt(x + s.dx, y + s.dy, s.opposite).exists(t.areas.contains)) }./{ case (x, y) => Spot(x, y) }
 
     def explorable(implicit game : Game) = mine.%(game.board.open).%(t => game.bearIn(t).not)
 
     // Friendly or neutral territories next to t, crossing Rough borders, where Automa units can go
     def neighbours(t : Territory)(implicit game : Game) : $[Territory] =
         game.board.adjacent(t).map(_._1).%(o => game.present(o).forall(_ == Automa)).%(o => game.hostileIn(o).not && game.swampIn(o).not && game.creaturesIn(o).none)
+
+    def move1Sources(implicit game : Game) : $[Territory] = move1Pairs.map(_._1).distinct
 
     def move1Pairs(implicit game : Game) : $[(Territory, Territory)] =
         mine.%(t => game.count(t, Automa) >= 2 && game.bearIn(t).not && game.hostileIn(t).not)./~(t => neighbours(t)./(o => t -> o))
@@ -288,18 +385,18 @@ object AutomaExpansion extends Expansion {
     }
 
     def possible(a : AutomaAct)(implicit game : Game) : Boolean = a match {
-        case AutomaRecruit(_, _) => canRecruit
-        case AutomaBuild(_) => buildOptions.any
-        case AutomaExplore(_, _) => explorable.any && game.pile.any
-        case AutomaMove1(_) => move1Pairs.any
+        case AutomaRecruit(_, need, _) => canRecruit && inReserve >= need
+        case b : AutomaBuild => buildChoice(b).any
+        case AutomaExplore(_, _) => exploreFrom.any && game.pile.any
+        case AutomaMove1(_, _) => move1Pairs.any
         case AutomaMove2(k, _, _) => canMove2(k)
     }
 
     def act(a : AutomaAct, then : ForcedAction)(implicit game : Game) : Continue = a match {
-        case AutomaRecruit(n, prio) => Then(AutomaRecruitAction(n, prio, None, then))
-        case AutomaBuild(prio) => Then(AutomaBuildAction(prio, None, then))
-        case e : AutomaExplore => Then(AutomaExploreAction(e, None, game.pile.num, then))
-        case AutomaMove1(prio) => Then(AutomaMove1Action(prio, None, then))
+        case AutomaRecruit(n, _, prio) => Then(AutomaRecruitAction(n, prio, None, then))
+        case b : AutomaBuild => Then(AutomaBuildAction(b, None, then))
+        case e : AutomaExplore => Then(AutomaExploreAction(e, None, None, game.pile.num, then))
+        case m : AutomaMove1 => Then(AutomaMove1Action(m, None, None, then))
         case m : AutomaMove2 => Then(AutomaReinforceAction(m, None, then))
     }
 
@@ -524,10 +621,10 @@ object AutomaExpansion extends Expansion {
                 val a = (step == 1).?(c.spec.first).|(c.spec.second)
                 if (possible(a)) {
                     game.note("automa-" + (a match {
-                        case AutomaRecruit(_, _) => "recruit"
-                        case AutomaBuild(_) => "build"
+                        case AutomaRecruit(_, _, _) => "recruit"
+                        case AutomaBuild(_, _) => "build"
                         case AutomaExplore(_, _) => "explore"
-                        case AutomaMove1(_) => "move1"
+                        case AutomaMove1(_, _) => "move1"
                         case AutomaMove2(_, _, _) => "move2"
                     }))
                     act(a, c.spec.flash.?(AutomaTurnAction(true) : ForcedAction).|(NextTurnAction(Automa)))
@@ -585,43 +682,52 @@ object AutomaExpansion extends Expansion {
             }
             Then(AutomaRecruitAction(left - 1, prio, None, then))
 
-        // BUILD: a large building when it has the wood and a space, otherwise a small one
-        case AutomaBuildAction(prio, None, then) =>
-            val l = buildOptions
-            val large = l.%(_._2.large)
-            val options = large.any.?(large).|(l)
-            choose(options./(x => game.board.territory(x._1)).distinct, prio, a => AutomaBuildAction(prio, |(a), then))
+        // BUILD: the card's building (the first of its options that can be built), where its priorities say
+        case AutomaBuildAction(b, None, then) =>
+            buildChoice(b) match {
+                case Some(o) =>
+                    val kind = building(o.what)
+                    choose(buildOptions.filter(_._2 == kind).map(x => game.board.territory(x._1)).distinct, o.prio, a => AutomaBuildAction(b, |(a), then))
+                case None =>
+                    Then(then)
+            }
 
-        case AutomaBuildAction(prio, Some(a), then) =>
-            val l = buildOptions.%(x => x._1 == a)
-            val large = l.%(_._2.large)
-            val order = $[Building](AltarOfKings, Forge, Fortress, WoodcutterLodge, FoodSilo, TrainingCamp, DefenseTower, CarvedStone)
-            val choice = large.any.?(large).|(l).sortBy(x => order.indexOf(x._2)).headOption
-
-            // The space: small, then Carved Stone, a large one last, keeping large spaces for large buildings
-            choice.foreach { case (a, b, spaces, cost) =>
-                val s = spaces.sortBy(s => $(SmallSpace, CarvedSpace, LargeSpace).indexOf(MapExpansion.spaceKind(s))).head
-                Automa.wood -= cost
-                game.buildings += s -> b
-                Automa.log("built", b, "in", a)
-                game.advance(Automa, "architecture")
+        case AutomaBuildAction(b, Some(a), then) =>
+            buildChoice(b).foreach { o =>
+                val kind = building(o.what)
+                // The space: small, then Carved Stone, a large one last, keeping large spaces for large buildings
+                buildOptions.find(x => x._2 == kind && game.board.territory(x._1).areas.contains(a)).foreach { case (a, b, spaces, cost) =>
+                    val s = spaces.sortBy(s => $(SmallSpace, CarvedSpace, LargeSpace).indexOf(MapExpansion.spaceKind(s))).head
+                    Automa.wood -= cost
+                    game.buildings += s -> b
+                    Automa.log("built", b, "in", a)
+                    game.advance(Automa, "architecture")
+                }
             }
             Then(then)
 
-        // EXPLORE: the spot by the first priority, then the top tile turned by the second
-        case AutomaExploreAction(e, None, tries, then) =>
-            val l = spots
-            if (l.none || game.pile.none)
+        // EXPLORE: from the territory chosen by the card, on its free spot (the compass priority, or the player's choice
+        // between spots), with the top tile turned by the card's rotation priorities
+        case AutomaExploreAction(e, None, _, tries, then) =>
+            if (exploreFrom.none || game.pile.none)
                 Then(then)
-            else {
-                val b = e.spot.foldLeft(l)((l, p) => { val m = l./(spotValue(p, _)).max ; l.%(spotValue(p, _) == m) })
-                if (b.num == 1)
-                    Then(AutomaExploreAction(e, |(b.head), tries, then))
-                else
-                    Ask(player).each(b)(s => AutomaExploreAction(e, |(s), tries, then).as(s)("Automa".hl, "explores: choose between the tied spots"))
-            }
+            else
+                choose(exploreFrom, e.on, a => AutomaExploreAction(e, |(a), None, tries, then))
 
-        case AutomaExploreAction(e, Some(spot), tries, then) =>
+        case AutomaExploreAction(e, Some(from), None, tries, then) =>
+            val l = spotsNext(game.board.territory(from))
+            val compass = e.on.%(p => $[AutomaPriority](Northernmost, Southernmost, Easternmost, Westernmost).has(p))
+            val b = compass.foldLeft(l)((l, p) => { val m = l./(spotValue(p, _)).max ; l.%(spotValue(p, _) == m) })
+
+            if (b.none)
+                Then(then)
+            else
+            if (b.num == 1)
+                Then(AutomaExploreAction(e, |(from), |(b.head), tries, then))
+            else
+                Ask(player).each(b)(s => AutomaExploreAction(e, |(from), |(s), tries, then).as(s)("Automa".hl, "explores: choose between the spots"))
+
+        case AutomaExploreAction(e, Some(from), Some(spot), tries, then) =>
             if (tries <= 0 || game.pile.none) {
                 Automa.log("found no tile to explore with")
                 Then(then)
@@ -630,34 +736,50 @@ object AutomaExpansion extends Expansion {
                 val tile = game.pile.head
                 game.pile = game.pile.drop(1)
 
-                val rs = MapExpansion.rotations(MapExpansion.placements(tile, |(explorable), false), spot)
+                val rs = MapExpansion.rotations(MapExpansion.placements(tile, |($(game.board.territory(from))), false), spot)
 
                 if (rs.none) {
                     game.pile :+= tile
-                    Then(AutomaExploreAction(e, |(spot), tries - 1, then))
+                    Then(AutomaExploreAction(e, |(from), |(spot), tries - 1, then))
                 }
                 else {
-                    // Closing a territory first if asked, then the fewest clockwise turns
+                    // Each turn measured with the tile in place: the territory explored from, and how many territories are closed
                     val before = game.board.territories.count(game.board.closed)
-                    val closing = rs.%(r => closedWith(Placement(tile, spot.x, spot.y, r)) > before)
-                    val r = (e.rotate.has(ClosedFirst) && closing.any).?(closing.head).|(rs.head)
+                    val r = e.rotate.foldLeft(rs) { (rs, p) =>
+                        if (rs.num <= 1) rs
+                        else {
+                            val v = rs./(r => r -> game.board.withPlaced(Placement(tile, spot.x, spot.y, r)) {
+                                val t = game.board.territory(from)
+                                p match {
+                                    case ClosedFirst => (game.board.territories.count(game.board.closed) > before).??(1).toDouble
+                                    case LeastRotations => -r.toDouble
+                                    case p => value(p, t, Map())
+                                }
+                            }).toMap
+                            val m = v.values.max
+                            rs.%(r => v(r) == m)
+                        }
+                    }.head
 
                     game.exploring = $(tile)
                     game.internalPerform(ExploreTurnAction(Automa, tile, spot, r, 1, ExploreEffect(), then), soft)
                 }
             }
 
-        // MOVE 1: exactly one unit to a friendly or neutral territory
-        case AutomaMove1Action(prio, None, then) =>
-            val pairs = move1Pairs
-            choose(pairs.map(_._2).distinct, prio, a => AutomaMove1Action(prio, |(a), then))
+        // MOVE 1: one unit from the territory chosen by the first priorities (2+ units) to a friendly or neutral one next to it
+        case AutomaMove1Action(m, None, _, then) =>
+            choose(move1Sources, m.from, a => AutomaMove1Action(m, |(a), None, then))
 
-        case AutomaMove1Action(prio, Some(a), then) =>
+        case AutomaMove1Action(m, Some(from), None, then) =>
+            val src = game.board.territory(from)
+            choose(move1Pairs.filter(_._1 == src).map(_._2), m.to, a => AutomaMove1Action(m, |(from), |(a), then))
+
+        case AutomaMove1Action(m, Some(from), Some(a), then) =>
+            val src = game.board.territory(from)
             val dst = game.board.territory(a)
-            val src = move1Pairs.filter(_._2 == dst).map(_._1).sortBy(t => -game.count(t, Automa)).head
             game.removeUnits(src, Automa, 1)
             game.addUnits(dst.anchor, Automa, 1)
-            Automa.log("moved 1 unit from", src.anchor, "to", a)
+            Automa.log("moved 1 unit from", from, "to", a)
             Then(then)
 
         // MOVE 2 WITH A LEADER: first, half the units (rounded up) of an adjacent territory reinforce the Leader

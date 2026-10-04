@@ -37,8 +37,8 @@ Squirrel, with their warchiefs and 28 clan cards, from the TTS mod
 3597126237) in `nort/newblood.scala`; picking one of them turns it on.
 Uncharted Horizons' Events and Alternative victory conditions modules are in
 `nort/horizons.scala`. The solo Automa (Uncharted Horizons' Solo module) is
-in `nort/automa.scala`, with provisional cards until the printed ones are
-transcribed. The
+in `nort/automa.scala`, with its 15 cards transcribed from the Tabletopia
+module ("Solo vs Automa" on the main menu). The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.
@@ -419,3 +419,7 @@ file covers the build, server and deploy. No session can ssh to the server
   shared link. The client sets the real title when it loads.
 - `good-game` wraps static files in `encodeResponse`, so the 8 MB client is
   sent gzipped (about 1.8 MB).
+- The site's icon is a drop (the owner's drawing), not HRF's crow: the
+  favicon is a 64x64 PNG data URI in the `icon` link of `index.html`
+  (`HRF.defaultGlyph`; games swap in faction glyphs), and `drop.png` is the
+  backdrop behind the loading screen, in the crow's old dark red.
