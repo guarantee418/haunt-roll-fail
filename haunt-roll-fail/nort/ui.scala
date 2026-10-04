@@ -372,17 +372,20 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         tints.get(key)
     }
 
-    // Tint colour and strength per player colour; blue needs more to show on the green tiles
+    // Tint per player colour: yellow and green strong, red and blue medium to light
     def tintOf(c : PlayerColor) : (String, Double) = c match {
-        case Blue => ("#1f5fe0", 0.5)
-        case Red => ("#e8300d", 0.4)
-        case Yellow => ("#ffc400", 0.42)
-        case Purple => ("#9b30c8", 0.45)
-        case Green => ("#1e8f1e", 0.5)
+        case Blue => ("#1f5fe0", 0.24)
+        case Red => ("#e8300d", 0.24)
+        case Yellow => ("#ffc400", 0.55)
+        case Purple => ("#9b30c8", 0.3)
+        case Green => ("#147a14", 0.55)
     }
 
-    // The territory being fought over
-    val battleTint = ("#ff3f9f", 0.55)
+    // Invaded, waiting for its fight
+    val contestedTint = ("#8c8c8c", 0.45)
+
+    // The fight being resolved, like Root's red cloud
+    val battleTint = ("#ff3f9f", 0.42)
 
     // Free ground for tokens, from TileGrid: the area and clutter (0-9) at a map point in tile units
     def cellAt(fx : Double, fy : Double) : |[(AreaRef, Int)] = {
@@ -419,22 +422,26 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // Where a round token of radius r (tile units) best fits in a territory: on open ground of that territory,
     // clear of the circles already taken, and, with a pull, not far from a point (a warchief by its clan's units)
     def freeSpot(t : Territory, r : Double, taken : $[(Double, Double, Double)], near : |[(Double, Double)], pull : Double) : (Double, Double) = spots.getOrElseUpdate((t.areas, r, taken, near, pull, game.board.placements.num), {
+        val gap = 0.03
+
         // Sample points over the token: its centre, a ring halfway out and a ring near its edge
         val ring = (0.0, 0.0) +: (0.until(6).$./(i => (math.cos(i * math.Pi / 3) * r * 0.5, math.sin(i * math.Pi / 3) * r * 0.5)) ++
             0.until(12).$./(i => (math.cos(i * math.Pi / 6) * r * 0.95, math.sin(i * math.Pi / 6) * r * 0.95)))
 
         def score(x : Double, y : Double) : Double = {
-            // Off the map or over another territory costs far more than any clutter
+            // Clutter counts cubed, so a resource icon, building space or number (9) costs far more than busy art;
+            // off the map or over another territory costs by far the most, more than covering a piece
             val ground = ring.map { case (dx, dy) =>
                 cellAt(x + dx, y + dy) match {
-                    case Some((a, c)) if t.areas.contains(a) => c.toDouble
-                    case _ => 60.0
+                    case Some((a, c)) if t.areas.contains(a) => (c * c * c).toDouble
+                    case _ => 20000.0
                 }
             }.sum / ring.num
 
+            // Covering anything already drawn costs the most, with a little gap kept around it
             val overlap = taken.map { case (ox, oy, or) =>
                 val d = math.sqrt((x - ox) * (x - ox) + (y - oy) * (y - oy))
-                (d < r + or).?(16 * (1 - d / (r + or))).|(0.0)
+                (d < r + or + gap).?(3000 * (1 - d / (r + or + gap))).|(0.0)
             }.sum
 
             val distance = near.map { case (nx, ny) => pull * math.max(0, math.sqrt((x - nx) * (x - nx) + (y - ny) * (y - ny)) - r) }.|(0.0)
@@ -467,11 +474,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             background.add(Sprite($(ImageRect(tileImage(p.tile, p.r), Rectangle(0, 0, T, T), 1.0)), $))(sx(p.x), sy(p.y))
         }
 
-        // Territories in the colour of the player who controls them, pink while fought over
+        // Territories in the colour of the player who controls them, gray once invaded, pink while the fight is resolved;
+        // the masks leave the resource icons clear
         board.placements.foreach { p =>
             p.spec.areas.foreach { s =>
                 val t = board.territory(AreaRef(p.x, p.y, s.id))
-                val color = game.battle.exists(t.areas.contains).?(battleTint).|(game.present(t).single./(f => tintOf(game.colors(f))).orNull)
+                val color =
+                    if (game.battle.exists(t.areas.contains)) battleTint
+                    else
+                    if (game.present(t).num > 1 || game.creatureFights.exists(x => t.areas.contains(x.area))) contestedTint
+                    else
+                        game.present(t).single./(f => tintOf(game.colors(f))).orNull
 
                 if (color != null)
                     tint(p.tile, s.id, p.r, color._1).foreach { i =>
@@ -523,8 +536,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             val scale = k match { case 0 | 1 => 1.0 ; case 2 => 0.6 ; case 3 => 0.45 ; case _ => 0.36 }
             val step = 160 * scale
 
-            // Circles (centre and radius, tile units) the warchiefs, Kaija and creatures keep clear of
-            var taken : $[(Double, Double, Double)] = $
+            // Circles (centre and radius, tile units) the warchiefs, Kaija and creatures keep clear of,
+            // starting with the territory's numbers and buildings
+            var taken : $[(Double, Double, Double)] = t.areas./{ a =>
+                val (x, y) = board.point(a)
+                (x, y, 0.06)
+            } ++ game.buildings.keys.$.%(s => t.areas.contains(s.area))./{ s =>
+                val (x, y) = board.point(s)
+                (x, y, 0.1)
+            }
 
             def mx(x : Double) = x / T + x0 - 1
             def my(y : Double) = y / T + y0 - 1
@@ -538,7 +558,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     pieces.add(Sprite($(at("unit-" + game.colors(f).id, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag))(ux, uy)
                     if (n <= 15)
                         pieces.add(Sprite($(at("ui-count-" + n, 96 * scale)), $))(ux + 62 * scale, uy + 62 * scale)
-                    taken :+= ((mx(ux), my(uy), 0.15 * scale))
+                    taken :+= ((mx(ux), my(uy), 0.13 * scale))
                 }
             }
 
@@ -547,29 +567,33 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 val ux = sx(px) + (k > 1).?(9 + (i - (k - 1) / 2.0) * step).|(0.0)
                 val uy = sy(py) + (k > 1).?(20.0).|(0.0)
 
-                // Next to the clan's figure on open ground; during a fight, tucked against the figure as space is shared;
-                // without units, in the figure's place
-                def beside(size : Double, dx : Double, dy : Double) : (Double, Double) =
-                    if (n == 0) (ux, uy)
-                    else
-                    if (k > 1) (ux + dx * scale, uy + dy * scale)
+                // Whether the figure's spot is used: without units, the first of the warchief and Kaija takes it
+                var used = n > 0
+
+                // On open ground a little apart from the clan's figure, or in its place when free
+                def beside(r : Double) : (Double, Double) =
+                    if (used.not) {
+                        used = true
+                        (ux, uy)
+                    }
                     else {
-                        val (x, y) = freeSpot(t, size / T / 2, taken, |((mx(ux), my(uy))), 8)
+                        val (x, y) = freeSpot(t, r, taken, |((mx(ux), my(uy))), 8)
                         (sx(x), sy(y))
                     }
 
-                // The warchief (Warchiefs module)
+                // The warchief (Warchiefs module), the size of a warrior
                 if (game.chiefIn(t, f)) {
-                    val cz = (n > 0).?(230).|(280) * scale
-                    val (cx, cy) = beside(cz, 95, -30)
+                    // The figure fills about three quarters of its image, like a warrior's
+                    val cz = 300 * scale
+                    val (cx, cy) = beside(0.13 * scale)
                     pieces.add(Sprite($(at("warchief-" + game.colors(f).id, cz)), $(Rectangle(-cz / 2, -cz / 2, cz, cz)), tag))(cx, cy)
-                    taken :+= ((mx(cx), my(cy), cz / T / 2))
+                    taken :+= ((mx(cx), my(cy), 0.13 * scale))
                 }
 
-                // Bear Clan's Kaija
+                // Bear Clan's Kaija; the round token fills its box, so 230 matches a warrior's height
                 if (game.kaijaIn(t, f)) {
-                    val kz = (n > 0).?(130).|(180) * scale
-                    val (kx, ky) = beside(kz, -40, 55)
+                    val kz = 230 * scale
+                    val (kx, ky) = beside(kz / T / 2)
                     pieces.add(Sprite($(at("token-kaija", kz)), $(Rectangle(-kz / 2, -kz / 2, kz, kz)), tag))(kx, ky)
                     taken :+= ((mx(kx), my(ky), kz / T / 2))
                 }

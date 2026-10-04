@@ -6,6 +6,8 @@
 # seeded on the tile sides it owns, its territory number and its building spaces, and grown by a
 # watershed on the blurred dash density, so neighbouring areas meet along the roads.
 #
+# The resource icons are cut out of the masks, so the tint doesn't cover them.
+#
 # The grid is 24 x 24 cells per tile. Each cell holds its area and how cluttered it is (0-9): busy
 # art (icons, trees, rocks), building spaces, the territory number, the unit marker and the
 # nearness of a border. The map uses it to put creatures, warchiefs and Kaija on free ground.
@@ -91,26 +93,38 @@ def segment(tid, areas, a):
     return lab
 
 
-def icons(a):
+# Resource icons the colour test misses on the photo tiles: centre and radius, in tile units
+ICONS = {
+    'start-5': [(0.207, 0.68, 0.05)],
+    'tile-31': [(0.613, 0.85, 0.058)],
+    'tile-32': [(0.82, 0.477, 0.067)],
+}
+
+
+def icons(tid, a):
     # Resource icons and the lore stones have a white rim; the food icon is a red apple
     rim = a.min(2) > 238
-    red = (a[..., 0] > 170) & (a[..., 1] < 90) & (a[..., 2] < 90)
+    red = (a[..., 0] > 110) & (a[..., 1] < 75) & (a[..., 2] < 85) & (a[..., 0] - a[..., 1] > 60)
     icon = ndi.binary_fill_holes(ndi.binary_closing(rim | red, iterations=5))
     lab, n = ndi.label(icon)
     sizes = ndi.sum(icon, lab, range(1, n + 1))
     keep = np.zeros(n + 1, bool)
     keep[1:] = sizes > 150
-    return ndi.binary_dilation(keep[lab], iterations=6)
+    icon = keep[lab]
+    yy, xx = np.mgrid[0:N, 0:N] / N
+    for x, y, r in ICONS.get(tid, []):
+        icon |= (xx - x) ** 2 + (yy - y) ** 2 < r * r
+    return icon
 
 
-def clutter(areas, a, lab):
+def clutter(tid, areas, a, lab):
     # Busy art: edges, with the insides of closed outlines (bushes, rocks) filled in
     gray = a.mean(2)
     grad = np.hypot(ndi.sobel(gray, 0), ndi.sobel(gray, 1))
     edges = ndi.maximum_filter(ndi.gaussian_filter(grad, 1), 5)
     busy = ndi.gaussian_filter(ndi.grey_closing(edges, size=(21, 21)), 3)
     busy = np.clip(busy / 300.0, 0, 1) * 6
-    busy[icons(a)] = 9
+    busy[ndi.binary_dilation(icons(tid, a), iterations=6)] = 9
 
     yy, xx = np.mgrid[0:N, 0:N] / N
     fixed = np.zeros((N, N))
@@ -177,13 +191,15 @@ def main():
         im = Image.open(os.path.join(TILES, tid + '.webp')).convert('RGB').resize((N, N), Image.LANCZOS)
         a = np.asarray(im).astype(int)
         lab = segment(tid, areas, a)
+        # The resource icons stay clear of the tint
+        holes = ndi.binary_dilation(icons(tid, a), iterations=2)
         for k, ar in enumerate(areas):
-            alpha = ndi.gaussian_filter((lab == k + 1).astype(float), 1.0)
+            alpha = ndi.gaussian_filter(((lab == k + 1) & ~holes).astype(float), 1.0)
             m = Image.fromarray((alpha * 255).astype(np.uint8)).resize((MASK, MASK), Image.LANCZOS)
             rgba = Image.new('RGBA', (MASK, MASK), (255, 255, 255, 0))
             rgba.putalpha(m)
             rgba.save(os.path.join(MASKS, tid + '-' + ar['id'] + '.webp'), lossless=True)
-        c = clutter(areas, a, lab)
+        c = clutter(tid, areas, a, lab)
         out[tid] = grid(lab, c)
         if check:
             pal = [(255, 0, 0), (0, 90, 255), (255, 220, 0), (200, 0, 255)]
@@ -216,4 +232,5 @@ def main():
         f.write('    )\n}\n')
 
 
-main()
+if __name__ == '__main__':
+    main()

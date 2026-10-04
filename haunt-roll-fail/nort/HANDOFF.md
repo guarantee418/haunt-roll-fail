@@ -159,23 +159,31 @@ on. To implement one:
 
 ## Map drawing: territory colours and free ground
 
-- Each territory is tinted with the colour of the player who controls it, and
-  pink (`game.battle`) while a fight in it is being resolved. `game.battle` is
-  set when a fight starts (`FightStartAction`, `CreatureCombatAction`) and
-  cleared by `FightOverAction`, which wraps the fight's continuation, and by
+- Each territory is tinted with the colour of the player who controls it
+  (`UI.tintOf`: yellow and green strong, red and blue medium to light, as the
+  owner asked), gray once invaded (more than one clan present, or a creature
+  fight declared there) and pink (`game.battle`) while its fight is resolved,
+  like Root's red cloud. `game.battle` is set when a fight starts
+  (`FightStartAction`, `CreatureCombatAction`) and cleared by
+  `FightOverAction`, which wraps the fight's continuation, and by
   `CombatsAction`.
 - The tints are the area masks in `tile/mask/`, filled with the colour and
   turned with the tile (`UI.tint`, made once per tile, area, turn and colour).
-  The masks come from the art: the borders are roads with white or yellow
-  dashes, and `tools/tile-masks.py` grows each area from its sides, number and
-  building spaces by a watershed on the dash density. All 35 tiles were
-  checked by eye. The photo tiles (`start-5`, `tile-31` to `tile-33`) use a
-  looser dash colour test.
-- Warchiefs and Kaija go next to their clan's figure, and creatures anywhere in
-  the territory, at the spot with the least clutter (`UI.freeSpot`, using
-  `TileGrid`), off other territories and the map edge, and clear of what is
-  already drawn. During a fight the warchief and Kaija stay tucked against
-  their clan's smaller figure. Very small territories still get crowded.
+  Units, buildings, numbers and tokens are drawn above them. The masks come
+  from the art: the borders are roads with white or yellow dashes, and
+  `tools/tile-masks.py` grows each area from its sides, number and building
+  spaces by a watershed on the dash density. The resource icons (found by
+  their white rim or apple red; hand-placed in `ICONS` for the photo tiles)
+  are cut out of the masks, so they show untinted. All 35 tiles were checked
+  by eye.
+- Warchiefs are the size of a warrior figure and Kaija's round token matches a
+  warrior's height. Both stand a little apart from their clan's figure on open
+  ground. Creatures go on the territory's most open ground (`UI.freeSpot`,
+  using `TileGrid`). The cost order is: off the map or out of the territory,
+  then covering anything drawn (figures, warchiefs, Kaija, buildings,
+  territory numbers, other creatures), then resource icons and building
+  spaces (clutter 9, cubed), then busy art. Very small territories still get
+  crowded.
 - The Kaija and Scorched Earth tokens are round with transparent corners.
 
 ## Known simplifications and gaps
