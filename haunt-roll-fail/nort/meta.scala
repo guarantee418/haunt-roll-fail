@@ -38,15 +38,17 @@ object Meta extends MetaGame { mmm =>
     val factions = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf)
 
     val minPlayers = 2
-    override val maxPlayers = 5
+    // Six players build on the five-player rules
+    override val maxPlayers = 6
 
     override val hiddenOptions = $
 
     val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(FameOnly, FirstSeatStarts, WarchiefCards) ++ Module.all./(ModuleOption) ++ $(MoreCreatures) ++ hiddenOptions
 
-    // Colors only for the clans in the game
+    // Colors only for the clans in the game; 2v2 Teams only with four players, 3v3 Teams only with six
     override def optionsFor(n : Int, l : $[F]) = options.%{
         case ColorOption(f, _) => l.has(f)
+        case ModuleOption(m) if Module.teams.contains(m) => Module.teams(m) == n
         case _ => true
     }
 
@@ -86,12 +88,14 @@ object Meta extends MetaGame { mmm =>
 
     def validateFactionCombination(factions : $[Faction]) = None ||
         (factions.num < 2).?(ErrorResult("Minimum two clans")) ||
-        (factions.num > 5).?(ErrorResult("Maximum five clans")) |
+        (factions.num > 6).?(ErrorResult("Maximum six clans")) |
         InfoResult("Northgard: Uncharted Lands")
 
     def validateFactionSeatingOptions(factions : $[Faction], options : $[O]) = validateFactionCombination(factions) && {
         val colored = options.of[ColorOption]
         val missing = factions.%(f => colored.exists(_.clan == f).not)
+        val teams = Module.teams.toList.%{ case (m, n) => has(options, m) && factions.num != n }
+        teams.any.?(ErrorResult(teams./{ case (m, n) => m.label + " needs " + n + " players" }.mkString(", "))) ||
         missing.any.?(WarningResult(missing./(factionName).mkString(", ") + " will get a free color")) |
         InfoResult("Northgard: Uncharted Lands")
     }
@@ -144,10 +148,10 @@ object Meta extends MetaGame { mmm =>
 
     val start = StartAction(gaming.version)
 
-    // Images are in webp2/nort/images/; there are no green starting cards, so green uses the blue ones
+    // Images are in webp2/nort/images/; there are no green or orange starting cards, so green uses the blue ones and orange the yellow ones
     val assets =
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card/start", "card-start-", "webp")(
-        PlayerColor.all./~(c => $("recruit", "move", "explore", "build", "feast")./(n => ImageAsset(c.id + "-" + n, (c == Green).?("blue").|(c.id) + "-" + n + (n == "feast").??("-1"))))
+        PlayerColor.all./~(c => $("recruit", "move", "explore", "build", "feast")./(n => ImageAsset(c.id + "-" + n, c.cards + "-" + n + (n == "feast").??("-1"))))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card/clan", "card-clan-", "webp")(
         Cards.clan.values.$.flatten./(_.image.drop("card-clan-".length))./(ImageAsset(_))

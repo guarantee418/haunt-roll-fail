@@ -35,6 +35,12 @@ case object Wolf extends Faction
 // Player colors mark a player's units and starting cards; they are not tied to the clan
 trait PlayerColor extends NamedToString with Styling with Elementary with Record {
     def id = name.toLowerCase
+    // The banner on the starting cards: green has no cards of its own and uses blue's, orange uses yellow's
+    def cards = this match {
+        case Green => "blue"
+        case Orange => "yellow"
+        case c => c.id
+    }
     override def elem : Elem = name.styled(this)
 }
 
@@ -43,9 +49,11 @@ case object Red extends PlayerColor
 case object Yellow extends PlayerColor
 case object Purple extends PlayerColor
 case object Green extends PlayerColor
+// The sixth player's color; there are no orange starting cards, so orange uses the yellow ones
+case object Orange extends PlayerColor
 
 object PlayerColor {
-    val all : $[PlayerColor] = $(Blue, Red, Yellow, Purple, Green)
+    val all : $[PlayerColor] = $(Blue, Red, Yellow, Purple, Green, Orange)
 }
 
 
@@ -194,6 +202,8 @@ case class ScorchedTakeAction(self : Faction, r : |[Resource]) extends BaseActio
 case class HarvestAction(take : |[Resource]) extends ForcedAction
 case class TradeAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class TradeForAction(self : Faction, pay : $[Resource], gain : Resource, then : ForcedAction) extends BaseAction("Trade", "three resources for one")("Pay", pay./(_.elem).join(" "), "for", gain)
+// Team play: one resource for one of a teammate's
+case class TeamTradeAction(self : Faction, mate : Faction, give : Resource, take : Resource, then : ForcedAction) extends BaseAction("Trade with", mate, "one for one")("Give", give, "for", take)
 case object WinterAction extends ForcedAction
 case object EndOfYearAction extends ForcedAction
 case object GameEndAction extends ForcedAction
@@ -253,6 +263,24 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // Three closed territories with large buildings win at the end of a year
     val domination = options.has(FameOnly).not
+
+    // Team play (2v2 with four players, 3v3 with six): seats alternate between the two teams,
+    // so teammates sit opposite each other
+    val teams : Boolean = Module.teams.exists { case (m, n) => has(m) && setup.num == n }
+
+    def team(f : Faction) : Int = teams.?(setup.indexOf(f) % 2).|(setup.indexOf(f))
+
+    def allied(f : Faction, g : Faction) : Boolean = f == g || (teams && team(f) == team(g))
+
+    def enemy(f : Faction, g : Faction) : Boolean = allied(f, g).not
+
+    // f's teammates, in seating order
+    def mates(f : Faction) : $[Faction] = setup.%(g => g != f && allied(f, g))
+
+    // The teams in seating order of their first player (each player alone without team play)
+    def sides : $[$[Faction]] = setup./(team).distinct./(n => setup.%(team(_) == n))
+
+    def teamName(f : Faction) : Elem = ("Team " + (team(f) == 0).?("A").|("B")).hl
 
     var year = 0
     var first : Faction = setup.first
@@ -350,6 +378,12 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def anyOnMap(f : Faction) : Boolean = onMap(f) > 0 || (f == Bear && kaija.any) || chiefs.contains(f)
 
     def controlled(f : Faction) : $[Territory] = board.territories.%(t => present(t) == $(f))
+
+    // Team play: a territory held by a teammate of f (f's units can only pass through it)
+    def mateHeld(f : Faction, t : Territory) : Boolean = present(t).exists(g => g != f && allied(f, g))
+
+    // Team play: teammates' territories with f's figures passing through during a Move
+    def passing(f : Faction) : $[Territory] = teams.??(board.territories.%(t => figures(t, f) > 0 && mateHeld(f, t)))
 
     def onMap(f : Faction) : Int = units.values./(_.getOrElse(f, 0)).sum
 
@@ -498,6 +532,15 @@ object CommonExpansion extends Expansion {
 
     def available(f : Faction)(implicit game : Game) = f.draw.num + f.discard.num
 
+    // The sides (teams, or players alone) with the best sums of the first key, then of the next ones for ties
+    def best(sides : $[$[Faction]], keys : $[Faction => Int]) : $[$[Faction]] =
+        keys.foldLeft(sides)((l, k) => l.%(s => s./(k).sum == l./(_./(k).sum).max))
+
+    def buildings(f : Faction)(implicit game : Game) = game.controlled(f)./~(game.buildingsIn).num
+
+    // Each team, or each player without team play
+    def sides(l : $[Faction])(implicit game : Game) : $[$[Faction]] = game.teams.?(game.sides./(_.%(l.has)).%(_.any)).|(l./(f => $(f)))
+
     // Only cards whose effect is implemented can be played
     def playable(f : Faction, c : Card)(implicit game : Game) : Boolean = playableEffect(f, c.effect)
 
@@ -559,7 +602,9 @@ object CommonExpansion extends Expansion {
             Shuffle[Card](Cards.advancedCards, ShuffledAdvancedAction(_))
 
         case ShuffledAdvancedAction(l) =>
-            game.developments ++= l.take(game.advancedPerPlayer * factions.num)
+            // With six players in a long game there aren't enough Early cards: Advanced ones make up the difference
+            val short = game.earlyPerPlayer * factions.num - game.developments.num
+            game.developments ++= l.take(game.advancedPerPlayer * factions.num + short)
 
             Shuffle[Card](Cards.achievementCards, ShuffledAchievementsAction(_))
 
@@ -594,11 +639,12 @@ object CommonExpansion extends Expansion {
 
             log(f, "goes first")
 
+            // Players 4 to 6 start with one more food
             game.from(f).zipWithIndex.foreach { case (f, i) =>
                 f.food = (i < 3).?(2).|(3)
                 f.wood = 2
 
-                f.log("plays", game.colors(f), "and starts with", f.food.hl, Food, "and", f.wood.hl, Wood)
+                f.log("plays", game.colors(f), game.teams.?("in " ~ game.teamName(f)).|(Empty), "and starts with", f.food.hl, Food, "and", f.wood.hl, Wood)
             }
 
             Shuffle[String](Tiles.regular./(_.id), ShuffledTilesAction(_))
@@ -806,7 +852,7 @@ object CommonExpansion extends Expansion {
             game.note(c.name.replace(" ", "-"))
 
             // Opponents holding Defensive Strategy may cancel the card
-            Then(DefensiveAskAction(f, c, stage, game.from(f).drop(1)))
+            Then(DefensiveAskAction(f, c, stage, game.from(f).drop(1).%(game.enemy(f, _))))
 
         case PlayResolveAction(f, c, stage) =>
             val after = TurnAction(f, (c.flash && stage < 2).?(1).|(2))
@@ -933,7 +979,7 @@ object CommonExpansion extends Expansion {
 
         // 3. HARVEST
         case ScorchedHarvestAction =>
-            val owner = game.scorched./(game.board.territory)./(game.present).|($).single.%(_ != Snake)
+            val owner = game.scorched./(game.board.territory)./(game.present).|($).single.%(game.enemy(Snake, _))
             val (food, wood, lore) = game.scorched./(game.board.territory)./(game.harvest).|((0, 0, 0))
             val l = $[(Resource, Int)](Food -> food, Wood -> wood, Lore -> lore).filter(_._2 > 0).map(_._1)
 
@@ -987,13 +1033,28 @@ object CommonExpansion extends Expansion {
 
         case TradeAction(f, then) =>
             val pp = payments(f)
+            // Team play: 1:1 with a teammate
+            val swaps = game.mates(f)./~(g => Resource.all.%(f.has(_) > 0)./~(r => Resource.all.%(_ != r).%(g.has(_) > 0)./(x => TeamTradeAction(f, g, r, x, then))))
 
-            if (pp.none)
+            if (pp.none && swaps.none)
                 Then(then)
             else
                 Ask(f)
                     .some(pp)(p => Resource.all./(r => TradeForAction(f, p, r, then)))
+                    .add(swaps)
                     .done(then)
+
+        case TeamTradeAction(f, g, r, x, then) =>
+            f.gain(r, -1)
+            g.gain(r, 1)
+            g.gain(x, -1)
+            f.gain(x, 1)
+
+            f.log("gave", 1.hl, r, "to", g, "for", 1.hl, x)
+
+            game.note("team-trade")
+
+            Then(TradeAction(f, then))
 
         case TradeForAction(f, p, r, then) =>
             p.foreach(x => f.gain(x, -1))
@@ -1062,12 +1123,11 @@ object CommonExpansion extends Expansion {
 
             rulers.foreach(f => f.log("controls three closed territories with large buildings"))
 
-            // Ties: fame, then territories controlled, then units, then buildings
-            val winners = rulers.%(f => f.fame == rulers./(_.fame).max) @@ { l =>
-                val t = l.%(f => game.controlled(f).num == l./(game.controlled(_).num).max)
-                val u = t.%(f => f.units == t./(_.units).max)
-                u.%(f => game.controlled(f)./~(game.buildingsIn).num == u./(game.controlled(_)./~(game.buildingsIn).num).max)
-            }
+            // Team play: the rulers' teams win, with their teammates
+            val contenders = game.teams.?(sides(factions).%(_.exists(rulers.has))).|(sides(rulers))
+
+            // Ties: fame, then territories controlled, then units, then buildings (added up for teams)
+            val winners = best(contenders, $(f => f.fame, f => game.controlled(f).num, f => f.units, f => buildings(f))).flatten
 
             game.isOver = true
             game.highlight.current = winners.single
@@ -1106,11 +1166,14 @@ object CommonExpansion extends Expansion {
                 f -> total
             }.toMap
 
-            // Ties: territories controlled, then units, then buildings
-            val best = factions.%(f => totals(f) == totals.values.max)
-            val t = best.%(f => game.controlled(f).num == best./(game.controlled(_).num).max)
-            val u = t.%(f => f.units == t./(_.units).max)
-            val winners = u.%(f => game.controlled(f)./~(game.buildingsIn).num == u./(game.controlled(_)./~(game.buildingsIn).num).max)
+            // Team play: teammates add their scores together
+            if (game.teams)
+                sides(factions).foreach { l =>
+                    log(game.teamName(l.head), l./(_.elem).join(", "), "scored", l./(totals).sum.hlb, "fame together")
+                }
+
+            // Ties: territories controlled, then units, then buildings (added up for teams)
+            val winners = best(sides(factions), $(f => totals(f), f => game.controlled(f).num, f => f.units, f => buildings(f))).flatten
 
             game.isOver = true
             game.highlight.current = winners.single

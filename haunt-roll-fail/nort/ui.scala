@@ -494,7 +494,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val cards = (state.hand.num.hl ~ " in hand, " ~ state.draw.num.hl ~ " to draw").div
 
-        val marks = ((game.first == f).?("First player".hh).|(Empty) ~ (state.passed && game.isOver.not).?(" Passed".txt).|(Empty)).div
+        // Team play: the player's team
+        val marks = (game.teams.?(game.teamName(f) ~ " ").|(Empty) ~ (game.first == f).?("First player".hh).|(Empty) ~ (state.passed && game.isOver.not).?(" Passed".txt).|(Empty)).div
 
         val content = (title.div ~ res ~ units ~ chief ~ cards ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
 

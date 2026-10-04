@@ -33,6 +33,7 @@ package object elem {
         Yellow --> color("#f79c01")
         Purple --> color("#a56ca5")
         Green --> color("#4f9e3a")
+        Orange --> color("#ff7a1a")
 
         Food --> color("#e04848")
         Wood --> color("#c98a4b")

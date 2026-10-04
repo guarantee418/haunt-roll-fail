@@ -117,12 +117,32 @@ case object UnchartedHorizons extends Module("Uncharted Horizons", "expansion") 
     def about = $("Development, Event and Raid cards, other victory conditions, Training Fields, solo play, drafting setup and more map tiles.")
 }
 
+// Team play (Game.teams): seats alternate between the two teams, so teammates sit opposite each other.
+// Teammates add their scores together, may move through each other's territories but not stop there,
+// never fight or target each other, and trade resources with each other 1:1 at harvest
 case object TeamsVariant extends Module("2v2 Teams", "core box variant") {
-    def about = $("Four players in two teams.")
+    override def ready = true
+    def about = $(
+        "Four players in two teams; teammates sit opposite each other (seats 1 and 3 against seats 2 and 4) and add their scores together.",
+        "Units may move through a teammate's territory but not stop there. During the harvest teammates may trade resources with each other 1:1.",
+    )
+}
+
+// The same rules with six players
+case object Teams3v3 extends Module("3v3 Teams", "variant, 2v2 rules") {
+    override def ready = true
+    def about = $(
+        "Six players in two teams of three, with the 2v2 rules; seats alternate between the teams (seats 1, 3 and 5 against seats 2, 4 and 6).",
+        "Teammates add their scores together, may move through each other's territories but not stop there, and may trade resources with each other 1:1 during the harvest.",
+        "Not in the rulebook.".styled(xstyles.warning),
+    )
 }
 
 object Module {
-    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, UnchartedHorizons, TeamsVariant)
+    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, UnchartedHorizons, TeamsVariant, Teams3v3)
+
+    // The team variants and the number of players each one needs
+    val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6)
 }
 
 case class ModuleOption(module : Module) extends GameOption with ToggleOption with ImportantOption {

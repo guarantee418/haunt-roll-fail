@@ -21,15 +21,16 @@ object Host extends hrf.host.BaseHost {
     def factions = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf)
     def subjects = factions
 
-    // Random colors, game length and victory options
-    def batch = $(2, 3, 4, 5)./(n => () => {
+    // Random colors, game length and victory options; teams half the time with four or six players (NORT_TEAMS=1: always)
+    def batch = $(2, 3, 4, 5, 6)./(n => () => {
         val l = factions.shuffle.take(n)
         val colors = l.zip(PlayerColor.all.shuffle)./{ case (f, c) => ColorOption(f, c) }
         // NORT_CREATURES=1: always with the Creatures module (and the More Creatures variant half the time); NORT_WARCHIEFS=1: always with Warchiefs
         val creatures = sys.env.get("NORT_CREATURES").has("1") || random() < 0.5
         val options = colors ++ $(YearsOption.all.shuffle.head) ++ (random() < 0.3).$(FameOnly) ++ (random() < 0.3).$(FirstSeatStarts) ++
             creatures.$(ModuleOption(Creatures)) ++ (creatures && random() < 0.5).$(MoreCreatures) ++
-            (sys.env.get("NORT_WARCHIEFS").has("1") || random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.3).$(WarchiefCards)
+            (sys.env.get("NORT_WARCHIEFS").has("1") || random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.3).$(WarchiefCards) ++
+            Module.teams.toList.%{ case (_, k) => k == n && (sys.env.get("NORT_TEAMS").has("1") || random() < 0.5) }./{ case (m, _) => ModuleOption(m) }
         options.foreach(o => assert(Meta.parseOption(Meta.writeOption(o)) == $(o), o))
         new G(l, options)
     })
@@ -52,6 +53,6 @@ object Host extends hrf.host.BaseHost {
     def start = StartAction(version)
     def times = 5
 
-    // Five-player ten-year games with creatures take more than the default 4000 steps
+    // Five- and six-player ten-year games with creatures take more than the default 4000 steps
     override val limit = 12000
 }
