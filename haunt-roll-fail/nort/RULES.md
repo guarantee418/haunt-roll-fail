@@ -31,7 +31,8 @@ draws a tile when no neutral territory is left.
 | Player colors, chosen per clan on the setup screen (default blue, red, yellow, purple, green by seat) | done; no green starting card images, green uses the blue ones |
 | Game length 5–10 years (10-year variant: 3 Early + 6 Advanced per player), Fame victory only, First seat goes first | done (options) |
 | Creatures module (core box), with the More Creatures variant | done 2026-10-03 (`creatures.scala`) |
-| Warchiefs module (Warchiefs expansion) | done 2026-10-03 (`warchiefs.scala`), except the expansion's 7 new clan upgrade cards (no images or text yet) |
+| Warchiefs module (Warchiefs expansion) | done 2026-10-03 (`warchiefs.scala`) |
+| The Warchiefs box's 7 extra clan upgrade cards | done 2026-10-03: with the module, or alone with the "Warchief upgrade cards" option |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -253,8 +254,23 @@ fame for defeating it, and the move priorities from left to right.
 From the English rulebook (`Warchief_Expansion_rules_EN_light.pdf`, found
 online). The box also has modular player and clan boards, a Kaija miniature
 and 7 new clan upgrade cards (one per clan, illustrated with the warchief,
-usable without the module); the boards are in `expansion/board/` and shown
-by the clan picker's Warchief button, the cards are not in the game yet.
+usable without the module); the boards are in `expansion/board/`, and the
+board and the warchief's card are shown by the clan picker's Warchief button.
+
+The card images come from the Tabletop Simulator mod "Northgard: Uncharted
+Lands + Warchief + Wilderness" (Steam Workshop 2838546142, card sheet 12),
+cut and resized to the other clan cards (`card/clan/<clan>-<card>.webp`).
+All seven are Move cards, none Flash, and become a third clan upgrade:
+
+| Clan | Card | Move | Effect |
+|---|---|---|---|
+| Wolf | Egil's Fury | 3, +1 casualty | Before combats are resolved, may remove 1 building from a territory being attacked (back to the reserve) |
+| Stag | Brand's Bravery | 2, +1 point | For each combat won, you choose where the enemy retreats (legally) |
+| Bear | Borgild's Shield | 2 | Before the Move, may place Kaija into Borgild's territory or vice versa; in each combat cancel 1 casualty inflicted by the defender |
+| Snake | Signy's Celerity | 3 | May move through the territory with the Scorched Earth token without stopping |
+| Raven | Liv's Cunning | 4 | In combat, may discard wood or lore instead of food for bonus points |
+| Goat | Halvard's Craft | 2 | If you control new territories after the Move, may place 1 small building in one of them for free |
+| Boar | Svarn's Menders | 2 | Friendly casualties go on the card; after all combats, place them in any of your territories |
 
 - Setup: each clan's warchief goes to its reserve (phase H). In phase L a
   player may place the warchief instead of one unit (two units and the
@@ -370,3 +386,15 @@ Check these against the rulebook when it is at hand.
     an adjacent territory held only by Stag.
   - Liv's reroll is offered after seeing the roll; the point-or-casualty
     choice comes after the reroll decision.
+- **Warchief upgrade cards**:
+  - The card bonuses also apply in fights against creatures started by the
+    Move (Borgild's cancelled casualty, Liv's Cunning, Svarn's Menders).
+    Confirmed by the owner on 2026-10-03.
+  - Not confirmed yet:
+    - Svarn's Menders brings back units only (not Kaija or the warchief),
+      and only casualties, not units lost for having nowhere to retreat.
+    - Halvard's Craft: a "new" territory is one with none of the areas the
+      player controlled before the Move; the free building follows the usual
+      build rules (space, one of each type, no Brown Bear).
+    - Signy's Celerity: units in an enemy territory with the token may move
+      on; a fight happens only if some stay.

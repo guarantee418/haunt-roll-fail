@@ -77,6 +77,26 @@ case class MoveUnitsAction(self : Faction, from : AreaRef, to : AreaRef, n : Int
 case class MoveDoneAction(self : Faction, e : MoveEffect, then : ForcedAction) extends BaseAction("Move")("Done")
 // All moves are made; the Creatures module asks which creatures are attacked before the fights
 case class MoveEndAction(f : Faction, e : MoveEffect, then : ForcedAction) extends ForcedAction
+
+// WARCHIEF UPGRADE CARDS
+case class MoveStartAction(f : Faction, e : MoveEffect, then : ForcedAction) extends ForcedAction
+case class MovesMadeAction(f : Faction, e : MoveEffect, then : ForcedAction) extends ForcedAction
+case class BorgildShieldAction(self : Faction, kaijaMoves : Boolean, e : MoveEffect, then : ForcedAction) extends BaseAction("Borgild's Shield".hl)(BorgildShieldLabel(kaijaMoves))
+
+case class BorgildShieldLabel(kaijaMoves : Boolean) extends GameElementary {
+    def elem(implicit game : Game) = kaijaMoves.?("Place " ~ "Kaija".hl ~ " in " ~ Warchief.elem(Bear) ~ "'s territory").|("Place " ~ Warchief.elem(Bear) ~ " in " ~ "Kaija".hl ~ "'s territory")
+}
+case class BorgildShieldSkipAction(self : Faction, e : MoveEffect, then : ForcedAction) extends BaseAction("Borgild's Shield".hl)("Leave them where they are")
+case class EgilFuryAction(self : Faction, space : SpaceRef, building : Building, e : MoveEffect, then : ForcedAction) extends BaseAction("Egil's Fury".hl, "remove a building from a territory being attacked")(building, "in", space.area) with MapTarget { def target = space.area }
+case class EgilFurySkipAction(self : Faction, e : MoveEffect, then : ForcedAction) extends BaseAction("Egil's Fury".hl)("Remove no building")
+case class LivCunningAskAction(f : Faction, defender : Faction, area : AreaRef, e : MoveEffect, spent : $[Resource], then : ForcedAction) extends ForcedAction
+case class LivCunningAction(self : Faction, defender : Faction, area : AreaRef, e : MoveEffect, r : Resource, spent : $[Resource], then : ForcedAction) extends BaseAction("Liv's Cunning".hl, "spend for the fight", spent.any.?("(" ~ spent./(_.elem).join(" ") ~ " so far)").|(Empty))("1", r)
+case class LivCunningDoneAction(self : Faction, defender : Faction, area : AreaRef, e : MoveEffect, spent : $[Resource], then : ForcedAction) extends BaseAction("Liv's Cunning".hl)(spent.none.?("Spend nothing").|("Done"))
+case class HalvardCraftSkipAction(self : Faction, then : ForcedAction) extends BaseAction("Halvard's Craft".hl)("Build nothing")
+case class SvarnMendAction(f : Faction, then : ForcedAction) extends ForcedAction
+case class SvarnMendToAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("Svarn's Menders".hl, "place a casualty back in")(area) with MapTarget { def target = area }
+case class BrandRetreatToAction(self : Faction, loser : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Brand's Bravery".hl, "choose where", loser, "retreats from", from)(to, RetreatGroup(loser, from, n, kaija)) with MapTarget { def target = to }
+case class CombatFoodPaidAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], then : ForcedAction) extends ForcedAction
 case class CombatsAction(f : Faction, e : MoveEffect, then : ForcedAction) extends ForcedAction
 case class FightAction(self : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends BaseAction("Fight in")(area) with MapTarget { def target = area }
 case class FightStartAction(f : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends ForcedAction
@@ -213,7 +233,10 @@ object MapExpansion extends Expansion {
     // Territories f can move out of: their own, not fighting; with Infiltration also enemy territories they moved into
     // No moving out of a Brown Bear's territory, nor out of a Fallen Valkyrie's before fighting it
     def moveSources(f : Faction, e : MoveEffect = MoveEffect(1))(implicit game : Game) =
-        (e.special == InfiltrateMove).?(game.board.territories.%(t => game.figures(t, f) > 0)).|(game.controlled(f)).%(t => game.bearIn(t).not && game.hostileIn(t).not)
+        ((e.special == InfiltrateMove).?(game.board.territories.%(t => game.figures(t, f) > 0)).|(game.controlled(f)) ++
+            // Signy's Celerity: units go on through the territory with the Scorched Earth token
+            (e.special == SignyMove).??(game.board.territories.%(t => game.scorchedIn(t) && game.figures(t, f) > 0 && game.controlled(f).has(t).not)))
+            .%(t => game.bearIn(t).not && game.hostileIn(t).not)
 
     // Two creatures that don't share their territory can't both be fought: nobody may enter
     def enterable(t : Territory)(implicit game : Game) = game.creaturesIn(t).count(_.kind.shares.not) < 2
@@ -345,7 +368,7 @@ object MapExpansion extends Expansion {
             val n = bigClosed(f).num
             f.log("drew", n.hl, (n == 1).?("card").|("cards"), "for closed territories of 3 or more tiles")
             Then(DrawCardsAction(f, n, then))
-        case e : MoveEffect => Then(MoveAction(f, e.n, e, then))
+        case e : MoveEffect => Then(MoveStartAction(f, e, then))
         case e : ExploreEffect => Then(ExploreAction(f, e.draw, e.times, e.redraw, e, then))
         case e : BuildEffect => Then(BuildAction(f, e, e.times, false, then))
         case FeastEffect =>
@@ -531,7 +554,7 @@ object MapExpansion extends Expansion {
             val sources = (left > 0).??(moveSources(f, e).%(t => game.board.adjacent(t).exists { case (_, regular) => moveCost(regular.not, e.ignoreRough) <= left }))
 
             if (sources.none)
-                Then(MoveEndAction(f, e, then))
+                Then(MovesMadeAction(f, e, then))
             else
                 Ask(f).each(sources)(t => MoveFromAction(f, t.anchor, left, e, then))
                     .add(MoveDoneAction(f, e, then))
@@ -593,7 +616,55 @@ object MapExpansion extends Expansion {
             Then(MoveAction(f, left - cost, e, then))
 
         case MoveDoneAction(f, e, then) =>
+            Then(MovesMadeAction(f, e, then))
+
+        // Before the Move: what f holds (Halvard's Craft), and Borgild's Shield bringing Kaija and Borgild together
+        case MoveStartAction(f, e, then) =>
+            game.heldBefore = game.controlled(f)./~(_.areas)
+            game.mended = 0
+
+            val apart = game.kaija.any && game.chiefs.contains(f) && game.board.territory(game.kaija.get) != game.board.territory(game.chiefs(f))
+
+            if (e.special == BorgildMove && f == Bear && apart)
+                Ask(f).add(BorgildShieldAction(f, true, e, then)).add(BorgildShieldAction(f, false, e, then)).add(BorgildShieldSkipAction(f, e, then))
+            else
+                Then(MoveAction(f, e.n, e, then))
+
+        case BorgildShieldAction(f, kaijaMoves, e, then) =>
+            if (kaijaMoves)
+                game.kaija = game.chiefs.get(f)
+            else
+                game.chiefs += f -> game.kaija.get
+
+            f.log("brought", "Kaija".hl, "and", WarchiefElem(f), "together with", "Borgild's Shield".hl)
+
+            Then(MoveAction(f, e.n, e, then))
+
+        case BorgildShieldSkipAction(f, e, then) =>
+            Then(MoveAction(f, e.n, e, then))
+
+        // After the moves: Egil's Fury may remove a building from a territory being attacked
+        case MovesMadeAction(f, e, then) =>
+            val attacked = game.combats.%(a => game.present(game.board.territory(a)).num > 1)./(game.board.territory)
+            val l = (e.special == EgilMove).??(attacked./~(game.buildingsIn))
+
+            if (l.any)
+                Ask(f).each(l) { case (s, b) => EgilFuryAction(f, s, b, e, then) }.add(EgilFurySkipAction(f, e, then))
+            else
+                Then(MoveEndAction(f, e, then))
+
+        case EgilFuryAction(f, s, b, e, then) =>
+            game.buildings -= s
+
+            f.log("removed", b, "from", s.area, "with", "Egil's Fury".hl)
+
             Then(MoveEndAction(f, e, then))
+
+        case EgilFurySkipAction(f, e, then) =>
+            Then(MoveEndAction(f, e, then))
+
+        case HalvardCraftSkipAction(f, then) =>
+            Then(then)
 
         case MoveEndAction(f, e, then) =>
             Then(CombatsAction(f, e, then))
@@ -609,6 +680,21 @@ object MapExpansion extends Expansion {
                 // Snake Clan card: the token may move after the move
                 if (e.special == SnakeMove)
                     Then(ScorchedAction(f, then))
+                else
+                // Svarn's Menders: the casualties come back
+                if (e.special == SvarnMove && game.mended > 0)
+                    Then(SvarnMendAction(f, then))
+                else
+                // Halvard's Craft: a free small building in a newly controlled territory
+                if (e.special == HalvardMove) {
+                    val fresh = game.controlled(f).%(t => t.areas.forall(a => game.heldBefore.has(a).not))./(_.anchor)
+                    val l = buildOptions(f, BuildEffect(discount = 1), true).%(x => fresh.has(x._1))
+
+                    if (l.none)
+                        Then(then)
+                    else
+                        Ask(f).each(l) { case (a, b, s, _) => BuildPlaceAction(f, a, b, s, 0, 1, BuildEffect(discount = 1), true, then) }.add(HalvardCraftSkipAction(f, then))
+                }
                 else
                     Then(then)
             }
@@ -672,6 +758,17 @@ object MapExpansion extends Expansion {
                     Then(CombatFoodStartAction(f, defender, a, e, then))
             }
 
+        // Liv's Cunning: wood or lore may be spent like food, one at a time
+        case CombatFoodStartAction(f, defender, a, e, then) if e.special == LivMove =>
+            Then(LivCunningAskAction(f, defender, a, e, $, then))
+
+        case LivCunningAskAction(f, defender, a, e, spent, then) =>
+            val max = game.figures(game.board.territory(a), f)
+
+            Ask(f)
+                .some(Resource.all.%(r => f.has(r) > 0 && spent.num < max))(r => $(LivCunningAction(f, defender, a, e, r, spent, then)))
+                .add(LivCunningDoneAction(f, defender, a, e, spent, then))
+
         case CombatFoodStartAction(f, defender, a, e, then) =>
             val t = game.board.territory(a)
             val max = math.min(f.food, game.figures(t, f))
@@ -681,12 +778,26 @@ object MapExpansion extends Expansion {
             else
                 Ask(f).each(0.to(max).$)(k => CombatFoodAction(f, f, defender, a, e, $(k), then))
 
+        case LivCunningAction(f, defender, a, e, r, spent, then) =>
+            f.gain(r, -1)
+
+            Then(LivCunningAskAction(f, defender, a, e, spent :+ r, then))
+
+        case LivCunningDoneAction(f, defender, a, e, spent, then) =>
+            if (spent.any)
+                f.log("spent", spent./(_.elem).join(" "), "with", "Liv's Cunning".hl)
+
+            Then(CombatFoodPaidAction(f, defender, a, e, $(spent.num), then))
+
         case CombatFoodAction(self, attacker, defender, a, e, food, then) =>
             self.food -= food.last
 
             if (food.last > 0)
                 self.log("spent", food.last.hl, Food)
 
+            Then(CombatFoodPaidAction(attacker, defender, a, e, food, then))
+
+        case CombatFoodPaidAction(attacker, defender, a, e, food, then) =>
             if (food.num == 1) {
                 val t = game.board.territory(a)
                 val max = math.min(defender.food, game.figures(t, defender))
@@ -764,9 +875,10 @@ object MapExpansion extends Expansion {
             val ds = game.strength(t, defender, false) + fortress + db + food(1) + faces(1).points
             // Casualties each side inflicts; Halvard defending ignores 1
             val halvard = math.min(faces(0).casualties, Warchief.shield(t, defender, false))
-            val ac = faces(0).casualties - halvard
+            // Egil's Fury: +1 casualty
+            val ac = faces(0).casualties - halvard + (e.special == EgilMove).??(1)
             // Shieldbearers cancel 1 casualty inflicted by the defender
-            val shield = (e.special == ShieldMove && faces(1).casualties + towers > 0).??(1)
+            val shield = ((e.special == ShieldMove || e.special == BorgildMove) && faces(1).casualties + towers > 0).??(1)
             val dc = faces(1).casualties + towers - shield
 
             if (game.kaijaIn(t, attacker) || game.kaijaIn(t, defender))
@@ -791,8 +903,13 @@ object MapExpansion extends Expansion {
                 else if (as > ds) |(attacker)
                 else |(defender)
 
+            val before = game.count(t, attacker)
             game.removeFigures(t, attacker, math.min(dc, au))
             game.removeFigures(t, defender, math.min(ac, du))
+
+            // Svarn's Menders: the attacker's casualties wait on the card
+            if (e.special == SvarnMove)
+                game.mended += before - game.count(t, attacker)
 
             winner match {
                 case None =>
@@ -816,8 +933,13 @@ object MapExpansion extends Expansion {
                         }
                     }
 
-                    if (game.figures(t, loser) > 0)
+                    if (game.figures(t, loser) > 0) {
+                        // Brand's Bravery: the winning attacker chooses where the loser retreats
+                        if (w == attacker && e.special == BrandMove)
+                            game.retreatBy = |(attacker)
+
                         Then(RetreatAction(loser, a, loser == attacker && e.ignoreRough, then))
+                    }
                     else
                         Then(then)
             }
@@ -827,8 +949,10 @@ object MapExpansion extends Expansion {
             val n = game.count(t, f)
             val kaija = game.kaijaIn(t, f)
 
-            if (n == 0 && kaija.not && game.chiefIn(t, f).not)
+            if (n == 0 && kaija.not && game.chiefIn(t, f).not) {
+                game.retreatBy = None
                 Then(then)
+            }
             else {
                 // Not into a fight, nor where a creature is being attacked or a Fallen Valkyrie is
                 val fighting = (game.combats ++ game.creatureFights./(_.area))./(game.board.territory)
@@ -838,12 +962,38 @@ object MapExpansion extends Expansion {
                     val chief = game.chiefIn(t, f)
                     game.removeFigures(t, f, game.figures(t, f))
                     f.log("had nowhere to retreat and lost", Figures(n, kaija, chief))
+                    game.retreatBy = None
                     Then(then)
                 }
+                else
+                if (game.retreatBy.any)
+                    Ask(game.retreatBy.get).some(to)(o => $(BrandRetreatToAction(game.retreatBy.get, f, a, o.anchor, n, kaija, rough, then)) ++ (n > 1).$(BrandRetreatToAction(game.retreatBy.get, f, a, o.anchor, 1, kaija, rough, then)))
                 else
                     // Kaija goes with the first group
                     Ask(f).some(to)(o => $(RetreatToAction(f, a, o.anchor, n, kaija, rough, then)) ++ (n > 1).$(RetreatToAction(f, a, o.anchor, 1, kaija, rough, then)))
             }
+
+        case BrandRetreatToAction(_, f, from, to, n, kaija, rough, then) =>
+            Then(RetreatToAction(f, from, to, n, kaija, rough, then))
+
+        // Svarn's Menders: each casualty back in one of f's territories
+        case SvarnMendAction(f, then) =>
+            val l = game.controlled(f)
+
+            if (game.mended <= 0 || l.none || game.reserve(f) <= 0) {
+                game.mended = 0
+                Then(then)
+            }
+            else
+                Ask(f).each(l)(t => SvarnMendToAction(f, t.anchor, then))
+
+        case SvarnMendToAction(f, a, then) =>
+            game.addUnits(a, f, 1)
+            game.mended -= 1
+
+            f.log("placed a casualty back in", a, "with", "Svarn's Menders".hl)
+
+            Then(SvarnMendAction(f, then))
 
         case RetreatToAction(f, from, to, n, kaija, rough, then) =>
             // The warchief goes with the first group

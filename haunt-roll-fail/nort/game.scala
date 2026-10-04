@@ -248,6 +248,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     val earlyPerPlayer = (lastYear - 1 + 2) / 3
     val advancedPerPlayer = lastYear - 1 - earlyPerPlayer
 
+    // The Warchiefs box's extra clan upgrade cards
+    val warchiefCards = has(Warchiefs) || options.has(WarchiefCards)
+
     // Three closed territories with large buildings win at the end of a year
     val domination = options.has(FameOnly).not
 
@@ -267,6 +270,12 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // Territories where a Move action started a fight
     var combats : $[AreaRef] = $
+
+    // Warchief upgrade cards: the areas the mover controlled before the Move action (Halvard's Craft),
+    // its casualties waiting to come back (Svarn's Menders), and who picks the loser's retreat (Brand's Bravery)
+    var heldBefore : $[AreaRef] = $
+    var mended = 0
+    var retreatBy : |[Faction] = None
 
     // Where the last Recruit action placed units (Raven Mercenaries)
     var recruited : $[AreaRef] = $
@@ -566,12 +575,14 @@ object CommonExpansion extends Expansion {
                 Random[Faction](factions, FirstPlayerAction(_))
 
         case ShuffleStartingDecksAction(f :: rest) =>
-            f.upgrades = $(ClanCard(f, 1), ClanCard(f, 2))
+            f.upgrades = $(ClanCard(f, 1), ClanCard(f, 2)) ++ game.warchiefCards.$(ClanCard(f, 3))
+
+            val upgrades = f.upgrades
 
             if (Debug.upgradesInDeck)
                 f.upgrades = $
 
-            Shuffle[Card]((Cards.starting(game.colors(f)) :+ ClanCard(f, 0)) ++ Debug.upgradesInDeck.??($(ClanCard(f, 1), ClanCard(f, 2))), ShuffledStartingDeckAction(f, _, rest))
+            Shuffle[Card]((Cards.starting(game.colors(f)) :+ ClanCard(f, 0)) ++ Debug.upgradesInDeck.??(upgrades), ShuffledStartingDeckAction(f, _, rest))
 
         case ShuffledStartingDeckAction(f, l, rest) =>
             f.draw = l
