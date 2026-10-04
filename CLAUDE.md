@@ -319,6 +319,21 @@ file covers the build, server and deploy. No session can ssh to the server
   The mirror factions' markers recolour those heads to the mirror colour
   (Negabond's head is the Vagabond's in negative; Longtail Kaliph is a black
   rat on red). Fan factions are deliberately left on their `-glyph` head icon.
+- The Gladiator, Cheat and Jailor Captain pieces
+  (`webp2/root/images/faction/abduct/kd-captain-*.webp`) are the official
+  Homeland meeples, rendered front-on from the 3D models (mesh plus texture)
+  in the Tabletop Simulator mod "Root - Ultimate Collection - Homeland
+  Expansion" (Steam workshop 3354438467; the save file comes from the
+  `file_url` of Steam's public `GetPublishedFileDetails` API, BSON, the
+  pieces are the `Vagabond - <name>` objects in its scripts).
+- Knaves items are the Captains' items, not crafted items: the Vagabond
+  can't take them in trade when it aids the Knaves (`AidTradeAction` in
+  `root/faction-hero.scala`), the Hundreds can't loot them (Looters in
+  `root/faction-horde.scala`), and the Knaves can't aid The Exile
+  (`anytime` in `root/hirelings.scala`, `canAidExile` in `root/game.scala`).
+- Advanced Setup's default faction pool leaves out the Vagabond, Negabond
+  and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
+  "Official | Riverfolk ..." presets add the Vagabond back.
 - Boards with printed item slots (Gorge, Marsh) set `itemSlots` (`itemGrid`
   for the usual 2x6 layout); `drawItemSlots` draws `game.uncrafted` on them.
 - The Homeland Marsh map is `MarshBoard` in `root/maps.scala` (option

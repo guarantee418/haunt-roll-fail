@@ -1150,8 +1150,9 @@ object HeroExpansion extends FactionExpansion[Hero] {
             AidTradeAction(f, i, e)
 
         case AidTradeAction(f, i, e) =>
+            // Knaves' items are their Captains' items, not crafted items to take in trade
             Ask(f)
-                .each(e.forTrade)(x => AidTakeItemAction(f, i, e, x))
+                .each(e.is[Knaves].not.??(e.forTrade))(x => AidTakeItemAction(f, i, e, x))
                 .add(AidIgnoreItemAction(f, i, e))
 
         case AidTakeItemAction(f, i, e, n) =>
@@ -1163,7 +1164,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
             AidDoneAction(f, e)
 
         case AidIgnoreItemAction(f, i, e) =>
-            f.log("aided", e, "with", i.exhaust, e.forTrade.any.??("and took nothing"))
+            f.log("aided", e, "with", i.exhaust, (e.is[Knaves].not && e.forTrade.any).??("and took nothing"))
 
             AidDoneAction(f, e)
 

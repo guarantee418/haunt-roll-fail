@@ -45,6 +45,9 @@ object MetaAdset extends MetaGame {
 
     val realFactions = Meta.official ++ $(NB) ++ $(XC) ++ $(CUv2) ++ $(FH) ++ $(LDvE) ++ $(TC) ++ $(KD)
 
+    // not in the pool by default: Vagabond, Negabond and the fan factions
+    val defaultFactions = realFactions.diff($(VB, NB, XC, CUv2, FH))
+
     val options = Meta.options
 
     override def optionsFor(n : Int, l : $[F]) = Meta.optionsFor(n, realFactions)
@@ -70,7 +73,7 @@ object MetaAdset extends MetaGame {
         RandomCharacter,
         MapDefaultLandmarks,
         NoHirelings
-    ) ++ realFactions./(IncludeFaction) ++ Meta.hirelings./(IncludeHireling)
+    ) ++ defaultFactions./(IncludeFaction) ++ Meta.hirelings./(IncludeHireling)
 
     override def presetsFor(n : Int, l : $[F]) = $(
         ("Reset Options".spn, $, $),
@@ -124,6 +127,7 @@ object MetaAdset extends MetaGame {
             UnthematicPropagandaBureau,
             TunnelsIgnoreRaid,
             TunnelsIgnoreTradePosts,
+            IncludeFaction(VB),
         ), realFactions.drop(6)./(IncludeFaction)),
         ("Official".hl ~ " | " ~ "Riverfolk".styled(RF) ~ " + " ~ "Underworld".styled(UD) ~ " | " ~ "Exiles & Partisans".hh, $(
             AutoHitsAssignmentMode,
@@ -134,6 +138,7 @@ object MetaAdset extends MetaGame {
             UnthematicPropagandaBureau,
             TunnelsIgnoreRaid,
             TunnelsIgnoreTradePosts,
+            IncludeFaction(VB),
         ), realFactions.drop(8)./(IncludeFaction)),
         ("Official".hl ~ " | " ~ "Riverfolk".styled(RF) ~ " + " ~ "Underworld".styled(UD) ~ " + " ~ "Marauder".styled(LH) ~ " | " ~ "Exiles & Partisans".hh, $(
             AutoHitsAssignmentMode,
@@ -144,6 +149,7 @@ object MetaAdset extends MetaGame {
             UnthematicPropagandaBureau,
             TunnelsIgnoreRaid,
             TunnelsIgnoreTradePosts,
+            IncludeFaction(VB),
         ), realFactions.drop(10)./(IncludeFaction)),
     )
 
