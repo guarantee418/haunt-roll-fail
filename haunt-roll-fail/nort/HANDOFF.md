@@ -170,15 +170,16 @@ list. In short:
   Warchiefs module (`GetPublishedFileDetails`, BSON); mod 2847156187 has one
   image per card and 1221x2564 tile textures (front on top, the tile square
   about 1180 px from about (20, 35)); mod 2838546142 has the digital card
-  sheets (7x5) and the creature meshes. `tools/render-mesh.py` renders a mesh. The missing 52nd
+  sheets (7x5) and the creature meshes. The missing 52nd
   card was Veiled Threats (Advanced, 2 fame: an opponent randomly discards 1
   card, or draw 1). TTS has green starting cards as photographed scans; ours
   are the blue digital art with the ribbon recoloured to their green. Tiles
   31-33 and start-5 were replaced by the sharper TTS scans, aligned to the old
   crops so the tile data still fits (tile-31's photo was slightly skewed).
-  The creature figures are rendered from the TTS OBJ meshes (Kaija and the
-  Brown Bear share a mesh) with a small numpy z-buffer renderer, tinted
-  beige / brown / dark brown like the cards' color codes.
+  The TTS creature miniatures (OBJ meshes, tinted beige / brown / dark
+  brown; Kaija and the Brown Bear share a mesh) were rendered and tried on the
+  map; the owner preferred the round tokens cut from the card art, so those
+  stay.
   TTS also has the seven warchiefs as standee portraits (Figurine_Custom,
   259x432), not used yet.
 - **Bots:** random (they now favour upgrading). Fine for testing, not for play.

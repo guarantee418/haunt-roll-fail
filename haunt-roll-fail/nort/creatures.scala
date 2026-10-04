@@ -87,8 +87,7 @@ case object CreatureWolf extends CreatureKind {
 case class Creature(kind : CreatureKind, n : Int) extends Card {
     def info = CardInfo(kind.title, "card-creature-" + kind.id + "-" + n, kind.fame, false, MapEffect, kind.text)
     def color = n match { case 1 => "beige" ; case 2 => "brown" ; case _ => "dark brown" }
-    // The miniature, rendered from the Tabletop Simulator model in the card's color code
-    def figure = "creature-figure-" + kind.id + "-" + n
+    def token = "creature-" + kind.id + "-" + n
     override def removable = false
     override def elem : Elem = kind.title.styled(styles.creature) ~ " (" ~ color.txt ~ ")"
 }

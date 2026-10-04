@@ -177,7 +177,7 @@ object Meta extends MetaGame { mmm =>
         $(ImageAsset("kaija"), ImageAsset("scorched-earth"))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Creatures), "token/creature", "creature-", "webp")(
-        Creature.all./(c => ImageAsset(c.figure.drop("creature-".length)))
+        Creature.all./(c => ImageAsset(c.token.drop("creature-".length)))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/building", "building-", "webp")(
         Building.all./(b => ImageAsset(b.image.drop("building-".length)))

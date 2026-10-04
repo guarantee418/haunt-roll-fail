@@ -431,12 +431,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 pieces.add(Sprite($(at("token-scorched-earth", 150)), $(Rectangle(-75, -75, 150, 150)), tag))(sx(x) - 40, sy(y) + 110)
             }
 
-            // Creature miniatures, above the territory number, side by side
+            // Creatures, above the territory number, side by side
             val creatures = game.creaturesIn(t)
             creatures.zipWithIndex.foreach { case (c, i) =>
                 val (x, y) = board.point(t.anchor)
-                val z = 300
-                pieces.add(Sprite($(at(c.figure, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag))(sx(x) + (i - (creatures.num - 1) / 2.0) * 230, sy(y) - 190)
+                val z = 220
+                pieces.add(Sprite($(at(c.token, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag))(sx(x) + (i - (creatures.num - 1) / 2.0) * 190, sy(y) - 160)
             }
         }
 
