@@ -1152,15 +1152,24 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         val solo = meta.soloFaction.get
         val t = "Play " ~ meta.label.hl ~ " " ~ "Solo".hl
 
-        ui.action.asker.zask(
-            $(ZOption(t, Div("Against the " ~ meta.factionName(solo).hl, ZBasic.info))) ++
-            meta.factions.but(solo)./(f => ZOption(Div("Play as".txt), OnClick(Div(meta.factionElem(f) ~ meta.factionNote(f), ZBasic.choice)), _ => {
-                startSetup($(f, solo), false)
-            })) ++
-            ZBasic(" ", "Cancel", () => {
-                history.popState()
-            }).?
-        )
+        // Each faction with its info button (Northgard's Warchief), as in the custom game's picker
+        def ask() {
+            ui.action.asker.zask(
+                $(ZOption(t, Div("Against the " ~ meta.factionName(solo).hl, ZBasic.info))) ++
+                meta.factions.but(solo)./(f => ZOption(Div("Play as".txt), OnClick(Div(meta.factionElem(f) ~ meta.factionInfo(f)./{ case (label, _, _) => " " ~ Parameter("faction-info", OnClick(Span(label, xstyles.outlined))) }.|(Empty) ~ meta.factionNote(f), ZBasic.choice)), {
+                    case "faction-info" =>
+                        meta.factionInfo(f).foreach { case (_, title, l) => showOverlayRaw(title, l) }
+                        setTimeout(0) { ask() }
+                    case _ =>
+                        startSetup($(f, solo), false)
+                })) ++
+                ZBasic(" ", "Cancel", () => {
+                    history.popState()
+                }).?
+            )
+        }
+
+        ask()
     }
 
     def customGame(online : Boolean) {

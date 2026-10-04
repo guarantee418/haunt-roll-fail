@@ -563,7 +563,7 @@ object NewBloodExpansion extends Expansion {
             val builds = game.controlled(f).has(t).??(MapExpansion.buildOptions(f, BuildEffect(), true).%(x => game.board.territory(x._1) == t))
 
             Ask(f).add(HorseWoodAction(f, a, rest, then))
-                .each(builds) { case (a, b, s, cost) => BuildPlaceAction(f, a, b, s, cost, 1, BuildEffect(), true, next) }
+                .each(builds) { case (a, b, s, cost) => MapExpansion.buildChoice(f, a, b, s, cost, 1, BuildEffect(), true, next) }
 
         case HorseWoodAction(f, a, rest, then) =>
             f.wood += 1
@@ -832,7 +832,7 @@ object NewBloodExpansion extends Expansion {
             if (l.none)
                 Then(then)
             else
-                Ask(f).each(l) { case (a, b, s, cost) => BuildPlaceAction(f, a, b, s, cost, 1, BuildEffect(discount = 1, duplicate = true), true, then) }
+                Ask(f).each(l) { case (a, b, s, cost) => MapExpansion.buildChoice(f, a, b, s, cost, 1, BuildEffect(discount = 1, duplicate = true), true, then) }
                     .add(then.as("Build no Food Silo")("Cooking Mastery".hl))
 
         case EconomicsStartAction(f, then) =>

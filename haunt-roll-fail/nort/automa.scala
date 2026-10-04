@@ -695,7 +695,9 @@ object AutomaExpansion extends Expansion {
         case AutomaBuildAction(b, Some(a), then) =>
             buildChoice(b).foreach { o =>
                 val kind = building(o.what)
-                buildOptions.find(x => x._2 == kind && game.board.territory(x._1).areas.contains(a)).foreach { case (a, b, s, cost) =>
+                // The space: small, then Carved Stone, a large one last, keeping large spaces for large buildings
+                buildOptions.find(x => x._2 == kind && game.board.territory(x._1).areas.contains(a)).foreach { case (a, b, spaces, cost) =>
+                    val s = spaces.sortBy(s => $(SmallSpace, CarvedSpace, LargeSpace).indexOf(MapExpansion.spaceKind(s))).head
                     Automa.wood -= cost
                     game.buildings += s -> b
                     Automa.log("built", b, "in", a)

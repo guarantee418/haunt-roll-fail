@@ -219,6 +219,10 @@ object Meta extends MetaGame { mmm =>
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wilderness), "tile/mask", "mask-", "webp")(
         Tiles.environment./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
     ) ::
+    // The clan boards (clan power, warchief and power), shown below the Lore Tree; loaded when shown
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "expansion/board", "board-", "webp", lzy = Laziness.OnDemand)(
+        mmm.factions./(f => ImageAsset(f.style, Warchief.boardFile(f)))
+    ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/unit", "unit-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "unit-" + c.id))
     ) ::
@@ -248,4 +252,40 @@ object Meta extends MetaGame { mmm =>
     $
 
     override val showAbout = false
+
+    // Map display settings, chosen by each player under "Interface" (like Root's Clearing Rule)
+    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, FightsTerritoryColor, HideTerritoryColor, ShowBorderColor, HideBorderColor)
+    override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor)
+}
+
+
+// Territories tinted with their controller's colour (gray when invaded and pink during a fight are kept with Fights Only)
+trait TerritoryColorSetting extends hrf.Setting with OneOfGroup {
+    val group = "Territory Color"
+}
+
+case object ShowTerritoryColor extends TerritoryColorSetting {
+    val valueOn = "Show".hlb
+}
+
+case object FightsTerritoryColor extends TerritoryColorSetting {
+    val valueOn = "Fights Only".hlb
+}
+
+case object HideTerritoryColor extends TerritoryColorSetting {
+    val valueOn = "Hide".hlb
+}
+
+
+// The border dashes of closed territories that give fame, in their controllers' colours
+trait BorderColorSetting extends hrf.Setting with OneOfGroup {
+    val group = "Fame Borders"
+}
+
+case object ShowBorderColor extends BorderColorSetting {
+    val valueOn = "Show".hlb
+}
+
+case object HideBorderColor extends BorderColorSetting {
+    val valueOn = "Hide".hlb
 }

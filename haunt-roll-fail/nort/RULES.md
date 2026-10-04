@@ -137,7 +137,13 @@ draws a tile when no neutral territory is left.
   a territory where at least one unit is recruited adds one more unit there.
   Limited by the 14 units in reserve.
 - **Build**: in an owned territory on a matching free space; one building of
-  each type per territory; limited by tokens; permanent.
+  each type per territory; limited by tokens; permanent. A small building
+  goes on a small, large or Carved Stone space (not confirmed, see
+  Interpretations), a large building only on a large space, a Carved Stone
+  only on a Carved Stone space. When a building
+  fits more than one kind of free space, the player picks the space (to keep
+  a large space for a large building, or a Carved Stone space for a Carved
+  Stone).
   - Small (1 wood): Food Silo (+1 food at harvest), Woodcutter Lodge (+1 wood),
     Defense Tower (+1 casualty to the defender's roll per tower), Training Camp
     (+1 unit when recruiting there), Carved Stone (+1 lore, only on a Carved
@@ -576,7 +582,7 @@ rulebook is on Tabletopia.
 
 Check these against the rulebook when it is at hand.
 
-- **Automa** (beyond the provisional cards):
+- **Automa**:
   - Its Leaders are its warchief (Leader 1) and its companion figure
     (Leader 2). Without the Warchiefs module they are worth 1 like units
     (the rulebook's example counts "Leader + 3 units" as 4); with it, 3.
@@ -589,6 +595,8 @@ Check these against the rulebook when it is at hand.
     prefers a turn that closes any territory; least rotations last.
   - Explore's territory row ranks the Automa's open territories that have a
     free spot; the compass icon also picks the spot next to that territory.
+  - Build: it puts a small building on a small space, then a Carved Stone
+    space, and on a large space only when no other is free.
   - Snake's Stolen Lore and Rapacious Exploitation adjustments aren't
     implemented (the Automa has no hand or active area).
 - **Events**:
@@ -682,6 +690,13 @@ Check these against the rulebook when it is at hand.
     tile's lair is on the other side of the Rough border). A Spectral Warrior
     may go on a lair with a creature on it.
 
+- **Building spaces** (not confirmed; the rulebook text isn't in the repo):
+  a small building may go on a large building space as well as on a small
+  or Carved Stone one. Before 2026-10-04 small buildings could only use
+  small and Carved Stone spaces. If the rulebook says large spaces are only
+  for large buildings, remove `LargeSpace` from the small buildings' kinds
+  in `MapExpansion.buildOptions` (`nort/map.scala`); the space choice still
+  works between small and Carved Stone spaces.
 - **Kaija** (Bear): one figure. It may be one of the three setup figures
   (two units and Kaija), or be recruited instead of a unit. It moves like a
   unit, alone or with others, but not into a territory with enemy figures
