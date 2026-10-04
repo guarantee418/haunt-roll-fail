@@ -336,11 +336,14 @@ on. To implement one:
   the combat food and die steps, `RetreatAction`, `TradeAction` and
   `EventStepAction`. Ties left by its priorities are asked of the player
   (`choose`).
-- **The cards are provisional** (`AutomaCards.specs`): the 15 printed cards
-  weren't found anywhere. Each is `AutomaSpec(flash, pass, first, second,
-  picks)` with actions `AutomaRecruit`, `AutomaBuild`, `AutomaExplore`,
-  `AutomaMove1`, `AutomaMove2` and the priority objects named after the
-  rulebook's icons (page 18), so transcribing the real cards is data only.
+- The cards (`AutomaCards.specs`) are transcribed from the Tabletopia
+  module's 15 Automa cards (images `card/automa/01`..`15`, and
+  `reference-1/2`): `AutomaSpec(flash, pass, first, second, picks)` with
+  `AutomaRecruit(n, need, prio)`, `AutomaBuild(large, options)` (each option
+  a building, or `SiloOrLodge`, with its priorities), `AutomaExplore(on,
+  rotate)`, `AutomaMove1(from, to)`, `AutomaMove2(leader, from, to)`.
+  Explore's rotations are measured with `Board.withPlaced`. The card strip
+  shows the cards it played this year.
 - The main menu has "Solo vs Automa" (framework hook `MetaGame.soloFaction`,
   `soloGame` in `hrf.scala`, URL `/play/nort/solo`): pick a clan, then the
   usual setup screen with the Automa added.
@@ -458,8 +461,7 @@ list. In short:
    loading rebuild the same game.
 5. **Expansions**: Wilderness, New Blood, and Uncharted Horizons' Events and
    Alternative victory modules are done; Wastelands and the rest of
-   Uncharted Horizons (Raids, Development cards, Training Fields) are next;
-   the Automa needs its 15 printed cards transcribed (assets in `expansion/`; the TTS mod
+   Uncharted Horizons (Raids, Development cards, Training Fields) are next (assets in `expansion/`; the TTS mod
    3597126237 has the Uncharted Horizons cards and Tabletopia its rulebook).
 
 ## How to build and test (in a cloud session)

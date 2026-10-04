@@ -77,6 +77,16 @@ class Board {
         territoryCache = None
     }
 
+    // The value of f with p placed for a moment (the Automa's tile rotations)
+    def withPlaced[T](p : Placement)(f : => T) : T = {
+        val before = placements
+        place(p)
+        try f finally {
+            placements = before
+            territoryCache = None
+        }
+    }
+
     def spec(a : AreaRef) : AreaSpec = at(a.x, a.y).get.spec.area(a.id)
 
     // The area of the tile at x, y that owns side s, if a tile is there

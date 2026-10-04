@@ -206,6 +206,10 @@ object Meta extends MetaGame { mmm =>
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card", "card-", "webp")(
         $(ImageAsset("unrest"))
     ) ::
+    // The Automa's cards (Solo module)
+    ConditionalAssetsList((factions : $[F], options : $[O]) => factions.has(Automa), "card/automa", "card-automa-", "webp")(
+        1.to(15).$./(n => ImageAsset("%02d".format(n))) ++ $(ImageAsset("reference-1"), ImageAsset("reference-2"))
+    ) ::
     // Uncharted Horizons: the Event cards and the Alternative victory cards
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, EventsModule), "card/event", "card-event-", "webp")(
         EventCard.all./(c => ImageAsset(c.id))
