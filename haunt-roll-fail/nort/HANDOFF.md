@@ -336,6 +336,9 @@ on. To implement one:
   picks)` with actions `AutomaRecruit`, `AutomaBuild`, `AutomaExplore`,
   `AutomaMove1`, `AutomaMove2` and the priority objects named after the
   rulebook's icons (page 18), so transcribing the real cards is data only.
+- The main menu has "Solo vs Automa" (framework hook `MetaGame.soloFaction`,
+  `soloGame` in `hrf.scala`, URL `/play/nort/solo`): pick a clan, then the
+  usual setup screen with the Automa added.
 - `NORT_AUTOMA=1` makes the headless host play solo games (random level;
   Creatures on from level 3); the summary counts `automa-<action>`.
 - Common code changes: `CommonExpansion.cardFame` (Achievement scoring, used

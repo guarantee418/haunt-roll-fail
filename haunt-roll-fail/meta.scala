@@ -146,6 +146,9 @@ trait MetaBase {
     // A faction only bots can play (Northgard's Automa): always set to its default bot
     def botOnly(f : F) : Boolean = false
 
+    // A solo opponent (Northgard's Automa): the main menu offers a solo game against it
+    def soloFaction : |[F] = None
+
     // Image name -> URL for images used in the menus (faction notes, option explanations), before the game's assets load
     def menuImages : Map[String, String] = Map()
 

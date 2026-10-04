@@ -42,6 +42,9 @@ object Meta extends MetaGame { mmm =>
     // The Automa plays by its cards, never by a person
     override def botOnly(f : Faction) = f == Automa
 
+    // The main menu's "Solo vs Automa"
+    override def soloFaction = |(Automa)
+
     val minPlayers = 2
     // Six players build on the five-player rules
     override val maxPlayers = 6

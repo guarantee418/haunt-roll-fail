@@ -878,6 +878,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             customGame(false)
         }
 
+        def goSolo() {
+            history.pushState("/play/" + meta.name + "/solo", () => metaMenu())
+            soloGame()
+        }
+
         def goOnline() {
             history.pushState("/play/" + meta.name + "/online", () => metaMenu())
             onlineGame()
@@ -888,7 +893,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             (
                 ZBasic(title, "Quick Game".hlb, meta.factions.%(f => meta.getBots(f).has(meta.defaultBot(f))).any.??(() => goQuickGame())) ::
                 ZBasic(title, "Local Game".hhb, () => goHotseat()) ::
-                ZBasic(title, "Play Online".hlb, (HRF.server.any && HRF.offline.not).??(() => goOnline()))
+                meta.soloFaction./(s => ZBasic(title, ("Solo vs " + meta.factionName(s).split(' ').head).hhb, () => goSolo())).$ ++
+                $(ZBasic(title, "Play Online".hlb, (HRF.server.any && HRF.offline.not).??(() => goOnline())))
             ) ++
             meta.intLinks./((t, l) => ZBasic("Other", t, () => {
                 HRF.metas.%(_.name == l).single./{ m =>
@@ -906,6 +912,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         else
         if (HRF.segments.startsWith($("hotseat")))
             goHotseat()
+        else
+        if (HRF.segments.startsWith($("solo")) && meta.soloFaction.any)
+            goSolo()
         else
         if (HRF.segments.startsWith($("online")))
             goOnline()
@@ -1131,6 +1140,24 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             })) ++
             ZBasic(" ", "Back", () => {
                 // onlineGame()
+                history.popState()
+            }).?
+        )
+    }
+
+    // A local game against the solo opponent: pick a faction, then the usual setup screen
+    def soloGame() {
+        HRF.segments = $
+
+        val solo = meta.soloFaction.get
+        val t = "Play " ~ meta.label.hl ~ " " ~ "Solo".hl
+
+        ui.action.asker.zask(
+            $(ZOption(t, Div("Against the " ~ meta.factionName(solo).hl, ZBasic.info))) ++
+            meta.factions.but(solo)./(f => ZOption(Div("Play as".txt), OnClick(Div(meta.factionElem(f) ~ meta.factionNote(f), ZBasic.choice)), _ => {
+                startSetup($(f, solo), false)
+            })) ++
+            ZBasic(" ", "Cancel", () => {
                 history.popState()
             }).?
         )
