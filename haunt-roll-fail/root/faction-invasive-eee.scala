@@ -869,7 +869,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
 
             Repeat
 
-        // Assimilationists: remove a Peaceful enclave you rule, both draw, no Fears Come to Pass
+        // Assimilationists: remove a Peaceful enclave you rule, you draw and the Diaspora draws, no Fears Come to Pass
         case CraftPerformAction(f, d @ CraftEffectCard(_, _, _, FrogAssimilationists(e)), m) =>
             f.hand --> d --> discard.quiet
 
@@ -891,7 +891,8 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
         case InvasiveEEEAssimilateAction(f, e, c) =>
             e.calm = true
 
-            val draw = DrawCardsAction(f, 1, WithEffect(FrogAssimilationists(e)), AddCardsAction(f, (f != e).?(DrawCardsAction(e, 1, WithEffect(FrogAssimilationists(e)), AddCardsAction(e, Repeat)) : ForcedAction).|(Repeat)))
+            // the card says draw 1 and force the Diaspora to draw 1, so the Diaspora crafting it draws 2
+            val draw = DrawCardsAction(f, 1, WithEffect(FrogAssimilationists(e)), AddCardsAction(f, DrawCardsAction(e, 1, WithEffect(FrogAssimilationists(e)), AddCardsAction(e, Repeat))))
 
             TryForcedRemoveAction(f, c, e, PeacefulEEE, (f != e).??(1), Removing, ForcedRemoveFinishedAction(f, draw), draw)
 

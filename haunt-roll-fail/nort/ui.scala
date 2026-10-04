@@ -577,12 +577,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         case f => $(f)
     },
     x => x,
-    // The overlay (zoomed cards, notifications) covers the whole screen
-    ff => ff :+ Fit("map-small-overlay", ff./(_.x).min, ff./(_.y).min, ff./(_.right).max - ff./(_.x).min, ff./(_.bottom).max - ff./(_.y).min))
+    // The overlay (zoomed cards, notifications, dialogs) covers the map, as in Root
+    ff => ff ++ ff.%(_.name == "map-small")./(_.copy(name = "map-small-overlay")))
 
     val settingsKey = Meta.settingsKey
 
-    val layoutKey = "v" + 8 + "." + "arity-" + arity
+    val layoutKey = "v" + 9 + "." + "arity-" + arity
 
     def overlayScrollX(e : Elem) = overlayScroll(e)(styles.seeThroughInner).onClick
     def overlayFitX(e : Elem) = overlayFit(e)(styles.seeThroughInner).onClick

@@ -161,8 +161,12 @@ case class WaitCardAction(self : Faction, card : Card) extends BaseAction(card)(
 case class ReplaceCardAction(self : Faction, card : Card) extends BaseAction(card)("Replace", "(" ~ 1.hl ~ " " ~ Lore.elem ~ ")")
 case class RemoveCardAction(self : Faction, card : Card) extends BaseAction(card)("Remove", "(" ~ 2.hl ~ " " ~ Lore.elem ~ ")")
 case class UpgradeCardAction(self : Faction, card : Card, upgrade : Card, remove : Boolean) extends BaseAction(card)("Upgrade to", upgrade, remove.?("and remove").|("and wait"), "(" ~ 3.hl ~ " " ~ Lore.elem ~ ")")
-// A card in hand, shown as its image; clicking it offers what can be done with it
+// A card in hand, shown as its image; clicking it selects it and offers what can be done with it
 case class CardMenuAction(self : Faction, card : Card, stage : Int) extends BaseAction("Your hand")(card.handImg) with Soft with ViewObject[Card] { def obj = card }
+// Another card in hand while one is selected; not exploded, so bots and checks don't walk from card to card
+case class CardSwitchAction(self : Faction, card : Card, stage : Int) extends BaseAction("Your hand")(card.handImg) with Soft with NoExplode with ViewObject[Card] { def obj = card }
+// The selected card in hand, as in Root's card choices; clicking it again opens it full screen
+case class CardSelectedAction(self : Faction, card : Card) extends BaseInfo("Your hand")(card.handImg) with ViewObject[Card] with Selected with OnClickInfo { def obj = card ; def param = card }
 // Cards shown while there is nothing to do with them; clicking one opens it full screen
 case class CardInfoAction(self : Faction, title : Elem, card : Card) extends BaseInfo(title)(card.handImg) with ViewObject[Card] with OnClickInfo { def obj = card ; def param = card }
 case class PassAction(self : Faction) extends BaseAction("Actions")("Pass")
@@ -418,7 +422,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def info(waiting : $[Faction], self : |[Faction], actions : $[UserAction]) : $[Info] = {
         // The developments and achievements are shown in the court pane (UI.drawCards);
         // your hand is in the action pane, as choices on your turn and as pictures otherwise
-        val choosing = actions.exists(_.unwrap.is[CardMenuAction])
+        val choosing = actions.exists(a => a.unwrap.is[CardMenuAction] || a.unwrap.is[CardSelectedAction])
 
         (year > 0).$(Info("Year", year.hlb, "of", lastYear.hl)) ++
         self.%(states.contains)./~(f =>
@@ -496,6 +500,30 @@ object CommonExpansion extends Expansion {
 
     // Only cards whose effect is implemented can be played
     def playable(f : Faction, c : Card)(implicit game : Game) : Boolean = playableEffect(f, c.effect)
+
+    // A card's choices, below the hand with that card selected; another card selects that one instead
+    def cardMenu(f : Faction, c : Card, stage : Int)(implicit game : Game) : Continue = {
+        val hand = handChoices(f, stage)./(d => (d == c).?(CardSelectedAction(f, d) : UserAction).|(CardSwitchAction(f, d, stage)))
+
+        if (stage == 0)
+            Ask(f)
+                .add(hand)
+                .add(playable(f, c).$(PlayCardAction(f, c, stage)))
+                .add(WaitCardAction(f, c))
+                .when(f.lore >= 1)(ReplaceCardAction(f, c))
+                .when(f.lore >= 2 && c.removable)(RemoveCardAction(f, c))
+                .add((f.lore >= 3).??(f.upgrades./~(u => $(UpgradeCardAction(f, c, u, false)) ++ c.removable.$(UpgradeCardAction(f, c, u, true)))))
+                .cancel
+        else
+            Ask(f)
+                .add(hand)
+                .add(PlayCardAction(f, c, stage))
+                .cancel
+    }
+
+    // The cards in hand that can be chosen on a turn: any at the start, then only playable ones (only Flash cards after the first)
+    def handChoices(f : Faction, stage : Int)(implicit game : Game) : $[Card] =
+        f.hand.distinct.%(c => stage == 0 || (playable(f, c) && (stage == 1 || c.flash)))
 
     def playableEffect(f : Faction, e : Effect)(implicit game : Game) : Boolean = e match {
         case DrawEffect(n, _, _, _) => available(f) >= n
@@ -751,32 +779,21 @@ object CommonExpansion extends Expansion {
         case TurnAction(f, stage) =>
             game.highlight.current = |(f)
 
-            val cards = f.hand.distinct
-
             if (stage == 0)
                 Ask(f)
-                    .each(cards)(c => CardMenuAction(f, c, stage))
+                    .each(handChoices(f, stage))(c => CardMenuAction(f, c, stage))
                     .add(PassAction(f))
             else
                 Ask(f)
-                    .each(cards.%(c => playable(f, c) && (stage == 1 || c.flash)))(c => CardMenuAction(f, c, stage))
+                    .each(handChoices(f, stage))(c => CardMenuAction(f, c, stage))
                     .add(EndTurnAction(f))
 
+        // The hand stays shown with the card selected and its choices below; another card selects that one instead
+        case CardSwitchAction(f, c, stage) =>
+            cardMenu(f, c, stage)
+
         case CardMenuAction(f, c, stage) =>
-            if (stage == 0)
-                Ask(f)
-                    .group(Image(c.info.image, styles.bigCard))
-                    .add(playable(f, c).$(PlayCardAction(f, c, stage)))
-                    .add(WaitCardAction(f, c))
-                    .when(f.lore >= 1)(ReplaceCardAction(f, c))
-                    .when(f.lore >= 2 && c.removable)(RemoveCardAction(f, c))
-                    .add((f.lore >= 3).??(f.upgrades./~(u => $(UpgradeCardAction(f, c, u, false)) ++ c.removable.$(UpgradeCardAction(f, c, u, true)))))
-                    .cancel
-            else
-                Ask(f)
-                    .group(Image(c.info.image, styles.bigCard))
-                    .add(PlayCardAction(f, c, stage))
-                    .cancel
+            cardMenu(f, c, stage)
 
         case PlayCardAction(f, c, stage) =>
             f.hand = f.hand.diff($(c))

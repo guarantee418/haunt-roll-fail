@@ -386,13 +386,15 @@ Check these against the rulebook when it is at hand.
     an adjacent territory held only by Stag.
   - Liv's reroll is offered after seeing the roll; the point-or-casualty
     choice comes after the reroll decision.
-- **Warchief upgrade cards** (not confirmed yet):
+- **Warchief upgrade cards**:
   - The card bonuses also apply in fights against creatures started by the
     Move (Borgild's cancelled casualty, Liv's Cunning, Svarn's Menders).
-  - Svarn's Menders brings back units only (not Kaija or the warchief), and
-    only casualties, not units lost for having nowhere to retreat.
-  - Halvard's Craft: a "new" territory is one with none of the areas the
-    player controlled before the Move; the free building follows the usual
-    build rules (space, one of each type, no Brown Bear).
-  - Signy's Celerity: units in an enemy territory with the token may move on;
-    a fight happens only if some stay.
+    Confirmed by the owner on 2026-10-03.
+  - Not confirmed yet:
+    - Svarn's Menders brings back units only (not Kaija or the warchief),
+      and only casualties, not units lost for having nowhere to retreat.
+    - Halvard's Craft: a "new" territory is one with none of the areas the
+      player controlled before the Move; the free building follows the usual
+      build rules (space, one of each type, no Brown Bear).
+    - Signy's Celerity: units in an enemy territory with the token may move
+      on; a fight happens only if some stay.
