@@ -350,9 +350,12 @@ file covers the build, server and deploy. No session can ssh to the server
   (Steam workshop 2516434159; its objects are JSON strings inside the
   `EVERYTHING['Standard'][<faction>]` Lua tables). Its Council and Knaves
   boards match the rules implemented here; the Homeland mod (3354438467) has
-  later revisions. Mirror factions show their original's board. Factions
-  without a dedicated overlay get a generic one with just the board (and the
-  Vagabond's character).
+  later revisions. Mirror factions show their original's board. Marquise,
+  Eyrie, Alliance, Vagabond, Riverfolk, Lizards and Corvids have overlays
+  like the Homeland ones: board, turn phases (`phases`), pieces, and a
+  "More Info" toggle with short rule notes. Panes are tappable before a
+  faction is set up too (`factionStatus` and `updateStatus`); a faction
+  without state yet shows just its board ("Not set up yet").
 - Boards with printed item slots (Gorge, Marsh) set `itemSlots` (`itemGrid`
   for the usual 2x6 layout); `drawItemSlots` draws `game.uncrafted` on them.
 - The Homeland Marsh map is `MarshBoard` in `root/maps.scala` (option
