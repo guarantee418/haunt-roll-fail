@@ -23,8 +23,10 @@ object Host extends hrf.host.BaseHost {
     def subjects = factions
 
     // Random colors, game length and victory options; teams half the time with four or six players (NORT_TEAMS=1: always)
+    // NORT_AUTOMA=1: solo games, one clan against the Automa
     def batch = $(2, 3, 4, 5, 6)./(n => () => {
-        val l = factions.shuffle.take(n)
+        val solo = sys.env.get("NORT_AUTOMA").has("1")
+        val l = solo.?(factions.shuffle.take(1) :+ Automa).|(factions.shuffle.take(n))
         val colors = l.zip(PlayerColor.all.shuffle)./{ case (f, c) => ColorOption(f, c) }
         // NORT_CREATURES=1: always with the Creatures module (and the More Creatures variant half the time); NORT_WARCHIEFS=1: always with Warchiefs; NORT_WILDERNESS=1: always with Wilderness
         val creatures = sys.env.get("NORT_CREATURES").has("1") || random() < 0.5
@@ -36,8 +38,10 @@ object Host extends hrf.host.BaseHost {
             (sys.env.get("NORT_EVENTS").has("1") || random() < 0.5).$(ModuleOption(EventsModule)) ++
             { val v = sys.env.get("NORT_VICTORY").has("1") || random() < 0.5 ; v.$(ModuleOption(VictoryModule)) ++ (v && random() < 0.5).$(VictoryModeOption(true)) } ++
             Module.teams.toList.%{ case (_, k) => k == n && (sys.env.get("NORT_TEAMS").has("1") || random() < 0.5) }./{ case (m, _) => ModuleOption(m) }
-        options.foreach(o => assert(Meta.parseOption(Meta.writeOption(o)) == $(o), o))
-        new G(l, options)
+        val level = solo.$(AutomaLevelOption(1 + (random() * 6).toInt))
+        val all = (options ++ level).%(o => solo.not || o.is[ModuleOption].not || Module.teams.contains(o.asInstanceOf[ModuleOption].module).not) ++ level.exists(_.level >= 3).$(ModuleOption(Creatures))
+        all.foreach(o => assert(Meta.parseOption(Meta.writeOption(o)) == $(o), o))
+        new G(l, all.distinct)
     })
 
     def factionName(f : F) = f.name

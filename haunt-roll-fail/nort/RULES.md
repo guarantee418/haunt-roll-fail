@@ -38,6 +38,7 @@ draws a tile when no neutral territory is left.
 | Wilderness expansion: Environment tiles and five more creatures, with the Ancestral Graveyard and the Wyvern's Den | done 2026-10-04 (`wilderness.scala`, see Wilderness below) |
 | New Blood: seven more clans with their warchiefs and 28 clan cards | done 2026-10-04 (`newblood.scala`, see New Blood below) |
 | Uncharted Horizons: Events module and Alternative victory conditions module (Thane and Jarl modes) | done 2026-10-04 (`horizons.scala`, see below) |
+| Uncharted Horizons: Solo module (the Automa) | engine done 2026-10-04 (`automa.scala`); the 15 Automa cards are provisional until the printed ones are transcribed |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -507,6 +508,57 @@ Wealth cards (`deck237`), more than the rulebook's 5 and 8. Code in
   Refinement (upgrade or remove 4 cards). The status panes show each card
   with ✓ when fulfilled and the counts.
 
+## Uncharted Horizons: Solo module, the Automa (2026-10-04, provisional cards)
+
+From the Uncharted Horizons rulebook on Tabletopia (pages 13–18); code in
+`automa.scala`. Pick "Automa (solo)" and one clan; the Automa is always a
+bot (`Meta.botOnly`). **The 15 Automa cards are not in any source found**
+(not in the TTS mods 3597126237 or 3596248061, not on Tabletopia; the
+rulebook prints only one example card), so `AutomaCards.specs` is a
+provisional deck: card 1 is the rulebook's example, the other 14 spread the
+five actions and the rulebook's priority icons. Replace it with the printed
+cards.
+
+- Levels (option "Automa difficulty"): 1, the player also wins with four
+  closed territories each with a large building; 2, more fame than the
+  Automa after the last year; 3, the same with the Creatures module; 4 and
+  up, the Automa draws one more card each year per level above 3.
+- Setup: Enemy Secrets and Ancestral Curse leave the Development deck; the
+  player goes first. The Automa places the top tile of the pile (drawing
+  once more if it shows no resource) to the right of the starting tile, then
+  above (or below) it, unturned when possible, and puts a Leader and two
+  units on the territory with the most resources, food, wood, building
+  spaces, open, farthest from the player.
+- Its year: it draws 4 cards (+1 per Forge it controls, +1 per lore it has,
+  which it spends, +1 per large building the player has more than it, +1 per
+  level above 3). Each turn it reveals a card and does the first possible of
+  its two actions (neither: next card); Flash cards play another card at
+  once. Its last card with the Pass icon makes it pass if the player hasn't.
+  Passing, it takes a Development card by the card's priorities (move,
+  draw, recruit, explore, special, left, right), the remaining one if the
+  player has passed, and in the last year the Achievement worth the most to
+  it. Its cards count only for fame at the end.
+- Actions: Recruit n (Leader 1, Leader 2, then units); Build (a large
+  building if it can, else a small one); Explore (the spot by the first
+  priority, the top tile turned by the second; a tile that doesn't fit goes
+  to the bottom); Move 1 (one unit from a territory with 2+ units to a
+  friendly or neutral one); Move 2 with Leader 1 or 2 (half the units,
+  rounded up, of an adjacent territory reinforce the Leader, then the Leader
+  moves: against the player with enough units to outnumber the defenders by
+  at most 2, into a neutral territory with half its units, into its own with
+  all but one). It ignores Rough borders and never empties a territory.
+- Priorities narrow the candidates one after the other; a tie left is the
+  player's choice. Leaders count as units (with the Warchiefs module they are
+  warchiefs worth 3).
+- Combat: it spends food to lead the player's best total by at most 2, or
+  all it can; it takes the casualty on the choice face if that wipes out the
+  enemy; casualties take units before Leaders; it retreats to one adjacent
+  friendly or neutral territory with the most building points, resources,
+  tiles, closed.
+- Harvest as usual, then one trade of 3 wood for 1 lore with 6+ wood, one of
+  3 food for 1 lore with 6+ food. No Winter costs, no Unrest. Events don't
+  involve it.
+
 ## Expansions (later)
 
 Wastelands (creatures, Environment and Central tiles), the rest of Uncharted
@@ -518,6 +570,19 @@ rulebook is on Tabletopia.
 
 Check these against the rulebook when it is at hand.
 
+- **Automa** (beyond the provisional cards):
+  - Its Leaders are its warchief (Leader 1) and its companion figure
+    (Leader 2). Without the Warchiefs module they are worth 1 like units
+    (the rulebook's example counts "Leader + 3 units" as 4); with it, 3.
+  - Creatures: the Automa never moves into a territory with a creature;
+    creature prompts aimed at it are answered by its bot.
+  - The die's choice face: the casualty only when the enemy has one figure
+    left in the fight.
+  - Build: Altar of Kings, Forge, Fortress, then Woodcutter's Lodge, Food
+    Silo, Training Camp, Defense Tower, Carved Stone (the rulebook doesn't
+    say which building).
+  - Snake's Stolen Lore and Rapacious Exploitation adjustments aren't
+    implemented (the Automa has no hand or active area).
 - **Events**:
   - Happy People acts after drawing, with the other start-of-year Events, so
     its Unrest card may also come from the hand.

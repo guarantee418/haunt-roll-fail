@@ -19,7 +19,7 @@ import nort.elem._
 trait Faction extends NamedToString with Styling with GameElementary with BasePlayer with Record {
     def short = name
     def style = name.toLowerCase
-    def elem(implicit game : Game) : Elem = (name + " Clan").styled(game.colors.get(this)./(c => c : Styling).|(this))(styles.title)(xstyles.bold)
+    def elem(implicit game : Game) : Elem = (name + (this != Automa).??(" Clan")).styled(game.colors.get(this)./(c => c : Styling).|(this))(styles.title)(xstyles.bold)
 }
 
 // The seven clans of the core game
@@ -30,6 +30,9 @@ case object Raven extends Faction
 case object Snake extends Faction
 case object Stag extends Faction
 case object Wolf extends Faction
+
+// The solo opponent (Uncharted Horizons' Solo module, automa.scala): a neutral clan with two Leaders, played by its cards
+case object Automa extends Faction
 
 // The seven clans of the New Blood expansion (newblood.scala)
 case object Dragon extends Faction
@@ -101,7 +104,7 @@ class FactionState(val faction : Faction)(implicit game : Game) {
     var fame = 0
 
     // Units on the map, with the warchief (Warchiefs module); Horse Clan's second warchief, Brok, counts too
-    def units = game.onMap(faction) + game.chiefs.contains(faction).??(1) + (faction == Horse && game.brok.any).??(1)
+    def units = game.onMap(faction) + game.chiefs.contains(faction).??(1) + ((faction == Horse && game.brok.any) || (faction == Automa && game.leader2.any)).??(1)
 
     var draw : $[Card] = $
     var hand : $[Card] = $
@@ -254,7 +257,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // Modules and expansions turned on in the options
     // New Blood is on whenever one of its clans plays
-    val modules : $[Module] = Module.all.%(m => options.has(ModuleOption(m)) || (m == NewBlood && setup.exists(NewBlood.clans.has)))
+    val modules : $[Module] = Module.all.%(m => options.has(ModuleOption(m)) || (m == NewBlood && setup.exists(NewBlood.clans.has)) || (m == Solo && setup.has(Automa)))
 
     def has(m : Module) = modules.has(m)
 
@@ -283,7 +286,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     val warchiefCards = has(Warchiefs) || options.has(WarchiefCards)
 
     // Three closed territories with large buildings win at the end of a year (not with the Alternative victory module)
-    val domination = options.has(FameOnly).not && options.has(ModuleOption(VictoryModule)).not
+    val domination = options.has(FameOnly).not && options.has(ModuleOption(VictoryModule)).not && (setup.has(Automa).not || options.has(AutomaLevelOption(1)))
 
     // Team play (2v2 with four players, 3v3 with six): seats alternate between the two teams,
     // so teammates sit opposite each other
@@ -371,6 +374,15 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     def tideIn(t : Territory) : Boolean = tides.exists(t.areas.contains)
 
+    // SOLO MODULE (automa.scala): the Automa's pile and discard pile, the cards drawn this year (its Actions deck)
+    // and those played, whether it drew this year, and the spot of its first tile
+    var automaDeck : $[AutomaCard] = $
+    var automaDiscard : $[AutomaCard] = $
+    var automaActions : $[AutomaCard] = $
+    var automaPlayed : $[AutomaCard] = $
+    var automaDrawn = false
+    var automaStart : |[Spot] = None
+
     // EVENTS MODULE (horizons.scala): the face-up deck, the event of this year, the steps already resolved this year,
     // and the Harvest changes the players chose (territories by their first area at the time)
     var eventDeck : $[EventCard] = $
@@ -440,11 +452,14 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // follow Kaija's rules as each clan's companion figure (moved, recruited and removed like it)
     var lynx : |[AreaRef] = None
     var brok : |[AreaRef] = None
+    // The Automa's Leader 2 (Leader 1 is its warchief, in chiefs)
+    var leader2 : |[AreaRef] = None
 
     def companion(f : Faction) : |[AreaRef] = f match {
         case Bear => kaija
         case Lynx => lynx
         case Horse => brok
+        case Automa => leader2
         case _ => None
     }
 
@@ -452,11 +467,12 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         case Bear => kaija = a
         case Lynx => lynx = a
         case Horse => brok = a
+        case Automa => leader2 = a
         case _ =>
     }
 
     // Every companion on the map, with its clan
-    def companions : $[(Faction, AreaRef)] = $(Bear, Lynx, Horse)./~(f => companion(f)./(f -> _))
+    def companions : $[(Faction, AreaRef)] = $(Bear, Lynx, Horse, Automa)./~(f => companion(f)./(f -> _))
 
     // Combat points of the companion: Kaija 2, Brundr and Kaelinn 1, Brok 2 (Eitria and Brok together are worth 3)
     def companionStrength(t : Territory, f : Faction) : Int =
@@ -464,6 +480,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         else f match {
             case Lynx => 1
             case Horse => chiefIn(t, f).?(1).|(2)
+            case Automa => AutomaExpansion.leaderStrength
             case _ => 2
         }
 
@@ -479,7 +496,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def chiefIn(t : Territory, f : Faction) : Boolean = chiefs.get(f).exists(t.areas.contains)
 
     // The warchief is in the reserve and can be recruited
-    def chiefReady(f : Faction) : Boolean = has(Warchiefs) && chiefs.contains(f).not && setup.has(f)
+    // The Automa's Leader 1 plays as its warchief, with or without the module
+    def chiefReady(f : Faction) : Boolean = (has(Warchiefs) || f == Automa) && chiefs.contains(f).not && setup.has(f)
 
     // Units, Kaija and the warchief
     def figures(t : Territory, f : Faction) : Int = count(t, f) + kaijaIn(t, f).??(1) + chiefIn(t, f).??(1)
@@ -489,7 +507,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // Kaija is in Bear Clan's reserve and can be recruited
     // Brundr and Kaelinn likewise; Brok only with the Warchiefs module
-    def kaijaReady(f : Faction) : Boolean = (f == Bear || f == Lynx || f == Horse && has(Warchiefs)) && companion(f).none && setup.has(f)
+    // The Automa's Leader 2 likewise, always
+    def kaijaReady(f : Faction) : Boolean = (f == Bear || f == Lynx || f == Automa || f == Horse && has(Warchiefs)) && companion(f).none && setup.has(f)
 
     def scorchedIn(t : Territory) : Boolean = scorched.exists(t.areas.contains)
 
@@ -559,6 +578,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         val here = working(t)
         (here.count(_ == FoodSilo), here.count(_ == WoodcutterLodge), here.count(_ == CarvedStone))
     }
+
+    // Against the Automa, level 1 is won with four such territories, and other levels have no sudden win
+    val strongholdsToWin = setup.has(Automa).?(4).|(3)
 
     // Closed controlled territories with at least one large building
     def strongholds(f : Faction) : $[Territory] = controlled(f).%(board.closed).%(t => buildingsIn(t).exists(_._2.large))
@@ -662,6 +684,25 @@ object CommonExpansion extends Expansion {
         keys.foldLeft(sides)((l, k) => l.%(s => s./(k).sum == l./(_./(k).sum).max))
 
     def buildings(f : Faction)(implicit game : Game) = game.controlled(f)./~(game.buildingsIn).num
+
+    // A card's fame at the end of the game (the Achievements count what f has then)
+    def cardFame(f : Faction, c : Card)(implicit game : Game) : Int = {
+        val territories = game.controlled(f)
+        val built = territories./~(game.buildingsIn).map(_._2)
+        lazy val spaces = territories./~(_.areas)./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not)
+        lazy val (food, wood, lore) = territories./(game.produce).foldLeft((0, 0, 0))((a, b) => (a._1 + b._1, a._2 + b._2, a._3 + b._3))
+
+        c match {
+            case Achievement("builder") => built.count(_.large.not) + 3 * built.count(_.large)
+            case Achievement("explorer") => spaces.count(s => game.board.spec(s.area).spaces(s.index).kind != LargeSpace) + 3 * spaces.count(s => game.board.spec(s.area).spaces(s.index).kind == LargeSpace)
+            case Achievement("food-trader") => 2 * food
+            case Achievement("wood-trader") => 2 * wood
+            case Achievement("scholar") => 2 * lore
+            case Achievement("trapper") => 3 * territories./~(_.areas).count(a => game.board.spec(a).lair)
+            case Achievement("warlord") => game.states(f).units
+            case c => c.fame
+        }
+    }
 
     // Each team, or each player without team play
     def sides(l : $[Faction])(implicit game : Game) : $[$[Faction]] = game.teams.?(game.sides./(_.%(l.has)).%(_.any)).|(l./(f => $(f)))
@@ -943,8 +984,8 @@ object CommonExpansion extends Expansion {
 
             game.awakened = false
 
-            // Each controlled Forge draws one more card
-            Then(game.from(game.first).foldRight(RevealDevelopmentsAction : ForcedAction)((f, then) => DrawCardsAction(f, 4 + game.controlled(f)./~(game.working).count(_ == Forge), then)))
+            // Each controlled Forge draws one more card; the Automa draws its own cards (automa.scala)
+            Then(game.from(game.first).but(Automa).foldRight(RevealDevelopmentsAction : ForcedAction)((f, then) => DrawCardsAction(f, 4 + game.controlled(f)./~(game.working).count(_ == Forge), then)))
 
         case RevealDevelopmentsAction =>
             if (game.year == game.lastYear) {
@@ -1241,7 +1282,8 @@ object CommonExpansion extends Expansion {
             log(SingleLine)
             log("Winter")
 
-            game.from(game.first).foreach { f =>
+            // The Automa pays no Winter costs
+            game.from(game.first).but(Automa).foreach { f =>
                 // Events: Harsh Winter and Blizzard
                 val (food, wood) = EventsExpansion.winterCost(f)
 
@@ -1278,7 +1320,7 @@ object CommonExpansion extends Expansion {
 
         // 5. END OF YEAR
         case EndOfYearAction =>
-            val rulers = game.domination.??(factions.%(f => game.strongholds(f).num >= 3))
+            val rulers = game.domination.??(factions.%(f => game.strongholds(f).num >= game.strongholdsToWin))
 
             if (rulers.any)
                 Then(DominationAction(rulers))
@@ -1316,21 +1358,7 @@ object CommonExpansion extends Expansion {
             log("End of the game")
 
             val totals = factions./{ f =>
-                val territories = game.controlled(f)
-                val built = territories./~(game.buildingsIn).map(_._2)
-                val spaces = territories./~(_.areas)./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not)
-                val (food, wood, lore) = territories./(game.produce).foldLeft((0, 0, 0))((a, b) => (a._1 + b._1, a._2 + b._2, a._3 + b._3))
-
-                val cards = f.deck./{
-                    case Achievement("builder") => built.count(_.large.not) + 3 * built.count(_.large)
-                    case Achievement("explorer") => spaces.count(s => game.board.spec(s.area).spaces(s.index).kind != LargeSpace) + 3 * spaces.count(s => game.board.spec(s.area).spaces(s.index).kind == LargeSpace)
-                    case Achievement("food-trader") => 2 * food
-                    case Achievement("wood-trader") => 2 * wood
-                    case Achievement("scholar") => 2 * lore
-                    case Achievement("trapper") => 3 * territories./~(_.areas).count(a => game.board.spec(a).lair)
-                    case Achievement("warlord") => f.units
-                    case c => c.fame
-                }.sum
+                val cards = f.deck./(c => cardFame(f, c)).sum
                 val sets = f.resources / 3
                 val total = f.fame + cards + sets - 5 * f.unrest
 

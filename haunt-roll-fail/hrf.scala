@@ -740,7 +740,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
                     dom.document.title = (self./(meta.factionName) :+ title.|("%untitled%") :+ meta.label).join(" - ")
 
-                    var difficulties = seating./(_ -> HRF.param("debug")./(bot => BotDebug(bot)).|(Human)).toMap ++ bots./{ case (f, d) => f -> HRF.flag("debug-bot").?(BotDebug(d)).|(Bot(d)) }
+                    var difficulties = seating./(_ -> HRF.param("debug")./(bot => BotDebug(bot)).|(Human)).toMap ++ bots./{ case (f, d) => f -> HRF.flag("debug-bot").?(BotDebug(d)).|(Bot(d)) } ++ seating.%(meta.botOnly)./(f => f -> Bot(meta.defaultBot(f)))
                     val state = OptionsState(meta.options, meta.mandatoryFor(seating.num, seating), options, $)
 
                     def names : Map[meta.F, String] = users.flatMap {
@@ -1032,7 +1032,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     ZBasic("", v.ok.?("Start Game".hl ~ v.message.any.??(" | ")).|(Empty) ~ v.message.styled(v.style), v.ok.??(() => {
                         val seating = factions
 
-                        val difficulties = seating./(f => f -> Bot(meta.defaultBot(f))).toMap + (faction -> Human)
+                        val difficulties = seating./(f => f -> Bot(meta.defaultBot(f))).toMap ++ meta.botOnly(faction).not.$(faction -> Human)
 
                         val journal = new MemoryJournal[meta.gaming.ExternalAction](meta)
 
@@ -1223,7 +1223,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         }
 
         var seating = factions
-        var difficulties : Map[meta.F, Difficulty] = factions.map(_ -> Human).toMap
+        var difficulties : Map[meta.F, Difficulty] = factions.map(f => f -> meta.botOnly(f).?(Bot(meta.defaultBot(f)) : Difficulty).|(Human)).toMap
 
         var notes = Map[meta.F, String]()
 
@@ -1249,7 +1249,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         xstyles.updown)
                         , ZBasic.choice :+ xstyles.player), {
                         case "difficulty" =>
-                            difficulties += f -> ($(Human) ++ meta.getBots(f)./(Bot) ++ $(Human)).dropWhile(_ != difficulties(f)).drop(1).head
+                            if (meta.botOnly(f).not)
+                                difficulties += f -> ($(Human) ++ meta.getBots(f)./(Bot) ++ $(Human)).dropWhile(_ != difficulties(f)).drop(1).head
                             setupQuestions(page)
                         case "row-option" =>
                             meta.factionRowClick(f, seating, options.selected).foreach { o =>

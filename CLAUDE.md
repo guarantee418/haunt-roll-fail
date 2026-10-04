@@ -36,7 +36,9 @@ New Blood expansion's seven clans (Dragon, Horse, Kraken, Lynx, Ox, Rat,
 Squirrel, with their warchiefs and 28 clan cards, from the TTS mod
 3597126237) in `nort/newblood.scala`; picking one of them turns it on.
 Uncharted Horizons' Events and Alternative victory conditions modules are in
-`nort/horizons.scala`. The
+`nort/horizons.scala`. The solo Automa (Uncharted Horizons' Solo module) is
+in `nort/automa.scala`, with provisional cards until the printed ones are
+transcribed. The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.

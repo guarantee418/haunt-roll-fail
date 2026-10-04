@@ -736,13 +736,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 // Bear Clan's Kaija and Lynx Clan's Brundr and Kaelinn; the round token fills its box, so 230 matches a warrior's height
                 // Horse Clan's second warchief, Brok, is a warchief figure
                 if (game.kaijaIn(t, f)) {
-                    val kz = (f == Horse).?(300.0).|(230.0) * scale
+                    val kz = (f == Horse || f == Automa).?(300.0).|(230.0) * scale
                     val image = f match {
-                        case Horse => "warchief-" + game.colors(f).id
+                        case Horse | Automa => "warchief-" + game.colors(f).id
                         case Lynx => "token-lynx"
                         case _ => "token-kaija"
                     }
-                    val (kx, ky) = beside((f == Horse).?(0.13 * scale).|(kz / T / 2))
+                    val (kx, ky) = beside((f == Horse || f == Automa).?(0.13 * scale).|(kz / T / 2))
                     pieces.add(Sprite($(at(image, kz)), $(Rectangle(-kz / 2, -kz / 2, kz, kz)), tag))(kx, ky)
                     taken :+= ((mx(kx), my(ky), kz / T / 2))
                 }
@@ -835,6 +835,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             case Dragon => ("Pyre: ".txt ~ game.pyre.none.?("empty".txt).|(game.pyre./(g => (g == Dragon).?("own".txt).|(g.name.styled(colorOf(g)))).join(", "))).div
             case Kraken => ("High Tide: ".txt ~ (2 - game.tides.num).hl ~ " in reserve").div
             case Ox => ("Equipment: ".txt ~ game.gearReady.num.hl ~ " ready, " ~ game.gearUsed.num.hl ~ " used").div
+            case Automa => ("Cards: ".txt ~ game.automaActions.num.hl ~ " to play, " ~ game.automaDeck.num.hl ~ " in its pile").div
             case _ => Empty
         }
 
