@@ -1385,7 +1385,7 @@ trait GameImplicits {
     }
 
     implicit class FactionPhaseEx(f : Faction)(implicit game : Game) {
-        def canAidExile = f.forTrade.any && TheExile.?%(hirelings.has).%(h => f.presence.exists(c => game.fromForest(h.region).contains(c))).any
+        def canAidExile = f.is[Knaves].not && f.forTrade.any && TheExile.?%(hirelings.has).%(h => f.presence.exists(c => game.fromForest(h.region).contains(c))).any
 
         def birdsongNewCard = f.can(StandAndDeliver) || f.can(SwapMeet) || (f.can(Merchants) && f.forTrade.any) || canAidExile
 

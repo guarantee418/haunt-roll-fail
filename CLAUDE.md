@@ -16,7 +16,8 @@ Northgard: Uncharted Lands is being added in `haunt-roll-fail/nort/`
 (meta name `nort`, URL `/play/nort`), base game first, expansions later.
 `nort/RULES.md` summarizes the rules (the rulebook PDFs aren't in the repo)
 and tracks what is done. `nort/HANDOFF.md` has the state, design notes,
-known gaps, next steps and how to build and test it. So far: the 7 clans, 2–5 players, the year loop with
+known gaps, next steps and how to build and test it. So far: the 7 clans, 2–6 players (six on the five-player rules), the 2v2
+Teams variant and a 3v3 one on the same rules, the year loop with
 decks, Wait/Replace/Remove/Upgrade/Pass, Flash cards, harvest trading, winter
 and Unrest, end-of-game scoring, and the real card list in `nort/cards.scala`
 (names, fame, text, images), the map: tile data in `nort/tiles.scala`
@@ -37,19 +38,24 @@ untinted); the area masks (`tile/mask/`) and the free-ground
 grid for placing warchiefs, Kaija and creatures (`nort/grid.scala`) are made
 from the tile art by `nort/tools/tile-masks.py`.
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
-Tabletopia export the owner uploaded, plus `tile-31` to `tile-33` and
-`start-5` cut from a photo of the owner's copy: all 35 core map tiles and 51
-of the 52 development cards; expansion tiles, clan
+Tabletopia export the owner uploaded, with gaps filled from two Tabletop
+Simulator mods (Steam Workshop 2838546142 and 2847156187; see
+`nort/HANDOFF.md`): all 35 core map tiles (`tile-31` to `tile-33` and
+`start-5` are TTS scans aligned to the old photo crops), all 52 development
+cards (Veiled Threats from TTS), and the warchief upgrade cards. Green starting cards are the blue ones with the ribbon
+recoloured to the printed green. Expansion tiles, clan
 boards and tokens are in `expansion/` for later. Unit figures are in
 `token/unit/` (`unit-<color>`, and `warchief-<color>` for the Warchiefs
 expansion), recolored from the `-original` images. Colors belong to
 players, not clans: each clan's player picks one on its row of the setup screen
-(`ColorOption`, default blue, red, yellow, purple, green by seat;
-`game.colors`); starting cards show that color's banner. The setup options
+(`ColorOption`, default blue, red, yellow, purple, green, orange by seat;
+`game.colors`); starting cards show that color's banner (orange has no
+cards of its own and uses the yellow ones). The setup options
 (colors, game length, fame-only victory, first player, and the modules and
-expansions; Creatures and Warchiefs are implemented, the others are shown but disabled) are in `nort/options.scala`. `underConstruction = true` in its `Meta` puts
-an "Under Construction" note under its name on the game list and a disclaimer
-at the top of its menu. `nort/host.scala` runs bot games headless (JVM only,
+expansions; Creatures, Warchiefs and the 2v2/3v3 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`. Northgard no longer sets `underConstruction`
+in its `Meta` (setting it to `true` would put an "Under Construction" note under
+its name on the game list and a disclaimer at the top of its menu).
+`nort/host.scala` runs bot games headless (JVM only,
 like the other `host.scala` files).
 
 ## Building
@@ -318,6 +324,21 @@ file covers the build, server and deploy. No session can ssh to the server
   The mirror factions' markers recolour those heads to the mirror colour
   (Negabond's head is the Vagabond's in negative; Longtail Kaliph is a black
   rat on red). Fan factions are deliberately left on their `-glyph` head icon.
+- The Gladiator, Cheat and Jailor Captain pieces
+  (`webp2/root/images/faction/abduct/kd-captain-*.webp`) are the official
+  Homeland meeples, rendered front-on from the 3D models (mesh plus texture)
+  in the Tabletop Simulator mod "Root - Ultimate Collection - Homeland
+  Expansion" (Steam workshop 3354438467; the save file comes from the
+  `file_url` of Steam's public `GetPublishedFileDetails` API, BSON, the
+  pieces are the `Vagabond - <name>` objects in its scripts).
+- Knaves items are the Captains' items, not crafted items: the Vagabond
+  can't take them in trade when it aids the Knaves (`AidTradeAction` in
+  `root/faction-hero.scala`), the Hundreds can't loot them (Looters in
+  `root/faction-horde.scala`), and the Knaves can't aid The Exile
+  (`anytime` in `root/hirelings.scala`, `canAidExile` in `root/game.scala`).
+- Advanced Setup's default faction pool leaves out the Vagabond, Negabond
+  and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
+  "Official | Riverfolk ..." presets add the Vagabond back.
 - Boards with printed item slots (Gorge, Marsh) set `itemSlots` (`itemGrid`
   for the usual 2x6 layout); `drawItemSlots` draws `game.uncrafted` on them.
 - The Homeland Marsh map is `MarshBoard` in `root/maps.scala` (option
@@ -356,5 +377,9 @@ file covers the build, server and deploy. No session can ssh to the server
 - Each online game has a Spectator link and one link per player. Spectator
   accounts can read the game but not add moves. A move posted by one gets a
   500 with `empty result set ... "right" = 'append'` in the server log.
+- Player and spectator links (`/play/<meta>/<secret>`) are served with an
+  empty `<title>` and no `og:title` (`gameIndex` in `GoodGame.scala`), so
+  Discord and other chat apps show no "Chronicles" preview card under each
+  shared link. The client sets the real title when it loads.
 - `good-game` wraps static files in `encodeResponse`, so the 8 MB client is
   sent gzipped (about 1.8 MB).

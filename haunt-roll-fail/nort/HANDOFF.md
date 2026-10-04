@@ -23,8 +23,8 @@ and each deck's `CustomDeck` has the `FaceURL` of its card sheet.
 
 | File | What it holds |
 |---|---|
-| `meta.scala` | Clans (picked by name, with their three clan cards shown), 2–5 players, which options go on which setup page, the asset lists (cards, tiles, units, buildings, `ui-` markers), `underConstruction = true` |
-| `options.scala` | Setup options: `ColorOption` per clan, `YearsOption` (5–10, default 7), `FameOnly`, `FirstSeatStarts`; `Module` and `ModuleOption` for modules and expansions |
+| `meta.scala` | Clans (picked by name, with their three clan cards shown), 2–6 players, which options go on which setup page, the asset lists (cards, tiles, units, buildings, `ui-` markers), `underConstruction = true` |
+| `options.scala` | Setup options: `ColorOption` per clan, `YearsOption` (5–10, default 7), `FameOnly`, `FirstSeatStarts`; `Module` and `ModuleOption` for modules and expansions, including the team variants `TeamsVariant` (2v2) and `Teams3v3` |
 | `game.scala` | Factions, player colors by seat, resources, `FactionState`, `Game` (map state and helpers), `CommonExpansion` (setup, decks, the year loop, harvest, winter, end of year, scoring), `Debug.summary` |
 | `cards.scala` | Every core card (name, fame, Flash, text, image) and its `Effect`; `MoveSpecial` / `BuildSpecial` mark Move and Build cards with extra rules |
 | `effects.scala` | `CardsExpansion`: the card effects that aren't basic actions (recruit per resource, removing enemy units, copying cards, looking at hands, Defensive Strategy, ...) |
@@ -94,10 +94,42 @@ used yet).
 - In the game, clan names are still drawn in the placeholder clan colors
   (`styles.scala`) next to the player's color.
 
+## Six players and teams (2026-10-04)
+
+- Six players (`Meta.maxPlayers`) follow the five-player rules (both
+  starting tiles, players 4–6 start with 3 food). The sixth color is
+  `Orange`: `unit-orange` and `warchief-orange` were recolored from the
+  `-original` figures with a dark outline (red and yellow are already
+  orange-ish), and `PlayerColor.cards` gives the starting cards' banner
+  (orange uses yellow's, green blue's).
+- Teams: the `ModuleOption`s for `TeamsVariant` (4 players) and `Teams3v3`
+  (6 players) only show for that player count (`Meta.optionsFor`), and the
+  wrong count is an error in `validateFactionSeatingOptions`. They have no
+  expansion: the rules are in the core code. `game.teams`, `team(f)` (seat
+  index mod 2), `allied`, `enemy`, `mates`, `sides`, `teamName`.
+- Anything that means "enemy" uses `game.enemy(f, _)` instead of `.but(f)`
+  (card effects in `effects.scala`, Defensive Strategy, Scorched Earth).
+  `present(t)`, `controlled(f)` and retreats are unchanged: a teammate's
+  territory isn't f's and isn't neutral.
+- Moving through a teammate's territory: `mateHeld`, `passing(f)` (the
+  territories f's figures are passing through), `MapExpansion.canPass`,
+  `canEnter` and `destinations` (a bounded search that the figures can get
+  out again with the moves left). `MoveDoneAction` isn't offered while
+  `passing(f)` is non-empty, and figures passing through move on together.
+- Harvest: `TeamTradeAction` (swap one resource for one of a teammate's) in
+  `TradeAction`. Scoring: `CommonExpansion.best` and `sides` add up totals
+  and tie-breakers per team, in `GameEndAction` and `DominationAction`.
+- The status panels show each player's team. `NORT_TEAMS=1` makes the
+  headless host always use teams with 4 or 6 players; the summary counts
+  `team-pass` and `team-trade` events.
+- The 2v2 rules come from a review of the final rulebook (the public
+  Kickstarter rulebook has no team variant); 3v3 is not in the rulebook.
+  Ask the owner to check them against their rulebook (`RULES.md`, Teams).
+
 ## Modules (groundwork)
 
 `Module` in `options.scala` lists Creatures, Warchiefs, Wilderness,
-Wastelands, New Blood, Uncharted Horizons and the 2v2 Teams variant. Each has
+Wastelands, New Blood, Uncharted Horizons and the 2v2 and 3v3 Teams variants. Each has
 a `ModuleOption`, shown on setup page 2 as "coming later" and impossible to
 turn on while `ready` is false. `game.modules` / `game.has(m)` tell which are
 on. To implement one:
@@ -195,8 +227,26 @@ list. In short:
   Interpretations in `RULES.md`; check them against the rulebook.
 - **Scout Camp:** the redraw happens before the tile is shown on the map.
 - **Defensive Strategy** prompts show who holds the card.
-- **Missing assets:** one Advanced development card (51 of 52 in the data and
-  images; nobody knows which), and green starting cards (green uses blue's).
+- **Assets checked against Tabletop Simulator (2026-10-04):** every core card,
+  all 35 tiles (same orientation) and the tokens were matched by perceptual
+  hash against the two TTS mods. TTS saves are fetched as described under the
+  Warchiefs module (`GetPublishedFileDetails`, BSON); mod 2847156187 has one
+  image per card and 1221x2564 tile textures (front on top, the tile square
+  about 1180 px from about (20, 35)); mod 2838546142 has the digital card
+  sheets (7x5) and the creature meshes. The missing 52nd
+  card was Veiled Threats (Advanced, 2 fame: an opponent randomly discards 1
+  card, or draw 1). TTS has green starting cards as photographed scans; ours
+  are the blue digital art with the ribbon recoloured to their green. Tiles
+  31-33 and start-5 were replaced by the sharper TTS scans, aligned to the old
+  crops so the tile data still fits (tile-31's photo was slightly skewed).
+  The TTS creature miniatures (OBJ meshes, tinted beige / brown / dark
+  brown; Kaija and the Brown Bear share a mesh) were rendered and tried on the
+  map; the owner preferred the round tokens cut from the card art, so those
+  stay.
+  TTS also has the seven warchiefs as standee portraits (Figurine_Custom,
+  259x432), not used yet.
+- **Missing assets:** orange starting cards (orange is not in the box and uses
+  yellow's).
 - **Bots:** random (they now favour upgrading). Fine for testing, not for play.
 - **Big territories** show their number on every area, but units are drawn
   only at the first area.
@@ -242,7 +292,8 @@ list. In short:
   `common.sbt` (change `%%%` to `%%`) plus `host.xsbt` as `build.sbt`,
   symlink the sources, then `sbt "runMain nort.Host"`. It plays 20 games with
   2–5 players and random colors, game lengths and victory options, and checks
-  that every action and option serializes and parses back. Leave
+  that every action and option serializes and parses back (with 2–6 players,
+  teams half the time with 4 or 6). Leave
   out `vast/host.scala`, which doesn't compile. Problems show as
   `UNMATCHING WRITE/PARSE` in the output or as `nort/game-error-*.txt` files
   (delete them, don't commit them). With `NORT_UPGRADES=1` the clan upgrade

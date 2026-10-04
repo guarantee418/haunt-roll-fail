@@ -402,7 +402,8 @@ object HordeExpansion extends FactionExpansion[Horde] {
 
             then
 
-        case BattleStartedAction(b) if b.attacker.can(Looters) && b.defender.forTrade.any =>
+        // Knaves' items are their Captains' items, not crafted items to loot
+        case BattleStartedAction(b) if b.attacker.can(Looters) && b.defender.is[Knaves].not && b.defender.forTrade.any =>
             val f = b.attacker
             val e = b.defender
             Ask(f)
