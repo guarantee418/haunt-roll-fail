@@ -33,8 +33,6 @@ object Meta extends MetaGame { mmm =>
     val name = "nort"
     val label = "Northgard: Uncharted Lands"
 
-    override val underConstruction = true
-
     val factions = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf)
 
     val minPlayers = 2

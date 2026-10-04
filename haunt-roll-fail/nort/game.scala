@@ -581,7 +581,6 @@ object CommonExpansion extends Expansion {
         case StartAction(version) =>
             log("HRF".hl, "version", gaming.version.hlb)
             log("Northgard: Uncharted Lands".hlb.styled(styles.title))
-            log("This game is very much", "under construction".styled(xstyles.warning))
 
             if (version != gaming.version)
                 log("Saved game version", version.hlb)

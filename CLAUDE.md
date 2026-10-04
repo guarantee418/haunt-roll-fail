@@ -44,9 +44,10 @@ players, not clans: each clan's player picks one on its row of the setup screen
 `game.colors`); starting cards show that color's banner (green uses the
 blue cards, orange the yellow ones). The setup options
 (colors, game length, fame-only victory, first player, and the modules and
-expansions; Creatures, Warchiefs and the 2v2/3v3 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`. `underConstruction = true` in its `Meta` puts
-an "Under Construction" note under its name on the game list and a disclaimer
-at the top of its menu. `nort/host.scala` runs bot games headless (JVM only,
+expansions; Creatures, Warchiefs and the 2v2/3v3 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`. Northgard no longer sets `underConstruction`
+in its `Meta` (setting it to `true` would put an "Under Construction" note under
+its name on the game list and a disclaimer at the top of its menu).
+`nort/host.scala` runs bot games headless (JVM only,
 like the other `host.scala` files).
 
 ## Building
@@ -353,5 +354,9 @@ file covers the build, server and deploy. No session can ssh to the server
 - Each online game has a Spectator link and one link per player. Spectator
   accounts can read the game but not add moves. A move posted by one gets a
   500 with `empty result set ... "right" = 'append'` in the server log.
+- Player and spectator links (`/play/<meta>/<secret>`) are served with an
+  empty `<title>` and no `og:title` (`gameIndex` in `GoodGame.scala`), so
+  Discord and other chat apps show no "Chronicles" preview card under each
+  shared link. The client sets the real title when it loads.
 - `good-game` wraps static files in `encodeResponse`, so the 8 MB client is
   sent gzipped (about 1.8 MB).
