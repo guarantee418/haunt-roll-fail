@@ -257,7 +257,16 @@ object GoodGame {
                 optionalHeaderValueByName("Referer") { referer =>
                     if (referer.exists(_.startsWith(url)))
                         encodeResponse {
-                            getFromDirectory(directory)
+                            extractUnmatchedPath { p =>
+                                // The client (target/scala-2.13/hrf-opt.js) keeps its name from build to build, so browsers
+                                // must check for a new one on every load; unchanged, it costs a 304 thanks to the ETag
+                                if (p.toString.startsWith("/target/"))
+                                    respondWithHeader(`Cache-Control`(CacheDirectives.`no-cache`)) {
+                                        getFromDirectory(directory)
+                                    }
+                                else
+                                    getFromDirectory(directory)
+                            }
                         }
                     else
                         complete(StatusCodes.NotFound, "")
