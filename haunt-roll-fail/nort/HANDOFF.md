@@ -105,8 +105,9 @@ used yet).
 - Six players (`Meta.maxPlayers`) follow the five-player rules (both
   starting tiles, players 4–6 start with 3 food). The sixth color is
   `Orange`: `unit-orange` and `warchief-orange` were recolored from the
-  `-original` figures with a dark outline (red and yellow are already
-  orange-ish), and `PlayerColor.cards` gives the starting cards' banner
+  `-original` figures. Red and orange figures now have the original's white
+  outline like the others (the light parts of the `-original` image are kept
+  over the recolored one), and `PlayerColor.cards` gives the starting cards' banner
   (orange uses yellow's, green blue's).
 - Teams: the `ModuleOption`s for `TeamsVariant` (4 players) and `Teams3v3`
   (6 players) only show for that player count (`Meta.optionsFor`), and the
@@ -255,7 +256,22 @@ on. To implement one:
   spaces by a watershed on the dash density. The resource icons (found by
   their white rim or apple red; hand-placed in `ICONS` for the photo tiles)
   are cut out of the masks, so they show untinted. All 35 tiles were checked
-  by eye.
+  by eye. Red's tint is a dark red (brownish over the grass) so it stands
+  apart from orange.
+- Closed territories that give fame at the Harvest (no Wolf creature) and are
+  controlled by one player have their border dashes redrawn in that player's
+  colour (`UI.lineOf`, opaque). Where two such territories of different
+  players meet, the dashes alternate between the two colours; a Rough border
+  also gets a solid yellow line on each side of its dashes (white when one of
+  the colours is yellow). The dashes are vector data in `nort/lines.scala`
+  (each a bent bar: three points of its centre line and its width, ordered
+  along the border), generated from the tile art and masks by
+  `java haunt-roll-fail/nort/tools/BorderLines.java [--check DIR]` (run from
+  the repository root; needs ImageMagick; `--check` draws what it found per
+  tile). `UI.lineImage` draws a border once per tile, turn and colours at
+  half size. A few junction stubs and dashes on busy art aren't found and
+  stay white; the Wilderness walls (orange lines, lake, peaks) aren't
+  redrawn.
 - Warchiefs are the size of a warrior figure and Kaija's round token matches a
   warrior's height. Both stand a little apart from their clan's figure on open
   ground. Creatures go on the territory's most open ground (`UI.freeSpot`,
