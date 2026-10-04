@@ -1352,7 +1352,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         })
 
         if (!game.states.contains(f)) {
-            container.replace(Div(Div(nameres.getName(f).|(f.name)).styled(f), styles.smallname, xlo.pointer), resources)
+            if (boardImage(f).any)
+                container.replace(Div(Div(nameres.getName(f).|(f.name)).styled(f), styles.smallname, xlo.pointer).div(xstyles.fillHeight).pointer.onClick.param(f), resources, {
+                    case f : Faction => onFactionStatus(f, false)
+                })
+            else
+                container.replace(Div(Div(nameres.getName(f).|(f.name)).styled(f), styles.smallname, xlo.pointer), resources)
             return
         }
 
@@ -2029,6 +2034,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         case _ : Expedition => Some("ki-board")
         case _ : Council => Some("tc-board-h")
         case _ : Knaves => Some("kd-board-h")
+        case CU => Some("cu-board-v1")
+        case CUv2 => Some("cu-board-v3")
+        case _ : Caster => Some("xc-board")
+        case _ : Farmer => Some("fh-board-v2")
+        case _ : OldExpedition => Some("ok-board")
+        case _ : InvasiveEEE => Some("hld-board")
+        case _ : InvasiveDDD => Some("ld-board-d")
+        case _ : InvasiveCCC => Some("ld-board-c")
+        case _ : InvasiveBBB => Some("ld-board")
+        case _ : InvasiveAAA => Some("td-board")
+        case _ : LegalAAA => Some("tc-board-a")
+        case _ : AbductAAA => Some("kd-board-a")
         case _ => None
     }
 
@@ -2043,7 +2060,36 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             less(("More Info".hh).div.div(xstyles.choice)(xstyles.xx)(xstyles.chm)(xstyles.chp)(xstyles.thu)(xlo.fullwidth)(new CustomStyle(rules.width("60ex"))(new StylePrefix("test")){}).pointer.onClick.param(faction, !isMore)) ~
             more(("Less Info".hh).div.div(xstyles.choice)(xstyles.xx)(xstyles.chm)(xstyles.chp)(xstyles.thu)(xlo.fullwidth)(new CustomStyle(rules.width("60ex"))(new StylePrefix("test")){}).pointer.onClick.param(faction, !isMore))
 
+        def phases(l : String*) = desc(l.toList.flatMap(p => List(dt.Arrow, p.styled(styles.phase))).drop(1) : _*)
+
+        def close : Any => Unit = {
+            case (f : Faction, more : Boolean) => onFactionStatus(f, more, None)
+            case _ =>
+                overlayPane.invis()
+                overlayPane.clear()
+        }
+
         faction @@ {
+            case f if game.states.contains(f).not =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    f.elem.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    boardImage(f)./(Image(_)(styles.factionboard)) ~
+                    HGap ~
+                    HGap ~
+                    desc("Not set up yet") ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), close)
+
             case f : Underground if chapter.has("ministers") =>
                 showOverlay(overlayScrollX((
                     HGap ~
@@ -3318,7 +3364,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                         overlayPane.clear()
                 })
 
-            case f if boardImage(f).any =>
+            case f : Feline =>
                 showOverlay(overlayScrollX((
                     HGap ~
                     HGap ~
@@ -3329,16 +3375,374 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     HGap ~
                     HGap ~
                     boardImage(f)./(Image(_)(styles.factionboard)) ~
-                    f.as[Hero].flatMap(h => h.character).%(c => resources.images.hasSource(c.img))./(c => HGap ~ HGap ~ HGap ~ HGap ~ Image(c.img)(styles.factionboard)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    phases("Place Wood", "Craft", "Actions", "Draw") ~
+                    more("Up to three Daylight actions:", "Battle".hh, Comma, "March".hh, Comma, "Recruit".hh, Comma, "Build".hh, "or", "Overwork".hh, Comma, "and one more for each", "bird".hh, "card spent", Dot) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Cats".hl.larger) ~
+                    more("Cats".hl.larger, "are", "warriors".hh, Comma, "they", "battle".hh, "and provide", "rule".hh, Dot) ~
+                    more("Field Hospitals".hh, Colon, "when cats are removed, a matching card can be spent to place them at the", "Keep".hh, Dot) ~
+                    desc(f.all(f.warrior).num.hl.larger, "on the map,", f.pooled(f.warrior).hl.larger, "in reserve") ~
+                    HGap ~
+                    warriorLine(f.style + "-cat", f.all(f.warrior).num, f.pooled(f.warrior)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Buildings".hl.larger) ~
+                    more("Buildings".hl.larger, "cost", "wood".hh, "and score more for each one built", Dot) ~
+                    buildingLine(_ => f.style + "-sawmill", f.all(Sawmill).num, f.pooled(Sawmill)) ~
+                    buildingLine(_ => f.style + "-workshop", f.all(Workshop).num, f.pooled(Workshop)) ~
+                    buildingLine(_ => f.style + "-recruiter", f.all(Recruiter).num, f.pooled(Recruiter)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Wood".hl.larger) ~
+                    more("Wood".hl.larger, "is placed at each", "sawmill".hh, "in Birdsong and spent to", "build".hh, Dot) ~
+                    tokenLine(_ => f.style + "-wood", f.all(Wood).num, f.pooled(Wood)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    more("The Keep".hl.larger, Colon, "only the", f.elem, "can place pieces in its clearing", Dot) ~
+                    f.all(Keep).none.?(desc("The", "Keep".hh, "has been removed")) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    info() ~
                     HGap ~
                     HGap ~
                     HGap ~
                     HGap
-                ).div(xlo.flexvcenter)), {
-                    case _ =>
-                        overlayPane.invis()
-                        overlayPane.clear()
-                })
+                ).div(xlo.flexvcenter)), close)
+
+            case f : Aviary =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    f.elem.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    boardImage(f)./(Image(_)(styles.factionboard)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    phases("Emergency Orders", "Add to the Decree", "A New Roost", "Craft", "Resolve the Decree", "Score", "Draw") ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    f.leader./(l => desc("Leader", l.name.hl.larger)) ~
+                    HGap ~
+                    less("Decree".hl.larger) ~
+                    more("Decree".hl.larger, "is resolved left to right; if an action cannot be taken, the Eyrie falls into", "Turmoil".hh, Dot) ~
+                    Decree.all./(d => desc(d.name.hh, f.todo(d)./(s => dt.CardSuitInfo(s)).merge)).merge ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Hawks".hl.larger) ~
+                    more("Hawks".hl.larger, "are", "warriors".hh, Comma, "they", "battle".hh, "and provide", "rule".hh, Dot) ~
+                    more("Lords of the Forest".hh, Colon, "the Eyrie rules clearings where it is tied for presence", Dot) ~
+                    desc(f.all(f.warrior).num.hl.larger, "on the map,", f.pooled(f.warrior).hl.larger, "in reserve") ~
+                    HGap ~
+                    warriorLine(f.style + "-hawk", f.all(f.warrior).num, f.pooled(f.warrior)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Roosts".hl.larger) ~
+                    more("Roosts".hl.larger, "score at the end of each turn and add to the cards drawn", Dot) ~
+                    buildingLine(_ => f.style + "-roost", f.all(Roost).num, f.pooled(Roost)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    more("Disdain for Trade".hh, Colon, "crafted items score only 1 VP unless the leader is the", "Builder".hh, Dot) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), close)
+
+            case f : Insurgent =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    f.elem.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    boardImage(f)./(Image(_)(styles.factionboard)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    phases("Revolt", "Spread Sympathy", "Craft", "Mobilize", "Train", "Military Operations", "Draw") ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Sympathy".hl.larger) ~
+                    more("Sympathy".hl.larger, "is spread by spending matching", "supporters".hh, "and scores more the more is on the map", Dot) ~
+                    more("Outrage".hh, Colon, "a faction that removes sympathy or moves into a sympathetic clearing must add a matching card to the", "supporters".hh, Dot) ~
+                    tokenLine(_ => f.style + "-sympathy", f.all(Sympathy).num, f.pooled(Sympathy)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Bases".hl.larger) ~
+                    more("Bases".hl.larger, "are placed by a", "revolt".hh, Comma, "which removes all enemy pieces in the clearing", Dot) ~
+                    FoxRabbitMouse./(s => f.all(Base(s)).any.?(Image(f.style + "-base-" + s.name)(styles.building3x)).|(Image("empty-building")(styles.building3x))).merge.div ~
+                    desc(f.supporters.num.hl.larger, "supporter".s(f.supporters.num), FoxRabbitMouse.forall(s => f.all(Base(s)).none).?("(at most 5 without a base)")) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Critters".hl.larger) ~
+                    more("Critters".hl.larger, "are", "warriors".hh, Comma, "they", "battle".hh, "and provide", "rule".hh, Dot) ~
+                    more("Officers".hh, "each allow one", "military operation".hh, "in Evening", Dot) ~
+                    more("Guerrilla War".hh, Colon, "as defender, the Alliance deals hits equal to the higher roll", Dot) ~
+                    desc(f.all(f.warrior).num.hl.larger, "on the map,", f.officers.num.hl.larger, "officer".s(f.officers.num) + ",", f.pooled(f.warrior).hl.larger, "in reserve") ~
+                    HGap ~
+                    warriorLineNoGroup(f.style + "-critter", f.all(f.warrior).num, f.pooled(f.warrior)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), close)
+
+            case f : Hero =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    f.elem.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    boardImage(f)./(Image(_)(styles.factionboard)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    phases("Refresh", "Slip", "Actions", "Rest", "Draw") ~
+                    more("Daylight actions exhaust items:", "Move".hh, Comma, "Battle".hh, Comma, "Explore".hh, Comma, "Aid".hh, Comma, "Quest".hh, Comma, "Strike".hh, Comma, "Repair".hh, Comma, "Craft".hh, "and the special action of the character", Dot) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    f.character./(c => desc(c.name.styled(f).larger) ~ resources.images.hasSource(c.img).?(Image(c.img)(styles.illustration))) ~
+                    HGap ~
+                    less("Items".hl.larger) ~
+                    more("Items".hl.larger, "are exhausted to take actions and refreshed in Birdsong; damaged items are mended by", "repairing".hh, Dot) ~
+                    f.inv./(i => Image(i.imgid, styles.iii)).merge.div ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    desc(f.quests.num.hl.larger, "quest".s(f.quests.num), "completed") ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    more("Nimble".hh, Colon, "the Vagabond moves regardless of rule", Dot) ~
+                    more("Lone Wanderer".hh, Colon, "the Vagabond is not a warrior and cannot be removed", Dot) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), close)
+
+            case f : Trader =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    f.elem.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    boardImage(f)./(Image(_)(styles.factionboard)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    phases("Protectionism", "Score Dividends", "Gather Funds", "Actions", "Discard", "Set Costs") ~
+                    more("Funds are spent in Daylight to", "Craft".hh, Comma, "Move".hh, Comma, "Battle".hh, Comma, "Draw".hh, Comma, "Recruit".hh, "or", "Establish a Trade Post".hh, Dot) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Funds".hl.larger) ~
+                    more("Funds".hl.larger, "are the warriors other factions pay for", "services".hh, Comma, "gathered from", "Payments".hh, "in Birdsong", Dot) ~
+                    desc(f.payments.$.num.hl.larger, "in payments,", f.funds.$.num.hl.larger, "in funds,", f.commited.$.num.hl.larger, "committed") ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Trade Posts".hl.larger) ~
+                    more("Trade Posts".hl.larger, "score when placed; while any are on the map, funds pay", "dividends".hh, Dot) ~
+                    FoxRabbitMouse./~(s => (Image(f.style + "-trade-post-" + s.name)(styles.token3x) *** f.all(TradePost(s)).num) ++ (Image("empty-token")(styles.token3x) *** f.pooled(TradePost(s)))).merge.div ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Otters".hl.larger) ~
+                    more("Otters".hl.larger, "are", "warriors".hh, Comma, "they", "battle".hh, "and provide", "rule".hh, Dot) ~
+                    more("Swimmers".hh, Colon, "the Riverfolk treat rivers as paths and move along them ignoring rule", Dot) ~
+                    desc(f.all(f.warrior).num.hl.larger, "on the map,", f.pooled(f.warrior).hl.larger, "in reserve") ~
+                    HGap ~
+                    warriorLine(f.style + "-" + f.warrior, f.all(f.warrior).num, f.pooled(f.warrior)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    more("For Sale".hh, Colon, "the hand is public; other factions buy cards, riverboats and mercenaries at the set prices", Dot) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), close)
+
+            case f : Fanatic =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    f.elem.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    boardImage(f)./(Image(_)(styles.factionboard)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    phases("Adjust the Outcast", "Discard Lost Souls", "Conspiracies", "Rituals", "Return Revealed", "Craft", "Draw") ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    f.outcast./(s => desc(f.hated.?("Hated Outcast").|("Outcast").hh, s.elem)) ~
+                    desc(f.lost.num.hl.larger, "lost soul".s(f.lost.num)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Gardens".hl.larger) ~
+                    more("Gardens".hl.larger, "are built by rituals and score more the more of a suit are on the map", Dot) ~
+                    more("Pilgrims".hh, Colon, "the Lizards rule any clearing with a garden", Dot) ~
+                    FoxRabbitMouse./(s => buildingLine(_ => f.style + "-garden-" + s.name, f.all(Garden(s)).num, f.pooled(Garden(s)))).merge ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Lizards".hl.larger) ~
+                    more("Lizards".hl.larger, "are", "warriors".hh, Comma, "they", "battle".hh, "and provide", "rule".hh, Dot) ~
+                    more("Revenge".hh, Colon, "lizards removed while defending become", "acolytes".hh, Comma, "who perform", "conspiracies".hh, Dot) ~
+                    desc(f.all(f.warrior).num.hl.larger, "on the map,", f.acolytes.num.hl.larger, "acolyte".s(f.acolytes.num) + ",", f.pooled(f.warrior).hl.larger, "in reserve") ~
+                    HGap ~
+                    warriorLine(f.style + "-lizard", f.all(f.warrior).num, f.pooled(f.warrior)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    more("Hatred of Birds".hh, Colon, "bird cards are not wild for rituals", Dot) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), close)
+
+            case f : Mischief =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    f.elem.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    boardImage(f)./(Image(_)(styles.factionboard)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    phases("Craft", "Flip", "Recruit", "Actions", "Exert", "Draw") ~
+                    more("Up to three Daylight actions:", "Plot".hh, Comma, "Trick".hh, Comma, "Move".hh, "or", "Battle".hh, Dot) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Plots".hl.larger) ~
+                    more("Plots".hl.larger, "are placed face down and score when", "flipped".hh, Comma, "each one costing one more warrior than the last", Dot) ~
+                    more("Exposure".hh, Colon, "another faction can show a matching card to guess a face-down plot and remove it if right", Dot) ~
+                    ((Plot.all./~(p => Image(f.style + "-" + p.name)(styles.token3x) *** f.all(p).diff(f.hidden).num)) ++ (Image(f.style + "-plot")(styles.token3x) *** f.hidden.num) ++ (Image("empty-token")(styles.token3x) *** (Plot.all./(f.pooled).sum - f.hidden.num))).merge.div ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    less("Ravens".hl.larger) ~
+                    more("Ravens".hl.larger, "are", "warriors".hh, Comma, "they", "battle".hh, "and provide", "rule".hh, Dot) ~
+                    more("Nimble".hh, Colon, "the Corvids move regardless of rule", Dot) ~
+                    more("Embedded Agents".hh, Colon, "defending in a clearing with a face-down plot deals an extra hit", Dot) ~
+                    desc(f.all(f.warrior).num.hl.larger, "on the map,", f.pooled(f.warrior).hl.larger, "in reserve") ~
+                    HGap ~
+                    warriorLine(f.style + "-raven", f.all(f.warrior).num, f.pooled(f.warrior)) ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), close)
 
             case f =>
                 println("no faction status overlay for " + f + " " + isMore + " " + chapter)
@@ -4223,7 +4627,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 factionStatus(game.ordering(n), statusBitmaps(n))
             else
             if (game.seating.any)
-                statusBitmaps(n).replace(Div(Div(resources.getName(game.seating(n)).|(game.seating(n).name).hh), styles.smallname, xlo.pointer), resources)
+                statusBitmaps(n).replace(Div(Div(resources.getName(game.seating(n)).|(game.seating(n).name).hh), styles.smallname, xlo.pointer).div(xstyles.fillHeight).pointer.onClick.param(game.seating(n)), resources, {
+                    case f : Faction if boardImage(f).any => onFactionStatus(f, false)
+                    case _ =>
+                })
             else
                 statusBitmaps(n).replace(Div(Div(""), styles.smallname, xlo.pointer), resources)
         }
