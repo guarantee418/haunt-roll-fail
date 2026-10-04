@@ -260,7 +260,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // Modules and expansions turned on in the options
     // New Blood is on whenever one of its clans plays
-    val modules : $[Module] = Module.all.%(m => options.has(ModuleOption(m)) || (m == NewBlood && setup.exists(NewBlood.clans.has)) || (m == Solo && setup.has(Automa)))
+    val modules : $[Module] = Module.all.%(m => Meta.has(options, m) || (m == NewBlood && setup.exists(NewBlood.clans.has)) || (m == Solo && setup.has(Automa)))
 
     def has(m : Module) = modules.has(m)
 
@@ -289,7 +289,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     val warchiefCards = has(Warchiefs) || options.has(WarchiefCards)
 
     // Three closed territories with large buildings win at the end of a year (not with the Alternative victory module)
-    val domination = options.has(FameOnly).not && options.has(ModuleOption(VictoryModule)).not && (setup.has(Automa).not || options.has(AutomaLevelOption(1)))
+    val domination = options.has(FameOnly).not && has(VictoryModule).not && (setup.has(Automa).not || options.has(AutomaLevelOption(1)))
 
     // Team play (2v2 with four players, 3v3 with six): seats alternate between the two teams,
     // so teammates sit opposite each other

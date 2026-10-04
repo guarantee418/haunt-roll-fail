@@ -68,13 +68,66 @@ object YearsOption {
     val standard = YearsOption(7)
 }
 
-case object FameOnly extends GameOption with ToggleOption with ImportantOption {
-    val group = "Victory".txt
+// VICTORY CONDITIONS: one of the four ways to win, then (Alternative victory) the mode and, if chosen by hand, the cards
+trait VictoryChoice extends GameOption with OneOfGroup with ImportantOption {
+    val group = "Victory conditions".txt
+}
+
+// The core rules: three closed territories each with a large building at the end of a year, otherwise the most fame
+case object StandardVictory extends VictoryChoice {
+    def valueOn = "Three territories with large buildings, or fame".txt
+    override val explain = $(
+        "The core rules: a player who controls three closed territories, each with a large building, wins at the end of a year.",
+        "Otherwise the player with the most fame wins at the end of the last year.",
+    )
+}
+
+case object FameOnly extends VictoryChoice {
     def valueOn = "Fame victory only".txt
     override val explain = $(
-        "Normally a player who controls three closed territories, each with a large building, wins at the end of a year.",
-        "With this option only fame counts, at the end of the last year. The rulebook suggests it for the " ~ 10.hl ~ "-year game.",
+        "Only fame counts, at the end of the last year; three closed territories with large buildings don't win.",
+        "The rulebook suggests it for the " ~ 10.hl ~ "-year game.",
     )
+}
+
+// Uncharted Horizons' Alternative victory conditions with the cards drawn at random, as the rulebook says
+case object AltVictoryRandom extends VictoryChoice {
+    def valueOn = "Alternative victory, random cards".txt
+    override def decorate(e : Elem) = e ~ " " ~ "(Uncharted Horizons)".spn(xstyles.smaller85)
+    override val explain = VictoryModule.about ++ $("One Map Control card and two Wealth cards (three with teams) are drawn at random at setup, as in the rulebook.".txt)
+}
+
+// The same with the cards chosen below (VictoryCardOption); Meta.validateFactionSeatingOptions checks their number
+case object AltVictoryChosen extends VictoryChoice {
+    def valueOn = "Alternative victory, chosen cards".txt
+    override def decorate(e : Elem) = e ~ " " ~ "(Uncharted Horizons)".spn(xstyles.smaller85)
+    override val explain = VictoryModule.about ++ $("Choose exactly one Map Control card and two Wealth cards (three with teams) below.".txt)
+}
+
+object VictoryChoice {
+    val alternative : $[VictoryChoice] = $(AltVictoryRandom, AltVictoryChosen)
+}
+
+// The Alternative victory mode
+case class VictoryModeOption(jarl : Boolean) extends GameOption with ImportantOption {
+    val group = "Victory conditions".txt
+    def valueOn = jarl.?("Jarl: all three cards").|("Thane: Map Control and one Wealth card").txt
+    override val explain = $("Needs " ~ "Alternative victory".hl ~ ". Thane is the default.")
+    override def required(all : $[BaseOption]) = VictoryChoice.alternative./(o => $[BaseOption](o))
+    override def forcedOff(all : $[BaseOption]) = $(VictoryModeOption(jarl.not))
+}
+
+// An Alternative victory card chosen by hand
+case class VictoryCardOption(card : VictoryCard) extends GameOption with ToggleOption with ImportantOption {
+    val group = "Victory conditions".txt
+    def valueOn = (card.mapControl.?("Map Control: ").|("Wealth: ").spn(xstyles.smaller85) ~ card.name.txt)
+    override def decorate(e : Elem) = e ~ VictoryExpansion.needsCreatures(card).?(" (Creatures module)".spn(xstyles.smaller85)).|(Empty)
+    override val explain = $(card.name.hl ~ ": " ~ card.info.text, "Needs " ~ "Alternative victory, chosen cards".hl ~ ".")
+    override def required(all : $[BaseOption]) = $($[BaseOption](AltVictoryChosen) ++ VictoryExpansion.needsCreatures(card).$(ModuleOption(Creatures)))
+}
+
+object VictoryCardOption {
+    val all : $[VictoryCardOption] = VictoryCard.all./(VictoryCardOption(_))
 }
 
 // The Warchiefs box's 7 extra clan upgrade cards, which the rulebook allows without the Warchiefs module
@@ -173,7 +226,8 @@ case object EventsModule extends Module("Events", "Uncharted Horizons") {
     )
 }
 
-// Uncharted Horizons' Alternative victory conditions module (horizons.scala)
+// Uncharted Horizons' Alternative victory conditions module (horizons.scala); turned on by the Victory conditions
+// (AltVictoryRandom, AltVictoryChosen), so its option isn't listed (games made before keep ModuleOption(VictoryModule))
 case object VictoryModule extends Module("Alternative victory", "Uncharted Horizons") {
     override def ready = true
     override def expansion = |(VictoryExpansion)
@@ -182,14 +236,6 @@ case object VictoryModule extends Module("Alternative victory", "Uncharted Horiz
         "One Map Control card and two Wealth cards (three with teams) are drawn at setup. At the end of each year, a player who fulfils the chosen mode's conditions wins at once: " ~ "Thane".hl ~ " needs the Map Control card and one Wealth card, " ~ "Jarl".hl ~ " all three.",
         "The three closed territories with large buildings no longer win. If nobody fulfils the conditions by the end of the last year, the most fame wins.",
     )
-}
-
-// The Alternative victory module's mode
-case class VictoryModeOption(jarl : Boolean) extends GameOption with OneOfGroup {
-    val group = "Alternative victory mode".txt
-    def valueOn = jarl.?("Jarl: all three cards").|("Thane: Map Control and one Wealth card").txt
-    override val explain = $("Needs the " ~ "Alternative victory".hl ~ " module. Thane is the default.")
-    override def required(all : $[BaseOption]) = $($(ModuleOption(VictoryModule)))
 }
 
 // Team play (Game.teams): seats alternate between the two teams, so teammates sit opposite each other.

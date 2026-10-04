@@ -572,7 +572,13 @@ object VictoryExpansion extends Expansion {
     }
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
-        // SETUP: 1 Map Control card and 2 Wealth cards (3 with teams); cards for modules not played are skipped
+        // SETUP: 1 Map Control card and 2 Wealth cards (3 with teams) at random; cards for modules not played are skipped
+        // Cards chosen on the setup screen instead
+        case ShuffledAchievementsAction(l) if game.victory.none && options.has(AltVictoryChosen) =>
+            game.victory = options.of[VictoryCardOption]./(_.card).sortBy(c => VictoryCard.all.indexOf(c)).sortBy(_.mapControl.not)
+            log("Victory conditions", "(" ~ options.has(VictoryModeOption(true)).?("Jarl").|("Thane").hl ~ ", chosen):", game.victory./(_.elem).join(", "))
+            game.internalPerform(ShuffledAchievementsAction(l), soft)
+
         case ShuffledAchievementsAction(l) if game.victory.none =>
             Shuffle[VictoryCard](VictoryCard.mapCards, ShuffledMapControlAction(_, l))
 

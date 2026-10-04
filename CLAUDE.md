@@ -73,8 +73,12 @@ players, not clans: each clan's player picks one on its row of the setup screen
 (`ColorOption`, default blue, red, yellow, purple, green, orange by seat;
 `game.colors`); starting cards show that color's banner (orange has no
 cards of its own and uses the yellow ones). The setup options
-(colors, game length, fame-only victory, first player, and the modules and
-expansions; Creatures, Warchiefs, Wilderness, Events, Alternative victory and the 2v2/3v3 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`. Northgard no longer sets `underConstruction`
+(colors, game length, victory conditions, first player, and the modules and
+expansions; Creatures, Warchiefs, Wilderness, Events and the 2v2/3v3 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`.
+"Victory conditions" picks one of: the standard rules, fame only, Alternative
+victory with random cards (the rulebook's way), or Alternative victory with
+cards chosen from the 21 listed below it (exactly 1 Map Control and 2 Wealth,
+3 with teams, or Start is refused); plus Thane or Jarl. Northgard no longer sets `underConstruction`
 in its `Meta` (setting it to `true` would put an "Under Construction" note under
 its name on the game list and a disclaimer at the top of its menu).
 `nort/host.scala` runs bot games headless (JVM only,

@@ -49,16 +49,18 @@ object Meta extends MetaGame { mmm =>
     // Six players build on the five-player rules
     override val maxPlayers = 6
 
-    override val hiddenOptions = $
+    // Games made before the Victory conditions options turned the Alternative victory module on with its module option
+    override val hiddenOptions = $(ModuleOption(VictoryModule))
 
     // New Blood has no option: picking one of its clans brings it in
-    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(FameOnly, FirstSeatStarts, WarchiefCards) ++ Module.all.but(NewBlood).but(Solo)./(ModuleOption) ++ $(MoreCreatures, VictoryModeOption(false), VictoryModeOption(true)) ++ AutomaLevelOption.all ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, WarchiefCards) ++ Module.all.but(NewBlood).but(Solo).but(VictoryModule)./(ModuleOption) ++ $(MoreCreatures) ++ AutomaLevelOption.all ++ hiddenOptions
 
     // Colors only for the clans in the game; 2v2 Teams only with four players, 3v3 Teams only with six
     override def optionsFor(n : Int, l : $[F]) = options.%{
         case ColorOption(f, _) => l.has(f)
         case ModuleOption(m) if Module.teams.contains(m) => Module.teams(m) == n && l.has(Automa).not
         case AutomaLevelOption(_) => l.has(Automa)
+        case ModuleOption(VictoryModule) => false
         case _ => true
     }
 
@@ -81,11 +83,11 @@ object Meta extends MetaGame { mmm =>
     }
 
     // Colors by seat, as before colors could be chosen
-    override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } :+ (YearsOption.standard : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O)
+    override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } :+ (YearsOption.standard : O) :+ (StandardVictory : O) :+ (VictoryModeOption(false) : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O)
 
     override def quickOptions = options./(o => o -> 0.0).toMap
 
-    def has(options : $[O], m : Module) = options.has(ModuleOption(m))
+    def has(options : $[O], m : Module) = options.has(ModuleOption(m)) || (m == VictoryModule && VictoryChoice.alternative.exists(options.has))
 
     val quickMin = 2
     val quickMax = 4
@@ -108,8 +110,18 @@ object Meta extends MetaGame { mmm =>
         val teams = Module.teams.toList.%{ case (m, n) => has(options, m) && factions.num != n }
         teams.any.?(ErrorResult(teams./{ case (m, n) => m.label + " needs " + n + " players" }.mkString(", "))) ||
         (factions.has(Automa) && options.of[AutomaLevelOption].exists(_.level >= 3) && has(options, Creatures).not).?(ErrorResult("Automa levels 3 and up need the Creatures module")) ||
+        validateVictoryCards(factions, options) ||
         missing.any.?(WarningResult(missing./(factionName).mkString(", ") + " will get a free color")) |
         InfoResult("Northgard: Uncharted Lands")
+    }
+
+    // Alternative victory with chosen cards: exactly one Map Control card and two Wealth cards (three with teams)
+    def validateVictoryCards(factions : $[Faction], options : $[O]) : |[ValidationResult] = if (options.has(AltVictoryChosen).not) None else {
+        val chosen = options.of[VictoryCardOption]./(_.card)
+        val maps = chosen.count(_.mapControl)
+        val wealth = chosen.count(_.mapControl.not)
+        val needed = Module.teams.exists { case (m, n) => has(options, m) && factions.num == n }.?(3).|(2)
+        (maps != 1 || wealth != needed).?(ErrorResult("Choose 1 Map Control card (" + maps + " chosen) and " + needed + " Wealth cards (" + wealth + " chosen)"))
     }
 
     def factionName(f : Faction) = (f == Automa).?("Automa (solo)").|(f.name + " Clan")
