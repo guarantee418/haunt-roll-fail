@@ -379,6 +379,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         case Yellow => ("#ffc400", 0.55)
         case Purple => ("#9b30c8", 0.3)
         case Green => ("#147a14", 0.55)
+        case Orange => ("#ff7a1a", 0.4)
     }
 
     // Invaded, waiting for its fight
