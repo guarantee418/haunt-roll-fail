@@ -484,8 +484,10 @@ the 20 Event cards in the TTS mod 3597126237 (sheet `deck235`, 5x4); code in
 
 Same sources; the TTS mod has 8 Map Control cards (sheet `deck236`) and 13
 Wealth cards (`deck237`), more than the rulebook's 5 and 8. Code in
-`horizons.scala` (`VictoryExpansion`), options "Alternative victory" and
-"Alternative victory mode" (Thane by default, or Jarl).
+`horizons.scala` (`VictoryExpansion`), under the "Victory conditions"
+options: "Alternative victory, random cards" (the rulebook's setup) or
+"Alternative victory, chosen cards" (the players pick exactly the cards the
+setup would draw), and Thane (default) or Jarl.
 
 - Setup: 1 Map Control card and 2 Wealth cards (3 with teams), face up.
   Cards needing the Creatures module (Creature Territories, Hunting) are

@@ -24,7 +24,7 @@ and each deck's `CustomDeck` has the `FaceURL` of its card sheet.
 | File | What it holds |
 |---|---|
 | `meta.scala` | Clans (picked by name, with their three clan cards shown), 2–6 players, which options go on which setup page, the asset lists (cards, tiles, units, buildings, `ui-` markers) |
-| `options.scala` | Setup options: `ColorOption` per clan, `YearsOption` (5–10, default 7), `FameOnly`, `FirstSeatStarts`; `Module` and `ModuleOption` for modules and expansions, including the team variants `TeamsVariant` (2v2) and `Teams3v3` |
+| `options.scala` | Setup options: `ColorOption` per clan, `YearsOption` (5–10, default 7), the Victory conditions (`VictoryChoice`: `StandardVictory`, `FameOnly`, `AltVictoryRandom`, `AltVictoryChosen`; `VictoryModeOption`, `VictoryCardOption`), `FirstSeatStarts`; `Module` and `ModuleOption` for modules and expansions, including the team variants `TeamsVariant` (2v2) and `Teams3v3` |
 | `game.scala` | Factions, player colors by seat, resources, `FactionState`, `Game` (map state and helpers), `CommonExpansion` (setup, decks, the year loop, harvest, winter, end of year, scoring), `Debug.summary` |
 | `cards.scala` | Every core card (name, fame, Flash, text, image) and its `Effect`; `MoveSpecial` / `BuildSpecial` mark Move and Build cards with extra rules |
 | `effects.scala` | `CardsExpansion`: the card effects that aren't basic actions (recruit per resource, removing enemy units, copying cards, looking at hands, Defensive Strategy, ...) |
@@ -289,7 +289,9 @@ on. To implement one:
 
 - `horizons.scala`: `EventCard` / `EventsExpansion` (option
   `ModuleOption(EventsModule)`) and `VictoryCard` / `VictoryExpansion`
-  (`ModuleOption(VictoryModule)`, with `VictoryModeOption(jarl)`), both
+  (on with `AltVictoryRandom` or `AltVictoryChosen` under "Victory
+  conditions", see `Meta.has`; older games have the hidden
+  `ModuleOption(VictoryModule)`; mode `VictoryModeOption(jarl)`), both
   priority -3 so they act before New Blood. Images in `card/event/`
   (landscape, 640x414) and `card/victory/`, cut from the TTS mod 3597126237
   sheets `deck235`, `deck236`, `deck237`. Rules in `RULES.md`.
@@ -306,12 +308,15 @@ on. To implement one:
   explores call `EventsExpansion.explored`.
 - Victory: `game.victory`, `game.progress` (validation counts by `advance`,
   only with the module), checked at `EndOfYearAction` (`AltVictoryAction`).
-  `game.domination` is off with the module.
+  `game.domination` is off with the module. With `AltVictoryChosen` the
+  cards come from the `VictoryCardOption`s instead of the shuffle;
+  `Meta.validateVictoryCards` refuses to start unless exactly 1 Map Control
+  and 2 Wealth cards (3 with teams) are chosen.
 - The card strip shows this year's Event and the next one, and the victory
   cards; the status panes list each victory card (✓ when fulfilled) with the
   counts.
 - `NORT_EVENTS=1` and `NORT_VICTORY=1` make the headless host always use the
-  modules; the summary counts `event-<id>` and `alt-victory-<mode>`. All 20
+  modules (Alternative victory with random or chosen cards, half each); the summary counts `event-<id>` and `alt-victory-<mode>`. All 20
   Events came up in bot games; the bots rarely meet victory conditions.
 
 ## Uncharted Horizons: the Automa (Solo module, 2026-10-04)

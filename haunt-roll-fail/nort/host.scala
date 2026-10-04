@@ -30,16 +30,22 @@ object Host extends hrf.host.BaseHost {
         val colors = l.zip(PlayerColor.all.shuffle)./{ case (f, c) => ColorOption(f, c) }
         // NORT_CREATURES=1: always with the Creatures module (and the More Creatures variant half the time); NORT_WARCHIEFS=1: always with Warchiefs; NORT_WILDERNESS=1: always with Wilderness
         val creatures = sys.env.get("NORT_CREATURES").has("1") || random() < 0.5
-        val options = colors ++ $(YearsOption.all.shuffle.head) ++ (random() < 0.3).$(FameOnly) ++ (random() < 0.3).$(FirstSeatStarts) ++
+        val teams = Module.teams.toList.%{ case (_, k) => k == n && solo.not && (sys.env.get("NORT_TEAMS").has("1") || random() < 0.5) }./{ case (m, _) => ModuleOption(m) }
+        // NORT_VICTORY=1: always with Alternative victory, with random or chosen cards
+        val alt = sys.env.get("NORT_VICTORY").has("1") || random() < 0.5
+        val chosen = alt && random() < 0.5
+        val usable = VictoryCard.all.%(c => creatures || VictoryExpansion.needsCreatures(c).not).shuffle
+        val victory = alt.?(chosen.?(AltVictoryChosen : VictoryChoice).|(AltVictoryRandom)).|((random() < 0.3).?(FameOnly : VictoryChoice).|(StandardVictory)) +:
+            ((alt && random() < 0.5).$(VictoryModeOption(true)) ++ chosen.??(usable.%(_.mapControl).take(1) ++ usable.%(_.mapControl.not).take(teams.any.?(3).|(2)))./(VictoryCardOption(_)))
+        val options = colors ++ $(YearsOption.all.shuffle.head) ++ victory ++ (random() < 0.3).$(FirstSeatStarts) ++
             creatures.$(ModuleOption(Creatures)) ++ (creatures && random() < 0.5).$(MoreCreatures) ++
             (sys.env.get("NORT_WARCHIEFS").has("1") || random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.3).$(WarchiefCards) ++
             (sys.env.get("NORT_WILDERNESS").has("1") || random() < 0.5).$(ModuleOption(Wilderness)) ++
-            // NORT_EVENTS=1 / NORT_VICTORY=1: always with the Events / Alternative victory module
+            // NORT_EVENTS=1: always with the Events module
             (sys.env.get("NORT_EVENTS").has("1") || random() < 0.5).$(ModuleOption(EventsModule)) ++
-            { val v = sys.env.get("NORT_VICTORY").has("1") || random() < 0.5 ; v.$(ModuleOption(VictoryModule)) ++ (v && random() < 0.5).$(VictoryModeOption(true)) } ++
-            Module.teams.toList.%{ case (_, k) => k == n && (sys.env.get("NORT_TEAMS").has("1") || random() < 0.5) }./{ case (m, _) => ModuleOption(m) }
+            teams
         val level = solo.$(AutomaLevelOption(1 + (random() * 6).toInt))
-        val all = (options ++ level).%(o => solo.not || o.is[ModuleOption].not || Module.teams.contains(o.asInstanceOf[ModuleOption].module).not) ++ level.exists(_.level >= 3).$(ModuleOption(Creatures))
+        val all = options ++ level ++ level.exists(_.level >= 3).$(ModuleOption(Creatures))
         all.foreach(o => assert(Meta.parseOption(Meta.writeOption(o)) == $(o), o))
         new G(l, all.distinct)
     })
