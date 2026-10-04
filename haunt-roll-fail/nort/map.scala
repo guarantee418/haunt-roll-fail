@@ -235,11 +235,33 @@ object MapExpansion extends Expansion {
     def moveSources(f : Faction, e : MoveEffect = MoveEffect(1))(implicit game : Game) =
         ((e.special == InfiltrateMove).?(game.board.territories.%(t => game.figures(t, f) > 0)).|(game.controlled(f)) ++
             // Signy's Celerity: units go on through the territory with the Scorched Earth token
-            (e.special == SignyMove).??(game.board.territories.%(t => game.scorchedIn(t) && game.figures(t, f) > 0 && game.controlled(f).has(t).not)))
+            (e.special == SignyMove).??(game.board.territories.%(t => game.scorchedIn(t) && game.figures(t, f) > 0 && game.controlled(f).has(t).not)) ++
+            // Team play: units passing through a teammate's territory
+            game.passing(f))
             .%(t => game.bearIn(t).not && game.hostileIn(t).not)
 
     // Two creatures that don't share their territory can't both be fought: nobody may enter
     def enterable(t : Territory)(implicit game : Game) = game.creaturesIn(t).count(_.kind.shares.not) < 2
+
+    // Team play: f's figures (with Kaija when kaija) entering a teammate's territory t with rem moves left
+    // must be able to move on, since they can't stop there
+    def canPass(f : Faction, t : Territory, rem : Int, e : MoveEffect, kaija : Boolean)(implicit game : Game) : Boolean =
+        rem > 0 && game.bearIn(t).not && game.hostileIn(t).not && game.board.adjacent(t).exists { case (o, regular) =>
+            val c = moveCost(regular.not, e.ignoreRough)
+            c <= rem && canEnter(f, o, rem - c, e, kaija)
+        }
+
+    // Kaija can't enter enemy territories unless awakened; a teammate's territory only to pass through
+    def canEnter(f : Faction, o : Territory, rem : Int, e : MoveEffect, kaija : Boolean)(implicit game : Game) : Boolean =
+        enterable(o) &&
+        (kaija.not || game.awakened || game.present(o).forall(game.allied(f, _))) &&
+        (game.mateHeld(f, o).not || canPass(f, o, rem, e, kaija))
+
+    // Where f's figures in t can move with left moves, and the cost; figures passing through a teammate's territory all move on together
+    def destinations(f : Faction, t : Territory, left : Int, e : MoveEffect)(implicit game : Game) : $[(Territory, Int)] = {
+        val kaija = game.mateHeld(f, t) && game.kaijaIn(t, f)
+        game.board.adjacent(t).map { case (o, regular) => o -> moveCost(regular.not, e.ignoreRough) }.filter { case (o, c) => c <= left && canEnter(f, o, left - c, e, kaija) }
+    }
 
     // Tiles a setup placement may go next to: the starting tile(s) in the first round, any tile in the second
     def setupPlacements(tile : String, round : Int)(implicit game : Game) : $[(Spot, Int)] =
@@ -338,10 +360,10 @@ object MapExpansion extends Expansion {
     // Closed territories of 3 or more tiles, for Protector of the Land
     def bigClosed(f : Faction)(implicit game : Game) = game.controlled(f).%(game.board.closed).%(t => game.board.tiles(t) >= 3)
 
-    // Neutral or enemy territories next to f's, where the Scorched Earth token can go
+    // Neutral or enemy territories next to f's, where the Scorched Earth token can go (not a teammate's)
     def scorchable(f : Faction)(implicit game : Game) : $[Territory] = {
         val mine = game.controlled(f)
-        game.board.territories.%(t => game.present(t).has(f).not)
+        game.board.territories.%(t => game.present(t).forall(game.enemy(f, _)))
             .%(t => mine.exists(m => game.board.adjacent(m).exists(_._1 == t)))
             .%(t => game.scorchedIn(t).not)
     }
@@ -400,6 +422,7 @@ object MapExpansion extends Expansion {
 
             game.board.place(Placement("start", 0, 0, 0))
 
+            // Five and six players: both starting tiles
             if (factions.num >= 5)
                 game.board.place(Placement("start-5", 1, 0, 0))
 
@@ -551,30 +574,34 @@ object MapExpansion extends Expansion {
 
         // MOVE
         case MoveAction(f, left, e, then) =>
-            val sources = (left > 0).??(moveSources(f, e).%(t => game.board.adjacent(t).exists { case (_, regular) => moveCost(regular.not, e.ignoreRough) <= left }))
+            val sources = (left > 0).??(moveSources(f, e).%(t => destinations(f, t, left, e).any))
 
             if (sources.none)
                 Then(MovesMadeAction(f, e, then))
             else
                 Ask(f).each(sources)(t => MoveFromAction(f, t.anchor, left, e, then))
-                    .add(MoveDoneAction(f, e, then))
+                    // Team play: units can't stop in a teammate's territory
+                    .when(game.passing(f).none)(MoveDoneAction(f, e, then))
 
         case MoveFromAction(f, from, left, e, then) =>
             val t = game.board.territory(from)
 
-            Ask(f).some(game.board.adjacent(t).filter(x => enterable(x._1))) { case (o, regular) =>
-                val cost = moveCost(regular.not, e.ignoreRough)
-                (cost <= left).$(MoveToAction(f, from, o.anchor, cost, left, e, then))
-            }.cancel
+            Ask(f).each(destinations(f, t, left, e))((o, cost) => MoveToAction(f, from, o.anchor, cost, left, e, then)).cancel
 
         case MoveToAction(f, from, to, cost, left, e, then) =>
             val t = game.board.territory(from)
+            val dst = game.board.territory(to)
             val n = game.count(t, f)
-            // Kaija can't enter enemy territories unless awakened
-            val kaija = game.kaijaIn(t, f) && (game.awakened || game.present(game.board.territory(to)).but(f).none)
+            // Kaija can't enter enemy territories unless awakened, nor a teammate's it couldn't move on from
+            val kaija = game.kaijaIn(t, f) && (game.awakened || game.present(dst).forall(game.allied(f, _))) &&
+                (game.mateHeld(f, dst).not || canPass(f, dst, left - cost, e, true))
 
             val chief = game.chiefIn(t, f)
 
+            // Team play: figures passing through a teammate's territory move on together
+            if (game.mateHeld(f, t))
+                Ask(f).add(MoveUnitsAction(f, from, to, n, game.kaijaIn(t, f), chief, cost, left, e, then)).cancel
+            else
             Ask(f)
                 .each(n.to(1, -1).$)(k => MoveUnitsAction(f, from, to, k, false, false, cost, left, e, then))
                 .some(kaija.$(n.to(0, -1).$).flatten)(k => $(MoveUnitsAction(f, from, to, k, true, false, cost, left, e, then)))
@@ -606,12 +633,15 @@ object MapExpansion extends Expansion {
             if (chief)
                 game.chiefs += f -> dst.anchor
 
-            val enemy = game.present(dst).but(f)
+            val enemy = game.present(dst).%(game.enemy(f, _))
 
-            f.log("moved", Figures(n, kaija, chief), "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty))
+            f.log("moved", Figures(n, kaija, chief), "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty), game.mateHeld(f, dst).?("(passing through)".txt).|(Empty))
 
             if (enemy.any && game.combats.has(dst.anchor).not)
                 game.combats :+= dst.anchor
+
+            if (game.mateHeld(f, dst))
+                game.note("team-pass")
 
             Then(MoveAction(f, left - cost, e, then))
 

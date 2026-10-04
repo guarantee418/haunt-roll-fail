@@ -28,7 +28,9 @@ draws a tile when no neutral territory is left.
 | End-of-game fame scoring | done (no territory fame yet; of the Achievements only Warlord scores) |
 | Map tiles, territories, borders, exploring | done: tile data in `tiles.scala`, territories and placement rules in `board.scala`, setup, Recruit, Move, Explore, Build, Feast and combat in `map.scala`. Tile images in `webp2/nort/images/tile/` (`tile-31` to `tile-33` and `start-5`: TTS scans aligned to the earlier photo crops) |
 | Card display (like Arcs): Development and Achievement cards in the `court` pane on top for everyone, your hand (and played cards) in the `hand` pane at the bottom; click or tap a card to see it full screen | done |
-| Player colors, chosen per clan on the setup screen (default blue, red, yellow, purple, green by seat) | done; green starting cards are the blue images with the ribbon recoloured to the printed green |
+| Player colors, chosen per clan on the setup screen (default blue, red, yellow, purple, green, orange by seat) | done; green starting cards are the blue images with the ribbon recoloured to the printed green; there are no orange ones, orange uses the yellow ones |
+| Six players (not in the rulebook) | done 2026-10-04: the five-player rules extended (see Six players below) |
+| 2v2 Teams variant (core box) and 3v3 Teams (not in the rulebook, the 2v2 rules with six players) | done 2026-10-04 (see Teams below) |
 | Game length 5–10 years (10-year variant: 3 Early + 6 Advanced per player), Fame victory only, First seat goes first | done (options) |
 | Creatures module (core box), with the More Creatures variant | done 2026-10-03 (`creatures.scala`) |
 | Warchiefs module (Warchiefs expansion) | done 2026-10-03 (`warchiefs.scala`) |
@@ -43,10 +45,11 @@ draws a tile when no neutral territory is left.
 
 ## Components (core box)
 
-- 7 clans: Bear, Boar, Goat, Raven, Snake, Stag, Wolf. 2–5 players.
+- 7 clans: Bear, Boar, Goat, Raven, Snake, Stag, Wolf. 2–5 players (6 in
+  this adaptation, see Six players below).
   Each player also picks a color, independent of the clan: blue, red,
-  yellow, purple or green (14 units, 6 starting cards with that color's
-  banner).
+  yellow, purple, green or orange (14 units, 6 starting cards with that
+  color's banner; orange is not in the box and uses the yellow cards).
 - Clan cards: 1 initial + 2 upgrades per clan.
 - 16 Early Development, 36 Advanced Development, 7 Achievement, 10 Unrest cards.
 - 35 map tiles: the starting tile (its own back), the 5-player starting tile
@@ -183,7 +186,37 @@ and Achievement cards (Achievements scored now) − 5 per Unrest card.
 Ties: territories controlled, then units, then buildings.
 
 Variants: a 10-year game (3 Early + 6 Advanced per player, fame win only);
-2v2 teams.
+2v2 teams (below).
+
+## Six players (not in the rulebook)
+
+Built on the five-player rules:
+
+- Both five-player starting tiles, as with five players.
+- Starting resources: players 4, 5 and 6 get 3 food + 2 wood.
+- The sixth player's color is orange: orange units and warchief
+  (`token/unit/unit-orange`, `warchief-orange`, recolored from the
+  `-original` images with a dark outline so they don't look like red or
+  yellow), and the yellow starting cards.
+- Development deck, Achievements and the Creatures module's first creatures
+  scale with the number of players as usual. The deck has 16 Early and 35
+  Advanced cards (in the data), so a six-player game of 8 years or more
+  is short of Early cards: Advanced cards make up the difference, and in a
+  10-year game the last years reveal fewer than six cards.
+
+## Teams (2v2 in the core rulebook; 3v3 added here)
+
+The final rulebook's 2v2 variant (the public Kickstarter rulebook doesn't
+have it; summarized from a review, check against the rulebook):
+
+- Four players in two teams; teammates sit opposite each other.
+- Teammates add their scores together.
+- Units may move through a teammate's territory but may not end their
+  movement there.
+- During the harvest, teammates may trade resources with each other 1:1.
+
+3v3 (option "3v3 Teams", six players) uses the same rules with teams of
+three; seats alternate between the teams (1, 3, 5 against 2, 4, 6).
 
 ## Clan powers
 
@@ -349,6 +382,28 @@ Check these against the rulebook when it is at hand.
   is optional.
 - **Boar Clan**: "explores without closing any territory" is read literally:
   closing anyone's territory (or a neutral one) costs the lore.
+- **Teams**, where the summary above says nothing:
+  - Teams follow the seats: seats 1 and 3 (1, 3 and 5 with six players)
+    against the others; the turn order alternates between the teams.
+  - Teammates are never enemies: no fights, and cards and powers that target
+    enemies, opponents or enemy territories (Plunder, Capture, Raiding Party,
+    Bribery, Call to War, Spy, Ancestral Curse, Rapacious Exploitation, Enemy
+    Secrets, Stolen Lore, Defensive Strategy, Scorched Earth) skip teammates.
+    Hidden Ways can't go to a teammate's territory; Bribery can't move units
+    into their own teammate's territory. Retreats can't go there either.
+  - Moving through: units entering a teammate's territory must leave it with
+    the same Move action, so they may only enter if their remaining moves
+    can take them out (Rough borders count double); all the figures passing
+    through move on together, and the Move can't end while any are there.
+    Kaija may pass through a teammate's territory.
+  - Tiles still can't join two players' territories, teammates included.
+  - The 1:1 trade is a swap: give one resource, take one of another kind
+    from the teammate, any number of times during your trade step.
+  - Fame victory: the team with the highest total fame wins (both players).
+    Ties: the teams' total territories, then units, then buildings.
+  - Three closed territories with large buildings: a team wins when one of
+    its players has them. If both teams do, the teams' total fame, then
+    territories, units and buildings decide.
 - **Creatures**, where the rulebook says nothing:
   - Kaija counts as a unit for the Draugr (units go first) and as 2 combat
     points; a Fallen Valkyrie in a territory makes a tile placement illegal

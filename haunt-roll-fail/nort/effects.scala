@@ -127,14 +127,14 @@ object CardsExpansion extends Expansion {
 
     val basics : $[Effect] = $(RecruitEffect(1), MoveEffect(1), ExploreEffect(), BuildEffect())
 
-    // Enemy units: territories and factions with units (not just Kaija) other than f
+    // Enemy units: territories and factions with units (not just Kaija) other than f and its teammates
     def enemyUnits(f : Faction)(implicit game : Game) : $[(Territory, Faction)] =
-        game.board.territories./~(t => game.present(t).but(f).%(g => game.count(t, g) > 0)./(g => t -> g))
+        game.board.territories./~(t => game.present(t).%(game.enemy(f, _)).%(g => game.count(t, g) > 0)./(g => t -> g))
 
     // The same, next to a territory f controls
     def adjacentEnemyUnits(f : Faction)(implicit game : Game) : $[(Territory, Faction)] = {
         val mine = game.controlled(f)
-        enemyUnits(f).%{ case (t, _) => game.present(t).has(f).not && mine.exists(m => game.board.adjacent(m).exists(_._1 == t)) }
+        enemyUnits(f).%{ case (t, _) => game.present(t).exists(game.allied(f, _)).not && mine.exists(m => game.board.adjacent(m).exists(_._1 == t)) }
     }
 
     // Territories f can recruit in: not with a Brown Bear (Creatures module)
@@ -147,24 +147,24 @@ object CardsExpansion extends Expansion {
         }.%(_.n > 0)
 
     def callToWarCaps(f : Faction)(implicit game : Game) : $[Cap] =
-        recruitable(f).%(t => game.board.adjacent(t).exists { case (o, _) => game.present(o).but(f).any })./(t => Cap(t.anchor, 1))
+        recruitable(f).%(t => game.board.adjacent(t).exists { case (o, _) => game.present(o).exists(game.enemy(f, _)) })./(t => Cap(t.anchor, 1))
 
-    def hiddenSources(f : Faction)(implicit game : Game) = MapExpansion.moveSources(f).%(t => hiddenTargets(t).any)
+    def hiddenSources(f : Faction)(implicit game : Game) = MapExpansion.moveSources(f).%(t => hiddenTargets(f, t).any)
 
-    // Open territories, not with a Fallen Valkyrie
-    def hiddenTargets(t : Territory)(implicit game : Game) = game.board.territories.%(o => o != t && game.board.open(o) && game.hostileIn(o).not)
+    // Open territories, not with a Fallen Valkyrie nor held by a teammate
+    def hiddenTargets(f : Faction, t : Territory)(implicit game : Game) = game.board.territories.%(o => o != t && game.board.open(o) && game.hostileIn(o).not && game.mateHeld(f, o).not)
 
     def briberySources(f : Faction)(implicit game : Game) : $[(Territory, Faction)] =
         enemyUnits(f).%{ case (t, g) => briberyTargets(t, g).any }
 
-    // Adjacent territories enemy units can be moved to, not making a three-way territory
+    // Adjacent territories enemy units can be moved to, not making a three-way territory nor joining their teammates
     def briberyTargets(t : Territory, g : Faction)(implicit game : Game) : $[Territory] =
-        game.board.adjacent(t).map(_._1).%(o => game.present(o).but(g).num <= 1).%(o => game.hostileIn(o).not)
+        game.board.adjacent(t).map(_._1).%(o => game.present(o).but(g).num <= 1).%(o => game.hostileIn(o).not).%(o => game.mateHeld(g, o).not)
 
     def futureSightCards(f : Faction)(implicit game : Game) : $[Card] =
         f.foresaw.not.??(game.display ++ (game.year < game.lastYear).??(game.achievements))
 
-    def opponentsWithCards(f : Faction)(implicit game : Game) = factions.but(f).%(_.hand.any)
+    def opponentsWithCards(f : Faction)(implicit game : Game) = factions.%(game.enemy(f, _)).%(_.hand.any)
 
     // Effects that may be copied: not the copying cards themselves
     def copyable(f : Faction, e : Effect)(implicit game : Game) = e match {
@@ -174,12 +174,12 @@ object CardsExpansion extends Expansion {
 
     def secretsCards(f : Faction)(implicit game : Game) : $[(Faction, Card)] = {
         val mine = game.controlled(f)
-        val owners = game.board.territories.%(t => game.present(t).has(f).not && mine.exists(m => game.board.adjacent(m).exists(_._1 == t)))./~(t => game.present(t).single).distinct.but(f)
+        val owners = game.board.territories.%(t => game.present(t).has(f).not && mine.exists(m => game.board.adjacent(m).exists(_._1 == t)))./~(t => game.present(t).single).distinct.%(game.enemy(f, _))
         owners./~(g => g.active.distinct.%(c => copyable(f, c.effect))./(c => g -> c))
     }
 
     def stolenLoreCards(f : Faction)(implicit game : Game) : $[(Faction, Card)] =
-        game.scorched./(game.board.territory)./(game.present).|($).single.but(f)./~(g => g.active.distinct.%(c => copyable(f, c.effect))./(c => g -> c))
+        game.scorched./(game.board.territory)./(game.present).|($).single.%(game.enemy(f, _))./~(g => g.active.distinct.%(c => copyable(f, c.effect))./(c => g -> c))
 
     def heroesCards(f : Faction)(implicit game : Game) : $[Card] = f.played.distinct.%(c => copyable(f, c.effect))
 
@@ -249,7 +249,7 @@ object CardsExpansion extends Expansion {
         case SpyEffect =>
             Ask(f).each(opponentsWithCards(f))(g => SpyAction(f, g, then))
 
-        case CurseEffect => Then(CurseAction(f, game.from(f).drop(1), then))
+        case CurseEffect => Then(CurseAction(f, game.from(f).drop(1).%(game.enemy(f, _)), then))
 
         case RapaciousEffect =>
             Ask(f).each(opponentsWithCards(f))(g => RapaciousAction(f, g, then))
@@ -373,12 +373,12 @@ object CardsExpansion extends Expansion {
         // HIDDEN WAYS
         case HiddenFromAction(f, from, then) =>
             val t = game.board.territory(from)
-            Ask(f).each(hiddenTargets(t))(o => HiddenToAction(f, from, o.anchor, then)).cancel
+            Ask(f).each(hiddenTargets(f, t))(o => HiddenToAction(f, from, o.anchor, then)).cancel
 
         case HiddenToAction(f, from, to, then) =>
             val t = game.board.territory(from)
             val n = game.count(t, f)
-            val kaija = game.kaijaIn(t, f) && (game.awakened || game.present(game.board.territory(to)).but(f).none)
+            val kaija = game.kaijaIn(t, f) && (game.awakened || game.present(game.board.territory(to)).forall(game.allied(f, _)))
             val chief = game.chiefIn(t, f)
 
             Ask(f)
@@ -399,7 +399,7 @@ object CardsExpansion extends Expansion {
             if (chief)
                 game.chiefs += f -> dst.anchor
 
-            val enemy = game.present(dst).but(f)
+            val enemy = game.present(dst).%(game.enemy(f, _))
 
             f.log("moved", Figures(n, kaija, chief), "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty))
 

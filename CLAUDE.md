@@ -16,7 +16,8 @@ Northgard: Uncharted Lands is being added in `haunt-roll-fail/nort/`
 (meta name `nort`, URL `/play/nort`), base game first, expansions later.
 `nort/RULES.md` summarizes the rules (the rulebook PDFs aren't in the repo)
 and tracks what is done. `nort/HANDOFF.md` has the state, design notes,
-known gaps, next steps and how to build and test it. So far: the 7 clans, 2–5 players, the year loop with
+known gaps, next steps and how to build and test it. So far: the 7 clans, 2–6 players (six on the five-player rules), the 2v2
+Teams variant and a 3v3 one on the same rules, the year loop with
 decks, Wait/Replace/Remove/Upgrade/Pass, Flash cards, harvest trading, winter
 and Unrest, end-of-game scoring, and the real card list in `nort/cards.scala`
 (names, fame, text, images), the map: tile data in `nort/tiles.scala`
@@ -42,10 +43,11 @@ boards and tokens are in `expansion/` for later. Unit figures are in
 `token/unit/` (`unit-<color>`, and `warchief-<color>` for the Warchiefs
 expansion), recolored from the `-original` images. Colors belong to
 players, not clans: each clan's player picks one on its row of the setup screen
-(`ColorOption`, default blue, red, yellow, purple, green by seat;
-`game.colors`); starting cards show that color's banner. The setup options
+(`ColorOption`, default blue, red, yellow, purple, green, orange by seat;
+`game.colors`); starting cards show that color's banner (orange has no
+cards of its own and uses the yellow ones). The setup options
 (colors, game length, fame-only victory, first player, and the modules and
-expansions; Creatures and Warchiefs are implemented, the others are shown but disabled) are in `nort/options.scala`. `underConstruction = true` in its `Meta` puts
+expansions; Creatures, Warchiefs and the 2v2/3v3 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`. `underConstruction = true` in its `Meta` puts
 an "Under Construction" note under its name on the game list and a disclaimer
 at the top of its menu. `nort/host.scala` runs bot games headless (JVM only,
 like the other `host.scala` files).
