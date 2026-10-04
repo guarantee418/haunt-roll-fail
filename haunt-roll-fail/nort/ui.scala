@@ -1053,6 +1053,49 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val layoutKey = "v" + 10 + "." + "arity-" + arity
 
+    // Ultrawide screens (21:9 and wider): the layouter stretches the player panels to the full height
+    // and leaves empty space around the map, so the hand gets a narrow column. Instead: the log on the
+    // left, the map, then short player panels in a row, the shared cards below them and the hand
+    // filling the rest, wide enough to show the whole hand.
+    override def layout(width : Int, height : Int)(onLayout : $[PanePlacement] => Unit) {
+        val root = dom.document.documentElement.asInstanceOf[dom.html.Element].style
+
+        if (width < height * 2.1) {
+            root.removeProperty("--nort-hand-card")
+            return super.layout(width, height)(onLayout)
+        }
+
+        val fontSize = height / 34.0
+
+        val logW = (width * 0.16).round.toInt
+        val mapW = min(width * 0.40, height * 1.1).round.toInt
+        val rightX = logW + mapW
+        val rightW = width - rightX
+
+        // Room for six lines in the player panels, in a smaller font (their text lines are short)
+        val statusH = (height * 0.19).round.toInt
+        val courtH = min(height * 0.22, rightW / 5.5).round.toInt
+        val actionY = statusH + courtH
+
+        def place(name : String, x : Int, y : Int, w : Int, h : Int) = PanePlacement(name, Rect(x, y, w, h), Some(fontSize))
+
+        // Hand cards (styles.handCard) sized so five or six fit in a row
+        root.setProperty("--nort-hand-card", (rightW / 5.8).round + "px")
+
+        val action = place("action", rightX, actionY, rightW, height - actionY)
+
+        onLayout(
+            1.to(arity)./(n => place("status-" + n, rightX + (n - 1) * rightW / arity, 0, n * rightW / arity - (n - 1) * rightW / arity, statusH).copy(fontSize = Some(fontSize * 0.8))) ++
+            $(
+                place("court", rightX, statusH, rightW, courtH),
+                action, action.copy(name = "undo"), action.copy(name = "settings"),
+                place("log", 0, 0, logW, height),
+                place("map-small", logW, 0, mapW, height),
+                place("map-small-overlay", logW, 0, mapW, height)
+            )
+        )
+    }
+
     def overlayScrollX(e : Elem) = overlayScroll(e)(styles.seeThroughInner).onClick
     def overlayFitX(e : Elem) = overlayFit(e)(styles.seeThroughInner).onClick
 

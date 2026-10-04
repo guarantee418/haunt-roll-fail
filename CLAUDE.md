@@ -54,7 +54,11 @@ creatures are kept off the resource icons (`nort/icons.scala`, the holes in
 the masks, made by `nort/tools/ResourceIcons.java`), and the icons are drawn
 again over the pieces, so a figure that must overlap one never hides it.
 The Northgard layout is mirrored (`layouter` in `nort/ui.scala`): the player
-panels and the hand are on the right, the log on the left. Each player can hide the
+panels and the hand are on the right, the log on the left. Ultrawide screens
+(width at least 2.1 times the height, e.g. 21:9) skip the layouter and get
+a fixed layout (`layout` override in `nort/ui.scala`): log, map, then short
+player panels in a row, the shared cards and the hand below them, with the
+hand cards sized to the pane (`--nort-hand-card`) so the whole hand fits. Each player can hide the
 tints and the colored borders under "Interface" (the Territory Color and
 Fame Borders settings in `nort/meta.scala`). When a building fits more than
 one kind of free space, the player picks the space; the player's clan board
