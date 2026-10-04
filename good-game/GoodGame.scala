@@ -165,6 +165,13 @@ object GoodGame {
 
         def index = readFile(directory + "/index.html")
 
+        // Game links (player and spectator) have no page title or og:title, so
+        // chat apps like Discord show no "Chronicles" preview card under each
+        // shared link. The client sets the real title once it loads.
+        def gameIndex = index
+            .replace(">Chronicles</title>", "></title>")
+            .replace("<meta property=\"og:title\" content=\"Chronicles\" />", "")
+
         def html(s : String) = complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s))
         def plain(s : String) = complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, s))
         def redir(s : String) = redirect(s, StatusCodes.SeeOther)
@@ -285,7 +292,7 @@ object GoodGame {
                         users.filter(_.id === play.userId).map((_, play))
                     }.result.head)
 
-                    html(index
+                    html(gameIndex
                         .replace("<base href=\"\" />", "<base href=\"" + cdn + "\"/>")
                         .replace("data-server=\"" + "\"", "data-server=\"" + url + "\"")
                         .replace("data-meta=\"" + "\"", "data-meta=\"" + meta + "\"")
@@ -295,7 +302,7 @@ object GoodGame {
                     )
                 }
                 else
-                    html(index
+                    html(gameIndex
                         .replace("<base href=\"\" />", "<base href=\"" + cdn + "\"/>")
                         .replace("data-server=\"" + "\"", "data-server=\"" + url + "\"")
                         .replace("data-meta=\"" + "\"", "data-meta=\"" + meta + "\"")
