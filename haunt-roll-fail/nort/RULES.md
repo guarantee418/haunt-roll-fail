@@ -37,6 +37,7 @@ draws a tile when no neutral territory is left.
 | The Warchiefs box's 7 extra clan upgrade cards | done 2026-10-03: with the module, or alone with the "Warchief upgrade cards" option |
 | Wilderness expansion: Environment tiles and five more creatures, with the Ancestral Graveyard and the Wyvern's Den | done 2026-10-04 (`wilderness.scala`, see Wilderness below) |
 | New Blood: seven more clans with their warchiefs and 28 clan cards | done 2026-10-04 (`newblood.scala`, see New Blood below) |
+| Uncharted Horizons: Events module and Alternative victory conditions module (Thane and Jarl modes) | done 2026-10-04 (`horizons.scala`, see below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -436,18 +437,108 @@ marked ⚡):
 The warchief upgrade cards follow the Warchiefs box's rule: a third upgrade
 with the Warchiefs module or the "Warchief upgrade cards" option.
 
+## Uncharted Horizons: Events module (2026-10-04)
+
+From the Uncharted Horizons rulebook on Tabletopia (work in progress) and
+the 20 Event cards in the TTS mod 3597126237 (sheet `deck235`, 5x4); code in
+`horizons.scala` (`EventsExpansion`), option "Events".
+
+- Setup: shuffle the Event cards and make a face-up deck of (years − 1)
+  cards. No Event in the first year. At the start of each later year the top
+  card applies for that year (the rulebook flips it at the end of the
+  previous year; same thing). The next one is visible in the card strip.
+- Start of the year, after drawing (each player in turn order): God's Favor
+  (1 lore or 3 fame), Offerings (may discard 1 lore: draw 1 or take a card
+  from the discard pile), Early Spring (may take 1 food, 1 wood or 1 card),
+  Supply from Homeland (1 resource or 1 card), Volcano Eruption (remove one
+  of your buildings: small draws 1, large draws 2), Happy People (remove 1
+  Unrest card, or 3 fame and 1 unit in a territory you control).
+- Actions: New Horizons (closing an enemy or neutral territory by exploring
+  gives 2 fame, +1 lore if 4+ tiles). Combats: Blood Moon (+1 casualty to
+  both sides; 1 fame per unit lost), Conquests (attacker +1 point; a
+  defender who wins gains 2 fame).
+- Before harvesting: Myrkálfar's Levy (a territory producing 2+ resources:
+  don't collect it or lose a unit there), Bountiful Year (one territory
+  gives no fame but double resources), Infestation (each territory producing
+  2+ resources: 1 food less and 1 fame, or lose a unit), Sailor Ghosts (the
+  open territory with the most units loses 2 units, 2 fame each), Kraken's
+  Attack (lose a unit in an open territory and discard 1 wood; with no open
+  territory, 2 fame).
+- Harvest: Frozen Sea (1 fame per territory controlled instead of per closed
+  territory), Ceremonial Bonfire (1 fame per trade, and 2 wood can be traded
+  for 1 lore). After harvesting: Draugr Invasion (2 fame; territories with 3+
+  units lose 2, minus 1 per Defense Tower and 2 per Fortress), Earthquake
+  (1 wood per territory with buildings, 1 fame each; each unpaid territory
+  loses a building).
+- Winter: Blizzard (+1 food and +1 wood), Harsh Winter (+1 unit per closed
+  territory you control).
+
+## Uncharted Horizons: Alternative victory conditions module (2026-10-04)
+
+Same sources; the TTS mod has 8 Map Control cards (sheet `deck236`) and 13
+Wealth cards (`deck237`), more than the rulebook's 5 and 8. Code in
+`horizons.scala` (`VictoryExpansion`), options "Alternative victory" and
+"Alternative victory mode" (Thane by default, or Jarl).
+
+- Setup: 1 Map Control card and 2 Wealth cards (3 with teams), face up.
+  Cards needing the Creatures module (Creature Territories, Hunting) are
+  skipped without it.
+- At each end of year (before the usual checks), a player fulfilling the
+  mode's conditions wins at once: Thane, the Map Control card and one Wealth
+  card; Jarl, all of them. With teams, each card may be fulfilled by any
+  player of the team. Ties: the most cards fulfilled, then fame. Three closed
+  territories with large buildings no longer win; nobody fulfilling the
+  conditions by the last year means the most fame wins.
+- Map Control: Many Territories (6 closed), Large Buildings (4 large
+  buildings), Spreading (8 territories), Creature Territories (3 closed with
+  a lair), Vast Territory (a closed territory of 6+ tiles with a large
+  building), Large Territories (3 closed with a large building), Two Larger
+  Territories (2 closed of 5+ tiles with a large building), Mountains (6
+  closed, each with a Rough or impassable border).
+- Wealth, checked on the spot: Knowledge (3 upgrades; without the Warchiefs
+  module 2 upgrades and 3 lore), Prosperity (50 fame tokens), Population (at
+  most 1 unit in reserve, no Unrest card), Production (5 of each resource),
+  Building Ownership (9 buildings in your territories).
+- Wealth with validation counts, which never go down: Exploration (close 6
+  territories you control), Architecture (build 5 buildings), Conquest (win
+  5 combats against players), Hunting (defeat 3 creatures), Valhalla (lose
+  6 units in combats against players or creatures), Development (6 fame from
+  Development cards, the best total reached), Trading (6 Harvest trades),
+  Refinement (upgrade or remove 4 cards). The status panes show each card
+  with ✓ when fulfilled and the counts.
+
 ## Expansions (later)
 
-Wastelands (creatures, Environment and Central tiles), Uncharted Horizons
-(Development / Event / Raid cards, alternative victory conditions, Training
-Fields, Solo/Automa, drafting setup, more map tiles). The TTS mod 3597126237
-has the Uncharted Horizons cards (Development, Event, Raid, Wealth) and its
+Wastelands (creatures, Environment and Central tiles), the rest of Uncharted
+Horizons (Development and Raid cards, Training Fields, Solo/Automa, drafting
+setup, more map tiles). The TTS mod 3597126237 has its cards and the
 rulebook is on Tabletopia.
 
 ## Interpretations (choices made where the summary above is not enough)
 
 Check these against the rulebook when it is at hand.
 
+- **Events**:
+  - Happy People acts after drawing, with the other start-of-year Events, so
+    its Unrest card may also come from the hand.
+  - Blood Moon and Conquests apply to fights between players only. Blood
+    Moon's fame counts every figure lost.
+  - "Remove 1 unit" (Levy, Infestation, Kraken's Attack) takes a unit first,
+    then the warchief, then a companion; Sailor Ghosts and Draugr Invasion
+    take units only.
+  - Earthquake: wood is paid for as many territories as possible; the unpaid
+    ones are those with the fewest large buildings, and the player picks the
+    building each one loses.
+  - Levy and Infestation look at what a territory produces (tiles and
+    buildings). Bountiful Year's territory may be open or closed.
+- **Alternative victory**:
+  - "Close 6 territories you control" counts territories closed by your own
+    Explore actions. Architecture counts every building placed through a
+    Build action (Quality of Life's tower doesn't count). Refinement counts
+    Remove and Upgrade (Replace doesn't change the deck).
+  - The cards are checked at the end of every year, including the last; the
+    three-stronghold win stays off even when Large Territories is drawn (it
+    is then simply a Map Control card).
 - **New Blood** (no rulebook; the boards and cards are the source):
   - Brundr and Kaelinn, and Horse's second warchief Brok (Warchiefs module
     only), use Kaija's rules: one figure, moves with the units, taken as a

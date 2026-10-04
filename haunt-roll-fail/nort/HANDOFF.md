@@ -285,6 +285,35 @@ on. To implement one:
   the clan picker's Warchief button shows the boards, but Brok has no figure
   of his own (he uses the warchief figure).
 
+## Uncharted Horizons: Events and Alternative victory (2026-10-04)
+
+- `horizons.scala`: `EventCard` / `EventsExpansion` (option
+  `ModuleOption(EventsModule)`) and `VictoryCard` / `VictoryExpansion`
+  (`ModuleOption(VictoryModule)`, with `VictoryModeOption(jarl)`), both
+  priority -3 so they act before New Blood. Images in `card/event/`
+  (landscape, 640x414) and `card/victory/`, cut from the TTS mod 3597126237
+  sheets `deck235`, `deck236`, `deck237`. Rules in `RULES.md`.
+- Setup: both intercept `ShuffledAchievementsAction` to shuffle their decks
+  first, then go back to it with `game.internalPerform` (an oracle action
+  can't go through `Then`).
+- Events: `game.event` (this year's), `game.eventDeck`, `game.eventSteps`
+  (the steps already resolved this year, so the intercepts of
+  `RevealDevelopmentsAction`, `ScorchedHarvestAction` and
+  `AfterHarvestAction` run once), and the Harvest changes `harvestSkip`,
+  `harvestDouble`, `harvestLessFood` used by `EventsExpansion.harvest` and
+  `fameFrom` in the core `HarvestAction`. Winter goes through
+  `EventsExpansion.winterCost`; combats call `EventsExpansion.afterCombat`;
+  explores call `EventsExpansion.explored`.
+- Victory: `game.victory`, `game.progress` (validation counts by `advance`,
+  only with the module), checked at `EndOfYearAction` (`AltVictoryAction`).
+  `game.domination` is off with the module.
+- The card strip shows this year's Event and the next one, and the victory
+  cards; the status panes list each victory card (✓ when fulfilled) with the
+  counts.
+- `NORT_EVENTS=1` and `NORT_VICTORY=1` make the headless host always use the
+  modules; the summary counts `event-<id>` and `alt-victory-<mode>`. All 20
+  Events came up in bot games; the bots rarely meet victory conditions.
+
 ## Map drawing: territory colours and free ground
 
 - Each territory is tinted with the colour of the player who controls it
@@ -384,8 +413,9 @@ list. In short:
 3. **A better bot** that recruits, builds and explores on purpose.
 4. **A replay check** like `root/replay-check.scala`, to confirm undo and
    loading rebuild the same game.
-5. **Expansions**: Wilderness and New Blood are done; Wastelands and
-   Uncharted Horizons are next (assets in `expansion/`; the TTS mod
+5. **Expansions**: Wilderness, New Blood, and Uncharted Horizons' Events and
+   Alternative victory modules are done; Wastelands and the rest of
+   Uncharted Horizons (Raids, Development cards, Training Fields, solo) are next (assets in `expansion/`; the TTS mod
    3597126237 has the Uncharted Horizons cards and Tabletopia its rulebook).
 
 ## How to build and test (in a cloud session)

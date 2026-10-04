@@ -34,7 +34,9 @@ the Ancestral Graveyard's Spectral Warriors and the Wyvern's Den) in
 `nort/wilderness.scala` (tiles `wild-*` in `Tiles.environment`), and the
 New Blood expansion's seven clans (Dragon, Horse, Kraken, Lynx, Ox, Rat,
 Squirrel, with their warchiefs and 28 clan cards, from the TTS mod
-3597126237) in `nort/newblood.scala`; picking one of them turns it on. The
+3597126237) in `nort/newblood.scala`; picking one of them turns it on.
+Uncharted Horizons' Events and Alternative victory conditions modules are in
+`nort/horizons.scala`. The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.
@@ -61,7 +63,7 @@ players, not clans: each clan's player picks one on its row of the setup screen
 `game.colors`); starting cards show that color's banner (orange has no
 cards of its own and uses the yellow ones). The setup options
 (colors, game length, fame-only victory, first player, and the modules and
-expansions; Creatures, Warchiefs, Wilderness and the 2v2/3v3 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`. Northgard no longer sets `underConstruction`
+expansions; Creatures, Warchiefs, Wilderness, Events, Alternative victory and the 2v2/3v3 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`. Northgard no longer sets `underConstruction`
 in its `Meta` (setting it to `true` would put an "Under Construction" note under
 its name on the game list and a disclaimer at the top of its menu).
 `nort/host.scala` runs bot games headless (JVM only,

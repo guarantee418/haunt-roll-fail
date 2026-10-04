@@ -526,6 +526,9 @@ object CreaturesExpansion extends Expansion {
             val before = game.count(t, f)
             game.removeFigures(t, f, math.min(pc, units))
 
+            // Alternative victory: Valhalla counts units lost to creatures too
+            game.advance(f, "valhalla", math.min(pc, units))
+
             // Svarn's Menders: the attacker's casualties wait on the card
             if (attacking && e.special == SvarnMove)
                 game.mended += before - game.count(t, f)
@@ -546,6 +549,7 @@ object CreaturesExpansion extends Expansion {
                 removeCreature(c)
                 f.fame += c.kind.fame
                 game.note("creature-defeated")
+                game.advance(f, "hunting")
 
                 f.log("defeated", c, "and gained", c.kind.fame.hl, "fame", c.kind.leaves.?("(it leaves the game)".txt).|(Empty))
 

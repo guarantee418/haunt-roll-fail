@@ -971,15 +971,20 @@ object MapExpansion extends Expansion {
             val halvard = math.min(faces(0).casualties, Warchief.shield(t, defender, false))
             // Egil's Fury: +1 casualty; New Blood bonuses; Eldrich (Squirrel): the defender's rolled casualties hit them too
             val eldrich = (e.special == EldrichMove).??(faces(1).casualties)
-            val ac = math.max(0, faces(0).casualties - halvard + (e.special == EgilMove).??(1) + NewBloodExpansion.casualties(attacker, t, e, true) + eldrich - NewBloodExpansion.ignored(defender))
+            // Events: Blood Moon adds a casualty to both sides
+            val moon = game.eventIs("blood-moon").??(1)
+            val ac = math.max(0, faces(0).casualties - halvard + (e.special == EgilMove).??(1) + NewBloodExpansion.casualties(attacker, t, e, true) + eldrich + moon - NewBloodExpansion.ignored(defender))
             // Shieldbearers cancel 1 casualty inflicted by the defender
             val shield = ((e.special == ShieldMove || e.special == BorgildMove) && faces(1).casualties + towers > 0).??(1)
-            val dc = math.max(0, faces(1).casualties + towers - shield + NewBloodExpansion.casualties(defender, t, e, false) - NewBloodExpansion.ignored(attacker))
+            val dc = math.max(0, faces(1).casualties + towers - shield + NewBloodExpansion.casualties(defender, t, e, false) + moon - NewBloodExpansion.ignored(attacker))
 
             // The Wise One (Lynx): 1 point per casualty inflicted
             val wise = (e.special == WiseOneMove).??(math.min(ac, du))
 
-            val as = game.strength(t, attacker, true) + e.bonus + ab + anb + wise + food(0) + faces(0).points
+            // Events: Conquests gives the attacker 1 point
+            val conquests = game.eventIs("conquests").??(1)
+
+            val as = game.strength(t, attacker, true) + e.bonus + ab + anb + wise + conquests + food(0) + faces(0).points
             val ds = game.strength(t, defender, false) + fortress + db + dnb + food(1) + faces(1).points
 
             if (game.kaijaIn(t, attacker) || game.kaijaIn(t, defender))
@@ -994,7 +999,7 @@ object MapExpansion extends Expansion {
             if (game.chiefIn(t, attacker) || game.chiefIn(t, defender))
                 game.note("chief-fight")
 
-            attacker.log("scored", as.hl, kaija(attacker), chief(attacker, true), extra(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt, wise -> "The Wise One".hl), "and inflicted", ac.hl, (ac == 1).?("casualty").|("casualties"), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
+            attacker.log("scored", as.hl, kaija(attacker), chief(attacker, true), extra(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt, wise -> "The Wise One".hl, conquests -> "Conquests".hl), "and inflicted", ac.hl, (ac == 1).?("casualty").|("casualties"), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
             defender.log("scored", ds.hl, kaija(defender), chief(defender, false), extra(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt), "and inflicted", dc.hl, (dc == 1).?("casualty").|("casualties"), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
 
             val winner =
@@ -1008,6 +1013,9 @@ object MapExpansion extends Expansion {
             val dbefore = game.count(t, defender)
             game.removeFigures(t, attacker, math.min(dc, au))
             game.removeFigures(t, defender, math.min(ac, du))
+
+            // Events (Blood Moon, Conquests) and the Alternative victory counts
+            EventsExpansion.afterCombat(attacker, defender, math.min(dc, au), math.min(ac, du), winner)
 
             // Sacrificial Pyre, Blood Ties, Howl from the Sea
             NewBloodExpansion.afterCombat(attacker, defender, t, e, before - game.count(t, attacker), dbefore - game.count(t, defender), math.min(dc, au), math.min(ac, du), winner)
@@ -1242,6 +1250,9 @@ object MapExpansion extends Expansion {
             }
 
             game.explored = |(tile)
+
+            // Events: New Horizons; Alternative victory: territories closed
+            EventsExpansion.explored(f, closing, closed)
 
             // New Blood: Ox Clan's Ancestral Equipment token on the tile, Rat Clan's units in closed territories
             if (game.has(NewBlood))

@@ -798,7 +798,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Creatures module: the creature line, in activation order
         val creatures = game.has(Creatures).$(("Creatures" ~ " (left to right)".spn(xstyles.smaller85)) -> game.creatureLine)
 
-        court.replaceCached((game.year, game.display, game.achievements, game.creatureLine).toString, strip((developments ++ achievements ++ creatures)./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
+        // Uncharted Horizons: this year's Event and the next one, and the Alternative victory cards
+        val events = game.has(EventsModule).$(("Event" ~ " (this year, next)".spn(xstyles.smaller85)) -> (game.event.$ ++ game.eventDeck.take(1)))
+
+        val victory = game.has(VictoryModule).$(("Victory: " ~ options.has(VictoryModeOption(true)).?("Jarl").|("Thane")) -> game.victory)
+
+        court.replaceCached((game.year, game.display, game.achievements, game.creatureLine, game.event, game.eventDeck.num, game.victory).toString, strip((events ++ victory ++ developments ++ achievements ++ creatures)./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
     }
 
     def factionStatus(f : Faction) {
@@ -836,7 +841,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Team play: the player's team
         val marks = (game.teams.?(game.teamName(f) ~ " ").|(Empty) ~ (game.first == f).?("First player".hh).|(Empty) ~ (state.passed && game.isOver.not).?(" Passed".txt).|(Empty)).div
 
-        val content = (title.div ~ res ~ units ~ chief ~ cards ~ nb ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
+        // Alternative victory: one mark per card, in the strip's order: ✓ when fulfilled, the validation count, or ✗
+        val goals = game.has(VictoryModule).?(("Victory: ".txt ~ game.victory./{ c =>
+            if (VictoryExpansion.fulfilled(f, c)) "✓".styled(styles.fame)
+            else c.target./(n => game.progressOf(f, c.id).hl ~ "/" ~ n.toString).|("✗".txt)
+        }.join(" ")).div).|(Empty)
+
+        val content = (title.div ~ res ~ units ~ chief ~ cards ~ nb ~ goals ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
 
         container.replace(content, resources, {
             case x => onClick(x)

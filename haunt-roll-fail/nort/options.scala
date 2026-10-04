@@ -130,7 +130,37 @@ case object NewBlood extends Module("New Blood", "expansion") {
 }
 
 case object UnchartedHorizons extends Module("Uncharted Horizons", "expansion") {
-    def about = $("Development, Event and Raid cards, other victory conditions, Training Fields, solo play, drafting setup and more map tiles.")
+    def about = $("The rest of the expansion: Development and Raid cards, Training Fields, solo play, drafting setup and more map tiles.")
+}
+
+// Uncharted Horizons' Events module (horizons.scala)
+case object EventsModule extends Module("Events", "Uncharted Horizons") {
+    override def ready = true
+    override def expansion = |(EventsExpansion)
+    override def priority = -3
+    def about = $(
+        "A face-up deck of Event cards, one fewer than the years played. From the second year on, one Event applies each year: at the start of the year, during the actions and combats, at the Harvest or in Winter.",
+        "The next Event is always visible, so players can prepare for it.",
+    )
+}
+
+// Uncharted Horizons' Alternative victory conditions module (horizons.scala)
+case object VictoryModule extends Module("Alternative victory", "Uncharted Horizons") {
+    override def ready = true
+    override def expansion = |(VictoryExpansion)
+    override def priority = -3
+    def about = $(
+        "One Map Control card and two Wealth cards (three with teams) are drawn at setup. At the end of each year, a player who fulfils the chosen mode's conditions wins at once: " ~ "Thane".hl ~ " needs the Map Control card and one Wealth card, " ~ "Jarl".hl ~ " all three.",
+        "The three closed territories with large buildings no longer win. If nobody fulfils the conditions by the end of the last year, the most fame wins.",
+    )
+}
+
+// The Alternative victory module's mode
+case class VictoryModeOption(jarl : Boolean) extends GameOption with OneOfGroup {
+    val group = "Alternative victory mode".txt
+    def valueOn = jarl.?("Jarl: all three cards").|("Thane: Map Control and one Wealth card").txt
+    override val explain = $("Needs the " ~ "Alternative victory".hl ~ " module. Thane is the default.")
+    override def required(all : $[BaseOption]) = $($(ModuleOption(VictoryModule)))
 }
 
 // Team play (Game.teams): seats alternate between the two teams, so teammates sit opposite each other.
@@ -155,7 +185,7 @@ case object Teams3v3 extends Module("3v3 Teams", "variant, 2v2 rules") {
 }
 
 object Module {
-    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, UnchartedHorizons, TeamsVariant, Teams3v3)
+    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, UnchartedHorizons, TeamsVariant, Teams3v3)
 
     // The team variants and the number of players each one needs
     val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6)

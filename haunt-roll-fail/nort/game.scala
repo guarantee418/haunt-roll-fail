@@ -282,8 +282,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // The Warchiefs box's extra clan upgrade cards
     val warchiefCards = has(Warchiefs) || options.has(WarchiefCards)
 
-    // Three closed territories with large buildings win at the end of a year
-    val domination = options.has(FameOnly).not
+    // Three closed territories with large buildings win at the end of a year (not with the Alternative victory module)
+    val domination = options.has(FameOnly).not && options.has(ModuleOption(VictoryModule)).not
 
     // Team play (2v2 with four players, 3v3 with six): seats alternate between the two teams,
     // so teammates sit opposite each other
@@ -370,6 +370,29 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     var howl = false
 
     def tideIn(t : Territory) : Boolean = tides.exists(t.areas.contains)
+
+    // EVENTS MODULE (horizons.scala): the face-up deck, the event of this year, the steps already resolved this year,
+    // and the Harvest changes the players chose (territories by their first area at the time)
+    var eventDeck : $[EventCard] = $
+    var event : |[EventCard] = None
+    var eventsShuffled = false
+    var eventSteps : $[String] = $
+    var harvestSkip : $[AreaRef] = $
+    var harvestDouble : $[AreaRef] = $
+    var harvestLessFood : $[AreaRef] = $
+
+    def eventIs(id : String) = event.exists(_.id == id)
+
+    // ALTERNATIVE VICTORY MODULE: the cards in play, the validation counts (they never go down) and who validated each card
+    var victory : $[VictoryCard] = $
+    var progress : Map[Faction, Map[String, Int]] = Map()
+
+    def progressOf(f : Faction, k : String) : Int = progress.getOrElse(f, Map()).getOrElse(k, 0)
+
+    def advance(f : Faction, k : String, n : Int = 1) {
+        if (n > 0 && has(VictoryModule))
+            progress += f -> (progress.getOrElse(f, Map()) + (k -> (progressOf(f, k) + n)))
+    }
 
     // Creatures module: the draw and discard piles, the creature line (the creatures on the map, in activation order),
     // where each one is, and the creatures attacked by the current Move action
@@ -1137,7 +1160,12 @@ object CommonExpansion extends Expansion {
 
                 // A Wolf creature leaves only the buildings' fame and resources
                 // The Wyvern's Den (Wilderness) gives its own fame instead
-                val fame = territories.%(game.board.closed).%(t => game.wolfIn(t).not).%(t => Wild.denIn(t).not)./(t => (game.board.tiles(t) >= 3).?(2).|(1)).sum
+                // Events: Frozen Sea gives 1 fame per territory instead; Bountiful Year's territory gives none
+                val fame =
+                    if (game.eventIs("frozen-sea"))
+                        territories.%(t => game.wolfIn(t).not).%(t => Wild.denIn(t).not).num
+                    else
+                        territories.%(game.board.closed).%(t => game.wolfIn(t).not).%(t => Wild.denIn(t).not).%(EventsExpansion.fameFrom)./(t => (game.board.tiles(t) >= 3).?(2).|(1)).sum
                 if (fame > 0) {
                     f.fame += fame
                     f.log("gained", fame.hl, "fame from closed territories")
@@ -1149,7 +1177,7 @@ object CommonExpansion extends Expansion {
                     f.log("gained", (3 * altars).hl, "fame from", AltarOfKings)
                 }
 
-                val (food, wood, lore) = territories./(game.harvest).foldLeft((0, 0, 0))((a, b) => (a._1 + b._1, a._2 + b._2, a._3 + b._3))
+                val (food, wood, lore) = territories./(EventsExpansion.harvest).foldLeft((0, 0, 0))((a, b) => (a._1 + b._1, a._2 + b._2, a._3 + b._3))
                 f.food += food
                 f.wood += wood
                 f.lore += lore
@@ -1214,7 +1242,8 @@ object CommonExpansion extends Expansion {
             log("Winter")
 
             game.from(game.first).foreach { f =>
-                val (food, wood) = Winter.cost(f.units)
+                // Events: Harsh Winter and Blizzard
+                val (food, wood) = EventsExpansion.winterCost(f)
 
                 if (food + wood == 0)
                     f.log("owed nothing for", f.units.hl, "units")

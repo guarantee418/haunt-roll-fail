@@ -32,6 +32,9 @@ object Host extends hrf.host.BaseHost {
             creatures.$(ModuleOption(Creatures)) ++ (creatures && random() < 0.5).$(MoreCreatures) ++
             (sys.env.get("NORT_WARCHIEFS").has("1") || random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.3).$(WarchiefCards) ++
             (sys.env.get("NORT_WILDERNESS").has("1") || random() < 0.5).$(ModuleOption(Wilderness)) ++
+            // NORT_EVENTS=1 / NORT_VICTORY=1: always with the Events / Alternative victory module
+            (sys.env.get("NORT_EVENTS").has("1") || random() < 0.5).$(ModuleOption(EventsModule)) ++
+            { val v = sys.env.get("NORT_VICTORY").has("1") || random() < 0.5 ; v.$(ModuleOption(VictoryModule)) ++ (v && random() < 0.5).$(VictoryModeOption(true)) } ++
             Module.teams.toList.%{ case (_, k) => k == n && (sys.env.get("NORT_TEAMS").has("1") || random() < 0.5) }./{ case (m, _) => ModuleOption(m) }
         options.foreach(o => assert(Meta.parseOption(Meta.writeOption(o)) == $(o), o))
         new G(l, options)

@@ -43,7 +43,7 @@ object Meta extends MetaGame { mmm =>
     override val hiddenOptions = $
 
     // New Blood has no option: picking one of its clans brings it in
-    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(FameOnly, FirstSeatStarts, WarchiefCards) ++ Module.all.but(NewBlood)./(ModuleOption) ++ $(MoreCreatures) ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(FameOnly, FirstSeatStarts, WarchiefCards) ++ Module.all.but(NewBlood)./(ModuleOption) ++ $(MoreCreatures, VictoryModeOption(false), VictoryModeOption(true)) ++ hiddenOptions
 
     // Colors only for the clans in the game; 2v2 Teams only with four players, 3v3 Teams only with six
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -177,6 +177,13 @@ object Meta extends MetaGame { mmm =>
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card", "card-", "webp")(
         $(ImageAsset("unrest"))
+    ) ::
+    // Uncharted Horizons: the Event cards and the Alternative victory cards
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, EventsModule), "card/event", "card-event-", "webp")(
+        EventCard.all./(c => ImageAsset(c.id))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, VictoryModule), "card/victory", "card-victory-", "webp")(
+        VictoryCard.all./(c => ImageAsset(c.id))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "tile", "tile-", "webp")(
         Tiles.all.diff(Tiles.environment)./(t => ImageAsset(t.id))
