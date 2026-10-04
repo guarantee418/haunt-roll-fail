@@ -336,12 +336,13 @@ object CreaturesExpansion extends Expansion {
         case CreatureCombatAction(f, a, c, e, attacking, then) =>
             game.fights += 1
             game.note("creature-fight")
+            game.battle = |(a)
 
             // Step 1: Signy and Brand (Warchiefs module)
             if (game.has(Warchiefs))
-                Then(ChiefStepOneAction($(f), a, CreatureFoodStartAction(f, a, c, e, attacking, then)))
+                Then(ChiefStepOneAction($(f), a, CreatureFoodStartAction(f, a, c, e, attacking, FightOverAction(then))))
             else
-                Then(CreatureFoodStartAction(f, a, c, e, attacking, then))
+                Then(CreatureFoodStartAction(f, a, c, e, attacking, FightOverAction(then)))
 
         // Liv's Cunning: wood or lore may be spent like food, one at a time
         case CreatureFoodStartAction(f, a, c, e, attacking, then) if attacking && e.special == LivMove =>

@@ -167,6 +167,10 @@ object Meta extends MetaGame { mmm =>
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "tile", "tile-", "webp")(
         Tiles.all./(t => ImageAsset(t.id))
     ) ::
+    // The shape of each area, tinted on the map with the colour of the player who controls it
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "tile/mask", "mask-", "webp")(
+        Tiles.all./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
+    ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/unit", "unit-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "unit-" + c.id))
     ) ::

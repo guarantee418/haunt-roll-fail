@@ -100,6 +100,8 @@ case class CombatFoodPaidAction(attacker : Faction, defender : Faction, area : A
 case class CombatsAction(f : Faction, e : MoveEffect, then : ForcedAction) extends ForcedAction
 case class FightAction(self : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends BaseAction("Fight in")(area) with MapTarget { def target = area }
 case class FightStartAction(f : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends ForcedAction
+// A fight (with a clan or a creature) is over: the map stops marking its territory
+case class FightOverAction(then : ForcedAction) extends ForcedAction
 case class IntimidateAction(self : Faction, area : AreaRef, to : AreaRef, e : MoveEffect, then : ForcedAction) extends BaseAction("Intimidate", "push a defending unit from", area, "to")(to) with MapTarget { def target = to }
 case class IntimidateSkipAction(self : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends BaseAction("Intimidate")("Fight them all")
 case class AxeAction(self : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], face : DieFace, then : ForcedAction) extends BaseAction("Axe Throwers")(face)
@@ -670,6 +672,8 @@ object MapExpansion extends Expansion {
             Then(CombatsAction(f, e, then))
 
         case CombatsAction(f, e, then) =>
+            game.battle = None
+
             val l = game.combats.%(a => game.present(game.board.territory(a)).num > 1)
             // Creatures attacked by this Move action (Creatures module)
             val cl = game.creatureFights.%(x => game.creatureLine.has(x.creature) && game.figures(game.board.territory(x.area), f) > 0)
@@ -746,6 +750,7 @@ object MapExpansion extends Expansion {
             }
             else {
                 game.fights += 1
+                game.battle = |(a)
 
                 val defender = game.present(t).but(f).head
 
@@ -753,10 +758,15 @@ object MapExpansion extends Expansion {
 
                 // Step 1: Signy and Brand (Warchiefs module), the attacker's first
                 if (game.has(Warchiefs))
-                    Then(ChiefStepOneAction($(f, defender), a, CombatFoodStartAction(f, defender, a, e, then)))
+                    Then(ChiefStepOneAction($(f, defender), a, CombatFoodStartAction(f, defender, a, e, FightOverAction(then))))
                 else
-                    Then(CombatFoodStartAction(f, defender, a, e, then))
+                    Then(CombatFoodStartAction(f, defender, a, e, FightOverAction(then)))
             }
+
+        case FightOverAction(then) =>
+            game.battle = None
+
+            Then(then)
 
         // Liv's Cunning: wood or lore may be spent like food, one at a time
         case CombatFoodStartAction(f, defender, a, e, then) if e.special == LivMove =>

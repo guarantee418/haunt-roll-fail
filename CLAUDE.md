@@ -31,6 +31,10 @@ button shows each clan's warchief board). The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.
+On the map, territories are tinted with their controlling player's color and
+turn pink during a fight; the area masks (`tile/mask/`) and the free-ground
+grid for placing warchiefs, Kaija and creatures (`nort/grid.scala`) are made
+from the tile art by `nort/tools/tile-masks.py`.
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
 Tabletopia export the owner uploaded, plus `tile-31` to `tile-33` and
 `start-5` cut from a photo of the owner's copy: all 35 core map tiles and 51

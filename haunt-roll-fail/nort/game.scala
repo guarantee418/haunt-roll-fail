@@ -271,6 +271,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // Territories where a Move action started a fight
     var combats : $[AreaRef] = $
 
+    // The territory of the fight being resolved, drawn pink on the map
+    var battle : |[AreaRef] = None
+
     // Warchief upgrade cards: the areas the mover controlled before the Move action (Halvard's Craft),
     // its casualties waiting to come back (Svarn's Menders), and who picks the loser's retreat (Brand's Bravery)
     var heldBefore : $[AreaRef] = $
