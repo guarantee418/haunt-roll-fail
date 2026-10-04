@@ -294,7 +294,21 @@ object MapExpansion extends Expansion {
 
     // Legal tile placements: next to tiles in `next` (any placed tile when None), keeping borders continuous,
     // never joining units of two players, with units placed in setup needing an empty area on the new tile
+    // Cached until the board or a figure changes: the bots ask for it again for every spot they look at,
+    // and each call rebuilds the territories for every free spot and rotation
     def placements(tile : String, near : Option[$[Territory]], setup : Boolean)(implicit game : Game) : $[(Spot, Int)] = {
+        val key = (tile, near, setup, game.board.placements, game.units, game.kaija, game.chiefs, game.creatureLine, game.creatureAt)
+
+        game.placementCache.getOrElse(key, {
+            val r = computePlacements(tile, near, setup)
+            if (game.placementCache.size >= 32)
+                game.placementCache.clear()
+            game.placementCache(key) = r
+            r
+        })
+    }
+
+    private def computePlacements(tile : String, near : Option[$[Territory]], setup : Boolean)(implicit game : Game) : $[(Spot, Int)] = {
         val board = game.board
 
         val spots = board.frontier.%{ case (x, y) =>
@@ -306,11 +320,7 @@ object MapExpansion extends Expansion {
         spots./~{ case (x, y) =>
             0.until(4)./~{ r =>
                 val p = Placement(tile, x, y, r)
-                val all = board.placements :+ p
-                if (board.consistent(all).not)
-                    None
-                else {
-                    val preview = board.preview(p)
+                board.tryPlace(p)./~{ preview =>
                     // Kaija counts as Bear Clan's, and a Fallen Valkyrie shares its territory with nobody
                     val mixed = preview.exists { t =>
                         val players = (t.areas./~(a => game.unitsAt(a).keys) ++ game.kaija.%(t.areas.contains)./(_ => Bear) ++ game.chiefs.toList.filter(x => t.areas.contains(x._2)).map(_._1)).distinct

@@ -146,10 +146,18 @@ class Board {
 
     // A placement is legal when every border of every tile still separates two territories;
     // otherwise some border would stop in the middle of a territory
-    def consistent(placements : $[Placement]) : Boolean = {
-        val t = compute(placements)
+    def consistent(placements : $[Placement]) : Boolean = consistent(placements, compute(placements))
+
+    private def consistent(placements : $[Placement], t : $[Territory]) : Boolean = {
         val index = t./~(t => t.areas./(_ -> t)).toMap
         placements.forall(p => p.spec.borders.forall(b => index(AreaRef(p.x, p.y, b.a)) != index(AreaRef(p.x, p.y, b.b))))
+    }
+
+    // The territories with p added, when that placement is consistent; computes them once for both
+    def tryPlace(p : Placement) : |[$[Territory]] = {
+        val all = placements :+ p
+        val t = compute(all)
+        consistent(all, t).?(t)
     }
 
     // Territories the areas of a new placement would join, with the result
