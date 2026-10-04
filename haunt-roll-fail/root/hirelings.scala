@@ -802,7 +802,8 @@ object HirelingsExpansion extends Expansion {
     }
 
     def anytime(f : Faction)(implicit game : Game, ask : ActionCollector) {
-        TheExile.?%(hirelings.has).foreach { h =>
+        // Knaves' items are their Captains' items, not crafted items to give
+        TheExile.?%(hirelings.has).%(_ => f.is[Knaves].not).foreach { h =>
             val cc = f.presence.intersect(game.fromForest(h.region))
             val ii = f.forTrade
 
