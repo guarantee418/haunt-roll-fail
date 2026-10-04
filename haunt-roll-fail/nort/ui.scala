@@ -375,11 +375,127 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // Tint per player colour: yellow and green strong, red and blue medium to light
     def tintOf(c : PlayerColor) : (String, Double) = c match {
         case Blue => ("#1f5fe0", 0.24)
-        case Red => ("#e8300d", 0.24)
+        case Red => ("#a3100c", 0.34)
         case Yellow => ("#ffc400", 0.55)
         case Purple => ("#9b30c8", 0.3)
         case Green => ("#147a14", 0.55)
         case Orange => ("#ff7a1a", 0.4)
+    }
+
+    // Border dashes of the closed territories a player controls, bright enough to show on the dark roads
+    def lineOf(c : PlayerColor) : String = c match {
+        case Blue => "#3d7bff"
+        case Red => "#c8140f"
+        case Yellow => "#ffc400"
+        case Purple => "#b54ae6"
+        case Green => "#2fb52f"
+        case Orange => "#ff8a1f"
+    }
+
+    // The two lines beside a Rough border's dashes
+    val roughRail = "#ffd21f"
+    val roughRailOnYellow = "#ffffff"
+
+    // A border's dashes in its sides' colours (alternating when both sides have one), rails beside a Rough one,
+    // turned with its tile; in scene units from the tile's top left corner, drawn at half size, made once
+    val lineImages = scala.collection.mutable.Map[(String, Int, Int, String, String, |[String]), (hrf.ui.sprites.Image, Rectangle)]()
+
+    def lineImage(tile : String, r : Int, n : Int, ca : String, cb : String, rail : |[String]) : (hrf.ui.sprites.Image, Rectangle) = {
+        val key = (tile, r % 4, n, ca, cb, rail)
+
+        if (lineImages.size > 400)
+            lineImages.clear()
+
+        lineImages.getOrElseUpdate(key, {
+            val line = BorderLines.lines(tile)(n)
+
+            def turn(x : Double, y : Double) = {
+                val (rx, ry) = game.board.rotate(x, y, r)
+                (rx * T, ry * T)
+            }
+
+            // Each dash's centre line, from the end that comes first along the border
+            val bars = line.dashes.map(d => ($(turn(d.x0, d.y0), turn(d.x1, d.y1), turn(d.x2, d.y2)), d.width * T))
+
+            def dist(a : (Double, Double), b : (Double, Double)) = math.sqrt((a._1 - b._1) * (a._1 - b._1) + (a._2 - b._2) * (a._2 - b._2))
+
+            val ordered = bars.zipWithIndex.map { case ((ps, w), i) =>
+                val prev = (i > 0).?(bars(i - 1)._1(1))
+                val next = (i < bars.num - 1).?(bars(i + 1)._1(1))
+                val flip = prev./(p => dist(ps(0), p) > dist(ps(2), p)).|(next./(p => dist(ps(2), p) > dist(ps(0), p)).|(false))
+                (flip.?(ps.reverse).|(ps), w)
+            }
+
+            // The rails follow the dashes, broken where the border has a gap (a lake, a junction)
+            val runs = ordered.foldLeft(List[List[(Double, Double)]]()) { case (acc, (ps, _)) =>
+                if (acc.none || dist(acc.last.last, ps.head) > 0.06 * T) acc :+ ps
+                else acc.dropRight(1) :+ (acc.last ++ ps)
+            }
+
+            val offset = 15.0
+            val margin = 30.0
+            val all = ordered.flatMap(_._1)
+            val x0 = all.map(_._1).min - margin
+            val y0 = all.map(_._2).min - margin
+            val x1 = all.map(_._1).max + margin
+            val y1 = all.map(_._2).max + margin
+            val k = 0.5
+
+            val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+            canvas.width = ((x1 - x0) * k).ceil.toInt.max(1)
+            canvas.height = ((y1 - y0) * k).ceil.toInt.max(1)
+
+            val c = new CanvasImage(canvas)
+            val g = c.context
+            g.scale(k, k)
+            g.translate(-x0, -y0)
+            g.lineJoin = "round"
+
+            rail.foreach { color =>
+                g.strokeStyle = color
+                g.lineWidth = 4
+                g.lineCap = "round"
+
+                runs.foreach { ps =>
+                    // Each point moved along the normal of the way through it
+                    def side(s : Int) = ps.indices.toList.map { i =>
+                        val (ax, ay) = ps((i - 1).max(0))
+                        val (bx, by) = ps((i + 1).min(ps.num - 1))
+                        val l = math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay)).max(0.001)
+                        (ps(i)._1 - (by - ay) / l * offset * s, ps(i)._2 + (bx - ax) / l * offset * s)
+                    }
+
+                    $(1, -1).foreach { s =>
+                        val q = side(s)
+                        g.beginPath()
+                        g.moveTo(q.head._1, q.head._2)
+                        q.drop(1).foreach { case (x, y) => g.lineTo(x, y) }
+                        g.stroke()
+                    }
+                }
+            }
+
+            g.lineCap = "butt"
+
+            ordered.zipWithIndex.foreach { case ((ps, w), i) =>
+                // A pixel longer and wider, to cover the art's dash
+                val (ax, ay) = ps(0)
+                val (bx, by) = ps(2)
+                val l = math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay)).max(0.001)
+                val ex = (bx - ax) / l * 1.5
+                val ey = (by - ay) / l * 1.5
+
+                g.strokeStyle = (i % 2 == 0).?(ca).|(cb)
+                g.lineWidth = w + 2
+                g.beginPath()
+                g.moveTo(ax - ex, ay - ey)
+                g.lineTo(ps(1)._1, ps(1)._2)
+                g.lineTo(bx + ex, by + ey)
+                g.stroke()
+            }
+
+            (c, Rectangle(x0, y0, x1 - x0, y1 - y0))
+        })
     }
 
     // Invaded, waiting for its fight
@@ -491,6 +607,26 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     tint(p.tile, s.id, p.r, color._1).foreach { i =>
                         background.add(Sprite($(ImageRect(i, Rectangle(0, 0, T, T), color._2)), $))(sx(p.x), sy(p.y))
                     }
+            }
+        }
+
+        // The borders of closed territories that give fame, in their controllers' colours: alternating between two players
+        // where two such territories meet, with rails beside a Rough border (white ones when a side is yellow)
+        def fameColor(t : Territory) : |[PlayerColor] =
+            if (board.closed(t) && game.wolfIn(t).not) game.present(t).single./(game.colors) else None
+
+        board.placements.foreach { p =>
+            BorderLines.lines.get(p.tile).|($).zipWithIndex.foreach { case (line, n) =>
+                val ca = fameColor(board.territory(AreaRef(p.x, p.y, line.a)))
+                val cb = fameColor(board.territory(AreaRef(p.x, p.y, line.b)))
+
+                if (line.dashes.any && (ca.any || cb.any)) {
+                    val colors = (ca ++ cb).toList
+                    val rough = p.spec.borders.exists(b => b.rough && $(b.a, b.b).toSet == $(line.a, line.b).toSet)
+                    val rail = rough.?(colors.has(Yellow).?(roughRailOnYellow).|(roughRail))
+                    val (i, rect) = lineImage(p.tile, p.r, n, lineOf(colors.head), lineOf(colors.last), rail)
+                    background.add(Sprite($(ImageRect(i, rect, 1.0)), $))(sx(p.x), sy(p.y))
+                }
             }
         }
 

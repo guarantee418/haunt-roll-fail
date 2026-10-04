@@ -37,7 +37,10 @@ choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.
 On the map, territories are tinted with their controlling player's color,
 turn gray when invaded and pink during the fight (resource icons stay
-untinted); the area masks (`tile/mask/`) and the free-ground
+untinted); closed territories that give fame have their border dashes
+drawn in the controller's color (alternating where two players' meet,
+yellow or white rails beside Rough borders), from the dash data in
+`nort/lines.scala` made by `nort/tools/BorderLines.java`; the area masks (`tile/mask/`) and the free-ground
 grid for placing warchiefs, Kaija and creatures (`nort/grid.scala`) are made
 from the tile art by `nort/tools/tile-masks.py`.
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
