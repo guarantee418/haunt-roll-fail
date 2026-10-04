@@ -38,7 +38,7 @@ draws a tile when no neutral territory is left.
 | Wilderness expansion: Environment tiles and five more creatures, with the Ancestral Graveyard and the Wyvern's Den | done 2026-10-04 (`wilderness.scala`, see Wilderness below) |
 | New Blood: seven more clans with their warchiefs and 28 clan cards | done 2026-10-04 (`newblood.scala`, see New Blood below) |
 | Uncharted Horizons: Events module and Alternative victory conditions module (Thane and Jarl modes) | done 2026-10-04 (`horizons.scala`, see below) |
-| Uncharted Horizons: Solo module (the Automa) | engine done 2026-10-04 (`automa.scala`); the 15 Automa cards are provisional until the printed ones are transcribed |
+| Uncharted Horizons: Solo module (the Automa) | done 2026-10-04 (`automa.scala`, the 15 real cards) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -508,17 +508,25 @@ Wealth cards (`deck237`), more than the rulebook's 5 and 8. Code in
   Refinement (upgrade or remove 4 cards). The status panes show each card
   with ✓ when fulfilled and the counts.
 
-## Uncharted Horizons: Solo module, the Automa (2026-10-04, provisional cards)
+## Uncharted Horizons: Solo module, the Automa (2026-10-04)
 
-From the Uncharted Horizons rulebook on Tabletopia (pages 13–18); code in
-`automa.scala`. Pick "Automa (solo)" and one clan; the Automa is always a
-bot (`Meta.botOnly`). **The 15 Automa cards are not in any source found**
-(not in the TTS mods 3597126237 or 3596248061, not on Tabletopia; the
-rulebook prints only one example card), so `AutomaCards.specs` is a
-provisional deck: card 1 is the rulebook's example, the other 14 spread the
-five actions and the rulebook's priority icons. Replace it with the printed
-cards.
+From the Uncharted Horizons rulebook on Tabletopia (pages 13–18) and the 15
+Automa cards and 2 reference cards from the Tabletopia module (screenshots
+the owner gathered; images in `card/automa/`); code in `automa.scala`
+(`AutomaCards.specs` is the cards' transcription). Pick "Solo vs Automa" on
+the main menu, or "Automa (solo)" and one clan; the Automa is always a bot
+(`Meta.botOnly`).
 
+- The cards: two conditional actions each (the first possible is done),
+  a Development card preference row, Flash on cards 4, 7, 11, 13 and 14, Pass
+  on cards 8, 9, 12 and 13. Recruit needs 1 or 2 Leaders and units in its
+  reserve; Build names its building (Altar of Kings, Fortress; "if possible a
+  Carved Stone, otherwise" a Defense Tower or Training Camp; a Food Silo if
+  its wood is at least its food, otherwise a Woodcutter's Lodge) and needs a
+  free space of that size with 1 or 3 wood; Explore ranks the Automa's open
+  territories, puts the tile on a spot next to the chosen one (its compass
+  icon for the spot) and turns the tile by its rotation row; Move 1 ranks the
+  territory to take a unit from (2+ units) and the one to put it in.
 - Levels (option "Automa difficulty"): 1, the player also wins with four
   closed territories each with a large building; 2, more fame than the
   Automa after the last year; 3, the same with the Creatures module; 4 and
@@ -538,15 +546,13 @@ cards.
   draw, recruit, explore, special, left, right), the remaining one if the
   player has passed, and in the last year the Achievement worth the most to
   it. Its cards count only for fame at the end.
-- Actions: Recruit n (Leader 1, Leader 2, then units); Build (a large
-  building if it can, else a small one); Explore (the spot by the first
-  priority, the top tile turned by the second; a tile that doesn't fit goes
-  to the bottom); Move 1 (one unit from a territory with 2+ units to a
-  friendly or neutral one); Move 2 with Leader 1 or 2 (half the units,
-  rounded up, of an adjacent territory reinforce the Leader, then the Leader
-  moves: against the player with enough units to outnumber the defenders by
-  at most 2, into a neutral territory with half its units, into its own with
-  all but one). It ignores Rough borders and never empties a territory.
+- Actions: Recruit n (Leader 1, Leader 2, then units); Build; Explore; Move 1
+  (one unit to a friendly or neutral territory); Move 2 with Leader 1 or 2
+  (half the units, rounded up, of an adjacent territory reinforce the
+  Leader, then the Leader moves: against the player with enough units to
+  outnumber the defenders by at most 2, into a neutral territory with half
+  its units, into its own with all but one). It ignores Rough borders and
+  never empties a territory.
 - Priorities narrow the candidates one after the other; a tie left is the
   player's choice. Leaders count as units (with the Warchiefs module they are
   warchiefs worth 3).
@@ -578,9 +584,11 @@ Check these against the rulebook when it is at hand.
     creature prompts aimed at it are answered by its bot.
   - The die's choice face: the casualty only when the enemy has one figure
     left in the fight.
-  - Build: Altar of Kings, Forge, Fortress, then Woodcutter's Lodge, Food
-    Silo, Training Camp, Defense Tower, Carved Stone (the rulebook doesn't
-    say which building).
+  - Explore's rotation row is measured with the tile in place: resources,
+    food, wood and spaces of the territory explored from; the closed icon
+    prefers a turn that closes any territory; least rotations last.
+  - Explore's territory row ranks the Automa's open territories that have a
+    free spot; the compass icon also picks the spot next to that territory.
   - Snake's Stolen Lore and Rapacious Exploitation adjustments aren't
     implemented (the Automa has no hand or active area).
 - **Events**:
