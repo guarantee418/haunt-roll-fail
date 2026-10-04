@@ -369,6 +369,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // Warchiefs module: where each clan's warchief is (none while in the reserve)
     var chiefs : Map[Faction, AreaRef] = Map()
 
+    // Legal tile placements by game state (Rules.placements)
+    val placementCache = scala.collection.mutable.Map[Any, $[(Spot, Int)]]()
+
     def chiefIn(t : Territory, f : Faction) : Boolean = chiefs.get(f).exists(t.areas.contains)
 
     // The warchief is in the reserve and can be recruited
