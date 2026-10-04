@@ -20,15 +20,15 @@ draws a tile when no neutral territory is left.
 | Decks: draw / hand / active / discard, reshuffle only when drawing from an empty pile | done |
 | Wait, Replace (1 lore), Remove (2 lore), Upgrade (3 lore), Pass | done |
 | Development deck (2 Early + 4 Advanced per player), Achievements in year 7 | done |
-| Card list with names, fame, text and images (`cards.scala`) | done: 21 clan, 16 Early + 35 Advanced (one Advanced card missing from the images), 7 Achievement |
+| Card list with names, fame, text and images (`cards.scala`) | done: 21 clan (+7 warchief upgrades), 16 Early + 36 Advanced (Veiled Threats found in a TTS mod on 2026-10-04), 7 Achievement |
 | Playing cards: Flash cards before/after the main card | done |
 | Card effects | done: every card in `cards.scala` has an effect (see Interpretations below for the choices made); only Scout Camp's redraw happens before the tile is shown |
 | Harvest trade (any 3 resources for 1) | done |
 | Winter costs and Unrest cards | done (counts units, which never change yet) |
 | End-of-game fame scoring | done (no territory fame yet; of the Achievements only Warlord scores) |
-| Map tiles, territories, borders, exploring | done: tile data in `tiles.scala`, territories and placement rules in `board.scala`, setup, Recruit, Move, Explore, Build, Feast and combat in `map.scala`. Tile images in `webp2/nort/images/tile/` (`tile-31` to `tile-33` and `start-5` from the owner's photos) |
+| Map tiles, territories, borders, exploring | done: tile data in `tiles.scala`, territories and placement rules in `board.scala`, setup, Recruit, Move, Explore, Build, Feast and combat in `map.scala`. Tile images in `webp2/nort/images/tile/` (`tile-31` to `tile-33` and `start-5`: TTS scans aligned to the earlier photo crops) |
 | Card display (like Arcs): Development and Achievement cards in the `court` pane on top for everyone, your hand (and played cards) in the `hand` pane at the bottom; click or tap a card to see it full screen | done |
-| Player colors, chosen per clan on the setup screen (default blue, red, yellow, purple, green, orange by seat) | done; no green or orange starting card images: green uses the blue ones, orange the yellow ones |
+| Player colors, chosen per clan on the setup screen (default blue, red, yellow, purple, green, orange by seat) | done; green starting cards are the blue images with the ribbon recoloured to the printed green; there are no orange ones, orange uses the yellow ones |
 | Six players (not in the rulebook) | done 2026-10-04: the five-player rules extended (see Six players below) |
 | 2v2 Teams variant (core box) and 3v3 Teams (not in the rulebook, the 2v2 rules with six players) | done 2026-10-04 (see Teams below) |
 | Game length 5–10 years (10-year variant: 3 Early + 6 Advanced per player), Fame victory only, First seat goes first | done (options) |

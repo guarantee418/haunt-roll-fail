@@ -47,6 +47,8 @@ case object AnnexationEffect extends Effect
 case object SpyEffect extends Effect
 // Ancestral Curse: each opponent discards a card of their choice, draw 1
 case object CurseEffect extends Effect
+// Veiled Threats: an opponent discards a random card, or draw 1
+case object VeiledEffect extends Effect
 // Rapacious Exploitation: pick a card from an opponent's hand; they discard it or give 2 resources
 case object RapaciousEffect extends Effect
 // Enemy Secrets: copy a card in the active area of an adjacent enemy
@@ -100,6 +102,10 @@ case class AnnexationExploreYesAction(self : Faction, then : ForcedAction) exten
 
 case class SpyAction(self : Faction, enemy : Faction, then : ForcedAction) extends BaseAction("Spy", "look at the hand of")(enemy)
 case class SpyDiscardAction(self : Faction, enemy : Faction, card : Card, then : ForcedAction) extends BaseAction("Spy", "discard from", enemy, "hand")(card.img, Break, card)
+
+case class VeiledDiscardAction(self : Faction, enemy : Faction, then : ForcedAction) extends BaseAction("Veiled Threats".hl, "make an opponent discard a random card")(enemy)
+case class VeiledDiscardedAction(self : Faction, enemy : Faction, random : Card, then : ForcedAction) extends RandomAction[Card]
+case class VeiledDrawAction(self : Faction, then : ForcedAction) extends BaseAction("Veiled Threats".hl)("Draw 1 card")
 
 case class CurseAction(f : Faction, l : $[Faction], then : ForcedAction) extends ForcedAction
 case class CurseDiscardAction(self : Faction, f : Faction, card : Card, l : $[Faction], then : ForcedAction) extends BaseAction("Ancestral Curse", "discard a card")(card.img, Break, card)
@@ -192,6 +198,7 @@ object CardsExpansion extends Expansion {
         case TeamworkEffect => basics.exists(MapExpansion.playable(f, _))
         case AnnexationEffect => MapExpansion.playable(f, MoveEffect(1)) || MapExpansion.playable(f, ExploreEffect())
         case SpyEffect => opponentsWithCards(f).any
+        case VeiledEffect => opponentsWithCards(f).any || CommonExpansion.available(f) > 0
         case CurseEffect => opponentsWithCards(f).any
         case RapaciousEffect => opponentsWithCards(f).any
         case SecretsEffect => secretsCards(f).any
@@ -235,6 +242,9 @@ object CardsExpansion extends Expansion {
             Ask(f)
                 .when(MapExpansion.playable(f, ExploreEffect()))(AnnexationOrderAction(f, true, then))
                 .add(AnnexationOrderAction(f, false, then))
+
+        case VeiledEffect =>
+            Ask(f).each(opponentsWithCards(f))(g => VeiledDiscardAction(f, g, then)).when(CommonExpansion.available(f) > 0)(VeiledDrawAction(f, then))
 
         case SpyEffect =>
             Ask(f).each(opponentsWithCards(f))(g => SpyAction(f, g, then))
@@ -451,6 +461,23 @@ object CardsExpansion extends Expansion {
             Then(ExploreAction(f, 1, 1, false, ExploreEffect(), then))
 
         // LOOKING AT HANDS
+        // VEILED THREATS
+        case VeiledDiscardAction(f, g, then) =>
+            Random[Card](g.hand, VeiledDiscardedAction(f, g, _, then))
+
+        case VeiledDiscardedAction(f, g, c, then) =>
+            g.hand = g.hand.diff($(c))
+            g.discard :+= c
+
+            g.log("discarded", c, "at random")
+
+            Then(then)
+
+        case VeiledDrawAction(f, then) =>
+            f.log("drew a card")
+
+            Then(DrawCardsAction(f, 1, then))
+
         case SpyAction(f, g, then) =>
             f.log("looked at the hand of", g)
             Ask(f).each(g.hand.distinct)(c => SpyDiscardAction(f, g, c, then))

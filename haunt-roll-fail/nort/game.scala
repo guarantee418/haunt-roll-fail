@@ -35,9 +35,8 @@ case object Wolf extends Faction
 // Player colors mark a player's units and starting cards; they are not tied to the clan
 trait PlayerColor extends NamedToString with Styling with Elementary with Record {
     def id = name.toLowerCase
-    // The banner on the starting cards: green has no cards of its own and uses blue's, orange uses yellow's
+    // The banner on the starting cards: orange has no cards of its own and uses yellow's
     def cards = this match {
-        case Green => "blue"
         case Orange => "yellow"
         case c => c.id
     }

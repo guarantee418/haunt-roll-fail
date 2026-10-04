@@ -245,6 +245,7 @@ object Cards {
         dev("grizzled-warriors", "Grizzled Warriors", 0, false, MoveEffect(2, bonus = 2), "Move 2, +2 combat points."),
         dev("upgraded-trading-post", "Upgraded Trading Post", 0, false, DrawEffect(3, 2, 1, 0), "Draw 3 cards; keep 2 and discard 1 of them."),
         dev("ancestral-curse", "Ancestral Curse", 2, false, CurseEffect, "All your opponents discard 1 card of their choice. Draw 1 card."),
+        dev("veiled-threats", "Veiled Threats", 2, false, VeiledEffect, "Choose one: an opponent randomly discards 1 card OR you draw 1 card."),
         dev("rangers", "Rangers", 1, false, ExploreEffect(times = 2), "Explore. After the first Explore action, you may do a second Explore action if possible."),
         dev("upgraded-scout-camp", "Upgraded Scout Camp", 0, false, ExploreEffect(draw = 2), "Explore. Draw 2 tiles; keep 1 to explore, and put the other on the bottom of the pile."),
         dev("greater-trade-routes", "Greater Trade Routes", 0, false, DrawEffect(3, 2, 0, 1), "Draw 3 cards; keep 2 and return 1 to the top of your draw pile."),

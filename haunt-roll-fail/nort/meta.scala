@@ -146,7 +146,7 @@ object Meta extends MetaGame { mmm =>
 
     val start = StartAction(gaming.version)
 
-    // Images are in webp2/nort/images/; there are no green or orange starting cards, so green uses the blue ones and orange the yellow ones
+    // Images are in webp2/nort/images/; the green starting cards are the blue ones with the ribbon recoloured to the printed green; there are no orange ones, so orange uses the yellow ones
     val assets =
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card/start", "card-start-", "webp")(
         PlayerColor.all./~(c => $("recruit", "move", "explore", "build", "feast")./(n => ImageAsset(c.id + "-" + n, c.cards + "-" + n + (n == "feast").??("-1"))))
