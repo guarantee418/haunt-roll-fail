@@ -314,6 +314,37 @@ on. To implement one:
   modules; the summary counts `event-<id>` and `alt-victory-<mode>`. All 20
   Events came up in bot games; the bots rarely meet victory conditions.
 
+## Uncharted Horizons: the Automa (Solo module, 2026-10-04)
+
+- `automa.scala`: `Automa` is a `Faction` in `Meta.factions` (picked with one
+  clan; validation refuses other counts and teams), always a bot through
+  the new framework hook `MetaGame.botOnly` (`hrf.scala` sets it to its
+  default bot on every setup path). `Game.modules` adds `Solo` when it plays;
+  `AutomaExpansion` has priority -5. Option `AutomaLevelOption(1..6)`.
+- Its Leaders reuse the warchief and companion plumbing: Leader 1 is
+  `game.chiefs(Automa)`, Leader 2 `game.leader2` (the companion); both are
+  drawn with the warchief figure.
+- State: `automaDeck`, `automaDiscard`, `automaActions` (drawn this year),
+  `automaPlayed`, `automaDrawn`, `automaStart`. It intercepts
+  `ShuffledAdvancedAction` (two cards out), `ShuffleStartingDecksAction`,
+  `SetupPlaceAction`, `RevealDevelopmentsAction` (its draw), `TurnAction`,
+  the combat food and die steps, `RetreatAction`, `TradeAction` and
+  `EventStepAction`. Ties left by its priorities are asked of the player
+  (`choose`).
+- **The cards are provisional** (`AutomaCards.specs`): the 15 printed cards
+  weren't found anywhere. Each is `AutomaSpec(flash, pass, first, second,
+  picks)` with actions `AutomaRecruit`, `AutomaBuild`, `AutomaExplore`,
+  `AutomaMove1`, `AutomaMove2` and the priority objects named after the
+  rulebook's icons (page 18), so transcribing the real cards is data only.
+- The main menu has "Solo vs Automa" (framework hook `MetaGame.soloFaction`,
+  `soloGame` in `hrf.scala`, URL `/play/nort/solo`): pick a clan, then the
+  usual setup screen with the Automa added.
+- `NORT_AUTOMA=1` makes the headless host play solo games (random level;
+  Creatures on from level 3); the summary counts `automa-<action>`.
+- Common code changes: `CommonExpansion.cardFame` (Achievement scoring, used
+  at the end and for the Automa's last-year pick), `game.strongholdsToWin`,
+  the Start of Year draw and Winter skip the Automa.
+
 ## Map drawing: territory colours and free ground
 
 - Each territory is tinted with the colour of the player who controls it
@@ -422,7 +453,8 @@ list. In short:
    loading rebuild the same game.
 5. **Expansions**: Wilderness, New Blood, and Uncharted Horizons' Events and
    Alternative victory modules are done; Wastelands and the rest of
-   Uncharted Horizons (Raids, Development cards, Training Fields, solo) are next (assets in `expansion/`; the TTS mod
+   Uncharted Horizons (Raids, Development cards, Training Fields) are next;
+   the Automa needs its 15 printed cards transcribed (assets in `expansion/`; the TTS mod
    3597126237 has the Uncharted Horizons cards and Tabletopia its rulebook).
 
 ## How to build and test (in a cloud session)

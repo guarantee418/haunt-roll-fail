@@ -188,6 +188,7 @@ case class Companion(f : Faction) extends Elementary {
     def name = f match {
         case Lynx => "Brundr and Kaelinn"
         case Horse => "Brok"
+        case Automa => "Leader 2"
         case _ => "Kaija"
     }
     def elem0 : Elem = name.hl

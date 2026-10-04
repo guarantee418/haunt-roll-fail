@@ -740,7 +740,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
                     dom.document.title = (self./(meta.factionName) :+ title.|("%untitled%") :+ meta.label).join(" - ")
 
-                    var difficulties = seating./(_ -> HRF.param("debug")./(bot => BotDebug(bot)).|(Human)).toMap ++ bots./{ case (f, d) => f -> HRF.flag("debug-bot").?(BotDebug(d)).|(Bot(d)) }
+                    var difficulties = seating./(_ -> HRF.param("debug")./(bot => BotDebug(bot)).|(Human)).toMap ++ bots./{ case (f, d) => f -> HRF.flag("debug-bot").?(BotDebug(d)).|(Bot(d)) } ++ seating.%(meta.botOnly)./(f => f -> Bot(meta.defaultBot(f)))
                     val state = OptionsState(meta.options, meta.mandatoryFor(seating.num, seating), options, $)
 
                     def names : Map[meta.F, String] = users.flatMap {
@@ -878,6 +878,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             customGame(false)
         }
 
+        def goSolo() {
+            history.pushState("/play/" + meta.name + "/solo", () => metaMenu())
+            soloGame()
+        }
+
         def goOnline() {
             history.pushState("/play/" + meta.name + "/online", () => metaMenu())
             onlineGame()
@@ -888,7 +893,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             (
                 ZBasic(title, "Quick Game".hlb, meta.factions.%(f => meta.getBots(f).has(meta.defaultBot(f))).any.??(() => goQuickGame())) ::
                 ZBasic(title, "Local Game".hhb, () => goHotseat()) ::
-                ZBasic(title, "Play Online".hlb, (HRF.server.any && HRF.offline.not).??(() => goOnline()))
+                meta.soloFaction./(s => ZBasic(title, ("Solo vs " + meta.factionName(s).split(' ').head).hhb, () => goSolo())).$ ++
+                $(ZBasic(title, "Play Online".hlb, (HRF.server.any && HRF.offline.not).??(() => goOnline())))
             ) ++
             meta.intLinks./((t, l) => ZBasic("Other", t, () => {
                 HRF.metas.%(_.name == l).single./{ m =>
@@ -906,6 +912,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         else
         if (HRF.segments.startsWith($("hotseat")))
             goHotseat()
+        else
+        if (HRF.segments.startsWith($("solo")) && meta.soloFaction.any)
+            goSolo()
         else
         if (HRF.segments.startsWith($("online")))
             goOnline()
@@ -1032,7 +1041,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     ZBasic("", v.ok.?("Start Game".hl ~ v.message.any.??(" | ")).|(Empty) ~ v.message.styled(v.style), v.ok.??(() => {
                         val seating = factions
 
-                        val difficulties = seating./(f => f -> Bot(meta.defaultBot(f))).toMap + (faction -> Human)
+                        val difficulties = seating./(f => f -> Bot(meta.defaultBot(f))).toMap ++ meta.botOnly(faction).not.$(faction -> Human)
 
                         val journal = new MemoryJournal[meta.gaming.ExternalAction](meta)
 
@@ -1136,6 +1145,24 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         )
     }
 
+    // A local game against the solo opponent: pick a faction, then the usual setup screen
+    def soloGame() {
+        HRF.segments = $
+
+        val solo = meta.soloFaction.get
+        val t = "Play " ~ meta.label.hl ~ " " ~ "Solo".hl
+
+        ui.action.asker.zask(
+            $(ZOption(t, Div("Against the " ~ meta.factionName(solo).hl, ZBasic.info))) ++
+            meta.factions.but(solo)./(f => ZOption(Div("Play as".txt), OnClick(Div(meta.factionElem(f) ~ meta.factionNote(f), ZBasic.choice)), _ => {
+                startSetup($(f, solo), false)
+            })) ++
+            ZBasic(" ", "Cancel", () => {
+                history.popState()
+            }).?
+        )
+    }
+
     def customGame(online : Boolean) {
         HRF.segments = $
 
@@ -1223,7 +1250,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         }
 
         var seating = factions
-        var difficulties : Map[meta.F, Difficulty] = factions.map(_ -> Human).toMap
+        var difficulties : Map[meta.F, Difficulty] = factions.map(f => f -> meta.botOnly(f).?(Bot(meta.defaultBot(f)) : Difficulty).|(Human)).toMap
 
         var notes = Map[meta.F, String]()
 
@@ -1249,7 +1276,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         xstyles.updown)
                         , ZBasic.choice :+ xstyles.player), {
                         case "difficulty" =>
-                            difficulties += f -> ($(Human) ++ meta.getBots(f)./(Bot) ++ $(Human)).dropWhile(_ != difficulties(f)).drop(1).head
+                            if (meta.botOnly(f).not)
+                                difficulties += f -> ($(Human) ++ meta.getBots(f)./(Bot) ++ $(Human)).dropWhile(_ != difficulties(f)).drop(1).head
                             setupQuestions(page)
                         case "row-option" =>
                             meta.factionRowClick(f, seating, options.selected).foreach { o =>

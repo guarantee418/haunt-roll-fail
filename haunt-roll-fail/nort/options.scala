@@ -30,6 +30,27 @@ object ColorOption {
     val all : $[ColorOption] = Meta.factions./~(f => PlayerColor.all./(c => ColorOption(f, c)))
 }
 
+// The Automa's difficulty (Solo module): 1, the player also wins with four closed territories with large buildings;
+// 3 and up need the Creatures module; from 4, the Automa draws one more card each year per level above 3
+case class AutomaLevelOption(level : Int) extends GameOption with OneOfGroup with ImportantOption {
+    val group = "Automa difficulty".txt
+    def valueOn = ("Level " + level).hlb
+    override def decorate(e : Elem) = e ~ (level match {
+        case 1 => " (or four closed territories with large buildings)"
+        case 3 => " (Creatures module)"
+        case n if n >= 4 => " (Creatures module, " + (n - 3) + " more card" + (n > 4).??("s") + ")"
+        case _ => ""
+    }).spn
+    override val explain = $(
+        "Level 1: win with four closed territories each with a large building, or with more fame than the Automa after the last year.",
+        "Level 2: win with more fame after the last year. Level 3: the same with the " ~ "Creatures".hl ~ " module. Level 4 and up: the Automa draws one more card each year per level above 3.",
+    )
+}
+
+object AutomaLevelOption {
+    val all = 1.to(6).$./(AutomaLevelOption(_))
+}
+
 // Number of years; developments revealed scale with it (Game.earlyPerPlayer, Game.advancedPerPlayer)
 case class YearsOption(years : Int) extends GameOption with OneOfGroup with ImportantOption {
     val group = "Game length".txt
@@ -133,6 +154,14 @@ case object UnchartedHorizons extends Module("Uncharted Horizons", "expansion") 
     def about = $("The rest of the expansion: Development and Raid cards, Training Fields, solo play, drafting setup and more map tiles.")
 }
 
+// Uncharted Horizons' Solo module: on whenever the Automa plays (Game.modules), so its option isn't listed
+case object Solo extends Module("Solo", "Uncharted Horizons") {
+    override def ready = true
+    override def expansion = |(AutomaExpansion)
+    override def priority = -5
+    def about = $("Play alone against the Automa: pick it and one clan.")
+}
+
 // Uncharted Horizons' Events module (horizons.scala)
 case object EventsModule extends Module("Events", "Uncharted Horizons") {
     override def ready = true
@@ -185,7 +214,7 @@ case object Teams3v3 extends Module("3v3 Teams", "variant, 2v2 rules") {
 }
 
 object Module {
-    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, UnchartedHorizons, TeamsVariant, Teams3v3)
+    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Solo, UnchartedHorizons, TeamsVariant, Teams3v3)
 
     // The team variants and the number of players each one needs
     val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6)

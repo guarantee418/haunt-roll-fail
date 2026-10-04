@@ -34,7 +34,16 @@ object Meta extends MetaGame { mmm =>
     val label = "Northgard: Uncharted Lands"
 
     // The core clans, then New Blood's
-    val factions = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf) ++ NewBlood.clans
+    val factions = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf) ++ NewBlood.clans :+ Automa
+
+    // The clans with cards and boards (not the Automa)
+    val clans = factions.but(Automa)
+
+    // The Automa plays by its cards, never by a person
+    override def botOnly(f : Faction) = f == Automa
+
+    // The main menu's "Solo vs Automa"
+    override def soloFaction = |(Automa)
 
     val minPlayers = 2
     // Six players build on the five-player rules
@@ -43,12 +52,13 @@ object Meta extends MetaGame { mmm =>
     override val hiddenOptions = $
 
     // New Blood has no option: picking one of its clans brings it in
-    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(FameOnly, FirstSeatStarts, WarchiefCards) ++ Module.all.but(NewBlood)./(ModuleOption) ++ $(MoreCreatures, VictoryModeOption(false), VictoryModeOption(true)) ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(FameOnly, FirstSeatStarts, WarchiefCards) ++ Module.all.but(NewBlood).but(Solo)./(ModuleOption) ++ $(MoreCreatures, VictoryModeOption(false), VictoryModeOption(true)) ++ AutomaLevelOption.all ++ hiddenOptions
 
     // Colors only for the clans in the game; 2v2 Teams only with four players, 3v3 Teams only with six
     override def optionsFor(n : Int, l : $[F]) = options.%{
         case ColorOption(f, _) => l.has(f)
-        case ModuleOption(m) if Module.teams.contains(m) => Module.teams(m) == n
+        case ModuleOption(m) if Module.teams.contains(m) => Module.teams(m) == n && l.has(Automa).not
+        case AutomaLevelOption(_) => l.has(Automa)
         case _ => true
     }
 
@@ -71,7 +81,7 @@ object Meta extends MetaGame { mmm =>
     }
 
     // Colors by seat, as before colors could be chosen
-    override def defaultsFor(n : Int, l : $[F]) = l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) } :+ YearsOption.standard
+    override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } :+ (YearsOption.standard : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O)
 
     override def quickOptions = options./(o => o -> 0.0).toMap
 
@@ -88,6 +98,7 @@ object Meta extends MetaGame { mmm =>
 
     def validateFactionCombination(factions : $[Faction]) = None ||
         (factions.num < 2).?(ErrorResult("Minimum two clans")) ||
+        (factions.has(Automa) && factions.num != 2).?(ErrorResult("The Automa plays against one clan only")) ||
         (factions.num > 6).?(ErrorResult("Maximum six clans")) |
         InfoResult("Northgard: Uncharted Lands")
 
@@ -96,20 +107,25 @@ object Meta extends MetaGame { mmm =>
         val missing = factions.%(f => colored.exists(_.clan == f).not)
         val teams = Module.teams.toList.%{ case (m, n) => has(options, m) && factions.num != n }
         teams.any.?(ErrorResult(teams./{ case (m, n) => m.label + " needs " + n + " players" }.mkString(", "))) ||
+        (factions.has(Automa) && options.of[AutomaLevelOption].exists(_.level >= 3) && has(options, Creatures).not).?(ErrorResult("Automa levels 3 and up need the Creatures module")) ||
         missing.any.?(WarningResult(missing./(factionName).mkString(", ") + " will get a free color")) |
         InfoResult("Northgard: Uncharted Lands")
     }
 
-    def factionName(f : Faction) = f.name + " Clan"
+    def factionName(f : Faction) = (f == Automa).?("Automa (solo)").|(f.name + " Clan")
     // No clan colors here: colors belong to players and are chosen on the setup screen
     def factionElem(f : Faction) = factionName(f).txt
     // The initial clan card and its two upgrades
-    override def factionNote(f : Faction) = HorizontalBreak ~ $(0, 1, 2)./(n => Image(ClanCard(f, n).info.image, styles.menuCard)).merge
+    override def factionNote(f : Faction) =
+        if (f == Automa)
+            HorizontalBreak ~ "The solo opponent from Uncharted Horizons: a neutral clan with two Leaders that plays by its own cards. Pick it and one clan.".txt
+        else
+            HorizontalBreak ~ $(0, 1, 2)./(n => Image(ClanCard(f, n).info.image, styles.menuCard)).merge
     // Once picked, just the clan's emblem
-    override def factionChosenElem(f : Faction) = Image("clan-" + f.style, styles.menuIcon) ~ factionElem(f).spn(xstyles.bold)
+    override def factionChosenElem(f : Faction) = (f == Automa).?(factionElem(f).spn(xstyles.bold)).|(Image("clan-" + f.style, styles.menuIcon) ~ factionElem(f).spn(xstyles.bold))
 
     // The clan picker's Warchief button: the clan board with the warchief's portrait and power, and the warchief's upgrade card (Warchiefs box)
-    override def factionInfo(f : Faction) = |((
+    override def factionInfo(f : Faction) = (f != Automa).?((
         "Warchief".txt,
         Warchief.name(f).hlb ~ ", " ~ factionName(f) ~ " warchief",
         $(
@@ -122,9 +138,9 @@ object Meta extends MetaGame { mmm =>
 
     // Images shown in the menus, before the game's assets are loaded
     override def menuImages = (
-        factions./~(f => $(0, 1, 2, 3)./(n => ClanCard(f, n).info.image)./(i => i -> ("/hrf/webp2/nort/images/card/clan/" + i.drop("card-clan-".length) + ".webp"))) ++
-        factions./(f => ("clan-" + f.style) -> ("/hrf/webp2/nort/images/clan/" + f.style + ".webp")) ++
-        factions./(f => Warchief.board(f) -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.boardFile(f) + ".webp"))
+        clans./~(f => $(0, 1, 2, 3)./(n => ClanCard(f, n).info.image)./(i => i -> ("/hrf/webp2/nort/images/card/clan/" + i.drop("card-clan-".length) + ".webp"))) ++
+        clans./(f => ("clan-" + f.style) -> ("/hrf/webp2/nort/images/clan/" + f.style + ".webp")) ++
+        clans./(f => Warchief.board(f) -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.boardFile(f) + ".webp"))
     ).toMap
 
     def createGame(factions : $[Faction], options : $[O]) = new Game(factions, options)
@@ -206,7 +222,8 @@ object Meta extends MetaGame { mmm =>
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/unit", "unit-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "unit-" + c.id))
     ) ::
-    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Warchiefs), "token/unit", "warchief-", "webp")(
+    // The warchiefs, and the Automa's Leaders
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Warchiefs) || factions.has(Automa), "token/unit", "warchief-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "warchief-" + c.id))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token", "token-", "webp")(
