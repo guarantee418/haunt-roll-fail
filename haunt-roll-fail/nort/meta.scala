@@ -161,17 +161,27 @@ object Meta extends MetaGame { mmm =>
         Cards.achievements.keys.$./(ImageAsset(_))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Creatures), "card/creature", "card-creature-", "webp")(
-        $("brown-bear-1", "brown-bear-2", "draugr-1", "draugr-2", "fallen-valkyrie-1", "fallen-valkyrie-2", "wolf-1", "wolf-2", "wolf-3")./(ImageAsset(_))
+        Creature.all./(c => ImageAsset(c.token.drop("creature-".length)))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Creatures) && has(options, Wilderness), "card/creature", "card-creature-", "webp")(
+        Creature.expansion./(c => ImageAsset(c.token.drop("creature-".length)))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card", "card-", "webp")(
         $(ImageAsset("unrest"))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "tile", "tile-", "webp")(
-        Tiles.all./(t => ImageAsset(t.id))
+        Tiles.all.diff(Tiles.environment)./(t => ImageAsset(t.id))
     ) ::
     // The shape of each area, tinted on the map with the colour of the player who controls it
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "tile/mask", "mask-", "webp")(
-        Tiles.all./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
+        Tiles.all.diff(Tiles.environment)./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
+    ) ::
+    // Wilderness: the Environment tiles
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wilderness), "tile", "tile-", "webp")(
+        Tiles.environment./(t => ImageAsset(t.id))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wilderness), "tile/mask", "mask-", "webp")(
+        Tiles.environment./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/unit", "unit-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "unit-" + c.id))
@@ -184,6 +194,9 @@ object Meta extends MetaGame { mmm =>
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Creatures), "token/creature", "creature-", "webp")(
         Creature.all./(c => ImageAsset(c.token.drop("creature-".length)))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Creatures) && has(options, Wilderness), "token/creature", "creature-", "webp")(
+        Creature.expansion./(c => ImageAsset(c.token.drop("creature-".length)))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/building", "building-", "webp")(
         Building.all./(b => ImageAsset(b.image.drop("building-".length)))

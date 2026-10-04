@@ -151,15 +151,15 @@ object CardsExpansion extends Expansion {
 
     def hiddenSources(f : Faction)(implicit game : Game) = MapExpansion.moveSources(f).%(t => hiddenTargets(f, t).any)
 
-    // Open territories, not with a Fallen Valkyrie nor held by a teammate
-    def hiddenTargets(f : Faction, t : Territory)(implicit game : Game) = game.board.territories.%(o => o != t && game.board.open(o) && game.hostileIn(o).not && game.mateHeld(f, o).not)
+    // Open territories, not with a Fallen Valkyrie, held by a teammate or the Swamp
+    def hiddenTargets(f : Faction, t : Territory)(implicit game : Game) = game.board.territories.%(o => o != t && game.board.open(o) && game.hostileIn(o).not && game.passOnly(f, o).not)
 
     def briberySources(f : Faction)(implicit game : Game) : $[(Territory, Faction)] =
         enemyUnits(f).%{ case (t, g) => briberyTargets(t, g).any }
 
     // Adjacent territories enemy units can be moved to, not making a three-way territory nor joining their teammates
     def briberyTargets(t : Territory, g : Faction)(implicit game : Game) : $[Territory] =
-        game.board.adjacent(t).map(_._1).%(o => game.present(o).but(g).num <= 1).%(o => game.hostileIn(o).not).%(o => game.mateHeld(g, o).not)
+        game.board.adjacent(t).map(_._1).%(o => game.present(o).but(g).num <= 1).%(o => game.hostileIn(o).not).%(o => game.passOnly(g, o).not)
 
     def futureSightCards(f : Faction)(implicit game : Game) : $[Card] =
         f.foresaw.not.??(game.display ++ (game.year < game.lastYear).??(game.achievements))

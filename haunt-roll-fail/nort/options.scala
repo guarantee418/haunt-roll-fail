@@ -84,6 +84,8 @@ abstract class Module(val label : String, val box : String) extends NamedToStrin
     def ready : Boolean = false
     def about : $[Elem]
     def expansion : |[Expansion] = None
+    // Lower goes first among the module expansions
+    def priority : Int = 0
 }
 
 case object Creatures extends Module("Creatures", "core box") {
@@ -102,7 +104,14 @@ case object Warchiefs extends Module("Warchiefs", "Warchiefs expansion") {
 }
 
 case object Wilderness extends Module("Wilderness", "expansion") {
-    def about = $("More creatures and Environment tiles.")
+    override def ready = true
+    override def expansion = |(WildernessExpansion)
+    // Before the Creatures module, so its Environment tiles can act first in the Creature phase
+    override def priority = -1
+    def about = $(
+        "Environment tiles: the Great Lake, two Geysers, two Ruins, the Swamp, the Poisonous Swamp and two High Peaks are shuffled into the map tiles after setup. Impassable borders (orange lines) can't be crossed.",
+        "With the " ~ "Creatures".hl ~ " module: the Draugr Jötnar, Eldthursar and Hvedrung join the creature deck, and the Ancestral Graveyard (Spectral Warriors) and the Wyvern's Den (the Wyvern) are added to the map tiles.",
+    )
 }
 
 case object Wastelands extends Module("Wastelands", "expansion") {

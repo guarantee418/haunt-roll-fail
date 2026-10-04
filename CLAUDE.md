@@ -28,7 +28,10 @@ effect works (special ones in `nort/effects.scala`) and all seven clan
 powers, including Bear's Kaija and Snake's Scorched Earth; the Creatures
 module (with its More Creatures variant) is in `nort/creatures.scala`, the
 Warchiefs module in `nort/warchiefs.scala` (the clan picker's Warchief
-button shows each clan's warchief board). The
+button shows each clan's warchief board), the Wilderness expansion
+(Environment tiles with impassable borders, and five more creatures plus
+the Ancestral Graveyard's Spectral Warriors and the Wyvern's Den) in
+`nort/wilderness.scala` (tiles `wild-*` in `Tiles.environment`). The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.
@@ -52,7 +55,7 @@ players, not clans: each clan's player picks one on its row of the setup screen
 `game.colors`); starting cards show that color's banner (orange has no
 cards of its own and uses the yellow ones). The setup options
 (colors, game length, fame-only victory, first player, and the modules and
-expansions; Creatures, Warchiefs and the 2v2/3v3 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`. Northgard no longer sets `underConstruction`
+expansions; Creatures, Warchiefs, Wilderness and the 2v2/3v3 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`. Northgard no longer sets `underConstruction`
 in its `Meta` (setting it to `true` would put an "Under Construction" note under
 its name on the game list and a disclaimer at the top of its menu).
 `nort/host.scala` runs bot games headless (JVM only,

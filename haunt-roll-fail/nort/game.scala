@@ -237,7 +237,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def has(m : Module) = modules.has(m)
 
     // Module expansions come first, so they can take over any core action
-    val expansions : $[Expansion] = modules./~(_.expansion) ++ $(MapExpansion, CardsExpansion, CommonExpansion)
+    val expansions : $[Expansion] = modules.sortBy(_.priority)./~(_.expansion) ++ $(MapExpansion, CardsExpansion, CommonExpansion)
 
     var seating : $[Faction] = setup
 
@@ -348,6 +348,21 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // A Wolf: no fame or resources at harvest except from buildings
     def wolfIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == CreatureWolf)
 
+    // A Spectral Warrior (Wilderness): the buildings in its territory have no effect
+    def ghostIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == SpectralWarrior)
+
+    // Wilderness: the Spectral Warriors not yet placed by the Ancestral Graveyard
+    var spectrals : $[Creature] = $
+
+    // The Swamp (Wilderness): units may pass through it but not stay
+    def swampIn(t : Territory) : Boolean = t.areas.exists(Wild.swamp)
+
+    // Units of f may only pass through t: a teammate's territory or the Swamp
+    def passOnly(f : Faction, t : Territory) : Boolean = mateHeld(f, t) || swampIn(t)
+
+    // Buildings that work: none where a Spectral Warrior is
+    def working(t : Territory) : $[Building] = ghostIn(t).not.??(buildingsIn(t).map(_._2))
+
     def unitsAt(a : AreaRef) : Map[Faction, Int] = units.getOrElse(a, Map())
 
     // Units only; Kaija is counted separately
@@ -384,8 +399,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // Team play: a territory held by a teammate of f (f's units can only pass through it)
     def mateHeld(f : Faction, t : Territory) : Boolean = present(t).exists(g => g != f && allied(f, g))
 
-    // Team play: teammates' territories with f's figures passing through during a Move
-    def passing(f : Faction) : $[Territory] = teams.??(board.territories.%(t => figures(t, f) > 0 && mateHeld(f, t)))
+    // Teammates' territories and the Swamp with f's figures passing through during a Move
+    def passing(f : Faction) : $[Territory] = board.territories.%(t => figures(t, f) > 0 && passOnly(f, t))
 
     def onMap(f : Faction) : Int = units.values./(_.getOrElse(f, 0)).sum
 
@@ -427,7 +442,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // Food, wood and lore shown on a territory and its buildings
     def produce(t : Territory) : (Int, Int, Int) = {
         val specs = t.areas./(board.spec)
-        val here = buildingsIn(t).map(_._2)
+        val here = working(t)
         (specs./(_.food).sum + here.count(_ == FoodSilo), specs./(_.wood).sum + here.count(_ == WoodcutterLodge), specs./(_.lore).sum + here.count(_ == CarvedStone))
     }
 
@@ -436,7 +451,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         if (wolfIn(t).not)
             return produce(t)
 
-        val here = buildingsIn(t).map(_._2)
+        val here = working(t)
         (here.count(_ == FoodSilo), here.count(_ == WoodcutterLodge), here.count(_ == CarvedStone))
     }
 
@@ -615,8 +630,9 @@ object CommonExpansion extends Expansion {
             Then(ShuffleStartingDecksAction(factions))
 
         case ShuffleStartingDecksAction(Nil) =>
+            // A random action must come from Random, even with one choice: the client can't perform it directly
             if (options.has(FirstSeatStarts))
-                Then(FirstPlayerAction(game.seating.first))
+                Random[Faction]($(game.seating.first), FirstPlayerAction(_))
             else
                 Random[Faction](factions, FirstPlayerAction(_))
 
@@ -800,7 +816,7 @@ object CommonExpansion extends Expansion {
             game.awakened = false
 
             // Each controlled Forge draws one more card
-            Then(game.from(game.first).foldRight(RevealDevelopmentsAction : ForcedAction)((f, then) => DrawCardsAction(f, 4 + game.controlled(f)./~(game.buildingsIn).map(_._2).count(_ == Forge), then)))
+            Then(game.from(game.first).foldRight(RevealDevelopmentsAction : ForcedAction)((f, then) => DrawCardsAction(f, 4 + game.controlled(f)./~(game.working).count(_ == Forge), then)))
 
         case RevealDevelopmentsAction =>
             if (game.year == game.lastYear) {
@@ -1002,13 +1018,14 @@ object CommonExpansion extends Expansion {
                 val territories = game.controlled(f)
 
                 // A Wolf creature leaves only the buildings' fame and resources
-                val fame = territories.%(game.board.closed).%(t => game.wolfIn(t).not)./(t => (game.board.tiles(t) >= 3).?(2).|(1)).sum
+                // The Wyvern's Den (Wilderness) gives its own fame instead
+                val fame = territories.%(game.board.closed).%(t => game.wolfIn(t).not).%(t => Wild.denIn(t).not)./(t => (game.board.tiles(t) >= 3).?(2).|(1)).sum
                 if (fame > 0) {
                     f.fame += fame
                     f.log("gained", fame.hl, "fame from closed territories")
                 }
 
-                val altars = territories./~(game.buildingsIn).map(_._2).count(_ == AltarOfKings)
+                val altars = territories./~(game.working).count(_ == AltarOfKings)
                 if (altars > 0) {
                     f.fame += 3 * altars
                     f.log("gained", (3 * altars).hl, "fame from", AltarOfKings)
@@ -1019,6 +1036,10 @@ object CommonExpansion extends Expansion {
                 f.wood += wood
                 f.lore += lore
                 f.log("collected", food.hl, Food, Comma, wood.hl, Wood, "and", lore.hl, Lore)
+
+                // Environment tiles (Wilderness): Ruins and the Wyvern's Den give fame, the Great Lake food
+                if (game.has(Wilderness))
+                    WildernessExpansion.harvest(f)
 
                 // The Scorched Earth resource goes to Snake Clan instead
                 if (victim.has(f))
