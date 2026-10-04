@@ -25,11 +25,12 @@ object Host extends hrf.host.BaseHost {
     def batch = $(2, 3, 4, 5, 6)./(n => () => {
         val l = factions.shuffle.take(n)
         val colors = l.zip(PlayerColor.all.shuffle)./{ case (f, c) => ColorOption(f, c) }
-        // NORT_CREATURES=1: always with the Creatures module (and the More Creatures variant half the time); NORT_WARCHIEFS=1: always with Warchiefs
+        // NORT_CREATURES=1: always with the Creatures module (and the More Creatures variant half the time); NORT_WARCHIEFS=1: always with Warchiefs; NORT_WILDERNESS=1: always with Wilderness
         val creatures = sys.env.get("NORT_CREATURES").has("1") || random() < 0.5
         val options = colors ++ $(YearsOption.all.shuffle.head) ++ (random() < 0.3).$(FameOnly) ++ (random() < 0.3).$(FirstSeatStarts) ++
             creatures.$(ModuleOption(Creatures)) ++ (creatures && random() < 0.5).$(MoreCreatures) ++
             (sys.env.get("NORT_WARCHIEFS").has("1") || random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.3).$(WarchiefCards) ++
+            (sys.env.get("NORT_WILDERNESS").has("1") || random() < 0.5).$(ModuleOption(Wilderness)) ++
             Module.teams.toList.%{ case (_, k) => k == n && (sys.env.get("NORT_TEAMS").has("1") || random() < 0.5) }./{ case (m, _) => ModuleOption(m) }
         options.foreach(o => assert(Meta.parseOption(Meta.writeOption(o)) == $(o), o))
         new G(l, options)

@@ -130,11 +130,11 @@ class Board {
 
     def open(t : Territory) = closed(t).not
 
-    // Adjacent territories, true when a regular border connects them
+    // Adjacent territories, true when a regular border connects them; impassable borders don't connect
     def adjacent(t : Territory) : $[(Territory, Boolean)] = {
         val links = t.areas./~{ a =>
             val p = at(a.x, a.y).get
-            p.spec.borders./~{ b =>
+            p.spec.borders.%(_.impassable.not)./~{ b =>
                 if (b.a == a.id) $(AreaRef(a.x, a.y, b.b) -> b.rough)
                 else if (b.b == a.id) $(AreaRef(a.x, a.y, b.a) -> b.rough)
                 else $

@@ -43,7 +43,8 @@ case class SpaceSpec(kind : SpaceKind, x : Double, y : Double)
 // x, y: the territory number; ux, uy: the unit markers
 case class AreaSpec(id : String, edges : $[Side], food : Int, wood : Int, lore : Int, lair : Boolean, spaces : $[SpaceSpec], x : Double, y : Double, ux : Double, uy : Double)
 
-case class BorderSpec(a : String, b : String, rough : Boolean)
+// impassable: a Wilderness border (orange line, or the art of a lake, swamp or peaks) nothing crosses
+case class BorderSpec(a : String, b : String, rough : Boolean, impassable : Boolean = false)
 
 case class TileSpec(id : String, areas : $[AreaSpec], borders : $[BorderSpec]) {
     def area(a : String) = areas.find(_.id == a).get
@@ -79,6 +80,7 @@ object Tiles {
 
     def border(a : String, b : String) = BorderSpec(a, b, false)
     def rough(a : String, b : String) = BorderSpec(a, b, true)
+    def wall(a : String, b : String) = BorderSpec(a, b, false, true)
 
     def tile(id : String)(areas : AreaSpec*)(borders : BorderSpec*) = TileSpec(id, areas.$, borders.$)
 
@@ -261,7 +263,69 @@ object Tiles {
         )(rough("n", "m"), border("m", "s")),
     )
 
-    val all : $[TileSpec] = start +: start5 +: regular
+    // Wilderness expansion, Environment tiles module (wilderness.scala has their rules). Areas with no edges
+    // are enclosed by the other areas of their tile (the Wyvern's Den, the Swamp)
+    val environment : $[TileSpec] = $(
+        // The lake is impassable; its four shores meet at the corners
+        tile("wild-lake")(
+            area("n", "N", 0.4, 0.06, 0.64, 0.09)(),
+            area("e", "E", 0.93, 0.42, 0.89, 0.64)(),
+            area("s", "S", 0.6, 0.94, 0.36, 0.9)(),
+            area("w", "W", 0.07, 0.62, 0.11, 0.36)(),
+        )(border("n", "e"), border("e", "s"), border("s", "w"), border("w", "n"), wall("n", "s"), wall("e", "w")),
+        tile("wild-geyser-1")(
+            area("n", "N", 0.28, 0.1, 0.78, 0.13)(small(0.56, 0.19)),
+            area("s", "ESW", 0.5, 0.55, 0.22, 0.86)(),
+        )(border("n", "s")),
+        tile("wild-geyser-2")(
+            area("n", "NE", 0.62, 0.36, 0.42, 0.13)(lair),
+            area("s", "SW", 0.34, 0.62, 0.6, 0.88)(),
+        )(border("n", "s")),
+        tile("wild-ruins-1")(
+            area("n", "NEW", 0.5, 0.12, 0.76, 0.15)(),
+            area("s", "S", 0.3, 0.6, 0.7, 0.62)(lore),
+        )(border("n", "s")),
+        tile("wild-ruins-2")(
+            area("n", "N", 0.25, 0.07, 0.86, 0.08)(lair),
+            area("s", "ESW", 0.2, 0.45, 0.82, 0.55)(lore),
+        )(rough("n", "s")),
+        // The Swamp in the middle; units may only pass through it
+        tile("wild-swamp")(
+            area("n", "N", 0.5, 0.05, 0.75, 0.05)(),
+            area("e", "E", 0.95, 0.5, 0.95, 0.75)(),
+            area("s", "S", 0.5, 0.95, 0.25, 0.95)(),
+            area("w", "W", 0.05, 0.5, 0.05, 0.25)(),
+            area("m", "", 0.65, 0.45, 0.5, 0.78)(lair),
+        )(border("m", "n"), border("m", "e"), border("m", "s"), border("m", "w")),
+        // The Poisonous Swamp is impassable, and so are the orange lines at its corners
+        tile("wild-poison")(
+            area("n", "N", 0.42, 0.06, 0.8, 0.07)(),
+            area("e", "E", 0.94, 0.38, 0.9, 0.78)(),
+            area("s", "S", 0.6, 0.94, 0.2, 0.92)(),
+            area("w", "W", 0.06, 0.6, 0.08, 0.2)(),
+        )(wall("n", "e"), wall("e", "s"), wall("s", "w"), wall("w", "n"), wall("n", "s"), wall("e", "w")),
+        tile("wild-peaks-1")(
+            area("n", "NW", 0.12, 0.5, 0.42, 0.43)(small(0.22, 0.28), wood),
+            area("s", "ES", 0.55, 0.62, 0.4, 0.86)(large(0.75, 0.77)),
+        )(wall("n", "s")),
+        tile("wild-peaks-2")(
+            area("n", "NW", 0.12, 0.5, 0.42, 0.42)(small(0.23, 0.29), wood),
+            area("s", "ES", 0.55, 0.62, 0.35, 0.84)(carved(0.73, 0.77)),
+        )(wall("n", "s")),
+        tile("wild-graveyard")(
+            area("n", "NW", 0.3, 0.42, 0.44, 0.27)(large(0.21, 0.21), lair),
+            area("s", "ES", 0.62, 0.6, 0.8, 0.86)(),
+        )(rough("n", "s")),
+        // The Wyvern's Den: a territory of one tile, always closed
+        tile("wild-den")(
+            area("n", "N", 0.5, 0.06, 0.76, 0.07)(),
+            area("e", "E", 0.93, 0.45, 0.92, 0.66)(),
+            area("s", "SW", 0.07, 0.45, 0.4, 0.9)(),
+            area("d", "", 0.26, 0.45, 0.66, 0.46)(),
+        )(border("d", "n"), border("d", "e"), border("d", "s"), border("n", "e"), border("n", "s"), border("e", "s")),
+    )
+
+    val all : $[TileSpec] = $(start, start5) ++ regular ++ environment
 
     val byId : Map[String, TileSpec] = all./(t => t.id -> t).toMap
 

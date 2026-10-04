@@ -35,6 +35,7 @@ draws a tile when no neutral territory is left.
 | Creatures module (core box), with the More Creatures variant | done 2026-10-03 (`creatures.scala`) |
 | Warchiefs module (Warchiefs expansion) | done 2026-10-03 (`warchiefs.scala`) |
 | The Warchiefs box's 7 extra clan upgrade cards | done 2026-10-03: with the module, or alone with the "Warchief upgrade cards" option |
+| Wilderness expansion: Environment tiles and five more creatures, with the Ancestral Graveyard and the Wyvern's Den | done 2026-10-04 (`wilderness.scala`, see Wilderness below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -328,9 +329,68 @@ All seven are Move cards, none Flash, and become a third clan upgrade:
 | Stag | Brand | Step 1: may move 1 friendly unit from an adjacent territory into Brand's (Rough borders ignored) |
 | Wolf | Egil | Attacking, worth 3 |
 
+## Wilderness expansion (rulebook, 8 pages)
+
+From the English rulebook (`Northgard_Wilderness_Expansion_rules_EN.pdf`,
+found online on tesera.ru). One option, "Wilderness", turns on both parts;
+the creature parts need the Creatures module as well. The images come from
+the Tabletop Simulator mod 2847156187 (cards, tiles) and the owner's
+upload (`expansion/tile/`, the same tiles): tiles are `tile/wild-*.webp`.
+
+### New creatures (Creatures module)
+
+The Draugr Jötnar, Eldthursar and Hvedrung go into the creature deck (all
+above value 6, so never among the first N+1). Priorities as printed on the
+cards (hammer = buildings, viking = units, wood/food/lore = resources):
+
+| Creature | Copies (colors) | Value | Fame | Priorities | Effect |
+|---|---|---|---|---|---|
+| Draugr Jötunn | 2 (beige, brown) | 8 | 5 | resources, buildings, units | When it appears or moves into a controlled territory, its owner must pay 2 resources of any type; otherwise it attacks (a player with 1 resource pays it and is attacked) |
+| Eldthurs | 2 (beige, brown) | 8 | 5 | buildings, units, resources | When it appears or moves into a controlled territory, its owner removes 1 of their small buildings there (back to the reserve) |
+| Hvedrung | 1 (beige) | 7 | 4 | buildings, resources, units | When it appears or moves into a territory, draw a creature card: it goes right after Hvedrung in the creature line, its miniature in Hvedrung's territory (it acts on appearing, and in the Creature phase it is activated next) |
+| Spectral Warrior | 2 (beige, brown) | 4 | 1 | buildings, resources, units | Ancestral Graveyard only. Buildings in its territory have no effect (no extra resources or fame, no combat bonuses, ...). Removed from the game when eliminated |
+| Wyvern | 1 (beige) | 9 | 6 | units, buildings, resources | Wyvern's Den only. Doesn't share a territory and attacks the units where it moves; every territory is adjacent to it for its moves. Before combat the player removes 1 unit. Losing outside its Den it goes back to the Den; losing in its Den it is removed from the game |
+
+### Environment tiles module
+
+- Setup: after step L (the setup tiles), the Environment tiles are shuffled
+  into the map tile pile. With the Creatures module the Wyvern's Den is
+  kept out, the first 3 × (players) tiles are set aside, the Den is shuffled
+  into the rest, and the set-aside tiles go back on top.
+- Impassable borders (uninterrupted orange lines, and the art of the Great
+  Lake, the Poisonous Swamp and the High Peaks): nothing crosses them, and
+  the territories on each side are not adjacent for any rule (moves,
+  retreats, creatures, cards). Territories may still become adjacent through
+  other tiles.
+- Great Lake (Harvest): the player with the most units in the four
+  territories around the lake collects 2 food; tied players collect 1 each.
+  The food isn't any territory's (cards and clan powers ignore it).
+- Geyser, 2 tiles (End of the Year): a player controlling a territory with a
+  Geyser may place one unit there (once per Geyser in the territory). Not
+  combined with the Training Camp benefit.
+- Ruins, 2 tiles (Harvest): the controller collects the lore and fame shown
+  (1 fame on one tile, 2 on the other), the fame even if the territory isn't
+  closed.
+- Swamp (Move): units can move through it but can't end a movement or
+  retreat there; units moving through lose one of them. Creatures may end
+  there. If an effect would make units end their movement there, they can't
+  enter it at all.
+- Poisonous Swamp (Harvest, impassable): at the end of the Harvest, one unit
+  is removed from each territory around it.
+- High Peaks, 2 tiles: impassable.
+- Ancestral Graveyard (Creatures module; Creature phase): at the start of the
+  Creature phase, the player controlling the Graveyard territory may place a
+  Spectral Warrior on any territory with a creature's lair, card at the end
+  of the creature line. Spectral Warriors removed from the game can't come
+  back.
+- Wyvern's Den (Creatures module; Explore and Harvest): when it is explored
+  the Wyvern goes on it, card at the end of the creature line. The Den is a
+  territory of one tile and gives 2 fame to a player controlling it at the
+  Harvest.
+
 ## Expansions (later)
 
-Wilderness (creatures, Environment tiles), Wastelands (creatures, Environment
+Wastelands (creatures, Environment
 and Central tiles), New Blood (7 more clans: Dragon, Horse, Kraken, Lynx, Ox,
 Rat, Squirrel, with warchiefs), Uncharted Horizons (Development / Event /
 Raid cards, alternative victory conditions, Training Fields, Solo/Automa,
@@ -339,6 +399,41 @@ drafting setup, more map tiles).
 ## Interpretations (choices made where the summary above is not enough)
 
 Check these against the rulebook when it is at hand.
+
+- **Wilderness**, where the rulebook says nothing:
+  - The Swamp's unit is lost when the figures enter it (units first, then
+    the warchief, then Kaija). Figures in the Swamp must leave it with the
+    same Move, all together, before any other figures move. The Swamp
+    can't be entered with a Fallen Valkyrie or a Wyvern in it, nor left with
+    a Brown Bear in it, so no one can be stuck there. Hidden Ways, Bribery,
+    Intimidate, retreats, recruiting, setup units and the "no units left"
+    placement can't use it.
+  - Draugr Jötunn: a player with 2 or more resources must pay (choosing
+    which 2); only a player who can't pay is attacked.
+  - Eldthurs and Draugr Jötunn act again when they can't move (like the core
+    Draugr); Hvedrung doesn't: it only calls a creature when it appears or
+    actually moves. Creatures appearing at setup don't act, Hvedrung
+    included.
+  - The Wyvern driven back to its Den gives no fame (it isn't defeated); it
+    gives its 6 fame only when beaten in its Den. A player left with no
+    figures after removing the unit before the fight loses it. The Wyvern
+    does nothing when it appears (its Den was just explored, so it's
+    empty).
+  - The Great Lake counts units and warchiefs, not Kaija. The Poisonous
+    Swamp removes a unit, or the warchief if there is none (not Kaija). Both
+    act on every territory around the tile, however many of its sides it
+    touches.
+  - The Wyvern's Den gives exactly 2 fame at the Harvest (instead of the 1
+    a closed territory of one tile would give), and like other fame from the
+    map not with a Wolf creature in it; Ruins' fame likewise.
+  - A Spectral Warrior's buildings: no resources from Food Silos,
+    Woodcutter's Lodges and Carved Stones, no fame from Altars of Kings, no
+    extra card from Forges, no Training Camp units, no Fortress or Defense
+    Tower in combat. They still count as buildings (Builder, large building
+    victory, creature priorities).
+  - The Ancestral Graveyard's own territory is the one with the graves (the
+    tile's lair is on the other side of the Rough border). A Spectral Warrior
+    may go on a lair with a creature on it.
 
 - **Kaija** (Bear): one figure. It may be one of the three setup figures
   (two units and Kaija), or be recruited instead of a unit. It moves like a

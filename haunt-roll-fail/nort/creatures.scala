@@ -40,6 +40,8 @@ trait CreatureKind extends NamedToString with Record {
     def shares : Boolean
     def priorities : $[CreaturePriority]
     def text : String
+    // Removed from the game, not discarded, when defeated (Wilderness: Spectral Warriors and the Wyvern)
+    def leaves : Boolean = false
 }
 
 case object BrownBear extends CreatureKind {
@@ -83,6 +85,61 @@ case object CreatureWolf extends CreatureKind {
     val text = "A territory with this creature on it does not generate any fame or resources during the Harvest phase (except from buildings)."
 }
 
+// Wilderness expansion creatures (their rules are in wilderness.scala)
+case object DraugrJotunn extends CreatureKind {
+    val id = "draugr-jotunn"
+    val title = "Draugr Jötunn"
+    val value = 8
+    val fame = 5
+    val shares = true
+    val priorities = $(MostResources, MostBuildings, MostUnits)
+    val text = "When this creature appears or moves into a controlled territory, its owner must pay 2 resources of any type. Otherwise, it attacks."
+}
+
+case object Eldthurs extends CreatureKind {
+    val id = "eldthurs"
+    val title = "Eldthurs"
+    val value = 8
+    val fame = 5
+    val shares = true
+    val priorities = $(MostBuildings, MostUnits, MostResources)
+    val text = "When this creature appears or moves into a controlled territory, its owner must remove 1 small building on the territory."
+}
+
+case object Hvedrung extends CreatureKind {
+    val id = "hvedrung"
+    val title = "Hvedrung"
+    val value = 7
+    val fame = 4
+    val shares = true
+    val priorities = $(MostBuildings, MostResources, MostUnits)
+    val text = "When this creature appears or moves into a territory, draw a new creature card; place the card next in the creature line and the miniature in its territory."
+}
+
+// Only placed by the Ancestral Graveyard tile
+case object SpectralWarrior extends CreatureKind {
+    val id = "spectral-warrior"
+    val title = "Spectral Warrior"
+    val value = 4
+    val fame = 1
+    val shares = true
+    val priorities = $(MostBuildings, MostResources, MostUnits)
+    val text = "Buildings in the same territory as this creature have no effect. When it is eliminated, remove it from the game."
+    override def leaves = true
+}
+
+// Only appears on the Wyvern's Den tile
+case object Wyvern extends CreatureKind {
+    val id = "wyvern"
+    val title = "Wyvern"
+    val value = 9
+    val fame = 6
+    val shares = false
+    val priorities = $(MostUnits, MostBuildings, MostResources)
+    val text = "This creature does not share a territory with a player and attacks them when it moves into a territory. All territories are considered to be adjacent to it for purposes of movement. Before combat, the player removes 1 unit. If it loses a combat while outside its Den, instead of it being defeated, place it back on its Den. If it loses a combat while inside its Den, remove it from the game."
+    override def leaves = true
+}
+
 // A creature card and its miniature; n is the color: 1 beige, 2 brown, 3 dark brown
 case class Creature(kind : CreatureKind, n : Int) extends Card {
     def info = CardInfo(kind.title, "card-creature-" + kind.id + "-" + n, kind.fame, false, MapEffect, kind.text)
@@ -94,6 +151,18 @@ case class Creature(kind : CreatureKind, n : Int) extends Card {
 
 object Creature {
     val all : $[Creature] = $(Creature(CreatureWolf, 1), Creature(CreatureWolf, 2), Creature(CreatureWolf, 3), Creature(BrownBear, 1), Creature(BrownBear, 2), Creature(Draugr, 1), Creature(Draugr, 2), Creature(FallenValkyrie, 1), Creature(FallenValkyrie, 2))
+
+    // Wilderness: added to the creature deck
+    val wild : $[Creature] = $(Creature(DraugrJotunn, 1), Creature(DraugrJotunn, 2), Creature(Eldthurs, 1), Creature(Eldthurs, 2), Creature(Hvedrung, 1))
+
+    // Wilderness: set aside for the Ancestral Graveyard and the Wyvern's Den
+    val spectral : $[Creature] = $(Creature(SpectralWarrior, 1), Creature(SpectralWarrior, 2))
+    val wyvern = Creature(Wyvern, 1)
+
+    val expansion : $[Creature] = wild ++ spectral :+ wyvern
+
+    // The creature deck of a game
+    def deck(implicit game : Game) : $[Creature] = all ++ game.has(Wilderness).??(wild)
 }
 
 // A creature attacked by the current Move action, in the territory with this anchor
@@ -167,10 +236,12 @@ object CreaturesExpansion extends Expansion {
     }
 
     // Where a creature moves: an adjacent territory (Rough borders don't matter) without a creature,
-    // with units if possible, then by its priorities; the first player breaks the remaining ties
+    // with units if possible, then by its priorities; the first player breaks the remaining ties.
+    // Every territory is adjacent to the Wyvern
     def destinations(c : Creature)(implicit game : Game) : $[Territory] = {
         val t = game.board.territory(game.creatureAt(c))
-        val free = game.board.adjacent(t).map(_._1).%(o => game.creaturesIn(o).none)
+        val near = (c.kind == Wyvern).?(game.board.territories.but(t)).|(game.board.adjacent(t).map(_._1))
+        val free = near.%(o => game.creaturesIn(o).none)
         val peopled = free.%(o => game.present(o).any)
 
         c.kind.priorities.foldLeft(peopled.any.?(peopled).|(free)) { (l, p) =>
@@ -181,17 +252,18 @@ object CreaturesExpansion extends Expansion {
     def removeCreature(c : Creature)(implicit game : Game) {
         game.creatureLine = game.creatureLine.but(c)
         game.creatureAt -= c
-        game.creatureDiscard :+= c
+        if (c.kind.leaves.not)
+            game.creatureDiscard :+= c
     }
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         // SETUP: N+1 creatures of value 6 or less on top, the rest shuffled below
         case ShuffledTilesAction(tiles) =>
-            Shuffle[Creature](Creature.all.%(_.kind.value <= 6), ShuffledCreaturesAction(_, tiles))
+            Shuffle[Creature](Creature.deck.%(_.kind.value <= 6), ShuffledCreaturesAction(_, tiles))
 
         case ShuffledCreaturesAction(low, tiles) =>
             val top = low.take(factions.num + 1)
-            Shuffle[Creature](low.drop(top.num) ++ Creature.all.%(_.kind.value > 6), ShuffledCreaturesRestAction(top, _, tiles))
+            Shuffle[Creature](low.drop(top.num) ++ Creature.deck.%(_.kind.value > 6), ShuffledCreaturesRestAction(top, _, tiles))
 
         case ShuffledCreaturesRestAction(top, rest, tiles) =>
             game.creatureDeck = top ++ rest
@@ -338,6 +410,19 @@ object CreaturesExpansion extends Expansion {
             game.note("creature-fight")
             game.battle = |(a)
 
+            // The Wyvern (Wilderness): the player first removes 1 unit, and may have none left
+            val t = game.board.territory(a)
+
+            if (c.kind == Wyvern) {
+                game.removeFigures(t, f, 1)
+                f.log("removed a unit before fighting", c)
+            }
+
+            if (game.figures(t, f) == 0) {
+                log(c, "won the fight in", a)
+                Then(FightOverAction(then))
+            }
+            else
             // Step 1: Signy and Brand (Warchiefs module)
             if (game.has(Warchiefs))
                 Then(ChiefStepOneAction($(f), a, CreatureFoodStartAction(f, a, c, e, attacking, FightOverAction(then))))
@@ -416,7 +501,7 @@ object CreaturesExpansion extends Expansion {
             val cface = random.choice.?(NorthgardDie.point).|(random)
 
             val t = game.board.territory(a)
-            val here = game.buildingsIn(t).map(_._2)
+            val here = game.working(t)
             val units = game.figures(t, f)
 
             // The attacker's card bonus or the defender's Fortresses; Defense Towers only add casualties, which creatures ignore
@@ -445,12 +530,24 @@ object CreaturesExpansion extends Expansion {
             if (attacking && e.special == SvarnMove)
                 game.mended += before - game.count(t, f)
 
+            // The Wyvern goes back to its Den unless it lost there (Wilderness)
+            val den = (c.kind == Wyvern && Wild.denIn(t).not).??(Wild.dens)
+
+            if (won && den.any) {
+                game.creatureAt += c -> den.head
+                game.note("wyvern-back")
+
+                f.log("drove", c, "back to its Den")
+
+                Then(then)
+            }
+            else
             if (won) {
                 removeCreature(c)
                 f.fame += c.kind.fame
                 game.note("creature-defeated")
 
-                f.log("defeated", c, "and gained", c.kind.fame.hl, "fame")
+                f.log("defeated", c, "and gained", c.kind.fame.hl, "fame", c.kind.leaves.?("(it leaves the game)".txt).|(Empty))
 
                 if (attacking && f == Wolf) {
                     f.food += 1

@@ -223,8 +223,8 @@ object MapExpansion extends Expansion {
             case _ => false
         }
 
-        // Creatures: no recruiting with a Brown Bear, and a Fallen Valkyrie shares its territory with nobody
-        val r = l.%(t => game.bearIn(t).not && game.hostileIn(t).not)
+        // Creatures: no recruiting with a Brown Bear, and a Fallen Valkyrie shares its territory with nobody; nobody stays in the Swamp
+        val r = l.%(t => game.bearIn(t).not && game.hostileIn(t).not && game.swampIn(t).not)
 
         if (same && placed.any)
             r.%(t => t.areas.contains(placed.head) || game.board.territory(placed.head) == t)
@@ -238,14 +238,14 @@ object MapExpansion extends Expansion {
         ((e.special == InfiltrateMove).?(game.board.territories.%(t => game.figures(t, f) > 0)).|(game.controlled(f)) ++
             // Signy's Celerity: units go on through the territory with the Scorched Earth token
             (e.special == SignyMove).??(game.board.territories.%(t => game.scorchedIn(t) && game.figures(t, f) > 0 && game.controlled(f).has(t).not)) ++
-            // Team play: units passing through a teammate's territory
+            // Units passing through a teammate's territory or the Swamp
             game.passing(f))
             .%(t => game.bearIn(t).not && game.hostileIn(t).not)
 
     // Two creatures that don't share their territory can't both be fought: nobody may enter
     def enterable(t : Territory)(implicit game : Game) = game.creaturesIn(t).count(_.kind.shares.not) < 2
 
-    // Team play: f's figures (with Kaija when kaija) entering a teammate's territory t with rem moves left
+    // f's figures (with Kaija when kaija) entering a teammate's territory or the Swamp t with rem moves left
     // must be able to move on, since they can't stop there
     def canPass(f : Faction, t : Territory, rem : Int, e : MoveEffect, kaija : Boolean)(implicit game : Game) : Boolean =
         rem > 0 && game.bearIn(t).not && game.hostileIn(t).not && game.board.adjacent(t).exists { case (o, regular) =>
@@ -257,11 +257,11 @@ object MapExpansion extends Expansion {
     def canEnter(f : Faction, o : Territory, rem : Int, e : MoveEffect, kaija : Boolean)(implicit game : Game) : Boolean =
         enterable(o) &&
         (kaija.not || game.awakened || game.present(o).forall(game.allied(f, _))) &&
-        (game.mateHeld(f, o).not || canPass(f, o, rem, e, kaija))
+        (game.passOnly(f, o).not || canPass(f, o, rem, e, kaija))
 
     // Where f's figures in t can move with left moves, and the cost; figures passing through a teammate's territory all move on together
     def destinations(f : Faction, t : Territory, left : Int, e : MoveEffect)(implicit game : Game) : $[(Territory, Int)] = {
-        val kaija = game.mateHeld(f, t) && game.kaijaIn(t, f)
+        val kaija = game.passOnly(f, t) && game.kaijaIn(t, f)
         game.board.adjacent(t).map { case (o, regular) => o -> moveCost(regular.not, e.ignoreRough) }.filter { case (o, c) => c <= left && canEnter(f, o, left - c, e, kaija) }
     }
 
@@ -491,7 +491,7 @@ object MapExpansion extends Expansion {
             Then(TilePlacedAction(f, tile, spot, true, SetupUnitsAskAction(f, round, l, tile, spot)))
 
         case SetupUnitsAskAction(f, round, l, tile, spot) =>
-            val all = Tiles(tile).areas./(a => game.board.territory(AreaRef(spot.x, spot.y, a.id))).distinct.%(t => game.present(t).none)
+            val all = Tiles(tile).areas./(a => game.board.territory(AreaRef(spot.x, spot.y, a.id))).distinct.%(t => game.present(t).none).%(t => game.swampIn(t).not)
             // Not with a Fallen Valkyrie, unless there is no other choice
             val empty = all.exists(t => game.hostileIn(t).not).?(all.%(t => game.hostileIn(t).not)).|(all)
 
@@ -574,7 +574,7 @@ object MapExpansion extends Expansion {
             game.recruited = placed
 
             placed./(game.board.territory).distinct.foreach { t =>
-                val camps = game.buildingsIn(t).count(_._2 == TrainingCamp)
+                val camps = game.working(t).count(_ == TrainingCamp)
                 val n = math.min(camps, game.reserve(f))
                 if (n > 0) {
                     game.addUnits(t.anchor, f, n)
@@ -586,7 +586,8 @@ object MapExpansion extends Expansion {
 
         // MOVE
         case MoveAction(f, left, e, then) =>
-            val sources = (left > 0).??(moveSources(f, e).%(t => destinations(f, t, left, e).any))
+            // Figures passing through a teammate's territory or the Swamp move on first
+            val sources = (left > 0).??(game.passing(f).any.?(game.passing(f)).|(moveSources(f, e)).%(t => destinations(f, t, left, e).any))
 
             if (sources.none)
                 Then(MovesMadeAction(f, e, then))
@@ -606,12 +607,12 @@ object MapExpansion extends Expansion {
             val n = game.count(t, f)
             // Kaija can't enter enemy territories unless awakened, nor a teammate's it couldn't move on from
             val kaija = game.kaijaIn(t, f) && (game.awakened || game.present(dst).forall(game.allied(f, _))) &&
-                (game.mateHeld(f, dst).not || canPass(f, dst, left - cost, e, true))
+                (game.passOnly(f, dst).not || canPass(f, dst, left - cost, e, true))
 
             val chief = game.chiefIn(t, f)
 
-            // Team play: figures passing through a teammate's territory move on together
-            if (game.mateHeld(f, t))
+            // Figures passing through a teammate's territory or the Swamp move on together
+            if (game.passOnly(f, t))
                 Ask(f).add(MoveUnitsAction(f, from, to, n, game.kaijaIn(t, f), chief, cost, left, e, then)).cancel
             else
             Ask(f)
@@ -647,7 +648,14 @@ object MapExpansion extends Expansion {
 
             val enemy = game.present(dst).%(game.enemy(f, _))
 
-            f.log("moved", Figures(n, kaija, chief), "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty), game.mateHeld(f, dst).?("(passing through)".txt).|(Empty))
+            f.log("moved", Figures(n, kaija, chief), "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty), game.passOnly(f, dst).?("(passing through)".txt).|(Empty))
+
+            // The Swamp (Wilderness): figures going in lose one of them
+            if (game.swampIn(dst) && game.swampIn(src).not) {
+                game.removeFigures(dst, f, 1)
+                game.note("swamp")
+                f.log("lost a unit in the", "Swamp".hl)
+            }
 
             if (enemy.any && game.combats.has(dst.anchor).not)
                 game.combats :+= dst.anchor
@@ -760,7 +768,7 @@ object MapExpansion extends Expansion {
             val fighting = (game.combats ++ game.creatureFights./(_.area))./(game.board.territory)
 
             // Intimidate: one defending unit may be pushed to a neutral or defender territory next door
-            val push = (e.special == IntimidateMove && game.count(t, defender) > 0).??(game.board.adjacent(t).map(_._1).%(o => fighting.has(o).not).%(o => game.present(o).but(defender).none).%(o => game.hostileIn(o).not))
+            val push = (e.special == IntimidateMove && game.count(t, defender) > 0).??(game.board.adjacent(t).map(_._1).%(o => fighting.has(o).not).%(o => game.present(o).but(defender).none).%(o => game.hostileIn(o).not).%(o => game.swampIn(o).not))
 
             if (push.any)
                 Ask(f).each(push)(o => IntimidateAction(f, a, o.anchor, e, then)).add(IntimidateSkipAction(f, a, e, then))
@@ -910,7 +918,7 @@ object MapExpansion extends Expansion {
 
         case CombatResolveAction(attacker, defender, a, e, food, faces, then) =>
             val t = game.board.territory(a)
-            val here = game.buildingsIn(t).map(_._2)
+            val here = game.working(t)
             val au = game.figures(t, attacker)
             val du = game.figures(t, defender)
             // Conqueror: the attacker ignores Fortresses and Defense Towers
@@ -1006,7 +1014,7 @@ object MapExpansion extends Expansion {
             else {
                 // Not into a fight, nor where a creature is being attacked or a Fallen Valkyrie is
                 val fighting = (game.combats ++ game.creatureFights./(_.area))./(game.board.territory)
-                val to = game.board.adjacent(t).filter(rough || _._2).map(_._1).%(o => fighting.has(o).not).%(o => game.present(o).but(f).none).%(o => game.hostileIn(o).not)
+                val to = game.board.adjacent(t).filter(rough || _._2).map(_._1).%(o => fighting.has(o).not).%(o => game.present(o).but(f).none).%(o => game.hostileIn(o).not).%(o => game.swampIn(o).not)
 
                 if (to.none) {
                     val chief = game.chiefIn(t, f)
@@ -1243,7 +1251,7 @@ object MapExpansion extends Expansion {
 
         // NO UNITS LEFT
         case ReturnUnitsAction(f, then) =>
-            val neutral = game.board.territories.%(t => game.present(t).none).%(t => game.hostileIn(t).not)
+            val neutral = game.board.territories.%(t => game.present(t).none).%(t => game.hostileIn(t).not).%(t => game.swampIn(t).not)
 
             if (game.anyOnMap(f))
                 Then(then)
