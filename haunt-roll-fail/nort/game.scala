@@ -488,11 +488,14 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         // The developments and achievements are shown in the court pane (UI.drawCards);
         // your hand is in the action pane, as choices on your turn and as pictures otherwise
         val choosing = actions.exists(a => a.unwrap.is[CardMenuAction] || a.unwrap.is[CardSelectedAction])
+        // The Lore Tree (clan upgrades not bought yet) can be looked at any time, whatever Lore you have
+        val inLoreTree = actions.exists(a => a.unwrap.is[LoreTreeCardAction] || a.unwrap.is[LoreTreeInfoAction] || a.unwrap.is[LoreTreeSelectedAction])
 
         (year > 0).$(Info("Year", year.hlb, "of", lastYear.hl)) ++
         self.%(states.contains)./~(f =>
             choosing.not.??(f.hand./(c => CardInfoAction(f, "Your hand".styled(colors(f)), c))) ++
             f.active./(c => CardInfoAction(f, "Played".styled(colors(f)), c)) ++
+            inLoreTree.not.??(f.upgrades./(u => CardInfoAction(f, "Lore Tree".styled(colors(f)) ~ " (" ~ f.lore.hl ~ " " ~ Lore.elem ~ ")", u))) ++
             $(Info("Fame", f.fame.hlb))
         )
     }
