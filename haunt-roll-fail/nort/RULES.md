@@ -136,7 +136,12 @@ draws a tile when no neutral territory is left.
   a territory where at least one unit is recruited adds one more unit there.
   Limited by the 14 units in reserve.
 - **Build**: in an owned territory on a matching free space; one building of
-  each type per territory; limited by tokens; permanent.
+  each type per territory; limited by tokens; permanent. A small building
+  goes on a small, large or Carved Stone space, a large building only on a
+  large space, a Carved Stone only on a Carved Stone space. When a building
+  fits more than one kind of free space, the player picks the space (to keep
+  a large space for a large building, or a Carved Stone space for a Carved
+  Stone).
   - Small (1 wood): Food Silo (+1 food at harvest), Woodcutter Lodge (+1 wood),
     Defense Tower (+1 casualty to the defender's roll per tower), Training Camp
     (+1 unit when recruiting there), Carved Stone (+1 lore, only on a Carved

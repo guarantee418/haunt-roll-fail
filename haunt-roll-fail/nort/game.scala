@@ -194,6 +194,9 @@ case class CardMenuAction(self : Faction, card : Card, stage : Int) extends Base
 case class CardSwitchAction(self : Faction, card : Card, stage : Int) extends BaseAction("Your hand")(card.handImg) with Soft with NoExplode with ViewObject[Card] { def obj = card }
 // The selected card in hand, as in Root's card choices; clicking it again opens it full screen
 case class CardSelectedAction(self : Faction, card : Card) extends BaseInfo("Your hand")(card.handImg) with ViewObject[Card] with Selected with OnClickInfo { def obj = card ; def param = card }
+// The player's clan board below the Lore Tree, to look up the clan's power and its warchief; clicking it opens it full screen
+case class ClanBoard(f : Faction)
+case class ClanBoardInfoAction(self : Faction, title : Elem) extends BaseInfo(title)(Image(Warchief.board(self), styles.boardInfo)) with ViewObject[Faction] with OnClickInfo { def obj = self ; def param = ClanBoard(self) }
 // Cards shown while there is nothing to do with them; clicking one opens it full screen
 case class CardInfoAction(self : Faction, title : Elem, card : Card) extends BaseInfo(title)(card.handImg) with ViewObject[Card] with OnClickInfo { def obj = card ; def param = card }
 case class PassAction(self : Faction) extends BaseAction("Actions")("Pass")
@@ -587,6 +590,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             choosing.not.??(f.hand./(c => CardInfoAction(f, "Your hand".styled(colors(f)), c))) ++
             f.active./(c => CardInfoAction(f, "Played".styled(colors(f)), c)) ++
             inLoreTree.not.??(f.upgrades./(u => CardInfoAction(f, "Lore Tree".styled(colors(f)) ~ " (" ~ f.lore.hl ~ " " ~ Lore.elem ~ ")", u))) ++
+            $(ClanBoardInfoAction(f, "Clan board".styled(colors(f)))) ++
             $(Info("Fame", f.fame.hlb))
         )
     }

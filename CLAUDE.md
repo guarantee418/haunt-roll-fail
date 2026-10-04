@@ -47,7 +47,11 @@ drawn in the controller's color (alternating where two players' meet,
 yellow or white rails beside Rough borders), from the dash data in
 `nort/lines.scala` made by `nort/tools/BorderLines.java`; the area masks (`tile/mask/`) and the free-ground
 grid for placing warchiefs, Kaija and creatures (`nort/grid.scala`) are made
-from the tile art by `nort/tools/tile-masks.py`.
+from the tile art by `nort/tools/tile-masks.py`. Each player can hide the
+tints and the colored borders under "Interface" (the Territory Color and
+Fame Borders settings in `nort/meta.scala`). When a building fits more than
+one kind of free space, the player picks the space; the player's clan board
+is shown under the Lore Tree.
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
 Tabletopia export the owner uploaded, with gaps filled from two Tabletop
 Simulator mods (Steam Workshop 2838546142 and 2847156187; see

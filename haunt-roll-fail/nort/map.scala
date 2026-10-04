@@ -145,6 +145,9 @@ case class ExploreRedrawAction(self : Faction, tile : String, times : Int, e : E
 // smallOnly: Carpentry Mastery after a large building
 case class BuildAction(f : Faction, e : BuildEffect, times : Int, smallOnly : Boolean, then : ForcedAction) extends ForcedAction
 case class BuildPlaceAction(self : Faction, area : AreaRef, building : Building, space : SpaceRef, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build in", area)(building, "(" ~ (cost == 0).?("free".txt).|(cost.hl ~ " " ~ Wood.elem) ~ ")") with MapTarget { def target = area }
+// A building that fits more than one kind of free space in the territory: the player picks the space
+case class BuildSlotAction(self : Faction, area : AreaRef, building : Building, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build in", area)(building, "(" ~ (cost == 0).?("free".txt).|(cost.hl ~ " " ~ Wood.elem) ~ ")") with Soft with MapTarget { def target = area }
+case class BuildSpaceAction(self : Faction, area : AreaRef, building : Building, space : SpaceRef, kind : SpaceKind, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build", building, "in", area, "on")(SpaceLabel(kind)) with MapTarget { def target = space }
 case class BuildDoneAction(self : Faction, e : BuildEffect, then : ForcedAction) extends BaseAction("Build")("Done")
 case class BuildFinishAction(f : Faction, e : BuildEffect, then : ForcedAction) extends ForcedAction
 case class ReplaceBuildingAction(self : Faction, area : AreaRef, space : SpaceRef, building : Building, then : ForcedAction) extends BaseAction("Industrious Villagers", "replace a building in", area, "with")(building) with MapTarget { def target = area }
@@ -152,6 +155,14 @@ case class ReplaceSkipAction(self : Faction, then : ForcedAction) extends BaseAc
 
 // FEAST
 case class FeastChoiceAction(self : Faction, effect : Effect, then : ForcedAction) extends BaseAction("Feast")(FeastLabel(effect))
+
+object SpaceLabel {
+    def apply(k : SpaceKind) : String = k match {
+        case SmallSpace => "A small building space"
+        case LargeSpace => "A large building space"
+        case CarvedSpace => "A Carved Stone space"
+    }
+}
 
 object FeastLabel {
     def apply(e : Effect) : String = e match {
@@ -353,7 +364,10 @@ object MapExpansion extends Expansion {
     def explorable(f : Faction, anywhere : Boolean)(implicit game : Game) : $[Territory] =
         anywhere.?(game.board.territories.%(game.board.open)).|(game.controlled(f).%(game.board.open)).%(t => game.bearIn(t).not)
 
-    def buildOptions(f : Faction, e : BuildEffect, smallOnly : Boolean)(implicit game : Game) : $[(AreaRef, Building, SpaceRef, Int)] = {
+    // Each building f can build in each territory, with the free spaces it can go on (the first of each kind):
+    // a small building on a small, large or Carved Stone space, a Carved Stone only on a Carved Stone space,
+    // a large building only on a large space
+    def buildOptions(f : Faction, e : BuildEffect, smallOnly : Boolean)(implicit game : Game) : $[(AreaRef, Building, $[SpaceRef], Int)] = {
         game.controlled(f).%(t => game.bearIn(t).not)./~{ t =>
             val here = game.buildingsIn(t).map(_._2)
             // Ancestral Equipment tokens (Ox Clan) keep their spaces from being built on
@@ -363,20 +377,28 @@ object MapExpansion extends Expansion {
                 val kinds = b match {
                     case CarvedStone => $(CarvedSpace)
                     case b if b.large => $(LargeSpace)
-                    case _ => $(SmallSpace, CarvedSpace)
+                    case _ => $(SmallSpace, LargeSpace, CarvedSpace)
                 }
-                // Keep Carved Stone spaces for Carved Stones when possible
-                val space =
+                val spaces =
                     // Amenities: small buildings take no space
                     if ((e.special == AmenitiesBuild || e.special == HorseBuild) && b.large.not)
-                        |(SpaceRef(t.anchor, SpaceRef.extra + game.buildings.keys.count(s => s.area == t.anchor && s.index >= SpaceRef.extra)))
+                        $(SpaceRef(t.anchor, SpaceRef.extra + game.buildings.keys.count(s => s.area == t.anchor && s.index >= SpaceRef.extra)))
                     else
-                        kinds./~(k => free.%(s => game.board.spec(s.area).spaces(s.index).kind == k)).headOption
+                        kinds./~(k => free.%(s => spaceKind(s) == k).take(1))
                 val cost = math.max(0, b.cost - e.discount)
-                space.%(_ => f.wood >= cost)./(s => (t.anchor, b, s, cost))
+                (spaces.any && f.wood >= cost).?((t.anchor, b, spaces, cost))
             }
         }
     }
+
+    def spaceKind(s : SpaceRef)(implicit game : Game) : SpaceKind = game.board.spec(s.area).spaces(s.index).kind
+
+    // Building b in a: straight away when it fits only one space, else the player picks the space
+    def buildChoice(f : Faction, a : AreaRef, b : Building, spaces : $[SpaceRef], cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) : UserAction =
+        if (spaces.num == 1)
+            BuildPlaceAction(f, a, b, spaces.head, cost, times, e, smallOnly, then)
+        else
+            BuildSlotAction(f, a, b, cost, times, e, smallOnly, then)
 
     // Industrious Villagers: f's buildings and what each could become
     def replacements(f : Faction)(implicit game : Game) : $[(SpaceRef, Building)] =
@@ -768,7 +790,7 @@ object MapExpansion extends Expansion {
                     if (l.none)
                         Then(then)
                     else
-                        Ask(f).each(l) { case (a, b, s, _) => BuildPlaceAction(f, a, b, s, 0, 1, BuildEffect(discount = 1), true, then) }.add(HalvardCraftSkipAction(f, then))
+                        Ask(f).each(l) { case (a, b, s, _) => buildChoice(f, a, b, s, 0, 1, BuildEffect(discount = 1), true, then) }.add(HalvardCraftSkipAction(f, then))
                 }
                 else
                     Then(then)
@@ -1270,8 +1292,17 @@ object MapExpansion extends Expansion {
             if (options.none)
                 Then(BuildFinishAction(f, e, then))
             else
-                Ask(f).each(options) { case (a, b, s, cost) => BuildPlaceAction(f, a, b, s, cost, times, e, smallOnly, then) }
+                Ask(f).each(options) { case (a, b, s, cost) => buildChoice(f, a, b, s, cost, times, e, smallOnly, then) }
                     .add(BuildDoneAction(f, e, then))
+
+        // The spaces the building fits, the same ones buildOptions found
+        case BuildSlotAction(f, a, b, cost, times, e, smallOnly, then) =>
+            val spaces = buildOptions(f, e, smallOnly).%(x => x._1 == a && x._2 == b)./~(_._3)
+
+            Ask(f).each(spaces)(s => BuildSpaceAction(f, a, b, s, spaceKind(s), cost, times, e, smallOnly, then)).cancel
+
+        case BuildSpaceAction(f, a, b, s, _, cost, times, e, smallOnly, then) =>
+            Then(BuildPlaceAction(f, a, b, s, cost, times, e, smallOnly, then))
 
         case BuildPlaceAction(f, a, b, s, cost, times, e, smallOnly, then) =>
             f.wood -= cost

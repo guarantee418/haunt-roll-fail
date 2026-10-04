@@ -593,6 +593,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         // Territories in the colour of the player who controls them, gray once invaded, pink while the fight is resolved;
         // the masks leave the resource icons clear
+        // (the Territory Color setting can hide the controllers' colours, or all tints)
+        val territoryColor = callbacks.settings.has(HideTerritoryColor).not
+        val controllerColor = territoryColor && callbacks.settings.has(FightsTerritoryColor).not
+
+        if (territoryColor)
         board.placements.foreach { p =>
             p.spec.areas.foreach { s =>
                 val t = board.territory(AreaRef(p.x, p.y, s.id))
@@ -601,7 +606,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     else
                     if (game.present(t).num > 1 || game.creatureFights.exists(x => t.areas.contains(x.area))) contestedTint
                     else
+                    if (controllerColor)
                         game.present(t).single./(f => tintOf(game.colors(f))).orNull
+                    else
+                        null
 
                 if (color != null)
                     tint(p.tile, s.id, p.r, color._1).foreach { i =>
@@ -615,6 +623,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         def fameColor(t : Territory) : |[PlayerColor] =
             if (board.closed(t) && game.wolfIn(t).not) game.present(t).single./(game.colors) else None
 
+        // (hidden with the Fame Borders setting)
+        if (callbacks.settings.has(HideBorderColor).not)
         board.placements.foreach { p =>
             BorderLines.lines.get(p.tile).|($).zipWithIndex.foreach { case (line, n) =>
                 val ca = fameColor(board.territory(AreaRef(p.x, p.y, line.a)))
@@ -648,6 +658,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         game.buildings.foreach { case (s, b) =>
             val (x, y) = board.point(s)
             pieces.add(Sprite($(at(b.image, 190)), $))(sx(x), sy(y))
+        }
+
+        // Free building spaces offered for a building, clickable
+        targets.of[SpaceRef].distinct.foreach { s =>
+            val (x, y) = board.point(s)
+            pieces.add(Sprite($(at("ui-target", 190)), $(Rectangle(-95, -95, 190, 190)), $(s)))(sx(x), sy(y))
         }
 
         // Ox Clan's Ancestral Equipment tokens on their spaces, face up
@@ -976,6 +992,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Any card on the table opens full screen; clicking again closes it
         case c : Card =>
             showOverlay(overlayFitX(Image(c.info.image, styles.zoomCard)).onClick, onClick)
+
+        case ClanBoard(f) =>
+            showOverlay(overlayFitX(Image(Warchief.board(f), styles.zoomCard)).onClick, onClick)
 
         case Nil =>
             clearOverlay()
