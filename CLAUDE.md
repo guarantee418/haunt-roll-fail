@@ -339,6 +339,17 @@ file covers the build, server and deploy. No session can ssh to the server
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.
+- Tapping a Root faction's status pane opens its overlay (`onFactionStatus` in
+  `root/ui.scala`) with its faction board. The boards of the base and
+  expansion factions, Twilight Council and Knaves (`boardImage`; `mc-board`,
+  `ed-board`, ..., `tc-board-h`, `kd-board-h`, loaded on demand) are the
+  board fronts from the Tabletop Simulator mod "Root - Ultimate Collection"
+  (Steam workshop 2516434159; its objects are JSON strings inside the
+  `EVERYTHING['Standard'][<faction>]` Lua tables). Its Council and Knaves
+  boards match the rules implemented here; the Homeland mod (3354438467) has
+  later revisions. Mirror factions show their original's board. Factions
+  without a dedicated overlay get a generic one with just the board (and the
+  Vagabond's character).
 - Boards with printed item slots (Gorge, Marsh) set `itemSlots` (`itemGrid`
   for the usual 2x6 layout); `drawItemSlots` draws `game.uncrafted` on them.
 - The Homeland Marsh map is `MarshBoard` in `root/maps.scala` (option

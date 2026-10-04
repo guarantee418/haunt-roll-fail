@@ -3077,7 +3077,21 @@ object Meta extends MetaGame {
         ImageAsset("kd-captain-thief"      ) ::
 
         ImageAsset("kd-acclaim"          ) ::
-    $)
+    $) ::
+    // Faction boards shown when a faction's status is tapped (boardImage in ui.scala),
+    // from the Tabletop Simulator mod "Root - Ultimate Collection" (Steam workshop 2516434159)
+    ConditionalAssetsList((factions, options) => factions.of[Feline].any, "faction/feline", lzy = Laziness.OnDemand)(ImageAsset("mc-board") :: $) ::
+    ConditionalAssetsList((factions, options) => factions.of[Aviary].any, "faction/aviary", lzy = Laziness.OnDemand)(ImageAsset("ed-board") :: $) ::
+    ConditionalAssetsList((factions, options) => factions.of[Insurgent].any, "faction/insurgent", lzy = Laziness.OnDemand)(ImageAsset("wa-board") :: $) ::
+    ConditionalAssetsList((factions, options) => factions.of[Hero].any, "faction/hero", lzy = Laziness.OnDemand)(ImageAsset("vb-board") :: $) ::
+    ConditionalAssetsList((factions, options) => factions.of[Trader].any, "faction/trader", lzy = Laziness.OnDemand)(ImageAsset("rf-board") :: $) ::
+    ConditionalAssetsList((factions, options) => factions.of[Fanatic].any, "faction/fanatic", lzy = Laziness.OnDemand)(ImageAsset("lc-board") :: $) ::
+    ConditionalAssetsList((factions, options) => factions.of[Mischief].any, "faction/mischief", lzy = Laziness.OnDemand)(ImageAsset("cc-board") :: $) ::
+    ConditionalAssetsList((factions, options) => factions.of[Underground].any, "faction/underground", lzy = Laziness.OnDemand)(ImageAsset("ud-board") :: $) ::
+    ConditionalAssetsList((factions, options) => factions.of[Horde].any, "faction/horde", lzy = Laziness.OnDemand)(ImageAsset("lh-board") :: $) ::
+    ConditionalAssetsList((factions, options) => factions.of[Expedition].any, "faction/expedition", lzy = Laziness.OnDemand)(ImageAsset("ki-board") :: $) ::
+    ConditionalAssetsList((factions, options) => factions.of[Council].any, "faction/legal", lzy = Laziness.OnDemand)(ImageAsset("tc-board-h") :: $) ::
+    ConditionalAssetsList((factions, options) => factions.of[Knaves].any, "faction/abduct", lzy = Laziness.OnDemand)(ImageAsset("kd-board-h") :: $)
 
     override def intLinks = $(("Root: Advanced Setup".spn -> "root-adset"), ("Root: Mirror".spn -> "root-mirror"))
 }
