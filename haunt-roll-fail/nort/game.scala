@@ -68,8 +68,9 @@ object PlayerColor {
 }
 
 
+// Shown as its icon (ui-food, ui-wood, ui-lore), with the name as the text alternative
 trait Resource extends NamedToString with Styling with Elementary with Record {
-    override def elem : Elem = name.styled(this)
+    override def elem : Elem = Image("ui-" + name.toLowerCase, styles.inlineIcon).alt(name)
 }
 
 case object Food extends Resource
@@ -220,7 +221,12 @@ case object RemoveMode extends TurnMode
 case object UpgradeMode extends TurnMode
 
 object LoreIcon {
-    def apply() : Elem = Image("ui-lore", styles.inlineIcon)
+    def apply() : Elem = Lore.elem
+}
+
+// Fame, shown as the crown of the fame tokens
+object FameIcon {
+    def apply() : Elem = Image("ui-fame", styles.inlineIcon).alt("fame")
 }
 
 object TurnModeLabel {
@@ -1304,13 +1310,13 @@ object CommonExpansion extends Expansion {
                 val fame = Harvest.territoryFame(f)
                 if (fame > 0) {
                     f.fame += fame
-                    f.log("gained", fame.hl, "fame from closed territories")
+                    f.log("gained", fame.hl, FameIcon(), "from closed territories")
                 }
 
                 val altars = Harvest.altarFame(f)
                 if (altars > 0) {
                     f.fame += altars
-                    f.log("gained", altars.hl, "fame from", AltarOfKings)
+                    f.log("gained", altars.hl, FameIcon(), "from", AltarOfKings)
                 }
 
                 val (food, wood, lore) = Harvest.resources(f)
@@ -1410,7 +1416,7 @@ object CommonExpansion extends Expansion {
                         f.discard ++= f.draw.take(1)
                         f.draw = f.draw.drop(1)
 
-                        f.log("could not pay for", f.units.hl, "units; with no", UnrestCard, "left, lost", 5.hl, "fame and discarded the top card of their draw pile")
+                        f.log("could not pay for", f.units.hl, "units; with no", UnrestCard, "left, lost", 5.hl, FameIcon(), "and discarded the top card of their draw pile")
                     }
                 }
             }
@@ -1463,7 +1469,7 @@ object CommonExpansion extends Expansion {
                 val FinalFame(tokens, cards, sets, unrest) = finalFame(f)
                 val total = finalFame(f).total
 
-                f.log("scored", total.hlb, "fame:", tokens.hl, "from tokens,", cards.hl, "from cards,", sets.hl, "from resources,", unrest.hl, "from", UnrestCard)
+                f.log("scored", total.hlb, FameIcon() ~ ":", tokens.hl, "from tokens,", cards.hl, "from cards,", sets.hl, "from resources,", unrest.hl, "from", UnrestCard)
 
                 f -> total
             }.toMap
@@ -1471,7 +1477,7 @@ object CommonExpansion extends Expansion {
             // Team play: teammates add their scores together
             if (game.teams)
                 sides(factions).foreach { l =>
-                    log(game.teamName(l.head), l./(_.elem).join(", "), "scored", l./(totals).sum.hlb, "fame together")
+                    log(game.teamName(l.head), l./(_.elem).join(", "), "scored", l./(totals).sum.hlb, FameIcon(), "together")
                 }
 
             // Ties: territories controlled, then units, then buildings (added up for teams)

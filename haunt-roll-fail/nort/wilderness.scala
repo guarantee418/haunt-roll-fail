@@ -111,13 +111,13 @@ object WildernessExpansion extends Expansion {
         val ruins = ruinsFame(f)
         if (ruins > 0) {
             f.fame += ruins
-            f.log("gained", ruins.hl, "fame from", "Ruins".hl)
+            f.log("gained", ruins.hl, FameIcon(), "from", "Ruins".hl)
         }
 
         val dens = denFame(f)
         if (dens > 0) {
             f.fame += dens
-            f.log("gained", dens.hl, "fame from the", "Wyvern's Den".hl)
+            f.log("gained", dens.hl, FameIcon(), "from the", "Wyvern's Den".hl)
         }
 
         lakeFood(f).foreach { n =>

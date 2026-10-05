@@ -1119,7 +1119,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val res = Resource.all./(r => state.has(r).hl ~ " " ~ r.elem).join(" ").div
 
-        val units = (state.units.hl ~ " units, " ~ state.fame.hl ~ " fame").div
+        val units = (state.units.hl ~ " units, " ~ state.fame.hl ~ " " ~ FameIcon()).div
 
         // Warchiefs module: the warchief's name, dimmed while in the reserve
         val chief = game.has(Warchiefs).?(game.chiefs.contains(f).?(Warchief.elem(f)).|(Warchief.name(f).txt ~ " (reserve)".spn(xstyles.smaller85)).div).|(Empty)
@@ -1146,7 +1146,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         // The next harvest as things stand, and the Winter costs (tapping them shows the whole Winter chart)
         val next = Harvest.forecast(f)
-        val gains = $(next.food -> Food.elem, next.wood -> Wood.elem, next.lore -> Lore.elem, next.fame -> "fame".txt).filter(_._1 > 0).map { case (n, e) => ("+" + n).hl ~ " " ~ e }
+        val gains = $(next.food -> Food.elem, next.wood -> Wood.elem, next.lore -> Lore.elem, next.fame -> FameIcon()).filter(_._1 > 0).map { case (n, e) => ("+" + n).hl ~ " " ~ e }
         val harvest = ("Harvest: ".txt ~ gains.any.?(gains.join(" ")).|("nothing".txt)).div
 
         val (food, wood) = EventsExpansion.winterCost(f)
