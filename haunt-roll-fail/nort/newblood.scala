@@ -201,7 +201,8 @@ object NewBloodExpansion extends Expansion {
     // After the casualties of a fight between players
     def afterCombat(attacker : Faction, defender : Faction, t : Territory, e : MoveEffect, aUnits : Int, dUnits : Int, aLost : Int, dLost : Int, winner : |[Faction])(implicit game : Game) {
         // Dragon Clan: enemy units lost go on the Sacrificial Pyre, while there is room
-        $((attacker, defender, dUnits), (defender, attacker, aUnits)).foreach { case (f, g, n) =>
+        // (Svarn's Menders puts the attacker's casualties on the card during the combat, so the Pyre doesn't get them)
+        $((attacker, defender, dUnits), (defender, attacker, (e.special != SvarnMove).??(aUnits))).foreach { case (f, g, n) =>
             if (f == Dragon && game.enemy(f, g)) {
                 val k = math.min(n, room)
                 if (k > 0) {

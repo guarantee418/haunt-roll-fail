@@ -841,7 +841,8 @@ Check these against the rulebook when it is at hand.
     sacrifice Dragon gets nothing at the Harvest (no fame, no resources); the
     choice is made before the Harvest. The extra food or wood needs a
     territory Dragon controls. A captured unit with the Pyre full just goes
-    back to its owner's reserve.
+    back to its owner's reserve. Svarn's Menders puts the attacker's casualties on
+    the card during the combat, so they don't go on the Pyre.
   - Kraken: a High Tide token goes back as soon as Kraken has no figures in
     its territory. Its casualty applies to fights between players only. The
     Kraken Clan card's food or wood doesn't depend on the territory's icons.
