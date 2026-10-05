@@ -1047,9 +1047,29 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         Nil
     )
 
+    // With the shared cards on the top left and the player panels on the top right, the log and the
+    // action pane start where the player panels do, so the right column lines up with them; the map
+    // below the shared cards gives up the width.
+    def alignRightColumn(ff : $[Fit]) : $[Fit] = {
+        def get(name : String) = ff.find(_.name == name)
+
+        (get("status-horizontal"), get("court"), get("map-small"), get("log"), get("action")) match {
+            case (Some(s), Some(c), Some(m), Some(l), Some(a))
+                if s.y < c.bottom && c.right <= s.x && m.y >= c.bottom - 2 && m.x < s.x &&
+                    l.y >= s.bottom - 2 && a.y >= s.bottom - 2 && l.x >= m.right - 2 && a.x >= m.right - 2 &&
+                    s.x < min(l.x, a.x) =>
+                ff./{
+                    case f if f.name == "log" || f.name == "action" => f.copy(x = s.x, width = f.right - s.x)
+                    case f if f.name == "map-small" => f.copy(width = s.x - f.x)
+                    case f => f
+                }
+            case _ => ff
+        }
+    }
+
     val layouter = Layouter(layouts,
     // The map on the left; the player panels, the log and the action pane (choices and hand) on the right
-    x => x,
+    alignRightColumn,
     _./~{
         case f if f.name == "action" => $(f, f.copy(name = "undo"), f.copy(name = "settings"))
         case f if f.name == "status-horizontal" => 1.to(arity)./(n => f.copy(name = "status-" + n, x = f.x + ((n - 1) * f.width  /~/ arity), width  = (n * f.width  /~/ arity) - ((n - 1) * f.width  /~/ arity)))
@@ -1061,7 +1081,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val settingsKey = Meta.settingsKey
 
-    val layoutKey = "v" + 11 + "." + "arity-" + arity
+    val layoutKey = "v" + 12 + "." + "arity-" + arity
 
     // Ultrawide screens (21:9 and wider): the layouter stretches the player panels to the full height
     // and leaves empty space around the map, so the hand gets a narrow column. Instead: the map on the
