@@ -53,7 +53,7 @@ object Meta extends MetaGame { mmm =>
     override val hiddenOptions = $(ModuleOption(VictoryModule))
 
     // New Blood has no option: picking one of its clans brings it in
-    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, WarchiefCards) ++ Module.all.but(NewBlood).but(Solo).but(VictoryModule)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ AutomaLevelOption.all ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, WarchiefCards, NoDrawDevelopments) ++ Module.all.but(NewBlood).but(Solo).but(VictoryModule)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ AutomaLevelOption.all ++ hiddenOptions
 
     // Colors only for the clans in the game; 2v2 Teams only with four players, 3v3 Teams only with six
     override def optionsFor(n : Int, l : $[F]) = options.%{
