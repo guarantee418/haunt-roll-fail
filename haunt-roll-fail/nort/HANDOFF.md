@@ -365,8 +365,13 @@ on. To implement one:
 ## Wastelands expansion (2026-10-05)
 
 - `wastelands.scala`: `Waste` (tile ids, `controller`, `around`), the
-  `CentralChoice` options (Standard, Random, or one of the nine; shown only
-  with the module, `optionShown` in `meta.scala`) and `WastelandsExpansion`
+  `CentralChoice` options (Standard, Random Wastelands tile, Random from all
+  of them, one of the nine, or the Wilderness Great Lake `wild-lake`, which
+  then stays out of the Environment tiles and gives its food through
+  `wildLakeFood` when Wilderness is off; offered in every game, and
+  any choice but Standard turns on `WastelandsExpansion` through `Meta.has`,
+  while the Environment tiles and the Wastelands creatures need the module
+  itself, `Waste.module`) and `WastelandsExpansion`
   (priority -4: before Events, so its Start of Year steps come before the
   Event's side effects). `game.wasteSteps` guards re-dispatched actions within
   a year (reset when `wasteYear` moves on at `StartYearAction`).
@@ -396,8 +401,9 @@ on. To implement one:
   figure, or in the middle of the Jötnar Camp while waiting; Naströnd's two
   wood in its middle until taken; the creature strip also shows when only
   Hrimgandr is in the line.
-- `NORT_WASTELANDS=1` makes the headless host always use the module (with a
-  random central tile choice).
+- `NORT_WASTELANDS=1` makes the headless host always use the module. Every
+  game gets a random central tile choice; `NORT_CENTRAL=1` never picks the
+  standard tile, and `NORT_CENTRAL=<tile id>` always picks that one.
 
 ## Map drawing: territory colours and free ground
 
