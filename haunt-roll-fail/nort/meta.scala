@@ -167,9 +167,11 @@ object Meta extends MetaGame { mmm =>
 
     def createGame(factions : $[Faction], options : $[O]) = new Game(factions, options)
 
-    def getBots(f : Faction) = $("Easy")
+    // Hard: BotHard (bot-hard.scala); the Automa plays by its own cards
+    def getBots(f : Faction) = (f == Automa).?($("Easy")).|($("Easy", "Hard"))
 
     def getBot(f : Faction, b : String) = (f, b) match {
+        case (f : Faction, "Hard") if f != Automa => new BotHard(f)
         case (f : Faction, _) => new BotXX(f)
     }
 

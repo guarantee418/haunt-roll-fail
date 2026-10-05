@@ -115,7 +115,10 @@ hook the setup screen in `hrf.scala` calls for every option). Northgard no longe
 in its `Meta` (setting it to `true` would put an "Under Construction" note under
 its name on the game list and a disclaimer at the top of its menu).
 `nort/host.scala` runs bot games headless (JVM only,
-like the other `host.scala` files).
+like the other `host.scala` files). Northgard has two bots: "Easy" (`BotXX` in
+`nort/bot.scala`, random) and "Hard" (`BotHard` in `nort/bot-hard.scala`, which
+values each choice by trying it on the game and scoring the position; see Bots
+in `nort/HANDOFF.md`).
 
 ## Building
 
