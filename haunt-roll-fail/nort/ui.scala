@@ -908,23 +908,25 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
                 // The warchief (Warchiefs module), the size of a warrior
                 if (game.chiefIn(t, f)) {
-                    // The figure fills about three quarters of its image, like a warrior's
-                    val cz = 300 * scale
-                    val (cx, cy) = beside(0.13 * scale)
-                    pieces.add(Sprite($(at("warchief-" + game.colors(f).id, cz)), $(Rectangle(-cz / 2, -cz / 2, cz, cz)), tag))(cx, cy)
-                    taken :+= ((mx(cx), my(cy), 0.13 * scale))
+                    // A figure fills about three quarters of its image, like a warrior's; a round token fills its box, so 230 matches a warrior's height
+                    val round = Warchief.round(f)
+                    val cz = round.?(230.0).|(300.0) * scale
+                    val (cx, cy) = beside(round.?(cz / T / 2).|(0.13 * scale))
+                    pieces.add(Sprite($(at(Warchief.figure(f), cz)), $(Rectangle(-cz / 2, -cz / 2, cz, cz)), tag))(cx, cy)
+                    taken :+= ((mx(cx), my(cy), round.?(cz / T / 2).|(0.13 * scale)))
                 }
 
                 // Bear Clan's Kaija and Lynx Clan's Brundr and Kaelinn; the round token fills its box, so 230 matches a warrior's height
-                // Horse Clan's second warchief, Brok, is a warchief figure
+                // Horse Clan's second warchief, Brok, is a round token like Eitria's; the Automa's second Leader is a warchief figure
                 if (game.kaijaIn(t, f)) {
-                    val kz = (f == Horse || f == Automa).?(300.0).|(230.0) * scale
+                    val kz = (f == Automa).?(300.0).|(230.0) * scale
                     val image = f match {
-                        case Horse | Automa => "warchief-" + game.colors(f).id
+                        case Automa => "warchief-" + game.colors(f).id
+                        case Horse => Warchief.brok
                         case Lynx => "token-lynx"
                         case _ => "token-kaija"
                     }
-                    val (kx, ky) = beside((f == Horse || f == Automa).?(0.13 * scale).|(kz / T / 2))
+                    val (kx, ky) = beside((f == Automa).?(0.13 * scale).|(kz / T / 2))
                     pieces.add(Sprite($(at(image, kz)), $(Rectangle(-kz / 2, -kz / 2, kz, kz)), tag))(kx, ky)
                     taken :+= ((mx(kx), my(ky), kz / T / 2))
                 }
