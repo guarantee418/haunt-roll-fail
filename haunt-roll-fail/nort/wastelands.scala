@@ -19,7 +19,8 @@ import nort.elem._
 
 // Wastelands expansion (12-page rulebook): five creatures for the Creatures module (two Rock Golems, two Myrkalfar,
 // two Giant Boars, two Kobolds, Valdemar), seven Environment tiles shuffled into the map tiles, and ten Central tiles,
-// one of which may replace the starting tile (CentralChoice). The tiles are in Tiles.wastelands and Tiles.central,
+// one of which may replace the starting tile (CentralChoice, offered in every game: picking one turns on the
+// expansion's code for it, without the Environment tiles and creatures unless the Wastelands module is on too). The tiles are in Tiles.wastelands and Tiles.central,
 // the creatures in creatures.scala. Card and tile art from the TTS mod 3597126237.
 
 
@@ -44,7 +45,8 @@ object Waste {
     val helheim = "start-helheim"
 
     // The central tiles impassable in the middle take the five-player tile with impassable borders
-    val impassable = $(relic, lake, volcano)
+    // (the Wilderness Great Lake can be the central tile too)
+    val impassable = $(relic, lake, volcano, Wild.lake)
     // Only with the Creatures module
     val creatureOnly = $(den, helheim)
 
@@ -53,6 +55,8 @@ object Waste {
     def tiles : $[String] = Tiles.wastelands./(_.id)
 
     def name(tile : String) : String = tile match {
+        case "start" => "Standard starting tile"
+        case Wild.lake => "Great Lake (Wilderness)"
         case `magma` => "Magma Flow"
         case `yggdrasil` => "Yggdrasil"
         case `relic` => "Relic of the Gods"
@@ -98,6 +102,9 @@ object Waste {
     def aroundSpot(spot : Spot)(implicit game : Game) : $[Territory] =
         game.board.at(spot.x, spot.y)./~(p => p.spec.areas./(a => game.board.territory(AreaRef(p.x, p.y, a.id)))).distinct
 
+    // The whole Wastelands module: its Environment tiles and creatures, not just a central tile
+    def module(implicit game : Game) = game.options.has(ModuleOption(Wastelands))
+
     def landvidiIn(t : Territory)(implicit game : Game) = in(t, landvidi, "s")
 
     def urdarbrunnIn(t : Territory)(implicit game : Game) = in(t, urdarbrunn, "s")
@@ -114,7 +121,7 @@ object Waste {
 }
 
 
-// The central tile (setup step F); shown with the Wastelands module
+// The central tile (setup step F); offered in every game
 abstract class CentralChoice(val label : String) extends GameOption with OneOfGroup with ImportantOption {
     val group = "Central tile".txt
     def valueOn = label.txt
@@ -127,14 +134,17 @@ case object StandardCentral extends CentralChoice("Standard starting tile") {
 
 case object RandomCentral extends CentralChoice("Random Wastelands central tile") {
     override val explain = $("One of the Wastelands central tiles, drawn at random (the Wyvern's Den and the Gate of Helheim only with the " ~ "Creatures".hl ~ " module).")
-    override def required(all : $[BaseOption]) = $($(ModuleOption(Wastelands)))
+}
+
+case object RandomAnyCentral extends CentralChoice("Random, any center tile") {
+    override val explain = $("The standard starting tile, the Wilderness Great Lake or one of the Wastelands central tiles, drawn at random (the Wyvern's Den and the Gate of Helheim only with the " ~ "Creatures".hl ~ " module).")
 }
 
 abstract class CentralTileChoice(val id : String, text : String) extends CentralChoice(Waste.name(id)) {
     override def tile = |(id)
     override def decorate(e : Elem) = e ~ Waste.creatureOnly.has(id).?(" (Creatures module)".spn(xstyles.smaller85)).|(Empty)
     override val explain = $(Waste.name(id).hl ~ ": " ~ text)
-    override def required(all : $[BaseOption]) = $($[BaseOption](ModuleOption(Wastelands)) ++ Waste.creatureOnly.has(id).$(ModuleOption(Creatures)))
+    override def required(all : $[BaseOption]) = $(Waste.creatureOnly.has(id).$[BaseOption](ModuleOption(Creatures)))
 }
 
 case object MagmaFlowCentral extends CentralTileChoice(Waste.magma, "at the Start of Year, its controller draws 1 more card.")
@@ -145,11 +155,15 @@ case object VolcanoCentral extends CentralTileChoice(Waste.volcano, "impassable;
 case object MimirCentral extends CentralTileChoice(Waste.mimir, "at the Start of Year, its controller may take one of the year's Development or Achievement cards on top of their deck, and takes no other that year.")
 case object HrimgandrCentral extends CentralTileChoice(Waste.hrimgandr, "Hrimgandr (strength 8, 8 fame) lives there, never moves and raises everyone's Winter costs one step; once it is defeated, the Lair's controller draws 1 more card each year.")
 case object DenCentral extends CentralTileChoice(Waste.den, "the Wyvern comes out at the start of year 3; once it is defeated, the Den's controller gains 2 fame at each Harvest.")
+case object WildLakeCentral extends CentralTileChoice(Wild.lake, "the Wilderness Environment tile: impassable; at each Harvest, the most units and warchiefs next to it gain 2 food (1 each when tied).")
 case object HelheimCentral extends CentralTileChoice(Waste.helheim, "its controller gets +2 axes against creatures; at each Creature phase, on a skull, a creature comes out of it.")
 
 object CentralChoice {
-    val tiles : $[CentralChoice] = $(MagmaFlowCentral, YggdrasilCentral, RelicCentral, GreatLakeCentral, VolcanoCentral, MimirCentral, HrimgandrCentral, DenCentral, HelheimCentral)
-    val all : $[CentralChoice] = $(StandardCentral, RandomCentral) ++ tiles
+    val tiles : $[CentralChoice] = $(MagmaFlowCentral, YggdrasilCentral, RelicCentral, GreatLakeCentral, VolcanoCentral, MimirCentral, HrimgandrCentral, DenCentral, HelheimCentral, WildLakeCentral)
+    val all : $[CentralChoice] = $(StandardCentral, RandomCentral, RandomAnyCentral) ++ tiles
+
+    // A choice other than the standard tile turns on the Wastelands code (Meta.has)
+    def picked(options : $[BaseOption]) = options.of[CentralChoice].exists(_ != StandardCentral)
 }
 
 
@@ -246,8 +260,11 @@ object WastelandsExpansion extends Expansion {
         Waste.at(Waste.yggdrasil, "c").%(t => game.controlled(f).has(t)).%(t => game.koboldIn(t).not).num * 5 +
         Waste.wyvernSlain.??(Waste.at(Waste.den, "d").%(t => game.controlled(f).has(t)).%(t => game.koboldIn(t).not).num * 2)
 
+    // The Wilderness Great Lake as the central tile, by its own rule; with Wilderness on, Wilderness collects it
+    def wildLakeFood(f : Faction)(implicit game : Game) : Int = (game.central == Wild.lake && game.has(Wilderness).not).??(WildernessExpansion.lakeFood(f).sum)
+
     // Fame, food and lore at the next harvest, for the player panels
-    def forecast(f : Faction)(implicit game : Game) : (Int, Int, Int) = (fame(f), lakeFood(f), relicLore(f))
+    def forecast(f : Faction)(implicit game : Game) : (Int, Int, Int) = (fame(f), lakeFood(f) + wildLakeFood(f), relicLore(f))
 
     def harvest(f : Faction)(implicit game : Game) {
         val n = fame(f)
@@ -260,6 +277,12 @@ object WastelandsExpansion extends Expansion {
         if (food > 0) {
             f.food += food
             f.log("collected", food.hl, Food, "from the", Waste.elem(Waste.lake))
+        }
+
+        val wild = wildLakeFood(f)
+        if (wild > 0) {
+            f.food += wild
+            f.log("collected", wild.hl, Food, "from the", "Great Lake".hl)
         }
 
         val lore = relicLore(f)
@@ -358,6 +381,8 @@ object WastelandsExpansion extends Expansion {
                 options.of[CentralChoice].single match {
                     case Some(RandomCentral) =>
                         Random[String](Waste.centrals.%(t => game.has(Creatures) || Waste.creatureOnly.has(t).not), CentralPickedAction(tiles, _))
+                    case Some(RandomAnyCentral) =>
+                        Random[String]("start" +: Waste.centrals.%(t => game.has(Creatures) || Waste.creatureOnly.has(t).not) :+ Wild.lake, CentralPickedAction(tiles, _))
                     case Some(c) if c.tile.any =>
                         central(tiles, c.tile.get, soft)
                     case _ =>
@@ -368,7 +393,7 @@ object WastelandsExpansion extends Expansion {
                 central(tiles, tile, soft)
 
             // After setup, the Environment tiles go into the map tile pile; with Wilderness at most 12 of both expansions
-            case ShuffledTilesBackAction(l) if game.wasteSteps.has("environment").not =>
+            case ShuffledTilesBackAction(l) if Waste.module && game.wasteSteps.has("environment").not =>
                 if (game.has(Wilderness))
                     Shuffle[String](Wild.tiles ++ Waste.tiles, WasteEnvironmentAction(l, _))
                 else {

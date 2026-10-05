@@ -37,7 +37,10 @@ Squirrel, with their warchiefs and 28 clan cards, from the TTS mod
 3597126237) in `nort/newblood.scala`; picking one of them turns it on.
 Uncharted Horizons' Events and Alternative victory conditions modules are in
 `nort/horizons.scala`. The Wastelands expansion (Environment tiles
-`waste-*`, the Central tiles `start-*` chosen with the "Central tile" option,
+`waste-*`, the Central tiles `start-*` chosen with the "Central tile" option, which
+is offered in every game (standard tile, any of the nine, the Wilderness Great
+Lake, or random) and needs
+the module only for the rest of Wastelands,
 five more creatures, Hrimgandr and Jötunn Blainn) is in `nort/wastelands.scala`.
 The solo Automa (Uncharted Horizons' Solo module) is
 in `nort/automa.scala`, with its 15 cards transcribed from the Tabletopia

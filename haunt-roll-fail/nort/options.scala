@@ -208,7 +208,7 @@ case object Wastelands extends Module("Wastelands", "expansion") {
     override def priority = -4
     def about = $(
         "Seven Environment tiles (the Kobold Camp, the Jötnar Camp with Jötunn Blainn, Naströnd, Landvidi, Thor's Wrath, Urdarbrunn and Vedrfolnir) are shuffled into the map tiles after setup; with " ~ "Wilderness".hl ~ " twelve Environment tiles of both are drawn.",
-        "A Central tile can replace the starting tile (" ~ "Central tile".hl ~ " below).",
+        "A Central tile can replace the starting tile (" ~ "Central tile".hl ~ " below, also offered without this module).",
         "With the " ~ "Creatures".hl ~ " module: Rock Golems, Myrkalfar, Giant Boars, Kobolds and Valdemar join the creature deck.",
     )
 }
