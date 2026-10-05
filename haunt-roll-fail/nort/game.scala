@@ -290,7 +290,13 @@ case object GameEndAction extends ForcedAction
 case object NewYearAction extends ForcedAction
 case class DominationAction(rulers : $[Faction]) extends ForcedAction
 
-case class GameOverWonAction(self : Faction, f : Faction) extends BaseInfo("Game Over")(f, "won")
+// Fame at the end of the game, by where it came from
+case class FinalFame(tokens : Int, cards : Int, sets : Int, unrest : Int) {
+    def total = tokens + cards + sets + unrest
+}
+
+// The end screen: the winners' clan cards (and warchief cards), the Jarl line and how they won
+case class GameOverWonAction(self : Faction, winners : $[Faction], message : Elem) extends BaseInfo("Game Over")(message)
 
 
 case object ScorchedEarthPlace extends GameElementary {
@@ -772,6 +778,38 @@ object CommonExpansion extends Expansion {
         keys.foldLeft(sides)((l, k) => l.%(s => s./(k).sum == l./(_./(k).sum).max))
 
     def buildings(f : Faction)(implicit game : Game) = game.controlled(f)./~(game.buildingsIn).num
+
+    // Final fame: (fame tokens, cards, resources, Unrest)
+    def finalFame(f : Faction)(implicit game : Game) : FinalFame =
+        FinalFame(f.fame, f.deck./(c => cardFame(f, c)).sum, f.resources / 3, -5 * f.unrest)
+
+    // The tie-breaks after fame, as said on the end screen
+    val tieBreaks = $("territories controlled", "units", "buildings")
+
+    // How a clan's fame adds up, for the end screen
+    def fameWhy(f : Faction)(implicit game : Game) : Elem = {
+        val FinalFame(tokens, cards, sets, unrest) = finalFame(f)
+        $(
+            Some(tokens.hl ~ " from fame tokens"),
+            (cards != 0).?(cards.hl ~ " from cards"),
+            (sets != 0).?(sets.hl ~ " from resources (" ~ 1.hl ~ " per " ~ 3.hl ~ ")"),
+            (unrest != 0).?(unrest.hl ~ " from " ~ f.unrest.hl ~ " " ~ UnrestCard.elem ~ " card" ~ (f.unrest > 1).??("s"))
+        ).flatten.join(", ")
+    }
+
+    // Clans as "A, B and C"
+    def and(l : $[Faction])(implicit game : Game) : Elem = (l.num > 1).?(l.dropRight(1)./(_.elem).join(", ") ~ " and " ~ l.last.elem).|(l.head.elem)
+
+    // The end of the game: the winners' clan cards (and warchief cards), the Jarl line, then how they won
+    def victory(winners : $[Faction], how : $[Elem])(implicit game : Game) : Continue = {
+        val cards = winners.but(Automa)./~(f => $(ClanCard(f, 0)) ++ game.warchiefCards.$(ClanCard(f, 3)))./(c => Image(c.info.image, styles.winnerCard))
+        val who = and(winners)
+        val line = (winners.num > 1).?(who ~ " tame these lands and triumph as the supreme " ~ "Jarls".hl).|(who ~ " tames these lands and triumphs as the supreme " ~ "Jarl".hl)
+
+        val message = cards.join(" ").div ~ line.div(styles.winnerLine) ~ how./(_.div).merge
+
+        GameOver(winners, "Game Over" ~ Break ~ winners./(_.elem).join(Break) ~ Break ~ "won", $(GameOverWonAction(null, winners, message)))
+    }
 
     // A card's fame at the end of the game (the Achievements count what f has then)
     def cardFame(f : Faction, c : Card)(implicit game : Game) : Int = {
@@ -1408,18 +1446,20 @@ object CommonExpansion extends Expansion {
 
             Debug.summary(game)
 
-            GameOver(winners, "Game Over" ~ Break ~ winners./(_.elem).join(Break) ~ Break ~ "won", winners./(f => GameOverWonAction(null, f)))
+            val held = winners.%(rulers.has)./(f => f.elem ~ " held " ~ game.strongholds(f)./(_.areas.head.elem).join(", "))
+            val tied = (contenders.num > 1).?(("Several clans did, so the most fame decided" + game.teams.??(" (added up for teams)") + ".").txt)
+
+            victory(winners, $("Won in year " ~ game.year.hl ~ " by controlling " ~ game.strongholdsToWin.hl ~ " closed territories with large buildings.") ++ held ++ tied)
 
         case GameEndAction =>
             log(DoubleLine)
             log("End of the game")
 
             val totals = factions./{ f =>
-                val cards = f.deck./(c => cardFame(f, c)).sum
-                val sets = f.resources / 3
-                val total = f.fame + cards + sets - 5 * f.unrest
+                val FinalFame(tokens, cards, sets, unrest) = finalFame(f)
+                val total = finalFame(f).total
 
-                f.log("scored", total.hlb, "fame:", f.fame.hl, "from tokens,", cards.hl, "from cards,", sets.hl, "from resources,", (-5 * f.unrest).hl, "from", UnrestCard)
+                f.log("scored", total.hlb, "fame:", tokens.hl, "from tokens,", cards.hl, "from cards,", sets.hl, "from resources,", unrest.hl, "from", UnrestCard)
 
                 f -> total
             }.toMap
@@ -1431,7 +1471,8 @@ object CommonExpansion extends Expansion {
                 }
 
             // Ties: territories controlled, then units, then buildings (added up for teams)
-            val winners = best(sides(factions), $(f => totals(f), f => game.controlled(f).num, f => f.units, f => buildings(f))).flatten
+            val keys = $[Faction => Int](f => totals(f), f => game.controlled(f).num, f => f.units, f => buildings(f))
+            val winners = best(sides(factions), keys).flatten
 
             game.isOver = true
             game.highlight.current = winners.single
@@ -1440,7 +1481,22 @@ object CommonExpansion extends Expansion {
 
             Debug.summary(game)
 
-            GameOver(winners, "Game Over" ~ Break ~ winners./(_.elem).join(Break) ~ Break ~ "won", winners./(f => GameOverWonAction(null, f)))
+            // How they won: their fame and where it came from, the runner-up, and the tie-break that decided it
+            val side = sides(factions).%(_.exists(winners.has))
+            val others = sides(factions).diff(side)
+            val score = winners./(totals).sum
+            val runner = others.any.?(others.maxBy(_./(totals).sum))
+            val decider = 1.until(keys.num).find(i => best(sides(factions), keys.take(i)).num > 1 && best(sides(factions), keys.take(i + 1)).num < best(sides(factions), keys.take(i)).num)
+
+            val how =
+                (winners.num > 1 || game.teams).?(
+                    $("Won with the most fame: " ~ score.hlb ~ " together.") ++ winners./(f => f.elem ~ ": " ~ totals(f).hlb ~ " fame, " ~ fameWhy(f) ~ ".")
+                ).|(
+                    $("Won with the most fame, " ~ score.hlb ~ ": " ~ fameWhy(winners.head) ~ ".")
+                ) ++
+                runner./(l => decider./(i => "Tied with " ~ and(l) ~ ", and won on " ~ tieBreaks(i - 1).hl ~ ".").|("Next: " ~ and(l) ~ " with " ~ l./(totals).sum.hl ~ " fame.")).$
+
+            victory(winners, how)
 
         case _ => UnknownContinue
     }
