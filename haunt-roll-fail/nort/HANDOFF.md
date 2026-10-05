@@ -127,6 +127,14 @@ boards are shown by the clan picker's Warchief button).
 - Harvest: `TeamTradeAction` (swap one resource for one of a teammate's) in
   `TradeAction`. Scoring: `CommonExpansion.best` and `sides` add up totals
   and tie-breakers per team, in `GameEndAction` and `DominationAction`.
+- The end screen (`CommonExpansion.victory`, `GameOverWonAction`, 2026-10-05):
+  the winners' clan cards (plus their warchief cards with Warchiefs or the
+  warchief upgrade cards), "<Clan> tames these lands and triumphs as the
+  supreme Jarl" ("tame ... Jarls" for teams), and how they won: for fame, the
+  total split into fame tokens, cards, resources and Unrest (`finalFame`,
+  `fameWhy`), plus the runner-up or the tie-break that decided it; for three
+  territories with large buildings, the year and the territories; for
+  Alternative victory, the mode and the cards fulfilled.
 - The status panels show each player's team. `NORT_TEAMS=1` makes the
   headless host always use teams with 4 or 6 players; the summary counts
   `team-pass` and `team-trade` events.

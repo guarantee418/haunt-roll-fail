@@ -648,7 +648,12 @@ object VictoryExpansion extends Expansion {
 
             Debug.summary(game)
 
-            GameOver(winners, "Game Over" ~ Break ~ winners./(_.elem).join(Break) ~ Break ~ "won", winners./(f => GameOverWonAction(null, f)))
+            val jarl = options.has(VictoryModeOption(true))
+            val side = sides.%(_.exists(winners.has)).head
+            CommonExpansion.victory(winners, $(
+                "Won in year " ~ game.year.hl ~ " with the " ~ "Alternative victory".hl ~ " conditions (" ~ jarl.?("Jarl").|("Thane").hl ~ ": " ~ jarl.?("all three cards").|("Map Control and one Wealth card") ~ ").",
+                "Fulfilled: " ~ done(side)./(_.elem).join(", ") ~ "."
+            ) ++ (most.num > 1).?("Several did, so the most conditions and then the most fame decided.".txt).$)
 
         case _ => UnknownContinue
     }

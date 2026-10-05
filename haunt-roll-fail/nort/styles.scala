@@ -58,6 +58,9 @@ package object elem {
         object inlineIcon extends CustomStyle(height("1.4em"), vertical.align("middle"))
         object buildIcon extends CustomStyle(height("2.6em"), vertical.align("middle"), margin.right("1ex"))
         object boardInfo extends CustomStyle(display("block"), width("44ex"), max.width("100%"))
+        // The end screen: the winners' clan cards, and warchief cards with the Warchiefs module
+        object winnerCard extends CustomStyle(display("inline-block"), width("18ex"), max.width("45%"), margin("0.5ex"), vertical.align("top"))
+        object winnerLine extends CustomStyle(font.size("120%"), margin.bottom("0.5ex"))
         object loreCard extends CustomStyle(display("block"), width("36ex"), max.width("100%"), margin.left("auto"), margin.right("auto"))
 
         object zoomCard extends CustomStyle(height("100%"), width("100%"), objectFit("contain"))
