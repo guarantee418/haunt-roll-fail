@@ -36,6 +36,11 @@ class BotHard(f : Faction) extends EvalBot {
         if (f == Automa || game.states.contains(f).not)
             return new BotXX(f).eval(actions)
 
+        if (game.training) {
+            val ev = new TrainingEvaluation(f, 7)
+            return actions./{ a => ActionEval(a, ev.eval(a)) }
+        }
+
         val ev = new HardEvaluation(f)
         actions./{ a => ActionEval(a, ev.eval(a)) }
     }

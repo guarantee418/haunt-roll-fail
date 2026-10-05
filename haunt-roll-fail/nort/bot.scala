@@ -13,6 +13,11 @@ import hrf.logger._
 
 class BotXX(f : Faction) extends EvalBot {
     def eval(actions : $[UserAction])(implicit game : Game) : Compute[$[ActionEval]] = {
+        if (game.training) {
+            val ev = new TrainingEvaluation(f, 40)
+            return actions./{ a => ActionEval(a, ev.eval(a)) }
+        }
+
         val ev = new GameEvaluation(f)
         actions./{ a => ActionEval(a, ev.eval(a)) }
     }

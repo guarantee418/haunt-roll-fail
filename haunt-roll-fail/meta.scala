@@ -151,6 +151,14 @@ trait MetaBase {
     // A solo opponent (Northgard's Automa): the main menu offers a solo game against it
     def soloFaction : |[F] = None
 
+    // Other ways to play on the main menu (Northgard's Training Grounds), each with a page offering a local or an online game:
+    // the menu label and the URL segment
+    def modes : $[(String, String)] = $
+    // A line about the mode on its page, the factions it is played with (in seating order) and the options it always has on
+    def modeAbout(mode : String) : Elem = Empty
+    def modeFactions(mode : String) : $[F] = $
+    def modeOptions(mode : String) : $[O] = $
+
     // Image name -> URL for images used in the menus (faction notes, option explanations), before the game's assets load
     def menuImages : Map[String, String] = Map()
 
