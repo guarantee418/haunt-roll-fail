@@ -396,9 +396,11 @@ on. To implement one:
   territory), and `UI.iconImage` cuts each icon from the tile art (where no
   mask covers it) to draw it again over all the pieces. Rerun the tool after
   regenerating the masks.
-- The layout is mirrored (the first `Layouter` step in `nort/ui.scala`), so
-  the player panels and the hand are on the right and the log on the left;
-  `layoutKey` was bumped to drop layouts cached in the browser.
+- The layout has the map on the left and the player panels, log and action
+  pane on the right (the owner's request on 2026-10-05; an earlier session had
+  mirrored it with the log on the left). The ultrawide `layout` override puts
+  the log on the far right. `layoutKey` was bumped to drop layouts cached in
+  the browser.
 - Both are player settings under "Interface" (in-game menu or the main
   menu's Settings), like Root's Clearing Rule: `TerritoryColorSetting`
   (Show / Fights Only: just the gray and pink / Hide) and

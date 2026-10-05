@@ -54,7 +54,7 @@ package object elem {
         object menuText extends CustomStyle(max.width("60ex"), margin.left("auto"), margin.right("auto"), margin.top("1ex"), text.align("center"))
         object menuCard extends CustomStyle(display("inline-block"), width("30%"), max.width("15ex"), margin("0.5ex"), vertical.align("top"))
         object card extends CustomStyle(display("inline-block"), width("22ex"), max.width("90%"), margin("0.3ex"))
-        object handCard extends CustomStyle(display("block"), width("22ex"))
+        object handCard extends CustomStyle(display("block"), width("var(--nort-hand-card, 22ex)"))
         object inlineIcon extends CustomStyle(height("1.4em"), vertical.align("middle"))
         object buildIcon extends CustomStyle(height("2.6em"), vertical.align("middle"), margin.right("1ex"))
         object boardInfo extends CustomStyle(display("block"), width("44ex"), max.width("100%"))

@@ -1009,8 +1009,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val layouts = $(Layout("base",
         $(
-            BasicPane("status", 15, (arity >= 4).?(24).|(18), Priorities(top = 3, left = 2, maxXscale = 1.8, maxYscale = 1.8, grow = 1)),
-            BasicPane("court", 80, 20, Priorities(top = 3, right = 3, maxXscale = 1.5, maxYscale = 1.5, grow = -2)),
+            BasicPane("status", 15, (arity >= 4).?(24).|(18), Priorities(top = 3, right = 2, maxXscale = 1.8, maxYscale = 1.8, grow = 1)),
+            BasicPane("court", 80, 20, Priorities(top = 3, left = 3, maxXscale = 1.5, maxYscale = 1.5, grow = -2)),
             BasicPane("log", 32, 16, Priorities(right = 1)),
             BasicPane("map-small", 73, 64, Priorities(top = 2, left = 1, grow = 3)),
             BasicPane("action-a", 64/1.5, 36, Priorities(bottom = 1, right = 3, grow = 2)),
@@ -1048,8 +1048,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     )
 
     val layouter = Layouter(layouts,
-    // Mirrored, so the player panels and the hand are on the right and the log on the left
-    ff => { val w = ff./(_.right).max ; ff./(f => f.copy(x = w - f.right)) },
+    // The map on the left; the player panels, the log and the action pane (choices and hand) on the right
+    x => x,
     _./~{
         case f if f.name == "action" => $(f, f.copy(name = "undo"), f.copy(name = "settings"))
         case f if f.name == "status-horizontal" => 1.to(arity)./(n => f.copy(name = "status-" + n, x = f.x + ((n - 1) * f.width  /~/ arity), width  = (n * f.width  /~/ arity) - ((n - 1) * f.width  /~/ arity)))
@@ -1061,7 +1061,50 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val settingsKey = Meta.settingsKey
 
-    val layoutKey = "v" + 10 + "." + "arity-" + arity
+    val layoutKey = "v" + 11 + "." + "arity-" + arity
+
+    // Ultrawide screens (21:9 and wider): the layouter stretches the player panels to the full height
+    // and leaves empty space around the map, so the hand gets a narrow column. Instead: the map on the
+    // left, then short player panels in a row, the shared cards below them and the hand filling the
+    // rest, wide enough to show the whole hand, and the log on the right.
+    override def layout(width : Int, height : Int)(onLayout : $[PanePlacement] => Unit) {
+        val root = dom.document.documentElement.asInstanceOf[dom.html.Element].style
+
+        if (width < height * 2.1) {
+            root.removeProperty("--nort-hand-card")
+            return super.layout(width, height)(onLayout)
+        }
+
+        val fontSize = height / 34.0
+
+        val logW = (width * 0.16).round.toInt
+        val mapW = min(width * 0.40, height * 1.1).round.toInt
+        val rightX = mapW
+        val rightW = width - mapW - logW
+
+        // Room for six lines in the player panels, in a smaller font (their text lines are short)
+        val statusH = (height * 0.19).round.toInt
+        val courtH = min(height * 0.22, rightW / 5.5).round.toInt
+        val actionY = statusH + courtH
+
+        def place(name : String, x : Int, y : Int, w : Int, h : Int) = PanePlacement(name, Rect(x, y, w, h), Some(fontSize))
+
+        // Hand cards (styles.handCard) sized so five or six fit in a row
+        root.setProperty("--nort-hand-card", (rightW / 5.8).round + "px")
+
+        val action = place("action", rightX, actionY, rightW, height - actionY)
+
+        onLayout(
+            1.to(arity)./(n => place("status-" + n, rightX + (n - 1) * rightW / arity, 0, n * rightW / arity - (n - 1) * rightW / arity, statusH).copy(fontSize = Some(fontSize * 0.8))) ++
+            $(
+                place("court", rightX, statusH, rightW, courtH),
+                action, action.copy(name = "undo"), action.copy(name = "settings"),
+                place("log", rightX + rightW, 0, logW, height),
+                place("map-small", 0, 0, mapW, height),
+                place("map-small-overlay", 0, 0, mapW, height)
+            )
+        )
+    }
 
     def overlayScrollX(e : Elem) = overlayScroll(e)(styles.seeThroughInner).onClick
     def overlayFitX(e : Elem) = overlayFit(e)(styles.seeThroughInner).onClick
