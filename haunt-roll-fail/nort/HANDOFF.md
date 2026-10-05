@@ -206,7 +206,7 @@ on. To implement one:
   contents) adds a button next to each faction in the "Play as" list
   (`hrf.scala`); Northgard's shows the clan board
   (`expansion/board/<clan>.webp`, through `menuImages`) and the warchief
-  power. The warchief figures are `token/unit/warchief-<color>`.
+  power. The warchief figures are `token/unit/chief-<clan>-<color>` (`Warchief.figure`).
 - `NORT_WARCHIEFS=1` makes the headless host always use the module.
 
 ## Wilderness expansion (2026-10-04)
@@ -338,8 +338,9 @@ on. To implement one:
   default bot on every setup path). `Game.modules` adds `Solo` when it plays;
   `AutomaExpansion` has priority -5. Option `AutomaLevelOption(1..6)`.
 - Its Leaders reuse the warchief and companion plumbing: Leader 1 is
-  `game.chiefs(Automa)`, Leader 2 `game.leader2` (the companion); both are
-  drawn with the warchief figure.
+  `game.chiefs(Automa)`, Leader 2 `game.leader2` (the companion); they are
+  drawn as the white and black Leader miniatures (`Warchief.figure`,
+  `Warchief.leader2`).
 - State: `automaDeck`, `automaDiscard`, `automaActions` (drawn this year),
   `automaPlayed`, `automaDrawn`, `automaStart`. It intercepts
   `ShuffledAdvancedAction` (two cards out), `ShuffleStartingDecksAction`,
@@ -613,8 +614,15 @@ list. In short:
   warchiefs (and Brok, `chief-brok-<color>`) are round tokens the size of
   Kaija's: the head from the clan card that shows them, in a ring of the
   player's color (`nort/tools/warchief-heads.py`, crop boxes in the script;
-  `Warchief.round`). The Automa's Leaders keep the generic `warchief-<color>`
-  figure.
+  `Warchief.round`). The Automa's Leaders are its white (Leader 1) and black
+  (Leader 2) miniatures, cut from the components photo on page 2 of the
+  Uncharted Horizons rulebook PDF in TTS mod 3597126237
+  (`nort/tools/automa-leaders.py`, `token/unit/leader-<1|2>-<color>`); Tabletopia
+  has no usable images outside a signed-in table. The old warchief figure
+  (`warchief-<color>`) is a second warrior design: `Warchief.warrior` picks
+  `unit-` or `warchief-` for each stack by a hash of the territory, clan and
+  count, so it changes at random when units arrive or leave but is the same
+  on every redraw and for every player.
 - **Missing assets:** orange starting cards (orange is not in the box and uses
   yellow's).
 - **Bots:** "Easy" is random (it favours upgrading); "Hard" plays to win (see Bots below).
