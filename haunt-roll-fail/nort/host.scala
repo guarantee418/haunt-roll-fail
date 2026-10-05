@@ -62,7 +62,7 @@ object Host extends hrf.host.BaseHost {
     Debug.upgradesInDeck = sys.env.get("NORT_UPGRADES").has("1")
 
     def winners(a : Action)(implicit g : G) = a @@ {
-        case GameOverWonAction(_, f) => $(f)
+        case GameOverWonAction(_, l, _) => l
     }
 
     def winnersFromFaction(f : F)(implicit g : G) = $(f)
