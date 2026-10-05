@@ -19,7 +19,7 @@ and tracks what is done. `nort/HANDOFF.md` has the state, design notes,
 known gaps, next steps and how to build and test it. So far: the 7 clans (14 with New Blood), 2–6 players (six on the five-player rules), the 2v2
 Teams variant and a 3v3 one on the same rules, the year loop with
 decks, Wait/Replace/Remove/Upgrade/Pass, Flash cards, harvest trading, winter
-and Unrest, end-of-game scoring, and the real card list in `nort/cards.scala`
+and Unrest, end-of-game scoring (the end screen shows the winner's clan card, "tames these lands and triumphs as the supreme Jarl", and how they won), and the real card list in `nort/cards.scala`
 (names, fame, text, images), the map: tile data in `nort/tiles.scala`
 (areas, borders, resources, spaces, checked against the art), territories
 and placement rules in `nort/board.scala`, and setup, Recruit, Move,
@@ -79,7 +79,7 @@ Pass); after one, tapping a card in hand does it. A Build card's builds: tap
 a free space, pick from the menu of all buildings with their costs, then
 confirm with the green check mark (or cancel with the red cross) drawn above
 the building on the map. Placing a tile works the same way: the tile is shown at its spot with
-one button just outside each corner: rotate arrows at the top, the check mark and cross at the bottom. The player's clan board is shown under the Lore Tree.
+one button just outside each corner: rotate arrows at the top, the check mark and cross at the bottom. The player's clan board is shown under the Lore Tree, then their discard pile (tapping it shows the cards).
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
 Tabletopia export the owner uploaded, with gaps filled from two Tabletop
 Simulator mods (Steam Workshop 2838546142 and 2847156187; see
