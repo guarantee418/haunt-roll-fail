@@ -47,7 +47,11 @@ the module only for the rest of Wastelands,
 five more creatures, Hrimgandr and Jötunn Blainn) is in `nort/wastelands.scala`.
 The solo Automa (Uncharted Horizons' Solo module) is
 in `nort/automa.scala`, with its 15 cards transcribed from the Tabletopia
-module ("Solo vs Automa" on the main menu). Solo games are saved in the
+module ("Solo vs Automa" on the main menu). Its Training Fields module, a two-player duel on
+a 4x3 grid of face-down tiles with seven Action cards each, is in
+`nort/training.scala`: "Training Grounds" on the main menu opens a page
+offering a local or an online game (the `modes` hooks in `meta.scala`,
+`modeMenu` in `hrf.scala`). Solo games are saved in the
 browser's localStorage as they are played (`newLocalGame` and `soloMenu` in
 `hrf.scala`, `LocalStorageJournal` in `journal.scala`; the 12 newest are
 kept), so "Solo vs Automa" offers New Solo Game or a saved game to continue,
