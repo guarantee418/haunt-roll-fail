@@ -81,7 +81,7 @@ case class CaptureAddAction(self : Faction, area : AreaRef, then : ForcedAction)
 case class RaidAction(self : Faction, area : AreaRef, enemy : Faction, then : ForcedAction) extends BaseAction("Raiding Party", "remove a unit in")(area, InParens(enemy)) with MapTarget { def target = area }
 case class RaidCollectAction(self : Faction, r : Resource, then : ForcedAction) extends BaseAction("Raiding Party", "collect")(r)
 
-case class FutureSightAction(self : Faction, card : Card, then : ForcedAction) extends BaseAction("Future Sight", "take a card")(card.img, Break, card)
+case class FutureSightAction(self : Faction, card : Card, then : ForcedAction) extends BaseAction("Future Sight", "take a card")(card.handImg) with ViewObject[Card] { def obj = card }
 
 case class HiddenFromAction(self : Faction, from : AreaRef, then : ForcedAction) extends BaseAction("Hidden Ways", "move from")(from) with Soft with MapTarget { def target = from }
 case class HiddenToAction(self : Faction, from : AreaRef, to : AreaRef, then : ForcedAction) extends BaseAction("Hidden Ways", "move from", from, "to")(to) with Soft with MapTarget { def target = to }
@@ -101,21 +101,21 @@ case class AnnexationExploreAction(f : Faction, then : ForcedAction) extends For
 case class AnnexationExploreYesAction(self : Faction, then : ForcedAction) extends BaseAction("Annexation")("Explore")
 
 case class SpyAction(self : Faction, enemy : Faction, then : ForcedAction) extends BaseAction("Spy", "look at the hand of")(enemy)
-case class SpyDiscardAction(self : Faction, enemy : Faction, card : Card, then : ForcedAction) extends BaseAction("Spy", "discard from", enemy, "hand")(card.img, Break, card)
+case class SpyDiscardAction(self : Faction, enemy : Faction, card : Card, then : ForcedAction) extends BaseAction("Spy", "discard from", enemy, "hand")(card.handImg) with ViewObject[Card] { def obj = card }
 
 case class VeiledDiscardAction(self : Faction, enemy : Faction, then : ForcedAction) extends BaseAction("Veiled Threats".hl, "make an opponent discard a random card")(enemy)
 case class VeiledDiscardedAction(self : Faction, enemy : Faction, random : Card, then : ForcedAction) extends RandomAction[Card]
 case class VeiledDrawAction(self : Faction, then : ForcedAction) extends BaseAction("Veiled Threats".hl)("Draw 1 card")
 
 case class CurseAction(f : Faction, l : $[Faction], then : ForcedAction) extends ForcedAction
-case class CurseDiscardAction(self : Faction, f : Faction, card : Card, l : $[Faction], then : ForcedAction) extends BaseAction("Ancestral Curse", "discard a card")(card.img, Break, card)
+case class CurseDiscardAction(self : Faction, f : Faction, card : Card, l : $[Faction], then : ForcedAction) extends BaseAction("Ancestral Curse", "discard a card")(card.handImg) with ViewObject[Card] { def obj = card }
 
 case class RapaciousAction(self : Faction, enemy : Faction, then : ForcedAction) extends BaseAction("Rapacious Exploitation", "look at the hand of")(enemy)
-case class RapaciousPickAction(self : Faction, enemy : Faction, card : Card, then : ForcedAction) extends BaseAction("Rapacious Exploitation", "choose from", enemy, "hand")(card.img, Break, card)
+case class RapaciousPickAction(self : Faction, enemy : Faction, card : Card, then : ForcedAction) extends BaseAction("Rapacious Exploitation", "choose from", enemy, "hand")(card.handImg) with ViewObject[Card] { def obj = card }
 case class RapaciousDiscardAction(self : Faction, f : Faction, card : Card, then : ForcedAction) extends BaseAction("Rapacious Exploitation", "by", f)("Discard", card)
 case class RapaciousGiveAction(self : Faction, f : Faction, card : Card, pay : $[Resource], then : ForcedAction) extends BaseAction("Rapacious Exploitation", "by", f)("Keep", card, "and give", pay./(_.elem).join(" "))
 
-case class CopyEffectAction(self : Faction, owner : Faction, card : Card, then : ForcedAction) extends BaseAction("Copy a card of", owner)(card.img, Break, card)
+case class CopyEffectAction(self : Faction, owner : Faction, card : Card, then : ForcedAction) extends BaseAction("Copy a card of", owner)(card.handImg) with ViewObject[Card] { def obj = card }
 
 case class DefensiveAskAction(f : Faction, card : Card, stage : Int, l : $[Faction]) extends ForcedAction
 case class DefensiveCancelAction(self : Faction, f : Faction, card : Card, stage : Int) extends BaseAction("Defensive Strategy", "against", f)("Cancel", card)

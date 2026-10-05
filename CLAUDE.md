@@ -81,7 +81,10 @@ Pass); after one, tapping a card in hand does it. A Build card's builds: tap
 a free space, pick from the menu of all buildings with their costs, then
 confirm with the green check mark (or cancel with the red cross) drawn above
 the building on the map. Placing a tile works the same way: the tile is shown at its spot with
-one button just outside each corner: rotate arrows at the top, the check mark and cross at the bottom. The player's clan board is shown under the Lore Tree, then their discard pile (tapping it shows the cards).
+one button just outside each corner: rotate arrows at the top, the check mark and cross at the bottom. A retreat works like a Move: tap the destination on the map (or in the list),
+then pick all the units or one (`RetreatPickAction` in `nort/map.scala`). Development
+and other card picks show the cards at hand-card size, and the last player to pass
+still sees the one card left before taking it. The player's clan board is shown under the Lore Tree, then their discard pile (tapping it shows the cards).
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
 Tabletopia export the owner uploaded, with gaps filled from two Tabletop
 Simulator mods (Steam Workshop 2838546142 and 2847156187; see
@@ -96,7 +99,9 @@ players, not clans: each clan's player picks one on its row of the setup screen
 (`ColorOption`, default blue, red, yellow, purple, green, orange by seat;
 `game.colors`); starting cards show that color's banner (orange has no
 cards of its own and uses the yellow ones). The setup options
-(colors, game length, victory conditions, first player, and the modules and
+(colors, game length, victory conditions, first player, "Ban card draw developments"
+(`NoDrawDevelopments`: leaves the seven Development cards that only draw cards
+out of the decks), and the modules and
 expansions; Creatures, Warchiefs, Wilderness, Wastelands, Events and the 2v2/3v3 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`.
 "Victory conditions" picks one of: the standard rules, fame only, Alternative
 victory with random cards (the rulebook's way), or Alternative victory with

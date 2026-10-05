@@ -34,6 +34,7 @@ draws a tile when no neutral territory is left.
 | Game length 5–10 years (10-year variant: 3 Early + 6 Advanced per player), Fame victory only, First seat goes first | done (options) |
 | Creatures module (core box), with the More Creatures variant | done 2026-10-03 (`creatures.scala`) |
 | Warchiefs module (Warchiefs expansion) | done 2026-10-03 (`warchiefs.scala`) |
+| "Ban card draw developments" house rule (not in the rulebook): leaves out Merchant, Market Place, Upgraded Market Place, Upgraded Trading Post, Greater Trade Routes, Trading Post and Cunning Merchant | done 2026-10-05 (`NoDrawDevelopments` in `options.scala`); Negociation, Spy, Ancestral Curse and Veiled Threats stay |
 | The Warchiefs box's 7 extra clan upgrade cards | done 2026-10-03: with the module, or alone with the "Warchief upgrade cards" option |
 | Wilderness expansion: Environment tiles and five more creatures, with the Ancestral Graveyard and the Wyvern's Den | done 2026-10-04 (`wilderness.scala`, see Wilderness below) |
 | New Blood: seven more clans with their warchiefs and 28 clan cards | done 2026-10-04 (`newblood.scala`, see New Blood below) |
