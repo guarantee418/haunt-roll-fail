@@ -111,11 +111,14 @@ boards are shown by the clan picker's Warchief button).
   outline like the others (the light parts of the `-original` image are kept
   over the recolored one), and `PlayerColor.cards` gives the starting cards' banner
   (orange uses yellow's, green blue's).
-- Teams: the `ModuleOption`s for `TeamsVariant` (4 players) and `Teams3v3`
-  (6 players) only show for that player count (`Meta.optionsFor`), and the
-  wrong count is an error in `validateFactionSeatingOptions`. They have no
-  expansion: the rules are in the core code. `game.teams`, `team(f)` (seat
-  index mod 2), `allied`, `enemy`, `mates`, `sides`, `teamName`.
+- Teams: the `ModuleOption`s for `TeamsVariant` (4 players), `Teams3v3`
+  and `Teams2v2v2` (6 players, added 2026-10-05) only show for that player
+  count (`Meta.optionsFor`), and the wrong count, or two team variants, is
+  an error in `validateFactionSeatingOptions`. They have no expansion: the
+  rules are in the core code. `Module.sides` gives each variant's number of
+  teams; `game.teams`, `teamCount`, `team(f)` (seat index mod `teamCount`,
+  so 2v2v2 pairs seats 1+4, 2+5, 3+6), `allied`, `enemy`, `mates`, `sides`,
+  `teamName` (Team A, B, C).
 - Anything that means "enemy" uses `game.enemy(f, _)` instead of `.but(f)`
   (card effects in `effects.scala`, Defensive Strategy, Scorched Earth).
   `present(t)`, `controlled(f)` and retreats are unchanged: a teammate's

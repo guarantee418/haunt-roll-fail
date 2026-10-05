@@ -58,7 +58,7 @@ object Host extends hrf.host.BaseHost {
         // NORT_CREATURES=1: always with the Creatures module (and the More Creatures variant half the time); NORT_WARCHIEFS=1: always with Warchiefs; NORT_WILDERNESS=1: always with Wilderness
         val creatures = sys.env.get("NORT_CREATURES").has("1") || random() < 0.5
         val wastelands = sys.env.get("NORT_WASTELANDS").has("1") || random() < 0.5
-        val teams = Module.teams.toList.%{ case (_, k) => k == n && solo.not && (sys.env.get("NORT_TEAMS").has("1") || random() < 0.5) }./{ case (m, _) => ModuleOption(m) }
+        val teams = Module.teams.toList.%{ case (_, k) => k == n && solo.not && (sys.env.get("NORT_TEAMS").has("1") || random() < 0.5) }./{ case (m, _) => ModuleOption(m) }.shuffle.take(1)
         // NORT_VICTORY=1: always with Alternative victory, with random or chosen cards
         val alt = sys.env.get("NORT_VICTORY").has("1") || random() < 0.5
         val chosen = alt && random() < 0.5

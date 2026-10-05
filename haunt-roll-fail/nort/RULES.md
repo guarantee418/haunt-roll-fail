@@ -229,6 +229,10 @@ have it; summarized from a review, check against the rulebook):
 3v3 (option "3v3 Teams", six players) uses the same rules with teams of
 three; seats alternate between the teams (1, 3, 5 against 2, 4, 6).
 
+2v2v2 (option "2v2v2 Teams", six players) uses the same rules with three
+teams of two; teammates sit opposite each other (1 and 4, 2 and 5, 3 and 6),
+so the turn order goes round the three teams.
+
 ## Clan powers
 
 - **Bear**: Kaija token, recruited like a unit (also at setup); worth 2 combat
@@ -938,8 +942,9 @@ Check these against the rulebook when it is at hand.
 - **Boar Clan**: "explores without closing any territory" is read literally:
   closing anyone's territory (or a neutral one) costs the lore.
 - **Teams**, where the summary above says nothing:
-  - Teams follow the seats: seats 1 and 3 (1, 3 and 5 with six players)
-    against the others; the turn order alternates between the teams.
+  - Teams follow the seats: seats 1 and 3 (1, 3 and 5 in 3v3) against the
+    others; the turn order alternates between the teams. In 2v2v2 seats 1
+    and 4, 2 and 5, 3 and 6 are teams.
   - Teammates are never enemies: no fights, and cards and powers that target
     enemies, opponents or enemy territories (Plunder, Capture, Raiding Party,
     Bribery, Call to War, Spy, Ancestral Curse, Rapacious Exploitation, Enemy
@@ -957,7 +962,7 @@ Check these against the rulebook when it is at hand.
   - Fame victory: the team with the highest total fame wins (both players).
     Ties: the teams' total territories, then units, then buildings.
   - Three closed territories with large buildings: a team wins when one of
-    its players has them. If both teams do, the teams' total fame, then
+    its players has them. If several teams do, the teams' total fame, then
     territories, units and buildings decide.
 - **Creatures**, where the rulebook says nothing:
   - Kaija counts as a unit for the Draugr (units go first) and as 2 combat
