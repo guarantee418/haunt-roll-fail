@@ -906,7 +906,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     // The figure fills about three quarters of its image, like a warrior's
                     val cz = 300 * scale
                     val (cx, cy) = beside(0.13 * scale)
-                    pieces.add(Sprite($(at("warchief-" + game.colors(f).id, cz)), $(Rectangle(-cz / 2, -cz / 2, cz, cz)), tag))(cx, cy)
+                    pieces.add(Sprite($(at(Warchief.figure(f), cz)), $(Rectangle(-cz / 2, -cz / 2, cz, cz)), tag))(cx, cy)
                     taken :+= ((mx(cx), my(cy), 0.13 * scale))
                 }
 

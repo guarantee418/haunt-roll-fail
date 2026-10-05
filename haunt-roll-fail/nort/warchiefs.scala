@@ -20,6 +20,13 @@ import nort.elem._
 // can't be targeted by card effects on enemy units, and goes back to the reserve when it dies
 
 object Warchief {
+    // The clans whose warchief has a portrait (the core ones, from the Tabletop Simulator standees, nort/tools/warchief-portraits.py);
+    // the others use the generic warchief figure
+    val portraits : $[Faction] = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf)
+
+    // The image of f's warchief on the map, outlined in its player's color
+    def figure(f : Faction)(implicit game : Game) : String = portraits.has(f).?("chief-" + f.style + "-").|("warchief-") + game.colors(f).id
+
     def name(f : Faction) : String = f match {
         case Bear => "Borgild"
         case Boar => "Svarn"

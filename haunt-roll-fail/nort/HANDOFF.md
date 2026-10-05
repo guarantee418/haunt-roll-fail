@@ -606,8 +606,14 @@ list. In short:
   brown; Kaija and the Brown Bear share a mesh) were rendered and tried on the
   map; the owner preferred the round tokens cut from the card art, so those
   stay.
-  TTS also has the seven warchiefs as standee portraits (Figurine_Custom,
-  259x432), not used yet.
+  TTS mod 2847156187 also has the seven core warchiefs as standee portraits
+  (Figurine_Custom, 259x432 PNGs). They are the map figures of those
+  warchiefs (2026-10-05): `nort/tools/warchief-portraits.py` scales each one
+  onto a 512x512 canvas with an outline in each player color and a white rim
+  (`token/unit/chief-<clan>-<color>.webp`, loaded only for the clans in play),
+  and `Warchief.figure` picks the image. New Blood has no standees (its clan
+  boards show the warchiefs only from the shoulders up), so its warchiefs,
+  Brok and the Automa's Leaders keep the generic `warchief-<color>` figure.
 - **Missing assets:** orange starting cards (orange is not in the box and uses
   yellow's).
 - **Bots:** "Easy" is random (it favours upgrading); "Hard" plays to win (see Bots below).
