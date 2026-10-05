@@ -35,7 +35,10 @@ SIGMA = 5        # blur of the dash density
 # Tiles cut from a photo have washed-out colours
 PHOTO = ('start-5', 'tile-31', 'tile-32', 'tile-33')
 # Wilderness tiles with impassable borders: solid orange lines
-ORANGE = ('wild-poison', 'wild-peaks-1', 'wild-peaks-2')
+ORANGE = ('wild-poison', 'wild-peaks-1', 'wild-peaks-2', 'start-relic', 'start-lake', 'start-volcano', 'start-5-wall',
+          'waste-kobold', 'waste-jotnar', 'waste-nastrond')
+# Impassable middles inside an orange ring (Wastelands): no territory, left untinted
+RINGED = ('start-relic', 'start-lake', 'start-volcano', 'waste-kobold', 'waste-jotnar', 'waste-nastrond')
 
 
 def parse():
@@ -111,7 +114,13 @@ ICONS = {
 }
 
 
+# Wastelands tiles with no resource icons, where lava, ice or stone would pass for one
+NO_ICONS = ('start-magma', 'start-yggdrasil', 'start-relic', 'waste-thor', 'waste-urdarbrunn')
+
+
 def icons(tid, a):
+    if tid in NO_ICONS:
+        return np.zeros(a.shape[:2], bool)
     # Resource icons and the lore stones have a white rim; the food icon is a red apple
     rim = a.min(2) > 238
     red = (a[..., 0] > 110) & (a[..., 1] < 75) & (a[..., 2] < 85) & (a[..., 0] - a[..., 1] > 60)
@@ -211,6 +220,14 @@ def main():
             if n:
                 big = np.argmax(ndi.sum(water, lab_w, range(1, n + 1))) + 1
                 holes |= ndi.binary_fill_holes(lab_w == big)
+        if tid in RINGED:
+            # The ring's outline can be broken where a border meets it, so its convex hull
+            from skimage.morphology import convex_hull_image
+            o = orange(a)
+            lab_o, n = ndi.label(ndi.binary_dilation(o, iterations=2))
+            if n:
+                ring = lab_o == np.argmax(ndi.sum(o, lab_o, range(1, n + 1))) + 1
+                holes |= ndi.binary_erosion(convex_hull_image(ring), iterations=6)
         for k, ar in enumerate(areas):
             alpha = ndi.gaussian_filter(((lab == k + 1) & ~holes).astype(float), 1.0)
             m = Image.fromarray((alpha * 255).astype(np.uint8)).resize((MASK, MASK), Image.LANCZOS)

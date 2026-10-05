@@ -53,7 +53,7 @@ object Meta extends MetaGame { mmm =>
     override val hiddenOptions = $(ModuleOption(VictoryModule))
 
     // New Blood has no option: picking one of its clans brings it in
-    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, WarchiefCards) ++ Module.all.but(NewBlood).but(Solo).but(VictoryModule)./(ModuleOption) ++ $(MoreCreatures) ++ AutomaLevelOption.all ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, WarchiefCards) ++ Module.all.but(NewBlood).but(Solo).but(VictoryModule)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ AutomaLevelOption.all ++ hiddenOptions
 
     // Colors only for the clans in the game; 2v2 Teams only with four players, 3v3 Teams only with six
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -68,6 +68,8 @@ object Meta extends MetaGame { mmm =>
     override def optionShown(o : O, selected : $[O]) = o match {
         case VictoryModeOption(_) => VictoryChoice.alternative.exists(selected.has)
         case VictoryCardOption(_) => selected.has(AltVictoryChosen)
+        // The central tiles only with Wastelands
+        case _ : CentralChoice => selected.has(ModuleOption(Wastelands))
         case _ => true
     }
 
@@ -90,7 +92,7 @@ object Meta extends MetaGame { mmm =>
     }
 
     // Colors by seat, as before colors could be chosen
-    override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } :+ (YearsOption.standard : O) :+ (StandardVictory : O) :+ (VictoryModeOption(false) : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O)
+    override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } :+ (YearsOption.standard : O) :+ (StandardVictory : O) :+ (VictoryModeOption(false) : O) :+ (StandardCentral : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O)
 
     override def quickOptions = options./(o => o -> 0.0).toMap
 
@@ -213,6 +215,10 @@ object Meta extends MetaGame { mmm =>
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Creatures) && has(options, Wilderness), "card/creature", "card-creature-", "webp")(
         Creature.expansion./(c => ImageAsset(c.token.drop("creature-".length)))
     ) ::
+    // Wastelands: its creatures, Hrimgandr and Jötunn Blainn
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wastelands), "card/creature", "card-creature-", "webp")(
+        (Creature.waste :+ Creature.hrimgandr)./(c => ImageAsset(c.token.drop("creature-".length))) :+ ImageAsset("blainn")
+    ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card", "card-", "webp")(
         $(ImageAsset("unrest"))
     ) ::
@@ -228,11 +234,11 @@ object Meta extends MetaGame { mmm =>
         VictoryCard.all./(c => ImageAsset(c.id))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "tile", "tile-", "webp")(
-        Tiles.all.diff(Tiles.environment)./(t => ImageAsset(t.id))
+        Tiles.all.diff(Tiles.environment).diff(Tiles.wastelands).diff(Tiles.central)./(t => ImageAsset(t.id))
     ) ::
     // The shape of each area, tinted on the map with the colour of the player who controls it
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "tile/mask", "mask-", "webp")(
-        Tiles.all.diff(Tiles.environment)./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
+        Tiles.all.diff(Tiles.environment).diff(Tiles.wastelands).diff(Tiles.central)./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
     ) ::
     // Wilderness: the Environment tiles
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wilderness), "tile", "tile-", "webp")(
@@ -240,6 +246,13 @@ object Meta extends MetaGame { mmm =>
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wilderness), "tile/mask", "mask-", "webp")(
         Tiles.environment./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
+    ) ::
+    // Wastelands: the Environment and central tiles
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wastelands), "tile", "tile-", "webp")(
+        (Tiles.wastelands ++ Tiles.central)./(t => ImageAsset(t.id))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wastelands), "tile/mask", "mask-", "webp")(
+        (Tiles.wastelands ++ Tiles.central)./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
     ) ::
     // The clan boards (clan power, warchief and power), shown below the Lore Tree; loaded when shown
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "expansion/board", "board-", "webp", lzy = Laziness.OnDemand)(
@@ -254,6 +267,12 @@ object Meta extends MetaGame { mmm =>
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token", "token-", "webp")(
         $(ImageAsset("kaija"), ImageAsset("scorched-earth"))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wastelands), "token", "token-", "webp")(
+        $(ImageAsset("blainn"), ImageAsset("wood"))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wastelands), "token/creature", "creature-", "webp")(
+        (Creature.waste :+ Creature.hrimgandr)./(c => ImageAsset(c.token.drop("creature-".length)))
     ) ::
     // New Blood: Brundr and Kaelinn, the High Tide tokens, the Ancestral Equipment tokens
     ConditionalAssetsList((factions : $[F], options : $[O]) => factions.exists(NewBlood.clans.has), "token", "token-", "webp")(

@@ -353,7 +353,7 @@ object MapExpansion extends Expansion {
     // Cached until the board or a figure changes: the bots ask for it again for every spot they look at,
     // and each call rebuilds the territories for every free spot and rotation
     def placements(tile : String, near : Option[$[Territory]], setup : Boolean)(implicit game : Game) : $[(Spot, Int)] = {
-        val key = (tile, near, setup, game.board.placements, game.units, game.companions, game.chiefs, game.creatureLine, game.creatureAt)
+        val key = (tile, near, setup, game.board.placements, game.units, game.companions, game.chiefs, game.creatureLine, game.creatureAt, game.blainn)
 
         game.placementCache.getOrElse(key, {
             val r = computePlacements(tile, near, setup)
@@ -379,7 +379,7 @@ object MapExpansion extends Expansion {
                 board.tryPlace(p)./~{ preview =>
                     // Kaija counts as Bear Clan's, and a Fallen Valkyrie shares its territory with nobody
                     val mixed = preview.exists { t =>
-                        val players = (t.areas./~(a => game.unitsAt(a).keys) ++ game.companions.filter(x => t.areas.contains(x._2)).map(_._1) ++ game.chiefs.toList.filter(x => t.areas.contains(x._2)).map(_._1)).distinct
+                        val players = (t.areas./~(a => game.unitsAt(a).keys) ++ game.companions.filter(x => t.areas.contains(x._2)).map(_._1) ++ game.chiefs.toList.filter(x => t.areas.contains(x._2)).map(_._1) ++ game.blainn.toList.filter(x => t.areas.contains(x._2)).map(_._1)).distinct
                         players.num > 1 || players.any && game.creatureLine.exists(c => c.kind.shares.not && t.areas.contains(game.creatureAt(c)))
                     }
                     val room = setup.not || p.spec.areas.exists(a => preview.find(_.areas.contains(AreaRef(x, y, a.id))).get.areas.forall(b => game.unitsAt(b).isEmpty))
@@ -535,11 +535,17 @@ object MapExpansion extends Expansion {
         case ShuffledTilesAction(l) =>
             game.pile = l
 
-            game.board.place(Placement("start", 0, 0, 0))
+            // Wastelands: a central tile can replace the starting tile
+            game.board.place(Placement(game.central, 0, 0, 0))
 
-            // Five and six players: both starting tiles
-            if (factions.num >= 5)
-                game.board.place(Placement("start-5", 1, 0, 0))
+            // Five and six players: both starting tiles; with a Wastelands central tile, the five-player tile with the same
+            // borders, whose middle territory is part of the central territory
+            if (factions.num >= 5) {
+                game.board.place(Placement(Waste.five(game.central), 1, 0, 0))
+
+                if (game.central != "start" && Waste.impassable.has(game.central).not)
+                    game.board.join(AreaRef(0, 0, Waste.middle(game.central)), AreaRef(0, 0, "e"))
+            }
 
             game.factions.foreach { f =>
                 game.tileHand += f -> game.pile.take(3)
@@ -1047,13 +1053,18 @@ object MapExpansion extends Expansion {
             val anb = NewBloodExpansion.points(attacker, t, e, true, food(0))
             val dnb = NewBloodExpansion.points(defender, t, e, false, food(1))
 
+            // Wastelands: Thor's Wrath, Landvidi; Urdarbrunn's defender ignores a casualty
+            val aw = game.has(Wastelands).??(WastelandsExpansion.points(attacker, t, true))
+            val dw = game.has(Wastelands).??(WastelandsExpansion.points(defender, t, false))
+            val urdar = game.has(Wastelands).??(WastelandsExpansion.ignored(t))
+
             // Casualties each side inflicts; Halvard defending ignores 1
             val halvard = math.min(faces(0).casualties, Warchief.shield(t, defender, false))
             // Egil's Fury: +1 casualty; New Blood bonuses; Eldrich (Squirrel): the defender's rolled casualties hit them too
             val eldrich = (e.special == EldrichMove).??(faces(1).casualties)
             // Events: Blood Moon adds a casualty to both sides
             val moon = game.eventIs("blood-moon").??(1)
-            val ac = math.max(0, faces(0).casualties - halvard + (e.special == EgilMove).??(1) + NewBloodExpansion.casualties(attacker, t, e, true) + eldrich + moon - NewBloodExpansion.ignored(defender))
+            val ac = math.max(0, faces(0).casualties - halvard + (e.special == EgilMove).??(1) + NewBloodExpansion.casualties(attacker, t, e, true) + eldrich + moon - NewBloodExpansion.ignored(defender) - urdar)
             // Shieldbearers cancel 1 casualty inflicted by the defender
             val shield = ((e.special == ShieldMove || e.special == BorgildMove) && faces(1).casualties + towers > 0).??(1)
             val dc = math.max(0, faces(1).casualties + towers - shield + NewBloodExpansion.casualties(defender, t, e, false) + moon - NewBloodExpansion.ignored(attacker))
@@ -1064,8 +1075,8 @@ object MapExpansion extends Expansion {
             // Events: Conquests gives the attacker 1 point
             val conquests = game.eventIs("conquests").??(1)
 
-            val as = game.strength(t, attacker, true) + e.bonus + ab + anb + wise + conquests + food(0) + faces(0).points
-            val ds = game.strength(t, defender, false) + fortress + db + dnb + food(1) + faces(1).points
+            val as = game.strength(t, attacker, true) + e.bonus + ab + anb + aw + wise + conquests + food(0) + faces(0).points
+            val ds = game.strength(t, defender, false) + fortress + db + dnb + dw + food(1) + faces(1).points
 
             if (game.kaijaIn(t, attacker) || game.kaijaIn(t, defender))
                 game.note("kaija-fight")
@@ -1079,8 +1090,8 @@ object MapExpansion extends Expansion {
             if (game.chiefIn(t, attacker) || game.chiefIn(t, defender))
                 game.note("chief-fight")
 
-            attacker.log("scored", as.hl, kaija(attacker), chief(attacker, true), extra(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt, wise -> "The Wise One".hl, conquests -> "Conquests".hl), "and inflicted", ac.hl, (ac == 1).?("casualty").|("casualties"), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
-            defender.log("scored", ds.hl, kaija(defender), chief(defender, false), extra(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt), "and inflicted", dc.hl, (dc == 1).?("casualty").|("casualties"), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
+            attacker.log("scored", as.hl, kaija(attacker), chief(attacker, true), extra(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt, aw -> "Wastelands".hl, wise -> "The Wise One".hl, conquests -> "Conquests".hl), "and inflicted", ac.hl, (ac == 1).?("casualty").|("casualties"), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
+            defender.log("scored", ds.hl, kaija(defender), chief(defender, false), extra(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt, dw -> "Wastelands".hl), "and inflicted", dc.hl, (dc == 1).?("casualty").|("casualties"), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
 
             val winner =
                 if (ac >= du && dc >= au) None

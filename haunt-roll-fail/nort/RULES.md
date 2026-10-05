@@ -39,6 +39,7 @@ draws a tile when no neutral territory is left.
 | New Blood: seven more clans with their warchiefs and 28 clan cards | done 2026-10-04 (`newblood.scala`, see New Blood below) |
 | Uncharted Horizons: Events module and Alternative victory conditions module (Thane and Jarl modes) | done 2026-10-04 (`horizons.scala`, see below) |
 | Uncharted Horizons: Solo module (the Automa) | done 2026-10-04 (`automa.scala`, the 15 real cards) |
+| Wastelands expansion: Environment and Central tiles, five more creatures, Hrimgandr and Jötunn Blainn | done 2026-10-05 (`wastelands.scala`, see Wastelands below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -573,7 +574,7 @@ the main menu, or "Automa (solo)" and one clan; the Automa is always a bot
   3 food for 1 lore with 6+ food. No Winter costs, no Unrest. Events don't
   involve it.
 
-## Wastelands expansion (rulebook, 12 pages; not implemented yet)
+## Wastelands expansion (rulebook, 12 pages; done 2026-10-05)
 
 From the English rulebook the owner uploaded on 2026-10-05
 (`Wastelands_Rulebook_150dpi_02122025_EN.pdf`, not in the repo). Uses some
@@ -601,11 +602,11 @@ of value 6 or less shuffled, players + 1 of them on top, the rest below):
 - Valdemar: when spawning or moving, removes 1 regular unit from the
   territory he arrives in. While he is alive all other creatures get +1 axe
   in combat.
-- Strength, fame and colour of these five: on the cards only (hidden in the
-  rulebook's picture); get them from the TTS mod. The top strip of each card
-  shows its movement priorities (Rock Golem: units > buildings ...;
-  Myrkalfar: buildings > resources ...; Giant Boar and Valdemar: resources
-  first; Kobold: buildings > units ...), to be read from the cards too.
+- Strength / fame from the cards (TTS mod 3597126237): Rock Golem 7/4,
+  Myrkalf 6/3, Giant Boar 5/2, Kobold 3/0, Valdemar 7/4 (beige only),
+  Hrimgandr 8/8. Movement priorities: Rock Golem units > buildings >
+  resources; Myrkalf buildings > resources > units; Giant Boar and Valdemar
+  resources > buildings > units; Kobold buildings > units > resources.
 
 **Environment tiles** (shuffled into the map tile pile at the end of setup;
 with Wilderness too, use at most 12 Environment tiles in all):
@@ -666,16 +667,14 @@ between them.
   creature cards, put one of those creatures on the Gate and the other card at
   the bottom of the creature deck.
 
-**Art in the repo** (`webp2/nort/images/expansion/tile/`): Kobold Camp
-`tile-14`, Thor's Wrath `tile-19`, Vedrfolnir `tile-15`, Naströnd `tile-16`,
-Landvidi `tile-11`, Jötnar Camp `tile-10`; Yggdrasil `tile-31`, Volcano
-`tile-32`, Great Lake `tile-33`, Wyvern's Den `tile-34`, Mimirsbrunn
-`tile-35`, five-player regular `central-5`; the Jötnar Camp card board is
-`board/jotnar-camp`. (`tile-12`, `-13`, `-17`, `-18` are Uncharted Horizons
-map tiles with building spaces, not Wastelands.) Missing: Urdarbrunn, Magma
-Flow, Relic of the Gods, Hrimgandr's Lair, Gate of Helheim, the impassable
-five-player tile and all creature cards and figures. The rulebook only has
-them as 230 px pictures.
+**Art** (`webp2/nort/images/tile/waste-*`, `start-*`): the tiles from the
+TTS mod 3597126237 (the ones already in `expansion/tile/` reused where they
+were), cropped like the core tiles. The impassable five-player tile
+(`start-5-wall`) isn't in the mod: it is the regular one with its dashed
+borders redrawn as orange impassable lines. Creature cards and round tokens
+(`card/creature/`, `token/creature/`) are from the mod's card images; the mod
+has only the brown-paw cards, so the beige ones (`-1`) have the paw ring
+recoloured. Jötunn Blainn's token is `token/blainn`.
 
 ## Expansions (later)
 
@@ -916,3 +915,36 @@ Check these against the rulebook when it is at hand.
       build rules (space, one of each type, no Brown Bear).
     - Signy's Celerity: units in an enemy territory with the token may move
       on; a fight happens only if some stay.
+- **Wastelands**, where the rulebook says nothing or the game simplifies:
+  - Central tiles impassable in the middle (Relic, Great Lake, Volcano) have
+    no middle territory, like the Wilderness Great Lake; the Kobold Camp,
+    Jötnar Camp and Naströnd likewise. The printed wood on Naströnd and the
+    apples on the Great Lake are reminders of their effects, not resources.
+  - Five players with a regular central tile: the five-player tile's middle
+    territory joins the central tile's east territory across the side as
+    usual, and that territory is joined to the middle territory (the border
+    between them ignored). With an impassable central tile the five-player
+    tile's middle just joins the east shore.
+  - The Wyvern's Den and the Gate of Helheim can only be chosen, or drawn,
+    with the Creatures module. The central Den's middle still gives the usual
+    fame of a closed territory; the 2 fame once the Wyvern is gone come on
+    top. A Wyvern beaten away from its Den goes back to it, as in Wilderness.
+  - Hrimgandr is in the game even without the Creatures module (it only
+    defends, so only its fights are needed).
+  - Wilderness together with Wastelands: 12 Environment tiles are drawn at
+    random from both sets (the Wilderness Den still goes below the first
+    tiles, as in Wilderness).
+  - Jötunn Blainn moves with his clan's figures: he goes along with the last
+    group of figures leaving his territory, and is a casualty after units and
+    the warchief, before Kaija. Card effects on units don't target him.
+  - The Volcano erupts every year, the first one included; its die removes
+    units only (not the warchief, Kaija or Blainn), chosen by the target.
+  - Myrkalf: the 1 wood is paid automatically when the owner has it.
+  - Gate of Helheim: the skull/axe face counts as a skull; the two cards are
+    drawn without reshuffling the discard pile (fewer if the deck is short).
+  - Mimirsbrunn: the card goes on top of the draw pile and counts as the
+    player's Development or Achievement card for the year (`foresaw`).
+  - Kobold exchanges and the Kobold Camp happen right after the Harvest's
+    collection, then Blainn's recruitment, then the usual trades.
+  - Vedrfolnir's tile is placed like a second-chance tile next to an open
+    territory; a tile that fits nowhere goes to the bottom of the pile.

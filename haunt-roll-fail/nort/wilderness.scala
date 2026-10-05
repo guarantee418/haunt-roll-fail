@@ -48,6 +48,11 @@ object Wild {
     // The Den's area, once explored
     def dens(implicit game : Game) : $[AreaRef] = game.board.placements.%(_.tile == den)./(p => AreaRef(p.x, p.y, "d"))
 
+    // Where a Wyvern lives: this Den or the Wastelands central Wyvern's Den
+    def homes(implicit game : Game) : $[AreaRef] = dens ++ game.board.placements.%(_.tile == Waste.den)./(p => AreaRef(p.x, p.y, "d"))
+
+    def homeIn(t : Territory)(implicit game : Game) = homes.exists(t.areas.contains)
+
     def geysersIn(t : Territory)(implicit game : Game) = t.areas.count(a => geysers.has(key(a)))
 
     def ruinsFame(t : Territory)(implicit game : Game) = t.areas./(a => ruins.getOrElse(key(a), 0)).sum
@@ -130,7 +135,8 @@ object WildernessExpansion extends Expansion {
             if (game.has(Creatures))
                 game.spectrals = Creature.spectral
 
-            Shuffle[String](l ++ Wild.tiles, ShuffledEnvironmentAction(_))
+            // With Wastelands, the twelve Environment tiles drawn from both expansions
+            Shuffle[String](l ++ game.environment.|(Wild.tiles), ShuffledEnvironmentAction(_))
 
         case ShuffledEnvironmentAction(l) =>
             game.pile = l
