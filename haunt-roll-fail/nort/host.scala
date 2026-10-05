@@ -16,7 +16,32 @@ object Host extends hrf.host.BaseHost {
 
     type W = Faction
 
-    def askBot(g : G, f : F, actions : $[UserAction]) = new BotXX(f).ask(actions, 0)(g)
+    // NORT_HARD=1: the first seat plays the Hard bot (BotHard), the others the Easy one; NORT_HARD=all: every seat Hard
+    def hard(g : G, f : F) = sys.env.get("NORT_HARD") match {
+        case Some("all") => true
+        case Some("1") => g.setup.head == f
+        case _ => false
+    }
+
+    def askBot(g : G, f : F, actions : $[UserAction]) = {
+        val bot = hard(g, f).?(new BotHard(f) : Bot).|(new BotXX(f))
+        val start = System.nanoTime
+        val r = bot.ask(actions, 0)(g)
+        val ms = (System.nanoTime - start) / 1000000
+        // NORT_TIMING=1: the slowest decisions of the Hard bot
+        if (sys.env.get("NORT_TIMING").has("1") && hard(g, f) && ms > 300)
+            println("SLOW " + ms + "ms " + g.setup.num + "p year " + g.year + " " + actions.num + " actions, first " + actions.head.unwrap.toString.take(80))
+        // NORT_TRACE=1: what the Hard bot chose, with its best alternatives
+        if (sys.env.get("NORT_TRACE").has("1") && hard(g, f) && actions.num > 1) {
+            val l = g.explode(actions, false, None).notOf[Hidden].%(_.isInstanceOf[Unavailable].not)
+            val e = new HardEvaluation(f)(g)
+            val scored = l./(a => a -> e.eval(a).head.weight).sortBy(-_._2)
+            if (scored.exists(_._1.unwrap.isInstanceOf[PassAction]))
+                println("   hand: " + g.states(f).hand./(c => c.name + "=" + e.cardValue(c).round).mkString(", ") + " pile " + g.pile.num + " explorable " + MapExpansion.explorable(f, false)(g).num + " sample " + g.pile.take(2)./(t => MapExpansion.placements(t, Some(MapExpansion.explorable(f, false)(g)), false)(g).num))
+            println("Y" + g.year + " " + f + " food " + g.states(f).food + " wood " + g.states(f).wood + " lore " + g.states(f).lore + " fame " + g.states(f).fame + " units " + g.onMap(f) + " | " + scored.take(4)./{ case (a, w) => w + " " + a.unwrap.toString.take(110) }.mkString("\n      "))
+        }
+        r
+    }
 
     // NORT_NEWBLOOD=1: only the New Blood clans
     def factions = sys.env.get("NORT_NEWBLOOD").has("1").?(NewBlood.clans).|($(Bear, Boar, Goat, Raven, Snake, Stag, Wolf) ++ NewBlood.clans)
@@ -24,8 +49,10 @@ object Host extends hrf.host.BaseHost {
 
     // Random colors, game length and victory options; teams half the time with four or six players (NORT_TEAMS=1: always)
     // NORT_AUTOMA=1: solo games, one clan against the Automa
-    def batch = $(2, 3, 4, 5, 6)./(n => () => {
+    def batch = sys.env.get("NORT_PLAYERS")./(_.toInt)./(n => $(n, n, n, n, n).take(sys.env.get("NORT_BATCH")./(_.toInt).|(5))).|($(2, 3, 4, 5, 6))./(n => () => {
         val solo = sys.env.get("NORT_AUTOMA").has("1")
+        // NORT_CORE=1: the core game only (seven years, no modules), with NORT_PLAYERS players if set
+        val core = sys.env.get("NORT_CORE").has("1")
         val l = solo.?(factions.shuffle.take(1) :+ Automa).|(factions.shuffle.take(n))
         val colors = l.zip(PlayerColor.all.shuffle)./{ case (f, c) => ColorOption(f, c) }
         // NORT_CREATURES=1: always with the Creatures module (and the More Creatures variant half the time); NORT_WARCHIEFS=1: always with Warchiefs; NORT_WILDERNESS=1: always with Wilderness
@@ -44,11 +71,13 @@ object Host extends hrf.host.BaseHost {
             (sys.env.get("NORT_WILDERNESS").has("1") || random() < 0.5).$(ModuleOption(Wilderness)) ++
             // NORT_EVENTS=1: always with the Events module
             (sys.env.get("NORT_EVENTS").has("1") || random() < 0.5).$(ModuleOption(EventsModule)) ++
-            // NORT_WASTELANDS=1: always with Wastelands, and a random central tile choice
-            wastelands.$(ModuleOption(Wastelands)) ++ wastelands.$(CentralChoice.all.%(c => creatures || c.tile.forall(Waste.creatureOnly.has(_).not)).shuffle.head) ++
+            // NORT_WASTELANDS=1: always with Wastelands; a random central tile choice either way (it needs no module),
+            // NORT_CENTRAL=1: never the standard tile; NORT_CENTRAL=<tile id>: always that tile
+            wastelands.$(ModuleOption(Wastelands)) ++ $(CentralChoice.all.%(c => creatures || c.tile.forall(Waste.creatureOnly.has(_).not)).%(c => c != StandardCentral || sys.env.get("NORT_CENTRAL").has("1").not)
+                .%(c => sys.env.get("NORT_CENTRAL").%(_ != "1").forall(c.tile.has)).shuffle.head) ++
             teams
         val level = solo.$(AutomaLevelOption(1 + (random() * 6).toInt))
-        val all = options ++ level ++ level.exists(_.level >= 3).$(ModuleOption(Creatures))
+        val all = core.?(colors).|(options ++ level ++ level.exists(_.level >= 3).$(ModuleOption(Creatures)))
         all.foreach(o => assert(Meta.parseOption(Meta.writeOption(o)) == $(o), o))
         new G(l, all.distinct)
     })
@@ -65,11 +94,15 @@ object Host extends hrf.host.BaseHost {
         case GameOverWonAction(_, l, _) => l
     }
 
-    def winnersFromFaction(f : F)(implicit g : G) = $(f)
+    def winnersFromFaction(f : F)(implicit g : G) = {
+        if (hard(g, f) && sys.env.get("NORT_HARD").has("1"))
+            println("HARD WON " + f.name + " in a " + g.setup.num + "-player game")
+        $(f)
+    }
 
     def serializer = nort.Serialize
     def start = StartAction(version)
-    def times = 5
+    def times = sys.env.get("NORT_TIMES")./(_.toInt).|(5)
 
     // Five- and six-player ten-year games with creatures take more than the default 4000 steps
     override val limit = 12000

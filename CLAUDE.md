@@ -37,7 +37,10 @@ Squirrel, with their warchiefs and 28 clan cards, from the TTS mod
 3597126237) in `nort/newblood.scala`; picking one of them turns it on.
 Uncharted Horizons' Events and Alternative victory conditions modules are in
 `nort/horizons.scala`. The Wastelands expansion (Environment tiles
-`waste-*`, the Central tiles `start-*` chosen with the "Central tile" option,
+`waste-*`, the Central tiles `start-*` chosen with the "Central tile" option, which
+is offered in every game (standard tile, any of the nine, the Wilderness Great
+Lake, or random) and needs
+the module only for the rest of Wastelands,
 five more creatures, Hrimgandr and Jötunn Blainn) is in `nort/wastelands.scala`.
 The solo Automa (Uncharted Horizons' Solo module) is
 in `nort/automa.scala`, with its 15 cards transcribed from the Tabletopia
@@ -53,7 +56,9 @@ On the map, territories are tinted with their controlling player's color,
 turn gray when invaded and pink during the fight (resource icons stay
 untinted); closed territories that give fame have their border dashes
 drawn in the controller's color (alternating where two players' meet,
-dotted yellow or white rails beside Rough borders), from the dash data in
+dotted yellow or white rails beside Rough borders, solid ones beside
+the orange impassable lines of the Peaks, the Poisonous Swamp's corners and the
+walled five-player tile), from the dash data in
 `nort/lines.scala` made by `nort/tools/BorderLines.java`; the area masks (`tile/mask/`) and the free-ground
 grid for placing warchiefs, Kaija and creatures (`nort/grid.scala`) are made
 from the tile art by `nort/tools/tile-masks.py`. Warchiefs, Kaija and
@@ -110,7 +115,10 @@ hook the setup screen in `hrf.scala` calls for every option). Northgard no longe
 in its `Meta` (setting it to `true` would put an "Under Construction" note under
 its name on the game list and a disclaimer at the top of its menu).
 `nort/host.scala` runs bot games headless (JVM only,
-like the other `host.scala` files).
+like the other `host.scala` files). Northgard has two bots: "Easy" (`BotXX` in
+`nort/bot.scala`, random) and "Hard" (`BotHard` in `nort/bot-hard.scala`, which
+values each choice by trying it on the game and scoring the position; see Bots
+in `nort/HANDOFF.md`).
 
 ## Building
 

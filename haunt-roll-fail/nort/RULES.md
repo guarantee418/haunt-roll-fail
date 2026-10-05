@@ -140,12 +140,10 @@ draws a tile when no neutral territory is left.
   Limited by the 14 units in reserve.
 - **Build**: in an owned territory on a matching free space; one building of
   each type per territory; limited by tokens; permanent. A small building
-  goes on a small, large or Carved Stone space (not confirmed, see
-  Interpretations), a large building only on a large space, a Carved Stone
+  goes on a small or Carved Stone space, a large building only on a large space, a Carved Stone
   only on a Carved Stone space. When a building
   fits more than one kind of free space, the player picks the space (to keep
-  a large space for a large building, or a Carved Stone space for a Carved
-  Stone).
+  a Carved Stone space for a Carved Stone).
   - Small (1 wood): Food Silo (+1 food at harvest), Woodcutter Lodge (+1 wood),
     Defense Tower (+1 casualty to the defender's roll per tower), Training Camp
     (+1 unit when recruiting there), Carved Stone (+1 lore, only on a Carved
@@ -694,6 +692,10 @@ Check these against the rulebook when it is at hand.
     (the rulebook's example counts "Leader + 3 units" as 4); with it, 3.
   - Creatures: the Automa never moves into a territory with a creature;
     creature prompts aimed at it are answered by its bot.
+    When a creature picks where to move, the Automa's figures are ignored
+    (a ruling from Robotos, 2026-10-05): a territory with only Automa
+    figures counts as empty, and only the player's figures count for "most
+    units".
   - The die's choice face: the casualty only when the enemy has one figure
     left in the fight.
   - Explore's rotation row is measured with the tile in place: resources,
@@ -702,7 +704,7 @@ Check these against the rulebook when it is at hand.
   - Explore's territory row ranks the Automa's open territories that have a
     free spot; the compass icon also picks the spot next to that territory.
   - Build: it puts a small building on a small space, then a Carved Stone
-    space, and on a large space only when no other is free.
+    space (large spaces take only large buildings).
   - Snake's Stolen Lore and Rapacious Exploitation adjustments aren't
     implemented (the Automa has no hand or active area).
 - **Events**:
@@ -796,13 +798,11 @@ Check these against the rulebook when it is at hand.
     tile's lair is on the other side of the Rough border). A Spectral Warrior
     may go on a lair with a creature on it.
 
-- **Building spaces** (not confirmed; the rulebook text isn't in the repo):
-  a small building may go on a large building space as well as on a small
-  or Carved Stone one. Before 2026-10-04 small buildings could only use
-  small and Carved Stone spaces. If the rulebook says large spaces are only
-  for large buildings, remove `LargeSpace` from the small buildings' kinds
-  in `MapExpansion.buildOptions` (`nort/map.scala`); the space choice still
-  works between small and Carved Stone spaces.
+- **Building spaces**: a large space takes only large buildings, and a small
+  building goes on a small or Carved Stone space (`MapExpansion.buildOptions`
+  and `buildBlock` in `nort/map.scala`). Small buildings were allowed on large
+  spaces between 2026-10-04 and 2026-10-05, when a player pointed out that
+  the rules don't allow it.
 - **Kaija** (Bear): one figure. It may be one of the three setup figures
   (two units and Kaija), or be recruited instead of a unit. It moves like a
   unit, alone or with others, but not into a territory with enemy figures
@@ -932,6 +932,15 @@ Check these against the rulebook when it is at hand.
     top. A Wyvern beaten away from its Den goes back to it, as in Wilderness.
   - Hrimgandr is in the game even without the Creatures module (it only
     defends, so only its fights are needed).
+  - The central tile can be picked in any game, without the rest of
+    Wastelands (owner's request, 2026-10-05): its effects apply, but the
+    Environment tiles and the Wastelands creatures stay out unless the
+    module is on. "Random" can draw from the nine Wastelands tiles only, or
+    from those, the standard tile and the Wilderness Great Lake. The
+    Wilderness Great Lake can be the central tile too (owner's request): it
+    works as the Wastelands one (the five-player tile with impassable
+    borders) but keeps its own food rule (units and warchiefs, not Kaija),
+    and it is then left out of the Environment tiles.
   - Wilderness together with Wastelands: 12 Environment tiles are drawn at
     random from both sets (the Wilderness Den still goes below the first
     tiles, as in Wilderness).

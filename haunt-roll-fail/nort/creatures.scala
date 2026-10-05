@@ -229,7 +229,7 @@ object Creature {
     val hrimgandr = Creature(Hrimgandr, 1)
 
     // The creature deck of a game
-    def deck(implicit game : Game) : $[Creature] = all ++ game.has(Wilderness).??(wild) ++ game.has(Wastelands).??(waste)
+    def deck(implicit game : Game) : $[Creature] = all ++ game.has(Wilderness).??(wild) ++ Waste.module.??(waste)
 }
 
 // A creature attacked by the current Move action, in the territory with this anchor
@@ -269,15 +269,15 @@ case class CreatureDeclareDoneAction(self : Faction, e : MoveEffect, then : Forc
 case class CreatureFightAction(self : Faction, area : AreaRef, c : Creature, e : MoveEffect, then : ForcedAction) extends BaseAction("Fight in")(area, "against", c) with MapTarget { def target = area }
 // attacking: the player attacks the creature; otherwise the creature attacks the player
 case class CreatureCombatAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, then : ForcedAction) extends ForcedAction
-case class CreatureFoodAction(self : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, then : ForcedAction) extends BaseAction(self, "spends food for the fight against", c, Break, CreatureFightInfo(self, area, c, attacking))((food == 0).?("No food".txt).|(food.hl ~ " " ~ Food.elem))
+case class CreatureFoodAction(self : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, then : ForcedAction) extends BaseAction(self, "spends food for the fight against", c, Break, CreatureFightInfo(self, area, c, e, attacking))((food == 0).?("No food".txt).|(food.hl ~ " " ~ Food.elem))
 case class CreaturePlayerRolledAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
 // Liv's reroll (Warchiefs module), and going on with the player's face
 case class CreatureRerollAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, then : ForcedAction) extends ForcedAction
 case class CreatureRerolledAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
 case class CreatureFaceAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, face : DieFace, then : ForcedAction) extends ForcedAction
 case class CreatureCunningAskAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, spent : $[Resource], then : ForcedAction) extends ForcedAction
-case class CreatureCunningAction(self : Faction, area : AreaRef, c : Creature, e : MoveEffect, r : Resource, spent : $[Resource], then : ForcedAction) extends BaseAction("Liv's Cunning".hl, "spend for the fight", spent.any.?("(" ~ spent./(_.elem).join(" ") ~ " so far)").|(Empty), Break, CreatureFightInfo(self, area, c, true))("1", r)
-case class CreatureCunningDoneAction(self : Faction, area : AreaRef, c : Creature, e : MoveEffect, spent : $[Resource], then : ForcedAction) extends BaseAction("Liv's Cunning".hl, Break, CreatureFightInfo(self, area, c, true))(spent.none.?("Spend nothing").|("Done"))
+case class CreatureCunningAction(self : Faction, area : AreaRef, c : Creature, e : MoveEffect, r : Resource, spent : $[Resource], then : ForcedAction) extends BaseAction("Liv's Cunning".hl, "spend for the fight", spent.any.?("(" ~ spent./(_.elem).join(" ") ~ " so far)").|(Empty), Break, CreatureFightInfo(self, area, c, e, true))("1", r)
+case class CreatureCunningDoneAction(self : Faction, area : AreaRef, c : Creature, e : MoveEffect, spent : $[Resource], then : ForcedAction) extends BaseAction("Liv's Cunning".hl, Break, CreatureFightInfo(self, area, c, e, true))(spent.none.?("Spend nothing").|("Done"))
 case class CreatureFoodPaidAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, then : ForcedAction) extends ForcedAction
 case class CreatureFoodStartAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, then : ForcedAction) extends ForcedAction
 case class CreatureRolledAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, face : DieFace, random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
@@ -296,7 +296,7 @@ object CreaturesExpansion extends Expansion {
 
     def score(p : CreaturePriority, t : Territory)(implicit game : Game) : Int = p match {
         case MostBuildings => buildingPoints(t)
-        case MostUnits => game.seating./(game.figures(t, _)).sum
+        case MostUnits => game.seating.but(Automa)./(game.figures(t, _)).sum
         case MostResources =>
             val (food, wood, lore) = game.produce(t)
             food + wood + lore
@@ -304,12 +304,13 @@ object CreaturesExpansion extends Expansion {
 
     // Where a creature moves: an adjacent territory (Rough borders don't matter) without a creature,
     // with units if possible, then by its priorities; the first player breaks the remaining ties.
+    // Creatures ignore the Automa's figures when choosing (a ruling from Robotos, 2026-10-05).
     // Every territory is adjacent to the Wyvern
     def destinations(c : Creature)(implicit game : Game) : $[Territory] = {
         val t = game.board.territory(game.creatureAt(c))
         val near = (c.kind == Wyvern).?(game.board.territories.but(t)).|(game.board.adjacent(t).map(_._1))
         val free = near.%(o => game.creaturesIn(o).none)
-        val peopled = free.%(o => game.present(o).any)
+        val peopled = free.%(o => game.present(o).but(Automa).any)
 
         c.kind.priorities.foldLeft(peopled.any.?(peopled).|(free)) { (l, p) =>
             if (l.none) l else { val m = l./(score(p, _)).max ; l.%(score(p, _) == m) }

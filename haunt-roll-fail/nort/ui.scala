@@ -338,6 +338,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         }
     })
 
+    // How big a building is drawn: its space's printed octagon, so a large building fills its large space
+    val smallBuilding = 190.0
+    val largeBuilding = 235.0
+    def buildingSize(b : Building) = b.large.?(largeBuilding).|(smallBuilding)
+
     def at(image : String, size : Double, alpha : Double = 1.0) : ImageRect = ImageRect(new RawImage(img(image)), Rectangle(-size / 2, -size / 2, size, size), alpha)
 
     // Territory tints: an area's mask (webp2/nort/images/tile/mask/) filled with a colour and turned with its tile, made once
@@ -500,6 +505,65 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 g.lineTo(ps(1)._1, ps(1)._2)
                 g.lineTo(bx + ex, by + ey)
                 g.stroke()
+            }
+
+            (c, Rectangle(x0, y0, x1 - x0, y1 - y0))
+        })
+    }
+
+    // Solid rails beside a wall (an impassable border's orange line), turned with its tile, like lineImage
+    def wallImage(tile : String, r : Int, n : Int, rail : String) : (hrf.ui.sprites.Image, Rectangle) = {
+        val key = (tile + "/wall", r % 4, n, rail, rail, |(rail))
+
+        if (lineImages.size > 400)
+            lineImages.clear()
+
+        lineImages.getOrElseUpdate(key, {
+            val runs = BorderLines.walls(tile)(n).runs./(_./ { case (x, y) =>
+                val (rx, ry) = game.board.rotate(x, y, r)
+                (rx * T, ry * T)
+            })
+
+            val offset = 33.0
+            val margin = 50.0
+            val all = runs.flatten
+            val x0 = all.map(_._1).min - margin
+            val y0 = all.map(_._2).min - margin
+            val x1 = all.map(_._1).max + margin
+            val y1 = all.map(_._2).max + margin
+            val k = 0.5
+
+            val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+            canvas.width = ((x1 - x0) * k).ceil.toInt.max(1)
+            canvas.height = ((y1 - y0) * k).ceil.toInt.max(1)
+
+            val c = new CanvasImage(canvas)
+            val g = c.context
+            g.scale(k, k)
+            g.translate(-x0, -y0)
+            g.lineJoin = "round"
+            g.lineCap = "round"
+
+            runs.foreach { ps =>
+                // Each point moved along the normal of the way through it
+                def side(s : Int) = ps.indices.toList.map { i =>
+                    val (ax, ay) = ps((i - 1).max(0))
+                    val (bx, by) = ps((i + 1).min(ps.num - 1))
+                    val l = math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay)).max(0.001)
+                    (ps(i)._1 - (by - ay) / l * offset * s, ps(i)._2 + (bx - ax) / l * offset * s)
+                }
+
+                $(1, -1).foreach { s =>
+                    val q = side(s)
+                    $(("rgba(40,25,0,0.8)", 16.0), (rail, 10.0)).foreach { case (stroke, width) =>
+                        g.strokeStyle = stroke
+                        g.lineWidth = width
+                        g.beginPath()
+                        g.moveTo(q.head._1, q.head._2)
+                        q.drop(1).foreach { case (x, y) => g.lineTo(x, y) }
+                        g.stroke()
+                    }
+                }
             }
 
             (c, Rectangle(x0, y0, x1 - x0, y1 - y0))
@@ -724,6 +788,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     background.add(Sprite($(ImageRect(i, rect, 1.0)), $))(sx(p.x), sy(p.y))
                 }
             }
+
+            // Solid rails on both sides of a wall when a side is controlled (white ones when a side is yellow)
+            BorderLines.walls.get(p.tile).|($).zipWithIndex.foreach { case (wall, n) =>
+                val colors = (fameColor(board.territory(AreaRef(p.x, p.y, wall.a))) ++ fameColor(board.territory(AreaRef(p.x, p.y, wall.b)))).toList
+
+                if (wall.runs.any && colors.any) {
+                    val (i, rect) = wallImage(p.tile, p.r, n, colors.has(Yellow).?(roughRailOnYellow).|(roughRail))
+                    background.add(Sprite($(ImageRect(i, rect, 1.0)), $))(sx(p.x), sy(p.y))
+                }
+            }
         }
 
         val targets = lastActions./~(_.unwrap.as[MapTarget])./(_.target)
@@ -740,16 +814,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 pieces.add(Sprite($(at("ui-spot-" + n, T * 0.9)), $(Rectangle(-T * 0.45, -T * 0.45, T * 0.9, T * 0.9)), $(s)))(sx(s.x + 0.5), sy(s.y + 0.5))
         }
 
-        // Buildings on their spaces
+        // Buildings on their spaces: a large building fills its (bigger) space
         game.buildings.foreach { case (s, b) =>
             val (x, y) = board.point(s)
-            pieces.add(Sprite($(at(b.image, 190)), $))(sx(x), sy(y))
+            pieces.add(Sprite($(at(b.image, buildingSize(b))), $))(sx(x), sy(y))
         }
 
         // Free building spaces offered for a building, clickable
         targets.of[SpaceRef].distinct.foreach { s =>
             val (x, y) = board.point(s)
-            pieces.add(Sprite($(at("ui-target", 190)), $(Rectangle(-95, -95, 190, 190)), $(s)))(sx(x), sy(y))
+            val n = (s.index < SpaceRef.extra && MapExpansion.spaceKind(s) == LargeSpace).?(largeBuilding).|(smallBuilding)
+            pieces.add(Sprite($(at("ui-target", n)), $(Rectangle(-n / 2, -n / 2, n, n)), $(s)))(sx(x), sy(y))
         }
 
         // Ox Clan's Ancestral Equipment tokens on their spaces, face up
@@ -932,7 +1007,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // The building being confirmed, on its space, with the check mark (confirm) and the cross (cancel) above it, on top of everything
         lastActions./~(_.unwrap.as[BuildPreview]).take(1).foreach { p =>
             val (x, y) = board.point(p.space)
-            pieces.add(Sprite($(at(p.building.image, 190, 0.9)), $))(sx(x), sy(y))
+            pieces.add(Sprite($(at(p.building.image, buildingSize(p.building), 0.9)), $))(sx(x), sy(y))
             pieces.add(Sprite($(at("ui-confirm", 220)), $(Rectangle(-110, -110, 220, 220)), $(ConfirmMark)))(sx(x) - 120, sy(y) - 225)
             pieces.add(Sprite($(at("ui-cancel", 220)), $(Rectangle(-110, -110, 220, 220)), $(CancelMark)))(sx(x) + 120, sy(y) - 225)
         }

@@ -9,6 +9,11 @@
 // Needs Java 11+ and ImageMagick (convert). Run from the repository root:
 //   java haunt-roll-fail/nort/tools/BorderLines.java [--check DIR]
 // --check writes an image per tile to DIR with the dashes found, coloured by border.
+//
+// It also traces the solid orange lines of the impassable borders (walls) that have a territory on
+// each side (the Peaks, the Poisonous Swamp's corners, the five-player tile with walls), so the map
+// can draw solid rails beside them when a side is controlled. The rings around impassable middles
+// have a territory on one side only and are left out.
 
 import java.io.*;
 import java.nio.file.*;
@@ -22,6 +27,8 @@ public class BorderLines {
     static final Set<String> PHOTO = Set.of("start-5", "tile-31", "tile-32", "tile-33");
     // Wastelands central tiles from the TTS scans: pale teal dashes
     static final Set<String> TEAL = Set.of("start-magma", "start-helheim", "start-relic");
+    // Impassable middles inside an orange ring: their walls have no territory on the inside
+    static final Set<String> RINGED = Set.of("start-relic", "start-lake", "start-volcano", "waste-kobold", "waste-jotnar", "waste-nastrond");
 
     record Border(String a, String b, boolean wall) {}
     record Tile(String id, List<String> areas, List<Border> borders) {}
@@ -48,6 +55,8 @@ public class BorderLines {
         out.append("        lazy val dashes : $[Dash] = data.split(' ').toList.filter(_.nonEmpty).map(_.toInt / 10000.0).grouped(7).toList.map(v => Dash(v(0), v(1), v(2), v(3), v(4), v(5), v(6)))\n");
         out.append("    }\n\n");
         out.append("    val lines : Map[String, $[Line]] = Map(\n");
+
+        StringBuilder wallOut = new StringBuilder();
 
         for (Tile t : parse()) {
             int[] rgb = readRaw(tiles.resolve(t.id + ".webp"), "rgb", 3);
@@ -117,6 +126,22 @@ public class BorderLines {
             }
             out.append("        ),\n");
 
+            Map<Border, List<List<double[]>>> walls = walls(t, rgb, lab);
+            if (!walls.isEmpty()) {
+                wallOut.append("        \"" + t.id + "\" -> $(\n");
+                for (var e : walls.entrySet()) {
+                    List<String> runs = new ArrayList<>();
+                    for (List<double[]> run : e.getValue()) {
+                        StringBuilder data = new StringBuilder();
+                        for (double[] q : run)
+                            data.append(Math.round(q[0] * 10000)).append(' ').append(Math.round(q[1] * 10000)).append(' ');
+                        runs.add("\"" + data.toString().trim() + "\"");
+                    }
+                    wallOut.append("            Wall(\"" + e.getKey().a + "\", \"" + e.getKey().b + "\", $(" + String.join(", ", runs) + ")),\n");
+                }
+                wallOut.append("        ),\n");
+            }
+
             if (check != null) {
                 var im = new java.awt.image.BufferedImage(N, N, java.awt.image.BufferedImage.TYPE_INT_RGB);
                 for (int i = 0; i < N * N; i++)
@@ -138,13 +163,123 @@ public class BorderLines {
                     }
                     k++;
                 }
+                g.setStroke(new java.awt.BasicStroke(3f));
+                for (var runs : walls.values())
+                    for (List<double[]> run : runs) {
+                        g.setColor(pal[k++ % pal.length]);
+                        var path = new java.awt.geom.Path2D.Double();
+                        path.moveTo(run.get(0)[0] * N, run.get(0)[1] * N);
+                        for (double[] q : run) path.lineTo(q[0] * N, q[1] * N);
+                        g.draw(path);
+                    }
                 javax.imageio.ImageIO.write(im, "png", Paths.get(check, t.id + ".png").toFile());
             }
             System.out.println(t.id + " " + found.values().stream().map(l -> "" + l.size()).reduce((p, q) -> p + " " + q).orElse(""));
         }
 
+        out.append("    )\n\n");
+        out.append("    // The centre lines of the walls with a territory on each side, as runs of points (x y, in ten thousandths of a tile)\n");
+        out.append("    case class Wall(a : String, b : String, data : $[String]) {\n");
+        out.append("        lazy val runs : $[$[(Double, Double)]] = data.map(_.split(' ').toList.filter(_.nonEmpty).map(_.toInt / 10000.0).grouped(2).toList.map(v => (v(0), v(1))))\n");
+        out.append("    }\n\n");
+        out.append("    val walls : Map[String, $[Wall]] = Map(\n");
+        out.append(wallOut);
         out.append("    )\n}\n");
         Files.writeString(nort.resolve("lines.scala"), out.toString());
+    }
+
+    static final int CELL = 16;
+
+    // The walls' orange lines: the middles of the orange pixels in each small cell, each given to the wall between
+    // the two areas nearest it, chained along the wall from its farthest end and broken at gaps
+    static Map<Border, List<List<double[]>>> walls(Tile t, int[] rgb, int[] lab) {
+        Map<Border, List<double[]>> found = new LinkedHashMap<>();
+        if (!RINGED.contains(t.id))
+            for (Border b : t.borders)
+                if (b.wall) found.put(b, new ArrayList<>());
+        Map<Border, List<List<double[]>>> out = new LinkedHashMap<>();
+        if (found.isEmpty())
+            return out;
+
+        for (int cy = 0; cy < N; cy += CELL)
+            for (int cx = 0; cx < N; cx += CELL) {
+                double sx = 0, sy = 0;
+                int n = 0;
+                for (int y = cy; y < Math.min(N, cy + CELL); y++)
+                    for (int x = cx; x < Math.min(N, cx + CELL); x++) {
+                        int i = y * N + x;
+                        int r = rgb[i * 3], g = rgb[i * 3 + 1], b = rgb[i * 3 + 2];
+                        if (r > 200 && g > 90 && g < 175 && b < 90 && r - g > 60) { sx += x + 0.5; sy += y + 0.5; n++; }
+                    }
+                if (n < 12)
+                    continue;
+                int px = (int) (sx / n), py = (int) (sy / n);
+                double[] near = new double[t.areas.size()];
+                Arrays.fill(near, 1e9);
+                int rad = 40;
+                for (int y = Math.max(0, py - rad); y < Math.min(N, py + rad); y++)
+                    for (int x = Math.max(0, px - rad); x < Math.min(N, px + rad); x++)
+                        if (lab[y * N + x] >= 0)
+                            near[lab[y * N + x]] = Math.min(near[lab[y * N + x]], Math.hypot(x - px, y - py));
+                Integer[] order = new Integer[near.length];
+                for (int k = 0; k < order.length; k++) order[k] = k;
+                Arrays.sort(order, (p, q) -> Double.compare(near[p], near[q]));
+                if (order.length < 2 || near[order[1]] > rad)
+                    continue;
+                String a = t.areas.get(order[0]), b = t.areas.get(order[1]);
+                for (Border br : found.keySet())
+                    if ((br.a.equals(a) && br.b.equals(b)) || (br.a.equals(b) && br.b.equals(a)))
+                        found.get(br).add(new double[] { sx / n / N, sy / n / N });
+            }
+
+        for (var e : found.entrySet()) {
+            List<double[]> ps = e.getValue();
+            if (ps.size() < 4)
+                continue;
+            List<List<double[]>> runs = new ArrayList<>();
+            List<double[]> left = new ArrayList<>(ps);
+            while (left.size() >= 4) {
+                // From the point farthest from the others' middle, always to the nearest one left, until a gap
+                double mx = 0, my = 0;
+                for (double[] q : left) { mx += q[0]; my += q[1]; }
+                double fx = mx / left.size(), fy = my / left.size();
+                double[] cur = Collections.max(left, Comparator.comparingDouble(q -> Math.hypot(q[0] - fx, q[1] - fy)));
+                List<double[]> run = new ArrayList<>();
+                left.remove(cur);
+                run.add(cur);
+                while (!left.isEmpty()) {
+                    double[] c = cur;
+                    double[] next = Collections.min(left, Comparator.comparingDouble(q -> Math.hypot(q[0] - c[0], q[1] - c[1])));
+                    if (Math.hypot(next[0] - c[0], next[1] - c[1]) > 2.5 * CELL / N)
+                        break;
+                    left.remove(next);
+                    run.add(next);
+                    cur = next;
+                }
+                if (run.size() >= 4)
+                    runs.add(smooth(run));
+            }
+            if (runs.isEmpty())
+                System.err.println(t.id + ": no line for wall " + e.getKey().a + "-" + e.getKey().b);
+            else
+                out.put(e.getKey(), runs);
+        }
+        return out;
+    }
+
+    // Averaged over neighbours, then every other point
+    static List<double[]> smooth(List<double[]> run) {
+        List<double[]> s = new ArrayList<>();
+        for (int i = 0; i < run.size(); i++) {
+            double x = 0, y = 0;
+            int n = 0;
+            for (int j = Math.max(0, i - 2); j <= Math.min(run.size() - 1, i + 2); j++) { x += run.get(j)[0]; y += run.get(j)[1]; n++; }
+            s.add(i == 0 || i == run.size() - 1 ? run.get(i) : new double[] { x / n, y / n });
+        }
+        List<double[]> out = new ArrayList<>();
+        for (int i = 0; i < s.size(); i++)
+            if (i % 2 == 0 || i == s.size() - 1) out.add(s.get(i));
+        return out;
     }
 
     static List<Tile> parse() throws IOException {

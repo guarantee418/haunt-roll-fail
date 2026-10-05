@@ -29,7 +29,8 @@ object Wild {
     // Without the Creatures module the Ancestral Graveyard and the Wyvern's Den stay out
     val creatureTiles = $(graveyard, den)
 
-    def tiles(implicit game : Game) : $[String] = Tiles.environment./(_.id).%(t => game.has(Creatures) || creatureTiles.has(t).not).but(den)
+    // Not the Great Lake when it is the central tile
+    def tiles(implicit game : Game) : $[String] = Tiles.environment./(_.id).%(t => game.has(Creatures) || creatureTiles.has(t).not).but(den).but(game.central)
 
     // Areas holding a feature: a geyser, ruins and their fame, the Swamp, the graveyard, the Den itself
     val geysers : $[(String, String)] = $("wild-geyser-1" -> "s", "wild-geyser-2" -> "s")
