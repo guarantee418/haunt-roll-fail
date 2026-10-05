@@ -1169,6 +1169,9 @@ object MapExpansion extends Expansion {
             if (e.special == SvarnMove)
                 game.mended += before - game.count(t, attacker)
 
+            // For the bot game summaries (host.scala)
+            game.note(winner.has(attacker).?("attack-won").|("attack-lost"))
+
             winner match {
                 case None =>
                     log("Both sides were wiped out")
