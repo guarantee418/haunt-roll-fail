@@ -20,12 +20,20 @@ import nort.elem._
 // can't be targeted by card effects on enemy units, and goes back to the reserve when it dies
 
 object Warchief {
-    // The clans whose warchief has a portrait (the core ones, from the Tabletop Simulator standees, nort/tools/warchief-portraits.py);
-    // the others use the generic warchief figure
+    // The clans whose warchief has a portrait (the core ones, from the Tabletop Simulator standees, nort/tools/warchief-portraits.py)
     val portraits : $[Faction] = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf)
 
+    // The New Blood clans' warchiefs are round tokens with their head from their clan card (nort/tools/warchief-heads.py);
+    // the Automa's Leaders use the generic warchief figure
+    val tokens : $[Faction] = $(Dragon, Horse, Kraken, Lynx, Ox, Rat, Squirrel)
+
+    def round(f : Faction) = tokens.has(f)
+
     // The image of f's warchief on the map, outlined in its player's color
-    def figure(f : Faction)(implicit game : Game) : String = portraits.has(f).?("chief-" + f.style + "-").|("warchief-") + game.colors(f).id
+    def figure(f : Faction)(implicit game : Game) : String = (portraits ++ tokens).has(f).?("chief-" + f.style + "-").|("warchief-") + game.colors(f).id
+
+    // Horse Clan's second warchief, Brok, a round token like Eitria's
+    def brok(implicit game : Game) : String = "chief-brok-" + game.colors(Horse).id
 
     def name(f : Faction) : String = f match {
         case Bear => "Borgild"

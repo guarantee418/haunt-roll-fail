@@ -103,8 +103,9 @@ boards and tokens are in `expansion/` for later. Unit figures are in
 expansion), recolored from the `-original` images. The seven core clans'
 warchiefs are drawn as their portraits instead (`chief-<clan>-<color>`, outlined
 in the player's color, from the TTS standees by `nort/tools/warchief-portraits.py`;
-`Warchief.figure`); New Blood warchiefs, Brok and the Automa's Leaders keep the
-generic figure. Colors belong to
+`Warchief.figure`), and the New Blood warchiefs (and Horse's Brok) as round
+tokens with their head from their clan card (same names, `brok` for Brok, by
+`nort/tools/warchief-heads.py`); the Automa's Leaders keep the generic figure. Colors belong to
 players, not clans: each clan's player picks one on its row of the setup screen
 (`ColorOption`, default blue, red, yellow, purple, green, orange by seat;
 `game.colors`); starting cards show that color's banner (orange has no

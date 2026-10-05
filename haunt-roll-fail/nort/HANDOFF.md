@@ -294,9 +294,7 @@ on. To implement one:
 - `NORT_NEWBLOOD=1` makes the headless host use only the New Blood clans;
   without it all 14 clans are drawn from. With `NORT_UPGRADES=1` every New
   Blood card was played in bot games without errors.
-- Not done: the Sacrificial Pyre isn't drawn (only listed in Dragon's pane);
-  the clan picker's Warchief button shows the boards, but Brok has no figure
-  of his own (he uses the warchief figure).
+- Not done: the Sacrificial Pyre isn't drawn (only listed in Dragon's pane).
 
 ## Uncharted Horizons: Events and Alternative victory (2026-10-04)
 
@@ -611,9 +609,12 @@ list. In short:
   warchiefs (2026-10-05): `nort/tools/warchief-portraits.py` scales each one
   onto a 512x512 canvas with an outline in each player color and a white rim
   (`token/unit/chief-<clan>-<color>.webp`, loaded only for the clans in play),
-  and `Warchief.figure` picks the image. New Blood has no standees (its clan
-  boards show the warchiefs only from the shoulders up), so its warchiefs,
-  Brok and the Automa's Leaders keep the generic `warchief-<color>` figure.
+  and `Warchief.figure` picks the image. New Blood has no standees, so its
+  warchiefs (and Brok, `chief-brok-<color>`) are round tokens the size of
+  Kaija's: the head from the clan card that shows them, in a ring of the
+  player's color (`nort/tools/warchief-heads.py`, crop boxes in the script;
+  `Warchief.round`). The Automa's Leaders keep the generic `warchief-<color>`
+  figure.
 - **Missing assets:** orange starting cards (orange is not in the box and uses
   yellow's).
 - **Bots:** "Easy" is random (it favours upgrading); "Hard" plays to win (see Bots below).
