@@ -25,6 +25,7 @@ and each deck's `CustomDeck` has the `FaceURL` of its card sheet.
 |---|---|
 | `meta.scala` | Clans (picked by name, with their three clan cards shown), 2–6 players, which options go on which setup page, the asset lists (cards, tiles, units, buildings, `ui-` markers) |
 | `options.scala` | Setup options: `ColorOption` per clan, `YearsOption` (5–10, default 7), the Victory conditions (`VictoryChoice`: `StandardVictory`, `FameOnly`, `AltVictoryRandom`, `AltVictoryChosen`; `VictoryModeOption`, `VictoryCardOption`), `FirstSeatStarts`; `Module` and `ModuleOption` for modules and expansions, including the team variants `TeamsVariant` (2v2) and `Teams3v3` |
+| `meta.scala` (Quick Game) | `quickMin`/`quickMax` 3 and `quickFactions` the 7 core clans: the main menu's Quick Game is always three core clans with the default (core) options |
 | `game.scala` | Factions, player colors by seat, resources, `FactionState`, `Game` (map state and helpers), `CommonExpansion` (setup, decks, the year loop, harvest, winter, end of year, scoring), `Debug.summary` |
 | `cards.scala` | Every core card (name, fame, Flash, text, image) and its `Effect`; `MoveSpecial` / `BuildSpecial` mark Move and Build cards with extra rules |
 | `effects.scala` | `CardsExpansion`: the card effects that aren't basic actions (recruit per resource, removing enemy units, copying cards, looking at hands, Defensive Strategy, ...) |
