@@ -206,7 +206,7 @@ on. To implement one:
   contents) adds a button next to each faction in the "Play as" list
   (`hrf.scala`); Northgard's shows the clan board
   (`expansion/board/<clan>.webp`, through `menuImages`) and the warchief
-  power. The warchief figures are `token/unit/warchief-<color>`.
+  power. The warchief figures are `token/unit/chief-<clan>-<color>` (`Warchief.figure`).
 - `NORT_WARCHIEFS=1` makes the headless host always use the module.
 
 ## Wilderness expansion (2026-10-04)
