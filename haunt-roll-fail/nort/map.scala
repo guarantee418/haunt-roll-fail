@@ -711,8 +711,6 @@ object MapExpansion extends Expansion {
 
             f.log("recruited in", a)
 
-            CreaturesExpansion.recruited(f, a)
-
             Then(RecruitAction(f, left - 1, mode, placed :+ a, then))
 
         case RecruitKaijaAction(f, a, left, mode, placed, then) =>
@@ -721,8 +719,6 @@ object MapExpansion extends Expansion {
 
             f.log("recruited", Companion(f), "in", a)
 
-            CreaturesExpansion.recruited(f, a)
-
             Then(RecruitAction(f, left - 1, mode, placed :+ a, then))
 
         case RecruitChiefAction(f, a, left, mode, placed, then) =>
@@ -730,8 +726,6 @@ object MapExpansion extends Expansion {
             game.note("chief-recruit")
 
             f.log("recruited", WarchiefElem(f), "in", a)
-
-            CreaturesExpansion.recruited(f, a)
 
             Then(RecruitAction(f, left - 1, mode, placed :+ a, then))
 
@@ -747,7 +741,6 @@ object MapExpansion extends Expansion {
                 if (n > 0) {
                     game.addUnits(t.anchor, f, n)
                     f.log("recruited", n.hl, "more with", TrainingCamp, "in", t.anchor)
-                    CreaturesExpansion.recruited(f, t.anchor, n)
                 }
             }
 

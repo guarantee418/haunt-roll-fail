@@ -680,7 +680,6 @@ object AutomaExpansion extends Expansion {
                 game.addUnits(a, Automa, 1)
                 Automa.log("recruited in", a)
             }
-            CreaturesExpansion.recruited(Automa, a)
             Then(AutomaRecruitAction(left - 1, prio, None, then))
 
         // BUILD: the card's building (the first of its options that can be built), where its priorities say

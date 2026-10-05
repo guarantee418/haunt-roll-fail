@@ -771,10 +771,11 @@ Check these against the rulebook when it is at hand.
     placement can't use it.
   - Draugr Jötunn: a player with 2 or more resources must pay (choosing
     which 2); only a player who can't pay is attacked.
-  - Eldthurs and Draugr Jötunn act again when they can't move (like the core
-    Draugr); Hvedrung doesn't: it only calls a creature when it appears or
-    actually moves. Creatures appearing at setup don't act, Hvedrung
-    included.
+  - A creature that can't move doesn't act again (a ruling from Robotos,
+    2026-10-05: a power triggers when the creature appears or enters a
+    territory, not while it sits still). That holds for the core Draugr and
+    the Fallen Valkyrie as well as Eldthurs, Draugr Jötunn and Hvedrung.
+    Creatures appearing at setup don't act either.
   - The Wyvern driven back to its Den gives no fame (it isn't defeated); it
     gives its 6 fame only when beaten in its Den. A player left with no
     figures after removing the unit before the fight loses it. The Wyvern
@@ -868,10 +869,6 @@ Check these against the rulebook when it is at hand.
     its players has them. If both teams do, the teams' total fame, then
     territories, units and buildings decide.
 - **Creatures**, where the rulebook says nothing:
-  - A Draugr also strikes when units spawn in its territory (a ruling from
-    Robotos, 2026-10-05): each figure recruited there, Training Camp extras
-    included, costs that player 1 unit (units go first). Not at setup, where
-    creature powers are off.
   - Kaija counts as a unit for the Draugr (units go first) and as 2 combat
     points; a Fallen Valkyrie in a territory makes a tile placement illegal
     if it would join it with units.
