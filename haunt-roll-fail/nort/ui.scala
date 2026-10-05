@@ -954,6 +954,48 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         court.replaceCached((game.year, game.display, game.achievements, game.creatureLine, game.event, game.eventDeck.num, game.victory, game.automaPlayed).toString, strip((automa ++ events ++ victory ++ developments ++ achievements ++ creatures)./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
     }
 
+    // The Winter cost chart, with each clan on its row and what f has to pay with
+    def winterChart(f : Faction) : Elem = {
+        val payers = game.setup.but(Automa).%(game.states.contains)
+
+        // Harsh Winter counts 1 more unit per closed territory
+        def counted(g : Faction) = game.states(g).units + game.eventIs("harsh-winter").??(game.controlled(g).%(game.board.closed).num)
+
+        val rows = $((0, 3), (4, 6), (7, 9), (10, 12), (13, 99))
+
+        val cells = rows./{ case (lo, hi) =>
+            val (food, wood) = Winter.cost(lo)
+            val here = payers.%(g => counted(g) >= lo && counted(g) <= hi)
+            val ss = here.has(f).$(styles.winterHere)
+            val label = (hi == 99).?((lo + "+ units").txt).|((lo + "–" + hi + " units").txt)
+            val cost = (food + wood == 0).?("nothing".txt).|($(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => n.hl ~ " " ~ e }.join(" "))
+            val clans = here./(g => g.name.styled(colorOf(g))).join(", ")
+
+            Div(label, styles.winterCell +: ss) ~ Div(cost, styles.winterCell +: ss) ~ Div(clans, styles.winterCell +: ss)
+        }
+
+        val state = game.states(f)
+        val (food, wood) = EventsExpansion.winterCost(f)
+        val next = Harvest.forecast(f)
+        val after = (state.food + next.food, state.wood + next.wood)
+
+        val events =
+            game.eventIs("harsh-winter").?(("Harsh Winter".hl ~ ": each closed territory counts as 1 more unit").div).|(Empty) ~
+            game.eventIs("blizzard").?(("Blizzard".hl ~ ": everyone pays 1 more " ~ Food.elem ~ " and 1 more " ~ Wood.elem).div).|(Empty)
+
+        val short = after._1 < food || after._2 < wood
+
+        ("Winter costs".hlb.div ~
+            Div(cells.merge, styles.winterChart) ~
+            events ~
+            (f.name.styled(colorOf(f)) ~ " pays " ~ (food + wood == 0).?("nothing".txt).|($(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => n.hl ~ " " ~ e }.join(" ")) ~ " for " ~ counted(f).hl ~ " units").div ~
+            ("Has " ~ state.food.hl ~ " " ~ Food.elem ~ " " ~ state.wood.hl ~ " " ~ Wood.elem ~ ", after the harvest " ~ after._1.hl ~ " " ~ Food.elem ~ " " ~ after._2.hl ~ " " ~ Wood.elem).div ~
+            short.?(("Not enough without trading: an unpaid Winter gives an " ~ UnrestCard.elem ~ " card").div).|(Empty) ~
+            HorizontalBreak ~
+            "(tap to close)".spn(xstyles.smaller85).div
+        ).div
+    }
+
     def factionStatus(f : Faction) {
         val container = statuses(game.setup.indexOf(f))
 
@@ -996,7 +1038,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             else c.target./(n => game.progressOf(f, c.id).hl ~ "/" ~ n.toString).|("✗".txt)
         }.join(" ")).div).|(Empty)
 
-        val content = (title.div ~ res ~ units ~ chief ~ cards ~ nb ~ goals ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
+        // The next harvest as things stand, and the Winter costs (tapping them shows the whole Winter chart)
+        val next = Harvest.forecast(f)
+        val gains = $(next.food -> Food.elem, next.wood -> Wood.elem, next.lore -> Lore.elem, next.fame -> "fame".txt).filter(_._1 > 0).map { case (n, e) => ("+" + n).hl ~ " " ~ e }
+        val harvest = ("Harvest: ".txt ~ gains.any.?(gains.join(" ")).|("nothing".txt)).div
+
+        val (food, wood) = EventsExpansion.winterCost(f)
+        val costs = $(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => n.hl ~ " " ~ e }
+        val winter = (f != Automa).?(OnClick(WinterChart(f), ("Winter: ".txt ~ costs.any.?(costs.join(" ")).|("nothing".txt)).div(styles.tappable)(xlo.pointer))).|(Empty)
+
+        val content = (title.div ~ res ~ units ~ chief ~ cards ~ nb ~ goals ~ marks ~ harvest ~ winter).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
 
         container.replace(content, resources, {
             case x => onClick(x)
@@ -1193,6 +1244,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case ClanBoard(f) =>
             showOverlay(overlayFitX(Image(Warchief.board(f), styles.zoomCard)).onClick, onClick)
+
+        case WinterChart(f) =>
+            showOverlay(overlayScrollX(winterChart(f)).onClick, onClick)
 
         case Nil =>
             clearOverlay()

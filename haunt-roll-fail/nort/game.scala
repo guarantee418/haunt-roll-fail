@@ -155,6 +155,40 @@ object Winter {
         else (4, 2)
 }
 
+// What a clan is set to collect at the next harvest, as things stand (shown in the player panels)
+case class HarvestForecast(food : Int, wood : Int, lore : Int, fame : Int)
+
+// Harvest amounts, shared by HarvestAction and the forecast in the player panels
+object Harvest {
+    // A Wolf creature leaves only the buildings' fame and resources;
+    // the Wyvern's Den (Wilderness) gives its own fame instead;
+    // Events: Frozen Sea gives 1 fame per territory instead; Bountiful Year's territory gives none
+    def territoryFame(f : Faction)(implicit game : Game) : Int = {
+        val territories = game.controlled(f)
+
+        if (game.eventIs("frozen-sea"))
+            territories.%(t => game.wolfIn(t).not).%(t => Wild.denIn(t).not).num
+        else
+            territories.%(game.board.closed).%(t => game.wolfIn(t).not).%(t => Wild.denIn(t).not).%(EventsExpansion.fameFrom)./(t => (game.board.tiles(t) >= 3).?(2).|(1)).sum
+    }
+
+    def altarFame(f : Faction)(implicit game : Game) : Int = 3 * game.controlled(f)./~(game.working).count(_ == AltarOfKings)
+
+    def resources(f : Faction)(implicit game : Game) : (Int, Int, Int) =
+        game.controlled(f)./(EventsExpansion.harvest).foldLeft((0, 0, 0))((a, b) => (a._1 + b._1, a._2 + b._2, a._3 + b._3))
+
+    // Leaves out the choices made during the harvest: Snake's Scorched Earth and the New Blood clan powers' extra resource
+    def forecast(f : Faction)(implicit game : Game) : HarvestForecast = {
+        if (f == Dragon && game.dragonHarvest.has(false))
+            return HarvestForecast(0, 0, 0, 0)
+
+        val (food, wood, lore) = resources(f)
+        val (wildFame, wildFood) = game.has(Wilderness).?(WildernessExpansion.forecast(f)).|((0, 0))
+
+        HarvestForecast(food + wildFood, wood, lore, territoryFame(f) + altarFame(f) + wildFame)
+    }
+}
+
 
 case class StartAction(version : String) extends StartGameAction with GameVersion
 case class ShuffledEarlyAction(shuffled : $[Card]) extends ShuffledAction[Card]
@@ -214,6 +248,8 @@ case class UpgradeCardAction(self : Faction, card : Card, upgrade : Card, remove
 case class HandInfoAction(self : Faction, title : Elem, card : Card) extends BaseInfo(title)(card.handImg) with ViewObject[Card] { def obj = card }
 // The player's clan board below the Lore Tree, to look up the clan's power and its warchief; clicking it opens it full screen
 case class ClanBoard(f : Faction)
+// The Winter cost chart, opened from a player panel
+case class WinterChart(f : Faction)
 case class ClanBoardInfoAction(self : Faction, title : Elem) extends BaseInfo(title)(Image(Warchief.board(self), styles.boardInfo)) with ViewObject[Faction] with OnClickInfo { def obj = self ; def param = ClanBoard(self) }
 // Cards shown while there is nothing to do with them; clicking one opens it full screen
 case class CardInfoAction(self : Faction, title : Elem, card : Card) extends BaseInfo(title)(card.handImg) with ViewObject[Card] with OnClickInfo { def obj = card ; def param = card }
@@ -1191,28 +1227,19 @@ object CommonExpansion extends Expansion {
 
             // Dragon Clan harvests nothing without a sacrifice on its Pyre
             game.from(game.first).%(f => f != Dragon || game.dragonHarvest.has(false).not).foreach { f =>
-                val territories = game.controlled(f)
-
-                // A Wolf creature leaves only the buildings' fame and resources
-                // The Wyvern's Den (Wilderness) gives its own fame instead
-                // Events: Frozen Sea gives 1 fame per territory instead; Bountiful Year's territory gives none
-                val fame =
-                    if (game.eventIs("frozen-sea"))
-                        territories.%(t => game.wolfIn(t).not).%(t => Wild.denIn(t).not).num
-                    else
-                        territories.%(game.board.closed).%(t => game.wolfIn(t).not).%(t => Wild.denIn(t).not).%(EventsExpansion.fameFrom)./(t => (game.board.tiles(t) >= 3).?(2).|(1)).sum
+                val fame = Harvest.territoryFame(f)
                 if (fame > 0) {
                     f.fame += fame
                     f.log("gained", fame.hl, "fame from closed territories")
                 }
 
-                val altars = territories./~(game.working).count(_ == AltarOfKings)
+                val altars = Harvest.altarFame(f)
                 if (altars > 0) {
-                    f.fame += 3 * altars
-                    f.log("gained", (3 * altars).hl, "fame from", AltarOfKings)
+                    f.fame += altars
+                    f.log("gained", altars.hl, "fame from", AltarOfKings)
                 }
 
-                val (food, wood, lore) = territories./(EventsExpansion.harvest).foldLeft((0, 0, 0))((a, b) => (a._1 + b._1, a._2 + b._2, a._3 + b._3))
+                val (food, wood, lore) = Harvest.resources(f)
                 f.food += food
                 f.wood += wood
                 f.lore += lore
