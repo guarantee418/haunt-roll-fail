@@ -354,6 +354,43 @@ on. To implement one:
   at the end and for the Automa's last-year pick), `game.strongholdsToWin`,
   the Start of Year draw and Winter skip the Automa.
 
+## Wastelands expansion (2026-10-05)
+
+- `wastelands.scala`: `Waste` (tile ids, `controller`, `around`), the
+  `CentralChoice` options (Standard, Random, or one of the nine; shown only
+  with the module, `optionShown` in `meta.scala`) and `WastelandsExpansion`
+  (priority -4: before Events, so its Start of Year steps come before the
+  Event's side effects). `game.wasteSteps` guards re-dispatched actions within
+  a year (reset when `wasteYear` moves on at `StartYearAction`).
+- Setup: `ShuffledTilesAction` is caught once to set `game.central` (and put
+  Hrimgandr in the creature line), then re-dispatched; `MapExpansion` places
+  `game.central` instead of `start`, and with five players
+  `Waste.five(central)` east of it, joining the middle to the east territory
+  with `Board.join`. `ShuffledTilesBackAction` adds the seven Environment
+  tiles; with Wilderness, `game.environment` holds 12 drawn from both and
+  Wilderness shuffles those in.
+- Tiles: `Tiles.wastelands` (`waste-*`) and `Tiles.central` (`start-*`), in
+  `tiles.scala`. `tile-masks.py` treats them like the Wilderness ones
+  (`ORANGE`, `RINGED` for impassable middles left untinted, `NO_ICONS` where
+  lava or ice passed for resource icons); `BorderLines.java` has `TEAL` for
+  the pale dashes of three central tiles (some of their dashes are still
+  missed, so their fame borders are partial).
+- Creatures (`creatures.scala`): Rock Golem, Myrkalf, Giant Boar, Kobold,
+  Valdemar and Hrimgandr kinds; combat hooks `creatureFace`,
+  `creaturePoints`, `creatureIgnored` in `CreatureRolledAction`. Without the
+  Creatures module, Hrimgandr's fights go to `CreaturesExpansion` through
+  `creatureCombat`.
+- Jötunn Blainn: `game.blainn` (owner and area), counted by `figures`,
+  `strength` (2), `units` (Winter) and `removeFigures`. He follows the last
+  figures leaving his territory (`follows`, on `MoveUnitsAction` and
+  `RetreatToAction`), and `normalize` sends him back to the camp when alone.
+- Map drawing (`ui.scala`): Blainn as a round token beside his clan's
+  figure, or in the middle of the Jötnar Camp while waiting; Naströnd's two
+  wood in its middle until taken; the creature strip also shows when only
+  Hrimgandr is in the line.
+- `NORT_WASTELANDS=1` makes the headless host always use the module (with a
+  random central tile choice).
+
 ## Map drawing: territory colours and free ground
 
 - Each territory is tinted with the colour of the player who controls it
@@ -473,8 +510,8 @@ list. In short:
 3. **A better bot** that recruits, builds and explores on purpose.
 4. **A replay check** like `root/replay-check.scala`, to confirm undo and
    loading rebuild the same game.
-5. **Expansions**: Wilderness, New Blood, and Uncharted Horizons' Events and
-   Alternative victory modules are done; Wastelands and the rest of
+5. **Expansions**: Wilderness, Wastelands, New Blood, and Uncharted Horizons' Events and
+   Alternative victory modules are done; the rest of
    Uncharted Horizons (Raids, Development cards, Training Fields) are next (assets in `expansion/`; the TTS mod
    3597126237 has the Uncharted Horizons cards and Tabletopia its rulebook).
 

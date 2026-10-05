@@ -848,6 +848,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     pieces.add(Sprite($(at(image, kz)), $(Rectangle(-kz / 2, -kz / 2, kz, kz)), tag))(kx, ky)
                     taken :+= ((mx(kx), my(ky), kz / T / 2))
                 }
+
+                // Jötunn Blainn (Wastelands), a round token like Kaija's
+                if (game.blainnIn(t, f)) {
+                    val bz = 230.0 * scale
+                    val (bx, by) = beside(bz / T / 2)
+                    pieces.add(Sprite($(at("token-blainn", bz)), $(Rectangle(-bz / 2, -bz / 2, bz, bz)), tag))(bx, by)
+                    taken :+= ((mx(bx), my(by), bz / T / 2))
+                }
             }
 
             // Kraken Clan's High Tide token, by the territory number
@@ -870,6 +878,19 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 val (x, y) = freeSpot(t, z / T / 2, taken, |(board.point(t.anchor)), 0.5)
                 pieces.add(Sprite($(at(c.token, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag))(sx(x), sy(y))
                 taken :+= ((x, y, z / T / 2))
+            }
+        }
+
+        // Wastelands: Jötunn Blainn waiting at his camp and Naströnd's wood not yet taken, in the impassable middle of their tiles
+        if (game.has(Wastelands)) {
+            game.jotnarCamp.%(_ => game.blainn.none).foreach { s =>
+                pieces.add(Sprite($(at("token-blainn", 230)), $(Rectangle(-115, -115, 230, 230))))(sx(s.x + 0.5), sy(s.y + 0.5))
+            }
+
+            game.nastrond.foreach { s =>
+                $(-55, 55).foreach { d =>
+                    pieces.add(Sprite($(at("token-wood", 140)), $(Rectangle(-70, -70, 140, 140))))(sx(s.x + 0.5) + d, sy(s.y + 0.5))
+                }
             }
         }
 
@@ -941,7 +962,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val achievements = $(("Achievements" ~ last.not.?(", year " ~ game.lastYear.hl).|(Empty)) -> last.?(game.display).|(game.achievements))
 
         // Creatures module: the creature line, in activation order
-        val creatures = game.has(Creatures).$(("Creatures" ~ " (left to right)".spn(xstyles.smaller85)) -> game.creatureLine)
+        val creatures = (game.has(Creatures) || game.creatureLine.any).$(("Creatures" ~ " (left to right)".spn(xstyles.smaller85)) -> game.creatureLine)
 
         // Uncharted Horizons: this year's Event and the next one, and the Alternative victory cards
         val events = game.has(EventsModule).$(("Event" ~ " (this year, next)".spn(xstyles.smaller85)) -> (game.event.$ ++ game.eventDeck.take(1)))

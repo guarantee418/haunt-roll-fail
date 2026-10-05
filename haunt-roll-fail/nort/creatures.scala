@@ -140,6 +140,69 @@ case object Wyvern extends CreatureKind {
     override def leaves = true
 }
 
+// Wastelands expansion creatures (their rules are in wastelands.scala)
+case object RockGolem extends CreatureKind {
+    val id = "rock-golem"
+    val title = "Rock Golem"
+    val value = 7
+    val fame = 4
+    val shares = true
+    val priorities = $(MostUnits, MostBuildings, MostResources)
+    val text = "When spawning or moving, this creature attacks if there are buildings in the territory. During combat, both player and this creature add 1 axe for each skull rolled. If the creature rolls a skull/axe it always chooses the skull."
+}
+
+case object Myrkalf extends CreatureKind {
+    val id = "myrkalf"
+    val title = "Myrkalf"
+    val value = 6
+    val fame = 3
+    val shares = true
+    val priorities = $(MostBuildings, MostResources, MostUnits)
+    val text = "Only when moving, this creature moves twice, without returning to its starting point. The owner of the territory in which this creature ends its movement must pay 1 wood or lose 2 fame."
+}
+
+case object GiantBoar extends CreatureKind {
+    val id = "giant-boar"
+    val title = "Giant Boar"
+    val value = 5
+    val fame = 2
+    val shares = true
+    val priorities = $(MostResources, MostBuildings, MostUnits)
+    val text = "When spawning or moving into a territory with wood (including buildings), this creature attacks. When attacking, add 1 skull to its die, and if the defender wins, increase their reward by 2 fame."
+}
+
+case object Kobold extends CreatureKind {
+    val id = "kobold"
+    val title = "Kobold"
+    val value = 3
+    val fame = 0
+    val shares = true
+    val priorities = $(MostBuildings, MostUnits, MostResources)
+    val text = "The territory containing this creature doesn't generate fame during Harvest (including buildings). However, once per Harvest, the owner of that territory may exchange 1 food for 1 wood (or vice-versa)."
+}
+
+case object Valdemar extends CreatureKind {
+    val id = "valdemar"
+    val title = "Valdemar"
+    val value = 7
+    val fame = 4
+    val shares = true
+    val priorities = $(MostResources, MostBuildings, MostUnits)
+    val text = "When spawning or after moving, this creature removes 1 unit from its territory. While Valdemar is alive, all other creatures gain 1 axe bonus in all combats."
+}
+
+// Only on the Hrimgandr's Lair central tile; never moves
+case object Hrimgandr extends CreatureKind {
+    val id = "hrimgandr"
+    val title = "Hrimgandr"
+    val value = 8
+    val fame = 8
+    val shares = false
+    val priorities = $
+    val text = "Hrimgandr doesn't move during the creature phase and doesn't share its territory: it only defends itself. While Hrimgandr is alive, Winter costs are increased by one step for every player. If it is defeated, remove it from the game."
+    override def leaves = true
+}
+
 // A creature card and its miniature; n is the color: 1 beige, 2 brown, 3 dark brown
 case class Creature(kind : CreatureKind, n : Int) extends Card {
     def info = CardInfo(kind.title, "card-creature-" + kind.id + "-" + n, kind.fame, false, MapEffect, kind.text)
@@ -161,8 +224,12 @@ object Creature {
 
     val expansion : $[Creature] = wild ++ spectral :+ wyvern
 
+    // Wastelands: added to the creature deck; Hrimgandr only on its Lair
+    val waste : $[Creature] = $(Creature(RockGolem, 1), Creature(RockGolem, 2), Creature(Myrkalf, 1), Creature(Myrkalf, 2), Creature(GiantBoar, 1), Creature(GiantBoar, 2), Creature(Kobold, 1), Creature(Kobold, 2), Creature(Valdemar, 1))
+    val hrimgandr = Creature(Hrimgandr, 1)
+
     // The creature deck of a game
-    def deck(implicit game : Game) : $[Creature] = all ++ game.has(Wilderness).??(wild)
+    def deck(implicit game : Game) : $[Creature] = all ++ game.has(Wilderness).??(wild) ++ game.has(Wastelands).??(waste)
 }
 
 // A creature attacked by the current Move action, in the territory with this anchor
@@ -498,7 +565,8 @@ object CreaturesExpansion extends Expansion {
         case CreatureRolledAction(f, a, c, e, attacking, food, face, random, then) =>
             log(c, "rolled", random)
 
-            val cface = random.choice.?(NorthgardDie.point).|(random)
+            // Wastelands: a Rock Golem takes the skull, a Giant Boar attacking adds one
+            val cface = game.has(Wastelands).?(WastelandsExpansion.creatureFace(c, attacking, random)).|(random.choice.?(NorthgardDie.point).|(random))
 
             val t = game.board.territory(a)
             val here = game.working(t)
@@ -509,16 +577,19 @@ object CreaturesExpansion extends Expansion {
             val axe = (attacking && e.special == AxeMove).??(1)
             val fortress = attacking.not.??(2 * here.count(_ == Fortress))
             val snake = (f == Snake && game.scorchedIn(t)).??(1)
-            val ps = game.strength(t, f, attacking) + bonus + axe + fortress + snake + food + face.points
+            // Wastelands: Rock Golem, Valdemar, Thor's Wrath, Landvidi, the Gate of Helheim and Urdarbrunn
+            val (pw, cw) = game.has(Wastelands).?(WastelandsExpansion.creaturePoints(f, t, c, attacking, face, cface)).|((0, 0))
+            val urdar = game.has(Wastelands).??(WastelandsExpansion.creatureIgnored(f, t, attacking))
+            val ps = game.strength(t, f, attacking) + bonus + axe + fortress + snake + food + face.points + pw
             // Shieldbearers cancel 1 casualty; Halvard defending ignores 1 inflicted by the attacking creature
-            val shield = math.min(cface.casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1) + Warchief.shield(t, f, attacking))
+            val shield = math.min(cface.casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1) + Warchief.shield(t, f, attacking) + urdar)
             val pc = cface.casualties - shield
-            val cs = c.kind.value + cface.points
+            val cs = c.kind.value + cface.points + cw
 
             def extra(l : (Int, Elem)*) : Elem = l.toList.filter(_._1 > 0).map { case (n, what) => "(" ~ n.hl ~ " from " ~ what ~ ")" }.join(" ")
 
-            f.log("scored", ps.hl, extra(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl))
-            log(c, "scored", cs.hl, "and inflicted", pc.hl, (pc == 1).?("casualty").|("casualties"), (shield > 0).?("(" ~ shield.hl ~ " cancelled by " ~ attacking.?("Shieldbearers".hl).|(Warchief.elem(Goat)) ~ ")").|(Empty))
+            f.log("scored", ps.hl, extra(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, pw -> "Wastelands".hl))
+            log(c, "scored", cs.hl, extra(cw -> "Wastelands".hl), "and inflicted", pc.hl, (pc == 1).?("casualty").|("casualties"), (shield > 0).?("(" ~ shield.hl ~ " cancelled)").|(Empty))
 
             // Losing all units loses the fight; otherwise ties go to the defender
             val won = pc < units && attacking.?(ps > cs).|(ps >= cs)
@@ -534,7 +605,7 @@ object CreaturesExpansion extends Expansion {
                 game.mended += before - game.count(t, f)
 
             // The Wyvern goes back to its Den unless it lost there (Wilderness)
-            val den = (c.kind == Wyvern && Wild.denIn(t).not).??(Wild.dens)
+            val den = (c.kind == Wyvern && Wild.homeIn(t).not).??(Wild.homes)
 
             if (won && den.any) {
                 game.creatureAt += c -> den.head
@@ -552,6 +623,12 @@ object CreaturesExpansion extends Expansion {
                 game.advance(f, "hunting")
 
                 f.log("defeated", c, "and gained", c.kind.fame.hl, "fame", c.kind.leaves.?("(it leaves the game)".txt).|(Empty))
+
+                // Wastelands: a Giant Boar that attacked gives 2 more fame
+                if (c.kind == GiantBoar && attacking.not) {
+                    f.fame += 2
+                    f.log("gained", 2.hl, "more fame for defeating", c, "as the defender")
+                }
 
                 if (attacking && f == Wolf) {
                     f.food += 1

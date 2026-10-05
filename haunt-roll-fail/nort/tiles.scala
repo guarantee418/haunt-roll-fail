@@ -325,7 +325,120 @@ object Tiles {
         )(border("d", "n"), border("d", "e"), border("d", "s"), border("n", "e"), border("n", "s"), border("e", "s")),
     )
 
-    val all : $[TileSpec] = $(start, start5) ++ regular ++ environment
+    // Wastelands expansion (wastelands.scala has their rules). Environment tiles: the Kobold Camp, the Jötnar Camp and
+    // Naströnd are impassable in the middle (no area), their territories around it are the ones next to it
+    val wastelands : $[TileSpec] = $(
+        tile("waste-kobold")(
+            area("w", "W", 0.06, 0.42, 0.07, 0.62)(),
+            area("s", "S", 0.5, 0.94, 0.3, 0.92)(),
+            area("n", "NE", 0.5, 0.06, 0.9, 0.5)(lair),
+        )(rough("w", "s"), border("s", "n"), border("n", "w")),
+        tile("waste-jotnar")(
+            area("w", "W", 0.06, 0.55, 0.07, 0.75)(),
+            area("s", "S", 0.45, 0.95, 0.27, 0.93)(),
+            area("n", "NE", 0.85, 0.1, 0.92, 0.45)(),
+        )(rough("w", "s"), border("s", "n"), border("n", "w")),
+        tile("waste-nastrond")(
+            area("n", "N", 0.4, 0.05, 0.62, 0.06)(),
+            area("e", "E", 0.95, 0.45, 0.93, 0.6)(),
+            area("s", "S", 0.6, 0.95, 0.36, 0.93)(),
+            area("w", "W", 0.05, 0.6, 0.07, 0.45)(),
+        )(border("n", "e"), border("e", "s"), border("s", "w"), border("w", "n"), wall("n", "s"), wall("e", "w")),
+        tile("waste-landvidi")(
+            area("n", "N", 0.55, 0.07, 0.38, 0.1)(),
+            area("s", "ESW", 0.2, 0.75, 0.6, 0.8)(),
+        )(border("n", "s")),
+        tile("waste-thor")(
+            area("n", "N", 0.25, 0.06, 0.82, 0.12)(lair),
+            area("s", "ESW", 0.15, 0.85, 0.8, 0.85)(),
+        )(rough("n", "s")),
+        tile("waste-urdarbrunn")(
+            area("n", "NW", 0.15, 0.15, 0.5, 0.07)(),
+            area("s", "ES", 0.85, 0.4, 0.55, 0.88)(),
+        )(rough("n", "s")),
+        tile("waste-vedrfolnir")(
+            area("n", "NEW", 0.5, 0.05, 0.82, 0.06)(),
+            area("s", "S", 0.45, 0.88, 0.72, 0.52)(),
+        )(rough("n", "s")),
+    )
+
+    // Wastelands central tiles, one of which replaces the starting tile: the middle territory (c, or d for the
+    // Wyvern's Den) is enclosed by four territories at the sides; the Relic of the Gods, the Great Lake and the
+    // Volcano are impassable in the middle. The five-player tiles go east of it, with regular or impassable borders
+    val central : $[TileSpec] = $(
+        tile("start-magma")(
+            area("c", "", 0.35, 0.62, 0.6, 0.7)(),
+            area("n", "N", 0.5, 0.05, 0.7, 0.07)(),
+            area("e", "E", 0.95, 0.5, 0.93, 0.65)(),
+            area("s", "S", 0.5, 0.95, 0.3, 0.93)(),
+            area("w", "W", 0.05, 0.5, 0.07, 0.35)(),
+        )(border("c", "n"), border("c", "e"), border("c", "s"), border("c", "w"), border("n", "e"), border("e", "s"), border("s", "w"), border("w", "n")),
+        tile("start-yggdrasil")(
+            area("c", "", 0.7, 0.62, 0.4, 0.66)(),
+            area("n", "N", 0.5, 0.05, 0.7, 0.07)(),
+            area("e", "E", 0.95, 0.5, 0.93, 0.65)(),
+            area("s", "S", 0.5, 0.95, 0.3, 0.93)(),
+            area("w", "W", 0.05, 0.5, 0.07, 0.35)(),
+        )(border("c", "n"), border("c", "e"), border("c", "s"), border("c", "w"), border("n", "e"), border("e", "s"), border("s", "w"), border("w", "n")),
+        tile("start-relic")(
+            area("n", "N", 0.4, 0.04, 0.64, 0.06)(),
+            area("e", "E", 0.96, 0.42, 0.94, 0.62)(),
+            area("s", "S", 0.6, 0.96, 0.36, 0.94)(),
+            area("w", "W", 0.04, 0.6, 0.06, 0.38)(),
+        )(border("n", "e"), border("e", "s"), border("s", "w"), border("w", "n"), wall("n", "s"), wall("e", "w")),
+        tile("start-lake")(
+            area("n", "N", 0.45, 0.05, 0.7, 0.06)(),
+            area("e", "E", 0.95, 0.5, 0.95, 0.3)(),
+            area("s", "S", 0.55, 0.95, 0.3, 0.95)(),
+            area("w", "W", 0.04, 0.5, 0.05, 0.7)(),
+        )(border("n", "e"), border("e", "s"), border("s", "w"), border("w", "n"), wall("n", "s"), wall("e", "w")),
+        tile("start-volcano")(
+            area("n", "N", 0.5, 0.05, 0.3, 0.06)(),
+            area("e", "E", 0.95, 0.5, 0.94, 0.3)(),
+            area("s", "S", 0.5, 0.95, 0.7, 0.94)(),
+            area("w", "W", 0.05, 0.5, 0.06, 0.7)(),
+        )(border("n", "e"), border("e", "s"), border("s", "w"), border("w", "n"), wall("n", "s"), wall("e", "w")),
+        tile("start-mimir")(
+            area("c", "", 0.7, 0.45, 0.5, 0.7)(),
+            area("n", "N", 0.5, 0.05, 0.7, 0.07)(),
+            area("e", "E", 0.95, 0.5, 0.93, 0.65)(),
+            area("s", "S", 0.5, 0.95, 0.3, 0.93)(),
+            area("w", "W", 0.05, 0.5, 0.07, 0.35)(),
+        )(border("c", "n"), border("c", "e"), border("c", "s"), border("c", "w"), border("n", "e"), border("e", "s"), border("s", "w"), border("w", "n")),
+        tile("start-hrimgandr")(
+            area("c", "", 0.75, 0.5, 0.5, 0.72)(),
+            area("n", "N", 0.5, 0.05, 0.7, 0.07)(),
+            area("e", "E", 0.95, 0.5, 0.93, 0.65)(),
+            area("s", "S", 0.5, 0.95, 0.3, 0.93)(),
+            area("w", "W", 0.05, 0.5, 0.07, 0.35)(),
+        )(border("c", "n"), border("c", "e"), border("c", "s"), border("c", "w"), border("n", "e"), border("e", "s"), border("s", "w"), border("w", "n")),
+        tile("start-den")(
+            area("d", "", 0.25, 0.45, 0.72, 0.62)(),
+            area("n", "N", 0.5, 0.05, 0.7, 0.07)(),
+            area("e", "E", 0.95, 0.5, 0.93, 0.65)(),
+            area("s", "S", 0.5, 0.95, 0.3, 0.93)(),
+            area("w", "W", 0.05, 0.5, 0.07, 0.35)(),
+        )(border("d", "n"), border("d", "e"), border("d", "s"), border("d", "w"), border("n", "e"), border("e", "s"), border("s", "w"), border("w", "n")),
+        tile("start-helheim")(
+            area("c", "", 0.22, 0.5, 0.5, 0.68)(),
+            area("n", "N", 0.5, 0.05, 0.7, 0.07)(),
+            area("e", "E", 0.95, 0.5, 0.93, 0.65)(),
+            area("s", "S", 0.5, 0.95, 0.3, 0.93)(),
+            area("w", "W", 0.05, 0.5, 0.07, 0.35)(),
+        )(border("c", "n"), border("c", "e"), border("c", "s"), border("c", "w"), border("n", "e"), border("e", "s"), border("s", "w"), border("w", "n")),
+        tile("start-5-open")(
+            area("n", "N", 0.55, 0.12, 0.35, 0.16)(),
+            area("m", "WE", 0.5, 0.55, 0.75, 0.55)(),
+            area("s", "S", 0.55, 0.9, 0.3, 0.9)(),
+        )(border("n", "m"), border("m", "s")),
+        tile("start-5-wall")(
+            area("n", "N", 0.55, 0.12, 0.35, 0.16)(),
+            area("m", "WE", 0.5, 0.55, 0.75, 0.55)(),
+            area("s", "S", 0.55, 0.9, 0.3, 0.9)(),
+        )(wall("n", "m"), wall("m", "s")),
+    )
+
+    val all : $[TileSpec] = $(start, start5) ++ regular ++ environment ++ wastelands ++ central
 
     val byId : Map[String, TileSpec] = all./(t => t.id -> t).toMap
 

@@ -107,7 +107,8 @@ object EventsExpansion extends Expansion {
     // Winter costs: Harsh Winter counts 1 more unit per closed territory, Blizzard adds 1 food and 1 wood
     def winterCost(f : Faction)(implicit game : Game) : (Int, Int) = {
         val harsh = game.eventIs("harsh-winter").??(game.controlled(f).%(game.board.closed).num)
-        val (food, wood) = Winter.cost(game.states(f).units + harsh)
+        // Wastelands: while Hrimgandr lives, the costs are one step (three units) higher
+        val (food, wood) = Winter.cost(game.states(f).units + harsh + WastelandsExpansion.winterUnits)
         val blizzard = game.eventIs("blizzard").??(1)
         (food + blizzard, wood + blizzard)
     }

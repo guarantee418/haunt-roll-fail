@@ -36,7 +36,10 @@ New Blood expansion's seven clans (Dragon, Horse, Kraken, Lynx, Ox, Rat,
 Squirrel, with their warchiefs and 28 clan cards, from the TTS mod
 3597126237) in `nort/newblood.scala`; picking one of them turns it on.
 Uncharted Horizons' Events and Alternative victory conditions modules are in
-`nort/horizons.scala`. The solo Automa (Uncharted Horizons' Solo module) is
+`nort/horizons.scala`. The Wastelands expansion (Environment tiles
+`waste-*`, the Central tiles `start-*` chosen with the "Central tile" option,
+five more creatures, Hrimgandr and Jötunn Blainn) is in `nort/wastelands.scala`.
+The solo Automa (Uncharted Horizons' Solo module) is
 in `nort/automa.scala`, with its 15 cards transcribed from the Tabletopia
 module ("Solo vs Automa" on the main menu). Solo games are saved in the
 browser's localStorage as they are played (`newLocalGame` and `soloMenu` in
@@ -92,7 +95,7 @@ players, not clans: each clan's player picks one on its row of the setup screen
 `game.colors`); starting cards show that color's banner (orange has no
 cards of its own and uses the yellow ones). The setup options
 (colors, game length, victory conditions, first player, and the modules and
-expansions; Creatures, Warchiefs, Wilderness, Events and the 2v2/3v3 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`.
+expansions; Creatures, Warchiefs, Wilderness, Wastelands, Events and the 2v2/3v3 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`.
 "Victory conditions" picks one of: the standard rules, fame only, Alternative
 victory with random cards (the rulebook's way), or Alternative victory with
 cards chosen from the 21 listed below it (exactly 1 Map Control and 2 Wealth,

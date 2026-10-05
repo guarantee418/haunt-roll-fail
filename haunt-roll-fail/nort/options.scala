@@ -189,7 +189,15 @@ case object Wilderness extends Module("Wilderness", "expansion") {
 }
 
 case object Wastelands extends Module("Wastelands", "expansion") {
-    def about = $("Creatures, Environment tiles and Central tiles.")
+    override def ready = true
+    override def expansion = |(WastelandsExpansion)
+    // Before Events, New Blood and Wilderness, so its Start of Year steps and setup come first
+    override def priority = -4
+    def about = $(
+        "Seven Environment tiles (the Kobold Camp, the Jötnar Camp with Jötunn Blainn, Naströnd, Landvidi, Thor's Wrath, Urdarbrunn and Vedrfolnir) are shuffled into the map tiles after setup; with " ~ "Wilderness".hl ~ " twelve Environment tiles of both are drawn.",
+        "A Central tile can replace the starting tile (" ~ "Central tile".hl ~ " below).",
+        "With the " ~ "Creatures".hl ~ " module: Rock Golems, Myrkalfar, Giant Boars, Kobolds and Valdemar join the creature deck.",
+    )
 }
 
 // Seven more clans; on whenever one of them plays (Game.modules), so its option isn't listed
