@@ -253,6 +253,9 @@ case class HandInfoAction(self : Faction, title : Elem, card : Card) extends Bas
 case class ClanBoard(f : Faction)
 // The Winter cost chart, opened from a player panel
 case class WinterChart(f : Faction)
+// A player's discard pile, opened from the action pane
+case class DiscardPile(f : Faction)
+case class DiscardPileInfoAction(self : Faction, title : Elem, n : Int) extends BaseInfo(title)((n == 0).?("empty".txt).|(n.hl ~ (n == 1).?(" card").|(" cards")) ~ " (tap to see)".spn(xstyles.smaller85)) with ViewObject[Faction] with OnClickInfo { def obj = self ; def param = DiscardPile(self) }
 case class ClanBoardInfoAction(self : Faction, title : Elem) extends BaseInfo(title)(Image(Warchief.board(self), styles.boardInfo)) with ViewObject[Faction] with OnClickInfo { def obj = self ; def param = ClanBoard(self) }
 // Cards shown while there is nothing to do with them; clicking one opens it full screen
 case class CardInfoAction(self : Faction, title : Elem, card : Card) extends BaseInfo(title)(card.handImg) with ViewObject[Card] with OnClickInfo { def obj = card ; def param = card }
@@ -703,6 +706,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             f.active./(c => CardInfoAction(f, "Played".styled(colors(f)), c)) ++
             inLoreTree.not.??(f.upgrades./(u => CardInfoAction(f, "Lore Tree".styled(colors(f)) ~ " (" ~ f.lore.hl ~ " " ~ LoreIcon() ~ ")", u))) ++
             $(ClanBoardInfoAction(f, "Clan board".styled(colors(f)))) ++
+            $(DiscardPileInfoAction(f, "Discard pile".styled(colors(f)), f.discard.num)) ++
             $(Info("Fame", f.fame.hlb))
         )
     }

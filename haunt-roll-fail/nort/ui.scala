@@ -1017,6 +1017,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         ).div
     }
 
+    // A player's discard pile, newest card last
+    def discardPile(f : Faction) : Elem = {
+        val l = game.states(f).discard
+
+        ((f.name.styled(colorOf(f)) ~ " discard pile").hlb.div ~
+            l.none.?("No cards".txt.div).|(Div(l./(c => Image(c.info.image, styles.discardCard)).merge, styles.discardCards)) ~
+            "(tap to close)".spn(xstyles.smaller85).div
+        ).div
+    }
+
     def factionStatus(f : Faction) {
         val container = statuses(game.setup.indexOf(f))
 
@@ -1268,6 +1278,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case WinterChart(f) =>
             showOverlay(overlayScrollX(winterChart(f)).onClick, onClick)
+
+        case DiscardPile(f) =>
+            showOverlay(overlayScrollX(discardPile(f)).onClick, onClick)
 
         case Nil =>
             clearOverlay()

@@ -79,6 +79,9 @@ package object elem {
 
         // The Winter line in the player panels opens the Winter chart
         object tappable extends CustomStyle(SimpleCSSRule("text-decoration", "underline dotted"), SimpleCSSRule("text-underline-offset", "0.3ex"))
+        // The discard pile overlay, opened from the action pane
+        object discardCards extends CustomStyle(display("flex"), SimpleCSSRule("flex-wrap", "wrap"), SimpleCSSRule("justify-content", "center"), SimpleCSSRule("gap", "1ex"), margin.top("1ex"), margin.bottom("1ex"))
+        object discardCard extends CustomStyle(width("18ex"), max.width("23%"), height("auto"))
         object winterChart extends CustomStyle(display("grid"), SimpleCSSRule("grid-template-columns", "auto auto auto"), SimpleCSSRule("column-gap", "1ex"), SimpleCSSRule("row-gap", "0.4ex"), SimpleCSSRule("width", "max-content"), max.width("100%"), margin.left("auto"), margin.right("auto"), margin.top("1ex"), margin.bottom("1ex"))
         object winterCell extends CustomStyle(padding("0.4ex 1.5ex"), text.align("left"))
         object winterHere extends CustomStyle(background.color("#3a3320"), outline.color("#e8b84a"), outline.style("solid"), outline.width("1px"))
