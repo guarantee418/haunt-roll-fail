@@ -885,17 +885,27 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             }
         }
 
-        // The tile being placed: rotate arrows at its top corners, the check mark (confirm) and the cross (cancel) at its bottom, on top of everything
+        // The tile being placed: one button just outside each corner, the rotate arrows at the top, the check mark (confirm) and the cross (cancel) at the bottom, on top of everything
+        var margins = this.margins
         lastActions./~(_.unwrap.as[TilePreview]).take(1).foreach { p =>
             val (x, y) = (sx(p.spot.x), sy(p.spot.y))
+            val d = 120
             def mark(image : String, tag : Any, dx : Double, dy : Double) = pieces.add(Sprite($(at(image, 220)), $(Rectangle(-110, -110, 220, 220)), $(tag)))(x + dx, y + dy)
             if (targets.has(RotateMark(-1)))
-                mark("ui-rotate-left", RotateMark(-1), 150, 150)
+                mark("ui-rotate-left", RotateMark(-1), -d, -d)
             if (targets.has(RotateMark(1)))
-                mark("ui-rotate-right", RotateMark(1), T - 150, 150)
-            mark("ui-confirm", ConfirmMark, T / 2 - 120, T - 150)
+                mark("ui-rotate-right", RotateMark(1), T + d, -d)
+            mark("ui-confirm", ConfirmMark, -d, T + d)
             if (lastActions.of[Cancel].any)
-                mark("ui-cancel", CancelMark, T / 2 + 120, T - 150)
+                mark("ui-cancel", CancelMark, T + d, T + d)
+
+            // A tile on the spare row or column at the edge of the scene: widen the margin there so its buttons stay in view
+            val out = d + 110 + 10
+            margins = Margins(
+                margins.left max (out - x),
+                margins.top max (out - y),
+                margins.right max (x + T + out - sceneWidth),
+                margins.bottom max (y + T + out - sceneHeight))
         }
 
         // The building being confirmed, on its space, with the check mark (confirm) and the cross (cancel) above it, on top of everything
