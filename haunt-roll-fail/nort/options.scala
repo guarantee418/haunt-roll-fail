@@ -140,6 +140,19 @@ case object WarchiefCards extends GameOption with ToggleOption {
     )
 }
 
+// Leaves the Development cards whose effect is to draw cards out of the decks (Game: ShuffledEarlyAction, ShuffledAdvancedAction).
+// Cards that only draw 1 besides another effect (Negociation, Spy, Ancestral Curse, Veiled Threats) stay
+case object NoDrawDevelopments extends GameOption with ToggleOption {
+    val group = "Development cards".txt
+    def valueOn = "Ban card draw developments".txt
+    override val explain = $(
+        "Removes the " ~ NoDrawDevelopments.cards.num.hl ~ " Development cards that draw cards: " ~ NoDrawDevelopments.cards./(_.info.name).mkString(", ").hl ~ ".",
+        "Cards that draw 1 besides another effect (Negociation, Spy, Ancestral Curse, Veiled Threats) stay in. With six players in a long game fewer Development cards may be revealed.",
+    )
+
+    lazy val cards : $[Card] = (Cards.early ++ Cards.advanced).%((_, info) => info.effect.is[DrawEffect]).lefts./(Development(_))
+}
+
 case object FirstSeatStarts extends GameOption with ToggleOption {
     val group = "First player".txt
     def valueOn = "First seat goes first".txt
