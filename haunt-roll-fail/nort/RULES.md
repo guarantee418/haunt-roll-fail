@@ -692,6 +692,10 @@ Check these against the rulebook when it is at hand.
     (the rulebook's example counts "Leader + 3 units" as 4); with it, 3.
   - Creatures: the Automa never moves into a territory with a creature;
     creature prompts aimed at it are answered by its bot.
+    When a creature picks where to move, the Automa's figures are ignored
+    (a ruling from Robotos, 2026-10-05): a territory with only Automa
+    figures counts as empty, and only the player's figures count for "most
+    units".
   - The die's choice face: the casualty only when the enemy has one figure
     left in the fight.
   - Explore's rotation row is measured with the tile in place: resources,
