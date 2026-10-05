@@ -24,7 +24,7 @@ case class TileRef(id : String) extends Elementary with Record {
     def elem = Image("tile-" + id, styles.tile)
 }
 
-// A tile being placed, shown on the map at its spot until confirmed, with rotate arrows (RotateMark), the check mark (confirm) and the cross (cancel) on it
+// A tile being placed, shown on the map at its spot until confirmed, with rotate arrows (RotateMark), the check mark (confirm) and the cross (cancel) just outside its corners
 trait TilePreview extends MapTarget {
     def tile : String
     def spot : Spot
