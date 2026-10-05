@@ -20,6 +20,8 @@ public class BorderLines {
     static Path root, nort, tiles, masks;
     // Tiles cut from a photo have washed-out colours, and the Wilderness tiles darker ones
     static final Set<String> PHOTO = Set.of("start-5", "tile-31", "tile-32", "tile-33");
+    // Wastelands central tiles from the TTS scans: pale teal dashes
+    static final Set<String> TEAL = Set.of("start-magma", "start-helheim", "start-relic");
 
     record Border(String a, String b, boolean wall) {}
     record Tile(String id, List<String> areas, List<Border> borders) {}
@@ -62,7 +64,7 @@ public class BorderLines {
                 lab[i] = best;
             }
 
-            boolean[] dash = dashes(rgb, PHOTO.contains(t.id) || t.id.startsWith("wild-"));
+            boolean[] dash = dashes(rgb, PHOTO.contains(t.id) || t.id.startsWith("wild-"), TEAL.contains(t.id));
             int[] comp = new int[N * N];
             List<int[]> comps = label(dash, comp);
 
@@ -170,7 +172,7 @@ public class BorderLines {
         return list;
     }
 
-    static boolean[] dashes(int[] a, boolean photo) {
+    static boolean[] dashes(int[] a, boolean photo, boolean teal) {
         boolean[] d = new boolean[N * N];
         for (int i = 0; i < N * N; i++) {
             int r = a[i * 3], g = a[i * 3 + 1], b = a[i * 3 + 2];
@@ -180,7 +182,8 @@ public class BorderLines {
             boolean pale = r > 195 && g > 205 && b < 175 && g - b > 55 && r - b > 40;
             // The photos' white dashes are a light gray, the Wilderness ones a pale blue
             boolean gray = Math.min(r, Math.min(g, b)) > 165 && spread < 70;
-            d[i] = white || yellow || (photo && (pale || gray));
+            boolean cyan = r > 105 && g > 160 && b > 155 && b - r > 35 && Math.abs(g - b) < 35;
+            d[i] = white || yellow || (photo && (pale || gray)) || (teal && cyan);
         }
         return d;
     }

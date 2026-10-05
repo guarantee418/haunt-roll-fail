@@ -848,6 +848,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     pieces.add(Sprite($(at(image, kz)), $(Rectangle(-kz / 2, -kz / 2, kz, kz)), tag))(kx, ky)
                     taken :+= ((mx(kx), my(ky), kz / T / 2))
                 }
+
+                // Jötunn Blainn (Wastelands), a round token like Kaija's
+                if (game.blainnIn(t, f)) {
+                    val bz = 230.0 * scale
+                    val (bx, by) = beside(bz / T / 2)
+                    pieces.add(Sprite($(at("token-blainn", bz)), $(Rectangle(-bz / 2, -bz / 2, bz, bz)), tag))(bx, by)
+                    taken :+= ((mx(bx), my(by), bz / T / 2))
+                }
             }
 
             // Kraken Clan's High Tide token, by the territory number
@@ -873,6 +881,19 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             }
         }
 
+        // Wastelands: Jötunn Blainn waiting at his camp and Naströnd's wood not yet taken, in the impassable middle of their tiles
+        if (game.has(Wastelands)) {
+            game.jotnarCamp.%(_ => game.blainn.none).foreach { s =>
+                pieces.add(Sprite($(at("token-blainn", 230)), $(Rectangle(-115, -115, 230, 230))))(sx(s.x + 0.5), sy(s.y + 0.5))
+            }
+
+            game.nastrond.foreach { s =>
+                $(-55, 55).foreach { d =>
+                    pieces.add(Sprite($(at("token-wood", 140)), $(Rectangle(-70, -70, 140, 140))))(sx(s.x + 0.5) + d, sy(s.y + 0.5))
+                }
+            }
+        }
+
         // The resource icons over everything, so a piece that has to overlap one never hides it
         board.placements.foreach { p =>
             TileIcons.icons.get(p.tile).|($).indices.foreach { n =>
@@ -885,17 +906,27 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             }
         }
 
-        // The tile being placed: rotate arrows at its top corners, the check mark (confirm) and the cross (cancel) at its bottom, on top of everything
+        // The tile being placed: one button just outside each corner, the rotate arrows at the top, the check mark (confirm) and the cross (cancel) at the bottom, on top of everything
+        var margins = this.margins
         lastActions./~(_.unwrap.as[TilePreview]).take(1).foreach { p =>
             val (x, y) = (sx(p.spot.x), sy(p.spot.y))
+            val d = 120
             def mark(image : String, tag : Any, dx : Double, dy : Double) = pieces.add(Sprite($(at(image, 220)), $(Rectangle(-110, -110, 220, 220)), $(tag)))(x + dx, y + dy)
             if (targets.has(RotateMark(-1)))
-                mark("ui-rotate-left", RotateMark(-1), 150, 150)
+                mark("ui-rotate-left", RotateMark(-1), -d, -d)
             if (targets.has(RotateMark(1)))
-                mark("ui-rotate-right", RotateMark(1), T - 150, 150)
-            mark("ui-confirm", ConfirmMark, T / 2 - 120, T - 150)
+                mark("ui-rotate-right", RotateMark(1), T + d, -d)
+            mark("ui-confirm", ConfirmMark, -d, T + d)
             if (lastActions.of[Cancel].any)
-                mark("ui-cancel", CancelMark, T / 2 + 120, T - 150)
+                mark("ui-cancel", CancelMark, T + d, T + d)
+
+            // A tile on the spare row or column at the edge of the scene: widen the margin there so its buttons stay in view
+            val out = d + 110 + 10
+            margins = Margins(
+                margins.left max (out - x),
+                margins.top max (out - y),
+                margins.right max (x + T + out - sceneWidth),
+                margins.bottom max (y + T + out - sceneHeight))
         }
 
         // The building being confirmed, on its space, with the check mark (confirm) and the cross (cancel) above it, on top of everything
@@ -931,7 +962,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val achievements = $(("Achievements" ~ last.not.?(", year " ~ game.lastYear.hl).|(Empty)) -> last.?(game.display).|(game.achievements))
 
         // Creatures module: the creature line, in activation order
-        val creatures = game.has(Creatures).$(("Creatures" ~ " (left to right)".spn(xstyles.smaller85)) -> game.creatureLine)
+        val creatures = (game.has(Creatures) || game.creatureLine.any).$(("Creatures" ~ " (left to right)".spn(xstyles.smaller85)) -> game.creatureLine)
 
         // Uncharted Horizons: this year's Event and the next one, and the Alternative victory cards
         val events = game.has(EventsModule).$(("Event" ~ " (this year, next)".spn(xstyles.smaller85)) -> (game.event.$ ++ game.eventDeck.take(1)))
@@ -942,6 +973,48 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val automa = game.setup.has(Automa).$(("Automa" ~ " (played this year)".spn(xstyles.smaller85)) -> game.automaPlayed)
 
         court.replaceCached((game.year, game.display, game.achievements, game.creatureLine, game.event, game.eventDeck.num, game.victory, game.automaPlayed).toString, strip((automa ++ events ++ victory ++ developments ++ achievements ++ creatures)./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
+    }
+
+    // The Winter cost chart, with each clan on its row and what f has to pay with
+    def winterChart(f : Faction) : Elem = {
+        val payers = game.setup.but(Automa).%(game.states.contains)
+
+        // Harsh Winter counts 1 more unit per closed territory
+        def counted(g : Faction) = game.states(g).units + game.eventIs("harsh-winter").??(game.controlled(g).%(game.board.closed).num)
+
+        val rows = $((0, 3), (4, 6), (7, 9), (10, 12), (13, 99))
+
+        val cells = rows./{ case (lo, hi) =>
+            val (food, wood) = Winter.cost(lo)
+            val here = payers.%(g => counted(g) >= lo && counted(g) <= hi)
+            val ss = here.has(f).$(styles.winterHere)
+            val label = (hi == 99).?((lo + "+ units").txt).|((lo + "–" + hi + " units").txt)
+            val cost = (food + wood == 0).?("nothing".txt).|($(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => n.hl ~ " " ~ e }.join(" "))
+            val clans = here./(g => g.name.styled(colorOf(g))).join(", ")
+
+            Div(label, styles.winterCell +: ss) ~ Div(cost, styles.winterCell +: ss) ~ Div(clans, styles.winterCell +: ss)
+        }
+
+        val state = game.states(f)
+        val (food, wood) = EventsExpansion.winterCost(f)
+        val next = Harvest.forecast(f)
+        val after = (state.food + next.food, state.wood + next.wood)
+
+        val events =
+            game.eventIs("harsh-winter").?(("Harsh Winter".hl ~ ": each closed territory counts as 1 more unit").div).|(Empty) ~
+            game.eventIs("blizzard").?(("Blizzard".hl ~ ": everyone pays 1 more " ~ Food.elem ~ " and 1 more " ~ Wood.elem).div).|(Empty)
+
+        val short = after._1 < food || after._2 < wood
+
+        ("Winter costs".hlb.div ~
+            Div(cells.merge, styles.winterChart) ~
+            events ~
+            (f.name.styled(colorOf(f)) ~ " pays " ~ (food + wood == 0).?("nothing".txt).|($(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => n.hl ~ " " ~ e }.join(" ")) ~ " for " ~ counted(f).hl ~ " units").div ~
+            ("Has " ~ state.food.hl ~ " " ~ Food.elem ~ " " ~ state.wood.hl ~ " " ~ Wood.elem ~ ", after the harvest " ~ after._1.hl ~ " " ~ Food.elem ~ " " ~ after._2.hl ~ " " ~ Wood.elem).div ~
+            short.?(("Not enough without trading: an unpaid Winter gives an " ~ UnrestCard.elem ~ " card").div).|(Empty) ~
+            HorizontalBreak ~
+            "(tap to close)".spn(xstyles.smaller85).div
+        ).div
     }
 
     def factionStatus(f : Faction) {
@@ -986,7 +1059,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             else c.target./(n => game.progressOf(f, c.id).hl ~ "/" ~ n.toString).|("✗".txt)
         }.join(" ")).div).|(Empty)
 
-        val content = (title.div ~ res ~ units ~ chief ~ cards ~ nb ~ goals ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
+        // The next harvest as things stand, and the Winter costs (tapping them shows the whole Winter chart)
+        val next = Harvest.forecast(f)
+        val gains = $(next.food -> Food.elem, next.wood -> Wood.elem, next.lore -> Lore.elem, next.fame -> "fame".txt).filter(_._1 > 0).map { case (n, e) => ("+" + n).hl ~ " " ~ e }
+        val harvest = ("Harvest: ".txt ~ gains.any.?(gains.join(" ")).|("nothing".txt)).div
+
+        val (food, wood) = EventsExpansion.winterCost(f)
+        val costs = $(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => n.hl ~ " " ~ e }
+        val winter = (f != Automa).?(OnClick(WinterChart(f), ("Winter: ".txt ~ costs.any.?(costs.join(" ")).|("nothing".txt)).div(styles.tappable)(xlo.pointer))).|(Empty)
+
+        val content = (title.div ~ res ~ units ~ chief ~ cards ~ nb ~ goals ~ marks ~ harvest ~ winter).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
 
         container.replace(content, resources, {
             case x => onClick(x)
@@ -1183,6 +1265,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case ClanBoard(f) =>
             showOverlay(overlayFitX(Image(Warchief.board(f), styles.zoomCard)).onClick, onClick)
+
+        case WinterChart(f) =>
+            showOverlay(overlayScrollX(winterChart(f)).onClick, onClick)
 
         case Nil =>
             clearOverlay()

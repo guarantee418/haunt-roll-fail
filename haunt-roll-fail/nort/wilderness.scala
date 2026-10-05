@@ -48,6 +48,11 @@ object Wild {
     // The Den's area, once explored
     def dens(implicit game : Game) : $[AreaRef] = game.board.placements.%(_.tile == den)./(p => AreaRef(p.x, p.y, "d"))
 
+    // Where a Wyvern lives: this Den or the Wastelands central Wyvern's Den
+    def homes(implicit game : Game) : $[AreaRef] = dens ++ game.board.placements.%(_.tile == Waste.den)./(p => AreaRef(p.x, p.y, "d"))
+
+    def homeIn(t : Territory)(implicit game : Game) = homes.exists(t.areas.contains)
+
     def geysersIn(t : Territory)(implicit game : Game) = t.areas.count(a => geysers.has(key(a)))
 
     def ruinsFame(t : Territory)(implicit game : Game) = t.areas./(a => ruins.getOrElse(key(a), 0)).sum
@@ -85,32 +90,38 @@ case class GeyserSkipAction(self : Faction, rest : $[GeyserSpot]) extends BaseAc
 
 object WildernessExpansion extends Expansion {
     // Harvest: the Ruins' fame (closed or not) and the Den's, unless a Wolf creature is there; the Great Lake's food
-    def harvest(f : Faction)(implicit game : Game) {
-        val mine = game.controlled(f).%(t => game.wolfIn(t).not)
+    def ruinsFame(f : Faction)(implicit game : Game) = game.controlled(f).%(t => game.wolfIn(t).not)./(Wild.ruinsFame).sum
 
-        val ruins = mine./(Wild.ruinsFame).sum
+    def denFame(f : Faction)(implicit game : Game) = 2 * game.controlled(f).%(t => game.wolfIn(t).not).count(Wild.denIn)
+
+    // The most units around each lake: 2 food; tied players get 1 each
+    def lakeFood(f : Faction)(implicit game : Game) : $[Int] = Wild.around(Wild.lake)./~{ l =>
+        def units(g : Faction) = l./(t => game.count(t, g) + game.chiefIn(t, g).??(1)).sum
+        val most = factions./(units).max
+        val tied = factions.%(g => units(g) == most)
+
+        (most > 0 && tied.has(f)).?((tied.num == 1).?(2).|(1))
+    }
+
+    // Fame and food at the next harvest, for the player panels
+    def forecast(f : Faction)(implicit game : Game) : (Int, Int) = (ruinsFame(f) + denFame(f), lakeFood(f).sum)
+
+    def harvest(f : Faction)(implicit game : Game) {
+        val ruins = ruinsFame(f)
         if (ruins > 0) {
             f.fame += ruins
             f.log("gained", ruins.hl, "fame from", "Ruins".hl)
         }
 
-        val dens = mine.count(Wild.denIn)
+        val dens = denFame(f)
         if (dens > 0) {
-            f.fame += 2 * dens
-            f.log("gained", (2 * dens).hl, "fame from the", "Wyvern's Den".hl)
+            f.fame += dens
+            f.log("gained", dens.hl, "fame from the", "Wyvern's Den".hl)
         }
 
-        // The most units around each lake: 2 food; tied players get 1 each
-        Wild.around(Wild.lake).foreach { l =>
-            def units(g : Faction) = l./(t => game.count(t, g) + game.chiefIn(t, g).??(1)).sum
-            val most = factions./(units).max
-            val tied = factions.%(g => units(g) == most)
-
-            if (most > 0 && tied.has(f)) {
-                val n = (tied.num == 1).?(2).|(1)
-                f.food += n
-                f.log("collected", n.hl, Food, "from the", "Great Lake".hl)
-            }
+        lakeFood(f).foreach { n =>
+            f.food += n
+            f.log("collected", n.hl, Food, "from the", "Great Lake".hl)
         }
     }
 
@@ -124,7 +135,8 @@ object WildernessExpansion extends Expansion {
             if (game.has(Creatures))
                 game.spectrals = Creature.spectral
 
-            Shuffle[String](l ++ Wild.tiles, ShuffledEnvironmentAction(_))
+            // With Wastelands, the twelve Environment tiles drawn from both expansions
+            Shuffle[String](l ++ game.environment.|(Wild.tiles), ShuffledEnvironmentAction(_))
 
         case ShuffledEnvironmentAction(l) =>
             game.pile = l

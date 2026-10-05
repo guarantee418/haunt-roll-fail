@@ -59,7 +59,7 @@ package object elem {
         object buildIcon extends CustomStyle(height("2.6em"), vertical.align("middle"), margin.right("1ex"))
         object boardInfo extends CustomStyle(display("block"), width("44ex"), max.width("100%"))
         // The end screen: the winners' clan cards, and warchief cards with the Warchiefs module
-        object winnerCard extends CustomStyle(display("inline-block"), width("18ex"), max.width("45%"), margin("0.5ex"), vertical.align("top"))
+        object winnerCard extends CustomStyle(display("inline-block"), width("18ex"), margin("0.5ex"), vertical.align("top"))
         object winnerLine extends CustomStyle(font.size("120%"), margin.bottom("0.5ex"))
         object loreCard extends CustomStyle(display("block"), width("36ex"), max.width("100%"), margin.left("auto"), margin.right("auto"))
 
@@ -76,6 +76,12 @@ package object elem {
         object stripEmpty extends CustomStyle(font.style("italic"))
 
         object fame extends CustomStyle(color("#e8b84a"))
+
+        // The Winter line in the player panels opens the Winter chart
+        object tappable extends CustomStyle(SimpleCSSRule("text-decoration", "underline dotted"), SimpleCSSRule("text-underline-offset", "0.3ex"))
+        object winterChart extends CustomStyle(display("grid"), SimpleCSSRule("grid-template-columns", "auto auto auto"), SimpleCSSRule("column-gap", "1ex"), SimpleCSSRule("row-gap", "0.4ex"), SimpleCSSRule("width", "max-content"), max.width("100%"), margin.left("auto"), margin.right("auto"), margin.top("1ex"), margin.bottom("1ex"))
+        object winterCell extends CustomStyle(padding("0.4ex 1.5ex"), text.align("left"))
+        object winterHere extends CustomStyle(background.color("#3a3320"), outline.color("#e8b84a"), outline.style("solid"), outline.width("1px"))
         object creature extends CustomStyle(color("#c9a27a"), font.weight("bold"))
 
         object tile extends CustomStyle(display("inline-block"), width("26ex"), max.width("90%"), vertical.align("middle"), margin("0.3ex"))

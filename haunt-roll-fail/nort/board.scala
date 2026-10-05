@@ -67,6 +67,17 @@ case class Territory(areas : $[AreaRef]) {
 class Board {
     var placements : $[Placement] = $
 
+    // Areas of one tile joined into one territory across a printed border, which is then ignored
+    // (Wastelands: with five players the middle of a central tile joins its east territory)
+    private var joins : $[(AreaRef, AreaRef)] = $
+
+    def join(a : AreaRef, b : AreaRef) {
+        joins :+= (a, b)
+        territoryCache = None
+    }
+
+    def joined(a : AreaRef, b : AreaRef) = joins.exists(j => j == (a, b) || j == (b, a))
+
     private var territoryCache : |[$[Territory]] = None
     private var indexCache : Map[AreaRef, Territory] = Map()
 
@@ -115,6 +126,8 @@ class Board {
             }
         }
 
+        joins.foreach { case (a, b) => if (parent.contains(a) && parent.contains(b)) parent(find(a)) = find(b) }
+
         val order = all.zipWithIndex.toMap
         all.groupBy(find).values.$./(l => Territory(l.sortBy(order)))./(t => t).sortBy(t => order(t.anchor))
     }
@@ -160,7 +173,7 @@ class Board {
 
     private def consistent(placements : $[Placement], t : $[Territory]) : Boolean = {
         val index = t./~(t => t.areas./(_ -> t)).toMap
-        placements.forall(p => p.spec.borders.forall(b => index(AreaRef(p.x, p.y, b.a)) != index(AreaRef(p.x, p.y, b.b))))
+        placements.forall(p => p.spec.borders.forall(b => joined(AreaRef(p.x, p.y, b.a), AreaRef(p.x, p.y, b.b)) || index(AreaRef(p.x, p.y, b.a)) != index(AreaRef(p.x, p.y, b.b))))
     }
 
     // The territories with p added, when that placement is consistent; computes them once for both

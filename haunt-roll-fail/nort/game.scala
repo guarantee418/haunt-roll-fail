@@ -104,7 +104,7 @@ class FactionState(val faction : Faction)(implicit game : Game) {
     var fame = 0
 
     // Units on the map, with the warchief (Warchiefs module); Horse Clan's second warchief, Brok, counts too
-    def units = game.onMap(faction) + game.chiefs.contains(faction).??(1) + ((faction == Horse && game.brok.any) || (faction == Automa && game.leader2.any)).??(1)
+    def units = game.onMap(faction) + game.chiefs.contains(faction).??(1) + ((faction == Horse && game.brok.any) || (faction == Automa && game.leader2.any)).??(1) + game.blainnOf(faction).any.??(1)
 
     var draw : $[Card] = $
     var hand : $[Card] = $
@@ -153,6 +153,42 @@ object Winter {
         else if (units <= 9) (2, 0)
         else if (units <= 12) (3, 1)
         else (4, 2)
+}
+
+// What a clan is set to collect at the next harvest, as things stand (shown in the player panels)
+case class HarvestForecast(food : Int, wood : Int, lore : Int, fame : Int)
+
+// Harvest amounts, shared by HarvestAction and the forecast in the player panels
+object Harvest {
+    // A Wolf creature leaves only the buildings' fame and resources;
+    // the Wyvern's Den (Wilderness) gives its own fame instead;
+    // Events: Frozen Sea gives 1 fame per territory instead; Bountiful Year's territory gives none
+    // Wastelands: a Kobold's territory gives no fame, its buildings' included
+    def territoryFame(f : Faction)(implicit game : Game) : Int = {
+        val territories = game.controlled(f).%(t => game.koboldIn(t).not)
+
+        if (game.eventIs("frozen-sea"))
+            territories.%(t => game.wolfIn(t).not).%(t => Wild.denIn(t).not).num
+        else
+            territories.%(game.board.closed).%(t => game.wolfIn(t).not).%(t => Wild.denIn(t).not).%(EventsExpansion.fameFrom)./(t => (game.board.tiles(t) >= 3).?(2).|(1)).sum
+    }
+
+    def altarFame(f : Faction)(implicit game : Game) : Int = 3 * game.controlled(f).%(t => game.koboldIn(t).not)./~(game.working).count(_ == AltarOfKings)
+
+    def resources(f : Faction)(implicit game : Game) : (Int, Int, Int) =
+        game.controlled(f)./(EventsExpansion.harvest).foldLeft((0, 0, 0))((a, b) => (a._1 + b._1, a._2 + b._2, a._3 + b._3))
+
+    // Leaves out the choices made during the harvest: Snake's Scorched Earth and the New Blood clan powers' extra resource
+    def forecast(f : Faction)(implicit game : Game) : HarvestForecast = {
+        if (f == Dragon && game.dragonHarvest.has(false))
+            return HarvestForecast(0, 0, 0, 0)
+
+        val (food, wood, lore) = resources(f)
+        val (wildFame, wildFood) = game.has(Wilderness).?(WildernessExpansion.forecast(f)).|((0, 0))
+        val (wasteFame, wasteFood, wasteLore) = game.has(Wastelands).?(WastelandsExpansion.forecast(f)).|((0, 0, 0))
+
+        HarvestForecast(food + wildFood + wasteFood, wood, lore + wasteLore, territoryFame(f) + altarFame(f) + wildFame + wasteFame)
+    }
 }
 
 
@@ -214,6 +250,8 @@ case class UpgradeCardAction(self : Faction, card : Card, upgrade : Card, remove
 case class HandInfoAction(self : Faction, title : Elem, card : Card) extends BaseInfo(title)(card.handImg) with ViewObject[Card] { def obj = card }
 // The player's clan board below the Lore Tree, to look up the clan's power and its warchief; clicking it opens it full screen
 case class ClanBoard(f : Faction)
+// The Winter cost chart, opened from a player panel
+case class WinterChart(f : Faction)
 case class ClanBoardInfoAction(self : Faction, title : Elem) extends BaseInfo(title)(Image(Warchief.board(self), styles.boardInfo)) with ViewObject[Faction] with OnClickInfo { def obj = self ; def param = ClanBoard(self) }
 // Cards shown while there is nothing to do with them; clicking one opens it full screen
 case class CardInfoAction(self : Faction, title : Elem, card : Card) extends BaseInfo(title)(card.handImg) with ViewObject[Card] with OnClickInfo { def obj = card ; def param = card }
@@ -450,11 +488,32 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // A Wolf: no fame or resources at harvest except from buildings
     def wolfIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == CreatureWolf)
 
+    // Wastelands: a territory with a Kobold gives no fame at the Harvest
+    def koboldIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == Kobold)
+
     // A Spectral Warrior (Wilderness): the buildings in its territory have no effect
     def ghostIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == SpectralWarrior)
 
     // Wilderness: the Spectral Warriors not yet placed by the Ancestral Graveyard
     var spectrals : $[Creature] = $
+
+    // WASTELANDS (wastelands.scala): the central tile; Jötunn Blainn's owner and area once recruited, and the Jötnar Camp
+    // he waits on; the Naströnd tiles whose 2 wood nobody has taken yet; the year the Start of Year steps were made and the
+    // steps done this year; the Wyvern placed on the central Wyvern's Den
+    var central = "start"
+    var blainn : |[(Faction, AreaRef)] = None
+    var jotnarCamp : |[Spot] = None
+    var nastrond : $[Spot] = $
+    var wasteYear = 0
+    var wasteSteps : $[String] = $
+    var denWyvern = false
+
+    // Wilderness and Wastelands together: the twelve Environment tiles drawn from both
+    var environment : |[$[String]] = None
+
+    def blainnOf(f : Faction) : |[AreaRef] = blainn.%(_._1 == f)./(_._2)
+
+    def blainnIn(t : Territory, f : Faction) : Boolean = blainnOf(f).exists(t.areas.contains)
 
     // The Swamp (Wilderness): units may pass through it but not stay
     def swampIn(t : Territory) : Boolean = t.areas.exists(Wild.swamp)
@@ -524,10 +583,11 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def chiefReady(f : Faction) : Boolean = (has(Warchiefs) || f == Automa) && chiefs.contains(f).not && setup.has(f)
 
     // Units, Kaija and the warchief
-    def figures(t : Territory, f : Faction) : Int = count(t, f) + kaijaIn(t, f).??(1) + chiefIn(t, f).??(1)
+    def figures(t : Territory, f : Faction) : Int = count(t, f) + kaijaIn(t, f).??(1) + chiefIn(t, f).??(1) + blainnIn(t, f).??(1)
 
     // Combat points of the figures: Kaija is worth 2, a warchief 2 or 3 depending on its power
-    def strength(t : Territory, f : Faction, attacking : Boolean) : Int = count(t, f) + companionStrength(t, f) + Warchief.strength(t, f, attacking)
+    // Jötunn Blainn (Wastelands) is worth 2
+    def strength(t : Territory, f : Faction, attacking : Boolean) : Int = count(t, f) + companionStrength(t, f) + Warchief.strength(t, f, attacking) + blainnIn(t, f).??(2)
 
     // Kaija is in Bear Clan's reserve and can be recruited
     // Brundr and Kaelinn likewise; Brok only with the Warchiefs module
@@ -559,13 +619,17 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         units += a -> (m + (f -> (m.getOrElse(f, 0) + n)))
     }
 
-    // Casualties: units first, then the warchief, Kaija last
+    // Casualties: units first, then the warchief, Jötunn Blainn (back to his camp), Kaija last
     def removeFigures(t : Territory, f : Faction, n : Int) {
         val k = math.min(n, count(t, f))
         removeUnits(t, f, k)
         var left = n - k
         if (left > 0 && chiefIn(t, f)) {
             chiefs -= f
+            left -= 1
+        }
+        if (left > 0 && blainnIn(t, f)) {
+            blainn = None
             left -= 1
         }
         if (left > 0 && kaijaIn(t, f))
@@ -1031,7 +1095,7 @@ object CommonExpansion extends Expansion {
             game.awakened = false
 
             // Each controlled Forge draws one more card; the Automa draws its own cards (automa.scala)
-            Then(game.from(game.first).but(Automa).foldRight(RevealDevelopmentsAction : ForcedAction)((f, then) => DrawCardsAction(f, 4 + game.controlled(f)./~(game.working).count(_ == Forge), then)))
+            Then(game.from(game.first).but(Automa).foldRight(RevealDevelopmentsAction : ForcedAction)((f, then) => DrawCardsAction(f, 4 + game.controlled(f)./~(game.working).count(_ == Forge) + game.has(Wastelands).??(WastelandsExpansion.extraDraw(f)), then)))
 
         case RevealDevelopmentsAction =>
             if (game.year == game.lastYear) {
@@ -1229,28 +1293,19 @@ object CommonExpansion extends Expansion {
 
             // Dragon Clan harvests nothing without a sacrifice on its Pyre
             game.from(game.first).%(f => f != Dragon || game.dragonHarvest.has(false).not).foreach { f =>
-                val territories = game.controlled(f)
-
-                // A Wolf creature leaves only the buildings' fame and resources
-                // The Wyvern's Den (Wilderness) gives its own fame instead
-                // Events: Frozen Sea gives 1 fame per territory instead; Bountiful Year's territory gives none
-                val fame =
-                    if (game.eventIs("frozen-sea"))
-                        territories.%(t => game.wolfIn(t).not).%(t => Wild.denIn(t).not).num
-                    else
-                        territories.%(game.board.closed).%(t => game.wolfIn(t).not).%(t => Wild.denIn(t).not).%(EventsExpansion.fameFrom)./(t => (game.board.tiles(t) >= 3).?(2).|(1)).sum
+                val fame = Harvest.territoryFame(f)
                 if (fame > 0) {
                     f.fame += fame
                     f.log("gained", fame.hl, "fame from closed territories")
                 }
 
-                val altars = territories./~(game.working).count(_ == AltarOfKings)
+                val altars = Harvest.altarFame(f)
                 if (altars > 0) {
-                    f.fame += 3 * altars
-                    f.log("gained", (3 * altars).hl, "fame from", AltarOfKings)
+                    f.fame += altars
+                    f.log("gained", altars.hl, "fame from", AltarOfKings)
                 }
 
-                val (food, wood, lore) = territories./(EventsExpansion.harvest).foldLeft((0, 0, 0))((a, b) => (a._1 + b._1, a._2 + b._2, a._3 + b._3))
+                val (food, wood, lore) = Harvest.resources(f)
                 f.food += food
                 f.wood += wood
                 f.lore += lore
@@ -1259,6 +1314,10 @@ object CommonExpansion extends Expansion {
                 // Environment tiles (Wilderness): Ruins and the Wyvern's Den give fame, the Great Lake food
                 if (game.has(Wilderness))
                     WildernessExpansion.harvest(f)
+
+                // Wastelands: Yggdrasil and the central Wyvern's Den give fame, the Great Lake food, the Relic of the Gods lore
+                if (game.has(Wastelands))
+                    WastelandsExpansion.harvest(f)
 
                 // The Scorched Earth resource goes to Snake Clan instead
                 if (victim.has(f))

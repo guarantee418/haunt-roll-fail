@@ -60,6 +60,24 @@ object TileIcons {
         "wild-peaks-1" -> $(Icon(0.540, 0.165, 0.070)),
         "wild-peaks-2" -> $(Icon(0.540, 0.165, 0.070)),
         "wild-graveyard" -> $(),
-        "wild-den" -> $()
+        "wild-den" -> $(),
+        "waste-kobold" -> $(),
+        "waste-jotnar" -> $(Icon(0.497, 0.905, 0.055)),
+        "waste-nastrond" -> $(Icon(0.094, 0.368, 0.072)),
+        "waste-landvidi" -> $(),
+        "waste-thor" -> $(),
+        "waste-urdarbrunn" -> $(),
+        "waste-vedrfolnir" -> $(),
+        "start-magma" -> $(),
+        "start-yggdrasil" -> $(),
+        "start-relic" -> $(),
+        "start-lake" -> $(),
+        "start-volcano" -> $(),
+        "start-mimir" -> $(),
+        "start-hrimgandr" -> $(),
+        "start-den" -> $(),
+        "start-helheim" -> $(),
+        "start-5-open" -> $(),
+        "start-5-wall" -> $()
     )
 }

@@ -36,7 +36,10 @@ New Blood expansion's seven clans (Dragon, Horse, Kraken, Lynx, Ox, Rat,
 Squirrel, with their warchiefs and 28 clan cards, from the TTS mod
 3597126237) in `nort/newblood.scala`; picking one of them turns it on.
 Uncharted Horizons' Events and Alternative victory conditions modules are in
-`nort/horizons.scala`. The solo Automa (Uncharted Horizons' Solo module) is
+`nort/horizons.scala`. The Wastelands expansion (Environment tiles
+`waste-*`, the Central tiles `start-*` chosen with the "Central tile" option,
+five more creatures, Hrimgandr and Jötunn Blainn) is in `nort/wastelands.scala`.
+The solo Automa (Uncharted Horizons' Solo module) is
 in `nort/automa.scala`, with its 15 cards transcribed from the Tabletopia
 module ("Solo vs Automa" on the main menu). Solo games are saved in the
 browser's localStorage as they are played (`newLocalGame` and `soloMenu` in
@@ -65,7 +68,10 @@ with the log on the left. Ultrawide screens
 a fixed layout (`layout` override in `nort/ui.scala`): map, then short
 player panels in a row, the shared cards and the hand below them, and the
 log on the far right, with the
-hand cards sized to the pane (`--nort-hand-card`) so the whole hand fits. Each player can hide the
+hand cards sized to the pane (`--nort-hand-card`) so the whole hand fits. The player panels end with the clan's next harvest as things stand
+(`Harvest.forecast` in `nort/game.scala`, the same sums `HarvestAction` uses,
+fame included) and its Winter cost; tapping the Winter line opens the whole
+Winter chart (`winterChart` in `nort/ui.scala`). Each player can hide the
 tints and the colored borders under "Interface" (the Territory Color and
 Fame Borders settings in `nort/meta.scala`). A turn starts with six choices at
 the top of the action pane (Play cards, Wait, Replace, Remove, Upgrade,
@@ -73,7 +79,7 @@ Pass); after one, tapping a card in hand does it. A Build card's builds: tap
 a free space, pick from the menu of all buildings with their costs, then
 confirm with the green check mark (or cancel with the red cross) drawn above
 the building on the map. Placing a tile works the same way: the tile is shown at its spot with
-rotate arrows at its top corners and the check mark and cross at its bottom. The player's clan board is shown under the Lore Tree.
+one button just outside each corner: rotate arrows at the top, the check mark and cross at the bottom. The player's clan board is shown under the Lore Tree.
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
 Tabletopia export the owner uploaded, with gaps filled from two Tabletop
 Simulator mods (Steam Workshop 2838546142 and 2847156187; see
@@ -89,7 +95,7 @@ players, not clans: each clan's player picks one on its row of the setup screen
 `game.colors`); starting cards show that color's banner (orange has no
 cards of its own and uses the yellow ones). The setup options
 (colors, game length, victory conditions, first player, and the modules and
-expansions; Creatures, Warchiefs, Wilderness, Events and the 2v2/3v3 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`.
+expansions; Creatures, Warchiefs, Wilderness, Wastelands, Events and the 2v2/3v3 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`.
 "Victory conditions" picks one of: the standard rules, fame only, Alternative
 victory with random cards (the rulebook's way), or Alternative victory with
 cards chosen from the 21 listed below it (exactly 1 Map Control and 2 Wealth,

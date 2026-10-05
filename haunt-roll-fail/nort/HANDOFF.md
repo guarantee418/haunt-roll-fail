@@ -31,7 +31,7 @@ and each deck's `CustomDeck` has the `FaceURL` of its card sheet.
 | `effects.scala` | `CardsExpansion`: the card effects that aren't basic actions (recruit per resource, removing enemy units, copying cards, looking at hands, Defensive Strategy, ...) |
 | `tiles.scala` | All 35 core tiles as data: areas, the sides each area owns, resources, lairs, building spaces, and borders (regular or rough) |
 | `board.scala` | `Board`: placements, joining areas into territories, adjacency, closed/open, legal placements (`consistent`), drawing positions |
-| `map.scala` | `MapExpansion`: setup tile/unit placement, Recruit (with Kaija), Move (with the Move specials), combat and retreat, Scorched Earth, Explore, Build (with the Build specials; a Build card's builds go `BuildAction` → `BuildSpotAction` (Soft, a free space, tapped on the map or picked from the list; `buildSpots`) → `BuildPickAction` (Soft, the menu of all eight buildings with their costs, the ones that can't go there dimmed with the reason from `buildBlock`) → `BuildConfirmAction` (the building drawn on its space with a green check mark and a red cross above it, `BuildPreview`; the check mark is the confirm action's map target `ConfirmMark`, the cross cancels through `CancelMark` in `UI.clickable`), which goes on to `BuildPlaceAction`. Placing a tile (setup, Explore, a second chance) works the same way: the tile is drawn at its spot (`TilePreview`, the `...TurnAction`s) with blue rotate arrows at its top corners (`ui-rotate-left`/`-right`, the map targets `RotateMark(d)` of the `...RotateAction`s, only when it has more than one legal turn) and the check mark and cross at its bottom; the buttons in the action pane still work too. The other builds (Halvard's Craft, New Blood clans) still use `buildOptions` and `buildChoice`), Feast, units returning at end of year |
+| `map.scala` | `MapExpansion`: setup tile/unit placement, Recruit (with Kaija), Move (with the Move specials), combat and retreat, Scorched Earth, Explore, Build (with the Build specials; a Build card's builds go `BuildAction` → `BuildSpotAction` (Soft, a free space, tapped on the map or picked from the list; `buildSpots`) → `BuildPickAction` (Soft, the menu of all eight buildings with their costs, the ones that can't go there dimmed with the reason from `buildBlock`) → `BuildConfirmAction` (the building drawn on its space with a green check mark and a red cross above it, `BuildPreview`; the check mark is the confirm action's map target `ConfirmMark`, the cross cancels through `CancelMark` in `UI.clickable`), which goes on to `BuildPlaceAction`. Placing a tile (setup, Explore, a second chance) works the same way: the tile is drawn at its spot (`TilePreview`, the `...TurnAction`s) with blue rotate arrows off its top corners (`ui-rotate-left`/`-right`, the map targets `RotateMark(d)` of the `...RotateAction`s, only when it has more than one legal turn) and the check mark and cross at its bottom, each button just outside its own corner of the tile (the scene margin widens on a side where the tile is at the edge); the buttons in the action pane still work too. The other builds (Halvard's Craft, New Blood clans) still use `buildOptions` and `buildChoice`), Feast, units returning at end of year |
 | `ui.scala` | Status panels (clan names in the player's color), the court strip on top (cards keep the pane's height and the strip scrolls sideways; see `styles.strip`), the board canvas, map clicks, the build preview. A turn (`TurnAction` stage 0, `turnModes` in `game.scala`) starts with six choices at the top of the action pane: `TurnModeAction` (Soft) for Play cards (1 + any ⚡), Wait, Replace card for 1 Lore, Remove card for 2 Lore, Upgrade for 3 Lore (dimmed with the reason when not possible; the Lore icon is `ui-lore`), and Pass; the hand is shown below as pictures that open full screen. After a choice (`modeChoices`) the hand is shown as that choice's actions (`PlayCardAction`, `WaitCardAction`, `ReplaceCardAction`, `RemoveCardAction`, all `HandChoice` with the card image): tapping a card does it, cards that can't be used are dimmed with the reason, Cancel goes back. Upgrade first shows the clan upgrades (`UpgradePickAction`), then the hand twice: wait with a card, or remove one (`UpgradeCardAction`). After the main card, `playChoices` offers the Flash cards and End turn. Until the turn ends the hand doesn't open full screen (`HandInfoAction` in `Game.info`); the Played cards, the Lore Tree list and the clan board (`ClanBoardInfoAction`, `ClanBoard` in `UI.onClick`) still do. Otherwise `Game.info` shows the hand as `CardInfoAction` pictures, with the Played cards |
 | `creatures.scala` | Creatures module: creature kinds and cards, setup deck, apparition on lairs (`TilePlacedAction`), the Creature phase (`CreaturePhaseAction`), declaring and fighting creatures (`MoveEndAction`, `CreatureFightAction`), the More Creatures variant (`PassedAction`) |
 | `warchiefs.scala` | Warchiefs module: names and powers (`Warchief`), step 1 powers (Signy, Brand), Liv's reroll prompts |
@@ -362,6 +362,43 @@ on. To implement one:
   at the end and for the Automa's last-year pick), `game.strongholdsToWin`,
   the Start of Year draw and Winter skip the Automa.
 
+## Wastelands expansion (2026-10-05)
+
+- `wastelands.scala`: `Waste` (tile ids, `controller`, `around`), the
+  `CentralChoice` options (Standard, Random, or one of the nine; shown only
+  with the module, `optionShown` in `meta.scala`) and `WastelandsExpansion`
+  (priority -4: before Events, so its Start of Year steps come before the
+  Event's side effects). `game.wasteSteps` guards re-dispatched actions within
+  a year (reset when `wasteYear` moves on at `StartYearAction`).
+- Setup: `ShuffledTilesAction` is caught once to set `game.central` (and put
+  Hrimgandr in the creature line), then re-dispatched; `MapExpansion` places
+  `game.central` instead of `start`, and with five players
+  `Waste.five(central)` east of it, joining the middle to the east territory
+  with `Board.join`. `ShuffledTilesBackAction` adds the seven Environment
+  tiles; with Wilderness, `game.environment` holds 12 drawn from both and
+  Wilderness shuffles those in.
+- Tiles: `Tiles.wastelands` (`waste-*`) and `Tiles.central` (`start-*`), in
+  `tiles.scala`. `tile-masks.py` treats them like the Wilderness ones
+  (`ORANGE`, `RINGED` for impassable middles left untinted, `NO_ICONS` where
+  lava or ice passed for resource icons); `BorderLines.java` has `TEAL` for
+  the pale dashes of three central tiles (some of their dashes are still
+  missed, so their fame borders are partial).
+- Creatures (`creatures.scala`): Rock Golem, Myrkalf, Giant Boar, Kobold,
+  Valdemar and Hrimgandr kinds; combat hooks `creatureFace`,
+  `creaturePoints`, `creatureIgnored` in `CreatureRolledAction`. Without the
+  Creatures module, Hrimgandr's fights go to `CreaturesExpansion` through
+  `creatureCombat`.
+- Jötunn Blainn: `game.blainn` (owner and area), counted by `figures`,
+  `strength` (2), `units` (Winter) and `removeFigures`. He follows the last
+  figures leaving his territory (`follows`, on `MoveUnitsAction` and
+  `RetreatToAction`), and `normalize` sends him back to the camp when alone.
+- Map drawing (`ui.scala`): Blainn as a round token beside his clan's
+  figure, or in the middle of the Jötnar Camp while waiting; Naströnd's two
+  wood in its middle until taken; the creature strip also shows when only
+  Hrimgandr is in the line.
+- `NORT_WASTELANDS=1` makes the headless host always use the module (with a
+  random central tile choice).
+
 ## Map drawing: territory colours and free ground
 
 - Each territory is tinted with the colour of the player who controls it
@@ -481,8 +518,8 @@ list. In short:
 3. **A better bot** that recruits, builds and explores on purpose.
 4. **A replay check** like `root/replay-check.scala`, to confirm undo and
    loading rebuild the same game.
-5. **Expansions**: Wilderness, New Blood, and Uncharted Horizons' Events and
-   Alternative victory modules are done; Wastelands and the rest of
+5. **Expansions**: Wilderness, Wastelands, New Blood, and Uncharted Horizons' Events and
+   Alternative victory modules are done; the rest of
    Uncharted Horizons (Raids, Development cards, Training Fields) are next (assets in `expansion/`; the TTS mod
    3597126237 has the Uncharted Horizons cards and Tabletopia its rulebook).
 

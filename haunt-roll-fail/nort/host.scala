@@ -30,6 +30,7 @@ object Host extends hrf.host.BaseHost {
         val colors = l.zip(PlayerColor.all.shuffle)./{ case (f, c) => ColorOption(f, c) }
         // NORT_CREATURES=1: always with the Creatures module (and the More Creatures variant half the time); NORT_WARCHIEFS=1: always with Warchiefs; NORT_WILDERNESS=1: always with Wilderness
         val creatures = sys.env.get("NORT_CREATURES").has("1") || random() < 0.5
+        val wastelands = sys.env.get("NORT_WASTELANDS").has("1") || random() < 0.5
         val teams = Module.teams.toList.%{ case (_, k) => k == n && solo.not && (sys.env.get("NORT_TEAMS").has("1") || random() < 0.5) }./{ case (m, _) => ModuleOption(m) }
         // NORT_VICTORY=1: always with Alternative victory, with random or chosen cards
         val alt = sys.env.get("NORT_VICTORY").has("1") || random() < 0.5
@@ -43,6 +44,8 @@ object Host extends hrf.host.BaseHost {
             (sys.env.get("NORT_WILDERNESS").has("1") || random() < 0.5).$(ModuleOption(Wilderness)) ++
             // NORT_EVENTS=1: always with the Events module
             (sys.env.get("NORT_EVENTS").has("1") || random() < 0.5).$(ModuleOption(EventsModule)) ++
+            // NORT_WASTELANDS=1: always with Wastelands, and a random central tile choice
+            wastelands.$(ModuleOption(Wastelands)) ++ wastelands.$(CentralChoice.all.%(c => creatures || c.tile.forall(Waste.creatureOnly.has(_).not)).shuffle.head) ++
             teams
         val level = solo.$(AutomaLevelOption(1 + (random() * 6).toInt))
         val all = options ++ level ++ level.exists(_.level >= 3).$(ModuleOption(Creatures))
