@@ -868,6 +868,10 @@ Check these against the rulebook when it is at hand.
     its players has them. If both teams do, the teams' total fame, then
     territories, units and buildings decide.
 - **Creatures**, where the rulebook says nothing:
+  - A Draugr also strikes when units spawn in its territory (a ruling from
+    Robotos, 2026-10-05): each figure recruited there, Training Camp extras
+    included, costs that player 1 unit (units go first). Not at setup, where
+    creature powers are off.
   - Kaija counts as a unit for the Draugr (units go first) and as 2 combat
     points; a Fallen Valkyrie in a territory makes a tile placement illegal
     if it would join it with units.

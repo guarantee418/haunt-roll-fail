@@ -61,7 +61,7 @@ case object Draugr extends CreatureKind {
     val fame = 2
     val shares = true
     val priorities = $(MostUnits, MostBuildings, MostResources)
-    val text = "When this creature appears or moves in a controlled territory, that player removes 1 unit from it."
+    val text = "When this creature appears or moves in a controlled territory, or units are recruited there, that player removes 1 unit from it."
 }
 
 case object FallenValkyrie extends CreatureKind {
@@ -313,6 +313,20 @@ object CreaturesExpansion extends Expansion {
 
         c.kind.priorities.foldLeft(peopled.any.?(peopled).|(free)) { (l, p) =>
             if (l.none) l else { val m = l./(score(p, _)).max ; l.%(score(p, _) == m) }
+        }
+    }
+
+    // A Draugr also strikes when units are recruited into its territory (not at setup):
+    // the player who controls it removes 1 unit for each figure recruited
+    def recruited(f : Faction, a : AreaRef, n : Int = 1)(implicit game : Game) {
+        val t = game.board.territory(a)
+
+        game.creaturesIn(t).%(_.kind == Draugr).foreach { c =>
+            if (n > 0 && game.present(t).single == Some(f)) {
+                game.removeFigures(t, f, n)
+                game.note("draugr")
+                f.log("lost", n.hl, (n > 1).?("units").|("unit"), "to", c, "in", t.anchor)
+            }
         }
     }
 
