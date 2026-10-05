@@ -292,11 +292,24 @@ case object Teams3v3 extends Module("3v3 Teams", "variant, 2v2 rules") {
     )
 }
 
+// Three teams of two with six players; teammates sit opposite each other
+case object Teams2v2v2 extends Module("2v2v2 Teams", "variant, 2v2 rules") {
+    override def ready = true
+    def about = $(
+        "Six players in three teams of two, with the 2v2 rules; teammates sit opposite each other (seats 1 and 4, 2 and 5, 3 and 6).",
+        "Teammates add their scores together, may move through each other's territories but not stop there, and may trade resources with each other 1:1 during the harvest.",
+        "Not in the rulebook.".styled(xstyles.warning),
+    )
+}
+
 object Module {
-    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3)
+    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2)
 
     // The team variants and the number of players each one needs
-    val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6)
+    val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6, Teams2v2v2 -> 6)
+
+    // How many teams each variant has
+    val sides : Map[Module, Int] = Map(TeamsVariant -> 2, Teams3v3 -> 2, Teams2v2v2 -> 3)
 }
 
 case class ModuleOption(module : Module) extends GameOption with ToggleOption with ImportantOption {

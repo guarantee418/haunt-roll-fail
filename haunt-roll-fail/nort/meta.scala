@@ -55,7 +55,7 @@ object Meta extends MetaGame { mmm =>
     // New Blood has no option: picking one of its clans brings it in
     val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, WarchiefCards, NoDrawDevelopments) ++ Module.all.but(NewBlood).but(Solo).but(VictoryModule)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ AutomaLevelOption.all ++ hiddenOptions
 
-    // Colors only for the clans in the game; 2v2 Teams only with four players, 3v3 Teams only with six
+    // Colors only for the clans in the game; 2v2 Teams only with four players, 3v3 and 2v2v2 Teams only with six
     override def optionsFor(n : Int, l : $[F]) = options.%{
         case ColorOption(f, _) => l.has(f)
         case ModuleOption(m) if Module.teams.contains(m) => Module.teams(m) == n && l.has(Automa).not
@@ -119,6 +119,7 @@ object Meta extends MetaGame { mmm =>
         val missing = factions.%(f => colored.exists(_.clan == f).not)
         val teams = Module.teams.toList.%{ case (m, n) => has(options, m) && factions.num != n }
         teams.any.?(ErrorResult(teams./{ case (m, n) => m.label + " needs " + n + " players" }.mkString(", "))) ||
+        (Module.teams.keys.count(has(options, _)) > 1).?(ErrorResult("Choose one team variant")) ||
         (factions.has(Automa) && options.of[AutomaLevelOption].exists(_.level >= 3) && has(options, Creatures).not).?(ErrorResult("Automa levels 3 and up need the Creatures module")) ||
         validateVictoryCards(factions, options) ||
         missing.any.?(WarningResult(missing./(factionName).mkString(", ") + " will get a free color")) |

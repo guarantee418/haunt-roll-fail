@@ -108,7 +108,7 @@ cards of its own and uses the yellow ones). The setup options
 (colors, game length, victory conditions, first player, "Ban card draw developments"
 (`NoDrawDevelopments`: leaves the seven Development cards that only draw cards
 out of the decks), and the modules and
-expansions; Creatures, Warchiefs, Wilderness, Wastelands, Events and the 2v2/3v3 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`.
+expansions; Creatures, Warchiefs, Wilderness, Wastelands, Events and the 2v2/3v3/2v2v2 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`.
 "Victory conditions" picks one of: the standard rules, fame only, Alternative
 victory with random cards (the rulebook's way), or Alternative victory with
 cards chosen from the 21 listed below it (exactly 1 Map Control and 2 Wealth,

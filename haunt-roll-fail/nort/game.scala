@@ -360,11 +360,16 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // Three closed territories with large buildings win at the end of a year (not with the Alternative victory module)
     val domination = options.has(FameOnly).not && has(VictoryModule).not && (setup.has(Automa).not || options.has(AutomaLevelOption(1)))
 
-    // Team play (2v2 with four players, 3v3 with six): seats alternate between the two teams,
+    // Team play (2v2 with four players, 3v3 or 2v2v2 with six): seats go round the teams in turn,
     // so teammates sit opposite each other
-    val teams : Boolean = Module.teams.exists { case (m, n) => has(m) && setup.num == n }
+    val teamModule : |[Module] = Module.teams.toList.%{ case (m, n) => has(m) && setup.num == n }.map(_._1).headOption
 
-    def team(f : Faction) : Int = teams.?(setup.indexOf(f) % 2).|(setup.indexOf(f))
+    val teams : Boolean = teamModule.any
+
+    // The number of teams (each player alone without team play)
+    val teamCount : Int = teamModule./(Module.sides).|(setup.num)
+
+    def team(f : Faction) : Int = setup.indexOf(f) % teamCount
 
     def allied(f : Faction, g : Faction) : Boolean = f == g || (teams && team(f) == team(g))
 
@@ -376,7 +381,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // The teams in seating order of their first player (each player alone without team play)
     def sides : $[$[Faction]] = setup./(team).distinct./(n => setup.%(team(_) == n))
 
-    def teamName(f : Faction) : Elem = ("Team " + (team(f) == 0).?("A").|("B")).hl
+    def teamName(f : Faction) : Elem = ("Team " + "ABC".charAt(team(f))).hl
 
     var year = 0
     var first : Faction = setup.first
