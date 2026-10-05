@@ -243,9 +243,10 @@ case class PlayCardAction(self : Faction, card : Card, stage : Int) extends Base
 case class WaitCardAction(self : Faction, card : Card) extends BaseAction("Wait with a card")(card.handImg) with ViewObject[Card] with HandChoice { def obj = card }
 case class ReplaceCardAction(self : Faction, card : Card) extends BaseAction("Replace a card for", 1.hl, LoreIcon())(card.handImg) with ViewObject[Card] with HandChoice { def obj = card }
 case class RemoveCardAction(self : Faction, card : Card) extends BaseAction("Remove a card from the game for", 2.hl, LoreIcon())(card.handImg) with ViewObject[Card] with HandChoice { def obj = card }
-// Upgrade: first the clan upgrade to take, then the card to wait with or to remove
+// Upgrade: first the clan upgrade to take, then the card from hand (one row), then Remove or Wait with it
 case class UpgradePickAction(self : Faction, upgrade : Card) extends BaseAction("Upgrade for", 3.hl, LoreIcon(), Comma, "take")(upgrade.handImg) with Soft with ViewObject[Card] with HandChoice { def obj = upgrade }
-case class UpgradeCardAction(self : Faction, card : Card, upgrade : Card, remove : Boolean) extends BaseAction(remove.?("Remove a card from the game").|("Wait with a card"), "and take", upgrade)(card.handImg) with ViewObject[Card] with HandChoice { def obj = card }
+case class UpgradeSacrificeAction(self : Faction, card : Card, upgrade : Card) extends BaseAction("Upgrade to", upgrade, Comma, "choose a card to remove or wait with")(card.handImg) with Soft with ViewObject[Card] with HandChoice { def obj = card }
+case class UpgradeCardAction(self : Faction, card : Card, upgrade : Card, remove : Boolean) extends BaseAction("Upgrade to", upgrade, Comma, "with", card)(remove.?("Remove".txt ~ " (out of the game)").|("Wait".txt ~ " (to the played cards)"))
 // Cards in hand while they can't be tapped: during your turn once a choice is made, they don't open full screen
 case class HandInfoAction(self : Faction, title : Elem, card : Card) extends BaseInfo(title)(card.handImg) with ViewObject[Card] { def obj = card }
 // The player's clan board below the Lore Tree, to look up the clan's power and its warchief; clicking it opens it full screen
@@ -1092,9 +1093,12 @@ object CommonExpansion extends Expansion {
             modeChoices(f, m)
 
         case UpgradePickAction(f, u) =>
+            Ask(f).each(f.hand.distinct)(c => UpgradeSacrificeAction(f, c, u)).cancel
+
+        case UpgradeSacrificeAction(f, c, u) =>
             Ask(f)
-                .each(f.hand.distinct)(c => UpgradeCardAction(f, c, u, false))
-                .each(f.hand.distinct.%(_.removable))(c => UpgradeCardAction(f, c, u, true))
+                .add(UpgradeCardAction(f, c, u, true).!(c.removable.not, "can't be removed from the game"))
+                .add(UpgradeCardAction(f, c, u, false))
                 .cancel
 
         case PlayCardAction(f, c, stage) =>
