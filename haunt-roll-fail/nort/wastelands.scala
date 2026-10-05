@@ -45,7 +45,8 @@ object Waste {
     val helheim = "start-helheim"
 
     // The central tiles impassable in the middle take the five-player tile with impassable borders
-    val impassable = $(relic, lake, volcano)
+    // (the Wilderness Great Lake can be the central tile too)
+    val impassable = $(relic, lake, volcano, Wild.lake)
     // Only with the Creatures module
     val creatureOnly = $(den, helheim)
 
@@ -55,6 +56,7 @@ object Waste {
 
     def name(tile : String) : String = tile match {
         case "start" => "Standard starting tile"
+        case Wild.lake => "Great Lake (Wilderness)"
         case `magma` => "Magma Flow"
         case `yggdrasil` => "Yggdrasil"
         case `relic` => "Relic of the Gods"
@@ -134,8 +136,8 @@ case object RandomCentral extends CentralChoice("Random Wastelands central tile"
     override val explain = $("One of the Wastelands central tiles, drawn at random (the Wyvern's Den and the Gate of Helheim only with the " ~ "Creatures".hl ~ " module).")
 }
 
-case object RandomAnyCentral extends CentralChoice("Random, standard tile included") {
-    override val explain = $("The standard starting tile or one of the Wastelands central tiles, drawn at random (the Wyvern's Den and the Gate of Helheim only with the " ~ "Creatures".hl ~ " module).")
+case object RandomAnyCentral extends CentralChoice("Random, any center tile") {
+    override val explain = $("The standard starting tile, the Wilderness Great Lake or one of the Wastelands central tiles, drawn at random (the Wyvern's Den and the Gate of Helheim only with the " ~ "Creatures".hl ~ " module).")
 }
 
 abstract class CentralTileChoice(val id : String, text : String) extends CentralChoice(Waste.name(id)) {
@@ -153,10 +155,11 @@ case object VolcanoCentral extends CentralTileChoice(Waste.volcano, "impassable;
 case object MimirCentral extends CentralTileChoice(Waste.mimir, "at the Start of Year, its controller may take one of the year's Development or Achievement cards on top of their deck, and takes no other that year.")
 case object HrimgandrCentral extends CentralTileChoice(Waste.hrimgandr, "Hrimgandr (strength 8, 8 fame) lives there, never moves and raises everyone's Winter costs one step; once it is defeated, the Lair's controller draws 1 more card each year.")
 case object DenCentral extends CentralTileChoice(Waste.den, "the Wyvern comes out at the start of year 3; once it is defeated, the Den's controller gains 2 fame at each Harvest.")
+case object WildLakeCentral extends CentralTileChoice(Wild.lake, "the Wilderness Environment tile: impassable; at each Harvest, the most units and warchiefs next to it gain 2 food (1 each when tied).")
 case object HelheimCentral extends CentralTileChoice(Waste.helheim, "its controller gets +2 axes against creatures; at each Creature phase, on a skull, a creature comes out of it.")
 
 object CentralChoice {
-    val tiles : $[CentralChoice] = $(MagmaFlowCentral, YggdrasilCentral, RelicCentral, GreatLakeCentral, VolcanoCentral, MimirCentral, HrimgandrCentral, DenCentral, HelheimCentral)
+    val tiles : $[CentralChoice] = $(MagmaFlowCentral, YggdrasilCentral, RelicCentral, GreatLakeCentral, VolcanoCentral, MimirCentral, HrimgandrCentral, DenCentral, HelheimCentral, WildLakeCentral)
     val all : $[CentralChoice] = $(StandardCentral, RandomCentral, RandomAnyCentral) ++ tiles
 
     // A choice other than the standard tile turns on the Wastelands code (Meta.has)
@@ -257,8 +260,11 @@ object WastelandsExpansion extends Expansion {
         Waste.at(Waste.yggdrasil, "c").%(t => game.controlled(f).has(t)).%(t => game.koboldIn(t).not).num * 5 +
         Waste.wyvernSlain.??(Waste.at(Waste.den, "d").%(t => game.controlled(f).has(t)).%(t => game.koboldIn(t).not).num * 2)
 
+    // The Wilderness Great Lake as the central tile, by its own rule; with Wilderness on, Wilderness collects it
+    def wildLakeFood(f : Faction)(implicit game : Game) : Int = (game.central == Wild.lake && game.has(Wilderness).not).??(WildernessExpansion.lakeFood(f).sum)
+
     // Fame, food and lore at the next harvest, for the player panels
-    def forecast(f : Faction)(implicit game : Game) : (Int, Int, Int) = (fame(f), lakeFood(f), relicLore(f))
+    def forecast(f : Faction)(implicit game : Game) : (Int, Int, Int) = (fame(f), lakeFood(f) + wildLakeFood(f), relicLore(f))
 
     def harvest(f : Faction)(implicit game : Game) {
         val n = fame(f)
@@ -271,6 +277,12 @@ object WastelandsExpansion extends Expansion {
         if (food > 0) {
             f.food += food
             f.log("collected", food.hl, Food, "from the", Waste.elem(Waste.lake))
+        }
+
+        val wild = wildLakeFood(f)
+        if (wild > 0) {
+            f.food += wild
+            f.log("collected", wild.hl, Food, "from the", "Great Lake".hl)
         }
 
         val lore = relicLore(f)
@@ -370,7 +382,7 @@ object WastelandsExpansion extends Expansion {
                     case Some(RandomCentral) =>
                         Random[String](Waste.centrals.%(t => game.has(Creatures) || Waste.creatureOnly.has(t).not), CentralPickedAction(tiles, _))
                     case Some(RandomAnyCentral) =>
-                        Random[String]("start" +: Waste.centrals.%(t => game.has(Creatures) || Waste.creatureOnly.has(t).not), CentralPickedAction(tiles, _))
+                        Random[String]("start" +: Waste.centrals.%(t => game.has(Creatures) || Waste.creatureOnly.has(t).not) :+ Wild.lake, CentralPickedAction(tiles, _))
                     case Some(c) if c.tile.any =>
                         central(tiles, c.tile.get, soft)
                     case _ =>

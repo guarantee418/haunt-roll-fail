@@ -365,8 +365,10 @@ on. To implement one:
 ## Wastelands expansion (2026-10-05)
 
 - `wastelands.scala`: `Waste` (tile ids, `controller`, `around`), the
-  `CentralChoice` options (Standard, Random Wastelands tile, Random with the
-  standard tile included, or one of the nine; offered in every game, and
+  `CentralChoice` options (Standard, Random Wastelands tile, Random from all
+  of them, one of the nine, or the Wilderness Great Lake `wild-lake`, which
+  then stays out of the Environment tiles and gives its food through
+  `wildLakeFood` when Wilderness is off; offered in every game, and
   any choice but Standard turns on `WastelandsExpansion` through `Meta.has`,
   while the Environment tiles and the Wastelands creatures need the module
   itself, `Waste.module`) and `WastelandsExpansion`
@@ -401,7 +403,7 @@ on. To implement one:
   Hrimgandr is in the line.
 - `NORT_WASTELANDS=1` makes the headless host always use the module. Every
   game gets a random central tile choice; `NORT_CENTRAL=1` never picks the
-  standard tile.
+  standard tile, and `NORT_CENTRAL=<tile id>` always picks that one.
 
 ## Map drawing: territory colours and free ground
 

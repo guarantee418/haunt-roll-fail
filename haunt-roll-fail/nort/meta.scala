@@ -239,10 +239,10 @@ object Meta extends MetaGame { mmm =>
         Tiles.all.diff(Tiles.environment).diff(Tiles.wastelands).diff(Tiles.central)./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
     ) ::
     // Wilderness: the Environment tiles
-    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wilderness), "tile", "tile-", "webp")(
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wilderness) || options.has(WildLakeCentral) || options.has(RandomAnyCentral), "tile", "tile-", "webp")(
         Tiles.environment./(t => ImageAsset(t.id))
     ) ::
-    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wilderness), "tile/mask", "mask-", "webp")(
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wilderness) || options.has(WildLakeCentral) || options.has(RandomAnyCentral), "tile/mask", "mask-", "webp")(
         Tiles.environment./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
     ) ::
     // Wastelands: the Environment and central tiles

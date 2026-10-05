@@ -936,7 +936,11 @@ Check these against the rulebook when it is at hand.
     Wastelands (owner's request, 2026-10-05): its effects apply, but the
     Environment tiles and the Wastelands creatures stay out unless the
     module is on. "Random" can draw from the nine Wastelands tiles only, or
-    from those and the standard tile.
+    from those, the standard tile and the Wilderness Great Lake. The
+    Wilderness Great Lake can be the central tile too (owner's request): it
+    works as the Wastelands one (the five-player tile with impassable
+    borders) but keeps its own food rule (units and warchiefs, not Kaija),
+    and it is then left out of the Environment tiles.
   - Wilderness together with Wastelands: 12 Environment tiles are drawn at
     random from both sets (the Wilderness Den still goes below the first
     tiles, as in Wilderness).
