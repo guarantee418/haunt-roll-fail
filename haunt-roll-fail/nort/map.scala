@@ -432,7 +432,7 @@ object MapExpansion extends Expansion {
         anywhere.?(game.board.territories.%(game.board.open)).|(game.controlled(f).%(game.board.open)).%(t => game.bearIn(t).not)
 
     // Each building f can build in each territory, with the free spaces it can go on (the first of each kind):
-    // a small building on a small, large or Carved Stone space, a Carved Stone only on a Carved Stone space,
+    // a small building on a small or Carved Stone space, a Carved Stone only on a Carved Stone space,
     // a large building only on a large space
     def buildOptions(f : Faction, e : BuildEffect, smallOnly : Boolean)(implicit game : Game) : $[(AreaRef, Building, $[SpaceRef], Int)] = {
         game.controlled(f).%(t => game.bearIn(t).not)./~{ t =>
@@ -444,7 +444,7 @@ object MapExpansion extends Expansion {
                 val kinds = b match {
                     case CarvedStone => $(CarvedSpace)
                     case b if b.large => $(LargeSpace)
-                    case _ => $(SmallSpace, LargeSpace, CarvedSpace)
+                    case _ => $(SmallSpace, CarvedSpace)
                 }
                 val spaces =
                     // Amenities: small buildings take no space
@@ -482,6 +482,7 @@ object MapExpansion extends Expansion {
         else if (extra.not && noSpace(e) && b.large.not) |("needs no space")
         else if (extra.not && b == CarvedStone && spaceKind(s) != CarvedSpace) |("needs a Carved Stone space")
         else if (extra.not && b.large && spaceKind(s) != LargeSpace) |("needs a large space")
+        else if (extra.not && b.large.not && spaceKind(s) == LargeSpace) |("large buildings only")
         else if (e.duplicate.not && game.buildingsIn(t).exists(_._2 == b)) |("already in this territory")
         else if (game.buildings.values.count(_ == b) >= Building.tokens) |("none left")
         else if (f.wood < cost) |("needs " + cost + " wood")
