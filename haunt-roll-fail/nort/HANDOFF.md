@@ -432,7 +432,13 @@ on. To implement one:
   tile). `UI.lineImage` draws a border once per tile, turn and colours at
   half size. A few junction stubs and dashes on busy art aren't found and
   stay white; the Wilderness walls (orange lines, lake, peaks) aren't
-  redrawn.
+  redrawn. Walls with a territory on each side (the Peaks, the Poisonous
+  Swamp's four corner lines, `start-5-wall`) get solid rails on both sides of
+  their orange line when a side is controlled (`UI.wallImage`, yellow, white
+  when a side is yellow), traced by the same tool into `BorderLines.walls`.
+  The rings around the Wastelands' impassable middles (`RINGED`) have a
+  territory on one side only and get none; the Lake's and the Poisonous
+  Swamp's middle walls have no line on the art.
 - Resource icons: `nort/icons.scala` lists each tile's icons (centre and
   radius), found as the holes in the masks by
   `java haunt-roll-fail/nort/tools/ResourceIcons.java` (the Peaks' wood isn't
