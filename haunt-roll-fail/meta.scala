@@ -109,6 +109,8 @@ trait MetaBase {
     def defaultsFor(n : Int, l : $[F]) : $[O] = $
     def mandatoryFor(n : Int, l : $[F]) : $[O] = $
     def hiddenOptions : $[O] = $
+    // Whether an option is listed on the setup screen with the current choices; used to show options only when they apply
+    def optionShown(o : O, selected : $[O]) : Boolean = true
 
     val indistinguishableFactions : Boolean = false
     val gradualFactions : Boolean = false

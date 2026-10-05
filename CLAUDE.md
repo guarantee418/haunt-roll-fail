@@ -38,7 +38,11 @@ Squirrel, with their warchiefs and 28 clan cards, from the TTS mod
 Uncharted Horizons' Events and Alternative victory conditions modules are in
 `nort/horizons.scala`. The solo Automa (Uncharted Horizons' Solo module) is
 in `nort/automa.scala`, with its 15 cards transcribed from the Tabletopia
-module ("Solo vs Automa" on the main menu). The
+module ("Solo vs Automa" on the main menu). Solo games are saved in the
+browser's localStorage as they are played (`newLocalGame` and `soloMenu` in
+`hrf.scala`, `LocalStorageJournal` in `journal.scala`; the 12 newest are
+kept), so "Solo vs Automa" offers New Solo Game or a saved game to continue,
+like Play Online. The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.
@@ -88,7 +92,9 @@ expansions; Creatures, Warchiefs, Wilderness, Events and the 2v2/3v3 Teams varia
 "Victory conditions" picks one of: the standard rules, fame only, Alternative
 victory with random cards (the rulebook's way), or Alternative victory with
 cards chosen from the 21 listed below it (exactly 1 Map Control and 2 Wealth,
-3 with teams, or Start is refused); plus Thane or Jarl. Northgard no longer sets `underConstruction`
+3 with teams, or Start is refused); plus Thane or Jarl. Thane/Jarl and the
+cards are listed only when they apply (`optionShown` in `nort/meta.scala`, a
+hook the setup screen in `hrf.scala` calls for every option). Northgard no longer sets `underConstruction`
 in its `Meta` (setting it to `true` would put an "Under Construction" note under
 its name on the game list and a disclaimer at the top of its menu).
 `nort/host.scala` runs bot games headless (JVM only,

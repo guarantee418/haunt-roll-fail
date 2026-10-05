@@ -261,6 +261,8 @@ package object web {
 
         def list(prefix : String) : $[String] = 0.until(dom.window.localStorage.length)./(i => dom.window.localStorage.key(i)).%(_.startsWith(prefix))
 
+        def remove(name : String) : Unit = dom.window.localStorage.removeItem(name)
+
         def clear() : Unit = dom.window.localStorage.clear()
     }
 
