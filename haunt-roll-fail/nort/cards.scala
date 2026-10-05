@@ -34,7 +34,7 @@ case object RecruitNormal extends RecruitMode
 case object RecruitSame extends RecruitMode
 // May also go in neutral territories
 case object RecruitNeutral extends RecruitMode
-// Neutral territories only
+// Neutral territories only (a territory recruited into this action stays allowed)
 case object RecruitNeutralOnly extends RecruitMode
 // All in the same neutral territory
 case object RecruitNeutralSame extends RecruitMode
@@ -325,7 +325,7 @@ object Cards {
         dev("heroic-charge", "Heroic Charge", 0, false, MoveEffect(3, bonus = 1), "Move 3, +1 combat point."),
         dev("trading-post", "Trading Post", 1, false, DrawEffect(3, 1, 1, 1), "Draw 3 cards; keep 1, discard 1, and return 1 to the top of your draw pile."),
         dev("legendary-heroes", "Legendary Heroes", 2, true, HeroesEffect, "Resolve the effect of a card you played this year."),
-        dev("allies-from-the-wild", "Allies from the Wild", 1, false, RecruitEffect(3, RecruitNeutralOnly), "Recruit 3. The units must be placed in neutral territories only."),
+        dev("allies-from-the-wild", "Allies from the Wild", 1, false, RecruitEffect(2, RecruitNeutralOnly), "Recruit 2. The units must be placed in neutral territories only."),
         dev("loremasters", "Loremasters", 1, false, RecruitPerEffect(Lore), "Recruit 1 unit per lore in each of your territories (including buildings)."),
         dev("warriors", "Warriors", 0, false, MoveEffect(2, bonus = 1), "Move 2, +1 combat point."),
         dev("cunning-merchant", "Cunning Merchant", 1, false, DrawEffect(3, 1, 0, 2), "Draw 3 cards; keep 1 and return 2 to the top of your draw pile."),
