@@ -1314,7 +1314,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         })
                     }
                 } ++
-                meta.optionsFor(seating.num, seating).diff(meta.hiddenOptions).intersect(pages(page))./({ o =>
+                meta.optionsFor(seating.num, seating).diff(meta.hiddenOptions).intersect(pages(page)).%(meta.optionShown(_, options.actual))./({ o =>
                     val state = options.selected.has(o)
                     val enabled = options.enabled(o)
                     val active = enabled

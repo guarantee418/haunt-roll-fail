@@ -64,6 +64,13 @@ object Meta extends MetaGame { mmm =>
         case _ => true
     }
 
+    // The Victory conditions list stays short: Thane / Jarl only with an Alternative victory choice, the cards only with chosen cards
+    override def optionShown(o : O, selected : $[O]) = o match {
+        case VictoryModeOption(_) => VictoryChoice.alternative.exists(selected.has)
+        case VictoryCardOption(_) => selected.has(AltVictoryChosen)
+        case _ => true
+    }
+
     // Colors are chosen on each clan's row of the setup screen, the rest below
     override def optionPages(n : Int, l : $[F]) = {
         val all = optionsFor(n, l)
