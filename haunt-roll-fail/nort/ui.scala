@@ -309,9 +309,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         mapSmall.attach.parent.style.cursor = clickable(target).any.?("pointer").|("default")
     }
 
-    // The single offered action a click on the map stands for
+    // The single offered action a click on the map stands for (the cross above a building being confirmed cancels)
     def clickable(target : $[Any]) : |[UserAction] = {
         target.foreach { t =>
+            if (t == BuildCancelMark)
+                return lastActions.of[Cancel].single
             val l = lastActions.%(a => a.unwrap.as[MapTarget].exists(_.target == t))
             if (l.num == 1)
                 return l.headOption
@@ -883,6 +885,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             }
         }
 
+        // The building being confirmed, on its space, with the check mark (confirm) and the cross (cancel) above it, on top of everything
+        lastActions./~(_.unwrap.as[BuildPreview]).take(1).foreach { p =>
+            val (x, y) = board.point(p.space)
+            pieces.add(Sprite($(at(p.building.image, 190, 0.9)), $))(sx(x), sy(y))
+            pieces.add(Sprite($(at("ui-confirm", 220)), $(Rectangle(-110, -110, 220, 220)), $(BuildConfirmMark)))(sx(x) - 120, sy(y) - 225)
+            pieces.add(Sprite($(at("ui-cancel", 220)), $(Rectangle(-110, -110, 220, 220)), $(BuildCancelMark)))(sx(x) + 120, sy(y) - 225)
+        }
+
         |(new Scene($(background, pieces), sceneWidth, sceneHeight, margins))
     }
 
@@ -896,7 +906,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             Div(Div(title, styles.stripTitle) ~ Div(items.any.?(items.merge).|(Div("none".txt, styles.stripEmpty)), styles.stripCards), styles.stripGroup)
         }.merge, styles.stripRow)
 
-    // Your hand and played cards are in the action pane, like in Arcs and Root (Game.info, CardMenuAction)
+    // Your hand and played cards are in the action pane, like in Arcs and Root (Game.info, TurnModeAction)
     def drawCards() {
         if (game.year == 0)
             return
@@ -999,8 +1009,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val layouts = $(Layout("base",
         $(
-            BasicPane("status", 15, (arity >= 4).?(24).|(18), Priorities(top = 3, left = 2, maxXscale = 1.8, maxYscale = 1.8, grow = 1)),
-            BasicPane("court", 80, 20, Priorities(top = 3, right = 3, maxXscale = 1.5, maxYscale = 1.5, grow = -2)),
+            BasicPane("status", 15, (arity >= 4).?(24).|(18), Priorities(top = 3, right = 2, maxXscale = 1.8, maxYscale = 1.8, grow = 1)),
+            BasicPane("court", 80, 20, Priorities(top = 3, left = 3, maxXscale = 1.5, maxYscale = 1.5, grow = -2)),
             BasicPane("log", 32, 16, Priorities(right = 1)),
             BasicPane("map-small", 73, 64, Priorities(top = 2, left = 1, grow = 3)),
             BasicPane("action-a", 64/1.5, 36, Priorities(bottom = 1, right = 3, grow = 2)),
@@ -1038,8 +1048,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     )
 
     val layouter = Layouter(layouts,
-    // Mirrored, so the player panels and the hand are on the right and the log on the left
-    ff => { val w = ff./(_.right).max ; ff./(f => f.copy(x = w - f.right)) },
+    // The map on the left; the player panels, the log and the action pane (choices and hand) on the right
+    x => x,
     _./~{
         case f if f.name == "action" => $(f, f.copy(name = "undo"), f.copy(name = "settings"))
         case f if f.name == "status-horizontal" => 1.to(arity)./(n => f.copy(name = "status-" + n, x = f.x + ((n - 1) * f.width  /~/ arity), width  = (n * f.width  /~/ arity) - ((n - 1) * f.width  /~/ arity)))
@@ -1051,12 +1061,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val settingsKey = Meta.settingsKey
 
-    val layoutKey = "v" + 10 + "." + "arity-" + arity
+    val layoutKey = "v" + 11 + "." + "arity-" + arity
 
     // Ultrawide screens (21:9 and wider): the layouter stretches the player panels to the full height
-    // and leaves empty space around the map, so the hand gets a narrow column. Instead: the log on the
-    // left, the map, then short player panels in a row, the shared cards below them and the hand
-    // filling the rest, wide enough to show the whole hand.
+    // and leaves empty space around the map, so the hand gets a narrow column. Instead: the map on the
+    // left, then short player panels in a row, the shared cards below them and the hand filling the
+    // rest, wide enough to show the whole hand, and the log on the right.
     override def layout(width : Int, height : Int)(onLayout : $[PanePlacement] => Unit) {
         val root = dom.document.documentElement.asInstanceOf[dom.html.Element].style
 
@@ -1069,8 +1079,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val logW = (width * 0.16).round.toInt
         val mapW = min(width * 0.40, height * 1.1).round.toInt
-        val rightX = logW + mapW
-        val rightW = width - rightX
+        val rightX = mapW
+        val rightW = width - mapW - logW
 
         // Room for six lines in the player panels, in a smaller font (their text lines are short)
         val statusH = (height * 0.19).round.toInt
@@ -1089,9 +1099,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             $(
                 place("court", rightX, statusH, rightW, courtH),
                 action, action.copy(name = "undo"), action.copy(name = "settings"),
-                place("log", 0, 0, logW, height),
-                place("map-small", logW, 0, mapW, height),
-                place("map-small-overlay", logW, 0, mapW, height)
+                place("log", rightX + rightW, 0, logW, height),
+                place("map-small", 0, 0, mapW, height),
+                place("map-small-overlay", 0, 0, mapW, height)
             )
         )
     }
