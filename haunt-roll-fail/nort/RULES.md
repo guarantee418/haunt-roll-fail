@@ -573,9 +573,113 @@ the main menu, or "Automa (solo)" and one clan; the Automa is always a bot
   3 food for 1 lore with 6+ food. No Winter costs, no Unrest. Events don't
   involve it.
 
+## Wastelands expansion (rulebook, 12 pages; not implemented yet)
+
+From the English rulebook the owner uploaded on 2026-10-05
+(`Wastelands_Rulebook_150dpi_02122025_EN.pdf`, not in the repo). Uses some
+Wilderness rules (impassable borders, the Wyvern).
+
+**Components:** 7 Environment tiles, 10 Central tiles (2 of them five-player
+tiles, marked with a 5), 11 creatures with cards: 2 Rock Golems, 2 Myrkalfar,
+2 Giant Boars, 2 Kobolds (beige, brown each), Valdemar, Jötunn Blainn and
+Hrimgandr (beige).
+
+**New creatures** (added to the Creatures module deck, built as usual: cards
+of value 6 or less shuffled, players + 1 of them on top, the rest below):
+- Rock Golem: when spawning or moving, attacks only if there are buildings in
+  the territory. In combat both sides add +1 axe for each skull rolled; if it
+  rolls the skull/axe face it always takes the skull.
+- Myrkalfar: moves twice, the second move not back to its starting point.
+  The owner of the second territory discards 1 wood or, if they can't, loses
+  2 fame. (Card: "Only when moving".)
+- Kobold: its territory makes no fame at the Harvest (buildings included).
+  Once per Harvest, the controller of a territory with a Kobold may exchange
+  1 food for 1 wood or back (one exchange per Kobold).
+- Giant Boar: when spawning or moving into a territory with wood (buildings
+  included), attacks with +1 skull on its die. If the defender wins, +2 fame
+  on their reward.
+- Valdemar: when spawning or moving, removes 1 regular unit from the
+  territory he arrives in. While he is alive all other creatures get +1 axe
+  in combat.
+- Strength, fame and colour of these five: on the cards only (hidden in the
+  rulebook's picture); get them from the TTS mod. The top strip of each card
+  shows its movement priorities (Rock Golem: units > buildings ...;
+  Myrkalfar: buildings > resources ...; Giant Boar and Valdemar: resources
+  first; Kobold: buildings > units ...), to be read from the cards too.
+
+**Environment tiles** (shuffled into the map tile pile at the end of setup;
+with Wilderness too, use at most 12 Environment tiles in all):
+- Kobold Camp (Harvest): once per controlled territory adjacent to it, a
+  player may exchange 1 food or 1 wood for 1 food, 1 wood or 1 fame.
+- Thor's Wrath (Combats): its controller gets +1 axe in all combats anywhere.
+- Vedrfolnir (Harvest): just before the Harvest its controller may add the top
+  map tile next to any open territory (not an Explore action: no clan or
+  Development explore effects).
+- Naströnd (Explore): impassable. When revealed, put 2 wood on it; the first
+  player to control a territory adjacent to it takes them (a tie during an
+  Explore: the explorer).
+- Landvidi (Combats): in a combat there, the defender gets +2 axes.
+- Urdarbrunn (Combats): in a combat there, the defender ignores 1 skull of the
+  enemy die.
+- Jötnar Camp (Explore, Recruit): when explored, Jötunn Blainn goes on it.
+  Blainn is a neutral unit worth 2 axes. During the Harvest, in turn order, a
+  player controlling a territory adjacent to the camp may pay 1 food on their
+  turn to recruit him: he joins the clan as one of its units (1 unit for
+  Winter), placed in a territory of theirs adjacent to the camp. Left alone in
+  a territory, or defeated, he goes back to the camp and can be recruited
+  again at the next Harvest.
+
+**Central tiles** (setup step F: one drawn at random, or chosen, replaces the
+starting tile; the others go back to the box). With five players, the
+matching five-player tile (same kind of borders: regular, or impassable for
+the Great Lake, Volcano and Relic) goes next to it as before; the territory
+with its arrow counts as part of the central territory, ignoring the border
+between them.
+- Magma Flow (Start of Year): its controller draws 1 more card.
+- Yggdrasil (Harvest): the controller of its centre territory gains 5 fame.
+- Relic of the Gods (Harvest): impassable. Most units in adjacent territories:
+  2 lore; every other player with a unit next to it: 1 lore; tied for most:
+  1 lore each.
+- Great Lake (Harvest): impassable. Most units in adjacent territories: 2
+  food; tied: 1 each (the Wilderness Great Lake's rule). The food belongs to
+  no territory, so clan powers and cards can't use it.
+- Volcano (Start of Year): at the very start, the first player picks a target
+  player (themselves allowed) and rolls a die: per axe the target gains 1
+  fame, per skull they remove 1 unit from the map to their reserve (skull/axe
+  face: both).
+- Mimirsbrunn (Start of Year): after drawing, its controller may take one of
+  this year's Development or Achievement cards face down on top of their deck;
+  they then take no other Development or Achievement card this year.
+- Hrimgandr's Lair (Creature, Winter): Hrimgandr starts on it (card next to
+  the board). Strength 8, 8 fame. It never moves and doesn't share its
+  territory; it only defends. While alive, Winter costs go up one level for
+  everyone: 1-3 units 1 food, 4-6 2 food, 7-9 3 food 1 wood, 10-12 4 food 2
+  wood, 13+ 4 food 2 wood. Once defeated it leaves the game, and from then
+  on the controller of the Lair draws 1 more card at each Start of Year.
+- Wyvern's Den (Creatures module and Wyvern only; Creature, Harvest): at the
+  start of year 3 the Wyvern goes on it and into the creature line (Wilderness
+  rules). Once it is defeated, the controller of the Den gains 2 fame each
+  Harvest. Use this tile, not the Wilderness Den.
+- Gate of Helheim (Creatures module only; Combats, Creatures): its controller
+  gets +2 axes in any combat against creatures. At the start of the Creature
+  phase the first player rolls a die; with at least one skull they draw 2
+  creature cards, put one of those creatures on the Gate and the other card at
+  the bottom of the creature deck.
+
+**Art in the repo** (`webp2/nort/images/expansion/tile/`): Kobold Camp
+`tile-14`, Thor's Wrath `tile-19`, Vedrfolnir `tile-15`, Naströnd `tile-16`,
+Landvidi `tile-11`, Jötnar Camp `tile-10`; Yggdrasil `tile-31`, Volcano
+`tile-32`, Great Lake `tile-33`, Wyvern's Den `tile-34`, Mimirsbrunn
+`tile-35`, five-player regular `central-5`; the Jötnar Camp card board is
+`board/jotnar-camp`. (`tile-12`, `-13`, `-17`, `-18` are Uncharted Horizons
+map tiles with building spaces, not Wastelands.) Missing: Urdarbrunn, Magma
+Flow, Relic of the Gods, Hrimgandr's Lair, Gate of Helheim, the impassable
+five-player tile and all creature cards and figures. The rulebook only has
+them as 230 px pictures.
+
 ## Expansions (later)
 
-Wastelands (creatures, Environment and Central tiles), the rest of Uncharted
+The rest of Uncharted
 Horizons (Development and Raid cards, Training Fields, Solo/Automa, drafting
 setup, more map tiles). The TTS mod 3597126237 has its cards and the
 rulebook is on Tabletopia.
