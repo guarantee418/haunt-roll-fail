@@ -143,6 +143,8 @@ case class ExploreAction(f : Faction, draw : Int, times : Int, redraw : Boolean,
 case class ExploreDrawAction(f : Faction, draw : Int, tries : Int, times : Int, redraw : Boolean, e : ExploreEffect, then : ForcedAction) extends ForcedAction
 case class ExploreChooseAction(f : Faction, times : Int, redraw : Boolean, e : ExploreEffect, then : ForcedAction) extends ForcedAction
 case class ExploreTileAction(self : Faction, tile : String, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Explore with")(TileRef(tile)) with Soft with ViewObject[TileRef] { def obj = TileRef(tile) }
+// The drawn tile, shown above the spots so it is known before choosing where it goes
+case class ExploreTileInfoAction(self : Faction, tile : String) extends BaseInfo("Exploring with")(TileRef(tile)) with ViewObject[TileRef] { def obj = TileRef(tile) }
 case class ExploreSpotAction(self : Faction, tile : String, spot : Spot, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at")(spot) with Soft with MapTarget { def target = spot }
 case class ExploreRotateAction(self : Faction, tile : String, spot : Spot, r : Int, d : Int, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft with MapTarget { def target = RotateMark(d) }
 case class ExploreTurnAction(self : Faction, tile : String, spot : Spot, r : Int, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at", spot)("Confirm") with TilePreview
@@ -1390,7 +1392,7 @@ object MapExpansion extends Expansion {
             Then(ExploreDrawAction(f, 1, game.pile.num, times, false, e, then))
 
         case ExploreTileAction(f, tile, times, e, then) =>
-            Ask(f).each(placements(tile, |(explorable(f, e.anywhere)), false).map(_._1).distinct)(s => ExploreSpotAction(f, tile, s, times, e, then)).cancel
+            Ask(f).add(ExploreTileInfoAction(f, tile)).each(placements(tile, |(explorable(f, e.anywhere)), false).map(_._1).distinct)(s => ExploreSpotAction(f, tile, s, times, e, then)).cancel
 
         case ExploreSpotAction(f, tile, spot, times, e, then) =>
             val rs = rotations(placements(tile, |(explorable(f, e.anywhere)), false), spot)
