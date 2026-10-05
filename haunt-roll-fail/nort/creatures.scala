@@ -229,7 +229,7 @@ object Creature {
     val hrimgandr = Creature(Hrimgandr, 1)
 
     // The creature deck of a game
-    def deck(implicit game : Game) : $[Creature] = all ++ game.has(Wilderness).??(wild) ++ game.has(Wastelands).??(waste)
+    def deck(implicit game : Game) : $[Creature] = all ++ game.has(Wilderness).??(wild) ++ Waste.module.??(waste)
 }
 
 // A creature attacked by the current Move action, in the territory with this anchor

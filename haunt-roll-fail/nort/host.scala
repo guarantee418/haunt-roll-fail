@@ -44,8 +44,9 @@ object Host extends hrf.host.BaseHost {
             (sys.env.get("NORT_WILDERNESS").has("1") || random() < 0.5).$(ModuleOption(Wilderness)) ++
             // NORT_EVENTS=1: always with the Events module
             (sys.env.get("NORT_EVENTS").has("1") || random() < 0.5).$(ModuleOption(EventsModule)) ++
-            // NORT_WASTELANDS=1: always with Wastelands, and a random central tile choice
-            wastelands.$(ModuleOption(Wastelands)) ++ wastelands.$(CentralChoice.all.%(c => creatures || c.tile.forall(Waste.creatureOnly.has(_).not)).shuffle.head) ++
+            // NORT_WASTELANDS=1: always with Wastelands; a random central tile choice either way (it needs no module),
+            // NORT_CENTRAL=1: never the standard tile
+            wastelands.$(ModuleOption(Wastelands)) ++ $(CentralChoice.all.%(c => creatures || c.tile.forall(Waste.creatureOnly.has(_).not)).%(c => c != StandardCentral || sys.env.get("NORT_CENTRAL").has("1").not).shuffle.head) ++
             teams
         val level = solo.$(AutomaLevelOption(1 + (random() * 6).toInt))
         val all = options ++ level ++ level.exists(_.level >= 3).$(ModuleOption(Creatures))

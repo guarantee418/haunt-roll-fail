@@ -68,8 +68,6 @@ object Meta extends MetaGame { mmm =>
     override def optionShown(o : O, selected : $[O]) = o match {
         case VictoryModeOption(_) => VictoryChoice.alternative.exists(selected.has)
         case VictoryCardOption(_) => selected.has(AltVictoryChosen)
-        // The central tiles only with Wastelands
-        case _ : CentralChoice => selected.has(ModuleOption(Wastelands))
         case _ => true
     }
 
@@ -96,7 +94,7 @@ object Meta extends MetaGame { mmm =>
 
     override def quickOptions = options./(o => o -> 0.0).toMap
 
-    def has(options : $[O], m : Module) = options.has(ModuleOption(m)) || (m == VictoryModule && VictoryChoice.alternative.exists(options.has))
+    def has(options : $[O], m : Module) = options.has(ModuleOption(m)) || (m == VictoryModule && VictoryChoice.alternative.exists(options.has)) || (m == Wastelands && CentralChoice.picked(options))
 
     // Quick Game: always three players, core clans and core rules (no option is turned on beyond the defaults)
     val quickMin = 3
