@@ -503,7 +503,12 @@ always plays its own cards.
   edge or spends food; clan upgrades are almost always worth it; a clan
   short of resources builds a Food Silo or Woodcutter's Lodge first; Forges
   early; an attack waits until the defender has passed unless it is worth a
-  lot.
+  lot; creatures are steered towards the other players and away from its own
+  units (the "Dealing with Creatures" thread: `creatureSpot`, for a tie in the
+  Creature phase, More Creatures and the Ancestral Graveyard). Nothing is
+  taken from the Automa's cards (`automa.scala`); the territory valuation
+  only covers similar ground to their priority lists (resources, buildings,
+  closed territories, spaces, nearby enemies).
 - **Not valued yet** (the Easy bot's random choice is used): Liv's reroll,
   Ox's Ancestral Equipment, Kobold and camp trades, Vedrfolnir, Gate of
   Helheim, the Events' unit choices, Bribery, Annexation's order, and the

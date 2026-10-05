@@ -27,7 +27,9 @@ import hrf.logger._
 // - clan upgrades are nearly always worth their 3 lore;
 // - a clan short of resources builds a Food Silo or Woodcutter's Lodge first;
 // - attacks are worth more once the defender has passed (no counterattack this year);
-// - pass early when the hand has little left, to take the best Development card.
+// - pass early when the hand has little left, to take the best Development card;
+// - send creatures towards the other players and away from your own units ("Dealing with Creatures" thread):
+//   used when the bot breaks a tie in the Creature phase or places a new creature or Spectral Warrior.
 
 class BotHard(f : Faction) extends EvalBot {
     def eval(actions : $[UserAction])(implicit game : Game) : Compute[$[ActionEval]] = {
@@ -755,6 +757,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
     }
 
     // Where a creature does the most harm to the bot's opponents and the least to the bot
+    // (BGG "Dealing with Creatures": players steer creatures towards each other)
     def creatureSpot(area : AreaRef) : Double = {
         val t = board.territory(area)
         val near = t +: adjacent(t).map(_._1)
