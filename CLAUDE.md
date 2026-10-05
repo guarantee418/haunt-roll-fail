@@ -75,7 +75,8 @@ the top of the action pane (Play cards, Wait, Replace, Remove, Upgrade,
 Pass); after one, tapping a card in hand does it. A Build card's builds: tap
 a free space, pick from the menu of all buildings with their costs, then
 confirm with the green check mark (or cancel with the red cross) drawn above
-the building on the map. The player's clan board is shown under the Lore Tree.
+the building on the map. Placing a tile works the same way: the tile is shown at its spot with
+rotate arrows at its top corners and the check mark and cross at its bottom. The player's clan board is shown under the Lore Tree.
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
 Tabletopia export the owner uploaded, with gaps filled from two Tabletop
 Simulator mods (Steam Workshop 2838546142 and 2847156187; see
