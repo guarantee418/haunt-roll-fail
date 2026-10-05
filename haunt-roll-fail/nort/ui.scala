@@ -511,6 +511,65 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         })
     }
 
+    // Solid rails beside a wall (an impassable border's orange line), turned with its tile, like lineImage
+    def wallImage(tile : String, r : Int, n : Int, rail : String) : (hrf.ui.sprites.Image, Rectangle) = {
+        val key = (tile + "/wall", r % 4, n, rail, rail, |(rail))
+
+        if (lineImages.size > 400)
+            lineImages.clear()
+
+        lineImages.getOrElseUpdate(key, {
+            val runs = BorderLines.walls(tile)(n).runs./(_./ { case (x, y) =>
+                val (rx, ry) = game.board.rotate(x, y, r)
+                (rx * T, ry * T)
+            })
+
+            val offset = 33.0
+            val margin = 50.0
+            val all = runs.flatten
+            val x0 = all.map(_._1).min - margin
+            val y0 = all.map(_._2).min - margin
+            val x1 = all.map(_._1).max + margin
+            val y1 = all.map(_._2).max + margin
+            val k = 0.5
+
+            val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+            canvas.width = ((x1 - x0) * k).ceil.toInt.max(1)
+            canvas.height = ((y1 - y0) * k).ceil.toInt.max(1)
+
+            val c = new CanvasImage(canvas)
+            val g = c.context
+            g.scale(k, k)
+            g.translate(-x0, -y0)
+            g.lineJoin = "round"
+            g.lineCap = "round"
+
+            runs.foreach { ps =>
+                // Each point moved along the normal of the way through it
+                def side(s : Int) = ps.indices.toList.map { i =>
+                    val (ax, ay) = ps((i - 1).max(0))
+                    val (bx, by) = ps((i + 1).min(ps.num - 1))
+                    val l = math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay)).max(0.001)
+                    (ps(i)._1 - (by - ay) / l * offset * s, ps(i)._2 + (bx - ax) / l * offset * s)
+                }
+
+                $(1, -1).foreach { s =>
+                    val q = side(s)
+                    $(("rgba(40,25,0,0.8)", 16.0), (rail, 10.0)).foreach { case (stroke, width) =>
+                        g.strokeStyle = stroke
+                        g.lineWidth = width
+                        g.beginPath()
+                        g.moveTo(q.head._1, q.head._2)
+                        q.drop(1).foreach { case (x, y) => g.lineTo(x, y) }
+                        g.stroke()
+                    }
+                }
+            }
+
+            (c, Rectangle(x0, y0, x1 - x0, y1 - y0))
+        })
+    }
+
     // Invaded, waiting for its fight
     val contestedTint = ("#8c8c8c", 0.45)
 
@@ -726,6 +785,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     val rough = p.spec.borders.exists(b => b.rough && $(b.a, b.b).toSet == $(line.a, line.b).toSet)
                     val rail = rough.?(colors.has(Yellow).?(roughRailOnYellow).|(roughRail))
                     val (i, rect) = lineImage(p.tile, p.r, n, lineOf(colors.head), lineOf(colors.last), rail)
+                    background.add(Sprite($(ImageRect(i, rect, 1.0)), $))(sx(p.x), sy(p.y))
+                }
+            }
+
+            // Solid rails on both sides of a wall when a side is controlled (white ones when a side is yellow)
+            BorderLines.walls.get(p.tile).|($).zipWithIndex.foreach { case (wall, n) =>
+                val colors = (fameColor(board.territory(AreaRef(p.x, p.y, wall.a))) ++ fameColor(board.territory(AreaRef(p.x, p.y, wall.b)))).toList
+
+                if (wall.runs.any && colors.any) {
+                    val (i, rect) = wallImage(p.tile, p.r, n, colors.has(Yellow).?(roughRailOnYellow).|(roughRail))
                     background.add(Sprite($(ImageRect(i, rect, 1.0)), $))(sx(p.x), sy(p.y))
                 }
             }

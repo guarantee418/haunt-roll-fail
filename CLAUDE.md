@@ -53,7 +53,9 @@ On the map, territories are tinted with their controlling player's color,
 turn gray when invaded and pink during the fight (resource icons stay
 untinted); closed territories that give fame have their border dashes
 drawn in the controller's color (alternating where two players' meet,
-dotted yellow or white rails beside Rough borders), from the dash data in
+dotted yellow or white rails beside Rough borders, solid ones beside
+the orange impassable lines of the Peaks, the Poisonous Swamp's corners and the
+walled five-player tile), from the dash data in
 `nort/lines.scala` made by `nort/tools/BorderLines.java`; the area masks (`tile/mask/`) and the free-ground
 grid for placing warchiefs, Kaija and creatures (`nort/grid.scala`) are made
 from the tile art by `nort/tools/tile-masks.py`. Warchiefs, Kaija and
@@ -79,7 +81,10 @@ Pass); after one, tapping a card in hand does it. A Build card's builds: tap
 a free space, pick from the menu of all buildings with their costs, then
 confirm with the green check mark (or cancel with the red cross) drawn above
 the building on the map. Placing a tile works the same way: the tile is shown at its spot with
-one button just outside each corner: rotate arrows at the top, the check mark and cross at the bottom. The player's clan board is shown under the Lore Tree, then their discard pile (tapping it shows the cards).
+one button just outside each corner: rotate arrows at the top, the check mark and cross at the bottom. A retreat works like a Move: tap the destination on the map (or in the list),
+then pick all the units or one (`RetreatPickAction` in `nort/map.scala`). Development
+and other card picks show the cards at hand-card size, and the last player to pass
+still sees the one card left before taking it. The player's clan board is shown under the Lore Tree, then their discard pile (tapping it shows the cards).
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
 Tabletopia export the owner uploaded, with gaps filled from two Tabletop
 Simulator mods (Steam Workshop 2838546142 and 2847156187; see
