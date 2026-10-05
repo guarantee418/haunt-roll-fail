@@ -36,7 +36,10 @@ New Blood expansion's seven clans (Dragon, Horse, Kraken, Lynx, Ox, Rat,
 Squirrel, with their warchiefs and 28 clan cards, from the TTS mod
 3597126237) in `nort/newblood.scala`; picking one of them turns it on.
 Uncharted Horizons' Events and Alternative victory conditions modules are in
-`nort/horizons.scala`. The Wastelands expansion (Environment tiles
+`nort/horizons.scala`. Its Sea module (Raids: a Beach tile with a Port for each
+player, the Raid phase and the 24 Raid cards, from the TTS mod 3597126237,
+whose rulebook PDF has the rules) is in `nort/sea.scala`; the Beach is four
+map cells (`Tiles.beach`), and a tile side no area owns is sea. The Wastelands expansion (Environment tiles
 `waste-*`, the Central tiles `start-*` chosen with the "Central tile" option, which
 is offered in every game (standard tile, any of the nine, the Wilderness Great
 Lake, or random) and needs

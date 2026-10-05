@@ -406,6 +406,41 @@ on. To implement one:
   game gets a random central tile choice; `NORT_CENTRAL=1` never picks the
   standard tile, and `NORT_CENTRAL=<tile id>` always picks that one.
 
+## Uncharted Horizons: Sea module (Raids, 2026-10-05)
+
+- `sea.scala`: `RaidCard` (the 24 cards from the TTS mod 3597126237, images
+  `card/raid/`), `Raid` (a Port's card, owner, units on the slots and years),
+  `RaidKept` (an action waiting for the next Harvest or Start of Year) and
+  `SeaExpansion` (priority -6, before every other module: its Raid phase must
+  come before the Creature phase, which Wastelands, Wilderness and Creatures
+  catch). Module `Sea` in `options.scala`; game state `raidDeck`, `ports`,
+  `raids`, `raidKept`, `raidSteps` (per-year guards), `raidExplore` in `game.scala`.
+- Beach tiles: four map cells, `Tiles.beach` (`beach-port`, `beach-sea`,
+  `beach-wing-w`, `beach-wing-e`), cut from the rulebook's picture by a
+  script (the art is upscaled; the port's top edge was filled in). A side
+  that no area owns is sea: `TileSpec.areaOn` gives None there, `Board`
+  joins nothing across it and `frontier` offers no spot beyond it. The
+  wings' areas own no side and are joined to the Port with `Board.join`.
+  They are placed when `TilePlacedAction` of a first-round setup tile goes
+  through (`beached`), turned so the sea is away from the starting tile.
+  `tile-masks.py` handles them (`BEACH`: one area, the land; sea and
+  transparent parts left out); `beach-sea` has no area and no grid entry.
+- Hooks: `FactionState.units` and `Game.reserve` count the raiders,
+  `Game.strength` adds the Port's +1 (`SeaExpansion.defense`, listed by
+  `FightPoints` and the combat log), `MapExpansion.destinations` adds
+  `sailing` (Port to Port, cost = moves left; `MoveCostLabel` says "by
+  sea"), `explorable` takes open neutral territories while `raidExplore`,
+  and `BoldMove` gives 2 fame per won combat in `CombatResolveAction` and
+  `CreatureRolledAction`.
+- The Raid phase is caught at `CreaturePhaseAction`; the Harvest cards at
+  `AfterHarvestAction`; Elder's Wisdom's extra card at
+  `RevealDevelopmentsAction`.
+- Map drawing (`ui.scala`): each Port's Raid card on its sea cell, the
+  raiders (with a count) on its left in their first year and on its right
+  in the second. The court strip shows the Raid cards on the Ports and the
+  kept ones; the player panel counts the units raiding.
+- `NORT_SEA=1` makes the headless host always use the module.
+
 ## Map drawing: territory colours and free ground
 
 - Each territory is tinted with the colour of the player who controls it
@@ -600,10 +635,10 @@ list. In short:
    Events' unit choices, Alternative victory cards) could get their own scores.
 4. **A replay check** like `root/replay-check.scala`, to confirm undo and
    loading rebuild the same game.
-5. **Expansions**: Wilderness, Wastelands, New Blood, and Uncharted Horizons' Events and
-   Alternative victory modules are done; the rest of
-   Uncharted Horizons (Raids, Development cards, Training Fields) are next (assets in `expansion/`; the TTS mod
-   3597126237 has the Uncharted Horizons cards and Tabletopia its rulebook).
+5. **Expansions**: Wilderness, Wastelands, New Blood, and Uncharted Horizons' Events,
+   Alternative victory and Sea (Raids) modules are done; the rest of
+   Uncharted Horizons (Development cards, Training Fields) are next (assets in `expansion/`; the TTS mod
+   3597126237 has the Uncharted Horizons cards and its rulebook PDF).
 
 ## How to build and test (in a cloud session)
 

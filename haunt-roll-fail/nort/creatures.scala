@@ -608,6 +608,12 @@ object CreaturesExpansion extends Expansion {
             // The Wyvern goes back to its Den unless it lost there (Wilderness)
             val den = (c.kind == Wyvern && Wild.homeIn(t).not).??(Wild.homes)
 
+            // Sea module: Bold Maneuver gives 2 fame per combat won
+            if (won && attacking && e.special == BoldMove) {
+                f.fame += 2
+                f.log("gained", 2.hl, FameIcon(), "for winning with", RaidCard("bold-maneuver"))
+            }
+
             if (won && den.any) {
                 game.creatureAt += c -> den.head
                 game.note("wyvern-back")

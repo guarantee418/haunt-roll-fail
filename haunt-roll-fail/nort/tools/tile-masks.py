@@ -39,6 +39,17 @@ ORANGE = ('wild-poison', 'wild-peaks-1', 'wild-peaks-2', 'start-relic', 'start-l
           'waste-kobold', 'waste-jotnar', 'waste-nastrond')
 # Impassable middles inside an orange ring (Wastelands): no territory, left untinted
 RINGED = ('start-relic', 'start-lake', 'start-volcano', 'waste-kobold', 'waste-jotnar', 'waste-nastrond')
+# Beach tiles (Sea module): one area, the land; the sea and the transparent parts are left out
+BEACH = ('beach-port', 'beach-wing-w', 'beach-wing-e')
+
+
+def land(rgba):
+    r, g, b = rgba[..., 0], rgba[..., 1], rgba[..., 2]
+    water = ndi.binary_opening(((b > g + 5) & (b > r + 15)) | (rgba[..., 3] < 128), iterations=2)
+    lab, n = ndi.label(~water)
+    sizes = ndi.sum(~water, lab, range(1, n + 1))
+    keep = np.isin(lab, [i + 1 for i, s in enumerate(sizes) if s > 400])
+    return ndi.binary_closing(keep, iterations=3)
 
 
 def parse():
@@ -202,16 +213,20 @@ def main():
         args = args[2:]
         os.makedirs(check, exist_ok=True)
     tiles = parse()
-    ids = args or list(tiles)
+    # The sea of a Beach has no area
+    ids = args or [t for t in tiles if tiles[t]]
     os.makedirs(MASKS, exist_ok=True)
     out = {}
     for tid in ids:
         areas = tiles[tid]
-        im = Image.open(os.path.join(TILES, tid + '.webp')).convert('RGB').resize((N, N), Image.LANCZOS)
-        a = np.asarray(im).astype(int)
-        lab = segment(tid, areas, a)
+        im = Image.open(os.path.join(TILES, tid + '.webp')).convert('RGBA' if tid in BEACH else 'RGB').resize((N, N), Image.LANCZOS)
+        px = np.asarray(im).astype(int)
+        a = px[..., :3]
+        lab = np.ones((N, N), int) if tid in BEACH else segment(tid, areas, a)
         # The resource icons stay clear of the tint
         holes = ndi.binary_dilation(icons(tid, a), iterations=2)
+        if tid in BEACH:
+            holes |= ~land(px)
         # The Great Lake's water belongs to no territory
         if tid == 'wild-lake':
             r, g, b = a[..., 0], a[..., 1], a[..., 2]
@@ -235,6 +250,8 @@ def main():
             rgba.putalpha(m)
             rgba.save(os.path.join(MASKS, tid + '-' + ar['id'] + '.webp'), lossless=True)
         c = clutter(tid, areas, a, lab)
+        if tid in BEACH:
+            c[ndi.binary_dilation(~land(px), iterations=8)] = 9
         out[tid] = grid(lab, c)
         if check:
             pal = [(255, 0, 0), (0, 90, 255), (255, 220, 0), (200, 0, 255), (0, 220, 120)]

@@ -71,6 +71,8 @@ object Host extends hrf.host.BaseHost {
             (sys.env.get("NORT_WILDERNESS").has("1") || random() < 0.5).$(ModuleOption(Wilderness)) ++
             // NORT_EVENTS=1: always with the Events module
             (sys.env.get("NORT_EVENTS").has("1") || random() < 0.5).$(ModuleOption(EventsModule)) ++
+            // NORT_SEA=1: always with the Sea module
+            (sys.env.get("NORT_SEA").has("1") || random() < 0.5).$(ModuleOption(Sea)) ++
             // NORT_WASTELANDS=1: always with Wastelands; a random central tile choice either way (it needs no module),
             // NORT_CENTRAL=1: never the standard tile; NORT_CENTRAL=<tile id>: always that tile
             wastelands.$(ModuleOption(Wastelands)) ++ $(CentralChoice.all.%(c => creatures || c.tile.forall(Waste.creatureOnly.has(_).not)).%(c => c != StandardCentral || sys.env.get("NORT_CENTRAL").has("1").not)

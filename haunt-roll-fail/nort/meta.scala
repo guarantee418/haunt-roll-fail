@@ -234,11 +234,21 @@ object Meta extends MetaGame { mmm =>
         VictoryCard.all./(c => ImageAsset(c.id))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "tile", "tile-", "webp")(
-        Tiles.all.diff(Tiles.environment).diff(Tiles.wastelands).diff(Tiles.central)./(t => ImageAsset(t.id))
+        Tiles.all.diff(Tiles.environment).diff(Tiles.wastelands).diff(Tiles.central).diff(Tiles.beach)./(t => ImageAsset(t.id))
     ) ::
     // The shape of each area, tinted on the map with the colour of the player who controls it
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "tile/mask", "mask-", "webp")(
-        Tiles.all.diff(Tiles.environment).diff(Tiles.wastelands).diff(Tiles.central)./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
+        Tiles.all.diff(Tiles.environment).diff(Tiles.wastelands).diff(Tiles.central).diff(Tiles.beach)./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
+    ) ::
+    // Sea: the Beach tiles and the Raid cards
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Sea), "tile", "tile-", "webp")(
+        Tiles.beach./(t => ImageAsset(t.id))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Sea), "tile/mask", "mask-", "webp")(
+        Tiles.beach./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Sea), "card/raid", "card-raid-", "webp")(
+        RaidCard.all./(c => ImageAsset(c.id))
     ) ::
     // Wilderness: the Environment tiles
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wilderness) || options.has(WildLakeCentral) || options.has(RandomAnyCentral), "tile", "tile-", "webp")(

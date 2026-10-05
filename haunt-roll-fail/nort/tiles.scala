@@ -49,7 +49,9 @@ case class BorderSpec(a : String, b : String, rough : Boolean, impassable : Bool
 case class TileSpec(id : String, areas : $[AreaSpec], borders : $[BorderSpec]) {
     def area(a : String) = areas.find(_.id == a).get
     // The area that owns side s when the tile is turned r quarter turns clockwise
-    def areaAt(s : Side, r : Int) : AreaSpec = areas.find(_.edges.exists(_.rotate(r) == s)).get
+    def areaAt(s : Side, r : Int) : AreaSpec = areaOn(s, r).get
+    // None for a side no area owns: the sea of the Beach tiles (Sea module), which joins nothing and lets no tile in
+    def areaOn(s : Side, r : Int) : |[AreaSpec] = areas.find(_.edges.exists(_.rotate(r) == s))
 }
 
 
@@ -438,7 +440,24 @@ object Tiles {
         )(wall("n", "m"), wall("m", "s")),
     )
 
-    val all : $[TileSpec] = $(start, start5) ++ regular ++ environment ++ wastelands ++ central
+    // Uncharted Horizons' Sea module (sea.scala): a Beach tile is the Port's land tile with the sea south of it and
+    // a shore wing on each side of the sea, all turned so the Port faces the map. The sides of the sea and of the
+    // wings own no area: they join nothing and no tile goes there. The wings' strips of land are part of the Port
+    // territory (Board.join)
+    val beach : $[TileSpec] = $(
+        tile("beach-port")(
+            area("p", "NEW", 0.3, 0.12, 0.64, 0.15)(small(0.29, 0.49)),
+        )(),
+        tile("beach-wing-w")(
+            area("p", "", 0.72, 0.1)(),
+        )(),
+        tile("beach-wing-e")(
+            area("p", "", 0.22, 0.1)(),
+        )(),
+        tile("beach-sea")()(),
+    )
+
+    val all : $[TileSpec] = $(start, start5) ++ regular ++ environment ++ wastelands ++ central ++ beach
 
     val byId : Map[String, TileSpec] = all./(t => t.id -> t).toMap
 

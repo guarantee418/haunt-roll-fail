@@ -41,6 +41,7 @@ draws a tile when no neutral territory is left.
 | Uncharted Horizons: Events module and Alternative victory conditions module (Thane and Jarl modes) | done 2026-10-04 (`horizons.scala`, see below) |
 | Uncharted Horizons: Solo module (the Automa) | done 2026-10-04 (`automa.scala`, the 15 real cards) |
 | Wastelands expansion: Environment and Central tiles, five more creatures, Hrimgandr and Jötunn Blainn | done 2026-10-05 (`wastelands.scala`, see Wastelands below) |
+| Uncharted Horizons: Sea module (Beach tiles, Ports, the Raid phase and the 24 Raid cards) | done 2026-10-05 (`sea.scala`, see Sea below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -675,16 +676,107 @@ borders redrawn as orange impassable lines. Creature cards and round tokens
 has only the brown-paw cards, so the beige ones (`-1`) have the paw ring
 recoloured. Jötunn Blainn's token is `token/blainn`.
 
+## Uncharted Horizons: Sea module (Raids; done 2026-10-05)
+
+From the Uncharted Horizons rulebook, pages 3 to 5 (the English PDF is in the
+TTS mod 3597126237, a `Custom_PDF` object). The module lists 5 Beach tiles and
+20 Raid cards; the mod has 24 Raid cards, all used here.
+
+- Setup: the Raid deck is shuffled (step E). After placing their first map
+  tile, each player leaves an empty tile space beyond it and places a Beach
+  tile there, its Port facing the map (step L).
+- The Beach tile: one land territory with a printed Port and a small building
+  space, the sea beyond it with the Raid card slot, and the Raid unit slots
+  (year 1 on the left, year 2 on the right).
+- The Port: units can move from a territory with a Port to another one with a
+  Port with a Move 2 or more (additional moves are ignored); its defender gets
+  +1 in combat; its controller may launch Raids, as soon as they conquer it.
+- The Raid phase: at the end of the Actions phase, before the Creature phase
+  (or the Harvest), each player controlling a Port does, for each Port, in
+  turn order:
+  - If the Port has a Raid card with units on it: complete the Raid (take the
+    benefit for the number of units: resources per unit, or the card's action,
+    for 1 year; the 2-year benefit after 2 years; units come back to the Port
+    territory, after 2 years one of them goes to the reserve instead; the
+    card goes to the bottom of the deck), or, with 2 units after 1 year,
+    continue for a second year.
+  - If the Port has no Raid card: draw 2, keep 1 face up on the Beach (the
+    other to the bottom of the deck), then place 1 or 2 units from the Port
+    territory on the year 1 slots.
+  - A Raid can be completed and a new one started in the same turn, with any
+    units in the Port territory, including those just back.
+- Raiders can't move between Ports, count for Winter costs, and are lost (to
+  the reserve) if their owner loses control of the Port territory. The new
+  controller may keep the card left there or replace it.
+- Some actions happen at the next Harvest or the next Start of Year: the card
+  is kept until then, then goes to the bottom of the deck.
+
+The cards (1 year: per unit OR the action; 2 years, 2 units: the resources OR
+the action; "any" is a resource of the player's choice): Calm the Storm,
+Raider's Reward, Outpost Establishment, Uncharted Journey, Bold Maneuver,
+Clear the Frontlines, Trade and Triumph, Conqueror's Tribute, Frontline
+Reinforcements, Elder's Wisdom, Infiltrate and Conquer, Renewal Ritual, Heroic
+Homestead, Predator's Pride, Raze and Conquer, Warlord's Tribute, Glory of the
+Homeland, Brotherhood of Arms, Fame for Fortune, Sacred Stones, Woodland
+Bounty, Ancient Wisdom, Valor's Reward, Bounty of the Harvest. Their texts are
+in `RaidCard.list` in `sea.scala`.
+
 ## Expansions (later)
 
 The rest of Uncharted
-Horizons (Development and Raid cards, Training Fields, Solo/Automa, drafting
-setup, more map tiles). The TTS mod 3597126237 has its cards and the
-rulebook is on Tabletopia.
+Horizons (Development cards, Training Fields, drafting setup, more map
+tiles). The TTS mod 3597126237 has its cards and its rulebook PDF.
 
 ## Interpretations (choices made where the summary above is not enough)
 
 Check these against the rulebook when it is at hand.
+
+- **Sea module (Raids)**:
+  - The Beach tile is drawn as four map cells: the Port's land tile, the sea
+    beyond it and a shore wing on each side of the sea, cut from the
+    rulebook's picture (there is no scan of the tile). The sea and the
+    wings' outer sides take no tiles; the wings' land is part of the Port
+    territory. The Port territory has no resources.
+  - Where the cells beyond the empty space are taken (five or six players,
+    two first tiles side by side), the Beach goes one or two spaces further
+    out; a Beach is never placed beside another Port. At most five Beaches
+    (the box has five): with six players the sixth gets none.
+  - Port to Port costs all the moves left; it is offered only between
+    territories that aren't next to each other.
+  - The Port's +1 is a combat point for whoever defends the Port territory
+    against a player or a creature.
+  - Raiders stay theirs while no other player has figures in the Port
+    territory, even if they sent their last units from it; they are lost at
+    the start of the Raid phase if another player is there.
+  - Drawing a Raid card is offered only with at least one unit in the Port
+    territory to send; a card left on a Port by its last owner can be used
+    (send units) or replaced by drawing 2.
+  - 1-year actions don't scale with the units sent (as in the rulebook's
+    example); resources do.
+  - Raider's Reward and Warlord's Tribute take the resources after the
+    Harvest, from what the territory produced (as much as the owner has
+    left); Raider's Reward (2 years) also takes the territory's fame
+    (2 for a closed territory of 3 tiles or more, 1 for a smaller closed one).
+    Warlord's Tribute (2 years) takes, in each open enemy territory, the
+    produced resource its owner has most of.
+  - Conqueror's Tribute counts every open territory controlled by an enemy.
+  - Trade and Triumph (2 years): any number of 1:1 exchanges, 1 fame each,
+    never taking a resource already given nor giving one already taken.
+  - Glory of the Homeland (1 year) counts territories of 1 or 2 tiles; (2
+    years) the closed-territory fame as at Harvest, then any number of moves
+    of units between the player's own territories.
+  - Predator's Pride (2 years): only the fame (2 per lair); its option to move
+    two creatures twice each is not implemented.
+  - Elder's Wisdom (2 years): the clan upgrade card is any card still in the
+    player's upgrade pile (warchief upgrade cards included).
+  - Sacred Stones (1 year) and Ancient Wisdom: the Carved Stone may go on a
+    small building space or a Carved Stone space; Sacred Stones (2 years)
+    needs no space, in territories without a Carved Stone.
+  - Cards that remove units or buildings only take units (never a warchief,
+    Kaija or the like).
+  - Uncharted Journey explores from open territories the player controls or
+    open neutral ones.
+  - The Automa doesn't raid.
 
 - **Automa**:
   - Its Leaders are its warchief (Leader 1) and its companion figure
