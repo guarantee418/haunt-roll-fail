@@ -148,6 +148,18 @@ case class BuildPlaceAction(self : Faction, area : AreaRef, building : Building,
 // A building that fits more than one kind of free space in the territory: the player picks the space
 case class BuildSlotAction(self : Faction, area : AreaRef, building : Building, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build in", area)(building, "(" ~ (cost == 0).?("free".txt).|(cost.hl ~ " " ~ Wood.elem) ~ ")") with Soft with MapTarget { def target = area }
 case class BuildSpaceAction(self : Faction, area : AreaRef, building : Building, space : SpaceRef, kind : SpaceKind, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build", building, "in", area, "on")(SpaceLabel(kind)) with MapTarget { def target = space }
+// Build on a card: tap a free building space, pick a building from the menu (every building with its cost),
+// then confirm it, previewed on the space with a check mark and a cross above it
+case class BuildSpotAction(self : Faction, space : SpaceRef, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build", Comma, "tap a building space")((g : Game) => SpaceName(space)(g).txt, "in", space.area) with Soft with MapTarget { def target = space }
+case class BuildPickAction(self : Faction, space : SpaceRef, building : Building, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build on", (g : Game) => SpaceName(space)(g).txt, "in", space.area)(BuildingLabel(building, cost)) with Soft with MapTarget { def target = space }
+case class BuildConfirmAction(self : Faction, area : AreaRef, building : Building, space : SpaceRef, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build", building, "in", area)("Confirm") with MapTarget with BuildPreview { def target = BuildConfirmMark }
+// The building being confirmed, drawn on its space; the check mark above it confirms, the cross cancels
+trait BuildPreview {
+    def space : SpaceRef
+    def building : Building
+}
+case object BuildConfirmMark
+case object BuildCancelMark
 case class BuildDoneAction(self : Faction, e : BuildEffect, then : ForcedAction) extends BaseAction("Build")("Done")
 case class BuildFinishAction(f : Faction, e : BuildEffect, then : ForcedAction) extends ForcedAction
 case class ReplaceBuildingAction(self : Faction, area : AreaRef, space : SpaceRef, building : Building, then : ForcedAction) extends BaseAction("Industrious Villagers", "replace a building in", area, "with")(building) with MapTarget { def target = area }
@@ -162,6 +174,16 @@ object SpaceLabel {
         case LargeSpace => "A large building space"
         case CarvedSpace => "A Carved Stone space"
     }
+}
+
+object SpaceName {
+    def apply(s : SpaceRef)(implicit game : Game) : String =
+        if (s.index >= SpaceRef.extra) "No space needed" else SpaceLabel(MapExpansion.spaceKind(s))
+}
+
+object BuildingLabel {
+    def apply(b : Building, cost : Int) : Elem =
+        Image(b.image, styles.buildIcon) ~ b.title.hl ~ " (" ~ (cost == 0).?("free".txt).|(cost.hl ~ " " ~ Wood.elem) ~ ")"
 }
 
 object FeastLabel {
@@ -390,6 +412,36 @@ object MapExpansion extends Expansion {
                 (spaces.any && f.wood >= cost).?((t.anchor, b, spaces, cost))
             }
         }
+    }
+
+    // The free spaces f can build on (with Amenities, a spot by the territory's number for small buildings needing no space)
+    def buildSpots(f : Faction, e : BuildEffect, smallOnly : Boolean)(implicit game : Game) : $[SpaceRef] =
+        game.controlled(f).%(t => game.bearIn(t).not)./~{ t =>
+            val free = t.areas./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not && game.gear.contains(s).not)
+            val extra = noSpace(e).$(SpaceRef(t.anchor, SpaceRef.extra + game.buildings.keys.count(s => s.area == t.anchor && s.index >= SpaceRef.extra)))
+            (free ++ extra).%(s => Building.all.exists(b => buildBlock(f, e, smallOnly, s, b).none))
+        }
+
+    // Amenities and Horse Clan: small buildings take no space
+    def noSpace(e : BuildEffect) = e.special == AmenitiesBuild || e.special == HorseBuild
+
+    def buildCost(b : Building, e : BuildEffect) = math.max(0, b.cost - e.discount)
+
+    // Why b can't be built on s, if it can't (the same rules as buildOptions)
+    def buildBlock(f : Faction, e : BuildEffect, smallOnly : Boolean, s : SpaceRef, b : Building)(implicit game : Game) : |[String] = {
+        val t = game.board.territory(s.area)
+        val extra = s.index >= SpaceRef.extra
+        val cost = buildCost(b, e)
+
+        if (smallOnly && b.large) |("small buildings only")
+        else if (extra && b.large) |("needs a large space")
+        else if (extra.not && noSpace(e) && b.large.not) |("needs no space")
+        else if (extra.not && b == CarvedStone && spaceKind(s) != CarvedSpace) |("needs a Carved Stone space")
+        else if (extra.not && b.large && spaceKind(s) != LargeSpace) |("needs a large space")
+        else if (e.duplicate.not && game.buildingsIn(t).exists(_._2 == b)) |("already in this territory")
+        else if (game.buildings.values.count(_ == b) >= Building.tokens) |("none left")
+        else if (f.wood < cost) |("needs " + cost + " wood")
+        else None
     }
 
     def spaceKind(s : SpaceRef)(implicit game : Game) : SpaceKind = game.board.spec(s.area).spaces(s.index).kind
@@ -1288,13 +1340,24 @@ object MapExpansion extends Expansion {
 
         // BUILD
         case BuildAction(f, e, times, smallOnly, then) =>
-            val options = (times > 0).??(buildOptions(f, e, smallOnly))
+            val spots = (times > 0).??(buildSpots(f, e, smallOnly))
 
-            if (options.none)
+            if (spots.none)
                 Then(BuildFinishAction(f, e, then))
             else
-                Ask(f).each(options) { case (a, b, s, cost) => buildChoice(f, a, b, s, cost, times, e, smallOnly, then) }
+                Ask(f).each(spots)(s => BuildSpotAction(f, s, times, e, smallOnly, then))
                     .add(BuildDoneAction(f, e, then))
+
+        // The menu: every building with its cost, the ones that can't go on this space dimmed
+        case BuildSpotAction(f, s, times, e, smallOnly, then) =>
+            Ask(f).each(Building.all)(b => BuildPickAction(f, s, b, buildCost(b, e), times, e, smallOnly, then).!(buildBlock(f, e, smallOnly, s, b).any, buildBlock(f, e, smallOnly, s, b).|("")))
+                .cancel
+
+        case BuildPickAction(f, s, b, cost, times, e, smallOnly, then) =>
+            Ask(f).add(BuildConfirmAction(f, game.board.territory(s.area).anchor, b, s, cost, times, e, smallOnly, then)).cancel
+
+        case BuildConfirmAction(f, a, b, s, cost, times, e, smallOnly, then) =>
+            Force(BuildPlaceAction(f, a, b, s, cost, times, e, smallOnly, then))
 
         // The spaces the building fits, the same ones buildOptions found
         case BuildSlotAction(f, a, b, cost, times, e, smallOnly, then) =>
