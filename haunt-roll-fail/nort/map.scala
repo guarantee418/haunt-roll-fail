@@ -99,7 +99,8 @@ case class LivCunningDoneAction(self : Faction, defender : Faction, area : AreaR
 case class HalvardCraftSkipAction(self : Faction, then : ForcedAction) extends BaseAction("Halvard's Craft".hl)("Build nothing")
 case class SvarnMendAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class SvarnMendToAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("Svarn's Menders".hl, "place a casualty back in")(area) with MapTarget { def target = area }
-case class BrandRetreatToAction(self : Faction, loser : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Brand's Bravery".hl, "choose where", loser, "retreats from", from)(to, RetreatGroup(loser, from, n, kaija)) with MapTarget { def target = to }
+case class BrandRetreatPickAction(self : Faction, loser : Faction, from : AreaRef, to : AreaRef, rough : Boolean, then : ForcedAction) extends BaseAction("Brand's Bravery".hl, "choose where", loser, "retreats from", from)(to) with Soft with MapTarget { def target = to }
+case class BrandRetreatToAction(self : Faction, loser : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Brand's Bravery".hl, loser, "retreats from", from, "to", to)(RetreatGroup(loser, from, n, kaija))
 case class CombatFoodPaidAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], then : ForcedAction) extends ForcedAction
 case class CombatsAction(f : Faction, e : MoveEffect, then : ForcedAction) extends ForcedAction
 case class FightAction(self : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends BaseAction("Fight in")(area) with MapTarget { def target = area }
@@ -123,7 +124,9 @@ case class CombatChooseAction(self : Faction, attacker : Faction, defender : Fac
 case class CombatResolveAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], then : ForcedAction) extends ForcedAction
 // rough: the retreating units may cross Rough borders (Wolf Clan card)
 case class RetreatAction(f : Faction, from : AreaRef, rough : Boolean, then : ForcedAction) extends ForcedAction
-case class RetreatToAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to")(to, RetreatGroup(self, from, n, kaija)) with MapTarget { def target = to }
+// Retreating: pick the destination (on the map or in the list), then how many units go there (all, or one), or cancel
+case class RetreatPickAction(self : Faction, from : AreaRef, to : AreaRef, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to")(to) with Soft with MapTarget { def target = to }
+case class RetreatToAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to", to)(RetreatGroup(self, from, n, kaija))
 
 // The units retreating together; the warchief goes with the first group, like Kaija
 case class RetreatGroup(f : Faction, from : AreaRef, n : Int, kaija : Boolean) extends GameElementary {
@@ -529,6 +532,17 @@ object MapExpansion extends Expansion {
         if (food + wood + lore > 0)
             f.log("collected", $(food -> Food, wood -> Wood, lore -> Lore).filter(_._1 > 0)./{ case (n, r) => n.hl ~ " " ~ r.elem }.join(", "), reason)
     }
+
+    // Where f's figures in t can retreat to: not into a fight, nor where a creature is being attacked or a Fallen Valkyrie is
+    def retreats(f : Faction, t : Territory, rough : Boolean)(implicit game : Game) : $[Territory] = {
+        val fighting = (game.combats ++ game.creatureFights./(_.area))./(game.board.territory)
+        game.board.adjacent(t).filter(rough || _._2).map(_._1).%(o => fighting.has(o).not).%(o => game.present(o).but(f).none).%(o => game.hostileIn(o).not).%(o => game.swampIn(o).not)
+    }
+
+    // How many go (all, or one) after picking where: with one destination the pick was made for the player, so there is
+    // nothing to cancel back to, but the choice is still shown so the player sees where the units go
+    def retreatCount(ask : Ask, f : Faction, from : AreaRef, rough : Boolean)(implicit game : Game) =
+        (retreats(f, game.board.territory(from), rough).num > 1).?(ask.cancel).|(ask.needOk)
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         // SETUP
@@ -1158,9 +1172,7 @@ object MapExpansion extends Expansion {
                 Then(then)
             }
             else {
-                // Not into a fight, nor where a creature is being attacked or a Fallen Valkyrie is
-                val fighting = (game.combats ++ game.creatureFights./(_.area))./(game.board.territory)
-                val to = game.board.adjacent(t).filter(rough || _._2).map(_._1).%(o => fighting.has(o).not).%(o => game.present(o).but(f).none).%(o => game.hostileIn(o).not).%(o => game.swampIn(o).not)
+                val to = retreats(f, t, rough)
 
                 if (to.none) {
                     val chief = game.chiefIn(t, f)
@@ -1171,11 +1183,25 @@ object MapExpansion extends Expansion {
                 }
                 else
                 if (game.retreatBy.any)
-                    Ask(game.retreatBy.get).some(to)(o => $(BrandRetreatToAction(game.retreatBy.get, f, a, o.anchor, n, kaija, rough, then)) ++ (n > 1).$(BrandRetreatToAction(game.retreatBy.get, f, a, o.anchor, 1, kaija, rough, then)))
+                    Ask(game.retreatBy.get).each(to)(o => BrandRetreatPickAction(game.retreatBy.get, f, a, o.anchor, rough, then))
                 else
-                    // Kaija goes with the first group
-                    Ask(f).some(to)(o => $(RetreatToAction(f, a, o.anchor, n, kaija, rough, then)) ++ (n > 1).$(RetreatToAction(f, a, o.anchor, 1, kaija, rough, then)))
+                    Ask(f).each(to)(o => RetreatPickAction(f, a, o.anchor, rough, then))
             }
+
+        // All the units, or one (Kaija and the warchief go with the first group)
+        case RetreatPickAction(f, from, to, rough, then) =>
+            val t = game.board.territory(from)
+            val n = game.count(t, f)
+            val kaija = game.kaijaIn(t, f)
+
+            retreatCount(Ask(f).add(RetreatToAction(f, from, to, n, kaija, rough, then)).when(n > 1)(RetreatToAction(f, from, to, 1, kaija, rough, then)), f, from, rough)
+
+        case BrandRetreatPickAction(self, f, from, to, rough, then) =>
+            val t = game.board.territory(from)
+            val n = game.count(t, f)
+            val kaija = game.kaijaIn(t, f)
+
+            retreatCount(Ask(self).add(BrandRetreatToAction(self, f, from, to, n, kaija, rough, then)).when(n > 1)(BrandRetreatToAction(self, f, from, to, 1, kaija, rough, then)), f, from, rough)
 
         case BrandRetreatToAction(_, f, from, to, n, kaija, rough, then) =>
             Then(RetreatToAction(f, from, to, n, kaija, rough, then))

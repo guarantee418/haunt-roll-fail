@@ -68,7 +68,7 @@ object EventCard {
 case class ShuffledEventsAction(shuffled : $[EventCard], achievements : $[Card]) extends ShuffledAction[EventCard]
 case class EventStepAction(step : String, l : $[Faction], then : ForcedAction) extends ForcedAction
 case class EventGainAction(self : Faction, card : EventCard, r : |[Resource], fame : Int, draw : Int, step : String, l : $[Faction], then : ForcedAction) extends BaseAction(card)(EventGainLabel(r, fame, draw))
-case class OfferingsTakeAction(self : Faction, card : Card, step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("offerings"), "discard", 1.hl, Lore, "to take from the discard pile")(card.img, Break, card)
+case class OfferingsTakeAction(self : Faction, card : Card, step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("offerings"), "discard", 1.hl, Lore, "to take from the discard pile")(card.handImg) with ViewObject[Card] { def obj = card }
 case class VolcanoAction(self : Faction, space : SpaceRef, building : Building, step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("volcano-eruption"), "remove a building in", space.area)(building) with MapTarget { def target = space.area }
 case class HappyUnrestAction(self : Faction, step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("happy-people"))("Remove 1", UnrestCard)
 case class HappyFameAction(self : Faction, area : |[AreaRef], step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("happy-people"), "gain", 3.hl, "fame and add a unit")(area./(a => a : Any).|("Gain 3 fame (no unit)".txt))

@@ -270,7 +270,7 @@ case class NegotiationTakeAction(self : Faction, card : Card, then : ForcedActio
 case class NegotiationDrawAction(self : Faction, then : ForcedAction) extends BaseAction("Negociation")("Draw a card")
 case class ResourcefulAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class ResourcefulPayAction(self : Faction, pay : $[Resource], then : ForcedAction) extends BaseAction("Resourceful People", "pay any 3 resources to draw 1 more card")("Pay", pay./(_.elem).join(" "))
-case class PickCardAction(self : Faction, card : Card) extends BaseAction("Take a card")(card.img, Break, card)
+case class PickCardAction(self : Faction, card : Card) extends BaseAction("Take a card")(card.handImg) with ViewObject[Card] { def obj = card }
 
 // Snake Clan may take one resource from the territory with its Scorched Earth token
 case object ScorchedHarvestAction extends ForcedAction
@@ -1202,9 +1202,9 @@ object CommonExpansion extends Expansion {
 
             f.passed = true
 
-            // After Future Sight there is no card to take
+            // After Future Sight there is no card to take; the last card left is still offered, so the player sees what they take
             if (game.display.any && f.foresaw.not)
-                Ask(f).each(game.display)(c => PickCardAction(f, c))
+                Ask(f).each(game.display)(c => PickCardAction(f, c)).when(game.display.num == 1)(HiddenOkAction)
             else
                 Then(PassedAction(f))
 
