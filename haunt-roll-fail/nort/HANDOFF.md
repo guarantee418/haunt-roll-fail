@@ -636,7 +636,7 @@ list. In short:
 4. **A replay check** like `root/replay-check.scala`, to confirm undo and
    loading rebuild the same game.
 5. **Expansions**: Wilderness, Wastelands, New Blood, and Uncharted Horizons' Events,
-   Alternative victory and Sea (Raids) modules are done; the rest of
+   Alternative victory and Sea modules are done; the rest of
    Uncharted Horizons (Development cards, Training Fields) are next (assets in `expansion/`; the TTS mod
    3597126237 has the Uncharted Horizons cards and its rulebook PDF).
 

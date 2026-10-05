@@ -248,7 +248,7 @@ case object EventsModule extends Module("Events", "Uncharted Horizons") {
 }
 
 // Uncharted Horizons' Sea module (sea.scala)
-case object Sea extends Module("Sea (Raids)", "Uncharted Horizons") {
+case object Sea extends Module("Sea", "Uncharted Horizons") {
     override def ready = true
     override def expansion = |(SeaExpansion)
     // First: the Raid phase comes before the Creature phase, and the Beach tiles before other setup steps

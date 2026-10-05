@@ -731,7 +731,7 @@ tiles). The TTS mod 3597126237 has its cards and its rulebook PDF.
 
 Check these against the rulebook when it is at hand.
 
-- **Sea module (Raids)**:
+- **Sea module**:
   - The Beach tile is drawn as four map cells: the Port's land tile, the sea
     beyond it and a shore wing on each side of the sea, cut from the
     rulebook's picture (there is no scan of the tile). The sea and the
@@ -739,8 +739,8 @@ Check these against the rulebook when it is at hand.
     territory. The Port territory has no resources.
   - Where the cells beyond the empty space are taken (five or six players,
     two first tiles side by side), the Beach goes one or two spaces further
-    out; a Beach is never placed beside another Port. At most five Beaches
-    (the box has five): with six players the sixth gets none.
+    out; a Beach is never placed beside another Port. The box has five Beaches;
+    a sixth is added so six-player games (and 3v3) get one each.
   - Port to Port costs all the moves left; it is offered only between
     territories that aren't next to each other.
   - The Port's +1 is a combat point for whoever defends the Port territory

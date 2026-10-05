@@ -210,7 +210,7 @@ object SeaExpansion extends Expansion {
             game.internalPerform(ShuffledAchievementsAction(achievements), soft)
 
         // After placing their first tile, each player leaves an empty space and places a Beach tile, its Port facing the map
-        case TilePlacedAction(f, tile, spot, true, SetupUnitsAskAction(_, 1, _, _, _)) if game.beached.has(f).not && game.ports.num < 5 =>
+        case TilePlacedAction(f, tile, spot, true, SetupUnitsAskAction(_, 1, _, _, _)) if game.beached.has(f).not && game.ports.num < 6 =>
             game.beached :+= f
 
             val centre = $((0, 0)) ++ (factions.num >= 5).$((1, 0))

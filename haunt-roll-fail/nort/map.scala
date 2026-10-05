@@ -420,7 +420,10 @@ object MapExpansion extends Expansion {
 
     // Tiles a setup placement may go next to: the starting tile(s) in the first round, any tile in the second
     def setupPlacements(tile : String, round : Int)(implicit game : Game) : $[(Spot, Int)] =
-        placements(tile, None, true).%{ case (s, _) => round > 1 || Side.all.exists(d => game.board.at(s.x + d.dx, s.y + d.dy).exists(_.tile.startsWith("start"))) }
+        placements(tile, None, true).%{ case (s, _) => round > 1 || Side.all.exists(d => centre.has((s.x + d.dx, s.y + d.dy))) }
+
+    // The starting tiles' spots (the central tile can be the Wilderness Great Lake, whose id doesn't start with "start")
+    def centre(implicit game : Game) : $[(Int, Int)] = $((0, 0)) ++ (game.factions.num >= 5).$((1, 0))
 
     def moveCost(rough : Boolean, ignoreRough : Boolean) = (rough && ignoreRough.not).?(2).|(1)
 
