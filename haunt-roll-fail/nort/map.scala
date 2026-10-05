@@ -94,8 +94,8 @@ case class BorgildShieldSkipAction(self : Faction, e : MoveEffect, then : Forced
 case class EgilFuryAction(self : Faction, space : SpaceRef, building : Building, e : MoveEffect, then : ForcedAction) extends BaseAction("Egil's Fury".hl, "remove a building from a territory being attacked")(building, "in", space.area) with MapTarget { def target = space.area }
 case class EgilFurySkipAction(self : Faction, e : MoveEffect, then : ForcedAction) extends BaseAction("Egil's Fury".hl)("Remove no building")
 case class LivCunningAskAction(f : Faction, defender : Faction, area : AreaRef, e : MoveEffect, spent : $[Resource], then : ForcedAction) extends ForcedAction
-case class LivCunningAction(self : Faction, defender : Faction, area : AreaRef, e : MoveEffect, r : Resource, spent : $[Resource], then : ForcedAction) extends BaseAction("Liv's Cunning".hl, "spend for the fight", spent.any.?("(" ~ spent./(_.elem).join(" ") ~ " so far)").|(Empty), Break, FightInfo(self, defender, area, $))("1", r)
-case class LivCunningDoneAction(self : Faction, defender : Faction, area : AreaRef, e : MoveEffect, spent : $[Resource], then : ForcedAction) extends BaseAction("Liv's Cunning".hl, Break, FightInfo(self, defender, area, $))(spent.none.?("Spend nothing").|("Done"))
+case class LivCunningAction(self : Faction, defender : Faction, area : AreaRef, e : MoveEffect, r : Resource, spent : $[Resource], then : ForcedAction) extends BaseAction("Liv's Cunning".hl, "spend for the fight", spent.any.?("(" ~ spent./(_.elem).join(" ") ~ " so far)").|(Empty), Break, FightInfo(self, defender, area, e, $))("1", r)
+case class LivCunningDoneAction(self : Faction, defender : Faction, area : AreaRef, e : MoveEffect, spent : $[Resource], then : ForcedAction) extends BaseAction("Liv's Cunning".hl, Break, FightInfo(self, defender, area, e, $))(spent.none.?("Spend nothing").|("Done"))
 case class HalvardCraftSkipAction(self : Faction, then : ForcedAction) extends BaseAction("Halvard's Craft".hl)("Build nothing")
 case class SvarnMendAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class SvarnMendToAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("Svarn's Menders".hl, "place a casualty back in")(area) with MapTarget { def target = area }
@@ -109,10 +109,10 @@ case class FightStartAction(f : Faction, area : AreaRef, e : MoveEffect, then : 
 case class FightOverAction(then : ForcedAction) extends ForcedAction
 case class IntimidateAction(self : Faction, area : AreaRef, to : AreaRef, e : MoveEffect, then : ForcedAction) extends BaseAction("Intimidate", "push a defending unit from", area, "to")(to) with MapTarget { def target = to }
 case class IntimidateSkipAction(self : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends BaseAction("Intimidate")("Fight them all")
-case class AxeAction(self : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], face : DieFace, then : ForcedAction) extends BaseAction("Axe Throwers", Break, FightInfo(self, defender, area, food))(face)
+case class AxeAction(self : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], face : DieFace, then : ForcedAction) extends BaseAction("Axe Throwers", Break, FightInfo(self, defender, area, e, food))(face)
 
 // COMBAT
-case class CombatFoodAction(self : Faction, attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], then : ForcedAction) extends BaseAction(self, "spends food for the fight", Break, FightInfo(attacker, defender, area, food.dropRight(1)))((food.last == 0).?("No food").|(food.last.hl ~ " " ~ Food.elem))
+case class CombatFoodAction(self : Faction, attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], then : ForcedAction) extends BaseAction(self, "spends food for the fight", Break, FightInfo(attacker, defender, area, e, food.dropRight(1)))((food.last == 0).?("No food").|(food.last.hl ~ " " ~ Food.elem))
 case class CombatRollAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], then : ForcedAction) extends ForcedAction
 case class CombatRolledAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
 // Liv's reroll (Warchiefs module): roll again, then go on with the face without offering another reroll
@@ -120,7 +120,7 @@ case class CombatRerollAction(attacker : Faction, defender : Faction, area : Are
 case class CombatRerolledAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
 case class CombatFaceAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], face : DieFace, then : ForcedAction) extends ForcedAction
 case class CombatFoodStartAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends ForcedAction
-case class CombatChooseAction(self : Faction, attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], choice : DieFace, then : ForcedAction) extends BaseAction(self, "rolled", DieChoice, Break, FightInfo(attacker, defender, area, food))(choice)
+case class CombatChooseAction(self : Faction, attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], choice : DieFace, then : ForcedAction) extends BaseAction(self, "rolled", DieChoice, Break, FightInfo(attacker, defender, area, e, food))(choice)
 case class CombatResolveAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], then : ForcedAction) extends ForcedAction
 // rough: the retreating units may cross Rough borders (Wolf Clan card)
 case class RetreatAction(f : Faction, from : AreaRef, rough : Boolean, then : ForcedAction) extends ForcedAction
@@ -230,42 +230,82 @@ case class Party(f : Faction, n : Int, kaija : Boolean, chief : Boolean) extends
     def elem(implicit game : Game) = ((n > 0).$((n == 1).?("1 unit").|(n.toString + " units").txt) ++ kaija.$(Companion(f).elem) ++ chief.$((f == Horse && kaija).?(Warchief.elem(f)).|("the warchief".txt))).join(" and ")
 }
 
-// Where a fight is and what each side has, shown under the question of each step of the fight
+// Where a fight is and what each side has, shown under the question of each step of the fight:
+// each side's combat points before the die, with where they come from (the same sums CombatResolveAction uses)
 // food: what each side has spent so far (the attacker first)
-case class FightInfo(attacker : Faction, defender : Faction, area : AreaRef, food : $[Int]) extends GameElementary {
+case class FightInfo(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int]) extends GameElementary {
     def elem(implicit game : Game) = {
         val t = game.board.territory(area)
         val here = game.working(t)
-        val fortresses = attacker.conqueror.?(0).|(here.count(_ == Fortress))
+        // Conqueror: the attacker ignores Fortresses and Defense Towers
         val towers = attacker.conqueror.?(0).|(here.count(_ == DefenseTower))
 
-        def side(f : Faction, attacking : Boolean, spent : |[Int]) : Elem =
-            f.elem ~ attacking.?(" attacks with ").|(" defends with ") ~ Party(f, game.count(t, f), game.kaijaIn(t, f), game.chiefIn(t, f)).elem ~
-            " (strength " ~ game.strength(t, f, attacking).hl ~ ")" ~ spent./(n => ", spent " ~ n.hl ~ " " ~ Food.elem).|(Empty)
+        def side(f : Faction, attacking : Boolean, spent : |[Int]) : Elem = {
+            val extra = attacking.?($(
+                e.bonus -> "the card".txt,
+                game.eventIs("conquests").??(1) -> "Conquests".hl
+            )).|($(
+                attacker.conqueror.?(0).|(2 * here.count(_ == Fortress)) -> Fortress.elem
+            )) ++ $(
+                (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl,
+                NewBloodExpansion.points(f, t, e, attacking, spent.|(0)) -> "New Blood powers".txt,
+                game.has(Wastelands).??(WastelandsExpansion.points(f, t, attacking)) -> "Wastelands".hl,
+                spent.|(0) -> Food.elem
+            )
 
-        val defense = $(
-            (fortresses > 0).?(Fortress.elem ~ " (+" ~ (2 * fortresses).hl ~ " strength)"),
-            (towers > 0).?(DefenseTower.elem ~ " (+" ~ towers.hl ~ " " ~ (towers == 1).?("casualty").|("casualties") ~ ")")
-        ).flatten
+            val casualties = attacking.?($(
+                ((e.special == EgilMove || e.special == FireArrowsMove).??(1) -> "the card".txt)
+            )).|($(towers -> DefenseTower.elem))
 
-        "The fight is in ".txt ~ area.elem ~ Break ~
-        side(attacker, true, food.lift(0)) ~ Break ~
-        side(defender, false, food.lift(1)) ~
-        defense.any.?(Break ~ "Defense: ".txt ~ defense.join(", ")).|(Empty)
+            FightPoints(f, t, attacking, extra, casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1))
+        }
+
+        "The fight is in ".txt ~ area.elem ~ Break ~ side(attacker, true, food.lift(0)) ~ Break ~ side(defender, false, food.lift(1))
     }
 }
 
 // The same for a fight against a creature
-case class CreatureFightInfo(f : Faction, area : AreaRef, c : Creature, attacking : Boolean) extends GameElementary {
+case class CreatureFightInfo(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean) extends GameElementary {
     def elem(implicit game : Game) = {
         val t = game.board.territory(area)
-        val fortresses = attacking.not.??(game.working(t).count(_ == Fortress))
+        val waste = game.has(Wastelands)
+
+        val extra = $(
+            attacking.??(e.bonus) -> "the card".txt,
+            (attacking && e.special == AxeMove).??(1) -> "Axe Throwers".hl,
+            attacking.not.??(2 * game.working(t).count(_ == Fortress)) -> Fortress.elem,
+            (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl,
+            waste.??(WastelandsExpansion.points(f, t, attacking) + Waste.controller(Waste.helheim, "c").has(f).??(2)) -> "Wastelands".hl
+        )
+
+        val bonus = waste.??((c.kind != Valdemar && Waste.valdemarAlive).??(1) + (attacking && Waste.landvidiIn(t)).??(2))
 
         "The fight is in ".txt ~ area.elem ~ Break ~
-        f.elem ~ attacking.?(" attacks with ").|(" defends with ") ~ Party(f, game.count(t, f), game.kaijaIn(t, f), game.chiefIn(t, f)).elem ~
-        " (strength " ~ game.strength(t, f, attacking).hl ~ ")" ~
-        (fortresses > 0).?(", " ~ Fortress.elem ~ " (+" ~ (2 * fortresses).hl ~ " strength)").|(Empty) ~ Break ~
-        c.elem ~ " has strength " ~ c.kind.value.hl
+        FightPoints(f, t, attacking, extra, $, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1)) ~ Break ~
+        c.elem ~ ": " ~ (c.kind.value + bonus).hl ~ " combat points" ~ (bonus > 0).?(" (" ~ c.kind.value.hl ~ " from its strength, " ~ bonus.hl ~ " from " ~ "Wastelands".hl ~ ")").|(Empty)
+    }
+}
+
+// A side's combat points before the die: units, Kaija, the warchief, Jötunn Blainn, then the extras;
+// sources worth nothing are left out
+object FightPoints {
+    def apply(f : Faction, t : Territory, attacking : Boolean, extra : $[(Int, Elem)], casualties : $[(Int, Elem)], cancels : Int)(implicit game : Game) : Elem = {
+        val units = game.count(t, f)
+        val parts = $(
+            units -> (units == 1).?("unit").|("units").txt,
+            game.companionStrength(t, f) -> Companion(f).elem,
+            Warchief.strength(t, f, attacking) -> Warchief.elem(f),
+            game.blainnIn(t, f).??(2) -> "Jötunn Blainn".hl
+        ) ++ extra
+
+        val points = parts.filter(_._1 > 0)
+        val total = points.map(_._1).sum
+        val more = casualties.filter(_._1 > 0)./{ case (n, what) => "+" ~ n.hl ~ " " ~ (n == 1).?("casualty").|("casualties") ~ " from " ~ what } ++
+            (cancels > 0).$("cancels " ~ cancels.hl ~ " casualty")
+
+        f.elem ~ attacking.?(" (attacking)").|(" (defending)") ~ ": " ~ total.hl ~ " combat " ~ (total == 1).?("point").|("points") ~
+        points.any.?(" (" ~ points./{ case (n, what) => n.hl ~ " from " ~ what }.join(", ") ~ ")").|(Empty) ~
+        more.any.?(", " ~ more.join(", ")).|(Empty)
     }
 }
 
@@ -436,7 +476,7 @@ object MapExpansion extends Expansion {
         anywhere.?(game.board.territories.%(game.board.open)).|(game.controlled(f).%(game.board.open)).%(t => game.bearIn(t).not)
 
     // Each building f can build in each territory, with the free spaces it can go on (the first of each kind):
-    // a small building on a small, large or Carved Stone space, a Carved Stone only on a Carved Stone space,
+    // a small building on a small or Carved Stone space, a Carved Stone only on a Carved Stone space,
     // a large building only on a large space
     def buildOptions(f : Faction, e : BuildEffect, smallOnly : Boolean)(implicit game : Game) : $[(AreaRef, Building, $[SpaceRef], Int)] = {
         game.controlled(f).%(t => game.bearIn(t).not)./~{ t =>
@@ -448,7 +488,7 @@ object MapExpansion extends Expansion {
                 val kinds = b match {
                     case CarvedStone => $(CarvedSpace)
                     case b if b.large => $(LargeSpace)
-                    case _ => $(SmallSpace, LargeSpace, CarvedSpace)
+                    case _ => $(SmallSpace, CarvedSpace)
                 }
                 val spaces =
                     // Amenities: small buildings take no space
@@ -486,6 +526,7 @@ object MapExpansion extends Expansion {
         else if (extra.not && noSpace(e) && b.large.not) |("needs no space")
         else if (extra.not && b == CarvedStone && spaceKind(s) != CarvedSpace) |("needs a Carved Stone space")
         else if (extra.not && b.large && spaceKind(s) != LargeSpace) |("needs a large space")
+        else if (extra.not && b.large.not && spaceKind(s) == LargeSpace) |("large buildings only")
         else if (e.duplicate.not && game.buildingsIn(t).exists(_._2 == b)) |("already in this territory")
         else if (game.buildings.values.count(_ == b) >= Building.tokens) |("none left")
         else if (f.wood < cost) |("needs " + cost + " wood")

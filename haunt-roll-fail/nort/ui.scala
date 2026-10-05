@@ -338,6 +338,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         }
     })
 
+    // How big a building is drawn: its space's printed octagon, so a large building fills its large space
+    val smallBuilding = 190.0
+    val largeBuilding = 235.0
+    def buildingSize(b : Building) = b.large.?(largeBuilding).|(smallBuilding)
+
     def at(image : String, size : Double, alpha : Double = 1.0) : ImageRect = ImageRect(new RawImage(img(image)), Rectangle(-size / 2, -size / 2, size, size), alpha)
 
     // Territory tints: an area's mask (webp2/nort/images/tile/mask/) filled with a colour and turned with its tile, made once
@@ -809,16 +814,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 pieces.add(Sprite($(at("ui-spot-" + n, T * 0.9)), $(Rectangle(-T * 0.45, -T * 0.45, T * 0.9, T * 0.9)), $(s)))(sx(s.x + 0.5), sy(s.y + 0.5))
         }
 
-        // Buildings on their spaces
+        // Buildings on their spaces: a large building fills its (bigger) space
         game.buildings.foreach { case (s, b) =>
             val (x, y) = board.point(s)
-            pieces.add(Sprite($(at(b.image, 190)), $))(sx(x), sy(y))
+            pieces.add(Sprite($(at(b.image, buildingSize(b))), $))(sx(x), sy(y))
         }
 
         // Free building spaces offered for a building, clickable
         targets.of[SpaceRef].distinct.foreach { s =>
             val (x, y) = board.point(s)
-            pieces.add(Sprite($(at("ui-target", 190)), $(Rectangle(-95, -95, 190, 190)), $(s)))(sx(x), sy(y))
+            val n = (s.index < SpaceRef.extra && MapExpansion.spaceKind(s) == LargeSpace).?(largeBuilding).|(smallBuilding)
+            pieces.add(Sprite($(at("ui-target", n)), $(Rectangle(-n / 2, -n / 2, n, n)), $(s)))(sx(x), sy(y))
         }
 
         // Ox Clan's Ancestral Equipment tokens on their spaces, face up
@@ -1001,7 +1007,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // The building being confirmed, on its space, with the check mark (confirm) and the cross (cancel) above it, on top of everything
         lastActions./~(_.unwrap.as[BuildPreview]).take(1).foreach { p =>
             val (x, y) = board.point(p.space)
-            pieces.add(Sprite($(at(p.building.image, 190, 0.9)), $))(sx(x), sy(y))
+            pieces.add(Sprite($(at(p.building.image, buildingSize(p.building), 0.9)), $))(sx(x), sy(y))
             pieces.add(Sprite($(at("ui-confirm", 220)), $(Rectangle(-110, -110, 220, 220)), $(ConfirmMark)))(sx(x) - 120, sy(y) - 225)
             pieces.add(Sprite($(at("ui-cancel", 220)), $(Rectangle(-110, -110, 220, 220)), $(CancelMark)))(sx(x) + 120, sy(y) - 225)
         }
