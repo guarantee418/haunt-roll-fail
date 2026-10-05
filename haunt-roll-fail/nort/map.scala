@@ -24,12 +24,16 @@ case class TileRef(id : String) extends Elementary with Record {
     def elem = Image("tile-" + id, styles.tile)
 }
 
-// A tile being placed, shown on the map at its spot until confirmed
-trait TilePreview {
+// A tile being placed, shown on the map at its spot until confirmed, with rotate arrows (RotateMark), the check mark (confirm) and the cross (cancel) on it
+trait TilePreview extends MapTarget {
     def tile : String
     def spot : Spot
     def r : Int
+    def target = ConfirmMark
 }
+
+// The rotate arrows on a tile being placed (d = 1 clockwise, -1 counterclockwise)
+case class RotateMark(d : Int)
 
 case class RotateLabel(d : Int) extends Elementary {
     def elem = (d > 0).?("Rotate right (90°)").|("Rotate left (−90°)").txt
@@ -46,7 +50,7 @@ case class ShuffledTilesAction(shuffled : $[String]) extends ShuffledAction[Stri
 case class SetupPlaceAction(round : Int, l : $[Faction]) extends ForcedAction
 case class SetupTileAction(self : Faction, round : Int, l : $[Faction], tile : String) extends BaseAction(self, "places a tile")(TileRef(tile)) with Soft with ViewObject[TileRef] { def obj = TileRef(tile) }
 case class SetupSpotAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot) extends BaseAction("Place the tile at")(spot) with Soft with MapTarget { def target = spot }
-case class SetupRotateAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot, r : Int, d : Int) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft
+case class SetupRotateAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot, r : Int, d : Int) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft with MapTarget { def target = RotateMark(d) }
 case class SetupTurnAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot, r : Int) extends BaseAction("Place the tile at", spot)("Confirm") with TilePreview
 case class SetupUnitsAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place three units in")(area) with MapTarget { def target = area }
 case class SetupKaijaAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place two units and", Companion(self), "in")(area)
@@ -137,7 +141,7 @@ case class ExploreDrawAction(f : Faction, draw : Int, tries : Int, times : Int, 
 case class ExploreChooseAction(f : Faction, times : Int, redraw : Boolean, e : ExploreEffect, then : ForcedAction) extends ForcedAction
 case class ExploreTileAction(self : Faction, tile : String, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Explore with")(TileRef(tile)) with Soft with ViewObject[TileRef] { def obj = TileRef(tile) }
 case class ExploreSpotAction(self : Faction, tile : String, spot : Spot, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at")(spot) with Soft with MapTarget { def target = spot }
-case class ExploreRotateAction(self : Faction, tile : String, spot : Spot, r : Int, d : Int, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft
+case class ExploreRotateAction(self : Faction, tile : String, spot : Spot, r : Int, d : Int, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft with MapTarget { def target = RotateMark(d) }
 case class ExploreTurnAction(self : Faction, tile : String, spot : Spot, r : Int, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at", spot)("Confirm") with TilePreview
 case class ExploreRedrawAction(self : Faction, tile : String, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Scout Camp")("Put", TileRef(tile), "at the bottom and draw another")
 
@@ -152,14 +156,15 @@ case class BuildSpaceAction(self : Faction, area : AreaRef, building : Building,
 // then confirm it, previewed on the space with a check mark and a cross above it
 case class BuildSpotAction(self : Faction, space : SpaceRef, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build", Comma, "tap a building space")((g : Game) => SpaceName(space)(g).txt, "in", space.area) with Soft with MapTarget { def target = space }
 case class BuildPickAction(self : Faction, space : SpaceRef, building : Building, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build on", (g : Game) => SpaceName(space)(g).txt, "in", space.area)(BuildingLabel(building, cost)) with Soft with MapTarget { def target = space }
-case class BuildConfirmAction(self : Faction, area : AreaRef, building : Building, space : SpaceRef, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build", building, "in", area)("Confirm") with MapTarget with BuildPreview { def target = BuildConfirmMark }
+case class BuildConfirmAction(self : Faction, area : AreaRef, building : Building, space : SpaceRef, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build", building, "in", area)("Confirm") with MapTarget with BuildPreview { def target = ConfirmMark }
 // The building being confirmed, drawn on its space; the check mark above it confirms, the cross cancels
 trait BuildPreview {
     def space : SpaceRef
     def building : Building
 }
-case object BuildConfirmMark
-case object BuildCancelMark
+// The check mark and the cross drawn on the map to confirm or cancel a building or a tile being placed
+case object ConfirmMark
+case object CancelMark
 case class BuildDoneAction(self : Faction, e : BuildEffect, then : ForcedAction) extends BaseAction("Build")("Done")
 case class BuildFinishAction(f : Faction, e : BuildEffect, then : ForcedAction) extends ForcedAction
 case class ReplaceBuildingAction(self : Faction, area : AreaRef, space : SpaceRef, building : Building, then : ForcedAction) extends BaseAction("Industrious Villagers", "replace a building in", area, "with")(building) with MapTarget { def target = area }
@@ -201,7 +206,7 @@ case class ReturnUnitsToAction(self : Faction, area : AreaRef, then : ForcedActi
 // No neutral territory left: draw a tile to make one
 case class SecondChanceDrawAction(f : Faction, tries : Int, then : ForcedAction) extends ForcedAction
 case class SecondChanceSpotAction(self : Faction, tile : String, spot : Spot, then : ForcedAction) extends BaseAction(self, "has no units and no neutral territory is left; place", TileRef(tile), "at")(spot) with Soft with MapTarget { def target = spot }
-case class SecondChanceRotateAction(self : Faction, tile : String, spot : Spot, r : Int, d : Int, then : ForcedAction) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft
+case class SecondChanceRotateAction(self : Faction, tile : String, spot : Spot, r : Int, d : Int, then : ForcedAction) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft with MapTarget { def target = RotateMark(d) }
 case class SecondChanceTurnAction(self : Faction, tile : String, spot : Spot, r : Int, then : ForcedAction) extends BaseAction("Place the tile at", spot)("Confirm") with TilePreview
 
 
@@ -1459,8 +1464,8 @@ object MapExpansion extends Expansion {
             val n = rotate(rs, r, d)
 
             Ask(f)
-                .add(SecondChanceRotateAction(f, tile, spot, n, 1, then))
-                .add(SecondChanceRotateAction(f, tile, spot, n, -1, then))
+                .when(rs.num > 1)(SecondChanceRotateAction(f, tile, spot, n, 1, then))
+                .when(rs.num > 1)(SecondChanceRotateAction(f, tile, spot, n, -1, then))
                 .add(SecondChanceTurnAction(f, tile, spot, n, then))
 
         case SecondChanceTurnAction(f, tile, spot, r, then) =>

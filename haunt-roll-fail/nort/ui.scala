@@ -309,10 +309,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         mapSmall.attach.parent.style.cursor = clickable(target).any.?("pointer").|("default")
     }
 
-    // The single offered action a click on the map stands for (the cross above a building being confirmed cancels)
+    // The single offered action a click on the map stands for (the cross on a building or tile being confirmed cancels)
     def clickable(target : $[Any]) : |[UserAction] = {
         target.foreach { t =>
-            if (t == BuildCancelMark)
+            if (t == CancelMark)
                 return lastActions.of[Cancel].single
             val l = lastActions.%(a => a.unwrap.as[MapTarget].exists(_.target == t))
             if (l.num == 1)
@@ -885,12 +885,25 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             }
         }
 
+        // The tile being placed: rotate arrows at its top corners, the check mark (confirm) and the cross (cancel) at its bottom, on top of everything
+        lastActions./~(_.unwrap.as[TilePreview]).take(1).foreach { p =>
+            val (x, y) = (sx(p.spot.x), sy(p.spot.y))
+            def mark(image : String, tag : Any, dx : Double, dy : Double) = pieces.add(Sprite($(at(image, 220)), $(Rectangle(-110, -110, 220, 220)), $(tag)))(x + dx, y + dy)
+            if (targets.has(RotateMark(-1)))
+                mark("ui-rotate-left", RotateMark(-1), 150, 150)
+            if (targets.has(RotateMark(1)))
+                mark("ui-rotate-right", RotateMark(1), T - 150, 150)
+            mark("ui-confirm", ConfirmMark, T / 2 - 120, T - 150)
+            if (lastActions.of[Cancel].any)
+                mark("ui-cancel", CancelMark, T / 2 + 120, T - 150)
+        }
+
         // The building being confirmed, on its space, with the check mark (confirm) and the cross (cancel) above it, on top of everything
         lastActions./~(_.unwrap.as[BuildPreview]).take(1).foreach { p =>
             val (x, y) = board.point(p.space)
             pieces.add(Sprite($(at(p.building.image, 190, 0.9)), $))(sx(x), sy(y))
-            pieces.add(Sprite($(at("ui-confirm", 220)), $(Rectangle(-110, -110, 220, 220)), $(BuildConfirmMark)))(sx(x) - 120, sy(y) - 225)
-            pieces.add(Sprite($(at("ui-cancel", 220)), $(Rectangle(-110, -110, 220, 220)), $(BuildCancelMark)))(sx(x) + 120, sy(y) - 225)
+            pieces.add(Sprite($(at("ui-confirm", 220)), $(Rectangle(-110, -110, 220, 220)), $(ConfirmMark)))(sx(x) - 120, sy(y) - 225)
+            pieces.add(Sprite($(at("ui-cancel", 220)), $(Rectangle(-110, -110, 220, 220)), $(CancelMark)))(sx(x) + 120, sy(y) - 225)
         }
 
         |(new Scene($(background, pieces), sceneWidth, sceneHeight, margins))
