@@ -71,7 +71,7 @@ case class EventGainAction(self : Faction, card : EventCard, r : |[Resource], fa
 case class OfferingsTakeAction(self : Faction, card : Card, step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("offerings"), "discard", 1.hl, Lore, "to take from the discard pile")(card.handImg) with ViewObject[Card] { def obj = card }
 case class VolcanoAction(self : Faction, space : SpaceRef, building : Building, step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("volcano-eruption"), "remove a building in", space.area)(building) with MapTarget { def target = space.area }
 case class HappyUnrestAction(self : Faction, step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("happy-people"))("Remove 1", UnrestCard)
-case class HappyFameAction(self : Faction, area : |[AreaRef], step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("happy-people"), "gain", 3.hl, "fame and add a unit")(area./(a => a : Any).|("Gain 3 fame (no unit)".txt))
+case class HappyFameAction(self : Faction, area : |[AreaRef], step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("happy-people"), "gain", 3.hl, FameIcon(), "and add a unit")(area./(a => a : Any).|("Gain " ~ 3.hl ~ " " ~ FameIcon() ~ " (no unit)"))
 case class LevyAction(self : Faction, area : AreaRef, remove : Boolean, step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("myrkalfars-levy"), "in", area)(remove.?("Remove 1 unit").|("Don't collect its resources")) with MapTarget { def target = area }
 case class BountifulAction(self : Faction, area : AreaRef, step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("bountiful-year"), "no fame, double resources from")(area) with MapTarget { def target = area }
 case class InfestationAction(f : Faction, areas : $[AreaRef], step : String, l : $[Faction], then : ForcedAction) extends ForcedAction
@@ -84,7 +84,7 @@ case class BonfireTradeAction(self : Faction, then : ForcedAction) extends BaseA
 
 case class EventGainLabel(r : |[Resource], fame : Int, draw : Int) extends Elementary {
     def elem = {
-        val l : $[Elem] = r.$./(r => "Collect " ~ 1.hl ~ " " ~ r.elem) ++ (fame > 0).$("Gain " ~ fame.hl ~ " fame") ++ (draw > 0).$(("Draw " + draw + " card").txt)
+        val l : $[Elem] = r.$./(r => "Collect " ~ 1.hl ~ " " ~ r.elem) ++ (fame > 0).$("Gain " ~ fame.hl ~ " " ~ FameIcon()) ++ (draw > 0).$(("Draw " + draw + " card").txt)
         l.any.?(l.join(" and ")).|("Nothing".txt)
     }
 }
@@ -122,7 +122,7 @@ object EventsExpansion extends Expansion {
                 game.states(f).fame += 2
                 val lore = (game.board.tiles(t) >= 4).??(1)
                 game.states(f).lore += lore
-                f.log("gained", 2.hl, "fame", (lore > 0).?("and " ~ 1.hl ~ " " ~ Lore.elem).|(Empty), "for closing", t.anchor, "with", EventCard("new-horizons"))
+                f.log("gained", 2.hl, FameIcon(), (lore > 0).?("and " ~ 1.hl ~ " " ~ Lore.elem).|(Empty), "for closing", t.anchor, "with", EventCard("new-horizons"))
             }
     }
 
@@ -132,13 +132,13 @@ object EventsExpansion extends Expansion {
             $(attacker -> aLost, defender -> dLost).foreach { case (f, n) =>
                 if (n > 0) {
                     game.states(f).fame += n
-                    f.log("gained", n.hl, "fame with", EventCard("blood-moon"))
+                    f.log("gained", n.hl, FameIcon(), "with", EventCard("blood-moon"))
                 }
             }
 
         if (game.eventIs("conquests") && winner.has(defender)) {
             game.states(defender).fame += 2
-            defender.log("gained", 2.hl, "fame with", EventCard("conquests"))
+            defender.log("gained", 2.hl, FameIcon(), "with", EventCard("conquests"))
         }
 
         winner.foreach(w => game.advance(w, "conquest"))
@@ -274,7 +274,7 @@ object EventsExpansion extends Expansion {
                     val l = game.controlled(f).%(game.board.open).%(t => game.figures(t, f) > 0)
                     if (l.none) {
                         f.fame += 2
-                        f.log("gained", 2.hl, "fame with", e)
+                        f.log("gained", 2.hl, FameIcon(), "with", e)
                         Then(n)
                     }
                     else
@@ -282,7 +282,7 @@ object EventsExpansion extends Expansion {
 
                 case "draugr-invasion" =>
                     f.fame += 2
-                    f.log("gained", 2.hl, "fame with", e)
+                    f.log("gained", 2.hl, FameIcon(), "with", e)
                     game.controlled(f).%(t => game.count(t, f) >= 3).foreach { t =>
                         val here = game.working(t)
                         val k = math.max(0, 2 - here.count(_ == DefenseTower) - 2 * here.count(_ == Fortress))
@@ -299,7 +299,7 @@ object EventsExpansion extends Expansion {
                     if (paid > 0) {
                         f.wood -= paid
                         f.fame += paid
-                        f.log("paid", paid.hl, Wood, "and gained", paid.hl, "fame with", e)
+                        f.log("paid", paid.hl, Wood, "and gained", paid.hl, FameIcon(), "with", e)
                     }
                     // The territories left unpaid lose a building: the ones with the fewest large buildings first
                     val unpaid = l.sortBy(t => (game.buildingsIn(t).count(_._2.large), game.buildingsIn(t).num)).take(l.num - paid)
@@ -322,7 +322,7 @@ object EventsExpansion extends Expansion {
                 }
                 if (fame > 0) {
                     f.fame += fame
-                    f.log("gained", fame.hl, "fame")
+                    f.log("gained", fame.hl, FameIcon())
                 }
                 if (draw > 0)
                     f.log("drew", draw.cards)
@@ -358,7 +358,7 @@ object EventsExpansion extends Expansion {
         case HappyFameAction(f, a, step, l, then) =>
             f.fame += 3
             a.foreach(a => game.addUnits(a, f, 1))
-            f.log("gained", 3.hl, "fame", a./(a => "and added a unit in " ~ a.elem).|(Empty))
+            f.log("gained", 3.hl, FameIcon(), a./(a => "and added a unit in " ~ a.elem).|(Empty))
             Then(next(step, l, then))
 
         case LevyAction(f, a, remove, step, l, then) =>
@@ -392,7 +392,7 @@ object EventsExpansion extends Expansion {
             else {
                 game.harvestLessFood :+= a
                 f.fame += 1
-                f.log("will collect 1 food less from", a, "and gained", 1.hl, "fame")
+                f.log("will collect 1 food less from", a, "and gained", 1.hl, FameIcon())
             }
             Then(InfestationAction(f, rest, step, l, then))
 
@@ -401,7 +401,7 @@ object EventsExpansion extends Expansion {
             val n = math.min(2, game.count(t, f))
             game.removeUnits(t, f, n)
             f.fame += 2 * n
-            f.log("lost", n.hl, "units in", a, "to the", EventCard("sailor-ghosts"), "and gained", (2 * n).hl, "fame")
+            f.log("lost", n.hl, "units in", a, "to the", EventCard("sailor-ghosts"), "and gained", (2 * n).hl, FameIcon())
             Then(next(step, l, then))
 
         case KrakenAttackAction(f, a, step, l, then) =>
@@ -440,21 +440,21 @@ object EventsExpansion extends Expansion {
             f.wood -= 2
             f.lore += 1
             f.fame += 1
-            f.log("traded", Wood, Wood, "for", Lore, "and gained", 1.hl, "fame")
+            f.log("traded", Wood, Wood, "for", Lore, "and gained", 1.hl, FameIcon())
             game.advance(f, "trading")
             Then(TradeAction(f, then))
 
         case TradeForAction(f, _, _, _) =>
             if (game.eventIs("ceremonial-bonfire")) {
                 f.fame += 1
-                f.log("gained", 1.hl, "fame with", EventCard("ceremonial-bonfire"))
+                f.log("gained", 1.hl, FameIcon(), "with", EventCard("ceremonial-bonfire"))
             }
             UnknownContinue
 
         case TeamTradeAction(f, _, _, _, _) =>
             if (game.eventIs("ceremonial-bonfire")) {
                 f.fame += 1
-                f.log("gained", 1.hl, "fame with", EventCard("ceremonial-bonfire"))
+                f.log("gained", 1.hl, FameIcon(), "with", EventCard("ceremonial-bonfire"))
             }
             UnknownContinue
 

@@ -270,7 +270,7 @@ object WastelandsExpansion extends Expansion {
         val n = fame(f)
         if (n > 0) {
             f.fame += n
-            f.log("gained", n.hl, "fame from", Waste.controller(Waste.yggdrasil, "c").has(f).?(Waste.elem(Waste.yggdrasil)).|(Waste.elem(Waste.den)))
+            f.log("gained", n.hl, FameIcon(), "from", Waste.controller(Waste.yggdrasil, "c").has(f).?(Waste.elem(Waste.yggdrasil)).|(Waste.elem(Waste.den)))
         }
 
         val food = lakeFood(f)
@@ -460,7 +460,7 @@ object WastelandsExpansion extends Expansion {
 
                 if (fame > 0) {
                     g.fame += fame
-                    g.log("gained", fame.hl, "fame")
+                    g.log("gained", fame.hl, FameIcon())
                 }
 
                 game.note("volcano")
@@ -576,7 +576,7 @@ object WastelandsExpansion extends Expansion {
                         }
                         else {
                             o.fame -= 2
-                            o.log("could not pay", Wood, "to", c, "and lost", 2.hl, "fame")
+                            o.log("could not pay", Wood, "to", c, "and lost", 2.hl, FameIcon())
                         }
                     }
 

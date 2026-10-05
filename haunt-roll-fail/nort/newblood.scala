@@ -135,7 +135,7 @@ case class OverworkCollectAction(self : Faction, area : AreaRef, then : ForcedAc
 
 // SQUIRREL
 case class SquirrelAfterAction(f : Faction, then : ForcedAction) extends ForcedAction
-case class SquirrelFameAction(self : Faction, n : Int, then : ForcedAction) extends BaseAction("Squirrel Clan".hl)("Gain", n.hl, "fame")
+case class SquirrelFameAction(self : Faction, n : Int, then : ForcedAction) extends BaseAction("Squirrel Clan".hl)("Gain", n.hl, FameIcon())
 case class CookingAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class EconomicsPayAction(self : Faction, n : Int, then : ForcedAction) extends BaseAction("Economics".hl, "pay food to draw cards")("Pay", n.hl, Food)
 
@@ -823,7 +823,7 @@ object NewBloodExpansion extends Expansion {
 
         case SquirrelFameAction(f, n, then) =>
             f.fame += n
-            f.log("gained", n.hl, "fame")
+            f.log("gained", n.hl, FameIcon())
             Then(then)
 
         case CookingAction(f, then) =>

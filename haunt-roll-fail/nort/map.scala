@@ -1233,7 +1233,7 @@ object MapExpansion extends Expansion {
 
                         if (attacker == Stag) {
                             attacker.fame += 1
-                            attacker.log("gained", 1.hl, "fame for conquering a territory")
+                            attacker.log("gained", 1.hl, FameIcon(), "for conquering a territory")
                         }
                     }
 
@@ -1435,11 +1435,11 @@ object MapExpansion extends Expansion {
             closed.foreach { t =>
                 val n = game.board.tiles(t)
                 f.fame += n
-                f.log("closed", t.anchor, "and gained", n.hl, "fame")
+                f.log("closed", t.anchor, "and gained", n.hl, FameIcon())
 
                 if (f == Stag) {
                     f.fame += 1
-                    f.log("gained", 1.hl, "more fame for closing a territory")
+                    f.log("gained", 1.hl, "more", FameIcon(), "for closing a territory")
                 }
 
                 if (f == Raven)

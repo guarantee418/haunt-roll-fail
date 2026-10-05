@@ -623,12 +623,12 @@ object CreaturesExpansion extends Expansion {
                 game.note("creature-defeated")
                 game.advance(f, "hunting")
 
-                f.log("defeated", c, "and gained", c.kind.fame.hl, "fame", c.kind.leaves.?("(it leaves the game)".txt).|(Empty))
+                f.log("defeated", c, "and gained", c.kind.fame.hl, FameIcon(), c.kind.leaves.?("(it leaves the game)".txt).|(Empty))
 
                 // Wastelands: a Giant Boar that attacked gives 2 more fame
                 if (c.kind == GiantBoar && attacking.not) {
                     f.fame += 2
-                    f.log("gained", 2.hl, "more fame for defeating", c, "as the defender")
+                    f.log("gained", 2.hl, "more", FameIcon(), "for defeating", c, "as the defender")
                 }
 
                 if (attacking && f == Wolf) {
@@ -639,7 +639,7 @@ object CreaturesExpansion extends Expansion {
                 // Beating a Fallen Valkyrie takes its territory
                 if (attacking && f == Stag && c.kind.shares.not) {
                     f.fame += 1
-                    f.log("gained", 1.hl, "fame for conquering a territory")
+                    f.log("gained", 1.hl, FameIcon(), "for conquering a territory")
                 }
 
                 Then(then)
