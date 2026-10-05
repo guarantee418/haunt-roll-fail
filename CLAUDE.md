@@ -38,7 +38,11 @@ Squirrel, with their warchiefs and 28 clan cards, from the TTS mod
 Uncharted Horizons' Events and Alternative victory conditions modules are in
 `nort/horizons.scala`. The solo Automa (Uncharted Horizons' Solo module) is
 in `nort/automa.scala`, with its 15 cards transcribed from the Tabletopia
-module ("Solo vs Automa" on the main menu). The
+module ("Solo vs Automa" on the main menu). Solo games are saved in the
+browser's localStorage as they are played (`newLocalGame` and `soloMenu` in
+`hrf.scala`, `LocalStorageJournal` in `journal.scala`; the 12 newest are
+kept), so "Solo vs Automa" offers New Solo Game or a saved game to continue,
+like Play Online. The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.

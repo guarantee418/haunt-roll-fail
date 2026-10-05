@@ -151,6 +151,21 @@ object HRF {
         OnlineGame(time, p("version ").single.|("unknown.version"), p("meta ").single.|("unknown-meta"), lobby, p("title ").single.|("Unnamed Game"), p("option "), pp("link ")./(l => PlayerLink(l(0), l(1), l.drop(2).join(" "))), p("spectate ").single.|("no/spectator/link"), p("status "))
     }
 
+    def writeLocalGame(lg : LocalGame) : String = (
+        $("version " + lg.version) ++
+        $("title " + lg.title) ++
+        $("seating " + lg.seating.join(" ")) ++
+        lg.bots./(b => "bot " + b.faction + " " + b.bot) ++
+        $("options " + lg.options.join(" "))
+    ).join("\n")
+
+    def parseLocalGame(time : Double, body : String) : LocalGame = {
+        val lines = body.split('\n').$
+        def p(prefix : String) = lines.%(_.startsWith(prefix))./(_.substring(prefix.length))
+
+        LocalGame(time, p("version ").single.|("unknown.version"), p("title ").single.|("Unnamed Game"), p("seating ").single./(_.split(' ').$.but("")).|($), p("bot ")./(_.split(' ').$)./~(l => (l.num >= 2).?(BotAssigned(l(0), l.drop(1).join(" ")))), p("options ").single./(_.split(' ').$.but("")).|($))
+    }
+
     def main(args : Array[String]) {
         val fonts = dom.document.fonts
 
@@ -258,6 +273,9 @@ case class OnlineGame(time : Double, version : String, meta : String, lobby : St
 case class PlayerLink(faction : String, key : String, note : String)
 
 case class BotAssigned(faction : String, bot : String)
+
+// A local game saved in the browser (solo games), continued from the solo menu
+case class LocalGame(time : Double, version : String, title : String, seating : $[String], bots : $[BotAssigned], options : $[String])
 
 case class HotseatGame(time : Double, version : String, meta : String, title : String, options : $[String], bots : $[BotAssigned], status : $[String])
 
@@ -880,7 +898,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         def goSolo() {
             history.pushState("/play/" + meta.name + "/solo", () => metaMenu())
-            soloGame()
+            soloMenu()
         }
 
         def goOnline() {
@@ -1145,6 +1163,114 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         )
     }
 
+    // Solo games are saved in the browser: the newest ones are kept, the rest deleted when a new one starts
+    val localGamesKept = 12
+
+    def localGameKey(time : Double) = meta.settingsKey + ".solo.game." + time.toLong
+    def localMovesKey(time : Double) = meta.settingsKey + ".solo.moves." + time.toLong
+
+    def localGames() : $[LocalGame] = {
+        val prefix = meta.settingsKey + ".solo.game."
+        Local.list(prefix)./~(k => k.drop(prefix.length).toLongOption./(t => HRF.parseLocalGame(t.toDouble, Local.get(k, "")))).sortBy(-_.time)
+    }
+
+    def deleteLocalGame(lg : LocalGame) {
+        Local.remove(localGameKey(lg.time))
+        Local.remove(localMovesKey(lg.time))
+    }
+
+    def localGameMoves(lg : LocalGame) : Int = Local.get(localMovesKey(lg.time), "").split('\n').$.but("").num
+
+    // Saves a new solo game's setup and returns the journal its moves go to
+    def newLocalGame(seating : $[meta.F], difficulties : Map[meta.F, Difficulty], options : $[meta.O], title : String) : Journal[meta.gaming.ExternalAction] = {
+        localGames().drop(localGamesKept - 1).foreach(deleteLocalGame)
+
+        val time = HRF.now().getTime()
+        val bots = seating./~(f => difficulties(f) match {
+            case Bot(name) => |(BotAssigned(meta.writeFaction(f), name))
+            case _ => None
+        })
+        val lg = LocalGame(time, HRF.version, title, seating./(meta.writeFaction), bots, options./(meta.writeOption))
+
+        try {
+            Local.set(localGameKey(time), HRF.writeLocalGame(lg))
+            Local.set(localMovesKey(time), "")
+        }
+        catch {
+            case e : Throwable => println("local game not saved: " + e)
+        }
+
+        new LocalStorageJournal[meta.gaming.ExternalAction](meta, localMovesKey(time), s => meta.parseActionExternal(s), a => meta.writeActionExternal(a))
+    }
+
+    def continueLocalGame(lg : LocalGame) {
+        HRF.segments = $
+
+        val seating = lg.seating./~(meta.parseFaction)
+
+        if (seating.num != lg.seating.num || seating.none) {
+            ui.logger.alog("Saved game not readable".spn.div(xstyles.error))
+        }
+        else {
+            val difficulties = seating./(f => f -> lg.bots.%(_.faction == meta.writeFaction(f)).single./(b => Bot(b.bot) : Difficulty).|(Human)).toMap
+            val options = lg.options./~(meta.parseOption)
+            val journal = new LocalStorageJournal[meta.gaming.ExternalAction](meta, localMovesKey(lg.time), s => meta.parseActionExternal(s), a => meta.writeActionExternal(a))
+
+            startGame(seating, difficulties, options, $, journal, lg.title, () => Map(), NoSwitches)
+        }
+    }
+
+    // The solo menu, like the online one: start a new game or continue a saved one
+    def soloMenu() {
+        val games = localGames()
+
+        def goSoloNew() {
+            history.pushState("/play/" + meta.name + "/solo/new", () => soloMenu())
+            soloGame()
+        }
+
+        var deleting : |[Double] = None
+
+        def ask() {
+            ui.action.asker.zask(
+                ZBasic(meta.label.hl, "New Solo Game".hl.styled(xstyles.larger110), () => {
+                    goSoloNew()
+                }).?.$ ++
+                localGames()./(g => ZOption("Saved Games", OnClick(Div(
+                    (new scalajs.js.Date(g.time).asInstanceOf[Dynamic].toLocaleString("sv-SE").toString.spn(xstyles.smaller75) ~ Break ~
+                    g.title.hh ~ Break ~
+                    g.seating./~(meta.parseFaction)./(f => meta.factionElem(f)).reduceLeftOption((a, b) => a ~ " vs " ~ b).|(Empty) ~ " " ~ ("(" + localGameMoves(g) + " moves)").spn(xstyles.smaller75) ~ " " ~
+                    Parameter("delete", OnClick(Span(deleting.has(g.time).?("Confirm Delete".styled(xstyles.error)).|("Delete".txt), xstyles.outlined)))).div($(xlo.fullwidth, xlo.fullheight)), ZBasic.choice)), {
+                        case "delete" =>
+                            if (deleting.has(g.time)) {
+                                deleteLocalGame(g)
+                                deleting = None
+                            }
+                            else
+                                deleting = |(g.time)
+                            setTimeout(0) { ask() }
+                        case _ =>
+                            continueLocalGame(g)
+                    })) ++
+                ZBasic(" ", "Back", () => {
+                    history.popState()
+                }).?
+            )
+        }
+
+        if (HRF.segments.startsWith($("solo", "new")) || games.none)
+            if (games.none) {
+                HRF.segments = $
+                soloGame()
+            }
+            else
+                goSoloNew()
+        else {
+            HRF.segments = $
+            ask()
+        }
+    }
+
     // A local game against the solo opponent: pick a faction, then the usual setup screen
     def soloGame() {
         HRF.segments = $
@@ -1161,7 +1287,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         meta.factionInfo(f).foreach { case (_, title, l) => showOverlayRaw(title, l) }
                         setTimeout(0) { ask() }
                     case _ =>
-                        startSetup($(f, solo), false)
+                        startSetup($(f, solo), false, true)
                 })) ++
                 ZBasic(" ", "Cancel", () => {
                     history.popState()
@@ -1235,7 +1361,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         }
     }
 
-    def startSetup(factions : $[meta.F], online : Boolean) {
+    def startSetup(factions : $[meta.F], online : Boolean, keep : Boolean = false) {
         val optionsSaveKey = meta.name + "." + online.?("online").|("offline") + ".options." + factions.num + "p"
         val saved = hrf.web.Local.get(optionsSaveKey, "").split(' ').$./~(_.some)
         val provided = HRF.paramList("options")
@@ -1358,9 +1484,10 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                             if (online)
                                 arrangeOnlineGame(seating, difficulties, options.actual, Map(), notes, false, meta.randomGameName(), HRF.now(), $(meta.start), None, g => {})
                             else {
-                                val journal = new MemoryJournal[meta.gaming.ExternalAction](meta)
+                                val title = meta.randomGameName()
+                                val journal = keep.?(newLocalGame(seating, difficulties, options.actual, title)).|(new MemoryJournal[meta.gaming.ExternalAction](meta))
 
-                                startGame(seating, difficulties, options.actual, $, journal, meta.randomGameName(), () => Map(), NoSwitches)
+                                startGame(seating, difficulties, options.actual, $, journal, title, () => Map(), NoSwitches)
                             }
                         })
                     ) ++
@@ -1448,10 +1575,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         })
                     }
                 }
-                def canPlayAgain = journal.is[MemoryJournal[_]]
+                def canPlayAgain = journal.is[MemoryJournal[_]] || journal.is[LocalStorageJournal[_]]
                 def playAgain() = {
                     ui.guir.clear()
-                    startGame(seating, difficulties, options : $[meta.O], self : $[meta.F], new MemoryJournal[meta.gaming.ExternalAction](meta), title : String, names : () => Map[meta.F, String], swt : Switches)
+                    val again = journal.is[LocalStorageJournal[_]].?(newLocalGame(seating, difficulties, options, title)).|(new MemoryJournal[meta.gaming.ExternalAction](meta))
+                    startGame(seating, difficulties, options : $[meta.O], self : $[meta.F], again, title : String, names : () => Map[meta.F, String], swt : Switches)
                 }
                 def editSettings(onEdit : => Unit) = {
                     ui.uir.show()
