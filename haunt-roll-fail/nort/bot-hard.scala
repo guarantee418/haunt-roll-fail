@@ -443,8 +443,11 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
     }
 
     // Placing a tile: the territories it joins, closing own territories (fame now), and the Raven's and Stag's powers
+    // Only the bot's own position is valued again: a new tile hardly changes the others' (closing theirs is counted below)
+    lazy val ownNow : Double = value(self)
+
     def explorePlacement(tile : String, spot : Spot, r : Int) : Double = {
-        val base = now
+        val base = ownNow
         val closedBefore = board.territories.%(board.closed)
         val enemyClosed = enemies./(e => game.controlled(e).%(board.closed).num).sum
         board.withPlaced(Placement(tile, spot.x, spot.y, r)) {
@@ -457,7 +460,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             // Closing an enemy's territory gives them fame every harvest
             val gift = enemies./(e => game.controlled(e).%(board.closed).num).sum - enemyClosed
             val lairs = game.has(Creatures).??(Tiles(tile).areas.count(_.lair) * 50)
-            trying(()) - base + fame * 100 + raven + stag + boar - lairs - gift * 40
+            value(self) - base + fame * 100 + raven + stag + boar - lairs - gift * 40
         }
     }
 
@@ -783,12 +786,14 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         } + buildingBonus(b, t)
     }
 
-    // Setup: the tile, and the best empty territory of it for the three units
+    // Setup: the tile, and the best empty territory of it for the three units; valued cheaply (there are many
+    // spots and turns): the territory's worth, next to the clan's other group (one Move joins them, BGG advice),
+    // and open, to explore from
     def setupPlacement(tile : String, spot : Spot, r : Int) : Double = {
-        val base = now
         board.withPlaced(Placement(tile, spot.x, spot.y, r)) {
             val l = board.territories.%(t => t.areas.exists(a => a.x == spot.x && a.y == spot.y)).%(t => game.present(t).none)
-            l./(t => trying(game.addUnits(t.anchor, self, 3)) - base).maxOr(-50.0)
+            val mine = game.controlled(self)
+            l./(t => territoryWorth(t, self) + adjacent(t).exists(x => mine.has(x._1)).??(60) + board.open(t).??(30) - adjacent(t).exists(x => game.present(x._1).exists(game.enemy(self, _))).??(40)).maxOr(-50.0)
         }
     }
 }

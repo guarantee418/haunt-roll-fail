@@ -517,7 +517,14 @@ always plays its own cards.
   count and number of games; `NORT_TRACE=1` prints each Hard choice with its
   best alternatives (and the hand's card values before a Pass);
   `NORT_TIMING=1` prints decisions over 300 ms.
-- RESULTS_PLACEHOLDER
+- **Results (2026-10-05, JVM host):** Hard in the first seat against Easy bots
+  won 25 of 25 three-player core games, 20 of 20 four-player core games, and
+  40 of 40 games with random modules and 2–6 players. In all-Hard games the
+  attacker won 83% of fights (Easy attackers: 35%). Easy is close to random,
+  so this shows a big gap, not how hard Hard is for people. Its slowest
+  decisions take about 350 ms on the JVM (choosing a setup tile was 5 s until
+  `setupPlacement` stopped valuing the opponents; Explore values only the
+  bot's own position for the same reason).
 
 ## Known simplifications and gaps
 
