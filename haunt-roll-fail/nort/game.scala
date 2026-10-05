@@ -721,6 +721,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         case Empty => None
         case NotInLog(_) => None
         case AltInLog(_, m) => |(m)
+        // Cards (played developments, clan and warchief cards, events, creatures...) can be tapped in the log to see them
+        case c : Card => |(OnClick(c, c.elem.spn(styles.tappable)(xlo.pointer)))
         case l : $[Any] => convertForLog(l)
         case x => |(x)
     }

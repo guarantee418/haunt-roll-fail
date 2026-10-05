@@ -1363,6 +1363,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         case Left(x) => onClick(x)
         case Right(x) => onClick(x)
 
+        // A card tapped in the log comes with the log line's own parameter stripped off
+        case List(x) => onClick(x)
+
         case x =>
             println("unknown onClick: " + x)
     }
