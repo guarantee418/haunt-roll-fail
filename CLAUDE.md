@@ -100,7 +100,12 @@ cards (Veiled Threats from TTS), and the warchief upgrade cards. Green starting 
 recoloured to the printed green. Expansion tiles, clan
 boards and tokens are in `expansion/` for later. Unit figures are in
 `token/unit/` (`unit-<color>`, and `warchief-<color>` for the Warchiefs
-expansion), recolored from the `-original` images. Colors belong to
+expansion), recolored from the `-original` images. The seven core clans'
+warchiefs are drawn as their portraits instead (`chief-<clan>-<color>`, outlined
+in the player's color, from the TTS standees by `nort/tools/warchief-portraits.py`;
+`Warchief.figure`), and the New Blood warchiefs (and Horse's Brok) as round
+tokens with their head from their clan card (same names, `brok` for Brok, by
+`nort/tools/warchief-heads.py`); the Automa's Leaders keep the generic figure. Colors belong to
 players, not clans: each clan's player picks one on its row of the setup screen
 (`ColorOption`, default blue, red, yellow, purple, green, orange by seat;
 `game.colors`); starting cards show that color's banner (orange has no
