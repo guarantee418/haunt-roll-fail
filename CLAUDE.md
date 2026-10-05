@@ -53,7 +53,9 @@ On the map, territories are tinted with their controlling player's color,
 turn gray when invaded and pink during the fight (resource icons stay
 untinted); closed territories that give fame have their border dashes
 drawn in the controller's color (alternating where two players' meet,
-dotted yellow or white rails beside Rough borders), from the dash data in
+dotted yellow or white rails beside Rough borders, solid ones beside
+the orange impassable lines of the Peaks, the Poisonous Swamp's corners and the
+walled five-player tile), from the dash data in
 `nort/lines.scala` made by `nort/tools/BorderLines.java`; the area masks (`tile/mask/`) and the free-ground
 grid for placing warchiefs, Kaija and creatures (`nort/grid.scala`) are made
 from the tile art by `nort/tools/tile-masks.py`. Warchiefs, Kaija and
