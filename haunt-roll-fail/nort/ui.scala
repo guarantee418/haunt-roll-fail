@@ -969,6 +969,24 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             }
         }
 
+        // Sea module: each Port's Raid card on its sea, with the raiders on its left (first year) or right (second year)
+        game.ports.foreach { p =>
+            val r = game.raids(p)
+            r.card.foreach { c =>
+                val d = South.rotate(board.at(p.x, p.y).get.r)
+                val (cx, cy) = (sx(p.x + d.dx + 0.5), sy(p.y + d.dy + 0.5))
+                val (w, h) = (474.0, 310.0)
+                pieces.add(Sprite($(ImageRect(new RawImage(img(c.info.image)), Rectangle(-w / 2, -h / 2, w, h), 1.0)), $))(cx, cy)
+
+                r.owner.%(_ => r.units > 0).foreach { f =>
+                    val z = 230
+                    val ux = cx + (r.years == 1).?(-w / 2 - 120).|(w / 2 + 120)
+                    pieces.add(Sprite($(at("unit-" + game.colors(f).id, z)), $))(ux, cy)
+                    pieces.add(Sprite($(at("ui-count-" + r.units, 80)), $))(ux + 50, cy + 50)
+                }
+            }
+        }
+
         // The resource icons over everything, so a piece that has to overlap one never hides it
         board.placements.foreach { p =>
             TileIcons.icons.get(p.tile).|($).indices.foreach { n =>
@@ -1047,7 +1065,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Solo: the Automa's cards played this year, the last on the right
         val automa = game.setup.has(Automa).$(("Automa" ~ " (played this year)".spn(xstyles.smaller85)) -> game.automaPlayed)
 
-        court.replaceCached((game.year, game.display, game.achievements, game.creatureLine, game.event, game.eventDeck.num, game.victory, game.automaPlayed).toString, strip((automa ++ events ++ victory ++ developments ++ achievements ++ creatures)./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
+        // Sea module: the Raid cards on the Ports, then the ones kept for the next Harvest or Start of Year
+        val raids = (game.has(Sea) && (game.raids.values.exists(_.card.any) || game.raidKept.any)).$(("Raids" ~ " (on the Ports, then kept)".spn(xstyles.smaller85)) -> (game.ports./~(p => game.raids(p).card) ++ game.raidKept./(_.card)))
+
+        court.replaceCached((game.year, game.display, game.achievements, game.creatureLine, game.event, game.eventDeck.num, game.victory, game.automaPlayed, game.raids, game.raidKept).toString, strip((automa ++ events ++ victory ++ developments ++ achievements ++ creatures ++ raids)./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
     }
 
     // The Winter cost chart, with each clan on its row and what f has to pay with
@@ -1119,7 +1140,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val res = Resource.all./(r => state.has(r).hl ~ " " ~ r.elem).join(" ").div
 
-        val units = (state.units.hl ~ " units, " ~ state.fame.hl ~ " " ~ FameIcon()).div
+        // Sea module: the units away on Raids
+        val raiding = SeaExpansion.raiders(f)
+        val units = (state.units.hl ~ " units" ~ (raiding > 0).?(" (" ~ raiding.hl ~ " raiding)").|(Empty) ~ ", " ~ state.fame.hl ~ " " ~ FameIcon()).div
 
         // Warchiefs module: the warchief's name, dimmed while in the reserve
         val chief = game.has(Warchiefs).?(game.chiefs.contains(f).?(Warchief.elem(f)).|(Warchief.name(f).txt ~ " (reserve)".spn(xstyles.smaller85)).div).|(Empty)

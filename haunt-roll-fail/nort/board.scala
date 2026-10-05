@@ -101,7 +101,7 @@ class Board {
     def spec(a : AreaRef) : AreaSpec = at(a.x, a.y).get.spec.area(a.id)
 
     // The area of the tile at x, y that owns side s, if a tile is there
-    def areaAt(x : Int, y : Int, s : Side) : |[AreaRef] = at(x, y)./(p => AreaRef(x, y, p.spec.areaAt(s, p.r).id))
+    def areaAt(x : Int, y : Int, s : Side) : |[AreaRef] = at(x, y)./~(p => p.spec.areaOn(s, p.r)./(a => AreaRef(x, y, a.id)))
 
     def sides(a : AreaRef) : $[Side] = {
         val p = at(a.x, a.y).get
@@ -119,9 +119,11 @@ class Board {
         placements.foreach { p =>
             Side.all.foreach { s =>
                 byXY.get((p.x + s.dx, p.y + s.dy)).foreach { q =>
-                    val a = AreaRef(p.x, p.y, p.spec.areaAt(s, p.r).id)
-                    val b = AreaRef(q.x, q.y, q.spec.areaAt(s.opposite, q.r).id)
-                    parent(find(a)) = find(b)
+                    // A side of sea (Beach tiles) joins nothing
+                    (p.spec.areaOn(s, p.r), q.spec.areaOn(s.opposite, q.r)) match {
+                        case (Some(x), Some(y)) => parent(find(AreaRef(p.x, p.y, x.id))) = find(AreaRef(q.x, q.y, y.id))
+                        case _ =>
+                    }
                 }
             }
         }
@@ -188,8 +190,8 @@ class Board {
 
     def empty(x : Int, y : Int) = at(x, y).none
 
-    // Empty spots touching a placed tile
-    def frontier : $[(Int, Int)] = placements./~(p => Side.all./(s => (p.x + s.dx, p.y + s.dy))).distinct.%{ case (x, y) => empty(x, y) }.sortBy { case (x, y) => (y, x) }
+    // Empty spots touching a placed tile on a side of land (not the sea of a Beach tile)
+    def frontier : $[(Int, Int)] = placements./~(p => Side.all.%(s => p.spec.areaOn(s, p.r).any)./(s => (p.x + s.dx, p.y + s.dy))).distinct.%{ case (x, y) => empty(x, y) }.sortBy { case (x, y) => (y, x) }
 
     // Number shown on the map for an empty spot
     def spotLabel(x : Int, y : Int) : Int = frontier.indexOf((x, y)) + 1

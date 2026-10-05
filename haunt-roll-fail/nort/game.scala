@@ -105,7 +105,7 @@ class FactionState(val faction : Faction)(implicit game : Game) {
     var fame = 0
 
     // Units on the map, with the warchief (Warchiefs module); Horse Clan's second warchief, Brok, counts too
-    def units = game.onMap(faction) + game.chiefs.contains(faction).??(1) + ((faction == Horse && game.brok.any) || (faction == Automa && game.leader2.any)).??(1) + game.blainnOf(faction).any.??(1)
+    def units = game.onMap(faction) + game.chiefs.contains(faction).??(1) + ((faction == Horse && game.brok.any) || (faction == Automa && game.leader2.any)).??(1) + game.blainnOf(faction).any.??(1) + SeaExpansion.raiders(faction)
 
     var draw : $[Card] = $
     var hand : $[Card] = $
@@ -467,6 +467,17 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     def eventIs(id : String) = event.exists(_.id == id)
 
+    // Uncharted Horizons' Sea module (sea.scala): the Ports (the Beach tiles' land areas), their Raids, the Raid deck
+    var raidDeck : $[RaidCard] = $
+    var raidsShuffled = false
+    var ports : $[AreaRef] = $
+    var raids : Map[AreaRef, Raid] = Map()
+    var beached : $[Faction] = $
+    var raidKept : $[RaidKept] = $
+    var raidSteps : $[String] = $
+    // Uncharted Journey: exploring from open neutral territories too
+    var raidExplore = false
+
     // ALTERNATIVE VICTORY MODULE: the cards in play, the validation counts (they never go down) and who validated each card
     var victory : $[VictoryCard] = $
     var progress : Map[Faction, Map[String, Int]] = Map()
@@ -597,7 +608,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // Combat points of the figures: Kaija is worth 2, a warchief 2 or 3 depending on its power
     // Jötunn Blainn (Wastelands) is worth 2
-    def strength(t : Territory, f : Faction, attacking : Boolean) : Int = count(t, f) + companionStrength(t, f) + Warchief.strength(t, f, attacking) + blainnIn(t, f).??(2)
+    // Sea module: +1 defending a Port
+    def strength(t : Territory, f : Faction, attacking : Boolean) : Int = count(t, f) + companionStrength(t, f) + Warchief.strength(t, f, attacking) + blainnIn(t, f).??(2) + SeaExpansion.defense(t, f, attacking)
 
     // Kaija is in Bear Clan's reserve and can be recruited
     // Brundr and Kaelinn likewise; Brok only with the Warchiefs module
@@ -622,7 +634,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def onMap(f : Faction) : Int = units.values./(_.getOrElse(f, 0)).sum
 
     // Units on Dragon Clan's Sacrificial Pyre are neither on the map nor in the reserve
-    def reserve(f : Faction) : Int = unitLimit - onMap(f) - pyre.count(f)
+    // Sea module: units away on Raids neither
+    def reserve(f : Faction) : Int = unitLimit - onMap(f) - pyre.count(f) - SeaExpansion.raiders(f)
 
     def addUnits(a : AreaRef, f : Faction, n : Int) {
         val m = unitsAt(a)

@@ -225,7 +225,7 @@ case object NewBlood extends Module("New Blood", "expansion") {
 }
 
 case object UnchartedHorizons extends Module("Uncharted Horizons", "expansion") {
-    def about = $("The rest of the expansion: Development and Raid cards, Training Fields, solo play, drafting setup and more map tiles.")
+    def about = $("The rest of the expansion: Development cards, Training Fields, drafting setup and more map tiles.")
 }
 
 // Uncharted Horizons' Solo module: on whenever the Automa plays (Game.modules), so its option isn't listed
@@ -244,6 +244,18 @@ case object EventsModule extends Module("Events", "Uncharted Horizons") {
     def about = $(
         "A face-up deck of Event cards, one fewer than the years played. From the second year on, one Event applies each year: at the start of the year, during the actions and combats, at the Harvest or in Winter.",
         "The next Event is always visible, so players can prepare for it.",
+    )
+}
+
+// Uncharted Horizons' Sea module (sea.scala)
+case object Sea extends Module("Sea", "Uncharted Horizons") {
+    override def ready = true
+    override def expansion = |(SeaExpansion)
+    // First: the Raid phase comes before the Creature phase, and the Beach tiles before other setup steps
+    override def priority = -6
+    def about = $(
+        "Each player places a Beach tile after their first map tile, leaving an empty space between them. Its territory has a Port: units can move from one Port to another with a Move of 2 or more, and its defender gets +1 in combat.",
+        "At the end of the Actions phase, the controller of a Port may draw 2 Raid cards, keep one and send 1 or 2 units from the Port on the Raid. A year later they come back with resources or the card's action, or 2 units stay away a second year for a bigger reward.",
     )
 }
 
@@ -281,7 +293,7 @@ case object Teams3v3 extends Module("3v3 Teams", "variant, 2v2 rules") {
 }
 
 object Module {
-    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Solo, UnchartedHorizons, TeamsVariant, Teams3v3)
+    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3)
 
     // The team variants and the number of players each one needs
     val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6)

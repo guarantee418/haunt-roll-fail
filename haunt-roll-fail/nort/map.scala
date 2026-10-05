@@ -73,7 +73,7 @@ case class TrainingCampsAction(f : Faction, placed : $[AreaRef], then : ForcedAc
 // MOVE
 case class MoveAction(f : Faction, left : Int, e : MoveEffect, then : ForcedAction) extends ForcedAction
 case class MoveFromAction(self : Faction, from : AreaRef, left : Int, e : MoveEffect, then : ForcedAction) extends BaseAction("Move", "(" ~ left.hl ~ " left)", "from")(from) with Soft with MapTarget { def target = from }
-case class MoveToAction(self : Faction, from : AreaRef, to : AreaRef, cost : Int, left : Int, e : MoveEffect, then : ForcedAction) extends BaseAction("Move from", from, "to")(to, (cost > 1).?("(Rough border)").|("")) with Soft with MapTarget { def target = to }
+case class MoveToAction(self : Faction, from : AreaRef, to : AreaRef, cost : Int, left : Int, e : MoveEffect, then : ForcedAction) extends BaseAction("Move from", from, "to")(to, (g : Game) => MoveCostLabel(from, to, cost)(g)) with Soft with MapTarget { def target = to }
 // chief: the warchief moves too (Warchiefs module); saved games from before it have no chief
 case class MoveUnitsAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean, cost : Int, left : Int, e : MoveEffect, then : ForcedAction) extends BaseAction("Move from", from, "to", to)(Party(self, n, kaija, chief)) {
     def this(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, cost : Int, left : Int, e : MoveEffect, then : ForcedAction) = this(self, from, to, n, kaija, false, cost, left, e, then)
@@ -288,6 +288,15 @@ case class CreatureFightInfo(f : Faction, area : AreaRef, c : Creature, e : Move
     }
 }
 
+// Move to a territory: the cost when more than 1 (a Rough border, or all the moves left to sail from Port to Port)
+object MoveCostLabel {
+    def apply(from : AreaRef, to : AreaRef, cost : Int)(implicit game : Game) : Elem =
+        if (cost <= 1) Empty
+        else
+        if (game.board.adjacent(game.board.territory(from)).exists(_._1 == game.board.territory(to))) "(Rough border)".txt
+        else "(by sea)".txt
+}
+
 // A side's combat points before the die: units, Kaija, the warchief, Jötunn Blainn, then the extras;
 // sources worth nothing are left out
 object FightPoints {
@@ -297,7 +306,8 @@ object FightPoints {
             units -> (units == 1).?("unit").|("units").txt,
             game.companionStrength(t, f) -> Companion(f).elem,
             Warchief.strength(t, f, attacking) -> Warchief.elem(f),
-            game.blainnIn(t, f).??(2) -> "Jötunn Blainn".hl
+            game.blainnIn(t, f).??(2) -> "Jötunn Blainn".hl,
+            SeaExpansion.defense(t, f, attacking) -> "the Port".hl
         ) ++ extra
 
         val points = parts.filter(_._1 > 0)
@@ -403,12 +413,17 @@ object MapExpansion extends Expansion {
     // Where f's figures in t can move with left moves, and the cost; figures passing through a teammate's territory all move on together
     def destinations(f : Faction, t : Territory, left : Int, e : MoveEffect)(implicit game : Game) : $[(Territory, Int)] = {
         val kaija = game.passOnly(f, t) && game.kaijaIn(t, f)
-        game.board.adjacent(t).map { case (o, regular) => o -> moveCost(regular.not, e.ignoreRough) }.filter { case (o, c) => c <= left && canEnter(f, o, left - c, e, kaija) }
+        // Sea module: from Port to Port with all the moves left
+        (game.board.adjacent(t).map { case (o, regular) => o -> moveCost(regular.not, e.ignoreRough) } ++ SeaExpansion.sailing(f, t, left).filter(x => game.board.adjacent(t).exists(_._1 == x._1).not))
+            .filter { case (o, c) => c <= left && canEnter(f, o, left - c, e, kaija) }
     }
 
     // Tiles a setup placement may go next to: the starting tile(s) in the first round, any tile in the second
     def setupPlacements(tile : String, round : Int)(implicit game : Game) : $[(Spot, Int)] =
-        placements(tile, None, true).%{ case (s, _) => round > 1 || Side.all.exists(d => game.board.at(s.x + d.dx, s.y + d.dy).exists(_.tile.startsWith("start"))) }
+        placements(tile, None, true).%{ case (s, _) => round > 1 || Side.all.exists(d => centre.has((s.x + d.dx, s.y + d.dy))) }
+
+    // The starting tiles' spots (the central tile can be the Wilderness Great Lake, whose id doesn't start with "start")
+    def centre(implicit game : Game) : $[(Int, Int)] = $((0, 0)) ++ (game.factions.num >= 5).$((1, 0))
 
     def moveCost(rough : Boolean, ignoreRough : Boolean) = (rough && ignoreRough.not).?(2).|(1)
 
@@ -475,7 +490,7 @@ object MapExpansion extends Expansion {
     }
 
     def explorable(f : Faction, anywhere : Boolean)(implicit game : Game) : $[Territory] =
-        anywhere.?(game.board.territories.%(game.board.open)).|(game.controlled(f).%(game.board.open)).%(t => game.bearIn(t).not)
+        anywhere.?(game.board.territories.%(game.board.open)).|(game.controlled(f).%(game.board.open) ++ game.raidExplore.??(game.board.territories.%(game.board.open).%(t => game.present(t).none))).%(t => game.bearIn(t).not)
 
     // Each building f can build in each territory, with the free spaces it can go on (the first of each kind):
     // a small building on a small or Carved Stone space, a Carved Stone only on a Carved Stone space,
@@ -1173,6 +1188,8 @@ object MapExpansion extends Expansion {
             val conquests = game.eventIs("conquests").??(1)
 
             val as = game.strength(t, attacker, true) + e.bonus + ab + anb + aw + wise + conquests + food(0) + faces(0).points
+            // Sea module: the Port's defender (in strength)
+            val port = SeaExpansion.defense(t, defender, false)
             val ds = game.strength(t, defender, false) + fortress + db + dnb + dw + food(1) + faces(1).points
 
             if (game.kaijaIn(t, attacker) || game.kaijaIn(t, defender))
@@ -1188,7 +1205,7 @@ object MapExpansion extends Expansion {
                 game.note("chief-fight")
 
             attacker.log("scored", as.hl, kaija(attacker), chief(attacker, true), extra(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt, aw -> "Wastelands".hl, wise -> "The Wise One".hl, conquests -> "Conquests".hl), "and inflicted", ac.hl, (ac == 1).?("casualty").|("casualties"), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
-            defender.log("scored", ds.hl, kaija(defender), chief(defender, false), extra(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt, dw -> "Wastelands".hl), "and inflicted", dc.hl, (dc == 1).?("casualty").|("casualties"), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
+            defender.log("scored", ds.hl, kaija(defender), chief(defender, false), extra(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt, dw -> "Wastelands".hl, port -> "the Port".hl), "and inflicted", dc.hl, (dc == 1).?("casualty").|("casualties"), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
 
             val winner =
                 if (ac >= du && dc >= au) None
@@ -1207,6 +1224,12 @@ object MapExpansion extends Expansion {
 
             // Sacrificial Pyre, Blood Ties, Howl from the Sea
             NewBloodExpansion.afterCombat(attacker, defender, t, e, before - game.count(t, attacker), dbefore - game.count(t, defender), math.min(dc, au), math.min(ac, du), winner)
+
+            // Sea module: Bold Maneuver gives 2 fame per combat won
+            if (e.special == BoldMove && winner.has(attacker)) {
+                attacker.fame += 2
+                attacker.log("gained", 2.hl, FameIcon(), "for winning with", RaidCard("bold-maneuver"))
+            }
 
             // Svarn's Menders: the attacker's casualties wait on the card
             if (e.special == SvarnMove)
