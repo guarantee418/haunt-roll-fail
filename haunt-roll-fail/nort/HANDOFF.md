@@ -25,6 +25,7 @@ and each deck's `CustomDeck` has the `FaceURL` of its card sheet.
 |---|---|
 | `meta.scala` | Clans (picked by name, with their three clan cards shown), 2–6 players, which options go on which setup page, the asset lists (cards, tiles, units, buildings, `ui-` markers) |
 | `options.scala` | Setup options: `ColorOption` per clan, `YearsOption` (5–10, default 7), the Victory conditions (`VictoryChoice`: `StandardVictory`, `FameOnly`, `AltVictoryRandom`, `AltVictoryChosen`; `VictoryModeOption`, `VictoryCardOption`), `FirstSeatStarts`; `Module` and `ModuleOption` for modules and expansions, including the team variants `TeamsVariant` (2v2) and `Teams3v3` |
+| `meta.scala` (Quick Game) | `quickMin`/`quickMax` 3 and `quickFactions` the 7 core clans: the main menu's Quick Game is always three core clans with the default (core) options |
 | `game.scala` | Factions, player colors by seat, resources, `FactionState`, `Game` (map state and helpers), `CommonExpansion` (setup, decks, the year loop, harvest, winter, end of year, scoring), `Debug.summary` |
 | `cards.scala` | Every core card (name, fame, Flash, text, image) and its `Effect`; `MoveSpecial` / `BuildSpecial` mark Move and Build cards with extra rules |
 | `effects.scala` | `CardsExpansion`: the card effects that aren't basic actions (recruit per resource, removing enemy units, copying cards, looking at hands, Defensive Strategy, ...) |
@@ -377,8 +378,8 @@ on. To implement one:
   controlled by one player have their border dashes redrawn in that player's
   colour (`UI.lineOf`, opaque). Where two such territories of different
   players meet, the dashes alternate between the two colours; a Rough border
-  also gets a solid yellow line on each side of its dashes (white when one of
-  the colours is yellow). The dashes are vector data in `nort/lines.scala`
+  also gets a dotted yellow line (dark-rimmed dots) on each side of its dashes
+  (white when one of the colours is yellow). The dashes are vector data in `nort/lines.scala`
   (each a bent bar: three points of its centre line and its width, ordered
   along the border), generated from the tile art and masks by
   `java haunt-roll-fail/nort/tools/BorderLines.java [--check DIR]` (run from
@@ -387,6 +388,17 @@ on. To implement one:
   half size. A few junction stubs and dashes on busy art aren't found and
   stay white; the Wilderness walls (orange lines, lake, peaks) aren't
   redrawn.
+- Resource icons: `nort/icons.scala` lists each tile's icons (centre and
+  radius), found as the holes in the masks by
+  `java haunt-roll-fail/nort/tools/ResourceIcons.java` (the Peaks' wood isn't
+  cut from their masks, so the tool adds it by hand). `UI.freeSpot` treats
+  them as obstacles (covering one costs more than hanging over another
+  territory), and `UI.iconImage` cuts each icon from the tile art (where no
+  mask covers it) to draw it again over all the pieces. Rerun the tool after
+  regenerating the masks.
+- The layout is mirrored (the first `Layouter` step in `nort/ui.scala`), so
+  the player panels and the hand are on the right and the log on the left;
+  `layoutKey` was bumped to drop layouts cached in the browser.
 - Both are player settings under "Interface" (in-game menu or the main
   menu's Settings), like Root's Clearing Rule: `TerritoryColorSetting`
   (Show / Fights Only: just the gray and pink / Hide) and

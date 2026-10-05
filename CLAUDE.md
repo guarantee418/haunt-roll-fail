@@ -46,10 +46,15 @@ On the map, territories are tinted with their controlling player's color,
 turn gray when invaded and pink during the fight (resource icons stay
 untinted); closed territories that give fame have their border dashes
 drawn in the controller's color (alternating where two players' meet,
-yellow or white rails beside Rough borders), from the dash data in
+dotted yellow or white rails beside Rough borders), from the dash data in
 `nort/lines.scala` made by `nort/tools/BorderLines.java`; the area masks (`tile/mask/`) and the free-ground
 grid for placing warchiefs, Kaija and creatures (`nort/grid.scala`) are made
-from the tile art by `nort/tools/tile-masks.py`. Each player can hide the
+from the tile art by `nort/tools/tile-masks.py`. Warchiefs, Kaija and
+creatures are kept off the resource icons (`nort/icons.scala`, the holes in
+the masks, made by `nort/tools/ResourceIcons.java`), and the icons are drawn
+again over the pieces, so a figure that must overlap one never hides it.
+The Northgard layout is mirrored (`layouter` in `nort/ui.scala`): the player
+panels and the hand are on the right, the log on the left. Each player can hide the
 tints and the colored borders under "Interface" (the Territory Color and
 Fame Borders settings in `nort/meta.scala`). A turn starts with six choices at
 the top of the action pane (Play cards, Wait, Replace, Remove, Upgrade,
