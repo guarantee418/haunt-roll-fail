@@ -909,7 +909,8 @@ object GorgeBoard extends Board {
 
     val inner = $(Fork, Pueblo)
 
-    // The 0-30 track along the bottom edge of the board image
+    // Where the score tracker (along the bottom edge) and the item tracker (top left) are drawn,
+    // where the printed board has them
     override val scoreTrack = |((88.3, 2122.0, 74.63))
 
     override val itemSlots = itemGrid(425.0, 88.0, 89.5, 173.5)
@@ -1050,8 +1051,11 @@ object MarshBoard extends Board {
 
     val inner = $(Peat, Crossing, Mire, Confluence, Fen)
 
-    // The item slots in the top left corner of the board image
+    // Where the item tracker (top left, as on the printed board) and the score tracker
+    // (along the bottom edge, below the Delta and Bayou names) are drawn
     override val itemSlots = itemGrid(423.5, 87.4, 90.0, 173.5)
+
+    override val scoreTrack = |((79.9, 2201.0, 74.63))
 
     override val floodPairs = $((Weir, Mudflat), (Mire, Fen), (Bulrush, Peat))
 
