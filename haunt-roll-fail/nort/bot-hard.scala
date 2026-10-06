@@ -193,7 +193,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         v += large * (game.domination.?(70).|(45)) * (here.exists(_.large).?(0.5).|(1.0))
         v += (free.num - large) * 15
 
-        if (game.has(Creatures))
+        // Creatures ignore a Robotos clan
+        if (game.has(Creatures) && game.robotos(f).not)
             v -= 40 * game.creaturesIn(t).num
 
         v
@@ -281,9 +282,12 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         if (game.has(VictoryModule).not || game.victory.exists(_.id == id).not) 0.0
         else victorySteps.getOrElseUpdate(id + n, victoryValue(self, Map(id -> n)) - victoryValue(self))
 
+    // Food and wood f owes at Winter: nothing for a Robotos clan (robotos.scala)
+    def winterNeed(f : Faction) : (Int, Int) = game.robotos(f).?((0, 0)).|(Winter.cost(f.units))
+
     // Food and wood owed at the next Winter, against what f will have; an Unrest card costs 5 fame
     def winterValue(f : Faction) : Double = {
-        val (needFood, needWood) = Winter.cost(f.units)
+        val (needFood, needWood) = winterNeed(f)
         val fc = if (harvestAhead) (try { Harvest.forecast(f) } catch { case e : Throwable => HarvestForecast(0, 0, 0, 0) }) else HarvestForecast(0, 0, 0, 0)
         val food = f.food + fc.food
         val wood = f.wood + fc.wood
@@ -428,7 +432,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
 
     // Food f would spend in a fight, keeping enough for Winter
     def spendable(f : Faction) : Int = {
-        val (needFood, _) = Winter.cost(f.units)
+        val (needFood, _) = winterNeed(f)
         val fc = harvestAhead.??(try { Harvest.forecast(f).food } catch { case e : Throwable => 0 })
         math.max(0, math.min(f.food, f.food + fc - needFood))
     }
@@ -484,7 +488,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
                     val base = total
                     val (t, g) = targets./(t => t -> (trying(game.addUnits(t.anchor, self, 1)) - base)).maxBy(_._2)
                     if (g > 0) {
-                        sum += g
+                        // Robotos: one more unit with the Recruit
+                        sum += g + (placed.none && game.robotos(self)).??(38)
                         game.addUnits(t.anchor, self, 1)
                         placed :+= t.anchor
                     }
@@ -563,7 +568,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             val boar = (self == Boar && closedNow.none).??(45)
             // Closing an enemy's territory gives them fame every harvest
             val gift = enemies./(e => game.controlled(e).%(board.closed).num).sum - enemyClosed
-            val lairs = game.has(Creatures).??(Tiles(tile).areas.count(_.lair) * 50)
+            val lairs = (game.has(Creatures) && game.robotos(self).not).??(Tiles(tile).areas.count(_.lair) * 50)
             value(self) - base + fame * 100 + raven + stag + boar - lairs - gift * 40 + closedNow.any.?(victoryStep("exploration", closedNow.num)).|(0.0)
         }
     }
@@ -666,7 +671,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val p = HardCombat.attackWin(as, ds, au, du, towers, extra)
         val mine = attacking.?(p).|(1 - p)
         // Food spent eats into Winter
-        val (needFood, _) = Winter.cost(self.units)
+        val (needFood, _) = winterNeed(self)
         val left = self.food - k
         val cost = k * resourceValue(Food) + (left < needFood && harvestAhead.not).??((needFood - left) * 120)
         mine * stake(t) - cost
@@ -834,7 +839,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             val base = game.strength(t, self, attacking) + attacking.??(e.bonus) + attacking.not.??(2 * here.count(_ == Fortress)) + (self == Snake && game.scorchedIn(t)).??(1)
             val (p, _) = HardCombat.creatureWin(base + food, c.kind.value, game.figures(t, self), attacking)
             val stake = 100 * c.kind.fame + 80 + attacking.not.?(territoryWorth(t, self)).|(0.0)
-            val (needFood, _) = Winter.cost(self.units)
+            val (needFood, _) = winterNeed(self)
             val left = self.food - food
             |(p * stake - food * resourceValue(Food) - (left < needFood).??((needFood - left) * 60))
         // A creature tied between territories, or a new one: away from the bot, towards its opponents

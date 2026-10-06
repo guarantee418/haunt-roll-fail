@@ -844,6 +844,13 @@ object MapExpansion extends Expansion {
         case TrainingCampsAction(f, placed, then) =>
             game.recruited = placed
 
+            // Robotos gets one more unit with every Recruit, where it recruited first
+            if (game.robotos(f) && placed.any && game.reserve(f) > 0) {
+                game.addUnits(placed.head, f, 1)
+                f.log("recruited", 1.hl, "more in", placed.head, "(Robotos)".hl)
+                game.note("robotos-recruit")
+            }
+
             placed./(game.board.territory).distinct.foreach { t =>
                 val camps = game.working(t).count(_ == TrainingCamp)
                 val n = math.min(camps, game.reserve(f))

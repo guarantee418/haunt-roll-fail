@@ -30,6 +30,18 @@ object ColorOption {
     val all : $[ColorOption] = Meta.factions./~(f => PlayerColor.all./(c => ColorOption(f, c)))
 }
 
+// A clan played by the "Robotos" bot, which cheats (robotos.scala): no Winter costs, creatures ignore it, one more
+// unit with every Recruit. Not on the setup screen: the game gets it for each clan set to "Bot / Robotos"
+// (Meta.botOptions, called by startGame in hrf.scala), so every client and every replay plays by the same rules
+case class RobotosOption(clan : Faction) extends GameOption {
+    val group = "Robotos".txt
+    def valueOn = (clan.name + " Clan").txt
+}
+
+object RobotosOption {
+    val all : $[RobotosOption] = Meta.factions./(RobotosOption(_))
+}
+
 // The Automa's difficulty (Solo module): 1, the player also wins with four closed territories with large buildings;
 // 3 and up need the Creatures module; from 4, the Automa draws one more card each year per level above 3
 case class AutomaLevelOption(level : Int) extends GameOption with OneOfGroup with ImportantOption {

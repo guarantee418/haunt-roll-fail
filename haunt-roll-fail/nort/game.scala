@@ -343,9 +343,15 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     def has(m : Module) = modules.has(m)
 
+    // Clans played by the cheating Robotos bot (robotos.scala)
+    val cheaters : $[Faction] = options.of[RobotosOption]./(_.clan).%(setup.has)
+
+    def robotos(f : Faction) : Boolean = cheaters.has(f)
+
     // Module expansions come first, so they can take over any core action; before them the Uncharted Horizons
     // Development cards, which only act on their own actions and specials
-    val expansions : $[Expansion] = $(HorizonDevsExpansion) ++ modules.sortBy(_.priority)./~(_.expansion) ++ $(MapExpansion, CardsExpansion, CommonExpansion)
+    // Robotos goes first: it takes over what creatures do to its clans
+    val expansions : $[Expansion] = cheaters.any.$(RobotosExpansion) ++ $(HorizonDevsExpansion) ++ modules.sortBy(_.priority)./~(_.expansion) ++ $(MapExpansion, CardsExpansion, CommonExpansion)
 
     var seating : $[Faction] = setup
 
@@ -1439,6 +1445,11 @@ object CommonExpansion extends Expansion {
                 // Events: Harsh Winter and Blizzard
                 val (food, wood) = EventsExpansion.winterCost(f)
 
+                if (game.robotos(f)) {
+                    f.log("pays no Winter costs", "(Robotos)".hl)
+                    game.note("robotos-winter")
+                }
+                else
                 if (food + wood == 0)
                     f.log("owed nothing for", f.units.hl, "units")
                 else
