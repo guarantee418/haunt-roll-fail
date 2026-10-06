@@ -1103,7 +1103,8 @@ Check these against the rulebook when it is at hand.
   - The warchief counts as a unit for winter, control, Warlord and ties, but
     not for the 14-unit supply (it's its own miniature) or Training Camps.
   - At setup a Bear player may place one unit, Kaija and Borgild together.
-  - A retreating warchief goes with the first group (like Kaija).
+  - A retreat may split the figures: everyone, the units only, one unit,
+    Kaija alone or the warchief alone go to each destination picked.
   - The Draugr removes units before the warchief.
   - Powers also work in fights against creatures. Brand brings a unit from
     an adjacent territory held only by Stag.

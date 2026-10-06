@@ -637,7 +637,7 @@ object WastelandsExpansion extends Expansion {
                 f.log("took", "Jötunn Blainn".hl, "along")
                 UnknownContinue
 
-            case RetreatToAction(f, from, to, n, kaija, rough, then) if follows(f, from, n, kaija, true) =>
+            case RetreatMoveAction(f, from, to, n, kaija, chief, rough, then) if follows(f, from, n, kaija, chief) =>
                 game.blainn = |((f, to))
                 f.log("took", "Jötunn Blainn".hl, "along")
                 UnknownContinue
