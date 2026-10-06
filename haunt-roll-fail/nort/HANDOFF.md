@@ -419,7 +419,10 @@ on. To implement one:
   `raids`, `raidKept`, `raidSteps` (per-year guards), `raidExplore` in `game.scala`.
 - Beach tiles: four map cells, `Tiles.beach` (`beach-port`, `beach-sea`,
   `beach-wing-w`, `beach-wing-e`), cut from the rulebook's picture by a
-  script (the art is upscaled; the port's top edge was filled in). A side
+  script (the art is upscaled; the port's top edge was filled in). On
+  2026-10-06 the four pieces were put back together, scaled up 1.21 times so
+  the wings fill their cells and the dashes match a map tile's, and cut again
+  (the top of the filled-in edge cropped off); masks and grid redone. A side
   that no area owns is sea: `TileSpec.areaOn` gives None there, `Board`
   joins nothing across it and `frontier` offers no spot beyond it. The
   wings' areas own no side and are joined to the Port with `Board.join`.

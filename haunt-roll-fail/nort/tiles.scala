@@ -446,13 +446,13 @@ object Tiles {
     // territory (Board.join)
     val beach : $[TileSpec] = $(
         tile("beach-port")(
-            area("p", "NEW", 0.3, 0.12, 0.64, 0.15)(small(0.29, 0.49)),
+            area("p", "NEW", 0.25, 0.07, 0.72, 0.08)(small(0.21, 0.32)),
         )(),
         tile("beach-wing-w")(
-            area("p", "", 0.72, 0.1)(),
+            area("p", "", 0.52, 0.07)(),
         )(),
         tile("beach-wing-e")(
-            area("p", "", 0.22, 0.1)(),
+            area("p", "", 0.33, 0.07)(),
         )(),
         tile("beach-sea")()(),
     )
