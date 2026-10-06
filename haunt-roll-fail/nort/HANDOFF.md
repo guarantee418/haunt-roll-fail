@@ -584,8 +584,17 @@ always plays its own cards.
 - **Unvalued choices:** anything else falls back to the Easy bot's random
   choice; failures to value are logged (`HardEvaluation.failed`), and
   `NORT_UNVALUED=1` in the JVM host prints, after each game, the action
-  classes the Hard bot left unvalued so far. With every module on, only the
-  Creature fights' order is left (it doesn't matter).
+  classes the Hard bot left unvalued so far. With every module on, nothing is
+  left but the order of Creature fights (it doesn't matter).
+- **A/B test of the 2026-10-06 changes** (two-player JVM games, the new Hard
+  in the first seat against the Hard bot from before): with every module on,
+  25 of 50; core game only, 24 of 50 (no regression); Alternative victory
+  only, 39 of 70 (56%, within noise of even). So the choices are now made on
+  purpose rather than at random, but the gain in strength isn't measurable
+  yet; only 1 of those 70 games ended by an Alternative victory, the others
+  on fame. The A/B harness was a scratch `ABHost` (a copy of `Host` whose
+  first seat plays `BotHard` and the others a renamed copy of the older
+  `bot-hard.scala`); it isn't in the repo.
 - **Testing:** in the JVM host (see How to build and test), `NORT_HARD=1`
   makes the first seat Hard and the others Easy (wins print as `HARD WON`),
   `NORT_HARD=all` makes every seat Hard; `NORT_CORE=1` plays the core game
