@@ -1505,7 +1505,8 @@ object CommonExpansion extends Expansion {
             Then(then)
 
         case TradeAction(f, then) =>
-            val pp = payments(f)
+            // Only trades that give back a resource not paid in: 3 food for 1 food, or 2 food and 1 wood for 1 wood, are never worth it
+            val pp = payments(f)./(p => p -> Resource.all.%(r => p.has(r).not)).%((_, l) => l.any)
             // Team play: 1:1 with a teammate
             val swaps = game.mates(f)./~(g => Resource.all.%(f.has(_) > 0)./~(r => Resource.all.%(_ != r).%(g.has(_) > 0)./(x => TeamTradeAction(f, g, r, x, then))))
 
@@ -1513,7 +1514,7 @@ object CommonExpansion extends Expansion {
                 Then(then)
             else
                 Ask(f)
-                    .some(pp)(p => Resource.all./(r => TradeForAction(f, p, r, then)))
+                    .some(pp)((p, l) => l./(r => TradeForAction(f, p, r, then)))
                     .add(swaps)
                     .done(then)
 
