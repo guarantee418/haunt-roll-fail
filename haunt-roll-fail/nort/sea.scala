@@ -239,8 +239,6 @@ object SeaExpansion extends Expansion {
                     game.board.place(Placement("beach-wing-e", sx + es.dx, sy + es.dy, r))
 
                     val p = AreaRef(px, py, "p")
-                    game.board.join(AreaRef(sx + ws.dx, sy + ws.dy, "p"), p)
-                    game.board.join(AreaRef(sx + es.dx, sy + es.dy, "p"), p)
 
                     game.ports :+= p
                     game.raids += p -> Raid(None, None, 0, 0)
