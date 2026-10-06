@@ -193,7 +193,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         v += large * (game.domination.?(70).|(45)) * (here.exists(_.large).?(0.5).|(1.0))
         v += (free.num - large) * 15
 
-        if (game.has(Creatures))
+        // Creatures ignore a Robotos clan
+        if (game.has(Creatures) && game.robotos(f).not)
             v -= 40 * game.creaturesIn(t).num
 
         v
@@ -281,9 +282,12 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         if (game.has(VictoryModule).not || game.victory.exists(_.id == id).not) 0.0
         else victorySteps.getOrElseUpdate(id + n, victoryValue(self, Map(id -> n)) - victoryValue(self))
 
+    // Food and wood f owes at Winter: nothing for a Robotos clan (robotos.scala)
+    def winterNeed(f : Faction) : (Int, Int) = game.robotos(f).?((0, 0)).|(Winter.cost(f.units))
+
     // Food and wood owed at the next Winter, against what f will have; an Unrest card costs 5 fame
     def winterValue(f : Faction) : Double = {
-        val (needFood, needWood) = Winter.cost(f.units)
+        val (needFood, needWood) = winterNeed(f)
         val fc = if (harvestAhead) (try { Harvest.forecast(f) } catch { case e : Throwable => HarvestForecast(0, 0, 0, 0) }) else HarvestForecast(0, 0, 0, 0)
         val food = f.food + fc.food
         val wood = f.wood + fc.wood
@@ -349,7 +353,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             val str = threat(t, e)
             if (str > 0) {
                 // A card bonus or food is likely
-                val p = HardCombat.attackWin(str + 1, ds + math.min(du, f.food), str, du, towers)
+                // Robotos attacking wins ties: the same as one more point
+                val p = HardCombat.attackWin(str + 1 + game.robotos(e).??(1), ds + math.min(du, f.food), str, du, towers)
                 val likely = e.passed.?(0.12).|(0.4) * (harvests <= 1).?(1.2).|(1.0)
                 hold *= 1 - math.min(1.0, likely * p)
             }
@@ -421,14 +426,14 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val towers = conq.?(0).|(here.count(_ == DefenseTower))
         val au = game.figures(t, attacker)
         val du = game.figures(t, defender)
-        val as = game.strength(t, attacker, true) + bonus + (attacker == Snake && game.scorchedIn(t)).??(1) + math.min(au, spendable(attacker))
+        val as = game.robotos(attacker).??(1) + game.strength(t, attacker, true) + bonus + (attacker == Snake && game.scorchedIn(t)).??(1) + math.min(au, spendable(attacker))
         val ds = game.strength(t, defender, false) + fortress + (defender == Snake && game.scorchedIn(t)).??(1) + math.min(du, defender.food)
         HardCombat.attackWin(as, ds, au, du, towers)
     }
 
     // Food f would spend in a fight, keeping enough for Winter
     def spendable(f : Faction) : Int = {
-        val (needFood, _) = Winter.cost(f.units)
+        val (needFood, _) = winterNeed(f)
         val fc = harvestAhead.??(try { Harvest.forecast(f).food } catch { case e : Throwable => 0 })
         math.max(0, math.min(f.food, f.food + fc - needFood))
     }
@@ -484,7 +489,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
                     val base = total
                     val (t, g) = targets./(t => t -> (trying(game.addUnits(t.anchor, self, 1)) - base)).maxBy(_._2)
                     if (g > 0) {
-                        sum += g
+                        // Robotos: one more unit with the Recruit
+                        sum += g + (placed.none && game.robotos(self)).??(38)
                         game.addUnits(t.anchor, self, 1)
                         placed :+= t.anchor
                     }
@@ -563,7 +569,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             val boar = (self == Boar && closedNow.none).??(45)
             // Closing an enemy's territory gives them fame every harvest
             val gift = enemies./(e => game.controlled(e).%(board.closed).num).sum - enemyClosed
-            val lairs = game.has(Creatures).??(Tiles(tile).areas.count(_.lair) * 50)
+            val lairs = (game.has(Creatures) && game.robotos(self).not).??(Tiles(tile).areas.count(_.lair) * 50)
             value(self) - base + fame * 100 + raven + stag + boar - lairs - gift * 40 + closedNow.any.?(victoryStep("exploration", closedNow.num)).|(0.0)
         }
     }
@@ -637,7 +643,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
 
         case RemoveCardAction(_, c) => 150 - 2 * resourceValue(Lore) - cardValue(c) + thin(c) + victoryStep("refinement")
 
-        case UpgradeCardAction(_, c, u, remove) => upgradeValue(u) - 3 * resourceValue(Lore) - cardValue(c) + remove.?(thin(c)).|(0.0) + victoryStep("refinement")
+        case UpgradeCardAction(_, c, u, remove) => upgradeValue(u) - game.upgradeCost(self) * resourceValue(Lore) - cardValue(c) + remove.?(thin(c)).|(0.0) + victoryStep("refinement")
 
         // Passing takes the best Development card now, but the cards left in hand do nothing this year
         case PassAction(_) =>
@@ -660,13 +666,13 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val attacking = self == attacker
         val af = attacking.?(k).|(food(0))
         val df = attacking.?(math.min(du, defender.food)).|(k)
-        val as = game.strength(t, attacker, true) + e.bonus + (attacker == Snake && game.scorchedIn(t)).??(1) + af
+        val as = game.robotos(attacker).??(1) + game.strength(t, attacker, true) + e.bonus + (attacker == Snake && game.scorchedIn(t)).??(1) + af
         val ds = game.strength(t, defender, false) + fortress + (defender == Snake && game.scorchedIn(t)).??(1) + df
         val extra = (e.special == EgilMove).??(1)
         val p = HardCombat.attackWin(as, ds, au, du, towers, extra)
         val mine = attacking.?(p).|(1 - p)
         // Food spent eats into Winter
-        val (needFood, _) = Winter.cost(self.units)
+        val (needFood, _) = winterNeed(self)
         val left = self.food - k
         val cost = k * resourceValue(Food) + (left < needFood && harvestAhead.not).??((needFood - left) * 120)
         mine * stake(t) - cost
@@ -680,7 +686,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val towers = conq.?(0).|(here.count(_ == DefenseTower))
         val au = game.figures(t, attacker)
         val du = game.figures(t, defender)
-        val as = game.strength(t, attacker, true) + e.bonus + (attacker == Snake && game.scorchedIn(t)).??(1) + food.lift(0).|(0)
+        val as = game.robotos(attacker).??(1) + game.strength(t, attacker, true) + e.bonus + (attacker == Snake && game.scorchedIn(t)).??(1) + food.lift(0).|(0)
         val ds = game.strength(t, defender, false) + fortress + (defender == Snake && game.scorchedIn(t)).??(1) + food.lift(1).|(0)
         val extra = (e.special == EgilMove).??(1)
         val p =
@@ -825,16 +831,16 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         // CREATURES
         case CreatureAttackAction(_, area, c, e, _, _) =>
             val t = board.territory(area)
-            val (p, lost) = HardCombat.creatureWin(game.strength(t, self, true) + e.bonus + spendable(self) / 2, c.kind.value, game.figures(t, self), true)
+            val (p, lost) = HardCombat.creatureWin(game.robotos(self).??(1) + game.strength(t, self, true) + e.bonus + spendable(self) / 2, c.kind.value, game.figures(t, self), true)
             |(p * (100 * c.kind.fame + 60 + 0.3 * territoryWorth(t, self) + victoryStep("hunting")) - lost * 45 - 20)
         case CreatureDeclareDoneAction(_, _, _) => |(0)
         case CreatureFoodAction(_, area, c, e, attacking, food, _) =>
             val t = board.territory(area)
             val here = game.working(t)
-            val base = game.strength(t, self, attacking) + attacking.??(e.bonus) + attacking.not.??(2 * here.count(_ == Fortress)) + (self == Snake && game.scorchedIn(t)).??(1)
+            val base = (attacking && game.robotos(self)).??(1) + game.strength(t, self, attacking) + attacking.??(e.bonus) + attacking.not.??(2 * here.count(_ == Fortress)) + (self == Snake && game.scorchedIn(t)).??(1)
             val (p, _) = HardCombat.creatureWin(base + food, c.kind.value, game.figures(t, self), attacking)
             val stake = 100 * c.kind.fame + 80 + attacking.not.?(territoryWorth(t, self)).|(0.0)
-            val (needFood, _) = Winter.cost(self.units)
+            val (needFood, _) = winterNeed(self)
             val left = self.food - food
             |(p * stake - food * resourceValue(Food) - (left < needFood).??((needFood - left) * 60))
         // A creature tied between territories, or a new one: away from the bot, towards its opponents
@@ -1088,7 +1094,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val towers = conq.?(0).|(here.count(_ == DefenseTower))
         val au = game.figures(t, attacker)
         val du = game.figures(t, defender)
-        val as = game.strength(t, attacker, true) + e.bonus + (attacker == Snake && game.scorchedIn(t)).??(1) + food.lift(0).|(0)
+        val as = game.robotos(attacker).??(1) + game.strength(t, attacker, true) + e.bonus + (attacker == Snake && game.scorchedIn(t)).??(1) + food.lift(0).|(0)
         val ds = game.strength(t, defender, false) + fortress + (defender == Snake && game.scorchedIn(t)).??(1) + food.lift(1).|(0)
         val extra = (e.special == EgilMove).??(1)
         val attacking = faces.none
@@ -1106,7 +1112,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
     def creatureRolledOdds(area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, face : |[DieFace]) : Double = {
         val t = board.territory(area)
         val here = game.working(t)
-        val base = game.strength(t, self, attacking) + attacking.??(e.bonus) + attacking.not.??(2 * here.count(_ == Fortress)) + (self == Snake && game.scorchedIn(t)).??(1) + food
+        val base = (attacking && game.robotos(self)).??(1) + game.strength(t, self, attacking) + attacking.??(e.bonus) + attacking.not.??(2 * here.count(_ == Fortress)) + (self == Snake && game.scorchedIn(t)).??(1) + food
         val units = game.figures(t, self)
         def odds(f : DieFace) : Double = {
             val ps = base + f.choice.?(1).|(f.points)

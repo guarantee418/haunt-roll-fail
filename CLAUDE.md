@@ -150,7 +150,13 @@ same setup) checks that undo and loading rebuild the same game; see
 `nort/HANDOFF.md`. Northgard has two bots: "Easy" (`BotXX` in
 `nort/bot.scala`, random) and "Hard" (`BotHard` in `nort/bot-hard.scala`, which
 values each choice by trying it on the game and scoring the position; see Bots
-in `nort/HANDOFF.md`).
+in `nort/HANDOFF.md`), plus "Robotos" (`nort/robotos.scala`), the Hard bot with
+cheats: no Winter costs, ignored by creatures, one more unit with every Recruit,
+one more card each year, ties won when attacking, a head start (2 more food and
+wood, one more unit) and upgrades for 2 lore; its panel says "(Robotos)", and
+tapping that lists the cheats.
+Its rules come from a hidden `RobotosOption` that `startGame` in `hrf.scala` adds
+for each clan set to it (`Meta.botOptions`), so every client and replay agrees.
 
 ## Building
 

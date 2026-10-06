@@ -16,15 +16,16 @@ object Host extends hrf.host.BaseHost {
 
     type W = Faction
 
-    // NORT_HARD=1: the first seat plays the Hard bot (BotHard), the others the Easy one; NORT_HARD=all: every seat Hard
+    // NORT_HARD=1: the first seat plays the Hard bot (BotHard), the others the Easy one; NORT_HARD=all: every seat Hard;
+    // NORT_HARD=robotos: the first seat plays Robotos (BotRobotos, with its cheats), the others Hard
     def hard(g : G, f : F) = sys.env.get("NORT_HARD") match {
-        case Some("all") => true
+        case Some("all") | Some("robotos") => true
         case Some("1") => g.setup.head == f
         case _ => false
     }
 
     def askBot(g : G, f : F, actions : $[UserAction]) = {
-        val bot = hard(g, f).?(new BotHard(f) : Bot).|(new BotXX(f))
+        val bot = g.robotos(f).?(new BotRobotos(f) : Bot).|(hard(g, f).?(new BotHard(f) : Bot).|(new BotXX(f)))
         val start = System.nanoTime
         val r = bot.ask(actions, 0)(g)
         val ms = (System.nanoTime - start) / 1000000
@@ -87,7 +88,9 @@ object Host extends hrf.host.BaseHost {
         val level = solo.$(AutomaLevelOption(1 + (random() * 6).toInt))
         val all = training.?(colors ++ $(TrainingFieldsOption) ++ (random() < 0.3).$(FirstSeatStarts)).|(core.?(colors).|(options ++ level ++ level.exists(_.level >= 3).$(ModuleOption(Creatures))))
         all.foreach(o => assert(Meta.parseOption(Meta.writeOption(o)) == $(o), o))
-        new G(l, all.distinct)
+        // NORT_HARD=robotos: the first seat is Robotos
+        val robotos = sys.env.get("NORT_HARD").has("robotos").$(RobotosOption(l.head))
+        new G(l, (all ++ robotos).distinct)
     })
 
     def factionName(f : F) = f.name
@@ -109,6 +112,8 @@ object Host extends hrf.host.BaseHost {
 
         if (hard(g, f) && sys.env.get("NORT_HARD").has("1"))
             println("HARD WON " + f.name + " in a " + g.setup.num + "-player game")
+        if (g.robotos(f))
+            println("ROBOTOS WON " + f.name + " in a " + g.setup.num + "-player game")
         $(f)
     }
 
