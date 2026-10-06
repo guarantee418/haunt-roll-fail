@@ -90,6 +90,10 @@ object Council {
     // For bots: entreat only where the faction has something to do, that is, it has pieces there or rules the clearing
     def entreatNeeded(f : Faction, c : Clearing)(implicit game : Game) : Boolean =
         (f.present(c) || f.rules(c)) && game.scorched.has(c).not && game.flooded.has(c).not
+
+    // An enemy of a Council could want to entreat it: a Governing assembly where it has pieces or rules
+    def entreatWanted(f : Faction)(implicit game : Game) : Boolean =
+        factions.but(f).of[Council].%(game.states.contains).%(_.friends(f).not).exists(t => t.all(GoverningAssembly).exists(c => entreatNeeded(f, c)))
 }
 
 
@@ -172,6 +176,17 @@ object CouncilExpansion extends FactionExpansion[Council] {
     override def daylight(f : Faction)(implicit game : Game, ask : ActionCollector) = entreat(f)
     override def evening(f : Faction)(implicit game : Game, ask : ActionCollector) = entreat(f)
 
+    // Entreating can be done any number of times at any point of an enemy's turn, so it is also
+    // offered at the start of each phase, before the steps that run without a menu
+    // (a Marquise's wood production, crafting, ...)
+    def entreatWindow(f : Faction, phase : Phase, then : ForcedAction)(implicit game : Game) : Continue = {
+        implicit val ask = builder
+
+        entreat(f)
+
+        Ask(f).add(RawElemGroup("Start of " ~ phase.elem)).add(ask.list).done(then)
+    }
+
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         // SETUP
         case CreatePlayerAction(f : Council) =>
@@ -242,6 +257,21 @@ object CouncilExpansion extends FactionExpansion[Council] {
             NukeAction(e, affects, l.diff(g), nuke, then)
 
         // Entreat
+        case BirdsongNAction(11, f) if game.current == f && Council.entreatWanted(f) =>
+            soft()
+
+            entreatWindow(f, Birdsong, Next)
+
+        case DaylightNAction(1, f) if game.current == f && Council.entreatWanted(f) =>
+            soft()
+
+            entreatWindow(f, Daylight, Next)
+
+        case EveningNAction(1, f) if game.current == f && Council.entreatWanted(f) =>
+            soft()
+
+            entreatWindow(f, Evening, Next)
+
         case CouncilEntreatMainAction(f, t, then) =>
             Ask(f).group("Entreat".styled(t), "to close an", GoverningAssembly.of(t))
                 .each(t.all(GoverningAssembly))(c => CouncilEntreatAction(f, t, c, then).as(c))

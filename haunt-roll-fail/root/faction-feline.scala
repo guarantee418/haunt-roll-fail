@@ -615,7 +615,7 @@ object FelineExpansion extends FactionExpansion[Feline] {
                 Ask(f).done(Next).birdsong(f)
             else
             if (t >= r.num)
-                Ask(f).add(ProduceMultiWoodAction(f, r))
+                Ask(f).add(ProduceMultiWoodAction(f, r)).birdsong(f)
             else
                 Ask(f).each(r.combinations(t).$)(ProduceMultiWoodAction(f, _)).birdsong(f)
 
