@@ -175,13 +175,13 @@ object Meta extends MetaGame { mmm =>
 
     // No clan colors here: colors belong to players and are chosen on the setup screen
     def factionElem(f : Faction) = factionName(f).txt
-    // The initial clan card and its two upgrades (the clan's Info button shows them)
+    // The initial clan card and its two upgrades (the clan's i button shows them)
     override def factionNote(f : Faction) =
         if (f == Automa)
             HorizontalBreak ~ "The solo opponent from Uncharted Horizons: a neutral clan with two Leaders that plays by its own cards. Pick it and one clan.".txt
         else
             HorizontalBreak ~ $(0, 1, 2)./(n => Image(ClanCard(f, n).info.image, styles.menuCard)).merge
-    // The clan picker is a grid of emblems; the rest is behind each clan's Info button
+    // The clan picker is a grid of emblems; the rest is behind each clan's i button
     override def factionTile(f : Faction) = |(
         if (f == Automa)
             Div("Automa".hlb) ~ Div("solo opponent".spn(xstyles.smaller85))
@@ -191,10 +191,10 @@ object Meta extends MetaGame { mmm =>
     // Once picked, just the clan's emblem
     override def factionChosenElem(f : Faction) = (f == Automa).?(factionElem(f).spn(xstyles.bold)).|(Image("clan-" + f.style, styles.menuIcon) ~ factionElem(f).spn(xstyles.bold))
 
-    // The clan picker's Info button: the clan ability and the two clan upgrades (the clan cards), then the clan board with
+    // The clan picker's i button: the clan ability and the two clan upgrades (the clan cards), then the clan board with
     // the warchief's portrait and power, and the warchief's upgrade card (Warchiefs box)
     override def factionInfo(f : Faction) = |((
-        "Info".txt,
+        " i ".txt,
         factionName(f).hlb,
         if (f == Automa)
             $("The solo opponent from Uncharted Horizons: a neutral clan with two Leaders that plays by its own cards. Pick it and one clan.".txt.div(styles.menuText))

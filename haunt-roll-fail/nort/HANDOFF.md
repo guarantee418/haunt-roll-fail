@@ -23,7 +23,7 @@ and each deck's `CustomDeck` has the `FaceURL` of its card sheet.
 
 | File | What it holds |
 |---|---|
-| `meta.scala` | Clans (picked from a grid of emblems, `factionTile`, with an Info button for the clan and warchief cards, `factionInfo`; or Random Clan: `randomFactions`, hidden until the game starts), 2–6 players, which options go on which setup page, the asset lists (cards, tiles, units, buildings, `ui-` markers) |
+| `meta.scala` | Clans (picked from a grid of emblems, `factionTile`, with an "i" button for the clan and warchief cards, `factionInfo`; or Random Clan: `randomFactions`, hidden until the game starts), 2–6 players, which options go on which setup page, the asset lists (cards, tiles, units, buildings, `ui-` markers) |
 | `options.scala` | Setup options: `ColorOption` per clan, `YearsOption` (5–10, default 7), the Victory conditions (`VictoryChoice`: `StandardVictory`, `FameOnly`, `AltVictoryRandom`, `AltVictoryChosen`; `VictoryModeOption`, `VictoryCardOption`), `FirstSeatStarts`; `Module` and `ModuleOption` for modules and expansions, including the team variants `TeamsVariant` (2v2) and `Teams3v3` |
 | `meta.scala` (Quick Game) | `quickMin`/`quickMax` 3 and `quickFactions` the 7 core clans: the main menu's Quick Game is always three core clans with the default (core) options |
 | `game.scala` | Factions, player colors by seat, resources, `FactionState`, `Game` (map state and helpers), `CommonExpansion` (setup, decks, the year loop, harvest, winter, end of year, scoring), `Debug.summary` |

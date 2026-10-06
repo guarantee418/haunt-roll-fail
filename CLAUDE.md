@@ -123,7 +123,7 @@ players, not clans: each clan's player picks one on its row of the setup screen
 `game.colors`); starting cards show that color's banner (orange has no
 cards of its own and uses the yellow ones). The clan picker (custom, online and solo games) is a grid of
 clan emblems (`factionTile` in `nort/meta.scala`, the `factionPick` helper in
-`hrf.scala`); each clan's Info button opens its clan ability, both clan
+`hrf.scala`); each clan's "i" button opens its clan ability, both clan
 upgrades, warchief board and power, and warchief card (`factionInfo`). It also
 offers two Random Clan picks, one of the seven core clans or one of all fourteen
 (`randomFactions` in `nort/meta.scala`, the hook in `meta.scala`): the clan is
