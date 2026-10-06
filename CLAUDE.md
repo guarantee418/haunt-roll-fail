@@ -149,7 +149,10 @@ same setup) checks that undo and loading rebuild the same game; see
 `nort/bot.scala`, random) and "Hard" (`BotHard` in `nort/bot-hard.scala`, which
 values each choice by trying it on the game and scoring the position; see Bots
 in `nort/HANDOFF.md`), plus "Robotos" (`nort/robotos.scala`), the Hard bot with
-cheats: no Winter costs, ignored by creatures, one more unit with every Recruit.
+cheats: no Winter costs, ignored by creatures, one more unit with every Recruit,
+one more card each year, ties won when attacking, a head start (2 more food and
+wood, one more unit) and upgrades for 2 lore; its panel says "(Robotos)", and
+tapping that lists the cheats.
 Its rules come from a hidden `RobotosOption` that `startGame` in `hrf.scala` adds
 for each clan set to it (`Meta.botOptions`), so every client and replay agrees.
 
@@ -410,7 +413,9 @@ file covers the build, server and deploy. No session can ssh to the server
   (`damCrossing`); the bridge path (Homestead - Lookout) divides nothing.
 - Root map drawing (`drawMap` in `root/ui.scala`): warriors of the same
   faction and kind in a region are drawn as one figure with a count badge
-  (`stacks`, `drawCount`), like the Northgard unit counts. Boards with a
+  (`stacks`, `drawCount`), like the Northgard unit counts. The in-game "Warriors" setting
+  (`StackWarriors`, the default, or `SeparateWarriors` in `root/meta.scala`) can
+  switch back to drawing every warrior. Boards with a
   printed score track set `scoreTrack` (centre of the 0 box, box spacing) in
   `root/maps.scala`; `drawScoreTrack` puts each faction's VP marker on its
   score, stacked upwards when tied, with a count badge past 30. Only Gorge has

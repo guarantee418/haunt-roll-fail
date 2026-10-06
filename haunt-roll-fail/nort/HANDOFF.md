@@ -734,15 +734,25 @@ it, and one more unit with every Recruit (on top of Training Camps and the rest)
   `game.expansions` when a Robotos clan plays) cancels what a creature does
   when it appears or moves where it has figures (any creature, any module).
   A creature already in its territory (one appearing on a lair it explores)
-  still blocks recruiting there (Brown Bear) or its fame (Wolf), as for anyone.
+  blocks nothing there either: `hostileIn`, `bearIn`, `wolfIn`, `koboldIn` and
+  `ghostIn` in `game.scala` are false where it has figures (`robotosIn`).
+  It also draws one more card each year (the year's `DrawCardsAction`), wins
+  ties when it attacks, clans or creatures (`map.scala`, `creatures.scala`),
+  starts with 2 more food and 2 more wood and one more unit with its first
+  setup placement (`MapExpansion.robotosSetup`), and upgrades for 2 lore
+  (`game.upgradeCost`).
+- **The tag:** its player panel shows "(Robotos)" beside the clan name;
+  tapping it lists the cheats (`RobotosInfo` in `ui.scala`, the list is
+  `RobotosExpansion.cheats`).
 - **The bot:** `BotRobotos` is `BotHard`; the Hard valuation reads
   `game.robotos` (no Winter need, no creature penalty or lair penalty, one more
-  unit per Recruit), so it plays its cheats out, and Hard opponents judge it
+  unit per Recruit, ties won when attacking, cheaper upgrades), so it plays its cheats out, and Hard opponents judge it
   rightly.
 - **Tested:** `NORT_HARD=robotos` in the JVM host puts Robotos in the first
   seat and Hard bots in the others (wins print as `ROBOTOS WON`; the summary
   counts `robotos-winter`, `robotos-recruit`, `robotos-ignored`). Three-player
-  games with creatures: Robotos won 17 of 20. `ReplayCheck 6 hard` with
+  games with creatures: Robotos won 17 of 20 with the first three cheats,
+  24 of 25 with all of them. `ReplayCheck 6 hard` with
   `NORT_HARD=robotos`: no mismatches.
 
 ## Known simplifications and gaps

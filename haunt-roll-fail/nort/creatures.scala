@@ -594,7 +594,8 @@ object CreaturesExpansion extends Expansion {
             log(c, "scored", cs.hl, extra(cw -> "Wastelands".hl), "and inflicted", pc.hl, (pc == 1).?("casualty").|("casualties"), (shield > 0).?("(" ~ shield.hl ~ " cancelled)").|(Empty))
 
             // Losing all units loses the fight; otherwise ties go to the defender
-            val won = pc < units && attacking.?(ps > cs).|(ps >= cs)
+            // Robotos wins ties attacking too
+            val won = pc < units && (attacking && game.robotos(f).not).?(ps > cs).|(ps >= cs)
 
             val before = game.count(t, f)
             game.removeFigures(t, f, math.min(pc, units))
