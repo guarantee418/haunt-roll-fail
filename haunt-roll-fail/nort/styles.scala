@@ -72,6 +72,8 @@ package object elem {
         object inlineIcon extends CustomStyle(height("1.4em"), vertical.align("middle"))
         // A player panel line of numbers and icons, kept on one row
         object panelLine extends CustomStyle(white.space("nowrap"))
+        // The stacked Harvest and Winter layout: each icon above its number
+        object stackedItem extends CustomStyle(display("inline-block"), text.align("center"), margin.left("0.4ex"), margin.right("0.4ex"))
         object buildIcon extends CustomStyle(height("2.6em"), vertical.align("middle"), margin.right("1ex"))
         object boardInfo extends CustomStyle(display("block"), width("44ex"), max.width("100%"))
         // The end screen: the winners' clan cards, and warchief cards with the Warchiefs module
