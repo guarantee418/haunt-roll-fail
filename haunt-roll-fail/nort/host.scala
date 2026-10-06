@@ -28,6 +28,8 @@ object Host extends hrf.host.BaseHost {
         val start = System.nanoTime
         val r = bot.ask(actions, 0)(g)
         val ms = (System.nanoTime - start) / 1000000
+        // NORT_TTRACE=1: every choice of the bots, in short
+        if (sys.env.get("NORT_TTRACE").has("1")) println((hard(g, f).?("H ").|("E ")) + f + " " + g.states(f).fame + " " + r.immediate.unwrap.toString.take(150))
         // NORT_TIMING=1: the slowest decisions of the Hard bot
         if (sys.env.get("NORT_TIMING").has("1") && hard(g, f) && ms > 300)
             println("SLOW " + ms + "ms " + g.setup.num + "p year " + g.year + " " + actions.num + " actions, first " + actions.head.unwrap.toString.take(80))
@@ -51,9 +53,11 @@ object Host extends hrf.host.BaseHost {
     // NORT_AUTOMA=1: solo games, one clan against the Automa
     def batch = sys.env.get("NORT_PLAYERS")./(_.toInt)./(n => $(n, n, n, n, n).take(sys.env.get("NORT_BATCH")./(_.toInt).|(5))).|($(2, 3, 4, 5, 6))./(n => () => {
         val solo = sys.env.get("NORT_AUTOMA").has("1")
+        // NORT_TRAINING=1: Training Fields duels between two core clans
+        val training = sys.env.get("NORT_TRAINING").has("1")
         // NORT_CORE=1: the core game only (seven years, no modules), with NORT_PLAYERS players if set
         val core = sys.env.get("NORT_CORE").has("1")
-        val l = solo.?(factions.shuffle.take(1) :+ Automa).|(factions.shuffle.take(n))
+        val l = training.?($(Bear, Boar, Goat, Raven, Snake, Stag, Wolf).shuffle.take(2)).|(solo.?(factions.shuffle.take(1) :+ Automa).|(factions.shuffle.take(n)))
         val colors = l.zip(PlayerColor.all.shuffle)./{ case (f, c) => ColorOption(f, c) }
         // NORT_CREATURES=1: always with the Creatures module (and the More Creatures variant half the time); NORT_WARCHIEFS=1: always with Warchiefs; NORT_WILDERNESS=1: always with Wilderness
         val creatures = sys.env.get("NORT_CREATURES").has("1") || random() < 0.5
@@ -79,7 +83,7 @@ object Host extends hrf.host.BaseHost {
                 .%(c => sys.env.get("NORT_CENTRAL").%(_ != "1").forall(c.tile.has)).shuffle.head) ++
             teams
         val level = solo.$(AutomaLevelOption(1 + (random() * 6).toInt))
-        val all = core.?(colors).|(options ++ level ++ level.exists(_.level >= 3).$(ModuleOption(Creatures)))
+        val all = training.?(colors ++ $(TrainingFieldsOption) ++ (random() < 0.3).$(FirstSeatStarts)).|(core.?(colors).|(options ++ level ++ level.exists(_.level >= 3).$(ModuleOption(Creatures))))
         all.foreach(o => assert(Meta.parseOption(Meta.writeOption(o)) == $(o), o))
         new G(l, all.distinct)
     })

@@ -906,12 +906,18 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             onlineGame()
         }
 
+        def goMode(mode : String) {
+            history.pushState("/play/" + meta.name + "/" + mode, () => metaMenu())
+            modeMenu(mode)
+        }
+
         ui.action.asker.zask(
             meta.underConstruction.$(ZOption(title, Div("This game is very much " ~ "under construction".styled(xstyles.warning) ~ "." ~ Break ~ "Expect missing rules, bugs and placeholder art.", ZBasic.info))) ++
             (
                 ZBasic(title, "Quick Game".hlb, meta.factions.%(f => meta.getBots(f).has(meta.defaultBot(f))).any.??(() => goQuickGame())) ::
                 ZBasic(title, "Local Game".hhb, () => goHotseat()) ::
                 meta.soloFaction./(s => ZBasic(title, ("Solo vs " + meta.factionName(s).split(' ').head).hhb, () => goSolo())).$ ++
+                meta.modes./{ case (label, mode) => ZBasic(title, label.hhb, () => goMode(mode)) } ++
                 $(ZBasic(title, "Play Online".hlb, (HRF.server.any && HRF.offline.not).??(() => goOnline())))
             ) ++
             meta.intLinks./((t, l) => ZBasic("Other", t, () => {
@@ -935,6 +941,43 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             goSolo()
         else
         if (HRF.segments.startsWith($("online")))
+            goOnline()
+        else
+        if (meta.modes.exists(m => HRF.segments.startsWith($(m._2))))
+            goMode(HRF.segments.head)
+        else
+            HRF.segments = $
+    }
+
+    // A mode from the main menu (Northgard's Training Grounds): a local or an online game, set up with the mode's factions and options
+    def modeMenu(mode : String) {
+        val label = meta.modes.find(_._2 == mode)./(_._1).|(mode).hlb
+
+        def goLocal() {
+            history.pushState("/play/" + meta.name + "/" + mode + "/local", () => modeMenu(mode))
+            HRF.segments = $
+            startSetup(meta.modeFactions(mode), false, mode = |(mode))
+        }
+
+        def goOnline() {
+            history.pushState("/play/" + meta.name + "/" + mode + "/online", () => modeMenu(mode))
+            HRF.segments = $
+            startSetup(meta.modeFactions(mode), true, mode = |(mode))
+        }
+
+        ui.action.asker.zask(
+            $(ZOption(label, Div(meta.modeAbout(mode), ZBasic.info))) ++
+            $(ZBasic(label, "Local Game".hhb, () => goLocal())) ++
+            $(ZBasic(label, "Play Online".hlb, (HRF.server.any && HRF.offline.not).??(() => goOnline()))) ++
+            ZBasic(" ", "Back", () => {
+                history.popState()
+            }).?
+        )
+
+        if (HRF.segments.startsWith($(mode, "local")))
+            goLocal()
+        else
+        if (HRF.segments.startsWith($(mode, "online")) && HRF.server.any && HRF.offline.not)
             goOnline()
         else
             HRF.segments = $
@@ -1361,8 +1404,10 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         }
     }
 
-    def startSetup(factions : $[meta.F], online : Boolean, keep : Boolean = false) {
-        val optionsSaveKey = meta.name + "." + online.?("online").|("offline") + ".options." + factions.num + "p"
+    // mode: a mode from the main menu (Meta.modes), whose options are always on; its choices are saved apart from the usual ones
+    def startSetup(factions : $[meta.F], online : Boolean, keep : Boolean = false, mode : |[String] = None) {
+        val optionsSaveKey = meta.name + mode./("." + _).|("") + "." + online.?("online").|("offline") + ".options." + factions.num + "p"
+        val mandatory = meta.mandatoryFor(factions.num, factions) ++ mode./~(meta.modeOptions)
         val saved = hrf.web.Local.get(optionsSaveKey, "").split(' ').$./~(_.some)
         val provided = HRF.paramList("options")
         val preset = provided.some.|(saved)./~(meta.parseOption(_)).intersect(meta.options)
@@ -1371,7 +1416,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         val needed = preset.intersect(matching)
 
         val defaults = meta.defaultsFor(factions.num, factions)
-        var options = OptionsState(meta.optionsFor(factions.num, factions), meta.mandatoryFor(factions.num, factions), $, needed.some./(o => meta.completeSaved(factions.num, factions, o ++ defaults.%(_.toggle.not))).|(defaults)).checkDimmed()
+        var options = OptionsState(meta.optionsFor(factions.num, factions), mandatory, $, needed.some./(o => meta.completeSaved(factions.num, factions, o ++ defaults.%(_.toggle.not))).|(defaults)).checkDimmed()
 
         val pages = {
             val pages = meta.optionPages(factions.num, factions)./(_.intersect(options.all))
@@ -1380,7 +1425,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         }
 
         val presets = meta.presetsFor(factions.num, factions)./{ case (title, included, excluded) =>
-            val options = OptionsState(meta.optionsFor(factions.num, factions), meta.mandatoryFor(factions.num, factions), included ++ meta.defaultsFor(factions.num, factions).diff(excluded), $).checkDimmed()
+            val options = OptionsState(meta.optionsFor(factions.num, factions), mandatory, included ++ meta.defaultsFor(factions.num, factions).diff(excluded), $).checkDimmed()
             (title, included, excluded, options)
         }
 

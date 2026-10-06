@@ -727,7 +727,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val board = game.board
 
-        val (x0, y0, x1, y1) = board.bounds
+        // Training Fields: the whole grid, with the tiles still face down
+        val (x0, y0, x1, y1) = game.training.?((0, 0, Training.width - 1, Training.height - 1)).|(board.bounds)
 
         // One spare row and column around the map for new tiles
         def sx(x : Double) = (x - x0 + 1) * T
@@ -741,6 +742,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         board.placements.foreach { p =>
             background.add(Sprite($(ImageRect(tileImage(p.tile, p.r), Rectangle(0, 0, T, T), 1.0)), $))(sx(p.x), sy(p.y))
+        }
+
+        game.hiddenTiles.foreach { p =>
+            background.add(Sprite($(ImageRect(new RawImage(img("tile-back")), Rectangle(0, 0, T, T), 1.0)), $))(sx(p.x), sy(p.y))
         }
 
         // Territories in the colour of the player who controls them, gray once invaded, pink while the fight is resolved;
@@ -1166,6 +1171,25 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val title = Div(Div(name), styles.smallname, styles.titleLine, xlo.pointer)
 
         val state = game.states(f)
+
+        // Training Fields: victory points, units, the resources and Monopolies that score when the opponent refreshes, the Action cards
+        if (game.training) {
+            val (food, wood, lore) = Training.resources(f)
+            val vp = (state.fame.hlb ~ " of " ~ Training.goal.hl ~ " VP").div
+            val units = (game.onMap(f).hl ~ " units, " ~ game.reserve(f).hl ~ " in reserve").div
+            val res = (food.hl ~ " " ~ Food.elem ~ " " ~ wood.hl ~ " " ~ Wood.elem ~ " " ~ lore.hl ~ " " ~ Lore.elem ~ " controlled").div
+            val scores = ("Scores " ~ Training.score(f).hl ~ " VP on a Refresh" ~ (Training.monopolies(f) > 0).?(" (" ~ Training.monopolies(f).hl ~ " Monopol" ~ (Training.monopolies(f) > 1).?("ies").|("y") ~ ")").|(Empty)).div
+            val cards = ("Cards: ".txt ~ game.drills.get(f)./(_.num).|(0).hl ~ " face up, " ~ (Drill.all.num - game.drills.get(f)./(_.num).|(0)).hl ~ " face down").div
+            val marks = (game.first == f).?("First player".hh.div).|(Empty)
+
+            container.replace((title.div ~ vp ~ units ~ res ~ scores ~ cards ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f), resources, {
+                case x => onClick(x)
+            })
+
+            container.attach.parent.style.outline = game.highlight.current.has(f).?("2px solid #aaaaaa").|(game.highlight.faction.has(f).?("2px dashed #aaaaaa").|(""))
+
+            return
+        }
 
         val res = Resource.all./(r => state.has(r).hl ~ " " ~ r.elem).join(" ").div
 
