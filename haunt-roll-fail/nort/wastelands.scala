@@ -24,6 +24,12 @@ import nort.elem._
 // the creatures in creatures.scala. Card and tile art from the TTS mod 3597126237.
 
 
+// Jötunn Blainn's card, shown with the shared cards once his camp is on the map (he is a neutral unit, not in the creature line)
+case object BlainnCard extends Card {
+    val info = CardInfo("Jötunn Blainn", "card-creature-blainn", 0, false, MapEffect, "A neutral unit worth 2 axes. During the Harvest, a player controlling a territory adjacent to the Jötnar Camp may pay 1 food to recruit him. Left alone in a territory, or defeated, he goes back to the camp.")
+}
+
+
 // Where each tile's feature is: tile and area
 object Waste {
     val kobold = "waste-kobold"
