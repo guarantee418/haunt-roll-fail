@@ -959,6 +959,19 @@ case object SeparateWarriors extends WarriorsOption {
 }
 
 
+trait TrackersOption extends hrf.Setting with OneOfGroup {
+    val group = "Board Trackers"
+}
+
+case object ShowBoardTrackers extends TrackersOption {
+    val valueOn = "Shown".hlb ~ " (Score and Items on the Gorge and Marsh Maps)".hl
+}
+
+case object HideBoardTrackers extends TrackersOption {
+    val valueOn = "Hidden".hlb
+}
+
+
 trait HighlightsOption extends hrf.Setting with OneOfGroup {
     val group = "Highlights"
 }
@@ -1016,8 +1029,8 @@ object Meta extends MetaGame {
     val name = "root"
     val label = "Root"
 
-    override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, StackWarriors, SeparateWarriors, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone)
-    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, NoOutOfTurn, HighlightNone)
+    override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, StackWarriors, SeparateWarriors, ShowBoardTrackers, HideBoardTrackers, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone)
+    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, ShowBoardTrackers, NoOutOfTurn, HighlightNone)
 
     override val about = $(
         "A quaint and quirky adaptation of the " ~ "R".styled(Fox).larger ~ "O".styled(Rabbit).larger ~ "O".styled(Mouse).larger ~ "T".styled(Bird).larger ~ " board game.",
@@ -1508,6 +1521,11 @@ object Meta extends MetaGame {
         ImageAsset("vp-kd") ::
         ImageAsset("vp-ld") ::
     $) ::
+    // The score and item trackers drawn on the maps that have places for them (the Board Trackers setting)
+    ConditionalAssetsList((factions, options) => options.has(GorgeMap) || options.has(MarshMap), "tracker")(
+        ImageAsset("score-track") ::
+        ImageAsset("item-track") ::
+    $) ::
     ConditionalAssetsList((factions, options) => true, "item")(
         ImageAsset("item-x-spacer"     ) ::
         ImageAsset("item-x-placeholder" ) ::
@@ -1816,9 +1834,10 @@ object Meta extends MetaGame {
         ImageAsset("clearing-name-deep-woods" ) ::
     $) ::
     ConditionalAssetsList((factions, options) => options.has(MarshMap), "marsh", "marsh:")(
-        ImageAsset("map"          , "map-bright" ) ::
-        ImageAsset("map-regions"  ).makeLossless ::
-        ImageAsset("map-woods"    ) ::
+        // new file names for the taller map (the new art shows more of the bottom), so browsers don't keep the cached ones
+        ImageAsset("map"          , "map-art" ) ::
+        ImageAsset("map-regions"  , "map-regions-2250").makeLossless ::
+        ImageAsset("map-woods"    , "map-woods-2250") ::
 
         ImageAsset("building-slot", "empty-building-white") ::
 
@@ -1866,7 +1885,7 @@ object Meta extends MetaGame {
         ImageAsset("clearing-name-effigy" ) ::
     $) ::
     ConditionalAssetsList((factions, options) => options.has(GorgeMap), "gorge", "gorge:")(
-        ImageAsset("map"          , "map-bright" ) ::
+        ImageAsset("map"          , "map-art" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
         // a new file name, so browsers don't keep the cached image with the lowercase "e" label
         ImageAsset("map-woods"    , "map-woods-e") ::
