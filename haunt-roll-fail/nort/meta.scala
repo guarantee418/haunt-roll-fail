@@ -63,7 +63,8 @@ object Meta extends MetaGame { mmm =>
 
     // Games made before the Victory conditions options turned the Alternative victory module on with its module option
     // Training Fields is turned on by the main menu's Training Grounds only
-    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption)
+    // Robotos (robotos.scala) comes from the bot chosen for a clan, not from the setup screen
+    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption) ++ RobotosOption.all
 
     // New Blood has no option: picking one of its clans brings it in
     val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, WarchiefCards, NoDrawDevelopments, HorizonsDevelopments) ++ Module.all.but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles) ++ AutomaLevelOption.all ++ hiddenOptions
@@ -223,10 +224,14 @@ object Meta extends MetaGame { mmm =>
     def createGame(factions : $[Faction], options : $[O]) = new Game(factions, options)
 
     // Hard: BotHard (bot-hard.scala); the Automa plays by its own cards
-    def getBots(f : Faction) = (f == Automa).?($("Easy")).|($("Easy", "Hard"))
+    // Robotos: the Hard bot, cheating (robotos.scala)
+    def getBots(f : Faction) = (f == Automa).?($("Easy")).|($("Easy", "Hard", "Robotos"))
+
+    override def botOptions(seating : $[Faction], bots : Map[Faction, String]) = seating.%(f => bots.get(f).has("Robotos") && f != Automa)./(RobotosOption(_))
 
     def getBot(f : Faction, b : String) = (f, b) match {
         case (f : Faction, "Hard") if f != Automa => new BotHard(f)
+        case (f : Faction, "Robotos") if f != Automa => new BotRobotos(f)
         case (f : Faction, _) => new BotXX(f)
     }
 
