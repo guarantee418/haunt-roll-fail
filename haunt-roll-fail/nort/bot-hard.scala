@@ -720,6 +720,9 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             |(gain(game.addUnits(area, self, 1)) + camp)
         case RecruitKaijaAction(_, area, _, _, _, _) => |(gain(game.setCompanion(self, |(area))) + 20)
         case RecruitChiefAction(_, area, _, _, _, _) => |(gain(game.chiefs += self -> area) + 20)
+        case RecruitUnitHereAction(f, area, left, mode, placed, then) => value(RecruitPlaceAction(f, area, left, mode, placed, then))
+        case RecruitKaijaHereAction(f, area, left, mode, placed, then) => value(RecruitKaijaAction(f, area, left, mode, placed, then))
+        case RecruitChiefHereAction(f, area, left, mode, placed, then) => value(RecruitChiefAction(f, area, left, mode, placed, then))
         case RecruitDoneAction(_, _, _) => |(0)
         case RecruitCapAction(_, area, _, _, _) => |(gain(game.addUnits(area, self, 1)))
 
