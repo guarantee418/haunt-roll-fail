@@ -1165,7 +1165,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     def seatStatus(p : Player) {
         val container = statuses(game.players.indexOf(p))
         val color = elem.styles.get(AdsetExpansion.color(p))
-        val name = resources.getName(p)./(n => n.styled(color)(styles.title) ~ " " ~ p.elem).|(p.elem.styled(color)(styles.title))
+        val label = p.as[Seat]./(_.name).|("")
+        val name = resources.getName(p)./(n => n.styled(color)(styles.title) ~ " " ~ label.txt).|(label.styled(color)(styles.title))
         val seat = game.seats.indexOf(p)
         val note = (seat >= 0).?(("Seat " + (seat + 1)).hl ~ ", choosing a clan".txt).|("Seating...".txt)
 

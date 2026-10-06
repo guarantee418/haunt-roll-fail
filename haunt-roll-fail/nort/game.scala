@@ -780,7 +780,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         val self : |[Faction] = player./~(ptf.get)
 
         // Adset: the seats and the clans left in the draft
-        val draftInfo : $[Info] = (adset && AdsetExpansion.drafting(this)).??(AdsetExpansion.info(player)(this))
+        val draftInfo : $[Info] = (adset && AdsetExpansion.drafting(this)).??(AdsetExpansion.info(player, actions)(this))
 
         // The developments and achievements are shown in the court pane (UI.drawCards);
         // your hand is in the action pane, as choices on your turn and as pictures otherwise

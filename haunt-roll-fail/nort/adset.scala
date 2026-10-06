@@ -75,9 +75,9 @@ object AdsetExpansion extends Expansion {
     def landsName(lands : String) = (lands == "wilderness").?("Wilderness").|("Wastelands")
 
     // A central tile and what it does
-    def centralLabel(tile : String) : Elem = {
-        val o = CentralChoice.all.find(_.tile.has(tile)).|(StandardCentral)
-        Waste.elem(tile) ~ o.explain.take(1)./(e => Break ~ e.spn(xstyles.smaller85)).merge
+    def centralLabel(tile : String) : Elem = CentralChoice.tiles.find(_.tile.has(tile)) match {
+        case Some(o) => o.explain.take(1)./(_.div).merge
+        case None => (Waste.elem(tile) ~ ": the core game's starting tile.").div
     }
 
     // Clans are still to be picked
@@ -114,11 +114,12 @@ object AdsetExpansion extends Expansion {
             game.pyre = $(Dragon)
     }
 
-    def info(player : |[Player])(implicit game : Game) : $[Info] =
+    // The clans aren't shown again to a player choosing among them
+    def info(player : |[Player], actions : $[UserAction])(implicit game : Game) : $[Info] =
         game.seats.any.??(
             $(Info("Seats:", game.seats.zipWithIndex./{ case (p, i) => ((i + 1) + ". ").hl ~ seatElem(p).styled(color(p)) ~ game.ptf.get(p)./(c => " " ~ c.name.hlb).|(Empty) }.join(", "))) ++
             game.banned.any.$(Info("Banned:", game.banned./(_.name.hl).join(", "))) ++
-            remaining./(c => AdsetClanInfoAction("Clans in the draft".hl, c))
+            actions.exists(a => a.unwrap.is[AdsetBanAction] || a.unwrap.is[AdsetPickAction]).not.??(remaining./(c => AdsetClanInfoAction("Clans in the draft".hl, c)))
         )
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
@@ -289,6 +290,9 @@ object MetaAdset extends MetaGame {
     def tagF = implicitly
 
     val name = "nort-adset"
+
+    // Northgard's images
+    override def path = "nort"
     val label = "Northgard: Adset"
 
     val factions = 1.to(6).$./(Seat)
