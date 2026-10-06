@@ -36,7 +36,11 @@ New Blood expansion's seven clans (Dragon, Horse, Kraken, Lynx, Ox, Rat,
 Squirrel, with their warchiefs and 28 clan cards, from the TTS mod
 3597126237) in `nort/newblood.scala`; picking one of them turns it on.
 Uncharted Horizons' Events and Alternative victory conditions modules are in
-`nort/horizons.scala`. Its Sea module (Raids: a Beach tile with a Port for each
+`nort/horizons.scala`. Its 13 Development cards and 2 Achievements (option
+"Uncharted Horizons Development cards", next to "Ban card draw developments")
+are in `nort/horizon-devs.scala`, and its 5 map tiles with The Bridge (option
+"Uncharted Horizons map tiles", under the Central tile choice) are
+`Tiles.horizons` (`horizon-*`, made by `nort/tools/horizon-tiles.py`). Its Sea module (Raids: a Beach tile with a Port for each
 player, the Raid phase and the 24 Raid cards, from the TTS mod 3597126237,
 whose rulebook PDF has the rules) is in `nort/sea.scala`; the Beach is four
 map cells (`Tiles.beach`), and a tile side no area owns is sea. The Wastelands expansion (Environment tiles

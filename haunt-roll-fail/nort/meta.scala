@@ -53,7 +53,7 @@ object Meta extends MetaGame { mmm =>
     override val hiddenOptions = $(ModuleOption(VictoryModule))
 
     // New Blood has no option: picking one of its clans brings it in
-    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, WarchiefCards, NoDrawDevelopments) ++ Module.all.but(NewBlood).but(Solo).but(VictoryModule)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ AutomaLevelOption.all ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, WarchiefCards, NoDrawDevelopments, HorizonsDevelopments) ++ Module.all.but(NewBlood).but(Solo).but(VictoryModule)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles) ++ AutomaLevelOption.all ++ hiddenOptions
 
     // Colors only for the clans in the game; 2v2 Teams only with four players, 3v3 and 2v2v2 Teams only with six
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -235,11 +235,18 @@ object Meta extends MetaGame { mmm =>
         VictoryCard.all./(c => ImageAsset(c.id))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "tile", "tile-", "webp")(
-        Tiles.all.diff(Tiles.environment).diff(Tiles.wastelands).diff(Tiles.central).diff(Tiles.beach)./(t => ImageAsset(t.id))
+        Tiles.all.diff(Tiles.environment).diff(Tiles.wastelands).diff(Tiles.central).diff(Tiles.beach).diff(Tiles.horizons)./(t => ImageAsset(t.id))
     ) ::
     // The shape of each area, tinted on the map with the colour of the player who controls it
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "tile/mask", "mask-", "webp")(
-        Tiles.all.diff(Tiles.environment).diff(Tiles.wastelands).diff(Tiles.central).diff(Tiles.beach)./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
+        Tiles.all.diff(Tiles.environment).diff(Tiles.wastelands).diff(Tiles.central).diff(Tiles.beach).diff(Tiles.horizons)./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
+    ) ::
+    // Uncharted Horizons' map tiles
+    ConditionalAssetsList((factions : $[F], options : $[O]) => options.has(HorizonsTiles), "tile", "tile-", "webp")(
+        Tiles.horizons./(t => ImageAsset(t.id))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => options.has(HorizonsTiles), "tile/mask", "mask-", "webp")(
+        Tiles.horizons./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
     ) ::
     // Sea: the Beach tiles and the Raid cards
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Sea), "tile", "tile-", "webp")(

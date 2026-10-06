@@ -78,6 +78,11 @@ object TileIcons {
         "start-den" -> $(),
         "start-helheim" -> $(),
         "start-5-open" -> $(),
-        "start-5-wall" -> $()
+        "start-5-wall" -> $(),
+        "horizon-1" -> $(),
+        "horizon-2" -> $(Icon(0.301, 0.431, 0.071), Icon(0.666, 0.876, 0.067)),
+        "horizon-3" -> $(Icon(0.733, 0.352, 0.029), Icon(0.488, 0.447, 0.067)),
+        "horizon-4" -> $(Icon(0.441, 0.871, 0.066)),
+        "horizon-bridge" -> $(Icon(0.480, 0.107, 0.065), Icon(0.076, 0.556, 0.071))
     )
 }
