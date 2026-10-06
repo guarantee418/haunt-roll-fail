@@ -375,7 +375,8 @@ object MapExpansion extends Expansion {
             case RecruitNeutral => mine ++ neutral
             // Allies from the Wild: neutral territories, or one this recruit already went into (2 in one, or 1 in each of 2)
             case RecruitNeutralOnly => neutral ++ placed./(game.board.territory).distinct.diff(neutral)
-            case RecruitNeutralSame => neutral
+            // Raven Mercenaries: a neutral territory, then the same one, which the first unit made Raven's
+            case RecruitNeutralSame => neutral ++ placed./(game.board.territory).distinct.diff(neutral)
             case RecruitSameAny => mine ++ neutral
             case RecruitOsmosis => mine.%(t => game.board.open(t) || t.areas.exists(a => game.board.spec(a).wood > 0)).%(t => placed.forall(p => t.areas.contains(p).not))
             case RecruitClosed => mine.%(game.board.closed).%(t => placed.forall(p => t.areas.contains(p).not))
