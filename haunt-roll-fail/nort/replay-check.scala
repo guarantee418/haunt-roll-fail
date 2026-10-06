@@ -90,7 +90,7 @@ object ReplayCheck {
     }
 
     // What the client does on undo or load (generateGameVoid in runner.scala), from actions read back like the server's copy
-    def rebuild(setup : $[Faction], options : $[Meta.O], recorded : $[ExternalAction]) : (Game, Continue) = {
+    def rebuild(setup : $[Player], options : $[Meta.O], recorded : $[ExternalAction]) : (Game, Continue) = {
         val g = new Game(setup, options)
         g.logging = false
         val parsed = recorded./(a => Meta.parseActionExternal(Meta.writeActionExternal(a)))
@@ -110,8 +110,9 @@ object ReplayCheck {
         0.until(games).foreach { gi =>
             val game = batch(gi % batch.num)()
             game.logging = false
-            val setup = game.setup
-            val options = game.options
+            // The players (seats in an Adset game) and the options before the game added any
+            val setup = game.players
+            val options = game.initialOptions
 
             var recorded : $[ExternalAction] = $
             var snapshots : Map[Int, ($[String], String)] = Map()
@@ -121,7 +122,10 @@ object ReplayCheck {
                 case a => throw new Error("not external " + a)
             }
 
-            def bot(f : Faction) : Bot = (hard && f == setup.first).?(new BotHard(f) : Bot).|(new BotXX(f))
+            def bot(f : Player) : Bot = f match {
+                case f : Faction => (hard && f == setup.first).?(new BotHard(f) : Bot).|(new BotXX(f))
+                case p => new BotAdset(p, hard && p == setup.first)
+            }
 
             var next : Action = StartAction(version)
             record(next)
@@ -152,7 +156,7 @@ object ReplayCheck {
                         case Random(l, x, _) => val a = x(l.shuffle(0)); chosen = |(a); record(a)
                         case GameOver(_, _, _) => over = true
                         case MultiAsk(l, _) => c = l.shuffle.head
-                        case Ask(f : Faction, l) =>
+                        case Ask(f, l) =>
                             val a = if (l.num == 1) l(0) else bot(f).ask(l, 0)(game).immediate
                             chosen = |(a)
                             a match {
@@ -170,7 +174,7 @@ object ReplayCheck {
                 case e : Throwable => +++("game", gi, "live play failed:", e); e.getStackTrace.take(12).foreach(s => +++("     ", s)); failures += 1
             }
 
-            +++("game", gi, setup./(_.name).mkString(", "), "-", options./(Meta.writeOption).mkString(" "), "-", recorded.num, "recorded actions", over.?("finished").|("stopped"))
+            +++("game", gi, setup./(Host.factionName).mkString(", ") + game.adset.??(" (" + game.setup./(_.name).mkString(", ") + ")"), "-", options./(Meta.writeOption).mkString(" "), "-", recorded.num, "recorded actions", over.?("finished").|("stopped"))
 
             var bad = 0
             val points = (if (dense) 1.until(math.min(recorded.num, 400)).$ else (1.until(recorded.num).by(math.max(1, recorded.num / 80)).$ :+ (recorded.num - 1))).distinct.%(snapshots.contains)
