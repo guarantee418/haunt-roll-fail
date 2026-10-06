@@ -1371,7 +1371,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         val needed = preset.intersect(matching)
 
         val defaults = meta.defaultsFor(factions.num, factions)
-        var options = OptionsState(meta.optionsFor(factions.num, factions), meta.mandatoryFor(factions.num, factions), $, needed.some./(_ ++ defaults.%(_.toggle.not)).|(defaults)).checkDimmed()
+        var options = OptionsState(meta.optionsFor(factions.num, factions), meta.mandatoryFor(factions.num, factions), $, needed.some./(o => meta.completeSaved(factions.num, factions, o ++ defaults.%(_.toggle.not))).|(defaults)).checkDimmed()
 
         val pages = {
             val pages = meta.optionPages(factions.num, factions)./(_.intersect(options.all))

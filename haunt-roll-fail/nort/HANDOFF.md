@@ -41,6 +41,7 @@ and each deck's `CustomDeck` has the `FaceURL` of its card sheet.
 | `bot.scala` | `BotXX`, the "Easy" bot: random, with a bias to play cards and never cancel |
 | `bot-hard.scala` | `BotHard`, the "Hard" bot (see Bots below) |
 | `host.scala` | Headless bot games on the JVM; prints a summary per game, with event counts (cards played, Kaija and Scorched Earth events, `attack-won`/`attack-lost`); `NORT_HARD`, `NORT_CORE`, `NORT_PLAYERS`, `NORT_TRACE`, `NORT_TIMING` (see Bots below) |
+| `replay-check.scala` | `ReplayCheck`: plays bot games headless and checks that undo and loading (replaying the recorded actions with `performVoid`, after writing and parsing them like the server's copy) rebuild the same game; see How to build and test |
 | `RULES.md` | Rules summary from the rulebook, plus the status table |
 
 Images are in `webp2/nort/images/`: `card/`, `tile/` (`start`, `start-5`,
@@ -425,10 +426,13 @@ on. To implement one:
   (the top of the filled-in edge cropped off); masks and grid redone. A side
   that no area owns is sea: `TileSpec.areaOn` gives None there, `Board`
   joins nothing across it and `frontier` offers no spot beyond it. The
-  wings' areas own no side and are joined to the Port with `Board.join`.
+  wings each have two areas (`n` along the top, `w` or `e` along the outer
+  side), split by the dashes to the outer top corner; they are not part of
+  the Port territory. `tile-masks.py` leaves the sand beyond the shore's
+  dashes out of every Beach mask (the sea grows up to the dashes).
   They are placed when `TilePlacedAction` of a first-round setup tile goes
   through (`beached`), turned so the sea is away from the starting tile.
-  `tile-masks.py` handles them (`BEACH`: one area, the land; sea and
+  `tile-masks.py` handles them (`BEACH`: the land only; sea and
   transparent parts left out); `beach-sea` has no area and no grid entry.
 - Hooks: `FactionState.units` and `Game.reserve` count the raiders,
   `Game.strength` adds the Port's +1 (`SeaExpansion.defense`, listed by
@@ -683,8 +687,9 @@ list. In short:
 3. **The Hard bot** (done 2026-10-05, expansion choices and Alternative
    victory added 2026-10-06, see Bots below): the next step is play against
    people, and tuning from what they find.
-4. **A replay check** like `root/replay-check.scala`, to confirm undo and
-   loading rebuild the same game.
+4. **A replay check** (done 2026-10-06): `nort/replay-check.scala`, see How
+   to build and test. Run it after changing actions, especially anything
+   marked `Soft`.
 5. **Expansions**: Wilderness, Wastelands, New Blood, and Uncharted Horizons' Events,
    Alternative victory and Sea modules are done; the rest of
    Uncharted Horizons (Development cards, Training Fields) are next (assets in `expansion/`; the TTS mod
@@ -714,6 +719,21 @@ list. In short:
   cards start in every deck, so their effects get played (bots rarely have
   3 lore); run both ways. The summary lines list how often each card and
   power event happened.
+- **Replay check:** in the same JVM project, `sbt "runMain nort.ReplayCheck
+  [games] [dense] [hard]"` (default 10 games) plays bot games with the host's
+  random clans and options (`Host.batch`, so the `NORT_*` variables apply),
+  records the actions as the browser journal does, and rebuilds the game
+  from about 80 prefixes of them (`dense`: every prefix of the first 400) the
+  way undo and loading do (`generateGameVoid` in `runner.scala`: write and
+  parse each action, `performVoid` all but the last). It compares every field
+  of `Game`, the `FactionState`s and the board placements (by reflection,
+  `fingerprint`), and the pending choice, and prints `MISMATCH` with the last
+  four actions and the differing fields, or `ok` per game; `failures: 0` at
+  the end. `hard` seats the Hard bot first. A state-changing action marked
+  `Soft` shows up here (replays skip it). On 2026-10-06 it passed 56 games
+  (all modules, `NORT_UPGRADES=1`, `NORT_AUTOMA=1`, `NORT_CORE=1` with the
+  Hard bot, and `dense`), and a fault injected into the rebuild (a skipped
+  action, a changed fame) was reported.
 - **Tile overlays:** to check tile data against the art, draw each area's
   number point, unit point and spaces on the tile image (Pillow:
   `pip install pillow`) with a 0.1 grid; that's how the 2026-10-03 fixes
