@@ -296,7 +296,7 @@ object CreaturesExpansion extends Expansion {
 
     def score(p : CreaturePriority, t : Territory)(implicit game : Game) : Int = p match {
         case MostBuildings => buildingPoints(t)
-        case MostUnits => game.seating.but(Automa)./(game.figures(t, _)).sum
+        case MostUnits => game.seating.but(Automa).%(game.robotos(_).not)./(game.figures(t, _)).sum
         case MostResources =>
             val (food, wood, lore) = game.produce(t)
             food + wood + lore
@@ -305,13 +305,16 @@ object CreaturesExpansion extends Expansion {
     // Where a creature moves: an adjacent territory (Rough borders don't matter) without a creature,
     // with units if possible, then by its priorities; the first player breaks the remaining ties.
     // Creatures ignore the Automa's figures when choosing (a ruling from Robotos, 2026-10-05).
-    // They ignore the Robotos bot's clans altogether: they never move into a territory with its units.
+    // They ignore the Robotos bot's clans: they avoid territories with its units, but a creature still
+    // moves into one when every other way is closed (it must move if it can), and its units count for nothing.
     // Every territory is adjacent to the Wyvern
     def destinations(c : Creature)(implicit game : Game) : $[Territory] = {
         val t = game.board.territory(game.creatureAt(c))
         val near = (c.kind == Wyvern).?(game.board.territories.but(t)).|(game.board.adjacent(t).map(_._1))
-        val free = near.%(o => game.creaturesIn(o).none).%(o => game.present(o).exists(game.robotos).not)
-        val peopled = free.%(o => game.present(o).but(Automa).any)
+        val open = near.%(o => game.creaturesIn(o).none)
+        val clear = open.%(o => game.present(o).exists(game.robotos).not)
+        val free = clear.any.?(clear).|(open)
+        val peopled = free.%(o => game.present(o).but(Automa).%(game.robotos(_).not).any)
 
         c.kind.priorities.foldLeft(peopled.any.?(peopled).|(free)) { (l, p) =>
             if (l.none) l else { val m = l./(score(p, _)).max ; l.%(score(p, _) == m) }
