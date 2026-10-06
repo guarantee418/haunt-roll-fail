@@ -117,6 +117,7 @@ object HRF {
         suok.Meta -> suok.UI,
         yarg.Meta -> yarg.UI,
         nort.Meta -> nort.UI,
+        nort.MetaAdset -> nort.UI,
     )
 
     val metas = metaUIs.lefts
@@ -169,11 +170,11 @@ object HRF {
         $("options " + lg.options.join(" "))
     ).join("\n")
 
-    def parseLocalGame(time : Double, body : String) : LocalGame = {
+    def parseLocalGame(kind : String, time : Double, body : String) : LocalGame = {
         val lines = body.split('\n').$
         def p(prefix : String) = lines.%(_.startsWith(prefix))./(_.substring(prefix.length))
 
-        LocalGame(time, p("version ").single.|("unknown.version"), p("title ").single.|("Unnamed Game"), p("seating ").single./(_.split(' ').$.but("")).|($), p("bot ")./(_.split(' ').$)./~(l => (l.num >= 2).?(BotAssigned(l(0), l.drop(1).join(" ")))), p("options ").single./(_.split(' ').$.but("")).|($))
+        LocalGame(kind, time, p("version ").single.|("unknown.version"), p("title ").single.|("Unnamed Game"), p("seating ").single./(_.split(' ').$.but("")).|($), p("bot ")./(_.split(' ').$)./~(l => (l.num >= 2).?(BotAssigned(l(0), l.drop(1).join(" ")))), p("options ").single./(_.split(' ').$.but("")).|($))
     }
 
     def main(args : Array[String]) {
@@ -284,8 +285,8 @@ case class PlayerLink(faction : String, key : String, note : String)
 
 case class BotAssigned(faction : String, bot : String)
 
-// A local game saved in the browser (solo games), continued from the solo menu
-case class LocalGame(time : Double, version : String, title : String, seating : $[String], bots : $[BotAssigned], options : $[String])
+// A local game saved in the browser, continued from its menu; kind is "solo", "quick" or "hotseat"
+case class LocalGame(kind : String, time : Double, version : String, title : String, seating : $[String], bots : $[BotAssigned], options : $[String])
 
 case class HotseatGame(time : Double, version : String, meta : String, title : String, options : $[String], bots : $[BotAssigned], status : $[String])
 
@@ -898,17 +899,17 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         def goQuickGame() {
             history.pushState("/play/" + meta.name + "/quick", () => metaMenu())
-            quickGame()
+            savedGamesMenu("quick", "New Quick Game", () => quickGame())
         }
 
         def goHotseat() {
             history.pushState("/play/" + meta.name + "/hotseat", () => metaMenu())
-            customGame(false)
+            savedGamesMenu("hotseat", "New Local Game", () => customGame(false))
         }
 
         def goSolo() {
             history.pushState("/play/" + meta.name + "/solo", () => metaMenu())
-            soloMenu()
+            savedGamesMenu("solo", "New Solo Game", () => soloGame())
         }
 
         def goOnline() {
@@ -923,11 +924,17 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         ui.action.asker.zask(
             meta.underConstruction.$(ZOption(title, Div("This game is very much " ~ "under construction".styled(xstyles.warning) ~ "." ~ Break ~ "Expect missing rules, bugs and placeholder art.", ZBasic.info))) ++
+            meta.menuAbout./(e => ZOption(title, Div(e, ZBasic.info))).$ ++
             (
                 ZBasic(title, "Quick Game".hlb, meta.factions.%(f => meta.getBots(f).has(meta.defaultBot(f))).any.??(() => goQuickGame())) ::
                 ZBasic(title, "Local Game".hhb, () => goHotseat()) ::
                 meta.soloFaction./(s => ZBasic(title, ("Solo vs " + meta.factionName(s).split(' ').head).hhb, () => goSolo())).$ ++
                 meta.modes./{ case (label, mode) => ZBasic(title, label.hhb, () => goMode(mode)) } ++
+                meta.linkedModes./{ case (label, l) => ZBasic(title, label.hhb, () => {
+                    HRF.metas.%(_.name == l).single./{ m =>
+                        new HRFMetaUI(ui, m, 800)(baseResources).withMeta()
+                    }.|(throw new Error("meta not found " + l))
+                }) } ++
                 $(ZBasic(title, "Play Online".hlb, (HRF.server.any && HRF.offline.not).??(() => goOnline())))
             ) ++
             meta.intLinks./((t, l) => ZBasic("Other", t, () => {
@@ -1066,13 +1073,13 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
     def quickGame() {
         HRF.segments = $
 
-        val journal = new MemoryJournal[meta.gaming.ExternalAction](meta)
-
         val (f, l, d, o) = meta.randomQuickGame()
 
         val bots = d.view.mapValues(s => Bot(s)).toMap + (f -> Human)
 
-        startGame(l, bots, o, $, journal, meta.randomGameName(), () => Map(), NoSwitches)
+        val title = meta.randomGameName()
+
+        startGame(l, bots, o, $, newLocalGame("quick", l, bots, o, title), title, () => Map(), NoSwitches)
     }
 
     def quickGameOld() {
@@ -1216,44 +1223,59 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         )
     }
 
-    // Solo games are saved in the browser: the newest ones are kept, the rest deleted when a new one starts
+    // Local games (solo, quick and hotseat) are saved in the browser: the newest ones of each kind are kept,
+    // the rest deleted when a new one starts
     val localGamesKept = 12
 
-    def localGameKey(time : Double) = meta.settingsKey + ".solo.game." + time.toLong
-    def localMovesKey(time : Double) = meta.settingsKey + ".solo.moves." + time.toLong
+    def localGameKey(kind : String, time : Double) = meta.settingsKey + "." + kind + ".game." + time.toLong
+    def localMovesKey(kind : String, time : Double) = meta.settingsKey + "." + kind + ".moves." + time.toLong
 
-    def localGames() : $[LocalGame] = {
-        val prefix = meta.settingsKey + ".solo.game."
-        Local.list(prefix)./~(k => k.drop(prefix.length).toLongOption./(t => HRF.parseLocalGame(t.toDouble, Local.get(k, "")))).sortBy(-_.time)
+    def localGames(kind : String) : $[LocalGame] = {
+        val prefix = meta.settingsKey + "." + kind + ".game."
+        Local.list(prefix)./~(k => k.drop(prefix.length).toLongOption./(t => HRF.parseLocalGame(kind, t.toDouble, Local.get(k, "")))).sortBy(-_.time)
     }
 
     def deleteLocalGame(lg : LocalGame) {
-        Local.remove(localGameKey(lg.time))
-        Local.remove(localMovesKey(lg.time))
+        Local.remove(localGameKey(lg.kind, lg.time))
+        Local.remove(localMovesKey(lg.kind, lg.time))
     }
 
-    def localGameMoves(lg : LocalGame) : Int = Local.get(localMovesKey(lg.time), "").split('\n').$.but("").num
+    def localGameMoves(lg : LocalGame) : Int = Local.get(localMovesKey(lg.kind, lg.time), "").split('\n').$.but("").num
 
-    // Saves a new solo game's setup and returns the journal its moves go to
-    def newLocalGame(seating : $[meta.F], difficulties : Map[meta.F, Difficulty], options : $[meta.O], title : String) : Journal[meta.gaming.ExternalAction] = {
-        localGames().drop(localGamesKept - 1).foreach(deleteLocalGame)
+    def localJournal(kind : String, time : Double) = new LocalStorageJournal[meta.gaming.ExternalAction](meta, localMovesKey(kind, time), s => meta.parseActionExternal(s), a => meta.writeActionExternal(a), kind)
+
+    // Saves a new local game's setup and returns the journal its moves go to;
+    // when the browser's storage is full, the oldest saved games of any kind make room
+    def newLocalGame(kind : String, seating : $[meta.F], difficulties : Map[meta.F, Difficulty], options : $[meta.O], title : String) : Journal[meta.gaming.ExternalAction] = {
+        localGames(kind).drop(localGamesKept - 1).foreach(deleteLocalGame)
 
         val time = HRF.now().getTime()
         val bots = seating./~(f => difficulties(f) match {
             case Bot(name) => |(BotAssigned(meta.writeFaction(f), name))
             case _ => None
         })
-        val lg = LocalGame(time, HRF.version, title, seating./(meta.writeFaction), bots, options./(meta.writeOption))
+        val lg = LocalGame(kind, time, HRF.version, title, seating./(meta.writeFaction), bots, options./(meta.writeOption))
 
-        try {
-            Local.set(localGameKey(time), HRF.writeLocalGame(lg))
-            Local.set(localMovesKey(time), "")
-        }
-        catch {
-            case e : Throwable => println("local game not saved: " + e)
+        def save(tries : Int) {
+            try {
+                Local.set(localGameKey(kind, time), HRF.writeLocalGame(lg))
+                Local.set(localMovesKey(kind, time), "")
+            }
+            catch {
+                case e : Throwable =>
+                    val oldest = $("solo", "quick", "hotseat")./~(localGames).%(_.time != time).sortBy(_.time)
+                    if (tries > 0 && oldest.any) {
+                        deleteLocalGame(oldest.head)
+                        save(tries - 1)
+                    }
+                    else
+                        println("local game not saved: " + e)
+            }
         }
 
-        new LocalStorageJournal[meta.gaming.ExternalAction](meta, localMovesKey(time), s => meta.parseActionExternal(s), a => meta.writeActionExternal(a))
+        save(6)
+
+        localJournal(kind, time)
     }
 
     def continueLocalGame(lg : LocalGame) {
@@ -1267,29 +1289,28 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         else {
             val difficulties = seating./(f => f -> lg.bots.%(_.faction == meta.writeFaction(f)).single./(b => Bot(b.bot) : Difficulty).|(Human)).toMap
             val options = lg.options./~(meta.parseOption)
-            val journal = new LocalStorageJournal[meta.gaming.ExternalAction](meta, localMovesKey(lg.time), s => meta.parseActionExternal(s), a => meta.writeActionExternal(a))
 
-            startGame(seating, difficulties, options, $, journal, lg.title, () => Map(), NoSwitches)
+            startGame(seating, difficulties, options, $, localJournal(lg.kind, lg.time), lg.title, () => Map(), NoSwitches)
         }
     }
 
-    // The solo menu, like the online one: start a new game or continue a saved one
-    def soloMenu() {
-        val games = localGames()
+    // The menu of a kind of local game, like the online one: start a new game or continue a saved one
+    def savedGamesMenu(kind : String, newLabel : String, startNew : () => Unit) {
+        val games = localGames(kind)
 
-        def goSoloNew() {
-            history.pushState("/play/" + meta.name + "/solo/new", () => soloMenu())
-            soloGame()
+        def goNew() {
+            history.pushState("/play/" + meta.name + "/" + kind + "/new", () => savedGamesMenu(kind, newLabel, startNew))
+            startNew()
         }
 
         var deleting : |[Double] = None
 
         def ask() {
             ui.action.asker.zask(
-                ZBasic(meta.label.hl, "New Solo Game".hl.styled(xstyles.larger110), () => {
-                    goSoloNew()
+                ZBasic(meta.label.hl, newLabel.hl.styled(xstyles.larger110), () => {
+                    goNew()
                 }).?.$ ++
-                localGames()./(g => ZOption("Saved Games", OnClick(Div(
+                localGames(kind)./(g => ZOption("Continue", OnClick(Div(
                     (new scalajs.js.Date(g.time).asInstanceOf[Dynamic].toLocaleString("sv-SE").toString.spn(xstyles.smaller75) ~ Break ~
                     g.title.hh ~ Break ~
                     g.seating./~(meta.parseFaction)./(f => meta.factionElem(f)).reduceLeftOption((a, b) => a ~ " vs " ~ b).|(Empty) ~ " " ~ ("(" + localGameMoves(g) + " moves)").spn(xstyles.smaller75) ~ " " ~
@@ -1311,13 +1332,13 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             )
         }
 
-        if (HRF.segments.startsWith($("solo", "new")) || games.none)
+        if (HRF.segments.startsWith($(kind, "new")) || games.none)
             if (games.none) {
                 HRF.segments = $
-                soloGame()
+                startNew()
             }
             else
-                goSoloNew()
+                goNew()
         else {
             HRF.segments = $
             ask()
@@ -1350,14 +1371,14 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 $(ZOption(t, Div("Against the " ~ meta.factionName(solo).hl, ZBasic.info))) ++
                 meta.randomFactions.map { case (label, pool) => ZOption(Div("Play as".txt), OnClick(randomPick(label)), _ => {
                     val f = pool.but(solo).shuffle.head
-                    startSetup($(f, solo), false, true, hidden = $(f))
+                    startSetup($(f, solo), false, |("solo"), hidden = $(f))
                 }) } ++
                 meta.factions.but(solo)./(f => ZOption(Div("Play as".txt), OnClick(factionPick(f)), {
                     case "faction-info" =>
                         meta.factionInfo(f).foreach { case (_, title, l) => showOverlayRaw(title, l) }
                         setTimeout(0) { ask() }
                     case _ =>
-                        startSetup($(f, solo), false, true)
+                        startSetup($(f, solo), false, |("solo"))
                 })) ++
                 ZBasic(" ", "Cancel", () => {
                     history.popState()
@@ -1388,7 +1409,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                                 .sortBy(c => meta.validateFactionCombination(c).is[WarningResult])
                                 .first
 
-                    startSetup(fff, online)
+                    startSetup(fff, online, online.not.?("hotseat"))
                 })) ++
                 ZBasic(" " ~ HorizontalBreak, "                                              Cancel                                              ", () => {
                     // metaMenu()
@@ -1415,7 +1436,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         askAdd()
                     }, ZBasic.infoch ++ $(xstyles.optionOn))) ++
                     ZBasic(t, v.ok.?("Start Setup".hl ~ v.message.any.??(" | ")).|(Empty) ~ v.message.styled(v.style), (v.ok).??(() => {
-                        startSetup(opponents, online, hidden = hidden.keys.$)
+                        startSetup(opponents, online, online.not.?("hotseat"), hidden = hidden.keys.$)
                     })).? ++
                     meta.randomFactions.filter { case (_, pool) => pool.diff(opponents).any }.map { case (label, pool) => ZOption(Div("Play as".txt), OnClick(randomPick(label)), _ => {
                         val f = pool.diff(opponents).shuffle.head
@@ -1456,7 +1477,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
     }
 
     // mode: a mode from the main menu (Meta.modes), whose options are always on; its choices are saved apart from the usual ones
-    def startSetup(factions : $[meta.F], online : Boolean, keep : Boolean = false, mode : |[String] = None, hidden : $[meta.F] = $) {
+    // keep: the kind of local game to save it as (savedGamesMenu), if it is saved
+    def startSetup(factions : $[meta.F], online : Boolean, keep : |[String] = None, mode : |[String] = None, hidden : $[meta.F] = $) {
         val optionsSaveKey = meta.name + mode./("." + _).|("") + "." + online.?("online").|("offline") + ".options." + factions.num + "p"
         val mandatory = meta.mandatoryFor(factions.num, factions) ++ mode./~(meta.modeOptions)
         val saved = hrf.web.Local.get(optionsSaveKey, "").split(' ').$./~(_.some)
@@ -1583,7 +1605,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                                 arrangeOnlineGame(seating, difficulties, options.actual, Map(), notes, false, meta.randomGameName(), HRF.now(), $(meta.start), None, g => {})
                             else {
                                 val title = meta.randomGameName()
-                                val journal = keep.?(newLocalGame(seating, difficulties, options.actual, title)).|(new MemoryJournal[meta.gaming.ExternalAction](meta))
+                                val journal = keep./(newLocalGame(_, seating, difficulties, options.actual, title)).|(new MemoryJournal[meta.gaming.ExternalAction](meta))
 
                                 startGame(seating, difficulties, options.actual, $, journal, title, () => Map(), NoSwitches)
                             }
@@ -1679,7 +1701,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 def canPlayAgain = journal.is[MemoryJournal[_]] || journal.is[LocalStorageJournal[_]]
                 def playAgain() = {
                     ui.guir.clear()
-                    val again = journal.is[LocalStorageJournal[_]].?(newLocalGame(seating, difficulties, options, title)).|(new MemoryJournal[meta.gaming.ExternalAction](meta))
+                    val again = journal.as[LocalStorageJournal[_]]./(j => newLocalGame(j.kind, seating, difficulties, options, title)).|(new MemoryJournal[meta.gaming.ExternalAction](meta))
                     startGame(seating, difficulties, options : $[meta.O], self : $[meta.F], again, title : String, names : () => Map[meta.F, String], swt : Switches)
                 }
                 def editSettings(onEdit : => Unit) = {

@@ -17,8 +17,12 @@ import fastparse._, NoWhitespace._
 object Serialize extends Serializer {
     val gaming = nort.gaming
 
-    def writeFaction(f : F) = Meta.writeFaction(f)
-    def parseFaction(s : String) = Meta.parseFaction(s)
+    // Clans, and the seats of an Adset game
+    def writeFaction(f : F) = f match {
+        case f : Faction => Meta.writeFaction(f)
+        case f : Seat => MetaAdset.writeFaction(f)
+    }
+    def parseFaction(s : String) : |[F] = Meta.parseFaction(s) || MetaAdset.parseFaction(s)
 
     val prefix = "nort."
 

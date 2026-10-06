@@ -125,7 +125,7 @@ case class CombatRerollAction(attacker : Faction, defender : Faction, area : Are
 case class CombatRerolledAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
 case class CombatFaceAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], face : DieFace, then : ForcedAction) extends ForcedAction
 case class CombatFoodStartAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends ForcedAction
-case class CombatChooseAction(self : Faction, attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], choice : DieFace, then : ForcedAction) extends BaseAction(self, "rolled", DieChoice, Break, FightInfo(attacker, defender, area, e, food))(choice)
+case class CombatChooseAction(self : Faction, attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], choice : DieFace, then : ForcedAction) extends BaseAction(self, "rolled", DieChoice, Break, FightInfo(attacker, defender, area, e, food, faces, true))(choice)
 case class CombatResolveAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], then : ForcedAction) extends ForcedAction
 // rough: the retreating units may cross Rough borders (Wolf Clan card)
 case class RetreatAction(f : Faction, from : AreaRef, rough : Boolean, then : ForcedAction) extends ForcedAction
@@ -240,14 +240,15 @@ case class Party(f : Faction, n : Int, kaija : Boolean, chief : Boolean) extends
 // Where a fight is and what each side has, shown under the question of each step of the fight:
 // each side's combat points before the die, with where they come from (the same sums CombatResolveAction uses)
 // food: what each side has spent so far (the attacker first)
-case class FightInfo(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int]) extends GameElementary {
+// faces: the dice already rolled (the attacker first), counted in; choosing: the next side to roll took "1 point or 1 casualty" and is choosing
+case class FightInfo(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace] = $, choosing : Boolean = false) extends GameElementary {
     def elem(implicit game : Game) = {
         val t = game.board.territory(area)
         val here = game.working(t)
         // Conqueror: the attacker ignores Fortresses and Defense Towers
         val towers = attacker.conqueror.?(0).|(here.count(_ == DefenseTower))
 
-        def side(f : Faction, attacking : Boolean, spent : |[Int]) : Elem = {
+        def side(f : Faction, attacking : Boolean, spent : |[Int], die : |[DieFace], choice : Boolean) : Elem = {
             val extra = attacking.?($(
                 e.bonus -> "the card".txt,
                 game.eventIs("conquests").??(1) -> "Conquests".hl
@@ -257,17 +258,22 @@ case class FightInfo(attacker : Faction, defender : Faction, area : AreaRef, e :
                 (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl,
                 NewBloodExpansion.points(f, t, e, attacking, spent.|(0)) -> "New Blood powers".txt,
                 game.has(Wastelands).??(WastelandsExpansion.points(f, t, attacking)) -> "Wastelands".hl,
-                spent.|(0) -> Food.elem
+                spent.|(0) -> Food.elem,
+                die./(_.points).|(0) -> "the die".txt
             )
 
             val casualties = attacking.?($(
                 ((e.special == EgilMove || e.special == FireArrowsMove).??(1) -> "the card".txt)
-            )).|($(towers -> DefenseTower.elem))
+            )).|($(towers -> DefenseTower.elem)) ++ $(die./(_.casualties).|(0) -> "the die".txt)
 
-            FightPoints(f, t, attacking, extra, casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1))
+            FightPoints(f, t, attacking, extra, casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1), choice)
         }
 
-        "The fight is in ".txt ~ area.elem ~ Break ~ side(attacker, true, food.lift(0)) ~ Break ~ side(defender, false, food.lift(1))
+        val chooser = choosing.?(faces.num).|(-1)
+
+        "The fight is in ".txt ~ area.elem ~
+        Break ~ side(attacker, true, food.lift(0), faces.lift(0), chooser == 0) ~
+        Break ~ side(defender, false, food.lift(1), faces.lift(1), chooser == 1)
     }
 }
 
@@ -303,9 +309,9 @@ object MoveCostLabel {
 }
 
 // A side's combat points before the die: units, Kaija, the warchief, Jötunn Blainn, then the extras;
-// sources worth nothing are left out
+// sources worth nothing are left out; choosing: the side is choosing "1 point or 1 casualty", so its total with the point is added
 object FightPoints {
-    def apply(f : Faction, t : Territory, attacking : Boolean, extra : $[(Int, Elem)], casualties : $[(Int, Elem)], cancels : Int)(implicit game : Game) : Elem = {
+    def apply(f : Faction, t : Territory, attacking : Boolean, extra : $[(Int, Elem)], casualties : $[(Int, Elem)], cancels : Int, choosing : Boolean = false)(implicit game : Game) : Elem = {
         val units = game.count(t, f)
         val parts = $(
             units -> (units == 1).?("unit").|("units").txt,
@@ -322,7 +328,8 @@ object FightPoints {
 
         f.elem ~ attacking.?(" (attacking)").|(" (defending)") ~ ": " ~ total.hl ~ " combat " ~ (total == 1).?("point").|("points") ~
         points.any.?(" (" ~ points./{ case (n, what) => n.hl ~ " from " ~ what }.join(", ") ~ ")").|(Empty) ~
-        more.any.?(", " ~ more.join(", ")).|(Empty)
+        more.any.?(", " ~ more.join(", ")).|(Empty) ~
+        choosing.?("; " ~ (total + 1).hl ~ " combat points if taking the point").|(Empty)
     }
 }
 
@@ -428,7 +435,7 @@ object MapExpansion extends Expansion {
         placements(tile, None, true).%{ case (s, _) => round > 1 || Side.all.exists(d => centre.has((s.x + d.dx, s.y + d.dy))) }
 
     // The starting tiles' spots (the central tile can be the Wilderness Great Lake, whose id doesn't start with "start")
-    def centre(implicit game : Game) : $[(Int, Int)] = $((0, 0)) ++ (game.factions.num >= 5).$((1, 0))
+    def centre(implicit game : Game) : $[(Int, Int)] = $((0, 0)) ++ (game.arity >= 5).$((1, 0))
 
     def moveCost(rough : Boolean, ignoreRough : Boolean) = (rough && ignoreRough.not).?(2).|(1)
 
@@ -696,21 +703,26 @@ object MapExpansion extends Expansion {
 
             // Five and six players: both starting tiles; with a Wastelands central tile, the five-player tile with the same
             // borders, whose middle territory is part of the central territory
-            if (factions.num >= 5) {
+            if (game.arity >= 5) {
                 game.board.place(Placement(Waste.five(game.central), 1, 0, 0))
 
                 if (game.central != "start" && Waste.impassable.has(game.central).not)
                     game.board.join(AreaRef(0, 0, Waste.middle(game.central)), AreaRef(0, 0, "e"))
             }
 
-            game.factions.foreach { f =>
-                game.tileHand += f -> game.pile.take(3)
-                game.pile = game.pile.drop(3)
+            // Adset: the tiles were drawn before the draft; the clans are picked as they place their tiles
+            if (game.adset)
+                Then(AdsetTurnAction(1, game.seats.reverse))
+            else {
+                game.factions.foreach { f =>
+                    game.tileHand += f -> game.pile.take(3)
+                    game.pile = game.pile.drop(3)
+                }
+
+                log("Each player drew three map tiles")
+
+                Then(SetupPlaceAction(1, game.from(game.first)))
             }
-
-            log("Each player drew three map tiles")
-
-            Then(SetupPlaceAction(1, game.from(game.first)))
 
         case SetupPlaceAction(1, Nil) =>
             Then(SetupPlaceAction(2, game.from(game.first)))
