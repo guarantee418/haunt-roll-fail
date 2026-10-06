@@ -391,8 +391,8 @@ object Meta extends MetaGame { mmm =>
     override val showAbout = false
 
     // Map display settings, chosen by each player under "Interface" (like Root's Clearing Rule)
-    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, FightsTerritoryColor, HideTerritoryColor, ShowBorderColor, HideBorderColor, CompactHarvest, StackedHarvest)
-    override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, CompactHarvest)
+    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, FightsTerritoryColor, HideTerritoryColor, ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels)
+    override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, CompactPanels)
 }
 
 
@@ -428,15 +428,15 @@ case object HideBorderColor extends BorderColorSetting {
 }
 
 
-// The player panels' Harvest and Winter lines: numbers beside the icons, or each icon above its number
-trait HarvestLayoutSetting extends hrf.Setting with OneOfGroup {
-    val group = "Harvest and Winter"
+// The player panels' numbers: beside their icons, or each icon above its number
+trait PanelLayoutSetting extends hrf.Setting with OneOfGroup {
+    val group = "Player Panels"
 }
 
-case object CompactHarvest extends HarvestLayoutSetting {
+case object CompactPanels extends PanelLayoutSetting {
     val valueOn = "Compact".hlb
 }
 
-case object StackedHarvest extends HarvestLayoutSetting {
+case object StackedPanels extends PanelLayoutSetting {
     val valueOn = "Stacked".hlb
 }

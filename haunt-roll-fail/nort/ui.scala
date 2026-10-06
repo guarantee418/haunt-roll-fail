@@ -1213,17 +1213,27 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             return
         }
 
-        val res = Resource.all./(r => state.has(r).hl ~ " " ~ r.elem).join(" ").div(styles.panelLine)
+        // Each number with its icon: "2 [food]" in a row, or with the Stacked setting the icon above the number
+        val stacked = callbacks.settings.has(StackedPanels)
+        def item(n : Elem, e : Elem) : Elem = stacked.?((e.div ~ n.div).spn(styles.stackedItem)).|(n ~ " " ~ e)
+        def row(l : $[Elem]) : Elem = stacked.?(l.merge).|(l.join(" "))
+        def amounts(l : $[(String, Elem)]) : Elem = row(l.map { case (n, e) => item(n.hl, e) })
+        def line(title : String, l : $[(String, Elem)]) : Elem =
+            if (l.none) (title + ": ").txt ~ "nothing".txt
+            else if (stacked) (title + ":").txt.div ~ amounts(l)
+            else (title + ": ").txt ~ amounts(l)
+
+        val res = row(Resource.all./(r => item(state.has(r).hl, r.elem))).div(styles.panelLine)
 
         // Sea module: the units away on Raids
         val raiding = SeaExpansion.raiders(f)
-        val units = (state.units.hl ~ " " ~ UnitIcon() ~ (raiding > 0).?(" (" ~ raiding.hl ~ " raiding)").|(Empty) ~ " " ~ state.fame.hl ~ " " ~ FameIcon()).div(styles.panelLine)
+        val units = row($(item(state.units.hl ~ (raiding > 0).?(" (" ~ raiding.hl ~ " raiding)").|(Empty), UnitIcon()), item(state.fame.hl, FameIcon()))).div(styles.panelLine)
 
         // Warchiefs module: the warchief's name, dimmed while in the reserve
         val chief = game.has(Warchiefs).?(game.chiefs.contains(f).?(Warchief.elem(f)).|(Warchief.name(f).txt ~ " (reserve)".spn(xstyles.smaller85)).div).|(Empty)
 
         // Cards in hand, to draw and discarded; tapping the discards shows them
-        val cards = (state.hand.num.hl ~ " " ~ CardIcon.hand ~ " " ~ state.draw.num.hl ~ " " ~ CardIcon.draw ~ " " ~ OnClick(DiscardPile(f), (state.discard.num.hl ~ " " ~ CardIcon.discard).spn(xlo.pointer))).div(styles.panelLine)
+        val cards = row($(item(state.hand.num.hl, CardIcon.hand), item(state.draw.num.hl, CardIcon.draw), OnClick(DiscardPile(f), item(state.discard.num.hl, CardIcon.discard).spn(xlo.pointer)))).div(styles.panelLine)
 
         // New Blood: Dragon's Sacrificial Pyre, Kraken's High Tide tokens, Ox's Ancestral Equipment tokens
         val nb = f match {
@@ -1245,16 +1255,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         // The next harvest as things stand, and the Winter costs (tapping them shows the whole Winter chart)
         val next = Harvest.forecast(f)
-        // Each amount with its icon: "+2 [food]" in a row, or with the Stacked setting the icon above "+2"
-        val stacked = callbacks.settings.has(StackedHarvest)
-        def amounts(l : $[(String, Elem)]) : Elem =
-            if (stacked) l.map { case (n, e) => (e.div ~ n.hl.div).spn(styles.stackedItem) }.merge.div
-            else l.map { case (n, e) => n.hl ~ " " ~ e }.join(" ")
-        def line(title : String, l : $[(String, Elem)]) : Elem =
-            if (l.none) (title + ": ").txt ~ "nothing".txt
-            else if (stacked) (title + ":").txt.div ~ amounts(l)
-            else (title + ": ").txt ~ amounts(l)
-
         val gains = $(next.food -> Food.elem, next.wood -> Wood.elem, next.lore -> Lore.elem, next.fame -> FameIcon()).filter(_._1 > 0).map { case (n, e) => ("+" + n) -> e }
         // Dragon Clan: 1 more food or wood for the sacrifice
         val pyre = (f == Dragon && game.dragonHarvest.has(false).not && (game.dragonHarvest.any || NewBloodExpansion.sacrificeOptions(f)) && game.controlled(f).any).$("+1" -> (Food.elem ~ "/" ~ Wood.elem))
