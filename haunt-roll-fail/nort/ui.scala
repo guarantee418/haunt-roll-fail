@@ -386,7 +386,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         case Yellow => ("#ffc400", 0.55)
         case Purple => ("#9b30c8", 0.3)
         case Green => ("#147a14", 0.55)
-        case Orange => ("#ff7a1a", 0.4)
+        case Orange => ("#ff5200", 0.5)
     }
 
     // Border dashes of the closed territories a player controls, bright enough to show on the dark roads
@@ -977,7 +977,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             r.card.foreach { c =>
                 val d = South.rotate(board.at(p.x, p.y).get.r)
                 val (cx, cy) = (sx(p.x + d.dx + 0.5), sy(p.y + d.dy + 0.5))
-                val (w, h) = (474.0, 310.0)
+                val (w, h) = (680.0, 445.0)
                 pieces.add(Sprite($(ImageRect(new RawImage(img(c.info.image)), Rectangle(-w / 2, -h / 2, w, h), 1.0)), $))(cx, cy)
 
                 r.owner.%(_ => r.units > 0).foreach { f =>
@@ -1059,6 +1059,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Creatures module: the creature line, in activation order
         val creatures = (game.has(Creatures) || game.creatureLine.any).$(("Creatures" ~ " (left to right)".spn(xstyles.smaller85)) -> game.creatureLine)
 
+        // Wastelands: Jötunn Blainn's card once the Jötnar Camp is on the map, with where he is
+        val blainn = game.jotnarCamp.any.$(("Jötunn Blainn" ~ game.blainn./{ case (f, _) => " (" ~ f.elem ~ ")" }.|(" (at his camp)".txt).spn(xstyles.smaller85)) -> $(BlainnCard))
+
         // Uncharted Horizons: this year's Event and the next one, and the Alternative victory cards
         val events = game.has(EventsModule).$(("Event" ~ " (this year, next)".spn(xstyles.smaller85)) -> (game.event.$ ++ game.eventDeck.take(1)))
 
@@ -1070,7 +1073,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Sea module: the Raid cards on the Ports, then the ones kept for the next Harvest or Start of Year
         val raids = (game.has(Sea) && (game.raids.values.exists(_.card.any) || game.raidKept.any)).$(("Raids" ~ " (on the Ports, then kept)".spn(xstyles.smaller85)) -> (game.ports./~(p => game.raids(p).card) ++ game.raidKept./(_.card)))
 
-        court.replaceCached((game.year, game.display, game.achievements, game.creatureLine, game.event, game.eventDeck.num, game.victory, game.automaPlayed, game.raids, game.raidKept).toString, strip((automa ++ events ++ victory ++ developments ++ achievements ++ creatures ++ raids)./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
+        court.replaceCached((game.year, game.display, game.achievements, game.creatureLine, game.event, game.eventDeck.num, game.victory, game.automaPlayed, game.raids, game.raidKept, game.jotnarCamp, game.blainn./(_._1)).toString, strip((automa ++ events ++ victory ++ developments ++ achievements ++ creatures ++ blainn ++ raids)./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
     }
 
     // The Winter cost chart, with each clan on its row and what f has to pay with
