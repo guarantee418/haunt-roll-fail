@@ -55,11 +55,13 @@ module ("Solo vs Automa" on the main menu). Its Training Fields module, a two-pl
 a 4x3 grid of face-down tiles with seven Action cards each, is in
 `nort/training.scala`: "Training Grounds" on the main menu opens a page
 offering a local or an online game (the `modes` hooks in `meta.scala`,
-`modeMenu` in `hrf.scala`). Solo games are saved in the
-browser's localStorage as they are played (`newLocalGame` and `soloMenu` in
-`hrf.scala`, `LocalStorageJournal` in `journal.scala`; the 12 newest are
-kept), so "Solo vs Automa" offers New Solo Game or a saved game to continue,
-like Play Online. The
+`modeMenu` in `hrf.scala`). Solo, Quick and Local (hotseat) games are saved in the
+browser's localStorage as they are played (`newLocalGame` and `savedGamesMenu` in
+`hrf.scala`, `LocalStorageJournal` in `journal.scala`; keys `<settingsKey>.<kind>.game.<time>`
+with kind `solo`, `quick` or `hotseat`; the 12 newest of each kind are kept, and when storage
+is full the oldest of any kind make room), so "Quick Game", "Local Game" and "Solo vs Automa"
+offer a new game or a saved one to continue (straight to a new one when none is saved),
+like Play Online. Training Grounds games aren't saved. The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.
