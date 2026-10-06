@@ -161,7 +161,7 @@ values each choice by trying it on the game and scoring the position; see Bots
 in `nort/HANDOFF.md`), plus "Robotos" (`nort/robotos.scala`), the Hard bot with
 cheats: no Winter costs, ignored by creatures, one more unit with every Recruit,
 one more card each year, ties won when attacking, a head start (2 more food and
-wood, one more unit) and upgrades for 2 lore; its panel says "(Robotos)", and
+wood, 5 units in each setup placement), 25 units instead of 14 and upgrades for 2 lore; its panel says "(Robotos)", and
 tapping that lists the cheats.
 Its rules come from a hidden `RobotosOption` that `startGame` in `hrf.scala` adds
 for each clan set to it (`Meta.botOptions`), so every client and replay agrees.

@@ -774,17 +774,18 @@ it, and one more unit with every Recruit (on top of Training Camps and the rest)
   Winter line shows "nothing"; the log says "pays no Winter costs
   (Robotos)"); `TrainingCampsAction` in `map.scala` adds the unit where it
   recruited first; `CreaturesExpansion.destinations` leaves out territories
-  with its figures, and `RobotosExpansion` (robotos.scala, first in
+  with its units, and `RobotosExpansion` (robotos.scala, first in
   `game.expansions` when a Robotos clan plays) cancels what a creature does
-  when it appears or moves where it has figures (any creature, any module).
+  when it appears or moves where it has units (any creature, any module).
   A creature already in its territory (one appearing on a lair it explores)
   blocks nothing there either: `hostileIn`, `bearIn`, `wolfIn`, `koboldIn` and
-  `ghostIn` in `game.scala` are false where it has figures (`robotosIn`).
+  `ghostIn` in `game.scala` are false where it has units (`robotosIn`).
   It also draws one more card each year (the year's `DrawCardsAction`), wins
   ties when it attacks, clans or creatures (`map.scala`, `creatures.scala`),
-  starts with 2 more food and 2 more wood and one more unit with its first
-  setup placement (`MapExpansion.robotosSetup`), and upgrades for 2 lore
-  (`game.upgradeCost`).
+  starts with 2 more food and 2 more wood, places 5 units in each setup
+  placement instead of 3 (`MapExpansion.robotosSetup`; the warchief and Kaija
+  count among them), has 25 units instead of 14 (`game.unitLimit(f)`), and
+  upgrades for 2 lore (`game.upgradeCost`).
 - **The tag:** its player panel shows "(Robotos)" beside the clan name;
   tapping it lists the cheats (`RobotosInfo` in `ui.scala`, the list is
   `RobotosExpansion.cheats`).
