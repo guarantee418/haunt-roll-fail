@@ -96,10 +96,10 @@ player panels in a row, the shared cards and the hand below them, and the
 log on the far right, with the
 hand cards sized to the pane (`--nort-hand-card`) so the whole hand fits. The player panels end with the clan's next harvest as things stand
 (`Harvest.forecast` in `nort/game.scala`, the same sums `HarvestAction` uses,
-fame included) and its Winter cost; tapping the Winter line opens the whole
+fame included) and its Winter cost (as losses, "-1"); tapping the Winter line opens the whole
 Winter chart (`winterChart` in `nort/ui.scala`). Each player can hide the
 tints and the colored borders under "Interface" (the Territory Color and
-Fame Borders settings in `nort/meta.scala`). A turn starts with six choices at
+Fame Borders settings in `nort/meta.scala`), and the "Player Panels" setting (`CompactPanels`, the default, or `StackedPanels`) shows every number in the panels beside its icon or under it. A turn starts with six choices at
 the top of the action pane (Play cards, Wait, Replace, Remove, Upgrade,
 Pass); after one, tapping a card in hand does it. A Build card's builds: tap
 a free space, pick from the menu of all buildings with their costs, then
@@ -415,8 +415,9 @@ file covers the build, server and deploy. No session can ssh to the server
   - Feather Rufflers, Spy Network, Silver-Tongue and Friend are usable from
     the Birdsong, Daylight and Evening menus on your own turn.
 - The Gorge map (`GorgeBoard` in `root/maps.scala`, option `GorgeMap`) uses
-  the board image the owner uploaded, scaled to the 2416x2214 size of the
-  other maps (score track included). The board prints no clearing names, so
+  the plain board art the owner uploaded (2026-10-06, no score track, item slots
+  or logo; `map-art.webp`), scaled and shifted onto the 2416x2214 frame of the
+  earlier printed-board image so every position still fits. The board prints no clearing names, so
   the names (Ranch, Bluff, ...) are made up from the art; the layout card's
   numbers are 1 Ranch, 2 Mesa, 3 Camp, 4 Chapel, 5 Bluff, 6 Saloon,
   7 Lookout, 8 Rapids, 9 Homestead, 10 Forge, 11 Fork, 12 Pueblo. The dam
@@ -427,11 +428,14 @@ file covers the build, server and deploy. No session can ssh to the server
   faction and kind in a region are drawn as one figure with a count badge
   (`stacks`, `drawCount`), like the Northgard unit counts. The in-game "Warriors" setting
   (`StackWarriors`, the default, or `SeparateWarriors` in `root/meta.scala`) can
-  switch back to drawing every warrior. Boards with a
-  printed score track set `scoreTrack` (centre of the 0 box, box spacing) in
-  `root/maps.scala`; `drawScoreTrack` puts each faction's VP marker on its
-  score, stacked upwards when tied, with a count badge past 30. Only Gorge has
-  one. Official VP marker art (`webp2/root/images/vp/`, `officialVP` in
+  switch back to drawing every warrior. Boards with room for a
+  score tracker set `scoreTrack` (centre of the 0 box, box spacing) in
+  `root/maps.scala`; `drawTrackers` draws the tracker image
+  (`webp2/root/images/tracker/score-track.webp`, from the owner) there and
+  `drawScoreTrack` puts each faction's VP marker on its
+  score, stacked upwards when tied, with a count badge past 30. Gorge and Marsh
+  have one. The in-game "Board Trackers" setting (`ShowBoardTrackers`, the
+  default, or `HideBoardTrackers`) hides both trackers and their markers. Official VP marker art (`webp2/root/images/vp/`, `officialVP` in
   `root/ui.scala`) exists for the Homeland Twilight Council, Knaves and
   Lilypad Diaspora, cut from page 17 of `root-factions/`. The ten other Leder
   factions (Marquise, Eyrie, Alliance, Vagabond, Riverfolk, Lizards, Duchy,
@@ -474,11 +478,15 @@ file covers the build, server and deploy. No session can ssh to the server
   "More Info" toggle with short rule notes. Panes are tappable before a
   faction is set up too (`factionStatus` and `updateStatus`); a faction
   without state yet shows just its board ("Not set up yet").
-- Boards with printed item slots (Gorge, Marsh) set `itemSlots` (`itemGrid`
-  for the usual 2x6 layout); `drawItemSlots` draws `game.uncrafted` on them.
+- Boards with room for an item tracker (Gorge, Marsh) set `itemSlots` (`itemGrid`
+  for the usual 2x6 layout); `drawTrackers` draws `tracker/item-track.webp` under
+  them and `drawItemSlots` draws `game.uncrafted` on them.
 - The Homeland Marsh map is `MarshBoard` in `root/maps.scala` (option
-  `MarshMap`, images in `webp2/root/images/marsh/`, from the board image and
-  the flood markers in the Homeland print-and-play PDF). The printed board
+  `MarshMap`, images in `webp2/root/images/marsh/`; the map is the plain board art
+  the owner uploaded on 2026-10-06, aligned to the earlier printed-board image and
+  105 pixels taller than it (2400x2250, room for the score tracker below the
+  Delta and Bayou names), and the flood markers come from the Homeland
+  print-and-play PDF). The printed board
   has no clearing names, so the names (Thatch, Sedge, Weir, ...) are made up;
   comments give the Law of Root diagram numbers.
   Region ids must be unique across all boards (`Serialize.parseRegion`),

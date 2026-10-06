@@ -391,8 +391,8 @@ object Meta extends MetaGame { mmm =>
     override val showAbout = false
 
     // Map display settings, chosen by each player under "Interface" (like Root's Clearing Rule)
-    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, FightsTerritoryColor, HideTerritoryColor, ShowBorderColor, HideBorderColor)
-    override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor)
+    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, FightsTerritoryColor, HideTerritoryColor, ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels)
+    override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, CompactPanels)
 }
 
 
@@ -425,4 +425,18 @@ case object ShowBorderColor extends BorderColorSetting {
 
 case object HideBorderColor extends BorderColorSetting {
     val valueOn = "Hide".hlb
+}
+
+
+// The player panels' numbers: beside their icons, or each icon above its number
+trait PanelLayoutSetting extends hrf.Setting with OneOfGroup {
+    val group = "Player Panels"
+}
+
+case object CompactPanels extends PanelLayoutSetting {
+    val valueOn = "Compact".hlb
+}
+
+case object StackedPanels extends PanelLayoutSetting {
+    val valueOn = "Stacked".hlb
 }
