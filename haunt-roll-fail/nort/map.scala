@@ -53,9 +53,9 @@ case class SetupSpotAction(self : Faction, round : Int, l : $[Faction], tile : S
 case class SetupRotateAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot, r : Int, d : Int) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft with MapTarget { def target = RotateMark(d) }
 case class SetupTurnAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot, r : Int) extends BaseAction("Place the tile at", spot)("Confirm") with TilePreview
 case class SetupUnitsAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place three units in")(area) with MapTarget { def target = area }
-case class SetupKaijaAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place two units and", Companion(self), "in")(area)
+case class SetupKaijaAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place two units and", Companion(self), "in")(area) with MapTarget { def target = area }
 // Warchiefs module: the warchief instead of one unit (and Kaija instead of another)
-case class SetupChiefAction(self : Faction, round : Int, l : $[Faction], area : AreaRef, kaija : Boolean) extends BaseAction(kaija.?("Place one unit, " ~ Companion(self).elem0 ~ " and your warchief in").|("Place two units and your warchief in"))(area)
+case class SetupChiefAction(self : Faction, round : Int, l : $[Faction], area : AreaRef, kaija : Boolean) extends BaseAction(kaija.?("Place one unit, " ~ Companion(self).elem0 ~ " and your warchief in").|("Place two units and your warchief in"))(area) with MapTarget { def target = area }
 case class ShuffledTilesBackAction(shuffled : $[String]) extends ShuffledAction[String]
 case class SetupUnitsAskAction(f : Faction, round : Int, l : $[Faction], tile : String, spot : Spot) extends ForcedAction
 
@@ -429,6 +429,16 @@ object MapExpansion extends Expansion {
 
     // The legal turns of a tile at a spot
     def rotations(l : $[(Spot, Int)], spot : Spot) : $[Int] = l.filter(_._1 == spot).map(_._2).distinct.sorted
+
+    // What a tap on a starting territory places (the list offers the rest): with the Warchiefs module, the warchief and
+    // two units; a clan with a second figure (Kaija, Brok) puts it in its other starting territory, or both together if
+    // its first territory got three units
+    def setupDefault(a : Action)(implicit game : Game) : Boolean = a match {
+        case SetupUnitsAction(f, _, _, _) => game.has(Warchiefs).not || (game.chiefReady(f).not && game.kaijaReady(f).not)
+        case SetupChiefAction(f, round, _, _, kaija) => game.has(Warchiefs) && kaija == (round == 2 && game.kaijaReady(f))
+        case SetupKaijaAction(f, _, _, _) => game.has(Warchiefs) && game.chiefReady(f).not
+        case _ => false
+    }
 
     // The next legal turn from r, clockwise (d = 1) or counterclockwise (d = -1)
     def rotate(rs : $[Int], r : Int, d : Int) : Int = 1.to(3).map(i => (r + d * i + 4) % 4).find(rs.has).|(r)
