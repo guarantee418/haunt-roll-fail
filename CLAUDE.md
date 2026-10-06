@@ -106,7 +106,7 @@ a free space, pick from the menu of all buildings with their costs, then
 confirm with the green check mark (or cancel with the red cross) drawn above
 the building on the map. Placing a tile works the same way: the tile is shown at its spot with
 one button just outside each corner: rotate arrows at the top, the check mark and cross at the bottom. A retreat works like a Move: tap the destination on the map (or in the list),
-then pick all the units or one (`RetreatPickAction` in `nort/map.scala`). Development
+then pick who goes: everyone, the units without Kaija and the warchief, one unit, or Kaija or the warchief alone (`RetreatPickAction` and `retreatParties` in `nort/map.scala`). Development
 and other card picks show the cards at hand-card size, and the last player to pass
 still sees the one card left before taking it. Copies of the same card in hand (and among
 the Played cards) are drawn as one card with the copies peeking out behind it
