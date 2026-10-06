@@ -754,6 +754,9 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case BuildPlaceAction(_, area, b, space, cost, _, e, _, _) => |(build(area, b, space, cost) + victoryStep("architecture"))
         case BuildSpaceAction(_, area, b, space, _, cost, _, e, _, _) => |(build(area, b, space, cost) + victoryStep("architecture"))
         case BuildDoneAction(_, _, _) => |(0)
+        // Industrious Villagers: swap a building for another of the same size
+        case ReplaceBuildingAction(_, _, space, b, _) => |(gain(game.buildings += space -> b))
+        case ReplaceSkipAction(_, _) => |(0)
 
         // EXPLORE
         case ExploreTurnAction(_, tile, spot, r, _, _, _) => |(explorePlacement(tile, spot, r))
