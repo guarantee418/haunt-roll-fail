@@ -270,17 +270,22 @@ case class TurnModeAction(self : Faction, mode : TurnMode) extends BaseAction("Y
 // Cards in hand once a choice is made, shown as their images: tapping one does it (no full screen view until the turn ends)
 trait HandChoice
 
+// A card in f's hand, with its copies stacked behind it (Card.handStack)
+object InHand {
+    def apply(f : Faction, c : Card) = (g : Game) => c.handStack(g.states.get(f)./(_.hand.count(c)).|(1))
+}
+
 // stage 0: the first card of the turn, 1: after a Flash card, 2: after the main card (only Flash cards left)
-case class PlayCardAction(self : Faction, card : Card, stage : Int) extends BaseAction((stage == 2).?("Play a Flash card").|("Play a card"))(card.handImg) with ViewObject[Card] with HandChoice { def obj = card }
-case class WaitCardAction(self : Faction, card : Card) extends BaseAction("Wait with a card")(card.handImg) with ViewObject[Card] with HandChoice { def obj = card }
-case class ReplaceCardAction(self : Faction, card : Card) extends BaseAction("Replace a card for", 1.hl, LoreIcon())(card.handImg) with ViewObject[Card] with HandChoice { def obj = card }
-case class RemoveCardAction(self : Faction, card : Card) extends BaseAction("Remove a card from the game for", 2.hl, LoreIcon())(card.handImg) with ViewObject[Card] with HandChoice { def obj = card }
+case class PlayCardAction(self : Faction, card : Card, stage : Int) extends BaseAction((stage == 2).?("Play a Flash card").|("Play a card"))(InHand(self, card)) with ViewObject[Card] with HandChoice { def obj = card }
+case class WaitCardAction(self : Faction, card : Card) extends BaseAction("Wait with a card")(InHand(self, card)) with ViewObject[Card] with HandChoice { def obj = card }
+case class ReplaceCardAction(self : Faction, card : Card) extends BaseAction("Replace a card for", 1.hl, LoreIcon())(InHand(self, card)) with ViewObject[Card] with HandChoice { def obj = card }
+case class RemoveCardAction(self : Faction, card : Card) extends BaseAction("Remove a card from the game for", 2.hl, LoreIcon())(InHand(self, card)) with ViewObject[Card] with HandChoice { def obj = card }
 // Upgrade: first the clan upgrade to take, then the card from hand (one row), then Remove or Wait with it
 case class UpgradePickAction(self : Faction, upgrade : Card) extends BaseAction("Upgrade for", 3.hl, LoreIcon(), Comma, "take")(upgrade.handImg) with Soft with ViewObject[Card] with HandChoice { def obj = upgrade }
-case class UpgradeSacrificeAction(self : Faction, card : Card, upgrade : Card) extends BaseAction("Upgrade to", upgrade, Comma, "choose a card to remove or wait with")(card.handImg) with Soft with ViewObject[Card] with HandChoice { def obj = card }
+case class UpgradeSacrificeAction(self : Faction, card : Card, upgrade : Card) extends BaseAction("Upgrade to", upgrade, Comma, "choose a card to remove or wait with")(InHand(self, card)) with Soft with ViewObject[Card] with HandChoice { def obj = card }
 case class UpgradeCardAction(self : Faction, card : Card, upgrade : Card, remove : Boolean) extends BaseAction("Upgrade to", upgrade, Comma, "with", card)(remove.?("Remove".txt ~ " (out of the game)").|("Wait".txt ~ " (to the played cards)"))
 // Cards in hand while they can't be tapped: during your turn once a choice is made, they don't open full screen
-case class HandInfoAction(self : Faction, title : Elem, card : Card) extends BaseInfo(title)(card.handImg) with ViewObject[Card] { def obj = card }
+case class HandInfoAction(self : Faction, title : Elem, card : Card, n : Int = 1) extends BaseInfo(title)(card.handStack(n)) with ViewObject[Card] { def obj = card }
 // The player's clan board below the Lore Tree, to look up the clan's power and its warchief; clicking it opens it full screen
 case class ClanBoard(f : Faction)
 // The Winter cost chart, opened from a player panel
@@ -292,7 +297,7 @@ case class DiscardPile(f : Faction)
 case object PyreView
 case class ClanBoardInfoAction(self : Faction, title : Elem) extends BaseInfo(title)(Image(Warchief.board(self), styles.boardInfo)) with ViewObject[Faction] with OnClickInfo { def obj = self ; def param = ClanBoard(self) }
 // Cards shown while there is nothing to do with them; clicking one opens it full screen
-case class CardInfoAction(self : Faction, title : Elem, card : Card) extends BaseInfo(title)(card.handImg) with ViewObject[Card] with OnClickInfo { def obj = card ; def param = card }
+case class CardInfoAction(self : Faction, title : Elem, card : Card, n : Int = 1) extends BaseInfo(title)(card.handStack(n)) with ViewObject[Card] with OnClickInfo { def obj = card ; def param = card }
 case class PassAction(self : Faction) extends BaseAction("Your turn")("Pass")
 case class EndTurnAction(self : Faction) extends BaseAction("Actions")("End turn")
 // Resolve a played card that nobody cancelled
@@ -835,8 +840,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         draftInfo ++
         (year > 0).$(Info("Year", year.hlb, "of", lastYear.hl)) ++
         self.%(states.contains)./~(f =>
-            (choosing || inLoreTree).not.??(f.hand./(c => turn.?(HandInfoAction(f, "Your hand".styled(colors(f)), c) : Info).|(CardInfoAction(f, "Your hand".styled(colors(f)), c)))) ++
-            f.active./(c => CardInfoAction(f, "Played".styled(colors(f)), c)) ++
+            (choosing || inLoreTree).not.??(f.hand.distinct./(c => turn.?(HandInfoAction(f, "Your hand".styled(colors(f)), c, f.hand.count(c)) : Info).|(CardInfoAction(f, "Your hand".styled(colors(f)), c, f.hand.count(c))))) ++
+            f.active.distinct./(c => CardInfoAction(f, "Played".styled(colors(f)), c, f.active.count(c))) ++
             inLoreTree.not.??(f.upgrades./(u => CardInfoAction(f, "Lore Tree".styled(colors(f)) ~ " (" ~ f.lore.hl ~ " " ~ LoreIcon() ~ ")", u))) ++
             $(ClanBoardInfoAction(f, "Clan board".styled(colors(f)))) ++
             $(Info("Fame", f.fame.hlb))
