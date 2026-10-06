@@ -792,6 +792,16 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
                 if (kaija)
                     game.setCompanion(self, |(to))
             } + n * 10)
+        case RetreatPartyAction(_, from, to, n, kaija, chief, _, _) =>
+            val t = board.territory(from)
+            |(gain {
+                game.removeUnits(t, self, n)
+                game.addUnits(to, self, n)
+                if (kaija)
+                    game.setCompanion(self, |(to))
+                if (chief)
+                    game.chiefs += self -> to
+            } + n * 10)
 
         // BUILD
         case BuildConfirmAction(_, area, b, space, cost, _, e, _, _) => |(build(area, b, space, cost) + victoryStep("architecture"))
@@ -905,6 +915,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case HalvardCraftSkipAction(_, _) => |(0)
         // Brand's Bravery: the beaten enemy retreats where it does them the least good
         case BrandRetreatToAction(_, loser, from, to, n, kaija, _, _) => |(gain { game.removeUnits(board.territory(from), loser, n) ; game.addUnits(to, loser, n) })
+        case BrandRetreatPartyAction(_, loser, from, to, n, kaija, _, _, _) => |(gain { game.removeUnits(board.territory(from), loser, n) ; game.addUnits(to, loser, n) })
 
         // OX (New Blood): Ancestral Equipment tokens
         case GearTakeAction(_, _, n, _) => |(gearValue(n) + 10)
