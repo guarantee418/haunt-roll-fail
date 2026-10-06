@@ -37,7 +37,11 @@ object UI extends BaseUI {
 }
 
 class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta.GameOption], val resources : Resources, callbacks : hrf.Callbacks) extends MapGUI {
-    def factionElem(f : Faction) = f.name.styled(colorOf(f))
+    // Adset: a player shows as their clan once drafted
+    def factionElem(p : Player) : Elem = p match {
+        case f : Faction => f.name.styled(colorOf(f))
+        case p => currentGame.?./~(_.ptf.get(p))./(f => f.name.styled(colorOf(f))).|(p.as[Seat]./(_.elem).|(Empty))
+    }
 
     // The style of the color a clan's player picked
     def colorOf(f : Faction) : Style = elem.styles.get(game.colors.get(f)./(c => c : Styling).|(f))
@@ -1157,11 +1161,24 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         ).div
     }
 
+    // Adset: a player who hasn't drafted a clan yet, in their color, with their seat
+    def seatStatus(p : Player) {
+        val container = statuses(game.players.indexOf(p))
+        val color = elem.styles.get(AdsetExpansion.color(p))
+        val name = resources.getName(p)./(n => n.styled(color)(styles.title) ~ " " ~ p.elem).|(p.elem.styled(color)(styles.title))
+        val seat = game.seats.indexOf(p)
+        val note = (seat >= 0).?(("Seat " + (seat + 1)).hl ~ ", choosing a clan".txt).|("Seating...".txt)
+
+        container.replace(Div(Div(name), styles.smallname) ~ note.div, resources)
+
+        container.attach.parent.style.outline = game.highlight.faction.has(p).?("2px solid #aaaaaa").|("")
+    }
+
     def factionStatus(f : Faction) {
-        val container = statuses(game.setup.indexOf(f))
+        val container = statuses(game.players.indexOf(game.ftp(f)))
 
         // The player's name (human players in online games), then the clan's, in the player's color
-        val name = resources.getName(f)./(n => n.styled(colorOf(f))(styles.title) ~ " " ~ f.name.txt).|(f.name.styled(colorOf(f))(styles.title))
+        val name = resources.getName(game.ftp(f))./(n => n.styled(colorOf(f))(styles.title) ~ " " ~ f.name.txt).|(f.name.styled(colorOf(f))(styles.title))
 
         if (!game.states.contains(f)) {
             container.replace(Div(Div(name), styles.smallname, xlo.pointer), resources)
@@ -1248,7 +1265,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     def updateStatus() {
         0.until(arity).foreach { n =>
-            factionStatus(game.setup(n))
+            game.ptf.get(game.players(n))./(factionStatus).|(seatStatus(game.players(n)))
         }
 
         if (overlayPane.visible)
@@ -1456,9 +1473,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         overlayPane.clear()
     }
 
-    override def info(self : |[Faction], aa : $[UserAction]) = {
+    override def info(self : |[F], aa : $[UserAction]) = {
         val ii = currentGame.info($, self, aa)
-        ii.any.??($(ZOption(Empty, Break)) ++ convertActions(self.of[Faction], ii)) ++
+        ii.any.??($(ZOption(Empty, Break)) ++ convertActions(self, ii)) ++
             (currentGame.isOver && hrf.HRF.flag("replay").not).$(
                 ZBasic(Break ~ Break ~ Break, "Save Replay As File".hh, () => {
                     showOverlay(overlayScrollX("Saving Replay...".hl.div).onClick, null)
@@ -1568,6 +1585,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         } ++
         faction @@ {
             case Some(f : Faction) => $(elem.borders.get(f))
+            case Some(p) if game.ptf.contains(p) => $(elem.borders.get(game.ptf(p)))
             case _ => $()
         } ++
         a @@ {

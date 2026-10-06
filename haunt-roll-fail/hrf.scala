@@ -117,6 +117,7 @@ object HRF {
         suok.Meta -> suok.UI,
         yarg.Meta -> yarg.UI,
         nort.Meta -> nort.UI,
+        nort.MetaAdset -> nort.UI,
     )
 
     val metas = metaUIs.lefts
@@ -923,11 +924,17 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         ui.action.asker.zask(
             meta.underConstruction.$(ZOption(title, Div("This game is very much " ~ "under construction".styled(xstyles.warning) ~ "." ~ Break ~ "Expect missing rules, bugs and placeholder art.", ZBasic.info))) ++
+            meta.menuAbout./(e => ZOption(title, Div(e, ZBasic.info))).$ ++
             (
                 ZBasic(title, "Quick Game".hlb, meta.factions.%(f => meta.getBots(f).has(meta.defaultBot(f))).any.??(() => goQuickGame())) ::
                 ZBasic(title, "Local Game".hhb, () => goHotseat()) ::
                 meta.soloFaction./(s => ZBasic(title, ("Solo vs " + meta.factionName(s).split(' ').head).hhb, () => goSolo())).$ ++
                 meta.modes./{ case (label, mode) => ZBasic(title, label.hhb, () => goMode(mode)) } ++
+                meta.linkedModes./{ case (label, l) => ZBasic(title, label.hhb, () => {
+                    HRF.metas.%(_.name == l).single./{ m =>
+                        new HRFMetaUI(ui, m, 800)(baseResources).withMeta()
+                    }.|(throw new Error("meta not found " + l))
+                }) } ++
                 $(ZBasic(title, "Play Online".hlb, (HRF.server.any && HRF.offline.not).??(() => goOnline())))
             ) ++
             meta.intLinks./((t, l) => ZBasic("Other", t, () => {

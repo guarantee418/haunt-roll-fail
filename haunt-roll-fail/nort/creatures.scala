@@ -330,7 +330,7 @@ object CreaturesExpansion extends Expansion {
             Shuffle[Creature](Creature.deck.%(_.kind.value <= 6), ShuffledCreaturesAction(_, tiles))
 
         case ShuffledCreaturesAction(low, tiles) =>
-            val top = low.take(factions.num + 1)
+            val top = low.take(game.arity + 1)
             Shuffle[Creature](low.drop(top.num) ++ Creature.deck.%(_.kind.value > 6), ShuffledCreaturesRestAction(top, _, tiles))
 
         case ShuffledCreaturesRestAction(top, rest, tiles) =>

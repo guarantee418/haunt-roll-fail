@@ -168,6 +168,10 @@ trait MetaBase {
     def modeAbout(mode : String) : Elem = Empty
     def modeFactions(mode : String) : $[F] = $
     def modeOptions(mode : String) : $[O] = $
+    // Other games on the main menu that are their own meta (Northgard's Adset): the menu label and the meta's name
+    def linkedModes : $[(String, String)] = $
+    // A note at the top of the main menu (Northgard's Adset: its rules in short)
+    def menuAbout : |[Elem] = None
 
     // Image name -> URL for images used in the menus (faction notes, option explanations), before the game's assets load
     def menuImages : Map[String, String] = Map()

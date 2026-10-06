@@ -57,6 +57,9 @@ object Meta extends MetaGame { mmm =>
 
     override def modeOptions(mode : String) = $(TrainingFieldsOption)
 
+    // The main menu's "Adset": its own game (MetaAdset in adset.scala), where the clans are drafted during setup
+    override def linkedModes = $(("Adset", "nort-adset"))
+
     val minPlayers = 2
     // Six players build on the five-player rules
     override val maxPlayers = 6
