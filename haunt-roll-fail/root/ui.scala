@@ -403,6 +403,76 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         g.restore()
     }
 
+    // A jail cell around warriors held prisoner in a forest (the Knaves' and Skunks' cages):
+    // a dark cell behind the figure (front = false), iron bars and a frame in front of it (front = true)
+    def drawJail(g : dom.CanvasRenderingContext2D, r : DrawRect, front : Boolean) {
+        val x = r.x - 10
+        val y = r.y - 8
+        val w = r.width + 20
+        val h = r.height + 14
+
+        g.save()
+        g.globalAlpha = 1.0
+
+        if (front.not) {
+            g.fillStyle = "rgba(20, 16, 12, 0.72)"
+            g.fillRect(x, y, w, h)
+            g.strokeStyle = "rgba(0, 0, 0, 0.5)"
+            g.lineWidth = 2
+            g.strokeRect(x, y, w, h)
+        }
+        else {
+            val bars = max(4, (w / 22).round.toInt)
+            val step = w / bars
+
+            0.to(bars).foreach { i =>
+                val bx = x + i * step
+                g.fillStyle = "#1c1c1c"
+                g.fillRect(bx - 4, y, 8, h)
+                g.fillStyle = "#8a8a8a"
+                g.fillRect(bx - 2, y, 2, h)
+            }
+
+            $(y, y + h - 10).foreach { by =>
+                g.fillStyle = "#1c1c1c"
+                g.fillRect(x - 5, by - 2, w + 10, 14)
+                g.fillStyle = "#6e6e6e"
+                g.fillRect(x - 5, by, w + 10, 3)
+                g.fillStyle = "#b0b0b0"
+                0.to(bars).foreach { i =>
+                    g.beginPath()
+                    g.arc(x + i * step, by + 5, 2.5, 0, 2 * math.Pi)
+                    g.fill()
+                }
+            }
+
+            // a padlock hanging from the middle of the top band
+            val lx = x + w / 2
+            val ly = y + h - 18
+            g.strokeStyle = "#1c1c1c"
+            g.lineWidth = 6
+            g.beginPath()
+            g.arc(lx, ly - 4, 9, math.Pi, 2 * math.Pi)
+            g.stroke()
+            g.strokeStyle = "#9a9a9a"
+            g.lineWidth = 2
+            g.beginPath()
+            g.arc(lx, ly - 4, 9, math.Pi, 2 * math.Pi)
+            g.stroke()
+            g.fillStyle = "#1c1c1c"
+            g.fillRect(lx - 13, ly - 5, 26, 22)
+            g.fillStyle = "#c9a227"
+            g.fillRect(lx - 11, ly - 3, 22, 18)
+            g.fillStyle = "#1c1c1c"
+            g.beginPath()
+            g.arc(lx, ly + 4, 3, 0, 2 * math.Pi)
+            g.fill()
+            g.fillRect(lx - 1.5, ly + 4, 3, 7)
+        }
+
+        g.restore()
+    }
+
     // The VP markers we have art for, by faction style; other factions are shown by their glyph
     val officialVP = Map(
         "mc" -> "vp-mc", "ed" -> "vp-ed", "wa" -> "vp-wa", "vb" -> "vp-vb", "rf" -> "vp-rf",
@@ -934,8 +1004,19 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         drawRule()
 
+        // Warriors held prisoner in forests are drawn behind bars
+        val caged = currentGame.ui.graveyard.not.??(game.board.forests./~(r => factions.of[CommonAbduct].%(game.states.contains)./~(_.from(Cage(r)).$)./(u => (r : Region, u.faction, u.piece)))).toSet
+
         draws.%(_.piece != Keep).sortBy(d => d.y - (d.piece.is[Token]).??(10000) - (d.piece == FreeBuildingSlot).??(20000) - (d.piece == Keep).??(40000)).foreach { d =>
+            val jail = caged.contains((d.region, d.faction, d.piece))
+
+            if (jail)
+                drawJail(g, d.rect, false)
+
             g.drawImage(resources.images.get(d.rect.key), d.rect.x, d.rect.y)
+
+            if (jail)
+                drawJail(g, d.rect, true)
         }
 
         // Counts on stacked warriors, at the lower right of the figure
