@@ -194,7 +194,7 @@ object Meta extends MetaGame { mmm =>
     // The clan picker's i button: the clan ability and the two clan upgrades (the clan cards), then the clan board with
     // the warchief's portrait and power, and the warchief's upgrade card (Warchiefs box)
     override def factionInfo(f : Faction) = |((
-        " i ".txt,
+        "i".txt,
         factionName(f).hlb,
         if (f == Automa)
             $("The solo opponent from Uncharted Horizons: a neutral clan with two Leaders that plays by its own cards. Pick it and one clan.".txt.div(styles.menuText))

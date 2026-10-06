@@ -1327,11 +1327,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
     // A faction in the picker: a tile in a grid when the game has them (Meta.factionTile), else a row with its note;
     // either way with the factionInfo button
     def factionPick(f : meta.F) : Elem = {
-        val info = meta.factionInfo(f)./{ case (label, _, _) => Parameter("faction-info", OnClick(Span(label, xstyles.outlined))) }
+        def info(styles : Style*) = meta.factionInfo(f)./{ case (label, _, _) => Parameter("faction-info", OnClick(Span(label, (xstyles.outlined +: styles).toList))) }
 
         meta.factionTile(f) match {
-            case Some(tile) => Div(Div(tile) ~ info./(i => Div(i)).|(Empty), ZBasic.tile)
-            case None => Div(meta.factionElem(f) ~ info./(" " ~ _).|(Empty) ~ meta.factionNote(f), ZBasic.choice)
+            case Some(tile) => Div(Div(tile) ~ info(xstyles.tileButton)./(i => Div(i)).|(Empty), ZBasic.tile)
+            case None => Div(meta.factionElem(f) ~ info()./(" " ~ _).|(Empty) ~ meta.factionNote(f), ZBasic.choice)
         }
     }
 

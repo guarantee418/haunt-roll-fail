@@ -144,6 +144,7 @@ object xstyles {
     object halfbutton extends CustomStyle(width("30%"), margin.left("2ex"), margin.right("2ex"))
 
     // A faction in the faction picker's grid (MetaGame.factionTile)
+    object tileButton extends CustomStyle(padding.left("1.2ex"), padding.right("1.2ex"), padding.top("0.2ex"), padding.bottom("0.2ex"), display("inline-block"), margin.top("0.4ex"))
     object factionTile extends CustomStyle(width("11ex"), min.height("13ex"), flex.direction("column"), margin("0.6ex"), text.align("center"))
 
     object horbreak extends CustomStyle(width("100%"))
