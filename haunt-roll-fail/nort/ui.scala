@@ -1189,7 +1189,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Robotos: a tag beside the clan name; tapping it lists the cheats
         val robotos = game.robotos(f).?(" ".txt ~ OnClick(RobotosInfo(f), "(Robotos)".spn(styles.tappable)(xlo.pointer))).|(Empty)
 
-        val title = Div(Div(name ~ robotos), styles.smallname, styles.titleLine, xlo.pointer)
+        // The first player marker beside the name
+        val first = (game.first == f).?(" ".txt ~ FirstPlayerIcon()).|(Empty)
+
+        val title = Div(Div(name ~ first ~ robotos), styles.smallname, styles.titleLine, xlo.pointer)
 
         val state = game.states(f)
 
@@ -1197,13 +1200,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         if (game.training) {
             val (food, wood, lore) = Training.resources(f)
             val vp = (state.fame.hlb ~ " of " ~ Training.goal.hl ~ " VP").div
-            val units = (game.onMap(f).hl ~ " units, " ~ game.reserve(f).hl ~ " in reserve").div
+            val units = (game.onMap(f).hl ~ " " ~ UnitIcon() ~ " on the map, " ~ game.reserve(f).hl ~ " in reserve").div
             val res = (food.hl ~ " " ~ Food.elem ~ " " ~ wood.hl ~ " " ~ Wood.elem ~ " " ~ lore.hl ~ " " ~ Lore.elem ~ " controlled").div
             val scores = ("Scores " ~ Training.score(f).hl ~ " VP on a Refresh" ~ (Training.monopolies(f) > 0).?(" (" ~ Training.monopolies(f).hl ~ " Monopol" ~ (Training.monopolies(f) > 1).?("ies").|("y") ~ ")").|(Empty)).div
             val cards = ("Cards: ".txt ~ game.drills.get(f)./(_.num).|(0).hl ~ " face up, " ~ (Drill.all.num - game.drills.get(f)./(_.num).|(0)).hl ~ " face down").div
-            val marks = (game.first == f).?("First player".hh.div).|(Empty)
-
-            container.replace((title.div ~ vp ~ units ~ res ~ scores ~ cards ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f), resources, {
+            container.replace((title.div ~ vp ~ units ~ res ~ scores ~ cards).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f), resources, {
                 case x => onClick(x)
             })
 
@@ -1212,16 +1213,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             return
         }
 
-        val res = Resource.all./(r => state.has(r).hl ~ " " ~ r.elem).join(" ").div
+        val res = Resource.all./(r => state.has(r).hl ~ " " ~ r.elem).join(" ").div(styles.panelLine)
 
         // Sea module: the units away on Raids
         val raiding = SeaExpansion.raiders(f)
-        val units = (state.units.hl ~ " units" ~ (raiding > 0).?(" (" ~ raiding.hl ~ " raiding)").|(Empty) ~ ", " ~ state.fame.hl ~ " " ~ FameIcon()).div
+        val units = (state.units.hl ~ " " ~ UnitIcon() ~ (raiding > 0).?(" (" ~ raiding.hl ~ " raiding)").|(Empty) ~ " " ~ state.fame.hl ~ " " ~ FameIcon()).div(styles.panelLine)
 
         // Warchiefs module: the warchief's name, dimmed while in the reserve
         val chief = game.has(Warchiefs).?(game.chiefs.contains(f).?(Warchief.elem(f)).|(Warchief.name(f).txt ~ " (reserve)".spn(xstyles.smaller85)).div).|(Empty)
 
-        val cards = (state.hand.num.hl ~ " in hand, " ~ state.draw.num.hl ~ " to draw").div
+        // Cards in hand, to draw and discarded; tapping the discards shows them
+        val cards = (state.hand.num.hl ~ " " ~ CardIcon.hand ~ " " ~ state.draw.num.hl ~ " " ~ CardIcon.draw ~ " " ~ OnClick(DiscardPile(f), (state.discard.num.hl ~ " " ~ CardIcon.discard).spn(xlo.pointer))).div(styles.panelLine)
 
         // New Blood: Dragon's Sacrificial Pyre, Kraken's High Tide tokens, Ox's Ancestral Equipment tokens
         val nb = f match {
@@ -1233,7 +1235,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         }
 
         // Team play: the player's team
-        val marks = (game.teams.?(game.teamName(f) ~ " ").|(Empty) ~ (game.first == f).?("First player".hh).|(Empty) ~ (state.passed && game.isOver.not).?(" Passed".txt).|(Empty)).div
+        val marks = (game.teams.?(game.teamName(f) ~ " ").|(Empty) ~ (state.passed && game.isOver.not).?(" Passed".txt).|(Empty)).div
 
         // Alternative victory: one mark per card, in the strip's order: ✓ when fulfilled, the validation count, or ✗
         val goals = game.has(VictoryModule).?(("Victory: ".txt ~ game.victory./{ c =>
