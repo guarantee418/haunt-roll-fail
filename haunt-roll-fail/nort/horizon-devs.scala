@@ -194,12 +194,13 @@ object HorizonDevsExpansion extends Expansion {
 
         // TRADING
         case BarterAction(f, n, once, then) =>
-            val pays = CommonExpansion.payments(f, n)./(_.sortBy(Resource.all.indexOf(_))).distinct
+            // Never give back a resource that is paid in
+            val pays = CommonExpansion.payments(f, n)./(_.sortBy(Resource.all.indexOf(_))).distinct.%(p => Resource.all.exists(r => p.has(r).not))
 
             if (pays.none)
                 Then(then)
             else
-                Ask(f).some(pays)(p => Resource.all.%(r => p.exists(_ != r))./(r => BarterPayAction(f, tradeName(n), p, r, once, then))).add(BarterDoneAction(f, tradeName(n), then))
+                Ask(f).some(pays)(p => Resource.all.%(r => p.has(r).not)./(r => BarterPayAction(f, tradeName(n), p, r, once, then))).add(BarterDoneAction(f, tradeName(n), then))
 
         case BarterPayAction(f, _, pay, get, once, then) =>
             pay.foreach(r => f.gain(r, -1))
