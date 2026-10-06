@@ -946,6 +946,19 @@ case object HideRule extends RuleOption {
 }
 
 
+trait WarriorsOption extends hrf.Setting with OneOfGroup {
+    val group = "Warriors"
+}
+
+case object StackWarriors extends WarriorsOption {
+    val valueOn = "Stacked".hlb ~ " (One Figure With a Count)".hl
+}
+
+case object SeparateWarriors extends WarriorsOption {
+    val valueOn = "Separate".hlb ~ " (Every Figure)".hl
+}
+
+
 trait HighlightsOption extends hrf.Setting with OneOfGroup {
     val group = "Highlights"
 }
@@ -1003,8 +1016,8 @@ object Meta extends MetaGame {
     val name = "root"
     val label = "Root"
 
-    override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone)
-    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, NoOutOfTurn, HighlightNone)
+    override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, StackWarriors, SeparateWarriors, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone)
+    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, NoOutOfTurn, HighlightNone)
 
     override val about = $(
         "A quaint and quirky adaptation of the " ~ "R".styled(Fox).larger ~ "O".styled(Rabbit).larger ~ "O".styled(Mouse).larger ~ "T".styled(Bird).larger ~ " board game.",
