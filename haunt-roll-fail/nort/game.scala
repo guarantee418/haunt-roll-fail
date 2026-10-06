@@ -181,7 +181,8 @@ object Harvest {
 
     // Leaves out the choices made during the harvest: Snake's Scorched Earth and the New Blood clan powers' extra resource
     def forecast(f : Faction)(implicit game : Game) : HarvestForecast = {
-        if (f == Dragon && game.dragonHarvest.has(false))
+        // Dragon Clan harvests only after a sacrifice on its Pyre: nothing if it chose not to, or has nothing to sacrifice or place
+        if (f == Dragon && (game.dragonHarvest.has(false) || (game.dragonHarvest.none && NewBloodExpansion.sacrificeOptions(f).not)))
             return HarvestForecast(0, 0, 0, 0)
 
         val (food, wood, lore) = resources(f)
@@ -261,6 +262,8 @@ case class ClanBoard(f : Faction)
 case class WinterChart(f : Faction)
 // A player's discard pile, opened from the action pane
 case class DiscardPile(f : Faction)
+// Tapping Dragon Clan's Sacrificial Pyre in its panel shows it full size
+case object PyreView
 case class DiscardPileInfoAction(self : Faction, title : Elem, n : Int) extends BaseInfo(title)((n == 0).?("empty".txt).|(n.hl ~ (n == 1).?(" card").|(" cards")) ~ " (tap to see)".spn(xstyles.smaller85)) with ViewObject[Faction] with OnClickInfo { def obj = self ; def param = DiscardPile(self) }
 case class ClanBoardInfoAction(self : Faction, title : Elem) extends BaseInfo(title)(Image(Warchief.board(self), styles.boardInfo)) with ViewObject[Faction] with OnClickInfo { def obj = self ; def param = ClanBoard(self) }
 // Cards shown while there is nothing to do with them; clicking one opens it full screen

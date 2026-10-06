@@ -89,6 +89,17 @@ object Meta extends MetaGame { mmm =>
         $(ColorOption(f, next)) ++ other./~(g => current./(ColorOption(g, _)))
     }
 
+    // Saved colors are kept; a clan that wasn't in the last game gets its seat's color if no one has it, else the first free one
+    override def completeSaved(n : Int, l : $[F], options : $[O]) = {
+        var taken = options.of[ColorOption].%(o => l.has(o.clan))./(_.color)
+        val added = l.zipWithIndex.%{ case (f, _) => options.of[ColorOption].exists(_.clan == f).not }./{ case (f, i) =>
+            val c = PlayerColor.all.lift(i).%(taken.has(_).not).|(PlayerColor.all.diff(taken).head)
+            taken :+= c
+            ColorOption(f, c) : O
+        }
+        options ++ added
+    }
+
     // Colors by seat, as before colors could be chosen
     override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } :+ (YearsOption.standard : O) :+ (StandardVictory : O) :+ (VictoryModeOption(false) : O) :+ (StandardCentral : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O)
 

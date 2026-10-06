@@ -795,9 +795,12 @@ Check these against the rulebook when it is at hand.
 - **Sea module**:
   - The Beach tile is drawn as four map cells: the Port's land tile, the sea
     beyond it and a shore wing on each side of the sea, cut from the
-    rulebook's picture (there is no scan of the tile). The sea and the
-    wings' outer sides take no tiles; the wings' land is part of the Port
-    territory. The Port territory has no resources.
+    rulebook's picture (there is no scan of the tile). The sea takes no
+    tiles. The Port territory is the Port's land above the shore's dashes;
+    each wing's land is two ordinary territories split by the dashes running
+    to its outer top corner (owner, 2026-10-06), joining the tiles placed
+    beside the Port and beyond the wing like any tile side, so no border
+    stops at the shore (a boundary never dead-ends). The Port territory has no resources.
   - Where the cells beyond the empty space are taken (five or six players,
     two first tiles side by side), the Beach goes one or two spaces further
     out; a Beach is never placed beside another Port. The box has five Beaches;
@@ -898,7 +901,8 @@ Check these against the rulebook when it is at hand.
     sacrifice Dragon gets nothing at the Harvest (no fame, no resources); the
     choice is made before the Harvest. The extra food or wood needs a
     territory Dragon controls. A captured unit with the Pyre full just goes
-    back to its owner's reserve.
+    back to its owner's reserve. Svarn's Menders puts the attacker's casualties on
+    the card during the combat, so they don't go on the Pyre.
   - Kraken: a High Tide token goes back as soon as Kraken has no figures in
     its territory. Its casualty applies to fights between players only. The
     Kraken Clan card's food or wood doesn't depend on the territory's icons.

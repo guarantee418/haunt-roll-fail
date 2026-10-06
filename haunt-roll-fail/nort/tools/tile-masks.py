@@ -42,7 +42,7 @@ ORANGE = ('wild-poison', 'wild-peaks-1', 'wild-peaks-2', 'start-relic', 'start-l
 BARRIERS = {'horizon-bridge': [((0.31, 0.39), (0.61, 0.35)), ((0.33, 0.65), (0.64, 0.655))]}
 # Impassable middles inside an orange ring (Wastelands): no territory, left untinted
 RINGED = ('start-relic', 'start-lake', 'start-volcano', 'waste-kobold', 'waste-jotnar', 'waste-nastrond')
-# Beach tiles (Sea module): one area, the land; the sea and the transparent parts are left out
+# Beach tiles (Sea module): the land, split along the dashes on the wings; the sea and the transparent parts are left out
 BEACH = ('beach-port', 'beach-wing-w', 'beach-wing-e')
 
 
@@ -94,7 +94,7 @@ def dashes(a, photo):
     return ok[lab]
 
 
-def segment(tid, areas, a):
+def segment(tid, areas, a, sea=None):
     d = dashes(a, tid in PHOTO)
     if tid in ORANGE:
         d = d | orange(a)
@@ -116,9 +116,21 @@ def segment(tid, areas, a):
             cx, cy = int(px * N), int(py * N)
             seeds[max(0, cy - 3):cy + 4, max(0, cx - 3):cx + 4] = k
     lab = watershed(elev, seeds)
+    # Beach tiles: the sea grows from the water up to the shore's dashes, taking the sand, against the grass; it is one
+    # more region (dropped by the caller)
+    n = len(areas)
+    if sea is not None:
+        r, g, b = a[..., 0], a[..., 1], a[..., 2]
+        grass = ndi.binary_erosion((g > r + 15) & (g > b + 15) & ~sea, iterations=2)
+        two = np.zeros((N, N), int)
+        two[ndi.binary_erosion(sea, iterations=4)] = 1
+        two[grass] = 2
+        shore = watershed(elev, two) == 1
+        n += 1
+        lab[shore] = n
     # Smooth the outlines
     for _ in range(2):
-        votes = np.stack([ndi.uniform_filter((lab == k + 1).astype(float), 9) for k in range(len(areas))])
+        votes = np.stack([ndi.uniform_filter((lab == k + 1).astype(float), 9) for k in range(n)])
         lab = votes.argmax(0) + 1
     return lab
 
@@ -232,11 +244,11 @@ def main():
         im = Image.open(os.path.join(TILES, tid + '.webp')).convert('RGBA' if tid in BEACH else 'RGB').resize((N, N), Image.LANCZOS)
         px = np.asarray(im).astype(int)
         a = px[..., :3]
-        lab = np.ones((N, N), int) if tid in BEACH else segment(tid, areas, a)
+        lab = segment(tid, areas, a, ~land(px)) if tid in BEACH else np.ones((N, N), int) if len(areas) == 1 else segment(tid, areas, a)
         # The resource icons stay clear of the tint
         holes = ndi.binary_dilation(icons(tid, a), iterations=2)
         if tid in BEACH:
-            holes |= ~land(px)
+            holes |= ~land(px) | (lab > len(areas))
         # The Great Lake's water belongs to no territory
         if tid == 'wild-lake':
             r, g, b = a[..., 0], a[..., 1], a[..., 2]
@@ -252,7 +264,17 @@ def main():
             lab_o, n = ndi.label(ndi.binary_dilation(o, iterations=2))
             if n:
                 ring = lab_o == np.argmax(ndi.sum(o, lab_o, range(1, n + 1))) + 1
-                holes |= ndi.binary_erosion(convex_hull_image(ring), iterations=6)
+                # Pieces of the ring cut off by the art (the Jötnar Camp's tusks): the other long thin orange lines,
+                # not the orange bushes
+                for k, sl in enumerate(ndi.find_objects(lab_o)):
+                    piece = lab_o[sl] == k + 1
+                    if piece.sum() > 300 and piece.sum() < 0.3 * piece.size:
+                        ring |= lab_o == k + 1
+                # Inside the ring itself, line included; its convex hull where the outline is too broken to fill
+                filled = ndi.binary_fill_holes(ndi.binary_closing(np.pad(ring, 30), iterations=6))[30:-30, 30:-30]
+                if filled.sum() < 3 * ring.sum():
+                    filled = ndi.binary_erosion(convex_hull_image(ring), iterations=6)
+                holes |= filled
         for k, ar in enumerate(areas):
             alpha = ndi.gaussian_filter(((lab == k + 1) & ~holes).astype(float), 1.0)
             m = Image.fromarray((alpha * 255).astype(np.uint8)).resize((MASK, MASK), Image.LANCZOS)
@@ -261,8 +283,8 @@ def main():
             rgba.save(os.path.join(MASKS, tid + '-' + ar['id'] + '.webp'), lossless=True)
         c = clutter(tid, areas, a, lab)
         if tid in BEACH:
-            c[ndi.binary_dilation(~land(px), iterations=8)] = 9
-        out[tid] = grid(lab, c)
+            c[ndi.binary_dilation(~land(px), iterations=8) | (lab > len(areas))] = 9
+        out[tid] = grid(np.where(lab > len(areas), 1, lab), c)
         if check:
             pal = [(255, 0, 0), (0, 90, 255), (255, 220, 0), (200, 0, 255), (0, 220, 120)]
             col = np.zeros_like(a, dtype=float)

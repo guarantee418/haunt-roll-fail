@@ -317,6 +317,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             val l = lastActions.%(a => a.unwrap.as[MapTarget].exists(_.target == t))
             if (l.num == 1)
                 return l.headOption
+            // Setup: several placements in one territory, the default one
+            l.%(a => MapExpansion.setupDefault(a.unwrap)).single.foreach(a => return |(a))
         }
         None
     }
@@ -386,7 +388,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         case Yellow => ("#ffc400", 0.55)
         case Purple => ("#9b30c8", 0.3)
         case Green => ("#147a14", 0.55)
-        case Orange => ("#ff7a1a", 0.4)
+        case Orange => ("#ff5200", 0.5)
     }
 
     // Border dashes of the closed territories a player controls, bright enough to show on the dark roads
@@ -977,7 +979,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             r.card.foreach { c =>
                 val d = South.rotate(board.at(p.x, p.y).get.r)
                 val (cx, cy) = (sx(p.x + d.dx + 0.5), sy(p.y + d.dy + 0.5))
-                val (w, h) = (474.0, 310.0)
+                val (w, h) = (680.0, 445.0)
                 pieces.add(Sprite($(ImageRect(new RawImage(img(c.info.image)), Rectangle(-w / 2, -h / 2, w, h), 1.0)), $))(cx, cy)
 
                 r.owner.%(_ => r.units > 0).foreach { f =>
@@ -1059,6 +1061,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Creatures module: the creature line, in activation order
         val creatures = (game.has(Creatures) || game.creatureLine.any).$(("Creatures" ~ " (left to right)".spn(xstyles.smaller85)) -> game.creatureLine)
 
+        // Wastelands: Jötunn Blainn's card once the Jötnar Camp is on the map, with where he is
+        val blainn = game.jotnarCamp.any.$(("Jötunn Blainn" ~ game.blainn./{ case (f, _) => " (" ~ f.elem ~ ")" }.|(" (at his camp)".txt).spn(xstyles.smaller85)) -> $(BlainnCard))
+
         // Uncharted Horizons: this year's Event and the next one, and the Alternative victory cards
         val events = game.has(EventsModule).$(("Event" ~ " (this year, next)".spn(xstyles.smaller85)) -> (game.event.$ ++ game.eventDeck.take(1)))
 
@@ -1070,7 +1075,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Sea module: the Raid cards on the Ports, then the ones kept for the next Harvest or Start of Year
         val raids = (game.has(Sea) && (game.raids.values.exists(_.card.any) || game.raidKept.any)).$(("Raids" ~ " (on the Ports, then kept)".spn(xstyles.smaller85)) -> (game.ports./~(p => game.raids(p).card) ++ game.raidKept./(_.card)))
 
-        court.replaceCached((game.year, game.display, game.achievements, game.creatureLine, game.event, game.eventDeck.num, game.victory, game.automaPlayed, game.raids, game.raidKept).toString, strip((automa ++ events ++ victory ++ developments ++ achievements ++ creatures ++ raids)./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
+        court.replaceCached((game.year, game.display, game.achievements, game.creatureLine, game.event, game.eventDeck.num, game.victory, game.automaPlayed, game.raids, game.raidKept, game.jotnarCamp, game.blainn./(_._1)).toString, strip((automa ++ events ++ victory ++ developments ++ achievements ++ creatures ++ blainn ++ raids)./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
     }
 
     // The Winter cost chart, with each clan on its row and what f has to pay with
@@ -1115,6 +1120,27 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         ).div
     }
 
+    // Dragon Clan's Sacrificial Pyre: the token with the units on it drawn on its two circles, in their owners' colors
+    def pyreElem(size : Style) : Elem = {
+        val slots = $(styles.pyreSlot0, styles.pyreSlot1).zipWithIndex./{ case (s, i) =>
+            game.pyre.lift(i)./(g => Image("unit-" + game.colors(g).id, $(s, styles.pyreUnit), |(g.name))).|(Div(Empty, s, styles.pyreEmpty))
+        }
+        val names = game.pyre.none.?("empty").|(game.pyre./(_.name).mkString(", "))
+        Div(Image("token-pyre", styles.pyreImage, "Sacrificial Pyre: " + names) ~ slots.merge, styles.pyre, size)
+    }
+
+    def pyreView : Elem = {
+        val units = game.pyre.none.?("none".txt).|(game.pyre./(g => g.name.styled(colorOf(g))).join(", "))
+
+        ((Dragon.name.styled(colorOf(Dragon)) ~ " " ~ "Sacrificial Pyre".hl).hlb.div ~
+            pyreElem(styles.pyreLarge).div ~
+            ("Units on it: " ~ units ~ " (room for " ~ NewBloodExpansion.pyreSize.hl ~ ")").div ~
+            "Enemy casualties go on it after each combat. To harvest, Dragon sacrifices a unit from it (back to its owner) or places one of its deployed units on it.".spn(xstyles.smaller85).div ~
+            HorizontalBreak ~
+            "(tap to close)".spn(xstyles.smaller85).div
+        ).div
+    }
+
     // A player's discard pile, newest card last
     def discardPile(f : Faction) : Elem = {
         val l = game.states(f).discard
@@ -1153,7 +1179,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         // New Blood: Dragon's Sacrificial Pyre, Kraken's High Tide tokens, Ox's Ancestral Equipment tokens
         val nb = f match {
-            case Dragon => ("Pyre: ".txt ~ game.pyre.none.?("empty".txt).|(game.pyre./(g => (g == Dragon).?("own".txt).|(g.name.styled(colorOf(g)))).join(", "))).div
+            case Dragon => OnClick(PyreView, Div(pyreElem(styles.pyreSmall), styles.pyreLine, xlo.pointer))
             case Kraken => ("High Tide: ".txt ~ (2 - game.tides.num).hl ~ " in reserve").div
             case Ox => ("Equipment: ".txt ~ game.gearReady.num.hl ~ " ready, " ~ game.gearUsed.num.hl ~ " used").div
             case Automa => ("Cards: ".txt ~ game.automaActions.num.hl ~ " to play, " ~ game.automaDeck.num.hl ~ " in its pile").div
@@ -1172,7 +1198,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // The next harvest as things stand, and the Winter costs (tapping them shows the whole Winter chart)
         val next = Harvest.forecast(f)
         val gains = $(next.food -> Food.elem, next.wood -> Wood.elem, next.lore -> Lore.elem, next.fame -> FameIcon()).filter(_._1 > 0).map { case (n, e) => ("+" + n).hl ~ " " ~ e }
-        val harvest = ("Harvest: ".txt ~ gains.any.?(gains.join(" ")).|("nothing".txt)).div
+        // Dragon Clan: 1 more food or wood for the sacrifice
+        val pyre = (f == Dragon && game.dragonHarvest.has(false).not && (game.dragonHarvest.any || NewBloodExpansion.sacrificeOptions(f)) && game.controlled(f).any).?(" " ~ "+1".hl ~ " " ~ Food.elem ~ "/" ~ Wood.elem).|(Empty)
+        val harvest = ("Harvest: ".txt ~ gains.any.?(gains.join(" ")).|("nothing".txt) ~ pyre).div
 
         val (food, wood) = EventsExpansion.winterCost(f)
         val costs = $(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => n.hl ~ " " ~ e }
@@ -1381,6 +1409,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case DiscardPile(f) =>
             showOverlay(overlayScrollX(discardPile(f)).onClick, onClick)
+
+        case PyreView =>
+            showOverlay(overlayScrollX(pyreView).onClick, onClick)
 
         case Nil =>
             clearOverlay()
