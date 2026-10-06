@@ -58,17 +58,21 @@ case class AdsetSeatingAction(shuffled : $[Player]) extends ShuffledAction[Playe
 case class AdsetClansAction(shuffled : $[Faction]) extends ShuffledAction[Faction]
 case class AdsetTilesAction(shuffled : $[String]) extends ShuffledAction[String]
 
-case class AdsetBanAction(self : Player, clan : Faction, then : ForcedAction) extends BaseAction(self, "bans a clan from the draft")(ClanCard(clan, 0).handImg) with ViewObject[Card] { def obj = ClanCard(clan, 0) }
+// The ban and the pick show the clans as the clan picker does: emblem, name and the "i" button (AdsetExpansion.clanTile)
+trait AdsetDraftChoice { def clan : Faction }
+
+case class AdsetBanAction(self : Player, clan : Faction, then : ForcedAction) extends BaseAction(self, "bans a clan from the draft")(AdsetExpansion.clanTile(clan, true)) with AdsetDraftChoice
 case object AdsetLandsStepAction extends ForcedAction
 case class AdsetLandsAction(self : Player, lands : String) extends BaseAction(self, "chooses the expansion")(AdsetExpansion.landsName(lands).hl)
 case object AdsetCentralStepAction extends ForcedAction
 case class AdsetCentralAction(self : Player, tile : String) extends BaseAction(self, "chooses the central tile")(AdsetExpansion.centralLabel(tile))
 // round 1: each player in l picks a clan, then places a tile and three units; round 2: a second tile and three units
 case class AdsetTurnAction(round : Int, l : $[Player]) extends ForcedAction
-case class AdsetPickAction(self : Player, clan : Faction, rest : $[Player]) extends BaseAction(self, "chooses a clan")(ClanCard(clan, 0).handImg) with ViewObject[Card] { def obj = ClanCard(clan, 0) }
+case class AdsetPickAction(self : Player, clan : Faction, rest : $[Player]) extends BaseAction(self, "chooses a clan")(AdsetExpansion.clanTile(clan, true)) with AdsetDraftChoice
 
-// The draft, shown to everyone while it lasts
-case class AdsetClanInfoAction(title : Elem, clan : Faction) extends BaseInfo(title)(ClanCard(clan, 0).handImg) with ViewObject[Card] with OnClickInfo { def obj = ClanCard(clan, 0) ; def param = ClanCard(clan, 0) }
+// The draft, shown to everyone while it lasts; tapping a clan shows its info
+case class AdsetClanInfo(clan : Faction)
+case class AdsetClanInfoAction(title : Elem, clan : Faction) extends BaseInfo(title)(AdsetExpansion.clanTile(clan, false)) with AdsetDraftChoice with OnClickInfo { def param = AdsetClanInfo(clan) }
 
 
 object AdsetExpansion extends Expansion {
@@ -79,6 +83,11 @@ object AdsetExpansion extends Expansion {
         case Some(o) => o.explain.take(1)./(_.div).merge
         case None => (Waste.elem(tile) ~ ": the core game's starting tile.").div
     }
+
+    // A clan as in the clan picker (Meta.factionTile): its emblem and name, and the "i" button for its info (Meta.factionInfo)
+    def clanTile(clan : Faction, button : Boolean) : Elem =
+        Div(Image("clan-" + clan.style, styles.pickIcon)) ~ Div(clan.name.hlb) ~
+        button.?(Div(Parameter(AdsetClanInfo(clan), OnClick(Span("i".txt, $(xstyles.outlined, xstyles.tileButton)))))).|(Empty)
 
     // Clans are still to be picked
     def drafting(implicit game : Game) = game.setup.num < game.arity
@@ -370,5 +379,7 @@ object MetaAdset extends MetaGame {
     // Any clan can be drafted, and Wilderness, Wastelands and every central tile can be chosen in the game
     val assets = Meta.assets./(a => ConditionalAssetsList(
         (factions : $[F], options : $[O]) => a.condition(Meta.clans, options ++ always ++ $(ModuleOption(Wilderness), ModuleOption(Wastelands), WildLakeCentral)),
-        a.path, a.prefix, a.ext, a.lzy, a.scale, a.lossless)(a.list))
+        a.path, a.prefix, a.ext, a.lzy, a.scale, a.lossless)(a.list)) :+
+    // The clan emblems, for the draft
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "clan", "clan-", "webp")(Meta.clans./(f => ImageAsset(f.style)))
 }

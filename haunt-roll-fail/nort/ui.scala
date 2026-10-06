@@ -1456,6 +1456,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         case PyreView =>
             showOverlay(overlayScrollX(pyreView).onClick, onClick)
 
+        // Adset: a drafted clan's info, as behind the clan picker's i button
+        case AdsetClanInfo(f) =>
+            Meta.factionInfo(f).foreach { case (_, title, l) => showOverlay(overlayScrollX((title.div ~ l./(e => Div(e)).merge).div(xlo.flexvcenter)).onClick, onClick) }
+
         case Nil =>
             clearOverlay()
 
@@ -1570,7 +1574,23 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         })
     }
 
+    // Adset: a clan's "i" button opens its info instead of choosing it
+    override def convertActions(faction : |[F], actions : $[UserAction], then : UserAction => Unit = null) : $[ZOption] =
+        if (actions.exists(_.is[AdsetDraftChoice]).not || then == null)
+            super.convertActions(faction, actions, then)
+        else
+            actions./~(a => super.convertActions(faction, $(a), then)./(z => a @@ {
+                case d : AdsetDraftChoice => z.copy(clear = false, click = {
+                    case AdsetClanInfo(f) => onClick(AdsetClanInfo(f))
+                    case x => z.click(x)
+                })
+                case _ => z
+            }))
+
     override def styleAction(faction : |[F], actions : $[UserAction], a : UserAction, unavailable : Boolean, view : |[Any]) : $[Style] =
+        if (a.is[AdsetDraftChoice])
+            $(xstyles.choice, xstyles.xx, xstyles.chp, xstyles.factionTile, styles.draftTile, xlo.pointer)
+        else
         view @@ {
             case _ if unavailable.not => $()
             case Some(_) => $(xstyles.unavailableCard)
