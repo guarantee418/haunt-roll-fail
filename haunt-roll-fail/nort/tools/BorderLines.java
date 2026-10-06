@@ -33,6 +33,40 @@ public class BorderLines {
     // (<tile>-sea.webp, made by tile-masks.py) is read like an area's; the map colours only the land side
     static final Set<String> BEACH = Set.of("beach-port", "beach-wing-w", "beach-wing-e");
 
+    // Tiles whose pale dashes the colour tests miss: their borders traced by hand in tools/traced-borders.json
+    // (border "a-b" -> points); a light dash near a traced line belongs to that line's border
+    static Map<String, Map<String, List<double[]>>> traced = new LinkedHashMap<>();
+
+    static void readTraced() throws IOException {
+        String js = Files.readString(nort.resolve("tools/traced-borders.json")).replaceAll("\\s", "");
+        Matcher tm = Pattern.compile("\"([\\w-]+)\":\\{(.*?)\\}").matcher(js);
+        while (tm.find()) {
+            Map<String, List<double[]>> borders = new LinkedHashMap<>();
+            Matcher bm = Pattern.compile("\"(\\w+-\\w+)\":\\[(.*?)\\]\\]").matcher(tm.group(2));
+            while (bm.find()) {
+                List<double[]> pts = new ArrayList<>();
+                Matcher pm = Pattern.compile("\\[([-\\d.]+),([-\\d.]+)").matcher(bm.group(2) + "]");
+                while (pm.find())
+                    pts.add(new double[] { Double.parseDouble(pm.group(1)), Double.parseDouble(pm.group(2)) });
+                borders.put(bm.group(1), pts);
+            }
+            traced.put(tm.group(1), borders);
+        }
+    }
+
+    // Distance from x, y to a traced line, in tile units
+    static double toLine(List<double[]> pts, double x, double y) {
+        double best = 1e9;
+        for (int i = 0; i + 1 < pts.size(); i++) {
+            double[] p = pts.get(i), q = pts.get(i + 1);
+            double dx = q[0] - p[0], dy = q[1] - p[1];
+            double l = dx * dx + dy * dy;
+            double u = l == 0 ? 0 : Math.max(0, Math.min(1, ((x - p[0]) * dx + (y - p[1]) * dy) / l));
+            best = Math.min(best, Math.hypot(x - p[0] - u * dx, y - p[1] - u * dy));
+        }
+        return best;
+    }
+
     record Border(String a, String b, boolean wall) {}
     record Tile(String id, List<String> areas, List<Border> borders) {}
     // A dash as a bent bar: its two ends and middle on its centre line, and its width
@@ -43,6 +77,7 @@ public class BorderLines {
         nort = root.resolve("nort");
         tiles = root.resolve("webp2/nort/images/tile");
         masks = tiles.resolve("mask");
+        readTraced();
         String check = args.length >= 2 && args[0].equals("--check") ? args[1] : null;
         if (check != null)
             Files.createDirectories(Paths.get(check));
@@ -82,6 +117,17 @@ public class BorderLines {
             }
 
             boolean[] dash = dashes(rgb, PHOTO.contains(t.id) || t.id.startsWith("wild-"), TEAL.contains(t.id));
+            Map<String, List<double[]>> lines = traced.get(t.id);
+            if (lines != null)
+                for (int i = 0; i < N * N; i++) {
+                    int r = rgb[i * 3], g = rgb[i * 3 + 1], b = rgb[i * 3 + 2];
+                    int lo = Math.min(r, Math.min(g, b)), spread = Math.max(r, Math.max(g, b)) - lo;
+                    boolean near = false;
+                    if (lo > 95 && g > 150 && b >= r - 10 && spread < 90)
+                        for (List<double[]> pts : lines.values())
+                            if (toLine(pts, (i % N + 0.5) / N, (i / N + 0.5) / N) < 0.045) { near = true; break; }
+                    dash[i] = near;
+                }
             int[] comp = new int[N * N];
             List<int[]> comps = label(dash, comp);
 
@@ -97,6 +143,27 @@ public class BorderLines {
                 // Dashes are bars, some bent; skip thin lines (building space outlines) and round blobs
                 if (f.width * N < 5 || f.width * N > 15 || f.length < f.width * 1.2)
                     continue;
+                // Traced tiles: the border of the nearest traced line
+                if (lines != null) {
+                    // Only dash-sized bars: the snow and pale ground along the roads make long streaks
+                    if (f.length * N > 32 || f.length * N < 12)
+                        continue;
+                    String key = null;
+                    double best = 0.045;
+                    for (var e : lines.entrySet()) {
+                        double d = toLine(e.getValue(), f.x, f.y);
+                        if (d < best) { best = d; key = e.getKey(); }
+                    }
+                    if (key == null)
+                        continue;
+                    String[] ab = key.split("-");
+                    for (Border br : found.keySet())
+                        if ((br.a.equals(ab[0]) && br.b.equals(ab[1])) || (br.a.equals(ab[1]) && br.b.equals(ab[0]))) {
+                            found.get(br).add(f);
+                            pixels.get(br).add(c);
+                        }
+                    continue;
+                }
                 // The two nearest areas (some masks of the Wilderness tiles stop short of the roads)
                 double[] near = new double[t.areas.size()];
                 Arrays.fill(near, 1e9);
