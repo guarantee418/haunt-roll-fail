@@ -129,6 +129,13 @@ trait MetaBase {
     def factionName(f : F) : String
     def factionElem(f : F) : Elem
     def factionNote(f : F) : Elem = Empty
+    // The faction picker shows the factions as a grid of tiles when this gives one (Northgard: the clan's emblem
+    // and name), each with the factionInfo button, instead of rows with factionElem and factionNote
+    def factionTile(f : F) : |[Elem] = None
+    // Random picks offered in the faction picker: the label (or tile) and the factions to pick from. The faction is drawn when
+    // the pick is made, among those not already in the game, and stays hidden (shown as randomName) until the game starts.
+    def randomFactions : $[(Elem, $[F])] = $
+    def randomName : String = "Random"
     // A faction already picked for the game, in the faction picker
     def factionChosenElem(f : F) : Elem = factionElem(f).spn(xstyles.bold) ~ factionNote(f)
 

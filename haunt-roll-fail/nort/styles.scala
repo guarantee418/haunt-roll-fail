@@ -48,6 +48,10 @@ package object elem {
 
         object title extends CustomStyle()
 
+        // The clan picker's grid
+        object pickIcon extends CustomStyle(height("7ex"), display("block"), margin.left("auto"), margin.right("auto"))
+        object pickRandomBox extends CustomStyle(height("7ex"), display("flex"), align.items("center"), justify.content("center"))
+        object pickRandom extends CustomStyle(font.size("300%"), line.height("1"))
         object menuIcon extends CustomStyle(height("2.4em"), vertical.align("middle"), margin.right("1ex"))
         object menuBoard extends CustomStyle(display("block"), width("60ex"), max.width("100%"), margin.left("auto"), margin.right("auto"))
         object menuWarchiefCard extends CustomStyle(display("block"), width("24ex"), max.width("60%"), margin.left("auto"), margin.right("auto"), margin.top("2ex"))
