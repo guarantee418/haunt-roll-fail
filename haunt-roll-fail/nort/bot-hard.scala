@@ -16,7 +16,8 @@ import hrf.logger._
 // what the clan's territories will give at the remaining harvests, closed territories and Altars, progress towards
 // three closed territories with large buildings (the sudden win), units and resources, the Winter bill, and the risk
 // of losing territories to adjacent enemies. Fights use the exact odds of the two dice. Opponents' positions count
-// against the bot, the leader's more, so it attacks a clan that is about to win.
+// against the bot, the leader's more, so it attacks a clan that is about to win. With Uncharted Horizons' Alternative
+// victory, progress towards the cards in play counts the same way (victoryValue).
 //
 // Playing priorities follow strategy discussions on BoardGameGeek (Northgard: Uncharted Lands forums):
 // - most games end with three closed territories holding large buildings, so large spaces and closing territories
@@ -106,6 +107,9 @@ object HardCombat {
 object HardEvaluation {
     // An action the bot fails to value is valued like the Easy bot does; the first few failures are logged
     var failures = 0
+
+    // Actions valued the Easy way because the Hard bot has no score for them, by class (host.scala prints them)
+    val unvalued = scala.collection.mutable.Map[String, Int]()
 
     def failed(a : Action, e : Throwable) {
         failures += 1
@@ -213,6 +217,65 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         base + potential
     }
 
+    // ALTERNATIVE VICTORY (Uncharted Horizons): how far f is towards each card in play, from 0 to 1;
+    // extra: validation counts f would add (a building, a trade, a closed territory, ...)
+    def victoryProgress(f : Faction, c : VictoryCard, extra : Map[String, Int]) : Double = {
+        def frac(x : Double, n : Double) = math.max(0.0, math.min(1.0, x / n))
+        val mine = game.controlled(f)
+        val closed = mine.%(board.closed)
+        def large(t : Territory) = game.buildingsIn(t).exists(_._2.large)
+        def lair(t : Territory) = t.areas.exists(a => board.spec(a).lair)
+
+        c.target match {
+            case Some(n) => frac(game.progressOf(f, c.id) + extra.getOrElse(c.id, 0), n)
+            case None => c.id match {
+                case "many-territories" => frac(closed.num + 0.3 * (mine.num - closed.num), 6)
+                case "large-buildings" => frac(mine./~(game.buildingsIn).count(_._2.large), 4)
+                case "spreading" => frac(mine.num, 8)
+                case "creature-territories" => frac(closed.count(lair) + 0.3 * mine.%(board.open).count(lair), 3)
+                case "vast-territory" => mine./(t => math.min(1.0, board.tiles(t) / 6.0) * board.closed(t).?(1.0).|(0.7) * large(t).?(1.0).|(0.7)).maxOr(0.0)
+                case "large-territories" => frac(closed.count(large) + 0.4 * mine.count(t => board.closed(t) != large(t)), 3)
+                case "two-larger-territories" => frac(mine./(t => math.min(1.0, board.tiles(t) / 5.0) * board.closed(t).?(1.0).|(0.7) * large(t).?(1.0).|(0.6)).sortBy(-_).take(2).sum, 2)
+                case "mountains" => frac(closed.count(VictoryExpansion.rough) + 0.3 * mine.%(board.open).count(VictoryExpansion.rough), 6)
+                case "knowledge" =>
+                    val u = VictoryExpansion.upgrades(f)
+                    if (game.has(Warchiefs)) frac(u, 3) else 0.7 * frac(u, 2) + 0.3 * frac(f.lore, 3)
+                case "prosperity" => frac(f.fame, 50)
+                case "population" => frac(game.onMap(f), game.unitLimit - 1) * (f.unrest == 0).?(1.0).|(0.5)
+                case "production" => (math.min(f.food, 5) + math.min(f.wood, 5) + math.min(f.lore, 5)) / 15.0
+                case "building-ownership" => frac(mine./~(game.buildingsIn).num, 9)
+                case _ => 0.0
+            }
+        }
+    }
+
+    // Thane: one Map Control card and one Wealth card; Jarl: all of them. Winning is worth as much as the three territories
+    def victoryValue(f : Faction, extra : Map[String, Int] = Map()) : Double = {
+        if (game.has(VictoryModule).not || game.victory.none)
+            return 0
+
+        val all = game.victory./(c => victoryProgress(f, c, extra))
+        def of(map : Boolean) = game.victory.zip(all).filter(_._1.mapControl == map).map(_._2)
+
+        if (options.has(VictoryModeOption(true))) {
+            if (all.forall(_ >= 1)) 6000.0
+            else all./(p => 500 * p * p).sum + 1500 * all.product
+        }
+        else {
+            val m = of(true).maxOr(0.0)
+            val w = of(false).maxOr(0.0)
+            if (m >= 1 && w >= 1) 6000.0
+            else 600 * (m * m + w * w) + 2000 * m * w
+        }
+    }
+
+    lazy val victorySteps = scala.collection.mutable.Map[String, Double]()
+
+    // What one more validation count (a building, a trade, ...) is worth to the bot
+    def victoryStep(id : String, n : Int = 1) : Double =
+        if (game.has(VictoryModule).not || game.victory.exists(_.id == id).not) 0.0
+        else victorySteps.getOrElseUpdate(id + n, victoryValue(self, Map(id -> n)) - victoryValue(self))
+
     // Food and wood owed at the next Winter, against what f will have; an Unrest card costs 5 fame
     def winterValue(f : Faction) : Double = {
         val (needFood, needWood) = Winter.cost(f.units)
@@ -287,6 +350,10 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
 
         v += strongholdValue(f)
 
+        v += 100.0 * f.fame
+
+        v += victoryValue(f)
+
         // Exploring needs an open territory: closing territories by exploring gives fame, and finds new spaces
         if (game.pile.any && harvests > 1) {
             val open = game.controlled(f).count(board.open)
@@ -340,7 +407,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val buildings = game.buildings
         val chiefs = game.chiefs
         val companion = game.companion(self)
-        val (food, wood, lore, fame) = (self.food, self.wood, self.lore, self.fame)
+        // Every player's resources and fame (team trades and some effects change another player's)
+        val stocks = players./(f => (f, f.food, f.wood, f.lore, f.fame))
         try {
             change
             total
@@ -350,10 +418,12 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             game.buildings = buildings
             game.chiefs = chiefs
             game.setCompanion(self, companion)
-            self.food = food
-            self.wood = wood
-            self.lore = lore
-            self.fame = fame
+            stocks.foreach { case (f, food, wood, lore, fame) =>
+                f.food = food
+                f.wood = wood
+                f.lore = lore
+                f.fame = fame
+            }
         }
     }
 
@@ -462,7 +532,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             // Closing an enemy's territory gives them fame every harvest
             val gift = enemies./(e => game.controlled(e).%(board.closed).num).sum - enemyClosed
             val lairs = game.has(Creatures).??(Tiles(tile).areas.count(_.lair) * 50)
-            value(self) - base + fame * 100 + raven + stag + boar - lairs - gift * 40
+            value(self) - base + fame * 100 + raven + stag + boar - lairs - gift * 40 + closedNow.any.?(victoryStep("exploration", closedNow.num)).|(0.0)
         }
     }
 
@@ -533,9 +603,9 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
 
         case ReplaceCardAction(_, c) => 75 - resourceValue(Lore) - cardValue(c)
 
-        case RemoveCardAction(_, c) => 150 - 2 * resourceValue(Lore) - cardValue(c) + thin(c)
+        case RemoveCardAction(_, c) => 150 - 2 * resourceValue(Lore) - cardValue(c) + thin(c) + victoryStep("refinement")
 
-        case UpgradeCardAction(_, c, u, remove) => upgradeValue(u) - 3 * resourceValue(Lore) - cardValue(c) + remove.?(thin(c)).|(0.0)
+        case UpgradeCardAction(_, c, u, remove) => upgradeValue(u) - 3 * resourceValue(Lore) - cardValue(c) + remove.?(thin(c)).|(0.0) + victoryStep("refinement")
 
         // Passing takes the best Development card now, but the cards left in hand do nothing this year
         case PassAction(_) =>
@@ -593,11 +663,21 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
 
         v match {
             case Some(x) => $(Evaluation((x + math.random() * 4).round.toInt, "hard"))
-            case None => new GameEvaluation(self).eval(a)
+            case None =>
+                val k = a.unwrap.getClass.getSimpleName
+                HardEvaluation.unvalued(k) = HardEvaluation.unvalued.getOrElse(k, 0) + 1
+                new GameEvaluation(self).eval(a)
         }
     }
 
+    // A choice that only goes on to the next step (Done, Skip, "Take no token", "No Raid", ...) is worth nothing in itself
     def value(action : Action) : |[Double] = action.unwrap match {
+        case _ : UserAction => valueOf(action)
+        case _ if action.is[UserAction] && action.unwrap.is[ForcedAction] => |(0)
+        case _ => valueOf(action)
+    }
+
+    def valueOf(action : Action) : |[Double] = action.unwrap match {
         case _ : Unavailable => |(-1000000)
         case CancelAction => |(-100000)
 
@@ -650,7 +730,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             val bonus = attack.??(e.bonus * 40 + (left - cost > 0).??(30))
             // Hold an attack against a clan that can still answer, unless it's worth a lot
             val wait = (attack && game.present(o).exists(f => game.enemy(self, f) && f.passed.not) && g < 250).??(20)
-            |(g + bonus - wait)
+            val conquest = attack.?(0.6 * victoryStep("conquest")).|(0.0)
+            |(g + bonus - wait + conquest)
         case MoveDoneAction(_, _, _) => |(5)
 
         // FIGHTS
@@ -669,17 +750,22 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             } + n * 10)
 
         // BUILD
-        case BuildConfirmAction(_, area, b, space, cost, _, e, _, _) => |(build(area, b, space, cost))
-        case BuildPlaceAction(_, area, b, space, cost, _, e, _, _) => |(build(area, b, space, cost))
-        case BuildSpaceAction(_, area, b, space, _, cost, _, e, _, _) => |(build(area, b, space, cost))
+        case BuildConfirmAction(_, area, b, space, cost, _, e, _, _) => |(build(area, b, space, cost) + victoryStep("architecture"))
+        case BuildPlaceAction(_, area, b, space, cost, _, e, _, _) => |(build(area, b, space, cost) + victoryStep("architecture"))
+        case BuildSpaceAction(_, area, b, space, _, cost, _, e, _, _) => |(build(area, b, space, cost) + victoryStep("architecture"))
         case BuildDoneAction(_, _, _) => |(0)
+        // Industrious Villagers: swap a building for another of the same size
+        case ReplaceBuildingAction(_, _, space, b, _) => |(gain(game.buildings += space -> b))
+        case ReplaceSkipAction(_, _) => |(0)
 
         // EXPLORE
         case ExploreTurnAction(_, tile, spot, r, _, _, _) => |(explorePlacement(tile, spot, r))
         case ExploreRedrawAction(_, _, _, _, _) => |(70)
 
         // HARVEST
-        case TradeForAction(_, pay, r, _) => |(gain { pay.foreach(x => self.gain(x, -1)) ; self.gain(r, 1) })
+        case TradeForAction(_, pay, r, _) => |(gain { pay.foreach(x => self.gain(x, -1)) ; self.gain(r, 1) } + victoryStep("trading"))
+        // A teammate's resources count too; a small cost keeps trades from going back and forth
+        case TeamTradeAction(_, mate, give, take, _) => |(gain { self.gain(give, -1) ; mate.gain(give, 1) ; mate.gain(take, -1) ; self.gain(take, 1) } + victoryStep("trading") - 15)
         case DoneAction(_) => |(0)
 
         // SNAKE
@@ -705,7 +791,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case CreatureAttackAction(_, area, c, e, _, _) =>
             val t = board.territory(area)
             val (p, lost) = HardCombat.creatureWin(game.strength(t, self, true) + e.bonus + spendable(self) / 2, c.kind.value, game.figures(t, self), true)
-            |(p * (100 * c.kind.fame + 60 + 0.3 * territoryWorth(t, self)) - lost * 45 - 20)
+            |(p * (100 * c.kind.fame + 60 + 0.3 * territoryWorth(t, self) + victoryStep("hunting")) - lost * 45 - 20)
         case CreatureDeclareDoneAction(_, _, _) => |(0)
         case CreatureFoodAction(_, area, c, e, attacking, food, _) =>
             val t = board.territory(area)
@@ -752,6 +838,118 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case RapaciousDiscardAction(_, _, card, _) => |(-cardValueSafe(card) - 0.3 * utility(card))
         case RapaciousGiveAction(_, _, _, pay, _) => |(-pay./(resourceValue).sum)
         case EruptTargetAction(_, target, _) => |(100 * enemyWeight(target) - game.allied(self, target).??(1000))
+        case BriberyUnitsAction(_, from, enemy, to, n, _) => |(gain { game.removeUnits(board.territory(from), enemy, n) ; game.addUnits(to, enemy, n) })
+        case AnnexationOrderAction(_, exploreFirst, _) => |(exploreFirst.??(5))
+        case AnnexationExploreYesAction(_, _) => |(exploreGain(ExploreEffect()))
+
+        // REROLLS: Liv (Raven's warchief) and Ox's token 3, from the exact odds of the face kept against a new roll
+        case LivKeepAction(_, keep) => |(keepOdds(keep))
+        case LivRerollAction(_, again) => |(rerollOdds(again))
+        case GearKeepAction(_, keep) => |(keepOdds(keep))
+        case GearRerollAction(_, again) => |(rerollOdds(again))
+        // Liv's Cunning: wood or lore spent like food, while it still helps
+        case LivCunningAction(_, defender, area, e, r, spent, _) => |((spent.num < game.figures(board.territory(area), self)).?(cunning(area, spent.num)).|(-100.0) - resourceValue(r))
+        case CreatureCunningAction(_, area, c, e, r, spent, _) => |((spent.num < game.figures(board.territory(area), self)).?(cunning(area, spent.num)).|(-100.0) - resourceValue(r))
+
+        // The order of the fights: the best odds first
+        case FightAction(_, area, e, _) =>
+            val t = board.territory(area)
+            |(game.present(t).but(self).headOption./(o => 10 * fightOdds(t, self, o, e.bonus)).|(0.0))
+        case CreatureFightAction(_, _, _, _, _) => |(0)
+        case LivCunningDoneAction(_, _, _, _, _, _) => |(0)
+        case CreatureCunningDoneAction(_, _, _, _, _, _) => |(0)
+        case HalvardCraftSkipAction(_, _) => |(0)
+        // Brand's Bravery: the beaten enemy retreats where it does them the least good
+        case BrandRetreatToAction(_, loser, from, to, n, kaija, _, _) => |(gain { game.removeUnits(board.territory(from), loser, n) ; game.addUnits(to, loser, n) })
+
+        // OX (New Blood): Ancestral Equipment tokens
+        case GearTakeAction(_, _, n, _) => |(gearValue(n) + 10)
+        case GearUseAction(_, n, area, _, _, _) => |(gearUse(n, area))
+        case TrueHeroAction(_, space, _, _) => |(gain(game.buildings -= space))
+
+        // OTHER NEW BLOOD CLANS
+        case SacrificeAction(_, owner, _) => |((owner == self).?(-50.0).|(60.0 + 40 * enemyWeight(owner)))
+        case PyrePlaceAction(_, area, _) => |(gain(game.removeUnits(board.territory(area), self, 1)) + 50)
+        case PyreReturnAction(_, area, _) => |(gain(game.addUnits(area, self, 1)))
+        case SacrificeCaptureAction(_, area, enemy, _) => |(removeEnemy(area, enemy))
+        case TidePlaceAction(_, area, _) =>
+            val t = board.territory(area)
+            val (f, w, l) = game.produce(t)
+            |(20 + (f + w + l) * 20 + game.controlled(self).has(t).??(30))
+        case KaraTideAction(_, _, _, _) => |(10)
+        case EndlessTideAction(_, area, enemy, _) => |(removeEnemy(area, enemy) + resourceValue(Lore))
+        case KnowledgeChoiceAction(_, _, _, r, _, _, _) => |(r./(resourceValue).|(70.0))
+        case RatRemoveAction(_, area, _, _) => |(gain { game.removeUnits(board.territory(area), self, 1) ; self.wood += 1 })
+        case OverworkRemoveAction(_, area, _) => |(gain(game.removeUnits(board.territory(area), self, 1)))
+        case OverworkCollectAction(_, area, _) => |(produceValue(board.territory(area)))
+        case CraftsmenReplaceAction(_, _, space, b, _) => |(gain(game.buildings += space -> b))
+        case HorseWoodAction(_, _, _, _) => |(resourceValue(Wood))
+        case QualityBuildAction(_, _, _) => |(40)
+        case PrecisionPayAction(_, r, _, _) => |(70 - resourceValue(r))
+        case LynxUnitsAction(_, _, n, _) => |(5.0 * n)
+
+        // WASTELANDS: Kobold and Kobold Camp exchanges, Jötunn Blainn, the volcano, Mimirsbrunn, the Gate of Helheim, Vedrfolnir
+        case KoboldSwapAction(_, give, _, _, _, _) => |(gain { self.gain(give, -1) ; self.gain((give == Food).?(Wood).|(Food), 1) })
+        case CampTradeAction(_, give, g, _, _, _, _) => |(gain { self.gain(give, -1) ; g match { case Some(x) => self.gain(x, 1) ; case None => self.fame += 1 } })
+        case WasteTradeDoneAction(_, _, _) => |(0)
+        case BlainnRecruitAction(_, area, _) => |(gain(self.food -= 1) + 180)
+        case BlainnSkipAction(_, _, _) => |(0)
+        case EruptUnitAction(_, area, _, _) => |(gain(game.removeUnits(board.territory(area), self, 1)))
+        case MimirTakeAction(_, c) => |(pickValue(c) - 0.4 * game.display./(pickValue).maxOr(0.0))
+        case MimirSkipAction(_) => |(0)
+        case GatePickAction(_, c, _) => |(-20.0 * c.kind.value)
+        case MyrkalfChoiceAction(_, _, to, _, _, _) => |(creatureSpot(to))
+        case VedrfolnirAction(_) => |(40)
+        case VedrfolnirSkipAction(_) => |(0)
+        case VedrfolnirTurnAction(_, tile, spot, r) => |(explorePlacement(tile, spot, r))
+
+        // WILDERNESS
+        case GeyserPlaceAction(_, area, _) => |(gain(game.addUnits(area, self, 1)))
+        case GeyserSkipAction(_, _) => |(0)
+        case EldthursAction(_, _, space, _, _) => |(gain(game.buildings -= space))
+
+        // EVENTS (Uncharted Horizons)
+        case OfferingsTakeAction(_, card, _, _, _) => |(utility(card) + cardValueSafe(card) - resourceValue(Lore))
+        case BonfireTradeAction(_, _) => |(gain { self.wood -= 2 ; self.lore += 1 ; self.fame += 1 } + victoryStep("trading"))
+        case VolcanoAction(_, space, b, _, _, _) => |(gain(game.buildings -= space) + 70 * b.large.?(2).|(1))
+        case HappyUnrestAction(_, _, _, _) => |(500)
+        case HappyFameAction(_, area, _, _, _) => |(300 + area./(a => gain(game.addUnits(a, self, 1))).|(0.0))
+        case LevyAction(_, area, remove, _, _, _) =>
+            val t = board.territory(area)
+            |(remove.?(gain(game.removeFigures(t, self, 1))).|(-produceValue(t)))
+        case BountifulAction(_, area, _, _, _) =>
+            val t = board.territory(area)
+            |(produceValue(t) - board.closed(t).??((board.tiles(t) >= 3).?(200).|(100)))
+        case InfestationChoiceAction(_, area, remove, _, _, _, _) =>
+            |(remove.?(gain(game.removeFigures(board.territory(area), self, 1))).|(100 - resourceValue(Food)))
+        case SailorAction(_, area, _, _, _) =>
+            val t = board.territory(area)
+            val n = math.min(2, game.count(t, self))
+            |(gain { game.removeUnits(t, self, n) ; self.fame += 2 * n })
+        case KrakenAttackAction(_, area, _, _, _) => |(gain { game.removeFigures(board.territory(area), self, 1) ; self.wood -= math.min(1, self.wood) })
+        case EarthquakeRemoveAction(_, space, _, _, _, _, _) => |(gain(game.buildings -= space))
+
+        // SEA (Uncharted Horizons): Raids from the Ports
+        case RaidDrawAction(_, _, _) => |(90)
+        case RaidPickAction(_, _, c, _, _) => |(raidValue(c, 2))
+        case RaidSendAction(_, port, c, n, _) => |(gain(game.removeUnits(board.territory(port), self, n)) + 0.85 * raidValue(c, n))
+        case RaidCompleteAction(_, _, c, years, n, act, _) => |(act.?(raidAction(c, years)).|(raidGain(c.gain(years, n))))
+        case RaidContinueAction(_, _, c, _) => |(0.75 * math.max(raidGain(c.gain(2, 2)), raidAction(c, 2)) - 60)
+        case RaidAnyPickAction(_, r, _, _) => |(gain(self.gain(r, 1)))
+        case RaidRemoveCardAction(_, _, c, _, _, _, _, _) => |((c == UnrestCard).?(500.0).|(thin(c) + 20))
+        case RaidRemoveDoneAction(_, _, _, _) => |(0)
+        case RaidUpgradeAction(_, _, u, _) => |(upgradeValue(u))
+        case RaidOutpostAction(_, _, area, _, _) => |(gain(game.addUnits(area, self, 1)))
+        case RaidBuildPlaceAction(_, _, space, b, _, _, _, _, _) => |(build(space.area, b, space, 0))
+        case RaidStoneAction(_, _, area, _, _) => |(horizon * 50)
+        case RaidClearUnitAction(_, _, area, enemy, _, _) => |(removeEnemy(area, enemy))
+        case RaidReinforceToAction(_, _, area, _, _, _) => |(gain(game.addUnits(area, self, 1)))
+        case RaidShiftMoveAction(_, _, from, to, n, _, _, _) => |(gain(moveFigures(board.territory(from), to, n, false, false)))
+        case RaidRazeAction(_, _, space, _, _) => |(gain(game.buildings -= space))
+        case RaidStealAction(_, _, area, r, _, _, _) => |(r./(resourceValue).|(produceValue(board.territory(area)) + 150.0))
+        case RaidExchangeAction(_, _, give, take, fame, _, _, _, _, _) => |(gain { self.gain(give, -1) ; self.gain(take, 1) ; if (fame) self.fame += 1 })
+        case RaidFortuneAction(_, _, r, n, _, _, _) => |(gain { self.gain(r, -n) ; self.fame += n })
+        case RaidSkipKeptAction(_, _, _, _, _) => |(0)
 
         case _ => None
     }
@@ -762,6 +960,131 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val t = board.territory(area)
         val near = t +: adjacent(t).map(_._1)
         near./(o => game.present(o)./(f => (f == self).?(-1.0).|(game.allied(self, f).?(-0.7).|(enemyWeight(f) * 1.5)) * (game.figures(o, f) * 10 + territoryWorth(o, f) * 0.2)).sum).sum
+    }
+
+    // What a territory's resources are worth once
+    def produceValue(t : Territory) : Double = {
+        val (f, w, l) = game.produce(t)
+        f * resourceValue(Food) + w * resourceValue(Wood) + l * resourceValue(Lore)
+    }
+
+    // RAIDS: what a Raid card's resources are worth, and a rough worth of its actions
+    def raidGain(g : RaidGain) : Double = g.food * resourceValue(Food) + g.wood * resourceValue(Wood) + g.lore * resourceValue(Lore) + 100.0 * g.fame + 50.0 * g.any
+
+    def raidAction(c : RaidCard, years : Int) : Double = (c.action(years).none).?(0.0).|((c.id, years) match {
+        case ("raiders-reward", 1) => 50
+        case ("raiders-reward", 2) => 350
+        case ("heroic-homestead", 2) => 3 * resourceValue(Wood) + 150
+        case ("elders-wisdom", 2) => 300
+        case ("clear-the-frontlines", y) => 90.0 * y
+        case ("conquerors-tribute", y) => 100.0 * y * math.min(5, enemies./~(game.controlled).count(board.open))
+        case (_, 1) => 90
+        case _ => 250
+    })
+
+    // The best a Raid with n units can give, with a second year discounted
+    def raidValue(c : RaidCard, n : Int) : Double = {
+        val one = math.max(raidGain(c.gain(1, n)), raidAction(c, 1))
+        val two = (n >= 2).?(0.7 * math.max(raidGain(c.gain(2, 2)), raidAction(c, 2))).|(0.0)
+        math.max(one, two)
+    }
+
+    // OX: an Ancestral Equipment token kept, and one spent in a fight (the points it adds, against the odds)
+    def gearValue(n : Int) : Double = n match {
+        case 4 => 90
+        case 5 | 6 => 70
+        case 7 => 55
+        case 2 => 50
+        case 3 => 45
+        case _ => 40
+    }
+
+    def gearUse(n : Int, area : AreaRef) : Double = {
+        val t = board.territory(area)
+        val other = game.present(t).but(self).headOption
+        other match {
+            case None => -20
+            case Some(o) =>
+                val points = n match {
+                    case 1 => (self.food > 0).?(1).|(0)
+                    case 2 | 6 | 7 => 1
+                    case 3 => 1
+                    case 4 | 5 => 2
+                    case _ => 1
+                }
+                val attacking = game.current.has(self)
+                val p0 = attacking.?(fightOdds(t, self, o, 0)).|(1 - fightOdds(t, o, self, 0))
+                val p1 = attacking.?(fightOdds(t, self, o, points)).|(1 - fightOdds(t, o, self, -points))
+                (p1 - p0) * stake(t) - 0.5 * gearValue(n)
+        }
+    }
+
+    // Liv's Cunning: what one more point is worth in the fight in area
+    def cunning(area : AreaRef, spent : Int) : Double = {
+        val t = board.territory(area)
+        game.present(t).but(self).headOption match {
+            case Some(o) =>
+                val p0 = fightOdds(t, self, o, spent)
+                val p1 = fightOdds(t, self, o, spent + 1)
+                (p1 - p0) * stake(t)
+            case None => 40
+        }
+    }
+
+    // The bot's odds in a fight once its die is known (keep) or before a new roll (reroll)
+    def keepOdds(keep : ForcedAction) : Double = keep match {
+        case CombatFaceAction(attacker, defender, area, e, food, faces, face, _) => 1000 * rolledOdds(attacker, defender, area, e, food, faces, |(face))
+        case CreatureFaceAction(_, area, c, e, attacking, food, face, _) => 1000 * creatureRolledOdds(area, c, e, attacking, food, |(face))
+        case _ => 0
+    }
+
+    def rerollOdds(again : ForcedAction) : Double = again match {
+        case CombatRerollAction(attacker, defender, area, e, food, faces, _) => 1000 * rolledOdds(attacker, defender, area, e, food, faces, None)
+        case CreatureRerollAction(_, area, c, e, attacking, food, _) => 1000 * creatureRolledOdds(area, c, e, attacking, food, None)
+        case _ => 0
+    }
+
+    // The attacker rolls first (faces empty), then the defender (faces holds the attacker's die); a "point or casualty" face is taken the better way
+    def rolledOdds(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], face : |[DieFace]) : Double = {
+        val t = board.territory(area)
+        val here = game.working(t)
+        val conq = attacker.conqueror
+        val fortress = conq.?(0).|(2 * here.count(_ == Fortress))
+        val towers = conq.?(0).|(here.count(_ == DefenseTower))
+        val au = game.figures(t, attacker)
+        val du = game.figures(t, defender)
+        val as = game.strength(t, attacker, true) + e.bonus + (attacker == Snake && game.scorchedIn(t)).??(1) + food.lift(0).|(0)
+        val ds = game.strength(t, defender, false) + fortress + (defender == Snake && game.scorchedIn(t)).??(1) + food.lift(1).|(0)
+        val extra = (e.special == EgilMove).??(1)
+        val attacking = faces.none
+        def choices(f : DieFace) = f.choice.?($(NorthgardDie.point, NorthgardDie.casualty)).|($(f))
+        def mine(p : Double) = attacking.?(p).|(1 - p)
+        def odds(f : DieFace) : Double =
+            if (attacking) choices(f)./(x => HardCombat.attackWinGiven(as, ds, au, du, towers, extra, x, None)).max
+            else choices(f)./(x => 1 - HardCombat.attackWinGiven(as, ds, au, du, towers, extra, faces(0), |(x))).max
+        face match {
+            case Some(f) => odds(f)
+            case None => HardCombat.faces./(odds).sum / 6
+        }
+    }
+
+    def creatureRolledOdds(area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, face : |[DieFace]) : Double = {
+        val t = board.territory(area)
+        val here = game.working(t)
+        val base = game.strength(t, self, attacking) + attacking.??(e.bonus) + attacking.not.??(2 * here.count(_ == Fortress)) + (self == Snake && game.scorchedIn(t)).??(1) + food
+        val units = game.figures(t, self)
+        def odds(f : DieFace) : Double = {
+            val ps = base + f.choice.?(1).|(f.points)
+            HardCombat.faces./ { fc =>
+                val cs = c.kind.value + fc.choice.?(1).|(fc.points)
+                val pc = fc.choice.?(0).|(fc.casualties)
+                (pc < units && attacking.?(ps > cs).|(ps >= cs)).?(1.0).|(0.0)
+            }.sum / 6
+        }
+        face match {
+            case Some(f) => odds(f)
+            case None => HardCombat.faces./(odds).sum / 6
+        }
     }
 
     def cardValueSafe(c : Card) : Double = try { cardValue(c) } catch { case e : Throwable => 0 }
