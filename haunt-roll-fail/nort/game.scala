@@ -240,6 +240,21 @@ object FameIcon {
     def apply() : Elem = Image("ui-fame", styles.inlineIcon).alt("fame")
 }
 
+// The player panels' icons: a unit (the figure on the Recruit card), the cards in hand (green), to draw (yellow) and discarded (red), and the first player marker
+object UnitIcon {
+    def apply() : Elem = Image("ui-unit", styles.inlineIcon).alt("units")
+}
+
+object CardIcon {
+    def hand : Elem = Image("ui-card-hand", styles.inlineIcon).alt("in hand")
+    def draw : Elem = Image("ui-card-draw", styles.inlineIcon).alt("to draw")
+    def discard : Elem = Image("ui-card-discard", styles.inlineIcon).alt("discarded")
+}
+
+object FirstPlayerIcon {
+    def apply() : Elem = Image("ui-first-player", styles.inlineIcon).alt("First player")
+}
+
 object TurnModeLabel {
     def apply(m : TurnMode) : Elem = m match {
         case PlayMode => "Play cards".txt ~ " (" ~ 1.hl ~ " + any " ~ "⚡".hl ~ ")"
@@ -275,7 +290,6 @@ case class RobotosInfo(f : Faction)
 case class DiscardPile(f : Faction)
 // Tapping Dragon Clan's Sacrificial Pyre in its panel shows it full size
 case object PyreView
-case class DiscardPileInfoAction(self : Faction, title : Elem, n : Int) extends BaseInfo(title)((n == 0).?("empty".txt).|(n.hl ~ (n == 1).?(" card").|(" cards")) ~ " (tap to see)".spn(xstyles.smaller85)) with ViewObject[Faction] with OnClickInfo { def obj = self ; def param = DiscardPile(self) }
 case class ClanBoardInfoAction(self : Faction, title : Elem) extends BaseInfo(title)(Image(Warchief.board(self), styles.boardInfo)) with ViewObject[Faction] with OnClickInfo { def obj = self ; def param = ClanBoard(self) }
 // Cards shown while there is nothing to do with them; clicking one opens it full screen
 case class CardInfoAction(self : Faction, title : Elem, card : Card) extends BaseInfo(title)(card.handImg) with ViewObject[Card] with OnClickInfo { def obj = card ; def param = card }
@@ -491,6 +505,9 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // Units per player (ten in the Training Fields)
     val unitLimit = training.?(Training.units).|(14)
 
+    // Robotos has 25 units
+    def unitLimit(f : Faction) : Int = robotos(f).?(25).|(unitLimit)
+
     // TRAINING FIELDS (training.scala): the tiles still face down, and each player's face-up Action cards
     var hiddenTiles : $[Placement] = $
     var drills : Map[Faction, $[Drill]] = Map()
@@ -592,7 +609,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // A Spectral Warrior (Wilderness): the buildings in its territory have no effect
     def ghostIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == SpectralWarrior) && robotosIn(t).not
 
-    // Creatures ignore a Robotos clan (robotos.scala): where it has figures, a creature blocks nothing and takes nothing
+    // Creatures ignore a Robotos clan (robotos.scala): where it has units, a creature blocks nothing and takes nothing
     def robotosIn(t : Territory) : Boolean = cheaters.any && present(t).exists(robotos)
 
     // Wilderness: the Spectral Warriors not yet placed by the Ancestral Graveyard
@@ -715,7 +732,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
     // Units on Dragon Clan's Sacrificial Pyre are neither on the map nor in the reserve
     // Sea module: units away on Raids neither
-    def reserve(f : Faction) : Int = unitLimit - onMap(f) - pyre.count(f) - SeaExpansion.raiders(f)
+    def reserve(f : Faction) : Int = unitLimit(f) - onMap(f) - pyre.count(f) - SeaExpansion.raiders(f)
 
     def addUnits(a : AreaRef, f : Faction, n : Int) {
         val m = unitsAt(a)
@@ -822,7 +839,6 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
             f.active./(c => CardInfoAction(f, "Played".styled(colors(f)), c)) ++
             inLoreTree.not.??(f.upgrades./(u => CardInfoAction(f, "Lore Tree".styled(colors(f)) ~ " (" ~ f.lore.hl ~ " " ~ LoreIcon() ~ ")", u))) ++
             $(ClanBoardInfoAction(f, "Clan board".styled(colors(f)))) ++
-            $(DiscardPileInfoAction(f, "Discard pile".styled(colors(f)), f.discard.num)) ++
             $(Info("Fame", f.fame.hlb))
         )
     }

@@ -610,9 +610,10 @@ object MapExpansion extends Expansion {
 
     // Robotos places one more unit with its first setup group
     def robotosSetup(f : Faction, round : Int, a : AreaRef)(implicit game : Game) {
-        if (round == 1 && game.robotos(f)) {
-            game.addUnits(a, f, 1)
-            f.log("placed one more unit in", a, "(Robotos)".hl)
+        // Robotos places 5 units each time instead of 3
+        if (game.robotos(f)) {
+            game.addUnits(a, f, 2)
+            f.log("placed two more units in", a, "(Robotos)".hl)
         }
     }
 

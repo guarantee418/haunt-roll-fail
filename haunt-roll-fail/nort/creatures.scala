@@ -305,8 +305,8 @@ object CreaturesExpansion extends Expansion {
     // Where a creature moves: an adjacent territory (Rough borders don't matter) without a creature,
     // with units if possible, then by its priorities; the first player breaks the remaining ties.
     // Creatures ignore the Automa's figures when choosing (a ruling from Robotos, 2026-10-05).
-    // They ignore the Robotos bot's clans: they avoid territories with its figures, but a creature still
-    // moves into one when every other way is closed (it must move if it can), and its figures count for nothing.
+    // They ignore the Robotos bot's clans: they avoid territories with its units, but a creature still
+    // moves into one when every other way is closed (it must move if it can), and its units count for nothing.
     // Every territory is adjacent to the Wyvern
     def destinations(c : Creature)(implicit game : Game) : $[Territory] = {
         val t = game.board.territory(game.creatureAt(c))
