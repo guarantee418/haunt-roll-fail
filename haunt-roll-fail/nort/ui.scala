@@ -385,10 +385,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         tints.get(key)
     }
 
-    // Tint per player colour: yellow and green strong, red and blue medium to light
+    // Tint per player colour: yellow and green strong, red and orange medium, blue and purple light;
+    // red leans to crimson so the green art doesn't turn it brown or orange
     def tintOf(c : PlayerColor) : (String, Double) = c match {
         case Blue => ("#1f5fe0", 0.24)
-        case Red => ("#a3100c", 0.34)
+        case Red => ("#d00038", 0.5)
         case Yellow => ("#ffc400", 0.55)
         case Purple => ("#9b30c8", 0.3)
         case Green => ("#147a14", 0.55)
