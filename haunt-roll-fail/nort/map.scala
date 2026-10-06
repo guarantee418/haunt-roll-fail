@@ -56,6 +56,11 @@ case class SetupUnitsAction(self : Faction, round : Int, l : $[Faction], area : 
 case class SetupKaijaAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place two units and", Companion(self), "in")(area) with MapTarget { def target = area }
 // Warchiefs module: the warchief instead of one unit (and Kaija instead of another)
 case class SetupChiefAction(self : Faction, round : Int, l : $[Faction], area : AreaRef, kaija : Boolean) extends BaseAction(kaija.?("Place one unit, " ~ Companion(self).elem0 ~ " and your warchief in").|("Place two units and your warchief in"))(area) with MapTarget { def target = area }
+// With Kaija or the warchief to place: tap the territory first, then pick what goes there
+case class SetupAreaAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place your starting units in")(area) with Soft with MapTarget { def target = area }
+case class SetupUnitsHereAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place in", area)("Three units")
+case class SetupKaijaHereAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place in", area)("Two units and", Companion(self))
+case class SetupChiefHereAction(self : Faction, round : Int, l : $[Faction], area : AreaRef, kaija : Boolean) extends BaseAction("Place in", area)(kaija.?("One unit, " ~ Companion(self).elem0 ~ " and your warchief").|("Two units and your warchief"))
 case class ShuffledTilesBackAction(shuffled : $[String]) extends ShuffledAction[String]
 case class SetupUnitsAskAction(f : Faction, round : Int, l : $[Faction], tile : String, spot : Spot) extends ForcedAction
 
@@ -455,16 +460,6 @@ object MapExpansion extends Expansion {
     // The legal turns of a tile at a spot
     def rotations(l : $[(Spot, Int)], spot : Spot) : $[Int] = l.filter(_._1 == spot).map(_._2).distinct.sorted
 
-    // What a tap on a starting territory places (the list offers the rest): with the Warchiefs module, the warchief and
-    // two units; a clan with a second figure (Kaija, Brok) puts it in its other starting territory, or both together if
-    // its first territory got three units
-    def setupDefault(a : Action)(implicit game : Game) : Boolean = a match {
-        case SetupUnitsAction(f, _, _, _) => game.has(Warchiefs).not || (game.chiefReady(f).not && game.kaijaReady(f).not)
-        case SetupChiefAction(f, round, _, _, kaija) => game.has(Warchiefs) && kaija == (round == 2 && game.kaijaReady(f))
-        case SetupKaijaAction(f, _, _, _) => game.has(Warchiefs) && game.chiefReady(f).not
-        case _ => false
-    }
-
     // The next legal turn from r, clockwise (d = 1) or counterclockwise (d = -1)
     def rotate(rs : $[Int], r : Int, d : Int) : Int = 1.to(3).map(i => (r + d * i + 4) % 4).find(rs.has).|(r)
 
@@ -600,6 +595,42 @@ object MapExpansion extends Expansion {
             val carved = s.index >= SpaceRef.extra || game.board.spec(s.area).spaces(s.index).kind == CarvedSpace
             Building.all.%(_ != old).%(_.large == old.large).%(b => b != CarvedStone || carved).%(b => game.buildings.values.count(_ == b) < Building.tokens)./(b => s -> b)
         }
+
+    def setupUnits(f : Faction, round : Int, l : $[Faction], a : AreaRef)(implicit game : Game) = {
+        game.addUnits(a, f, 3)
+
+        f.log("placed three units in", a)
+
+        robotosSetup(f, round, a)
+
+        Then(SetupPlaceAction(round, l.drop(1)))
+    }
+
+    def setupKaija(f : Faction, round : Int, l : $[Faction], a : AreaRef)(implicit game : Game) = {
+        game.addUnits(a, f, 2)
+        game.setCompanion(f, |(a))
+        game.note("kaija-setup")
+
+        f.log("placed two units and", Companion(f), "in", a)
+
+        robotosSetup(f, round, a)
+
+        Then(SetupPlaceAction(round, l.drop(1)))
+    }
+
+    def setupChief(f : Faction, round : Int, l : $[Faction], a : AreaRef, kaija : Boolean)(implicit game : Game) = {
+        game.addUnits(a, f, kaija.?(1).|(2))
+        game.chiefs += f -> a
+        if (kaija)
+            game.setCompanion(f, |(a))
+        game.note("chief-setup")
+
+        f.log(kaija.?("placed one unit, " ~ Companion(f).elem0 ~ " and").|("placed two units and"), WarchiefElem(f), "in", a)
+
+        robotosSetup(f, round, a)
+
+        Then(SetupPlaceAction(round, l.drop(1)))
+    }
 
     def recruitUnit(f : Faction, a : AreaRef)(implicit game : Game) : Unit = {
         game.addUnits(a, f, 1)
@@ -795,46 +826,47 @@ object MapExpansion extends Expansion {
             // Not with a Fallen Valkyrie, unless there is no other choice
             val empty = all.exists(t => game.hostileIn(t).not).?(all.%(t => game.hostileIn(t).not)).|(all)
 
-            Ask(f).each(empty)(t => SetupUnitsAction(f, round, l, t.anchor))
-                .some(empty.%(_ => game.kaijaReady(f)))(t => $(SetupKaijaAction(f, round, l, t.anchor)))
-                .some(empty.%(_ => game.chiefReady(f)))(t => $(SetupChiefAction(f, round, l, t.anchor, false)))
-                .some(empty.%(_ => game.chiefReady(f) && game.kaijaReady(f)))(t => $(SetupChiefAction(f, round, l, t.anchor, true)))
+            // One territory per row when Kaija or the warchief could go there too; what to place is asked after it is picked
+            if (game.kaijaReady(f) || game.chiefReady(f))
+                Ask(f).each(empty)(t => SetupAreaAction(f, round, l, t.anchor))
+            else
+                Ask(f).each(empty)(t => SetupUnitsAction(f, round, l, t.anchor))
+
+        // The usual placement first: the warchief with two units; a second figure (Kaija, Brok) in the other starting
+        // territory, or with the warchief in the second one if the first got three units
+        case SetupAreaAction(f, round, l, a) =>
+            val kaija = game.kaijaReady(f)
+            val chief = game.chiefReady(f)
+
+            Ask(f)
+                .when(chief && (kaija.not || round == 1))(SetupChiefHereAction(f, round, l, a, false))
+                .when(chief && kaija)(SetupChiefHereAction(f, round, l, a, true))
+                .when(chief.not && kaija)(SetupKaijaHereAction(f, round, l, a))
+                .when(chief && kaija && round == 2)(SetupChiefHereAction(f, round, l, a, false))
+                .when(chief && kaija)(SetupKaijaHereAction(f, round, l, a))
+                .add(SetupUnitsHereAction(f, round, l, a))
+                .cancel
 
         case TilePlacedAction(f, tile, spot, setup, then) =>
             Then(then)
 
         case SetupUnitsAction(f, round, l, a) =>
-            game.addUnits(a, f, 3)
+            setupUnits(f, round, l, a)
 
-            f.log("placed three units in", a)
-
-            MapExpansion.robotosSetup(f, round, a)
-
-            Then(SetupPlaceAction(round, l.drop(1)))
+        case SetupUnitsHereAction(f, round, l, a) =>
+            setupUnits(f, round, l, a)
 
         case SetupKaijaAction(f, round, l, a) =>
-            game.addUnits(a, f, 2)
-            game.setCompanion(f, |(a))
-            game.note("kaija-setup")
+            setupKaija(f, round, l, a)
 
-            f.log("placed two units and", Companion(f), "in", a)
-
-            MapExpansion.robotosSetup(f, round, a)
-
-            Then(SetupPlaceAction(round, l.drop(1)))
+        case SetupKaijaHereAction(f, round, l, a) =>
+            setupKaija(f, round, l, a)
 
         case SetupChiefAction(f, round, l, a, kaija) =>
-            game.addUnits(a, f, kaija.?(1).|(2))
-            game.chiefs += f -> a
-            if (kaija)
-                game.setCompanion(f, |(a))
-            game.note("chief-setup")
+            setupChief(f, round, l, a, kaija)
 
-            f.log(kaija.?("placed one unit, " ~ Companion(f).elem0 ~ " and").|("placed two units and"), WarchiefElem(f), "in", a)
-
-            MapExpansion.robotosSetup(f, round, a)
-
-            Then(SetupPlaceAction(round, l.drop(1)))
+        case SetupChiefHereAction(f, round, l, a, kaija) =>
+            setupChief(f, round, l, a, kaija)
 
         // RECRUIT
         case RecruitAction(f, left, mode, placed, then) =>

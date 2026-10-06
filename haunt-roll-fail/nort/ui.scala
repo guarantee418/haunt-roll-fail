@@ -321,8 +321,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             val l = lastActions.%(a => a.unwrap.as[MapTarget].exists(_.target == t))
             if (l.num == 1)
                 return l.headOption
-            // Setup: several placements in one territory, the default one
-            l.%(a => MapExpansion.setupDefault(a.unwrap)).single.foreach(a => return |(a))
         }
         None
     }
