@@ -481,17 +481,36 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     def showTrackers = callbacks.settings.has(HideBoardTrackers).not
 
-    // The score and item trackers, on the boards that have places for them, unless hidden in the settings
+    // Boards with no room for the trackers (all but Gorge and Marsh) get them in a strip under the map:
+    // the item tracker on the left, the score tracker beside it
+    def trackersBelow = game.board.scoreTrack.none && game.board.itemSlots.none
+
+    val trackerStrip = 140
+
+    def strip = (showTrackers && trackersBelow).??(trackerStrip)
+
+    // The tracker images: score-track has boxes 0 to 30, 64.45 pixels apart, box 0 centred at (32.7, 34);
+    // item-track has the usual two rows of six slots, 87.4 pixels apart and 84 apart, the first centred at (31.5, 31.5)
+    def scoreTrack : |[(Double, Double, Double)] = game.board.scoreTrack || trackersBelow.?({
+        val left = 20 + 500 * 0.75 + 30
+        val k = (mp.width - 20 - left) / 2000.0
+        (left + 32.7 * k, mp.height + trackerStrip / 2.0, 64.45 * k)
+    })
+
+    def itemSlots : $[(Item, Double, Double)] = game.board.itemSlots.some || trackersBelow.?({
+        val k = 0.75
+        game.board.itemGrid(20 + 31.5 * k, 87.4 * k, mp.height + 15 + 31.5 * k, mp.height + 15 + 115.5 * k)
+    }) | $
+
+    // The score and item trackers, unless hidden in the settings
     def drawTrackers(g : dom.CanvasRenderingContext2D) {
         if (showTrackers) {
-            // score-track: boxes 0 to 30, 64.45 pixels apart, box 0 centred at (32.7, 34)
-            game.board.scoreTrack.foreach { case (x0, y0, step) =>
+            scoreTrack.foreach { case (x0, y0, step) =>
                 val k = step / 64.45
                 g.drawImage(resources.images.get("score-track"), x0 - 32.7 * k, y0 - 34 * k, 2000 * k, 68 * k)
             }
 
-            // item-track: the usual two rows of six slots, 87.4 pixels apart, the first centred at (31.5, 31.5)
-            game.board.itemSlots match {
+            itemSlots match {
                 case (_, x, y) :: (_, x1, _) :: _ =>
                     val k = (x1 - x) / 87.4
                     g.drawImage(resources.images.get("item-track"), x - 31.5 * k, y - 31.5 * k, 500 * k, 147 * k)
@@ -500,14 +519,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         }
     }
 
-    // Faction VP markers on the score tracker (only some boards have one).
+    // Faction VP markers on the score tracker.
     // Factions on the same score are stacked upwards; a faction with a dominance or in a coalition has no marker.
     def drawScoreTrack(g : dom.CanvasRenderingContext2D) {
         if (showTrackers.not)
             return
 
-        game.board.scoreTrack.foreach { case (x0, y0, step) =>
-            val size = 64
+        scoreTrack.foreach { case (x0, y0, step) =>
+            // 64 pixels on the Gorge and Marsh trackers
+            val size = 64 * step / 74.63
             val max = game.board.scoreTrackMax
 
             val scoring = factions.%(game.states.contains).%(f => (f.dominance.none || f.demagogue) && f.coalition.none)
@@ -543,14 +563,20 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         }
     }
 
-    // The items still available to craft, on the item tracker (only some boards have one)
+    // The items still available to craft, on the item tracker
     def drawItemSlots(g : dom.CanvasRenderingContext2D) {
         if (showTrackers.not)
             return
 
-        val size = 62
+        val slots = itemSlots
 
-        game.board.itemSlots.groupBy(_._1).foreach { case (item, slots) =>
+        // 62 pixels on the Gorge and Marsh trackers
+        val size = slots match {
+            case (_, x, _) :: (_, x1, _) :: _ => 62 * (x1 - x) / 88
+            case _ => 62.0
+        }
+
+        slots.groupBy(_._1).foreach { case (item, slots) =>
             slots.take(game.uncrafted.count(item)).foreach { case (_, x, y) =>
                 g.drawImage(resources.images.get(item.imgid), x - size / 2, y - size / 2, size, size)
             }
@@ -634,13 +660,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         val dw = d
         val dh = d
 
+        // the map, and the tracker strip under it if there is one
+        val mh = mp.height + strip
+
         if (bitmap.height < bitmap.width || true) {
-            if ((dw + mp.width + dw) * bitmap.height < bitmap.width * (dh + mp.height + dh)) {
-                g.translate((bitmap.width - (dw + mp.width + dw) * bitmap.height / (dh + mp.height + dh)) / 2, 0)
-                g.scale(1.0 * bitmap.height / (dh + mp.height + dh), 1.0 * bitmap.height / (dh + mp.height + dh))
+            if ((dw + mp.width + dw) * bitmap.height < bitmap.width * (dh + mh + dh)) {
+                g.translate((bitmap.width - (dw + mp.width + dw) * bitmap.height / (dh + mh + dh)) / 2, 0)
+                g.scale(1.0 * bitmap.height / (dh + mh + dh), 1.0 * bitmap.height / (dh + mh + dh))
             }
             else {
-                g.translate(0, (bitmap.height - (dh + mp.height + dh) * bitmap.width / (dw + mp.width + dw)) / 2)
+                g.translate(0, (bitmap.height - (dh + mh + dh) * bitmap.width / (dw + mp.width + dw)) / 2)
                 g.scale(1.0 * bitmap.width / (dw + mp.width + dw), 1.0 * bitmap.width / (dw + mp.width + dw))
             }
             g.translate(dw, dh)
@@ -649,12 +678,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             g.translate(bitmap.width, 0)
             g.rotate(math.Pi / 2)
 
-            if ((dw + mp.width + dw) * bitmap.width < bitmap.height * (dh + mp.height + dh)) {
-                g.translate((bitmap.height - (dw + mp.width + dw) * bitmap.width / (dh + mp.height + dh)) / 2, 0)
-                g.scale(1.0 * bitmap.width / (dh + mp.height + dh), 1.0 * bitmap.width / (dh + mp.height + dh))
+            if ((dw + mp.width + dw) * bitmap.width < bitmap.height * (dh + mh + dh)) {
+                g.translate((bitmap.height - (dw + mp.width + dw) * bitmap.width / (dh + mh + dh)) / 2, 0)
+                g.scale(1.0 * bitmap.width / (dh + mh + dh), 1.0 * bitmap.width / (dh + mh + dh))
             }
             else {
-                g.translate(0, (bitmap.width - (dh + mp.height + dh) * bitmap.height / (dw + mp.width + dw)) / 2)
+                g.translate(0, (bitmap.width - (dh + mh + dh) * bitmap.height / (dw + mp.width + dw)) / 2)
                 g.scale(1.0 * bitmap.height / (dw + mp.width + dw), 1.0 * bitmap.height / (dw + mp.width + dw))
             }
             g.translate(dw, dh)

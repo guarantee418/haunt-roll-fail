@@ -435,8 +435,13 @@ file covers the build, server and deploy. No session can ssh to the server
   (`webp2/root/images/tracker/score-track.webp`, from the owner) there and
   `drawScoreTrack` puts each faction's VP marker on its
   score, stacked upwards when tied, with a count badge past 30. Gorge and Marsh
-  have one. The in-game "Board Trackers" setting (`ShowBoardTrackers`, the
-  default, or `HideBoardTrackers`) hides both trackers and their markers. Official VP marker art (`webp2/root/images/vp/`, `officialVP` in
+  have places for the trackers on the board; every other map has no room
+  for them, so `drawMap` adds a 140-pixel strip under the map
+  (`trackersBelow`, `strip`, and the `scoreTrack` and `itemSlots` in
+  `root/ui.scala`) with the item tracker on the left and the score tracker
+  beside it. The in-game "Board Trackers" setting (`ShowBoardTrackers`, the
+  default, or `HideBoardTrackers`) hides both trackers and their markers, and
+  the strip with them. Official VP marker art (`webp2/root/images/vp/`, `officialVP` in
   `root/ui.scala`) exists for the Homeland Twilight Council, Knaves and
   Lilypad Diaspora, cut from page 17 of `root-factions/`. The ten other Leder
   factions (Marquise, Eyrie, Alliance, Vagabond, Riverfolk, Lizards, Duchy,
