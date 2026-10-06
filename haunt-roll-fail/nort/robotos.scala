@@ -23,7 +23,7 @@ import nort.elem._
 //   Where it has units, a creature blocks nothing either: no Brown Bear lock, no Wolf or Kobold harvest loss, ... (game.robotosIn);
 // - one more unit with every Recruit, on top of Training Camps and the rest (TrainingCampsAction in map.scala);
 // - one more card each year (DrawCardsAction at the start of the year in game.scala);
-// - attacking, it wins ties, against clans and creatures (map.scala, creatures.scala);
+// - attacking, it gets 1 more combat point, against clans and creatures (map.scala, creatures.scala; shown in FightInfo);
 // - a head start: 2 more food and 2 more wood, and 5 units in each setup placement instead of 3 (MapExpansion.robotosSetup);
 // - 25 units instead of 14 (game.unitLimit);
 // - clan upgrades cost 2 lore instead of 3 (game.upgradeCost).
@@ -41,7 +41,7 @@ object RobotosExpansion extends Expansion {
         "Creatures ignore it: they avoid its territories (unless no other is open), never harm it, and block nothing where it has units.",
         "Recruits one more unit every time.",
         "Draws one more card each year.",
-        "Wins ties when it attacks.",
+        "Gets 1 more combat point when it attacks.",
         "Starts with 2 more food and 2 more wood, and places 5 units each time at setup instead of 3.",
         "Has 25 units instead of 14.",
         "Clan upgrades cost it 2 lore instead of 3.",

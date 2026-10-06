@@ -353,7 +353,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             val str = threat(t, e)
             if (str > 0) {
                 // A card bonus or food is likely
-                // Robotos attacking wins ties: the same as one more point
+                // Robotos attacking: one more point
                 val p = HardCombat.attackWin(str + 1 + game.robotos(e).??(1), ds + math.min(du, f.food), str, du, towers)
                 val likely = e.passed.?(0.12).|(0.4) * (harvests <= 1).?(1.2).|(1.0)
                 hold *= 1 - math.min(1.0, likely * p)

@@ -781,8 +781,9 @@ it, and one more unit with every Recruit (on top of Training Camps and the rest)
   A creature already in its territory (one appearing on a lair it explores)
   blocks nothing there either: `hostileIn`, `bearIn`, `wolfIn`, `koboldIn` and
   `ghostIn` in `game.scala` are false where it has units (`robotosIn`).
-  It also draws one more card each year (the year's `DrawCardsAction`), wins
-  ties when it attacks, clans or creatures (`map.scala`, `creatures.scala`),
+  It also draws one more card each year (the year's `DrawCardsAction`), gets
+  1 more combat point when it attacks, clans or creatures (`map.scala`,
+  `creatures.scala`, listed as "Robotos" in the fight info and the log),
   starts with 2 more food and 2 more wood, places 5 units in each setup
   placement instead of 3 (`MapExpansion.robotosSetup`; the warchief and Kaija
   count among them), has 25 units instead of 14 (`game.unitLimit(f)`), and
@@ -792,7 +793,7 @@ it, and one more unit with every Recruit (on top of Training Camps and the rest)
   `RobotosExpansion.cheats`).
 - **The bot:** `BotRobotos` is `BotHard`; the Hard valuation reads
   `game.robotos` (no Winter need, no creature penalty or lair penalty, one more
-  unit per Recruit, ties won when attacking, cheaper upgrades), so it plays its cheats out, and Hard opponents judge it
+  unit per Recruit, 1 more combat point attacking, cheaper upgrades), so it plays its cheats out, and Hard opponents judge it
   rightly.
 - **Tested:** `NORT_HARD=robotos` in the JVM host puts Robotos in the first
   seat and Hard bots in the others (wins print as `ROBOTOS WON`; the summary
