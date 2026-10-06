@@ -342,7 +342,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     // How big a building is drawn: its space's printed octagon, so a large building fills its large space
     val smallBuilding = 190.0
-    val largeBuilding = 235.0
+    val largeBuilding = 240.0
     def buildingSize(b : Building) = b.large.?(largeBuilding).|(smallBuilding)
 
     def at(image : String, size : Double, alpha : Double = 1.0) : ImageRect = ImageRect(new RawImage(img(image)), Rectangle(-size / 2, -size / 2, size, size), alpha)

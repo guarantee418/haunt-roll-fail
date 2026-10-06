@@ -32,7 +32,9 @@ import scala.collection.mutable
 object HRF {
     val version = BuildInfo.version
 
-    val imageDataVersion = "as-of-0.8.87"
+    // Images are kept in Cache Storage under this name and never refetched, so bump it whenever an image
+    // changes in place (same file name), or browsers keep showing the old one
+    val imageDataVersion = "as-of-2026-10-06"
 
     def now() = new scalajs.js.Date()
 
@@ -45,6 +47,14 @@ object HRF {
     def glyph(s : String) = getElem("icon").asInstanceOf[dom.html.Link].href = s
 
     val imageCache = new CachedBlobImageLoader("hrf-image-cache-" + imageDataVersion)
+
+    // Drop the image caches of older versions (Cache Storage is only there in secure contexts)
+    dom.window.caches.toOption.foreach { caches =>
+        caches.keys().`then`[Null]({ names : scalajs.js.Array[String] =>
+            names.filter(n => n.startsWith("hrf-image-cache-") && n != "hrf-image-cache-" + imageDataVersion).foreach(n => caches.delete(n))
+            null
+        } : scalajs.js.Function1[scalajs.js.Array[String], scalajs.js.|[Null, scalajs.js.Thenable[Null]]])
+    }
     val stringCache = new CachedStringLoader("hrf-page-cache")
     val stringLoader = StringLoader
 
