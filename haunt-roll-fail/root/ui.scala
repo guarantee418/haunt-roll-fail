@@ -147,8 +147,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         val forest = region.is[Forest]
 
         val icon : DrawRect = piece match {
-            // the Gorge board prints smaller slot outlines; draw over them, not around them
-            case FreeBuildingSlot if game.board == GorgeBoard => { DrawRect(mapid + "building-slot", -36, -36, 72, 72) }
             case FreeBuildingSlot => { DrawRect(mapid + "building-slot", -50, -50, 100, 100) }
             case Battle => { DrawRect("clearing-battle", -50, -50, 100, 100) }
             case Placement => { DrawRect("clearing-placement", -50, -50, 100, 100) }
@@ -481,9 +479,33 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         "dr" -> "vp-dr", "ri" -> "vp-ri", "lk" -> "vp-lk",
         "TC" -> "vp-tc", "KD" -> "vp-kd", "hld" -> "vp-ld", "LD" -> "vp-ld")
 
-    // Faction VP markers on the score track printed on the board (only some boards have one).
+    def showTrackers = callbacks.settings.has(HideBoardTrackers).not
+
+    // The score and item trackers, on the boards that have places for them, unless hidden in the settings
+    def drawTrackers(g : dom.CanvasRenderingContext2D) {
+        if (showTrackers) {
+            // score-track: boxes 0 to 30, 64.45 pixels apart, box 0 centred at (32.7, 34)
+            game.board.scoreTrack.foreach { case (x0, y0, step) =>
+                val k = step / 64.45
+                g.drawImage(resources.images.get("score-track"), x0 - 32.7 * k, y0 - 34 * k, 2000 * k, 68 * k)
+            }
+
+            // item-track: the usual two rows of six slots, 87.4 pixels apart, the first centred at (31.5, 31.5)
+            game.board.itemSlots match {
+                case (_, x, y) :: (_, x1, _) :: _ =>
+                    val k = (x1 - x) / 87.4
+                    g.drawImage(resources.images.get("item-track"), x - 31.5 * k, y - 31.5 * k, 500 * k, 147 * k)
+                case _ =>
+            }
+        }
+    }
+
+    // Faction VP markers on the score tracker (only some boards have one).
     // Factions on the same score are stacked upwards; a faction with a dominance or in a coalition has no marker.
     def drawScoreTrack(g : dom.CanvasRenderingContext2D) {
+        if (showTrackers.not)
+            return
+
         game.board.scoreTrack.foreach { case (x0, y0, step) =>
             val size = 64
             val max = game.board.scoreTrackMax
@@ -521,8 +543,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         }
     }
 
-    // The items still available to craft, on the item slots printed on the board (only some boards have them)
+    // The items still available to craft, on the item tracker (only some boards have one)
     def drawItemSlots(g : dom.CanvasRenderingContext2D) {
+        if (showTrackers.not)
+            return
+
         val size = 62
 
         game.board.itemSlots.groupBy(_._1).foreach { case (item, slots) =>
@@ -668,6 +693,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             g.drawImage(deadmp.canvas, 0, 0)
         else
             g.drawImage(mp, 0, 0)
+
+        drawTrackers(g)
 
         game.rubble.foreach { case (from, to) =>
             val pp = $("rubble-" + from.name + "-" + to.name, "rubble-" + to.name + "-" + from.name)
