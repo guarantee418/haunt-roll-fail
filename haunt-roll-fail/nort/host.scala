@@ -101,6 +101,10 @@ object Host extends hrf.host.BaseHost {
     }
 
     def winnersFromFaction(f : F)(implicit g : G) = {
+        // NORT_UNVALUED=1: after each game, the actions so far the Hard bot left to the Easy bot's valuation (by class)
+        if (sys.env.get("NORT_UNVALUED").has("1"))
+            println("UNVALUED " + HardEvaluation.unvalued.toList.sortBy(-_._2)./{ case (k, n) => k + " " + n }.mkString(", "))
+
         if (hard(g, f) && sys.env.get("NORT_HARD").has("1"))
             println("HARD WON " + f.name + " in a " + g.setup.num + "-player game")
         $(f)

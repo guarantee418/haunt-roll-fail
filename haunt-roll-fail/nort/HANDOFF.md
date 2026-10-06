@@ -605,19 +605,48 @@ always plays its own cards.
   taken from the Automa's cards (`automa.scala`); the territory valuation
   only covers similar ground to their priority lists (resources, buildings,
   closed territories, spaces, nearby enemies).
-- **Not valued yet** (the Easy bot's random choice is used): Liv's reroll,
-  Ox's Ancestral Equipment, Kobold and camp trades, Vedrfolnir, Gate of
-  Helheim, the Events' unit choices, Bribery, Annexation's order, and the
-  Alternative victory cards (it plays for fame and the three territories).
-  Any action it fails to value falls back the same way and is logged
-  (`HardEvaluation.failed`).
+- **Alternative victory** (2026-10-06): `victoryProgress` measures how far a
+  clan is towards each card in play (0 to 1, from the map, its resources, or
+  the validation counts), and `victoryValue` turns that into position value:
+  Thane needs one Map Control and one Wealth card, Jarl all of them, and a win
+  is worth as much as the three territories. Opponents' progress counts
+  against the bot, so it attacks a clan close to its cards. Actions that add
+  a validation count get the step it is worth (`victoryStep`: a building,
+  a trade, removing or upgrading a card, a fight, closing territories by
+  exploring, a creature killed).
+- **Expansion choices** (2026-10-06): Ox's Ancestral Equipment (taking a
+  token, and spending one in a fight by the odds it adds), Liv's Cunning and
+  rerolls (Liv's and Ox's token 3, from the exact odds of the face kept
+  against a new roll), Kobold and Kobold Camp exchanges, Jötunn Blainn,
+  Mimirsbrunn, the Gate of Helheim, Vedrfolnir, the Geysers, every Event
+  choice, the Sea module's Raids (drawing, picking and sending, completing or
+  continuing, and each Raid effect), the other New Blood clans' choices,
+  Bribery, Annexation and Brand's retreats. A choice that only goes on to the
+  next step (Done, "Take no token", "No Raid") is worth 0, so the real options
+  must beat it. Fame counts in the position value, so trading resources for
+  fame is weighed properly.
+- **Unvalued choices:** anything else falls back to the Easy bot's random
+  choice; failures to value are logged (`HardEvaluation.failed`), and
+  `NORT_UNVALUED=1` in the JVM host prints, after each game, the action
+  classes the Hard bot left unvalued so far. With every module on, nothing is
+  left but the order of Creature fights (it doesn't matter).
+- **A/B test of the 2026-10-06 changes** (two-player JVM games, the new Hard
+  in the first seat against the Hard bot from before): with every module on,
+  25 of 50; core game only, 24 of 50 (no regression); Alternative victory
+  only, 39 of 70 (56%, within noise of even). So the choices are now made on
+  purpose rather than at random, but the gain in strength isn't measurable
+  yet; only 1 of those 70 games ended by an Alternative victory, the others
+  on fame. The A/B harness was a scratch `ABHost` (a copy of `Host` whose
+  first seat plays `BotHard` and the others a renamed copy of the older
+  `bot-hard.scala`); it isn't in the repo.
 - **Testing:** in the JVM host (see How to build and test), `NORT_HARD=1`
   makes the first seat Hard and the others Easy (wins print as `HARD WON`),
   `NORT_HARD=all` makes every seat Hard; `NORT_CORE=1` plays the core game
   only; `NORT_PLAYERS=n` (with `NORT_BATCH`, `NORT_TIMES`) sets the player
   count and number of games; `NORT_TRACE=1` prints each Hard choice with its
   best alternatives (and the hand's card values before a Pass);
-  `NORT_TIMING=1` prints decisions over 300 ms.
+  `NORT_TIMING=1` prints decisions over 300 ms; `NORT_UNVALUED=1` prints the
+  actions it left unvalued.
 - **Results (2026-10-05, JVM host):** Hard in the first seat against Easy bots
   won 25 of 25 three-player core games, 20 of 20 four-player core games, and
   40 of 40 games with random modules and 2–6 players. In all-Hard games the
@@ -695,9 +724,9 @@ list. In short:
 2. **Board UI polish:** clicking anywhere in a territory; a preview of the
    tile at the chosen spot while picking a rotation; showing the explore tile
    on the map; a phone-size check; the very long separator lines in the log.
-3. **The Hard bot** (done 2026-10-05, see Bots below): the expansion choices it
-   doesn't value yet (Liv's reroll, Ox's tokens, Kobold trades, Vedrfolnir, the
-   Events' unit choices, Alternative victory cards) could get their own scores.
+3. **The Hard bot** (done 2026-10-05, expansion choices and Alternative
+   victory added 2026-10-06, see Bots below): the next step is play against
+   people, and tuning from what they find.
 4. **A replay check** (done 2026-10-06): `nort/replay-check.scala`, see How
    to build and test. Run it after changing actions, especially anything
    marked `Soft`.
