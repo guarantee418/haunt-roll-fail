@@ -425,10 +425,13 @@ on. To implement one:
   (the top of the filled-in edge cropped off); masks and grid redone. A side
   that no area owns is sea: `TileSpec.areaOn` gives None there, `Board`
   joins nothing across it and `frontier` offers no spot beyond it. The
-  wings' areas own no side and are joined to the Port with `Board.join`.
+  wings each have two areas (`n` along the top, `w` or `e` along the outer
+  side), split by the dashes to the outer top corner; they are not part of
+  the Port territory. `tile-masks.py` leaves the sand beyond the shore's
+  dashes out of every Beach mask (the sea grows up to the dashes).
   They are placed when `TilePlacedAction` of a first-round setup tile goes
   through (`beached`), turned so the sea is away from the starting tile.
-  `tile-masks.py` handles them (`BEACH`: one area, the land; sea and
+  `tile-masks.py` handles them (`BEACH`: the land only; sea and
   transparent parts left out); `beach-sea` has no area and no grid entry.
 - Hooks: `FactionState.units` and `Game.reserve` count the raiders,
   `Game.strength` adds the Port's +1 (`SeaExpansion.defense`, listed by

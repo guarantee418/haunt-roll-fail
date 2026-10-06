@@ -738,11 +738,12 @@ Check these against the rulebook when it is at hand.
 - **Sea module**:
   - The Beach tile is drawn as four map cells: the Port's land tile, the sea
     beyond it and a shore wing on each side of the sea, cut from the
-    rulebook's picture (there is no scan of the tile). The sea and the
-    wings' outer sides take no tiles; the wings' land is part of the Port
-    territory. The wings' land sides, beside the Port, join the tiles placed
-    there like any tile side, so a tile's border can't stop at the shore
-    (owner, 2026-10-06: a boundary never dead-ends). The Port territory has no resources.
+    rulebook's picture (there is no scan of the tile). The sea takes no
+    tiles. The Port territory is the Port's land above the shore's dashes;
+    each wing's land is two ordinary territories split by the dashes running
+    to its outer top corner (owner, 2026-10-06), joining the tiles placed
+    beside the Port and beyond the wing like any tile side, so no border
+    stops at the shore (a boundary never dead-ends). The Port territory has no resources.
   - Where the cells beyond the empty space are taken (five or six players,
     two first tiles side by side), the Beach goes one or two spaces further
     out; a Beach is never placed beside another Port. The box has five Beaches;
