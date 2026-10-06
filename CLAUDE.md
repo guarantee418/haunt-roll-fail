@@ -109,7 +109,11 @@ warchiefs are drawn as their portraits instead (`chief-<clan>-<color>`, outlined
 in the player's color, from the TTS standees by `nort/tools/warchief-portraits.py`;
 `Warchief.figure`), and the New Blood warchiefs (and Horse's Brok) as round
 tokens with their head from their clan card (same names, `brok` for Brok, by
-`nort/tools/warchief-heads.py`); the Automa's Leaders keep the generic figure. Colors belong to
+`nort/tools/warchief-heads.py`). The Automa's Leaders are its two miniatures
+(`leader-<1|2>-<color>`, white and black, cut from the Uncharted Horizons
+rulebook photo by `nort/tools/automa-leaders.py`). The old warchief figure is
+now a second warrior design: each stack of warriors is drawn with one of the
+two, picked by a hash of the territory and the count (`Warchief.warrior`). Colors belong to
 players, not clans: each clan's player picks one on its row of the setup screen
 (`ColorOption`, default blue, red, yellow, purple, green, orange by seat;
 `game.colors`); starting cards show that color's banner (orange has no
@@ -127,7 +131,9 @@ hook the setup screen in `hrf.scala` calls for every option). Northgard no longe
 in its `Meta` (setting it to `true` would put an "Under Construction" note under
 its name on the game list and a disclaimer at the top of its menu).
 `nort/host.scala` runs bot games headless (JVM only,
-like the other `host.scala` files). Northgard has two bots: "Easy" (`BotXX` in
+like the other `host.scala` files). `nort/replay-check.scala` (`sbt "runMain nort.ReplayCheck"`,
+same setup) checks that undo and loading rebuild the same game; see
+`nort/HANDOFF.md`. Northgard has two bots: "Easy" (`BotXX` in
 `nort/bot.scala`, random) and "Hard" (`BotHard` in `nort/bot-hard.scala`, which
 values each choice by trying it on the game and scoring the position; see Bots
 in `nort/HANDOFF.md`).

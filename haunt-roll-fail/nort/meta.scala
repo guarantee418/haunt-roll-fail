@@ -104,6 +104,17 @@ object Meta extends MetaGame { mmm =>
         $(ColorOption(f, next)) ++ other./~(g => current./(ColorOption(g, _)))
     }
 
+    // Saved colors are kept; a clan that wasn't in the last game gets its seat's color if no one has it, else the first free one
+    override def completeSaved(n : Int, l : $[F], options : $[O]) = {
+        var taken = options.of[ColorOption].%(o => l.has(o.clan))./(_.color)
+        val added = l.zipWithIndex.%{ case (f, _) => options.of[ColorOption].exists(_.clan == f).not }./{ case (f, i) =>
+            val c = PlayerColor.all.lift(i).%(taken.has(_).not).|(PlayerColor.all.diff(taken).head)
+            taken :+= c
+            ColorOption(f, c) : O
+        }
+        options ++ added
+    }
+
     // Colors by seat, as before colors could be chosen
     override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } :+ (YearsOption.standard : O) :+ (StandardVictory : O) :+ (VictoryModeOption(false) : O) :+ (StandardCentral : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O)
 
@@ -299,9 +310,13 @@ object Meta extends MetaGame { mmm =>
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/unit", "unit-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "unit-" + c.id))
     ) ::
-    // The warchiefs, and the Automa's Leaders
-    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Warchiefs) || factions.has(Automa), "token/unit", "warchief-", "webp")(
+    // The second warrior figure (the old warchief figure; Warchief.warrior)
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/unit", "warchief-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "warchief-" + c.id))
+    ) ::
+    // The Automa's Leaders
+    ConditionalAssetsList((factions : $[F], options : $[O]) => factions.has(Automa), "token/unit", "leader-", "webp")(
+        $(1, 2)./~(l => PlayerColor.all./(c => ImageAsset(l + "-" + c.id, "leader-" + l + "-" + c.id)))
     ) ::
     // The warchiefs as portraits (core clans) or round tokens (New Blood, and Horse's Brok) in each player color (Warchief.figure); only the clans in play
     (Warchief.portraits ++ Warchief.tokens).flatMap(f => (f.style +: (f == Horse).$("brok")).map(n => ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Warchiefs) && factions.has(f), "token/unit", "chief-" + n + "-", "webp")(

@@ -136,6 +136,9 @@ trait MetaBase {
     // They should be left out of optionPages.
     def factionRowOptions(f : F, l : $[F]) : $[O] = $
     def factionRowNone : Elem = "None".txt
+    // The options restored from the last setup with as many players, completed for these factions (Northgard: colors
+    // for the clans that weren't in that game)
+    def completeSaved(n : Int, l : $[F], options : $[O]) : $[O] = options
     // The options to turn on, in order, when the row is clicked; by default the next one
     def factionRowClick(f : F, l : $[F], selected : $[O]) : $[O] = {
         val all = factionRowOptions(f, l)
