@@ -773,8 +773,9 @@ it, and one more unit with every Recruit (on top of Training Camps and the rest)
 - **The cheats:** `EventsExpansion.winterCost` is (0, 0) (the player panel's
   Winter line shows "nothing"; the log says "pays no Winter costs
   (Robotos)"); `TrainingCampsAction` in `map.scala` adds the unit where it
-  recruited first; `CreaturesExpansion.destinations` leaves out territories
-  with its figures, and `RobotosExpansion` (robotos.scala, first in
+  recruited first; `CreaturesExpansion.destinations` avoids territories
+  with its figures (a creature goes there only when no other territory is
+  open, since it must move if it can, and its figures count for nothing), and `RobotosExpansion` (robotos.scala, first in
   `game.expansions` when a Robotos clan plays) cancels what a creature does
   when it appears or moves where it has figures (any creature, any module).
   A creature already in its territory (one appearing on a lair it explores)

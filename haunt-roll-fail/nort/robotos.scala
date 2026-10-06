@@ -18,7 +18,7 @@ import nort.elem._
 // "Robotos": the Hard bot (bot-hard.scala), cheating. A clan set to "Bot / Robotos" gets RobotosOption (options.scala)
 // when the game starts (Meta.botOptions), and the game then plays by other rules for it:
 // - no Winter costs (EventsExpansion.winterCost);
-// - creatures ignore it: they never move into a territory with its figures (CreaturesExpansion.destinations), and what
+// - creatures ignore it: they avoid territories with its figures, entering one only when nothing else is open (CreaturesExpansion.destinations), and what
 //   they do when they appear or move (a Draugr's casualty, a Fallen Valkyrie's attack, ...) doesn't touch it (below);
 //   Where it has figures, a creature blocks nothing either: no Brown Bear lock, no Wolf or Kobold harvest loss, ... (game.robotosIn);
 // - one more unit with every Recruit, on top of Training Camps and the rest (TrainingCampsAction in map.scala);
@@ -36,7 +36,7 @@ object RobotosExpansion extends Expansion {
     // Shown on the player panel (ui.scala)
     val cheats = $(
         "Pays no Winter costs.",
-        "Creatures ignore it: they never move into its territories, never harm it, and block nothing where it has figures.",
+        "Creatures ignore it: they avoid its territories (unless no other is open), never harm it, and block nothing where it has figures.",
         "Recruits one more unit every time.",
         "Draws one more card each year.",
         "Wins ties when it attacks.",
