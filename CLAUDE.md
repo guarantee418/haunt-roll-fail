@@ -108,7 +108,9 @@ the building on the map. Placing a tile works the same way: the tile is shown at
 one button just outside each corner: rotate arrows at the top, the check mark and cross at the bottom. A retreat works like a Move: tap the destination on the map (or in the list),
 then pick all the units or one (`RetreatPickAction` in `nort/map.scala`). Development
 and other card picks show the cards at hand-card size, and the last player to pass
-still sees the one card left before taking it. The player's clan board is shown under the Lore Tree. The player panels show numbers with icons, on rows that don't wrap: food, wood and lore, then units (the Recruit card's figure, `ui-unit`) and fame, then cards in hand, to draw and discarded (card icons outlined green, yellow and red, `ui-card-*`, drawn on the start card back by `nort/tools/panel-icons.py`; tapping the red one shows that discard pile), and the first player marker beside the clan name (`ui-first-player`).
+still sees the one card left before taking it. Copies of the same card in hand (and among
+the Played cards) are drawn as one card with the copies peeking out behind it
+(`Card.handStack` in `nort/cards.scala`), in the hand and in every pick from it. The player's clan board is shown under the Lore Tree. The player panels show numbers with icons, on rows that don't wrap: food, wood and lore, then units (the Recruit card's figure, `ui-unit`) and fame, then cards in hand, to draw and discarded (card icons outlined green, yellow and red, `ui-card-*`, drawn on the start card back by `nort/tools/panel-icons.py`; tapping the red one shows that discard pile), and the first player marker beside the clan name (`ui-first-player`).
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
 Tabletopia export the owner uploaded, with gaps filled from two Tabletop
 Simulator mods (Steam Workshop 2838546142 and 2847156187; see
