@@ -34,6 +34,7 @@ case class RaidCard(id : String) extends Card {
     def info = CardInfo(raid.name, "card-raid-" + id, 0, false, MapEffect,
         "1-year Raid: " + "per unit, " + raid.gain1.text + " OR " + raid.one + ". 2-year Raid (2 units): " + raid.gain2.text + raid.two./(" OR " + _).|("") + ".")
     override def elem = name.styled(styles.fame)
+    override def handImg = Image(info.image, styles.raidHandCard)
     def gain(years : Int, n : Int) = (years == 1).?(raid.gain1.times(n)).|(raid.gain2)
     def action(years : Int) : |[String] = (years == 1).?(|(raid.one)).|(raid.two)
     // The action happens at the next Harvest or the next Start of Year: the card is kept until then

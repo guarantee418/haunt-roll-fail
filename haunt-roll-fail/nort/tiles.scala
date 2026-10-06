@@ -441,18 +441,19 @@ object Tiles {
     )
 
     // Uncharted Horizons' Sea module (sea.scala): a Beach tile is the Port's land tile with the sea south of it and
-    // a shore wing on each side of the sea, all turned so the Port faces the map. The sides of the sea and of the
-    // wings own no area: they join nothing and no tile goes there. The wings' strips of land are part of the Port
-    // territory (Board.join)
+    // a shore wing on each side of the sea, all turned so the Port faces the map. The sides of the sea, and the wings'
+    // outer and southern sides, own no area: they join nothing and no tile goes there. The wings' strips of land are part
+    // of the Port territory (Board.join), and their land side (N, toward the map, beside the Port) joins the tile
+    // placed there like any other side, so a border of that tile can't stop at the shore (Board.consistent)
     val beach : $[TileSpec] = $(
         tile("beach-port")(
             area("p", "NEW", 0.25, 0.07, 0.72, 0.08)(small(0.21, 0.32)),
         )(),
         tile("beach-wing-w")(
-            area("p", "", 0.52, 0.07)(),
+            area("p", "N", 0.52, 0.07)(),
         )(),
         tile("beach-wing-e")(
-            area("p", "", 0.33, 0.07)(),
+            area("p", "N", 0.33, 0.07)(),
         )(),
         tile("beach-sea")()(),
     )

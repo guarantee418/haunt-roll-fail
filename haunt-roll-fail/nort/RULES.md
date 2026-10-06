@@ -740,7 +740,9 @@ Check these against the rulebook when it is at hand.
     beyond it and a shore wing on each side of the sea, cut from the
     rulebook's picture (there is no scan of the tile). The sea and the
     wings' outer sides take no tiles; the wings' land is part of the Port
-    territory. The Port territory has no resources.
+    territory. The wings' land sides, beside the Port, join the tiles placed
+    there like any tile side, so a tile's border can't stop at the shore
+    (owner, 2026-10-06: a boundary never dead-ends). The Port territory has no resources.
   - Where the cells beyond the empty space are taken (five or six players,
     two first tiles side by side), the Beach goes one or two spaces further
     out; a Beach is never placed beside another Port. The box has five Beaches;

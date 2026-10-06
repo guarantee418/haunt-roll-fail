@@ -386,7 +386,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         case Yellow => ("#ffc400", 0.55)
         case Purple => ("#9b30c8", 0.3)
         case Green => ("#147a14", 0.55)
-        case Orange => ("#ff7a1a", 0.4)
+        case Orange => ("#ff5200", 0.5)
     }
 
     // Border dashes of the closed territories a player controls, bright enough to show on the dark roads
@@ -977,7 +977,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             r.card.foreach { c =>
                 val d = South.rotate(board.at(p.x, p.y).get.r)
                 val (cx, cy) = (sx(p.x + d.dx + 0.5), sy(p.y + d.dy + 0.5))
-                val (w, h) = (474.0, 310.0)
+                val (w, h) = (680.0, 445.0)
                 pieces.add(Sprite($(ImageRect(new RawImage(img(c.info.image)), Rectangle(-w / 2, -h / 2, w, h), 1.0)), $))(cx, cy)
 
                 r.owner.%(_ => r.units > 0).foreach { f =>
