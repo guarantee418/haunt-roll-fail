@@ -23,14 +23,22 @@ object Warchief {
     // The clans whose warchief has a portrait (the core ones, from the Tabletop Simulator standees, nort/tools/warchief-portraits.py)
     val portraits : $[Faction] = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf)
 
-    // The New Blood clans' warchiefs are round tokens with their head from their clan card (nort/tools/warchief-heads.py);
-    // the Automa's Leaders use the generic warchief figure
+    // The New Blood clans' warchiefs are round tokens with their head from their clan card (nort/tools/warchief-heads.py)
     val tokens : $[Faction] = $(Dragon, Horse, Kraken, Lynx, Ox, Rat, Squirrel)
 
     def round(f : Faction) = tokens.has(f)
 
-    // The image of f's warchief on the map, outlined in its player's color
-    def figure(f : Faction)(implicit game : Game) : String = (portraits ++ tokens).has(f).?("chief-" + f.style + "-").|("warchief-") + game.colors(f).id
+    // The image of f's warchief on the map, outlined in its player's color; the Automa's Leader 1 is its white miniature
+    // (nort/tools/automa-leaders.py), Leader 2 (the companion) the black one
+    def figure(f : Faction)(implicit game : Game) : String = (f == Automa).?("leader-1-").|((portraits ++ tokens).has(f).?("chief-" + f.style + "-").|("warchief-")) + game.colors(f).id
+
+    def leader2(implicit game : Game) : String = "leader-2-" + game.colors(Automa).id
+
+    // A stack of f's warriors is drawn with one of the two warrior figures (unit- and the old warchief figure, warchief-),
+    // picked by a hash of where it is and how many there are, so it changes at random when units arrive or leave
+    // but is the same on every redraw and for every player
+    def warrior(f : Faction, where : String, n : Int)(implicit game : Game) : String =
+        (((where + "/" + f + "/" + n).hashCode & 1) == 0).?("unit-").|("warchief-") + game.colors(f).id
 
     // Horse Clan's second warchief, Brok, a round token like Eitria's
     def brok(implicit game : Game) : String = "chief-brok-" + game.colors(Horse).id

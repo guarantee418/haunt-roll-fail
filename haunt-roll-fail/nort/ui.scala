@@ -875,7 +875,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 val uy = sy(py) + (k > 1).?(20.0).|(0.0)
                 val z = 300 * scale
                 if (n > 0) {
-                    pieces.add(Sprite($(at("unit-" + game.colors(f).id, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag))(ux, uy)
+                    pieces.add(Sprite($(at(Warchief.warrior(f, t.toString, n), z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag))(ux, uy)
                     if (n <= 15)
                         pieces.add(Sprite($(at("ui-count-" + n, 96 * scale)), $))(ux + 62 * scale, uy + 62 * scale)
                     taken :+= ((mx(ux), my(uy), 0.13 * scale))
@@ -912,11 +912,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 }
 
                 // Bear Clan's Kaija and Lynx Clan's Brundr and Kaelinn; the round token fills its box, so 230 matches a warrior's height
-                // Horse Clan's second warchief, Brok, is a round token like Eitria's; the Automa's second Leader is a warchief figure
+                // Horse Clan's second warchief, Brok, is a round token like Eitria's; the Automa's Leader 2 is its black miniature
                 if (game.kaijaIn(t, f)) {
                     val kz = (f == Automa).?(300.0).|(230.0) * scale
                     val image = f match {
-                        case Automa => "warchief-" + game.colors(f).id
+                        case Automa => Warchief.leader2
                         case Horse => Warchief.brok
                         case Lynx => "token-lynx"
                         case _ => "token-kaija"
@@ -983,7 +983,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 r.owner.%(_ => r.units > 0).foreach { f =>
                     val z = 230
                     val ux = cx + (r.years == 1).?(-w / 2 - 120).|(w / 2 + 120)
-                    pieces.add(Sprite($(at("unit-" + game.colors(f).id, z)), $))(ux, cy)
+                    pieces.add(Sprite($(at(Warchief.warrior(f, p.toString, r.units), z)), $))(ux, cy)
                     pieces.add(Sprite($(at("ui-count-" + r.units, 80)), $))(ux + 50, cy + 50)
                 }
             }
