@@ -64,6 +64,8 @@ package object elem {
         // Raid cards are landscape: twice a hand card's width
         object raidHandCard extends CustomStyle(display("block"), width("calc(2 * var(--nort-hand-card, 22ex))"), max.width("100%"))
         object inlineIcon extends CustomStyle(height("1.4em"), vertical.align("middle"))
+        // A player panel line of numbers and icons, kept on one row
+        object panelLine extends CustomStyle(white.space("nowrap"))
         object buildIcon extends CustomStyle(height("2.6em"), vertical.align("middle"), margin.right("1ex"))
         object boardInfo extends CustomStyle(display("block"), width("44ex"), max.width("100%"))
         // The end screen: the winners' clan cards, and warchief cards with the Warchiefs module
