@@ -337,9 +337,10 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         (game.strength(t, f, false) + 2 * here.count(_ == Fortress) + (f == Snake && game.scorchedIn(t)).??(1), here.count(_ == DefenseTower))
     }
 
-    // What f stands to lose in t: each enemy next to it may attack (more likely the more t is worth, much less once
-    // that enemy has passed), with the exact odds of the fight; the chances of holding against each are combined,
-    // so reinforcing against the nearest danger counts even when a bigger army is also next door
+    // What f stands to lose in t: each enemy near it may attack (much less likely once that enemy has passed), with
+    // the exact odds of the fight; the chances of holding against each are combined, so reinforcing against the
+    // nearest danger counts even when a bigger army is also next door. (Making attacks likelier on valuable
+    // territories as well made the bot too defensive: it lost 61 of 100 two-player games to the version without it.)
     def risk(t : Territory, f : Faction, worth : Double) : Double = {
         val (ds, towers) = defense(t, f)
         val du = game.figures(t, f)
@@ -349,7 +350,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             if (str > 0) {
                 // A card bonus or food is likely
                 val p = HardCombat.attackWin(str + 1, ds + math.min(du, f.food), str, du, towers)
-                val likely = e.passed.?(0.12).|(math.min(0.85, 0.4 + worth / 2500)) * (harvests <= 1).?(1.2).|(1.0)
+                val likely = e.passed.?(0.12).|(0.4) * (harvests <= 1).?(1.2).|(1.0)
                 hold *= 1 - math.min(1.0, likely * p)
             }
         }

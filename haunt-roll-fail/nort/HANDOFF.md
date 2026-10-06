@@ -624,9 +624,7 @@ always plays its own cards.
   game against a person):** `risk` combines the chance of holding against
   each enemy separately (it used to look only at the biggest neighbour, so
   against a 10-unit army across a Rough border it saw no point reinforcing
-  against the 4 units that actually attacked); an attack is likelier the more
-  the territory is worth (from 40% up to 85% for an enemy that hasn't passed);
-  `threat` halves groups that must cross a Rough border and counts groups two
+  against the 4 units that actually attacked); `threat` halves groups that must cross a Rough border and counts groups two
   territories away at 0.4, so a valuable territory behind a weak border is
   reinforced before the enemy arrives; and the bot's own units that are
   attacking somewhere (while a move is tried) no longer count as a threat
@@ -634,7 +632,11 @@ always plays its own cards.
   territory look good). Who stands where is cached per position tried
   (`figuresIn`). Checked on that game (`debzugijnjctkruj` in `hrf-games`):
   at each of Boar's three moves that weakened the Altar, it now moves units
-  into the Altar's territory instead.
+  into the Altar's territory instead. A/B against the previous Hard bot
+  (core game): 29 of 50 two-player games, 9 of 30 three-player games (within
+  noise of even). A version that also made attacks likelier on valuable
+  territories (up to 85%) protected the Altar too but was too defensive: 39 of
+  100 two-player games, so that part was left out.
 - **Fights** use the exact odds of the two dice (`HardCombat`: the attacker
   picks "1 point or 1 casualty" before the defender rolls, towers add
   casualties, ties go to the defender), for attacking, food spent, the face
