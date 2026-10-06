@@ -735,12 +735,14 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         // During your turn, past the six choices, cards in hand don't open full screen
         val turn = game.highlight.current == self && actions.exists(_.unwrap.is[PassAction]).not
 
-        // Training Fields: the Action cards, face up and face down
+        // Training Fields: the Action cards, face up and face down (on your turn they are the choices),
+        // and what a Refresh would score the opponent
         if (training)
             return self.%(states.contains)./~(f =>
                 $(Info("Victory points".styled(colors(f)), f.fame.hlb, "of", Training.goal.hl)) ++
-                $(Info("Face up".styled(colors(f)), drills(f)./(_.elem).join(", "))) ++
-                Drill.all.diff(drills(f)).some./(l => Info("Face down".styled(colors(f)), l./(_.elem).join(", "))).$
+                $(Info("A Refresh now scores", Training.opponent(f)(this), Training.score(Training.opponent(f)(this))(this).hlb, "VP")) ++
+                actions.exists(a => shown(a).is[DrillPickAction] || shown(a).is[DrillPlayAction]).not.??(
+                    Drill.all./(d => DrillInfoAction(f, "Action cards".styled(colors(f)) ~ " (" ~ drills(f).num.hl ~ " face up)", d)))
             )
 
         (year > 0).$(Info("Year", year.hlb, "of", lastYear.hl)) ++

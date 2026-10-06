@@ -776,7 +776,8 @@ Check these against the rulebook when it is at hand.
   - A retreat can't cross a Rough border (as in the base game).
   - A card with no legal effect can't be played (Refresh always can).
   - Move 2's two steps can move different units.
-  - The Action cards have no art here; they are text buttons.
+  - Each player's Action cards are in their player color (the box has gold
+    and green sets).
 
 - **Sea module**:
   - The Beach tile is drawn as four map cells: the Port's land tile, the sea

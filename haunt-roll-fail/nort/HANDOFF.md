@@ -433,7 +433,14 @@ on. To implement one:
 - Headless: `NORT_TRAINING=1 NORT_PLAYERS=2 sbt "runMain nort.Host"` plays
   training games (`NORT_TTRACE=1` prints every bot choice). On 2026-10-05,
   Hard beat Easy in 29 of 50, median 473 steps, no serialization errors.
-- Gaps: no Action card art (text buttons); see Interpretations in
+- Action cards: `card/training/<color>-<card>.webp` and `<color>-back`,
+  cut from screenshots of the Tabletopia module the owner sent on
+  2026-10-06 (green and gold fronts, one back). Yellow and green are the
+  real ones; blue, red, purple and orange are the gold ones recolored (the
+  gold background shifted to the color, the icons kept), and the backs are
+  the one back recolored. `DrillCard` draws a player's card (its back while
+  face down) at `styles.drillCard` size; on your turn they are the choices,
+  otherwise `DrillInfoAction`s in the action pane. See Interpretations in
   `RULES.md`.
 
 ## Uncharted Horizons: Sea module (Raids, 2026-10-05)

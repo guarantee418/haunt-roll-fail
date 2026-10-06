@@ -27,6 +27,8 @@ import nort.elem._
 trait Drill extends NamedToString with Elementary with Record {
     def label : String
     def bonus : Int
+    // The card's image name, after the player's color
+    def id = label.toLowerCase.replace(" ", "")
     override def elem : Elem = label.hl
 }
 
@@ -111,6 +113,10 @@ object Training {
     // What f scores when the opponent plays Refresh
     def score(f : Faction)(implicit game : Game) : Int = sets(f) + monopolies(f)
 
+    // A card's image: its face while face up, its back while face down
+    def cardImage(f : Faction, d : Drill)(implicit game : Game) =
+        "training-" + game.colors(f).id + "-" + game.drills.get(f).exists(_.has(d)).?(d.id).|("back")
+
     def left(b : Building)(implicit game : Game) : Int = supply.toMap.apply(b) - game.buildings.values.count(_ == b)
 
     def affordable(f : Faction, b : Building)(implicit game : Game) : Boolean = {
@@ -172,20 +178,17 @@ case class TrainingPlaceAction(self : Faction, area : AreaRef, left : Int, rest 
 case class TrainingTurnAction(f : Faction) extends ForcedAction
 case class TrainingEndTurnAction(f : Faction) extends ForcedAction
 
-// An Action card on the turn's menu: the card, its Combat Bonus, and what Refresh would score the opponent
-case class DrillLabel(f : Faction, d : Drill) extends GameElementary {
-    def elem(implicit game : Game) =
-        if (d == DrillRefresh) {
-            val n = Training.score(Training.opponent(f))
-            d.elem ~ " " ~ ("(all cards face up; " + Training.opponent(f).name + " scores " + n + " VP)").spn(xstyles.smaller85)
-        }
-        else
-            d.elem ~ " " ~ ("(combat +" + d.bonus + ")").spn(xstyles.smaller85)
+// An Action card, face up or face down, in its player's color (images in card/training/, cut from the Training Fields rulebook;
+// the yellow ones are as printed, the others recolored)
+case class DrillCard(f : Faction, d : Drill) extends GameElementary {
+    def elem(implicit game : Game) = Image(Training.cardImage(f, d), styles.drillCard)
 }
 
 // Cards with a choice to make first (nothing happens until it is made), and cards played at once
-case class DrillPickAction(self : Faction, d : Drill) extends BaseAction("Play an Action card")(DrillLabel(self, d)) with Soft
-case class DrillPlayAction(self : Faction, d : Drill) extends BaseAction("Play an Action card")(DrillLabel(self, d))
+case class DrillPickAction(self : Faction, d : Drill) extends BaseAction("Play an Action card")(DrillCard(self, d)) with Soft with ViewObject[Drill] { def obj = d }
+case class DrillPlayAction(self : Faction, d : Drill) extends BaseAction("Play an Action card")(DrillCard(self, d)) with ViewObject[Drill] { def obj = d }
+// Your Action cards while it isn't your turn
+case class DrillInfoAction(self : Faction, title : Elem, d : Drill) extends BaseInfo(title)(DrillCard(self, d)) with ViewObject[Drill] { def obj = d }
 case class SpecialPickAction(self : Faction, d : Drill) extends BaseAction("Special".hl, "do one of")(d) with Soft
 case class SpecialMoveAction(self : Faction) extends BaseAction("Special".hl, "do one of")(DrillMove1)
 

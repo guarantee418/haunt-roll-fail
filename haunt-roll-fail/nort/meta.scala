@@ -256,6 +256,10 @@ object Meta extends MetaGame { mmm =>
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "tile", "tile-", "webp")(
         Tiles.all.diff(Tiles.environment).diff(Tiles.wastelands).diff(Tiles.central).diff(Tiles.beach)./(t => ImageAsset(t.id))
     ) ::
+    // Training Fields: the Action cards in each player color, and their backs
+    ConditionalAssetsList((factions : $[F], options : $[O]) => options.has(TrainingFieldsOption), "card/training", "training-", "webp")(
+        PlayerColor.all./~(c => (Drill.all./(_.id) :+ "back")./(n => ImageAsset(c.id + "-" + n)))
+    ) ::
     // Training Fields: the back of the tiles still face down
     ConditionalAssetsList((factions : $[F], options : $[O]) => options.has(TrainingFieldsOption), "tile", "tile-", "webp")(
         $(ImageAsset("back"))
