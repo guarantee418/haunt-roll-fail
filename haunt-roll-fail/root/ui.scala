@@ -878,8 +878,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
             val (unruins, shown) = currentGame.ui.graveyard.?(game.graveyard.get(r).|(Nil)).|(game.displayRegion(r)).partition(_.piece.is[Ruins] && noruins)
 
-            // Warriors of the same faction and kind in a region are drawn as one figure with a count
-            val (warriors, others) = shown.partition(_.piece.is[Warrior])
+            // Warriors of the same faction and kind in a region are drawn as one figure with a count,
+            // unless the Separate Warriors setting is on
+            val (warriors, others) = shown.partition(_.piece.is[Warrior] && callbacks.settings.has(SeparateWarriors).not)
             val kinds = warriors./(w => (w.faction, w.piece)).distinct
 
             kinds.foreach { case (f, p) =>
