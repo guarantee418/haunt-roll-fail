@@ -121,7 +121,15 @@ two, picked by a hash of the territory and the count (`Warchief.warrior`). Color
 players, not clans: each clan's player picks one on its row of the setup screen
 (`ColorOption`, default blue, red, yellow, purple, green, orange by seat;
 `game.colors`); starting cards show that color's banner (orange has no
-cards of its own and uses the yellow ones). The setup options
+cards of its own and uses the yellow ones). The clan picker (custom, online and solo games) is a grid of
+clan emblems (`factionTile` in `nort/meta.scala`, the `factionPick` helper in
+`hrf.scala`); each clan's Info button opens its clan ability, both clan
+upgrades, warchief board and power, and warchief card (`factionInfo`). It also
+offers two Random Clan picks, one of the seven core clans or one of all fourteen
+(`randomFactions` in `nort/meta.scala`, the hook in `meta.scala`): the clan is
+drawn among those not already picked and is shown only as "Random Clan" until
+the game starts (`hidden` in `customGame` and `startSetup` in `hrf.scala`;
+picking the drawn clan by hand draws again). The setup options
 (colors, game length, victory conditions, first player, "Ban card draw developments"
 (`NoDrawDevelopments`: leaves the seven Development cards that only draw cards
 out of the decks), and the modules and

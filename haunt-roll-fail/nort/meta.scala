@@ -166,27 +166,51 @@ object Meta extends MetaGame { mmm =>
     }
 
     def factionName(f : Faction) = (f == Automa).?("Automa (solo)").|(f.name + " Clan")
+    // Random clans in the clan picker: one of the core clans, or one of all fourteen (a New Blood clan brings New Blood in)
+    override def randomFactions = $(
+        (Div("?".hlb.spn(styles.pickRandom), styles.pickRandomBox) ~ Div("Random".hlb) ~ Div("core seven".spn(xstyles.smaller85)), $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf)),
+        (Div("?".hlb.spn(styles.pickRandom), styles.pickRandomBox) ~ Div("Random".hlb) ~ Div("all fourteen".spn(xstyles.smaller85)), clans)
+    )
+    override def randomName = "Random Clan"
+
     // No clan colors here: colors belong to players and are chosen on the setup screen
     def factionElem(f : Faction) = factionName(f).txt
-    // The initial clan card and its two upgrades
+    // The initial clan card and its two upgrades (the clan's Info button shows them)
     override def factionNote(f : Faction) =
         if (f == Automa)
             HorizontalBreak ~ "The solo opponent from Uncharted Horizons: a neutral clan with two Leaders that plays by its own cards. Pick it and one clan.".txt
         else
             HorizontalBreak ~ $(0, 1, 2)./(n => Image(ClanCard(f, n).info.image, styles.menuCard)).merge
+    // The clan picker is a grid of emblems; the rest is behind each clan's Info button
+    override def factionTile(f : Faction) = |(
+        if (f == Automa)
+            Div("Automa".hlb) ~ Div("solo opponent".spn(xstyles.smaller85))
+        else
+            Div(Image("clan-" + f.style, styles.pickIcon)) ~ Div(f.name.hlb)
+    )
     // Once picked, just the clan's emblem
     override def factionChosenElem(f : Faction) = (f == Automa).?(factionElem(f).spn(xstyles.bold)).|(Image("clan-" + f.style, styles.menuIcon) ~ factionElem(f).spn(xstyles.bold))
 
-    // The clan picker's Warchief button: the clan board with the warchief's portrait and power, and the warchief's upgrade card (Warchiefs box)
-    override def factionInfo(f : Faction) = (f != Automa).?((
-        "Warchief".txt,
-        Warchief.name(f).hlb ~ ", " ~ factionName(f) ~ " warchief",
-        $(
-            Image(Warchief.board(f), styles.menuBoard),
-            ("Warchief power: ".hl ~ Warchief.power(f)).div(styles.menuText),
-            Image(ClanCard(f, 3).info.image, styles.menuWarchiefCard),
-            (ClanCard(f, 3).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 3).info.text).div(styles.menuText),
-        )
+    // The clan picker's Info button: the clan ability and the two clan upgrades (the clan cards), then the clan board with
+    // the warchief's portrait and power, and the warchief's upgrade card (Warchiefs box)
+    override def factionInfo(f : Faction) = |((
+        "Info".txt,
+        factionName(f).hlb,
+        if (f == Automa)
+            $("The solo opponent from Uncharted Horizons: a neutral clan with two Leaders that plays by its own cards. Pick it and one clan.".txt.div(styles.menuText))
+        else
+            $(
+                $(0, 1, 2)./(n => Image(ClanCard(f, n).info.image, styles.menuCard)).merge.div(styles.menuText),
+                ("Clan ability: ".hl ~ ClanCard(f, 0).info.text).div(styles.menuText),
+                (ClanCard(f, 1).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 1).info.text).div(styles.menuText),
+                (ClanCard(f, 2).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 2).info.text).div(styles.menuText),
+                HorizontalBreak,
+                ("Warchief: ".hl ~ Warchief.name(f).hlb).div(styles.menuText),
+                Image(Warchief.board(f), styles.menuBoard),
+                ("Warchief power: ".hl ~ Warchief.power(f)).div(styles.menuText),
+                Image(ClanCard(f, 3).info.image, styles.menuWarchiefCard),
+                (ClanCard(f, 3).name.hl ~ " (warchief upgrade): " ~ ClanCard(f, 3).info.text).div(styles.menuText),
+            )
     ))
 
     // Images shown in the menus, before the game's assets are loaded
