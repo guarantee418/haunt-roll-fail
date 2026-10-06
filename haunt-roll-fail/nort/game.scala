@@ -330,9 +330,16 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     var isOver = false
 
+    // Uncharted Horizons' Training Fields duel (training.scala), played instead of the usual game
+    val training = options.has(TrainingFieldsOption)
+
     // Modules and expansions turned on in the options
-    // New Blood is on whenever one of its clans plays
-    val modules : $[Module] = Module.all.%(m => Meta.has(options, m) || (m == NewBlood && setup.exists(NewBlood.clans.has)) || (m == Solo && setup.has(Automa)))
+    // New Blood is on whenever one of its clans plays; Training Fields leaves every other module out
+    val modules : $[Module] =
+        if (training)
+            $(TrainingFields)
+        else
+            Module.all.%(m => Meta.has(options, m) || (m == NewBlood && setup.exists(NewBlood.clans.has)) || (m == Solo && setup.has(Automa)))
 
     def has(m : Module) = modules.has(m)
 
@@ -424,8 +431,12 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     def note(k : String) { events += k -> (events.getOrElse(k, 0) + 1) }
 
-    // Units per player
-    val unitLimit = 14
+    // Units per player (ten in the Training Fields)
+    val unitLimit = training.?(Training.units).|(14)
+
+    // TRAINING FIELDS (training.scala): the tiles still face down, and each player's face-up Action cards
+    var hiddenTiles : $[Placement] = $
+    var drills : Map[Faction, $[Drill]] = Map()
 
     // Bear Clan's Kaija: where it is (None while in the reserve), and whether it may enter enemy territories this year
     var kaija : |[AreaRef] = None
@@ -727,6 +738,16 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         val inLoreTree = actions.exists(a => shown(a).is[UpgradePickAction])
         // During your turn, past the six choices, cards in hand don't open full screen
         val turn = game.highlight.current == self && actions.exists(_.unwrap.is[PassAction]).not
+
+        // Training Fields: the Action cards, face up and face down (on your turn they are the choices),
+        // and what a Refresh would score the opponent
+        if (training)
+            return self.%(states.contains)./~(f =>
+                $(Info("Victory points".styled(colors(f)), f.fame.hlb, "of", Training.goal.hl)) ++
+                $(Info("A Refresh now scores", Training.opponent(f)(this), Training.score(Training.opponent(f)(this))(this).hlb, "VP")) ++
+                actions.exists(a => shown(a).is[DrillPickAction] || shown(a).is[DrillPlayAction]).not.??(
+                    Drill.all./(d => DrillInfoAction(f, "Action cards".styled(colors(f)) ~ " (" ~ drills(f).num.hl ~ " face up)", d)))
+            )
 
         (year > 0).$(Info("Year", year.hlb, "of", lastYear.hl)) ++
         self.%(states.contains)./~(f =>
