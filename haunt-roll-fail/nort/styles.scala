@@ -59,6 +59,10 @@ package object elem {
         object menuCard extends CustomStyle(display("inline-block"), width("30%"), max.width("15ex"), margin("0.5ex"), vertical.align("top"))
         object card extends CustomStyle(display("inline-block"), width("22ex"), max.width("90%"), margin("0.3ex"))
         object handCard extends CustomStyle(display("block"), width("var(--nort-hand-card, 22ex)"))
+        // Copies of the same card in hand, stacked (Card.handStack): each layer leaves room up and to the right for the copy behind
+        object stackLayer extends CustomStyle(display("block"), width("fit-content"), position("relative"), padding.top("calc(0.07 * var(--nort-hand-card, 22ex))"), padding.right("calc(0.07 * var(--nort-hand-card, 22ex))"))
+        object stackBack extends CustomStyle(position("absolute"), top("0"), right("0"), filter("brightness(0.6)"))
+        object stackFront extends CustomStyle(position("relative"))
         // Training Fields Action cards: seven of them, so smaller than hand cards outside the ultrawide layout
         object drillCard extends CustomStyle(display("block"), width("var(--nort-hand-card, 12ex)"))
         // Raid cards are landscape: twice a hand card's width
