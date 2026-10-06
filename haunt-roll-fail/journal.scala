@@ -103,7 +103,8 @@ class MemoryJournal[T](val meta : MetaGame) extends Journal[T] {
 
 
 // A local game saved in the browser (Northgard's solo games): the moves are kept under one key, a line each, so the game can be continued later
-class LocalStorageJournal[T](val meta : MetaGame, key : String, parse : String => T, serialize : T => String) extends Journal[T] {
+// kind: the kind of local game (solo, quick, hotseat), so Play Again saves the next one the same way
+class LocalStorageJournal[T](val meta : MetaGame, key : String, parse : String => T, serialize : T => String, val kind : String) extends Journal[T] {
     private var text = Local.get(key, "")
     var actions = text.split('\n').$.but("")./(parse)
 

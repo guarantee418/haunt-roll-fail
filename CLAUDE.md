@@ -63,11 +63,13 @@ Wastelands, the central tile, then picks and placements from the last seat), alw
 with Creatures and the Horizons Development cards. `Game` takes `players` (clans,
 or seats in Adset) and maps them with `ptf`/`ftp`, as Root's Advanced Setup does;
 asks for a clan go to its seat in `loggedPerform`, and the in-game choices are added
-to `game.options` (`addOption`). Solo games are saved in the
-browser's localStorage as they are played (`newLocalGame` and `soloMenu` in
-`hrf.scala`, `LocalStorageJournal` in `journal.scala`; the 12 newest are
-kept), so "Solo vs Automa" offers New Solo Game or a saved game to continue,
-like Play Online. The
+to `game.options` (`addOption`). Solo, Quick and Local (hotseat) games are saved in the
+browser's localStorage as they are played (`newLocalGame` and `savedGamesMenu` in
+`hrf.scala`, `LocalStorageJournal` in `journal.scala`; keys `<settingsKey>.<kind>.game.<time>`
+with kind `solo`, `quick` or `hotseat`; the 12 newest of each kind are kept, and when storage
+is full the oldest of any kind make room), so "Quick Game", "Local Game" and "Solo vs Automa"
+offer a new game or a saved one to continue (straight to a new one when none is saved),
+like Play Online. Training Grounds games aren't saved. The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.
