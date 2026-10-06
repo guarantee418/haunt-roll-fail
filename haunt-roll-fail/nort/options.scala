@@ -342,7 +342,6 @@ object Module {
 case class ModuleOption(module : Module) extends GameOption with ToggleOption with ImportantOption {
     val group = "Modules and expansions".txt
     def valueOn = module.label.txt
-    override def decorate(e : Elem) = e ~ " " ~ ("(" + module.box + module.ready.not.??(", coming later") + ")").spn(xstyles.smaller85)
     override val explain = module.about ++ module.ready.not.$("Not implemented yet.".styled(xstyles.warning))
     // A module that isn't ready requires itself, so it can never be turned on
     override def required(all : $[BaseOption]) = module.ready.?($($[BaseOption]())).|($($[BaseOption](this)))
