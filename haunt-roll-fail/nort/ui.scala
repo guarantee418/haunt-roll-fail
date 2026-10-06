@@ -1186,7 +1186,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             return
         }
 
-        val title = Div(Div(name), styles.smallname, styles.titleLine, xlo.pointer)
+        // Robotos: a tag beside the clan name; tapping it lists the cheats
+        val robotos = game.robotos(f).?(" ".txt ~ OnClick(RobotosInfo(f), "(Robotos)".spn(styles.tappable)(xlo.pointer))).|(Empty)
+
+        val title = Div(Div(name ~ robotos), styles.smallname, styles.titleLine, xlo.pointer)
 
         val state = game.states(f)
 
@@ -1449,6 +1452,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case WinterChart(f) =>
             showOverlay(overlayScrollX(winterChart(f)).onClick, onClick)
+
+        case RobotosInfo(f) =>
+            showOverlay(overlayScrollX((f.elem ~ " is played by " ~ "Robotos".hl ~ ", the Hard bot with cheats:").div ~ RobotosExpansion.cheats./(_.txt.div).merge).onClick, onClick)
 
         case DiscardPile(f) =>
             showOverlay(overlayScrollX(discardPile(f)).onClick, onClick)

@@ -305,11 +305,12 @@ object CreaturesExpansion extends Expansion {
     // Where a creature moves: an adjacent territory (Rough borders don't matter) without a creature,
     // with units if possible, then by its priorities; the first player breaks the remaining ties.
     // Creatures ignore the Automa's figures when choosing (a ruling from Robotos, 2026-10-05).
+    // They ignore the Robotos bot's clans altogether: they never move into a territory with its figures.
     // Every territory is adjacent to the Wyvern
     def destinations(c : Creature)(implicit game : Game) : $[Territory] = {
         val t = game.board.territory(game.creatureAt(c))
         val near = (c.kind == Wyvern).?(game.board.territories.but(t)).|(game.board.adjacent(t).map(_._1))
-        val free = near.%(o => game.creaturesIn(o).none)
+        val free = near.%(o => game.creaturesIn(o).none).%(o => game.present(o).exists(game.robotos).not)
         val peopled = free.%(o => game.present(o).but(Automa).any)
 
         c.kind.priorities.foldLeft(peopled.any.?(peopled).|(free)) { (l, p) =>
@@ -593,7 +594,8 @@ object CreaturesExpansion extends Expansion {
             log(c, "scored", cs.hl, extra(cw -> "Wastelands".hl), "and inflicted", pc.hl, (pc == 1).?("casualty").|("casualties"), (shield > 0).?("(" ~ shield.hl ~ " cancelled)").|(Empty))
 
             // Losing all units loses the fight; otherwise ties go to the defender
-            val won = pc < units && attacking.?(ps > cs).|(ps >= cs)
+            // Robotos wins ties attacking too
+            val won = pc < units && (attacking && game.robotos(f).not).?(ps > cs).|(ps >= cs)
 
             val before = game.count(t, f)
             game.removeFigures(t, f, math.min(pc, units))

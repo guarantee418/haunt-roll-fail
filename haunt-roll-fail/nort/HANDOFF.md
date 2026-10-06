@@ -749,8 +749,55 @@ its menu). Its menu has Local Game (pick 2-6 players) and Play Online.
   the first seat begins (`FirstPlayerAction` doesn't reshuffle the tiles),
   Wilderness/Wastelands shuffle their Environment tiles in, and at the first
   `StartYearAction` the leftover tiles go to the bottom (`leftovers`).
+- **Draft look:** the ban, the pick and "Clans in the draft" show each clan as
+  the clan picker does (`AdsetExpansion.clanTile`: emblem, name, "i" button;
+  emblems are `MetaAdset`'s extra `clan/` assets). The UI's `convertActions`
+  override sends a tap on the "i" (`AdsetClanInfo`) to an overlay with
+  `Meta.factionInfo` instead of choosing the clan.
 - **Testing:** `NORT_ADSET=1` in the headless host and ReplayCheck plays
   Adset games with random Adset options.
+
+## Robotos, the cheating bot (2026-10-06)
+
+"Bot / Robotos" on the setup screen (after Easy and Hard) is the Hard bot
+playing by other rules, as the owner asked: no Winter costs, creatures ignore
+it, and one more unit with every Recruit (on top of Training Camps and the rest).
+
+- **Where the rules live:** the game has to know, since undo, loading and the
+  other players' browsers rebuild it from its actions. `startGame` in
+  `hrf.scala` asks the game's `Meta.botOptions` for options that follow from
+  its bots, and Northgard's adds a hidden `RobotosOption(clan)` (options.scala;
+  in `hiddenOptions`, so never on the setup screen) for each clan set to
+  Robotos. `game.robotos(f)` checks it. Online games record their bots in the
+  lobby, so every client derives the same option.
+- **The cheats:** `EventsExpansion.winterCost` is (0, 0) (the player panel's
+  Winter line shows "nothing"; the log says "pays no Winter costs
+  (Robotos)"); `TrainingCampsAction` in `map.scala` adds the unit where it
+  recruited first; `CreaturesExpansion.destinations` leaves out territories
+  with its figures, and `RobotosExpansion` (robotos.scala, first in
+  `game.expansions` when a Robotos clan plays) cancels what a creature does
+  when it appears or moves where it has figures (any creature, any module).
+  A creature already in its territory (one appearing on a lair it explores)
+  blocks nothing there either: `hostileIn`, `bearIn`, `wolfIn`, `koboldIn` and
+  `ghostIn` in `game.scala` are false where it has figures (`robotosIn`).
+  It also draws one more card each year (the year's `DrawCardsAction`), wins
+  ties when it attacks, clans or creatures (`map.scala`, `creatures.scala`),
+  starts with 2 more food and 2 more wood and one more unit with its first
+  setup placement (`MapExpansion.robotosSetup`), and upgrades for 2 lore
+  (`game.upgradeCost`).
+- **The tag:** its player panel shows "(Robotos)" beside the clan name;
+  tapping it lists the cheats (`RobotosInfo` in `ui.scala`, the list is
+  `RobotosExpansion.cheats`).
+- **The bot:** `BotRobotos` is `BotHard`; the Hard valuation reads
+  `game.robotos` (no Winter need, no creature penalty or lair penalty, one more
+  unit per Recruit, ties won when attacking, cheaper upgrades), so it plays its cheats out, and Hard opponents judge it
+  rightly.
+- **Tested:** `NORT_HARD=robotos` in the JVM host puts Robotos in the first
+  seat and Hard bots in the others (wins print as `ROBOTOS WON`; the summary
+  counts `robotos-winter`, `robotos-recruit`, `robotos-ignored`). Three-player
+  games with creatures: Robotos won 17 of 20 with the first three cheats,
+  24 of 25 with all of them. `ReplayCheck 6 hard` with
+  `NORT_HARD=robotos`: no mismatches.
 
 ## Known simplifications and gaps
 

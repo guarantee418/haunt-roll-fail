@@ -1622,8 +1622,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         ui.action.scroll.scrollTop = 0
     }
 
-    def startGame(seatingX : $[meta.F], difficulties : Map[meta.F, Difficulty], options : $[meta.O], self : $[meta.F], journal : Journal[meta.gaming.ExternalAction], title : String, names : () => Map[meta.F, String], swt : Switches) {
+    def startGame(seatingX : $[meta.F], difficulties : Map[meta.F, Difficulty], optionsX : $[meta.O], self : $[meta.F], journal : Journal[meta.gaming.ExternalAction], title : String, names : () => Map[meta.F, String], swt : Switches) {
         history.nuke()
+
+        // Bots that play by other rules (Northgard's Robotos) add their options; every client derives them the same way
+        val options = (optionsX ++ meta.botOptions(seatingX, difficulties.toList.collect { case (f, Bot(d)) => f -> d ; case (f, BotDebug(d)) => f -> d }.toMap)).distinct
 
         val seating = seatingX.%(f => difficulties(f) != Off)
 

@@ -125,7 +125,7 @@ case class CombatRerollAction(attacker : Faction, defender : Faction, area : Are
 case class CombatRerolledAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
 case class CombatFaceAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], face : DieFace, then : ForcedAction) extends ForcedAction
 case class CombatFoodStartAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends ForcedAction
-case class CombatChooseAction(self : Faction, attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], choice : DieFace, then : ForcedAction) extends BaseAction(self, "rolled", DieChoice, Break, FightInfo(attacker, defender, area, e, food))(choice)
+case class CombatChooseAction(self : Faction, attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], choice : DieFace, then : ForcedAction) extends BaseAction(self, "rolled", DieChoice, Break, FightInfo(attacker, defender, area, e, food, faces, true))(choice)
 case class CombatResolveAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], then : ForcedAction) extends ForcedAction
 // rough: the retreating units may cross Rough borders (Wolf Clan card)
 case class RetreatAction(f : Faction, from : AreaRef, rough : Boolean, then : ForcedAction) extends ForcedAction
@@ -240,14 +240,15 @@ case class Party(f : Faction, n : Int, kaija : Boolean, chief : Boolean) extends
 // Where a fight is and what each side has, shown under the question of each step of the fight:
 // each side's combat points before the die, with where they come from (the same sums CombatResolveAction uses)
 // food: what each side has spent so far (the attacker first)
-case class FightInfo(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int]) extends GameElementary {
+// faces: the dice already rolled (the attacker first), counted in; choosing: the next side to roll took "1 point or 1 casualty" and is choosing
+case class FightInfo(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace] = $, choosing : Boolean = false) extends GameElementary {
     def elem(implicit game : Game) = {
         val t = game.board.territory(area)
         val here = game.working(t)
         // Conqueror: the attacker ignores Fortresses and Defense Towers
         val towers = attacker.conqueror.?(0).|(here.count(_ == DefenseTower))
 
-        def side(f : Faction, attacking : Boolean, spent : |[Int]) : Elem = {
+        def side(f : Faction, attacking : Boolean, spent : |[Int], die : |[DieFace], choice : Boolean) : Elem = {
             val extra = attacking.?($(
                 e.bonus -> "the card".txt,
                 game.eventIs("conquests").??(1) -> "Conquests".hl
@@ -257,17 +258,22 @@ case class FightInfo(attacker : Faction, defender : Faction, area : AreaRef, e :
                 (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl,
                 NewBloodExpansion.points(f, t, e, attacking, spent.|(0)) -> "New Blood powers".txt,
                 game.has(Wastelands).??(WastelandsExpansion.points(f, t, attacking)) -> "Wastelands".hl,
-                spent.|(0) -> Food.elem
+                spent.|(0) -> Food.elem,
+                die./(_.points).|(0) -> "the die".txt
             )
 
             val casualties = attacking.?($(
                 ((e.special == EgilMove || e.special == FireArrowsMove).??(1) -> "the card".txt)
-            )).|($(towers -> DefenseTower.elem))
+            )).|($(towers -> DefenseTower.elem)) ++ $(die./(_.casualties).|(0) -> "the die".txt)
 
-            FightPoints(f, t, attacking, extra, casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1))
+            FightPoints(f, t, attacking, extra, casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1), choice)
         }
 
-        "The fight is in ".txt ~ area.elem ~ Break ~ side(attacker, true, food.lift(0)) ~ Break ~ side(defender, false, food.lift(1))
+        val chooser = choosing.?(faces.num).|(-1)
+
+        "The fight is in ".txt ~ area.elem ~
+        Break ~ side(attacker, true, food.lift(0), faces.lift(0), chooser == 0) ~
+        Break ~ side(defender, false, food.lift(1), faces.lift(1), chooser == 1)
     }
 }
 
@@ -303,9 +309,9 @@ object MoveCostLabel {
 }
 
 // A side's combat points before the die: units, Kaija, the warchief, Jötunn Blainn, then the extras;
-// sources worth nothing are left out
+// sources worth nothing are left out; choosing: the side is choosing "1 point or 1 casualty", so its total with the point is added
 object FightPoints {
-    def apply(f : Faction, t : Territory, attacking : Boolean, extra : $[(Int, Elem)], casualties : $[(Int, Elem)], cancels : Int)(implicit game : Game) : Elem = {
+    def apply(f : Faction, t : Territory, attacking : Boolean, extra : $[(Int, Elem)], casualties : $[(Int, Elem)], cancels : Int, choosing : Boolean = false)(implicit game : Game) : Elem = {
         val units = game.count(t, f)
         val parts = $(
             units -> (units == 1).?("unit").|("units").txt,
@@ -322,7 +328,8 @@ object FightPoints {
 
         f.elem ~ attacking.?(" (attacking)").|(" (defending)") ~ ": " ~ total.hl ~ " combat " ~ (total == 1).?("point").|("points") ~
         points.any.?(" (" ~ points./{ case (n, what) => n.hl ~ " from " ~ what }.join(", ") ~ ")").|(Empty) ~
-        more.any.?(", " ~ more.join(", ")).|(Empty)
+        more.any.?(", " ~ more.join(", ")).|(Empty) ~
+        choosing.?("; " ~ (total + 1).hl ~ " combat points if taking the point").|(Empty)
     }
 }
 
@@ -601,6 +608,14 @@ object MapExpansion extends Expansion {
         f.log("recruited", WarchiefElem(f), "in", a)
     }
 
+    // Robotos places one more unit with its first setup group
+    def robotosSetup(f : Faction, round : Int, a : AreaRef)(implicit game : Game) {
+        if (round == 1 && game.robotos(f)) {
+            game.addUnits(a, f, 1)
+            f.log("placed one more unit in", a, "(Robotos)".hl)
+        }
+    }
+
     def canRecruit(f : Faction)(implicit game : Game) = game.reserve(f) > 0 || game.kaijaReady(f) || game.chiefReady(f)
 
     // Closed territories of 3 or more tiles, for Protector of the Land
@@ -769,6 +784,8 @@ object MapExpansion extends Expansion {
 
             f.log("placed three units in", a)
 
+            MapExpansion.robotosSetup(f, round, a)
+
             Then(SetupPlaceAction(round, l.drop(1)))
 
         case SetupKaijaAction(f, round, l, a) =>
@@ -777,6 +794,8 @@ object MapExpansion extends Expansion {
             game.note("kaija-setup")
 
             f.log("placed two units and", Companion(f), "in", a)
+
+            MapExpansion.robotosSetup(f, round, a)
 
             Then(SetupPlaceAction(round, l.drop(1)))
 
@@ -788,6 +807,8 @@ object MapExpansion extends Expansion {
             game.note("chief-setup")
 
             f.log(kaija.?("placed one unit, " ~ Companion(f).elem0 ~ " and").|("placed two units and"), WarchiefElem(f), "in", a)
+
+            MapExpansion.robotosSetup(f, round, a)
 
             Then(SetupPlaceAction(round, l.drop(1)))
 
@@ -848,6 +869,13 @@ object MapExpansion extends Expansion {
 
         case TrainingCampsAction(f, placed, then) =>
             game.recruited = placed
+
+            // Robotos gets one more unit with every Recruit, where it recruited first
+            if (game.robotos(f) && placed.any && game.reserve(f) > 0) {
+                game.addUnits(placed.head, f, 1)
+                f.log("recruited", 1.hl, "more in", placed.head, "(Robotos)".hl)
+                game.note("robotos-recruit")
+            }
 
             placed./(game.board.territory).distinct.foreach { t =>
                 val camps = game.working(t).count(_ == TrainingCamp)
@@ -1266,7 +1294,8 @@ object MapExpansion extends Expansion {
                 if (ac >= du && dc >= au) None
                 else if (ac >= du) |(attacker)
                 else if (dc >= au) |(defender)
-                else if (as > ds) |(attacker)
+                // Robotos wins ties when it attacks (it already does when it defends)
+                else if (as > ds || (as == ds && game.robotos(attacker))) |(attacker)
                 else |(defender)
 
             val before = game.count(t, attacker)

@@ -16,9 +16,10 @@ object Host extends hrf.host.BaseHost {
 
     type W = Faction
 
-    // NORT_HARD=1: the first seat plays the Hard bot (BotHard), the others the Easy one; NORT_HARD=all: every seat Hard
+    // NORT_HARD=1: the first seat plays the Hard bot (BotHard), the others the Easy one; NORT_HARD=all: every seat Hard;
+    // NORT_HARD=robotos: the first seat plays Robotos (BotRobotos, with its cheats), the others Hard
     def hard(g : G, f : F) = sys.env.get("NORT_HARD") match {
-        case Some("all") => true
+        case Some("all") | Some("robotos") => true
         case Some("1") => g.players.head == f
         case _ => false
     }
@@ -28,7 +29,7 @@ object Host extends hrf.host.BaseHost {
 
     def askBot(g : G, p : F, actions : $[UserAction]) = {
         val f = clan(g, p)
-        val bot = (f == null || g.adset).?(new BotAdset(p, hard(g, p)) : Bot).|(hard(g, p).?(new BotHard(f) : Bot).|(new BotXX(f)))
+        val bot = (f == null || g.adset).?(new BotAdset(p, hard(g, p)) : Bot).|(g.robotos(f).?(new BotRobotos(f) : Bot).|(hard(g, p).?(new BotHard(f) : Bot).|(new BotXX(f))))
         val start = System.nanoTime
         val r = bot.ask(actions, 0)(g)
         val ms = (System.nanoTime - start) / 1000000
@@ -97,8 +98,11 @@ object Host extends hrf.host.BaseHost {
             val adset = $(YearsOption.all.shuffle.head) ++ victory ++ (random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.5).$(ModuleOption(Sea)) :+ lands
             MetaAdset.createGame(MetaAdset.factions.take(n), adset.distinct)
         }
-        else
-        new G(l, all.distinct)
+        else {
+            // NORT_HARD=robotos: the first seat is Robotos
+            val robotos = sys.env.get("NORT_HARD").has("robotos").$(RobotosOption(l.head))
+            new G(l, (all ++ robotos).distinct)
+        }
     })
 
     def factionName(f : F) = f match {
@@ -123,7 +127,10 @@ object Host extends hrf.host.BaseHost {
 
         if (hard(g, f) && sys.env.get("NORT_HARD").has("1"))
             println("HARD WON " + factionName(f) + " in a " + g.setup.num + "-player game")
-        $(g.ptf.get(f).|(f.asInstanceOf[Faction]))
+        val c = g.ptf.get(f).|(f.asInstanceOf[Faction])
+        if (g.robotos(c))
+            println("ROBOTOS WON " + c.name + " in a " + g.setup.num + "-player game")
+        $(c)
     }
 
     def serializer = nort.Serialize
