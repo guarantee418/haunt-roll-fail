@@ -16,9 +16,9 @@
 #   python3 haunt-roll-fail/nort/tools/tile-masks.py [--check DIR] [tile ...]
 # --check writes an overlay per tile to DIR to look at.
 
-import os, re, sys
+import json, os, re, sys
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 from scipy import ndimage as ndi
 from skimage.segmentation import watershed
 
@@ -99,8 +99,21 @@ def dashes(a, photo):
     return ok[lab]
 
 
+# Tiles whose roads the colour tests miss (pale dashes on ice, ash or bare ground): borders traced by hand, as lines
+# between their two areas, in tools/traced-borders.json
+TRACED = json.load(open(os.path.join(HERE, 'traced-borders.json')))
+
+
+def traced(tid):
+    im = Image.new('L', (N, N), 0)
+    draw = ImageDraw.Draw(im)
+    for pts in TRACED[tid].values():
+        draw.line([(x * N, y * N) for x, y in pts], fill=255, width=5)
+    return np.asarray(im) > 0
+
+
 def segment(tid, areas, a, sea=None):
-    d = dashes(a, tid in PHOTO)
+    d = traced(tid) if tid in TRACED else dashes(a, tid in PHOTO)
     if tid in ORANGE:
         d = d | orange(a)
     elev = ndi.gaussian_filter(d.astype(float), SIGMA)

@@ -394,8 +394,12 @@ on. To implement one:
   `tiles.scala`. `tile-masks.py` treats them like the Wilderness ones
   (`ORANGE`, `RINGED` for impassable middles left untinted, `NO_ICONS` where
   lava or ice passed for resource icons); `BorderLines.java` has `TEAL` for
-  the pale dashes of three central tiles (some of their dashes are still
-  missed, so their fame borders are partial).
+  the pale dashes of some central tiles. Magma Flow, the Gate of Helheim and
+  Hrimgandr's Lair have their roads traced by hand in
+  `tools/traced-borders.json` (border `a-b` -> points): `tile-masks.py`
+  splits their areas along those lines, and `BorderLines.java` takes the
+  pale dashes near a traced line for its border (their colours pass for
+  snow, ash and bare ground elsewhere).
 - Creatures (`creatures.scala`): Rock Golem, Myrkalf, Giant Boar, Kobold,
   Valdemar and Hrimgandr kinds; combat hooks `creatureFace`,
   `creaturePoints`, `creatureIgnored` in `CreatureRolledAction`. Without the
