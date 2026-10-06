@@ -1029,6 +1029,10 @@ Check these against the rulebook when it is at hand.
 - **Teamwork**: two of Recruit 1, Move 1, Explore, Build, like Feast.
 - **Enemy Secrets, Stolen Lore, Legendary Heroes** can't copy each other or
   Defensive Strategy.
+- **Stolen Lore** can be played at any time, even when the Scorched Earth
+  token is in the Snake's own territory or no opponent has a card to copy:
+  the Snake may move the token first, and with nothing to copy it does
+  nothing.
 - **Defensive Strategy**: every time a player plays a card, opponents holding
   it are asked in turn order (so a prompt shows who holds it). The cancelled
   card goes to the discard pile and the player goes on with their turn.
