@@ -134,7 +134,7 @@ case class VictoryCardOption(card : VictoryCard) extends GameOption with ToggleO
     val group = "Victory conditions".txt
     def valueOn = (card.mapControl.?("Map Control: ").|("Wealth: ").spn(xstyles.smaller85) ~ card.name.txt)
     override def decorate(e : Elem) = e ~ VictoryExpansion.needsCreatures(card).?(" (Creatures module)".spn(xstyles.smaller85)).|(Empty)
-    override val explain = $(card.name.hl ~ ": " ~ card.info.text, "Needs " ~ "Alternative victory, chosen cards".hl ~ ".")
+    override val explain = $(card.name.hl ~ ": " ~ card.info.textElem, "Needs " ~ "Alternative victory, chosen cards".hl ~ ".")
     override def required(all : $[BaseOption]) = $($[BaseOption](AltVictoryChosen) ++ VictoryExpansion.needsCreatures(card).$(ModuleOption(Creatures)))
 }
 
@@ -181,7 +181,7 @@ case object FirstSeatStarts extends GameOption with ToggleOption {
     val group = "First player".txt
     def valueOn = "First seat goes first".txt
     override val explain = $(
-        "By the rules the first player is chosen at random (most axes on the dice).",
+        CombatText("By the rules the first player is chosen at random (most axes on the dice)."),
         "With this option the player in the first seat goes first.",
     )
 }
@@ -209,7 +209,7 @@ case object Warchiefs extends Module("Warchiefs", "Warchiefs expansion") {
     override def ready = true
     override def expansion = |(WarchiefsExpansion)
     def about = $(
-        "Each clan gets its warchief: a unit worth 2 combat points with a power of its own (see the Warchief button when picking clans).",
+        CombatText("Each clan gets its warchief: a unit worth 2 combat points with a power of its own (see the Warchief button when picking clans)."),
         "It can be placed at setup instead of one unit, or recruited instead of a unit, and goes back to the reserve when it dies. Card effects on enemy units can't target it.",
     )
 }

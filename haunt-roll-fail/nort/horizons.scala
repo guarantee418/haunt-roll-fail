@@ -188,13 +188,13 @@ object EventsExpansion extends Expansion {
         // 1. START OF THE YEAR, after drawing
         case RevealDevelopmentsAction if game.event.exists(e => EventCard.start.has(e.id)) && game.eventSteps.has("start").not =>
             game.eventSteps :+= "start"
-            log(game.event.get, "applies this year:", game.event.get.info.text.txt)
+            log(game.event.get, "applies this year:", game.event.get.info.textElem)
             Then(EventStepAction("start", game.from(game.first), RevealDevelopmentsAction))
 
         case RevealDevelopmentsAction if game.event.any && game.eventSteps.has("shown").not =>
             game.eventSteps :+= "shown"
             if (EventCard.start.has(game.event.get.id).not)
-                log(game.event.get, "applies this year:", game.event.get.info.text.txt)
+                log(game.event.get, "applies this year:", game.event.get.info.textElem)
             UnknownContinue
 
         // 3. HARVEST: before and after

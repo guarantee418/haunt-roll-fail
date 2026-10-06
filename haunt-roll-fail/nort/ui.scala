@@ -1145,7 +1145,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         ((Dragon.name.styled(colorOf(Dragon)) ~ " " ~ "Sacrificial Pyre".hl).hlb.div ~
             pyreElem(styles.pyreLarge).div ~
             ("Units on it: " ~ units ~ " (room for " ~ NewBloodExpansion.pyreSize.hl ~ ")").div ~
-            "Enemy casualties go on it after each combat. To harvest, Dragon sacrifices a unit from it (back to its owner) or places one of its deployed units on it.".spn(xstyles.smaller85).div ~
+            CombatText("Enemy casualties go on it after each combat. To harvest, Dragon sacrifices a unit from it (back to its owner) or places one of its deployed units on it.").spn(xstyles.smaller85).div ~
             HorizontalBreak ~
             "(tap to close)".spn(xstyles.smaller85).div
         ).div

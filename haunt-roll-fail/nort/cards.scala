@@ -124,7 +124,10 @@ case object AwakenEffect extends Effect
 case object ProtectorEffect extends Effect
 
 
-case class CardInfo(name : String, image : String, fame : Int, flash : Boolean, effect : Effect, text : String)
+case class CardInfo(name : String, image : String, fame : Int, flash : Boolean, effect : Effect, text : String) {
+    // The text with combat points and casualties drawn as the die icons
+    def textElem : Elem = CombatText(text)
+}
 
 trait Card extends Elementary with Record {
     def info : CardInfo

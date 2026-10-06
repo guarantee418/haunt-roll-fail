@@ -111,6 +111,7 @@ and other card picks show the cards at hand-card size, and the last player to pa
 still sees the one card left before taking it. Copies of the same card in hand (and among
 the Played cards) are drawn as one card with the copies peeking out behind it
 (`Card.handStack` in `nort/cards.scala`), in the hand and in every pick from it. The player's clan board is shown under the Lore Tree. The player panels show numbers with icons, on rows that don't wrap: food, wood and lore, then units (the Recruit card's figure, `ui-unit`) and fame, then cards in hand, to draw and discarded (card icons outlined green, yellow and red, `ui-card-*`, drawn on the start card back by `nort/tools/panel-icons.py`; tapping the red one shows that discard pile), and the first player marker beside the clan name (`ui-first-player`).
+Combat points and casualties are drawn as the battle die's axe and skull wherever they come up (fight info, die results, the log, card and rules text): `CombatIcon` and, for rules text, `CombatText` in `nort/game.scala`, with `ui-axe` and `ui-skull` cut from the die texture `token/die.webp` (TTS mod 2838546142) by `nort/tools/dice-icons.py`.
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
 Tabletopia export the owner uploaded, with gaps filled from two Tabletop
 Simulator mods (Steam Workshop 2838546142 and 2847156187; see
