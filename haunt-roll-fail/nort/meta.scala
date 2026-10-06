@@ -205,15 +205,15 @@ object Meta extends MetaGame { mmm =>
         else
             $(
                 $(0, 1, 2)./(n => Image(ClanCard(f, n).info.image, styles.menuCard)).merge.div(styles.menuText),
-                ("Clan ability: ".hl ~ ClanCard(f, 0).info.text).div(styles.menuText),
-                (ClanCard(f, 1).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 1).info.text).div(styles.menuText),
-                (ClanCard(f, 2).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 2).info.text).div(styles.menuText),
+                ("Clan ability: ".hl ~ ClanCard(f, 0).info.textElem).div(styles.menuText),
+                (ClanCard(f, 1).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 1).info.textElem).div(styles.menuText),
+                (ClanCard(f, 2).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 2).info.textElem).div(styles.menuText),
                 HorizontalBreak,
                 ("Warchief: ".hl ~ Warchief.name(f).hlb).div(styles.menuText),
                 Image(Warchief.board(f), styles.menuBoard),
-                ("Warchief power: ".hl ~ Warchief.power(f)).div(styles.menuText),
+                ("Warchief power: ".hl ~ CombatText(Warchief.power(f))).div(styles.menuText),
                 Image(ClanCard(f, 3).info.image, styles.menuWarchiefCard),
-                (ClanCard(f, 3).name.hl ~ " (warchief upgrade): " ~ ClanCard(f, 3).info.text).div(styles.menuText),
+                (ClanCard(f, 3).name.hl ~ " (warchief upgrade): " ~ ClanCard(f, 3).info.textElem).div(styles.menuText),
             )
     ))
 
@@ -221,7 +221,9 @@ object Meta extends MetaGame { mmm =>
     override def menuImages = (
         clans./~(f => $(0, 1, 2, 3)./(n => ClanCard(f, n).info.image)./(i => i -> ("/hrf/webp2/nort/images/card/clan/" + i.drop("card-clan-".length) + ".webp"))) ++
         clans./(f => ("clan-" + f.style) -> ("/hrf/webp2/nort/images/clan/" + f.style + ".webp")) ++
-        clans./(f => Warchief.board(f) -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.boardFile(f) + ".webp"))
+        clans./(f => Warchief.board(f) -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.boardFile(f) + ".webp")) ++
+        // The combat icons in rules text (CombatText)
+        $("axe", "skull")./(i => ("ui-" + i) -> ("/hrf/webp2/nort/images/ui/" + i + ".webp"))
     ).toMap
 
     def createGame(factions : $[Faction], options : $[O]) = new Game(factions, options)
@@ -384,7 +386,7 @@ object Meta extends MetaGame { mmm =>
         Building.all./(b => ImageAsset(b.image.drop("building-".length)))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "ui", "ui-", "webp")(
-        (1.to(99).map(n => ImageAsset("label-" + n)) ++ 1.to(15).map(n => ImageAsset("count-" + n)) ++ 1.to(40).map(n => ImageAsset("spot-" + n))).toList :+ ImageAsset("target") :+ ImageAsset("lore") :+ ImageAsset("food") :+ ImageAsset("wood") :+ ImageAsset("fame") :+ ImageAsset("confirm") :+ ImageAsset("cancel") :+ ImageAsset("rotate-left") :+ ImageAsset("rotate-right") :+ ImageAsset("unit") :+ ImageAsset("card-hand") :+ ImageAsset("card-draw") :+ ImageAsset("card-discard") :+ ImageAsset("first-player")
+        (1.to(99).map(n => ImageAsset("label-" + n)) ++ 1.to(15).map(n => ImageAsset("count-" + n)) ++ 1.to(40).map(n => ImageAsset("spot-" + n))).toList :+ ImageAsset("target") :+ ImageAsset("lore") :+ ImageAsset("food") :+ ImageAsset("wood") :+ ImageAsset("fame") :+ ImageAsset("confirm") :+ ImageAsset("cancel") :+ ImageAsset("rotate-left") :+ ImageAsset("rotate-right") :+ ImageAsset("unit") :+ ImageAsset("card-hand") :+ ImageAsset("card-draw") :+ ImageAsset("card-discard") :+ ImageAsset("first-player") :+ ImageAsset("axe") :+ ImageAsset("skull")
     ) ::
     $
 

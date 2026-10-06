@@ -336,7 +336,7 @@ object HorizonDevsExpansion extends Expansion {
         val n = game.controlled(f).but(t).count(m => game.board.adjacent(m).exists(_._1 == t))
 
         if (n > 0)
-            f.log("gained", n.hl, (n == 1).?("combat point").|("combat points"), "from", "Forged for War".hl)
+            f.log("gained", CombatIcon.axes(n), "from", "Forged for War".hl)
 
         e.copy(bonus = e.bonus + n, special = ForgedFight)
     }

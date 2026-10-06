@@ -149,7 +149,7 @@ case object RandomAnyCentral extends CentralChoice("Random, any center tile") {
 abstract class CentralTileChoice(val id : String, text : String) extends CentralChoice(Waste.name(id)) {
     override def tile = |(id)
     override def decorate(e : Elem) = e ~ Waste.creatureOnly.has(id).?(" (Creatures module)".spn(xstyles.smaller85)).|(Empty)
-    override val explain = $(Waste.name(id).hl ~ ": " ~ text)
+    override val explain = $(Waste.name(id).hl ~ ": " ~ CombatText(text))
     override def required(all : $[BaseOption]) = $(Waste.creatureOnly.has(id).$[BaseOption](ModuleOption(Creatures)))
 }
 
