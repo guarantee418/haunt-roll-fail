@@ -45,15 +45,28 @@ object Meta extends MetaGame { mmm =>
     // The main menu's "Solo vs Automa"
     override def soloFaction = |(Automa)
 
+    // The main menu's "Training Grounds": Uncharted Horizons' Training Fields duel, local or online, between two core clans
+    // (the clans only name the players: they have no powers there)
+    override def modes = $(("Training Grounds", "training"))
+
+    override def modeAbout(mode : String) =
+        "Uncharted Horizons' Training Fields: a quick duel for two players on a small map of twelve tiles, most of them face down.".txt ~ Break ~
+        "Each turn, play one of your seven Action cards. Control resources and buildings: the first to 5 victory points wins.".txt
+
+    override def modeFactions(mode : String) = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf).shuffle.take(2)
+
+    override def modeOptions(mode : String) = $(TrainingFieldsOption)
+
     val minPlayers = 2
     // Six players build on the five-player rules
     override val maxPlayers = 6
 
     // Games made before the Victory conditions options turned the Alternative victory module on with its module option
-    override val hiddenOptions = $(ModuleOption(VictoryModule))
+    // Training Fields is turned on by the main menu's Training Grounds only
+    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption)
 
     // New Blood has no option: picking one of its clans brings it in
-    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, WarchiefCards, NoDrawDevelopments) ++ Module.all.but(NewBlood).but(Solo).but(VictoryModule)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ AutomaLevelOption.all ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, WarchiefCards, NoDrawDevelopments) ++ Module.all.but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ AutomaLevelOption.all ++ hiddenOptions
 
     // Colors only for the clans in the game; 2v2 Teams only with four players, 3v3 and 2v2v2 Teams only with six
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -65,7 +78,9 @@ object Meta extends MetaGame { mmm =>
     }
 
     // The Victory conditions list stays short: Thane / Jarl only with an Alternative victory choice, the cards only with chosen cards
+    // Training Fields has only the colors and the first player
     override def optionShown(o : O, selected : $[O]) = o match {
+        case o if selected.has(TrainingFieldsOption) => o.is[ColorOption] || o == FirstSeatStarts
         case VictoryModeOption(_) => VictoryChoice.alternative.exists(selected.has)
         case VictoryCardOption(_) => selected.has(AltVictoryChosen)
         case _ => true
@@ -105,7 +120,7 @@ object Meta extends MetaGame { mmm =>
 
     override def quickOptions = options./(o => o -> 0.0).toMap
 
-    def has(options : $[O], m : Module) = options.has(ModuleOption(m)) || (m == VictoryModule && VictoryChoice.alternative.exists(options.has)) || (m == Wastelands && CentralChoice.picked(options))
+    def has(options : $[O], m : Module) = options.has(ModuleOption(m)) || (m == TrainingFields && options.has(TrainingFieldsOption)) || (m == VictoryModule && VictoryChoice.alternative.exists(options.has)) || (m == Wastelands && CentralChoice.picked(options))
 
     // Quick Game: always three players, core clans and core rules (no option is turned on beyond the defaults)
     val quickMin = 3
@@ -125,17 +140,21 @@ object Meta extends MetaGame { mmm =>
         (factions.num > 6).?(ErrorResult("Maximum six clans")) |
         InfoResult("Northgard: Uncharted Lands")
 
-    def validateFactionSeatingOptions(factions : $[Faction], options : $[O]) = validateFactionCombination(factions) && {
-        val colored = options.of[ColorOption]
-        val missing = factions.%(f => colored.exists(_.clan == f).not)
-        val teams = Module.teams.toList.%{ case (m, n) => has(options, m) && factions.num != n }
-        teams.any.?(ErrorResult(teams./{ case (m, n) => m.label + " needs " + n + " players" }.mkString(", "))) ||
-        (Module.teams.keys.count(has(options, _)) > 1).?(ErrorResult("Choose one team variant")) ||
-        (factions.has(Automa) && options.of[AutomaLevelOption].exists(_.level >= 3) && has(options, Creatures).not).?(ErrorResult("Automa levels 3 and up need the Creatures module")) ||
-        validateVictoryCards(factions, options) ||
-        missing.any.?(WarningResult(missing./(factionName).mkString(", ") + " will get a free color")) |
-        InfoResult("Northgard: Uncharted Lands")
-    }
+    def validateFactionSeatingOptions(factions : $[Faction], options : $[O]) : ValidationResult =
+        if (options.has(TrainingFieldsOption))
+            ((factions.num != 2 || factions.has(Automa)).?(ErrorResult("Training Fields is a duel for two clans")) | InfoResult("Training Fields"))
+        else
+            validateFactionCombination(factions) && {
+                val colored = options.of[ColorOption]
+                val missing = factions.%(f => colored.exists(_.clan == f).not)
+                val teams = Module.teams.toList.%{ case (m, n) => has(options, m) && factions.num != n }
+                teams.any.?(ErrorResult(teams./{ case (m, n) => m.label + " needs " + n + " players" }.mkString(", "))) ||
+                (Module.teams.keys.count(has(options, _)) > 1).?(ErrorResult("Choose one team variant")) ||
+                (factions.has(Automa) && options.of[AutomaLevelOption].exists(_.level >= 3) && has(options, Creatures).not).?(ErrorResult("Automa levels 3 and up need the Creatures module")) ||
+                validateVictoryCards(factions, options) ||
+                missing.any.?(WarningResult(missing./(factionName).mkString(", ") + " will get a free color")) |
+                InfoResult("Northgard: Uncharted Lands")
+            }
 
     // Alternative victory with chosen cards: exactly one Map Control card and two Wealth cards (three with teams)
     def validateVictoryCards(factions : $[Faction], options : $[O]) : |[ValidationResult] = if (options.has(AltVictoryChosen).not) None else {
@@ -247,6 +266,14 @@ object Meta extends MetaGame { mmm =>
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "tile", "tile-", "webp")(
         Tiles.all.diff(Tiles.environment).diff(Tiles.wastelands).diff(Tiles.central).diff(Tiles.beach)./(t => ImageAsset(t.id))
+    ) ::
+    // Training Fields: the Action cards in each player color, and their backs
+    ConditionalAssetsList((factions : $[F], options : $[O]) => options.has(TrainingFieldsOption), "card/training", "training-", "webp")(
+        PlayerColor.all./~(c => (Drill.all./(_.id) :+ "back")./(n => ImageAsset(c.id + "-" + n)))
+    ) ::
+    // Training Fields: the back of the tiles still face down
+    ConditionalAssetsList((factions : $[F], options : $[O]) => options.has(TrainingFieldsOption), "tile", "tile-", "webp")(
+        $(ImageAsset("back"))
     ) ::
     // The shape of each area, tinted on the map with the colour of the player who controls it
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "tile/mask", "mask-", "webp")(

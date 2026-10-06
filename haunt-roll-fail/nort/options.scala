@@ -225,7 +225,22 @@ case object NewBlood extends Module("New Blood", "expansion") {
 }
 
 case object UnchartedHorizons extends Module("Uncharted Horizons", "expansion") {
-    def about = $("The rest of the expansion: Development cards, Training Fields, drafting setup and more map tiles.")
+    def about = $("The rest of the expansion: Development cards, drafting setup and more map tiles. (Its Training Fields duel is Training Grounds on the main menu.)")
+}
+
+// Uncharted Horizons' Training Fields module (training.scala): a two-player duel of its own, played instead of the usual game.
+// On only with TrainingFieldsOption, which the main menu's Training Grounds turns on (Meta.modes), so it has no module option
+case object TrainingFields extends Module("Training Fields", "Uncharted Horizons") {
+    override def ready = true
+    override def expansion = |(TrainingExpansion)
+    // Before everything: it takes over the start of the game
+    override def priority = -10
+    def about = $("A duel for two players on twelve tiles of the base game. Players take turns playing one of their seven Action cards; the first to " ~ 5.hl ~ " victory points wins.")
+}
+
+case object TrainingFieldsOption extends GameOption with ToggleOption {
+    val group = "Training Fields".txt
+    def valueOn = "Training Fields duel".txt
 }
 
 // Uncharted Horizons' Solo module: on whenever the Automa plays (Game.modules), so its option isn't listed
@@ -303,7 +318,7 @@ case object Teams2v2v2 extends Module("2v2v2 Teams", "variant, 2v2 rules") {
 }
 
 object Module {
-    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2)
+    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields)
 
     // The team variants and the number of players each one needs
     val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6, Teams2v2v2 -> 6)

@@ -413,6 +413,42 @@ on. To implement one:
   game gets a random central tile choice; `NORT_CENTRAL=1` never picks the
   standard tile, and `NORT_CENTRAL=<tile id>` always picks that one.
 
+## Uncharted Horizons: Training Fields (Training Grounds, 2026-10-05)
+
+- Main menu: the framework hooks `MetaGame.modes`, `modeAbout`,
+  `modeFactions` and `modeOptions` (`meta.scala`) add a menu line per mode;
+  `modeMenu` in `hrf.scala` is its page (`/play/nort/training`) with Local
+  Game and Play Online (`/training/local`, `/training/online`). The mode's
+  options are added to the mandatory ones in `startSetup`, so the game is
+  an ordinary game with `TrainingFieldsOption` (hidden) on. Northgard's
+  mode deals two random core clans; the setup screen shows only colors and
+  First player (`optionShown`), and validation wants exactly two players.
+- `training.scala`: `Training` (tiles, grid, building supply and costs,
+  scoring, what each card can do), `Drill` (the seven Action cards),
+  `TrainingExpansion` (setup, turns, Refresh scoring, combat) and
+  `TrainingEvaluation` (bot heuristics, used by both bots).
+  `Game.modules` is just `TrainingFields`; `game.training`,
+  `game.hiddenTiles` (face-down tiles, drawn with the `tile-back` image) and
+  `game.drills` (each player's cards, face up or down) hold its state.
+  `unitLimit` is 10.
+- It reuses the base Move (`MoveStartAction`, `MoveEffect`), retreat
+  (`RetreatAction`) and building plumbing; `FightStartAction` is intercepted
+  for its own combat (`TrainingFightAction` .. `TrainingResolveAction`).
+- The player panels show VP, units, resources, what a Refresh would score
+  for them and the face-up card count.
+- Headless: `NORT_TRAINING=1 NORT_PLAYERS=2 sbt "runMain nort.Host"` plays
+  training games (`NORT_TTRACE=1` prints every bot choice). On 2026-10-05,
+  Hard beat Easy in 29 of 50, median 473 steps, no serialization errors.
+- Action cards: `card/training/<color>-<card>.webp` and `<color>-back`,
+  cut from screenshots of the Tabletopia module the owner sent on
+  2026-10-06 (green and gold fronts, one back). Yellow and green are the
+  real ones; blue, red, purple and orange are the gold ones recolored (the
+  gold background shifted to the color, the icons kept), and the backs are
+  the one back recolored. `DrillCard` draws a player's card (its back while
+  face down) at `styles.drillCard` size; on your turn they are the choices,
+  otherwise `DrillInfoAction`s in the action pane. See Interpretations in
+  `RULES.md`.
+
 ## Uncharted Horizons: Sea module (Raids, 2026-10-05)
 
 - `sea.scala`: `RaidCard` (the 24 cards from the TTS mod 3597126237, images

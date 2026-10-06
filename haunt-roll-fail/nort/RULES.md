@@ -42,6 +42,7 @@ draws a tile when no neutral territory is left.
 | Uncharted Horizons: Solo module (the Automa) | done 2026-10-04 (`automa.scala`, the 15 real cards) |
 | Wastelands expansion: Environment and Central tiles, five more creatures, Hrimgandr and Jötunn Blainn | done 2026-10-05 (`wastelands.scala`, see Wastelands below) |
 | Uncharted Horizons: Sea module (Beach tiles, Ports, the Raid phase and the 24 Raid cards) | done 2026-10-05 (`sea.scala`, see Sea below) |
+| Uncharted Horizons: Training Fields module (two-player duel) | done 2026-10-05 (`training.scala`, "Training Grounds" on the main menu, see Training Fields below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -725,15 +726,58 @@ Homeland, Brotherhood of Arms, Fame for Fortune, Sacred Stones, Woodland
 Bounty, Ancient Wisdom, Valor's Reward, Bounty of the Harvest. Their texts are
 in `RaidCard.list` in `sea.scala`.
 
+## Uncharted Horizons: Training Fields module (done 2026-10-05)
+
+From the Uncharted Horizons rulebook, pages 14 to 16. A separate two-player
+game, reached from "Training Grounds" on the main menu.
+
+- 13 base-game tiles (01, 06, 08, 10, 12, 14, 16, 19, 20, 23, 26, 30, 32);
+  one is removed at random and 12 go face down in a 4x3 grid. The two
+  opposite corners are turned face up as the players' base tiles. 10 units
+  each, 3 of them on the base tile. No clan powers, no seasons, no fame.
+- Seven Action cards each (Combat Bonus in brackets): Recruit (3), Explore
+  (3), Special (2), Move 2 (2), Move 1 (1), Build (1), Refresh (0). A turn is
+  one face-up card, which is then turned face down.
+- Recruit: 1 unit on the base tile, or in a territory with your Training
+  Camp, +1 per Training Camp there. Explore: turn a face-down tile adjacent
+  to your territory face up (no rotation choice); if that joins enemy units,
+  you attack. Build: a building from the shared supply, whose cost is
+  resources you control (nothing is spent): Defense Tower (2, 1 wood),
+  Training Camp (3, 1 wood), Wood Monopoly (1, 3 wood), Food Monopoly (1,
+  1 wood + 3 food), Lore Monopoly (1, 1 wood + 3 lore). Special: Recruit,
+  Build, Explore or Move 1.
+- Refresh: the opponent scores 1 VP per set of three different resources
+  they control plus 1 per Monopoly, then all your cards turn face up.
+  The first to 5 VP wins at once.
+- Combat: each side's strength is its units plus the Combat Bonus of one
+  of its face-up cards at random (a Refresh drawn gives no bonus, turns its
+  owner's cards face up and scores nothing for the opponent). Each side
+  loses a unit, the attacker one more per Defense Tower. A side with no
+  units left loses; both wiped out leaves the territory neutral. Otherwise
+  the higher strength wins, ties to the defender, and the loser retreats or
+  loses its units.
+
 ## Expansions (later)
 
 The rest of Uncharted
-Horizons (Development cards, Training Fields, drafting setup, more map
+Horizons (Development cards, drafting setup, more map
 tiles). The TTS mod 3597126237 has its cards and its rulebook PDF.
 
 ## Interpretations (choices made where the summary above is not enough)
 
 Check these against the rulebook when it is at hand.
+
+- **Training Fields**:
+  - Sets of three resources count only the resources printed on the map
+    territories a player controls.
+  - Each Defense Tower in the territory adds one casualty to the attacker.
+  - Recruiting on the base tile needs it free of enemy units.
+  - The hidden tiles get random rotations; Explore never asks for one.
+  - A retreat can't cross a Rough border (as in the base game).
+  - A card with no legal effect can't be played (Refresh always can).
+  - Move 2's two steps can move different units.
+  - Each player's Action cards are in their player color (the box has gold
+    and green sets).
 
 - **Sea module**:
   - The Beach tile is drawn as four map cells: the Port's land tile, the sea
