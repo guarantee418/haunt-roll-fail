@@ -738,9 +738,10 @@ it, and one more unit with every Recruit (on top of Training Camps and the rest)
   `ghostIn` in `game.scala` are false where it has units (`robotosIn`).
   It also draws one more card each year (the year's `DrawCardsAction`), wins
   ties when it attacks, clans or creatures (`map.scala`, `creatures.scala`),
-  starts with 2 more food and 2 more wood and one more unit with its first
-  setup placement (`MapExpansion.robotosSetup`), and upgrades for 2 lore
-  (`game.upgradeCost`).
+  starts with 2 more food and 2 more wood, places 5 units in each setup
+  placement instead of 3 (`MapExpansion.robotosSetup`; the warchief and Kaija
+  count among them), has 25 units instead of 14 (`game.unitLimit(f)`), and
+  upgrades for 2 lore (`game.upgradeCost`).
 - **The tag:** its player panel shows "(Robotos)" beside the clan name;
   tapping it lists the cheats (`RobotosInfo` in `ui.scala`, the list is
   `RobotosExpansion.cheats`).

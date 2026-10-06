@@ -444,6 +444,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // Units per player (ten in the Training Fields)
     val unitLimit = training.?(Training.units).|(14)
 
+    // Robotos has 25 units
+    def unitLimit(f : Faction) : Int = robotos(f).?(25).|(unitLimit)
+
     // TRAINING FIELDS (training.scala): the tiles still face down, and each player's face-up Action cards
     var hiddenTiles : $[Placement] = $
     var drills : Map[Faction, $[Drill]] = Map()
@@ -668,7 +671,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // Units on Dragon Clan's Sacrificial Pyre are neither on the map nor in the reserve
     // Sea module: units away on Raids neither
-    def reserve(f : Faction) : Int = unitLimit - onMap(f) - pyre.count(f) - SeaExpansion.raiders(f)
+    def reserve(f : Faction) : Int = unitLimit(f) - onMap(f) - pyre.count(f) - SeaExpansion.raiders(f)
 
     def addUnits(a : AreaRef, f : Faction, n : Int) {
         val m = unitsAt(a)

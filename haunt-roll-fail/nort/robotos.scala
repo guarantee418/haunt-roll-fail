@@ -24,7 +24,8 @@ import nort.elem._
 // - one more unit with every Recruit, on top of Training Camps and the rest (TrainingCampsAction in map.scala);
 // - one more card each year (DrawCardsAction at the start of the year in game.scala);
 // - attacking, it wins ties, against clans and creatures (map.scala, creatures.scala);
-// - a head start: 2 more food and 2 more wood, and one more unit with its first setup placement (MapExpansion.robotosSetup);
+// - a head start: 2 more food and 2 more wood, and 5 units in each setup placement instead of 3 (MapExpansion.robotosSetup);
+// - 25 units instead of 14 (game.unitLimit);
 // - clan upgrades cost 2 lore instead of 3 (game.upgradeCost).
 // "Units" as in the rules: warriors, the warchief and Kaija.
 // Its player panel says "(Robotos)"; tapping that lists the cheats (RobotosInfo in ui.scala).
@@ -41,7 +42,8 @@ object RobotosExpansion extends Expansion {
         "Recruits one more unit every time.",
         "Draws one more card each year.",
         "Wins ties when it attacks.",
-        "Starts with 2 more food, 2 more wood and one more unit.",
+        "Starts with 2 more food and 2 more wood, and places 5 units each time at setup instead of 3.",
+        "Has 25 units instead of 14.",
         "Clan upgrades cost it 2 lore instead of 3.",
     )
 
