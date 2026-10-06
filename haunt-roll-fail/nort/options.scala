@@ -153,6 +153,18 @@ case object NoDrawDevelopments extends GameOption with ToggleOption {
     lazy val cards : $[Card] = (Cards.early ++ Cards.advanced).%((_, info) => info.effect.is[DrawEffect]).lefts./(Development(_))
 }
 
+// Uncharted Horizons' 5 Early and 8 Advanced Development cards and 2 Achievement cards, shuffled into their decks
+// (Game: ShuffledEarlyAction, ShuffledAdvancedAction, ShuffledAchievementsAction; effects in horizon-devs.scala)
+case object HorizonsDevelopments extends GameOption with ToggleOption {
+    val group = "Development cards".txt
+    def valueOn = "Uncharted Horizons Development cards".txt
+    override val explain = $(
+        "Shuffles the " ~ 13.hl ~ " Development cards of Uncharted Horizons into the decks: Early " ~ Cards.horizonsEarly.rights./(_.name).mkString(", ").hl ~ "; Advanced " ~ Cards.horizonsAdvanced.rights./(_.name).mkString(", ").hl ~ ".",
+        "The Achievement cards " ~ "Mountaineer".hl ~ " (2 fame per territory with a Rough border) and " ~ "Sailor".hl ~ " (2 fame per open territory) join the Achievements.",
+        "As many Development cards are revealed as usual; there are just more to draw from.",
+    )
+}
+
 case object FirstSeatStarts extends GameOption with ToggleOption {
     val group = "First player".txt
     def valueOn = "First seat goes first".txt
@@ -225,7 +237,7 @@ case object NewBlood extends Module("New Blood", "expansion") {
 }
 
 case object UnchartedHorizons extends Module("Uncharted Horizons", "expansion") {
-    def about = $("The rest of the expansion: Development cards, drafting setup and more map tiles. (Its Training Fields duel is Training Grounds on the main menu.)")
+    def about = $("The rest of the expansion: the drafting setup. Its Development cards and map tiles are options of their own (Development cards, Map tiles), and its Training Fields duel is Training Grounds on the main menu.")
 }
 
 // Uncharted Horizons' Training Fields module (training.scala): a two-player duel of its own, played instead of the usual game.

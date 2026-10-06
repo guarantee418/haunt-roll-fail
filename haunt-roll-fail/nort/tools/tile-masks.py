@@ -36,7 +36,10 @@ SIGMA = 5        # blur of the dash density
 PHOTO = ('start-5', 'tile-31', 'tile-32', 'tile-33')
 # Wilderness tiles with impassable borders: solid orange lines
 ORANGE = ('wild-poison', 'wild-peaks-1', 'wild-peaks-2', 'start-relic', 'start-lake', 'start-volcano', 'start-5-wall',
-          'waste-kobold', 'waste-jotnar', 'waste-nastrond')
+          'waste-kobold', 'waste-jotnar', 'waste-nastrond', 'horizon-bridge')
+# Lines drawn into the borders where the art has none, in tile units: the Bridge's cliffs end at the bridge, which
+# is left to the valley under it
+BARRIERS = {'horizon-bridge': [((0.31, 0.39), (0.61, 0.35)), ((0.33, 0.65), (0.64, 0.655))]}
 # Impassable middles inside an orange ring (Wastelands): no territory, left untinted
 RINGED = ('start-relic', 'start-lake', 'start-volcano', 'waste-kobold', 'waste-jotnar', 'waste-nastrond')
 # Beach tiles (Sea module): the land, split along the dashes on the wings; the sea and the transparent parts are left out
@@ -103,6 +106,9 @@ def segment(tid, areas, a, sea=None):
     d = dashes(a, tid in PHOTO)
     if tid in ORANGE:
         d = d | orange(a)
+    for (x0, y0), (x1, y1) in BARRIERS.get(tid, []):
+        for t in np.linspace(0, 1, 200):
+            d[int((y0 + (y1 - y0) * t) * N), int((x0 + (x1 - x0) * t) * N)] = True
     elev = ndi.gaussian_filter(d.astype(float), SIGMA)
     seeds = np.zeros((N, N), int)
     m = int(N * 0.1)
@@ -142,6 +148,10 @@ ICONS = {
     'start-5': [(0.207, 0.68, 0.05)],
     'tile-31': [(0.613, 0.85, 0.058)],
     'tile-32': [(0.82, 0.477, 0.067)],
+    # The Uncharted Horizons scans: lore stones with a dark rim, and dull white rims
+    'horizon-2': [(0.3, 0.43, 0.065), (0.665, 0.875, 0.06)],
+    'horizon-4': [(0.44, 0.87, 0.06)],
+    'horizon-bridge': [(0.075, 0.555, 0.065)],
 }
 
 

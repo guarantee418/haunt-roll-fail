@@ -461,7 +461,33 @@ object Tiles {
         tile("beach-sea")()(),
     )
 
-    val all : $[TileSpec] = $(start, start5) ++ regular ++ environment ++ wastelands ++ central ++ beach
+    // Uncharted Horizons' five map tiles (TTS mod 3597126237), shuffled into the map tiles with the HorizonsTiles option.
+    // The Bridge: two cliffs (n, s) behind impassable lines, linked over the valley (m) by the bridge, so n and s are adjacent
+    val horizons : $[TileSpec] = $(
+        tile("horizon-1")(
+            area("n", "NW", 0.45, 0.1, 0.1, 0.5)(small(0.21, 0.2)),
+            area("s", "ES", 0.9, 0.45, 0.47, 0.88)(small(0.72, 0.77)),
+        )(border("n", "s")),
+        tile("horizon-2")(
+            area("n", "NEW", 0.5, 0.06, 0.9, 0.13)(lair, wood, large(0.66, 0.29)),
+            area("s", "S", 0.2, 0.8, 0.66, 0.7)(lore),
+        )(rough("n", "s")),
+        tile("horizon-3")(
+            area("n", "NW", 0.3, 0.04, 0.05, 0.45)(),
+            area("s", "ES", 0.88, 0.45, 0.4, 0.25)(food, lair),
+        )(rough("n", "s")),
+        tile("horizon-4")(
+            area("n", "NEW", 0.5, 0.06, 0.3, 0.36)(small(0.18, 0.18), small(0.83, 0.15), small(0.62, 0.42)),
+            area("s", "S", 0.2, 0.84, 0.62, 0.88)(lore),
+        )(border("n", "s")),
+        tile("horizon-bridge")(
+            area("n", "N", 0.64, 0.22, 0.25, 0.17)(food),
+            area("m", "EW", 0.25, 0.5, 0.64, 0.5)(wood, small(0.85, 0.48)),
+            area("s", "S", 0.3, 0.9, 0.68, 0.88)(),
+        )(wall("n", "m"), wall("m", "s"), border("n", "s")),
+    )
+
+    val all : $[TileSpec] = $(start, start5) ++ regular ++ environment ++ wastelands ++ central ++ beach ++ horizons
 
     val byId : Map[String, TileSpec] = all./(t => t.id -> t).toMap
 

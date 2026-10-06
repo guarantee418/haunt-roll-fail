@@ -343,8 +343,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     def has(m : Module) = modules.has(m)
 
-    // Module expansions come first, so they can take over any core action
-    val expansions : $[Expansion] = modules.sortBy(_.priority)./~(_.expansion) ++ $(MapExpansion, CardsExpansion, CommonExpansion)
+    // Module expansions come first, so they can take over any core action; before them the Uncharted Horizons
+    // Development cards, which only act on their own actions and specials
+    val expansions : $[Expansion] = $(HorizonDevsExpansion) ++ modules.sortBy(_.priority)./~(_.expansion) ++ $(MapExpansion, CardsExpansion, CommonExpansion)
 
     var seating : $[Faction] = setup
 
@@ -880,6 +881,8 @@ object CommonExpansion extends Expansion {
             case Achievement("scholar") => 2 * lore
             case Achievement("trapper") => 3 * territories./~(_.areas).count(a => game.board.spec(a).lair)
             case Achievement("warlord") => game.states(f).units
+            case Achievement("mountaineer") => 2 * territories.count(HorizonDevsExpansion.rough)
+            case Achievement("sailor") => 2 * territories.count(game.board.open)
             case c => c.fame
         }
     }
@@ -944,19 +947,19 @@ object CommonExpansion extends Expansion {
                 game.states += f -> new FactionState(f)
             }
 
-            Shuffle[Card](Cards.earlyCards.diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)), ShuffledEarlyAction(_))
+            Shuffle[Card](Cards.earlyCards.diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)) ++ options.has(HorizonsDevelopments).??(Cards.horizonsEarlyCards), ShuffledEarlyAction(_))
 
         case ShuffledEarlyAction(l) =>
             game.developments = l.take(game.earlyPerPlayer * factions.num)
 
-            Shuffle[Card](Cards.advancedCards.diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)), ShuffledAdvancedAction(_))
+            Shuffle[Card](Cards.advancedCards.diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)) ++ options.has(HorizonsDevelopments).??(Cards.horizonsAdvancedCards), ShuffledAdvancedAction(_))
 
         case ShuffledAdvancedAction(l) =>
             // With six players in a long game there aren't enough Early cards: Advanced ones make up the difference
             val short = game.earlyPerPlayer * factions.num - game.developments.num
             game.developments ++= l.take(game.advancedPerPlayer * factions.num + short)
 
-            Shuffle[Card](Cards.achievementCards, ShuffledAchievementsAction(_))
+            Shuffle[Card](Cards.achievementCards ++ options.has(HorizonsDevelopments).??(Cards.horizonsAchievementCards), ShuffledAchievementsAction(_))
 
         case ShuffledAchievementsAction(l) =>
             game.achievements = l.take(factions.num)
@@ -998,7 +1001,7 @@ object CommonExpansion extends Expansion {
                 f.log("plays", game.colors(f), game.teams.?("in " ~ game.teamName(f)).|(Empty), "and starts with", f.food.hl, Food, "and", f.wood.hl, Wood)
             }
 
-            Shuffle[String](Tiles.regular./(_.id), ShuffledTilesAction(_))
+            Shuffle[String](Tiles.regular./(_.id) ++ options.has(HorizonsTiles).??(Tiles.horizons./(_.id)), ShuffledTilesAction(_))
 
         // DRAWING
         case DrawTempAction(f, n, then) =>

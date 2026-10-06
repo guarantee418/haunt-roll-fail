@@ -42,6 +42,8 @@ draws a tile when no neutral territory is left.
 | Uncharted Horizons: Solo module (the Automa) | done 2026-10-04 (`automa.scala`, the 15 real cards) |
 | Wastelands expansion: Environment and Central tiles, five more creatures, Hrimgandr and Jötunn Blainn | done 2026-10-05 (`wastelands.scala`, see Wastelands below) |
 | Uncharted Horizons: Sea module (Beach tiles, Ports, the Raid phase and the 24 Raid cards) | done 2026-10-05 (`sea.scala`, see Sea below) |
+| Uncharted Horizons: the 13 Development cards and 2 Achievement cards | done 2026-10-06 (`horizon-devs.scala`, option "Uncharted Horizons Development cards" next to "Ban card draw developments"; see below) |
+| Uncharted Horizons: the 5 map tiles, The Bridge among them | done 2026-10-06 (`Tiles.horizons`, option "Uncharted Horizons map tiles" under the Central tile choice; see below) |
 | Uncharted Horizons: Training Fields module (two-player duel) | done 2026-10-05 (`training.scala`, "Training Grounds" on the main menu, see Training Fields below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
@@ -726,6 +728,39 @@ Homeland, Brotherhood of Arms, Fame for Fortune, Sacred Stones, Woodland
 Bounty, Ancient Wisdom, Valor's Reward, Bounty of the Harvest. Their texts are
 in `RaidCard.list` in `sea.scala`.
 
+## Uncharted Horizons: Development cards and map tiles (2026-10-06)
+
+From the card sheets and map tile textures of the TTS mod 3597126237 (the
+rulebook lists the components but prints no card text). The cards are
+shuffled into the decks with the option "Uncharted Horizons Development
+cards"; as many cards are revealed each year as usual.
+
+- Early: **Explorer** (0, Move 2; after it, if no combat was triggered, may
+  draw 1), **Simple Trading** (1, exchange 1 resource for another, then may
+  draw 1), **Archery Range** (2, roll a die against an enemy territory next to
+  one of yours: 1 enemy unit removed per skull, 1 more if your territory has a
+  Defense Tower), **Silent Watchers** (2, for up to 3 Defense Towers, a
+  different one each of: collect 1 resource from its territory, recruit 1
+  there, draw 1), **Fateful Gifts** (2, Flash: 1 of each resource a closed
+  territory you control doesn't produce).
+- Advanced: **Tamer** (2, Flash: 1 unit to any neutral territory, or a
+  creature moved once or twice, then activated), **Local Trading** (3, any 2
+  resources for 1, any number of times, then may draw 1), **Brewer** (2,
+  Flash: collect from a territory you control as at harvest), **Healer** (1,
+  Recruit 1, then may draw 1), **Fleeting Prosperity** (3, Flash: a small
+  building you control works 3 times, then goes back to the reserve),
+  **Forged for War** (0, Move 2, +1 axe per own territory next to each combat),
+  **House** (2, Build, then may draw 1), **Emissary** (1, Explore, then may
+  draw 1).
+- Achievements: **Mountaineer** (2 fame per territory you control with a
+  Rough border) and **Sailor** (2 fame per open territory you control).
+
+The five map tiles are shuffled into the map tiles with the option "Uncharted
+Horizons map tiles" (the rulebook: "You can shuffle them into the main pile of
+Map tiles when setting up"). The Bridge has three territories: two cliffs
+behind impassable lines, which the bridge makes adjacent, and the valley under
+it.
+
 ## Uncharted Horizons: Training Fields module (done 2026-10-05)
 
 From the Uncharted Horizons rulebook, pages 14 to 16. A separate two-player
@@ -760,13 +795,34 @@ game, reached from "Training Grounds" on the main menu.
 ## Expansions (later)
 
 The rest of Uncharted
-Horizons (Development cards, drafting setup, more map
-tiles). The TTS mod 3597126237 has its cards and its rulebook PDF.
+Horizons (drafting setup). The TTS mod 3597126237 has its cards and its rulebook PDF.
 
 ## Interpretations (choices made where the summary above is not enough)
 
 Check these against the rulebook when it is at hand.
 
+- **Uncharted Horizons Development cards**:
+  - An "axe" (Forged for War) is a combat point and a "skull" (Archery Range)
+    a casualty, as on the die; the die face with a choice counts as a skull.
+    Archery Range removes units only, not the warchief or Kaija; the Defense
+    Tower bonus counts when any of your territories next to the target has
+    one, and applies even with no skull rolled.
+  - Forged for War counts your controlled territories next to each combat
+    when that combat starts, so one won earlier counts; it adds to creature
+    fights too.
+  - Explorer: a combat was triggered when a fight (against a player or a
+    creature) took place during the Move; a territory taken without a fight
+    doesn't count.
+  - Fleeting Prosperity "activates" a Food Silo, Woodcutter Lodge or Carved
+    Stone as 3 of its resource, and a Training Camp as 3 units recruited in
+    its territory; a Defense Tower can't be chosen.
+  - Silent Watchers' "collect 1 resource from its territory" is a resource
+    the territory produces. Tamer's unit goes to a territory with no figures
+    and no creature (not the Swamp); its creature moves to adjacent
+    territories without a creature and then acts as in the Creature phase.
+  - Local Trading pays any 2 resources (the same or different) for 1 of
+    another kind than at least one of them.
+- **The Bridge**: the bridge deck is drawn as part of the valley's area.
 - **Training Fields**:
   - Sets of three resources count only the resources printed on the map
     territories a player controls.

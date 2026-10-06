@@ -493,6 +493,39 @@ on. To implement one:
   kept ones; the player panel counts the units raiding.
 - `NORT_SEA=1` makes the headless host always use the module.
 
+## Uncharted Horizons: Development cards and map tiles (2026-10-06)
+
+- Options: `HorizonsDevelopments` ("Development cards" group, listed right after
+  "Ban card draw developments") shuffles the 5 Early and 8 Advanced cards
+  (`Cards.horizonsEarly`, `Cards.horizonsAdvanced`) and the Mountaineer and
+  Sailor Achievements into the decks (`StartAction` and the `Shuffled...`
+  actions in `game.scala`). `HorizonsTiles` ("Map tiles" group, right after the
+  Central tile choice, in `wastelands.scala`) adds `Tiles.horizons` to the map
+  tile pile (`FirstPlayerAction`). Both work without any module.
+- Effects: `horizon-devs.scala` (`HorizonDevsExpansion`), reached from the end
+  of `NewBloodExpansion.playable` and `resolve`. It is first in
+  `Game.expansions` (always on) so it can catch `MoveStartAction` (Explorer),
+  `FightStartAction` and `CreatureFightAction` (Forged for War) before the
+  modules; it also handles `MayDrawAction` now (it was New Blood's), which the
+  "then you may draw 1 card" cards use. Rule choices are under
+  Interpretations in `RULES.md`.
+- Images: `card/dev/<id>.webp` and `card/achievement/{mountaineer,sailor}`
+  (sheet `241` of the TTS mod, 8x2, resized to 412x635 like the clan cards);
+  `tile/horizon-{1,2,3,4,bridge}.webp` from the five tile textures by
+  `nort/tools/horizon-tiles.py` (crop, colours brought closer to the other
+  tiles, the Bridge's cliffs recoloured to the Wilderness orange). Masks, grid
+  rows, border dashes and icons were made with the usual tools;
+  `tile-masks.py` has the Bridge in `ORANGE`, two `BARRIERS` lines across the
+  bridge's ends and manual `ICONS` for the lore stones (only the five new
+  tiles' grid rows were added: a full rerun changes other tiles' masks slightly).
+- The Bridge (`horizon-bridge`): areas `n` and `s` (the cliffs) and `m` (the
+  valley, sides E and W); `wall(n, m)`, `wall(m, s)` and a regular
+  `border(n, s)` for the bridge, so the cliffs are adjacent and the valley is
+  reached only from the E and W sides. Its n-s border has no dashes, so no
+  fame-border line is drawn there.
+- `NORT_HORIZONS=1` in the headless host turns both options on; 35 bot games
+  (Easy and Hard) played every card without errors.
+
 ## Map drawing: territory colours and free ground
 
 - Each territory is tinted with the colour of the player who controls it
@@ -734,8 +767,8 @@ list. In short:
    to build and test. Run it after changing actions, especially anything
    marked `Soft`.
 5. **Expansions**: Wilderness, Wastelands, New Blood, and Uncharted Horizons' Events,
-   Alternative victory and Sea modules are done; the rest of
-   Uncharted Horizons (Development cards, Training Fields) are next (assets in `expansion/`; the TTS mod
+   Alternative victory and Sea modules, its Development cards and its map tiles are done; the rest of
+   Uncharted Horizons (Training Fields, the drafting setup) is next (the TTS mod
    3597126237 has the Uncharted Horizons cards and its rulebook PDF).
 
 ## How to build and test (in a cloud session)

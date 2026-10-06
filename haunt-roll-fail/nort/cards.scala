@@ -332,10 +332,33 @@ object Cards {
         dev("capture", "Capture", 3, true, CaptureEffect, "Remove 1 enemy unit from a territory adjacent to yours. Add 1 unit to any one of your territories."),
     )
 
-    val developments : Map[String, CardInfo] = (early ++ advanced).toMap
+    // Uncharted Horizons' 13 Development cards (TTS mod 3597126237), shuffled in with the HorizonsDevelopments option;
+    // their effects are in horizon-devs.scala
+    val horizonsEarly : $[(String, CardInfo)] = $(
+        dev("explorer", "Explorer", 0, false, MoveEffect(2, special = ExplorerMove), "Move 2. After doing the Move action, if no combat was triggered, then you may draw 1 card."),
+        dev("simple-trading", "Simple Trading", 1, false, TradeEffect(1), "You may exchange any 1 resource for another of your choice, then you may draw 1 card."),
+        dev("archery-range", "Archery Range", 2, false, ArcheryEffect, "Choose one of your territories and an adjacent enemy territory. Roll a die: remove 1 enemy unit per skull rolled. Remove 1 more if your territory has a Defense Tower."),
+        dev("silent-watchers", "Silent Watchers", 2, false, WatchersEffect, "For up to 3 Defense Towers you control, choose a different option for each: collect 1 resource from its territory, recruit 1 unit in that territory or draw 1 card."),
+        dev("fateful-gifts", "Fateful Gifts", 2, true, GiftsEffect, "Choose a closed territory you control. Collect 1 of each resource that is not produced in that territory."),
+    )
+
+    val horizonsAdvanced : $[(String, CardInfo)] = $(
+        dev("tamer", "Tamer", 2, true, TamerEffect, "Move 1 unit you own to any neutral territory OR you move any 1 creature once or twice to an adjacent territory. The creature is activated once it finishes all its moves."),
+        dev("local-trading", "Local Trading", 3, false, TradeEffect(2), "You may exchange (multiple times) any 2 resources for another of your choice, then you may draw 1 card."),
+        dev("brewer", "Brewer", 2, true, BrewerEffect, "Collect all resources from a territory you control as if it were currently the Harvest phase."),
+        dev("healer", "Healer", 1, false, HealerEffect, "Recruit 1. After the Recruit action you may draw 1 card."),
+        dev("fleeting-prosperity", "Fleeting Prosperity", 3, true, ProsperityEffect, "Activate 1 small building you control 3 times, then remove it and return it to the reserve."),
+        dev("forged-for-war", "Forged for War", 0, false, MoveEffect(2, special = ForgedMove), "Move 2. In Step 1 of each combat triggered by this card, gain +1 axe per own territory adjacent to the combat. You may count the territory won in the first combat for the second one."),
+        dev("house", "House", 2, false, HouseEffect, "Build. After the Build action you may draw 1 card."),
+        dev("emissary", "Emissary", 1, false, EmissaryEffect, "Explore. After the Explore action you may draw 1 card."),
+    )
+
+    val developments : Map[String, CardInfo] = (early ++ advanced ++ horizonsEarly ++ horizonsAdvanced).toMap
 
     val earlyCards : $[Card] = early.lefts./(Development(_))
     val advancedCards : $[Card] = advanced.lefts./(Development(_))
+    val horizonsEarlyCards : $[Card] = horizonsEarly.lefts./(Development(_))
+    val horizonsAdvancedCards : $[Card] = horizonsAdvanced.lefts./(Development(_))
 
     // Achievement fame is worked out at the end of the game
     val achievements : Map[String, CardInfo] = $(
@@ -346,9 +369,15 @@ object Cards {
         card("card-achievement-")("trapper", "Trapper", 0, false, MapEffect, "Gain 3 fame per creature's lair in your territories."),
         card("card-achievement-")("warlord", "Warlord", 0, false, MapEffect, "Gain 1 fame per unit in your territories."),
         card("card-achievement-")("wood-trader", "Wood Trader", 0, false, MapEffect, "Gain 2 fame for each wood on your territories (including buildings)."),
+        // Uncharted Horizons (HorizonsDevelopments option)
+        card("card-achievement-")("mountaineer", "Mountaineer", 0, false, MapEffect, "Gain 2 fame for each territory you control with at least one Rough border."),
+        card("card-achievement-")("sailor", "Sailor", 0, false, MapEffect, "Gain 2 fame for each open territory you control."),
     ).toMap
 
-    val achievementCards : $[Card] = achievements.keys.$.sorted./(Achievement(_))
+    val horizonsAchievements : $[String] = $("mountaineer", "sailor")
+
+    val achievementCards : $[Card] = achievements.keys.$.diff(horizonsAchievements).sorted./(Achievement(_))
+    val horizonsAchievementCards : $[Card] = horizonsAchievements./(Achievement(_))
 
     // Image names for the asset list
     def images : $[String] =
