@@ -37,13 +37,13 @@ object CraftExpansion extends MandatoryExpansion {
                 .!(c.none, "nothing craftable")
 
             val extra =
-                if (f.has(MorningCraft) && (c.any || f.birdsongNewCard))
+                if (f.has(MorningCraft) && (c.any || f.birdsongNewCard || Council.entreatWanted(f)))
                     f.birdsong
                 else
-                if (f.has(DaylightCraft) && (c.any || f.daylightNewCard))
+                if (f.has(DaylightCraft) && (c.any || f.daylightNewCard || Council.entreatWanted(f)))
                     f.daylight
                 else
-                if (f.has(EveningCraft) && (c.any || f.eveningNewCard))
+                if (f.has(EveningCraft) && (c.any || f.eveningNewCard || Council.entreatWanted(f)))
                     f.evening
                 else
                     $()
