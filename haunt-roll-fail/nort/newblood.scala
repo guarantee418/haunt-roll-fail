@@ -318,7 +318,7 @@ object NewBloodExpansion extends Expansion {
         case SquirrelClanEffect => true
         case CookingEffect => MapExpansion.playable(f, BuildEffect())
         case EconomicsEffect => CommonExpansion.available(f) > 0
-        case _ => false
+        case e => HorizonDevsExpansion.playable(f, e)
     }
 
     def resolve(f : Faction, e : Effect, then : ForcedAction)(implicit game : Game) : Continue = e match {
@@ -379,7 +379,7 @@ object NewBloodExpansion extends Expansion {
         case EconomicsEffect =>
             Then(DrawCardsAction(f, 1, EconomicsStartAction(f, then)))
 
-        case _ => Then(then)
+        case e => HorizonDevsExpansion.resolve(f, e, then)
     }
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
@@ -850,13 +850,6 @@ object NewBloodExpansion extends Expansion {
                 f.log("paid", n.hl, Food, "to draw", n.cards)
             }
             Then(DrawCardsAction(f, n, then))
-
-        // Either
-        case MayDrawAction(f, then) =>
-            if (CommonExpansion.available(f) > 0)
-                Ask(f).add(DrawCardsAction(f, 1, then).as("Draw 1 card")(f)).add(then.as("Draw no card")(f))
-            else
-                Then(then)
 
         case _ => UnknownContinue
     }

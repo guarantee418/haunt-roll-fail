@@ -31,7 +31,7 @@ and each deck's `CustomDeck` has the `FaceURL` of its card sheet.
 | `effects.scala` | `CardsExpansion`: the card effects that aren't basic actions (recruit per resource, removing enemy units, copying cards, looking at hands, Defensive Strategy, ...) |
 | `tiles.scala` | All 35 core tiles as data: areas, the sides each area owns, resources, lairs, building spaces, and borders (regular or rough) |
 | `board.scala` | `Board`: placements, joining areas into territories, adjacency, closed/open, legal placements (`consistent`), drawing positions |
-| `map.scala` | `MapExpansion`: setup tile/unit placement, Recruit (with Kaija), Move (with the Move specials), combat and retreat, Scorched Earth, Explore, Build (with the Build specials; a Build card's builds go `BuildAction` → `BuildSpotAction` (Soft, a free space, tapped on the map or picked from the list; `buildSpots`) → `BuildPickAction` (Soft, the menu of all eight buildings with their costs, the ones that can't go there dimmed with the reason from `buildBlock`) → `BuildConfirmAction` (the building drawn on its space with a green check mark and a red cross above it, `BuildPreview`; the check mark is the confirm action's map target `ConfirmMark`, the cross cancels through `CancelMark` in `UI.clickable`), which goes on to `BuildPlaceAction`. Explore shows the drawn tile above the list of spots (`ExploreTileInfoAction`), so the player sees it before choosing where it goes. Placing a tile (setup, Explore, a second chance) works the same way: the tile is drawn at its spot (`TilePreview`, the `...TurnAction`s) with blue rotate arrows off its top corners (`ui-rotate-left`/`-right`, the map targets `RotateMark(d)` of the `...RotateAction`s, only when it has more than one legal turn) and the check mark and cross at its bottom, each button just outside its own corner of the tile (the scene margin widens on a side where the tile is at the edge); the buttons in the action pane still work too. The other builds (Halvard's Craft, New Blood clans) still use `buildOptions` and `buildChoice`), Feast, units returning at end of year |
+| `map.scala` | `MapExpansion`: setup tile/unit placement, Recruit (with Kaija and the warchief: when more than one kind can be recruited, a territory is tapped first (`RecruitAreaAction`, Soft) and then a regular unit, Kaija or the warchief is picked (`RecruitUnitHereAction` etc.); with one kind the old one-step `RecruitPlaceAction`, `RecruitKaijaAction`, `RecruitChiefAction` stay), Move (with the Move specials), combat and retreat, Scorched Earth, Explore, Build (with the Build specials; a Build card's builds go `BuildAction` → `BuildSpotAction` (Soft, a free space, tapped on the map or picked from the list; `buildSpots`) → `BuildPickAction` (Soft, the menu of all eight buildings with their costs, the ones that can't go there dimmed with the reason from `buildBlock`) → `BuildConfirmAction` (the building drawn on its space with a green check mark and a red cross above it, `BuildPreview`; the check mark is the confirm action's map target `ConfirmMark`, the cross cancels through `CancelMark` in `UI.clickable`), which goes on to `BuildPlaceAction`. Explore shows the drawn tile above the list of spots (`ExploreTileInfoAction`), so the player sees it before choosing where it goes. Placing a tile (setup, Explore, a second chance) works the same way: the tile is drawn at its spot (`TilePreview`, the `...TurnAction`s) with blue rotate arrows off its top corners (`ui-rotate-left`/`-right`, the map targets `RotateMark(d)` of the `...RotateAction`s, only when it has more than one legal turn) and the check mark and cross at its bottom, each button just outside its own corner of the tile (the scene margin widens on a side where the tile is at the edge); the buttons in the action pane still work too. The other builds (Halvard's Craft, New Blood clans) still use `buildOptions` and `buildChoice`), Feast, units returning at end of year |
 | `ui.scala` | Status panels (clan names in the player's color), the court strip on top (cards keep the pane's height and the strip scrolls sideways; see `styles.strip`), the board canvas, map clicks, the build preview. A turn (`TurnAction` stage 0, `turnModes` in `game.scala`) starts with six choices at the top of the action pane: `TurnModeAction` (Soft) for Play cards (1 + any ⚡), Wait, Replace card for 1 Lore, Remove card for 2 Lore, Upgrade for 3 Lore (dimmed with the reason when not possible; the Lore icon is `ui-lore`), and Pass; the hand is shown below as pictures that open full screen. After a choice (`modeChoices`) the hand is shown as that choice's actions (`PlayCardAction`, `WaitCardAction`, `ReplaceCardAction`, `RemoveCardAction`, all `HandChoice` with the card image): tapping a card does it, cards that can't be used are dimmed with the reason, Cancel goes back. Upgrade first shows the clan upgrades (`UpgradePickAction`), then the hand twice: wait with a card, or remove one (`UpgradeCardAction`). After the main card, `playChoices` offers the Flash cards and End turn. Until the turn ends the hand doesn't open full screen (`HandInfoAction` in `Game.info`); the Played cards, the Lore Tree list and the clan board (`ClanBoardInfoAction`, `ClanBoard` in `UI.onClick`) still do. Otherwise `Game.info` shows the hand as `CardInfoAction` pictures, with the Played cards |
 | `creatures.scala` | Creatures module: creature kinds and cards, setup deck, apparition on lairs (`TilePlacedAction`), the Creature phase (`CreaturePhaseAction`), declaring and fighting creatures (`MoveEndAction`, `CreatureFightAction`), the More Creatures variant (`PassedAction`) |
 | `warchiefs.scala` | Warchiefs module: names and powers (`Warchief`), step 1 powers (Signy, Brand), Liv's reroll prompts |
@@ -497,6 +497,39 @@ on. To implement one:
   kept ones; the player panel counts the units raiding.
 - `NORT_SEA=1` makes the headless host always use the module.
 
+## Uncharted Horizons: Development cards and map tiles (2026-10-06)
+
+- Options: `HorizonsDevelopments` ("Development cards" group, listed right after
+  "Ban card draw developments") shuffles the 5 Early and 8 Advanced cards
+  (`Cards.horizonsEarly`, `Cards.horizonsAdvanced`) and the Mountaineer and
+  Sailor Achievements into the decks (`StartAction` and the `Shuffled...`
+  actions in `game.scala`). `HorizonsTiles` ("Map tiles" group, right after the
+  Central tile choice, in `wastelands.scala`) adds `Tiles.horizons` to the map
+  tile pile (`FirstPlayerAction`). Both work without any module.
+- Effects: `horizon-devs.scala` (`HorizonDevsExpansion`), reached from the end
+  of `NewBloodExpansion.playable` and `resolve`. It is first in
+  `Game.expansions` (always on) so it can catch `MoveStartAction` (Explorer),
+  `FightStartAction` and `CreatureFightAction` (Forged for War) before the
+  modules; it also handles `MayDrawAction` now (it was New Blood's), which the
+  "then you may draw 1 card" cards use. Rule choices are under
+  Interpretations in `RULES.md`.
+- Images: `card/dev/<id>.webp` and `card/achievement/{mountaineer,sailor}`
+  (sheet `241` of the TTS mod, 8x2, resized to 412x635 like the clan cards);
+  `tile/horizon-{1,2,3,4,bridge}.webp` from the five tile textures by
+  `nort/tools/horizon-tiles.py` (crop, colours brought closer to the other
+  tiles, the Bridge's cliffs recoloured to the Wilderness orange). Masks, grid
+  rows, border dashes and icons were made with the usual tools;
+  `tile-masks.py` has the Bridge in `ORANGE`, two `BARRIERS` lines across the
+  bridge's ends and manual `ICONS` for the lore stones (only the five new
+  tiles' grid rows were added: a full rerun changes other tiles' masks slightly).
+- The Bridge (`horizon-bridge`): areas `n` and `s` (the cliffs) and `m` (the
+  valley, sides E and W); `wall(n, m)`, `wall(m, s)` and a regular
+  `border(n, s)` for the bridge, so the cliffs are adjacent and the valley is
+  reached only from the E and W sides. Its n-s border has no dashes, so no
+  fame-border line is drawn there.
+- `NORT_HORIZONS=1` in the headless host turns both options on; 35 bot games
+  (Easy and Hard) played every card without errors.
+
 ## Map drawing: territory colours and free ground
 
 - Each territory is tinted with the colour of the player who controls it
@@ -738,8 +771,8 @@ list. In short:
    to build and test. Run it after changing actions, especially anything
    marked `Soft`.
 5. **Expansions**: Wilderness, Wastelands, New Blood, and Uncharted Horizons' Events,
-   Alternative victory and Sea modules are done; the rest of
-   Uncharted Horizons (Development cards, Training Fields) are next (assets in `expansion/`; the TTS mod
+   Alternative victory and Sea modules, its Development cards and its map tiles are done; the rest of
+   Uncharted Horizons (Training Fields, the drafting setup) is next (the TTS mod
    3597126237 has the Uncharted Horizons cards and its rulebook PDF).
 
 ## How to build and test (in a cloud session)

@@ -202,7 +202,8 @@ object CardsExpansion extends Expansion {
         case CurseEffect => opponentsWithCards(f).any
         case RapaciousEffect => opponentsWithCards(f).any
         case SecretsEffect => secretsCards(f).any
-        case StolenLoreEffect => stolenLoreCards(f).any
+        // Always playable: the Snake may move the token first, and with nothing to copy the card does nothing
+        case StolenLoreEffect => true
         case HeroesEffect => heroesCards(f).any
         case e => NewBloodExpansion.playable(f, e)
     }

@@ -164,6 +164,16 @@ case object DenCentral extends CentralTileChoice(Waste.den, "the Wyvern comes ou
 case object WildLakeCentral extends CentralTileChoice(Wild.lake, "the Wilderness Environment tile: impassable; at each Harvest, the most units and warchiefs next to it gain 2 food (1 each when tied).")
 case object HelheimCentral extends CentralTileChoice(Waste.helheim, "its controller gets +2 axes against creatures; at each Creature phase, on a skull, a creature comes out of it.")
 
+// Uncharted Horizons' five map tiles, The Bridge among them, shuffled into the map tiles (game.scala: FirstPlayerAction)
+case object HorizonsTiles extends GameOption with ToggleOption {
+    val group = "Map tiles".txt
+    def valueOn = "Uncharted Horizons map tiles".txt
+    override val explain = $(
+        "Shuffles the " ~ 5.hl ~ " map tiles of Uncharted Horizons into the pile of map tiles at setup, as its rulebook allows.",
+        "The Bridge".hl ~ ": two cliffs behind impassable borders, linked by a bridge that makes them adjacent and overhangs the valley between them, a third territory.",
+    )
+}
+
 object CentralChoice {
     val tiles : $[CentralChoice] = $(MagmaFlowCentral, YggdrasilCentral, RelicCentral, GreatLakeCentral, VolcanoCentral, MimirCentral, HrimgandrCentral, DenCentral, HelheimCentral, WildLakeCentral)
     val all : $[CentralChoice] = $(StandardCentral, RandomCentral, RandomAnyCentral) ++ tiles
