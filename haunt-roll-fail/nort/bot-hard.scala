@@ -299,16 +299,35 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             -550.0 - 60 * short
     }
 
-    // The points an enemy could bring against t from the territories next to it
-    def threat(t : Territory, f : Faction) : (Faction, Int) = {
-        var best : (Faction, Int) = (f, 0)
-        enemiesOf(f).foreach { e =>
-            val groups = adjacent(t)./{ case (o, _) => game.figures(o, e) }.%(_ > 0).sortBy(-_)
-            val str = groups.take(1).sum + groups.drop(1).sum / 2
-            if (str > best._2)
-                best = (e, str)
+    // The points enemy e could bring against t: its biggest group next to t, and half of the rest; a group that must
+    // cross a Rough border (2 moves) counts half. The bot's own units attacking somewhere (sharing a territory, while
+    // its moves are tried) count for nothing: they are about to fight; the defenders there still count
+    // Who is in each territory, worked out once per position tried (the threats look at every territory's neighbours)
+    // (the game replaces these maps and lists when they change, so comparing references is enough)
+    private var occupantsKey : $[AnyRef] = null
+    private var occupants : Map[Territory, $[(Faction, Int)]] = Map()
+
+    def figuresIn(t : Territory) : $[(Faction, Int)] = {
+        val key : $[AnyRef] = $(game.units, game.chiefs, game.kaija, game.lynx, game.brok, game.leader2, board.placements, game.blainn)
+        if (occupantsKey == null || occupantsKey.zip(key).exists { case (a, b) => a ne b }) {
+            occupants = board.territories./(o => o -> game.present(o)./(f => f -> game.figures(o, f))).toMap
+            occupantsKey = key
         }
-        best
+        occupants.getOrElse(t, $)
+    }
+
+    // Groups two territories away count 0.4: they can take the territory in between first, and the bot should not wait
+    // for them to arrive before reinforcing (an Altar of Kings behind a weak border, for one)
+    def threat(t : Territory, e : Faction) : Int = {
+        def here(o : Territory) : Double = {
+            val l = figuresIn(o)
+            if (e == self && l.num > 1) 0.0 else l.find(_._1 == e)./(_._2.toDouble).|(0.0)
+        }
+        val near = adjacent(t)
+        val groups = near./{ case (o, regular) => regular.?(1.0).|(0.5) * here(o) }
+        val far = near./~{ case (o, _) => adjacent(o).map(_._1).filter(x => x != t && near.exists(_._1 == x).not) }.distinct./(x => 0.4 * here(x))
+        val all = (groups ++ far).%(_ > 0).sortBy(-_)
+        (all.take(1).sum + all.drop(1).sum / 2).round.toInt
     }
 
     def enemiesOf(f : Faction) : $[Faction] = players.%(g => game.enemy(f, g))
@@ -318,16 +337,24 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         (game.strength(t, f, false) + 2 * here.count(_ == Fortress) + (f == Snake && game.scorchedIn(t)).??(1), here.count(_ == DefenseTower))
     }
 
+    // What f stands to lose in t: each enemy near it may attack (much less likely once that enemy has passed), with
+    // the exact odds of the fight; the chances of holding against each are combined, so reinforcing against the
+    // nearest danger counts even when a bigger army is also next door. (Making attacks likelier on valuable
+    // territories as well made the bot too defensive: it lost 61 of 100 two-player games to the version without it.)
     def risk(t : Territory, f : Faction, worth : Double) : Double = {
-        val (e, str) = threat(t, f)
-        if (str == 0)
-            return 0
         val (ds, towers) = defense(t, f)
         val du = game.figures(t, f)
-        // A card bonus or food is likely; units must stay behind in the territories they come from
-        val p = HardCombat.attackWin(str + 1, ds + math.min(du, f.food), str, du, towers)
-        val likely = (e.passed).?(0.12).|(0.4) * (harvests <= 1).?(1.2).|(1.0)
-        likely * p * (worth + 30 * du)
+        var hold = 1.0
+        enemiesOf(f).foreach { e =>
+            val str = threat(t, e)
+            if (str > 0) {
+                // A card bonus or food is likely
+                val p = HardCombat.attackWin(str + 1, ds + math.min(du, f.food), str, du, towers)
+                val likely = e.passed.?(0.12).|(0.4) * (harvests <= 1).?(1.2).|(1.0)
+                hold *= 1 - math.min(1.0, likely * p)
+            }
+        }
+        (1 - hold) * (worth + 30 * du)
     }
 
     // POSITION: the whole value of f's position
