@@ -20,22 +20,26 @@ object Host extends hrf.host.BaseHost {
     // NORT_HARD=robotos: the first seat plays Robotos (BotRobotos, with its cheats), the others Hard
     def hard(g : G, f : F) = sys.env.get("NORT_HARD") match {
         case Some("all") | Some("robotos") => true
-        case Some("1") => g.setup.head == f
+        case Some("1") => g.players.head == f
         case _ => false
     }
 
-    def askBot(g : G, f : F, actions : $[UserAction]) = {
-        val bot = g.robotos(f).?(new BotRobotos(f) : Bot).|(hard(g, f).?(new BotHard(f) : Bot).|(new BotXX(f)))
+    // Adset games: the seat's clan once drafted
+    def clan(g : G, p : F) : Faction = g.ptf.get(p).orNull
+
+    def askBot(g : G, p : F, actions : $[UserAction]) = {
+        val f = clan(g, p)
+        val bot = (f == null || g.adset).?(new BotAdset(p, hard(g, p)) : Bot).|(g.robotos(f).?(new BotRobotos(f) : Bot).|(hard(g, p).?(new BotHard(f) : Bot).|(new BotXX(f))))
         val start = System.nanoTime
         val r = bot.ask(actions, 0)(g)
         val ms = (System.nanoTime - start) / 1000000
         // NORT_TTRACE=1: every choice of the bots, in short
-        if (sys.env.get("NORT_TTRACE").has("1")) println((hard(g, f).?("H ").|("E ")) + f + " " + g.states(f).fame + " " + r.immediate.unwrap.toString.take(150))
+        if (sys.env.get("NORT_TTRACE").has("1")) println((hard(g, p).?("H ").|("E ")) + p + " " + (f != null).??(g.states(f).fame.toString) + " " + r.immediate.unwrap.toString.take(150))
         // NORT_TIMING=1: the slowest decisions of the Hard bot
-        if (sys.env.get("NORT_TIMING").has("1") && hard(g, f) && ms > 300)
+        if (sys.env.get("NORT_TIMING").has("1") && hard(g, p) && ms > 300)
             println("SLOW " + ms + "ms " + g.setup.num + "p year " + g.year + " " + actions.num + " actions, first " + actions.head.unwrap.toString.take(80))
         // NORT_TRACE=1: what the Hard bot chose, with its best alternatives
-        if (sys.env.get("NORT_TRACE").has("1") && hard(g, f) && actions.num > 1) {
+        if (sys.env.get("NORT_TRACE").has("1") && hard(g, p) && f != null && actions.num > 1) {
             val l = g.explode(actions, false, None).notOf[Hidden].%(_.isInstanceOf[Unavailable].not)
             val e = new HardEvaluation(f)(g)
             val scored = l./(a => a -> e.eval(a).head.weight).sortBy(-_._2)
@@ -88,13 +92,24 @@ object Host extends hrf.host.BaseHost {
         val level = solo.$(AutomaLevelOption(1 + (random() * 6).toInt))
         val all = training.?(colors ++ $(TrainingFieldsOption) ++ (random() < 0.3).$(FirstSeatStarts)).|(core.?(colors).|(options ++ level ++ level.exists(_.level >= 3).$(ModuleOption(Creatures))))
         all.foreach(o => assert(Meta.parseOption(Meta.writeOption(o)) == $(o), o))
-        // NORT_HARD=robotos: the first seat is Robotos
-        val robotos = sys.env.get("NORT_HARD").has("robotos").$(RobotosOption(l.head))
-        new G(l, (all ++ robotos).distinct)
+        // NORT_ADSET=1: Adset games, with seats that draft their clans (random setup choices)
+        if (sys.env.get("NORT_ADSET").has("1")) {
+            val lands = (n > 2).?(AdsetLands.all).|(AdsetLands.all.but(LandsSeatChooses)).shuffle.head
+            val adset = $(YearsOption.all.shuffle.head) ++ victory ++ (random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.5).$(ModuleOption(Sea)) :+ lands
+            MetaAdset.createGame(MetaAdset.factions.take(n), adset.distinct)
+        }
+        else {
+            // NORT_HARD=robotos: the first seat is Robotos
+            val robotos = sys.env.get("NORT_HARD").has("robotos").$(RobotosOption(l.head))
+            new G(l, (all ++ robotos).distinct)
+        }
     })
 
-    def factionName(f : F) = f.name
-    def nameWinner(f : F) = f.name
+    def factionName(f : F) = f match {
+        case f : Faction => f.name
+        case p : Seat => p.name
+    }
+    def nameWinner(f : W) = f.name
 
     Debug.stats = true
 
@@ -111,10 +126,11 @@ object Host extends hrf.host.BaseHost {
             println("UNVALUED " + HardEvaluation.unvalued.toList.sortBy(-_._2)./{ case (k, n) => k + " " + n }.mkString(", "))
 
         if (hard(g, f) && sys.env.get("NORT_HARD").has("1"))
-            println("HARD WON " + f.name + " in a " + g.setup.num + "-player game")
-        if (g.robotos(f))
-            println("ROBOTOS WON " + f.name + " in a " + g.setup.num + "-player game")
-        $(f)
+            println("HARD WON " + factionName(f) + " in a " + g.setup.num + "-player game")
+        val c = g.ptf.get(f).|(f.asInstanceOf[Faction])
+        if (g.robotos(c))
+            println("ROBOTOS WON " + c.name + " in a " + g.setup.num + "-player game")
+        $(c)
     }
 
     def serializer = nort.Serialize

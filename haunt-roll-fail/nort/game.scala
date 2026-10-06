@@ -15,8 +15,18 @@ import hrf.elem._
 import nort.elem._
 
 
+// Who plays: a clan, or in an Adset game (adset.scala) a seat that drafts its clan during setup
+trait Player extends BasePlayer
+
+// An Adset player, before and after drafting a clan (Game.ptf gives the clan)
+case class Seat(n : Int) extends Player with Elementary with Record {
+    def short = "P" + n
+    def name = "Player #" + n
+    def elem : Elem = name.hh
+}
+
 // A clan's name shows in the color its player picked
-trait Faction extends NamedToString with Styling with GameElementary with BasePlayer with Record {
+trait Faction extends NamedToString with Styling with GameElementary with Player with Record {
     def short = name
     def style = name.toLowerCase
     def elem(implicit game : Game) : Elem = (name + (this != Automa).??(" Clan")).styled(game.colors.get(this)./(c => c : Styling).|(this))(styles.title)(xstyles.bold)
@@ -326,8 +336,23 @@ trait Expansion {
     }
 }
 
-class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame with ContinueGame with LoggedGame {
+// players: the clans, or in an Adset game the seats, who draft their clans during setup (adset.scala)
+class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends BaseGame with ContinueGame with LoggedGame {
     private implicit val game = this
+
+    def arity = players.num
+
+    // Adset: the clans come with the draft, and the second and third seats add Wilderness or Wastelands and the central tile to the options
+    val adset = players.exists(_.is[Seat])
+
+    var options : $[Meta.O] = initialOptions
+
+    // The clans in play, in seating order (in an Adset game, filled in as they are drafted)
+    var setup : $[Faction] = players.of[Faction]
+
+    // Each clan's player, and each player's clan (the same without Adset)
+    var ftp : Map[Faction, Player] = setup./(f => f -> (f : Player)).toMap
+    var ptf : Map[Player, Faction] = setup./(f => (f : Player) -> f).toMap
 
     var isOver = false
 
@@ -336,11 +361,14 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // Modules and expansions turned on in the options
     // New Blood is on whenever one of its clans plays; Training Fields leaves every other module out
-    val modules : $[Module] =
+    // Adset: New Blood is always on, as any clan can be drafted
+    def computeModules : $[Module] =
         if (training)
             $(TrainingFields)
         else
-            Module.all.%(m => Meta.has(options, m) || (m == NewBlood && setup.exists(NewBlood.clans.has)) || (m == Solo && setup.has(Automa)))
+            Module.all.%(m => Meta.has(options, m) || (m == NewBlood && (adset || setup.exists(NewBlood.clans.has))) || (m == Solo && setup.has(Automa)))
+
+    var modules : $[Module] = computeModules
 
     def has(m : Module) = modules.has(m)
 
@@ -353,9 +381,18 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def upgradeCost(f : Faction) : Int = robotos(f).?(2).|(3)
 
     // Module expansions come first, so they can take over any core action; before them the Uncharted Horizons
-    // Development cards, which only act on their own actions and specials
-    // Robotos goes first: it takes over what creatures do to its clans
-    val expansions : $[Expansion] = cheaters.any.$(RobotosExpansion) ++ $(HorizonDevsExpansion) ++ modules.sortBy(_.priority)./~(_.expansion) ++ $(MapExpansion, CardsExpansion, CommonExpansion)
+    // Development cards, which only act on their own actions and specials (and in an Adset game, its draft)
+    // Robotos goes first after the draft: it takes over what creatures do to its clans
+    def computeExpansions : $[Expansion] = adset.$(AdsetExpansion) ++ cheaters.any.$(RobotosExpansion) ++ $(HorizonDevsExpansion) ++ modules.sortBy(_.priority)./~(_.expansion) ++ $(MapExpansion, CardsExpansion, CommonExpansion)
+
+    var expansions : $[Expansion] = computeExpansions
+
+    // An Adset choice turned an option on (Wilderness or Wastelands, the central tile)
+    def addOption(o : Meta.O) {
+        options :+= o
+        modules = computeModules
+        expansions = computeExpansions
+    }
 
     var seating : $[Faction] = setup
 
@@ -363,7 +400,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     var states = Map[Faction, FactionState]()
 
     // Colors chosen on the setup screen; clans without one get the free colors in seating order
-    val colors : Map[Faction, PlayerColor] = {
+    // (Adset: each player's color by player number, given to the clan they draft)
+    var colors : Map[Faction, PlayerColor] = {
         val chosen = options.of[ColorOption].%(o => setup.has(o.clan)).groupBy(_.clan)./{ case (f, l) => f -> l.head.color }.toMap
         val free = PlayerColor.all.diff(chosen.values.$)
         chosen ++ setup.%(f => chosen.contains(f).not).zip(free).toMap
@@ -388,7 +426,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     val teams : Boolean = teamModule.any
 
     // The number of teams (each player alone without team play)
-    val teamCount : Int = teamModule./(Module.sides).|(setup.num)
+    def teamCount : Int = teamModule./(Module.sides).|(setup.num)
 
     def team(f : Faction) : Int = setup.indexOf(f) % teamCount
 
@@ -404,8 +442,17 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     def teamName(f : Faction) : Elem = ("Team " + "ABC".charAt(team(f))).hl
 
+    // ADSET (adset.scala): the players in seat order, the clans drafted and banned, each player's three tiles before they
+    // pick a clan, where the setup goes on after a placement, and the tiles left over for the bottom of the pile
+    var seats : $[Player] = $
+    var draft : $[Faction] = $
+    var banned : $[Faction] = $
+    var seatTiles : Map[Player, $[String]] = Map()
+    var adsetNext : |[(Int, $[Player])] = None
+    var leftovers : $[String] = $
+
     var year = 0
-    var first : Faction = setup.first
+    var first : Faction = setup.headOption.orNull
 
     val board = new Board
 
@@ -734,14 +781,20 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     var display : $[Card] = $
 
     object highlight {
-        var faction : $[Faction] = $
+        var faction : $[Player] = $
         var current : |[Faction] = None
     }
 
     // Seating order starting with f
     def from(f : Faction) = seating.dropWhile(_ != f) ++ seating.takeWhile(_ != f)
 
-    def info(waiting : $[Faction], self : |[Faction], actions : $[UserAction]) : $[Info] = {
+    def info(waiting : $[Player], player : |[Player], actions : $[UserAction]) : $[Info] = {
+        // Adset: the player's clan once drafted; the draft while it lasts
+        val self : |[Faction] = player./~(ptf.get)
+
+        // Adset: the seats and the clans left in the draft
+        val draftInfo : $[Info] = (adset && AdsetExpansion.drafting(this)).??(AdsetExpansion.info(player, actions)(this))
+
         // The developments and achievements are shown in the court pane (UI.drawCards);
         // your hand is in the action pane, as choices on your turn and as pictures otherwise
         def shown(a : UserAction) : Action = a.as[UnavailableReasonAction]./(_.action : Action).|(a.unwrap)
@@ -762,6 +815,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     Drill.all./(d => DrillInfoAction(f, "Action cards".styled(colors(f)) ~ " (" ~ drills(f).num.hl ~ " face up)", d)))
             )
 
+        draftInfo ++
         (year > 0).$(Info("Year", year.hlb, "of", lastYear.hl)) ++
         self.%(states.contains)./~(f =>
             (choosing || inLoreTree).not.??(f.hand./(c => turn.?(HandInfoAction(f, "Your hand".styled(colors(f)), c) : Info).|(CardInfoAction(f, "Your hand".styled(colors(f)), c)))) ++
@@ -788,11 +842,21 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     }
 
     def loggedPerform(action : Action, soft : Void) : Continue = {
-        val c = action.as[SelfPerform]./(_.perform(soft)).|(internalPerform(action, soft))
+        // Adset: a clan's choices go to its player
+        def fix(f : Player) : Player = f match {
+            case f : Faction => ftp.get(f).|(f)
+            case f => f
+        }
+
+        val c = action.as[SelfPerform]./(_.perform(soft)).|(internalPerform(action, soft)) match {
+            case c : Ask if adset => c.copy(faction = fix(c.faction))
+            case c : MultiAsk if adset => c.copy(asks = c.asks./(a => a.copy(faction = fix(a.faction))))
+            case c => c
+        }
 
         highlight.faction = c match {
-            case Ask(f, _) => $(f)
-            case MultiAsk(a, _) => a./(_.faction)
+            case Ask(f, _) => $(f) ++ ptf.get(f).$
+            case MultiAsk(a, _) => a./~(a => $(a.faction) ++ ptf.get(a.faction).$)
             case _ => Nil
         }
 
@@ -963,19 +1027,19 @@ object CommonExpansion extends Expansion {
             Shuffle[Card](Cards.earlyCards.diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)) ++ options.has(HorizonsDevelopments).??(Cards.horizonsEarlyCards), ShuffledEarlyAction(_))
 
         case ShuffledEarlyAction(l) =>
-            game.developments = l.take(game.earlyPerPlayer * factions.num)
+            game.developments = l.take(game.earlyPerPlayer * game.arity)
 
             Shuffle[Card](Cards.advancedCards.diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)) ++ options.has(HorizonsDevelopments).??(Cards.horizonsAdvancedCards), ShuffledAdvancedAction(_))
 
         case ShuffledAdvancedAction(l) =>
             // With six players in a long game there aren't enough Early cards: Advanced ones make up the difference
-            val short = game.earlyPerPlayer * factions.num - game.developments.num
-            game.developments ++= l.take(game.advancedPerPlayer * factions.num + short)
+            val short = game.earlyPerPlayer * game.arity - game.developments.num
+            game.developments ++= l.take(game.advancedPerPlayer * game.arity + short)
 
             Shuffle[Card](Cards.achievementCards ++ options.has(HorizonsDevelopments).??(Cards.horizonsAchievementCards), ShuffledAchievementsAction(_))
 
         case ShuffledAchievementsAction(l) =>
-            game.achievements = l.take(factions.num)
+            game.achievements = l.take(game.arity)
 
             Then(ShuffleStartingDecksAction(factions))
 
@@ -1020,7 +1084,11 @@ object CommonExpansion extends Expansion {
                 f.log("plays", game.colors(f), game.teams.?("in " ~ game.teamName(f)).|(Empty), "and starts with", f.food.hl, Food, "and", f.wood.hl, Wood)
             }
 
-            Shuffle[String](Tiles.regular./(_.id) ++ options.has(HorizonsTiles).??(Tiles.horizons./(_.id)), ShuffledTilesAction(_))
+            // Adset: the map is already set up; the pile stays as it is
+            if (game.adset)
+                game.internalPerform(ShuffledTilesBackAction(game.pile), soft)
+            else
+                Shuffle[String](Tiles.regular./(_.id) ++ options.has(HorizonsTiles).??(Tiles.horizons./(_.id)), ShuffledTilesAction(_))
 
         // DRAWING
         case DrawTempAction(f, n, then) =>
