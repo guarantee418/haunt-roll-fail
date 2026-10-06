@@ -545,7 +545,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // A Spectral Warrior (Wilderness): the buildings in its territory have no effect
     def ghostIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == SpectralWarrior) && robotosIn(t).not
 
-    // Creatures ignore a Robotos clan (robotos.scala): where it has figures, a creature blocks nothing and takes nothing
+    // Creatures ignore a Robotos clan (robotos.scala): where it has units, a creature blocks nothing and takes nothing
     def robotosIn(t : Territory) : Boolean = cheaters.any && present(t).exists(robotos)
 
     // Wilderness: the Spectral Warriors not yet placed by the Ancestral Graveyard
