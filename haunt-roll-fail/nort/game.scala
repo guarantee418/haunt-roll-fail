@@ -240,6 +240,39 @@ object FameIcon {
     def apply() : Elem = Image("ui-fame", styles.inlineIcon).alt("fame")
 }
 
+// Combat points and casualties, shown as the axe and the skull of the battle die
+object CombatIcon {
+    def axe : Elem = Image("ui-axe", styles.inlineIcon).alt("combat points")
+    def skull : Elem = Image("ui-skull", styles.inlineIcon).alt("casualties")
+
+    // n combat points or n casualties, for counts in sentences
+    def axes(n : Int) : Elem = n.hl ~ " " ~ axe
+    def skulls(n : Int) : Elem = n.hl ~ " " ~ skull
+}
+
+// Rules text with its combat words drawn as the die icons: "combat point(s)", "point(s)" after a number, "any", "bonus" or "more",
+// "casualty", "casualties", "axe(s)" and "skull(s)"; any other "point" (a starting point) stays a word
+object CombatText {
+    private val words = """\b((?:\d+ |any |bonus |more )?)(combat points?|points?|casualty|casualties|axes?|skulls?)\b""".r
+
+    def apply(s : String) : Elem = {
+        var at = 0
+        val parts = words.findAllMatchIn(s).toList.flatMap { m =>
+            val word = m.group(2)
+            val icon =
+                if (word.startsWith("casualt") || word.startsWith("skull")) |(CombatIcon.skull)
+                else if (word.startsWith("combat") || word.startsWith("axe") || m.group(1).nonEmpty) |(CombatIcon.axe)
+                else None
+            icon./ { i =>
+                val before = Text(s.substring(at, m.start(2)))
+                at = m.end(2)
+                $(before, i)
+            }.|($)
+        }
+        (parts :+ Text(s.substring(at))).filter(_ != Text("")).merge
+    }
+}
+
 // The player panels' icons: a unit (the figure on the Recruit card), the cards in hand (green), to draw (yellow) and discarded (red), and the first player marker
 object UnitIcon {
     def apply() : Elem = Image("ui-unit", styles.inlineIcon).alt("units")
