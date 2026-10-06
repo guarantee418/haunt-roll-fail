@@ -23,7 +23,7 @@ and each deck's `CustomDeck` has the `FaceURL` of its card sheet.
 
 | File | What it holds |
 |---|---|
-| `meta.scala` | Clans (picked by name, with their three clan cards shown), 2–6 players, which options go on which setup page, the asset lists (cards, tiles, units, buildings, `ui-` markers) |
+| `meta.scala` | Clans (picked from a grid of emblems, `factionTile`, with an "i" button for the clan and warchief cards, `factionInfo`; or Random Clan: `randomFactions`, hidden until the game starts), 2–6 players, which options go on which setup page, the asset lists (cards, tiles, units, buildings, `ui-` markers) |
 | `options.scala` | Setup options: `ColorOption` per clan, `YearsOption` (5–10, default 7), the Victory conditions (`VictoryChoice`: `StandardVictory`, `FameOnly`, `AltVictoryRandom`, `AltVictoryChosen`; `VictoryModeOption`, `VictoryCardOption`), `FirstSeatStarts`; `Module` and `ModuleOption` for modules and expansions, including the team variants `TeamsVariant` (2v2) and `Teams3v3` |
 | `meta.scala` (Quick Game) | `quickMin`/`quickMax` 3 and `quickFactions` the 7 core clans: the main menu's Quick Game is always three core clans with the default (core) options |
 | `game.scala` | Factions, player colors by seat, resources, `FactionState`, `Game` (map state and helpers), `CommonExpansion` (setup, decks, the year loop, harvest, winter, end of year, scoring), `Debug.summary` |
@@ -618,8 +618,25 @@ always plays its own cards.
   territories with large buildings (`strongholdValue`); units, Kaija and the
   warchief; resources; the coming Winter (an Unrest card is −5 fame); open
   territories to explore from; and the risk of losing each territory to the
-  enemies next to it (`risk`). Opponents' values count against it
+  enemies near it (`risk`). Opponents' values count against it
   (`total`), the leader's more, so it attacks a clan close to winning.
+- **Defending (2026-10-06, after a Hard Boar gave up an Altar of Kings in a
+  game against a person):** `risk` combines the chance of holding against
+  each enemy separately (it used to look only at the biggest neighbour, so
+  against a 10-unit army across a Rough border it saw no point reinforcing
+  against the 4 units that actually attacked); `threat` halves groups that must cross a Rough border and counts groups two
+  territories away at 0.4, so a valuable territory behind a weak border is
+  reinforced before the enemy arrives; and the bot's own units that are
+  attacking somewhere (while a move is tried) no longer count as a threat
+  to the territories around them (that made a one-unit attack into a strong
+  territory look good). Who stands where is cached per position tried
+  (`figuresIn`). Checked on that game (`debzugijnjctkruj` in `hrf-games`):
+  at each of Boar's three moves that weakened the Altar, it now moves units
+  into the Altar's territory instead. A/B against the previous Hard bot
+  (core game): 29 of 50 two-player games, 9 of 30 three-player games (within
+  noise of even). A version that also made attacks likelier on valuable
+  territories (up to 85%) protected the Altar too but was too defensive: 39 of
+  100 two-player games, so that part was left out.
 - **Fights** use the exact odds of the two dice (`HardCombat`: the attacker
   picks "1 point or 1 casualty" before the defender rolls, towers add
   casualties, ties go to the defender), for attacking, food spent, the face
