@@ -103,7 +103,7 @@ case class LivCunningAction(self : Faction, defender : Faction, area : AreaRef, 
 case class LivCunningDoneAction(self : Faction, defender : Faction, area : AreaRef, e : MoveEffect, spent : $[Resource], then : ForcedAction) extends BaseAction("Liv's Cunning".hl, Break, FightInfo(self, defender, area, e, $))(spent.none.?("Spend nothing").|("Done"))
 case class HalvardCraftSkipAction(self : Faction, then : ForcedAction) extends BaseAction("Halvard's Craft".hl)("Build nothing")
 case class SvarnMendAction(f : Faction, then : ForcedAction) extends ForcedAction
-case class SvarnMendToAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("Svarn's Menders".hl, "place a casualty back in")(area) with MapTarget { def target = area }
+case class SvarnMendToAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("Svarn's Menders".hl, "place a", CombatIcon.skull, "back in")(area) with MapTarget { def target = area }
 case class BrandRetreatPickAction(self : Faction, loser : Faction, from : AreaRef, to : AreaRef, rough : Boolean, then : ForcedAction) extends BaseAction("Brand's Bravery".hl, "choose where", loser, "retreats from", from)(to) with Soft with MapTarget { def target = to }
 case class BrandRetreatToAction(self : Faction, loser : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Brand's Bravery".hl, loser, "retreats from", from, "to", to)(RetreatGroup(loser, from, n, kaija))
 case class CombatFoodPaidAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], then : ForcedAction) extends ForcedAction
@@ -297,7 +297,7 @@ case class CreatureFightInfo(f : Faction, area : AreaRef, c : Creature, e : Move
 
         "The fight is in ".txt ~ area.elem ~ Break ~
         FightPoints(f, t, attacking, extra, $, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1)) ~ Break ~
-        c.elem ~ ": " ~ (c.kind.value + bonus).hl ~ " combat points" ~ (bonus > 0).?(" (" ~ c.kind.value.hl ~ " from its strength, " ~ bonus.hl ~ " from " ~ "Wastelands".hl ~ ")").|(Empty)
+        c.elem ~ ": " ~ CombatIcon.axes(c.kind.value + bonus) ~ (bonus > 0).?(" (" ~ c.kind.value.hl ~ " from its strength, " ~ bonus.hl ~ " from " ~ "Wastelands".hl ~ ")").|(Empty)
     }
 }
 
@@ -325,13 +325,13 @@ object FightPoints {
 
         val points = parts.filter(_._1 > 0)
         val total = points.map(_._1).sum
-        val more = casualties.filter(_._1 > 0)./{ case (n, what) => "+" ~ n.hl ~ " " ~ (n == 1).?("casualty").|("casualties") ~ " from " ~ what } ++
-            (cancels > 0).$("cancels " ~ cancels.hl ~ " casualty")
+        val more = casualties.filter(_._1 > 0)./{ case (n, what) => "+" ~ CombatIcon.skulls(n) ~ " from " ~ what } ++
+            (cancels > 0).$("cancels " ~ CombatIcon.skulls(cancels))
 
-        f.elem ~ attacking.?(" (attacking)").|(" (defending)") ~ ": " ~ total.hl ~ " combat " ~ (total == 1).?("point").|("points") ~
+        f.elem ~ attacking.?(" (attacking)").|(" (defending)") ~ ": " ~ CombatIcon.axes(total) ~
         points.any.?(" (" ~ points./{ case (n, what) => n.hl ~ " from " ~ what }.join(", ") ~ ")").|(Empty) ~
         more.any.?(", " ~ more.join(", ")).|(Empty) ~
-        choosing.?("; " ~ (total + 1).hl ~ " combat points if taking the point").|(Empty)
+        choosing.?("; " ~ CombatIcon.axes(total + 1) ~ " if taking the " ~ CombatIcon.axe).|(Empty)
     }
 }
 
@@ -345,15 +345,15 @@ case class Figures(n : Int, kaija : Boolean, chief : Boolean = false) extends El
 // The Northgard die
 case class DieFace(points : Int, casualties : Int, choice : Boolean) extends Elementary with Record {
     def elem : Elem =
-        if (choice) "1 point or 1 casualty".hl
+        if (choice) CombatIcon.axes(1) ~ " or " ~ CombatIcon.skulls(1)
         else $(
-            (points > 0).?(points.hl ~ " " ~ (points == 1).?("point").|("points")),
-            (casualties > 0).?(casualties.hl ~ " " ~ (casualties == 1).?("casualty").|("casualties"))
+            (points > 0).?(CombatIcon.axes(points)),
+            (casualties > 0).?(CombatIcon.skulls(casualties))
         ).flatten.join(" and ")
 }
 
 case object DieChoice extends Elementary {
-    def elem = "1 point or 1 casualty".hl ~ ", taking"
+    def elem = CombatIcon.axes(1) ~ " or " ~ CombatIcon.skulls(1) ~ ", taking"
 }
 
 object NorthgardDie {
@@ -1294,8 +1294,8 @@ object MapExpansion extends Expansion {
             if (game.chiefIn(t, attacker) || game.chiefIn(t, defender))
                 game.note("chief-fight")
 
-            attacker.log("scored", as.hl, kaija(attacker), chief(attacker, true), extra(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt, aw -> "Wastelands".hl, wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl), "and inflicted", ac.hl, (ac == 1).?("casualty").|("casualties"), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
-            defender.log("scored", ds.hl, kaija(defender), chief(defender, false), extra(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt, dw -> "Wastelands".hl, port -> "the Port".hl), "and inflicted", dc.hl, (dc == 1).?("casualty").|("casualties"), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
+            attacker.log("scored", CombatIcon.axes(as), kaija(attacker), chief(attacker, true), extra(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt, aw -> "Wastelands".hl, wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl), "and inflicted", CombatIcon.skulls(ac), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
+            defender.log("scored", CombatIcon.axes(ds), kaija(defender), chief(defender, false), extra(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt, dw -> "Wastelands".hl, port -> "the Port".hl), "and inflicted", CombatIcon.skulls(dc), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
 
             val winner =
                 if (ac >= du && dc >= au) None
@@ -1420,7 +1420,7 @@ object MapExpansion extends Expansion {
             game.addUnits(a, f, 1)
             game.mended -= 1
 
-            f.log("placed a casualty back in", a, "with", "Svarn's Menders".hl)
+            f.log("placed a", CombatIcon.skull, "back in", a, "with", "Svarn's Menders".hl)
 
             Then(SvarnMendAction(f, then))
 

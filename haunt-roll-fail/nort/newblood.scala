@@ -80,7 +80,7 @@ case class CraftsmenReplaceAction(self : Faction, area : AreaRef, space : SpaceR
 case class QualityBuildAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("Quality of Life".hl, "build a free", DefenseTower, "in")(area) with MapTarget { def target = area }
 case class QualityCollectAction(f : Faction, l : $[AreaRef], then : ForcedAction) extends ForcedAction
 case class QualityTakeAction(self : Faction, area : AreaRef, r : Resource, rest : $[AreaRef], then : ForcedAction) extends BaseAction("Quality of Life".hl, "collect from", area)(r)
-case class PrecisionPayAction(self : Faction, r : Resource, e : MoveEffect, then : ForcedAction) extends BaseAction("Eitria and Brok's Precision".hl, "+1 combat point and Move 3")("Pay", 1.hl, r)
+case class PrecisionPayAction(self : Faction, r : Resource, e : MoveEffect, then : ForcedAction) extends BaseAction("Eitria and Brok's Precision".hl, "+" ~ CombatIcon.axes(1) ~ " and Move 3")("Pay", 1.hl, r)
 
 // KRAKEN
 case class TidePlaceAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("High Tide".hl, "place a token in")(area) with MapTarget { def target = area }
@@ -124,7 +124,7 @@ case class GearName(n : Int) extends Elementary {
         case 6 => "+1 casualty"
         case _ => "ignore 1 casualty"
     }
-    def elem = ("Token " + n).hl ~ " (" ~ text.txt ~ ")"
+    def elem = ("Token " + n).hl ~ " (" ~ CombatText(text) ~ ")"
 }
 
 // RAT

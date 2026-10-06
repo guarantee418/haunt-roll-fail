@@ -595,8 +595,8 @@ object CreaturesExpansion extends Expansion {
 
             def extra(l : (Int, Elem)*) : Elem = l.toList.filter(_._1 > 0).map { case (n, what) => "(" ~ n.hl ~ " from " ~ what ~ ")" }.join(" ")
 
-            f.log("scored", ps.hl, extra(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, robo -> "Robotos".hl, pw -> "Wastelands".hl))
-            log(c, "scored", cs.hl, extra(cw -> "Wastelands".hl), "and inflicted", pc.hl, (pc == 1).?("casualty").|("casualties"), (shield > 0).?("(" ~ shield.hl ~ " cancelled)").|(Empty))
+            f.log("scored", CombatIcon.axes(ps), extra(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, robo -> "Robotos".hl, pw -> "Wastelands".hl))
+            log(c, "scored", CombatIcon.axes(cs), extra(cw -> "Wastelands".hl), "and inflicted", CombatIcon.skulls(pc), (shield > 0).?("(" ~ shield.hl ~ " cancelled)").|(Empty))
 
             // Losing all units loses the fight; otherwise ties go to the defender
             val won = pc < units && attacking.?(ps > cs).|(ps >= cs)
