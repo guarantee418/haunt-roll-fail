@@ -435,7 +435,7 @@ object MapExpansion extends Expansion {
         placements(tile, None, true).%{ case (s, _) => round > 1 || Side.all.exists(d => centre.has((s.x + d.dx, s.y + d.dy))) }
 
     // The starting tiles' spots (the central tile can be the Wilderness Great Lake, whose id doesn't start with "start")
-    def centre(implicit game : Game) : $[(Int, Int)] = $((0, 0)) ++ (game.factions.num >= 5).$((1, 0))
+    def centre(implicit game : Game) : $[(Int, Int)] = $((0, 0)) ++ (game.arity >= 5).$((1, 0))
 
     def moveCost(rough : Boolean, ignoreRough : Boolean) = (rough && ignoreRough.not).?(2).|(1)
 
@@ -610,9 +610,10 @@ object MapExpansion extends Expansion {
 
     // Robotos places one more unit with its first setup group
     def robotosSetup(f : Faction, round : Int, a : AreaRef)(implicit game : Game) {
-        if (round == 1 && game.robotos(f)) {
-            game.addUnits(a, f, 1)
-            f.log("placed one more unit in", a, "(Robotos)".hl)
+        // Robotos places 5 units each time instead of 3
+        if (game.robotos(f)) {
+            game.addUnits(a, f, 2)
+            f.log("placed two more units in", a, "(Robotos)".hl)
         }
     }
 
@@ -702,21 +703,26 @@ object MapExpansion extends Expansion {
 
             // Five and six players: both starting tiles; with a Wastelands central tile, the five-player tile with the same
             // borders, whose middle territory is part of the central territory
-            if (factions.num >= 5) {
+            if (game.arity >= 5) {
                 game.board.place(Placement(Waste.five(game.central), 1, 0, 0))
 
                 if (game.central != "start" && Waste.impassable.has(game.central).not)
                     game.board.join(AreaRef(0, 0, Waste.middle(game.central)), AreaRef(0, 0, "e"))
             }
 
-            game.factions.foreach { f =>
-                game.tileHand += f -> game.pile.take(3)
-                game.pile = game.pile.drop(3)
+            // Adset: the tiles were drawn before the draft; the clans are picked as they place their tiles
+            if (game.adset)
+                Then(AdsetTurnAction(1, game.seats.reverse))
+            else {
+                game.factions.foreach { f =>
+                    game.tileHand += f -> game.pile.take(3)
+                    game.pile = game.pile.drop(3)
+                }
+
+                log("Each player drew three map tiles")
+
+                Then(SetupPlaceAction(1, game.from(game.first)))
             }
-
-            log("Each player drew three map tiles")
-
-            Then(SetupPlaceAction(1, game.from(game.first)))
 
         case SetupPlaceAction(1, Nil) =>
             Then(SetupPlaceAction(2, game.from(game.first)))

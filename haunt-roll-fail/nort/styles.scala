@@ -50,6 +50,8 @@ package object elem {
 
         // The clan picker's grid
         object pickIcon extends CustomStyle(height("7ex"), display("block"), margin.left("auto"), margin.right("auto"))
+        // Adset: the draft's clans, as in the clan picker's grid
+        object draftTile extends CustomStyle(display("inline-flex"), vertical.align("top"))
         object pickRandomBox extends CustomStyle(height("7ex"), display("flex"), align.items("center"), justify.content("center"))
         object pickRandom extends CustomStyle(font.size("300%"), line.height("1"))
         object menuIcon extends CustomStyle(height("2.4em"), vertical.align("middle"), margin.right("1ex"))
@@ -68,6 +70,8 @@ package object elem {
         // Raid cards are landscape: twice a hand card's width
         object raidHandCard extends CustomStyle(display("block"), width("calc(2 * var(--nort-hand-card, 22ex))"), max.width("100%"))
         object inlineIcon extends CustomStyle(height("1.4em"), vertical.align("middle"))
+        // A player panel line of numbers and icons, kept on one row
+        object panelLine extends CustomStyle(white.space("nowrap"))
         object buildIcon extends CustomStyle(height("2.6em"), vertical.align("middle"), margin.right("1ex"))
         object boardInfo extends CustomStyle(display("block"), width("44ex"), max.width("100%"))
         // The end screen: the winners' clan cards, and warchief cards with the Warchiefs module

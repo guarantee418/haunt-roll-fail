@@ -145,7 +145,7 @@ object WildernessExpansion extends Expansion {
             log("The Environment tiles were shuffled into the map tiles")
 
             if (game.has(Creatures)) {
-                val top = l.take(3 * factions.num)
+                val top = l.take(3 * game.arity)
                 Shuffle[String]((l.drop(top.num) :+ Wild.den), ShuffledDenAction(top, _))
             }
             else

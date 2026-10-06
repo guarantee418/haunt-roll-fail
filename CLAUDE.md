@@ -55,7 +55,15 @@ module ("Solo vs Automa" on the main menu). Its Training Fields module, a two-pl
 a 4x3 grid of face-down tiles with seven Action cards each, is in
 `nort/training.scala`: "Training Grounds" on the main menu opens a page
 offering a local or an online game (the `modes` hooks in `meta.scala`,
-`modeMenu` in `hrf.scala`). Solo, Quick and Local (hotseat) games are saved in the
+`modeMenu` in `hrf.scala`). "Adset" on the main menu (the `linkedModes` hook) opens
+its own meta, `nort-adset` (`MetaAdset` in `nort/adset.scala`, URL `/play/nort-adset`):
+a free-for-all whose players are seats (`Seat`, "Player #n") that draft their clans
+during setup (random seat order, players + 2 clans drawn, a ban, Wilderness or
+Wastelands, the central tile, then picks and placements from the last seat), always
+with Creatures and the Horizons Development cards. `Game` takes `players` (clans,
+or seats in Adset) and maps them with `ptf`/`ftp`, as Root's Advanced Setup does;
+asks for a clan go to its seat in `loggedPerform`, and the in-game choices are added
+to `game.options` (`addOption`). Solo, Quick and Local (hotseat) games are saved in the
 browser's localStorage as they are played (`newLocalGame` and `savedGamesMenu` in
 `hrf.scala`, `LocalStorageJournal` in `journal.scala`; keys `<settingsKey>.<kind>.game.<time>`
 with kind `solo`, `quick` or `hotseat`; the 12 newest of each kind are kept, and when storage
@@ -100,7 +108,7 @@ the building on the map. Placing a tile works the same way: the tile is shown at
 one button just outside each corner: rotate arrows at the top, the check mark and cross at the bottom. A retreat works like a Move: tap the destination on the map (or in the list),
 then pick all the units or one (`RetreatPickAction` in `nort/map.scala`). Development
 and other card picks show the cards at hand-card size, and the last player to pass
-still sees the one card left before taking it. The player's clan board is shown under the Lore Tree, then their discard pile (tapping it shows the cards).
+still sees the one card left before taking it. The player's clan board is shown under the Lore Tree. The player panels show numbers with icons, on rows that don't wrap: food, wood and lore, then units (the Recruit card's figure, `ui-unit`) and fame, then cards in hand, to draw and discarded (card icons outlined green, yellow and red, `ui-card-*`, drawn on the start card back by `nort/tools/panel-icons.py`; tapping the red one shows that discard pile), and the first player marker beside the clan name (`ui-first-player`).
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
 Tabletopia export the owner uploaded, with gaps filled from two Tabletop
 Simulator mods (Steam Workshop 2838546142 and 2847156187; see
@@ -153,7 +161,7 @@ values each choice by trying it on the game and scoring the position; see Bots
 in `nort/HANDOFF.md`), plus "Robotos" (`nort/robotos.scala`), the Hard bot with
 cheats: no Winter costs, ignored by creatures, one more unit with every Recruit,
 one more card each year, ties won when attacking, a head start (2 more food and
-wood, one more unit) and upgrades for 2 lore; its panel says "(Robotos)", and
+wood, 5 units in each setup placement), 25 units instead of 14 and upgrades for 2 lore; its panel says "(Robotos)", and
 tapping that lists the cheats.
 Its rules come from a hidden `RobotosOption` that `startGame` in `hrf.scala` adds
 for each clan set to it (`Meta.botOptions`), so every client and replay agrees.

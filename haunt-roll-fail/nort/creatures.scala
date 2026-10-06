@@ -305,7 +305,7 @@ object CreaturesExpansion extends Expansion {
     // Where a creature moves: an adjacent territory (Rough borders don't matter) without a creature,
     // with units if possible, then by its priorities; the first player breaks the remaining ties.
     // Creatures ignore the Automa's figures when choosing (a ruling from Robotos, 2026-10-05).
-    // They ignore the Robotos bot's clans altogether: they never move into a territory with its figures.
+    // They ignore the Robotos bot's clans altogether: they never move into a territory with its units.
     // Every territory is adjacent to the Wyvern
     def destinations(c : Creature)(implicit game : Game) : $[Territory] = {
         val t = game.board.territory(game.creatureAt(c))
@@ -331,7 +331,7 @@ object CreaturesExpansion extends Expansion {
             Shuffle[Creature](Creature.deck.%(_.kind.value <= 6), ShuffledCreaturesAction(_, tiles))
 
         case ShuffledCreaturesAction(low, tiles) =>
-            val top = low.take(factions.num + 1)
+            val top = low.take(game.arity + 1)
             Shuffle[Creature](low.drop(top.num) ++ Creature.deck.%(_.kind.value > 6), ShuffledCreaturesRestAction(top, _, tiles))
 
         case ShuffledCreaturesRestAction(top, rest, tiles) =>

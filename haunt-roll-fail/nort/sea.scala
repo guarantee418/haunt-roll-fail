@@ -214,7 +214,7 @@ object SeaExpansion extends Expansion {
         case TilePlacedAction(f, tile, spot, true, SetupUnitsAskAction(_, 1, _, _, _)) if game.beached.has(f).not && game.ports.num < 6 =>
             game.beached :+= f
 
-            val centre = $((0, 0)) ++ (factions.num >= 5).$((1, 0))
+            val centre = MapExpansion.centre
             Side.all.find(s => centre.has((spot.x + s.dx, spot.y + s.dy)))./(_.opposite).foreach { d =>
                 val r = d match {
                     case South => 0

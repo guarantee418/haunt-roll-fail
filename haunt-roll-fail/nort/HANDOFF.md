@@ -713,6 +713,50 @@ always plays its own cards.
   `setupPlacement` stopped valuing the opponents; Explore values only the
   bot's own position for the same reason).
 
+## Adset (2026-10-06)
+
+The owner's "Northgard Adset" rules, a free-for-all with a clan draft. It is its
+own meta, `nort-adset` (`MetaAdset` in `adset.scala`), opened by the "Adset"
+button on the Northgard main menu (`Meta.linkedModes`, rendered in
+`metaMenu` in `hrf.scala`; `menuAbout` puts the rules summary at the top of
+its menu). Its menu has Local Game (pick 2-6 players) and Play Online.
+
+- **Players are seats.** `Seat(n)` ("Player #n", written `P1`...) extends
+  `Player`, like Faction; `nort.F` is `Player`. `Game(players, options)`:
+  `setup`, `factions` and `seating` are the clans, filled in as they are
+  drafted (seat order); `ptf`/`ftp` map seats and clans (identity without
+  Adset). `loggedPerform` sends a clan's Asks to its seat, `info` and the UI
+  map the seat back (`factionStatus`/`seatStatus`, `factionElem`).
+  `BotAdset` plays the draft at random, then hands over to the clan's
+  Easy or Hard bot.
+- **Options:** game length, victory conditions, Warchiefs and Sea are
+  optional; "Wilderness or Wastelands" (`AdsetLands`): the second seat
+  chooses (3+ players), Wilderness, Wastelands or Neither (2-player default).
+  Creatures and `HorizonsDevelopments` are always added (`MetaAdset.always`).
+  Assets load as if every clan, Wilderness, Wastelands and central tile could
+  be in play. In-game choices become options with `game.addOption`, which
+  recomputes `modules` and `expansions`.
+- **Flow** (`AdsetExpansion`, first in `expansions`): the core setup runs to
+  the starting decks (none yet), then seats are shuffled, the 14 clans are
+  shuffled and players + 2 drawn (5 with two players), the regular tiles
+  shuffled and 3 dealt per seat (`seatTiles`), the first seat bans one,
+  Wilderness/Wastelands, then the central tile (third seat, second with two
+  players: standard, the Wastelands centrals (not the Den with Wilderness)
+  or the Wilderness Great Lake), then `ShuffledTilesAction` as usual. Round 1
+  from the last seat: `AdsetPickAction` (with two players the second seat
+  then bans one more), `SetupPlaceAction(1, $(clan))`; round 2 the same with
+  the second tile (`adsetNext` says where to go on). Then the starting decks,
+  the first seat begins (`FirstPlayerAction` doesn't reshuffle the tiles),
+  Wilderness/Wastelands shuffle their Environment tiles in, and at the first
+  `StartYearAction` the leftover tiles go to the bottom (`leftovers`).
+- **Draft look:** the ban, the pick and "Clans in the draft" show each clan as
+  the clan picker does (`AdsetExpansion.clanTile`: emblem, name, "i" button;
+  emblems are `MetaAdset`'s extra `clan/` assets). The UI's `convertActions`
+  override sends a tap on the "i" (`AdsetClanInfo`) to an overlay with
+  `Meta.factionInfo` instead of choosing the clan.
+- **Testing:** `NORT_ADSET=1` in the headless host and ReplayCheck plays
+  Adset games with random Adset options.
+
 ## Robotos, the cheating bot (2026-10-06)
 
 "Bot / Robotos" on the setup screen (after Easy and Hard) is the Hard bot
@@ -730,17 +774,18 @@ it, and one more unit with every Recruit (on top of Training Camps and the rest)
   Winter line shows "nothing"; the log says "pays no Winter costs
   (Robotos)"); `TrainingCampsAction` in `map.scala` adds the unit where it
   recruited first; `CreaturesExpansion.destinations` leaves out territories
-  with its figures, and `RobotosExpansion` (robotos.scala, first in
+  with its units, and `RobotosExpansion` (robotos.scala, first in
   `game.expansions` when a Robotos clan plays) cancels what a creature does
-  when it appears or moves where it has figures (any creature, any module).
+  when it appears or moves where it has units (any creature, any module).
   A creature already in its territory (one appearing on a lair it explores)
   blocks nothing there either: `hostileIn`, `bearIn`, `wolfIn`, `koboldIn` and
-  `ghostIn` in `game.scala` are false where it has figures (`robotosIn`).
+  `ghostIn` in `game.scala` are false where it has units (`robotosIn`).
   It also draws one more card each year (the year's `DrawCardsAction`), wins
   ties when it attacks, clans or creatures (`map.scala`, `creatures.scala`),
-  starts with 2 more food and 2 more wood and one more unit with its first
-  setup placement (`MapExpansion.robotosSetup`), and upgrades for 2 lore
-  (`game.upgradeCost`).
+  starts with 2 more food and 2 more wood, places 5 units in each setup
+  placement instead of 3 (`MapExpansion.robotosSetup`; the warchief and Kaija
+  count among them), has 25 units instead of 14 (`game.unitLimit(f)`), and
+  upgrades for 2 lore (`game.upgradeCost`).
 - **The tag:** its player panel shows "(Robotos)" beside the clan name;
   tapping it lists the cheats (`RobotosInfo` in `ui.scala`, the list is
   `RobotosExpansion.cheats`).
