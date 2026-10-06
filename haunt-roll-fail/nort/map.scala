@@ -251,7 +251,8 @@ case class FightInfo(attacker : Faction, defender : Faction, area : AreaRef, e :
         def side(f : Faction, attacking : Boolean, spent : |[Int], die : |[DieFace], choice : Boolean) : Elem = {
             val extra = attacking.?($(
                 e.bonus -> "the card".txt,
-                game.eventIs("conquests").??(1) -> "Conquests".hl
+                game.eventIs("conquests").??(1) -> "Conquests".hl,
+                game.robotos(f).??(1) -> "Robotos".hl
             )).|($(
                 attacker.conqueror.?(0).|(2 * here.count(_ == Fortress)) -> Fortress.elem
             )) ++ $(
@@ -286,6 +287,7 @@ case class CreatureFightInfo(f : Faction, area : AreaRef, c : Creature, e : Move
         val extra = $(
             attacking.??(e.bonus) -> "the card".txt,
             (attacking && e.special == AxeMove).??(1) -> "Axe Throwers".hl,
+            (attacking && game.robotos(f)).??(1) -> "Robotos".hl,
             attacking.not.??(2 * game.working(t).count(_ == Fortress)) -> Fortress.elem,
             (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl,
             waste.??(WastelandsExpansion.points(f, t, attacking) + Waste.controller(Waste.helheim, "c").has(f).??(2)) -> "Wastelands".hl
@@ -1272,7 +1274,10 @@ object MapExpansion extends Expansion {
             // Events: Conquests gives the attacker 1 point
             val conquests = game.eventIs("conquests").??(1)
 
-            val as = game.strength(t, attacker, true) + e.bonus + ab + anb + aw + wise + conquests + food(0) + faces(0).points
+            // Robotos: 1 more combat point when it attacks
+            val robo = game.robotos(attacker).??(1)
+
+            val as = game.strength(t, attacker, true) + e.bonus + ab + anb + aw + wise + conquests + robo + food(0) + faces(0).points
             // Sea module: the Port's defender (in strength)
             val port = SeaExpansion.defense(t, defender, false)
             val ds = game.strength(t, defender, false) + fortress + db + dnb + dw + food(1) + faces(1).points
@@ -1289,15 +1294,14 @@ object MapExpansion extends Expansion {
             if (game.chiefIn(t, attacker) || game.chiefIn(t, defender))
                 game.note("chief-fight")
 
-            attacker.log("scored", as.hl, kaija(attacker), chief(attacker, true), extra(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt, aw -> "Wastelands".hl, wise -> "The Wise One".hl, conquests -> "Conquests".hl), "and inflicted", ac.hl, (ac == 1).?("casualty").|("casualties"), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
+            attacker.log("scored", as.hl, kaija(attacker), chief(attacker, true), extra(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt, aw -> "Wastelands".hl, wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl), "and inflicted", ac.hl, (ac == 1).?("casualty").|("casualties"), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
             defender.log("scored", ds.hl, kaija(defender), chief(defender, false), extra(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt, dw -> "Wastelands".hl, port -> "the Port".hl), "and inflicted", dc.hl, (dc == 1).?("casualty").|("casualties"), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
 
             val winner =
                 if (ac >= du && dc >= au) None
                 else if (ac >= du) |(attacker)
                 else if (dc >= au) |(defender)
-                // Robotos wins ties when it attacks (it already does when it defends)
-                else if (as > ds || (as == ds && game.robotos(attacker))) |(attacker)
+                else if (as > ds) |(attacker)
                 else |(defender)
 
             val before = game.count(t, attacker)
