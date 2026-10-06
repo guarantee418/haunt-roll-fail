@@ -355,6 +355,15 @@ file covers the build, server and deploy. No session can ssh to the server
   with `None.get` in the console. Test changes to the loaders both on
   `localhost` (cache path) and through a non-localhost http address (no
   cache).
+- Browsers keep every image in Cache Storage under `hrf-image-cache-<imageDataVersion>`
+  (`HRF.imageDataVersion` in `haunt-roll-fail/hrf.scala`) and never refetch it. When an image
+  changes but keeps its file name, bump `imageDataVersion`, or players keep seeing the old one
+  (the large Northgard buildings kept their black corners that way). Older caches are deleted
+  on load.
+- Northgard building space positions (`small`, `large`, `carved` in `nort/tiles.scala`) were
+  measured from the printed slot frames on 2026-10-06; after moving any, rerun
+  `nort/tools/tile-masks.py` for the grid (it regenerates the photo tiles' masks slightly
+  differently on other library versions, so keep only the tiles you changed).
 - The 23 Squires and Disciples deck cards (`SquiresDeck`, listed in
   `effectsSquires` in `haunt-roll-fail/root/cards.scala`) have images in
   `webp2/root/images/card/deck/`, `apprentice.webp` through
