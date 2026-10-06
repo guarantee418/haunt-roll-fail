@@ -260,6 +260,7 @@ case class HandInfoAction(self : Faction, title : Elem, card : Card) extends Bas
 case class ClanBoard(f : Faction)
 // The Winter cost chart, opened from a player panel
 case class WinterChart(f : Faction)
+case class RobotosInfo(f : Faction)
 // A player's discard pile, opened from the action pane
 case class DiscardPile(f : Faction)
 // Tapping Dragon Clan's Sacrificial Pyre in its panel shows it full size
@@ -343,9 +344,18 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     def has(m : Module) = modules.has(m)
 
+    // Clans played by the cheating Robotos bot (robotos.scala)
+    val cheaters : $[Faction] = options.of[RobotosOption]./(_.clan).%(setup.has)
+
+    def robotos(f : Faction) : Boolean = cheaters.has(f)
+
+    // Robotos upgrades for 2 lore
+    def upgradeCost(f : Faction) : Int = robotos(f).?(2).|(3)
+
     // Module expansions come first, so they can take over any core action; before them the Uncharted Horizons
     // Development cards, which only act on their own actions and specials
-    val expansions : $[Expansion] = $(HorizonDevsExpansion) ++ modules.sortBy(_.priority)./~(_.expansion) ++ $(MapExpansion, CardsExpansion, CommonExpansion)
+    // Robotos goes first: it takes over what creatures do to its clans
+    val expansions : $[Expansion] = cheaters.any.$(RobotosExpansion) ++ $(HorizonDevsExpansion) ++ modules.sortBy(_.priority)./~(_.expansion) ++ $(MapExpansion, CardsExpansion, CommonExpansion)
 
     var seating : $[Faction] = setup
 
@@ -521,19 +531,22 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def creaturesIn(t : Territory) : $[Creature] = creatureLine.%(c => t.areas.contains(creatureAt(c)))
 
     // A Fallen Valkyrie: units can't stay there without fighting it
-    def hostileIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind.shares.not)
+    def hostileIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind.shares.not) && robotosIn(t).not
 
     // A Brown Bear: no building, recruiting, exploring or moving out
-    def bearIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == BrownBear)
+    def bearIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == BrownBear) && robotosIn(t).not
 
     // A Wolf: no fame or resources at harvest except from buildings
-    def wolfIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == CreatureWolf)
+    def wolfIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == CreatureWolf) && robotosIn(t).not
 
     // Wastelands: a territory with a Kobold gives no fame at the Harvest
-    def koboldIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == Kobold)
+    def koboldIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == Kobold) && robotosIn(t).not
 
     // A Spectral Warrior (Wilderness): the buildings in its territory have no effect
-    def ghostIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == SpectralWarrior)
+    def ghostIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == SpectralWarrior) && robotosIn(t).not
+
+    // Creatures ignore a Robotos clan (robotos.scala): where it has figures, a creature blocks nothing and takes nothing
+    def robotosIn(t : Territory) : Boolean = cheaters.any && present(t).exists(robotos)
 
     // Wilderness: the Spectral Warriors not yet placed by the Ancestral Graveyard
     var spectrals : $[Creature] = $
@@ -900,7 +913,7 @@ object CommonExpansion extends Expansion {
             .add(TurnModeAction(f, WaitMode).!(f.hand.none, "no cards"))
             .add(TurnModeAction(f, ReplaceMode).!(f.hand.none || f.lore < 1, "needs 1 lore"))
             .add(TurnModeAction(f, RemoveMode).!(f.hand.exists(_.removable).not || f.lore < 2, "needs 2 lore"))
-            .add(TurnModeAction(f, UpgradeMode).!(f.hand.none || f.upgrades.none || f.lore < 3, "needs 3 lore"))
+            .add(TurnModeAction(f, UpgradeMode).!(f.hand.none || f.upgrades.none || f.lore < game.upgradeCost(f), "needs " + game.upgradeCost(f) + " lore"))
             .add(PassAction(f))
 
     // The hand after a choice: tapping a card does it; Cancel goes back to the six choices
@@ -997,6 +1010,12 @@ object CommonExpansion extends Expansion {
             game.from(f).zipWithIndex.foreach { case (f, i) =>
                 f.food = (i < 3).?(2).|(3)
                 f.wood = 2
+
+                // Robotos starts with 2 more food and 2 more wood
+                if (game.robotos(f)) {
+                    f.food += 2
+                    f.wood += 2
+                }
 
                 f.log("plays", game.colors(f), game.teams.?("in " ~ game.teamName(f)).|(Empty), "and starts with", f.food.hl, Food, "and", f.wood.hl, Wood)
             }
@@ -1153,7 +1172,7 @@ object CommonExpansion extends Expansion {
             game.awakened = false
 
             // Each controlled Forge draws one more card; the Automa draws its own cards (automa.scala)
-            Then(game.from(game.first).but(Automa).foldRight(RevealDevelopmentsAction : ForcedAction)((f, then) => DrawCardsAction(f, 4 + game.controlled(f)./~(game.working).count(_ == Forge) + game.has(Wastelands).??(WastelandsExpansion.extraDraw(f)), then)))
+            Then(game.from(game.first).but(Automa).foldRight(RevealDevelopmentsAction : ForcedAction)((f, then) => DrawCardsAction(f, 4 + game.robotos(f).??(1) + game.controlled(f)./~(game.working).count(_ == Forge) + game.has(Wastelands).??(WastelandsExpansion.extraDraw(f)), then)))
 
         case RevealDevelopmentsAction =>
             if (game.year == game.lastYear) {
@@ -1278,11 +1297,11 @@ object CommonExpansion extends Expansion {
             else
                 f.active :+= c
 
-            f.lore -= 3
+            f.lore -= game.upgradeCost(f)
             f.upgrades = f.upgrades.diff($(u))
             f.hand :+= u
 
-            f.log("upgraded to", u, "for", 3.hl, Lore)
+            f.log("upgraded to", u, "for", game.upgradeCost(f).hl, Lore, game.robotos(f).?("(Robotos)".hl).|(Empty))
 
             Then(NextTurnAction(f))
 
@@ -1439,6 +1458,11 @@ object CommonExpansion extends Expansion {
                 // Events: Harsh Winter and Blizzard
                 val (food, wood) = EventsExpansion.winterCost(f)
 
+                if (game.robotos(f)) {
+                    f.log("pays no Winter costs", "(Robotos)".hl)
+                    game.note("robotos-winter")
+                }
+                else
                 if (food + wood == 0)
                     f.log("owed nothing for", f.units.hl, "units")
                 else

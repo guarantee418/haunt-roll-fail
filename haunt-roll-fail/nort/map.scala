@@ -608,6 +608,14 @@ object MapExpansion extends Expansion {
         f.log("recruited", WarchiefElem(f), "in", a)
     }
 
+    // Robotos places one more unit with its first setup group
+    def robotosSetup(f : Faction, round : Int, a : AreaRef)(implicit game : Game) {
+        if (round == 1 && game.robotos(f)) {
+            game.addUnits(a, f, 1)
+            f.log("placed one more unit in", a, "(Robotos)".hl)
+        }
+    }
+
     def canRecruit(f : Faction)(implicit game : Game) = game.reserve(f) > 0 || game.kaijaReady(f) || game.chiefReady(f)
 
     // Closed territories of 3 or more tiles, for Protector of the Land
@@ -771,6 +779,8 @@ object MapExpansion extends Expansion {
 
             f.log("placed three units in", a)
 
+            MapExpansion.robotosSetup(f, round, a)
+
             Then(SetupPlaceAction(round, l.drop(1)))
 
         case SetupKaijaAction(f, round, l, a) =>
@@ -779,6 +789,8 @@ object MapExpansion extends Expansion {
             game.note("kaija-setup")
 
             f.log("placed two units and", Companion(f), "in", a)
+
+            MapExpansion.robotosSetup(f, round, a)
 
             Then(SetupPlaceAction(round, l.drop(1)))
 
@@ -790,6 +802,8 @@ object MapExpansion extends Expansion {
             game.note("chief-setup")
 
             f.log(kaija.?("placed one unit, " ~ Companion(f).elem0 ~ " and").|("placed two units and"), WarchiefElem(f), "in", a)
+
+            MapExpansion.robotosSetup(f, round, a)
 
             Then(SetupPlaceAction(round, l.drop(1)))
 
@@ -850,6 +864,13 @@ object MapExpansion extends Expansion {
 
         case TrainingCampsAction(f, placed, then) =>
             game.recruited = placed
+
+            // Robotos gets one more unit with every Recruit, where it recruited first
+            if (game.robotos(f) && placed.any && game.reserve(f) > 0) {
+                game.addUnits(placed.head, f, 1)
+                f.log("recruited", 1.hl, "more in", placed.head, "(Robotos)".hl)
+                game.note("robotos-recruit")
+            }
 
             placed./(game.board.territory).distinct.foreach { t =>
                 val camps = game.working(t).count(_ == TrainingCamp)
@@ -1268,7 +1289,8 @@ object MapExpansion extends Expansion {
                 if (ac >= du && dc >= au) None
                 else if (ac >= du) |(attacker)
                 else if (dc >= au) |(defender)
-                else if (as > ds) |(attacker)
+                // Robotos wins ties when it attacks (it already does when it defends)
+                else if (as > ds || (as == ds && game.robotos(attacker))) |(attacker)
                 else |(defender)
 
             val before = game.count(t, attacker)
