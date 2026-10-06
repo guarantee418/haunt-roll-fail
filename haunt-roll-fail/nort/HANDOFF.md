@@ -469,7 +469,10 @@ on. To implement one:
   wings each have two areas (`n` along the top, `w` or `e` along the outer
   side), split by the dashes to the outer top corner; they are not part of
   the Port territory. `tile-masks.py` leaves the sand beyond the shore's
-  dashes out of every Beach mask (the sea grows up to the dashes).
+  dashes out of every Beach mask (the sea grows up to the dashes), and
+  writes `<tile>-sea.webp` for `BorderLines.java`, which makes the shore's
+  dashes borders between each land area and `"sea"` (by what lies across
+  each dash); `drawMap` colours only the land side of those.
   They are placed when `TilePlacedAction` of a first-round setup tile goes
   through (`beached`), turned so the sea is away from the starting tile.
   `tile-masks.py` handles them (`BEACH`: the land only; sea and

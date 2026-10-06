@@ -785,7 +785,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         board.placements.foreach { p =>
             BorderLines.lines.get(p.tile).|($).zipWithIndex.foreach { case (line, n) =>
                 val ca = fameColor(board.territory(AreaRef(p.x, p.y, line.a)))
-                val cb = fameColor(board.territory(AreaRef(p.x, p.y, line.b)))
+                // A Beach's shore: the land's colour only ("sea" is no area)
+                val cb = if (line.b == "sea") None else fameColor(board.territory(AreaRef(p.x, p.y, line.b)))
 
                 if (line.dashes.any && (ca.any || cb.any)) {
                     val colors = (ca ++ cb).toList

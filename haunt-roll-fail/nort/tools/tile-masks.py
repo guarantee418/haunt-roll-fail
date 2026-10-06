@@ -55,6 +55,14 @@ def land(rgba):
     return ndi.binary_closing(keep, iterations=3)
 
 
+# The sea of a Beach tile: the largest stretch of water (grey rocks pass for water too, so not every patch)
+def sea(rgba):
+    lab, n = ndi.label(~land(rgba))
+    if n == 0:
+        return np.zeros(lab.shape, bool)
+    return lab == np.argmax(ndi.sum(np.ones(lab.shape), lab, range(1, n + 1))) + 1
+
+
 def parse():
     tiles = {}
     cur = None
@@ -244,11 +252,12 @@ def main():
         im = Image.open(os.path.join(TILES, tid + '.webp')).convert('RGBA' if tid in BEACH else 'RGB').resize((N, N), Image.LANCZOS)
         px = np.asarray(im).astype(int)
         a = px[..., :3]
-        lab = segment(tid, areas, a, ~land(px)) if tid in BEACH else np.ones((N, N), int) if len(areas) == 1 else segment(tid, areas, a)
+        water = sea(px) if tid in BEACH else None
+        lab = segment(tid, areas, a, water) if tid in BEACH else np.ones((N, N), int) if len(areas) == 1 else segment(tid, areas, a)
         # The resource icons stay clear of the tint
         holes = ndi.binary_dilation(icons(tid, a), iterations=2)
         if tid in BEACH:
-            holes |= ~land(px) | (lab > len(areas))
+            holes |= water | (px[..., 3] < 128) | (lab > len(areas))
         # The Great Lake's water belongs to no territory
         if tid == 'wild-lake':
             r, g, b = a[..., 0], a[..., 1], a[..., 2]
@@ -281,9 +290,16 @@ def main():
             rgba = Image.new('RGBA', (MASK, MASK), (255, 255, 255, 0))
             rgba.putalpha(m)
             rgba.save(os.path.join(MASKS, tid + '-' + ar['id'] + '.webp'), lossless=True)
+        # Beach tiles: the sea and the sand beyond the shore's dashes, for BorderLines.java (the shore's borders)
+        if tid in BEACH:
+            alpha = ndi.gaussian_filter(((lab > len(areas)) | water | (px[..., 3] < 128)).astype(float), 1.0)
+            m = Image.fromarray((alpha * 255).astype(np.uint8)).resize((MASK, MASK), Image.LANCZOS)
+            rgba = Image.new('RGBA', (MASK, MASK), (255, 255, 255, 0))
+            rgba.putalpha(m)
+            rgba.save(os.path.join(MASKS, tid + '-sea.webp'), lossless=True)
         c = clutter(tid, areas, a, lab)
         if tid in BEACH:
-            c[ndi.binary_dilation(~land(px), iterations=8) | (lab > len(areas))] = 9
+            c[ndi.binary_dilation(water | (px[..., 3] < 128), iterations=8) | (lab > len(areas))] = 9
         out[tid] = grid(np.where(lab > len(areas), 1, lab), c)
         if check:
             pal = [(255, 0, 0), (0, 90, 255), (255, 220, 0), (200, 0, 255), (0, 220, 120)]

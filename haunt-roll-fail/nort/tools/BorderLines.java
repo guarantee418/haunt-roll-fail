@@ -29,6 +29,9 @@ public class BorderLines {
     static final Set<String> TEAL = Set.of("start-magma", "start-helheim", "start-relic");
     // Impassable middles inside an orange ring: their walls have no territory on the inside
     static final Set<String> RINGED = Set.of("start-relic", "start-lake", "start-volcano", "waste-kobold", "waste-jotnar", "waste-nastrond");
+    // Beach tiles (Sea module): the shore's dashes are borders between each land area and the sea, whose mask
+    // (<tile>-sea.webp, made by tile-masks.py) is read like an area's; the map colours only the land side
+    static final Set<String> BEACH = Set.of("beach-port", "beach-wing-w", "beach-wing-e");
 
     record Border(String a, String b, boolean wall) {}
     record Tile(String id, List<String> areas, List<Border> borders) {}
@@ -59,6 +62,11 @@ public class BorderLines {
         StringBuilder wallOut = new StringBuilder();
 
         for (Tile t : parse()) {
+            if (BEACH.contains(t.id)) {
+                for (String a : List.copyOf(t.areas))
+                    t.borders.add(new Border(a, "sea", false));
+                t.areas.add("sea");
+            }
             int[] rgb = readRaw(tiles.resolve(t.id + ".webp"), "rgb", 3);
             int[][] alpha = new int[t.areas.size()][];
             for (int k = 0; k < t.areas.size(); k++)
@@ -104,6 +112,38 @@ public class BorderLines {
                 if (order.length < 2 || near[order[1]] > r)
                     continue;
                 String a = t.areas.get(order[0]), b = t.areas.get(order[1]);
+                // Beach tiles: the areas on either side of the dash, across it (the sand, the sea and the holes in the
+                // masks count as sea), since the sand makes the nearest areas misleading near the shore
+                int sea = t.areas.indexOf("sea");
+                if (sea >= 0) {
+                    String[] side = new String[2];
+                    double px = -Math.sin(f.angle), py = Math.cos(f.angle);
+                    for (int k = 0; k < 2; k++) {
+                        int[] votes = new int[t.areas.size()];
+                        for (int d = 10; d <= 34; d += 3) {
+                            int x = (int) (f.x * N + (k == 0 ? d : -d) * px), y = (int) (f.y * N + (k == 0 ? d : -d) * py);
+                            if (x < 0 || y < 0 || x >= N || y >= N)
+                                continue;
+                            int i = y * N + x, rr = rgb[i * 3], gg = rgb[i * 3 + 1], bb = rgb[i * 3 + 2];
+                            boolean sand = rr > 170 && gg > 160 && bb < 175 && rr - bb > 30 && Math.abs(rr - gg) < 40;
+                            votes[sand || lab[i] < 0 ? sea : lab[i]]++;
+                        }
+                        int best = 0;
+                        for (int v = 1; v < votes.length; v++) if (votes[v] > votes[best]) best = v;
+                        side[k] = t.areas.get(best);
+                    }
+                    if (side[0].equals(side[1])) {
+                        // Both sides alike (a wide road, sand on both, the Port's jetty): the nearest land beside the sea
+                        if (!side[0].equals("sea") && near[sea] > 40)
+                            continue;
+                        a = t.areas.get(order[0] == sea ? order[1] : order[0]);
+                        b = "sea";
+                    }
+                    else {
+                        a = side[0];
+                        b = side[1];
+                    }
+                }
                 for (Border br : found.keySet())
                     if ((br.a.equals(a) && br.b.equals(b)) || (br.a.equals(b) && br.b.equals(a))) {
                         found.get(br).add(f);
