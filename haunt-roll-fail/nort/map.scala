@@ -68,6 +68,11 @@ case class RecruitPlaceAction(self : Faction, area : AreaRef, left : Int, mode :
 case class RecruitKaijaAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit", Companion(self), "in")(area)
 case class RecruitChiefAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit", WarchiefElem(self), "in")(area)
 case class RecruitDoneAction(self : Faction, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit")("Done")
+// With Kaija or the warchief ready: tap the territory first, then pick what to recruit there
+case class RecruitAreaAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit", (left > 1).?("(" ~ left.hl ~ " left)").|(""), "in")(area) with Soft with MapTarget { def target = area }
+case class RecruitUnitHereAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit in", area)("A regular unit")
+case class RecruitKaijaHereAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit in", area)(Companion(self))
+case class RecruitChiefHereAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit in", area)(WarchiefElem(self))
 case class TrainingCampsAction(f : Faction, placed : $[AreaRef], then : ForcedAction) extends ForcedAction
 
 // MOVE
@@ -576,6 +581,26 @@ object MapExpansion extends Expansion {
             Building.all.%(_ != old).%(_.large == old.large).%(b => b != CarvedStone || carved).%(b => game.buildings.values.count(_ == b) < Building.tokens)./(b => s -> b)
         }
 
+    def recruitUnit(f : Faction, a : AreaRef)(implicit game : Game) : Unit = {
+        game.addUnits(a, f, 1)
+
+        f.log("recruited in", a)
+    }
+
+    def recruitKaija(f : Faction, a : AreaRef)(implicit game : Game) : Unit = {
+        game.setCompanion(f, |(a))
+        game.note("kaija-recruit")
+
+        f.log("recruited", Companion(f), "in", a)
+    }
+
+    def recruitChief(f : Faction, a : AreaRef)(implicit game : Game) : Unit = {
+        game.chiefs += f -> a
+        game.note("chief-recruit")
+
+        f.log("recruited", WarchiefElem(f), "in", a)
+    }
+
     def canRecruit(f : Faction)(implicit game : Game) = game.reserve(f) > 0 || game.kaijaReady(f) || game.chiefReady(f)
 
     // Closed territories of 3 or more tiles, for Protector of the Land
@@ -632,7 +657,7 @@ object MapExpansion extends Expansion {
     }
 
     // Collect what a territory produces, as at harvest
-    def collect(f : Faction, t : Territory, reason : Elem)(implicit game : Game) {
+    def collect(f : Faction, t : Territory, reason : Elem)(implicit game : Game) : Unit = {
         val (food, wood, lore) = game.harvest(t)
         f.food += food
         f.wood += wood
@@ -768,34 +793,49 @@ object MapExpansion extends Expansion {
             if (targets.none)
                 Then(TrainingCampsAction(f, placed, then))
             else
-                Ask(f).some(targets)(t =>
-                    (game.reserve(f) > 0).$(RecruitPlaceAction(f, t.anchor, left, mode, placed, then)) ++
-                    game.kaijaReady(f).$(RecruitKaijaAction(f, t.anchor, left, mode, placed, then)) ++
-                    game.chiefReady(f).$(RecruitChiefAction(f, t.anchor, left, mode, placed, then))
-                )
+                Ask(f).some(targets) { t =>
+                    val l =
+                        (game.reserve(f) > 0).$(RecruitPlaceAction(f, t.anchor, left, mode, placed, then)) ++
+                        game.kaijaReady(f).$(RecruitKaijaAction(f, t.anchor, left, mode, placed, then)) ++
+                        game.chiefReady(f).$(RecruitChiefAction(f, t.anchor, left, mode, placed, then))
+
+                    // One territory per row; what to recruit there is asked after it is picked
+                    if (l.num > 1)
+                        $(RecruitAreaAction(f, t.anchor, left, mode, placed, then))
+                    else
+                        l
+                }
                     .when(placed.any)(RecruitDoneAction(f, placed, then))
 
+        case RecruitAreaAction(f, a, left, mode, placed, then) =>
+            Ask(f)
+                .when(game.reserve(f) > 0)(RecruitUnitHereAction(f, a, left, mode, placed, then))
+                .when(game.kaijaReady(f))(RecruitKaijaHereAction(f, a, left, mode, placed, then))
+                .when(game.chiefReady(f))(RecruitChiefHereAction(f, a, left, mode, placed, then))
+                .cancel
+
         case RecruitPlaceAction(f, a, left, mode, placed, then) =>
-            game.addUnits(a, f, 1)
+            recruitUnit(f, a)
+            Then(RecruitAction(f, left - 1, mode, placed :+ a, then))
 
-            f.log("recruited in", a)
-
+        case RecruitUnitHereAction(f, a, left, mode, placed, then) =>
+            recruitUnit(f, a)
             Then(RecruitAction(f, left - 1, mode, placed :+ a, then))
 
         case RecruitKaijaAction(f, a, left, mode, placed, then) =>
-            game.setCompanion(f, |(a))
-            game.note("kaija-recruit")
+            recruitKaija(f, a)
+            Then(RecruitAction(f, left - 1, mode, placed :+ a, then))
 
-            f.log("recruited", Companion(f), "in", a)
-
+        case RecruitKaijaHereAction(f, a, left, mode, placed, then) =>
+            recruitKaija(f, a)
             Then(RecruitAction(f, left - 1, mode, placed :+ a, then))
 
         case RecruitChiefAction(f, a, left, mode, placed, then) =>
-            game.chiefs += f -> a
-            game.note("chief-recruit")
+            recruitChief(f, a)
+            Then(RecruitAction(f, left - 1, mode, placed :+ a, then))
 
-            f.log("recruited", WarchiefElem(f), "in", a)
-
+        case RecruitChiefHereAction(f, a, left, mode, placed, then) =>
+            recruitChief(f, a)
             Then(RecruitAction(f, left - 1, mode, placed :+ a, then))
 
         case RecruitDoneAction(f, placed, then) =>
