@@ -265,7 +265,7 @@ on. To implement one:
   the Ox tokens (both faces, as `Custom_Token` states) and the High Tide
   token. Images: `card/clan/<clan>-<card>.webp`, `clan/<clan>.webp` (emblems
   cut from the boards like the core ones), `token/ox-<n>` (face up, effect)
-  and `token/ox-back-<n>`, `token/high-tide`, `token/pyre` (not drawn yet),
+  and `token/ox-back-<n>`, `token/high-tide`, `token/pyre`,
   `token/lynx` (Brundr and Kaelinn: the Lynx emblem; no figure art exists).
   Tabletopia itself only has the Uncharted Horizons rulebook (WIP) with five
   of the clans; no New Blood rulebook was found.
@@ -288,14 +288,18 @@ on. To implement one:
   `ScorchedHarvestAction` for Dragon, `ChiefStepOneAction` for Kàra and
   Andhrimnir, `MoveStartAction` for Eitria and Brok's Precision), some only
   for a side effect before returning `UnknownContinue`.
-- The status panes show Dragon's Pyre, Kraken's tokens in reserve and Ox's
+- Dragon's pane draws the Sacrificial Pyre token with the units on it
+  (`pyreElem` in `ui.scala`: each unit's figure in its owner's color on one
+  of the two circles, an empty circle darkened); tapping it opens it full
+  size (`PyreView`). Dragon's Harvest line shows nothing while it has
+  nothing to sacrifice or place, and "+1 food/wood" for the sacrifice.
+- The status panes show Kraken's tokens in reserve and Ox's
   ready and used tokens. The map draws High Tide tokens by the territory
   number, Ox tokens on their spaces, Brundr and Kaelinn as a round token and
   Brok as a second warchief figure.
 - `NORT_NEWBLOOD=1` makes the headless host use only the New Blood clans;
   without it all 14 clans are drawn from. With `NORT_UPGRADES=1` every New
   Blood card was played in bot games without errors.
-- Not done: the Sacrificial Pyre isn't drawn (only listed in Dragon's pane).
 
 ## Uncharted Horizons: Events and Alternative victory (2026-10-04)
 

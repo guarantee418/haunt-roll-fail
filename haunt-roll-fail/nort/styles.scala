@@ -88,6 +88,17 @@ package object elem {
         object winterCell extends CustomStyle(padding("0.4ex 1.5ex"), text.align("left"))
         object winterHere extends CustomStyle(background.color("#3a3320"), outline.color("#e8b84a"), outline.style("solid"), outline.width("1px"))
         object creature extends CustomStyle(color("#c9a27a"), font.weight("bold"))
+        // Dragon Clan's Sacrificial Pyre in its panel: the token with the units on its two circles (600x379 image)
+        object pyre extends CustomStyle(position("relative"), display("inline-block"), vertical.align("middle"))
+        object pyreSmall extends CustomStyle(height("2.4em"))
+        object pyreLarge extends CustomStyle(height("40vh"), max.height("60vw"), margin.top("1ex"), margin.bottom("1ex"))
+        object pyreLine extends CustomStyle(line.height("0"), margin.top("0.2ex"), margin.bottom("0.2ex"))
+        object pyreImage extends CustomStyle(display("block"), height("100%"), width("auto"))
+        object pyreSlot0 extends CustomStyle(position("absolute"), left("7.5%"), top("6.6%"), width("26.7%"), height("42.2%"))
+        object pyreSlot1 extends CustomStyle(position("absolute"), left("8%"), top("52.8%"), width("26.7%"), height("42.2%"))
+        object pyreEmpty extends CustomStyle(background.color("#000000c0"), border.radius("50%"))
+        // A unit hides the figure printed on the circle
+        object pyreUnit extends CustomStyle(background.color("#000000"), border.radius("50%"))
 
         object tile extends CustomStyle(display("inline-block"), width("26ex"), max.width("90%"), vertical.align("middle"), margin("0.3ex"))
         object rot0 extends CustomStyle()

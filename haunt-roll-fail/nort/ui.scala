@@ -1121,6 +1121,27 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         ).div
     }
 
+    // Dragon Clan's Sacrificial Pyre: the token with the units on it drawn on its two circles, in their owners' colors
+    def pyreElem(size : Style) : Elem = {
+        val slots = $(styles.pyreSlot0, styles.pyreSlot1).zipWithIndex./{ case (s, i) =>
+            game.pyre.lift(i)./(g => Image("unit-" + game.colors(g).id, $(s, styles.pyreUnit), |(g.name))).|(Div(Empty, s, styles.pyreEmpty))
+        }
+        val names = game.pyre.none.?("empty").|(game.pyre./(_.name).mkString(", "))
+        Div(Image("token-pyre", styles.pyreImage, "Sacrificial Pyre: " + names) ~ slots.merge, styles.pyre, size)
+    }
+
+    def pyreView : Elem = {
+        val units = game.pyre.none.?("none".txt).|(game.pyre./(g => g.name.styled(colorOf(g))).join(", "))
+
+        ((Dragon.name.styled(colorOf(Dragon)) ~ " " ~ "Sacrificial Pyre".hl).hlb.div ~
+            pyreElem(styles.pyreLarge).div ~
+            ("Units on it: " ~ units ~ " (room for " ~ NewBloodExpansion.pyreSize.hl ~ ")").div ~
+            "Enemy casualties go on it after each combat. To harvest, Dragon sacrifices a unit from it (back to its owner) or places one of its deployed units on it.".spn(xstyles.smaller85).div ~
+            HorizontalBreak ~
+            "(tap to close)".spn(xstyles.smaller85).div
+        ).div
+    }
+
     // A player's discard pile, newest card last
     def discardPile(f : Faction) : Elem = {
         val l = game.states(f).discard
@@ -1159,7 +1180,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         // New Blood: Dragon's Sacrificial Pyre, Kraken's High Tide tokens, Ox's Ancestral Equipment tokens
         val nb = f match {
-            case Dragon => ("Pyre: ".txt ~ game.pyre.none.?("empty".txt).|(game.pyre./(g => (g == Dragon).?("own".txt).|(g.name.styled(colorOf(g)))).join(", "))).div
+            case Dragon => OnClick(PyreView, Div(pyreElem(styles.pyreSmall), styles.pyreLine, xlo.pointer))
             case Kraken => ("High Tide: ".txt ~ (2 - game.tides.num).hl ~ " in reserve").div
             case Ox => ("Equipment: ".txt ~ game.gearReady.num.hl ~ " ready, " ~ game.gearUsed.num.hl ~ " used").div
             case Automa => ("Cards: ".txt ~ game.automaActions.num.hl ~ " to play, " ~ game.automaDeck.num.hl ~ " in its pile").div
@@ -1178,7 +1199,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // The next harvest as things stand, and the Winter costs (tapping them shows the whole Winter chart)
         val next = Harvest.forecast(f)
         val gains = $(next.food -> Food.elem, next.wood -> Wood.elem, next.lore -> Lore.elem, next.fame -> FameIcon()).filter(_._1 > 0).map { case (n, e) => ("+" + n).hl ~ " " ~ e }
-        val harvest = ("Harvest: ".txt ~ gains.any.?(gains.join(" ")).|("nothing".txt)).div
+        // Dragon Clan: 1 more food or wood for the sacrifice
+        val pyre = (f == Dragon && game.dragonHarvest.has(false).not && (game.dragonHarvest.any || NewBloodExpansion.sacrificeOptions(f)) && game.controlled(f).any).?(" " ~ "+1".hl ~ " " ~ Food.elem ~ "/" ~ Wood.elem).|(Empty)
+        val harvest = ("Harvest: ".txt ~ gains.any.?(gains.join(" ")).|("nothing".txt) ~ pyre).div
 
         val (food, wood) = EventsExpansion.winterCost(f)
         val costs = $(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => n.hl ~ " " ~ e }
@@ -1387,6 +1410,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case DiscardPile(f) =>
             showOverlay(overlayScrollX(discardPile(f)).onClick, onClick)
+
+        case PyreView =>
+            showOverlay(overlayScrollX(pyreView).onClick, onClick)
 
         case Nil =>
             clearOverlay()
