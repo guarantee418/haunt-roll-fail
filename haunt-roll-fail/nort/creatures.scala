@@ -638,7 +638,7 @@ object CreaturesExpansion extends Expansion {
                 game.creatureAt += c -> den.head
                 game.note("wyvern-back")
 
-                f.log("drove", c, "back to its Den")
+                f.log(CombatReport.link("drove"), c, "back to its Den")
 
                 next(then)
             }
@@ -649,7 +649,7 @@ object CreaturesExpansion extends Expansion {
                 game.note("creature-defeated")
                 game.advance(f, "hunting")
 
-                f.log("defeated", c, "and gained", c.kind.fame.hl, FameIcon(), c.kind.leaves.?("(it leaves the game)".txt).|(Empty))
+                f.log(CombatReport.link("defeated"), c, "and gained", c.kind.fame.hl, FameIcon(), c.kind.leaves.?("(it leaves the game)".txt).|(Empty))
 
                 // Wastelands: a Giant Boar that attacked gives 2 more fame
                 if (c.kind == GiantBoar && attacking.not) {
@@ -671,7 +671,7 @@ object CreaturesExpansion extends Expansion {
                 next(then)
             }
             else {
-                log(c, "won the fight in", a)
+                log(c, CombatReport.link("won"), "the fight in", a)
 
                 // Attacking a creature that shares its territory, the units simply stay
                 if (game.figures(t, f) > 0 && (attacking.not || c.kind.shares.not))

@@ -1503,6 +1503,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         case PyreView =>
             showOverlay(overlayScrollX(pyreView).onClick, onClick)
 
+        // A fight's result tapped in the log
+        case FightReportView(r) =>
+            showOverlay(overlayScrollX(("Combat report".hlb.div ~ CombatReport.text(r, None).div)).onClick, onClick)
+
         // Adset: a drafted clan's info, as behind the clan picker's i button
         case AdsetClanInfo(f) =>
             Meta.factionInfo(f).foreach { case (_, title, l) => showOverlay(overlayScrollX((title.div ~ l./(e => Div(e)).merge).div(xlo.flexvcenter)).onClick, onClick) }

@@ -377,14 +377,30 @@ case class FightReport(area : AreaRef, attacker : FightSide, defender : FightSid
 
 // The report as self sees it: "You" for self's side
 case class CombatReport(self : Faction) extends GameElementary {
-    def elem(implicit game : Game) = game.fightReport./{ r =>
-        def name(s : FightSide) : Elem = s.f.has(self).?("You".txt).|(s.who)
+    def elem(implicit game : Game) = game.fightReport./(CombatReport.text(_, |(self))).|(Empty)
+}
+
+// Every fight's report, kept in the log: the word that says who won ("won", "defeated", "wiped out") opens it
+case class FightReportView(r : FightReport)
+
+object CombatReport {
+    // Who sees the report of a fight between these clans (or one clan and a creature), by the game's options
+    def readers(attacker : |[Faction], defender : |[Faction])(implicit game : Game) : $[Faction] =
+        (game.options.has(CombatReportAttackers).??(attacker.$) ++ game.options.has(CombatReportDefenders).??(defender.$)).but(Automa)
+
+    // The word in the log that opens the fight's report
+    def link(word : String)(implicit game : Game) : Elem =
+        game.fightReport./(r => OnClick(FightReportView(r), word.spn(styles.tappable)(xlo.pointer)) : Elem).|(word.txt)
+
+    // The report's text; self: whose side is "You" (None in the log, where clans are named)
+    def text(r : FightReport, self : |[Faction])(implicit game : Game) : Elem = {
+        def name(s : FightSide) : Elem = (self.any && s.f == self).?("You".txt).|(s.who)
 
         val headline = r.winner./(w => w.?(r.attacker).|(r.defender)) match {
             case None => "Both sides were wiped out in ".txt ~ r.area.elem ~ "."
             case Some(w) =>
                 name(w) ~ " won the fight in " ~ r.area.elem ~ " " ~ (
-                    if (r.wipe) "by killing all " ~ w.f.has(self).?("enemy").|("your") ~ " units " ~ CombatIcon.skull
+                    if (r.wipe) "by killing all " ~ self.none.?(w.attacking.?(r.defender).|(r.attacker).who).|(w.f.has(self.get).?("enemy".txt).|("your".txt)) ~ " units " ~ CombatIcon.skull
                     else if (r.attacker.total == r.defender.total) "with as many " ~ CombatIcon.axe ~ " (the defender wins ties)"
                     else "with more " ~ CombatIcon.axe
                 ) ~ "."
@@ -402,16 +418,10 @@ case class CombatReport(self : Faction) extends GameElementary {
         }
 
         // Your side first
-        val sides = r.defender.f.has(self).?($(r.defender, r.attacker)).|($(r.attacker, r.defender))
+        val sides = (self.any && r.defender.f == self).?($(r.defender, r.attacker)).|($(r.attacker, r.defender))
 
         headline ~ Break ~ side(sides(0)) ~ Break ~ side(sides(1))
-    }.|(Empty)
-}
-
-object CombatReport {
-    // Who sees the report of a fight between these clans (or one clan and a creature), by the game's options
-    def readers(attacker : |[Faction], defender : |[Faction])(implicit game : Game) : $[Faction] =
-        (game.options.has(CombatReportAttackers).??(attacker.$) ++ game.options.has(CombatReportDefenders).??(defender.$)).but(Automa)
+    }
 }
 
 // Some units, maybe with Kaija and the warchief
@@ -1465,13 +1475,13 @@ object MapExpansion extends Expansion {
 
             winner match {
                 case None =>
-                    log("Both sides were wiped out")
+                    log("Both sides were", CombatReport.link("wiped out"))
                     next(then)
 
                 case Some(w) =>
                     val loser = (w == attacker).?(defender).|(attacker)
 
-                    w.log("won the fight in", a)
+                    w.log(CombatReport.link("won"), "the fight in", a)
 
                     if (w == attacker) {
                         if (attacker == Wolf) {
