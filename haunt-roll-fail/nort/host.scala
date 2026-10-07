@@ -54,7 +54,7 @@ object Host extends hrf.host.BaseHost {
     def factions = sys.env.get("NORT_NEWBLOOD").has("1").?(NewBlood.clans).|($(Bear, Boar, Goat, Raven, Snake, Stag, Wolf) ++ NewBlood.clans)
     def subjects = factions
 
-    // Random colors, game length and victory options; teams half the time with four or six players (NORT_TEAMS=1: always)
+    // Random colors, game length and victory options; random teams half the time with three or more players (NORT_TEAMS=1: always)
     // NORT_AUTOMA=1: solo games, one clan against the Automa
     def batch = sys.env.get("NORT_PLAYERS")./(_.toInt)./(n => $(n, n, n, n, n).take(sys.env.get("NORT_BATCH")./(_.toInt).|(5))).|($(2, 3, 4, 5, 6))./(n => () => {
         val solo = sys.env.get("NORT_AUTOMA").has("1")
@@ -67,7 +67,11 @@ object Host extends hrf.host.BaseHost {
         // NORT_CREATURES=1: always with the Creatures module (and the More Creatures variant half the time); NORT_WARCHIEFS=1: always with Warchiefs; NORT_WILDERNESS=1: always with Wilderness
         val creatures = sys.env.get("NORT_CREATURES").has("1") || random() < 0.5
         val wastelands = sys.env.get("NORT_WASTELANDS").has("1") || random() < 0.5
-        val teams = Module.teams.toList.%{ case (_, k) => k == n && solo.not && (sys.env.get("NORT_TEAMS").has("1") || random() < 0.5) }./{ case (m, _) => ModuleOption(m) }.shuffle.take(1)
+        // Teams: any split into two or more teams (two to n - 1 of them, players put in at random)
+        val teamed = n >= 3 && solo.not && (sys.env.get("NORT_TEAMS").has("1") || random() < 0.5)
+        val k = 2 + (random() * (n - 2)).toInt
+        val split = l.indices.toList./(i => (i < 2).?(i).|((random() * k).toInt))
+        val teams = teamed.??(TeamPlay +: l.zip(split.shuffle)./{ case (f, t) => TeamOption(f, t) })
         // NORT_VICTORY=1: always with Alternative victory, with random or chosen cards
         val alt = sys.env.get("NORT_VICTORY").has("1") || random() < 0.5
         val chosen = alt && random() < 0.5
@@ -76,7 +80,7 @@ object Host extends hrf.host.BaseHost {
             ((alt && random() < 0.5).$(VictoryModeOption(true)) ++ chosen.??(usable.%(_.mapControl).take(1) ++ usable.%(_.mapControl.not).take(teams.any.?(3).|(2)))./(VictoryCardOption(_)))
         val options = colors ++ $(YearsOption.all.shuffle.head) ++ victory ++ (random() < 0.3).$(FirstSeatStarts) ++ (random() < 0.5).$(CombatReportAttackers) ++ (random() < 0.5).$(CombatReportDefenders) ++
             creatures.$(ModuleOption(Creatures)) ++ (creatures && random() < 0.5).$(MoreCreatures) ++
-            (sys.env.get("NORT_WARCHIEFS").has("1") || random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.3).$(WarchiefCards) ++ (random() < 0.3).$(NoDrawDevelopments) ++
+            (sys.env.get("NORT_WARCHIEFS").has("1") || random() < 0.5).?(WarchiefsChoice.all.shuffle.take(1)).|((random() < 0.3).$(WarchiefCards)) ++ (random() < 0.3).$(NoDrawDevelopments) ++
             // NORT_HORIZONS=1: always with the Uncharted Horizons Development cards and map tiles
             (sys.env.get("NORT_HORIZONS").has("1") || random() < 0.5).$(HorizonsDevelopments) ++ (sys.env.get("NORT_HORIZONS").has("1") || random() < 0.5).$(HorizonsTiles) ++
             (sys.env.get("NORT_WILDERNESS").has("1") || random() < 0.5).$(ModuleOption(Wilderness)) ++

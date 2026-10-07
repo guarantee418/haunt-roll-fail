@@ -30,6 +30,25 @@ object ColorOption {
     val all : $[ColorOption] = Meta.factions./~(f => PlayerColor.all./(c => ColorOption(f, c)))
 }
 
+// Team play, picked above the clan picker (Meta.pickerModes): each player is on the team of its TeamOption, chosen on its row of
+// the setup screen; any split of the players into two or more teams. The team modules below are what games made before used
+case object TeamPlay extends GameOption {
+    val group = "Game type".txt
+    def valueOn = "Teams".hlb
+}
+
+// A clan's team in team play: 0 is Team A, 1 Team B, and so on; picking a team takes the clan off its old one
+case class TeamOption(clan : Faction, team : Int) extends GameOption {
+    val group = (clan.name + " Clan team").txt
+    def valueOn = ("Team " + TeamOption.letter(team)).hl
+    override def forcedOff(all : $[BaseOption]) = all.of[TeamOption].%(o => o != this && o.clan == clan)
+}
+
+object TeamOption {
+    def letter(team : Int) = "ABCDEF".charAt(team).toString
+    val all : $[TeamOption] = Meta.factions./~(f => $(0, 1, 2, 3, 4, 5)./(TeamOption(f, _)))
+}
+
 // A clan played by the "Robotos" bot, which cheats (robotos.scala): no Winter costs, creatures ignore it, one more
 // unit with every Recruit. Not on the setup screen: the game gets it for each clan set to "Bot / Robotos"
 // (Meta.botOptions, called by startGame in hrf.scala), so every client and every replay plays by the same rules
@@ -142,14 +161,34 @@ object VictoryCardOption {
     val all : $[VictoryCardOption] = VictoryCard.all./(VictoryCardOption(_))
 }
 
-// The Warchiefs box's 7 extra clan upgrade cards, which the rulebook allows without the Warchiefs module
+// WARCHIEFS MODULE: the whole module (ModuleOption(Warchiefs)), only its third clan upgrade cards (WarchiefCards),
+// or only its warchiefs (WarchiefPawns); at most one of the three
+object WarchiefsChoice {
+    val group = "Warchiefs module".txt
+    def all : $[GameOption] = $(ModuleOption(Warchiefs), WarchiefCards, WarchiefPawns)
+    def others(o : BaseOption) : $[BaseOption] = all.%(_ != o)
+}
+
+// Each clan's warchief upgrade card (its third clan upgrade card, all 14 clans) without the warchiefs, which the rulebook allows
 case object WarchiefCards extends GameOption with ToggleOption {
-    val group = "Warchief upgrade cards".txt
-    def valueOn = "Warchief upgrade cards without the module".txt
+    val group = WarchiefsChoice.group
+    def valueOn = "Warchief upgrade cards only".txt
     override val explain = $(
-        "The Warchiefs box adds a third clan upgrade card for each clan (Egil's Fury, Brand's Bravery, Borgild's Shield, Signy's Celerity, Liv's Cunning, Halvard's Craft, Svarn's Menders).",
-        "They are always in the game with the " ~ "Warchiefs".hl ~ " module. With this option they are also used without it; Borgild's Shield then ignores its Kaija and Borgild part.",
+        "Each clan gets its warchief upgrade card, a third clan upgrade card (Egil's Fury, Brand's Bravery, Borgild's Shield, ...), but no warchief.",
+        "Borgild's Shield then ignores its Kaija and Borgild part.",
     )
+    override def forcedOff(all : $[BaseOption]) = WarchiefsChoice.others(this)
+}
+
+// The warchiefs (pawns and powers) without the warchief upgrade cards; Meta.has counts it as the Warchiefs module
+case object WarchiefPawns extends GameOption with ToggleOption {
+    val group = WarchiefsChoice.group
+    def valueOn = "Warchief pawns only".txt
+    override val explain = $(
+        CombatText("Each clan gets its warchief: a unit worth 2 combat points with a power of its own (see the Warchief button when picking clans)."),
+        "No warchief upgrade cards: every clan has its usual two clan upgrades.",
+    )
+    override def forcedOff(all : $[BaseOption]) = WarchiefsChoice.others(this)
 }
 
 // Leaves the Development cards whose effect is to draw cards out of the decks (Game: ShuffledEarlyAction, ShuffledAdvancedAction).
@@ -228,6 +267,7 @@ case object Warchiefs extends Module("Warchiefs", "Warchiefs expansion") {
     def about = $(
         CombatText("Each clan gets its warchief: a unit worth 2 combat points with a power of its own (see the Warchief button when picking clans)."),
         "It can be placed at setup instead of one unit, or recruited instead of a unit, and goes back to the reserve when it dies. Card effects on enemy units can't target it.",
+        "Each clan also gets its warchief upgrade card, a third clan upgrade card.",
     )
 }
 
@@ -327,6 +367,7 @@ case object VictoryModule extends Module("Alternative victory", "Uncharted Horiz
     )
 }
 
+// The fixed team variants, from before the teams were chosen per player (TeamPlay); no longer offered, kept for the games made with them.
 // Team play (Game.teams): seats alternate between the two teams, so teammates sit opposite each other.
 // Teammates add their scores together, may move through each other's territories but not stop there,
 // never fight or target each other, and trade resources with each other 1:1 at harvest
@@ -369,8 +410,10 @@ object Module {
 }
 
 case class ModuleOption(module : Module) extends GameOption with ToggleOption with ImportantOption {
-    val group = "Modules and expansions".txt
-    def valueOn = module.label.txt
+    // The Warchiefs module has its own section, with its parts (WarchiefsChoice)
+    val group = (module == Warchiefs).?(WarchiefsChoice.group).|("Modules and expansions".txt)
+    def valueOn = (module == Warchiefs).?("Full module: warchiefs and upgrade cards").|(module.label).txt
+    override def forcedOff(all : $[BaseOption]) = (module == Warchiefs).??(WarchiefsChoice.others(this))
     override val explain = module.about ++ module.ready.not.$("Not implemented yet.".styled(xstyles.warning))
     // A module that isn't ready requires itself, so it can never be turned on
     override def required(all : $[BaseOption]) = module.ready.?($($[BaseOption]())).|($($[BaseOption](this)))

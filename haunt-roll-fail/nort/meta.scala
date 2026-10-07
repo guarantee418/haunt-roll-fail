@@ -67,15 +67,17 @@ object Meta extends MetaGame { mmm =>
     // Games made before the Victory conditions options turned the Alternative victory module on with its module option
     // Training Fields is turned on by the main menu's Training Grounds only
     // Robotos (robotos.scala) comes from the bot chosen for a clan, not from the setup screen
-    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption) ++ RobotosOption.all
+    // Team play comes from the choice above the clan picker (pickerModes), the old fixed team variants are no longer offered
+    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TeamPlay) ++ RobotosOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // New Blood has no option: picking one of its clans brings it in
-    val options : $[O] = ColorOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, CombatReportAttackers, CombatReportDefenders, WarchiefCards, NoDrawDevelopments, HorizonsDevelopments) ++ Module.all.but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles) ++ AutomaLevelOption.all ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, CombatReportAttackers, CombatReportDefenders) ++ WarchiefsChoice.all ++ $(NoDrawDevelopments, HorizonsDevelopments) ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles) ++ AutomaLevelOption.all ++ hiddenOptions
 
-    // Colors only for the clans in the game; 2v2 Teams only with four players, 3v3 and 2v2v2 Teams only with six
+    // Colors and teams only for the clans in the game, as many teams as players
     override def optionsFor(n : Int, l : $[F]) = options.%{
         case ColorOption(f, _) => l.has(f)
-        case ModuleOption(m) if Module.teams.contains(m) => Module.teams(m) == n && l.has(Automa).not
+        case TeamOption(f, t) => l.has(f) && t < n
+        case ModuleOption(m) if Module.teams.contains(m) => false
         case AutomaLevelOption(_) => l.has(Automa)
         case ModuleOption(VictoryModule) => false
         case _ => true
@@ -85,16 +87,22 @@ object Meta extends MetaGame { mmm =>
     // Training Fields has only the colors and the first player
     override def optionShown(o : O, selected : $[O]) = o match {
         case o if selected.has(TrainingFieldsOption) => o.is[ColorOption] || o == FirstSeatStarts
+        case TeamOption(_, _) => false
         case VictoryModeOption(_) => VictoryChoice.alternative.exists(selected.has)
         case VictoryCardOption(_) => selected.has(AltVictoryChosen)
         case _ => true
     }
 
-    // Colors are chosen on each clan's row of the setup screen, the rest below
+    // Colors and teams are chosen on each clan's row of the setup screen, the rest below
     override def optionPages(n : Int, l : $[F]) = {
         val all = optionsFor(n, l)
-        $(all.diff(all.of[ColorOption]))
+        $(all.diff(all.of[ColorOption]).diff(all.of[TeamOption]))
     }
+
+    // Free-for-all or teams, above the clan picker; a team game gets each player's team on its row of the setup screen
+    override def pickerModes = $(("Free-for-all".txt, $), ("Teams".txt, $(TeamPlay)))
+
+    override def factionRowMore(f : F, l : $[F], selected : $[O]) = selected.has(TeamPlay).$(0.until(l.num).toList./(TeamOption(f, _)))
 
     override def factionRowOptions(f : F, l : $[F]) = PlayerColor.all./(ColorOption(f, _))
 
@@ -116,15 +124,18 @@ object Meta extends MetaGame { mmm =>
             taken :+= c
             ColorOption(f, c) : O
         }
-        options ++ added
+        // Teams by seat, alternating, for the clans without one
+        val teams = l.zipWithIndex.%{ case (f, _) => options.of[TeamOption].exists(o => o.clan == f && o.team < n).not }./{ case (f, i) => TeamOption(f, i % 2) : O }
+        options.%{ case TeamOption(f, t) => t < n ; case _ => true } ++ added ++ teams
     }
 
     // Colors by seat, as before colors could be chosen
-    override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } :+ (YearsOption.standard : O) :+ (StandardVictory : O) :+ (VictoryModeOption(false) : O) :+ (StandardCentral : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O)
+    // Teams alternate by seat (two teams), as the old team variants did
+    override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } ++ l.zipWithIndex./{ case (f, i) => TeamOption(f, i % 2) : O } :+ (YearsOption.standard : O) :+ (StandardVictory : O) :+ (VictoryModeOption(false) : O) :+ (StandardCentral : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O)
 
     override def quickOptions = options./(o => o -> 0.0).toMap
 
-    def has(options : $[O], m : Module) = options.has(ModuleOption(m)) || (m == TrainingFields && options.has(TrainingFieldsOption)) || (m == VictoryModule && VictoryChoice.alternative.exists(options.has)) || (m == Wastelands && CentralChoice.picked(options))
+    def has(options : $[O], m : Module) = options.has(ModuleOption(m)) || (m == Warchiefs && options.has(WarchiefPawns)) || (m == TrainingFields && options.has(TrainingFieldsOption)) || (m == VictoryModule && VictoryChoice.alternative.exists(options.has)) || (m == Wastelands && CentralChoice.picked(options))
 
     // Quick Game: always three players, core clans and core rules (no option is turned on beyond the defaults)
     val quickMin = 3
@@ -151,12 +162,13 @@ object Meta extends MetaGame { mmm =>
             validateFactionCombination(factions) && {
                 val colored = options.of[ColorOption]
                 val missing = factions.%(f => colored.exists(_.clan == f).not)
-                val teams = Module.teams.toList.%{ case (m, n) => has(options, m) && factions.num != n }
-                teams.any.?(ErrorResult(teams./{ case (m, n) => m.label + " needs " + n + " players" }.mkString(", "))) ||
-                (Module.teams.keys.count(has(options, _)) > 1).?(ErrorResult("Choose one team variant")) ||
+                val teams = options.has(TeamPlay).??(sides(factions, options))
+                (options.has(TeamPlay) && factions.has(Automa)).?(ErrorResult("No teams against the Automa")) ||
+                (options.has(TeamPlay) && teams.num < 2).?(ErrorResult("Put the players in at least two teams")) ||
                 (factions.has(Automa) && options.of[AutomaLevelOption].exists(_.level >= 3) && has(options, Creatures).not).?(ErrorResult("Automa levels 3 and up need the Creatures module")) ||
                 validateVictoryCards(factions, options) ||
-                missing.any.?(WarningResult(missing./(factionName).mkString(", ") + " will get a free color")) |
+                missing.any.?(WarningResult(missing./(factionName).mkString(", ") + " will get a free color")) ||
+                (options.has(TeamPlay) && teams.num == factions.num).?(WarningResult("Every player is on a team alone: a free-for-all")) |
                 InfoResult("Northgard: Uncharted Lands")
             }
 
@@ -165,9 +177,16 @@ object Meta extends MetaGame { mmm =>
         val chosen = options.of[VictoryCardOption]./(_.card)
         val maps = chosen.count(_.mapControl)
         val wealth = chosen.count(_.mapControl.not)
-        val needed = Module.teams.exists { case (m, n) => has(options, m) && factions.num == n }.?(3).|(2)
+        val needed = (options.has(TeamPlay) || Module.teams.exists { case (m, n) => has(options, m) && factions.num == n }).?(3).|(2)
         (maps != 1 || wealth != needed).?(ErrorResult("Choose 1 Map Control card (" + maps + " chosen) and " + needed + " Wealth cards (" + wealth + " chosen)"))
     }
+
+    // Team play: the players of each team, teams in the order of their letters (the same teams Game.team makes)
+    def sides(factions : $[Faction], options : $[O]) : $[$[Faction]] =
+        factions./(teamOf(factions, options, _)).distinct.sorted./(t => factions.%(teamOf(factions, options, _) == t))
+
+    // f's team in team play: its TeamOption, else alternating by seat
+    def teamOf(factions : $[Faction], options : $[O], f : Faction) : Int = options.of[TeamOption].find(_.clan == f)./(_.team).|(factions.indexOf(f) % 2)
 
     def factionName(f : Faction) = (f == Automa).?("Automa (solo)").|(f.name + " Clan")
     // Random clans in the clan picker: one of the core clans, or one of all fourteen (a New Blood clan brings New Blood in)

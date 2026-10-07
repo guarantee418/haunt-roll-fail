@@ -35,7 +35,7 @@ draws a tile when no neutral territory is left.
 | Creatures module (core box), with the More Creatures variant | done 2026-10-03 (`creatures.scala`) |
 | Warchiefs module (Warchiefs expansion) | done 2026-10-03 (`warchiefs.scala`) |
 | "Ban card draw developments" house rule (not in the rulebook): leaves out Merchant, Market Place, Upgraded Market Place, Upgraded Trading Post, Greater Trade Routes, Trading Post and Cunning Merchant | done 2026-10-05 (`NoDrawDevelopments` in `options.scala`); Negociation, Spy, Ancestral Curse and Veiled Threats stay |
-| The Warchiefs box's 7 extra clan upgrade cards | done 2026-10-03: with the module, or alone with the "Warchief upgrade cards" option |
+| The Warchiefs box's 7 extra clan upgrade cards | done 2026-10-03: with the module, or alone with "Warchief upgrade cards only" in the "Warchiefs module" section |
 | Wilderness expansion: Environment tiles and five more creatures, with the Ancestral Graveyard and the Wyvern's Den | done 2026-10-04 (`wilderness.scala`, see Wilderness below) |
 | New Blood: seven more clans with their warchiefs and 28 clan cards | done 2026-10-04 (`newblood.scala`, see New Blood below) |
 | Uncharted Horizons: Events module and Alternative victory conditions module (Thane and Jarl modes) | done 2026-10-04 (`horizons.scala`, see below) |
@@ -229,12 +229,14 @@ have it; summarized from a review, check against the rulebook):
   movement there.
 - During the harvest, teammates may trade resources with each other 1:1.
 
-3v3 (option "3v3 Teams", six players) uses the same rules with teams of
-three; seats alternate between the teams (1, 3, 5 against 2, 4, 6).
-
-2v2v2 (option "2v2v2 Teams", six players) uses the same rules with three
-teams of two; teammates sit opposite each other (1 and 4, 2 and 5, 3 and 6),
-so the turn order goes round the three teams.
+Here any split works (2026-10-07): "Teams" above the clan picker (instead
+of "Free-for-all") and each player's team (Team A to F) on its row of the
+setup screen, any two or more teams with 3 to 6 players (2v2, 3v3, 2v2v2,
+but also 2v1, 3v2, 4v2, 2v2v1, ...). Turn order is the seating order on the
+setup screen, so put teammates opposite each other for the rulebook's
+2v2. The rules above apply to every team. Games made before with the old
+fixed variants (options "2v2 Teams", "3v3 Teams", "2v2v2 Teams": seats
+alternating, or 1+4, 2+5, 3+6) still play as they did.
 
 ## Clan powers
 
@@ -450,7 +452,10 @@ marked ⚡):
 | Squirrel | ⚡ Squirrel Clan: Recruit 1, then 1 food or fame equal to your units in your territories / 4 | Cooking Mastery: Build, then may build a free Food Silo in a territory you control, even next to another | Economics: draw 1; pay up to 2 food, 1 card each | Eldrich: Move 2; each casualty the enemy rolls also hits their own units |
 
 The warchief upgrade cards follow the Warchiefs box's rule: a third upgrade
-with the Warchiefs module or the "Warchief upgrade cards" option.
+with the Warchiefs module. The setup screen's "Warchiefs module" section offers
+the full module, the upgrade cards only ("Warchief upgrade cards only", as the
+box allows) or the warchiefs only ("Warchief pawns only", no third upgrade; the
+Knowledge victory card then counts as played without Warchiefs).
 
 ## Uncharted Horizons: Events module (2026-10-04)
 
@@ -1050,9 +1055,9 @@ Check these against the rulebook when it is at hand.
 - **Boar Clan**: "explores without closing any territory" is read literally:
   closing anyone's territory (or a neutral one) costs the lore.
 - **Teams**, where the summary above says nothing:
-  - Teams follow the seats: seats 1 and 3 (1, 3 and 5 in 3v3) against the
-    others; the turn order alternates between the teams. In 2v2v2 seats 1
-    and 4, 2 and 5, 3 and 6 are teams.
+  - Each player picks its team on the setup screen; the turn order is the
+    seating order (the old fixed variants: seats 1 and 3, or 1, 3 and 5,
+    against the others; in 2v2v2 seats 1 and 4, 2 and 5, 3 and 6).
   - Teammates are never enemies: no fights, and cards and powers that target
     enemies, opponents or enemy territories (Plunder, Capture, Raiding Party,
     Bribery, Call to War, Spy, Ancestral Curse, Rapacious Exploitation, Enemy
