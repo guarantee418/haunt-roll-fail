@@ -148,6 +148,12 @@ trait MetaBase {
     // They should be left out of optionPages.
     def factionRowOptions(f : F, l : $[F]) : $[O] = $
     def factionRowNone : Elem = "None".txt
+    // More buttons on the faction's row, after the factionRowOptions one, each cycling through its options; selected is what the
+    // game has so far, the picker mode included (Northgard: the player's team, in a team game)
+    def factionRowMore(f : F, l : $[F], selected : $[O]) : $[$[O]] = $
+    // Choices offered above the faction picker, one of them always picked (Northgard: free-for-all or teams): each one's label
+    // and the options it brings to the setup screen, where they are always on; the first is the default
+    def pickerModes : $[(Elem, $[O])] = $
     // The options restored from the last setup with as many players, completed for these factions (Northgard: colors
     // for the clans that weren't in that game)
     def completeSaved(n : Int, l : $[F], options : $[O]) : $[O] = options
