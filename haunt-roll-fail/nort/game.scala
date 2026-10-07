@@ -484,7 +484,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     val advancedPerPlayer = lastYear - 1 - earlyPerPlayer
 
     // The Warchiefs box's extra clan upgrade cards
-    val warchiefCards = has(Warchiefs) || options.has(WarchiefCards)
+    val warchiefCards = has(Warchiefs) && options.has(WarchiefPawns).not || options.has(WarchiefCards)
 
     // Three closed territories with large buildings win at the end of a year (not with the Alternative victory module)
     val domination = options.has(FameOnly).not && has(VictoryModule).not && (setup.has(Automa).not || options.has(AutomaLevelOption(1)))

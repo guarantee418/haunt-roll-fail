@@ -555,7 +555,7 @@ object VictoryExpansion extends Expansion {
                 case "large-territories" => closed.count(large) >= 3
                 case "two-larger-territories" => closed.count(t => game.board.tiles(t) >= 5 && large(t)) >= 2
                 case "mountains" => closed.count(rough) >= 6
-                case "knowledge" => if (game.has(Warchiefs)) upgrades(f) >= 3 else upgrades(f) >= 2 && s.lore >= 3
+                case "knowledge" => if (game.warchiefCards) upgrades(f) >= 3 else upgrades(f) >= 2 && s.lore >= 3
                 case "prosperity" => s.fame >= 50
                 case "population" => game.reserve(f) <= 1 && s.unrest == 0
                 case "production" => s.food >= 5 && s.wood >= 5 && s.lore >= 5

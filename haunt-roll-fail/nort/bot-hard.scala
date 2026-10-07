@@ -245,7 +245,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
                 case "mountains" => frac(closed.count(VictoryExpansion.rough) + 0.3 * mine.%(board.open).count(VictoryExpansion.rough), 6)
                 case "knowledge" =>
                     val u = VictoryExpansion.upgrades(f)
-                    if (game.has(Warchiefs)) frac(u, 3) else 0.7 * frac(u, 2) + 0.3 * frac(f.lore, 3)
+                    if (game.warchiefCards) frac(u, 3) else 0.7 * frac(u, 2) + 0.3 * frac(f.lore, 3)
                 case "prosperity" => frac(f.fame, 50)
                 case "population" => frac(game.onMap(f), game.unitLimit(f) - 1) * (f.unrest == 0).?(1.0).|(0.5)
                 case "production" => (math.min(f.food, 5) + math.min(f.wood, 5) + math.min(f.lore, 5)) / 15.0
