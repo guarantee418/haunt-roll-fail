@@ -727,8 +727,10 @@ its menu). Its menu has Local Game (pick 2-6 players) and Play Online.
   drafted (seat order); `ptf`/`ftp` map seats and clans (identity without
   Adset). `loggedPerform` sends a clan's Asks to its seat, `info` and the UI
   map the seat back (`factionStatus`/`seatStatus`, `factionElem`).
-  `BotAdset` plays the draft at random, then hands over to the clan's
-  Easy or Hard bot.
+  `BotAdset` plays the draft at random (it shuffles the choices: the
+  bots' sort keeps equal choices in order, so without that it always took
+  the first, the standard central tile and Wilderness), then hands over to
+  the clan's Easy or Hard bot.
 - **Options:** game length, victory conditions, Warchiefs and Sea are
   optional; "Wilderness or Wastelands" (`AdsetLands`): the second seat
   chooses (3+ players), Wilderness, Wastelands or Neither (2-player default).
@@ -754,6 +756,9 @@ its menu). Its menu has Local Game (pick 2-6 players) and Play Online.
   emblems are `MetaAdset`'s extra `clan/` assets). The UI's `convertActions`
   override sends a tap on the "i" (`AdsetClanInfo`) to an overlay with
   `Meta.factionInfo` instead of choosing the clan.
+  Until it picks its clan, each seat sees its three map tiles under "Your
+  map tiles" (`AdsetTileInfoAction`), and the map shows from the central
+  tile on (`makeScene` in `ui.scala` draws with no clan state yet).
 - **Testing:** `NORT_ADSET=1` in the headless host and ReplayCheck plays
   Adset games with random Adset options.
 
