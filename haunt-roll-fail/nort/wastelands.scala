@@ -727,7 +727,7 @@ object WastelandsExpansion extends Expansion {
                     case None => f.fame += 1
                 }
                 game.note("kobold-camp")
-                f.log("exchanged", 1.hl, r, "for", g./(x => 1.hl ~ " " ~ x.elem).|(1.hl ~ " fame"), "at the", Waste.elem(Waste.kobold))
+                f.log("exchanged", 1.hl, r, "for", g./(x => Amount(1.hl, x.elem)).|(1.hl ~ " fame"), "at the", Waste.elem(Waste.kobold))
                 Then(WasteTradeAction(f, k, c - 1, rest, then))
 
             case WasteTradeDoneAction(f, rest, then) =>

@@ -269,7 +269,7 @@ case class CreatureDeclareDoneAction(self : Faction, e : MoveEffect, then : Forc
 case class CreatureFightAction(self : Faction, area : AreaRef, c : Creature, e : MoveEffect, then : ForcedAction) extends BaseAction("Fight in")(area, "against", c) with MapTarget { def target = area }
 // attacking: the player attacks the creature; otherwise the creature attacks the player
 case class CreatureCombatAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, then : ForcedAction) extends ForcedAction
-case class CreatureFoodAction(self : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, then : ForcedAction) extends BaseAction(self, "spends food for the fight against", c, Break, CreatureFightInfo(self, area, c, e, attacking))((food == 0).?("No food".txt).|(food.hl ~ " " ~ Food.elem))
+case class CreatureFoodAction(self : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, then : ForcedAction) extends BaseAction(self, "spends food for the fight against", c, Break, CreatureFightInfo(self, area, c, e, attacking))((food == 0).?("No food".txt).|(Amount(food.hl, Food.elem)))
 case class CreaturePlayerRolledAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
 // Liv's reroll (Warchiefs module), and going on with the player's face
 case class CreatureRerollAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, then : ForcedAction) extends ForcedAction
