@@ -547,6 +547,9 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var mended = 0
     var retreatBy : |[Faction] = None
 
+    // The combat report of the fight just decided, until everyone shown it has tapped OK (CombatReportAction)
+    var fightReport : |[FightReport] = None
+
     // Where the last Recruit action placed units (Raven Mercenaries)
     var recruited : $[AreaRef] = $
 
