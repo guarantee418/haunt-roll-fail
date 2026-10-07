@@ -35,7 +35,7 @@ draws a tile when no neutral territory is left.
 | Creatures module (core box), with the More Creatures variant | done 2026-10-03 (`creatures.scala`) |
 | Warchiefs module (Warchiefs expansion) | done 2026-10-03 (`warchiefs.scala`) |
 | "Ban card draw developments" house rule (not in the rulebook): leaves out Merchant, Market Place, Upgraded Market Place, Upgraded Trading Post, Greater Trade Routes, Trading Post and Cunning Merchant | done 2026-10-05 (`NoDrawDevelopments` in `options.scala`); Negociation, Spy, Ancestral Curse and Veiled Threats stay |
-| The Warchiefs box's 7 extra clan upgrade cards | done 2026-10-03: with the module, or alone with the "Warchief upgrade cards" option |
+| The Warchiefs box's 7 extra clan upgrade cards | done 2026-10-03: with the module, or alone with "Warchief upgrade cards only" in the "Warchiefs module" section |
 | Wilderness expansion: Environment tiles and five more creatures, with the Ancestral Graveyard and the Wyvern's Den | done 2026-10-04 (`wilderness.scala`, see Wilderness below) |
 | New Blood: seven more clans with their warchiefs and 28 clan cards | done 2026-10-04 (`newblood.scala`, see New Blood below) |
 | Uncharted Horizons: Events module and Alternative victory conditions module (Thane and Jarl modes) | done 2026-10-04 (`horizons.scala`, see below) |
@@ -452,7 +452,10 @@ marked ⚡):
 | Squirrel | ⚡ Squirrel Clan: Recruit 1, then 1 food or fame equal to your units in your territories / 4 | Cooking Mastery: Build, then may build a free Food Silo in a territory you control, even next to another | Economics: draw 1; pay up to 2 food, 1 card each | Eldrich: Move 2; each casualty the enemy rolls also hits their own units |
 
 The warchief upgrade cards follow the Warchiefs box's rule: a third upgrade
-with the Warchiefs module or the "Warchief upgrade cards" option.
+with the Warchiefs module. The setup screen's "Warchiefs module" section offers
+the full module, the upgrade cards only ("Warchief upgrade cards only", as the
+box allows) or the warchiefs only ("Warchief pawns only", no third upgrade; the
+Knowledge victory card then counts as played without Warchiefs).
 
 ## Uncharted Horizons: Events module (2026-10-04)
 
