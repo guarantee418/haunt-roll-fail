@@ -57,6 +57,15 @@ case object Squirrel extends Faction
 // Player colors mark a player's units and starting cards; they are not tied to the clan
 trait PlayerColor extends NamedToString with Styling with Elementary with Record {
     def id = name.toLowerCase
+    // The colour of the player's name, also used for their territories on the map
+    def hex = this match {
+        case Blue => "#4e78bc"
+        case Red => "#e8410d"
+        case Yellow => "#f79c01"
+        case Purple => "#a56ca5"
+        case Green => "#4f9e3a"
+        case Orange => "#ff7a1a"
+    }
     // The banner on the starting cards: orange has no cards of its own and uses yellow's
     def cards = this match {
         case Orange => "yellow"

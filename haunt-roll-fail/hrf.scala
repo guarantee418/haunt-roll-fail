@@ -557,20 +557,35 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         var ostate = OptionsState[Setting](meta.settingsList, $, settings, meta.settingsDefaults).checkDimmed()
 
         def ask() {
+            def pick(o : Setting) {
+                if (ostate.enabled(o)) {
+                    ostate = ostate.click(o)
+                    settings = ostate.selected
+                    saveSettings(settings)
+                    applySettings(settings)
+                    ask()
+                }
+            }
+
+            // Consecutive compact settings of the same group share one row
+            val rows = meta.settingsList.foldLeft($[$[Setting]]()) { (rows, o) =>
+                (o, rows.lastOption./(_.last)) match {
+                    case (c : CompactSetting, Some(p : CompactSetting)) if p.group == c.group => rows.dropRight(1) :+ (rows.last :+ o)
+                    case _ => rows :+ $(o)
+                }
+            }
+
             ui.overlay.asker.zask(
-                meta.settingsList./({ o =>
-                    val state = ostate.selected.has(o)
-                    val active = ostate.enabled(o)
-                    ZBasic(o.group, state.?(o.valueOn).|(o.valueOff), (active || state).??(() => {
-                        if (active) {
-                            ostate = ostate.click(o)
-                            settings = ostate.selected
-                            saveSettings(settings)
-                            applySettings(settings)
-                            ask()
-                        }
-                    }), ZBasic.choice ++ $(xlo.fullwidth)).copy(clear = false)
-                }) ++
+                rows./~ {
+                    case l @ ((h : CompactSetting) :: _) =>
+                        val items = l./(o => OnClick(o, Div(ostate.selected.has(o).?(o.valueOn).|(o.valueOff), $(xstyles.choice, xstyles.xx, xstyles.chp, xstyles.compactChoice, xlo.pointer))))
+                        $(ZOption(h.group, Div(items.merge, $(xlo.flexhcenter, xlo.fullwidth)), p => pick(p.asInstanceOf[Setting]), clear = false))
+                    case l => l./({ o =>
+                        val state = ostate.selected.has(o)
+                        val active = ostate.enabled(o)
+                        ZBasic(o.group, state.?(o.valueOn).|(o.valueOff), (active || state).??(() => pick(o)), ZBasic.choice ++ $(xlo.fullwidth)).copy(clear = false)
+                    })
+                } ++
                 $(ZBasic("", "Reset All Settings", () => {
                     ostate = OptionsState[Setting](meta.settingsList, $, $, meta.settingsDefaults).checkDimmed()
                     settings = ostate.selected
