@@ -161,27 +161,34 @@ object VictoryCardOption {
     val all : $[VictoryCardOption] = VictoryCard.all./(VictoryCardOption(_))
 }
 
-// The Warchiefs box's 7 extra clan upgrade cards, which the rulebook allows without the Warchiefs module
-case object WarchiefCards extends GameOption with ToggleOption {
-    val group = "Warchief upgrade cards".txt
-    def valueOn = "Warchief upgrade cards without the module".txt
-    override val explain = $(
-        "The Warchiefs box adds a third clan upgrade card for each clan (Egil's Fury, Brand's Bravery, Borgild's Shield, Signy's Celerity, Liv's Cunning, Halvard's Craft, Svarn's Menders).",
-        "They are always in the game with the " ~ "Warchiefs".hl ~ " module (unless " ~ "Warchief pawns without the upgrade cards".hl ~ " is on). With this option they are also used without it; Borgild's Shield then ignores its Kaija and Borgild part.",
-    )
-    override def blocked(all : $[BaseOption]) = $($(WarchiefPawns))
+// WARCHIEFS MODULE: the whole module (ModuleOption(Warchiefs)), only its third clan upgrade cards (WarchiefCards),
+// or only its warchiefs (WarchiefPawns); at most one of the three
+object WarchiefsChoice {
+    val group = "Warchiefs module".txt
+    def all : $[GameOption] = $(ModuleOption(Warchiefs), WarchiefCards, WarchiefPawns)
+    def others(o : BaseOption) : $[BaseOption] = all.%(_ != o)
 }
 
-// The opposite of WarchiefCards: the Warchiefs module's warchiefs, but not its 7 extra clan upgrade cards
-case object WarchiefPawns extends GameOption with ToggleOption {
-    val group = "Warchief upgrade cards".txt
-    def valueOn = "Warchief pawns without the upgrade cards".txt
+// Each clan's warchief upgrade card (its third clan upgrade card, all 14 clans) without the warchiefs, which the rulebook allows
+case object WarchiefCards extends GameOption with ToggleOption {
+    val group = WarchiefsChoice.group
+    def valueOn = "Warchief upgrade cards only".txt
     override val explain = $(
-        "Plays the " ~ "Warchiefs".hl ~ " module with its warchiefs (pawns and powers) but leaves out the third clan upgrade card it adds for each clan, so every clan has its usual two upgrades.",
-        "Needs the " ~ "Warchiefs".hl ~ " module.",
+        "Each clan gets its warchief upgrade card, a third clan upgrade card (Egil's Fury, Brand's Bravery, Borgild's Shield, ...), but no warchief.",
+        "Borgild's Shield then ignores its Kaija and Borgild part.",
     )
-    override def required(all : $[BaseOption]) = $($(ModuleOption(Warchiefs)))
-    override def blocked(all : $[BaseOption]) = $($(WarchiefCards))
+    override def forcedOff(all : $[BaseOption]) = WarchiefsChoice.others(this)
+}
+
+// The warchiefs (pawns and powers) without the warchief upgrade cards; Meta.has counts it as the Warchiefs module
+case object WarchiefPawns extends GameOption with ToggleOption {
+    val group = WarchiefsChoice.group
+    def valueOn = "Warchief pawns only".txt
+    override val explain = $(
+        CombatText("Each clan gets its warchief: a unit worth 2 combat points with a power of its own (see the Warchief button when picking clans)."),
+        "No warchief upgrade cards: every clan has its usual two clan upgrades.",
+    )
+    override def forcedOff(all : $[BaseOption]) = WarchiefsChoice.others(this)
 }
 
 // Leaves the Development cards whose effect is to draw cards out of the decks (Game: ShuffledEarlyAction, ShuffledAdvancedAction).
@@ -260,6 +267,7 @@ case object Warchiefs extends Module("Warchiefs", "Warchiefs expansion") {
     def about = $(
         CombatText("Each clan gets its warchief: a unit worth 2 combat points with a power of its own (see the Warchief button when picking clans)."),
         "It can be placed at setup instead of one unit, or recruited instead of a unit, and goes back to the reserve when it dies. Card effects on enemy units can't target it.",
+        "Each clan also gets its warchief upgrade card, a third clan upgrade card.",
     )
 }
 
@@ -402,8 +410,10 @@ object Module {
 }
 
 case class ModuleOption(module : Module) extends GameOption with ToggleOption with ImportantOption {
-    val group = "Modules and expansions".txt
-    def valueOn = module.label.txt
+    // The Warchiefs module has its own section, with its parts (WarchiefsChoice)
+    val group = (module == Warchiefs).?(WarchiefsChoice.group).|("Modules and expansions".txt)
+    def valueOn = (module == Warchiefs).?("Full module: warchiefs and upgrade cards").|(module.label).txt
+    override def forcedOff(all : $[BaseOption]) = (module == Warchiefs).??(WarchiefsChoice.others(this))
     override val explain = module.about ++ module.ready.not.$("Not implemented yet.".styled(xstyles.warning))
     // A module that isn't ready requires itself, so it can never be turned on
     override def required(all : $[BaseOption]) = module.ready.?($($[BaseOption]())).|($($[BaseOption](this)))

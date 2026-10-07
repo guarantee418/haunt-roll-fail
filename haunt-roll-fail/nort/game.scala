@@ -1095,7 +1095,8 @@ object CommonExpansion extends Expansion {
                 log("Saved game version", version.hlb)
 
             // Colors and teams are told with each clan below ("plays Red in Team B")
-            options.%(o => o.is[ColorOption].not && o.is[TeamOption].not).foreach { o =>
+            // (Games from before the Warchiefs module section could have the module with Warchief pawns only: just the latter is told)
+            options.%(o => o.is[ColorOption].not && o.is[TeamOption].not).%(o => o != ModuleOption(Warchiefs) || options.has(WarchiefPawns).not).foreach { o =>
                 log(o.group, o.valueOn)
             }
 

@@ -71,7 +71,7 @@ object Meta extends MetaGame { mmm =>
     override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TeamPlay) ++ RobotosOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // New Blood has no option: picking one of its clans brings it in
-    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, CombatReportAttackers, CombatReportDefenders, WarchiefCards, WarchiefPawns, NoDrawDevelopments, HorizonsDevelopments) ++ Module.all.but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles) ++ AutomaLevelOption.all ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, CombatReportAttackers, CombatReportDefenders) ++ WarchiefsChoice.all ++ $(NoDrawDevelopments, HorizonsDevelopments) ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles) ++ AutomaLevelOption.all ++ hiddenOptions
 
     // Colors and teams only for the clans in the game, as many teams as players
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -135,7 +135,7 @@ object Meta extends MetaGame { mmm =>
 
     override def quickOptions = options./(o => o -> 0.0).toMap
 
-    def has(options : $[O], m : Module) = options.has(ModuleOption(m)) || (m == TrainingFields && options.has(TrainingFieldsOption)) || (m == VictoryModule && VictoryChoice.alternative.exists(options.has)) || (m == Wastelands && CentralChoice.picked(options))
+    def has(options : $[O], m : Module) = options.has(ModuleOption(m)) || (m == Warchiefs && options.has(WarchiefPawns)) || (m == TrainingFields && options.has(TrainingFieldsOption)) || (m == VictoryModule && VictoryChoice.alternative.exists(options.has)) || (m == Wastelands && CentralChoice.picked(options))
 
     // Quick Game: always three players, core clans and core rules (no option is turned on beyond the defaults)
     val quickMin = 3
