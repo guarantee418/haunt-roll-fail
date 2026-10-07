@@ -73,6 +73,8 @@ case class AdsetPickAction(self : Player, clan : Faction, rest : $[Player]) exte
 // The draft, shown to everyone while it lasts; tapping a clan shows its info
 case class AdsetClanInfo(clan : Faction)
 case class AdsetClanInfoAction(title : Elem, clan : Faction) extends BaseInfo(title)(AdsetExpansion.clanTile(clan, false)) with AdsetDraftChoice with OnClickInfo { def param = AdsetClanInfo(clan) }
+// The three map tiles a seat drew, shown to it until it picks its clan
+case class AdsetTileInfoAction(title : Elem, tile : String) extends BaseInfo(title)(Image("tile-" + tile, styles.seatTile))
 
 
 object AdsetExpansion extends Expansion {
@@ -128,7 +130,8 @@ object AdsetExpansion extends Expansion {
         game.seats.any.??(
             $(Info("Seats:", game.seats.zipWithIndex./{ case (p, i) => ((i + 1) + ". ").hl ~ seatElem(p).styled(color(p)) ~ game.ptf.get(p)./(c => " " ~ c.name.hlb).|(Empty) }.join(", "))) ++
             game.banned.any.$(Info("Banned:", game.banned./(_.name.hl).join(", "))) ++
-            actions.exists(a => a.unwrap.is[AdsetBanAction] || a.unwrap.is[AdsetPickAction]).not.??(remaining./(c => AdsetClanInfoAction("Clans in the draft".hl, c)))
+            actions.exists(a => a.unwrap.is[AdsetBanAction] || a.unwrap.is[AdsetPickAction]).not.??(remaining./(c => AdsetClanInfoAction("Clans in the draft".hl, c))) ++
+            player./~(game.seatTiles.get).|($)./(t => AdsetTileInfoAction("Your map tiles".hl, t))
         )
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
@@ -285,7 +288,8 @@ class BotAdset(p : Player, hard : Boolean) extends EvalBot {
     def eval(actions : $[UserAction])(implicit game : Game) : Compute[$[ActionEval]] =
         game.ptf.get(p) match {
             case Some(f) if actions.exists(draft).not => hard.?(new BotHard(f) : EvalBot).|(new BotXX(f)).eval(actions)
-            case _ => actions./(a => ActionEval(a, $))
+            // At random: the sort keeps the order of equal choices, so unshuffled it would always take the first
+            case _ => actions.shuffle./(a => ActionEval(a, $))
         }
 }
 
