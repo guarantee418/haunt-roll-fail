@@ -481,33 +481,56 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     def showTrackers = callbacks.settings.has(HideBoardTrackers).not
 
-    // The score and item trackers, on the boards that have places for them, unless hidden in the settings
+    // A clearing name's top at ny, x - w to x + w wide: moved up to just above the score tracker if it would overlap it
+    def nameOverTrack(x : Double, ny : Double, w : Double) : Double = game.board.scoreTrack.filter(_ => showTrackers).map { case (x0, y0, step) =>
+        val k = step / 64.45
+        val (left, top, right) = (x0 - 32.7 * k, y0 - 34 * k, x0 - 32.7 * k + 2000 * k)
+
+        if (ny + 60 > top && x + w > left && x - w < right) math.min(ny, top - 60 - 4) else ny
+    }.getOrElse(ny)
+
+    // The score and item trackers, unless hidden in the settings
     def drawTrackers(g : dom.CanvasRenderingContext2D) {
         if (showTrackers) {
-            // score-track: boxes 0 to 30, 64.45 pixels apart, box 0 centred at (32.7, 34)
             game.board.scoreTrack.foreach { case (x0, y0, step) =>
                 val k = step / 64.45
                 g.drawImage(resources.images.get("score-track"), x0 - 32.7 * k, y0 - 34 * k, 2000 * k, 68 * k)
             }
 
-            // item-track: the usual two rows of six slots, 87.4 pixels apart, the first centred at (31.5, 31.5)
             game.board.itemSlots match {
                 case (_, x, y) :: (_, x1, _) :: _ =>
                     val k = (x1 - x) / 87.4
+
+                    // a dark panel behind it, so the light slots show on snow too
+                    val (px, py, pw, ph, r) = (x - (31.5 + 14) * k, y - (31.5 + 14) * k, (500 + 28) * k, (147 + 28) * k, 16 * k)
+
+                    g.save()
+                    g.beginPath()
+                    g.moveTo(px + r, py)
+                    g.arcTo(px + pw, py, px + pw, py + ph, r)
+                    g.arcTo(px + pw, py + ph, px, py + ph, r)
+                    g.arcTo(px, py + ph, px, py, r)
+                    g.arcTo(px, py, px + pw, py, r)
+                    g.closePath()
+                    g.fillStyle = "rgba(40, 32, 24, 0.72)"
+                    g.fill()
+                    g.restore()
+
                     g.drawImage(resources.images.get("item-track"), x - 31.5 * k, y - 31.5 * k, 500 * k, 147 * k)
                 case _ =>
             }
         }
     }
 
-    // Faction VP markers on the score tracker (only some boards have one).
+    // Faction VP markers on the score tracker.
     // Factions on the same score are stacked upwards; a faction with a dominance or in a coalition has no marker.
     def drawScoreTrack(g : dom.CanvasRenderingContext2D) {
         if (showTrackers.not)
             return
 
         game.board.scoreTrack.foreach { case (x0, y0, step) =>
-            val size = 64
+            // 64 pixels on the Gorge and Marsh trackers
+            val size = 64 * step / 74.63
             val max = game.board.scoreTrackMax
 
             val scoring = factions.%(game.states.contains).%(f => (f.dominance.none || f.demagogue) && f.coalition.none)
@@ -543,14 +566,20 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         }
     }
 
-    // The items still available to craft, on the item tracker (only some boards have one)
+    // The items still available to craft, on the item tracker
     def drawItemSlots(g : dom.CanvasRenderingContext2D) {
         if (showTrackers.not)
             return
 
-        val size = 62
+        val slots = game.board.itemSlots
 
-        game.board.itemSlots.groupBy(_._1).foreach { case (item, slots) =>
+        // 62 pixels on the Gorge and Marsh trackers
+        val size = slots match {
+            case (_, x, _) :: (_, x1, _) :: _ => 62 * (x1 - x) / 88
+            case _ => 62.0
+        }
+
+        slots.groupBy(_._1).foreach { case (item, slots) =>
             slots.take(game.uncrafted.count(item)).foreach { case (_, x, y) =>
                 g.drawImage(resources.images.get(item.imgid), x - size / 2, y - size / 2, size, size)
             }
@@ -776,6 +805,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     val (x, y) = game.board.center(c)
                     val dx = c.name.length * 12 + 38
 
+                    // the name (60 pixels tall) goes under the clearing, or just above the score tracker if it would cover it
+                    val ny = nameOverTrack(x, y + 165, dx + 70)
+
                     val nmn = c.name.replace(' ', '-')
                     val nmi = resources.images.get(mapid + "clearing-name-" + nmn)
                     val stn = game.mapping(c)./(_.name).distinct.join("-")
@@ -783,7 +815,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     // Marsh: a clearing without a suit (until its landmark is placed) gets an untinted name
                     if (stn == "") {
                         if (nmi.complete)
-                            g.drawImage(nmi, x - 240, y + 165)
+                            g.drawImage(nmi, x - 240, ny)
                     }
                     else {
                         val sti = resources.images.get("text-tint:" + stn + (hl && game.mapping(c).has(Frog)).??("-hl"))
@@ -798,7 +830,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                             nmt.context.globalCompositeOperation = "destination-in"
                             nmt.context.drawImage(nmi, 0, 0)
 
-                            g.drawImage(nmt.canvas, x - 240, y + 165)
+                            g.drawImage(nmt.canvas, x - 240, ny)
                         }
                     }
 
@@ -806,16 +838,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
                     suits.indexed.foreach { (s, n) =>
                         val si = resources.images.get("clearing-suit-" + s + (hl && s == Frog).??("-hl"))
-                        g.drawImage(si, x - 30 + dx + 40 * n + (n > 0).??(5) + (n > 2).??(5), y + 165)
-                        g.drawImage(si, x - 30 - dx - 40 * n - (n > 0).??(5) - (n > 2).??(5), y + 165)
+                        g.drawImage(si, x - 30 + dx + 40 * n + (n > 0).??(5) + (n > 2).??(5), ny)
+                        g.drawImage(si, x - 30 - dx - 40 * n - (n > 0).??(5) - (n > 2).??(5), ny)
                     }
 
                     val offs = game.original(c).diff(suits)
 
                     offs.indexed.foreach { (s, i) =>
                         val n = i + suits.num
-                        g.drawImage(resources.images.get("clearing-suit-" + s + "-off"), x - 30 + dx + 40 * n + (n > 0).??(10) + (n > 2).??(5), y + 165)
-                        g.drawImage(resources.images.get("clearing-suit-" + s + "-off"), x - 30 - dx - 40 * n - (n > 0).??(10) - (n > 2).??(5), y + 165)
+                        g.drawImage(resources.images.get("clearing-suit-" + s + "-off"), x - 30 + dx + 40 * n + (n > 0).??(10) + (n > 2).??(5), ny)
+                        g.drawImage(resources.images.get("clearing-suit-" + s + "-off"), x - 30 - dx - 40 * n - (n > 0).??(10) - (n > 2).??(5), ny)
                     }
 
                     val rulers = (factions ++ game.unhired).%(game.states.contains).%(_.rules(c))

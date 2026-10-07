@@ -964,7 +964,7 @@ trait TrackersOption extends hrf.Setting with OneOfGroup {
 }
 
 case object ShowBoardTrackers extends TrackersOption {
-    val valueOn = "Shown".hlb ~ " (Score and Items on the Gorge and Marsh Maps)".hl
+    val valueOn = "Shown".hlb ~ " (Score and Items on the Map)".hl
 }
 
 case object HideBoardTrackers extends TrackersOption {
@@ -1541,8 +1541,8 @@ object Meta extends MetaGame {
         ImageAsset("vp-kd") ::
         ImageAsset("vp-ld") ::
     $) ::
-    // The score and item trackers drawn on the maps that have places for them (the Board Trackers setting)
-    ConditionalAssetsList((factions, options) => options.has(GorgeMap) || options.has(MarshMap), "tracker")(
+    // The score and item trackers (the Board Trackers setting)
+    ConditionalAssetsList((factions, options) => true, "tracker")(
         ImageAsset("score-track") ::
         ImageAsset("item-track") ::
     $) ::

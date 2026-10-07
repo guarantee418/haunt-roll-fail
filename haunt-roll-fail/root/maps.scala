@@ -53,6 +53,11 @@ object AutumnBoard extends Board {
 
     val inner = $(Beach, Glade, Waterfall)
 
+    // The trackers in the usual places on this board's image, 20 pixels bigger on every side
+    override val scoreTrack = |((108.3, 2162.0, 74.63))
+
+    override def itemSlots = itemGrid(445.0, 88.0, 109.5, 193.5)
+
     def connected(c : Clearing) = c @@ {
         case Hill => $(Creek, Beach, Dune)
         case Glade => $(Beach, Waterfall, Pond, Haven, Dune)
@@ -178,6 +183,9 @@ object WinterBoard extends Board {
     val diagonals = $((Mound, Hedge), (Moor, Spire))
 
     val inner = $(Wade, Bend)
+
+    // The score tracker along the bottom edge of this board's image, 8 pixels taller than most
+    override val scoreTrack = |((88.3, 2130.0, 74.63))
 
     object WinterNW extends UnnamedForest
     object Deadwood extends NamedForest("Deadwood")
@@ -425,6 +433,9 @@ object MountainBoard extends Board {
     val diagonals = $((Slope, Crest), (Drain, Peak))
 
     val inner = $(Pass, Valley)
+
+    // The score tracker along the bottom edge of this board's image, 8 pixels taller than most
+    override val scoreTrack = |((88.3, 2130.0, 74.63))
 
     override val rubble = $((Brim, Ledge), (Ledge, Mine), (Mine, Peak), (Ramp, Valley), (Valley, Ridge), (Cliff, Crest))
 
@@ -909,12 +920,6 @@ object GorgeBoard extends Board {
 
     val inner = $(Fork, Pueblo)
 
-    // Where the score tracker (along the bottom edge) and the item tracker (top left) are drawn,
-    // where the printed board has them
-    override val scoreTrack = |((88.3, 2122.0, 74.63))
-
-    override val itemSlots = itemGrid(425.0, 88.0, 89.5, 173.5)
-
     object GorgeNW extends NamedForest("North-West")
     object GorgeN extends NamedForest("North")
     object GorgeNE extends NamedForest("North-East")
@@ -1053,7 +1058,7 @@ object MarshBoard extends Board {
 
     // Where the item tracker (top left, as on the printed board) and the score tracker
     // (along the bottom edge, below the Delta and Bayou names) are drawn
-    override val itemSlots = itemGrid(423.5, 87.4, 90.0, 173.5)
+    override def itemSlots = itemGrid(423.5, 87.4, 90.0, 173.5)
 
     override val scoreTrack = |((79.9, 2201.0, 74.63))
 
