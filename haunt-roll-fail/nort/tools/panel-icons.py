@@ -53,3 +53,61 @@ for name, color in [('hand', (110, 200, 80)), ('draw', (240, 200, 60)), ('discar
     c = Image.new('RGBA', (64 * K, 64 * K))
     c.paste(card, ((64 * K - W) // 2, (64 * K - H) // 2), card)
     c.rotate(-12, resample=Image.BICUBIC).resize((64, 64), Image.LANCZOS).save(IMAGES + 'ui/card-' + name + '.webp', quality=90)
+
+# The harvest and Winter rows' icons, drawn 8 times larger then scaled down, with a dark outline
+import math
+
+def ellipse(d, cx, cy, rx, ry, angle, fill):
+    a = math.radians(angle)
+    pts = [(rx * math.cos(t), ry * math.sin(t)) for t in [i * math.pi / 24 for i in range(48)]]
+    d.polygon([(cx + x * math.cos(a) - y * math.sin(a), cy + x * math.sin(a) + y * math.cos(a)) for x, y in pts], fill=fill)
+
+def outlined(shape, out, outline=(40, 30, 20, 255)):
+    S = shape.size[0]
+    edge = Image.new('RGBA', shape.size, outline)
+    edge.putalpha(shape.getchannel('A').filter(ImageFilter.MaxFilter(2 * K + 1)))
+    edge.alpha_composite(shape)
+    edge.resize((64, 64), Image.LANCZOS).save(IMAGES + 'ui/' + out, quality=90)
+
+S = 64 * K
+
+# harvest.webp: a wheat sheaf, stalks fanning out above and below a tied band
+wheat = Image.new('RGBA', (S, S))
+d = ImageDraw.Draw(wheat)
+band = (S / 2, S * 0.60)
+stalks = [-34, -17, 0, 17, 34]
+for a in stalks:
+    r = math.radians(a)
+    top = (band[0] + math.sin(r) * S * 0.30, band[1] - math.cos(r) * S * 0.30)
+    bottom = (band[0] - math.sin(r) * S * 0.36 * 0.55, band[1] + S * 0.36)
+    d.line([bottom, band, top], fill=(196, 146, 52, 255), width=3 * K, joint='curve')
+for a in stalks:
+    r = math.radians(a)
+    for i in range(4):
+        t = S * (0.30 + 0.065 * i)
+        cx, cy = band[0] + math.sin(r) * t, band[1] - math.cos(r) * t
+        for side in (-1, 1):
+            ox, oy = math.cos(r) * side * S * 0.028, math.sin(r) * side * S * 0.028
+            ellipse(d, cx + ox, cy + oy, S * 0.024, S * 0.042, a + side * 28, (236, 190, 72, 255))
+    t = S * 0.30 + 0.065 * 4 * S - S * 0.02
+    ellipse(d, band[0] + math.sin(r) * t, band[1] - math.cos(r) * t, S * 0.022, S * 0.045, a, (236, 190, 72, 255))
+d.rounded_rectangle((S * 0.36, band[1] - S * 0.035, S * 0.64, band[1] + S * 0.035), radius=S * 0.02, fill=(150, 84, 34, 255))
+outlined(wheat, 'harvest.webp')
+
+# winter.webp: a snowflake, six branched arms
+flake = Image.new('RGBA', (S, S))
+d = ImageDraw.Draw(flake)
+c = S / 2
+ice = (205, 235, 255, 255)
+for i in range(6):
+    r = math.radians(60 * i - 90)
+    def at(t, off=0):
+        return (c + math.cos(r) * t - math.sin(r) * off, c + math.sin(r) * t + math.cos(r) * off)
+    d.line([at(0), at(S * 0.44)], fill=ice, width=5 * K)
+    for t, l in [(0.20, 0.13), (0.32, 0.09)]:
+        for side in (-1, 1):
+            b = r + side * math.radians(55)
+            p = at(S * t)
+            d.line([p, (p[0] + math.cos(b) * S * l, p[1] + math.sin(b) * S * l)], fill=ice, width=4 * K)
+d.ellipse((c - S * 0.07, c - S * 0.07, c + S * 0.07, c + S * 0.07), fill=ice)
+outlined(flake, 'winter.webp', (30, 70, 120, 255))
