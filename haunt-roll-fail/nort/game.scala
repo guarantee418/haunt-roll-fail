@@ -302,6 +302,12 @@ object CardIcon {
     def discard : Elem = Image("ui-card-discard", styles.inlineIcon).alt("discarded")
 }
 
+// The player panels' Harvest and Winter rows: a wheat sheaf and a snowflake (drawn by nort/tools/panel-icons.py)
+object SeasonIcon {
+    def harvest : Elem = Image("ui-harvest", styles.inlineIcon).alt("Harvest")
+    def winter : Elem = Image("ui-winter", styles.inlineIcon).alt("Winter")
+}
+
 object FirstPlayerIcon {
     def apply() : Elem = Image("ui-first-player", styles.inlineIcon).alt("First player")
 }

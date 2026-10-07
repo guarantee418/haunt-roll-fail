@@ -97,7 +97,7 @@ player panels in a row, the shared cards and the hand below them, and the
 log on the far right, with the
 hand cards sized to the pane (`--nort-hand-card`) so the whole hand fits. The player panels end with the clan's next harvest as things stand
 (`Harvest.forecast` in `nort/game.scala`, the same sums `HarvestAction` uses,
-fame included) and its Winter cost (as losses, "-1"); tapping the Winter line, the Harvest line or the resources opens the whole
+fame included) and its Winter cost (as losses, "-1"), on rows marked with a wheat sheaf and a snowflake (`SeasonIcon`, drawn by `nort/tools/panel-icons.py`); tapping the Winter line, the Harvest line or the resources opens the whole
 Winter chart (`winterChart` in `nort/ui.scala`). Each player can hide the
 tints and the colored borders under "Interface" (the Territory Color and
 Fame Borders settings in `nort/meta.scala`). The tints are the player colors themselves

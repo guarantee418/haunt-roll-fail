@@ -1243,10 +1243,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         def item(n : Elem, e : Elem) : Elem = stacked.?((e.div ~ n.div).spn(styles.stackedItem)).|(Amount(n, e))
         def row(l : $[Elem]) : Elem = stacked.?(l.merge).|(l.join(" "))
         def amounts(l : $[(String, Elem)]) : Elem = row(l.map { case (n, e) => item(n.hl, e) })
-        def line(title : String, l : $[(String, Elem)]) : Elem =
-            if (l.none) (title + ": ").txt ~ "nothing".txt
-            else if (stacked) (title + ":").txt.div ~ amounts(l)
-            else (title + ": ").txt ~ amounts(l)
+        def line(title : Elem, l : $[(String, Elem)]) : Elem =
+            if (l.none) Amount(title, "nothing".txt)
+            else if (stacked) title.div ~ amounts(l)
+            else Amount(title, amounts(l))
 
         // Tapping the resources (or the harvest) shows the Winter chart, with the stockpile and the harvest
         def toWinter(e : Elem) : Elem = (f != Automa).?(OnClick(WinterChart(f), e.spn(xlo.pointer))).|(e)
@@ -1286,12 +1286,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val gains = $(next.food -> Food.elem, next.wood -> Wood.elem, next.lore -> Lore.elem, next.fame -> FameIcon()).filter(_._1 > 0).map { case (n, e) => ("+" + n) -> e }
         // Dragon Clan: 1 more food or wood for the sacrifice
         val pyre = (f == Dragon && game.dragonHarvest.has(false).not && (game.dragonHarvest.any || NewBloodExpansion.sacrificeOptions(f)) && game.controlled(f).any).$("+1" -> (Food.elem ~ "/" ~ Wood.elem))
-        val harvest = (f != Automa).?(OnClick(WinterChart(f), line("Harvest", gains ++ pyre).div(xlo.pointer))).|(line("Harvest", gains ++ pyre).div)
+        val harvest = (f != Automa).?(OnClick(WinterChart(f), line(SeasonIcon.harvest, gains ++ pyre).div(xlo.pointer))).|(line(SeasonIcon.harvest, gains ++ pyre).div)
 
         // Winter costs as losses: "-1 [food]"
         val (food, wood) = EventsExpansion.winterCost(f)
         val costs = $(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => ("-" + n) -> e }
-        val winter = (f != Automa).?(OnClick(WinterChart(f), line("Winter", costs).div(styles.tappable)(xlo.pointer))).|(Empty)
+        val winter = (f != Automa).?(OnClick(WinterChart(f), line(SeasonIcon.winter, costs).div(styles.tappable)(xlo.pointer))).|(Empty)
 
         val content = (title.div ~ res ~ units ~ chief ~ cards ~ nb ~ goals ~ marks ~ harvest ~ winter).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
 
