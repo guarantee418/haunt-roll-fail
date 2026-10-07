@@ -69,7 +69,8 @@ package object elem {
         object drillCard extends CustomStyle(display("block"), width("var(--nort-hand-card, 12ex)"))
         // Raid cards are landscape: twice a hand card's width
         object raidHandCard extends CustomStyle(display("block"), width("calc(2 * var(--nort-hand-card, 22ex))"), max.width("100%"))
-        object inlineIcon extends CustomStyle(height("1.4em"), vertical.align("middle"))
+        // Icons in text; a number just before one stays on its line (GluesToNumber)
+        object inlineIcon extends CustomStyle(height("1.4em"), vertical.align("middle")) with GluesToNumber
         // A player panel line of numbers and icons, kept on one row
         object panelLine extends CustomStyle(white.space("nowrap"))
         // The Stacked player panels: each icon above its number
