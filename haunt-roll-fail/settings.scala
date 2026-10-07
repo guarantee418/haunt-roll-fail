@@ -16,6 +16,9 @@ import hrf.elem._
 
 trait Setting extends BaseOption
 
+// A setting whose group is shown as one row of small buttons instead of a full-width button per value
+trait CompactSetting extends Setting
+
 sealed trait TipsSetting extends Setting with OneOfGroup {
     val group = "Tips"
 }

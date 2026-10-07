@@ -383,16 +383,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         tints.get(key)
     }
 
-    // Tint per player colour: yellow and green strong, red, orange and blue medium, purple light;
-    // red leans to crimson and blue to violet so the green art doesn't turn them brown or teal
-    def tintOf(c : PlayerColor) : (String, Double) = c match {
-        case Blue => ("#2a40ff", 0.45)
-        case Red => ("#d00038", 0.5)
-        case Yellow => ("#ffc400", 0.55)
-        case Purple => ("#9b30c8", 0.3)
-        case Green => ("#147a14", 0.55)
-        case Orange => ("#ff5200", 0.5)
-    }
+    // Tint per player colour: the colour of the player's name, as opaque as the player's Territories setting
+    def tintOf(c : PlayerColor) : (String, Double) =
+        (c.hex, callbacks.settings.collectFirst { case TerritoryOpacity(x, p) if x == c => p }.|(50) / 100.0)
 
     // Border dashes of the closed territories a player controls, bright enough to show on the dark roads
     def lineOf(c : PlayerColor) : String = c match {
