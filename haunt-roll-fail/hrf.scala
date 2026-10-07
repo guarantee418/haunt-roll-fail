@@ -568,7 +568,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             }
 
             // Consecutive compact settings of the same group share one row
-            val rows = meta.settingsList.foldLeft($[$[Setting]]()) { (rows, o) =>
+            val rows = meta.settingsList.filter(_.visible(ostate.selected)).foldLeft($[$[Setting]]()) { (rows, o) =>
                 (o, rows.lastOption./(_.last)) match {
                     case (c : CompactSetting, Some(p : CompactSetting)) if p.group == c.group => rows.dropRight(1) :+ (rows.last :+ o)
                     case _ => rows :+ $(o)

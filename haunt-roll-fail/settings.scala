@@ -14,7 +14,10 @@ import hrf.options._
 import hrf.elem._
 
 
-trait Setting extends BaseOption
+trait Setting extends BaseOption {
+    // Whether the settings screen lists it, given the settings currently chosen
+    def visible(selected : $[BaseOption]) : Boolean = true
+}
 
 // A setting whose group is shown as one row of small buttons instead of a full-width button per value
 trait CompactSetting extends Setting

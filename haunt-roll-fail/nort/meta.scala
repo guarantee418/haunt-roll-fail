@@ -412,7 +412,7 @@ object Meta extends MetaGame { mmm =>
     override val showAbout = false
 
     // Map display settings, chosen by each player under "Interface" (like Root's Clearing Rule)
-    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, FightsTerritoryColor, HideTerritoryColor) ++ TerritoryOpacity.all ++ $(ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels)
+    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, CustomTerritoryColor, FightsTerritoryColor, HideTerritoryColor) ++ TerritoryOpacity.all ++ $(ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels)
     override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, CompactPanels) ++ PlayerColor.all./(TerritoryOpacity(_, 50))
 }
 
@@ -424,6 +424,11 @@ trait TerritoryColorSetting extends hrf.Setting with OneOfGroup {
 
 case object ShowTerritoryColor extends TerritoryColorSetting {
     val valueOn = "Show".hlb
+}
+
+// Like Show, with the opacity of each colour set by the player (the rows below it, shown only when this is picked)
+case object CustomTerritoryColor extends TerritoryColorSetting {
+    val valueOn = "Custom".hlb
 }
 
 case object FightsTerritoryColor extends TerritoryColorSetting {
@@ -438,6 +443,7 @@ case object HideTerritoryColor extends TerritoryColorSetting {
 case class TerritoryOpacity(color : PlayerColor, percent : Int) extends hrf.CompactSetting with OneOfGroup {
     val group = color.name + " Territories"
     val valueOn = (percent + "%").hlb
+    override def visible(selected : $[BaseOption]) = selected.has(CustomTerritoryColor)
 }
 
 object TerritoryOpacity {
