@@ -116,6 +116,8 @@ trait MetaBase {
     def botOptions(seating : $[F], bots : Map[F, String]) : $[O] = $
     // Whether an option is listed on the setup screen with the current choices; used to show options only when they apply
     def optionShown(o : O, selected : $[O]) : Boolean = true
+    // Whether a foldable section (BaseOption.fold) is shown open even when folded, e.g. while it holds a mistake to fix
+    def optionFoldOpen(fold : String, factions : $[F], selected : $[O]) : Boolean = false
 
     val indistinguishableFactions : Boolean = false
     val gradualFactions : Boolean = false

@@ -141,6 +141,9 @@ trait BaseOption extends Record {
 
     val toggle : Boolean = false
 
+    // The foldable section it belongs to (hrf.ui.Folds): folded, the section shows only what is picked
+    def fold : |[String] = None
+
     def required(all : $[BaseOption]) : $[$[BaseOption]] = $($())
     def blocked(all : $[BaseOption]) : $[$[BaseOption]] = $()
     def forcedOn(all : $[BaseOption]) : $[BaseOption] = $()

@@ -65,6 +65,7 @@ object RobotosOption {
 // 3 and up need the Creatures module; from 4, the Automa draws one more card each year per level above 3
 case class AutomaLevelOption(level : Int) extends GameOption with OneOfGroup with ImportantOption {
     val group = "Automa difficulty".txt
+    override def fold = |("Automa difficulty")
     def valueOn = ("Level " + level).hlb
     override def decorate(e : Elem) = e ~ (level match {
         case 1 => " (or four closed territories with large buildings)"
@@ -85,6 +86,7 @@ object AutomaLevelOption {
 // Number of years; developments revealed scale with it (Game.earlyPerPlayer, Game.advancedPerPlayer)
 case class YearsOption(years : Int) extends GameOption with OneOfGroup with ImportantOption {
     val group = "Game length".txt
+    override def fold = |("Game length")
     def valueOn = years.hlb ~ " years"
     override def decorate(e : Elem) = e ~ (years == 7).?(" (standard)".spn).|(Empty) ~ (years == 10).?(" (long variant)".spn).|(Empty)
     override val explain = $(
@@ -102,6 +104,7 @@ object YearsOption {
 // VICTORY CONDITIONS: one of the four ways to win, then (Alternative victory) the mode and, if chosen by hand, the cards
 trait VictoryChoice extends GameOption with OneOfGroup with ImportantOption {
     val group = "Victory conditions".txt
+    override def fold = |("Victory conditions")
 }
 
 // The core rules: three closed territories each with a large building at the end of a year, otherwise the most fame
@@ -142,6 +145,7 @@ object VictoryChoice {
 // The Alternative victory mode
 case class VictoryModeOption(jarl : Boolean) extends GameOption with ImportantOption {
     val group = "Victory conditions".txt
+    override def fold = |("Victory conditions")
     def valueOn = jarl.?("Jarl: all three cards").|("Thane: Map Control and one Wealth card").txt
     override val explain = $("Needs " ~ "Alternative victory".hl ~ ". Thane is the default.")
     override def required(all : $[BaseOption]) = VictoryChoice.alternative./(o => $[BaseOption](o))
@@ -151,6 +155,7 @@ case class VictoryModeOption(jarl : Boolean) extends GameOption with ImportantOp
 // An Alternative victory card chosen by hand
 case class VictoryCardOption(card : VictoryCard) extends GameOption with ToggleOption with ImportantOption {
     val group = "Victory conditions".txt
+    override def fold = |("Victory conditions")
     def valueOn = (card.mapControl.?("Map Control: ").|("Wealth: ").spn(xstyles.smaller85) ~ card.name.txt)
     override def decorate(e : Elem) = e ~ VictoryExpansion.needsCreatures(card).?(" (Creatures module)".spn(xstyles.smaller85)).|(Empty)
     override val explain = $(card.name.hl ~ ": " ~ card.info.textElem, "Needs " ~ "Alternative victory, chosen cards".hl ~ ".")

@@ -130,6 +130,7 @@ object Waste {
 // The central tile (setup step F); offered in every game
 abstract class CentralChoice(val label : String) extends GameOption with OneOfGroup with ImportantOption {
     val group = "Central tile".txt
+    override def fold = |("Central tile")
     def valueOn = label.txt
     def tile : |[String] = None
 }
