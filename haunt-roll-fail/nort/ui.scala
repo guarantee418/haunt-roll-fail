@@ -1115,8 +1115,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         ("Winter costs".hlb.div ~
             Div(cells.merge, styles.winterChart) ~
             events ~
-            (f.name.styled(colorOf(f)) ~ " pays " ~ (food + wood == 0).?("nothing".txt).|($(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => Amount(n.hl, e) }.join(" ")) ~ " for " ~ counted(f).hl ~ " units").div ~
             ("Has " ~ Amount(state.food.hl, Food.elem) ~ " " ~ Amount(state.wood.hl, Wood.elem) ~ ", after the harvest " ~ Amount(after._1.hl, Food.elem) ~ " " ~ Amount(after._2.hl, Wood.elem)).div ~
+            (f.name.styled(colorOf(f)) ~ " pays " ~ (food + wood == 0).?("nothing".txt).|($(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => Amount(n.hl, e) }.join(" ")) ~ " for " ~ counted(f).hl ~ " units during winter").div ~
             short.?(("Not enough without trading: an unpaid Winter gives an " ~ UnrestCard.elem ~ " card").div).|(Empty) ~
             HorizontalBreak ~
             "(tap to close)".spn(xstyles.smaller85).div
@@ -1216,7 +1216,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             else if (stacked) (title + ":").txt.div ~ amounts(l)
             else (title + ": ").txt ~ amounts(l)
 
-        val res = row(Resource.all./(r => item(state.has(r).hl, r.elem))).div(styles.panelLine)
+        // Tapping the resources (or the harvest) shows the Winter chart, with the stockpile and the harvest
+        def toWinter(e : Elem) : Elem = (f != Automa).?(OnClick(WinterChart(f), e.spn(xlo.pointer))).|(e)
+
+        val res = toWinter(row(Resource.all./(r => item(state.has(r).hl, r.elem)))).div(styles.panelLine)
 
         // Sea module: the units away on Raids
         val raiding = SeaExpansion.raiders(f)
@@ -1225,8 +1228,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Warchiefs module: the warchief's name, dimmed while in the reserve
         val chief = game.has(Warchiefs).?(game.chiefs.contains(f).?(Warchief.elem(f)).|(Warchief.name(f).txt ~ " (reserve)".spn(xstyles.smaller85)).div).|(Empty)
 
-        // Cards in hand, to draw and discarded; tapping the discards shows them
-        val cards = row($(item(state.hand.num.hl, CardIcon.hand), item(state.draw.num.hl, CardIcon.draw), OnClick(DiscardPile(f), item(state.discard.num.hl, CardIcon.discard).spn(xlo.pointer)))).div(styles.panelLine)
+        // Cards in hand, to draw and discarded; tapping any of them shows the discards
+        val cards = OnClick(DiscardPile(f), row($(item(state.hand.num.hl, CardIcon.hand), item(state.draw.num.hl, CardIcon.draw), item(state.discard.num.hl, CardIcon.discard))).spn(xlo.pointer)).div(styles.panelLine)
 
         // New Blood: Dragon's Sacrificial Pyre, Kraken's High Tide tokens, Ox's Ancestral Equipment tokens
         val nb = f match {
@@ -1251,7 +1254,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val gains = $(next.food -> Food.elem, next.wood -> Wood.elem, next.lore -> Lore.elem, next.fame -> FameIcon()).filter(_._1 > 0).map { case (n, e) => ("+" + n) -> e }
         // Dragon Clan: 1 more food or wood for the sacrifice
         val pyre = (f == Dragon && game.dragonHarvest.has(false).not && (game.dragonHarvest.any || NewBloodExpansion.sacrificeOptions(f)) && game.controlled(f).any).$("+1" -> (Food.elem ~ "/" ~ Wood.elem))
-        val harvest = line("Harvest", gains ++ pyre).div
+        val harvest = (f != Automa).?(OnClick(WinterChart(f), line("Harvest", gains ++ pyre).div(xlo.pointer))).|(line("Harvest", gains ++ pyre).div)
 
         // Winter costs as losses: "-1 [food]"
         val (food, wood) = EventsExpansion.winterCost(f)
