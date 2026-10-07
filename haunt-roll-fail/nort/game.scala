@@ -291,15 +291,16 @@ object CombatText {
     }
 }
 
-// The player panels' icons: a unit (the figure on the Recruit card), the cards in hand (green), to draw (yellow) and discarded (red), and the first player marker
+// The player panels' icons: a unit (the figure on the Recruit card), the cards to draw (white), in hand (green), played this year (yellow) and discarded (red), and the first player marker
 object UnitIcon {
     def apply() : Elem = Image("ui-unit", styles.inlineIcon).alt("units")
 }
 
 object CardIcon {
-    def hand : Elem = Image("ui-card-hand", styles.inlineIcon).alt("in hand")
-    def draw : Elem = Image("ui-card-draw", styles.inlineIcon).alt("to draw")
-    def discard : Elem = Image("ui-card-discard", styles.inlineIcon).alt("discarded")
+    def draw : Elem = Image("ui-card-deck", styles.inlineIcon, styles.cardIcon).alt("to draw")
+    def hand : Elem = Image("ui-card-hand", styles.inlineIcon, styles.cardIcon).alt("in hand")
+    def active : Elem = Image("ui-card-active", styles.inlineIcon, styles.cardIcon).alt("played this year")
+    def discard : Elem = Image("ui-card-discard", styles.inlineIcon, styles.cardIcon).alt("discarded")
 }
 
 // The player panels' Harvest and Winter rows: a wheat sheaf and a snowflake (drawn by nort/tools/panel-icons.py)
@@ -350,6 +351,8 @@ case class WinterChart(f : Faction)
 case class RobotosInfo(f : Faction)
 // A player's discard pile, opened from the action pane
 case class DiscardPile(f : Faction)
+// A player's active cards (played this year), opened from the yellow card in its panel
+case class ActiveCards(f : Faction)
 // Tapping Dragon Clan's Sacrificial Pyre in its panel shows it full size
 case object PyreView
 case class ClanBoardInfoAction(self : Faction, title : Elem) extends BaseInfo(title)(Image(Warchief.board(self), styles.boardInfo)) with ViewObject[Faction] with OnClickInfo { def obj = self ; def param = ClanBoard(self) }
