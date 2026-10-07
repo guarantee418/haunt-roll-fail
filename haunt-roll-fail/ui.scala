@@ -154,7 +154,21 @@ class LazyLogger(val body : AttachmentPoint) {
 }
 
 
-case class ZOption(group : Elem, option : Elem, click : Any => Unit = null, clear : Boolean = true, over : Any => Unit = null, out : Any => Unit = null) extends GoodMatch
+// groupClick: what tapping the group heading does, when the heading has an OnClick (a foldable section, Folds)
+case class ZOption(group : Elem, option : Elem, click : Any => Unit = null, clear : Boolean = true, over : Any => Unit = null, out : Any => Unit = null, groupClick : Any => Unit = null) extends GoodMatch
+
+// Sections of the setup and settings screens folded under a tappable heading (BaseOption.fold); folded until opened, the open ones are remembered
+object Folds {
+    val key = "hrf.open-sections"
+
+    def opened : $[String] = try { hrf.web.Local.get(key, "").split('|').$.%(_.nonEmpty) } catch { case _ : Throwable => $ }
+
+    def isOpen(s : String) = opened.has(s)
+
+    def toggle(s : String) : Unit = try { hrf.web.Local.set(key, opened.has(s).?(opened.but(s)).|(opened :+ s).join("|")) } catch { case _ : Throwable => }
+
+    def heading(title : Elem, open : Boolean) : Elem = OnClick(title, Span(title ~ " " ~ open.?("▾").|("▸"), $(xlo.pointer)))
+}
 
 object ZBasic {
     val choice   = $(xstyles.choice, xstyles.xx, xstyles.chm, xstyles.chp, xstyles.thuc, xlo.fullwidth, xstyles.thumargin, xlo.pointer)
@@ -215,7 +229,7 @@ class Asker(val body : AttachmentPoint, assets : String => dom.html.Image) {
                 g = Empty
 
             if (g != Empty)
-                cont.attach.append(g.div(xlo.fullwidth), resources)
+                cont.attach.append(g.div(xlo.fullwidth), resources, w.groupClick)
 
             cont.attach.append(o, resources, l => {
                 if (w.clear) {
@@ -369,7 +383,7 @@ class NewAsker(body : Container, assets : String => dom.html.Image, header : |[S
             else
                 g = Empty
 
-            body.attach.append(g, resources)
+            body.attach.append(g, resources, w.groupClick)
             body.attach.append(o, resources, l => {
                 if (w.clear) {
                     scroll = true

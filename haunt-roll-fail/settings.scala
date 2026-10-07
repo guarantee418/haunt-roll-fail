@@ -17,6 +17,9 @@ import hrf.elem._
 trait Setting extends BaseOption {
     // Whether the settings screen lists it, given the settings currently chosen
     def visible(selected : $[BaseOption]) : Boolean = true
+
+    // How a folded section that isn't headed by its own group sums it up (Northgard's Territory Opacity)
+    def foldSummary : Elem = group ~ " " ~ valueOn
 }
 
 // A setting whose group is shown as one row of small buttons instead of a full-width button per value
@@ -51,6 +54,7 @@ case object SystemFontFace extends FontFaceSetting {
 
 sealed trait FontSizeSetting extends Setting with OneOfGroup {
     val group = "Font Size"
+    override def fold = Some("Font Size")
 }
 
 case object SmallerFontSize extends FontSizeSetting {
@@ -102,6 +106,7 @@ case object ExpandedButtonSpacing extends ButtonSpacingSetting {
 
 sealed trait ScrollSpeedSetting extends Setting with OneOfGroup {
     val group = "Scroll Speed"
+    override def fold = Some("Scroll Speed")
 }
 
 case object SlowestScrollSpeed extends ScrollSpeedSetting {

@@ -159,7 +159,12 @@ victory with random cards (the rulebook's way), or Alternative victory with
 cards chosen from the 21 listed below it (exactly 1 Map Control and 2 Wealth,
 3 with teams, or Start is refused); plus Thane or Jarl. Thane/Jarl and the
 cards are listed only when they apply (`optionShown` in `nort/meta.scala`, a
-hook the setup screen in `hrf.scala` calls for every option). Northgard no longer sets `underConstruction`
+hook the setup screen in `hrf.scala` calls for every option). Long sections fold under a tappable
+heading with an arrow (`Folds` in `ui.scala`, `BaseOption.fold`): on the setup screen Game length, Victory conditions,
+Automa difficulty and Central tile, in the settings Font Size, Scroll Speed (every game) and Territory Opacity. Folded,
+a section shows only what is picked (Territory Opacity a one-line summary, `Setting.foldSummary`); every section starts
+folded and the open ones are remembered in the browser (`hrf.open-sections`). Victory conditions stays open while the
+chosen cards are the wrong number (`Meta.optionFoldOpen`). Northgard no longer sets `underConstruction`
 in its `Meta` (setting it to `true` would put an "Under Construction" note under
 its name on the game list and a disclaimer at the top of its menu).
 `nort/host.scala` runs bot games headless (JVM only,

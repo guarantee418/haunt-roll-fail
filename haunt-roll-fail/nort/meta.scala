@@ -93,6 +93,9 @@ object Meta extends MetaGame { mmm =>
         case _ => true
     }
 
+    // Victory conditions stays open while the chosen cards are the wrong number, so the message's cause is in view
+    override def optionFoldOpen(fold : String, factions : $[F], selected : $[O]) = fold == "Victory conditions" && validateVictoryCards(factions, selected).any
+
     // Colors and teams are chosen on each clan's row of the setup screen, the rest below
     override def optionPages(n : Int, l : $[F]) = {
         val all = optionsFor(n, l)
@@ -444,6 +447,9 @@ case class TerritoryOpacity(color : PlayerColor, percent : Int) extends hrf.Comp
     val group = color.name + " Territories"
     val valueOn = (percent + "%").hlb
     override def visible(selected : $[BaseOption]) = selected.has(CustomTerritoryColor)
+    // The six rows fold under one Territory Opacity heading (hrf.ui.Folds)
+    override def fold = |("Territory Opacity")
+    override def foldSummary = color.name ~ " " ~ valueOn
 }
 
 object TerritoryOpacity {

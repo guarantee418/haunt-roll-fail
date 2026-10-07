@@ -575,15 +575,29 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 }
             }
 
+            // A foldable section (Folds) under its own group's heading shows only what is picked until the heading is tapped;
+            // one made of several groups gets a heading of its own, with a summary of what is picked while folded
+            def fold(s : String) = (_ : Any) => { Folds.toggle(s) ; ask() }
+
             ui.overlay.asker.zask(
-                rows./~ {
-                    case l @ ((h : CompactSetting) :: _) =>
-                        val items = l./(o => OnClick(o, Div(ostate.selected.has(o).?(o.valueOn).|(o.valueOff), $(xstyles.choice, xstyles.xx, xstyles.chp, xstyles.compactChoice, xlo.pointer))))
-                        $(ZOption(h.group, Div(items.merge, $(xlo.flexhcenter, xlo.fullwidth)), p => pick(p.asInstanceOf[Setting]), clear = false))
-                    case l => l./({ o =>
-                        val state = ostate.selected.has(o)
-                        val active = ostate.enabled(o)
-                        ZBasic(o.group, state.?(o.valueOn).|(o.valueOff), (active || state).??(() => pick(o)), ZBasic.choice ++ $(xlo.fullwidth)).copy(clear = false)
+                rows.zipWithIndex./~ { case (l, i) =>
+                    val f = l.head.fold
+                    val open = f.forall(Folds.isOpen)
+                    val headed = f.exists(_ == l.head.group.text)
+                    val group = f.%(_ => headed)./(s => Folds.heading(l.head.group, open)).|(l.head.group)
+                    val first = f.any && headed.not && (i == 0 || rows(i - 1).head.fold != f)
+                    val section = rows.drop(i).takeWhile(_.head.fold == f).flatten
+
+                    first.$(ZOption(Folds.heading(f.get.txt, open), open.?(Empty).|(OnClick(Div(section.%(ostate.selected.has)./(_.foldSummary).reduceOption((a, b) => a ~ " · " ~ b).|(Empty), ZBasic.choice ++ $(xlo.fullwidth)))), fold(f.get), clear = false, groupClick = fold(f.get))) ++
+                    (open || headed).??(l match {
+                        case (h : CompactSetting) :: _ =>
+                            val items = l./(o => OnClick(o, Div(ostate.selected.has(o).?(o.valueOn).|(o.valueOff), $(xstyles.choice, xstyles.xx, xstyles.chp, xstyles.compactChoice, xlo.pointer))))
+                            $(ZOption(group, Div(items.merge, $(xlo.flexhcenter, xlo.fullwidth)), p => pick(p.asInstanceOf[Setting]), clear = false, groupClick = f./(fold).orNull))
+                        case l => l.%(o => open || ostate.selected.has(o))./({ o =>
+                            val state = ostate.selected.has(o)
+                            val active = ostate.enabled(o)
+                            ZBasic(group, state.?(o.valueOn).|(o.valueOff), (active || state).??(() => pick(o)), ZBasic.choice ++ $(xlo.fullwidth)).copy(clear = false, groupClick = f./(fold).orNull)
+                        })
                     })
                 } ++
                 $(ZBasic("", "Reset All Settings", () => {
@@ -1574,6 +1588,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
             val vm = v.message.styled(v.style)
 
+            def foldOpen(s : String) = Folds.isOpen(s) || meta.optionFoldOpen(s, seating, options.actual)
+
             ui.action.asker.zask(
                 (page == 0).?? {
                     seating./(f => ZOption("Setup Factions".styled(xstyles.larger125), Div(Empty ~ online.?(Input(notes.get(f).|(""), "Player #" + (seating.indexOf(f) + 1), s => notes += f -> s.sanitize(32), 9, 16, ZBasic.inputT, ZBasic.inputD)) ~ " " ~ (padding(f) ~ hidden.has(f).?(meta.randomName.txt).|(meta.factionElem(f)) ~ padding(f)).div(xstyles.width18ch) ~ " " ~
@@ -1627,11 +1643,12 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         })
                     }
                 } ++
-                meta.optionsFor(seating.num, seating).diff(meta.hiddenOptions).intersect(pages(page)).%(meta.optionShown(_, options.actual))./({ o =>
+                // A foldable section shows only what is picked until its heading is tapped (Folds)
+                meta.optionsFor(seating.num, seating).diff(meta.hiddenOptions).intersect(pages(page)).%(meta.optionShown(_, options.actual)).%(o => o.fold.forall(foldOpen) || options.selected.has(o))./({ o =>
                     val state = options.selected.has(o)
                     val enabled = options.enabled(o)
                     val active = enabled
-                    ZOption(o.group.styled(xstyles.larger125),
+                    ZOption(o.fold./(s => Folds.heading(o.group.styled(xstyles.larger125), foldOpen(s))).|(o.group.styled(xstyles.larger125)),
                         OnClick(Div(state.?(o.decorate(o.valueOn).styled(xstyles.bold)).|(o.decorate(o.valueOff))
                         ~ (o.explain.any).?(Parameter(o, OnClick(Image("question-mark")(xstyles.explain)))), (active || state).?(ZBasic.choice).|(ZBasic.info) ++ state.$(xstyles.optionOn) ++ $(xstyles.optionE))), {
                             case o : GameOption if o.explain.any =>
@@ -1646,7 +1663,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                                     }
                                 }
                                 setupQuestions(page)
-                        }
+                        },
+                        groupClick = o.fold./(s => (_ : Any) => { if (meta.optionFoldOpen(s, seating, options.actual).not) Folds.toggle(s) ; setupQuestions(page) }).orNull
                     )
                 }) ++
                 (page == 0).$(
