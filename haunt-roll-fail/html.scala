@@ -182,11 +182,26 @@ package object html {
         def appendContainerGetAP(elem : Elem, resources : Resources) : ElementAttachmentPoint = appendContainer(elem : Elem, resources : Resources).attach.asInstanceOf[ElementAttachmentPoint]
     }
 
+    // redraws the text and images already on the page after the display language changed
+    def retranslate() {
+        val texts = dom.document.querySelectorAll("[data-text]")
+        0.until(texts.length).foreach { i =>
+            val e = texts(i).asInstanceOf[dom.html.Element]
+            e.textContent = Translation.text(e.dataset("text"))
+        }
+        val images = dom.document.querySelectorAll("img[data-source]")
+        0.until(images.length).foreach { i =>
+            val f = images(i).asInstanceOf[js.Dynamic].retranslate
+            if (!js.isUndefined(f))
+                f.asInstanceOf[js.Function0[Unit]]()
+        }
+    }
+
     def htmlString(elem : Elem, r : Resources) : String = elem match {
         case Empty => ""
         case s : SpecialElem => htmlString(s.underlying, r)
         case x if x == HorizontalBreak => "<hr/>"
-        case Text(s) => s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        case Text(s) => Translation.text(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         case Span(e, styles) => "<span class='" + styles.id + "'>" + htmlString(e, r) + "</span>"
         case Div(e, styles) => "<div class='" + styles.id + "'>" + htmlString(e, r) + "</div>"
         case Image(image, styles, desc) => "<img class='" + styles.id + "' src='" + r.images.getSource(image.id) + "' alt='" + desc.|(image.id) + "' />"
@@ -213,7 +228,8 @@ package object html {
         case Text(s) =>
             val r = dom.document.createElement("span").asInstanceOf[dom.html.Span]
             r.dataset("elem") = "text"
-            r.appendChild(dom.document.createTextNode(s))
+            r.dataset("text") = s
+            r.appendChild(dom.document.createTextNode(Translation.text(s)))
             $(r)
 
         case Comment(s) =>
@@ -238,18 +254,24 @@ package object html {
             val r = dom.document.createElement("h" + lvl).asInstanceOf[dom.html.Heading]
             resources.getStyles(styles).foreach(r.classList.add)
             r.dataset("elem") = "header"
-            r.appendChild(dom.document.createTextNode(s))
+            r.dataset("text") = s
+            r.appendChild(dom.document.createTextNode(Translation.text(s)))
             $(r)
 
-        case Image(s, styles, desc) =>
+        case Image(i, styles, desc) =>
             val r = dom.document.createElement("img").asInstanceOf[dom.html.Image]
             r.ondragstart = (e) => false
-            r.dataset("source") = s.id
+            r.dataset("source") = i.id
             r.asInstanceOf[js.Dynamic].crossorigin = "use-credentials"
             resources.getStyles(styles).foreach(r.classList.add)
-            r.dataset("src") = resources.images.getSource(s.id)
-            resources.images.getBlobSource(s.id) { url => r.src = url }
-            r.alt = desc.|(s.id.split('-').dropWhile(_.length < 3).join(" "))
+            def show() {
+                val s = Some(Translation.image(i.id)).filter(t => t != i.id && resources.images.hasSource(t)).map(ImageId(_)).getOrElse(i)
+                r.dataset("src") = resources.images.getSource(s.id)
+                resources.images.getBlobSource(s.id) { url => r.src = url }
+                r.alt = desc.|(s.id.split('-').dropWhile(_.length < 3).join(" "))
+            }
+            show()
+            r.asInstanceOf[js.Dynamic].retranslate = (() => show()) : js.Function0[Unit]
             $(r)
 
         case ContentDiv(id, styles) =>

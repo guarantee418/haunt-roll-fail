@@ -395,7 +395,28 @@ class HRFUI(implicit resources : Resources) {
     logger.alog(Empty ~ "John 3:16")
 
     def topMenu() {
-        action.asker.zask(HRF.menuMetas./(m => ZBasic("Kings and Chronicles".hh(xstyles.larger110)(ExternalStyle("consolas")), metaLabel(m), () => if (m == root.Meta) rootMenu() else new HRFMetaUI(this, m, 0)(resources).withMeta(), ZBasic.choice.but(xstyles.thumargin))))
+        hrf.elem.Translation.set("", identity, identity)
+
+        def entry(m : MetaGame, label : Elem, onClick : () => Unit) = ZBasic("Kings and Chronicles".hh(xstyles.larger110)(ExternalStyle("consolas")), label, onClick, ZBasic.choice.but(xstyles.thumargin))
+
+        action.asker.zask(HRF.menuMetas./~(m =>
+            if (m == root.Meta)
+                $(
+                    entry(m, metaLabel(m), () => { rootLanguage(root.EnglishLanguage) ; rootMenu() }),
+                    entry(m, (m.label + " en français").spn(xstyles.larger110)(ExternalStyle(m.titleFont.|(""))), () => { rootLanguage(root.FrenchLanguage) ; rootMenu() })
+                )
+            else
+                $(entry(m, metaLabel(m), () => new HRFMetaUI(this, m, 0)(resources).withMeta()))
+        ))
+    }
+
+    // Root's language is one of its settings (shared by all the Root metas), so the French entry
+    // only saves it and every Root game, online or local, is the same game in either language
+    def rootLanguage(language : root.LanguageOption) {
+        val key = root.Meta.settingsKey + ".settings"
+        val saved = Local.get(key, "").split(' ').$.%(s => s != "" && s != root.EnglishLanguage.toString && s != root.FrenchLanguage.toString)
+        Local.set(key, (saved :+ language.toString).mkString(" "))
+        root.Meta.translation($(language)) @@ { case (language, text, image) => hrf.elem.Translation.set(language, text, image) }
     }
 
     def rootMenu() {
@@ -495,6 +516,13 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 "margin-bottom: " + margin + " !important;" +
                 "padding-top: " + padding + " !important;" +
                 "padding-bottom: " + padding + " !important;").asInstanceOf[dom.CSSStyleDeclaration]
+        }
+
+        meta.translation(settings) @@ { case (language, text, image) =>
+            val changed = language != hrf.elem.Translation.language
+            hrf.elem.Translation.set(language, text, image)
+            if (changed)
+                hrf.html.retranslate()
         }
 
         dom.window.asInstanceOf[Dynamic].clicksToSwitchFullScreen = settings.of[FullScreenSetting].lastOption @@? {
