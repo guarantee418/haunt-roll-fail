@@ -73,6 +73,10 @@ package object elem {
         object inlineIcon extends CustomStyle(height("1.4em"), vertical.align("middle")) with GluesToNumber
         // A player panel line of numbers and icons, kept on one row
         object panelLine extends CustomStyle(white.space("nowrap"))
+        // The four card counts in a compact panel: a little smaller, so the row fits as the three resources do
+        object cardLine extends CustomStyle(font.size("80%"))
+        // The card icons without most of the clear space beside the tilted card
+        object cardIcon extends CustomStyle(margin.left("-0.14em"), margin.right("-0.14em"))
         // The Stacked player panels: each icon above its number
         object stackedItem extends CustomStyle(display("inline-block"), text.align("center"), margin.left("0.4ex"), margin.right("0.4ex"))
         object buildIcon extends CustomStyle(height("2.6em"), vertical.align("middle"), margin.right("1ex"))
