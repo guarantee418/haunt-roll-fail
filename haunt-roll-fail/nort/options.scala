@@ -187,17 +187,21 @@ case object FirstSeatStarts extends GameOption with ToggleOption {
 }
 
 
-// After the die decides a fight, the attacker gets a combat report (who won and how, each side's combat points and
-// casualties and where they came from, what each lost) and taps OK before any retreat (CombatReportAction in map.scala).
-// With this option the defender gets it too. Off by default, like Root's Async options
-case object CombatReportOption extends GameOption with ToggleOption {
+// After the die decides a fight (against a clan or a creature), the combat report: who won and how, each side's
+// combat points and casualties and where they came from, what each lost; the player taps OK before any retreat
+// (CombatReportAction in map.scala). One option for the attacking side, one for the defending side; both off by
+// default, like Root's Async options
+abstract class CombatReportChoice(label : String, side : String) extends GameOption with ToggleOption {
     val group = "Combat report".txt
-    def valueOn = "Combat report for defenders".txt
+    def valueOn = label.txt
     override val explain = $(
-        CombatText("After the dice decide a fight, the attacker always sees a combat report: who won and how, each side's combat points and casualties and where they came from, and what each side lost. The attacker taps OK to go on to the retreat."),
-        "With this option the defender sees it and taps OK too, after the attacker.",
+        CombatText("After the dice decide a fight, against a clan or a creature, the " + side + " sees a combat report: who won and how, each side's combat points and casualties and where they came from, and what each side lost."),
+        "They tap OK to go on (to the retreat, if there is one).",
     )
 }
+
+case object CombatReportAttackers extends CombatReportChoice("Combat report for attackers", "attacking player")
+case object CombatReportDefenders extends CombatReportChoice("Combat report for defenders", "defending player")
 
 
 // Modules and expansions. Each one is a game option; until a module is implemented its option

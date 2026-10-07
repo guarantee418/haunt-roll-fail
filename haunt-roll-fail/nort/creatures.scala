@@ -601,6 +601,16 @@ object CreaturesExpansion extends Expansion {
             // Losing all units loses the fight; otherwise ties go to the defender
             val won = pc < units && attacking.?(ps > cs).|(ps >= cs)
 
+            // The combat report, from the same sums; creatures ignore casualties, so the clan inflicts none
+            val wyvernBack = won && c.kind == Wyvern && Wild.homeIn(t).not && Wild.homes.any
+            val player = FightSide(f, attacking, FightPoints.parts(f, t, attacking, $(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, robo -> "Robotos".hl, food -> Food.elem, face.points -> "the die".txt, pw -> "Wastelands".hl)), ps, $, 0, math.min(pc, units))
+            val creature = FightSide(None, c.elem, attacking.not, $(c.kind.value -> "its strength".txt, cface.points -> "the die".txt, cw -> "Wastelands".hl).filter(_._1 > 0), cs,
+                $(cface.casualties -> "the die".txt, -shield -> "cancelled".txt).filter(_._1 != 0), pc, 0, won.?(wyvernBack.?("was driven back to its Den".txt).|("was defeated".txt)).|(Empty))
+            game.fightReport = |(FightReport(a, attacking.?(player).|(creature), attacking.?(creature).|(player), |(won == attacking), won.not && pc >= units))
+
+            val readers = CombatReport.readers(attacking.?(f), attacking.not.?(f))
+            def next(then : ForcedAction) = (readers.any).?(Then(CombatReportAction(readers, then))).|(Then(then))
+
             val before = game.count(t, f)
             game.removeFigures(t, f, math.min(pc, units))
 
@@ -626,7 +636,7 @@ object CreaturesExpansion extends Expansion {
 
                 f.log("drove", c, "back to its Den")
 
-                Then(then)
+                next(then)
             }
             else
             if (won) {
@@ -654,16 +664,16 @@ object CreaturesExpansion extends Expansion {
                     f.log("gained", 1.hl, FameIcon(), "for conquering a territory")
                 }
 
-                Then(then)
+                next(then)
             }
             else {
                 log(c, "won the fight in", a)
 
                 // Attacking a creature that shares its territory, the units simply stay
                 if (game.figures(t, f) > 0 && (attacking.not || c.kind.shares.not))
-                    Then(RetreatAction(f, a, false, then))
+                    next(RetreatAction(f, a, false, then))
                 else
-                    Then(then)
+                    next(then)
             }
 
         // MORE CREATURES VARIANT
