@@ -123,7 +123,7 @@ case class IntimidateSkipAction(self : Faction, area : AreaRef, e : MoveEffect, 
 case class AxeAction(self : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], face : DieFace, then : ForcedAction) extends BaseAction("Axe Throwers", Break, FightInfo(self, defender, area, e, food))(face)
 
 // COMBAT
-case class CombatFoodAction(self : Faction, attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], then : ForcedAction) extends BaseAction(self, "spends food for the fight", Break, FightInfo(attacker, defender, area, e, food.dropRight(1)))((food.last == 0).?("No food").|(food.last.hl ~ " " ~ Food.elem))
+case class CombatFoodAction(self : Faction, attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], then : ForcedAction) extends BaseAction(self, "spends food for the fight", Break, FightInfo(attacker, defender, area, e, food.dropRight(1)))((food.last == 0).?("No food").|(Amount(food.last.hl, Food.elem)))
 case class CombatRollAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], then : ForcedAction) extends ForcedAction
 case class CombatRolledAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
 // Liv's reroll (Warchiefs module): roll again, then go on with the face without offering another reroll
@@ -173,9 +173,9 @@ case class ExploreRedrawAction(self : Faction, tile : String, times : Int, e : E
 // BUILD
 // smallOnly: Carpentry Mastery after a large building
 case class BuildAction(f : Faction, e : BuildEffect, times : Int, smallOnly : Boolean, then : ForcedAction) extends ForcedAction
-case class BuildPlaceAction(self : Faction, area : AreaRef, building : Building, space : SpaceRef, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build in", area)(building, "(" ~ (cost == 0).?("free".txt).|(cost.hl ~ " " ~ Wood.elem) ~ ")") with MapTarget { def target = area }
+case class BuildPlaceAction(self : Faction, area : AreaRef, building : Building, space : SpaceRef, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build in", area)(building, "(" ~ (cost == 0).?("free".txt).|(Amount(cost.hl, Wood.elem)) ~ ")") with MapTarget { def target = area }
 // A building that fits more than one kind of free space in the territory: the player picks the space
-case class BuildSlotAction(self : Faction, area : AreaRef, building : Building, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build in", area)(building, "(" ~ (cost == 0).?("free".txt).|(cost.hl ~ " " ~ Wood.elem) ~ ")") with Soft with MapTarget { def target = area }
+case class BuildSlotAction(self : Faction, area : AreaRef, building : Building, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build in", area)(building, "(" ~ (cost == 0).?("free".txt).|(Amount(cost.hl, Wood.elem)) ~ ")") with Soft with MapTarget { def target = area }
 case class BuildSpaceAction(self : Faction, area : AreaRef, building : Building, space : SpaceRef, kind : SpaceKind, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build", building, "in", area, "on")(SpaceLabel(kind)) with MapTarget { def target = space }
 // Build on a card: tap a free building space, pick a building from the menu (every building with its cost),
 // then confirm it, previewed on the space with a check mark and a cross above it
@@ -213,7 +213,7 @@ object SpaceName {
 
 object BuildingLabel {
     def apply(b : Building, cost : Int) : Elem =
-        Image(b.image, styles.buildIcon) ~ b.title.hl ~ " (" ~ (cost == 0).?("free".txt).|(cost.hl ~ " " ~ Wood.elem) ~ ")"
+        Image(b.image, styles.buildIcon) ~ b.title.hl ~ " (" ~ (cost == 0).?("free".txt).|(Amount(cost.hl, Wood.elem)) ~ ")"
 }
 
 object FeastLabel {
@@ -340,7 +340,7 @@ object FightPoints {
 
         val points = parts.filter(_._1 > 0)
         val total = points.map(_._1).sum
-        val more = casualties.filter(_._1 > 0)./{ case (n, what) => "+" ~ CombatIcon.skulls(n) ~ " from " ~ what } ++
+        val more = casualties.filter(_._1 > 0)./{ case (n, what) => Amount(("+" + n).hl, CombatIcon.skull) ~ " from " ~ what } ++
             (cancels > 0).$("cancels " ~ CombatIcon.skulls(cancels))
 
         f.elem ~ attacking.?(" (attacking)").|(" (defending)") ~ ": " ~ CombatIcon.axes(total) ~
@@ -723,7 +723,7 @@ object MapExpansion extends Expansion {
         f.wood += wood
         f.lore += lore
         if (food + wood + lore > 0)
-            f.log("collected", $(food -> Food, wood -> Wood, lore -> Lore).filter(_._1 > 0)./{ case (n, r) => n.hl ~ " " ~ r.elem }.join(", "), reason)
+            f.log("collected", $(food -> Food, wood -> Wood, lore -> Lore).filter(_._1 > 0)./{ case (n, r) => Amount(n.hl, r.elem) }.join(", "), reason)
     }
 
     // Where f's figures in t can retreat to: not into a fight, nor where a creature is being attacked or a Fallen Valkyrie is

@@ -63,7 +63,7 @@ case class WatchersDoneAction(self : Faction, then : ForcedAction) extends BaseA
 case class WatchersLabel(option : Int, r : |[Resource]) extends Elementary {
     def elem = option match {
         case 0 => "Recruit 1 unit there".txt
-        case 1 => "Collect " ~ 1.hl ~ " " ~ r.get.elem
+        case 1 => "Collect " ~ Amount(1.hl, r.get.elem)
         case _ => "Draw 1 card".txt
     }
 }
@@ -273,7 +273,7 @@ object HorizonDevsExpansion extends Expansion {
         case GiftsAction(f, a, then) =>
             val l = missing(game.board.territory(a))
             l.foreach(r => f.gain(r, 1))
-            f.log("collected", l./(r => 1.hl ~ " " ~ r.elem).join(", "), "with", "Fateful Gifts".hl)
+            f.log("collected", l./(r => Amount(1.hl, r.elem)).join(", "), "with", "Fateful Gifts".hl)
             Then(then)
 
         // TAMER

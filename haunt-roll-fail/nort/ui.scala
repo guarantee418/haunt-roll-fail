@@ -1101,7 +1101,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             val here = payers.%(g => counted(g) >= lo && counted(g) <= hi)
             val ss = here.has(f).$(styles.winterHere)
             val label = (hi == 99).?((lo + "+ units").txt).|((lo + "–" + hi + " units").txt)
-            val cost = (food + wood == 0).?("nothing".txt).|($(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => n.hl ~ " " ~ e }.join(" "))
+            val cost = (food + wood == 0).?("nothing".txt).|($(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => Amount(n.hl, e) }.join(" "))
             val clans = here./(g => g.name.styled(colorOf(g))).join(", ")
 
             Div(label, styles.winterCell +: ss) ~ Div(cost, styles.winterCell +: ss) ~ Div(clans, styles.winterCell +: ss)
@@ -1121,8 +1121,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         ("Winter costs".hlb.div ~
             Div(cells.merge, styles.winterChart) ~
             events ~
-            (f.name.styled(colorOf(f)) ~ " pays " ~ (food + wood == 0).?("nothing".txt).|($(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => n.hl ~ " " ~ e }.join(" ")) ~ " for " ~ counted(f).hl ~ " units").div ~
-            ("Has " ~ state.food.hl ~ " " ~ Food.elem ~ " " ~ state.wood.hl ~ " " ~ Wood.elem ~ ", after the harvest " ~ after._1.hl ~ " " ~ Food.elem ~ " " ~ after._2.hl ~ " " ~ Wood.elem).div ~
+            (f.name.styled(colorOf(f)) ~ " pays " ~ (food + wood == 0).?("nothing".txt).|($(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => Amount(n.hl, e) }.join(" ")) ~ " for " ~ counted(f).hl ~ " units").div ~
+            ("Has " ~ Amount(state.food.hl, Food.elem) ~ " " ~ Amount(state.wood.hl, Wood.elem) ~ ", after the harvest " ~ Amount(after._1.hl, Food.elem) ~ " " ~ Amount(after._2.hl, Wood.elem)).div ~
             short.?(("Not enough without trading: an unpaid Winter gives an " ~ UnrestCard.elem ~ " card").div).|(Empty) ~
             HorizontalBreak ~
             "(tap to close)".spn(xstyles.smaller85).div
@@ -1199,8 +1199,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         if (game.training) {
             val (food, wood, lore) = Training.resources(f)
             val vp = (state.fame.hlb ~ " of " ~ Training.goal.hl ~ " VP").div
-            val units = (game.onMap(f).hl ~ " " ~ UnitIcon() ~ " on the map, " ~ game.reserve(f).hl ~ " in reserve").div
-            val res = (food.hl ~ " " ~ Food.elem ~ " " ~ wood.hl ~ " " ~ Wood.elem ~ " " ~ lore.hl ~ " " ~ Lore.elem ~ " controlled").div
+            val units = (Amount(game.onMap(f).hl, UnitIcon()) ~ " on the map, " ~ game.reserve(f).hl ~ " in reserve").div
+            val res = (Amount(food.hl, Food.elem) ~ " " ~ Amount(wood.hl, Wood.elem) ~ " " ~ Amount(lore.hl, Lore.elem) ~ " controlled").div
             val scores = ("Scores " ~ Training.score(f).hl ~ " VP on a Refresh" ~ (Training.monopolies(f) > 0).?(" (" ~ Training.monopolies(f).hl ~ " Monopol" ~ (Training.monopolies(f) > 1).?("ies").|("y") ~ ")").|(Empty)).div
             val cards = ("Cards: ".txt ~ game.drills.get(f)./(_.num).|(0).hl ~ " face up, " ~ (Drill.all.num - game.drills.get(f)./(_.num).|(0)).hl ~ " face down").div
             container.replace((title.div ~ vp ~ units ~ res ~ scores ~ cards).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f), resources, {
@@ -1214,7 +1214,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         // Each number with its icon: "2 [food]" in a row, or with the Stacked setting the icon above the number
         val stacked = callbacks.settings.has(StackedPanels)
-        def item(n : Elem, e : Elem) : Elem = stacked.?((e.div ~ n.div).spn(styles.stackedItem)).|(n ~ " " ~ e)
+        def item(n : Elem, e : Elem) : Elem = stacked.?((e.div ~ n.div).spn(styles.stackedItem)).|(Amount(n, e))
         def row(l : $[Elem]) : Elem = stacked.?(l.merge).|(l.join(" "))
         def amounts(l : $[(String, Elem)]) : Elem = row(l.map { case (n, e) => item(n.hl, e) })
         def line(title : String, l : $[(String, Elem)]) : Elem =

@@ -579,7 +579,7 @@ trait Gaming extends Timelines {
                     case Nil => None
                     case Break :: tail => Some(tail.span(_ != Break))
                     case l => Some(l.span(_ != Break))
-                }./(_./~($(_, Join)).sliding(2).flatMap[Elem] {
+                }./(GluesToNumber.list)./(_./~($(_, Join)).sliding(2).flatMap[Elem] {
                     case Join :: (_ : Postfix) :: _ => None
                     case a :: _ :: _ => Some(a)
                 }.$.merge).join(Break)
