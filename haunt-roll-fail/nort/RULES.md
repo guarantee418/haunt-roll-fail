@@ -229,12 +229,14 @@ have it; summarized from a review, check against the rulebook):
   movement there.
 - During the harvest, teammates may trade resources with each other 1:1.
 
-3v3 (option "3v3 Teams", six players) uses the same rules with teams of
-three; seats alternate between the teams (1, 3, 5 against 2, 4, 6).
-
-2v2v2 (option "2v2v2 Teams", six players) uses the same rules with three
-teams of two; teammates sit opposite each other (1 and 4, 2 and 5, 3 and 6),
-so the turn order goes round the three teams.
+Here any split works (2026-10-07): "Teams" above the clan picker (instead
+of "Free-for-all") and each player's team (Team A to F) on its row of the
+setup screen, any two or more teams with 3 to 6 players (2v2, 3v3, 2v2v2,
+but also 2v1, 3v2, 4v2, 2v2v1, ...). Turn order is the seating order on the
+setup screen, so put teammates opposite each other for the rulebook's
+2v2. The rules above apply to every team. Games made before with the old
+fixed variants (options "2v2 Teams", "3v3 Teams", "2v2v2 Teams": seats
+alternating, or 1+4, 2+5, 3+6) still play as they did.
 
 ## Clan powers
 
@@ -1050,9 +1052,9 @@ Check these against the rulebook when it is at hand.
 - **Boar Clan**: "explores without closing any territory" is read literally:
   closing anyone's territory (or a neutral one) costs the lore.
 - **Teams**, where the summary above says nothing:
-  - Teams follow the seats: seats 1 and 3 (1, 3 and 5 in 3v3) against the
-    others; the turn order alternates between the teams. In 2v2v2 seats 1
-    and 4, 2 and 5, 3 and 6 are teams.
+  - Each player picks its team on the setup screen; the turn order is the
+    seating order (the old fixed variants: seats 1 and 3, or 1, 3 and 5,
+    against the others; in 2v2v2 seats 1 and 4, 2 and 5, 3 and 6).
   - Teammates are never enemies: no fights, and cards and powers that target
     enemies, opponents or enemy territories (Plunder, Capture, Raiding Party,
     Bribery, Call to War, Spy, Ancestral Curse, Rapacious Exploitation, Enemy
