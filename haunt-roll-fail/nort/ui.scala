@@ -1249,7 +1249,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         def line(title : Elem, l : $[(String, Elem)]) : Elem =
             if (l.none) Amount(title, "nothing".txt)
             else if (stacked) title.div ~ amounts(l)
-            else Amount(title, amounts(l))
+            // the title stays with the first item; the line may wrap between items, never inside one
+            else Amount(title, item(l.head._1.hl, l.head._2)) ~ l.tail.map { case (n, e) => " ".txt ~ item(n.hl, e) }.merge
 
         // Tapping the resources (or the harvest) shows the Winter chart, with the stockpile and the harvest
         def toWinter(e : Elem) : Elem = (f != Automa).?(OnClick(WinterChart(f), e.spn(xlo.pointer))).|(e)
@@ -1272,9 +1273,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         ))
         val cards = stacked.?(cardRow.div(styles.panelLine)).|(cardRow.div(styles.panelLine)(styles.cardLine))
 
-        // New Blood: Dragon's Sacrificial Pyre, Kraken's High Tide tokens, Ox's Ancestral Equipment tokens
+        // New Blood: Kraken's High Tide tokens, Ox's Ancestral Equipment tokens
         val nb = f match {
-            case Dragon => OnClick(PyreView, Div(pyreElem(styles.pyreSmall), styles.pyreLine, xlo.pointer))
             case Kraken => ("High Tide: ".txt ~ (2 - game.tides.num).hl ~ " in reserve").div
             case Ox => ("Equipment: ".txt ~ game.gearReady.num.hl ~ " ready, " ~ game.gearUsed.num.hl ~ " used").div
             case Automa => ("Cards: ".txt ~ game.automaActions.num.hl ~ " to play, " ~ game.automaDeck.num.hl ~ " in its pile").div
@@ -1282,7 +1282,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         }
 
         // Team play: the player's team
-        val marks = (game.teams.?(game.teamName(f) ~ " ").|(Empty) ~ (state.passed && game.isOver.not).?(" Passed".txt).|(Empty)).div
+        // Dragon's Sacrificial Pyre, small, at the start of this line (tapping it shows it full size)
+        val pyreMark = (f == Dragon).?(OnClick(PyreView, pyreElem(styles.pyreSmall).spn(xlo.pointer)) ~ " ").|(Empty)
+
+        val marks = (pyreMark ~ game.teams.?(game.teamName(f) ~ " ").|(Empty) ~ (state.passed && game.isOver.not).?(" Passed".txt).|(Empty)).div
 
         // Alternative victory: one mark per card, in the strip's order: ✓ when fulfilled, the validation count, or ✗
         val goals = game.has(VictoryModule).?(("Victory: ".txt ~ game.victory./{ c =>
