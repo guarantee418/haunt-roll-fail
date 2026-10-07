@@ -500,6 +500,22 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             game.board.itemSlots match {
                 case (_, x, y) :: (_, x1, _) :: _ =>
                     val k = (x1 - x) / 87.4
+
+                    // a dark panel behind it, so the light slots show on snow too
+                    val (px, py, pw, ph, r) = (x - (31.5 + 14) * k, y - (31.5 + 14) * k, (500 + 28) * k, (147 + 28) * k, 16 * k)
+
+                    g.save()
+                    g.beginPath()
+                    g.moveTo(px + r, py)
+                    g.arcTo(px + pw, py, px + pw, py + ph, r)
+                    g.arcTo(px + pw, py + ph, px, py + ph, r)
+                    g.arcTo(px, py + ph, px, py, r)
+                    g.arcTo(px, py, px + pw, py, r)
+                    g.closePath()
+                    g.fillStyle = "rgba(40, 32, 24, 0.72)"
+                    g.fill()
+                    g.restore()
+
                     g.drawImage(resources.images.get("item-track"), x - 31.5 * k, y - 31.5 * k, 500 * k, 147 * k)
                 case _ =>
             }

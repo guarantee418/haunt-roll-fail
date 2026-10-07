@@ -484,7 +484,8 @@ file covers the build, server and deploy. No session can ssh to the server
   faction is set up too (`factionStatus` and `updateStatus`); a faction
   without state yet shows just its board ("Not set up yet").
 - `itemSlots` (`itemGrid` for the usual 2x6 layout) places the item tracker;
-  `drawTrackers` draws `tracker/item-track.webp` under
+  `drawTrackers` draws `tracker/item-track.webp`, on a dark translucent panel so
+  its light slots show on the snowy maps, under
   them and `drawItemSlots` draws `game.uncrafted` on them.
 - The Homeland Marsh map is `MarshBoard` in `root/maps.scala` (option
   `MarshMap`, images in `webp2/root/images/marsh/`; the map is the plain board art
