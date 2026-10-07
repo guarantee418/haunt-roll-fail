@@ -31,7 +31,7 @@ and each deck's `CustomDeck` has the `FaceURL` of its card sheet.
 | `effects.scala` | `CardsExpansion`: the card effects that aren't basic actions (recruit per resource, removing enemy units, copying cards, looking at hands, Defensive Strategy, ...) |
 | `tiles.scala` | All 35 core tiles as data: areas, the sides each area owns, resources, lairs, building spaces, and borders (regular or rough) |
 | `board.scala` | `Board`: placements, joining areas into territories, adjacency, closed/open, legal placements (`consistent`), drawing positions |
-| `map.scala` | `MapExpansion`: setup tile/unit placement, Recruit (with Kaija and the warchief: when more than one kind can be recruited, a territory is tapped first (`RecruitAreaAction`, Soft) and then a regular unit, Kaija or the warchief is picked (`RecruitUnitHereAction` etc.); with one kind the old one-step `RecruitPlaceAction`, `RecruitKaijaAction`, `RecruitChiefAction` stay), Move (with the Move specials), combat and retreat, Scorched Earth, Explore, Build (with the Build specials; a Build card's builds go `BuildAction` → `BuildSpotAction` (Soft, a free space, tapped on the map or picked from the list; `buildSpots`) → `BuildPickAction` (Soft, the menu of all eight buildings with their costs, the ones that can't go there dimmed with the reason from `buildBlock`) → `BuildConfirmAction` (the building drawn on its space with a green check mark and a red cross above it, `BuildPreview`; the check mark is the confirm action's map target `ConfirmMark`, the cross cancels through `CancelMark` in `UI.clickable`), which goes on to `BuildPlaceAction`. Explore shows the drawn tile above the list of spots (`ExploreTileInfoAction`), so the player sees it before choosing where it goes. Placing a tile (setup, Explore, a second chance) works the same way: the tile is drawn at its spot (`TilePreview`, the `...TurnAction`s) with blue rotate arrows off its top corners (`ui-rotate-left`/`-right`, the map targets `RotateMark(d)` of the `...RotateAction`s, only when it has more than one legal turn) and the check mark and cross at its bottom, each button just outside its own corner of the tile (the scene margin widens on a side where the tile is at the edge); the buttons in the action pane still work too. The other builds (Halvard's Craft, New Blood clans) still use `buildOptions` and `buildChoice`), Feast, units returning at end of year |
+| `map.scala` | `MapExpansion`: setup tile/unit placement (with Kaija or the warchief still to place, the starting territory is tapped first (`SetupAreaAction`, Soft) and then what goes there is picked (`SetupUnitsHereAction`, `SetupKaijaHereAction`, `SetupChiefHereAction`, the usual one first); otherwise the old one-step `SetupUnitsAction`; the old `SetupKaijaAction` and `SetupChiefAction` stay for old logs), Recruit (with Kaija and the warchief: when more than one kind can be recruited, a territory is tapped first (`RecruitAreaAction`, Soft) and then a regular unit, Kaija or the warchief is picked (`RecruitUnitHereAction` etc.); with one kind the old one-step `RecruitPlaceAction`, `RecruitKaijaAction`, `RecruitChiefAction` stay), Move (with the Move specials), combat and retreat, Scorched Earth, Explore, Build (with the Build specials; a Build card's builds go `BuildAction` → `BuildSpotAction` (Soft, a free space, tapped on the map or picked from the list; `buildSpots`) → `BuildPickAction` (Soft, the menu of all eight buildings with their costs, the ones that can't go there dimmed with the reason from `buildBlock`) → `BuildConfirmAction` (the building drawn on its space with a green check mark and a red cross above it, `BuildPreview`; the check mark is the confirm action's map target `ConfirmMark`, the cross cancels through `CancelMark` in `UI.clickable`), which goes on to `BuildPlaceAction`. Explore shows the drawn tile above the list of spots (`ExploreTileInfoAction`), so the player sees it before choosing where it goes. Placing a tile (setup, Explore, a second chance) works the same way: the tile is drawn at its spot (`TilePreview`, the `...TurnAction`s) with blue rotate arrows off its top corners (`ui-rotate-left`/`-right`, the map targets `RotateMark(d)` of the `...RotateAction`s, only when it has more than one legal turn) and the check mark and cross at its bottom, each button just outside its own corner of the tile (the scene margin widens on a side where the tile is at the edge); the buttons in the action pane still work too. The other builds (Halvard's Craft, New Blood clans) still use `buildOptions` and `buildChoice`), Feast, units returning at end of year |
 | `ui.scala` | Status panels (clan names in the player's color), the court strip on top (cards keep the pane's height and the strip scrolls sideways; see `styles.strip`), the board canvas, map clicks, the build preview. A turn (`TurnAction` stage 0, `turnModes` in `game.scala`) starts with six choices at the top of the action pane: `TurnModeAction` (Soft) for Play cards (1 + any ⚡), Wait, Replace card for 1 Lore, Remove card for 2 Lore, Upgrade for 3 Lore (dimmed with the reason when not possible; the Lore icon is `ui-lore`), and Pass; the hand is shown below as pictures that open full screen. After a choice (`modeChoices`) the hand is shown as that choice's actions (`PlayCardAction`, `WaitCardAction`, `ReplaceCardAction`, `RemoveCardAction`, all `HandChoice` with the card image): tapping a card does it, cards that can't be used are dimmed with the reason, Cancel goes back. Upgrade first shows the clan upgrades (`UpgradePickAction`), then the hand twice: wait with a card, or remove one (`UpgradeCardAction`). After the main card, `playChoices` offers the Flash cards and End turn. Until the turn ends the hand doesn't open full screen (`HandInfoAction` in `Game.info`); the Played cards, the Lore Tree list and the clan board (`ClanBoardInfoAction`, `ClanBoard` in `UI.onClick`) still do. Otherwise `Game.info` shows the hand as `CardInfoAction` pictures, with the Played cards |
 | `creatures.scala` | Creatures module: creature kinds and cards, setup deck, apparition on lairs (`TilePlacedAction`), the Creature phase (`CreaturePhaseAction`), declaring and fighting creatures (`MoveEndAction`, `CreatureFightAction`), the More Creatures variant (`PassedAction`) |
 | `warchiefs.scala` | Warchiefs module: names and powers (`Warchief`), step 1 powers (Signy, Brand), Liv's reroll prompts |
@@ -727,8 +727,10 @@ its menu). Its menu has Local Game (pick 2-6 players) and Play Online.
   drafted (seat order); `ptf`/`ftp` map seats and clans (identity without
   Adset). `loggedPerform` sends a clan's Asks to its seat, `info` and the UI
   map the seat back (`factionStatus`/`seatStatus`, `factionElem`).
-  `BotAdset` plays the draft at random, then hands over to the clan's
-  Easy or Hard bot.
+  `BotAdset` plays the draft at random (it shuffles the choices: the
+  bots' sort keeps equal choices in order, so without that it always took
+  the first, the standard central tile and Wilderness), then hands over to
+  the clan's Easy or Hard bot.
 - **Options:** game length, victory conditions, Warchiefs and Sea are
   optional; "Wilderness or Wastelands" (`AdsetLands`): the second seat
   chooses (3+ players), Wilderness, Wastelands or Neither (2-player default).
@@ -754,6 +756,9 @@ its menu). Its menu has Local Game (pick 2-6 players) and Play Online.
   emblems are `MetaAdset`'s extra `clan/` assets). The UI's `convertActions`
   override sends a tap on the "i" (`AdsetClanInfo`) to an overlay with
   `Meta.factionInfo` instead of choosing the clan.
+  Until it picks its clan, each seat sees its three map tiles under "Your
+  map tiles" (`AdsetTileInfoAction`), and the map shows from the central
+  tile on (`makeScene` in `ui.scala` draws with no clan state yet).
 - **Testing:** `NORT_ADSET=1` in the headless host and ReplayCheck plays
   Adset games with random Adset options.
 
@@ -781,8 +786,9 @@ it, and one more unit with every Recruit (on top of Training Camps and the rest)
   A creature already in its territory (one appearing on a lair it explores)
   blocks nothing there either: `hostileIn`, `bearIn`, `wolfIn`, `koboldIn` and
   `ghostIn` in `game.scala` are false where it has units (`robotosIn`).
-  It also draws one more card each year (the year's `DrawCardsAction`), wins
-  ties when it attacks, clans or creatures (`map.scala`, `creatures.scala`),
+  It also draws one more card each year (the year's `DrawCardsAction`), gets
+  1 more combat point when it attacks, clans or creatures (`map.scala`,
+  `creatures.scala`, listed as "Robotos" in the fight info and the log),
   starts with 2 more food and 2 more wood, places 5 units in each setup
   placement instead of 3 (`MapExpansion.robotosSetup`; the warchief and Kaija
   count among them), has 25 units instead of 14 (`game.unitLimit(f)`), and
@@ -792,7 +798,7 @@ it, and one more unit with every Recruit (on top of Training Camps and the rest)
   `RobotosExpansion.cheats`).
 - **The bot:** `BotRobotos` is `BotHard`; the Hard valuation reads
   `game.robotos` (no Winter need, no creature penalty or lair penalty, one more
-  unit per Recruit, ties won when attacking, cheaper upgrades), so it plays its cheats out, and Hard opponents judge it
+  unit per Recruit, 1 more combat point attacking, cheaper upgrades), so it plays its cheats out, and Hard opponents judge it
   rightly.
 - **Tested:** `NORT_HARD=robotos` in the JVM host puts Robotos in the first
   seat and Hard bots in the others (wins print as `ROBOTOS WON`; the summary

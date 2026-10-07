@@ -353,7 +353,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             val str = threat(t, e)
             if (str > 0) {
                 // A card bonus or food is likely
-                // Robotos attacking wins ties: the same as one more point
+                // Robotos attacking: one more point
                 val p = HardCombat.attackWin(str + 1 + game.robotos(e).??(1), ds + math.min(du, f.food), str, du, towers)
                 val likely = e.passed.?(0.12).|(0.4) * (harvests <= 1).?(1.2).|(1.0)
                 hold *= 1 - math.min(1.0, likely * p)
@@ -742,6 +742,9 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case SetupTurnAction(_, _, _, tile, spot, r) => |(setupPlacement(tile, spot, r))
         case SetupUnitsAction(_, _, _, area) => |(gain(game.addUnits(area, self, 3)))
         case SetupKaijaAction(_, _, _, area) => |(gain { game.addUnits(area, self, 2) ; game.setCompanion(self, |(area)) })
+        case SetupUnitsHereAction(f, round, l, area) => value(SetupUnitsAction(f, round, l, area))
+        case SetupKaijaHereAction(f, round, l, area) => value(SetupKaijaAction(f, round, l, area))
+        case SetupChiefHereAction(f, round, l, area, kaija) => value(SetupChiefAction(f, round, l, area, kaija))
         case SetupChiefAction(_, _, _, area, kaija) => |(gain { game.addUnits(area, self, kaija.?(1).|(2)) ; game.chiefs += self -> area ; if (kaija) game.setCompanion(self, |(area)) })
         case ReturnUnitsToAction(_, area, _) => |(gain(game.addUnits(area, self, 3)))
         case SecondChanceTurnAction(_, tile, spot, r, _) => |(setupPlacement(tile, spot, r))
@@ -788,6 +791,16 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
                 game.addUnits(to, self, n)
                 if (kaija)
                     game.setCompanion(self, |(to))
+            } + n * 10)
+        case RetreatPartyAction(_, from, to, n, kaija, chief, _, _) =>
+            val t = board.territory(from)
+            |(gain {
+                game.removeUnits(t, self, n)
+                game.addUnits(to, self, n)
+                if (kaija)
+                    game.setCompanion(self, |(to))
+                if (chief)
+                    game.chiefs += self -> to
             } + n * 10)
 
         // BUILD
@@ -902,6 +915,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case HalvardCraftSkipAction(_, _) => |(0)
         // Brand's Bravery: the beaten enemy retreats where it does them the least good
         case BrandRetreatToAction(_, loser, from, to, n, kaija, _, _) => |(gain { game.removeUnits(board.territory(from), loser, n) ; game.addUnits(to, loser, n) })
+        case BrandRetreatPartyAction(_, loser, from, to, n, kaija, _, _, _) => |(gain { game.removeUnits(board.territory(from), loser, n) ; game.addUnits(to, loser, n) })
 
         // OX (New Blood): Ancestral Equipment tokens
         case GearTakeAction(_, _, n, _) => |(gearValue(n) + 10)

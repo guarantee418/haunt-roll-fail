@@ -582,10 +582,12 @@ object CreaturesExpansion extends Expansion {
             val axe = (attacking && e.special == AxeMove).??(1)
             val fortress = attacking.not.??(2 * here.count(_ == Fortress))
             val snake = (f == Snake && game.scorchedIn(t)).??(1)
+            // Robotos: 1 more combat point when it attacks
+            val robo = (attacking && game.robotos(f)).??(1)
             // Wastelands: Rock Golem, Valdemar, Thor's Wrath, Landvidi, the Gate of Helheim and Urdarbrunn
             val (pw, cw) = game.has(Wastelands).?(WastelandsExpansion.creaturePoints(f, t, c, attacking, face, cface)).|((0, 0))
             val urdar = game.has(Wastelands).??(WastelandsExpansion.creatureIgnored(f, t, attacking))
-            val ps = game.strength(t, f, attacking) + bonus + axe + fortress + snake + food + face.points + pw
+            val ps = game.strength(t, f, attacking) + bonus + axe + fortress + snake + robo + food + face.points + pw
             // Shieldbearers cancel 1 casualty; Halvard defending ignores 1 inflicted by the attacking creature
             val shield = math.min(cface.casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1) + Warchief.shield(t, f, attacking) + urdar)
             val pc = cface.casualties - shield
@@ -593,12 +595,11 @@ object CreaturesExpansion extends Expansion {
 
             def extra(l : (Int, Elem)*) : Elem = l.toList.filter(_._1 > 0).map { case (n, what) => "(" ~ n.hl ~ " from " ~ what ~ ")" }.join(" ")
 
-            f.log("scored", CombatIcon.axes(ps), extra(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, pw -> "Wastelands".hl))
+            f.log("scored", CombatIcon.axes(ps), extra(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, robo -> "Robotos".hl, pw -> "Wastelands".hl))
             log(c, "scored", CombatIcon.axes(cs), extra(cw -> "Wastelands".hl), "and inflicted", CombatIcon.skulls(pc), (shield > 0).?("(" ~ shield.hl ~ " cancelled)").|(Empty))
 
             // Losing all units loses the fight; otherwise ties go to the defender
-            // Robotos wins ties attacking too
-            val won = pc < units && (attacking && game.robotos(f).not).?(ps > cs).|(ps >= cs)
+            val won = pc < units && attacking.?(ps > cs).|(ps >= cs)
 
             val before = game.count(t, f)
             game.removeFigures(t, f, math.min(pc, units))

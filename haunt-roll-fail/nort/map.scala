@@ -56,6 +56,11 @@ case class SetupUnitsAction(self : Faction, round : Int, l : $[Faction], area : 
 case class SetupKaijaAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place two units and", Companion(self), "in")(area) with MapTarget { def target = area }
 // Warchiefs module: the warchief instead of one unit (and Kaija instead of another)
 case class SetupChiefAction(self : Faction, round : Int, l : $[Faction], area : AreaRef, kaija : Boolean) extends BaseAction(kaija.?("Place one unit, " ~ Companion(self).elem0 ~ " and your warchief in").|("Place two units and your warchief in"))(area) with MapTarget { def target = area }
+// With Kaija or the warchief to place: tap the territory first, then pick what goes there
+case class SetupAreaAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place your starting units in")(area) with Soft with MapTarget { def target = area }
+case class SetupUnitsHereAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place in", area)("Three units")
+case class SetupKaijaHereAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place in", area)("Two units and", Companion(self))
+case class SetupChiefHereAction(self : Faction, round : Int, l : $[Faction], area : AreaRef, kaija : Boolean) extends BaseAction("Place in", area)(kaija.?("One unit, " ~ Companion(self).elem0 ~ " and your warchief").|("Two units and your warchief"))
 case class ShuffledTilesBackAction(shuffled : $[String]) extends ShuffledAction[String]
 case class SetupUnitsAskAction(f : Faction, round : Int, l : $[Faction], tile : String, spot : Spot) extends ForcedAction
 
@@ -106,6 +111,7 @@ case class SvarnMendAction(f : Faction, then : ForcedAction) extends ForcedActio
 case class SvarnMendToAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("Svarn's Menders".hl, "place a", CombatIcon.skull, "back in")(area) with MapTarget { def target = area }
 case class BrandRetreatPickAction(self : Faction, loser : Faction, from : AreaRef, to : AreaRef, rough : Boolean, then : ForcedAction) extends BaseAction("Brand's Bravery".hl, "choose where", loser, "retreats from", from)(to) with Soft with MapTarget { def target = to }
 case class BrandRetreatToAction(self : Faction, loser : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Brand's Bravery".hl, loser, "retreats from", from, "to", to)(RetreatGroup(loser, from, n, kaija))
+case class BrandRetreatPartyAction(self : Faction, loser : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Brand's Bravery".hl, loser, "retreats from", from, "to", to)(RetreatParty(loser, n, kaija, chief))
 case class CombatFoodPaidAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], then : ForcedAction) extends ForcedAction
 case class CombatsAction(f : Faction, e : MoveEffect, then : ForcedAction) extends ForcedAction
 case class FightAction(self : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends BaseAction("Fight in")(area) with MapTarget { def target = area }
@@ -129,13 +135,22 @@ case class CombatChooseAction(self : Faction, attacker : Faction, defender : Fac
 case class CombatResolveAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], then : ForcedAction) extends ForcedAction
 // rough: the retreating units may cross Rough borders (Wolf Clan card)
 case class RetreatAction(f : Faction, from : AreaRef, rough : Boolean, then : ForcedAction) extends ForcedAction
-// Retreating: pick the destination (on the map or in the list), then how many units go there (all, or one), or cancel
+// Retreating: pick the destination (on the map or in the list), then who goes there (everyone, the units, one unit,
+// Kaija or the warchief alone), or cancel
 case class RetreatPickAction(self : Faction, from : AreaRef, to : AreaRef, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to")(to) with Soft with MapTarget { def target = to }
+// Older games: the warchief went with the first group
 case class RetreatToAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to", to)(RetreatGroup(self, from, n, kaija))
+case class RetreatPartyAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to", to)(RetreatParty(self, n, kaija, chief))
+// The figures go
+case class RetreatMoveAction(f : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean, rough : Boolean, then : ForcedAction) extends ForcedAction
 
-// The units retreating together; the warchief goes with the first group, like Kaija
+// The units retreating together in older games; the warchief went with the first group, like Kaija
 case class RetreatGroup(f : Faction, from : AreaRef, n : Int, kaija : Boolean) extends GameElementary {
     def elem(implicit game : Game) = "(" ~ Party(f, n, kaija, game.chiefIn(game.board.territory(from), f)).elem ~ ")"
+}
+
+case class RetreatParty(f : Faction, n : Int, kaija : Boolean, chief : Boolean) extends GameElementary {
+    def elem(implicit game : Game) = "(" ~ Party(f, n, kaija, chief).elem ~ ")"
 }
 
 // SNAKE CLAN
@@ -251,7 +266,8 @@ case class FightInfo(attacker : Faction, defender : Faction, area : AreaRef, e :
         def side(f : Faction, attacking : Boolean, spent : |[Int], die : |[DieFace], choice : Boolean) : Elem = {
             val extra = attacking.?($(
                 e.bonus -> "the card".txt,
-                game.eventIs("conquests").??(1) -> "Conquests".hl
+                game.eventIs("conquests").??(1) -> "Conquests".hl,
+                game.robotos(f).??(1) -> "Robotos".hl
             )).|($(
                 attacker.conqueror.?(0).|(2 * here.count(_ == Fortress)) -> Fortress.elem
             )) ++ $(
@@ -286,6 +302,7 @@ case class CreatureFightInfo(f : Faction, area : AreaRef, c : Creature, e : Move
         val extra = $(
             attacking.??(e.bonus) -> "the card".txt,
             (attacking && e.special == AxeMove).??(1) -> "Axe Throwers".hl,
+            (attacking && game.robotos(f)).??(1) -> "Robotos".hl,
             attacking.not.??(2 * game.working(t).count(_ == Fortress)) -> Fortress.elem,
             (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl,
             waste.??(WastelandsExpansion.points(f, t, attacking) + Waste.controller(Waste.helheim, "c").has(f).??(2)) -> "Wastelands".hl
@@ -443,16 +460,6 @@ object MapExpansion extends Expansion {
     // The legal turns of a tile at a spot
     def rotations(l : $[(Spot, Int)], spot : Spot) : $[Int] = l.filter(_._1 == spot).map(_._2).distinct.sorted
 
-    // What a tap on a starting territory places (the list offers the rest): with the Warchiefs module, the warchief and
-    // two units; a clan with a second figure (Kaija, Brok) puts it in its other starting territory, or both together if
-    // its first territory got three units
-    def setupDefault(a : Action)(implicit game : Game) : Boolean = a match {
-        case SetupUnitsAction(f, _, _, _) => game.has(Warchiefs).not || (game.chiefReady(f).not && game.kaijaReady(f).not)
-        case SetupChiefAction(f, round, _, _, kaija) => game.has(Warchiefs) && kaija == (round == 2 && game.kaijaReady(f))
-        case SetupKaijaAction(f, _, _, _) => game.has(Warchiefs) && game.chiefReady(f).not
-        case _ => false
-    }
-
     // The next legal turn from r, clockwise (d = 1) or counterclockwise (d = -1)
     def rotate(rs : $[Int], r : Int, d : Int) : Int = 1.to(3).map(i => (r + d * i + 4) % 4).find(rs.has).|(r)
 
@@ -589,6 +596,42 @@ object MapExpansion extends Expansion {
             Building.all.%(_ != old).%(_.large == old.large).%(b => b != CarvedStone || carved).%(b => game.buildings.values.count(_ == b) < Building.tokens)./(b => s -> b)
         }
 
+    def setupUnits(f : Faction, round : Int, l : $[Faction], a : AreaRef)(implicit game : Game) = {
+        game.addUnits(a, f, 3)
+
+        f.log("placed three units in", a)
+
+        robotosSetup(f, round, a)
+
+        Then(SetupPlaceAction(round, l.drop(1)))
+    }
+
+    def setupKaija(f : Faction, round : Int, l : $[Faction], a : AreaRef)(implicit game : Game) = {
+        game.addUnits(a, f, 2)
+        game.setCompanion(f, |(a))
+        game.note("kaija-setup")
+
+        f.log("placed two units and", Companion(f), "in", a)
+
+        robotosSetup(f, round, a)
+
+        Then(SetupPlaceAction(round, l.drop(1)))
+    }
+
+    def setupChief(f : Faction, round : Int, l : $[Faction], a : AreaRef, kaija : Boolean)(implicit game : Game) = {
+        game.addUnits(a, f, kaija.?(1).|(2))
+        game.chiefs += f -> a
+        if (kaija)
+            game.setCompanion(f, |(a))
+        game.note("chief-setup")
+
+        f.log(kaija.?("placed one unit, " ~ Companion(f).elem0 ~ " and").|("placed two units and"), WarchiefElem(f), "in", a)
+
+        robotosSetup(f, round, a)
+
+        Then(SetupPlaceAction(round, l.drop(1)))
+    }
+
     def recruitUnit(f : Faction, a : AreaRef)(implicit game : Game) : Unit = {
         game.addUnits(a, f, 1)
 
@@ -694,6 +737,16 @@ object MapExpansion extends Expansion {
     def retreatCount(ask : Ask, f : Faction, from : AreaRef, rough : Boolean)(implicit game : Game) =
         (retreats(f, game.board.territory(from), rough).num > 1).?(ask.cancel).|(ask.needOk)
 
+    // Who can retreat together: everyone, then the units without Kaija and the warchief, one unit, Kaija alone, the warchief alone
+    def retreatParties(f : Faction, from : AreaRef)(implicit game : Game) : $[(Int, Boolean, Boolean)] = {
+        val t = game.board.territory(from)
+        val n = game.count(t, f)
+        val kaija = game.kaijaIn(t, f)
+        val chief = game.chiefIn(t, f)
+
+        $((n, kaija, chief)) ++ (n > 0).$((n, false, false)) ++ (n > 1).$((1, false, false)) ++ kaija.$((0, true, false)) ++ chief.$((0, false, true))
+    }.distinct
+
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         // SETUP
         case ShuffledTilesAction(l) =>
@@ -773,46 +826,47 @@ object MapExpansion extends Expansion {
             // Not with a Fallen Valkyrie, unless there is no other choice
             val empty = all.exists(t => game.hostileIn(t).not).?(all.%(t => game.hostileIn(t).not)).|(all)
 
-            Ask(f).each(empty)(t => SetupUnitsAction(f, round, l, t.anchor))
-                .some(empty.%(_ => game.kaijaReady(f)))(t => $(SetupKaijaAction(f, round, l, t.anchor)))
-                .some(empty.%(_ => game.chiefReady(f)))(t => $(SetupChiefAction(f, round, l, t.anchor, false)))
-                .some(empty.%(_ => game.chiefReady(f) && game.kaijaReady(f)))(t => $(SetupChiefAction(f, round, l, t.anchor, true)))
+            // One territory per row when Kaija or the warchief could go there too; what to place is asked after it is picked
+            if (game.kaijaReady(f) || game.chiefReady(f))
+                Ask(f).each(empty)(t => SetupAreaAction(f, round, l, t.anchor))
+            else
+                Ask(f).each(empty)(t => SetupUnitsAction(f, round, l, t.anchor))
+
+        // The usual placement first: the warchief with two units; a second figure (Kaija, Brok) in the other starting
+        // territory, or with the warchief in the second one if the first got three units
+        case SetupAreaAction(f, round, l, a) =>
+            val kaija = game.kaijaReady(f)
+            val chief = game.chiefReady(f)
+
+            Ask(f)
+                .when(chief && (kaija.not || round == 1))(SetupChiefHereAction(f, round, l, a, false))
+                .when(chief && kaija)(SetupChiefHereAction(f, round, l, a, true))
+                .when(chief.not && kaija)(SetupKaijaHereAction(f, round, l, a))
+                .when(chief && kaija && round == 2)(SetupChiefHereAction(f, round, l, a, false))
+                .when(chief && kaija)(SetupKaijaHereAction(f, round, l, a))
+                .add(SetupUnitsHereAction(f, round, l, a))
+                .cancel
 
         case TilePlacedAction(f, tile, spot, setup, then) =>
             Then(then)
 
         case SetupUnitsAction(f, round, l, a) =>
-            game.addUnits(a, f, 3)
+            setupUnits(f, round, l, a)
 
-            f.log("placed three units in", a)
-
-            MapExpansion.robotosSetup(f, round, a)
-
-            Then(SetupPlaceAction(round, l.drop(1)))
+        case SetupUnitsHereAction(f, round, l, a) =>
+            setupUnits(f, round, l, a)
 
         case SetupKaijaAction(f, round, l, a) =>
-            game.addUnits(a, f, 2)
-            game.setCompanion(f, |(a))
-            game.note("kaija-setup")
+            setupKaija(f, round, l, a)
 
-            f.log("placed two units and", Companion(f), "in", a)
-
-            MapExpansion.robotosSetup(f, round, a)
-
-            Then(SetupPlaceAction(round, l.drop(1)))
+        case SetupKaijaHereAction(f, round, l, a) =>
+            setupKaija(f, round, l, a)
 
         case SetupChiefAction(f, round, l, a, kaija) =>
-            game.addUnits(a, f, kaija.?(1).|(2))
-            game.chiefs += f -> a
-            if (kaija)
-                game.setCompanion(f, |(a))
-            game.note("chief-setup")
+            setupChief(f, round, l, a, kaija)
 
-            f.log(kaija.?("placed one unit, " ~ Companion(f).elem0 ~ " and").|("placed two units and"), WarchiefElem(f), "in", a)
-
-            MapExpansion.robotosSetup(f, round, a)
-
-            Then(SetupPlaceAction(round, l.drop(1)))
+        case SetupChiefHereAction(f, round, l, a, kaija) =>
+            setupChief(f, round, l, a, kaija)
 
         // RECRUIT
         case RecruitAction(f, left, mode, placed, then) =>
@@ -1272,7 +1326,10 @@ object MapExpansion extends Expansion {
             // Events: Conquests gives the attacker 1 point
             val conquests = game.eventIs("conquests").??(1)
 
-            val as = game.strength(t, attacker, true) + e.bonus + ab + anb + aw + wise + conquests + food(0) + faces(0).points
+            // Robotos: 1 more combat point when it attacks
+            val robo = game.robotos(attacker).??(1)
+
+            val as = game.strength(t, attacker, true) + e.bonus + ab + anb + aw + wise + conquests + robo + food(0) + faces(0).points
             // Sea module: the Port's defender (in strength)
             val port = SeaExpansion.defense(t, defender, false)
             val ds = game.strength(t, defender, false) + fortress + db + dnb + dw + food(1) + faces(1).points
@@ -1289,15 +1346,14 @@ object MapExpansion extends Expansion {
             if (game.chiefIn(t, attacker) || game.chiefIn(t, defender))
                 game.note("chief-fight")
 
-            attacker.log("scored", CombatIcon.axes(as), kaija(attacker), chief(attacker, true), extra(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt, aw -> "Wastelands".hl, wise -> "The Wise One".hl, conquests -> "Conquests".hl), "and inflicted", CombatIcon.skulls(ac), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
+            attacker.log("scored", CombatIcon.axes(as), kaija(attacker), chief(attacker, true), extra(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt, aw -> "Wastelands".hl, wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl), "and inflicted", CombatIcon.skulls(ac), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
             defender.log("scored", CombatIcon.axes(ds), kaija(defender), chief(defender, false), extra(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt, dw -> "Wastelands".hl, port -> "the Port".hl), "and inflicted", CombatIcon.skulls(dc), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
 
             val winner =
                 if (ac >= du && dc >= au) None
                 else if (ac >= du) |(attacker)
                 else if (dc >= au) |(defender)
-                // Robotos wins ties when it attacks (it already does when it defends)
-                else if (as > ds || (as == ds && game.robotos(attacker))) |(attacker)
+                else if (as > ds) |(attacker)
                 else |(defender)
 
             val before = game.count(t, attacker)
@@ -1383,23 +1439,20 @@ object MapExpansion extends Expansion {
                     Ask(f).each(to)(o => RetreatPickAction(f, a, o.anchor, rough, then))
             }
 
-        // All the units, or one (Kaija and the warchief go with the first group)
         case RetreatPickAction(f, from, to, rough, then) =>
-            val t = game.board.territory(from)
-            val n = game.count(t, f)
-            val kaija = game.kaijaIn(t, f)
-
-            retreatCount(Ask(f).add(RetreatToAction(f, from, to, n, kaija, rough, then)).when(n > 1)(RetreatToAction(f, from, to, 1, kaija, rough, then)), f, from, rough)
+            retreatCount(Ask(f).each(retreatParties(f, from)) { case (n, kaija, chief) => RetreatPartyAction(f, from, to, n, kaija, chief, rough, then) }, f, from, rough)
 
         case BrandRetreatPickAction(self, f, from, to, rough, then) =>
-            val t = game.board.territory(from)
-            val n = game.count(t, f)
-            val kaija = game.kaijaIn(t, f)
-
-            retreatCount(Ask(self).add(BrandRetreatToAction(self, f, from, to, n, kaija, rough, then)).when(n > 1)(BrandRetreatToAction(self, f, from, to, 1, kaija, rough, then)), f, from, rough)
+            retreatCount(Ask(self).each(retreatParties(f, from)) { case (n, kaija, chief) => BrandRetreatPartyAction(self, f, from, to, n, kaija, chief, rough, then) }, f, from, rough)
 
         case BrandRetreatToAction(_, f, from, to, n, kaija, rough, then) =>
             Then(RetreatToAction(f, from, to, n, kaija, rough, then))
+
+        case BrandRetreatPartyAction(_, f, from, to, n, kaija, chief, rough, then) =>
+            Then(RetreatMoveAction(f, from, to, n, kaija, chief, rough, then))
+
+        case RetreatPartyAction(f, from, to, n, kaija, chief, rough, then) =>
+            Then(RetreatMoveAction(f, from, to, n, kaija, chief, rough, then))
 
         // Svarn's Menders: each casualty back in one of f's territories
         case SvarnMendAction(f, then) =>
@@ -1420,10 +1473,11 @@ object MapExpansion extends Expansion {
 
             Then(SvarnMendAction(f, then))
 
+        // Older games: the warchief goes with the first group
         case RetreatToAction(f, from, to, n, kaija, rough, then) =>
-            // The warchief goes with the first group
-            val chief = game.chiefIn(game.board.territory(from), f)
+            Then(RetreatMoveAction(f, from, to, n, kaija, game.chiefIn(game.board.territory(from), f), rough, then))
 
+        case RetreatMoveAction(f, from, to, n, kaija, chief, rough, then) =>
             game.removeUnits(game.board.territory(from), f, n)
             game.addUnits(to, f, n)
             if (kaija)

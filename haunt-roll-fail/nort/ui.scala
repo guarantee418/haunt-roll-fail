@@ -321,8 +321,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             val l = lastActions.%(a => a.unwrap.as[MapTarget].exists(_.target == t))
             if (l.num == 1)
                 return l.headOption
-            // Setup: several placements in one territory, the default one
-            l.%(a => MapExpansion.setupDefault(a.unwrap)).single.foreach(a => return |(a))
         }
         None
     }
@@ -385,10 +383,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         tints.get(key)
     }
 
-    // Tint per player colour: yellow and green strong, red and orange medium, blue and purple light;
-    // red leans to crimson so the green art doesn't turn it brown or orange
+    // Tint per player colour: yellow and green strong, red, orange and blue medium, purple light;
+    // red leans to crimson and blue to violet so the green art doesn't turn them brown or teal
     def tintOf(c : PlayerColor) : (String, Double) = c match {
-        case Blue => ("#1f5fe0", 0.24)
+        case Blue => ("#2a40ff", 0.45)
         case Red => ("#d00038", 0.5)
         case Yellow => ("#ffc400", 0.55)
         case Purple => ("#9b30c8", 0.3)
@@ -727,7 +725,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     })
 
     def makeScene() : |[Scene] = {
-        if (game.states.none || game.board.placements.none)
+        // Adset: the map shows from the central tile on, before any clan is drafted
+        if ((game.states.none && game.adset.not) || game.board.placements.none)
             return None
 
         val board = game.board
@@ -1610,6 +1609,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     override def styleAction(faction : |[F], actions : $[UserAction], a : UserAction, unavailable : Boolean, view : |[Any]) : $[Style] =
         if (a.is[AdsetDraftChoice])
             $(xstyles.choice, xstyles.xx, xstyles.chp, xstyles.factionTile, styles.draftTile, xlo.pointer)
+        else
+        // Adset: the seat's three map tiles side by side
+        if (a.is[AdsetTileInfoAction])
+            $(xstyles.info, xstyles.xx, xstyles.chp, styles.draftTile)
         else
         view @@ {
             case _ if unavailable.not => $()
