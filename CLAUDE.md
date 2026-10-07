@@ -99,7 +99,11 @@ hand cards sized to the pane (`--nort-hand-card`) so the whole hand fits. The pl
 fame included) and its Winter cost (as losses, "-1"); tapping the Winter line opens the whole
 Winter chart (`winterChart` in `nort/ui.scala`). Each player can hide the
 tints and the colored borders under "Interface" (the Territory Color and
-Fame Borders settings in `nort/meta.scala`), and the "Player Panels" setting (`CompactPanels`, the default, or `StackedPanels`) shows every number in the panels beside its icon or under it. A turn starts with six choices at
+Fame Borders settings in `nort/meta.scala`). The tints are the player colors themselves
+(`PlayerColor.hex`, the same colors as the names), and each player sets how opaque each
+color is, 0 to 100% in steps of 10 (default 50%), with the "<Color> Territories" rows under
+Territory Color (`TerritoryOpacity`, a `CompactSetting`: its values are one row of small
+buttons in the settings screen, `editSettings` in `hrf.scala`). The "Player Panels" setting (`CompactPanels`, the default, or `StackedPanels`) shows every number in the panels beside its icon or under it. A turn starts with six choices at
 the top of the action pane (Play cards, Wait, Replace, Remove, Upgrade,
 Pass); after one, tapping a card in hand does it. A Build card's builds: tap
 a free space, pick from the menu of all buildings with their costs, then

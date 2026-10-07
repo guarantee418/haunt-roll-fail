@@ -35,12 +35,12 @@ package object elem {
         Rat --> color("#8fa060")
         Squirrel --> color("#d98c3a")
 
-        Blue --> color("#4e78bc")
-        Red --> color("#e8410d")
-        Yellow --> color("#f79c01")
-        Purple --> color("#a56ca5")
-        Green --> color("#4f9e3a")
-        Orange --> color("#ff7a1a")
+        Blue --> color(Blue.hex)
+        Red --> color(Red.hex)
+        Yellow --> color(Yellow.hex)
+        Purple --> color(Purple.hex)
+        Green --> color(Green.hex)
+        Orange --> color(Orange.hex)
 
         Food --> color("#e04848")
         Wood --> color("#c98a4b")

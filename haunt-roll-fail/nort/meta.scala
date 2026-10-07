@@ -393,8 +393,8 @@ object Meta extends MetaGame { mmm =>
     override val showAbout = false
 
     // Map display settings, chosen by each player under "Interface" (like Root's Clearing Rule)
-    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, FightsTerritoryColor, HideTerritoryColor, ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels)
-    override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, CompactPanels)
+    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, FightsTerritoryColor, HideTerritoryColor) ++ TerritoryOpacity.all ++ $(ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels)
+    override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, CompactPanels) ++ PlayerColor.all./(TerritoryOpacity(_, 50))
 }
 
 
@@ -413,6 +413,16 @@ case object FightsTerritoryColor extends TerritoryColorSetting {
 
 case object HideTerritoryColor extends TerritoryColorSetting {
     val valueOn = "Hide".hlb
+}
+
+// How strongly each player colour tints its territories, 0 to 100 percent (50 by default)
+case class TerritoryOpacity(color : PlayerColor, percent : Int) extends hrf.CompactSetting with OneOfGroup {
+    val group = color.name + " Territories"
+    val valueOn = (percent + "%").hlb
+}
+
+object TerritoryOpacity {
+    val all : $[TerritoryOpacity] = PlayerColor.all./~(c => 0.to(100, 10).toList./(TerritoryOpacity(c, _)))
 }
 
 
