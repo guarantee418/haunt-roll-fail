@@ -187,6 +187,19 @@ case object FirstSeatStarts extends GameOption with ToggleOption {
 }
 
 
+// After the die decides a fight, the attacker gets a combat report (who won and how, each side's combat points and
+// casualties and where they came from, what each lost) and taps OK before any retreat (CombatReportAction in map.scala).
+// With this option the defender gets it too. Off by default, like Root's Async options
+case object CombatReportOption extends GameOption with ToggleOption {
+    val group = "Combat report".txt
+    def valueOn = "Combat report for defenders".txt
+    override val explain = $(
+        CombatText("After the dice decide a fight, the attacker always sees a combat report: who won and how, each side's combat points and casualties and where they came from, and what each side lost. The attacker taps OK to go on to the retreat."),
+        "With this option the defender sees it and taps OK too, after the attacker.",
+    )
+}
+
+
 // Modules and expansions. Each one is a game option; until a module is implemented its option
 // is shown but can't be turned on. To implement one: set `ready`, give it an `expansion`
 // (tried before the core ones in Game.expansions, so it can take over any action), and add its

@@ -134,6 +134,10 @@ case class CombatFoodStartAction(attacker : Faction, defender : Faction, area : 
 case class CombatChooseAction(self : Faction, attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], choice : DieFace, then : ForcedAction) extends BaseAction(self, "rolled", DieChoice, Break, FightInfo(attacker, defender, area, e, food, faces, true))(choice)
 case class CombatResolveAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], then : ForcedAction) extends ForcedAction
 // rough: the retreating units may cross Rough borders (Wolf Clan card)
+// The combat report (FightReport): to each of l in turn, who taps OK, then the fight goes on (a retreat or what follows it)
+case class CombatReportAction(l : $[Faction], then : ForcedAction) extends ForcedAction
+case class CombatReportDoneAction(self : Faction, rest : $[Faction], then : ForcedAction) extends BaseAction(CombatReport(self))("OK")
+
 case class RetreatAction(f : Faction, from : AreaRef, rough : Boolean, then : ForcedAction) extends ForcedAction
 // Retreating: pick the destination (on the map or in the list), then who goes there (everyone, the units, one unit,
 // Kaija or the warchief alone), or cancel
@@ -328,17 +332,20 @@ object MoveCostLabel {
 // A side's combat points before the die: units, Kaija, the warchief, Jötunn Blainn, then the extras;
 // sources worth nothing are left out; choosing: the side is choosing "1 point or 1 casualty", so its total with the point is added
 object FightPoints {
-    def apply(f : Faction, t : Territory, attacking : Boolean, extra : $[(Int, Elem)], casualties : $[(Int, Elem)], cancels : Int, choosing : Boolean = false)(implicit game : Game) : Elem = {
+    // The sources worth something, with what they are worth (they add up to game.strength plus the extras)
+    def parts(f : Faction, t : Territory, attacking : Boolean, extra : $[(Int, Elem)])(implicit game : Game) : $[(Int, Elem)] = {
         val units = game.count(t, f)
-        val parts = $(
+        ($(
             units -> (units == 1).?("unit").|("units").txt,
             game.companionStrength(t, f) -> Companion(f).elem,
             Warchief.strength(t, f, attacking) -> Warchief.elem(f),
             game.blainnIn(t, f).??(2) -> "Jötunn Blainn".hl,
             SeaExpansion.defense(t, f, attacking) -> "the Port".hl
-        ) ++ extra
+        ) ++ extra).filter(_._1 > 0)
+    }
 
-        val points = parts.filter(_._1 > 0)
+    def apply(f : Faction, t : Territory, attacking : Boolean, extra : $[(Int, Elem)], casualties : $[(Int, Elem)], cancels : Int, choosing : Boolean = false)(implicit game : Game) : Elem = {
+        val points = parts(f, t, attacking, extra)
         val total = points.map(_._1).sum
         val more = casualties.filter(_._1 > 0)./{ case (n, what) => Amount(("+" + n).hl, CombatIcon.skull) ~ " from " ~ what } ++
             (cancels > 0).$("cancels " ~ CombatIcon.skulls(cancels))
@@ -348,6 +355,47 @@ object FightPoints {
         more.any.?(", " ~ more.join(", ")).|(Empty) ~
         choosing.?("; " ~ CombatIcon.axes(total + 1) ~ " if taking the " ~ CombatIcon.axe).|(Empty)
     }
+}
+
+// The combat report, shown once the die has decided a fight (CombatResolveAction) and before any retreat:
+// who won and how, then each side's combat points and casualties with where they come from, and what it lost.
+// Always to the attacker, and to the defender with the "Combat report for defenders" option (CombatReportOption).
+// points: the sources worth something; casualties: the sources of the casualties inflicted, a negative one cancels
+// (its Elem then says how, "ignored by ..."); lost: figures removed
+case class FightSide(f : Faction, attacking : Boolean, points : $[(Int, Elem)], total : Int, casualties : $[(Int, Elem)], inflicted : Int, lost : Int)
+
+case class FightReport(area : AreaRef, attacker : FightSide, defender : FightSide, winner : |[Faction], wipe : Boolean)
+
+// The report as self sees it: "You" for self's side
+case class CombatReport(self : Faction) extends GameElementary {
+    def elem(implicit game : Game) = game.fightReport./{ r =>
+        def name(f : Faction) : Elem = (f == self).?("You".txt).|(f.elem)
+
+        val headline = r.winner match {
+            case None => "Both sides were wiped out in ".txt ~ r.area.elem ~ "."
+            case Some(w) =>
+                name(w) ~ " won the fight in " ~ r.area.elem ~ " " ~ (
+                    if (r.wipe) "by killing all " ~ (w == self).?("enemy").|("your") ~ " units " ~ CombatIcon.skull
+                    else if (r.attacker.total == r.defender.total) "with as many " ~ CombatIcon.axe ~ " (the defender wins ties)"
+                    else "with more " ~ CombatIcon.axe
+                ) ~ "."
+        }
+
+        def side(s : FightSide) : Elem = {
+            val from = s.points./{ case (n, what) => n.hl ~ " from " ~ what }
+            val hits = s.casualties./{ case (n, what) => (n > 0).?(n.hl ~ " from " ~ what).|((-n).hl ~ " " ~ what) }
+
+            name(s.f) ~ s.attacking.?(" (attacking)").|(" (defending)") ~ " had " ~ CombatIcon.axes(s.total) ~
+            from.any.?(" (" ~ from.join(", ") ~ ")").|(Empty) ~
+            hits.any.?(", inflicted " ~ CombatIcon.skulls(s.inflicted) ~ " (" ~ hits.join(", ") ~ ")").|(Empty) ~
+            (s.lost > 0).?(" and lost " ~ s.lost.hl ~ (s.lost == 1).?(" unit").|(" units")).|(Empty) ~ "."
+        }
+
+        // Your side first
+        val sides = (r.defender.f == self).?($(r.defender, r.attacker)).|($(r.attacker, r.defender))
+
+        headline ~ Break ~ side(sides(0)) ~ Break ~ side(sides(1))
+    }.|(Empty)
 }
 
 // Some units, maybe with Kaija and the warchief
@@ -1356,6 +1404,24 @@ object MapExpansion extends Expansion {
                 else if (as > ds) |(attacker)
                 else |(defender)
 
+            // The combat report, from the same sums
+            def report(f : Faction, attacking : Boolean, extra : $[(Int, Elem)], casualties : $[(Int, Elem)], total : Int, inflicted : Int, lost : Int) =
+                FightSide(f, attacking, FightPoints.parts(f, t, attacking, extra), total, casualties.filter(_._1 != 0), inflicted, lost)
+
+            game.fightReport = |(FightReport(a,
+                report(attacker, true, $(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt, aw -> "Wastelands".hl, wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl, food(0) -> Food.elem, faces(0).points -> "the die".txt),
+                    $(faces(0).casualties -> "the die".txt, (e.special == EgilMove).??(1) -> "the card".txt, NewBloodExpansion.casualties(attacker, t, e, true) -> "New Blood powers".txt, eldrich -> "Eldrich".hl, moon -> "Blood Moon".hl,
+                        -halvard -> ("ignored by " ~ Warchief.elem(Goat)), -NewBloodExpansion.ignored(defender) -> "ignored by New Blood powers".txt, -urdar -> "ignored by Urdarbrunn".hl),
+                    as, ac, math.min(dc, au)),
+                report(defender, false, $(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt, dw -> "Wastelands".hl, food(1) -> Food.elem, faces(1).points -> "the die".txt),
+                    $(faces(1).casualties -> "the die".txt, towers -> DefenseTower.elem, NewBloodExpansion.casualties(defender, t, e, false) -> "New Blood powers".txt, moon -> "Blood Moon".hl,
+                        -shield -> ("cancelled by " ~ "Shieldbearers".hl), -NewBloodExpansion.ignored(attacker) -> "ignored by New Blood powers".txt),
+                    ds, dc, math.min(ac, du)),
+                winner, winner.exists(w => (w == attacker).?(ac >= du).|(dc >= au))))
+
+            // Always to the attacker; to the defender too with the option; never to the Automa
+            val readers = ($(attacker) ++ game.options.has(CombatReportOption).$(defender)).but(Automa)
+
             val before = game.count(t, attacker)
             val dbefore = game.count(t, defender)
             game.removeFigures(t, attacker, math.min(dc, au))
@@ -1380,10 +1446,12 @@ object MapExpansion extends Expansion {
             // For the bot game summaries (host.scala)
             game.note(winner.has(attacker).?("attack-won").|("attack-lost"))
 
+            def next(then : ForcedAction) = Then(CombatReportAction(readers, then))
+
             winner match {
                 case None =>
                     log("Both sides were wiped out")
-                    Then(then)
+                    next(then)
 
                 case Some(w) =>
                     val loser = (w == attacker).?(defender).|(attacker)
@@ -1407,11 +1475,22 @@ object MapExpansion extends Expansion {
                         if (w == attacker && e.special == BrandMove)
                             game.retreatBy = |(attacker)
 
-                        Then(RetreatAction(loser, a, loser == attacker && e.ignoreRough, then))
+                        next(RetreatAction(loser, a, loser == attacker && e.ignoreRough, then))
                     }
                     else
-                        Then(then)
+                        next(then)
             }
+
+        case CombatReportAction(l, then) =>
+            if (l.none) {
+                game.fightReport = None
+                Then(then)
+            }
+            else
+                Ask(l.head).add(CombatReportDoneAction(l.head, l.tail, then))
+
+        case CombatReportDoneAction(_, rest, then) =>
+            Then(CombatReportAction(rest, then))
 
         case RetreatAction(f, a, rough, then) =>
             val t = game.board.territory(a)

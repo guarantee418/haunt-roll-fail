@@ -203,6 +203,16 @@ on. To implement one:
 - Combat: `ChiefStepOneAction` (Signy, Brand) runs before food, for player
   and creature fights; Liv's reroll is offered in `CombatRolledAction` and
   `CreaturePlayerRolledAction`.
+- Combat report (asked for by Robotos, 2026-10-07): once `CombatResolveAction`
+  has decided a fight between clans, it stores a `FightReport` in
+  `game.fightReport` (each side's combat points and casualties with their
+  sources, from the same sums, `FightPoints.parts` for the figures) and asks
+  the attacker to tap OK (`CombatReportAction`, `CombatReportDoneAction`,
+  shown by `CombatReport(self)` in `map.scala`) before the retreat. The
+  defender gets it too with the game option `CombatReportOption` ("Combat
+  report for defenders", off by default like Root's Async options); never
+  the Automa. Creature fights have no report. Games saved before it replay
+  as they were: recorded moves carry their own continuation.
 - Clan picker: the framework hook `MetaGame.factionInfo` (label, title,
   contents) adds a button next to each faction in the "Play as" list
   (`hrf.scala`); Northgard's shows the clan board
