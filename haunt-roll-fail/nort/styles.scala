@@ -118,6 +118,8 @@ package object elem {
         object pyreUnit extends CustomStyle(background.color("#000000"), border.radius("50%"))
 
         object tile extends CustomStyle(display("inline-block"), width("26ex"), max.width("90%"), vertical.align("middle"), margin("0.3ex"))
+        // Adset: a seat's three map tiles, side by side during the draft
+        object seatTile extends CustomStyle(display("inline-block"), width("14ex"), vertical.align("middle"), margin("0.3ex"))
         object rot0 extends CustomStyle()
         object rot1 extends CustomStyle(transform("rotate(90deg)"))
         object rot2 extends CustomStyle(transform("rotate(180deg)"))
