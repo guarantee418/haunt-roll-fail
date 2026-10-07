@@ -75,8 +75,8 @@ code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.
 On the map, territories are tinted with their controlling player's color,
-turn gray when invaded and pink during the fight (resource icons stay
-untinted); closed territories that give fame have their border dashes
+turn gray when invaded and pink during the fight (resource icons and the
+printed building space frames stay untinted: `tint` in `nort/ui.scala` cuts them out); closed territories that give fame have their border dashes
 drawn in the controller's color (alternating where two players' meet,
 dotted yellow or white rails beside Rough borders, solid ones beside
 the orange impassable lines of the Peaks, the Poisonous Swamp's corners and the

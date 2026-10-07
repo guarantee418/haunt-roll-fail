@@ -377,6 +377,38 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             g.fillStyle = color
             g.fillRect(0, 0, m.width, m.height)
 
+            // The resource icons and the printed building space frames stay untinted
+            // (some masks only partly leave the icons out)
+            g.translate(m.width / 2, m.height / 2)
+            g.rotate(math.Pi / 2 * (r % 4))
+            g.translate(-m.width / 2, -m.height / 2)
+            g.scale(m.width, m.height)
+            g.globalCompositeOperation = "destination-out"
+            g.fillStyle = "black"
+            g.beginPath()
+            TileIcons.icons.get(tile).|($).foreach { i =>
+                g.moveTo(i.x + i.r, i.y)
+                g.arc(i.x, i.y, i.r, 0, 2 * math.Pi)
+            }
+            Tiles.byId(tile).areas./~(_.spaces).foreach { s =>
+                if (s.kind == LargeSpace) {
+                    val (h, c) = (0.145, 0.065)
+                    g.moveTo(s.x - h + c, s.y - h)
+                    g.lineTo(s.x + h - c, s.y - h)
+                    g.lineTo(s.x + h, s.y - h + c)
+                    g.lineTo(s.x + h, s.y + h - c)
+                    g.lineTo(s.x + h - c, s.y + h)
+                    g.lineTo(s.x - h + c, s.y + h)
+                    g.lineTo(s.x - h, s.y + h - c)
+                    g.lineTo(s.x - h, s.y - h + c)
+                    g.closePath()
+                }
+                else
+                    g.rect(s.x - 0.117, s.y - 0.117, 0.234, 0.234)
+            }
+            g.fill()
+            g.setTransform(1, 0, 0, 1, 0, 0)
+
             tints(key) = c
         }
 
