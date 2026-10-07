@@ -92,6 +92,9 @@ trait MetaBase {
 
     def settingsDefaults : $[hrf.Setting] = $(hrf.ShowTips, hrf.NormalSpacing, hrf.GameFontFace, hrf.NormalFontSize, hrf.TripleClickFullScreen, hrf.NormalScrollSpeed)
 
+    // the display language: (name, text, image id), see hrf.elem.Translation
+    def translation(settings : $[hrf.Setting]) : (String, String => String, String => String) = ("", identity, identity)
+
     val about : $[Elem] = $
 
     val showAbout : Boolean = true
