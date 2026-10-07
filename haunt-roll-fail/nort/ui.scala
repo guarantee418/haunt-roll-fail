@@ -1177,10 +1177,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     // A player's discard pile, newest card last
-    def discardPile(f : Faction) : Elem = {
-        val l = game.states(f).discard
+    def discardPile(f : Faction) : Elem = cardPile(f, " discard pile", game.states(f).discard)
 
-        ((f.name.styled(colorOf(f)) ~ " discard pile").hlb.div ~
+    def activeCards(f : Faction) : Elem = cardPile(f, " active cards (played this year)", game.states(f).active)
+
+    def cardPile(f : Faction, what : String, l : $[Card]) : Elem = {
+        ((f.name.styled(colorOf(f)) ~ what).hlb.div ~
             l.none.?("No cards".txt.div).|(Div(l./(c => Image(c.info.image, styles.discardCard)).merge, styles.discardCards)) ~
             "(tap to close)".spn(xstyles.smaller85).div
         ).div
@@ -1238,9 +1240,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             return
         }
 
-        // Each number with its icon: "2 [food]" in a row, or with the Stacked setting the icon above the number
-        val stacked = callbacks.settings.has(StackedPanels)
-        def item(n : Elem, e : Elem) : Elem = stacked.?((e.div ~ n.div).spn(styles.stackedItem)).|(Amount(n, e))
+        // Each number with its icon: "2 [food]" in a row, with the Stacked setting the icon above the number, with Reverse Stacked the number above the icon
+        val reverse = callbacks.settings.has(ReverseStackedPanels)
+        val stacked = reverse || callbacks.settings.has(StackedPanels)
+        def item(n : Elem, e : Elem) : Elem = stacked.?(reverse.?(n.div ~ e.div).|(e.div ~ n.div).spn(styles.stackedItem)).|(Amount(n, e))
         def row(l : $[Elem]) : Elem = stacked.?(l.merge).|(l.join(" "))
         def amounts(l : $[(String, Elem)]) : Elem = row(l.map { case (n, e) => item(n.hl, e) })
         def line(title : Elem, l : $[(String, Elem)]) : Elem =
@@ -1260,8 +1263,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Warchiefs module: the warchief's name, dimmed while in the reserve
         val chief = game.has(Warchiefs).?(game.chiefs.contains(f).?(Warchief.elem(f)).|(Warchief.name(f).txt ~ " (reserve)".spn(xstyles.smaller85)).div).|(Empty)
 
-        // Cards in hand, to draw and discarded; tapping any of them shows the discards
-        val cards = OnClick(DiscardPile(f), row($(item(state.hand.num.hl, CardIcon.hand), item(state.draw.num.hl, CardIcon.draw), item(state.discard.num.hl, CardIcon.discard))).spn(xlo.pointer)).div(styles.panelLine)
+        // Cards to draw, in hand, played this year and discarded; tapping the yellow card shows the cards played this year, the red one the discards
+        val cardRow = row($(
+            item(state.draw.num.hl, CardIcon.draw),
+            item(state.hand.num.hl, CardIcon.hand),
+            OnClick(ActiveCards(f), item(state.active.num.hl, CardIcon.active).spn(xlo.pointer)),
+            OnClick(DiscardPile(f), item(state.discard.num.hl, CardIcon.discard).spn(xlo.pointer))
+        ))
+        val cards = stacked.?(cardRow.div(styles.panelLine)).|(cardRow.div(styles.panelLine)(styles.cardLine))
 
         // New Blood: Dragon's Sacrificial Pyre, Kraken's High Tide tokens, Ox's Ancestral Equipment tokens
         val nb = f match {
@@ -1499,6 +1508,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case DiscardPile(f) =>
             showOverlay(overlayScrollX(discardPile(f)).onClick, onClick)
+
+        case ActiveCards(f) =>
+            showOverlay(overlayScrollX(activeCards(f)).onClick, onClick)
 
         case PyreView =>
             showOverlay(overlayScrollX(pyreView).onClick, onClick)

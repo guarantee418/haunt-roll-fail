@@ -408,14 +408,14 @@ object Meta extends MetaGame { mmm =>
         Building.all./(b => ImageAsset(b.image.drop("building-".length)))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "ui", "ui-", "webp")(
-        (1.to(99).map(n => ImageAsset("label-" + n)) ++ 1.to(15).map(n => ImageAsset("count-" + n)) ++ 1.to(40).map(n => ImageAsset("spot-" + n))).toList :+ ImageAsset("target") :+ ImageAsset("lore") :+ ImageAsset("food") :+ ImageAsset("wood") :+ ImageAsset("fame") :+ ImageAsset("confirm") :+ ImageAsset("cancel") :+ ImageAsset("rotate-left") :+ ImageAsset("rotate-right") :+ ImageAsset("unit") :+ ImageAsset("card-hand") :+ ImageAsset("card-draw") :+ ImageAsset("card-discard") :+ ImageAsset("first-player") :+ ImageAsset("axe") :+ ImageAsset("skull") :+ ImageAsset("harvest") :+ ImageAsset("winter")
+        (1.to(99).map(n => ImageAsset("label-" + n)) ++ 1.to(15).map(n => ImageAsset("count-" + n)) ++ 1.to(40).map(n => ImageAsset("spot-" + n))).toList :+ ImageAsset("target") :+ ImageAsset("lore") :+ ImageAsset("food") :+ ImageAsset("wood") :+ ImageAsset("fame") :+ ImageAsset("confirm") :+ ImageAsset("cancel") :+ ImageAsset("rotate-left") :+ ImageAsset("rotate-right") :+ ImageAsset("unit") :+ ImageAsset("card-deck") :+ ImageAsset("card-hand") :+ ImageAsset("card-active") :+ ImageAsset("card-discard") :+ ImageAsset("first-player") :+ ImageAsset("axe") :+ ImageAsset("skull") :+ ImageAsset("harvest") :+ ImageAsset("winter")
     ) ::
     $
 
     override val showAbout = false
 
     // Map display settings, chosen by each player under "Interface" (like Root's Clearing Rule)
-    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, CustomTerritoryColor, FightsTerritoryColor, HideTerritoryColor) ++ TerritoryOpacity.all ++ $(ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels)
+    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, CustomTerritoryColor, FightsTerritoryColor, HideTerritoryColor) ++ TerritoryOpacity.all ++ $(ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels, ReverseStackedPanels)
     override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, CompactPanels) ++ PlayerColor.all./(TerritoryOpacity(_, 50))
 }
 
@@ -471,7 +471,7 @@ case object HideBorderColor extends BorderColorSetting {
 }
 
 
-// The player panels' numbers: beside their icons, or each icon above its number
+// The player panels' numbers: beside their icons, each icon above its number, or each number above its icon
 trait PanelLayoutSetting extends hrf.Setting with OneOfGroup {
     val group = "Player Panels"
 }
@@ -482,4 +482,8 @@ case object CompactPanels extends PanelLayoutSetting {
 
 case object StackedPanels extends PanelLayoutSetting {
     val valueOn = "Stacked".hlb
+}
+
+case object ReverseStackedPanels extends PanelLayoutSetting {
+    val valueOn = "Reverse Stacked".hlb
 }
