@@ -725,7 +725,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     })
 
     def makeScene() : |[Scene] = {
-        if (game.states.none || game.board.placements.none)
+        // Adset: the map shows from the central tile on, before any clan is drafted
+        if ((game.states.none && game.adset.not) || game.board.placements.none)
             return None
 
         val board = game.board
@@ -1608,6 +1609,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     override def styleAction(faction : |[F], actions : $[UserAction], a : UserAction, unavailable : Boolean, view : |[Any]) : $[Style] =
         if (a.is[AdsetDraftChoice])
             $(xstyles.choice, xstyles.xx, xstyles.chp, xstyles.factionTile, styles.draftTile, xlo.pointer)
+        else
+        // Adset: the seat's three map tiles side by side
+        if (a.is[AdsetTileInfoAction])
+            $(xstyles.info, xstyles.xx, xstyles.chp, styles.draftTile)
         else
         view @@ {
             case _ if unavailable.not => $()
