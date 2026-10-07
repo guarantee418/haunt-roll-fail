@@ -972,6 +972,20 @@ case object HideBoardTrackers extends TrackersOption {
 }
 
 
+trait LanguageOption extends hrf.Setting with OneOfGroup {
+    val group = "Language"
+}
+
+case object EnglishLanguage extends LanguageOption {
+    val valueOn = "English".hlb
+}
+
+// display only (root/french.scala), so players in one game can each pick their language
+case object FrenchLanguage extends LanguageOption {
+    val valueOn = "Français".hlb
+}
+
+
 trait HighlightsOption extends hrf.Setting with OneOfGroup {
     val group = "Highlights"
 }
@@ -1029,8 +1043,14 @@ object Meta extends MetaGame {
     val name = "root"
     val label = "Root"
 
-    override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, StackWarriors, SeparateWarriors, ShowBoardTrackers, HideBoardTrackers, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone)
-    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, ShowBoardTrackers, NoOutOfTurn, HighlightNone)
+    override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, StackWarriors, SeparateWarriors, ShowBoardTrackers, HideBoardTrackers, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone, EnglishLanguage, FrenchLanguage)
+    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, ShowBoardTrackers, NoOutOfTurn, HighlightNone, EnglishLanguage)
+
+    override def translation(settings : $[hrf.Setting]) =
+        if (settings.has(FrenchLanguage))
+            ("fr", French.text _, French.image _)
+        else
+            super.translation(settings)
 
     override val about = $(
         "A quaint and quirky adaptation of the " ~ "R".styled(Fox).larger ~ "O".styled(Rabbit).larger ~ "O".styled(Mouse).larger ~ "T".styled(Bird).larger ~ " board game.",
@@ -2684,6 +2704,8 @@ object Meta extends MetaGame {
         ImageAsset("tactician") ::
         ImageAsset("the-faithful") ::
     $) ::
+    ConditionalAssetsList((factions, options) => true, "card/deck/fr", "fr:", lzy = Laziness.OnDemand, scale = 50)(French.cards./(ImageAsset(_))) ::
+    ConditionalAssetsList((factions, options) => true, "faction/fr", "fr:", lzy = Laziness.OnDemand)(French.boards./(ImageAsset(_))) ::
     ConditionalAssetsList((factions, options) => options.has(DuskDeck), "card/dusk", lzy = Laziness.Later)(
         ImageAsset("adventurers"                ) ::
         ImageAsset("breaking-dawn"              ) ::

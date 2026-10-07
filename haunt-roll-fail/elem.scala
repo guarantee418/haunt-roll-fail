@@ -27,6 +27,21 @@ package object elem {
     val Checkmark = 0x2713.toChar.toString
     val Failmark = 0x2718.toChar.toString
 
+    // The display language: text and image ids are passed through these when they are drawn
+    // (html.materialize), so a game's state and saved moves stay the same in every language.
+    // Set from the game's settings (MetaGame.translation); English is the identity.
+    object Translation {
+        var language : String = ""
+        var text : String => String = identity
+        var image : String => String = identity
+
+        def set(language : String, text : String => String, image : String => String) {
+            this.language = language
+            this.text = text
+            this.image = image
+        }
+    }
+
     trait Postfix extends Elem
 
     case object Join extends SpecialText(" ")

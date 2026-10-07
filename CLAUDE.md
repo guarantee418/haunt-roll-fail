@@ -513,6 +513,18 @@ file covers the build, server and deploy. No session can ssh to the server
   (`game.landmarkSuits`). Foxburrow is the `FoxburrowRoads` transport,
   Rabbittown a Daylight action and Mousehold a hook in `battle.scala`; the
   effects are in `MapsExpansion` in `root/maps.scala`.
+- Root has a French display language: the "Language" setting (`EnglishLanguage`,
+  `FrenchLanguage` in `root/meta.scala`, shared by all the Root metas) and a "Root en français"
+  entry on the main menu (`rootLanguage` in `hrf.scala`, which only saves that setting). It is
+  display only: `hrf.elem.Translation` passes every `Text`, `Header` and image id through the
+  meta's `translation` when `html.materialize` draws it, so game state, saved moves and online
+  games are the same in both languages, players in one game can each pick theirs, and switching
+  mid-game redraws the page in place (`html.retranslate`). The words are in `root/french.scala`
+  (whole pieces of text first, then names and terms inside longer ones; anything missing stays
+  English), following the official French edition. French card art for the base and Exiles and
+  Partisans decks and the eight base and Riverfolk/Underworld faction boards are in
+  `webp2/root/images/card/deck/fr/` and `faction/fr/` (asset prefix `fr:`), cut by
+  `root/tools/french-assets.py` from the TTS mod "Root FR" (Steam workshop 1829904481).
 - Bot games can be run headless on the JVM with `root/host.scala` (see
   `host.xsbt` for the source exclusions); it also checks that every action
   serializes and parses back.
