@@ -156,13 +156,13 @@ trait Board {
     val ferry : $[Clearing] = $
     val tower : $[Clearing] = $
 
-    // A score track printed on the board: the centre of the 0 box and the distance between boxes,
-    // with boxes 0 to scoreTrackMax in a row
-    val scoreTrack : |[(Double, Double, Double)] = None
+    // The score tracker: the centre of the 0 box and the distance between boxes, with boxes 0 to
+    // scoreTrackMax in a row. It runs along the bottom edge, as on the printed boards.
+    val scoreTrack : |[(Double, Double, Double)] = |((88.3, 2122.0, 74.63))
     val scoreTrackMax = 30
 
-    // Item slots printed on the board: each slot's item and centre
-    val itemSlots : $[(Item, Double, Double)] = $
+    // The item tracker: each slot's item and centre, in the top left corner as on the printed boards
+    def itemSlots : $[(Item, Double, Double)] = itemGrid(425.0, 88.0, 89.5, 173.5)
 
     // The usual two rows of six slots: Bag, Boots, Crossbow (Hammer below), Sword, Teapot, Coins
     def itemGrid(x0 : Double, dx : Double, y0 : Double, y1 : Double) : $[(Item, Double, Double)] =
