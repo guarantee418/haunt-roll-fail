@@ -30,6 +30,25 @@ object ColorOption {
     val all : $[ColorOption] = Meta.factions./~(f => PlayerColor.all./(c => ColorOption(f, c)))
 }
 
+// Team play, picked above the clan picker (Meta.pickerModes): each player is on the team of its TeamOption, chosen on its row of
+// the setup screen; any split of the players into two or more teams. The team modules below are what games made before used
+case object TeamPlay extends GameOption {
+    val group = "Game type".txt
+    def valueOn = "Teams".hlb
+}
+
+// A clan's team in team play: 0 is Team A, 1 Team B, and so on; picking a team takes the clan off its old one
+case class TeamOption(clan : Faction, team : Int) extends GameOption {
+    val group = (clan.name + " Clan team").txt
+    def valueOn = ("Team " + TeamOption.letter(team)).hl
+    override def forcedOff(all : $[BaseOption]) = all.of[TeamOption].%(o => o != this && o.clan == clan)
+}
+
+object TeamOption {
+    def letter(team : Int) = "ABCDEF".charAt(team).toString
+    val all : $[TeamOption] = Meta.factions./~(f => $(0, 1, 2, 3, 4, 5)./(TeamOption(f, _)))
+}
+
 // A clan played by the "Robotos" bot, which cheats (robotos.scala): no Winter costs, creatures ignore it, one more
 // unit with every Recruit. Not on the setup screen: the game gets it for each clan set to "Bot / Robotos"
 // (Meta.botOptions, called by startGame in hrf.scala), so every client and every replay plays by the same rules
@@ -340,6 +359,7 @@ case object VictoryModule extends Module("Alternative victory", "Uncharted Horiz
     )
 }
 
+// The fixed team variants, from before the teams were chosen per player (TeamPlay); no longer offered, kept for the games made with them.
 // Team play (Game.teams): seats alternate between the two teams, so teammates sit opposite each other.
 // Teammates add their scores together, may move through each other's territories but not stop there,
 // never fight or target each other, and trade resources with each other 1:1 at harvest

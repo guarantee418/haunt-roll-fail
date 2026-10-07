@@ -16,8 +16,9 @@ Northgard: Uncharted Lands is being added in `haunt-roll-fail/nort/`
 (meta name `nort`, URL `/play/nort`), base game first, expansions later.
 `nort/RULES.md` summarizes the rules (the rulebook PDFs aren't in the repo)
 and tracks what is done. `nort/HANDOFF.md` has the state, design notes,
-known gaps, next steps and how to build and test it. So far: the 7 clans (14 with New Blood), 2–6 players (six on the five-player rules), the 2v2
-Teams variant and a 3v3 one on the same rules, the year loop with
+known gaps, next steps and how to build and test it. So far: the 7 clans (14 with New Blood), 2–6 players (six on the five-player rules), team
+play with any split into teams on the 2v2 rules ("Free-for-all" or "Teams" above the clan
+picker, `Meta.pickerModes`; each player's team on its setup row, `TeamOption`), the year loop with
 decks, Wait/Replace/Remove/Upgrade/Pass, Flash cards, harvest trading, winter
 and Unrest, end-of-game scoring (the end screen shows the winner's clan card, "tames these lands and triumphs as the supreme Jarl", and how they won), and the real card list in `nort/cards.scala`
 (names, fame, text, images), the map: tile data in `nort/tiles.scala`
@@ -100,10 +101,11 @@ fame included) and its Winter cost (as losses, "-1"); tapping the Winter line, t
 Winter chart (`winterChart` in `nort/ui.scala`). Each player can hide the
 tints and the colored borders under "Interface" (the Territory Color and
 Fame Borders settings in `nort/meta.scala`). The tints are the player colors themselves
-(`PlayerColor.hex`, the same colors as the names), and each player sets how opaque each
-color is, 0 to 100% in steps of 10 (default 50%), with the "<Color> Territories" rows under
-Territory Color (`TerritoryOpacity`, a `CompactSetting`: its values are one row of small
-buttons in the settings screen, `editSettings` in `hrf.scala`). The "Player Panels" setting (`CompactPanels`, the default, or `StackedPanels`) shows every number in the panels beside its icon or under it. A turn starts with six choices at
+(`PlayerColor.hex`, the same colors as the names), at 50% opacity; picking "Custom" under Territory Color
+(`CustomTerritoryColor`) shows the "<Color> Territories" rows, where each player sets how
+opaque each color is, 0 to 100% in steps of 10 (default 50%) (`TerritoryOpacity`, a
+`CompactSetting`: its values are one row of small buttons in the settings screen,
+`editSettings` in `hrf.scala`; rows are hidden while `Setting.visible` is false). The "Player Panels" setting (`CompactPanels`, the default, or `StackedPanels`) shows every number in the panels beside its icon or under it. A turn starts with six choices at
 the top of the action pane (Play cards, Wait, Replace, Remove, Upgrade,
 Pass); after one, tapping a card in hand does it. A Build card's builds: tap
 a free space, pick from the menu of all buildings with their costs, then
@@ -151,7 +153,7 @@ picking the drawn clan by hand draws again). The setup options
 (colors, game length, victory conditions, first player, "Ban card draw developments"
 (`NoDrawDevelopments`: leaves the seven Development cards that only draw cards
 out of the decks), and the modules and
-expansions; Creatures, Warchiefs, Wilderness, Wastelands, Events and the 2v2/3v3/2v2v2 Teams variants are implemented, the others are shown but disabled) are in `nort/options.scala`.
+expansions; Creatures, Warchiefs, Wilderness, Wastelands and Events are implemented, the others are shown but disabled) are in `nort/options.scala`.
 "Victory conditions" picks one of: the standard rules, fame only, Alternative
 victory with random cards (the rulebook's way), or Alternative victory with
 cards chosen from the 21 listed below it (exactly 1 Map Control and 2 Wealth,

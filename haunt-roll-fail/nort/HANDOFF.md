@@ -24,7 +24,7 @@ and each deck's `CustomDeck` has the `FaceURL` of its card sheet.
 | File | What it holds |
 |---|---|
 | `meta.scala` | Clans (picked from a grid of emblems, `factionTile`, with an "i" button for the clan and warchief cards, `factionInfo`; or Random Clan: `randomFactions`, hidden until the game starts), 2–6 players, which options go on which setup page, the asset lists (cards, tiles, units, buildings, `ui-` markers) |
-| `options.scala` | Setup options: `ColorOption` per clan, `YearsOption` (5–10, default 7), the Victory conditions (`VictoryChoice`: `StandardVictory`, `FameOnly`, `AltVictoryRandom`, `AltVictoryChosen`; `VictoryModeOption`, `VictoryCardOption`), `FirstSeatStarts`; `Module` and `ModuleOption` for modules and expansions, including the team variants `TeamsVariant` (2v2) and `Teams3v3` |
+| `options.scala` | Setup options: `ColorOption` per clan, `YearsOption` (5–10, default 7), the Victory conditions (`VictoryChoice`: `StandardVictory`, `FameOnly`, `AltVictoryRandom`, `AltVictoryChosen`; `VictoryModeOption`, `VictoryCardOption`), `FirstSeatStarts`; `Module` and `ModuleOption` for modules and expansions, the team play options `TeamPlay` and `TeamOption` (and the old fixed team variants `TeamsVariant`, `Teams3v3`, `Teams2v2v2`, hidden) |
 | `meta.scala` (Quick Game) | `quickMin`/`quickMax` 3 and `quickFactions` the 7 core clans: the main menu's Quick Game is always three core clans with the default (core) options |
 | `game.scala` | Factions, player colors by seat, resources, `FactionState`, `Game` (map state and helpers), `CommonExpansion` (setup, decks, the year loop, harvest, winter, end of year, scoring), `Debug.summary` |
 | `cards.scala` | Every core card (name, fame, Flash, text, image) and its `Effect`; `MoveSpecial` / `BuildSpecial` mark Move and Build cards with extra rules |
@@ -120,6 +120,20 @@ boards are shown by the clan picker's Warchief button).
   teams; `game.teams`, `teamCount`, `team(f)` (seat index mod `teamCount`,
   so 2v2v2 pairs seats 1+4, 2+5, 3+6), `allied`, `enemy`, `mates`, `sides`,
   `teamName` (Team A, B, C).
+- Custom teams (2026-10-07, the owner's ask): the clan picker (custom and
+  online games) starts with "Game type": Free-for-all (default) or Teams
+  (`Meta.pickerModes`, a hook in `meta.scala`; `customGame` in `hrf.scala`
+  remembers the choice in local storage under `nort.picker-mode` and passes
+  its options to `startSetup` as `extra`, always on like a mode's). Teams adds
+  the hidden `TeamPlay` option, and each clan's row on the setup screen gets
+  a team button, Team A to as many letters as players (`TeamOption(clan,
+  team)`, `Meta.factionRowMore`, a second row-button hook). Defaults and
+  `completeSaved` alternate the teams by seat. `validateFactionSeatingOptions`
+  refuses one team and teams against the Automa, and warns when everyone is
+  alone. `game.team(f)` is the clan's `TeamOption` (`Meta.teamOf`) with
+  `TeamPlay`, else the old seat-based rule. The three team `ModuleOption`s
+  are hidden now (kept so old games load). The headless host puts players in
+  random teams half the time with 3+ players (`NORT_TEAMS=1`: always).
 - Anything that means "enemy" uses `game.enemy(f, _)` instead of `.but(f)`
   (card effects in `effects.scala`, Defensive Strategy, Scorched Earth).
   `present(t)`, `controlled(f)` and retreats are unchanged: a teammate's
@@ -914,7 +928,7 @@ list. In short:
   symlink the sources, then `sbt "runMain nort.Host"`. It plays 20 games with
   2–5 players and random colors, game lengths and victory options, and checks
   that every action and option serializes and parses back (with 2–6 players,
-  teams half the time with 4 or 6). Leave
+  random teams half the time with 3 or more). Leave
   out `vast/host.scala`, which doesn't compile. Problems show as
   `UNMATCHING WRITE/PARSE` in the output or as `nort/game-error-*.txt` files
   (delete them, don't commit them). With `NORT_UPGRADES=1` the clan upgrade

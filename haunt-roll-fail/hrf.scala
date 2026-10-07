@@ -568,7 +568,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             }
 
             // Consecutive compact settings of the same group share one row
-            val rows = meta.settingsList.foldLeft($[$[Setting]]()) { (rows, o) =>
+            val rows = meta.settingsList.filter(_.visible(ostate.selected)).foldLeft($[$[Setting]]()) { (rows, o) =>
                 (o, rows.lastOption./(_.last)) match {
                     case (c : CompactSetting, Some(p : CompactSetting)) if p.group == c.group => rows.dropRight(1) :+ (rows.last :+ o)
                     case _ => rows :+ $(o)
@@ -1467,6 +1467,12 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
             def chosenElem(f : meta.F) = hidden.contains(f).?(meta.randomName.hlb).|(meta.factionChosenElem(f))
 
+            // The choice above the picker (Meta.pickerModes, Northgard's free-for-all or teams), remembered for the next game
+            val modeKey = meta.name + ".picker-mode"
+            var mode = meta.pickerModes.indices.find(_.toString == hrf.web.Local.get(modeKey, "")).|(0)
+
+            def modeOptions = meta.pickerModes.lift(mode)./(_._2).|($)
+
             def askAdd() {
                 val t = "Play " ~ meta.label.hl ~ " " ~ (online).?("Online").|("Hotseat")
                 val v = meta.validateFactionCombination(opponents)
@@ -1479,8 +1485,15 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         askAdd()
                     }, ZBasic.infoch ++ $(xstyles.optionOn))) ++
                     ZBasic(t, v.ok.?("Start Setup".hl ~ v.message.any.??(" | ")).|(Empty) ~ v.message.styled(v.style), (v.ok).??(() => {
-                        startSetup(opponents, online, online.not.?("hotseat"), hidden = hidden.keys.$)
+                        startSetup(opponents, online, online.not.?("hotseat"), hidden = hidden.keys.$, extra = modeOptions)
                     })).? ++
+                    meta.pickerModes.zipWithIndex./{ case ((label, _), i) =>
+                        ZOption("Game type".styled(xstyles.larger125), OnClick(Div(label, ZBasic.choice ++ (i == mode).$(xstyles.optionOn, xstyles.bold) ++ $(xstyles.optionE, xstyles.halfbutton))), _ => {
+                            mode = i
+                            hrf.web.Local.set(modeKey, i.toString)
+                            askAdd()
+                        })
+                    } ++
                     meta.randomFactions.filter { case (_, pool) => pool.diff(opponents).any }.map { case (label, pool) => ZOption(Div("Play as".txt), OnClick(randomPick(label)), _ => {
                         val f = pool.diff(opponents).shuffle.head
                         opponents :+= f
@@ -1521,9 +1534,10 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
     // mode: a mode from the main menu (Meta.modes), whose options are always on; its choices are saved apart from the usual ones
     // keep: the kind of local game to save it as (savedGamesMenu), if it is saved
-    def startSetup(factions : $[meta.F], online : Boolean, keep : |[String] = None, mode : |[String] = None, hidden : $[meta.F] = $) {
+    // extra: options picked before the setup screen (Meta.pickerModes), always on like the mode's
+    def startSetup(factions : $[meta.F], online : Boolean, keep : |[String] = None, mode : |[String] = None, hidden : $[meta.F] = $, extra : $[meta.O] = $) {
         val optionsSaveKey = meta.name + mode./("." + _).|("") + "." + online.?("online").|("offline") + ".options." + factions.num + "p"
-        val mandatory = meta.mandatoryFor(factions.num, factions) ++ mode./~(meta.modeOptions)
+        val mandatory = meta.mandatoryFor(factions.num, factions) ++ mode./~(meta.modeOptions) ++ extra
         val saved = hrf.web.Local.get(optionsSaveKey, "").split(' ').$./~(_.some)
         val provided = HRF.paramList("options")
         val preset = provided.some.|(saved)./~(meta.parseOption(_)).intersect(meta.options)
@@ -1568,6 +1582,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                             case Bot(s) => " Bot / ".pre ~ (s + " ").pre.hl
                         }).div(xstyles.width14ex), xstyles.outlined))) ~
                         meta.factionRowOptions(f, seating).some./(l => " " ~ Parameter("row-option", OnClick(Span(l.find(options.selected.has)./(o => o.valueOn).|(meta.factionRowNone).div(xstyles.width14ex), xstyles.outlined)))).|(Empty) ~
+                        meta.factionRowMore(f, seating, options.actual).zipWithIndex./{ case (l, i) => " " ~ Parameter("row-more-" + i, OnClick(Span(l.find(options.selected.has)./(o => o.valueOn).|(meta.factionRowNone).div(xstyles.width10ch), xstyles.outlined))) }.merge ~
                         Div(
                             (seating.head == f).?("   ".pre.spn(xstyles.larger125)).|(OnClick("up",   Span(" ▲ ".pre.spn(xstyles.larger125), xstyles.outlined))) ~
                             (seating.last == f).?("   ".pre.spn(xstyles.larger125)).|(OnClick("down", Span(" ▼ ".pre.spn(xstyles.larger125), xstyles.outlined))),
@@ -1581,6 +1596,15 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                             meta.factionRowClick(f, seating, options.selected).foreach { o =>
                                 if (options.selected.has(o).not)
                                     options = options.click(o)
+                            }
+                            hrf.web.Local.set(optionsSaveKey, (options.selected ++ options.dimmed ++ unneeded)./(meta.writeOption).join(" "))
+                            setupQuestions(page)
+                        case s : String if s.startsWith("row-more-") =>
+                            meta.factionRowMore(f, seating, options.actual).lift(s.drop("row-more-".length).toInt).foreach { l =>
+                                (l ++ l).dropWhile(o => options.selected.has(o).not).drop(1).take(1).some.|(l.take(1)).foreach { o =>
+                                    if (options.selected.has(o).not)
+                                        options = options.click(o)
+                                }
                             }
                             hrf.web.Local.set(optionsSaveKey, (options.selected ++ options.dimmed ++ unneeded)./(meta.writeOption).join(" "))
                             setupQuestions(page)
