@@ -69,7 +69,8 @@ package object elem {
         object drillCard extends CustomStyle(display("block"), width("var(--nort-hand-card, 12ex)"))
         // Raid cards are landscape: twice a hand card's width
         object raidHandCard extends CustomStyle(display("block"), width("calc(2 * var(--nort-hand-card, 22ex))"), max.width("100%"))
-        object inlineIcon extends CustomStyle(height("1.4em"), vertical.align("middle"))
+        // Icons in text; a number just before one stays on its line (GluesToNumber)
+        object inlineIcon extends CustomStyle(height("1.4em"), vertical.align("middle")) with GluesToNumber
         // A player panel line of numbers and icons, kept on one row
         object panelLine extends CustomStyle(white.space("nowrap"))
         // The Stacked player panels: each icon above its number
@@ -117,6 +118,8 @@ package object elem {
         object pyreUnit extends CustomStyle(background.color("#000000"), border.radius("50%"))
 
         object tile extends CustomStyle(display("inline-block"), width("26ex"), max.width("90%"), vertical.align("middle"), margin("0.3ex"))
+        // Adset: a seat's three map tiles, side by side during the draft
+        object seatTile extends CustomStyle(display("inline-block"), width("14ex"), vertical.align("middle"), margin("0.3ex"))
         object rot0 extends CustomStyle()
         object rot1 extends CustomStyle(transform("rotate(90deg)"))
         object rot2 extends CustomStyle(transform("rotate(180deg)"))

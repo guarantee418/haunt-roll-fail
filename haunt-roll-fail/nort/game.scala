@@ -244,6 +244,12 @@ object LoreIcon {
     def apply() : Elem = Lore.elem
 }
 
+// A number and its icon ("3 [food]"), which never wrap apart; numbers and icons given separately to log() and actions are glued the same way
+object Amount {
+    def apply(n : Elem, e : Elem) : Elem = GluesToNumber(n, e)
+    def apply(n : Int, e : Elem) : Elem = GluesToNumber(n.hl, e)
+}
+
 // Fame, shown as the crown of the fame tokens
 object FameIcon {
     def apply() : Elem = Image("ui-fame", styles.inlineIcon).alt("fame")
@@ -255,8 +261,8 @@ object CombatIcon {
     def skull : Elem = Image("ui-skull", styles.inlineIcon).alt("casualties")
 
     // n combat points or n casualties, for counts in sentences
-    def axes(n : Int) : Elem = n.hl ~ " " ~ axe
-    def skulls(n : Int) : Elem = n.hl ~ " " ~ skull
+    def axes(n : Int) : Elem = Amount(n.hl, axe)
+    def skulls(n : Int) : Elem = Amount(n.hl, skull)
 }
 
 // Rules text with its combat words drawn as the die icons: "combat point(s)", "point(s)" after a number, "any", "bonus" or "more",
@@ -273,9 +279,12 @@ object CombatText {
                 else if (word.startsWith("combat") || word.startsWith("axe") || m.group(1).nonEmpty) |(CombatIcon.axe)
                 else None
             icon./ { i =>
-                val before = Text(s.substring(at, m.start(2)))
+                val n = m.group(1).trim
+                val number = n.nonEmpty && n.forall(_.isDigit)
+                // A number stays on the same line as its icon
+                val before = Text(s.substring(at, number.?(m.start(1)).|(m.start(2))))
                 at = m.end(2)
-                $(before, i)
+                $(before, number.?(Amount(Text(n), i)).|(i))
             }.|($)
         }
         (parts :+ Text(s.substring(at))).filter(_ != Text("")).merge
@@ -301,9 +310,9 @@ object TurnModeLabel {
     def apply(m : TurnMode) : Elem = m match {
         case PlayMode => "Play cards".txt ~ " (" ~ 1.hl ~ " + any " ~ "⚡".hl ~ ")"
         case WaitMode => "Wait".txt
-        case ReplaceMode => "Replace card for".txt ~ " " ~ 1.hl ~ " " ~ LoreIcon()
-        case RemoveMode => "Remove card for".txt ~ " " ~ 2.hl ~ " " ~ LoreIcon()
-        case UpgradeMode => "Upgrade for".txt ~ " " ~ 3.hl ~ " " ~ LoreIcon()
+        case ReplaceMode => "Replace card for".txt ~ " " ~ Amount(1.hl, LoreIcon())
+        case RemoveMode => "Remove card for".txt ~ " " ~ Amount(2.hl, LoreIcon())
+        case UpgradeMode => "Upgrade for".txt ~ " " ~ Amount(3.hl, LoreIcon())
     }
 }
 
@@ -884,7 +893,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         self.%(states.contains)./~(f =>
             (choosing || inLoreTree).not.??(f.hand.distinct./(c => turn.?(HandInfoAction(f, "Your hand".styled(colors(f)), c, f.hand.count(c)) : Info).|(CardInfoAction(f, "Your hand".styled(colors(f)), c, f.hand.count(c))))) ++
             f.active.distinct./(c => CardInfoAction(f, "Played".styled(colors(f)), c, f.active.count(c))) ++
-            inLoreTree.not.??(f.upgrades./(u => CardInfoAction(f, "Lore Tree".styled(colors(f)) ~ " (" ~ f.lore.hl ~ " " ~ LoreIcon() ~ ")", u))) ++
+            inLoreTree.not.??(f.upgrades./(u => CardInfoAction(f, "Lore Tree".styled(colors(f)) ~ " (" ~ Amount(f.lore.hl, LoreIcon()) ~ ")", u))) ++
             $(ClanBoardInfoAction(f, "Clan board".styled(colors(f)))) ++
             $(Info("Fame", f.fame.hlb))
         )
@@ -1602,7 +1611,7 @@ object CommonExpansion extends Expansion {
                     f.food -= food
                     f.wood -= wood
 
-                    f.log("paid", food.hl, Food, (wood > 0).?("and " ~ wood.hl ~ " " ~ Wood.elem).|(Empty), "for", f.units.hl, "units")
+                    f.log("paid", food.hl, Food, (wood > 0).?("and " ~ Amount(wood.hl, Wood.elem)).|(Empty), "for", f.units.hl, "units")
                 }
                 else {
                     f.food = math.max(0, f.food - food)
@@ -1672,7 +1681,7 @@ object CommonExpansion extends Expansion {
                 val FinalFame(tokens, cards, sets, unrest) = finalFame(f)
                 val total = finalFame(f).total
 
-                f.log("scored", total.hlb, FameIcon() ~ ":", tokens.hl, "from tokens,", cards.hl, "from cards,", sets.hl, "from resources,", unrest.hl, "from", UnrestCard)
+                f.log("scored", Amount(total.hlb, FameIcon()) ~ ":", tokens.hl, "from tokens,", cards.hl, "from cards,", sets.hl, "from resources,", unrest.hl, "from", UnrestCard)
 
                 f -> total
             }.toMap

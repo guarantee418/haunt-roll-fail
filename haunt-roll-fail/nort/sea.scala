@@ -22,7 +22,7 @@ import nort.elem._
 // What a Raid gives instead of its action: per unit for a 1-year Raid, once for a 2-year Raid; any: resources of the player's choice
 case class RaidGain(food : Int = 0, wood : Int = 0, lore : Int = 0, fame : Int = 0, any : Int = 0) {
     def times(n : Int) = RaidGain(food * n, wood * n, lore * n, fame * n, any * n)
-    def elem : Elem = $(food -> Food.elem, wood -> Wood.elem, lore -> Lore.elem, fame -> FameIcon(), any -> "any resource".txt).filter(_._1 > 0)./{ case (n, e) => n.hl ~ " " ~ e }.join(", ")
+    def elem : Elem = $(food -> Food.elem, wood -> Wood.elem, lore -> Lore.elem, fame -> FameIcon(), any -> "any resource".txt).filter(_._1 > 0)./{ case (n, e) => Amount(n.hl, e) }.join(", ")
     def text : String = $(food -> "food", wood -> "wood", lore -> "lore", fame -> "fame", any -> "any resource").filter(_._1 > 0)./{ case (n, e) => n.toString + " " + e }.mkString(", ")
 }
 
@@ -676,7 +676,7 @@ object SeaExpansion extends Expansion {
             f.gain(x, 1)
             if (fame)
                 f.fame += 1
-            f.log("exchanged", 1.hl, r, "for", 1.hl, x, fame.?("and gained " ~ 1.hl ~ " " ~ FameIcon()).|(Empty), "with", c)
+            f.log("exchanged", 1.hl, r, "for", 1.hl, x, fame.?("and gained " ~ Amount(1.hl, FameIcon())).|(Empty), "with", c)
             if (fame)
                 Then(RaidTriumphAction(f, c, (given :+ r).distinct, (taken :+ x).distinct, k, rest, then))
             else

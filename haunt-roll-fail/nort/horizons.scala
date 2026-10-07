@@ -71,7 +71,7 @@ case class EventGainAction(self : Faction, card : EventCard, r : |[Resource], fa
 case class OfferingsTakeAction(self : Faction, card : Card, step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("offerings"), "discard", 1.hl, Lore, "to take from the discard pile")(card.handImg) with ViewObject[Card] { def obj = card }
 case class VolcanoAction(self : Faction, space : SpaceRef, building : Building, step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("volcano-eruption"), "remove a building in", space.area)(building) with MapTarget { def target = space.area }
 case class HappyUnrestAction(self : Faction, step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("happy-people"))("Remove 1", UnrestCard)
-case class HappyFameAction(self : Faction, area : |[AreaRef], step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("happy-people"), "gain", 3.hl, FameIcon(), "and add a unit")(area./(a => a : Any).|("Gain " ~ 3.hl ~ " " ~ FameIcon() ~ " (no unit)"))
+case class HappyFameAction(self : Faction, area : |[AreaRef], step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("happy-people"), "gain", 3.hl, FameIcon(), "and add a unit")(area./(a => a : Any).|("Gain " ~ Amount(3.hl, FameIcon()) ~ " (no unit)"))
 case class LevyAction(self : Faction, area : AreaRef, remove : Boolean, step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("myrkalfars-levy"), "in", area)(remove.?("Remove 1 unit").|("Don't collect its resources")) with MapTarget { def target = area }
 case class BountifulAction(self : Faction, area : AreaRef, step : String, l : $[Faction], then : ForcedAction) extends BaseAction(EventCard("bountiful-year"), "no fame, double resources from")(area) with MapTarget { def target = area }
 case class InfestationAction(f : Faction, areas : $[AreaRef], step : String, l : $[Faction], then : ForcedAction) extends ForcedAction
@@ -84,7 +84,7 @@ case class BonfireTradeAction(self : Faction, then : ForcedAction) extends BaseA
 
 case class EventGainLabel(r : |[Resource], fame : Int, draw : Int) extends Elementary {
     def elem = {
-        val l : $[Elem] = r.$./(r => "Collect " ~ 1.hl ~ " " ~ r.elem) ++ (fame > 0).$("Gain " ~ fame.hl ~ " " ~ FameIcon()) ++ (draw > 0).$(("Draw " + draw + " card").txt)
+        val l : $[Elem] = r.$./(r => "Collect " ~ Amount(1.hl, r.elem)) ++ (fame > 0).$("Gain " ~ Amount(fame.hl, FameIcon())) ++ (draw > 0).$(("Draw " + draw + " card").txt)
         l.any.?(l.join(" and ")).|("Nothing".txt)
     }
 }
@@ -126,7 +126,7 @@ object EventsExpansion extends Expansion {
                 game.states(f).fame += 2
                 val lore = (game.board.tiles(t) >= 4).??(1)
                 game.states(f).lore += lore
-                f.log("gained", 2.hl, FameIcon(), (lore > 0).?("and " ~ 1.hl ~ " " ~ Lore.elem).|(Empty), "for closing", t.anchor, "with", EventCard("new-horizons"))
+                f.log("gained", 2.hl, FameIcon(), (lore > 0).?("and " ~ Amount(1.hl, Lore.elem)).|(Empty), "for closing", t.anchor, "with", EventCard("new-horizons"))
             }
     }
 
@@ -412,7 +412,7 @@ object EventsExpansion extends Expansion {
             game.removeFigures(game.board.territory(a), f, 1)
             val wood = math.min(1, f.wood)
             f.wood -= wood
-            f.log("lost a unit in", a, (wood > 0).?("and discarded " ~ 1.hl ~ " " ~ Wood.elem).|(Empty))
+            f.log("lost a unit in", a, (wood > 0).?("and discarded " ~ Amount(1.hl, Wood.elem)).|(Empty))
             Then(next(step, l, then))
 
         case EarthquakeAction(f, Nil, step, l, then) =>

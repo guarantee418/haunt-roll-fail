@@ -37,6 +37,28 @@ package object elem {
     case object Colon extends SpecialText(":") with Postfix
     case object Space extends SpecialText(" ")
 
+    // An icon style for icons that stay on the same line as the number just before them ("3 [food]")
+    trait GluesToNumber extends Style
+
+    object GluesToNumber {
+        private val number = "[+-]?[0-9]+".r
+
+        def icon(e : Elem) : Boolean = e match {
+            case Image(_, styles, _) => styles.exists(_.isInstanceOf[GluesToNumber])
+            case _ => false
+        }
+
+        // A number and its icon, which never wrap apart
+        def apply(n : Elem, e : Elem) : Elem = Span(n ~ " " ~ e, xlo.nowrap)
+
+        // Glues each number in a list to the icon that follows it
+        def list(l : $[Elem]) : $[Elem] = l match {
+            case n :: e :: rest if icon(e) && number.matches(n.text) => apply(n, e) :: list(rest)
+            case a :: rest => a :: list(rest)
+            case Nil => Nil
+        }
+    }
+
     abstract class Style extends GoodMatch {
         val name : String
         val prefix : StylePrefix
