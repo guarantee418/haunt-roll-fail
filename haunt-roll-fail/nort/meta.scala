@@ -71,7 +71,7 @@ object Meta extends MetaGame { mmm =>
     override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TeamPlay) ++ RobotosOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // New Blood has no option: picking one of its clans brings it in
-    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, CombatReportAttackers, CombatReportDefenders, WarchiefCards, NoDrawDevelopments, HorizonsDevelopments) ++ Module.all.but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles) ++ AutomaLevelOption.all ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, CombatReportAttackers, CombatReportDefenders, WarchiefCards, WarchiefPawns, NoDrawDevelopments, HorizonsDevelopments) ++ Module.all.but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles) ++ AutomaLevelOption.all ++ hiddenOptions
 
     // Colors and teams only for the clans in the game, as many teams as players
     override def optionsFor(n : Int, l : $[F]) = options.%{

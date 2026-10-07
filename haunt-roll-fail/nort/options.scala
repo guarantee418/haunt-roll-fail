@@ -167,8 +167,21 @@ case object WarchiefCards extends GameOption with ToggleOption {
     def valueOn = "Warchief upgrade cards without the module".txt
     override val explain = $(
         "The Warchiefs box adds a third clan upgrade card for each clan (Egil's Fury, Brand's Bravery, Borgild's Shield, Signy's Celerity, Liv's Cunning, Halvard's Craft, Svarn's Menders).",
-        "They are always in the game with the " ~ "Warchiefs".hl ~ " module. With this option they are also used without it; Borgild's Shield then ignores its Kaija and Borgild part.",
+        "They are always in the game with the " ~ "Warchiefs".hl ~ " module (unless " ~ "Warchief pawns without the upgrade cards".hl ~ " is on). With this option they are also used without it; Borgild's Shield then ignores its Kaija and Borgild part.",
     )
+    override def blocked(all : $[BaseOption]) = $($(WarchiefPawns))
+}
+
+// The opposite of WarchiefCards: the Warchiefs module's warchiefs, but not its 7 extra clan upgrade cards
+case object WarchiefPawns extends GameOption with ToggleOption {
+    val group = "Warchief upgrade cards".txt
+    def valueOn = "Warchief pawns without the upgrade cards".txt
+    override val explain = $(
+        "Plays the " ~ "Warchiefs".hl ~ " module with its warchiefs (pawns and powers) but leaves out the third clan upgrade card it adds for each clan, so every clan has its usual two upgrades.",
+        "Needs the " ~ "Warchiefs".hl ~ " module.",
+    )
+    override def required(all : $[BaseOption]) = $($(ModuleOption(Warchiefs)))
+    override def blocked(all : $[BaseOption]) = $($(WarchiefCards))
 }
 
 // Leaves the Development cards whose effect is to draw cards out of the decks (Game: ShuffledEarlyAction, ShuffledAdvancedAction).
