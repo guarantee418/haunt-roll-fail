@@ -307,6 +307,7 @@ case class CreatureFightInfo(f : Faction, area : AreaRef, c : Creature, e : Move
             attacking.??(e.bonus) -> "the card".txt,
             (attacking && e.special == AxeMove).??(1) -> "Axe Throwers".hl,
             (attacking && game.robotos(f)).??(1) -> "Robotos".hl,
+            (attacking && f == Dragon && e.special == GrudgeMove).??(game.pyre.num) -> "Tenacious Grudge".hl,
             attacking.not.??(2 * game.working(t).count(_ == Fortress)) -> Fortress.elem,
             (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl,
             waste.??(WastelandsExpansion.points(f, t, attacking) + Waste.controller(Waste.helheim, "c").has(f).??(2)) -> "Wastelands".hl
