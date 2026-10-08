@@ -3,7 +3,7 @@
 # card-draw.webp, card-hand.webp, card-played.webp, card-discard.webp, the start card back outlined yellow, green, white and red
 # (to draw, in hand, played this year, discarded);
 # first-player.webp, the first player marker without its background;
-# unit-supply.webp, the map's unit figure as a gray silhouette (the units left in the supply).
+# unit-supply.webp, unit.webp grayed out (the units left in the supply).
 from collections import deque
 from PIL import Image, ImageDraw, ImageFilter
 
@@ -114,12 +114,9 @@ for i in range(6):
 d.ellipse((c - S * 0.07, c - S * 0.07, c + S * 0.07, c + S * 0.07), fill=ice)
 outlined(flake, 'winter.webp', (30, 70, 120, 255))
 
-# unit-supply.webp: the map's unit figure as a gray silhouette in its white outline, for the units left in the supply
-supply = Image.open(IMAGES + 'token/unit/unit-original.webp').convert('RGBA')
-supply.putdata([p if min(p[:3]) > 200 else (120, 120, 120, p[3]) for p in supply.getdata()])
-supply = supply.crop(supply.getchannel('A').getbbox())
-s = 64 / max(supply.size)
-supply = supply.resize((round(supply.size[0] * s), round(supply.size[1] * s)), Image.LANCZOS)
-c = Image.new('RGBA', (64, 64))
-c.paste(supply, ((64 - supply.size[0]) // 2, (64 - supply.size[1]) // 2))
-c.save(IMAGES + 'ui/unit-supply.webp', quality=90)
+# unit-supply.webp: the units icon (unit.webp) grayed out, for the units left in the supply
+from PIL import ImageEnhance
+supply = Image.open(IMAGES + 'ui/unit.webp').convert('RGBA')
+gray = ImageEnhance.Brightness(supply.convert('L').convert('RGB')).enhance(0.8).convert('RGBA')
+gray.putalpha(supply.getchannel('A'))
+gray.save(IMAGES + 'ui/unit-supply.webp', quality=90)
