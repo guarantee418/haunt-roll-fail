@@ -1433,19 +1433,37 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val layoutKey = "v" + 12 + "." + "arity-" + arity
 
-    // Folded, the court keeps its place as a one-line bar, and the panes right under it (the map, or the
-    // action pane) grow up into the room it gave; everything else stays where it was
+    // Folded, the court shrinks to a one-line bar. The player panels right above it (the ultrawide layout)
+    // grow down into the room it gave, with the bar under them, and get a larger font; with no panels above it, the panes right
+    // under it (the map) grow up instead. Everything else stays where it was
     def foldCourt(height : Int)(l : $[PanePlacement]) : $[PanePlacement] = l.find(_.name == "court") match {
         case Some(c) if courtFolded =>
             val r = c.rect
             val px = c.fontSize./(f => 16 * f * 3612 / height / 100).|(16.0)
             val bar = min(r.height, (px * 1.9).round.toInt)
-            l./{
-                case p if p.name == "court" => p.copy(rect = Rect(r.x, r.y, r.width, bar))
-                case p if (p.rect.y - (r.y + r.height)).abs <= 3 && p.rect.x >= r.x - 3 && p.rect.x + p.rect.width <= r.x + r.width + 3 =>
-                    p.copy(rect = Rect(p.rect.x, r.y + bar, p.rect.width, p.rect.height + p.rect.y - r.y - bar))
-                case p => p
-            }
+            val gain = r.height - bar
+
+            def within(p : PanePlacement) = p.rect.x >= r.x - 3 && p.rect.x + p.rect.width <= r.x + r.width + 3
+            def above(p : PanePlacement) = p.name.startsWith("status-") && (p.rect.y + p.rect.height - r.y).abs <= 3 && within(p)
+            def below(p : PanePlacement) = (p.rect.y - (r.y + r.height)).abs <= 3 && within(p)
+
+            if (l.exists(above))
+                l./{
+                    case p if p.name == "court" => p.copy(rect = Rect(r.x, r.y + gain, r.width, bar))
+                    case p if above(p) =>
+                        // and a larger font, as far as the height allows and their rows (about 12 em) still fit
+                        val h = p.rect.height + gain
+                        val pf = p.fontSize./(f => 16 * f * 3612 / height / 100).|(16.0)
+                        val k = max(1.0, min(h * 1.0 / p.rect.height, p.rect.width / (pf * 12)))
+                        p.copy(rect = Rect(p.rect.x, p.rect.y, p.rect.width, h), fontSize = p.fontSize./(_ * k))
+                    case p => p
+                }
+            else
+                l./{
+                    case p if p.name == "court" => p.copy(rect = Rect(r.x, r.y, r.width, bar))
+                    case p if below(p) => p.copy(rect = Rect(p.rect.x, r.y + bar, p.rect.width, p.rect.height + gain))
+                    case p => p
+                }
         case _ => l
     }
 
