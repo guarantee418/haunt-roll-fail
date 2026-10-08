@@ -231,17 +231,12 @@ case object FirstSeatStarts extends GameOption with ToggleOption {
 }
 
 
-// After the die decides a fight (against a clan or a creature), the combat report: who won and how, each side's
-// combat points and casualties and where they came from, what each lost; the player taps OK before any retreat
-// (CombatReportAction in map.scala). One option for the attacking side, one for the defending side; both off by
-// default, like Root's Async options
+// The game options of 2026-10-07 for who saw the combat report. Since 2026-10-08 the report is asked of both sides and
+// each player's "Combat Report" setting (ShowCombatReport, SkipCombatReport in meta.scala) shows or skips it, so these are
+// hidden and do nothing; they stay so the games that have them still load
 abstract class CombatReportChoice(label : String, side : String) extends GameOption with ToggleOption {
     val group = "Combat report".txt
     def valueOn = label.txt
-    override val explain = $(
-        CombatText("After the dice decide a fight, against a clan or a creature, the " + side + " sees a combat report: who won and how, each side's combat points and casualties and where they came from, and what each side lost."),
-        "They tap OK to go on (to the retreat, if there is one).",
-    )
 }
 
 case object CombatReportAttackers extends CombatReportChoice("Combat report for attackers", "attacking player")

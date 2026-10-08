@@ -332,7 +332,10 @@ object MetaAdset extends MetaGame {
     // Always on: the Creatures module and the Uncharted Horizons Development and Achievement cards
     val always : $[O] = $(ModuleOption(Creatures), HorizonsDevelopments)
 
-    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(CombatReportAttackers, CombatReportDefenders) ++ WarchiefsChoice.all ++ $(ModuleOption(Sea)) ++ AdsetLands.all
+    // The old combat report options do nothing now (the report is a setting); kept so the games that have them still load
+    override val hiddenOptions : $[O] = $(CombatReportAttackers, CombatReportDefenders)
+
+    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ WarchiefsChoice.all ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ hiddenOptions
 
     // With two players the second seat doesn't choose: an expansion is agreed on here, or none
     override def optionsFor(n : Int, l : $[F]) = options.%{
