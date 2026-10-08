@@ -114,6 +114,9 @@ package object elem {
         object stripTab extends CustomStyle(display("flex"), align.items("center"), justify.content("center"), flex.shrink("0"), width("2.2ex"), min.height("1.4em"), margin.right("0.5ex"), border.radius("0.5ex"), background.color("#ffffff1a"), color("#d8d8d8"), font.size("120%"))
         object stripFolded extends CustomStyle(display("flex"), align.items("stretch"), height("100%"), padding("0.15ex 0.5ex"), box.sizing("border-box"), overflow("hidden"))
         object stripFoldedText extends CustomStyle(display("flex"), align.items("center"), justify.content("center"), flex.grow("1"), white.space("nowrap"), overflow("hidden"))
+        object stripFoldedSide extends CustomStyle(display("flex"), flex.direction("column"), align.items("center"), height("100%"), padding("0.5ex 0.15ex"), box.sizing("border-box"), overflow("hidden"))
+        object stripFoldedSideText extends CustomStyle(display("flex"), align.items("center"), justify.content("flex-start"), align.content("center"), SimpleCSSRule("flex-wrap", "wrap"), font.size("85%"), flex.grow("1"), white.space("nowrap"), overflow("hidden"), SimpleCSSRule("writing-mode", "vertical-rl"), margin.top("0.5ex"))
+        object stripFoldedSideItem extends CustomStyle(margin.top("0.6ex"), margin.bottom("0.6ex"))
         object stripFoldedItem extends CustomStyle(margin.left("1.2ex"), margin.right("1.2ex"))
         object stripEmpty extends CustomStyle(font.style("italic"))
 
