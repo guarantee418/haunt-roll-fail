@@ -1525,6 +1525,170 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         }
     }
 
+    // The divider right of the map and the one between the log and the action pane have drag handles; each
+    // browser keeps where they were dragged, as fractions of the window, for each shape of screen (tall, wide,
+    // ultrawide). Double-tapping a handle puts it back
+    def splitKind(width : Int, height : Int) = (width >= height * 2.1).?("ultrawide").|((width > height).?("wide").|("tall"))
+
+    var splitLoaded = ""
+    var splitX = 0.0
+    var splitY = 0.0
+
+    def loadSplit(kind : String) {
+        if (splitLoaded != kind) {
+            splitLoaded = kind
+            val v = try { hrf.web.Local.get(Meta.settingsKey + ".split-" + kind, "") } catch { case _ : Throwable => "" }
+            v.split(",").toList match {
+                case a :: b :: Nil => splitX = a.toDoubleOption.|(0.0); splitY = b.toDoubleOption.|(0.0)
+                case _ => splitX = 0.0; splitY = 0.0
+            }
+        }
+    }
+
+    def saveSplit() = try { hrf.web.Local.set(Meta.settingsKey + ".split-" + splitLoaded, splitX + "," + splitY) } catch { case _ : Throwable => }
+
+    // The panes whose edge is at a divider move with it, each kept at least 15% of the window
+    def split(width : Int, height : Int)(l0 : $[PanePlacement]) : $[PanePlacement] = {
+        loadSplit(splitKind(width, height))
+
+        def clamp(want : Int, lo : Int, hi : Int) = max(min(want, max(hi, 0)), min(lo, 0))
+
+        var l = l0
+
+        l.find(_.name == "map-small").foreach { m =>
+            val x = m.rect.x + m.rect.width
+            def beside(p : PanePlacement) = p.rect.y >= m.rect.y - 3 && p.rect.y + p.rect.height <= m.rect.y + m.rect.height + 3
+            def leftOf(p : PanePlacement) = beside(p) && (p.rect.x + p.rect.width - x).abs <= 3
+            def rightOf(p : PanePlacement) = beside(p) && (p.rect.x - x).abs <= 3
+            // A row above the map split at the same place (the court and the player panels, unfolded) follows
+            // the divider left, the panels right of it sharing the room, so no gap opens under them
+            def rowLeft(p : PanePlacement) = p.rect.y < m.rect.y - 3 && (p.rect.x + p.rect.width - x).abs <= 3
+            def rowRight(p : PanePlacement) = p.rect.y < m.rect.y - 3 && p.rect.x >= x - 3
+            val right = l.filter(rowRight)./(p => p.rect.x + p.rect.width).maxOption.|(x)
+            if (l.exists(rightOf)) {
+                val minW = width * 15 / 100
+                val dx = clamp((splitX * width).round.toInt, l.filter(leftOf)./(p => minW - p.rect.width).max, l.filter(rightOf)./(p => p.rect.width - minW).min)
+                splitX = dx * 1.0 / width
+                // Moving right, the row stays, as the panels have no room to spare; the map just runs under their lower edge
+                val row = dx < 0 && l.exists(rowLeft) && l.exists(rowRight)
+                def along(right : Int)(v : Int) = x + dx + ((v - x) * 1.0 * (right - x - dx) / (right - x)).round.toInt
+                def across(p : PanePlacement, right : Int) = p.copy(rect = Rect(along(right)(p.rect.x), p.rect.y, along(right)(p.rect.x + p.rect.width) - along(right)(p.rect.x), p.rect.height))
+                // A row of panes beside the map starting at the divider (the player panels, ultrawide) shares the room
+                def sameRow(p : PanePlacement, q : PanePlacement) = (p.rect.y - q.rect.y).abs <= 3 && (p.rect.height - q.rect.height).abs <= 3
+                val rows = l.filter(rightOf)./(q => l.filter(p => beside(p) && p.rect.x >= x - 3 && sameRow(p, q))).filter(_.num > 1)
+                l = l./{
+                    case p if leftOf(p) || (row && rowLeft(p)) => p.copy(rect = Rect(p.rect.x, p.rect.y, p.rect.width + dx, p.rect.height))
+                    case p if rows.exists(_.contains(p)) => across(p, rows.find(_.contains(p)).get./(q => q.rect.x + q.rect.width).max)
+                    case p if rightOf(p) => p.copy(rect = Rect(p.rect.x + dx, p.rect.y, p.rect.width - dx, p.rect.height))
+                    case p if row && rowRight(p) => across(p, right)
+                    case p => p
+                }
+            }
+        }
+
+        l.find(_.name == "log").foreach { g =>
+            val y = g.rect.y + g.rect.height
+            def column(p : PanePlacement) = p.rect.x >= g.rect.x - 3 && p.rect.x + p.rect.width <= g.rect.x + g.rect.width + 3
+            def above(p : PanePlacement) = column(p) && (p.rect.y + p.rect.height - y).abs <= 3
+            def below(p : PanePlacement) = column(p) && (p.rect.y - y).abs <= 3
+            if (l.exists(below)) {
+                val minH = height * 15 / 100
+                val dy = clamp((splitY * height).round.toInt, l.filter(above)./(p => minH - p.rect.height).max, l.filter(below)./(p => p.rect.height - minH).min)
+                splitY = dy * 1.0 / height
+                l = l./{
+                    case p if above(p) => p.copy(rect = Rect(p.rect.x, p.rect.y, p.rect.width, p.rect.height + dy))
+                    case p if below(p) => p.copy(rect = Rect(p.rect.x, p.rect.y + dy, p.rect.width, p.rect.height - dy))
+                    case p => p
+                }
+            }
+        }
+
+        l
+    }
+
+    // The two handles, on top of the panes
+    lazy val handles = $(true, false)./ { vertical =>
+        val e = dom.document.createElement("div").asInstanceOf[dom.html.Element]
+        e.className = "nort-split-handle"
+        e.innerHTML = "<svg viewBox='0 0 24 24' width='22' height='22' style='display:block;margin:4px" + vertical.?("").|(";transform:rotate(90deg)") + "'>" +
+            "<path d='M1 12 L7 6 L7 10 L17 10 L17 6 L23 12 L17 18 L17 14 L7 14 L7 18 Z' fill='#f0f0f0'/></svg>"
+        val st = e.style
+        st.position = "absolute"
+        st.width = "30px"
+        st.height = "30px"
+        st.marginLeft = "-16px"
+        st.marginTop = "-16px"
+        st.borderRadius = "16px"
+        st.background = "#2a2a2af0"
+        st.border = "1px solid #c0c0c0"
+        st.boxShadow = "0 0 4px #000"
+        st.cursor = vertical.?("col-resize").|("row-resize")
+        st.zIndex = "200"
+        st.setProperty("touch-action", "none")
+        st.setProperty("user-select", "none")
+        st.display = "none"
+
+        var start : Option[(Double, Double)] = None
+        var frame = false
+
+        e.addEventListener("pointerdown", (ev : dom.MouseEvent) => {
+            ev.preventDefault()
+            start = Some((vertical.?(ev.clientX).|(ev.clientY), vertical.?(splitX).|(splitY)))
+            try { e.asInstanceOf[scalajs.js.Dynamic].setPointerCapture(ev.asInstanceOf[scalajs.js.Dynamic].pointerId) } catch { case _ : Throwable => }
+        })
+        // On the window, so a drag held past the size limit, with the pointer off the handle, still ends (in the capture phase, as some panes stop pointer events)
+        dom.window.addEventListener("pointermove", (ev : dom.MouseEvent) => start.foreach { case (from, was) =>
+            val size = vertical.?(dom.window.innerWidth).|(dom.window.innerHeight)
+            val now = was + (vertical.?(ev.clientX).|(ev.clientY) - from) / size
+            if (vertical) splitX = now else splitY = now
+            if (frame.not) {
+                frame = true
+                dom.window.requestAnimationFrame((_ : Double) => { frame = false; resize() })
+            }
+        }, true)
+        def end(ev : dom.MouseEvent) {
+            if (start.any) {
+                start = None
+                saveSplit()
+                resize()
+            }
+        }
+        dom.window.addEventListener("pointerup", end _, true)
+        dom.window.addEventListener("pointercancel", end _, true)
+        e.addEventListener("dblclick", (ev : dom.MouseEvent) => {
+            if (vertical) splitX = 0 else splitY = 0
+            saveSplit()
+            resize()
+        })
+
+        court.node.parentElement.appendChild(e)
+        e
+    }
+
+    def placeHandles(l : $[PanePlacement]) {
+        val (v, h) = (handles(0), handles(1))
+        v.style.display = "none"
+        h.style.display = "none"
+
+        l.find(_.name == "map-small").foreach { m =>
+            val x = m.rect.x + m.rect.width
+            if (l.exists(p => (p.rect.x - x).abs <= 3 && p.rect.y >= m.rect.y - 3 && p.rect.y + p.rect.height <= m.rect.y + m.rect.height + 3)) {
+                v.style.left = x + "px"
+                v.style.top = (m.rect.y + m.rect.height / 2) + "px"
+                v.style.display = "block"
+            }
+        }
+
+        l.find(_.name == "log").foreach { g =>
+            val y = g.rect.y + g.rect.height
+            if (l.exists(p => (p.rect.y - y).abs <= 3 && p.rect.x >= g.rect.x - 3 && p.rect.x + p.rect.width <= g.rect.x + g.rect.width + 3)) {
+                h.style.left = (g.rect.x + g.rect.width / 2) + "px"
+                h.style.top = y + "px"
+                h.style.display = "block"
+            }
+        }
+    }
+
     // Folded, the court shrinks to a one-line bar. When the player panels are right above it (ultrawide and
     // phone layouts), they take the room it gave, the bar goes under them, and whatever room they don't need
     // goes to the pane below (the map or the action pane); otherwise the pane below grows up into the room.
@@ -1644,7 +1808,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // left, then short player panels in a row, the shared cards below them and the hand filling the
     // rest, wide enough to show the whole hand, and the log on the right.
     override def layout(width : Int, height : Int)(onLayout0 : $[PanePlacement] => Unit) {
-        val onLayout = onLayout0.compose(foldCourt(height))
+        val onLayout = (l : $[PanePlacement]) => {
+            val placed = split(width, height)(foldCourt(height)(l))
+            onLayout0(placed)
+            placeHandles(placed)
+        }
 
         val root = dom.document.documentElement.asInstanceOf[dom.html.Element].style
 
