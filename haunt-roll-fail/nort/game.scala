@@ -354,6 +354,8 @@ case class ClanBoard(f : Faction)
 // The Winter cost chart, opened from a player panel
 case class WinterChart(f : Faction)
 case class RobotosInfo(f : Faction)
+// Tapping a player's name or clan in its panel shows the clan's abilities, upgrades and warchief, as the clan picker's i button does
+case class ClanInfo(f : Faction)
 
 // The fold tab on the shared cards strip (ui.scala)
 case object CourtToggle
