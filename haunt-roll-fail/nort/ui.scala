@@ -1444,37 +1444,107 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val layoutKey = "v" + 12 + "." + "arity-" + arity
 
-    // Folded, the court shrinks to a one-line bar. The player panels right above it (the ultrawide layout)
-    // grow down into the room it gave, with the bar under them, and get a larger font; with no panels above it, the panes right
-    // under it (the map) grow up instead. Everything else stays where it was
+    // Folded, the court shrinks to a one-line bar. When the player panels are right above it (ultrawide and
+    // phone layouts), they take the room it gave, the bar goes under them, and whatever room they don't need
+    // goes to the pane below (the map or the action pane); otherwise the pane below grows up into the room.
+    // Either way the panels are laid out again in their area (plus that room): in one row or several (say 2x2
+    // for four narrow phone panels), whichever lets their font grow the most while their contents (measured)
+    // still fit, each as tall as its contents need. When even their present font doesn't fit (four panels in
+    // a 16:9 or tablet layout), the arrangement that needs the least shrinking is used. Nothing else moves
     def foldCourt(height : Int)(l : $[PanePlacement]) : $[PanePlacement] = l.find(_.name == "court") match {
         case Some(c) if courtFolded =>
             val r = c.rect
-            val px = c.fontSize./(f => 16 * f * 3612 / height / 100).|(16.0)
-            val bar = min(r.height, (px * 1.9).round.toInt)
+            // A pane's font size is a percentage of the font of the element the panes are in (not always 16px)
+            val basePx = panes.get("court")./~(c => try {
+                Some(dom.window.getComputedStyle(c.node.asInstanceOf[dom.html.Element].parentElement).fontSize.replace("px", "").toDouble).filter(_ > 0)
+            } catch { case _ : Throwable => None }).|(16.0)
+            def px(p : PanePlacement) = p.fontSize./(f => basePx * f * 3612 / height / 100).|(basePx)
+            val bar = min(r.height, (px(c) * 1.9).round.toInt)
             val gain = r.height - bar
 
             def within(p : PanePlacement) = p.rect.x >= r.x - 3 && p.rect.x + p.rect.width <= r.x + r.width + 3
-            def above(p : PanePlacement) = p.name.startsWith("status-") && (p.rect.y + p.rect.height - r.y).abs <= 3 && within(p)
             def below(p : PanePlacement) = (p.rect.y - (r.y + r.height)).abs <= 3 && within(p)
 
-            if (l.exists(above))
+            // The player panels, when they are in one row
+            val panels : $[PanePlacement] = l.filter(_.name.startsWith("status-")).sortBy(_.name.drop(7).toIntOption.getOrElse(0)) match {
+                case pp if pp.any && pp.forall(p => p.rect.y == pp.head.rect.y && p.rect.height == pp.head.rect.height) => pp
+                case _ => $
+            }
+            val top = panels./(_.rect.y).minOption.|(0)
+            val left = panels./(_.rect.x).minOption.|(0)
+            val w = panels./(p => p.rect.x + p.rect.width).maxOption.|(0) - left
+            val h0 = panels./(_.rect.height).maxOption.|(0)
+            val above = panels.any && (top + h0 - r.y).abs <= 3 && left >= r.x - 3 && left + w <= r.x + r.width + 3
+
+            // What the panels' contents need, in em: the widest row and the rows' total height, measured on the
+            // panels as they are drawn now (about 12 by 8 when they aren't drawn yet)
+            val (needW, needH) = {
+                val sizes = panels./~(p => panes.get(p.name)./~ { c =>
+                    try {
+                        val upper = c.node.asInstanceOf[dom.html.Element].querySelector("[class^=nort-status-upper]").asInstanceOf[dom.html.Element]
+                        val em = dom.window.getComputedStyle(upper).fontSize.replace("px", "").toDouble
+                        val rows = 0.until(upper.children.length)./(i => upper.children(i).asInstanceOf[dom.html.Element])
+                        val widths = rows./ { e =>
+                            val range = scalajs.js.Dynamic.global.document.createRange()
+                            range.selectNodeContents(e)
+                            range.getBoundingClientRect().width.asInstanceOf[Double]
+                        }
+                        (em > 0 && rows.any).?(widths.max / em -> rows./(_.offsetHeight.toDouble).sum / em)
+                    }
+                    catch { case _ : Throwable => None }
+                })
+
+                sizes.any.?((sizes.map(_._1).max, sizes.map(_._2).max)).|((12.0, 8.0))
+            }
+
+            // The panels laid out again in `room` pixels of height; returns them and the height they use
+            def regrid(room : Int) : (Map[String, PanePlacement], Int) = {
+                val f0 = px(panels.head)
+                val n = panels.num
+                val cellH = f0 * (needH * 1.15 + 0.6)
+
+                // For each number of rows: how much the font can grow (k), limited by the width of a column and by the height
+                def fit(rows : Int) = {
+                    val cols = (n + rows - 1) / rows
+                    min(w * 1.0 / cols / (f0 * (needW * 1.1 + 0.6)), room * 1.0 / rows / cellH)
+                }
+                val (rows, k) = 1.to(n)./(rows => rows -> fit(rows)).maxBy { case (rows, k) => (k, -rows) }
+
+                // Never smaller than now, unless they don't fit now either
+                val (rr, kk) = (k < 1 && fit(1) >= 1).?((1, 1.0)).|((rows, k))
+                val cols = (n + rr - 1) / rr
+                val ch = (kk < 1).?(room / rr).|(min(room / rr, max((cellH * kk).ceil.toInt, (rr == 1).?(h0).|(0))))
+
+                panels.zipWithIndex./{ case (p, i) =>
+                    val (row, col) = (i / cols, i % cols)
+                    // a short last row is centered
+                    val inRow = (row == rr - 1).?(n - row * cols).|(cols)
+                    val shift = (cols - inRow) * w / cols / 2
+                    val x0 = left + shift + col * w / cols
+                    val x1 = left + shift + (col + 1) * w / cols
+                    p.name -> p.copy(rect = Rect(x0, top + row * ch, x1 - x0, ch), fontSize = p.fontSize./(_ * kk))
+                }.toMap -> ch * rr
+            }
+
+            if (above) {
+                val (placed, used) = regrid(h0 + gain)
+                val barY = top + used
                 l./{
-                    case p if p.name == "court" => p.copy(rect = Rect(r.x, r.y + gain, r.width, bar))
-                    case p if above(p) =>
-                        // and a larger font, as far as the height allows and their rows (about 12 em) still fit
-                        val h = p.rect.height + gain
-                        val pf = p.fontSize./(f => 16 * f * 3612 / height / 100).|(16.0)
-                        val k = max(1.0, min(h * 1.0 / p.rect.height, p.rect.width / (pf * 12)))
-                        p.copy(rect = Rect(p.rect.x, p.rect.y, p.rect.width, h), fontSize = p.fontSize./(_ * k))
+                    case p if p.name == "court" => p.copy(rect = Rect(r.x, barY, r.width, bar))
+                    case p if placed.contains(p.name) => placed(p.name)
+                    case p if below(p) => p.copy(rect = Rect(p.rect.x, barY + bar, p.rect.width, p.rect.y + p.rect.height - barY - bar))
                     case p => p
                 }
-            else
+            }
+            else {
+                val placed = panels.any.?(regrid(h0)._1).|(Map[String, PanePlacement]())
                 l./{
                     case p if p.name == "court" => p.copy(rect = Rect(r.x, r.y, r.width, bar))
+                    case p if placed.contains(p.name) => placed(p.name)
                     case p if below(p) => p.copy(rect = Rect(p.rect.x, r.y + bar, p.rect.width, p.rect.height + gain))
                     case p => p
                 }
+            }
         case _ => l
     }
 
