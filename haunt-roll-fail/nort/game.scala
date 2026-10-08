@@ -362,6 +362,8 @@ case object CourtToggle
 case class DiscardPile(f : Faction)
 // A player's active cards (played this year), opened from the white card in its panel
 case class ActiveCards(f : Faction)
+// A player's Lore Tree (the clan upgrades left), opened from the lore in its panel
+case class LoreTree(f : Faction)
 // Tapping Dragon Clan's Sacrificial Pyre in its panel shows it full size
 case object PyreView
 // Cards shown while there is nothing to do with them; clicking one opens it full screen
@@ -916,7 +918,6 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         self.%(states.contains)./~(f =>
             (choosing || inLoreTree).not.??(f.hand.distinct./(c => turn.?(HandInfoAction(f, "Your hand".styled(colors(f)), c, f.hand.count(c)) : Info).|(CardInfoAction(f, "Your hand".styled(colors(f)), c, f.hand.count(c))))) ++
             f.active.distinct./(c => CardInfoAction(f, "Played".styled(colors(f)), c, f.active.count(c))) ++
-            inLoreTree.not.??(f.upgrades./(u => CardInfoAction(f, "Lore Tree".styled(colors(f)) ~ " (" ~ Amount(f.lore.hl, LoreIcon()) ~ ")", u))) ++
             $(Info("Fame", f.fame.hlb))
         )
     }

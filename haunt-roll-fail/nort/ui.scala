@@ -1210,6 +1210,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     def activeCards(f : Faction) : Elem = cardPile(f, " active cards (played this year)", game.states(f).active)
 
+    def loreTree(f : Faction) : Elem = cardPile(f, " Lore Tree", game.states(f).upgrades)
+
     def cardPile(f : Faction, what : String, l : $[Card]) : Elem = {
         ((f.name.styled(colorOf(f)) ~ what).hlb.div ~
             l.none.?("No cards".txt.div).|(Div(l./(c => Image(c.info.image, styles.discardCard)).merge, styles.discardCards)) ~
@@ -1324,27 +1326,30 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // The columns: the icon, the stockpile, the harvest's gain and the Winter cost
         // Dragon Clan: 1 more food or wood for the sacrifice, shown as a range on both, its upper end faint as only one of them gets it
         val pyre = f == Dragon && game.dragonHarvest.has(false).not && (game.dragonHarvest.any || NewBloodExpansion.sacrificeOptions(f)) && game.controlled(f).any
-        case class Column(icon : Elem, has : Int, gain : Int, cost : Int, extra : Boolean = false)
+        // Tapping the lore (its icon or stockpile) opens the clan's Lore Tree
+        case class Column(icon : Elem, has : Int, gain : Int, cost : Int, extra : Boolean = false, open : |[Any] = None)
         val columns = $(
             Column(Food.elem, state.has(Food), next.food, winterFood, pyre),
             Column(Wood.elem, state.has(Wood), next.wood, winterWood, pyre),
-            Column(Lore.elem, state.has(Lore), next.lore, 0),
+            Column(Lore.elem, state.has(Lore), next.lore, 0, open = |(LoreTree(f))),
             Column(FameIcon(), state.fame, next.fame, 0))
 
-        def cell(e : Elem) : Elem = e.div(styles.ledgerCell)
+        // Each cell taps through to the Winter chart, the lore's to the Lore Tree (one OnClick per cell: nested ones would pass both)
+        def open(o : |[Any], e : Elem) : Elem = o.orElse(if (f != Automa) |(WinterChart(f)) else None)./(x => OnClick(x, e.div(styles.ledgerCell)(xlo.pointer))).|(e.div(styles.ledgerCell))
+        def cell(e : Elem) : Elem = open(None, e)
         def none : Elem = cell("–".spn(styles.ledgerNone))
         // The stockpile with its icons in the compact panels; the harvest and Winter numbers alone, under them, green and red
         def signed(n : Int, sign : String, s : Style) : Elem = (n > 0).?(cell((sign + n).styled(s))).|(none)
 
-        val icons = cell(Empty) ~ columns./(c => cell(c.icon)).merge
-        val stock = cell(Empty) ~ columns./(c => cell(stacked.?(c.has.hl).|(Amount(c.has.hl, c.icon)))).merge
+        val icons = cell(Empty) ~ columns./(c => open(c.open, c.icon)).merge
+        val stock = cell(Empty) ~ columns./(c => open(c.open, stacked.?(c.has.hl).|(Amount(c.has.hl, c.icon)))).merge
         def gain(c : Column) : Elem = c.extra.?(cell((("+" + c.gain).styled(styles.ledgerGain) ~ ("-" + (c.gain + 1)).styled(styles.ledgerGain, styles.ledgerMaybe)).spn)).|(signed(c.gain, "+", styles.ledgerGain))
         val harvest = cell(SeasonIcon.harvest) ~ columns./(gain).merge
         val winter = (f != Automa).?(cell(SeasonIcon.winter) ~ columns./(c => signed(c.cost, "-", styles.ledgerLoss)).merge).|(Empty)
 
         val rows = stacked.?(reverse.?(stock ~ icons ~ harvest ~ winter).|(icons ~ stock ~ harvest ~ winter)).|(stock ~ harvest ~ winter)
         val grid = stacked.?(rows.div(styles.ledger)).|(rows.div(styles.ledger)(styles.ledgerCompact))
-        val ledger = (f != Automa).?(OnClick(WinterChart(f), grid.div(xlo.pointer))).|(grid)
+        val ledger = grid
 
         val content = (title.div ~ cards ~ units ~ ledger ~ nb ~ goals ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
 
@@ -1917,6 +1922,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case ActiveCards(f) =>
             showOverlay(overlayScrollX(activeCards(f)).onClick, onClick)
+
+        case LoreTree(f) =>
+            showOverlay(overlayScrollX(loreTree(f)).onClick, onClick)
 
         case PyreView =>
             showOverlay(overlayScrollX(pyreView).onClick, onClick)
