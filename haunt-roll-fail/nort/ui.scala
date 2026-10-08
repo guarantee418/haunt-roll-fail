@@ -1210,11 +1210,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     def activeCards(f : Faction) : Elem = cardPile(f, " active cards (played this year)", game.states(f).active)
 
-    def loreTree(f : Faction) : Elem = cardPile(f, " Lore Tree", game.states(f).upgrades)
+    def loreTree(f : Faction) : Elem = cardPile(f, " Lore Tree", game.states(f).upgrades, styles.loreTreeCard)
 
-    def cardPile(f : Faction, what : String, l : $[Card]) : Elem = {
+    def cardPile(f : Faction, what : String, l : $[Card], size : Style = styles.discardCard) : Elem = {
         ((f.name.styled(colorOf(f)) ~ what).hlb.div ~
-            l.none.?("No cards".txt.div).|(Div(l./(c => Image(c.info.image, styles.discardCard)).merge, styles.discardCards)) ~
+            l.none.?("No cards".txt.div).|(Div(l./(c => Image(c.info.image, size)).merge, styles.discardCards)) ~
             "(tap to close)".spn(xstyles.smaller85).div
         ).div
     }
