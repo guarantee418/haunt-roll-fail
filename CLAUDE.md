@@ -95,7 +95,7 @@ with the log on the left. Ultrawide screens
 a fixed layout (`layout` override in `nort/ui.scala`): map, then short
 player panels in a row, the shared cards and the hand below them, and the
 log on the far right, with the
-hand cards sized to the pane (`--nort-hand-card`) so the whole hand fits. The player panels open with a small table (`ledger` in `factionStatus`, `nort/ui.scala`; asked for by the player Robotos on 2026-10-08): a column per resource, the stockpile, then under it the clan's next harvest as things stand
+hand cards sized to the pane (`--nort-hand-card`) so the whole hand fits. The player panels show the card counts, then units and fame, then a small table (`ledger` in `factionStatus`, `nort/ui.scala`; asked for by the player Robotos on 2026-10-08): a column per resource, the stockpile, then under it the clan's next harvest as things stand
 (`Harvest.forecast` in `nort/game.scala`, the same sums `HarvestAction` uses; fame and the Dragon's sacrifice on a row of their own under it) in green and its Winter cost (as losses, "-1") in red, on rows marked with a wheat sheaf and a snowflake (`SeasonIcon`, drawn by `nort/tools/panel-icons.py`); tapping the table opens the whole
 Winter chart (`winterChart` in `nort/ui.scala`). Each player can hide the
 tints and the colored borders under "Interface" (the Territory Color and
