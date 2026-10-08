@@ -1510,14 +1510,21 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         }
     }, true)
 
+    // The needs in em aren't quite the same at every font (the icons are whole pixels), and a panel measured
+    // at a smaller font can need a little less than at the larger one it was laid out for. Taking that as a
+    // change made a panel that just overflows (the Dragon's, with its sacrifice row) flip between the two
+    // fonts for ever. So a need only counts as changed when it grows, or shrinks by about a row or more
+    def settle(was : Option[(Double, Double)], now : Option[(Double, Double)]) : Option[(Double, Double)] = (was, now) match {
+        case (Some((w0, h0)), Some((w1, h1))) =>
+            def one(a : Double, b : Double) = (b - a > 0.3 || a - b > 1.0).?(b).|(a)
+            Some((one(w0, w1), one(h0, h1)))
+        case _ => now.orElse(was)
+    }
+
     def refitFolded() {
         if (courtFolded && foldBasePx > 0 && refitting.not) {
             val now = panelNeed(statusNames)
-            val stale = (now, foldNeed) match {
-                case (Some((w1, h1)), Some((w0, h0))) => (w1 - w0).abs > 0.3 || (h1 - h0).abs > 0.3
-                case (Some(_), None) => true
-                case _ => false
-            }
+            val stale = now.isDefined && settle(foldNeed, now) != foldNeed
             if (stale || (paneBasePx() - foldBasePx).abs > 0.5) {
                 refitting = true
                 try resize() finally refitting = false
@@ -1733,7 +1740,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             val above = panels.any && (top + h0 - r.y).abs <= 3 && left >= r.x - 3 && left + w <= r.x + r.width + 3
 
             // What the panels' contents need, in em (about 12 by 8 when they aren't drawn yet)
-            foldNeed = panelNeed(statusNames).orElse(foldNeed)
+            foldNeed = settle(foldNeed, panelNeed(statusNames))
             val (needW, needH) = foldNeed.|((12.0, 8.0))
 
             // The panels laid out again in `room` pixels of height (and `w` of width from `left`); returns them and the height they use
