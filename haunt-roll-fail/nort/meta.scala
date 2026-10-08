@@ -68,10 +68,10 @@ object Meta extends MetaGame { mmm =>
     // Training Fields is turned on by the main menu's Training Grounds only
     // Robotos (robotos.scala) comes from the bot chosen for a clan, not from the setup screen
     // Team play comes from the choice above the clan picker (pickerModes), the old fixed team variants are no longer offered
-    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TeamPlay) ++ RobotosOption.all ++ Module.teams.keys.$./(ModuleOption)
+    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TeamPlay, CombatReportAttackers, CombatReportDefenders) ++ RobotosOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // New Blood has no option: picking one of its clans brings it in
-    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts, CombatReportAttackers, CombatReportDefenders) ++ WarchiefsChoice.all ++ $(NoDrawDevelopments, HorizonsDevelopments) ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles) ++ AutomaLevelOption.all ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ WarchiefsChoice.all ++ $(NoDrawDevelopments, HorizonsDevelopments) ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles) ++ AutomaLevelOption.all ++ hiddenOptions
 
     // Colors and teams only for the clans in the game, as many teams as players
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -415,10 +415,24 @@ object Meta extends MetaGame { mmm =>
     override val showAbout = false
 
     // Map display settings, chosen by each player under "Interface" (like Root's Clearing Rule)
-    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, CustomTerritoryColor, FightsTerritoryColor, HideTerritoryColor) ++ TerritoryOpacity.all ++ $(ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels, ReverseStackedPanels)
-    override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, CompactPanels) ++ PlayerColor.all./(TerritoryOpacity(_, 50))
+    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, CustomTerritoryColor, FightsTerritoryColor, HideTerritoryColor) ++ TerritoryOpacity.all ++ $(ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels, ReverseStackedPanels, ShowCombatReport, SkipCombatReport)
+    override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, CompactPanels, ShowCombatReport) ++ PlayerColor.all./(TerritoryOpacity(_, 50))
 }
 
+
+// The combat report after each fight (CombatReportAction in map.scala): shown, to be tapped OK, or skipped (tapped OK
+// for the player by the UI, ask in ui.scala; like Root's Ambush! setting). Every report stays in the log either way
+trait CombatReportSetting extends hrf.Setting with OneOfGroup {
+    val group = "Combat Report"
+}
+
+case object ShowCombatReport extends CombatReportSetting {
+    val valueOn = "Show".hlb
+}
+
+case object SkipCombatReport extends CombatReportSetting {
+    val valueOn = "Skip".hlb
+}
 
 // Territories tinted with their controller's colour (gray when invaded and pink during a fight are kept with Fights Only)
 trait TerritoryColorSetting extends hrf.Setting with OneOfGroup {

@@ -221,13 +221,16 @@ on. To implement one:
   (or `CreatureRolledAction`, against a creature) has decided a fight, it
   stores a `FightReport` in `game.fightReport` (each side's combat points and
   casualties with their sources, from the same sums, `FightPoints.parts` for
-  the figures) and asks the players who see it to tap OK
+  the figures) and asks both sides (never the Automa) to tap OK
   (`CombatReportAction`, `CombatReportDoneAction`, shown by
-  `CombatReport(self)` in `map.scala`) before the retreat. Who sees it is up
-  to two game options, `CombatReportAttackers` and `CombatReportDefenders`
-  (both off by default, like Root's Async options; Gman wanted it fully
-  optional); never the Automa. Games saved before it replay as they were:
-  recorded moves carry their own continuation, and they have neither option.
+  `CombatReport(self)` in `map.scala`) before the retreat. On 2026-10-08 Gman
+  asked for it on by default with an in-game way to turn it off, like Root's
+  Ambush! setting: each player's "Combat Report" setting under Interface
+  (`ShowCombatReport`, the default, or `SkipCombatReport` in `meta.scala`);
+  with Skip the UI takes the OK for them (`ask` in `ui.scala`). The game
+  options of 2026-10-07 (`CombatReportAttackers`, `CombatReportDefenders`) are
+  hidden and do nothing, kept so the games that have them still load. Saved
+  games replay as they were: recorded moves carry their own continuation.
 - Clan picker: the framework hook `MetaGame.factionInfo` (label, title,
   contents) adds a button next to each faction in the "Play as" list
   (`hrf.scala`); Northgard's shows the clan board

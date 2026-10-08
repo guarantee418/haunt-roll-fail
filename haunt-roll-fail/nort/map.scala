@@ -360,8 +360,8 @@ object FightPoints {
 
 // The combat report, shown once the die has decided a fight (CombatResolveAction, or CreatureRolledAction against a
 // creature) and before any retreat: who won and how, then each side's combat points and casualties with where they
-// come from, and what it lost. To the attacker with the "Combat report for attackers" option, to the defender with
-// "Combat report for defenders" (CombatReport.readers); never to the Automa.
+// come from, and what it lost. Asked of both sides (CombatReport.readers), never of the Automa; a player whose
+// "Combat Report" setting is Skip taps OK without seeing it (the UI does, ask in ui.scala).
 // f: the clan (None for a creature, named by who); points: the sources worth something; casualties: the sources of
 // the casualties inflicted, a negative one cancels (its Elem then says how, "ignored by ..."); lost: figures removed;
 // fate: what became of a creature ("was defeated")
@@ -384,9 +384,10 @@ case class CombatReport(self : Faction) extends GameElementary {
 case class FightReportView(r : FightReport)
 
 object CombatReport {
-    // Who sees the report of a fight between these clans (or one clan and a creature), by the game's options
+    // Who is shown the report of a fight between these clans (or one clan and a creature): both sides but the Automa.
+    // Each player's "Combat Report" setting decides whether they see it (ShowCombatReport) or it is skipped
     def readers(attacker : |[Faction], defender : |[Faction])(implicit game : Game) : $[Faction] =
-        (game.options.has(CombatReportAttackers).??(attacker.$) ++ game.options.has(CombatReportDefenders).??(defender.$)).but(Automa)
+        (attacker.$ ++ defender.$).but(Automa)
 
     // The word in the log that opens the fight's report
     def link(word : String)(implicit game : Game) : Elem =
