@@ -43,6 +43,8 @@ case object BriberyEffect extends Effect
 case object TeamworkEffect extends Effect
 // Annexation: Move 1 and, before or after, may Explore
 case object AnnexationEffect extends Effect
+// Stag Clan: Recruit 1, then may move 1 unit from an adjacent territory into the recruit's (ignoring Rough borders)
+case object StagClanEffect extends Effect
 // Spy: discard 1 card from an opponent's hand, draw 1
 case object SpyEffect extends Effect
 // Ancestral Curse: each opponent discards a card of their choice, draw 1
@@ -66,6 +68,9 @@ case class Cap(area : AreaRef, n : Int) extends Record
 
 case class RecruitCapsAction(f : Faction, caps : $[Cap], placed : $[AreaRef], then : ForcedAction) extends ForcedAction
 case class RecruitCapAction(self : Faction, area : AreaRef, caps : $[Cap], placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit in")(area) with MapTarget { def target = area }
+
+case class StagPullAction(f : Faction, then : ForcedAction) extends ForcedAction
+case class StagPullFromAction(self : Faction, area : AreaRef, from : AreaRef, then : ForcedAction) extends BaseAction("Stag Clan", "move 1 unit into", area, "from")(from) with MapTarget { def target = from }
 
 case class MercenariesExtraAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class MercenariesPayAction(self : Faction, pay : $[Resource], area : AreaRef, then : ForcedAction) extends BaseAction("Raven Mercenaries", "one more unit in", area)("Pay", pay./(_.elem).join(" "))
@@ -197,6 +202,7 @@ object CardsExpansion extends Expansion {
         case BriberyEffect => briberySources(f).any
         case TeamworkEffect => basics.exists(MapExpansion.playable(f, _))
         case AnnexationEffect => MapExpansion.playable(f, MoveEffect(1)) || MapExpansion.playable(f, ExploreEffect())
+        case StagClanEffect => MapExpansion.playable(f, RecruitEffect(1))
         case SpyEffect => opponentsWithCards(f).any
         case VeiledEffect => opponentsWithCards(f).any || CommonExpansion.available(f) > 0
         case CurseEffect => opponentsWithCards(f).any
@@ -213,6 +219,7 @@ object CardsExpansion extends Expansion {
         case CallToWarEffect => Then(RecruitCapsAction(f, callToWarCaps(f), $, then))
         case OsmosisEffect => Then(RecruitAction(f, 3, RecruitOsmosis, $, then))
         case MercenariesEffect => Then(RecruitAction(f, 2, RecruitNeutralSame, $, MercenariesExtraAction(f, then)))
+        case StagClanEffect => Then(RecruitAction(f, 1, RecruitNormal, $, StagPullAction(f, then)))
 
         case PlunderEffect =>
             Ask(f).each(adjacentEnemyUnits(f))((t, g) => PlunderAction(f, t.anchor, g, then))
@@ -305,6 +312,25 @@ object CardsExpansion extends Expansion {
             game.addUnits(a, f, 1)
             f.log("recruited in", a)
             Then(RecruitCapsAction(f, caps./(c => (c.area == a).?(c.copy(n = c.n - 1)).|(c)), placed :+ a, then))
+
+        // STAG CLAN: one unit from an adjacent territory joins the recruit (Rough borders don't matter, impassable ones do)
+        case StagPullAction(f, then) =>
+            val sources = game.recruited.lastOption.toList./~{ a =>
+                val t = game.board.territory(a)
+                game.board.adjacent(t).map(_._1).%(o => game.count(o, f) > 0)./(o => (t, o))
+            }
+
+            if (sources.none)
+                Then(then)
+            else
+                Ask(f).each(sources)((t, o) => StagPullFromAction(f, t.anchor, o.anchor, then)).skip(then)
+
+        case StagPullFromAction(f, a, from, then) =>
+            game.removeUnits(game.board.territory(from), f, 1)
+            game.addUnits(a, f, 1)
+            game.note("stag-clan")
+            f.log("moved a unit from", from, "to", a, "with", "Stag Clan".hl)
+            Then(then)
 
         // RAVEN MERCENARIES
         case MercenariesExtraAction(f, then) =>

@@ -577,6 +577,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
     def effectGain(e : Effect) : Double = e match {
         case RecruitEffect(n, mode) => recruitGain(n, mode)
         case AwakenEffect => recruitGain(2, RecruitNormal)
+        case StagClanEffect => recruitGain(1, RecruitNormal) + 15
         case e : MoveEffect => moveGain(e)
         case e : ExploreEffect => exploreGain(e)
         case e : BuildEffect => buildGain(e)
@@ -608,6 +609,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val e = c.effect
         val use = e match {
             case RecruitEffect(n, _) => 55 * n
+            case StagClanEffect => 65
             case RecruitPerEffect(_) => 110
             case MoveEffect(n, bonus, _, _) => 40 + 22 * n + 35 * bonus
             case e : ExploreEffect => (game.pile.num > 4).?(75 + 25 * (e.draw - 1) + 60 * (e.times - 1)).|(10)
