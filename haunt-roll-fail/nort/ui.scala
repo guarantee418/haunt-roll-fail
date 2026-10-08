@@ -1077,10 +1077,20 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     def stripCard(c : Card) : Elem = OnClick(c, Image(c.info.image, styles.stripCard, xlo.pointer))
 
+    // The tab on the left of the court folds it into a one-line bar (and back), remembered in the browser;
+    // the pane under it gets the room (foldCourt)
+    def courtKey = Meta.settingsKey + ".court-folded"
+
+    var courtFolded : Boolean = try { hrf.web.Local.get(courtKey, "") == "yes" } catch { case _ : Throwable => false }
+
     def strip(groups : $[(Elem, $[Elem])]) =
-        Div(groups./{ case (title, items) =>
+        Div(OnClick(CourtToggle, Div("▴".txt, styles.stripTab, xlo.pointer)) ~ groups./{ case (title, items) =>
             Div(Div(title, styles.stripTitle) ~ Div(items.any.?(items.merge).|(Div("none".txt, styles.stripEmpty)), styles.stripCards), styles.stripGroup)
         }.merge, styles.stripRow)
+
+    // Folded: the groups' titles with their card counts, all of it tappable to unfold
+    def foldedStrip(titles : $[(String, Int)]) =
+        OnClick(CourtToggle, Div(Div("▾".txt, styles.stripTab) ~ Div(titles./{ case (t, n) => (t ~ " " ~ ("(" + n + ")").hl).spn(styles.stripFoldedItem) }.merge, styles.stripFoldedText), styles.stripFolded, xlo.pointer))
 
     // Your hand and played cards are in the action pane, like in Arcs and Root (Game.info, TurnModeAction)
     def drawCards() {
@@ -1110,7 +1120,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Sea module: the Raid cards on the Ports, then the ones kept for the next Harvest or Start of Year
         val raids = (game.has(Sea) && (game.raids.values.exists(_.card.any) || game.raidKept.any)).$(("Raids" ~ " (on the Ports, then kept)".spn(xstyles.smaller85)) -> (game.ports./~(p => game.raids(p).card) ++ game.raidKept./(_.card)))
 
-        court.replaceCached((game.year, game.display, game.achievements, game.creatureLine, game.event, game.eventDeck.num, game.victory, game.automaPlayed, game.raids, game.raidKept, game.jotnarCamp, game.blainn./(_._1)).toString, strip((automa ++ events ++ victory ++ developments ++ achievements ++ creatures ++ blainn ++ raids)./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
+        val groups = automa ++ events ++ victory ++ developments ++ achievements ++ creatures ++ blainn ++ raids
+
+        if (courtFolded) {
+            val short = $(automa -> "Automa", events -> "Event", victory -> "Victory", developments -> "Developments", achievements -> "Achievements", creatures -> "Creatures", blainn -> "Jötunn Blainn", raids -> "Raids")
+            val titles = short.flatMap { case (g, t) => g.map(x => t -> x._2.num) }
+            court.replaceCached("folded " + titles, foldedStrip(titles), resources, onClick)
+        }
+        else
+            court.replaceCached((game.year, game.display, game.achievements, game.creatureLine, game.event, game.eventDeck.num, game.victory, game.automaPlayed, game.raids, game.raidKept, game.jotnarCamp, game.blainn./(_._1)).toString, strip(groups./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
     }
 
     // The Winter cost chart, with each clan on its row and what f has to pay with
@@ -1415,11 +1433,29 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val layoutKey = "v" + 12 + "." + "arity-" + arity
 
+    // Folded, the court keeps its place as a one-line bar, and the panes right under it (the map, or the
+    // action pane) grow up into the room it gave; everything else stays where it was
+    def foldCourt(height : Int)(l : $[PanePlacement]) : $[PanePlacement] = l.find(_.name == "court") match {
+        case Some(c) if courtFolded =>
+            val r = c.rect
+            val px = c.fontSize./(f => 16 * f * 3612 / height / 100).|(16.0)
+            val bar = min(r.height, (px * 1.9).round.toInt)
+            l./{
+                case p if p.name == "court" => p.copy(rect = Rect(r.x, r.y, r.width, bar))
+                case p if (p.rect.y - (r.y + r.height)).abs <= 3 && p.rect.x >= r.x - 3 && p.rect.x + p.rect.width <= r.x + r.width + 3 =>
+                    p.copy(rect = Rect(p.rect.x, r.y + bar, p.rect.width, p.rect.height + p.rect.y - r.y - bar))
+                case p => p
+            }
+        case _ => l
+    }
+
     // Ultrawide screens (21:9 and wider): the layouter stretches the player panels to the full height
     // and leaves empty space around the map, so the hand gets a narrow column. Instead: the map on the
     // left, then short player panels in a row, the shared cards below them and the hand filling the
     // rest, wide enough to show the whole hand, and the log on the right.
-    override def layout(width : Int, height : Int)(onLayout : $[PanePlacement] => Unit) {
+    override def layout(width : Int, height : Int)(onLayout0 : $[PanePlacement] => Unit) {
+        val onLayout = onLayout0.compose(foldCourt(height))
+
         val root = dom.document.documentElement.asInstanceOf[dom.html.Element].style
 
         if (width < height * 2.1) {
@@ -1468,6 +1504,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     override def onClick(a : Any) = a @@ {
         case Some(x) => onClick(x)
+
+        case CourtToggle =>
+            courtFolded = courtFolded.not
+            try { hrf.web.Local.set(courtKey, courtFolded.?("yes").|("")) } catch { case _ : Throwable => }
+            resize()
 
         case ("notifications", Some(f : Faction)) =>
             shown = $

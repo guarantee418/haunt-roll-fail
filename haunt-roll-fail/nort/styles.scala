@@ -96,6 +96,11 @@ package object elem {
         object stripTitle extends CustomStyle(text.align("center"), white.space("nowrap"), margin.bottom("0.3ex"))
         object stripCards extends CustomStyle(display("flex"), justify.content("center"), align.items("center"), flex.grow("1"), min.height("0"))
         object stripCard extends CustomStyle(height("calc(100cqh - 1.2em - 1.6ex)"), max.height("100%"), width("auto"), flex.shrink("0"), margin.left("0.3ex"), margin.right("0.3ex"))
+        // The fold tab on the court's left edge, and the folded one-line bar
+        object stripTab extends CustomStyle(display("flex"), align.items("center"), justify.content("center"), flex.shrink("0"), width("2.2ex"), min.height("1.4em"), margin.right("0.5ex"), border.radius("0.5ex"), background.color("#ffffff1a"), color("#d8d8d8"), font.size("120%"))
+        object stripFolded extends CustomStyle(display("flex"), align.items("stretch"), height("100%"), padding("0.15ex 0.5ex"), box.sizing("border-box"), overflow("hidden"))
+        object stripFoldedText extends CustomStyle(display("flex"), align.items("center"), justify.content("center"), flex.grow("1"), white.space("nowrap"), overflow("hidden"))
+        object stripFoldedItem extends CustomStyle(margin.left("1.2ex"), margin.right("1.2ex"))
         object stripEmpty extends CustomStyle(font.style("italic"))
 
         object fame extends CustomStyle(color("#e8b84a"))
