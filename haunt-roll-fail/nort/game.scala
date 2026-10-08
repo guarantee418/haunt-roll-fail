@@ -349,11 +349,11 @@ case class UpgradeSacrificeAction(self : Faction, card : Card, upgrade : Card) e
 case class UpgradeCardAction(self : Faction, card : Card, upgrade : Card, remove : Boolean) extends BaseAction("Upgrade to", upgrade, Comma, "with", card)(remove.?("Remove".txt ~ " (out of the game)").|("Wait".txt ~ " (to the played cards)"))
 // Cards in hand while they can't be tapped: during your turn once a choice is made, they don't open full screen
 case class HandInfoAction(self : Faction, title : Elem, card : Card, n : Int = 1) extends BaseInfo(title)(card.handStack(n)) with ViewObject[Card] { def obj = card }
-// The player's clan board below the Lore Tree, to look up the clan's power and its warchief; clicking it opens it full screen
-case class ClanBoard(f : Faction)
 // The Winter cost chart, opened from a player panel
 case class WinterChart(f : Faction)
 case class RobotosInfo(f : Faction)
+// Tapping a player's name or clan in its panel shows the clan's abilities, upgrades and warchief, as the clan picker's i button does
+case class ClanInfo(f : Faction)
 
 // The fold tab on the shared cards strip (ui.scala)
 case object CourtToggle
@@ -364,7 +364,6 @@ case class DiscardPile(f : Faction)
 case class ActiveCards(f : Faction)
 // Tapping Dragon Clan's Sacrificial Pyre in its panel shows it full size
 case object PyreView
-case class ClanBoardInfoAction(self : Faction, title : Elem) extends BaseInfo(title)(Image(Warchief.board(self), styles.boardInfo)) with ViewObject[Faction] with OnClickInfo { def obj = self ; def param = ClanBoard(self) }
 // Cards shown while there is nothing to do with them; clicking one opens it full screen
 case class CardInfoAction(self : Faction, title : Elem, card : Card, n : Int = 1) extends BaseInfo(title)(card.handStack(n)) with ViewObject[Card] with OnClickInfo { def obj = card ; def param = card }
 case class PassAction(self : Faction) extends BaseAction("Your turn")("Pass")
@@ -918,7 +917,6 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
             (choosing || inLoreTree).not.??(f.hand.distinct./(c => turn.?(HandInfoAction(f, "Your hand".styled(colors(f)), c, f.hand.count(c)) : Info).|(CardInfoAction(f, "Your hand".styled(colors(f)), c, f.hand.count(c))))) ++
             f.active.distinct./(c => CardInfoAction(f, "Played".styled(colors(f)), c, f.active.count(c))) ++
             inLoreTree.not.??(f.upgrades./(u => CardInfoAction(f, "Lore Tree".styled(colors(f)) ~ " (" ~ Amount(f.lore.hl, LoreIcon()) ~ ")", u))) ++
-            $(ClanBoardInfoAction(f, "Clan board".styled(colors(f)))) ++
             $(Info("Fame", f.fame.hlb))
         )
     }

@@ -1235,7 +1235,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val container = statuses(game.players.indexOf(game.ftp(f)))
 
         // The player's name (human players in online games), then the clan's, in the player's color
-        val name = resources.getName(game.ftp(f))./(n => n.styled(colorOf(f))(styles.title) ~ " " ~ f.name.txt).|(f.name.styled(colorOf(f))(styles.title))
+        // Tapping it shows the clan's abilities, upgrades and warchief
+        val name = OnClick(ClanInfo(f), resources.getName(game.ftp(f))./(n => n.styled(colorOf(f))(styles.title) ~ " " ~ f.name.txt).|(f.name.styled(colorOf(f))(styles.title)).spn(styles.tappable)(xlo.pointer))
 
         if (!game.states.contains(f)) {
             container.replace(Div(Div(name), styles.smallname, xlo.pointer), resources)
@@ -1730,9 +1731,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         case c : Card =>
             showOverlay(overlayFitX(Image(c.info.image, styles.zoomCard)).onClick, onClick)
 
-        case ClanBoard(f) =>
-            showOverlay(overlayFitX(Image(Warchief.board(f), styles.zoomCard)).onClick, onClick)
-
         case WinterChart(f) =>
             showOverlay(overlayScrollX(winterChart(f)).onClick, onClick)
 
@@ -1753,6 +1751,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             showOverlay(overlayScrollX(("Combat report".hlb.div ~ CombatReport.text(r, None).div)).onClick, onClick)
 
         // Adset: a drafted clan's info, as behind the clan picker's i button
+        case ClanInfo(f) =>
+            onClick(AdsetClanInfo(f))
+
         case AdsetClanInfo(f) =>
             Meta.factionInfo(f).foreach { case (_, title, l) => showOverlay(overlayScrollX((title.div ~ l./(e => Div(e)).merge).div(xlo.flexvcenter)).onClick, onClick) }
 
