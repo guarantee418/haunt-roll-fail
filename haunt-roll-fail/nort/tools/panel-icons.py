@@ -2,7 +2,8 @@
 # unit.webp, the unit figure from the Active Area board's Winter costs (the Recruit card's figure, without its + sign);
 # card-deck.webp, card-hand.webp, card-active.webp, card-discard.webp, the start card back outlined white, green, yellow and red
 # (to draw, in hand, played this year, discarded);
-# first-player.webp, the first player marker without its background.
+# first-player.webp, the first player marker without its background;
+# unit-supply.webp, the map's unit figure as a gray silhouette (the units left in the supply).
 from collections import deque
 from PIL import Image, ImageDraw, ImageFilter
 
@@ -112,3 +113,13 @@ for i in range(6):
             d.line([p, (p[0] + math.cos(b) * S * l, p[1] + math.sin(b) * S * l)], fill=ice, width=4 * K)
 d.ellipse((c - S * 0.07, c - S * 0.07, c + S * 0.07, c + S * 0.07), fill=ice)
 outlined(flake, 'winter.webp', (30, 70, 120, 255))
+
+# unit-supply.webp: the map's unit figure as a gray silhouette in its white outline, for the units left in the supply
+supply = Image.open(IMAGES + 'token/unit/unit-original.webp').convert('RGBA')
+supply.putdata([p if min(p[:3]) > 200 else (120, 120, 120, p[3]) for p in supply.getdata()])
+supply = supply.crop(supply.getchannel('A').getbbox())
+s = 64 / max(supply.size)
+supply = supply.resize((round(supply.size[0] * s), round(supply.size[1] * s)), Image.LANCZOS)
+c = Image.new('RGBA', (64, 64))
+c.paste(supply, ((64 - supply.size[0]) // 2, (64 - supply.size[1]) // 2))
+c.save(IMAGES + 'ui/unit-supply.webp', quality=90)

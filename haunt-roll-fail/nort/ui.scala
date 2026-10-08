@@ -1248,10 +1248,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         // Sea module: the units away on Raids
         val raiding = SeaExpansion.raiders(f)
-        val units = row($(item(state.units.hl ~ (raiding > 0).?(" (" ~ raiding.hl ~ " raiding)").|(Empty), UnitIcon()), item(state.fame.hl, FameIcon()))).div(styles.panelLine)
-
-        // Warchiefs module: the warchief's name, dimmed while in the reserve
-        val chief = game.has(Warchiefs).?(game.chiefs.contains(f).?(Warchief.elem(f)).|(Warchief.name(f).txt ~ " (reserve)".spn(xstyles.smaller85)).div).|(Empty)
+        // Units on the map, the warchief (its token and name, grayed out while in the reserve) and the units left in the supply
+        val onMap = item(game.onMap(f).hl ~ (raiding > 0).?(" (" ~ raiding.hl ~ " raiding)").|(Empty), UnitIcon())
+        val chief = game.has(Warchiefs).$ {
+            val here = game.chiefs.contains(f)
+            val token = Image(Warchief.figure(f), styles.inlineIcon).alt(Warchief.name(f))
+            val name = here.?(Warchief.elem(f)).|(Warchief.name(f).txt)
+            stacked.?(item(name, token)).|(token ~ name).spn(here.?(styles.onBoard).|(styles.offBoard))
+        }
+        val units = row(onMap +: chief :+ item(game.reserve(f).hl, SupplyIcon())).div
 
         // Cards to draw, in hand, played this year and discarded; tapping the yellow card shows the cards played this year, the red one the discards
         val cardRow = row($(
@@ -1282,33 +1287,36 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             else c.target./(n => game.progressOf(f, c.id).hl ~ "/" ~ n.toString).|("✗".txt)
         }.join(" ")).div).|(Empty)
 
-        // The resources, and under them the next harvest as things stand and the Winter costs, one column per resource (tapping them shows
+        // The resources and fame, and under them the next harvest as things stand and the Winter costs, one column each (tapping them shows
         // the whole Winter chart). Compact: "2 [food]" in each cell; Stacked: the icons head the columns; Reverse Stacked: they go under the stockpile
         val next = Harvest.forecast(f)
         val (winterFood, winterWood) = EventsExpansion.winterCost(f)
-        val gain = Map[Resource, Int](Food -> next.food, Wood -> next.wood, Lore -> next.lore)
-        val cost = Map[Resource, Int](Food -> winterFood, Wood -> winterWood)
-        // Dragon Clan: 1 more food or wood for the sacrifice
+        // The columns: the icon, the stockpile, the harvest's gain and the Winter cost
+        case class Column(icon : Elem, has : Int, gain : Int, cost : Int)
+        val columns = $(
+            Column(Food.elem, state.has(Food), next.food, winterFood),
+            Column(Wood.elem, state.has(Wood), next.wood, winterWood),
+            Column(Lore.elem, state.has(Lore), next.lore, 0),
+            Column(FameIcon(), state.fame, next.fame, 0))
+        // Dragon Clan: 1 more food or wood for the sacrifice, on a row of its own under the harvest's
         val pyre = f == Dragon && game.dragonHarvest.has(false).not && (game.dragonHarvest.any || NewBloodExpansion.sacrificeOptions(f)) && game.controlled(f).any
-        // Gains no resource column holds: fame, and the Dragon's sacrifice
-        val extras = (next.fame > 0).$(Amount(("+" + next.fame).styled(styles.ledgerGain), FameIcon())) ++ pyre.$(Amount("+1".styled(styles.ledgerGain), Food.elem ~ "/" ~ Wood.elem))
 
         def cell(e : Elem) : Elem = e.div(styles.ledgerCell)
         def none : Elem = cell("–".spn(styles.ledgerNone))
         // The stockpile with its icons in the compact panels; the harvest and Winter numbers alone, under them, green and red
-        def number(n : String, r : Resource) : Elem = cell(stacked.?(n.hl).|(Amount(n.hl, r.elem)))
         def signed(n : Int, sign : String, s : Style) : Elem = (n > 0).?(cell((sign + n).styled(s))).|(none)
 
-        val icons = cell(Empty) ~ Resource.all./(r => cell(r.elem)).merge
-        val stock = cell(Empty) ~ Resource.all./(r => number(state.has(r).toString, r)).merge
-        val harvest = cell(SeasonIcon.harvest) ~ Resource.all./(r => signed(gain(r), "+", styles.ledgerGain)).merge ~ extras.any.?(extras.join(" ").div(styles.ledgerExtra)).|(Empty)
-        val winter = (f != Automa).?(cell(SeasonIcon.winter) ~ Resource.all./(r => signed(cost.getOrElse(r, 0), "-", styles.ledgerLoss)).merge).|(Empty)
+        val icons = cell(Empty) ~ columns./(c => cell(c.icon)).merge
+        val stock = cell(Empty) ~ columns./(c => cell(stacked.?(c.has.hl).|(Amount(c.has.hl, c.icon)))).merge
+        val harvest = cell(SeasonIcon.harvest) ~ columns./(c => signed(c.gain, "+", styles.ledgerGain)).merge ~
+            pyre.?(Amount("+1".styled(styles.ledgerGain), Food.elem ~ "/" ~ Wood.elem).div(styles.ledgerExtra)).|(Empty)
+        val winter = (f != Automa).?(cell(SeasonIcon.winter) ~ columns./(c => signed(c.cost, "-", styles.ledgerLoss)).merge).|(Empty)
 
         val rows = stacked.?(reverse.?(stock ~ icons ~ harvest ~ winter).|(icons ~ stock ~ harvest ~ winter)).|(stock ~ harvest ~ winter)
         val grid = stacked.?(rows.div(styles.ledger)).|(rows.div(styles.ledger)(styles.ledgerCompact))
         val ledger = (f != Automa).?(OnClick(WinterChart(f), grid.div(xlo.pointer))).|(grid)
 
-        val content = (title.div ~ cards ~ units ~ chief ~ ledger ~ nb ~ goals ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
+        val content = (title.div ~ cards ~ units ~ ledger ~ nb ~ goals ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
 
         container.replace(content, resources, {
             case x => onClick(x)
