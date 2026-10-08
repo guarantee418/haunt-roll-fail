@@ -508,13 +508,34 @@ object BinaryLoader extends Loader[ArrayBuffer] {
 }
 
 object DataUrlLoader extends Loader[String] {
+    // The offline download fetches every image of a game at once (about 1,300 for Root),
+    // so a single dropped request is likely; retry it a few times before giving up
+    val retries = 5
+
     def process(url : String) {
+        process(url, 0)
+    }
+
+    def process(url : String, tries : Int) {
+        def retry() {
+            if (tries < retries)
+                setTimeout(500 * (tries + 1)) {
+                    process(url, tries + 1)
+                }
+            else
+                fail(url)
+        }
+
         var xhr = new dom.XMLHttpRequest()
-        xhr.onerror = (e : dom.ProgressEvent) => fail(url)
+        xhr.onerror = (e : dom.ProgressEvent) => retry()
         xhr.onload = (e : dom.Event) => {
-            val r = new dom.FileReader()
-            r.onload = (e : dom.Event) => put(url, r.result.asInstanceOf[String])
-            r.readAsDataURL(xhr.response.asInstanceOf[dom.Blob])
+            if (xhr.status >= 500)
+                retry()
+            else {
+                val r = new dom.FileReader()
+                r.onload = (e : dom.Event) => put(url, r.result.asInstanceOf[String])
+                r.readAsDataURL(xhr.response.asInstanceOf[dom.Blob])
+            }
         }
         xhr.open("GET", url, true)
         xhr.setRequestHeader("Access-Control-Allow-Origin", "*")
