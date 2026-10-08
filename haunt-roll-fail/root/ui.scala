@@ -586,6 +586,133 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         }
     }
 
+    def pilesOnMap = callbacks.settings.has(CardPilesOnMap)
+
+    // The draw and discard piles, the Pond, the Lost Souls and the available dominances, shown as in the side panel:
+    // (image, label, count, what tapping it opens); a dominance has no count
+    def cardPiles : $[(String, String, |[Int], Any)] = {
+        val diaspora = factions.of[InvasiveEEE].%(game.states.contains)
+        val frogOnTop = diaspora.any && game.deck.get.headOption.exists(Deck.frogEEE.has)
+
+        $(
+            (frogOnTop.?("deck-frog").|("deck"), "Deck", |(game.deck.num), "view-deck"),
+            ("pile-" + game.pile.any.?(game.pile.last.suit).|("empty"), "Discard Pile", |(game.pile.num), "view-discard")
+        ) ++
+        diaspora./(f => (f.pond.any.?("pile-frog").|("pile-empty"), "Pond", |(f.pond.num), ("view-frog-deck", f))) ++
+        factions.of[Fanatic].%(game.states.contains)./(f => (f.lost.any.?("pile-" + f.lost.last.suit).|("pile-empty"), "Lost Souls", |(f.lost.num), ("view-lost-souls", f))) ++
+        game.dominances./(d => (d.id, "Dominance", None, "view-dominances"))
+    }
+
+    // Where the map was last drawn in the canvas: x and y offset, scale, margins, canvas width in pixels
+    var mapTransform = (0.0, 0.0, 1.0, 0.0, 0.0, 1.0)
+
+    // The card piles drawn on the map, in map coordinates, for taps
+    var pileTargets : $[(Double, Double, Double, Double, Any)] = $
+
+    // In the top right corner of the map, in a dark panel like the item tracker's
+    def drawCardPiles(g : dom.CanvasRenderingContext2D) {
+        pileTargets = $
+
+        if (pilesOnMap.not)
+            return
+
+        val piles = cardPiles
+
+        val (cw, ch, iw, ih, pad) = (176.0, 172.0, 128.0, 84.0, 14.0)
+        val dw = 120.0
+
+        def width(p : (String, String, |[Int], Any)) = p._3.any.?(cw).|(dw + 20)
+
+        val pw = pad * 2 + piles./(width).sum
+        val ph = pad * 2 + ch
+        val px = mp.width - 30 - pw
+        val py = 24.0
+        val r = 16.0
+
+        g.save()
+        g.globalAlpha = 1.0
+        g.beginPath()
+        g.moveTo(px + r, py)
+        g.arcTo(px + pw, py, px + pw, py + ph, r)
+        g.arcTo(px + pw, py + ph, px, py + ph, r)
+        g.arcTo(px, py + ph, px, py, r)
+        g.arcTo(px, py, px + pw, py, r)
+        g.closePath()
+        g.fillStyle = "rgba(40, 32, 24, 0.72)"
+        g.fill()
+
+        g.textAlign = "center"
+        g.textBaseline = "alphabetic"
+
+        var x = px + pad
+
+        piles.foreach { p =>
+            val w = width(p)
+            val (img, name, count, target) = p
+
+            p._3 match {
+                case Some(n) =>
+                    g.drawImage(resources.images.get(img), x + (w - iw) / 2, py + pad + 4, iw, ih)
+
+                    g.fillStyle = "#ffffff"
+                    g.font = "bold 46px sans-serif"
+                    g.fillText(n.toString, x + w / 2, py + pad + 4 + ih + 46)
+
+                case None =>
+                    cardImage(img).foreach { i =>
+                        g.drawImage(i, x + (w - dw) / 2, py + pad + (ch - dw * 708 / 512) / 2, dw, dw * 708 / 512)
+                    }
+            }
+
+            g.fillStyle = "#e8dcc0"
+            g.font = "bold 27px sans-serif"
+            if (p._3.any)
+                g.fillText(translate(name), x + w / 2, py + pad + 4 + ih + 46 + 32)
+
+            pileTargets :+= ((x, py, w, ph, target))
+
+            x += w
+        }
+
+        g.restore()
+    }
+
+    // Card images are loaded on demand (only their sources are known up front); the map is drawn again once one has loaded
+    val cardImages = mutable.Map[String, dom.html.Image]()
+
+    def cardImage(key : String) : |[dom.html.Image] =
+        if (resources.images.has(key))
+            |(resources.images.get(key))
+        else
+        if (resources.images.hasSource(key).not)
+            None
+        else
+            cardImages.get(key) match {
+                case Some(i) => i.complete.?(i)
+                case None =>
+                    val i = dom.document.createElement("img").asInstanceOf[dom.html.Image]
+                    cardImages(key) = i
+                    i.onload = (_ : dom.Event) => drawMap()
+                    resources.images.getBlobSource(key) { url => i.src = url }
+                    None
+            }
+
+    def translate(s : String) : String = callbacks.settings.has(FrenchLanguage).?(French.text(s)).|(s)
+
+    map.node.onclick = (e : dom.MouseEvent) => {
+        if (pileTargets.any) {
+            val rect = map.node.getBoundingClientRect()
+            val (tx, ty, sc, dw, dh, bw) = mapTransform
+            val k = bw / rect.width
+            val x = ((e.clientX - rect.left) * k - tx) / sc - dw
+            val y = ((e.clientY - rect.top) * k - ty) / sc - dh
+
+            pileTargets.find { case (px, py, pw, ph, _) => x >= px && x < px + pw && y >= py && y < py + ph }.foreach { case (_, _, _, _, target) =>
+                onClick(target)
+            }
+        }
+    }
+
     def drawMap() {
         // The map images may still be loading (slow connections, phones);
         // retry instead of leaving the map blank until the next update
@@ -667,10 +794,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             if ((dw + mp.width + dw) * bitmap.height < bitmap.width * (dh + mp.height + dh)) {
                 g.translate((bitmap.width - (dw + mp.width + dw) * bitmap.height / (dh + mp.height + dh)) / 2, 0)
                 g.scale(1.0 * bitmap.height / (dh + mp.height + dh), 1.0 * bitmap.height / (dh + mp.height + dh))
+
+                mapTransform = ((bitmap.width - (dw + mp.width + dw) * bitmap.height / (dh + mp.height + dh)) / 2, 0.0, 1.0 * bitmap.height / (dh + mp.height + dh), dw.toDouble, dh.toDouble, bitmap.width.toDouble)
             }
             else {
                 g.translate(0, (bitmap.height - (dh + mp.height + dh) * bitmap.width / (dw + mp.width + dw)) / 2)
                 g.scale(1.0 * bitmap.width / (dw + mp.width + dw), 1.0 * bitmap.width / (dw + mp.width + dw))
+
+                mapTransform = (0.0, (bitmap.height - (dh + mp.height + dh) * bitmap.width / (dw + mp.width + dw)) / 2, 1.0 * bitmap.width / (dw + mp.width + dw), dw.toDouble, dh.toDouble, bitmap.width.toDouble)
             }
             g.translate(dw, dh)
         }
@@ -1089,6 +1220,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         drawScoreTrack(g)
 
         drawItemSlots(g)
+
+        drawCardPiles(g)
 
         hhh.foreach { h =>
             g.globalAlpha = h._2
@@ -2572,7 +2705,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     game.ruins.values./~(_.items).$.sortBy(i => Item.order.indexOf(i)).distinct.diff(f.fromRuins).some./(l =>
                         desc(l./(_.name.spn(styles.itemInfo)).comma, (l.num > 1 || l.diff($(Boots, Coins)).none).?("are").|("is"), "available in the", "ruins".hh, Dot)
                     ) ~
-                    factions.but(f).%(_.forTrade.any)./(e => desc(e.forTrade./(_.item.name.spn(styles.itemInfo)).comma, "can be", "looted".f, "from", e.elem, Dot)).merge ~
+                    factions.but(f).%(_.is[Knaves].not).%(_.forTrade.any)./(e => desc(e.forTrade./(_.item.name.spn(styles.itemInfo)).comma, "can be", "looted".f, "from", e.elem, Dot)).merge ~
                     HGap ~
                     HGap ~
                     HGap ~
@@ -4757,12 +4890,26 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         val items = (uncrafted.take(6).merge.div(xlo.flexhcenter)(xlo.flexnowrap) ~ uncrafted.drop(6).merge.div(xlo.flexhcenter)(xlo.flexnowrap)).div(xlo.pointer).onClick.param("view-items")
 
-        val s = $(|(items), quests, |(discard), pond.filter(_ => hor)./(_.div(xlo.flexhcenter)), |(dominances)).flatten.but(Empty)./(_.div(styles.skipline)).merge
+        // The items are on the item tracker when the board trackers are shown, the piles and dominances on the map with Card Piles on the map
+        val s = $(showTrackers.not.?(items), quests, pilesOnMap.not.?(discard), pond.filter(_ => hor && pilesOnMap.not)./(_.div(xlo.flexhcenter)), pilesOnMap.not.?(dominances)).flatten.but(Empty)./(_.div(styles.skipline)).merge
 
         container.replace((s.div(xlo.flexhcenter)(styles.gstatus)), resources, onClick)
     }
 
+    // The game status pane (items, quests, piles, dominances) is left out of the layout when it would be empty
+    def gameStatusShown = showTrackers.not || pilesOnMap.not || game.quests.any
+
+    var laidOutGameStatus : |[Boolean] = None
+
     def updateStatus() {
+        if (laidOutGameStatus.any && laidOutGameStatus != |(gameStatusShown)) {
+            laidOutGameStatus = |(gameStatusShown)
+            resize()
+            return
+        }
+
+        laidOutGameStatus = |(gameStatusShown)
+
         0.until(arity).foreach { n =>
             if (game.ordering.contains(n))
                 factionStatus(game.ordering(n), statusBitmaps(n))
@@ -4878,7 +5025,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         $
     )
 
-    val layouter = Layouter(layouts.%(l => hrf.HRF.param("layout").none || hrf.HRF.param("layout").get == l.name), _./~{
+    val layoutsNoGameStatus = layouts.%(_.name.endsWith("-gameStatusA"))./(l => l.copy(panes = l.panes.%(_.name != "status-game")))
+
+    def layouter = gameStatusShown.?(layouterGameStatus).|(layouterNoGameStatus)
+
+    lazy val layouterNoGameStatus = Layouter(layoutsNoGameStatus.%(l => hrf.HRF.param("layout").none || hrf.HRF.param("layout").get == l.name), (ff : $[Fit]) => layouterGameStatus.process(0)(ff).%(_.name != "status-game"))
+
+    lazy val layouterGameStatus = Layouter(layouts.%(l => hrf.HRF.param("layout").none || hrf.HRF.param("layout").get == l.name), _./~{
         case f if f.name == "map-small" => $(f, f.copy(name = "overlay"))
         case f if f.name == "action" => $(f, f.copy(name = "undo"), f.copy(name = "settings"))
         case f if f.name == "status-horizontal" => 1.to(arity)./(n => f.copy(name = "status-" + n, x = f.x + ((n - 1) * f.width  / arity.toDouble).round.toInt, width  = (n * f.width  / arity.toDouble).round.toInt - ((n - 1) * f.width  / arity.toDouble).round.toInt))
@@ -4904,7 +5057,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     val settingsKey = Meta.settingsKey
 
-    val layoutKey = "v" + 2 + "." + "arity-" + arity
+    def layoutKey = "v" + 2 + "." + gameStatusShown.not.??("no-game-status.") + "arity-" + arity
 
     override def info(self : |[Player], aa : $[UserAction]) = {
         val ii = currentGame.info($, self, aa)
