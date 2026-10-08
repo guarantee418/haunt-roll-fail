@@ -588,19 +588,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     def pilesOnMap = callbacks.settings.has(CardPilesOnMap)
 
-    // The draw and discard piles, the Pond, the Lost Souls and the available dominances, shown as in the side panel:
-    // (image, label, count, what tapping it opens); a dominance has no count
-    def cardPiles : $[(String, String, |[Int], Any)] = {
+    // The draw and discard piles, the Pond (with the Lilypad Diaspora) and the Lost Souls (with the Lizards),
+    // shown as in the side panel: (image, label, count, what tapping it opens)
+    def cardPiles : $[(String, String, Int, Any)] = {
         val diaspora = factions.of[InvasiveEEE].%(game.states.contains)
         val frogOnTop = diaspora.any && game.deck.get.headOption.exists(Deck.frogEEE.has)
 
         $(
-            (frogOnTop.?("deck-frog").|("deck"), "Deck", |(game.deck.num), "view-deck"),
-            ("pile-" + game.pile.any.?(game.pile.last.suit).|("empty"), "Discard Pile", |(game.pile.num), "view-discard")
+            (frogOnTop.?("deck-frog").|("deck"), "Deck", game.deck.num, "view-deck"),
+            ("pile-" + game.pile.any.?(game.pile.last.suit).|("empty"), "Discard Pile", game.pile.num, "view-discard")
         ) ++
-        diaspora./(f => (f.pond.any.?("pile-frog").|("pile-empty"), "Pond", |(f.pond.num), ("view-frog-deck", f))) ++
-        factions.of[Fanatic].%(game.states.contains)./(f => (f.lost.any.?("pile-" + f.lost.last.suit).|("pile-empty"), "Lost Souls", |(f.lost.num), ("view-lost-souls", f))) ++
-        game.dominances./(d => (d.id, "Dominance", None, "view-dominances"))
+        diaspora./(f => (f.pond.any.?("pile-frog").|("pile-empty"), "Pond", f.pond.num, ("view-frog-deck", f))) ++
+        factions.of[Fanatic].%(game.states.contains)./(f => (f.lost.any.?("pile-" + f.lost.last.suit).|("pile-empty"), "Lost Souls", f.lost.num, ("view-lost-souls", f)))
     }
 
     // Where the map was last drawn in the canvas: x and y offset, scale, margins, canvas width in pixels
@@ -618,12 +617,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         val piles = cardPiles
 
+        // the available dominances, stacked: each card shows a strip of the one under it
+        val dominances = game.dominances./(_.id)
+
         val (cw, ch, iw, ih, pad) = (176.0, 172.0, 128.0, 84.0, 14.0)
-        val dw = 120.0
+        val (dw, step) = (120.0, 36.0)
+        val stackWidth = dominances.any.?(dw + 20 + (dominances.num - 1) * step).|(0.0)
 
-        def width(p : (String, String, |[Int], Any)) = p._3.any.?(cw).|(dw + 20)
-
-        val pw = pad * 2 + piles./(width).sum
+        val pw = pad * 2 + piles.num * cw + stackWidth
         val ph = pad * 2 + ch
         val px = mp.width - 30 - pw
         val py = 24.0
@@ -646,32 +647,30 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         var x = px + pad
 
-        piles.foreach { p =>
-            val w = width(p)
-            val (img, name, count, target) = p
+        piles.foreach { case (img, name, n, target) =>
+            g.drawImage(resources.images.get(img), x + (cw - iw) / 2, py + pad + 4, iw, ih)
 
-            p._3 match {
-                case Some(n) =>
-                    g.drawImage(resources.images.get(img), x + (w - iw) / 2, py + pad + 4, iw, ih)
-
-                    g.fillStyle = "#ffffff"
-                    g.font = "bold 46px sans-serif"
-                    g.fillText(n.toString, x + w / 2, py + pad + 4 + ih + 46)
-
-                case None =>
-                    cardImage(img).foreach { i =>
-                        g.drawImage(i, x + (w - dw) / 2, py + pad + (ch - dw * 708 / 512) / 2, dw, dw * 708 / 512)
-                    }
-            }
+            g.fillStyle = "#ffffff"
+            g.font = "bold 46px sans-serif"
+            g.fillText(n.toString, x + cw / 2, py + pad + 4 + ih + 46)
 
             g.fillStyle = "#e8dcc0"
             g.font = "bold 27px sans-serif"
-            if (p._3.any)
-                g.fillText(translate(name), x + w / 2, py + pad + 4 + ih + 46 + 32)
+            g.fillText(translate(name), x + cw / 2, py + pad + 4 + ih + 46 + 32)
 
-            pileTargets :+= ((x, py, w, ph, target))
+            pileTargets :+= ((x, py, cw, ph, target))
 
-            x += w
+            x += cw
+        }
+
+        if (dominances.any) {
+            dominances.indexed.foreach { (img, i) =>
+                cardImage(img).foreach { c =>
+                    g.drawImage(c, x + 10 + i * step, py + pad + (ch - dw * 708 / 512) / 2, dw, dw * 708 / 512)
+                }
+            }
+
+            pileTargets :+= ((x, py, stackWidth, ph, "view-dominances"))
         }
 
         g.restore()
