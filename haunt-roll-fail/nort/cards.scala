@@ -224,7 +224,7 @@ object Cards {
             "snake-signys-celerity" -> CardInfo("Signy's Celerity", "", 0, false, MoveEffect(3, special = SignyMove), "Move 3. You may move through the territory with the Scorched Earth token without stopping."),
         ),
         clanCards(Stag,
-            "stag" -> CardInfo("Stag Clan", "", 0, true, RecruitEffect(1), "Recruit 1. After this Recruit action, you can move 1 of your units from an adjacent territory into this one (ignoring Rough borders)."),
+            "stag" -> CardInfo("Stag Clan", "", 0, true, StagClanEffect, "Recruit 1. After this Recruit action, you can move 1 of your units from an adjacent territory into this one (ignoring Rough borders)."),
             "stag-glory-of-the-clan" -> CardInfo("Glory of the Clan", "", 0, false, BuildEffect(special = GloryBuild), "Build. Before or after this Build action, you may collect resources in this territory as if it were the Harvest phase."),
             "stag-annexation" -> CardInfo("Annexation", "", 0, true, AnnexationEffect, "Move 1. Before or after this Move action, you may do an Explore action."),
             "stag-brands-bravery" -> CardInfo("Brand's Bravery", "", 0, false, MoveEffect(2, bonus = 1, special = BrandMove), "Move 2, +1 combat point. For each combat won, you choose which territory the enemy retreats to (the retreat move must be legal)."),
