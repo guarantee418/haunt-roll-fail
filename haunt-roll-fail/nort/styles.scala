@@ -79,6 +79,12 @@ package object elem {
         object cardIcon extends CustomStyle(margin.left("-0.14em"), margin.right("-0.14em"))
         // The Stacked player panels: each icon above its number
         object stackedItem extends CustomStyle(display("inline-block"), text.align("center"), margin.left("0.4ex"), margin.right("0.4ex"))
+        // The resources with the next harvest and the Winter costs under them, one column per resource (the panel's "ledger")
+        object ledger extends CustomStyle(display("grid"), SimpleCSSRule("grid-template-columns", "auto auto auto auto auto"), SimpleCSSRule("align-items", "center"), SimpleCSSRule("justify-items", "center"), SimpleCSSRule("width", "max-content"), margin.left("auto"), margin.right("auto"), white.space("nowrap"))
+        object ledgerCell extends CustomStyle(padding("0 0.4ex"))
+        object ledgerExtra extends CustomStyle(padding("0 0.4ex"), SimpleCSSRule("justify-self", "start"))
+        // Nothing in that column this harvest or winter
+        object ledgerNone extends CustomStyle(opacity("0.35"))
         object buildIcon extends CustomStyle(height("2.6em"), vertical.align("middle"), margin.right("1ex"))
         object boardInfo extends CustomStyle(display("block"), width("44ex"), max.width("100%"))
         // The end screen: the winners' clan cards, and warchief cards with the Warchiefs module
