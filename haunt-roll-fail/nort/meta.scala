@@ -416,7 +416,7 @@ object Meta extends MetaGame { mmm =>
 
     // Map display settings, chosen by each player under "Interface" (like Root's Clearing Rule)
     override def settingsList = super.settingsList ++ $(ShowTerritoryColor, CustomTerritoryColor, FightsTerritoryColor, HideTerritoryColor) ++ TerritoryOpacity.all ++ $(ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels, ReverseStackedPanels, ShowCombatReport, SkipCombatReport)
-    override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, CompactPanels, ShowCombatReport) ++ PlayerColor.all./(TerritoryOpacity(_, 50))
+    override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, StackedPanels, ShowCombatReport) ++ PlayerColor.all./(TerritoryOpacity(_, 50))
 }
 
 
