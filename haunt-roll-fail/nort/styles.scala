@@ -80,8 +80,9 @@ package object elem {
         // The Stacked player panels: each icon above its number
         object stackedItem extends CustomStyle(display("inline-block"), text.align("center"), margin.left("0.4ex"), margin.right("0.4ex"))
         // The resources with the next harvest and the Winter costs under them, one column per resource (the panel's "ledger")
-        object ledger extends CustomStyle(display("grid"), SimpleCSSRule("grid-template-columns", "auto auto auto auto auto"), SimpleCSSRule("align-items", "center"), SimpleCSSRule("justify-items", "center"), SimpleCSSRule("width", "max-content"), margin.left("auto"), margin.right("auto"), margin.bottom("0.3ex"), white.space("nowrap"))
-        object ledgerCell extends CustomStyle(padding("0 0.2ex"))
+        object ledger extends CustomStyle(display("grid"), SimpleCSSRule("grid-template-columns", "auto auto auto auto auto"), SimpleCSSRule("align-items", "stretch"), SimpleCSSRule("justify-items", "stretch"), SimpleCSSRule("width", "max-content"), margin.left("auto"), margin.right("auto"), margin.bottom("0.3ex"), white.space("nowrap"), SimpleCSSRule("border-top", "1px solid rgba(255, 255, 255, 0.3)"), SimpleCSSRule("border-left", "1px solid rgba(255, 255, 255, 0.3)"))
+        // Each cell draws its right and bottom grid lines, the table its top and left ones
+        object ledgerCell extends CustomStyle(padding("0.1ex 0.3ex"), display("flex"), SimpleCSSRule("align-items", "center"), SimpleCSSRule("justify-content", "center"), SimpleCSSRule("border-right", "1px solid rgba(255, 255, 255, 0.3)"), SimpleCSSRule("border-bottom", "1px solid rgba(255, 255, 255, 0.3)"))
         // Compact panels: a little smaller, so the season icons' column fits beside the three resources (as cardLine does for the cards)
         object ledgerCompact extends CustomStyle(font.size("90%"))
         // The Dragon's sacrifice, which no column holds, on its own row under the harvest's; zero width with a full
