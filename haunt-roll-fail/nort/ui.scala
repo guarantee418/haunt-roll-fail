@@ -1322,14 +1322,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val next = Harvest.forecast(f)
         val (winterFood, winterWood) = EventsExpansion.winterCost(f)
         // The columns: the icon, the stockpile, the harvest's gain and the Winter cost
-        case class Column(icon : Elem, has : Int, gain : Int, cost : Int)
+        // Dragon Clan: 1 more food or wood for the sacrifice, shown as a range on both, its upper end faint as only one of them gets it
+        val pyre = f == Dragon && game.dragonHarvest.has(false).not && (game.dragonHarvest.any || NewBloodExpansion.sacrificeOptions(f)) && game.controlled(f).any
+        case class Column(icon : Elem, has : Int, gain : Int, cost : Int, extra : Boolean = false)
         val columns = $(
-            Column(Food.elem, state.has(Food), next.food, winterFood),
-            Column(Wood.elem, state.has(Wood), next.wood, winterWood),
+            Column(Food.elem, state.has(Food), next.food, winterFood, pyre),
+            Column(Wood.elem, state.has(Wood), next.wood, winterWood, pyre),
             Column(Lore.elem, state.has(Lore), next.lore, 0),
             Column(FameIcon(), state.fame, next.fame, 0))
-        // Dragon Clan: 1 more food or wood for the sacrifice, on a row of its own under the harvest's
-        val pyre = f == Dragon && game.dragonHarvest.has(false).not && (game.dragonHarvest.any || NewBloodExpansion.sacrificeOptions(f)) && game.controlled(f).any
 
         def cell(e : Elem) : Elem = e.div(styles.ledgerCell)
         def none : Elem = cell("–".spn(styles.ledgerNone))
@@ -1338,8 +1338,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val icons = cell(Empty) ~ columns./(c => cell(c.icon)).merge
         val stock = cell(Empty) ~ columns./(c => cell(stacked.?(c.has.hl).|(Amount(c.has.hl, c.icon)))).merge
-        val harvest = cell(SeasonIcon.harvest) ~ columns./(c => signed(c.gain, "+", styles.ledgerGain)).merge ~
-            pyre.?(Amount("+1".styled(styles.ledgerGain), Food.elem ~ "/" ~ Wood.elem).div(styles.ledgerExtra)).|(Empty)
+        def gain(c : Column) : Elem = c.extra.?(cell((("+" + c.gain).styled(styles.ledgerGain) ~ ("-" + (c.gain + 1)).styled(styles.ledgerGain, styles.ledgerMaybe)).spn)).|(signed(c.gain, "+", styles.ledgerGain))
+        val harvest = cell(SeasonIcon.harvest) ~ columns./(gain).merge
         val winter = (f != Automa).?(cell(SeasonIcon.winter) ~ columns./(c => signed(c.cost, "-", styles.ledgerLoss)).merge).|(Empty)
 
         val rows = stacked.?(reverse.?(stock ~ icons ~ harvest ~ winter).|(icons ~ stock ~ harvest ~ winter)).|(stock ~ harvest ~ winter)
