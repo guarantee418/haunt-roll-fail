@@ -296,6 +296,11 @@ object UnitIcon {
     def apply() : Elem = Image("ui-unit", styles.inlineIcon).alt("units")
 }
 
+// The units left in the supply: the unit figure's silhouette
+object SupplyIcon {
+    def apply() : Elem = Image("ui-unit-supply", styles.inlineIcon).alt("units in the supply")
+}
+
 object CardIcon {
     def draw : Elem = Image("ui-card-draw", styles.inlineIcon, styles.cardIcon).alt("to draw")
     def hand : Elem = Image("ui-card-hand", styles.inlineIcon, styles.cardIcon).alt("in hand")

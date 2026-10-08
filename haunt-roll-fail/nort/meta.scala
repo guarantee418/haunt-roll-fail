@@ -408,7 +408,7 @@ object Meta extends MetaGame { mmm =>
         Building.all./(b => ImageAsset(b.image.drop("building-".length)))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "ui", "ui-", "webp")(
-        (1.to(99).map(n => ImageAsset("label-" + n)) ++ 1.to(15).map(n => ImageAsset("count-" + n)) ++ 1.to(40).map(n => ImageAsset("spot-" + n))).toList :+ ImageAsset("target") :+ ImageAsset("lore") :+ ImageAsset("food") :+ ImageAsset("wood") :+ ImageAsset("fame") :+ ImageAsset("confirm") :+ ImageAsset("cancel") :+ ImageAsset("rotate-left") :+ ImageAsset("rotate-right") :+ ImageAsset("unit") :+ ImageAsset("card-draw") :+ ImageAsset("card-hand") :+ ImageAsset("card-played") :+ ImageAsset("card-discard") :+ ImageAsset("first-player") :+ ImageAsset("axe") :+ ImageAsset("skull") :+ ImageAsset("harvest") :+ ImageAsset("winter")
+        (1.to(99).map(n => ImageAsset("label-" + n)) ++ 1.to(15).map(n => ImageAsset("count-" + n)) ++ 1.to(40).map(n => ImageAsset("spot-" + n))).toList :+ ImageAsset("target") :+ ImageAsset("lore") :+ ImageAsset("food") :+ ImageAsset("wood") :+ ImageAsset("fame") :+ ImageAsset("confirm") :+ ImageAsset("cancel") :+ ImageAsset("rotate-left") :+ ImageAsset("rotate-right") :+ ImageAsset("unit") :+ ImageAsset("unit-supply") :+ ImageAsset("card-draw") :+ ImageAsset("card-hand") :+ ImageAsset("card-played") :+ ImageAsset("card-discard") :+ ImageAsset("first-player") :+ ImageAsset("axe") :+ ImageAsset("skull") :+ ImageAsset("harvest") :+ ImageAsset("winter")
     ) ::
     $
 

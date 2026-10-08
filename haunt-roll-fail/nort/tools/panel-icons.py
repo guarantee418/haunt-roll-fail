@@ -2,7 +2,8 @@
 # unit.webp, the unit figure from the Active Area board's Winter costs (the Recruit card's figure, without its + sign);
 # card-draw.webp, card-hand.webp, card-played.webp, card-discard.webp, the start card back outlined yellow, green, white and red
 # (to draw, in hand, played this year, discarded);
-# first-player.webp, the first player marker without its background.
+# first-player.webp, the first player marker without its background;
+# unit-supply.webp, unit.webp grayed out (the units left in the supply).
 from collections import deque
 from PIL import Image, ImageDraw, ImageFilter
 
@@ -112,3 +113,10 @@ for i in range(6):
             d.line([p, (p[0] + math.cos(b) * S * l, p[1] + math.sin(b) * S * l)], fill=ice, width=4 * K)
 d.ellipse((c - S * 0.07, c - S * 0.07, c + S * 0.07, c + S * 0.07), fill=ice)
 outlined(flake, 'winter.webp', (30, 70, 120, 255))
+
+# unit-supply.webp: the units icon (unit.webp) grayed out, for the units left in the supply
+from PIL import ImageEnhance
+supply = Image.open(IMAGES + 'ui/unit.webp').convert('RGBA')
+gray = ImageEnhance.Brightness(supply.convert('L').convert('RGB')).enhance(0.8).convert('RGBA')
+gray.putalpha(supply.getchannel('A'))
+gray.save(IMAGES + 'ui/unit-supply.webp', quality=90)
