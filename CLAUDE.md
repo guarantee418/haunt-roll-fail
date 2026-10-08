@@ -95,7 +95,10 @@ with the log on the left. Ultrawide screens
 a fixed layout (`layout` override in `nort/ui.scala`): map, then short
 player panels in a row, the shared cards and the hand below them, and the
 log on the far right, with the
-hand cards sized to the pane (`--nort-hand-card`) so the whole hand fits. The player panels end with the clan's next harvest as things stand
+hand cards sized to the pane (`--nort-hand-card`) so the whole hand fits. The shared cards strip (Developments, Achievements, Creatures and the rest, the `court` pane)
+has a tab on its left that folds it into a one-line bar listing each group with its card count, and back;
+the player panels right above it (ultrawide) grow into the room with a larger font (as far as their width
+allows), or else the pane right under it (the map) does, and nothing else moves (`foldCourt` in `nort/ui.scala`). Each browser remembers it (`<settingsKey>.court-folded`). The player panels end with the clan's next harvest as things stand
 (`Harvest.forecast` in `nort/game.scala`, the same sums `HarvestAction` uses,
 fame included) and its Winter cost (as losses, "-1"), on rows marked with a wheat sheaf and a snowflake (`SeasonIcon`, drawn by `nort/tools/panel-icons.py`); tapping the Winter line, the Harvest line or the resources opens the whole
 Winter chart (`winterChart` in `nort/ui.scala`). Each player can hide the

@@ -349,6 +349,10 @@ case class ClanBoard(f : Faction)
 // The Winter cost chart, opened from a player panel
 case class WinterChart(f : Faction)
 case class RobotosInfo(f : Faction)
+
+// The fold tab on the shared cards strip (ui.scala)
+case object CourtToggle
+
 // A player's discard pile, opened from the action pane
 case class DiscardPile(f : Faction)
 // A player's active cards (played this year), opened from the white card in its panel
