@@ -222,9 +222,13 @@ case class BlainnSkipAction(self : Faction, rest : $[Faction], then : ForcedActi
 
 
 object WastelandsExpansion extends Expansion {
-    // COMBAT: Thor's Wrath gives its controller 1 point anywhere; Landvidi's defender gets 2
-    def points(f : Faction, t : Territory, attacking : Boolean)(implicit game : Game) : Int =
-        Waste.controller(Waste.thor, "s").has(f).??(1) + (attacking.not && Waste.landvidiIn(t)).??(2)
+    // COMBAT: Thor's Wrath gives its controller 1 point anywhere; Landvidi's defender gets 2; by source, for the fight info and the log
+    def pointParts(f : Faction, t : Territory, attacking : Boolean)(implicit game : Game) : $[(Int, Elem)] = $(
+        Waste.controller(Waste.thor, "s").has(f).??(1) -> Waste.elem(Waste.thor),
+        (attacking.not && Waste.landvidiIn(t)).??(2) -> Waste.elem(Waste.landvidi)
+    ).filter(_._1 > 0)
+
+    def points(f : Faction, t : Territory, attacking : Boolean)(implicit game : Game) : Int = pointParts(f, t, attacking).map(_._1).sum
 
     // Urdarbrunn's defender ignores a casualty of the attacker's die
     def ignored(t : Territory)(implicit game : Game) : Int = Waste.urdarbrunnIn(t).??(1)
@@ -235,13 +239,25 @@ object WastelandsExpansion extends Expansion {
         (c.kind == GiantBoar && attacking.not).?(face.copy(casualties = face.casualties + 1)).|(face)
     }
 
-    // Extra points of the player and the creature in a fight against a creature
-    def creaturePoints(f : Faction, t : Territory, c : Creature, attacking : Boolean, face : DieFace, cface : DieFace)(implicit game : Game) : (Int, Int) = {
+    // Extra points of the player and the creature in a fight against a creature, by source; without the dice, the
+    // player's are known before the fight (the Gate of Helheim gives its controller 2)
+    def playerCreatureParts(f : Faction, t : Territory, attacking : Boolean)(implicit game : Game) : $[(Int, Elem)] =
+        pointParts(f, t, attacking) ++ $(Waste.controller(Waste.helheim, "c").has(f).??(2) -> Waste.elem(Waste.helheim)).filter(_._1 > 0)
+
+    // Valdemar alive gives the other creatures 1; a creature defending Landvidi gets 2
+    def creatureParts(c : Creature, t : Territory, attacking : Boolean)(implicit game : Game) : $[(Int, Elem)] = $(
+        (c.kind != Valdemar && Waste.valdemarAlive).??(1) -> "Valdemar".hl,
+        (attacking && Waste.landvidiIn(t)).??(2) -> Waste.elem(Waste.landvidi)
+    ).filter(_._1 > 0)
+
+    // With the dice: the player's skulls count as points against a Rock Golem, and so do the Golem's
+    def creaturePoints(f : Faction, t : Territory, c : Creature, attacking : Boolean, face : DieFace, cface : DieFace)(implicit game : Game) : ($[(Int, Elem)], $[(Int, Elem)]) = {
         val golem = c.kind == RockGolem
         // Urdarbrunn: a defending creature ignores a skull of the player's die
         val skulls = math.max(0, face.casualties - (attacking && Waste.urdarbrunnIn(t)).??(1))
-        val player = points(f, t, attacking) + Waste.controller(Waste.helheim, "c").has(f).??(2) + golem.??(skulls)
-        val creature = golem.??(cface.casualties) + (c.kind != Valdemar && Waste.valdemarAlive).??(1) + (attacking && Waste.landvidiIn(t)).??(2)
+        val die = "the " ~ CombatIcon.skull ~ " of the die"
+        val player = playerCreatureParts(f, t, attacking) ++ $(golem.??(skulls) -> die).filter(_._1 > 0)
+        val creature = $(golem.??(cface.casualties) -> die).filter(_._1 > 0) ++ creatureParts(c, t, attacking)
         (player, creature)
     }
 

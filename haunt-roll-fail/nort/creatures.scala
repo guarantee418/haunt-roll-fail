@@ -589,7 +589,9 @@ object CreaturesExpansion extends Expansion {
             // Dragon Clan's Tenacious Grudge: 1 point for each unit on the Sacrificial Pyre
             val grudge = (attacking && f == Dragon && e.special == GrudgeMove).??(game.pyre.num)
             // Wastelands: Rock Golem, Valdemar, Thor's Wrath, Landvidi, the Gate of Helheim and Urdarbrunn
-            val (pw, cw) = game.has(Wastelands).?(WastelandsExpansion.creaturePoints(f, t, c, attacking, face, cface)).|((0, 0))
+            val (pws, cws) = game.has(Wastelands).?(WastelandsExpansion.creaturePoints(f, t, c, attacking, face, cface)).|(($[(Int, Elem)](), $[(Int, Elem)]()))
+            val pw = pws.map(_._1).sum
+            val cw = cws.map(_._1).sum
             val urdar = game.has(Wastelands).??(WastelandsExpansion.creatureIgnored(f, t, attacking))
             val ps = game.strength(t, f, attacking) + bonus + axe + fortress + snake + robo + grudge + food + face.points + pw
             // Shieldbearers cancel 1 casualty; Halvard defending ignores 1 inflicted by the attacking creature
@@ -599,16 +601,18 @@ object CreaturesExpansion extends Expansion {
 
             def extra(l : (Int, Elem)*) : Elem = l.toList.filter(_._1 > 0).map { case (n, what) => "(" ~ n.hl ~ " from " ~ what ~ ")" }.join(" ")
 
-            f.log("scored", CombatIcon.axes(ps), extra(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, robo -> "Robotos".hl, grudge -> "Tenacious Grudge".hl, pw -> "Wastelands".hl))
-            log(c, "scored", CombatIcon.axes(cs), extra(cw -> "Wastelands".hl), (pc > 0 || shield > 0).?("and inflicted " ~ CombatIcon.skulls(pc)).|(Empty), (shield > 0).?("(" ~ shield.hl ~ " cancelled)").|(Empty))
+            // Everything but the units and the die, as in the fight with a clan
+            val extras = $(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, robo -> "Robotos".hl, grudge -> "Tenacious Grudge".hl) ++ pws
+            f.log("scored", CombatIcon.axes(ps), extra((FightPoints.others(f, t, attacking) ++ extras) : _*))
+            log(c, "scored", CombatIcon.axes(cs), extra(cws : _*), (pc > 0 || shield > 0).?("and inflicted " ~ CombatIcon.skulls(pc)).|(Empty), (shield > 0).?("(" ~ shield.hl ~ " cancelled)").|(Empty))
 
             // Losing all units loses the fight; otherwise ties go to the defender
             val won = pc < units && attacking.?(ps > cs).|(ps >= cs)
 
             // The combat report, from the same sums; creatures ignore casualties, so the clan inflicts none
             val wyvernBack = won && c.kind == Wyvern && Wild.homeIn(t).not && Wild.homes.any
-            val player = FightSide(f, attacking, FightPoints.parts(f, t, attacking, $(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, robo -> "Robotos".hl, grudge -> "Tenacious Grudge".hl, food -> Food.elem, face.points -> "the die".txt, pw -> "Wastelands".hl)), ps, $, 0, math.min(pc, units))
-            val creature = FightSide(None, c.elem, attacking.not, $(c.kind.value -> "its strength".txt, cface.points -> "the die".txt, cw -> "Wastelands".hl).filter(_._1 > 0), cs,
+            val player = FightSide(f, attacking, FightPoints.parts(f, t, attacking, extras ++ $(food -> Food.elem, face.points -> "the die".txt)), ps, $, 0, math.min(pc, units))
+            val creature = FightSide(None, c.elem, attacking.not, ($(c.kind.value -> "its strength".txt, cface.points -> "the die".txt) ++ cws).filter(_._1 > 0), cs,
                 $(cface.casualties -> "the die".txt, -shield -> "cancelled".txt).filter(_._1 != 0), pc, 0, won.?(wyvernBack.?("was driven back to its Den".txt).|("was defeated".txt)).|(Empty))
             game.fightReport = |(FightReport(a, attacking.?(player).|(creature), attacking.?(creature).|(player), |(won == attacking), won.not && pc >= units))
 

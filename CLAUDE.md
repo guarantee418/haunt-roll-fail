@@ -538,6 +538,9 @@ file covers the build, server and deploy. No session can ssh to the server
 - Bot games can be run headless on the JVM with `root/host.scala` (see
   `host.xsbt` for the source exclusions); it also checks that every action
   serializes and parses back.
+- The runner (`runner.scala`) takes an `Ask` with a single choice by itself without showing it. A step that
+  must pause the game on one button (Northgard's combat report, `CombatReportAction`) adds `.needOk`; bots skip
+  the hidden OK.
 - Undo, and loading a game, rebuild it by replaying the recorded actions
   with `performVoid`, which stops at the first `Soft` action in a chain.
   So an action marked `with Soft` must only offer choices (return an `Ask`);

@@ -276,8 +276,8 @@ case class FightInfo(attacker : Faction, defender : Faction, area : AreaRef, e :
                 attacker.conqueror.?(0).|(2 * here.count(_ == Fortress)) -> Fortress.elem
             )) ++ $(
                 (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl,
-                NewBloodExpansion.points(f, t, e, attacking, spent.|(0)) -> "New Blood powers".txt,
-                game.has(Wastelands).??(WastelandsExpansion.points(f, t, attacking)) -> "Wastelands".hl,
+                NewBloodExpansion.points(f, t, e, attacking, spent.|(0)) -> "New Blood powers".txt
+            ) ++ game.has(Wastelands).??(WastelandsExpansion.pointParts(f, t, attacking)) ++ $(
                 spent.|(0) -> Food.elem,
                 die./(_.points).|(0) -> "the die".txt
             )
@@ -309,15 +309,15 @@ case class CreatureFightInfo(f : Faction, area : AreaRef, c : Creature, e : Move
             (attacking && game.robotos(f)).??(1) -> "Robotos".hl,
             (attacking && f == Dragon && e.special == GrudgeMove).??(game.pyre.num) -> "Tenacious Grudge".hl,
             attacking.not.??(2 * game.working(t).count(_ == Fortress)) -> Fortress.elem,
-            (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl,
-            waste.??(WastelandsExpansion.points(f, t, attacking) + Waste.controller(Waste.helheim, "c").has(f).??(2)) -> "Wastelands".hl
-        )
+            (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl
+        ) ++ waste.??(WastelandsExpansion.playerCreatureParts(f, t, attacking))
 
-        val bonus = waste.??((c.kind != Valdemar && Waste.valdemarAlive).??(1) + (attacking && Waste.landvidiIn(t)).??(2))
+        val more = waste.??(WastelandsExpansion.creatureParts(c, t, attacking))
+        val bonus = more.map(_._1).sum
 
         "The fight is in ".txt ~ area.elem ~ Break ~
         FightPoints(f, t, attacking, extra, $, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1)) ~ Break ~
-        c.elem ~ ": " ~ CombatIcon.axes(c.kind.value + bonus) ~ (bonus > 0).?(" (" ~ c.kind.value.hl ~ " from its strength, " ~ bonus.hl ~ " from " ~ "Wastelands".hl ~ ")").|(Empty)
+        c.elem ~ ": " ~ CombatIcon.axes(c.kind.value + bonus) ~ more.any.?(" (" ~ ($(c.kind.value -> "its strength".txt) ++ more)./{ case (n, what) => n.hl ~ " from " ~ what }.join(", ") ~ ")").|(Empty)
     }
 }
 
@@ -336,14 +336,16 @@ object FightPoints {
     // The sources worth something, with what they are worth (they add up to game.strength plus the extras)
     def parts(f : Faction, t : Territory, attacking : Boolean, extra : $[(Int, Elem)])(implicit game : Game) : $[(Int, Elem)] = {
         val units = game.count(t, f)
-        ($(
-            units -> (units == 1).?("unit").|("units").txt,
-            game.companionStrength(t, f) -> Companion(f).elem,
-            Warchief.strength(t, f, attacking) -> Warchief.elem(f),
-            game.blainnIn(t, f).??(2) -> "Jötunn Blainn".hl,
-            SeaExpansion.defense(t, f, attacking) -> "the Port".hl
-        ) ++ extra).filter(_._1 > 0)
+        ($(units -> (units == 1).?("unit").|("units").txt) ++ others(f, t, attacking) ++ extra).filter(_._1 > 0)
     }
+
+    // The figures beside the units, and the Port
+    def others(f : Faction, t : Territory, attacking : Boolean)(implicit game : Game) : $[(Int, Elem)] = $(
+        game.companionStrength(t, f) -> Companion(f).elem,
+        Warchief.strength(t, f, attacking) -> Warchief.elem(f),
+        game.blainnIn(t, f).??(2) -> "Jötunn Blainn".hl,
+        SeaExpansion.defense(t, f, attacking) -> "the Port".hl
+    ).filter(_._1 > 0)
 
     def apply(f : Faction, t : Territory, attacking : Boolean, extra : $[(Int, Elem)], casualties : $[(Int, Elem)], cancels : Int, choosing : Boolean = false)(implicit game : Game) : Elem = {
         val points = parts(f, t, attacking, extra)
@@ -1380,8 +1382,10 @@ object MapExpansion extends Expansion {
             val dnb = NewBloodExpansion.points(defender, t, e, false, food(1))
 
             // Wastelands: Thor's Wrath, Landvidi; Urdarbrunn's defender ignores a casualty
-            val aw = game.has(Wastelands).??(WastelandsExpansion.points(attacker, t, true))
-            val dw = game.has(Wastelands).??(WastelandsExpansion.points(defender, t, false))
+            val aws = game.has(Wastelands).??(WastelandsExpansion.pointParts(attacker, t, true))
+            val dws = game.has(Wastelands).??(WastelandsExpansion.pointParts(defender, t, false))
+            val aw = aws.map(_._1).sum
+            val dw = dws.map(_._1).sum
             val urdar = game.has(Wastelands).??(WastelandsExpansion.ignored(t))
 
             // Casualties each side inflicts; Halvard defending ignores 1
@@ -1405,8 +1409,6 @@ object MapExpansion extends Expansion {
             val robo = game.robotos(attacker).??(1)
 
             val as = game.strength(t, attacker, true) + e.bonus + ab + anb + aw + wise + conquests + robo + food(0) + faces(0).points
-            // Sea module: the Port's defender (in strength)
-            val port = SeaExpansion.defense(t, defender, false)
             val ds = game.strength(t, defender, false) + fortress + db + dnb + dw + food(1) + faces(1).points
 
             if (game.kaijaIn(t, attacker) || game.kaijaIn(t, defender))
@@ -1415,14 +1417,12 @@ object MapExpansion extends Expansion {
                 game.note("scorched-fight")
 
             def extra(l : (Int, Elem)*) : Elem = l.toList.filter(_._1 > 0).map { case (n, what) => "(" ~ n.hl ~ " from " ~ what ~ ")" }.join(" ")
-            def kaija(f : Faction) = game.kaijaIn(t, f).?("(" ~ game.companionStrength(t, f).hl ~ " from " ~ Companion(f).elem ~ ")").|(Empty)
-            def chief(f : Faction, attacking : Boolean) = game.chiefIn(t, f).?("(" ~ Warchief.strength(t, f, attacking).hl ~ " from " ~ Warchief.elem(f) ~ ")").|(Empty)
 
             if (game.chiefIn(t, attacker) || game.chiefIn(t, defender))
                 game.note("chief-fight")
 
-            attacker.log("scored", CombatIcon.axes(as), kaija(attacker), chief(attacker, true), extra(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt, aw -> "Wastelands".hl, wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl), (ac > 0 || halvard > 0).?("and inflicted " ~ CombatIcon.skulls(ac)).|(Empty), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
-            defender.log("scored", CombatIcon.axes(ds), kaija(defender), chief(defender, false), extra(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt, dw -> "Wastelands".hl, port -> "the Port".hl), (dc > 0 || shield > 0).?("and inflicted " ~ CombatIcon.skulls(dc)).|(Empty), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
+            attacker.log("scored", CombatIcon.axes(as), extra((FightPoints.others(attacker, t, true) ++ $(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt) ++ aws ++ $(wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl)) : _*), (ac > 0 || halvard > 0).?("and inflicted " ~ CombatIcon.skulls(ac)).|(Empty), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
+            defender.log("scored", CombatIcon.axes(ds), extra((FightPoints.others(defender, t, false) ++ $(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt) ++ dws) : _*), (dc > 0 || shield > 0).?("and inflicted " ~ CombatIcon.skulls(dc)).|(Empty), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
 
             val winner =
                 if (ac >= du && dc >= au) None
@@ -1436,11 +1436,11 @@ object MapExpansion extends Expansion {
                 FightSide(f, attacking, FightPoints.parts(f, t, attacking, extra), total, casualties, inflicted, lost)
 
             game.fightReport = |(FightReport(a,
-                report(attacker, true, $(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt, aw -> "Wastelands".hl, wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl, food(0) -> Food.elem, faces(0).points -> "the die".txt),
+                report(attacker, true, $(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt) ++ aws ++ $(wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl, food(0) -> Food.elem, faces(0).points -> "the die".txt),
                     $(faces(0).casualties -> "the die".txt, (e.special == EgilMove).??(1) -> "the card".txt, NewBloodExpansion.casualties(attacker, t, e, true) -> "New Blood powers".txt, eldrich -> "Eldrich".hl, moon -> "Blood Moon".hl,
                         -halvard -> ("ignored by " ~ Warchief.elem(Goat)), -NewBloodExpansion.ignored(defender) -> "ignored by New Blood powers".txt, -urdar -> "ignored by Urdarbrunn".hl),
                     as, ac, math.min(dc, au)),
-                report(defender, false, $(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt, dw -> "Wastelands".hl, food(1) -> Food.elem, faces(1).points -> "the die".txt),
+                report(defender, false, $(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt) ++ dws ++ $(food(1) -> Food.elem, faces(1).points -> "the die".txt),
                     $(faces(1).casualties -> "the die".txt, towers -> DefenseTower.elem, NewBloodExpansion.casualties(defender, t, e, false) -> "New Blood powers".txt, moon -> "Blood Moon".hl,
                         -shield -> ("cancelled by " ~ "Shieldbearers".hl), -NewBloodExpansion.ignored(attacker) -> "ignored by New Blood powers".txt),
                     ds, dc, math.min(ac, du)),
@@ -1513,7 +1513,8 @@ object MapExpansion extends Expansion {
                 Then(then)
             }
             else
-                Ask(l.head).add(CombatReportDoneAction(l.head, l.tail, then))
+                // needOk: an Ask with a single choice is otherwise taken by the runner without showing it
+                Ask(l.head).add(CombatReportDoneAction(l.head, l.tail, then)).needOk
 
         case CombatReportDoneAction(_, rest, then) =>
             Then(CombatReportAction(rest, then))
