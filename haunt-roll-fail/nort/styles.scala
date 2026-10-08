@@ -86,7 +86,7 @@ package object elem {
         object ledgerCompact extends CustomStyle(font.size("90%"))
         // The Dragon's sacrifice, which no column holds, on its own row under the harvest's; zero width with a full
         // minimum, so they wrap within the columns instead of widening them
-        object ledgerExtra extends CustomStyle(padding("0 0.2ex"), SimpleCSSRule("grid-column", "2 / -1"), white.space("normal"), text.align("center"), width("0"), min.width("100%"), box.sizing("border-box"))
+        object ledgerMaybe extends CustomStyle(opacity("0.55"))
         // The warchief in the player panels: grayed out while it isn't on the map
         object onBoard extends CustomStyle(white.space("nowrap"))
         object offBoard extends CustomStyle(white.space("nowrap"), filter("grayscale(1)"), opacity("0.45"))
