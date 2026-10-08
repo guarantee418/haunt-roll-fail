@@ -80,9 +80,15 @@ package object elem {
         // The Stacked player panels: each icon above its number
         object stackedItem extends CustomStyle(display("inline-block"), text.align("center"), margin.left("0.4ex"), margin.right("0.4ex"))
         // The resources with the next harvest and the Winter costs under them, one column per resource (the panel's "ledger")
-        object ledger extends CustomStyle(display("grid"), SimpleCSSRule("grid-template-columns", "auto auto auto auto auto"), SimpleCSSRule("align-items", "center"), SimpleCSSRule("justify-items", "center"), SimpleCSSRule("width", "max-content"), margin.left("auto"), margin.right("auto"), white.space("nowrap"))
-        object ledgerCell extends CustomStyle(padding("0 0.4ex"))
-        object ledgerExtra extends CustomStyle(padding("0 0.4ex"), SimpleCSSRule("justify-self", "start"))
+        object ledger extends CustomStyle(display("grid"), SimpleCSSRule("grid-template-columns", "auto auto auto auto"), SimpleCSSRule("align-items", "center"), SimpleCSSRule("justify-items", "center"), SimpleCSSRule("width", "max-content"), margin.left("auto"), margin.right("auto"), margin.bottom("0.3ex"), white.space("nowrap"))
+        object ledgerCell extends CustomStyle(padding("0 0.2ex"))
+        // Compact panels: a little smaller, so the season icons' column fits beside the three resources (as cardLine does for the cards)
+        object ledgerCompact extends CustomStyle(font.size("90%"))
+        // Harvest gains no column holds (fame, the Dragon's sacrifice), on their own row under the harvest's; zero width with a full
+        // minimum, so they wrap within the columns instead of widening them
+        object ledgerExtra extends CustomStyle(padding("0 0.2ex"), SimpleCSSRule("grid-column", "2 / -1"), white.space("normal"), text.align("center"), width("0"), min.width("100%"), box.sizing("border-box"))
+        object ledgerGain extends CustomStyle(color("#7ccf62"))
+        object ledgerLoss extends CustomStyle(color("#e5574a"))
         // Nothing in that column this harvest or winter
         object ledgerNone extends CustomStyle(opacity("0.35"))
         object buildIcon extends CustomStyle(height("2.6em"), vertical.align("middle"), margin.right("1ex"))
