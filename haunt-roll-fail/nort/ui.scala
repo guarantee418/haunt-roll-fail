@@ -1088,9 +1088,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             Div(Div(title, styles.stripTitle) ~ Div(items.any.?(items.merge).|(Div("none".txt, styles.stripEmpty)), styles.stripCards), styles.stripGroup)
         }.merge, styles.stripRow)
 
-    // Folded: the groups' titles with their card counts, all of it tappable to unfold
+    // Folded: the year, then the groups' titles with their card counts, all of it tappable to unfold
     def foldedStrip(titles : $[(String, Int)]) =
-        OnClick(CourtToggle, Div(Div("▾".txt, styles.stripTab) ~ Div(titles./{ case (t, n) => (t ~ " " ~ ("(" + n + ")").hl).spn(styles.stripFoldedItem) }.merge, styles.stripFoldedText), styles.stripFolded, xlo.pointer))
+        OnClick(CourtToggle, Div(Div("▾".txt, styles.stripTab) ~ Div(("Year " ~ game.year.hlb ~ " of " ~ game.lastYear.hl).spn(styles.stripFoldedItem) ~ titles./{ case (t, n) => (t ~ " " ~ ("(" + n + ")").hl).spn(styles.stripFoldedItem) }.merge, styles.stripFoldedText), styles.stripFolded, xlo.pointer))
 
     // Your hand and played cards are in the action pane, like in Arcs and Root (Game.info, TurnModeAction)
     def drawCards() {
@@ -1125,7 +1125,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         if (courtFolded) {
             val short = $(automa -> "Automa", events -> "Event", victory -> "Victory", developments -> "Developments", achievements -> "Achievements", creatures -> "Creatures", blainn -> "Jötunn Blainn", raids -> "Raids")
             val titles = short.flatMap { case (g, t) => g.map(x => t -> x._2.num) }
-            court.replaceCached("folded " + titles, foldedStrip(titles), resources, onClick)
+            court.replaceCached("folded " + game.year + " " + titles, foldedStrip(titles), resources, onClick)
         }
         else
             court.replaceCached((game.year, game.display, game.achievements, game.creatureLine, game.event, game.eventDeck.num, game.victory, game.automaPlayed, game.raids, game.raidKept, game.jotnarCamp, game.blainn./(_._1)).toString, strip(groups./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
@@ -1362,6 +1362,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         drawMap()
 
         drawCards()
+
+        refitFolded()
     }
 
     val layoutZoom = 0.49 * 0.88
@@ -1444,6 +1446,73 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     val layoutKey = "v" + 12 + "." + "arity-" + arity
 
+    // What the player panels' contents need, in em: the widest row and the rows' total height, measured on the
+    // panels as they are drawn now; None when they aren't drawn yet, or their icons are still loading (an icon
+    // takes no room until it has loaded)
+    def panelNeed(names : $[String]) : Option[(Double, Double)] = {
+        val uppers = names./~(n => panes.get(n)./~(c => Option(c.node.asInstanceOf[dom.html.Element].querySelector("[class^=nort-status-upper]").asInstanceOf[dom.html.Element])))
+
+        def loading(upper : dom.html.Element) = {
+            val images = upper.querySelectorAll("img")
+            0.until(images.length).exists(i => images(i).asInstanceOf[dom.html.Image].complete.not)
+        }
+
+        val sizes = uppers./~ { upper =>
+            try {
+                val em = dom.window.getComputedStyle(upper).fontSize.replace("px", "").toDouble
+                val rows = 0.until(upper.children.length)./(i => upper.children(i).asInstanceOf[dom.html.Element])
+                val widths = rows./ { e =>
+                    val range = scalajs.js.Dynamic.global.document.createRange()
+                    range.selectNodeContents(e)
+                    range.getBoundingClientRect().width.asInstanceOf[Double]
+                }
+                (em > 0 && rows.any).?(widths.max / em -> rows./(_.offsetHeight.toDouble).sum / em)
+            }
+            catch { case _ : Throwable => None }
+        }
+
+        (sizes.any && uppers.exists(loading).not).?((sizes.map(_._1).max, sizes.map(_._2).max))
+    }
+
+    // A pane's font size is a percentage of the font of the element the panes are in (not always 16px, and
+    // when a game loads it can change after the first layout)
+    def paneBasePx() : Double = panes.get("court")./~(c => try {
+        Some(dom.window.getComputedStyle(c.node.asInstanceOf[dom.html.Element].parentElement).fontSize.replace("px", "").toDouble).filter(_ > 0)
+    } catch { case _ : Throwable => None }).|(16.0)
+
+    def statusNames = 1.to(arity)./("status-" + _)
+
+    // The needs and font the folded layout was made for. The panels are often drawn after it (when a game loads,
+    // or when a warchief or a goal adds a row), so updateStatus lays them out again when either changes
+    var foldBasePx = 0.0
+    var foldNeed : Option[(Double, Double)] = None
+    var refitting = false
+
+    // The icons load after the panels are drawn: once they have, the panels are measured again
+    var refitTimer : Option[Int] = None
+
+    dom.document.addEventListener("load", (e : dom.Event) => {
+        if (courtFolded && e.target.isInstanceOf[dom.html.Image] && statusNames.exists(n => panes.get(n).exists(_.node.contains(e.target.asInstanceOf[dom.Node])))) {
+            refitTimer.foreach(dom.window.clearTimeout)
+            refitTimer = Some(dom.window.setTimeout(() => { refitTimer = None; refitFolded() }, 50))
+        }
+    }, true)
+
+    def refitFolded() {
+        if (courtFolded && foldBasePx > 0 && refitting.not) {
+            val now = panelNeed(statusNames)
+            val stale = (now, foldNeed) match {
+                case (Some((w1, h1)), Some((w0, h0))) => (w1 - w0).abs > 0.3 || (h1 - h0).abs > 0.3
+                case (Some(_), None) => true
+                case _ => false
+            }
+            if (stale || (paneBasePx() - foldBasePx).abs > 0.5) {
+                refitting = true
+                try resize() finally refitting = false
+            }
+        }
+    }
+
     // Folded, the court shrinks to a one-line bar. When the player panels are right above it (ultrawide and
     // phone layouts), they take the room it gave, the bar goes under them, and whatever room they don't need
     // goes to the pane below (the map or the action pane); otherwise the pane below grows up into the room.
@@ -1454,10 +1523,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     def foldCourt(height : Int)(l : $[PanePlacement]) : $[PanePlacement] = l.find(_.name == "court") match {
         case Some(c) if courtFolded =>
             val r = c.rect
-            // A pane's font size is a percentage of the font of the element the panes are in (not always 16px)
-            val basePx = panes.get("court")./~(c => try {
-                Some(dom.window.getComputedStyle(c.node.asInstanceOf[dom.html.Element].parentElement).fontSize.replace("px", "").toDouble).filter(_ > 0)
-            } catch { case _ : Throwable => None }).|(16.0)
+            val basePx = paneBasePx()
+            foldBasePx = basePx
             def px(p : PanePlacement) = p.fontSize./(f => basePx * f * 3612 / height / 100).|(basePx)
             val bar = min(r.height, (px(c) * 1.9).round.toInt)
             val gain = r.height - bar
@@ -1476,26 +1543,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             val h0 = panels./(_.rect.height).maxOption.|(0)
             val above = panels.any && (top + h0 - r.y).abs <= 3 && left >= r.x - 3 && left + w <= r.x + r.width + 3
 
-            // What the panels' contents need, in em: the widest row and the rows' total height, measured on the
-            // panels as they are drawn now (about 12 by 8 when they aren't drawn yet)
-            val (needW, needH) = {
-                val sizes = panels./~(p => panes.get(p.name)./~ { c =>
-                    try {
-                        val upper = c.node.asInstanceOf[dom.html.Element].querySelector("[class^=nort-status-upper]").asInstanceOf[dom.html.Element]
-                        val em = dom.window.getComputedStyle(upper).fontSize.replace("px", "").toDouble
-                        val rows = 0.until(upper.children.length)./(i => upper.children(i).asInstanceOf[dom.html.Element])
-                        val widths = rows./ { e =>
-                            val range = scalajs.js.Dynamic.global.document.createRange()
-                            range.selectNodeContents(e)
-                            range.getBoundingClientRect().width.asInstanceOf[Double]
-                        }
-                        (em > 0 && rows.any).?(widths.max / em -> rows./(_.offsetHeight.toDouble).sum / em)
-                    }
-                    catch { case _ : Throwable => None }
-                })
-
-                sizes.any.?((sizes.map(_._1).max, sizes.map(_._2).max)).|((12.0, 8.0))
-            }
+            // What the panels' contents need, in em (about 12 by 8 when they aren't drawn yet)
+            foldNeed = panelNeed(statusNames).orElse(foldNeed)
+            val (needW, needH) = foldNeed.|((12.0, 8.0))
 
             // The panels laid out again in `room` pixels of height; returns them and the height they use
             def regrid(room : Int) : (Map[String, PanePlacement], Int) = {
