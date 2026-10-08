@@ -1,6 +1,6 @@
 # Makes the player panel icons in webp2/nort/images/ui/ (run from haunt-roll-fail/):
 # unit.webp, the unit figure from the Active Area board's Winter costs (the Recruit card's figure, without its + sign);
-# card-deck.webp, card-hand.webp, card-active.webp, card-discard.webp, the start card back outlined white, green, yellow and red
+# card-draw.webp, card-hand.webp, card-played.webp, card-discard.webp, the start card back outlined yellow, green, white and red
 # (to draw, in hand, played this year, discarded);
 # first-player.webp, the first player marker without its background;
 # unit-supply.webp, the map's unit figure as a gray silhouette (the units left in the supply).
@@ -46,7 +46,7 @@ icon(marker, background(marker, lambda p: max(p) < 60 and max(p) - min(p) < 8).f
 K = 8
 W, H = 40 * K, 56 * K
 art = Image.open(IMAGES + 'card/back/start.webp').convert('RGBA').resize((W, H), Image.LANCZOS)
-for name, color in [('deck', (240, 240, 240)), ('hand', (110, 200, 80)), ('active', (240, 200, 60)), ('discard', (220, 60, 50))]:
+for name, color in [('draw', (240, 200, 60)), ('hand', (110, 200, 80)), ('played', (240, 240, 240)), ('discard', (220, 60, 50))]:
     shape = Image.new('L', (W, H))
     ImageDraw.Draw(shape).rounded_rectangle((0, 0, W - 1, H - 1), radius=5 * K, fill=255)
     card = Image.new('RGBA', (W, H))

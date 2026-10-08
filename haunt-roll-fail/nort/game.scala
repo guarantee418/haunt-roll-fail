@@ -291,7 +291,7 @@ object CombatText {
     }
 }
 
-// The player panels' icons: a unit (the figure on the Recruit card), the cards to draw (white), in hand (green), played this year (yellow) and discarded (red), and the first player marker
+// The player panels' icons: a unit (the figure on the Recruit card), the cards to draw (yellow), in hand (green), played this year (white) and discarded (red), and the first player marker
 object UnitIcon {
     def apply() : Elem = Image("ui-unit", styles.inlineIcon).alt("units")
 }
@@ -302,9 +302,9 @@ object SupplyIcon {
 }
 
 object CardIcon {
-    def draw : Elem = Image("ui-card-deck", styles.inlineIcon, styles.cardIcon).alt("to draw")
+    def draw : Elem = Image("ui-card-draw", styles.inlineIcon, styles.cardIcon).alt("to draw")
     def hand : Elem = Image("ui-card-hand", styles.inlineIcon, styles.cardIcon).alt("in hand")
-    def active : Elem = Image("ui-card-active", styles.inlineIcon, styles.cardIcon).alt("played this year")
+    def active : Elem = Image("ui-card-played", styles.inlineIcon, styles.cardIcon).alt("played this year")
     def discard : Elem = Image("ui-card-discard", styles.inlineIcon, styles.cardIcon).alt("discarded")
 }
 
@@ -354,9 +354,13 @@ case class ClanBoard(f : Faction)
 // The Winter cost chart, opened from a player panel
 case class WinterChart(f : Faction)
 case class RobotosInfo(f : Faction)
+
+// The fold tab on the shared cards strip (ui.scala)
+case object CourtToggle
+
 // A player's discard pile, opened from the action pane
 case class DiscardPile(f : Faction)
-// A player's active cards (played this year), opened from the yellow card in its panel
+// A player's active cards (played this year), opened from the white card in its panel
 case class ActiveCards(f : Faction)
 // Tapping Dragon Clan's Sacrificial Pyre in its panel shows it full size
 case object PyreView
