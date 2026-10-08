@@ -1854,6 +1854,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         lastActions = actions
         lastThen = then
 
+        // The "Combat Report" setting on Skip: the report's only choice, OK, is taken for the player
+        if (callbacks.settings.has(SkipCombatReport) && actions.exists(_.unwrap.is[CombatReportDoneAction])) {
+            scalajs.js.timers.setTimeout(0) { then(actions.find(_.unwrap.is[CombatReportDoneAction]).get) }
+            return
+        }
+
         showNotifications(faction.$)
 
         keysDirect = actions./~(a => a.as[Key] || a.unwrap.as[Key]).distinct
