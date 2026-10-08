@@ -1641,9 +1641,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         case c : Card =>
             showOverlay(overlayFitX(Image(c.info.image, styles.zoomCard)).onClick, onClick)
 
-        case ClanBoard(f) =>
-            showOverlay(overlayFitX(Image(Warchief.board(f), styles.zoomCard)).onClick, onClick)
-
         case WinterChart(f) =>
             showOverlay(overlayScrollX(winterChart(f)).onClick, onClick)
 

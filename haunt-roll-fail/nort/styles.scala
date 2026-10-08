@@ -95,7 +95,6 @@ package object elem {
         // Nothing in that column this harvest or winter
         object ledgerNone extends CustomStyle(opacity("0.35"))
         object buildIcon extends CustomStyle(height("2.6em"), vertical.align("middle"), margin.right("1ex"))
-        object boardInfo extends CustomStyle(display("block"), width("44ex"), max.width("100%"))
         // The end screen: the winners' clan cards, and warchief cards with the Warchiefs module
         object winnerCard extends CustomStyle(display("inline-block"), width("18ex"), margin("0.5ex"), vertical.align("top"))
         object winnerLine extends CustomStyle(font.size("120%"), margin.bottom("0.5ex"))
