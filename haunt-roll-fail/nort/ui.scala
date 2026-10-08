@@ -1264,7 +1264,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Warchiefs module: the warchief's name, dimmed while in the reserve
         val chief = game.has(Warchiefs).?(game.chiefs.contains(f).?(Warchief.elem(f)).|(Warchief.name(f).txt ~ " (reserve)".spn(xstyles.smaller85)).div).|(Empty)
 
-        // Cards to draw, in hand, played this year and discarded; tapping the yellow card shows the cards played this year, the red one the discards
+        // Cards to draw, in hand, played this year and discarded; tapping the white card shows the cards played this year, the red one the discards
         val cardRow = row($(
             item(state.draw.num.hl, CardIcon.draw),
             item(state.hand.num.hl, CardIcon.hand),
