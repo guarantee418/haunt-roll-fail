@@ -606,19 +606,20 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // The fight being resolved, like Root's red cloud
     val battleTint = ("#ff3f9f", 0.42)
 
-    // Free ground for tokens, from TileGrid: the area and clutter (0-9) at a map point in tile units
+    // Free ground for tokens, from TileGrid: the area and clutter (0-9) at a map point in tile units;
+    // none inside an impassable ring (a Wastelands camp, Naströnd, a central lake or volcano)
     def cellAt(fx : Double, fy : Double) : |[(AreaRef, Int)] = {
         val x = math.floor(fx).toInt
         val y = math.floor(fy).toInt
 
         game.board.at(x, y).flatMap { p =>
-            TileGrid.cells.get(p.tile).map { rows =>
+            TileGrid.cells.get(p.tile).flatMap { rows =>
                 val n = TileGrid.size
                 // Back to the unturned tile
                 val (lx, ly) = game.board.rotate(fx - x, fy - y, 4 - p.r % 4)
                 val ch = rows((ly * n).toInt.clamp(0, n - 1))((lx * n).toInt.clamp(0, n - 1))
                 val g = TileGrid.groups.indexWhere(_.contains(ch))
-                (AreaRef(x, y, p.spec.areas(g).id), TileGrid.groups(g).indexOf(ch))
+                (g >= 0).?((AreaRef(x, y, p.spec.areas(g).id), TileGrid.groups(g).indexOf(ch)))
             }
         }
     }

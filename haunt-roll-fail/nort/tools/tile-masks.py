@@ -231,15 +231,21 @@ def clutter(tid, areas, a, lab):
 
 
 SYMBOLS = ['0123456789', 'abcdefghij', 'klmnopqrst', 'ABCDEFGHIJ', 'KLMNOPQRST']
+# A cell of no territory (the impassable middle inside an orange ring)
+NONE = '.'
 
 
-def grid(lab, c):
+def grid(lab, c, none=None):
     s = N / GRID
     rows = []
     for gy in range(GRID):
         row = ''
         for gx in range(GRID):
             y0, y1, x0, x1 = int(gy * s), int((gy + 1) * s), int(gx * s), int((gx + 1) * s)
+            # Mostly inside an impassable ring: no territory
+            if none is not None and none[y0:y1, x0:x1].mean() > 0.5:
+                row += NONE
+                continue
             cell = lab[y0:y1, x0:x1]
             k = np.bincount(cell.ravel()).argmax() - 1
             v = int(round(c[y0:y1, x0:x1].mean()))
@@ -279,6 +285,7 @@ def main():
             if n:
                 big = np.argmax(ndi.sum(water, lab_w, range(1, n + 1))) + 1
                 holes |= ndi.binary_fill_holes(lab_w == big)
+        ringed = None
         if tid in RINGED:
             # The ring's outline can be broken where a border meets it, so its convex hull
             from skimage.morphology import convex_hull_image
@@ -297,6 +304,7 @@ def main():
                 if filled.sum() < 3 * ring.sum():
                     filled = ndi.binary_erosion(convex_hull_image(ring), iterations=6)
                 holes |= filled
+                ringed = filled
         for k, ar in enumerate(areas):
             alpha = ndi.gaussian_filter(((lab == k + 1) & ~holes).astype(float), 1.0)
             m = Image.fromarray((alpha * 255).astype(np.uint8)).resize((MASK, MASK), Image.LANCZOS)
@@ -313,7 +321,7 @@ def main():
         c = clutter(tid, areas, a, lab)
         if tid in BEACH:
             c[ndi.binary_dilation(water | (px[..., 3] < 128), iterations=8) | (lab > len(areas))] = 9
-        out[tid] = grid(np.where(lab > len(areas), 1, lab), c)
+        out[tid] = grid(np.where(lab > len(areas), 1, lab), c, ringed)
         if check:
             pal = [(255, 0, 0), (0, 90, 255), (255, 220, 0), (200, 0, 255), (0, 220, 120)]
             col = np.zeros_like(a, dtype=float)
@@ -334,6 +342,7 @@ def main():
         f.write('// Each tile is 24 x 24 cells, rows from the top, unturned. A cell is its area (the index into the\n')
         f.write('// tile\'s areas: 0-9 for the first, a-j, k-t, A-J, K-T for the others) and its clutter, the digit or the\n')
         f.write('// letter\'s place in its group: 0 is open ground, 9 is a building space, a number or the unit marker.\n')
+        f.write('// A "%s" is no territory (the impassable middle inside an orange ring).\n' % NONE)
         f.write('object TileGrid {\n    val size = %d\n\n' % GRID)
         f.write('    val groups : $[String] = $(%s)\n\n' % ', '.join('"%s"' % g for g in SYMBOLS))
         f.write('    val cells : Map[String, $[String]] = Map(\n')
