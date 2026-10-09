@@ -1282,7 +1282,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Sea module: the units away on Raids
         val raiding = SeaExpansion.raiders(f)
         // Units on the map, the warchief (its token and name, grayed out while in the reserve) and the units left in the supply
-        val onMap = item(game.onMap(f).hl ~ (raiding > 0).?(" (" ~ raiding.hl ~ " raiding)").|(Empty), UnitIcon())
+        val onMap = item(game.onMap(f).hl ~ (raiding > 0).?(" (" ~ raiding.hl ~ " " ~ ShipIcon() ~ ")").|(Empty), UnitIcon())
         val chief = game.has(Warchiefs).$ {
             val here = game.chiefs.contains(f)
             val token = Image(Warchief.figure(f), styles.inlineIcon).alt(Warchief.name(f))

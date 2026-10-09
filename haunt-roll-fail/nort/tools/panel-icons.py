@@ -3,7 +3,8 @@
 # card-draw.webp, card-hand.webp, card-played.webp, card-discard.webp, the start card back outlined yellow, green, white and red
 # (to draw, in hand, played this year, discarded);
 # first-player.webp, the first player marker without its background;
-# unit-supply.webp, unit.webp grayed out (the units left in the supply).
+# unit-supply.webp, unit.webp grayed out (the units left in the supply);
+# harvest.webp, winter.webp and ship.webp (the units away on Raids), drawn here.
 from collections import deque
 from PIL import Image, ImageDraw, ImageFilter
 
@@ -113,6 +114,34 @@ for i in range(6):
             d.line([p, (p[0] + math.cos(b) * S * l, p[1] + math.sin(b) * S * l)], fill=ice, width=4 * K)
 d.ellipse((c - S * 0.07, c - S * 0.07, c + S * 0.07, c + S * 0.07), fill=ice)
 outlined(flake, 'winter.webp', (30, 70, 120, 255))
+
+# ship.webp: a longship, for the units away on Raids (Sea module): a hull with curled prow and stern, shields along it, a striped sail
+ship = Image.new('RGBA', (S, S))
+d = ImageDraw.Draw(ship)
+wood, dark = (150, 92, 44, 255), (104, 60, 26, 255)
+d.line([(S * 0.50, S * 0.64), (S * 0.50, S * 0.12)], fill=dark, width=3 * K)
+top, foot = S * 0.18, S * 0.54
+d.polygon([(S * 0.28, top), (S * 0.72, top), (S * 0.76, foot), (S * 0.24, foot)], fill=(236, 226, 200, 255))
+for i in (1, 3):
+    x0, x1 = S * (0.28 + 0.088 * i), S * (0.28 + 0.088 * (i + 1))
+    d.polygon([(x0, top), (x1, top), (x1 + (x1 - S / 2) * 0.09, foot), (x0 + (x0 - S / 2) * 0.09, foot)], fill=(196, 52, 40, 255))
+d.line([(S * 0.25, top), (S * 0.75, top)], fill=dark, width=3 * K)
+# The hull, from the sheer line (a shallow curve rising to both ends) down to the keel
+sheer = [(S * (0.14 + 0.72 * t), S * (0.60 - 0.10 * (2 * t - 1) ** 4)) for t in [i / 32 for i in range(33)]]
+keel = [(S * (0.14 + 0.72 * t), S * (0.62 + 0.16 * math.sin(math.pi * t) ** 0.6)) for t in [i / 32 for i in range(33)]]
+d.polygon(sheer + keel[::-1], fill=wood)
+# The stem and stern posts, rising from the ends and curling outwards
+for side in (-1, 1):
+    pts = [(S / 2 + side * S * (0.36 + 0.06 * t), S * (0.52 - 0.30 * t)) for t in [i / 16 for i in range(17)]]
+    d.line(pts, fill=wood, width=6 * K, joint='curve')
+    cx, cy, r = S / 2 + side * S * 0.46, S * 0.22, S * 0.05
+    d.ellipse((cx - S * 0.055, cy - S * 0.06, cx + S * 0.055, cy + S * 0.05), fill=wood)
+    d.ellipse((cx + side * S * 0.01 - S * 0.02, cy - S * 0.03, cx + side * S * 0.01 + S * 0.02, cy + S * 0.01), fill=dark)
+for i in range(5):
+    x = S * (0.26 + 0.12 * i)
+    d.ellipse((x - S * 0.05, S * 0.63 - S * 0.05, x + S * 0.05, S * 0.63 + S * 0.05), fill=((220, 180, 70, 255), (60, 110, 170, 255))[i % 2])
+    d.ellipse((x - S * 0.016, S * 0.63 - S * 0.016, x + S * 0.016, S * 0.63 + S * 0.016), fill=(210, 210, 210, 255))
+outlined(ship, 'ship.webp')
 
 # unit-supply.webp: the units icon (unit.webp) grayed out, for the units left in the supply
 from PIL import ImageEnhance
