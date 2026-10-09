@@ -310,11 +310,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         highlight.coordinates = |(xy)
         highlight.target = target
 
-        mapSmall.attach.parent.style.cursor = (clickable(target).any || creatureCard(target).any).?("pointer").|("default")
+        mapSmall.attach.parent.style.cursor = (clickable(target).any || pieceInfo(target).any).?("pointer").|("default")
     }
 
-    // The creature token on top where the map was tapped, whose card opens when the tap does nothing else
-    def creatureCard(target : $[Any]) : |[Creature] = target.headOption./~(_.as[Creature])
+    // The piece on top where the map was tapped (a creature, Blainn, a Raid card, a warchief or a clan token), whose card or info opens when the tap does nothing else
+    def pieceInfo(target : $[Any]) : |[Any] = target.headOption.%(x => x.is[Card] || x.is[WarchiefInfo] || x.is[ClanAbilityInfo])
 
     // The single offered action a click on the map stands for (the cross on a building or tile being confirmed cancels)
     def clickable(target : $[Any]) : |[UserAction] = {
@@ -329,7 +329,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     def processTargetClick(target : $[Any], xy : XY) {
-        clickable(target).orElse(creatureCard(target)).foreach(onClick)
+        clickable(target).orElse(pieceInfo(target)).foreach(onClick)
     }
 
     // Rotated tile images, made once
@@ -948,7 +948,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     val round = Warchief.round(f)
                     val cz = round.?(230.0).|(300.0) * scale
                     val (cx, cy) = beside(round.?(cz / T / 2).|(0.13 * scale))
-                    pieces.add(Sprite($(at(Warchief.figure(f), cz)), $(Rectangle(-cz / 2, -cz / 2, cz, cz)), tag))(cx, cy)
+                    pieces.add(Sprite($(at(Warchief.figure(f), cz)), $(Rectangle(-cz / 2, -cz / 2, cz, cz)), tag ++ (f != Automa).$(WarchiefInfo(f))))(cx, cy)
                     taken :+= ((mx(cx), my(cy), round.?(cz / T / 2).|(0.13 * scale)))
                 }
 
@@ -963,7 +963,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                         case _ => "token-kaija"
                     }
                     val (kx, ky) = beside((f == Automa).?(0.13 * scale).|(kz / T / 2))
-                    pieces.add(Sprite($(at(image, kz)), $(Rectangle(-kz / 2, -kz / 2, kz, kz)), tag))(kx, ky)
+                    val info = f match {
+                        case Automa => None
+                        case Horse => |(WarchiefInfo(f))
+                        case _ => |(ClanAbilityInfo(f))
+                    }
+                    pieces.add(Sprite($(at(image, kz)), $(Rectangle(-kz / 2, -kz / 2, kz, kz)), tag ++ info))(kx, ky)
                     taken :+= ((mx(kx), my(ky), kz / T / 2))
                 }
 
@@ -971,7 +976,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 if (game.blainnIn(t, f)) {
                     val bz = 230.0 * scale
                     val (bx, by) = beside(bz / T / 2)
-                    pieces.add(Sprite($(at("token-blainn", bz)), $(Rectangle(-bz / 2, -bz / 2, bz, bz)), tag))(bx, by)
+                    pieces.add(Sprite($(at("token-blainn", bz)), $(Rectangle(-bz / 2, -bz / 2, bz, bz)), tag :+ BlainnCard))(bx, by)
                     taken :+= ((mx(bx), my(by), bz / T / 2))
                 }
             }
@@ -979,18 +984,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             // Kraken Clan's High Tide token, by the territory number
             if (game.tideIn(t)) {
                 val (x, y) = board.point(t.anchor)
-                pieces.add(Sprite($(at("token-high-tide", 150)), $(Rectangle(-75, -75, 150, 150)), tag))(sx(x) + 40, sy(y) - 110)
+                pieces.add(Sprite($(at("token-high-tide", 150)), $(Rectangle(-75, -75, 150, 150)), tag :+ ClanAbilityInfo(Kraken)))(sx(x) + 40, sy(y) - 110)
                 taken :+= ((x + 40 / T, y - 110 / T, 75 / T))
             }
 
             // Snake Clan's Scorched Earth token, by the territory number
             if (game.scorchedIn(t)) {
                 val (x, y) = board.point(t.anchor)
-                pieces.add(Sprite($(at("token-scorched-earth", 150)), $(Rectangle(-75, -75, 150, 150)), tag))(sx(x) - 40, sy(y) + 110)
+                pieces.add(Sprite($(at("token-scorched-earth", 150)), $(Rectangle(-75, -75, 150, 150)), tag :+ ClanAbilityInfo(Snake)))(sx(x) - 40, sy(y) + 110)
                 taken :+= ((x - 40 / T, y + 110 / T, 75 / T))
             }
 
-            // Creatures on the territory's most open ground, clear of everything else, a little drawn to its first number (tapping one opens its card, unless the tap picks the territory)
+            // Creatures on the territory's most open ground, clear of everything else, a little drawn to its first number
             game.creaturesIn(t).foreach { c =>
                 val z = 220
                 val (x, y) = freeSpot(t, z / T / 2, taken, |(board.point(t.anchor)), 0.5)
@@ -1002,7 +1007,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Wastelands: Jötunn Blainn waiting at his camp and Naströnd's wood not yet taken, in the impassable middle of their tiles
         if (game.has(Wastelands)) {
             game.jotnarCamp.%(_ => game.blainn.none).foreach { s =>
-                pieces.add(Sprite($(at("token-blainn", 230)), $(Rectangle(-115, -115, 230, 230))))(sx(s.x + 0.5), sy(s.y + 0.5))
+                pieces.add(Sprite($(at("token-blainn", 230)), $(Rectangle(-115, -115, 230, 230)), $(BlainnCard)))(sx(s.x + 0.5), sy(s.y + 0.5))
             }
 
             game.nastrond.foreach { s =>
@@ -1019,7 +1024,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 val d = South.rotate(board.at(p.x, p.y).get.r)
                 val (cx, cy) = (sx(p.x + d.dx + 0.5), sy(p.y + d.dy + 0.5))
                 val (w, h) = (680.0, 445.0)
-                pieces.add(Sprite($(ImageRect(new RawImage(img(c.info.image)), Rectangle(-w / 2, -h / 2, w, h), 1.0)), $))(cx, cy)
+                pieces.add(Sprite($(ImageRect(new RawImage(img(c.info.image)), Rectangle(-w / 2, -h / 2, w, h), 1.0)), $(Rectangle(-w / 2, -h / 2, w, h)), $(c)))(cx, cy)
 
                 r.owner.%(_ => r.units > 0).foreach { f =>
                     val z = 230
@@ -2000,6 +2005,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Adset: a drafted clan's info, as behind the clan picker's i button
         case ClanInfo(f) =>
             onClick(AdsetClanInfo(f))
+
+        // A clan token or warchief tapped on the map
+        case ClanAbilityInfo(f) =>
+            showOverlay(overlayScrollX((Meta.factionName(f).hlb.div ~ Meta.clanAbility(f)./(e => Div(e)).merge).div(xlo.flexvcenter)).onClick, onClick)
+
+        case WarchiefInfo(f) =>
+            showOverlay(overlayScrollX((Meta.factionName(f).hlb.div ~ Meta.warchiefInfo(f)./(e => Div(e)).merge).div(xlo.flexvcenter)).onClick, onClick)
 
         case AdsetClanInfo(f) =>
             Meta.factionInfo(f).foreach { case (_, title, l) => showOverlay(overlayScrollX((title.div ~ l./(e => Div(e)).merge).div(xlo.flexvcenter)).onClick, onClick) }

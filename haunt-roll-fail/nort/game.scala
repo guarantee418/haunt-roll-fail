@@ -359,6 +359,9 @@ case class WinterChart(f : Faction)
 case class RobotosInfo(f : Faction)
 // Tapping a player's name or clan in its panel shows the clan's abilities, upgrades and warchief, as the clan picker's i button does
 case class ClanInfo(f : Faction)
+// Tapping a piece on the map: a clan token (Kaija, Brundr and Kaelinn, High Tide, Scorched Earth) shows the clan's cards, a warchief its board and card
+case class ClanAbilityInfo(f : Faction)
+case class WarchiefInfo(f : Faction)
 
 // The fold tab on the shared cards strip (ui.scala)
 case object CourtToggle
