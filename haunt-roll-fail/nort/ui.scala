@@ -310,8 +310,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         highlight.coordinates = |(xy)
         highlight.target = target
 
-        mapSmall.attach.parent.style.cursor = clickable(target).any.?("pointer").|("default")
+        mapSmall.attach.parent.style.cursor = (clickable(target).any || creatureCard(target).any).?("pointer").|("default")
     }
+
+    // The creature token on top where the map was tapped, whose card opens when the tap does nothing else
+    def creatureCard(target : $[Any]) : |[Creature] = target.headOption./~(_.as[Creature])
 
     // The single offered action a click on the map stands for (the cross on a building or tile being confirmed cancels)
     def clickable(target : $[Any]) : |[UserAction] = {
@@ -326,7 +329,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     def processTargetClick(target : $[Any], xy : XY) {
-        clickable(target).foreach(onClick)
+        clickable(target).orElse(creatureCard(target)).foreach(onClick)
     }
 
     // Rotated tile images, made once
@@ -987,11 +990,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 taken :+= ((x - 40 / T, y + 110 / T, 75 / T))
             }
 
-            // Creatures on the territory's most open ground, clear of everything else, a little drawn to its first number
+            // Creatures on the territory's most open ground, clear of everything else, a little drawn to its first number (tapping one opens its card, unless the tap picks the territory)
             game.creaturesIn(t).foreach { c =>
                 val z = 220
                 val (x, y) = freeSpot(t, z / T / 2, taken, |(board.point(t.anchor)), 0.5)
-                pieces.add(Sprite($(at(c.token, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag))(sx(x), sy(y))
+                pieces.add(Sprite($(at(c.token, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag :+ c))(sx(x), sy(y))
                 taken :+= ((x, y, z / T / 2))
             }
         }

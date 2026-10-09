@@ -86,7 +86,8 @@ grid for placing warchiefs, Kaija and creatures (`nort/grid.scala`) are made
 from the tile art by `nort/tools/tile-masks.py`. Warchiefs, Kaija and
 creatures are kept off the resource icons (`nort/icons.scala`, the holes in
 the masks, made by `nort/tools/ResourceIcons.java`), and the icons are drawn
-again over the pieces, so a figure that must overlap one never hides it.
+again over the pieces, so a figure that must overlap one never hides it. Tapping a creature on the map opens its card, unless the tap
+picks its territory for an offered action (`creatureCard` in `nort/ui.scala`).
 The Northgard layout (`layouter` in `nort/ui.scala`) has the map on the left
 and the player panels, log and action pane (choices and hand) on the right;
 the owner asked for that on 2026-10-05, undoing an earlier mirrored layout
