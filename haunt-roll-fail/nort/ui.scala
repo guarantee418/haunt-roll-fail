@@ -1245,7 +1245,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val name = OnClick(ClanInfo(f), resources.getName(game.ftp(f))./(n => n.styled(colorOf(f))(styles.title) ~ " " ~ f.name.txt).|(f.name.styled(colorOf(f))(styles.title)).spn(styles.tappable)(xlo.pointer))
 
         if (!game.states.contains(f)) {
-            container.replace(Div(Div(name), styles.smallname, xlo.pointer), resources)
+            container.replace(Div(Div(name), styles.smallname, xlo.pointer), resources, {
+                case x => onClick(x)
+            })
             return
         }
 
@@ -1954,6 +1956,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case $(f : Faction, x) =>
             onClick(x)
+
+        // Anywhere else on a player panel: the clan's info, as from its name
+        case f : Faction =>
+            onClick(ClanInfo(f))
 
         case action : Action if lastThen != null =>
             clearOverlay()
