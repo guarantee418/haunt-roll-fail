@@ -301,6 +301,11 @@ object SupplyIcon {
     def apply() : Elem = Image("ui-unit-supply", styles.inlineIcon).alt("units in the supply")
 }
 
+// The units away on Raids (Sea module): a longship
+object ShipIcon {
+    def apply() : Elem = Image("ui-ship", styles.inlineIcon).alt("raiding")
+}
+
 object CardIcon {
     def draw : Elem = Image("ui-card-draw", styles.inlineIcon, styles.cardIcon).alt("to draw")
     def hand : Elem = Image("ui-card-hand", styles.inlineIcon, styles.cardIcon).alt("in hand")
