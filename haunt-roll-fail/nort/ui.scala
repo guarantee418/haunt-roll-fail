@@ -1537,7 +1537,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         }
     }
 
-    // The divider right of the map and the one between the log and the action pane have drag handles; each
+    // The divider right of the map, the one between the log and the action pane and the bottom edge of the
+    // player panels have drag handles; each
     // browser keeps where they were dragged, as fractions of the window, for each shape of screen (tall, wide,
     // ultrawide). Double-tapping a handle puts it back
     def splitKind(width : Int, height : Int) = (width >= height * 2.1).?("ultrawide").|((width > height).?("wide").|("tall"))
@@ -1545,27 +1546,29 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     var splitLoaded = ""
     var splitX = 0.0
     var splitY = 0.0
+    var splitP = 0.0
 
     def loadSplit(kind : String) {
         if (splitLoaded != kind) {
             splitLoaded = kind
             val v = try { hrf.web.Local.get(Meta.settingsKey + ".split-" + kind, "") } catch { case _ : Throwable => "" }
-            v.split(",").toList match {
-                case a :: b :: Nil => splitX = a.toDoubleOption.|(0.0); splitY = b.toDoubleOption.|(0.0)
-                case _ => splitX = 0.0; splitY = 0.0
-            }
+            val n = v.split(",").toList./(_.toDoubleOption.|(0.0))
+            splitX = n.lift(0).|(0.0)
+            splitY = n.lift(1).|(0.0)
+            splitP = n.lift(2).|(0.0)
         }
     }
 
-    def saveSplit() = try { hrf.web.Local.set(Meta.settingsKey + ".split-" + splitLoaded, splitX + "," + splitY) } catch { case _ : Throwable => }
+    def saveSplit() = try { hrf.web.Local.set(Meta.settingsKey + ".split-" + splitLoaded, splitX + "," + splitY + "," + splitP) } catch { case _ : Throwable => }
 
     // The panes whose edge is at a divider move with it, each kept at least 15% of the window
-    def split(width : Int, height : Int)(l0 : $[PanePlacement]) : $[PanePlacement] = {
+    def split(width : Int, height : Int, panelsBottom : Option[Int] = None)(l0 : $[PanePlacement]) : $[PanePlacement] = {
         loadSplit(splitKind(width, height))
 
         def clamp(want : Int, lo : Int, hi : Int) = max(min(want, max(hi, 0)), min(lo, 0))
 
         var l = l0
+        handleAt = $(None, None, None)
 
         l.find(_.name == "map-small").foreach { m =>
             val x = m.rect.x + m.rect.width
@@ -1595,6 +1598,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     case p if row && rowRight(p) => across(p, right)
                     case p => p
                 }
+                handleAt = handleAt.updated(0, Some((x + dx, m.rect.y + m.rect.height / 2)))
             }
         }
 
@@ -1612,14 +1616,75 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     case p if below(p) => p.copy(rect = Rect(p.rect.x, p.rect.y + dy, p.rect.width, p.rect.height - dy))
                     case p => p
                 }
+                handleAt = handleAt.updated(1, Some((g.rect.x + g.rect.width / 2, y + dy)))
+            }
+        }
+
+        // The player panels' bottom edge: the panels (and the folded court tab beside them) stretch or shrink,
+        // their font with them (as far as their measured contents fit their width), down to half their height;
+        // the court right under them (the folded bar, or the cards in the ultrawide layout) moves along, and
+        // the panes under that give or take the room
+        val pp = l.filter(_.name.startsWith("status-"))
+        if (pp.any) {
+            val top = pp./(_.rect.y).min
+            val y = pp./(p => p.rect.y + p.rect.height).max
+            val left = pp./(_.rect.x).min
+            val right = pp./(p => p.rect.x + p.rect.width).max
+            def over(p : PanePlacement, a : Int, b : Int) = p.rect.x < b - 3 && p.rect.x + p.rect.width > a + 3
+            def band(p : PanePlacement) = p.name.startsWith("status-") || (p.name == "court" && (p.rect.y - top).abs <= 3 && (p.rect.y + p.rect.height - y).abs <= 3)
+            val bar = l.find(p => p.name == "court" && (p.rect.y - y).abs <= 3 && over(p, left, right))
+            val y2 = bar./(b => b.rect.y + b.rect.height).|(y)
+            val (a2, b2) = bar./(b => (b.rect.x, b.rect.x + b.rect.width)).|((left, right))
+            def below(p : PanePlacement) = p.name != "court" && (p.rect.y - y2).abs <= 3 && over(p, a2, b2)
+            // Under the log (16:9 unfolded), once the log is down to its least, the action pane gives the rest
+            val log = l.find(p => p.name == "log" && below(p))
+            def underLog(p : PanePlacement) = log.exists(g => (p.rect.y - (g.rect.y + g.rect.height)).abs <= 3 && p.rect.x >= g.rect.x - 3 && p.rect.x + p.rect.width <= g.rect.x + g.rect.width + 3)
+            if (l.exists(below) && y > top) {
+                val minH = height * 15 / 100
+                val h = y - top
+                def room(p : PanePlacement) = p.rect.height - minH + log.has(p).??(l.filter(underLog)./(_.rect.height - minH).minOption.|(0))
+                // splitP is kept from where the panels end without it (folded, they may already be taller)
+                val from = panelsBottom.|(y)
+                val dy = max(-(h / 2), min(from + (splitP * height).round.toInt - y, l.filter(below)./(room).min))
+                val push = log./(g => dy - (g.rect.height - minH)).filter(_ > 0).|(0)
+                splitP = (y + dy - from) * 1.0 / height
+                val ratio = (h + dy) * 1.0 / h
+                def at(v : Int) = top + ((v - top) * ratio).round.toInt
+
+                // Growing, the font stops where the widest contents fill a panel's width
+                val basePx = paneBasePx()
+                val k = (ratio > 1).?(foldNeed.orElse(panelNeed(statusNames))./ { case (needW, _) =>
+                    min(ratio, max(1.0, pp./(p => p.rect.width / (p.fontSize./(f => basePx * f * 3612 / height / 100).|(basePx) * (needW * 1.1 + 0.6))).min))
+                }.|(1.0)).|(ratio)
+
+                l = l./{
+                    case p if band(p) => p.copy(rect = Rect(p.rect.x, at(p.rect.y), p.rect.width, at(p.rect.y + p.rect.height) - at(p.rect.y)),
+                        fontSize = p.name.startsWith("status-").?(p.fontSize./(_ * k)).|(p.fontSize))
+                    case p if bar.has(p) => p.copy(rect = Rect(p.rect.x, p.rect.y + dy, p.rect.width, p.rect.height))
+                    case p if log.has(p) && push > 0 => p.copy(rect = Rect(p.rect.x, p.rect.y + dy, p.rect.width, minH))
+                    case p if below(p) => p.copy(rect = Rect(p.rect.x, p.rect.y + dy, p.rect.width, p.rect.height - dy))
+                    case p if push > 0 && underLog(p) => p.copy(rect = Rect(p.rect.x, p.rect.y + push, p.rect.width, p.rect.height - push))
+                    case p => p
+                }
+                if (push > 0)
+                    handleAt = handleAt.updated(1, handleAt(1)./ { case (x, y) => (x, y + push) })
+                // At the right end of the bar, clear of its text; else in the middle
+                handleAt = handleAt.updated(2, Some((bar.any.?(right - 24).|((left + right) / 2), y + dy)))
             }
         }
 
         l
     }
 
-    // The two handles, on top of the panes
-    lazy val handles = $(true, false)./ { vertical =>
+    // Where each handle goes (map edge, log bottom, panels' bottom), worked out by split
+    var handleAt : $[Option[(Int, Int)]] = $(None, None, None)
+
+    def splitGet(i : Int) = i match { case 0 => splitX case 1 => splitY case _ => splitP }
+    def splitSet(i : Int, v : Double) = i match { case 0 => splitX = v case 1 => splitY = v case _ => splitP = v }
+
+    // The three handles, on top of the panes
+    lazy val handles = $(0, 1, 2)./ { i =>
+        val vertical = i == 0
         val e = dom.document.createElement("div").asInstanceOf[dom.html.Element]
         e.className = "nort-split-handle"
         e.innerHTML = "<svg viewBox='0 0 24 24' width='22' height='22' style='display:block;margin:4px" + vertical.?("").|(";transform:rotate(90deg)") + "'>" +
@@ -1645,14 +1710,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         e.addEventListener("pointerdown", (ev : dom.MouseEvent) => {
             ev.preventDefault()
-            start = Some((vertical.?(ev.clientX).|(ev.clientY), vertical.?(splitX).|(splitY)))
+            start = Some((vertical.?(ev.clientX).|(ev.clientY), splitGet(i)))
             try { e.asInstanceOf[scalajs.js.Dynamic].setPointerCapture(ev.asInstanceOf[scalajs.js.Dynamic].pointerId) } catch { case _ : Throwable => }
         })
         // On the window, so a drag held past the size limit, with the pointer off the handle, still ends (in the capture phase, as some panes stop pointer events)
         dom.window.addEventListener("pointermove", (ev : dom.MouseEvent) => start.foreach { case (from, was) =>
             val size = vertical.?(dom.window.innerWidth).|(dom.window.innerHeight)
             val now = was + (vertical.?(ev.clientX).|(ev.clientY) - from) / size
-            if (vertical) splitX = now else splitY = now
+            splitSet(i, now)
             if (frame.not) {
                 frame = true
                 dom.window.requestAnimationFrame((_ : Double) => { frame = false; resize() })
@@ -1668,7 +1733,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         dom.window.addEventListener("pointerup", end _, true)
         dom.window.addEventListener("pointercancel", end _, true)
         e.addEventListener("dblclick", (ev : dom.MouseEvent) => {
-            if (vertical) splitX = 0 else splitY = 0
+            splitSet(i, 0)
             saveSplit()
             resize()
         })
@@ -1678,26 +1743,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     def placeHandles(l : $[PanePlacement]) {
-        val (v, h) = (handles(0), handles(1))
-        v.style.display = "none"
-        h.style.display = "none"
-
-        l.find(_.name == "map-small").foreach { m =>
-            val x = m.rect.x + m.rect.width
-            if (l.exists(p => (p.rect.x - x).abs <= 3 && p.rect.y >= m.rect.y - 3 && p.rect.y + p.rect.height <= m.rect.y + m.rect.height + 3)) {
-                v.style.left = x + "px"
-                v.style.top = (m.rect.y + m.rect.height / 2) + "px"
-                v.style.display = "block"
-            }
-        }
-
-        l.find(_.name == "log").foreach { g =>
-            val y = g.rect.y + g.rect.height
-            if (l.exists(p => (p.rect.y - y).abs <= 3 && p.rect.x >= g.rect.x - 3 && p.rect.x + p.rect.width <= g.rect.x + g.rect.width + 3)) {
-                h.style.left = (g.rect.x + g.rect.width / 2) + "px"
-                h.style.top = y + "px"
-                h.style.display = "block"
-            }
+        handles.zip(handleAt).foreach {
+            case (e, Some((x, y))) =>
+                e.style.left = x + "px"
+                e.style.top = y + "px"
+                e.style.display = "block"
+            case (e, None) =>
+                e.style.display = "none"
         }
     }
 
@@ -1708,10 +1760,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // for four narrow phone panels), whichever lets their font grow the most while their contents (measured)
     // still fit, each as tall as its contents need. When even their present font doesn't fit (four panels in
     // a 16:9 or tablet layout), the arrangement that needs the least shrinking is used. Nothing else moves
-    def foldCourt(height : Int)(l : $[PanePlacement]) : $[PanePlacement] = {
+    def foldCourt(height : Int, extra : Int = 0)(l : $[PanePlacement]) : $[PanePlacement] = {
         courtSideways = sideways(l)
-        foldCourt0(height)(l)
+        foldCourt0(height, extra)(l)
     }
+
+    def statusBottom(l : $[PanePlacement]) = l.filter(_.name.startsWith("status-"))./(p => p.rect.y + p.rect.height).maxOption
 
     // Whether the court is at the top with the player panels in a row right of it (16:9 and 16:10 layouts)
     def sideways(l : $[PanePlacement]) : Boolean = l.find(_.name == "court").exists { c =>
@@ -1721,7 +1775,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     var courtSideways = false
 
-    def foldCourt0(height : Int)(l : $[PanePlacement]) : $[PanePlacement] = l.find(_.name == "court") match {
+    def foldCourt0(height : Int, extra : Int = 0)(l : $[PanePlacement]) : $[PanePlacement] = l.find(_.name == "court") match {
         case Some(c) if courtFolded =>
             val r = c.rect
             val basePx = paneBasePx()
@@ -1782,7 +1836,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 // left, the panels run across the top from it, and the panes under both start under them
                 // wide enough for two columns of the tab's text, running down
                 val tab = (bar * 1.7).round.toInt
-                val (placed, used) = regrid(h0, r.x + tab, left + w - r.x - tab)
+                val (placed, used) = regrid(h0 + extra, r.x + tab, left + w - r.x - tab)
                 val bandY = r.y + used
                 def under(p : PanePlacement) = ((p.rect.y - (r.y + r.height)).abs <= 3 || (p.rect.y - (top + h0)).abs <= 3) &&
                     p.rect.x >= r.x - 3 && p.rect.x + p.rect.width <= left + w + 3
@@ -1794,7 +1848,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 }
             }
             else if (above) {
-                val (placed, used) = regrid(h0 + gain)
+                val (placed, used) = regrid(h0 + gain + extra)
                 val barY = top + used
                 l./{
                     case p if p.name == "court" => p.copy(rect = Rect(r.x, barY, r.width, bar))
@@ -1821,7 +1875,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // rest, wide enough to show the whole hand, and the log on the right.
     override def layout(width : Int, height : Int)(onLayout0 : $[PanePlacement] => Unit) {
         val onLayout = (l : $[PanePlacement]) => {
-            val placed = split(width, height)(foldCourt(height)(l))
+            // Folded, room the player panels' handle gives them is first offered to the folded layout, which
+            // may lay them out in more rows with a larger font; split then makes them as tall as asked
+            loadSplit(splitKind(width, height))
+            val base = foldCourt(height)(l)
+            val want = (splitP * height).round.toInt
+            val grown = (courtFolded && want > 0).?(foldCourt(height, min(want, height / 2))(l)).|(base)
+            val placed = split(width, height, statusBottom(base))(grown)
             onLayout0(placed)
             placeHandles(placed)
         }

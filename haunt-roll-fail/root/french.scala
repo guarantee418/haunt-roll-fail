@@ -638,6 +638,11 @@ object French {
         "Separate" -> "Séparés",
         "Shown" -> "Affichés",
         "Hidden" -> "Masqués",
+        "Card Piles" -> "Piles de cartes",
+        "Pond" -> "Mare",
+        "Side Panel" -> "Panneau latéral",
+        "On the Map" -> "Sur le plateau",
+        " (Draw, Discard, Pond, Lost Souls and Dominances)" -> " (pioche, défausse, mare, âmes perdues et dominations)",
 
         // more menus and setup
         "Play" -> "Jouer",

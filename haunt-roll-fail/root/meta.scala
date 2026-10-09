@@ -972,6 +972,19 @@ case object HideBoardTrackers extends TrackersOption {
 }
 
 
+trait CardPilesOption extends hrf.Setting with OneOfGroup {
+    val group = "Card Piles"
+}
+
+case object CardPilesInPanel extends CardPilesOption {
+    val valueOn = "Side Panel".hlb
+}
+
+case object CardPilesOnMap extends CardPilesOption {
+    val valueOn = "On the Map".hlb ~ " (Draw, Discard, Pond, Lost Souls and Dominances)".hl
+}
+
+
 trait LanguageOption extends hrf.Setting with OneOfGroup {
     val group = "Language"
 }
@@ -1043,8 +1056,8 @@ object Meta extends MetaGame {
     val name = "root"
     val label = "Root"
 
-    override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, StackWarriors, SeparateWarriors, ShowBoardTrackers, HideBoardTrackers, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone, EnglishLanguage, FrenchLanguage)
-    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, ShowBoardTrackers, NoOutOfTurn, HighlightNone, EnglishLanguage)
+    override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, StackWarriors, SeparateWarriors, ShowBoardTrackers, HideBoardTrackers, CardPilesInPanel, CardPilesOnMap, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone, EnglishLanguage, FrenchLanguage)
+    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, ShowBoardTrackers, CardPilesInPanel, NoOutOfTurn, HighlightNone, EnglishLanguage)
 
     override def translation(settings : $[hrf.Setting]) =
         if (settings.has(FrenchLanguage))
