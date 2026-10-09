@@ -225,19 +225,25 @@ object Meta extends MetaGame { mmm =>
         if (f == Automa)
             $("The solo opponent from Uncharted Horizons: a neutral clan with two Leaders that plays by its own cards. Pick it and one clan.".txt.div(styles.menuText))
         else
-            $(
-                $(0, 1, 2)./(n => Image(ClanCard(f, n).info.image, styles.menuCard)).merge.div(styles.menuText),
-                ("Clan ability: ".hl ~ ClanCard(f, 0).info.textElem).div(styles.menuText),
-                (ClanCard(f, 1).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 1).info.textElem).div(styles.menuText),
-                (ClanCard(f, 2).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 2).info.textElem).div(styles.menuText),
-                HorizontalBreak,
-                ("Warchief: ".hl ~ Warchief.name(f).hlb).div(styles.menuText),
-                Image(Warchief.board(f), styles.menuBoard),
-                ("Warchief power: ".hl ~ CombatText(Warchief.power(f))).div(styles.menuText),
-                Image(ClanCard(f, 3).info.image, styles.menuWarchiefCard),
-                (ClanCard(f, 3).name.hl ~ " (warchief upgrade): " ~ ClanCard(f, 3).info.textElem).div(styles.menuText),
-            )
+            clanAbility(f) ++ $(HorizontalBreak) ++ warchiefInfo(f)
     ))
+
+    // The clan's three clan cards, its ability and upgrades (also opened by tapping Kaija, High Tide and the other clan tokens on the map)
+    def clanAbility(f : Faction) : $[Elem] = $(
+        $(0, 1, 2)./(n => Image(ClanCard(f, n).info.image, styles.menuCard)).merge.div(styles.menuText),
+        ("Clan ability: ".hl ~ ClanCard(f, 0).info.textElem).div(styles.menuText),
+        (ClanCard(f, 1).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 1).info.textElem).div(styles.menuText),
+        (ClanCard(f, 2).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 2).info.textElem).div(styles.menuText),
+    )
+
+    // The clan's warchief: board, power and upgrade card (also opened by tapping the warchief on the map)
+    def warchiefInfo(f : Faction) : $[Elem] = $(
+        ("Warchief: ".hl ~ Warchief.name(f).hlb).div(styles.menuText),
+        Image(Warchief.board(f), styles.menuBoard),
+        ("Warchief power: ".hl ~ CombatText(Warchief.power(f))).div(styles.menuText),
+        Image(ClanCard(f, 3).info.image, styles.menuWarchiefCard),
+        (ClanCard(f, 3).name.hl ~ " (warchief upgrade): " ~ ClanCard(f, 3).info.textElem).div(styles.menuText),
+    )
 
     // Images shown in the menus, before the game's assets are loaded
     override def menuImages = (
