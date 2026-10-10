@@ -7,6 +7,8 @@
 #
 # Writes webp2/root/images/card/deck/fr/<card id>.webp (512x708, like the English deck cards)
 # and webp2/root/images/faction/fr/<faction>-board.webp (the size of the English boards).
+# The four Ambushes, the Squires and Disciples cards and the Homeland Frog cards (hl-*) aren't made
+# here: they are newer scans a player shared on Google Drive (2026-10-10), already 512x708.
 import os, sys, urllib.request
 from PIL import Image
 
@@ -18,10 +20,10 @@ EXILES = "771743400535646806/21896B6CC1EC553FCCDAE30E357A572599F5667D"
 # sheet position (row * 10 + column on the 10x6 sheet) -> card id
 BASE_CARDS = {
     0: "armorers", 2: "woodland-runners", 3: "arms-trader", 4: "bird-crossbow", 5: "sappers", 7: "brutal-tactics", 9: "royal-claim",
-    10: "fox-ambush", 11: "gently-used-knapsack", 12: "fox-root-tea", 13: "fox-travel-gear", 14: "protection-racket", 15: "foxfolk-steel", 16: "anvil", 17: "stand-and-deliver", 19: "tax-collector",
-    22: "favor-of-the-foxes", 23: "rabbit-ambush", 24: "smugglers-trail", 25: "rabbit-root-tea", 26: "a-visit-to-friends", 27: "bake-sale", 28: "command-warren",
-    30: "better-burrow-bank", 32: "cobbler", 34: "favor-of-the-rabbits", 35: "mouse-ambush", 36: "mouse-in-a-sack", 37: "mouse-root-tea", 38: "mouse-travel-gear", 39: "investments",
-    40: "sword", 41: "mouse-crossbow", 42: "scouting-party", 44: "bird-ambush", 46: "birdy-bindle", 47: "bird-dominance", 48: "fox-dominance", 49: "codebreakers",
+    11: "gently-used-knapsack", 12: "fox-root-tea", 13: "fox-travel-gear", 14: "protection-racket", 15: "foxfolk-steel", 16: "anvil", 17: "stand-and-deliver", 19: "tax-collector",
+    22: "favor-of-the-foxes", 24: "smugglers-trail", 25: "rabbit-root-tea", 26: "a-visit-to-friends", 27: "bake-sale", 28: "command-warren",
+    30: "better-burrow-bank", 32: "cobbler", 34: "favor-of-the-rabbits", 36: "mouse-in-a-sack", 37: "mouse-root-tea", 38: "mouse-travel-gear", 39: "investments",
+    40: "sword", 41: "mouse-crossbow", 42: "scouting-party", 46: "birdy-bindle", 47: "bird-dominance", 48: "fox-dominance", 49: "codebreakers",
     51: "mouse-dominance", 52: "favor-of-the-mice", 53: "rabbit-dominance",
 }
 
