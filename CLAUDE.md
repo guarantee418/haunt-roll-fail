@@ -188,6 +188,9 @@ wood, 5 units in each setup placement), 25 units instead of 14 and upgrades for 
 tapping that lists the cheats.
 Its rules come from a hidden `RobotosOption` that `startGame` in `hrf.scala` adds
 for each clan set to it (`Meta.botOptions`), so every client and replay agrees.
+Adset seats can be set to Robotos too: `MetaAdset.botOptions` adds a hidden
+`RobotosSeatOption(seat)`, and the clan that seat drafts cheats (`game.cheaters`,
+recomputed in `AdsetExpansion.assign`).
 
 ## Building
 
