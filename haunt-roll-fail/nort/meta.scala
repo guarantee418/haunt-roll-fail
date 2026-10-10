@@ -258,10 +258,11 @@ object Meta extends MetaGame { mmm =>
         clans./(f => Warchief.board(f) -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.boardFile(f) + ".webp")) ++
         // The combat icons in rules text (CombatText), and the icons in the Tutorial's lessons
         $("axe", "skull", "food", "wood", "lore", "fame", "harvest", "winter", "confirm", "cancel")./(i => ("ui-" + i) -> ("/hrf/webp2/nort/images/ui/" + i + ".webp")) ++
-        // The Tutorial's lessons: the blue starting cards, the buildings and the phases aid
+        // The Tutorial's lessons: the blue starting cards, the buildings, the phases aid and the starting tile
         $("recruit", "move", "explore", "build", "feast")./(n => ("card-start-blue-" + n) -> ("/hrf/webp2/nort/images/card/start/blue-" + n + (n == "feast").??("-1") + ".webp")) ++
         Building.all./(b => b.image -> ("/hrf/webp2/nort/images/token/building/" + b.image.drop("building-".length) + ".webp")) ++
-        $("phases")./(n => ("card-aid-" + n) -> ("/hrf/webp2/nort/images/card/aid-" + n + ".webp"))
+        $("phases")./(n => ("card-aid-" + n) -> ("/hrf/webp2/nort/images/card/aid-" + n + ".webp")) ++
+        $("tile-start" -> "/hrf/webp2/nort/images/tile/start.webp")
     ).toMap
 
     def createGame(factions : $[Faction], options : $[O]) = new Game(factions, options)

@@ -53,85 +53,73 @@ object Tutorial {
     def p(e : Elem) : Elem = e.div(styles.tutorialText)
     def site(e : Elem) : Elem = ("On this site: ".hl ~ e).div(styles.tutorialText)(styles.tutorialSite)
 
-    // Each lesson: its title and its paragraphs
+    // Each lesson: its title and its paragraphs. The order is the owner's teaching plan (2026-10-10): the goal, the map
+    // (territories, open and closed, the part new players find hardest), the deck and the year, the actions, harvest and
+    // winter, combat (also explained in the practice game when the first fight comes), and the clan last, as a twist on the rules
     val lessons : $[(Elem, $[Elem])] = $(
-        ("Welcome".txt, $(
-            p("Northgard: Uncharted Lands".hl ~ " is a board game for 2 to 6 players. Each player leads a Viking clan that lands on an unknown island: you explore it tile by tile, settle territories, build, fight and gather " ~ fame ~ " fame."),
-            p("The game lasts " ~ "7 years".hl ~ " (rounds). After the seventh year the player with the most fame wins. A clan can also win early: at the end of any year, " ~ "control three closed territories that each have a large building".hl ~ "."),
-            p("In this tutorial you play the " ~ stag ~ ". These lessons cover the rules and how to play them on this site; the practice game at the end gives a tip for every choice you make."),
+        ("How you win".txt, $(
+            p("Northgard: Uncharted Lands".hl ~ " is a board game for 2 to 6 players. Each player leads a Viking clan settling an unknown island: you explore it tile by tile, take land, build, fight and gather " ~ fame ~ " fame."),
+            p("Start with the goal, so every other rule has a reason. There are " ~ "two ways to win".hl ~ ":"),
+            p("1. Sudden death".hl ~ ": at the end of " ~ "any".hl ~ " year, a clan that controls " ~ "three closed territories that each have a large building".hl ~ " (Fortress, Forge or Altar of Kings) wins at once. This really happens: keep an eye on your opponents' closed territories and large buildings, every year."),
+            p("2. Fame".hl ~ ": otherwise, after the " ~ "seventh year".hl ~ ", the clan with the most fame wins."),
+            p("In this tutorial you play the " ~ stag ~ ". The lessons go in the order a good teacher would use; the practice game at the end gives a tip for every choice you make."),
             site("Northgard runs in your browser at " ~ "games.clean5110.com".hl ~ ", on a computer, tablet or phone. There is nothing to install, and you don't need an account."),
         )),
-        ("The Stag Clan".txt, $(
-            Div(clanCard(0) ~ clanCard(1) ~ clanCard(2), styles.menuText),
-            p("Every clan has a " ~ "clan ability".hl ~ ", a clan card that starts in its deck and two clan upgrades it can buy during the game."),
-            p("Stag's ability: " ~ "+1 fame".hl ~ " for every territory you " ~ "conquer in combat".hl ~ " and every territory you " ~ "close by exploring".hl ~ ". The Stag rewards bold play: explore to close territories, and take land from your neighbours."),
-            p("Stag Clan".hl ~ " card (a Flash card): Recruit 1, then you may move 1 of your units from an adjacent territory into the one you recruited in (even across a Rough border)."),
-            p("Upgrades: " ~ "Glory of the Clan".hl ~ " (Build, and collect that territory's resources as if it were the Harvest) and " ~ "Annexation".hl ~ " (Move 1 and Explore, a Flash card). With the Warchiefs module, " ~ "Brand's Bravery".hl ~ " is a third one."),
-            site("tap the " ~ "i".hl ~ " beside a clan in the clan picker, or a clan's name in its player panel during a game, to see its cards."),
+        ("The map: territories".txt, $(
+            p("This is the idea to take slowly. The island is built from square " ~ "tiles".hl ~ ". The dotted lines are " ~ "borders".hl ~ ", and the land inside them is a " ~ "territory".hl ~ ". A territory can stretch over several tiles: its borders carry on from one tile to the next."),
+            Image("tile-start", styles.menuWarchiefCard),
+            p("The starting tile, above, has " ~ "four territories".hl ~ ". In the game every territory has a number on the map."),
+            p("Control".hl ~ ": a territory is yours when you have " ~ "at least one unit".hl ~ " in it. With no units it is " ~ "neutral".hl ~ ", even if it has buildings."),
+            p("Open or closed".hl ~ ": a territory is " ~ "open".hl ~ " while one of its edges still runs to the edge of the map, where a new tile could extend it. Once tiles surround it on every side it is " ~ "closed".hl ~ ": fully bounded, it can't grow any more. All four territories of the starting tile are open at first."),
+            p("Closed territories are what matter".hl ~ ": they give you fame at every Harvest, and the sudden-death win needs three of them. Exploring next to a territory is how it gets closed."),
+            p("White dotted borders are regular. Yellow dashed borders are " ~ "Rough".hl ~ ": crossing one costs 2 moves. Territories also show resources (" ~ food ~ " food, " ~ wood ~ " wood, " ~ lore ~ " lore) and building spaces."),
+            site("each territory is tinted with its owner's color and has a number. Closed territories that give fame get their border drawn in their owner's color. When a choice is a territory, tap it on the map (or in the list)."),
         )),
-        ("The map".txt, $(
-            p("The island is made of square " ~ "tiles".hl ~ ". The dotted lines on them are " ~ "borders".hl ~ " that split the land into " ~ "territories".hl ~ ". A territory can stretch over several tiles: its borders continue from one tile to the next."),
-            p("A territory with your units in it is " ~ "yours".hl ~ " (you control it). One with no units is " ~ "neutral".hl ~ ", even if it has buildings."),
-            p("A territory is " ~ "closed".hl ~ " once tiles surround it on every side, and " ~ "open".hl ~ " while one of its edges is still at the edge of the map. Closed territories give fame."),
-            p("White dotted borders are regular. Yellow dashed borders are " ~ "Rough".hl ~ ": crossing one costs 2 moves."),
-            p("Territories show resources (" ~ food ~ " food, " ~ wood ~ " wood, " ~ lore ~ " lore) and building spaces: small round ones, large ones, and Carved Stone spaces."),
-            site("each territory is tinted with its owner's color, and has a number for the log and the menus. When a choice is a territory, tap it on the map (or in the list). Tap a creature, warchief or token to see its card."),
-        )),
-        ("Your cards".txt, $(
-            Div(card("recruit") ~ card("move") ~ card("explore") ~ card("build") ~ card("feast"), styles.menuText),
-            p("Your actions come from " ~ "cards".hl ~ ". Your deck starts with six cards, " ~ "Recruit, Move, Explore, Build".hl ~ " and two " ~ "Feasts".hl ~ ", plus your " ~ "Stag Clan".hl ~ " card."),
-            p("At the start of each year you draw " ~ "4 cards".hl ~ ". When your draw pile runs out, your discard pile is shuffled into a new one."),
-            p("Cards with a lightning bolt are " ~ "Flash".hl ~ " cards: you may play any number of them before or after your main card."),
-            p("Development cards".hl ~ " are new, stronger cards you add to your deck during the game (see the next lessons)."),
-            site("your hand is at the bottom of the action pane. The icons at the top of your player panel count the cards " ~ "to draw".hl ~ ", " ~ "in hand".hl ~ ", " ~ "played this year".hl ~ " and " ~ "discarded".hl ~ "; tap the last two to see those cards."),
-        )),
-        ("A year".txt, $(
+        ("Your deck and the year".txt, $(
+            Div(card("recruit") ~ card("explore") ~ card("move") ~ card("build") ~ card("feast"), styles.menuText),
+            p("Your deck starts with six cards, " ~ "Recruit, Explore, Move, Build".hl ~ " and two " ~ "Feasts".hl ~ ", plus your clan card."),
+            p("If you know other deck-builders, note the difference: you " ~ "don't play your whole hand".hl ~ " on your turn. At the start of each year everyone draws " ~ "4 cards".hl ~ ". Then players take turns doing " ~ "one thing at a time".hl ~ ", around and around, until everyone has passed."),
+            p("Passing".hl ~ " matters. When you pass, your hand and played cards are discarded and you pick one of the revealed " ~ "Development cards".hl ~ ", new and stronger cards. It goes " ~ "on top of your draw pile".hl ~ ", so you draw it next year. The first to pass picks first and takes the " ~ "First Player marker".hl ~ "."),
+            p("That's the tension of every year: " ~ "pass early".hl ~ " for the best card and to go first, or " ~ "stay in".hl ~ " for more actions."),
             Image("card-aid-phases", styles.menuBoard),
-            p("1. Start of year".hl ~ ": everyone draws 4 cards, and one " ~ "Development card".hl ~ " per player is revealed."),
-            p("2. Actions".hl ~ ": starting with the first player, everyone takes one action in turn, again and again, until everyone has passed."),
-            p("3. Harvest".hl ~ ": you score fame for your closed territories and collect resources; then you may trade."),
-            p("4. Winter".hl ~ ": you pay food (and wood) for your units."),
-            p("5. End of year".hl ~ ": a clan with three closed territories that each hold a large building wins. Otherwise a new year starts, until the seventh is over."),
-            site("the folded bar above the panels starts with " ~ "Year X of 7".hl ~ ", and the log on the right says what everyone did."),
+            p("A year: " ~ "1. Start of year".hl ~ " (draw 4, Developments revealed), " ~ "2. Actions".hl ~ " (turns until everyone passes), " ~ "3. Harvest".hl ~ ", " ~ "4. Winter".hl ~ ", " ~ "5. End of year".hl ~ " (check the sudden-death win)."),
+            site("the counts at the top of your player panel are the cards " ~ "to draw".hl ~ ", " ~ "in hand".hl ~ ", " ~ "played this year".hl ~ " and " ~ "discarded".hl ~ " (tap the last two to see those cards). The revealed Development cards are in the strip at the top; the bar above the panels shows " ~ "Year X of 7".hl ~ "."),
         )),
-        ("Your turn".txt, $(
-            p("On your turn you do " ~ "one".hl ~ " of these:"),
-            p("Play cards".hl ~ ": play one card from your hand and do what it says (plus any Flash cards). It goes to your played cards."),
-            p("Wait".hl ~ ": put a card with your played cards without using it. Useful to let others act first."),
-            p("Replace".hl ~ " for 1 " ~ lore ~ ": put a card with your played cards and draw 1."),
-            p("Remove".hl ~ " for 2 " ~ lore ~ ": remove a weak card from the game for good and draw 2."),
-            p("Upgrade".hl ~ " for 3 " ~ lore ~ ": take one of your clan upgrades into your hand."),
-            p("Pass".hl ~ ": you are done for the year. Your hand and played cards are discarded, and you pick one of the revealed " ~ "Development cards".hl ~ ": it goes on top of your draw pile, so you draw it next year. The first to pass picks first and is the first player next year."),
-            site("your turn starts with six buttons at the top of the action pane. Tap one, then tap a card in your hand to do it. A dimmed choice says why it isn't possible; " ~ "Cancel".hl ~ " goes back."),
-        )),
-        ("The actions".txt, $(
+        ("The four actions".txt, $(
+            p("Your Starting cards show the four core actions:"),
             p("Recruit N".hl ~ ": place N new units in your territories (in any neutral one if you have none). You have 14 units."),
-            p("Move N".hl ~ ": N times, move any number of units from one of your territories across one border. Entering an enemy territory stops them and starts a fight."),
-            p("Explore".hl ~ ": draw a tile and add it to the map next to one of your open territories. Its borders must continue the ones it touches, and it can't join two players' territories. Closing your territories this way gives fame (the " ~ stag ~ " gets 1 more)."),
+            p("Explore".hl ~ ": draw a tile and add it to the map next to one of your open territories. Its borders must continue the ones it touches, and it can't join two players' territories. Closing your own territories this way gives fame."),
+            p("Move N".hl ~ ": N times, move any number of units from one of your territories across one border. Entering an enemy territory starts a fight."),
             p("Build".hl ~ ": in your territory, on a free space. Small buildings cost 1 " ~ wood ~ ": " ~ building("food-silo") ~ " Food Silo (+1 food), " ~ building("woodcutter-lodge") ~ " Woodcutter Lodge (+1 wood), " ~ building("defense-tower") ~ " Defense Tower, " ~ building("training-camp") ~ " Training Camp, " ~ building("carved-stone") ~ " Carved Stone (+1 lore). Large ones cost 3 " ~ wood ~ ": " ~ building("fortress") ~ " Fortress, " ~ building("forge") ~ " Forge (+1 card a year), " ~ building("altar-of-kings") ~ " Altar of Kings (+3 fame each Harvest)."),
-            p("Feast".hl ~ ": Recruit 1, Move 1, Explore or Build, as you choose."),
+            p("Feast".hl ~ " is wild: Recruit 1, Move 1, Explore or Build."),
+            p("Flash".hl ~ " cards (a lightning bolt) can be played in any number, before and after your main card."),
+            p("Lore".hl ~ " " ~ lore ~ " lets you replace a card (1), remove a card from your deck (2) or take a clan upgrade (3). That's for after your first year: don't worry about it yet."),
             site(Div(
-                "Recruit and Move: tap the territories on the map. " ~
-                "Explore: you see the tile first; tap a spot, turn it with the blue arrows, then tap the green " ~ Image("ui-confirm", styles.inlineIcon) ~ " check mark (the red " ~ Image("ui-cancel", styles.inlineIcon) ~ " cross cancels). " ~
-                "Build: tap a free space, pick a building from the menu (it shows the cost and how many are left), then confirm with the check mark.")),
-        )),
-        ("Combat".txt, $(
-            p("Moving into an enemy territory starts a fight. Each side counts " ~ CombatIcon.axe ~ " combat points: 1 per unit, plus the Move card's bonus for the attacker and the buildings for the defender (a Fortress gives 2)."),
-            p("Then each side may spend " ~ food ~ " food, +1 point each (at most one per unit), and rolls the battle die. The die gives points " ~ CombatIcon.axe ~ " and casualties " ~ CombatIcon.skull ~ ": each " ~ CombatIcon.skull ~ " removes one enemy unit."),
-            p("The higher total wins; " ~ "ties go to the defender".hl ~ ". A side that loses all its units loses. The loser retreats to a neighbouring territory of its own or a neutral one."),
-            p("The " ~ stag ~ " gains " ~ "+1 fame".hl ~ " for each territory it conquers in combat."),
-            site("after the roll, a " ~ "combat report".hl ~ " shows both sides' points and losses; tap " ~ "OK".hl ~ ". To retreat, tap where to go, then who goes. You can turn the reports off under " ~ "Interface".hl ~ " (Combat Report), and the word for how a fight ended in the log (\"won\", \"defeated\") opens its report again."),
+                "your turn starts with six buttons: " ~ "Play cards".hl ~ ", " ~ "Wait".hl ~ " (set a card aside unused), the three lore choices, and " ~ "Pass".hl ~ ". Tap one, then tap a card in your hand. " ~
+                "Recruit and Move: tap the territories on the map. Explore: you see the tile first; tap a spot, turn it with the blue arrows, then tap the green " ~ Image("ui-confirm", styles.inlineIcon) ~ " check mark (the red " ~ Image("ui-cancel", styles.inlineIcon) ~ " cross cancels). " ~
+                "Build: tap a free space, pick a building from the menu, then confirm with the check mark.")),
         )),
         ("Harvest and Winter".txt, $(
-            p("Harvest".hl ~ ": each closed territory you control gives " ~ fame ~ " 1 fame (2 if it covers 3 tiles or more), each Altar of Kings 3 fame. You collect a resource for each icon in your territories and for your Food Silos, Woodcutter Lodges and Carved Stones."),
-            p("Then you may " ~ "trade".hl ~ " any 3 resources for 1 of your choice, as often as you like."),
-            p("Winter".hl ~ ": your units must eat. 1 to 3 units are free, 4 to 6 cost 1 " ~ food ~ ", 7 to 9 cost 2 " ~ food ~ ", 10 to 12 cost 3 " ~ food ~ " and 1 " ~ wood ~ ", 13 or more 4 " ~ food ~ " and 2 " ~ wood ~ ". If you can't pay, you take an " ~ "Unrest".hl ~ " card: it clogs your hand and costs 5 fame at the end."),
-            site("the small table in your player panel shows your resources and fame, then your next harvest " ~ SeasonIcon.harvest ~ " (green) and your winter cost " ~ SeasonIcon.winter ~ " (red), as things stand. Tap it for the whole winter chart. Other players' fame shows as " ~ "?".hl ~ ": fame tokens are kept face down. While trading, tap the trades you want, then " ~ "Done trading".hl ~ "."),
+            p("Harvest".hl ~ " is the payoff. Each closed territory you control gives " ~ fame ~ " 1 fame (2 if it covers 3 tiles or more), each Altar of Kings 3 fame. You collect a resource for every icon in your territories and on your buildings. Then you may trade any 3 resources for 1."),
+            p("Winter".hl ~ " is the bill: your units must eat."),
+            p("1 to 3 units: free. 4 to 6: 1 " ~ food ~ ". 7 to 9: 2 " ~ food ~ ". 10 to 12: 3 " ~ food ~ " and 1 " ~ wood ~ ". 13 or more: 4 " ~ food ~ " and 2 " ~ wood ~ "."),
+            p("Watch out: this is where new players get punished.".styled(xstyles.warning) ~ " If you can't pay, you take an " ~ "Unrest".hl ~ " card: it clogs your deck (a dead card in your hand) and costs " ~ "5 fame".hl ~ " at the end. Don't recruit more units than your food can feed."),
+            site("the small table in your player panel shows your resources and fame, then your next harvest " ~ SeasonIcon.harvest ~ " (green) and your winter cost " ~ SeasonIcon.winter ~ " (red), as things stand right now. Check it before you recruit. Tap it for the whole winter chart. Other players' fame shows as " ~ "?".hl ~ ": fame is kept face down."),
         )),
-        ("Winning".txt, $(
-            p("At the end of each year, a clan controlling " ~ "three closed territories each with a large building".hl ~ " (Fortress, Forge or Altar of Kings) wins at once."),
-            p("Otherwise, after the 7th year, the most " ~ fame ~ " fame wins: your fame tokens, plus the fame printed on your Development and Achievement cards, plus 1 for every 3 resources left, minus 5 for each Unrest card. In the last year the revealed cards are " ~ "Achievements".hl ~ " instead of Developments."),
-            p("Tips for the " ~ stag ~ ": recruit early so you can spread out; explore to close territories (2 fame each for you, more for big ones); keep food for winter; and watch for weak neighbours to conquer."),
+        ("Combat".txt, $(
+            p("You can leave this until your first fight: the practice game explains it then, step by step."),
+            p("Moving into an enemy territory starts a fight. Each side counts " ~ CombatIcon.axe ~ " combat points: " ~ "1 per unit".hl ~ ", plus the " ~ "Move card's bonus".hl ~ " for the attacker or the " ~ "buildings".hl ~ " for the defender (a Fortress gives 2)."),
+            p("Then each side may spend " ~ food ~ " food, +1 point each (at most one per unit), and rolls " ~ "one die".hl ~ ". The die gives points " ~ CombatIcon.axe ~ " and casualties " ~ CombatIcon.skull ~ ": each " ~ CombatIcon.skull ~ " removes one enemy unit."),
+            p("Two things to remember: " ~ "ties go to the defender".hl ~ ", and a side that " ~ "loses all its units".hl ~ " to casualties loses the fight, whatever the score. The loser retreats to a neighbouring territory of its own or a neutral one."),
+            site("after the roll, a " ~ "combat report".hl ~ " shows both sides' points and losses; tap " ~ "OK".hl ~ ". To retreat, tap where to go, then who goes. Interface > Combat Report can skip the reports, and the word for how a fight ended in the log (\"won\", \"defeated\") opens its report again."),
+        )),
+        ("Your clan: the Stag".txt, $(
+            Div(clanCard(0) ~ clanCard(1) ~ clanCard(2), styles.menuText),
+            p("Once you know the base game, your clan is " ~ "your twist on the rules".hl ~ ". Each player only needs to read their own."),
+            p("Stag's ability: " ~ "+1 fame".hl ~ " for every territory you " ~ "conquer in combat".hl ~ " and every territory you " ~ "close by exploring".hl ~ ". The Stag rewards bold play: explore to close territories, and take land from your neighbours."),
+            p("Stag Clan".hl ~ " card (a Flash card): Recruit 1, then you may move 1 of your units from an adjacent territory into the one you recruited in (even across a Rough border)."),
+            p("Upgrades, for 3 " ~ lore ~ ": " ~ "Glory of the Clan".hl ~ " (Build, and collect that territory's resources as if it were the Harvest) and " ~ "Annexation".hl ~ " (Move 1 and Explore, a Flash card). With the Warchiefs module, " ~ "Brand's Bravery".hl ~ " is a third one."),
+            site("tap the " ~ "i".hl ~ " beside a clan in the clan picker, or a clan's name in its player panel during a game, to see its cards."),
         )),
         ("Using this site".txt, $(
             p("The main menu".hl ~ ": " ~ "Quick Game".hl ~ " (you and two bots), " ~ "Local Game".hl ~ " (pick the clans, people and bots; people take turns on one device), " ~ "Solo vs Automa".hl ~ ", " ~ "Training Grounds".hl ~ " (a short two-player duel), " ~ "Adset".hl ~ " (clans drafted during setup) and " ~ "Play Online".hl ~ "."),
@@ -142,14 +130,46 @@ object Tutorial {
             p("Settings".hl ~ ": " ~ "Interface".hl ~ ", under the action pane, sets the territory tints, the panel layout, combat reports and the font size. " ~ "Report a Bug".hl ~ " is next to it."),
         )),
         ("The practice game".txt, $(
-            p("You play the " ~ stag ~ " against the " ~ "Wolf Clan".styled(Wolf)(xstyles.bold) ~ ", played by the Easy bot. You go first. It is a full game of 7 years with the standard rules."),
-            p("A " ~ "tip".hl ~ " at the top of the action pane explains each choice as it comes up. " ~ "Hide tips".hl ~ " turns them off; " ~ "Tutorial Lessons".hl ~ " under the action pane opens these lessons again."),
-            p("The practice game is saved in your browser, so you can stop and continue it later from the Tutorial menu."),
+            p("You play the " ~ stag ~ " against the " ~ "Wolf Clan".styled(Wolf)(xstyles.bold) ~ ", played by the Easy bot. You go first. It is a full game of 7 years with the core rules only: no Creatures or other modules, as the rulebook recommends for your first games."),
+            p("A " ~ "tip".hl ~ " at the top of the action pane talks you through each choice, as a teacher would in your first year: what it does, what to watch for (winter costs, the sudden-death win), and combat when your first fight comes."),
+            p("Read the cards".hl ~ ": card text overrides the rulebook. Tap a card to see it full size (in your hand, between your turns)."),
+            p(("Hide tips".hl ~ " turns the tips off; " ~ "Tutorial Lessons".hl ~ " under the action pane opens these lessons again. The practice game is saved in your browser, so you can stop and continue it later from the Tutorial menu.")),
         )),
     )
 
     def about : Elem =
-        ("Learn to play " ~ "Northgard: Uncharted Lands".hl ~ " as the " ~ stag ~ ", and how to play it on this site. Read the lessons, then try a practice game against a bot, with a tip for every choice.").div
+        ("Learn to play " ~ "Northgard: Uncharted Lands".hl ~ " as the " ~ stag ~ ", and how to play it on this site. The lessons go from the goal to the map, the cards and the year, then combat and your clan; then try a practice game against a bot, with a tip for every choice.").div
+
+    // The map as it is: which territories are closed (the map lesson's point, shown on the real map)
+    def closedNote(game : Game) : Elem = {
+        val closed = game.board.territories.zipWithIndex.%{ case (t, _) => game.board.closed(t) }.map(_._2 + 1)
+        if (closed.none)
+            "No territory is closed yet: every one still has an edge at the edge of the map.".txt
+        else
+            ("Closed now: territor" + (closed.num > 1).?("ies ").|("y ")).txt ~ closed.map(_.toString).mkString(", ").hl ~ ". The others are still open.".txt
+    }
+
+    // What Winter will cost f as things stand, and a warning when the food won't cover it
+    def winterNote(game : Game, f : Faction) : Elem = {
+        implicit val g = game
+        val st = game.states(f)
+        val n = st.units
+        val (cf, cw) = Winter.cost(n)
+        val h = Harvest.forecast(f)
+        val short = st.food + h.food < cf || st.wood + h.wood < cw
+        ("You have " ~ n.hl ~ " unit" ~ (n != 1).??("s") ~ " on the map: Winter will cost " ~
+            ((cf + cw) == 0).?("nothing".hl).|(Amount(cf, food) ~ (cw > 0).?(" and " ~ Amount(cw, wood)).|(Empty)) ~ ". " ~
+            short.?("Your food after the Harvest won't cover it: an Unrest card is coming unless you get more.".styled(xstyles.warning)).|(Empty))
+    }
+
+    // The sudden-death win: closed territories with a large building, f's and its opponents'
+    def suddenDeathNote(game : Game, f : Faction) : Elem = {
+        val need = game.strongholdsToWin
+        val mine = game.strongholds(f).num
+        val danger = game.factions.but(f).%(o => game.strongholds(o).num >= need - 1)
+        danger./(o => (o.name + " Clan").styled(o)(xstyles.bold) ~ " has " ~ game.strongholds(o).num.hl ~ " of the " ~ need.hl ~ " closed territories with a large building it needs to win at the end of a year. Stop it!".styled(xstyles.warning) ~ " ").merge ~
+            (mine > 0).?("You have " ~ mine.hl ~ " of the " ~ need.hl ~ " you need for the sudden-death win. ").|(Empty)
+    }
 
     // The tip for the choices f is offered; None when there is nothing to say
     def tip(game : Game, f : Faction, actions : $[UserAction]) : |[Elem] = {
@@ -160,7 +180,8 @@ object Tutorial {
         val st = game.states.get(f)
 
         if (has[SetupTileAction])
-            |("Setup: you drew 3 map tiles. Pick one to add next to the starting tile. Look at what it offers: " ~ food ~ " food and " ~ wood ~ " wood to start with, building spaces, and borders that will be easy to close. Tap a tile to pick it.")
+            |(("Setup: you drew 3 map tiles. Pick one to add to the map. Look at what it offers: " ~ food ~ " food and " ~ wood ~ " wood, building spaces, and borders that will be easy to close. Tap a tile to pick it.").div ~
+                ("Look at the map: the dotted lines are borders, and each numbered area between them is a territory. " ~ closedNote(game)).div)
         else
         if (has[SetupSpotAction] || has[ExploreSpotAction] || has[SecondChanceSpotAction])
             |("Tap one of the marked spots on the map (or in the list) to place the tile there. Its borders must continue the ones they touch, so only some spots and turns are allowed.")
@@ -169,22 +190,24 @@ object Tutorial {
             |("The tile is shown in place. Turn it with the blue arrows above it, then tap the green check mark below it to place it (or the red cross to pick another spot).")
         else
         if (has[SetupAreaAction] || has[SetupUnitsAction])
-            |("Place your 3 starting units: tap a territory of your new tile. A territory with " ~ food ~ " food or " ~ wood ~ " wood icons gives them at every Harvest, and one that is nearly closed is easy to close for fame.")
+            |(("Place your 3 starting units: tap a territory of your new tile. One unit is enough to control a territory. A territory with " ~ food ~ " food or " ~ wood ~ " wood icons gives them at every Harvest, and one that is nearly surrounded is easy to close for fame.").div ~ closedNote(game).div)
         else
         if (has[TurnModeAction]) {
             val n = st./(_.hand.num).|(0)
             val lr = st./(_.lore).|(0)
             |(("Your turn, year " ~ game.year.hl ~ ". You have " ~ n.hl ~ " card" ~ (n != 1).??("s") ~ " in hand. ").div ~
-                "Tap " ~ "Play cards".hl ~ " to use a card, " ~ "Wait".hl ~ " to set one aside, or " ~ "Pass".hl ~ " when you're done for the year (the first to pass picks a Development card first). " ~
-                (lr >= 3).?("You have " ~ lr.hl ~ " " ~ lore ~ " lore: " ~ "Upgrade".hl ~ " would get you a Stag clan upgrade. ").|(Empty) ~
-                (n == 0).?("Your hand is empty, so Pass is your only choice.".hl).|(Empty))
+                (n == 0).?("Your hand is empty, so Pass is your only choice.".hl.div).|(Empty) ~
+                (n > 0).?(("You do " ~ "one".hl ~ " thing per turn, not your whole hand: tap " ~ "Play cards".hl ~ " to use a card, " ~ "Wait".hl ~ " to set one aside, or " ~ "Pass".hl ~ " to stop for the year. Pass early to pick the best Development card and go first next year; stay in for more actions.").div).|(Empty) ~
+                (game.year <= 1).?(("The three " ~ lore ~ " lore choices are for later years; ignore them for now.").div).|((lr >= 3).?(("You have " ~ lr.hl ~ " " ~ lore ~ " lore: " ~ "Upgrade".hl ~ " would get you a Stag clan upgrade.").div).|(Empty)) ~
+                winterNote(game, f).div ~
+                suddenDeathNote(game, f).div)
         }
         else
         if (has[PlayCardAction] && has[EndTurnAction])
             |("You may play Flash cards (the ones with a lightning bolt) now, or tap " ~ "End turn".hl ~ ".")
         else
         if (has[PlayCardAction])
-            |("Tap a card in your hand to play it. A dimmed card can't be played now; it says why. Tap a card's picture after your turn to see it full size.")
+            |("Tap a card in your hand to play it. A dimmed card can't be played now; it says why. Read the card: its text overrides the rules. (Between your turns, tap a card to see it full size.)")
         else
         if (has[WaitCardAction])
             |("Tap the card to wait with: it goes with your played cards, unused, and comes back after the next shuffle.")
@@ -205,7 +228,7 @@ object Tutorial {
             |("Stag Clan".hl ~ ": you may now move 1 of your units from an adjacent territory into the one you recruited in. Tap where it comes from, or skip.")
         else
         if (has[RecruitAreaAction] || has[RecruitPlaceAction])
-            |("Recruit: tap one of your territories to place a new unit there. More units hold more land and win fights, but cost more food in Winter (4 or more units cost food).")
+            |(("Recruit: tap one of your territories to place a new unit there. More units hold more land and win fights, but every unit must eat in Winter, and new players often recruit more than they can feed.".txt).div ~ winterNote(game, f).div)
         else
         if (has[FeastChoiceAction])
             |("Feast: choose one action. Early on, Recruit or Explore help most; Build when you have " ~ wood ~ " wood and a good space.")
@@ -220,13 +243,13 @@ object Tutorial {
             |("Pick how many units go. Leave at least one behind to keep the territory they leave.")
         else
         if (has[ExploreTileAction] || has[ExploreTileInfoAction])
-            |("Explore: here is the tile you drew. It must go next to one of your open territories. Closing a territory of yours gives fame for each of its tiles, and the Stag gets 1 more.")
+            |(("Explore: here is the tile you drew. It must go next to one of your open territories. Closing a territory of yours gives fame for each of its tiles, and the Stag gets 1 more.".txt).div ~ closedNote(game).div)
         else
         if (has[BuildSpotAction])
             |("Build: tap a free building space in one of your territories. Small spaces take small buildings (1 " ~ wood ~ "), large spaces large ones (3 " ~ wood ~ ").")
         else
         if (has[BuildPickAction])
-            |("Pick a building: dimmed ones can't go there and say why. A Food Silo or Woodcutter Lodge pays every Harvest; a large building in a closed territory counts toward the early win.")
+            |("Pick a building: dimmed ones can't go there and say why. A Food Silo or Woodcutter Lodge pays every Harvest; a large building in a closed territory counts toward the sudden-death win (three of them).")
         else
         if (has[BuildConfirmAction])
             |("The building is shown on its space: tap the green check mark above it to build it, or the red cross to choose again.")
@@ -235,13 +258,17 @@ object Tutorial {
             |("Several fights: tap the territory to fight in first.")
         else
         if (has[CombatFoodAction])
-            |("Spend " ~ food ~ " food for this fight? Each one gives +1 combat point (at most one per unit). Remember Winter: your units must eat.")
+            |(("A fight! Here's how it works:".hl).div ~
+                ("1. Each side counts " ~ CombatIcon.axe ~ " combat points: 1 per unit, plus the Move card's bonus for the attacker, or the buildings for the defender. The totals so far are shown below.").div ~
+                ("2. Now each side may spend " ~ food ~ " food: +1 point each, at most one per unit. Food spent now can't feed your units in Winter.").div ~
+                ("3. Then each side rolls one die, for more points " ~ CombatIcon.axe ~ " and casualties " ~ CombatIcon.skull ~ " (each removes an enemy unit).").div ~
+                ("Remember: " ~ "ties go to the defender".hl ~ ", and a side that " ~ "loses all its units".hl ~ " loses, whatever the score.").div)
         else
         if (has[CombatChooseAction])
             |("Your die shows a choice: 1 combat point " ~ CombatIcon.axe ~ " or 1 casualty " ~ CombatIcon.skull ~ " (one enemy unit removed). Pick what helps more.")
         else
         if (has[CombatReportDoneAction])
-            |("The combat report: who won, each side's points and losses. Tap " ~ "OK".hl ~ " to go on. (Interface > Combat Report can skip these.)")
+            |("The combat report: who won, each side's points and losses (ties go to the defender; losing every unit loses). Tap " ~ "OK".hl ~ " to go on. The Stag gets +1 fame for each territory it conquers. (Interface > Combat Report can skip these reports.)")
         else
         if (has[RetreatPickAction])
             |("You lost this fight: tap where your units retreat to (your territory or a neutral one), then who goes.")
@@ -250,10 +277,10 @@ object Tutorial {
             |("Brand's Bravery".hl ~ ": you choose where the beaten enemy retreats. Pick the place that helps you most.")
         else
         if (has[TradeForAction] || has[TradeDoneAction])
-            |("Harvest trading: pay any 3 resources for 1 of your choice, as often as you like. Check your Winter cost in your panel (the red row) first. Tap " ~ "Done trading".hl ~ " when finished.")
+            |(("Harvest done: you scored fame for your closed territories and collected your resources. Now you may trade any 3 resources for 1 of your choice, as often as you like. Tap " ~ "Done trading".hl ~ " when finished.").div ~ winterNote(game, f).div)
         else
         if (has[PickCardAction])
-            |("You passed: pick a Development card. It goes on top of your draw pile, so you draw it at the start of next year. Tap a card to see it full size first.")
+            |("You passed: pick a Development card. It goes on top of your draw pile, so you draw it at the start of next year. Read it first: tap a card to see it full size.")
         else
         if (has[KeepDrawnAction] || has[DiscardDrawnAction] || has[ReturnDrawnAction])
             |("Choose what to do with each card you drew, as the card says.")

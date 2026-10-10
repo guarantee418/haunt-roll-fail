@@ -58,8 +58,12 @@ a 4x3 grid of face-down tiles with seven Action cards each, is in
 offering a local or an online game (the `modes` hooks in `meta.scala`,
 `modeMenu` in `hrf.scala`). "Tutorial", first on the main menu (the `tutorialLessons`,
 `tutorialAbout` and `tutorialGame` hooks in `meta.scala`, `tutorialMenu` in `hrf.scala`, URL
-`/play/nort/tutorial`), teaches the game as the Stag Clan: twelve lessons on the rules and on
+`/play/nort/tutorial`), teaches the game as the Stag Clan: nine lessons on the rules and on
 playing them on this site (`Tutorial.lessons` in `nort/tutorial.scala`, all the text in one place),
+in the owner's teaching order (2026-10-10): how you win (stressing the sudden-death win), the map
+(territories, open and closed), the deck and the year (one card a turn, passing), the four actions
+(lore left for after the first year), harvest and winter (overexpanding flagged), combat (also
+explained in the practice game at the first fight), the clan last, the site, the practice game;
 then a practice game, Stag (first) against the Wolf Clan's Easy bot, with the hidden
 `TutorialOption`: a "Tutorial tip" above the choices explains each one (`Tutorial.tip`, by the
 kind of action offered; `preinfo` in `nort/ui.scala`), "Hide tips" turns them off (each browser
