@@ -272,6 +272,7 @@ case class KnavesRunAwayAction(self : Faction, f : Knaves, c : Clearing, r : For
 
 case class KnavesMockAction(self : Knaves) extends ForcedAction
 case class KnavesProtectMainAction(self : Knaves) extends ForcedAction with Soft
+case class KnavesProtectClearingAction(self : Knaves, c : Clearing) extends BaseAction("Protect the Weak".styled(self), "in")(c) with Soft
 case class KnavesProtectCardAction(self : Knaves, c : Clearing, d : DeckCard) extends BaseAction("Protect the Weak".styled(self), "in", c, "with")(d.img) with ViewCard
 case class KnavesTakeItEasyAction(self : Knaves) extends ForcedAction
 case class KnavesFreePrisonersMainAction(self : Knaves, e : Faction) extends ForcedAction
@@ -914,11 +915,16 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
 
             if (l.any && f.pool(f.warrior) && f.hand.any)
                 Ask(f).group("Protect the Weak".styled(f), "spend a matching card to place a", f.warrior.of(f))
-                    .some(l)(c => f.hand./(d => KnavesProtectCardAction(f, c, d).!(d.matches(c.cost).not).!(f.canPlace(c).not, "can't place")))
+                    .each(l)(c => KnavesProtectClearingAction(f, c).!(f.canPlace(c).not, "can't place").!(f.hand.exists(_.matches(c.cost)).not, "no matching card"))
                     .done(Next)
                     .evening(f)
             else
                 NoAsk(f)(Next)
+
+        case KnavesProtectClearingAction(f, c) =>
+            Ask(f).group("Protect the Weak".styled(f), "in", c, "with")
+                .each(f.hand)(d => KnavesProtectCardAction(f, c, d).!(d.matches(c.cost).not))
+                .cancel
 
         case KnavesProtectCardAction(f, c, d) =>
             f.hand --> d --> discard.quiet
