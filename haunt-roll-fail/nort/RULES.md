@@ -856,10 +856,18 @@ Check these against the rulebook when it is at hand.
     to its outer top corner (owner, 2026-10-06), joining the tiles placed
     beside the Port and beyond the wing like any tile side, so no border
     stops at the shore (a boundary never dead-ends). The Port territory has no resources.
-  - Where the cells beyond the empty space are taken (five or six players,
-    two first tiles side by side), the Beach goes one or two spaces further
-    out; a Beach is never placed beside another Port. The box has five Beaches;
-    a sixth is added so six-player games (and 3v3) get one each.
+  - With two to four players the Beach goes straight out from the player's
+    first tile, beyond an empty space. With five or six players (the
+    two-tile starting tile) the Beaches are where the rulebook's five-player
+    picture puts them (`fivePlayerBeaches` in `sea.scala`; owner, 2026-10-10):
+    with the starting tile at (0, 0) and (1, 0), a ring of empty spaces around
+    the first tiles, one Beach on the west side out from the west first tile,
+    two on the east side side by side with one space between them (Ports at
+    (3, -2) and (3, 2)), one north and one south (Ports at (-1, -3) and
+    (-1, 3)). With six players the west side gets two like the east (Ports at
+    (-2, -2) and (-2, 2)) and the north and south ones move to (0, -3) and
+    (1, 3). Each player gets the free Beach nearest their first tile. The box
+    has five Beaches; a sixth is added so six-player games (and 3v3) get one each.
   - Port to Port costs all the moves left; it is offered only between
     territories that aren't next to each other.
   - The Port's +1 is a combat point for whoever defends the Port territory
