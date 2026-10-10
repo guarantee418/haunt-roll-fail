@@ -305,6 +305,14 @@ case object CardDraftFive extends CardDraftOption {
     val valueOn = "Draw Five".hh ~ " / " ~ "Keep Three".hh
 }
 
+// Lilypad Diaspora's Frog cards go into the shared deck once every faction is set up, so no starting hand has
+// any (as in Advanced Setup). Hidden and on by default for new games; games started without it keep the old
+// timing (shuffled in during Lilypad's setup) so their replays don't change.
+case object FrogCardsAfterStartingHands extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Frog".hh ~ " cards after starting hands"
+}
+
 
 case object AutoHitsAssignmentMode extends GameOption with ToggleOption {
     val group = "Async"
@@ -1218,7 +1226,8 @@ object Meta extends MetaGame {
         $(SeatingGiven, SeatingRandom) ++
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
-        $(CardDraftStandard, CardDraftFive)
+        $(CardDraftStandard, CardDraftFive) ++
+        $(FrogCardsAfterStartingHands)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1237,6 +1246,7 @@ object Meta extends MetaGame {
         SetupTypeCorners,
         SetupOrderPriority,
         CardDraftStandard,
+        FrogCardsAfterStartingHands,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)

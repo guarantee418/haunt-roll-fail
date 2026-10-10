@@ -321,9 +321,21 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
                 f.log("removed", EnclaveDominance, "from the game")
             }
 
+            if (options.has(FrogCardsAfterStartingHands))
+                SetupFactionsAction
+            else {
+                f.supply --> deck
+
+                Shuffle[DeckCard](deck, InvasiveEEEShuffleFrogCardsAction(f, _, SetupFactionsAction))
+            }
+
+        // once every faction has drawn its starting hand and set up
+        case SetupDoneAction if options.has(FrogCardsAfterStartingHands) && factions.of[InvasiveEEE].exists(_.supply.any) =>
+            val f = factions.of[InvasiveEEE].%(_.supply.any).first
+
             f.supply --> deck
 
-            Shuffle[DeckCard](deck, InvasiveEEEShuffleFrogCardsAction(f, _, SetupFactionsAction))
+            Shuffle[DeckCard](deck, InvasiveEEEShuffleFrogCardsAction(f, _, SetupDoneAction))
 
         case InvasiveEEEShuffleFrogCardsAction(f, l, then) =>
             deck --> l --> deck

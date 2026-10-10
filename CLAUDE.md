@@ -501,6 +501,12 @@ file covers the build, server and deploy. No session can ssh to the server
   Expansion" (Steam workshop 3354438467; the save file comes from the
   `file_url` of Steam's public `GetPublishedFileDetails` API, BSON, the
   pieces are the `Vagabond - <name>` objects in its scripts).
+- Lilypad Diaspora's Frog cards go into the shared deck only after every faction has set up, so no
+  starting hand gets one (reported on Discord, 2026-10-10: the Knaves drew Settlers in a standard setup).
+  New games get the hidden default option `FrogCardsAfterStartingHands` (`root/meta.scala`), and the shuffle
+  then waits for `SetupDoneAction` (`faction-invasive-eee.scala`); games started before it keep shuffling them
+  in during Lilypad's setup, so their replays don't change. `ReplayCheck <games> ldkd` checks starting hands
+  (`oldfrogs` for the old timing).
 - Knaves items are the Captains' items, not crafted items: the Vagabond
   can't take them in trade when it aids the Knaves (`AidTradeAction` in
   `root/faction-hero.scala`), the Hundreds can't loot them (Looters in

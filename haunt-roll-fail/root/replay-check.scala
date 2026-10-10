@@ -16,6 +16,7 @@ import hrf.logger._
 object ReplayCheck {
     var marsh = false
     var exiles = false
+    var oldFrogs = false
 
     def options(seating : $[Faction]) : $[Meta.O] = marsh.?($[Meta.O](
         MarshMap, AllRandomClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
@@ -23,7 +24,7 @@ object ReplayCheck {
     )).|($[Meta.O](
         AutumnMap, DefaultClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
         FerryLandmark, LostCityLandmark, SeatingGiven, FactionSeatingGiven, SetupOrderPriority, CardDraftStandard,
-    )).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)) ++ exiles.$(ErrataCoffinMakers) ++ seating./(IncludeFaction)
+    )).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.$(FrogCardsAfterStartingHands) ++ seating./(IncludeFaction)
 
     def privateMap(o : AnyRef, suffix : String) : Map[Any, Any] = {
         val f = o.getClass.getDeclaredFields.filter(_.getName.endsWith(suffix)).head
@@ -95,11 +96,13 @@ object ReplayCheck {
         val games = args.lift(0)./(_.toInt).|(6)
         marsh = args.exists(_.startsWith("marsh"))
         exiles = args.contains("exiles")
+        oldFrogs = args.contains("oldfrogs")
         val pool : $[$[Faction]] = args.lift(1)./(_ match {
             case "base" => $($(MC, ED, WA, VB), $(MC, ED, WA, LC), $(MC, ED, RF, UD))
             case "ld" => $($(MC, ED, WA, LDvE))
             case "tc" => $($(MC, ED, WA, TC))
             case "kd" => $($(MC, ED, WA, KD))
+            case "ldkd" => $($(MC, ED, LDvE, KD), $(MC, WA, LDvE, KD))
             case "marsh5" => $($(MC, ED, WA, VB, LDvE), $(MC, ED, WA, KD, TC))
             case "marsh" => $($(MC, ED, WA, VB), $(MC, ED, WA, LDvE), $(MC, WA, KD, TC))
         }).|($($(MC, WA, LDvE, KD), $(MC, ED, LDvE, KD), $(MC, WA, KD, TC), $(MC, WA, LDvE, TC)))
@@ -122,6 +125,7 @@ object ReplayCheck {
             record(next)
             var steps = 0
             var over = false
+            var handsChecked = false
 
             try {
                 while (over.not && steps < 6000) {
@@ -160,6 +164,16 @@ object ReplayCheck {
                     }
 
                     chosen.foreach(next = _)
+
+                    // no starting hand may hold Lilypad Diaspora's Frog cards
+                    if (handsChecked.not && oldFrogs.not && game.turn > 0) {
+                        handsChecked = true
+                        implicit val g : Game = game
+                        game.factions.foreach { f =>
+                            if (game.states.get(f).exists(_ => f.hand.exists(Deck.frogEEE.has)))
+                                throw new Error(f.name + " began with a Frog card: " + f.hand.$)
+                        }
+                    }
                 }
             }
             catch {
