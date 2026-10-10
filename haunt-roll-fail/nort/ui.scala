@@ -1709,8 +1709,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     def splitGet(i : Int) = i match { case 0 => splitX case 1 => splitY case _ => splitP }
     def splitSet(i : Int, v : Double) = i match { case 0 => splitX = v case 1 => splitY = v case _ => splitP = v }
 
-    // The three handles, on top of the panes
-    lazy val handles = $(0, 1, 2)./ { i =>
+    // The three handles, on top of the panes; any left by an earlier game UI on the page go first, or they
+    // stay where that UI put them, as a second set
+    lazy val handles = {
+        val old = dom.document.querySelectorAll(".nort-split-handle")
+        0.until(old.length)./(old(_)).foreach(o => o.parentNode.removeChild(o))
+        handles0
+    }
+
+    lazy val handles0 = $(0, 1, 2)./ { i =>
         val vertical = i == 0
         val e = dom.document.createElement("div").asInstanceOf[dom.html.Element]
         e.className = "nort-split-handle"
