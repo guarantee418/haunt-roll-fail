@@ -824,6 +824,10 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case TeamTradeAction(_, mate, give, take, _) => |(gain { self.gain(give, -1) ; mate.gain(give, 1) ; mate.gain(take, -1) ; self.gain(take, 1) } + victoryStep("trading") - 15)
         case DoneAction(_) => |(0)
         case TradeDoneAction(_, _) => |(0)
+        case TeamOfferAction(_, mate, give, take, _) => |(gain { self.gain(give, -1) ; mate.gain(give, 1) ; mate.gain(take, -1) ; self.gain(take, 1) } + victoryStep("trading") - 15)
+        // Accepting: self gives take and gets give
+        case TeamAcceptAction(_, from, give, take, _) => |(gain { self.gain(take, -1) ; from.gain(take, 1) ; from.gain(give, -1) ; self.gain(give, 1) } - 5)
+        case TeamDeclineAction(_, _, _, _, _) => |(0)
 
         // SNAKE
         case ScorchedPlaceAction(_, area, _) =>
