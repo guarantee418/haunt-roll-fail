@@ -111,6 +111,10 @@ draws a tile when no neutral territory is left.
    - 3 fame per Altar of Kings.
    - 1 food / wood / lore per icon on controlled territories and buildings.
    - Trade: any 3 resources for 1 of choice, any number of times.
+     Here every player trades at the same time (with the supply and, in team
+     play, 1:1 with teammates), each until "Done trading"; the game goes on
+     when all are done (`TradePhaseAction` in `game.scala`; the Automa trades
+     first, by itself). A player done trading can't be traded with any more.
 4. **Winter** (from the first player), by units on the map:
 
    | Units | 1–3 | 4–6 | 7–9 | 10–12 | 13+ |

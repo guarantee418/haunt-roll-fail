@@ -426,27 +426,14 @@ object EventsExpansion extends Expansion {
             f.log("lost", b, "in", s.area, "to the", EventCard("earthquake"))
             Then(EarthquakeAction(f, rest, step, l, then))
 
-        // Ceremonial Bonfire: 2 wood for 1 lore, and 1 fame per trade
-        case TradeAction(f, then) if game.eventIs("ceremonial-bonfire") =>
-            val pp = CommonExpansion.payments(f)
-            val swaps = game.mates(f)./~(g => Resource.all.%(f.has(_) > 0)./~(r => Resource.all.%(_ != r).%(g.has(_) > 0)./(x => TeamTradeAction(f, g, r, x, then))))
-
-            if (pp.none && swaps.none && f.wood < 2)
-                Then(then)
-            else
-                Ask(f)
-                    .some(pp)(p => Resource.all./(r => TradeForAction(f, p, r, then)))
-                    .when(f.wood >= 2)(BonfireTradeAction(f, then))
-                    .add(swaps)
-                    .done(then)
-
+        // Ceremonial Bonfire: 2 wood for 1 lore (in CommonExpansion.tradeChoices), and 1 fame per trade
         case BonfireTradeAction(f, then) =>
             f.wood -= 2
             f.lore += 1
             f.fame += 1
             f.log("traded", Wood, Wood, "for", Lore, "and gained", 1.hl, FameIcon())
             game.advance(f, "trading")
-            Then(TradeAction(f, then))
+            Then(CommonExpansion.afterTrade(f, then))
 
         case TradeForAction(f, _, _, _) =>
             if (game.eventIs("ceremonial-bonfire")) {

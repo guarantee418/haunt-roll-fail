@@ -823,6 +823,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         // A teammate's resources count too; a small cost keeps trades from going back and forth
         case TeamTradeAction(_, mate, give, take, _) => |(gain { self.gain(give, -1) ; mate.gain(give, 1) ; mate.gain(take, -1) ; self.gain(take, 1) } + victoryStep("trading") - 15)
         case DoneAction(_) => |(0)
+        case TradeDoneAction(_, _) => |(0)
 
         // SNAKE
         case ScorchedPlaceAction(_, area, _) =>
