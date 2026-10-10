@@ -1242,6 +1242,21 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         container.attach.parent.style.outline = game.highlight.faction.has(p).?("2px solid #aaaaaa").|("")
     }
 
+    // The clans whose player looks at this screen: the one asked, or, while waiting, this browser's only player (none for spectators
+    // and, between turns, for hotseat games)
+    var viewers : $[Faction] = $
+
+    def look(l : $[Faction]) {
+        if (l != viewers) {
+            viewers = l
+            if (game.states.nonEmpty)
+                game.factions.%(game.ftp.contains).foreach(factionStatus)
+        }
+    }
+
+    // Fame tokens are kept face down: the panels show only the viewer's and its teammates' fame, everyone's once the game is over
+    def fameHidden(f : Faction) : Boolean = game.isOver.not && viewers.exists(v => v == f || game.mates(v).has(f)).not
+
     def factionStatus(f : Faction) {
         val container = statuses(game.players.indexOf(game.ftp(f)))
 
@@ -1336,12 +1351,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Dragon Clan: 1 more food or wood for the sacrifice, shown as a range on both, its upper end faint as only one of them gets it
         val pyre = f == Dragon && game.dragonHarvest.has(false).not && (game.dragonHarvest.any || NewBloodExpansion.sacrificeOptions(f)) && game.controlled(f).any
         // Tapping the lore (its icon or stockpile) opens the clan's Lore Tree
-        case class Column(icon : Elem, has : Int, gain : Int, cost : Int, extra : Boolean = false, open : |[Any] = None)
+        case class Column(icon : Elem, has : Int, gain : Int, cost : Int, extra : Boolean = false, open : |[Any] = None, hidden : Boolean = false) {
+            // Another player's fame is hidden (the fame tokens are kept face down), its harvest's fame isn't
+            def stock : Elem = hidden.?("?".hl).|(has.hl)
+        }
         val columns = $(
             Column(Food.elem, state.has(Food), next.food, winterFood, pyre),
             Column(Wood.elem, state.has(Wood), next.wood, winterWood, pyre),
             Column(Lore.elem, state.has(Lore), next.lore, 0, open = |(LoreTree(f))),
-            Column(FameIcon(), state.fame, next.fame, 0))
+            Column(FameIcon(), state.fame, next.fame, 0, hidden = fameHidden(f)))
 
         // Each cell taps through to the Winter chart, the lore's to the Lore Tree (one OnClick per cell: nested ones would pass both)
         def open(o : |[Any], e : Elem) : Elem = o.orElse(if (f != Automa) |(WinterChart(f)) else None)./(x => OnClick(x, e.div(styles.ledgerCell)(xlo.pointer))).|(e.div(styles.ledgerCell))
@@ -1351,7 +1369,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         def signed(n : Int, sign : String, s : Style) : Elem = (n > 0).?(cell((sign + n).styled(s))).|(none)
 
         val icons = cell(Empty) ~ columns./(c => open(c.open, c.icon)).merge
-        val stock = cell(Empty) ~ columns./(c => open(c.open, stacked.?(c.has.hl).|(Amount(c.has.hl, c.icon)))).merge
+        val stock = cell(Empty) ~ columns./(c => open(c.open, stacked.?(c.stock).|(Amount(c.stock, c.icon)))).merge
         def gain(c : Column) : Elem = c.extra.?(cell((("+" + c.gain).styled(styles.ledgerGain) ~ ("-" + (c.gain + 1)).styled(styles.ledgerGain, styles.ledgerMaybe)).spn)).|(signed(c.gain, "+", styles.ledgerGain))
         val harvest = cell(SeasonIcon.harvest) ~ columns./(gain).merge
         val winter = (f != Automa).?(cell(SeasonIcon.winter) ~ columns./(c => signed(c.cost, "-", styles.ledgerLoss)).merge).|(Empty)
@@ -2161,6 +2179,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     override def wait(self : $[F], factions : $[F], message : Elem) {
+        look(self.single./~(game.ptf.get).$)
+
         lastActions = $
         lastThen = null
 
@@ -2189,6 +2209,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             scalajs.js.timers.setTimeout(0) { then(actions.find(_.unwrap.is[CombatReportDoneAction]).get) }
             return
         }
+
+        look(faction./~(game.ptf.get).$)
 
         showNotifications(faction.$)
 
