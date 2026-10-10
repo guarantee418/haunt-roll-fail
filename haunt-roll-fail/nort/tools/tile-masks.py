@@ -14,7 +14,8 @@
 #
 # Needs Pillow, numpy, scipy and scikit-image. Run from anywhere:
 #   python3 haunt-roll-fail/nort/tools/tile-masks.py [--check DIR] [tile ...]
-# --check writes an overlay per tile to DIR to look at.
+# --check writes an overlay per tile to DIR to look at. With tiles named (and no --check), only their entries in
+# grid.scala are replaced.
 
 import json, os, re, sys
 import numpy as np
@@ -42,6 +43,9 @@ ORANGE = ('wild-poison', 'wild-peaks-1', 'wild-peaks-2', 'start-relic', 'start-l
 BARRIERS = {'horizon-bridge': [((0.31, 0.39), (0.61, 0.35)), ((0.33, 0.65), (0.64, 0.655))]}
 # Impassable middles inside an orange ring (Wastelands): no territory, left untinted
 RINGED = ('start-relic', 'start-lake', 'start-volcano', 'waste-kobold', 'waste-jotnar', 'waste-nastrond')
+# Wilderness, Wastelands and Uncharted Horizons tiles: figures keep off the rock bands along their borders
+def expansion(tid):
+    return tid.startswith(('wild-', 'waste-', 'horizon-')) or (tid.startswith('start-') and not tid.startswith('start-5'))
 # Beach tiles (Sea module): the land, split along the dashes on the wings; the sea and the transparent parts are left out
 BEACH = ('beach-port', 'beach-wing-w', 'beach-wing-e')
 
@@ -190,6 +194,40 @@ def icons(tid, a):
     return icon
 
 
+# The orange lines of impassable borders and rings, not the orange bushes: long thin pieces
+def orange_lines(a):
+    o = ndi.binary_dilation(orange(a), iterations=2)
+    lab, n = ndi.label(o)
+    keep = np.zeros(n + 1, bool)
+    for k, sl in enumerate(ndi.find_objects(lab)):
+        piece = lab[sl] == k + 1
+        keep[k + 1] = piece.sum() > 150 and piece.sum() < 0.3 * piece.size
+    return keep[lab]
+
+
+# The yellow dashes of rough borders: dashes in a row, not a lone yellow flower or icon
+def rough_dashes(a):
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    y = dashes(a, False) & (r > 190) & (g > 150) & (b < 120) & (r - b > 110) & (g - b > 80)
+    lab, n = ndi.label(ndi.binary_dilation(y, iterations=12))
+    count = ndi.sum(y, lab, range(1, n + 1))
+    keep = np.zeros(n + 1, bool)
+    keep[1:] = count > 150
+    return y & keep[lab]
+
+
+# Grey and slate-blue rocks (the walls along rough and impassable borders, the rock bands of some roads): big dull
+# patches no greener than they are blue
+def rocks(a):
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    v = a.mean(2)
+    rock = ndi.binary_opening((b >= g - 8) & (b >= r) & (a.max(2) - a.min(2) < 70) & (v > 45) & (v < 185), iterations=2)
+    lab, n = ndi.label(rock)
+    keep = np.zeros(n + 1, bool)
+    keep[1:] = ndi.sum(rock, lab, range(1, n + 1)) > 120
+    return keep[lab]
+
+
 def clutter(tid, areas, a, lab):
     # Busy art: edges, with the insides of closed outlines (bushes, rocks) filled in
     gray = a.mean(2)
@@ -197,6 +235,9 @@ def clutter(tid, areas, a, lab):
     edges = ndi.maximum_filter(ndi.gaussian_filter(grad, 1), 5)
     busy = ndi.gaussian_filter(ndi.grey_closing(edges, size=(21, 21)), 3)
     busy = np.clip(busy / 300.0, 0, 1) * 6
+    if expansion(tid):
+        rock = ndi.binary_dilation(rocks(a), iterations=3)
+        busy[rock] = np.maximum(busy[rock], 7)
     busy[ndi.binary_dilation(icons(tid, a), iterations=6)] = 9
 
     yy, xx = np.mgrid[0:N, 0:N] / N
@@ -225,13 +266,20 @@ def clutter(tid, areas, a, lab):
     # A little off the tile edges, which may be open
     edge = np.minimum.reduce([xx, yy, 1 - xx, 1 - yy])
     near = np.maximum(near, np.clip((0.04 - edge) / 0.04, 0, 1) * 3)
+    # Wilderness and Wastelands: the cliffs, rock walls and ridges along an impassable or rough border, wider than
+    # the road of a regular one
+    if expansion(tid):
+        for line, w in ((orange_lines(a), 0.1), (rough_dashes(a), 0.075)):
+            if line.any():
+                d = ndi.distance_transform_edt(~line) / N
+                near = np.maximum(near, np.clip((w - d) / w * 2, 0, 1) * 8)
 
     c = np.maximum(fixed, busy + near)
     return np.clip(c, 0, 9)
 
 
 SYMBOLS = ['0123456789', 'abcdefghij', 'klmnopqrst', 'ABCDEFGHIJ', 'KLMNOPQRST']
-# A cell of no territory (the impassable middle inside an orange ring)
+# A cell of no territory (the impassable middle inside an orange ring, the Great Lake's water)
 NONE = '.'
 
 
@@ -242,7 +290,7 @@ def grid(lab, c, none=None):
         row = ''
         for gx in range(GRID):
             y0, y1, x0, x1 = int(gy * s), int((gy + 1) * s), int(gx * s), int((gx + 1) * s)
-            # Mostly inside an impassable ring: no territory
+            # Mostly inside an impassable ring or the Great Lake: no territory
             if none is not None and none[y0:y1, x0:x1].mean() > 0.5:
                 row += NONE
                 continue
@@ -277,6 +325,7 @@ def main():
         holes = ndi.binary_dilation(icons(tid, a), iterations=2)
         if tid in BEACH:
             holes |= water | (px[..., 3] < 128) | (lab > len(areas))
+        ringed = None
         # The Great Lake's water belongs to no territory
         if tid == 'wild-lake':
             r, g, b = a[..., 0], a[..., 1], a[..., 2]
@@ -284,8 +333,8 @@ def main():
             lab_w, n = ndi.label(water)
             if n:
                 big = np.argmax(ndi.sum(water, lab_w, range(1, n + 1))) + 1
-                holes |= ndi.binary_fill_holes(lab_w == big)
-        ringed = None
+                ringed = ndi.binary_fill_holes(lab_w == big)
+                holes |= ringed
         if tid in RINGED:
             # The ring's outline can be broken where a border meets it, so its convex hull
             from skimage.morphology import convex_hull_image
@@ -333,7 +382,19 @@ def main():
             Image.fromarray(o.astype(np.uint8)).save(os.path.join(check, tid + '.png'))
         print(tid)
 
+    # Some tiles only: their entries replaced in the grid, the others kept (the other library versions make slightly
+    # different grids)
+    if check and args:
+        return
     if args:
+        path = os.path.join(NORT, 'grid.scala')
+        text = open(path).read()
+        for tid in ids:
+            rows = ''.join('            "%s",\n' % row for row in out[tid])
+            text, n = re.subn(r'(        "%s" -> \$\(\n)(?:            "[^"]*",\n)*' % re.escape(tid), lambda m: m.group(1) + rows, text)
+            if n != 1:
+                print('not in grid.scala:', tid)
+        open(path, 'w').write(text)
         return
 
     with open(os.path.join(NORT, 'grid.scala'), 'w') as f:
@@ -342,7 +403,7 @@ def main():
         f.write('// Each tile is 24 x 24 cells, rows from the top, unturned. A cell is its area (the index into the\n')
         f.write('// tile\'s areas: 0-9 for the first, a-j, k-t, A-J, K-T for the others) and its clutter, the digit or the\n')
         f.write('// letter\'s place in its group: 0 is open ground, 9 is a building space, a number or the unit marker.\n')
-        f.write('// A "%s" is no territory (the impassable middle inside an orange ring).\n' % NONE)
+        f.write('// A "%s" is no territory (the impassable middle inside an orange ring, the Great Lake\'s water).\n' % NONE)
         f.write('object TileGrid {\n    val size = %d\n\n' % GRID)
         f.write('    val groups : $[String] = $(%s)\n\n' % ', '.join('"%s"' % g for g in SYMBOLS))
         f.write('    val cells : Map[String, $[String]] = Map(\n')
