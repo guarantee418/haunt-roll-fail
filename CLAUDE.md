@@ -83,7 +83,9 @@ the orange impassable lines of the Peaks, the Poisonous Swamp's corners and the
 walled five-player tile), from the dash data in
 `nort/lines.scala` made by `nort/tools/BorderLines.java`; the area masks (`tile/mask/`) and the free-ground
 grid for placing warchiefs, Kaija and creatures (`nort/grid.scala`) are made
-from the tile art by `nort/tools/tile-masks.py`. Warchiefs, Kaija and
+from the tile art by `nort/tools/tile-masks.py` (it keeps figures off the Great Lake's water and,
+on the Wilderness and Wastelands tiles, the rock bands along impassable and rough borders; `tile-masks.py <tile ...>`
+regenerates only those tiles' grid entries). Warchiefs, Kaija and
 creatures are kept off the resource icons (`nort/icons.scala`, the holes in
 the masks, made by `nort/tools/ResourceIcons.java`), and the icons are drawn
 again over the pieces, so a figure that must overlap one never hides it. Tapping a piece on the map opens what it stands for, unless the tap

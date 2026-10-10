@@ -278,6 +278,15 @@ on. To implement one:
   the Great Lake's water untinted. Running it on all tiles changes the
   masks and grid of the photo tiles (`start-5`, `tile-31` to `-33`); only the
   `wild-*` outputs were committed.
+- Since 2026-10-10 the Great Lake's water is also no territory in the grid
+  (`.`, like the ringed middles), so Kaija, warchiefs and creatures are never
+  put on it (Robotos saw Kaija and a bear standing on the lake), and on the
+  Wilderness and Wastelands tiles (`expansion` in `tile-masks.py`) the cells
+  within 0.1 of an orange line or 0.075 of a rough border's yellow dashes
+  count as cluttered, keeping figures off the ridges, cliffs and rock walls.
+  `tile-masks.py <tile ...>` now replaces only those tiles' entries in
+  `grid.scala`; the 27 `wild-*`, `waste-*` and `start-<name>` tiles were
+  regenerated that way (their masks came out unchanged).
 - `NORT_WILDERNESS=1` makes the headless host always use the module.
 
 ## New Blood expansion (2026-10-04)
