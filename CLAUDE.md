@@ -56,7 +56,16 @@ module ("Solo vs Automa" on the main menu). Its Training Fields module, a two-pl
 a 4x3 grid of face-down tiles with seven Action cards each, is in
 `nort/training.scala`: "Training Grounds" on the main menu opens a page
 offering a local or an online game (the `modes` hooks in `meta.scala`,
-`modeMenu` in `hrf.scala`). "Adset" on the main menu (the `linkedModes` hook) opens
+`modeMenu` in `hrf.scala`). "Tutorial", first on the main menu (the `tutorialLessons`,
+`tutorialAbout` and `tutorialGame` hooks in `meta.scala`, `tutorialMenu` in `hrf.scala`, URL
+`/play/nort/tutorial`), teaches the game as the Stag Clan: twelve lessons on the rules and on
+playing them on this site (`Tutorial.lessons` in `nort/tutorial.scala`, all the text in one place),
+then a practice game, Stag (first) against the Wolf Clan's Easy bot, with the hidden
+`TutorialOption`: a "Tutorial tip" above the choices explains each one (`Tutorial.tip`, by the
+kind of action offered; `preinfo` in `nort/ui.scala`), "Hide tips" turns them off (each browser
+remembers it, `nort.tutorial-tips-hidden`) and "Tutorial Lessons" under the action pane opens the
+lessons over the game (`TutorialLessonView`). The practice game is saved like the other local
+games (kind `tutorial`). "Adset" on the main menu (the `linkedModes` hook) opens
 its own meta, `nort-adset` (`MetaAdset` in `nort/adset.scala`, URL `/play/nort-adset`):
 a free-for-all whose players are seats (`Seat`, "Player #n") that draft their clans
 during setup (random seat order, players + 2 clans drawn, a ban, Wilderness or

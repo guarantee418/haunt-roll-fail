@@ -57,6 +57,11 @@ object Meta extends MetaGame { mmm =>
 
     override def modeOptions(mode : String) = $(TrainingFieldsOption)
 
+    // The main menu's "Tutorial" (tutorial.scala): lessons as the Stag Clan, then a practice game against the Easy bot with tips
+    override def tutorialAbout = Tutorial.about
+    override def tutorialLessons = Tutorial.lessons
+    override def tutorialGame = |((Tutorial.seating, Tutorial.bots, Tutorial.options))
+
     // The main menu's "Adset": its own game (MetaAdset in adset.scala), where the clans are drafted during setup
     override def linkedModes = $(("Adset", "nort-adset"))
 
@@ -68,7 +73,8 @@ object Meta extends MetaGame { mmm =>
     // Training Fields is turned on by the main menu's Training Grounds only
     // Robotos (robotos.scala) comes from the bot chosen for a clan, not from the setup screen
     // Team play comes from the choice above the clan picker (pickerModes), the old fixed team variants are no longer offered
-    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TeamPlay, CombatReportAttackers, CombatReportDefenders) ++ RobotosOption.all ++ Module.teams.keys.$./(ModuleOption)
+    // The Tutorial's practice game has its tips on
+    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders) ++ RobotosOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // New Blood has no option: picking one of its clans brings it in
     val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ WarchiefsChoice.all ++ $(NoDrawDevelopments, HorizonsDevelopments) ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles) ++ AutomaLevelOption.all ++ hiddenOptions
@@ -250,8 +256,12 @@ object Meta extends MetaGame { mmm =>
         clans./~(f => $(0, 1, 2, 3)./(n => ClanCard(f, n).info.image)./(i => i -> ("/hrf/webp2/nort/images/card/clan/" + i.drop("card-clan-".length) + ".webp"))) ++
         clans./(f => ("clan-" + f.style) -> ("/hrf/webp2/nort/images/clan/" + f.style + ".webp")) ++
         clans./(f => Warchief.board(f) -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.boardFile(f) + ".webp")) ++
-        // The combat icons in rules text (CombatText)
-        $("axe", "skull")./(i => ("ui-" + i) -> ("/hrf/webp2/nort/images/ui/" + i + ".webp"))
+        // The combat icons in rules text (CombatText), and the icons in the Tutorial's lessons
+        $("axe", "skull", "food", "wood", "lore", "fame", "harvest", "winter", "confirm", "cancel")./(i => ("ui-" + i) -> ("/hrf/webp2/nort/images/ui/" + i + ".webp")) ++
+        // The Tutorial's lessons: the blue starting cards, the buildings and the phases aid
+        $("recruit", "move", "explore", "build", "feast")./(n => ("card-start-blue-" + n) -> ("/hrf/webp2/nort/images/card/start/blue-" + n + (n == "feast").??("-1") + ".webp")) ++
+        Building.all./(b => b.image -> ("/hrf/webp2/nort/images/token/building/" + b.image.drop("building-".length) + ".webp")) ++
+        $("phases")./(n => ("card-aid-" + n) -> ("/hrf/webp2/nort/images/card/aid-" + n + ".webp"))
     ).toMap
 
     def createGame(factions : $[Faction], options : $[O]) = new Game(factions, options)
@@ -409,6 +419,10 @@ object Meta extends MetaGame { mmm =>
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Creatures) && has(options, Wilderness), "token/creature", "creature-", "webp")(
         Creature.expansion./(c => ImageAsset(c.token.drop("creature-".length)))
+    ) ::
+    // The Tutorial's lessons, opened in its practice game
+    ConditionalAssetsList((factions : $[F], options : $[O]) => options.has(TutorialOption), "card", "card-aid-", "webp", lzy = Laziness.OnDemand)(
+        $(ImageAsset("phases"))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/building", "building-", "webp")(
         Building.all./(b => ImageAsset(b.image.drop("building-".length)))

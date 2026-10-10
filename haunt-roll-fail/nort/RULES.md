@@ -44,6 +44,7 @@ draws a tile when no neutral territory is left.
 | Uncharted Horizons: Sea module (Beach tiles, Ports, the Raid phase and the 24 Raid cards) | done 2026-10-05 (`sea.scala`, see Sea below) |
 | Uncharted Horizons: the 13 Development cards and 2 Achievement cards | done 2026-10-06 (`horizon-devs.scala`, option "Uncharted Horizons Development cards" next to "Ban card draw developments"; see below) |
 | Uncharted Horizons: the 5 map tiles, The Bridge among them | done 2026-10-06 (`Tiles.horizons`, option "Uncharted Horizons map tiles" under the Central tile choice; see below) |
+| Tutorial (not in the rulebook): lessons as the Stag Clan, then a practice game against the Easy bot with a tip for every choice | done 2026-10-10 (`tutorial.scala`, "Tutorial" on the main menu) |
 | Uncharted Horizons: Training Fields module (two-player duel) | done 2026-10-05 (`training.scala`, "Training Grounds" on the main menu, see Training Fields below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
