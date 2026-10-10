@@ -472,8 +472,10 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
     def has(m : Module) = modules.has(m)
 
-    // Clans played by the cheating Robotos bot (robotos.scala)
-    val cheaters : $[Faction] = options.of[RobotosOption]./(_.clan).%(setup.has)
+    // Clans played by the cheating Robotos bot (robotos.scala); in an Adset game, the clans drafted by its seats (AdsetExpansion.assign)
+    def computeCheaters : $[Faction] = options.of[RobotosOption]./(_.clan).%(setup.has) ++ options.of[RobotosSeatOption]./~(o => ptf.get(o.seat))
+
+    var cheaters : $[Faction] = computeCheaters
 
     def robotos(f : Faction) : Boolean = cheaters.has(f)
 
@@ -483,7 +485,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // Module expansions come first, so they can take over any core action; before them the Uncharted Horizons
     // Development cards, which only act on their own actions and specials (and in an Adset game, its draft)
     // Robotos goes first after the draft: it takes over what creatures do to its clans
-    def computeExpansions : $[Expansion] = adset.$(AdsetExpansion) ++ cheaters.any.$(RobotosExpansion) ++ $(HorizonDevsExpansion) ++ modules.sortBy(_.priority)./~(_.expansion) ++ $(MapExpansion, CardsExpansion, CommonExpansion)
+    def computeExpansions : $[Expansion] = adset.$(AdsetExpansion) ++ (cheaters.any || options.of[RobotosSeatOption].any).$(RobotosExpansion) ++ $(HorizonDevsExpansion) ++ modules.sortBy(_.priority)./~(_.expansion) ++ $(MapExpansion, CardsExpansion, CommonExpansion)
 
     var expansions : $[Expansion] = computeExpansions
 
