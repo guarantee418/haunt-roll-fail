@@ -106,6 +106,9 @@ class CouncilPlayer(val faction : Council)(implicit val game : Game) extends Fac
 
     def placedAssemblies = all(ClosedAssembly).num + all(GoverningAssembly).num
 
+    // Warriors removed by Empower, kept in the supply until they are placed in the Loyalists or not
+    var empowered : Int = 0
+
     def craft = assemblies./(_.asset)
 }
 
@@ -129,6 +132,7 @@ case class CouncilEmpowerAction(self : Council, c : Clearing) extends ForcedActi
 case class CouncilEmpowerRolledAction(self : Council, c : Clearing, n : Int) extends RolledAction[Int] { def rolled = $(n) }
 case class CouncilEmpowerLoyalistsAction(self : Council, n : Int) extends ForcedAction
 case class CouncilEmpowerScoreAction(self : Council, c : Clearing) extends ForcedAction
+case class CouncilEmpowerSupplyAction(self : Council) extends ForcedAction
 case class CouncilBanishDestinationAction(self : Council, b : Battle, e : Faction, l : $[Figure], t : Clearing, then : ForcedAction) extends ForcedAction
 
 case class CouncilInspireAction(f : Council) extends ForcedAction
@@ -521,24 +525,37 @@ object CouncilExpansion extends FactionExpansion[Council] {
 
             f.log("rolled", r.roll, "and removed", n.hl, f.warrior.nof(n)(f), "in", c)
 
-            f.from(c) --> n.times(f.warrior) --> game.unreplaced
+            f.from(c) --> n.times(f.warrior) --> f.reserve
+
+            f.empowered = n
 
             val canScore = f.rules(c)
 
             Ask(f).group("Empower".styled(f), "in", c)
                 .add(CouncilEmpowerLoyalistsAction(f, n).as("Place", n.hl, f.warrior.nof(n)(f), "in", Loyalists.of(f, 2)).!(n == 0))
                 .add(CouncilEmpowerScoreAction(f, c).as("Score", 1.vp).!(canScore.not, "don't rule"))
-                .skip(CouncilConveneMainAction(f))
+                .skip(CouncilEmpowerSupplyAction(f))
 
         case CouncilEmpowerLoyalistsAction(f, n) =>
             val k = toLoyalists(f, n)
 
             f.log("gained", k.hl, Loyalists.of(f, k))
 
-            CouncilConveneMainAction(f)
+            f.empowered -= k
+
+            CouncilEmpowerSupplyAction(f)
 
         case CouncilEmpowerScoreAction(f, c) =>
             f.oscore(1)("empowering in", c)
+
+            CouncilEmpowerSupplyAction(f)
+
+        // The removed warriors not placed in the Loyalists stay in the supply (Coffin Makers' Homeland errata takes them)
+        case CouncilEmpowerSupplyAction(f) =>
+            if (options.has(ErrataCoffinMakers))
+                f.reserve --> min(f.empowered, f.pooled(f.warrior)).times(f.warrior) --> game.unreplaced
+
+            f.empowered = 0
 
             CouncilConveneMainAction(f)
 

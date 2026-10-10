@@ -437,8 +437,12 @@ file covers the build, server and deploy. No session can ssh to the server
   Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
   box) and the Homeland errata, from a player's Google Drive (2026-10-10). The shared deck's back follows
   the deck option (`deckBack` in `root/ui.scala`: `card-back-art`, `-ep`, `-sd`). The same Drive has
-  the Council and Knaves boards (English and French) with the later Homeland revisions of their rules
-  (Inspire, Empower, Run Away!, ...); they are not used, since the code implements the older boards.
+  the revised Council and Knaves boards (English and French), now `tc-board-h` and `kd-board-h`. The
+  code already followed most of their changes (Banish hits only warriors and the Council picks where
+  they go, Have at Thee! only for the Acting Captain, Run Away!'s forest picked by the enemy); since
+  then, Empower's removed warriors wait in the supply (`empowered` in `CouncilPlayer`) until they go to
+  the Loyalists, and Governors keeps the Knaves from crafting with a Captain or acclaim at a Governing
+  assembly (Filch and Serve).
 - Coffin Makers has three rules: forcibly removed warriors only (no option), any warrior returned to a
   supply (`UnthematicCoffinMakers`), or the Homeland errata, "warriors removed, not replaced, from the
   map to their supply" (`ErrataCoffinMakers`, the default and in the Official presets). In `root/game.scala`,
@@ -502,13 +506,12 @@ file covers the build, server and deploy. No session can ssh to the server
   "Official | Riverfolk ..." presets add the Vagabond back.
 - Tapping a Root faction's status pane opens its overlay (`onFactionStatus` in
   `root/ui.scala`) with its faction board. The boards of the base and
-  expansion factions, Twilight Council and Knaves (`boardImage`; `mc-board`,
+  expansion factions (`boardImage`; `mc-board`,
   `ed-board`, ..., `tc-board-h`, `kd-board-h`, loaded on demand) are the
   board fronts from the Tabletop Simulator mod "Root - Ultimate Collection"
   (Steam workshop 2516434159; its objects are JSON strings inside the
   `EVERYTHING['Standard'][<faction>]` Lua tables). Its Council and Knaves
-  boards match the rules implemented here; the Homeland mod (3354438467) has
-  later revisions. Mirror factions show their original's board. Marquise,
+  boards were replaced on 2026-10-10 by the revised ones a player shared (see above). Mirror factions show their original's board. Marquise,
   Eyrie, Alliance, Vagabond, Riverfolk, Lizards and Corvids have overlays
   like the Homeland ones: board, turn phases (`phases`), pieces, and a
   "More Info" toggle with short rule notes. Panes are tappable before a
