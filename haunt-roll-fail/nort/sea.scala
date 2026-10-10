@@ -196,6 +196,22 @@ object SeaExpansion extends Expansion {
         ok.??(t.areas./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not && game.gear.contains(s).not).%(s => kinds.has(MapExpansion.spaceKind(s))))
     }
 
+    // The turn of a Beach whose sea lies in direction d from its Port
+    def rotation(d : Side) = d match {
+        case South => 0
+        case West => 1
+        case North => 2
+        case East => 3
+    }
+
+    // The Beaches (Port spot, direction of its sea) around the five-player starting tile at (0, 0) and (1, 0),
+    // as in the rulebook's five-player picture: the first tiles go beside it, the ring of spaces around them stays empty;
+    // with six players the west side gets two Beaches like the east side
+    def fivePlayerBeaches(six : Boolean) : $[((Int, Int), Side)] =
+        six.?($(((-2, -2), West), ((-2, 2), West))).|($(((-3, 0), West))) ++
+        $(((3, -2), East), ((3, 2), East)) ++
+        six.?($(((0, -3), North), ((1, 3), South))).|($(((-1, -3), North), ((-1, 3), South)))
+
     def toBottom(c : RaidCard)(implicit game : Game) {
         game.raidDeck :+= c
     }
@@ -215,36 +231,45 @@ object SeaExpansion extends Expansion {
             game.beached :+= f
 
             val centre = MapExpansion.centre
-            Side.all.find(s => centre.has((spot.x + s.dx, spot.y + s.dy)))./(_.opposite).foreach { d =>
-                val r = d match {
-                    case South => 0
-                    case West => 1
-                    case North => 2
-                    case East => 3
+
+            def free(x : Int, y : Int) = game.board.empty(x, y)
+
+            // The cells of a Beach with its Port at (px, py), the sea in direction d: Port, sea and the two wings
+            def cells(px : Int, py : Int, d : Side) = {
+                val r = rotation(d)
+                val (sx, sy) = (px + d.dx, py + d.dy)
+                $((px, py), (sx, sy), (sx + West.rotate(r).dx, sy + West.rotate(r).dy), (sx + East.rotate(r).dx, sy + East.rotate(r).dy))
+            }
+
+            val beach : |[((Int, Int), Side)] =
+                if (centre.num > 1)
+                    // Five or six players: the Beaches of the rulebook's picture around the five-player starting tile, a single
+                    // one on the west side (two with six players), two on the east side with one space between them,
+                    // one north and one south; each player takes the free one nearest to their first tile
+                    fivePlayerBeaches(game.arity >= 6).%{ case ((px, py), d) => cells(px, py, d).forall { case (x, y) => free(x, y) } }
+                        .sortBy { case ((px, py), _) => (px - spot.x).abs + (py - spot.y).abs }.starting
+                else
+                    // Straight out from the first tile, beyond an empty space (further out if taken)
+                    Side.all.find(s => centre.has((spot.x + s.dx, spot.y + s.dy)))./(_.opposite)./~{ d =>
+                        2.to(4).map(k => (spot.x + k * d.dx, spot.y + k * d.dy)).find { case (px, py) =>
+                            cells(px, py, d).forall { case (x, y) => free(x, y) } &&
+                            free(px + West.rotate(rotation(d)).dx, py + West.rotate(rotation(d)).dy) && free(px + East.rotate(rotation(d)).dx, py + East.rotate(rotation(d)).dy)
+                        }./(_ -> d)
+                    }
+
+            beach.foreach { case ((px, py), d) =>
+                val r = rotation(d)
+
+                $("beach-port", "beach-sea", "beach-wing-w", "beach-wing-e").zip(cells(px, py, d)).foreach { case (tile, (x, y)) =>
+                    game.board.place(Placement(tile, x, y, r))
                 }
-                val ws = West.rotate(r)
-                val es = East.rotate(r)
 
-                def free(x : Int, y : Int) = game.board.empty(x, y)
+                val p = AreaRef(px, py, "p")
 
-                2.to(4).map(k => (spot.x + k * d.dx, spot.y + k * d.dy)).find { case (px, py) =>
-                    val (sx, sy) = (px + d.dx, py + d.dy)
-                    free(px, py) && free(sx, sy) && free(sx + ws.dx, sy + ws.dy) && free(sx + es.dx, sy + es.dy) &&
-                    free(px + ws.dx, py + ws.dy) && free(px + es.dx, py + es.dy)
-                }.foreach { case (px, py) =>
-                    val (sx, sy) = (px + d.dx, py + d.dy)
-                    game.board.place(Placement("beach-port", px, py, r))
-                    game.board.place(Placement("beach-sea", sx, sy, r))
-                    game.board.place(Placement("beach-wing-w", sx + ws.dx, sy + ws.dy, r))
-                    game.board.place(Placement("beach-wing-e", sx + es.dx, sy + es.dy, r))
+                game.ports :+= p
+                game.raids += p -> Raid(None, None, 0, 0)
 
-                    val p = AreaRef(px, py, "p")
-
-                    game.ports :+= p
-                    game.raids += p -> Raid(None, None, 0, 0)
-
-                    f.log("placed a Beach tile with a Port in", p)
-                }
+                f.log("placed a Beach tile with a Port in", p)
             }
 
             UnknownContinue
