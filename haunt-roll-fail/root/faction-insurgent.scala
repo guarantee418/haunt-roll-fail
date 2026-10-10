@@ -604,7 +604,7 @@ object InsurgentExpansion extends FactionExpansion[Insurgent] {
 
             val n = f.reward(f.pooled(Sympathy))
 
-            f.from(c) --> f.warrior --> game.recycle
+            f.from(c) --> f.warrior --> game.removed
 
             f.reserve --> Sympathy --> c
 

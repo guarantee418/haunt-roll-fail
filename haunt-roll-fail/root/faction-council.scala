@@ -521,7 +521,7 @@ object CouncilExpansion extends FactionExpansion[Council] {
 
             f.log("rolled", r.roll, "and removed", n.hl, f.warrior.nof(n)(f), "in", c)
 
-            f.from(c) --> n.times(f.warrior) --> f.reserve
+            f.from(c) --> n.times(f.warrior) --> game.unreplaced
 
             val canScore = f.rules(c)
 

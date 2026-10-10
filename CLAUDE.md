@@ -433,6 +433,19 @@ file covers the build, server and deploy. No session can ssh to the server
     taken; the player keeps scoring (`demagogue` flag in `FactionState`).
   - Feather Rufflers, Spy Network, Silver-Tongue and Friend are usable from
     the Birdsong, Daylight and Evening menus on your own turn.
+- The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
+  Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
+  box) and the Homeland errata, from a player's Google Drive (2026-10-10). The shared deck's back follows
+  the deck option (`deckBack` in `root/ui.scala`: `card-back-art`, `-ep`, `-sd`). The same Drive has
+  the Council and Knaves boards (English and French) with the later Homeland revisions of their rules
+  (Inspire, Empower, Run Away!, ...); they are not used, since the code implements the older boards.
+- Coffin Makers has three rules: forcibly removed warriors only (no option), any warrior returned to a
+  supply (`UnthematicCoffinMakers`), or the Homeland errata, "warriors removed, not replaced, from the
+  map to their supply" (`ErrataCoffinMakers`, the default and in the Official presets). In `root/game.scala`,
+  `dead` is forcible removal, `recycle` any return, `removed` a removal from the map without being forced
+  or replaced, and `unreplaced` the same for removals that went to the supply before the errata (Council's
+  Empower). Replacements (Hundreds' Anoint and Mob, Lilypad's flips) and returns from off the map
+  (officers, acolytes, payments, captives) don't go to Coffin Makers under the errata.
 - The Gorge map (`GorgeBoard` in `root/maps.scala`, option `GorgeMap`) uses
   the plain board art the owner uploaded (2026-10-06, no score track, item slots
   or logo; `map-art.webp`), scaled and shifted onto the 2416x2214 frame of the
@@ -538,7 +551,8 @@ file covers the build, server and deploy. No session can ssh to the server
   English), following the official French edition. French card art for the base and Exiles and
   Partisans decks and the eight base and Riverfolk/Underworld faction boards are in
   `webp2/root/images/card/deck/fr/` and `faction/fr/` (asset prefix `fr:`), cut by
-  `root/tools/french-assets.py` from the TTS mod "Root FR" (Steam workshop 1829904481).
+  `root/tools/french-assets.py` from the TTS mod "Root FR" (Steam workshop 1829904481); the boards
+  (and the Hundreds, Keepers and Lilypad Diaspora ones) were replaced on 2026-10-10 by newer scans from a player.
 - Bot games can be run headless on the JVM with `root/host.scala` (see
   `host.xsbt` for the source exclusions); it also checks that every action
   serializes and parses back.

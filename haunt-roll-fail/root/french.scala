@@ -758,7 +758,8 @@ object French {
 
     def text(s : String) : String = cache.getOrElseUpdate(s, translate(s))
 
-    // French card and faction board images (root/tools/french-assets.py), loaded on demand under "fr:"
+    // French card and faction board images (root/tools/french-assets.py; the Hundreds, Keepers and Lilypad boards
+    // and newer copies of the others from a player on 2026-10-10), loaded on demand under "fr:"
     val cards = $(
         "armorers", "woodland-runners", "arms-trader", "bird-crossbow", "sappers", "brutal-tactics", "royal-claim",
         "fox-ambush", "gently-used-knapsack", "fox-root-tea", "fox-travel-gear", "protection-racket", "foxfolk-steel", "anvil", "stand-and-deliver", "tax-collector",
@@ -771,7 +772,7 @@ object French {
         "murine-broker", "master-engravers",
     )
 
-    val boards = $("mc-board", "ed-board", "wa-board", "vb-board", "lc-board", "rf-board", "cc-board", "ud-board")
+    val boards = $("mc-board", "ed-board", "wa-board", "vb-board", "lc-board", "rf-board", "cc-board", "ud-board", "lh-board", "ki-board", "hld-board")
 
     private val images = (cards ++ boards).toSet
 

@@ -136,7 +136,7 @@ object StandardDeckExpansion extends Expansion {
         case TaxCollectorAction(f, c, p, then) =>
             f.used :+= TaxCollector
 
-            f.from(c) --> p --> game.recycle
+            f.from(c) --> p --> game.removed
 
             DrawCardsAction(f, 1, ConcatMessage(WithEffect(TaxCollector), InClearing(c)), AddCardsAction(f, then))
 

@@ -477,7 +477,7 @@ object MischiefExpansion extends FactionExpansion[Mischief] {
                 }
             }
             else
-                f.from(c) --> n.times(Raven) --> game.recycle
+                f.from(c) --> n.times(Raven) --> game.removed
 
             f.placed += 1
 

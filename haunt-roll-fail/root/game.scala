@@ -1710,18 +1710,38 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
 
     lazy val efforts = game.pieces.register(Neutral -> Effort, u => u.piece == Heart, 0.to(33)./(i => Figure(Neutral, Heart, i)))
 
+    def coffinable(u : Figure) = u.piece.is[Warrior] && u.piece.is[Tenacious].not && factions.%(_.has(CoffinMakers)).any && u.faction.ignored.has(IgnoreWarriorRemovalEffects).not
+
+    // Forcibly removed
     val dead = RedirectRegion { u =>
-        if (u.piece.is[Warrior] && u.piece.is[Tenacious].not && factions.%(_.has(CoffinMakers)).any && u.faction.ignored.has(IgnoreWarriorRemovalEffects).not)
+        if (coffinable(u))
             coffins
         else
             u.faction.reserve
     }
 
+    // Returned to the supply from anywhere
     val recycle = RedirectRegion { u =>
         if (u.piece == Heart)
             efforts
         else
-        if (u.piece.is[Warrior] && u.piece.is[Tenacious].not && factions.%(_.has(CoffinMakers)).any && u.faction.ignored.has(IgnoreWarriorRemovalEffects).not && options.has(UnthematicCoffinMakers))
+        if (coffinable(u) && options.has(UnthematicCoffinMakers))
+            coffins
+        else
+            u.faction.reserve
+    }
+
+    // Removed from the map without being forced or replaced (Coffin Makers' Homeland errata)
+    val removed = RedirectRegion { u =>
+        if (coffinable(u) && (options.has(UnthematicCoffinMakers) || options.has(ErrataCoffinMakers)))
+            coffins
+        else
+            u.faction.reserve
+    }
+
+    // Same, for removals that went to the supply before the errata
+    val unreplaced = RedirectRegion { u =>
+        if (coffinable(u) && options.has(ErrataCoffinMakers))
             coffins
         else
             u.faction.reserve
