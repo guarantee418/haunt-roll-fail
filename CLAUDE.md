@@ -84,7 +84,7 @@ walled five-player tile), from the dash data in
 `nort/lines.scala` made by `nort/tools/BorderLines.java`; the area masks (`tile/mask/`) and the free-ground
 grid for placing warchiefs, Kaija and creatures (`nort/grid.scala`) are made
 from the tile art by `nort/tools/tile-masks.py` (it keeps figures off the Great Lake's water and,
-on the Wilderness and Wastelands tiles, the rock bands along impassable and rough borders; `tile-masks.py <tile ...>`
+on the Wilderness, Wastelands and Uncharted Horizons tiles, the rocks and the rock bands along impassable and rough borders; `tile-masks.py <tile ...>`
 regenerates only those tiles' grid entries). Warchiefs, Kaija and
 creatures are kept off the resource icons (`nort/icons.scala`, the holes in
 the masks, made by `nort/tools/ResourceIcons.java`), and the icons are drawn

@@ -43,9 +43,9 @@ ORANGE = ('wild-poison', 'wild-peaks-1', 'wild-peaks-2', 'start-relic', 'start-l
 BARRIERS = {'horizon-bridge': [((0.31, 0.39), (0.61, 0.35)), ((0.33, 0.65), (0.64, 0.655))]}
 # Impassable middles inside an orange ring (Wastelands): no territory, left untinted
 RINGED = ('start-relic', 'start-lake', 'start-volcano', 'waste-kobold', 'waste-jotnar', 'waste-nastrond')
-# Wilderness and Wastelands tiles: figures keep off the rock bands along their impassable and rough borders
+# Wilderness, Wastelands and Uncharted Horizons tiles: figures keep off the rock bands along their borders
 def expansion(tid):
-    return tid.startswith(('wild-', 'waste-')) or (tid.startswith('start-') and not tid.startswith('start-5'))
+    return tid.startswith(('wild-', 'waste-', 'horizon-')) or (tid.startswith('start-') and not tid.startswith('start-5'))
 # Beach tiles (Sea module): the land, split along the dashes on the wings; the sea and the transparent parts are left out
 BEACH = ('beach-port', 'beach-wing-w', 'beach-wing-e')
 
@@ -216,6 +216,18 @@ def rough_dashes(a):
     return y & keep[lab]
 
 
+# Grey and slate-blue rocks (the walls along rough and impassable borders, the rock bands of some roads): big dull
+# patches no greener than they are blue
+def rocks(a):
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    v = a.mean(2)
+    rock = ndi.binary_opening((b >= g - 8) & (b >= r) & (a.max(2) - a.min(2) < 70) & (v > 45) & (v < 185), iterations=2)
+    lab, n = ndi.label(rock)
+    keep = np.zeros(n + 1, bool)
+    keep[1:] = ndi.sum(rock, lab, range(1, n + 1)) > 120
+    return keep[lab]
+
+
 def clutter(tid, areas, a, lab):
     # Busy art: edges, with the insides of closed outlines (bushes, rocks) filled in
     gray = a.mean(2)
@@ -223,6 +235,9 @@ def clutter(tid, areas, a, lab):
     edges = ndi.maximum_filter(ndi.gaussian_filter(grad, 1), 5)
     busy = ndi.gaussian_filter(ndi.grey_closing(edges, size=(21, 21)), 3)
     busy = np.clip(busy / 300.0, 0, 1) * 6
+    if expansion(tid):
+        rock = ndi.binary_dilation(rocks(a), iterations=3)
+        busy[rock] = np.maximum(busy[rock], 7)
     busy[ndi.binary_dilation(icons(tid, a), iterations=6)] = 9
 
     yy, xx = np.mgrid[0:N, 0:N] / N

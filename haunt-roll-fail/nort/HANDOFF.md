@@ -284,9 +284,12 @@ on. To implement one:
   Wilderness and Wastelands tiles (`expansion` in `tile-masks.py`) the cells
   within 0.1 of an orange line or 0.075 of a rough border's yellow dashes
   count as cluttered, keeping figures off the ridges, cliffs and rock walls.
+  The same goes for the Uncharted Horizons tiles (`horizon-*`), and on all of
+  them grey and slate-blue rocks (`rocks`: the walls and the rock bands along
+  some roads, also a few statues and Hrimgandr's ice) count as busy art (7).
   `tile-masks.py <tile ...>` now replaces only those tiles' entries in
-  `grid.scala`; the 27 `wild-*`, `waste-*` and `start-<name>` tiles were
-  regenerated that way (their masks came out unchanged).
+  `grid.scala`; the 32 `wild-*`, `waste-*`, `start-<name>` and `horizon-*`
+  tiles were regenerated that way (their masks came out unchanged).
 - `NORT_WILDERNESS=1` makes the headless host always use the module.
 
 ## New Blood expansion (2026-10-04)
