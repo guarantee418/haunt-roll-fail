@@ -61,6 +61,17 @@ object RobotosOption {
     val all : $[RobotosOption] = Meta.factions./(RobotosOption(_))
 }
 
+// The same for a seat of an Adset game (adset.scala), whose clan is known only once it is drafted:
+// the clan the seat picks plays by the Robotos rules (game.cheaters)
+case class RobotosSeatOption(seat : Seat) extends GameOption {
+    val group = "Robotos".txt
+    def valueOn = seat.name.txt
+}
+
+object RobotosSeatOption {
+    val all : $[RobotosSeatOption] = MetaAdset.factions./(RobotosSeatOption(_))
+}
+
 // The Automa's difficulty (Solo module): 1, the player also wins with four closed territories with large buildings;
 // 3 and up need the Creatures module; from 4, the Automa draws one more card each year per level above 3
 case class AutomaLevelOption(level : Int) extends GameOption with OneOfGroup with ImportantOption {

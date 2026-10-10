@@ -846,6 +846,14 @@ it, and one more unit with every Recruit (on top of Training Camps and the rest)
   games with creatures: Robotos won 17 of 20 with the first three cheats,
   24 of 25 with all of them. `ReplayCheck 6 hard` with
   `NORT_HARD=robotos`: no mismatches.
+- **Adset (2026-10-10):** "Robotos" is also a bot for an Adset seat
+  (`MetaAdset.getBots`). Its clan is known only after the draft, so
+  `MetaAdset.botOptions` adds a hidden `RobotosSeatOption(seat)` instead, and
+  `game.cheaters` (now a var, `computeCheaters`) takes the clan each such seat
+  drafts, recomputed in `AdsetExpansion.assign`; `RobotosExpansion` is on from
+  the start when a seat has the option. The seat drafts at random, like the
+  other Adset bots, then plays as the Hard bot (`BotAdset`). `NORT_ADSET=1
+  NORT_HARD=robotos` in the host makes the first seat Robotos.
 
 ## Known simplifications and gaps
 

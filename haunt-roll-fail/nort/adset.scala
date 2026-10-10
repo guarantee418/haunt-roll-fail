@@ -116,6 +116,7 @@ object AdsetExpansion extends Expansion {
         game.factions = game.setup
         game.seating = game.setup
         game.colors += c -> color(p)
+        game.cheaters = game.computeCheaters
         game.states += c -> new FactionState(c)
         game.tileHand += c -> game.seatTiles.get(p).|($)
         game.seatTiles -= p
@@ -278,7 +279,7 @@ object AdsetExpansion extends Expansion {
 }
 
 
-// A seat's bot: random during the draft, then the clan's Easy or Hard bot
+// A seat's bot: random during the draft, then the clan's Easy or Hard bot (Robotos plays as the Hard bot)
 class BotAdset(p : Player, hard : Boolean) extends EvalBot {
     def draft(a : Action) = a.unwrap match {
         case _ : AdsetBanAction | _ : AdsetLandsAction | _ : AdsetCentralAction | _ : AdsetPickAction => true
@@ -333,7 +334,8 @@ object MetaAdset extends MetaGame {
     val always : $[O] = $(ModuleOption(Creatures), HorizonsDevelopments)
 
     // The old combat report options do nothing now (the report is a setting); kept so the games that have them still load
-    override val hiddenOptions : $[O] = $(CombatReportAttackers, CombatReportDefenders)
+    // Robotos (robotos.scala) comes from the bot chosen for a seat, as in Meta.botOptions
+    override val hiddenOptions : $[O] = $(CombatReportAttackers, CombatReportDefenders) ++ RobotosSeatOption.all
 
     val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ WarchiefsChoice.all ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ hiddenOptions
 
@@ -366,9 +368,12 @@ object MetaAdset extends MetaGame {
 
     def createGame(factions : $[F], options : $[O]) = new Game(factions, options.diff(always) ++ always)
 
-    def getBots(f : F) = $("Easy", "Hard")
+    // Robotos: the Hard bot, cheating, for the clan the seat drafts (robotos.scala)
+    def getBots(f : F) = $("Easy", "Hard", "Robotos")
 
-    def getBot(f : F, b : String) = new BotAdset(f, b == "Hard")
+    override def botOptions(seating : $[F], bots : Map[F, String]) = seating.%(f => bots.get(f).has("Robotos"))./(RobotosSeatOption(_))
+
+    def getBot(f : F, b : String) = new BotAdset(f, b == "Hard" || b == "Robotos")
 
     def defaultBot(f : F) = "Easy"
 
