@@ -2294,6 +2294,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         helper.&(Image(id, styles.wr3x) *** count) ~ helper.&(Image(id + "-empty", styles.wr3x) *** rest)
     )
 
+    // The shared deck's card back
+    def deckBack = game.options.of[DeckOption].lastOption @@ {
+        case Some(ExilesDeck) => "card-back-art-ep"
+        case Some(SquiresDeck) => "card-back-art-sd"
+        case _ => "card-back-art"
+    }
+
     def boardImage(f : Faction) : |[String] = f @@ {
         case _ : Feline => Some("mc-board")
         case _ : Aviary => Some("ed-board")
@@ -4715,7 +4722,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         case "view-deck" =>
             showOverlay(overlayScrollX("Draw Deck".hl.div ~
-                1.to(game.deck.num)./{ n => Div(Image("card-back-art", styles.card), xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined) }.merge), onClick)
+                1.to(game.deck.num)./{ n => Div(Image(deckBack, styles.card), xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined) }.merge), onClick)
 
         case ("view-frog-deck", f : InvasiveEEE) =>
             showOverlay(overlayScrollX(("Pond".styled(f) ~ " (top card first)").div ~
@@ -4743,17 +4750,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         case ("view-hand", f : Fanatic) =>
             showOverlay(overlayScrollX((f.name.styled(f) ~ " hand").div ~
-                1.to(f.hand.num)./{ n => Div(Image("card-back-art", styles.card), xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined) }.merge ~
+                1.to(f.hand.num)./{ n => Div(Image(deckBack, styles.card), xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined) }.merge ~
                 f.revealed./{ d => OnClick(d, Div(d.img, xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined)) }.merge), onClick)
 
         case ("view-hand", f : Underground) =>
             showOverlay(overlayScrollX((f.name.styled(f) ~ " hand").div ~
-                1.to(f.hand.num)./{ n => Div(Image("card-back-art", styles.card), xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined) }.merge ~
+                1.to(f.hand.num)./{ n => Div(Image(deckBack, styles.card), xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined) }.merge ~
                 f.revealed./{ d => OnClick(d, Div(d.img, xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined)) }.merge), onClick)
 
         case ("view-hand", f : Faction) =>
             showOverlay(overlayScrollX((f.name.styled(f) ~ " hand").div ~
-                1.to(f.hand.num)./{ n => Div(Image("card-back-art", styles.card), xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined) }.merge), onClick)
+                1.to(f.hand.num)./{ n => Div(Image(deckBack, styles.card), xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined) }.merge), onClick)
 
         case ("view-decree", f : Aviary) =>
             showOverlay(overlayScrollX(

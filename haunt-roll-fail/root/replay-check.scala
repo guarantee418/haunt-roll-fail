@@ -15,6 +15,7 @@ import hrf.logger._
 // performVoid) gives the same state as the live game at that point.
 object ReplayCheck {
     var marsh = false
+    var exiles = false
 
     def options(seating : $[Faction]) : $[Meta.O] = marsh.?($[Meta.O](
         MarshMap, AllRandomClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
@@ -22,7 +23,7 @@ object ReplayCheck {
     )).|($[Meta.O](
         AutumnMap, DefaultClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
         FerryLandmark, LostCityLandmark, SeatingGiven, FactionSeatingGiven, SetupOrderPriority, CardDraftStandard,
-    )) ++ seating./(IncludeFaction)
+    )).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)) ++ exiles.$(ErrataCoffinMakers) ++ seating./(IncludeFaction)
 
     def privateMap(o : AnyRef, suffix : String) : Map[Any, Any] = {
         val f = o.getClass.getDeclaredFields.filter(_.getName.endsWith(suffix)).head
@@ -93,6 +94,7 @@ object ReplayCheck {
     def main(args : Array[String]) {
         val games = args.lift(0)./(_.toInt).|(6)
         marsh = args.exists(_.startsWith("marsh"))
+        exiles = args.contains("exiles")
         val pool : $[$[Faction]] = args.lift(1)./(_ match {
             case "base" => $($(MC, ED, WA, VB), $(MC, ED, WA, LC), $(MC, ED, RF, UD))
             case "ld" => $($(MC, ED, WA, LDvE))

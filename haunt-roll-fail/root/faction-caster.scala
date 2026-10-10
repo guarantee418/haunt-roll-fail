@@ -757,7 +757,7 @@ object CasterExpansion extends FactionExpansion[Caster] {
 
         case EveningExtraDrawAction(f, l, then) =>
             l.distinct.foreach { c =>
-                f.from(c) --> l.count(c).times(f.warrior) --> game.recycle
+                f.from(c) --> l.count(c).times(f.warrior) --> game.removed
 
                 f.log("removed", l.count(c).times(f.warrior.of(f)).comma, "from", c)
             }

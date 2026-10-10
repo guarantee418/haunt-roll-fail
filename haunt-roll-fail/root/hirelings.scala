@@ -1289,7 +1289,7 @@ object HirelingsExpansion extends Expansion {
             NukeAction(h, h.enemies.%(h.canRemove(c)), $(c), NukeType.ClearSector, ForceAction(SpringUprisingRemoveAction(f, h, c)))
 
         case SpringUprisingRemoveAction(f, h, c) =>
-            h.from(c) --> h.warrior --> game.recycle
+            h.from(c) --> h.warrior --> game.removed
 
             h.log("removed", h.warrior.of(h), "from", c)
 

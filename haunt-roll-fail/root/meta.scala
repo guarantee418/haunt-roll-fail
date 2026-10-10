@@ -183,9 +183,21 @@ case object UnthematicCoffinMakers extends GameOption with ToggleOption {
     val group = "Cards"
     val valueOn = "Coffin Makers".styled(styles.get(Rabbit)) ~ SpacedDash ~ "Any Warrior Recycle".hh
     override def required(all : $[BaseOption]) = $($(ExilesDeck))
+    override def forcedOff(all : $[BaseOption]) = $(ErrataCoffinMakers)
     override val explain = $(
         "Without this option, only " ~ "forcibly".styled(styles.hit) ~ " removed warriors go to " ~ (FigureSpace + "Coffin Makers" + FigureSpace).styled(xlo.pre, xstyles.outlined, styles.get(Rabbit)) ~ ".",
         "This option expands this to all instances of warriors returned to the supply."
+    )
+}
+
+case object ErrataCoffinMakers extends GameOption with ToggleOption {
+    val group = "Cards"
+    val valueOn = "Coffin Makers".styled(styles.get(Rabbit)) ~ SpacedDash ~ "Homeland Errata".hh
+    override def required(all : $[BaseOption]) = $($(ExilesDeck))
+    override def forcedOff(all : $[BaseOption]) = $(UnthematicCoffinMakers)
+    override val explain = $(
+        "As reprinted in " ~ "Homeland".hh ~ ", warriors removed from the map to their supply by any effect go to " ~ (FigureSpace + "Coffin Makers" + FigureSpace).styled(xlo.pre, xstyles.outlined, styles.get(Rabbit)) ~ ", unless they are replaced.",
+        "Warriors returned from anywhere else (officers, acolytes, payments, captives) go to their supply."
     )
 }
 
@@ -1132,7 +1144,7 @@ object Meta extends MetaGame {
         $(MapDefaultLandmarks, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         $,
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck) ++
-        $(NonBirdPartisans, UnthematicCoffinMakers, UnthematicPropagandaBureau) ++
+        $(NonBirdPartisans, UnthematicCoffinMakers, ErrataCoffinMakers, UnthematicPropagandaBureau) ++
         l.of[Mischief].any.$(TunnelsIgnoreRaid) ++
         l.of[Trader].any.$(TunnelsIgnoreTradePosts) ++
         $,
@@ -1170,7 +1182,7 @@ object Meta extends MetaGame {
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck) ++
-        $(NonBirdPartisans, UnthematicCoffinMakers, UnthematicPropagandaBureau) ++
+        $(NonBirdPartisans, UnthematicCoffinMakers, ErrataCoffinMakers, UnthematicPropagandaBureau) ++
         l.of[Mischief].any.$(TunnelsIgnoreRaid) ++
         l.of[Trader].any.$(TunnelsIgnoreTradePosts) ++
         $(AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode) ++
@@ -1218,6 +1230,7 @@ object Meta extends MetaGame {
         AutumnMap,
         DefaultClearings, NoClustersClearings,
         MixedDeck,
+        ErrataCoffinMakers,
         AutoHitsAssignmentMode,
         FolkHeroCharacter,
         AdSetBuffOn,
@@ -1234,7 +1247,7 @@ object Meta extends MetaGame {
             AllRandomClearings,
             StandardDeck,
             NonBirdPartisans,
-            UnthematicCoffinMakers,
+            ErrataCoffinMakers,
             UnthematicPropagandaBureau,
             TunnelsIgnoreRaid,
             TunnelsIgnoreTradePosts,
@@ -1245,7 +1258,7 @@ object Meta extends MetaGame {
             AllRandomClearings,
             StandardDeck,
             NonBirdPartisans,
-            UnthematicCoffinMakers,
+            ErrataCoffinMakers,
             UnthematicPropagandaBureau,
             TunnelsIgnoreRaid,
             TunnelsIgnoreTradePosts,
@@ -1660,6 +1673,8 @@ object Meta extends MetaGame {
     $) ::
     ConditionalAssetsList((factions, options) => true, "card")(
         ImageAsset("card-back-art") ::
+        ImageAsset("card-back-art-ep") ::
+        ImageAsset("card-back-art-sd") ::
 
     $) ::
     ConditionalAssetsList((factions, options) => true, "faction/hireling")(
