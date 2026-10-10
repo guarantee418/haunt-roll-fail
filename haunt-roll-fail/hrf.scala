@@ -1722,7 +1722,17 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         ui.action.scroll.scrollTop = 0
     }
 
+    // One game per page: a second start (say a Start button tapped twice) would build a second game UI over the
+    // first, its drag handles and all. Play Again clears the page and resets it
+    var gameStarted = false
+
     def startGame(seatingX : $[meta.F], difficulties : Map[meta.F, Difficulty], optionsX : $[meta.O], self : $[meta.F], journal : Journal[meta.gaming.ExternalAction], title : String, names : () => Map[meta.F, String], swt : Switches) {
+        if (gameStarted) {
+            dom.console.warn("game already started, second start ignored")
+            return
+        }
+        gameStarted = true
+
         history.nuke()
 
         // Bots that play by other rules (Northgard's Robotos) add their options; every client derives them the same way
@@ -1786,6 +1796,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 def canPlayAgain = journal.is[MemoryJournal[_]] || journal.is[LocalStorageJournal[_]]
                 def playAgain() = {
                     ui.guir.clear()
+                    gameStarted = false
                     val again = journal.as[LocalStorageJournal[_]]./(j => newLocalGame(j.kind, seating, difficulties, options, title)).|(new MemoryJournal[meta.gaming.ExternalAction](meta))
                     startGame(seating, difficulties, options : $[meta.O], self : $[meta.F], again, title : String, names : () => Map[meta.F, String], swt : Switches)
                 }
