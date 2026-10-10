@@ -1809,6 +1809,68 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     var courtSideways = false
 
+    // Two players on a tall screen (a phone held upright): the layouter puts the player panels in a row beside
+    // the log (under the court or the map). Instead they go at the top, right of the shared cards, as in 16:9, so the court folds
+    // sideways (foldCourt) and the folded panels get the whole width. The panes right under (or above, or beside)
+    // their old place grow into it; the row is as tall as the taller of the court and the panels, and the panes
+    // under the court give up the difference
+    def panelsBesideCourt(width : Int, height : Int)(l : $[PanePlacement]) : $[PanePlacement] = {
+        val pp = l.filter(_.name.startsWith("status-"))
+        def near(a : Int, b : Int) = (a - b).abs <= 3
+        l.find(_.name == "court") match {
+            case Some(c) if width < height && arity <= 2 && pp.any && sideways(l).not && pp.forall(p => near(p.rect.y, pp.head.rect.y)) =>
+                val (x0, y0) = (pp./(_.rect.x).min, pp./(_.rect.y).min)
+                val (x1, y1) = (pp./(p => p.rect.x + p.rect.width).max, pp./(p => p.rect.y + p.rect.height).max)
+                val others = l.filter(p => p.name != "court" && p.name.startsWith("status-").not)
+                def spans(q : $[PanePlacement], a : Int, b : Int, lo : PanePlacement => Int, hi : PanePlacement => Int) =
+                    q.any && near(q./(lo).min, a) && near(q./(hi).max, b)
+                val xs = (p : PanePlacement) => p.rect.x
+                val xe = (p : PanePlacement) => p.rect.x + p.rect.width
+                val ys = (p : PanePlacement) => p.rect.y
+                val ye = (p : PanePlacement) => p.rect.y + p.rect.height
+                def inX(p : PanePlacement) = p.rect.x >= x0 - 3 && xe(p) <= x1 + 3
+                def inY(p : PanePlacement) = p.rect.y >= y0 - 3 && ye(p) <= y1 + 3
+                val under = others.filter(p => near(ys(p), y1) && inX(p))
+                val over = others.filter(p => near(ye(p), y0) && inX(p))
+                val right = others.filter(p => near(xs(p), x1) && inY(p))
+                val left = others.filter(p => near(xe(p), x0) && inY(p))
+                // the first of them that spans the panels' whole edge, and how each of its panes grows
+                val freed : Option[($[PanePlacement], PanePlacement => PanePlacement)] = $(
+                    (under, spans(under, x0, x1, xs, xe), (p : PanePlacement) => p.copy(rect = Rect(p.rect.x, y0, p.rect.width, ye(p) - y0))),
+                    (over, spans(over, x0, x1, xs, xe), (p : PanePlacement) => p.copy(rect = Rect(p.rect.x, p.rect.y, p.rect.width, y1 - p.rect.y))),
+                    (right, spans(right, y0, y1, ys, ye), (p : PanePlacement) => p.copy(rect = Rect(x0, p.rect.y, xe(p) - x0, p.rect.height))),
+                    (left, spans(left, y0, y1, ys, ye), (p : PanePlacement) => p.copy(rect = Rect(p.rect.x, p.rect.y, x1 - p.rect.x, p.rect.height)))
+                ).find(_._2).map(t => (t._1, t._3))
+
+                freed match {
+                    case None => l
+                    case Some((grown, grow)) =>
+                        val r = c.rect
+                        val rowH = max(r.height, y1 - y0)
+                        val dh = rowH - r.height
+                        // the panels keep the width they had (the layouter fitted their font to it), from a third
+                        // to half of the row; the court (it scrolls sideways) gets the rest
+                        val pw = max(r.width / 3, min(r.width / 2, x1 - x0))
+                        val cw = r.width - pw
+                        val n = pp.num
+                        val sorted = pp.sortBy(_.name.drop(7).toIntOption.getOrElse(0))
+                        def belowCourt(p : PanePlacement) = near(p.rect.y, r.y + r.height) && p.rect.x >= r.x - 3 && xe(p) <= r.x + r.width + 3
+                        l./{
+                            case p if p.name == "court" => p.copy(rect = Rect(r.x, r.y, cw, rowH))
+                            case p if pp.contains(p) =>
+                                val i = sorted.indexOf(p)
+                                val a = r.x + cw + i * pw / n
+                                val b = r.x + cw + (i + 1) * pw / n
+                                p.copy(rect = Rect(a, r.y, b - a, rowH))
+                            case p =>
+                                val q = grown.contains(p).?(grow(p)).|(p)
+                                belowCourt(q).?(q.copy(rect = Rect(q.rect.x, q.rect.y + dh, q.rect.width, q.rect.height - dh))).|(q)
+                        }
+                }
+            case _ => l
+        }
+    }
+
     def foldCourt0(height : Int, extra : Int = 0)(l : $[PanePlacement]) : $[PanePlacement] = l.find(_.name == "court") match {
         case Some(c) if courtFolded =>
             val r = c.rect
@@ -1908,7 +1970,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // left, then short player panels in a row, the shared cards below them and the hand filling the
     // rest, wide enough to show the whole hand, and the log on the right.
     override def layout(width : Int, height : Int)(onLayout0 : $[PanePlacement] => Unit) {
-        val onLayout = (l : $[PanePlacement]) => {
+        val onLayout = (l0 : $[PanePlacement]) => {
+            val l = panelsBesideCourt(width, height)(l0)
             // Folded, room the player panels' handle gives them is first offered to the folded layout, which
             // may lay them out in more rows with a larger font; split then makes them as tall as asked
             loadSplit(splitKind(width, height))
