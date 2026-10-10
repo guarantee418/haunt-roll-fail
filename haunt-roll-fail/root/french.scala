@@ -283,6 +283,45 @@ object French {
         "Murine Broker" -> "Brocanteur",
         "Master Engravers" -> "Maître artisan",
 
+        // card names: Squires and Disciples deck
+        "Sky Couriers" -> "Messagers des cieux",
+        "Spy Network" -> "Réseau d'espions",
+        "Silver-Tongue" -> "Beau parleur",
+        "Shadow Council" -> "Conseil de l'ombre",
+        "Feather Rufflers" -> "Froisseurs de plumes",
+        "Fox Squires" -> "Écuyers Renards",
+        "Rabbit Squires" -> "Écuyers Lapins",
+        "Mouse Squires" -> "Écuyers Souris",
+        "Bold Leadership" -> "Meneur intrépide",
+        "Supply Train" -> "Ravitaillement",
+        "Tactician" -> "Tacticien",
+        "Apprentice" -> "Apprenti",
+        "Friend of the Foxes" -> "Ami des Renards",
+        "Friend of the Rabbits" -> "Ami des Lapins",
+        "Friend of the Mice" -> "Ami des Souris",
+        "Lookouts" -> "Sentinelles",
+        "Hidden Warrens" -> "Terriers dissimulés",
+        "The Faithful" -> "Le Fidèle",
+        "Riversteads" -> "Propriétés fluviales",
+        "Standard Bearer" -> "Porte-étendard",
+        "Raiding Party" -> "Équipe de pillards",
+        "Mice-in-a-Bush" -> "Souris-en-bosquet",
+        "Brazen Demagogue" -> "Démagogue éhonté",
+
+        // card names: Lilypad Diaspora's Frog cards
+        "Fox Laborers" -> "Ouvriers Renard",
+        "Rabbit Laborers" -> "Ouvriers Lapins",
+        "Mouse Laborers" -> "Ouvriers Souris",
+        "Settlers" -> "Colons",
+        "Stewards" -> "Intendants",
+        "Companions" -> "Compagnons",
+        "Agitators" -> "Agitateurs",
+        "Advocates" -> "Défenseurs",
+        "Militias" -> "Milices",
+        "Assimilationists" -> "Assimilationnistes",
+        "Frog Partisans" -> "Partisans Grenouille",
+        "Frog Ambush!" -> "Embuscade Grenouille !",
+
         // actions
         "Move" -> "Déplacer",
         "move" -> "déplacer",
@@ -770,6 +809,13 @@ object French {
         "saboteurs", "soup-kitchens", "boat-builders", "corvid-planners", "eyrie-emigre", "fox-partisans", "propaganda-bureau", "false-orders", "informants",
         "rabbit-partisans", "tunnels", "charm-offensive", "coffin-makers", "swap-meet", "mouse-partisans", "league-of-adventurous-mice",
         "murine-broker", "master-engravers",
+        // Squires and Disciples, with newer Ambushes, and the Homeland Frog cards (from a player's Google Drive, 2026-10-10)
+        "sky-couriers", "spy-network", "silver-tongue", "shadow-council", "feather-rufflers",
+        "fox-squires", "bold-leadership", "supply-train", "tactician", "apprentice", "friend-of-the-foxes",
+        "rabbit-squires", "lookouts", "hidden-warrens", "the-faithful", "riversteads", "standard-bearer", "friend-of-the-rabbits",
+        "mouse-squires", "raiding-party", "mice-in-a-bush", "brazen-demagogue", "friend-of-the-mice",
+        "hl-rabbit-laborers", "hl-mouse-laborers", "hl-fox-laborers", "hl-settlers", "hl-stewards", "hl-companions",
+        "hl-agitators", "hl-advocates", "hl-militias", "hl-assimilationists", "hl-frog-partisans", "hl-frog-dominance", "frog-ambush",
     )
 
     val boards = $("mc-board", "ed-board", "wa-board", "vb-board", "lc-board", "rf-board", "cc-board", "ud-board", "lh-board", "ki-board", "hld-board", "tc-board-h", "kd-board-h")

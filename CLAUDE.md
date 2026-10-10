@@ -567,6 +567,9 @@ file covers the build, server and deploy. No session can ssh to the server
   `webp2/root/images/card/deck/fr/` and `faction/fr/` (asset prefix `fr:`), cut by
   `root/tools/french-assets.py` from the TTS mod "Root FR" (Steam workshop 1829904481); the boards
   (and the Hundreds, Keepers and Lilypad Diaspora ones) were replaced on 2026-10-10 by newer scans from a player.
+  The same player's Google Drive gave the French Squires and Disciples cards, newer Ambushes (used for every deck)
+  and the Homeland Frog cards (`hl-*`, `frog-ambush`, `hl-frog-dominance`) in `card/deck/fr/`, listed in `French.cards`
+  with their names; `french-assets.py` no longer makes the Ambushes.
 - Bot games can be run headless on the JVM with `root/host.scala` (see
   `host.xsbt` for the source exclusions); it also checks that every action
   serializes and parses back.
