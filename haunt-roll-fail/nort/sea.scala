@@ -121,7 +121,7 @@ case class RaidUpgradeAskAction(f : Faction, card : RaidCard, then : ForcedActio
 case class RaidUpgradeAction(self : Faction, card : RaidCard, upgrade : Card, then : ForcedAction) extends BaseAction(card, "put a clan upgrade card on top of the draw pile")(upgrade.handImg) with ViewObject[Card] { def obj = upgrade }
 case class RaidOutpostAction(self : Faction, card : RaidCard, area : AreaRef, years : Int, then : ForcedAction) extends BaseAction(card, "place 1 unit in")(area) with MapTarget { def target = area }
 case class RaidBuildAction(f : Faction, card : RaidCard, only : $[Building], small : Boolean, area : |[AreaRef], left : Int, then : ForcedAction) extends ForcedAction
-case class RaidBuildPlaceAction(self : Faction, card : RaidCard, space : SpaceRef, building : Building, only : $[Building], small : Boolean, area : |[AreaRef], left : Int, then : ForcedAction) extends BaseAction(card, "build for free in", space.area)(building) with MapTarget { def target = space }
+case class RaidBuildPlaceAction(self : Faction, card : RaidCard, space : SpaceRef, building : Building, only : $[Building], small : Boolean, area : |[AreaRef], left : Int, then : ForcedAction) extends BaseAction(card, "build for free in", space.area)(building, SupplyLeft(building)) with MapTarget { def target = space }
 case class RaidStonesAction(f : Faction, card : RaidCard, left : Int, then : ForcedAction) extends ForcedAction
 case class RaidStoneAction(self : Faction, card : RaidCard, area : AreaRef, left : Int, then : ForcedAction) extends BaseAction(card, "place a", CarvedStone, "in")(area) with MapTarget { def target = area }
 case class RaidClearAction(f : Faction, card : RaidCard, left : Int, then : ForcedAction) extends ForcedAction

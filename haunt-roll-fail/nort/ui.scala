@@ -1242,6 +1242,21 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         container.attach.parent.style.outline = game.highlight.faction.has(p).?("2px solid #aaaaaa").|("")
     }
 
+    // The clans whose player looks at this screen: the one asked, or, while waiting, this browser's only player (none for spectators
+    // and, between turns, for hotseat games)
+    var viewers : $[Faction] = $
+
+    def look(l : $[Faction]) {
+        if (l != viewers) {
+            viewers = l
+            if (game.states.nonEmpty)
+                game.factions.%(game.ftp.contains).foreach(factionStatus)
+        }
+    }
+
+    // Fame tokens are kept face down: the panels show only the viewer's and its teammates' fame, everyone's once the game is over
+    def fameHidden(f : Faction) : Boolean = game.isOver.not && viewers.exists(v => v == f || game.mates(v).has(f)).not
+
     def factionStatus(f : Faction) {
         val container = statuses(game.players.indexOf(game.ftp(f)))
 
@@ -1336,12 +1351,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Dragon Clan: 1 more food or wood for the sacrifice, shown as a range on both, its upper end faint as only one of them gets it
         val pyre = f == Dragon && game.dragonHarvest.has(false).not && (game.dragonHarvest.any || NewBloodExpansion.sacrificeOptions(f)) && game.controlled(f).any
         // Tapping the lore (its icon or stockpile) opens the clan's Lore Tree
-        case class Column(icon : Elem, has : Int, gain : Int, cost : Int, extra : Boolean = false, open : |[Any] = None)
+        case class Column(icon : Elem, has : Int, gain : Int, cost : Int, extra : Boolean = false, open : |[Any] = None, hidden : Boolean = false) {
+            // Another player's fame is hidden (the fame tokens are kept face down), its harvest's fame isn't
+            def stock : Elem = hidden.?("?".hl).|(has.hl)
+        }
         val columns = $(
             Column(Food.elem, state.has(Food), next.food, winterFood, pyre),
             Column(Wood.elem, state.has(Wood), next.wood, winterWood, pyre),
             Column(Lore.elem, state.has(Lore), next.lore, 0, open = |(LoreTree(f))),
-            Column(FameIcon(), state.fame, next.fame, 0))
+            Column(FameIcon(), state.fame, next.fame, 0, hidden = fameHidden(f)))
 
         // Each cell taps through to the Winter chart, the lore's to the Lore Tree (one OnClick per cell: nested ones would pass both)
         def open(o : |[Any], e : Elem) : Elem = o.orElse(if (f != Automa) |(WinterChart(f)) else None)./(x => OnClick(x, e.div(styles.ledgerCell)(xlo.pointer))).|(e.div(styles.ledgerCell))
@@ -1351,7 +1369,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         def signed(n : Int, sign : String, s : Style) : Elem = (n > 0).?(cell((sign + n).styled(s))).|(none)
 
         val icons = cell(Empty) ~ columns./(c => open(c.open, c.icon)).merge
-        val stock = cell(Empty) ~ columns./(c => open(c.open, stacked.?(c.has.hl).|(Amount(c.has.hl, c.icon)))).merge
+        val stock = cell(Empty) ~ columns./(c => open(c.open, stacked.?(c.stock).|(Amount(c.stock, c.icon)))).merge
         def gain(c : Column) : Elem = c.extra.?(cell((("+" + c.gain).styled(styles.ledgerGain) ~ ("-" + (c.gain + 1)).styled(styles.ledgerGain, styles.ledgerMaybe)).spn)).|(signed(c.gain, "+", styles.ledgerGain))
         val harvest = cell(SeasonIcon.harvest) ~ columns./(gain).merge
         val winter = (f != Automa).?(cell(SeasonIcon.winter) ~ columns./(c => signed(c.cost, "-", styles.ledgerLoss)).merge).|(Empty)
@@ -1791,6 +1809,68 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     var courtSideways = false
 
+    // Two players on a tall screen (a phone held upright): the layouter puts the player panels in a row beside
+    // the log (under the court or the map). Instead they go at the top, right of the shared cards, as in 16:9, so the court folds
+    // sideways (foldCourt) and the folded panels get the whole width. The panes right under (or above, or beside)
+    // their old place grow into it; the row is as tall as the taller of the court and the panels, and the panes
+    // under the court give up the difference
+    def panelsBesideCourt(width : Int, height : Int)(l : $[PanePlacement]) : $[PanePlacement] = {
+        val pp = l.filter(_.name.startsWith("status-"))
+        def near(a : Int, b : Int) = (a - b).abs <= 3
+        l.find(_.name == "court") match {
+            case Some(c) if width < height && arity <= 2 && pp.any && sideways(l).not && pp.forall(p => near(p.rect.y, pp.head.rect.y)) =>
+                val (x0, y0) = (pp./(_.rect.x).min, pp./(_.rect.y).min)
+                val (x1, y1) = (pp./(p => p.rect.x + p.rect.width).max, pp./(p => p.rect.y + p.rect.height).max)
+                val others = l.filter(p => p.name != "court" && p.name.startsWith("status-").not)
+                def spans(q : $[PanePlacement], a : Int, b : Int, lo : PanePlacement => Int, hi : PanePlacement => Int) =
+                    q.any && near(q./(lo).min, a) && near(q./(hi).max, b)
+                val xs = (p : PanePlacement) => p.rect.x
+                val xe = (p : PanePlacement) => p.rect.x + p.rect.width
+                val ys = (p : PanePlacement) => p.rect.y
+                val ye = (p : PanePlacement) => p.rect.y + p.rect.height
+                def inX(p : PanePlacement) = p.rect.x >= x0 - 3 && xe(p) <= x1 + 3
+                def inY(p : PanePlacement) = p.rect.y >= y0 - 3 && ye(p) <= y1 + 3
+                val under = others.filter(p => near(ys(p), y1) && inX(p))
+                val over = others.filter(p => near(ye(p), y0) && inX(p))
+                val right = others.filter(p => near(xs(p), x1) && inY(p))
+                val left = others.filter(p => near(xe(p), x0) && inY(p))
+                // the first of them that spans the panels' whole edge, and how each of its panes grows
+                val freed : Option[($[PanePlacement], PanePlacement => PanePlacement)] = $(
+                    (under, spans(under, x0, x1, xs, xe), (p : PanePlacement) => p.copy(rect = Rect(p.rect.x, y0, p.rect.width, ye(p) - y0))),
+                    (over, spans(over, x0, x1, xs, xe), (p : PanePlacement) => p.copy(rect = Rect(p.rect.x, p.rect.y, p.rect.width, y1 - p.rect.y))),
+                    (right, spans(right, y0, y1, ys, ye), (p : PanePlacement) => p.copy(rect = Rect(x0, p.rect.y, xe(p) - x0, p.rect.height))),
+                    (left, spans(left, y0, y1, ys, ye), (p : PanePlacement) => p.copy(rect = Rect(p.rect.x, p.rect.y, x1 - p.rect.x, p.rect.height)))
+                ).find(_._2).map(t => (t._1, t._3))
+
+                freed match {
+                    case None => l
+                    case Some((grown, grow)) =>
+                        val r = c.rect
+                        val rowH = max(r.height, y1 - y0)
+                        val dh = rowH - r.height
+                        // the panels keep the width they had (the layouter fitted their font to it), from a third
+                        // to half of the row; the court (it scrolls sideways) gets the rest
+                        val pw = max(r.width / 3, min(r.width / 2, x1 - x0))
+                        val cw = r.width - pw
+                        val n = pp.num
+                        val sorted = pp.sortBy(_.name.drop(7).toIntOption.getOrElse(0))
+                        def belowCourt(p : PanePlacement) = near(p.rect.y, r.y + r.height) && p.rect.x >= r.x - 3 && xe(p) <= r.x + r.width + 3
+                        l./{
+                            case p if p.name == "court" => p.copy(rect = Rect(r.x, r.y, cw, rowH))
+                            case p if pp.contains(p) =>
+                                val i = sorted.indexOf(p)
+                                val a = r.x + cw + i * pw / n
+                                val b = r.x + cw + (i + 1) * pw / n
+                                p.copy(rect = Rect(a, r.y, b - a, rowH))
+                            case p =>
+                                val q = grown.contains(p).?(grow(p)).|(p)
+                                belowCourt(q).?(q.copy(rect = Rect(q.rect.x, q.rect.y + dh, q.rect.width, q.rect.height - dh))).|(q)
+                        }
+                }
+            case _ => l
+        }
+    }
+
     def foldCourt0(height : Int, extra : Int = 0)(l : $[PanePlacement]) : $[PanePlacement] = l.find(_.name == "court") match {
         case Some(c) if courtFolded =>
             val r = c.rect
@@ -1890,7 +1970,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // left, then short player panels in a row, the shared cards below them and the hand filling the
     // rest, wide enough to show the whole hand, and the log on the right.
     override def layout(width : Int, height : Int)(onLayout0 : $[PanePlacement] => Unit) {
-        val onLayout = (l : $[PanePlacement]) => {
+        val onLayout = (l0 : $[PanePlacement]) => {
+            val l = panelsBesideCourt(width, height)(l0)
             // Folded, room the player panels' handle gives them is first offered to the folded layout, which
             // may lay them out in more rows with a larger font; split then makes them as tall as asked
             loadSplit(splitKind(width, height))
@@ -2098,6 +2179,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     override def wait(self : $[F], factions : $[F], message : Elem) {
+        look(self.single./~(game.ptf.get).$)
+
         lastActions = $
         lastThen = null
 
@@ -2126,6 +2209,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             scalajs.js.timers.setTimeout(0) { then(actions.find(_.unwrap.is[CombatReportDoneAction]).get) }
             return
         }
+
+        look(faction./~(game.ptf.get).$)
 
         showNotifications(faction.$)
 

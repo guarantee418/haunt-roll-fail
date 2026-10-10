@@ -404,6 +404,16 @@ case class TradeAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class TradeForAction(self : Faction, pay : $[Resource], gain : Resource, then : ForcedAction) extends BaseAction("Trade", "three resources for one")("Pay", pay./(_.elem).join(" "), "for", gain)
 // Team play: one resource for one of a teammate's
 case class TeamTradeAction(self : Faction, mate : Faction, give : Resource, take : Resource, then : ForcedAction) extends BaseAction("Trade with", mate, "one for one")("Give", give, "for", take)
+// The trades, every player at once: each trades until "Done trading"; done holds those who are done
+case class TradePhaseAction(done : $[Faction], then : ForcedAction) extends ForcedAction
+case class TradeDoneAction(self : Faction, then : TradePhaseAction) extends BaseAction(None)("Done trading")
+// Team play in the trading phase: a 1:1 trade with a teammate is an offer, made only if the teammate accepts it
+// (from gives give and gets take); the proposer waits for the answer
+case class TeamOfferAction(self : Faction, mate : Faction, give : Resource, take : Resource, then : TradePhaseAction) extends BaseAction("Offer", mate, "a trade, one for one")("Give", give, "for", take)
+case class TeamAcceptAction(self : Faction, from : Faction, give : Resource, take : Resource, then : TradePhaseAction) extends BaseAction(from, "offers you", 1.hl, give, "for your", 1.hl, take)("Accept")
+case class TeamDeclineAction(self : Faction, from : Faction, give : Resource, take : Resource, then : TradePhaseAction) extends BaseAction(from, "offers you", 1.hl, give, "for your", 1.hl, take)("Decline")
+// A pending offer (game state only, never recorded)
+case class TradeOffer(from : Faction, to : Faction, give : Resource, take : Resource)
 case object WinterAction extends ForcedAction
 case object EndOfYearAction extends ForcedAction
 case object GameEndAction extends ForcedAction
@@ -651,6 +661,13 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var harvestLessFood : $[AreaRef] = $
 
     def eventIs(id : String) = event.exists(_.id == id)
+
+    // The trading phase: teammates' offers waiting for an answer, and the ones declined (not offered again this harvest)
+    var tradeOffers : $[TradeOffer] = $
+    var tradeDeclined : $[TradeOffer] = $
+
+    // The buildings of a kind left in the supply
+    def buildingsLeft(b : Building) : Int = Building.tokens - buildings.values.count(_ == b)
 
     // Uncharted Horizons' Sea module (sea.scala): the Ports (the Beach tiles' land areas), their Raids, the Raid deck
     var raidDeck : $[RaidCard] = $
@@ -1009,6 +1026,33 @@ object CommonExpansion extends Expansion {
             .%(p => Resource.all.forall(r => p.count(_ == r) <= f.has(r)))
 
     def available(f : Faction)(implicit game : Game) = f.draw.num + f.discard.num
+
+    // The harvest trades f can make: 3 resources for 1 (only for a resource not paid in, except with the Ceremonial Bonfire, which also
+    // allows 2 wood for 1 lore), and 1 for 1 with the teammates in mates
+    def tradeChoices(f : Faction, mates : $[Faction], then : ForcedAction)(implicit game : Game) : $[UserAction] = {
+        val bonfire = game.eventIs("ceremonial-bonfire")
+        val pp = payments(f)./(p => p -> Resource.all.%(r => bonfire || p.has(r).not)).%((_, l) => l.any)
+        val swaps = mates./~(g => Resource.all.%(f.has(_) > 0)./~(r => Resource.all.%(_ != r).%(g.has(_) > 0)./(x => TeamTradeAction(f, g, r, x, then))))
+
+        pp./~((p, l) => l./(r => TradeForAction(f, p, r, then))) ++ (bonfire && f.wood >= 2).$(BonfireTradeAction(f, then)) ++ swaps
+    }
+
+    // f's choices in the trading phase: answers to teammates' offers, trades with the supply, and new offers to the teammates
+    // still trading (none while an answer is owed; none repeating a declined offer)
+    def phaseChoices(f : Faction, done : $[Faction], next : TradePhaseAction)(implicit game : Game) : $[UserAction] = {
+        val incoming = game.tradeOffers.%(_.to == f)
+        val answers = incoming./~(o => $(TeamAcceptAction(f, o.from, o.give, o.take, next), TeamDeclineAction(f, o.from, o.give, o.take, next)))
+        val offers = incoming.none.??(game.mates(f).diff(done)./~(g => Resource.all.%(f.has(_) > 0)./~(r => Resource.all.%(_ != r).%(g.has(_) > 0)
+            .%(x => game.tradeDeclined.has(TradeOffer(f, g, r, x)).not)./(x => TeamOfferAction(f, g, r, x, next)))))
+
+        answers ++ tradeChoices(f, $, next) ++ offers
+    }
+
+    // After a trade: back to every player's trades, or (old games) to the same player's
+    def afterTrade(f : Faction, then : ForcedAction) : ForcedAction = then match {
+        case p : TradePhaseAction => p
+        case _ => TradeAction(f, then)
+    }
 
     // The sides (teams, or players alone) with the best sums of the first key, then of the next ones for ties
     def best(sides : $[$[Faction]], keys : $[Faction => Int]) : $[$[Faction]] =
@@ -1585,24 +1629,62 @@ object CommonExpansion extends Expansion {
             }
 
             // New Blood's powers after harvesting (Dragon, Squirrel), then the trades
-            Then(AfterHarvestAction(game.from(game.first).foldRight(WinterAction : ForcedAction)((f, then) => TradeAction(f, then))))
+            Then(AfterHarvestAction(TradePhaseAction($, WinterAction)))
 
         case AfterHarvestAction(then) =>
             Then(then)
 
-        case TradeAction(f, then) =>
-            // Only trades that give back a resource not paid in: 3 food for 1 food, or 2 food and 1 wood for 1 wood, are never worth it
-            val pp = payments(f)./(p => p -> Resource.all.%(r => p.has(r).not)).%((_, l) => l.any)
-            // Team play: 1:1 with a teammate
-            val swaps = game.mates(f)./~(g => Resource.all.%(f.has(_) > 0)./~(r => Resource.all.%(_ != r).%(g.has(_) > 0)./(x => TeamTradeAction(f, g, r, x, then))))
+        // The trades, every player at once (the Automa first, by itself); TradeAction is the old one-player-at-a-time trading, kept for old games
+        case TradePhaseAction(done, then) =>
+            if (game.factions.has(Automa) && done.has(Automa).not)
+                Then(TradeAction(Automa, TradePhaseAction(done :+ Automa, then)))
+            else {
+                val next = TradePhaseAction(done, then)
 
-            if (pp.none && swaps.none)
+                // Offers drop when either player is done trading or no longer has the resource
+                game.tradeOffers = game.tradeOffers.%(o => done.has(o.from).not && done.has(o.to).not && o.from.has(o.give) > 0 && o.to.has(o.take) > 0)
+
+                // A player waiting for a teammate's answer isn't asked
+                def asks = game.from(game.first).diff(done).%(f => game.tradeOffers.exists(_.from == f).not)./(f => f -> phaseChoices(f, done, next)).%((_, l) => l.any)
+
+                // Never stuck on offers nobody can answer: drop them, so their players are asked again
+                if (asks.none)
+                    game.tradeOffers = $
+
+                if (asks.none) {
+                    game.tradeOffers = $
+                    game.tradeDeclined = $
+                    Then(then)
+                }
+                else
+                    MultiAsk(asks./((f, l) => Ask(f).add(l).add(TradeDoneAction(f, next))))
+            }
+
+        case TradeDoneAction(f, TradePhaseAction(done, then)) =>
+            Then(TradePhaseAction(done :+ f, then))
+
+        case TeamOfferAction(f, g, r, x, then) =>
+            game.tradeOffers :+= TradeOffer(f, g, r, x)
+            f.log("offered", g, 1.hl, r, "for", 1.hl, x)
+            Then(then)
+
+        case TeamAcceptAction(f, g, r, x, then) =>
+            game.tradeOffers = game.tradeOffers.but(TradeOffer(g, f, r, x))
+            Then(TeamTradeAction(g, f, r, x, then))
+
+        case TeamDeclineAction(f, g, r, x, then) =>
+            game.tradeOffers = game.tradeOffers.but(TradeOffer(g, f, r, x))
+            game.tradeDeclined :+= TradeOffer(g, f, r, x)
+            f.log("declined", g, "'s offer of", 1.hl, r, "for", 1.hl, x)
+            Then(then)
+
+        case TradeAction(f, then) =>
+            val l = tradeChoices(f, game.mates(f), then)
+
+            if (l.none)
                 Then(then)
             else
-                Ask(f)
-                    .some(pp)((p, l) => l./(r => TradeForAction(f, p, r, then)))
-                    .add(swaps)
-                    .done(then)
+                Ask(f).add(l).done(then)
 
         case TeamTradeAction(f, g, r, x, then) =>
             f.gain(r, -1)
@@ -1614,7 +1696,7 @@ object CommonExpansion extends Expansion {
 
             game.note("team-trade")
 
-            Then(TradeAction(f, then))
+            Then(afterTrade(f, then))
 
         case TradeForAction(f, p, r, then) =>
             p.foreach(x => f.gain(x, -1))
@@ -1622,7 +1704,7 @@ object CommonExpansion extends Expansion {
 
             f.log("traded", p./(_.elem).join(" "), "for", r)
 
-            Then(TradeAction(f, then))
+            Then(afterTrade(f, then))
 
         // 4. WINTER
         case WinterAction =>
