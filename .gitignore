@@ -1,12 +1,15 @@
 # Local game server database (created by start-server.sh)
 good-game-database.*
 
-# Temporary sbt run files
-**/target/bg-jobs/
-**/target/global-logging/
-
-# Development client build (sbt fastOptJS); the site loads the optimized hrf-opt.js
-haunt-roll-fail/target/scala-2.13/hrf-fastopt*
+# sbt build output. Only the optimized client the site loads is committed
+# (sbt fullOptJS), so the server runs without building it; the server
+# compiles good-game itself when it starts.
+**/target/**
+!haunt-roll-fail/target/**/
+!haunt-roll-fail/target/scala-2.13/hrf-opt.js
+!haunt-roll-fail/target/scala-2.13/hrf-opt.js.map
+!haunt-roll-fail/target/scala-2.13/hrf-opt/main.js
+!haunt-roll-fail/target/scala-2.13/hrf-opt/main.js.map
 
 # https: certificate (holds the private key) and Let's Encrypt webroot (created by setup-https.sh)
 good-game/certificate.pkcs12*
