@@ -496,12 +496,17 @@ object CreaturesExpansion extends Expansion {
                 log(c, "won the fight in", a)
                 Then(FightOverAction(then))
             }
-            else
-            // Step 1: Signy and Brand (Warchiefs module)
-            if (game.has(Warchiefs))
-                Then(ChiefStepOneAction($(f), a, CreatureFoodStartAction(f, a, c, e, attacking, FightOverAction(then))))
-            else
-                Then(CreatureFoodStartAction(f, a, c, e, attacking, FightOverAction(then)))
+            else {
+                val food = CreatureFoodStartAction(f, a, c, e, attacking, FightOverAction(then))
+                // New Blood: Ox Clan's Ancestral Equipment tokens, chosen in step 1
+                val step = game.has(NewBlood).?(GearCreatureAskAction(f, a, e, attacking, food) : ForcedAction).|(food)
+
+                // Step 1: Signy and Brand (Warchiefs module)
+                if (game.has(Warchiefs))
+                    Then(ChiefStepOneAction($(f), a, step))
+                else
+                    Then(step)
+            }
 
         // Liv's Cunning: wood or lore may be spent like food, one at a time
         case CreatureFoodStartAction(f, a, c, e, attacking, then) if attacking && e.special == LivMove =>
@@ -555,6 +560,12 @@ object CreaturesExpansion extends Expansion {
                     .add(LivRerollAction(f, CreatureRerollAction(f, a, c, e, attacking, food, then)))
                     .add(LivKeepAction(f, CreatureFaceAction(f, a, c, e, attacking, food, face, then)))
             else
+            // Ancestral Equipment 3 (Ox Clan): roll again
+            if (f == Ox && game.gearFight.has(3))
+                Ask(f)
+                    .add(GearRerollAction(f, CreatureRerollAction(f, a, c, e, attacking, food, then)))
+                    .add(GearKeepAction(f, CreatureFaceAction(f, a, c, e, attacking, food, face, then)))
+            else
                 Then(CreatureFaceAction(f, a, c, e, attacking, food, face, then))
 
         case CreatureRerollAction(f, a, c, e, attacking, food, then) =>
@@ -598,9 +609,11 @@ object CreaturesExpansion extends Expansion {
             val pw = pws.map(_._1).sum
             val cw = cws.map(_._1).sum
             val urdar = game.has(Wastelands).??(WastelandsExpansion.creatureIgnored(f, t, attacking))
-            val ps = game.strength(t, f, attacking) + bonus + axe + fortress + snake + robo + grudge + food + face.points + pw
+            // Ox Clan's Ancestral Equipment tokens: their points, and token 7's ignored casualty
+            val gear = NewBloodExpansion.gearPoints(f, food)
+            val ps = game.strength(t, f, attacking) + bonus + axe + fortress + snake + robo + grudge + gear + food + face.points + pw
             // Shieldbearers cancel 1 casualty; Halvard defending ignores 1 inflicted by the attacking creature
-            val shield = math.min(cface.casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1) + Warchief.shield(t, f, attacking) + urdar)
+            val shield = math.min(cface.casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1) + Warchief.shield(t, f, attacking) + urdar + NewBloodExpansion.ignored(f))
             val pc = cface.casualties - shield
             val cs = c.kind.value + cface.points + cw
 
@@ -614,7 +627,7 @@ object CreaturesExpansion extends Expansion {
                 def extra(l : (Int, Elem)*) : Elem = l.toList.filter(_._1 > 0).map { case (n, what) => "(" ~ n.hl ~ " from " ~ what ~ ")" }.join(" ")
 
                 // Everything but the units and the die, as in the fight with a clan
-                val extras = $(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, robo -> "Robotos".hl, grudge -> "Tenacious Grudge".hl) ++ pws
+                val extras = $(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, robo -> "Robotos".hl, grudge -> "Tenacious Grudge".hl, gear -> "Ancestral Equipment".hl) ++ pws
                 f.log("scored", CombatIcon.axes(ps), extra((FightPoints.others(f, t, attacking) ++ extras) : _*))
                 log(c, "scored", CombatIcon.axes(cs), extra(cws : _*), (pc > 0 || shield > 0).?("and inflicted " ~ CombatIcon.skulls(pc)).|(Empty), (shield > 0).?("(" ~ shield.hl ~ " cancelled)").|(Empty))
 
