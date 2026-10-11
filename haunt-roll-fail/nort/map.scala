@@ -322,14 +322,15 @@ case class CreatureFightInfo(f : Faction, area : AreaRef, c : Creature, e : Move
             (attacking && game.robotos(f)).??(1) -> "Robotos".hl,
             (attacking && f == Dragon && e.special == GrudgeMove).??(game.pyre.num) -> "Tenacious Grudge".hl,
             attacking.not.??(2 * game.working(t).count(_ == Fortress)) -> Fortress.elem,
-            (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl
+            (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl,
+            NewBloodExpansion.gearPoints(f, 0) -> "Ancestral Equipment".hl
         ) ++ waste.??(WastelandsExpansion.playerCreatureParts(f, t, attacking))
 
         val more = waste.??(WastelandsExpansion.creatureParts(c, t, attacking))
         val bonus = more.map(_._1).sum
 
         "The fight is in ".txt ~ area.elem ~ Break ~
-        FightPoints(f, t, attacking, extra, $, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1)) ~ Break ~
+        FightPoints(f, t, attacking, extra, $, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1) + NewBloodExpansion.ignored(f)) ~ Break ~
         c.elem ~ ": " ~ CombatIcon.axes(c.kind.value + bonus) ~ more.any.?(" (" ~ ($(c.kind.value -> "its strength".txt) ++ more)./{ case (n, what) => n.hl ~ " from " ~ what }.join(", ") ~ ")").|(Empty)
     }
 }

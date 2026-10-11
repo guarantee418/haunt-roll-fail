@@ -972,9 +972,10 @@ Check these against the rulebook when it is at hand.
     Kraken Clan card's food or wood doesn't depend on the territory's icons.
   - Ox: the token goes on the first free small building space (not Carved
     Stone spaces) of the explored tile, even in a neutral or enemy territory;
-    none if the tile has no such space. Tokens are used in fights between
-    players only, chosen before food is spent. A space with a token can't be
-    built on.
+    none if the tile has no such space. Tokens are used in every fight, against
+    creatures too (Gman, 2026-10-11), chosen before food is spent; against a
+    creature token 6's extra casualty does nothing, as creatures ignore
+    casualties. A space with a token can't be built on.
   - Horse: "close a territory" means one Horse controls, closed by Horse's
     Explore; one choice per territory. Quality of Life's resource is one of
     the kinds the territory produces.

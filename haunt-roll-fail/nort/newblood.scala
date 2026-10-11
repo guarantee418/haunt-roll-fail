@@ -107,6 +107,7 @@ case class PoachingAction(f : Faction, then : ForcedAction) extends ForcedAction
 // OX
 case class GearTakeAction(self : Faction, space : SpaceRef, n : Int, then : ForcedAction) extends BaseAction("Ancestral Equipment".hl, "take a token from")(space.area, "(" ~ GearName(n).elem ~ ")") with MapTarget { def target = space.area }
 case class GearAskAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends ForcedAction
+case class GearCreatureAskAction(f : Faction, area : AreaRef, e : MoveEffect, attacking : Boolean, then : ForcedAction) extends ForcedAction
 case class GearUseAction(self : Faction, n : Int, area : AreaRef, limit : Int, hero : Boolean, then : ForcedAction) extends BaseAction("Ancestral Equipment".hl, "use a token in the fight in", area)(GearName(n))
 case class TrueHeroAction(self : Faction, space : SpaceRef, building : Building, then : ForcedAction) extends BaseAction("The True Hero".hl, "give up Torfin's second token to remove a building in", space.area)(building) with MapTarget { def target = space.area }
 case class GearRerollAction(self : Faction, again : ForcedAction) extends BaseAction("Ancestral Equipment".hl)("Reroll the combat die")
@@ -181,6 +182,10 @@ object NewBloodExpansion extends Expansion {
     // Combat points from clan powers and cards (e: the attacker's card)
     def points(f : Faction, t : Territory, e : MoveEffect, attacking : Boolean, food : Int)(implicit game : Game) : Int =
         (attacking && f == Dragon && e.special == GrudgeMove).??(game.pyre.num) +
+        gearPoints(f, food)
+
+    // Ox Clan's Ancestral Equipment tokens used in the fight: their combat points (against creatures too)
+    def gearPoints(f : Faction, food : Int)(implicit game : Game) : Int =
         (f == Ox).??(game.gearFight./{
             case 1 => (food > 0).??(1)
             case 2 => 1
@@ -267,6 +272,21 @@ object NewBloodExpansion extends Expansion {
                     game.note("rat-close")
                 }
             }
+    }
+
+    // Step 1 of a fight Ox is in: its Ancestral Equipment tokens, one more with Torfin there
+    def gearStep(a : AreaRef, e : MoveEffect, attacking : Boolean, then : ForcedAction)(implicit game : Game) : Continue = {
+        val t = game.board.territory(a)
+        val torfin = game.chiefIn(t, Ox)
+        val limit = 1 + torfin.??(1)
+
+        // The True Hero: Torfin's second token may be given up to remove a building there
+        val hero = attacking && e.special == TrueHeroMove && torfin && game.buildingsIn(t).any
+
+        if (game.gearReady.any || hero)
+            Then(GearStepAction(Ox, a, limit, hero, then))
+        else
+            Then(then)
     }
 
     def tileHasLore(tile : String) = Tiles(tile).areas.exists(a => a.lore > 0 || a.spaces.exists(_.kind == CarvedSpace))
@@ -726,15 +746,15 @@ object NewBloodExpansion extends Expansion {
             Then(then)
 
         case GearAskAction(attacker, defender, a, e, then) =>
-            val t = game.board.territory(a)
-            val torfin = game.chiefIn(t, Ox)
-            val limit = 1 + torfin.??(1)
+            if (attacker == Ox || defender == Ox)
+                gearStep(a, e, attacker == Ox, then)
+            else
+                Then(then)
 
-            // The True Hero: Torfin's second token may be given up to remove a building there
-            val hero = attacker == Ox && e.special == TrueHeroMove && torfin && game.buildingsIn(t).any
-
-            if ((attacker == Ox || defender == Ox) && (game.gearReady.any || hero))
-                Then(GearStepAction(Ox, a, limit, hero, then))
+        // Against a creature, the same tokens (a casualty more does nothing, as creatures ignore casualties)
+        case GearCreatureAskAction(f, a, e, attacking, then) =>
+            if (f == Ox)
+                gearStep(a, e, attacking, then)
             else
                 Then(then)
 
