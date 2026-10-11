@@ -34,6 +34,8 @@ object MetaMirror extends MetaGame {
 
     override def settingsKey = Meta.settingsKey
 
+    override def translation(settings : $[hrf.Setting]) = Meta.translation(settings)
+
     val factions = Meta.official.%(f => Meta.clones.exists(_.clashKey == f.clashKey)) ++ Meta.clones
 
     override def factionGroup(f : F) : |[Elem] = Meta.factionGroup(f)
