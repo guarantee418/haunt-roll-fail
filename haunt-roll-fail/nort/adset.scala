@@ -73,8 +73,8 @@ case class AdsetPickAction(self : Player, clan : Faction, rest : $[Player]) exte
 // The draft, shown to everyone while it lasts; tapping a clan shows its info
 case class AdsetClanInfo(clan : Faction)
 case class AdsetClanInfoAction(title : Elem, clan : Faction) extends BaseInfo(title)(AdsetExpansion.clanTile(clan, false)) with AdsetDraftChoice with OnClickInfo { def param = AdsetClanInfo(clan) }
-// The three map tiles a seat drew, shown to it until it picks its clan
-case class AdsetTileInfoAction(title : Elem, tile : String) extends BaseInfo(title)(Image("tile-" + tile, styles.seatTile))
+// The three map tiles a seat drew, shown to it until it picks its clan; tapping one shows it full screen
+case class AdsetTileInfoAction(title : Elem, tile : String) extends BaseInfo(title)(Image("tile-" + tile, styles.seatTile)) with OnClickInfo { def param = TileRef(tile) }
 
 
 object AdsetExpansion extends Expansion {
