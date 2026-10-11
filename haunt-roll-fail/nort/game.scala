@@ -589,6 +589,10 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var mended = 0
     var retreatBy : |[Faction] = None
 
+    // Casualties their players chose (ChooseCasualties): the units, companion, warchief and Blainn each clan loses in the fight
+    // being decided; taken by removeCasualties
+    var casualtyPicks = Map[Faction, (Int, Boolean, Boolean, Boolean)]()
+
     // The combat report of the fight just decided, until everyone shown it has tapped OK (CombatReportAction)
     var fightReport : |[FightReport] = None
 
@@ -862,6 +866,23 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         }
         if (left > 0 && kaijaIn(t, f))
             setCompanion(f, None)
+    }
+
+    // A fight's casualties: those f's player picked (casualtyPicks), else units first, then the warchief, Blainn and the companion
+    def removeCasualties(t : Territory, f : Faction, n : Int) {
+        casualtyPicks.get(f) match {
+            case Some((units, kaija, chief, blainnToo)) =>
+                casualtyPicks -= f
+                removeUnits(t, f, units)
+                if (chief)
+                    chiefs -= f
+                if (blainnToo)
+                    blainn = None
+                if (kaija)
+                    setCompanion(f, None)
+            case None =>
+                removeFigures(t, f, n)
+        }
     }
 
     def removeUnits(t : Territory, f : Faction, n : Int) {
@@ -1165,9 +1186,9 @@ object CommonExpansion extends Expansion {
             if (version != gaming.version)
                 log("Saved game version", version.hlb)
 
-            // Colors and teams are told with each clan below ("plays Red in Team B")
+            // Colors and teams are told with each clan below ("plays Red in Team B"); chosen casualties are the rule now, not told
             // (Games from before the Warchiefs module section could have the module with Warchief pawns only: just the latter is told)
-            options.%(o => o.is[ColorOption].not && o.is[TeamOption].not).%(o => o != ModuleOption(Warchiefs) || options.has(WarchiefPawns).not).foreach { o =>
+            options.%(o => o.is[ColorOption].not && o.is[TeamOption].not && o != ChooseCasualties).%(o => o != ModuleOption(Warchiefs) || options.has(WarchiefPawns).not).foreach { o =>
                 log(o.group, o.valueOn)
             }
 

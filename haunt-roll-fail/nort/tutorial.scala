@@ -35,7 +35,7 @@ object Tutorial {
     // The practice game: Stag goes first, against the Easy bot, with the standard rules
     def seating : $[Faction] = $(clan, opponent)
     def bots : Map[Faction, String] = Map(opponent -> "Easy")
-    def options : $[GameOption] = Meta.defaultsFor(2, seating).%(_.is[VictoryModeOption].not) ++ $(TutorialOption, FirstSeatStarts)
+    def options : $[GameOption] = Meta.defaultsFor(2, seating).%(_.is[VictoryModeOption].not) ++ $(TutorialOption, FirstSeatStarts, ChooseCasualties)
 
     // Images in the lessons (Meta.menuImages has their URLs for the menus; in the game they are assets)
     def card(n : String) = Image("card-start-blue-" + n, styles.menuCard)
@@ -266,6 +266,9 @@ object Tutorial {
         else
         if (has[CombatChooseAction])
             |("Your die shows a choice: 1 combat point " ~ CombatIcon.axe ~ " or 1 casualty " ~ CombatIcon.skull ~ " (one enemy unit removed). Pick what helps more.")
+        else
+        if (has[CasualtyPickAction])
+            |("You take casualties " ~ CombatIcon.skull ~ " in this fight: pick who is lost, your units or a special figure (it goes back to your reserve). The fight's result doesn't change.")
         else
         if (has[CombatReportDoneAction])
             |("The combat report: who won, each side's points and losses (ties go to the defender; losing every unit loses). Tap " ~ "OK".hl ~ " to go on. The Stag gets +1 fame for each territory it conquers. (Interface > Combat Report can skip these reports.)")

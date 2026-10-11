@@ -211,7 +211,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     mapControl
 
     // Buttons over the map's bottom right corner: zoom in and out (magnifying glasses),
-    // arrows to move the map, and the middle one to reset the view
+    // arrows to move the map, and the middle one to reset the view; the one in the corner folds them
+    // all away (and back), remembered in the browser
     object mapButtons {
         val node = mapSmall.attach.parent
 
@@ -222,6 +223,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val minus = glass + "<line x1='7' y1='10' x2='13' y2='10'/>"
         def arrow(r : Int) = "<g transform='rotate(" + r + " 12 12)'><polyline points='6,14 12,8 18,14'/></g>"
         val reset = "<rect x='6' y='6' width='12' height='12' rx='1.5'/><line x1='12' y1='9' x2='12' y2='15'/><line x1='9' y1='12' x2='15' y2='12'/>"
+        // Folding: an arrow into the corner; folded, the four arrows of a move cross
+        val fold = "<line x1='6' y1='6' x2='17' y2='17'/><polyline points='17,9 17,17 9,17'/>"
+        val unfold = "<polyline points='9,5 12,2 15,5'/><polyline points='9,19 12,22 15,19'/><polyline points='5,9 2,12 5,15'/><polyline points='19,9 22,12 19,15'/><line x1='12' y1='2' x2='12' y2='22'/><line x1='2' y1='12' x2='22' y2='12'/>"
+
+        def foldKey = Meta.settingsKey + ".map-buttons-folded"
+
+        var folded : Boolean = try { hrf.web.Local.get(foldKey, "") == "yes" } catch { case _ : Throwable => false }
+
+        var buttons : $[dom.html.Div] = $
 
         val box = dom.document.createElement("div").asInstanceOf[dom.html.Div]
         box.style.position = "absolute"
@@ -254,7 +264,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             mapControl.zoomAt(c, c, zoomBase + d)
         }
 
-        def button(icon : String, title : String, col : Int, row : Int)(action : => Unit) {
+        def button(icon : String, title : String, col : Int, row : Int)(action : => Unit) : dom.html.Div = {
             val b = dom.document.createElement("div").asInstanceOf[dom.html.Div]
             b.innerHTML = svg(icon)
             b.title = title
@@ -280,6 +290,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             }
 
             box.appendChild(b)
+            buttons :+= b
+            b
         }
 
         button(plus, "Zoom in", 1, 1)(zoomBy(350))
@@ -289,6 +301,26 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         button(reset, "Reset the view", 2, 3) { zoomBase = 0 ; dX = 0 ; dY = 0 ; drawMap() }
         button(arrow(90), "Move right", 3, 3)(pan(1, 0))
         button(arrow(180), "Move down", 2, 4)(pan(0, 1))
+
+        val toggle = button(fold, "Hide the map buttons", 3, 4)(toggleFold())
+
+        // Folded, only the toggle is left, in the corner
+        def show() {
+            buttons.but(toggle).foreach(_.style.display = folded.?("none").|("flex"))
+            box.style.setProperty("grid-template-columns", folded.?("max(4.6vmin, 36px)").|("repeat(3, max(4.6vmin, 36px))"))
+            toggle.style.setProperty("grid-column", folded.?("1").|("3"))
+            toggle.style.setProperty("grid-row", folded.?("1").|("4"))
+            toggle.innerHTML = svg(folded.?(unfold).|(fold))
+            toggle.title = folded.?("Show the map buttons").|("Hide the map buttons")
+        }
+
+        def toggleFold() {
+            folded = folded.not
+            try { hrf.web.Local.set(foldKey, folded.?("yes").|("")) } catch { case _ : Throwable => }
+            show()
+        }
+
+        show()
 
         node.appendChild(box)
     }
@@ -2270,6 +2302,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         case c : Card =>
             showOverlay(overlayFitX(Image(c.info.image, styles.zoomCard)).onClick, onClick)
 
+        // A map tile shown in the action pane (Adset's drawn tiles, the tile being explored with) opens full screen too
+        case TileRef(id) =>
+            showOverlay(overlayFitX(Image("tile-" + id, styles.zoomCard)).onClick, onClick)
+
         case WinterChart(f) =>
             showOverlay(overlayScrollX(winterChart(f)).onClick, onClick)
 
@@ -2491,7 +2527,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         else
         // Adset: the seat's three map tiles side by side
         if (a.is[AdsetTileInfoAction])
-            $(xstyles.info, xstyles.xx, xstyles.chp, styles.draftTile)
+            $(xstyles.info, xstyles.xx, xstyles.chp, styles.draftTile, xlo.pointer)
         else
         view @@ {
             case _ if unavailable.not => $()

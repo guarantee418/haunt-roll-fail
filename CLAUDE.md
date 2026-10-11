@@ -138,6 +138,7 @@ and other card picks show the cards at hand-card size, and the last player to pa
 still sees the one card left before taking it. Copies of the same card in hand (and among
 the Played cards) are drawn as one card with the copies peeking out behind it
 (`Card.handStack` in `nort/cards.scala`), in the hand and in every pick from it. Tapping a player's name in its panel opens its clan's info (`ClanInfo`, the same as the clan picker's "i" button); the clan board that was shown under the Lore Tree was removed for it on 2026-10-08 (asked for by Robotos). The player panels show numbers with icons, on rows that don't wrap: cards to draw, in hand, played this year (the active cards) and discarded (card icons outlined yellow, green, white and red, `ui-card-draw`, `-hand`, `-played`, `-discard`, drawn on the start card back by `nort/tools/panel-icons.py`; tapping the white card shows the active cards, the red one the discard pile), then the units on the map (the Recruit card's figure, `ui-unit`; with the Sea module, the units away on Raids in brackets beside it with a longship, `ShipIcon`, `ui-ship`, drawn by `nort/tools/panel-icons.py`), the warchief with the Warchiefs module (its token and name, grayed out while in the reserve) and the units left in the supply (`SupplyIcon`, `ui-unit-supply`, the units icon grayed out, by `nort/tools/panel-icons.py`), then the food, wood, lore and fame table, and the first player marker beside the clan name (`ui-first-player`).
+A clan taking casualties in a fight picks which figures go when it has a choice (units, the warchief, Kaija or the other companions, Jötunn Blainn; `CasualtyPickAction` in `nort/map.scala`, asked for by Robotos on 2026-10-11), only in games with the hidden `ChooseCasualties` option that every new game gets (`mandatoryFor` in `nort/meta.scala` and `nort/adset.scala`); older games keep taking units first so their replays don't change.
 After the die decides a fight (against a clan or a creature), a combat report (who won and how, each side's combat points and casualties with their sources, what each lost) is shown to both sides before the retreat, to be tapped OK (`CombatReportAction` in `nort/map.scala`); each player can skip theirs with the in-game "Combat Report" setting under Interface (`ShowCombatReport`, the default, or `SkipCombatReport`, like Root's Ambush! setting; the UI then taps OK for them, `ask` in `nort/ui.scala`). The old game options `CombatReportAttackers` and `CombatReportDefenders` are hidden and do nothing. In every game, the log's word for how a fight ended ("won", "defeated", "drove", "wiped out") opens that fight's report (`CombatReport.link`, `FightReportView`).
 Combat points and casualties are drawn as the battle die's axe and skull wherever they come up (fight info, die results, the log, card and rules text): `CombatIcon` and, for rules text, `CombatText` in `nort/game.scala`, with `ui-axe` and `ui-skull` cut from the die texture `token/die.webp` (TTS mod 2838546142) by `nort/tools/dice-icons.py`.
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
@@ -219,11 +220,12 @@ cd haunt-roll-fail && sbt fullOptJS
   temporarily point the script in `index.html` at `hrf-fastopt`.
 - The client build needs more than sbt's default 1 GB heap or it fails with
   `OutOfMemoryError`. Use `SBT_OPTS="-Xmx6G -Xss4M"`.
-- Build output under `target/` is committed, including `hrf-opt.js`.
-  After changing client code, run `sbt fullOptJS` and commit `hrf-opt.js`,
-  `hrf-opt.js.map`, `hrf-opt/main.js` and `hrf-opt/main.js.map`
-  so the server can run without rebuilding. Don't commit the rest of the
-  `target/` churn a build produces.
+- Of the build output under `target/`, only the optimized client is
+  committed: `hrf-opt.js`, `hrf-opt.js.map`, `hrf-opt/main.js` and
+  `hrf-opt/main.js.map`, so the server can run without building it (it
+  compiles `good-game` itself when it starts). `.gitignore` ignores the rest
+  of every `target/` (issue #11). After changing client code, run
+  `sbt fullOptJS` and commit those four files.
 
 ## Live server
 
