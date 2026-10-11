@@ -470,6 +470,19 @@ object NorthgardDie {
 
 
 object MapExpansion extends Expansion {
+    // The clan powers of an attacker that won a fight
+    def attackWon(attacker : Faction)(implicit game : Game) {
+        if (attacker == Wolf) {
+            attacker.food += 1
+            attacker.log("collected", 1.hl, Food, "for winning as the attacker")
+        }
+
+        if (attacker == Stag) {
+            attacker.fame += 1
+            attacker.log("gained", 1.hl, FameIcon(), "for conquering a territory")
+        }
+    }
+
     def recruitTargets(f : Faction, mode : RecruitMode, placed : $[AreaRef])(implicit game : Game) : $[Territory] = {
         val neutral = game.board.territories.%(t => game.present(t).none)
         val mine = game.controlled(f)
@@ -1250,7 +1263,19 @@ object MapExpansion extends Expansion {
 
             f.log("pushed a unit of", defender, "from", a, "to", to)
 
-            Then(FightStartAction(f, a, e, then))
+            // FAQ: the combat has started (Intimidate is in its step 1), so pushing the last defender out wins it,
+            // with what winning brings (Wolf's food, Stag's fame, Conquest), though no die is rolled
+            if (game.present(t).but(f).none) {
+                game.fights += 1
+                f.log("won the fight in", a, "with", "Intimidate".hl)
+                EventsExpansion.afterCombat(f, defender, 0, 0, |(f))
+                game.note("attack-won")
+                attackWon(f)
+
+                Then(then)
+            }
+            else
+                Then(FightStartAction(f, a, e, then))
 
         case IntimidateSkipAction(f, a, e, then) =>
             Then(FightStartAction(f, a, e, then))
@@ -1519,17 +1544,8 @@ object MapExpansion extends Expansion {
 
                         w.log(CombatReport.link("won"), "the fight in", a)
 
-                        if (w == attacker) {
-                            if (attacker == Wolf) {
-                                attacker.food += 1
-                                attacker.log("collected", 1.hl, Food, "for winning as the attacker")
-                            }
-
-                            if (attacker == Stag) {
-                                attacker.fame += 1
-                                attacker.log("gained", 1.hl, FameIcon(), "for conquering a territory")
-                            }
-                        }
+                        if (w == attacker)
+                            attackWon(attacker)
 
                         if (game.figures(t, loser) > 0) {
                             // Brand's Bravery: the winning attacker chooses where the loser retreats

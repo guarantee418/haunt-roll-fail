@@ -1061,7 +1061,9 @@ Check these against the rulebook when it is at hand.
   building (so a new Food Silo etc. counts).
 - **Intimidate**: the pushed unit goes to any adjacent territory that is
   neutral or the defender's and not in a fight; if no defender is left, the
-  territory is taken without a fight (no Stag fame).
+  attacker wins the combat without rolling (the FAQ: Intimidate is step 1 of
+  the combat, so a combat took place), with Wolf's food, Stag's fame and a
+  Conquest win (reported by Robotos, 2026-10-11).
 - **Amenities**: small buildings never take a space; they are drawn next to
   the territory number.
 - **Industrious Villagers**: a Carved Stone can only replace a building on a
