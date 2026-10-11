@@ -2264,6 +2264,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         case c : Card =>
             showOverlay(overlayFitX(Image(c.info.image, styles.zoomCard)).onClick, onClick)
 
+        // A map tile shown in the action pane (Adset's drawn tiles, the tile being explored with) opens full screen too
+        case TileRef(id) =>
+            showOverlay(overlayFitX(Image("tile-" + id, styles.zoomCard)).onClick, onClick)
+
         case WinterChart(f) =>
             showOverlay(overlayScrollX(winterChart(f)).onClick, onClick)
 
@@ -2485,7 +2489,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         else
         // Adset: the seat's three map tiles side by side
         if (a.is[AdsetTileInfoAction])
-            $(xstyles.info, xstyles.xx, xstyles.chp, styles.draftTile)
+            $(xstyles.info, xstyles.xx, xstyles.chp, styles.draftTile, xlo.pointer)
         else
         view @@ {
             case _ if unavailable.not => $()
