@@ -1564,8 +1564,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         }
     }
 
-    // The divider right of the map, the one between the log and the action pane and the bottom edge of the
-    // player panels have drag handles; each
+    // The divider right of the map, the one between the log and the action pane, the bottom edge of the
+    // player panels and the map's bottom edge (with panes under it, as on a phone held upright) have drag handles; each
     // browser keeps where they were dragged, as fractions of the window, for each shape of screen (tall, wide,
     // ultrawide). Double-tapping a handle puts it back
     def splitKind(width : Int, height : Int) = (width >= height * 2.1).?("ultrawide").|((width > height).?("wide").|("tall"))
@@ -1574,6 +1574,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     var splitX = 0.0
     var splitY = 0.0
     var splitP = 0.0
+    var splitB = 0.0
 
     def loadSplit(kind : String) {
         if (splitLoaded != kind) {
@@ -1583,10 +1584,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             splitX = n.lift(0).|(0.0)
             splitY = n.lift(1).|(0.0)
             splitP = n.lift(2).|(0.0)
+            splitB = n.lift(3).|(0.0)
         }
     }
 
-    def saveSplit() = try { hrf.web.Local.set(Meta.settingsKey + ".split-" + splitLoaded, splitX + "," + splitY + "," + splitP) } catch { case _ : Throwable => }
+    def saveSplit() = try { hrf.web.Local.set(Meta.settingsKey + ".split-" + splitLoaded, splitX + "," + splitY + "," + splitP + "," + splitB) } catch { case _ : Throwable => }
 
     // The panes whose edge is at a divider move with it, each kept at least 15% of the window
     def split(width : Int, height : Int, panelsBottom : Option[Int] = None)(l0 : $[PanePlacement]) : $[PanePlacement] = {
@@ -1595,7 +1597,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         def clamp(want : Int, lo : Int, hi : Int) = max(min(want, max(hi, 0)), min(lo, 0))
 
         var l = l0
-        handleAt = $(None, None, None)
+        handleAt = $(None, None, None, None)
 
         l.find(_.name == "map-small").foreach { m =>
             val x = m.rect.x + m.rect.width
@@ -1700,16 +1702,40 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             }
         }
 
+        // The map's bottom edge, when panes are right under it and no wider than it (the log and the action pane
+        // on a phone held upright): dragging it up makes them taller and their font larger, down the other way.
+        // The font follows the square root of the height, so the text takes about as much of the pane as before
+        l.find(_.name == "map-small").foreach { m =>
+            val y = m.rect.y + m.rect.height
+            def map(p : PanePlacement) = p.name == "map-small" || p.name == "map-small-overlay"
+            def over(p : PanePlacement) = p.rect.x < m.rect.x + m.rect.width - 3 && p.rect.x + p.rect.width > m.rect.x + 3
+            def below(p : PanePlacement) = map(p).not && (p.rect.y - y).abs <= 3 && over(p)
+            val under = l.filter(below)
+            if (under.any && under.forall(p => p.rect.x >= m.rect.x - 3 && p.rect.x + p.rect.width <= m.rect.x + m.rect.width + 3)) {
+                val minH = height * 15 / 100
+                val dy = clamp((splitB * height).round.toInt, minH - m.rect.height, under./(_.rect.height - minH).min)
+                splitB = dy * 1.0 / height
+                l = l./{
+                    case p if map(p) => p.copy(rect = Rect(p.rect.x, p.rect.y, p.rect.width, p.rect.height + dy))
+                    case p if below(p) =>
+                        val k = math.sqrt((p.rect.height - dy) * 1.0 / p.rect.height)
+                        p.copy(rect = Rect(p.rect.x, p.rect.y + dy, p.rect.width, p.rect.height - dy), fontSize = p.fontSize./(_ * k))
+                    case p => p
+                }
+                handleAt = handleAt.updated(3, Some((m.rect.x + m.rect.width / 2, y + dy)))
+            }
+        }
+
         l
     }
 
-    // Where each handle goes (map edge, log bottom, panels' bottom), worked out by split
-    var handleAt : $[Option[(Int, Int)]] = $(None, None, None)
+    // Where each handle goes (map edge, log bottom, panels' bottom, map bottom), worked out by split
+    var handleAt : $[Option[(Int, Int)]] = $(None, None, None, None)
 
-    def splitGet(i : Int) = i match { case 0 => splitX case 1 => splitY case _ => splitP }
-    def splitSet(i : Int, v : Double) = i match { case 0 => splitX = v case 1 => splitY = v case _ => splitP = v }
+    def splitGet(i : Int) = i match { case 0 => splitX case 1 => splitY case 2 => splitP case _ => splitB }
+    def splitSet(i : Int, v : Double) = i match { case 0 => splitX = v case 1 => splitY = v case 2 => splitP = v case _ => splitB = v }
 
-    // The three handles, on top of the panes; any left by an earlier game UI on the page go first, or they
+    // The four handles, on top of the panes; any left by an earlier game UI on the page go first, or they
     // stay where that UI put them, as a second set
     lazy val handles = {
         val old = dom.document.querySelectorAll(".nort-split-handle")
@@ -1717,7 +1743,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         handles0
     }
 
-    lazy val handles0 = $(0, 1, 2)./ { i =>
+    lazy val handles0 = $(0, 1, 2, 3)./ { i =>
         val vertical = i == 0
         val e = dom.document.createElement("div").asInstanceOf[dom.html.Element]
         e.className = "nort-split-handle"
@@ -1784,6 +1810,170 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 e.style.display = "block"
             case (e, None) =>
                 e.style.display = "none"
+        }
+    }
+
+    // The log folds into a narrow strip (beside the pane next to it) or a one-line bar (above or below it) with
+    // a tab that unfolds it; the pane it touches (the action pane first) and the others in that row or column
+    // take the room. Each browser remembers it (<settingsKey>.log-folded)
+    def logKey = Meta.settingsKey + ".log-folded"
+
+    var logFolded : Boolean = try { hrf.web.Local.get(logKey, "") == "yes" } catch { case _ : Throwable => false }
+
+    // Where the log is (unfolded) or its strip (folded), and whether the strip runs down (beside a pane) or across
+    var logAt : |[(Rect, Boolean)] = None
+
+    val logStrip = 26
+
+    def foldLog(l : $[PanePlacement]) : $[PanePlacement] = {
+        logAt = None
+
+        l.find(_.name == "log") match {
+            case Some(g) =>
+                val r = g.rect
+                def rows(p : PanePlacement) = p.rect.y < r.y + r.height - 3 && p.rect.y + p.rect.height > r.y + 3
+                def cols(p : PanePlacement) = p.rect.x < r.x + r.width - 3 && p.rect.x + p.rect.width > r.x + 3
+                def map(p : PanePlacement) = p.name == "map-small" || p.name == "map-small-overlay"
+                val others = l.%(_.name != "log")
+                def touches(p : PanePlacement, side : Int) = side match {
+                    case 0 => rows(p) && (p.rect.x - (r.x + r.width)).abs <= 3
+                    case 1 => rows(p) && (p.rect.x + p.rect.width - r.x).abs <= 3
+                    case 2 => cols(p) && (p.rect.y - (r.y + r.height)).abs <= 3
+                    case _ => cols(p) && (p.rect.y + p.rect.height - r.y).abs <= 3
+                }
+                // Right, left, below, above: the side with the action pane, else any pane but the map, else the map
+                val sides = $(0, 1, 2, 3)
+                val side = sides.find(i => others.exists(p => p.name == "action" && touches(p, i)))
+                    .orElse(sides.find(i => others.exists(p => map(p).not && touches(p, i))))
+                    .orElse(sides.find(i => others.exists(p => touches(p, i))))
+
+                if (logFolded.not || side.isEmpty) {
+                    logAt = Some((r, false))
+                    l
+                }
+                else {
+                    val i = side.get
+                    val down = i < 2
+                    val s = min(logStrip, down.?(r.width).|(r.height))
+                    // The panes on that side, as far as the map (or the window's edge) when the map isn't the one taking the room
+                    val takers = others.%(p => touches(p, i)).exists(map(_).not)
+                    def stretch(a0 : Int, a1 : Int, b0 : Int, b1 : Int)(v : Int) = b0 + ((v - a0) * 1.0 * (b1 - b0) / (a1 - a0)).round.toInt
+                    val result = i match {
+                        case 0 =>
+                            val end = others.%(p => rows(p) && p.rect.x >= r.x + r.width - 3 && (takers.not || map(p).not))./(p => p.rect.x + p.rect.width).maxOption.|(r.x + r.width)
+                            val f = stretch(r.x + r.width, end, r.x + s, end) _
+                            others./{
+                                case p if rows(p) && p.rect.x >= r.x + r.width - 3 && p.rect.x + p.rect.width <= end + 3 => p.copy(rect = Rect(f(p.rect.x), p.rect.y, f(p.rect.x + p.rect.width) - f(p.rect.x), p.rect.height))
+                                case p => p
+                            }
+                        case 1 =>
+                            val end = others.%(p => rows(p) && p.rect.x + p.rect.width <= r.x + 3 && (takers.not || map(p).not))./(_.rect.x).minOption.|(r.x)
+                            val f = stretch(end, r.x, end, r.x + r.width - s) _
+                            others./{
+                                case p if rows(p) && p.rect.x + p.rect.width <= r.x + 3 && p.rect.x >= end - 3 => p.copy(rect = Rect(f(p.rect.x), p.rect.y, f(p.rect.x + p.rect.width) - f(p.rect.x), p.rect.height))
+                                case p => p
+                            }
+                        case 2 =>
+                            val end = others.%(p => cols(p) && p.rect.y >= r.y + r.height - 3 && (takers.not || map(p).not))./(p => p.rect.y + p.rect.height).maxOption.|(r.y + r.height)
+                            val f = stretch(r.y + r.height, end, r.y + s, end) _
+                            others./{
+                                case p if cols(p) && p.rect.y >= r.y + r.height - 3 && p.rect.y + p.rect.height <= end + 3 => p.copy(rect = Rect(p.rect.x, f(p.rect.y), p.rect.width, f(p.rect.y + p.rect.height) - f(p.rect.y)))
+                                case p => p
+                            }
+                        case _ =>
+                            val end = others.%(p => cols(p) && p.rect.y + p.rect.height <= r.y + 3 && (takers.not || map(p).not))./(_.rect.y).minOption.|(r.y)
+                            val f = stretch(end, r.y, end, r.y + r.height - s) _
+                            others./{
+                                case p if cols(p) && p.rect.y + p.rect.height <= r.y + 3 && p.rect.y >= end - 3 => p.copy(rect = Rect(p.rect.x, f(p.rect.y), p.rect.width, f(p.rect.y + p.rect.height) - f(p.rect.y)))
+                                case p => p
+                            }
+                    }
+                    val strip = i match {
+                        case 0 => Rect(r.x, r.y, s, r.height)
+                        case 1 => Rect(r.x + r.width - s, r.y, s, r.height)
+                        case 2 => Rect(r.x, r.y, r.width, s)
+                        case _ => Rect(r.x, r.y + r.height - s, r.width, s)
+                    }
+                    logAt = Some((strip, down))
+                    // The handle between the log and the pane under it goes with the log
+                    handleAt = handleAt.updated(1, None)
+                    result
+                }
+            case None => l
+        }
+    }
+
+    lazy val logToggle = {
+        val old = dom.document.querySelectorAll(".nort-log-toggle")
+        0.until(old.length)./(old(_)).foreach(o => o.parentNode.removeChild(o))
+
+        val e = dom.document.createElement("div").asInstanceOf[dom.html.Element]
+        e.className = "nort-log-toggle"
+        val st = e.style
+        st.position = "absolute"
+        st.boxSizing = "border-box"
+        st.background = "#2a2a2af0"
+        st.border = "1px solid #c0c0c0"
+        st.color = "#f0f0f0"
+        st.cursor = "pointer"
+        st.zIndex = "199"
+        st.display = "flex"
+        st.alignItems = "center"
+        st.justifyContent = "center"
+        st.overflow = "hidden"
+        st.whiteSpace = "nowrap"
+        st.fontSize = "14px"
+        st.lineHeight = "1"
+        st.setProperty("touch-action", "manipulation")
+        st.setProperty("user-select", "none")
+        st.display = "none"
+
+        e.addEventListener("click", (ev : dom.MouseEvent) => {
+            ev.preventDefault()
+            ev.stopPropagation()
+            logFolded = logFolded.not
+            try { hrf.web.Local.set(logKey, logFolded.?("yes").|("")) } catch { case _ : Throwable => }
+            resize()
+            if (logFolded.not)
+                dom.window.requestAnimationFrame((_ : Double) => logger.scrollToBottom())
+        })
+
+        court.node.parentElement.appendChild(e)
+        e
+    }
+
+    def placeLogToggle() {
+        val e = logToggle
+        val st = e.style
+        logAt match {
+            case Some((r, down)) if logFolded =>
+                // The strip itself, its label running down beside a pane
+                st.left = r.x + "px"
+                st.top = r.y + "px"
+                st.width = r.width + "px"
+                st.height = r.height + "px"
+                st.borderRadius = "0"
+                st.boxShadow = "none"
+                st.setProperty("writing-mode", down.?("vertical-rl").|("horizontal-tb"))
+                e.title = "Show the log"
+                e.textContent = "+ Log"
+                st.display = "flex"
+            case Some((r, _)) =>
+                // A small round button in the log's top right corner, or its bottom right one when a handle is there
+                val x = r.x + r.width - 26
+                val top = handleAt.flatten.exists { case (hx, hy) => (hx - x - 11).abs < 30 && (hy - r.y - 15).abs < 30 }.not
+                st.left = x + "px"
+                st.top = top.?(r.y + 4).|(r.y + r.height - 26) + "px"
+                st.width = "22px"
+                st.height = "22px"
+                st.borderRadius = "11px"
+                st.boxShadow = "0 0 4px #000"
+                st.setProperty("writing-mode", "horizontal-tb")
+                e.title = "Fold the log"
+                e.textContent = "–"
+                st.display = "flex"
+            case None =>
+                st.display = "none"
         }
     }
 
@@ -1978,9 +2168,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             val base = foldCourt(height)(l)
             val want = (splitP * height).round.toInt
             val grown = (courtFolded && want > 0).?(foldCourt(height, min(want, height / 2))(l)).|(base)
-            val placed = split(width, height, statusBottom(base))(grown)
+            val placed = foldLog(split(width, height, statusBottom(base))(grown))
             onLayout0(placed)
             placeHandles(placed)
+            placeLogToggle()
         }
 
         val root = dom.document.documentElement.asInstanceOf[dom.html.Element].style
