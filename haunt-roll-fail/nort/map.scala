@@ -138,6 +138,14 @@ case class CombatResolveAction(attacker : Faction, defender : Faction, area : Ar
 case class CombatReportAction(l : $[Faction], then : ForcedAction) extends ForcedAction
 case class CombatReportDoneAction(self : Faction, rest : $[Faction], then : ForcedAction) extends BaseAction(CombatReport(self))("OK")
 
+// Casualties chosen by their player (ChooseCasualties): which figures go, then the fight goes on (then decides it again, now
+// with the pick in game.casualtyPicks)
+case class CasualtyPickAction(self : Faction, area : AreaRef, k : Int, n : Int, kaija : Boolean, chief : Boolean, blainn : Boolean, then : ForcedAction) extends BaseAction(self, "takes", CombatIcon.skulls(k), "in", area)(CasualtyParty(self, n, kaija, chief, blainn))
+
+case class CasualtyParty(f : Faction, n : Int, kaija : Boolean, chief : Boolean, blainn : Boolean) extends GameElementary {
+    def elem(implicit game : Game) = "Lose " ~ (((n > 0 || kaija || chief).$(Party(f, n, kaija, chief).elem) ++ blainn.$("Jötunn Blainn".hl)) : $[Elem]).join(" and ")
+}
+
 case class RetreatAction(f : Faction, from : AreaRef, rough : Boolean, then : ForcedAction) extends ForcedAction
 // Retreating: pick the destination (on the map or in the list), then who goes there (everyone, the units, one unit,
 // Kaija or the warchief alone), or cancel
@@ -365,7 +373,7 @@ object FightPoints {
     }
 }
 
-// The combat report, shown once the die has decided a fight (CombatResolveAction, or CreatureRolledAction against a
+// The combat report, shown once the die has decided a fight (CombatResolveAction, or CreatureResolveAction against a
 // creature) and before any retreat: who won and how, then each side's combat points and casualties with where they
 // come from, and what it lost. Asked of both sides (CombatReport.readers), never of the Automa; a player whose
 // "Combat Report" setting is Skip taps OK without seeing it (the UI does, ask in ui.scala).
@@ -818,6 +826,22 @@ object MapExpansion extends Expansion {
     // nothing to cancel back to, but the choice is still shown so the player sees where the units go
     def retreatCount(ask : Ask, f : Faction, from : AreaRef, rough : Boolean)(implicit game : Game) =
         (retreats(f, game.board.territory(from), rough).num > 1).?(ask.cancel).|(ask.needOk)
+
+    // The ways f can take k casualties in t: units, Kaija (or Brundr and Kaelinn, or Brok), the warchief, Blainn, units first
+    def casualtyParties(f : Faction, t : Territory, k : Int)(implicit game : Game) : $[(Int, Boolean, Boolean, Boolean)] = {
+        val n = game.count(t, f)
+        def may(b : Boolean) = b.?($(false, true)).|($(false))
+
+        for (chief <- may(game.chiefIn(t, f)); blainn <- may(game.blainnIn(t, f)); kaija <- may(game.kaijaIn(t, f)) ; s = $(kaija, chief, blainn).count(b => b) ; if s <= k && k - s <= n)
+            yield (k - s, kaija, chief, blainn)
+    }.sortBy(p => $(p._2, p._3, p._4).count(b => b))
+
+    // Asks the first of l (a clan and the casualties it takes) with a choice to make, then again; None once all are picked
+    // (Robotos's request of 2026-10-11; only in games with ChooseCasualties, and never for the Automa)
+    def pickCasualties(l : $[(Faction, Int)], t : Territory, again : ForcedAction)(implicit game : Game) : |[Ask] =
+        game.options.has(ChooseCasualties).??(l.%{ case (f, k) => k > 0 && f != Automa && game.casualtyPicks.contains(f).not }./{ case (f, k) => (f, k, casualtyParties(f, t, k)) }.%(_._3.num > 1).headOption./{ case (f, k, l) =>
+            Ask(f).each(l) { case (n, kaija, chief, blainn) => CasualtyPickAction(f, t.anchor, k, n, kaija, chief, blainn, again) }
+        })
 
     // Who can retreat together: everyone, then the units without Kaija and the warchief, one unit, Kaija alone, the warchief alone
     def retreatParties(f : Faction, from : AreaRef)(implicit game : Game) : $[(Int, Boolean, Boolean)] = {
@@ -1404,113 +1428,126 @@ object MapExpansion extends Expansion {
             val shield = ((e.special == ShieldMove || e.special == BorgildMove) && faces(1).casualties + towers > 0).??(1)
             val dc = math.max(0, faces(1).casualties + towers - shield + NewBloodExpansion.casualties(defender, t, e, false) + moon - NewBloodExpansion.ignored(attacker))
 
-            // The Wise One (Lynx): 1 point per casualty inflicted
-            val wise = (e.special == WiseOneMove).??(math.min(ac, du))
+            // Each side picks its casualties when it has a choice (ChooseCasualties), before anything is told
+            val pick = pickCasualties($(attacker -> math.min(dc, au), defender -> math.min(ac, du)), t, CombatResolveAction(attacker, defender, a, e, food, faces, then))
 
-            // Events: Conquests gives the attacker 1 point
-            val conquests = game.eventIs("conquests").??(1)
+            if (pick.any)
+                pick.get
+            else {
+                // The Wise One (Lynx): 1 point per casualty inflicted
+                val wise = (e.special == WiseOneMove).??(math.min(ac, du))
 
-            // Robotos: 1 more combat point when it attacks
-            val robo = game.robotos(attacker).??(1)
+                // Events: Conquests gives the attacker 1 point
+                val conquests = game.eventIs("conquests").??(1)
 
-            val as = game.strength(t, attacker, true) + e.bonus + ab + anb + aw + wise + conquests + robo + food(0) + faces(0).points
-            val ds = game.strength(t, defender, false) + fortress + db + dnb + dw + food(1) + faces(1).points
+                // Robotos: 1 more combat point when it attacks
+                val robo = game.robotos(attacker).??(1)
 
-            if (game.kaijaIn(t, attacker) || game.kaijaIn(t, defender))
-                game.note("kaija-fight")
-            if (ab + db > 0)
-                game.note("scorched-fight")
+                val as = game.strength(t, attacker, true) + e.bonus + ab + anb + aw + wise + conquests + robo + food(0) + faces(0).points
+                val ds = game.strength(t, defender, false) + fortress + db + dnb + dw + food(1) + faces(1).points
 
-            def extra(l : (Int, Elem)*) : Elem = l.toList.filter(_._1 > 0).map { case (n, what) => "(" ~ n.hl ~ " from " ~ what ~ ")" }.join(" ")
+                if (game.kaijaIn(t, attacker) || game.kaijaIn(t, defender))
+                    game.note("kaija-fight")
+                if (ab + db > 0)
+                    game.note("scorched-fight")
 
-            if (game.chiefIn(t, attacker) || game.chiefIn(t, defender))
-                game.note("chief-fight")
+                def extra(l : (Int, Elem)*) : Elem = l.toList.filter(_._1 > 0).map { case (n, what) => "(" ~ n.hl ~ " from " ~ what ~ ")" }.join(" ")
 
-            attacker.log("scored", CombatIcon.axes(as), extra((FightPoints.others(attacker, t, true) ++ $(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt) ++ aws ++ $(wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl)) : _*), (ac > 0 || halvard > 0).?("and inflicted " ~ CombatIcon.skulls(ac)).|(Empty), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
-            defender.log("scored", CombatIcon.axes(ds), extra((FightPoints.others(defender, t, false) ++ $(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt) ++ dws) : _*), (dc > 0 || shield > 0).?("and inflicted " ~ CombatIcon.skulls(dc)).|(Empty), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
+                if (game.chiefIn(t, attacker) || game.chiefIn(t, defender))
+                    game.note("chief-fight")
 
-            val winner =
-                if (ac >= du && dc >= au) None
-                else if (ac >= du) |(attacker)
-                else if (dc >= au) |(defender)
-                else if (as > ds) |(attacker)
-                else |(defender)
+                attacker.log("scored", CombatIcon.axes(as), extra((FightPoints.others(attacker, t, true) ++ $(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt) ++ aws ++ $(wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl)) : _*), (ac > 0 || halvard > 0).?("and inflicted " ~ CombatIcon.skulls(ac)).|(Empty), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
+                defender.log("scored", CombatIcon.axes(ds), extra((FightPoints.others(defender, t, false) ++ $(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt) ++ dws) : _*), (dc > 0 || shield > 0).?("and inflicted " ~ CombatIcon.skulls(dc)).|(Empty), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
 
-            // The combat report, from the same sums
-            def report(f : Faction, attacking : Boolean, extra : $[(Int, Elem)], casualties : $[(Int, Elem)], total : Int, inflicted : Int, lost : Int) =
-                FightSide(f, attacking, FightPoints.parts(f, t, attacking, extra), total, casualties, inflicted, lost)
+                val winner =
+                    if (ac >= du && dc >= au) None
+                    else if (ac >= du) |(attacker)
+                    else if (dc >= au) |(defender)
+                    else if (as > ds) |(attacker)
+                    else |(defender)
 
-            game.fightReport = |(FightReport(a,
-                report(attacker, true, $(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt) ++ aws ++ $(wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl, food(0) -> Food.elem, faces(0).points -> "the die".txt),
-                    $(faces(0).casualties -> "the die".txt, (e.special == EgilMove).??(1) -> "the card".txt, NewBloodExpansion.casualties(attacker, t, e, true) -> "New Blood powers".txt, eldrich -> "Eldrich".hl, moon -> "Blood Moon".hl,
-                        -halvard -> ("ignored by " ~ Warchief.elem(Goat)), -NewBloodExpansion.ignored(defender) -> "ignored by New Blood powers".txt, -urdar -> "ignored by Urdarbrunn".hl),
-                    as, ac, math.min(dc, au)),
-                report(defender, false, $(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt) ++ dws ++ $(food(1) -> Food.elem, faces(1).points -> "the die".txt),
-                    $(faces(1).casualties -> "the die".txt, towers -> DefenseTower.elem, NewBloodExpansion.casualties(defender, t, e, false) -> "New Blood powers".txt, moon -> "Blood Moon".hl,
-                        -shield -> ("cancelled by " ~ "Shieldbearers".hl), -NewBloodExpansion.ignored(attacker) -> "ignored by New Blood powers".txt),
-                    ds, dc, math.min(ac, du)),
-                winner./(_ == attacker), winner.exists(w => (w == attacker).?(ac >= du).|(dc >= au))))
+                // The combat report, from the same sums
+                def report(f : Faction, attacking : Boolean, extra : $[(Int, Elem)], casualties : $[(Int, Elem)], total : Int, inflicted : Int, lost : Int) =
+                    FightSide(f, attacking, FightPoints.parts(f, t, attacking, extra), total, casualties, inflicted, lost)
 
-            val readers = CombatReport.readers(|(attacker), |(defender))
+                game.fightReport = |(FightReport(a,
+                    report(attacker, true, $(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt) ++ aws ++ $(wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl, food(0) -> Food.elem, faces(0).points -> "the die".txt),
+                        $(faces(0).casualties -> "the die".txt, (e.special == EgilMove).??(1) -> "the card".txt, NewBloodExpansion.casualties(attacker, t, e, true) -> "New Blood powers".txt, eldrich -> "Eldrich".hl, moon -> "Blood Moon".hl,
+                            -halvard -> ("ignored by " ~ Warchief.elem(Goat)), -NewBloodExpansion.ignored(defender) -> "ignored by New Blood powers".txt, -urdar -> "ignored by Urdarbrunn".hl),
+                        as, ac, math.min(dc, au)),
+                    report(defender, false, $(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt) ++ dws ++ $(food(1) -> Food.elem, faces(1).points -> "the die".txt),
+                        $(faces(1).casualties -> "the die".txt, towers -> DefenseTower.elem, NewBloodExpansion.casualties(defender, t, e, false) -> "New Blood powers".txt, moon -> "Blood Moon".hl,
+                            -shield -> ("cancelled by " ~ "Shieldbearers".hl), -NewBloodExpansion.ignored(attacker) -> "ignored by New Blood powers".txt),
+                        ds, dc, math.min(ac, du)),
+                    winner./(_ == attacker), winner.exists(w => (w == attacker).?(ac >= du).|(dc >= au))))
 
-            val before = game.count(t, attacker)
-            val dbefore = game.count(t, defender)
-            game.removeFigures(t, attacker, math.min(dc, au))
-            game.removeFigures(t, defender, math.min(ac, du))
+                val readers = CombatReport.readers(|(attacker), |(defender))
 
-            // Events (Blood Moon, Conquests) and the Alternative victory counts
-            EventsExpansion.afterCombat(attacker, defender, math.min(dc, au), math.min(ac, du), winner)
+                val before = game.count(t, attacker)
+                val dbefore = game.count(t, defender)
+                game.removeCasualties(t, attacker, math.min(dc, au))
+                game.removeCasualties(t, defender, math.min(ac, du))
 
-            // Sacrificial Pyre, Blood Ties, Howl from the Sea
-            NewBloodExpansion.afterCombat(attacker, defender, t, e, before - game.count(t, attacker), dbefore - game.count(t, defender), math.min(dc, au), math.min(ac, du), winner)
+                // Events (Blood Moon, Conquests) and the Alternative victory counts
+                EventsExpansion.afterCombat(attacker, defender, math.min(dc, au), math.min(ac, du), winner)
 
-            // Sea module: Bold Maneuver gives 2 fame per combat won
-            if (e.special == BoldMove && winner.has(attacker)) {
-                attacker.fame += 2
-                attacker.log("gained", 2.hl, FameIcon(), "for winning with", RaidCard("bold-maneuver"))
-            }
+                // Sacrificial Pyre, Blood Ties, Howl from the Sea
+                NewBloodExpansion.afterCombat(attacker, defender, t, e, before - game.count(t, attacker), dbefore - game.count(t, defender), math.min(dc, au), math.min(ac, du), winner)
 
-            // Svarn's Menders: the attacker's casualties wait on the card
-            if (e.special == SvarnMove)
-                game.mended += before - game.count(t, attacker)
+                // Sea module: Bold Maneuver gives 2 fame per combat won
+                if (e.special == BoldMove && winner.has(attacker)) {
+                    attacker.fame += 2
+                    attacker.log("gained", 2.hl, FameIcon(), "for winning with", RaidCard("bold-maneuver"))
+                }
 
-            // For the bot game summaries (host.scala)
-            game.note(winner.has(attacker).?("attack-won").|("attack-lost"))
+                // Svarn's Menders: the attacker's casualties wait on the card
+                if (e.special == SvarnMove)
+                    game.mended += before - game.count(t, attacker)
 
-            def next(then : ForcedAction) = Then(CombatReportAction(readers, then))
+                // For the bot game summaries (host.scala)
+                game.note(winner.has(attacker).?("attack-won").|("attack-lost"))
 
-            winner match {
-                case None =>
-                    log("Both sides were", CombatReport.link("wiped out"))
-                    next(then)
+                def next(then : ForcedAction) = Then(CombatReportAction(readers, then))
 
-                case Some(w) =>
-                    val loser = (w == attacker).?(defender).|(attacker)
-
-                    w.log(CombatReport.link("won"), "the fight in", a)
-
-                    if (w == attacker) {
-                        if (attacker == Wolf) {
-                            attacker.food += 1
-                            attacker.log("collected", 1.hl, Food, "for winning as the attacker")
-                        }
-
-                        if (attacker == Stag) {
-                            attacker.fame += 1
-                            attacker.log("gained", 1.hl, FameIcon(), "for conquering a territory")
-                        }
-                    }
-
-                    if (game.figures(t, loser) > 0) {
-                        // Brand's Bravery: the winning attacker chooses where the loser retreats
-                        if (w == attacker && e.special == BrandMove)
-                            game.retreatBy = |(attacker)
-
-                        next(RetreatAction(loser, a, loser == attacker && e.ignoreRough, then))
-                    }
-                    else
+                winner match {
+                    case None =>
+                        log("Both sides were", CombatReport.link("wiped out"))
                         next(then)
+
+                    case Some(w) =>
+                        val loser = (w == attacker).?(defender).|(attacker)
+
+                        w.log(CombatReport.link("won"), "the fight in", a)
+
+                        if (w == attacker) {
+                            if (attacker == Wolf) {
+                                attacker.food += 1
+                                attacker.log("collected", 1.hl, Food, "for winning as the attacker")
+                            }
+
+                            if (attacker == Stag) {
+                                attacker.fame += 1
+                                attacker.log("gained", 1.hl, FameIcon(), "for conquering a territory")
+                            }
+                        }
+
+                        if (game.figures(t, loser) > 0) {
+                            // Brand's Bravery: the winning attacker chooses where the loser retreats
+                            if (w == attacker && e.special == BrandMove)
+                                game.retreatBy = |(attacker)
+
+                            next(RetreatAction(loser, a, loser == attacker && e.ignoreRough, then))
+                        }
+                        else
+                            next(then)
+                }
             }
+
+        case CasualtyPickAction(f, _, k, n, kaija, chief, blainn, then) =>
+            game.casualtyPicks += f -> (n, kaija, chief, blainn)
+            game.note((n < k).?("casualties-figure").|("casualties-units"))
+
+            Then(then)
 
         case CombatReportAction(l, then) =>
             if (l.none) {

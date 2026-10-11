@@ -281,6 +281,8 @@ case class CreatureCunningDoneAction(self : Faction, area : AreaRef, c : Creatur
 case class CreatureFoodPaidAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, then : ForcedAction) extends ForcedAction
 case class CreatureFoodStartAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, then : ForcedAction) extends ForcedAction
 case class CreatureRolledAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, face : DieFace, random : DieFace, then : ForcedAction) extends RandomAction[DieFace]
+// The fight decided, once the clan picked its casualties if it has a choice (ChooseCasualties)
+case class CreatureResolveAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, face : DieFace, random : DieFace, then : ForcedAction) extends ForcedAction
 
 // MORE CREATURES VARIANT
 case class MoreCreaturesAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("More creatures!", "a new creature appears in")(area) with MapTarget { def target = area }
@@ -572,6 +574,9 @@ object CreaturesExpansion extends Expansion {
         case CreatureRolledAction(f, a, c, e, attacking, food, face, random, then) =>
             log(c, "rolled", random)
 
+            Then(CreatureResolveAction(f, a, c, e, attacking, food, face, random, then))
+
+        case CreatureResolveAction(f, a, c, e, attacking, food, face, random, then) =>
             // Wastelands: a Rock Golem takes the skull, a Giant Boar attacking adds one
             val cface = game.has(Wastelands).?(WastelandsExpansion.creatureFace(c, attacking, random)).|(random.choice.?(NorthgardDie.point).|(random))
 
@@ -599,89 +604,97 @@ object CreaturesExpansion extends Expansion {
             val pc = cface.casualties - shield
             val cs = c.kind.value + cface.points + cw
 
-            def extra(l : (Int, Elem)*) : Elem = l.toList.filter(_._1 > 0).map { case (n, what) => "(" ~ n.hl ~ " from " ~ what ~ ")" }.join(" ")
+            // The clan picks its casualties when it has a choice, before anything is told
+            val pick = MapExpansion.pickCasualties($(f -> math.min(pc, units)), t, CreatureResolveAction(f, a, c, e, attacking, food, face, random, then))
 
-            // Everything but the units and the die, as in the fight with a clan
-            val extras = $(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, robo -> "Robotos".hl, grudge -> "Tenacious Grudge".hl) ++ pws
-            f.log("scored", CombatIcon.axes(ps), extra((FightPoints.others(f, t, attacking) ++ extras) : _*))
-            log(c, "scored", CombatIcon.axes(cs), extra(cws : _*), (pc > 0 || shield > 0).?("and inflicted " ~ CombatIcon.skulls(pc)).|(Empty), (shield > 0).?("(" ~ shield.hl ~ " cancelled)").|(Empty))
-
-            // Losing all units loses the fight; otherwise ties go to the defender
-            val won = pc < units && attacking.?(ps > cs).|(ps >= cs)
-
-            // The combat report, from the same sums; creatures ignore casualties, so the clan inflicts none
-            val wyvernBack = won && c.kind == Wyvern && Wild.homeIn(t).not && Wild.homes.any
-            val player = FightSide(f, attacking, FightPoints.parts(f, t, attacking, extras ++ $(food -> Food.elem, face.points -> "the die".txt)), ps, $, 0, math.min(pc, units))
-            val creature = FightSide(None, c.elem, attacking.not, ($(c.kind.value -> "its strength".txt, cface.points -> "the die".txt) ++ cws).filter(_._1 > 0), cs,
-                $(cface.casualties -> "the die".txt, -shield -> "cancelled".txt).filter(_._1 != 0), pc, 0, won.?(wyvernBack.?("was driven back to its Den".txt).|("was defeated".txt)).|(Empty))
-            game.fightReport = |(FightReport(a, attacking.?(player).|(creature), attacking.?(creature).|(player), |(won == attacking), won.not && pc >= units))
-
-            val readers = CombatReport.readers(attacking.?(f), attacking.not.?(f))
-            def next(then : ForcedAction) = (readers.any).?(Then(CombatReportAction(readers, then))).|(Then(then))
-
-            val before = game.count(t, f)
-            game.removeFigures(t, f, math.min(pc, units))
-
-            // Alternative victory: Valhalla counts units lost to creatures too
-            game.advance(f, "valhalla", math.min(pc, units))
-
-            // Svarn's Menders: the attacker's casualties wait on the card
-            if (attacking && e.special == SvarnMove)
-                game.mended += before - game.count(t, f)
-
-            // The Wyvern goes back to its Den unless it lost there (Wilderness)
-            val den = (c.kind == Wyvern && Wild.homeIn(t).not).??(Wild.homes)
-
-            // Sea module: Bold Maneuver gives 2 fame per combat won
-            if (won && attacking && e.special == BoldMove) {
-                f.fame += 2
-                f.log("gained", 2.hl, FameIcon(), "for winning with", RaidCard("bold-maneuver"))
-            }
-
-            if (won && den.any) {
-                game.creatureAt += c -> den.head
-                game.note("wyvern-back")
-
-                f.log(CombatReport.link("drove"), c, "back to its Den")
-
-                next(then)
-            }
-            else
-            if (won) {
-                removeCreature(c)
-                f.fame += c.kind.fame
-                game.note("creature-defeated")
-                game.advance(f, "hunting")
-
-                f.log(CombatReport.link("defeated"), c, "and gained", c.kind.fame.hl, FameIcon(), c.kind.leaves.?("(it leaves the game)".txt).|(Empty))
-
-                // Wastelands: a Giant Boar that attacked gives 2 more fame
-                if (c.kind == GiantBoar && attacking.not) {
-                    f.fame += 2
-                    f.log("gained", 2.hl, "more", FameIcon(), "for defeating", c, "as the defender")
-                }
-
-                if (attacking && f == Wolf) {
-                    f.food += 1
-                    f.log("collected", 1.hl, Food, "for winning as the attacker")
-                }
-
-                // Beating a Fallen Valkyrie takes its territory
-                if (attacking && f == Stag && c.kind.shares.not) {
-                    f.fame += 1
-                    f.log("gained", 1.hl, FameIcon(), "for conquering a territory")
-                }
-
-                next(then)
-            }
+            if (pick.any)
+                pick.get
             else {
-                log(c, CombatReport.link("won"), "the fight in", a)
 
-                // Attacking a creature that shares its territory, the units simply stay
-                if (game.figures(t, f) > 0 && (attacking.not || c.kind.shares.not))
-                    next(RetreatAction(f, a, false, then))
-                else
+                def extra(l : (Int, Elem)*) : Elem = l.toList.filter(_._1 > 0).map { case (n, what) => "(" ~ n.hl ~ " from " ~ what ~ ")" }.join(" ")
+
+                // Everything but the units and the die, as in the fight with a clan
+                val extras = $(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, robo -> "Robotos".hl, grudge -> "Tenacious Grudge".hl) ++ pws
+                f.log("scored", CombatIcon.axes(ps), extra((FightPoints.others(f, t, attacking) ++ extras) : _*))
+                log(c, "scored", CombatIcon.axes(cs), extra(cws : _*), (pc > 0 || shield > 0).?("and inflicted " ~ CombatIcon.skulls(pc)).|(Empty), (shield > 0).?("(" ~ shield.hl ~ " cancelled)").|(Empty))
+
+                // Losing all units loses the fight; otherwise ties go to the defender
+                val won = pc < units && attacking.?(ps > cs).|(ps >= cs)
+
+                // The combat report, from the same sums; creatures ignore casualties, so the clan inflicts none
+                val wyvernBack = won && c.kind == Wyvern && Wild.homeIn(t).not && Wild.homes.any
+                val player = FightSide(f, attacking, FightPoints.parts(f, t, attacking, extras ++ $(food -> Food.elem, face.points -> "the die".txt)), ps, $, 0, math.min(pc, units))
+                val creature = FightSide(None, c.elem, attacking.not, ($(c.kind.value -> "its strength".txt, cface.points -> "the die".txt) ++ cws).filter(_._1 > 0), cs,
+                    $(cface.casualties -> "the die".txt, -shield -> "cancelled".txt).filter(_._1 != 0), pc, 0, won.?(wyvernBack.?("was driven back to its Den".txt).|("was defeated".txt)).|(Empty))
+                game.fightReport = |(FightReport(a, attacking.?(player).|(creature), attacking.?(creature).|(player), |(won == attacking), won.not && pc >= units))
+
+                val readers = CombatReport.readers(attacking.?(f), attacking.not.?(f))
+                def next(then : ForcedAction) = (readers.any).?(Then(CombatReportAction(readers, then))).|(Then(then))
+
+                val before = game.count(t, f)
+                game.removeCasualties(t, f, math.min(pc, units))
+
+                // Alternative victory: Valhalla counts units lost to creatures too
+                game.advance(f, "valhalla", math.min(pc, units))
+
+                // Svarn's Menders: the attacker's casualties wait on the card
+                if (attacking && e.special == SvarnMove)
+                    game.mended += before - game.count(t, f)
+
+                // The Wyvern goes back to its Den unless it lost there (Wilderness)
+                val den = (c.kind == Wyvern && Wild.homeIn(t).not).??(Wild.homes)
+
+                // Sea module: Bold Maneuver gives 2 fame per combat won
+                if (won && attacking && e.special == BoldMove) {
+                    f.fame += 2
+                    f.log("gained", 2.hl, FameIcon(), "for winning with", RaidCard("bold-maneuver"))
+                }
+
+                if (won && den.any) {
+                    game.creatureAt += c -> den.head
+                    game.note("wyvern-back")
+
+                    f.log(CombatReport.link("drove"), c, "back to its Den")
+
                     next(then)
+                }
+                else
+                if (won) {
+                    removeCreature(c)
+                    f.fame += c.kind.fame
+                    game.note("creature-defeated")
+                    game.advance(f, "hunting")
+
+                    f.log(CombatReport.link("defeated"), c, "and gained", c.kind.fame.hl, FameIcon(), c.kind.leaves.?("(it leaves the game)".txt).|(Empty))
+
+                    // Wastelands: a Giant Boar that attacked gives 2 more fame
+                    if (c.kind == GiantBoar && attacking.not) {
+                        f.fame += 2
+                        f.log("gained", 2.hl, "more", FameIcon(), "for defeating", c, "as the defender")
+                    }
+
+                    if (attacking && f == Wolf) {
+                        f.food += 1
+                        f.log("collected", 1.hl, Food, "for winning as the attacker")
+                    }
+
+                    // Beating a Fallen Valkyrie takes its territory
+                    if (attacking && f == Stag && c.kind.shares.not) {
+                        f.fame += 1
+                        f.log("gained", 1.hl, FameIcon(), "for conquering a territory")
+                    }
+
+                    next(then)
+                }
+                else {
+                    log(c, CombatReport.link("won"), "the fight in", a)
+
+                    // Attacking a creature that shares its territory, the units simply stay
+                    if (game.figures(t, f) > 0 && (attacking.not || c.kind.shares.not))
+                        next(RetreatAction(f, a, false, then))
+                    else
+                        next(then)
+                }
             }
 
         // MORE CREATURES VARIANT

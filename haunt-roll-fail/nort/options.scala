@@ -242,6 +242,15 @@ case object FirstSeatStarts extends GameOption with ToggleOption {
 }
 
 
+// Casualties are chosen by their player: units, the warchief, Kaija (or Brundr and Kaelinn, or Brok) and Jötunn Blainn,
+// in any mix (CasualtyPickAction in map.scala; asked for by Robotos on 2026-10-11). Hidden, and given to every new game
+// (Meta.mandatoryFor): games started before it took units first, then the warchief, Blainn and the companion, and their
+// replays must not stop on a choice they never recorded
+case object ChooseCasualties extends GameOption with ToggleOption {
+    val group = "Casualties".txt
+    def valueOn = "Chosen by their player".txt
+}
+
 // The game options of 2026-10-07 for who saw the combat report. Since 2026-10-08 the report is asked of both sides and
 // each player's "Combat Report" setting (ShowCombatReport, SkipCombatReport in meta.scala) shows or skips it, so these are
 // hidden and do nothing; they stay so the games that have them still load
