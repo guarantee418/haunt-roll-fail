@@ -39,6 +39,8 @@ object MetaAdset extends MetaGame {
 
     override def settingsKey = Meta.settingsKey
 
+    override def translation(settings : $[hrf.Setting]) = Meta.translation(settings)
+
     val factions = $(PlayerN(1), PlayerN(2), PlayerN(3), PlayerN(4), PlayerN(5), PlayerN(6), PlayerN(7), PlayerN(8))
 
     val minPlayers = 2
