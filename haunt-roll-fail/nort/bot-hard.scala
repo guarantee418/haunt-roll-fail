@@ -1065,7 +1065,30 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val t = board.territory(area)
         val other = game.present(t).but(self).headOption
         other match {
-            case None => -20
+            case None =>
+                // Against a creature: the points it adds, or token 7's ignored casualty (creatures ignore token 6's)
+                game.creaturesIn(t).headOption match {
+                    case Some(c) =>
+                        val attacking = game.current.has(self)
+                        val base = game.strength(t, self, attacking) + NewBloodExpansion.gearPoints(self, 0)
+                        val units = game.figures(t, self)
+                        def odds(extra : Int, ignore : Int) = HardCombat.faces./ { f =>
+                            HardCombat.faces./ { fc =>
+                                val ps = base + extra + f.choice.?(1).|(f.points)
+                                val cs = c.kind.value + fc.choice.?(1).|(fc.points)
+                                val pc = math.max(0, fc.choice.?(0).|(fc.casualties) - ignore)
+                                (pc < units && attacking.?(ps > cs).|(ps >= cs)).?(1.0).|(0.0)
+                            }.sum / 6
+                        }.sum / 6
+                        val points = n match {
+                            case 1 => (self.food > 0).?(1).|(0)
+                            case 2 | 3 => 1
+                            case 4 | 5 => 2
+                            case _ => 0
+                        }
+                        (odds(points, (n == 7).??(1)) - odds(0, 0)) * stake(t) - 0.5 * gearValue(n)
+                    case None => -20
+                }
             case Some(o) =>
                 val points = n match {
                     case 1 => (self.food > 0).?(1).|(0)
@@ -1133,13 +1156,13 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
     def creatureRolledOdds(area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, face : |[DieFace]) : Double = {
         val t = board.territory(area)
         val here = game.working(t)
-        val base = (attacking && game.robotos(self)).??(1) + game.strength(t, self, attacking) + attacking.??(e.bonus) + attacking.not.??(2 * here.count(_ == Fortress)) + (self == Snake && game.scorchedIn(t)).??(1) + food
+        val base = (attacking && game.robotos(self)).??(1) + game.strength(t, self, attacking) + attacking.??(e.bonus) + attacking.not.??(2 * here.count(_ == Fortress)) + (self == Snake && game.scorchedIn(t)).??(1) + NewBloodExpansion.gearPoints(self, food) + food
         val units = game.figures(t, self)
         def odds(f : DieFace) : Double = {
             val ps = base + f.choice.?(1).|(f.points)
             HardCombat.faces./ { fc =>
                 val cs = c.kind.value + fc.choice.?(1).|(fc.points)
-                val pc = fc.choice.?(0).|(fc.casualties)
+                val pc = math.max(0, fc.choice.?(0).|(fc.casualties) - NewBloodExpansion.ignored(self))
                 (pc < units && attacking.?(ps > cs).|(ps >= cs)).?(1.0).|(0.0)
             }.sum / 6
         }
