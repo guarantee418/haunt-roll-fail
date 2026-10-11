@@ -177,9 +177,9 @@ case class ExploreRedrawAction(self : Faction, tile : String, times : Int, e : E
 // BUILD
 // smallOnly: Carpentry Mastery after a large building
 case class BuildAction(f : Faction, e : BuildEffect, times : Int, smallOnly : Boolean, then : ForcedAction) extends ForcedAction
-case class BuildPlaceAction(self : Faction, area : AreaRef, building : Building, space : SpaceRef, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build in", area)(building, "(" ~ (cost == 0).?("free".txt).|(Amount(cost.hl, Wood.elem)) ~ ")") with MapTarget { def target = area }
+case class BuildPlaceAction(self : Faction, area : AreaRef, building : Building, space : SpaceRef, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build in", area)(building, "(" ~ (cost == 0).?("free".txt).|(Amount(cost.hl, Wood.elem)) ~ ")", SupplyLeft(building)) with MapTarget { def target = area }
 // A building that fits more than one kind of free space in the territory: the player picks the space
-case class BuildSlotAction(self : Faction, area : AreaRef, building : Building, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build in", area)(building, "(" ~ (cost == 0).?("free".txt).|(Amount(cost.hl, Wood.elem)) ~ ")") with Soft with MapTarget { def target = area }
+case class BuildSlotAction(self : Faction, area : AreaRef, building : Building, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build in", area)(building, "(" ~ (cost == 0).?("free".txt).|(Amount(cost.hl, Wood.elem)) ~ ")", SupplyLeft(building)) with Soft with MapTarget { def target = area }
 case class BuildSpaceAction(self : Faction, area : AreaRef, building : Building, space : SpaceRef, kind : SpaceKind, cost : Int, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build", building, "in", area, "on")(SpaceLabel(kind)) with MapTarget { def target = space }
 // Build on a card: tap a free building space, pick a building from the menu (every building with its cost),
 // then confirm it, previewed on the space with a check mark and a cross above it
@@ -196,7 +196,7 @@ case object ConfirmMark
 case object CancelMark
 case class BuildDoneAction(self : Faction, e : BuildEffect, then : ForcedAction) extends BaseAction("Build")("Done")
 case class BuildFinishAction(f : Faction, e : BuildEffect, then : ForcedAction) extends ForcedAction
-case class ReplaceBuildingAction(self : Faction, area : AreaRef, space : SpaceRef, building : Building, then : ForcedAction) extends BaseAction("Industrious Villagers", "replace a building in", area, "with")(building) with MapTarget { def target = area }
+case class ReplaceBuildingAction(self : Faction, area : AreaRef, space : SpaceRef, building : Building, then : ForcedAction) extends BaseAction("Industrious Villagers", "replace a building in", area, "with")(building, SupplyLeft(building)) with MapTarget { def target = area }
 case class ReplaceSkipAction(self : Faction, then : ForcedAction) extends BaseAction("Industrious Villagers")("Keep the buildings")
 
 // FEAST
@@ -215,9 +215,14 @@ object SpaceName {
         if (s.index >= SpaceRef.extra) "No space needed" else SpaceLabel(MapExpansion.spaceKind(s))
 }
 
-object BuildingLabel {
-    def apply(b : Building, cost : Int) : Elem =
-        Image(b.image, styles.buildIcon) ~ b.title.hl ~ " (" ~ (cost == 0).?("free".txt).|(Amount(cost.hl, Wood.elem)) ~ ")"
+case class BuildingLabel(b : Building, cost : Int) extends GameElementary {
+    def elem(implicit game : Game) =
+        Image(b.image, styles.buildIcon) ~ b.title.hl ~ " (" ~ (cost == 0).?("free".txt).|(Amount(cost.hl, Wood.elem)) ~ ") " ~ SupplyLeft(b).elem
+}
+
+// How many of a building are left in the supply (7 of each, less those on the map)
+case class SupplyLeft(b : Building) extends GameElementary {
+    def elem(implicit game : Game) = "(" ~ game.buildingsLeft(b).hl ~ " left in supply)"
 }
 
 object FeastLabel {
@@ -608,7 +613,7 @@ object MapExpansion extends Expansion {
             // Ancestral Equipment tokens (Ox Clan) keep their spaces from being built on
             val free = t.areas./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not && game.gear.contains(s).not)
 
-            Building.all.%(b => e.duplicate || here.has(b).not).%(b => game.buildings.values.count(_ == b) < Building.tokens).%(b => smallOnly.not || b.large.not)./~{ b =>
+            Building.all.%(b => e.duplicate || here.has(b).not).%(b => game.buildingsLeft(b) > 0).%(b => smallOnly.not || b.large.not)./~{ b =>
                 val kinds = b match {
                     case CarvedStone => $(CarvedSpace)
                     case b if b.large => $(LargeSpace)
@@ -652,7 +657,7 @@ object MapExpansion extends Expansion {
         else if (extra.not && b.large && spaceKind(s) != LargeSpace) |("needs a large space")
         else if (extra.not && b.large.not && spaceKind(s) == LargeSpace) |("large buildings only")
         else if (e.duplicate.not && game.buildingsIn(t).exists(_._2 == b)) |("already in this territory")
-        else if (game.buildings.values.count(_ == b) >= Building.tokens) |("none left")
+        else if (game.buildingsLeft(b) <= 0) |("none left")
         else if (f.wood < cost) |("needs " + cost + " wood")
         else None
     }
@@ -670,7 +675,7 @@ object MapExpansion extends Expansion {
     def replacements(f : Faction)(implicit game : Game) : $[(SpaceRef, Building)] =
         game.controlled(f)./~(game.buildingsIn)./~{ case (s, old) =>
             val carved = s.index >= SpaceRef.extra || game.board.spec(s.area).spaces(s.index).kind == CarvedSpace
-            Building.all.%(_ != old).%(_.large == old.large).%(b => b != CarvedStone || carved).%(b => game.buildings.values.count(_ == b) < Building.tokens)./(b => s -> b)
+            Building.all.%(_ != old).%(_.large == old.large).%(b => b != CarvedStone || carved).%(b => game.buildingsLeft(b) > 0)./(b => s -> b)
         }
 
     def setupUnits(f : Faction, round : Int, l : $[Faction], a : AreaRef)(implicit game : Game) = {

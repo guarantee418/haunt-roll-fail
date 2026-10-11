@@ -58,6 +58,10 @@ package object elem {
         object menuBoard extends CustomStyle(display("block"), width("60ex"), max.width("100%"), margin.left("auto"), margin.right("auto"))
         object menuWarchiefCard extends CustomStyle(display("block"), width("24ex"), max.width("60%"), margin.left("auto"), margin.right("auto"), margin.top("2ex"))
         object menuText extends CustomStyle(max.width("60ex"), margin.left("auto"), margin.right("auto"), margin.top("1ex"), text.align("center"))
+        // The Tutorial's lessons: paragraphs, the notes about this site, and the tip above the choices in the practice game
+        object tutorialText extends CustomStyle(max.width("60ex"), margin.left("auto"), margin.right("auto"), margin.top("1ex"), text.align("left"))
+        object tutorialSite extends CustomStyle(SimpleCSSRule("border-left", "0.5ex solid #8fbf6f"), padding.left("1ex"))
+        object tutorialTip extends CustomStyle(text.align("left"), SimpleCSSRule("border-left", "0.5ex solid #8fbf6f"))
         object menuCard extends CustomStyle(display("inline-block"), width("30%"), max.width("15ex"), margin("0.5ex"), vertical.align("top"))
         object card extends CustomStyle(display("inline-block"), width("22ex"), max.width("90%"), margin("0.3ex"))
         object handCard extends CustomStyle(display("block"), width("var(--nort-hand-card, 22ex)"))

@@ -41,6 +41,7 @@ and each deck's `CustomDeck` has the `FaceURL` of its card sheet.
 | `bot.scala` | `BotXX`, the "Easy" bot: random, with a bias to play cards and never cancel |
 | `bot-hard.scala` | `BotHard`, the "Hard" bot (see Bots below) |
 | `host.scala` | Headless bot games on the JVM; prints a summary per game, with event counts (cards played, Kaija and Scorched Earth events, `attack-won`/`attack-lost`); `NORT_HARD`, `NORT_CORE`, `NORT_PLAYERS`, `NORT_TRACE`, `NORT_TIMING` (see Bots below) |
+| `tutorial.scala` | The main menu's Tutorial: `TutorialOption` (hidden, on in its practice game), `Tutorial.lessons` (the nine lessons' text and images, Stag Clan, in the owner's teaching order: goal, map, deck and year, actions, harvest and winter, combat, clan; the images are in `Meta.menuImages` for the menu and assets in the game), the practice game's seating, bot and options, and `Tutorial.tip` (the tip for each kind of choice, shown above the choices by `preinfo` in `ui.scala`, with live notes: the closed territories, the Winter cost against the food after the Harvest, and the sudden-death win's progress) |
 | `replay-check.scala` | `ReplayCheck`: plays bot games headless and checks that undo and loading (replaying the recorded actions with `performVoid`, after writing and parsing them like the server's copy) rebuild the same game; see How to build and test |
 | `RULES.md` | Rules summary from the rulebook, plus the status table |
 
@@ -278,6 +279,18 @@ on. To implement one:
   the Great Lake's water untinted. Running it on all tiles changes the
   masks and grid of the photo tiles (`start-5`, `tile-31` to `-33`); only the
   `wild-*` outputs were committed.
+- Since 2026-10-10 the Great Lake's water is also no territory in the grid
+  (`.`, like the ringed middles), so Kaija, warchiefs and creatures are never
+  put on it (Robotos saw Kaija and a bear standing on the lake), and on the
+  Wilderness and Wastelands tiles (`expansion` in `tile-masks.py`) the cells
+  within 0.1 of an orange line or 0.075 of a rough border's yellow dashes
+  count as cluttered, keeping figures off the ridges, cliffs and rock walls.
+  The same goes for the Uncharted Horizons tiles (`horizon-*`), and on all of
+  them grey and slate-blue rocks (`rocks`: the walls and the rock bands along
+  some roads, also a few statues and Hrimgandr's ice) count as busy art (7).
+  `tile-masks.py <tile ...>` now replaces only those tiles' entries in
+  `grid.scala`; the 32 `wild-*`, `waste-*`, `start-<name>` and `horizon-*`
+  tiles were regenerated that way (their masks came out unchanged).
 - `NORT_WILDERNESS=1` makes the headless host always use the module.
 
 ## New Blood expansion (2026-10-04)
@@ -834,6 +847,14 @@ it, and one more unit with every Recruit (on top of Training Camps and the rest)
   games with creatures: Robotos won 17 of 20 with the first three cheats,
   24 of 25 with all of them. `ReplayCheck 6 hard` with
   `NORT_HARD=robotos`: no mismatches.
+- **Adset (2026-10-10):** "Robotos" is also a bot for an Adset seat
+  (`MetaAdset.getBots`). Its clan is known only after the draft, so
+  `MetaAdset.botOptions` adds a hidden `RobotosSeatOption(seat)` instead, and
+  `game.cheaters` (now a var, `computeCheaters`) takes the clan each such seat
+  drafts, recomputed in `AdsetExpansion.assign`; `RobotosExpansion` is on from
+  the start when a seat has the option. The seat drafts at random, like the
+  other Adset bots, then plays as the Hard bot (`BotAdset`). `NORT_ADSET=1
+  NORT_HARD=robotos` in the host makes the first seat Robotos.
 
 ## Known simplifications and gaps
 

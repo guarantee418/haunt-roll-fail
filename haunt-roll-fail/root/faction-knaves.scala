@@ -272,6 +272,7 @@ case class KnavesRunAwayAction(self : Faction, f : Knaves, c : Clearing, r : For
 
 case class KnavesMockAction(self : Knaves) extends ForcedAction
 case class KnavesProtectMainAction(self : Knaves) extends ForcedAction with Soft
+case class KnavesProtectClearingAction(self : Knaves, c : Clearing) extends BaseAction("Protect the Weak".styled(self), "in")(c) with Soft
 case class KnavesProtectCardAction(self : Knaves, c : Clearing, d : DeckCard) extends BaseAction("Protect the Weak".styled(self), "in", c, "with")(d.img) with ViewCard
 case class KnavesTakeItEasyAction(self : Knaves) extends ForcedAction
 case class KnavesFreePrisonersMainAction(self : Knaves, e : Faction) extends ForcedAction
@@ -626,7 +627,7 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
 
                 + BattleInitAction(f, f, NoMessage, c.$, $(CancelAction), KnavesSpendAction(f, Repeat)).as("Battle".styled(f))(g).!(c.none, "in a forest").!(c.?(c => f.canAttackList(c).none), "no targets")
 
-                val filch = c.?(c => f.hand.exists(f.craftableWith($(c.asset), $)) || f.enemies.%(_.present(c)).%(_.is[Hero].not).exists(_.forTrade.any))
+                val filch = c.?(c => (Council.governs(f, c).not && f.hand.exists(f.craftableWith($(c.asset), $))) || f.enemies.%(_.present(c)).%(_.is[Hero].not).exists(_.forTrade.any))
 
                 + KnavesFilchMainAction(f).as("Filch".styled(f))(g).!(f.used.has(KnavesFilched), "once per turn").!(c.none, "in a forest").!(filch.not, "nothing to filch")
 
@@ -804,7 +805,8 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
         case KnavesServeAction(f) =>
             f.actingWhere./~(_.as[Clearing]) match {
                 case Some(c) if f.at(c).has(Acclaim) =>
-                    f.serving = f.all(Acclaim).%(_.asset == c.asset)
+                    // Governors: no crafting with acclaim at a Council's Governing assembly
+                    f.serving = f.all(Acclaim).%(_.asset == c.asset).%!(Council.governs(f, _))
 
                     f.pending :+= KnavesServeCraft
 
@@ -823,7 +825,7 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
             val ee = f.enemies.%(_.present(c)).%(_.is[Hero].not).%(_.forTrade.any)
 
             Ask(f).group("Filch".styled(f), "in", c)
-                .add(KnavesCraftMenuAction(f, $(c.asset), false).as("Craft".styled(f), dt.CraftSuit(c.asset), "(no points)").!(f.hand.%(f.craftableWith($(c.asset), $)).none, "nothing craftable"))
+                .add(KnavesCraftMenuAction(f, $(c.asset), false).as("Craft".styled(f), dt.CraftSuit(c.asset), "(no points)").!(Council.governs(f, c), "governed").!(f.hand.%(f.craftableWith($(c.asset), $)).none, "nothing craftable"))
                 .some(ee)(e => e.forTrade./(i => KnavesFilchTakeAction(f, e, i).as("Take", i.img, i, "from", e)))
                 .cancel
 
@@ -913,11 +915,16 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
 
             if (l.any && f.pool(f.warrior) && f.hand.any)
                 Ask(f).group("Protect the Weak".styled(f), "spend a matching card to place a", f.warrior.of(f))
-                    .some(l)(c => f.hand./(d => KnavesProtectCardAction(f, c, d).!(d.matches(c.cost).not).!(f.canPlace(c).not, "can't place")))
+                    .each(l)(c => KnavesProtectClearingAction(f, c).!(f.canPlace(c).not, "can't place").!(f.hand.exists(_.matches(c.cost)).not, "no matching card"))
                     .done(Next)
                     .evening(f)
             else
                 NoAsk(f)(Next)
+
+        case KnavesProtectClearingAction(f, c) =>
+            Ask(f).group("Protect the Weak".styled(f), "in", c, "with")
+                .each(f.hand)(d => KnavesProtectCardAction(f, c, d).!(d.matches(c.cost).not))
+                .cancel
 
         case KnavesProtectCardAction(f, c, d) =>
             f.hand --> d --> discard.quiet

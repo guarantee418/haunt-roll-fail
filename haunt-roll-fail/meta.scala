@@ -183,6 +183,11 @@ trait MetaBase {
     def modeOptions(mode : String) : $[O] = $
     // Other games on the main menu that are their own meta (Northgard's Adset): the menu label and the meta's name
     def linkedModes : $[(String, String)] = $
+    // A tutorial on the main menu (Northgard's): a line about it, its lessons (each a title and its paragraphs), and the
+    // practice game it ends with: the seating, the bots by faction (the rest are played by the person) and the options
+    def tutorialAbout : Elem = Empty
+    def tutorialLessons : $[(Elem, $[Elem])] = $
+    def tutorialGame : |[($[F], Map[F, String], $[O])] = None
     // A note at the top of the main menu (Northgard's Adset: its rules in short)
     def menuAbout : |[Elem] = None
 

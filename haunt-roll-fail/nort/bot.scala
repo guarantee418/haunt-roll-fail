@@ -27,7 +27,7 @@ object BotXX {
     // The Easy bot never trades: it picked exchanges at random and could give away the food it needed for Winter.
     // Every exchange choice comes with a Done or "no more" choice, so pushing them last is enough.
     def trade(a : Action) : Boolean = a.unwrap match {
-        case _ : TradeForAction | _ : TeamTradeAction | _ : BonfireTradeAction | _ : BarterPayAction | _ : KoboldSwapAction | _ : CampTradeAction => true
+        case _ : TradeForAction | _ : TeamTradeAction | _ : TeamOfferAction | _ : TeamAcceptAction | _ : BonfireTradeAction | _ : BarterPayAction | _ : KoboldSwapAction | _ : CampTradeAction => true
         case _ => false
     }
 

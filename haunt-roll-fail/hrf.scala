@@ -34,7 +34,7 @@ object HRF {
 
     // Images are kept in Cache Storage under this name and never refetched, so bump it whenever an image
     // changes in place (same file name), or browsers keep showing the old one
-    val imageDataVersion = "as-of-2026-10-08"
+    val imageDataVersion = "as-of-2026-10-10-b"
 
     def now() = new scalajs.js.Date()
 
@@ -285,7 +285,7 @@ case class PlayerLink(faction : String, key : String, note : String)
 
 case class BotAssigned(faction : String, bot : String)
 
-// A local game saved in the browser, continued from its menu; kind is "solo", "quick" or "hotseat"
+// A local game saved in the browser, continued from its menu; kind is "solo", "quick", "hotseat" or "tutorial"
 case class LocalGame(kind : String, time : Double, version : String, title : String, seating : $[String], bots : $[BotAssigned], options : $[String])
 
 case class HotseatGame(time : Double, version : String, meta : String, title : String, options : $[String], bots : $[BotAssigned], status : $[String])
@@ -974,6 +974,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             onlineGame()
         }
 
+        def goTutorial() {
+            history.pushState("/play/" + meta.name + "/tutorial", () => metaMenu())
+            tutorialMenu()
+        }
+
         def goMode(mode : String) {
             history.pushState("/play/" + meta.name + "/" + mode, () => metaMenu())
             modeMenu(mode)
@@ -983,8 +988,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             meta.underConstruction.$(ZOption(title, Div("This game is very much " ~ "under construction".styled(xstyles.warning) ~ "." ~ Break ~ "Expect missing rules, bugs and placeholder art.", ZBasic.info))) ++
             meta.menuAbout./(e => ZOption(title, Div(e, ZBasic.info))).$ ++
             (
-                ZBasic(title, "Quick Game".hlb, meta.factions.%(f => meta.getBots(f).has(meta.defaultBot(f))).any.??(() => goQuickGame())) ::
-                ZBasic(title, "Local Game".hhb, () => goHotseat()) ::
+                meta.tutorialLessons.any.$(ZBasic(title, "Tutorial".hlb, () => goTutorial())) ++
+                $(ZBasic(title, "Quick Game".hlb, meta.factions.%(f => meta.getBots(f).has(meta.defaultBot(f))).any.??(() => goQuickGame()))) ++
+                $(ZBasic(title, "Local Game".hhb, () => goHotseat())) ++
                 meta.soloFaction./(s => ZBasic(title, ("Solo vs " + meta.factionName(s).split(' ').head).hhb, () => goSolo())).$ ++
                 meta.modes./{ case (label, mode) => ZBasic(title, label.hhb, () => goMode(mode)) } ++
                 meta.linkedModes./{ case (label, l) => ZBasic(title, label.hhb, () => {
@@ -1005,6 +1011,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             meta.showAbout.$(ZBasic(" ", Div("About"), () => aboutMenu()))
         )
 
+        if (HRF.segments.startsWith($("tutorial")) && meta.tutorialLessons.any)
+            goTutorial()
+        else
         if (HRF.segments.startsWith($("quick")))
             goQuickGame()
         else
@@ -1019,6 +1028,70 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         else
         if (meta.modes.exists(m => HRF.segments.startsWith($(m._2))))
             goMode(HRF.segments.head)
+        else
+            HRF.segments = $
+    }
+
+    // The main menu's Tutorial (Northgard's): its lessons, each on its own page with the next one a tap away, and a practice game
+    // against bots with the meta's options, saved in the browser like the other local games
+    def tutorialMenu() {
+        val label = "Tutorial".hlb
+        val lessons = meta.tutorialLessons
+
+        def goLesson(i : Int) {
+            history.pushState("/play/" + meta.name + "/tutorial/lesson", () => tutorialMenu())
+            lesson(i)
+        }
+
+        def lesson(i : Int) {
+            val (t, body) = lessons(i)
+
+            ui.action.asker.zask(
+                $(ZOption(("Lesson " + (i + 1) + " of " + lessons.num).txt.div ~ t.hlb.div, Div(body./(e => Div(e)).merge, ZBasic.info))) ++
+                (i + 1 < lessons.num).$(ZBasic(" ", "Next: ".txt ~ lessons(i + 1)._1.hh, () => lesson(i + 1))) ++
+                (i + 1 == lessons.num).??(meta.tutorialGame.$./(_ => ZBasic(" ", "Start the Practice Game".hlb, () => {
+                    history.popState()
+                    goPractice()
+                }))) ++
+                (i > 0).$(ZBasic(" ", "Previous: ".txt ~ lessons(i - 1)._1, () => lesson(i - 1))) ++
+                $(ZBasic(" ", "All Lessons", () => history.popState()))
+            )
+
+            ui.action.scroll.scrollTop = 0
+        }
+
+        def practice() {
+            HRF.segments = $
+
+            meta.tutorialGame.foreach { case (seating, bots, options) =>
+                val difficulties = seating./(f => f -> bots.get(f)./(b => Bot(b) : Difficulty).|(Human)).toMap
+
+                startGame(seating, difficulties, options, $, newLocalGame("tutorial", seating, difficulties, options, "Tutorial"), "Tutorial", () => Map(), NoSwitches)
+            }
+        }
+
+        def goPractice() {
+            history.pushState("/play/" + meta.name + "/tutorial/practice", () => tutorialMenu())
+            savedGamesMenu("tutorial", "New Practice Game", () => practice())
+        }
+
+        ui.action.asker.zask(
+            $(ZOption(label, Div(meta.tutorialAbout, ZBasic.info))) ++
+            lessons.zipWithIndex./{ case ((t, _), i) => ZBasic("Lessons", ((i + 1) + ". ").txt ~ t, () => goLesson(i)) } ++
+            meta.tutorialGame.$./(_ => ZBasic("Practice", "Practice Game".hlb, () => goPractice())) ++
+            ZBasic(" ", "Back", () => {
+                history.popState()
+            }).?
+        )
+
+        // savedGamesMenu's own address for a new game is .../tutorial/new
+        if (HRF.segments.startsWith($("tutorial", "new")) && meta.tutorialGame.any)
+            goPractice()
+        else
+        if (HRF.segments.startsWith($("tutorial", "practice")) && meta.tutorialGame.any) {
+            HRF.segments = $
+            goPractice()
+        }
         else
             HRF.segments = $
     }
@@ -1320,7 +1393,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             }
             catch {
                 case e : Throwable =>
-                    val oldest = $("solo", "quick", "hotseat")./~(localGames).%(_.time != time).sortBy(_.time)
+                    val oldest = $("solo", "quick", "hotseat", "tutorial")./~(localGames).%(_.time != time).sortBy(_.time)
                     if (tries > 0 && oldest.any) {
                         deleteLocalGame(oldest.head)
                         save(tries - 1)
@@ -1722,7 +1795,17 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         ui.action.scroll.scrollTop = 0
     }
 
+    // One game per page: a second start (say a Start button tapped twice) would build a second game UI over the
+    // first, its drag handles and all. Play Again clears the page and resets it
+    var gameStarted = false
+
     def startGame(seatingX : $[meta.F], difficulties : Map[meta.F, Difficulty], optionsX : $[meta.O], self : $[meta.F], journal : Journal[meta.gaming.ExternalAction], title : String, names : () => Map[meta.F, String], swt : Switches) {
+        if (gameStarted) {
+            dom.console.warn("game already started, second start ignored")
+            return
+        }
+        gameStarted = true
+
         history.nuke()
 
         // Bots that play by other rules (Northgard's Robotos) add their options; every client derives them the same way
@@ -1786,6 +1869,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 def canPlayAgain = journal.is[MemoryJournal[_]] || journal.is[LocalStorageJournal[_]]
                 def playAgain() = {
                     ui.guir.clear()
+                    gameStarted = false
                     val again = journal.as[LocalStorageJournal[_]]./(j => newLocalGame(j.kind, seating, difficulties, options, title)).|(new MemoryJournal[meta.gaming.ExternalAction](meta))
                     startGame(seating, difficulties, options : $[meta.O], self : $[meta.F], again, title : String, names : () => Map[meta.F, String], swt : Switches)
                 }

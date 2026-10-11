@@ -349,7 +349,7 @@ object FarmerExpansion extends FactionExpansion[Farmer] {
 
             f.reserve --> p --> c
 
-            f.from(c) --> f.warrior --> game.recycle
+            f.from(c) --> f.warrior --> game.removed
 
             f.log("elected", p.of(f), "in", c, "with", d)
 

@@ -386,7 +386,7 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
                 .cancel
 
         case EncampAction(f, c, w) =>
-            f.from(c) --> f.warrior --> game.recycle
+            f.from(c) --> f.warrior --> game.removed
 
             f.reserve --> w --> c
 
@@ -642,7 +642,7 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
         case EveningNAction(20, f : Expedition) =>
             clearings.foreach { c =>
                 if (f.at(c).of[Warrior].num > 3) {
-                    f.from(c) --> f.warrior --> game.recycle
+                    f.from(c) --> f.warrior --> game.removed
                     f.log("dispatched", f.warrior.of(f), "in", c, "for supplies")
                 }
             }

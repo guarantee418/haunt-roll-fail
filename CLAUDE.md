@@ -19,7 +19,7 @@ and tracks what is done. `nort/HANDOFF.md` has the state, design notes,
 known gaps, next steps and how to build and test it. So far: the 7 clans (14 with New Blood), 2–6 players (six on the five-player rules), team
 play with any split into teams on the 2v2 rules ("Free-for-all" or "Teams" above the clan
 picker, `Meta.pickerModes`; each player's team on its setup row, `TeamOption`), the year loop with
-decks, Wait/Replace/Remove/Upgrade/Pass, Flash cards, harvest trading, winter
+decks, Wait/Replace/Remove/Upgrade/Pass, Flash cards, harvest trading (every player at once, each until "Done trading", like Root's Advanced Setup discards: `TradePhaseAction`, a `MultiAsk`, in `nort/game.scala`; a player done trading can't be traded with any more; a 1:1 trade with a teammate is an offer the teammate accepts or declines, `TeamOfferAction`, `TeamAcceptAction`, `TeamDeclineAction`, with the pending offers in `game.tradeOffers`: the proposer waits for the answer, a player owing an answer can't make offers, and a declined offer isn't offered again that harvest), winter
 and Unrest, end-of-game scoring (the end screen shows the winner's clan card, "tames these lands and triumphs as the supreme Jarl", and how they won), and the real card list in `nort/cards.scala`
 (names, fame, text, images), the map: tile data in `nort/tiles.scala`
 (areas, borders, resources, spaces, checked against the art), territories
@@ -56,7 +56,20 @@ module ("Solo vs Automa" on the main menu). Its Training Fields module, a two-pl
 a 4x3 grid of face-down tiles with seven Action cards each, is in
 `nort/training.scala`: "Training Grounds" on the main menu opens a page
 offering a local or an online game (the `modes` hooks in `meta.scala`,
-`modeMenu` in `hrf.scala`). "Adset" on the main menu (the `linkedModes` hook) opens
+`modeMenu` in `hrf.scala`). "Tutorial", first on the main menu (the `tutorialLessons`,
+`tutorialAbout` and `tutorialGame` hooks in `meta.scala`, `tutorialMenu` in `hrf.scala`, URL
+`/play/nort/tutorial`), teaches the game as the Stag Clan: nine lessons on the rules and on
+playing them on this site (`Tutorial.lessons` in `nort/tutorial.scala`, all the text in one place),
+in the owner's teaching order (2026-10-10): how you win (stressing the sudden-death win), the map
+(territories, open and closed), the deck and the year (one card a turn, passing), the four actions
+(lore left for after the first year), harvest and winter (overexpanding flagged), combat (also
+explained in the practice game at the first fight), the clan last, the site, the practice game;
+then a practice game, Stag (first) against the Wolf Clan's Easy bot, with the hidden
+`TutorialOption`: a "Tutorial tip" above the choices explains each one (`Tutorial.tip`, by the
+kind of action offered; `preinfo` in `nort/ui.scala`), "Hide tips" turns them off (each browser
+remembers it, `nort.tutorial-tips-hidden`) and "Tutorial Lessons" under the action pane opens the
+lessons over the game (`TutorialLessonView`). The practice game is saved like the other local
+games (kind `tutorial`). "Adset" on the main menu (the `linkedModes` hook) opens
 its own meta, `nort-adset` (`MetaAdset` in `nort/adset.scala`, URL `/play/nort-adset`):
 a free-for-all whose players are seats (`Seat`, "Player #n") that draft their clans
 during setup (random seat order, players + 2 clans drawn, a ban, Wilderness or
@@ -83,11 +96,16 @@ the orange impassable lines of the Peaks, the Poisonous Swamp's corners and the
 walled five-player tile), from the dash data in
 `nort/lines.scala` made by `nort/tools/BorderLines.java`; the area masks (`tile/mask/`) and the free-ground
 grid for placing warchiefs, Kaija and creatures (`nort/grid.scala`) are made
-from the tile art by `nort/tools/tile-masks.py`. Warchiefs, Kaija and
+from the tile art by `nort/tools/tile-masks.py` (it keeps figures off the Great Lake's water and,
+on the Wilderness, Wastelands and Uncharted Horizons tiles, the rocks and the rock bands along impassable and rough borders; `tile-masks.py <tile ...>`
+regenerates only those tiles' grid entries). Warchiefs, Kaija and
 creatures are kept off the resource icons (`nort/icons.scala`, the holes in
 the masks, made by `nort/tools/ResourceIcons.java`), and the icons are drawn
-again over the pieces, so a figure that must overlap one never hides it. Tapping a creature on the map opens its card, unless the tap
-picks its territory for an offered action (`creatureCard` in `nort/ui.scala`).
+again over the pieces, so a figure that must overlap one never hides it. Tapping a piece on the map opens what it stands for, unless the tap
+picks its territory for an offered action (`pieceInfo` in `nort/ui.scala`): a creature, Jötunn Blainn
+or a Raid card its card, a warchief (and Horse's Brok) its board, power and upgrade card (`WarchiefInfo`,
+`Meta.warchiefInfo`), and Kaija, Lynx's Brundr and Kaelinn, the High Tide and Scorched Earth tokens their
+clan's three clan cards (`ClanAbilityInfo`, `Meta.clanAbility`). The Automa's Leaders open nothing.
 The Northgard layout (`layouter` in `nort/ui.scala`) has the map on the left
 and the player panels, log and action pane (choices and hand) on the right;
 the owner asked for that on 2026-10-05, undoing an earlier mirrored layout
@@ -99,7 +117,7 @@ log on the far right, with the
 hand cards sized to the pane (`--nort-hand-card`) so the whole hand fits. The shared cards strip (Developments, Achievements, Creatures and the rest, the `court` pane)
 has a tab on its left that folds it into a one-line bar listing each group with its card count, and back;
 the player panels right above it (ultrawide) grow into the room with a larger font (as far as their width
-allows), or else the pane right under it (the map) does, and nothing else moves (`foldCourt` in `nort/ui.scala`). Folded, the player panels are laid out again in one row or several (2x2 for four panels on a phone), whichever gives the largest font that still fits their measured contents, each only as tall as it needs; the rest of the room goes to the pane below. They are measured again once their icons have loaded (an icon takes no room before), so a game loaded folded fits too (`refitFolded`). The folded bar starts with "Year X of 7". Where the strip sits left of the panels at the top (16:9 and 16:10), its tab points sideways (◂ to fold, ▸ to unfold): folded, it is a narrow tab on the left with its text running down in two columns, and the panels run across the top from it, with the map and log under them (`courtSideways`). Each browser remembers it (`<settingsKey>.court-folded`). The divider right of the map, the one between the log and the action pane, and the bottom edge of the player panels have round drag handles with arrows (`split` and `placeHandles` in `nort/ui.scala`; asked for by Gman on 2026-10-08): dragging moves the panes along that edge, each kept at least 15% of the window (moving the map's edge left, an unfolded row of court and panels above it follows; a row of panels starting at the edge shares the room), double-tapping one puts it back, and each browser remembers the offsets per screen shape (`<settingsKey>.split-<tall|wide|ultrawide>`, "x,y,panels"). The panels' edge stretches or shrinks the panels (to half their height at least) and their font with them, as far as their measured contents fit their width; the court right under them moves along, the panes under that give the room (the log down to 15%, then the action pane). Folded, the extra height is first given to `foldCourt` (its `extra`), which may lay the panels out in more rows with a larger font. A layout with no pane past the map's right edge or under the log (a phone held upright) shows no handle. The player panels show the card counts, then units, warchief and supply, then a small table with grid lines around its cells (`ledger` in `factionStatus`, `nort/ui.scala`; asked for by the player Robotos on 2026-10-08): a column per resource and one for fame, the stockpile, then under it the clan's next harvest as things stand
+allows), or else the pane right under it (the map) does, and nothing else moves (`foldCourt` in `nort/ui.scala`). Folded, the player panels are laid out again in one row or several (2x2 for four panels on a phone), whichever gives the largest font that still fits their measured contents, each only as tall as it needs; the rest of the room goes to the pane below. They are measured again once their icons have loaded (an icon takes no room before), so a game loaded folded fits too (`refitFolded`). The folded bar starts with "Year X of 7". Where the strip sits left of the panels at the top (16:9 and 16:10), its tab points sideways (◂ to fold, ▸ to unfold): folded, it is a narrow tab on the left with its text running down in two columns, and the panels run across the top from it, with the map and log under them (`courtSideways`). With two players (or one) on a tall screen (a phone held upright), the panels are moved up beside the strip (`panelsBesideCourt`), wherever the layouter put them, so it folds sideways there too. Each browser remembers it (`<settingsKey>.court-folded`). The divider right of the map, the one between the log and the action pane, and the bottom edge of the player panels have round drag handles with arrows (`split` and `placeHandles` in `nort/ui.scala`; asked for by Gman on 2026-10-08): dragging moves the panes along that edge, each kept at least 15% of the window (moving the map's edge left, an unfolded row of court and panels above it follows; a row of panels starting at the edge shares the room), double-tapping one puts it back, and each browser remembers the offsets per screen shape (`<settingsKey>.split-<tall|wide|ultrawide>`, "x,y,panels,bottom"). The panels' edge stretches or shrinks the panels (to half their height at least) and their font with them, as far as their measured contents fit their width; the court right under them moves along, the panes under that give the room (the log down to 15%, then the action pane). Folded, the extra height is first given to `foldCourt` (its `extra`), which may lay the panels out in more rows with a larger font. The map's bottom edge has one too when panes are right under it (the log and the action pane on a phone held upright, asked for by the owner on 2026-10-11): dragging it up makes them taller and their font larger (by the square root of the height), down the other way. A layout with no pane past the map's right edge or under the log or the map shows none of those handles. The log folds in every layout (`foldLog` and `placeLogToggle` in `nort/ui.scala`): a small "–" button in its top right corner (bottom right when a handle is there) folds it into a "+ Log" strip, beside the pane it touches or across, and that pane (the action pane first, else the map) takes the room; each browser remembers it (`<settingsKey>.log-folded`). A page runs one game: `startGame` in `hrf.scala` ignores a second start (`gameStarted`, reset by Play Again), and the handles remove any left by an earlier game UI, after Robotos saw two of each handle on 2026-10-09. The player panels show the card counts, then units, warchief and supply, then a small table with grid lines around its cells (`ledger` in `factionStatus`, `nort/ui.scala`; asked for by the player Robotos on 2026-10-08): a column per resource and one for fame, the stockpile (other players' fame is "?" until the game is over, as the fame tokens are face down: only the clan whose player is asked or waiting on this screen, and its teammates, show theirs; `viewers` and `fameHidden` in `nort/ui.scala`; spectators see none), then under it the clan's next harvest as things stand
 (`Harvest.forecast` in `nort/game.scala`, the same sums `HarvestAction` uses; the Dragon's food and wood as ranges, "+1-2", the upper end faint since its sacrifice adds 1 to only one of them) in green and its Winter cost (as losses, "-1") in red, on rows marked with a wheat sheaf and a snowflake (`SeasonIcon`, drawn by `nort/tools/panel-icons.py`); tapping the table opens the whole
 Winter chart (`winterChart` in `nort/ui.scala`), except the lore (its icon or number), which opens the clan's Lore Tree (`LoreTree`, `loreTree`; Gman moved it there from the action pane on 2026-10-08). Each player can hide the
 tints and the colored borders under "Interface" (the Territory Color and
@@ -111,7 +129,7 @@ opaque each color is, 0 to 100% in steps of 10 (default 50%) (`TerritoryOpacity`
 `editSettings` in `hrf.scala`; rows are hidden while `Setting.visible` is false). The "Player Panels" setting (`StackedPanels`, the default since 2026-10-08, `CompactPanels`, or `ReverseStackedPanels`) shows every number in the panels under its icon, beside it ("Compact"), or above it ("Reverse Stacked"). A turn starts with six choices at
 the top of the action pane (Play cards, Wait, Replace, Remove, Upgrade,
 Pass); after one, tapping a card in hand does it. A Build card's builds: tap
-a free space, pick from the menu of all buildings with their costs, then
+a free space, pick from the menu of all buildings with their costs and how many are left in the supply (7 of each, `SupplyLeft` in `nort/map.scala`, also on the other build and replace choices), then
 confirm with the green check mark (or cancel with the red cross) drawn above
 the building on the map. Placing a tile works the same way: the tile is shown at its spot with
 one button just outside each corner: rotate arrows at the top, the check mark and cross at the bottom. A retreat works like a Move: tap the destination on the map (or in the list),
@@ -183,6 +201,9 @@ wood, 5 units in each setup placement), 25 units instead of 14 and upgrades for 
 tapping that lists the cheats.
 Its rules come from a hidden `RobotosOption` that `startGame` in `hrf.scala` adds
 for each clan set to it (`Meta.botOptions`), so every client and replay agrees.
+Adset seats can be set to Robotos too: `MetaAdset.botOptions` adds a hidden
+`RobotosSeatOption(seat)`, and the clan that seat drafts cheats (`game.cheaters`,
+recomputed in `AdsetExpansion.assign`).
 
 ## Building
 
@@ -430,6 +451,23 @@ file covers the build, server and deploy. No session can ssh to the server
     taken; the player keeps scoring (`demagogue` flag in `FactionState`).
   - Feather Rufflers, Spy Network, Silver-Tongue and Friend are usable from
     the Birdsong, Daylight and Evening menus on your own turn.
+- The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
+  Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
+  box) and the Homeland errata, from a player's Google Drive (2026-10-10). The shared deck's back follows
+  the deck option (`deckBack` in `root/ui.scala`: `card-back-art`, `-ep`, `-sd`). The same Drive has
+  the revised Council and Knaves boards (English and French), now `tc-board-h` and `kd-board-h`. The
+  code already followed most of their changes (Banish hits only warriors and the Council picks where
+  they go, Have at Thee! only for the Acting Captain, Run Away!'s forest picked by the enemy); since
+  then, Empower's removed warriors wait in the supply (`empowered` in `CouncilPlayer`) until they go to
+  the Loyalists, and Governors keeps the Knaves from crafting with a Captain or acclaim at a Governing
+  assembly (Filch and Serve).
+- Coffin Makers has three rules: forcibly removed warriors only (no option), any warrior returned to a
+  supply (`UnthematicCoffinMakers`), or the Homeland errata, "warriors removed, not replaced, from the
+  map to their supply" (`ErrataCoffinMakers`, the default and in the Official presets). In `root/game.scala`,
+  `dead` is forcible removal, `recycle` any return, `removed` a removal from the map without being forced
+  or replaced, and `unreplaced` the same for removals that went to the supply before the errata (Council's
+  Empower). Replacements (Hundreds' Anoint and Mob, Lilypad's flips) and returns from off the map
+  (officers, acolytes, payments, captives) don't go to Coffin Makers under the errata.
 - The Gorge map (`GorgeBoard` in `root/maps.scala`, option `GorgeMap`) uses
   the plain board art the owner uploaded (2026-10-06, no score track, item slots
   or logo; `map-art.webp`), scaled and shifted onto the 2416x2214 frame of the
@@ -476,6 +514,12 @@ file covers the build, server and deploy. No session can ssh to the server
   Expansion" (Steam workshop 3354438467; the save file comes from the
   `file_url` of Steam's public `GetPublishedFileDetails` API, BSON, the
   pieces are the `Vagabond - <name>` objects in its scripts).
+- Lilypad Diaspora's Frog cards go into the shared deck only after every faction has set up, so no
+  starting hand gets one (reported on Discord, 2026-10-10: the Knaves drew Settlers in a standard setup).
+  New games get the hidden default option `FrogCardsAfterStartingHands` (`root/meta.scala`), and the shuffle
+  then waits for `SetupDoneAction` (`faction-invasive-eee.scala`); games started before it keep shuffling them
+  in during Lilypad's setup, so their replays don't change. `ReplayCheck <games> ldkd` checks starting hands
+  (`oldfrogs` for the old timing).
 - Knaves items are the Captains' items, not crafted items: the Vagabond
   can't take them in trade when it aids the Knaves (`AidTradeAction` in
   `root/faction-hero.scala`), the Hundreds can't loot them (Looters in
@@ -486,13 +530,12 @@ file covers the build, server and deploy. No session can ssh to the server
   "Official | Riverfolk ..." presets add the Vagabond back.
 - Tapping a Root faction's status pane opens its overlay (`onFactionStatus` in
   `root/ui.scala`) with its faction board. The boards of the base and
-  expansion factions, Twilight Council and Knaves (`boardImage`; `mc-board`,
+  expansion factions (`boardImage`; `mc-board`,
   `ed-board`, ..., `tc-board-h`, `kd-board-h`, loaded on demand) are the
   board fronts from the Tabletop Simulator mod "Root - Ultimate Collection"
   (Steam workshop 2516434159; its objects are JSON strings inside the
   `EVERYTHING['Standard'][<faction>]` Lua tables). Its Council and Knaves
-  boards match the rules implemented here; the Homeland mod (3354438467) has
-  later revisions. Mirror factions show their original's board. Marquise,
+  boards were replaced on 2026-10-10 by the revised ones a player shared (see above). Mirror factions show their original's board. Marquise,
   Eyrie, Alliance, Vagabond, Riverfolk, Lizards and Corvids have overlays
   like the Homeland ones: board, turn phases (`phases`), pieces, and a
   "More Info" toggle with short rule notes. Panes are tappable before a
@@ -535,7 +578,11 @@ file covers the build, server and deploy. No session can ssh to the server
   English), following the official French edition. French card art for the base and Exiles and
   Partisans decks and the eight base and Riverfolk/Underworld faction boards are in
   `webp2/root/images/card/deck/fr/` and `faction/fr/` (asset prefix `fr:`), cut by
-  `root/tools/french-assets.py` from the TTS mod "Root FR" (Steam workshop 1829904481).
+  `root/tools/french-assets.py` from the TTS mod "Root FR" (Steam workshop 1829904481); the boards
+  (and the Hundreds, Keepers and Lilypad Diaspora ones) were replaced on 2026-10-10 by newer scans from a player.
+  The same player's Google Drive gave the French Squires and Disciples cards, newer Ambushes (used for every deck)
+  and the Homeland Frog cards (`hl-*`, `frog-ambush`, `hl-frog-dominance`) in `card/deck/fr/`, listed in `French.cards`
+  with their names; `french-assets.py` no longer makes the Ambushes.
 - Bot games can be run headless on the JVM with `root/host.scala` (see
   `host.xsbt` for the source exclusions); it also checks that every action
   serializes and parses back.

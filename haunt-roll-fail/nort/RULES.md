@@ -44,6 +44,7 @@ draws a tile when no neutral territory is left.
 | Uncharted Horizons: Sea module (Beach tiles, Ports, the Raid phase and the 24 Raid cards) | done 2026-10-05 (`sea.scala`, see Sea below) |
 | Uncharted Horizons: the 13 Development cards and 2 Achievement cards | done 2026-10-06 (`horizon-devs.scala`, option "Uncharted Horizons Development cards" next to "Ban card draw developments"; see below) |
 | Uncharted Horizons: the 5 map tiles, The Bridge among them | done 2026-10-06 (`Tiles.horizons`, option "Uncharted Horizons map tiles" under the Central tile choice; see below) |
+| Tutorial (not in the rulebook): lessons as the Stag Clan, then a practice game against the Easy bot with a tip for every choice | done 2026-10-10 (`tutorial.scala`, "Tutorial" on the main menu) |
 | Uncharted Horizons: Training Fields module (two-player duel) | done 2026-10-05 (`training.scala`, "Training Grounds" on the main menu, see Training Fields below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
@@ -111,6 +112,13 @@ draws a tile when no neutral territory is left.
    - 3 fame per Altar of Kings.
    - 1 food / wood / lore per icon on controlled territories and buildings.
    - Trade: any 3 resources for 1 of choice, any number of times.
+     Here every player trades at the same time (with the supply and, in team
+     play, 1:1 with teammates), each until "Done trading"; the game goes on
+     when all are done (`TradePhaseAction` in `game.scala`; the Automa trades
+     first, by itself). A player done trading can't be traded with any more.
+     A 1:1 trade with a teammate needs their consent: it is offered, and made
+     only when the teammate accepts (the proposer waits for the answer; a
+     declined offer can't be made again that harvest).
 4. **Winter** (from the first player), by units on the map:
 
    | Units | 1–3 | 4–6 | 7–9 | 10–12 | 13+ |
@@ -849,10 +857,18 @@ Check these against the rulebook when it is at hand.
     to its outer top corner (owner, 2026-10-06), joining the tiles placed
     beside the Port and beyond the wing like any tile side, so no border
     stops at the shore (a boundary never dead-ends). The Port territory has no resources.
-  - Where the cells beyond the empty space are taken (five or six players,
-    two first tiles side by side), the Beach goes one or two spaces further
-    out; a Beach is never placed beside another Port. The box has five Beaches;
-    a sixth is added so six-player games (and 3v3) get one each.
+  - With two to four players the Beach goes straight out from the player's
+    first tile, beyond an empty space. With five or six players (the
+    two-tile starting tile) the Beaches are where the rulebook's five-player
+    picture puts them (`fivePlayerBeaches` in `sea.scala`; owner, 2026-10-10):
+    with the starting tile at (0, 0) and (1, 0), a ring of empty spaces around
+    the first tiles, one Beach on the west side out from the west first tile,
+    two on the east side side by side with one space between them (Ports at
+    (3, -2) and (3, 2)), one north and one south (Ports at (-1, -3) and
+    (-1, 3)). With six players the west side gets two like the east (Ports at
+    (-2, -2) and (-2, 2)) and the north and south ones move to (0, -3) and
+    (1, 3). Each player gets the free Beach nearest their first tile. The box
+    has five Beaches; a sixth is added so six-player games (and 3v3) get one each.
   - Port to Port costs all the moves left; it is offered only between
     territories that aren't next to each other.
   - The Port's +1 is a combat point for whoever defends the Port territory

@@ -99,7 +99,9 @@ object Host extends hrf.host.BaseHost {
         // NORT_ADSET=1: Adset games, with seats that draft their clans (random setup choices)
         if (sys.env.get("NORT_ADSET").has("1")) {
             val lands = (n > 2).?(AdsetLands.all).|(AdsetLands.all.but(LandsSeatChooses)).shuffle.head
-            val adset = $(YearsOption.all.shuffle.head) ++ victory ++ (random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.5).$(ModuleOption(Sea)) :+ lands
+            // NORT_HARD=robotos: the first seat is Robotos
+            val robotos = sys.env.get("NORT_HARD").has("robotos").$(RobotosSeatOption(MetaAdset.factions.head))
+            val adset = $(YearsOption.all.shuffle.head) ++ victory ++ (random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.5).$(ModuleOption(Sea)) ++ robotos :+ lands
             MetaAdset.createGame(MetaAdset.factions.take(n), adset.distinct)
         }
         else {

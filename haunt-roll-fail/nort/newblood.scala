@@ -76,7 +76,7 @@ case class HarvestExtraAction(self : Faction, r : Resource, then : ForcedAction)
 case class HorseClosedAction(f : Faction, l : $[AreaRef], then : ForcedAction) extends ForcedAction
 case class HorseWoodAction(self : Faction, area : AreaRef, rest : $[AreaRef], then : ForcedAction) extends BaseAction("Horse Clan".hl, "closed", area)("Collect", 1.hl, Wood)
 case class CraftsmenAction(f : Faction, then : ForcedAction) extends ForcedAction
-case class CraftsmenReplaceAction(self : Faction, area : AreaRef, space : SpaceRef, building : Building, then : ForcedAction) extends BaseAction("Craftsmen".hl, "replace a building in", area, "with")(building) with MapTarget { def target = area }
+case class CraftsmenReplaceAction(self : Faction, area : AreaRef, space : SpaceRef, building : Building, then : ForcedAction) extends BaseAction("Craftsmen".hl, "replace a building in", area, "with")(building, SupplyLeft(building)) with MapTarget { def target = area }
 case class QualityBuildAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("Quality of Life".hl, "build a free", DefenseTower, "in")(area) with MapTarget { def target = area }
 case class QualityCollectAction(f : Faction, l : $[AreaRef], then : ForcedAction) extends ForcedAction
 case class QualityTakeAction(self : Faction, area : AreaRef, r : Resource, rest : $[AreaRef], then : ForcedAction) extends BaseAction("Quality of Life".hl, "collect from", area)(r)

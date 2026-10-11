@@ -310,11 +310,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         highlight.coordinates = |(xy)
         highlight.target = target
 
-        mapSmall.attach.parent.style.cursor = (clickable(target).any || creatureCard(target).any).?("pointer").|("default")
+        mapSmall.attach.parent.style.cursor = (clickable(target).any || pieceInfo(target).any).?("pointer").|("default")
     }
 
-    // The creature token on top where the map was tapped, whose card opens when the tap does nothing else
-    def creatureCard(target : $[Any]) : |[Creature] = target.headOption./~(_.as[Creature])
+    // The piece on top where the map was tapped (a creature, Blainn, a Raid card, a warchief or a clan token), whose card or info opens when the tap does nothing else
+    def pieceInfo(target : $[Any]) : |[Any] = target.headOption.%(x => x.is[Card] || x.is[WarchiefInfo] || x.is[ClanAbilityInfo])
 
     // The single offered action a click on the map stands for (the cross on a building or tile being confirmed cancels)
     def clickable(target : $[Any]) : |[UserAction] = {
@@ -329,7 +329,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     def processTargetClick(target : $[Any], xy : XY) {
-        clickable(target).orElse(creatureCard(target)).foreach(onClick)
+        clickable(target).orElse(pieceInfo(target)).foreach(onClick)
     }
 
     // Rotated tile images, made once
@@ -948,7 +948,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     val round = Warchief.round(f)
                     val cz = round.?(230.0).|(300.0) * scale
                     val (cx, cy) = beside(round.?(cz / T / 2).|(0.13 * scale))
-                    pieces.add(Sprite($(at(Warchief.figure(f), cz)), $(Rectangle(-cz / 2, -cz / 2, cz, cz)), tag))(cx, cy)
+                    pieces.add(Sprite($(at(Warchief.figure(f), cz)), $(Rectangle(-cz / 2, -cz / 2, cz, cz)), tag ++ (f != Automa).$(WarchiefInfo(f))))(cx, cy)
                     taken :+= ((mx(cx), my(cy), round.?(cz / T / 2).|(0.13 * scale)))
                 }
 
@@ -963,7 +963,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                         case _ => "token-kaija"
                     }
                     val (kx, ky) = beside((f == Automa).?(0.13 * scale).|(kz / T / 2))
-                    pieces.add(Sprite($(at(image, kz)), $(Rectangle(-kz / 2, -kz / 2, kz, kz)), tag))(kx, ky)
+                    val info = f match {
+                        case Automa => None
+                        case Horse => |(WarchiefInfo(f))
+                        case _ => |(ClanAbilityInfo(f))
+                    }
+                    pieces.add(Sprite($(at(image, kz)), $(Rectangle(-kz / 2, -kz / 2, kz, kz)), tag ++ info))(kx, ky)
                     taken :+= ((mx(kx), my(ky), kz / T / 2))
                 }
 
@@ -971,7 +976,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 if (game.blainnIn(t, f)) {
                     val bz = 230.0 * scale
                     val (bx, by) = beside(bz / T / 2)
-                    pieces.add(Sprite($(at("token-blainn", bz)), $(Rectangle(-bz / 2, -bz / 2, bz, bz)), tag))(bx, by)
+                    pieces.add(Sprite($(at("token-blainn", bz)), $(Rectangle(-bz / 2, -bz / 2, bz, bz)), tag :+ BlainnCard))(bx, by)
                     taken :+= ((mx(bx), my(by), bz / T / 2))
                 }
             }
@@ -979,18 +984,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             // Kraken Clan's High Tide token, by the territory number
             if (game.tideIn(t)) {
                 val (x, y) = board.point(t.anchor)
-                pieces.add(Sprite($(at("token-high-tide", 150)), $(Rectangle(-75, -75, 150, 150)), tag))(sx(x) + 40, sy(y) - 110)
+                pieces.add(Sprite($(at("token-high-tide", 150)), $(Rectangle(-75, -75, 150, 150)), tag :+ ClanAbilityInfo(Kraken)))(sx(x) + 40, sy(y) - 110)
                 taken :+= ((x + 40 / T, y - 110 / T, 75 / T))
             }
 
             // Snake Clan's Scorched Earth token, by the territory number
             if (game.scorchedIn(t)) {
                 val (x, y) = board.point(t.anchor)
-                pieces.add(Sprite($(at("token-scorched-earth", 150)), $(Rectangle(-75, -75, 150, 150)), tag))(sx(x) - 40, sy(y) + 110)
+                pieces.add(Sprite($(at("token-scorched-earth", 150)), $(Rectangle(-75, -75, 150, 150)), tag :+ ClanAbilityInfo(Snake)))(sx(x) - 40, sy(y) + 110)
                 taken :+= ((x - 40 / T, y + 110 / T, 75 / T))
             }
 
-            // Creatures on the territory's most open ground, clear of everything else, a little drawn to its first number (tapping one opens its card, unless the tap picks the territory)
+            // Creatures on the territory's most open ground, clear of everything else, a little drawn to its first number
             game.creaturesIn(t).foreach { c =>
                 val z = 220
                 val (x, y) = freeSpot(t, z / T / 2, taken, |(board.point(t.anchor)), 0.5)
@@ -1002,7 +1007,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Wastelands: Jötunn Blainn waiting at his camp and Naströnd's wood not yet taken, in the impassable middle of their tiles
         if (game.has(Wastelands)) {
             game.jotnarCamp.%(_ => game.blainn.none).foreach { s =>
-                pieces.add(Sprite($(at("token-blainn", 230)), $(Rectangle(-115, -115, 230, 230))))(sx(s.x + 0.5), sy(s.y + 0.5))
+                pieces.add(Sprite($(at("token-blainn", 230)), $(Rectangle(-115, -115, 230, 230)), $(BlainnCard)))(sx(s.x + 0.5), sy(s.y + 0.5))
             }
 
             game.nastrond.foreach { s =>
@@ -1019,7 +1024,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 val d = South.rotate(board.at(p.x, p.y).get.r)
                 val (cx, cy) = (sx(p.x + d.dx + 0.5), sy(p.y + d.dy + 0.5))
                 val (w, h) = (680.0, 445.0)
-                pieces.add(Sprite($(ImageRect(new RawImage(img(c.info.image)), Rectangle(-w / 2, -h / 2, w, h), 1.0)), $))(cx, cy)
+                pieces.add(Sprite($(ImageRect(new RawImage(img(c.info.image)), Rectangle(-w / 2, -h / 2, w, h), 1.0)), $(Rectangle(-w / 2, -h / 2, w, h)), $(c)))(cx, cy)
 
                 r.owner.%(_ => r.units > 0).foreach { f =>
                     val z = 230
@@ -1237,6 +1242,21 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         container.attach.parent.style.outline = game.highlight.faction.has(p).?("2px solid #aaaaaa").|("")
     }
 
+    // The clans whose player looks at this screen: the one asked, or, while waiting, this browser's only player (none for spectators
+    // and, between turns, for hotseat games)
+    var viewers : $[Faction] = $
+
+    def look(l : $[Faction]) {
+        if (l != viewers) {
+            viewers = l
+            if (game.states.nonEmpty)
+                game.factions.%(game.ftp.contains).foreach(factionStatus)
+        }
+    }
+
+    // Fame tokens are kept face down: the panels show only the viewer's and its teammates' fame, everyone's once the game is over
+    def fameHidden(f : Faction) : Boolean = game.isOver.not && viewers.exists(v => v == f || game.mates(v).has(f)).not
+
     def factionStatus(f : Faction) {
         val container = statuses(game.players.indexOf(game.ftp(f)))
 
@@ -1333,12 +1353,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Dragon Clan: 1 more food or wood for the sacrifice, shown as a range on both, its upper end faint as only one of them gets it
         val pyre = f == Dragon && game.dragonHarvest.has(false).not && (game.dragonHarvest.any || NewBloodExpansion.sacrificeOptions(f)) && game.controlled(f).any
         // Tapping the lore (its icon or stockpile) opens the clan's Lore Tree
-        case class Column(icon : Elem, has : Int, gain : Int, cost : Int, extra : Boolean = false, open : |[Any] = None)
+        case class Column(icon : Elem, has : Int, gain : Int, cost : Int, extra : Boolean = false, open : |[Any] = None, hidden : Boolean = false) {
+            // Another player's fame is hidden (the fame tokens are kept face down), its harvest's fame isn't
+            def stock : Elem = hidden.?("?".hl).|(has.hl)
+        }
         val columns = $(
             Column(Food.elem, state.has(Food), next.food, winterFood, pyre),
             Column(Wood.elem, state.has(Wood), next.wood, winterWood, pyre),
             Column(Lore.elem, state.has(Lore), next.lore, 0, open = |(LoreTree(f))),
-            Column(FameIcon(), state.fame, next.fame, 0))
+            Column(FameIcon(), state.fame, next.fame, 0, hidden = fameHidden(f)))
 
         // Each cell taps through to the Winter chart, the lore's to the Lore Tree (one OnClick per cell: nested ones would pass both)
         def open(o : |[Any], e : Elem) : Elem = o.orElse(if (f != Automa) |(WinterChart(f)) else None)./(x => OnClick(x, e.div(styles.ledgerCell)(xlo.pointer))).|(e.div(styles.ledgerCell))
@@ -1348,7 +1371,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         def signed(n : Int, sign : String, s : Style) : Elem = (n > 0).?(cell((sign + n).styled(s))).|(none)
 
         val icons = cell(Empty) ~ columns./(c => open(c.open, c.icon)).merge
-        val stock = cell(Empty) ~ columns./(c => open(c.open, stacked.?(c.has.hl).|(Amount(c.has.hl, c.icon)))).merge
+        val stock = cell(Empty) ~ columns./(c => open(c.open, stacked.?(c.stock).|(Amount(c.stock, c.icon)))).merge
         def gain(c : Column) : Elem = c.extra.?(cell((("+" + c.gain).styled(styles.ledgerGain) ~ ("-" + (c.gain + 1)).styled(styles.ledgerGain, styles.ledgerMaybe)).spn)).|(signed(c.gain, "+", styles.ledgerGain))
         val harvest = cell(SeasonIcon.harvest) ~ columns./(gain).merge
         val winter = (f != Automa).?(cell(SeasonIcon.winter) ~ columns./(c => signed(c.cost, "-", styles.ledgerLoss)).merge).|(Empty)
@@ -1543,8 +1566,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         }
     }
 
-    // The divider right of the map, the one between the log and the action pane and the bottom edge of the
-    // player panels have drag handles; each
+    // The divider right of the map, the one between the log and the action pane, the bottom edge of the
+    // player panels and the map's bottom edge (with panes under it, as on a phone held upright) have drag handles; each
     // browser keeps where they were dragged, as fractions of the window, for each shape of screen (tall, wide,
     // ultrawide). Double-tapping a handle puts it back
     def splitKind(width : Int, height : Int) = (width >= height * 2.1).?("ultrawide").|((width > height).?("wide").|("tall"))
@@ -1553,6 +1576,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     var splitX = 0.0
     var splitY = 0.0
     var splitP = 0.0
+    var splitB = 0.0
 
     def loadSplit(kind : String) {
         if (splitLoaded != kind) {
@@ -1562,10 +1586,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             splitX = n.lift(0).|(0.0)
             splitY = n.lift(1).|(0.0)
             splitP = n.lift(2).|(0.0)
+            splitB = n.lift(3).|(0.0)
         }
     }
 
-    def saveSplit() = try { hrf.web.Local.set(Meta.settingsKey + ".split-" + splitLoaded, splitX + "," + splitY + "," + splitP) } catch { case _ : Throwable => }
+    def saveSplit() = try { hrf.web.Local.set(Meta.settingsKey + ".split-" + splitLoaded, splitX + "," + splitY + "," + splitP + "," + splitB) } catch { case _ : Throwable => }
 
     // The panes whose edge is at a divider move with it, each kept at least 15% of the window
     def split(width : Int, height : Int, panelsBottom : Option[Int] = None)(l0 : $[PanePlacement]) : $[PanePlacement] = {
@@ -1574,7 +1599,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         def clamp(want : Int, lo : Int, hi : Int) = max(min(want, max(hi, 0)), min(lo, 0))
 
         var l = l0
-        handleAt = $(None, None, None)
+        handleAt = $(None, None, None, None)
 
         l.find(_.name == "map-small").foreach { m =>
             val x = m.rect.x + m.rect.width
@@ -1679,17 +1704,48 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             }
         }
 
+        // The map's bottom edge, when panes are right under it and no wider than it (the log and the action pane
+        // on a phone held upright): dragging it up makes them taller and their font larger, down the other way.
+        // The font follows the square root of the height, so the text takes about as much of the pane as before
+        l.find(_.name == "map-small").foreach { m =>
+            val y = m.rect.y + m.rect.height
+            def map(p : PanePlacement) = p.name == "map-small" || p.name == "map-small-overlay"
+            def over(p : PanePlacement) = p.rect.x < m.rect.x + m.rect.width - 3 && p.rect.x + p.rect.width > m.rect.x + 3
+            def below(p : PanePlacement) = map(p).not && (p.rect.y - y).abs <= 3 && over(p)
+            val under = l.filter(below)
+            if (under.any && under.forall(p => p.rect.x >= m.rect.x - 3 && p.rect.x + p.rect.width <= m.rect.x + m.rect.width + 3)) {
+                val minH = height * 15 / 100
+                val dy = clamp((splitB * height).round.toInt, minH - m.rect.height, under./(_.rect.height - minH).min)
+                splitB = dy * 1.0 / height
+                l = l./{
+                    case p if map(p) => p.copy(rect = Rect(p.rect.x, p.rect.y, p.rect.width, p.rect.height + dy))
+                    case p if below(p) =>
+                        val k = math.sqrt((p.rect.height - dy) * 1.0 / p.rect.height)
+                        p.copy(rect = Rect(p.rect.x, p.rect.y + dy, p.rect.width, p.rect.height - dy), fontSize = p.fontSize./(_ * k))
+                    case p => p
+                }
+                handleAt = handleAt.updated(3, Some((m.rect.x + m.rect.width / 2, y + dy)))
+            }
+        }
+
         l
     }
 
-    // Where each handle goes (map edge, log bottom, panels' bottom), worked out by split
-    var handleAt : $[Option[(Int, Int)]] = $(None, None, None)
+    // Where each handle goes (map edge, log bottom, panels' bottom, map bottom), worked out by split
+    var handleAt : $[Option[(Int, Int)]] = $(None, None, None, None)
 
-    def splitGet(i : Int) = i match { case 0 => splitX case 1 => splitY case _ => splitP }
-    def splitSet(i : Int, v : Double) = i match { case 0 => splitX = v case 1 => splitY = v case _ => splitP = v }
+    def splitGet(i : Int) = i match { case 0 => splitX case 1 => splitY case 2 => splitP case _ => splitB }
+    def splitSet(i : Int, v : Double) = i match { case 0 => splitX = v case 1 => splitY = v case 2 => splitP = v case _ => splitB = v }
 
-    // The three handles, on top of the panes
-    lazy val handles = $(0, 1, 2)./ { i =>
+    // The four handles, on top of the panes; any left by an earlier game UI on the page go first, or they
+    // stay where that UI put them, as a second set
+    lazy val handles = {
+        val old = dom.document.querySelectorAll(".nort-split-handle")
+        0.until(old.length)./(old(_)).foreach(o => o.parentNode.removeChild(o))
+        handles0
+    }
+
+    lazy val handles0 = $(0, 1, 2, 3)./ { i =>
         val vertical = i == 0
         val e = dom.document.createElement("div").asInstanceOf[dom.html.Element]
         e.className = "nort-split-handle"
@@ -1759,6 +1815,175 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         }
     }
 
+    // The log folds into a narrow strip (beside the pane next to it) or a one-line bar (above or below it) with
+    // a tab that unfolds it; the pane it touches (the action pane first) and the others in that row or column
+    // take the room. Each browser remembers it (<settingsKey>.log-folded)
+    def logKey = Meta.settingsKey + ".log-folded"
+
+    var logFolded : Boolean = try { hrf.web.Local.get(logKey, "") == "yes" } catch { case _ : Throwable => false }
+
+    // Where the log is (unfolded) or its strip (folded), and whether the strip runs down (beside a pane) or across
+    var logAt : |[(Rect, Boolean)] = None
+
+    val logStrip = 26
+
+    def foldLog(l : $[PanePlacement]) : $[PanePlacement] = {
+        logAt = None
+
+        l.find(_.name == "log") match {
+            case Some(g) =>
+                val r = g.rect
+                def rows(p : PanePlacement) = p.rect.y < r.y + r.height - 3 && p.rect.y + p.rect.height > r.y + 3
+                def cols(p : PanePlacement) = p.rect.x < r.x + r.width - 3 && p.rect.x + p.rect.width > r.x + 3
+                val others = l.%(_.name != "log")
+                def touches(p : PanePlacement, side : Int) = side match {
+                    case 0 => rows(p) && (p.rect.x - (r.x + r.width)).abs <= 3
+                    case 1 => rows(p) && (p.rect.x + p.rect.width - r.x).abs <= 3
+                    case 2 => cols(p) && (p.rect.y - (r.y + r.height)).abs <= 3
+                    case _ => cols(p) && (p.rect.y + p.rect.height - r.y).abs <= 3
+                }
+                // Right, left, below, above: the side with the action pane, else the map, else any other pane
+                val sides = $(0, 1, 2, 3)
+                val side = sides.find(i => others.exists(p => p.name == "action" && touches(p, i)))
+                    .orElse(sides.find(i => others.exists(p => p.name == "map-small" && touches(p, i))))
+                    .orElse(sides.find(i => others.exists(p => touches(p, i))))
+
+                if (logFolded.not || side.isEmpty) {
+                    logAt = Some((r, false))
+                    l
+                }
+                else {
+                    val i = side.get
+                    val down = i < 2
+                    val s = min(logStrip, down.?(r.width).|(r.height))
+                    // The panes touching the log take the room, and the others in their row or column up to their far edge
+                    // (the player panels beside the cards and the hand in the ultrawide layout)
+                    val touching = others.%(p => touches(p, i))
+                    def stretch(a0 : Int, a1 : Int, b0 : Int, b1 : Int)(v : Int) = b0 + ((v - a0) * 1.0 * (b1 - b0) / (a1 - a0)).round.toInt
+                    val result = i match {
+                        case 0 =>
+                            val end = touching./(p => p.rect.x + p.rect.width).max
+                            val f = stretch(r.x + r.width, end, r.x + s, end) _
+                            others./{
+                                case p if rows(p) && p.rect.x >= r.x + r.width - 3 && p.rect.x + p.rect.width <= end + 3 => p.copy(rect = Rect(f(p.rect.x), p.rect.y, f(p.rect.x + p.rect.width) - f(p.rect.x), p.rect.height))
+                                case p => p
+                            }
+                        case 1 =>
+                            val end = touching./(_.rect.x).min
+                            val f = stretch(end, r.x, end, r.x + r.width - s) _
+                            others./{
+                                case p if rows(p) && p.rect.x + p.rect.width <= r.x + 3 && p.rect.x >= end - 3 => p.copy(rect = Rect(f(p.rect.x), p.rect.y, f(p.rect.x + p.rect.width) - f(p.rect.x), p.rect.height))
+                                case p => p
+                            }
+                        case 2 =>
+                            val end = touching./(p => p.rect.y + p.rect.height).max
+                            val f = stretch(r.y + r.height, end, r.y + s, end) _
+                            others./{
+                                case p if cols(p) && p.rect.y >= r.y + r.height - 3 && p.rect.y + p.rect.height <= end + 3 => p.copy(rect = Rect(p.rect.x, f(p.rect.y), p.rect.width, f(p.rect.y + p.rect.height) - f(p.rect.y)))
+                                case p => p
+                            }
+                        case _ =>
+                            val end = touching./(_.rect.y).min
+                            val f = stretch(end, r.y, end, r.y + r.height - s) _
+                            others./{
+                                case p if cols(p) && p.rect.y + p.rect.height <= r.y + 3 && p.rect.y >= end - 3 => p.copy(rect = Rect(p.rect.x, f(p.rect.y), p.rect.width, f(p.rect.y + p.rect.height) - f(p.rect.y)))
+                                case p => p
+                            }
+                    }
+                    val strip = i match {
+                        case 0 => Rect(r.x, r.y, s, r.height)
+                        case 1 => Rect(r.x + r.width - s, r.y, s, r.height)
+                        case 2 => Rect(r.x, r.y, r.width, s)
+                        case _ => Rect(r.x, r.y + r.height - s, r.width, s)
+                    }
+                    logAt = Some((strip, down))
+                    // The handle between the log and the pane under it goes with the log
+                    handleAt = handleAt.updated(1, None)
+                    result
+                }
+            case None => l
+        }
+    }
+
+    lazy val logToggle = {
+        val old = dom.document.querySelectorAll(".nort-log-toggle")
+        0.until(old.length)./(old(_)).foreach(o => o.parentNode.removeChild(o))
+
+        val e = dom.document.createElement("div").asInstanceOf[dom.html.Element]
+        e.className = "nort-log-toggle"
+        val st = e.style
+        st.position = "absolute"
+        st.boxSizing = "border-box"
+        st.background = "#2a2a2af0"
+        st.border = "1px solid #c0c0c0"
+        st.color = "#f0f0f0"
+        st.cursor = "pointer"
+        st.zIndex = "199"
+        st.display = "flex"
+        st.setProperty("align-items", "center")
+        st.setProperty("justify-content", "center")
+        st.overflow = "hidden"
+        st.whiteSpace = "nowrap"
+        st.fontSize = "14px"
+        st.lineHeight = "1"
+        st.setProperty("touch-action", "manipulation")
+        st.setProperty("user-select", "none")
+        st.display = "none"
+
+        e.addEventListener("click", (ev : dom.MouseEvent) => {
+            ev.preventDefault()
+            ev.stopPropagation()
+            logFolded = logFolded.not
+            try { hrf.web.Local.set(logKey, logFolded.?("yes").|("")) } catch { case _ : Throwable => }
+            resize()
+            if (logFolded.not)
+                dom.window.requestAnimationFrame((_ : Double) => logger.scrollToBottom())
+        })
+
+        court.node.parentElement.appendChild(e)
+        e
+    }
+
+    def placeLogToggle() {
+        val e = logToggle
+        val st = e.style
+        logAt match {
+            case Some((r, down)) if logFolded =>
+                // The strip itself, its label running down beside a pane
+                st.left = r.x + "px"
+                st.top = r.y + "px"
+                st.width = r.width + "px"
+                st.height = r.height + "px"
+                st.borderRadius = "0"
+                st.boxShadow = "none"
+                st.setProperty("writing-mode", down.?("vertical-rl").|("horizontal-tb"))
+                // Across, the label goes at the bar's left end, clear of the panels' handle in the middle
+                st.setProperty("justify-content", down.?("center").|("flex-start"))
+                st.paddingLeft = down.?("0").|("10px")
+                e.title = "Show the log"
+                e.textContent = "+ Log"
+                st.display = "flex"
+            case Some((r, _)) =>
+                // A small round button in the log's top right corner, or its bottom right one when a handle is there
+                val x = r.x + r.width - 26
+                val top = handleAt.flatten.exists { case (hx, hy) => (hx - x - 11).abs < 30 && (hy - r.y - 15).abs < 30 }.not
+                st.left = x + "px"
+                st.top = top.?(r.y + 4).|(r.y + r.height - 26) + "px"
+                st.width = "22px"
+                st.height = "22px"
+                st.borderRadius = "11px"
+                st.boxShadow = "0 0 4px #000"
+                st.setProperty("writing-mode", "horizontal-tb")
+                st.setProperty("justify-content", "center")
+                st.paddingLeft = "0"
+                e.title = "Fold the log"
+                e.textContent = "–"
+                st.display = "flex"
+            case None =>
+                st.display = "none"
+        }
+    }
+
     // Folded, the court shrinks to a one-line bar. When the player panels are right above it (ultrawide and
     // phone layouts), they take the room it gave, the bar goes under them, and whatever room they don't need
     // goes to the pane below (the map or the action pane); otherwise the pane below grows up into the room.
@@ -1780,6 +2005,68 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     var courtSideways = false
+
+    // Two players on a tall screen (a phone held upright): the layouter puts the player panels in a row beside
+    // the log (under the court or the map). Instead they go at the top, right of the shared cards, as in 16:9, so the court folds
+    // sideways (foldCourt) and the folded panels get the whole width. The panes right under (or above, or beside)
+    // their old place grow into it; the row is as tall as the taller of the court and the panels, and the panes
+    // under the court give up the difference
+    def panelsBesideCourt(width : Int, height : Int)(l : $[PanePlacement]) : $[PanePlacement] = {
+        val pp = l.filter(_.name.startsWith("status-"))
+        def near(a : Int, b : Int) = (a - b).abs <= 3
+        l.find(_.name == "court") match {
+            case Some(c) if width < height && arity <= 2 && pp.any && sideways(l).not && pp.forall(p => near(p.rect.y, pp.head.rect.y)) =>
+                val (x0, y0) = (pp./(_.rect.x).min, pp./(_.rect.y).min)
+                val (x1, y1) = (pp./(p => p.rect.x + p.rect.width).max, pp./(p => p.rect.y + p.rect.height).max)
+                val others = l.filter(p => p.name != "court" && p.name.startsWith("status-").not)
+                def spans(q : $[PanePlacement], a : Int, b : Int, lo : PanePlacement => Int, hi : PanePlacement => Int) =
+                    q.any && near(q./(lo).min, a) && near(q./(hi).max, b)
+                val xs = (p : PanePlacement) => p.rect.x
+                val xe = (p : PanePlacement) => p.rect.x + p.rect.width
+                val ys = (p : PanePlacement) => p.rect.y
+                val ye = (p : PanePlacement) => p.rect.y + p.rect.height
+                def inX(p : PanePlacement) = p.rect.x >= x0 - 3 && xe(p) <= x1 + 3
+                def inY(p : PanePlacement) = p.rect.y >= y0 - 3 && ye(p) <= y1 + 3
+                val under = others.filter(p => near(ys(p), y1) && inX(p))
+                val over = others.filter(p => near(ye(p), y0) && inX(p))
+                val right = others.filter(p => near(xs(p), x1) && inY(p))
+                val left = others.filter(p => near(xe(p), x0) && inY(p))
+                // the first of them that spans the panels' whole edge, and how each of its panes grows
+                val freed : Option[($[PanePlacement], PanePlacement => PanePlacement)] = $(
+                    (under, spans(under, x0, x1, xs, xe), (p : PanePlacement) => p.copy(rect = Rect(p.rect.x, y0, p.rect.width, ye(p) - y0))),
+                    (over, spans(over, x0, x1, xs, xe), (p : PanePlacement) => p.copy(rect = Rect(p.rect.x, p.rect.y, p.rect.width, y1 - p.rect.y))),
+                    (right, spans(right, y0, y1, ys, ye), (p : PanePlacement) => p.copy(rect = Rect(x0, p.rect.y, xe(p) - x0, p.rect.height))),
+                    (left, spans(left, y0, y1, ys, ye), (p : PanePlacement) => p.copy(rect = Rect(p.rect.x, p.rect.y, x1 - p.rect.x, p.rect.height)))
+                ).find(_._2).map(t => (t._1, t._3))
+
+                freed match {
+                    case None => l
+                    case Some((grown, grow)) =>
+                        val r = c.rect
+                        val rowH = max(r.height, y1 - y0)
+                        val dh = rowH - r.height
+                        // the panels keep the width they had (the layouter fitted their font to it), from a third
+                        // to half of the row; the court (it scrolls sideways) gets the rest
+                        val pw = max(r.width / 3, min(r.width / 2, x1 - x0))
+                        val cw = r.width - pw
+                        val n = pp.num
+                        val sorted = pp.sortBy(_.name.drop(7).toIntOption.getOrElse(0))
+                        def belowCourt(p : PanePlacement) = near(p.rect.y, r.y + r.height) && p.rect.x >= r.x - 3 && xe(p) <= r.x + r.width + 3
+                        l./{
+                            case p if p.name == "court" => p.copy(rect = Rect(r.x, r.y, cw, rowH))
+                            case p if pp.contains(p) =>
+                                val i = sorted.indexOf(p)
+                                val a = r.x + cw + i * pw / n
+                                val b = r.x + cw + (i + 1) * pw / n
+                                p.copy(rect = Rect(a, r.y, b - a, rowH))
+                            case p =>
+                                val q = grown.contains(p).?(grow(p)).|(p)
+                                belowCourt(q).?(q.copy(rect = Rect(q.rect.x, q.rect.y + dh, q.rect.width, q.rect.height - dh))).|(q)
+                        }
+                }
+            case _ => l
+        }
+    }
 
     def foldCourt0(height : Int, extra : Int = 0)(l : $[PanePlacement]) : $[PanePlacement] = l.find(_.name == "court") match {
         case Some(c) if courtFolded =>
@@ -1880,16 +2167,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // left, then short player panels in a row, the shared cards below them and the hand filling the
     // rest, wide enough to show the whole hand, and the log on the right.
     override def layout(width : Int, height : Int)(onLayout0 : $[PanePlacement] => Unit) {
-        val onLayout = (l : $[PanePlacement]) => {
+        val onLayout = (l0 : $[PanePlacement]) => {
+            val l = panelsBesideCourt(width, height)(l0)
             // Folded, room the player panels' handle gives them is first offered to the folded layout, which
             // may lay them out in more rows with a larger font; split then makes them as tall as asked
             loadSplit(splitKind(width, height))
             val base = foldCourt(height)(l)
             val want = (splitP * height).round.toInt
             val grown = (courtFolded && want > 0).?(foldCourt(height, min(want, height / 2))(l)).|(base)
-            val placed = split(width, height, statusBottom(base))(grown)
+            val placed = foldLog(split(width, height, statusBottom(base))(grown))
             onLayout0(placed)
             placeHandles(placed)
+            placeLogToggle()
         }
 
         val root = dom.document.documentElement.asInstanceOf[dom.html.Element].style
@@ -1996,6 +2285,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         case LoreTree(f) =>
             showOverlay(overlayScrollX(loreTree(f)).onClick, onClick)
 
+        case TutorialLessonView(n) =>
+            showOverlay(overlayScrollX(tutorialLesson(n)).onClick, onClick)
+
         case PyreView =>
             showOverlay(overlayScrollX(pyreView).onClick, onClick)
 
@@ -2006,6 +2298,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Adset: a drafted clan's info, as behind the clan picker's i button
         case ClanInfo(f) =>
             onClick(AdsetClanInfo(f))
+
+        // A clan token or warchief tapped on the map
+        case ClanAbilityInfo(f) =>
+            showOverlay(overlayScrollX((Meta.factionName(f).hlb.div ~ Meta.clanAbility(f)./(e => Div(e)).merge).div(xlo.flexvcenter)).onClick, onClick)
+
+        case WarchiefInfo(f) =>
+            showOverlay(overlayScrollX((Meta.factionName(f).hlb.div ~ Meta.warchiefInfo(f)./(e => Div(e)).merge).div(xlo.flexvcenter)).onClick, onClick)
 
         case AdsetClanInfo(f) =>
             Meta.factionInfo(f).foreach { case (_, title, l) => showOverlay(overlayScrollX((title.div ~ l./(e => Div(e)).merge).div(xlo.flexvcenter)).onClick, onClick) }
@@ -2023,10 +2322,47 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             println("unknown onClick: " + x)
     }
 
+    // The Tutorial's practice game: a lesson tapped open, with the previous and next ones a tap away (a tap elsewhere closes it)
+    def tutorialLesson(n : Int) : Elem = {
+        val (t, body) = Tutorial.lessons(n)
+        val last = Tutorial.lessons.num - 1
+        val nav = (n > 0).?(("◂ " ~ Tutorial.lessons(n - 1)._1).spn(xstyles.outlined).pointer.onClick.param(TutorialLessonView(n - 1))).|(Empty) ~ " ".pre ~
+            (n < last).?((Tutorial.lessons(n + 1)._1 ~ " ▸").spn(xstyles.outlined).pointer.onClick.param(TutorialLessonView(n + 1))).|(Empty)
+        (("Lesson " + (n + 1) + " of " + (last + 1)).txt.div ~ t.hlb.div ~ body./(e => Div(e)).merge ~ nav.div(styles.menuText)).div(xlo.flexvcenter)
+    }
+
     def clearOverlay() {
         overlayPane.invis()
         overlayPane.clear()
     }
+
+    // The Tutorial's practice game: its tips, hidden by "Hide tips" (each browser remembers it)
+    def tutorial = game.options.has(TutorialOption)
+
+    val tutorialTipsKey = "nort.tutorial-tips-hidden"
+
+    def tutorialTipsHidden : Boolean = try { hrf.web.Local.get(tutorialTipsKey, "") == "yes" } catch { case _ : Throwable => false }
+
+    def hideTutorialTips(hide : Boolean) {
+        try { hrf.web.Local.set(tutorialTipsKey, hide.?("yes").|("")) } catch { case _ : Throwable => }
+        if (lastThen != null) ask(lastSelf, lastActions, lastThen)
+    }
+
+    // The tip for the choices offered (Tutorial.tip), or what the bot is doing, above the choices
+    override def preinfo(self : |[F], aa : $[UserAction]) : $[ZOption] =
+        if (tutorial.not || tutorialTipsHidden || currentGame.isOver)
+            $
+        else {
+            val tip = (self match {
+                case Some(f : Faction) if f == Tutorial.clan => Tutorial.tip(currentGame, f, aa)
+                case _ => None
+            }) || aa.none.?(Tutorial.waiting(currentGame))
+            // Only "Hide tips" hides them, so a tap on the tip itself does nothing
+            tip./(t => ZOption("Tutorial tip".hl, Div(Div(t, $(styles.tutorialTip)) ~ Div(Parameter("hide", OnClick("Hide tips".spn(xstyles.outlined)(xstyles.smaller85)(xlo.pointer))), $(styles.menuText)), ZBasic.info), {
+                case "hide" => hideTutorialTips(true)
+                case _ =>
+            }, clear = false)).$
+        }
 
     override def info(self : |[F], aa : $[UserAction]) = {
         val ii = currentGame.info($, self, aa)
@@ -2056,6 +2392,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     })
                 }).copy(clear = false)
             ) ++
+            tutorial.$(ZBasic(Break ~ Break, "Tutorial Lessons".spn, () => onClick(TutorialLessonView(0))).copy(clear = false)) ++
+            (tutorial && tutorialTipsHidden && currentGame.isOver.not).$(ZBasic(Break, "Show tutorial tips".spn, () => hideTutorialTips(false)).copy(clear = false)) ++
             $(ZBasic(Break ~ Break, "Interface".spn, () => { callbacks.editSettings { updateStatus() } }).copy(clear = false)) ++
             $(ZBasic(Break ~ Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug)
     }
@@ -2085,6 +2423,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     override def wait(self : $[F], factions : $[F], message : Elem) {
+        look(self.single./~(game.ptf.get).$)
+
         lastActions = $
         lastThen = null
 
@@ -2113,6 +2453,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             scalajs.js.timers.setTimeout(0) { then(actions.find(_.unwrap.is[CombatReportDoneAction]).get) }
             return
         }
+
+        look(faction./~(game.ptf.get).$)
 
         showNotifications(faction.$)
 
