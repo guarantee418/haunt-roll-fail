@@ -74,7 +74,8 @@ object Meta extends MetaGame { mmm =>
     // Robotos (robotos.scala) comes from the bot chosen for a clan, not from the setup screen
     // Team play comes from the choice above the clan picker (pickerModes), the old fixed team variants are no longer offered
     // The Tutorial's practice game has its tips on
-    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders) ++ RobotosOption.all ++ Module.teams.keys.$./(ModuleOption)
+    // Chosen casualties are on in every new game (mandatoryFor), not in older ones
+    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties) ++ RobotosOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // New Blood has no option: picking one of its clans brings it in
     val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ WarchiefsChoice.all ++ $(NoDrawDevelopments, HorizonsDevelopments) ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles) ++ AutomaLevelOption.all ++ hiddenOptions
@@ -137,6 +138,12 @@ object Meta extends MetaGame { mmm =>
         val teams = l.zipWithIndex.%{ case (f, _) => options.of[TeamOption].exists(o => o.clan == f && o.team < n).not }./{ case (f, i) => TeamOption(f, i % 2) : O }
         options.%{ case TeamOption(f, t) => t < n ; case _ => true } ++ added ++ teams
     }
+
+    // Chosen casualties: every new game gets them; a loaded game keeps the options it was started with
+    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties)
+
+    // Quick games take only the selected options, not the mandatory ones
+    override def randomQuickGame() = super.randomQuickGame() match { case (f, l, d, o) => (f, l, d, (o :+ ChooseCasualties).distinct) }
 
     // Colors by seat, as before colors could be chosen
     // Teams alternate by seat (two teams), as the old team variants did

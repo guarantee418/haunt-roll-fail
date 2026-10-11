@@ -951,7 +951,7 @@ Check these against the rulebook when it is at hand.
 - **New Blood** (no rulebook; the boards and cards are the source):
   - Brundr and Kaelinn, and Horse's second warchief Brok (Warchiefs module
     only), use Kaija's rules: one figure, moves with the units, taken as a
-    casualty after the units and the warchief, can't be targeted by card
+    casualty chosen by the player like the warchief, can't be targeted by card
     effects on enemy units, doesn't count for the 14-unit limit. Unlike
     Kaija they may enter enemy territories. Brundr and Kaelinn don't count
     for winter (Uncharted Horizons rulebook); Brok does, like a warchief.
@@ -1028,8 +1028,8 @@ Check these against the rulebook when it is at hand.
   (two units and Kaija), or be recruited instead of a unit. It moves like a
   unit, alone or with others, but not into a territory with enemy figures
   unless The Bear Awakens was played this year. It counts for control and
-  for "1 food per figure" in combat, adds 2 combat points, and is taken as a
-  casualty after all units. It doesn't count for winter, the 14-unit limit,
+  for "1 food per figure" in combat, adds 2 combat points, and can be taken
+  as a casualty (the player chooses; older games take it after all units). It doesn't count for winter, the 14-unit limit,
   Warlord or Training Camps. Removed Kaija goes back to the reserve.
 - **Bear Clan card**: when Kaija is in the move, the territory it leaves
   gives its food and wood (tiles and buildings) before any fight.
@@ -1120,9 +1120,15 @@ Check these against the rulebook when it is at hand.
   - With the second chance tile, a lair creature acts as from an Explore.
 - **Warchiefs**, where the rulebook says nothing or the game simplifies
   (confirmed by the owner on 2026-10-03):
-  - Casualties take units first, then the warchief, then Kaija (the
-    rulebook lets the player choose; keeping the warchief is the usual
-    choice).
+  - Casualties in a fight (against a clan or a creature) are chosen by their
+    player, as the rulebook says: any mix of units, the warchief, Kaija (or
+    Brundr and Kaelinn, or Brok) and Jötunn Blainn, asked only when there is
+    more than one way (`CasualtyPickAction`; asked for by Robotos on
+    2026-10-11). Games started before 2026-10-11 (without the hidden
+    `ChooseCasualties` option) take units first, then the warchief, Blainn
+    and Kaija, as the owner had confirmed on 2026-10-03. The Automa still
+    loses units before Leaders. Casualties from cards and creatures outside a
+    fight (the Draugr, ...) still take units first.
   - The warchief counts as a unit for winter, control, Warlord and ties, but
     not for the 14-unit supply (it's its own miniature) or Training Camps.
   - At setup a Bear player may place one unit, Kaija and Borgild together.

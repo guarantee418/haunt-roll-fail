@@ -209,6 +209,17 @@ on. To implement one:
   `chiefIn`, `chiefReady`. `figures` counts it, `strength(t, f, attacking)`
   adds 2 or 3 (`Warchief.strength`), `removeFigures` takes it after the
   units. `FactionState.units` includes it (winter, Warlord, ties).
+- Chosen casualties (asked for by Robotos, 2026-10-11): in a fight, a clan
+  that can lose its casualties more than one way (units, the warchief, the
+  companion, Blainn) picks which (`casualtyParties`, `pickCasualties` and
+  `CasualtyPickAction` in `map.scala`). `CombatResolveAction` and
+  `CreatureResolveAction` (split from `CreatureRolledAction`, which only logs
+  the creature's roll now) ask before telling anything, store the pick in
+  `game.casualtyPicks` and run again; `removeCasualties` in `game.scala`
+  takes it. Only in games with the hidden option `ChooseCasualties`, which
+  `mandatoryFor` (Meta and MetaAdset), the Tutorial and `randomQuickGame`
+  give every new game: older games replay as recorded, units first. Never
+  asked of the Automa. `Host` turns it on in 80% of games.
 - Card effects on enemy units use `count` (units only), so they can't touch
   warchiefs.
 - `MoveUnitsAction` and `HiddenUnitsAction` gained a `chief` field; each has
@@ -219,7 +230,7 @@ on. To implement one:
   and creature fights; Liv's reroll is offered in `CombatRolledAction` and
   `CreaturePlayerRolledAction`.
 - Combat report (asked for by Robotos, 2026-10-07): once `CombatResolveAction`
-  (or `CreatureRolledAction`, against a creature) has decided a fight, it
+  (or `CreatureResolveAction`, against a creature) has decided a fight, it
   stores a `FightReport` in `game.fightReport` (each side's combat points and
   casualties with their sources, from the same sums, `FightPoints.parts` for
   the figures) and asks both sides (never the Automa) to tap OK
@@ -443,7 +454,7 @@ on. To implement one:
   snow, ash and bare ground elsewhere).
 - Creatures (`creatures.scala`): Rock Golem, Myrkalf, Giant Boar, Kobold,
   Valdemar and Hrimgandr kinds; combat hooks `creatureFace`,
-  `creaturePoints`, `creatureIgnored` in `CreatureRolledAction`. Without the
+  `creaturePoints`, `creatureIgnored` in `CreatureResolveAction`. Without the
   Creatures module, Hrimgandr's fights go to `CreaturesExpansion` through
   `creatureCombat`.
 - Jötunn Blainn: `game.blainn` (owner and area), counted by `figures`,
@@ -528,7 +539,7 @@ on. To implement one:
   `sailing` (Port to Port, cost = moves left; `MoveCostLabel` says "by
   sea"), `explorable` takes open neutral territories while `raidExplore`,
   and `BoldMove` gives 2 fame per won combat in `CombatResolveAction` and
-  `CreatureRolledAction`.
+  `CreatureResolveAction`.
 - The Raid phase is caught at `CreaturePhaseAction`; the Harvest cards at
   `AfterHarvestAction`; Elder's Wisdom's extra card at
   `RevealDevelopmentsAction`.

@@ -379,7 +379,7 @@ object WastelandsExpansion extends Expansion {
         case _ : MoveEndAction | _ : CreatureDeclareAction | _ : CreatureAttackAction | _ : CreatureDeclareDoneAction | _ : CreatureFightAction |
             _ : CreatureCombatAction | _ : CreatureFoodStartAction | _ : CreatureCunningAskAction | _ : CreatureCunningAction | _ : CreatureCunningDoneAction |
             _ : CreatureFoodAction | _ : CreatureFoodPaidAction | _ : CreaturePlayerRolledAction | _ : CreatureRerollAction | _ : CreatureRerolledAction |
-            _ : CreatureFaceAction | _ : CreatureRolledAction => true
+            _ : CreatureFaceAction | _ : CreatureRolledAction | _ : CreatureResolveAction => true
         case _ => false
     }
 
