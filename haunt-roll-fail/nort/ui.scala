@@ -1833,7 +1833,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 val r = g.rect
                 def rows(p : PanePlacement) = p.rect.y < r.y + r.height - 3 && p.rect.y + p.rect.height > r.y + 3
                 def cols(p : PanePlacement) = p.rect.x < r.x + r.width - 3 && p.rect.x + p.rect.width > r.x + 3
-                def map(p : PanePlacement) = p.name == "map-small" || p.name == "map-small-overlay"
                 val others = l.%(_.name != "log")
                 def touches(p : PanePlacement, side : Int) = side match {
                     case 0 => rows(p) && (p.rect.x - (r.x + r.width)).abs <= 3
@@ -1841,10 +1840,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     case 2 => cols(p) && (p.rect.y - (r.y + r.height)).abs <= 3
                     case _ => cols(p) && (p.rect.y + p.rect.height - r.y).abs <= 3
                 }
-                // Right, left, below, above: the side with the action pane, else any pane but the map, else the map
+                // Right, left, below, above: the side with the action pane, else the map, else any other pane
                 val sides = $(0, 1, 2, 3)
                 val side = sides.find(i => others.exists(p => p.name == "action" && touches(p, i)))
-                    .orElse(sides.find(i => others.exists(p => map(p).not && touches(p, i))))
+                    .orElse(sides.find(i => others.exists(p => p.name == "map-small" && touches(p, i))))
                     .orElse(sides.find(i => others.exists(p => touches(p, i))))
 
                 if (logFolded.not || side.isEmpty) {
@@ -1855,33 +1854,34 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     val i = side.get
                     val down = i < 2
                     val s = min(logStrip, down.?(r.width).|(r.height))
-                    // The panes on that side, as far as the map (or the window's edge) when the map isn't the one taking the room
-                    val takers = others.%(p => touches(p, i)).exists(map(_).not)
+                    // The panes touching the log take the room, and the others in their row or column up to their far edge
+                    // (the player panels beside the cards and the hand in the ultrawide layout)
+                    val touching = others.%(p => touches(p, i))
                     def stretch(a0 : Int, a1 : Int, b0 : Int, b1 : Int)(v : Int) = b0 + ((v - a0) * 1.0 * (b1 - b0) / (a1 - a0)).round.toInt
                     val result = i match {
                         case 0 =>
-                            val end = others.%(p => rows(p) && p.rect.x >= r.x + r.width - 3 && (takers.not || map(p).not))./(p => p.rect.x + p.rect.width).maxOption.|(r.x + r.width)
+                            val end = touching./(p => p.rect.x + p.rect.width).max
                             val f = stretch(r.x + r.width, end, r.x + s, end) _
                             others./{
                                 case p if rows(p) && p.rect.x >= r.x + r.width - 3 && p.rect.x + p.rect.width <= end + 3 => p.copy(rect = Rect(f(p.rect.x), p.rect.y, f(p.rect.x + p.rect.width) - f(p.rect.x), p.rect.height))
                                 case p => p
                             }
                         case 1 =>
-                            val end = others.%(p => rows(p) && p.rect.x + p.rect.width <= r.x + 3 && (takers.not || map(p).not))./(_.rect.x).minOption.|(r.x)
+                            val end = touching./(_.rect.x).min
                             val f = stretch(end, r.x, end, r.x + r.width - s) _
                             others./{
                                 case p if rows(p) && p.rect.x + p.rect.width <= r.x + 3 && p.rect.x >= end - 3 => p.copy(rect = Rect(f(p.rect.x), p.rect.y, f(p.rect.x + p.rect.width) - f(p.rect.x), p.rect.height))
                                 case p => p
                             }
                         case 2 =>
-                            val end = others.%(p => cols(p) && p.rect.y >= r.y + r.height - 3 && (takers.not || map(p).not))./(p => p.rect.y + p.rect.height).maxOption.|(r.y + r.height)
+                            val end = touching./(p => p.rect.y + p.rect.height).max
                             val f = stretch(r.y + r.height, end, r.y + s, end) _
                             others./{
                                 case p if cols(p) && p.rect.y >= r.y + r.height - 3 && p.rect.y + p.rect.height <= end + 3 => p.copy(rect = Rect(p.rect.x, f(p.rect.y), p.rect.width, f(p.rect.y + p.rect.height) - f(p.rect.y)))
                                 case p => p
                             }
                         case _ =>
-                            val end = others.%(p => cols(p) && p.rect.y + p.rect.height <= r.y + 3 && (takers.not || map(p).not))./(_.rect.y).minOption.|(r.y)
+                            val end = touching./(_.rect.y).min
                             val f = stretch(end, r.y, end, r.y + r.height - s) _
                             others./{
                                 case p if cols(p) && p.rect.y + p.rect.height <= r.y + 3 && p.rect.y >= end - 3 => p.copy(rect = Rect(p.rect.x, f(p.rect.y), p.rect.width, f(p.rect.y + p.rect.height) - f(p.rect.y)))
@@ -1918,8 +1918,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         st.cursor = "pointer"
         st.zIndex = "199"
         st.display = "flex"
-        st.alignItems = "center"
-        st.justifyContent = "center"
+        st.setProperty("align-items", "center")
+        st.setProperty("justify-content", "center")
         st.overflow = "hidden"
         st.whiteSpace = "nowrap"
         st.fontSize = "14px"
@@ -1955,6 +1955,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 st.borderRadius = "0"
                 st.boxShadow = "none"
                 st.setProperty("writing-mode", down.?("vertical-rl").|("horizontal-tb"))
+                // Across, the label goes at the bar's left end, clear of the panels' handle in the middle
+                st.setProperty("justify-content", down.?("center").|("flex-start"))
+                st.paddingLeft = down.?("0").|("10px")
                 e.title = "Show the log"
                 e.textContent = "+ Log"
                 st.display = "flex"
@@ -1969,6 +1972,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 st.borderRadius = "11px"
                 st.boxShadow = "0 0 4px #000"
                 st.setProperty("writing-mode", "horizontal-tb")
+                st.setProperty("justify-content", "center")
+                st.paddingLeft = "0"
                 e.title = "Fold the log"
                 e.textContent = "–"
                 st.display = "flex"
