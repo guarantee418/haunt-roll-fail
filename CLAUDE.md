@@ -220,11 +220,12 @@ cd haunt-roll-fail && sbt fullOptJS
   temporarily point the script in `index.html` at `hrf-fastopt`.
 - The client build needs more than sbt's default 1 GB heap or it fails with
   `OutOfMemoryError`. Use `SBT_OPTS="-Xmx6G -Xss4M"`.
-- Build output under `target/` is committed, including `hrf-opt.js`.
-  After changing client code, run `sbt fullOptJS` and commit `hrf-opt.js`,
-  `hrf-opt.js.map`, `hrf-opt/main.js` and `hrf-opt/main.js.map`
-  so the server can run without rebuilding. Don't commit the rest of the
-  `target/` churn a build produces.
+- Of the build output under `target/`, only the optimized client is
+  committed: `hrf-opt.js`, `hrf-opt.js.map`, `hrf-opt/main.js` and
+  `hrf-opt/main.js.map`, so the server can run without building it (it
+  compiles `good-game` itself when it starts). `.gitignore` ignores the rest
+  of every `target/` (issue #11). After changing client code, run
+  `sbt fullOptJS` and commit those four files.
 
 ## Live server
 
