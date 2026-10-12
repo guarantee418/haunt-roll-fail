@@ -900,10 +900,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             pieces.add(Sprite($(at("ui-target", n)), $(Rectangle(-n / 2, -n / 2, n, n)), $(s)))(sx(x), sy(y))
         }
 
-        // Ox Clan's Ancestral Equipment tokens on their spaces, face up
+        // Ox Clan's Ancestral Equipment tokens on their spaces, face up; tapping one picks that token (GearTakeAction targets its space)
         game.gear.foreach { case (s, n) =>
             val (x, y) = board.point(s)
-            pieces.add(Sprite($(at("token-ox-" + n, 170)), $))(sx(x), sy(y))
+            pieces.add(Sprite($(at("token-ox-" + n, 170)), $(Rectangle(-85, -85, 170, 170)), $(s)))(sx(x), sy(y))
         }
 
         // Territory numbers on every area of the territory, highlighted when it can be chosen; units at its first area
