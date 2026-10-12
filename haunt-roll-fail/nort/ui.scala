@@ -1234,19 +1234,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         Div(Image("token-pyre", styles.pyreImage, "Sacrificial Pyre: " + names) ~ slots.merge, styles.pyre, size)
     }
 
-    // One of Ox Clan's Ancestral Equipment tokens full size, with what it does and whether it is ready
-    def gearView(n : Int) : Elem = {
-        val state = game.gearReady.has(n).?("Ready to use in a fight").|(game.gearUsed.has(n).?("Used this year, ready again next year").|("On the map"))
-
-        ((Ox.name.styled(colorOf(Ox)) ~ " " ~ "Ancestral Equipment".hl).hlb.div ~
-            Image("token-ox-" + n, $(styles.gearLarge, game.gearUsed.has(n).?(styles.offBoard).|(styles.onBoard)), |("Token " + n)).div ~
-            GearName(n).elem.div ~
-            state.txt.div ~
-            CombatText("In each fight Ox Clan may use one ready token (two with Torfin there); a used token is ready again next year.").spn(xstyles.smaller85).div ~
-            HorizontalBreak ~
-            "(tap to close)".spn(xstyles.smaller85).div).div(xlo.flexvcenter)
-    }
-
     def pyreView : Elem = {
         val units = game.pyre.none.?("none".txt).|(game.pyre./(g => g.name.styled(colorOf(g))).join(", "))
 
@@ -1254,6 +1241,36 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             pyreElem(styles.pyreLarge).div ~
             ("Units on it: " ~ units ~ " (room for " ~ NewBloodExpansion.pyreSize.hl ~ ")").div ~
             CombatText("Enemy casualties go on it after each combat. To harvest, Dragon sacrifices a unit from it (back to its owner) or places one of its deployed units on it.").spn(xstyles.smaller85).div ~
+            HorizontalBreak ~
+            "(tap to close)".spn(xstyles.smaller85).div
+        ).div
+    }
+
+    // Ox Clan's Ancestral Equipment tokens in its panel: those ready face up, those used this year grayed out (so it still shows which)
+    def gearRow : Elem = {
+        val ready = game.gearReady.sorted./(n => Image("token-ox-" + n, styles.gearSmall, "Token " + n + ": " + GearName(n).text))
+        val used = game.gearUsed.sorted./(n => Image("token-ox-" + n, $(styles.gearSmall, styles.offBoard), |("Token " + n + ", used this year")))
+        (ready ++ used).none.?("Ancestral Equipment: none".txt).|((ready ++ used).merge)
+    }
+
+    // All seven tokens: what each does, and where it is (ready, used, on the map or in the pile, which shows its number on top)
+    def gearView : Elem = {
+        val rows = 1.to(7).$./{ n =>
+            val where : Elem =
+                if (game.gearReady.has(n)) "ready".styled(styles.ledgerGain)
+                else if (game.gearUsed.has(n)) "used this year, ready next year".txt
+                else game.gear.find(_._2 == n)./{ case (s, _) => "on the map in " ~ s.area.elem }
+                    .|(game.gearPile.headOption.has(n).?("in the pile, on top".txt).|("in the pile".txt))
+            // Face down when used or in the pile
+            val back = game.gearUsed.has(n) || (game.gear.values.$.has(n).not && game.gearReady.has(n).not)
+            (Image("token-ox" + back.??("-back") + "-" + n, styles.gearLarge, "Token " + n).div(styles.gearCell) ~
+                (("Token " + n).hl ~ ": " ~ CombatText(GearName(n).text)).div(styles.gearCell)(styles.winterCell) ~
+                where.div(styles.gearCell)(styles.winterCell))
+        }
+
+        ((Ox.name.styled(colorOf(Ox)) ~ " " ~ "Ancestral Equipment".hl).hlb.div ~
+            rows.merge.div(styles.gearTable) ~
+            "One token may be used in each fight (two with Torfin); a used token turns face down until the next year.".spn(xstyles.smaller85).div ~
             HorizontalBreak ~
             "(tap to close)".spn(xstyles.smaller85).div
         ).div
@@ -1373,10 +1390,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // New Blood: Kraken's High Tide tokens, Ox's Ancestral Equipment tokens
         val nb = f match {
             case Kraken => ("High Tide: ".txt ~ (2 - game.tides.num).hl ~ " in reserve").div
-            // The tokens themselves, ready ones face up and those used this year grayed out; tapping one shows what it does
-            case Ox => (game.gearReady.sorted./(n => (n, true)) ++ game.gearUsed.sorted./(n => (n, false)))./{ case (n, ready) =>
-                OnClick(GearInfo(n), Image("token-ox-" + n, $(styles.gearToken, ready.?(styles.onBoard).|(styles.offBoard)), |("Token " + n + ready.not.??(" (used)"))).spn(xlo.pointer))
-            }.merge.div
+            case Ox => OnClick(GearView, gearRow.div(styles.gearRow)(xlo.pointer))
             case Automa => ("Cards: ".txt ~ game.automaActions.num.hl ~ " to play, " ~ game.automaDeck.num.hl ~ " in its pile").div
             case _ => Empty
         }
@@ -2343,8 +2357,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         case PyreView =>
             showOverlay(overlayScrollX(pyreView).onClick, onClick)
 
-        case GearInfo(n) =>
-            showOverlay(overlayScrollX(gearView(n)).onClick, onClick)
+        case GearView =>
+            showOverlay(overlayScrollX(gearView).onClick, onClick)
 
         // A fight's result tapped in the log
         case FightReportView(r) =>

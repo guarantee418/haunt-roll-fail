@@ -141,13 +141,16 @@ package object elem {
         object pyre extends CustomStyle(position("relative"), display("inline-block"), vertical.align("middle"))
         object pyreSmall extends CustomStyle(height("1.6em"))
         object pyreLarge extends CustomStyle(height("40vh"), max.height("60vw"), margin.top("1ex"), margin.bottom("1ex"))
-        // Ox Clan's Ancestral Equipment tokens in its panel (the used ones grayed out), and one shown full size
-        object gearToken extends CustomStyle(height("1.5em"), vertical.align("middle"), margin.left("0.05em"), margin.right("0.05em"))
-        object gearLarge extends CustomStyle(height("30vh"), max.height("50vw"), margin.top("1ex"), margin.bottom("1ex"))
         object pyreImage extends CustomStyle(display("block"), height("100%"), width("auto"))
         object pyreSlot0 extends CustomStyle(position("absolute"), left("7.5%"), top("6.6%"), width("26.7%"), height("42.2%"))
         object pyreSlot1 extends CustomStyle(position("absolute"), left("8%"), top("52.8%"), width("26.7%"), height("42.2%"))
         object pyreEmpty extends CustomStyle(background.color("#000000c0"), border.radius("50%"))
+        // Ox Clan's Ancestral Equipment tokens: in its panel (294x300 images, small enough for all seven in a row), and the overlay listing all seven
+        object gearRow extends CustomStyle(white.space("nowrap"))
+        object gearSmall extends CustomStyle(height("1.5em"), width("auto"), vertical.align("middle"), margin("0 0.05em"))
+        object gearLarge extends CustomStyle(height("min(9vh, 14vw)"), width("auto"), display("block"))
+        object gearTable extends CustomStyle(display("grid"), SimpleCSSRule("grid-template-columns", "auto auto auto"), SimpleCSSRule("column-gap", "1ex"), SimpleCSSRule("row-gap", "0.4ex"), SimpleCSSRule("align-items", "center"), SimpleCSSRule("width", "max-content"), max.width("100%"), margin.left("auto"), margin.right("auto"), margin.top("1ex"), margin.bottom("1ex"))
+        object gearCell extends CustomStyle(text.align("left"))
         // A unit hides the figure printed on the circle
         object pyreUnit extends CustomStyle(background.color("#000000"), border.radius("50%"))
 
