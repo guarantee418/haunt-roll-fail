@@ -101,6 +101,9 @@ object HRF {
     val embedded = flag("embedded-assets")
     val replay = flag("replay")
 
+    // An online game opened through its Spectator link: this browser plays no clan, so the waiting pane says so
+    var spectator = false
+
     val metaUIs : $[(MetaGame, BaseUI)] = $(
         root.Meta -> root.UI,
         root.MetaAdset -> root.UI,
@@ -856,6 +859,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                             new ServerPhantomJournal[meta.gaming.ExternalAction](meta, HRF.server.get, HRF.user.get, HRF.secret.get, server.get, s => meta.parseActionExternal(s), s => meta.writeActionExternal(s), HRF.paramInt("at") | 999999)
                         else
                             new ServerJournal[meta.gaming.ExternalAction](meta, HRF.server.get, HRF.user.get, HRF.secret.get, server.get, s => meta.parseActionExternal(s), s => meta.writeActionExternal(s), HRF.paramInt("at") | 999999)
+
+                    HRF.spectator = self.none && HRF.replay.not
 
                     startGame(seating, difficulties, state.selected, self, journal, title.|("%untitled%"), () => names, ServerSwitches)
 

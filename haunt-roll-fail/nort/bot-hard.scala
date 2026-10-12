@@ -871,7 +871,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             val left = self.food - food
             |(p * stake - food * resourceValue(Food) - (left < needFood).??((needFood - left) * 60))
         // A creature tied between territories, or a new one: away from the bot, towards its opponents
-        case CreatureMoveChoiceAction(_, _, to, _) => |(creatureSpot(to))
+        case CreatureMoveChoiceAction(_, _, to, _) => |(creatureMove(to))
         case MoreCreaturesAction(_, area, _) => |(creatureSpot(area))
         case MoreCreaturesSkipAction(_, _) => |(0)
         case SpectralPlaceAction(_, area) => |(creatureSpot(area))
@@ -1029,6 +1029,29 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val t = board.territory(area)
         val near = t +: adjacent(t).map(_._1)
         near./(o => game.present(o)./(f => (f == self).?(-1.0).|(game.allied(self, f).?(-0.7).|(enemyWeight(f) * 1.5)) * (game.figures(o, f) * 10 + territoryWorth(o, f) * 0.2)).sum).sum
+    }
+
+    // A creature movement tie: always towards the human players the bot is against (geffrey, 2026-10-12: "have the bots
+    // intentionally move the creatures", as the Automa's creatures do): the territory nearest their figures first, then
+    // the one with the most of them on it and around it, then creatureSpot. With no human enemy on the map, creatureSpot
+    lazy val humans : $[Faction] = enemies.%(game.human)
+
+    lazy val humanSteps : Map[Territory, Int] = {
+        var dist : Map[Territory, Int] = board.territories.%(t => humans.exists(f => game.figures(t, f) > 0))./(t => t -> 0).toMap
+        var edge : $[Territory] = dist.keys.toList
+        var steps = 0
+        while (edge.any) {
+            steps += 1
+            edge = edge./~(t => adjacent(t).map(_._1)).distinct.%(o => dist.contains(o).not)
+            edge.foreach(o => dist += o -> steps)
+        }
+        dist
+    }
+
+    def creatureMove(area : AreaRef) : Double = {
+        val t = board.territory(area)
+        val near = humanSteps.isEmpty.?(0.0).|(-10000.0 * humanSteps.get(t).|(99) + 100.0 * (t +: adjacent(t).map(_._1))./(o => humans./(game.figures(o, _)).sum).sum)
+        near + creatureSpot(area)
     }
 
     // What a territory's resources are worth once

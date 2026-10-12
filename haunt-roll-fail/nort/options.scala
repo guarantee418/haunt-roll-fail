@@ -72,6 +72,26 @@ object RobotosSeatOption {
     val all : $[RobotosSeatOption] = MetaAdset.factions./(RobotosSeatOption(_))
 }
 
+// A clan (or Adset seat) played by any bot, Easy, Hard or Robotos. Hidden, added by Meta.botOptions like Robotos, so the
+// Hard bots can tell the human players apart (game.human): they break creature movement ties towards them
+case class BotClanOption(clan : Faction) extends GameOption {
+    val group = "Bots".txt
+    def valueOn = (clan.name + " Clan").txt
+}
+
+object BotClanOption {
+    val all : $[BotClanOption] = Meta.factions./(BotClanOption(_))
+}
+
+case class BotSeatOption(seat : Seat) extends GameOption {
+    val group = "Bots".txt
+    def valueOn = seat.name.txt
+}
+
+object BotSeatOption {
+    val all : $[BotSeatOption] = MetaAdset.factions./(BotSeatOption(_))
+}
+
 // The Automa's difficulty (Solo module): 1, the player also wins with four closed territories with large buildings;
 // 3 and up need the Creatures module; from 4, the Automa draws one more card each year per level above 3
 case class AutomaLevelOption(level : Int) extends GameOption with OneOfGroup with ImportantOption {
@@ -249,6 +269,31 @@ case object FirstSeatStarts extends GameOption with ToggleOption {
 case object ChooseCasualties extends GameOption with ToggleOption {
     val group = "Casualties".txt
     def valueOn = "Chosen by their player".txt
+}
+
+// Ox Clan's Ancestral Equipment token after an Explore goes on a free small building space or Carved Stone space of the tile
+// that Ox picks (GearPlaceAction in newblood.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
+// (Meta.mandatoryFor): games started before it put the token on the tile's first free small building space, never on a
+// Carved Stone space, and their replays must not stop on a choice they never recorded
+case object OxPicksSpace extends GameOption with ToggleOption {
+    val group = "Ancestral Equipment".txt
+    def valueOn = "Ox picks the space".txt
+}
+
+// Svarn's Menders brings back the warchief, the companion (Kaija, Brundr and Kaelinn, Brok) and Jötunn Blainn among the
+// casualties too, not only units (the owner's ruling of 2026-10-12; figures lost for having nowhere to retreat still stay lost).
+// Hidden, and given to every new game (Meta.mandatoryFor): older games brought back units only, and their replays must not stop
+// on a choice they never recorded
+case object MendFigures extends GameOption with ToggleOption {
+    val group = "Svarn's Menders".txt
+    def valueOn = "Brings back every figure".txt
+}
+
+// The clan power report (ClanPowers in map.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
+// (Meta.mandatoryFor), like ChooseCasualties: older games' replays must not stop on a step they never recorded
+case object ClanPowerReports extends GameOption with ToggleOption {
+    val group = "Clan powers".txt
+    def valueOn = "Reported".txt
 }
 
 // A player who can't pay for Winter takes the Unrest card themselves, by tapping it (TakeUnrestAction in game.scala; asked
