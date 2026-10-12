@@ -251,6 +251,13 @@ case object ChooseCasualties extends GameOption with ToggleOption {
     def valueOn = "Chosen by their player".txt
 }
 
+// The clan power report (ClanPowers in map.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
+// (Meta.mandatoryFor), like ChooseCasualties: older games' replays must not stop on a step they never recorded
+case object ClanPowerReports extends GameOption with ToggleOption {
+    val group = "Clan powers".txt
+    def valueOn = "Reported".txt
+}
+
 // The game options of 2026-10-07 for who saw the combat report. Since 2026-10-08 the report is asked of both sides and
 // each player's "Combat Report" setting (ShowCombatReport, SkipCombatReport in meta.scala) shows or skips it, so these are
 // hidden and do nothing; they stay so the games that have them still load

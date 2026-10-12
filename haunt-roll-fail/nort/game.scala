@@ -596,6 +596,9 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // The combat report of the fight just decided, until everyone shown it has tapped OK (CombatReportAction)
     var fightReport : |[FightReport] = None
 
+    // Clan powers that went off by themselves since the last clan power report (ClanPowerReports, ClanPowers in map.scala)
+    var powerNotes : $[PowerNote] = $
+
     // Where the last Recruit action placed units (Raven Mercenaries)
     var recruited : $[AreaRef] = $
 
@@ -1188,7 +1191,7 @@ object CommonExpansion extends Expansion {
 
             // Colors and teams are told with each clan below ("plays Red in Team B"); chosen casualties are the rule now, not told
             // (Games from before the Warchiefs module section could have the module with Warchief pawns only: just the latter is told)
-            options.%(o => o.is[ColorOption].not && o.is[TeamOption].not && o != ChooseCasualties).%(o => o != ModuleOption(Warchiefs) || options.has(WarchiefPawns).not).foreach { o =>
+            options.%(o => o.is[ColorOption].not && o.is[TeamOption].not && o != ChooseCasualties && o != ClanPowerReports).%(o => o != ModuleOption(Warchiefs) || options.has(WarchiefPawns).not).foreach { o =>
                 log(o.group, o.valueOn)
             }
 

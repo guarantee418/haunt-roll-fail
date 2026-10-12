@@ -2490,6 +2490,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             return
         }
 
+        // The "Clan Power Report" setting on Skip: the same for the clan power report
+        if (callbacks.settings.has(SkipClanPowerReport) && actions.exists(_.unwrap.is[ClanPowerReportDoneAction])) {
+            scalajs.js.timers.setTimeout(0) { then(actions.find(_.unwrap.is[ClanPowerReportDoneAction]).get) }
+            return
+        }
+
         look(faction./~(game.ptf.get).$)
 
         showNotifications(faction.$)
