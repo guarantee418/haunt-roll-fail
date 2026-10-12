@@ -1124,6 +1124,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     var courtFolded : Boolean = try { hrf.web.Local.get(courtKey, "") == "yes" } catch { case _ : Throwable => false }
 
+    // Where the court is beside the player panels at the top (courtSideways), the tab swaps the row between
+    // the two instead (asked for by Robotos on 2026-10-12, as sharing it left both squashed): the panels across
+    // the row with the court folded into a tab on the left (the default), or the court across the whole row
+    // and no panels. Kept apart from courtFolded, so other screen shapes keep their own choice
+    def courtWideKey = Meta.settingsKey + ".court-wide"
+
+    var courtWide : Boolean = try { hrf.web.Local.get(courtWideKey, "") == "yes" } catch { case _ : Throwable => false }
+
+    // Whether the court is folded (with the panels laid out again by foldCourt) in the present layout
+    def folded = courtSideways.?(courtWide.not).|(courtFolded)
+
     def strip(groups : $[(Elem, $[Elem])]) =
         Div(OnClick(CourtToggle, Div(courtSideways.?("◂").|("▴").txt, styles.stripTab, xlo.pointer)) ~ groups./{ case (title, items) =>
             Div(Div(title, styles.stripTitle) ~ Div(items.any.?(items.merge).|(Div("none".txt, styles.stripEmpty)), styles.stripCards), styles.stripGroup)
@@ -1174,7 +1185,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val groups = automa ++ events ++ victory ++ developments ++ achievements ++ creatures ++ blainn ++ raids
 
-        if (courtFolded) {
+        if (folded) {
             val short = $(automa -> "Automa", events -> "Event", victory -> "Victory", developments -> "Developments", achievements -> "Achievements", creatures -> "Creatures", blainn -> "Jötunn Blainn", raids -> "Raids")
             val titles = short.flatMap { case (g, t) => g.map(x => t -> x._2.num) }
             court.replaceCached("folded " + courtSideways + " " + game.year + " " + titles, foldedStrip(titles), resources, onClick)
@@ -1528,7 +1539,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // panels as they are drawn now; None when they aren't drawn yet, or their icons are still loading (an icon
     // takes no room until it has loaded)
     def panelNeed(names : $[String]) : Option[(Double, Double)] = {
-        val uppers = names./~(n => panes.get(n)./~(c => Option(c.node.asInstanceOf[dom.html.Element].querySelector("[class^=nort-status-upper]").asInstanceOf[dom.html.Element])))
+        // hidden panels (the court across the whole row, courtWide) measure nothing
+        val uppers = names./~(n => panes.get(n)./~(c => Option(c.node.asInstanceOf[dom.html.Element].querySelector("[class^=nort-status-upper]").asInstanceOf[dom.html.Element]))).filter(_.getClientRects().length > 0)
 
         def loading(upper : dom.html.Element) = {
             val images = upper.querySelectorAll("img")
@@ -1570,7 +1582,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     var refitTimer : Option[Int] = None
 
     dom.document.addEventListener("load", (e : dom.Event) => {
-        if (courtFolded && e.target.isInstanceOf[dom.html.Image] && statusNames.exists(n => panes.get(n).exists(_.node.contains(e.target.asInstanceOf[dom.Node])))) {
+        if (folded && e.target.isInstanceOf[dom.html.Image] && statusNames.exists(n => panes.get(n).exists(_.node.contains(e.target.asInstanceOf[dom.Node])))) {
             refitTimer.foreach(dom.window.clearTimeout)
             refitTimer = Some(dom.window.setTimeout(() => { refitTimer = None; refitFolded() }, 50))
         }
@@ -1588,7 +1600,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     def refitFolded() {
-        if (courtFolded && foldBasePx > 0 && refitting.not) {
+        if (folded && foldBasePx > 0 && refitting.not) {
             val now = panelNeed(statusNames)
             val stale = now.isDefined && settle(foldNeed, now) != foldNeed
             if (stale || (paneBasePx() - foldBasePx).abs > 0.5) {
@@ -2101,7 +2113,21 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     def foldCourt0(height : Int, extra : Int = 0)(l : $[PanePlacement]) : $[PanePlacement] = l.find(_.name == "court") match {
-        case Some(c) if courtFolded =>
+        // Sideways and swapped: the court takes the whole row and the panels are left out (so hidden)
+        case Some(c) if courtSideways && courtWide =>
+            val r = c.rect
+            val pp = l.filter(_.name.startsWith("status-"))
+            val right = pp./(p => p.rect.x + p.rect.width).maxOption.|(r.x + r.width)
+            val bottom = (r.y + r.height) +: pp./(p => p.rect.y + p.rect.height)
+            val rowH = bottom.max - r.y
+            def under(p : PanePlacement) = bottom.exists(b => (p.rect.y - b).abs <= 3) && p.name.startsWith("status-").not &&
+                p.name != "court" && p.rect.x >= r.x - 3 && p.rect.x + p.rect.width <= right + 3
+            l.filter(p => pp.contains(p).not)./{
+                case p if p.name == "court" => p.copy(rect = Rect(r.x, r.y, right - r.x, rowH))
+                case p if under(p) => p.copy(rect = Rect(p.rect.x, r.y + rowH, p.rect.width, p.rect.y + p.rect.height - r.y - rowH))
+                case p => p
+            }
+        case Some(c) if folded =>
             val r = c.rect
             val basePx = paneBasePx()
             foldBasePx = basePx
@@ -2206,7 +2232,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             loadSplit(splitKind(width, height))
             val base = foldCourt(height)(l)
             val want = (splitP * height).round.toInt
-            val grown = (courtFolded && want > 0).?(foldCourt(height, min(want, height / 2))(l)).|(base)
+            val grown = (folded && want > 0).?(foldCourt(height, min(want, height / 2))(l)).|(base)
             val placed = foldLog(split(width, height, statusBottom(base))(grown))
             onLayout0(placed)
             placeHandles(placed)
@@ -2261,6 +2287,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     override def onClick(a : Any) = a @@ {
         case Some(x) => onClick(x)
+
+        case CourtToggle if courtSideways =>
+            courtWide = courtWide.not
+            try { hrf.web.Local.set(courtWideKey, courtWide.?("yes").|("")) } catch { case _ : Throwable => }
+            resize()
 
         case CourtToggle =>
             courtFolded = courtFolded.not
