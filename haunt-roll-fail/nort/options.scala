@@ -72,6 +72,26 @@ object RobotosSeatOption {
     val all : $[RobotosSeatOption] = MetaAdset.factions./(RobotosSeatOption(_))
 }
 
+// A clan (or Adset seat) played by any bot, Easy, Hard or Robotos. Hidden, added by Meta.botOptions like Robotos, so the
+// Hard bots can tell the human players apart (game.human): they break creature movement ties towards them
+case class BotClanOption(clan : Faction) extends GameOption {
+    val group = "Bots".txt
+    def valueOn = (clan.name + " Clan").txt
+}
+
+object BotClanOption {
+    val all : $[BotClanOption] = Meta.factions./(BotClanOption(_))
+}
+
+case class BotSeatOption(seat : Seat) extends GameOption {
+    val group = "Bots".txt
+    def valueOn = seat.name.txt
+}
+
+object BotSeatOption {
+    val all : $[BotSeatOption] = MetaAdset.factions./(BotSeatOption(_))
+}
+
 // The Automa's difficulty (Solo module): 1, the player also wins with four closed territories with large buildings;
 // 3 and up need the Creatures module; from 4, the Automa draws one more card each year per level above 3
 case class AutomaLevelOption(level : Int) extends GameOption with OneOfGroup with ImportantOption {

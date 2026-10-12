@@ -486,6 +486,10 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
     def robotos(f : Faction) : Boolean = cheaters.has(f)
 
+    // Played by a person: not a bot's clan (BotClanOption, or an Adset seat's, BotSeatOption) nor the Automa.
+    // Games started before those options know only the Robotos bots
+    def human(f : Faction) : Boolean = f != Automa && robotos(f).not && options.has(BotClanOption(f)).not && options.of[BotSeatOption].exists(o => ptf.get(o.seat).has(f)).not
+
     // Robotos upgrades for 2 lore
     def upgradeCost(f : Faction) : Int = robotos(f).?(2).|(3)
 
