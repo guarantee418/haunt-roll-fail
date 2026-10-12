@@ -251,6 +251,15 @@ case object ChooseCasualties extends GameOption with ToggleOption {
     def valueOn = "Chosen by their player".txt
 }
 
+// Svarn's Menders brings back the warchief, the companion (Kaija, Brundr and Kaelinn, Brok) and Jötunn Blainn among the
+// casualties too, not only units (the owner's ruling of 2026-10-12; figures lost for having nowhere to retreat still stay lost).
+// Hidden, and given to every new game (Meta.mandatoryFor): older games brought back units only, and their replays must not stop
+// on a choice they never recorded
+case object MendFigures extends GameOption with ToggleOption {
+    val group = "Svarn's Menders".txt
+    def valueOn = "Brings back every figure".txt
+}
+
 // The game options of 2026-10-07 for who saw the combat report. Since 2026-10-08 the report is asked of both sides and
 // each player's "Combat Report" setting (ShowCombatReport, SkipCombatReport in meta.scala) shows or skips it, so these are
 // hidden and do nothing; they stay so the games that have them still load
