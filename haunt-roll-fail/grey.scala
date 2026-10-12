@@ -628,7 +628,10 @@ trait GreyUI { gui : Gaming =>
             val m = message // (message != Empty).?(message).|("z... z... z...".txt)
 
             if (factions.any) {
-                val waiting = factions.any.$(ZOption(Div("Waiting for " ~ convertDesc(factions./(f => factionElem(f)).comma).apply(game))(xlo.fullwidth), Div(m, ZBasic.info)(xlo.fullwidth)))
+                // A spectator never gets choices, so say why first (a player who opened the Spectator link by mistake)
+                val spectating = (hrf.HRF.spectator && self.none).$(ZOption(Div("Spectating".hl)(xlo.fullwidth), Div("You are watching this game as a " ~ "spectator".hl ~ " and can't make moves. To play, open your own " ~ "player link".hl ~ ".", ZBasic.info)(xlo.fullwidth)))
+
+                val waiting = spectating ++ factions.any.$(ZOption(Div("Waiting for " ~ convertDesc(factions./(f => factionElem(f)).comma).apply(game))(xlo.fullwidth), Div(m, ZBasic.info)(xlo.fullwidth)))
 
                 preasker.zask(preinfo(self.single, $))(resources)
                 asker.zask(waiting)(resources)
