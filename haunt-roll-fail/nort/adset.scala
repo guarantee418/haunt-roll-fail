@@ -336,7 +336,7 @@ object MetaAdset extends MetaGame {
     // The old combat report options do nothing now (the report is a setting); kept so the games that have them still load
     // Robotos (robotos.scala) comes from the bot chosen for a seat, as in Meta.botOptions
     // Chosen casualties, taking the Unrest card and the clan power report are on in every new game, as in Meta
-    override val hiddenOptions : $[O] = $(CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports) ++ RobotosSeatOption.all
+    override val hiddenOptions : $[O] = $(CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports) ++ RobotosSeatOption.all ++ BotSeatOption.all
 
     override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports)
 
@@ -374,7 +374,8 @@ object MetaAdset extends MetaGame {
     // Robotos: the Hard bot, cheating, for the clan the seat drafts (robotos.scala)
     def getBots(f : F) = $("Easy", "Hard", "Robotos")
 
-    override def botOptions(seating : $[F], bots : Map[F, String]) = seating.%(f => bots.get(f).has("Robotos"))./(RobotosSeatOption(_))
+    override def botOptions(seating : $[F], bots : Map[F, String]) =
+        seating.%(f => bots.get(f).has("Robotos"))./(RobotosSeatOption(_)) ++ seating.%(bots.contains)./(BotSeatOption(_))
 
     def getBot(f : F, b : String) = new BotAdset(f, b == "Hard" || b == "Robotos")
 

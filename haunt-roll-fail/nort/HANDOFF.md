@@ -728,7 +728,14 @@ always plays its own cards.
   early; an attack waits until the defender has passed unless it is worth a
   lot; creatures are steered towards the other players and away from its own
   units (the "Dealing with Creatures" thread: `creatureSpot`, for a tie in the
-  Creature phase, More Creatures and the Ancestral Graveyard). Nothing is
+  Creature phase, More Creatures and the Ancestral Graveyard). A tie in the
+  Creature phase goes first towards the human players it is against
+  (`creatureMove`: the territory fewest steps from their figures, then the
+  most of them on and around it; asked for on Discord on 2026-10-12, as the
+  Automa's creatures head for the player). Bots are told apart by the hidden
+  `BotClanOption` (`BotSeatOption` in Adset) that `Meta.botOptions` adds for
+  every bot seat (`game.human`); in older games only Robotos counts as a bot.
+  Nothing is
   taken from the Automa's cards (`automa.scala`); the territory valuation
   only covers similar ground to their priority lists (resources, buildings,
   closed territories, spaces, nearby enemies).
@@ -773,7 +780,8 @@ always plays its own cards.
   count and number of games; `NORT_TRACE=1` prints each Hard choice with its
   best alternatives (and the hand's card values before a Pass);
   `NORT_TIMING=1` prints decisions over 300 ms; `NORT_UNVALUED=1` prints the
-  actions it left unvalued.
+  actions it left unvalued; `NORT_HUMAN=1` makes the last seat count as a
+  person (`game.human`) and the others as bots.
 - **Results (2026-10-05, JVM host):** Hard in the first seat against Easy bots
   won 25 of 25 three-player core games, 20 of 20 four-player core games, and
   40 of 40 games with random modules and 2–6 players. In all-Hard games the
