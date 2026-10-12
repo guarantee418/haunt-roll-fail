@@ -645,14 +645,18 @@ object CreaturesExpansion extends Expansion {
                 def next(then : ForcedAction) = (readers.any).?(Then(CombatReportAction(readers, ClanPowerReportAction(then)))).|(Then(ClanPowerReportAction(then)))
 
                 val before = game.count(t, f)
+                val specials = game.specialsIn(t, f)
                 game.removeCasualties(t, f, math.min(pc, units))
 
                 // Alternative victory: Valhalla counts units lost to creatures too
                 game.advance(f, "valhalla", math.min(pc, units))
 
                 // Svarn's Menders: the attacker's casualties wait on the card
-                if (attacking && e.special == SvarnMove)
+                if (attacking && e.special == SvarnMove) {
                     game.mended += before - game.count(t, f)
+                    if (game.options.has(MendFigures))
+                        game.mendedFigures ++= specials.diff(game.specialsIn(t, f))
+                }
 
                 // The Wyvern goes back to its Den unless it lost there (Wilderness)
                 val den = (c.kind == Wyvern && Wild.homeIn(t).not).??(Wild.homes)

@@ -1144,9 +1144,12 @@ Check these against the rulebook when it is at hand.
   - The card bonuses also apply in fights against creatures started by the
     Move (Borgild's cancelled casualty, Liv's Cunning, Svarn's Menders).
     Confirmed by the owner on 2026-10-03.
+  - Svarn's Menders brings back every casualty, the warchief, the
+    companion (Kaija, Brundr and Kaelinn, Brok) and Jötunn Blainn included,
+    but only casualties, not figures lost for having nowhere to retreat
+    (the owner's ruling of 2026-10-12; the hidden `MendFigures` option that
+    every new game gets; older games bring back units only).
   - Not confirmed yet:
-    - Svarn's Menders brings back units only (not Kaija or the warchief),
-      and only casualties, not units lost for having nowhere to retreat.
     - Halvard's Craft: a "new" territory is one with none of the areas the
       player controlled before the Move; the free building follows the usual
       build rules (space, one of each type, no Brown Bear).
