@@ -472,6 +472,11 @@ case class ClanPowerCollect(self : Faction) extends GameElementary {
 }
 
 object ClanPowers {
+    // The report step after an action, only in games with the option: older games recorded their action chains
+    // without it, and the client checks recorded actions against the chain when it loads a game
+    def report(then : ForcedAction)(implicit game : Game) : ForcedAction =
+        game.options.has(ClanPowerReports).?(ClanPowerReportAction(then) : ForcedAction).|(then)
+
     def note(n : PowerNote)(implicit game : Game) {
         if (game.options.has(ClanPowerReports) && n.f != Automa)
             game.powerNotes :+= n
@@ -1334,7 +1339,7 @@ object MapExpansion extends Expansion {
                 game.note("attack-won")
                 attackWon(f, a)
 
-                Then(ClanPowerReportAction(then))
+                Then(ClanPowers.report(then))
             }
             else
                 Then(FightStartAction(f, a, e, then))
@@ -1598,7 +1603,7 @@ object MapExpansion extends Expansion {
                 // For the bot game summaries (host.scala)
                 game.note(winner.has(attacker).?("attack-won").|("attack-lost"))
 
-                def next(then : ForcedAction) = Then(CombatReportAction(readers, ClanPowerReportAction(then)))
+                def next(then : ForcedAction) = Then(CombatReportAction(readers, ClanPowers.report(then)))
 
                 winner match {
                     case None =>
@@ -1894,7 +1899,7 @@ object MapExpansion extends Expansion {
                 NewBloodExpansion.explored(f, tile, spot, closed)
 
             // The clan power report once the tile is placed (and any creature on it has appeared)
-            val next = ClanPowerReportAction(ExploreAction(f, 1, times - 1, false, e, then))
+            val next = ClanPowers.report(ExploreAction(f, 1, times - 1, false, e, then))
 
             // Horse Clan: 1 wood or a small building for each closed territory
             val horse = (f == Horse && closed.any).?(HorseClosedAction(f, closed./(_.anchor), next) : ForcedAction).|(next)
@@ -1962,9 +1967,9 @@ object MapExpansion extends Expansion {
             val l = (e.special == IndustriousBuild).??(replacements(f))
 
             if (l.none)
-                Then(ClanPowerReportAction(then))
+                Then(ClanPowers.report(then))
             else
-                Ask(f).each(l) { case (s, b) => ReplaceBuildingAction(f, s.area, s, b, ClanPowerReportAction(then)) }.add(ReplaceSkipAction(f, ClanPowerReportAction(then)))
+                Ask(f).each(l) { case (s, b) => ReplaceBuildingAction(f, s.area, s, b, ClanPowers.report(then)) }.add(ReplaceSkipAction(f, ClanPowers.report(then)))
 
         case ReplaceBuildingAction(f, a, s, b, then) =>
             val old = game.buildings(s)

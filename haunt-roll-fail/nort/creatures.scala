@@ -642,7 +642,7 @@ object CreaturesExpansion extends Expansion {
                 game.fightReport = |(FightReport(a, attacking.?(player).|(creature), attacking.?(creature).|(player), |(won == attacking), won.not && pc >= units))
 
                 val readers = CombatReport.readers(attacking.?(f), attacking.not.?(f))
-                def next(then : ForcedAction) = (readers.any).?(Then(CombatReportAction(readers, ClanPowerReportAction(then)))).|(Then(ClanPowerReportAction(then)))
+                def next(then : ForcedAction) = (readers.any).?(Then(CombatReportAction(readers, ClanPowers.report(then)))).|(Then(ClanPowers.report(then)))
 
                 val before = game.count(t, f)
                 val specials = game.specialsIn(t, f)
