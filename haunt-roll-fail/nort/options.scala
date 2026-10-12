@@ -260,6 +260,14 @@ case object MendFigures extends GameOption with ToggleOption {
     def valueOn = "Brings back every figure".txt
 }
 
+// A player who can't pay for Winter takes the Unrest card themselves, by tapping it (TakeUnrestAction in game.scala; asked
+// for by Robotos on 2026-10-12, as it was easy to miss). Hidden, and given to every new game (Meta.mandatoryFor): older games
+// gave it without asking, and their replays must not stop on a choice they never recorded
+case object TakeUnrestCard extends GameOption with ToggleOption {
+    val group = "Unrest".txt
+    def valueOn = "Taken by the player".txt
+}
+
 // The game options of 2026-10-07 for who saw the combat report. Since 2026-10-08 the report is asked of both sides and
 // each player's "Combat Report" setting (ShowCombatReport, SkipCombatReport in meta.scala) shows or skips it, so these are
 // hidden and do nothing; they stay so the games that have them still load

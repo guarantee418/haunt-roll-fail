@@ -335,10 +335,10 @@ object MetaAdset extends MetaGame {
 
     // The old combat report options do nothing now (the report is a setting); kept so the games that have them still load
     // Robotos (robotos.scala) comes from the bot chosen for a seat, as in Meta.botOptions
-    // Chosen casualties are on in every new game, as in Meta
-    override val hiddenOptions : $[O] = $(CombatReportAttackers, CombatReportDefenders, ChooseCasualties, MendFigures) ++ RobotosSeatOption.all
+    // Chosen casualties and taking the Unrest card are on in every new game, as in Meta
+    override val hiddenOptions : $[O] = $(CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, MendFigures) ++ RobotosSeatOption.all
 
-    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, MendFigures)
+    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, MendFigures)
 
     val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ WarchiefsChoice.all ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ hiddenOptions
 
