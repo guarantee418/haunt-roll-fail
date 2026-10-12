@@ -280,6 +280,15 @@ case object OxPicksSpace extends GameOption with ToggleOption {
     def valueOn = "Ox picks the space".txt
 }
 
+// Svarn's Menders brings back the warchief, the companion (Kaija, Brundr and Kaelinn, Brok) and Jötunn Blainn among the
+// casualties too, not only units (the owner's ruling of 2026-10-12; figures lost for having nowhere to retreat still stay lost).
+// Hidden, and given to every new game (Meta.mandatoryFor): older games brought back units only, and their replays must not stop
+// on a choice they never recorded
+case object MendFigures extends GameOption with ToggleOption {
+    val group = "Svarn's Menders".txt
+    def valueOn = "Brings back every figure".txt
+}
+
 // The clan power report (ClanPowers in map.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
 // (Meta.mandatoryFor), like ChooseCasualties: older games' replays must not stop on a step they never recorded
 case object ClanPowerReports extends GameOption with ToggleOption {

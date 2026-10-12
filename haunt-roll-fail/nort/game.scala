@@ -598,6 +598,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // its casualties waiting to come back (Svarn's Menders), and who picks the loser's retreat (Brand's Bravery)
     var heldBefore : $[AreaRef] = $
     var mended = 0
+    // and its warchief, companion and Jötunn Blainn among them ("chief", "companion", "blainn"; MendFigures)
+    var mendedFigures : $[String] = $
     var retreatBy : |[Faction] = None
 
     // Casualties their players chose (ChooseCasualties): the units, companion, warchief and Blainn each clan loses in the fight
@@ -881,6 +883,10 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         if (left > 0 && kaijaIn(t, f))
             setCompanion(f, None)
     }
+
+    // Svarn's Menders (MendFigures): f's warchief, companion and Jötunn Blainn in t, to see which were casualties
+    def specialsIn(t : Territory, f : Faction) : $[String] =
+        chiefIn(t, f).$("chief") ++ kaijaIn(t, f).$("companion") ++ blainnIn(t, f).$("blainn")
 
     // A fight's casualties: those f's player picked (casualtyPicks), else units first, then the warchief, Blainn and the companion
     def removeCasualties(t : Territory, f : Faction, n : Int) {
@@ -1251,7 +1257,7 @@ object CommonExpansion extends Expansion {
 
             // Colors and teams are told with each clan below ("plays Red in Team B"); chosen casualties and taking Unrest are the rule now, not told
             // (Games from before the Warchiefs module section could have the module with Warchief pawns only: just the latter is told)
-            options.%(o => o.is[ColorOption].not && o.is[TeamOption].not && o != ChooseCasualties && o != TakeUnrestCard && o != ClanPowerReports && o != OxPicksSpace).%(o => o != ModuleOption(Warchiefs) || options.has(WarchiefPawns).not).foreach { o =>
+            options.%(o => o.is[ColorOption].not && o.is[TeamOption].not && o != ChooseCasualties && o != TakeUnrestCard && o != ClanPowerReports && o != MendFigures && o != OxPicksSpace).%(o => o != ModuleOption(Warchiefs) || options.has(WarchiefPawns).not).foreach { o =>
                 log(o.group, o.valueOn)
             }
 

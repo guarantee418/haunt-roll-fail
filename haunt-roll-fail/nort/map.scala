@@ -109,6 +109,7 @@ case class LivCunningDoneAction(self : Faction, defender : Faction, area : AreaR
 case class HalvardCraftSkipAction(self : Faction, then : ForcedAction) extends BaseAction("Halvard's Craft".hl)("Build nothing")
 case class SvarnMendAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class SvarnMendToAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("Svarn's Menders".hl, "place a", CombatIcon.skull, "back in")(area) with MapTarget { def target = area }
+case class SvarnMendFigureToAction(self : Faction, area : AreaRef, figure : String, then : ForcedAction) extends BaseAction("Svarn's Menders".hl, "place", SvarnMendFigure(self, figure), "back in")(area) with MapTarget { def target = area }
 case class BrandRetreatPickAction(self : Faction, loser : Faction, from : AreaRef, to : AreaRef, rough : Boolean, then : ForcedAction) extends BaseAction("Brand's Bravery".hl, "choose where", loser, "retreats from", from)(to) with Soft with MapTarget { def target = to }
 case class BrandRetreatToAction(self : Faction, loser : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Brand's Bravery".hl, loser, "retreats from", from, "to", to)(RetreatGroup(loser, from, n, kaija))
 case class BrandRetreatPartyAction(self : Faction, loser : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Brand's Bravery".hl, loser, "retreats from", from, "to", to)(RetreatParty(loser, n, kaija, chief))
@@ -265,6 +266,15 @@ case class Companion(f : Faction) extends Elementary {
     }
     def elem0 : Elem = name.hl
     def elem : Elem = name.hl
+}
+
+// A figure Svarn's Menders brings back (MendFigures): the warchief, the companion or Jötunn Blainn
+case class SvarnMendFigure(f : Faction, figure : String) extends GameElementary {
+    def elem(implicit game : Game) = figure match {
+        case "chief" => WarchiefElem(f).elem
+        case "companion" => Companion(f).elem
+        case _ => "Jötunn Blainn".hl
+    }
 }
 
 // Some units of a clan, maybe with its companion and its warchief
@@ -1202,6 +1212,7 @@ object MapExpansion extends Expansion {
         case MoveStartAction(f, e, then) =>
             game.heldBefore = game.controlled(f)./~(_.areas)
             game.mended = 0
+            game.mendedFigures = $
 
             val apart = game.kaija.any && game.chiefs.contains(f) && game.board.territory(game.kaija.get) != game.board.territory(game.chiefs(f))
 
@@ -1264,7 +1275,7 @@ object MapExpansion extends Expansion {
                     Then(ScorchedAction(f, then))
                 else
                 // Svarn's Menders: the casualties come back
-                if (e.special == SvarnMove && game.mended > 0)
+                if (e.special == SvarnMove && (game.mended > 0 || game.mendedFigures.any))
                     Then(SvarnMendAction(f, then))
                 else
                 // Halvard's Craft: a free small building in a newly controlled territory
@@ -1561,6 +1572,7 @@ object MapExpansion extends Expansion {
 
                 val before = game.count(t, attacker)
                 val dbefore = game.count(t, defender)
+                val specials = game.specialsIn(t, attacker)
                 game.removeCasualties(t, attacker, math.min(dc, au))
                 game.removeCasualties(t, defender, math.min(ac, du))
 
@@ -1577,8 +1589,11 @@ object MapExpansion extends Expansion {
                 }
 
                 // Svarn's Menders: the attacker's casualties wait on the card
-                if (e.special == SvarnMove)
+                if (e.special == SvarnMove) {
                     game.mended += before - game.count(t, attacker)
+                    if (game.options.has(MendFigures))
+                        game.mendedFigures ++= specials.diff(game.specialsIn(t, attacker))
+                }
 
                 // For the bot game summaries (host.scala)
                 game.note(winner.has(attacker).?("attack-won").|("attack-lost"))
@@ -1684,15 +1699,35 @@ object MapExpansion extends Expansion {
             Then(RetreatMoveAction(f, from, to, n, kaija, chief, rough, then))
 
         // Svarn's Menders: each casualty back in one of f's territories
+        // and the warchief, companion and Jötunn Blainn first, when they were casualties too (MendFigures)
         case SvarnMendAction(f, then) =>
             val l = game.controlled(f)
 
+            if (l.any && game.mendedFigures.any)
+                Ask(f).each(l)(t => SvarnMendFigureToAction(f, t.anchor, game.mendedFigures.head, then))
+            else
             if (game.mended <= 0 || l.none || game.reserve(f) <= 0) {
                 game.mended = 0
+                game.mendedFigures = $
                 Then(then)
             }
             else
                 Ask(f).each(l)(t => SvarnMendToAction(f, t.anchor, then))
+
+        case SvarnMendFigureToAction(f, a, figure, then) =>
+            game.mendedFigures = game.mendedFigures.drop(1)
+
+            figure match {
+                case "chief" => game.chiefs += f -> a
+                case "companion" => game.setCompanion(f, |(a))
+                case "blainn" => game.blainn = |((f, a))
+            }
+
+            game.note("svarn-mend-" + figure)
+
+            f.log("placed", SvarnMendFigure(f, figure), "back in", a, "with", "Svarn's Menders".hl)
+
+            Then(SvarnMendAction(f, then))
 
         case SvarnMendToAction(f, a, then) =>
             game.addUnits(a, f, 1)
