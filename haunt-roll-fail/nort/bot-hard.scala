@@ -28,7 +28,7 @@ import hrf.logger._
 // - clan upgrades are nearly always worth their 3 lore;
 // - a clan short of resources builds a Food Silo or Woodcutter's Lodge first;
 // - attacks are worth more once the defender has passed (no counterattack this year);
-// - pass early when the hand has little left, to take the best Development card;
+// - pass early when the hand has little left, to take the best Development card before the others do;
 // - send creatures towards the other players and away from your own units ("Dealing with Creatures" thread):
 //   used when the bot breaks a tie in the Creature phase or places a new creature or Spectral Warrior.
 
@@ -647,10 +647,17 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
 
         case UpgradeCardAction(_, c, u, remove) => upgradeValue(u) - game.upgradeCost(self) * resourceValue(Lore) - cardValue(c) + remove.?(thin(c)).|(0.0) + victoryStep("refinement")
 
-        // Passing takes the best Development card now, but the cards left in hand do nothing this year
+        // Every player takes a Development card when passing, so passing now only keeps the pick from going to someone
+        // who passes before the bot's next turn (likely with one or two cards left in hand): the best card against the
+        // one left once the players still playing have taken theirs. The cards left in hand are discarded unplayed, so a
+        // card that still does something is played first (a Hard Boar passed in year 1 with Move and Explore in hand)
         case PassAction(_) =>
-            val best = game.display./(pickValue).maxOr(0.0)
-            0.3 * best + 10 - self.hand.distinct./(c => math.max(0.0, cardValue(c)) * self.hand.count(c)).sum * 0.9
+            val picks = game.display./(pickValue).sortBy(-_)
+            val others = players.%(g => g != self && g.passed.not)
+            val first = 1 - others./(g => 1 - $(1.0, 0.7, 0.35, 0.15)(math.min(g.hand.num, 3))).product
+            val edge = if (picks.any) first * (picks.head - picks(math.min(others.num, picks.num - 1))) else 0.0
+            val marker = if (players.forall(_.passed.not)) 15.0 else 0.0
+            edge + marker - self.hand./(c => math.max(0.0, cardValue(c))).sum
     }
 
     // FIGHTS

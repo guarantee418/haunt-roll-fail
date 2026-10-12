@@ -697,7 +697,13 @@ always plays its own cards.
   (`effectGain`: the best recruits, moves, build, or a sample of three tiles
   from the pile for Explore); Wait, Replace, Remove and Upgrade are valued
   against that (upgrades nearly always win when 3 lore is there); Pass is
-  worth the best Development card less the cards left in hand. Development
+  worth the pick it keeps from the others (every player takes a Development
+  card when passing, so only the gap between the best card and the one left
+  after the players still playing have taken theirs, times the chance one of
+  them passes before the bot's next turn, judged by the cards they hold) and
+  the first player marker, less the cards left in hand, which are discarded
+  unplayed. Until 2026-10-12 it was worth 30% of the best card, which made a
+  Hard Boar pass in year 1 with Move and Explore in hand (Robotos, Discord). Development
   picks count printed fame plus what the card does in the years left;
   Achievements count what they would score now.
 - **Strategy notes it follows**, from the BoardGameGeek strategy forum (read
