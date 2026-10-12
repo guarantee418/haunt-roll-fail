@@ -1214,12 +1214,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val short = after._1 < food || after._2 < wood
 
-        ("Winter costs".hlb.div ~
-            Div(cells.merge, styles.winterChart) ~
-            events ~
+        ("Income".hlb.div ~
             ("Has " ~ Amount(state.food.hl, Food.elem) ~ " " ~ Amount(state.wood.hl, Wood.elem) ~ ", after the harvest " ~ Amount(after._1.hl, Food.elem) ~ " " ~ Amount(after._2.hl, Wood.elem)).div ~
             (f.name.styled(colorOf(f)) ~ " pays " ~ (food + wood == 0).?("nothing".txt).|($(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => Amount(n.hl, e) }.join(" ")) ~ " for " ~ counted(f).hl ~ " units during winter").div ~
             short.?(("Not enough without trading: an unpaid Winter gives an " ~ UnrestCard.elem ~ " card").div).|(Empty) ~
+            HorizontalBreak ~
+            "Winter costs".hlb.div ~
+            Div(cells.merge, styles.winterChart) ~
+            events ~
             HorizontalBreak ~
             "(tap to close)".spn(xstyles.smaller85).div
         ).div
