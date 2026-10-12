@@ -78,7 +78,7 @@ object Host extends hrf.host.BaseHost {
         val usable = VictoryCard.all.%(c => creatures || VictoryExpansion.needsCreatures(c).not).shuffle
         val victory = alt.?(chosen.?(AltVictoryChosen : VictoryChoice).|(AltVictoryRandom)).|((random() < 0.3).?(FameOnly : VictoryChoice).|(StandardVictory)) +:
             ((alt && random() < 0.5).$(VictoryModeOption(true)) ++ chosen.??(usable.%(_.mapControl).take(1) ++ usable.%(_.mapControl.not).take(teams.any.?(3).|(2)))./(VictoryCardOption(_)))
-        val options = colors ++ $(YearsOption.all.shuffle.head) ++ victory ++ (random() < 0.3).$(FirstSeatStarts) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(OxPicksSpace) ++
+        val options = colors ++ $(YearsOption.all.shuffle.head) ++ victory ++ (random() < 0.3).$(FirstSeatStarts) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(TakeUnrestCard) ++ (random() < 0.8).$(OxPicksSpace) ++
             creatures.$(ModuleOption(Creatures)) ++ (creatures && random() < 0.5).$(MoreCreatures) ++
             (sys.env.get("NORT_WARCHIEFS").has("1") || random() < 0.5).?(WarchiefsChoice.all.shuffle.take(1)).|((random() < 0.3).$(WarchiefCards)) ++ (random() < 0.3).$(NoDrawDevelopments) ++
             // NORT_HORIZONS=1: always with the Uncharted Horizons Development cards and map tiles
@@ -101,7 +101,7 @@ object Host extends hrf.host.BaseHost {
             val lands = (n > 2).?(AdsetLands.all).|(AdsetLands.all.but(LandsSeatChooses)).shuffle.head
             // NORT_HARD=robotos: the first seat is Robotos
             val robotos = sys.env.get("NORT_HARD").has("robotos").$(RobotosSeatOption(MetaAdset.factions.head))
-            val adset = $(YearsOption.all.shuffle.head) ++ victory ++ (random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.5).$(ModuleOption(Sea)) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(OxPicksSpace) ++ robotos :+ lands
+            val adset = $(YearsOption.all.shuffle.head) ++ victory ++ (random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.5).$(ModuleOption(Sea)) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(TakeUnrestCard) ++ (random() < 0.8).$(OxPicksSpace) ++ robotos :+ lands
             MetaAdset.createGame(MetaAdset.factions.take(n), adset.distinct)
         }
         else {
