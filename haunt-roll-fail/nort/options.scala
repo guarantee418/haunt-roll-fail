@@ -251,6 +251,15 @@ case object ChooseCasualties extends GameOption with ToggleOption {
     def valueOn = "Chosen by their player".txt
 }
 
+// Ox Clan's Ancestral Equipment token after an Explore goes on a free small building space or Carved Stone space of the tile
+// that Ox picks (GearPlaceAction in newblood.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
+// (Meta.mandatoryFor): games started before it put the token on the tile's first free small building space, never on a
+// Carved Stone space, and their replays must not stop on a choice they never recorded
+case object OxPicksSpace extends GameOption with ToggleOption {
+    val group = "Ancestral Equipment".txt
+    def valueOn = "Ox picks the space".txt
+}
+
 // The game options of 2026-10-07 for who saw the combat report. Since 2026-10-08 the report is asked of both sides and
 // each player's "Combat Report" setting (ShowCombatReport, SkipCombatReport in meta.scala) shows or skips it, so these are
 // hidden and do nothing; they stay so the games that have them still load
