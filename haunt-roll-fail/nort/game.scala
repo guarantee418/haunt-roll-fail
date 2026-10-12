@@ -1257,7 +1257,7 @@ object CommonExpansion extends Expansion {
 
             // Colors and teams are told with each clan below ("plays Red in Team B"); chosen casualties and taking Unrest are the rule now, not told
             // (Games from before the Warchiefs module section could have the module with Warchief pawns only: just the latter is told)
-            options.%(o => o.is[ColorOption].not && o.is[TeamOption].not && o != ChooseCasualties && o != TakeUnrestCard && o != ClanPowerReports && o != MendFigures).%(o => o != ModuleOption(Warchiefs) || options.has(WarchiefPawns).not).foreach { o =>
+            options.%(o => o.is[ColorOption].not && o.is[TeamOption].not && o != ChooseCasualties && o != TakeUnrestCard && o != ClanPowerReports && o != MendFigures && o != OxPicksSpace).%(o => o != ModuleOption(Warchiefs) || options.has(WarchiefPawns).not).foreach { o =>
                 log(o.group, o.valueOn)
             }
 

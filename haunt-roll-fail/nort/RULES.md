@@ -970,9 +970,11 @@ Check these against the rulebook when it is at hand.
   - Kraken: a High Tide token goes back as soon as Kraken has no figures in
     its territory. Its casualty applies to fights between players only. The
     Kraken Clan card's food or wood doesn't depend on the territory's icons.
-  - Ox: the token goes on the first free small building space (not Carved
-    Stone spaces) of the explored tile, even in a neutral or enemy territory;
-    none if the tile has no such space. Tokens are used in every fight, against
+  - Ox: the token goes on a free small building space or Carved Stone space
+    of the explored tile that Ox picks (small buildings go on both), even in a
+    neutral or enemy territory; none if the tile has no such space (Robotos,
+    2026-10-12; games started before that put it on the first free small
+    building space, never a Carved Stone one, `OxPicksSpace`). Tokens are used in every fight, against
     creatures too (Gman, 2026-10-11), chosen before food is spent; against a
     creature token 6's extra casualty does nothing, as creatures ignore
     casualties. A space with a token can't be built on.

@@ -107,6 +107,9 @@ case class PoachingAction(f : Faction, then : ForcedAction) extends ForcedAction
 // OX
 // The token itself is the target (its space), so two tokens in one territory are told apart on the map
 case class GearTakeAction(self : Faction, space : SpaceRef, n : Int, then : ForcedAction) extends BaseAction("Ancestral Equipment".hl, "take a token from")(space.area, "(" ~ GearName(n).elem ~ ")") with MapTarget { def target = space }
+// After an Explore (OxPicksSpace): the space of the tile the next token goes on
+case class GearPlaceAskAction(f : Faction, tile : String, spot : Spot, then : ForcedAction) extends ForcedAction
+case class GearPlaceAction(self : Faction, space : SpaceRef, n : Int, then : ForcedAction) extends BaseAction("Ancestral Equipment".hl, "place", GearName(n).elem, "on")((g : Game) => SpaceName(space)(g).txt, "in", space.area) with MapTarget { def target = space }
 case class GearAskAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends ForcedAction
 case class GearCreatureAskAction(f : Faction, area : AreaRef, e : MoveEffect, attacking : Boolean, then : ForcedAction) extends ForcedAction
 case class GearUseAction(self : Faction, n : Int, area : AreaRef, limit : Int, hero : Boolean, then : ForcedAction) extends BaseAction("Ancestral Equipment".hl, "use a token in the fight in", area)(GearName(n))
@@ -251,9 +254,17 @@ object NewBloodExpansion extends Expansion {
         }
     }
 
+    // The free spaces of an explored tile Ox's next token can go on: small building spaces, and Carved Stone spaces with OxPicksSpace
+    def gearSpaces(tile : String, spot : Spot)(implicit game : Game) : $[SpaceRef] = {
+        val kinds = game.options.has(OxPicksSpace).?($[SpaceKind](SmallSpace, CarvedSpace)).|($[SpaceKind](SmallSpace))
+        Tiles(tile).areas./~(a => a.spaces.indices.%(i => kinds.has(a.spaces(i).kind))./(i => SpaceRef(AreaRef(spot.x, spot.y, a.id), i)))
+            .%(s => game.buildings.contains(s).not && game.gear.contains(s).not)
+    }
+
     // After an Explore: Ox's token on a small building space of the tile, Rat's units in the territories it closed
+    // (with OxPicksSpace, Ox picks the space afterwards, GearPlaceAskAction)
     def explored(f : Faction, tile : String, spot : Spot, closed : $[Territory])(implicit game : Game) {
-        if (f == Ox && game.gearPile.any) {
+        if (f == Ox && game.gearPile.any && game.options.has(OxPicksSpace).not) {
             val spaces = Tiles(tile).areas./~(a => a.spaces.indices.%(i => a.spaces(i).kind == SmallSpace)./(i => SpaceRef(AreaRef(spot.x, spot.y, a.id), i)))
                 .%(s => game.buildings.contains(s).not && game.gear.contains(s).not)
 
@@ -747,6 +758,21 @@ object NewBloodExpansion extends Expansion {
             game.gearReady :+= n
             f.log("took", GearName(n), "from", s.area)
             game.note("gear-take")
+            Then(then)
+
+        case GearPlaceAskAction(f, tile, spot, then) =>
+            val l = (f == Ox && game.gearPile.any).??(gearSpaces(tile, spot))
+
+            if (l.none)
+                Then(then)
+            else
+                Ask(f).each(l)(s => GearPlaceAction(f, s, game.gearPile.head, then))
+
+        case GearPlaceAction(f, s, n, then) =>
+            game.gearPile = game.gearPile.diff($(n))
+            game.gear += s -> n
+            f.log("placed", GearName(n), "in", s.area)
+            game.note("gear-place")
             Then(then)
 
         case GearAskAction(attacker, defender, a, e, then) =>

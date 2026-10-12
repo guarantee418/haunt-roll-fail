@@ -271,6 +271,15 @@ case object ChooseCasualties extends GameOption with ToggleOption {
     def valueOn = "Chosen by their player".txt
 }
 
+// Ox Clan's Ancestral Equipment token after an Explore goes on a free small building space or Carved Stone space of the tile
+// that Ox picks (GearPlaceAction in newblood.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
+// (Meta.mandatoryFor): games started before it put the token on the tile's first free small building space, never on a
+// Carved Stone space, and their replays must not stop on a choice they never recorded
+case object OxPicksSpace extends GameOption with ToggleOption {
+    val group = "Ancestral Equipment".txt
+    def valueOn = "Ox picks the space".txt
+}
+
 // Svarn's Menders brings back the warchief, the companion (Kaija, Brundr and Kaelinn, Brok) and Jötunn Blainn among the
 // casualties too, not only units (the owner's ruling of 2026-10-12; figures lost for having nowhere to retreat still stay lost).
 // Hidden, and given to every new game (Meta.mandatoryFor): older games brought back units only, and their replays must not stop

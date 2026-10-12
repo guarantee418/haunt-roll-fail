@@ -1893,11 +1893,16 @@ object MapExpansion extends Expansion {
             if (game.has(NewBlood))
                 NewBloodExpansion.explored(f, tile, spot, closed)
 
-            // Horse Clan: 1 wood or a small building for each closed territory
             // The clan power report once the tile is placed (and any creature on it has appeared)
             val next = ClanPowerReportAction(ExploreAction(f, 1, times - 1, false, e, then))
 
-            Then(TilePlacedAction(f, tile, spot, false, (f == Horse && closed.any).?(HorseClosedAction(f, closed./(_.anchor), next) : ForcedAction).|(next)))
+            // Horse Clan: 1 wood or a small building for each closed territory
+            val horse = (f == Horse && closed.any).?(HorseClosedAction(f, closed./(_.anchor), next) : ForcedAction).|(next)
+
+            // New Blood: Ox Clan picks the space for its token (OxPicksSpace)
+            val ox = (f == Ox && game.options.has(OxPicksSpace) && game.gearPile.any).?(GearPlaceAskAction(f, tile, spot, horse) : ForcedAction).|(horse)
+
+            Then(TilePlacedAction(f, tile, spot, false, ox))
 
         // BUILD
         case BuildAction(f, e, times, smallOnly, then) =>
