@@ -374,6 +374,8 @@ case class ActiveCards(f : Faction)
 case class LoreTree(f : Faction)
 // Tapping Dragon Clan's Sacrificial Pyre in its panel shows it full size
 case object PyreView
+// Tapping Ox Clan's Ancestral Equipment tokens in its panel shows all seven, what each does and where it is
+case object GearView
 // Cards shown while there is nothing to do with them; clicking one opens it full screen
 case class CardInfoAction(self : Faction, title : Elem, card : Card, n : Int = 1) extends BaseInfo(title)(card.handStack(n)) with ViewObject[Card] with OnClickInfo { def obj = card ; def param = card }
 case class PassAction(self : Faction) extends BaseAction("Your turn")("Pass")
@@ -415,6 +417,11 @@ case class TeamDeclineAction(self : Faction, from : Faction, give : Resource, ta
 // A pending offer (game state only, never recorded)
 case class TradeOffer(from : Faction, to : Faction, give : Resource, take : Resource)
 case object WinterAction extends ForcedAction
+// Winter, clan by clan in turn order, with the TakeUnrestCard option: a clan that can't pay takes its Unrest card by tapping it
+// (or, with none left, UnrestGoneAction: taps to lose 5 fame and discard the top card of its draw pile)
+case class WinterPayAction(l : $[Faction]) extends ForcedAction
+case class TakeUnrestAction(self : Faction, units : Int, rest : $[Faction]) extends BaseAction("Winter: not enough to pay for", units.hl, "units", Comma, "take an", UnrestCard, "card")(UnrestCard.handImg) with ViewObject[Card] { def obj = UnrestCard }
+case class UnrestGoneAction(self : Faction, units : Int, rest : $[Faction]) extends BaseAction("Winter: not enough to pay for", units.hl, "units", Comma, "and no", UnrestCard, "cards left")("Lose", 5.hl, FameIcon(), "and discard the top card of your draw pile")
 case object EndOfYearAction extends ForcedAction
 case object GameEndAction extends ForcedAction
 case object NewYearAction extends ForcedAction
@@ -1052,6 +1059,55 @@ object CommonExpansion extends Expansion {
 
     def available(f : Faction)(implicit game : Game) = f.draw.num + f.discard.num
 
+    // Winter: f pays its food and wood; true when it could not pay it all (it then pays what it can and takes an Unrest card)
+    def payWinter(f : Faction)(implicit game : Game) : Boolean = {
+        // Events: Harsh Winter and Blizzard
+        val (food, wood) = EventsExpansion.winterCost(f)
+
+        if (game.robotos(f)) {
+            f.log("pays no Winter costs", "(Robotos)".hl)
+            game.note("robotos-winter")
+            false
+        }
+        else
+        if (food + wood == 0) {
+            f.log("owed nothing for", f.units.hl, "units")
+            false
+        }
+        else
+        if (f.food >= food && f.wood >= wood) {
+            f.food -= food
+            f.wood -= wood
+
+            f.log("paid", food.hl, Food, (wood > 0).?("and " ~ Amount(wood.hl, Wood.elem)).|(Empty), "for", f.units.hl, "units")
+            false
+        }
+        else {
+            f.food = math.max(0, f.food - food)
+            f.wood = math.max(0, f.wood - wood)
+            true
+        }
+    }
+
+    // Ten Unrest cards
+    def unrestLeft(implicit game : Game) = game.factions./(_.unrest).sum < UnrestCard.supply
+
+    // An unpaid Winter: an Unrest card on top of the draw pile; with none left, lose 5 fame and discard the top card of the draw pile
+    def takeUnrest(f : Faction)(implicit game : Game) {
+        if (unrestLeft) {
+            f.draw = UnrestCard +: f.draw
+
+            f.log("could not pay for", f.units.hl, "units and took", UnrestCard)
+        }
+        else {
+            f.fame -= 5
+            f.discard ++= f.draw.take(1)
+            f.draw = f.draw.drop(1)
+
+            f.log("could not pay for", f.units.hl, "units; with no", UnrestCard, "left, lost", 5.hl, FameIcon(), "and discarded the top card of their draw pile")
+        }
+    }
+
     // The harvest trades f can make: 3 resources for 1 (only for a resource not paid in, except with the Ceremonial Bonfire, which also
     // allows 2 wood for 1 lore), and 1 for 1 with the teammates in mates
     def tradeChoices(f : Faction, mates : $[Faction], then : ForcedAction)(implicit game : Game) : $[UserAction] = {
@@ -1190,9 +1246,9 @@ object CommonExpansion extends Expansion {
             if (version != gaming.version)
                 log("Saved game version", version.hlb)
 
-            // Colors and teams are told with each clan below ("plays Red in Team B"); chosen casualties are the rule now, not told
+            // Colors and teams are told with each clan below ("plays Red in Team B"); chosen casualties and taking Unrest are the rule now, not told
             // (Games from before the Warchiefs module section could have the module with Warchief pawns only: just the latter is told)
-            options.%(o => o.is[ColorOption].not && o.is[TeamOption].not && o != ChooseCasualties).%(o => o != ModuleOption(Warchiefs) || options.has(WarchiefPawns).not).foreach { o =>
+            options.%(o => o.is[ColorOption].not && o.is[TeamOption].not && o != ChooseCasualties && o != TakeUnrestCard).%(o => o != ModuleOption(Warchiefs) || options.has(WarchiefPawns).not).foreach { o =>
                 log(o.group, o.valueOn)
             }
 
@@ -1737,45 +1793,44 @@ object CommonExpansion extends Expansion {
             log("Winter")
 
             // The Automa pays no Winter costs
-            game.from(game.first).but(Automa).foreach { f =>
-                // Events: Harsh Winter and Blizzard
-                val (food, wood) = EventsExpansion.winterCost(f)
+            val payers = game.from(game.first).but(Automa)
 
-                if (game.robotos(f)) {
-                    f.log("pays no Winter costs", "(Robotos)".hl)
-                    game.note("robotos-winter")
+            // With TakeUnrestCard each clan that can't pay takes its Unrest card itself (WinterPayAction); older games gave it
+            if (game.options.has(TakeUnrestCard))
+                Then(WinterPayAction(payers))
+            else {
+                payers.foreach { f =>
+                    if (payWinter(f))
+                        takeUnrest(f)
                 }
-                else
-                if (food + wood == 0)
-                    f.log("owed nothing for", f.units.hl, "units")
-                else
-                if (f.food >= food && f.wood >= wood) {
-                    f.food -= food
-                    f.wood -= wood
 
-                    f.log("paid", food.hl, Food, (wood > 0).?("and " ~ Amount(wood.hl, Wood.elem)).|(Empty), "for", f.units.hl, "units")
-                }
-                else {
-                    f.food = math.max(0, f.food - food)
-                    f.wood = math.max(0, f.wood - wood)
-
-                    // Ten Unrest cards; with none left, lose 5 fame and discard the top card of the draw pile
-                    if (factions./(_.unrest).sum < UnrestCard.supply) {
-                        f.draw = UnrestCard +: f.draw
-
-                        f.log("could not pay for", f.units.hl, "units and took", UnrestCard)
-                    }
-                    else {
-                        f.fame -= 5
-                        f.discard ++= f.draw.take(1)
-                        f.draw = f.draw.drop(1)
-
-                        f.log("could not pay for", f.units.hl, "units; with no", UnrestCard, "left, lost", 5.hl, FameIcon(), "and discarded the top card of their draw pile")
-                    }
-                }
+                Then(EndOfYearAction)
             }
 
-            Then(EndOfYearAction)
+        case WinterPayAction(l) =>
+            l match {
+                case f :: rest =>
+                    if (payWinter(f))
+                        // needOk: an Ask with a single choice is otherwise taken by the runner without showing it
+                        Ask(f).add(unrestLeft.?(TakeUnrestAction(f, f.units, rest)).|(UnrestGoneAction(f, f.units, rest))).needOk
+                    else
+                        Then(WinterPayAction(rest))
+
+                case _ =>
+                    Then(EndOfYearAction)
+            }
+
+        case TakeUnrestAction(f, _, rest) =>
+            takeUnrest(f)
+            game.note("unrest-taken")
+
+            Then(WinterPayAction(rest))
+
+        case UnrestGoneAction(f, _, rest) =>
+            takeUnrest(f)
+            game.note("unrest-gone")
+
+            Then(WinterPayAction(rest))
 
         // 5. END OF YEAR
         case EndOfYearAction =>
