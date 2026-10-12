@@ -478,9 +478,12 @@ file covers the build, server and deploy. No session can ssh to the server
   the names (Ranch, Bluff, ...) are made up from the art; the layout card's
   numbers are 1 Ranch, 2 Mesa, 3 Camp, 4 Chapel, 5 Bluff, 6 Saloon,
   7 Lookout, 8 Rapids, 9 Homestead, 10 Forge, 11 Fork, 12 Pueblo. The dam
-  path (Forge - Saloon) divides forests and is crossed by the Fork - Pueblo
-  path, so the four forests around that crossing are adjacent in pairs
-  (`damCrossing`); the bridge path (Homestead - Lookout) divides nothing.
+  path (Forge - Saloon) divides forests (Law of Root M.6.1), so the forests
+  above and under it are adjacent in pairs (`acrossDam`: West - Center,
+  North - East). The Fork - Pueblo path runs only through the dam's tunnel,
+  so it makes no forests adjacent: Center and East (and West and North) are
+  not, as a player pointed out on 2026-10-12. The bridge path (Homestead -
+  Lookout) divides nothing.
 - Root map drawing (`drawMap` in `root/ui.scala`): warriors of the same
   faction and kind in a region are drawn as one figure with a count badge
   (`stacks`, `drawCount`), like the Northgard unit counts. The in-game "Warriors" setting

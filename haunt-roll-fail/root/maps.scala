@@ -931,12 +931,14 @@ object GorgeBoard extends Board {
 
     val forests = $(GorgeNW, GorgeN, GorgeNE, GorgeW, GorgeC, GorgeE, GorgeSW, GorgeS)
 
-    // The path from Fork to Pueblo goes through the dam, crossing the dam path from Forge to Saloon,
-    // so the four forests around the crossing touch the forests on either side of each half-path
-    val damCrossing = $[(Forest, Forest)]((GorgeW, GorgeN), (GorgeN, GorgeE), (GorgeE, GorgeC), (GorgeC, GorgeW))
+    // The dam path from Forge to Saloon separates the forests above the dam from those under it (Law of Root M.6.1),
+    // so each is adjacent to the one across it. The path from Fork to Pueblo runs only through the dam's tunnel,
+    // with Fork touching the dam path and the tunnel opening onto Pueblo, so it doesn't make the forests on
+    // either side of it adjacent: those are separated by a clearing and the dam, not by one path
+    val acrossDam = $[(Forest, Forest)]((GorgeW, GorgeC), (GorgeN, GorgeE))
 
     override def forestsConnected(o : Forest, d : Forest) : Boolean = super.forestsConnected(o, d) ||
-        damCrossing.has((o, d)) || damCrossing.has((d, o))
+        acrossDam.has((o, d)) || acrossDam.has((d, o))
 
     // Forge - Saloon is the dam path, Homestead - Lookout is the bridge path
     def connected(c : Clearing) = c @@ {
