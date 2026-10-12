@@ -629,7 +629,7 @@ trait GreyUI { gui : Gaming =>
 
             if (factions.any) {
                 // A spectator never gets choices, so say why first (a player who opened the Spectator link by mistake)
-                val spectating = (hrf.HRF.spectator && self.none).$(ZOption(Div("Spectating".hl)(xlo.fullwidth), Div("You are watching this game as a " ~ "spectator".hl ~ " and can't make moves. To play, open your own " ~ "player link".hl ~ ".", ZBasic.info)(xlo.fullwidth)))
+                val spectating = (hrf.HRF.spectator && self.none).$(ZOption(Div("Spectating".hl)(xlo.fullwidth), Div("You are watching this game as a spectator and can't make moves. To play, open your own player link.", ZBasic.info)(xlo.fullwidth)))
 
                 val waiting = spectating ++ factions.any.$(ZOption(Div("Waiting for " ~ convertDesc(factions./(f => factionElem(f)).comma).apply(game))(xlo.fullwidth), Div(m, ZBasic.info)(xlo.fullwidth)))
 
