@@ -642,7 +642,7 @@ object CreaturesExpansion extends Expansion {
                 game.fightReport = |(FightReport(a, attacking.?(player).|(creature), attacking.?(creature).|(player), |(won == attacking), won.not && pc >= units))
 
                 val readers = CombatReport.readers(attacking.?(f), attacking.not.?(f))
-                def next(then : ForcedAction) = (readers.any).?(Then(CombatReportAction(readers, then))).|(Then(then))
+                def next(then : ForcedAction) = (readers.any).?(Then(CombatReportAction(readers, ClanPowerReportAction(then)))).|(Then(ClanPowerReportAction(then)))
 
                 val before = game.count(t, f)
                 val specials = game.specialsIn(t, f)
@@ -693,12 +693,14 @@ object CreaturesExpansion extends Expansion {
                     if (attacking && f == Wolf) {
                         f.food += 1
                         f.log("collected", 1.hl, Food, "for winning as the attacker")
+                        ClanPowers.note(PowerNote(f, |(a), f.elem ~ " collects 1 food for winning a fight as the attacker.", food = 1))
                     }
 
                     // Beating a Fallen Valkyrie takes its territory
                     if (attacking && f == Stag && c.kind.shares.not) {
                         f.fame += 1
                         f.log("gained", 1.hl, FameIcon(), "for conquering a territory")
+                        ClanPowers.note(PowerNote(f, |(a), f.elem ~ " gains 1 fame for each territory it conquers.", fame = 1))
                     }
 
                     next(then)

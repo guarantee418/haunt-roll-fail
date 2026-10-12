@@ -35,7 +35,7 @@ object Tutorial {
     // The practice game: Stag goes first, against the Easy bot, with the standard rules
     def seating : $[Faction] = $(clan, opponent)
     def bots : Map[Faction, String] = Map(opponent -> "Easy")
-    def options : $[GameOption] = Meta.defaultsFor(2, seating).%(_.is[VictoryModeOption].not) ++ $(TutorialOption, FirstSeatStarts, ChooseCasualties, TakeUnrestCard, MendFigures)
+    def options : $[GameOption] = Meta.defaultsFor(2, seating).%(_.is[VictoryModeOption].not) ++ $(TutorialOption, FirstSeatStarts, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures)
 
     // Images in the lessons (Meta.menuImages has their URLs for the menus; in the game they are assets)
     def card(n : String) = Image("card-start-blue-" + n, styles.menuCard)
@@ -272,6 +272,9 @@ object Tutorial {
         else
         if (has[CombatReportDoneAction])
             |("The combat report: who won, each side's points and losses (ties go to the defender; losing every unit loses). Tap " ~ "OK".hl ~ " to go on. The Stag gets +1 fame for each territory it conquers. (Interface > Combat Report can skip these reports.)")
+        else
+        if (has[ClanPowerReportDoneAction])
+            |("Your clan power went off by itself: this box says where and what it gave you (already added to your stockpile). Tap the button to go on. (Interface > Clan Power Report can skip these reports.)")
         else
         if (has[TakeUnrestAction])
             |("Winter: you couldn't feed your units (or heat their homes), so you take an " ~ "Unrest".hl ~ " card. Tap it to add it to your draw pile. It is a dead card in your hand and costs " ~ "5 fame".hl ~ " at the end.")

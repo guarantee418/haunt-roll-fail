@@ -243,6 +243,24 @@ on. To implement one:
   options of 2026-10-07 (`CombatReportAttackers`, `CombatReportDefenders`) are
   hidden and do nothing, kept so the games that have them still load. Saved
   games replay as they were: recorded moves carry their own continuation.
+- Clan power report (asked for by Robotos, 2026-10-12): a clan power that
+  goes off by itself (Raven's collect and Stag's fame when closing, Boar's
+  lore, Goat's food, Wolf's food and Stag's fame when winning an attack, also
+  against a creature or by Intimidate, Dragon's Pyre captures, Ox's
+  Ancestral Equipment token, Rat's units in closed territories) adds a
+  `PowerNote` to `game.powerNotes` (`ClanPowers.note` in `map.scala`). The
+  next `ClanPowerReportAction` (after each explored tile and its creatures,
+  at the end of a Build, after the combat report) asks each clan with notes
+  to tap a button naming its gains ("Collect 1 Lore", "Gain 1 fame", or OK),
+  under "You activated your clan power in <territory>." and what the power
+  did (`ClanPowerReport`, `ClanPowerCollect`). The gains are made when the
+  power goes off, so the step changes nothing in the game. Interactive powers
+  (Snake, Horse, Lynx, Squirrel, Kraken's tokens) already ask and get none.
+  Only in games with the hidden `ClanPowerReports` option, which
+  `mandatoryFor` gives every new game (older games' replays must not stop on
+  it); never for the Automa. Each player's "Clan Power Report" setting under
+  Interface (`ShowClanPowerReport`, the default, or `SkipClanPowerReport`)
+  shows it or has the UI tap it, like the Combat Report setting.
 - Clan picker: the framework hook `MetaGame.factionInfo` (label, title,
   contents) adds a button next to each faction in the "Play as" list
   (`hrf.scala`); Northgard's shows the clan board

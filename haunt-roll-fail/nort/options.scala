@@ -280,6 +280,13 @@ case object MendFigures extends GameOption with ToggleOption {
     def valueOn = "Brings back every figure".txt
 }
 
+// The clan power report (ClanPowers in map.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
+// (Meta.mandatoryFor), like ChooseCasualties: older games' replays must not stop on a step they never recorded
+case object ClanPowerReports extends GameOption with ToggleOption {
+    val group = "Clan powers".txt
+    def valueOn = "Reported".txt
+}
+
 // A player who can't pay for Winter takes the Unrest card themselves, by tapping it (TakeUnrestAction in game.scala; asked
 // for by Robotos on 2026-10-12, as it was easy to miss). Hidden, and given to every new game (Meta.mandatoryFor): older games
 // gave it without asking, and their replays must not stop on a choice they never recorded

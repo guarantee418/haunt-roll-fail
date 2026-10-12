@@ -75,7 +75,7 @@ object Meta extends MetaGame { mmm =>
     // Team play comes from the choice above the clan picker (pickerModes), the old fixed team variants are no longer offered
     // The Tutorial's practice game has its tips on
     // Chosen casualties are on in every new game (mandatoryFor), not in older ones
-    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, MendFigures) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
+    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // New Blood has no option: picking one of its clans brings it in
     val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ WarchiefsChoice.all ++ $(NoDrawDevelopments, HorizonsDevelopments) ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles) ++ AutomaLevelOption.all ++ hiddenOptions
@@ -139,11 +139,11 @@ object Meta extends MetaGame { mmm =>
         options.%{ case TeamOption(f, t) => t < n ; case _ => true } ++ added ++ teams
     }
 
-    // Chosen casualties and taking the Unrest card: every new game gets them; a loaded game keeps the options it was started with
-    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, MendFigures)
+    // Chosen casualties, taking the Unrest card and the clan power report: every new game gets them; a loaded game keeps the options it was started with
+    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures)
 
     // Quick games take only the selected options, not the mandatory ones
-    override def randomQuickGame() = super.randomQuickGame() match { case (f, l, d, o) => (f, l, d, (o :+ ChooseCasualties :+ TakeUnrestCard :+ MendFigures).distinct) }
+    override def randomQuickGame() = super.randomQuickGame() match { case (f, l, d, o) => (f, l, d, (o :+ ChooseCasualties :+ TakeUnrestCard :+ ClanPowerReports :+ MendFigures).distinct) }
 
     // Colors by seat, as before colors could be chosen
     // Teams alternate by seat (two teams), as the old team variants did
@@ -444,8 +444,8 @@ object Meta extends MetaGame { mmm =>
     override val showAbout = false
 
     // Map display settings, chosen by each player under "Interface" (like Root's Clearing Rule)
-    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, CustomTerritoryColor, FightsTerritoryColor, HideTerritoryColor) ++ TerritoryOpacity.all ++ $(ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels, ReverseStackedPanels, ShowCombatReport, SkipCombatReport)
-    override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, StackedPanels, ShowCombatReport) ++ PlayerColor.all./(TerritoryOpacity(_, 50))
+    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, CustomTerritoryColor, FightsTerritoryColor, HideTerritoryColor) ++ TerritoryOpacity.all ++ $(ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels, ReverseStackedPanels, ShowCombatReport, SkipCombatReport, ShowClanPowerReport, SkipClanPowerReport)
+    override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, StackedPanels, ShowCombatReport, ShowClanPowerReport) ++ PlayerColor.all./(TerritoryOpacity(_, 50))
 }
 
 
@@ -460,6 +460,20 @@ case object ShowCombatReport extends CombatReportSetting {
 }
 
 case object SkipCombatReport extends CombatReportSetting {
+    val valueOn = "Skip".hlb
+}
+
+// The clan power report (ClanPowerReportAction in map.scala): shown, to be tapped, or skipped (tapped for the player by
+// the UI, ask in ui.scala), like the Combat Report setting
+trait ClanPowerReportSetting extends hrf.Setting with OneOfGroup {
+    val group = "Clan Power Report"
+}
+
+case object ShowClanPowerReport extends ClanPowerReportSetting {
+    val valueOn = "Show".hlb
+}
+
+case object SkipClanPowerReport extends ClanPowerReportSetting {
     val valueOn = "Skip".hlb
 }
 
