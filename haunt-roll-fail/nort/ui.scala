@@ -900,10 +900,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             pieces.add(Sprite($(at("ui-target", n)), $(Rectangle(-n / 2, -n / 2, n, n)), $(s)))(sx(x), sy(y))
         }
 
-        // Ox Clan's Ancestral Equipment tokens on their spaces, face up
+        // Ox Clan's Ancestral Equipment tokens on their spaces, face up; tapping one picks that token (GearTakeAction targets its space)
         game.gear.foreach { case (s, n) =>
             val (x, y) = board.point(s)
-            pieces.add(Sprite($(at("token-ox-" + n, 170)), $))(sx(x), sy(y))
+            pieces.add(Sprite($(at("token-ox-" + n, 170)), $(Rectangle(-85, -85, 170, 170)), $(s)))(sx(x), sy(y))
         }
 
         // Territory numbers on every area of the territory, highlighted when it can be chosen; units at its first area
@@ -1246,6 +1246,36 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         ).div
     }
 
+    // Ox Clan's Ancestral Equipment tokens in its panel: those ready face up, those used this year grayed out (so it still shows which)
+    def gearRow : Elem = {
+        val ready = game.gearReady.sorted./(n => Image("token-ox-" + n, styles.gearSmall, "Token " + n + ": " + GearName(n).text))
+        val used = game.gearUsed.sorted./(n => Image("token-ox-" + n, $(styles.gearSmall, styles.offBoard), |("Token " + n + ", used this year")))
+        (ready ++ used).none.?("Ancestral Equipment: none".txt).|((ready ++ used).merge)
+    }
+
+    // All seven tokens: what each does, and where it is (ready, used, on the map or in the pile, which shows its number on top)
+    def gearView : Elem = {
+        val rows = 1.to(7).$./{ n =>
+            val where : Elem =
+                if (game.gearReady.has(n)) "ready".styled(styles.ledgerGain)
+                else if (game.gearUsed.has(n)) "used this year, ready next year".txt
+                else game.gear.find(_._2 == n)./{ case (s, _) => "on the map in " ~ s.area.elem }
+                    .|(game.gearPile.headOption.has(n).?("in the pile, on top".txt).|("in the pile".txt))
+            // Face down when used or in the pile
+            val back = game.gearUsed.has(n) || (game.gear.values.$.has(n).not && game.gearReady.has(n).not)
+            (Image("token-ox" + back.??("-back") + "-" + n, styles.gearLarge, "Token " + n).div(styles.gearCell) ~
+                (("Token " + n).hl ~ ": " ~ CombatText(GearName(n).text)).div(styles.gearCell)(styles.winterCell) ~
+                where.div(styles.gearCell)(styles.winterCell))
+        }
+
+        ((Ox.name.styled(colorOf(Ox)) ~ " " ~ "Ancestral Equipment".hl).hlb.div ~
+            rows.merge.div(styles.gearTable) ~
+            "One token may be used in each fight (two with Torfin); a used token turns face down until the next year.".spn(xstyles.smaller85).div ~
+            HorizontalBreak ~
+            "(tap to close)".spn(xstyles.smaller85).div
+        ).div
+    }
+
     // A player's discard pile, newest card last
     def discardPile(f : Faction) : Elem = cardPile(f, " discard pile", game.states(f).discard)
 
@@ -1360,7 +1390,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // New Blood: Kraken's High Tide tokens, Ox's Ancestral Equipment tokens
         val nb = f match {
             case Kraken => ("High Tide: ".txt ~ (2 - game.tides.num).hl ~ " in reserve").div
-            case Ox => ("Equipment: ".txt ~ game.gearReady.num.hl ~ " ready, " ~ game.gearUsed.num.hl ~ " used").div
+            case Ox => OnClick(GearView, gearRow.div(styles.gearRow)(xlo.pointer))
             case Automa => ("Cards: ".txt ~ game.automaActions.num.hl ~ " to play, " ~ game.automaDeck.num.hl ~ " in its pile").div
             case _ => Empty
         }
@@ -2326,6 +2356,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case PyreView =>
             showOverlay(overlayScrollX(pyreView).onClick, onClick)
+
+        case GearView =>
+            showOverlay(overlayScrollX(gearView).onClick, onClick)
 
         // A fight's result tapped in the log
         case FightReportView(r) =>
