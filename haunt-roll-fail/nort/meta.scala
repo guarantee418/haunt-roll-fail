@@ -71,11 +71,11 @@ object Meta extends MetaGame { mmm =>
 
     // Games made before the Victory conditions options turned the Alternative victory module on with its module option
     // Training Fields is turned on by the main menu's Training Grounds only
-    // Robotos (robotos.scala) comes from the bot chosen for a clan, not from the setup screen
+    // Robotos (robotos.scala) comes from the bot chosen for a clan, not from the setup screen, and so does BotClanOption
     // Team play comes from the choice above the clan picker (pickerModes), the old fixed team variants are no longer offered
     // The Tutorial's practice game has its tips on
     // Chosen casualties are on in every new game (mandatoryFor), not in older ones
-    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, MendFigures) ++ RobotosOption.all ++ Module.teams.keys.$./(ModuleOption)
+    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, MendFigures) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // New Blood has no option: picking one of its clans brings it in
     val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ WarchiefsChoice.all ++ $(NoDrawDevelopments, HorizonsDevelopments) ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles) ++ AutomaLevelOption.all ++ hiddenOptions
@@ -278,7 +278,8 @@ object Meta extends MetaGame { mmm =>
     // Robotos: the Hard bot, cheating (robotos.scala)
     def getBots(f : Faction) = (f == Automa).?($("Easy")).|($("Easy", "Hard", "Robotos"))
 
-    override def botOptions(seating : $[Faction], bots : Map[Faction, String]) = seating.%(f => bots.get(f).has("Robotos") && f != Automa)./(RobotosOption(_))
+    override def botOptions(seating : $[Faction], bots : Map[Faction, String]) =
+        seating.%(f => bots.get(f).has("Robotos") && f != Automa)./(RobotosOption(_)) ++ seating.%(f => bots.contains(f) && f != Automa)./(BotClanOption(_))
 
     def getBot(f : Faction, b : String) = (f, b) match {
         case (f : Faction, "Hard") if f != Automa => new BotHard(f)

@@ -101,13 +101,19 @@ object Host extends hrf.host.BaseHost {
             val lands = (n > 2).?(AdsetLands.all).|(AdsetLands.all.but(LandsSeatChooses)).shuffle.head
             // NORT_HARD=robotos: the first seat is Robotos
             val robotos = sys.env.get("NORT_HARD").has("robotos").$(RobotosSeatOption(MetaAdset.factions.head))
-            val adset = $(YearsOption.all.shuffle.head) ++ victory ++ (random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.5).$(ModuleOption(Sea)) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(TakeUnrestCard) ++ (random() < 0.8).$(MendFigures) ++ robotos :+ lands
+            // NORT_HUMAN=1: the last seat counts as a person (game.human), the others as bots
+            val bots = sys.env.get("NORT_HUMAN").has("1").??(MetaAdset.factions.take(n - 1)./(BotSeatOption(_)))
+            bots.foreach(o => assert(MetaAdset.parseOption(MetaAdset.writeOption(o)) == $(o), o))
+            val adset = $(YearsOption.all.shuffle.head) ++ victory ++ (random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.5).$(ModuleOption(Sea)) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(TakeUnrestCard) ++ (random() < 0.8).$(MendFigures) ++ robotos ++ bots :+ lands
             MetaAdset.createGame(MetaAdset.factions.take(n), adset.distinct)
         }
         else {
             // NORT_HARD=robotos: the first seat is Robotos
             val robotos = sys.env.get("NORT_HARD").has("robotos").$(RobotosOption(l.head))
-            new G(l, (all ++ robotos).distinct)
+            // NORT_HUMAN=1: the last clan counts as a person (game.human), the others as bots
+            val bots = sys.env.get("NORT_HUMAN").has("1").??(l.dropRight(1).but(Automa)./(BotClanOption(_)))
+            bots.foreach(o => assert(Meta.parseOption(Meta.writeOption(o)) == $(o), o))
+            new G(l, (all ++ robotos ++ bots).distinct)
         }
     })
 
