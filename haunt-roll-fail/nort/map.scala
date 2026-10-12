@@ -137,6 +137,9 @@ case class CombatResolveAction(attacker : Faction, defender : Faction, area : Ar
 // The combat report (FightReport): to each of l in turn, who taps OK, then the fight goes on (a retreat or what follows it)
 case class CombatReportAction(l : $[Faction], then : ForcedAction) extends ForcedAction
 case class CombatReportDoneAction(self : Faction, rest : $[Faction], then : ForcedAction) extends BaseAction(CombatReport(self))("OK")
+// The clan power report (ClanPowers): to each clan with notes in turn, who taps the button, then the game goes on
+case class ClanPowerReportAction(then : ForcedAction) extends ForcedAction
+case class ClanPowerReportDoneAction(self : Faction, then : ForcedAction) extends BaseAction(ClanPowerReport(self))(ClanPowerCollect(self))
 
 // Casualties chosen by their player (ChooseCasualties): which figures go, then the fight goes on (then decides it again, now
 // with the pick in game.casualtyPicks)
@@ -441,6 +444,50 @@ object CombatReport {
     }
 }
 
+// The clan power report (asked for by Robotos on 2026-10-12): after an action that set off a clan's own power without
+// asking anything (Raven, Stag, Boar, Goat, Wolf, Dragon's Pyre, Ox's Ancestral Equipment, Rat's units), a box tells
+// its player where it went off and what it did, with a button naming what was collected ("Collect 1 Lore"). The power
+// has already done its work when the box shows (the button only tells it), so the game is the same with or without it.
+// Notes are kept in game.powerNotes until the next ClanPowerReportAction (after each explored tile, a Build, a fight).
+// Only in games with the hidden ClanPowerReports option, never for the Automa; each player's "Clan Power Report"
+// setting shows it or skips it (the UI taps the button, ask in ui.scala)
+case class PowerNote(f : Faction, area : |[AreaRef], what : Elem, food : Int = 0, wood : Int = 0, lore : Int = 0, fame : Int = 0)
+
+case class ClanPowerReport(self : Faction) extends GameElementary {
+    def elem(implicit game : Game) = ClanPowers.text(self)
+}
+
+case class ClanPowerCollect(self : Faction) extends GameElementary {
+    def elem(implicit game : Game) = ClanPowers.button(self)
+}
+
+object ClanPowers {
+    def note(n : PowerNote)(implicit game : Game) {
+        if (game.options.has(ClanPowerReports) && n.f != Automa)
+            game.powerNotes :+= n
+    }
+
+    def text(self : Faction)(implicit game : Game) : Elem =
+        game.powerNotes.%(_.f == self)./(n => ("You activated your clan power" ~ n.area./(a => " in " ~ a.elem).|(Empty) ~ ".").div ~ n.what.div).join(Break)
+
+    def button(self : Faction)(implicit game : Game) : Elem = {
+        val l = game.powerNotes.%(_.f == self)
+        val res = $(l./(_.food).sum -> Food.elem, l./(_.wood).sum -> Wood.elem, l./(_.lore).sum -> Lore.elem).filter(_._1 > 0)./{ case (n, e) => Amount(n, e) }
+        val fame = l./(_.fame).sum
+
+        if (res.any && fame > 0)
+            "Collect " ~ res.join(", ") ~ " and gain " ~ Amount(fame, FameIcon())
+        else
+        if (res.any)
+            "Collect " ~ res.join(", ")
+        else
+        if (fame > 0)
+            "Gain " ~ Amount(fame, FameIcon())
+        else
+            "OK".txt
+    }
+}
+
 // Some units, maybe with Kaija and the warchief
 case class Figures(n : Int, kaija : Boolean, chief : Boolean = false) extends Elementary with Record {
     def this(n : Int, kaija : Boolean) = this(n, kaija, false)
@@ -472,15 +519,17 @@ object NorthgardDie {
 
 object MapExpansion extends Expansion {
     // The clan powers of an attacker that won a fight
-    def attackWon(attacker : Faction)(implicit game : Game) {
+    def attackWon(attacker : Faction, a : AreaRef)(implicit game : Game) {
         if (attacker == Wolf) {
             attacker.food += 1
             attacker.log("collected", 1.hl, Food, "for winning as the attacker")
+            ClanPowers.note(PowerNote(attacker, |(a), attacker.elem ~ " collects 1 food for winning a fight as the attacker.", food = 1))
         }
 
         if (attacker == Stag) {
             attacker.fame += 1
             attacker.log("gained", 1.hl, FameIcon(), "for conquering a territory")
+            ClanPowers.note(PowerNote(attacker, |(a), attacker.elem ~ " gains 1 fame for each territory it conquers.", fame = 1))
         }
     }
 
@@ -821,13 +870,14 @@ object MapExpansion extends Expansion {
     }
 
     // Collect what a territory produces, as at harvest
-    def collect(f : Faction, t : Territory, reason : Elem)(implicit game : Game) : Unit = {
+    def collect(f : Faction, t : Territory, reason : Elem)(implicit game : Game) : (Int, Int, Int) = {
         val (food, wood, lore) = game.harvest(t)
         f.food += food
         f.wood += wood
         f.lore += lore
         if (food + wood + lore > 0)
             f.log("collected", $(food -> Food, wood -> Wood, lore -> Lore).filter(_._1 > 0)./{ case (n, r) => Amount(n.hl, r.elem) }.join(", "), reason)
+        (food, wood, lore)
     }
 
     // Where f's figures in t can retreat to: not into a fight, nor where a creature is being attacked or a Fallen Valkyrie is
@@ -1271,9 +1321,9 @@ object MapExpansion extends Expansion {
                 f.log("won the fight in", a, "with", "Intimidate".hl)
                 EventsExpansion.afterCombat(f, defender, 0, 0, |(f))
                 game.note("attack-won")
-                attackWon(f)
+                attackWon(f, a)
 
-                Then(then)
+                Then(ClanPowerReportAction(then))
             }
             else
                 Then(FightStartAction(f, a, e, then))
@@ -1533,7 +1583,7 @@ object MapExpansion extends Expansion {
                 // For the bot game summaries (host.scala)
                 game.note(winner.has(attacker).?("attack-won").|("attack-lost"))
 
-                def next(then : ForcedAction) = Then(CombatReportAction(readers, then))
+                def next(then : ForcedAction) = Then(CombatReportAction(readers, ClanPowerReportAction(then)))
 
                 winner match {
                     case None =>
@@ -1546,7 +1596,7 @@ object MapExpansion extends Expansion {
                         w.log(CombatReport.link("won"), "the fight in", a)
 
                         if (w == attacker)
-                            attackWon(attacker)
+                            attackWon(attacker, a)
 
                         if (game.figures(t, loser) > 0) {
                             // Brand's Bravery: the winning attacker chooses where the loser retreats
@@ -1577,6 +1627,20 @@ object MapExpansion extends Expansion {
 
         case CombatReportDoneAction(_, rest, then) =>
             Then(CombatReportAction(rest, then))
+
+        case ClanPowerReportAction(then) =>
+            game.powerNotes.headOption match {
+                case Some(n) =>
+                    // needOk: an Ask with a single choice is otherwise taken by the runner without showing it
+                    Ask(n.f).add(ClanPowerReportDoneAction(n.f, then)).needOk
+                case None =>
+                    Then(then)
+            }
+
+        case ClanPowerReportDoneAction(f, then) =>
+            game.note("power-report")
+            game.powerNotes = game.powerNotes.%(_.f != f)
+            Then(ClanPowerReportAction(then))
 
         case RetreatAction(f, a, rough, then) =>
             val t = game.board.territory(a)
@@ -1768,16 +1832,21 @@ object MapExpansion extends Expansion {
                 if (f == Stag) {
                     f.fame += 1
                     f.log("gained", 1.hl, "more", FameIcon(), "for closing a territory")
+                    ClanPowers.note(PowerNote(f, |(t.anchor), f.elem ~ " gains 1 fame for each territory it closes.", fame = 1))
                 }
 
-                if (f == Raven)
-                    collect(f, t, "from the closed territory")
+                if (f == Raven) {
+                    val (food, wood, lore) = collect(f, t, "from the closed territory")
+                    if (food + wood + lore > 0)
+                        ClanPowers.note(PowerNote(f, |(t.anchor), f.elem ~ " collects the resources of its own territories closed by exploring.", food, wood, lore))
+                }
             }
 
             // Boar Clan: exploring without closing any territory
             if (closing.none && f == Boar) {
                 f.lore += 1
                 f.log("collected", 1.hl, Lore, "for exploring without closing a territory")
+                ClanPowers.note(PowerNote(f, None, f.elem ~ " collects 1 lore for exploring without closing a territory.", lore = 1))
             }
 
             game.explored = |(tile)
@@ -1789,9 +1858,10 @@ object MapExpansion extends Expansion {
             if (game.has(NewBlood))
                 NewBloodExpansion.explored(f, tile, spot, closed)
 
-            // Horse Clan: 1 wood or a small building for each closed territory
-            val next = ExploreAction(f, 1, times - 1, false, e, then)
+            // The clan power report once the tile is placed (and any creature on it has appeared)
+            val next = ClanPowerReportAction(ExploreAction(f, 1, times - 1, false, e, then))
 
+            // Horse Clan: 1 wood or a small building for each closed territory
             val horse = (f == Horse && closed.any).?(HorseClosedAction(f, closed./(_.anchor), next) : ForcedAction).|(next)
 
             // New Blood: Ox Clan picks the space for its token (OxPicksSpace)
@@ -1839,6 +1909,7 @@ object MapExpansion extends Expansion {
                 val n = b.large.?(2).|(1)
                 f.food += n
                 f.log("collected", n.hl, Food, "for building")
+                ClanPowers.note(PowerNote(f, |(a), f.elem ~ " collects food for each building: 1 for a small one, 2 for a large one.", food = n))
             }
 
             // Glory of the Clan: collect the territory's resources as at harvest
@@ -1856,9 +1927,9 @@ object MapExpansion extends Expansion {
             val l = (e.special == IndustriousBuild).??(replacements(f))
 
             if (l.none)
-                Then(then)
+                Then(ClanPowerReportAction(then))
             else
-                Ask(f).each(l) { case (s, b) => ReplaceBuildingAction(f, s.area, s, b, then) }.add(ReplaceSkipAction(f, then))
+                Ask(f).each(l) { case (s, b) => ReplaceBuildingAction(f, s.area, s, b, ClanPowerReportAction(then)) }.add(ReplaceSkipAction(f, ClanPowerReportAction(then)))
 
         case ReplaceBuildingAction(f, a, s, b, then) =>
             val old = game.buildings(s)

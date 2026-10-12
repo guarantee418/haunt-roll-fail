@@ -217,6 +217,7 @@ object NewBloodExpansion extends Expansion {
                 if (k > 0) {
                     game.pyre ++= 1.to(k).$./(_ => g)
                     f.log("put", k.hl, (k == 1).?("unit").|("units"), "of", g, "on the", "Sacrificial Pyre".hl)
+                    ClanPowers.note(PowerNote(f, |(t.anchor), f.elem ~ " put " ~ k.hl ~ (k == 1).?(" unit").|(" units") ~ " of " ~ g.elem ~ " lost in the fight on the " ~ "Sacrificial Pyre".hl ~ "."))
                     game.note("pyre-capture")
                 }
             }
@@ -272,6 +273,7 @@ object NewBloodExpansion extends Expansion {
                 game.gearPile = game.gearPile.drop(1)
                 game.gear += s -> n
                 f.log("placed", GearName(n), "on the explored tile")
+                ClanPowers.note(PowerNote(f, |(s.area), f.elem ~ " placed " ~ GearName(n).elem ~ " on the explored tile."))
                 game.note("gear-place")
             }
         }
@@ -281,6 +283,7 @@ object NewBloodExpansion extends Expansion {
                 if (game.reserve(f) > 0) {
                     game.addUnits(t.anchor, f, 1)
                     f.log("placed a unit in the closed territory", t.anchor)
+                    ClanPowers.note(PowerNote(f, |(t.anchor), f.elem ~ " placed a unit from its reserve in the closed territory."))
                     game.note("rat-close")
                 }
             }

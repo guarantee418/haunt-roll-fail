@@ -72,6 +72,26 @@ object RobotosSeatOption {
     val all : $[RobotosSeatOption] = MetaAdset.factions./(RobotosSeatOption(_))
 }
 
+// A clan (or Adset seat) played by any bot, Easy, Hard or Robotos. Hidden, added by Meta.botOptions like Robotos, so the
+// Hard bots can tell the human players apart (game.human): they break creature movement ties towards them
+case class BotClanOption(clan : Faction) extends GameOption {
+    val group = "Bots".txt
+    def valueOn = (clan.name + " Clan").txt
+}
+
+object BotClanOption {
+    val all : $[BotClanOption] = Meta.factions./(BotClanOption(_))
+}
+
+case class BotSeatOption(seat : Seat) extends GameOption {
+    val group = "Bots".txt
+    def valueOn = seat.name.txt
+}
+
+object BotSeatOption {
+    val all : $[BotSeatOption] = MetaAdset.factions./(BotSeatOption(_))
+}
+
 // The Automa's difficulty (Solo module): 1, the player also wins with four closed territories with large buildings;
 // 3 and up need the Creatures module; from 4, the Automa draws one more card each year per level above 3
 case class AutomaLevelOption(level : Int) extends GameOption with OneOfGroup with ImportantOption {
@@ -258,6 +278,13 @@ case object ChooseCasualties extends GameOption with ToggleOption {
 case object OxPicksSpace extends GameOption with ToggleOption {
     val group = "Ancestral Equipment".txt
     def valueOn = "Ox picks the space".txt
+}
+
+// The clan power report (ClanPowers in map.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
+// (Meta.mandatoryFor), like ChooseCasualties: older games' replays must not stop on a step they never recorded
+case object ClanPowerReports extends GameOption with ToggleOption {
+    val group = "Clan powers".txt
+    def valueOn = "Reported".txt
 }
 
 // A player who can't pay for Winter takes the Unrest card themselves, by tapping it (TakeUnrestAction in game.scala; asked

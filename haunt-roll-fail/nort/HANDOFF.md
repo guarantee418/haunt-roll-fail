@@ -243,6 +243,24 @@ on. To implement one:
   options of 2026-10-07 (`CombatReportAttackers`, `CombatReportDefenders`) are
   hidden and do nothing, kept so the games that have them still load. Saved
   games replay as they were: recorded moves carry their own continuation.
+- Clan power report (asked for by Robotos, 2026-10-12): a clan power that
+  goes off by itself (Raven's collect and Stag's fame when closing, Boar's
+  lore, Goat's food, Wolf's food and Stag's fame when winning an attack, also
+  against a creature or by Intimidate, Dragon's Pyre captures, Ox's
+  Ancestral Equipment token, Rat's units in closed territories) adds a
+  `PowerNote` to `game.powerNotes` (`ClanPowers.note` in `map.scala`). The
+  next `ClanPowerReportAction` (after each explored tile and its creatures,
+  at the end of a Build, after the combat report) asks each clan with notes
+  to tap a button naming its gains ("Collect 1 Lore", "Gain 1 fame", or OK),
+  under "You activated your clan power in <territory>." and what the power
+  did (`ClanPowerReport`, `ClanPowerCollect`). The gains are made when the
+  power goes off, so the step changes nothing in the game. Interactive powers
+  (Snake, Horse, Lynx, Squirrel, Kraken's tokens) already ask and get none.
+  Only in games with the hidden `ClanPowerReports` option, which
+  `mandatoryFor` gives every new game (older games' replays must not stop on
+  it); never for the Automa. Each player's "Clan Power Report" setting under
+  Interface (`ShowClanPowerReport`, the default, or `SkipClanPowerReport`)
+  shows it or has the UI tap it, like the Combat Report setting.
 - Clan picker: the framework hook `MetaGame.factionInfo` (label, title,
   contents) adds a button next to each faction in the "Play as" list
   (`hrf.scala`); Northgard's shows the clan board
@@ -710,7 +728,14 @@ always plays its own cards.
   early; an attack waits until the defender has passed unless it is worth a
   lot; creatures are steered towards the other players and away from its own
   units (the "Dealing with Creatures" thread: `creatureSpot`, for a tie in the
-  Creature phase, More Creatures and the Ancestral Graveyard). Nothing is
+  Creature phase, More Creatures and the Ancestral Graveyard). A tie in the
+  Creature phase goes first towards the human players it is against
+  (`creatureMove`: the territory fewest steps from their figures, then the
+  most of them on and around it; asked for on Discord on 2026-10-12, as the
+  Automa's creatures head for the player). Bots are told apart by the hidden
+  `BotClanOption` (`BotSeatOption` in Adset) that `Meta.botOptions` adds for
+  every bot seat (`game.human`); in older games only Robotos counts as a bot.
+  Nothing is
   taken from the Automa's cards (`automa.scala`); the territory valuation
   only covers similar ground to their priority lists (resources, buildings,
   closed territories, spaces, nearby enemies).
@@ -755,7 +780,8 @@ always plays its own cards.
   count and number of games; `NORT_TRACE=1` prints each Hard choice with its
   best alternatives (and the hand's card values before a Pass);
   `NORT_TIMING=1` prints decisions over 300 ms; `NORT_UNVALUED=1` prints the
-  actions it left unvalued.
+  actions it left unvalued; `NORT_HUMAN=1` makes the last seat count as a
+  person (`game.human`) and the others as bots.
 - **Results (2026-10-05, JVM host):** Hard in the first seat against Easy bots
   won 25 of 25 three-player core games, 20 of 20 four-player core games, and
   40 of 40 games with random modules and 2–6 players. In all-Hard games the
