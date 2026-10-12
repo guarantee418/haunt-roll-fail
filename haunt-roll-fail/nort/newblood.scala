@@ -105,11 +105,12 @@ case class LynxUnitsAction(self : Faction, to : AreaRef, n : Int, then : ForcedA
 case class PoachingAction(f : Faction, then : ForcedAction) extends ForcedAction
 
 // OX
-case class GearTakeAction(self : Faction, space : SpaceRef, n : Int, then : ForcedAction) extends BaseAction("Ancestral Equipment".hl, "take a token from")(space.area, "(" ~ GearName(n).elem ~ ")") with MapTarget { def target = space.area }
+// The token itself is the target (its space), so two tokens in one territory are told apart on the map
+case class GearTakeAction(self : Faction, space : SpaceRef, n : Int, then : ForcedAction) extends BaseAction("Ancestral Equipment".hl, "take a token from")(space.area, "(" ~ GearName(n).elem ~ ")") with MapTarget { def target = space }
 case class GearAskAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, then : ForcedAction) extends ForcedAction
 case class GearCreatureAskAction(f : Faction, area : AreaRef, e : MoveEffect, attacking : Boolean, then : ForcedAction) extends ForcedAction
 case class GearUseAction(self : Faction, n : Int, area : AreaRef, limit : Int, hero : Boolean, then : ForcedAction) extends BaseAction("Ancestral Equipment".hl, "use a token in the fight in", area)(GearName(n))
-case class TrueHeroAction(self : Faction, space : SpaceRef, building : Building, then : ForcedAction) extends BaseAction("The True Hero".hl, "give up Torfin's second token to remove a building in", space.area)(building) with MapTarget { def target = space.area }
+case class TrueHeroAction(self : Faction, space : SpaceRef, building : Building, then : ForcedAction) extends BaseAction("The True Hero".hl, "give up Torfin's second token to remove a building in", space.area)(building) with MapTarget { def target = space }
 case class GearRerollAction(self : Faction, again : ForcedAction) extends BaseAction("Ancestral Equipment".hl)("Reroll the combat die")
 case class GearKeepAction(self : Faction, keep : ForcedAction) extends BaseAction("Ancestral Equipment".hl)("Keep the result")
 case class WarcraftAfterAction(f : Faction, then : ForcedAction) extends ForcedAction

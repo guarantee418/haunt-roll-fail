@@ -900,10 +900,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             pieces.add(Sprite($(at("ui-target", n)), $(Rectangle(-n / 2, -n / 2, n, n)), $(s)))(sx(x), sy(y))
         }
 
-        // Ox Clan's Ancestral Equipment tokens on their spaces, face up
+        // Ox Clan's Ancestral Equipment tokens on their spaces, face up; tapping one picks that token (GearTakeAction targets its space)
         game.gear.foreach { case (s, n) =>
             val (x, y) = board.point(s)
-            pieces.add(Sprite($(at("token-ox-" + n, 170)), $))(sx(x), sy(y))
+            pieces.add(Sprite($(at("token-ox-" + n, 170)), $(Rectangle(-85, -85, 170, 170)), $(s)))(sx(x), sy(y))
         }
 
         // Territory numbers on every area of the territory, highlighted when it can be chosen; units at its first area
@@ -1124,6 +1124,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     var courtFolded : Boolean = try { hrf.web.Local.get(courtKey, "") == "yes" } catch { case _ : Throwable => false }
 
+    // Where the court is beside the player panels at the top (courtSideways), the tab swaps the row between
+    // the two instead (asked for by Robotos on 2026-10-12, as sharing it left both squashed): the panels across
+    // the row with the court folded into a tab on the left (the default), or the court across the whole row
+    // and no panels. Kept apart from courtFolded, so other screen shapes keep their own choice
+    def courtWideKey = Meta.settingsKey + ".court-wide"
+
+    var courtWide : Boolean = try { hrf.web.Local.get(courtWideKey, "") == "yes" } catch { case _ : Throwable => false }
+
+    // Whether the court is folded (with the panels laid out again by foldCourt) in the present layout
+    def folded = courtSideways.?(courtWide.not).|(courtFolded)
+
     def strip(groups : $[(Elem, $[Elem])]) =
         Div(OnClick(CourtToggle, Div(courtSideways.?("◂").|("▴").txt, styles.stripTab, xlo.pointer)) ~ groups./{ case (title, items) =>
             Div(Div(title, styles.stripTitle) ~ Div(items.any.?(items.merge).|(Div("none".txt, styles.stripEmpty)), styles.stripCards), styles.stripGroup)
@@ -1174,7 +1185,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val groups = automa ++ events ++ victory ++ developments ++ achievements ++ creatures ++ blainn ++ raids
 
-        if (courtFolded) {
+        if (folded) {
             val short = $(automa -> "Automa", events -> "Event", victory -> "Victory", developments -> "Developments", achievements -> "Achievements", creatures -> "Creatures", blainn -> "Jötunn Blainn", raids -> "Raids")
             val titles = short.flatMap { case (g, t) => g.map(x => t -> x._2.num) }
             court.replaceCached("folded " + courtSideways + " " + game.year + " " + titles, foldedStrip(titles), resources, onClick)
@@ -1243,6 +1254,36 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             pyreElem(styles.pyreLarge).div ~
             ("Units on it: " ~ units ~ " (room for " ~ NewBloodExpansion.pyreSize.hl ~ ")").div ~
             CombatText("Enemy casualties go on it after each combat. To harvest, Dragon sacrifices a unit from it (back to its owner) or places one of its deployed units on it.").spn(xstyles.smaller85).div ~
+            HorizontalBreak ~
+            "(tap to close)".spn(xstyles.smaller85).div
+        ).div
+    }
+
+    // Ox Clan's Ancestral Equipment tokens in its panel: those ready face up, those used this year grayed out (so it still shows which)
+    def gearRow : Elem = {
+        val ready = game.gearReady.sorted./(n => Image("token-ox-" + n, styles.gearSmall, "Token " + n + ": " + GearName(n).text))
+        val used = game.gearUsed.sorted./(n => Image("token-ox-" + n, $(styles.gearSmall, styles.offBoard), |("Token " + n + ", used this year")))
+        (ready ++ used).none.?("Ancestral Equipment: none".txt).|((ready ++ used).merge)
+    }
+
+    // All seven tokens: what each does, and where it is (ready, used, on the map or in the pile, which shows its number on top)
+    def gearView : Elem = {
+        val rows = 1.to(7).$./{ n =>
+            val where : Elem =
+                if (game.gearReady.has(n)) "ready".styled(styles.ledgerGain)
+                else if (game.gearUsed.has(n)) "used this year, ready next year".txt
+                else game.gear.find(_._2 == n)./{ case (s, _) => "on the map in " ~ s.area.elem }
+                    .|(game.gearPile.headOption.has(n).?("in the pile, on top".txt).|("in the pile".txt))
+            // Face down when used or in the pile
+            val back = game.gearUsed.has(n) || (game.gear.values.$.has(n).not && game.gearReady.has(n).not)
+            (Image("token-ox" + back.??("-back") + "-" + n, styles.gearLarge, "Token " + n).div(styles.gearCell) ~
+                (("Token " + n).hl ~ ": " ~ CombatText(GearName(n).text)).div(styles.gearCell)(styles.winterCell) ~
+                where.div(styles.gearCell)(styles.winterCell))
+        }
+
+        ((Ox.name.styled(colorOf(Ox)) ~ " " ~ "Ancestral Equipment".hl).hlb.div ~
+            rows.merge.div(styles.gearTable) ~
+            "One token may be used in each fight (two with Torfin); a used token turns face down until the next year.".spn(xstyles.smaller85).div ~
             HorizontalBreak ~
             "(tap to close)".spn(xstyles.smaller85).div
         ).div
@@ -1362,7 +1403,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // New Blood: Kraken's High Tide tokens, Ox's Ancestral Equipment tokens
         val nb = f match {
             case Kraken => ("High Tide: ".txt ~ (2 - game.tides.num).hl ~ " in reserve").div
-            case Ox => ("Equipment: ".txt ~ game.gearReady.num.hl ~ " ready, " ~ game.gearUsed.num.hl ~ " used").div
+            case Ox => OnClick(GearView, gearRow.div(styles.gearRow)(xlo.pointer))
             case Automa => ("Cards: ".txt ~ game.automaActions.num.hl ~ " to play, " ~ game.automaDeck.num.hl ~ " in its pile").div
             case _ => Empty
         }
@@ -1530,7 +1571,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // panels as they are drawn now; None when they aren't drawn yet, or their icons are still loading (an icon
     // takes no room until it has loaded)
     def panelNeed(names : $[String]) : Option[(Double, Double)] = {
-        val uppers = names./~(n => panes.get(n)./~(c => Option(c.node.asInstanceOf[dom.html.Element].querySelector("[class^=nort-status-upper]").asInstanceOf[dom.html.Element])))
+        // hidden panels (the court across the whole row, courtWide) measure nothing
+        val uppers = names./~(n => panes.get(n)./~(c => Option(c.node.asInstanceOf[dom.html.Element].querySelector("[class^=nort-status-upper]").asInstanceOf[dom.html.Element]))).filter(_.getClientRects().length > 0)
 
         def loading(upper : dom.html.Element) = {
             val images = upper.querySelectorAll("img")
@@ -1572,7 +1614,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     var refitTimer : Option[Int] = None
 
     dom.document.addEventListener("load", (e : dom.Event) => {
-        if (courtFolded && e.target.isInstanceOf[dom.html.Image] && statusNames.exists(n => panes.get(n).exists(_.node.contains(e.target.asInstanceOf[dom.Node])))) {
+        if (folded && e.target.isInstanceOf[dom.html.Image] && statusNames.exists(n => panes.get(n).exists(_.node.contains(e.target.asInstanceOf[dom.Node])))) {
             refitTimer.foreach(dom.window.clearTimeout)
             refitTimer = Some(dom.window.setTimeout(() => { refitTimer = None; refitFolded() }, 50))
         }
@@ -1590,7 +1632,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     def refitFolded() {
-        if (courtFolded && foldBasePx > 0 && refitting.not) {
+        if (folded && foldBasePx > 0 && refitting.not) {
             val now = panelNeed(statusNames)
             val stale = now.isDefined && settle(foldNeed, now) != foldNeed
             if (stale || (paneBasePx() - foldBasePx).abs > 0.5) {
@@ -2103,7 +2145,21 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     def foldCourt0(height : Int, extra : Int = 0)(l : $[PanePlacement]) : $[PanePlacement] = l.find(_.name == "court") match {
-        case Some(c) if courtFolded =>
+        // Sideways and swapped: the court takes the whole row and the panels are left out (so hidden)
+        case Some(c) if courtSideways && courtWide =>
+            val r = c.rect
+            val pp = l.filter(_.name.startsWith("status-"))
+            val right = pp./(p => p.rect.x + p.rect.width).maxOption.|(r.x + r.width)
+            val bottom = (r.y + r.height) +: pp./(p => p.rect.y + p.rect.height)
+            val rowH = bottom.max - r.y
+            def under(p : PanePlacement) = bottom.exists(b => (p.rect.y - b).abs <= 3) && p.name.startsWith("status-").not &&
+                p.name != "court" && p.rect.x >= r.x - 3 && p.rect.x + p.rect.width <= right + 3
+            l.filter(p => pp.contains(p).not)./{
+                case p if p.name == "court" => p.copy(rect = Rect(r.x, r.y, right - r.x, rowH))
+                case p if under(p) => p.copy(rect = Rect(p.rect.x, r.y + rowH, p.rect.width, p.rect.y + p.rect.height - r.y - rowH))
+                case p => p
+            }
+        case Some(c) if folded =>
             val r = c.rect
             val basePx = paneBasePx()
             foldBasePx = basePx
@@ -2208,7 +2264,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             loadSplit(splitKind(width, height))
             val base = foldCourt(height)(l)
             val want = (splitP * height).round.toInt
-            val grown = (courtFolded && want > 0).?(foldCourt(height, min(want, height / 2))(l)).|(base)
+            val grown = (folded && want > 0).?(foldCourt(height, min(want, height / 2))(l)).|(base)
             val placed = foldLog(split(width, height, statusBottom(base))(grown))
             onLayout0(placed)
             placeHandles(placed)
@@ -2263,6 +2319,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     override def onClick(a : Any) = a @@ {
         case Some(x) => onClick(x)
+
+        case CourtToggle if courtSideways =>
+            courtWide = courtWide.not
+            try { hrf.web.Local.set(courtWideKey, courtWide.?("yes").|("")) } catch { case _ : Throwable => }
+            resize()
 
         case CourtToggle =>
             courtFolded = courtFolded.not
@@ -2328,6 +2389,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case PyreView =>
             showOverlay(overlayScrollX(pyreView).onClick, onClick)
+
+        case GearView =>
+            showOverlay(overlayScrollX(gearView).onClick, onClick)
 
         // A fight's result tapped in the log
         case FightReportView(r) =>
