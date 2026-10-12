@@ -1234,6 +1234,19 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         Div(Image("token-pyre", styles.pyreImage, "Sacrificial Pyre: " + names) ~ slots.merge, styles.pyre, size)
     }
 
+    // One of Ox Clan's Ancestral Equipment tokens full size, with what it does and whether it is ready
+    def gearView(n : Int) : Elem = {
+        val state = game.gearReady.has(n).?("Ready to use in a fight").|(game.gearUsed.has(n).?("Used this year, ready again next year").|("On the map"))
+
+        ((Ox.name.styled(colorOf(Ox)) ~ " " ~ "Ancestral Equipment".hl).hlb.div ~
+            Image("token-ox-" + n, $(styles.gearLarge, game.gearUsed.has(n).?(styles.offBoard).|(styles.onBoard)), |("Token " + n)).div ~
+            GearName(n).elem.div ~
+            state.txt.div ~
+            CombatText("In each fight Ox Clan may use one ready token (two with Torfin there); a used token is ready again next year.").spn(xstyles.smaller85).div ~
+            HorizontalBreak ~
+            "(tap to close)".spn(xstyles.smaller85).div).div(xlo.flexvcenter)
+    }
+
     def pyreView : Elem = {
         val units = game.pyre.none.?("none".txt).|(game.pyre./(g => g.name.styled(colorOf(g))).join(", "))
 
@@ -1360,7 +1373,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // New Blood: Kraken's High Tide tokens, Ox's Ancestral Equipment tokens
         val nb = f match {
             case Kraken => ("High Tide: ".txt ~ (2 - game.tides.num).hl ~ " in reserve").div
-            case Ox => ("Equipment: ".txt ~ game.gearReady.num.hl ~ " ready, " ~ game.gearUsed.num.hl ~ " used").div
+            // The tokens themselves, ready ones face up and those used this year grayed out; tapping one shows what it does
+            case Ox => (game.gearReady.sorted./(n => (n, true)) ++ game.gearUsed.sorted./(n => (n, false)))./{ case (n, ready) =>
+                OnClick(GearInfo(n), Image("token-ox-" + n, $(styles.gearToken, ready.?(styles.onBoard).|(styles.offBoard)), |("Token " + n + ready.not.??(" (used)"))).spn(xlo.pointer))
+            }.merge.div
             case Automa => ("Cards: ".txt ~ game.automaActions.num.hl ~ " to play, " ~ game.automaDeck.num.hl ~ " in its pile").div
             case _ => Empty
         }
@@ -2326,6 +2342,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case PyreView =>
             showOverlay(overlayScrollX(pyreView).onClick, onClick)
+
+        case GearInfo(n) =>
+            showOverlay(overlayScrollX(gearView(n)).onClick, onClick)
 
         // A fight's result tapped in the log
         case FightReportView(r) =>

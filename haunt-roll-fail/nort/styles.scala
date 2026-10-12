@@ -141,6 +141,9 @@ package object elem {
         object pyre extends CustomStyle(position("relative"), display("inline-block"), vertical.align("middle"))
         object pyreSmall extends CustomStyle(height("1.6em"))
         object pyreLarge extends CustomStyle(height("40vh"), max.height("60vw"), margin.top("1ex"), margin.bottom("1ex"))
+        // Ox Clan's Ancestral Equipment tokens in its panel (the used ones grayed out), and one shown full size
+        object gearToken extends CustomStyle(height("1.5em"), vertical.align("middle"), margin.left("0.05em"), margin.right("0.05em"))
+        object gearLarge extends CustomStyle(height("30vh"), max.height("50vw"), margin.top("1ex"), margin.bottom("1ex"))
         object pyreImage extends CustomStyle(display("block"), height("100%"), width("auto"))
         object pyreSlot0 extends CustomStyle(position("absolute"), left("7.5%"), top("6.6%"), width("26.7%"), height("42.2%"))
         object pyreSlot1 extends CustomStyle(position("absolute"), left("8%"), top("52.8%"), width("26.7%"), height("42.2%"))
