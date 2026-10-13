@@ -576,6 +576,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
     var year = 0
     var first : Faction = setup.headOption.orNull
+    // Who went first this year (the first player marker moves to the first to pass during the year); the player panels start with them
+    var yearFirst : |[Faction] = None
 
     val board = new Board
 
@@ -1467,6 +1469,7 @@ object CommonExpansion extends Expansion {
         // 1. START OF YEAR
         case StartYearAction =>
             game.year += 1
+            game.yearFirst = Some(game.first)
 
             log(DoubleLine)
             log("Year", game.year.hlb)

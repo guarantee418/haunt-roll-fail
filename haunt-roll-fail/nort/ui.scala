@@ -1303,9 +1303,19 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         ).div
     }
 
+    // The player panels left to right in turn order, from the player who went first this year (before the first year, the
+    // first player once picked, else the seat order)
+    def panelOrder : $[Player] =
+        game.yearFirst.orElse(Option(game.first)).flatMap(game.ftp.get).filter(game.players.contains) match {
+            case Some(p) => game.players.dropWhile(_ != p) ++ game.players.takeWhile(_ != p)
+            case None => game.players
+        }
+
+    def statusPane(p : Player) = statuses(panelOrder.indexOf(p))
+
     // Adset: a player who hasn't drafted a clan yet, in their color, with their seat
     def seatStatus(p : Player) {
-        val container = statuses(game.players.indexOf(p))
+        val container = statusPane(p)
         val color = elem.styles.get(AdsetExpansion.color(p))
         val label = p.as[Seat]./(_.name).|("")
         val name = resources.getName(p)./(n => n.styled(color)(styles.title) ~ " " ~ label.txt).|(label.styled(color)(styles.title))
@@ -1333,7 +1343,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     def fameHidden(f : Faction) : Boolean = game.isOver.not && viewers.exists(v => v == f || game.mates(v).has(f)).not
 
     def factionStatus(f : Faction) {
-        val container = statuses(game.players.indexOf(game.ftp(f)))
+        val container = statusPane(game.ftp(f))
 
         // The player's name (human players in online games), then the clan's, in the player's color
         // Tapping it shows the clan's abilities, upgrades and warchief
