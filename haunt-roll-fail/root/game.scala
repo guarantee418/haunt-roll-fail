@@ -1355,7 +1355,7 @@ trait GameImplicits {
             val frog = d.suit == Frog || (d.is[DisguisedCard] && factions.of[InvasiveEEE].any)
 
             lsr.starting @@ {
-                case Some(_) if frog && options.has(FrogCardsSkipLostSouls) => source --> d --> discard.direct
+                case Some(_) if frog && (options.has(FrogCardsSkipLostSouls) || game.frogsSkipLostSouls) => source --> d --> discard.direct
                 case Some(l) => source --> d --> l.lost
                 case _ => source --> d --> discard.direct
             }
@@ -1467,6 +1467,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     def arity = players.num
 
     var ftp = Map[Faction, Player]()
+    var frogsSkipLostSouls = false
     var ptf = Map[Player, Faction]()
 
     players.of[Faction].foreach { f =>
