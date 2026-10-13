@@ -24,7 +24,7 @@ object ReplayCheck {
     )).|($[Meta.O](
         AutumnMap, DefaultClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
         FerryLandmark, LostCityLandmark, SeatingGiven, FactionSeatingGiven, SetupOrderPriority, CardDraftStandard,
-    )).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.$(FrogCardsAfterStartingHands) ++ seating./(IncludeFaction)
+    )).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.$(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls) ++ seating./(IncludeFaction)
 
     def privateMap(o : AnyRef, suffix : String) : Map[Any, Any] = {
         val f = o.getClass.getDeclaredFields.filter(_.getName.endsWith(suffix)).head
@@ -103,6 +103,7 @@ object ReplayCheck {
             case "tc" => $($(MC, ED, WA, TC))
             case "kd" => $($(MC, ED, WA, KD))
             case "ldkd" => $($(MC, ED, LDvE, KD), $(MC, WA, LDvE, KD))
+            case "ldlc" => $($(MC, ED, LDvE, LC), $(MC, WA, LDvE, LC))
             case "marsh5" => $($(MC, ED, WA, VB, LDvE), $(MC, ED, WA, KD, TC))
             case "marsh" => $($(MC, ED, WA, VB), $(MC, ED, WA, LDvE), $(MC, WA, KD, TC))
         }).|($($(MC, WA, LDvE, KD), $(MC, ED, LDvE, KD), $(MC, WA, KD, TC), $(MC, WA, LDvE, TC)))

@@ -1352,7 +1352,10 @@ trait GameImplicits {
         def -->(dest : QuietDiscard.type) {
             val lsr = (factions.drop(1) ++ factions.take(1)).of[Fanatic].%(_.has(LostSouls))
 
+            val frog = d.suit == Frog || (d.is[DisguisedCard] && factions.of[InvasiveEEE].any)
+
             lsr.starting @@ {
+                case Some(_) if frog && options.has(FrogCardsSkipLostSouls) => source --> d --> discard.direct
                 case Some(l) => source --> d --> l.lost
                 case _ => source --> d --> discard.direct
             }
