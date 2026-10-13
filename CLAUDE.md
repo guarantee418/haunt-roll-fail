@@ -534,6 +534,10 @@ file covers the build, server and deploy. No session can ssh to the server
   `root/faction-hero.scala`), the Hundreds can't loot them (Looters in
   `root/faction-horde.scala`), and the Knaves can't aid The Exile
   (`anytime` in `root/hirelings.scala`, `canAidExile` in `root/game.scala`).
+- Lizard Cult crafting (house rule, asked for by the owner on 2026-10-13): gardens of the Outcast suit craft as
+  usual, and every other garden pays only for wild (any suit) cost icons (`WildOnly` in `root/game.scala`, `craft` in
+  `root/faction-fanatic.scala`). Law of Root 10.2.1 allows only Outcast gardens. Not gated by an option: it only adds
+  craft choices, so recorded games replay the same.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.
