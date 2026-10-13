@@ -1643,11 +1643,19 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case s => s.name + " Domination: wins if rules there " + s.name + " clearings at the start of the turn"
         }
 
-        val handcards = (f.hand.num > 5).?(
-            (f.hand.num / 5).times(Image("deck", styles.card5info)) ~ (f.hand.num % 5).times(dt.CardBackInfo)
+        // Frog cards have their own back, so like a Frog card on top of the deck, everyone sees the ones held
+        val frogs = f.hand.get.%(frogBacked(_)).num
+        val others = f.hand.num - frogs
+
+        def backs(n : Int, deck : String, back : Elem) = (n > 5).?(
+            (n / 5).times(Image(deck, styles.card5info)) ~ (n % 5).times(back)
         ).|(
-            (f.hand.num).times(dt.CardBackInfo).merge
+            n.times(back).merge
         )
+
+        val handcards = backs(others, "deck", dt.CardBackInfo) ~ backs(frogs, "deck-frog", dt.CardBackFrogInfo)
+
+        val handHint = "Hand: " + f.hand.num + " cards" + (frogs > 0).??(", " + frogs + " " + Frog.name)
 
         val hand : Elem = (f @@ {
             case f : Trader =>
@@ -1657,17 +1665,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     )
             case f : Fanatic =>
                 (f.hand.none && f.revealed.none).?(Hint("Hand: no cards", "~~~")).|(
-                    Hint("Hand: " + f.hand.num + " cards" + f.revealed.any.??("\nRevealed:\n" + f.revealed.get./(_.name).join("\n")),
+                    Hint(handHint + f.revealed.any.??("\nRevealed:\n" + f.revealed.get./(_.name).join("\n")),
                         handcards ~ f.revealed.get./(_.suit)./(s => dt.CardSuitInfo(s)).merge)
                     )
             case f : Underground =>
                 (f.hand.none && f.revealed.none).?(Hint("Hand: no cards", "~~~")).|(
-                    Hint("Hand: " + f.hand.num + " cards" + f.revealed.any.??("\nRevealed:\n" + f.revealed.get./(_.name).join("\n")),
+                    Hint(handHint + f.revealed.any.??("\nRevealed:\n" + f.revealed.get./(_.name).join("\n")),
                         handcards ~ f.revealed.get./(_.suit)./(s => dt.CardSuitInfo(s)).merge)
                     )
             case _ =>
                 f.hand.none.?(Hint("Hand: no cards", "~~~")).|(
-                    Hint("Hand: " + f.hand.num + " cards", handcards)
+                    Hint(handHint, handcards)
                 )
         }).pointer.onClick.param(("view-hand", f))
 
@@ -2295,6 +2303,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     )
 
     // The shared deck's card back
+    // Frog cards (also when held as another suit with Companions) have the Frog card back
+    def frogBacked(d : DeckCard) : Boolean = d @@ {
+        case DisguisedCard(c, _) => frogBacked(c)
+        case d => d.suit == Frog
+    }
+
+    // A faction's hand as the other players see it: the card backs, the Frog cards last
+    def handBacks(f : Faction) =
+        f.hand.get.sortBy(frogBacked(_))./{ d => Div(Image(frogBacked(d).?("card-frog-back-art").|(deckBack), styles.card), xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined) }.merge
+
     def deckBack = game.options.of[DeckOption].lastOption @@ {
         case Some(ExilesDeck) => "card-back-art-ep"
         case Some(SquiresDeck) => "card-back-art-sd"
@@ -4750,17 +4768,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         case ("view-hand", f : Fanatic) =>
             showOverlay(overlayScrollX((f.name.styled(f) ~ " hand").div ~
-                1.to(f.hand.num)./{ n => Div(Image(deckBack, styles.card), xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined) }.merge ~
+                handBacks(f) ~
                 f.revealed./{ d => OnClick(d, Div(d.img, xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined)) }.merge), onClick)
 
         case ("view-hand", f : Underground) =>
             showOverlay(overlayScrollX((f.name.styled(f) ~ " hand").div ~
-                1.to(f.hand.num)./{ n => Div(Image(deckBack, styles.card), xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined) }.merge ~
+                handBacks(f) ~
                 f.revealed./{ d => OnClick(d, Div(d.img, xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined)) }.merge), onClick)
 
         case ("view-hand", f : Faction) =>
             showOverlay(overlayScrollX((f.name.styled(f) ~ " hand").div ~
-                1.to(f.hand.num)./{ n => Div(Image(deckBack, styles.card), xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined) }.merge), onClick)
+                handBacks(f)), onClick)
 
         case ("view-decree", f : Aviary) =>
             showOverlay(overlayScrollX(

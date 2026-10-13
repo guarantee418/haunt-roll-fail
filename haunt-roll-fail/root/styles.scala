@@ -35,6 +35,7 @@ package object elem {
         }
         val CardEmpty = Image("card-empty", styles.cardback)
         val CardBackInfo = Image("card-back", styles.cardbackinfo, "card")
+        val CardBackFrogInfo = Image("card-back-frog", styles.cardbackinfo, "Frog card")
         def CardSuitInfo(s : SuitCost) = Image("card-suit-" + s + "-gray", styles.cardbackinfo)
         val CardEmptyInfo = Image("card-empty", styles.cardbackinfo, "no card")
 
