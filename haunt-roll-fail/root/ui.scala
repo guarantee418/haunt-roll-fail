@@ -4854,6 +4854,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             overlayPane.invis()
             overlayPane.clear()
 
+        // a card tapped in the log (the log line's action number is dropped by the runner)
+        case List(x) => onClick(x)
+
         case x =>
             println("unknown onClick: " + x)
     }
