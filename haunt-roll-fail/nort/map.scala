@@ -314,18 +314,17 @@ case class FightInfo(attacker : Faction, defender : Faction, area : AreaRef, e :
             )).|($(
                 attacker.conqueror.?(0).|(2 * here.count(_ == Fortress)) -> Fortress.elem
             )) ++ $(
-                (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl,
-                NewBloodExpansion.points(f, t, e, attacking, spent.|(0)) -> "New Blood powers".txt
-            ) ++ game.has(Wastelands).??(WastelandsExpansion.pointParts(f, t, attacking)) ++ $(
+                (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl
+            ) ++ NewBloodExpansion.pointParts(f, t, e, attacking, spent.|(0)) ++ game.has(Wastelands).??(WastelandsExpansion.pointParts(f, t, attacking)) ++ $(
                 spent.|(0) -> Food.elem,
                 die./(_.points).|(0) -> "the die".txt
             )
 
             val casualties = attacking.?($(
-                ((e.special == EgilMove || e.special == FireArrowsMove).??(1) -> "the card".txt)
-            )).|($(towers -> DefenseTower.elem)) ++ $(die./(_.casualties).|(0) -> "the die".txt)
+                (e.special == EgilMove).??(1) -> "the card".txt
+            )).|($(towers -> DefenseTower.elem)) ++ NewBloodExpansion.casualtyParts(f, t, e, attacking) ++ $(die./(_.casualties).|(0) -> "the die".txt)
 
-            FightPoints(f, t, attacking, extra, casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1), choice)
+            FightPoints(f, t, attacking, extra, casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1) + NewBloodExpansion.ignored(f), choice)
         }
 
         val chooser = choosing.?(faces.num).|(-1)
@@ -1607,8 +1606,8 @@ object MapExpansion extends Expansion {
                 if (game.chiefIn(t, attacker) || game.chiefIn(t, defender))
                     game.note("chief-fight")
 
-                attacker.log("scored", CombatIcon.axes(as), extra((FightPoints.others(attacker, t, true) ++ $(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt) ++ aws ++ $(wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl)) : _*), (ac > 0 || halvard > 0).?("and inflicted " ~ CombatIcon.skulls(ac)).|(Empty), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
-                defender.log("scored", CombatIcon.axes(ds), extra((FightPoints.others(defender, t, false) ++ $(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt) ++ dws) : _*), (dc > 0 || shield > 0).?("and inflicted " ~ CombatIcon.skulls(dc)).|(Empty), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
+                attacker.log("scored", CombatIcon.axes(as), extra((FightPoints.others(attacker, t, true) ++ $(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl) ++ NewBloodExpansion.pointParts(attacker, t, e, true, food(0)) ++ aws ++ $(wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl)) : _*), (ac > 0 || halvard > 0).?("and inflicted " ~ CombatIcon.skulls(ac)).|(Empty), (halvard > 0).?("(" ~ 1.hl ~ " ignored by " ~ Warchief.elem(Goat) ~ ")").|(Empty))
+                defender.log("scored", CombatIcon.axes(ds), extra((FightPoints.others(defender, t, false) ++ $(fortress -> Fortress.elem, db -> "Scorched Earth".hl) ++ NewBloodExpansion.pointParts(defender, t, e, false, food(1)) ++ dws) : _*), (dc > 0 || shield > 0).?("and inflicted " ~ CombatIcon.skulls(dc)).|(Empty), extra(towers -> DefenseTower.elem), (shield > 0).?("(" ~ 1.hl ~ " cancelled by " ~ "Shieldbearers".hl ~ ")").|(Empty))
 
                 val winner =
                     if (ac >= du && dc >= au) None
@@ -1622,13 +1621,13 @@ object MapExpansion extends Expansion {
                     FightSide(f, attacking, FightPoints.parts(f, t, attacking, extra), total, casualties, inflicted, lost)
 
                 game.fightReport = |(FightReport(a,
-                    report(attacker, true, $(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl, anb -> "New Blood powers".txt) ++ aws ++ $(wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl, food(0) -> Food.elem, faces(0).points -> "the die".txt),
-                        $(faces(0).casualties -> "the die".txt, (e.special == EgilMove).??(1) -> "the card".txt, NewBloodExpansion.casualties(attacker, t, e, true) -> "New Blood powers".txt, eldrich -> "Eldrich".hl, moon -> "Blood Moon".hl,
-                            -halvard -> ("ignored by " ~ Warchief.elem(Goat)), -NewBloodExpansion.ignored(defender) -> "ignored by New Blood powers".txt, -urdar -> "ignored by Urdarbrunn".hl),
+                    report(attacker, true, $(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl) ++ NewBloodExpansion.pointParts(attacker, t, e, true, food(0)) ++ aws ++ $(wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl, food(0) -> Food.elem, faces(0).points -> "the die".txt),
+                        $(faces(0).casualties -> "the die".txt, (e.special == EgilMove).??(1) -> "the card".txt) ++ NewBloodExpansion.casualtyParts(attacker, t, e, true) ++ $(eldrich -> "Eldrich".hl, moon -> "Blood Moon".hl,
+                            -halvard -> ("ignored by " ~ Warchief.elem(Goat)), -NewBloodExpansion.ignored(defender) -> ("ignored by " ~ "Ancestral Equipment".hl), -urdar -> "ignored by Urdarbrunn".hl),
                         as, ac, math.min(dc, au)),
-                    report(defender, false, $(fortress -> Fortress.elem, db -> "Scorched Earth".hl, dnb -> "New Blood powers".txt) ++ dws ++ $(food(1) -> Food.elem, faces(1).points -> "the die".txt),
-                        $(faces(1).casualties -> "the die".txt, towers -> DefenseTower.elem, NewBloodExpansion.casualties(defender, t, e, false) -> "New Blood powers".txt, moon -> "Blood Moon".hl,
-                            -shield -> ("cancelled by " ~ "Shieldbearers".hl), -NewBloodExpansion.ignored(attacker) -> "ignored by New Blood powers".txt),
+                    report(defender, false, $(fortress -> Fortress.elem, db -> "Scorched Earth".hl) ++ NewBloodExpansion.pointParts(defender, t, e, false, food(1)) ++ dws ++ $(food(1) -> Food.elem, faces(1).points -> "the die".txt),
+                        $(faces(1).casualties -> "the die".txt, towers -> DefenseTower.elem) ++ NewBloodExpansion.casualtyParts(defender, t, e, false) ++ $(moon -> "Blood Moon".hl,
+                            -shield -> ("cancelled by " ~ "Shieldbearers".hl), -NewBloodExpansion.ignored(attacker) -> ("ignored by " ~ "Ancestral Equipment".hl)),
                         ds, dc, math.min(ac, du)),
                     winner./(_ == attacker), winner.exists(w => (w == attacker).?(ac >= du).|(dc >= au))))
 

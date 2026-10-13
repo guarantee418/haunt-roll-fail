@@ -185,8 +185,13 @@ object NewBloodExpansion extends Expansion {
 
     // Combat points from clan powers and cards (e: the attacker's card)
     def points(f : Faction, t : Territory, e : MoveEffect, attacking : Boolean, food : Int)(implicit game : Game) : Int =
-        (attacking && f == Dragon && e.special == GrudgeMove).??(game.pyre.num) +
-        gearPoints(f, food)
+        pointParts(f, t, e, attacking, food).map(_._1).sum
+
+    // The same, each with where it comes from, for the fight info, the log and the combat report
+    def pointParts(f : Faction, t : Territory, e : MoveEffect, attacking : Boolean, food : Int)(implicit game : Game) : $[(Int, Elem)] = $(
+        (attacking && f == Dragon && e.special == GrudgeMove).??(game.pyre.num) -> "Tenacious Grudge".hl,
+        gearPoints(f, food) -> "Ancestral Equipment".hl
+    )
 
     // Ox Clan's Ancestral Equipment tokens used in the fight: their combat points (against creatures too)
     def gearPoints(f : Faction, food : Int)(implicit game : Game) : Int =
@@ -200,9 +205,14 @@ object NewBloodExpansion extends Expansion {
 
     // Casualties from clan powers and cards
     def casualties(f : Faction, t : Territory, e : MoveEffect, attacking : Boolean)(implicit game : Game) : Int =
-        (attacking && e.special == FireArrowsMove).??(1) +
-        (f == Ox && game.gearFight.has(6)).??(1) +
-        (f == Kraken && game.tideIn(t)).??(1)
+        casualtyParts(f, t, e, attacking).map(_._1).sum
+
+    // The same, each with where it comes from, for the fight info and the combat report
+    def casualtyParts(f : Faction, t : Territory, e : MoveEffect, attacking : Boolean)(implicit game : Game) : $[(Int, Elem)] = $(
+        (attacking && e.special == FireArrowsMove).??(1) -> "Fire Arrows".hl,
+        (f == Ox && game.gearFight.has(6)).??(1) -> "Ancestral Equipment".hl,
+        (f == Kraken && game.tideIn(t)).??(1) -> "High Tide".hl
+    )
 
     // Casualties f ignores
     def ignored(f : Faction)(implicit game : Game) : Int = (f == Ox && game.gearFight.has(7)).??(1)
