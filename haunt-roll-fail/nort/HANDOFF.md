@@ -59,7 +59,11 @@ boards are shown by the clan picker's Warchief button).
 - A placement is legal when, after it, every border of every tile still has
   different territories on its two sides (`Board.consistent`). That is the
   rulebook's "borders must not stop in the middle". New tiles must also touch
-  a placed tile and must not join two players' units.
+  a placed tile and must not join two players' units. With `JoinedTilesOnly`
+  (every game since 2026-10-13) only the territories the tile joins are
+  checked (`joins` in `map.scala`); older games check every territory, so a
+  territory already shared anywhere (teammates, Robotos beside a Fallen
+  Valkyrie) stops every placement.
 - A territory is closed when every side owned by its areas has a tile next to
   it. Fame for 2 tiles is 1, for 3 or more tiles 2 (harvest); closing by
   exploring gives the number of tiles.

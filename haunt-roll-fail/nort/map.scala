@@ -702,6 +702,24 @@ object MapExpansion extends Expansion {
         })
     }
 
+    // The players with figures in t (Kaija counts as Bear Clan's)
+    private def occupants(t : Territory)(implicit game : Game) : $[Faction] =
+        (t.areas./~(a => game.unitsAt(a).keys) ++ game.companions.filter(x => t.areas.contains(x._2)).map(_._1) ++ game.chiefs.toList.filter(x => t.areas.contains(x._2)).map(_._1) ++ game.blainn.toList.filter(x => t.areas.contains(x._2)).map(_._1)).distinct
+
+    // A Fallen Valkyrie shares its territory with nobody
+    private def valkyrieIn(t : Territory)(implicit game : Game) : Boolean =
+        game.creatureLine.exists(c => c.kind.shares.not && t.areas.contains(game.creatureAt(c)))
+
+    // JoinedTilesOnly: the tile at (x, y) joins territories holding two players' units, or a player's units and a Fallen Valkyrie
+    // (but not the Robotos bot's, which it ignores, hostileIn). Only the territories joined count: two clans already sharing one
+    // (teammates, or Robotos beside a Valkyrie) elsewhere on the map, or in a territory the tile only extends, stop nothing
+    private def joins(preview : $[Territory], x : Int, y : Int)(implicit game : Game) : Boolean =
+        preview.%(_.areas.exists(a => a.x == x && a.y == y)).exists { t =>
+            val parts = game.board.territories.%(o => o.areas.forall(t.areas.contains)).%(o => occupants(o).any || valkyrieIn(o))
+            val players = parts./~(occupants).distinct
+            parts.num > 1 && (players.num > 1 || players.any && players.exists(game.robotos).not && parts.exists(valkyrieIn))
+        }
+
     private def computePlacements(tile : String, near : Option[$[Territory]], setup : Boolean)(implicit game : Game) : $[(Spot, Int)] = {
         val board = game.board
 
@@ -715,11 +733,10 @@ object MapExpansion extends Expansion {
             0.until(4)./~{ r =>
                 val p = Placement(tile, x, y, r)
                 board.tryPlace(p)./~{ preview =>
-                    // Kaija counts as Bear Clan's, and a Fallen Valkyrie shares its territory with nobody
-                    val mixed = preview.exists { t =>
-                        val players = (t.areas./~(a => game.unitsAt(a).keys) ++ game.companions.filter(x => t.areas.contains(x._2)).map(_._1) ++ game.chiefs.toList.filter(x => t.areas.contains(x._2)).map(_._1) ++ game.blainn.toList.filter(x => t.areas.contains(x._2)).map(_._1)).distinct
-                        players.num > 1 || players.any && game.creatureLine.exists(c => c.kind.shares.not && t.areas.contains(game.creatureAt(c)))
-                    }
+                    val mixed = game.options.has(JoinedTilesOnly).?(joins(preview, x, y)).|(preview.exists { t =>
+                        val players = occupants(t)
+                        players.num > 1 || players.any && valkyrieIn(t)
+                    })
                     val room = setup.not || p.spec.areas.exists(a => preview.find(_.areas.contains(AreaRef(x, y, a.id))).get.areas.forall(b => game.unitsAt(b).isEmpty))
                     (mixed.not && room).?(Spot(x, y) -> r)
                 }
