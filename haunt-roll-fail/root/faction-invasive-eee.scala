@@ -153,7 +153,10 @@ class InvasiveEEEPlayer(val faction : InvasiveEEE)(implicit val game : Game) ext
     def militant = clearings.%(c => at(c).has(MilitantEEE))
     def available = 12 - enclaves.num
 
-    def craft = enclaves./(_.asset)
+    // FrogsCraftByClearing: the clearings whose enclaves crafted this turn; they stay used until the enclave is removed
+    var craftedIn : $[Clearing] = $
+
+    def craft = InvasiveEEEExpansion.craftByClearing.?(enclaves.diff(craftedIn)).|(enclaves)./(_.asset)
 }
 
 
@@ -201,6 +204,13 @@ case class InvasiveEEEFearsAction(f : InvasiveEEE, e : Faction, then : ForcedAct
 // A one-time fix for games started before FrogCardsSkipLostSouls, added to a live game's log by hand: moves the Frog cards
 // in the Lizards' Lost Souls to the Pond and turns the rule on from here (game.frogsSkipLostSouls), then goes on with then
 case class FrogCardsToPondAction(then : ForcedAction) extends ForcedAction with SkipValidate
+
+// The same for FrogsCraftByClearing: turns crafting by clearing on from here (game.frogsCraftByClearing), then goes on with then
+case class FrogsCraftByClearingAction(then : ForcedAction) extends ForcedAction with SkipValidate
+
+// FrogsCraftByClearing: pick the clearings (and any other crafting assets) to craft with, then record them
+case class InvasiveEEECraftSelectAction(self : InvasiveEEE, d : CraftCard, l : $[Clearing], x : $[SuitAsset], m : Message, then : ForcedAction) extends ForcedAction with Soft
+case class InvasiveEEECraftClearingsAction(self : InvasiveEEE, l : $[Clearing], then : ForcedAction) extends ForcedAction with ExpandThen
 
 case class InvasiveEEEPondDrawAction(f : Faction, e : InvasiveEEE, n : Int, m : Message, then : ForcedAction) extends ForcedAction
 case class InvasiveEEEDeckDrawAction(f : Faction, e : InvasiveEEE, n : Int, m : Message, then : ForcedAction) extends ForcedAction
@@ -252,6 +262,21 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
 
             refresh(f, c)
         }
+    }
+
+    def craftByClearing(implicit game : Game) = game.options.has(FrogsCraftByClearing) || game.frogsCraftByClearing
+
+    // FrogsCraftByClearing: crafting assets other than this turn's unused enclaves
+    def craftAssets(f : InvasiveEEE)(implicit game : Game) : $[SuitAsset] = (f.frogCraft ++ f.extraCraft).diff(f.crafted)
+
+    // every way to pay for d: the enclave clearings and the other crafting assets used
+    def craftChoices(f : InvasiveEEE, d : CraftCard)(implicit game : Game) : $[($[Clearing], $[SuitAsset])] = {
+        val costs = d.cost
+        val units : $[Either[Clearing, SuitAsset]] = f.enclaves.diff(f.craftedIn)./(Left(_)) ++ craftAssets(f)./(Right(_))
+
+        units.combinations(costs.num).toList
+            .%(u => costs.permutations.exists(_.lazyZip(u./(_.fold(_.asset, a => a))).forall((c, a) => a.matches(c))))
+            ./(u => (u./~(_.left.toOption), u./~(_.toOption)))
     }
 
     def place(f : InvasiveEEE, c : Clearing, p : EnclaveEEE)(implicit game : Game) {
@@ -349,6 +374,11 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
             then
 
         // POND
+        case FrogsCraftByClearingAction(then) =>
+            game.frogsCraftByClearing = true
+
+            then
+
         case FrogCardsToPondAction(then) =>
             game.frogsSkipLostSouls = true
 
@@ -436,6 +466,8 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
         case ForcedRemoveTargetEffectAction(e, c, f : InvasiveEEE, p : EnclaveEEE, then) =>
             refresh(f, c)
 
+            f.craftedIn = f.craftedIn.but(c)
+
             if (p == PeacefulEEE && e != f && f.watched.none && f.calm.not)
                 f.fears :+= e
 
@@ -511,6 +543,32 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
 
                 f.log("placed", f.warrior.of(f), "in", l./(_.elem).comma, m)
             }
+
+            then
+
+        // CRAFT BY CLEARING
+        case CraftAction(f : InvasiveEEE, d : CraftCard, m, then) if craftByClearing =>
+            val l = craftChoices(f, d)
+
+            if (l.num == 1)
+                Ask(f).done(InvasiveEEECraftClearingsAction(f, l.only._1, CraftAssignAction(f, d, craftAssets(f), l.only._2, m, then)))
+            else
+                InvasiveEEECraftSelectAction(f, d, $, $, m, then)
+
+        case InvasiveEEECraftSelectAction(f, d, l, x, m, then) =>
+            val choices = craftChoices(f, d).%{ case (a, b) => l.diff(a).none && x.diff(b).none }
+            val complete = l.num + x.num == d.cost.num
+
+            Ask(f).group("Craft", d.elem, "using", (l./(c => c.elem ~ " " ~ dt.CraftSuit(c.asset)) ++ x./(dt.CraftSuit)).merge)
+                .each(complete.not.??(choices.flatMap(_._1).distinct.diff(l)))(c => InvasiveEEECraftSelectAction(f, d, l :+ c, x, m, then).as(c, dt.CraftSuit(c.asset)))
+                .each(complete.not.??(choices.flatMap(_._2.diff(x)).distinct))(a => InvasiveEEECraftSelectAction(f, d, l, x :+ a, m, then).as(dt.CraftSuit(a)))
+                .when(complete)(InvasiveEEECraftClearingsAction(f, l, CraftAssignAction(f, d, craftAssets(f), x, m, then)).as("Craft".hh, d.elem))
+                .each(l)(c => InvasiveEEECraftSelectAction(f, d, l.but(c), x, m, then).as("Undo", c))
+                .each(x.distinct)(a => InvasiveEEECraftSelectAction(f, d, l, x.diff($(a)), m, then).as("Undo", dt.CraftSuit(a)))
+                .cancel
+
+        case InvasiveEEECraftClearingsAction(f, l, then) =>
+            f.craftedIn ++= l
 
             then
 
