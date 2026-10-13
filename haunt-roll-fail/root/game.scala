@@ -89,6 +89,11 @@ case class OneOf(suits : $[BaseSuit]) extends SuitAsset {
     def elem = suits./(_.elem).spaceCommaOr
 }
 
+// A crafting piece that pays only for wild (Any suit) costs: Lizard Cult gardens not of the Outcast suit.
+case class WildOnly(suit : BaseSuit) extends SuitAsset {
+    def elem = suit.elem
+}
+
 object OneOf {
     def apply(suits : $[BaseSuit]) : SuitAsset = suits @@ {
         case List(s) => s
