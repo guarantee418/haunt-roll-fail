@@ -2507,7 +2507,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             tutorial.$(ZBasic(Break ~ Break, "Tutorial Lessons".spn, () => onClick(TutorialLessonView(0))).copy(clear = false)) ++
             (tutorial && tutorialTipsHidden && currentGame.isOver.not).$(ZBasic(Break, "Show tutorial tips".spn, () => hideTutorialTips(false)).copy(clear = false)) ++
             $(ZBasic(Break ~ Break, "Interface".spn, () => { callbacks.editSettings { updateStatus() } }).copy(clear = false)) ++
-            $(ZBasic(Break ~ Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug)
+            $(ZBasic(Break ~ Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug) ++
+            $(ZBasic(Break ~ Break, "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle)
     }
 
     var shown : $[Notification] = $
