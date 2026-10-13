@@ -1192,6 +1192,32 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 g.drawImage(resources.images.get(mapid + "blizzard-mark"), x - 32, y - 32)
         }
 
+        // The Gorge art has no clearing circles, so outline each clearing's area (a circle cut flat at the top
+        // and bottom, as in map-regions); without them the pieces under a name were taken for that clearing's
+        if (game.board == GorgeBoard)
+            game.clearings.foreach { c =>
+                val (x, y) = game.board.center(c)
+                val (r, h) = (182, 152)
+
+                g.save()
+                g.beginPath()
+                g.rect(x - r - 10, y - h, 2 * r + 20, 2 * h)
+                g.clip()
+                g.beginPath()
+                g.arc(x, y, r, 0, 2 * math.Pi)
+                g.clip()
+                g.beginPath()
+                g.arc(x, y, r, 0, 2 * math.Pi)
+                g.rect(x - r - 10, y - h, 2 * r + 20, 2 * h)
+                g.lineWidth = 20
+                g.strokeStyle = "rgba(60, 30, 10, 0.4)"
+                g.stroke()
+                g.lineWidth = 9
+                g.strokeStyle = "rgba(255, 245, 220, 0.85)"
+                g.stroke()
+                g.restore()
+            }
+
         drawRule()
 
         // Warriors held prisoner in forests are drawn behind bars

@@ -491,7 +491,9 @@ file covers the build, server and deploy. No session can ssh to the server
   North - East). The Fork - Pueblo path runs only through the dam's tunnel,
   so it makes no forests adjacent: Center and East (and West and North) are
   not, as a player pointed out on 2026-10-12. The bridge path (Homestead -
-  Lookout) divides nothing.
+  Lookout) divides nothing. The art has no clearing circles either, so `drawMap` outlines each
+  clearing's area (the disc of `map-regions`, cut flat at the top and bottom) under the pieces:
+  a player took the Homestead pieces right under the "Forge" name for Forge's (2026-10-13).
 - Root map drawing (`drawMap` in `root/ui.scala`): warriors of the same
   faction and kind in a region are drawn as one figure with a count badge
   (`stacks`, `drawCount`), like the Northgard unit counts. The in-game "Warriors" setting
