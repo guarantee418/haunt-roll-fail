@@ -1652,6 +1652,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
         case f : Faction => Some(f.elem.styled(styles.condensed))
         case e : GameModeElementary => Some(e.elem(this, ModeLog))
         case d : DeckCard => Some(OnClick(d, d.elem.spn(xlo.pointer)))
+        case q : Quest => Some(OnClick(q, q.elem.spn(xlo.pointer)))
         case l : List[Any] => convertForLog(l)
         case x => Some(x)
     }
