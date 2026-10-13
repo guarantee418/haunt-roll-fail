@@ -576,6 +576,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
     var year = 0
     var first : Faction = setup.headOption.orNull
+    // Who went first this year (the first player marker moves to the first to pass during the year); the player panels start with them
+    var yearFirst : |[Faction] = None
 
     val board = new Board
 
@@ -862,9 +864,12 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // Sea module: units away on Raids neither
     def reserve(f : Faction) : Int = unitLimit(f) - onMap(f) - pyre.count(f) - SeaExpansion.raiders(f)
 
+    // Adding no units (a warchief or Kaija moving or retreating alone) leaves no entry: a clan with 0 units
+    // listed in a territory counted as present there for tile placements, and blocked every explore
     def addUnits(a : AreaRef, f : Faction, n : Int) {
         val m = unitsAt(a)
-        units += a -> (m + (f -> (m.getOrElse(f, 0) + n)))
+        val v = m.getOrElse(f, 0) + n
+        units += a -> ((v > 0).?(m + (f -> v)).|(m - f))
     }
 
     // Casualties: units first, then the warchief, Jötunn Blainn (back to his camp), Kaija last
@@ -1467,6 +1472,7 @@ object CommonExpansion extends Expansion {
         // 1. START OF YEAR
         case StartYearAction =>
             game.year += 1
+            game.yearFirst = Some(game.first)
 
             log(DoubleLine)
             log("Year", game.year.hlb)
