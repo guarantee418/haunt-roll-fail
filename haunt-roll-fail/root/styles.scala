@@ -45,6 +45,7 @@ package object elem {
             case s @ AnySuit => Image("craft-suit-" + s, styles.dt.token, "any suit")
             case OneOf(List(s)) => Image("craft-suit-" + s, styles.dt.token, s.toString)
             case OneOf(l) => Image("craft-suit-" + l.mkString("-"), styles.dt.token, l.mkString("-"))
+            case WildOnly(s) => Image("craft-suit-" + s, styles.dt.token, s.toString + " (any suit costs only)")
         }
 
         val VP = Span("VP", xstyles.smaller75, styles.vp)

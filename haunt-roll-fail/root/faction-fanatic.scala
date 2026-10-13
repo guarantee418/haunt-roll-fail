@@ -76,7 +76,8 @@ class FanaticPlayer(val faction : Fanatic)(implicit val game : Game) extends Fac
 
     val rubble = location(Rubble, u => u.faction == faction && u.piece.is[Garden])
 
-    def craft = outcast./~(s => Council.governedFor(faction, all(Garden(s)))./(_ => s))
+    // Gardens of the Outcast suit craft as usual; the other gardens pay only for wild (Any suit) costs.
+    def craft = FoxRabbitMouse./~(s => Council.governedFor(faction, all(Garden(s)))./(_ => outcast.has(s).?[SuitAsset](s).|(WildOnly(s))))
 }
 
 
