@@ -392,6 +392,9 @@ GitHub repository, `guarantee418/hrf-games`, and fixed through it.
   post is logged as `Bug report not posted: ...` (see `live-server.sh log`).
 - Reports never include the page URL, because player links contain the
   player's secret.
+- Under "Report a Bug", every game's in-game menu has a "Main Menu" button (asked for by Robotos on
+  2026-10-13): it loads `/play/<meta>` afresh (`returnToTitle` in `hrf.scala`), where online and saved
+  local games can be picked up again; a game kept only in memory (Training Grounds) asks first.
 
 ## Several sessions or accounts
 
