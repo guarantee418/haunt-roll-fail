@@ -363,7 +363,7 @@ object SquiresDeckExpansion extends Expansion {
             XXSelectObjectsAction(f, f.hand)
                 .withGroup(SkyCouriers.elem ~ " spends cards to draw one more")
                 .withRule(_.atLeast(1))
-                .withThen(SkyCouriersAction(f, _))(l => "Spend".hl ~ l./(" " ~ _.elem) ~ " to draw " ~ (l.num + 1).hl ~ " " ~ (l.num + 1).cards)
+                .withThen(SkyCouriersAction(f, _))(l => "Spend".hl ~ l./(" " ~ _.elem) ~ " to draw " ~ (l.num + 1).cards)
                 .withExtra($(NoHand, CancelAction))
 
         case SkyCouriersAction(f, l) =>
