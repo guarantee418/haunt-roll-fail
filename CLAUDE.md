@@ -539,7 +539,10 @@ file covers the build, server and deploy. No session can ssh to the server
 - Discarded Frog cards skip the Lizard Cult's Lost Souls and go straight to the Pond (or the playtest Lilypads'
   piles), and so do Companions' disguised Frog cards (asked for by the owner on 2026-10-13). New games get the hidden
   default option `FrogCardsSkipLostSouls` (`root/meta.scala`, checked in `QuietDiscard` in `root/game.scala`); older
-  games keep putting them in the Lost Souls. `ReplayCheck <games> ldlc` plays Lilypad with the Lizards.
+  games keep putting them in the Lost Souls. `ReplayCheck <games> ldlc` plays Lilypad with the Lizards. A running
+  game can be switched over by hand: replace the last line of its log (a forced action `X`, e.g. `Next`) with
+  `FrogCardsToPondAction(X)` through an `hrf-games` fix; it moves any Frog cards in the Lost Souls to the Pond and sets
+  `game.frogsSkipLostSouls` (done for Power for Destiny on 2026-10-13).
 - Knaves items are the Captains' items, not crafted items: the Vagabond
   can't take them in trade when it aids the Knaves (`AidTradeAction` in
   `root/faction-hero.scala`), the Hundreds can't loot them (Looters in

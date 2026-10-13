@@ -198,6 +198,10 @@ case class InvasiveEEEIntegrateAction(self : InvasiveEEE, d : DeckCard, s : Base
 
 case class InvasiveEEEFearsAction(f : InvasiveEEE, e : Faction, then : ForcedAction) extends ForcedAction
 
+// A one-time fix for games started before FrogCardsSkipLostSouls, added to a live game's log by hand: moves the Frog cards
+// in the Lizards' Lost Souls to the Pond and turns the rule on from here (game.frogsSkipLostSouls), then goes on with then
+case class FrogCardsToPondAction(then : ForcedAction) extends ForcedAction with SkipValidate
+
 case class InvasiveEEEPondDrawAction(f : Faction, e : InvasiveEEE, n : Int, m : Message, then : ForcedAction) extends ForcedAction
 case class InvasiveEEEDeckDrawAction(f : Faction, e : InvasiveEEE, n : Int, m : Message, then : ForcedAction) extends ForcedAction
 case class InvasiveEEEDrawnAction(e : InvasiveEEE, then : ForcedAction) extends ForcedAction
@@ -345,6 +349,19 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
             then
 
         // POND
+        case FrogCardsToPondAction(then) =>
+            game.frogsSkipLostSouls = true
+
+            factions.of[Fanatic].foreach { l =>
+                l.lost.%(_.suit == Frog).foreach { d =>
+                    l.lost --> d --> discard.direct
+
+                    log(d, "went from the", "Lost Souls".styled(l), "to the", "Pond".styled(factions.of[InvasiveEEE].first))
+                }
+            }
+
+            then
+
         case ShufflePileAction(l, then) if factions.of[InvasiveEEE].exists(_.pond.any) =>
             factions.of[InvasiveEEE].foreach { e =>
                 e.pond --> pile
