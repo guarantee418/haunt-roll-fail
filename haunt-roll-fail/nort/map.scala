@@ -212,7 +212,7 @@ case class ReplaceBuildingAction(self : Faction, area : AreaRef, space : SpaceRe
 case class ReplaceSkipAction(self : Faction, then : ForcedAction) extends BaseAction("Industrious Villagers")("Keep the buildings")
 
 // FEAST
-case class FeastChoiceAction(self : Faction, effect : Effect, then : ForcedAction) extends BaseAction("Feast")(FeastLabel(effect))
+case class FeastChoiceAction(self : Faction, effect : Effect, then : ForcedAction) extends BaseAction("Feast")(FeastText(effect))
 
 object SpaceLabel {
     def apply(k : SpaceKind) : String = k match {
@@ -235,6 +235,19 @@ case class BuildingLabel(b : Building, cost : Int) extends GameElementary {
 // How many of a building are left in the supply (7 of each, less those on the map)
 case class SupplyLeft(b : Building) extends GameElementary {
     def elem(implicit game : Game) = "(" ~ game.buildingsLeft(b).hl ~ " left in supply)"
+}
+
+// How many map tiles are left in the pile to explore with (after the ones drawn)
+case object TilesLeft extends GameElementary {
+    def elem(implicit game : Game) = "(" ~ game.pile.num.hl ~ " " ~ (game.pile.num == 1).?("tile").|("tiles") ~ " left in pile)"
+}
+
+// A Feast (or Teamwork) choice's button: Explore says how many tiles are left in the pile
+case class FeastText(e : Effect) extends GameElementary {
+    def elem(implicit game : Game) = e match {
+        case _ : ExploreEffect => FeastLabel(e).txt ~ " " ~ TilesLeft.elem
+        case _ => FeastLabel(e).txt
+    }
 }
 
 object FeastLabel {

@@ -99,7 +99,7 @@ case class BriberyToAction(self : Faction, from : AreaRef, enemy : Faction, to :
 case class BriberyUnitsAction(self : Faction, from : AreaRef, enemy : Faction, to : AreaRef, n : Int, then : ForcedAction) extends BaseAction("Bribery", "move", enemy, "units from", from, "to", to)(Figures(n, false))
 
 case class TeamworkAction(f : Faction, done : $[Effect], then : ForcedAction) extends ForcedAction
-case class TeamworkChoiceAction(self : Faction, e : Effect, done : $[Effect], then : ForcedAction) extends BaseAction("Teamwork", done.any.?("second action").|("first action"))(FeastLabel(e))
+case class TeamworkChoiceAction(self : Faction, e : Effect, done : $[Effect], then : ForcedAction) extends BaseAction("Teamwork", done.any.?("second action").|("first action"))(FeastText(e))
 
 case class AnnexationOrderAction(self : Faction, exploreFirst : Boolean, then : ForcedAction) extends BaseAction("Annexation")(exploreFirst.?("Explore, then Move 1").|("Move 1, then maybe Explore"))
 case class AnnexationExploreAction(f : Faction, then : ForcedAction) extends ForcedAction
