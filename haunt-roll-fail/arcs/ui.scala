@@ -1901,7 +1901,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, title : String, val opti
                         updateStatus()
                 }
             }).copy(clear = false)) ++
-            $(ZBasic(Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug)
+            $(ZBasic(Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug) ++
+            $(ZBasic(Break, "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle)
     }
 
     var shown : $[Notification] = $

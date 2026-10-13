@@ -324,7 +324,8 @@ case class FightInfo(attacker : Faction, defender : Faction, area : AreaRef, e :
 }
 
 // The same for a fight against a creature
-case class CreatureFightInfo(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean) extends GameElementary {
+// food, die: what the player spent and rolled so far (the reroll step), counted in
+case class CreatureFightInfo(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int = 0, die : |[DieFace] = None) extends GameElementary {
     def elem(implicit game : Game) = {
         val t = game.board.territory(area)
         val waste = game.has(Wastelands)
@@ -336,8 +337,12 @@ case class CreatureFightInfo(f : Faction, area : AreaRef, c : Creature, e : Move
             (attacking && f == Dragon && e.special == GrudgeMove).??(game.pyre.num) -> "Tenacious Grudge".hl,
             attacking.not.??(2 * game.working(t).count(_ == Fortress)) -> Fortress.elem,
             (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl,
-            NewBloodExpansion.gearPoints(f, 0) -> "Ancestral Equipment".hl
-        ) ++ waste.??(WastelandsExpansion.playerCreatureParts(f, t, attacking))
+            NewBloodExpansion.gearPoints(f, food) -> "Ancestral Equipment".hl
+        ) ++ waste.??(WastelandsExpansion.playerCreatureParts(f, t, attacking)) ++ $(
+            food -> Food.elem,
+            // Casualties don't hurt creatures, so a player always takes the point
+            die./(d => d.choice.?(1).|(d.points)).|(0) -> "the die".txt
+        )
 
         val more = waste.??(WastelandsExpansion.creatureParts(c, t, attacking))
         val bonus = more.map(_._1).sum
@@ -345,6 +350,28 @@ case class CreatureFightInfo(f : Faction, area : AreaRef, c : Creature, e : Move
         "The fight is in ".txt ~ area.elem ~ Break ~
         FightPoints(f, t, attacking, extra, $, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1) + NewBloodExpansion.ignored(f)) ~ Break ~
         c.elem ~ ": " ~ CombatIcon.axes(c.kind.value + bonus) ~ more.any.?(" (" ~ ($(c.kind.value -> "its strength".txt) ++ more)./{ case (n, what) => n.hl ~ " from " ~ what }.join(", ") ~ ")").|(Empty)
+    }
+}
+
+// Liv's reroll (Warchiefs module) and Ancestral Equipment 3 (Ox Clan): what the die showed and where the fight stands
+// with it, above "Reroll the combat die" and "Keep the result"; keep: the Keep action's next step, which holds the face
+case class RerollInfoAction(self : Faction, liv : Boolean, keep : ForcedAction) extends BaseInfo((g : Game) => liv.?(Warchief.elem(Raven)(g)).|("Ancestral Equipment".hl))(RerollInfo(keep))
+
+// (in a block of its own: the info box lays out its contents in a row, which would drop the line breaks)
+case class RerollInfo(keep : ForcedAction) extends GameElementary {
+    def elem(implicit game : Game) = lines.div(xlo.fullwidth)
+
+    def lines(implicit game : Game) : Elem = keep match {
+        case CombatFaceAction(attacker, defender, a, e, food, faces, face, _) =>
+            // A "point or casualty" face is shown both ways, as when choosing
+            val info = face.choice.?(FightInfo(attacker, defender, a, e, food, faces, true)).|(FightInfo(attacker, defender, a, e, food, faces :+ face))
+
+            "You rolled ".txt ~ face.elem ~ Break ~ info.elem ~ faces.none.?(Break ~ defender.elem ~ " rolls after you").|(Empty)
+
+        case CreatureFaceAction(f, a, c, e, attacking, food, face, _) =>
+            "You rolled ".txt ~ face.elem ~ Break ~ CreatureFightInfo(f, a, c, e, attacking, food, |(face)).elem ~ Break ~ c.elem ~ " rolls after you"
+
+        case _ => Empty
     }
 }
 
@@ -1445,12 +1472,14 @@ object MapExpansion extends Expansion {
             // Liv may reroll once (Warchiefs module)
             if (Warchief.reroll(game.board.territory(a), self))
                 Ask(self)
+                    .add(RerollInfoAction(self, true, CombatFaceAction(attacker, defender, a, e, food, faces, face, then)))
                     .add(LivRerollAction(self, CombatRerollAction(attacker, defender, a, e, food, faces, then)))
                     .add(LivKeepAction(self, CombatFaceAction(attacker, defender, a, e, food, faces, face, then)))
             else
             // Ancestral Equipment 3 (Ox Clan): roll again
             if (self == Ox && game.gearFight.has(3))
                 Ask(self)
+                    .add(RerollInfoAction(self, false, CombatFaceAction(attacker, defender, a, e, food, faces, face, then)))
                     .add(GearRerollAction(self, CombatRerollAction(attacker, defender, a, e, food, faces, then)))
                     .add(GearKeepAction(self, CombatFaceAction(attacker, defender, a, e, food, faces, face, then)))
             else

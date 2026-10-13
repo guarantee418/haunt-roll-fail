@@ -271,6 +271,8 @@ trait Callbacks {
     def editSettings(onEdit : => Unit) : Unit
     def canReportBug : Boolean
     def reportBug() : Unit
+    def canReturnToTitle : Boolean
+    def returnToTitle() : Unit
 }
 
 sealed trait Difficulty
@@ -1886,6 +1888,15 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     }
                 }
                 def settings = main.settings
+                // "Main Menu" under "Report a Bug": loads the game's main menu afresh, so nothing of this game's UI
+                // is left over. Online and saved local games can be picked up again from there; a game kept only
+                // in memory (Training Grounds, URL-started games) asks first, as it would be lost
+                def canReturnToTitle = HRF.offline.not
+                def returnToTitle() = {
+                    val unsaved = journal.is[MemoryJournal[_]] && HRF.lobby.none
+                    if (unsaved.not || dom.window.confirm("This game isn't saved and will be lost. Leave it for the main menu?"))
+                        dom.document.location.assign("/play/" + meta.name)
+                }
                 def canReportBug = HRF.server.any && HRF.offline.not
                 def reportBug() = {
                     journal.read(0) { actions =>

@@ -668,6 +668,7 @@ object French {
         "Log" -> "Journal",
         "log" -> "journal",
         "Report a Bug" -> "Signaler un bug",
+        "Main Menu" -> "Menu principal",
         "Undo" -> "Annuler",
         "Reset All Settings" -> "Réinitialiser les réglages",
         "Save Game Online" -> "Sauvegarder la partie en ligne",

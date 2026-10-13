@@ -557,12 +557,14 @@ object CreaturesExpansion extends Expansion {
             // Liv may reroll once (Warchiefs module)
             if (Warchief.reroll(game.board.territory(a), f))
                 Ask(f)
+                    .add(RerollInfoAction(f, true, CreatureFaceAction(f, a, c, e, attacking, food, face, then)))
                     .add(LivRerollAction(f, CreatureRerollAction(f, a, c, e, attacking, food, then)))
                     .add(LivKeepAction(f, CreatureFaceAction(f, a, c, e, attacking, food, face, then)))
             else
             // Ancestral Equipment 3 (Ox Clan): roll again
             if (f == Ox && game.gearFight.has(3))
                 Ask(f)
+                    .add(RerollInfoAction(f, false, CreatureFaceAction(f, a, c, e, attacking, food, face, then)))
                     .add(GearRerollAction(f, CreatureRerollAction(f, a, c, e, attacking, food, then)))
                     .add(GearKeepAction(f, CreatureFaceAction(f, a, c, e, attacking, food, face, then)))
             else
