@@ -178,9 +178,9 @@ case class ScorchedSkipAction(self : Faction, then : ForcedAction) extends BaseA
 case class ExploreAction(f : Faction, draw : Int, times : Int, redraw : Boolean, e : ExploreEffect, then : ForcedAction) extends ForcedAction
 case class ExploreDrawAction(f : Faction, draw : Int, tries : Int, times : Int, redraw : Boolean, e : ExploreEffect, then : ForcedAction) extends ForcedAction
 case class ExploreChooseAction(f : Faction, times : Int, redraw : Boolean, e : ExploreEffect, then : ForcedAction) extends ForcedAction
-case class ExploreTileAction(self : Faction, tile : String, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Explore with")(TileRef(tile), TilesLeft) with Soft with ViewObject[TileRef] { def obj = TileRef(tile) }
+case class ExploreTileAction(self : Faction, tile : String, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Explore with")(TileRef(tile)) with Soft with ViewObject[TileRef] { def obj = TileRef(tile) }
 // The drawn tile, shown above the spots so it is known before choosing where it goes
-case class ExploreTileInfoAction(self : Faction, tile : String) extends BaseInfo("Exploring with")(TileRef(tile), TilesLeft) with ViewObject[TileRef] with OnClickInfo { def obj = TileRef(tile) ; def param = TileRef(tile) }
+case class ExploreTileInfoAction(self : Faction, tile : String) extends BaseInfo("Exploring with")(TileRef(tile)) with ViewObject[TileRef] with OnClickInfo { def obj = TileRef(tile) ; def param = TileRef(tile) }
 case class ExploreSpotAction(self : Faction, tile : String, spot : Spot, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at")(spot) with Soft with MapTarget { def target = spot }
 case class ExploreRotateAction(self : Faction, tile : String, spot : Spot, r : Int, d : Int, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft with MapTarget { def target = RotateMark(d) }
 case class ExploreTurnAction(self : Faction, tile : String, spot : Spot, r : Int, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Place the tile at", spot)("Confirm") with TilePreview
@@ -212,7 +212,7 @@ case class ReplaceBuildingAction(self : Faction, area : AreaRef, space : SpaceRe
 case class ReplaceSkipAction(self : Faction, then : ForcedAction) extends BaseAction("Industrious Villagers")("Keep the buildings")
 
 // FEAST
-case class FeastChoiceAction(self : Faction, effect : Effect, then : ForcedAction) extends BaseAction("Feast")(FeastLabel(effect))
+case class FeastChoiceAction(self : Faction, effect : Effect, then : ForcedAction) extends BaseAction("Feast")(FeastText(effect))
 
 object SpaceLabel {
     def apply(k : SpaceKind) : String = k match {
@@ -240,6 +240,14 @@ case class SupplyLeft(b : Building) extends GameElementary {
 // How many map tiles are left in the pile to explore with (after the ones drawn)
 case object TilesLeft extends GameElementary {
     def elem(implicit game : Game) = "(" ~ game.pile.num.hl ~ " " ~ (game.pile.num == 1).?("tile").|("tiles") ~ " left in pile)"
+}
+
+// A Feast (or Teamwork) choice's button: Explore says how many tiles are left in the pile
+case class FeastText(e : Effect) extends GameElementary {
+    def elem(implicit game : Game) = e match {
+        case _ : ExploreEffect => FeastLabel(e).txt ~ " " ~ TilesLeft.elem
+        case _ => FeastLabel(e).txt
+    }
 }
 
 object FeastLabel {
