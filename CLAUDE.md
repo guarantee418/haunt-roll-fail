@@ -541,6 +541,12 @@ file covers the build, server and deploy. No session can ssh to the server
   game can be switched over by hand: replace the last line of its log (a forced action `X`, e.g. `Next`) with
   `FrogCardsToPondAction(X)` through an `hrf-games` fix; it moves any Frog cards in the Lost Souls to the Pond and sets
   `game.frogsSkipLostSouls` (done for Power for Destiny on 2026-10-13).
+- Lilypad Diaspora crafts by clearing (asked for by the owner on 2026-10-13): when more than one set of its enclaves could
+  pay for a card, it picks the clearings (`InvasiveEEECraftSelectAction`), and the enclaves used stay used for the turn
+  (`craftedIn` in `InvasiveEEEPlayer`) until removed (`ForcedRemoveTargetEffectAction`), so losing an unused enclave
+  doesn't use up the craft of a used one, and flipping a used enclave doesn't free it. New games get the hidden default
+  option `FrogsCraftByClearing` (`root/meta.scala`); older games craft by suit as before. A running game can be switched
+  the same way as above, with `FrogsCraftByClearingAction(X)` (sets `game.frogsCraftByClearing`).
 - Knaves items are the Captains' items, not crafted items: the Vagabond
   can't take them in trade when it aids the Knaves (`AidTradeAction` in
   `root/faction-hero.scala`), the Hundreds can't loot them (Looters in

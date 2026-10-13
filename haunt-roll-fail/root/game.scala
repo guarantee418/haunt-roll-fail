@@ -1468,6 +1468,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
 
     var ftp = Map[Faction, Player]()
     var frogsSkipLostSouls = false
+    var frogsCraftByClearing = false
     var ptf = Map[Player, Faction]()
 
     players.of[Faction].foreach { f =>

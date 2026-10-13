@@ -314,6 +314,7 @@ object TurnExpansion extends MandatoryExpansion {
 
         case CleanUpAction(f) =>
             f.crafted = $
+            f.as[InvasiveEEE].foreach(_.craftedIn = $)
             f.extraCraft = $
             f.services = $
 

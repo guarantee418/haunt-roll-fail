@@ -321,6 +321,14 @@ case object FrogCardsSkipLostSouls extends GameOption with ToggleOption {
     val valueOn = "Frog".hh ~ " cards skip the " ~ "Lost Souls".hh
 }
 
+// Lilypad Diaspora picks which clearings' enclaves it crafts with, and an enclave used this turn stays used
+// when another is removed. Hidden and on by default for new games; older games keep crafting by suit only
+// so their replays don't change.
+case object FrogsCraftByClearing extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Lilypad Diaspora".hh ~ " crafts by clearing"
+}
+
 
 case object AutoHitsAssignmentMode extends GameOption with ToggleOption {
     val group = "Async"
@@ -1235,7 +1243,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1256,6 +1264,7 @@ object Meta extends MetaGame {
         CardDraftStandard,
         FrogCardsAfterStartingHands,
         FrogCardsSkipLostSouls,
+        FrogsCraftByClearing,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
