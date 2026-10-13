@@ -72,6 +72,7 @@ object MetaAdset extends MetaGame {
         SetupOrderReverse,
         CardDraftFive,
         FrogCardsAfterStartingHands,
+        FrogCardsSkipLostSouls,
         FolkHeroCharacter,
         RandomCharacter,
         MapDefaultLandmarks,

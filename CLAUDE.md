@@ -533,6 +533,10 @@ file covers the build, server and deploy. No session can ssh to the server
   then waits for `SetupDoneAction` (`faction-invasive-eee.scala`); games started before it keep shuffling them
   in during Lilypad's setup, so their replays don't change. `ReplayCheck <games> ldkd` checks starting hands
   (`oldfrogs` for the old timing).
+- Discarded Frog cards skip the Lizard Cult's Lost Souls and go straight to the Pond (or the playtest Lilypads'
+  piles), and so do Companions' disguised Frog cards (asked for by the owner on 2026-10-13). New games get the hidden
+  default option `FrogCardsSkipLostSouls` (`root/meta.scala`, checked in `QuietDiscard` in `root/game.scala`); older
+  games keep putting them in the Lost Souls. `ReplayCheck <games> ldlc` plays Lilypad with the Lizards.
 - Knaves items are the Captains' items, not crafted items: the Vagabond
   can't take them in trade when it aids the Knaves (`AidTradeAction` in
   `root/faction-hero.scala`), the Hundreds can't loot them (Looters in

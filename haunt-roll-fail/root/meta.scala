@@ -313,6 +313,14 @@ case object FrogCardsAfterStartingHands extends GameOption with ToggleOption {
     val valueOn = "Frog".hh ~ " cards after starting hands"
 }
 
+// Discarded Frog cards skip the Lizard Cult's Lost Souls and go straight to the Pond (or the other Lilypad
+// versions' piles). Hidden and on by default for new games; older games keep sending them to the Lost Souls
+// so their replays don't change.
+case object FrogCardsSkipLostSouls extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Frog".hh ~ " cards skip the " ~ "Lost Souls".hh
+}
+
 
 case object AutoHitsAssignmentMode extends GameOption with ToggleOption {
     val group = "Async"
@@ -1227,7 +1235,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1247,6 +1255,7 @@ object Meta extends MetaGame {
         SetupOrderPriority,
         CardDraftStandard,
         FrogCardsAfterStartingHands,
+        FrogCardsSkipLostSouls,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
