@@ -1526,6 +1526,7 @@ object Meta extends MetaGame {
     ConditionalAssetsList((factions, options) => true, "icon/card")(
         ImageAsset("card-back"             ) ::
         ImageAsset("card-back-frog"        ) ::
+        ImageAsset("card-back-frog-hl"     ) ::
         ImageAsset("card-empty"            ) ::
         ImageAsset("card-separator"        ) ::
 
@@ -1538,6 +1539,7 @@ object Meta extends MetaGame {
 
         ImageAsset("deck" ) ::
         ImageAsset("deck-frog" ) ::
+        ImageAsset("deck-frog-hl" ) ::
 
         ImageAsset("pile-empty"  ) ::
         ImageAsset("pile-bird"   ) ::
@@ -3065,6 +3067,7 @@ object Meta extends MetaGame {
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[InvasiveEEE].any, "faction/invasive/card", lzy = Laziness.Later, scale = 50)(
         ImageAsset("card-frog-back-art") ::
+        ImageAsset("hl-card-frog-back-art") ::
         ImageAsset("frog-ambush", "hl-frog-ambush") ::
         ImageAsset("hl-frog-dominance") ::
         ImageAsset("hl-rabbit-laborers") ::

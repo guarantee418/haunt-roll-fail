@@ -595,7 +595,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         val frogOnTop = diaspora.any && game.deck.get.headOption.exists(Deck.frogEEE.has)
 
         $(
-            (frogOnTop.?("deck-frog").|("deck"), "Deck", game.deck.num, "view-deck"),
+            (frogOnTop.?("deck-frog-hl").|("deck"), "Deck", game.deck.num, "view-deck"),
             ("pile-" + game.pile.any.?(game.pile.last.suit).|("empty"), "Discard Pile", game.pile.num, "view-discard")
         ) ++
         diaspora./(f => (f.pond.any.?("pile-frog").|("pile-empty"), "Pond", f.pond.num, ("view-frog-deck", f))) ++
@@ -1653,7 +1653,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             n.times(back).merge
         )
 
-        val handcards = backs(others, "deck", dt.CardBackInfo) ~ backs(frogs, "deck-frog", dt.CardBackFrogInfo)
+        val handcards = backs(others, "deck", dt.CardBackInfo) ~ backs(frogs, frogDeckIcon, Image(frogBackIcon, styles.cardbackinfo, "Frog card"))
 
         val handHint = "Hand: " + f.hand.num + " cards" + (frogs > 0).??(", " + frogs + " " + Frog.name)
 
@@ -2309,9 +2309,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         case d => d.suit == Frog
     }
 
+    // The Homeland Frog cards have the official back (from the TTS Homeland mod), the playtest ones the old art
+    def homelandFrogs = factions.of[InvasiveEEE].any
+    def frogBackArt = homelandFrogs.?("hl-card-frog-back-art").|("card-frog-back-art")
+    def frogBackIcon = homelandFrogs.?("card-back-frog-hl").|("card-back-frog")
+    def frogDeckIcon = homelandFrogs.?("deck-frog-hl").|("deck-frog")
+
     // A faction's hand as the other players see it: the card backs, the Frog cards last
     def handBacks(f : Faction) =
-        f.hand.get.sortBy(frogBacked(_))./{ d => Div(Image(frogBacked(d).?("card-frog-back-art").|(deckBack), styles.card), xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined) }.merge
+        f.hand.get.sortBy(frogBacked(_))./{ d => Div(Image(frogBacked(d).?(frogBackArt).|(deckBack), styles.card), xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined) }.merge
 
     def deckBack = game.options.of[DeckOption].lastOption @@ {
         case Some(ExilesDeck) => "card-back-art-ep"
@@ -4739,8 +4745,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 game.quests.take(3)./{ q => OnClick(q, Div(q.img, xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined)) }.merge), onClick)
 
         case "view-deck" =>
+            // a Frog card on top shows its back
+            val frogOnTop = homelandFrogs && game.deck.get.headOption.exists(Deck.frogEEE.has)
+
             showOverlay(overlayScrollX("Draw Deck".hl.div ~
-                1.to(game.deck.num)./{ n => Div(Image(deckBack, styles.card), xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined) }.merge), onClick)
+                1.to(game.deck.num)./{ n => Div(Image((n == 1 && frogOnTop).?(frogBackArt).|(deckBack), styles.card), xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined) }.merge), onClick)
 
         case ("view-frog-deck", f : InvasiveEEE) =>
             showOverlay(overlayScrollX(("Pond".styled(f) ~ " (top card first)").div ~
@@ -4893,7 +4902,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         val discard =
             (
-                (game.deck.num.formatted("%2d").hl.styled(styles.doubleFigures) ~ Image(frogOnTop.?("deck-frog").|("deck"), styles.pile)).pointer.onClick.param("view-deck") ~
+                (game.deck.num.formatted("%2d").hl.styled(styles.doubleFigures) ~ Image(frogOnTop.?("deck-frog-hl").|("deck"), styles.pile)).pointer.onClick.param("view-deck") ~
                 Gap ~
                 (game.pile.num.formatted("%2d").hl.styled(styles.doubleFigures) ~ Image("pile-" + game.pile.any.?(game.pile.last.suit).|("empty"), styles.pile)).pointer.onClick.param("view-discard") ~
                 pond.filter(_ => hor.not)./(Gap ~ _)
