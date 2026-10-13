@@ -1304,12 +1304,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     // The player panels left to right in turn order, from the player who went first this year (before the first year, the
-    // first player once picked, else the seat order)
-    def panelOrder : $[Player] =
-        game.yearFirst.orElse(Option(game.first)).flatMap(game.ftp.get).filter(game.players.contains) match {
-            case Some(p) => game.players.dropWhile(_ != p) ++ game.players.takeWhile(_ != p)
-            case None => game.players
+    // first player once picked, else the seat order). Adset plays in its random seat order (game.seats), not the players' order
+    def panelOrder : $[Player] = {
+        val order = game.seats.any.?(game.seats).|(game.players)
+
+        game.yearFirst.orElse(Option(game.first)).flatMap(game.ftp.get).filter(order.contains) match {
+            case Some(p) => order.dropWhile(_ != p) ++ order.takeWhile(_ != p)
+            case None => order
         }
+    }
 
     def statusPane(p : Player) = statuses(panelOrder.indexOf(p))
 
