@@ -280,6 +280,15 @@ case object OxPicksSpace extends GameOption with ToggleOption {
     def valueOn = "Ox picks the space".txt
 }
 
+// A tile placement is refused only when it joins two players' units (or a player's units and a Fallen Valkyrie) into one
+// territory: the territories it is part of are checked, not every territory on the map (MapExpansion.placements). Without it,
+// teammates sharing a territory, or the Robotos bot's units beside a Fallen Valkyrie, anywhere, stopped every Explore.
+// Hidden, and given to every new game (Meta.mandatoryFor): older games drew and set aside other tiles, and their replays must not change
+case object JoinedTilesOnly extends GameOption with ToggleOption {
+    val group = "Tile placement".txt
+    def valueOn = "Checks only the territories joined".txt
+}
+
 // Svarn's Menders brings back the warchief, the companion (Kaija, Brundr and Kaelinn, Brok) and Jötunn Blainn among the
 // casualties too, not only units (the owner's ruling of 2026-10-12; figures lost for having nowhere to retreat still stay lost).
 // Hidden, and given to every new game (Meta.mandatoryFor): older games brought back units only, and their replays must not stop
