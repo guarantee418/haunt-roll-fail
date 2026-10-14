@@ -2062,12 +2062,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     (Image(f.style + "-peaceful", styles.token) *** f.peaceful.num) ~
                     (Image(f.style + "-militant", styles.token) *** f.militant.num) ~
                     (Image("empty-token", styles.token) *** f.available)) ~
-                Gap ~
-                Hint("Pond\n" + f.pond.num + " " + Frog.name + " cards, top card shown",
-                    (
-                        (f.pond.num.formatted("%2d").hl.styled(styles.doubleFigures) ~ Image(f.pond.any.?("pile-frog").|("pile-empty"), styles.pile))
-                    ).&.pointer.onClick.param("view-frog-deck", f)
-                ).div(xstyles.smaller75) ~
+                // (the Pond is with the deck and the discard pile, like the Lost Souls, as any player can draw from it)
                 (game.current == f).?(Gap ~ 1.to(3)./(_ => Image("action-black", styles.building)).take(f.acted) ~ (1.to(3)./(_ => Image(f.style + "-action", styles.building))).drop(f.acted)) ~
                 Div(Hint("Frogs\n" + f.all(f.warrior).num + " on the map\n" + f.pooled(f.warrior) + " available",
                 &((Image(f.style + "-frog-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-frog", styles.wr) *** (f.all(f.warrior).num % 5))) ~

@@ -987,7 +987,10 @@ list. In short:
 - **sbt isn't installed.** Download it:
   `curl -sSL -o sbt.tgz https://github.com/sbt/sbt/releases/download/v1.11.2/sbt-1.11.2.tgz && tar xzf sbt.tgz`.
   Then `cd scala-js-dom-reduced && sbt publishLocal` once. Maven Central
-  sometimes answers 429 (rate limited); retry after a minute.
+  sometimes answers 429 (rate limited); retry after a minute, or put Google's
+  mirror first in `~/.sbt/repositories` (`[repositories]`, `local`,
+  `gcs: https://maven-central.storage-download.googleapis.com/maven2/`, `maven-central`,
+  and the `sbt-plugin-releases` ivy line) and run sbt with `-Dsbt.override.build.repos=true`.
 - **Client:** `cd haunt-roll-fail && SBT_OPTS="-Xmx6G -Xss4M" sbt -batch fullOptJS`
   (about 2–4 minutes). Commit only `hrf-opt.js`, `hrf-opt.js.map`,
   `hrf-opt/main.js` and `hrf-opt/main.js.map` from `target/`; restore or
