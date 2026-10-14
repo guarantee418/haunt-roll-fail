@@ -1,0 +1,12 @@
+{
+  "name": "hrf-site-test",
+  "private": true,
+  "description": "Loads the live site in Chrome, starts a game and reports load times, errors and screenshots",
+  "main": "site-test.js",
+  "scripts": {
+    "test": "node site-test.js"
+  },
+  "dependencies": {
+    "puppeteer": "^23.11.1"
+  }
+}
