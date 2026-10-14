@@ -73,6 +73,8 @@ case class AdsetPickAction(self : Player, clan : Faction, rest : $[Player]) exte
 // The draft, shown to everyone while it lasts; tapping a clan shows its info
 case class AdsetClanInfo(clan : Faction)
 case class AdsetClanInfoAction(title : Elem, clan : Faction) extends BaseInfo(title)(AdsetExpansion.clanTile(clan, false)) with AdsetDraftChoice with OnClickInfo { def param = AdsetClanInfo(clan) }
+// The first year's Development cards and the Achievements, dealt before the draft, shown to everyone while it lasts (also in the court pane, UI.drawCards)
+case class AdsetCardInfoAction(title : Elem, card : Card) extends BaseInfo(title)(card.handStack(1)) with ViewObject[Card] with OnClickInfo { def obj = card ; def param = card }
 // The three map tiles a seat drew, shown to it until it picks its clan; tapping one shows it full screen
 case class AdsetTileInfoAction(title : Elem, tile : String) extends BaseInfo(title)(Image("tile-" + tile, styles.seatTile)) with OnClickInfo { def param = TileRef(tile) }
 
@@ -132,6 +134,8 @@ object AdsetExpansion extends Expansion {
             $(Info("Seats:", game.seats.zipWithIndex./{ case (p, i) => ((i + 1) + ". ").hl ~ seatElem(p).styled(color(p)) ~ game.ptf.get(p)./(c => " " ~ c.name.hlb).|(Empty) }.join(", "))) ++
             game.banned.any.$(Info("Banned:", game.banned./(_.name.hl).join(", "))) ++
             actions.exists(a => a.unwrap.is[AdsetBanAction] || a.unwrap.is[AdsetPickAction]).not.??(remaining./(c => AdsetClanInfoAction("Clans in the draft".hl, c))) ++
+            game.developments.take(game.arity)./(c => AdsetCardInfoAction("Developments, year 1".hl, c)) ++
+            game.achievements./(c => AdsetCardInfoAction("Achievements, year ".hl ~ game.lastYear.hlb, c)) ++
             player./~(game.seatTiles.get).|($)./(t => AdsetTileInfoAction("Your map tiles".hl, t))
         )
 

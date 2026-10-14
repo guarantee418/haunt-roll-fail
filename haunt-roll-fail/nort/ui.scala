@@ -1152,17 +1152,20 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             case "Jötunn Blainn" => "Blainn"
             case t => t
         }
-        OnClick(CourtToggle, Div(Div(courtSideways.?("▸").|("▾").txt, styles.stripTab) ~ Div(courtSideways.?(("Year " ~ game.year.hlb ~ "/" ~ game.lastYear.hl).spn(item)).|(("Year " ~ game.year.hlb ~ " of " ~ game.lastYear.hl).spn(item)) ~ titles./{ case (t, n) => (courtSideways.?(short(t)).|(t) ~ " " ~ ("(" + n + ")").hl).spn(item) }.merge, courtSideways.?(styles.stripFoldedSideText).|(styles.stripFoldedText)), courtSideways.?(styles.stripFoldedSide).|(styles.stripFolded), xlo.pointer))
+        OnClick(CourtToggle, Div(Div(courtSideways.?("▸").|("▾").txt, styles.stripTab) ~ Div((game.year == 0).?("Setup".hlb.spn(item)).|(courtSideways.?(("Year " ~ game.year.hlb ~ "/" ~ game.lastYear.hl).spn(item)).|(("Year " ~ game.year.hlb ~ " of " ~ game.lastYear.hl).spn(item))) ~ titles./{ case (t, n) => (courtSideways.?(short(t)).|(t) ~ " " ~ ("(" + n + ")").hl).spn(item) }.merge, courtSideways.?(styles.stripFoldedSideText).|(styles.stripFoldedText)), courtSideways.?(styles.stripFoldedSide).|(styles.stripFolded), xlo.pointer))
     }
 
     // Your hand and played cards are in the action pane, like in Arcs and Root (Game.info, TurnModeAction)
     def drawCards() {
-        if (game.year == 0)
+        // Adset: the first year's Development cards and the Achievements are dealt before the draft and shown during it
+        val draft = game.year == 0 && game.adset && game.seats.any
+
+        if (game.year == 0 && draft.not)
             return
 
         val last = game.year == game.lastYear
 
-        val developments = last.not.$(("Developments, year " ~ game.year.hlb ~ " of " ~ game.lastYear.hl) -> game.display)
+        val developments = last.not.$(("Developments, year " ~ draft.?(1).|(game.year).hlb ~ " of " ~ game.lastYear.hl) -> draft.?(game.developments.take(game.arity)).|(game.display))
 
         val achievements = $(("Achievements" ~ last.not.?(", year " ~ game.lastYear.hl).|(Empty)) -> last.?(game.display).|(game.achievements))
 
@@ -1188,10 +1191,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         if (folded) {
             val short = $(automa -> "Automa", events -> "Event", victory -> "Victory", developments -> "Developments", achievements -> "Achievements", creatures -> "Creatures", blainn -> "Jötunn Blainn", raids -> "Raids")
             val titles = short.flatMap { case (g, t) => g.map(x => t -> x._2.num) }
-            court.replaceCached("folded " + courtSideways + " " + game.year + " " + titles, foldedStrip(titles), resources, onClick)
+            court.replaceCached("folded " + courtSideways + " " + game.year + " " + draft + " " + titles, foldedStrip(titles), resources, onClick)
         }
         else
-            court.replaceCached((courtSideways, game.year, game.display, game.achievements, game.creatureLine, game.event, game.eventDeck.num, game.victory, game.automaPlayed, game.raids, game.raidKept, game.jotnarCamp, game.blainn./(_._1)).toString, strip(groups./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
+            court.replaceCached((courtSideways, game.year, draft, game.display, game.achievements, game.creatureLine, game.event, game.eventDeck.num, game.victory, game.automaPlayed, game.raids, game.raidKept, game.jotnarCamp, game.blainn./(_._1)).toString, strip(groups./{ case (t, l) => t -> l./(stripCard) }), resources, onClick)
     }
 
     // The Winter cost chart, with each clan on its row and what f has to pay with
