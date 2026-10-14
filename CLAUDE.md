@@ -74,7 +74,9 @@ its own meta, `nort-adset` (`MetaAdset` in `nort/adset.scala`, URL `/play/nort-a
 a free-for-all whose players are seats (`Seat`, "Player #n") that draft their clans
 during setup (random seat order, players + 2 clans drawn, a ban, Wilderness or
 Wastelands, the central tile, then picks and placements from the last seat), always
-with Creatures and the Horizons Development cards. `Game` takes `players` (clans,
+with Creatures and the Horizons Development cards. The first year's Development cards and the Achievements
+are dealt before the draft and shown during it, in the action pane (`AdsetCardInfoAction`) and the card strip
+(`drawCards` in `nort/ui.scala`; asked for by Gman on 2026-10-14). `Game` takes `players` (clans,
 or seats in Adset) and maps them with `ptf`/`ftp`, as Root's Advanced Setup does;
 asks for a clan go to its seat in `loggedPerform`, and the in-game choices are added
 to `game.options` (`addOption`). Solo, Quick and Local (hotseat) games are saved in the
