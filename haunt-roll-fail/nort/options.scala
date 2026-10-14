@@ -273,6 +273,30 @@ case object FirstSeatStarts extends GameOption with ToggleOption {
     )
 }
 
+// FAME: whether the player panels show every clan's fame (nort/ui.scala, fameHidden). Private is the rule (the fame tokens are
+// kept face down) and the default; games made before the choice have neither option and stay private
+trait FameChoice extends GameOption with OneOfGroup {
+    val group = "Fame".txt
+}
+
+case object PrivateFame extends FameChoice {
+    def valueOn = "Private fame".txt
+    override val explain = $(
+        "The rules: fame tokens are kept face down. Each player sees only their own fame (and their teammates'), everyone's once the game is over.",
+    )
+}
+
+case object PublicFame extends FameChoice {
+    def valueOn = "Public fame".txt
+    override val explain = $(
+        "Every player's fame is shown in the player panels all game.",
+    )
+}
+
+object FameChoice {
+    val all : $[FameChoice] = $(PrivateFame, PublicFame)
+}
+
 
 // Casualties are chosen by their player: units, the warchief, Kaija (or Brundr and Kaelinn, or Brok) and Jötunn Blainn,
 // in any mix (CasualtyPickAction in map.scala; asked for by Robotos on 2026-10-11). Hidden, and given to every new game
