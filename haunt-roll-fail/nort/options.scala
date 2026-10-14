@@ -240,6 +240,18 @@ case object NoDrawDevelopments extends GameOption with ToggleOption {
     lazy val cards : $[Card] = (Cards.early ++ Cards.advanced).%((_, info) => info.effect.is[DrawEffect]).lefts./(Development(_))
 }
 
+// Leaves Defensive Strategy (an Advanced Development card that cancels another player's card) out of the decks
+// (Game: ShuffledEarlyAction, ShuffledAdvancedAction)
+case object NoDefensiveStrategy extends GameOption with ToggleOption {
+    val group = "Development cards".txt
+    def valueOn = "Ban Defensive Strategy".txt
+    override val explain = $(
+        "Removes " ~ "Defensive Strategy".hl ~ " from the Development cards, so no card played can be cancelled.",
+    )
+
+    val cards : $[Card] = $(Development("defensive-strategy"))
+}
+
 // Uncharted Horizons' 5 Early and 8 Advanced Development cards and 2 Achievement cards, shuffled into their decks
 // (Game: ShuffledEarlyAction, ShuffledAdvancedAction, ShuffledAchievementsAction; effects in horizon-devs.scala)
 case object HorizonsDevelopments extends GameOption with ToggleOption {

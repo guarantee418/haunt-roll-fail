@@ -35,6 +35,7 @@ draws a tile when no neutral territory is left.
 | Creatures module (core box), with the More Creatures variant | done 2026-10-03 (`creatures.scala`) |
 | Warchiefs module (Warchiefs expansion) | done 2026-10-03 (`warchiefs.scala`) |
 | "Ban card draw developments" house rule (not in the rulebook): leaves out Merchant, Market Place, Upgraded Market Place, Upgraded Trading Post, Greater Trade Routes, Trading Post and Cunning Merchant | done 2026-10-05 (`NoDrawDevelopments` in `options.scala`); Negociation, Spy, Ancestral Curse and Veiled Threats stay |
+| "Ban Defensive Strategy" house rule (not in the rulebook): leaves Defensive Strategy out of the Development cards | done 2026-10-14 (`NoDefensiveStrategy` in `options.scala`), in the main setup and in Adset |
 | The Warchiefs box's 7 extra clan upgrade cards | done 2026-10-03: with the module, or alone with "Warchief upgrade cards only" in the "Warchiefs module" section |
 | Wilderness expansion: Environment tiles and five more creatures, with the Ancestral Graveyard and the Wyvern's Den | done 2026-10-04 (`wilderness.scala`, see Wilderness below) |
 | New Blood: seven more clans with their warchiefs and 28 clan cards | done 2026-10-04 (`newblood.scala`, see New Blood below) |
