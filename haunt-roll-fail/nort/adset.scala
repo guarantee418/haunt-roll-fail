@@ -344,7 +344,7 @@ object MetaAdset extends MetaGame {
 
     override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly)
 
-    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ WarchiefsChoice.all ++ $(NoDefensiveStrategy) ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ hiddenOptions
+    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ WarchiefsChoice.all ++ $(NoDefensiveStrategy) ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ hiddenOptions
 
     // With two players the second seat doesn't choose: an expansion is agreed on here, or none
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -354,7 +354,7 @@ object MetaAdset extends MetaGame {
 
     override def optionShown(o : O, selected : $[O]) = Meta.optionShown(o, selected)
 
-    override def defaultsFor(n : Int, l : $[F]) = $(YearsOption.standard, StandardVictory, VictoryModeOption(false), (n > 2).?(LandsSeatChooses).|(LandsNeither))
+    override def defaultsFor(n : Int, l : $[F]) = $(YearsOption.standard, StandardVictory, VictoryModeOption(false), PrivateFame, (n > 2).?(LandsSeatChooses).|(LandsNeither))
 
     override def quickOptions = Map()
 

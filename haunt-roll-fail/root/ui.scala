@@ -2202,7 +2202,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 f.captains.indexed./((k, i) => Hint(k.name + "\n" + k.text, (Image(f.style + "-captain-" + k.name.toLowerCase, styles.wr) ~ " " ~ f.is(k).?(k.name.hl).|(f.retired.has(k).?(k.name.txt).|(k.name.styled(f))) ~ f.retired.has(k).?(" (retired)".txt)).div(styles.minister))).merge ~
                 Hint("Acclaim\n" + f.all(Acclaim).num + " on the map\n" + f.pooled(Acclaim) + " available",
                     (Image("empty-token", styles.token) *** f.all(Acclaim).num) ~ (Image(f.style + "-acclaim", styles.token) *** f.pooled(Acclaim))) ~ Break ~
-                Hint("Prisoners\n" + f.prisoners.num + " in the forests", ("Prisoners ".txt ~ f.prisoners.num.hl).div) ~
+                f.prisoners.any.?(Hint("Prisoners\n" + f.prisoners.num + " in the forests", prisonerLine(f, styles.wr).div)).|(Empty) ~
                 Div(Hint("Skunks\n" + f.allr(f.warrior).num + " on the map\n" + f.pooled(f.warrior) + " available",
                 &((Image(f.style + "-skunk-x5", styles.wr) *** (f.allr(f.warrior).num / 5)) ~ (Image(f.style + "-skunk", styles.wr) *** (f.allr(f.warrior).num % 5))) ~
                 &((Image(f.style + "-skunk-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-skunk-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
@@ -2297,6 +2297,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         helper.&((Image(al + "-x5"   , styles.wr3x) *** (extra / 5)) ~ (Image(al              , styles.wr3x) *** (extra % 5))) ~
         helper.&((Image(id + "-empty", styles.wr3x) *** (rest  % 5)) ~ (Image(id + "-x5-empty", styles.wr3x) *** (rest  / 5)))
     )
+
+    // The Knaves' prisoners as figures, grouped by faction in turn order
+    def prisonerLine(f : Knaves, style : Style) =
+        f.prisoners.sortBy(p => game.factions.indexOf(p.faction))./(p => Image(p.imgid, style)).merge
 
     def warriorLineNoGroup(id : String, count : Int, rest : Int) = helper.&(
         helper.&(Image(id, styles.wr3x) *** count) ~ helper.&(Image(id + "-empty", styles.wr3x) *** rest)
@@ -3541,6 +3545,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     HGap ~
                     HGap ~
                     desc(f.all(Acclaim).num.hl.larger, "acclaim on the map,", f.pooled(Acclaim).hl.larger, "in reserve,", f.prisoners.num.hl.larger, "prisoners") ~
+                    f.prisoners.any.?(HGap ~ prisonerLine(f, styles.wr3x).div).|(Empty) ~
                     HGap ~
                     HGap ~
                     HGap ~
