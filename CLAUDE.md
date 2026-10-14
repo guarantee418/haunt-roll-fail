@@ -563,6 +563,11 @@ file covers the build, server and deploy. No session can ssh to the server
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.
+- Root's layout (`layoutsFor` in `root/ui.scala`) mostly picks the "-fulldim" map, which fills the window's height, so
+  going full screen used to widen the map and squeeze the player boards, log and cards (MaKoBwoY, 2026-10-14). In full
+  screen the map is now capped at the height the window had before (`mapMaxHeight`, remembered per screen width as
+  `root.windowed-height.<width>`, else 90% of the screen; `FullDimPane`'s `maxHeight` in `panes-again.scala`), so the
+  side panes keep their width and the action pane takes the extra height. Other games don't pass `maxHeight`.
 - Tapping a Root faction's status pane opens its overlay (`onFactionStatus` in
   `root/ui.scala`) with its faction board. The boards of the base and
   expansion factions (`boardImage`; `mc-board`,

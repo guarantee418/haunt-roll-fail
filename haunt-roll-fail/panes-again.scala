@@ -120,9 +120,11 @@ trait UIPane {
     def pane(width : Int, height : Int, fontSize : Double) : Pane
 }
 
-case class FullDimPane(name : String, kX : Double, kY : Double, pr : Priorities = Priorities()) extends UIPane {
-    def fontSize(width : Int, height : Int) = min(width / kX, height / kY)
-    def pane(width : Int, height : Int, fontSize : Double) = {
+// Fills the whole height (or width), no taller than maxHeight
+case class FullDimPane(name : String, kX : Double, kY : Double, pr : Priorities = Priorities(), maxHeight : Int = Int.MaxValue) extends UIPane {
+    def fontSize(width : Int, height : Int) = min(width / kX, min(height, maxHeight) / kY)
+    def pane(width : Int, fullHeight : Int, fontSize : Double) = {
+        val height = min(fullHeight, maxHeight)
         val wfh = height / kY * kX
         val hfw = width / kX * kY
 
