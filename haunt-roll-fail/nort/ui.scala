@@ -1346,7 +1346,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     // Fame tokens are kept face down: the panels show only the viewer's and its teammates' fame, everyone's once the game is over
-    def fameHidden(f : Faction) : Boolean = game.isOver.not && viewers.exists(v => v == f || game.mates(v).has(f)).not
+    // or in games set to Public fame
+    def fameHidden(f : Faction) : Boolean = game.isOver.not && game.options.has(PublicFame).not && viewers.exists(v => v == f || game.mates(v).has(f)).not
 
     def factionStatus(f : Faction) {
         val container = statusPane(game.ftp(f))
