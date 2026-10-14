@@ -66,9 +66,13 @@ package object elem {
         object card extends CustomStyle(display("inline-block"), width("22ex"), max.width("90%"), margin("0.3ex"))
         object handCard extends CustomStyle(display("block"), width("var(--nort-hand-card, 22ex)"))
         // Copies of the same card in hand, stacked (Card.handStack): each layer leaves room up and to the right for the copy behind
-        object stackLayer extends CustomStyle(display("block"), width("fit-content"), position("relative"), padding.top("calc(0.07 * var(--nort-hand-card, 22ex))"), padding.right("calc(0.07 * var(--nort-hand-card, 22ex))"))
-        object stackBack extends CustomStyle(position("absolute"), top("0"), right("0"), filter("brightness(0.6)"))
-        object stackFront extends CustomStyle(position("relative"))
+        object stackLayer extends CustomStyle(display("block"), width("fit-content"), position("relative"), padding.top("calc(0.1 * var(--nort-hand-card, 22ex))"), padding.right("calc(0.1 * var(--nort-hand-card, 22ex))"))
+        // The copies behind: darker, with a light edge, so they don't blur into the card in front
+        object stackBack extends CustomStyle(position("absolute"), top("0"), right("0"), filter("brightness(0.5)"), outline.color("#ffffffa0"), outline.style("solid"), outline.width("1px"), SimpleCSSRule("outline-offset", "-1px"))
+        // The card in front casts a shadow up and to the right, onto the copies behind
+        object stackFront extends CustomStyle(display("block"), width("fit-content"), position("relative"), filter("drop-shadow(0.25ex -0.25ex 0.4ex #000000e0)"))
+        // How many copies, in the front card's bottom right corner (over the art, clear of the card's text at the top)
+        object stackCount extends CustomStyle(position("absolute"), right("4%"), bottom("3%"), padding("0.1em 0.5em"), border.radius("0.8em"), background.color("#000000c8"), SimpleCSSRule("border", "2px solid #e8b84a"), color("#ffffff"), font.weight("bold"), font.size("calc(0.17 * var(--nort-hand-card, 22ex))"), line.height("1.2"), SimpleCSSRule("pointer-events", "none"))
         // Training Fields Action cards: seven of them, so smaller than hand cards outside the ultrawide layout
         object drillCard extends CustomStyle(display("block"), width("var(--nort-hand-card, 12ex)"))
         // Raid cards are landscape: twice a hand card's width
