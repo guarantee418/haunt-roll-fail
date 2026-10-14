@@ -4983,7 +4983,32 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     val zoom = 0.72
 
-    val layouts = $(Layout("base", $(
+    // In full screen the map keeps the height it had in the window, and the room it gains goes to the other panes
+    // (MaKoBwoY, 2026-10-14): the browser's height before full screen is remembered per screen width, or taken as 90%
+    var mapMaxHeight : Int = Int.MaxValue
+
+    def fullScreen = dom.document.fullscreenElement != null || (dom.window.innerHeight >= dom.window.screen.height && dom.window.innerWidth >= dom.window.screen.width)
+
+    override def resize() {
+        val width = dom.window.innerWidth.~
+        val height = dom.window.innerHeight.~
+        val key = settingsKey + ".windowed-height." + width
+
+        mapMaxHeight = Int.MaxValue
+
+        try {
+            if (fullScreen.not)
+                Local.set(key, height.toString)
+            else
+            if (width > height)
+                mapMaxHeight = Local.get(key, "").toIntOption.filter(_ < height).|((height * 0.9).round.toInt)
+        }
+        catch { case e : Throwable => }
+
+        super.resize()
+    }
+
+    def layoutsFor(mapMaxHeight : Int) = $(Layout("base", $(
                 BasicPane("status", 12.2+0.8+0.8-0.8-0.8, 16.4, Priorities(top = 2, right = 2, maxXscale = 1.8, maxYscale = 1.4)),
                 BasicPane("status-game-a", 10.5+0.5, 10, Priorities(grow = -1, maxXscale = 1.8, maxYscale = 2.4)),
                 BasicPane("status-game-b", 35, 4.4, Priorities(top = 1, grow = -1, maxXscale = 3.0, maxYscale = 3.2)),
@@ -4997,7 +5022,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         )
     )./~(l =>
         l.copy(name = l.name + "-fulldim", panes = l.panes./{
-            case p : BasicPane if p.name == "map-small" => FullDimPane(p.name, p.kX, p.kY, p.pr)
+            case p : BasicPane if p.name == "map-small" => FullDimPane(p.name, p.kX, p.kY, p.pr, mapMaxHeight)
             case p => p
         }, boost = 1.1) ::
         l.copy(name = l.name + "-plus20", panes = l.panes./{
@@ -5066,13 +5091,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         $
     )
 
-    val layoutsNoGameStatus = layouts.%(_.name.endsWith("-gameStatusA"))./(l => l.copy(panes = l.panes.%(_.name != "status-game")))
+    def layouter = layouters.getOrElseUpdate((mapMaxHeight, gameStatusShown), {
+        val layouts = layoutsFor(mapMaxHeight)
 
-    def layouter = gameStatusShown.?(layouterGameStatus).|(layouterNoGameStatus)
+        if (gameStatusShown)
+            Layouter(layouts.%(l => hrf.HRF.param("layout").none || hrf.HRF.param("layout").get == l.name), processLayout)
+        else
+            Layouter(layouts.%(_.name.endsWith("-gameStatusA"))./(l => l.copy(panes = l.panes.%(_.name != "status-game"))).%(l => hrf.HRF.param("layout").none || hrf.HRF.param("layout").get == l.name), (ff : $[Fit]) => processLayout(ff).%(_.name != "status-game"))
+    })
 
-    lazy val layouterNoGameStatus = Layouter(layoutsNoGameStatus.%(l => hrf.HRF.param("layout").none || hrf.HRF.param("layout").get == l.name), (ff : $[Fit]) => layouterGameStatus.process(0)(ff).%(_.name != "status-game"))
+    val layouters = mutable.Map[(Int, Boolean), Layouter]()
 
-    lazy val layouterGameStatus = Layouter(layouts.%(l => hrf.HRF.param("layout").none || hrf.HRF.param("layout").get == l.name), _./~{
+    val processLayout : $[Fit] => $[Fit] = _./~{
         case f if f.name == "map-small" => $(f, f.copy(name = "overlay"))
         case f if f.name == "action" => $(f, f.copy(name = "undo"), f.copy(name = "settings"))
         case f if f.name == "status-horizontal" => 1.to(arity)./(n => f.copy(name = "status-" + n, x = f.x + ((n - 1) * f.width  / arity.toDouble).round.toInt, width  = (n * f.width  / arity.toDouble).round.toInt - ((n - 1) * f.width  / arity.toDouble).round.toInt))
@@ -5094,11 +5124,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 width = (n > c).?(f.width - f.width / 2).|(f.width / 2))
             )
         case f => $(f)
-    })
+    }
 
     val settingsKey = Meta.settingsKey
 
-    def layoutKey = "v" + 2 + "." + gameStatusShown.not.??("no-game-status.") + "arity-" + arity
+    def layoutKey = "v" + 2 + "." + gameStatusShown.not.??("no-game-status.") + (mapMaxHeight < Int.MaxValue).??("map-" + mapMaxHeight + ".") + "arity-" + arity
 
     override def info(self : |[Player], aa : $[UserAction]) = {
         val ii = currentGame.info($, self, aa)
