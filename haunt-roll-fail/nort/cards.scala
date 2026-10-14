@@ -139,9 +139,10 @@ trait Card extends Elementary with Record {
     def elem : Elem = name.hl
     def img = Image(info.image, styles.card)
     def handImg = Image(info.image, styles.handCard)
-    // n copies of this card in hand as one stack, the extra copies (at most four drawn) peeking out behind it, up and to the right
+    // n copies of this card in hand as one stack, the extra copies (at most four drawn) peeking out behind it, up and to the right,
+    // and the front card's corner saying how many there are ("×2"), as players kept missing the copy behind
     def handStack(n : Int) : Elem = {
-        def layers(k : Int) : Elem = (k == 0).?(handImg(styles.stackFront) : Elem).|(Div(Image(info.image, styles.handCard, styles.stackBack) ~ layers(k - 1), styles.stackLayer))
+        def layers(k : Int) : Elem = (k == 0).?(Div(handImg ~ Div(("×" + n).txt, styles.stackCount), styles.stackFront) : Elem).|(Div(Image(info.image, styles.handCard, styles.stackBack) ~ layers(k - 1), styles.stackLayer))
         (n <= 1).?(handImg : Elem).|(layers(math.min(n - 1, 4)))
     }
 }
