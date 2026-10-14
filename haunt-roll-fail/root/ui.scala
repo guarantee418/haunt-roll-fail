@@ -588,8 +588,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     def pilesOnMap = callbacks.settings.has(CardPilesOnMap)
 
-    // The draw and discard piles and the Lost Souls (with the Lizards), shown as in the side panel
-    // (the Pond is only on the Lilypad Diaspora's own panel, as on its board): (image, label, count, what tapping it opens)
+    // The draw and discard piles, the Pond (with the Lilypad Diaspora) and the Lost Souls (with the Lizards),
+    // shown as in the side panel: (image, label, count, what tapping it opens)
     def cardPiles : $[(String, String, Int, Any)] = {
         val diaspora = factions.of[InvasiveEEE].%(game.states.contains)
         val frogOnTop = diaspora.any && game.deck.get.headOption.exists(Deck.frogEEE.has)
@@ -598,6 +598,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             (frogOnTop.?("deck-frog-hl").|("deck"), "Deck", game.deck.num, "view-deck"),
             ("pile-" + game.pile.any.?(game.pile.last.suit).|("empty"), "Discard Pile", game.pile.num, "view-discard")
         ) ++
+        diaspora./(f => (f.pond.any.?("pile-frog").|("pile-empty"), "Pond", f.pond.num, ("view-frog-deck", f))) ++
         factions.of[Fanatic].%(game.states.contains)./(f => (f.lost.any.?("pile-" + f.lost.last.suit).|("pile-empty"), "Lost Souls", f.lost.num, ("view-lost-souls", f)))
     }
 
@@ -2061,12 +2062,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     (Image(f.style + "-peaceful", styles.token) *** f.peaceful.num) ~
                     (Image(f.style + "-militant", styles.token) *** f.militant.num) ~
                     (Image("empty-token", styles.token) *** f.available)) ~
-                Gap ~
-                Hint("Pond\n" + f.pond.num + " " + Frog.name + " cards, top card shown",
-                    (
-                        (f.pond.num.formatted("%2d").hl.styled(styles.doubleFigures) ~ Image(f.pond.any.?("pile-frog").|("pile-empty"), styles.pile))
-                    ).&.pointer.onClick.param("view-frog-deck", f)
-                ).div(xstyles.smaller75) ~
+                // (the Pond is with the deck and the discard pile, like the Lost Souls, as any player can draw from it)
                 (game.current == f).?(Gap ~ 1.to(3)./(_ => Image("action-black", styles.building)).take(f.acted) ~ (1.to(3)./(_ => Image(f.style + "-action", styles.building))).drop(f.acted)) ~
                 Div(Hint("Frogs\n" + f.all(f.warrior).num + " on the map\n" + f.pooled(f.warrior) + " available",
                 &((Image(f.style + "-frog-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-frog", styles.wr) *** (f.all(f.warrior).num % 5))) ~
@@ -4898,15 +4894,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         val quests = game.quests.any.?((game.quests.take(3)./(q => Image("quest-" + q.suit.name, styles.token) ~ " " ~ q.elem).join(Break).div(hor.not.?(styles.centerquest))).pointer.onClick.param("view-quests"))
 
         // Homeland Lilypad Diaspora: Frog cards have their own back, so a Frog card on top of the shared deck shows
-        // (the Pond is only on the Diaspora's own panel, as on its board)
         val diaspora = factions.of[InvasiveEEE].%(game.states.contains).starting
         val frogOnTop = diaspora.any && game.deck.get.headOption.exists(Deck.frogEEE.has)
+
+        val pond = diaspora./(f => Hint("Pond\n" + f.pond.num + " " + Frog.name + " cards",
+            (f.pond.num.formatted("%2d").hl.styled(styles.doubleFigures) ~ Image(f.pond.any.?("pile-frog").|("pile-empty"), styles.pile)).&.pointer.onClick.param("view-frog-deck", f)))
 
         val discard =
             (
                 (game.deck.num.formatted("%2d").hl.styled(styles.doubleFigures) ~ Image(frogOnTop.?("deck-frog-hl").|("deck"), styles.pile)).pointer.onClick.param("view-deck") ~
                 Gap ~
-                (game.pile.num.formatted("%2d").hl.styled(styles.doubleFigures) ~ Image("pile-" + game.pile.any.?(game.pile.last.suit).|("empty"), styles.pile)).pointer.onClick.param("view-discard")
+                (game.pile.num.formatted("%2d").hl.styled(styles.doubleFigures) ~ Image("pile-" + game.pile.any.?(game.pile.last.suit).|("empty"), styles.pile)).pointer.onClick.param("view-discard") ~
+                pond.filter(_ => hor.not)./(Gap ~ _)
             ).div(xlo.flexhcenter)(hor.?(styles.verdeck))
 
         val dominances = game.dominances./(d => Image(d.id, styles.dominance)).merge.pointer.onClick.param("view-dominances")
@@ -4928,7 +4927,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         val items = (uncrafted.take(6).merge.div(xlo.flexhcenter)(xlo.flexnowrap) ~ uncrafted.drop(6).merge.div(xlo.flexhcenter)(xlo.flexnowrap)).div(xlo.pointer).onClick.param("view-items")
 
         // The items are on the item tracker when the board trackers are shown, the piles and dominances on the map with Card Piles on the map
-        val s = $(showTrackers.not.?(items), quests, pilesOnMap.not.?(discard), pilesOnMap.not.?(dominances)).flatten.but(Empty)./(_.div(styles.skipline)).merge
+        val s = $(showTrackers.not.?(items), quests, pilesOnMap.not.?(discard), pond.filter(_ => hor && pilesOnMap.not)./(_.div(xlo.flexhcenter)), pilesOnMap.not.?(dominances)).flatten.but(Empty)./(_.div(styles.skipline)).merge
 
         container.replace((s.div(xlo.flexhcenter)(styles.gstatus)), resources, onClick)
     }
