@@ -14,7 +14,7 @@ clans = ["bear", "boar", "goat", "raven", "snake", "stag", "wolf"]
 colors = {
     "blue": (79, 120, 188),
     "red": (234, 65, 13),
-    "yellow": (247, 156, 0),
+    "yellow": (255, 255, 0),
     "purple": (165, 108, 166),
     "green": (79, 159, 59),
     "orange": (255, 138, 20),
