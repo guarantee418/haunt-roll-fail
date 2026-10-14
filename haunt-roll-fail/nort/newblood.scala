@@ -76,7 +76,7 @@ case class HarvestExtraAction(self : Faction, r : Resource, then : ForcedAction)
 case class HorseClosedAction(f : Faction, l : $[AreaRef], then : ForcedAction) extends ForcedAction
 case class HorseWoodAction(self : Faction, area : AreaRef, rest : $[AreaRef], then : ForcedAction) extends BaseAction("Horse Clan".hl, "closed", area)("Collect", 1.hl, Wood)
 case class CraftsmenAction(f : Faction, then : ForcedAction) extends ForcedAction
-case class CraftsmenReplaceAction(self : Faction, area : AreaRef, space : SpaceRef, building : Building, then : ForcedAction) extends BaseAction("Craftsmen".hl, "replace a building in", area, "with")(building, SupplyLeft(building)) with MapTarget { def target = area }
+case class CraftsmenReplaceAction(self : Faction, area : AreaRef, space : SpaceRef, building : Building, then : ForcedAction) extends BaseAction("Craftsmen".hl, "replace", OldBuilding(space), "in", area, "with")(building, SupplyLeft(building)) with MapTarget { def target = space }
 case class QualityBuildAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("Quality of Life".hl, "build a free", DefenseTower, "in")(area) with MapTarget { def target = area }
 case class QualityCollectAction(f : Faction, l : $[AreaRef], then : ForcedAction) extends ForcedAction
 case class QualityTakeAction(self : Faction, area : AreaRef, r : Resource, rest : $[AreaRef], then : ForcedAction) extends BaseAction("Quality of Life".hl, "collect from", area)(r)
@@ -622,7 +622,7 @@ object NewBloodExpansion extends Expansion {
             if (l.none)
                 Then(then)
             else
-                Ask(f).each(l) { case (s, b) => CraftsmenReplaceAction(f, s.area, s, b, then) }.add(then.as("Keep the buildings")("Craftsmen".hl))
+                MapExpansion.replaceAsk(f, "Craftsmen", l, then).add(then.as("Keep the buildings")("Craftsmen".hl))
 
         case CraftsmenReplaceAction(f, a, s, b, then) =>
             val old = game.buildings(s)

@@ -240,6 +240,18 @@ case object NoDrawDevelopments extends GameOption with ToggleOption {
     lazy val cards : $[Card] = (Cards.early ++ Cards.advanced).%((_, info) => info.effect.is[DrawEffect]).lefts./(Development(_))
 }
 
+// Leaves Defensive Strategy (an Advanced Development card that cancels another player's card) out of the decks
+// (Game: ShuffledEarlyAction, ShuffledAdvancedAction)
+case object NoDefensiveStrategy extends GameOption with ToggleOption {
+    val group = "Development cards".txt
+    def valueOn = "Ban Defensive Strategy".txt
+    override val explain = $(
+        "Removes " ~ "Defensive Strategy".hl ~ " from the Development cards, so no card played can be cancelled.",
+    )
+
+    val cards : $[Card] = $(Development("defensive-strategy"))
+}
+
 // Uncharted Horizons' 5 Early and 8 Advanced Development cards and 2 Achievement cards, shuffled into their decks
 // (Game: ShuffledEarlyAction, ShuffledAdvancedAction, ShuffledAchievementsAction; effects in horizon-devs.scala)
 case object HorizonsDevelopments extends GameOption with ToggleOption {
@@ -259,6 +271,30 @@ case object FirstSeatStarts extends GameOption with ToggleOption {
         CombatText("By the rules the first player is chosen at random (most axes on the dice)."),
         "With this option the player in the first seat goes first.",
     )
+}
+
+// FAME: whether the player panels show every clan's fame (nort/ui.scala, fameHidden). Private is the rule (the fame tokens are
+// kept face down) and the default; games made before the choice have neither option and stay private
+trait FameChoice extends GameOption with OneOfGroup {
+    val group = "Fame".txt
+}
+
+case object PrivateFame extends FameChoice {
+    def valueOn = "Private fame".txt
+    override val explain = $(
+        "The rules: fame tokens are kept face down. Each player sees only their own fame (and their teammates'), everyone's once the game is over.",
+    )
+}
+
+case object PublicFame extends FameChoice {
+    def valueOn = "Public fame".txt
+    override val explain = $(
+        "Every player's fame is shown in the player panels all game.",
+    )
+}
+
+object FameChoice {
+    val all : $[FameChoice] = $(PrivateFame, PublicFame)
 }
 
 

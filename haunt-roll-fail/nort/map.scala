@@ -208,7 +208,13 @@ case object ConfirmMark
 case object CancelMark
 case class BuildDoneAction(self : Faction, e : BuildEffect, then : ForcedAction) extends BaseAction("Build")("Done")
 case class BuildFinishAction(f : Faction, e : BuildEffect, then : ForcedAction) extends ForcedAction
-case class ReplaceBuildingAction(self : Faction, area : AreaRef, space : SpaceRef, building : Building, then : ForcedAction) extends BaseAction("Industrious Villagers", "replace a building in", area, "with")(building, SupplyLeft(building)) with MapTarget { def target = area }
+case class ReplaceBuildingAction(self : Faction, area : AreaRef, space : SpaceRef, building : Building, then : ForcedAction) extends BaseAction("Industrious Villagers", "replace", OldBuilding(space), "in", area, "with")(building, SupplyLeft(building)) with MapTarget { def target = space }
+// Replacing one of several buildings (Industrious Villagers, Horse's Craftsmen): tap the building first, then pick what it becomes
+case class ReplaceSpotAction(self : Faction, source : String, space : SpaceRef, then : ForcedAction) extends BaseAction(source.hl, Comma, "tap a building to replace")(OldBuilding(space), "in", space.area) with Soft with MapTarget { def target = space }
+// The building on a space, named in a replacement's label
+case class OldBuilding(s : SpaceRef) extends GameElementary {
+    def elem(implicit game : Game) = game.buildings.get(s)./(_.elem).|("a building".txt)
+}
 case class ReplaceSkipAction(self : Faction, then : ForcedAction) extends BaseAction("Industrious Villagers")("Keep the buildings")
 
 // FEAST
@@ -819,6 +825,22 @@ object MapExpansion extends Expansion {
             val carved = s.index >= SpaceRef.extra || game.board.spec(s.area).spaces(s.index).kind == CarvedSpace
             Building.all.%(_ != old).%(_.large == old.large).%(b => b != CarvedStone || carved).%(b => game.buildingsLeft(b) > 0)./(b => s -> b)
         }
+
+    // A replacement offer: with more than one building to replace, the building is tapped first (ReplaceSpotAction)
+    def replaceAsk(f : Faction, source : String, l : $[(SpaceRef, Building)], then : ForcedAction)(implicit game : Game) : Ask = {
+        val spaces = l.map(_._1).distinct
+
+        if (spaces.num == 1)
+            replaceChoices(f, source, l, then)
+        else
+            Ask(f).each(spaces)(s => ReplaceSpotAction(f, source, s, then))
+    }
+
+    def replaceChoices(f : Faction, source : String, l : $[(SpaceRef, Building)], then : ForcedAction)(implicit game : Game) : Ask =
+        if (source == "Craftsmen")
+            Ask(f).each(l) { case (s, b) => CraftsmenReplaceAction(f, s.area, s, b, then) }
+        else
+            Ask(f).each(l) { case (s, b) => ReplaceBuildingAction(f, s.area, s, b, then) }
 
     def setupUnits(f : Faction, round : Int, l : $[Faction], a : AreaRef)(implicit game : Game) = {
         game.addUnits(a, f, 3)
@@ -2027,7 +2049,7 @@ object MapExpansion extends Expansion {
             if (l.none)
                 Then(ClanPowers.report(then))
             else
-                Ask(f).each(l) { case (s, b) => ReplaceBuildingAction(f, s.area, s, b, ClanPowers.report(then)) }.add(ReplaceSkipAction(f, ClanPowers.report(then)))
+                replaceAsk(f, "Industrious Villagers", l, ClanPowers.report(then)).add(ReplaceSkipAction(f, ClanPowers.report(then)))
 
         case ReplaceBuildingAction(f, a, s, b, then) =>
             val old = game.buildings(s)
@@ -2039,6 +2061,10 @@ object MapExpansion extends Expansion {
 
         case ReplaceSkipAction(f, then) =>
             Then(then)
+
+        // The new buildings for the tapped one (the replacement itself, ReplaceBuildingAction or CraftsmenReplaceAction, is what the game records)
+        case ReplaceSpotAction(f, source, s, then) =>
+            replaceChoices(f, source, replacements(f).filter(_._1 == s), then).cancel
 
         // FEAST
         case FeastChoiceAction(f, e, then) =>

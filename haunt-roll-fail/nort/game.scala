@@ -1270,12 +1270,12 @@ object CommonExpansion extends Expansion {
                 game.states += f -> new FactionState(f)
             }
 
-            Shuffle[Card](Cards.earlyCards.diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)) ++ options.has(HorizonsDevelopments).??(Cards.horizonsEarlyCards), ShuffledEarlyAction(_))
+            Shuffle[Card](Cards.earlyCards.diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)).diff(options.has(NoDefensiveStrategy).??(NoDefensiveStrategy.cards)) ++ options.has(HorizonsDevelopments).??(Cards.horizonsEarlyCards), ShuffledEarlyAction(_))
 
         case ShuffledEarlyAction(l) =>
             game.developments = l.take(game.earlyPerPlayer * game.arity)
 
-            Shuffle[Card](Cards.advancedCards.diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)) ++ options.has(HorizonsDevelopments).??(Cards.horizonsAdvancedCards), ShuffledAdvancedAction(_))
+            Shuffle[Card](Cards.advancedCards.diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)).diff(options.has(NoDefensiveStrategy).??(NoDefensiveStrategy.cards)) ++ options.has(HorizonsDevelopments).??(Cards.horizonsAdvancedCards), ShuffledAdvancedAction(_))
 
         case ShuffledAdvancedAction(l) =>
             // With six players in a long game there aren't enough Early cards: Advanced ones make up the difference
