@@ -2719,11 +2719,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     HGap ~
                     less("The".spn.larger, "Hoard".hl.larger) ~
                     more("The".spn.larger, "Hoard".hl.larger, "stores", "items".hh, "that increase the number of actions.") ~
-                    less("Command".f.larger, Dash, f.command.hlb.larger, "action".s(f.command), "to", "Command the Hundreds".styled(styles.phase)) ~
+                    less("Command".f.larger, Dash, f.command.hlb.larger, "action".s(f.command), "to|purpose", "Command the Hundreds".styled(styles.phase)) ~
                     more("Command".hl.larger, "grants", f.command.hlb.larger, "action".s(f.command), "each turn to", "build".hh, "or", "move".hh, "or", "battle".hh, Dot) ~
                     more(Bag.name.spn(styles.itemInfo), Comma, Boots.name.spn(styles.itemInfo), Comma, Coins.name.spn(styles.itemInfo), "further increase it.") ~
                     itemLine(n => "item-" + f.hoard.command(n).name, f.hoard.command.num, 4, n => "item-x-placeholder" + $("-2p", "-0p", "-3p", "-4p")(n)) ~
-                    less("Prowess".f.larger, Dash, f.prowess.hlb.larger, "action".s(f.prowess), "to", "Advance the Warlord".styled(styles.phase)) ~
+                    less("Prowess".f.larger, Dash, f.prowess.hlb.larger, "action".s(f.prowess), "to|purpose", "Advance the Warlord".styled(styles.phase)) ~
                     more("Prowess".hl.larger, "grants", f.prowess.hlb.larger, "action".s(f.prowess), "each turn to", "move".hh, "and then", "battle".hh, "with the", "Warlord".f) ~
                     more($(Sword, Hammer, Teapot, Crossbow)./(_.name.spn(styles.itemInfo)).comma, "further increase it.") ~
                     itemLine(n => "item-" + f.hoard.prowess(n).name, f.hoard.prowess.num, 4, n => "item-x-placeholder" + $("-2p", "-0p", "-3p", "-4p")(n)) ~

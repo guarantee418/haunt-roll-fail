@@ -591,7 +591,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
             InvasiveEEEReconcileSelectAction(f, $)
 
         case InvasiveEEEReconcileSelectAction(f, l) =>
-            Ask(f).group("Reconcile".styled(f), "- flip", MilitantEEE.sof(f), "to", PeacefulEEE.of(f), l.any.?("in"), l.any.?(l./(_.elem).comma))
+            Ask(f).group("Reconcile".styled(f), "- flip", MilitantEEE.sof(f), "to|become", PeacefulEEE.of(f), l.any.?("in"), l.any.?(l./(_.elem).comma))
                 .each(f.militant.diff(l))(c => InvasiveEEEReconcileSelectAction(f, l :+ c).as("Add", c))
                 .add(InvasiveEEEReconcileAction(f, l).as("Reconcile".styled(f), l.none.?("without flipping")))
                 .cancel
@@ -750,7 +750,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
 
         // NEGOTIATIONS
         case InvasiveEEENegotiateMainAction(f, e, then) =>
-            Ask(f).group(Negotiations.of(e), "- flip", MilitantEEE.of(e), "to", PeacefulEEE.of(e))
+            Ask(f).group(Negotiations.of(e), "- flip", MilitantEEE.of(e), "to|become", PeacefulEEE.of(e))
                 .each(e.militant.%(f.present))(c => InvasiveEEENegotiateAction(f, e, c, then).as(c))
                 .cancel
 

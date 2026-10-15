@@ -375,7 +375,7 @@ object InvasiveDDDExpansion extends FactionExpansion[InvasiveDDD] {
                 .birdsong(f)
 
         case InvasiveDDDReconcileClearingFactionAction(f, c, e) =>
-            f.logtemp("offered reconciliation in", c, "to", e)
+            f.logtemp("offered reconciliation in", c, "to|recipient", e)
 
             YYSelectObjectsAction(e, e.hand)
                 .withGroup(f.elem ~ " offers reconciliation in " ~ c.elem)

@@ -367,7 +367,7 @@ object CouncilExpansion extends FactionExpansion[Council] {
             val bt = clearings.%(matching).%(f.canAttackIn)
             val asm = clearings.%(matching).%(c => f.at(c).of[CouncilAssembly].none).%(f.canPlace)
 
-            Ask(f).group("Reveal", d, "to")
+            Ask(f).group("Reveal", d, "to|purpose")
                 .add(MoveInitAction(f, f, $, NoMessage, mv, f.movable, $(CancelAction), CouncilRevealedAction(f, d, false, Repeat)).as("Move".styled(f), "from", mv.comma).!(mv.none))
                 .each(rc)(c => CouncilRecruitAction(f, d, c).as("Recruit".styled(f), f.warrior.imgd(f), "in", c).!(f.pool(f.warrior).not))
                 .each(bt)(c => CouncilBattleAction(f, d, c).as("Battle".styled(f), "in", c, f.at(c).of[CouncilAssembly].any.?("(discard)")))

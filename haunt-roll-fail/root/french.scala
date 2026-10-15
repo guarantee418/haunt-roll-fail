@@ -378,6 +378,12 @@ object French {
         "with" -> "avec",
         "from" -> "de",
         "to" -> "vers",
+        // "to" in other senses (see Translation in elem.scala): only the word is shown
+        "to|purpose" -> "pour", // flipped Teapot to Revel, Reveal (card) to Move, 2 actions to Command the Hundreds
+        "to|become" -> "en", // flip Militant to Peaceful, convert Mob to Rats
+        "to|toward" -> "envers", // became Hostile to (faction)
+        "to|recipient" -> "à", // gave (card) to (faction), offered reconciliation to (faction)
+        "to|value" -> "à", // set price for Riverboats to 3
         "and" -> "et",
         "or" -> "ou",
         "for" -> "pour",
@@ -796,7 +802,14 @@ object French {
         ).getOrElse(substitute(s))
     }
 
-    def text(s : String) : String = cache.getOrElseUpdate(s, translate(s))
+    // "to|purpose": the entry for the word in that sense, else the word's own entry
+    def text(s : String) : String = cache.getOrElseUpdate(s, {
+        val plain = hrf.elem.Translation.plain(s)
+        if (plain != s && lookup(s.trim).isEmpty)
+            translate(plain)
+        else
+            translate(s)
+    })
 
     // French card and faction board images (root/tools/french-assets.py; the Hundreds, Keepers, Lilypad, Council and Knaves boards
     // and newer copies of the others from a player on 2026-10-10), loaded on demand under "fr:"

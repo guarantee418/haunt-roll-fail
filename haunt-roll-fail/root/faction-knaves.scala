@@ -660,7 +660,7 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
 
             f.actions -= 1
 
-            f.plog("flipped", flips./(_.elem).comma, "to", a)
+            f.plog("flipped", flips./(_.elem).comma, "to|purpose", a)
 
             then
 

@@ -701,7 +701,7 @@ object TraderExpansion extends FactionExpansion[Trader] {
         case UdjustPricesAction(f, l, m, then) =>
             f.prices = m
 
-            l.foreach(s => f.log("set price for", s.name.styled(f), "to", m(s).hl))
+            l.foreach(s => f.log("set price for", s.name.styled(f), "to|value", m(s).hl))
 
             then
 

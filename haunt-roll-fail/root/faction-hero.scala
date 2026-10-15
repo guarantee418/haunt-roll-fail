@@ -739,7 +739,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
 
         case ForcedRemoveSourceEffectAction(e : Hero, c, f, p : Warrior, then) if e.hostile(f).not =>
             e.attitude += f -> Hostile
-            f.log("became", Hostile, "to", e)
+            f.log("became", Hostile, "to|toward", e)
 
             TryAgain
 
@@ -830,7 +830,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
         case BattleCleanupAttackerAction(b, f : Hero) =>
             if (b.balance < 0) {
                 f.attitude += b.ally.get -> Hostile
-                log(b.ally.get, "became", Hostile, "to", f)
+                log(b.ally.get, "became", Hostile, "to|toward", f)
             }
 
             BattleForcedRemoveAction(b)
@@ -1193,7 +1193,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
             if (f.has(FriendOfTheForest) && att == Hostile) {
                 f.attitude += e -> Indifferent
 
-                e.log("became", Indifferent, "to", f)
+                e.log("became", Indifferent, "to|toward", f)
 
                 VagabondFriendOfTheForestMainAction(f)
             }

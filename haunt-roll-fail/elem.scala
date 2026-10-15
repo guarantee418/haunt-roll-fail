@@ -30,15 +30,30 @@ package object elem {
     // The display language: text and image ids are passed through these when they are drawn
     // (html.materialize), so a game's state and saved moves stay the same in every language.
     // Set from the game's settings (MetaGame.translation); English is the identity.
+    //
+    // A piece of text can carry a context after a bar, "to|purpose", so a translation can tell apart
+    // the same English word used in different senses ("moved to" a place, "flipped Teapot to Revel").
+    // The context is never shown: English drops it, and a translation without an entry for it
+    // translates the bare word.
     object Translation {
         var language : String = ""
-        var text : String => String = identity
+        private var translate : String => String = identity
         var image : String => String = identity
+
+        def text(s : String) : String = plain(translate(s))
 
         def set(language : String, text : String => String, image : String => String) {
             this.language = language
-            this.text = text
+            this.translate = text
             this.image = image
+        }
+
+        private val context = "([^|]+)\\|[a-z][a-z -]*".r
+
+        // the text without its context
+        def plain(s : String) : String = s match {
+            case context(t) => t
+            case _ => s
         }
     }
 
@@ -360,7 +375,7 @@ package object elem {
     }
 
     case class Text(s : String) extends Elem {
-        def text = s
+        def text = Translation.plain(s)
         def variants = Nil
     }
 

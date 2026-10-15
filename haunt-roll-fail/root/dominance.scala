@@ -159,7 +159,7 @@ object DominanceExpansion extends MandatoryExpansion {
             f.log("formed", "Coalition".hh, "with", x, "using", d)
             if (f.hostile(x)) {
                 f.attitude += x -> Indifferent
-                x.log("became", Indifferent, "to", f)
+                x.log("became", Indifferent, "to|toward", f)
             }
             then
 

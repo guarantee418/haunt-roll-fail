@@ -347,7 +347,7 @@ object TurnExpansion extends MandatoryExpansion {
                 .cancelIf(going.num > 1 && factions.but(f).num > 1)
 
         case GiveAwayHirelingToAction(f, h, e) =>
-            f.log("gave", h, "to", e)
+            f.log("gave", h, "to|recipient", e)
 
             f.contracts :-= h
             f.effects :-= h

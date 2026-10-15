@@ -87,7 +87,7 @@ case object Relentless extends Mood(Bag) {
 case object Bitter extends Mood(Hammer) with BattleEffect {
     val name = "Bitter"
     def desc(f : Horde) = Mob.imgd(f) ~ dt.ArrowWide ~ f.warrior.img(f)
-    def long(f : Horde) = $("Can convert", Mob.sof(f), "to", Rat.sof(f), "from neighbouring clearings before roll in battle")
+    def long(f : Horde) = $("Can convert", Mob.sof(f), "to|become", Rat.sof(f), "from neighbouring clearings before roll in battle")
 }
 
 case object Grandiose extends Mood(Teapot) {
