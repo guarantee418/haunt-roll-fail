@@ -563,6 +563,14 @@ file covers the build, server and deploy. No session can ssh to the server
   usual, and every other garden pays only for wild (any suit) cost icons (`WildOnly` in `root/game.scala`, `craft` in
   `root/faction-fanatic.scala`). Law of Root 10.2.1 allows only Outcast gardens. Not gated by an option: it only adds
   craft choices, so recorded games replay the same.
+- Lizard Cult Outcast gardens pay for their clearing's suits, not their printed suit (Homeland Lilypad Diaspora rules,
+  posted by MaKoBwoY on 2026-10-15): only frog at a Militant enclave, either at a Peaceful one, any of the Lost City's three,
+  and either of a double suited Mousehold, Foxburrow or Rabbittown clearing (`c.asset`, a `OneOf`). New games get the hidden
+  default option `LizardsCraftByClearing` (`root/meta.scala`, `FanaticExpansion.craftByClearing`); older games keep the
+  printed suit. A running game can be switched over like the Frog fixes above, with `LizardsCraftByClearingAction(X)`
+  (sets `game.lizardsCraftByClearing`). The two- and three-suit craft icons missing for landmark clearings
+  (`craft-suit-fox-rabbit` ... `-rabbit-mouse-frog`) were composed by `root/tools/craft-suit-icons.py`; `CraftSuit` in
+  `root/styles.scala` names them in Fox, Rabbit, Mouse, Frog order.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.

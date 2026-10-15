@@ -89,7 +89,7 @@ case class OneOf(suits : $[BaseSuit]) extends SuitAsset {
     def elem = suits./(_.elem).spaceCommaOr
 }
 
-// A crafting piece that pays only for wild (Any suit) costs: Lizard Cult gardens not of the Outcast suit.
+// A crafting piece that pays only for wild (Any suit) costs: Lizard Cult gardens not of the Outcast suit (house rule).
 case class WildOnly(suit : BaseSuit) extends SuitAsset {
     def elem = suit.elem
 }
@@ -1469,6 +1469,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var ftp = Map[Faction, Player]()
     var frogsSkipLostSouls = false
     var frogsCraftByClearing = false
+    var lizardsCraftByClearing = false
     var ptf = Map[Player, Faction]()
 
     players.of[Faction].foreach { f =>
