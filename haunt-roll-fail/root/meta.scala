@@ -329,6 +329,14 @@ case object FrogsCraftByClearing extends GameOption with ToggleOption {
     val valueOn = "Lilypad Diaspora".hh ~ " crafts by clearing"
 }
 
+// Companions stays out until the frog card turned into another suit with it is discarded (spent), and can't turn another
+// one meanwhile. Hidden and on by default for new games; older games discard Companions as soon as the card is turned
+// so their replays don't change.
+case object CompanionsUntilSpent extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Companions".hh ~ " discarded when its card is spent"
+}
+
 // Lizard Cult gardens of the Outcast suit pay for their clearing's suits (frog at enclaves, the Lost City's three,
 // double suited landmarks), not their printed suit (Homeland Lilypad Diaspora rules). Hidden and on by default for
 // new games; older games keep the printed suit so their replays don't change.
@@ -1251,7 +1259,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1274,6 +1282,7 @@ object Meta extends MetaGame {
         FrogCardsSkipLostSouls,
         FrogsCraftByClearing,
         LizardsCraftByClearing,
+        CompanionsUntilSpent,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
