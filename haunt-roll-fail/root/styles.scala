@@ -44,7 +44,7 @@ package object elem {
             case s : BaseSuit => Image("craft-suit-" + s, styles.dt.token, s.toString)
             case s @ AnySuit => Image("craft-suit-" + s, styles.dt.token, "any suit")
             case OneOf(List(s)) => Image("craft-suit-" + s, styles.dt.token, s.toString)
-            case OneOf(l) => Image("craft-suit-" + l.mkString("-"), styles.dt.token, l.mkString("-"))
+            case OneOf(l) => $[BaseSuit](Fox, Rabbit, Mouse, Frog).%(l.has) @@ { l => Image("craft-suit-" + l.mkString("-"), styles.dt.token, l.mkString("-")) }
             case WildOnly(s) => Image("craft-suit-" + s, styles.dt.token, s.toString + " (any suit costs only)")
         }
 

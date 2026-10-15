@@ -329,6 +329,14 @@ case object FrogsCraftByClearing extends GameOption with ToggleOption {
     val valueOn = "Lilypad Diaspora".hh ~ " crafts by clearing"
 }
 
+// Lizard Cult gardens of the Outcast suit pay for their clearing's suits (frog at enclaves, the Lost City's three,
+// double suited landmarks), not their printed suit (Homeland Lilypad Diaspora rules). Hidden and on by default for
+// new games; older games keep the printed suit so their replays don't change.
+case object LizardsCraftByClearing extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Lizard Cult".hh ~ " gardens craft by clearing"
+}
+
 
 case object AutoHitsAssignmentMode extends GameOption with ToggleOption {
     val group = "Async"
@@ -1243,7 +1251,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1265,6 +1273,7 @@ object Meta extends MetaGame {
         FrogCardsAfterStartingHands,
         FrogCardsSkipLostSouls,
         FrogsCraftByClearing,
+        LizardsCraftByClearing,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
@@ -1538,6 +1547,12 @@ object Meta extends MetaGame {
         ImageAsset("craft-suit-fox-frog"      ) ::
         ImageAsset("craft-suit-rabbit-frog"   ) ::
         ImageAsset("craft-suit-mouse-frog"    ) ::
+        ImageAsset("craft-suit-fox-rabbit"    ) ::
+        ImageAsset("craft-suit-fox-mouse"     ) ::
+        ImageAsset("craft-suit-rabbit-mouse"  ) ::
+        ImageAsset("craft-suit-fox-rabbit-frog"    ) ::
+        ImageAsset("craft-suit-fox-mouse-frog"     ) ::
+        ImageAsset("craft-suit-rabbit-mouse-frog"  ) ::
         ImageAsset("craft-suit-fox-rabbit-mouse"       ) ::
         ImageAsset("craft-suit-fox-rabbit-mouse-frog"  ) ::
     $) ::

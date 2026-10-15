@@ -76,8 +76,10 @@ class FanaticPlayer(val faction : Fanatic)(implicit val game : Game) extends Fac
 
     val rubble = location(Rubble, u => u.faction == faction && u.piece.is[Garden])
 
-    // Gardens of the Outcast suit craft as usual; the other gardens pay only for wild (Any suit) costs.
-    def craft = FoxRabbitMouse./~(s => Council.governedFor(faction, all(Garden(s)))./(_ => outcast.has(s).?[SuitAsset](s).|(WildOnly(s))))
+    // Gardens of the Outcast suit craft (house rule: the other gardens pay only for wild (Any suit) costs).
+    // With LizardsCraftByClearing they pay for their clearing's suits, not their own: only frog at a Militant
+    // enclave, either at a Peaceful one, any of the Lost City's, either at a double suited Mousehold, Foxburrow or Rabbittown.
+    def craft = FoxRabbitMouse./~(s => Council.governedFor(faction, all(Garden(s)))./(c => outcast.has(s).?[SuitAsset](FanaticExpansion.craftByClearing.?(c.asset).|(s)).|(WildOnly(s))))
 }
 
 
@@ -145,8 +147,19 @@ case class FanaticRevealCardAction(self : Fanatic, s : $[Suit], d : DeckCard, th
 case class FanaticRevealDiscardCardMainAction(self : Fanatic, s : BaseSuit, vp : Int) extends ForcedAction with Soft
 case class FanaticRevealDiscardCardAction(self : Fanatic, s : BaseSuit, d : DeckCard, vp : Int) extends BaseAction("Discard", s.elem, "card")(d.img) with ViewCard
 
+// A one-time fix for games started before LizardsCraftByClearing, added to a live game's log by hand: turns crafting
+// by clearing suit on from here (game.lizardsCraftByClearing), then goes on with then
+case class LizardsCraftByClearingAction(then : ForcedAction) extends ForcedAction with SkipValidate
+
 object FanaticExpansion extends FactionExpansion[Fanatic] {
+    def craftByClearing(implicit game : Game) = game.options.has(LizardsCraftByClearing) || game.lizardsCraftByClearing
+
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
+        case LizardsCraftByClearingAction(then) =>
+            game.lizardsCraftByClearing = true
+
+            then
+
         // SETUP
         case CreatePlayerAction(f : Fanatic) =>
             game.states += f -> new FanaticPlayer(f)
