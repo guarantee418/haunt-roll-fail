@@ -276,8 +276,8 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
 
     // CompanionsUntilSpent: a turned frog card was discarded, so the Companions of whoever turned it goes too
     def disguiseSpent(e : InvasiveEEE, d : DeckCard)(implicit game : Game) {
-        e.disguisedBy.%(_._1 == d).foreach { case (_, f) =>
-            e.disguisedBy = e.disguisedBy.%(_._1 != d)
+        e.disguisedBy.filter(_._1 == d).foreach { case (_, f) =>
+            e.disguisedBy = e.disguisedBy.filter(_._1 != d)
 
             if (f.has(FrogCompanions(e))) {
                 f.log("discarded", FrogCompanions(e), "as", d, "was spent")
