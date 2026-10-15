@@ -422,6 +422,9 @@ case object WinterAction extends ForcedAction
 case class WinterPayAction(l : $[Faction]) extends ForcedAction
 case class TakeUnrestAction(self : Faction, units : Int, rest : $[Faction]) extends BaseAction("Winter: not enough to pay for", units.hl, "units", Comma, "take an", UnrestCard, "card")(UnrestCard.handImg) with ViewObject[Card] { def obj = UnrestCard }
 case class UnrestGoneAction(self : Faction, units : Int, rest : $[Faction]) extends BaseAction("Winter: not enough to pay for", units.hl, "units", Comma, "and no", UnrestCard, "cards left")("Lose", 5.hl, FameIcon(), "and discard the top card of your draw pile")
+// A one-time fix for games started before ChooseCasualties, added to a live game's log by hand (an hrf-games fix): turns the
+// option on from here, then goes on with then. Turning it on for the whole game would change its earlier fights
+case class ChooseCasualtiesAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case object EndOfYearAction extends ForcedAction
 case object GameEndAction extends ForcedAction
 case object NewYearAction extends ForcedAction
@@ -1846,6 +1849,12 @@ object CommonExpansion extends Expansion {
             game.note("unrest-gone")
 
             Then(WinterPayAction(rest))
+
+        case ChooseCasualtiesAction(then) =>
+            if (game.options.has(ChooseCasualties).not)
+                game.addOption(ChooseCasualties)
+
+            Then(then)
 
         // 5. END OF YEAR
         case EndOfYearAction =>
