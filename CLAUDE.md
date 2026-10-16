@@ -631,7 +631,10 @@ file covers the build, server and deploy. No session can ssh to the server
   games are the same in both languages, players in one game can each pick theirs, and switching
   mid-game redraws the page in place (`html.retranslate`). The words are in `root/french.scala`
   (whole pieces of text first, then names and terms inside longer ones; anything missing stays
-  English), following the official French edition. French card art for the base and Exiles and
+  English), following the official French edition. A word the game uses with another meaning in one place gets a
+  context in square brackets in the code, `"to [in order to]"` (Knaves' "flipped Teapot to Revel"): `Translation.text`
+  in `elem.scala` shows it without the brackets, and `french.scala` translates it apart from the plain "to"
+  (asked for by MaKoBwoY on 2026-10-15). French card art for the base and Exiles and
   Partisans decks and the eight base and Riverfolk/Underworld faction boards are in
   `webp2/root/images/card/deck/fr/` and `faction/fr/` (asset prefix `fr:`), cut by
   `root/tools/french-assets.py` from the TTS mod "Root FR" (Steam workshop 1829904481); the boards
