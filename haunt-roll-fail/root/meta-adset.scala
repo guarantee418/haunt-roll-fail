@@ -75,6 +75,7 @@ object MetaAdset extends MetaGame {
         FrogCardsSkipLostSouls,
         FrogsCraftByClearing,
         LizardsCraftByClearing,
+        CompanionsUntilSpent,
         FolkHeroCharacter,
         RandomCharacter,
         MapDefaultLandmarks,

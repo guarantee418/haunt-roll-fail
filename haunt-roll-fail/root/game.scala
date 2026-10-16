@@ -1362,6 +1362,7 @@ trait GameImplicits {
                     val e = factions.of[InvasiveEEE].first
                     source --> d --> e.standins
                     e.companions --> d.card --> e.pond
+                    InvasiveEEEExpansion.disguiseSpent(e, d.card)
                 case d if d.suit == Frog => source --> d -->{
                     factions.of[InvasiveEEE].single./(_.pond) ||
                     factions.of[InvasiveDDD].single./(_.deck) ||
@@ -1495,6 +1496,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var frogsSkipLostSouls = false
     var frogsCraftByClearing = false
     var lizardsCraftByClearing = false
+    var companionsUntilSpent = false
     var ptf = Map[Player, Faction]()
 
     players.of[Faction].foreach { f =>

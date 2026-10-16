@@ -131,6 +131,9 @@ class InvasiveEEEPlayer(val faction : InvasiveEEE)(implicit val game : Game) ext
     val companions = cards("companions")
     val standins = cards("standins", Deck.frogEEE./~(d => InvasiveEEEExpansion.disguiseSuits./(DisguisedCard(d, _))))
 
+    // CompanionsUntilSpent: the frog cards turned with Companions and who turned them, until they are discarded
+    var disguisedBy : $[(DeckCard, Faction)] = $
+
     var retaliated : $[Clearing] = $
     var integrated = false
 
@@ -208,6 +211,9 @@ case class FrogCardsToPondAction(then : ForcedAction) extends ForcedAction with 
 // The same for FrogsCraftByClearing: turns crafting by clearing on from here (game.frogsCraftByClearing), then goes on with then
 case class FrogsCraftByClearingAction(then : ForcedAction) extends ForcedAction with SkipValidate
 
+// The same for CompanionsUntilSpent (game.companionsUntilSpent)
+case class CompanionsUntilSpentAction(then : ForcedAction) extends ForcedAction with SkipValidate
+
 // FrogsCraftByClearing: pick the clearings (and any other crafting assets) to craft with, then record them
 case class InvasiveEEECraftSelectAction(self : InvasiveEEE, d : CraftCard, l : $[Clearing], x : $[SuitAsset], m : Message, then : ForcedAction) extends ForcedAction with Soft
 // A pick or undo in that menu. It expands straight to the crafts it can still lead to (only the one being checked when
@@ -279,6 +285,21 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
 
     def craftByClearing(implicit game : Game) = game.options.has(FrogsCraftByClearing) || game.frogsCraftByClearing
 
+    def companionsUntilSpent(implicit game : Game) = game.options.has(CompanionsUntilSpent) || game.companionsUntilSpent
+
+    // CompanionsUntilSpent: a turned frog card was discarded, so the Companions of whoever turned it goes too
+    def disguiseSpent(e : InvasiveEEE, d : DeckCard)(implicit game : Game) {
+        e.disguisedBy.filter(_._1 == d).foreach { case (_, f) =>
+            e.disguisedBy = e.disguisedBy.filter(_._1 != d)
+
+            if (f.has(FrogCompanions(e))) {
+                f.log("discarded", FrogCompanions(e), "as", d, "was spent")
+
+                f.removeStuckEffect(FrogCompanions(e))
+            }
+        }
+    }
+
     // FrogsCraftByClearing: crafting assets other than this turn's unused enclaves
     def craftAssets(f : InvasiveEEE)(implicit game : Game) : $[SuitAsset] = (f.frogCraft ++ f.extraCraft).diff(f.crafted)
 
@@ -322,7 +343,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
     // Companions: turn a frog card into another suit
     def companions(f : Faction)(implicit game : Game, ask : ActionCollector) {
         factions.of[InvasiveEEE].%(game.states.contains).foreach { e =>
-            if (f.has(FrogCompanions(e)) && f.hand.exists(_.suit == Frog))
+            if (f.has(FrogCompanions(e)) && f.hand.exists(_.suit == Frog) && e.disguisedBy.exists(_._2 == f).not)
                 + InvasiveEEECompanionsMainAction(f, e, Repeat)
         }
     }
@@ -389,6 +410,11 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
         // POND
         case FrogsCraftByClearingAction(then) =>
             game.frogsCraftByClearing = true
+
+            then
+
+        case CompanionsUntilSpentAction(then) =>
+            game.companionsUntilSpent = true
 
             then
 
@@ -880,7 +906,10 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
 
             f.log("turned", d, "into a", s, "card with", FrogCompanions(e))
 
-            f.removeStuckEffect(FrogCompanions(e))
+            if (companionsUntilSpent)
+                e.disguisedBy :+= (d, f)
+            else
+                f.removeStuckEffect(FrogCompanions(e))
 
             then
 
