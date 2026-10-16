@@ -571,6 +571,11 @@ file covers the build, server and deploy. No session can ssh to the server
   (sets `game.lizardsCraftByClearing`). The two- and three-suit craft icons missing for landmark clearings
   (`craft-suit-fox-rabbit` ... `-rabbit-mouse-frog`) were composed by `root/tools/craft-suit-icons.py`; `CraftSuit` in
   `root/styles.scala` names them in Fox, Rabbit, Mouse, Frog order.
+- Root's "Assign Hits: Auto Assign If No Choice" setting (`AutoAssignHits`, `ask` in `root/ui.scala`), the
+  out-of-turn auto assign switch and the `AutoHitsAssignmentMode` game option count the ways to assign hits with
+  `HitsVariants.distinct` (`root/game.scala`): how many of each piece of each faction are removed. The hits prompt
+  picks figures in order, and the old check counted buildings picked in another order as another choice, so
+  losing, say, both a sawmill and a workshop still asked (reported 2026-10-16).
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.
