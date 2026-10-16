@@ -1207,7 +1207,26 @@ trait GameImplicits {
                 var aa : $[SuitAsset] = assets.diff(costs)
                 var cc : $[SuitCost] = costs.diff(assets)
 
-                aa.permutations.exists { aa => cc.lazyZip(aa).forall((c, a) => a.matches(c)) }
+                // Each remaining cost needs its own asset: a bipartite matching (augmenting paths), as trying every
+                // order of the assets took factorial time with many unmatched ones (Lizard gardens, Lost City)
+                val owner = Array.fill(aa.num)(-1)
+
+                def assign(i : Int, seen : Array[Boolean]) : Boolean = {
+                    var j = 0
+                    while (j < aa.num) {
+                        if (seen(j).not && aa(j).matches(cc(i))) {
+                            seen(j) = true
+                            if (owner(j) < 0 || assign(owner(j), seen)) {
+                                owner(j) = i
+                                return true
+                            }
+                        }
+                        j += 1
+                    }
+                    false
+                }
+
+                cc.indices.forall(i => assign(i, Array.fill(aa.num)(false)))
 
             case _ => false
         }
