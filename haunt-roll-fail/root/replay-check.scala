@@ -67,8 +67,12 @@ object ReplayCheck {
         case Log(_, _, c) => show0(c)
         case DelayedContinue(_, c) => show0(c)
         // the Riverfolk's Daylight menu depends on its chosen currency (see TraderPlayer.current in fingerprint): compare
-        // the fund groups and the kinds of choice offered, not the currency picked or the funds each choice would spend
-        case Ask(f, l) if l.exists(_.unwrap.is[TraderCurrencyAction]) => "Ask(" + f + ", Riverfolk Daylight, funds " + l./(_.unwrap).of[TraderCurrencyAction]./(_.ll).mkString + ", " + l./(_.unwrap.getClass.getSimpleName).mkString(" | ") + ")"
+        // the fund groups and the kinds of choice offered, not the currency picked, the funds each choice would spend or
+        // whether that currency can pay for it
+        case Ask(f, l) if l.exists(_.unwrap.is[TraderCurrencyAction]) => "Ask(" + f + ", Riverfolk Daylight, funds " + l./(_.unwrap).of[TraderCurrencyAction]./(_.ll).mkString + ", " + l./{
+            case u : Unavailable => u.action.unwrap
+            case a => a.unwrap
+        }./(_.getClass.getSimpleName).mkString(" | ") + ")"
         case Ask(f, l) => "Ask(" + f + ", " + l./(_.unwrap.toString).mkString(" | ") + ")"
         case MultiAsk(l, _) => "MultiAsk(" + l./(show0).mkString(" || ") + ")"
         case c => c.toString.takeWhile(_ != '(')
