@@ -518,7 +518,7 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
         case KnavesTakePrisonerAction(f, b, p, r, n) =>
             b.defender.from(Limbo(b.clearing)) --> $(p) --> (f, Cage(r))
 
-            f.log("took", p.of(b.defender), "prisoner to", r)
+            f.log("took [a prisoner]", p.of(b.defender), "prisoner to", r)
 
             KnavesPrisonersAction(f, b, n - 1)
 
@@ -660,7 +660,7 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
 
             f.actions -= 1
 
-            f.plog("flipped", flips./(_.elem).comma, "to", a)
+            f.plog("flipped", flips./(_.elem).comma, "to [in order to]", a)
 
             then
 
