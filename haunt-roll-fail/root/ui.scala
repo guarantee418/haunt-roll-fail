@@ -712,7 +712,20 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         }
     }
 
+    // A failure drawing the map (seen only on iPhones, Ground and Might, 2026-10-16) must not stop the rest of the
+    // update: drawMap is the last step of updateStatus, so an exception left the action pane and the menu (and its
+    // Report a Bug) empty. It is logged instead, where Report a Bug collects it.
     def drawMap() {
+        try {
+            drawMapUnsafe()
+        }
+        catch {
+            case e : Throwable =>
+                dom.console.error("Map drawing failed: " + e + "\n" + e.getStackTrace.take(20).mkString("\n"))
+        }
+    }
+
+    def drawMapUnsafe() {
         // The map images may still be loading (slow connections, phones);
         // retry instead of leaving the map blank until the next update
         if (resources.images.get(mapid + "map").complete.not || resources.images.get(mapid + "map-regions").complete.not) {

@@ -662,6 +662,10 @@ file covers the build, server and deploy. No session can ssh to the server
   The same player's Google Drive gave the French Squires and Disciples cards, newer Ambushes (used for every deck)
   and the Homeland Frog cards (`hl-*`, `frog-ambush`, `hl-frog-dominance`) in `card/deck/fr/`, listed in `French.cards`
   with their names; `french-assets.py` no longer makes the Ambushes.
+- Root's `drawMap` (`root/ui.scala`) catches and logs any error (`Map drawing failed: ...`, which Report a Bug collects) and
+  draws what it can: it is the last step of `updateStatus`, so an error there (seen only on iPhones, Ground and Might on the
+  Marsh map, 2026-10-16) left the action pane and the menu empty, with no way to report it. The cause on iPhones isn't known
+  yet; the same error comes from a missing `map-regions` image (`image.width <= 0`).
 - Bot games can be run headless on the JVM with `root/host.scala` (see
   `host.xsbt` for the source exclusions); it also checks that every action
   serializes and parses back.
