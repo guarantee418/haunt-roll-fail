@@ -680,6 +680,12 @@ trait BirdsongQuestion extends FactionAction {
 }
 
 
+// Ways to assign hits that remove different pieces. The figures are picked in order, so the same pieces
+// picked in another order are the same removal: compare how many of each piece of each faction go.
+object HitsVariants {
+    def distinct(l : $[XXObjectsSelectedAction[Figure]]) = l.distinctBy(_.values.groupMapReduce(u => u.faction -> u.piece)(_ => 1)(_ + _))
+}
+
 case class SelectFiguresAction(f : Faction, m : Elem, figures : $[Figure], extra : $[UserAction])(r : ObjectSetRule[Figure] => ObjectSetRule[Figure])(then : $[Figure] => ForcedAction) extends ForcedAction with Soft with SelfPerform {
     def perform(soft : Void)(implicit game : Game) = {
         implicit val convF = (x : Figure, s : Boolean) => FigureRemove(x).elem(s)(styles.iii)
@@ -1201,7 +1207,26 @@ trait GameImplicits {
                 var aa : $[SuitAsset] = assets.diff(costs)
                 var cc : $[SuitCost] = costs.diff(assets)
 
-                aa.permutations.exists { aa => cc.lazyZip(aa).forall((c, a) => a.matches(c)) }
+                // Each remaining cost needs its own asset: a bipartite matching (augmenting paths), as trying every
+                // order of the assets took factorial time with many unmatched ones (Lizard gardens, Lost City)
+                val owner = Array.fill(aa.num)(-1)
+
+                def assign(i : Int, seen : Array[Boolean]) : Boolean = {
+                    var j = 0
+                    while (j < aa.num) {
+                        if (seen(j).not && aa(j).matches(cc(i))) {
+                            seen(j) = true
+                            if (owner(j) < 0 || assign(owner(j), seen)) {
+                                owner(j) = i
+                                return true
+                            }
+                        }
+                        j += 1
+                    }
+                    false
+                }
+
+                cc.indices.forall(i => assign(i, Array.fill(aa.num)(false)))
 
             case _ => false
         }

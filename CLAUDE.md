@@ -559,9 +559,12 @@ file covers the build, server and deploy. No session can ssh to the server
   (`craftedIn` in `InvasiveEEEPlayer`) until removed (`ForcedRemoveTargetEffectAction`), so losing an unused enclave
   doesn't use up the craft of a used one, and flipping a used enclave doesn't free it. New games get the hidden default
   option `FrogsCraftByClearing` (`root/meta.scala`); older games craft by suit as before. A running game can be switched
-  the same way as above, with `FrogsCraftByClearingAction(X)` (sets `game.frogsCraftByClearing`). Its "Undo" picks are
-  `InvasiveEEECraftUndoAction`, a `Back`, so `explode` (bots) doesn't follow them: as plain soft choices, picking and undoing
-  made an endless graph, and the bots ran out of memory when Lilypad crafted with several ways to pay (2026-10-16).
+  the same way as above, with `FrogsCraftByClearingAction(X)` (sets `game.frogsCraftByClearing`). The menu's picks and
+  undos are `InvasiveEEECraftPickAction`, a `HalfExplode` that expands straight to the crafts it can still lead to (only the
+  recorded one when validating a move): walking the menu tried every order of picks and undos, and bots and move checks ran
+  out of memory with many enclaves (found 2026-10-16).
+- `craftableWith` in `root/game.scala` matches the leftover costs to assets (augmenting paths) instead of trying every
+  order of the assets, which took factorial time with many assets that pay only some costs (Lizard gardens, the Lost City).
 - Knaves items are the Captains' items, not crafted items: the Vagabond
   can't take them in trade when it aids the Knaves (`AidTradeAction` in
   `root/faction-hero.scala`), the Hundreds can't loot them (Looters in
@@ -579,6 +582,11 @@ file covers the build, server and deploy. No session can ssh to the server
   (sets `game.lizardsCraftByClearing`). The two- and three-suit craft icons missing for landmark clearings
   (`craft-suit-fox-rabbit` ... `-rabbit-mouse-frog`) were composed by `root/tools/craft-suit-icons.py`; `CraftSuit` in
   `root/styles.scala` names them in Fox, Rabbit, Mouse, Frog order.
+- Root's "Assign Hits: Auto Assign If No Choice" setting (`AutoAssignHits`, `ask` in `root/ui.scala`), the
+  out-of-turn auto assign switch and the `AutoHitsAssignmentMode` game option count the ways to assign hits with
+  `HitsVariants.distinct` (`root/game.scala`): how many of each piece of each faction are removed. The hits prompt
+  picks figures in order, and the old check counted buildings picked in another order as another choice, so
+  losing, say, both a sawmill and a workshop still asked (reported 2026-10-16).
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.
@@ -634,7 +642,10 @@ file covers the build, server and deploy. No session can ssh to the server
   games are the same in both languages, players in one game can each pick theirs, and switching
   mid-game redraws the page in place (`html.retranslate`). The words are in `root/french.scala`
   (whole pieces of text first, then names and terms inside longer ones; anything missing stays
-  English), following the official French edition. French card art for the base and Exiles and
+  English), following the official French edition. A word the game uses with another meaning in one place gets a
+  context in square brackets in the code, `"to [in order to]"` (Knaves' "flipped Teapot to Revel"): `Translation.text`
+  in `elem.scala` shows it without the brackets, and `french.scala` translates it apart from the plain "to"
+  (asked for by MaKoBwoY on 2026-10-15). French card art for the base and Exiles and
   Partisans decks and the eight base and Riverfolk/Underworld faction boards are in
   `webp2/root/images/card/deck/fr/` and `faction/fr/` (asset prefix `fr:`), cut by
   `root/tools/french-assets.py` from the TTS mod "Root FR" (Steam workshop 1829904481); the boards

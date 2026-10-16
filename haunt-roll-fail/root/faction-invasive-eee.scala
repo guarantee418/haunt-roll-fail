@@ -216,10 +216,20 @@ case class CompanionsUntilSpentAction(then : ForcedAction) extends ForcedAction 
 
 // FrogsCraftByClearing: pick the clearings (and any other crafting assets) to craft with, then record them
 case class InvasiveEEECraftSelectAction(self : InvasiveEEE, d : CraftCard, l : $[Clearing], x : $[SuitAsset], m : Message, then : ForcedAction) extends ForcedAction with Soft
+// A pick or undo in that menu. It expands straight to the crafts it can still lead to (only the one being checked when
+// validating a recorded move), as walking the menu tried every order of picks and undos and ran out of memory.
+case class InvasiveEEECraftPickAction(self : InvasiveEEE, d : CraftCard, l : $[Clearing], x : $[SuitAsset], m : Message, then : ForcedAction)(leaves : $[InvasiveEEECraftClearingsAction], label : (Game => Elem)*) extends BaseAction(None)(label : _*) with Soft with HalfExplode with SelfPerform {
+    def perform(soft : Void)(implicit game : Game) = Force(InvasiveEEECraftSelectAction(self, d, l, x, m, then))
+
+    def expand(target : |[Action]) = target./(_.unwrap) @@ {
+        case Some(t @ InvasiveEEECraftClearingsAction(_, tl, CraftAssignAction(_, _, ta, tx, _, _))) if leaves.exists {
+            case InvasiveEEECraftClearingsAction(f, ll, CraftAssignAction(_, dd, aa, xx, mm, tt)) =>
+                t == InvasiveEEECraftClearingsAction(f, tl, CraftAssignAction(f, dd, aa, tx, mm, tt)) && tl.toSet == ll.toSet && tl.num == ll.num && tx.sortBy(_.toString) == xx.sortBy(_.toString)
+        } => $(t.as("Craft".hh, d.elem))
+        case _ => leaves./(_.as("Craft".hh, d.elem))
+    }
+}
 case class InvasiveEEECraftClearingsAction(self : InvasiveEEE, l : $[Clearing], then : ForcedAction) extends ForcedAction with ExpandThen
-// Undoing a pick is a Back, so explode (bots, validation) doesn't follow it: picks and undos made an endless graph that
-// ran the bots out of memory
-case class InvasiveEEECraftUndoAction(then : ForcedAction)(o : (Game => Elem)*) extends BaseUserAction()(o : _*) with WrappedAction with Back
 
 case class InvasiveEEEPondDrawAction(f : Faction, e : InvasiveEEE, n : Int, m : Message, then : ForcedAction) extends ForcedAction
 case class InvasiveEEEDeckDrawAction(f : Faction, e : InvasiveEEE, n : Int, m : Message, then : ForcedAction) extends ForcedAction
@@ -585,15 +595,24 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
                 InvasiveEEECraftSelectAction(f, d, $, $, m, then)
 
         case InvasiveEEECraftSelectAction(f, d, l, x, m, then) =>
-            val choices = craftChoices(f, d).%{ case (a, b) => l.diff(a).none && x.diff(b).none }
+            val all = craftChoices(f, d)
+            val choices = all.%{ case (a, b) => l.diff(a).none && x.diff(b).none }
             val complete = l.num + x.num == d.cost.num
+            val assets = craftAssets(f)
+
+            // the crafts still open after picking ll and xx, each once, in pick order then the rest
+            def leaves(ll : $[Clearing], xx : $[SuitAsset]) = all.%{ case (a, b) => ll.diff(a).none && xx.diff(b).none }./{ case (a, b) =>
+                InvasiveEEECraftClearingsAction(f, ll ++ a.diff(ll), CraftAssignAction(f, d, assets, xx ++ b.diff(xx), m, then))
+            }
+
+            def pick(ll : $[Clearing], xx : $[SuitAsset])(label : (Game => Elem)*) = InvasiveEEECraftPickAction(f, d, ll, xx, m, then)(leaves(ll, xx), label : _*)
 
             Ask(f).group("Craft", d.elem, "using", (l./(c => c.elem ~ " " ~ dt.CraftSuit(c.asset)) ++ x./(dt.CraftSuit)).merge)
-                .each(complete.not.??(choices.flatMap(_._1).distinct.diff(l)))(c => InvasiveEEECraftSelectAction(f, d, l :+ c, x, m, then).as(c, dt.CraftSuit(c.asset)))
-                .each(complete.not.??(choices.flatMap(_._2.diff(x)).distinct))(a => InvasiveEEECraftSelectAction(f, d, l, x :+ a, m, then).as(dt.CraftSuit(a)))
-                .when(complete)(InvasiveEEECraftClearingsAction(f, l, CraftAssignAction(f, d, craftAssets(f), x, m, then)).as("Craft".hh, d.elem))
-                .each(l)(c => InvasiveEEECraftUndoAction(InvasiveEEECraftSelectAction(f, d, l.but(c), x, m, then))("Undo", c))
-                .each(x.distinct)(a => InvasiveEEECraftUndoAction(InvasiveEEECraftSelectAction(f, d, l, x.diff($(a)), m, then))("Undo", dt.CraftSuit(a)))
+                .each(complete.not.??(choices.flatMap(_._1).distinct.diff(l)))(c => pick(l :+ c, x)(c, dt.CraftSuit(c.asset)))
+                .each(complete.not.??(choices.flatMap(_._2.diff(x)).distinct))(a => pick(l, x :+ a)(dt.CraftSuit(a)))
+                .when(complete)(InvasiveEEECraftClearingsAction(f, l, CraftAssignAction(f, d, assets, x, m, then)).as("Craft".hh, d.elem))
+                .each(l)(c => pick(l.but(c), x)("Undo", c))
+                .each(x.distinct)(a => pick(l, x.diff($(a)))("Undo", dt.CraftSuit(a)))
                 .cancel
 
         case InvasiveEEECraftClearingsAction(f, l, then) =>
