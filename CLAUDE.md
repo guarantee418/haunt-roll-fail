@@ -553,7 +553,12 @@ file covers the build, server and deploy. No session can ssh to the server
   (`craftedIn` in `InvasiveEEEPlayer`) until removed (`ForcedRemoveTargetEffectAction`), so losing an unused enclave
   doesn't use up the craft of a used one, and flipping a used enclave doesn't free it. New games get the hidden default
   option `FrogsCraftByClearing` (`root/meta.scala`); older games craft by suit as before. A running game can be switched
-  the same way as above, with `FrogsCraftByClearingAction(X)` (sets `game.frogsCraftByClearing`).
+  the same way as above, with `FrogsCraftByClearingAction(X)` (sets `game.frogsCraftByClearing`). The menu's picks and
+  undos are `InvasiveEEECraftPickAction`, a `HalfExplode` that expands straight to the crafts it can still lead to (only the
+  recorded one when validating a move): walking the menu tried every order of picks and undos, and bots and move checks ran
+  out of memory with many enclaves (found 2026-10-16).
+- `craftableWith` in `root/game.scala` matches the leftover costs to assets (augmenting paths) instead of trying every
+  order of the assets, which took factorial time with many assets that pay only some costs (Lizard gardens, the Lost City).
 - Knaves items are the Captains' items, not crafted items: the Vagabond
   can't take them in trade when it aids the Knaves (`AidTradeAction` in
   `root/faction-hero.scala`), the Hundreds can't loot them (Looters in
