@@ -658,7 +658,11 @@ file covers the build, server and deploy. No session can ssh to the server
   So an action marked `with Soft` must only offer choices (return an `Ask`);
   if it changes the game (places pieces, moves on with `Next`), replays
   skip that and the game breaks (blank map, `... not found among ...` in
-  the console). Lilypad Diaspora's `InvasiveEEEMusterAction` had this bug.
+  the console). Lilypad Diaspora's `InvasiveEEEMusterAction` had this bug, and so did `MarchAction` (`root/movement.scala`):
+  after its last move it went straight on to its forced `then`, so a reload or undo lost the Underground Duchy Brigadier's
+  `WorkDoneAction` and the Brigadier could work again that turn. It now offers a forced `then` as the only choice
+  (`NoAsk`, recorded), as `WageWarAction` does (found 2026-10-16). `ReplayCheck` ignores the Riverfolk's chosen currency
+  (`TraderPlayer.current`, menu state set by soft actions) in its comparisons.
   `root/replay-check.scala` plays bot games and checks that replaying every
   prefix of the recorded actions matches the live game:
   `sbt "runMain root.ReplayCheck <games> [base|ld|tc|kd] [dense]"` with the

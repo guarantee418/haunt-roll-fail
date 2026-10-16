@@ -331,11 +331,16 @@ object MovementExpansion extends MandatoryExpansion {
 
         case MarchAction(f, n, total, then) =>
             val cc = f.moveFrom
+
+            // MarchAction is Soft, and replays stop at a soft action, so a forced then that changes the game (the
+            // Brigadier's WorkDoneAction) is offered as the only choice, which gets recorded, as WageWarAction does
+            def done = then.isSoft.?[Continue](then).|(NoAsk(f)(then))
+
             if (n > total)
-                then // Ask(f)(then.as("Then"))
+                done
             else
             if (cc.none)
-                then // Ask(f)(then.as("Can't Move".hl))
+                done
             else
                 MoveInitAction(f, f, Nil, (total > 1).?(March(n, total)).|(NoMessage), cc, f.movable, $((n == 1).?(CancelAction).|(then.as("Forfeit " ~ (total - n + 1).of("move")))), MarchAction(f, n + 1, total, then))
 
