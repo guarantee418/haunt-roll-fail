@@ -42,7 +42,9 @@ object ReplayCheck {
             var r = $[String]()
             while (cl != null && cl.getName.startsWith("root")) {
                 cl.getDeclaredFields.foreach { fd =>
-                    if (java.lang.reflect.Modifier.isStatic(fd.getModifiers).not) {
+                    // TraderPlayer.current is the Riverfolk's chosen currency: menu state only (it orders the payment
+                    // choices), set by soft actions that replays skip; the funds each move spends are in the move itself
+                    if (java.lang.reflect.Modifier.isStatic(fd.getModifiers).not && (cl.getSimpleName == "TraderPlayer" && fd.getName == "current").not) {
                         fd.setAccessible(true)
                         val x = fd.get(o)
                         x match {
@@ -64,6 +66,13 @@ object ReplayCheck {
     def show0(c : Continue) : String = c match {
         case Log(_, _, c) => show0(c)
         case DelayedContinue(_, c) => show0(c)
+        // the Riverfolk's Daylight menu depends on its chosen currency (see TraderPlayer.current in fingerprint): compare
+        // the fund groups and the kinds of choice offered, not the currency picked, the funds each choice would spend or
+        // whether that currency can pay for it
+        case Ask(f, l) if l.exists(_.unwrap.is[TraderCurrencyAction]) => "Ask(" + f + ", Riverfolk Daylight, funds " + l./(_.unwrap).of[TraderCurrencyAction]./(_.ll).mkString + ", " + l./{
+            case u : Unavailable => u.action.unwrap
+            case a => a.unwrap
+        }./(_.getClass.getSimpleName).mkString(" | ") + ")"
         case Ask(f, l) => "Ask(" + f + ", " + l./(_.unwrap.toString).mkString(" | ") + ")"
         case MultiAsk(l, _) => "MultiAsk(" + l./(show0).mkString(" || ") + ")"
         case c => c.toString.takeWhile(_ != '(')
