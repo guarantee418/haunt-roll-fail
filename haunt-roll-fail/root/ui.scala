@@ -5352,14 +5352,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             if (actions.has(HiddenAssignHits) && isEnabled(f, UseAutoAssignHits)) {
                 if (test) alog("auto assign hits?".hl, 0, _ => {})
 
-                val values = expand.of[XXObjectsSelectedAction[Figure]]./(_.values)
-
-                val variants = values./(_.indexed./{
-                    case Figure(faction, piece : Base, _) -> n => Figure(faction, piece, n)
-                    case Figure(faction, piece, _) -> _ => Figure(faction, piece, 0)
-                }.toSet).distinct
-
-                if (variants.num == 1)
+                if (HitsVariants.distinct(expand.of[XXObjectsSelectedAction[Figure]]).num == 1)
                     return Some(expand(0))
             }
 
@@ -5434,16 +5427,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             return
         }
 
-        if (actions.has(HiddenAssignHits)) {
-            val variants = expand.of[XXObjectsSelectedAction[Figure]]./(_.values)
+        if (actions.has(HiddenAssignHits) && callbacks.settings.has(AutoAssignHits)) {
+            val variants = HitsVariants.distinct(expand.of[XXObjectsSelectedAction[Figure]])
 
-            val choice = variants./(_.indexed./{
-                case Figure(faction, piece : Base, _) -> n => Figure(faction, piece, n)
-                case Figure(faction, piece, _) -> _ => Figure(faction, piece, 0)
-            }.toSet).distinct
-
-            if (actions.has(HiddenAssignHits) && choice.num == 1 && (callbacks.settings.has(AutoAssignHits) /*|| { dom.window.alert("auto hits off") ; false }*/)) {
-                scalajs.js.timers.setTimeout(0) { then(expand(0)) }
+            if (variants.num == 1) {
+                scalajs.js.timers.setTimeout(0) { then(variants(0)) }
                 return
             }
         }

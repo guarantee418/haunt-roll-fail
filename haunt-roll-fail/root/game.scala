@@ -680,6 +680,12 @@ trait BirdsongQuestion extends FactionAction {
 }
 
 
+// Ways to assign hits that remove different pieces. The figures are picked in order, so the same pieces
+// picked in another order are the same removal: compare how many of each piece of each faction go.
+object HitsVariants {
+    def distinct(l : $[XXObjectsSelectedAction[Figure]]) = l.distinctBy(_.values.groupMapReduce(u => u.faction -> u.piece)(_ => 1)(_ + _))
+}
+
 case class SelectFiguresAction(f : Faction, m : Elem, figures : $[Figure], extra : $[UserAction])(r : ObjectSetRule[Figure] => ObjectSetRule[Figure])(then : $[Figure] => ForcedAction) extends ForcedAction with Soft with SelfPerform {
     def perform(soft : Void)(implicit game : Game) = {
         implicit val convF = (x : Figure, s : Boolean) => FigureRemove(x).elem(s)(styles.iii)

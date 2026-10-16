@@ -936,7 +936,7 @@ object BattleExpansion extends MandatoryExpansion {
                 val explode = ask.perform(soft).actions.of[HalfExplode]
                 val variants = explode./~(_.expand(None)).of[XXObjectsSelectedAction[Figure]]
 
-                val d = variants.distinctBy(_.values./(u => u.piece -> u.faction))
+                val d = HitsVariants.distinct(variants)
 
                 if (d.num == 1)
                     Ask(f).add(d).add(explode)
