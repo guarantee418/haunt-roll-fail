@@ -113,6 +113,7 @@ object ReplayCheck {
             case "kd" => $($(MC, ED, WA, KD))
             case "ldkd" => $($(MC, ED, LDvE, KD), $(MC, WA, LDvE, KD))
             case "ldlc" => $($(MC, ED, LDvE, LC), $(MC, WA, LDvE, LC))
+            case "ldtc" => $($(MC, ED, LDvE, TC), $(MC, WA, LDvE, TC))
             case "marsh5" => $($(MC, ED, WA, VB, LDvE), $(MC, ED, WA, KD, TC))
             case "marsh" => $($(MC, ED, WA, VB), $(MC, ED, WA, LDvE), $(MC, WA, KD, TC))
         }).|($($(MC, WA, LDvE, KD), $(MC, ED, LDvE, KD), $(MC, WA, KD, TC), $(MC, WA, LDvE, TC)))

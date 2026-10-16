@@ -114,6 +114,9 @@ case class VeiledDrawAction(self : Faction, then : ForcedAction) extends BaseAct
 
 case class CurseAction(f : Faction, l : $[Faction], then : ForcedAction) extends ForcedAction
 case class CurseDiscardAction(self : Faction, f : Faction, card : Card, l : $[Faction], then : ForcedAction) extends BaseAction("Ancestral Curse", "discard a card")(InHand(f, card)) with ViewObject[Card] { def obj = card }
+// SimultaneousCurse: every opponent picks its card at once (a MultiAsk), l are those still to discard
+case class CurseAllAction(f : Faction, l : $[Faction], then : ForcedAction) extends ForcedAction
+case class CurseAllDiscardAction(self : Faction, f : Faction, card : Card, l : $[Faction], then : ForcedAction) extends BaseAction("Ancestral Curse", "discard a card")(InHand(f, card)) with ViewObject[Card] { def obj = card }
 
 case class RapaciousAction(self : Faction, enemy : Faction, then : ForcedAction) extends BaseAction("Rapacious Exploitation", "look at the hand of")(enemy)
 case class RapaciousPickAction(self : Faction, enemy : Faction, card : Card, then : ForcedAction) extends BaseAction("Rapacious Exploitation", "choose from", enemy, "hand")(InHand(enemy, card)) with ViewObject[Card] { def obj = card }
@@ -257,7 +260,12 @@ object CardsExpansion extends Expansion {
         case SpyEffect =>
             Ask(f).each(opponentsWithCards(f))(g => SpyAction(f, g, then))
 
-        case CurseEffect => Then(CurseAction(f, game.from(f).drop(1).%(game.enemy(f, _)), then))
+        case CurseEffect =>
+            val l = game.from(f).drop(1).%(game.enemy(f, _))
+            if (game.options.has(SimultaneousCurse))
+                Then(CurseAllAction(f, l, then))
+            else
+                Then(CurseAction(f, l, then))
 
         case RapaciousEffect =>
             Ask(f).each(opponentsWithCards(f))(g => RapaciousAction(f, g, then))
@@ -526,6 +534,18 @@ object CardsExpansion extends Expansion {
             g.discard :+= c
             g.log("discarded", c)
             Then(CurseAction(f, l, then))
+
+        case CurseAllAction(f, l, then) =>
+            l.%(_.hand.any) match {
+                case Nil => Then(DrawCardsAction(f, 1, then))
+                case l => MultiAsk(l./(g => Ask(g).each(g.hand.distinct)(c => CurseAllDiscardAction(g, f, c, l, then))))
+            }
+
+        case CurseAllDiscardAction(g, f, c, l, then) =>
+            g.hand = g.hand.diff($(c))
+            g.discard :+= c
+            g.log("discarded", c)
+            Then(CurseAllAction(f, l.but(g), then))
 
         case RapaciousAction(f, g, then) =>
             f.log("looked at the hand of", g)

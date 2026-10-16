@@ -332,12 +332,41 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
     }
 
     // Negotiations (16.2.5): offered to enemies during their turn
-    def negotiations(f : Faction)(implicit game : Game, ask : ActionCollector) {
+    def negotiations(f : Faction, then : ForcedAction = Repeat)(implicit game : Game, ask : ActionCollector) {
         factions.but(f).of[InvasiveEEE].%(game.states.contains).%(_.friends(f).not).foreach { e =>
             if (e.negotiated.has((game.turn, f)).not)
                 if (e.militant.exists(f.present))
-                    + InvasiveEEENegotiateMainAction(f, e, Repeat)
+                    + InvasiveEEENegotiateMainAction(f, e, then)
         }
+    }
+
+    // Negotiations in every menu of the enemy's turn, not only those calling the phase hooks (Council's Convene didn't;
+    // asked for by the owner on 2026-10-16): added to an Ask made by a soft action, which it then returns to, as a soft action
+    // only offers choices and is safe to perform again. Not to a menu about a card (the card may be the one given away), nor to
+    // a sub-menu with Cancel (back to a menu with Negotiations), which also keeps it out of its own steps. It depends only on
+    // the game, so bots, move checks and replays see the same choices; recorded games replay the same, as it only adds choices.
+    def anytimeNegotiations(action : Action, c : Continue)(implicit game : Game) : Continue = (action, c) @@ {
+        case (then : ForcedAction, ask @ Ask(f : Faction, l)) if then.isSoft && f == game.current && game.turn > 0 &&
+            game.phase != Night && ask.available && l.exists(_.is[InvasiveEEENegotiateMainAction]).not && l.exists(_.is[Cancel]).not &&
+            (l.num == 1 && l.exists(_.is[WrapAction])).not && aboutCard(then).not =>
+            implicit val collector = builder
+
+            negotiations(f, then)
+
+            val n = collector.list
+
+            if (n.any)
+                ask.group("Negotiations").add(n)
+            else
+                ask
+
+        case _ => c
+    }
+
+    def aboutCard(x : Any) : Boolean = x @@ {
+        case _ : DeckCard => true
+        case p : Product => p.productIterator.exists(aboutCard)
+        case _ => false
     }
 
     // Companions: turn a frog card into another suit

@@ -903,6 +903,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case SpyDiscardAction(_, _, card, _) => |(utility(card))
         case RapaciousPickAction(_, _, card, _) => |(utility(card))
         case CurseDiscardAction(_, _, card, _, _) => |(-cardValueSafe(card) - 0.3 * utility(card))
+        case CurseAllDiscardAction(_, _, card, _, _) => |(-cardValueSafe(card) - 0.3 * utility(card))
         case RapaciousDiscardAction(_, _, card, _) => |(-cardValueSafe(card) - 0.3 * utility(card))
         case RapaciousGiveAction(_, _, _, pay, _) => |(-pay./(resourceValue).sum)
         case EruptTargetAction(_, target, _) => |(100 * enemyWeight(target) - game.allied(self, target).??(1000))

@@ -334,6 +334,14 @@ case object MendFigures extends GameOption with ToggleOption {
     def valueOn = "Brings back every figure".txt
 }
 
+// Ancestral Curse's opponents pick the card they discard all at once, each on their own screen (CurseAllAction in effects.scala;
+// asked for by the owner on 2026-10-16), instead of one after another in turn order. Hidden, and given to every new game
+// (Meta.mandatoryFor): older games recorded the discards one by one, and their replays must not change
+case object SimultaneousCurse extends GameOption with ToggleOption {
+    val group = "Ancestral Curse".txt
+    def valueOn = "Opponents discard at once".txt
+}
+
 // The clan power report (ClanPowers in map.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
 // (Meta.mandatoryFor), like ChooseCasualties: older games' replays must not stop on a step they never recorded
 case object ClanPowerReports extends GameOption with ToggleOption {

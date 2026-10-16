@@ -1929,7 +1929,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
 
                     return another.as[SelfPerform]./(_.perform(soft)).|(internalPerform(another, soft))
                 case TryAgain => return internalPerform(action, soft)
-                case c => return c
+                case c => return InvasiveEEEExpansion.anytimeNegotiations(action, c)(this)
             }
         }
 
