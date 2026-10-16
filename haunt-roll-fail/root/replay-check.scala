@@ -42,7 +42,9 @@ object ReplayCheck {
             var r = $[String]()
             while (cl != null && cl.getName.startsWith("root")) {
                 cl.getDeclaredFields.foreach { fd =>
-                    if (java.lang.reflect.Modifier.isStatic(fd.getModifiers).not) {
+                    // TraderPlayer.current is the Riverfolk's chosen currency: menu state only (it orders the payment
+                    // choices), set by soft actions that replays skip; the funds each move spends are in the move itself
+                    if (java.lang.reflect.Modifier.isStatic(fd.getModifiers).not && (cl.getSimpleName == "TraderPlayer" && fd.getName == "current").not) {
                         fd.setAccessible(true)
                         val x = fd.get(o)
                         x match {
