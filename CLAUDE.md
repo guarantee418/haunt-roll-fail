@@ -630,7 +630,8 @@ file covers the build, server and deploy. No session can ssh to the server
   has no clearing names, so the names (Thatch, Sedge, Weir, ...) are made up;
   comments give the Law of Root diagram numbers. The seven forests are named after wetland trees and woods (owner,
   2026-10-17): Alder (north-west), Willow (west), Osier (north), Cypress (centre), Tamarack (east), Mangrove
-  (south-west, by the Delta) and Carr (south); only their labels, so saved games are unchanged.
+  (south-west, by the Delta) and Carr (south); only their labels, so saved games are unchanged. The names are drawn on
+  the map at the forests' centres, under the pieces (`drawForestNames` in `root/ui.scala`, Marsh only).
   Region ids must be unique across all boards (`Serialize.parseRegion`),
   so the Marsh river fork is Confluence, not Fork (Gorge has a Fork).
   Rules follow Law of Root M.5: with 1-4 players one clearing of each colored pair (`floodPairs`) is

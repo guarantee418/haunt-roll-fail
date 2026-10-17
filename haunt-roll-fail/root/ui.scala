@@ -566,6 +566,33 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         }
     }
 
+    // The Marsh forests' names (Alder, Willow, ...) at their centres, under the pieces (asked for by the owner on 2026-10-17):
+    // pale with a dark outline, to read on the woods
+    def drawForestNames(g : dom.CanvasRenderingContext2D) {
+        if (game.board != MarshBoard)
+            return
+
+        g.save()
+        g.globalAlpha = 1.0
+        g.font = "italic bold 46px monospace"
+        g.textAlign = "center"
+        g.textBaseline = "middle"
+        g.lineJoin = "round"
+        g.lineWidth = 10
+        g.strokeStyle = "rgba(24, 34, 18, 0.9)"
+        g.fillStyle = "#eef3dc"
+
+        game.board.forests.foreach { f =>
+            f.label.foreach { name =>
+                val (x, y) = game.board.center(f)
+                g.strokeText(name, x, y)
+                g.fillText(name, x, y)
+            }
+        }
+
+        g.restore()
+    }
+
     // The items still available to craft, on the item tracker
     def drawItemSlots(g : dom.CanvasRenderingContext2D) {
         if (showTrackers.not)
@@ -1245,6 +1272,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         }
 
         drawRule()
+
+        drawForestNames(g)
 
         // Warriors held prisoner in forests are drawn behind bars
         val caged = currentGame.ui.graveyard.not.??(game.board.forests./~(r => factions.of[CommonAbduct].%(game.states.contains)./~(_.from(Cage(r)).$)./(u => (r : Region, u.faction, u.piece)))).toSet
