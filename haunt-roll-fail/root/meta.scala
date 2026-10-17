@@ -337,6 +337,14 @@ case object CompanionsUntilSpent extends GameOption with ToggleOption {
     val valueOn = "Companions".hh ~ " discarded when its card is spent"
 }
 
+// Governors (17.2.3): Lilypad Diaspora can't flip its enclaves at an enemy Council's Governing assemblies (Provoke, Reconcile,
+// Fears Come to Pass, Negotiations, Militias). Hidden and on by default for new games; older games keep flipping there so their
+// replays don't change.
+case object GovernorsStopEnclaveFlips extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Governors".hh ~ " stop enclave flips"
+}
+
 // Hirelings as their cards say (the TTS mod's cards, Law of Root appendix H): the Band blocks only those who moved into
 // its clearing that turn, the Forest Patrol saves one warrior of each removal, the Spring Uprising has 4 warriors and the
 // Warm Sun Prophets start in every ruin. Hidden and on by default for new games; older games keep the earlier rules so
@@ -1286,7 +1294,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1311,6 +1319,7 @@ object Meta extends MetaGame {
         LizardsCraftByClearing,
         CompanionsUntilSpent,
         HirelingsByTheCard,
+        GovernorsStopEnclaveFlips,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
