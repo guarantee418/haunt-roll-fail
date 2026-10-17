@@ -568,8 +568,13 @@ file covers the build, server and deploy. No session can ssh to the server
   `root/styles.scala`) is the Homeland Lilypad Diaspora's yellow-green `#b7b13c` (owner, 2026-10-17, after trying the frog
   decree icons' `#7b9f3c`), and so are the playtest frog factions (`TD`, `LDvB` to `LDvD`, once teal `#3c7174`) and the frog
   part of the map's clearing name tints (`feature/text/frog`, `fox-frog`, `rabbit-frog`, `mouse-frog`,
-  `fox-rabbit-mouse-frog`), so a frog clearing's name now looks like its `-hl` highlight. The frog decree and relic icons
-  stay `#7b9f3c`. The solid `frog` tint is saved lossy (a one-colour lossless WebP is a few dozen bytes, the kind iPhones
+  `fox-rabbit-mouse-frog`), so a frog clearing's name now looks like its `-hl` highlight. The old teal images were
+  recoloured to it too (owner, 2026-10-17): the frog suit icon beside clearing names (`feature/clearing-suit-frog`), the
+  frog card, deck and pile icons (`icon/card/*frog*`), the frog craft icons (`icon/craft/*frog*`), and the playtest frog
+  faction's action icons, glyph, enclave tokens, titles (`td-*`, `ld-title`) and cards (`faction/invasive/card/`, not `hl-*`;
+  only the banner, its suit circle and the bottom-left icon box, so the artwork keeps its colours), by shifting the teal hue
+  band onto `#b7b13c`. The playtest frog warriors (`td-frog`, `td-frog-x5`), boards and character art stay teal. The frog
+  decree and relic icons stay `#7b9f3c`, the green of the Homeland frog cards (owner's choice). The solid `frog` tint is saved lossy (a one-colour lossless WebP is a few dozen bytes, the kind iPhones
   failed on).
 - Lilypad Diaspora crafts by clearing (asked for by the owner on 2026-10-13): when more than one set of its enclaves could
   pay for a card, it picks the clearings (`InvasiveEEECraftSelectAction`), and the enclaves used stay used for the turn
