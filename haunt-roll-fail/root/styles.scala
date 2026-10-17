@@ -111,10 +111,10 @@ package object elem {
 
         FH --> color("#989745")
 
-        TD --> color("#3c7174")
-        LDvB --> color("#3c7174")
-        LDvC --> color("#3c7174")
-        LDvD --> color("#3c7174")
+        TD --> color("#7b9f3c")
+        LDvB --> color("#7b9f3c")
+        LDvC --> color("#7b9f3c")
+        LDvD --> color("#7b9f3c")
         LDvE --> color("#b7b13c")
 
         TCvA --> color("#954a2e")

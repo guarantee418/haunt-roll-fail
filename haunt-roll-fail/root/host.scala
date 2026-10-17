@@ -85,8 +85,8 @@ object Host {
         case XC => fansi.Color.True(0x4c3896)(f.name)
         case CUv2 => fansi.Color.True(0xc7afd9)(f.name)
         case FH => fansi.Color.True(0x989745)(f.name)
-        case TD => fansi.Color.True(0x3c7174)(f.name)
-        case _ : CommonInvasive => fansi.Color.True(0x3c7174)(f.name)
+        case TD => fansi.Color.True(0x7b9f3c)(f.name)
+        case _ : CommonInvasive => fansi.Color.True(0x7b9f3c)(f.name)
         case _ => fansi.Color.DarkGray(f.name)
     }).render
 
