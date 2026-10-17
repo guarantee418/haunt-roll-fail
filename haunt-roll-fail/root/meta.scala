@@ -1011,6 +1011,21 @@ case object SeparateWarriors extends WarriorsOption {
 }
 
 
+// Local games with more than one human player: a "Pass to <faction>" screen hides the action pane (hand and
+// choices) whenever the turn goes to another player on the device, until that player taps it (`ask` in root/ui.scala)
+trait PassScreenOption extends hrf.Setting with OneOfGroup {
+    val group = "Pass and Play"
+}
+
+case object ShowPassScreen extends PassScreenOption {
+    val valueOn = "Pass Screen".hlb ~ " (Local Games: Hand Hidden Until the Next Player Taps)".hl
+}
+
+case object NoPassScreen extends PassScreenOption {
+    val valueOn = "Off".hlb
+}
+
+
 trait TrackersOption extends hrf.Setting with OneOfGroup {
     val group = "Board Trackers"
 }
@@ -1108,8 +1123,8 @@ object Meta extends MetaGame {
     val name = "root"
     val label = "Root"
 
-    override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, StackWarriors, SeparateWarriors, ShowBoardTrackers, HideBoardTrackers, CardPilesInPanel, CardPilesOnMap, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone, EnglishLanguage, FrenchLanguage)
-    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, ShowBoardTrackers, CardPilesInPanel, NoOutOfTurn, HighlightNone, EnglishLanguage)
+    override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, StackWarriors, SeparateWarriors, ShowBoardTrackers, HideBoardTrackers, CardPilesInPanel, CardPilesOnMap, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone, ShowPassScreen, NoPassScreen, EnglishLanguage, FrenchLanguage)
+    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, ShowBoardTrackers, CardPilesInPanel, NoOutOfTurn, HighlightNone, ShowPassScreen, EnglishLanguage)
 
     override def translation(settings : $[hrf.Setting]) =
         if (settings.has(FrenchLanguage))

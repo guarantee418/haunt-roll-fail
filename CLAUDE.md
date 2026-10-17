@@ -609,6 +609,12 @@ file covers the build, server and deploy. No session can ssh to the server
   `HitsVariants.distinct` (`root/game.scala`): how many of each piece of each faction are removed. The hits prompt
   picks figures in order, and the old check counted buildings picked in another order as another choice, so
   losing, say, both a sawmill and a workshop still asked (reported 2026-10-16).
+- Root pass and play (asked for by the owner on 2026-10-17): in a local game with more than one human faction
+  (`Callbacks.hotseat` in `hrf.scala`: a memory or localStorage journal), each time another human faction is asked
+  the action pane shows "Pass to <faction>" and a "Show Hand and Choices" button instead of its hand and choices
+  (`passTo` and `passedTo` in `root/ui.scala`). Notifications (cards drawn or given) wait for that tap too: `wait`
+  shows none, and a tap marks only the revealed faction's as seen. The "Pass and Play" setting (`ShowPassScreen`,
+  the default, or `NoPassScreen` in `root/meta.scala`) turns it off. Display only, so no game records change.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.

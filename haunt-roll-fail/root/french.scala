@@ -790,6 +790,12 @@ object French {
         "On the Map" -> "Sur le plateau",
         " (Draw, Discard, Pond, Lost Souls and Dominances)" -> " (pioche, défausse, Mare, Âmes perdues et Dominations)",
         "Highlights" -> "Surbrillance",
+        "Pass and Play" -> "Passer l'appareil",
+        "Pass Screen" -> "Écran de passage",
+        " (Local Games: Hand Hidden Until the Next Player Taps)" -> " (parties locales : main cachée jusqu'à ce que le joueur suivant touche l'écran)",
+        "Pass to " -> "Passez à ",
+        "Only this player should look. Their hand and choices stay hidden until they tap below." -> "Seul ce joueur doit regarder. Sa main et ses choix restent cachés jusqu'à ce qu'il touche ci-dessous.",
+        "Show Hand and Choices" -> "Afficher la main et les choix",
         "Hirelings" -> "Nomades",
 
         // more menus and setup
