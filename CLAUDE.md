@@ -565,11 +565,12 @@ file covers the build, server and deploy. No session can ssh to the server
   plays Lilypad with the Council. Those menus head it with the Lilypad faction's name, as the button already says
   Negotiations (MaKoBwoY saw "Négociations" twice). The Council's "Convene Woodfolk" is in the Council's colour.
 - Frog suit text (clearing names in menus and the log, and the two-suit gradients, `Frog` and `FoxFrog` ... in
-  `root/styles.scala`) is the green of the Homeland frog cards and the frog decree icons, `#7b9f3c` (owner, 2026-10-17), and
-  so are the playtest frog factions (`TD`, `LDvB` to `LDvD`, which were teal `#3c7174`) and the frog part of the map's
-  clearing name tints (`feature/text/frog`, `fox-frog`, `rabbit-frog`, `mouse-frog`, `fox-rabbit-mouse-frog`; the `-hl`
-  ones stay the Diaspora's yellow). The Homeland Lilypad Diaspora (`LDvE`) keeps its official yellow `#b7b13c`. The solid
-  `frog` tint is saved lossy (a one-colour lossless WebP is a few dozen bytes, the kind iPhones failed on).
+  `root/styles.scala`) is the Homeland Lilypad Diaspora's yellow-green `#b7b13c` (owner, 2026-10-17, after trying the frog
+  decree icons' `#7b9f3c`), and so are the playtest frog factions (`TD`, `LDvB` to `LDvD`, once teal `#3c7174`) and the frog
+  part of the map's clearing name tints (`feature/text/frog`, `fox-frog`, `rabbit-frog`, `mouse-frog`,
+  `fox-rabbit-mouse-frog`), so a frog clearing's name now looks like its `-hl` highlight. The frog decree and relic icons
+  stay `#7b9f3c`. The solid `frog` tint is saved lossy (a one-colour lossless WebP is a few dozen bytes, the kind iPhones
+  failed on).
 - Lilypad Diaspora crafts by clearing (asked for by the owner on 2026-10-13): when more than one set of its enclaves could
   pay for a card, it picks the clearings (`InvasiveEEECraftSelectAction`), and the enclaves used stay used for the turn
   (`craftedIn` in `InvasiveEEEPlayer`) until removed (`ForcedRemoveTargetEffectAction`), so losing an unused enclave

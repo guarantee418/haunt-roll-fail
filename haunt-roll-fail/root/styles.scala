@@ -111,10 +111,10 @@ package object elem {
 
         FH --> color("#989745")
 
-        TD --> color("#7b9f3c")
-        LDvB --> color("#7b9f3c")
-        LDvC --> color("#7b9f3c")
-        LDvD --> color("#7b9f3c")
+        TD --> color("#b7b13c")
+        LDvB --> color("#b7b13c")
+        LDvC --> color("#b7b13c")
+        LDvD --> color("#b7b13c")
         LDvE --> color("#b7b13c")
 
         TCvA --> color("#954a2e")
@@ -156,14 +156,14 @@ package object elem {
         Mouse --> color("#f68b56")
         Bird --> color("#6ac0ba")
         // the green of the Homeland frog cards and of the frog decree icons (asked for by the owner on 2026-10-17)
-        Frog --> color("#7b9f3c")
+        Frog --> color("#b7b13c")
 
-        object FoxFrog extends CustomStyle(background("linear-gradient(to bottom, #e53e36 0%, #e53e36 50%, #7b9f3c 70%, #7b9f3c 100%)"), background.clip("text"), color("transparent"))
-        object RabbitFrog extends CustomStyle(background("linear-gradient(to bottom, #f4e74f 0%, #f4e74f 50%, #7b9f3c 70%, #7b9f3c 100%)"), background.clip("text"), color("transparent"))
-        object MouseFrog extends CustomStyle(background("linear-gradient(to bottom, #f68b56 0%, #f68b56 50%, #7b9f3c 70%, #7b9f3c 100%)"), background.clip("text"), color("transparent"))
+        object FoxFrog extends CustomStyle(background("linear-gradient(to bottom, #e53e36 0%, #e53e36 50%, #b7b13c 70%, #b7b13c 100%)"), background.clip("text"), color("transparent"))
+        object RabbitFrog extends CustomStyle(background("linear-gradient(to bottom, #f4e74f 0%, #f4e74f 50%, #b7b13c 70%, #b7b13c 100%)"), background.clip("text"), color("transparent"))
+        object MouseFrog extends CustomStyle(background("linear-gradient(to bottom, #f68b56 0%, #f68b56 50%, #b7b13c 70%, #b7b13c 100%)"), background.clip("text"), color("transparent"))
 
         object FoxRabbitMouse extends CustomStyle(background("linear-gradient(to bottom, #e53e36 0%, #e53e36 46%, #f4e74f 51%, #f4e74f 54%, #f68b56 74%, #f68b56 100%)"), background.clip("text"), color("transparent"))
-        object FoxRabbitMouseFrog extends CustomStyle(background("linear-gradient(to bottom, #e53e36 0%, #e53e36 30%, #f4e74f 40%, #f4e74f 40%, #f68b56 60%, #f68b56 60%, #7b9f3c 80%, #7b9f3c 100%)"), background.clip("text"), color("transparent"))
+        object FoxRabbitMouseFrog extends CustomStyle(background("linear-gradient(to bottom, #e53e36 0%, #e53e36 30%, #f4e74f 40%, #f4e74f 40%, #f68b56 60%, #f68b56 60%, #b7b13c 80%, #b7b13c 100%)"), background.clip("text"), color("transparent"))
 
         object gold extends CustomStyle(color("gold"))
 
