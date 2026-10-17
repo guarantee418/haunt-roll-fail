@@ -444,8 +444,8 @@ object Meta extends MetaGame { mmm =>
     override val showAbout = false
 
     // Map display settings, chosen by each player under "Interface" (like Root's Clearing Rule)
-    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, CustomTerritoryColor, FightsTerritoryColor, HideTerritoryColor) ++ TerritoryOpacity.all ++ $(ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels, ReverseStackedPanels, ShowCombatReport, SkipCombatReport, ShowClanPowerReport, SkipClanPowerReport)
-    override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, StackedPanels, ShowCombatReport, ShowClanPowerReport) ++ PlayerColor.all./(TerritoryOpacity(_, 50))
+    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, CustomTerritoryColor, FightsTerritoryColor, HideTerritoryColor) ++ TerritoryOpacity.all ++ $(ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels, ReverseStackedPanels, ShowCombatReport, SkipCombatReport, ShowClanPowerReport, SkipClanPowerReport, ShowPassScreen, NoPassScreen)
+    override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, StackedPanels, ShowCombatReport, ShowClanPowerReport, ShowPassScreen) ++ PlayerColor.all./(TerritoryOpacity(_, 50))
 }
 
 
@@ -475,6 +475,20 @@ case object ShowClanPowerReport extends ClanPowerReportSetting {
 
 case object SkipClanPowerReport extends ClanPowerReportSetting {
     val valueOn = "Skip".hlb
+}
+
+// Local games with more than one human player: a "Pass to <clan>" screen hides the action pane (hand and choices) and
+// the clan's fame whenever another player on the device is asked, until that player taps it (ask in ui.scala), like Root's
+trait PassScreenSetting extends hrf.Setting with OneOfGroup {
+    val group = "Pass and Play"
+}
+
+case object ShowPassScreen extends PassScreenSetting {
+    val valueOn = "Pass Screen".hlb ~ " (Local Games: Hand Hidden Until the Next Player Taps)".hl
+}
+
+case object NoPassScreen extends PassScreenSetting {
+    val valueOn = "Off".hlb
 }
 
 // Territories tinted with their controller's colour (gray when invaded and pink during a fight are kept with Fights Only)

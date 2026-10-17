@@ -2524,7 +2524,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val newer = game.notifications
         val older = shown
 
-        shown = game.notifications
+        // In pass and play, only the notifications of the clan holding the device are marked as shown
+        shown = passing.?(shown ++ newer.diff(older).%(_.factions.intersect(self).any)).|(game.notifications)
 
         val display = newer.diff(older).%(_.factions.intersect(self).any)./~(n => convertActions(self.single, n.infos)).some./~(_ :+ ZOption(Empty, Break))
 
@@ -2550,7 +2551,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         drawCards()
 
-        showNotifications(self)
+        // In pass and play, every human player on the device is self, so notifications wait for each one's own turn
+        showNotifications(passing.?($[F]()).|(self))
 
         super.wait(self, factions, message)
     }
@@ -2580,6 +2582,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             return
         }
 
+        if (passing && game.isOver.not && faction.exists(f => passedTo.has(f).not)) {
+            passTo(faction.get, () => ask(faction, actions, then))
+            return
+        }
+
         look(faction./~(game.ptf.get).$)
 
         showNotifications(faction.$)
@@ -2596,6 +2603,32 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             keysExplode = $
             then(a)
         })
+    }
+
+    // Pass and play: in a local game with several human players, the action pane (hand, choices, notifications) and the
+    // clan's fame are hidden behind a "Pass to <clan>" screen each time another of them is asked, until that player taps it
+    def passing = callbacks.hotseat && callbacks.settings.has(NoPassScreen).not
+
+    var passedTo : |[F] = None
+
+    def passTo(f : F, reveal : () => Unit) {
+        look($)
+
+        lastActions = $
+        lastThen = null
+
+        clearOverlay()
+
+        preasker.zask($)(resources)
+        asker.zask($(
+            ZOption(Div("Pass to " ~ factionElem(f))(xlo.fullwidth), Div("Only this player should look. Their hand and choices stay hidden until they tap below.", ZBasic.info)(xlo.fullwidth)),
+            ZBasic(Empty, "Show Hand and Choices".hlb, () => {
+                passedTo = |(f)
+                reveal()
+            })
+        ))(resources)
+        postasker.zask($)(resources)
+        hideSwitches()
     }
 
     // Adset: a clan's "i" button opens its info instead of choosing it
