@@ -604,8 +604,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     // The forests' names (Alder, Willow, ...) at their centres, under the pieces, on the Marsh (asked for by the owner on
     // 2026-10-17) and the Autumn, Winter, Lake, Mountain and Gorge maps (the same day): pale with a dark outline, to read on the woods
+    def forestNames = $[Board](AutumnBoard, WinterBoard, LakeBoard, MountainBoard, GorgeBoard, MarshBoard).has(game.board)
+
     def drawForestNames(g : dom.CanvasRenderingContext2D) {
-        if ($[Board](AutumnBoard, WinterBoard, LakeBoard, MountainBoard, GorgeBoard, MarshBoard).has(game.board).not)
+        if (forestNames.not)
             return
 
         g.save()
@@ -1141,8 +1143,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         val nowoods = (game.turn > 0) && factions.of[Hero].none && factions.of[Expedition].none && factions.of[OldExpedition].none && factions.of[CommonAbduct].none && hirelings.has(TheExile).not
 
-        // the Marsh has no woods overlay
-        if (nowoods.not && resources.images.has(mapid + "map-woods"))
+        // the Marsh has no woods overlay, and the maps with forest names (drawForestNames) skip theirs, which only
+        // printed the old names (or the Gorge's compass letters) and showed them twice
+        if (nowoods.not && forestNames.not && resources.images.has(mapid + "map-woods"))
             g.drawImage(resources.images.get(mapid + "map-woods"), 0, 0)
 
         var saved = oldPositions
