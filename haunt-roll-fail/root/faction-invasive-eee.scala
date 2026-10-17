@@ -258,7 +258,16 @@ case class InvasiveEEEMilitiasPlaceAction(self : Faction, e : InvasiveEEE, c : C
 case class InvasiveEEEAssimilateAction(self : Faction, e : InvasiveEEE, c : Clearing) extends ForcedAction
 
 
+// A one-time fix for games started before GovernorsStopEnclaveFlips, added to a live game's log by hand: Lilypad's enclaves
+// can't be flipped at an enemy Council's Governing assemblies from here (game.governorsStopEnclaveFlips), then goes on with then
+case class GovernorsStopEnclaveFlipsAction(then : ForcedAction) extends ForcedAction with SkipValidate
+
 object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
+    // Governors (17.2.3): no flipping at an enemy Council's Governing assemblies (reported by MaKoBwoY on 2026-10-17: Provoke
+    // flipped one); games started before keep the earlier rules so their replays don't change
+    def flippable(e : InvasiveEEE, l : $[Clearing])(implicit game : Game) : $[Clearing] =
+        (game.options.has(GovernorsStopEnclaveFlips) || game.governorsStopEnclaveFlips).?(Council.governedFor(e, l)).|(l)
+
     val disguiseSuits = $[Suit](Bird, Fox, Rabbit, Mouse)
 
     // 16.2.1.I: Peaceful adds the frog suit, Militant covers the clearing suit (landmark suits stay)
@@ -335,7 +344,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
     def negotiations(f : Faction, then : ForcedAction = Repeat)(implicit game : Game, ask : ActionCollector) {
         factions.but(f).of[InvasiveEEE].%(game.states.contains).%(_.friends(f).not).foreach { e =>
             if (e.negotiated.has((game.turn, f)).not)
-                if (e.militant.exists(f.present))
+                if (flippable(e, e.militant).exists(f.present))
                     + InvasiveEEENegotiateMainAction(f, e, then)
         }
     }
@@ -381,6 +390,11 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
         FoxRabbitMouse.%(s => f.has(EnclaveLaborers(e, s)))./~(s => e.peaceful.%(c => game.original(c).has(s)))./(_.asset)
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
+        case GovernorsStopEnclaveFlipsAction(then) =>
+            game.governorsStopEnclaveFlips = true
+
+            then
+
         // SETUP
         case CreatePlayerAction(f : InvasiveEEE) =>
             game.states += f -> new InvasiveEEEPlayer(f)
@@ -567,7 +581,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
             l.foldRight(then)((e, q) => InvasiveEEEFearsAction(f, e, q))
 
         case InvasiveEEEFearsAction(f, e, then) =>
-            val l = f.peaceful.%(e.present)
+            val l = flippable(f, f.peaceful).%(e.present)
 
             if (l.any) {
                 l.foreach(c => flip(f, c, PeacefulEEE, MilitantEEE))
@@ -665,7 +679,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
 
         case InvasiveEEEReconcileSelectAction(f, l) =>
             Ask(f).group("Reconcile".styled(f), "- flip", MilitantEEE.sof(f), "to", PeacefulEEE.of(f), l.any.?("in"), l.any.?(l./(_.elem).comma))
-                .each(f.militant.diff(l))(c => InvasiveEEEReconcileSelectAction(f, l :+ c).as("Add", c))
+                .each(flippable(f, f.militant).diff(l))(c => InvasiveEEEReconcileSelectAction(f, l :+ c).as("Add", c))
                 .add(InvasiveEEEReconcileAction(f, l).as("Reconcile".styled(f), l.none.?("without flipping")))
                 .cancel
 
@@ -755,7 +769,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
         case InvasiveEEEProvokeFlipAction(f, c) =>
             flip(f, c, PeacefulEEE, MilitantEEE)
 
-            f.log("provoked and flipped", MilitantEEE.of(f), "in", c)
+            f.log("provoked and flipped", PeacefulEEE.of(f), "to", MilitantEEE.of(f), "in", c)
 
             InvasiveEEEMusterAction(f, NoMessage, DiscardRandomCardAction(f, InvasiveEEEDoneAction(f, Repeat)))
 
@@ -824,7 +838,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
         // NEGOTIATIONS
         case InvasiveEEENegotiateMainAction(f, e, then) =>
             Ask(f).group(Negotiations.of(e), "- flip", MilitantEEE.of(e), "to", PeacefulEEE.of(e))
-                .each(e.militant.%(f.present))(c => InvasiveEEENegotiateAction(f, e, c, then).as(c))
+                .each(flippable(e, e.militant).%(f.present))(c => InvasiveEEENegotiateAction(f, e, c, then).as(c))
                 .cancel
 
         case InvasiveEEENegotiateAction(f, e, c, then) =>
@@ -1001,8 +1015,8 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
         case CraftPerformAction(f, d @ CraftEffectCard(_, _, _, FrogMilitias(e)), m) =>
             f.hand --> d --> discard.quiet
 
-            val lf = e.peaceful
-            val lp = (e.available > 0).??(clearings.diff(game.scorched).diff(game.flooded).%(c => e.at(c).of[EnclaveEEE].none))
+            val lf = flippable(e, e.peaceful)
+            val lp = (e.available > 0).??(clearings.diff(game.scorched).diff(game.flooded).%(c => e.at(c).of[EnclaveEEE].none)).%(c => flippable(e, $(c)).any)
 
             if (lf.any || lp.any) {
                 f.log("raised", d, "(" ~ d.cost.ss ~ ")", m)
@@ -1076,7 +1090,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
     def settleable(f : InvasiveEEE, c : Clearing)(implicit game : Game) : Boolean =
         f.validDest.has(c) && (f.at(c).of[Warrior].any || settleMoves(f, c, $).any)
 
-    def provokeFlip(f : InvasiveEEE)(implicit game : Game) = f.peaceful
+    def provokeFlip(f : InvasiveEEE)(implicit game : Game) = flippable(f, f.peaceful)
 
     def provokePlace(f : InvasiveEEE)(implicit game : Game) =
         (f.available > 0).??(clearings.%(c => f.at(c).of[EnclaveEEE].none).%(c => game.riverside.has(c) || f.at(c).of[Warrior].any).%(f.canPlace))

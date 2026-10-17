@@ -586,6 +586,12 @@ file covers the build, server and deploy. No session can ssh to the server
   undos are `InvasiveEEECraftPickAction`, a `HalfExplode` that expands straight to the crafts it can still lead to (only the
   recorded one when validating a move): walking the menu tried every order of picks and undos, and bots and move checks ran
   out of memory with many enclaves (found 2026-10-16).
+- Governors (17.2.3) stop Lilypad Diaspora's enclave flips at an enemy Council's Governing assemblies, as they already stopped
+  placing (`canPlace`): Provoke, Reconcile, Fears Come to Pass, Negotiations and the Militias Frog card leave those clearings out
+  (`flippable` in `root/faction-invasive-eee.scala`; reported by MaKoBwoY on 2026-10-17, who could Provoke at Delta and Bayou).
+  New games get the hidden default option `GovernorsStopEnclaveFlips`; older games keep flipping there so their replays don't
+  change, and a running game can be switched over like the fixes above, with `GovernorsStopEnclaveFlipsAction(X)`. Provoke's log
+  now says "flipped Peaceful Enclave to Militant Enclave".
 - `craftableWith` in `root/game.scala` matches the leftover costs to assets (augmenting paths) instead of trying every
   order of the assets, which took factorial time with many assets that pay only some costs (Lizard gardens, the Lost City).
 - Knaves items are the Captains' items, not crafted items: the Vagabond
