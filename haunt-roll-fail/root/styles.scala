@@ -136,6 +136,9 @@ package object elem {
         RavenSentries --> color("#6615ad")
         RatSmugglers --> color("#cf002c")
         BadgerBodyguards --> color("#a1b0b0")
+        BatMessengers --> color("#a35a35")
+        FrogTinkers --> color("#b7b13c")
+        StrugglingFarmers --> color("#e9b23a")
 
         PopularBand --> color("#0c93de")
         FuriousProtector --> color("#d2a02a")
@@ -150,6 +153,10 @@ package object elem {
         SunwardExpedition --> color("#ecba98")
         FlameBearers --> color("#cf002c")
         VaultKeepers --> color("#a1b0b0")
+        // the Homeland hirelings: the bats' brown, the frogs' green and the farmers' yellow, from their pieces
+        SunnyAdvocates --> color("#a35a35")
+        RiverRoamers --> color("#b7b13c")
+        ProsperousFarmers --> color("#e9b23a")
 
         Fox --> color("#e53e36")
         Rabbit --> color("#f4e74f")
@@ -179,6 +186,10 @@ package object elem {
         object charback extends CustomStyle(background.color("#2b2b2b"))
 
         object illustration extends CustomStyle(height("16ch"))
+        // hireling cards (landscape) in the hirelings overlay, and one alone, larger
+        object hirelingcard extends CustomStyle(display("block"), width("40ch"), max.width("88vw"), border.radius("1.2ch"))
+        object hirelingcardbig extends CustomStyle(display("block"), width("72ch"), max.width("94vw"), border.radius("1.6ch"))
+        object hirelingmarker extends CustomStyle(height("7ch"))
         object factionboard extends CustomStyle(height("64ex"))
 
         object quasi extends CustomStyle(background.color("transparent"), padding("0.2ch"), margin("0.1ch"), outline.style("none"), border.style("solid"), border.width("0.2ch"), border.color("transparent"))

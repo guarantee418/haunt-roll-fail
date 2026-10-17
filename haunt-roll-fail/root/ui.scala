@@ -240,6 +240,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case Varmint => { DrawRect(pr + "varmint", -46, -86, 94, 92) }
             case Vole => { DrawRect(pr + "vole", -53, -79, 87, 85) }
             case Vault => { DrawRect(pr + "vault", -50, -50, 100, 100) }
+            case Advocate => { DrawRect(pr + "advocate", -34, -90, 68, 96) }
+            case Roamer => { DrawRect(pr + "roamer", -42, -86, 84, 92) }
+            case Lilypad => { DrawRect(pr + "lilypad", -45, -45, 90, 90) }
+            case FarmerWarrior => { DrawRect(pr + "farmer", -45, -94, 91, 100) }
 
             case Foxy => { DrawRect(pr + "foxy", -42, -84, 81, 90) }
             case Palace => { DrawRect(pr + "palace", -50, -50, 100, 100) }
@@ -533,6 +537,38 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             val size = 64 * step / 74.63
             val max = game.board.scoreTrackMax
 
+            // The hireling markers still on the track (4, 8, 12): taking one gains a hireling at the end of that turn.
+            // Tapping one shows the hirelings in the game and their cards
+            game.thresholds.%(_ <= max).foreach { n =>
+                val key = "hireling-tab-" + n
+                val w = step * 1.24
+                val h = w * 120 / 181
+                val x = x0 + n * step - w / 2
+                val y = y0 - h / 2
+
+                g.save()
+                g.shadowColor = "rgba(0, 0, 0, 0.75)"
+                g.shadowBlur = step * 0.18
+                g.shadowOffsetY = step * 0.04
+
+                if (resources.images.has(key))
+                    g.drawImage(resources.images.get(key), x, y, w, h)
+                else {
+                    g.drawImage(resources.images.get("hireling-tab-back"), x, y, w, h)
+                    g.save()
+                    g.fillStyle = "#2b2b2b"
+                    g.font = "bold " + (h * 0.4).round + "px serif"
+                    g.textAlign = "center"
+                    g.textBaseline = "top"
+                    g.fillText(n.toString, x + w / 2, y + h * 0.05)
+                    g.restore()
+                }
+
+                g.restore()
+
+                pileTargets :+= ((x, y, w, h, "view-hirelings"))
+            }
+
             val scoring = factions.%(game.states.contains).%(f => (f.dominance.none || f.demagogue) && f.coalition.none)
 
             scoring.groupBy(f => f.vp.clamp(0, max)).foreach { case (vp, l) =>
@@ -637,8 +673,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     // In the top right corner of the map, in a dark panel like the item tracker's
     def drawCardPiles(g : dom.CanvasRenderingContext2D) {
-        pileTargets = $
-
         if (pilesOnMap.not)
             return
 
@@ -1296,6 +1330,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 drawCount(g, n, d.rect.x + d.rect.width - 10, d.rect.y + d.rect.height - 18)
             }
         }
+
+        pileTargets = $
 
         drawScoreTrack(g)
 
@@ -4770,8 +4806,32 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 })
 
             case f =>
-                println("no hireling status overlay for " + f)
+                onClick(("view-hireling-card", f))
         }
+    }
+
+    // A hireling's card, as its side in play reads, and who has it
+    def hirelingStatusLine(h : Hireling) : Elem =
+        game.unhired.has(h).?("In the supply".hl).|(
+            h.owner./(o => "Controlled by " ~ o.elem ~ " (" ~ o.contracts.count(h).hl ~ " control marker".s(o.contracts.count(h)) ~ ")").|("Hired".hl)
+        )
+
+    def showHirelings() {
+        val markers = game.thresholds./(n => $(4, 8, 12).has(n).?(Image("hireling-tab-" + n, styles.hirelingmarker)).|(n.vp)).merge
+
+        showOverlay(overlayScrollX(
+            "Hirelings".hl.larger.div ~
+            game.thresholds.any.?(("Next hireling at " ~ game.thresholds./(_.vp).comma.merge).div).|("All hirelings have been taken".txt.div) ~
+            markers.div ~
+            HGap ~
+            (game.hirelings ++ game.unhired).distinct./(h =>
+                OnClick(("view-hireling-card", h), (
+                    Image("hireling-card:" + h.style + "-card", styles.hirelingcard) ~
+                    (h.elem ~ (h.demoted).?(" (demoted)").|(" (staunch)")).div ~
+                    hirelingStatusLine(h).div
+                ).div(styles.margined).div(xstyles.choice)(xstyles.xx)(xstyles.chm)(xstyles.chp)(styles.inline).pointer)
+            ).merge
+        ), onClick)
     }
 
     def onClickMore(f : Any) = f @@ {
@@ -4785,6 +4845,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     override def onClick(a : Any) = a @@ {
         // In pass and play, only the notifications of the player holding the device are seen by a tap
         case _ if { seen = passing.?(seen ++ game.notifications.diff(seen).%(n => passedTo.exists(n.factions.has))).|(game.notifications) ; false } =>
+
+        case "view-hirelings" =>
+            showHirelings()
+
+        case ("view-hireling-card", h : Hireling) =>
+            showOverlay(overlayScrollX(
+                Image("hireling-card:" + h.style + "-card", styles.hirelingcardbig) ~
+                (h.elem ~ (h.demoted).?(" (demoted)").|(" (staunch)")).div ~
+                (game.hirelings ++ game.unhired).has(h).?(hirelingStatusLine(h).div) ~
+                HGap ~
+                ("All Hirelings".hh).div.div(xstyles.choice)(xstyles.xx)(xstyles.chm)(xstyles.chp)(xstyles.thu)(xlo.fullwidth).pointer.onClick.param("view-hirelings")
+            ), onClick)
 
         case ("notifications", Some(f : Faction)) =>
             seen = $
@@ -5236,6 +5308,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 }).copy(clear = false)
             ) ++
             $(ZBasic(Break ~ Break, "Notifications".spn, () => { onClick("notifications", self) }).copy(clear = false)).%(_ => self.any || game.isOver) ++
+            $(ZBasic(Break ~ Break, "Hirelings".spn, () => { onClick("view-hirelings") }).copy(clear = false)).%(_ => game.hirelings.any || game.unhired.any) ++
             $(ZBasic(Break ~ Break, "Interface".spn, () => { callbacks.editSettings { updateStatus() } }).copy(clear = false)) ++
             $(ZBasic(Break ~ Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug) ++
             $(ZBasic(Break ~ Break, "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle)

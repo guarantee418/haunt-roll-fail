@@ -163,7 +163,19 @@ object TurnExpansion extends MandatoryExpansion {
                         case None => MoveFromAction(f, h, $, JustElem(StoicProtector), o, $, Repeat).!(f.canMoveFrom(o).not, "snared").!(true)
                     })
                 } ++
-                f.can(BluebirdNobles).$(BluebirdNoblesAction(f, clearings.%(f.ruleSelf).num).!(clearings.%(f.ruleSelf).num < 3)) ++
+                f.can(FuriousProtector).?? {
+                    val h = FuriousProtector
+                    val from = h.all(Elk)
+                    val plans = h.movePlans(from.%(h.canMoveFrom), game.transports./($) ** h.transports)
+                    val remove = FuriousProtectorRemoveAction(f, h, factions)
+                    from./(o => plans.get(o) @@ {
+                        case Some((t, l)) => MoveFromAction(f, h, t, JustElem(FuriousProtector), o, l, remove)
+                        case None => remove.as("Strike with", FuriousProtector)(FuriousProtector)
+                    })
+                } ++
+                f.can(FlameBearers).$(FlameBearersMainAction(f, FlameBearers)) ++
+                f.can(FrogTinkers).$(FrogTinkersAction(f, FrogTinkers)) ++
+                f.can(BluebirdNobles).$(BluebirdNoblesAction(f, clearings.%(f.rules).num).!(clearings.%(f.rules).num < 3)) ++
                 f.can(SpringUprising).?(SpringUprisingMainAction(f, SpringUprising)) ++
                 f.can(RiverfolkFlotilla).$(RiverfolkFlotillaAction(f, RiverfolkFlotilla))
 
@@ -302,6 +314,24 @@ object TurnExpansion extends MandatoryExpansion {
 
         case CleanUpAction(f) if hirelings.has(StreetBand) && StreetBand.enchanted.any =>
             StreetBand.enchanted = $
+
+            CleanUpAction(f)
+
+        case CleanUpAction(f) if hirelings.has(PopularBand) && PopularBand.enchanted.any =>
+            PopularBand.enchanted = $
+
+            CleanUpAction(f)
+
+        case CleanUpAction(f) if game.movedInto.any =>
+            game.movedInto = $
+
+            CleanUpAction(f)
+
+        // Frog Tinkers' card is discarded at the end of Evening
+        case CleanUpAction(f) if hirelings.has(FrogTinkers) && FrogTinkers.display.any =>
+            FrogTinkers.log("discarded", FrogTinkers.display.get)
+
+            FrogTinkers.display --> discard.quiet
 
             CleanUpAction(f)
 

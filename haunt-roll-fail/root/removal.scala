@@ -124,7 +124,8 @@ object RemovalExpansion extends MandatoryExpansion {
 
             destroyed.foreach(x => f.log("removed", x.piece.ofg(x.faction), "in", x.clearing))
 
-            val n = destroyed./(_.piece).of[Scoring].notOf[Palace.type].num
+            // farms of the Farmers hirelings give no points
+            val n = destroyed.%(x => x.piece.is[Scoring] && x.piece.is[Palace.type].not && (x.piece == Farm && x.faction.is[FarmersHireling]).not).num
 
             f.oscore(n)("laying waste on", clearings./(_.elem).comma)
 

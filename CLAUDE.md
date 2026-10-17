@@ -616,6 +616,28 @@ file covers the build, server and deploy. No session can ssh to the server
   (`passTo` and `passedTo` in `root/ui.scala`). Notifications (cards drawn or given) wait for that tap too: `wait`
   shows none, and a tap marks only the revealed faction's as seen. The "Pass and Play" setting (`ShowPassScreen`,
   the default, or `NoPassScreen` in `root/meta.scala`) turns it off. Display only, so no game records change.
+- Root hirelings (asked for by the owner on 2026-10-17): all 26 cards, the 20 of the Marauder, Riverfolk and Underworld
+  packs and Homeland's Sunny Advocates / Bat Messengers, River Roamers / Frog Tinkers and Prosperous / Struggling Farmers,
+  are in `root/hirelings.scala` and offered in setup (`Meta.hirelings`). The rules follow the cards and the hireling
+  booklet from the TTS mod "Root - Ultimate Collection" (Steam workshop 2516434159; its `Hirelings` entries hold each card,
+  face staunch, back demoted, the pieces, the 4/8/12 markers and the control die) and Law of Root appendix H (Root
+  Database). Card art is `webp2/root/images/faction/hireling/card/<style>-card.webp` (loaded on demand as `hireling-card:`);
+  the Homeland pieces were rendered front-on from the mod's meshes and textures; the markers' top tabs are
+  `hireling-tab-4/8/12/back`. New games get the hidden `HirelingsByTheCard` option (older games keep the earlier rules so
+  their replays don't change): the Bands stop only the enemies that moved into their clearing that turn
+  (`game.movedInto`), the Forest Patrol saves one warrior of each removal, the Spring Uprising has 4 warriors and the Warm
+  Sun Prophets start in every ruin. Judgment calls where the cards leave room: the River Roamers lend their lilypads'
+  clearing suits as crafting icons for the rest of the turn (`extraCraft`, with a craft menu right away); the Frog
+  Tinkers' card is one more crafting icon (a bird for any suit), discarded at the end of the turn; Bat Messengers notice
+  the controller's new buildings and tokens in clearings before the next action (`game.batSeen`, like the 4/8/12
+  thresholds' check) and offer the warrior then; the Vagabond can't be forced to move by the Warm Sun Prophets, and on a
+  Highway Bandits path damages an item; pawns can't be burned or tolled; the Brigand's ruin items are added when setup
+  is done if no Vagabond or Hundreds put them; the Struggling Farmers leave the clearings their former controller
+  doesn't rule once handed over. The hireling markers still on the score track are drawn on their spaces (`drawScoreTrack`
+  in `root/ui.scala`); tapping one, or the "Hirelings" button under the action pane, lists the hirelings in the game with
+  their cards and who controls them (`showHirelings`), and a card opens larger. `ReplayCheck <games> base hire:FRP,SAD,...`
+  plays bot games with those hirelings (`oldhire` without `HirelingsByTheCard`), checks every action writes and parses
+  back, and lists how often each hireling choice was taken.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.

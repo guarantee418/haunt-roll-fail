@@ -347,7 +347,7 @@ case object SpringUprising extends Hireling with WarriorFaction with BattleEffec
 
     val warrior = Animal
 
-    def pieces(options : $[Meta.O]) = Animal *** 5
+    def pieces(options : $[Meta.O]) = Animal *** 4
 }
 
 
@@ -625,6 +625,114 @@ class HighwayBanditsState(val faction : HighwayBandits.type)(implicit val game :
 }
 
 
+// Root: Homeland hirelings (cards and pieces from the TTS mod "Root - Ultimate Collection", Steam workshop 2516434159)
+case object Advocate extends Warrior
+
+case object SunnyAdvocates extends Hireling with WarriorFaction {
+    val name = "Sunny Advocates"
+    val short = "SAD"
+    val style = "sad"
+
+    val demoted = false
+    val setup = true
+
+    val clashKey = TCvA
+
+    val warrior = Advocate
+
+    def pieces(options : $[Meta.O]) = Advocate *** 8
+}
+
+case object BatMessengers extends Hireling {
+    val name = "Bat Messengers"
+    val short = "BMS"
+    val style = "bms"
+
+    val demoted = true
+    val setup = false
+
+    val clashKey = TCvA
+
+    def pieces(options : $[Meta.O]) = $
+}
+
+
+case object Roamer extends Warrior
+case object Lilypad extends Token
+
+case object RiverRoamers extends Hireling with WarriorFaction {
+    val name = "River Roamers"
+    val short = "RVR"
+    val style = "rvr"
+
+    val demoted = false
+    val setup = true
+
+    val clashKey = LDvD
+
+    val warrior = Roamer
+
+    def pieces(options : $[Meta.O]) = Roamer *** 10 ++ Lilypad *** 4
+}
+
+// The River Roamers' crafting with lilypads, once a turn, before their other Daylight action
+case object RoamersCrafted extends Effect
+
+case object FrogTinkers extends Hireling {
+    val name = "Frog Tinkers"
+    val short = "FRT"
+    val style = "frt"
+
+    val demoted = true
+    val setup = false
+
+    val clashKey = LDvD
+
+    def pieces(options : $[Meta.O]) = $
+}
+
+class FrogTinkersState(val faction : FrogTinkers.type)(implicit val game : Game) extends HirelingState {
+    val display = cards("display")
+}
+
+
+case object FarmerWarrior extends Warrior {
+    override def id = "farmer"
+    override def name = "Farmer"
+}
+
+trait FarmersHireling extends Hireling with WarriorFaction {
+    val clashKey = ProsperousFarmers
+
+    val warrior = FarmerWarrior
+
+    def pieces(options : $[Meta.O]) = FarmerWarrior *** 9 ++ Farm *** 4
+}
+
+case object ProsperousFarmers extends FarmersHireling {
+    val name = "Prosperous Farmers"
+    val short = "PFR"
+    val style = "pfr"
+
+    val demoted = false
+    val setup = true
+}
+
+case object StrugglingFarmers extends FarmersHireling {
+    val name = "Struggling Farmers"
+    val short = "SFR"
+    val style = "sfr"
+
+    val demoted = true
+    val setup = false
+}
+
+class StrugglingFarmersState(val faction : StrugglingFarmers.type)(implicit val game : Game) extends HirelingState {
+    // who gave the hireling away last, for the when-hired removal
+    var former : |[Faction] = None
+}
+
+
 case class HirelingTransfersAction(f : Faction) extends ForcedAction
 case class GiveAwayHirelingAction(self : Faction, l : $[Hireling], h : Hireling) extends BaseAction(self, "gives away")(h) with Soft
 case class GiveAwayHirelingToAction(self : Faction, h : Hireling, e : Faction) extends BaseAction(self, "gives away", h)(e)
@@ -707,6 +815,94 @@ case class RiverfolkFlotillaMoveAction(self : Faction, h : RiverfolkFlotilla.typ
 case class RiverfolkFlotillaBattleAction(self : Faction, h : RiverfolkFlotilla.type) extends ForcedAction
 
 case class FlameBearersSetupAction(self : Player, h : FlameBearers.type) extends ForcedAction
+
+// helpers shared by several hirelings
+case class HirelingPlaceAnyAction(self : Faction, h : Hireling, p : Piece, n : Int, l : $[Clearing], then : ForcedAction) extends ForcedAction
+case class HirelingBattleEachAction(self : Faction, h : Hireling, l : $[Clearing], optional : Boolean, then : ForcedAction) extends ForcedAction
+case class HirelingMoveBattleAction(self : Faction, h : Hireling, then : ForcedAction) extends BaseAction(h)("Move".styled(h), dt.Move, "then", "Battle".styled(h), dt.Battle) with Soft
+case class HirelingMovedBattleAction(self : Faction, h : Hireling, then : ForcedAction) extends ForcedAction
+case class HirelingRecruitEachAction(self : Faction, h : WarriorFaction, at : $[Clearing], then : ForcedAction) extends BaseAction(h)("Place", h.warrior.of(h), "at each", implicit g => at.distinct./(_.elem).comma.merge) with Soft
+case class HirelingRecruitAction(self : Faction, h : WarriorFaction, l : $[Clearing], then : ForcedAction) extends BaseAction("Place", implicit g => l.num.times(h.warrior.imgd(h)).merge)(implicit g => l./(_.elem).comma.merge)
+case class HirelingRemovePieceAction(self : Faction, h : Hireling, c : Clearing, e : Faction, p : Piece, then : ForcedAction) extends BaseAction(h, "removes in", c)(p.img(e), p.of(e))
+
+// WARM SUN PROPHETS
+case class WarmSunProphetsBattleAction(self : Faction, h : WarmSunProphets.type, e : Faction, c : Clearing) extends BaseAction(h, "can force")("Force", e, "to", "battle".hh, "in", c) with Soft
+case class WarmSunProphetsMoveAction(self : Faction, h : WarmSunProphets.type, e : Faction, c : Clearing) extends BaseAction(h, "can force")("Force", e, "to", "move".hh, "from", c) with Soft
+case class WarmSunProphetsMoveToAction(self : Faction, h : WarmSunProphets.type, e : Faction, c : Clearing, d : Clearing, t : $[Transport], l : $[Piece]) extends BaseAction("Force", e, "to move from", c, "to")(d, l./(_.img(e)).merge)
+case class WarmSunProphetsMovedAction(self : Faction, h : WarmSunProphets.type, e : Faction, d : Clearing) extends ForcedAction
+
+// SUNWARD EXPEDITION
+case class SunwardMainAction(self : Faction, h : SunwardExpedition.type) extends BaseAction(Hirelings)(SunwardExpedition) with Soft
+case class SunwardRemoveFootholdAction(self : Faction, h : SunwardExpedition.type, c : Clearing) extends BaseAction(h, "has no footholds left, remove one from")(c)
+case class SunwardFootholdAction(self : Faction, h : SunwardExpedition.type, cancel : Boolean) extends ForcedAction
+case class SunwardFootholdClearingAction(self : Faction, h : SunwardExpedition.type, c : Clearing, cancel : Boolean) extends BaseAction(h, "places a", Foothold.of(h), "in")(c) with Soft
+case class SunwardPlaceAction(self : Faction, h : SunwardExpedition.type, c : Clearing, n : Int) extends BaseAction(h, "places a", Foothold.of(h), "in", c, "and")(n.hl, Mouldwarp.nof(n)(h), implicit g => n.times(Mouldwarp.imgd(h)).merge)
+case class SunwardSecondAction(self : Faction, h : SunwardExpedition.type) extends ForcedAction
+
+// CORVID SPIES
+case class CorvidSpiesMainAction(self : Faction, h : CorvidSpies.type) extends BaseAction(Hirelings)(CorvidSpies) with Soft
+case class CorvidSpiesPlaceAction(self : Faction, h : CorvidSpies.type, n : Int) extends ForcedAction
+case class CorvidSpiesSecondAction(self : Faction, h : CorvidSpies.type) extends ForcedAction
+case class CorvidSpiesStealAction(self : Faction, h : CorvidSpies.type, c : Clearing) extends BaseAction(h)("Take a random card from each enemy in", c)
+
+// FLAME BEARERS
+case class FlameBearersMainAction(self : Faction, h : FlameBearers.type) extends BaseAction()(h)
+case class FlameBearersBurnAction(self : Faction, h : FlameBearers.type, l : $[Clearing]) extends ForcedAction
+case class FlameBearersSpreadAction(self : Faction, h : FlameBearers.type) extends ForcedAction
+
+// VAULT KEEPERS
+case class VaultKeepersMainAction(self : Faction, h : VaultKeepers.type) extends BaseAction(Hirelings)(VaultKeepers) with Soft
+case class VaultKeepersPlaceAction(self : Faction, h : VaultKeepers.type, c : Clearing, warrior : Boolean) extends BaseAction(h, "places a", Vault.of(h), warrior.?("and a"), warrior.?(Vole.of(h)), "in")(c)
+case class VaultKeepersSkipAction(self : Faction, h : VaultKeepers.type) extends BaseAction(h)("Place no", Vault.of(h))
+case class VaultKeepersSecondAction(self : Faction, h : VaultKeepers.type) extends ForcedAction
+
+// HIGHWAY BANDITS
+case class HighwayBanditsMainAction(self : Faction, h : HighwayBandits.type) extends BaseAction(Hirelings)(HighwayBandits) with Soft
+case class HighwayBanditRemoveAction(self : Faction, h : HighwayBandits.type, a : Clearing, b : Clearing) extends BaseAction(h, "has no bandits left, remove one from")(a, dt.Arrow, b)
+case class HighwayBanditBonusAction(self : WarriorFaction, c : Clearing, then : ForcedAction) extends BaseAction(HighwayBandits)("Place", self.warrior.of(self), "in", c)
+case class HighwayBanditTollAction(self : Faction, c : Clearing, p : Piece, then : ForcedAction) extends BaseAction(self, "must pay", HighwayBandits)("Remove", p.img(self), p.of(self))
+
+// POPULAR BAND
+case class PopularBandMainAction(self : Faction, h : PopularBand.type) extends BaseAction(Hirelings)(PopularBand) with Soft
+case class PopularBandConcertAction(self : Faction, h : PopularBand.type, c : Clearing) extends BaseAction(h, "plays a concert in")(c)
+case class PopularBandPullAction(self : Faction, h : PopularBand.type, c : Clearing) extends ForcedAction
+case class PopularBandPullOneAction(self : Faction, h : PopularBand.type, c : Clearing, d : Clearing, e : Faction, p : Piece) extends BaseAction(h, "can draw warriors to", c)(p.img(e), p.of(e), "from", d)
+case class PopularBandPlaceAction(self : Faction, h : PopularBand.type) extends ForcedAction
+
+// FURIOUS PROTECTOR
+case class FuriousProtectorRemoveAction(self : Faction, h : FuriousProtector.type, l : $[Faction]) extends ForcedAction
+
+// SUNNY ADVOCATES
+case class SunnyAdvocatesSetupAction(self : Player, h : SunnyAdvocates.type, l : $[BaseSuit]) extends ForcedAction
+case class SunnyAdvocatesSetupClearingAction(self : Player, h : SunnyAdvocates.type, s : BaseSuit, c : Clearing, l : $[BaseSuit]) extends BaseAction(h, "places two", Advocate.sof(h), "in a", s, "clearing")(c)
+case class SunnyAdvocatesMainAction(self : Faction, h : SunnyAdvocates.type) extends BaseAction(Hirelings)(SunnyAdvocates) with Soft
+case class SunnyAdvocatesSuitAction(self : Faction, h : SunnyAdvocates.type, s : BaseSuit) extends BaseAction(h, "converts in")(s, "clearings")
+case class SunnyAdvocatesReplaceAction(self : Faction, h : SunnyAdvocates.type, l : $[Clearing]) extends ForcedAction
+case class SunnyAdvocatesReplaceOneAction(self : WarriorFaction, h : SunnyAdvocates.type, c : Clearing, e : Faction, p : Piece, l : $[Clearing]) extends BaseAction(h, "replaces in", c)(p.img(e), p.of(e))
+case class SunnyAdvocatesSpreadAction(self : Faction, h : SunnyAdvocates.type) extends ForcedAction
+
+// BAT MESSENGERS
+case class BatMessengersAction(self : WarriorFaction, l : $[Clearing], c : Clearing, then : ForcedAction) extends BaseAction(BatMessengers, "can place a warrior at new pieces in", implicit g => l./(_.elem).comma.merge)("Place", self.warrior.of(self), "in", c)
+case class BatMessengersAskAction(self : WarriorFaction, l : $[Clearing], then : ForcedAction) extends ForcedAction
+
+// RIVER ROAMERS
+case class RiverRoamersCraftAction(self : Faction, h : RiverRoamers.type) extends BaseAction(Hirelings)(RiverRoamers, "craft using", Lilypad.sof(h))
+case class RiverRoamersMainAction(self : Faction, h : RiverRoamers.type) extends BaseAction(Hirelings)(RiverRoamers) with Soft
+case class RiverRoamersCraftMoreAction(self : Faction, h : RiverRoamers.type) extends BaseAction(Hirelings)(RiverRoamers, "craft using", Lilypad.sof(h)) with Soft
+case class RiverRoamersCraftMenuAction(self : Faction, h : RiverRoamers.type, cancel : Boolean) extends ForcedAction
+case class RiverRoamersPlaceAction(self : Player, h : RiverRoamers.type, c : Clearing, then : ForcedAction) extends BaseAction(h, "places", Roamer.sof(h), "in")(c)
+
+// FROG TINKERS
+case class FrogTinkersAction(self : Faction, h : FrogTinkers.type) extends BaseAction()("Draw a card for", h)
+
+// FARMERS
+case class FarmersSetupAction(self : Player, h : ProsperousFarmers.type) extends ForcedAction
+case class FarmersPlaceAction(self : Faction, h : FarmersHireling, c : Clearing, farm : Boolean, warrior : Boolean, then : ForcedAction) extends BaseAction(h, "places in")(c, farm.?(Farm.img(h)), warrior.?(FarmerWarrior.img(h)))
+case class ProsperousFarmersMainAction(self : Faction, h : ProsperousFarmers.type) extends BaseAction(Hirelings)(ProsperousFarmers) with Soft
+case class ProsperousFarmersHarvestAction(self : Faction, h : ProsperousFarmers.type) extends BaseAction(h)("Draw a card and place a", Farm.of(h))
+case class ProsperousFarmersFarmAction(self : Faction, h : ProsperousFarmers.type) extends ForcedAction
+case class ProsperousFarmersSecondAction(self : Faction, h : ProsperousFarmers.type) extends ForcedAction
+case class StrugglingFarmersMainAction(self : Faction, h : StrugglingFarmers.type) extends BaseAction(Hirelings)(StrugglingFarmers) with Soft
 
 case object Hirelings extends Message {
     def elem(implicit game : Game) = "Hirelings"
@@ -794,6 +990,46 @@ object HirelingsExpansion extends Expansion {
             + WarmSunProphetsMainAction(f, h)
         }
 
+        SunwardExpedition.?%(f.can).foreach { h =>
+            + SunwardMainAction(f, h)
+        }
+
+        CorvidSpies.?%(f.can).foreach { h =>
+            + CorvidSpiesMainAction(f, h)
+        }
+
+        VaultKeepers.?%(f.can).foreach { h =>
+            + VaultKeepersMainAction(f, h)
+        }
+
+        HighwayBandits.?%(f.can).foreach { h =>
+            + HighwayBanditsMainAction(f, h).!(banditPaths(f).none && h.all(Bandit).none, "no paths")
+        }
+
+        PopularBand.?%(f.can).foreach { h =>
+            + PopularBandMainAction(f, h)
+        }
+
+        SunnyAdvocates.?%(f.can).foreach { h =>
+            + SunnyAdvocatesMainAction(f, h)
+        }
+
+        RiverRoamers.?%(f.can).foreach { h =>
+            if (f.used.has(RoamersCrafted).not)
+                + RiverRoamersCraftAction(f, h).!(h.all(Lilypad).none, "no lilypads").!(f.hand.none, "no cards")
+            else
+                + RiverRoamersCraftMoreAction(f, h).!(f.hand.%(f.craftable).none, "nothing craftable")
+            + RiverRoamersMainAction(f, h)
+        }
+
+        ProsperousFarmers.?%(f.can).foreach { h =>
+            + ProsperousFarmersMainAction(f, h)
+        }
+
+        StrugglingFarmers.?%(f.can).foreach { h =>
+            + StrugglingFarmersMainAction(f, h).!(clearings.%(f.rules).%(h.canPlace).none, "no ruled clearings")
+        }
+
         anytime(f)
     }
 
@@ -813,8 +1049,65 @@ object HirelingsExpansion extends Expansion {
         }
     }
 
+    // paths without a bandit linked to a clearing with f's pieces (bandits can't go on rivers, so only paths)
+    // the Highway Bandits' place on the path between two clearings, in either order
+    def pathOf(a : Clearing, b : Clearing)(implicit game : Game) : |[(Faction, Region)] =
+        HighwayBandits.paths.find(_._2 @@ {
+            case PathBetween(x, y) => (x == a && y == b) || (x == b && y == a)
+            case _ => false
+        })
+
+    def banditPaths(f : Faction)(implicit game : Game) : $[(Clearing, Clearing)] =
+        HighwayBandits.paths.filter(l => game.pieces.get(l).none).map(_._2).of[PathBetween].map(p => (p.a, p.b)).filter { case (a, b) => game.connected(a).has(b) && (f.present(a) || f.present(b)) }
+
+    def banditOn(a : Clearing, b : Clearing)(implicit game : Game) : Boolean =
+        hirelings.has(HighwayBandits) && pathOf(a, b).exists(l => game.pieces.get(l).any)
+
+    // a clearing's suits as a crafting icon (a card's suit for Frog Tinkers, a bird for any suit)
+    def cardAsset(d : DeckCard) : SuitAsset = d.suit @@ {
+        case Bird => OneOf(FoxRabbitMouse)
+        case s : BaseSuit => s
+        case s => s
+    }
+
+    // Bat Messengers: the controller's buildings and tokens on the map
+    def batPieces(f : Faction)(implicit game : Game) : $[(Piece, Region)] = clearings./~(c => f.at(c).%(p => p.is[Building] || p.is[Token])./(p => (p : Piece) -> (c : Region)))
+
+    def warriorsIn(c : Clearing)(implicit game : Game) : Int = (factions ++ hirelings).%(game.states.contains)./(_.at(c).of[Warrior].num).sum
+
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
-        // THRESHOLDS
+        // BAT MESSENGERS: when its controller places a building or token, they may place a warrior at it
+        case a if a.isSoft.not && game.turn > 0 && hirelings.has(BatMessengers) && game.batOwner != BatMessengers.owner =>
+            game.batOwner = BatMessengers.owner
+            game.batSeen = game.batOwner./~(batPieces)
+
+            TryAgain
+
+        case a if a.isSoft.not && game.turn > 0 && hirelings.has(BatMessengers) && game.batOwner.any && {
+            val f = game.batOwner.get
+            val now = batPieces(f)
+            val seen : $[(Piece, Region)] = game.batSeen
+            val kinds : $[Piece] = now.map(_._1).distinct
+            val placed : $[(Piece, Region)] = kinds.filter(p => now.count(x => x._1 == p) > seen.count(x => x._1 == p)).flatMap(p => now.filter(x => x._1 == p).diff(seen.filter(x => x._1 == p)))
+            game.batSeen = now
+            placed.map(_._2).of[Clearing].any && f.is[WarriorFaction] && {
+                game.batPlaced = placed.map(_._2).of[Clearing]
+                true
+            }
+        } =>
+            val f = game.batOwner.get.asInstanceOf[WarriorFaction]
+            val l = game.batPlaced
+            game.batPlaced = $
+
+            val then : ForcedAction = a match {
+                case a : ForcedAction => a
+                case a : Choice => ForceAction(a)
+                case a => throw new Error("bat messengers before " + a)
+            }
+
+            BatMessengersAskAction(f, l, then)
+
+
         case a if a.isSoft.not && game.turn > 0 && game.thresholds.any && game.thresholds.min <= factions./(_.vp).max =>
             game.thresholds :-= game.thresholds.min
 
@@ -1202,7 +1495,7 @@ object HirelingsExpansion extends Expansion {
 
             then
 
-        case ForcedRemoveTargetEffectAction(e, c, f : ForestPatrol.type, p : StrayCat, then) =>
+        case ForcedRemoveTargetEffectAction(e, c, f : ForestPatrol.type, p : StrayCat, then) if options.has(HirelingsByTheCard).not =>
             f.limbo(c) --> p --> f.hospital
 
             then
@@ -1430,7 +1723,18 @@ object HirelingsExpansion extends Expansion {
 
             log(f, "setup", h)
 
-            Ask(f).each(game.ruins.keys.$.combinations(4).$)(l => l.foldLeft[ForcedAction](SetupNextHirelingAction)((then, c) => ForceAction(PlaceHirelingWarriorAction(f, h, h.warrior, c, then))).as(l.comma)(h)).needOk
+            if (options.has(HirelingsByTheCard)) {
+                val l = game.ruins.keys.$.%(h.canPlace).take(h.pooled(h.warrior))
+
+                l.foreach(c => h.reserve --> h.warrior --> c)
+
+                if (l.any)
+                    h.log("placed", l.num.of(h.warrior.name.styled(h)), "in the ruins of", l./(_.elem).comma)
+
+                SetupNextHirelingAction
+            }
+            else
+                Ask(f).each(game.ruins.keys.$.combinations(4).$)(l => l.foldLeft[ForcedAction](SetupNextHirelingAction)((then, c) => ForceAction(PlaceHirelingWarriorAction(f, h, h.warrior, c, then))).as(l.comma)(h)).needOk
 
         // CORVID SPIES
         case SetupHirelingAction(f, h : CorvidSpies.type) =>
@@ -1483,6 +1787,675 @@ object HirelingsExpansion extends Expansion {
             Ask(f)
                 .each(clearings.%(h.canBuild))(c => PlaceHirelingWarriorsAction(f, h, $(h.warrior, h.warrior, Vault), c, SetupNextHirelingAction))
                 .needOk
+
+        // HELPERS
+        case HirelingPlaceAnyAction(f, h, p, n, l, then) =>
+            if (n <= 0 || h.pool(p).not)
+                then
+            else
+                Ask(f).each(l.%(h.canPlace))(c => PlaceHirelingWarriorAction(f, h, p, c, HirelingPlaceAnyAction(f, h, p, n - 1, l, then))).bail(then)
+
+        case HirelingBattleEachAction(f, h, l, optional, then) =>
+            val ll = l.distinct.%(h.canAttackIn)
+
+            if (ll.none)
+                then
+            else
+                Ask(f)
+                    .each(ll)(c => BattleInitAction(f, h, NoMessage, $(c), $, HirelingBattleEachAction(f, h, l.distinct.but(c), optional, then)).as("Battle".styled(h), dt.Battle, "in", c)(h))
+                    .skipIf(optional)(then)
+
+        case HirelingMoveBattleAction(f, h, then) =>
+            MoveInitAction(f, h, $, NoMessage, h.moveFrom, h.movable, $(HirelingMovedBattleAction(f, h, then).as("Skip", "Move".styled(h))), HirelingMovedBattleAction(f, h, then))
+
+        case HirelingMovedBattleAction(f, h, then) =>
+            BattleInitAction(f, h, NoMessage, clearings.%(h.canAttackIn), $(then.as("Skip", "Battle".styled(h))), then)
+
+        case HirelingRecruitEachAction(f, h, at, then) =>
+            val l = at.%(h.canPlace)
+            val n = min(l.num, h.pooled(h.warrior))
+
+            Ask(f).each(l.combinations(n).$)(r => HirelingRecruitAction(f, h, r, then)).cancel
+
+        case HirelingRecruitAction(f, h, l, then) =>
+            game.highlights :+= PlaceHighlight(l.distinct)
+
+            l.foreach(c => h.reserve --> h.warrior --> c)
+
+            h.log("placed", l.num.of(h.warrior.name.styled(h)), "in", l.distinct./(_.elem).comma)
+
+            then
+
+        case HirelingRemovePieceAction(f, h, c, e, p, then) =>
+            ForcedRemoveAction(h, c, e, p, 0, Removing, then)
+
+        // WARM SUN PROPHETS
+        case OnTakeHirelingAction(f, h : WarmSunProphets.type, then) if h.all(Chameleon).none =>
+            h.logtemp("has no", Chameleon.sof(h), "on the map")
+
+            HirelingPlaceAnyAction(f, h, Chameleon, 1, clearings, then)
+
+        case WarmSunProphetsMainAction(f, h) =>
+            val cc = clearings.%(c => h.at(c).has(Chameleon))
+            val done = UsedEffectAction(f, h, Repeat)
+
+            Ask(f)
+                .some(cc)(c => factions.%(_.present(c))./~{ e =>
+                    $(
+                        WarmSunProphetsBattleAction(f, h, e, c).!(e.canAttackList(c).none, "can't battle"),
+                        WarmSunProphetsMoveAction(f, h, e, c).!(e.is[Hero], "Vagabond").!(e.canMoveFrom(c).not, "can't move").!(e.movePlans($(c), game.transports./($) ** e.transports).none, "can't move")
+                    )
+                })
+                .each(clearings.%(c => h.at(c).has(Chameleon).not).%(h.canPlace))(c => PlaceHirelingWarriorAction(f, h, Chameleon, c, done).!(h.pool(Chameleon).not, "no warriors"))
+                .cancel
+
+        case WarmSunProphetsBattleAction(f, h, e, c) =>
+            val done = UsedEffectAction(f, h, Repeat)
+
+            Ask(f)
+                .group(h, "forces", e, "to battle in", c)
+                .each(e.canAttackList(c))(o => BattleConfirmAction(f, e, e, NoMessage, c, o, None, done))
+                .cancel
+
+        case WarmSunProphetsMoveAction(f, h, e, c) =>
+            val plans = e.movePlans($(c), game.transports./($) ** e.transports)
+            val (tt, dd) = plans(c)
+            val mv = e.at(c).of[Movable]
+            val cm = 1.to(mv.num)./~(n => mv.combinations(n))
+
+            Ask(f)
+                .some(dd.of[Clearing]) { d =>
+                    val parties : $[($[Transport], $[Movable])] = tt.flatMap((t : $[Transport]) => cm.filter((l : $[Movable]) => t.forall(_.allows(e, c, d, l))).map((l : $[Movable]) => (t, l)))
+                    parties.any.??($(parties.maxBy(_._2.num)).map { case (t, l) => WarmSunProphetsMoveToAction(f, h, e, c, d, t, l) })
+                }
+                .cancel
+
+        case WarmSunProphetsMoveToAction(f, h, e, c, d, t, l) =>
+            h.log("forced", e, "to move")
+
+            Force(MoveListAction(f, e, t, NoMessage, c, d, l, WarmSunProphetsMovedAction(f, h, e, d)))
+
+        case WarmSunProphetsMovedAction(f, h, e, d) =>
+            val done = UsedEffectAction(f, h, Repeat)
+
+            Ask(f)
+                .group(h, "can force", e, "to battle in", d)
+                .each(e.canAttackList(d))(o => BattleConfirmAction(f, e, e, NoMessage, d, o, None, done))
+                .add(done.as("Skip", "Battle".hh))
+
+        // SUNWARD EXPEDITION
+        case SunwardMainAction(f, h) =>
+            if (h.pool(Foothold).not && h.all(Foothold).any)
+                Ask(f).each(h.all(Foothold))(c => SunwardRemoveFootholdAction(f, h, c)).cancel
+            else
+                SunwardFootholdAction(f, h, true)
+
+        case SunwardRemoveFootholdAction(f, h, c) =>
+            f.used :+= h
+
+            h.from(c) --> Foothold --> h.reserve
+
+            h.log("took back the", Foothold.of(h), "from", c)
+
+            SunwardFootholdAction(f, h, false)
+
+        case SunwardFootholdAction(f, h, cancel) =>
+            val cc = clearings.%(c => h.at(c).has(Foothold).not).%(h.canPlace)
+
+            if (h.pool(Foothold) && cc.any)
+                Ask(f).each(cc)(c => SunwardFootholdClearingAction(f, h, c, cancel)).cancelIf(cancel)
+            else
+            if (cancel)
+                Ask(f).add(SunwardSecondAction(f, h).as("Move or place", Mouldwarp.sof(h))(h)).cancel
+            else
+                SunwardSecondAction(f, h)
+
+        case SunwardFootholdClearingAction(f, h, c, cancel) =>
+            Ask(f).each(0.to(min(3, h.pooled(Mouldwarp))).$.reverse)(n => SunwardPlaceAction(f, h, c, n)).cancelIf(cancel)
+
+        case SunwardPlaceAction(f, h, c, n) =>
+            f.used :+= h
+
+            game.highlights :+= PlaceHighlight($(c))
+
+            h.reserve --> (Foothold +: n.times(Mouldwarp)) --> c
+
+            h.log("placed a", Foothold.of(h), (n > 0).?("and"), (n > 0).?(n.of(Mouldwarp.name.styled(h))), "in", c)
+
+            SunwardSecondAction(f, h)
+
+        case SunwardSecondAction(f, h) =>
+            if (f.used.has(h).not)
+                f.used :+= h
+
+            val done = Repeat
+
+            Ask(f)
+                .group(SunwardExpedition)
+                .add(HirelingMoveBattleAction(f, h, done))
+                .add(HirelingRecruitEachAction(f, h, h.all(Foothold), done).!(h.all(Foothold).%(h.canPlace).none, "no footholds").!(h.pool(Mouldwarp).not, "no warriors"))
+                .add(done.as("Skip"))
+
+        // CORVID SPIES
+        case CorvidSpiesMainAction(f, h) =>
+            CorvidSpiesPlaceAction(f, h, 0)
+
+        case CorvidSpiesPlaceAction(f, h, n) =>
+            val cc = clearings.%(c => h.enemies.exists(_.present(c))).%(h.canPlace)
+
+            if (n >= 2 || h.pool(Magpie).not || cc.none)
+                CorvidSpiesSecondAction(f, h)
+            else
+                Ask(f).group(h, "places", (n == 0).?("first").|("second"), Magpie.of(h))
+                    .each(cc)(c => PlaceHirelingWarriorAction(f, h, Magpie, c, (n == 0).?(UsedEffectAction(f, h, CorvidSpiesPlaceAction(f, h, n + 1)) : ForcedAction).|(CorvidSpiesPlaceAction(f, h, n + 1))))
+                    .cancelIf(n == 0)
+
+        // reached from the soft first step when no Spy can be placed, so only the recorded choices mark the Spies used
+        case CorvidSpiesSecondAction(f, h) =>
+            val cc = clearings.%(c => h.at(c).has(Magpie))
+            val done = f.used.has(h).?(Repeat).|(UsedEffectAction(f, h, Repeat))
+
+            Ask(f)
+                .group(CorvidSpies)
+                .add(UsedEffectAction(f, h, HirelingBattleEachAction(f, h, cc, false, Repeat)).as("Battle".styled(h), dt.Battle, "in each clearing with", Magpie.sof(h))(h).!(cc.%(h.canAttackIn).none, "no targets"))
+                .each(cc)(c => CorvidSpiesStealAction(f, h, c).!(factions.%!(_.friends(f)).%(_.present(c)).%(_.hand.any).none, "no cards"))
+                .add(done.as("Skip"))
+
+        case CorvidSpiesStealAction(f, h, c) =>
+            if (f.used.has(h).not)
+                f.used :+= h
+
+            val l = factions.%!(_.friends(f)).%(_.present(c)).%(_.hand.any)
+
+            h.log("spied in", c)
+
+            l.foldLeft(Repeat : ForcedAction)((q, e) => StealCardAction(f, e, q))
+
+        // FLAME BEARERS
+        case OnTakeHirelingAction(f, h : FlameBearers.type, then) if h.all(Varmint).none =>
+            HirelingPlaceAnyAction(f, h, Varmint, 2, clearings, then)
+
+        case FlameBearersMainAction(f, h) =>
+            f.used :+= h
+
+            FlameBearersBurnAction(f, h, clearings./~(c => h.at(c).count(Varmint).times(c)))
+
+        case FlameBearersBurnAction(f, h, Nil) =>
+            ForcedRemoveFinishedAction(h, FlameBearersSpreadAction(f, h))
+
+        case FlameBearersBurnAction(f, h, c :: rest) =>
+            val pieces = h.enemies.%(e => game.states.contains(e)).%(h.canRemove(c))./~(e => e.at(c).distinct.%(p => p.is[Tenacious].not && p.is[Pawn].not)./(p => (e, p)))
+            val warriors = pieces.%((e, p) => p.is[Warrior])
+            val l = warriors.some.|(pieces)
+
+            if (l.none)
+                FlameBearersBurnAction(f, h, rest.but(c))
+            else
+                Ask(f).group(h, "burn in", c).each(l)((e, p) => HirelingRemovePieceAction(f, h, c, e, p, FlameBearersBurnAction(f, h, rest)))
+
+        case FlameBearersSpreadAction(f, h) =>
+            val cc = h.all(Varmint)./~(c => c +: game.connected(c)).distinct.%(h.canPlace)
+
+            if (h.pool(Varmint).not)
+                Repeat
+            else
+            if (cc.any)
+                Ask(f).group(h, "spread").each(cc)(c => PlaceHirelingWarriorAction(f, h, Varmint, c, Repeat))
+            else
+                HirelingPlaceAnyAction(f, h, Varmint, 2, clearings, Repeat)
+
+        // VAULT KEEPERS
+        case OnTakeHirelingAction(f, h : VaultKeepers.type, then) if h.presence.none =>
+            val l = (h.pool(Vault).?(Vault) ++ h.pooled(Vole).times(Vole).take(2)).$
+
+            Ask(f).group(h, "returns").each(clearings.%(c => h.pool(Vault).?(h.canBuild(c)).|(h.canPlace(c))))(c => PlaceHirelingWarriorsAction(f, h, l, c, then)).bail(then)
+
+        case VaultKeepersMainAction(f, h) =>
+            val adjacent = h.all(Vault)./~(c => c +: game.connected(c)).distinct.%(h.canBuild)
+
+            if (h.pool(Vault).not)
+                Ask(f).add(VaultKeepersSkipAction(f, h)).cancel
+            else
+            if (adjacent.any)
+                Ask(f).group(h, "places a", Vault.of(h)).each(adjacent)(c => VaultKeepersPlaceAction(f, h, c, false)).add(VaultKeepersSkipAction(f, h)).cancel
+            else
+                Ask(f).group(h, "places a", Vault.of(h), "and a", Vole.of(h)).each(clearings.%(h.canBuild))(c => VaultKeepersPlaceAction(f, h, c, h.pool(Vole))).add(VaultKeepersSkipAction(f, h)).cancel
+
+        case VaultKeepersPlaceAction(f, h, c, w) =>
+            f.used :+= h
+
+            game.highlights :+= PlaceHighlight($(c))
+
+            h.reserve --> (Vault +: w.$(Vole)) --> c
+
+            h.log("placed a", Vault.of(h), w.?("and a"), w.?(Vole.of(h)), "in", c)
+
+            VaultKeepersSecondAction(f, h)
+
+        case VaultKeepersSkipAction(f, h) =>
+            f.used :+= h
+
+            VaultKeepersSecondAction(f, h)
+
+        case VaultKeepersSecondAction(f, h) =>
+            val cc = h.all(Vault).distinct
+
+            Ask(f)
+                .group(VaultKeepers)
+                .add(HirelingBattleEachAction(f, h, cc, true, Repeat).as("Battle".styled(h), dt.Battle, "in each clearing with a", Vault.of(h))(h).!(cc.%(h.canAttackIn).none, "no targets"))
+                .add(HirelingRecruitEachAction(f, h, h.all(Vault), Repeat).!(cc.%(h.canPlace).none, "no vaults").!(h.pool(Vole).not, "no warriors"))
+                .add(Repeat.as("Skip"))
+
+        // HIGHWAY BANDITS
+        case HighwayBanditsMainAction(f, h) =>
+            val paths = banditPaths(f)
+
+            if (h.pool(Bandit))
+                Ask(f).group(h, "places a", Bandit.of(h), "on a path").each(paths)((a, b) => HighwayBanditPlaceAction(f, h, a, b, UsedEffectAction(f, h, Repeat)).as(a, dt.Arrow, b)(h)).cancel
+            else
+                Ask(f).each(h.paths.map(_._2).of[PathBetween].filter(p => h.at(p).any))(p => HighwayBanditRemoveAction(f, h, p.a, p.b)).cancel
+
+        case HighwayBanditRemoveAction(f, h, a, b) =>
+            f.used :+= h
+
+            h.from(PathBetween(a, b)) --> Bandit --> h.reserve
+
+            h.log("took back a", Bandit.of(h), "from the path between", a, "and", b)
+
+            val paths = banditPaths(f)
+
+            Ask(f).group(h, "places a", Bandit.of(h), "on a path").each(paths)((a, b) => HighwayBanditPlaceAction(f, h, a, b, Repeat).as(a, dt.Arrow, b)(h)).bail(Repeat)
+
+        case MoveCompleteAction(self, f, from : Clearing, to : Clearing, l, e, then) if e.has(HighwayBandits).not && banditOn(from, to) =>
+            val next = MoveCompleteAction(self, f, from, to, l, e :+ HighwayBandits, then)
+            val h = HighwayBandits
+
+            if (h.friends(f).not) {
+                val moving = l.distinct.%(p => f.at(to).has(p)).%(p => p.is[Tenacious].not && p.is[Pawn].not)
+
+                if (f.is[Hero] && l.exists(_.is[Pawn]))
+                    BattleAssignHitsAction(f, Battle(to, h, None, f, None, None, None, 0, 0, 0, DummyAction), 1, 0, next)
+                else
+                if (moving.any && h.canRemove(to)(f))
+                    Ask(f).group(f, "was ambushed by", h, "on the path to", to).each(moving)(p => HighwayBanditTollAction(f, to, p, ForcedRemoveFinishedAction(h, next)))
+                else
+                    next
+            }
+            else
+            if (f.has(h))
+                f.as[WarriorFaction].%(f => f.pool(f.warrior) && f.canPlace(to))./(f => Ask(f).add(HighwayBanditBonusAction(f, to, next)).skip(next) : Continue).|(next)
+            else
+                next
+
+        case HighwayBanditTollAction(f, c, p, then) =>
+            ForcedRemoveAction(HighwayBandits, c, f, p, 0, Removing, then)
+
+        case HighwayBanditBonusAction(f, c, then) =>
+            game.highlights :+= PlaceHighlight($(c))
+
+            f.reserve --> f.warrior --> c
+
+            f.log("placed", f.warrior.of(f), "in", c, "with", HighwayBandits)
+
+            then
+
+        // POPULAR BAND
+        case OnTakeHirelingAction(f, h : PopularBand.type, then) if h.all(RockStar).none && clearings.exists(c => h.at(c).of[RockStar].any).not =>
+            val p = h.reserve.$.pieces.of[RockStar].starting
+
+            p./(p => Ask(f).group(h, "returns").each(clearings.%(f.present).%(h.canPlace))(c => PlaceHirelingWarriorAction(f, h, p, c, then)).bail(then) : Continue).|(then)
+
+        case PopularBandMainAction(f, h) =>
+            val cc = clearings.%(c => h.at(c).of[RockStar].any)
+
+            if (cc.any)
+                Ask(f).group(h, "plays a concert").each(cc)(c => PopularBandConcertAction(f, h, c)).cancel
+            else
+                Ask(f).add(PopularBandPlaceAction(f, h).as("Place a", RockStar.of(h))(h)).cancel
+
+        case PopularBandConcertAction(f, h, c) =>
+            f.used :+= h
+
+            h.log("played a concert in", c)
+
+            PopularBandPullAction(f, h, c)
+
+        case PopularBandPullAction(f, h, c) =>
+            val l = game.connected(c)./~(d => factions.%(_.canMoveFrom(d))./~(e => e.at(d).of[Warrior].distinct./(p => PopularBandPullOneAction(f, h, c, d, e, p))))
+
+            Ask(f).group(h, "can draw warriors to", c).add(l).add(PopularBandPlaceAction(f, h).as("Done")(h))
+
+        case PopularBandPullOneAction(f, h, c, d, e, p) =>
+            Force(MoveListAction(f, e, $, NoMessage, d, c, $(p), PopularBandPullAction(f, h, c)))
+
+        case PopularBandPlaceAction(f, h) =>
+            if (f.used.has(h).not)
+                f.used :+= h
+
+            h.reserve.$.pieces.of[RockStar].starting./(p => Ask(f).group(h, "can place a", RockStar.of(h)).each(clearings.%(h.canPlace))(c => PlaceHirelingWarriorAction(f, h, p, c, Repeat)).skip(Repeat) : Continue).|(Repeat)
+
+        // FURIOUS PROTECTOR
+        case FuriousProtectorRemoveAction(f, h, l) =>
+            if (f.used.has(h).not)
+                f.used :+= h
+
+            val c = h.all(Elk).only
+
+            l.%(e => e.at(c).of[Warrior].any && h.canRemove(c)(e)) match {
+                case Nil => ForcedRemoveFinishedAction(h, Repeat)
+                case e :: rest => Ask(f).group(h, "strikes in", c).each(e.at(c).of[Warrior].distinct)(p => HirelingRemovePieceAction(f, h, c, e, p, FuriousProtectorRemoveAction(f, h, rest)))
+            }
+
+        // SUNNY ADVOCATES
+        case SetupHirelingAction(f, h : SunnyAdvocates.type) =>
+            game.states += h -> new BasicHirelingState(h)
+
+            game.hirelings :+= h
+
+            log(f, "setup", h)
+
+            SunnyAdvocatesSetupAction(f, h, FoxRabbitMouse)
+
+        case SunnyAdvocatesSetupAction(f, h, Nil) =>
+            SetupNextHirelingAction
+
+        case SunnyAdvocatesSetupAction(f, h, s :: rest) =>
+            Ask(f).each(clearings.%(_.cost.matched(s)).%(h.canPlace))(c => SunnyAdvocatesSetupClearingAction(f, h, s, c, rest)).bail(SunnyAdvocatesSetupAction(f, h, rest))
+
+        case SunnyAdvocatesSetupClearingAction(f, h, s, c, rest) =>
+            game.highlights :+= PlaceHighlight($(c))
+
+            h.reserve --> $(Advocate, Advocate).take(h.pooled(Advocate)) --> c
+
+            h.log("placed two", Advocate.sof(h), "in", c)
+
+            SunnyAdvocatesSetupAction(f, h, rest)
+
+        case OnTakeHirelingAction(f, h : SunnyAdvocates.type, then) if h.all(Advocate).none =>
+            HirelingPlaceAnyAction(f, h, Advocate, 1, clearings, then)
+
+        case SunnyAdvocatesMainAction(f, h) =>
+            Ask(f).group(h, "convert in").each(FoxRabbitMouse)(s => SunnyAdvocatesSuitAction(f, h, s)).cancel
+
+        case SunnyAdvocatesSuitAction(f, h, s) =>
+            f.used :+= h
+
+            h.log("preached in", s, "clearings")
+
+            SunnyAdvocatesReplaceAction(f, h, clearings.%(_.cost.matched(s)).%(c => h.at(c).has(Advocate)))
+
+        case SunnyAdvocatesReplaceAction(f, h, Nil) =>
+            ForcedRemoveFinishedAction(h, SunnyAdvocatesSpreadAction(f, h))
+
+        case SunnyAdvocatesReplaceAction(f, h, c :: rest) =>
+            f.as[WarriorFaction].%(f => f.pool(f.warrior) && f.canPlace(c)) match {
+                case Some(w) =>
+                    val l = f.enemies.%(e => game.states.contains(e)).%(h.canRemove(c))./~(e => e.at(c).of[Warrior].distinct.%(_.is[Tenacious].not)./(p => (e, p)))
+
+                    if (l.none)
+                        SunnyAdvocatesReplaceAction(f, h, rest)
+                    else
+                        Ask(f).group(h, "convert in", c).each(l)((e, p) => SunnyAdvocatesReplaceOneAction(w, h, c, e, p, rest))
+
+                case None =>
+                    SunnyAdvocatesReplaceAction(f, h, rest)
+            }
+
+        case SunnyAdvocatesReplaceOneAction(f, h, c, e, p, rest) =>
+            f.reserve --> f.warrior --> c
+
+            h.log("converted", p.of(e), "into", f.warrior.of(f), "in", c)
+
+            ForcedRemoveAction(h, c, e, p, 0, NoMessage, SunnyAdvocatesReplaceAction(f, h, rest))
+
+        case SunnyAdvocatesSpreadAction(f, h) =>
+            val near = clearings.%(c => h.at(c).has(Advocate).not && f.present(c)).%(h.canPlace)
+
+            HirelingPlaceAnyAction(f, h, Advocate, 1, near.some.|(clearings), Repeat)
+
+        // BAT MESSENGERS
+        case BatMessengersAskAction(f, l, then) =>
+            if (l.none || f.pool(f.warrior).not)
+                then
+            else
+                Ask(f).each(l.distinct.%(f.canPlace))(c => BatMessengersAction(f, l, c, BatMessengersAskAction(f, l :- c, then))).skip(then)
+
+        case BatMessengersAction(f, l, c, then) =>
+            game.highlights :+= PlaceHighlight($(c))
+
+            f.reserve --> f.warrior --> c
+
+            f.log("placed", f.warrior.of(f), "in", c, "with", BatMessengers)
+
+            then
+
+        // RIVER ROAMERS
+        case SetupHirelingAction(f, h : RiverRoamers.type) =>
+            game.states += h -> new BasicHirelingState(h)
+
+            game.hirelings :+= h
+
+            log(f, "setup", h)
+
+            Ask(f).each(game.riverside.%(h.canPlace))(c => RiverRoamersPlaceAction(f, h, c, SetupNextHirelingAction)).bail(SetupNextHirelingAction)
+
+        case OnTakeHirelingAction(f, h : RiverRoamers.type, then) if h.all(Lilypad).none =>
+            Ask(f).group(h, "return").each(game.riverside.%(h.canPlace))(c => RiverRoamersPlaceAction(f, h, c, then)).bail(then)
+
+        case RiverRoamersPlaceAction(f, h, c, then) =>
+            game.highlights :+= PlaceHighlight($(c))
+
+            val l = h.pooled(Roamer).times(Roamer).take(2) ++ (h.at(c).has(Lilypad).not && h.pool(Lilypad)).$(Lilypad)
+
+            h.reserve --> l --> c
+
+            h.log("placed", l./(_.of(h)).comma, "in", c)
+
+            then
+
+        case RiverRoamersCraftAction(f, h) =>
+            f.used :+= RoamersCrafted
+
+            val l = h.all(Lilypad)./(_.asset)
+
+            f.extraCraft ++= l
+
+            h.log("lent", f, l./(dt.CraftSuit).merge, "for crafting")
+
+            RiverRoamersCraftMenuAction(f, h, false)
+
+        case RiverRoamersCraftMoreAction(f, h) =>
+            RiverRoamersCraftMenuAction(f, h, true)
+
+        // the usual craft menu, but right after lending the lilypads (a recorded action) it ends with Done, not Cancel
+        case RiverRoamersCraftMenuAction(f, h, cancel) =>
+            YYSelectObjectsAction(f, f.hand)
+                .withGroup("Craft".styled(f) ~ " with " ~ (f.craft ++ f.frogCraft ++ f.extraCraft).diff(f.crafted)./(dt.CraftSuit).merge)
+                .withRule(f.craftable)
+                .withThen(d => CraftAction(f, d, NoMessage, CraftPerformAction(f, d, NoMessage)))(d => game.desc("Craft", d, "with", d.as[CraftCard]./~(_.cost./(dt.CraftSuit)).merge))("Craft")
+                .withExtra($(NoHand, cancel.?(CancelAction).|(Repeat.as("Done"))))
+
+        case RiverRoamersMainAction(f, h) =>
+            val cc = clearings.%(c => h.at(c).has(Lilypad))
+            val done = UsedEffectAction(f, h, Repeat)
+
+            Ask(f)
+                .group(RiverRoamers)
+                .add(HirelingBattleEachAction(f, h, cc, false, done).as("Battle".styled(h), dt.Battle, "at each", Lilypad.of(h))(h).!(cc.%(h.canAttackIn).none, "no targets"))
+                .each(game.riverside.%(h.canPlace))(c => RiverRoamersPlaceAction(f, h, c, done).!(h.pool(Roamer).not && h.pool(Lilypad).not, "no pieces"))
+                .cancel
+
+        // FROG TINKERS
+        case FrogTinkersAction(f, h) =>
+            if (deck.none && pile.any)
+                Shuffle[DeckCard](pile, ShufflePileAction(_, ForceAction(FrogTinkersAction(f, h))))
+            else {
+                f.used :+= h
+
+                deck.$.starting.foreach { d =>
+                    deck --> d --> h.display
+
+                    f.extraCraft :+= cardAsset(d)
+
+                    h.log("tinkered with", d)
+                }
+
+                Repeat
+            }
+
+        // FARMERS
+        case SetupHirelingAction(f, h : ProsperousFarmers.type) =>
+            game.states += h -> new BasicHirelingState(h)
+
+            game.hirelings :+= h
+
+            log(f, "setup", h)
+
+            FarmersSetupAction(f, h)
+
+        case FarmersSetupAction(f, h) =>
+            if (h.all(Farm).num >= 2 || h.pool(Farm).not)
+                SetupNextHirelingAction
+            else
+                Ask(f).each(clearings.%(h.canBuild).%(c => h.at(c).has(Farm).not))(c => FarmersPlaceAction(f.as[Faction].|(h), h, c, true, true, FarmersSetupAction(f, h))).bail(SetupNextHirelingAction)
+
+        case FarmersPlaceAction(f, h, c, farm, warrior, then) =>
+            game.highlights :+= PlaceHighlight($(c))
+
+            h.reserve --> (farm.$(Farm) ++ (warrior && h.pool(FarmerWarrior)).$(FarmerWarrior)) --> c
+
+            h.log("placed", farm.?(Farm.of(h)), (farm && warrior).?("and"), warrior.?(FarmerWarrior.of(h)), "in", c)
+
+            then
+
+        case OnTakeHirelingAction(f, h : ProsperousFarmers.type, then) if h.all(Farm).none && h.pool(Farm) =>
+            Ask(f).group(h, "return").each(clearings.%(f.present).%(h.canBuild))(c => FarmersPlaceAction(f, h, c, true, true, then)).bail(then)
+
+        case ProsperousFarmersMainAction(f, h) =>
+            if (h.all(Farm).exists(f.rules))
+                Ask(f).add(ProsperousFarmersHarvestAction(f, h)).cancel
+            else
+                Ask(f).add(ProsperousFarmersSecondAction(f, h).as("Battle at a", Farm.of(h), "or place", FarmerWarrior.sof(h))(h)).cancel
+
+        case ProsperousFarmersHarvestAction(f, h) =>
+            f.used :+= h
+
+            DrawCardsAction(f, 1, WithEffect(h), AddCardsAction(f, ProsperousFarmersFarmAction(f, h)))
+
+        case ProsperousFarmersFarmAction(f, h) =>
+            val cc = clearings.%(h.canBuild)
+
+            if (h.pool(Farm) && cc.any) {
+                val least = cc./(warriorsIn).min
+
+                Ask(f).group(h, "plant a", Farm.of(h)).each(cc.%(c => warriorsIn(c) == least))(c => FarmersPlaceAction(f, h, c, true, false, ProsperousFarmersSecondAction(f, h)))
+            }
+            else
+                ProsperousFarmersSecondAction(f, h)
+
+        case ProsperousFarmersSecondAction(f, h) =>
+            if (f.used.has(h).not)
+                f.used :+= h
+
+            val cc = h.all(Farm).distinct
+
+            Ask(f)
+                .group(ProsperousFarmers)
+                .add(BattleInitAction(f, h, NoMessage, cc.%(h.canAttackIn), $, Repeat).as("Battle".styled(h), dt.Battle, "at a", Farm.of(h))(h).!(cc.%(h.canAttackIn).none, "no targets"))
+                .add(HirelingRecruitEachAction(f, h, h.all(Farm), Repeat).!(cc.%(h.canPlace).none, "no farms").!(h.pool(FarmerWarrior).not, "no warriors"))
+                .bailout(Repeat.as("Skip"))
+
+        case GiveAwayHirelingToAction(f, h : StrugglingFarmers.type, e) if { h.former = |(f) ; false } =>
+            NeverAction
+
+        case OnTakeHirelingAction(f, h : StrugglingFarmers.type, then) if h.former.any =>
+            val former = h.former.get
+
+            h.former = None
+
+            clearings.%(c => h.at(c).any).%(c => former.rules(c).not).foreach { c =>
+                val l = h.at(c)
+
+                h.from(c) --> h.reserve
+
+                h.log("left", c, "taking", l./(_.of(h)).comma, "with them")
+            }
+
+            OnTakeHirelingAction(f, h, then)
+
+        case StrugglingFarmersMainAction(f, h) =>
+            val cc = clearings.%(f.rules).%(h.canPlace)
+            val done = UsedEffectAction(f, h, Repeat)
+
+            Ask(f)
+                .group(h, "can settle in a ruled clearing")
+                .some(cc)(c =>
+                    (h.pool(Farm) && h.canBuild(c) && h.pool(FarmerWarrior)).$(FarmersPlaceAction(f, h, c, true, true, DrawCardsAction(f, 1, WithEffect(h), AddCardsAction(f, done)))) ++
+                    (h.pool(Farm) && h.canBuild(c)).$(FarmersPlaceAction(f, h, c, true, false, done)) ++
+                    h.pool(FarmerWarrior).$(FarmersPlaceAction(f, h, c, false, true, done))
+                )
+                .cancel
+
+        // farms give no points when removed
+        case ForcedRemoveScoreAction(e, c, f : FarmersHireling, p @ Farm, n, m, then) if n != 0 =>
+            ForcedRemoveScoreAction(e, c, f, p, 0, m, then)
+
+        // THE BANDS: who moved where this turn, for the Bands' hold on enemies that move into their clearing
+        case MoveCompleteAction(self, f, from, to : Clearing, l, e, then) if options.has(HirelingsByTheCard) && e.has(PopularBand).not =>
+            if (game.movedInto.has((f, to)).not)
+                game.movedInto :+= (f, to)
+
+            if (hirelings.has(StreetBand) && StreetBand.friends(f).not && StreetBand.at(to).any && StreetBand.enchanted.has(to).not) {
+                StreetBand.log("started playing in", to)
+
+                StreetBand.enchanted :+= to
+            }
+
+            if (hirelings.has(PopularBand) && PopularBand.friends(f).not && PopularBand.at(to).any && PopularBand.enchanted.has(to).not) {
+                PopularBand.log("started playing in", to)
+
+                PopularBand.enchanted :+= to
+            }
+
+            MoveCompleteAction(self, f, from, to, l, e :+ PopularBand, then)
+
+        // FOREST PATROL: one of the Patrol warriors removed at once goes on the card, the rest to the supply
+        case ForcedRemoveCleanupAction(f, then) if options.has(HirelingsByTheCard) && hirelings.has(ForestPatrol) && clearings.exists(c => ForestPatrol.limbo(c).any) =>
+            val h = ForestPatrol
+
+            clearings.%(c => h.limbo(c).any).starting.foreach { c =>
+                val p = h.limbo(c).$.starting.get.piece
+
+                h.limbo(c) --> p --> h.hospital
+
+                h.log("carried", p.name.styled(h), "to the first aid")
+            }
+
+            clearings.foreach(c => h.limbo(c) --> game.dead)
+
+            ForcedRemoveCleanupAction(f, then)
+
+        // THE BRIGAND: "R" items go under the ruins as if the Vagabond were in play, unless a Vagabond or the Hundreds put them
+        case SetupDoneAction if hirelings.has(Brigand) && game.ruins.any && game.ruins.values.forall(_.items.none) =>
+            AddRuinItemsAction(SetupDoneAction)
+
+        case SetupHirelingAction(f, h : FrogTinkers.type) =>
+            game.states += h -> new FrogTinkersState(h)
+
+            game.hirelings :+= h
+
+            log(f, "setup", h)
+
+            SetupNextHirelingAction
+
+        case SetupHirelingAction(f, h : StrugglingFarmers.type) =>
+            game.states += h -> new StrugglingFarmersState(h)
+
+            game.hirelings :+= h
+
+            log(f, "setup", h)
+
+            SetupNextHirelingAction
 
         // SETUP
         case SetupHirelingAction(f, h : PawnHireling) =>

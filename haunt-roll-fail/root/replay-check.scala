@@ -17,6 +17,10 @@ object ReplayCheck {
     var marsh = false
     var exiles = false
     var oldFrogs = false
+    // "hire:Forest Patrol,Street Band" (names or short codes): every game gets those hirelings
+    var hire : $[Hireling] = $
+    // "oldhire": without HirelingsByTheCard, as games started before it play
+    var oldHire = false
 
     def options(seating : $[Faction]) : $[Meta.O] = marsh.?($[Meta.O](
         MarshMap, AllRandomClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
@@ -24,7 +28,7 @@ object ReplayCheck {
     )).|($[Meta.O](
         AutumnMap, DefaultClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
         FerryLandmark, LostCityLandmark, SeatingGiven, FactionSeatingGiven, SetupOrderPriority, CardDraftStandard,
-    )).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.$(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent) ++ seating./(IncludeFaction)
+    )).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.$(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent) ++ seating./(IncludeFaction)
 
     def privateMap(o : AnyRef, suffix : String) : Map[Any, Any] = {
         val f = o.getClass.getDeclaredFields.filter(_.getName.endsWith(suffix)).head
@@ -106,6 +110,8 @@ object ReplayCheck {
         marsh = args.exists(_.startsWith("marsh"))
         exiles = args.contains("exiles")
         oldFrogs = args.contains("oldfrogs")
+        oldHire = args.contains("oldhire")
+        hire = args.find(_.startsWith("hire:"))./~(_.drop(5).split(',').$./(n => Meta.hirelings.%(h => h.name == n || h.short == n || h.toString == n).single.|!("no hireling " + n)))
         val pool : $[$[Faction]] = args.lift(1)./(_ match {
             case "base" => $($(MC, ED, WA, VB), $(MC, ED, WA, LC), $(MC, ED, RF, UD))
             case "ld" => $($(MC, ED, WA, LDvE))
@@ -118,6 +124,9 @@ object ReplayCheck {
             case "marsh" => $($(MC, ED, WA, VB), $(MC, ED, WA, LDvE), $(MC, WA, KD, TC))
         }).|($($(MC, WA, LDvE, KD), $(MC, ED, LDvE, KD), $(MC, WA, KD, TC), $(MC, WA, LDvE, TC)))
         var failures = 0
+        // how often each hireling-related choice was recorded, to see that the bots used them
+        var used = Map[String, Int]()
+        val keys = $("Hireling", "WarmSun", "Sunward", "CorvidSpies", "FlameBearers", "VaultKeepers", "FuriousProtector", "HighwayBandit", "PopularBand", "SunnyAdvocates", "BatMessengers", "RiverRoamers", "FrogTinkers", "Farmers", "Brigand", "LizardEnvoys", "Bluebird", "FelinePhysicians", "MoleArtisians", "RatSmugglers", "ForestPatrol", "Patrol", "LastDynasty", "Uprising", "Exile", "Flotilla", "StreetBand", "BanditGangs", "Scouts")
 
         0.until(games).foreach { gi =>
             val seating = pool(gi % pool.num).shuffle
@@ -128,7 +137,18 @@ object ReplayCheck {
             var snapshots : Map[Int, (String, String)] = Map()
 
             def record(a : Action) = a match {
-                case a : ExternalAction => recorded :+= a
+                case a : ExternalAction =>
+                    // every recorded action must write and parse back to itself, or saved games can't be loaded
+                    val w = Serialize.write(a.unwrap)
+                    val w2 = try { Serialize.write(Serialize.parseAction(w)) } catch { case e : Throwable => "ERROR " + e }
+                    if (w2 != w) {
+                        failures += 1
+                        +++("  UNMATCHING WRITE/PARSE", w, "->", w2)
+                    }
+                    recorded :+= a
+                    val n = a.unwrap.getClass.getSimpleName
+                    if (keys.exists(n.contains))
+                        used += n -> (used.getOrElse(n, 0) + 1)
                 case a => throw new Error("not external " + a)
             }
 
@@ -188,7 +208,10 @@ object ReplayCheck {
                 }
             }
             catch {
-                case e : Throwable => +++("game", gi, "live play failed:", e); failures += 1
+                case e : Throwable =>
+                    +++("game", gi, "live play failed:", e); failures += 1
+                    (recorded.num - 6).until(recorded.num).%(_ >= 0).foreach(i => +++("    recorded", i, ":", recorded(i).unwrap.toString.take(300)))
+                    Option(e.getCause).foreach { c => +++("  cause:", c); c.getStackTrace.take(14).foreach(t => +++("     ", t)) }
             }
 
             +++("game", gi, seating./(_.name).mkString(", "), "-", recorded.num, "recorded actions", over.?("finished").|("stopped"))
@@ -220,6 +243,8 @@ object ReplayCheck {
                 }
             }
         }
+
+        used.toList.sortBy(_._1).foreach { case (n, k) => +++("  used", n, k) }
 
         +++("failures:", failures)
     }
