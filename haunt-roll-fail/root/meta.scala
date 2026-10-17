@@ -1939,7 +1939,7 @@ object Meta extends MetaGame {
         // new file names for the taller map (the new art shows more of the bottom), so browsers don't keep the cached ones
         ImageAsset("map"          , "map-art" ) ::
         ImageAsset("map-regions"  , "map-regions-2250").makeLossless ::
-        ImageAsset("map-woods"    , "map-woods-2250") ::
+        // no "map-woods": the Marsh's was empty (fully transparent), and iPhones failed to load it however it was saved
 
         ImageAsset("building-slot", "empty-building-white") ::
 

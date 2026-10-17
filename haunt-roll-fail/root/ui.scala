@@ -1080,7 +1080,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         val nowoods = (game.turn > 0) && factions.of[Hero].none && factions.of[Expedition].none && factions.of[OldExpedition].none && factions.of[CommonAbduct].none && hirelings.has(TheExile).not
 
-        if (nowoods.not)
+        // the Marsh has no woods overlay
+        if (nowoods.not && resources.images.has(mapid + "map-woods"))
             g.drawImage(resources.images.get(mapid + "map-woods"), 0, 0)
 
         var saved = oldPositions
