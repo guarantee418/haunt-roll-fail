@@ -73,13 +73,15 @@ object AutumnBoard extends Board {
         case Quarry => $(Mountain, Creek, Beach)
     }
 
-    object AutumnN extends UnnamedForest
-    object AutumnNW extends UnnamedForest
+    // Named after trees, like the Marsh forests (asked for by the owner on 2026-10-17); only the labels, as saved games
+    // name regions by their objects
+    object AutumnN extends NamedForest("Maple")
+    object AutumnNW extends NamedForest("Hazel")
     object Witchwood extends NamedForest("Witchwood")
-    object AutumnW extends UnnamedForest
-    object AutumnS extends UnnamedForest
-    object AutumnE extends UnnamedForest
-    object AutumnSW extends UnnamedForest
+    object AutumnW extends NamedForest("Beech")
+    object AutumnS extends NamedForest("Rowan")
+    object AutumnE extends NamedForest("Elm")
+    object AutumnSW extends NamedForest("Birch")
 
     val forests = $(AutumnN, AutumnNW, Witchwood, AutumnW, AutumnS, AutumnE, AutumnSW)
 
@@ -128,6 +130,14 @@ object AutumnBoard extends Board {
 
         case Burrow(_) => (1208, 999999)
         case _ => (0, 0); throw new Error("no center for " + r)
+    }
+
+    override def forestLabel(f : Forest) = f @@ {
+        case AutumnN => (1554, 463)
+        case Witchwood => (1160, 980)
+        case AutumnS => (1194, 1346)
+        case AutumnSW => (650, 1749)
+        case _ => center(f)
     }
 
     override def port(r : Region)(flooded : $[Clearing]) = r @@ {
@@ -187,14 +197,16 @@ object WinterBoard extends Board {
     // The score tracker along the bottom edge of this board's image, 8 pixels taller than most
     override val scoreTrack = |((88.3, 2130.0, 74.63))
 
-    object WinterNW extends UnnamedForest
+    // Named after trees, like the Marsh forests (asked for by the owner on 2026-10-17); only the labels, as saved games
+    // name regions by their objects
+    object WinterNW extends NamedForest("Fir")
     object Deadwood extends NamedForest("Deadwood")
-    object WinterNE extends UnnamedForest
-    object WinterW extends UnnamedForest
-    object WinterSW extends UnnamedForest
+    object WinterNE extends NamedForest("Spruce")
+    object WinterW extends NamedForest("Larch")
+    object WinterSW extends NamedForest("Hemlock")
     object Mirkwood extends NamedForest("Mirkwood")
-    object WinterSE extends UnnamedForest
-    object WinterE extends UnnamedForest
+    object WinterSE extends NamedForest("Pine")
+    object WinterE extends NamedForest("Yew")
 
     val forests = $(WinterNW, Deadwood, WinterNE, WinterW, WinterSW, Mirkwood, WinterSE, WinterE)
 
@@ -259,6 +271,12 @@ object WinterBoard extends Board {
         case _ => (0, 0); throw new Error("no center for " + r)
     }
 
+    override def forestLabel(f : Forest) = f @@ {
+        case WinterNW => (433, 629)
+        case Deadwood => (1040, 750)
+        case _ => center(f)
+    }
+
     override def gates(r : Region) = r @@ {
         case Mound => $((300, 286))
         case Trench => $((940, 324), (908, 434))
@@ -305,15 +323,17 @@ object LakeBoard extends Board {
 
     val coastal = $(Gulf, Marsh, Shoal, Bay)
 
-    object LakeW extends UnnamedForest
-    object LakeNW extends UnnamedForest
-    object LakeN extends UnnamedForest
-    object LakeNE extends UnnamedForest
+    // Named after trees, like the Marsh forests (asked for by the owner on 2026-10-17); only the labels, as saved games
+    // name regions by their objects
+    object LakeW extends NamedForest("Linden")
+    object LakeNW extends NamedForest("Aspen")
+    object LakeN extends NamedForest("Sycamore")
+    object LakeNE extends NamedForest("Poplar")
     object AcresWild extends NamedForest("Acres Wild")
     object HeartOfOak extends NamedForest("Heart of Oak")
-    object LakeS extends UnnamedForest
-    object LakeSE extends UnnamedForest
-    object LakeE extends UnnamedForest
+    object LakeS extends NamedForest("Chestnut")
+    object LakeSE extends NamedForest("Hornbeam")
+    object LakeE extends NamedForest("Holly")
 
     val forests = $(LakeW, LakeNW, LakeN, LakeNE, AcresWild, HeartOfOak, LakeS, LakeSE, LakeE)
 
@@ -383,6 +403,13 @@ object LakeBoard extends Board {
         case _ => (0, 0); throw new Error("no center for " + r)
     }
 
+    // off the water
+    override def forestLabel(f : Forest) = f @@ {
+        case HeartOfOak => (450, 1400)
+        case LakeE => (1810, 1300)
+        case _ => center(f)
+    }
+
     override def port(r : Region)(flooded : $[Clearing]) = r @@ {
         case Shoal => (992, 989)
         case Bay => (1300, 1145)
@@ -441,14 +468,16 @@ object MountainBoard extends Board {
 
     override val tower = $(Pass)
 
-    object MountainW extends UnnamedForest
-    object MountainNW extends UnnamedForest
-    object MountainCW extends UnnamedForest
-    object MountainC extends UnnamedForest
-    object MountainCN extends UnnamedForest
-    object MountainN extends UnnamedForest
-    object MountainNE extends UnnamedForest
-    object MountainSE extends UnnamedForest
+    // Named after trees, like the Marsh forests (asked for by the owner on 2026-10-17); only the labels, as saved games
+    // name regions by their objects
+    object MountainW extends NamedForest("Cedar")
+    object MountainNW extends NamedForest("Whitebark")
+    object MountainCW extends NamedForest("Lodgepole")
+    object MountainC extends NamedForest("Redwood")
+    object MountainCN extends NamedForest("Sequoia")
+    object MountainN extends NamedForest("Krummholz")
+    object MountainNE extends NamedForest("Balsam")
+    object MountainSE extends NamedForest("Bristlecone")
     object LiarWind extends NamedForest("Liar Wind")
     object NadaMoonshine extends NamedForest("Nada Moonshine")
 
@@ -920,14 +949,16 @@ object GorgeBoard extends Board {
 
     val inner = $(Fork, Pueblo)
 
-    object GorgeNW extends NamedForest("North-West")
-    object GorgeN extends NamedForest("North")
-    object GorgeNE extends NamedForest("North-East")
-    object GorgeW extends NamedForest("West")
-    object GorgeC extends NamedForest("Center")
-    object GorgeE extends NamedForest("East")
-    object GorgeSW extends NamedForest("South-West")
-    object GorgeS extends NamedForest("South")
+    // Named after desert trees, like the Marsh forests (asked for by the owner on 2026-10-17; they were compass points);
+    // only the labels, as saved games name regions by their objects
+    object GorgeNW extends NamedForest("Mesquite")
+    object GorgeN extends NamedForest("Cottonwood")
+    object GorgeNE extends NamedForest("Juniper")
+    object GorgeW extends NamedForest("Pinyon")
+    object GorgeC extends NamedForest("Tamarisk")
+    object GorgeE extends NamedForest("Ironwood")
+    object GorgeSW extends NamedForest("Paloverde")
+    object GorgeS extends NamedForest("Acacia")
 
     val forests = $(GorgeNW, GorgeN, GorgeNE, GorgeW, GorgeC, GorgeE, GorgeSW, GorgeS)
 

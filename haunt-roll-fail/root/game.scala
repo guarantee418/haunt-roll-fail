@@ -215,6 +215,9 @@ trait Board {
 
     def center(r : Region) : (Int, Int)
 
+    // Where a forest's name is drawn on the map (drawForestNames), fixed where its center is picked at random
+    def forestLabel(f : Forest) : (Int, Int) = center(f)
+
     def dir(from : Region, to : Region) = {
         val (ax, ay) = center(from)
         val (bx, by) = center(to)
