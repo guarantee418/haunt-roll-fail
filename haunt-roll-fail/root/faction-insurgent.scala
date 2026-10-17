@@ -316,7 +316,10 @@ object InsurgentExpansion extends FactionExpansion[Insurgent] {
                 if (o.hand.any) {
                     f.log("looked at", o, "cards, no", c.suits, "cards")
 
-                    NoAsk(o)(PeekCardsMainAction(f, Empty, FactionHand(o), o.hand, draw))
+                    if (game.options.has(OutragePeekNeedsOk))
+                        PeekCardsAsk(f, FactionHand(o), o.hand, draw)
+                    else
+                        NoAsk(o)(PeekCardsMainAction(f, Empty, FactionHand(o), o.hand, draw))
                 }
                 else {
                     o.log("had no cards")

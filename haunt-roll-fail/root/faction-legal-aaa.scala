@@ -249,11 +249,16 @@ object LegalAAAExpansion extends FactionExpansion[LegalAAA] {
                 if (o.hand.any) {
                     f.log("looked at", o, "cards, no", c.suits, "cards")
 
+                    val seen = o.hand.$
+
                     if (f.has(IntensifyPacifism)) {
                         o.hand --> discard(o, "due", IntensifyPacifism.of(f))
                     }
 
-                    NoAsk(o)(PeekCardsMainAction(f, Empty, FactionHand(o), o.hand, draw))
+                    if (game.options.has(OutragePeekNeedsOk))
+                        PeekCardsAsk(f, FactionHand(o), seen, draw)
+                    else
+                        NoAsk(o)(PeekCardsMainAction(f, Empty, FactionHand(o), o.hand, draw))
                 }
                 else {
                     o.log("had no cards")
