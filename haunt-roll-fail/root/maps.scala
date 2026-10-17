@@ -1076,13 +1076,15 @@ object MarshBoard extends Board {
         case _ => $()
     }
 
-    object MarshNW extends UnnamedForest
-    object MarshW extends UnnamedForest
-    object MarshN extends UnnamedForest
-    object MarshC extends UnnamedForest
-    object MarshE extends UnnamedForest
-    object MarshSW extends UnnamedForest
-    object MarshS extends UnnamedForest
+    // Named after wetland trees and woods, like the made-up clearing names (asked for by the owner on 2026-10-17);
+    // only the labels, as saved games name regions by their objects
+    object MarshNW extends NamedForest("Alder")
+    object MarshW extends NamedForest("Willow")
+    object MarshN extends NamedForest("Osier")
+    object MarshC extends NamedForest("Cypress")
+    object MarshE extends NamedForest("Tamarack")
+    object MarshSW extends NamedForest("Mangrove")
+    object MarshS extends NamedForest("Carr")
 
     val forests = $(MarshNW, MarshW, MarshN, MarshC, MarshE, MarshSW, MarshS)
 
