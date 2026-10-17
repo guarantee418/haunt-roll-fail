@@ -225,9 +225,18 @@ case class InsurgentOrganizeClearingAction(self : Insurgent, c : Clearing) exten
 
 case class AddSupportersAction(f : Insurgent, then : ForcedAction) extends ForcedAction
 
+// A one-time fix for games started before OutragePeekNeedsOk, added to a live game's log by hand: from here Outrage shows
+// the hand to the Alliance and waits for its Ok (game.outragePeekNeedsOk), then goes on with then
+case class OutragePeekNeedsOkAction(then : ForcedAction) extends ForcedAction with SkipValidate
+
 
 object InsurgentExpansion extends FactionExpansion[Insurgent] {
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
+        case OutragePeekNeedsOkAction(then) =>
+            game.outragePeekNeedsOk = true
+
+            then
+
         // SETUP
         case CreatePlayerAction(f : Insurgent) =>
             game.states += f -> new InsurgentPlayer(f)
@@ -316,7 +325,7 @@ object InsurgentExpansion extends FactionExpansion[Insurgent] {
                 if (o.hand.any) {
                     f.log("looked at", o, "cards, no", c.suits, "cards")
 
-                    if (game.options.has(OutragePeekNeedsOk))
+                    if (game.options.has(OutragePeekNeedsOk) || game.outragePeekNeedsOk)
                         PeekCardsAsk(f, FactionHand(o), o.hand, draw)
                     else
                         NoAsk(o)(PeekCardsMainAction(f, Empty, FactionHand(o), o.hand, draw))

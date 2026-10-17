@@ -255,7 +255,7 @@ object LegalAAAExpansion extends FactionExpansion[LegalAAA] {
                         o.hand --> discard(o, "due", IntensifyPacifism.of(f))
                     }
 
-                    if (game.options.has(OutragePeekNeedsOk))
+                    if (game.options.has(OutragePeekNeedsOk) || game.outragePeekNeedsOk)
                         PeekCardsAsk(f, FactionHand(o), seen, draw)
                     else
                         NoAsk(o)(PeekCardsMainAction(f, Empty, FactionHand(o), o.hand, draw))
