@@ -668,8 +668,10 @@ file covers the build, server and deploy. No session can ssh to the server
   image is skipped and its name kept in `window.hrfBrokenImages` (the loaders tag cached images with `data-url`, as they are
   shown from `blob:` addresses). Root's `drawMap` (`root/ui.scala`) writes those names, or any error it catches with its
   stack, across the top of the map (`mapNote`), so a player's screenshot shows them; map `hrf-opt.js` line:column positions
-  to the sources with that build's `hrf-opt.js.map` (the `source-map` package in `/opt/node-tools` works). Which image the
-  iPhone couldn't decode isn't known yet.
+  to the sources with that build's `hrf-opt.js.map` (the `source-map` package in `/opt/node-tools` works). It was the Marsh
+  map's `marsh/map-woods-2250.webp`, a fully transparent 2400x2250 lossless WebP of 266 bytes that iPhones couldn't
+  decode; it was saved again as lossy with an alpha chunk (VP8X/ALPH, like the other maps' `map-woods`), and
+  `imageDataVersion` bumped so phones drop the cached copy. No other image is a large lossless WebP of a few hundred bytes.
 - Bot games can be run headless on the JVM with `root/host.scala` (see
   `host.xsbt` for the source exclusions); it also checks that every action
   serializes and parses back.
