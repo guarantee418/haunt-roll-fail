@@ -571,9 +571,9 @@ file covers the build, server and deploy. No session can ssh to the server
   `fox-rabbit-mouse-frog`), so a frog clearing's name now looks like its `-hl` highlight. The old teal images were
   recoloured to it too (owner, 2026-10-17): the frog suit icon beside clearing names (`feature/clearing-suit-frog`), the
   frog card, deck and pile icons (`icon/card/*frog*`), the frog craft icons (`icon/craft/*frog*`), and the playtest frog
-  faction's action icons, glyph, enclave tokens, titles (`td-*`, `ld-title`) and cards (`faction/invasive/card/`, not `hl-*`;
-  only the banner, its suit circle and the bottom-left icon box, so the artwork keeps its colours), by shifting the teal hue
-  band onto `#b7b13c`. The playtest frog warriors (`td-frog`, `td-frog-x5`), boards and character art stay teal. The frog
+  faction's action icons, glyph, enclave tokens and titles (`td-*`, `ld-title`), by shifting the teal hue band onto
+  `#b7b13c`. The playtest frog cards (`faction/invasive/card/`, not `hl-*`), warriors (`td-frog`, `td-frog-x5`), boards and
+  character art stay teal (owner's choice). The frog
   decree and relic icons stay `#7b9f3c`, the green of the Homeland frog cards (owner's choice). The solid `frog` tint is saved lossy (a one-colour lossless WebP is a few dozen bytes, the kind iPhones
   failed on).
 - Lilypad Diaspora crafts by clearing (asked for by the owner on 2026-10-13): when more than one set of its enclaves could
