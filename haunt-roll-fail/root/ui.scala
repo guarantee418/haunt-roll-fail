@@ -4783,7 +4783,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     }
 
     override def onClick(a : Any) = a @@ {
-        case _ if { seen = game.notifications ; false } =>
+        // In pass and play, only the notifications of the player holding the device are seen by a tap
+        case _ if { seen = passing.?(seen ++ game.notifications.diff(seen).%(n => passedTo.exists(n.factions.has))).|(game.notifications) ; false } =>
 
         case ("notifications", Some(f : Faction)) =>
             seen = $
@@ -5284,7 +5285,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         if (was != lastWaiting)
             sayCurrentActions(false)
 
-        showNotifications(self)
+        // In pass and play, every human player on the device is self, so notifications wait for each one's own turn
+        showNotifications(passing.?($[F]()).|(self))
 
         super.wait(self./(fix), factions./(fix), message)
     }
@@ -5483,11 +5485,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         lastActionsChosen = None
         lastWaiting = $
 
-        if (Speech.enabled)
-            sayCurrentActions(false)
-
-        showNotifications(faction.$)
-
         lazy val choice = actions./~{
             case _ : Info => None
             case _ : Hidden => None
@@ -5523,7 +5520,43 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             return
         }
 
+        if (passing && game.over.none && faction./(fix).exists(f => passedTo.has(f).not)) {
+            passTo(fix(faction.get), () => ask(faction, actions, then))
+            return
+        }
+
+        if (Speech.enabled)
+            sayCurrentActions(false)
+
+        showNotifications(faction.$)
+
         super.ask(faction, actions, then)
+    }
+
+    // Pass and play: in a local game with several human players, the action pane (hand, choices, notifications)
+    // is hidden behind a "Pass to <faction>" screen each time another of them is asked, until that player taps it
+    def passing = callbacks.hotseat && callbacks.settings.has(NoPassScreen).not
+
+    var passedTo : |[Player] = None
+
+    def passTo(f : Player, reveal : () => Unit) {
+        lastSelf = None
+        lastActions = $
+        lastThen = null
+
+        overlayPane.invis()
+        overlayPane.clear()
+
+        preasker.zask($)(resources)
+        asker.zask($(
+            ZOption(Div("Pass to " ~ factionElem(f))(xlo.fullwidth), Div("Only this player should look. Their hand and choices stay hidden until they tap below.", ZBasic.info)(xlo.fullwidth)),
+            ZBasic(Empty, "Show Hand and Choices".hlb, () => {
+                passedTo = |(f)
+                reveal()
+            })
+        ))(resources)
+        postasker.zask($)(resources)
+        hideSwitches()
     }
 
     override def updateHighlight(a : |[UserAction]) {

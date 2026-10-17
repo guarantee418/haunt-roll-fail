@@ -273,6 +273,8 @@ trait Callbacks {
     def reportBug() : Unit
     def canReturnToTitle : Boolean
     def returnToTitle() : Unit
+    // A local game (hotseat) with more than one human player on this device
+    def hotseat : Boolean
 }
 
 sealed trait Difficulty
@@ -1897,6 +1899,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     if (unsaved.not || dom.window.confirm("This game isn't saved and will be lost. Leave it for the main menu?"))
                         dom.document.location.assign("/play/" + meta.name)
                 }
+                def hotseat = (journal.is[MemoryJournal[_]] || journal.is[LocalStorageJournal[_]]) && seating.count(f => difficulties(f) == Human) > 1
                 def canReportBug = HRF.server.any && HRF.offline.not
                 def reportBug() = {
                     journal.read(0) { actions =>
