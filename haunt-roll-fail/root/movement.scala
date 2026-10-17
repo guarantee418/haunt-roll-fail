@@ -308,7 +308,7 @@ object MovementExpansion extends MandatoryExpansion {
 
             DrawCardsAction(b, 1, WithEffect(Ferry), AddCardsAction(b, then))
 
-        case MoveCompleteAction(self, f, from, to : Clearing, l, e, then) if hirelings.has(StreetBand) && e.has(StreetBand).not =>
+        case MoveCompleteAction(self, f, from, to : Clearing, l, e, then) if options.has(HirelingsByTheCard).not && hirelings.has(StreetBand) && e.has(StreetBand).not =>
             if (f == game.current)
                 if (f.has(StreetBand).not)
                     if (StreetBand.at(to).any)

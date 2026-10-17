@@ -828,6 +828,8 @@ trait GameImplicits {
     implicit def moleArtisiansState(f : MoleArtisians.type)(implicit game : Game) = game.states(f).as[MoleArtisiansState].get
     implicit def forestPatrolState(f : ForestPatrol.type)(implicit game : Game) = game.states(f).as[ForestPatrolState].get
     implicit def theExiteState(f : TheExile.type)(implicit game : Game) = game.states(f).as[TheExileState].get
+    implicit def frogTinkersState(f : FrogTinkers.type)(implicit game : Game) = game.states(f).as[FrogTinkersState].get
+    implicit def strugglingFarmersState(f : StrugglingFarmers.type)(implicit game : Game) = game.states(f).as[StrugglingFarmersState].get
 
     implicit def factionState(f : Faction)(implicit game : Game) = game.states(f)
 
@@ -949,7 +951,9 @@ trait GameImplicits {
 
         def canMoveFrom(o : Region) = o @@ {
             case o : Clearing if factions.but(f).of[Mischief].%!(f.friends).%(e => e.at(o).has(Snare) && e.hidden.has(o).not).any => false
-            case o : Clearing if hirelings.has(StreetBand) && f.has(StreetBand).not && StreetBand.enchanted.has(o) => false
+            // the Bands: enemies can't move out of a clearing with a Band warrior on the turn they moved into it
+            case o : Clearing if options.has(HirelingsByTheCard) && game.movedInto.has((f, o)) && $[Hireling](StreetBand, PopularBand).%(hirelings.has).exists(b => b.friends(f).not && b.at(o).of[Warrior].any) => false
+            case o : Clearing if options.has(HirelingsByTheCard).not && hirelings.has(StreetBand) && f.has(StreetBand).not && StreetBand.enchanted.has(o) => false
             case _ => true
         }
 
@@ -971,10 +975,8 @@ trait GameImplicits {
             if (f.is[LegalAAA] && (f.at(c).has(AssemblyAAA) || f.at(c).has(ConvenedAAA)))
                 return false
 
-            /*
             if (e == FuriousProtector)
                 return false
-            */
 
             if (f.friends(e))
                 return false
@@ -1051,6 +1053,9 @@ trait GameImplicits {
             if (e == RiverfolkFlotilla)
                 return false
 
+            if (e == FuriousProtector)
+                return false
+
             if (e == StoicProtector)
                 return false
 
@@ -1096,12 +1101,17 @@ trait GameImplicits {
 
                 if (Council.governs(f, c))
                     return CouncilGovernors.of(TC)
+
+                if (game.hirelings.has(FuriousProtector) && f != FuriousProtector && FuriousProtector.friends(f).not && FuriousProtector.at(c).any)
+                    return FuriousProtector.elem
             }
 
             "No Reason"
         }
 
         def canPlace(c : Clearing) : Boolean =
+            // enemies can't place pieces in the Furious Protector's clearing
+            (game.hirelings.has(FuriousProtector) && f != FuriousProtector && FuriousProtector.friends(f).not && FuriousProtector.at(c).any).not &&
             game.scorched.has(c).not &&
             game.flooded.has(c).not &&
             factions.but(f).of[Feline].%(_.keep.has(c)).none &&
@@ -1717,6 +1727,12 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var hirelings : $[Hireling] = $
     var unhired : $[Hireling] = $
     var thresholds : $[Int] = $
+    // The Street and Popular Band: who moved into which clearing this turn (they can't move out of it past a Band warrior)
+    var movedInto : $[(Faction, Clearing)] = $
+    // Bat Messengers: the buildings and tokens its controller had on the map when last checked, to find new ones
+    var batSeen : $[(Piece, Region)] = $
+    var batOwner : |[Faction] = None
+    var batPlaced : $[Clearing] = $
 
     var corners : $[Clearing] = $
     var homelands : $[Clearing] = $

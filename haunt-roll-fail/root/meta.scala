@@ -337,6 +337,15 @@ case object CompanionsUntilSpent extends GameOption with ToggleOption {
     val valueOn = "Companions".hh ~ " discarded when its card is spent"
 }
 
+// Hirelings as their cards say (the TTS mod's cards, Law of Root appendix H): the Band blocks only those who moved into
+// its clearing that turn, the Forest Patrol saves one warrior of each removal, the Spring Uprising has 4 warriors and the
+// Warm Sun Prophets start in every ruin. Hidden and on by default for new games; older games keep the earlier rules so
+// their replays don't change.
+case object HirelingsByTheCard extends GameOption with ToggleOption {
+    val group = "Hirelings"
+    val valueOn = "Hirelings".hh ~ " as their cards say"
+}
+
 // Lizard Cult gardens of the Outcast suit pay for their clearing's suits (frog at enclaves, the Lost City's three,
 // double suited landmarks), not their printed suit (Homeland Lilypad Diaspora rules). Hidden and on by default for
 // new games; older games keep the printed suit so their replays don't change.
@@ -1186,7 +1195,10 @@ object Meta extends MetaGame {
 
     val minPlayers = 2
 
-    val hirelings = $(StreetBand, StoicProtector, BanditGangs, MoleArtisians, RatSmugglers, ForestPatrol, LastDynasty, SpringUprising, TheExile, RiverfolkFlotilla)
+    // demoted ones first, then staunch, each in the cards' order (Marauder, Riverfolk and Underworld packs, then Homeland)
+    val hirelings = $(
+        FelinePhysicians, BluebirdNobles, RabbitScouts, Brigand, LizardEnvoys, OtterDivers, MoleArtisians, RavenSentries, RatSmugglers, BadgerBodyguards, StoicProtector, BanditGangs, StreetBand, BatMessengers, FrogTinkers, StrugglingFarmers,
+        ForestPatrol, LastDynasty, SpringUprising, TheExile, WarmSunProphets, RiverfolkFlotilla, SunwardExpedition, CorvidSpies, FlameBearers, VaultKeepers, FuriousProtector, HighwayBandits, PopularBand, SunnyAdvocates, RiverRoamers, ProsperousFarmers)
 
     override def optionPages(n : Int, l : $[F]) : $[$[GameOption]] = $(
         hiddenOptions ++
@@ -1274,7 +1286,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1298,6 +1310,7 @@ object Meta extends MetaGame {
         FrogsCraftByClearing,
         LizardsCraftByClearing,
         CompanionsUntilSpent,
+        HirelingsByTheCard,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
@@ -1794,7 +1807,35 @@ object Meta extends MetaGame {
 
         ImageAsset("fmb-varmint"           ) ::
         ImageAsset("fmb-varmint-empty"     ) ::
+
+        ImageAsset("sad-advocate"          ) ::
+        ImageAsset("sad-advocate-empty"    ) ::
+
+        ImageAsset("rvr-roamer"            ) ::
+        ImageAsset("rvr-roamer-empty"      ) ::
+        ImageAsset("rvr-lilypad"           ) ::
+
+        ImageAsset("pfr-farmer"            ) ::
+        ImageAsset("pfr-farmer-empty"      ) ::
+        ImageAsset("pfr-farm"              ) ::
+        ImageAsset("sfr-farmer"            ) ::
+        ImageAsset("sfr-farmer-empty"      ) ::
+        ImageAsset("sfr-farm"              ) ::
+
+        // the hireling markers on the score track (4, 8, 12; the back once taken), cut from the TTS mod's textures
+        ImageAsset("hireling-tab-4"        ) ::
+        ImageAsset("hireling-tab-8"        ) ::
+        ImageAsset("hireling-tab-12"       ) ::
+        ImageAsset("hireling-tab-back"     ) ::
+        ImageAsset("hireling-marker-4"     ) ::
+        ImageAsset("hireling-marker-8"     ) ::
+        ImageAsset("hireling-marker-12"    ) ::
+        ImageAsset("hireling-marker-back"  ) ::
     $) ::
+    // the hireling cards, both sides (staunch on the front, demoted on the back), from the TTS mod "Root - Ultimate Collection"
+    ConditionalAssetsList((factions, options) => true, "faction/hireling/card", "hireling-card:", lzy = Laziness.OnDemand)(
+        Meta.hirelings./(h => ImageAsset(h.style + "-card"))
+    ) ::
     ConditionalAssetsList((factions, options) => options.has(AutumnMap), "autumn", "autumn:")(
         ImageAsset("map"          ,    "map-bright-new-expand" ) ::
         ImageAsset("map-regions"  ).makeLossless ::

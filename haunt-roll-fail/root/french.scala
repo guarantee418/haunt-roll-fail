@@ -797,6 +797,15 @@ object French {
         "Only this player should look. Their hand and choices stay hidden until they tap below." -> "Seul ce joueur doit regarder. Sa main et ses choix restent cachés jusqu'à ce qu'il touche ci-dessous.",
         "Show Hand and Choices" -> "Afficher la main et les choix",
         "Hirelings" -> "Nomades",
+        "All Hirelings" -> "Tous les nomades",
+        "In the supply" -> "Dans la réserve",
+        "Next hireling at " -> "Prochain nomade à ",
+        "All hirelings have been taken" -> "Tous les nomades ont été pris",
+        " (demoted)" -> " (déchu)",
+        " (staunch)" -> " (loyal)",
+        "Controlled by " -> "Contrôlé par ",
+        " control marker" -> " marqueur de contrôle",
+        " control markers" -> " marqueurs de contrôle",
 
         // more menus and setup
         "Play" -> "Jouer",
