@@ -721,7 +721,30 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         }
         catch {
             case e : Throwable =>
-                dom.console.error("Map drawing failed: " + e + "\n" + e.getStackTrace.take(20).mkString("\n"))
+                val lines = ("Map drawing failed: " + e) +: e.getStackTrace.take(12).$./(_.toString.replaceAll("https?://[^ ()]*/", ""))
+
+                dom.console.error(lines.mkString("\n"))
+
+                // and on the map itself, so a screenshot shows it
+                try {
+                    val canvas = map.node.querySelector("canvas").asInstanceOf[dom.html.Canvas]
+
+                    if (canvas != null) {
+                        val g = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+                        val size = (canvas.width / 45).max(10)
+                        val top = size * 2
+
+                        g.setTransform(1, 0, 0, 1, 0, 0)
+                        g.globalAlpha = 1.0
+                        g.fillStyle = "rgba(0, 0, 0, 0.75)"
+                        g.fillRect(0, top, canvas.width, size * 1.3 * (lines.num + 1))
+                        g.fillStyle = "#ffffff"
+                        g.font = size + "px monospace"
+                        g.textBaseline = "top"
+                        lines.indexed.foreach { (l, i) => g.fillText(l, size / 2, top + size / 2 + i * size * 1.3, canvas.width - size) }
+                    }
+                }
+                catch { case _ : Throwable => }
         }
     }
 

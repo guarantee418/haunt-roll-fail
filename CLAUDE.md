@@ -665,7 +665,9 @@ file covers the build, server and deploy. No session can ssh to the server
 - Root's `drawMap` (`root/ui.scala`) catches and logs any error (`Map drawing failed: ...`, which Report a Bug collects) and
   draws what it can: it is the last step of `updateStatus`, so an error there (seen only on iPhones, Ground and Might on the
   Marsh map, 2026-10-16) left the action pane and the menu empty, with no way to report it. The cause on iPhones isn't known
-  yet; the same error comes from a missing `map-regions` image (`image.width <= 0`).
+  yet; the same error comes from a missing `map-regions` image (`image.width <= 0`). The error and its stack are also written
+  across the top of the map, so a player's screenshot shows them; map the `hrf-opt.js` line:column positions to the
+  sources with that build's `hrf-opt.js.map` (the `source-map` package in `/opt/node-tools` works).
 - Bot games can be run headless on the JVM with `root/host.scala` (see
   `host.xsbt` for the source exclusions); it also checks that every action
   serializes and parses back.
