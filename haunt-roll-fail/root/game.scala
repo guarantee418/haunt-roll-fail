@@ -1510,6 +1510,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var frogsCraftByClearing = false
     var lizardsCraftByClearing = false
     var governorsStopEnclaveFlips = false
+    var outragePeekNeedsOk = false
     var companionsUntilSpent = false
     var ptf = Map[Player, Faction]()
 

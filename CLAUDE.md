@@ -595,7 +595,8 @@ file covers the build, server and deploy. No session can ssh to the server
 - Outrage with no card of the clearing's suit to give shows the hand to the Woodland Alliance in its action pane, and the
   game waits for its "Ok" (`PeekCardsAsk` and `PeekCardsSeenAction` in `root/cards.scala`; the playtest Pacifism the same).
   It was only a notification, and the game went on (Hayjay couldn't see the Lilypad Diaspora's hand on 2026-10-17). New games
-  get the hidden default option `OutragePeekNeedsOk`; older games keep the notification so their replays don't change.
+  get the hidden default option `OutragePeekNeedsOk`; older games keep the notification so their replays don't change, and a running game can be
+  switched over like the fixes above, with `OutragePeekNeedsOkAction(X)` (done for Hayjay's Ground and Might on 2026-10-17).
 - `craftableWith` in `root/game.scala` matches the leftover costs to assets (augmenting paths) instead of trying every
   order of the assets, which took factorial time with many assets that pay only some costs (Lizard gardens, the Lost City).
 - Knaves items are the Captains' items, not crafted items: the Vagabond
