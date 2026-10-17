@@ -375,6 +375,26 @@
             })();
         </script>
 
+        <script id="broken-images">
+            // Drawing an image that failed to load or decode throws (iPhones, 2026-10-17), which stopped the whole map:
+            // skip it and remember it (by the loader's data-url, as cached images have blob: addresses)
+            (function () {
+                const broken = window.hrfBrokenImages = [];
+                const draw = CanvasRenderingContext2D.prototype.drawImage;
+                CanvasRenderingContext2D.prototype.drawImage = function (img) {
+                    if (img instanceof HTMLImageElement && img.complete && img.naturalWidth === 0) {
+                        const name = (img.getAttribute("data-url") || img.src || "?").replace(/^.*\//, "");
+                        if (broken.indexOf(name) < 0) {
+                            broken.push(name);
+                            console.warn("Broken image not drawn: " + name);
+                        }
+                        return;
+                    }
+                    return draw.apply(this, arguments);
+                };
+            })();
+        </script>
+
         <!-- { | CACHE INVALIDATION | { -->
         <script id="cache-invalidation">
             const removeItemFromCache = async (name) => {

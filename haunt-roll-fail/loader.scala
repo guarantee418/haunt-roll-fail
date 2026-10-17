@@ -145,8 +145,10 @@ class BlobImageWrapper(url : String, private var blob : dom.Blob) extends ImageW
         if (loaded)
             return onLoad(img)
 
-        if (img == null)
+        if (img == null) {
             img = new njs.Image()
+            img.setAttribute("data-url", url)
+        }
 
         img.addEventListener("onerror", (e : dom.ErrorEvent) => {
             +++("blob to image failed " + url)
