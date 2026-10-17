@@ -353,12 +353,8 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
 
             negotiations(f, then)
 
-            val n = collector.list
-
-            if (n.any)
-                ask.group("Negotiations").add(n)
-            else
-                ask
+            // headed by the Lilypad faction, as the button already says Negotiations
+            collector.list.of[InvasiveEEENegotiateMainAction].groupBy(_.e).foldLeft(ask) { case (ask, (e, l)) => ask.group(e).add(l) }
 
         case _ => c
     }

@@ -125,7 +125,7 @@ case class CouncilPlaceLoyalistsAction(self : Council, c : Clearing, n : Int, th
 case class CouncilAssembleDoneAction(self : Council, d : DeckCard, c : Clearing) extends ForcedAction
 
 case class CouncilConveneMainAction(f : Council) extends ForcedAction with Soft
-case class CouncilConveneCardAction(self : Council, d : DeckCard) extends BaseAction("Convene Woodfolk", "return a card")(d.img) with ViewCard
+case class CouncilConveneCardAction(self : Council, d : DeckCard) extends BaseAction("Convene Woodfolk".styled(self), "return a card")(d.img) with ViewCard
 case class CouncilBanishAction(self : Council, c : Clearing, e : Faction) extends ForcedAction
 case class CouncilAgitateAction(self : Council, d : DeckCard, c : Clearing) extends ForcedAction
 case class CouncilEmpowerAction(self : Council, c : Clearing) extends ForcedAction

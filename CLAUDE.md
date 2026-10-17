@@ -562,7 +562,11 @@ file covers the build, server and deploy. No session can ssh to the server
   perform again. Not in menus about a card (`aboutCard`: the card may be the one given away), sub-menus with Cancel, or
   Hobson's choices. It depends only on the game state, so bots, move checks and replays agree (an earlier try that tracked
   soft choices in a `Game` field broke them); old games replay the same, as it only adds choices. `ReplayCheck <games> ldtc`
-  plays Lilypad with the Council.
+  plays Lilypad with the Council. Those menus head it with the Lilypad faction's name, as the button already says
+  Negotiations (MaKoBwoY saw "Négociations" twice). The Council's "Convene Woodfolk" is in the Council's colour.
+- Frog suit text (clearing names in menus and the log, and the two-suit gradients, `Frog` and `FoxFrog` ... in
+  `root/styles.scala`) is the green of the Homeland frog cards and the frog decree icons, `#7b9f3c` (owner, 2026-10-17); the
+  Lilypad and Lizard faction colours stay teal.
 - Lilypad Diaspora crafts by clearing (asked for by the owner on 2026-10-13): when more than one set of its enclaves could
   pay for a card, it picks the clearings (`InvasiveEEECraftSelectAction`), and the enclaves used stay used for the turn
   (`craftedIn` in `InvasiveEEEPlayer`) until removed (`ForcedRemoveTargetEffectAction`), so losing an unused enclave

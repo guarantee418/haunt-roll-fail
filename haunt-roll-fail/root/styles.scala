@@ -155,14 +155,15 @@ package object elem {
         Rabbit --> color("#f4e74f")
         Mouse --> color("#f68b56")
         Bird --> color("#6ac0ba")
-        Frog --> color("#3c7174")
+        // the green of the Homeland frog cards and of the frog decree icons (asked for by the owner on 2026-10-17)
+        Frog --> color("#7b9f3c")
 
-        object FoxFrog extends CustomStyle(background("linear-gradient(to bottom, #e53e36 0%, #e53e36 50%, #3c7174 70%, #3c7174 100%)"), background.clip("text"), color("transparent"))
-        object RabbitFrog extends CustomStyle(background("linear-gradient(to bottom, #f4e74f 0%, #f4e74f 50%, #3c7174 70%, #3c7174 100%)"), background.clip("text"), color("transparent"))
-        object MouseFrog extends CustomStyle(background("linear-gradient(to bottom, #f68b56 0%, #f68b56 50%, #3c7174 70%, #3c7174 100%)"), background.clip("text"), color("transparent"))
+        object FoxFrog extends CustomStyle(background("linear-gradient(to bottom, #e53e36 0%, #e53e36 50%, #7b9f3c 70%, #7b9f3c 100%)"), background.clip("text"), color("transparent"))
+        object RabbitFrog extends CustomStyle(background("linear-gradient(to bottom, #f4e74f 0%, #f4e74f 50%, #7b9f3c 70%, #7b9f3c 100%)"), background.clip("text"), color("transparent"))
+        object MouseFrog extends CustomStyle(background("linear-gradient(to bottom, #f68b56 0%, #f68b56 50%, #7b9f3c 70%, #7b9f3c 100%)"), background.clip("text"), color("transparent"))
 
         object FoxRabbitMouse extends CustomStyle(background("linear-gradient(to bottom, #e53e36 0%, #e53e36 46%, #f4e74f 51%, #f4e74f 54%, #f68b56 74%, #f68b56 100%)"), background.clip("text"), color("transparent"))
-        object FoxRabbitMouseFrog extends CustomStyle(background("linear-gradient(to bottom, #e53e36 0%, #e53e36 30%, #f4e74f 40%, #f4e74f 40%, #f68b56 60%, #f68b56 60%, #3c7174 80%, #3c7174 100%)"), background.clip("text"), color("transparent"))
+        object FoxRabbitMouseFrog extends CustomStyle(background("linear-gradient(to bottom, #e53e36 0%, #e53e36 30%, #f4e74f 40%, #f4e74f 40%, #f68b56 60%, #f68b56 60%, #7b9f3c 80%, #7b9f3c 100%)"), background.clip("text"), color("transparent"))
 
         object gold extends CustomStyle(color("gold"))
 
