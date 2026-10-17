@@ -417,6 +417,15 @@ case class PeekCardsMainAction(self : Faction, s : Elem, m : Message, l : $[Deck
 
 case class ViewCardInfoAction(self : Player, s : Elem, d : Card) extends BaseInfo(s)(d.img) with ViewCard with OnClickInfo { def param = d }
 
+// The OK after looking at another faction's cards (PeekCardsAskAction), so the game waits until they were seen
+case class PeekCardsSeenAction(self : Faction, then : ForcedAction) extends BaseAction(None)("Ok")
+
+object PeekCardsAsk {
+    // Shows the cards to f in its action pane and waits for its OK
+    def apply(f : Faction, m : Message, l : $[DeckCard], then : ForcedAction)(implicit game : Game) : Continue =
+        Ask(f).each(l)(d => ViewCardInfoAction(f, m.elem(game), d)).add(PeekCardsSeenAction(f, then)).needOk
+}
+
 case class ShufflePileAction(shuffled : $[DeckCard], then : ForcedAction) extends ShuffledAction[DeckCard]
 
 case class DrawCardsAction(f : Faction, n : Int, m : Message, then : ForcedAction) extends ForcedAction
@@ -459,6 +468,9 @@ object CardsExpansion extends MandatoryExpansion {
         case PeekCardsMainAction(f, s, m, l, then) =>
             f.notify(l./(d => ViewCardInfoAction(f, m.elem(game), d)))
 
+            then
+
+        case PeekCardsSeenAction(f, then) =>
             then
 
         case DrawCardsAction(f, n, m, then) =>

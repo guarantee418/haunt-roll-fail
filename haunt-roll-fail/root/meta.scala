@@ -345,6 +345,14 @@ case object GovernorsStopEnclaveFlips extends GameOption with ToggleOption {
     val valueOn = "Governors".hh ~ " stop enclave flips"
 }
 
+// Outrage (and the playtest Pacifism) with no card to give: the hand is shown to the Alliance in its action pane, and the game
+// waits for its OK instead of going on with only a notification. Hidden and on by default for new games; older games keep the
+// notification so their replays don't change.
+case object OutragePeekNeedsOk extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Outrage".hh ~ " waits until the hand is seen"
+}
+
 // Hirelings as their cards say (the TTS mod's cards, Law of Root appendix H): the Band blocks only those who moved into
 // its clearing that turn, the Forest Patrol saves one warrior of each removal, the Spring Uprising has 4 warriors and the
 // Warm Sun Prophets start in every ruin. Hidden and on by default for new games; older games keep the earlier rules so
@@ -1294,7 +1302,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1320,6 +1328,7 @@ object Meta extends MetaGame {
         CompanionsUntilSpent,
         HirelingsByTheCard,
         GovernorsStopEnclaveFlips,
+        OutragePeekNeedsOk,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
