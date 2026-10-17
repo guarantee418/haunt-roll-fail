@@ -684,6 +684,8 @@ file covers the build, server and deploy. No session can ssh to the server
   after trees (Maple, Fir, Linden, Cedar, Mesquite, ...), the old names (Witchwood, Deadwood, Mirkwood, Acres Wild,
   Heart of Oak, Liar Wind, Nada Moonshine) stay, and `Board.forestLabel` places a name where `center` picks at random
   or would put it on water. Tidal, Tundra and Gloom draw none (their forests are still compass points).
+  Those maps no longer draw their `map-woods` overlay (shown only with a faction that uses forests, like the Vagabond or
+  the Knaves): it printed the old names, or the Gorge's compass letters, a second time (seen on 2026-10-17).
   Region ids must be unique across all boards (`Serialize.parseRegion`),
   so the Marsh river fork is Confluence, not Fork (Gorge has a Fork).
   Rules follow Law of Root M.5: with 1-4 players one clearing of each colored pair (`floodPairs`) is
