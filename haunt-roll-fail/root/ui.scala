@@ -602,10 +602,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         }
     }
 
-    // The Marsh forests' names (Alder, Willow, ...) at their centres, under the pieces (asked for by the owner on 2026-10-17):
-    // pale with a dark outline, to read on the woods
+    // The forests' names (Alder, Willow, ...) at their centres, under the pieces, on the Marsh (asked for by the owner on
+    // 2026-10-17) and the Autumn, Winter, Lake, Mountain and Gorge maps (the same day): pale with a dark outline, to read on the woods
     def drawForestNames(g : dom.CanvasRenderingContext2D) {
-        if (game.board != MarshBoard)
+        if ($[Board](AutumnBoard, WinterBoard, LakeBoard, MountainBoard, GorgeBoard, MarshBoard).has(game.board).not)
             return
 
         g.save()
@@ -620,7 +620,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         game.board.forests.foreach { f =>
             f.label.foreach { name =>
-                val (x, y) = game.board.center(f)
+                val (x, y) = game.board.forestLabel(f)
                 g.strokeText(name, x, y)
                 g.fillText(name, x, y)
             }
