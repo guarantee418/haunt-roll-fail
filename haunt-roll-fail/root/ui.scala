@@ -5369,6 +5369,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     override val allSwitches = $(
         UseAutoAssignHits,
+        AutoSkipAmbushIfNone,
         SkipAmbushSuit(Fox),
         SkipAmbushSuit(Rabbit),
         SkipAmbushSuit(Mouse),
@@ -5397,10 +5398,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         }) ++
         fix(f).as[Faction]./~(f => allSwitches.%{
             case PickFactionIfAvailable(s) => false
-            case _ if callbacks.settings.has(NoOutOfTurn) => false
             case _ if game.states.contains(f).not => false
-            case UseAutoAssignHits if f.is[Hero] && f.contracts.none => false
-            case UseAutoAssignHits => f.presence.any || f.contracts.distinct.exists(_.presence.any)
+            case AutoSkipAmbushIfNone => true
+            case UseAutoAssignHits => true
+            case _ if callbacks.settings.has(NoOutOfTurn) => false
             case SkipAmbushSuit(_) if f.hand.none => false
             case SkipAmbushSuit(s) if callbacks.settings.has(BasicOutOfTurn) && (f.hand.has(Ambush(Bird)) || f.hand.has(Ambush(s))) => false
             case SkipAmbushSuit(s) if f.is[Hero] => f.as[Hero]./~(_.region.as[Clearing]).?(_.cost.matched(s))
@@ -5498,6 +5499,22 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         val test = hrf.HRF.flag("async-test")
 
+        // The two in-game switches every player sees act at once: any client that is open takes the only choice
+        if (actions.has(HiddenAmbush) && choice.num == 1 && isEnabled(f, AutoSkipAmbushIfNone)) {
+            if (test) alog("auto skip ambush if none".hl, 0, _ => {})
+
+            return Some(choice(0))
+        }
+
+        if (actions.has(HiddenAssignHits) && isEnabled(f, UseAutoAssignHits)) {
+            if (test) alog("auto assign hits".hl, 0, _ => {})
+
+            val variants = HitsVariants.distinct(expand.of[XXObjectsSelectedAction[Figure]])
+
+            if (variants.num == 1)
+                return Some(variants(0))
+        }
+
         val r = random() / test.?(8).|(1)
 
         if (r < 0.02)
@@ -5505,14 +5522,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 if (test) alog("auto skip ambush".hl, 0, _ => {})
 
                 return Some(choice.last)
-            }
-
-        if (r < 0.40)
-            if (actions.has(HiddenAssignHits) && isEnabled(f, UseAutoAssignHits)) {
-                if (test) alog("auto assign hits?".hl, 0, _ => {})
-
-                if (HitsVariants.distinct(expand.of[XXObjectsSelectedAction[Figure]]).num == 1)
-                    return Some(expand(0))
             }
 
         if (r < 0.08)
@@ -5576,12 +5585,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case a => Some(a)
         }
 
-        if (actions.has(HiddenAmbush) && choice.num == 1 && (callbacks.settings.has(AutoAmbush))) {
+        // The in-game switches (a player's choice for this game, honoured on every device) count as well as the settings
+        lazy val asked = faction./(fix)./~(_.as[Faction])
+
+        if (actions.has(HiddenAmbush) && choice.num == 1 && (callbacks.settings.has(AutoAmbush) || asked.exists(isEnabled(_, AutoSkipAmbushIfNone)))) {
             scalajs.js.timers.setTimeout(0) { then(choice(0)) }
             return
         }
 
-        if (actions.has(HiddenAssignHits) && callbacks.settings.has(AutoAssignHits)) {
+        if (actions.has(HiddenAssignHits) && (callbacks.settings.has(AutoAssignHits) || asked.exists(isEnabled(_, UseAutoAssignHits)))) {
             val variants = HitsVariants.distinct(expand.of[XXObjectsSelectedAction[Figure]])
 
             if (variants.num == 1) {
