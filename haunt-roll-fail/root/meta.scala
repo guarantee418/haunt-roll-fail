@@ -1111,6 +1111,11 @@ case object UseAutoAssignHits extends Switch {
     val valueOn = "Auto " ~ "Assign Hits".hl ~ " in " ~ "Battle".hl ~ " (If No Choice)"
 }
 
+// Shown in every game (whatever the Out of Turn Actions setting), so a player away from the game doesn't hold up battles
+case object AutoSkipAmbushIfNone extends Switch {
+    val valueOn = "Auto Skip " ~ "Ambush".hl ~ " (If None)"
+}
+
 case class SkipAmbushSuit(suit : BaseSuit) extends Switch {
     val valueOn = "Skip " ~ "Ambush".hl ~ " in " ~ suit.elem
 }

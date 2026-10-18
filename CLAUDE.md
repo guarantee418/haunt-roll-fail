@@ -627,6 +627,12 @@ file covers the build, server and deploy. No session can ssh to the server
   `HitsVariants.distinct` (`root/game.scala`): how many of each piece of each faction are removed. The hits prompt
   picks figures in order, and the old check counted buildings picked in another order as another choice, so
   losing, say, both a sawmill and a workshop still asked (reported 2026-10-16).
+- Those two settings act only on the asked player's own device while the game is open, so an absent player held up every
+  battle (Gman, 2026-10-18). Each player's in-game switches under the action pane while waiting, "Auto Assign Hits in
+  Battle (If No Choice)" (`UseAutoAssignHits`) and "Auto Skip Ambush (If None)" (`AutoSkipAmbushIfNone`, `root/meta.scala`),
+  are stored with the game (`callbacks.switches`) and shown whatever the Out of Turn Actions setting; any open client takes
+  the only choice for that player (`shadowCheck` in `root/ui.scala`). New Adset games also start with
+  `AutoHitsAssignmentMode`, as Root's do.
 - Root pass and play (asked for by the owner on 2026-10-17): in a local game with more than one human faction
   (`Callbacks.hotseat` in `hrf.scala`: a memory or localStorage journal), each time another human faction is asked
   the action pane shows "Pass to <faction>" and a "Show Hand and Choices" button instead of its hand and choices
