@@ -480,11 +480,12 @@ object CouncilExpansion extends FactionExpansion[Council] {
 
             val g = "Convene Woodfolk".styled(f) ~ " with " ~ d.elem
 
-            if (d.suit == Bird) {
+            val ask = if (d.suit == Bird) {
                 val l = f.assemblies
 
                 Ask(f).group(g)
                     .each(l)(c => CouncilEmpowerAction(f, c).as("Empower".styled(f), "in", c).!(f.at(c).of[Warrior].none, "no warriors"))
+                    .add(l.none.??($(Info("No assemblies"))))
                     .skip(CouncilConveneMainAction(f))
             }
             else {
@@ -493,8 +494,13 @@ object CouncilExpansion extends FactionExpansion[Council] {
                 Ask(f).group(g)
                     .some(l)(c => f.enemies.%(_.present(c)).%(f.canAttack(c)).%(_.is[Hero].not)./(e => CouncilBanishAction(f, c, e).as("Banish".styled(f), e, "in", c)))
                     .each(l)(c => CouncilAgitateAction(f, d, c).as("Agitate".styled(f), "in", c, "(spend card)"))
+                    .add(l.none.??($(Info("No assembly in a", d.suit, "clearing"))))
                     .skip(CouncilConveneMainAction(f))
             }
+
+            // With nothing to do but skip, the menu used to be skipped by itself, so the card went back to hand
+            // without a word (Jfthex, 2026-10-18); wait for the skip, which is soft, so no recorded moves change
+            ask.needOkIf(ask.choice.not)
 
         case CouncilBanishAction(f, c, e) =>
             f.used :+= Banishing
