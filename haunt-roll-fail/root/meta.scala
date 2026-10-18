@@ -353,6 +353,14 @@ case object OutragePeekNeedsOk extends GameOption with ToggleOption {
     val valueOn = "Outrage".hh ~ " waits until the hand is seen"
 }
 
+// Mice-in-a-Bush counts as an ambush card, so the attacker can cancel it with a counter-ambush, as the Root rules channel
+// confirmed (2026-10-18). Hidden and on by default for new games; older games deal its hit straight away so their replays
+// don't change.
+case object CounterMiceInABush extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Mice-in-a-Bush".hh ~ " can be counter-ambushed"
+}
+
 // Hirelings as their cards say (the TTS mod's cards, Law of Root appendix H): the Band blocks only those who moved into
 // its clearing that turn, the Forest Patrol saves one warrior of each removal, the Spring Uprising has 4 warriors and the
 // Warm Sun Prophets start in every ruin. Hidden and on by default for new games; older games keep the earlier rules so
@@ -1307,7 +1315,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1334,6 +1342,7 @@ object Meta extends MetaGame {
         HirelingsByTheCard,
         GovernorsStopEnclaveFlips,
         OutragePeekNeedsOk,
+        CounterMiceInABush,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)

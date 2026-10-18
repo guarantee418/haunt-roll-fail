@@ -80,6 +80,7 @@ object MetaAdset extends MetaGame {
         HirelingsByTheCard,
         GovernorsStopEnclaveFlips,
         OutragePeekNeedsOk,
+        CounterMiceInABush,
         FolkHeroCharacter,
         RandomCharacter,
         MapDefaultLandmarks,
