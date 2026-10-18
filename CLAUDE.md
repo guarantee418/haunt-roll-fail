@@ -604,7 +604,7 @@ file covers the build, server and deploy. No session can ssh to the server
   get the hidden default option `OutragePeekNeedsOk`; older games keep the notification so their replays don't change, and a running game can be
   switched over like the fixes above, with `OutragePeekNeedsOkAction(X)` (done for Hayjay's Ground and Might on 2026-10-17).
 - Mice-in-a-Bush counts as an ambush card, so the attacker is offered a counter-ambush against it before its hit
-  (`askCounterAmbush` in `root/battle.scala`, the same menu as against an ambush card, with 1 hit instead of 2); it dealt
+  (`askCounterAmbush` in `root/battle.scala`, the same menu as against an ambush card, with 1 hit instead of 2, and no other ambush follows it, as it is the defender's ambush); it dealt
   its hit straight away until Gman's Ground and Might on 2026-10-18 (the Root rules channel confirmed it can be countered).
   New games get the hidden default option `CounterMiceInABush`; older games keep the old way so their replays don't change,
   and a running game can be switched over like the fixes above, with `CounterMiceInABushAction(X)`.
