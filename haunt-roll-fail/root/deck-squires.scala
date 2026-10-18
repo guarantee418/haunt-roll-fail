@@ -196,6 +196,9 @@ case class LookoutsAction(self : WarriorFaction, b : Battle, then : ForcedAction
 case class MiceInABushAction(self : Faction, b : Battle, then : ForcedAction) extends ForcedAction
 case class TheFaithfulAction(self : Faction, c : Clearing, then : ForcedAction) extends BaseAction(self, "in battle")("Deal an extra", 1.hit, "with", TheFaithful)
 case class TheFaithfulRevealAction(self : Faction, c : Clearing, then : ForcedAction) extends ForcedAction
+// A one-time fix for games started before CounterMiceInABush, added to a live game's log by hand: from here the attacker
+// can counter-ambush Mice-in-a-Bush (game.counterMiceInABush), then goes on with then
+case class CounterMiceInABushAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class StandardBearerCheckAction(self : Faction, c : Clearing, then : ForcedAction) extends ForcedAction
 
 case class BrazenDemagogueMainAction(self : Faction, then : ForcedAction) extends ForcedAction
@@ -643,6 +646,11 @@ object SquiresDeckExpansion extends Expansion {
                 .each(payments(f, Lookouts, PayReturn, c.cost))(p => SquiresPayAction(f, p, then).as(paymentElem(p)))
 
         // MICE IN A BUSH
+        case CounterMiceInABushAction(then) =>
+            game.counterMiceInABush = true
+
+            then
+
         case BattleAskAmbushAction(b, then) if b.defender.can(MiceInABush) && b.attacker.has(ScoutingParty).not && b.defender.canRemove(b.clearing)(b.attacker) =>
             val f = b.defender
 
@@ -656,7 +664,10 @@ object SquiresDeckExpansion extends Expansion {
 
             f.log("ambushed with", MiceInABush, "dealing", 1.hit)
 
-            BattleAmbushHitsAction(b, 1, BattleAskAmbushAction(b, then))
+            if (options.has(CounterMiceInABush) || game.counterMiceInABush)
+                BattleExpansion.askCounterAmbush(b, 1, BattleAskAmbushAction(b, then))
+            else
+                BattleAmbushHitsAction(b, 1, BattleAskAmbushAction(b, then))
 
         // BOLD LEADERSHIP
         case BattleBonusAction(b, f, o, fs, os, fr, or, fh, oh, fe, oe) if f == b.attacker && f.can(BoldLeadership) && f.canRemove(b.clearing)(o) =>

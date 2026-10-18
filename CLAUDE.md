@@ -603,6 +603,12 @@ file covers the build, server and deploy. No session can ssh to the server
   It was only a notification, and the game went on (Hayjay couldn't see the Lilypad Diaspora's hand on 2026-10-17). New games
   get the hidden default option `OutragePeekNeedsOk`; older games keep the notification so their replays don't change, and a running game can be
   switched over like the fixes above, with `OutragePeekNeedsOkAction(X)` (done for Hayjay's Ground and Might on 2026-10-17).
+- Mice-in-a-Bush counts as an ambush card, so the attacker is offered a counter-ambush against it before its hit
+  (`askCounterAmbush` in `root/battle.scala`, the same menu as against an ambush card, with 1 hit instead of 2); it dealt
+  its hit straight away until Gman's Ground and Might on 2026-10-18 (the Root rules channel confirmed it can be countered).
+  New games get the hidden default option `CounterMiceInABush`; older games keep the old way so their replays don't change,
+  and a running game can be switched over like the fixes above, with `CounterMiceInABushAction(X)`.
+  `ReplayCheck <games> base squires` plays with the Squires and Disciples deck.
 - `craftableWith` in `root/game.scala` matches the leftover costs to assets (augmenting paths) instead of trying every
   order of the assets, which took factorial time with many assets that pay only some costs (Lizard gardens, the Lost City).
 - Knaves items are the Captains' items, not crafted items: the Vagabond

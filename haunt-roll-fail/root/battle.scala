@@ -140,6 +140,68 @@ object BattleExpansion extends MandatoryExpansion {
         case _ => false
     }
 
+    // The attacker's chance to cancel an ambush that deals n hits: a counter-ambush goes on with then, no counter deals the hits
+    // first (an ambush card deals 2, Mice-in-a-Bush 1)
+    def askCounterAmbush(b : Battle, n : Int, then : ForcedAction)(implicit game : Game) = {
+        def canAmbush(d : DeckCard) = canAmbushWith(b.attacker, b.clearing, b.defender)(d)
+
+        val pass = BattleAmbushHitsAction(b, n, then)
+        val skip = Ask(b.attacker).add(pass.as("No " ~ "Ambush".hl))
+
+        val ask =
+        if (b.attacker.hand.none)
+            skip
+        else
+        if (b.attacker.is[Trader] && b.attacker.hand.%(canAmbush).none)
+            skip
+        else
+        if ((game.playingDeck ++ factions.of[InvasiveEEE].any.??(Deck.frogEEE)).%(canAmbush)
+            .diff(game.pile.$)
+            .diff(factions.of[Aviary]./~(f => Decree.all./~(d => f.decree(d).$).but(LoyalVizier)))
+            .diff(factions.of[Expedition]./~(f => Retinue.all./~(r => f.retinue(r).$).but(FaithfulRetainer)))
+            .diff(factions.of[Fanatic]./~(_.lost.$))
+            .diff(factions.of[Fanatic]./~(_.revealed.$))
+            .diff(factions.of[Underground]./~(_.revealed.$))
+            .diff(factions.but(b.attacker).of[Trader]./~(_.hand.$))
+            .none
+        ) {
+            // log("...deduced no ambush...")
+            skip
+        }
+        else
+        if (options.has(AutoAmbushSkippingMode) && b.attacker.hand.%(canAmbush).none)
+            skip
+        else {
+            val f = b.attacker
+            val z = f.hand.any
+            val q = f.hand.%(d => d == Ambush(Bird) || b.clearing.suits.exists(s => d == Ambush(s)) || SquiresDeckExpansion.friendAmbush(f, b.clearing)(d))
+            val h = f.hand./(d => BattleCounterAmbushAction(f, b, d, q.any, q.contains(d), then).!(q.contains(d).not))
+
+            if (q.any)
+                Ask(f)
+                    .add(h)
+                    .add(pass.as("Skip " ~ "Counter-Ambush".hl))
+                    .add(NoHand)
+                    .add(HiddenAmbush)
+                    .add(HiddenClearing(b.clearing))
+            else
+                Ask(f)
+                    .add(pass.as("No " ~ "Counter-Ambush".hl))
+                    .add(h)
+                    .add(NoHand)
+                    .add(HiddenAmbush)
+                    .add(HiddenClearing(b.clearing))
+                    .needOk
+        }
+
+        if (options.has(BrutalHonesty) && b.attacker.is[Mischief] && (b.attacker.at(b.clearing).has(Bomb) || b.attacker.at(b.clearing).has(HiddenPlot))) {
+            val f = b.attacker.as[Mischief].get
+            ask.prepend(BattleBombCounterAmbushAction(f, b, then).as("Counter-Ambush with", Bomb.of(f), Bomb.img(f))("Brutal Honesty".hl).!(f.at(b.clearing).has(Bomb).not && f.secret.get(b.clearing).has(Bomb).not)).needOk
+        }
+        else
+            ask
+    }
+
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         // BATTLE
         case BattleInitAction(self, f, m, from, extra, then) =>
@@ -397,63 +459,7 @@ object BattleExpansion extends MandatoryExpansion {
             BattleAskCounterAmbushAction(b, then)
 
         case BattleAskCounterAmbushAction(b, then) =>
-            def canAmbush(d : DeckCard) = canAmbushWith(b.attacker, b.clearing, b.defender)(d)
-
-            val pass = BattleAmbushHitsAction(b, 2, then)
-            val skip = Ask(b.attacker).add(pass.as("No " ~ "Ambush".hl))
-
-            val ask =
-            if (b.attacker.hand.none)
-                skip
-            else
-            if (b.attacker.is[Trader] && b.attacker.hand.%(canAmbush).none)
-                skip
-            else
-            if ((game.playingDeck ++ factions.of[InvasiveEEE].any.??(Deck.frogEEE)).%(canAmbush)
-                .diff(game.pile.$)
-                .diff(factions.of[Aviary]./~(f => Decree.all./~(d => f.decree(d).$).but(LoyalVizier)))
-                .diff(factions.of[Expedition]./~(f => Retinue.all./~(r => f.retinue(r).$).but(FaithfulRetainer)))
-                .diff(factions.of[Fanatic]./~(_.lost.$))
-                .diff(factions.of[Fanatic]./~(_.revealed.$))
-                .diff(factions.of[Underground]./~(_.revealed.$))
-                .diff(factions.but(b.attacker).of[Trader]./~(_.hand.$))
-                .none
-            ) {
-                // log("...deduced no ambush...")
-                skip
-            }
-            else
-            if (options.has(AutoAmbushSkippingMode) && b.attacker.hand.%(canAmbush).none)
-                skip
-            else {
-                val f = b.attacker
-                val z = f.hand.any
-                val q = f.hand.%(d => d == Ambush(Bird) || b.clearing.suits.exists(s => d == Ambush(s)) || SquiresDeckExpansion.friendAmbush(f, b.clearing)(d))
-                val h = f.hand./(d => BattleCounterAmbushAction(f, b, d, q.any, q.contains(d), then).!(q.contains(d).not))
-
-                if (q.any)
-                    Ask(f)
-                        .add(h)
-                        .add(pass.as("Skip " ~ "Counter-Ambush".hl))
-                        .add(NoHand)
-                        .add(HiddenAmbush)
-                        .add(HiddenClearing(b.clearing))
-                else
-                    Ask(f)
-                        .add(pass.as("No " ~ "Counter-Ambush".hl))
-                        .add(h)
-                        .add(NoHand)
-                        .add(HiddenAmbush)
-                        .add(HiddenClearing(b.clearing))
-                        .needOk
-            }
-
-            if (options.has(BrutalHonesty) && b.attacker.is[Mischief] && (b.attacker.at(b.clearing).has(Bomb) || b.attacker.at(b.clearing).has(HiddenPlot))) {
-                val f = b.attacker.as[Mischief].get
-                ask.prepend(BattleBombCounterAmbushAction(f, b, then).as("Counter-Ambush with", Bomb.of(f), Bomb.img(f))("Brutal Honesty".hl).!(f.at(b.clearing).has(Bomb).not && f.secret.get(b.clearing).has(Bomb).not)).needOk
-            }
-            else
-                ask
+            askCounterAmbush(b, 2, then)
 
         case BattleCounterAmbushAction(f, c, d, true, true, then) =>
             f.hand --> d --> discard.quiet
