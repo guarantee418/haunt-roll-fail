@@ -124,7 +124,7 @@ allows), or else the pane right under it (the map) does, and nothing else moves 
 Winter chart (`winterChart` in `nort/ui.scala`), except the lore (its icon or number), which opens the clan's Lore Tree (`LoreTree`, `loreTree`; Gman moved it there from the action pane on 2026-10-08). Each player can hide the
 tints and the colored borders under "Interface" (the Territory Color and
 Fame Borders settings in `nort/meta.scala`). The tints are the player colors themselves
-(`PlayerColor.hex`, the same colors as the names), at 50% opacity; picking "Custom" under Territory Color
+(`PlayerColor.hex`, the same colors as the names, except that yellow names and warchief names use the yellow units' brighter `#fbfb05`, `PlayerColor.ink`, asked for by the owner on 2026-10-18), at 50% opacity; picking "Custom" under Territory Color
 (`CustomTerritoryColor`) shows the "<Color> Territories" rows, where each player sets how
 opaque each color is, 0 to 100% in steps of 10 (default 50%) (`TerritoryOpacity`, a
 `CompactSetting`: its values are one row of small buttons in the settings screen,
