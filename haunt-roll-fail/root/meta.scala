@@ -1316,6 +1316,7 @@ object Meta extends MetaGame {
         MixedDeck,
         ErrataCoffinMakers,
         AutoHitsAssignmentMode,
+        AutoAmbushSkippingMode,
         FolkHeroCharacter,
         AdSetBuffOn,
         SetupTypeCorners,
