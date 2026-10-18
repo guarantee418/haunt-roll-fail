@@ -23,6 +23,7 @@ import scala.jdk.CollectionConverters._
 //                    fixes/<name>.before.tsv, and never changes or deletes the
 //                    files people commit, so git merges stay simple.
 //   fixes/applied.log the fixes seen so far (by hash), so none is tried twice
+//   bug-reports/<time>.md the reports sent with the in-game Report a Bug button
 //
 // Fields are separated by tabs; tabs, newlines and backslashes in them are escaped.
 // "restore" rebuilds a database from such a directory.
@@ -195,8 +196,24 @@ object Backup {
                 Files.list(d).iterator.asScala.toList.filter(p => Files.isRegularFile(p) && p.toString.endsWith(".tsv") && !p.toString.endsWith(".before.tsv")).sorted.foreach(fix)
         }
 
+        // The bug reports players sent with Report a Bug (saved in bug-reports/ whether or not they reached GitHub), so
+        // sessions without access to the server can read them; copied once each, never deleted
+        def reports() {
+            val from = Paths.get("bug-reports")
+            if (Files.isDirectory(from)) {
+                val to = dir.resolve("bug-reports")
+                Files.list(from).iterator.asScala.toList.filter(p => Files.isRegularFile(p) && p.toString.endsWith(".md")).foreach { p =>
+                    val target = to.resolve(p.getFileName.toString)
+                    if (!Files.exists(target)) {
+                        Files.createDirectories(to)
+                        write(target, read(p))
+                    }
+                }
+            }
+        }
+
         def tick() {
-            List[(String, () => Unit)]("fixes" -> (() => fixes()), "export" -> (() => export())).foreach { case (what, f) =>
+            List[(String, () => Unit)]("fixes" -> (() => fixes()), "export" -> (() => export()), "reports" -> (() => reports())).foreach { case (what, f) =>
                 try f()
                 catch {
                     case e : Exception => println("Backup " + what + " failed: " + e)

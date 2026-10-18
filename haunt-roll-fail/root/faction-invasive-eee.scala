@@ -357,7 +357,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
     def anytimeNegotiations(action : Action, c : Continue)(implicit game : Game) : Continue = (action, c) @@ {
         case (then : ForcedAction, ask @ Ask(f : Faction, l)) if then.isSoft && f == game.current && game.turn > 0 &&
             game.phase != Night && ask.available && l.exists(_.is[InvasiveEEENegotiateMainAction]).not && l.exists(_.is[Cancel]).not &&
-            (l.num == 1 && l.exists(_.is[WrapAction])).not && aboutCard(then).not =>
+            (l.num == 1 && l.exists(_.is[WrapAction])).not && aboutCard(then).not && unsaved(then).not =>
             implicit val collector = builder
 
             negotiations(f, then)
@@ -371,6 +371,15 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
     def aboutCard(x : Any) : Boolean = x @@ {
         case _ : DeckCard => true
         case p : Product => p.productIterator.exists(aboutCard)
+        case _ => false
+    }
+
+    // Holds menu buttons (the Knaves' move with a pending Nab carries a WrapAction), which a recorded move can't be
+    // written and read back with: the negotiation that returned to it couldn't be loaded (found 2026-10-18, ReplayCheck ldkd)
+    def unsaved(x : Any) : Boolean = x @@ {
+        case _ : WrapAction => true
+        case _ : DoAction => true
+        case p : Product => p.productIterator.exists(unsaved)
         case _ => false
     }
 

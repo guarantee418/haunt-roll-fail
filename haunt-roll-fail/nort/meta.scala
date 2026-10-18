@@ -393,7 +393,7 @@ object Meta extends MetaGame { mmm =>
     ) ::
     // The clan boards (clan power, warchief and power), shown below the Lore Tree; loaded when shown
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "expansion/board", "board-", "webp", lzy = Laziness.OnDemand)(
-        mmm.factions./(f => ImageAsset(f.style, Warchief.boardFile(f)))
+        mmm.clans./(f => ImageAsset(f.style, Warchief.boardFile(f)))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/unit", "unit-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "unit-" + c.id))
@@ -431,7 +431,7 @@ object Meta extends MetaGame { mmm =>
     ) ::
     // The Tutorial's lessons, opened in its practice game
     ConditionalAssetsList((factions : $[F], options : $[O]) => options.has(TutorialOption), "card", "card-aid-", "webp", lzy = Laziness.OnDemand)(
-        $(ImageAsset("phases"))
+        $(ImageAsset("phases", "aid-phases"))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/building", "building-", "webp")(
         Building.all./(b => ImageAsset(b.image.drop("building-".length)))

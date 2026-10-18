@@ -24,6 +24,10 @@ are written `\t`, `\n` and `\\`. Lines starting with `#` are headers.
 - `games/<id>.tsv`: one game. The first line is `# game <id> entries <n>`,
   then one line per entry: index (from 0), user id, text (the recorded
   action, as the client writes it)
+- `bug-reports/<time>.md`: the reports players sent with the in-game
+  "Report a Bug" button (summary, description, game, options, the last 300
+  moves, console errors), copied from the server's `bug-reports/` folder
+  whether or not they were also posted as GitHub issues
 
 The git history keeps every earlier version, so a game can be looked at as it
 was at any time.

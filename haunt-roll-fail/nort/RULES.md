@@ -24,8 +24,8 @@ draws a tile when no neutral territory is left.
 | Playing cards: Flash cards before/after the main card | done |
 | Card effects | done: every card in `cards.scala` has an effect (see Interpretations below for the choices made); only Scout Camp's redraw happens before the tile is shown |
 | Harvest trade (any 3 resources for 1) | done |
-| Winter costs and Unrest cards | done (counts units, which never change yet) |
-| End-of-game fame scoring | done (no territory fame yet; of the Achievements only Warlord scores) |
+| Winter costs and Unrest cards | done |
+| End-of-game fame scoring | done (fame tokens, cards, every Achievement, resources and Unrest) |
 | Map tiles, territories, borders, exploring | done: tile data in `tiles.scala`, territories and placement rules in `board.scala`, setup, Recruit, Move, Explore, Build, Feast and combat in `map.scala`. Tile images in `webp2/nort/images/tile/` (`tile-31` to `tile-33` and `start-5`: TTS scans aligned to the earlier photo crops) |
 | Card display (like Arcs): Development and Achievement cards in the `court` pane on top for everyone, your hand (and played cards) in the `hand` pane at the bottom; click or tap a card to see it full screen | done |
 | Player colors, chosen per clan on the setup screen (default blue, red, yellow, purple, green, orange by seat) | done; green starting cards are the blue images with the ribbon recoloured to the printed green; there are no orange ones, orange uses the yellow ones |
