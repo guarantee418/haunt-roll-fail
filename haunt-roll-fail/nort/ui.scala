@@ -229,7 +229,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         def foldKey = Meta.settingsKey + ".map-buttons-folded"
 
-        var folded : Boolean = try { hrf.web.Local.get(foldKey, "") == "yes" } catch { case _ : Throwable => false }
+        // Until a player folds or unfolds them, they start folded on a phone, where the seven buttons covered a third of the map's width
+        var folded : Boolean = try { hrf.web.Local.get(foldKey, "") match {
+            case "yes" => true
+            case "no" => false
+            case _ => min(dom.window.innerWidth, dom.window.innerHeight) < 600
+        } } catch { case _ : Throwable => false }
 
         var buttons : $[dom.html.Div] = $
 
@@ -316,7 +321,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         def toggleFold() {
             folded = folded.not
-            try { hrf.web.Local.set(foldKey, folded.?("yes").|("")) } catch { case _ : Throwable => }
+            try { hrf.web.Local.set(foldKey, folded.?("yes").|("no")) } catch { case _ : Throwable => }
             show()
         }
 
@@ -1420,7 +1425,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // New Blood: Kraken's High Tide tokens, Ox's Ancestral Equipment tokens
         val nb = f match {
             case Kraken => ("High Tide: ".txt ~ (2 - game.tides.num).hl ~ " in reserve").div
-            case Ox => OnClick(GearView, gearRow.div(styles.gearRow)(xlo.pointer))
+            // no line while Ox has no token ready or used ("Ancestral Equipment: none" sat under the panel's drag handle at the start)
+            case Ox if game.gearReady.any || game.gearUsed.any => OnClick(GearView, gearRow.div(styles.gearRow)(xlo.pointer))
             case Automa => ("Cards: ".txt ~ game.automaActions.num.hl ~ " to play, " ~ game.automaDeck.num.hl ~ " in its pile").div
             case _ => Empty
         }
@@ -1631,7 +1637,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     var refitTimer : Option[Int] = None
 
     dom.document.addEventListener("load", (e : dom.Event) => {
-        if (folded && e.target.isInstanceOf[dom.html.Image] && statusNames.exists(n => panes.get(n).exists(_.node.contains(e.target.asInstanceOf[dom.Node])))) {
+        if (foldBasePx > 0 && e.target.isInstanceOf[dom.html.Image] && statusNames.exists(n => panes.get(n).exists(_.node.contains(e.target.asInstanceOf[dom.Node])))) {
             refitTimer.foreach(dom.window.clearTimeout)
             refitTimer = Some(dom.window.setTimeout(() => { refitTimer = None; refitFolded() }, 50))
         }
@@ -1649,7 +1655,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     def refitFolded() {
-        if (folded && foldBasePx > 0 && refitting.not) {
+        // (foldBasePx is set only by the layouts that fit the panels: folded, or open in a row above the court)
+        if (foldBasePx > 0 && refitting.not) {
             val now = panelNeed(statusNames)
             val stale = now.isDefined && settle(foldNeed, now) != foldNeed
             if (stale || (paneBasePx() - foldBasePx).abs > 0.5) {
@@ -2161,9 +2168,19 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         }
     }
 
+    // The player panels, when they are in one row right above the court and as wide as it
+    def openPanels(l : $[PanePlacement], c : PanePlacement) : $[PanePlacement] =
+        l.filter(_.name.startsWith("status-")) match {
+            case pp if pp.any && pp.forall(p => p.rect.y == pp.head.rect.y && p.rect.height == pp.head.rect.height && p.rect.width == pp.head.rect.width) &&
+                (pp.head.rect.y + pp.head.rect.height - c.rect.y).abs <= 3 && pp./(_.rect.x).min >= c.rect.x - 3 &&
+                pp./(p => p.rect.x + p.rect.width).max <= c.rect.x + c.rect.width + 3 => pp
+            case _ => $
+        }
+
     def foldCourt0(height : Int, extra : Int = 0)(l : $[PanePlacement]) : $[PanePlacement] = l.find(_.name == "court") match {
         // Sideways and swapped: the court takes the whole row and the panels are left out (so hidden)
         case Some(c) if courtSideways && courtWide =>
+            foldBasePx = 0
             val r = c.rect
             val pp = l.filter(_.name.startsWith("status-"))
             val right = pp./(p => p.rect.x + p.rect.width).maxOption.|(r.x + r.width)
@@ -2175,6 +2192,34 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 case p if p.name == "court" => p.copy(rect = Rect(r.x, r.y, right - r.x, rowH))
                 case p if under(p) => p.copy(rect = Rect(p.rect.x, r.y + rowH, p.rect.width, p.rect.y + p.rect.height - r.y - rowH))
                 case p => p
+            }
+        // Open, with the player panels in a row right above it (a phone held upright, three players or more): panels whose
+        // contents don't fit (the stockpile row was cut and the harvest and winter rows hidden, seen 2026-10-18) take room from
+        // the court, up to half of it, and their font shrinks for what is still missing
+        case Some(c) if folded.not && courtSideways.not && openPanels(l, c).any =>
+            val r = c.rect
+            val panels = openPanels(l, c)
+            val basePx = paneBasePx()
+            foldBasePx = basePx
+            def px(p : PanePlacement) = p.fontSize./(f => basePx * f * 3612 / height / 100).|(basePx)
+            foldNeed = settle(foldNeed, panelNeed(statusNames))
+            foldNeed match {
+                case None => l
+                case Some((needW, needH)) =>
+                    val f0 = px(panels.head)
+                    val h0 = panels.head.rect.height
+                    val w = panels.head.rect.width
+                    val need = (f0 * (needH * 1.15 + 0.6)).ceil.toInt
+                    val grow = max(0, min(need - h0, r.height / 2))
+                    val k = min(1.0, min((h0 + grow) * 1.0 / need, w / (f0 * (needW * 1.1 + 0.6))))
+                    if (grow == 0 && k >= 1.0)
+                        l
+                    else
+                        l./{
+                            case p if p.name == "court" => p.copy(rect = Rect(r.x, r.y + grow, r.width, r.height - grow))
+                            case p if panels.contains(p) => p.copy(rect = Rect(p.rect.x, p.rect.y, p.rect.width, h0 + grow), fontSize = p.fontSize./(_ * k))
+                            case p => p
+                        }
             }
         case Some(c) if folded =>
             val r = c.rect
@@ -2266,7 +2311,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     case p => p
                 }
             }
-        case _ => l
+        case _ =>
+            foldBasePx = 0
+            l
     }
 
     // Ultrawide screens (21:9 and wider): the layouter stretches the player panels to the full height

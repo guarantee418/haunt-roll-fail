@@ -1269,9 +1269,10 @@ object CommonExpansion extends Expansion {
             if (version != gaming.version)
                 log("Saved game version", version.hlb)
 
-            // Colors and teams are told with each clan below ("plays Red in Team B"); chosen casualties and taking Unrest are the rule now, not told
+            // Colors and teams are told with each clan below ("plays Red in Team B"); the hidden options (rules every new game gets,
+            // the bots' options) are not told: a hand-kept list of them missed new ones ("Bots Boar Clan", seen 2026-10-18)
             // (Games from before the Warchiefs module section could have the module with Warchief pawns only: just the latter is told)
-            options.%(o => o.is[ColorOption].not && o.is[TeamOption].not && o != ChooseCasualties && o != TakeUnrestCard && o != ClanPowerReports && o != MendFigures && o != OxPicksSpace && o != JoinedTilesOnly).%(o => o != ModuleOption(Warchiefs) || options.has(WarchiefPawns).not).foreach { o =>
+            options.%(o => o.is[ColorOption].not && o.is[TeamOption].not && Meta.hiddenOptions.contains(o).not && MetaAdset.hiddenOptions.contains(o).not).%(o => o != ModuleOption(Warchiefs) || options.has(WarchiefPawns).not).foreach { o =>
                 log(o.group, o.valueOn)
             }
 

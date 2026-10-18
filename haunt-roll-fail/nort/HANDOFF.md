@@ -968,19 +968,15 @@ list. In short:
 
 1. **Check the Interpretations in `RULES.md` with the owner** (they have the
    rulebook) and adjust.
-2. **Board UI polish:** clicking anywhere in a territory; a preview of the
-   tile at the chosen spot while picking a rotation; showing the explore tile
-   on the map; a phone-size check; the very long separator lines in the log.
-3. **The Hard bot** (done 2026-10-05, expansion choices and Alternative
-   victory added 2026-10-06, see Bots below): the next step is play against
-   people, and tuning from what they find.
-4. **A replay check** (done 2026-10-06): `nort/replay-check.scala`, see How
-   to build and test. Run it after changing actions, especially anything
-   marked `Soft`.
-5. **Expansions**: Wilderness, Wastelands, New Blood, and Uncharted Horizons' Events,
-   Alternative victory and Sea modules, its Development cards and its map tiles are done; the rest of
-   Uncharted Horizons (Training Fields, the drafting setup) is next (the TTS mod
-   3597126237 has the Uncharted Horizons cards and its rulebook PDF).
+2. **Board UI polish:** clicking anywhere in a territory; the very long
+   separator lines in the log.
+3. **The Hard bot:** tune it from what people find playing against it (see Bots).
+4. **Uncharted Horizons:** Predator's Pride (2 years) still lacks its option to
+   move two creatures twice each (Interpretations in `RULES.md`).
+5. **Before each deploy**, run the replay check (`nort/replay-check.scala`)
+   after changing actions, especially anything marked `Soft`, and the live games
+   check (`live-check.scala`, see How to build and test), which loads every
+   online game with the new code.
 
 ## How to build and test (in a cloud session)
 
@@ -1009,6 +1005,13 @@ list. In short:
   cards start in every deck, so their effects get played (bots rarely have
   3 lore); run both ways. The summary lines list how often each card and
   power event happened.
+- **Live games check:** in the same JVM project, clone `guarantee418/hrf-games`
+  (`add_repo` it first) and run `sbt "runMain hrf.LiveCheck <its directory>"`.
+  It loads every online game (Northgard, Adset and Root) with the code as it
+  is now, the way a browser does, and prints `ok` or where each one stopped,
+  then `games: <n> bad: <n>`. Games last played before 2026-10-07 already
+  stopped loading (14 Northgard, 6 Root, as of 2026-10-18); a game that newly
+  fails means the change would break it, as #180 did on 2026-10-12.
 - **Replay check:** in the same JVM project, `sbt "runMain nort.ReplayCheck
   [games] [dense] [hard]"` (default 10 games) plays bot games with the host's
   random clans and options (`Host.batch`, so the `NORT_*` variables apply),
