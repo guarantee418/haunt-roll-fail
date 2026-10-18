@@ -664,8 +664,9 @@ object SquiresDeckExpansion extends Expansion {
 
             f.log("ambushed with", MiceInABush, "dealing", 1.hit)
 
+            // Mice-in-a-Bush is the defender's ambush card: the attacker may counter it, and either way no other ambush follows
             if (options.has(CounterMiceInABush) || game.counterMiceInABush)
-                BattleExpansion.askCounterAmbush(b, 1, BattleAskAmbushAction(b, then))
+                BattleExpansion.askCounterAmbush(b, 1, then)
             else
                 BattleAmbushHitsAction(b, 1, BattleAskAmbushAction(b, then))
 
