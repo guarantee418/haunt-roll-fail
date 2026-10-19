@@ -252,6 +252,16 @@ case object NoDefensiveStrategy extends GameOption with ToggleOption {
     val cards : $[Card] = $(Development("defensive-strategy"))
 }
 
+// One more Achievement card than there are players is revealed in the last year (Game: ShuffledAchievementsAction);
+// the one left over after everyone has passed is set aside
+case object ExtraAchievement extends GameOption with ToggleOption {
+    val group = "Development cards".txt
+    def valueOn = "One more Achievement card".txt
+    override val explain = $(
+        "Reveals one more " ~ "Achievement".hl ~ " card than there are players in the last year, so the last player to pass still has a choice. The card nobody takes is set aside.",
+    )
+}
+
 // Uncharted Horizons' 5 Early and 8 Advanced Development cards and 2 Achievement cards, shuffled into their decks
 // (Game: ShuffledEarlyAction, ShuffledAdvancedAction, ShuffledAchievementsAction; effects in horizon-devs.scala)
 case object HorizonsDevelopments extends GameOption with ToggleOption {

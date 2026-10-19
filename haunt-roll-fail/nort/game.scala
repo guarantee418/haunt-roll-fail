@@ -1295,7 +1295,7 @@ object CommonExpansion extends Expansion {
             Shuffle[Card](Cards.achievementCards ++ options.has(HorizonsDevelopments).??(Cards.horizonsAchievementCards), ShuffledAchievementsAction(_))
 
         case ShuffledAchievementsAction(l) =>
-            game.achievements = l.take(game.arity)
+            game.achievements = l.take(game.arity + options.has(ExtraAchievement).??(1))
 
             Then(ShuffleStartingDecksAction(factions))
 

@@ -184,7 +184,8 @@ picking the drawn clan by hand draws again). The setup options
 (colors, game length, victory conditions, first player, "Ban card draw developments"
 (`NoDrawDevelopments`: leaves the seven Development cards that only draw cards
 out of the decks), "Ban Defensive Strategy" (`NoDefensiveStrategy`, asked for by Gman on 2026-10-14;
-also offered in Adset), and the modules and
+also offered in Adset), "One more Achievement card" (`ExtraAchievement`: the last year reveals players + 1
+Achievements and the one left is set aside; asked for by Marzaus on 2026-10-19, also in Adset), and the modules and
 expansions; Creatures, Warchiefs, Wilderness, Wastelands and Events are implemented, the others are shown but disabled) are in `nort/options.scala`.
 "Victory conditions" picks one of: the standard rules, fame only, Alternative
 victory with random cards (the rulebook's way), or Alternative victory with
