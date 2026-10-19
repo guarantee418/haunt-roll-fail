@@ -163,8 +163,7 @@ object AdsetExpansion extends Expansion {
             game.pile = l
 
             game.seats.foreach { p =>
-                game.seatTiles += p -> game.pile.take(3)
-                game.pile = game.pile.drop(3)
+                game.seatTiles += p -> MapExpansion.dealStart()
             }
 
             log("Each player drew three map tiles")
@@ -344,7 +343,7 @@ object MetaAdset extends MetaGame {
 
     override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse)
 
-    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ WarchiefsChoice.all ++ $(NoDefensiveStrategy) ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ hiddenOptions
+    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ WarchiefsChoice.all ++ $(NoDefensiveStrategy, BalancedStartTiles) ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ hiddenOptions
 
     // With two players the second seat doesn't choose: an expansion is agreed on here, or none
     override def optionsFor(n : Int, l : $[F]) = options.%{

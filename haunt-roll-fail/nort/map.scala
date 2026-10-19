@@ -1010,6 +1010,33 @@ object MapExpansion extends Expansion {
         $((n, kaija, chief)) ++ (n > 0).$((n, false, false)) ++ (n > 1).$((1, false, false)) ++ kaija.$((0, true, false)) ++ chief.$((0, false, true))
     }.distinct
 
+    // The resources a set of tiles shows
+    def shown(tiles : $[String]) : $[Resource] = Resource.all.%(r => tiles./~(Tiles(_).areas).exists(a => r match {
+        case Food => a.food > 0
+        case Wood => a.wood > 0
+        case Lore => a.lore > 0
+    }))
+
+    // Three starting tiles from the top of the pile; with BalancedStartTiles, while they don't show food, wood and lore,
+    // the tile whose loss leaves the most of them goes to the bottom and the next one is drawn (at most once per tile in the pile)
+    def dealStart()(implicit game : Game) : $[String] = {
+        var hand = game.pile.take(3)
+        game.pile = game.pile.drop(3)
+
+        if (game.options.has(BalancedStartTiles)) {
+            var tries = game.pile.num
+
+            while (shown(hand).num < Resource.all.num && tries > 0) {
+                val t = hand.maxBy(t => shown(hand.diff($(t))).num)
+                hand = hand.diff($(t)) :+ game.pile.head
+                game.pile = game.pile.drop(1) :+ t
+                tries -= 1
+            }
+        }
+
+        hand
+    }
+
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         // SETUP
         case ShuffledTilesAction(l) =>
@@ -1032,8 +1059,7 @@ object MapExpansion extends Expansion {
                 Then(AdsetTurnAction(1, game.seats.reverse))
             else {
                 game.factions.foreach { f =>
-                    game.tileHand += f -> game.pile.take(3)
-                    game.pile = game.pile.drop(3)
+                    game.tileHand += f -> dealStart()
                 }
 
                 log("Each player drew three map tiles")
