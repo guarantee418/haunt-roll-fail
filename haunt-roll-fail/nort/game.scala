@@ -542,6 +542,9 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     val earlyPerPlayer = (lastYear - 1 + 2) / 3
     val advancedPerPlayer = lastYear - 1 - earlyPerPlayer
 
+    // Development cards revealed each year: one per player, or 3 in a two-player game with ThreeDevelopments
+    def devsPerYear = arity + (options.has(ThreeDevelopments) && arity == 2 && setup.has(Automa).not).??(1)
+
     // The Warchiefs box's extra clan upgrade cards
     val warchiefCards = has(Warchiefs) && options.has(WarchiefPawns).not || options.has(WarchiefCards)
 
@@ -1283,14 +1286,14 @@ object CommonExpansion extends Expansion {
             Shuffle[Card](Cards.earlyCards.diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)).diff(options.has(NoDefensiveStrategy).??(NoDefensiveStrategy.cards)) ++ options.has(HorizonsDevelopments).??(Cards.horizonsEarlyCards), ShuffledEarlyAction(_))
 
         case ShuffledEarlyAction(l) =>
-            game.developments = l.take(game.earlyPerPlayer * game.arity)
+            game.developments = l.take(game.earlyPerPlayer * game.devsPerYear)
 
             Shuffle[Card](Cards.advancedCards.diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)).diff(options.has(NoDefensiveStrategy).??(NoDefensiveStrategy.cards)) ++ options.has(HorizonsDevelopments).??(Cards.horizonsAdvancedCards), ShuffledAdvancedAction(_))
 
         case ShuffledAdvancedAction(l) =>
             // With six players in a long game there aren't enough Early cards: Advanced ones make up the difference
-            val short = game.earlyPerPlayer * game.arity - game.developments.num
-            game.developments ++= l.take(game.advancedPerPlayer * game.arity + short)
+            val short = game.earlyPerPlayer * game.devsPerYear - game.developments.num
+            game.developments ++= l.take(game.advancedPerPlayer * game.devsPerYear + short)
 
             Shuffle[Card](Cards.achievementCards ++ options.has(HorizonsDevelopments).??(Cards.horizonsAchievementCards), ShuffledAchievementsAction(_))
 
@@ -1507,8 +1510,8 @@ object CommonExpansion extends Expansion {
                 log("Achievement cards", game.display./(_.elem).join(", "), "are available")
             }
             else {
-                game.display = game.developments.take(factions.num)
-                game.developments = game.developments.drop(factions.num)
+                game.display = game.developments.take(game.devsPerYear)
+                game.developments = game.developments.drop(game.devsPerYear)
 
                 if (game.display.any)
                     log("Development cards", game.display./(_.elem).join(", "), "are available")

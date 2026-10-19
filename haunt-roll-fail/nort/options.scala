@@ -252,6 +252,16 @@ case object NoDefensiveStrategy extends GameOption with ToggleOption {
     val cards : $[Card] = $(Development("defensive-strategy"))
 }
 
+// Two-player games reveal 3 Development cards each year instead of 2; the one left after both pass is discarded
+// (Game.devsPerYear; offered only for two clans without the Automa, optionsFor in meta.scala and adset.scala)
+case object ThreeDevelopments extends GameOption with ToggleOption {
+    val group = "Development cards".txt
+    def valueOn = "Three Development cards in two-player games".txt
+    override val explain = $(
+        "Each year " ~ 3.hl ~ " Development cards are revealed instead of " ~ 2.hl ~ ", so the second player to pass still has a choice. The card left over is discarded.",
+    )
+}
+
 // Uncharted Horizons' 5 Early and 8 Advanced Development cards and 2 Achievement cards, shuffled into their decks
 // (Game: ShuffledEarlyAction, ShuffledAdvancedAction, ShuffledAchievementsAction; effects in horizon-devs.scala)
 case object HorizonsDevelopments extends GameOption with ToggleOption {

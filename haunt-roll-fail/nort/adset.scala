@@ -134,7 +134,7 @@ object AdsetExpansion extends Expansion {
             $(Info("Seats:", game.seats.zipWithIndex./{ case (p, i) => ((i + 1) + ". ").hl ~ seatElem(p).styled(color(p)) ~ game.ptf.get(p)./(c => " " ~ c.name.hlb).|(Empty) }.join(", "))) ++
             game.banned.any.$(Info("Banned:", game.banned./(_.name.hl).join(", "))) ++
             actions.exists(a => a.unwrap.is[AdsetBanAction] || a.unwrap.is[AdsetPickAction]).not.??(remaining./(c => AdsetClanInfoAction("Clans in the draft".hl, c))) ++
-            game.developments.take(game.arity)./(c => AdsetCardInfoAction("Developments, year 1".hl, c)) ++
+            game.developments.take(game.devsPerYear)./(c => AdsetCardInfoAction("Developments, year 1".hl, c)) ++
             game.achievements./(c => AdsetCardInfoAction("Achievements, year ".hl ~ game.lastYear.hlb, c)) ++
             player./~(game.seatTiles.get).|($)./(t => AdsetTileInfoAction("Your map tiles".hl, t))
         )
@@ -344,11 +344,12 @@ object MetaAdset extends MetaGame {
 
     override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse)
 
-    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ WarchiefsChoice.all ++ $(NoDefensiveStrategy) ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ hiddenOptions
+    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ WarchiefsChoice.all ++ $(NoDefensiveStrategy, ThreeDevelopments) ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ hiddenOptions
 
     // With two players the second seat doesn't choose: an expansion is agreed on here, or none
     override def optionsFor(n : Int, l : $[F]) = options.%{
         case LandsSeatChooses => n > 2
+        case ThreeDevelopments => n == 2
         case _ => true
     }
 
