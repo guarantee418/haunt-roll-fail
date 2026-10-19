@@ -159,6 +159,25 @@ object NewBloodExpansion extends Expansion {
 
     def sacrificeOptions(f : Faction)(implicit game : Game) : Boolean = game.pyre.any || (room > 0 && deployed(f).any)
 
+    // Dragon Clan's extra resource after harvesting: food or wood, from one of its territories (DragonExtraFromTerritory: only one that
+    // gave it at this harvest, less what Scorched Earth took there; scorched false leaves that out, for the harvest forecast)
+    def dragonExtra(f : Faction, scorched : Boolean = true)(implicit game : Game) : $[Resource] = {
+        val territories = game.controlled(f)
+
+        if (territories.none)
+            $
+        else if (game.options.has(DragonExtraFromTerritory).not)
+            $(Food, Wood)
+        else
+            $(Food, Wood).%{ r =>
+                territories.exists { t =>
+                    val (food, wood, _) = EventsExpansion.harvest(t)
+                    val took = (scorched && game.scorchedTook.has(f -> r) && game.scorchedIn(t)).??(1)
+                    (r == Food).?(food).|(wood) - took > 0
+                }
+            }
+    }
+
     // Kraken's High Tide tokens leave with the last Kraken figure
     def cleanup()(implicit game : Game) {
         if (game.tides.any)
@@ -554,7 +573,7 @@ object NewBloodExpansion extends Expansion {
         case AfterHarvestNBAction(f :: rest, then) =>
             val next = AfterHarvestNBAction(rest, then)
             val l =
-                if (f == Dragon) (game.dragonHarvest.has(true) && game.controlled(f).any).??($(Food, Wood))
+                if (f == Dragon) game.dragonHarvest.has(true).??(dragonExtra(f))
                 else Resource.all.take(2).%(r => f.has(r) > 0)
 
             if (l.none)

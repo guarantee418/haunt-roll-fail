@@ -965,8 +965,12 @@ Check these against the rulebook when it is at hand.
     from fights between players. Units on the Pyre are neither on the map
     nor in the reserve (Dragon starts with 13 in reserve). Without a
     sacrifice Dragon gets nothing at the Harvest (no fame, no resources); the
-    choice is made before the Harvest. The extra food or wood needs a
-    territory Dragon controls. A captured unit with the Pyre full just goes
+    choice is made before the Harvest. The extra food or wood comes "from one
+    of your territories": since 2026-10-19 (hidden `DragonExtraFromTerritory`,
+    every new game) only a resource one of them gave at this Harvest, less the
+    one Snake's Scorched Earth took there, so no wood without a territory that
+    gives wood (the Great Lakes' food doesn't count). Older games offer either
+    while Dragon controls a territory. A captured unit with the Pyre full just goes
     back to its owner's reserve. Svarn's Menders puts the attacker's casualties on
     the card during the combat, so they don't go on the Pyre.
   - Kraken: a High Tide token goes back as soon as Kraken has no figures in

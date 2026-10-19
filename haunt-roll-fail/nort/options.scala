@@ -342,6 +342,15 @@ case object SimultaneousCurse extends GameOption with ToggleOption {
     def valueOn = "Opponents discard at once".txt
 }
 
+// Dragon Clan's extra food or wood after harvesting comes "from one of your territories": only a resource one of them gave at
+// this harvest, less what Snake's Scorched Earth took from it (NewBloodExpansion.dragonExtra; reported on Discord on 2026-10-19,
+// food was collected from a food territory whose food Snake had taken). Hidden, and given to every new game (Meta.mandatoryFor):
+// older games could take either, and their replays must not lose a recorded choice
+case object DragonExtraFromTerritory extends GameOption with ToggleOption {
+    val group = "Dragon Clan".txt
+    def valueOn = "Extra resource from a territory".txt
+}
+
 // The clan power report (ClanPowers in map.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
 // (Meta.mandatoryFor), like ChooseCasualties: older games' replays must not stop on a step they never recorded
 case object ClanPowerReports extends GameOption with ToggleOption {
