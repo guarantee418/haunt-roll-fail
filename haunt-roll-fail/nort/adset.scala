@@ -163,8 +163,7 @@ object AdsetExpansion extends Expansion {
             game.pile = l
 
             game.seats.foreach { p =>
-                game.seatTiles += p -> game.pile.take(3)
-                game.pile = game.pile.drop(3)
+                game.seatTiles += p -> MapExpansion.dealStart()
             }
 
             log("Each player drew three map tiles")
@@ -340,11 +339,11 @@ object MetaAdset extends MetaGame {
     // The old combat report options do nothing now (the report is a setting); kept so the games that have them still load
     // Robotos (robotos.scala) comes from the bot chosen for a seat, as in Meta.botOptions
     // Chosen casualties, taking the Unrest card and the clan power report are on in every new game, as in Meta
-    override val hiddenOptions : $[O] = $(CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse) ++ RobotosSeatOption.all ++ BotSeatOption.all
+    override val hiddenOptions : $[O] = $(CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory) ++ RobotosSeatOption.all ++ BotSeatOption.all
 
-    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse)
+    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory)
 
-    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ WarchiefsChoice.all ++ $(NoDefensiveStrategy, ExtraDevelopment) ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ hiddenOptions
+    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ WarchiefsChoice.all ++ $(NoDefensiveStrategy, ExtraDevelopment, ExtraAchievement, BalancedStartTiles) ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ hiddenOptions
 
     // With two players the second seat doesn't choose: an expansion is agreed on here, or none
     override def optionsFor(n : Int, l : $[F]) = options.%{

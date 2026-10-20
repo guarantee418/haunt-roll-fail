@@ -662,6 +662,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var pyre : $[Faction] = $
     // Dragon Clan may harvest this year (it sacrificed or placed a unit on the Pyre); None until it has chosen
     var dragonHarvest : |[Boolean] = None
+    // What Snake's Scorched Earth took at this harvest, and from whom
+    var scorchedTook : |[(Faction, Resource)] = None
     // Kraken Clan's High Tide tokens (2 at most), each in a territory with Kraken figures
     var tides : $[AreaRef] = $
     // Ox Clan's Ancestral Equipment tokens: on the map (face up), the face-down pile, face up in the reserve, and used this year
@@ -1304,7 +1306,7 @@ object CommonExpansion extends Expansion {
             Shuffle[Card](Cards.achievementCards ++ game.horizonsDevelopments.??(Cards.horizonsAchievementCards), ShuffledAchievementsAction(_))
 
         case ShuffledAchievementsAction(l) =>
-            game.achievements = l.take(game.arity)
+            game.achievements = l.take(game.arity + options.has(ExtraAchievement).??(1))
 
             Then(ShuffleStartingDecksAction(factions))
 
@@ -1704,6 +1706,7 @@ object CommonExpansion extends Expansion {
             log("Harvest")
 
             val victim = take.any.??(game.scorched./(game.board.territory)./(game.present).|($).single)
+            game.scorchedTook = victim.flatMap(f => take.map(f -> _))
 
             // Dragon Clan harvests nothing without a sacrifice on its Pyre
             game.from(game.first).%(f => f != Dragon || game.dragonHarvest.has(false).not).foreach { f =>

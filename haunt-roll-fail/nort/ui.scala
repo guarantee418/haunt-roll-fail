@@ -1449,15 +1449,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val (winterFood, winterWood) = EventsExpansion.winterCost(f)
         // The columns: the icon, the stockpile, the harvest's gain and the Winter cost
         // Dragon Clan: 1 more food or wood for the sacrifice, shown as a range on both, its upper end faint as only one of them gets it
-        val pyre = f == Dragon && game.dragonHarvest.has(false).not && (game.dragonHarvest.any || NewBloodExpansion.sacrificeOptions(f)) && game.controlled(f).any
+        val pyre = (f == Dragon && game.dragonHarvest.has(false).not && (game.dragonHarvest.any || NewBloodExpansion.sacrificeOptions(f))).??(NewBloodExpansion.dragonExtra(f, false))
         // Tapping the lore (its icon or stockpile) opens the clan's Lore Tree
         case class Column(icon : Elem, has : Int, gain : Int, cost : Int, extra : Boolean = false, open : |[Any] = None, hidden : Boolean = false) {
             // Another player's fame is hidden (the fame tokens are kept face down), its harvest's fame isn't
             def stock : Elem = hidden.?("?".hl).|(has.hl)
         }
         val columns = $(
-            Column(Food.elem, state.has(Food), next.food, winterFood, pyre),
-            Column(Wood.elem, state.has(Wood), next.wood, winterWood, pyre),
+            Column(Food.elem, state.has(Food), next.food, winterFood, pyre.has(Food)),
+            Column(Wood.elem, state.has(Wood), next.wood, winterWood, pyre.has(Wood)),
             Column(Lore.elem, state.has(Lore), next.lore, 0, open = |(LoreTree(f))),
             Column(FameIcon(), state.fame, next.fame, 0, hidden = fameHidden(f)))
 

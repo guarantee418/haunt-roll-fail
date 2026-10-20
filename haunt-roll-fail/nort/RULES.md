@@ -37,6 +37,7 @@ draws a tile when no neutral territory is left.
 | "Ban card draw developments" house rule (not in the rulebook): leaves out Merchant, Market Place, Upgraded Market Place, Upgraded Trading Post, Greater Trade Routes, Trading Post and Cunning Merchant | done 2026-10-05 (`NoDrawDevelopments` in `options.scala`); Negociation, Spy, Ancestral Curse and Veiled Threats stay |
 | "Ban Defensive Strategy" house rule (not in the rulebook): leaves Defensive Strategy out of the Development cards | done 2026-10-14 (`NoDefensiveStrategy` in `options.scala`), in the main setup and in Adset |
 | "One extra Development card each year" house rule (not in the rulebook): one more Development card revealed each year than there are players, the one left over discarded | done 2026-10-20 (`ExtraDevelopment` in `options.scala`, `devsPerYear` in `game.scala`), in the main setup and in Adset, not against the Automa; the Uncharted Horizons Development cards are added when the core decks can't last every year (six players in a long game) |
+| "One more Achievement card" house rule (asked for by Marzaus on 2026-10-19, not in the rulebook): the last year reveals one Achievement card more than there are players, so the last to pass still chooses; the one left is set aside | done 2026-10-19 (`ExtraAchievement` in `options.scala`), in the main setup and in Adset |
 | "Fame" setup choice (not in the rulebook): Private fame (the rule, fame tokens face down; the default) or Public fame (every clan's fame shown in the panels) | done 2026-10-14 (`PrivateFame`, `PublicFame` in `options.scala`, `fameHidden` in `ui.scala`), in the main setup and in Adset |
 | The Warchiefs box's 7 extra clan upgrade cards | done 2026-10-03: with the module, or alone with "Warchief upgrade cards only" in the "Warchiefs module" section |
 | Wilderness expansion: Environment tiles and five more creatures, with the Ancestral Graveyard and the Wyvern's Den | done 2026-10-04 (`wilderness.scala`, see Wilderness below) |
@@ -966,13 +967,21 @@ Check these against the rulebook when it is at hand.
     from fights between players. Units on the Pyre are neither on the map
     nor in the reserve (Dragon starts with 13 in reserve). Without a
     sacrifice Dragon gets nothing at the Harvest (no fame, no resources); the
-    choice is made before the Harvest. The extra food or wood needs a
-    territory Dragon controls. A captured unit with the Pyre full just goes
+    choice is made before the Harvest. The extra food or wood comes "from one
+    of your territories": since 2026-10-19 (hidden `DragonExtraFromTerritory`,
+    every new game) only a resource one of them gave at this Harvest, less the
+    one Snake's Scorched Earth took there, so no wood without a territory that
+    gives wood (the Great Lakes' food doesn't count). Older games offer either
+    while Dragon controls a territory. A captured unit with the Pyre full just goes
     back to its owner's reserve. Svarn's Menders puts the attacker's casualties on
     the card during the combat, so they don't go on the Pyre.
   - Kraken: a High Tide token goes back as soon as Kraken has no figures in
     its territory. Its casualty applies to fights between players only. The
-    Kraken Clan card's food or wood doesn't depend on the territory's icons.
+    Kraken Clan card's food or wood must be one a territory Kraken controls
+    with a High Tide token gives at harvest (its icons and buildings; with
+    neither, only the draw is left), as the card says "from a territory"
+    (Marzaus, 2026-10-19; games started before that, without the hidden
+    `KrakenFromTerritory` option, offer either whatever the territory gives).
   - Ox: the token goes on a free small building space or Carved Stone space
     of the explored tile that Ox picks (small buildings go on both), even in a
     neutral or enemy territory; none if the tile has no such space (Robotos,

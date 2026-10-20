@@ -269,6 +269,16 @@ case object ExtraDevelopment extends GameOption with ToggleOption {
             (players + 1) * (years - 1) > (Cards.earlyCards ++ Cards.advancedCards).diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)).diff(options.has(NoDefensiveStrategy).??(NoDefensiveStrategy.cards)).num
 }
 
+// One more Achievement card than there are players is revealed in the last year (Game: ShuffledAchievementsAction);
+// the one left over after everyone has passed is set aside
+case object ExtraAchievement extends GameOption with ToggleOption {
+    val group = "Development cards".txt
+    def valueOn = "One more Achievement card".txt
+    override val explain = $(
+        "Reveals one more " ~ "Achievement".hl ~ " card than there are players in the last year, so the last player to pass still has a choice. The card nobody takes is set aside.",
+    )
+}
+
 // Uncharted Horizons' 5 Early and 8 Advanced Development cards and 2 Achievement cards, shuffled into their decks
 // (Game: ShuffledEarlyAction, ShuffledAdvancedAction, ShuffledAchievementsAction; effects in horizon-devs.scala)
 case object HorizonsDevelopments extends GameOption with ToggleOption {
@@ -278,6 +288,17 @@ case object HorizonsDevelopments extends GameOption with ToggleOption {
         "Shuffles the " ~ 13.hl ~ " Development cards of Uncharted Horizons into the decks: Early " ~ Cards.horizonsEarly.rights./(_.name).mkString(", ").hl ~ "; Advanced " ~ Cards.horizonsAdvanced.rights./(_.name).mkString(", ").hl ~ ".",
         "The Achievement cards " ~ "Mountaineer".hl ~ " (2 fame per territory with a Rough border) and " ~ "Sailor".hl ~ " (2 fame per open territory) join the Achievements.",
         "As many Development cards are revealed as usual; there are just more to draw from.",
+    )
+}
+
+// Each player's three starting tiles are one from a food, a wood and a lore pile (Marzaus's group's house rule, asked for
+// by Gman on 2026-10-19, who picked three piles over redrawing; MapExpansion.dealStart)
+case object BalancedStartTiles extends GameOption with ToggleOption {
+    val group = "Map tiles".txt
+    def valueOn = "Balanced starting tiles".txt
+    override val explain = $(
+        "Each player's " ~ 3.hl ~ " starting tiles show at least one " ~ Food.elem ~ ", one " ~ Wood.elem ~ " and one " ~ Lore.elem ~ ".",
+        "The map tiles are sorted into a food, a wood and a lore pile, and each player gets one tile from each. A tile with two resources is in the pile of the rarer one; tiles with none aren't dealt.",
     )
 }
 
@@ -357,6 +378,23 @@ case object MendFigures extends GameOption with ToggleOption {
 case object SimultaneousCurse extends GameOption with ToggleOption {
     val group = "Ancestral Curse".txt
     def valueOn = "Opponents discard at once".txt
+}
+
+// Dragon Clan's extra food or wood after harvesting comes "from one of your territories": only a resource one of them gave at
+// this harvest, less what Snake's Scorched Earth took from it (NewBloodExpansion.dragonExtra; reported on Discord on 2026-10-19,
+// food was collected from a food territory whose food Snake had taken). Hidden, and given to every new game (Meta.mandatoryFor):
+// older games could take either, and their replays must not lose a recorded choice
+case object DragonExtraFromTerritory extends GameOption with ToggleOption {
+    val group = "Dragon Clan".txt
+    def valueOn = "Extra resource from a territory".txt
+}
+
+// The Kraken Clan card collects 1 food or 1 wood only if a territory Kraken controls with a High Tide token gives it (reported
+// by Marzaus on 2026-10-19: wood was offered from a tile without any). Hidden, and given to every new game (Meta.mandatoryFor):
+// older games may have recorded a resource no such territory gives, and their replays must not change
+case object KrakenFromTerritory extends GameOption with ToggleOption {
+    val group = "Kraken Clan".txt
+    def valueOn = "Collects from the territory".txt
 }
 
 // The clan power report (ClanPowers in map.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
