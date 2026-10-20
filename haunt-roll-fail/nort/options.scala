@@ -252,13 +252,14 @@ case object NoDefensiveStrategy extends GameOption with ToggleOption {
     val cards : $[Card] = $(Development("defensive-strategy"))
 }
 
-// Two-player games reveal 3 Development cards each year instead of 2; the one left after both pass is discarded
-// (Game.devsPerYear; offered only for two clans without the Automa, optionsFor in meta.scala and adset.scala)
-case object ThreeDevelopments extends GameOption with ToggleOption {
+// One more Development card revealed each year than there are players; the one left after everyone passes is discarded
+// (Game.devsPerYear; not offered against the Automa, optionsFor in meta.scala)
+case object ExtraDevelopment extends GameOption with ToggleOption {
     val group = "Development cards".txt
-    def valueOn = "Three Development cards in two-player games".txt
+    def valueOn = "One extra Development card each year".txt
     override val explain = $(
-        "Each year " ~ 3.hl ~ " Development cards are revealed instead of " ~ 2.hl ~ ", so the second player to pass still has a choice. The card left over is discarded.",
+        "Each year one more Development card is revealed than there are players (" ~ 3.hl ~ " in a two-player game), so the last player to pass still has a choice. The card left over is discarded.",
+        "With many players in a long game the decks may run out before the last year.",
     )
 }
 

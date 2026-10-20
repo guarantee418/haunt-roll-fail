@@ -542,8 +542,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     val earlyPerPlayer = (lastYear - 1 + 2) / 3
     val advancedPerPlayer = lastYear - 1 - earlyPerPlayer
 
-    // Development cards revealed each year: one per player, or 3 in a two-player game with ThreeDevelopments
-    def devsPerYear = arity + (options.has(ThreeDevelopments) && arity == 2 && setup.has(Automa).not).??(1)
+    // Development cards revealed each year: one per player, and one more with ExtraDevelopment (not against the Automa)
+    def devsPerYear = arity + (options.has(ExtraDevelopment) && setup.has(Automa).not).??(1)
 
     // The Warchiefs box's extra clan upgrade cards
     val warchiefCards = has(Warchiefs) && options.has(WarchiefPawns).not || options.has(WarchiefCards)

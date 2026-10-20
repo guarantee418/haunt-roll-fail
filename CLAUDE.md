@@ -184,9 +184,9 @@ picking the drawn clan by hand draws again). The setup options
 (colors, game length, victory conditions, first player, "Ban card draw developments"
 (`NoDrawDevelopments`: leaves the seven Development cards that only draw cards
 out of the decks), "Ban Defensive Strategy" (`NoDefensiveStrategy`, asked for by Gman on 2026-10-14;
-also offered in Adset), "Three Development cards in two-player games" (`ThreeDevelopments`, `game.devsPerYear`,
-suggested by Marzaus on 2026-10-19; listed only for two clans without the Automa, in the main setup and Adset; the card
-left after both pass is discarded), and the modules and
+also offered in Adset), "One extra Development card each year" (`ExtraDevelopment`, `game.devsPerYear`,
+suggested by Marzaus for two players on 2026-10-19, made for every player count by Gman on 2026-10-20; not against the
+Automa; in the main setup and Adset; the card left after everyone passes is discarded), and the modules and
 expansions; Creatures, Warchiefs, Wilderness, Wastelands and Events are implemented, the others are shown but disabled) are in `nort/options.scala`.
 "Victory conditions" picks one of: the standard rules, fame only, Alternative
 victory with random cards (the rulebook's way), or Alternative victory with
