@@ -1010,6 +1010,41 @@ object MapExpansion extends Expansion {
         $((n, kaija, chief)) ++ (n > 0).$((n, false, false)) ++ (n > 1).$((1, false, false)) ++ kaija.$((0, true, false)) ++ chief.$((0, false, true))
     }.distinct
 
+    // The resources a set of tiles shows
+    def shown(tiles : $[String]) : $[Resource] = Resource.all.%(r => tiles./~(Tiles(_).areas).exists(a => r match {
+        case Food => a.food > 0
+        case Wood => a.wood > 0
+        case Lore => a.lore > 0
+    }))
+
+    // The pile a tile goes in for BalancedStartTiles: the resource it shows that the fewest tiles show (lore, then food), none for a blank tile
+    lazy val startPileOf : Map[String, Resource] = {
+        val all = Tiles.regular ++ Tiles.horizons
+        val count = Resource.all./(r => r -> all.count(t => shown($(t.id)).has(r))).toMap
+        all./~(t => shown($(t.id)).sortBy(count).headOption./(t.id -> _)).toMap
+    }
+
+    // Three starting tiles from the top of the pile; with BalancedStartTiles, the first food, wood and lore tiles in the pile
+    // (the piles of startPileOf), or the top tile when a pile has run out
+    def dealStart()(implicit game : Game) : $[String] = {
+        if (game.options.has(BalancedStartTiles)) {
+            var hand : $[String] = $
+
+            Resource.all.foreach { r =>
+                val t = game.pile.find(startPileOf.get(_).has(r)).|(game.pile.head)
+                hand :+= t
+                game.pile = game.pile.diff($(t))
+            }
+
+            hand
+        }
+        else {
+            val hand = game.pile.take(3)
+            game.pile = game.pile.drop(3)
+            hand
+        }
+    }
+
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         // SETUP
         case ShuffledTilesAction(l) =>
@@ -1032,8 +1067,7 @@ object MapExpansion extends Expansion {
                 Then(AdsetTurnAction(1, game.seats.reverse))
             else {
                 game.factions.foreach { f =>
-                    game.tileHand += f -> game.pile.take(3)
-                    game.pile = game.pile.drop(3)
+                    game.tileHand += f -> dealStart()
                 }
 
                 log("Each player drew three map tiles")

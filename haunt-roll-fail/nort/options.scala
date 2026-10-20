@@ -274,6 +274,17 @@ case object HorizonsDevelopments extends GameOption with ToggleOption {
     )
 }
 
+// Each player's three starting tiles are one from a food, a wood and a lore pile (Marzaus's group's house rule, asked for
+// by Gman on 2026-10-19, who picked three piles over redrawing; MapExpansion.dealStart)
+case object BalancedStartTiles extends GameOption with ToggleOption {
+    val group = "Map tiles".txt
+    def valueOn = "Balanced starting tiles".txt
+    override val explain = $(
+        "Each player's " ~ 3.hl ~ " starting tiles show at least one " ~ Food.elem ~ ", one " ~ Wood.elem ~ " and one " ~ Lore.elem ~ ".",
+        "The map tiles are sorted into a food, a wood and a lore pile, and each player gets one tile from each. A tile with two resources is in the pile of the rarer one; tiles with none aren't dealt.",
+    )
+}
+
 case object FirstSeatStarts extends GameOption with ToggleOption {
     val group = "First player".txt
     def valueOn = "First seat goes first".txt
