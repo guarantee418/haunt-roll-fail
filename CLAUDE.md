@@ -568,6 +568,9 @@ file covers the build, server and deploy. No session can ssh to the server
 - The Pond (Lilypad Diaspora's face-up Frog card pile) is shown only with the deck and the discard pile (or among the
   card piles on the map), like the Lost Souls, as any player may draw from it; it was also on the Diaspora's player
   panel until MaKoBwoY found the two copies confusing and Gman picked the public spot (2026-10-14).
+- A spent Frog Ambush goes to the bottom of the Pond (`toPondBottom` in `root/faction-invasive-eee.scala`), as the Homeland
+  card says; the log says so. MaKoBwoY's first reformatted Ambush cards (`hl-frog-ambush`, `card/deck/fr/frog-ambush`) left
+  that out, and he replaced them on 2026-10-20.
 - Lilypad Diaspora's Companions stays with the faction that crafted it until the Frog card it turned into another suit
   is discarded (spent), and can't turn a second card meanwhile (asked for by the owner on 2026-10-15); it was
   discarded as soon as the card was turned. New games get the hidden default option `CompanionsUntilSpent`

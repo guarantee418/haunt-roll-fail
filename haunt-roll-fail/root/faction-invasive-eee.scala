@@ -526,16 +526,20 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
 
         // Frog Ambush: discard to the Pond bottom
         case BattleAmbushAction(f, b, d @ Ambush(Frog), true, true, then) if factions.of[InvasiveEEE].any =>
-            toPondBottom(factions.of[InvasiveEEE].first, f, d)
+            val e = factions.of[InvasiveEEE].first
 
-            f.log("played", d)
+            toPondBottom(e, f, d)
+
+            f.log("played", d, "to the bottom of the", "Pond".styled(e))
 
             BattleAskCounterAmbushAction(b, then)
 
         case BattleCounterAmbushAction(f, b, d @ Ambush(Frog), true, true, then) if factions.of[InvasiveEEE].any =>
-            toPondBottom(factions.of[InvasiveEEE].first, f, d)
+            val e = factions.of[InvasiveEEE].first
 
-            f.log("counter-played", d)
+            toPondBottom(e, f, d)
+
+            f.log("counter-played", d, "to the bottom of the", "Pond".styled(e))
 
             then
 

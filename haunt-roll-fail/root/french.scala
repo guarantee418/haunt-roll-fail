@@ -571,6 +571,7 @@ object French {
         "became the" -> "deviennent les",
         "negociated with" -> "négocie avec",
         "from the" -> "dans la",
+        "to the bottom of the" -> "au fond de la",
         "flooded" -> "inondée",
         "became adjacent" -> "deviennent adjacentes",
         "shuffled" -> "mélange",
