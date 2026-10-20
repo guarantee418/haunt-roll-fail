@@ -34,7 +34,7 @@ case object QualityEffect extends Effect
 case object KrakenClanEffect extends Effect
 // Endless Tide: may remove 1 enemy unit from an open territory for 1 lore; may draw 1
 case object EndlessTideEffect extends Effect
-// Knowledge from Beyond: per High Tide territory, one of Recruit 1, Collect 1, Draw 1 (each once)
+// Knowledge from Beyond: per High Tide territory, one of Recruit 1, Collect 1, Draw 1 (each once without KnowledgeEachTerritory)
 case object KnowledgeEffect extends Effect
 // Poaching: draw 2; a Flash card among them draws 1 more
 case object PoachingEffect extends Effect
@@ -727,6 +727,18 @@ object NewBloodExpansion extends Expansion {
         case KnowledgeAction(f, l, used, then) =>
             l match {
                 case Nil => Then(then)
+                case a :: rest if game.options.has(KnowledgeEachTerritory) =>
+                    // The print card (Marzaus, 2026-10-20): any option for each territory, collecting only what it gives
+                    val recruit = (game.reserve(f) > 0 && game.controlled(f).exists(_.areas.contains(a))).$(KnowledgeChoiceAction(f, a, 0, None, rest, used, then))
+                    val collect = resourcesIn(game.board.territory(a))./(r => KnowledgeChoiceAction(f, a, 1, |(r), rest, used, then))
+                    val draw = (CommonExpansion.available(f) > 0).$(KnowledgeChoiceAction(f, a, 2, None, rest, used, then))
+                    val all = recruit ++ collect ++ draw
+
+                    if (all.none)
+                        Then(KnowledgeAction(f, rest, used, then))
+                    else
+                        Ask(f).add(all)
+
                 case a :: rest =>
                     val recruit = (used.has(0).not && game.reserve(f) > 0 && game.controlled(f).exists(_.areas.contains(a))).$(KnowledgeChoiceAction(f, a, 0, None, rest, used :+ 0, then))
                     val collect = used.has(1).not.??(Resource.all./(r => KnowledgeChoiceAction(f, a, 1, |(r), rest, used :+ 1, then)))
@@ -744,10 +756,17 @@ object NewBloodExpansion extends Expansion {
                 case 0 =>
                     game.addUnits(a, f, 1)
                     f.log("recruited in", a)
-                    Then(KnowledgeAction(f, rest, used, then))
+                    // A Recruit, so its Training Camps add their units, as with every Recruit card
+                    if (game.options.has(KnowledgeEachTerritory))
+                        Then(TrainingCampsAction(f, $(a), KnowledgeAction(f, rest, used, then)))
+                    else
+                        Then(KnowledgeAction(f, rest, used, then))
                 case 1 =>
                     f.gain(r.get, 1)
-                    f.log("collected", 1.hl, r.get)
+                    if (game.options.has(KnowledgeEachTerritory))
+                        f.log("collected", 1.hl, r.get, "from", a)
+                    else
+                        f.log("collected", 1.hl, r.get)
                     Then(KnowledgeAction(f, rest, used, then))
                 case _ =>
                     f.log("drew a card")

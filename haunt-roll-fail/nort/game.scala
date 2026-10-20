@@ -431,6 +431,8 @@ case class UnrestGoneAction(self : Faction, units : Int, rest : $[Faction]) exte
 // A one-time fix for games started before ChooseCasualties, added to a live game's log by hand (an hrf-games fix): turns the
 // option on from here, then goes on with then. Turning it on for the whole game would change its earlier fights
 case class ChooseCasualtiesAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// The same for KnowledgeEachTerritory (Kraken's Knowledge from Beyond as printed, newblood.scala)
+case class KnowledgeEachTerritoryAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case object EndOfYearAction extends ForcedAction
 case object GameEndAction extends ForcedAction
 case object NewYearAction extends ForcedAction
@@ -1872,6 +1874,12 @@ object CommonExpansion extends Expansion {
         case ChooseCasualtiesAction(then) =>
             if (game.options.has(ChooseCasualties).not)
                 game.addOption(ChooseCasualties)
+
+            Then(then)
+
+        case KnowledgeEachTerritoryAction(then) =>
+            if (game.options.has(KnowledgeEachTerritory).not)
+                game.addOption(KnowledgeEachTerritory)
 
             Then(then)
 
