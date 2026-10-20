@@ -159,6 +159,25 @@ object NewBloodExpansion extends Expansion {
 
     def sacrificeOptions(f : Faction)(implicit game : Game) : Boolean = game.pyre.any || (room > 0 && deployed(f).any)
 
+    // Dragon Clan's extra resource after harvesting: food or wood, from one of its territories (DragonExtraFromTerritory: only one that
+    // gave it at this harvest, less what Scorched Earth took there; scorched false leaves that out, for the harvest forecast)
+    def dragonExtra(f : Faction, scorched : Boolean = true)(implicit game : Game) : $[Resource] = {
+        val territories = game.controlled(f)
+
+        if (territories.none)
+            $
+        else if (game.options.has(DragonExtraFromTerritory).not)
+            $(Food, Wood)
+        else
+            $(Food, Wood).%{ r =>
+                territories.exists { t =>
+                    val (food, wood, _) = EventsExpansion.harvest(t)
+                    val took = (scorched && game.scorchedTook.has(f -> r) && game.scorchedIn(t)).??(1)
+                    (r == Food).?(food).|(wood) - took > 0
+                }
+            }
+    }
+
     // Kraken's High Tide tokens leave with the last Kraken figure
     def cleanup()(implicit game : Game) {
         if (game.tides.any)
@@ -388,8 +407,17 @@ object NewBloodExpansion extends Expansion {
                 f.log("has no", "High Tide".hl, "token in a territory they control")
                 Then(MayDrawAction(f, then))
             }
-            else
-                Ask(f).each($(Food, Wood))(r => KrakenCollectAction(f, r, then))
+            else {
+                // KrakenFromTerritory: only what a High Tide territory gives, as the card says "from a territory"
+                val l = game.options.has(KrakenFromTerritory).?($(Food, Wood).%(r => tideTerritories.exists(t => resourcesIn(t).has(r)))).|($(Food, Wood))
+
+                if (l.none) {
+                    f.log("has no", Food, "or", Wood, "in a", "High Tide".hl, "territory they control")
+                    Then(MayDrawAction(f, then))
+                }
+                else
+                    Ask(f).each(l)(r => KrakenCollectAction(f, r, then))
+            }
 
         case EndlessTideEffect =>
             Ask(f).each(CardsExpansion.enemyUnits(f).filter(x => game.board.open(x._1)))((t, g) => EndlessTideAction(f, t.anchor, g, then))
@@ -554,7 +582,7 @@ object NewBloodExpansion extends Expansion {
         case AfterHarvestNBAction(f :: rest, then) =>
             val next = AfterHarvestNBAction(rest, then)
             val l =
-                if (f == Dragon) (game.dragonHarvest.has(true) && game.controlled(f).any).??($(Food, Wood))
+                if (f == Dragon) game.dragonHarvest.has(true).??(dragonExtra(f))
                 else Resource.all.take(2).%(r => f.has(r) > 0)
 
             if (l.none)
