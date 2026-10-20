@@ -186,7 +186,9 @@ picking the drawn clan by hand draws again). The setup options
 out of the decks), "Ban Defensive Strategy" (`NoDefensiveStrategy`, asked for by Gman on 2026-10-14;
 also offered in Adset), "One extra Development card each year" (`ExtraDevelopment`, `game.devsPerYear`,
 suggested by Marzaus for two players on 2026-10-19, made for every player count by Gman on 2026-10-20; not against the
-Automa; in the main setup and Adset; the card left after everyone passes is discarded), and the modules and
+Automa; in the main setup and Adset; the card left after everyone passes is discarded; when the core decks can't last
+every year, as with six players in a long game, the Uncharted Horizons Development cards are added, `ExtraDevelopment.needsHorizons`,
+`game.horizonsDevelopments`, asked for by Gman on 2026-10-20, and the setup screen warns of it), and the modules and
 expansions; Creatures, Warchiefs, Wilderness, Wastelands and Events are implemented, the others are shown but disabled) are in `nort/options.scala`.
 "Victory conditions" picks one of: the standard rules, fame only, Alternative
 victory with random cards (the rulebook's way), or Alternative victory with

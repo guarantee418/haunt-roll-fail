@@ -259,8 +259,14 @@ case object ExtraDevelopment extends GameOption with ToggleOption {
     def valueOn = "One extra Development card each year".txt
     override val explain = $(
         "Each year one more Development card is revealed than there are players (" ~ 3.hl ~ " in a two-player game), so the last player to pass still has a choice. The card left over is discarded.",
-        "With many players in a long game the decks may run out before the last year.",
+        "When the decks can't last every year (six players in a long game), the " ~ "Uncharted Horizons Development cards".hl ~ " are added.",
     )
+
+    // The core Development cards left after the bans can't give one more card than the players every year but the last:
+    // the Uncharted Horizons ones join in (Game.horizonsDevelopments; told on the setup screen, validateFactionSeatingOptions)
+    def needsHorizons(options : $[BaseOption], players : Int, years : Int) : Boolean =
+        options.has(ExtraDevelopment) && options.has(HorizonsDevelopments).not &&
+            (players + 1) * (years - 1) > (Cards.earlyCards ++ Cards.advancedCards).diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)).diff(options.has(NoDefensiveStrategy).??(NoDefensiveStrategy.cards)).num
 }
 
 // Uncharted Horizons' 5 Early and 8 Advanced Development cards and 2 Achievement cards, shuffled into their decks

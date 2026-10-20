@@ -185,6 +185,7 @@ object Meta extends MetaGame { mmm =>
                 (factions.has(Automa) && options.of[AutomaLevelOption].exists(_.level >= 3) && has(options, Creatures).not).?(ErrorResult("Automa levels 3 and up need the Creatures module")) ||
                 validateVictoryCards(factions, options) ||
                 missing.any.?(WarningResult(missing./(factionName).mkString(", ") + " will get a free color")) ||
+                (factions.has(Automa).not && ExtraDevelopment.needsHorizons(options, factions.num, options.of[YearsOption].single./(_.years).|(YearsOption.standard.years))).?(WarningResult("Uncharted Horizons Development cards will be added, so the decks last with the extra card")) ||
                 (options.has(TeamPlay) && teams.num == factions.num).?(WarningResult("Every player is on a team alone: a free-for-all")) |
                 InfoResult("Northgard: Uncharted Lands")
             }
