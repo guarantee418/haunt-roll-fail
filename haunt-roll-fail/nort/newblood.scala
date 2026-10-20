@@ -407,8 +407,17 @@ object NewBloodExpansion extends Expansion {
                 f.log("has no", "High Tide".hl, "token in a territory they control")
                 Then(MayDrawAction(f, then))
             }
-            else
-                Ask(f).each($(Food, Wood))(r => KrakenCollectAction(f, r, then))
+            else {
+                // KrakenFromTerritory: only what a High Tide territory gives, as the card says "from a territory"
+                val l = game.options.has(KrakenFromTerritory).?($(Food, Wood).%(r => tideTerritories.exists(t => resourcesIn(t).has(r)))).|($(Food, Wood))
+
+                if (l.none) {
+                    f.log("has no", Food, "or", Wood, "in a", "High Tide".hl, "territory they control")
+                    Then(MayDrawAction(f, then))
+                }
+                else
+                    Ask(f).each(l)(r => KrakenCollectAction(f, r, then))
+            }
 
         case EndlessTideEffect =>
             Ask(f).each(CardsExpansion.enemyUnits(f).filter(x => game.board.open(x._1)))((t, g) => EndlessTideAction(f, t.anchor, g, then))

@@ -975,7 +975,11 @@ Check these against the rulebook when it is at hand.
     the card during the combat, so they don't go on the Pyre.
   - Kraken: a High Tide token goes back as soon as Kraken has no figures in
     its territory. Its casualty applies to fights between players only. The
-    Kraken Clan card's food or wood doesn't depend on the territory's icons.
+    Kraken Clan card's food or wood must be one a territory Kraken controls
+    with a High Tide token gives at harvest (its icons and buildings; with
+    neither, only the draw is left), as the card says "from a territory"
+    (Marzaus, 2026-10-19; games started before that, without the hidden
+    `KrakenFromTerritory` option, offer either whatever the territory gives).
   - Ox: the token goes on a free small building space or Carved Stone space
     of the explored tile that Ox picks (small buildings go on both), even in a
     neutral or enemy territory; none if the tile has no such space (Robotos,
