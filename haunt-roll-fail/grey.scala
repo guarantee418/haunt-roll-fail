@@ -556,6 +556,9 @@ trait GreyUI { gui : Gaming =>
             top()
         }
 
+        // Why "Undo to here" isn't offered for the state after n actions (a game's undo rules); None offers it
+        def undoBlocked(n : Int, actions : $[ExternalAction]) : |[Elem] = None
+
         override def rewind(n : Int, actions : $[ExternalAction], speed : Option[Int], latest : () => Unit, undoTo : (Int, Int) => Unit, playback : Int => Unit) {
             actionPane.invis()
             settingsPane.invis()
@@ -571,7 +574,7 @@ trait GreyUI { gui : Gaming =>
                         playback(hrf.HRF.paramInt("replay-speed").|(300))
                         top()
                     }),
-                    ZBasic(g, "Undo to here".styled(xstyles.warning), () => {
+                    undoBlocked(n, actions)./(reason => ZBasic(g, reason.div)).|(ZBasic(g, "Undo to here".styled(xstyles.warning), () => {
                         val dd = actions.drop(n)./~(describeActionForUndo(_, None))
                         val ee = (dd.distinct.num > 1).?(", including ").|((dd.distinct.num > 0).?(", namely ").|("")).spn ~ dd.distinct./(d => (dd.count(d) > 3).?("multple ".spn) ~ d.elem(dd.count(d))).join(", ")
 
@@ -587,7 +590,7 @@ trait GreyUI { gui : Gaming =>
                                 top()
                             }))
                         )(resources)
-                    }),
+                    })),
                     ZBasic(g, "Back", () => {
                         undoPane.invis()
                         actionPane.vis()

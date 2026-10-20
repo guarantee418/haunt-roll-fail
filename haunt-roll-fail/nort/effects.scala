@@ -515,6 +515,7 @@ object CardsExpansion extends Expansion {
 
         case SpyAction(f, g, then) =>
             f.log("looked at the hand of", g)
+            game.peeked += 1
             Ask(f).each(g.hand.distinct)(c => SpyDiscardAction(f, g, c, then))
 
         case SpyDiscardAction(f, g, c, then) =>
@@ -549,6 +550,7 @@ object CardsExpansion extends Expansion {
 
         case RapaciousAction(f, g, then) =>
             f.log("looked at the hand of", g)
+            game.peeked += 1
             Ask(f).each(g.hand.distinct)(c => RapaciousPickAction(f, g, c, then))
 
         case RapaciousPickAction(f, g, c, then) =>
