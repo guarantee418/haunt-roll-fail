@@ -1354,6 +1354,28 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // or in games set to Public fame
     def fameHidden(f : Faction) : Boolean = game.isOver.not && game.options.has(PublicFame).not && viewers.exists(v => v == f || game.mates(v).has(f)).not
 
+    // The setup's Undo choice (UndoChoice in options.scala): none, or with Limited undo none past a die roll, a shuffle or a
+    // random pick, or past a card, tile or token taken from a face-down pile (Game.revealedSince); the state after n actions is
+    // overrideGame while the log is rewound
+    override def undoBlocked(n : Int, actions : $[ExternalAction]) : |[Elem] = {
+        val now = currentGame
+
+        if (now.options.has(NoUndo))
+            |("No undo in this game".hl)
+        else
+        if (now.options.has(LimitedUndo)) {
+            if (actions.drop(n).exists(_.unwrap.is[OracleAction]))
+                |("Limited undo: ".hl ~ "can't go back past a die roll or a shuffle")
+            else
+            if (overrideGame.exists(now.revealedSince))
+                |("Limited undo: ".hl ~ "can't go back past a card or tile drawn or seen")
+            else
+                None
+        }
+        else
+            None
+    }
+
     def factionStatus(f : Faction) {
         val container = statusPane(game.ftp(f))
 

@@ -335,6 +335,38 @@ object FameChoice {
     val all : $[FameChoice] = $(PrivateFame, PublicFame)
 }
 
+// UNDO: how far "Undo to here" in the log may go back (undoBlocked in nort/ui.scala; asked for by Robotos on 2026-10-20).
+// Display only, so recorded games replay the same; games made before the choice have none of these and keep unlimited undo
+trait UndoChoice extends GameOption with OneOfGroup {
+    val group = "Undo".txt
+}
+
+case object NoUndo extends UndoChoice {
+    def valueOn = "No undo".txt
+    override val explain = $(
+        "Nothing can be undone. The log still replays the game.",
+    )
+}
+
+case object LimitedUndo extends UndoChoice {
+    def valueOn = "Limited undo".txt
+    override val explain = $(
+        "Undo can't go back past a combat die roll, a shuffle, a card or tile drawn, or Developments, creatures or events revealed.",
+        "After an Explore, the tile can be placed again, but not drawn again.",
+    )
+}
+
+case object UnlimitedUndo extends UndoChoice {
+    def valueOn = "Unlimited undo".txt
+    override val explain = $(
+        "Anything can be undone, back to any line of the log.",
+    )
+}
+
+object UndoChoice {
+    val all : $[UndoChoice] = $(UnlimitedUndo, LimitedUndo, NoUndo)
+}
+
 
 // Casualties are chosen by their player: units, the warchief, Kaija (or Brundr and Kaelinn, or Brok) and Jötunn Blainn,
 // in any mix (CasualtyPickAction in map.scala; asked for by Robotos on 2026-10-11). Hidden, and given to every new game

@@ -970,6 +970,18 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var achievements : $[Card] = $
     var display : $[Card] = $
 
+    // LIMITED UNDO (LimitedUndo, undoBlocked in ui.scala): the face-down piles, top first, and how often hidden cards were seen
+    // without leaving them (drawn and put back on top, a hand looked at). A pile that no longer ends with what it held earlier had
+    // cards taken from its top, so something was revealed
+    var peeked = 0
+
+    def hiddenPiles : Map[String, $[Any]] = Map(
+        "tiles" -> pile, "developments" -> developments, "creatures" -> creatureDeck, "events" -> eventDeck, "raids" -> raidDeck,
+        "automa" -> automaDeck, "gear" -> gearPile, "training" -> hiddenTiles
+    ) ++ states./{ case (f, s) => ("draw " + f) -> s.draw }
+
+    def revealedSince(before : Game) : Boolean = peeked != before.peeked || before.hiddenPiles.exists { case (k, l) => hiddenPiles.get(k).|($).endsWith(l).not }
+
     object highlight {
         var faction : $[Player] = $
         var current : |[Faction] = None
@@ -1402,6 +1414,7 @@ object CommonExpansion extends Expansion {
             if (k == 0 && d == 0 && f.drawn.distinct.num == 1) {
                 f.draw = f.drawn ++ f.draw
                 f.drawn = $
+                game.peeked += 1
 
                 f.log("returned", n.cards, "to the top of their draw pile")
 
