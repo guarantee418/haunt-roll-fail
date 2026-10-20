@@ -93,7 +93,9 @@ case class FactionChoice(faction : Faction) extends PlayChoice {
         Image(faction.style + "-char")(styles.quest)(charstyles.get(faction)).div(styles.charblock) ~ faction.advertising,
         Break,
         faction.motto
-    )
+    ) ~ game.draftCaptains.get(faction)./(l => Break ~ Break ~ "Captain cards".styled(faction) ~ Break ~ l./(k =>
+        (Image("kd-captain-" + k.name.toLowerCase)(styles.captainpick) ~ Break ~ k.elem ~ Break ~ k.items./(_.img).merge).div(styles.captainblock)
+    ).merge.div(styles.captainrow))
 }
 
 case class FactionCharacterChoice(faction : Hero, c : Character) extends PlayChoice {
@@ -490,13 +492,29 @@ object SetupExpansion extends MandatoryExpansion {
             if (options.has(RandomCharacter))
                 Shuffle[Character](HeroExpansion.characters(options), t => CharactersCombinationAction(t))
             else
-                Milestone(SetupFactionsAction)
+                DraftCaptainsAction
 
         case CharactersCombinationAction(t) =>
             game.drawn.of[Hero].lazyZip(t).foreach((h, c) => game.chars += h -> c)
 
             log("Drawn factions", game.playChoices./(_.elem).comma)
 
+            DraftCaptainsAction
+
+        // the Knaves' four Captain cards are dealt with the drawn factions, so the draft shows them
+        case DraftCaptainsAction if options.has(KnavesCaptainsInDraft) && game.drawn.of[Knaves].exists(f => game.draftCaptains.contains(f).not) =>
+            val f = game.drawn.of[Knaves].%(f => game.draftCaptains.contains(f).not).first
+
+            Shuffle[KnaveCaptain](Knaves.captains, l => DraftCaptainsDealtAction(f, l))
+
+        case DraftCaptainsDealtAction(f, l) =>
+            game.draftCaptains += f -> l.take(4)
+
+            log(f, "drew", game.draftCaptains(f)./(_.elem).comma, "as Captain cards")
+
+            DraftCaptainsAction
+
+        case DraftCaptainsAction =>
             Milestone(SetupFactionsAction)
 
         case SetupFactionsAction =>

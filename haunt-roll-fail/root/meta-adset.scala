@@ -81,6 +81,7 @@ object MetaAdset extends MetaGame {
         GovernorsStopEnclaveFlips,
         OutragePeekNeedsOk,
         CounterMiceInABush,
+        KnavesCaptainsInDraft,
         FolkHeroCharacter,
         RandomCharacter,
         MapDefaultLandmarks,

@@ -361,6 +361,14 @@ case object CounterMiceInABush extends GameOption with ToggleOption {
     val valueOn = "Mice-in-a-Bush".hh ~ " can be counter-ambushed"
 }
 
+// Advanced Setup deals the Knaves their four Captain cards when the factions are drawn, so the draft shows them
+// (asked for by Gman on 2026-10-20). Hidden and on by default for new games; older games deal them when the Knaves
+// set up, so their replays don't change.
+case object KnavesCaptainsInDraft extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Knaves".hh ~ " Captains shown in the draft"
+}
+
 // Hirelings as their cards say (the TTS mod's cards, Law of Root appendix H): the Band blocks only those who moved into
 // its clearing that turn, the Forest Patrol saves one warrior of each removal, the Spring Uprising has 4 warriors and the
 // Warm Sun Prophets start in every ruin. Hidden and on by default for new games; older games keep the earlier rules so
@@ -1315,7 +1323,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 

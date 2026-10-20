@@ -355,6 +355,12 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
             FactionInitAction(f)
 
         // Advanced Setup deals 4 random Captain cards to choose 3 from
+        // dealt during the draft with KnavesCaptainsInDraft
+        case FactionSetupAction(f : Knaves) if f.captains.none && f.dealt.none && game.draftCaptains.contains(f) =>
+            f.dealt = game.draftCaptains(f)
+
+            FactionSetupAction(f)
+
         case FactionSetupAction(f : Knaves) if f.captains.none && f.dealt.none && game.players.of[PlayerN].any =>
             Shuffle[KnaveCaptain](Knaves.captains, l => KnavesDealCaptainsAction(f, l))
 

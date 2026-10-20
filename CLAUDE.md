@@ -679,6 +679,10 @@ file covers the build, server and deploy. No session can ssh to the server
   their cards and who controls them (`showHirelings`), and a card opens larger. `ReplayCheck <games> base hire:FRP,SAD,...`
   plays bot games with those hirelings (`oldhire` without `HirelingsByTheCard`), checks every action writes and parses
   back, and lists how often each hireling choice was taken.
+- In Advanced Setup the Knaves' four Captain cards are dealt when the factions are drawn, and the draft shows them under
+  the Knaves (meeple, name and items; `FactionChoice.desc` in `root/setup.scala`, `game.draftCaptains`, asked for by Gman on
+  2026-10-20); the Knaves then choose 3 of those. New games get the hidden default option `KnavesCaptainsInDraft`; older
+  games deal them when the Knaves set up, so their replays don't change.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.

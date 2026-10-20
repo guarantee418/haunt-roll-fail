@@ -183,6 +183,10 @@ package object elem {
 
         object card extends CustomStyle(display("block"), width("18ch"))
         object charblock extends CustomStyle(display("block"), width("18ch"), height("18ch"), position("relative"))
+        // the Knaves' Captains under their faction in the Advanced Setup draft
+        object captainblock extends CustomStyle(display("inline-block"), width("8.6ch"), vertical.align("top"), text.align("center"))
+        object captainrow extends CustomStyle(display("block"), width("18ch"), margin("auto"))
+        object captainpick extends CustomStyle(height("5ch"))
         object charback extends CustomStyle(background.color("#2b2b2b"))
 
         object illustration extends CustomStyle(height("16ch"))

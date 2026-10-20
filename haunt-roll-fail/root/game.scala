@@ -797,6 +797,8 @@ case class SeatingOrderAction(shuffled : $[Player]) extends ShuffledAction[Playe
 case class FactionsCombinationAction(random : $[Faction]) extends RandomAction[$[Faction]]
 
 case class CharactersCombinationAction(shuffled : $[Character]) extends ShuffledAction[Character]
+case object DraftCaptainsAction extends ForcedAction
+case class DraftCaptainsDealtAction(f : Faction, shuffled : $[KnaveCaptain]) extends ShuffledAction[KnaveCaptain]
 
 trait GameImplicits {
 
@@ -1524,6 +1526,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
 
     var drawn = $[Faction]()
     var chars = Map[Hero, Character]()
+    var draftCaptains = Map[Faction, $[KnaveCaptain]]()
 
     def playChoices : $[PlayChoice] = drawn./(f => f.as[Hero]./(h => FactionCharacterChoice(h, chars(h))).|(FactionChoice(f)))
 
