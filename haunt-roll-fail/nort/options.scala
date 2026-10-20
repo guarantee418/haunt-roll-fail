@@ -397,6 +397,14 @@ case object KrakenFromTerritory extends GameOption with ToggleOption {
     def valueOn = "Collects from the territory".txt
 }
 
+// Knowledge from Beyond as on the print card Marzaus posted on 2026-10-20: for each High Tide territory, any of Recruit 1
+// (with its Training Camps), Collect 1 resource that territory gives, or Draw 1, the same one again if wanted. Hidden, and
+// given to every new game (Meta.mandatoryFor): older games offered each option once and any resource, and replay that way
+case object KnowledgeEachTerritory extends GameOption with ToggleOption {
+    val group = "Kraken Clan".txt
+    def valueOn = "Knowledge from Beyond for each territory".txt
+}
+
 // The clan power report (ClanPowers in map.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
 // (Meta.mandatoryFor), like ChooseCasualties: older games' replays must not stop on a step they never recorded
 case object ClanPowerReports extends GameOption with ToggleOption {

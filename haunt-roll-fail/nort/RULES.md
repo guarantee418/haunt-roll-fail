@@ -457,7 +457,7 @@ marked ⚡):
 |---|---|---|---|---|
 | Dragon | ⚡ Dragon Clan: sacrifice 1 unit or place 1 deployed unit on the Pyre, then draw 1 and collect 1 food | ⚡ Capture for Sacrifice: from a territory you control, remove 1 enemy unit from an adjacent territory and put it on the Pyre; you may return 1 own unit from the Pyre to a territory you control | Reluctant Workforce: draw 1; sacrifice up to 2 units, 1 card each | Tenacious Grudge: Move 3, +1 point per unit on the Pyre |
 | Horse | ⚡ Horse Clan: Build; small buildings (Carved Stone too) need no space | Craftsmen: Recruit 2, then may replace a building you control with another of the same size | ⚡ Quality of Life: may build a free Defense Tower needing no space, then collect a resource from each of your territories with a Defense Tower | Eitria and Brok's Precision: Move 2; before, may pay any 1 resource for +1 point and Move 3 |
-| Kraken | ⚡ Kraken Clan: collect 1 food or 1 wood from a territory you control with a High Tide token; may draw 1 | ⚡ Endless Tide: may remove 1 enemy unit from an open territory for 1 lore; may draw 1 | Knowledge from Beyond: per High Tide territory you control, one of Recruit 1, Collect 1 resource, Draw 1 (each once) | Howl from the Sea: Move 2; where you win, add 1 unit per casualty inflicted; for each combat lost, 1 unit where you retreat |
+| Kraken | ⚡ Kraken Clan: collect 1 food or 1 wood from a territory you control with a High Tide token; may draw 1 | ⚡ Endless Tide: may remove 1 enemy unit from an open territory for 1 lore; may draw 1 | Knowledge from Beyond: per High Tide territory you control, one of Recruit 1 there, Collect 1 resource from it, Draw 1 (any option for each territory) | Howl from the Sea: Move 2; where you win, add 1 unit per casualty inflicted; for each combat lost, 1 unit where you retreat |
 | Lynx | ⚡ Lynx Clan: Explore; may put the tile at the bottom and draw another | ⚡ Fire Arrows: Move 1, +1 point and +1 casualty | Poaching: draw 2; if either is Flash, reveal it and draw 1 more | The Wise One: Move 2, +1 point per casualty inflicted |
 | Ox | ⚡ Ox Clan: Move 1; the token may be taken after the card instead | Warcraft: Explore; 1 lore if the tile shows lore, otherwise another Explore | City Builder: Build, then 1 lore and may draw 1 | The True Hero: Move 2; before a combat with Torfin, may give up his power to remove a building there |
 | Rat | ⚡ Rat Clan: Build; may first remove up to 2 units from your territories for 1 wood each | ⚡ Overwork: may remove 1 unit to collect everything from 1 territory you control (buildings too); may draw 1 | Proliferation: Recruit 1 in up to 3 closed territories you control | Blood Ties: Move 2, 1 lore per casualty suffered |
@@ -982,6 +982,14 @@ Check these against the rulebook when it is at hand.
     neither, only the draw is left), as the card says "from a territory"
     (Marzaus, 2026-10-19; games started before that, without the hidden
     `KrakenFromTerritory` option, offer either whatever the territory gives).
+    Knowledge from Beyond follows the print card Marzaus posted on 2026-10-20:
+    each territory gets its own choice, so one option can be taken for every
+    territory; Collect offers only a resource that territory gives at harvest
+    (food, wood or lore), and Recruit is a Recruit, so the territory's Training
+    Camp adds its unit (and Robotos its extra one), as with Proliferation and
+    the other Recruit cards. Games started before that, without the hidden
+    `KnowledgeEachTerritory` option, offer each option once, any resource, and
+    no Training Camp unit.
   - Ox: the token goes on a free small building space or Carved Stone space
     of the explored tile that Ox picks (small buildings go on both), even in a
     neutral or enemy territory; none if the tile has no such space (Robotos,

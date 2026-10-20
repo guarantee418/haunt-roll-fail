@@ -252,7 +252,7 @@ object Cards {
         clanCards(Kraken,
             "kraken" -> CardInfo("Kraken Clan", "", 0, true, KrakenClanEffect, "Collect 1 food or 1 wood from a territory you control with a High Tide token on it. Then, you may draw 1 card."),
             "kraken-endless-tide" -> CardInfo("Endless Tide", "", 0, true, EndlessTideEffect, "You may remove 1 enemy unit from any open territory to gain 1 lore. Then you may draw 1 card."),
-            "kraken-knowledge-from-beyond" -> CardInfo("Knowledge from Beyond", "", 0, false, KnowledgeEffect, "For each territory you control with a High Tide token on it, choose between: Recruit 1 unit, Collect 1 resource, Draw 1 card (each option can only be chosen once)."),
+            "kraken-knowledge-from-beyond" -> CardInfo("Knowledge from Beyond", "", 0, false, KnowledgeEffect, "For each territory you control with a High Tide token on it, choose to either: Recruit 1 unit on it, Collect 1 resource from it, or Draw 1 card."),
             "kraken-howl-from-the-sea" -> CardInfo("Howl from the Sea", "", 0, false, MoveEffect(2, special = HowlMove), "Move 2. In each territory where you win a combat, add 1 unit per casualty you've inflicted. However, for each combat lost, add 1 unit on 1 territory you've retreated to."),
         ),
         clanCards(Lynx,
