@@ -186,7 +186,12 @@ picking the drawn clan by hand draws again). The setup options
 (colors, game length, victory conditions, first player, "Ban card draw developments"
 (`NoDrawDevelopments`: leaves the seven Development cards that only draw cards
 out of the decks), "Ban Defensive Strategy" (`NoDefensiveStrategy`, asked for by Gman on 2026-10-14;
-also offered in Adset), "One more Achievement card" (`ExtraAchievement`: the last year reveals players + 1
+also offered in Adset), "One extra Development card each year" (`ExtraDevelopment`, `game.devsPerYear`,
+suggested by Marzaus for two players on 2026-10-19, made for every player count by Gman on 2026-10-20; not against the
+Automa; in the main setup and Adset; the card left after everyone passes is discarded; when the core decks can't last
+every year, as with six players in a long game, the Uncharted Horizons Development cards are added, `ExtraDevelopment.needsHorizons`,
+`game.horizonsDevelopments`, asked for by Gman on 2026-10-20, and the setup screen warns of it),
+"One more Achievement card" (`ExtraAchievement`: the last year reveals players + 1
 Achievements and the one left is set aside; asked for by Marzaus on 2026-10-19, also in Adset),
 "Balanced starting tiles" (`BalancedStartTiles`, under Map tiles, off by default, also in Adset;
 asked for by Gman on 2026-10-19 from Marzaus's group's house rule: each player's three starting tiles show at least one food,

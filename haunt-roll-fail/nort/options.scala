@@ -252,6 +252,23 @@ case object NoDefensiveStrategy extends GameOption with ToggleOption {
     val cards : $[Card] = $(Development("defensive-strategy"))
 }
 
+// One more Development card revealed each year than there are players; the one left after everyone passes is discarded
+// (Game.devsPerYear; not offered against the Automa, optionsFor in meta.scala)
+case object ExtraDevelopment extends GameOption with ToggleOption {
+    val group = "Development cards".txt
+    def valueOn = "One extra Development card each year".txt
+    override val explain = $(
+        "Each year one more Development card is revealed than there are players (" ~ 3.hl ~ " in a two-player game), so the last player to pass still has a choice. The card left over is discarded.",
+        "When the decks can't last every year (six players in a long game), the " ~ "Uncharted Horizons Development cards".hl ~ " are added.",
+    )
+
+    // The core Development cards left after the bans can't give one more card than the players every year but the last:
+    // the Uncharted Horizons ones join in (Game.horizonsDevelopments; told on the setup screen, validateFactionSeatingOptions)
+    def needsHorizons(options : $[BaseOption], players : Int, years : Int) : Boolean =
+        options.has(ExtraDevelopment) && options.has(HorizonsDevelopments).not &&
+            (players + 1) * (years - 1) > (Cards.earlyCards ++ Cards.advancedCards).diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)).diff(options.has(NoDefensiveStrategy).??(NoDefensiveStrategy.cards)).num
+}
+
 // One more Achievement card than there are players is revealed in the last year (Game: ShuffledAchievementsAction);
 // the one left over after everyone has passed is set aside
 case object ExtraAchievement extends GameOption with ToggleOption {

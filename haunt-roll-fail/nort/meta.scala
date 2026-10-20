@@ -78,7 +78,7 @@ object Meta extends MetaGame { mmm =>
     override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // New Blood has no option: picking one of its clans brings it in
-    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ WarchiefsChoice.all ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraAchievement, HorizonsDevelopments) ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles, BalancedStartTiles) ++ AutomaLevelOption.all ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ WarchiefsChoice.all ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraDevelopment, ExtraAchievement, HorizonsDevelopments) ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles, BalancedStartTiles) ++ AutomaLevelOption.all ++ hiddenOptions
 
     // Colors and teams only for the clans in the game, as many teams as players
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -86,6 +86,7 @@ object Meta extends MetaGame { mmm =>
         case TeamOption(f, t) => l.has(f) && t < n
         case ModuleOption(m) if Module.teams.contains(m) => false
         case AutomaLevelOption(_) => l.has(Automa)
+        case ExtraDevelopment => l.has(Automa).not
         case ModuleOption(VictoryModule) => false
         case _ => true
     }
@@ -184,6 +185,7 @@ object Meta extends MetaGame { mmm =>
                 (factions.has(Automa) && options.of[AutomaLevelOption].exists(_.level >= 3) && has(options, Creatures).not).?(ErrorResult("Automa levels 3 and up need the Creatures module")) ||
                 validateVictoryCards(factions, options) ||
                 missing.any.?(WarningResult(missing./(factionName).mkString(", ") + " will get a free color")) ||
+                (factions.has(Automa).not && ExtraDevelopment.needsHorizons(options, factions.num, options.of[YearsOption].single./(_.years).|(YearsOption.standard.years))).?(WarningResult("Uncharted Horizons Development cards will be added, so the decks last with the extra card")) ||
                 (options.has(TeamPlay) && teams.num == factions.num).?(WarningResult("Every player is on a team alone: a free-for-all")) |
                 InfoResult("Northgard: Uncharted Lands")
             }

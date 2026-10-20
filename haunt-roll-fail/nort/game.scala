@@ -542,6 +542,12 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     val earlyPerPlayer = (lastYear - 1 + 2) / 3
     val advancedPerPlayer = lastYear - 1 - earlyPerPlayer
 
+    // Development cards revealed each year: one per player, and one more with ExtraDevelopment (not against the Automa)
+    def devsPerYear = arity + (options.has(ExtraDevelopment) && setup.has(Automa).not).??(1)
+
+    // The Uncharted Horizons Development cards: chosen, or added when the extra card would empty the core decks early
+    val horizonsDevelopments = options.has(HorizonsDevelopments) || (players.has(Automa).not && ExtraDevelopment.needsHorizons(options, players.num, lastYear))
+
     // The Warchiefs box's extra clan upgrade cards
     val warchiefCards = has(Warchiefs) && options.has(WarchiefPawns).not || options.has(WarchiefCards)
 
@@ -1278,23 +1284,26 @@ object CommonExpansion extends Expansion {
                 log(o.group, o.valueOn)
             }
 
+            if (game.horizonsDevelopments && options.has(HorizonsDevelopments).not)
+                log(HorizonsDevelopments.group, HorizonsDevelopments.valueOn, "(added for the extra card each year)")
+
             game.setup.foreach { f =>
                 game.states += f -> new FactionState(f)
             }
 
-            Shuffle[Card](Cards.earlyCards.diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)).diff(options.has(NoDefensiveStrategy).??(NoDefensiveStrategy.cards)) ++ options.has(HorizonsDevelopments).??(Cards.horizonsEarlyCards), ShuffledEarlyAction(_))
+            Shuffle[Card](Cards.earlyCards.diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)).diff(options.has(NoDefensiveStrategy).??(NoDefensiveStrategy.cards)) ++ game.horizonsDevelopments.??(Cards.horizonsEarlyCards), ShuffledEarlyAction(_))
 
         case ShuffledEarlyAction(l) =>
-            game.developments = l.take(game.earlyPerPlayer * game.arity)
+            game.developments = l.take(game.earlyPerPlayer * game.devsPerYear)
 
-            Shuffle[Card](Cards.advancedCards.diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)).diff(options.has(NoDefensiveStrategy).??(NoDefensiveStrategy.cards)) ++ options.has(HorizonsDevelopments).??(Cards.horizonsAdvancedCards), ShuffledAdvancedAction(_))
+            Shuffle[Card](Cards.advancedCards.diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)).diff(options.has(NoDefensiveStrategy).??(NoDefensiveStrategy.cards)) ++ game.horizonsDevelopments.??(Cards.horizonsAdvancedCards), ShuffledAdvancedAction(_))
 
         case ShuffledAdvancedAction(l) =>
             // With six players in a long game there aren't enough Early cards: Advanced ones make up the difference
-            val short = game.earlyPerPlayer * game.arity - game.developments.num
-            game.developments ++= l.take(game.advancedPerPlayer * game.arity + short)
+            val short = game.earlyPerPlayer * game.devsPerYear - game.developments.num
+            game.developments ++= l.take(game.advancedPerPlayer * game.devsPerYear + short)
 
-            Shuffle[Card](Cards.achievementCards ++ options.has(HorizonsDevelopments).??(Cards.horizonsAchievementCards), ShuffledAchievementsAction(_))
+            Shuffle[Card](Cards.achievementCards ++ game.horizonsDevelopments.??(Cards.horizonsAchievementCards), ShuffledAchievementsAction(_))
 
         case ShuffledAchievementsAction(l) =>
             game.achievements = l.take(game.arity + options.has(ExtraAchievement).??(1))
@@ -1509,8 +1518,8 @@ object CommonExpansion extends Expansion {
                 log("Achievement cards", game.display./(_.elem).join(", "), "are available")
             }
             else {
-                game.display = game.developments.take(factions.num)
-                game.developments = game.developments.drop(factions.num)
+                game.display = game.developments.take(game.devsPerYear)
+                game.developments = game.developments.drop(game.devsPerYear)
 
                 if (game.display.any)
                     log("Development cards", game.display./(_.elem).join(", "), "are available")
