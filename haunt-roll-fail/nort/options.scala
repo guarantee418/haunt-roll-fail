@@ -264,14 +264,14 @@ case object HorizonsDevelopments extends GameOption with ToggleOption {
     )
 }
 
-// Each player's three starting tiles show at least one food, one wood and one lore between them; the game redraws
-// until they do, without asking (Marzaus's group's house rule, asked for by Gman on 2026-10-19; MapExpansion.dealStart)
+// Each player's three starting tiles are one from a food, a wood and a lore pile (Marzaus's group's house rule, asked for
+// by Gman on 2026-10-19, who picked three piles over redrawing; MapExpansion.dealStart)
 case object BalancedStartTiles extends GameOption with ToggleOption {
     val group = "Map tiles".txt
     def valueOn = "Balanced starting tiles".txt
     override val explain = $(
-        "Each player's " ~ 3.hl ~ " starting tiles show at least one " ~ Food.elem ~ ", one " ~ Wood.elem ~ " and one " ~ Lore.elem ~ " between them, on any of the three.",
-        "When one is missing, a tile goes to the bottom of the pile and the next one is drawn, until all three are there. The game does it by itself.",
+        "Each player's " ~ 3.hl ~ " starting tiles show at least one " ~ Food.elem ~ ", one " ~ Wood.elem ~ " and one " ~ Lore.elem ~ ".",
+        "The map tiles are sorted into a food, a wood and a lore pile, and each player gets one tile from each. A tile with two resources is in the pile of the rarer one; tiles with none aren't dealt.",
     )
 }
 

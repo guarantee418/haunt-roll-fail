@@ -1017,24 +1017,32 @@ object MapExpansion extends Expansion {
         case Lore => a.lore > 0
     }))
 
-    // Three starting tiles from the top of the pile; with BalancedStartTiles, while they don't show food, wood and lore,
-    // the tile whose loss leaves the most of them goes to the bottom and the next one is drawn (at most once per tile in the pile)
+    // The pile a tile goes in for BalancedStartTiles: the resource it shows that the fewest tiles show (lore, then food), none for a blank tile
+    lazy val startPileOf : Map[String, Resource] = {
+        val all = Tiles.regular ++ Tiles.horizons
+        val count = Resource.all./(r => r -> all.count(t => shown($(t.id)).has(r))).toMap
+        all./~(t => shown($(t.id)).sortBy(count).headOption./(t.id -> _)).toMap
+    }
+
+    // Three starting tiles from the top of the pile; with BalancedStartTiles, the first food, wood and lore tiles in the pile
+    // (the piles of startPileOf), or the top tile when a pile has run out
     def dealStart()(implicit game : Game) : $[String] = {
-        var hand = game.pile.take(3)
-        game.pile = game.pile.drop(3)
-
         if (game.options.has(BalancedStartTiles)) {
-            var tries = game.pile.num
+            var hand : $[String] = $
 
-            while (shown(hand).num < Resource.all.num && tries > 0) {
-                val t = hand.maxBy(t => shown(hand.diff($(t))).num)
-                hand = hand.diff($(t)) :+ game.pile.head
-                game.pile = game.pile.drop(1) :+ t
-                tries -= 1
+            Resource.all.foreach { r =>
+                val t = game.pile.find(startPileOf.get(_).has(r)).|(game.pile.head)
+                hand :+= t
+                game.pile = game.pile.diff($(t))
             }
-        }
 
-        hand
+            hand
+        }
+        else {
+            val hand = game.pile.take(3)
+            game.pile = game.pile.drop(3)
+            hand
+        }
     }
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {

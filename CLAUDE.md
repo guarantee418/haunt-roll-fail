@@ -186,8 +186,8 @@ picking the drawn clan by hand draws again). The setup options
 out of the decks), "Ban Defensive Strategy" (`NoDefensiveStrategy`, asked for by Gman on 2026-10-14;
 also offered in Adset), "Balanced starting tiles" (`BalancedStartTiles`, under Map tiles, off by default, also in Adset;
 asked for by Gman on 2026-10-19 from Marzaus's group's house rule: each player's three starting tiles show at least one food,
-one wood and one lore between them, or the game puts the tile that adds least at the bottom of the pile and draws the next,
-silently, `dealStart` in `nort/map.scala`), and the modules and
+one wood and one lore: each gets one tile from a food, a wood and a lore pile, a two-resource tile in the pile of the rarer
+one (`startPileOf`), blank tiles not dealt, `dealStart` in `nort/map.scala`; Gman picked that over redrawing), and the modules and
 expansions; Creatures, Warchiefs, Wilderness, Wastelands and Events are implemented, the others are shown but disabled) are in `nort/options.scala`.
 "Victory conditions" picks one of: the standard rules, fame only, Alternative
 victory with random cards (the rulebook's way), or Alternative victory with
