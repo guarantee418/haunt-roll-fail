@@ -1274,6 +1274,32 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         (ready ++ used).none.?("Ancestral Equipment: none".txt).|((ready ++ used).merge)
     }
 
+    // Kraken Clan's two High Tide tokens in its panel: those on the map in color, those in the reserve grayed out
+    def tideRow : Elem = {
+        val out = game.tides./(a => Image("token-high-tide", styles.gearSmall, "High Tide token in " + game.board.label(a)))
+        val reserve = (2 - game.tides.num).times(Image("token-high-tide", $(styles.gearSmall, styles.offBoard), |("High Tide token in reserve")))
+        (out ++ reserve).merge
+    }
+
+    // What a High Tide token does, and where each one is
+    def tideView : Elem = {
+        val rows = 0.until(2).$./{ n =>
+            val where : Elem = game.tides.lift(n)./(a => "on the map in " ~ a.elem).|("in reserve".txt)
+            (Image("token-high-tide", $(styles.gearLarge) ++ (n >= game.tides.num).$(styles.offBoard), |("High Tide token")).div(styles.gearCell) ~
+                where.div(styles.gearCell)(styles.winterCell))
+        }
+
+        ((Kraken.name.styled(colorOf(Kraken)) ~ " " ~ "High Tide".hl).hlb.div ~
+            rows.merge.div(styles.tideTable) ~
+            ("Before playing a Kraken card, Kraken may place a High Tide token in a territory it controls (with both on the map, " ~
+                "it may move one there instead). A token returns to the reserve when Kraken no longer controls its territory.").spn(xstyles.smaller85).div ~
+            CombatText("Combat step 4: enemies fighting Kraken in a territory with a High Tide token suffer 1 casualty.").spn(xstyles.smaller85).div ~
+            "The Kraken cards' Kraken Clan and Knowledge from Beyond use the territories with a High Tide token.".spn(xstyles.smaller85).div ~
+            HorizontalBreak ~
+            "(tap to close)".spn(xstyles.smaller85).div
+        ).div
+    }
+
     // All seven tokens: what each does, and where it is (ready, used, on the map or in the pile, which shows its number on top)
     def gearView : Elem = {
         val rows = 1.to(7).$./{ n =>
@@ -1446,7 +1472,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         // New Blood: Kraken's High Tide tokens, Ox's Ancestral Equipment tokens
         val nb = f match {
-            case Kraken => ("High Tide: ".txt ~ (2 - game.tides.num).hl ~ " in reserve").div
+            case Kraken => OnClick(TideView, tideRow.div(styles.gearRow)(xlo.pointer))
             // no line while Ox has no token ready or used ("Ancestral Equipment: none" sat under the panel's drag handle at the start)
             case Ox if game.gearReady.any || game.gearUsed.any => OnClick(GearView, gearRow.div(styles.gearRow)(xlo.pointer))
             case Automa => ("Cards: ".txt ~ game.automaActions.num.hl ~ " to play, " ~ game.automaDeck.num.hl ~ " in its pile").div
@@ -2478,6 +2504,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case GearView =>
             showOverlay(overlayScrollX(gearView).onClick, onClick)
+
+        case TideView =>
+            showOverlay(overlayScrollX(tideView).onClick, onClick)
 
         // A fight's result tapped in the log
         case FightReportView(r) =>

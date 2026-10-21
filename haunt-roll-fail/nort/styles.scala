@@ -154,6 +154,7 @@ package object elem {
         object gearSmall extends CustomStyle(height("1.5em"), width("auto"), vertical.align("middle"), margin("0 0.05em"))
         object gearLarge extends CustomStyle(height("min(9vh, 14vw)"), width("auto"), display("block"))
         object gearTable extends CustomStyle(display("grid"), SimpleCSSRule("grid-template-columns", "auto auto auto"), SimpleCSSRule("column-gap", "1ex"), SimpleCSSRule("row-gap", "0.4ex"), SimpleCSSRule("align-items", "center"), SimpleCSSRule("width", "max-content"), max.width("100%"), margin.left("auto"), margin.right("auto"), margin.top("1ex"), margin.bottom("1ex"))
+        object tideTable extends CustomStyle(display("grid"), SimpleCSSRule("grid-template-columns", "auto auto"), SimpleCSSRule("column-gap", "1ex"), SimpleCSSRule("row-gap", "0.4ex"), SimpleCSSRule("align-items", "center"), SimpleCSSRule("width", "max-content"), max.width("100%"), margin.left("auto"), margin.right("auto"), margin.top("1ex"), margin.bottom("1ex"))
         object gearCell extends CustomStyle(text.align("left"))
         // A unit hides the figure printed on the circle
         object pyreUnit extends CustomStyle(background.color("#000000"), border.radius("50%"))
