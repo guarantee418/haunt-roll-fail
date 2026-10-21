@@ -684,6 +684,11 @@ file covers the build, server and deploy. No session can ssh to the server
   their cards and who controls them (`showHirelings`), and a card opens larger. `ReplayCheck <games> base hire:FRP,SAD,...`
   plays bot games with those hirelings (`oldhire` without `HirelingsByTheCard`), checks every action writes and parses
   back, and lists how often each hireling choice was taken.
+- The Knaves' Serve activates acclaim in every clearing sharing a suit with the acting clearing, and each acclaim pays for
+  the suits the two share (`serveSuits` and `serveAsset` in `root/faction-knaves.scala`). It matched only clearings with
+  exactly the same suits, so acclaim at a Lilypad Peaceful enclave (rabbit and frog) or a landmark's second suit was left out
+  (MaKoBwoY couldn't craft Coins with his rabbit acclaim in Bayou and Fen on 2026-10-21). Not gated by an option: it only
+  adds craft choices, so recorded games replay the same.
 - In Advanced Setup the Knaves' four Captain cards are dealt when the factions are drawn, and the draft shows them under
   the Knaves (meeple, name and items; `FactionChoice.desc` in `root/setup.scala`, `game.draftCaptains`, asked for by Gman on
   2026-10-20); the Knaves then choose 3 of those. New games get the hidden default option `KnavesCaptainsInDraft`; older
