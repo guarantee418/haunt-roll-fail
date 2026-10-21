@@ -75,10 +75,10 @@ object Meta extends MetaGame { mmm =>
     // Team play comes from the choice above the clan picker (pickerModes), the old fixed team variants are no longer offered
     // The Tutorial's practice game has its tips on
     // Chosen casualties are on in every new game (mandatoryFor), not in older ones
-    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
+    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // New Blood has no option: picking one of its clans brings it in
-    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ WarchiefsChoice.all ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraDevelopment, ExtraAchievement, HorizonsDevelopments) ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles, BalancedStartTiles) ++ AutomaLevelOption.all ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ WarchiefsChoice.all ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraDevelopment, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles, BalancedStartTiles) ++ AutomaLevelOption.all ++ hiddenOptions
 
     // Colors and teams only for the clans in the game, as many teams as players
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -98,6 +98,7 @@ object Meta extends MetaGame { mmm =>
         case TeamOption(_, _) => false
         case VictoryModeOption(_) => VictoryChoice.alternative.exists(selected.has)
         case VictoryCardOption(_) => selected.has(AltVictoryChosen)
+        case BanDevelopment(id) => BanDevelopment.horizons(id).not || selected.has(HorizonsDevelopments)
         case _ => true
     }
 
@@ -141,10 +142,10 @@ object Meta extends MetaGame { mmm =>
     }
 
     // Chosen casualties, taking the Unrest card and the clan power report: every new game gets them; a loaded game keeps the options it was started with
-    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide)
+    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait)
 
     // Quick games take only the selected options, not the mandatory ones
-    override def randomQuickGame() = super.randomQuickGame() match { case (f, l, d, o) => (f, l, d, (o :+ ChooseCasualties :+ TakeUnrestCard :+ ClanPowerReports :+ MendFigures :+ OxPicksSpace :+ JoinedTilesOnly :+ DragonExtraFromTerritory).distinct) }
+    override def randomQuickGame() = super.randomQuickGame() match { case (f, l, d, o) => (f, l, d, (o :+ ChooseCasualties :+ TakeUnrestCard :+ ClanPowerReports :+ ReportsDontWait :+ MendFigures :+ OxPicksSpace :+ JoinedTilesOnly :+ DragonExtraFromTerritory).distinct) }
 
     // Colors by seat, as before colors could be chosen
     // Teams alternate by seat (two teams), as the old team variants did
@@ -185,10 +186,19 @@ object Meta extends MetaGame { mmm =>
                 (factions.has(Automa) && options.of[AutomaLevelOption].exists(_.level >= 3) && has(options, Creatures).not).?(ErrorResult("Automa levels 3 and up need the Creatures module")) ||
                 validateVictoryCards(factions, options) ||
                 missing.any.?(WarningResult(missing./(factionName).mkString(", ") + " will get a free color")) ||
+                tooManyBans(factions, options).?(WarningResult("The banned Development cards leave too few: some years will reveal fewer cards")) ||
                 (factions.has(Automa).not && ExtraDevelopment.needsHorizons(options, factions.num, options.of[YearsOption].single./(_.years).|(YearsOption.standard.years))).?(WarningResult("Uncharted Horizons Development cards will be added, so the decks last with the extra card")) ||
                 (options.has(TeamPlay) && teams.num == factions.num).?(WarningResult("Every player is on a team alone: a free-for-all")) |
                 InfoResult("Northgard: Uncharted Lands")
             }
+
+    // Cards banned one by one (BanDevelopment) leaving fewer Development cards than the years reveal
+    def tooManyBans(factions : $[Faction], options : $[O]) : Boolean = options.of[BanDevelopment].any && {
+        val years = options.of[YearsOption].single./(_.years).|(YearsOption.standard.years)
+        val perYear = factions.num + (options.has(ExtraDevelopment) && factions.has(Automa).not).??(1)
+        val horizons = options.has(HorizonsDevelopments) || (factions.has(Automa).not && ExtraDevelopment.needsHorizons(options, factions.num, years))
+        perYear * (years - 1) > (Cards.earlyCards ++ Cards.advancedCards ++ horizons.??(Cards.horizonsEarlyCards ++ Cards.horizonsAdvancedCards)).diff(BanDevelopment.cards(options)).num
+    }
 
     // Alternative victory with chosen cards: exactly one Map Control card and two Wealth cards (three with teams)
     def validateVictoryCards(factions : $[Faction], options : $[O]) : |[ValidationResult] = if (options.has(AltVictoryChosen).not) None else {

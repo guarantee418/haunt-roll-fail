@@ -2625,7 +2625,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // In pass and play, only the notifications of the clan holding the device are marked as shown
         shown = passing.?(shown ++ newer.diff(older).%(_.factions.intersect(self).any)).|(game.notifications)
 
-        val display = newer.diff(older).%(_.factions.intersect(self).any)./~(n => convertActions(self.single, n.infos)).some./~(_ :+ ZOption(Empty, Break))
+        // The "Combat Report" and "Clan Power Report" settings on Skip leave those reports out (ReportsDontWait)
+        def wanted(i : Info) = i match {
+            case ReportNote(_, true, _) => callbacks.settings.has(SkipCombatReport).not
+            case ReportNote(_, false, _) => callbacks.settings.has(SkipClanPowerReport).not
+            case _ => true
+        }
+
+        val display = newer.diff(older).%(_.factions.intersect(self).any)./(n => n.copy(infos = n.infos.%(wanted))).%(_.infos.any)./~(n => convertActions(self.single, n.infos)).some./~(_ :+ ZOption(Empty, Break))
 
         if (display.none)
             return
