@@ -72,6 +72,7 @@ object MetaAdset extends MetaGame {
         SetupOrderReverse,
         CardDraftFive,
         AutoHitsAssignmentMode,
+        BluffMode,
         FrogCardsAfterStartingHands,
         FrogCardsSkipLostSouls,
         FrogsCraftByClearing,
