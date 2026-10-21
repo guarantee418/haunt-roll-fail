@@ -437,6 +437,14 @@ case object KnowledgeEachTerritory extends GameOption with ToggleOption {
     def valueOn = "Knowledge from Beyond for each territory".txt
 }
 
+// The Kraken clan cards, with both High Tide tokens out, may move one to another territory Kraken controls (asked for by the
+// owner on 2026-10-21; the clan board only says "place"). Hidden, and given to every new game (Meta.mandatoryFor): older
+// games' replays must not stop on a step they never recorded
+case object KrakenMovesTide extends GameOption with ToggleOption {
+    val group = "Kraken Clan".txt
+    def valueOn = "Clan cards move a High Tide token".txt
+}
+
 // The clan power report (ClanPowers in map.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
 // (Meta.mandatoryFor), like ChooseCasualties: older games' replays must not stop on a step they never recorded
 case object ClanPowerReports extends GameOption with ToggleOption {

@@ -433,6 +433,8 @@ case class UnrestGoneAction(self : Faction, units : Int, rest : $[Faction]) exte
 case class ChooseCasualtiesAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for KnowledgeEachTerritory (Kraken's Knowledge from Beyond as printed, newblood.scala)
 case class KnowledgeEachTerritoryAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// The same for KrakenMovesTide (newblood.scala)
+case class KrakenMovesTideAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case object EndOfYearAction extends ForcedAction
 case object GameEndAction extends ForcedAction
 case object NewYearAction extends ForcedAction
@@ -1893,6 +1895,12 @@ object CommonExpansion extends Expansion {
         case KnowledgeEachTerritoryAction(then) =>
             if (game.options.has(KnowledgeEachTerritory).not)
                 game.addOption(KnowledgeEachTerritory)
+
+            Then(then)
+
+        case KrakenMovesTideAction(then) =>
+            if (game.options.has(KrakenMovesTide).not)
+                game.addOption(KrakenMovesTide)
 
             Then(then)
 
