@@ -476,6 +476,14 @@ case object ReportsDontWait extends GameOption with ToggleOption {
     def valueOn = "Reports don't wait".txt
 }
 
+// Future Sight's "or Achievement" only in the last year (Gman, 2026-10-21): the Achievements are the cards on offer then, so
+// before it Future Sight takes only a revealed Development card. Hidden, and given to every new game (Meta.mandatoryFor):
+// older games could take an Achievement early, and replay that way
+case object FutureSightLastYear extends GameOption with ToggleOption {
+    val group = "Development cards".txt
+    def valueOn = "Future Sight takes Achievements only in the last year".txt
+}
+
 // The clan power report (ClanPowers in map.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
 // (Meta.mandatoryFor), like ChooseCasualties: older games' replays must not stop on a step they never recorded
 case object ClanPowerReports extends GameOption with ToggleOption {

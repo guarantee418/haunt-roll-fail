@@ -1121,7 +1121,10 @@ Check these against the rulebook when it is at hand.
   if the reserve is too small, units are placed one at a time by choice.
 - **Raiding Party**: any enemy unit on the map; the resource comes from
   what the territory produces (tiles and buildings).
-- **Future Sight**: may take a face-up Achievement before year 7.
+- **Future Sight**: takes an Achievement only in the last year, when they
+  are the cards on offer; before it, only a revealed Development card
+  (`FutureSightLastYear`, given to every new game; older games could take
+  a face-up Achievement before the last year, and replay that way).
 - **Hidden Ways**: to any open territory, also an enemy one (then a fight).
 - **Bribery**: to any adjacent territory (Rough borders ignored) holding at
   most one other player; the moved units attack whoever is there.

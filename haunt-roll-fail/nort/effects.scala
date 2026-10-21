@@ -170,7 +170,7 @@ object CardsExpansion extends Expansion {
         game.board.adjacent(t).map(_._1).%(o => game.present(o).but(g).num <= 1).%(o => game.hostileIn(o).not).%(o => game.passOnly(g, o).not)
 
     def futureSightCards(f : Faction)(implicit game : Game) : $[Card] =
-        f.foresaw.not.??(game.display ++ (game.year < game.lastYear).??(game.achievements))
+        f.foresaw.not.??(game.display ++ (game.year < game.lastYear && game.options.has(FutureSightLastYear).not).??(game.achievements))
 
     def opponentsWithCards(f : Faction)(implicit game : Game) = factions.%(game.enemy(f, _)).%(_.hand.any)
 
