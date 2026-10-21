@@ -511,9 +511,15 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
             then
 
         case RetinueDelveAction(f, d, c, cancel, then) =>
+            // Governors (17.2.3): a delved relic is placed in the clearing, so at an enemy Council's Governing assembly the
+            // Keepers must entreat it first
+            val governed = options.has(GovernorsStopDelve) && Council.governs(f, c)
+
             if (f.rules(c) && f.at(c).of[Warrior].any)
                 Ask(f)
-                    .some(board.forests.%(game.fromForest(_).has(c)))(r => f.at(r).of[AnyRelic]./(RetinueDelveRelicAction(f, d, c, r, _, cancel, then)))
+                    .some(board.forests.%(game.fromForest(_).has(c)))(r => f.at(r).of[AnyRelic]./(RetinueDelveRelicAction(f, d, c, r, _, cancel, then).!(governed, "Governors")))
+                    .each(governed.??(factions.but(f).of[Council].%(t => t.at(c).has(GoverningAssembly) && t.friends(f).not)))(t =>
+                        CouncilEntreatAction(f, t, c, ForceAction(RetinueDelveAction(f, d, c, cancel, then))).as("Entreat".styled(t), "to close the", GoverningAssembly.of(t), "in", c))
                     .cancelIf(cancel)
                     .doneIf(cancel.not)(then)
             else

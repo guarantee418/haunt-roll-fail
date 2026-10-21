@@ -361,6 +361,14 @@ case object CounterMiceInABush extends GameOption with ToggleOption {
     val valueOn = "Mice-in-a-Bush".hh ~ " can be counter-ambushed"
 }
 
+// Governors (17.2.3) also stop the Keepers' Delve at an enemy Council's Governing assemblies, as the found relic is placed there:
+// the Delve offers an Entreat instead (reported by Gman on 2026-10-21, after the Keepers delved into one). Hidden and on by default
+// for new games; older games keep delving there so their replays don't change.
+case object GovernorsStopDelve extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Governors".hh ~ " stop the Keepers' Delve"
+}
+
 // Lilypad Diaspora's Rally or Reconcile is skipped when neither would do anything: no Militant Enclave to flip, and none to place
 // a warrior at (asked for by MaKoBwoY on 2026-10-21). Hidden and on by default for new games; older games keep asking so their
 // replays don't change.
@@ -1349,7 +1357,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1379,6 +1387,7 @@ object Meta extends MetaGame {
         OutragePeekNeedsOk,
         CounterMiceInABush,
         SkipIdleRallyReconcile,
+        GovernorsStopDelve,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
