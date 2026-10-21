@@ -84,6 +84,7 @@ case class PrecisionPayAction(self : Faction, r : Resource, e : MoveEffect, then
 
 // KRAKEN
 case class TidePlaceAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("High Tide".hl, "place a token in")(area) with MapTarget { def target = area }
+case class TideMoveAction(self : Faction, from : AreaRef, area : AreaRef, then : ForcedAction) extends BaseAction("High Tide".hl, "move a token from", from, "to")(area) with MapTarget { def target = area }
 case class KaraTideAction(self : Faction, from : AreaRef, area : AreaRef, then : ForcedAction) extends BaseAction(WarchiefElem(Kraken), "move a", "High Tide".hl, "token to her territory from")(from) with MapTarget { def target = from }
 case class KrakenCollectAction(self : Faction, r : Resource, then : ForcedAction) extends BaseAction("Kraken Clan".hl)("Collect", 1.hl, r)
 case class EndlessTideAction(self : Faction, area : AreaRef, enemy : Faction, then : ForcedAction) extends BaseAction("Endless Tide".hl, "remove a unit for", 1.hl, Lore, "in")(area, InParens(enemy)) with MapTarget { def target = area }
@@ -187,6 +188,9 @@ object NewBloodExpansion extends Expansion {
     def tideTerritories(implicit game : Game) = game.controlled(Kraken).%(game.tideIn)
 
     def tideTargets(implicit game : Game) = (game.tides.num < 2).??(game.controlled(Kraken).%(t => game.tideIn(t).not))
+
+    // With both tokens out, a clan card may move one to another territory Kraken controls (KrakenMovesTide)
+    def tideMoves(implicit game : Game) = (game.options.has(KrakenMovesTide) && game.tides.num >= 2).??(game.tides./~(o => game.controlled(Kraken).%(t => game.tideIn(t).not)./(t => (o, t.anchor))))
 
     // Ox's tokens on the map in territories Ox controls
     def gearOnMap(f : Faction)(implicit game : Game) : $[(SpaceRef, Int)] =
@@ -487,6 +491,9 @@ object NewBloodExpansion extends Expansion {
                     if (tideTargets.any)
                         Ask(f).each(tideTargets)(t => TidePlaceAction(f, t.anchor, resolve)).add(resolve.as("Place no token")("High Tide".hl))
                     else
+                    if (tideMoves.any)
+                        Ask(f).each(tideMoves)((o, a) => TideMoveAction(f, o, a, resolve)).add(resolve.as("Move no token")("High Tide".hl))
+                    else
                         Then(resolve)
 
                 case Ox =>
@@ -701,6 +708,11 @@ object NewBloodExpansion extends Expansion {
         // Kàra defending, before the fight: a High Tide token may come to her territory
         case ChiefStepOneAction(Kraken :: Nil, a, then) if game.chiefIn(game.board.territory(a), Kraken) && game.tides.any && game.tideIn(game.board.territory(a)).not =>
             Ask(Kraken).each(game.tides)(o => KaraTideAction(Kraken, o, a, then)).add(then.as("Leave the tokens where they are")(WarchiefElem(Kraken)))
+
+        case TideMoveAction(f, from, a, then) =>
+            game.tides = game.tides.diff($(from)) :+ a
+            f.log("moved a", "High Tide".hl, "token from", from, "to", a)
+            then
 
         case KaraTideAction(f, from, a, then) =>
             game.tides = game.tides.diff($(from)) :+ a
