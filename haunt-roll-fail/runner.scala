@@ -729,10 +729,14 @@ object Runner {
 
                     logged += 1
 
-                    line = lines.num
+                    // Someone looking at an earlier state in the log (a spectator, or a player waiting) stays there as
+                    // other players' moves come in (Robotos, 2026-10-21); "Back" or their own turn brings them to the latest
+                    if (ui.overrideGame.none) {
+                        line = lines.num
 
-                    if (aa.none)
-                        scrollActionToLatest()
+                        if (aa.none)
+                            scrollActionToLatest()
+                    }
 
                     if (Speech.enabled && aa.num < 6)
                         stop { later =>
@@ -763,7 +767,8 @@ object Runner {
 
                         ui.wait(self, waitingFor, "z... z... z...".txt)
 
-                        setTimeout(0) { hrf.web.timed(0)("scrollActionToLatest()") { scrollActionToLatest() } }
+                        if (ui.overrideGame.none)
+                            setTimeout(0) { hrf.web.timed(0)("scrollActionToLatest()") { scrollActionToLatest() } }
                     }
 
                     c match {

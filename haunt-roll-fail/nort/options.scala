@@ -252,6 +252,29 @@ case object NoDefensiveStrategy extends GameOption with ToggleOption {
     val cards : $[Card] = $(Development("defensive-strategy"))
 }
 
+// Development cards left out of the decks one by one (asked for by Marzaus and Robotos on 2026-10-21: Future Sight, Market Place,
+// "any cards you want"); Game: ShuffledEarlyAction, ShuffledAdvancedAction
+case class BanDevelopment(id : String) extends GameOption with ToggleOption {
+    val group = "Ban Development cards".txt
+    override def fold = |("Ban Development cards")
+    def info = Cards.developments(id)
+    def valueOn = info.name.txt
+    override def decorate(e : Elem) = e ~ " " ~ BanDevelopment.deck(id).spn(xstyles.smaller85)
+    override val explain = $(info.name.hl ~ ": " ~ info.textElem)
+}
+
+object BanDevelopment {
+    val all : $[BanDevelopment] = (Cards.early ++ Cards.advanced ++ Cards.horizonsEarly ++ Cards.horizonsAdvanced).lefts./(BanDevelopment(_))
+
+    def horizons(id : String) = (Cards.horizonsEarly ++ Cards.horizonsAdvanced).lefts.has(id)
+
+    def deck(id : String) = (Cards.early ++ Cards.horizonsEarly).lefts.has(id).?("(Early").|("(Advanced") + horizons(id).??(", Uncharted Horizons") + ")"
+
+    // Every card the setup leaves out: the two ban options and the cards banned one by one
+    def cards(options : $[BaseOption]) : $[Card] =
+        options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards) ++ options.has(NoDefensiveStrategy).??(NoDefensiveStrategy.cards) ++ options.of[BanDevelopment]./(o => Development(o.id))
+}
+
 // One more Development card revealed each year than there are players; the one left after everyone passes is discarded
 // (Game.devsPerYear; not offered against the Automa, optionsFor in meta.scala)
 case object ExtraDevelopment extends GameOption with ToggleOption {
@@ -266,7 +289,7 @@ case object ExtraDevelopment extends GameOption with ToggleOption {
     // the Uncharted Horizons ones join in (Game.horizonsDevelopments; told on the setup screen, validateFactionSeatingOptions)
     def needsHorizons(options : $[BaseOption], players : Int, years : Int) : Boolean =
         options.has(ExtraDevelopment) && options.has(HorizonsDevelopments).not &&
-            (players + 1) * (years - 1) > (Cards.earlyCards ++ Cards.advancedCards).diff(options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards)).diff(options.has(NoDefensiveStrategy).??(NoDefensiveStrategy.cards)).num
+            (players + 1) * (years - 1) > (Cards.earlyCards ++ Cards.advancedCards).diff(BanDevelopment.cards(options)).num
 }
 
 // One more Achievement card than there are players is revealed in the last year (Game: ShuffledAchievementsAction);
@@ -443,6 +466,14 @@ case object KnowledgeEachTerritory extends GameOption with ToggleOption {
 case object KrakenMovesTide extends GameOption with ToggleOption {
     val group = "Kraken Clan".txt
     def valueOn = "Clan cards move a High Tide token".txt
+}
+
+// The combat report and the clan power report are notifications that don't stop the game (Robotos, 2026-10-21: nobody
+// should wait for another player to tap OK on a box only they read): each player sees them over their screen the next time
+// it updates (ReportNote in map.scala). Hidden, and given to every new game (Meta.mandatoryFor): older games recorded the OKs
+case object ReportsDontWait extends GameOption with ToggleOption {
+    val group = "Clan powers".txt
+    def valueOn = "Reports don't wait".txt
 }
 
 // The clan power report (ClanPowers in map.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game

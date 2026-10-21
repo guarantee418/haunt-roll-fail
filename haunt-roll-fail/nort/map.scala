@@ -499,6 +499,9 @@ object CombatReport {
     }
 }
 
+// A combat report or clan power report sent as a notification (ReportsDontWait), its text as it was then
+case class ReportNote(self : Faction, combat : Boolean, body : Elem) extends BaseInfo(combat.?("Combat report").|("Clan power").hl)(body)
+
 // The clan power report (asked for by Robotos on 2026-10-12): after an action that set off a clan's own power without
 // asking anything (Raven, Stag, Boar, Goat, Wolf, Dragon's Pyre, Ox's Ancestral Equipment, Rat's units), a box tells
 // its player where it went off and what it did, with a button naming what was collected ("Collect 1 Lore"). The power
@@ -1750,6 +1753,15 @@ object MapExpansion extends Expansion {
 
             Then(then)
 
+        // ReportsDontWait: each reader gets the report as a notification, and the game goes on
+        case CombatReportAction(l, then) if game.options.has(ReportsDontWait) =>
+            game.fightReport.foreach { r =>
+                l.foreach(f => game.notify(f, $(ReportNote(f, true, CombatReport.text(r, |(f))))))
+            }
+
+            game.fightReport = None
+            Then(then)
+
         case CombatReportAction(l, then) =>
             if (l.none) {
                 game.fightReport = None
@@ -1761,6 +1773,15 @@ object MapExpansion extends Expansion {
 
         case CombatReportDoneAction(_, rest, then) =>
             Then(CombatReportAction(rest, then))
+
+        case ClanPowerReportAction(then) if game.options.has(ReportsDontWait) =>
+            game.powerNotes./(_.f).distinct.foreach { f =>
+                game.notify(f, $(ReportNote(f, false, ClanPowers.text(f) ~ Break ~ ClanPowers.button(f))))
+                game.note("power-report")
+            }
+
+            game.powerNotes = $
+            Then(then)
 
         case ClanPowerReportAction(then) =>
             game.powerNotes.headOption match {
@@ -1925,9 +1946,17 @@ object MapExpansion extends Expansion {
                 f.log("found no tile to explore with")
                 Then(then)
             }
-            else
+            else {
+                // A log line of its own (Robotos, 2026-10-21): "Undo to here" on it goes back to the tile drawn but not yet
+                // placed, which Limited undo allows, while the line before was the card played before the draw
+                if (game.exploring.num == 1)
+                    f.log("drew a tile to explore")
+                else
+                    f.log("drew", game.exploring.num.hl, "tiles to explore")
+
                 Ask(f).each(game.exploring)(t => ExploreTileAction(f, t, times, e, then))
                     .when(redraw && game.exploring.num == 1 && game.pile.any)(ExploreRedrawAction(f, game.exploring.head, times, e, then))
+            }
 
         case ExploreRedrawAction(f, tile, times, e, then) =>
             game.exploring = $
