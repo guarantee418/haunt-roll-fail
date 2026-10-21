@@ -663,18 +663,18 @@ case object Teams2v2v2 extends Module("2v2v2 Teams", "variant, 2v2 rules") {
 
 // FAN CONTENT
 // The Minerals module (minerals.scala), fan-made by Maciej "Niedźwiedź" Drewing (BoardGameGeek file 255809, 2023; asked for by Gman
-// on 2026-10-21): Mines on territories with a creature lair dig up Stone, Iron and Ruby at the Harvest
+// on 2026-10-21): Mines on territories with a creature lair dig up Stone, Iron and Gem at the Harvest
 case object MineralsModule extends Module("Minerals", "fan-made module by Maciej Drewing") {
     override def ready = true
     override def fan = true
     override def expansion = |(MineralsExpansion)
     def about = $(
         "A new small building, the " ~ "Mine".hl ~ ": " ~ Amount(1.hl, Wood.elem) ~ ", only in a territory with a creature lair (" ~ 7.hl ~ " in the supply).",
-        CombatText("At the Harvest each player rolls the combat die, times their Mines: 2 axes give a Stone, an axe and a skull an Iron, 2 skulls a Ruby."),
+        CombatText("At the Harvest each player rolls the combat die, times their Mines: 2 axes give a Stone, an axe and a skull an Iron, 2 skulls a Gem."),
         "Minerals are limited. Each is worth two resources of your choice for trading, Winter and the final fame; spent minerals leave the game.",
         "Stone".hl ~ ": during a Build, upgrade one of your buildings (" ~ 1.hl ~ " for a small one, " ~ 2.hl ~ " for a large one); it then counts as two.",
         "Iron".hl ~ ": in a fight, roll two combat dice instead of one.",
-        "Ruby".hl ~ ": when playing cards, gain the fame of a card in your discard pile and put it on top of your draw pile.",
+        "Gem".hl ~ ": when playing cards, gain the fame of a card in your discard pile and put it on top of your draw pile.",
         "Fan-made, not part of the published game.".styled(xstyles.warning),
     )
 }

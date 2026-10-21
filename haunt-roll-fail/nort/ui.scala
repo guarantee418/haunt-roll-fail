@@ -1300,11 +1300,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             (Mine.elem ~ ": " ~ built.hl ~ " built, " ~ game.buildingsLeft(Mine).hl ~ " left in the supply; " ~ game.upgraded.num.hl ~ " building" ~ (game.upgraded.num != 1).??("s") ~ " upgraded with " ~ Stone.elem).div ~
             HorizontalBreak ~
             ("A " ~ Mine.elem ~ " costs " ~ Amount(1.hl, Wood.elem) ~ " and goes only in a territory with a creature lair. At the Harvest each player rolls the combat die and multiplies the result by their Mines (an upgraded one counts twice): ").spn(xstyles.smaller85).div ~
-            CombatText("2 axes give a Stone, an axe and a skull an Iron, 2 skulls a Ruby. The die face with a choice gives one symbol per Mine, each picked apart.").spn(xstyles.smaller85).div ~
+            CombatText("2 axes give a Stone, an axe and a skull an Iron, 2 skulls a Gem. The die face with a choice gives one symbol per Mine, each picked apart.").spn(xstyles.smaller85).div ~
             ("Each mineral is worth two resources of your choice for trading, Winter and the final fame. Resources can't be traded for minerals, and spent minerals leave the game.").spn(xstyles.smaller85).div ~
             (Stone.elem ~ " During a Build, upgrade one of your buildings for " ~ 1.hl ~ " (small) or " ~ 2.hl ~ " (large): it then counts as two of its kind. Removed, it loses its Stone.").spn(xstyles.smaller85).div ~
             (Iron.elem ~ CombatText(" In a fight, after the food, spend one to roll two combat dice and add them up.")).spn(xstyles.smaller85).div ~
-            (Ruby.elem ~ " When playing cards, before or after, spend one to gain the fame of a card in your discard pile; the card goes on top of your draw pile.").spn(xstyles.smaller85).div ~
+            (Gem.elem ~ " When playing cards, before or after, spend one to gain the fame of a card in your discard pile; the card goes on top of your draw pile.").spn(xstyles.smaller85).div ~
             "Fan-made by Maciej Drewing (BoardGameGeek).".spn(xstyles.smaller85).div ~
             HorizontalBreak ~
             "(tap to close)".spn(xstyles.smaller85).div
@@ -1556,7 +1556,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val grid = stacked.?(rows.div(styles.ledger)).|(rows.div(styles.ledger)(styles.ledgerCompact))
         val ledger = grid
 
-        // Minerals module: the Mines, then the Stone, Iron and Ruby held (tapping them shows the supply and what each does)
+        // Minerals module: the Mines, then the Stone, Iron and Gem held (tapping them shows the supply and what each does)
         val minerals = (game.has(MineralsModule) && f != Automa).?(OnClick(MineralsView, row(item(MineralsExpansion.mines(f).hl, Image(Mine.image, styles.inlineIcon).alt("Mines")) +: Mineral.all./(m => item(state.mineral(m).hl, m.elem))).div(styles.panelLine)(xlo.pointer))).|(Empty)
 
         val content = (title.div ~ cards ~ units ~ ledger ~ minerals ~ nb ~ goals ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)

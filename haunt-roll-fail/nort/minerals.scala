@@ -19,24 +19,24 @@ import nort.elem._
 // BoardGameGeek file 255809 "[Fan-made] Module: Minerals" (2023), here from its Polish print-and-play version (Czacha Games).
 // RULES.md (Minerals) lists the choices made where the module is short
 
-// Stone, Iron and Ruby, shown as their icons (ui-stone, ui-iron, ui-ruby, cut from the module's rules)
+// Stone, Iron and Gem, shown as their icons (ui-stone, ui-iron, ui-gem, cut from the module's rules)
 trait Mineral extends NamedToString with Elementary with Record {
     override def elem : Elem = Image("ui-" + name.toLowerCase, styles.inlineIcon).alt(name)
 }
 
 case object Stone extends Mineral
 case object Iron extends Mineral
-case object Ruby extends Mineral
+case object Gem extends Mineral
 
 object Mineral {
-    val all : $[Mineral] = $(Stone, Iron, Ruby)
+    val all : $[Mineral] = $(Stone, Iron, Gem)
 }
 
 // The Mine, a small building (the module's 7 tokens), built only in a territory with a creature lair; not in Building.all,
 // so games without the module never offer it (MineralsExpansion.buildings)
 case object Mine extends Building { val large = false }
 
-// Minerals as "1 [stone] 2 [ruby]"
+// Minerals as "1 [stone] 2 [gem]"
 case class MineralsLabel(l : $[Mineral]) extends Elementary {
     def elem : Elem = Mineral.all.%(l.has)./(m => Amount(l.count(m).hl, m.elem)).join(" ")
 }
@@ -54,12 +54,13 @@ case class IronAction(self : Faction, use : Boolean, then : ForcedAction) extend
 case class DicePair(a : DieFace, b : DieFace) extends Record
 case class IronRolledAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], random : DicePair, then : ForcedAction) extends RandomAction[DicePair]
 // Two dice with "1 point or 1 casualty" faces: how many of them are points
+case class CreatureIronRolledAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, random : DicePair, then : ForcedAction) extends RandomAction[DicePair]
 case class IronChooseAction(self : Faction, attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], choice : DieFace, then : ForcedAction) extends BaseAction(self, "rolled two dice with", Iron, Break, FightInfo(attacker, defender, area, e, food, faces, true))(choice)
 
 // RUBY: the fame of a card in the discard pile, which goes on top of the draw pile; stage as in TurnAction
-case class RubyAction(self : Faction, card : Card, stage : Int) extends BaseAction("Spend a", Ruby, "for the fame of a discarded card", "(it goes on top of your draw pile)")(card.handImg, Amount(card.fame.hl, FameIcon())) with ViewObject[Card] { def obj = card }
-// Back to the cards in hand after a Ruby spent before playing one
-case class RubyPlayAction(f : Faction) extends ForcedAction
+case class GemAction(self : Faction, card : Card, stage : Int) extends BaseAction("Spend a", Gem, "for the fame of a discarded card", "(it goes on top of your draw pile)")(card.handImg, Amount(card.fame.hl, FameIcon())) with ViewObject[Card] { def obj = card }
+// Back to the cards in hand after a Gem spent before playing one
+case class GemPlayAction(f : Faction) extends ForcedAction
 
 // TRADES: a mineral counts as two of the three resources paid for one
 case class MineralTradeAction(self : Faction, pay : $[Mineral], also : |[Resource], gain : Resource, then : ForcedAction) extends BaseAction("Trade", "three resources for one", "(a mineral counts as two)")("Pay", MineralsLabel(pay), also./(_.elem).|(Empty), "for", gain)
@@ -73,8 +74,8 @@ case object MineralsView
 
 
 object MineralsExpansion extends Expansion {
-    // The minerals in the supply: 3, 2 and 1.5 per player (rounded up) of Stone, Iron and Ruby, as in the module's table for 2 to 5 players
-    def supply(players : Int) : Map[Mineral, Int] = Map(Stone -> 3 * players, Iron -> 2 * players, Ruby -> (3 * players + 1) / 2)
+    // The minerals in the supply: 3, 2 and 1.5 per player (rounded up) of Stone, Iron and Gem, as in the module's table for 2 to 5 players
+    def supply(players : Int) : Map[Mineral, Int] = Map(Stone -> 3 * players, Iron -> 2 * players, Gem -> (3 * players + 1) / 2)
 
     // The buildings in this game: the Mine only with the module
     def buildings(implicit game : Game) : $[Building] = Building.all ++ game.has(MineralsModule).$(Mine)
@@ -86,7 +87,7 @@ object MineralsExpansion extends Expansion {
 
     def left(m : Mineral)(implicit game : Game) = game.mineralBank.getOrElse(m, 0)
 
-    // Every haul the rolled symbols can pay for, and none paying for more: 2 axes a Stone, an axe and a skull an Iron, 2 skulls a Ruby,
+    // Every haul the rolled symbols can pay for, and none paying for more: 2 axes a Stone, an axe and a skull an Iron, 2 skulls a Gem,
     // as far as the supply goes. "1 point or 1 casualty" gives one symbol per Mine, each picked apart
     def hauls(face : DieFace, mines : Int)(implicit game : Game) : $[$[Mineral]] = {
         val axes = face.points * mines
@@ -98,10 +99,10 @@ object MineralsExpansion extends Expansion {
             else 2 * s + i <= axes && i + 2 * r <= skulls
 
         val max = (axes + skulls + free) / 2
-        val all = for (s <- 0.to(math.min(max, left(Stone))).$; i <- 0.to(math.min(max, left(Iron))).$; r <- 0.to(math.min(max, left(Ruby))).$; if fits(s, i, r)) yield (s, i, r)
+        val all = for (s <- 0.to(math.min(max, left(Stone))).$; i <- 0.to(math.min(max, left(Iron))).$; r <- 0.to(math.min(max, left(Gem))).$; if fits(s, i, r)) yield (s, i, r)
         val best = all.%{ case (s, i, r) => all.exists { case (s2, i2, r2) => s2 >= s && i2 >= i && r2 >= r && (s2, i2, r2) != (s, i, r) }.not }
 
-        best.%(_ != ((0, 0, 0))).sortBy { case (s, i, r) => (-r, -i, -s) }./{ case (s, i, r) => s.times(Stone : Mineral) ++ i.times(Iron : Mineral) ++ r.times(Ruby : Mineral) }
+        best.%(_ != ((0, 0, 0))).sortBy { case (s, i, r) => (-r, -i, -s) }./{ case (s, i, r) => s.times(Stone : Mineral) ++ i.times(Iron : Mineral) ++ r.times(Gem : Mineral) }
     }
 
     // Stone: f's buildings it can upgrade now (once per Build), 1 Stone for a small one, 2 for a large one
@@ -112,9 +113,9 @@ object MineralsExpansion extends Expansion {
 
     def cost(b : Building) = b.large.?(2).|(1)
 
-    // Ruby: the cards in f's discard pile that give fame, while playing cards (stage as in TurnAction)
-    def rubies(f : Faction, stage : Int)(implicit game : Game) : $[UserAction] =
-        (game.has(MineralsModule) && f.mineral(Ruby) > 0).??(f.discard.distinct.%(_.fame > 0)./(c => RubyAction(f, c, stage)))
+    // Gem: the cards in f's discard pile that give fame, while playing cards (stage as in TurnAction)
+    def gems(f : Faction, stage : Int)(implicit game : Game) : $[UserAction] =
+        (game.has(MineralsModule) && f.mineral(Gem) > 0).??(f.discard.distinct.%(_.fame > 0)./(c => GemAction(f, c, stage)))
 
     // The harvest trades with minerals: a mineral and a resource, or two minerals, for a resource not paid in
     def trades(f : Faction, then : ForcedAction)(implicit game : Game) : $[UserAction] = {
@@ -233,6 +234,24 @@ object MineralsExpansion extends Expansion {
 
             Then(then)
 
+        // In a fight with a creature, the player's die (casualties don't hurt creatures, so a choice face is a point)
+        case CreatureFoodPaidAction(f, a, c, e, attacking, food, then) if game.has(MineralsModule) && f != Automa && f.mineral(Iron) > 0 && game.ironAsked.has(f).not =>
+            val next = CreatureFoodPaidAction(f, a, c, e, attacking, food, then)
+
+            Ask(f).add(IronAction(f, true, next)).add(IronAction(f, false, next))
+
+        case CreatureFoodPaidAction(f, a, c, e, attacking, food, then) if game.ironFight.has(f) =>
+            Random[DicePair](NorthgardDie.faces./~(x => NorthgardDie.faces./(y => DicePair(x, y))), CreatureIronRolledAction(f, a, c, e, attacking, food, _, then))
+
+        case CreatureIronRolledAction(f, a, c, e, attacking, food, DicePair(x, y), then) =>
+            game.ironFight = game.ironFight.but(f)
+
+            f.log("rolled", x, "and", y, "with", Iron)
+
+            val l = $(x, y)
+
+            Then(CreatureFaceAction(f, a, c, e, attacking, food, DieFace(l./(d => d.choice.?(1).|(d.points)).sum, l./(_.casualties).sum, false), then))
+
         case CombatRollAction(attacker, defender, a, e, food, faces, then) if faces.num < 2 && game.ironFight.has((faces.num == 0).?(attacker).|(defender)) =>
             Random[DicePair](NorthgardDie.faces./~(x => NorthgardDie.faces./(y => DicePair(x, y))), IronRolledAction(attacker, defender, a, e, food, faces, _, then))
 
@@ -256,19 +275,19 @@ object MineralsExpansion extends Expansion {
             MapExpansion.rolled(attacker, defender, a, e, food, faces, choice, then)
 
         // RUBY
-        case RubyAction(f, c, stage) =>
-            spend(f, $(Ruby))
+        case GemAction(f, c, stage) =>
+            spend(f, $(Gem))
             f.discard = f.discard.diff($(c))
             f.draw = c +: f.draw
             f.fame += c.fame
 
-            f.log("spent", Ruby, "and gained", c.fame.hl, FameIcon(), "for", c, Comma, "now on top of their draw pile")
+            f.log("spent", Gem, "and gained", c.fame.hl, FameIcon(), "for", c, Comma, "now on top of their draw pile")
 
-            game.note("ruby")
+            game.note("gem")
 
-            Then((stage == 0).?(RubyPlayAction(f) : ForcedAction).|(TurnAction(f, stage)))
+            Then((stage == 0).?(GemPlayAction(f) : ForcedAction).|(TurnAction(f, stage)))
 
-        case RubyPlayAction(f) =>
+        case GemPlayAction(f) =>
             CommonExpansion.playChoices(f, 0)
 
         // TRADES

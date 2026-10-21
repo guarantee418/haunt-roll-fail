@@ -1424,6 +1424,9 @@ object MapExpansion extends Expansion {
 
         case FightAction(f, a, e, then) =>
             game.combats = game.combats.but(a)
+            // Minerals: each fight asks again whether to spend an Iron
+            game.ironAsked = $
+            game.ironFight = $
 
             val t = game.board.territory(a)
             val defender = game.present(t).but(f).head

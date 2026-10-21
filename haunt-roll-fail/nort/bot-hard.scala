@@ -841,7 +841,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case StoneUpgradeAction(_, space, _, cost, _) => |(gain { self.gainMineral(Stone, -cost) ; game.upgraded :+= space })
         case IronAction(_, use, _) => |(use.?(80).|(0))
         case IronChooseAction(s, attacker, defender, area, e, food, faces, choice, _) => |(faceChoice(s, attacker, defender, area, e, food, faces, choice))
-        case RubyAction(_, card, _) => |(card.fame * 100.0 - 100)
+        case GemAction(_, card, _) => |(card.fame * 100.0 - 100)
         case MineralTradeAction(_, pay, also, r, _) => |(gain { pay.foreach(m => self.gainMineral(m, -1)) ; also.foreach(x => self.gain(x, -1)) ; self.gain(r, 1) })
         case MineralWinterAction(_, _, _) => |(300)
         case MineralWinterSkipAction(_, _) => |(0)

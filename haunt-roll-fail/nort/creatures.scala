@@ -481,6 +481,9 @@ object CreaturesExpansion extends Expansion {
         // The player may spend food; the creature can't
         case CreatureCombatAction(f, a, c, e, attacking, then) =>
             game.fights += 1
+            // Minerals: each creature fight asks again whether to spend an Iron
+            game.ironAsked = game.ironAsked.but(f)
+            game.ironFight = game.ironFight.but(f)
             game.note("creature-fight")
             game.battle = |(a)
 

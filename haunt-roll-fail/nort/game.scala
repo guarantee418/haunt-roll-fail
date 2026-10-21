@@ -169,7 +169,7 @@ class FactionState(val faction : Faction)(implicit game : Game) {
         case Lore => lore += n
     }
 
-    // Minerals module (minerals.scala): the Stone, Iron and Ruby tokens held, each worth two resources
+    // Minerals module (minerals.scala): the Stone, Iron and Gem tokens held, each worth two resources
     var minerals : Map[Mineral, Int] = Map()
 
     def mineral(m : Mineral) = minerals.getOrElse(m, 0)
@@ -1301,8 +1301,8 @@ object CommonExpansion extends Expansion {
     // The cards in hand to play, the ones that can't be played now dimmed
     def playChoices(f : Faction, stage : Int)(implicit game : Game) : Ask = {
         val l = handChoices(f, stage).%(playable(f, _))
-        // Minerals module: a Ruby before or after the cards played
-        Ask(f).each(f.hand.distinct)(c => PlayCardAction(f, c, stage).!(l.has(c).not, (stage == 2 && c.flash.not).?("only Flash cards now").|("can't be played now"))).add(MineralsExpansion.rubies(f, stage))
+        // Minerals module: a Gem before or after the cards played
+        Ask(f).each(f.hand.distinct)(c => PlayCardAction(f, c, stage).!(l.has(c).not, (stage == 2 && c.flash.not).?("only Flash cards now").|("can't be played now"))).add(MineralsExpansion.gems(f, stage))
     }
 
     // The cards in hand that can be chosen on a turn: any at the start, then only playable ones (only Flash cards after the first)

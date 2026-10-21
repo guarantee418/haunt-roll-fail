@@ -815,11 +815,13 @@ game, reached from "Training Grounds" on the main menu.
 Fan-made by Maciej "Niedźwiedź" Drewing (BoardGameGeek user Niedwiediew,
 file 255809, "[Fan-made] Module: Minerals [ENG/PL/HU]", v2 of 2023). Built from
 its Polish print-and-play version by Czacha Games (3 pages, the same rules,
-with the Mine tokens), and the author's answer under the BGG file. The art
-(`token/building/mine`, `ui/stone`, `ui/iron`, `ui/ruby`) is cut from that PDF.
+with the Mine tokens) and the author's answer under the BGG file, then checked
+against the English one-page PDF Gman uploaded (2026-10-21), whose names are
+used (Gem, not Ruby). The art
+(`token/building/mine`, `ui/stone`, `ui/iron`, `ui/gem`) is cut from that PDF.
 
 - Setup: 7 Mine tokens join the buildings; the minerals in the supply are
-  3, 2 and 1.5 per player (rounded up) of Stone, Iron and Ruby, the module's
+  3, 2 and 1.5 per player (rounded up) of Stone, Iron and Gem, the module's
   table for 2 to 5 players (6/4/3 ... 15/10/8), extended the same way to 6
   (18/12/9) and, against the Automa, counted for 2.
 - Mine: a small building (1 wood) on a small space, only in a territory with
@@ -828,7 +830,7 @@ with the Mine tokens), and the author's answer under the BGG file. The art
 - Harvest: after the harvest and its extras (Dragon, Squirrel, the Kobolds),
   before the trades, each player with Mines in turn order rolls the combat
   die; the symbols times the Mines are exchanged: 2 axes for a Stone, an axe
-  and a skull for an Iron, 2 skulls for a Ruby, as far as the supply goes.
+  and a skull for an Iron, 2 skulls for a Gem, as far as the supply goes.
   The "1 point or 1 casualty" face gives one symbol per Mine, each picked
   apart (the author's answer). The player picks among the hauls that can't
   be bettered (`MineralsExpansion.hauls`). An upgraded Mine counts as two.
@@ -851,12 +853,13 @@ with the Mine tokens), and the author's answer under the BGG file. The art
   It still takes one space and one supply token, and is one building for the
   tie-breaks and the three-territories win. When it leaves the map (removed
   or replaced) its Stone goes back to the box (`buildings_=` in `game.scala`).
-- Iron: in a fight between clans, after each side's food (step 3), that side
-  may spend one Iron to roll two combat dice and add them up; "1 point or 1
-  casualty" faces are picked as usual. Liv's and Ox's rerolls don't apply to
-  the two dice. Fights with creatures don't use Iron.
-- Ruby: while playing cards (the Play cards choice, before the first card,
-  or after any), a player may spend Rubies, one at a time: each takes a card
+- Iron: "during Step 3 of Combat", so in every fight: after each side's food,
+  that side may spend one Iron to roll two combat dice and add them up; "1
+  point or 1 casualty" faces are picked as usual against a clan, and give the
+  point against a creature (casualties don't hurt creatures). Liv's and Ox's
+  rerolls don't apply to the two dice.
+- Gem: while playing cards (the Play cards choice, before the first card,
+  or after any), a player may spend Gems, one at a time: each takes a card
   with fame from their discard pile, gains its printed fame, and puts it on
   top of their draw pile.
 - The Automa neither builds Mines nor uses minerals.
