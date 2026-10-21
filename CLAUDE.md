@@ -622,7 +622,8 @@ file covers the build, server and deploy. No session can ssh to the server
   that clearing (Gman, Wind against Upheaval, 2026-10-21: the Keepers delved into Confluence): the relics are listed as
   unavailable ("Governors") and the Delve offers to entreat the Council first, then comes back to the Delve
   (`RetinueDelveAction` in `root/faction-expedition.scala`). New games get the hidden default option `GovernorsStopDelve`;
-  older games keep delving there so their replays don't change. `ReplayCheck <games> ki` plays the Keepers with the Council.
+  older games keep delving there so their replays don't change, and a running game can be switched over like the fixes above,
+  with `GovernorsStopDelveAction(X)` (done for Wind against Upheaval on 2026-10-21). `ReplayCheck <games> ki` plays the Keepers with the Council.
 - Lilypad Diaspora's Birdsong "Rally or Reconcile" is skipped when neither would do anything: no Militant enclave it may
   flip, and none it could place a warrior at (asked for by MaKoBwoY on 2026-10-21); the Birdsong extras (Entreat and the rest)
   are still offered then, with "Done". New games get the hidden default option `SkipIdleRallyReconcile`; older games keep

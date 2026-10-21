@@ -1512,6 +1512,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var frogsCraftByClearing = false
     var lizardsCraftByClearing = false
     var governorsStopEnclaveFlips = false
+    var governorsStopDelve = false
     var outragePeekNeedsOk = false
     var counterMiceInABush = false
     var companionsUntilSpent = false
