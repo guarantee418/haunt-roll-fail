@@ -382,6 +382,8 @@ case class LoreTree(f : Faction)
 case object PyreView
 // Tapping Ox Clan's Ancestral Equipment tokens in its panel shows all seven, what each does and where it is
 case object GearView
+// Tapping Kraken Clan's High Tide tokens in its panel shows what they do and where they are
+case object TideView
 // Cards shown while there is nothing to do with them; clicking one opens it full screen
 case class CardInfoAction(self : Faction, title : Elem, card : Card, n : Int = 1) extends BaseInfo(title)(card.handStack(n)) with ViewObject[Card] with OnClickInfo { def obj = card ; def param = card }
 case class PassAction(self : Faction) extends BaseAction("Your turn")("Pass")
