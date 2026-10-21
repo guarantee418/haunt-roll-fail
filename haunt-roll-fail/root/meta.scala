@@ -395,18 +395,35 @@ case object AutoHitsAssignmentMode extends GameOption with ToggleOption {
     )
 }
 
-case object AutoAmbushSkippingMode extends GameOption with ToggleOption {
+// Bluff Mode and Auto Skip Ambushes are one choice; Bluff Mode is the default for new games. Games without either
+// (started before Bluff Mode) keep the players' own auto skip settings, so nothing changes for them.
+case object BluffMode extends GameOption with OneOfGroup {
     val group = "Async"
-    val valueOn = "Auto Ambush Skipping".hh
+    val valueOn = "Bluff Mode".hh
     override val explain = $(
-        &("Ambush".styled(Bird) ~ " prompts are skipped " ~ "if the player doesn't have any.".&)
+        &("Every player who is " ~ "attacked".styled(styles.hit) ~ " is asked whether to " ~ "Ambush".styled(Bird) ~ ",") ~ " " ~ &("even with no " ~ "ambush".styled(Bird) ~ " card to play,") ~ " " ~ &("so nobody learns who holds one."),
+        &("The game " ~ "waits".hl ~ " for that player, " ~ "as at the table.".&),
+        &("Players' own " ~ "Auto Skip".hh ~ " settings don't skip " ~ "ambushes".styled(Bird) ~ " in this game.") ~ " " ~ &("The attacker's " ~ "counter-ambush".styled(Bird) ~ " is asked the same way."),
+        &("A player is still skipped " ~ "when it gives nothing away:".&) ~ " " ~ &("no cards in hand, ") ~ &("Scouting Party".hh ~ ", ") ~ &("a " ~ "Riverfolk".hh ~ " hand (it's open), ") ~ &("or every " ~ "ambush".styled(Bird) ~ " card already seen."),
+        &("Auto Skip Ambushes".hh ~ " instead skips every player " ~ ("who has no " ~ "ambush".styled(Bird) ~ " they can play,").&) ~ " " ~ &("so the game moves on without them."),
+    )
+}
+
+case object AutoAmbushSkippingMode extends GameOption with OneOfGroup {
+    val group = "Async"
+    val valueOn = "Auto Skip Ambushes".hh
+    override val explain = $(
+        &("An " ~ "attacked".styled(styles.hit) ~ " player " ~ ("who has no " ~ "ambush".styled(Bird) ~ " card they can play").& ~ " " ~ "is skipped,".&) ~ " " ~ &("and the game moves on without waiting for them."),
+        &("The attacker's " ~ "counter-ambush".styled(Bird) ~ " is skipped the same way."),
+        &("Quicker for " ~ "async".hl ~ " games, but everyone can tell " ~ "who holds no ambush.".&),
+        &("Bluff Mode".hh ~ " instead asks every attacked player, " ~ "every time.".&),
     )
 }
 
 case object ForcedAsyncMode extends GameOption with ToggleOption {
     val group = "Async"
     val valueOn = "Forced Async Mode".styled(xstyles.warning)
-    override def required(all : $[BaseOption]) = $($(AutoHitsAssignmentMode, AutoAmbushSkippingMode))
+    override def forcedOn(all : $[BaseOption]) = $(AutoHitsAssignmentMode, AutoAmbushSkippingMode)
     override def decorate(elem : Elem) = Image("swap")(styles.token) ~ " " ~ elem ~ " " ~ Image("swap")(styles.token)
     override val explain = $(
         &("Ambush".styled(Bird) ~ " prompts are skipped " ~ "if the player doesn't have any.".&),
@@ -1001,7 +1018,7 @@ case object PromptAmbush extends AmbushOption {
 }
 
 case object AutoAmbush extends AmbushOption {
-    val valueOn = "Auto Skip If None".hlb ~ " (Only When Online)".hl
+    val valueOn = "Auto Skip If None".hlb ~ " (Only When Online, Not in Bluff Mode)".hl
 }
 
 
@@ -1128,6 +1145,7 @@ case object UseAutoAssignHits extends Switch {
 }
 
 // Shown in every game (whatever the Out of Turn Actions setting), so a player away from the game doesn't hold up battles
+// Not offered with Bluff Mode, where every attacked player is asked
 case object AutoSkipAmbushIfNone extends Switch {
     val valueOn = "Auto Skip " ~ "Ambush".hl ~ " (If None)"
 }
@@ -1239,7 +1257,7 @@ object Meta extends MetaGame {
 
     override def optionPages(n : Int, l : $[F]) : $[$[GameOption]] = $(
         hiddenOptions ++
-        $(AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode) ++
+        $(AutoHitsAssignmentMode, BluffMode, AutoAmbushSkippingMode, ForcedAsyncMode) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
         (n > 2).?(TotalWarDominance) ++
         $,
@@ -1289,7 +1307,7 @@ object Meta extends MetaGame {
         $(NonBirdPartisans, UnthematicCoffinMakers, ErrataCoffinMakers, UnthematicPropagandaBureau) ++
         l.of[Mischief].any.$(TunnelsIgnoreRaid) ++
         l.of[Trader].any.$(TunnelsIgnoreTradePosts) ++
-        $(AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode) ++
+        $(AutoHitsAssignmentMode, BluffMode, AutoAmbushSkippingMode, ForcedAsyncMode) ++
         (n > 2).?(TotalWarDominance) ++
         (l.of[Feline].num > 1).$(TheWoodMustFlow) ++
         (l.of[Aviary].num > 1).$(OneTrueEmpire) ++
@@ -1337,6 +1355,7 @@ object Meta extends MetaGame {
         MixedDeck,
         ErrataCoffinMakers,
         AutoHitsAssignmentMode,
+        BluffMode,
         FolkHeroCharacter,
         AdSetBuffOn,
         SetupTypeCorners,

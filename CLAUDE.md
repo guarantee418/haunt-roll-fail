@@ -656,6 +656,15 @@ file covers the build, server and deploy. No session can ssh to the server
   are stored with the game (`callbacks.switches`) and shown whatever the Out of Turn Actions setting; any open client takes
   the only choice for that player (`shadowCheck` in `root/ui.scala`). New Adset games also start with
   `AutoHitsAssignmentMode`, as Root's do.
+- Root's "Bluff Mode" (asked for by Gman on 2026-10-21): under Async in setup, `BluffMode` and `AutoAmbushSkippingMode`
+  ("Auto Skip Ambushes", once "Auto Ambush Skipping", same saved name) are one choice (`OneOfGroup`), Bluff Mode the default
+  for new games and Adset; each has a "?" popup. Auto Skip skips an attacked player (and the attacker's counter-ambush, also
+  against Mice-in-a-Bush) holding no ambush they can play (`battle.scala`). Bluff Mode asks every time, and stops the
+  "Ambush!: Auto Skip If None" setting and the "Auto Skip Ambush (If None)" switch (`ask` and `shadowCheck` in
+  `root/ui.scala`, `switchesFor` hides it), which skipped at once and so showed who held none. Skips that reveal nothing
+  stay (empty hand, Scouting Party, Riverfolk's open hand, every ambush card seen). Games with neither option keep the old
+  behaviour; UI only, so no records change. Forced Async Mode now turns on Auto Hits Assignment and Auto Skip Ambushes
+  (`forcedOn`) instead of waiting for both to be picked.
 - Root pass and play (asked for by the owner on 2026-10-17): in a local game with more than one human faction
   (`Callbacks.hotseat` in `hrf.scala`: a memory or localStorage journal), each time another human faction is asked
   the action pane shows "Pass to <faction>" and a "Show Hand and Choices" button instead of its hand and choices

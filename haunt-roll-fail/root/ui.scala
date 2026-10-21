@@ -5399,7 +5399,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         fix(f).as[Faction]./~(f => allSwitches.%{
             case PickFactionIfAvailable(s) => false
             case _ if game.states.contains(f).not => false
-            case AutoSkipAmbushIfNone => true
+            case AutoSkipAmbushIfNone => options.has(BluffMode).not
             case UseAutoAssignHits => true
             case _ if callbacks.settings.has(NoOutOfTurn) => false
             case SkipAmbushSuit(_) if f.hand.none => false
@@ -5500,7 +5500,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         val test = hrf.HRF.flag("async-test")
 
         // The two in-game switches every player sees act at once: any client that is open takes the only choice
-        if (actions.has(HiddenAmbush) && choice.num == 1 && isEnabled(f, AutoSkipAmbushIfNone)) {
+        if (actions.has(HiddenAmbush) && choice.num == 1 && isEnabled(f, AutoSkipAmbushIfNone) && options.has(BluffMode).not) {
             if (test) alog("auto skip ambush if none".hl, 0, _ => {})
 
             return Some(choice(0))
@@ -5588,7 +5588,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         // The in-game switches (a player's choice for this game, honoured on every device) count as well as the settings
         lazy val asked = faction./(fix)./~(_.as[Faction])
 
-        if (actions.has(HiddenAmbush) && choice.num == 1 && (callbacks.settings.has(AutoAmbush) || asked.exists(isEnabled(_, AutoSkipAmbushIfNone)))) {
+        // With Bluff Mode every attacked player answers themselves, so the pause gives nothing away
+        if (actions.has(HiddenAmbush) && choice.num == 1 && options.has(BluffMode).not && (callbacks.settings.has(AutoAmbush) || asked.exists(isEnabled(_, AutoSkipAmbushIfNone)))) {
             scalajs.js.timers.setTimeout(0) { then(choice(0)) }
             return
         }
