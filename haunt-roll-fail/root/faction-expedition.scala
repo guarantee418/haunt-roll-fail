@@ -520,13 +520,13 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
             then
 
         case RetinueDelveAction(f, d, c, cancel, then) =>
-            // Governors (17.2.3): a delved relic is placed in the clearing, so at an enemy Council's Governing assembly the
-            // Keepers must entreat it first
+            // Delving moves a relic from the forest to the clearing, so Governors (17.2.3) don't stop it (owner, 2026-10-21);
+            // games started with the withdrawn GovernorsStopDelve (or switched to it) keep its Entreat choice, as they may have recorded it
             val governed = (options.has(GovernorsStopDelve) || game.governorsStopDelve) && Council.governs(f, c)
 
             if (f.rules(c) && f.at(c).of[Warrior].any)
                 Ask(f)
-                    .some(board.forests.%(game.fromForest(_).has(c)))(r => f.at(r).of[AnyRelic]./(RetinueDelveRelicAction(f, d, c, r, _, cancel, then).!(governed, "Governors")))
+                    .some(board.forests.%(game.fromForest(_).has(c)))(r => f.at(r).of[AnyRelic]./(RetinueDelveRelicAction(f, d, c, r, _, cancel, then)))
                     .each(governed.??(factions.but(f).of[Council].%(t => t.at(c).has(GoverningAssembly) && t.friends(f).not)))(t =>
                         CouncilEntreatAction(f, t, c, ForceAction(RetinueDelveAction(f, d, c, cancel, then))).as("Entreat".styled(t), "to close the", GoverningAssembly.of(t), "in", c))
                     .cancelIf(cancel)
