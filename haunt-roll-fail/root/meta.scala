@@ -361,6 +361,14 @@ case object CounterMiceInABush extends GameOption with ToggleOption {
     val valueOn = "Mice-in-a-Bush".hh ~ " can be counter-ambushed"
 }
 
+// Lilypad Diaspora's Rally or Reconcile is skipped when neither would do anything: no Militant Enclave to flip, and none to place
+// a warrior at (asked for by MaKoBwoY on 2026-10-21). Hidden and on by default for new games; older games keep asking so their
+// replays don't change.
+case object SkipIdleRallyReconcile extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Rally".hh ~ " or " ~ "Reconcile".hh ~ " skipped when idle"
+}
+
 // Advanced Setup deals the Knaves their four Captain cards when the factions are drawn, so the draft shows them
 // (asked for by Gman on 2026-10-20). Hidden and on by default for new games; older games deal them when the Knaves
 // set up, so their replays don't change.
@@ -1341,7 +1349,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1370,6 +1378,7 @@ object Meta extends MetaGame {
         GovernorsStopEnclaveFlips,
         OutragePeekNeedsOk,
         CounterMiceInABush,
+        SkipIdleRallyReconcile,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
