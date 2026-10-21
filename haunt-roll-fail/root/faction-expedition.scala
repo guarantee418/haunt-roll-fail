@@ -194,6 +194,10 @@ case class RetinueMoveDoneAction(self : Expedition, d : Card, then : ForcedActio
 case class RetinueBattleThenDelveAction(self : Expedition, d : Card) extends BaseAction("Battle".hl, "then", "Delve".hl)(d.img) with Soft with ViewCard
 case class RetinueBattleThenDelveDoneAction(self : Expedition, d : Card, then : ForcedAction) extends ForcedAction
 
+// A one-time fix for games started before GovernorsStopDelve, added to a live game's log by hand: the Keepers' Delve is
+// stopped at an enemy Council's Governing assemblies from here (game.governorsStopDelve), then goes on with then
+case class GovernorsStopDelveAction(then : ForcedAction) extends ForcedAction with SkipValidate
+
 case class RetinueDelveAction(self : Expedition, d : Card, c : Clearing, cancel : Boolean, then : ForcedAction) extends BaseAction("Delve".hl, "with", d)(c) with SoftOptional {
     def soft = cancel
 }
@@ -510,10 +514,15 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
 
             then
 
+        case GovernorsStopDelveAction(then) =>
+            game.governorsStopDelve = true
+
+            then
+
         case RetinueDelveAction(f, d, c, cancel, then) =>
             // Governors (17.2.3): a delved relic is placed in the clearing, so at an enemy Council's Governing assembly the
             // Keepers must entreat it first
-            val governed = options.has(GovernorsStopDelve) && Council.governs(f, c)
+            val governed = (options.has(GovernorsStopDelve) || game.governorsStopDelve) && Council.governs(f, c)
 
             if (f.rules(c) && f.at(c).of[Warrior].any)
                 Ask(f)
