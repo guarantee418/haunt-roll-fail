@@ -361,9 +361,9 @@ case object CounterMiceInABush extends GameOption with ToggleOption {
     val valueOn = "Mice-in-a-Bush".hh ~ " can be counter-ambushed"
 }
 
-// Governors (17.2.3) also stop the Keepers' Delve at an enemy Council's Governing assemblies, as the found relic is placed there:
-// the Delve offers an Entreat instead (reported by Gman on 2026-10-21, after the Keepers delved into one). Hidden and on by default
-// for new games; older games keep delving there so their replays don't change.
+// Withdrawn: Governors (17.2.3) were taken to stop the Keepers' Delve at an enemy Council's Governing assemblies (Gman, 2026-10-21),
+// but delving moves a relic from the forest to the clearing, it places nothing (owner, 2026-10-21). New games no longer get it; the
+// games started with it keep its extra Entreat choice in the Delve, so their recorded moves still load (RetinueDelveAction)
 case object GovernorsStopDelve extends GameOption with ToggleOption {
     val group = "Card Draft"
     val valueOn = "Governors".hh ~ " stop the Keepers' Delve"
@@ -1387,7 +1387,6 @@ object Meta extends MetaGame {
         OutragePeekNeedsOk,
         CounterMiceInABush,
         SkipIdleRallyReconcile,
-        GovernorsStopDelve,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
