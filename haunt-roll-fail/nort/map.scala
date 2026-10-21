@@ -764,7 +764,7 @@ object MapExpansion extends Expansion {
             // Ancestral Equipment tokens (Ox Clan) keep their spaces from being built on
             val free = t.areas./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not && game.gear.contains(s).not)
 
-            Building.all.%(b => e.duplicate || here.has(b).not).%(b => game.buildingsLeft(b) > 0).%(b => smallOnly.not || b.large.not)./~{ b =>
+            MineralsExpansion.buildings.%(b => e.duplicate || here.has(b).not).%(b => game.buildingsLeft(b) > 0).%(b => smallOnly.not || b.large.not).%(b => b != Mine || MineralsExpansion.lair(t))./~{ b =>
                 val kinds = b match {
                     case CarvedStone => $(CarvedSpace)
                     case b if b.large => $(LargeSpace)
@@ -787,7 +787,7 @@ object MapExpansion extends Expansion {
         game.controlled(f).%(t => game.bearIn(t).not)./~{ t =>
             val free = t.areas./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not && game.gear.contains(s).not)
             val extra = noSpace(e).$(SpaceRef(t.anchor, SpaceRef.extra + game.buildings.keys.count(s => s.area == t.anchor && s.index >= SpaceRef.extra)))
-            (free ++ extra).%(s => Building.all.exists(b => buildBlock(f, e, smallOnly, s, b).none))
+            (free ++ extra).%(s => MineralsExpansion.buildings.exists(b => buildBlock(f, e, smallOnly, s, b).none))
         }
 
     // Amenities and Horse Clan: small buildings take no space
@@ -807,6 +807,7 @@ object MapExpansion extends Expansion {
         else if (extra.not && b == CarvedStone && spaceKind(s) != CarvedSpace) |("needs a Carved Stone space")
         else if (extra.not && b.large && spaceKind(s) != LargeSpace) |("needs a large space")
         else if (extra.not && b.large.not && spaceKind(s) == LargeSpace) |("large buildings only")
+        else if (b == Mine && MineralsExpansion.lair(t).not) |("needs a creature lair")
         else if (e.duplicate.not && game.buildingsIn(t).exists(_._2 == b)) |("already in this territory")
         else if (game.buildingsLeft(b) <= 0) |("none left")
         else if (f.wood < cost) |("needs " + cost + " wood")
@@ -826,7 +827,7 @@ object MapExpansion extends Expansion {
     def replacements(f : Faction)(implicit game : Game) : $[(SpaceRef, Building)] =
         game.controlled(f)./~(game.buildingsIn)./~{ case (s, old) =>
             val carved = s.index >= SpaceRef.extra || game.board.spec(s.area).spaces(s.index).kind == CarvedSpace
-            Building.all.%(_ != old).%(_.large == old.large).%(b => b != CarvedStone || carved).%(b => game.buildingsLeft(b) > 0)./(b => s -> b)
+            MineralsExpansion.buildings.%(_ != old).%(_.large == old.large).%(b => b != CarvedStone || carved).%(b => b != Mine || MineralsExpansion.lair(game.board.territory(s.area))).%(b => game.buildingsLeft(b) > 0)./(b => s -> b)
         }
 
     // A replacement offer: with more than one building to replace, the building is tapped first (ReplaceSpotAction)
@@ -1423,6 +1424,9 @@ object MapExpansion extends Expansion {
 
         case FightAction(f, a, e, then) =>
             game.combats = game.combats.but(a)
+            // Minerals: each fight asks again whether to spend an Iron
+            game.ironAsked = $
+            game.ironFight = $
 
             val t = game.board.territory(a)
             val defender = game.present(t).but(f).head
@@ -1491,6 +1495,8 @@ object MapExpansion extends Expansion {
         case FightOverAction(then) =>
             game.battle = None
             game.gearFight = $
+            game.ironAsked = $
+            game.ironFight = $
 
             Then(then)
 
@@ -2055,16 +2061,19 @@ object MapExpansion extends Expansion {
         // BUILD
         case BuildAction(f, e, times, smallOnly, then) =>
             val spots = (times > 0).??(buildSpots(f, e, smallOnly))
+            // Minerals module: one building upgraded with Stone, whether or not anything is built
+            val upgrades = MineralsExpansion.upgrades(f, BuildAction(f, e, times, smallOnly, then))
 
-            if (spots.none)
+            if (spots.none && upgrades.none)
                 Then(BuildFinishAction(f, e, then))
             else
                 Ask(f).each(spots)(s => BuildSpotAction(f, s, times, e, smallOnly, then))
+                    .add(upgrades)
                     .add(BuildDoneAction(f, e, then))
 
         // The menu: every building with its cost, the ones that can't go on this space dimmed
         case BuildSpotAction(f, s, times, e, smallOnly, then) =>
-            Ask(f).each(Building.all)(b => BuildPickAction(f, s, b, buildCost(b, e), times, e, smallOnly, then).!(buildBlock(f, e, smallOnly, s, b).any, buildBlock(f, e, smallOnly, s, b).|("")))
+            Ask(f).each(MineralsExpansion.buildings)(b => BuildPickAction(f, s, b, buildCost(b, e), times, e, smallOnly, then).!(buildBlock(f, e, smallOnly, s, b).any, buildBlock(f, e, smallOnly, s, b).|("")))
                 .cancel
 
         case BuildPickAction(f, s, b, cost, times, e, smallOnly, then) =>
@@ -2106,6 +2115,8 @@ object MapExpansion extends Expansion {
             Then(BuildFinishAction(f, e, then))
 
         case BuildFinishAction(f, e, then) =>
+            game.stoneUsed = false
+
             // Industrious Villagers: may replace one of f's buildings by another of the same size
             val l = (e.special == IndustriousBuild).??(replacements(f))
 

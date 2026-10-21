@@ -78,7 +78,7 @@ object Meta extends MetaGame { mmm =>
     override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // New Blood has no option: picking one of its clans brings it in
-    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ WarchiefsChoice.all ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraDevelopment, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles, BalancedStartTiles) ++ AutomaLevelOption.all ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ WarchiefsChoice.all ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraDevelopment, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons).%(_.fan.not)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles, BalancedStartTiles) ++ AutomaLevelOption.all ++ Module.all.%(_.fan)./(ModuleOption) ++ hiddenOptions
 
     // Colors and teams only for the clans in the game, as many teams as players
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -447,6 +447,13 @@ object Meta extends MetaGame { mmm =>
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/building", "building-", "webp")(
         Building.all./(b => ImageAsset(b.image.drop("building-".length)))
+    ) ::
+    // Minerals module (fan content): the Mine and the mineral icons
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, MineralsModule), "token/building", "building-", "webp")(
+        $(ImageAsset(Mine.image.drop("building-".length)))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, MineralsModule), "ui", "ui-", "webp")(
+        Mineral.all./(m => ImageAsset(m.name.toLowerCase))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "ui", "ui-", "webp")(
         (1.to(99).map(n => ImageAsset("label-" + n)) ++ 1.to(15).map(n => ImageAsset("count-" + n)) ++ 1.to(40).map(n => ImageAsset("spot-" + n))).toList :+ ImageAsset("target") :+ ImageAsset("lore") :+ ImageAsset("food") :+ ImageAsset("wood") :+ ImageAsset("fame") :+ ImageAsset("confirm") :+ ImageAsset("cancel") :+ ImageAsset("rotate-left") :+ ImageAsset("rotate-right") :+ ImageAsset("unit") :+ ImageAsset("unit-supply") :+ ImageAsset("card-draw") :+ ImageAsset("card-hand") :+ ImageAsset("card-played") :+ ImageAsset("card-discard") :+ ImageAsset("first-player") :+ ImageAsset("axe") :+ ImageAsset("skull") :+ ImageAsset("harvest") :+ ImageAsset("winter") :+ ImageAsset("ship")

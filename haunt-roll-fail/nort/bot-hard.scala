@@ -403,6 +403,10 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
 
         v += f.food * resourceValueFor(f, Food) + f.wood * resourceValueFor(f, Wood) + f.lore * resourceValueFor(f, Lore)
 
+        // Minerals module: each mineral is worth two resources and more; each Mine about half a mineral at each harvest left
+        if (game.has(MineralsModule))
+            v += f.mineralCount * 100 + MineralsExpansion.mines(f) * 50 * harvests
+
         v += winterValue(f)
 
         v
@@ -446,6 +450,10 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val companion = game.companion(self)
         // Every player's resources and fame (team trades and some effects change another player's)
         val stocks = players./(f => (f, f.food, f.wood, f.lore, f.fame))
+        // Minerals module: the minerals held, the supply and the Stone upgrades
+        val minerals = players./(f => (f, f.minerals))
+        val bank = game.mineralBank
+        val upgraded = game.upgraded
         try {
             change
             total
@@ -453,6 +461,9 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         finally {
             game.units = units
             game.buildings = buildings
+            game.upgraded = upgraded
+            game.mineralBank = bank
+            minerals.foreach { case (f, m) => f.minerals = m }
             game.chiefs = chiefs
             game.setCompanion(self, companion)
             stocks.foreach { case (f, food, wood, lore, fame) =>
@@ -824,6 +835,16 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         // EXPLORE
         case ExploreTurnAction(_, tile, spot, r, _, _, _) => |(explorePlacement(tile, spot, r))
         case ExploreRedrawAction(_, _, _, _, _) => |(70)
+
+        // MINERALS MODULE
+        case MineTakeAction(_, _, _, take, _, _) => |(take./{ case Stone => 100.0 ; case Iron => 120.0 ; case _ => 150.0 }.sum)
+        case StoneUpgradeAction(_, space, _, cost, _) => |(gain { self.gainMineral(Stone, -cost) ; game.upgraded :+= space })
+        case IronAction(_, use, _) => |(use.?(80).|(0))
+        case IronChooseAction(s, attacker, defender, area, e, food, faces, choice, _) => |(faceChoice(s, attacker, defender, area, e, food, faces, choice))
+        case GemAction(_, card, _) => |(card.fame * 100.0 - 100)
+        case MineralTradeAction(_, pay, also, r, _) => |(gain { pay.foreach(m => self.gainMineral(m, -1)) ; also.foreach(x => self.gain(x, -1)) ; self.gain(r, 1) })
+        case MineralWinterAction(_, _, _) => |(300)
+        case MineralWinterSkipAction(_, _) => |(0)
 
         // HARVEST
         case TradeForAction(_, pay, r, _) => |(gain { pay.foreach(x => self.gain(x, -1)) ; self.gain(r, 1) } + victoryStep("trading"))

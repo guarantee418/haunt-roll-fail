@@ -168,6 +168,15 @@ class FactionState(val faction : Faction)(implicit game : Game) {
         case Wood => wood += n
         case Lore => lore += n
     }
+
+    // Minerals module (minerals.scala): the Stone, Iron and Gem tokens held, each worth two resources
+    var minerals : Map[Mineral, Int] = Map()
+
+    def mineral(m : Mineral) = minerals.getOrElse(m, 0)
+
+    def gainMineral(m : Mineral, n : Int) { minerals += m -> (mineral(m) + n) }
+
+    def mineralCount = minerals.values.sum
 }
 
 
@@ -609,7 +618,25 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var exploring : $[String] = $
 
     var units : Map[AreaRef, Map[Faction, Int]] = Map()
-    var buildings : Map[SpaceRef, Building] = Map()
+
+    // A space that loses its building, or gets another one, loses its Stone upgrade (Minerals module): the stones go back to the box
+    private var placed : Map[SpaceRef, Building] = Map()
+
+    def buildings : Map[SpaceRef, Building] = placed
+
+    def buildings_=(m : Map[SpaceRef, Building]) {
+        upgraded = upgraded.%(s => m.get(s).any && m.get(s) == placed.get(s))
+        placed = m
+    }
+
+    // MINERALS MODULE (minerals.scala): the minerals left in the supply, the buildings upgraded with Stone, the year the Mines
+    // were last rolled, whether this Build has used its upgrade, and in the fight being resolved, who was asked about Iron and who uses it
+    var mineralBank : Map[Mineral, Int] = if (has(MineralsModule)) MineralsExpansion.supply(arity) else Map()
+    var upgraded : $[SpaceRef] = $
+    var minedYear = 0
+    var stoneUsed = false
+    var ironAsked : $[Faction] = $
+    var ironFight : $[Faction] = $
 
     // Territories where a Move action started a fight
     var combats : $[AreaRef] = $
@@ -793,7 +820,10 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     def passOnly(f : Faction, t : Territory) : Boolean = mateHeld(f, t) || swampIn(t)
 
     // Buildings that work: none where a Spectral Warrior is
-    def working(t : Territory) : $[Building] = ghostIn(t).not.??(buildingsIn(t).map(_._2))
+    def working(t : Territory) : $[Building] = ghostIn(t).not.??(counted(t))
+
+    // The buildings in a territory, a building upgraded with Stone twice (Minerals module: it counts as two of its kind)
+    def counted(t : Territory) : $[Building] = buildingsIn(t)./~((s, b) => upgraded.has(s).?($(b, b)).|($(b)))
 
     def unitsAt(a : AreaRef) : Map[Faction, Int] = units.getOrElse(a, Map())
 
@@ -1164,7 +1194,7 @@ object CommonExpansion extends Expansion {
         val pp = payments(f)./(p => p -> Resource.all.%(r => bonfire || p.has(r).not)).%((_, l) => l.any)
         val swaps = mates./~(g => Resource.all.%(f.has(_) > 0)./~(r => Resource.all.%(_ != r).%(g.has(_) > 0)./(x => TeamTradeAction(f, g, r, x, then))))
 
-        pp./~((p, l) => l./(r => TradeForAction(f, p, r, then))) ++ (bonfire && f.wood >= 2).$(BonfireTradeAction(f, then)) ++ swaps
+        pp./~((p, l) => l./(r => TradeForAction(f, p, r, then))) ++ (bonfire && f.wood >= 2).$(BonfireTradeAction(f, then)) ++ MineralsExpansion.trades(f, then) ++ swaps
     }
 
     // f's choices in the trading phase: answers to teammates' offers, trades with the supply, and new offers to the teammates
@@ -1192,7 +1222,7 @@ object CommonExpansion extends Expansion {
 
     // Final fame: (fame tokens, cards, resources, Unrest)
     def finalFame(f : Faction)(implicit game : Game) : FinalFame =
-        FinalFame(f.fame, f.deck./(c => cardFame(f, c)).sum, f.resources / 3, -5 * f.unrest)
+        FinalFame(f.fame, f.deck./(c => cardFame(f, c)).sum, (f.resources + 2 * f.mineralCount) / 3, -5 * f.unrest)
 
     // The tie-breaks after fame, as said on the end screen
     val tieBreaks = $("territories controlled", "units", "buildings")
@@ -1203,7 +1233,7 @@ object CommonExpansion extends Expansion {
         $(
             Some(tokens.hl ~ " from fame tokens"),
             (cards != 0).?(cards.hl ~ " from cards"),
-            (sets != 0).?(sets.hl ~ " from resources (" ~ 1.hl ~ " per " ~ 3.hl ~ ")"),
+            (sets != 0).?(sets.hl ~ " from resources (" ~ 1.hl ~ " per " ~ 3.hl ~ game.has(MineralsModule).??(", " + 2 + " for a mineral") ~ ")"),
             (unrest != 0).?(unrest.hl ~ " from " ~ f.unrest.hl ~ " " ~ UnrestCard.elem ~ " card" ~ (f.unrest > 1).??("s"))
         ).flatten.join(", ")
     }
@@ -1225,7 +1255,7 @@ object CommonExpansion extends Expansion {
     // A card's fame at the end of the game (the Achievements count what f has then)
     def cardFame(f : Faction, c : Card)(implicit game : Game) : Int = {
         val territories = game.controlled(f)
-        val built = territories./~(game.buildingsIn).map(_._2)
+        val built = territories./~(game.counted)
         lazy val spaces = territories./~(_.areas)./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not)
         lazy val (food, wood, lore) = territories./(game.produce).foldLeft((0, 0, 0))((a, b) => (a._1 + b._1, a._2 + b._2, a._3 + b._3))
 
@@ -1271,7 +1301,8 @@ object CommonExpansion extends Expansion {
     // The cards in hand to play, the ones that can't be played now dimmed
     def playChoices(f : Faction, stage : Int)(implicit game : Game) : Ask = {
         val l = handChoices(f, stage).%(playable(f, _))
-        Ask(f).each(f.hand.distinct)(c => PlayCardAction(f, c, stage).!(l.has(c).not, (stage == 2 && c.flash.not).?("only Flash cards now").|("can't be played now")))
+        // Minerals module: a Gem before or after the cards played
+        Ask(f).each(f.hand.distinct)(c => PlayCardAction(f, c, stage).!(l.has(c).not, (stage == 2 && c.flash.not).?("only Flash cards now").|("can't be played now"))).add(MineralsExpansion.gems(f, stage))
     }
 
     // The cards in hand that can be chosen on a turn: any at the start, then only playable ones (only Flash cards after the first)

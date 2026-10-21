@@ -85,7 +85,13 @@ browser's localStorage as they are played (`newLocalGame` and `savedGamesMenu` i
 with kind `solo`, `quick` or `hotseat`; the 12 newest of each kind are kept, and when storage
 is full the oldest of any kind make room), so "Quick Game", "Local Game" and "Solo vs Automa"
 offer a new game or a saved one to continue (straight to a new one when none is saved),
-like Play Online. Training Grounds games aren't saved. The
+like Play Online. Training Grounds games aren't saved. Fan-made modules are listed under "Fan content" on the setup
+screen (`Module.fan`, also in Adset): the Minerals module by Maciej Drewing (BoardGameGeek file 255809; asked for by Gman on
+2026-10-21) is in `nort/minerals.scala`: Mines (a small building, `Mine`, not in `Building.all`, only in a territory with a creature
+lair) roll the combat die at the harvest for Stone, Iron and Gem (`game.mineralBank`, each clan's `minerals`), each worth two
+resources for trading, Winter and the final fame; Stone upgrades a building during a Build (`game.upgraded`, counted twice by
+`Game.counted` and `working`, cleared when the space's building changes, `buildings_=`), Iron rolls two dice in a fight, Gem takes a
+discarded card's fame while playing cards. The player panels show the Mines and minerals (tapping them, the supply and rules). The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.
