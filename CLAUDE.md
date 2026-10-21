@@ -617,6 +617,11 @@ file covers the build, server and deploy. No session can ssh to the server
   New games get the hidden default option `GovernorsStopEnclaveFlips`; older games keep flipping there so their replays don't
   change, and a running game can be switched over like the fixes above, with `GovernorsStopEnclaveFlipsAction(X)`. Provoke's log
   now says "flipped Peaceful Enclave to Militant Enclave".
+- Governors also stop the Keepers in Iron's Delve at an enemy Council's Governing assembly, as the relic found is placed in
+  that clearing (Gman, Wind against Upheaval, 2026-10-21: the Keepers delved into Confluence): the relics are listed as
+  unavailable ("Governors") and the Delve offers to entreat the Council first, then comes back to the Delve
+  (`RetinueDelveAction` in `root/faction-expedition.scala`). New games get the hidden default option `GovernorsStopDelve`;
+  older games keep delving there so their replays don't change. `ReplayCheck <games> ki` plays the Keepers with the Council.
 - Lilypad Diaspora's Birdsong "Rally or Reconcile" is skipped when neither would do anything: no Militant enclave it may
   flip, and none it could place a warrior at (asked for by MaKoBwoY on 2026-10-21); the Birdsong extras (Entreat and the rest)
   are still offered then, with "Done". New games get the hidden default option `SkipIdleRallyReconcile`; older games keep
@@ -811,7 +816,7 @@ file covers the build, server and deploy. No session can ssh to the server
   (`TraderPlayer.current`, menu state set by soft actions) in its comparisons.
   `root/replay-check.scala` plays bot games and checks that replaying every
   prefix of the recorded actions matches the live game:
-  `sbt "runMain root.ReplayCheck <games> [base|ld|tc|kd] [dense]"` with the
+  `sbt "runMain root.ReplayCheck <games> [base|ld|tc|kd|ki] [dense]"` with the
   `host.xsbt` setup. `ReplayCheck <games> marsh` or `marsh5` plays the
   Marsh map with 4 or 5 players and the three Homeland landmarks.
 - Each online game has a Spectator link and one link per player. Spectator
