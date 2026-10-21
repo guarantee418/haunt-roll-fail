@@ -297,6 +297,15 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
 
     def canAcclaim(f : Knaves, c : Clearing, battle : Boolean)(implicit game : Game) : Boolean = f.pool(Acclaim) && f.at(c).has(Acclaim).not && (f.canPlace(c) || (battle && Council.governs(f, c)))
 
+    // Serve: an acclaim's clearing matches the acting clearing if they share a suit (a Peaceful enclave's or a landmark's
+    // second suit counts), and its acclaim pays for the shared suits
+    def serveSuits(f : Knaves, c : Clearing)(implicit game : Game) = f.actingWhere./~(_.as[Clearing])./(_.suits.intersect(c.suits)).|(c.suits)
+
+    def serveAsset(f : Knaves, c : Clearing)(implicit game : Game) : SuitAsset = serveSuits(f, c) @@ {
+        case List(s) => s
+        case l => OneOf(l)
+    }
+
     def flip(f : Knaves, l : $[Item])(implicit game : Game) {
         l.foreach { i =>
             f.forTrade.%(r => r.item == i && r.exhausted.not && r.damaged.not).starting.foreach { r =>
@@ -615,7 +624,7 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
                     val l = f.serving.diff(f.activated)
 
                     Ask(f).group(KnavesServe, "activates acclaim to craft")
-                        .add(KnavesCraftMenuAction(f, l./(_.asset), true).as("Craft".styled(f), l./(c => dt.CraftSuit(c.asset)).merge)(g).!(f.hand.%(f.craftableWith(l./(_.asset), $)).none, "nothing craftable"))
+                        .add(KnavesCraftMenuAction(f, l./(serveAsset(f, _)), true).as("Craft".styled(f), l./(c => dt.CraftSuit(serveAsset(f, c))).merge)(g).!(f.hand.%(f.craftableWith(l./(serveAsset(f, _)), $)).none, "nothing craftable"))
                         .add(KnavesPendingDoneAction(f, KnavesServeCraft).as("Done"))
             }
 
@@ -812,7 +821,7 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
             f.actingWhere./~(_.as[Clearing]) match {
                 case Some(c) if f.at(c).has(Acclaim) =>
                     // Governors: no crafting with acclaim at a Council's Governing assembly
-                    f.serving = f.all(Acclaim).%(_.asset == c.asset).%!(Council.governs(f, _))
+                    f.serving = f.all(Acclaim).%(serveSuits(f, _).any).%!(Council.governs(f, _))
 
                     f.pending :+= KnavesServeCraft
 
@@ -878,7 +887,7 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
 
             if (f.filchCrafting.not)
                 used.foreach { a =>
-                    f.serving.diff(f.activated).%(_.asset == a).starting.foreach { c => f.activated :+= c }
+                    f.serving.diff(f.activated).%(serveAsset(f, _) == a).starting.foreach { c => f.activated :+= c }
                 }
 
             then
