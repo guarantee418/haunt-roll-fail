@@ -676,6 +676,10 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
         case BirdsongNAction(30, f : InvasiveEEE) =>
             XCraftMainAction(f)
 
+        // Nothing to Rally or Reconcile: no Militant Enclave to flip, and none to place a warrior at
+        case BirdsongNAction(50, f : InvasiveEEE) if options.has(SkipIdleRallyReconcile) && flippable(f, f.militant).none && (f.militant.%(f.canPlace).none || f.pooled(f.warrior) == 0) =>
+            Ask(f).done(Next).birdsong(f)
+
         case BirdsongNAction(50, f : InvasiveEEE) =>
             Ask(f)
                 .add(InvasiveEEERallyAction(f))

@@ -264,7 +264,15 @@ object SquiresDeckExpansion extends Expansion {
             f.disguises.foreach { fc =>
                 game.cards.locationsOf(fc).starting.foreach { l =>
                     game.cards.move(l, fc, f.friendTrash)
-                    game.cards.move(f.disguised, fc.card, l)
+
+                    // A Dominance spent as another suit goes beside the deck, as any discarded Dominance does
+                    val spent = $[hrf.tracker.Location[Card]](game.pile) ++ factions.of[InvasiveEEE]./(_.pond) ++ factions.of[InvasiveDDD]./(_.deck) ++
+                        factions.of[InvasiveCCC]./(_.pile) ++ factions.of[InvasiveBBB]./(_.pile) ++ factions.of[InvasiveAAA]./(_.pile)
+
+                    fc.card @@ {
+                        case d : Dominance if spent.has(l) => game.cards.move(f.disguised, d, game.dominances)
+                        case d => game.cards.move(f.disguised, d, l)
+                    }
                 }
             }
 
@@ -295,7 +303,7 @@ object SquiresDeckExpansion extends Expansion {
 
         FoxRabbitMouse.foreach { s =>
             if (f.can(FriendOfThe(s)))
-                + FriendMainAction(f, p, s).!(f.hand.%(_.suit == s).%(_.is[Dominance].not).none, "no " + s.name + " cards")
+                + FriendMainAction(f, p, s).!(f.hand.%(_.suit == s).none, "no " + s.name + " cards")
         }
     }
 
@@ -486,7 +494,7 @@ object SquiresDeckExpansion extends Expansion {
         // FRIEND OF THE
         case FriendMainAction(f, p, s) =>
             Ask(f).group(FriendOfThe(s), "treats a", s, "card as another suit")
-                .each(f.hand)(d => FriendCardAction(f, s, d).!(d.suit != s || d.is[Dominance]))
+                .each(f.hand)(d => FriendCardAction(f, s, d).!(d.suit != s))
                 .add(NoHand)
                 .cancel
 
