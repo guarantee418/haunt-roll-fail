@@ -50,6 +50,7 @@ draws a tile when no neutral territory is left.
 | Uncharted Horizons: the 5 map tiles, The Bridge among them | done 2026-10-06 (`Tiles.horizons`, option "Uncharted Horizons map tiles" under the Central tile choice; see below) |
 | Tutorial (not in the rulebook): lessons as the Stag Clan, then a practice game against the Easy bot with a tip for every choice | done 2026-10-10 (`tutorial.scala`, "Tutorial" on the main menu) |
 | Uncharted Horizons: Training Fields module (two-player duel) | done 2026-10-05 (`training.scala`, "Training Grounds" on the main menu, see Training Fields below) |
+| Fan content: the Minerals module (fan-made by Maciej Drewing, BoardGameGeek file 255809) | done 2026-10-21 (`minerals.scala`, option "Minerals" under "Fan content", also in Adset; see Minerals below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -808,6 +809,57 @@ game, reached from "Training Grounds" on the main menu.
   units left loses; both wiped out leaves the territory neutral. Otherwise
   the higher strength wins, ties to the defender, and the loser retreats or
   loses its units.
+
+## Fan content: Minerals module (done 2026-10-21)
+
+Fan-made by Maciej "Niedźwiedź" Drewing (BoardGameGeek user Niedwiediew,
+file 255809, "[Fan-made] Module: Minerals [ENG/PL/HU]", v2 of 2023). Built from
+its Polish print-and-play version by Czacha Games (3 pages, the same rules,
+with the Mine tokens), and the author's answer under the BGG file. The art
+(`token/building/mine`, `ui/stone`, `ui/iron`, `ui/ruby`) is cut from that PDF.
+
+- Setup: 7 Mine tokens join the buildings; the minerals in the supply are
+  3, 2 and 1.5 per player (rounded up) of Stone, Iron and Ruby, the module's
+  table for 2 to 5 players (6/4/3 ... 15/10/8), extended the same way to 6
+  (18/12/9) and, against the Automa, counted for 2.
+- Mine: a small building (1 wood) on a small space, only in a territory with
+  a creature lair (the lairs printed on the tiles, with or without the
+  Creatures module).
+- Harvest: after the harvest and its extras (Dragon, Squirrel, the Kobolds),
+  before the trades, each player with Mines in turn order rolls the combat
+  die; the symbols times the Mines are exchanged: 2 axes for a Stone, an axe
+  and a skull for an Iron, 2 skulls for a Ruby, as far as the supply goes.
+  The "1 point or 1 casualty" face gives one symbol per Mine, each picked
+  apart (the author's answer). The player picks among the hauls that can't
+  be bettered (`MineralsExpansion.hauls`). An upgraded Mine counts as two.
+- Each mineral is worth two resources of the player's choice for trading,
+  Winter and the final fame. Resources can't be traded for minerals; spent
+  minerals leave the game (they don't go back to the supply).
+  - Trading: a mineral and a resource, or two minerals, pay for one resource
+    (the three-for-one trade; with two minerals one is wasted).
+  - Winter: a player who can't pay with food and wood may pay the rest with
+    minerals (the fewest that cover it, each counting as 2 food or wood),
+    or keep them and take the Unrest card.
+  - Final fame: 1 per 3 resources, a mineral counting as 2.
+  - Other payments of "any resources" (Resourceful People, Local Trading)
+    don't take minerals: the module names only trading, discards and fame.
+- Stone: during a Build action (a Build card, Feast as Build, House, ...),
+  one of the player's buildings may be upgraded, 1 Stone for a small one,
+  2 for a large one, whether or not anything is built. An upgraded building
+  counts as two of its kind for every effect (`Game.counted`, `working`):
+  resources, combat points, Training Camps, Forges, Altars, Builder, Mines.
+  It still takes one space and one supply token, and is one building for the
+  tie-breaks and the three-territories win. When it leaves the map (removed
+  or replaced) its Stone goes back to the box (`buildings_=` in `game.scala`).
+- Iron: in a fight between clans, after each side's food (step 3), that side
+  may spend one Iron to roll two combat dice and add them up; "1 point or 1
+  casualty" faces are picked as usual. Liv's and Ox's rerolls don't apply to
+  the two dice. Fights with creatures don't use Iron.
+- Ruby: while playing cards (the Play cards choice, before the first card,
+  or after any), a player may spend Rubies, one at a time: each takes a card
+  with fame from their discard pile, gains its printed fame, and puts it on
+  top of their draw pile.
+- The Automa neither builds Mines nor uses minerals.
 
 ## Expansions (later)
 
