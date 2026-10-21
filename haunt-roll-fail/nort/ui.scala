@@ -351,7 +351,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     // The piece on top where the map was tapped (a creature, Blainn, a Raid card, a warchief or a clan token), whose card or info opens when the tap does nothing else
-    def pieceInfo(target : $[Any]) : |[Any] = target.headOption.%(x => x.is[Card] || x.is[WarchiefInfo] || x.is[ClanAbilityInfo])
+    def pieceInfo(target : $[Any]) : |[Any] = target.headOption.%(x => x.is[Card] || x.is[WarchiefInfo] || x.is[ClanAbilityInfo] || x.is[GearTokenInfo])
 
     // The single offered action a click on the map stands for (the cross on a building or tile being confirmed cancels)
     def clickable(target : $[Any]) : |[UserAction] = {
@@ -914,10 +914,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             pieces.add(Sprite($(at("ui-target", n)), $(Rectangle(-n / 2, -n / 2, n, n)), $(s)))(sx(x), sy(y))
         }
 
-        // Ox Clan's Ancestral Equipment tokens on their spaces, face up; tapping one picks that token (GearTakeAction targets its space)
+        // Ox Clan's Ancestral Equipment tokens on their spaces, face up; tapping one picks that token (GearTakeAction targets its space), or else says what it does
         game.gear.foreach { case (s, n) =>
             val (x, y) = board.point(s)
-            pieces.add(Sprite($(at("token-ox-" + n, 170)), $(Rectangle(-85, -85, 170, 170)), $(s)))(sx(x), sy(y))
+            pieces.add(Sprite($(at("token-ox-" + n, 170)), $(Rectangle(-85, -85, 170, 170)), $(s, GearTokenInfo(s, n))))(sx(x), sy(y))
         }
 
         // Territory numbers on every area of the territory, highlighted when it can be chosen; units at its first area
@@ -1351,6 +1351,32 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             HorizontalBreak ~
             "(tap to close)".spn(xstyles.smaller85).div
         ).div
+    }
+
+    // One token on the map, tapped: what it does in a fight, and how Ox Clan takes it
+    def gearTokenView(s : SpaceRef, n : Int) : Elem = {
+        val does = n match {
+            case 1 => "Combat step 2: if Ox Clan spends food in the fight, +1 combat point."
+            case 2 => "Combat step 1: +1 combat point."
+            case 3 => "Combat step 4: Ox Clan may reroll its combat die."
+            case 4 => "Combat step 1: +2 combat points."
+            case 5 => "Combat step 2: +2 combat points for each food Ox Clan spends, instead of +1."
+            case 6 => "Combat step 6: the enemy suffers 1 more casualty."
+            case _ => "Combat step 6: Ox Clan ignores 1 of its casualties."
+        }
+        val owner = game.controlled(Ox).exists(_.areas.contains(s.area))
+
+        ((Ox.name.styled(colorOf(Ox)) ~ " " ~ "Ancestral Equipment".hl).hlb.div ~
+            Image("token-ox-" + n, styles.gearLarge, "Token " + n).div ~
+            (("Token " + n).hl ~ " in " ~ s.area.elem).div ~
+            CombatText(does).div ~
+            HorizontalBreak ~
+            ("Before playing an Ox card, Ox Clan may take one token from a territory it controls into its reserve" ~
+                owner.??(" (it controls this one)") ~ ". " ~
+                "It may use one token from its reserve in each fight (two with Torfin); a used token turns face down until the next year.").spn(xstyles.smaller85).div ~
+            HorizontalBreak ~
+            "(tap to close)".spn(xstyles.smaller85).div
+        ).div(xlo.flexvcenter)
     }
 
     // A player's discard pile, newest card last
@@ -2537,6 +2563,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case GearView =>
             showOverlay(overlayScrollX(gearView).onClick, onClick)
+
+        case GearTokenInfo(s, n) =>
+            showOverlay(overlayScrollX(gearTokenView(s, n)).onClick, onClick)
 
         case TideView =>
             showOverlay(overlayScrollX(tideView).onClick, onClick)
