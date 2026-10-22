@@ -78,7 +78,7 @@ object Meta extends MetaGame { mmm =>
     override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // New Blood has no option: picking one of its clans brings it in
-    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ WarchiefsChoice.all ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraDevelopment, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons).%(_.fan.not)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles, BalancedStartTiles) ++ AutomaLevelOption.all ++ Module.all.%(_.fan)./(ModuleOption) ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ WarchiefsChoice.all ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraDevelopment, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons).%(_.fan.not)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles, BalancedStartTiles) ++ AutomaLevelOption.all ++ Module.all.%(_.fan)./(ModuleOption) ++ hiddenOptions
 
     // Colors and teams only for the clans in the game, as many teams as players
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -149,7 +149,7 @@ object Meta extends MetaGame { mmm =>
 
     // Colors by seat, as before colors could be chosen
     // Teams alternate by seat (two teams), as the old team variants did
-    override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } ++ l.zipWithIndex./{ case (f, i) => TeamOption(f, i % 2) : O } :+ (YearsOption.standard : O) :+ (StandardVictory : O) :+ (VictoryModeOption(false) : O) :+ (PrivateFame : O) :+ (UnlimitedUndo : O) :+ (StandardCentral : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O)
+    override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } ++ l.zipWithIndex./{ case (f, i) => TeamOption(f, i % 2) : O } :+ (YearsOption.standard : O) :+ (StandardVictory : O) :+ (VictoryModeOption(false) : O) :+ (PrivateFame : O) :+ (UnlimitedUndo : O) :+ (EditionChoice.default : O) :+ (StandardCentral : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O)
 
     override def quickOptions = options./(o => o -> 0.0).toMap
 
@@ -256,10 +256,13 @@ object Meta extends MetaGame { mmm =>
     // The clan's three clan cards, its ability and upgrades (also opened by tapping Kaija, High Tide and the other clan tokens on the map)
     def clanAbility(f : Faction) : $[Elem] = $(
         $(0, 1, 2)./(n => Image(ClanCard(f, n).info.image, styles.menuCard)).merge.div(styles.menuText),
-        ("Clan ability: ".hl ~ ClanCard(f, 0).info.textElem).div(styles.menuText),
-        (ClanCard(f, 1).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 1).info.textElem).div(styles.menuText),
-        (ClanCard(f, 2).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 2).info.textElem).div(styles.menuText),
+        ("Clan ability: ".hl ~ ClanCard(f, 0).info.textElem ~ otherVersions(ClanCard(f, 0))).div(styles.menuText),
+        (ClanCard(f, 1).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 1).info.textElem ~ otherVersions(ClanCard(f, 1))).div(styles.menuText),
+        (ClanCard(f, 2).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 2).info.textElem ~ otherVersions(ClanCard(f, 2))).div(styles.menuText),
     )
+
+    // A card's text in the other editions (CardVersions in editions.scala), under its text in the one in play
+    def otherVersions(c : Card) : Elem = CardVersions.others(c)./{ case (edition, info) => Break ~ (edition + ": ").hl.spn(xstyles.smaller85) ~ info.textElem.spn(xstyles.smaller85) }.merge
 
     // The clan's warchief: board, power and upgrade card (also opened by tapping the warchief on the map)
     def warchiefInfo(f : Faction) : $[Elem] = $(
@@ -272,7 +275,7 @@ object Meta extends MetaGame { mmm =>
 
     // Images shown in the menus, before the game's assets are loaded
     override def menuImages = (
-        clans./~(f => $(0, 1, 2, 3)./(n => ClanCard(f, n).info.image)./(i => i -> ("/hrf/webp2/nort/images/card/clan/" + i.drop("card-clan-".length) + ".webp"))) ++
+        (clans./~(f => $(0, 1, 2, 3)./(n => ClanCard(f, n).printed.image)) ++ CardVersions.all./(_.info.image).%(_.startsWith("card-clan-")))./(i => i -> ("/hrf/webp2/nort/images/card/clan/" + i.drop("card-clan-".length) + ".webp")) ++
         clans./(f => ("clan-" + f.style) -> ("/hrf/webp2/nort/images/clan/" + f.style + ".webp")) ++
         clans./(f => Warchief.board(f) -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.boardFile(f) + ".webp")) ++
         // The combat icons in rules text (CombatText), and the icons in the Tutorial's lessons
@@ -325,7 +328,7 @@ object Meta extends MetaGame { mmm =>
         PlayerColor.all./~(c => $("recruit", "move", "explore", "build", "feast")./(n => ImageAsset(c.id + "-" + n, c.cards + "-" + n + (n == "feast").??("-1"))))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card/clan", "card-clan-", "webp")(
-        Cards.clan.values.$.flatten./(_.image.drop("card-clan-".length))./(ImageAsset(_))
+        (Cards.clan.values.$.flatten ++ CardVersions.all./(_.info))./(_.image).%(_.startsWith("card-clan-"))./(_.drop("card-clan-".length)).distinct./(ImageAsset(_))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card/dev", "card-dev-", "webp")(
         Cards.developments.keys.$./(ImageAsset(_))

@@ -903,6 +903,20 @@ it, and one more unit with every Recruit (on top of Training Camps and the rest)
   other Adset bots, then plays as the Hard bot (`BotAdset`). `NORT_ADSET=1
   NORT_HARD=robotos` in the host makes the first seat Robotos.
 
+## Card editions (2026-10-22)
+
+- "Card edition" on the setup screen (and in Adset): `FirstEdition` or `SecondEdition` (`EditionChoice`, default
+  `EditionChoice.default`). Old games have neither and play the 1st edition, so nothing about them changes.
+- `CardVersions.all` in `nort/editions.scala` lists the cards another edition (or fan content) prints differently:
+  the card replaced, the option turning the version on, and the version's `CardInfo` (name, image, effect, text).
+  `ClanCard`, `StartCard`, `Development` and `Achievement` get `info` through `CardVersions(this, printed)`.
+  To add a version: one entry, its image under `webp2/nort/images/` (clan card images under `card/clan/` are picked
+  up as assets and menu images automatically), and an option if no existing one fits. New effects need their
+  `playable`/`resolve` cases and a value in `bot-hard.scala`.
+- `CardVersions.options` is global state: the `Game` sets it on creation and in `addOption`. It is fine with one game
+  per page and the JVM checks (one game at a time); a future tool running several games at once would need it per game.
+- `nort/host.scala` picks an edition at random, so bot runs cover both.
+
 ## Known simplifications and gaps
 
 The status table and the Interpretations section in `RULES.md` are the full

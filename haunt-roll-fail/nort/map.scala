@@ -638,6 +638,8 @@ object MapExpansion extends Expansion {
             // Units passing through a teammate's territory or the Swamp
             game.passing(f))
             .%(t => game.bearIn(t).not && game.hostileIn(t).not)
+            // Stag Clan (second edition): a unit moves, not Kaija nor the warchief alone
+            .%(t => e.special != StagSingleMove || game.count(t, f) > 0)
 
     // Two creatures that don't share their territory can't both be fought: nobody may enter
     def enterable(t : Territory)(implicit game : Game) = game.creaturesIn(t).count(_.kind.shares.not) < 2
@@ -928,6 +930,7 @@ object MapExpansion extends Expansion {
         case RecruitEffect(_, mode) => canRecruit(f) && recruitTargets(f, mode, $).any
         case AwakenEffect => true
         case ProtectorEffect => bigClosed(f).any && CommonExpansion.available(f) > 0
+        case ProtectorMaxEffect(_) => bigClosed(f).any && CommonExpansion.available(f) > 0
         // A Move action may be played just to attack creatures
         case MoveEffect(_, _, _, _) => moveSources(f).any || CreaturesExpansion.attackable(f).any
         case e : ExploreEffect => game.pile.any && explorable(f, e.anywhere).any
@@ -944,6 +947,10 @@ object MapExpansion extends Expansion {
             Then(RecruitAction(f, 2, RecruitNormal, $, then))
         case ProtectorEffect =>
             val n = bigClosed(f).num
+            f.log("drew", n.hl, (n == 1).?("card").|("cards"), "for closed territories of 3 or more tiles")
+            Then(DrawCardsAction(f, n, then))
+        case ProtectorMaxEffect(max) =>
+            val n = math.min(max, bigClosed(f).num)
             f.log("drew", n.hl, (n == 1).?("card").|("cards"), "for closed territories of 3 or more tiles")
             Then(DrawCardsAction(f, n, then))
         case e : MoveEffect => Then(MoveStartAction(f, e, then))
@@ -1272,6 +1279,10 @@ object MapExpansion extends Expansion {
 
             val chief = game.chiefIn(t, f)
 
+            // Stag Clan (second edition): one unit
+            if (e.special == StagSingleMove)
+                Ask(f).add(MoveUnitsAction(f, from, to, 1, false, false, cost, left, e, then)).cancel
+            else
             // Figures passing through a teammate's territory or the Swamp move on together
             if (game.passOnly(f, t))
                 Ask(f).add(MoveUnitsAction(f, from, to, n, game.kaijaIn(t, f), chief, cost, left, e, then)).cancel

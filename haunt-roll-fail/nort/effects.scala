@@ -45,6 +45,8 @@ case object TeamworkEffect extends Effect
 case object AnnexationEffect extends Effect
 // Stag Clan: Recruit 1, then may move 1 unit from an adjacent territory into the recruit's (ignoring Rough borders)
 case object StagClanEffect extends Effect
+// Its second edition: Recruit 1, then one unit may make a Move 1 (ignoring Rough borders) from anywhere
+case object StagMoveEffect extends Effect
 // Spy: discard 1 card from an opponent's hand, draw 1
 case object SpyEffect extends Effect
 // Ancestral Curse: each opponent discards a card of their choice, draw 1
@@ -53,6 +55,8 @@ case object CurseEffect extends Effect
 case object VeiledEffect extends Effect
 // Rapacious Exploitation: pick a card from an opponent's hand; they discard it or give 2 resources
 case object RapaciousEffect extends Effect
+// Its second edition: then the Snake may draw 1 card
+case object RapaciousDrawEffect extends Effect
 // Enemy Secrets: copy a card in the active area of an adjacent enemy
 case object SecretsEffect extends Effect
 // Stolen Lore: copy a card in the active area of the player with the Scorched Earth token
@@ -70,6 +74,11 @@ case class RecruitCapsAction(f : Faction, caps : $[Cap], placed : $[AreaRef], th
 case class RecruitCapAction(self : Faction, area : AreaRef, caps : $[Cap], placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit in")(area) with MapTarget { def target = area }
 
 case class StagPullAction(f : Faction, then : ForcedAction) extends ForcedAction
+case class StagMoveOfferAction(f : Faction, then : ForcedAction) extends ForcedAction
+object StagMoveOfferAction {
+    val move = MoveEffect(1, ignoreRough = true, special = StagSingleMove)
+}
+case class StagMoveAction(self : Faction, then : ForcedAction) extends BaseAction("Stag Clan")("Move 1 unit", "(ignoring Rough borders)".spn(xstyles.smaller85))
 case class StagPullFromAction(self : Faction, area : AreaRef, from : AreaRef, then : ForcedAction) extends BaseAction("Stag Clan", "move 1 unit into", area, "from")(from) with MapTarget { def target = from }
 
 case class MercenariesExtraAction(f : Faction, then : ForcedAction) extends ForcedAction
@@ -121,6 +130,8 @@ case class CurseAllDiscardAction(self : Faction, f : Faction, card : Card, l : $
 case class RapaciousAction(self : Faction, enemy : Faction, then : ForcedAction) extends BaseAction("Rapacious Exploitation", "look at the hand of")(enemy)
 case class RapaciousPickAction(self : Faction, enemy : Faction, card : Card, then : ForcedAction) extends BaseAction("Rapacious Exploitation", "choose from", enemy, "hand")(InHand(enemy, card)) with ViewObject[Card] { def obj = card }
 case class RapaciousDiscardAction(self : Faction, f : Faction, card : Card, then : ForcedAction) extends BaseAction("Rapacious Exploitation", "by", f)("Discard", card)
+case class RapaciousDrawOfferAction(f : Faction, then : ForcedAction) extends ForcedAction
+case class RapaciousDrawAction(self : Faction, then : ForcedAction) extends BaseAction("Rapacious Exploitation")("Draw 1 card")
 case class RapaciousGiveAction(self : Faction, f : Faction, card : Card, pay : $[Resource], then : ForcedAction) extends BaseAction("Rapacious Exploitation", "by", f)("Keep", card, "and give", pay./(_.elem).join(" "))
 
 case class CopyEffectAction(self : Faction, owner : Faction, card : Card, then : ForcedAction) extends BaseAction("Copy a card of", owner)(card.handImg) with ViewObject[Card] { def obj = card }
@@ -206,10 +217,12 @@ object CardsExpansion extends Expansion {
         case TeamworkEffect => basics.exists(MapExpansion.playable(f, _))
         case AnnexationEffect => MapExpansion.playable(f, MoveEffect(1)) || MapExpansion.playable(f, ExploreEffect())
         case StagClanEffect => MapExpansion.playable(f, RecruitEffect(1))
+        case StagMoveEffect => MapExpansion.playable(f, RecruitEffect(1))
         case SpyEffect => opponentsWithCards(f).any
         case VeiledEffect => opponentsWithCards(f).any || CommonExpansion.available(f) > 0
         case CurseEffect => opponentsWithCards(f).any
         case RapaciousEffect => opponentsWithCards(f).any
+        case RapaciousDrawEffect => opponentsWithCards(f).any
         case SecretsEffect => secretsCards(f).any
         // Always playable: the Snake may move the token first, and with nothing to copy the card does nothing
         case StolenLoreEffect => true
@@ -223,6 +236,7 @@ object CardsExpansion extends Expansion {
         case OsmosisEffect => Then(RecruitAction(f, 3, RecruitOsmosis, $, then))
         case MercenariesEffect => Then(RecruitAction(f, 2, RecruitNeutralSame, $, MercenariesExtraAction(f, then)))
         case StagClanEffect => Then(RecruitAction(f, 1, RecruitNormal, $, StagPullAction(f, then)))
+        case StagMoveEffect => Then(RecruitAction(f, 1, RecruitNormal, $, StagMoveOfferAction(f, then)))
 
         case PlunderEffect =>
             Ask(f).each(adjacentEnemyUnits(f))((t, g) => PlunderAction(f, t.anchor, g, then))
@@ -269,6 +283,9 @@ object CardsExpansion extends Expansion {
 
         case RapaciousEffect =>
             Ask(f).each(opponentsWithCards(f))(g => RapaciousAction(f, g, then))
+
+        case RapaciousDrawEffect =>
+            Ask(f).each(opponentsWithCards(f))(g => RapaciousAction(f, g, RapaciousDrawOfferAction(f, then)))
 
         case SecretsEffect =>
             if (secretsCards(f).none) {
@@ -332,6 +349,18 @@ object CardsExpansion extends Expansion {
                 Then(then)
             else
                 Ask(f).each(sources)((t, o) => StagPullFromAction(f, t.anchor, o.anchor, then)).skip(then)
+
+        // STAG CLAN, second edition: one unit (not Kaija nor the warchief) may make a Move 1 from anywhere, ignoring Rough borders;
+        // a real Move action, so it can attack
+        case StagMoveOfferAction(f, then) =>
+            if (MapExpansion.moveSources(f, StagMoveOfferAction.move).exists(t => game.count(t, f) > 0 && MapExpansion.destinations(f, t, 1, StagMoveOfferAction.move).any))
+                Ask(f).add(StagMoveAction(f, then)).skip(then)
+            else
+                Then(then)
+
+        case StagMoveAction(f, then) =>
+            game.note("stag-move")
+            Then(MoveStartAction(f, StagMoveOfferAction.move, then))
 
         case StagPullFromAction(f, a, from, then) =>
             game.removeUnits(game.board.territory(from), f, 1)
@@ -562,6 +591,16 @@ object CardsExpansion extends Expansion {
             g.discard :+= c
             g.log("discarded", c)
             Then(then)
+
+        // Second edition: then the Snake may draw 1 card
+        case RapaciousDrawOfferAction(f, then) =>
+            if (CommonExpansion.available(f) > 0)
+                Ask(f).add(RapaciousDrawAction(f, then)).skip(then)
+            else
+                Then(then)
+
+        case RapaciousDrawAction(f, then) =>
+            Then(DrawCardsAction(f, 1, then))
 
         case RapaciousGiveAction(g, f, c, p, then) =>
             p.foreach { r =>
