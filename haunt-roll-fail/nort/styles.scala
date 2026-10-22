@@ -103,6 +103,8 @@ package object elem {
         object ledgerLoss extends CustomStyle(color("#e5574a"))
         // Nothing in that column this harvest or winter
         object ledgerNone extends CustomStyle(opacity("0.35"))
+        // The harvest row once this year's harvest is collected (trading, Winter): it only forecasts next year's
+        object ledgerPast extends CustomStyle(filter("grayscale(1)"), opacity("0.45"))
         object buildIcon extends CustomStyle(height("2.6em"), vertical.align("middle"), margin.right("1ex"))
         // The end screen: the winners' clan cards, and warchief cards with the Warchiefs module
         object winnerCard extends CustomStyle(display("inline-block"), width("18ex"), margin("0.5ex"), vertical.align("top"))

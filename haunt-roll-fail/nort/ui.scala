@@ -1234,7 +1234,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val state = game.states(f)
         val (food, wood) = EventsExpansion.winterCost(f)
         val next = Harvest.forecast(f)
-        val after = (state.food + next.food, state.wood + next.wood)
+        // After this year's harvest (trading, Winter) the stockpile already holds it
+        val after = game.harvested.?((state.food, state.wood)).|((state.food + next.food, state.wood + next.wood))
 
         val events =
             game.eventIs("harsh-winter").?(("Harsh Winter".hl ~ ": each closed territory counts as 1 more unit").div).|(Empty) ~
@@ -1243,7 +1244,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val short = after._1 < food || after._2 < wood
 
         ("Income".hlb.div ~
-            ("Has " ~ Amount(state.food.hl, Food.elem) ~ " " ~ Amount(state.wood.hl, Wood.elem) ~ ", after the harvest " ~ Amount(after._1.hl, Food.elem) ~ " " ~ Amount(after._2.hl, Wood.elem)).div ~
+            ("Has " ~ Amount(state.food.hl, Food.elem) ~ " " ~ Amount(state.wood.hl, Wood.elem) ~ game.harvested.?(", harvest collected".txt).|(", after the harvest " ~ Amount(after._1.hl, Food.elem) ~ " " ~ Amount(after._2.hl, Wood.elem))).div ~
             (f.name.styled(colorOf(f)) ~ " pays " ~ (food + wood == 0).?("nothing".txt).|($(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => Amount(n.hl, e) }.join(" ")) ~ " for " ~ counted(f).hl ~ " units during winter").div ~
             short.?(("Not enough without trading: an unpaid Winter gives an " ~ UnrestCard.elem ~ " card").div).|(Empty) ~
             HorizontalBreak ~
@@ -1548,8 +1549,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val icons = cell(Empty) ~ columns./(c => open(c.open, c.icon)).merge
         val stock = cell(Empty) ~ columns./(c => open(c.open, stacked.?(c.stock).|(Amount(c.stock, c.icon)))).merge
-        def gain(c : Column) : Elem = c.extra.?(cell((("+" + c.gain).styled(styles.ledgerGain) ~ ("-" + (c.gain + 1)).styled(styles.ledgerGain, styles.ledgerMaybe)).spn)).|(signed(c.gain, "+", styles.ledgerGain))
-        val harvest = cell(SeasonIcon.harvest) ~ columns./(gain).merge
+        // Once this year's harvest is collected (trading, Winter) the row is grayed out, so it isn't taken for income still to come
+        def faded(e : Elem) : Elem = game.harvested.?(e.styled(styles.ledgerPast)).|(e)
+        def gain(c : Column) : Elem = cell(faded(c.extra.?((("+" + c.gain).styled(styles.ledgerGain) ~ ("-" + (c.gain + 1)).styled(styles.ledgerGain, styles.ledgerMaybe)).spn).|((c.gain > 0).?(("+" + c.gain).styled(styles.ledgerGain)).|("–".spn(styles.ledgerNone)))))
+        val harvest = cell(faded(SeasonIcon.harvest)) ~ columns./(gain).merge
         val winter = (f != Automa).?(cell(SeasonIcon.winter) ~ columns./(c => signed(c.cost, "-", styles.ledgerLoss)).merge).|(Empty)
 
         val rows = stacked.?(reverse.?(stock ~ icons ~ harvest ~ winter).|(icons ~ stock ~ harvest ~ winter)).|(stock ~ harvest ~ winter)
