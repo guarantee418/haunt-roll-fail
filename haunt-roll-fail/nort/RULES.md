@@ -936,7 +936,9 @@ proposed there, to change if Marzaus answers otherwise.
   nothing add their casualty at the end (`game.towersUsed`). Not against a
   Conqueror, nor against Shieldbearers and Borgild's Shield (their cancelled
   casualty stays at the end). If the towers kill every attacker, the defender
-  wins without dice. 2: four Militia (`game.militia`), placed one by one in
+  wins without dice. With the Tower PC version every tower already kills
+  before the fight, so Guardian adds no second kill, and its towers cost no
+  wood there either. 2: four Militia (`game.militia`), placed one by one in
   the clan's territories: they count as figures (control, combat points, 1
   each, casualties after the units), aren't units for the supply, Winter or
   card effects on units, move with Move cards only into the clan's own
