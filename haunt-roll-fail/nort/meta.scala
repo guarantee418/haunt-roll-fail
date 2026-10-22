@@ -457,10 +457,7 @@ object Meta extends MetaGame { mmm =>
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, MineralsModule), "ui", "ui-", "webp")(
         Mineral.all./(m => ImageAsset(m.name.toLowerCase))
     ) ::
-    // Military paths module (fan content): the Palisade and the Militia's shield
-    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, MilitaryModule), "token/building", "building-", "webp")(
-        $(ImageAsset(Palisade.image.drop("building-".length)))
-    ) ::
+    // Military paths module (fan content): the Militia's shield
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, MilitaryModule), "ui", "ui-", "webp")(
         $(ImageAsset("militia"))
     ) ::
