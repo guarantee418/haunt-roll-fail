@@ -593,6 +593,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case RecruitEffect(n, mode) => recruitGain(n, mode)
         case AwakenEffect => recruitGain(2, RecruitNormal)
         case StagClanEffect => recruitGain(1, RecruitNormal) + 15
+        case StagMoveEffect => recruitGain(1, RecruitNormal) + 25
         case e : MoveEffect => moveGain(e)
         case e : ExploreEffect => exploreGain(e)
         case e : BuildEffect => buildGain(e)
@@ -602,6 +603,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case NegotiationEffect => 80
         case ResourcefulEffect => 170
         case ProtectorEffect => 75 * MapExpansion.bigClosed(self).num
+        case ProtectorMaxEffect(max) => 75 * math.min(max, MapExpansion.bigClosed(self).num)
         case MapEffect => 0
         case _ => 110
     }
@@ -625,6 +627,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val use = e match {
             case RecruitEffect(n, _) => 55 * n
             case StagClanEffect => 65
+            case StagMoveEffect => 75
             case RecruitPerEffect(_) => 110
             case MoveEffect(n, bonus, _, _) => 40 + 22 * n + 35 * bonus
             case e : ExploreEffect => (game.pile.num > 4).?(75 + 25 * (e.draw - 1) + 60 * (e.times - 1)).|(10)
@@ -926,6 +929,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case RapaciousAction(_, enemy, _) => |(100 * enemyWeight(enemy))
         case VeiledDiscardAction(_, enemy, _) => |(80 * enemyWeight(enemy) + 20)
         case VeiledDrawAction(_, _) => |(60)
+        case RapaciousDrawAction(_, _) => |(60)
         case SpyDiscardAction(_, _, card, _) => |(utility(card))
         case RapaciousPickAction(_, _, card, _) => |(utility(card))
         case CurseDiscardAction(_, _, card, _, _) => |(-cardValueSafe(card) - 0.3 * utility(card))

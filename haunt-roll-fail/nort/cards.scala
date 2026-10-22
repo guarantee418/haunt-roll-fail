@@ -95,6 +95,9 @@ case object FireArrowsMove extends MoveSpecial
 // The Wise One (Lynx): +1 combat point per casualty inflicted
 case object WiseOneMove extends MoveSpecial
 
+// Stag Clan (second edition): a single unit moves
+case object StagSingleMove extends MoveSpecial
+
 case class MoveEffect(n : Int, bonus : Int = 0, ignoreRough : Boolean = false, special : MoveSpecial = PlainMove) extends Effect
 // Draw tiles and keep one; redraw: may put the drawn tile back once; anywhere: from any open territory
 // collect: Lay of the Land collects the resources shown on the tile
@@ -122,6 +125,8 @@ case object FeastEffect extends Effect
 case object AwakenEffect extends Effect
 // Protector of the Land: draw 1 per closed territory of 3 or more tiles
 case object ProtectorEffect extends Effect
+// Its second edition: at most max cards
+case class ProtectorMaxEffect(max : Int) extends Effect
 
 
 case class CardInfo(name : String, image : String, fame : Int, flash : Boolean, effect : Effect, text : String) {
@@ -131,6 +136,8 @@ case class CardInfo(name : String, image : String, fame : Int, flash : Boolean, 
 
 trait Card extends Elementary with Record {
     def info : CardInfo
+    // The card as first printed, whatever version this game plays (CardVersions in editions.scala)
+    def printed : CardInfo = info
     def name = info.name
     def fame : Int = info.fame
     def flash = info.flash
@@ -149,21 +156,25 @@ trait Card extends Elementary with Record {
 
 // Starting cards: Recruit, Move, Explore, Build and two Feasts per player
 case class StartCard(color : PlayerColor, id : String) extends Card {
-    def info = Cards.start(id).copy(image = "card-start-" + color.id + "-" + id)
+    override def printed = Cards.start(id).copy(image = "card-start-" + color.id + "-" + id)
+    def info = CardVersions(this, printed)
 }
 
 // Clan cards: n = 0 is the initial card, 1 and 2 the upgrades
 case class ClanCard(clan : Faction, n : Int) extends Card {
-    def info = Cards.clan(clan)(n)
+    override def printed = Cards.clan(clan)(n)
+    def info = CardVersions(this, printed)
     override def elem = name.styled(clan)
 }
 
 case class Development(id : String) extends Card {
-    def info = Cards.developments(id)
+    override def printed = Cards.developments(id)
+    def info = CardVersions(this, printed)
 }
 
 case class Achievement(id : String) extends Card {
-    def info = Cards.achievements(id)
+    override def printed = Cards.achievements(id)
+    def info = CardVersions(this, printed)
     override def elem = name.styled(styles.fame)
 }
 

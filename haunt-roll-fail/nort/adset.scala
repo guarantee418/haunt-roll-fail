@@ -343,7 +343,7 @@ object MetaAdset extends MetaGame {
 
     override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear)
 
-    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ UndoChoice.all ++ WarchiefsChoice.all ++ DevelopmentsChoice.all ++ $(NoDefensiveStrategy, ExtraAchievement, BalancedStartTiles) ++ BanDevelopment.all ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ Module.all.%(_.fan)./(ModuleOption) ++ hiddenOptions
+    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ WarchiefsChoice.all ++ DevelopmentsChoice.all ++ $(NoDefensiveStrategy, ExtraAchievement, BalancedStartTiles) ++ BanDevelopment.all ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ Module.all.%(_.fan)./(ModuleOption) ++ hiddenOptions
 
     // With two players the second seat doesn't choose: an expansion is agreed on here, or none
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -357,7 +357,7 @@ object MetaAdset extends MetaGame {
         case o => Meta.optionShown(o, selected)
     }
 
-    override def defaultsFor(n : Int, l : $[F]) = $(YearsOption.standard, StandardVictory, VictoryModeOption(false), PrivateFame, UnlimitedUndo, NormalDevelopments, (n > 2).?(LandsSeatChooses).|(LandsNeither))
+    override def defaultsFor(n : Int, l : $[F]) = $(YearsOption.standard, StandardVictory, VictoryModeOption(false), PrivateFame, UnlimitedUndo, EditionChoice.default, NormalDevelopments, (n > 2).?(LandsSeatChooses).|(LandsNeither))
 
     override def quickOptions = Map()
 

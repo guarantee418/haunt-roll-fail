@@ -490,6 +490,9 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
     var options : $[Meta.O] = initialOptions
 
+    // The card versions in play (editions.scala) follow this game's options
+    CardVersions.options = options
+
     // The clans in play, in seating order (in an Adset game, filled in as they are drafted)
     var setup : $[Faction] = players.of[Faction]
 
@@ -539,6 +542,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // An Adset choice turned an option on (Wilderness or Wastelands, the central tile)
     def addOption(o : Meta.O) {
         options :+= o
+        CardVersions.options = options
         modules = computeModules
         expansions = computeExpansions
     }

@@ -898,6 +898,11 @@ Horizons (drafting setup). The TTS mod 3597126237 has its cards and its rulebook
 
 ## Interpretations (choices made where the summary above is not enough)
 
+- Card editions (2026-10-22, `nort/editions.scala`): the 2nd edition Stag Clan card's "Move 1 action with only one of your units"
+  moves one unit (not Kaija nor the warchief), from any of the clan's territories, and is a full Move action, so it may attack.
+  The 2nd edition Rapacious Exploitation no longer prints "if they don't have enough resources, they must discard"; a player
+  who can't pay still has to discard. The draw is offered only when the Snake has cards left to draw.
+
 Check these against the rulebook when it is at hand.
 
 - **Uncharted Horizons Development cards**:
