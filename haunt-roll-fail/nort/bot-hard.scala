@@ -283,7 +283,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         else victorySteps.getOrElseUpdate(id + n, victoryValue(self, Map(id -> n)) - victoryValue(self))
 
     // Food and wood f owes at Winter: nothing for a Robotos clan (robotos.scala)
-    def winterNeed(f : Faction) : (Int, Int) = game.robotos(f).?((0, 0)).|(Winter.cost(f.units))
+    def winterNeed(f : Faction) : (Int, Int) = game.robotos(f).?((0, 0)).|(Winter.cost(f.winterUnits))
 
     // Food and wood owed at the next Winter, against what f will have; an Unrest card costs 5 fame
     def winterValue(f : Faction) : Double = {
@@ -407,6 +407,10 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         if (game.has(MineralsModule))
             v += f.mineralCount * 100 + MineralsExpansion.mines(f) * 50 * harvests
 
+        // Military paths module: MXP towards the next level, the Militia and the bodyguard
+        if (game.has(MilitaryModule))
+            v += MilitaryExpansion.mxp(f) * 4 + MilitaryExpansion.militiaOnMap(f) * 38 + game.guards.has(f).??(30)
+
         v += winterValue(f)
 
         v
@@ -428,11 +432,15 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val conq = attacker.conqueror
         val fortress = conq.?(0).|(2 * here.count(_ == Fortress))
         val towers = conq.?(0).|(here.count(_ == DefenseTower))
-        val au = game.figures(t, attacker)
-        val du = game.figures(t, defender)
-        val as = game.robotos(attacker).??(1) + game.strength(t, attacker, true) + bonus + (attacker == Snake && game.scorchedIn(t)).??(1) + math.min(au, spendable(attacker))
+        // Tower PC version: the towers kill attacking units before the fight
+        val first = TowersExpansion.killFirst.??(math.min(towers, game.figures(t, attacker)))
+        val au = game.toughness(t, attacker) - first
+        val du = game.toughness(t, defender)
+        if (au <= 0)
+            return 0.0
+        val as = game.robotos(attacker).??(1) + game.strength(t, attacker, true) - first + bonus + (attacker == Snake && game.scorchedIn(t)).??(1) + math.min(au, spendable(attacker))
         val ds = game.strength(t, defender, false) + fortress + (defender == Snake && game.scorchedIn(t)).??(1) + math.min(du, defender.food)
-        HardCombat.attackWin(as, ds, au, du, towers)
+        HardCombat.attackWin(as, ds, au, du, TowersExpansion.killFirst.?(0).|(towers))
     }
 
     // Food f would spend in a fight, keeping enough for Winter
@@ -454,6 +462,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val minerals = players./(f => (f, f.minerals))
         val bank = game.mineralBank
         val upgraded = game.upgraded
+        // Military paths module: the Militia
+        val militia = game.militia
         try {
             change
             total
@@ -462,6 +472,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             game.units = units
             game.buildings = buildings
             game.upgraded = upgraded
+            game.militia = militia
             game.mineralBank = bank
             minerals.foreach { case (f, m) => f.minerals = m }
             game.chiefs = chiefs
@@ -589,6 +600,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case RecruitEffect(n, mode) => recruitGain(n, mode)
         case AwakenEffect => recruitGain(2, RecruitNormal)
         case StagClanEffect => recruitGain(1, RecruitNormal) + 15
+        case StagMoveEffect => recruitGain(1, RecruitNormal) + 25
         case e : MoveEffect => moveGain(e)
         case e : ExploreEffect => exploreGain(e)
         case e : BuildEffect => buildGain(e)
@@ -598,6 +610,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case NegotiationEffect => 80
         case ResourcefulEffect => 170
         case ProtectorEffect => 75 * MapExpansion.bigClosed(self).num
+        case ProtectorMaxEffect(max) => 75 * math.min(max, MapExpansion.bigClosed(self).num)
         case MapEffect => 0
         case _ => 110
     }
@@ -621,6 +634,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val use = e match {
             case RecruitEffect(n, _) => 55 * n
             case StagClanEffect => 65
+            case StagMoveEffect => 75
             case RecruitPerEffect(_) => 110
             case MoveEffect(n, bonus, _, _) => 40 + 22 * n + 35 * bonus
             case e : ExploreEffect => (game.pile.num > 4).?(75 + 25 * (e.draw - 1) + 60 * (e.times - 1)).|(10)
@@ -680,9 +694,10 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val here = game.working(t)
         val conq = attacker.conqueror
         val fortress = conq.?(0).|(2 * here.count(_ == Fortress))
-        val towers = conq.?(0).|(here.count(_ == DefenseTower))
-        val au = game.figures(t, attacker)
-        val du = game.figures(t, defender)
+        // Tower PC version: the towers fired before the fight
+        val towers = (conq || TowersExpansion.killFirst).?(0).|(here.count(_ == DefenseTower))
+        val au = game.toughness(t, attacker)
+        val du = game.toughness(t, defender)
         val attacking = self == attacker
         val af = attacking.?(k).|(food(0))
         val df = attacking.?(math.min(du, defender.food)).|(k)
@@ -703,9 +718,9 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val here = game.working(t)
         val conq = attacker.conqueror
         val fortress = conq.?(0).|(2 * here.count(_ == Fortress))
-        val towers = conq.?(0).|(here.count(_ == DefenseTower))
-        val au = game.figures(t, attacker)
-        val du = game.figures(t, defender)
+        val towers = (conq || TowersExpansion.killFirst).?(0).|(here.count(_ == DefenseTower))
+        val au = game.toughness(t, attacker)
+        val du = game.toughness(t, defender)
         val as = game.robotos(attacker).??(1) + game.strength(t, attacker, true) + e.bonus + (attacker == Snake && game.scorchedIn(t)).??(1) + food.lift(0).|(0)
         val ds = game.strength(t, defender, false) + fortress + (defender == Snake && game.scorchedIn(t)).??(1) + food.lift(1).|(0)
         val extra = (e.special == EgilMove).??(1)
@@ -921,6 +936,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case RapaciousAction(_, enemy, _) => |(100 * enemyWeight(enemy))
         case VeiledDiscardAction(_, enemy, _) => |(80 * enemyWeight(enemy) + 20)
         case VeiledDrawAction(_, _) => |(60)
+        case RapaciousDrawAction(_, _) => |(60)
         case SpyDiscardAction(_, _, card, _) => |(utility(card))
         case RapaciousPickAction(_, _, card, _) => |(utility(card))
         case CurseDiscardAction(_, _, card, _, _) => |(-cardValueSafe(card) - 0.3 * utility(card))
@@ -937,6 +953,24 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case LivRerollAction(_, again) => |(rerollOdds(again))
         case GearKeepAction(_, keep) => |(keepOdds(keep))
         case GearRerollAction(_, again) => |(rerollOdds(again))
+        // Military paths: Leadership's and Legions' reroll; keeping goes on to the die as rolled
+        case MilitaryRerollAction(_, _, again) => |(rerollOdds(again))
+        case MilitaryKeepAction(_, MilitaryKeptAction(attacker, defender, area, e, food, faces, face, _, _)) => |(1000 * rolledOdds(attacker, defender, area, e, food, faces, |(face)))
+        // The path: Legions and Guardian pay off with the buildings they make cheaper, Leadership with the warchief's fights
+        case MilitaryPathAction(_, p, _) =>
+            val held = game.controlled(self)./~(game.working)
+            |(p match {
+                case Legions => 20 + 10 * held.count(_ == TrainingCamp)
+                case Guardian => 20 + 10 * held.count(_ == DefenseTower)
+                case _ => 20 + game.chiefs.contains(self).??(12)
+            })
+        case MilitiaPlaceAction(_, area, _, _) => |(gain(MilitaryExpansion.addMilitia(area, self, 1)))
+        case MilitiaMoveAction(f, from, to, n, kaija, chief, m, cost, left, e, then) =>
+            |(gain { MilitaryExpansion.removeMilitia(board.territory(from), self, m) ; MilitaryExpansion.addMilitia(to, self, m) ; moveFigures(board.territory(from), to, n, kaija, chief) })
+        case MilitiaRetreatAction(_, from, to, _, _) => |(gain { val n = MilitaryExpansion.militiaIn(board.territory(from), self) ; MilitaryExpansion.removeMilitia(board.territory(from), self, n) ; MilitaryExpansion.addMilitia(to, self, n) })
+        case PalisadeAction(_, area, _) => |(gain(game.buildings += MilitaryExpansion.extraSpace(board.territory(area)) -> Palisade))
+        case ChiefMoveAction(_, from, to, _) => |(gain(game.chiefs += self -> to) - game.present(board.territory(to)).exists(game.enemy(self, _)).??(30))
+        case ChiefMoveSkipAction(_, _) => |(0)
         // Liv's Cunning: wood or lore spent like food, while it still helps
         case LivCunningAction(_, defender, area, e, r, spent, _) => |((spent.num < game.figures(board.territory(area), self)).?(cunning(area, spent.num)).|(-100.0) - resourceValue(r))
         case CreatureCunningAction(_, area, c, e, r, spent, _) => |((spent.num < game.figures(board.territory(area), self)).?(cunning(area, spent.num)).|(-100.0) - resourceValue(r))
@@ -1187,9 +1221,9 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val here = game.working(t)
         val conq = attacker.conqueror
         val fortress = conq.?(0).|(2 * here.count(_ == Fortress))
-        val towers = conq.?(0).|(here.count(_ == DefenseTower))
-        val au = game.figures(t, attacker)
-        val du = game.figures(t, defender)
+        val towers = (conq || TowersExpansion.killFirst).?(0).|(here.count(_ == DefenseTower))
+        val au = game.toughness(t, attacker)
+        val du = game.toughness(t, defender)
         val as = game.robotos(attacker).??(1) + game.strength(t, attacker, true) + e.bonus + (attacker == Snake && game.scorchedIn(t)).??(1) + food.lift(0).|(0)
         val ds = game.strength(t, defender, false) + fortress + (defender == Snake && game.scorchedIn(t)).??(1) + food.lift(1).|(0)
         val extra = (e.special == EgilMove).??(1)

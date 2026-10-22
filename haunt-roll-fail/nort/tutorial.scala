@@ -39,7 +39,7 @@ object Tutorial {
 
     // Images in the lessons (Meta.menuImages has their URLs for the menus; in the game they are assets)
     def card(n : String) = Image("card-start-blue-" + n, styles.menuCard)
-    def clanCard(n : Int) = Image(ClanCard(clan, n).info.image, styles.menuCard)
+    def clanCard(n : Int) = Image(CardVersions.in(ClanCard(clan, n), EditionChoice.default).image, styles.menuCard)
     def building(b : String) = Image("building-" + b, styles.inlineIcon)
     def icon(s : String) = Image("ui-" + s, styles.inlineIcon)
 
@@ -117,7 +117,7 @@ object Tutorial {
             Div(clanCard(0) ~ clanCard(1) ~ clanCard(2), styles.menuText),
             p("Once you know the base game, your clan is " ~ "your twist on the rules".hl ~ ". Each player only needs to read their own."),
             p("Stag's ability: " ~ "+1 fame".hl ~ " for every territory you " ~ "conquer in combat".hl ~ " and every territory you " ~ "close by exploring".hl ~ ". The Stag rewards bold play: explore to close territories, and take land from your neighbours."),
-            p("Stag Clan".hl ~ " card (a Flash card): Recruit 1, then you may move 1 of your units from an adjacent territory into the one you recruited in (even across a Rough border)."),
+            p("Stag Clan".hl ~ " card (a Flash card): " ~ (EditionChoice.default == SecondEdition).?("Recruit 1, then one of your units, anywhere, may make a Move 1 (even across a Rough border).").|("Recruit 1, then you may move 1 of your units from an adjacent territory into the one you recruited in (even across a Rough border).")),
             p("Upgrades, for 3 " ~ lore ~ ": " ~ "Glory of the Clan".hl ~ " (Build, and collect that territory's resources as if it were the Harvest) and " ~ "Annexation".hl ~ " (Move 1 and Explore, a Flash card). With the Warchiefs module, " ~ "Brand's Bravery".hl ~ " is a third one."),
             site("tap the " ~ "i".hl ~ " beside a clan in the clan picker, or a clan's name in its player panel during a game, to see its cards."),
         )),
@@ -223,6 +223,9 @@ object Tutorial {
         else
         if (has[UpgradeSacrificeAction] || has[UpgradeCardAction])
             |("An upgrade also costs a card from your hand: it either waits (goes with your played cards) or is removed from the game.")
+        else
+        if (has[StagMoveAction])
+            |("Stag Clan".hl ~ ": one of your units may now make a Move 1, from any of your territories, even across a Rough border, and even into an enemy territory to fight. Tap " ~ "Move 1 unit".hl ~ ", or skip.")
         else
         if (has[StagPullFromAction])
             |("Stag Clan".hl ~ ": you may now move 1 of your units from an adjacent territory into the one you recruited in. Tap where it comes from, or skip.")

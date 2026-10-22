@@ -132,6 +132,9 @@ class FactionState(val faction : Faction)(implicit game : Game) {
     // Units on the map, with the warchief (Warchiefs module); Horse Clan's second warchief, Brok, counts too
     def units = game.onMap(faction) + game.chiefs.contains(faction).??(1) + ((faction == Horse && game.brok.any) || (faction == Automa && game.leader2.any)).??(1) + game.blainnOf(faction).any.??(1) + SeaExpansion.raiders(faction)
 
+    // The units Winter costs count: Warchiefs PC version leaves the warchief out
+    def winterUnits = units - (game.pcChief(faction) && game.chiefs.contains(faction)).??(1)
+
     var draw : $[Card] = $
     var hand : $[Card] = $
     var active : $[Card] = $
@@ -487,6 +490,9 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
     var options : $[Meta.O] = initialOptions
 
+    // The card versions in play (editions.scala) follow this game's options
+    CardVersions.options = options
+
     // The clans in play, in seating order (in an Adset game, filled in as they are drafted)
     var setup : $[Faction] = players.of[Faction]
 
@@ -536,6 +542,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // An Adset choice turned an option on (Wilderness or Wastelands, the central tile)
     def addOption(o : Meta.O) {
         options :+= o
+        CardVersions.options = options
         modules = computeModules
         expansions = computeExpansions
     }
@@ -559,8 +566,13 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     val earlyPerPlayer = (lastYear - 1 + 2) / 3
     val advancedPerPlayer = lastYear - 1 - earlyPerPlayer
 
-    // Development cards revealed each year: one per player, and one more with ExtraDevelopment (not against the Automa)
-    def devsPerYear = arity + (options.has(ExtraDevelopment) && setup.has(Automa).not).??(1)
+    // Development cards revealed in a year: one per player, one more with ExtraDevelopment, one fewer after the first with
+    // FewerDevelopments (not against the Automa)
+    def devsIn(year : Int) = DevelopmentsChoice.in(options, arity, setup.has(Automa), year)
+
+    // Early cards for the first years, Advanced ones for the rest but the last
+    def earlyDevs = DevelopmentsChoice.total(options, arity, setup.has(Automa), 1, 1 + earlyPerPlayer)
+    def advancedDevs = DevelopmentsChoice.total(options, arity, setup.has(Automa), 1 + earlyPerPlayer, lastYear)
 
     // The Uncharted Horizons Development cards: chosen, or added when the extra card would empty the core decks early
     val horizonsDevelopments = options.has(HorizonsDevelopments) || (players.has(Automa).not && ExtraDevelopment.needsHorizons(options, players.num, lastYear))
@@ -640,6 +652,29 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var ironAsked : $[Faction] = $
     var ironFight : $[Faction] = $
 
+    // TOWER PC VERSION (towers.scala): the clan holding each Defense Tower's territory, the fight whose towers have fired,
+    // whether Shieldbearers cancelled that kill, and the creature whose entering was offered to the towers
+    var towerHolder : Map[SpaceRef, Faction] = Map()
+    var volleyed : |[AreaRef] = None
+    var towerShield = false
+    var towerAsked : |[Creature] = None
+
+    // Military paths module (military.scala): each clan's MXP and path, the bodyguards alive (Leadership), the Militia on the map
+    // (Guardian), the year of each clan's free Palisade; in a fight, whether the kills before it are done, the Defense Towers
+    // that killed then and what each side killed then, and who rerolled
+    var mxp : Map[Faction, Int] = Map()
+    var paths : Map[Faction, MilitaryPath] = Map()
+    var guards : $[Faction] = $
+    var militia : Map[AreaRef, Map[Faction, Int]] = Map()
+    var militiaGiven : $[Faction] = $
+    var palisadeYear : Map[Faction, Int] = Map()
+    var militaryYear = 0
+    var fightStarted = false
+    var towersUsed = 0
+    var fightKills : Map[Faction, Int] = Map()
+    var rerolled : $[Faction] = $
+    var extraMoved = false
+
     // Territories where a Move action started a fight
     var combats : $[AreaRef] = $
 
@@ -699,6 +734,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var dragonHarvest : |[Boolean] = None
     // What Snake's Scorched Earth took at this harvest, and from whom
     var scorchedTook : |[(Faction, Resource)] = None
+    // This year's harvest is collected (the player panels gray out their harvest row until the next year); display only
+    var harvested : Boolean = false
     // Kraken Clan's High Tide tokens (2 at most), each in a territory with Kraken figures
     var tides : $[AreaRef] = $
     // Ox Clan's Ancestral Equipment tokens: on the map (face up), the face-down pile, face up in the reserve, and used this year
@@ -885,13 +922,20 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // The Automa's Leader 1 plays as its warchief, with or without the module
     def chiefReady(f : Faction) : Boolean = (has(Warchiefs) || f == Automa) && chiefs.contains(f).not && setup.has(f)
 
-    // Units, Kaija and the warchief
-    def figures(t : Territory, f : Faction) : Int = count(t, f) + kaijaIn(t, f).??(1) + chiefIn(t, f).??(1) + blainnIn(t, f).??(1)
+    // Warchiefs PC version (fan-made): f's warchief takes 2 casualties to kill, isn't placed at setup, is recruited for 2 units
+    // into a territory with a Training Camp and doesn't count for Winter; the Automa's Leader plays as usual
+    def pcChief(f : Faction) : Boolean = has(WarchiefsPC) && f != Automa
+
+    // The casualties it takes to remove all of f's figures in t: one each, two for a PC version warchief
+    def toughness(t : Territory, f : Faction) : Int = figures(t, f) + (pcChief(f) && chiefIn(t, f)).??(1)
+
+    // Units, Kaija and the warchief (and the Military paths' Militia and bodyguard)
+    def figures(t : Territory, f : Faction) : Int = count(t, f) + kaijaIn(t, f).??(1) + chiefIn(t, f).??(1) + blainnIn(t, f).??(1) + MilitaryExpansion.figures(t, f)
 
     // Combat points of the figures: Kaija is worth 2, a warchief 2 or 3 depending on its power
     // Jötunn Blainn (Wastelands) is worth 2
-    // Sea module: +1 defending a Port
-    def strength(t : Territory, f : Faction, attacking : Boolean) : Int = count(t, f) + companionStrength(t, f) + Warchief.strength(t, f, attacking) + blainnIn(t, f).??(2) + SeaExpansion.defense(t, f, attacking)
+    // Sea module: +1 defending a Port; Military paths: the Militia, the bodyguard, the paths' points and Palisades
+    def strength(t : Territory, f : Faction, attacking : Boolean) : Int = count(t, f) + companionStrength(t, f) + Warchief.strength(t, f, attacking) + blainnIn(t, f).??(2) + SeaExpansion.defense(t, f, attacking) + MilitaryExpansion.strength(t, f, attacking)
 
     // Kaija is in Bear Clan's reserve and can be recruited
     // Brundr and Kaelinn likewise; Brok only with the Warchiefs module
@@ -903,7 +947,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     def present(t : Territory) : $[Faction] = seating.%(f => figures(t, f) > 0)
 
     // Units or Kaija anywhere on the map
-    def anyOnMap(f : Faction) : Boolean = onMap(f) > 0 || companion(f).any || chiefs.contains(f)
+    def anyOnMap(f : Faction) : Boolean = onMap(f) > 0 || companion(f).any || chiefs.contains(f) || MilitaryExpansion.militiaOnMap(f) > 0
 
     def controlled(f : Faction) : $[Territory] = board.territories.%(t => present(t) == $(f))
 
@@ -927,15 +971,21 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         units += a -> ((v > 0).?(m + (f -> v)).|(m - f))
     }
 
-    // Casualties: units first, then the warchief, Jötunn Blainn (back to his camp), Kaija last
+    // Casualties: units first (Military paths: then the Militia and the bodyguard), then the warchief, Jötunn Blainn (back to his camp), Kaija last
+    // (a PC version warchief takes 2, so a single removal passes it by)
     def removeFigures(t : Territory, f : Faction, n : Int) {
         val k = math.min(n, count(t, f))
         removeUnits(t, f, k)
         var left = n - k
-        if (left > 0 && chiefIn(t, f)) {
+        left -= MilitaryExpansion.removeExtra(t, f, left)
+        val cost = pcChief(f).?(2).|(1)
+        if (left >= cost && chiefIn(t, f)) {
             chiefs -= f
-            left -= 1
+            left -= cost
         }
+        else
+        if (left > 0 && chiefIn(t, f))
+            note("pc-chief-spared")
         if (left > 0 && blainnIn(t, f)) {
             blainn = None
             left -= 1
@@ -953,9 +1003,11 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         casualtyPicks.get(f) match {
             case Some((units, kaija, chief, blainnToo)) =>
                 casualtyPicks -= f
-                removeUnits(t, f, units)
+                MilitaryExpansion.kill(t, f, units)
                 if (chief)
                     chiefs -= f
+                if (chief.not && chiefIn(t, f) && pcChief(f))
+                    note("pc-chief-spared")
                 if (blainnToo)
                     blainn = None
                 if (kaija)
@@ -1083,11 +1135,18 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
             case f => f
         }
 
+        // Tower PC version: towers whose territory was captured or abandoned are destroyed (before too, as a replay stops at soft actions)
+        if (has(TowersModule))
+            TowersExpansion.sweep(this)
+
         val c = action.as[SelfPerform]./(_.perform(soft)).|(internalPerform(action, soft)) match {
             case c : Ask if adset => c.copy(faction = fix(c.faction))
             case c : MultiAsk if adset => c.copy(asks = c.asks./(a => a.copy(faction = fix(a.faction))))
             case c => c
         }
+
+        if (has(TowersModule))
+            TowersExpansion.sweep(this)
 
         highlight.faction = c match {
             case Ask(f, _) => $(f) ++ ptf.get(f).$
@@ -1123,6 +1182,9 @@ object Debug {
     // Headless testing only: starting decks also hold both clan upgrades
     var upgradesInDeck = false
 
+    // Military paths module: MXP gains multiplied, to test the higher levels in bot games (NORT_MXP in host.scala)
+    var mxpTimes = 1
+
     def summary(g : Game) {
         if (stats)
             println("  year " + g.year + ", " + g.board.placements.size + " tiles, " + g.buildings.size + " buildings, " + g.fights + " fights, " +
@@ -1152,7 +1214,7 @@ object CommonExpansion extends Expansion {
         }
         else
         if (food + wood == 0) {
-            f.log("owed nothing for", f.units.hl, "units")
+            f.log("owed nothing for", f.winterUnits.hl, "units")
             false
         }
         else
@@ -1160,7 +1222,7 @@ object CommonExpansion extends Expansion {
             f.food -= food
             f.wood -= wood
 
-            f.log("paid", food.hl, Food, (wood > 0).?("and " ~ Amount(wood.hl, Wood.elem)).|(Empty), "for", f.units.hl, "units")
+            f.log("paid", food.hl, Food, (wood > 0).?("and " ~ Amount(wood.hl, Wood.elem)).|(Empty), "for", f.winterUnits.hl, "units")
             false
         }
         else {
@@ -1178,14 +1240,14 @@ object CommonExpansion extends Expansion {
         if (unrestLeft) {
             f.draw = UnrestCard +: f.draw
 
-            f.log("could not pay for", f.units.hl, "units and took", UnrestCard)
+            f.log("could not pay for", f.winterUnits.hl, "units and took", UnrestCard)
         }
         else {
             f.fame -= 5
             f.discard ++= f.draw.take(1)
             f.draw = f.draw.drop(1)
 
-            f.log("could not pay for", f.units.hl, "units; with no", UnrestCard, "left, lost", 5.hl, FameIcon(), "and discarded the top card of their draw pile")
+            f.log("could not pay for", f.winterUnits.hl, "units; with no", UnrestCard, "left, lost", 5.hl, FameIcon(), "and discarded the top card of their draw pile")
         }
     }
 
@@ -1345,14 +1407,14 @@ object CommonExpansion extends Expansion {
             Shuffle[Card]((Cards.earlyCards ++ game.horizonsDevelopments.??(Cards.horizonsEarlyCards)).diff(BanDevelopment.cards(options)), ShuffledEarlyAction(_))
 
         case ShuffledEarlyAction(l) =>
-            game.developments = l.take(game.earlyPerPlayer * game.devsPerYear)
+            game.developments = l.take(game.earlyDevs)
 
             Shuffle[Card]((Cards.advancedCards ++ game.horizonsDevelopments.??(Cards.horizonsAdvancedCards)).diff(BanDevelopment.cards(options)), ShuffledAdvancedAction(_))
 
         case ShuffledAdvancedAction(l) =>
             // With six players in a long game there aren't enough Early cards: Advanced ones make up the difference
-            val short = game.earlyPerPlayer * game.devsPerYear - game.developments.num
-            game.developments ++= l.take(game.advancedPerPlayer * game.devsPerYear + short)
+            val short = game.earlyDevs - game.developments.num
+            game.developments ++= l.take(game.advancedDevs + short)
 
             Shuffle[Card](Cards.achievementCards ++ game.horizonsDevelopments.??(Cards.horizonsAchievementCards), ShuffledAchievementsAction(_))
 
@@ -1546,6 +1608,7 @@ object CommonExpansion extends Expansion {
         case StartYearAction =>
             game.year += 1
             game.yearFirst = Some(game.first)
+            game.harvested = false
 
             log(DoubleLine)
             log("Year", game.year.hlb)
@@ -1570,8 +1633,8 @@ object CommonExpansion extends Expansion {
                 log("Achievement cards", game.display./(_.elem).join(", "), "are available")
             }
             else {
-                game.display = game.developments.take(game.devsPerYear)
-                game.developments = game.developments.drop(game.devsPerYear)
+                game.display = game.developments.take(game.devsIn(game.year))
+                game.developments = game.developments.drop(game.devsIn(game.year))
 
                 if (game.display.any)
                     log("Development cards", game.display./(_.elem).join(", "), "are available")
@@ -1757,6 +1820,8 @@ object CommonExpansion extends Expansion {
             log(SingleLine)
             log("Harvest")
 
+            game.harvested = true
+
             val victim = take.any.??(game.scorched./(game.board.territory)./(game.present).|($).single)
             game.scorchedTook = victim.flatMap(f => take.map(f -> _))
 
@@ -1901,7 +1966,7 @@ object CommonExpansion extends Expansion {
                 case f :: rest =>
                     if (payWinter(f))
                         // needOk: an Ask with a single choice is otherwise taken by the runner without showing it
-                        Ask(f).add(unrestLeft.?(TakeUnrestAction(f, f.units, rest)).|(UnrestGoneAction(f, f.units, rest))).needOk
+                        Ask(f).add(unrestLeft.?(TakeUnrestAction(f, f.winterUnits, rest)).|(UnrestGoneAction(f, f.winterUnits, rest))).needOk
                     else
                         Then(WinterPayAction(rest))
 

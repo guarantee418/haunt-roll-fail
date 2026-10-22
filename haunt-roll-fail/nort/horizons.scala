@@ -112,7 +112,7 @@ object EventsExpansion extends Expansion {
 
         val harsh = game.eventIs("harsh-winter").??(game.controlled(f).%(game.board.closed).num)
         // Wastelands: while Hrimgandr lives, the costs are one step (three units) higher
-        val (food, wood) = Winter.cost(game.states(f).units + harsh + WastelandsExpansion.winterUnits)
+        val (food, wood) = Winter.cost(game.states(f).winterUnits + harsh + WastelandsExpansion.winterUnits)
         val blizzard = game.eventIs("blizzard").??(1)
         (food + blizzard, wood + blizzard)
     }

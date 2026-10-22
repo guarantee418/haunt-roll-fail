@@ -36,7 +36,8 @@ draws a tile when no neutral territory is left.
 | Warchiefs module (Warchiefs expansion) | done 2026-10-03 (`warchiefs.scala`) |
 | "Ban card draw developments" house rule (not in the rulebook): leaves out Merchant, Market Place, Upgraded Market Place, Upgraded Trading Post, Greater Trade Routes, Trading Post and Cunning Merchant | done 2026-10-05 (`NoDrawDevelopments` in `options.scala`); Negociation, Spy, Ancestral Curse and Veiled Threats stay |
 | "Ban Defensive Strategy" house rule (not in the rulebook): leaves Defensive Strategy out of the Development cards | done 2026-10-14 (`NoDefensiveStrategy` in `options.scala`), in the main setup and in Adset |
-| "One extra Development card each year" house rule (not in the rulebook): one more Development card revealed each year than there are players, the one left over discarded | done 2026-10-20 (`ExtraDevelopment` in `options.scala`, `devsPerYear` in `game.scala`), in the main setup and in Adset, not against the Automa; the Uncharted Horizons Development cards are added when the core decks can't last every year (six players in a long game) |
+| "One extra Development card each year" house rule (not in the rulebook): one more Development card revealed each year than there are players, the one left over discarded | done 2026-10-20 (`ExtraDevelopment` in `options.scala`, now one of the "Development cards each year" choices, `DevelopmentsChoice`; `devsIn` in `game.scala`), in the main setup and in Adset, not against the Automa; the Uncharted Horizons Development cards are added when the core decks can't last every year (six players in a long game) |
+| "One fewer after year 1 (hard mode)" house rule (not in the rulebook; Marzaus, 2026-10-22): year 1 reveals one Development card per player, every later year but the last one fewer, so the last player to pass gets none | done 2026-10-22 (`FewerDevelopments`, a `DevelopmentsChoice` with `NormalDevelopments` and `ExtraDevelopment`, in `options.scala`; `devsIn`, `earlyDevs` and `advancedDevs` in `game.scala`), in the main setup and in Adset, not against the Automa |
 | "One more Achievement card" house rule (asked for by Marzaus on 2026-10-19, not in the rulebook): the last year reveals one Achievement card more than there are players, so the last to pass still chooses; the one left is set aside | done 2026-10-19 (`ExtraAchievement` in `options.scala`), in the main setup and in Adset |
 | "Fame" setup choice (not in the rulebook): Private fame (the rule, fame tokens face down; the default) or Public fame (every clan's fame shown in the panels) | done 2026-10-14 (`PrivateFame`, `PublicFame` in `options.scala`, `fameHidden` in `ui.scala`), in the main setup and in Adset |
 | The Warchiefs box's 7 extra clan upgrade cards | done 2026-10-03: with the module, or alone with "Warchief upgrade cards only" in the "Warchiefs module" section |
@@ -51,6 +52,9 @@ draws a tile when no neutral territory is left.
 | Tutorial (not in the rulebook): lessons as the Stag Clan, then a practice game against the Easy bot with a tip for every choice | done 2026-10-10 (`tutorial.scala`, "Tutorial" on the main menu) |
 | Uncharted Horizons: Training Fields module (two-player duel) | done 2026-10-05 (`training.scala`, "Training Grounds" on the main menu, see Training Fields below) |
 | Fan content: the Minerals module (fan-made by Maciej Drewing, BoardGameGeek file 255809) | done 2026-10-21 (`minerals.scala`, option "Minerals" under "Fan content", also in Adset; see Minerals below) |
+| Fan content: Tower PC version (fan-made by Marzaus, Discord) | done 2026-10-22 (`towers.scala`, option "Tower PC version" under "Fan content", also in Adset; see Tower PC version below) |
+| Fan content: Warchiefs PC version (fan-made by Marzaus) | done 2026-10-22 (option "Warchiefs PC version" under "Fan content", needs the warchiefs; see Warchiefs PC version below) |
+| Fan content: the Military paths module (fan-made by Marzaus, Discord northgard-fanmade-content) | done 2026-10-22 (`military.scala`, option "Military paths" under "Fan content", also in Adset; see Military paths below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -864,12 +868,102 @@ used (Gem, not Ruby). The art
   top of their draw pile.
 - The Automa neither builds Mines nor uses minerals.
 
+## Fan content: Warchiefs PC version (done 2026-10-22)
+
+Marzaus's variant (Discord, northgard-fanmade-content, "Warchiefs PC version"), making
+the warchiefs play more like the video game's. Option `ModuleOption(WarchiefsPC)`, under
+"Fan content", needs the warchiefs (the Warchiefs module or "Warchief pawns only"). His post:
+warchiefs (not Kaja) need a military camp to recruit and cost double; they can't be recruited
+during setup; they can only be killed with 2 casualties (and ignore anything with "remove a
+unit"); they aren't counted for army cap and Winter cost. Readings (`pcChief` and `toughness`
+in `game.scala`, `chiefAtSetup`, `chiefPrice` and `recruitChief` in `map.scala`):
+
+- Only the clan's warchief. Kaija, Brundr and Kaelinn, Horse's Brok and the Automa's Leaders
+  keep the usual rules.
+- Recruiting it takes 2 of a Recruit's units, into a territory the clan controls with a
+  working Training Camp; the camp's extra unit comes as usual.
+- No warchief at setup: three units in each placement.
+- In a fight (against a clan or a creature) it takes 2 casualties to kill it: a side's
+  casualties are capped at its figures plus one for the warchief. A player picking casualties
+  may leave one over that nothing else can take, so the warchief lives; it carries no damage
+  to the next fight. Without a choice, units go first, then the warchief if 2 are left.
+- Removals of one figure outside a fight (the Swamp, the Poisonous Swamp, creatures, Events)
+  pass it by. It is still lost with the rest of its side when they have nowhere to retreat.
+- Winter costs leave it out (`FactionState.winterUnits`). The 14-unit supply never counted it,
+  so "army cap" changes nothing.
+
+## Fan content: Military paths module (2026-10-22)
+
+Fan-made by Marzaus, posted in the Discord channel northgard-fanmade-content
+(thread "Military paths"); Gman sent screenshots of the post on 2026-10-22.
+The post is short, so the open points were put to Gman in a Claude Doc
+("Military paths: rule questions and plan"); the readings below are the ones
+proposed there, to change if Marzaus answers otherwise.
+
+- MXP is a number per clan (`game.mxp`), shown on its panel. Levels at 5,
+  50 and 100. At 5 MXP the clan picks a path (a choice right after the fight,
+  or at the end of the year), kept for the rest of the game; levels 2 and 3
+  are that path's. Leadership is offered only with the Warchiefs module.
+  Choices wait for `MilitaryCheckAction`, after each fight (`FightOverAction`)
+  and at the end of the year.
+- Gains: defeating a creature, twice its fame (attacking or defending; a
+  Wyvern driven back gives nothing). Winning a fight against a clan: 2 per
+  enemy unit killed (Militia and the bodyguard too, and those killed before
+  the fight) and 10 for an enemy warchief; companions give nothing; only the
+  winner scores, a tie nobody. Destroying a Defense Tower in a territory the
+  clan doesn't control (Egil's Fury, a Raid's raze, The True Hero): 3. The
+  Automa takes no part.
+- End of the year (after Winter, `EndOfYearAction`): Leadership 1, 1 per unit
+  and Militia in the warchief's territory; Guardian 1, 3 per Defense Tower
+  controlled; Legions 1, 3 per Training Camp controlled; Legions 2, one unit
+  from the supply at each Training Camp; Leadership's dead bodyguard comes back.
+- Leadership. 1: the bodyguard (`game.guards`) is a figure that is wherever the
+  warchief is (it moves, retreats and goes to the reserve with it), worth 1
+  combat point, lost as a casualty after the units and Militia and before the
+  warchief; not one of the 14 units, no Winter cost. 2: one reroll in each
+  fight with the warchief, against a clan (as Liv's; with Liv, one each),
+  +1 combat point where the warchief fights, and after a Move card's moves
+  the warchief may cross one more regular border (`ChiefMoveAction`; not into
+  the Swamp, a teammate's territory or a Brown Bear's). 3: the warchief's
+  territory recruits one more unit, like a Training Camp; after a fight the
+  warchief's side wins, each enemy unit killed there is replaced by one of the
+  clan's from its supply; attacking a clan, the warchief kills 1 enemy unit
+  before the fight (after step 1), and if that was the last enemy figure the
+  attacker wins without dice.
+- Guardian. 1: Defense Towers cost no wood and may go on a spot that takes no
+  space (still one per territory); defending, each tower kills an attacking
+  unit (or the bodyguard) before the fight, and only the towers that killed
+  nothing add their casualty at the end (`game.towersUsed`). Not against a
+  Conqueror, nor against Shieldbearers and Borgild's Shield (their cancelled
+  casualty stays at the end). If the towers kill every attacker, the defender
+  wins without dice. With the Tower PC version every tower already kills
+  before the fight, so Guardian adds no second kill, and its towers cost no
+  wood there either. 2: four Militia (`game.militia`), placed one by one in
+  the clan's territories: they count as figures (control, combat points, 1
+  each, casualties after the units), aren't units for the supply, Winter or
+  card effects on units, move with Move cards only into the clan's own
+  territories, retreat only there (or are lost), and don't come back once
+  dead. 3: Defense Towers recruit one more unit like Training Camps; once a
+  year, during a Build, a free Palisade (`Palisade`, a small building on no
+  space, 7 in the supply, up to 2 per territory, not offered by the build
+  menu): +1 combat point to whoever defends its territory, against creatures
+  too. The Conqueror doesn't ignore it.
+- Legions. 1: Training Camps cost no wood and may take no space; each recruits
+  2 units instead of 1. 2: see the end of the year. 3: +1 combat point for
+  every 2 of the clan's units in a fight (units only), and one reroll in each
+  fight against a clan.
+
 ## Expansions (later)
 
 The rest of Uncharted
 Horizons (drafting setup). The TTS mod 3597126237 has its cards and its rulebook PDF.
 
 ## Interpretations (choices made where the summary above is not enough)
+
+- Card editions (2026-10-22, `nort/editions.scala`): the 2nd edition Stag Clan card's "Move 1 action with only one of your units"
+  moves one unit (not Kaija nor the warchief), from any of the clan's territories, and is a full Move action, so it may attack.
+  The 2nd edition Rapacious Exploitation no longer prints "if they don't have enough resources, they must discard"; a player
+  who can't pay still has to discard. The draw is offered only when the Snake has cards left to draw.
 
 Check these against the rulebook when it is at hand.
 
@@ -1277,3 +1371,32 @@ Check these against the rulebook when it is at hand.
     collection, then Blainn's recruitment, then the usual trades.
   - Vedrfolnir's tile is placed like a second-chance tile next to an open
     territory; a tile that fits nowhere goes to the bottom of the pile.
+
+## Fan content: Tower PC version (done 2026-10-22)
+
+Fan-made by Marzaus, posted in the Discord's #northgard-fanmade-content
+("Tower PC version", 2026-10-22): Defense Towers as in the video game.
+The post has four lines; where it is short:
+
+- "If the territory is captured or abandoned, they are destroyed": a tower
+  belongs to the clan that held its territory when it was built (or first
+  held it after). Once that clan has no figure left there (lost a fight, moved
+  everyone out, Winter, Draugr, card effects) the tower goes back to the
+  supply. Checked before and after every action (`TowersExpansion.sweep`).
+- "They cost 2 wood": discounts still apply (a card's -1 makes it 1) and
+  free builds (Quality of Life, Halvard's Craft) stay free.
+- "They kill a unit before the fight, not after": at the start of each
+  fight (after Intimidate, before Signy, Brand, the Ox's tokens and food),
+  each tower kills 1 attacking unit; the attacker picks the figure
+  (ChooseCasualties). It adds no casualty after the die. Conqueror ignores
+  it; Shieldbearers (and Borgild) cancel it, and then no die casualty. With
+  no attacking figure left the defender wins without a roll (a fight for the
+  Events and Alternative victory counts).
+- "They add 1 axe to a monster fight": 1 combat point per tower in the
+  territory, attacking or defending.
+- "Can trigger fight with it upon monster entering a tile (before its
+  ability)": when a creature appears (not at setup) or moves into a territory
+  held by one clan with a tower there, that clan may fight it first, as the
+  attacker (no card bonus, food as usual, ties to the creature). Won, the
+  creature is defeated as usual and doesn't act; lost (or skipped), its
+  ability then happens. The Automa isn't asked.

@@ -879,6 +879,7 @@ object NewBloodExpansion extends Expansion {
                     .add(then.as("Use no more tokens")("Ancestral Equipment".hl))
 
         case TrueHeroAction(f, s, b, then) =>
+            MilitaryExpansion.razed(f, s, b)
             game.buildings -= s
             f.log("removed", b, "from", s.area, "with", "The True Hero".hl)
             Then(then)

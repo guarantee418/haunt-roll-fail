@@ -134,7 +134,7 @@ object AdsetExpansion extends Expansion {
             $(Info("Seats:", game.seats.zipWithIndex./{ case (p, i) => ((i + 1) + ". ").hl ~ seatElem(p).styled(color(p)) ~ game.ptf.get(p)./(c => " " ~ c.name.hlb).|(Empty) }.join(", "))) ++
             game.banned.any.$(Info("Banned:", game.banned./(_.name.hl).join(", "))) ++
             actions.exists(a => a.unwrap.is[AdsetBanAction] || a.unwrap.is[AdsetPickAction]).not.??(remaining./(c => AdsetClanInfoAction("Clans in the draft".hl, c))) ++
-            game.developments.take(game.devsPerYear)./(c => AdsetCardInfoAction("Developments, year 1".hl, c)) ++
+            game.developments.take(game.devsIn(1))./(c => AdsetCardInfoAction("Developments, year 1".hl, c)) ++
             game.achievements./(c => AdsetCardInfoAction("Achievements, year ".hl ~ game.lastYear.hlb, c)) ++
             player./~(game.seatTiles.get).|($)./(t => AdsetTileInfoAction("Your map tiles".hl, t))
         )
@@ -343,7 +343,7 @@ object MetaAdset extends MetaGame {
 
     override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear)
 
-    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ UndoChoice.all ++ WarchiefsChoice.all ++ $(NoDefensiveStrategy, ExtraDevelopment, ExtraAchievement, BalancedStartTiles) ++ BanDevelopment.all ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ Module.all.%(_.fan)./(ModuleOption) ++ hiddenOptions
+    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ WarchiefsChoice.all ++ DevelopmentsChoice.all ++ $(NoDefensiveStrategy, ExtraAchievement, BalancedStartTiles) ++ BanDevelopment.all ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ Module.all.%(_.fan)./(ModuleOption) ++ hiddenOptions
 
     // With two players the second seat doesn't choose: an expansion is agreed on here, or none
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -357,7 +357,7 @@ object MetaAdset extends MetaGame {
         case o => Meta.optionShown(o, selected)
     }
 
-    override def defaultsFor(n : Int, l : $[F]) = $(YearsOption.standard, StandardVictory, VictoryModeOption(false), PrivateFame, UnlimitedUndo, (n > 2).?(LandsSeatChooses).|(LandsNeither))
+    override def defaultsFor(n : Int, l : $[F]) = $(YearsOption.standard, StandardVictory, VictoryModeOption(false), PrivateFame, UnlimitedUndo, EditionChoice.default, NormalDevelopments, (n > 2).?(LandsSeatChooses).|(LandsNeither))
 
     override def quickOptions = Map()
 

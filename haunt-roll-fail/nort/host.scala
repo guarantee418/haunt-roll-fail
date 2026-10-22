@@ -78,9 +78,9 @@ object Host extends hrf.host.BaseHost {
         val usable = VictoryCard.all.%(c => creatures || VictoryExpansion.needsCreatures(c).not).shuffle
         val victory = alt.?(chosen.?(AltVictoryChosen : VictoryChoice).|(AltVictoryRandom)).|((random() < 0.3).?(FameOnly : VictoryChoice).|(StandardVictory)) +:
             ((alt && random() < 0.5).$(VictoryModeOption(true)) ++ chosen.??(usable.%(_.mapControl).take(1) ++ usable.%(_.mapControl.not).take(teams.any.?(3).|(2)))./(VictoryCardOption(_)))
-        val options = colors ++ $(YearsOption.all.shuffle.head) ++ victory ++ (random() < 0.3).$(FirstSeatStarts) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(TakeUnrestCard) ++ (random() < 0.8).$(ClanPowerReports) ++ (random() < 0.8).$(MendFigures) ++ (random() < 0.8).$(OxPicksSpace) ++ (random() < 0.8).$(JoinedTilesOnly) ++ (random() < 0.8).$(SimultaneousCurse) ++ (random() < 0.8).$(KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear) ++
+        val options = colors ++ $(YearsOption.all.shuffle.head) ++ $(EditionChoice.all.shuffle.head) ++ victory ++ (random() < 0.3).$(FirstSeatStarts) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(TakeUnrestCard) ++ (random() < 0.8).$(ClanPowerReports) ++ (random() < 0.8).$(MendFigures) ++ (random() < 0.8).$(OxPicksSpace) ++ (random() < 0.8).$(JoinedTilesOnly) ++ (random() < 0.8).$(SimultaneousCurse) ++ (random() < 0.8).$(KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear) ++
             creatures.$(ModuleOption(Creatures)) ++ (creatures && random() < 0.5).$(MoreCreatures) ++
-            (sys.env.get("NORT_WARCHIEFS").has("1") || random() < 0.5).?(WarchiefsChoice.all.shuffle.take(1)).|((random() < 0.3).$(WarchiefCards)) ++ (random() < 0.3).$(NoDrawDevelopments) ++ (random() < 0.3).$(NoDefensiveStrategy) ++ (random() < 0.3).$(ExtraDevelopment) ++ (random() < 0.3).$(ExtraAchievement) ++ (random() < 0.5).$(BalancedStartTiles) ++
+            (sys.env.get("NORT_WARCHIEFS").has("1") || random() < 0.5).?(WarchiefsChoice.all.shuffle.take(1)).|((random() < 0.3).$(WarchiefCards)) ++ (random() < 0.3).$(NoDrawDevelopments) ++ (random() < 0.3).$(NoDefensiveStrategy) ++ (random() < 0.4).$(ExtraDevelopment, FewerDevelopments).shuffle.take(1) ++ (random() < 0.3).$(ExtraAchievement) ++ (random() < 0.5).$(BalancedStartTiles) ++
             // NORT_HORIZONS=1: always with the Uncharted Horizons Development cards and map tiles
             (sys.env.get("NORT_HORIZONS").has("1") || random() < 0.5).$(HorizonsDevelopments) ++ (sys.env.get("NORT_HORIZONS").has("1") || random() < 0.5).$(HorizonsTiles) ++
             (sys.env.get("NORT_WILDERNESS").has("1") || random() < 0.5).$(ModuleOption(Wilderness)) ++
@@ -90,6 +90,12 @@ object Host extends hrf.host.BaseHost {
             (sys.env.get("NORT_SEA").has("1") || random() < 0.5).$(ModuleOption(Sea)) ++
             // NORT_MINERALS=1: always with the Minerals module (fan content)
             (sys.env.get("NORT_MINERALS").has("1") || random() < 0.5).$(ModuleOption(MineralsModule)) ++
+            // NORT_TOWERS=1: always with the Tower PC version (fan content)
+            (sys.env.get("NORT_TOWERS").has("1") || random() < 0.5).$(ModuleOption(TowersModule)) ++
+            // NORT_PCCHIEFS=1: always with the Warchiefs PC version (fan content), when the warchiefs are in
+            (sys.env.get("NORT_PCCHIEFS").has("1") || random() < 0.3).$(ModuleOption(WarchiefsPC)) ++
+            // NORT_MILITARY=1: always with the Military paths module (fan content)
+            (sys.env.get("NORT_MILITARY").has("1") || random() < 0.5).$(ModuleOption(MilitaryModule)) ++
             // NORT_WASTELANDS=1: always with Wastelands; a random central tile choice either way (it needs no module),
             // NORT_CENTRAL=1: never the standard tile; NORT_CENTRAL=<tile id>: always that tile
             wastelands.$(ModuleOption(Wastelands)) ++ $(CentralChoice.all.%(c => creatures || c.tile.forall(Waste.creatureOnly.has(_).not)).%(c => c != StandardCentral || sys.env.get("NORT_CENTRAL").has("1").not)
@@ -106,7 +112,7 @@ object Host extends hrf.host.BaseHost {
             // NORT_HUMAN=1: the last seat counts as a person (game.human), the others as bots
             val bots = sys.env.get("NORT_HUMAN").has("1").??(MetaAdset.factions.take(n - 1)./(BotSeatOption(_)))
             bots.foreach(o => assert(MetaAdset.parseOption(MetaAdset.writeOption(o)) == $(o), o))
-            val adset = $(YearsOption.all.shuffle.head) ++ victory ++ (random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.5).$(ModuleOption(Sea)) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(TakeUnrestCard) ++ (random() < 0.8).$(ClanPowerReports) ++ (random() < 0.8).$(MendFigures) ++ (random() < 0.8).$(OxPicksSpace) ++ (random() < 0.8).$(JoinedTilesOnly) ++ (random() < 0.8).$(SimultaneousCurse) ++ (random() < 0.8).$(KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear) ++ (random() < 0.5).$(BalancedStartTiles) ++ (random() < 0.3).$(ExtraDevelopment) ++ robotos ++ bots :+ lands
+            val adset = $(YearsOption.all.shuffle.head) ++ $(EditionChoice.all.shuffle.head) ++ victory ++ (random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.5).$(ModuleOption(Sea)) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(TakeUnrestCard) ++ (random() < 0.8).$(ClanPowerReports) ++ (random() < 0.8).$(MendFigures) ++ (random() < 0.8).$(OxPicksSpace) ++ (random() < 0.8).$(JoinedTilesOnly) ++ (random() < 0.8).$(SimultaneousCurse) ++ (random() < 0.8).$(KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear) ++ (random() < 0.5).$(BalancedStartTiles) ++ (random() < 0.4).$(ExtraDevelopment, FewerDevelopments).shuffle.take(1) ++ robotos ++ bots :+ lands
             MetaAdset.createGame(MetaAdset.factions.take(n), adset.distinct)
         }
         else {
@@ -129,6 +135,9 @@ object Host extends hrf.host.BaseHost {
 
     // NORT_UPGRADES=1: clan upgrades start in the decks, to test their effects
     Debug.upgradesInDeck = sys.env.get("NORT_UPGRADES").has("1")
+
+    // NORT_MXP=n: Military paths MXP gains times n, to reach levels 2 and 3
+    Debug.mxpTimes = sys.env.get("NORT_MXP")./(_.toInt).|(1)
 
     def winners(a : Action)(implicit g : G) = a @@ {
         case GameOverWonAction(_, l, _) => l

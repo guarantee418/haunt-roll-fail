@@ -1018,6 +1018,25 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     taken :+= ((mx(kx), my(ky), kz / T / 2))
                 }
 
+                // Military paths: the bodyguard beside the warchief, a smaller warrior; the Militia, warriors with a shield and their count
+                if (MilitaryExpansion.guardIn(t, f)) {
+                    val gz = 230.0 * scale
+                    val (gx, gy) = beside(0.1 * scale)
+                    pieces.add(Sprite($(at(Warchief.warrior(f, t.toString + "/guard", 1), gz)), $(Rectangle(-gz / 2, -gz / 2, gz, gz)), tag :+ MilitaryView(f)))(gx, gy)
+                    taken :+= ((mx(gx), my(gy), 0.1 * scale))
+                }
+
+                val militia = MilitaryExpansion.militiaIn(t, f)
+                if (militia > 0) {
+                    val qz = 270.0 * scale
+                    val (qx, qy) = beside(0.12 * scale)
+                    pieces.add(Sprite($(at(Warchief.warrior(f, t.toString + "/militia", militia), qz)), $(Rectangle(-qz / 2, -qz / 2, qz, qz)), tag :+ MilitaryView(f)))(qx, qy)
+                    pieces.add(Sprite($(at("ui-militia", 90 * scale)), $))(qx - 55 * scale, qy - 55 * scale)
+                    if (militia <= 15)
+                        pieces.add(Sprite($(at("ui-count-" + militia, 90 * scale)), $))(qx + 56 * scale, qy + 56 * scale)
+                    taken :+= ((mx(qx), my(qy), 0.12 * scale))
+                }
+
                 // Jötunn Blainn (Wastelands), a round token like Kaija's
                 if (game.blainnIn(t, f)) {
                     val bz = 230.0 * scale
@@ -1179,7 +1198,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val last = game.year == game.lastYear
 
-        val developments = last.not.$(("Developments, year " ~ draft.?(1).|(game.year).hlb ~ " of " ~ game.lastYear.hl) -> draft.?(game.developments.take(game.devsPerYear)).|(game.display))
+        val developments = last.not.$(("Developments, year " ~ draft.?(1).|(game.year).hlb ~ " of " ~ game.lastYear.hl) -> draft.?(game.developments.take(game.devsIn(1))).|(game.display))
 
         val achievements = $(("Achievements" ~ last.not.?(", year " ~ game.lastYear.hl).|(Empty)) -> last.?(game.display).|(game.achievements))
 
@@ -1216,7 +1235,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val payers = game.setup.but(Automa).%(game.states.contains)
 
         // Harsh Winter counts 1 more unit per closed territory
-        def counted(g : Faction) = game.states(g).units + game.eventIs("harsh-winter").??(game.controlled(g).%(game.board.closed).num)
+        def counted(g : Faction) = game.states(g).winterUnits + game.eventIs("harsh-winter").??(game.controlled(g).%(game.board.closed).num)
 
         val rows = $((0, 3), (4, 6), (7, 9), (10, 12), (13, 99))
 
@@ -1234,7 +1253,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val state = game.states(f)
         val (food, wood) = EventsExpansion.winterCost(f)
         val next = Harvest.forecast(f)
-        val after = (state.food + next.food, state.wood + next.wood)
+        // After this year's harvest (trading, Winter) the stockpile already holds it
+        val after = game.harvested.?((state.food, state.wood)).|((state.food + next.food, state.wood + next.wood))
 
         val events =
             game.eventIs("harsh-winter").?(("Harsh Winter".hl ~ ": each closed territory counts as 1 more unit").div).|(Empty) ~
@@ -1243,7 +1263,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val short = after._1 < food || after._2 < wood
 
         ("Income".hlb.div ~
-            ("Has " ~ Amount(state.food.hl, Food.elem) ~ " " ~ Amount(state.wood.hl, Wood.elem) ~ ", after the harvest " ~ Amount(after._1.hl, Food.elem) ~ " " ~ Amount(after._2.hl, Wood.elem)).div ~
+            ("Has " ~ Amount(state.food.hl, Food.elem) ~ " " ~ Amount(state.wood.hl, Wood.elem) ~ game.harvested.?(", harvest collected".txt).|(", after the harvest " ~ Amount(after._1.hl, Food.elem) ~ " " ~ Amount(after._2.hl, Wood.elem))).div ~
             (f.name.styled(colorOf(f)) ~ " pays " ~ (food + wood == 0).?("nothing".txt).|($(food -> Food.elem, wood -> Wood.elem).filter(_._1 > 0).map { case (n, e) => Amount(n.hl, e) }.join(" ")) ~ " for " ~ counted(f).hl ~ " units during winter").div ~
             short.?(("Not enough without trading: an unpaid Winter gives an " ~ UnrestCard.elem ~ " card").div).|(Empty) ~
             HorizontalBreak ~
@@ -1306,6 +1326,36 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             (Iron.elem ~ CombatText(" In a fight, after the food, spend one to roll two combat dice and add them up.")).spn(xstyles.smaller85).div ~
             (Gem.elem ~ " When playing cards, before or after, spend one to gain the fame of a card in your discard pile; the card goes on top of your draw pile.").spn(xstyles.smaller85).div ~
             "Fan-made by Maciej Drewing (BoardGameGeek).".spn(xstyles.smaller85).div ~
+            HorizontalBreak ~
+            "(tap to close)".spn(xstyles.smaller85).div
+        ).div
+    }
+
+    // Military paths module: the clan's MXP and path, how MXP is gained and the three paths, the clan's levels marked
+    def militaryView(f : Faction) : Elem = {
+        val path = game.paths.get(f)
+        val level = MilitaryExpansion.level(f)
+        val next = MilitaryExpansion.thresholds.find(_ > MilitaryExpansion.mxp(f))
+        def small(e : Elem) = e.spn(xstyles.smaller85).div
+
+        val others = game.factions.but(f).but(Automa).%(game.states.contains)./(g => (g.elem ~ ": " ~ MilitaryLabel(g).elem).div).merge
+
+        ("Military paths".hlb.div ~
+            (f.elem ~ ": " ~ MilitaryLabel(f).elem ~ next./(n => " (next level at " ~ n.hl ~ ")").|(Empty)).div ~
+            others ~
+            HorizontalBreak ~
+            small("Military experience (MXP): twice the fame of each creature defeated; for winning a fight, 2 for each enemy unit killed (Militia and bodyguards too) and 10 for an enemy warchief; 3 for destroying an enemy " ~ DefenseTower.elem ~ ".") ~
+            small("Level 1 at " ~ 5.hl ~ " MXP, when a path is chosen for the rest of the game; level 2 at " ~ 50.hl ~ ", level 3 at " ~ 100.hl ~ ".") ~
+            MilitaryPath.all.%(p => p != Leadership || game.has(Warchiefs))./{ p =>
+                HorizontalBreak ~
+                (p.elem ~ path.has(p).?(" (" ~ f.elem ~ ")").|(Empty)).div ~
+                p.levels.zipWithIndex./{ case (l, i) =>
+                    val reached = path.has(p) && level > i
+                    val st = reached.?($(styles.onBoard)).|(path.has(p).?($(styles.offBoard)).|($))
+                    (("Level " + (i + 1) + ": ").hl ~ l./(s => CombatText(s)).join(" ")).spn(xstyles.smaller85).styled(st).div
+                }.merge
+            }.merge ~
+            small("Fan-made by Marzaus (Discord, northgard-fanmade-content).".txt) ~
             HorizontalBreak ~
             "(tap to close)".spn(xstyles.smaller85).div
         ).div
@@ -1574,8 +1624,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val icons = cell(Empty) ~ columns./(c => open(c.open, c.icon)).merge
         val stock = cell(Empty) ~ columns./(c => open(c.open, stacked.?(c.stock).|(Amount(c.stock, c.icon)))).merge
-        def gain(c : Column) : Elem = c.extra.?(cell((("+" + c.gain).styled(styles.ledgerGain) ~ ("-" + (c.gain + 1)).styled(styles.ledgerGain, styles.ledgerMaybe)).spn)).|(signed(c.gain, "+", styles.ledgerGain))
-        val harvest = cell(SeasonIcon.harvest) ~ columns./(gain).merge
+        // Once this year's harvest is collected (trading, Winter) the row is grayed out, so it isn't taken for income still to come
+        def faded(e : Elem) : Elem = game.harvested.?(e.styled(styles.ledgerPast)).|(e)
+        def gain(c : Column) : Elem = cell(faded(c.extra.?((("+" + c.gain).styled(styles.ledgerGain) ~ ("-" + (c.gain + 1)).styled(styles.ledgerGain, styles.ledgerMaybe)).spn).|((c.gain > 0).?(("+" + c.gain).styled(styles.ledgerGain)).|("–".spn(styles.ledgerNone)))))
+        val harvest = cell(faded(SeasonIcon.harvest)) ~ columns./(gain).merge
         val winter = (f != Automa).?(cell(SeasonIcon.winter) ~ columns./(c => signed(c.cost, "-", styles.ledgerLoss)).merge).|(Empty)
 
         val rows = stacked.?(reverse.?(stock ~ icons ~ harvest ~ winter).|(icons ~ stock ~ harvest ~ winter)).|(stock ~ harvest ~ winter)
@@ -1585,7 +1637,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Minerals module: the Mines, then the Stone, Iron and Gem held (tapping them shows the supply and what each does)
         val minerals = (game.has(MineralsModule) && f != Automa).?(OnClick(MineralsView, row(item(MineralsExpansion.mines(f).hl, Image(Mine.image, styles.inlineIcon).alt("Mines")) +: Mineral.all./(m => item(state.mineral(m).hl, m.elem))).div(styles.panelLine)(xlo.pointer))).|(Empty)
 
-        val content = (title.div ~ cards ~ units ~ ledger ~ minerals ~ nb ~ goals ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
+        // Military paths module: the MXP, the path and its level (tapping them shows the paths)
+        val military = (game.has(MilitaryModule) && f != Automa).?(OnClick(MilitaryView(f), MilitaryLabel(f).elem.div(styles.panelLine)(xlo.pointer))).|(Empty)
+
+        val content = (title.div ~ cards ~ units ~ ledger ~ minerals ~ military ~ nb ~ goals ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
 
         container.replace(content, resources, {
             case x => onClick(x)
@@ -2572,6 +2627,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case MineralsView =>
             showOverlay(overlayScrollX(mineralsView).onClick, onClick)
+
+        case MilitaryView(f) =>
+            showOverlay(overlayScrollX(militaryView(f)).onClick, onClick)
 
         // A fight's result tapped in the log
         case FightReportView(r) =>

@@ -275,11 +275,23 @@ object BanDevelopment {
         options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards) ++ options.has(NoDefensiveStrategy).??(NoDefensiveStrategy.cards) ++ options.of[BanDevelopment]./(o => Development(o.id))
 }
 
+// DEVELOPMENT CARDS EACH YEAR: one per player (the rules), one more (suggested by Marzaus for two players on 2026-10-19, for every
+// player count by Gman on 2026-10-20), or one fewer from year 2 on, "hard mode" (Marzaus, 2026-10-22). Game.devsIn; not offered
+// against the Automa (optionsFor in meta.scala). Games made before the choice have none of these, or ExtraDevelopment
+trait DevelopmentsChoice extends GameOption with OneOfGroup {
+    val group = "Development cards each year".txt
+}
+
+case object NormalDevelopments extends DevelopmentsChoice {
+    def valueOn = "One per player".txt
+    override val explain = $(
+        "The rules: each year as many Development cards are revealed as there are players.",
+    )
+}
+
 // One more Development card revealed each year than there are players; the one left after everyone passes is discarded
-// (Game.devsPerYear; not offered against the Automa, optionsFor in meta.scala)
-case object ExtraDevelopment extends GameOption with ToggleOption {
-    val group = "Development cards".txt
-    def valueOn = "One extra Development card each year".txt
+case object ExtraDevelopment extends DevelopmentsChoice {
+    def valueOn = "One extra each year".txt
     override val explain = $(
         "Each year one more Development card is revealed than there are players (" ~ 3.hl ~ " in a two-player game), so the last player to pass still has a choice. The card left over is discarded.",
         "When the decks can't last every year (six players in a long game), the " ~ "Uncharted Horizons Development cards".hl ~ " are added.",
@@ -290,6 +302,29 @@ case object ExtraDevelopment extends GameOption with ToggleOption {
     def needsHorizons(options : $[BaseOption], players : Int, years : Int) : Boolean =
         options.has(ExtraDevelopment) && options.has(HorizonsDevelopments).not &&
             (players + 1) * (years - 1) > (Cards.earlyCards ++ Cards.advancedCards).diff(BanDevelopment.cards(options)).num
+}
+
+// One fewer Development card than there are players from the second year on: the last player to pass gets none
+case object FewerDevelopments extends DevelopmentsChoice {
+    def valueOn = "One fewer after year 1 (hard mode)".txt
+    override val explain = $(
+        "Year " ~ 1.hl ~ " reveals one Development card per player. From year " ~ 2.hl ~ " on, one fewer is revealed than there are players, so the last player to pass gets none.",
+    )
+}
+
+object DevelopmentsChoice {
+    val all : $[DevelopmentsChoice] = $(NormalDevelopments, ExtraDevelopment, FewerDevelopments)
+
+    // Development cards revealed in a year (not the last, which reveals the Achievements)
+    def in(options : $[BaseOption], players : Int, automa : Boolean, year : Int) : Int =
+        if (automa) players
+        else if (options.has(ExtraDevelopment)) players + 1
+        else if (options.has(FewerDevelopments) && year > 1) players - 1
+        else players
+
+    // Development cards revealed in the years from..until (until excluded)
+    def total(options : $[BaseOption], players : Int, automa : Boolean, from : Int, until : Int) : Int =
+        (from until until)./(in(options, players, automa, _)).sum
 }
 
 // One more Achievement card than there are players is revealed in the last year (Game: ShuffledAchievementsAction);
@@ -523,6 +558,8 @@ abstract class Module(val label : String, val box : String) extends NamedToStrin
     def priority : Int = 0
     // Fan-made, listed under "Fan content" on the setup screen
     def fan : Boolean = false
+    // The options it needs, any one of the lists (BaseOption.required)
+    def requires : $[$[BaseOption]] = $($())
 }
 
 case object Creatures extends Module("Creatures", "core box") {
@@ -687,8 +724,57 @@ case object MineralsModule extends Module("Minerals", "fan-made module by Maciej
     )
 }
 
+// The Tower PC version (towers.scala), fan-made by Marzaus (Discord, 2026-10-22): Defense Towers as in the video game.
+// First of all the module expansions, so it steps in before the Creatures module and the fights
+case object TowersModule extends Module("Tower PC version", "fan-made by Marzaus") {
+    override def ready = true
+    override def fan = true
+    override def expansion = |(TowersExpansion)
+    override def priority = -20
+    def about = $(
+        CombatText("Defense Towers work as in the Northgard video game:"),
+        "A " ~ "Defense Tower".hl ~ " costs " ~ Amount(2.hl, Wood.elem) ~ ".",
+        "It is destroyed when its territory is captured or abandoned (the clan holding it has no figure left there).",
+        "It kills 1 attacking unit before the fight, not after it; with no attacker left, the defender wins without a roll.",
+        CombatText("A clan fighting a creature in a territory with a Defense Tower gets 1 more combat point; when a creature appears or moves into such a territory, the clan holding it may fight it first, before the creature's ability."),
+        "Fan-made, not part of the published game.".styled(xstyles.warning),
+    )
+}
+
+// Warchiefs PC version (game.scala, map.scala), fan-made by Marzaus (Discord, northgard-fanmade-content; asked for by Gman on
+// 2026-10-22): the warchiefs play more like the video game's. Needs the warchiefs (the Warchiefs module or its pawns)
+case object WarchiefsPC extends Module("Warchiefs PC version", "fan-made variant by Marzaus") {
+    override def ready = true
+    override def fan = true
+    override def requires = $($(ModuleOption(Warchiefs)), $(WarchiefPawns))
+    def about = $(
+        "The warchiefs (not Kaija, Brok, Brundr and Kaelinn) play more like the video game's:",
+        "Recruiting a warchief takes " ~ 2.hl ~ " of a Recruit's units, into a territory with your " ~ TrainingCamp.elem ~ ". No warchief is placed at setup.",
+        CombatText("It takes 2 casualties to kill a warchief; a single one left over does nothing to it. Effects that remove a unit outside a fight never take it."),
+        "Warchiefs don't count for Winter costs.",
+        "Needs the warchiefs (" ~ "Warchiefs module".hl ~ ").",
+        "Fan-made, not part of the published game.".styled(xstyles.warning),
+    )
+}
+
+// The Military paths module (military.scala), fan-made by Marzaus (Discord, northgard-fanmade-content; asked for by Gman on
+// 2026-10-22): MXP from fights, and at 5 MXP one of three paths, each with three levels
+case object MilitaryModule extends Module("Military paths", "fan-made module by Marzaus") {
+    override def ready = true
+    override def fan = true
+    override def expansion = |(MilitaryExpansion)
+    def about = $(
+        "Clans gain military experience (MXP): twice the fame of each creature they defeat; for winning a fight, 2 for each enemy unit and 10 for an enemy warchief killed; 3 for destroying an enemy Defense Tower.",
+        "At 5 MXP (level 1) a clan picks a path for the rest of the game; levels 2 and 3 come at 50 and 100 MXP.",
+        "Leadership".hl ~ " (with the Warchiefs module): a bodyguard for the warchief, rerolls, an extra move and point, captures, a kill before attacking.",
+        "Guardian".hl ~ ": free Defense Towers that kill before the fight, Militia, Palisades.",
+        "Legions".hl ~ ": free Training Camps that recruit more and train units, more points for big armies, rerolls.",
+        "Fan-made, not part of the published game.".styled(xstyles.warning),
+    )
+}
+
 object Module {
-    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule)
+    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule)
 
     // The team variants and the number of players each one needs
     val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6, Teams2v2v2 -> 6)
@@ -704,5 +790,5 @@ case class ModuleOption(module : Module) extends GameOption with ToggleOption wi
     override def forcedOff(all : $[BaseOption]) = (module == Warchiefs).??(WarchiefsChoice.others(this))
     override val explain = module.about ++ module.ready.not.$("Not implemented yet.".styled(xstyles.warning))
     // A module that isn't ready requires itself, so it can never be turned on
-    override def required(all : $[BaseOption]) = module.ready.?($($[BaseOption]())).|($($[BaseOption](this)))
+    override def required(all : $[BaseOption]) = module.ready.?(module.requires).|($($[BaseOption](this)))
 }
