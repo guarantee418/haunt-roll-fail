@@ -913,6 +913,17 @@ object MapExpansion extends Expansion {
 
     def canRecruit(f : Faction)(implicit game : Game) = game.reserve(f) > 0 || game.kaijaReady(f) || game.chiefReady(f)
 
+    // Warchiefs PC version: no warchief at setup
+    def chiefAtSetup(f : Faction)(implicit game : Game) = game.chiefReady(f) && game.pcChief(f).not
+
+    // How many of a Recruit's units the warchief takes: 2 with Warchiefs PC version
+    def chiefPrice(f : Faction)(implicit game : Game) = game.pcChief(f).?(2).|(1)
+
+    // Whether f's warchief can be recruited in t with left units of the Recruit to go: with Warchiefs PC version, 2 of them,
+    // into a territory f controls with a working Training Camp
+    def recruitChief(f : Faction, t : Territory, left : Int)(implicit game : Game) =
+        game.chiefReady(f) && (game.pcChief(f).not || left >= 2 && game.controlled(f).has(t) && game.working(t).has(TrainingCamp))
+
     // Closed territories of 3 or more tiles, for Protector of the Land
     def bigClosed(f : Faction)(implicit game : Game) = game.controlled(f).%(game.board.closed).%(t => game.board.tiles(t) >= 3)
 
@@ -993,8 +1004,14 @@ object MapExpansion extends Expansion {
         val n = game.count(t, f)
         def may(b : Boolean) = b.?($(false, true)).|($(false))
 
-        for (chief <- may(game.chiefIn(t, f)); blainn <- may(game.blainnIn(t, f)); kaija <- may(game.kaijaIn(t, f)) ; s = $(kaija, chief, blainn).count(b => b) ; if s <= k && k - s <= n)
-            yield (k - s, kaija, chief, blainn)
+        // Warchiefs PC version: the warchief takes 2 casualties, and a single one left over with nothing else to take it is lost
+        val cost = game.pcChief(f).?(2).|(1)
+        val spare = game.pcChief(f) && game.chiefIn(t, f)
+
+        for (chief <- may(game.chiefIn(t, f)); blainn <- may(game.blainnIn(t, f)); kaija <- may(game.kaijaIn(t, f)) ; s = $(kaija, blainn).count(b => b) + chief.??(cost) ;
+            u = k - s ; all = kaija == game.kaijaIn(t, f) && blainn == game.blainnIn(t, f) ;
+            if s <= k && (u <= n || spare && chief.not && all && u == n + 1))
+            yield (math.min(u, n), kaija, chief, blainn)
     }.sortBy(p => $(p._2, p._3, p._4).count(b => b))
 
     // Asks the first of l (a clan and the casualties it takes) with a choice to make, then again; None once all are picked
@@ -1128,7 +1145,7 @@ object MapExpansion extends Expansion {
             val empty = all.exists(t => game.hostileIn(t).not).?(all.%(t => game.hostileIn(t).not)).|(all)
 
             // One territory per row when Kaija or the warchief could go there too; what to place is asked after it is picked
-            if (game.kaijaReady(f) || game.chiefReady(f))
+            if (game.kaijaReady(f) || chiefAtSetup(f))
                 Ask(f).each(empty)(t => SetupAreaAction(f, round, l, t.anchor))
             else
                 Ask(f).each(empty)(t => SetupUnitsAction(f, round, l, t.anchor))
@@ -1137,7 +1154,7 @@ object MapExpansion extends Expansion {
         // territory, or with the warchief in the second one if the first got three units
         case SetupAreaAction(f, round, l, a) =>
             val kaija = game.kaijaReady(f)
-            val chief = game.chiefReady(f)
+            val chief = chiefAtSetup(f)
 
             Ask(f)
                 .when(chief && (kaija.not || round == 1))(SetupChiefHereAction(f, round, l, a, false))
@@ -1171,7 +1188,8 @@ object MapExpansion extends Expansion {
 
         // RECRUIT
         case RecruitAction(f, left, mode, placed, then) =>
-            val targets = (left > 0 && canRecruit(f)).??(recruitTargets(f, mode, placed))
+            // (with Warchiefs PC version, the warchief only where recruitChief allows it)
+            val targets = (left > 0 && canRecruit(f)).??(recruitTargets(f, mode, placed)).%(t => game.reserve(f) > 0 || game.kaijaReady(f) || recruitChief(f, t, left))
 
             if (targets.none)
                 Then(TrainingCampsAction(f, placed, then))
@@ -1180,7 +1198,7 @@ object MapExpansion extends Expansion {
                     val l =
                         (game.reserve(f) > 0).$(RecruitPlaceAction(f, t.anchor, left, mode, placed, then)) ++
                         game.kaijaReady(f).$(RecruitKaijaAction(f, t.anchor, left, mode, placed, then)) ++
-                        game.chiefReady(f).$(RecruitChiefAction(f, t.anchor, left, mode, placed, then))
+                        recruitChief(f, t, left).$(RecruitChiefAction(f, t.anchor, left, mode, placed, then))
 
                     // One territory per row; what to recruit there is asked after it is picked
                     if (l.num > 1)
@@ -1194,7 +1212,7 @@ object MapExpansion extends Expansion {
             Ask(f)
                 .when(game.reserve(f) > 0)(RecruitUnitHereAction(f, a, left, mode, placed, then))
                 .when(game.kaijaReady(f))(RecruitKaijaHereAction(f, a, left, mode, placed, then))
-                .when(game.chiefReady(f))(RecruitChiefHereAction(f, a, left, mode, placed, then))
+                .when(recruitChief(f, game.board.territory(a), left))(RecruitChiefHereAction(f, a, left, mode, placed, then))
                 .cancel
 
         case RecruitPlaceAction(f, a, left, mode, placed, then) =>
@@ -1215,11 +1233,11 @@ object MapExpansion extends Expansion {
 
         case RecruitChiefAction(f, a, left, mode, placed, then) =>
             recruitChief(f, a)
-            Then(RecruitAction(f, left - 1, mode, placed :+ a, then))
+            Then(RecruitAction(f, left - chiefPrice(f), mode, placed :+ a, then))
 
         case RecruitChiefHereAction(f, a, left, mode, placed, then) =>
             recruitChief(f, a)
-            Then(RecruitAction(f, left - 1, mode, placed :+ a, then))
+            Then(RecruitAction(f, left - chiefPrice(f), mode, placed :+ a, then))
 
         case RecruitDoneAction(f, placed, then) =>
             Then(TrainingCampsAction(f, placed, then))
@@ -1313,9 +1331,12 @@ object MapExpansion extends Expansion {
 
             // The Swamp (Wilderness): figures going in lose one of them
             if (game.swampIn(dst) && game.swampIn(src).not) {
+                val had = game.figures(dst, f)
                 game.removeFigures(dst, f, 1)
                 game.note("swamp")
-                f.log("lost a unit in the", "Swamp".hl)
+                // A Warchiefs PC version warchief going in alone loses nothing
+                if (game.figures(dst, f) < had || game.pcChief(f).not)
+                    f.log("lost a unit in the", "Swamp".hl)
             }
 
             if (enemy.any && game.combats.has(dst.anchor).not)
@@ -1611,8 +1632,9 @@ object MapExpansion extends Expansion {
         case CombatResolveAction(attacker, defender, a, e, food, faces, then) =>
             val t = game.board.territory(a)
             val here = game.working(t)
-            val au = game.figures(t, attacker)
-            val du = game.figures(t, defender)
+            // The casualties that remove every figure (a Warchiefs PC version warchief takes 2)
+            val au = game.toughness(t, attacker)
+            val du = game.toughness(t, defender)
             // Conqueror: the attacker ignores Fortresses and Defense Towers
             val fortress = attacker.conqueror.?(0).|(2 * here.count(_ == Fortress))
             val towers = attacker.conqueror.?(0).|(here.count(_ == DefenseTower))
@@ -1817,7 +1839,7 @@ object MapExpansion extends Expansion {
 
                 if (to.none) {
                     val chief = game.chiefIn(t, f)
-                    game.removeFigures(t, f, game.figures(t, f))
+                    game.removeFigures(t, f, game.toughness(t, f))
                     f.log("had nowhere to retreat and lost", Party(f, n, kaija, chief))
                     game.retreatBy = None
                     Then(then)

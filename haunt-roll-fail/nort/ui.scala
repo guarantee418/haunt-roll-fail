@@ -1216,7 +1216,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val payers = game.setup.but(Automa).%(game.states.contains)
 
         // Harsh Winter counts 1 more unit per closed territory
-        def counted(g : Faction) = game.states(g).units + game.eventIs("harsh-winter").??(game.controlled(g).%(game.board.closed).num)
+        def counted(g : Faction) = game.states(g).winterUnits + game.eventIs("harsh-winter").??(game.controlled(g).%(game.board.closed).num)
 
         val rows = $((0, 3), (4, 6), (7, 9), (10, 12), (13, 99))
 

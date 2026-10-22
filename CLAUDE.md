@@ -91,7 +91,7 @@ screen (`Module.fan`, also in Adset): the Minerals module by Maciej Drewing (Boa
 lair) roll the combat die at the harvest for Stone, Iron and Gem (`game.mineralBank`, each clan's `minerals`), each worth two
 resources for trading, Winter and the final fame; Stone upgrades a building during a Build (`game.upgraded`, counted twice by
 `Game.counted` and `working`, cleared when the space's building changes, `buildings_=`), Iron rolls two dice in a fight, Gem takes a
-discarded card's fame while playing cards. The player panels show the Mines and minerals (tapping them, the supply and rules). The
+discarded card's fame while playing cards. The player panels show the Mines and minerals (tapping them, the supply and rules). Marzaus's "Warchiefs PC version" (asked for by Gman on 2026-10-22; `WarchiefsPC` in `nort/options.scala`, needs the warchiefs) makes the clan's warchief (not Kaija, Brok or the Automa's Leaders) cost 2 of a Recruit's units, only into a territory with its Training Camp, never placed at setup, killed only by 2 casualties in one fight (`game.toughness`; a single one left over spares it), passed by every one-figure removal outside a fight, and left out of Winter costs (`FactionState.winterUnits`); see `nort/RULES.md`. The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.

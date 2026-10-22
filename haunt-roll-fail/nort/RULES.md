@@ -51,6 +51,7 @@ draws a tile when no neutral territory is left.
 | Tutorial (not in the rulebook): lessons as the Stag Clan, then a practice game against the Easy bot with a tip for every choice | done 2026-10-10 (`tutorial.scala`, "Tutorial" on the main menu) |
 | Uncharted Horizons: Training Fields module (two-player duel) | done 2026-10-05 (`training.scala`, "Training Grounds" on the main menu, see Training Fields below) |
 | Fan content: the Minerals module (fan-made by Maciej Drewing, BoardGameGeek file 255809) | done 2026-10-21 (`minerals.scala`, option "Minerals" under "Fan content", also in Adset; see Minerals below) |
+| Fan content: Warchiefs PC version (fan-made by Marzaus) | done 2026-10-22 (option "Warchiefs PC version" under "Fan content", needs the warchiefs; see Warchiefs PC version below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -863,6 +864,30 @@ used (Gem, not Ruby). The art
   with fame from their discard pile, gains its printed fame, and puts it on
   top of their draw pile.
 - The Automa neither builds Mines nor uses minerals.
+
+## Fan content: Warchiefs PC version (done 2026-10-22)
+
+Marzaus's variant (Discord, northgard-fanmade-content, "Warchiefs PC version"), making
+the warchiefs play more like the video game's. Option `ModuleOption(WarchiefsPC)`, under
+"Fan content", needs the warchiefs (the Warchiefs module or "Warchief pawns only"). His post:
+warchiefs (not Kaja) need a military camp to recruit and cost double; they can't be recruited
+during setup; they can only be killed with 2 casualties (and ignore anything with "remove a
+unit"); they aren't counted for army cap and Winter cost. Readings (`pcChief` and `toughness`
+in `game.scala`, `chiefAtSetup`, `chiefPrice` and `recruitChief` in `map.scala`):
+
+- Only the clan's warchief. Kaija, Brundr and Kaelinn, Horse's Brok and the Automa's Leaders
+  keep the usual rules.
+- Recruiting it takes 2 of a Recruit's units, into a territory the clan controls with a
+  working Training Camp; the camp's extra unit comes as usual.
+- No warchief at setup: three units in each placement.
+- In a fight (against a clan or a creature) it takes 2 casualties to kill it: a side's
+  casualties are capped at its figures plus one for the warchief. A player picking casualties
+  may leave one over that nothing else can take, so the warchief lives; it carries no damage
+  to the next fight. Without a choice, units go first, then the warchief if 2 are left.
+- Removals of one figure outside a fight (the Swamp, the Poisonous Swamp, creatures, Events)
+  pass it by. It is still lost with the rest of its side when they have nowhere to retreat.
+- Winter costs leave it out (`FactionState.winterUnits`). The 14-unit supply never counted it,
+  so "army cap" changes nothing.
 
 ## Expansions (later)
 

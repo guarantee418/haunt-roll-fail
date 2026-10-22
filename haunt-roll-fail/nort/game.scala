@@ -132,6 +132,9 @@ class FactionState(val faction : Faction)(implicit game : Game) {
     // Units on the map, with the warchief (Warchiefs module); Horse Clan's second warchief, Brok, counts too
     def units = game.onMap(faction) + game.chiefs.contains(faction).??(1) + ((faction == Horse && game.brok.any) || (faction == Automa && game.leader2.any)).??(1) + game.blainnOf(faction).any.??(1) + SeaExpansion.raiders(faction)
 
+    // The units Winter costs count: Warchiefs PC version leaves the warchief out
+    def winterUnits = units - (game.pcChief(faction) && game.chiefs.contains(faction)).??(1)
+
     var draw : $[Card] = $
     var hand : $[Card] = $
     var active : $[Card] = $
@@ -883,6 +886,13 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // The Automa's Leader 1 plays as its warchief, with or without the module
     def chiefReady(f : Faction) : Boolean = (has(Warchiefs) || f == Automa) && chiefs.contains(f).not && setup.has(f)
 
+    // Warchiefs PC version (fan-made): f's warchief takes 2 casualties to kill, isn't placed at setup, is recruited for 2 units
+    // into a territory with a Training Camp and doesn't count for Winter; the Automa's Leader plays as usual
+    def pcChief(f : Faction) : Boolean = has(WarchiefsPC) && f != Automa
+
+    // The casualties it takes to remove all of f's figures in t: one each, two for a PC version warchief
+    def toughness(t : Territory, f : Faction) : Int = figures(t, f) + (pcChief(f) && chiefIn(t, f)).??(1)
+
     // Units, Kaija and the warchief
     def figures(t : Territory, f : Faction) : Int = count(t, f) + kaijaIn(t, f).??(1) + chiefIn(t, f).??(1) + blainnIn(t, f).??(1)
 
@@ -926,14 +936,19 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     }
 
     // Casualties: units first, then the warchief, Jötunn Blainn (back to his camp), Kaija last
+    // (a PC version warchief takes 2, so a single removal passes it by)
     def removeFigures(t : Territory, f : Faction, n : Int) {
         val k = math.min(n, count(t, f))
         removeUnits(t, f, k)
         var left = n - k
-        if (left > 0 && chiefIn(t, f)) {
+        val cost = pcChief(f).?(2).|(1)
+        if (left >= cost && chiefIn(t, f)) {
             chiefs -= f
-            left -= 1
+            left -= cost
         }
+        else
+        if (left > 0 && chiefIn(t, f))
+            note("pc-chief-spared")
         if (left > 0 && blainnIn(t, f)) {
             blainn = None
             left -= 1
@@ -954,6 +969,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
                 removeUnits(t, f, units)
                 if (chief)
                     chiefs -= f
+                if (chief.not && chiefIn(t, f) && pcChief(f))
+                    note("pc-chief-spared")
                 if (blainnToo)
                     blainn = None
                 if (kaija)
@@ -1150,7 +1167,7 @@ object CommonExpansion extends Expansion {
         }
         else
         if (food + wood == 0) {
-            f.log("owed nothing for", f.units.hl, "units")
+            f.log("owed nothing for", f.winterUnits.hl, "units")
             false
         }
         else
@@ -1158,7 +1175,7 @@ object CommonExpansion extends Expansion {
             f.food -= food
             f.wood -= wood
 
-            f.log("paid", food.hl, Food, (wood > 0).?("and " ~ Amount(wood.hl, Wood.elem)).|(Empty), "for", f.units.hl, "units")
+            f.log("paid", food.hl, Food, (wood > 0).?("and " ~ Amount(wood.hl, Wood.elem)).|(Empty), "for", f.winterUnits.hl, "units")
             false
         }
         else {
@@ -1176,14 +1193,14 @@ object CommonExpansion extends Expansion {
         if (unrestLeft) {
             f.draw = UnrestCard +: f.draw
 
-            f.log("could not pay for", f.units.hl, "units and took", UnrestCard)
+            f.log("could not pay for", f.winterUnits.hl, "units and took", UnrestCard)
         }
         else {
             f.fame -= 5
             f.discard ++= f.draw.take(1)
             f.draw = f.draw.drop(1)
 
-            f.log("could not pay for", f.units.hl, "units; with no", UnrestCard, "left, lost", 5.hl, FameIcon(), "and discarded the top card of their draw pile")
+            f.log("could not pay for", f.winterUnits.hl, "units; with no", UnrestCard, "left, lost", 5.hl, FameIcon(), "and discarded the top card of their draw pile")
         }
     }
 
@@ -1899,7 +1916,7 @@ object CommonExpansion extends Expansion {
                 case f :: rest =>
                     if (payWinter(f))
                         // needOk: an Ask with a single choice is otherwise taken by the runner without showing it
-                        Ask(f).add(unrestLeft.?(TakeUnrestAction(f, f.units, rest)).|(UnrestGoneAction(f, f.units, rest))).needOk
+                        Ask(f).add(unrestLeft.?(TakeUnrestAction(f, f.winterUnits, rest)).|(UnrestGoneAction(f, f.winterUnits, rest))).needOk
                     else
                         Then(WinterPayAction(rest))
 

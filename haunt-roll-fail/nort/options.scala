@@ -523,6 +523,8 @@ abstract class Module(val label : String, val box : String) extends NamedToStrin
     def priority : Int = 0
     // Fan-made, listed under "Fan content" on the setup screen
     def fan : Boolean = false
+    // The options it needs, any one of the lists (BaseOption.required)
+    def requires : $[$[BaseOption]] = $($())
 }
 
 case object Creatures extends Module("Creatures", "core box") {
@@ -687,8 +689,24 @@ case object MineralsModule extends Module("Minerals", "fan-made module by Maciej
     )
 }
 
+// Warchiefs PC version (game.scala, map.scala), fan-made by Marzaus (Discord, northgard-fanmade-content; asked for by Gman on
+// 2026-10-22): the warchiefs play more like the video game's. Needs the warchiefs (the Warchiefs module or its pawns)
+case object WarchiefsPC extends Module("Warchiefs PC version", "fan-made variant by Marzaus") {
+    override def ready = true
+    override def fan = true
+    override def requires = $($(ModuleOption(Warchiefs)), $(WarchiefPawns))
+    def about = $(
+        "The warchiefs (not Kaija, Brok, Brundr and Kaelinn) play more like the video game's:",
+        "Recruiting a warchief takes " ~ 2.hl ~ " of a Recruit's units, into a territory with your " ~ TrainingCamp.elem ~ ". No warchief is placed at setup.",
+        CombatText("It takes 2 casualties to kill a warchief; a single one left over does nothing to it. Effects that remove a unit outside a fight never take it."),
+        "Warchiefs don't count for Winter costs.",
+        "Needs the warchiefs (" ~ "Warchiefs module".hl ~ ").",
+        "Fan-made, not part of the published game.".styled(xstyles.warning),
+    )
+}
+
 object Module {
-    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule)
+    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, WarchiefsPC)
 
     // The team variants and the number of players each one needs
     val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6, Teams2v2v2 -> 6)
@@ -704,5 +722,5 @@ case class ModuleOption(module : Module) extends GameOption with ToggleOption wi
     override def forcedOff(all : $[BaseOption]) = (module == Warchiefs).??(WarchiefsChoice.others(this))
     override val explain = module.about ++ module.ready.not.$("Not implemented yet.".styled(xstyles.warning))
     // A module that isn't ready requires itself, so it can never be turned on
-    override def required(all : $[BaseOption]) = module.ready.?($($[BaseOption]())).|($($[BaseOption](this)))
+    override def required(all : $[BaseOption]) = module.ready.?(module.requires).|($($[BaseOption](this)))
 }
