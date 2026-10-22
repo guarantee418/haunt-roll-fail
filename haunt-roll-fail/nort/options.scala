@@ -687,8 +687,25 @@ case object MineralsModule extends Module("Minerals", "fan-made module by Maciej
     )
 }
 
+// The Tower PC version (towers.scala), fan-made by Marzaus (Discord, 2026-10-22): Defense Towers as in the video game.
+// First of all the module expansions, so it steps in before the Creatures module and the fights
+case object TowersModule extends Module("Tower PC version", "fan-made by Marzaus") {
+    override def ready = true
+    override def fan = true
+    override def expansion = |(TowersExpansion)
+    override def priority = -20
+    def about = $(
+        CombatText("Defense Towers work as in the Northgard video game:"),
+        "A " ~ "Defense Tower".hl ~ " costs " ~ Amount(2.hl, Wood.elem) ~ ".",
+        "It is destroyed when its territory is captured or abandoned (the clan holding it has no figure left there).",
+        "It kills 1 attacking unit before the fight, not after it; with no attacker left, the defender wins without a roll.",
+        CombatText("A clan fighting a creature in a territory with a Defense Tower gets 1 more combat point; when a creature appears or moves into such a territory, the clan holding it may fight it first, before the creature's ability."),
+        "Fan-made, not part of the published game.".styled(xstyles.warning),
+    )
+}
+
 object Module {
-    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule)
+    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule)
 
     // The team variants and the number of players each one needs
     val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6, Teams2v2v2 -> 6)

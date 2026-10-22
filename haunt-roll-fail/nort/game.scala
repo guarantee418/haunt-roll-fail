@@ -638,6 +638,13 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var ironAsked : $[Faction] = $
     var ironFight : $[Faction] = $
 
+    // TOWER PC VERSION (towers.scala): the clan holding each Defense Tower's territory, the fight whose towers have fired,
+    // whether Shieldbearers cancelled that kill, and the creature whose entering was offered to the towers
+    var towerHolder : Map[SpaceRef, Faction] = Map()
+    var volleyed : |[AreaRef] = None
+    var towerShield = false
+    var towerAsked : |[Creature] = None
+
     // Territories where a Move action started a fight
     var combats : $[AreaRef] = $
 
@@ -1081,11 +1088,18 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
             case f => f
         }
 
+        // Tower PC version: towers whose territory was captured or abandoned are destroyed (before too, as a replay stops at soft actions)
+        if (has(TowersModule))
+            TowersExpansion.sweep(this)
+
         val c = action.as[SelfPerform]./(_.perform(soft)).|(internalPerform(action, soft)) match {
             case c : Ask if adset => c.copy(faction = fix(c.faction))
             case c : MultiAsk if adset => c.copy(asks = c.asks./(a => a.copy(faction = fix(a.faction))))
             case c => c
         }
+
+        if (has(TowersModule))
+            TowersExpansion.sweep(this)
 
         highlight.faction = c match {
             case Ask(f, _) => $(f) ++ ptf.get(f).$
