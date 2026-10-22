@@ -275,11 +275,23 @@ object BanDevelopment {
         options.has(NoDrawDevelopments).??(NoDrawDevelopments.cards) ++ options.has(NoDefensiveStrategy).??(NoDefensiveStrategy.cards) ++ options.of[BanDevelopment]./(o => Development(o.id))
 }
 
+// DEVELOPMENT CARDS EACH YEAR: one per player (the rules), one more (suggested by Marzaus for two players on 2026-10-19, for every
+// player count by Gman on 2026-10-20), or one fewer from year 2 on, "hard mode" (Marzaus, 2026-10-22). Game.devsIn; not offered
+// against the Automa (optionsFor in meta.scala). Games made before the choice have none of these, or ExtraDevelopment
+trait DevelopmentsChoice extends GameOption with OneOfGroup {
+    val group = "Development cards each year".txt
+}
+
+case object NormalDevelopments extends DevelopmentsChoice {
+    def valueOn = "One per player".txt
+    override val explain = $(
+        "The rules: each year as many Development cards are revealed as there are players.",
+    )
+}
+
 // One more Development card revealed each year than there are players; the one left after everyone passes is discarded
-// (Game.devsPerYear; not offered against the Automa, optionsFor in meta.scala)
-case object ExtraDevelopment extends GameOption with ToggleOption {
-    val group = "Development cards".txt
-    def valueOn = "One extra Development card each year".txt
+case object ExtraDevelopment extends DevelopmentsChoice {
+    def valueOn = "One extra each year".txt
     override val explain = $(
         "Each year one more Development card is revealed than there are players (" ~ 3.hl ~ " in a two-player game), so the last player to pass still has a choice. The card left over is discarded.",
         "When the decks can't last every year (six players in a long game), the " ~ "Uncharted Horizons Development cards".hl ~ " are added.",
@@ -290,6 +302,29 @@ case object ExtraDevelopment extends GameOption with ToggleOption {
     def needsHorizons(options : $[BaseOption], players : Int, years : Int) : Boolean =
         options.has(ExtraDevelopment) && options.has(HorizonsDevelopments).not &&
             (players + 1) * (years - 1) > (Cards.earlyCards ++ Cards.advancedCards).diff(BanDevelopment.cards(options)).num
+}
+
+// One fewer Development card than there are players from the second year on: the last player to pass gets none
+case object FewerDevelopments extends DevelopmentsChoice {
+    def valueOn = "One fewer after year 1 (hard mode)".txt
+    override val explain = $(
+        "Year " ~ 1.hl ~ " reveals one Development card per player. From year " ~ 2.hl ~ " on, one fewer is revealed than there are players, so the last player to pass gets none.",
+    )
+}
+
+object DevelopmentsChoice {
+    val all : $[DevelopmentsChoice] = $(NormalDevelopments, ExtraDevelopment, FewerDevelopments)
+
+    // Development cards revealed in a year (not the last, which reveals the Achievements)
+    def in(options : $[BaseOption], players : Int, automa : Boolean, year : Int) : Int =
+        if (automa) players
+        else if (options.has(ExtraDevelopment)) players + 1
+        else if (options.has(FewerDevelopments) && year > 1) players - 1
+        else players
+
+    // Development cards revealed in the years from..until (until excluded)
+    def total(options : $[BaseOption], players : Int, automa : Boolean, from : Int, until : Int) : Int =
+        (from until until)./(in(options, players, automa, _)).sum
 }
 
 // One more Achievement card than there are players is revealed in the last year (Game: ShuffledAchievementsAction);

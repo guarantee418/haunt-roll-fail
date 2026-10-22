@@ -557,8 +557,13 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     val earlyPerPlayer = (lastYear - 1 + 2) / 3
     val advancedPerPlayer = lastYear - 1 - earlyPerPlayer
 
-    // Development cards revealed each year: one per player, and one more with ExtraDevelopment (not against the Automa)
-    def devsPerYear = arity + (options.has(ExtraDevelopment) && setup.has(Automa).not).??(1)
+    // Development cards revealed in a year: one per player, one more with ExtraDevelopment, one fewer after the first with
+    // FewerDevelopments (not against the Automa)
+    def devsIn(year : Int) = DevelopmentsChoice.in(options, arity, setup.has(Automa), year)
+
+    // Early cards for the first years, Advanced ones for the rest but the last
+    def earlyDevs = DevelopmentsChoice.total(options, arity, setup.has(Automa), 1, 1 + earlyPerPlayer)
+    def advancedDevs = DevelopmentsChoice.total(options, arity, setup.has(Automa), 1 + earlyPerPlayer, lastYear)
 
     // The Uncharted Horizons Development cards: chosen, or added when the extra card would empty the core decks early
     val horizonsDevelopments = options.has(HorizonsDevelopments) || (players.has(Automa).not && ExtraDevelopment.needsHorizons(options, players.num, lastYear))
@@ -1343,14 +1348,14 @@ object CommonExpansion extends Expansion {
             Shuffle[Card]((Cards.earlyCards ++ game.horizonsDevelopments.??(Cards.horizonsEarlyCards)).diff(BanDevelopment.cards(options)), ShuffledEarlyAction(_))
 
         case ShuffledEarlyAction(l) =>
-            game.developments = l.take(game.earlyPerPlayer * game.devsPerYear)
+            game.developments = l.take(game.earlyDevs)
 
             Shuffle[Card]((Cards.advancedCards ++ game.horizonsDevelopments.??(Cards.horizonsAdvancedCards)).diff(BanDevelopment.cards(options)), ShuffledAdvancedAction(_))
 
         case ShuffledAdvancedAction(l) =>
             // With six players in a long game there aren't enough Early cards: Advanced ones make up the difference
-            val short = game.earlyPerPlayer * game.devsPerYear - game.developments.num
-            game.developments ++= l.take(game.advancedPerPlayer * game.devsPerYear + short)
+            val short = game.earlyDevs - game.developments.num
+            game.developments ++= l.take(game.advancedDevs + short)
 
             Shuffle[Card](Cards.achievementCards ++ game.horizonsDevelopments.??(Cards.horizonsAchievementCards), ShuffledAchievementsAction(_))
 
@@ -1568,8 +1573,8 @@ object CommonExpansion extends Expansion {
                 log("Achievement cards", game.display./(_.elem).join(", "), "are available")
             }
             else {
-                game.display = game.developments.take(game.devsPerYear)
-                game.developments = game.developments.drop(game.devsPerYear)
+                game.display = game.developments.take(game.devsIn(game.year))
+                game.developments = game.developments.drop(game.devsIn(game.year))
 
                 if (game.display.any)
                     log("Development cards", game.display./(_.elem).join(", "), "are available")
