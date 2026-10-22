@@ -391,6 +391,8 @@ case class LoreTree(f : Faction)
 case object PyreView
 // Tapping Ox Clan's Ancestral Equipment tokens in its panel shows all seven, what each does and where it is
 case object GearView
+// Tapping an Ancestral Equipment token on the map says what it does and how Ox Clan takes it
+case class GearTokenInfo(space : SpaceRef, n : Int)
 // Tapping Kraken Clan's High Tide tokens in its panel shows what they do and where they are
 case object TideView
 // Cards shown while there is nothing to do with them; clicking one opens it full screen
