@@ -283,7 +283,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         else victorySteps.getOrElseUpdate(id + n, victoryValue(self, Map(id -> n)) - victoryValue(self))
 
     // Food and wood f owes at Winter: nothing for a Robotos clan (robotos.scala)
-    def winterNeed(f : Faction) : (Int, Int) = game.robotos(f).?((0, 0)).|(Winter.cost(f.units))
+    def winterNeed(f : Faction) : (Int, Int) = game.robotos(f).?((0, 0)).|(Winter.cost(f.winterUnits))
 
     // Food and wood owed at the next Winter, against what f will have; an Unrest card costs 5 fame
     def winterValue(f : Faction) : Double = {
@@ -430,8 +430,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val towers = conq.?(0).|(here.count(_ == DefenseTower))
         // Tower PC version: the towers kill attacking units before the fight
         val first = TowersExpansion.killFirst.??(math.min(towers, game.figures(t, attacker)))
-        val au = game.figures(t, attacker) - first
-        val du = game.figures(t, defender)
+        val au = game.toughness(t, attacker) - first
+        val du = game.toughness(t, defender)
         if (au <= 0)
             return 0.0
         val as = game.robotos(attacker).??(1) + game.strength(t, attacker, true) - first + bonus + (attacker == Snake && game.scorchedIn(t)).??(1) + math.min(au, spendable(attacker))
@@ -686,8 +686,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val fortress = conq.?(0).|(2 * here.count(_ == Fortress))
         // Tower PC version: the towers fired before the fight
         val towers = (conq || TowersExpansion.killFirst).?(0).|(here.count(_ == DefenseTower))
-        val au = game.figures(t, attacker)
-        val du = game.figures(t, defender)
+        val au = game.toughness(t, attacker)
+        val du = game.toughness(t, defender)
         val attacking = self == attacker
         val af = attacking.?(k).|(food(0))
         val df = attacking.?(math.min(du, defender.food)).|(k)
@@ -709,8 +709,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val conq = attacker.conqueror
         val fortress = conq.?(0).|(2 * here.count(_ == Fortress))
         val towers = (conq || TowersExpansion.killFirst).?(0).|(here.count(_ == DefenseTower))
-        val au = game.figures(t, attacker)
-        val du = game.figures(t, defender)
+        val au = game.toughness(t, attacker)
+        val du = game.toughness(t, defender)
         val as = game.robotos(attacker).??(1) + game.strength(t, attacker, true) + e.bonus + (attacker == Snake && game.scorchedIn(t)).??(1) + food.lift(0).|(0)
         val ds = game.strength(t, defender, false) + fortress + (defender == Snake && game.scorchedIn(t)).??(1) + food.lift(1).|(0)
         val extra = (e.special == EgilMove).??(1)
@@ -1193,8 +1193,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val conq = attacker.conqueror
         val fortress = conq.?(0).|(2 * here.count(_ == Fortress))
         val towers = (conq || TowersExpansion.killFirst).?(0).|(here.count(_ == DefenseTower))
-        val au = game.figures(t, attacker)
-        val du = game.figures(t, defender)
+        val au = game.toughness(t, attacker)
+        val du = game.toughness(t, defender)
         val as = game.robotos(attacker).??(1) + game.strength(t, attacker, true) + e.bonus + (attacker == Snake && game.scorchedIn(t)).??(1) + food.lift(0).|(0)
         val ds = game.strength(t, defender, false) + fortress + (defender == Snake && game.scorchedIn(t)).??(1) + food.lift(1).|(0)
         val extra = (e.special == EgilMove).??(1)

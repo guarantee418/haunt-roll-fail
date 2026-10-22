@@ -92,6 +92,8 @@ object Host extends hrf.host.BaseHost {
             (sys.env.get("NORT_MINERALS").has("1") || random() < 0.5).$(ModuleOption(MineralsModule)) ++
             // NORT_TOWERS=1: always with the Tower PC version (fan content)
             (sys.env.get("NORT_TOWERS").has("1") || random() < 0.5).$(ModuleOption(TowersModule)) ++
+            // NORT_PCCHIEFS=1: always with the Warchiefs PC version (fan content), when the warchiefs are in
+            (sys.env.get("NORT_PCCHIEFS").has("1") || random() < 0.3).$(ModuleOption(WarchiefsPC)) ++
             // NORT_WASTELANDS=1: always with Wastelands; a random central tile choice either way (it needs no module),
             // NORT_CENTRAL=1: never the standard tile; NORT_CENTRAL=<tile id>: always that tile
             wastelands.$(ModuleOption(Wastelands)) ++ $(CentralChoice.all.%(c => creatures || c.tile.forall(Waste.creatureOnly.has(_).not)).%(c => c != StandardCentral || sys.env.get("NORT_CENTRAL").has("1").not)

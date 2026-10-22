@@ -318,7 +318,8 @@ object WildernessExpansion extends Expansion {
         // POISONOUS SWAMP: at the end of the Harvest, one unit dies in each territory next to it
         case WinterAction =>
             Wild.around(Wild.poison).flatten.distinct.foreach { t =>
-                game.present(t).single.%(g => game.count(t, g) > 0 || game.chiefIn(t, g)).foreach { g =>
+                // A Warchiefs PC version warchief is never removed by it
+                game.present(t).single.%(g => game.count(t, g) > 0 || game.chiefIn(t, g) && game.pcChief(g).not).foreach { g =>
                     if (game.count(t, g) > 0)
                         game.removeUnits(t, g, 1)
                     else

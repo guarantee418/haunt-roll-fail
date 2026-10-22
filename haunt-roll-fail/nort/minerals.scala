@@ -322,7 +322,7 @@ object MineralsExpansion extends Expansion {
         // The same as WinterPayAction without the minerals
         case MineralWinterSkipAction(f, rest) =>
             if (CommonExpansion.payWinter(f))
-                Ask(f).add(CommonExpansion.unrestLeft.?(TakeUnrestAction(f, f.units, rest)).|(UnrestGoneAction(f, f.units, rest))).needOk
+                Ask(f).add(CommonExpansion.unrestLeft.?(TakeUnrestAction(f, f.winterUnits, rest)).|(UnrestGoneAction(f, f.winterUnits, rest))).needOk
             else
                 Then(WinterPayAction(rest))
 

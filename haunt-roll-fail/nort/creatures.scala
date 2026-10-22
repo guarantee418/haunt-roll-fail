@@ -598,7 +598,8 @@ object CreaturesExpansion extends Expansion {
 
             val t = game.board.territory(a)
             val here = game.working(t)
-            val units = game.figures(t, f)
+            // The casualties that remove every figure (a Warchiefs PC version warchief takes 2)
+            val units = game.toughness(t, f)
 
             // The attacker's card bonus or the defender's Fortresses; Defense Towers only add casualties, which creatures ignore,
             // except with the Tower PC version: 1 point each
