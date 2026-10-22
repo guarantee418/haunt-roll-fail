@@ -1018,6 +1018,25 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     taken :+= ((mx(kx), my(ky), kz / T / 2))
                 }
 
+                // Military paths: the bodyguard beside the warchief, a smaller warrior; the Militia, warriors with a shield and their count
+                if (MilitaryExpansion.guardIn(t, f)) {
+                    val gz = 230.0 * scale
+                    val (gx, gy) = beside(0.1 * scale)
+                    pieces.add(Sprite($(at(Warchief.warrior(f, t.toString + "/guard", 1), gz)), $(Rectangle(-gz / 2, -gz / 2, gz, gz)), tag :+ MilitaryView(f)))(gx, gy)
+                    taken :+= ((mx(gx), my(gy), 0.1 * scale))
+                }
+
+                val militia = MilitaryExpansion.militiaIn(t, f)
+                if (militia > 0) {
+                    val qz = 270.0 * scale
+                    val (qx, qy) = beside(0.12 * scale)
+                    pieces.add(Sprite($(at(Warchief.warrior(f, t.toString + "/militia", militia), qz)), $(Rectangle(-qz / 2, -qz / 2, qz, qz)), tag :+ MilitaryView(f)))(qx, qy)
+                    pieces.add(Sprite($(at("ui-militia", 90 * scale)), $))(qx - 55 * scale, qy - 55 * scale)
+                    if (militia <= 15)
+                        pieces.add(Sprite($(at("ui-count-" + militia, 90 * scale)), $))(qx + 56 * scale, qy + 56 * scale)
+                    taken :+= ((mx(qx), my(qy), 0.12 * scale))
+                }
+
                 // Jötunn Blainn (Wastelands), a round token like Kaija's
                 if (game.blainnIn(t, f)) {
                     val bz = 230.0 * scale
@@ -1312,6 +1331,36 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         ).div
     }
 
+    // Military paths module: the clan's MXP and path, how MXP is gained and the three paths, the clan's levels marked
+    def militaryView(f : Faction) : Elem = {
+        val path = game.paths.get(f)
+        val level = MilitaryExpansion.level(f)
+        val next = MilitaryExpansion.thresholds.find(_ > MilitaryExpansion.mxp(f))
+        def small(e : Elem) = e.spn(xstyles.smaller85).div
+
+        val others = game.factions.but(f).but(Automa).%(game.states.contains)./(g => (g.elem ~ ": " ~ MilitaryLabel(g).elem).div).merge
+
+        ("Military paths".hlb.div ~
+            (f.elem ~ ": " ~ MilitaryLabel(f).elem ~ next./(n => " (next level at " ~ n.hl ~ ")").|(Empty)).div ~
+            others ~
+            HorizontalBreak ~
+            small("Military experience (MXP): twice the fame of each creature defeated; for winning a fight, 2 for each enemy unit killed (Militia and bodyguards too) and 10 for an enemy warchief; 3 for destroying an enemy " ~ DefenseTower.elem ~ ".") ~
+            small("Level 1 at " ~ 5.hl ~ " MXP, when a path is chosen for the rest of the game; level 2 at " ~ 50.hl ~ ", level 3 at " ~ 100.hl ~ ".") ~
+            MilitaryPath.all.%(p => p != Leadership || game.has(Warchiefs))./{ p =>
+                HorizontalBreak ~
+                (p.elem ~ path.has(p).?(" (" ~ f.elem ~ ")").|(Empty)).div ~
+                p.levels.zipWithIndex./{ case (l, i) =>
+                    val reached = path.has(p) && level > i
+                    val st = reached.?($(styles.onBoard)).|(path.has(p).?($(styles.offBoard)).|($))
+                    (("Level " + (i + 1) + ": ").hl ~ l./(s => CombatText(s)).join(" ")).spn(xstyles.smaller85).styled(st).div
+                }.merge
+            }.merge ~
+            small("Fan-made by Marzaus (Discord, northgard-fanmade-content).".txt) ~
+            HorizontalBreak ~
+            "(tap to close)".spn(xstyles.smaller85).div
+        ).div
+    }
+
     // What a High Tide token does, and where each one is
     def tideView : Elem = {
         val rows = 0.until(2).$./{ n =>
@@ -1588,7 +1637,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Minerals module: the Mines, then the Stone, Iron and Gem held (tapping them shows the supply and what each does)
         val minerals = (game.has(MineralsModule) && f != Automa).?(OnClick(MineralsView, row(item(MineralsExpansion.mines(f).hl, Image(Mine.image, styles.inlineIcon).alt("Mines")) +: Mineral.all./(m => item(state.mineral(m).hl, m.elem))).div(styles.panelLine)(xlo.pointer))).|(Empty)
 
-        val content = (title.div ~ cards ~ units ~ ledger ~ minerals ~ nb ~ goals ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
+        // Military paths module: the MXP, the path and its level (tapping them shows the paths)
+        val military = (game.has(MilitaryModule) && f != Automa).?(OnClick(MilitaryView(f), MilitaryLabel(f).elem.div(styles.panelLine)(xlo.pointer))).|(Empty)
+
+        val content = (title.div ~ cards ~ units ~ ledger ~ minerals ~ military ~ nb ~ goals ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
 
         container.replace(content, resources, {
             case x => onClick(x)
@@ -2575,6 +2627,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case MineralsView =>
             showOverlay(overlayScrollX(mineralsView).onClick, onClick)
+
+        case MilitaryView(f) =>
+            showOverlay(overlayScrollX(militaryView(f)).onClick, onClick)
 
         // A fight's result tapped in the log
         case FightReportView(r) =>

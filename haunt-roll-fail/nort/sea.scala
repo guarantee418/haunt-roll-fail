@@ -593,6 +593,7 @@ object SeaExpansion extends Expansion {
             Then(neutral.?(then).|(RaidShiftAction(f, c, false, true, then)))
 
         case RaidRazeAction(f, c, s, b, then) =>
+            MilitaryExpansion.razed(f, s, b)
             game.buildings -= s
             f.log("destroyed", b, "in", s.area, "with", c)
             Then(then)

@@ -692,6 +692,9 @@ object CreaturesExpansion extends Expansion {
 
                     f.log(CombatReport.link("defeated"), c, "and gained", c.kind.fame.hl, FameIcon(), c.kind.leaves.?("(it leaves the game)".txt).|(Empty))
 
+                    // Military paths: twice its fame in MXP
+                    MilitaryExpansion.defeated(f, c)
+
                     // Wastelands: a Giant Boar that attacked gives 2 more fame
                     if (c.kind == GiantBoar && attacking.not) {
                         f.fame += 2

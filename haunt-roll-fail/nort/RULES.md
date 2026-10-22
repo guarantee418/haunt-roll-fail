@@ -54,6 +54,7 @@ draws a tile when no neutral territory is left.
 | Fan content: the Minerals module (fan-made by Maciej Drewing, BoardGameGeek file 255809) | done 2026-10-21 (`minerals.scala`, option "Minerals" under "Fan content", also in Adset; see Minerals below) |
 | Fan content: Tower PC version (fan-made by Marzaus, Discord) | done 2026-10-22 (`towers.scala`, option "Tower PC version" under "Fan content", also in Adset; see Tower PC version below) |
 | Fan content: Warchiefs PC version (fan-made by Marzaus) | done 2026-10-22 (option "Warchiefs PC version" under "Fan content", needs the warchiefs; see Warchiefs PC version below) |
+| Fan content: the Military paths module (fan-made by Marzaus, Discord northgard-fanmade-content) | done 2026-10-22 (`military.scala`, option "Military paths" under "Fan content", also in Adset; see Military paths below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -890,6 +891,65 @@ in `game.scala`, `chiefAtSetup`, `chiefPrice` and `recruitChief` in `map.scala`)
   pass it by. It is still lost with the rest of its side when they have nowhere to retreat.
 - Winter costs leave it out (`FactionState.winterUnits`). The 14-unit supply never counted it,
   so "army cap" changes nothing.
+
+## Fan content: Military paths module (2026-10-22)
+
+Fan-made by Marzaus, posted in the Discord channel northgard-fanmade-content
+(thread "Military paths"); Gman sent screenshots of the post on 2026-10-22.
+The post is short, so the open points were put to Gman in a Claude Doc
+("Military paths: rule questions and plan"); the readings below are the ones
+proposed there, to change if Marzaus answers otherwise.
+
+- MXP is a number per clan (`game.mxp`), shown on its panel. Levels at 5,
+  50 and 100. At 5 MXP the clan picks a path (a choice right after the fight,
+  or at the end of the year), kept for the rest of the game; levels 2 and 3
+  are that path's. Leadership is offered only with the Warchiefs module.
+  Choices wait for `MilitaryCheckAction`, after each fight (`FightOverAction`)
+  and at the end of the year.
+- Gains: defeating a creature, twice its fame (attacking or defending; a
+  Wyvern driven back gives nothing). Winning a fight against a clan: 2 per
+  enemy unit killed (Militia and the bodyguard too, and those killed before
+  the fight) and 10 for an enemy warchief; companions give nothing; only the
+  winner scores, a tie nobody. Destroying a Defense Tower in a territory the
+  clan doesn't control (Egil's Fury, a Raid's raze, The True Hero): 3. The
+  Automa takes no part.
+- End of the year (after Winter, `EndOfYearAction`): Leadership 1, 1 per unit
+  and Militia in the warchief's territory; Guardian 1, 3 per Defense Tower
+  controlled; Legions 1, 3 per Training Camp controlled; Legions 2, one unit
+  from the supply at each Training Camp; Leadership's dead bodyguard comes back.
+- Leadership. 1: the bodyguard (`game.guards`) is a figure that is wherever the
+  warchief is (it moves, retreats and goes to the reserve with it), worth 1
+  combat point, lost as a casualty after the units and Militia and before the
+  warchief; not one of the 14 units, no Winter cost. 2: one reroll in each
+  fight with the warchief, against a clan (as Liv's; with Liv, one each),
+  +1 combat point where the warchief fights, and after a Move card's moves
+  the warchief may cross one more regular border (`ChiefMoveAction`; not into
+  the Swamp, a teammate's territory or a Brown Bear's). 3: the warchief's
+  territory recruits one more unit, like a Training Camp; after a fight the
+  warchief's side wins, each enemy unit killed there is replaced by one of the
+  clan's from its supply; attacking a clan, the warchief kills 1 enemy unit
+  before the fight (after step 1), and if that was the last enemy figure the
+  attacker wins without dice.
+- Guardian. 1: Defense Towers cost no wood and may go on a spot that takes no
+  space (still one per territory); defending, each tower kills an attacking
+  unit (or the bodyguard) before the fight, and only the towers that killed
+  nothing add their casualty at the end (`game.towersUsed`). Not against a
+  Conqueror, nor against Shieldbearers and Borgild's Shield (their cancelled
+  casualty stays at the end). If the towers kill every attacker, the defender
+  wins without dice. 2: four Militia (`game.militia`), placed one by one in
+  the clan's territories: they count as figures (control, combat points, 1
+  each, casualties after the units), aren't units for the supply, Winter or
+  card effects on units, move with Move cards only into the clan's own
+  territories, retreat only there (or are lost), and don't come back once
+  dead. 3: Defense Towers recruit one more unit like Training Camps; once a
+  year, during a Build, a free Palisade (`Palisade`, a small building on no
+  space, 7 in the supply, up to 2 per territory, not offered by the build
+  menu): +1 combat point to whoever defends its territory, against creatures
+  too. The Conqueror doesn't ignore it.
+- Legions. 1: Training Camps cost no wood and may take no space; each recruits
+  2 units instead of 1. 2: see the end of the year. 3: +1 combat point for
+  every 2 of the clan's units in a fight (units only), and one reroll in each
+  fight against a clan.
 
 ## Expansions (later)
 
