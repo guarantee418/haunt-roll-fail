@@ -1376,8 +1376,14 @@ trait GameImplicits {
                 case d : DisguisedCard if factions.of[InvasiveEEE].any =>
                     val e = factions.of[InvasiveEEE].first
                     source --> d --> e.standins
-                    e.companions --> d.card --> e.pond
+                    if (d.card == Ambush(Frog) && (options.has(FrogAmbushToPondBottom) || game.frogAmbushToPondBottom))
+                        InvasiveEEEExpansion.pondBottom(e) { e.companions --> d.card --> e.pond }
+                    else
+                        e.companions --> d.card --> e.pond
                     InvasiveEEEExpansion.disguiseSpent(e, d.card)
+                case d @ Ambush(Frog) if factions.of[InvasiveEEE].any && (options.has(FrogAmbushToPondBottom) || game.frogAmbushToPondBottom) =>
+                    val e = factions.of[InvasiveEEE].first
+                    InvasiveEEEExpansion.pondBottom(e) { source --> d --> e.pond }
                 case d if d.suit == Frog => source --> d -->{
                     factions.of[InvasiveEEE].single./(_.pond) ||
                     factions.of[InvasiveDDD].single./(_.deck) ||
@@ -1515,6 +1521,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var governorsStopDelve = false
     var outragePeekNeedsOk = false
     var counterMiceInABush = false
+    var frogAmbushToPondBottom = false
     var companionsUntilSpent = false
     var ptf = Map[Player, Faction]()
 
