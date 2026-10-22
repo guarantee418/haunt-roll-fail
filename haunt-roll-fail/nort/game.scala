@@ -699,6 +699,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var dragonHarvest : |[Boolean] = None
     // What Snake's Scorched Earth took at this harvest, and from whom
     var scorchedTook : |[(Faction, Resource)] = None
+    // This year's harvest is collected (the player panels gray out their harvest row until the next year); display only
+    var harvested : Boolean = false
     // Kraken Clan's High Tide tokens (2 at most), each in a territory with Kraken figures
     var tides : $[AreaRef] = $
     // Ox Clan's Ancestral Equipment tokens: on the map (face up), the face-down pile, face up in the reserve, and used this year
@@ -1546,6 +1548,7 @@ object CommonExpansion extends Expansion {
         case StartYearAction =>
             game.year += 1
             game.yearFirst = Some(game.first)
+            game.harvested = false
 
             log(DoubleLine)
             log("Year", game.year.hlb)
@@ -1756,6 +1759,8 @@ object CommonExpansion extends Expansion {
         case HarvestAction(take) =>
             log(SingleLine)
             log("Harvest")
+
+            game.harvested = true
 
             val victim = take.any.??(game.scorched./(game.board.territory)./(game.present).|($).single)
             game.scorchedTook = victim.flatMap(f => take.map(f -> _))
