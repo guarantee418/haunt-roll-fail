@@ -309,8 +309,8 @@ case class FightInfo(attacker : Faction, defender : Faction, area : AreaRef, e :
     def elem(implicit game : Game) = {
         val t = game.board.territory(area)
         val here = game.working(t)
-        // Conqueror: the attacker ignores Fortresses and Defense Towers
-        val towers = attacker.conqueror.?(0).|(here.count(_ == DefenseTower))
+        // Conqueror: the attacker ignores Fortresses and Defense Towers; with the Tower PC version they fired before the fight
+        val towers = (attacker.conqueror || TowersExpansion.killFirst).?(0).|(here.count(_ == DefenseTower))
 
         def side(f : Faction, attacking : Boolean, spent : |[Int], die : |[DieFace], choice : Boolean) : Elem = {
             val extra = attacking.?($(
@@ -330,7 +330,7 @@ case class FightInfo(attacker : Faction, defender : Faction, area : AreaRef, e :
                 (e.special == EgilMove).??(1) -> "the card".txt
             )).|($(towers -> DefenseTower.elem)) ++ NewBloodExpansion.casualtyParts(f, t, e, attacking) ++ $(die./(_.casualties).|(0) -> "the die".txt)
 
-            FightPoints(f, t, attacking, extra, casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1) + NewBloodExpansion.ignored(f), choice)
+            FightPoints(f, t, attacking, extra, casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove) && game.towerShield.not).??(1) + NewBloodExpansion.ignored(f), choice)
         }
 
         val chooser = choosing.?(faces.num).|(-1)
@@ -355,7 +355,8 @@ case class CreatureFightInfo(f : Faction, area : AreaRef, c : Creature, e : Move
             (attacking && f == Dragon && e.special == GrudgeMove).??(game.pyre.num) -> "Tenacious Grudge".hl,
             attacking.not.??(2 * game.working(t).count(_ == Fortress)) -> Fortress.elem,
             (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl,
-            NewBloodExpansion.gearPoints(f, food) -> "Ancestral Equipment".hl
+            NewBloodExpansion.gearPoints(f, food) -> "Ancestral Equipment".hl,
+            TowersExpansion.towerPoints(t) -> DefenseTower.elem
         ) ++ waste.??(WastelandsExpansion.playerCreatureParts(f, t, attacking)) ++ $(
             food -> Food.elem,
             // Casualties don't hurt creatures, so a player always takes the point
@@ -776,7 +777,7 @@ object MapExpansion extends Expansion {
                         $(SpaceRef(t.anchor, SpaceRef.extra + game.buildings.keys.count(s => s.area == t.anchor && s.index >= SpaceRef.extra)))
                     else
                         kinds./~(k => free.%(s => spaceKind(s) == k).take(1))
-                val cost = math.max(0, b.cost - e.discount)
+                val cost = buildCost(b, e)
                 (spaces.any && f.wood >= cost).?((t.anchor, b, spaces, cost))
             }
         }
@@ -793,7 +794,8 @@ object MapExpansion extends Expansion {
     // Amenities and Horse Clan: small buildings take no space
     def noSpace(e : BuildEffect) = e.special == AmenitiesBuild || e.special == HorseBuild
 
-    def buildCost(b : Building, e : BuildEffect) = math.max(0, b.cost - e.discount)
+    // Tower PC version: a Defense Tower costs 2 wood
+    def buildCost(b : Building, e : BuildEffect)(implicit game : Game) = math.max(0, TowersExpansion.cost(b) - e.discount)
 
     // Why b can't be built on s, if it can't (the same rules as buildOptions)
     def buildBlock(f : Faction, e : BuildEffect, smallOnly : Boolean, s : SpaceRef, b : Building)(implicit game : Game) : |[String] = {
@@ -1615,7 +1617,8 @@ object MapExpansion extends Expansion {
             val du = game.figures(t, defender)
             // Conqueror: the attacker ignores Fortresses and Defense Towers
             val fortress = attacker.conqueror.?(0).|(2 * here.count(_ == Fortress))
-            val towers = attacker.conqueror.?(0).|(here.count(_ == DefenseTower))
+            // Tower PC version: they killed before the fight instead (TowerVolleyAction)
+            val towers = (attacker.conqueror || TowersExpansion.killFirst).?(0).|(here.count(_ == DefenseTower))
             // Snake Clan fights better on its Scorched Earth
             val scorched = game.scorchedIn(t)
             val ab = (attacker == Snake && scorched).??(1)
@@ -1640,7 +1643,7 @@ object MapExpansion extends Expansion {
             val moon = game.eventIs("blood-moon").??(1)
             val ac = math.max(0, faces(0).casualties - halvard + (e.special == EgilMove).??(1) + NewBloodExpansion.casualties(attacker, t, e, true) + eldrich + moon - NewBloodExpansion.ignored(defender) - urdar)
             // Shieldbearers cancel 1 casualty inflicted by the defender
-            val shield = ((e.special == ShieldMove || e.special == BorgildMove) && faces(1).casualties + towers > 0).??(1)
+            val shield = ((e.special == ShieldMove || e.special == BorgildMove) && faces(1).casualties + towers > 0 && game.towerShield.not).??(1)
             val dc = math.max(0, faces(1).casualties + towers - shield + NewBloodExpansion.casualties(defender, t, e, false) + moon - NewBloodExpansion.ignored(attacker))
 
             // Each side picks its casualties when it has a choice (ChooseCasualties), before anything is told

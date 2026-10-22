@@ -600,7 +600,8 @@ object CreaturesExpansion extends Expansion {
             val here = game.working(t)
             val units = game.figures(t, f)
 
-            // The attacker's card bonus or the defender's Fortresses; Defense Towers only add casualties, which creatures ignore
+            // The attacker's card bonus or the defender's Fortresses; Defense Towers only add casualties, which creatures ignore,
+            // except with the Tower PC version: 1 point each
             val bonus = attacking.?(e.bonus).|(0)
             val axe = (attacking && e.special == AxeMove).??(1)
             val fortress = attacking.not.??(2 * here.count(_ == Fortress))
@@ -616,7 +617,8 @@ object CreaturesExpansion extends Expansion {
             val urdar = game.has(Wastelands).??(WastelandsExpansion.creatureIgnored(f, t, attacking))
             // Ox Clan's Ancestral Equipment tokens: their points, and token 7's ignored casualty
             val gear = NewBloodExpansion.gearPoints(f, food)
-            val ps = game.strength(t, f, attacking) + bonus + axe + fortress + snake + robo + grudge + gear + food + face.points + pw
+            val tower = TowersExpansion.towerPoints(t)
+            val ps = game.strength(t, f, attacking) + bonus + axe + fortress + snake + robo + grudge + gear + tower + food + face.points + pw
             // Shieldbearers cancel 1 casualty; Halvard defending ignores 1 inflicted by the attacking creature
             val shield = math.min(cface.casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1) + Warchief.shield(t, f, attacking) + urdar + NewBloodExpansion.ignored(f))
             val pc = cface.casualties - shield
@@ -632,7 +634,7 @@ object CreaturesExpansion extends Expansion {
                 def extra(l : (Int, Elem)*) : Elem = l.toList.filter(_._1 > 0).map { case (n, what) => "(" ~ n.hl ~ " from " ~ what ~ ")" }.join(" ")
 
                 // Everything but the units and the die, as in the fight with a clan
-                val extras = $(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, robo -> "Robotos".hl, grudge -> "Tenacious Grudge".hl, gear -> "Ancestral Equipment".hl) ++ pws
+                val extras = $(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, robo -> "Robotos".hl, grudge -> "Tenacious Grudge".hl, gear -> "Ancestral Equipment".hl, tower -> DefenseTower.elem) ++ pws
                 f.log("scored", CombatIcon.axes(ps), extra((FightPoints.others(f, t, attacking) ++ extras) : _*))
                 log(c, "scored", CombatIcon.axes(cs), extra(cws : _*), (pc > 0 || shield > 0).?("and inflicted " ~ CombatIcon.skulls(pc)).|(Empty), (shield > 0).?("(" ~ shield.hl ~ " cancelled)").|(Empty))
 

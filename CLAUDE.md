@@ -91,7 +91,7 @@ screen (`Module.fan`, also in Adset): the Minerals module by Maciej Drewing (Boa
 lair) roll the combat die at the harvest for Stone, Iron and Gem (`game.mineralBank`, each clan's `minerals`), each worth two
 resources for trading, Winter and the final fame; Stone upgrades a building during a Build (`game.upgraded`, counted twice by
 `Game.counted` and `working`, cleared when the space's building changes, `buildings_=`), Iron rolls two dice in a fight, Gem takes a
-discarded card's fame while playing cards. The player panels show the Mines and minerals (tapping them, the supply and rules). The
+discarded card's fame while playing cards. The player panels show the Mines and minerals (tapping them, the supply and rules). The "Tower PC version" (fan-made by Marzaus on Discord, asked for by Gman on 2026-10-22, `TowersModule`, also under Fan content) is in `nort/towers.scala`: a Defense Tower costs 2 wood (`TowersExpansion.cost`, in `buildCost`), is destroyed once the clan holding its territory has no figure left there (`sweep`, run by `Game.loggedPerform` before and after each action, `game.towerHolder`), kills 1 attacking unit per tower before each fight instead of adding a casualty after it (`TowerVolleyAction`, before `FightStartAction`; `killFirst`, the hook for any other rule that makes towers fire first), gives 1 combat point per tower against creatures (`towerPoints`), and lets the holder fight a creature that appears or moves into its territory before the creature's ability (`TowerChallengeAction`). The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.

@@ -51,6 +51,7 @@ draws a tile when no neutral territory is left.
 | Tutorial (not in the rulebook): lessons as the Stag Clan, then a practice game against the Easy bot with a tip for every choice | done 2026-10-10 (`tutorial.scala`, "Tutorial" on the main menu) |
 | Uncharted Horizons: Training Fields module (two-player duel) | done 2026-10-05 (`training.scala`, "Training Grounds" on the main menu, see Training Fields below) |
 | Fan content: the Minerals module (fan-made by Maciej Drewing, BoardGameGeek file 255809) | done 2026-10-21 (`minerals.scala`, option "Minerals" under "Fan content", also in Adset; see Minerals below) |
+| Fan content: Tower PC version (fan-made by Marzaus, Discord) | done 2026-10-22 (`towers.scala`, option "Tower PC version" under "Fan content", also in Adset; see Tower PC version below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -1277,3 +1278,32 @@ Check these against the rulebook when it is at hand.
     collection, then Blainn's recruitment, then the usual trades.
   - Vedrfolnir's tile is placed like a second-chance tile next to an open
     territory; a tile that fits nowhere goes to the bottom of the pile.
+
+## Fan content: Tower PC version (done 2026-10-22)
+
+Fan-made by Marzaus, posted in the Discord's #northgard-fanmade-content
+("Tower PC version", 2026-10-22): Defense Towers as in the video game.
+The post has four lines; where it is short:
+
+- "If the territory is captured or abandoned, they are destroyed": a tower
+  belongs to the clan that held its territory when it was built (or first
+  held it after). Once that clan has no figure left there (lost a fight, moved
+  everyone out, Winter, Draugr, card effects) the tower goes back to the
+  supply. Checked before and after every action (`TowersExpansion.sweep`).
+- "They cost 2 wood": discounts still apply (a card's -1 makes it 1) and
+  free builds (Quality of Life, Halvard's Craft) stay free.
+- "They kill a unit before the fight, not after": at the start of each
+  fight (after Intimidate, before Signy, Brand, the Ox's tokens and food),
+  each tower kills 1 attacking unit; the attacker picks the figure
+  (ChooseCasualties). It adds no casualty after the die. Conqueror ignores
+  it; Shieldbearers (and Borgild) cancel it, and then no die casualty. With
+  no attacking figure left the defender wins without a roll (a fight for the
+  Events and Alternative victory counts).
+- "They add 1 axe to a monster fight": 1 combat point per tower in the
+  territory, attacking or defending.
+- "Can trigger fight with it upon monster entering a tile (before its
+  ability)": when a creature appears (not at setup) or moves into a territory
+  held by one clan with a tower there, that clan may fight it first, as the
+  attacker (no card bonus, food as usual, ties to the creature). Won, the
+  creature is defeated as usual and doesn't act; lost (or skipped), its
+  ability then happens. The Automa isn't asked.
