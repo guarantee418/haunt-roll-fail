@@ -262,6 +262,10 @@ case class InvasiveEEEAssimilateAction(self : Faction, e : InvasiveEEE, c : Clea
 // can't be flipped at an enemy Council's Governing assemblies from here (game.governorsStopEnclaveFlips), then goes on with then
 case class GovernorsStopEnclaveFlipsAction(then : ForcedAction) extends ForcedAction with SkipValidate
 
+// A one-time fix for games started before FrogAmbushToPondBottom, added to a live game's log by hand: from here a discarded
+// Frog Ambush goes to the Pond bottom (game.frogAmbushToPondBottom), and one already in the Pond moves there, then goes on with then
+case class FrogAmbushToPondBottomAction(then : ForcedAction) extends ForcedAction with SkipValidate
+
 object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
     // Governors (17.2.3): no flipping at an enemy Council's Governing assemblies (reported by MaKoBwoY on 2026-10-17: Provoke
     // flipped one); games started before keep the earlier rules so their replays don't change
@@ -333,9 +337,16 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
     def pondTop(e : InvasiveEEE)(implicit game : Game) = e.pond.get.lastOption
 
     def toPondBottom(e : InvasiveEEE, f : Faction, d : DeckCard)(implicit game : Game) {
+        pondBottom(e) {
+            f.hand --> d --> e.pond
+        }
+    }
+
+    // whatever move puts a card in the Pond, put it under the cards already there (the top is the last)
+    def pondBottom(e : InvasiveEEE)(move : => Unit)(implicit game : Game) {
         val rest = e.pond.get
 
-        f.hand --> d --> e.pond
+        move
 
         e.pond --> rest --> e.pond
     }
@@ -463,6 +474,21 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
 
         case CompanionsUntilSpentAction(then) =>
             game.companionsUntilSpent = true
+
+            then
+
+        case FrogAmbushToPondBottomAction(then) =>
+            game.frogAmbushToPondBottom = true
+
+            factions.of[InvasiveEEE].foreach { e =>
+                val ambushes = e.pond.%(_ == Ambush(Frog))
+
+                if (ambushes.any) {
+                    e.pond --> e.pond.%(_ != Ambush(Frog)) --> e.pond
+
+                    log(ambushes.first, "went to the bottom of the", "Pond".styled(e))
+                }
+            }
 
             then
 

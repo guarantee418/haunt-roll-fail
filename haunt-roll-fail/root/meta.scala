@@ -377,6 +377,14 @@ case object SkipIdleRallyReconcile extends GameOption with ToggleOption {
     val valueOn = "Rally".hh ~ " or " ~ "Reconcile".hh ~ " skipped when idle"
 }
 
+// The Homeland Frog Ambush goes to the bottom of the Pond whenever it is discarded ("Discard this to the Pond bottom."), not only
+// when spent as an ambush: discarded at the hand limit it went on top (Gman, 2026-10-22). Hidden and on by default for new
+// games; older games keep putting it on top so their replays don't change.
+case object FrogAmbushToPondBottom extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Frog Ambush".hh ~ " always discarded to the Pond bottom"
+}
+
 // Advanced Setup deals the Knaves their four Captain cards when the factions are drawn, so the draft shows them
 // (asked for by Gman on 2026-10-20). Hidden and on by default for new games; older games deal them when the Knaves
 // set up, so their replays don't change.
@@ -1357,7 +1365,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1387,6 +1395,7 @@ object Meta extends MetaGame {
         OutragePeekNeedsOk,
         CounterMiceInABush,
         SkipIdleRallyReconcile,
+        FrogAmbushToPondBottom,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
