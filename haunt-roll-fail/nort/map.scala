@@ -832,7 +832,7 @@ object MapExpansion extends Expansion {
 
     // Industrious Villagers: f's buildings and what each could become
     def replacements(f : Faction)(implicit game : Game) : $[(SpaceRef, Building)] =
-        game.controlled(f)./~(game.buildingsIn).%((_, b) => b != Palisade)./~{ case (s, old) =>
+        game.controlled(f)./~(game.buildingsIn)./~{ case (s, old) =>
             val carved = s.index >= SpaceRef.extra || game.board.spec(s.area).spaces(s.index).kind == CarvedSpace
             MineralsExpansion.buildings.%(_ != old).%(_.large == old.large).%(b => b != CarvedStone || carved).%(b => b != Mine || MineralsExpansion.lair(game.board.territory(s.area))).%(b => game.buildingsLeft(b) > 0)./(b => s -> b)
         }
@@ -2111,9 +2111,7 @@ object MapExpansion extends Expansion {
         case BuildAction(f, e, times, smallOnly, then) =>
             val spots = (times > 0).??(buildSpots(f, e, smallOnly))
             // Minerals module: one building upgraded with Stone, whether or not anything is built
-            val upgrades = MineralsExpansion.upgrades(f, BuildAction(f, e, times, smallOnly, then)) ++
-                // Military paths: Guardian 3's free Palisade
-                MilitaryExpansion.palisadeChoices(f, BuildAction(f, e, times, smallOnly, then))
+            val upgrades = MineralsExpansion.upgrades(f, BuildAction(f, e, times, smallOnly, then))
 
             if (spots.none && upgrades.none)
                 Then(BuildFinishAction(f, e, then))
@@ -2150,6 +2148,8 @@ object MapExpansion extends Expansion {
 
             if (MilitaryExpansion.freeBuild(f, b))
                 game.note("path-build-" + b.name)
+
+            MilitaryExpansion.built(f, b)
 
             if (f == Goat) {
                 val n = b.large.?(2).|(1)

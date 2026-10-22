@@ -43,10 +43,9 @@ case object Guardian extends MilitaryPath {
         $("Defense Towers cost no wood and need no building space.",
             "Your Defense Towers kill before the fight: each kills an attacking unit before the dice; when there is nothing to kill, it adds its casualty at the end as usual.",
             "At the end of the year, 3 MXP for each Defense Tower you control."),
-        $("Militia: 4 more warriors, placed in your territories. They fight and hold territories like units, aren't units for the supply or Winter, and only move between your territories. Dead, they are gone."),
+        $("Militia: 4 more warriors, placed in your territories. They fight and hold territories like units, aren't units for the supply or Winter, and only move between your territories. At the end of each year, 1 dead Militia comes back."),
         $("Defense Towers also work as Training Camps.",
-            "Once a year, during a Build, a free Palisade (no building space): +1 combat point to the defender of its territory.",
-            "Up to 2 Palisades in a territory."))
+            "Once a year, a free Fortress (no wood) when you build one."))
 }
 
 case object Legions extends MilitaryPath {
@@ -65,7 +64,6 @@ object MilitaryPath {
 
 // Guardian path, level 3: a small building that takes no space, 2 to a territory; not in Building.all, so games without the
 // module never draw or offer it
-case object Palisade extends Building { val large = false }
 
 // "12 MXP"
 case class MXP(n : Int) extends Elementary {
@@ -117,8 +115,6 @@ case class MilitaryKeepAction(self : Faction, keep : ForcedAction) extends BaseA
 // The die kept: on as CombatRolledAction would (Liv's and Ox's rerolls still offered), or after a reroll (again) as CombatRerolledAction
 case class MilitaryKeptAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], face : DieFace, again : Boolean, then : ForcedAction) extends ForcedAction
 
-// Guardian path, level 3: the year's free Palisade, during a Build (then back to the Build)
-case class PalisadeAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("Build a free", Palisade, "(once a year)", "in")(area) with MapTarget { def target = area }
 
 // The panel's line (tapped: MilitaryView)
 case class MilitaryView(f : Faction)
@@ -205,15 +201,12 @@ object MilitaryExpansion extends Expansion {
         k + removeExtra(t, f, n - k)
     }
 
-    def palisades(t : Territory)(implicit game : Game) : Int = game.working(t).count(_ == Palisade)
-
     // Combat points beside the units, the warchief and the companions (they add up to game.strength)
     def parts(t : Territory, f : Faction, attacking : Boolean)(implicit game : Game) : $[(Int, Elem)] = on.??($(
         militiaIn(t, f) -> "Militia".hl,
         guardIn(t, f).??(1) -> "the bodyguard".txt,
         (at(f, Leadership, 2) && game.chiefIn(t, f)).??(1) -> "Leadership".hl,
-        at(f, Legions, 3).??(game.count(t, f) / 2) -> "Legions".hl,
-        attacking.not.??(palisades(t)) -> Palisade.elem
+        at(f, Legions, 3).??(game.count(t, f) / 2) -> "Legions".hl
     ).filter(_._1 > 0))
 
     def strength(t : Territory, f : Faction, attacking : Boolean)(implicit game : Game) : Int = parts(t, f, attacking).map(_._1).sum
@@ -230,16 +223,22 @@ object MilitaryExpansion extends Expansion {
     // Buildings f builds for no wood and with no space (whatever they cost otherwise, as with the Tower PC version): Guardian's Defense Towers, Legions' Training Camps
     def freeBuild(f : Faction, b : Building)(implicit game : Game) : Boolean = on && (b == DefenseTower && at(f, Guardian, 1) || b == TrainingCamp && at(f, Legions, 1))
 
-    def cost(f : Faction, b : Building, base : Int)(implicit game : Game) : Int = freeBuild(f, b).?(0).|(base)
+    def cost(f : Faction, b : Building, base : Int)(implicit game : Game) : Int = (freeBuild(f, b) || b == Fortress && freeFortress(f)).?(0).|(base)
+
+    // Guardian 3: once a year, a Fortress for no wood (Marzaus's Palisade is the Fortress, 2026-10-22); the first Fortress built that year uses it
+    def freeFortress(f : Faction)(implicit game : Game) : Boolean = on && at(f, Guardian, 3) && game.fortressYear.get(f).has(game.year).not
+
+    def built(f : Faction, b : Building)(implicit game : Game) {
+        if (b == Fortress && freeFortress(f)) {
+            game.fortressYear += f -> game.year
+            f.log("built it for free", "(" ~ "Guardian".hl ~ ")")
+            game.note("guardian-fortress")
+        }
+    }
 
     // A territory's next space for a building that takes none
     def extraSpace(t : Territory)(implicit game : Game) : SpaceRef = SpaceRef(t.anchor, SpaceRef.extra + game.buildings.keys.count(s => s.area == t.anchor && s.index >= SpaceRef.extra))
 
-    // Guardian 3: the year's free Palisade, 2 to a territory, offered during a Build
-    def palisadeChoices(f : Faction, then : ForcedAction)(implicit game : Game) : $[UserAction] =
-        (on && at(f, Guardian, 3) && game.palisadeYear.get(f).has(game.year).not && game.buildingsLeft(Palisade) > 0).??(
-            game.controlled(f).%(t => game.bearIn(t).not).%(t => game.buildingsIn(t).count(_._2 == Palisade) < 2)./(t => PalisadeAction(f, t.anchor, then))
-        )
 
     // Militia move only into the clan's own territories; other figures may go anywhere they could
     def mayEnter(f : Faction, from : Territory, to : Territory)(implicit game : Game) : Boolean =
@@ -265,20 +264,21 @@ object MilitaryExpansion extends Expansion {
     // Each side's soldiers and warchief before the casualties are taken
     def before(t : Territory, l : $[Faction])(implicit game : Game) : Map[Faction, (Int, Boolean)] = l./(f => f -> (soldiers(t, f), game.chiefIn(t, f))).toMap
 
-    // After a fight: the winner gains 2 MXP for each enemy unit killed (Militia and the bodyguard too, and those killed
-    // before the fight) and 10 for the enemy warchief; Leadership 3 captures the killed units
+    // After a fight: each side, the loser too (Marzaus, 2026-10-22), gains 2 MXP for each enemy unit it killed (Militia and
+    // the bodyguard too, and those killed before the fight) and 10 for the enemy warchief; Leadership 3's winner captures
+    // the killed units
     def afterCombat(attacker : Faction, defender : Faction, t : Territory, before : Map[Faction, (Int, Boolean)], winner : |[Faction])(implicit game : Game) {
         if (on)
-            winner.foreach { w =>
-                val l = (w == attacker).?(defender).|(attacker)
+            $(attacker -> defender, defender -> attacker).foreach { case (w, l) =>
                 val (n, chief) = before(l)
-                val units = n - soldiers(t, l) + game.fightKills.getOrElse(w, 0)
+                val units = math.max(0, n - soldiers(t, l)) + game.fightKills.getOrElse(w, 0)
                 val chiefKilled = chief && game.chiefIn(t, l).not
 
                 if (units + chiefKilled.??(1) > 0)
                     gain(w, 2 * units + chiefKilled.??(10), "for killing", ((units > 0).$((units == 1).?("1 unit").|(units.toString + " units").txt) ++ chiefKilled.$(Warchief.elem(l))).join(" and "), "of", l)
 
-                capture(w, t, units)
+                if (winner.has(w))
+                    capture(w, t, units)
             }
     }
 
@@ -303,8 +303,8 @@ object MilitaryExpansion extends Expansion {
         game.rerolled = $
     }
 
-    // Choices still to make: a path at level 1, the Militia at Guardian 2
-    def pending(implicit game : Game) : Boolean = on && game.factions.exists(f => f != Automa && (pathDue(f) || militiaDue(f)))
+    // Choices still to make: a path at level 1, the Militia at Guardian 2, a dead Militia back at the end of the year
+    def pending(implicit game : Game) : Boolean = on && game.factions.exists(f => f != Automa && (pathDue(f) || militiaDue(f) || game.militiaBack.has(f)))
 
     def pathDue(f : Faction)(implicit game : Game) = level(f) >= 1 && game.paths.contains(f).not
 
@@ -340,6 +340,10 @@ object MilitaryExpansion extends Expansion {
                         }
                     }
 
+                // Guardian 2: one dead Militia comes back each year (Marzaus, 2026-10-22)
+                if (at(f, Guardian, 2) && game.militiaGiven.has(f) && militiaOnMap(f) < 4 && game.controlled(f).any)
+                    game.militiaBack :+= f
+
                 if (at(f, Leadership, 1) && game.guards.has(f).not) {
                     game.guards :+= f
                     f.log("got the bodyguard of", Warchief.elem(f), "back")
@@ -362,7 +366,15 @@ object MilitaryExpansion extends Expansion {
                             game.militiaGiven :+= f
                             Then(MilitiaAskAction(f, 4, MilitaryCheckAction(then)))
                         case None =>
-                            Then(then)
+                            l.find(game.militiaBack.has) match {
+                                case Some(f) =>
+                                    game.militiaBack = game.militiaBack.but(f)
+                                    f.log("got a", "Militia".hl, "warrior back")
+                                    game.note("militia-back")
+                                    Then(MilitiaAskAction(f, 1, MilitaryCheckAction(then)))
+                                case None =>
+                                    Then(then)
+                            }
                     }
             }
 
@@ -600,18 +612,6 @@ object MilitaryExpansion extends Expansion {
 
             Then(RetreatAction(f, from, rough, then))
 
-        // BUILD: Guardian 3's Palisade
-        case PalisadeAction(f, a, then) =>
-            val t = game.board.territory(a)
-
-            game.buildings += extraSpace(t) -> Palisade
-            game.palisadeYear += f -> game.year
-
-            f.log("built a free", Palisade, "in", a)
-
-            game.note("palisade")
-
-            Then(then)
 
         case _ => UnknownContinue
     }

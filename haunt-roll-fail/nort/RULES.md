@@ -907,10 +907,11 @@ proposed there, to change if Marzaus answers otherwise.
   Choices wait for `MilitaryCheckAction`, after each fight (`FightOverAction`)
   and at the end of the year.
 - Gains: defeating a creature, twice its fame (attacking or defending; a
-  Wyvern driven back gives nothing). Winning a fight against a clan: 2 per
-  enemy unit killed (Militia and the bodyguard too, and those killed before
-  the fight) and 10 for an enemy warchief; companions give nothing; only the
-  winner scores, a tie nobody. Destroying a Defense Tower in a territory the
+  Wyvern driven back gives nothing). A fight against a clan: each side, won,
+  lost or tied, 2 per enemy unit it killed (Militia and the bodyguard too, and
+  those killed before the fight) and 10 for an enemy warchief; companions give
+  nothing. (The first reading gave MXP to the winner only; Marzaus answered on
+  2026-10-22 that both sides score.) Destroying a Defense Tower in a territory the
   clan doesn't control (Egil's Fury, a Raid's raze, The True Hero): 3. The
   Automa takes no part.
 - End of the year (after Winter, `EndOfYearAction`): Leadership 1, 1 per unit
@@ -942,12 +943,15 @@ proposed there, to change if Marzaus answers otherwise.
   the clan's territories: they count as figures (control, combat points, 1
   each, casualties after the units), aren't units for the supply, Winter or
   card effects on units, move with Move cards only into the clan's own
-  territories, retreat only there (or are lost), and don't come back once
-  dead. 3: Defense Towers recruit one more unit like Training Camps; once a
-  year, during a Build, a free Palisade (`Palisade`, a small building on no
-  space, 7 in the supply, up to 2 per territory, not offered by the build
-  menu): +1 combat point to whoever defends its territory, against creatures
-  too. The Conqueror doesn't ignore it.
+  territories, retreat only there (or are lost). At the end of each year one dead Militia
+  comes back, placed by the clan in one of its territories (`game.militiaBack`;
+  Marzaus, 2026-10-22, when asked whether they come back). 3: Defense Towers recruit one more unit like Training Camps; once a
+  year, the first Fortress the clan builds costs no wood (`freeFortress`,
+  `game.fortressYear`); it is a usual Fortress otherwise (a large building
+  space, +2 combat points to the defender). Marzaus's "Palisade" is the
+  Fortress: he showed the video game's token (an axe ×2) on 2026-10-22, and
+  the owner confirmed it; it was first read as a new small building on no
+  space giving +1.
 - Legions. 1: Training Camps cost no wood and may take no space; each recruits
   2 units instead of 1. 2: see the end of the year. 3: +1 combat point for
   every 2 of the clan's units in a fight (units only), and one reroll in each

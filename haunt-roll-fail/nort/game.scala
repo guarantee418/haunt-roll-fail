@@ -660,14 +660,15 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var towerAsked : |[Creature] = None
 
     // Military paths module (military.scala): each clan's MXP and path, the bodyguards alive (Leadership), the Militia on the map
-    // (Guardian), the year of each clan's free Palisade; in a fight, whether the kills before it are done, the Defense Towers
+    // (Guardian), the year of each clan's free Fortress (Guardian 3); in a fight, whether the kills before it are done, the Defense Towers
     // that killed then and what each side killed then, and who rerolled
     var mxp : Map[Faction, Int] = Map()
     var paths : Map[Faction, MilitaryPath] = Map()
     var guards : $[Faction] = $
     var militia : Map[AreaRef, Map[Faction, Int]] = Map()
     var militiaGiven : $[Faction] = $
-    var palisadeYear : Map[Faction, Int] = Map()
+    var militiaBack : $[Faction] = $
+    var fortressYear : Map[Faction, Int] = Map()
     var militaryYear = 0
     var fightStarted = false
     var towersUsed = 0
@@ -934,7 +935,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
     // Combat points of the figures: Kaija is worth 2, a warchief 2 or 3 depending on its power
     // Jötunn Blainn (Wastelands) is worth 2
-    // Sea module: +1 defending a Port; Military paths: the Militia, the bodyguard, the paths' points and Palisades
+    // Sea module: +1 defending a Port; Military paths: the Militia, the bodyguard, the paths' points
     def strength(t : Territory, f : Faction, attacking : Boolean) : Int = count(t, f) + companionStrength(t, f) + Warchief.strength(t, f, attacking) + blainnIn(t, f).??(2) + SeaExpansion.defense(t, f, attacking) + MilitaryExpansion.strength(t, f, attacking)
 
     // Kaija is in Bear Clan's reserve and can be recruited

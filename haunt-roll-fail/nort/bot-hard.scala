@@ -968,7 +968,6 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case MilitiaMoveAction(f, from, to, n, kaija, chief, m, cost, left, e, then) =>
             |(gain { MilitaryExpansion.removeMilitia(board.territory(from), self, m) ; MilitaryExpansion.addMilitia(to, self, m) ; moveFigures(board.territory(from), to, n, kaija, chief) })
         case MilitiaRetreatAction(_, from, to, _, _) => |(gain { val n = MilitaryExpansion.militiaIn(board.territory(from), self) ; MilitaryExpansion.removeMilitia(board.territory(from), self, n) ; MilitaryExpansion.addMilitia(to, self, n) })
-        case PalisadeAction(_, area, _) => |(gain(game.buildings += MilitaryExpansion.extraSpace(board.territory(area)) -> Palisade))
         case ChiefMoveAction(_, from, to, _) => |(gain(game.chiefs += self -> to) - game.present(board.territory(to)).exists(game.enemy(self, _)).??(30))
         case ChiefMoveSkipAction(_, _) => |(0)
         // Liv's Cunning: wood or lore spent like food, while it still helps
