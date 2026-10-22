@@ -586,6 +586,10 @@ file covers the build, server and deploy. No session can ssh to the server
 - A spent Frog Ambush goes to the bottom of the Pond (`toPondBottom` in `root/faction-invasive-eee.scala`), as the Homeland
   card says; the log says so. MaKoBwoY's first reformatted Ambush cards (`hl-frog-ambush`, `card/deck/fr/frog-ambush`) left
   that out, and he replaced them on 2026-10-20.
+  Every other discard of it (hand limit, Lizard Cult's Lost Souls skip, Companions) goes there too, as the card says
+  "Discard this to the Pond bottom." (Gman, 2026-10-22: the Lizards' hand limit discard put it on top), in games with the
+  hidden default option `FrogAmbushToPondBottom` (`DirectDiscard` in `root/game.scala`, `pondBottom`); older games keep it on top.
+  A running game can be switched over with `FrogAmbushToPondBottomAction(X)`, which also moves one already in the Pond to the bottom.
 - Lilypad Diaspora's Companions stays with the faction that crafted it until the Frog card it turned into another suit
   is discarded (spent), and can't turn a second card meanwhile (asked for by the owner on 2026-10-15); it was
   discarded as soon as the card was turned. New games get the hidden default option `CompanionsUntilSpent`

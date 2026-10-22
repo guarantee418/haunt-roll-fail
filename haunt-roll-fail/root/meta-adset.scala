@@ -84,6 +84,7 @@ object MetaAdset extends MetaGame {
         CounterMiceInABush,
         KnavesCaptainsInDraft,
         SkipIdleRallyReconcile,
+        FrogAmbushToPondBottom,
         FolkHeroCharacter,
         RandomCharacter,
         MapDefaultLandmarks,
