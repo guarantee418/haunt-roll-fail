@@ -1179,7 +1179,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         val last = game.year == game.lastYear
 
-        val developments = last.not.$(("Developments, year " ~ draft.?(1).|(game.year).hlb ~ " of " ~ game.lastYear.hl) -> draft.?(game.developments.take(game.devsPerYear)).|(game.display))
+        val developments = last.not.$(("Developments, year " ~ draft.?(1).|(game.year).hlb ~ " of " ~ game.lastYear.hl) -> draft.?(game.developments.take(game.devsIn(1))).|(game.display))
 
         val achievements = $(("Achievements" ~ last.not.?(", year " ~ game.lastYear.hl).|(Empty)) -> last.?(game.display).|(game.achievements))
 

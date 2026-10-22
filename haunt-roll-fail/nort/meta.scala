@@ -78,7 +78,7 @@ object Meta extends MetaGame { mmm =>
     override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // New Blood has no option: picking one of its clans brings it in
-    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ WarchiefsChoice.all ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraDevelopment, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons).%(_.fan.not)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles, BalancedStartTiles) ++ AutomaLevelOption.all ++ Module.all.%(_.fan)./(ModuleOption) ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ WarchiefsChoice.all ++ DevelopmentsChoice.all ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons).%(_.fan.not)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles, BalancedStartTiles) ++ AutomaLevelOption.all ++ Module.all.%(_.fan)./(ModuleOption) ++ hiddenOptions
 
     // Colors and teams only for the clans in the game, as many teams as players
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -86,7 +86,7 @@ object Meta extends MetaGame { mmm =>
         case TeamOption(f, t) => l.has(f) && t < n
         case ModuleOption(m) if Module.teams.contains(m) => false
         case AutomaLevelOption(_) => l.has(Automa)
-        case ExtraDevelopment => l.has(Automa).not
+        case _ : DevelopmentsChoice => l.has(Automa).not
         case ModuleOption(VictoryModule) => false
         case _ => true
     }
@@ -149,7 +149,7 @@ object Meta extends MetaGame { mmm =>
 
     // Colors by seat, as before colors could be chosen
     // Teams alternate by seat (two teams), as the old team variants did
-    override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } ++ l.zipWithIndex./{ case (f, i) => TeamOption(f, i % 2) : O } :+ (YearsOption.standard : O) :+ (StandardVictory : O) :+ (VictoryModeOption(false) : O) :+ (PrivateFame : O) :+ (UnlimitedUndo : O) :+ (StandardCentral : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O)
+    override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } ++ l.zipWithIndex./{ case (f, i) => TeamOption(f, i % 2) : O } :+ (YearsOption.standard : O) :+ (StandardVictory : O) :+ (VictoryModeOption(false) : O) :+ (PrivateFame : O) :+ (UnlimitedUndo : O) :+ (StandardCentral : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O) ++ l.has(Automa).not.$(NormalDevelopments : O)
 
     override def quickOptions = options./(o => o -> 0.0).toMap
 
@@ -195,9 +195,8 @@ object Meta extends MetaGame { mmm =>
     // Cards banned one by one (BanDevelopment) leaving fewer Development cards than the years reveal
     def tooManyBans(factions : $[Faction], options : $[O]) : Boolean = options.of[BanDevelopment].any && {
         val years = options.of[YearsOption].single./(_.years).|(YearsOption.standard.years)
-        val perYear = factions.num + (options.has(ExtraDevelopment) && factions.has(Automa).not).??(1)
         val horizons = options.has(HorizonsDevelopments) || (factions.has(Automa).not && ExtraDevelopment.needsHorizons(options, factions.num, years))
-        perYear * (years - 1) > (Cards.earlyCards ++ Cards.advancedCards ++ horizons.??(Cards.horizonsEarlyCards ++ Cards.horizonsAdvancedCards)).diff(BanDevelopment.cards(options)).num
+        DevelopmentsChoice.total(options, factions.num, factions.has(Automa), 1, years) > (Cards.earlyCards ++ Cards.advancedCards ++ horizons.??(Cards.horizonsEarlyCards ++ Cards.horizonsAdvancedCards)).diff(BanDevelopment.cards(options)).num
     }
 
     // Alternative victory with chosen cards: exactly one Map Control card and two Wealth cards (three with teams)
