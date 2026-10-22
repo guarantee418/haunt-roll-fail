@@ -309,8 +309,8 @@ case class FightInfo(attacker : Faction, defender : Faction, area : AreaRef, e :
     def elem(implicit game : Game) = {
         val t = game.board.territory(area)
         val here = game.working(t)
-        // Conqueror: the attacker ignores Fortresses and Defense Towers
-        val towers = attacker.conqueror.?(0).|(here.count(_ == DefenseTower))
+        // Conqueror: the attacker ignores Fortresses and Defense Towers; Military paths: those that killed before the fight are done
+        val towers = attacker.conqueror.?(0).|(math.max(0, here.count(_ == DefenseTower) - game.towersUsed))
 
         def side(f : Faction, attacking : Boolean, spent : |[Int], die : |[DieFace], choice : Boolean) : Elem = {
             val extra = attacking.?($(
@@ -417,7 +417,7 @@ object FightPoints {
         Warchief.strength(t, f, attacking) -> Warchief.elem(f),
         game.blainnIn(t, f).??(2) -> "Jötunn Blainn".hl,
         SeaExpansion.defense(t, f, attacking) -> "the Port".hl
-    ).filter(_._1 > 0)
+    ).filter(_._1 > 0) ++ MilitaryExpansion.parts(t, f, attacking)
 
     def apply(f : Faction, t : Territory, attacking : Boolean, extra : $[(Int, Elem)], casualties : $[(Int, Elem)], cancels : Int, choosing : Boolean = false)(implicit game : Game) : Elem = {
         val points = parts(f, t, attacking, extra)
@@ -699,7 +699,7 @@ object MapExpansion extends Expansion {
     // Cached until the board or a figure changes: the bots ask for it again for every spot they look at,
     // and each call rebuilds the territories for every free spot and rotation
     def placements(tile : String, near : Option[$[Territory]], setup : Boolean)(implicit game : Game) : $[(Spot, Int)] = {
-        val key = (tile, near, setup, game.board.placements, game.units, game.companions, game.chiefs, game.creatureLine, game.creatureAt, game.blainn)
+        val key = (tile, near, setup, game.board.placements, game.units, game.companions, game.chiefs, game.creatureLine, game.creatureAt, game.blainn, game.militia)
 
         game.placementCache.getOrElse(key, {
             val r = computePlacements(tile, near, setup)
@@ -712,7 +712,8 @@ object MapExpansion extends Expansion {
 
     // The players with figures in t (Kaija counts as Bear Clan's)
     private def occupants(t : Territory)(implicit game : Game) : $[Faction] =
-        (t.areas./~(a => game.unitsAt(a).keys) ++ game.companions.filter(x => t.areas.contains(x._2)).map(_._1) ++ game.chiefs.toList.filter(x => t.areas.contains(x._2)).map(_._1) ++ game.blainn.toList.filter(x => t.areas.contains(x._2)).map(_._1)).distinct
+        // Military paths: the Militia too
+        (t.areas./~(a => game.unitsAt(a).keys) ++ t.areas./~(a => game.militia.getOrElse(a, Map()).keys) ++ game.companions.filter(x => t.areas.contains(x._2)).map(_._1) ++ game.chiefs.toList.filter(x => t.areas.contains(x._2)).map(_._1) ++ game.blainn.toList.filter(x => t.areas.contains(x._2)).map(_._1)).distinct
 
     // A Fallen Valkyrie shares its territory with nobody
     private def valkyrieIn(t : Territory)(implicit game : Game) : Boolean =
@@ -771,12 +772,12 @@ object MapExpansion extends Expansion {
                     case _ => $(SmallSpace, CarvedSpace)
                 }
                 val spaces =
-                    // Amenities: small buildings take no space
-                    if ((e.special == AmenitiesBuild || e.special == HorseBuild) && b.large.not)
+                    // Amenities: small buildings take no space (Military paths: nor Guardian's Defense Towers and Legions' Training Camps)
+                    if ((e.special == AmenitiesBuild || e.special == HorseBuild) && b.large.not || MilitaryExpansion.freeBuild(f, b))
                         $(SpaceRef(t.anchor, SpaceRef.extra + game.buildings.keys.count(s => s.area == t.anchor && s.index >= SpaceRef.extra)))
                     else
                         kinds./~(k => free.%(s => spaceKind(s) == k).take(1))
-                val cost = math.max(0, b.cost - e.discount)
+                val cost = MilitaryExpansion.cost(f, b, math.max(0, b.cost - e.discount))
                 (spaces.any && f.wood >= cost).?((t.anchor, b, spaces, cost))
             }
         }
@@ -786,7 +787,7 @@ object MapExpansion extends Expansion {
     def buildSpots(f : Faction, e : BuildEffect, smallOnly : Boolean)(implicit game : Game) : $[SpaceRef] =
         game.controlled(f).%(t => game.bearIn(t).not)./~{ t =>
             val free = t.areas./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not && game.gear.contains(s).not)
-            val extra = noSpace(e).$(SpaceRef(t.anchor, SpaceRef.extra + game.buildings.keys.count(s => s.area == t.anchor && s.index >= SpaceRef.extra)))
+            val extra = (noSpace(e) || MilitaryExpansion.buildings.exists(b => MilitaryExpansion.freeBuild(f, b))).$(SpaceRef(t.anchor, SpaceRef.extra + game.buildings.keys.count(s => s.area == t.anchor && s.index >= SpaceRef.extra)))
             (free ++ extra).%(s => MineralsExpansion.buildings.exists(b => buildBlock(f, e, smallOnly, s, b).none))
         }
 
@@ -799,10 +800,11 @@ object MapExpansion extends Expansion {
     def buildBlock(f : Faction, e : BuildEffect, smallOnly : Boolean, s : SpaceRef, b : Building)(implicit game : Game) : |[String] = {
         val t = game.board.territory(s.area)
         val extra = s.index >= SpaceRef.extra
-        val cost = buildCost(b, e)
+        val cost = MilitaryExpansion.cost(f, b, buildCost(b, e))
 
         if (smallOnly && b.large) |("small buildings only")
         else if (extra && b.large) |("needs a large space")
+        else if (extra && noSpace(e).not && MilitaryExpansion.freeBuild(f, b).not) |("needs a building space")
         else if (extra.not && noSpace(e) && b.large.not) |("needs no space")
         else if (extra.not && b == CarvedStone && spaceKind(s) != CarvedSpace) |("needs a Carved Stone space")
         else if (extra.not && b.large && spaceKind(s) != LargeSpace) |("needs a large space")
@@ -825,7 +827,7 @@ object MapExpansion extends Expansion {
 
     // Industrious Villagers: f's buildings and what each could become
     def replacements(f : Faction)(implicit game : Game) : $[(SpaceRef, Building)] =
-        game.controlled(f)./~(game.buildingsIn)./~{ case (s, old) =>
+        game.controlled(f)./~(game.buildingsIn).%((_, b) => b != Palisade)./~{ case (s, old) =>
             val carved = s.index >= SpaceRef.extra || game.board.spec(s.area).spaces(s.index).kind == CarvedSpace
             MineralsExpansion.buildings.%(_ != old).%(_.large == old.large).%(b => b != CarvedStone || carved).%(b => b != Mine || MineralsExpansion.lair(game.board.territory(s.area))).%(b => game.buildingsLeft(b) > 0)./(b => s -> b)
         }
@@ -990,7 +992,8 @@ object MapExpansion extends Expansion {
 
     // The ways f can take k casualties in t: units, Kaija (or Brundr and Kaelinn, or Brok), the warchief, Blainn, units first
     def casualtyParties(f : Faction, t : Territory, k : Int)(implicit game : Game) : $[(Int, Boolean, Boolean, Boolean)] = {
-        val n = game.count(t, f)
+        // Military paths: the Militia and the bodyguard go with the units, after them
+        val n = MilitaryExpansion.soldiers(t, f)
         def may(b : Boolean) = b.?($(false, true)).|($(false))
 
         for (chief <- may(game.chiefIn(t, f)); blainn <- may(game.blainnIn(t, f)); kaija <- may(game.kaijaIn(t, f)) ; s = $(kaija, chief, blainn).count(b => b) ; if s <= k && k - s <= n)
@@ -1235,7 +1238,8 @@ object MapExpansion extends Expansion {
             }
 
             placed./(game.board.territory).distinct.foreach { t =>
-                val camps = game.working(t).count(_ == TrainingCamp)
+                // Military paths: Legions' camps recruit two, Guardian's Defense Towers and Leadership's warchief work as camps
+                val camps = game.working(t).count(_ == TrainingCamp) + MilitaryExpansion.camps(f, t)
                 val n = math.min(camps, game.reserve(f))
                 if (n > 0) {
                     game.addUnits(t.anchor, f, n)
@@ -1248,7 +1252,8 @@ object MapExpansion extends Expansion {
         // MOVE
         case MoveAction(f, left, e, then) =>
             // Figures passing through a teammate's territory or the Swamp move on first
-            val sources = (left > 0).??(game.passing(f).any.?(game.passing(f)).|(moveSources(f, e)).%(t => destinations(f, t, left, e).any))
+            // Military paths: Militia alone move only into the clan's territories
+            val sources = (left > 0).??(game.passing(f).any.?(game.passing(f)).|(moveSources(f, e)).%(t => destinations(f, t, left, e).exists(o => MilitaryExpansion.mayEnter(f, t, o._1))))
 
             if (sources.none)
                 Then(MovesMadeAction(f, e, then))
@@ -1260,7 +1265,7 @@ object MapExpansion extends Expansion {
         case MoveFromAction(f, from, left, e, then) =>
             val t = game.board.territory(from)
 
-            Ask(f).each(destinations(f, t, left, e))((o, cost) => MoveToAction(f, from, o.anchor, cost, left, e, then)).cancel
+            Ask(f).each(destinations(f, t, left, e).%((o, _) => MilitaryExpansion.mayEnter(f, t, o)))((o, cost) => MoveToAction(f, from, o.anchor, cost, left, e, then)).cancel
 
         case MoveToAction(f, from, to, cost, left, e, then) =>
             val t = game.board.territory(from)
@@ -1332,6 +1337,7 @@ object MapExpansion extends Expansion {
         // Before the Move: what f holds (Halvard's Craft), and Borgild's Shield bringing Kaija and Borgild together
         case MoveStartAction(f, e, then) =>
             game.heldBefore = game.controlled(f)./~(_.areas)
+            game.extraMoved = false
             game.mended = 0
             game.mendedFigures = $
 
@@ -1366,6 +1372,7 @@ object MapExpansion extends Expansion {
                 Then(MoveEndAction(f, e, then))
 
         case EgilFuryAction(f, s, b, e, then) =>
+            MilitaryExpansion.razed(f, s, b)
             game.buildings -= s
 
             f.log("removed", b, "from", s.area, "with", "Egil's Fury".hl)
@@ -1494,6 +1501,7 @@ object MapExpansion extends Expansion {
 
         case FightOverAction(then) =>
             game.battle = None
+            MilitaryExpansion.fightOver()
             game.gearFight = $
             game.ironAsked = $
             game.ironFight = $
@@ -1613,9 +1621,9 @@ object MapExpansion extends Expansion {
             val here = game.working(t)
             val au = game.figures(t, attacker)
             val du = game.figures(t, defender)
-            // Conqueror: the attacker ignores Fortresses and Defense Towers
+            // Conqueror: the attacker ignores Fortresses and Defense Towers; Military paths: those that killed before the fight are done
             val fortress = attacker.conqueror.?(0).|(2 * here.count(_ == Fortress))
-            val towers = attacker.conqueror.?(0).|(here.count(_ == DefenseTower))
+            val towers = attacker.conqueror.?(0).|(math.max(0, here.count(_ == DefenseTower) - game.towersUsed))
             // Snake Clan fights better on its Scorched Earth
             val scorched = game.scorchedIn(t)
             val ab = (attacker == Snake && scorched).??(1)
@@ -1701,8 +1709,12 @@ object MapExpansion extends Expansion {
                 val before = game.count(t, attacker)
                 val dbefore = game.count(t, defender)
                 val specials = game.specialsIn(t, attacker)
+                val soldiers = MilitaryExpansion.before(t, $(attacker, defender))
                 game.removeCasualties(t, attacker, math.min(dc, au))
                 game.removeCasualties(t, defender, math.min(ac, du))
+
+                // Military paths: the winner's MXP, Leadership's captures
+                MilitaryExpansion.afterCombat(attacker, defender, t, soldiers, winner)
 
                 // Events (Blood Moon, Conquests) and the Alternative victory counts
                 EventsExpansion.afterCombat(attacker, defender, math.min(dc, au), math.min(ac, du), winner)
@@ -2062,7 +2074,9 @@ object MapExpansion extends Expansion {
         case BuildAction(f, e, times, smallOnly, then) =>
             val spots = (times > 0).??(buildSpots(f, e, smallOnly))
             // Minerals module: one building upgraded with Stone, whether or not anything is built
-            val upgrades = MineralsExpansion.upgrades(f, BuildAction(f, e, times, smallOnly, then))
+            val upgrades = MineralsExpansion.upgrades(f, BuildAction(f, e, times, smallOnly, then)) ++
+                // Military paths: Guardian 3's free Palisade
+                MilitaryExpansion.palisadeChoices(f, BuildAction(f, e, times, smallOnly, then))
 
             if (spots.none && upgrades.none)
                 Then(BuildFinishAction(f, e, then))
@@ -2073,7 +2087,7 @@ object MapExpansion extends Expansion {
 
         // The menu: every building with its cost, the ones that can't go on this space dimmed
         case BuildSpotAction(f, s, times, e, smallOnly, then) =>
-            Ask(f).each(MineralsExpansion.buildings)(b => BuildPickAction(f, s, b, buildCost(b, e), times, e, smallOnly, then).!(buildBlock(f, e, smallOnly, s, b).any, buildBlock(f, e, smallOnly, s, b).|("")))
+            Ask(f).each(MineralsExpansion.buildings)(b => BuildPickAction(f, s, b, MilitaryExpansion.cost(f, b, buildCost(b, e)), times, e, smallOnly, then).!(buildBlock(f, e, smallOnly, s, b).any, buildBlock(f, e, smallOnly, s, b).|("")))
                 .cancel
 
         case BuildPickAction(f, s, b, cost, times, e, smallOnly, then) =>
@@ -2096,6 +2110,9 @@ object MapExpansion extends Expansion {
             game.buildings += s -> b
 
             f.log("built", b, "in", a)
+
+            if (MilitaryExpansion.freeBuild(f, b))
+                game.note("path-build-" + b.name)
 
             if (f == Goat) {
                 val n = b.large.?(2).|(1)

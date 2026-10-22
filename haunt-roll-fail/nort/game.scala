@@ -640,6 +640,22 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var ironAsked : $[Faction] = $
     var ironFight : $[Faction] = $
 
+    // Military paths module (military.scala): each clan's MXP and path, the bodyguards alive (Leadership), the Militia on the map
+    // (Guardian), the year of each clan's free Palisade; in a fight, whether the kills before it are done, the Defense Towers
+    // that killed then and what each side killed then, and who rerolled
+    var mxp : Map[Faction, Int] = Map()
+    var paths : Map[Faction, MilitaryPath] = Map()
+    var guards : $[Faction] = $
+    var militia : Map[AreaRef, Map[Faction, Int]] = Map()
+    var militiaGiven : $[Faction] = $
+    var palisadeYear : Map[Faction, Int] = Map()
+    var militaryYear = 0
+    var fightStarted = false
+    var towersUsed = 0
+    var fightKills : Map[Faction, Int] = Map()
+    var rerolled : $[Faction] = $
+    var extraMoved = false
+
     // Territories where a Move action started a fight
     var combats : $[AreaRef] = $
 
@@ -885,13 +901,13 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // The Automa's Leader 1 plays as its warchief, with or without the module
     def chiefReady(f : Faction) : Boolean = (has(Warchiefs) || f == Automa) && chiefs.contains(f).not && setup.has(f)
 
-    // Units, Kaija and the warchief
-    def figures(t : Territory, f : Faction) : Int = count(t, f) + kaijaIn(t, f).??(1) + chiefIn(t, f).??(1) + blainnIn(t, f).??(1)
+    // Units, Kaija and the warchief (and the Military paths' Militia and bodyguard)
+    def figures(t : Territory, f : Faction) : Int = count(t, f) + kaijaIn(t, f).??(1) + chiefIn(t, f).??(1) + blainnIn(t, f).??(1) + MilitaryExpansion.figures(t, f)
 
     // Combat points of the figures: Kaija is worth 2, a warchief 2 or 3 depending on its power
     // Jötunn Blainn (Wastelands) is worth 2
-    // Sea module: +1 defending a Port
-    def strength(t : Territory, f : Faction, attacking : Boolean) : Int = count(t, f) + companionStrength(t, f) + Warchief.strength(t, f, attacking) + blainnIn(t, f).??(2) + SeaExpansion.defense(t, f, attacking)
+    // Sea module: +1 defending a Port; Military paths: the Militia, the bodyguard, the paths' points and Palisades
+    def strength(t : Territory, f : Faction, attacking : Boolean) : Int = count(t, f) + companionStrength(t, f) + Warchief.strength(t, f, attacking) + blainnIn(t, f).??(2) + SeaExpansion.defense(t, f, attacking) + MilitaryExpansion.strength(t, f, attacking)
 
     // Kaija is in Bear Clan's reserve and can be recruited
     // Brundr and Kaelinn likewise; Brok only with the Warchiefs module
@@ -903,7 +919,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     def present(t : Territory) : $[Faction] = seating.%(f => figures(t, f) > 0)
 
     // Units or Kaija anywhere on the map
-    def anyOnMap(f : Faction) : Boolean = onMap(f) > 0 || companion(f).any || chiefs.contains(f)
+    def anyOnMap(f : Faction) : Boolean = onMap(f) > 0 || companion(f).any || chiefs.contains(f) || MilitaryExpansion.militiaOnMap(f) > 0
 
     def controlled(f : Faction) : $[Territory] = board.territories.%(t => present(t) == $(f))
 
@@ -927,11 +943,12 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         units += a -> ((v > 0).?(m + (f -> v)).|(m - f))
     }
 
-    // Casualties: units first, then the warchief, Jötunn Blainn (back to his camp), Kaija last
+    // Casualties: units first (Military paths: then the Militia and the bodyguard), then the warchief, Jötunn Blainn (back to his camp), Kaija last
     def removeFigures(t : Territory, f : Faction, n : Int) {
         val k = math.min(n, count(t, f))
         removeUnits(t, f, k)
         var left = n - k
+        left -= MilitaryExpansion.removeExtra(t, f, left)
         if (left > 0 && chiefIn(t, f)) {
             chiefs -= f
             left -= 1
@@ -953,7 +970,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         casualtyPicks.get(f) match {
             case Some((units, kaija, chief, blainnToo)) =>
                 casualtyPicks -= f
-                removeUnits(t, f, units)
+                MilitaryExpansion.kill(t, f, units)
                 if (chief)
                     chiefs -= f
                 if (blainnToo)
@@ -1122,6 +1139,9 @@ object Debug {
 
     // Headless testing only: starting decks also hold both clan upgrades
     var upgradesInDeck = false
+
+    // Military paths module: MXP gains multiplied, to test the higher levels in bot games (NORT_MXP in host.scala)
+    var mxpTimes = 1
 
     def summary(g : Game) {
         if (stats)

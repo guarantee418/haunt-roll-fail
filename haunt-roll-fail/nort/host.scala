@@ -90,6 +90,8 @@ object Host extends hrf.host.BaseHost {
             (sys.env.get("NORT_SEA").has("1") || random() < 0.5).$(ModuleOption(Sea)) ++
             // NORT_MINERALS=1: always with the Minerals module (fan content)
             (sys.env.get("NORT_MINERALS").has("1") || random() < 0.5).$(ModuleOption(MineralsModule)) ++
+            // NORT_MILITARY=1: always with the Military paths module (fan content)
+            (sys.env.get("NORT_MILITARY").has("1") || random() < 0.5).$(ModuleOption(MilitaryModule)) ++
             // NORT_WASTELANDS=1: always with Wastelands; a random central tile choice either way (it needs no module),
             // NORT_CENTRAL=1: never the standard tile; NORT_CENTRAL=<tile id>: always that tile
             wastelands.$(ModuleOption(Wastelands)) ++ $(CentralChoice.all.%(c => creatures || c.tile.forall(Waste.creatureOnly.has(_).not)).%(c => c != StandardCentral || sys.env.get("NORT_CENTRAL").has("1").not)
@@ -129,6 +131,9 @@ object Host extends hrf.host.BaseHost {
 
     // NORT_UPGRADES=1: clan upgrades start in the decks, to test their effects
     Debug.upgradesInDeck = sys.env.get("NORT_UPGRADES").has("1")
+
+    // NORT_MXP=n: Military paths MXP gains times n, to reach levels 2 and 3
+    Debug.mxpTimes = sys.env.get("NORT_MXP")./(_.toInt).|(1)
 
     def winners(a : Action)(implicit g : G) = a @@ {
         case GameOverWonAction(_, l, _) => l

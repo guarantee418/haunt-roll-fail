@@ -91,7 +91,14 @@ screen (`Module.fan`, also in Adset): the Minerals module by Maciej Drewing (Boa
 lair) roll the combat die at the harvest for Stone, Iron and Gem (`game.mineralBank`, each clan's `minerals`), each worth two
 resources for trading, Winter and the final fame; Stone upgrades a building during a Build (`game.upgraded`, counted twice by
 `Game.counted` and `working`, cleared when the space's building changes, `buildings_=`), Iron rolls two dice in a fight, Gem takes a
-discarded card's fame while playing cards. The player panels show the Mines and minerals (tapping them, the supply and rules). The
+discarded card's fame while playing cards. The player panels show the Mines and minerals (tapping them, the supply and rules). The Military paths module by Marzaus (Discord
+northgard-fanmade-content; asked for by Gman on 2026-10-22) is in `nort/military.scala`: MXP (`game.mxp`) from fights won (2 per enemy
+unit killed, 10 per warchief), creatures (twice their fame) and enemy Defense Towers destroyed (3), and at 5, 50 and 100 MXP the
+levels of a path picked at 5 (`game.paths`): Leadership (only with Warchiefs: a bodyguard, `game.guards`, rerolls, an extra move,
+captures, a kill before attacking), Guardian (free Defense Towers on no space that kill before the fight, `game.towersUsed`; four
+Militia, `game.militia`, figures that stay in the clan's territories; a free Palisade a year, `Palisade`, +1 to the defender) and
+Legions (free Training Camps on no space that recruit 2 and train a unit each year, points for big armies, rerolls). The readings of
+the short post are listed in `nort/RULES.md` (Military paths); the player panels show the MXP and path (tapping them, every path). The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.

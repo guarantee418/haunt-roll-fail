@@ -687,8 +687,24 @@ case object MineralsModule extends Module("Minerals", "fan-made module by Maciej
     )
 }
 
+// The Military paths module (military.scala), fan-made by Marzaus (Discord, northgard-fanmade-content; asked for by Gman on
+// 2026-10-22): MXP from fights, and at 5 MXP one of three paths, each with three levels
+case object MilitaryModule extends Module("Military paths", "fan-made module by Marzaus") {
+    override def ready = true
+    override def fan = true
+    override def expansion = |(MilitaryExpansion)
+    def about = $(
+        "Clans gain military experience (MXP): twice the fame of each creature they defeat; for winning a fight, 2 for each enemy unit and 10 for an enemy warchief killed; 3 for destroying an enemy Defense Tower.",
+        "At 5 MXP (level 1) a clan picks a path for the rest of the game; levels 2 and 3 come at 50 and 100 MXP.",
+        "Leadership".hl ~ " (with the Warchiefs module): a bodyguard for the warchief, rerolls, an extra move and point, captures, a kill before attacking.",
+        "Guardian".hl ~ ": free Defense Towers that kill before the fight, Militia, Palisades.",
+        "Legions".hl ~ ": free Training Camps that recruit more and train units, more points for big armies, rerolls.",
+        "Fan-made, not part of the published game.".styled(xstyles.warning),
+    )
+}
+
 object Module {
-    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule)
+    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, MilitaryModule)
 
     // The team variants and the number of players each one needs
     val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6, Teams2v2v2 -> 6)

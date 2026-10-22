@@ -407,6 +407,10 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         if (game.has(MineralsModule))
             v += f.mineralCount * 100 + MineralsExpansion.mines(f) * 50 * harvests
 
+        // Military paths module: MXP towards the next level, the Militia and the bodyguard
+        if (game.has(MilitaryModule))
+            v += MilitaryExpansion.mxp(f) * 4 + MilitaryExpansion.militiaOnMap(f) * 38 + game.guards.has(f).??(30)
+
         v += winterValue(f)
 
         v
@@ -454,6 +458,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val minerals = players./(f => (f, f.minerals))
         val bank = game.mineralBank
         val upgraded = game.upgraded
+        // Military paths module: the Militia
+        val militia = game.militia
         try {
             change
             total
@@ -462,6 +468,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             game.units = units
             game.buildings = buildings
             game.upgraded = upgraded
+            game.militia = militia
             game.mineralBank = bank
             minerals.foreach { case (f, m) => f.minerals = m }
             game.chiefs = chiefs
@@ -937,6 +944,24 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case LivRerollAction(_, again) => |(rerollOdds(again))
         case GearKeepAction(_, keep) => |(keepOdds(keep))
         case GearRerollAction(_, again) => |(rerollOdds(again))
+        // Military paths: Leadership's and Legions' reroll; keeping goes on to the die as rolled
+        case MilitaryRerollAction(_, _, again) => |(rerollOdds(again))
+        case MilitaryKeepAction(_, MilitaryKeptAction(attacker, defender, area, e, food, faces, face, _, _)) => |(1000 * rolledOdds(attacker, defender, area, e, food, faces, |(face)))
+        // The path: Legions and Guardian pay off with the buildings they make cheaper, Leadership with the warchief's fights
+        case MilitaryPathAction(_, p, _) =>
+            val held = game.controlled(self)./~(game.working)
+            |(p match {
+                case Legions => 20 + 10 * held.count(_ == TrainingCamp)
+                case Guardian => 20 + 10 * held.count(_ == DefenseTower)
+                case _ => 20 + game.chiefs.contains(self).??(12)
+            })
+        case MilitiaPlaceAction(_, area, _, _) => |(gain(MilitaryExpansion.addMilitia(area, self, 1)))
+        case MilitiaMoveAction(f, from, to, n, kaija, chief, m, cost, left, e, then) =>
+            |(gain { MilitaryExpansion.removeMilitia(board.territory(from), self, m) ; MilitaryExpansion.addMilitia(to, self, m) ; moveFigures(board.territory(from), to, n, kaija, chief) })
+        case MilitiaRetreatAction(_, from, to, _, _) => |(gain { val n = MilitaryExpansion.militiaIn(board.territory(from), self) ; MilitaryExpansion.removeMilitia(board.territory(from), self, n) ; MilitaryExpansion.addMilitia(to, self, n) })
+        case PalisadeAction(_, area, _) => |(gain(game.buildings += MilitaryExpansion.extraSpace(board.territory(area)) -> Palisade))
+        case ChiefMoveAction(_, from, to, _) => |(gain(game.chiefs += self -> to) - game.present(board.territory(to)).exists(game.enemy(self, _)).??(30))
+        case ChiefMoveSkipAction(_, _) => |(0)
         // Liv's Cunning: wood or lore spent like food, while it still helps
         case LivCunningAction(_, defender, area, e, r, spent, _) => |((spent.num < game.figures(board.territory(area), self)).?(cunning(area, spent.num)).|(-100.0) - resourceValue(r))
         case CreatureCunningAction(_, area, c, e, r, spent, _) => |((spent.num < game.figures(board.territory(area), self)).?(cunning(area, spent.num)).|(-100.0) - resourceValue(r))
