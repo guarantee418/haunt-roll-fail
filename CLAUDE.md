@@ -854,6 +854,13 @@ file covers the build, server and deploy. No session can ssh to the server
   Marsh map with 4 or 5 players and the three Homeland landmarks.
 - Looking at an earlier state in the log (tapping a line) no longer jumps to the latest state when other players' moves come
   in (`ui.overrideGame` checks in `runner.scala`; Robotos, spectating, 2026-10-21); "Back", or the player's own turn, does.
+- A finished game's "Save Replay As File" (`Quine.save` in `quine.scala`) inlines the whole client and every image of
+  the game, about 63 MB for Northgard, too big for Discord (Robotos, 2026-10-23). "Save Small Replay File" under it
+  (Northgard and Root, not offline) saves an .html of a few dozen KB (`Quine.saveSmall`): it only sends the browser to
+  `/play/<meta>#small-replay=<moves>`, the lobby lines and moves deflated (`CompressionStream`) and base64url encoded.
+  `onDocumentLoad` in `hrf.scala` unpacks that (`Quine.openSmall`) into the page's `lobby` and `replay` elements and
+  `data-replay`, as a full replay file has them (`HRF.replay` is lazy for it). The part after `#` never reaches the
+  server, so it needs no server change, but the replay plays with the site's current code and images.
 - Each online game has a Spectator link and one link per player. Spectator
   accounts can read the game but not add moves. A move posted by one gets a
   500 with `empty result set ... "right" = 'append'` in the server log.

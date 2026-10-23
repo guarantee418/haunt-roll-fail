@@ -5295,6 +5295,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     }
                 }).copy(clear = false)
             ) ++
+            // A few dozen KB, small enough for Discord, opened on this site (Quine.saveSmall)
+            (currentGame.isOver && hrf.HRF.flag("replay").not && hrf.HRF.offline.not).$(
+                ZBasic(Break, "Save Small Replay File".hh, () => {
+                    showOverlay(overlayScrollX("Saving Replay...".hl.div).onClick, null)
+
+                    callbacks.saveSmallReplay {
+                        overlayPane.invis()
+                        overlayPane.clear()
+                    }
+                }).copy(clear = false)
+            ) ++
             (hrf.HRF.param("lobby").none && hrf.HRF.offline.not).$(
                 ZBasic(Break ~ Break ~ Break, "Save Game Online".hh, () => {
                     showOverlay(overlayScrollX("Save Game Online".hlb(xstyles.larger125) ~
