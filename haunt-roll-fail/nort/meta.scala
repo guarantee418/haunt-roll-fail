@@ -457,9 +457,12 @@ object Meta extends MetaGame { mmm =>
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, MineralsModule), "ui", "ui-", "webp")(
         Mineral.all./(m => ImageAsset(m.name.toLowerCase))
     ) ::
-    // Military paths module (fan content): the Militia's shield
+    // Military paths module (fan content): the Militia's shield and the Leadership path's bodyguard figure
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, MilitaryModule), "ui", "ui-", "webp")(
         $(ImageAsset("militia"))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, MilitaryModule), "token/unit", "bodyguard-", "webp")(
+        PlayerColor.all./(c => ImageAsset(c.id, "bodyguard-" + c.id))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "ui", "ui-", "webp")(
         (1.to(99).map(n => ImageAsset("label-" + n)) ++ 1.to(15).map(n => ImageAsset("count-" + n)) ++ 1.to(40).map(n => ImageAsset("spot-" + n))).toList :+ ImageAsset("target") :+ ImageAsset("lore") :+ ImageAsset("food") :+ ImageAsset("wood") :+ ImageAsset("fame") :+ ImageAsset("confirm") :+ ImageAsset("cancel") :+ ImageAsset("rotate-left") :+ ImageAsset("rotate-right") :+ ImageAsset("unit") :+ ImageAsset("unit-supply") :+ ImageAsset("card-draw") :+ ImageAsset("card-hand") :+ ImageAsset("card-played") :+ ImageAsset("card-discard") :+ ImageAsset("first-player") :+ ImageAsset("axe") :+ ImageAsset("skull") :+ ImageAsset("harvest") :+ ImageAsset("winter") :+ ImageAsset("ship")
