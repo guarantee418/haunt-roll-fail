@@ -336,6 +336,11 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
 
     def pondTop(e : InvasiveEEE)(implicit game : Game) = e.pond.get.lastOption
 
+    // A Frog Ambush discarded other than as an ambush goes to the Pond bottom too (FrogAmbushToPondBottom), unless the game has
+    // FrogAmbushBottomOnlyAsAmbush
+    def frogAmbushAlwaysBottom(implicit game : Game) =
+        (options.has(FrogAmbushToPondBottom) && options.has(FrogAmbushBottomOnlyAsAmbush).not) || game.frogAmbushToPondBottom
+
     def toPondBottom(e : InvasiveEEE, f : Faction, d : DeckCard)(implicit game : Game) {
         pondBottom(e) {
             f.hand --> d --> e.pond

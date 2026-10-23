@@ -598,6 +598,10 @@ file covers the build, server and deploy. No session can ssh to the server
   "Discard this to the Pond bottom." (Gman, 2026-10-22: the Lizards' hand limit discard put it on top), in games with the
   hidden default option `FrogAmbushToPondBottom` (`DirectDiscard` in `root/game.scala`, `pondBottom`); older games keep it on top.
   A running game can be switched over with `FrogAmbushToPondBottomAction(X)`, which also moves one already in the Pond to the bottom.
+  Guerric Samples ruled that it goes to the bottom only when played as an ambush (relayed by Gman on 2026-10-23), so new games
+  get the hidden default option `FrogAmbushBottomOnlyAsAmbush` instead, which turns `FrogAmbushToPondBottom` off
+  (`frogAmbushAlwaysBottom` in `root/faction-invasive-eee.scala`): any other discard puts it on top like every Frog card. Games
+  started from 2026-10-22 with `FrogAmbushToPondBottom` alone, or switched over by the action, keep it.
 - Lilypad Diaspora's Companions stays with the faction that crafted it until the Frog card it turned into another suit
   is discarded (spent), and can't turn a second card meanwhile (asked for by the owner on 2026-10-15); it was
   discarded as soon as the card was turned. New games get the hidden default option `CompanionsUntilSpent`
