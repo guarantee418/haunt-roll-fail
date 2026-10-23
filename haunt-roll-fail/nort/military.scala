@@ -265,15 +265,34 @@ object MilitaryExpansion extends Expansion {
         gain(f, 2 * c.kind.fame, "for defeating", c)
     }
 
+    // A fight against a clan begins: each side's figures then, for the winner's MXP (fightSize, cleared by fightOver)
+    def begins(t : Territory, f : Faction, d : Faction)(implicit game : Game) {
+        if (on && game.fightSize.isEmpty)
+            game.fightSize = Map(f -> game.figures(t, f), d -> game.figures(t, d))
+    }
+
+    // Winning a fight against a clan: 1 MXP for each enemy figure it began with, whether or not any was killed
+    // (asked for by the owner on 2026-10-23)
+    def won(w : Faction, l : Faction, n : Int)(implicit game : Game) {
+        if (n > 0) {
+            gain(w, n, "for winning the fight against", n.hl, (n == 1).?("figure").|("figures"), "of", l)
+            if (on && w != Automa)
+                game.note("mxp-win")
+        }
+    }
+
     // Each side's soldiers and warchief before the casualties are taken
     def before(t : Territory, l : $[Faction])(implicit game : Game) : Map[Faction, (Int, Boolean)] = l./(f => f -> (soldiers(t, f), game.chiefIn(t, f))).toMap
 
-    // After a fight: each side, the loser too (Marzaus, 2026-10-22), gains 2 MXP for each enemy unit it killed (Militia and
-    // the bodyguard too, and those killed before the fight) and 10 for the enemy warchief; Leadership 3's winner captures
-    // the killed units
+    // After a fight: the winner gains 1 MXP for each enemy figure the fight began with; each side, the loser too (Marzaus,
+    // 2026-10-22), gains 2 MXP for each enemy unit it killed (Militia and the bodyguard too, and those killed before the
+    // fight) and 10 for the enemy warchief; Leadership 3's winner captures the killed units
     def afterCombat(attacker : Faction, defender : Faction, t : Territory, before : Map[Faction, (Int, Boolean)], winner : |[Faction])(implicit game : Game) {
         if (on)
             $(attacker -> defender, defender -> attacker).foreach { case (w, l) =>
+                if (winner.has(w))
+                    won(w, l, game.fightSize.getOrElse(l, 0))
+
                 val (n, chief) = before(l)
                 val units = math.max(0, n - soldiers(t, l)) + game.fightKills.getOrElse(w, 0)
                 val chiefKilled = chief && game.chiefIn(t, l).not
@@ -302,6 +321,7 @@ object MilitaryExpansion extends Expansion {
     // A fight is over
     def fightOver()(implicit game : Game) {
         game.fightStarted = false
+        game.fightSize = Map()
         game.towersUsed = 0
         game.fightKills = Map()
         game.rerolled = $

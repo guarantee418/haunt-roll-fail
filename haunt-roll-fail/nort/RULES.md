@@ -907,8 +907,14 @@ proposed there, to change if Marzaus answers otherwise.
   Choices wait for `MilitaryCheckAction`, after each fight (`FightOverAction`)
   and at the end of the year.
 - Gains: defeating a creature, twice its fame (attacking or defending; a
-  Wyvern driven back gives nothing). A fight against a clan: each side, won,
-  lost or tied, 2 per enemy unit it killed (Militia and the bodyguard too, and
+  Wyvern driven back gives nothing). A fight against a clan: the winner gets 1 per
+  enemy figure the fight began with (units, Militia, the bodyguard, the
+  warchief, Kaija and the other companions, Blainn; counted before any kill,
+  the towers' and Leadership's before the fight included; `game.fightSize`),
+  even if it killed none (the owner, 2026-10-23: "If I fought against 8 units
+  and I won that battle, even if I didn't kill anybody, I should still get 8
+  MXP"; Intimidate pushing out the last unit is a win against 1). And each
+  side, won, lost or tied, 2 per enemy unit it killed (Militia and the bodyguard too, and
   those killed before the fight) and 10 for an enemy warchief; companions give
   nothing. (The first reading gave MXP to the winner only; Marzaus answered on
   2026-10-22 that both sides score.) Destroying a Defense Tower in a territory the

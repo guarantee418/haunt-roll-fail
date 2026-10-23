@@ -764,7 +764,7 @@ case object MilitaryModule extends Module("Military paths", "fan-made module by 
     override def fan = true
     override def expansion = |(MilitaryExpansion)
     def about = $(
-        "Clans gain military experience (MXP): twice the fame of each creature they defeat; in a fight against a clan, won or lost, 2 for each enemy unit and 10 for an enemy warchief killed; 3 for destroying an enemy Defense Tower.",
+        "Clans gain military experience (MXP): twice the fame of each creature they defeat; for winning a fight against a clan, 1 for each enemy figure in it; in a fight against a clan, won or lost, 2 for each enemy unit and 10 for an enemy warchief killed; 3 for destroying an enemy Defense Tower.",
         "At 5 MXP (level 1) a clan picks a path for the rest of the game; levels 2 and 3 come at 50 and 100 MXP.",
         "Leadership".hl ~ " (with the Warchiefs module): a bodyguard for the warchief, rerolls, an extra move and point, captures, a kill before attacking.",
         "Guardian".hl ~ ": free Defense Towers that kill before the fight, Militia, a free Fortress each year.",

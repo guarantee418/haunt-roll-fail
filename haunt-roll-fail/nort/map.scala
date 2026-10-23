@@ -1497,6 +1497,8 @@ object MapExpansion extends Expansion {
                 game.fights += 1
                 f.log("won the fight in", a, "with", "Intimidate".hl)
                 EventsExpansion.afterCombat(f, defender, 0, 0, |(f))
+                // Military paths: the win against the one unit pushed out
+                MilitaryExpansion.won(f, defender, 1)
                 game.note("attack-won")
                 attackWon(f, a)
 
@@ -1520,6 +1522,9 @@ object MapExpansion extends Expansion {
                 game.battle = |(a)
 
                 val defender = game.present(t).but(f).head
+
+                // Military paths: each side's figures as the fight begins
+                MilitaryExpansion.begins(t, f, defender)
 
                 log(f, "fights", defender, "in", a)
 

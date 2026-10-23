@@ -668,6 +668,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var militia : Map[AreaRef, Map[Faction, Int]] = Map()
     var militiaGiven : $[Faction] = $
     var militiaBack : $[Faction] = $
+    var fightSize : Map[Faction, Int] = Map()
     var fortressYear : Map[Faction, Int] = Map()
     var militaryYear = 0
     var fightStarted = false
