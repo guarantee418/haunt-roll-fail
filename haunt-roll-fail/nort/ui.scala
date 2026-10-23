@@ -1018,11 +1018,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     taken :+= ((mx(kx), my(ky), kz / T / 2))
                 }
 
-                // Military paths: the bodyguard beside the warchief, a smaller warrior; the Militia, warriors with a shield and their count
+                // Military paths: the bodyguard beside the warchief, its own figure (a huscarl with a kite shield and a spear,
+                // drawn by nort/tools/bodyguard-figure.py); the Militia, warriors with a shield and their count
                 if (MilitaryExpansion.guardIn(t, f)) {
                     val gz = 230.0 * scale
                     val (gx, gy) = beside(0.1 * scale)
-                    pieces.add(Sprite($(at(Warchief.warrior(f, t.toString + "/guard", 1), gz)), $(Rectangle(-gz / 2, -gz / 2, gz, gz)), tag :+ MilitaryView(f)))(gx, gy)
+                    pieces.add(Sprite($(at("bodyguard-" + game.colors(f).id, gz)), $(Rectangle(-gz / 2, -gz / 2, gz, gz)), tag :+ MilitaryView(f)))(gx, gy)
                     taken :+= ((mx(gx), my(gy), 0.1 * scale))
                 }
 
@@ -1341,11 +1342,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val others = game.factions.but(f).but(Automa).%(game.states.contains)./(g => (g.elem ~ ": " ~ MilitaryLabel(g).elem).div).merge
 
         ("Military paths".hlb.div ~
-            (f.elem ~ ": " ~ MilitaryLabel(f).elem ~ next./(n => " (next level at " ~ n.hl ~ ")").|(Empty)).div ~
+            (f.elem ~ ": " ~ MilitaryLabel(f).elem ~ next./(n => " (next level at " ~ MXP(n).elem ~ ")").|(Empty)).div ~
             others ~
             HorizontalBreak ~
-            small("Military experience (MXP): twice the fame of each creature defeated; for winning a fight, 2 for each enemy unit killed (Militia and bodyguards too) and 10 for an enemy warchief; 3 for destroying an enemy " ~ DefenseTower.elem ~ ".") ~
-            small("Level 1 at " ~ 5.hl ~ " MXP, when a path is chosen for the rest of the game; level 2 at " ~ 50.hl ~ ", level 3 at " ~ 100.hl ~ ".") ~
+            small("Military experience (" ~ MXP.icon ~ " MXP): twice the fame of each creature defeated; for winning a fight against a clan, 1 for each enemy figure it began with; in a fight against a clan, won or lost, 2 for each enemy unit killed (Militia and bodyguards too) and 10 for an enemy warchief; 3 for destroying an enemy " ~ DefenseTower.elem ~ ".") ~
+            small("Level 1 at " ~ MXP(5).elem ~ ", when a path is chosen for the rest of the game; level 2 at " ~ MXP(50).elem ~ ", level 3 at " ~ MXP(100).elem ~ ".") ~
             MilitaryPath.all.%(p => p != Leadership || game.has(Warchiefs))./{ p =>
                 HorizontalBreak ~
                 (p.elem ~ path.has(p).?(" (" ~ f.elem ~ ")").|(Empty)).div ~

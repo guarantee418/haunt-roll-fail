@@ -98,6 +98,8 @@ object TowersExpansion extends Expansion {
             val t = game.board.territory(a)
             val defender = game.present(t).but(f).headOption
             val n = f.conqueror.?(0).|(towers(t))
+            // Military paths: each side's figures as the fight begins, before the towers fire
+            defender.foreach(d => MilitaryExpansion.begins(t, f, d))
             // Shieldbearers cancel 1 casualty inflicted by the defender: this one, if there is one
             val shield = (n > 0 && (e.special == ShieldMove || e.special == BorgildMove)).??(1)
             val k = math.min(n - shield, game.figures(t, f))
@@ -128,6 +130,9 @@ object TowersExpansion extends Expansion {
                     game.note("attack-lost")
                     d.log("won the fight in", a, "with", DefenseTower)
                     EventsExpansion.afterCombat(f, d, 0, 0, |(d))
+                    // Military paths: the win, and the fight is over
+                    MilitaryExpansion.won(d, f, game.fightSize.getOrElse(f, 0))
+                    MilitaryExpansion.fightOver()
                     Then(then)
                 }
                 else {
