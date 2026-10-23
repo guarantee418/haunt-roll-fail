@@ -459,7 +459,7 @@ object CardsExpansion extends Expansion {
             game.removeUnits(src, f, n)
             game.addUnits(dst.anchor, f, n)
             if (kaija)
-                game.setCompanion(f, |(dst.anchor))
+                game.moveCompanion(f, src, dst.anchor)
             if (chief)
                 game.chiefs += f -> dst.anchor
 

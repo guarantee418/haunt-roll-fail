@@ -312,7 +312,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
     private var occupants : Map[Territory, $[(Faction, Int)]] = Map()
 
     def figuresIn(t : Territory) : $[(Faction, Int)] = {
-        val key : $[AnyRef] = $(game.units, game.chiefs, game.kaija, game.lynx, game.brok, game.leader2, board.placements, game.blainn)
+        val key : $[AnyRef] = $(game.units, game.chiefs, game.kaija, game.lynx, game.lynx2, game.brok, game.leader2, board.placements, game.blainn)
         if (occupantsKey == null || occupantsKey.zip(key).exists { case (a, b) => a ne b }) {
             occupants = board.territories./(o => o -> game.present(o)./(f => f -> game.figures(o, f))).toMap
             occupantsKey = key
@@ -456,6 +456,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val buildings = game.buildings
         val chiefs = game.chiefs
         val companion = game.companion(self)
+        val lynx2 = game.lynx2
         // Every player's resources and fame (team trades and some effects change another player's)
         val stocks = players./(f => (f, f.food, f.wood, f.lore, f.fame))
         // Minerals module: the minerals held, the supply and the Stone upgrades
@@ -477,6 +478,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             minerals.foreach { case (f, m) => f.minerals = m }
             game.chiefs = chiefs
             game.setCompanion(self, companion)
+            game.lynx2 = lynx2
             stocks.foreach { case (f, food, wood, lore, fame) =>
                 f.food = food
                 f.wood = wood
@@ -494,7 +496,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         game.removeUnits(from, self, n)
         game.addUnits(to, self, n)
         if (kaija)
-            game.setCompanion(self, |(to))
+            game.moveCompanion(self, from, to)
         if (chief)
             game.chiefs += self -> to
     }
@@ -789,7 +791,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             val t = board.territory(area)
             val camp = (game.working(t).has(TrainingCamp) && placed.exists(p => t.areas.has(p)).not).??(45)
             |(gain(game.addUnits(area, self, 1)) + camp)
-        case RecruitKaijaAction(_, area, _, _, _, _) => |(gain(game.setCompanion(self, |(area))) + 20)
+        case RecruitKaijaAction(_, area, _, _, _, _) => |(gain(game.placeCompanion(self, area)) + 20)
         case RecruitChiefAction(_, area, _, _, _, _) => |(gain(game.chiefs += self -> area) + 20)
         case RecruitUnitHereAction(f, area, left, mode, placed, then) => value(RecruitPlaceAction(f, area, left, mode, placed, then))
         case RecruitKaijaHereAction(f, area, left, mode, placed, then) => value(RecruitKaijaAction(f, area, left, mode, placed, then))
@@ -825,7 +827,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
                 game.removeUnits(t, self, n)
                 game.addUnits(to, self, n)
                 if (kaija)
-                    game.setCompanion(self, |(to))
+                    game.moveCompanion(self, t, to)
             } + n * 10)
         case RetreatPartyAction(_, from, to, n, kaija, chief, _, _) =>
             val t = board.territory(from)
@@ -833,7 +835,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
                 game.removeUnits(t, self, n)
                 game.addUnits(to, self, n)
                 if (kaija)
-                    game.setCompanion(self, |(to))
+                    game.moveCompanion(self, t, to)
                 if (chief)
                     game.chiefs += self -> to
             } + n * 10)

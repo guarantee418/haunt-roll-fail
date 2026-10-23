@@ -896,7 +896,7 @@ object MapExpansion extends Expansion {
     }
 
     def recruitKaija(f : Faction, a : AreaRef)(implicit game : Game) : Unit = {
-        game.setCompanion(f, |(a))
+        game.placeCompanion(f, a)
         game.note("kaija-recruit")
 
         f.log("recruited", Companion(f), "in", a)
@@ -1318,6 +1318,9 @@ object MapExpansion extends Expansion {
                 .some(kaija.$(n.to(0, -1).$).flatten)(k => $(MoveUnitsAction(f, from, to, k, true, false, cost, left, e, then)))
                 .some(chief.$(n.to(0, -1).$).flatten)(k => $(MoveUnitsAction(f, from, to, k, false, true, cost, left, e, then)))
                 .some((chief && kaija).$(n.to(0, -1).$).flatten)(k => $(MoveUnitsAction(f, from, to, k, true, true, cost, left, e, then)))
+                // Printed Lynx Clan: Brundr or Kaelinn alone, the other staying behind
+                .some((kaija && game.extraLynx(t, f) > 0).$(n.to(0, -1).$).flatten)(k => $(MoveOneLynxAction(f, from, to, k, false, cost, left, e, then)))
+                .some((kaija && chief && game.extraLynx(t, f) > 0).$(n.to(0, -1).$).flatten)(k => $(MoveOneLynxAction(f, from, to, k, true, cost, left, e, then)))
                 .cancel
 
         case MoveUnitsAction(f, from, to, n, kaija, chief, cost, left, e, then) =>
@@ -1340,7 +1343,7 @@ object MapExpansion extends Expansion {
             game.removeUnits(src, f, n)
             game.addUnits(dst.anchor, f, n)
             if (kaija)
-                game.setCompanion(f, |(dst.anchor))
+                game.moveCompanion(f, src, dst.anchor)
             if (chief)
                 game.chiefs += f -> dst.anchor
 
@@ -1375,6 +1378,7 @@ object MapExpansion extends Expansion {
             game.extraMoved = false
             game.mended = 0
             game.mendedFigures = $
+            game.wisdomTaken = false
 
             val apart = game.kaija.any && game.chiefs.contains(f) && game.board.territory(game.kaija.get) != game.board.territory(game.chiefs(f))
 
@@ -1541,6 +1545,7 @@ object MapExpansion extends Expansion {
 
         case FightOverAction(then) =>
             game.battle = None
+            game.surtrPoints = 0
             MilitaryExpansion.fightOver()
             game.gearFight = $
             game.ironAsked = $
@@ -1764,6 +1769,9 @@ object MapExpansion extends Expansion {
                 // Sacrificial Pyre, Blood Ties, Howl from the Sea
                 NewBloodExpansion.afterCombat(attacker, defender, t, e, before - game.count(t, attacker), dbefore - game.count(t, defender), math.min(dc, au), math.min(ac, du), winner)
 
+                // Mielikki's Wisdom: 1 lore once a casualty is rolled
+                NewBloodExpansion.wisdom(attacker, e, faces.exists(_.casualties > 0))
+
                 // Sea module: Bold Maneuver gives 2 fame per combat won
                 if (e.special == BoldMove && winner.has(attacker)) {
                     attacker.fame += 2
@@ -1919,7 +1927,7 @@ object MapExpansion extends Expansion {
 
             figure match {
                 case "chief" => game.chiefs += f -> a
-                case "companion" => game.setCompanion(f, |(a))
+                case "companion" => game.placeCompanion(f, a)
                 case "blainn" => game.blainn = |((f, a))
             }
 
@@ -1945,7 +1953,7 @@ object MapExpansion extends Expansion {
             game.removeUnits(game.board.territory(from), f, n)
             game.addUnits(to, f, n)
             if (kaija)
-                game.setCompanion(f, |(to))
+                game.moveCompanion(f, game.board.territory(from), to)
             if (chief)
                 game.chiefs += f -> to
 
@@ -2148,6 +2156,7 @@ object MapExpansion extends Expansion {
         case BuildPlaceAction(f, a, b, s, cost, times, e, smallOnly, then) =>
             f.wood -= cost
             game.buildings += s -> b
+            game.lastBuilt = |(b)
 
             f.log("built", b, "in", a)
 

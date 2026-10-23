@@ -751,6 +751,12 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var explored : |[String] = None
     // Howl from the Sea: Kraken's first retreating group adds a unit where it goes
     var howl = false
+    // PrintedNewBlood: the building the last Build placed (City Builder), whether Mielikki's Wisdom gave its lore this card,
+    // the combat points Surtr's Wrath bought for the fight being resolved, and whether Lynx forwent its bonus Move (Lynx Clan's redraw)
+    var lastBuilt : |[Building] = None
+    var wisdomTaken = false
+    var surtrPoints = 0
+    var lynxForgone = false
 
     def tideIn(t : Territory) : Boolean = tides.exists(t.areas.contains)
 
@@ -871,7 +877,49 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // Units only; Kaija is counted separately
     def count(t : Territory, f : Faction) : Int = t.areas./(a => unitsAt(a).getOrElse(f, 0)).sum
 
-    def kaijaIn(t : Territory, f : Faction) : Boolean = companion(f).exists(t.areas.contains)
+    def kaijaIn(t : Territory, f : Faction) : Boolean = companion(f).exists(t.areas.contains) || (f == Lynx && lynx2.exists(t.areas.contains))
+
+    // PrintedNewBlood: Brundr and Kaelinn are two figures (the board as printed). The first is the companion (lynx), the second lynx2,
+    // only ever on the map with the first: when the first is removed the second takes its place, so the slots don't say which is which
+    var lynx2 : |[AreaRef] = None
+
+    def lynxesIn(t : Territory) : Int = lynx.exists(t.areas.contains).??(1) + lynx2.exists(t.areas.contains).??(1)
+
+    // Both lynxes in t: the second one is lost like a unit (after the units), the first like a companion
+    def extraLynx(t : Territory, f : Faction) : Int = (f == Lynx && lynxesIn(t) == 2).??(1)
+
+    // Lynx's figures, wherever they are
+    def lynxes : $[AreaRef] = lynx.$ ++ lynx2.$
+
+    // The companion recruited or placed: the second lynx once the first is out
+    def placeCompanion(f : Faction, a : AreaRef) =
+        if (f == Lynx && lynx.any)
+            lynx2 = |(a)
+        else
+            setCompanion(f, |(a))
+
+    // The companion (both lynxes there) going from t to a
+    def moveCompanion(f : Faction, t : Territory, a : AreaRef) {
+        if (f == Lynx && lynx2.exists(t.areas.contains))
+            lynx2 = |(a)
+        if (f != Lynx || lynx.exists(t.areas.contains))
+            setCompanion(f, |(a))
+    }
+
+    // The companion removed from t (one lynx)
+    def dropCompanion(t : Territory, f : Faction) {
+        if (f == Lynx && lynx2.exists(t.areas.contains))
+            lynx2 = None
+        else
+        if (f == Lynx) {
+            if (lynx.exists(t.areas.contains)) {
+                lynx = lynx2
+                lynx2 = None
+            }
+        }
+        else
+            setCompanion(f, None)
+    }
 
     // New Blood: Lynx Clan's Brundr and Kaelinn token, and Horse Clan's second warchief, Brok (Warchiefs module),
     // follow Kaija's rules as each clan's companion figure (moved, recruited and removed like it)
@@ -903,7 +951,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     def companionStrength(t : Territory, f : Faction) : Int =
         if (kaijaIn(t, f).not) 0
         else f match {
-            case Lynx => 1
+            case Lynx => lynxesIn(t)
             case Horse => chiefIn(t, f).?(1).|(2)
             case Automa => AutomaExpansion.leaderStrength
             case _ => 2
@@ -932,7 +980,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     def toughness(t : Territory, f : Faction) : Int = figures(t, f) + (pcChief(f) && chiefIn(t, f)).??(1)
 
     // Units, Kaija and the warchief (and the Military paths' Militia and bodyguard)
-    def figures(t : Territory, f : Faction) : Int = count(t, f) + kaijaIn(t, f).??(1) + chiefIn(t, f).??(1) + blainnIn(t, f).??(1) + MilitaryExpansion.figures(t, f)
+    def figures(t : Territory, f : Faction) : Int = count(t, f) + kaijaIn(t, f).??(1) + extraLynx(t, f) + chiefIn(t, f).??(1) + blainnIn(t, f).??(1) + MilitaryExpansion.figures(t, f)
 
     // Combat points of the figures: Kaija is worth 2, a warchief 2 or 3 depending on its power
     // Jötunn Blainn (Wastelands) is worth 2
@@ -942,7 +990,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // Kaija is in Bear Clan's reserve and can be recruited
     // Brundr and Kaelinn likewise; Brok only with the Warchiefs module
     // The Automa's Leader 2 likewise, always
-    def kaijaReady(f : Faction) : Boolean = (f == Bear || f == Lynx || f == Automa || f == Horse && has(Warchiefs)) && companion(f).none && setup.has(f)
+    // PrintedNewBlood: the second lynx too
+    def kaijaReady(f : Faction) : Boolean = (f == Bear || f == Lynx || f == Automa || f == Horse && has(Warchiefs)) && (companion(f).none || f == Lynx && lynx2.none && options.has(PrintedNewBlood)) && setup.has(f)
 
     def scorchedIn(t : Territory) : Boolean = scorched.exists(t.areas.contains)
 
@@ -993,7 +1042,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
             left -= 1
         }
         if (left > 0 && kaijaIn(t, f))
-            setCompanion(f, None)
+            dropCompanion(t, f)
     }
 
     // Svarn's Menders (MendFigures): f's warchief, companion and Jötunn Blainn in t, to see which were casualties
@@ -1013,7 +1062,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
                 if (blainnToo)
                     blainn = None
                 if (kaija)
-                    setCompanion(f, None)
+                    dropCompanion(t, f)
             case None =>
                 removeFigures(t, f, n)
         }
@@ -1205,6 +1254,9 @@ object CommonExpansion extends Expansion {
     def available(f : Faction)(implicit game : Game) = f.draw.num + f.discard.num
 
     // Winter: f pays its food and wood; true when it could not pay it all (it then pays what it can and takes an Unrest card)
+    // After Winter: the printed New Blood cards add a step (Squirrel Clan's move); older games go straight to the end of the year
+    def afterWinter(implicit game : Game) : ForcedAction = game.options.has(PrintedNewBlood).?(AfterWinterAction(EndOfYearAction) : ForcedAction).|(EndOfYearAction)
+
     def payWinter(f : Faction)(implicit game : Game) : Boolean = {
         // Events: Harsh Winter and Blizzard
         val (food, wood) = EventsExpansion.winterCost(f)
@@ -1871,6 +1923,10 @@ object CommonExpansion extends Expansion {
         case AfterHarvestAction(then) =>
             Then(then)
 
+        // Printed New Blood: Squirrel's move after Winter (NewBloodExpansion)
+        case AfterWinterAction(then) =>
+            Then(then)
+
         // The trades, every player at once (the Automa first, by itself); TradeAction is the old one-player-at-a-time trading, kept for old games
         case TradePhaseAction(done, then) =>
             if (game.factions.has(Automa) && done.has(Automa).not)
@@ -1960,7 +2016,7 @@ object CommonExpansion extends Expansion {
                         takeUnrest(f)
                 }
 
-                Then(EndOfYearAction)
+                Then(afterWinter)
             }
 
         case WinterPayAction(l) =>
@@ -1973,7 +2029,7 @@ object CommonExpansion extends Expansion {
                         Then(WinterPayAction(rest))
 
                 case _ =>
-                    Then(EndOfYearAction)
+                    Then(afterWinter)
             }
 
         case TakeUnrestAction(f, _, rest) =>

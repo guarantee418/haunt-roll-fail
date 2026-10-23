@@ -611,6 +611,8 @@ object CreaturesExpansion extends Expansion {
             val robo = (attacking && game.robotos(f)).??(1)
             // Dragon Clan's Tenacious Grudge: 1 point for each unit on the Sacrificial Pyre
             val grudge = (attacking && f == Dragon && e.special == GrudgeMove).??(game.pyre.num)
+            // Surtr's Wrath (printed New Blood): 1 point for each unit sacrificed from the Pyre
+            val surtr = (attacking && f == Dragon).??(game.surtrPoints)
             // Wastelands: Rock Golem, Valdemar, Thor's Wrath, Landvidi, the Gate of Helheim and Urdarbrunn
             val (pws, cws) = game.has(Wastelands).?(WastelandsExpansion.creaturePoints(f, t, c, attacking, face, cface)).|(($[(Int, Elem)](), $[(Int, Elem)]()))
             val pw = pws.map(_._1).sum
@@ -619,7 +621,7 @@ object CreaturesExpansion extends Expansion {
             // Ox Clan's Ancestral Equipment tokens: their points, and token 7's ignored casualty
             val gear = NewBloodExpansion.gearPoints(f, food)
             val tower = TowersExpansion.towerPoints(t)
-            val ps = game.strength(t, f, attacking) + bonus + axe + fortress + snake + robo + grudge + gear + tower + food + face.points + pw
+            val ps = game.strength(t, f, attacking) + bonus + axe + fortress + snake + robo + grudge + surtr + gear + tower + food + face.points + pw
             // Shieldbearers cancel 1 casualty; Halvard defending ignores 1 inflicted by the attacking creature
             val shield = math.min(cface.casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1) + Warchief.shield(t, f, attacking) + urdar + NewBloodExpansion.ignored(f))
             val pc = cface.casualties - shield
@@ -635,7 +637,7 @@ object CreaturesExpansion extends Expansion {
                 def extra(l : (Int, Elem)*) : Elem = l.toList.filter(_._1 > 0).map { case (n, what) => "(" ~ n.hl ~ " from " ~ what ~ ")" }.join(" ")
 
                 // Everything but the units and the die, as in the fight with a clan
-                val extras = $(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, robo -> "Robotos".hl, grudge -> "Tenacious Grudge".hl, gear -> "Ancestral Equipment".hl, tower -> DefenseTower.elem) ++ pws
+                val extras = $(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, robo -> "Robotos".hl, grudge -> "Tenacious Grudge".hl, surtr -> "Surtr's Wrath".hl, gear -> "Ancestral Equipment".hl, tower -> DefenseTower.elem) ++ pws
                 f.log("scored", CombatIcon.axes(ps), extra((FightPoints.others(f, t, attacking) ++ extras) : _*))
                 log(c, "scored", CombatIcon.axes(cs), extra(cws : _*), (pc > 0 || shield > 0).?("and inflicted " ~ CombatIcon.skulls(pc)).|(Empty), (shield > 0).?("(" ~ shield.hl ~ " cancelled)").|(Empty))
 
@@ -655,6 +657,10 @@ object CreaturesExpansion extends Expansion {
                 val before = game.count(t, f)
                 val specials = game.specialsIn(t, f)
                 game.removeCasualties(t, f, math.min(pc, units))
+
+                // Mielikki's Wisdom: 1 lore once a casualty is rolled
+                if (attacking)
+                    NewBloodExpansion.wisdom(f, e, face.casualties > 0 || cface.casualties > 0)
 
                 // Alternative victory: Valhalla counts units lost to creatures too
                 game.advance(f, "valhalla", math.min(pc, units))

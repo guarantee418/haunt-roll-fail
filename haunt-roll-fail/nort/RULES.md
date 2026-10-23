@@ -468,6 +468,48 @@ marked ⚡):
 | Rat | ⚡ Rat Clan: Build; may first remove up to 2 units from your territories for 1 wood each | ⚡ Overwork: may remove 1 unit to collect everything from 1 territory you control (buildings too); may draw 1 | Proliferation: Recruit 1 in up to 3 closed territories you control | Blood Ties: Move 2, 1 lore per casualty suffered |
 | Squirrel | ⚡ Squirrel Clan: Recruit 1, then 1 food or fame equal to your units in your territories / 4 | Cooking Mastery: Build, then may build a free Food Silo in a territory you control, even next to another | Economics: draw 1; pay up to 2 food, 1 card each | Eldrich: Move 2; each casualty the enemy rolls also hits their own units |
 
+### Printed New Blood cards and boards (2026-10-23)
+
+Gman sent photos of the printed New Blood clan cards (19) and of the clan board texts (9) on 2026-10-23. The TTS
+cards above were a prototype. New games get the hidden `PrintedNewBlood` option (`options.scala`, in `mandatoryFor`),
+which turns on the printed cards (`CardVersions.printedNewBlood` in `editions.scala`: own name, image, effect, text)
+and the printed board rules; games started before keep the TTS cards and rules, so their replays don't change. The
+clan info shows the earlier text under each changed card ("Earlier version"). The board pictures keep their look,
+with the printed text drawn in (`expansion/board/<clan>-print.webp`, by `tools/board-text.py`; `Warchief.board`).
+
+Cards that changed in play (the others got the printed art and wording only: Horse Clan, Quality of Life, Eitria and
+Brok's Precision, Kàra's Devotion (was Howl from the Sea), Ox Clan, Torfin's Ferocity (was The True Hero), Overwork):
+
+| Clan | Printed card | Was | Printed rule |
+|---|---|---|---|
+| Dragon | ⚡ Enslavement | Capture for Sacrifice | Put 1 or 2 enemy units, from different territories adjacent to yours, on free Pyre spots; with the Pyre full, may first sacrifice 1 for 1 food (`EnslaveAction`) |
+| Dragon | Reluctant Forces | Reluctant Workforce | Draw 3; keep a card per unit sacrificed from the Pyre; the rest go on top of the draw or the discard pile (`ForcesAction`) |
+| Dragon | Surtr's Wrath | Tenacious Grudge | Move 3; before each fight it starts, may sacrifice units from the Pyre, +1 point each (`SurtrAskAction`, `game.surtrPoints`) |
+| Kraken | ⚡ Endless Tide | Endless Tide | Recruit 1 in a neutral open territory, or replace 1 enemy unit in an enemy's open territory with one of yours from the reserve; a fight follows (`TidePrintAction`) |
+| Lynx | ⚡ Lynx Clan | Lynx Clan | The redraw costs the bonus Move (`game.lynxForgone`) |
+| Lynx | ⚡ Nimble Paws | Fire Arrows | Each lynx may pull 1 enemy unit from an adjacent territory (ignoring Rough borders) into its own; the fights follow, Lynx attacking (`NimbleAction`) |
+| Lynx | Caring Siblings | Poaching | Recruit 2; the units just recruited with a lynx may join the bonus Move |
+| Lynx | Mielikki's Wisdom | The Wise One | Move 3; 1 lore once a casualty is rolled in a fight it starts, once per card (`wisdom`) |
+| Ox | Ancient Battlegrounds | Warcraft | Explore; a tile showing lore may give 1 lore; without it (declined or none), another Explore |
+| Ox | City Builder | City Builder | Build; a small building (or Carved Stone) may draw 1, a large one gives 1 lore (`game.lastBuilt`) |
+| Squirrel | Cooking Mastery | Cooking Mastery | Build, then a free Food Silo needing no space in a territory you control without one |
+| Squirrel | Economics | Economics | Draw 1; 1 food for a second card, 2 more for a third |
+| Rat | ⚡ Overwork | Overwork | The unit removed may be anywhere |
+
+Board rules that changed:
+
+- Lynx: Brundr and Kaelinn are two figures, each worth 1 point (`game.lynx` and `game.lynx2`; the second is recruited
+  like the first, never at setup, and is only on the map while the first is). Before or after a Lynx card with the lynx
+  icon (the initial card and the two upgrades), a bonus Move 1 with only the lynxes (and Caring Siblings' new units),
+  into any territory but not across Rough borders nor into a creature's, starting at most 1 fight (`LynxBonusAction`).
+  A Move takes both lynxes in a territory, or one (`MoveOneLynxAction`). The second lynx is lost like a unit, after the units.
+- Mielikki: attacking, she may bring Brundr or Kaelinn from any territory (instead of +1 point with a Flash card).
+- Kraken: a High Tide token is placed or moved before or after a Kraken card, and goes back when Kraken loses a fight
+  in its territory. Kàra, defending, may place one as well as move one.
+- Dragon: to harvest, a deployed unit goes on the Pyre only while it is empty; otherwise one is sacrificed.
+- Squirrel: the extra food or wood comes after paying Winter (`AfterWinterAction`), not after the harvest.
+- Horse, Ox, Rat, Eitria and Brok, Eir: new wording, same rules.
+
 The warchief upgrade cards follow the Warchiefs box's rule: a third upgrade
 with the Warchiefs module. The setup screen's "Warchiefs module" section offers
 the full module, the upgrade cards only ("Warchief upgrade cards only", as the
