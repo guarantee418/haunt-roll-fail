@@ -1376,12 +1376,12 @@ trait GameImplicits {
                 case d : DisguisedCard if factions.of[InvasiveEEE].any =>
                     val e = factions.of[InvasiveEEE].first
                     source --> d --> e.standins
-                    if (d.card == Ambush(Frog) && (options.has(FrogAmbushToPondBottom) || game.frogAmbushToPondBottom))
+                    if (d.card == Ambush(Frog) && InvasiveEEEExpansion.frogAmbushAlwaysBottom)
                         InvasiveEEEExpansion.pondBottom(e) { e.companions --> d.card --> e.pond }
                     else
                         e.companions --> d.card --> e.pond
                     InvasiveEEEExpansion.disguiseSpent(e, d.card)
-                case d @ Ambush(Frog) if factions.of[InvasiveEEE].any && (options.has(FrogAmbushToPondBottom) || game.frogAmbushToPondBottom) =>
+                case d @ Ambush(Frog) if factions.of[InvasiveEEE].any && InvasiveEEEExpansion.frogAmbushAlwaysBottom =>
                     val e = factions.of[InvasiveEEE].first
                     InvasiveEEEExpansion.pondBottom(e) { source --> d --> e.pond }
                 case d if d.suit == Frog => source --> d -->{

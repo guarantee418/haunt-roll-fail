@@ -385,6 +385,14 @@ case object FrogAmbushToPondBottom extends GameOption with ToggleOption {
     val valueOn = "Frog Ambush".hh ~ " always discarded to the Pond bottom"
 }
 
+// The Frog Ambush goes to the bottom of the Pond only when played as an ambush (or counter-ambush); any other discard puts it
+// on top like every Frog card (Guerric Samples's ruling, relayed by Gman on 2026-10-23). Hidden and on by default for new games
+// in place of FrogAmbushToPondBottom, and it turns that one off; games started with FrogAmbushToPondBottom alone keep it.
+case object FrogAmbushBottomOnlyAsAmbush extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Frog Ambush".hh ~ " to the Pond bottom only as an ambush"
+}
+
 // Advanced Setup deals the Knaves their four Captain cards when the factions are drawn, so the draft shows them
 // (asked for by Gman on 2026-10-20). Hidden and on by default for new games; older games deal them when the Knaves
 // set up, so their replays don't change.
@@ -1365,7 +1373,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1395,7 +1403,7 @@ object Meta extends MetaGame {
         OutragePeekNeedsOk,
         CounterMiceInABush,
         SkipIdleRallyReconcile,
-        FrogAmbushToPondBottom,
+        FrogAmbushBottomOnlyAsAmbush,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
