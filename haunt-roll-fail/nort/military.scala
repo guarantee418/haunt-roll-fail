@@ -65,9 +65,13 @@ object MilitaryPath {
 // Guardian path, level 3: a small building that takes no space, 2 to a territory; not in Building.all, so games without the
 // module never draw or offer it
 
-// "12 MXP"
+// "12" and the video game's Military Experience icon, crossed swords (ui-mxp, made by nort/tools/mxp-icon.py)
 case class MXP(n : Int) extends Elementary {
-    def elem : Elem = n.hl ~ " MXP"
+    def elem : Elem = Amount(n.hl, MXP.icon)
+}
+
+object MXP {
+    def icon : Elem = Image("ui-mxp", styles.inlineIcon).alt("MXP")
 }
 
 // A clan's MXP, level and path, as in its panel

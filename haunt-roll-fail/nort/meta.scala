@@ -459,7 +459,7 @@ object Meta extends MetaGame { mmm =>
     ) ::
     // Military paths module (fan content): the Militia's shield and the Leadership path's bodyguard figure
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, MilitaryModule), "ui", "ui-", "webp")(
-        $(ImageAsset("militia"))
+        $(ImageAsset("militia"), ImageAsset("mxp"))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, MilitaryModule), "token/unit", "bodyguard-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "bodyguard-" + c.id))

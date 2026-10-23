@@ -1342,11 +1342,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val others = game.factions.but(f).but(Automa).%(game.states.contains)./(g => (g.elem ~ ": " ~ MilitaryLabel(g).elem).div).merge
 
         ("Military paths".hlb.div ~
-            (f.elem ~ ": " ~ MilitaryLabel(f).elem ~ next./(n => " (next level at " ~ n.hl ~ ")").|(Empty)).div ~
+            (f.elem ~ ": " ~ MilitaryLabel(f).elem ~ next./(n => " (next level at " ~ MXP(n).elem ~ ")").|(Empty)).div ~
             others ~
             HorizontalBreak ~
-            small("Military experience (MXP): twice the fame of each creature defeated; in a fight against a clan, won or lost, 2 for each enemy unit killed (Militia and bodyguards too) and 10 for an enemy warchief; 3 for destroying an enemy " ~ DefenseTower.elem ~ ".") ~
-            small("Level 1 at " ~ 5.hl ~ " MXP, when a path is chosen for the rest of the game; level 2 at " ~ 50.hl ~ ", level 3 at " ~ 100.hl ~ ".") ~
+            small("Military experience (" ~ MXP.icon ~ " MXP): twice the fame of each creature defeated; in a fight against a clan, won or lost, 2 for each enemy unit killed (Militia and bodyguards too) and 10 for an enemy warchief; 3 for destroying an enemy " ~ DefenseTower.elem ~ ".") ~
+            small("Level 1 at " ~ MXP(5).elem ~ ", when a path is chosen for the rest of the game; level 2 at " ~ MXP(50).elem ~ ", level 3 at " ~ MXP(100).elem ~ ".") ~
             MilitaryPath.all.%(p => p != Leadership || game.has(Warchiefs))./{ p =>
                 HorizontalBreak ~
                 (p.elem ~ path.has(p).?(" (" ~ f.elem ~ ")").|(Empty)).div ~
