@@ -1,41 +1,18 @@
 # Makes the warchief pawns token/unit/chief-<clan>-<color>.webp for the New Blood clans (and chief-brok-<color>
-# for Horse's Brok): each warchief cut out of the art of their clan card (card/clan/*.webp), which shows them down
-# to the waist or the knees, above the card's text box, so the pawn stands on that straight edge. The figure is
-# placed and outlined like the core clans' portraits (warchief-portraits.py): an outline in the player's color and a
-# thin white rim. The figures are cut from the art with the BiRefNet model of rembg (pip install rembg), one
-# process for each, as the model runs out of memory over several images in one process.
+# for Horse's Brok) from the video game's unit renders of those warchiefs on the Northgard wiki (northgard.fandom.com:
+# Surtr-Icon, Eitria icon, Brok icon, Kàra-icon, Mielikki model, Torfin icon, Eir icon, Andhrimnir-model; 101 to 150
+# pixels wide), kept in expansion/warchief/<name>.webp, like the Lion's Hildegard (lion-art.py). The render's ground
+# shadow is left out, and the figure is scaled and outlined like Hildegard's: an outline in the player's color and a
+# thin white rim. Until 2026-10-25 the pawns were cut out of the clan cards' art (the owner preferred the renders).
 #
-#   python3 warchief-pawns.py <webp2/nort/images> [<name> ...]     (only those pawns, e.g. brok)
+#   python3 warchief-pawns.py <webp2/nort/images>
 
-import sys, os, subprocess, tempfile
+import sys
 import numpy
 from scipy import ndimage
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageFilter
 
-# Card, and the box of the art cut out, in card pixels (412x635): above the text box, and below the clan icon and
-# the card's name where the figure doesn't reach them
-pawns = {
-    "dragon": ("dragon-tenacious-grudge", (0, 150, 412, 480)),
-    "horse": ("horse-eitria-and-broks-precision", (200, 150, 412, 470)),
-    "brok": ("horse-eitria-and-broks-precision", (0, 150, 256, 470)),
-    "kraken": ("kraken-howl-from-the-sea", (0, 150, 412, 455)),
-    "lynx": ("lynx-the-wise-one", (0, 150, 412, 500)),
-    "ox": ("ox-the-true-hero", (0, 150, 412, 455)),
-    "rat": ("rat-blood-ties", (0, 130, 412, 440)),
-    "squirrel": ("squirrel-eldrich", (0, 105, 412, 470)),
-}
-
-# Parts of the box left out of the figure, in card pixels: the clan icon and the card's name, where the figure
-# reaches above them
-cuts = {
-    "rat": [(80, 0, 360, 146)],
-    "squirrel": [(85, 0, 360, 150)],
-}
-
-# Parts kept in the figure, in card pixels, that the model takes for the mist around them: the head of Brok's hammer
-keeps = {
-    "brok": [[(2, 213), (27, 203), (42, 226), (40, 240), (27, 246), (10, 241)]],
-}
+pawns = ["dragon", "horse", "brok", "kraken", "lynx", "ox", "rat", "squirrel"]
 
 # The middle of each color's unit figure (token/unit/unit-<color>.webp)
 colors = {
@@ -48,9 +25,8 @@ colors = {
 }
 
 size = 512
-width = 380     # the largest figure: the wide ones about as wide as a warrior, the tall ones a little shorter than the portraits
-# (the art is a close-up, so they look as big)
-height = 350
+height = 370    # as Hildegard's
+width = 470     # the widest (Kàra's blades) as wide as the canvas allows
 band = 15       # colored outline, in output pixels
 rim = 5         # white rim outside it
 
@@ -58,59 +34,24 @@ def grow(alpha, r):
     # Grows the shape by about r pixels with round corners: blur, then keep everything the blur reached
     return alpha.filter(ImageFilter.GaussianBlur(r / 2)).point(lambda a: 255 if a > 6 else 0)
 
-def solid(mask):
-    # Fills the gaps inside the shape (between an arm and the body), so the outline only goes around it
-    return Image.fromarray((ndimage.binary_fill_holes(numpy.array(mask) > 127) * 255).astype(numpy.uint8))
-
-def biggest(a):
-    # Keeps only the largest piece of the figure, dropping specks like the embers in the art
-    parts, n = ndimage.label(numpy.array(a) > 96)
-    if n < 2:
-        return a
-    keep = ndimage.binary_dilation(parts == 1 + numpy.argmax(ndimage.sum(numpy.ones(parts.shape), parts, range(1, n + 1))), iterations = 3)
-    return Image.fromarray((numpy.array(a) * keep).astype(numpy.uint8))
-
-def cutout(art, out):
-    # Runs in its own process (see above)
-    from rembg import remove, new_session
-    remove(Image.open(art), session = new_session("birefnet-general")).save(out)
-
-if len(sys.argv) == 4 and sys.argv[1] == "--cut":
-    cutout(sys.argv[2], sys.argv[3])
-    sys.exit(0)
+def unshadowed(fig):
+    # The figure is opaque and its shadow on the ground half transparent: keeps the opaque part and its soft edge
+    a = numpy.array(fig.split()[3])
+    near = ndimage.binary_dilation(a >= 200, iterations = 2)
+    fig.putalpha(Image.fromarray((a * near).astype(numpy.uint8)))
+    return fig.crop(fig.split()[3].point(lambda v: 255 if v > 96 else 0).getbbox())
 
 images = sys.argv[1]
-only = sys.argv[2:]
-tmp = tempfile.mkdtemp()
 
-for name, (card, box) in pawns.items():
-    if only and name not in only:
-        continue
-    art = Image.open(images + "/card/clan/" + card + ".webp").convert("RGB").crop(box)
-    art.save(tmp + "/art.png")
-    subprocess.run([sys.executable, "-I", os.path.abspath(__file__), "--cut", tmp + "/art.png", tmp + "/fig.png"], check = True)
-    # The model's shape, on the art's colors (it blanks them where it found background, as in the kept parts)
-    a = Image.open(tmp + "/fig.png").split()[3]
-    fig = art.convert("RGBA")
-    d = ImageDraw.Draw(a)
-    for (l, t, r, b) in cuts.get(name, []):
-        d.rectangle((l - box[0], t - box[1], r - box[0], b - box[1]), fill = 0)
-    for shape in keeps.get(name, []):
-        d.polygon([(x - box[0], y - box[1]) for (x, y) in shape], fill = 255)
-    # Drops the faint haze the model leaves around the figure
-    a = biggest(a.point(lambda v: 0 if v < 40 else v))
-    fig.putalpha(a)
-    fig = fig.crop(a.point(lambda v: 255 if v > 96 else 0).getbbox())
-
-    k = min(width / fig.width, height / fig.height)
+for name in pawns:
+    fig = unshadowed(Image.open(images + "/expansion/warchief/" + name + ".webp").convert("RGBA"))
+    k = min(height / fig.height, width / fig.width)
     fig = fig.resize((round(fig.width * k), round(fig.height * k)), Image.LANCZOS)
     canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    # Centred, standing a little above the bottom to leave room for the outline under it
-    canvas.paste(fig, ((size - fig.width) // 2, size - fig.height - band - rim - 8 - (height - fig.height) // 2), fig)
+    canvas.alpha_composite(fig, ((size - fig.width) // 2, size - fig.height - band - rim - 8 - max(0, (350 - fig.height) // 2)))
 
     alpha = canvas.split()[3].point(lambda a: 255 if a > 96 else 0)
-    inner = solid(grow(alpha, band))
-    outer = solid(grow(alpha, band + rim))
+    inner, outer = grow(alpha, band), grow(alpha, band + rim)
 
     for color, rgb in colors.items():
         result = Image.new("RGBA", (size, size), (255, 255, 255, 0))
