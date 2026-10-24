@@ -108,7 +108,7 @@ def clan_card(base, name, header, text, icon=None, fame=False, figure=None):
         # each row of the bar takes the median color of its empty left part, with a little grain, blended in at the ends
         a = np.array(im).astype(float)
         rows = np.median(a[26:102, 40:120], axis=1)
-        fill = np.repeat(rows[:, None], 240, axis=1) + (np.random.rand(76, 240, 1) - 0.5) * 6
+        fill = np.repeat(rows[:, None], 240, axis=1) + (np.random.default_rng(3).random((76, 240, 1)) - 0.5) * 6
         ramp = np.clip(np.minimum(np.arange(240), 239 - np.arange(240)) / 20, 0, 1)[None, :, None]
         a[26:102, 86:326] = a[26:102, 86:326] * (1 - ramp) + fill * ramp
         im = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8))
