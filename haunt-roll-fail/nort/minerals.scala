@@ -78,7 +78,7 @@ object MineralsExpansion extends Expansion {
     def supply(players : Int) : Map[Mineral, Int] = Map(Stone -> 3 * players, Iron -> 2 * players, Gem -> (3 * players + 1) / 2)
 
     // The buildings in this game: the Mine only with the module
-    def buildings(implicit game : Game) : $[Building] = Building.all ++ game.has(MineralsModule).$(Mine)
+    def buildings(implicit game : Game) : $[Building] = Building.all ++ game.has(MineralsModule).$(Mine) ++ game.has(LionKingdom).$(Chapel)
 
     def lair(t : Territory)(implicit game : Game) : Boolean = t.areas.exists(a => game.board.spec(a).lair)
 

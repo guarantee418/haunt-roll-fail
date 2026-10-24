@@ -782,8 +782,26 @@ case object MilitaryModule extends Module("Military paths", "fan-made module by 
     )
 }
 
+// The Lion Kingdom (lion.scala), a fan-made clan: the video game's Kingdom of Neustria (Gman, 2026-10-21, with Robotos's Chapel and
+// alternative starting deck). On whenever the Lion plays (Game.modules), like New Blood, so its option isn't listed
+case object LionKingdom extends Module("Lion Kingdom", "fan-made clan") {
+    override def ready = true
+    override def fan = true
+    override def expansion = |(LionExpansion)
+    // With New Blood's, before Wilderness, Creatures and Warchiefs
+    override def priority = -2
+    def about = $("The video game's Kingdom of Neustria as a clan: Lords on its Defense Towers, Chapels instead of Carved Stones, and Hildegard as its warchief.")
+}
+
+// Robotos's alternative starting deck for the Lion Kingdom (Discord, 2026-10-21): 2 Adventure (Explore or Move 1), 2 Toil (Build, or
+// 1 food or 1 wood) and 2 Prey (Recruit 1, or 1 fame) instead of the usual six cards; offered only with the Lion picked (Meta.optionsFor)
+case object LionStartingDeck extends GameOption with ToggleOption {
+    val group = "Fan content".txt
+    def valueOn = "Lion Kingdom: alternative starting deck".txt
+}
+
 object Module {
-    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule)
+    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, LionKingdom)
 
     // The team variants and the number of players each one needs
     val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6, Teams2v2v2 -> 6)

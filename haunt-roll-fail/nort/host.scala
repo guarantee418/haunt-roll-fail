@@ -51,7 +51,8 @@ object Host extends hrf.host.BaseHost {
     }
 
     // NORT_NEWBLOOD=1: only the New Blood clans
-    def factions = sys.env.get("NORT_NEWBLOOD").has("1").?(NewBlood.clans).|($(Bear, Boar, Goat, Raven, Snake, Stag, Wolf) ++ NewBlood.clans)
+    // NORT_LION=1: the fan-made Lion Kingdom in every game
+    def factions = sys.env.get("NORT_NEWBLOOD").has("1").?(NewBlood.clans).|($(Bear, Boar, Goat, Raven, Snake, Stag, Wolf) ++ NewBlood.clans :+ Lion)
     def subjects = factions
 
     // Random colors, game length and victory options; random teams half the time with three or more players (NORT_TEAMS=1: always)
@@ -62,7 +63,7 @@ object Host extends hrf.host.BaseHost {
         val training = sys.env.get("NORT_TRAINING").has("1")
         // NORT_CORE=1: the core game only (seven years, no modules), with NORT_PLAYERS players if set
         val core = sys.env.get("NORT_CORE").has("1")
-        val l = training.?($(Bear, Boar, Goat, Raven, Snake, Stag, Wolf).shuffle.take(2)).|(solo.?(factions.shuffle.take(1) :+ Automa).|(factions.shuffle.take(n)))
+        val l = training.?($(Bear, Boar, Goat, Raven, Snake, Stag, Wolf).shuffle.take(2)).|(solo.?(factions.shuffle.take(1) :+ Automa).|(sys.env.get("NORT_LION").has("1").?((Lion +: factions.but(Lion).shuffle.take(n - 1)).shuffle).|(factions.shuffle.take(n))))
         val colors = l.zip(PlayerColor.all.shuffle)./{ case (f, c) => ColorOption(f, c) }
         // NORT_CREATURES=1: always with the Creatures module (and the More Creatures variant half the time); NORT_WARCHIEFS=1: always with Warchiefs; NORT_WILDERNESS=1: always with Wilderness
         val creatures = sys.env.get("NORT_CREATURES").has("1") || random() < 0.5
@@ -80,7 +81,7 @@ object Host extends hrf.host.BaseHost {
             ((alt && random() < 0.5).$(VictoryModeOption(true)) ++ chosen.??(usable.%(_.mapControl).take(1) ++ usable.%(_.mapControl.not).take(teams.any.?(3).|(2)))./(VictoryCardOption(_)))
         val options = colors ++ $(YearsOption.all.shuffle.head) ++ $(EditionChoice.all.shuffle.head) ++ victory ++ (random() < 0.3).$(FirstSeatStarts) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(TakeUnrestCard) ++ (random() < 0.8).$(ClanPowerReports) ++ (random() < 0.8).$(MendFigures) ++ (random() < 0.8).$(OxPicksSpace) ++ (random() < 0.8).$(JoinedTilesOnly) ++ (random() < 0.8).$(SimultaneousCurse) ++ (random() < 0.8).$(KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood) ++
             creatures.$(ModuleOption(Creatures)) ++ (creatures && random() < 0.5).$(MoreCreatures) ++
-            (sys.env.get("NORT_WARCHIEFS").has("1") || random() < 0.5).?(WarchiefsChoice.all.shuffle.take(1)).|((random() < 0.3).$(WarchiefCards)) ++ (random() < 0.3).$(NoDrawDevelopments) ++ (random() < 0.3).$(NoDefensiveStrategy) ++ (random() < 0.4).$(ExtraDevelopment, FewerDevelopments).shuffle.take(1) ++ (random() < 0.3).$(ExtraAchievement) ++ (random() < 0.5).$(BalancedStartTiles) ++
+            (sys.env.get("NORT_WARCHIEFS").has("1") || random() < 0.5).?(WarchiefsChoice.all.shuffle.take(1)).|((random() < 0.3).$(WarchiefCards)) ++ (random() < 0.3).$(NoDrawDevelopments) ++ (random() < 0.3).$(NoDefensiveStrategy) ++ (random() < 0.4).$(ExtraDevelopment, FewerDevelopments).shuffle.take(1) ++ (random() < 0.3).$(ExtraAchievement) ++ (random() < 0.5).$(BalancedStartTiles) ++ (random() < 0.5).$(LionStartingDeck) ++
             // NORT_HORIZONS=1: always with the Uncharted Horizons Development cards and map tiles
             (sys.env.get("NORT_HORIZONS").has("1") || random() < 0.5).$(HorizonsDevelopments) ++ (sys.env.get("NORT_HORIZONS").has("1") || random() < 0.5).$(HorizonsTiles) ++
             (sys.env.get("NORT_WILDERNESS").has("1") || random() < 0.5).$(ModuleOption(Wilderness)) ++
@@ -112,7 +113,7 @@ object Host extends hrf.host.BaseHost {
             // NORT_HUMAN=1: the last seat counts as a person (game.human), the others as bots
             val bots = sys.env.get("NORT_HUMAN").has("1").??(MetaAdset.factions.take(n - 1)./(BotSeatOption(_)))
             bots.foreach(o => assert(MetaAdset.parseOption(MetaAdset.writeOption(o)) == $(o), o))
-            val adset = $(YearsOption.all.shuffle.head) ++ $(EditionChoice.all.shuffle.head) ++ victory ++ (random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.5).$(ModuleOption(Sea)) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(TakeUnrestCard) ++ (random() < 0.8).$(ClanPowerReports) ++ (random() < 0.8).$(MendFigures) ++ (random() < 0.8).$(OxPicksSpace) ++ (random() < 0.8).$(JoinedTilesOnly) ++ (random() < 0.8).$(SimultaneousCurse) ++ (random() < 0.8).$(KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood) ++ (random() < 0.5).$(BalancedStartTiles) ++ (random() < 0.4).$(ExtraDevelopment, FewerDevelopments).shuffle.take(1) ++ robotos ++ bots :+ lands
+            val adset = $(YearsOption.all.shuffle.head) ++ $(EditionChoice.all.shuffle.head) ++ victory ++ (random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.5).$(ModuleOption(Sea)) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(TakeUnrestCard) ++ (random() < 0.8).$(ClanPowerReports) ++ (random() < 0.8).$(MendFigures) ++ (random() < 0.8).$(OxPicksSpace) ++ (random() < 0.8).$(JoinedTilesOnly) ++ (random() < 0.8).$(SimultaneousCurse) ++ (random() < 0.8).$(KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood) ++ (random() < 0.5).$(BalancedStartTiles) ++ (random() < 0.5).$(LionStartingDeck) ++ (random() < 0.4).$(ExtraDevelopment, FewerDevelopments).shuffle.take(1) ++ robotos ++ bots :+ lands
             MetaAdset.createGame(MetaAdset.factions.take(n), adset.distinct)
         }
         else {

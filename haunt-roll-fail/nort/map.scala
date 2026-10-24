@@ -615,6 +615,7 @@ object MapExpansion extends Expansion {
             case RecruitSameAny => mine ++ neutral
             case RecruitOsmosis => mine.%(t => game.board.open(t) || t.areas.exists(a => game.board.spec(a).wood > 0)).%(t => placed.forall(p => t.areas.contains(p).not))
             case RecruitClosed => mine.%(game.board.closed).%(t => placed.forall(p => t.areas.contains(p).not))
+            case RecruitPeers => LionExpansion.peersTargets(f, placed)
         }
 
         val same = mode @@ {
@@ -769,9 +770,10 @@ object MapExpansion extends Expansion {
             // Ancestral Equipment tokens (Ox Clan) keep their spaces from being built on
             val free = t.areas./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not && game.gear.contains(s).not)
 
-            MineralsExpansion.buildings.%(b => e.duplicate || here.has(b).not).%(b => game.buildingsLeft(b) > 0).%(b => smallOnly.not || b.large.not).%(b => b != Mine || MineralsExpansion.lair(t))./~{ b =>
+            MineralsExpansion.buildings.%(b => e.duplicate || here.has(b).not).%(b => game.buildingsLeft(b) > 0).%(b => smallOnly.not || b.large.not).%(b => b != Mine || MineralsExpansion.lair(t)).%(b => LionExpansion.allowed(f, b))./~{ b =>
                 val kinds = b match {
-                    case CarvedStone => $(CarvedSpace)
+                    // the Lion's Chapel goes on a Carved Stone space too
+                    case CarvedStone | Chapel => $(CarvedSpace)
                     case b if b.large => $(LargeSpace)
                     case _ => $(SmallSpace, CarvedSpace)
                 }
@@ -811,7 +813,9 @@ object MapExpansion extends Expansion {
         else if (extra && b.large) |("needs a large space")
         else if (extra && noSpace(e).not && MilitaryExpansion.freeBuild(f, b).not) |("needs a building space")
         else if (extra.not && noSpace(e) && b.large.not) |("needs no space")
-        else if (extra.not && b == CarvedStone && spaceKind(s) != CarvedSpace) |("needs a Carved Stone space")
+        else if (b == Chapel && f != Lion) |("Lion Kingdom only")
+        else if (b == CarvedStone && f == Lion) |("the Lion builds Chapels instead")
+        else if (extra.not && (b == CarvedStone || b == Chapel) && spaceKind(s) != CarvedSpace) |("needs a Carved Stone space")
         else if (extra.not && b.large && spaceKind(s) != LargeSpace) |("needs a large space")
         else if (extra.not && b.large.not && spaceKind(s) == LargeSpace) |("large buildings only")
         else if (b == Mine && MineralsExpansion.lair(t).not) |("needs a creature lair")
@@ -834,7 +838,7 @@ object MapExpansion extends Expansion {
     def replacements(f : Faction)(implicit game : Game) : $[(SpaceRef, Building)] =
         game.controlled(f)./~(game.buildingsIn)./~{ case (s, old) =>
             val carved = s.index >= SpaceRef.extra || game.board.spec(s.area).spaces(s.index).kind == CarvedSpace
-            MineralsExpansion.buildings.%(_ != old).%(_.large == old.large).%(b => b != CarvedStone || carved).%(b => b != Mine || MineralsExpansion.lair(game.board.territory(s.area))).%(b => game.buildingsLeft(b) > 0)./(b => s -> b)
+            MineralsExpansion.buildings.%(_ != old).%(_.large == old.large).%(b => (b != CarvedStone && b != Chapel) || carved).%(b => LionExpansion.allowed(f, b)).%(b => b != Mine || MineralsExpansion.lair(game.board.territory(s.area))).%(b => game.buildingsLeft(b) > 0)./(b => s -> b)
         }
 
     // A replacement offer: with more than one building to replace, the building is tapped first (ReplaceSpotAction)
@@ -2175,6 +2179,13 @@ object MapExpansion extends Expansion {
             // Glory of the Clan: collect the territory's resources as at harvest
             if (e.special == GloryBuild)
                 collect(f, game.board.territory(a), "from the territory")
+
+            // The Lion Kingdom: a Lord on each new Defense Tower; Abundance collects from a territory of 3 buildings or more
+            if (f == Lion && b == DefenseTower)
+                LionExpansion.towerBuilt(f, s)
+
+            if (e.special == AbundanceBuild)
+                LionExpansion.abundance(f, game.board.territory(a))
 
             // Carpentry Mastery: once a large building is built, the other must be small
             Then(BuildAction(f, e, times - 1, smallOnly || (e.special == CarpentryBuild && b.large), then))

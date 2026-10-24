@@ -149,7 +149,8 @@ object AdsetExpansion extends Expansion {
 
             log("Adset".hlb, "seat order:", l.zipWithIndex./{ case (p, i) => ((i + 1) + ". ").hl ~ seatElem(p) }.join(", "))
 
-            Shuffle[Faction](Meta.clans, AdsetClansAction(_))
+            // The fan-made Lion Kingdom isn't drafted
+            Shuffle[Faction](Meta.clans.but(Lion), AdsetClansAction(_))
 
         case AdsetClansAction(l) =>
             // The number of players plus two, one more with two players
@@ -343,7 +344,7 @@ object MetaAdset extends MetaGame {
 
     override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood)
 
-    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ WarchiefsChoice.all ++ DevelopmentsChoice.all ++ $(NoDefensiveStrategy, ExtraAchievement, BalancedStartTiles) ++ BanDevelopment.all ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ Module.all.%(_.fan)./(ModuleOption) ++ hiddenOptions
+    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ WarchiefsChoice.all ++ DevelopmentsChoice.all ++ $(NoDefensiveStrategy, ExtraAchievement, BalancedStartTiles) ++ BanDevelopment.all ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ Module.all.%(_.fan).but(LionKingdom)./(ModuleOption) ++ hiddenOptions
 
     // With two players the second seat doesn't choose: an expansion is agreed on here, or none
     override def optionsFor(n : Int, l : $[F]) = options.%{

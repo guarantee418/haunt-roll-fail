@@ -56,6 +56,7 @@ object Warchief {
         case Ox => "Torfin"
         case Rat => "Eir"
         case Squirrel => "Andhrimnir"
+        case Lion => "Hildegard"
         case _ => "Leader 1"
     }
 
@@ -85,6 +86,7 @@ object Warchief {
         case Ox => "When Torfin fights, he can use one additional Ancestral Equipment token that was not already used this year."
         case Rat => "Eir gains 1 combat point when fighting in a territory with at least 1 food in it, excluding Food Silos."
         case Squirrel => "Before step 1 of a defensive combat involving Andhrimnir, you gain 1 food."
+        case Lion => "After a combat involving Hildegard, collect 1 lore for each casualty the enemy suffered."
         case _ => "The Automa's Leaders count as units; with the Warchiefs module they are worth 3 combat points."
     }
 

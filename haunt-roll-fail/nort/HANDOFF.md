@@ -917,6 +917,16 @@ it, and one more unit with every Recruit (on top of Training Camps and the rest)
   per page and the JVM checks (one game at a time); a future tool running several games at once would need it per game.
 - `nort/host.scala` picks an edition at random, so bot runs cover both.
 
+## Lion Kingdom, a fan-made clan (2026-10-24)
+
+`Lion` in `game.scala` (named "Lion Kingdom", `Meta.factionName`), rules in `lion.scala` (`LionExpansion`, module
+`LionKingdom`, turned on by `computeModules` when the Lion plays). Lords are `game.lordSpaces` (tower spaces),
+pruned by `LionExpansion.cleanup` after moves, fights and retreats; their combat points go through
+`NewBloodExpansion.pointParts`, Hildegard's lore through `afterCombat` (`game.hildegard` set at
+`CombatResolveAction`). The Chapel is a `Building` outside `Building.all`, added by `MineralsExpansion.buildings`
+and gated by `LionExpansion.allowed`. The alternative deck is the `LionStartingDeck` option
+(`LionExpansion.starting`). Art from `tools/lion-art.py`. `NORT_LION=1` puts the Lion in every host game.
+
 ## Known simplifications and gaps
 
 The status table and the Interpretations section in `RULES.md` are the full

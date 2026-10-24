@@ -55,6 +55,7 @@ draws a tile when no neutral territory is left.
 | Fan content: Tower PC version (fan-made by Marzaus, Discord) | done 2026-10-22 (`towers.scala`, option "Tower PC version" under "Fan content", also in Adset; see Tower PC version below) |
 | Fan content: Warchiefs PC version (fan-made by Marzaus) | done 2026-10-22 (option "Warchiefs PC version" under "Fan content", needs the warchiefs; see Warchiefs PC version below) |
 | Fan content: the Military paths module (fan-made by Marzaus, Discord northgard-fanmade-content) | done 2026-10-22 (`military.scala`, option "Military paths" under "Fan content", also in Adset; see Military paths below) |
+| Fan content: the Lion Kingdom (the video game's Kingdom of Neustria as a clan; designed here for Gman, with Robotos's Chapel and starting deck) | 2026-10-24 (`lion.scala`, picked like any clan, "Lion Kingdom: alternative starting deck" under "Fan content"; not in Adset or the random picks; see Lion Kingdom below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -1004,6 +1005,29 @@ proposed there, to change if Marzaus answers otherwise.
   2 units instead of 1. 2: see the end of the year. 3: +1 combat point for
   every 2 of the clan's units in a fight (units only), and one reroll in each
   fight against a clan.
+
+## Fan content: Lion Kingdom (2026-10-24)
+
+A clan made up for the site, not published anywhere: the Northgard video game's Kingdom of Neustria (its
+Lion clan), from the design Gman asked for on 2026-10-21 (Claude Doc "Lion Kingdom for Uncharted Lands"),
+with Robotos's Chapel and alternative starting deck from Discord. Picking it in the clan picker turns it on
+(module `LionKingdom`, hidden); it isn't offered in Adset or by the Random Clan picks. Its art is made from the
+game's own images by `nort/tools/lion-art.py` (the emblem is the Noto lion emoji, chalked).
+
+- Clan card "Lion Kingdom" (flash): Recruit 1, then pay up to 2 lore for 1 more unit each in the same territory.
+- Clan power, Forts and Lords: 3 Lord tokens. Building a Defense Tower puts a Lord from the reserve on it.
+  Defending a territory against a clan, each Lord there adds 2 combat points. Lords never move, never take
+  casualties, aren't units and don't hold territory; a Lord goes back to the reserve when its tower is gone or
+  the Lion loses the territory. (The design had Lords as figures that could be killed; that was simplified.)
+- Chapel: the Lion builds Chapels instead of Carved Stones, on Carved Stone spaces (7, cost 1); each gives 1 fame
+  at harvest, none under a Kobold (like the Altar of Kings).
+- Rise of the Twelve Peers (upgrade, flash): Recruit 1 in up to 2 territories with a Defense Tower or Training
+  Camp, then may put a Lord from the reserve on a Defense Tower without one.
+- Abundance (upgrade): Build; then a territory with 3 or more buildings gives its resources as at harvest.
+- Hildegard's Vow (upgrade): Move 2; in its combats, +2 combat points for each Lord in a territory next to the fight.
+- Warchief Hildegard (Warchiefs module): after a combat she was in, 1 lore for each casualty the enemy suffered.
+- Alternative starting deck (option): Adventure (Explore or Move 1), Toil (Build, or collect 1 food or 1 wood) and
+  Prey (Recruit 1, or 1 fame), two of each, instead of the six core starting cards.
 
 ## Expansions (later)
 
