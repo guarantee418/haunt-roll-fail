@@ -59,7 +59,18 @@ object Warchief {
         case _ => "Leader 1"
     }
 
-    def power(f : Faction) : String = f match {
+    // The printed New Blood boards' wording (PrintedNewBlood; CardVersions.options follows the game being played)
+    def power(f : Faction) : String = printedPower(f).filter(_ => CardVersions.options.has(PrintedNewBlood)).|(earlierPower(f))
+
+    def printedPower(f : Faction) : |[String] = f match {
+        case Horse => |("The Horse clan has 2 warchiefs, each worth 2 combat points. If Eitria and Brok are in the same territory, together they are only worth 3 combat points in combat (and not 4).")
+        case Kraken => |("If Kàra is the defender, before the combat starts, she may immediately place or relocate a High Tide token on her territory.")
+        case Lynx => |("If Mielikki is the attacker, she may Move either Brundr or Kaelinn from any territory to her territory.")
+        case Rat => |("Eir gains 1 combat point when fighting in a territory with food in it that does not come from a building.")
+        case _ => None
+    }
+
+    def earlierPower(f : Faction) : String = f match {
         case Bear => "If Borgild is the defender, she is worth 3 combat points instead of 2."
         case Boar => "If Svarn is in an open territory or a territory with wood (icons on buildings do not count), he is worth 3 combat points instead of 2."
         case Goat => "If Halvard is the defender, ignore 1 casualty inflicted by the attacker."
@@ -80,10 +91,16 @@ object Warchief {
     def elem(f : Faction)(implicit game : Game) : Elem = name(f).styled(game.colors.get(f)./(c => c : Styling).|(f))(xstyles.bold)
 
     // The clan board with the warchief's portrait and power
-    def board(f : Faction) = "board-" + f.style
+    def board(f : Faction) = "board-" + f.style + (CardVersions.options.has(PrintedNewBlood) && printedBoards.has(f)).??("-print")
+
+    // The New Blood boards redrawn with the printed text (PrintedNewBlood; nort/tools/board-text.py)
+    val printedBoards : $[Faction] = $(Dragon, Horse, Kraken, Lynx, Ox, Rat, Squirrel)
 
     // The board image file: Ox Clan's is the corrected print
     def boardFile(f : Faction) = (f == Ox).?("ox-2").|(f.style)
+
+    // Its printed text version
+    def printedFile(f : Faction) = f.style + "-print"
 
     // Combat points of the warchief in a fight in t: 2, or 3 with Borgild defending, Egil attacking or Svarn on open or wooded land
     def strength(t : Territory, f : Faction, attacking : Boolean)(implicit game : Game) : Int =
@@ -97,7 +114,7 @@ object Warchief {
             3
         else
         // Mielikki with a Flash card in the active area, Eir where the tiles show food
-        if (f == Lynx && game.states(f).active.exists(_.flash) || f == Rat && t.areas.exists(a => game.board.spec(a).food > 0))
+        if (f == Lynx && game.options.has(PrintedNewBlood).not && game.states(f).active.exists(_.flash) || f == Rat && t.areas.exists(a => game.board.spec(a).food > 0))
             3
         else
             2

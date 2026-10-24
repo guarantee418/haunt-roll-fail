@@ -99,7 +99,8 @@ object HRF {
     var offsite = server.has(dom.window.location.origin).not.?(dom.window.location.origin + dom.window.location.pathname)
 
     val embedded = flag("embedded-assets")
-    val replay = flag("replay")
+    // Lazy, as a small replay link (Quine.openSmall) sets it on the page before the game starts
+    lazy val replay = flag("replay")
 
     // An online game opened through its Spectator link: this browser plays no clan, so the waiting pane says so
     var spectator = false
@@ -216,7 +217,18 @@ object HRF {
             dom.window.onload = (e) => onDocumentLoad()
     }
 
+    private var smallReplayOpened = false
+
     def onDocumentLoad() {
+        if (smallReplayOpened.not && getElem("lobby") == null && hashParam(Quine.smallReplayKey).any) {
+            smallReplayOpened = true
+            Quine.openSmall(hashParam(Quine.smallReplayKey).get) {
+                params.clear()
+                onDocumentLoad()
+            }
+            return
+        }
+
         originalOuterHtml = "<!doctype html>\n<html>\n    " + dom.document.documentElement.innerHTML + "\n<html>"
 
         HRFR.load(resources => new HRFUI()(resources))
@@ -266,6 +278,7 @@ trait Callbacks {
     def canPlayAgain : Boolean
     def playAgain() : Unit
     def saveReplay(onSave : => Unit) : Unit
+    def saveSmallReplay(onSave : => Unit) : Unit
     def saveReplayOnline(replaceBots : Boolean, mergeHumans : Boolean)(onSave : String => Unit) : Unit
     def settings : $[Setting]
     def editSettings(onEdit : => Unit) : Unit
@@ -1854,6 +1867,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     val filename = "hrf--" + meta.name + "--" + HRF.version + "--replay--" + HRF.startAt.toISOString().take(16).replace("T", "--")
 
                     Quine.save(meta)(title, seating, options, resources, journal, filename, true, "", onSave)
+                }
+                def saveSmallReplay(onSave : => Unit) = {
+                    val filename = "hrf--" + meta.name + "--" + HRF.version + "--small-replay--" + HRF.startAt.toISOString().take(16).replace("T", "--")
+
+                    Quine.saveSmall(meta)(title, seating, options, resources, journal, filename, onSave)
                 }
                 def saveReplayOnline(replaceBots : Boolean, mergeHumans : Boolean)(onSave : String => Unit) = {
                     journal.read(0) { actions =>

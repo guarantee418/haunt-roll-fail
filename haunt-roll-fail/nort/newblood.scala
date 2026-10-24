@@ -53,6 +53,24 @@ case object CookingEffect extends Effect
 // Economics: draw 1, may pay up to 2 food for 1 card each
 case object EconomicsEffect extends Effect
 
+// New Blood as printed (PrintedNewBlood, CardVersions in editions.scala)
+// Enslavement: 1 or 2 enemy units from different territories next to f's onto the Pyre; with it full, first may sacrifice 1 for 1 food
+case object EnslavementEffect extends Effect
+// Reluctant Forces: draw 3, sacrifice 1 unit from the Pyre per card kept, the others back on the draw or the discard pile
+case object ReluctantForcesEffect extends Effect
+// Endless Tide: Recruit 1 in a neutral open territory, or replace an enemy unit in an enemy's open territory with one of f's
+case object EndlessTidePrintEffect extends Effect
+// Nimble Paws: each lynx may pull 1 enemy unit from a territory next to it (across Rough borders too); the fights follow
+case object NimblePawsEffect extends Effect
+// Ancient Battlegrounds: Explore; 1 lore if the tile shows lore, or else another Explore
+case object BattlegroundsEffect extends Effect
+// City Builder: Build; a small building may draw 1, a large one collects 1 lore
+case object CityBuilderPrintEffect extends Effect
+// Cooking Mastery: Build, then may build a free Food Silo needing no space in a territory f controls
+case object CookingPrintEffect extends Effect
+// Economics: draw 1; 1 food for a second card, then 2 more for a third
+case object EconomicsPrintEffect extends Effect
+
 
 case class NewBloodLabel(s : String) extends Elementary {
     def elem = s.hl
@@ -148,6 +166,53 @@ case class EconomicsPayAction(self : Faction, n : Int, then : ForcedAction) exte
 // Either: draw 1 card (optional)
 case class MayDrawAction(f : Faction, then : ForcedAction) extends ForcedAction
 
+// PRINTED NEW BLOOD (PrintedNewBlood)
+// Dragon
+case class EnslaveFoodAction(self : Faction, owner : Faction, then : ForcedAction) extends BaseAction("Enslavement".hl, "the", "Sacrificial Pyre".hl, "is full")("Sacrifice a unit of", owner, "to collect", 1.hl, Food)
+case class EnslaveAction(f : Faction, from : $[AreaRef], then : ForcedAction) extends ForcedAction
+case class EnslaveTakeAction(self : Faction, area : AreaRef, enemy : Faction, from : $[AreaRef], then : ForcedAction) extends BaseAction("Enslavement".hl, "put on the", "Sacrificial Pyre".hl, "a unit from")(area, InParens(enemy)) with MapTarget { def target = area }
+case class ForcesAction(f : Faction, then : ForcedAction) extends ForcedAction
+case class ForcesKeepAction(self : Faction, c : Card, owner : Faction, then : ForcedAction) extends BaseAction("Reluctant Forces".hl, "sacrifice a unit of", owner, "to keep")(c)
+case class ForcesReturnAction(self : Faction, discard : Boolean, then : ForcedAction) extends BaseAction("Reluctant Forces".hl, "the other cards")(discard.?("On the discard pile").|("On top of the draw pile"))
+case class SurtrAskAction(f : Faction, then : ForcedAction) extends ForcedAction
+case class SurtrSacrificeAction(self : Faction, owner : Faction, then : ForcedAction) extends BaseAction("Surtr's Wrath".hl, "before the fight")("Sacrifice a unit of", owner, "for", Amount(1.hl, CombatIcon.axe))
+
+// Kraken
+case class TidePrintAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("Endless Tide".hl, "recruit 1 in the neutral territory")(area) with MapTarget { def target = area }
+case class TideReplaceAction(self : Faction, area : AreaRef, enemy : Faction, then : ForcedAction) extends BaseAction("Endless Tide".hl, "replace a unit with one of yours in")(area, InParens(enemy)) with MapTarget { def target = area }
+case class TideLaterAction(f : Faction, then : ForcedAction) extends ForcedAction
+case class KaraPlaceAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction(WarchiefElem(Kraken), "place a", "High Tide".hl, "token in her territory")(area)
+
+// Lynx
+case class LynxGoAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, units : Int, then : ForcedAction) extends BaseAction("Brundr and Kaelinn".hl, "bonus Move from", from, "to", to)(LynxParty(n, units)) with MapTarget { def target = to }
+case class LynxParty(n : Int, units : Int) extends Elementary {
+    def elem = ((n == 2).?("both lynxes").|("one lynx") + (units > 0).??(" and " + units + (units == 1).?(" unit").|(" units"))).txt
+}
+case class MoveOneLynxAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, chief : Boolean, cost : Int, left : Int, e : MoveEffect, then : ForcedAction) extends BaseAction("Move from", from, "to", to)(MoveOneLynxLabel(n, chief))
+case class MoveOneLynxLabel(n : Int, chief : Boolean) extends Elementary {
+    def elem = ($("one lynx".txt) ++ (n > 0).$((n == 1).?("1 unit").|(n.toString + " units").txt) ++ chief.$("the warchief".txt)).join(" and ")
+}
+case class NimbleAction(f : Faction, used : $[AreaRef], then : ForcedAction) extends ForcedAction
+case class NimblePullAction(self : Faction, lynx : AreaRef, from : AreaRef, enemy : Faction, used : $[AreaRef], then : ForcedAction) extends BaseAction("Nimble Paws".hl, "pull a unit to", lynx, "from")(from, InParens(enemy)) with MapTarget { def target = from }
+case class MielikkiLynxAction(self : Faction, from : AreaRef, area : AreaRef, then : ForcedAction) extends BaseAction(WarchiefElem(Lynx), "bring a lynx to her territory from")(from) with MapTarget { def target = from }
+
+// Ox
+case class BattlegroundsAfterAction(f : Faction, then : ForcedAction) extends ForcedAction
+case class BattlegroundsLoreAction(self : Faction, then : ForcedAction) extends BaseAction("Ancient Battlegrounds".hl)("Collect", 1.hl, Lore)
+case class BattlegroundsExploreAction(self : Faction, then : ForcedAction) extends BaseAction("Ancient Battlegrounds".hl)("Explore again")
+case class CityBuilderAfterAction(f : Faction, then : ForcedAction) extends ForcedAction
+
+// Squirrel
+case class CookingPrintAction(f : Faction, then : ForcedAction) extends ForcedAction
+case class CookingSiloAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("Cooking Mastery".hl, "build a free", FoodSilo, "in")(area) with MapTarget { def target = area }
+case class EconomicsMoreAction(self : Faction, n : Int, cost : Int, then : ForcedAction) extends BaseAction("Economics".hl)("Pay", cost.hl, Food, "to draw a", (n == 2).?("second").|("third"), "card")
+case class AfterWinterAction(then : ForcedAction) extends ForcedAction
+case class WinterExtraAction(self : Faction, r : Resource, then : ForcedAction) extends BaseAction(self, "after paying Winter")("Collect", 1.hl, r)
+case class EconomicsAskAction(f : Faction, n : Int, then : ForcedAction) extends ForcedAction
+case class LynxAfterAction(f : Faction, caring : Boolean, then : ForcedAction) extends ForcedAction
+case class LynxBonusAction(f : Faction, units : $[AreaRef], then : ForcedAction) extends ForcedAction
+case class LynxBonusFromAction(self : Faction, from : AreaRef, units : $[AreaRef], then : ForcedAction) extends BaseAction("Brundr and Kaelinn".hl, "bonus Move from")(from) with Soft with MapTarget { def target = from }
+
 
 object NewBloodExpansion extends Expansion {
     // A unit on the Pyre at the start (Dragon Clan's setup)
@@ -213,6 +278,7 @@ object NewBloodExpansion extends Expansion {
     // The same, each with where it comes from, for the fight info, the log and the combat report
     def pointParts(f : Faction, t : Territory, e : MoveEffect, attacking : Boolean, food : Int)(implicit game : Game) : $[(Int, Elem)] = $(
         (attacking && f == Dragon && e.special == GrudgeMove).??(game.pyre.num) -> "Tenacious Grudge".hl,
+        (attacking && f == Dragon).??(game.surtrPoints) -> "Surtr's Wrath".hl,
         gearPoints(f, food) -> "Ancestral Equipment".hl
     )
 
@@ -256,6 +322,12 @@ object NewBloodExpansion extends Expansion {
             }
         }
 
+        // High Tide (as printed): the token goes when Kraken loses the fight there
+        if (printed && game.tideIn(t) && winner.exists(w => w != Kraken && (attacker == Kraken || defender == Kraken))) {
+            game.tides = game.tides.%(a => t.areas.contains(a).not)
+            Kraken.log("lost the", "High Tide".hl, "token in", t.anchor)
+        }
+
         // Blood Ties: 1 lore per casualty suffered
         if (attacker == Rat && e.special == BloodTiesMove && aLost > 0) {
             attacker.lore += aLost
@@ -268,7 +340,7 @@ object NewBloodExpansion extends Expansion {
                 val k = math.min(dLost, game.reserve(attacker))
                 if (k > 0) {
                     game.addUnits(t.anchor, attacker, k)
-                    attacker.log("added", k.hl, (k == 1).?("unit").|("units"), "with", "Howl from the Sea".hl)
+                    attacker.log("added", k.hl, (k == 1).?("unit").|("units"), "with", ClanCard(Kraken, 3).name.hl)
                 }
             }
             else
@@ -282,7 +354,7 @@ object NewBloodExpansion extends Expansion {
             game.howl = false
             if (game.reserve(f) > 0) {
                 game.addUnits(to, f, 1)
-                f.log("added a unit in", to, "with", "Howl from the Sea".hl)
+                f.log("added a unit in", to, "with", ClanCard(Kraken, 3).name.hl)
             }
         }
     }
@@ -359,6 +431,51 @@ object NewBloodExpansion extends Expansion {
         $[(Resource, Int)](Food -> food, Wood -> wood, Lore -> lore).filter(_._2 > 0).map(_._1)
     }
 
+    // NEW BLOOD AS PRINTED (PrintedNewBlood)
+    def printed(implicit game : Game) = game.options.has(PrintedNewBlood)
+
+    // Lynx's bonus Move: the territories with lynxes, and where they can go (a Move 1, into any territory, without creatures)
+    def lynxSources(implicit game : Game) : $[Territory] = game.lynxes./(game.board.territory).distinct.%(t => game.bearIn(t).not && game.hostileIn(t).not && lynxGoals(t).any)
+
+    def lynxGoals(t : Territory)(implicit game : Game) : $[Territory] =
+        game.board.adjacent(t).filter(_._2).map(_._1).%(o => game.hostileIn(o).not && game.bearIn(o).not && game.swampIn(o).not && game.creaturesIn(o).none && MapExpansion.enterable(o))
+            .%(o => game.present(o).forall(g => g == Lynx || game.enemy(Lynx, g)))
+
+    // Nimble Paws: for each lynx not used yet, an enemy unit next to it (across Rough borders too)
+    def nimbleTargets(f : Faction, used : $[AreaRef])(implicit game : Game) : $[(Territory, Territory, Faction)] =
+        game.lynxes./(game.board.territory).distinct.%(t => used.count(t.anchor) < game.lynxesIn(t) && game.bearIn(t).not && game.hostileIn(t).not)./~{ t =>
+            game.board.adjacent(t).map(_._1).%(_ != t)./~(o => game.present(o).%(game.enemy(f, _)).%(g => game.count(o, g) > 0)./(g => (t, o, g)))
+        }
+
+    // Endless Tide: neutral open territories (no figures, no creatures), and enemies' open territories
+    def tideNeutral(implicit game : Game) : $[Territory] =
+        game.board.territories.%(t => game.board.open(t) && game.present(t).none && game.creaturesIn(t).none && game.swampIn(t).not)
+
+    def tideEnemy(f : Faction)(implicit game : Game) : $[(Territory, Faction)] =
+        game.board.territories.%(game.board.open)./~(t => game.present(t) match {
+            case $(g) if game.enemy(f, g) && game.count(t, g) > 0 => $((t, g))
+            case _ => $
+        })
+
+    // Cooking Mastery: territories f controls without a Food Silo
+    def siloTargets(f : Faction)(implicit game : Game) : $[Territory] =
+        (game.buildingsLeft(FoodSilo) > 0).??(game.controlled(f).%(t => game.bearIn(t).not && game.buildingsIn(t).exists(_._2 == FoodSilo).not))
+
+    // A building on no space (Quality of Life's Defense Tower, Cooking Mastery's Food Silo)
+    def spaceless(t : Territory)(implicit game : Game) = SpaceRef(t.anchor, SpaceRef.extra + game.buildings.keys.count(s => s.area == t.anchor && s.index >= SpaceRef.extra))
+
+    // High Tide tokens: where one may be placed, and where one may be moved (with PrintedNewBlood, any token any time)
+    def tideRelocations(implicit game : Game) : $[(AreaRef, AreaRef)] = game.tides./~(o => game.controlled(Kraken).%(t => game.tideIn(t).not)./(t => (o, t.anchor)))
+
+    // Mielikki's Wisdom: 1 lore, once for the card, when a fight it started rolled a casualty
+    def wisdom(f : Faction, e : MoveEffect, rolled : Boolean)(implicit game : Game) {
+        if (e.special == MielikkiMove && rolled && game.wisdomTaken.not) {
+            game.wisdomTaken = true
+            f.lore += 1
+            f.log("collected", 1.hl, Lore, "with", "Mielikki's Wisdom".hl)
+        }
+    }
+
     // The build options with some more wood (Rat Clan's units removed)
     def buildableWith(f : Faction, extra : Int)(implicit game : Game) : Boolean = {
         f.wood += extra
@@ -382,10 +499,18 @@ object NewBloodExpansion extends Expansion {
         case WarcraftEffect => MapExpansion.playable(f, ExploreEffect())
         case CityBuilderEffect => MapExpansion.playable(f, BuildEffect())
         case RatClanEffect => buildableWith(f, math.min(2, game.onMap(f)))
-        case OverworkEffect => unitsIn(f).any
+        case OverworkEffect => printed.?(game.onMap(f) > 0).|(unitsIn(f).any)
         case SquirrelClanEffect => true
         case CookingEffect => MapExpansion.playable(f, BuildEffect())
         case EconomicsEffect => CommonExpansion.available(f) > 0
+        case EnslavementEffect => CardsExpansion.adjacentEnemyUnits(f).any && (room > 0 || game.pyre.any)
+        case ReluctantForcesEffect => CommonExpansion.available(f) > 0
+        case EndlessTidePrintEffect => game.reserve(f) > 0 && (tideNeutral.any || tideEnemy(f).any)
+        case NimblePawsEffect => nimbleTargets(f, $).any
+        case BattlegroundsEffect => MapExpansion.playable(f, ExploreEffect())
+        case CityBuilderPrintEffect => MapExpansion.playable(f, BuildEffect())
+        case CookingPrintEffect => MapExpansion.playable(f, BuildEffect())
+        case EconomicsPrintEffect => CommonExpansion.available(f) > 0
         case e => HorizonDevsExpansion.playable(f, e)
     }
 
@@ -444,7 +569,8 @@ object NewBloodExpansion extends Expansion {
             Then(RatAskAction(f, 2, BuildAction(f, BuildEffect(), 1, false, then)))
 
         case OverworkEffect =>
-            Ask(f).each(unitsIn(f))(t => OverworkRemoveAction(f, t.anchor, then))
+            // As printed: a unit anywhere
+            Ask(f).each(printed.?(game.board.territories.%(t => game.count(t, f) > 0)).|(unitsIn(f)))(t => OverworkRemoveAction(f, t.anchor, then))
                 .add(MayDrawAction(f, then).as("Remove no unit")("Overwork".hl))
 
         case SquirrelClanEffect =>
@@ -455,6 +581,44 @@ object NewBloodExpansion extends Expansion {
 
         case EconomicsEffect =>
             Then(DrawCardsAction(f, 1, EconomicsStartAction(f, then)))
+
+        case EnslavementEffect =>
+            if (room == 0 && game.pyre.any)
+                Ask(f).each(game.pyre.distinct)(g => EnslaveFoodAction(f, g, EnslaveAction(f, $, then)))
+                    .add(EnslaveAction(f, $, then).as("Sacrifice no unit")("Enslavement".hl))
+            else
+                Then(EnslaveAction(f, $, then))
+
+        case ReluctantForcesEffect =>
+            Then(DrawTempAction(f, 3, ForcesAction(f, then)))
+
+        case EndlessTidePrintEffect =>
+            val neutral = (game.reserve(f) > 0).??(tideNeutral)
+            val enemy = (game.reserve(f) > 0).??(tideEnemy(f))
+
+            if (neutral.none && enemy.none) {
+                f.log("could neither recruit nor replace a unit with", "Endless Tide".hl)
+                Then(then)
+            }
+            else
+                Ask(f).each(neutral)(t => TidePrintAction(f, t.anchor, then)).each(enemy)((t, g) => TideReplaceAction(f, t.anchor, g, then))
+
+        case NimblePawsEffect =>
+            Then(NimbleAction(f, $, then))
+
+        case BattlegroundsEffect =>
+            game.explored = None
+            Then(ExploreAction(f, 1, 1, false, ExploreEffect(), BattlegroundsAfterAction(f, then)))
+
+        case CityBuilderPrintEffect =>
+            game.lastBuilt = None
+            Then(BuildAction(f, BuildEffect(), 1, false, CityBuilderAfterAction(f, then)))
+
+        case CookingPrintEffect =>
+            Then(BuildAction(f, BuildEffect(), 1, false, CookingPrintAction(f, then)))
+
+        case EconomicsPrintEffect =>
+            Then(DrawCardsAction(f, 1, EconomicsAskAction(f, 2, then)))
 
         case e => HorizonDevsExpansion.resolve(f, e, then)
     }
@@ -486,6 +650,35 @@ object NewBloodExpansion extends Expansion {
             val resolve = ResolveEffectAction(f, c.effect, after)
 
             f match {
+                // As printed: a token placed or moved before or after the card
+                case Kraken if printed =>
+                    cleanup()
+                    val later = ResolveEffectAction(f, c.effect, TideLaterAction(f, after))
+
+                    if (tideTargets.any || tideRelocations.any)
+                        Ask(f).each(tideTargets)(t => TidePlaceAction(f, t.anchor, resolve)).each(tideRelocations)((o, a) => TideMoveAction(f, o, a, resolve))
+                            .add(later.as("Place or move a token after the card")("High Tide".hl))
+                            .add(resolve.as("Place no token")("High Tide".hl))
+                    else
+                        Then(later)
+
+                // As printed: only the cards with the lynx icon (not Mielikki's Wisdom); the bonus Move takes only the lynxes,
+                // and Lynx Clan's redraw forgoes it (so the card is played without it once they have moved)
+                case Lynx if printed =>
+                    game.lynxForgone = false
+                    val caring = c.n == 2
+                    val later = ResolveEffectAction(f, c.effect, LynxAfterAction(f, caring, after))
+
+                    if (c.n == 3)
+                        Then(resolve)
+                    else
+                    if (lynxSources.any)
+                        Ask(f).add(LynxBonusAction(f, $, ResolveEffectAction(f, (c.n == 0).?(ExploreEffect() : Effect).|(c.effect), after)).as("Move them before the card")("Brundr and Kaelinn".hl))
+                            .add(later.as("Move them after the card")("Brundr and Kaelinn".hl))
+                            .add(resolve.as("Don't move them")("Brundr and Kaelinn".hl))
+                    else
+                        Then(later)
+
                 case Kraken =>
                     cleanup()
                     if (tideTargets.any)
@@ -562,7 +755,8 @@ object NewBloodExpansion extends Expansion {
         // Harvest: Dragon must sacrifice or place a unit on the Pyre first
         case ScorchedHarvestAction if factions.has(Dragon) && game.dragonHarvest.none =>
             val owners = game.pyre.distinct
-            val from = (room > 0).??(deployed(Dragon))
+            // As printed: a deployed unit goes on the Pyre only when it is empty
+            val from = printed.?(game.pyre.none.??(deployed(Dragon))).|((room > 0).??(deployed(Dragon)))
 
             if (owners.none && from.none) {
                 Dragon.log("could neither sacrifice nor place a unit on the", "Sacrificial Pyre".hl, "and won't harvest")
@@ -581,7 +775,7 @@ object NewBloodExpansion extends Expansion {
 
         // After harvesting: Dragon's extra food or wood, Squirrel's extra food or wood
         case AfterHarvestAction(then) =>
-            Then(AfterHarvestNBAction(game.from(game.first).%(f => f == Dragon || f == Squirrel), then))
+            Then(AfterHarvestNBAction(game.from(game.first).%(f => f == Dragon || f == Squirrel && printed.not), then))
 
         case AfterHarvestNBAction(Nil, then) =>
             Then(then)
@@ -706,8 +900,10 @@ object NewBloodExpansion extends Expansion {
             Then(then)
 
         // Kàra defending, before the fight: a High Tide token may come to her territory
-        case ChiefStepOneAction(Kraken :: Nil, a, then) if game.chiefIn(game.board.territory(a), Kraken) && game.tides.any && game.tideIn(game.board.territory(a)).not =>
-            Ask(Kraken).each(game.tides)(o => KaraTideAction(Kraken, o, a, then)).add(then.as("Leave the tokens where they are")(WarchiefElem(Kraken)))
+        case ChiefStepOneAction(Kraken :: Nil, a, then) if game.chiefIn(game.board.territory(a), Kraken) && (game.tides.any || printed && game.tides.num < 2) && game.tideIn(game.board.territory(a)).not =>
+            // As printed: she may also place one from the reserve
+            Ask(Kraken).each(game.tides)(o => KaraTideAction(Kraken, o, a, then)).when(printed && game.tides.num < 2)(KaraPlaceAction(Kraken, a, then))
+                .add(then.as("Leave the tokens where they are")(WarchiefElem(Kraken)))
 
         case TideMoveAction(f, from, a, then) =>
             game.tides = game.tides.diff($(from)) :+ a
@@ -881,7 +1077,7 @@ object NewBloodExpansion extends Expansion {
         case TrueHeroAction(f, s, b, then) =>
             MilitaryExpansion.razed(f, s, b)
             game.buildings -= s
-            f.log("removed", b, "from", s.area, "with", "The True Hero".hl)
+            f.log("removed", b, "from", s.area, "with", ClanCard(Ox, 3).name.hl)
             Then(then)
 
         case GearRerollAction(f, again) =>
@@ -970,6 +1166,304 @@ object NewBloodExpansion extends Expansion {
                 f.log("paid", n.hl, Food, "to draw", n.cards)
             }
             Then(DrawCardsAction(f, n, then))
+
+        // NEW BLOOD AS PRINTED (PrintedNewBlood)
+        // Dragon
+        case EnslaveFoodAction(f, g, then) =>
+            game.pyre = game.pyre.diff($(g))
+            f.food += 1
+            f.log("sacrificed a unit of", g, "from the", "Sacrificial Pyre".hl, "and collected", 1.hl, Food)
+            game.note("pyre-sacrifice")
+            Then(then)
+
+        case EnslaveAction(f, from, then) =>
+            val l = (from.num < 2 && room > 0).??(CardsExpansion.adjacentEnemyUnits(f).%((t, _) => from.has(t.anchor).not))
+
+            if (l.none)
+                Then(then)
+            else
+                Ask(f).each(l)((t, g) => EnslaveTakeAction(f, t.anchor, g, from, then)).when(from.any)(then.as("Take no more")("Enslavement".hl))
+
+        case EnslaveTakeAction(f, a, g, from, then) =>
+            game.removeUnits(game.board.territory(a), g, 1)
+            game.pyre :+= g
+            f.log("put a unit of", g, "from", a, "on the", "Sacrificial Pyre".hl)
+            Then(EnslaveAction(f, from :+ a, then))
+
+        case ForcesAction(f, then) =>
+            if (f.drawn.none)
+                Then(then)
+            else {
+                val owners = game.pyre.distinct
+                Ask(f).some(owners.any.??(f.drawn.distinct))(c => owners./(g => ForcesKeepAction(f, c, g, then)))
+                    .add(ForcesReturnAction(f, false, then))
+                    .add(ForcesReturnAction(f, true, then))
+            }
+
+        case ForcesKeepAction(f, c, g, then) =>
+            f.drawn = f.drawn.diff($(c))
+            f.hand :+= c
+            game.pyre = game.pyre.diff($(g))
+            f.log("sacrificed a unit of", g, "from the", "Sacrificial Pyre".hl, "to keep a card")
+            game.note("pyre-sacrifice")
+            Then(ForcesAction(f, then))
+
+        case ForcesReturnAction(f, discard, then) =>
+            if (discard) {
+                f.discard ++= f.drawn
+                f.log("discarded", f.drawn./(_.elem).join(", "))
+                f.drawn = $
+                Then(then)
+            }
+            else {
+                // Cards drawn and put back on top: Limited undo can't go back past them
+                game.peeked += 1
+                Then(ResolveDrawnAction(f, 0, 0, f.drawn.num, then))
+            }
+
+        // Surtr's Wrath: units sacrificed from the Pyre before the fight, 1 point each
+        case GearAskAction(attacker, defender, a, e, then) if attacker == Dragon && e.special == SurtrMove && game.pyre.any =>
+            Then(SurtrAskAction(Dragon, GearAskAction(attacker, defender, a, e.copy(special = PlainMove), then)))
+
+        case GearCreatureAskAction(f, a, e, attacking, then) if attacking && f == Dragon && e.special == SurtrMove && game.pyre.any =>
+            Then(SurtrAskAction(Dragon, GearCreatureAskAction(f, a, e.copy(special = PlainMove), attacking, then)))
+
+        case SurtrAskAction(f, then) =>
+            if (game.pyre.none)
+                Then(then)
+            else
+                Ask(f).each(game.pyre.distinct)(g => SurtrSacrificeAction(f, g, then)).add(then.as("Sacrifice no more")("Surtr's Wrath".hl))
+
+        case SurtrSacrificeAction(f, g, then) =>
+            game.pyre = game.pyre.diff($(g))
+            game.surtrPoints += 1
+            f.log("sacrificed a unit of", g, "from the", "Sacrificial Pyre".hl, "for", Amount(1.hl, CombatIcon.axe), "with", "Surtr's Wrath".hl)
+            game.note("pyre-sacrifice")
+            Then(SurtrAskAction(f, then))
+
+        // Kraken
+        case TidePrintAction(f, a, then) =>
+            game.addUnits(a, f, 1)
+            f.log("recruited in", a, "with", "Endless Tide".hl)
+            Then(TrainingCampsAction(f, $(a), then))
+
+        case TideReplaceAction(f, a, g, then) =>
+            val t = game.board.territory(a)
+            game.removeUnits(t, g, 1)
+            game.addUnits(a, f, 1)
+            f.log("replaced a unit of", g, "in", a, "with one of theirs", game.present(t).has(g).?("and attacked " ~ g.elem).|(Empty))
+
+            if (game.present(t).has(g)) {
+                game.combats :+= t.anchor
+                Then(CombatsAction(f, MoveEffect(0), then))
+            }
+            else
+                Then(then)
+
+        case TideLaterAction(f, then) =>
+            cleanup()
+            if (tideTargets.any || tideRelocations.any)
+                Ask(f).each(tideTargets)(t => TidePlaceAction(f, t.anchor, then)).each(tideRelocations)((o, a) => TideMoveAction(f, o, a, then))
+                    .add(then.as("Place no token")("High Tide".hl))
+            else
+                Then(then)
+
+        case KaraPlaceAction(f, a, then) =>
+            game.tides :+= a
+            f.log("placed a", "High Tide".hl, "token in", a, "with", WarchiefElem(f))
+            game.note("tide-place")
+            Then(then)
+
+        // Lynx: the bonus Move, only the lynxes (and the units Caring Siblings recruited with them)
+        case LynxAfterAction(f, caring, then) =>
+            if (game.lynxForgone) {
+                f.log("forwent the bonus Move of", "Brundr and Kaelinn".hl)
+                Then(then)
+            }
+            else
+            if (lynxSources.any)
+                Ask(f).add(LynxBonusAction(f, caring.??(game.recruited), then).as("Move them")("Brundr and Kaelinn".hl)).add(then.as("Don't move them")("Brundr and Kaelinn".hl))
+            else
+                Then(then)
+
+        case LynxBonusAction(f, units, then) =>
+            Ask(f).each(lynxSources)(t => LynxBonusFromAction(f, t.anchor, units, then)).add(then.as("Don't move them")("Brundr and Kaelinn".hl))
+
+        case LynxBonusFromAction(f, from, units, then) =>
+            val t = game.board.territory(from)
+            val n = game.lynxesIn(t)
+            val u = math.min(game.count(t, f), units.count(a => t.areas.contains(a)))
+
+            Ask(f).some(lynxGoals(t))(o => 1.to(n).$./~(k => 0.to(u).$./(j => LynxGoAction(f, from, o.anchor, k, j, then)))).cancel
+
+        case LynxGoAction(f, from, to, n, units, then) =>
+            val src = game.board.territory(from)
+            val dst = game.board.territory(to)
+
+            if (n == 2 || game.lynx2.exists(src.areas.contains).not)
+                game.moveCompanion(f, src, dst.anchor)
+            else
+                game.lynx2 = |(dst.anchor)
+
+            game.removeUnits(src, f, units)
+            game.addUnits(dst.anchor, f, units)
+
+            val enemy = game.present(dst).%(game.enemy(f, _))
+
+            f.log("moved", LynxParty(n, units), "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty))
+            game.note("lynx-move")
+
+            if (enemy.any) {
+                game.combats :+= dst.anchor
+                Then(CombatsAction(f, MoveEffect(0), then))
+            }
+            else
+                Then(then)
+
+        // A regular Move taking one of the two lynxes in a territory
+        case MoveOneLynxAction(f, from, to, n, chief, cost, left, e, then) =>
+            val src = game.board.territory(from)
+            val dst = game.board.territory(to)
+
+            game.removeUnits(src, f, n)
+            game.addUnits(dst.anchor, f, n)
+            game.lynx2 = |(dst.anchor)
+            if (chief)
+                game.chiefs += f -> dst.anchor
+
+            val enemy = game.present(dst).%(game.enemy(f, _))
+
+            f.log("moved", MoveOneLynxLabel(n, chief), "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty), game.passOnly(f, dst).?("(passing through)".txt).|(Empty))
+
+            if (game.swampIn(dst) && game.swampIn(src).not) {
+                game.removeFigures(dst, f, 1)
+                game.note("swamp")
+                f.log("lost a unit in the", "Swamp".hl)
+            }
+
+            if (enemy.any && game.combats.has(dst.anchor).not)
+                game.combats :+= dst.anchor
+
+            Then(MoveAction(f, left - cost, e, then))
+
+        // Lynx Clan's redraw forgoes the bonus Move
+        case ExploreRedrawAction(f, _, _, _, _) if f == Lynx && printed =>
+            game.lynxForgone = true
+            UnknownContinue
+
+        case NimbleAction(f, used, then) =>
+            val l = nimbleTargets(f, used)
+
+            if (l.none)
+                Then(then)
+            else
+                Ask(f).each(l) { case (t, o, g) => NimblePullAction(f, t.anchor, o.anchor, g, used, then) }.add(then.as("Pull no more")("Nimble Paws".hl))
+
+        case NimblePullAction(f, a, from, g, used, then) =>
+            val t = game.board.territory(a)
+            game.removeUnits(game.board.territory(from), g, 1)
+            game.addUnits(t.anchor, g, 1)
+            f.log("pulled a unit of", g, "from", from, "to", t.anchor, "with", "Nimble Paws".hl)
+
+            val next = NimbleAction(f, used :+ t.anchor, then)
+
+            if (game.present(t).has(f) && game.present(t).has(g)) {
+                game.combats :+= t.anchor
+                Then(CombatsAction(f, MoveEffect(0), next))
+            }
+            else
+                Then(next)
+
+        // Mielikki attacking: a lynx from anywhere to her territory
+        case ChiefStepOneAction(Lynx :: rest, a, then) if rest.any && printed && game.chiefIn(game.board.territory(a), Lynx) && game.lynxes.exists(o => game.board.territory(a).areas.contains(o).not) =>
+            val t = game.board.territory(a)
+            val next = ChiefStepOneAction(rest, a, then)
+            Ask(Lynx).each(game.lynxes.%(o => t.areas.contains(o).not).distinct)(o => MielikkiLynxAction(Lynx, o, a, next)).add(next.as("Bring no lynx")(WarchiefElem(Lynx)))
+
+        case MielikkiLynxAction(f, from, a, then) =>
+            if (game.lynx2.has(from))
+                game.lynx2 = |(a)
+            else
+                game.lynx = |(a)
+            f.log("brought a lynx from", from, "with", WarchiefElem(f))
+            game.note("mielikki")
+            Then(then)
+
+        // Ox
+        case BattlegroundsAfterAction(f, then) =>
+            val again = game.explored.any && MapExpansion.playable(f, ExploreEffect())
+
+            if (game.explored.exists(tileHasLore))
+                Ask(f).add(BattlegroundsLoreAction(f, then)).when(again)(BattlegroundsExploreAction(f, then))
+            else
+            if (again)
+                Ask(f).add(BattlegroundsExploreAction(f, then)).add(then.as("Explore no more")("Ancient Battlegrounds".hl))
+            else
+                Then(then)
+
+        case BattlegroundsLoreAction(f, then) =>
+            f.lore += 1
+            f.log("collected", 1.hl, Lore, "with", "Ancient Battlegrounds".hl)
+            Then(then)
+
+        case BattlegroundsExploreAction(f, then) =>
+            f.log("explores again with", "Ancient Battlegrounds".hl)
+            game.explored = None
+            Then(ExploreAction(f, 1, 1, false, ExploreEffect(), then))
+
+        case CityBuilderAfterAction(f, then) =>
+            game.lastBuilt match {
+                case Some(b) if b.large =>
+                    f.lore += 1
+                    f.log("collected", 1.hl, Lore, "with", "City Builder".hl)
+                    Then(then)
+                case Some(_) =>
+                    Then(MayDrawAction(f, then))
+                case None =>
+                    Then(then)
+            }
+
+        // Squirrel
+        case CookingPrintAction(f, then) =>
+            val l = siloTargets(f)
+
+            if (l.none)
+                Then(then)
+            else
+                Ask(f).each(l)(t => CookingSiloAction(f, t.anchor, then)).add(then.as("Build no Food Silo")("Cooking Mastery".hl))
+
+        case CookingSiloAction(f, a, then) =>
+            val t = game.board.territory(a)
+            game.buildings += spaceless(t) -> FoodSilo
+            f.log("built", FoodSilo, "in", a, "with", "Cooking Mastery".hl)
+            Then(then)
+
+        case EconomicsAskAction(f, n, then) =>
+            val cost = (n == 2).?(1).|(2)
+
+            if (n > 3 || f.food < cost || CommonExpansion.available(f) == 0)
+                Then(then)
+            else
+                Ask(f).add(EconomicsMoreAction(f, n, cost, then)).add(then.as("Draw no more")("Economics".hl))
+
+        case EconomicsMoreAction(f, n, cost, then) =>
+            f.food -= cost
+            f.log("paid", cost.hl, Food, "to draw a card")
+            Then(DrawCardsAction(f, 1, EconomicsAskAction(f, n + 1, then)))
+
+        // Squirrel Clan as printed: its extra food or wood after paying Winter
+        case AfterWinterAction(then) if factions.has(Squirrel) && printed =>
+            val l = Resource.all.take(2).%(r => Squirrel.has(r) > 0)
+
+            if (l.none)
+                Then(then)
+            else
+                Ask(Squirrel).each(l)(r => WinterExtraAction(Squirrel, r, then))
+
+        case WinterExtraAction(f, r, then) =>
+            f.gain(r, 1)
+            f.log("collected", 1.hl, r, "with the clan power")
+            Then(then)
 
         case _ => UnknownContinue
     }

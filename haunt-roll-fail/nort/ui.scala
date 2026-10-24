@@ -1018,6 +1018,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     taken :+= ((mx(kx), my(ky), kz / T / 2))
                 }
 
+                // Printed Lynx Clan: Brundr and Kaelinn are two figures, the second one here too
+                if (f == Lynx && game.extraLynx(t, f) > 0) {
+                    val kz = 230.0 * scale
+                    val (kx, ky) = beside(kz / T / 2)
+                    pieces.add(Sprite($(at("token-lynx", kz)), $(Rectangle(-kz / 2, -kz / 2, kz, kz)), tag :+ ClanAbilityInfo(f)))(kx, ky)
+                    taken :+= ((mx(kx), my(ky), kz / T / 2))
+                }
+
                 // Military paths: the bodyguard beside the warchief, its own figure (a huscarl with a kite shield and a spear,
                 // drawn by nort/tools/bodyguard-figure.py); the Militia, warriors with a shield and their count
                 if (MilitaryExpansion.guardIn(t, f)) {
@@ -2713,6 +2721,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     showOverlay(overlayScrollX("Saving Replay...".hl.div).onClick, null)
 
                     callbacks.saveReplay {
+                        overlayPane.invis()
+                        overlayPane.clear()
+                    }
+                }).copy(clear = false)
+            ) ++
+            // A few dozen KB, small enough for Discord, opened on this site (Quine.saveSmall)
+            (currentGame.isOver && hrf.HRF.flag("replay").not && hrf.HRF.offline.not).$(
+                ZBasic(Break, "Save Small Replay File".hh, () => {
+                    showOverlay(overlayScrollX("Saving Replay...".hl.div).onClick, null)
+
+                    callbacks.saveSmallReplay {
                         overlayPane.invis()
                         overlayPane.clear()
                     }
