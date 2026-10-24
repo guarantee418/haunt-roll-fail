@@ -82,7 +82,24 @@ object CardVersions {
             "Draw 1 card. You may pay 1 food to draw a second card. You may pay 2 more food to draw a third and final card.")),
     )
 
-    val all : $[CardVersion] = secondEdition ++ printedNewBlood
+    // Robotos's fan-made Dragon (DragonVariant, 2026-10-24): in place of both the TTS and the printed Dragon cards, so it comes first
+    // (the warchief upgrade card stays)
+    val dragonVariant : $[CardVersion] = $(
+        CardVersion(ClanCard(Dragon, 0), ModuleOption(DragonVariant), CardInfo("Dragon Clan", "card-clan-dragon-variant", 0, true, DragonVariantClanEffect,
+            "Recruit 1. If the Sacrificial Pyre is full, you may empty it to collect 1 food.")),
+        CardVersion(ClanCard(Dragon, 1), ModuleOption(DragonVariant), CardInfo("Enthrall", "card-clan-dragon-enthrall", 0, true, EnthrallEffect,
+            "If the Sacrificial Pyre is full, empty it to gain 2 fame. Then take an enemy unit from a territory adjacent to one of your own and put it on the Sacrificial Pyre.")),
+        CardVersion(ClanCard(Dragon, 2), ModuleOption(DragonVariant), CardInfo("Reluctant Workforce", "card-clan-dragon-reluctant-workforce-variant", 0, false, WorkforceVariantEffect,
+            "Draw 2 cards. If the Sacrificial Pyre is full, you may empty it to draw a 3rd card.")),
+    )
+
+    val all : $[CardVersion] = dragonVariant ++ secondEdition ++ printedNewBlood
+
+    // Fan-made versions are shown in the clan info only in the games that play them
+    def fan(v : CardVersion) : Boolean = v.option match {
+        case ModuleOption(m) => m.fan
+        case _ => false
+    }
 
     // The options of the game being played, set by the Game (one game runs on a page; the JVM checks run one at a time);
     // before a game, as in the clan picker, the cards new games start with
@@ -95,13 +112,14 @@ object CardVersions {
 
     // The card's other versions, for the clan info: the first edition's text in a second edition game and the other way round
     def others(c : Card) : $[(String, CardInfo)] = {
-        val l = all.%(_.card == c)
+        val l = all.%(_.card == c).%(v => fan(v).not || options.has(v.option))
         if (l.none)
             $
         else {
             val current = all.find(v => v.card == c && options.has(v.option))
             // New Blood's cards before the print are the TTS mod's prototype ones, not a first edition
-            val base = l.exists(_.option == PrintedNewBlood).?("Earlier version").|(FirstEdition.short)
+            // and a card only a fan version changes is the original
+            val base = l.exists(_.option == PrintedNewBlood).?("Earlier version").|(l.forall(fan).?("Original").|(FirstEdition.short))
             (current.any.$(base -> c.printed) ++ l.%(v => current.contains(v).not)./(v => v.edition -> v.info))
         }
     }

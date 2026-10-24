@@ -91,7 +91,9 @@ object Warchief {
     def elem(f : Faction)(implicit game : Game) : Elem = name(f).styled(game.colors.get(f)./(c => c : Styling).|(f))(xstyles.bold)
 
     // The clan board with the warchief's portrait and power
-    def board(f : Faction) = "board-" + f.style + (CardVersions.options.has(PrintedNewBlood) && printedBoards.has(f)).??("-print")
+    def board(f : Faction) =
+        if (f == Dragon && CardVersions.options.has(ModuleOption(DragonVariant))) "board-dragon-variant"
+        else "board-" + f.style + (CardVersions.options.has(PrintedNewBlood) && printedBoards.has(f)).??("-print")
 
     // The New Blood boards redrawn with the printed text (PrintedNewBlood; nort/tools/board-text.py)
     val printedBoards : $[Faction] = $(Dragon, Horse, Kraken, Lynx, Ox, Rat, Squirrel)

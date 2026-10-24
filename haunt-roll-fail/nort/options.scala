@@ -782,8 +782,25 @@ case object MilitaryModule extends Module("Military paths", "fan-made module by 
     )
 }
 
+// Robotos's "Lower skill floor Dragon variant" (Discord, northgard-fanmade-content, 2026-10-21; asked for by Gman on 2026-10-24):
+// Dragon Clan's power and clan cards (CardVersions.dragonVariant in editions.scala, the rules in newblood.scala)
+case object DragonVariant extends Module("Lower skill floor Dragon", "fan-made variant by Robotos") {
+    override def ready = true
+    override def fan = true
+    def about = $(
+        "Dragon Clan".hl ~ " plays by Robotos's variant: it never sacrifices its own units, and makes fewer resources out of thin air.",
+        CombatText("The Sacrificial Pyre starts with 1 Dragon unit, and enemy casualties go on it after each combat, as before."),
+        "Dragon harvests without a sacrifice and gets no extra food or wood; at the start of each Harvest it may put 1 unit from its reserve on an empty Pyre spot.",
+        "Dragon Clan".hl ~ " (Flash): Recruit 1; with the Pyre full, may empty it for " ~ Amount(1.hl, Food.elem) ~ ".",
+        "Reluctant Workforce".hl ~ ": draw 2; with the Pyre full, may empty it to draw a third card.",
+        "Enthrall".hl ~ " (Flash): with the Pyre full, empty it for " ~ Amount(2.hl, FameIcon()) ~ "; then put an enemy unit from a territory adjacent to yours on it.",
+        "Emptying the Pyre sends its units back to their owners' reserves. Surtr and his card don't change.",
+        "Fan-made, not part of the published game.".styled(xstyles.warning),
+    )
+}
+
 object Module {
-    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule)
+    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, DragonVariant)
 
     // The team variants and the number of players each one needs
     val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6, Teams2v2v2 -> 6)
