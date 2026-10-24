@@ -65,46 +65,84 @@ def sword_details(d, colour, detail):
     d.line(p((198, 214), (198, 336)), fill=detail, width=10 * S)
     d.line(p((156, 252), (240, 252)), fill=detail, width=10 * S)
 
-# --- the longbowman: kettle hat, a longbow as tall as he is, a quiver of arrows on his back
-BOW = (196, 236, 60, 206)   # the bow's arc: centre x, centre y, half width, half height
+# --- the longbowman: kettle hat, drawing a longbow, a quiver of arrows at his hip; drawn with curves and then rounded, so he
+# isn't built of boxes (Gman, 2026-10-24)
+def curve(pts, n=12):
+    # a closed Catmull-Rom curve through the points
+    out = []
+    for i in range(len(pts)):
+        p0, p1, p2, p3 = pts[i - 1], pts[i], pts[(i + 1) % len(pts)], pts[(i + 2) % len(pts)]
+        for k in range(n):
+            t = k / n
+            out.append(tuple(0.5 * (2 * p1[j] + (p2[j] - p0[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t * t + (3 * p1[j] - p0[j] - 3 * p2[j] + p3[j]) * t ** 3) for j in (0, 1)))
+    return out
 
-def bow_point(a):
-    cx, cy, rx, ry = BOW
-    return (cx + rx * math.cos(math.radians(a)), cy + ry * math.sin(math.radians(a)))
+def limb(d, colour, pts, r0, r1):
+    # a tapered limb along a path, thicker at its start
+    for i in range(len(pts) - 1):
+        (x0, y0), (x1, y1) = pts[i], pts[i + 1]
+        for k in range(21):
+            t = (i + k / 20) / (len(pts) - 1)
+            x, y = x0 + (x1 - x0) * k / 20, y0 + (y1 - y0) * k / 20
+            r = r0 + (r1 - r0) * t
+            d.ellipse(p((x - r, y - r), (x + r, y + r)), fill=colour)
+
+def bezier(a, c, b, n=60):
+    return [((1 - t) ** 2 * a[0] + 2 * (1 - t) * t * c[0] + t * t * b[0], (1 - t) ** 2 * a[1] + 2 * (1 - t) * t * c[1] + t * t * b[1]) for t in (k / n for k in range(n + 1))]
+
+TOP, GRIP, BOTTOM, HAND = (142, 20), (118, 162), (142, 304), (278, 148)
 
 def bow_shapes(d, colour, detail):
-    body(d, colour)
-    # Quiver behind the right shoulder, and the arrows' shafts and fletchings above it
-    d.polygon(p((294, 146), (318, 136), (350, 266), (326, 276)), fill=colour)
-    for x, y in ((298, 102), (310, 96), (322, 100)):
-        d.line(p((x + 4, y + 44), (x, y)), fill=colour, width=5 * S)
-        d.polygon(p((x - 8, y + 6), (x, y - 12), (x + 8, y + 6), (x + 2, y + 20), (x - 2, y + 20)), fill=colour)
-    # Head and a kettle hat: a dome with a wide brim
-    d.ellipse(p((220, 98), (280, 166)), fill=colour)
-    d.pieslice(p((218, 64), (282, 128)), 180, 360, fill=colour)
-    d.ellipse(p((192, 88), (308, 112)), fill=colour)
-    # Right arm down to the hip, left arm out to the bow's grip
-    d.polygon(p((296, 174), (316, 182), (330, 276), (308, 280)), fill=colour)
-    grip = bow_point(180)
-    d.polygon(p((206, 172), (190, 200), (grip[0] + 2, grip[1] + 12), (grip[0] + 4, grip[1] - 8)), fill=colour)
-    d.ellipse(p((grip[0] - 8, grip[1] - 12), (grip[0] + 16, grip[1] + 12)), fill=colour)
-    # The longbow, thicker at the grip, and its string
-    cx, cy, rx, ry = BOW
-    for a in range(112, 249, 2):
-        x, y = bow_point(a)
-        r = 5 + 4 * math.cos(math.radians((a - 180) * 1.3))
-        d.ellipse(p((x - r, y - r), (x + r, y + r)), fill=colour)
-    d.line(p(bow_point(112), bow_point(248)), fill=colour, width=3 * S)
+    m = Image.new('L', (N, N))
+    e = ImageDraw.Draw(m)
+    # Legs in a wide stance, and the feet turned out
+    limb(e, 255, [(232, 318), (214, 370), (204, 416)], 19, 13)
+    limb(e, 255, [(270, 318), (288, 370), (298, 416)], 19, 13)
+    e.ellipse(p((176, 410), (222, 434)), fill=255)
+    e.ellipse(p((280, 410), (326, 434)), fill=255)
+    # Tunic: broad shoulders, a belted waist, a skirt flaring to the knees
+    e.polygon(p(*curve([(204, 172), (228, 158), (276, 158), (300, 172), (304, 200), (290, 246), (300, 300), (310, 336), (276, 342), (250, 338),
+        (224, 342), (192, 336), (202, 300), (212, 246), (198, 200)])), fill=255)
+    # Neck, head, kettle hat: a dome and a brim curving down at its ends
+    e.ellipse(p((236, 136), (268, 168)), fill=255)
+    e.polygon(p((206, 172), (226, 146), (278, 146), (298, 172)), fill=255)
+    e.ellipse(p((222, 90), (282, 152)), fill=255)
+    e.pieslice(p((220, 72), (284, 132)), 180, 360, fill=255)
+    e.polygon(p(*curve([(188, 114), (214, 101), (252, 98), (290, 101), (316, 114), (290, 110), (252, 108), (214, 110)], 8)), fill=255)
+    # Bow arm held out to the grip, and the drawing arm with its elbow raised behind
+    limb(e, 255, [(214, 176), (168, 168), (126, 162)], 15, 11)
+    e.ellipse(p((GRIP[0] - 4, GRIP[1] - 14), (GRIP[0] + 22, GRIP[1] + 12)), fill=255)
+    limb(e, 255, [(290, 176), (330, 160), (HAND[0] + 6, HAND[1])], 15, 11)
+    e.ellipse(p((HAND[0] - 10, HAND[1] - 12), (HAND[0] + 14, HAND[1] + 12)), fill=255)
+    # Quiver at the right hip, with three fletchings showing
+    e.polygon(p(*curve([(300, 232), (322, 226), (340, 316), (318, 324)], 6)), fill=255)
+    for x, y in ((298, 206), (310, 200), (322, 206)):
+        e.polygon(p((x - 7, y + 8), (x, y - 10), (x + 7, y + 8), (x + 2, y + 30), (x - 2, y + 30)), fill=255)
+    # The longbow, thick at the grip and thin at the tips, with small recurved tips
+    pts = bezier(TOP, (74, 162), GRIP) + bezier(GRIP, (74, 162), BOTTOM)[1:]
+    for i, (x, y) in enumerate(pts):
+        r = 4 + 5 * math.sin(math.pi * i / (len(pts) - 1))
+        e.ellipse(p((x - r, y - r), (x + r, y + r)), fill=255)
+    for (x, y), dy in ((TOP, 1), (BOTTOM, -1)):
+        e.ellipse(p((x - 3, y - 3 * dy - 4), (x + 7, y - 3 * dy + 4)), fill=255)
+    # Rounded: every corner softened
+    m = m.filter(ImageFilter.GaussianBlur(3 * S)).point(lambda v: 255 if v > 128 else 0)
+    d.bitmap((0, 0), m, fill=colour)
+    # The string drawn back to the hand, and the arrow on it, its head past the bow
+    d.line(p(TOP, HAND, BOTTOM), fill=colour, width=3 * S)
+    d.line(p((HAND[0] + 4, HAND[1]), (96, 163)), fill=colour, width=5 * S)
+    d.polygon(p((84, 164), (100, 154), (98, 172)), fill=colour)
 
 def bow_details(d, colour, detail):
-    w = 5 * S
-    # The hat's brim edge, and the eyes under it
-    d.line(p((200, 103), (300, 103)), fill=detail, width=4 * S)
-    d.rectangle(p((232, 124), (242, 132)), fill=detail)
-    d.rectangle(p((258, 124), (268, 132)), fill=detail)
-    # Belt, the tunic's hem, the quiver's band
-    d.line(p((188, 252), (312, 252)), fill=detail, width=w)
-    d.line(p((300, 170), (324, 160)), fill=detail, width=w)
+    w = 4 * S
+    # The hat's brim edge and the eyes
+    d.line(p(*curve([(196, 112), (252, 104), (308, 112), (252, 106)], 8)[:9]), fill=detail, width=w)
+    d.ellipse(p((233, 122), (243, 131)), fill=detail)
+    d.ellipse(p((261, 122), (271, 131)), fill=detail)
+    # The tunic's collar, the belt and its buckle
+    d.line(p((232, 168), (252, 190), (272, 168)), fill=detail, width=w, joint='curve')
+    d.line(p(*bezier((212, 252), (252, 262), (292, 252), 20)), fill=detail, width=5 * S)
+    d.rectangle(p((245, 251), (259, 264)), outline=detail, width=3 * S)
 
 def draw(shapes, details, colour, detail):
     sil = Image.new('L', (N, N))
