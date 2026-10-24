@@ -95,7 +95,7 @@ def text_box(im, box, header, text):
     for l in lines:
         d.text(((x0 + x1) / 2, y), l, font=ft, fill=(236, 238, 238), anchor='mm'); y += lh
 
-def clan_card(base, name, header, text, icon=None, fame=False):
+def clan_card(base, name, header, text, icon=None, fame=False, figure=None):
     im = load(base)
     if base.endswith('squirrel.webp'):
         emb, banner, tbox = (40, 150, 372, 448), (205, 129), (22, 455, 390, 605)
@@ -105,26 +105,50 @@ def clan_card(base, name, header, text, icon=None, fame=False):
     patch_fill(im, (60, 112, 352, 145), [(4, 150, 40, 450), (372, 150, 408, 450)], 24)
     if icon is not None:
         # the bar's own empty part covers its icon, then the new icon goes in the middle
-        strip = im.crop((40, 26, 140, 102))
-        im.paste(strip, (130, 26)); im.paste(strip, (205, 26))
-        im.alpha_composite(icon, (206 - icon.width // 2, 64 - icon.height // 2))
+        # each row of the bar takes the median color of its empty left part, with a little grain, blended in at the ends
+        a = np.array(im).astype(float)
+        rows = np.median(a[26:102, 40:120], axis=1)
+        fill = np.repeat(rows[:, None], 240, axis=1) + (np.random.rand(76, 240, 1) - 0.5) * 6
+        ramp = np.clip(np.minimum(np.arange(240), 239 - np.arange(240)) / 20, 0, 1)[None, :, None]
+        a[26:102, 86:326] = a[26:102, 86:326] * (1 - ramp) + fill * ramp
+        im = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8))
+        x = 206 - sum(i.width for i in icon) // 2 - 12 * (len(icon) - 1)
+        for i in icon:
+            im.alpha_composite(i, (x, 64 - i.height // 2)); x += i.width + 24
     e = emblem(270)
+    if figure is not None:
+        # a warchief's card: the warchief standing on the text box, a faint emblem behind
+        e.putalpha(e.split()[3].point(lambda v: v * 0.16))
     im.alpha_composite(e, (206 - e.width // 2, (emb[1] + emb[3]) // 2 - e.height // 2 + 6))
+    if figure is not None:
+        im.alpha_composite(figure, (206 - figure.width // 2, emb[3] + 14 - figure.height))
     d = ImageDraw.Draw(im)
     title_banner(im, d, *banner, name.upper())
     text_box(im, tbox, header, text)
     return im.convert('RGB')
 
 # --- the four clan cards
-vow = load('card/clan/goat-halvards-craft.webp').crop((168, 28, 248, 100))
+# an icon taken off a card's bar: alpha by the distance from the bar's color (the crop's border), the bar unmixed from the colors
+def bar_icon(im, box, soft=70):
+    c = np.array(load(im).crop(box)).astype(float)[..., :3]
+    border = np.concatenate([c[0], c[-1], c[:, 0], c[:, -1]])
+    bg = np.median(border, axis=0)
+    al = np.clip((np.sqrt(((c - bg) ** 2).sum(-1)) - 14) / soft, 0, 1)
+    rgb = (c - bg * (1 - al[..., None])) / np.maximum(al[..., None], 0.05)
+    out = np.dstack([np.clip(rgb, 0, 255), al * 255]).astype(np.uint8)
+    i = Image.fromarray(out)
+    return i.crop(i.split()[3].point(lambda v: 255 if v > 40 else 0).getbbox())
+vow = bar_icon('card/clan/goat-halvards-craft.webp', (172, 36, 244, 96))
+# Forged for War's combat icon with its question mark ("+? combat points")
+axe = bar_icon('card/dev/forged-for-war.webp', (222, 30, 300, 104))
 cards = {
     'lion': ('card/clan/squirrel.webp', 'Lion Kingdom', None, 'Recruit 1. Then you may pay up to 2 lore: recruit 1 more unit in that territory for each lore paid.', None),
     'lion-rise-of-the-twelve-peers': ('card/clan/squirrel.webp', 'Rise of the Twelve Peers', 'CLAN UPGRADE', 'Recruit 1 unit in up to 2 territories you control with a Defense Tower or Training Camp. Then you may put a Lord from your reserve on a Defense Tower you control that has none.', None),
     'lion-abundance': ('card/clan/squirrel-cooking-mastery.webp', 'Abundance', 'CLAN UPGRADE', 'Build. Then, if that territory has 3 or more buildings, collect its resources as if it were the Harvest phase.', None),
-    'lion-hildegards-vow': ('card/clan/squirrel-cooking-mastery.webp', "Hildegard's Vow", 'CLAN UPGRADE', 'Move 2. In each combat triggered by this card, gain 2 combat points for each of your Lords in a territory adjacent to the fight.', vow),
+    'lion-hildegards-vow': ('card/clan/squirrel-cooking-mastery.webp', "Hildegard's Vow", 'CLAN UPGRADE', 'Move 2. In each combat triggered by this card, gain 2 combat points for each of your Lords in a territory adjacent to the fight.', [vow, axe], hildegard(330)),
 }
-for k, (base, name, header, text, icon) in cards.items():
-    save(clan_card(base, name, header, text, icon), 'card/clan/' + k + '.webp')
+for k, (base, name, header, text, icon, *figure) in cards.items():
+    save(clan_card(base, name, header, text, icon, figure=(figure or [None])[0]), 'card/clan/' + k + '.webp')
 
 # --- the clan emblem token (clan picker, panels)
 tok = load('clan/squirrel.webp')
