@@ -167,7 +167,8 @@ object MilitaryExpansion extends Expansion {
     def figures(t : Territory, f : Faction)(implicit game : Game) : Int = militiaIn(t, f) + guardIn(t, f).??(1)
 
     // What can be lost as a unit: the units, then the Militia, then the bodyguard
-    def soldiers(t : Territory, f : Faction)(implicit game : Game) : Int = game.count(t, f) + figures(t, f)
+    // (and New Blood's second lynx when both are there, PrintedNewBlood)
+    def soldiers(t : Territory, f : Faction)(implicit game : Game) : Int = game.count(t, f) + figures(t, f) + game.extraLynx(t, f)
 
     def addMilitia(a : AreaRef, f : Faction, n : Int)(implicit game : Game) {
         val m = game.militia.getOrElse(a, Map())
@@ -195,7 +196,11 @@ object MilitaryExpansion extends Expansion {
         val g = (n > m && guardIn(t, f)).??(1)
         if (g > 0)
             game.guards = game.guards.but(f)
-        m + g
+        // New Blood: the second lynx when both are there (PrintedNewBlood), after the units
+        val x = (n > m + g).??(game.extraLynx(t, f))
+        if (x > 0)
+            game.dropCompanion(t, f)
+        m + g + x
     }
 
     // Soldiers killed by a card or a building (units first)
