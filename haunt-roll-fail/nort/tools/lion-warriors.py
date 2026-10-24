@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Lion Kingdom (fan content): the clan's two warrior figures, in the flat style of unit-original and bodyguard-figure.py, with no
-# Norse horns: a man-at-arms in a great helm with a sword and a heater shield (lion-sword-<color>.webp), and a longbowman in a
+# Norse horns: a man-at-arms in a steel cap holding a longsword upright (lion-sword-<color>.webp), and a longbowman in a
 # kettle hat with a quiver (lion-bow-<color>.webp). Asked for by Gman on 2026-10-24, so the Lion's warriors look English or French.
 # Drawn in the originals' brown and white (-original), then in each player color with the unit figures' fill and detail colors.
 # Run from haunt-roll-fail/: python3 nort/tools/lion-warriors.py
@@ -31,39 +31,58 @@ def body(d, colour):
     d.polygon(p((262, 300), (294, 300), (296, 412), (312, 424), (306, 436), (266, 424)), fill=colour)
     d.polygon(p((198, 170), (302, 170), (316, 210), (312, 324), (188, 324), (184, 210)), fill=colour)
 
-# --- the man-at-arms: great helm, sword raised, heater shield with a cross
+# --- the man-at-arms: a round steel cap, both hands on a longsword held upright at his right; drawn like the longbowman, with curves
+# and rounded corners, and no shield or helm, so he looks nothing like the bodyguard (Gman, 2026-10-24)
+POMMEL, BLADE = (336, 262), (0.30, -0.954)   # the sword's pommel and the direction of its point
+
+def along(t, side=0):
+    # the point t pixels from the pommel along the sword, side pixels across it
+    return (POMMEL[0] + BLADE[0] * t - BLADE[1] * side, POMMEL[1] + BLADE[1] * t + BLADE[0] * side)
+
 def sword_shapes(d, colour, detail):
-    body(d, colour)
-    d.ellipse(p((222, 150), (278, 186)), fill=colour)
-    # Great helm: a flat topped barrel
-    d.polygon(p((212, 162), (210, 98), (224, 80), (276, 80), (290, 98), (288, 162)), fill=colour)
-    # Sword arm, raised, and the sword: blade, point, crossguard, grip, pommel
-    d.polygon(p((292, 174), (314, 176), (372, 118), (354, 100)), fill=colour)
-    d.rectangle(p((356, 24), (370, 100)), fill=colour)
-    d.polygon(p((356, 26), (363, 6), (370, 26)), fill=colour)
-    d.rectangle(p((336, 96), (390, 108)), fill=colour)
-    d.rectangle(p((357, 106), (369, 132)), fill=colour)
-    d.ellipse(p((353, 128), (373, 148)), fill=colour)
+    m = Image.new('L', (N, N))
+    e = ImageDraw.Draw(m)
+    limb(e, 255, [(232, 318), (214, 370), (204, 416)], 19, 13)
+    limb(e, 255, [(270, 318), (288, 370), (298, 416)], 19, 13)
+    e.ellipse(p((176, 410), (222, 434)), fill=255)
+    e.ellipse(p((280, 410), (326, 434)), fill=255)
+    # A surcoat over the mail, belted, down to the knees
+    e.polygon(p(*curve([(204, 172), (228, 158), (276, 158), (300, 172), (304, 200), (290, 246), (300, 300), (310, 336), (276, 342), (250, 338),
+        (224, 342), (192, 336), (202, 300), (212, 246), (198, 200)])), fill=255)
+    # Neck, head, and a round steel cap with a rim
+    e.polygon(p((206, 172), (226, 146), (278, 146), (298, 172)), fill=255)
+    e.ellipse(p((236, 136), (268, 168)), fill=255)
+    e.ellipse(p((222, 92), (282, 154)), fill=255)
+    e.pieslice(p((218, 74), (286, 142)), 180, 360, fill=255)
+    e.ellipse(p((212, 100), (292, 116)), fill=255)
+    # Both arms to the grip at his right, the right elbow out, the left arm across the body, the fists around the grip
+    h1, h2 = along(16), along(38)
+    limb(e, 255, [(212, 178), (248, 234), (h1[0] - 4, h1[1])], 15, 11)
+    limb(e, 255, [(292, 176), (326, 210), (h2[0] + 2, h2[1] + 2)], 15, 11)
+    for x, y in (h1, h2):
+        e.ellipse(p((x - 13, y - 12), (x + 13, y + 12)), fill=255)
+    e.polygon(p((296, 196), (326, 210), h2, h1, (276, 244)), fill=255)
+    m = m.filter(ImageFilter.GaussianBlur(3 * S)).point(lambda v: 255 if v > 128 else 0)
+    d.bitmap((0, 0), m, fill=colour)
+    # The belt
+    d.line(p(*bezier((212, 252), (252, 262), (292, 252), 20)), fill=detail, width=5 * S)
+    # The longsword held upright: pommel under the fists, a straight crossguard over them, a long blade tapering to its point
+    d.ellipse(p(*(lambda c: ((c[0] - 9, c[1] - 9), (c[0] + 9, c[1] + 9)))(along(0))), fill=colour)
+    d.polygon(p(along(0, -5), along(50, -5), along(50, 5), along(0, 5)), fill=colour)
+    d.polygon(p(along(50, -30), along(58, -30), along(58, 30), along(50, 30)), fill=colour)
+    for side in (-31, 31):
+        d.ellipse(p(*(lambda c: ((c[0] - 6, c[1] - 6), (c[0] + 6, c[1] + 6)))(along(54, side))), fill=colour)
+    d.polygon(p(along(56, -8), along(228, -6), along(252, 0), along(228, 6), along(56, 8)), fill=colour)
 
 def sword_details(d, colour, detail):
-    w = 5 * S
-    # The helm's eye slit and breathing cross
-    d.line(p((214, 118), (286, 118)), fill=detail, width=8 * S)
-    d.line(p((250, 126), (250, 156)), fill=detail, width=w)
-    d.line(p((238, 140), (262, 140)), fill=detail, width=w)
+    w = 4 * S
+    # The cap's rim, the eyes, the collar
+    d.line(p(*bezier((216, 108), (252, 114), (288, 108), 20)), fill=detail, width=w)
+    d.ellipse(p((233, 124), (243, 133)), fill=detail)
+    d.ellipse(p((261, 124), (271, 133)), fill=detail)
+    d.line(p((232, 168), (252, 190), (272, 168)), fill=detail, width=w, joint='curve')
     # The blade's fuller
-    d.line(p((363, 22), (363, 92)), fill=detail, width=3 * S)
-    # Belt
-    d.line(p((250, 252), (310, 252)), fill=detail, width=w)
-    # Heater shield in front: a detail-colored edge, the shield, an inner line, a cross
-    shield = [(138, 190), (258, 190), (258, 262), (242, 318), (198, 372), (154, 318), (138, 262)]
-    edge = [(x + (x - 198) * 0.09, y + (y - 270) * 0.08) for x, y in shield]
-    d.polygon(p(*edge), fill=detail)
-    d.polygon(p(*shield), fill=colour)
-    inner = [(198 + (x - 198) * 0.8, 268 + (y - 268) * 0.82) for x, y in shield]
-    d.line(p(*(inner + inner[:1])), fill=detail, width=4 * S, joint='curve')
-    d.line(p((198, 214), (198, 336)), fill=detail, width=10 * S)
-    d.line(p((156, 252), (240, 252)), fill=detail, width=10 * S)
+    d.line(p(along(64), along(218)), fill=detail, width=3 * S)
 
 # --- the longbowman: kettle hat, drawing a longbow, a quiver of arrows at his hip; drawn with curves and then rounded, so he
 # isn't built of boxes (Gman, 2026-10-24)
