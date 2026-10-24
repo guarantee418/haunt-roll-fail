@@ -830,20 +830,26 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
     def creaturesIn(t : Territory) : $[Creature] = creatureLine.%(c => t.areas.contains(creatureAt(c)))
 
+    // Marzaus's Aggressive creatures (fan content): no creature has its ability, and every one is aggressive
+    def noAbilities = has(AggressiveCreatures)
+
+    // A creature that doesn't share its territory (a Fallen Valkyrie; with Aggressive creatures, all of them)
+    def aggressive(c : Creature) : Boolean = c.kind.shares.not || noAbilities
+
     // A Fallen Valkyrie: units can't stay there without fighting it
-    def hostileIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind.shares.not) && robotosIn(t).not
+    def hostileIn(t : Territory) : Boolean = creaturesIn(t).exists(aggressive) && robotosIn(t).not
 
     // A Brown Bear: no building, recruiting, exploring or moving out
-    def bearIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == BrownBear) && robotosIn(t).not
+    def bearIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == BrownBear) && robotosIn(t).not && noAbilities.not
 
     // A Wolf: no fame or resources at harvest except from buildings
-    def wolfIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == CreatureWolf) && robotosIn(t).not
+    def wolfIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == CreatureWolf) && robotosIn(t).not && noAbilities.not
 
     // Wastelands: a territory with a Kobold gives no fame at the Harvest
-    def koboldIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == Kobold) && robotosIn(t).not
+    def koboldIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == Kobold) && robotosIn(t).not && noAbilities.not
 
     // A Spectral Warrior (Wilderness): the buildings in its territory have no effect
-    def ghostIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == SpectralWarrior) && robotosIn(t).not
+    def ghostIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == SpectralWarrior) && robotosIn(t).not && noAbilities.not
 
     // Creatures ignore a Robotos clan (robotos.scala): where it has units, a creature blocks nothing and takes nothing
     def robotosIn(t : Territory) : Boolean = cheaters.any && present(t).exists(robotos)

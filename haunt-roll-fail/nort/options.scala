@@ -799,6 +799,24 @@ case object DragonVariant extends Module("Lower skill floor Dragon", "fan-made v
     )
 }
 
+// Marzaus's "Fan creatures" (Discord, northgard-fanmade-content, 2026-10-23; asked for by Gman on 2026-10-24), a fun mode
+// (creatures.scala, AggressiveCreaturesExpansion): no creature has its ability, and every creature is aggressive like the Fallen Valkyrie
+case object AggressiveCreatures extends Module("Aggressive creatures", "fan-made variant by Marzaus") {
+    override def ready = true
+    override def fan = true
+    override def expansion = |(AggressiveCreaturesExpansion)
+    // After the Tower PC version's challenge, before the creatures' own abilities (Wilderness, Wastelands, Creatures)
+    override def priority = -15
+    override def requires = $($(ModuleOption(Creatures)))
+    def about = $(
+        "Creatures have no abilities, but every one of them is aggressive, like the " ~ "Fallen Valkyrie".hl ~ ":",
+        "No clan shares a territory with a creature. A creature that appears or moves into a clan's territory attacks it, and units that move into a creature's territory must fight it.",
+        "Creatures still move by their priorities, and their strength and fame don't change. Hrimgandr still never moves, but no longer raises Winter costs.",
+        "Needs the " ~ "Creatures".hl ~ " module.",
+        "Fan-made, not part of the published game.".styled(xstyles.warning),
+    )
+}
+
 // The Lion Kingdom (lion.scala), a fan-made clan: the video game's Kingdom of Neustria (Gman, 2026-10-21, with Robotos's Chapel and
 // alternative starting deck). On whenever the Lion plays (Game.modules), like New Blood, so its option isn't listed
 case object LionKingdom extends Module("Lion Kingdom", "fan-made clan") {
@@ -826,7 +844,7 @@ case object LionOwnDeck extends GameOption with ToggleOption {
 }
 
 object Module {
-    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, DragonVariant, LionKingdom)
+    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, DragonVariant, AggressiveCreatures, LionKingdom)
 
     // The team variants and the number of players each one needs
     val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6, Teams2v2v2 -> 6)
