@@ -222,6 +222,8 @@ case class InvasiveEEECraftPickAction(self : InvasiveEEE, d : CraftCard, l : $[C
     def perform(soft : Void)(implicit game : Game) = Force(InvasiveEEECraftSelectAction(self, d, l, x, m, then))
 
     def expand(target : |[Action]) = target./(_.unwrap) @@ {
+        // a pick or undo deeper in the same menu (the browser validates each soft step against the menu's first Ask)
+        case Some(t @ InvasiveEEECraftPickAction(f, dd, _, _, mm, tt)) if f == self && dd == d && mm == m && tt == then => $(t)
         case Some(t @ InvasiveEEECraftClearingsAction(_, tl, CraftAssignAction(_, _, ta, tx, _, _))) if leaves.exists {
             case InvasiveEEECraftClearingsAction(f, ll, CraftAssignAction(_, dd, aa, xx, mm, tt)) =>
                 t == InvasiveEEECraftClearingsAction(f, tl, CraftAssignAction(f, dd, aa, tx, mm, tt)) && tl.toSet == ll.toSet && tl.num == ll.num && tx.sortBy(_.toString) == xx.sortBy(_.toString)
