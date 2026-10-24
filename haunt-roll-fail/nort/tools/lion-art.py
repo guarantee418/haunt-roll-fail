@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # The Lion Kingdom's art (fan-made clan): emblem, clan cards, board, Lord token, Chapel, alternative starting cards.
-# Built from the existing Northgard images and the video game's Lion emblem and Hildegard (expansion/lion/): python3 -I lion-art.py <webp2/nort/images> <out dir for previews>
+# Built from the existing Northgard images and the video game's Lion emblem, Hildegard and Lord (expansion/lion/): python3 -I lion-art.py <webp2/nort/images> <out dir for previews>
 import sys, random
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
@@ -179,19 +179,21 @@ para(462, 'WARCHIEF POWER:', 'After a combat involving Hildegard, collect 1 lore
 d.text((24, H - 14), 'Fan-made', font=font('Inter-MediumItalic', 12), fill=(170, 180, 186), anchor='lm')
 save(board.convert('RGB'), 'expansion/board/lion.webp')
 
-# --- the Lord token: a gold ring, a dark field and a crown over the lion
+# --- the Lord token: a gold ring around the video game's Lord unit (its icon from the Northgard wiki, expansion/lion/lord.webp)
 lord = Image.new('RGBA', (300, 300), (0, 0, 0, 0))
 d = ImageDraw.Draw(lord)
 d.ellipse((4, 4, 295, 295), fill=(36, 26, 8, 255))
 d.ellipse((12, 12, 287, 287), fill=(217, 166, 43, 255))
 d.ellipse((30, 30, 269, 269), fill=(30, 52, 70, 255))
-e = emblem(170)
-lord.alpha_composite(e, (150 - e.width // 2, 168 - e.height // 2))
-crown = [(92, 96), (92, 56), (116, 78), (150, 44), (184, 78), (208, 56), (208, 96)]
-d.polygon(crown, fill=(240, 186, 52), outline=(90, 62, 10))
-d.rectangle((92, 92, 208, 106), fill=(240, 186, 52), outline=(90, 62, 10))
-for x in (92, 150, 208):
-    d.ellipse((x - 7, (56 if x != 150 else 44) - 7, x + 7, (56 if x != 150 else 44) + 7), fill=(250, 220, 120), outline=(90, 62, 10))
+fig = load('expansion/lion/lord.webp')
+fig = fig.crop(fig.split()[3].getbbox())
+fig = fig.resize((262 * fig.width // fig.height, 262), Image.LANCZOS)
+inside = Image.new('RGBA', (300, 300), (0, 0, 0, 0))
+inside.alpha_composite(fig, (150 - fig.width // 2 + 6, 286 - fig.height))
+field = Image.new('L', (300, 300), 0)
+ImageDraw.Draw(field).ellipse((30, 30, 269, 269), fill=255)
+inside.putalpha(Image.fromarray(np.minimum(np.array(inside.split()[3]), np.array(field))))
+lord.alpha_composite(inside)
 save(lord, 'token/lord.webp', lossless=True)
 
 # --- the Chapel: the Carved Stone's grass, a small stone chapel with a bell gable
