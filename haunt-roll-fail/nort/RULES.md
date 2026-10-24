@@ -1012,7 +1012,8 @@ A clan made up for the site, not published anywhere: the Northgard video game's 
 Lion clan), from the design Gman asked for on 2026-10-21 (Claude Doc "Lion Kingdom for Uncharted Lands"),
 with Robotos's Chapel and alternative starting deck from Discord. Picking it in the clan picker turns it on
 (module `LionKingdom`, hidden); it isn't offered in Adset or by the Random Clan picks. Its art is made from the
-game's own images by `nort/tools/lion-art.py` (the emblem is the Noto lion emoji, chalked).
+game's own images by `nort/tools/lion-art.py`, with the video game's Lion emblem and Hildegard (her unit icon, also her
+figure on the map) from the Northgard wiki (`expansion/lion/`, asked for by Gman on 2026-10-24).
 
 - Clan card "Lion Kingdom" (flash): Recruit 1, then pay up to 2 lore for 1 more unit each in the same territory.
 - Clan power, Forts and Lords: 3 Lord tokens. Building a Defense Tower puts a Lord from the reserve on it.

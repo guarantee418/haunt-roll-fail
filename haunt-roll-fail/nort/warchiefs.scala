@@ -23,8 +23,9 @@ object Warchief {
     // The clans whose warchief has a portrait (the core ones, from the Tabletop Simulator standees, nort/tools/warchief-portraits.py)
     val portraits : $[Faction] = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf)
 
-    // The New Blood clans' warchiefs are pawns cut out of their clan card's art (nort/tools/warchief-pawns.py)
-    val pawns : $[Faction] = $(Dragon, Horse, Kraken, Lynx, Ox, Rat, Squirrel)
+    // The New Blood clans' warchiefs are pawns cut out of their clan card's art (nort/tools/warchief-pawns.py); the fan-made Lion
+    // Kingdom's Hildegard is the video game's unit icon, outlined the same way (nort/tools/lion-art.py)
+    val pawns : $[Faction] = $(Dragon, Horse, Kraken, Lynx, Ox, Rat, Squirrel, Lion)
 
     // The image of f's warchief on the map, outlined in its player's color; the Automa's Leader 1 is its white miniature
     // (nort/tools/automa-leaders.py), Leader 2 (the companion) the black one

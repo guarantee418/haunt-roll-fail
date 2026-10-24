@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # The Lion Kingdom's art (fan-made clan): emblem, clan cards, board, Lord token, Chapel, alternative starting cards.
-# Built from the existing Northgard images: python3 -I lion-art.py <webp2/nort/images> <out dir for previews>
+# Built from the existing Northgard images and the video game's Lion emblem and Hildegard (expansion/lion/): python3 -I lion-art.py <webp2/nort/images> <out dir for previews>
 import sys, random
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
@@ -19,22 +19,24 @@ def save(im, p, lossless=False):
     im.save(IMG + '/' + p, 'WEBP', quality=88, method=6, lossless=lossless)
     im.save(PRE + '/' + p.replace('/', '_').replace('.webp', '.png'))
 
-# --- emblem: the lion head as a chalky white mark, like the clan emblems
+# --- emblem: the video game's Lion clan emblem (its round icon from the Northgard wiki, expansion/lion/lion-round.webp),
+# the white chalk lion taken off its gray stone
 def emblem(size):
-    e = Image.new('RGBA', (160, 160), (0, 0, 0, 0))
-    ImageDraw.Draw(e).text((10, 10), '\U0001F981', font=ImageFont.truetype('/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf', 109), embedded_color=True)
-    e = e.crop(e.getbbox())
-    e = e.resize((size, size * e.height // e.width), Image.LANCZOS)
-    g = np.array(ImageOps.grayscale(e)).astype(float)
-    a = np.array(e.split()[3]).astype(float) / 255
-    # light parts (face) full white, the mane a little less, dark features cut out
-    al = np.where(g > 150, 1.0, np.where(g > 80, 0.82, 0.0)) * a
-    noise = np.array(Image.fromarray((np.random.rand(*g.shape) * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.6))).astype(float) / 255
-    al = al * np.clip(0.55 + noise * 0.9, 0, 1)
+    src = load('expansion/lion/lion-round.webp')
+    g = np.array(ImageOps.grayscale(src.convert('RGB'))).astype(float)
+    al = np.clip((g - 112) / 95, 0, 1) * (np.array(src.split()[3]).astype(float) / 255)
     out = np.zeros(g.shape + (4,), np.uint8)
-    out[..., :3] = 236
-    out[..., 3] = np.clip(al * 255, 0, 255).astype(np.uint8)
-    return Image.fromarray(out).filter(ImageFilter.GaussianBlur(0.6))
+    out[..., :3] = 238
+    out[..., 3] = (al * 255).astype(np.uint8)
+    e = Image.fromarray(out)
+    e = e.crop(e.split()[3].point(lambda v: 255 if v > 60 else 0).getbbox())
+    return e.resize((size, size * e.height // e.width), Image.LANCZOS)
+
+# Hildegard, the video game's Lion warchief (her unit icon from the Northgard wiki, expansion/lion/hildegard.webp)
+def hildegard(height):
+    h = load('expansion/lion/hildegard.webp')
+    h = h.crop(h.split()[3].getbbox())
+    return h.resize((height * h.width // h.height, height), Image.LANCZOS)
 
 # Fills box with random patches of the card's own background taken from the sources
 def patch_fill(im, box, sources, p=36):
@@ -106,7 +108,7 @@ def clan_card(base, name, header, text, icon=None, fame=False):
         strip = im.crop((40, 26, 140, 102))
         im.paste(strip, (130, 26)); im.paste(strip, (205, 26))
         im.alpha_composite(icon, (206 - icon.width // 2, 64 - icon.height // 2))
-    e = emblem(250)
+    e = emblem(270)
     im.alpha_composite(e, (206 - e.width // 2, (emb[1] + emb[3]) // 2 - e.height // 2 + 6))
     d = ImageDraw.Draw(im)
     title_banner(im, d, *banner, name.upper())
@@ -150,10 +152,10 @@ grad = Image.fromarray(ga)
 strip_x = 540
 board = grad.copy()
 board.paste(b.crop((strip_x, 0, W, H)), (strip_x, 0))
-# a large faint lion behind the text, where the warchief's portrait was
-big = emblem(330)
-big.putalpha(big.split()[3].point(lambda v: v * 0.13))
-board.alpha_composite(big, (330, 150))
+# Hildegard where the warchief's portrait is, behind the name
+hil = hildegard(420)
+hil.putalpha(hil.split()[3].point(lambda v: v * 0.35))
+board.alpha_composite(hil, (strip_x - hil.width - 4, 120))
 d = ImageDraw.Draw(board)
 gold = (240, 176, 48)
 cx, cy, r = 130, 300, 104
@@ -255,4 +257,19 @@ for color in ('blue', 'red', 'yellow', 'purple', 'green'):
         d.rectangle((150, 96, max(150 + tw + 28, 276), 124), fill=(14, 30, 40, 255))
         spaced(d, (164, 110), name.upper(), f, (222, 230, 234), 2.2, anchor='lm')
         save(im.convert('RGB'), 'card/start/%s-%s.webp' % (color, name))
+# --- Hildegard on the map: outlined in the player's color like the New Blood warchiefs (warchief-pawns.py)
+colors = {'blue': (79, 120, 188), 'red': (234, 65, 13), 'yellow': (255, 255, 0), 'purple': (165, 108, 166), 'green': (79, 159, 59), 'orange': (255, 138, 20)}
+size, band, rim = 512, 15, 5
+fig = hildegard(370)
+canvas = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+canvas.alpha_composite(fig, ((size - fig.width) // 2, size - fig.height - band - rim - 8 - (350 - fig.height) // 2 if fig.height < 350 else size - fig.height - band - rim - 8))
+alpha = canvas.split()[3].point(lambda a: 255 if a > 96 else 0)
+def grow(a, r): return a.filter(ImageFilter.GaussianBlur(r / 2)).point(lambda v: 255 if v > 6 else 0)
+inner, outer = grow(alpha, band), grow(alpha, band + rim)
+for color, rgb in colors.items():
+    out = Image.new('RGBA', (size, size), (255, 255, 255, 0))
+    out.paste(Image.new('RGBA', (size, size), (255, 255, 255, 255)), (0, 0), outer.filter(ImageFilter.GaussianBlur(0.8)))
+    out.paste(Image.new('RGBA', (size, size), rgb + (255,)), (0, 0), inner.filter(ImageFilter.GaussianBlur(0.8)))
+    out.alpha_composite(canvas)
+    save(out, 'token/unit/chief-lion-%s.webp' % color)
 print('done')
