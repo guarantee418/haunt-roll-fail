@@ -136,7 +136,14 @@ object LiveCheck {
                     val validate = full || remaining < 40
                     if (validate && i > 0 && a.isSoft.not && a.unwrap.isInstanceOf[SkipValidate].not && a.unwrap.isInstanceOf[OutOfTurn].not && game.validate(game.continue, a).not)
                         invalid :+= i
-                    val c = unlog(game.performContinue(|(game.continue), a, remaining < 40).nest)
+                    var c = unlog(game.performContinue(|(game.continue), a, remaining < 40).nest)
+                    // the browser performs a forced action left waiting (a DelayedContinue, like the Eyrie's Turmoil)
+                    // before the next recorded one (UIContinue in runner.scala)
+                    while (c match {
+                        case Force(t) => c = unlog(game.performContinue(|(game.continue), t, false).nest); true
+                        case DelayedContinue(_, x) => c = unlog(x); true
+                        case _ => false
+                    }) {}
                     c match {
                         case ErrorContinue(e, m) =>
                             return "ERROR at " + i + "/" + parsed.num + " (" + recorded(i).take(200) + "): " + m + " " + e + "\n" + e.getStackTrace.take(10).mkString("\n")
