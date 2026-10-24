@@ -5,7 +5,7 @@
 # thin white rim. The figures are cut from the art with the BiRefNet model of rembg (pip install rembg), one
 # process for each, as the model runs out of memory over several images in one process.
 #
-#   python3 warchief-pawns.py <webp2/nort/images>
+#   python3 warchief-pawns.py <webp2/nort/images> [<name> ...]     (only those pawns, e.g. brok)
 
 import sys, os, subprocess, tempfile
 import numpy
@@ -17,7 +17,7 @@ from PIL import Image, ImageDraw, ImageFilter
 pawns = {
     "dragon": ("dragon-tenacious-grudge", (0, 150, 412, 480)),
     "horse": ("horse-eitria-and-broks-precision", (200, 150, 412, 470)),
-    "brok": ("horse-eitria-and-broks-precision", (0, 150, 240, 470)),
+    "brok": ("horse-eitria-and-broks-precision", (0, 150, 256, 470)),
     "kraken": ("kraken-howl-from-the-sea", (0, 150, 412, 455)),
     "lynx": ("lynx-the-wise-one", (0, 150, 412, 500)),
     "ox": ("ox-the-true-hero", (0, 150, 412, 455)),
@@ -30,6 +30,11 @@ pawns = {
 cuts = {
     "rat": [(80, 0, 360, 146)],
     "squirrel": [(85, 0, 360, 150)],
+}
+
+# Parts kept in the figure, in card pixels, that the model takes for the mist around them: the head of Brok's hammer
+keeps = {
+    "brok": [[(2, 213), (27, 203), (42, 226), (40, 240), (27, 246), (10, 241)]],
 }
 
 # The middle of each color's unit figure (token/unit/unit-<color>.webp)
@@ -75,18 +80,23 @@ if len(sys.argv) == 4 and sys.argv[1] == "--cut":
     sys.exit(0)
 
 images = sys.argv[1]
+only = sys.argv[2:]
 tmp = tempfile.mkdtemp()
 
 for name, (card, box) in pawns.items():
+    if only and name not in only:
+        continue
     art = Image.open(images + "/card/clan/" + card + ".webp").convert("RGB").crop(box)
     art.save(tmp + "/art.png")
     subprocess.run([sys.executable, "-I", os.path.abspath(__file__), "--cut", tmp + "/art.png", tmp + "/fig.png"], check = True)
-    fig = Image.open(tmp + "/fig.png").convert("RGBA")
-
-    a = fig.split()[3]
+    # The model's shape, on the art's colors (it blanks them where it found background, as in the kept parts)
+    a = Image.open(tmp + "/fig.png").split()[3]
+    fig = art.convert("RGBA")
     d = ImageDraw.Draw(a)
     for (l, t, r, b) in cuts.get(name, []):
         d.rectangle((l - box[0], t - box[1], r - box[0], b - box[1]), fill = 0)
+    for shape in keeps.get(name, []):
+        d.polygon([(x - box[0], y - box[1]) for (x, y) in shape], fill = 255)
     # Drops the faint haze the model leaves around the figure
     a = biggest(a.point(lambda v: 0 if v < 40 else v))
     fig.putalpha(a)
