@@ -924,7 +924,7 @@ it, and one more unit with every Recruit (on top of Training Camps and the rest)
 pruned by `LionExpansion.cleanup` after moves, fights and retreats; their combat points go through
 `NewBloodExpansion.pointParts`, Hildegard's lore through `afterCombat` (`game.hildegard` set at
 `CombatResolveAction`). The Chapel is a `Building` outside `Building.all`, added by `MineralsExpansion.buildings`
-and gated by `LionExpansion.allowed`. The alternative deck is the `LionStartingDeck` option
+and gated by `LionExpansion.allowed`. The Lion's own deck comes with the hidden `LionOwnDeck` every new game gets (or the old `LionStartingDeck` option)
 (`LionExpansion.starting`). Art from `tools/lion-art.py` (the video game's emblem and Hildegard icon from the Northgard wiki are its sources in
 `webp2/nort/images/expansion/lion/`; Hildegard's map figure is `chief-lion-<color>`, so `Lion` is in `Warchief.pawns`). `NORT_LION=1` puts the Lion in every host game.
 

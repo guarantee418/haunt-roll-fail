@@ -33,7 +33,7 @@ case object AbundanceBuild extends BuildSpecial
 // Hildegard's Vow: Move 2, +2 combat points for each Lord next to the fight
 case object VowMove extends MoveSpecial
 
-// The alternative starting deck (LionStartingDeck): each card offers two actions
+// The Lion's own starting deck (LionOwnDeck, or LionStartingDeck in older games): each card offers two actions
 // Adventure: Explore or Move 1
 case object AdventureEffect extends Effect
 // Toil: Build, or collect 1 food or 1 wood
@@ -141,9 +141,9 @@ object LionExpansion extends Expansion {
     // The buildings f may build: the Lion builds Chapels instead of Carved Stones
     def allowed(f : Faction, b : Building) : Boolean = (b != Chapel || f == Lion) && (b != CarvedStone || f != Lion)
 
-    // The starting deck: the alternative one for the Lion with LionStartingDeck
+    // The starting deck: the Lion's own (LionOwnDeck in every new game, LionStartingDeck in older games that picked it)
     def starting(f : Faction)(implicit game : Game) : $[Card] =
-        if (f == Lion && game.options.has(LionStartingDeck))
+        if (f == Lion && (game.options.has(LionOwnDeck) || game.options.has(LionStartingDeck)))
             $("adventure", "adventure", "toil", "toil", "prey", "prey")./(StartCard(game.colors(f), _))
         else
             Cards.starting(game.colors(f))

@@ -829,10 +829,18 @@ case object LionKingdom extends Module("Lion Kingdom", "fan-made clan") {
 }
 
 // Robotos's alternative starting deck for the Lion Kingdom (Discord, 2026-10-21): 2 Adventure (Explore or Move 1), 2 Toil (Build, or
-// 1 food or 1 wood) and 2 Prey (Recruit 1, or 1 fame) instead of the usual six cards; offered only with the Lion picked (Meta.optionsFor)
+// 1 food or 1 wood) and 2 Prey (Recruit 1, or 1 fame) instead of the usual six cards. It was a setup option at first; it is the Lion's
+// own deck in every new game (LionOwnDeck, Gman, 2026-10-24), and this option, now hidden, stays for the games that picked it
 case object LionStartingDeck extends GameOption with ToggleOption {
     val group = "Fan content".txt
     def valueOn = "Lion Kingdom: alternative starting deck".txt
+}
+
+// The Lion always starts with its own deck (LionStartingDeck's), in every new game (mandatoryFor); games started before it keep the
+// usual starting cards unless they picked the old option, so their replays don't change
+case object LionOwnDeck extends GameOption with ToggleOption {
+    val group = "Fan content".txt
+    def valueOn = "Lion Kingdom plays its own starting deck".txt
 }
 
 object Module {

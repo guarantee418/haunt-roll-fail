@@ -56,7 +56,7 @@ draws a tile when no neutral territory is left.
 | Fan content: Warchiefs PC version (fan-made by Marzaus) | done 2026-10-22 (option "Warchiefs PC version" under "Fan content", needs the warchiefs; see Warchiefs PC version below) |
 | Fan content: the Military paths module (fan-made by Marzaus, Discord northgard-fanmade-content) | done 2026-10-22 (`military.scala`, option "Military paths" under "Fan content", also in Adset; see Military paths below) |
 | Fan content: Aggressive creatures (Marzaus's "Fan creatures", Discord northgard-fanmade-content) | 2026-10-24 (`AggressiveCreaturesExpansion` in `creatures.scala`, option "Aggressive creatures" under "Fan content", needs Creatures, also in Adset; see Aggressive creatures below) |
-| Fan content: the Lion Kingdom (the video game's Kingdom of Neustria as a clan; designed here for Gman, with Robotos's Chapel and starting deck) | 2026-10-24 (`lion.scala`, picked like any clan, "Lion Kingdom: alternative starting deck" under "Fan content"; not in Adset or the random picks; see Lion Kingdom below) |
+| Fan content: the Lion Kingdom (the video game's Kingdom of Neustria as a clan; designed here for Gman, with Robotos's Chapel and starting deck) | 2026-10-24 (`lion.scala`, picked like any clan, with its own starting deck; not in Adset or the random picks; see Lion Kingdom below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -1028,7 +1028,7 @@ figure on the map) from the Northgard wiki (`expansion/lion/`, asked for by Gman
 - Abundance (upgrade): Build; then a territory with 3 or more buildings gives its resources as at harvest.
 - Hildegard's Vow (upgrade): Move 2; in its combats, +2 combat points for each Lord in a territory next to the fight.
 - Warchief Hildegard (Warchiefs module): after a combat she was in, 1 lore for each casualty the enemy suffered.
-- Alternative starting deck (option): Adventure (Explore or Move 1), Toil (Build, or collect 1 food or 1 wood) and
+- Its own starting deck (every new game, hidden `LionOwnDeck`, Gman 2026-10-24; a setup option at first, `LionStartingDeck`, kept for the games that picked it): Adventure (Explore or Move 1), Toil (Build, or collect 1 food or 1 wood) and
   Prey (Recruit 1, or 1 fame), two of each, instead of the six core starting cards.
 
 ## Expansions (later)
