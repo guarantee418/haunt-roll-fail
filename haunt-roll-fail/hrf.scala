@@ -34,7 +34,7 @@ object HRF {
 
     // Images are kept in Cache Storage under this name and never refetched, so bump it whenever an image
     // changes in place (same file name), or browsers keep showing the old one
-    val imageDataVersion = "as-of-2026-10-24-warchief-pawns"
+    val imageDataVersion = "as-of-2026-10-25-wiki-warchief-pawns"
 
     def now() = new scalajs.js.Date()
 

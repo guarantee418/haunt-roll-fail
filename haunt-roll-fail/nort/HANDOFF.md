@@ -959,12 +959,14 @@ list. In short:
   onto a 512x512 canvas with an outline in each player color and a white rim
   (`token/unit/chief-<clan>-<color>.webp`, loaded only for the clans in play),
   and `Warchief.figure` picks the image. New Blood has no standees, so its
-  warchiefs (and Brok, `chief-brok-<color>`) are pawns (2026-10-24, round
-  tokens of their head before): each cut out of the clan card that shows them,
-  down to the card's text box, so they stand on that straight edge, and
-  outlined like the portraits (`nort/tools/warchief-pawns.py`, crop boxes in
-  the script; the cutting is rembg's BiRefNet model, `pip install rembg`, which
-  downloads about 900 MB; `Warchief.pawns`). The Automa's Leaders are its white (Leader 1) and black
+  warchiefs (and Brok, `chief-brok-<color>`) are pawns made like Hildegard's:
+  the video game's unit renders on the Northgard wiki (Surtr-Icon, Eitria icon,
+  Brok icon, Kàra-icon, Mielikki model, Torfin icon, Eir icon, Andhrimnir-model,
+  101 to 150 pixels wide, kept in `expansion/warchief/`), their half transparent
+  ground shadow left out, scaled to 370 pixels tall and outlined like the
+  portraits (`nort/tools/warchief-pawns.py`; `Warchief.pawns`). They were round
+  tokens of their head until 2026-10-24, then for a day cut out of the clan
+  cards' art with rembg's BiRefNet model (in that script's git history). The Automa's Leaders are its white (Leader 1) and black
   (Leader 2) miniatures, cut from the components photo on page 2 of the
   Uncharted Horizons rulebook PDF in TTS mod 3597126237
   (`nort/tools/automa-leaders.py`, `token/unit/leader-<1|2>-<color>`); Tabletopia

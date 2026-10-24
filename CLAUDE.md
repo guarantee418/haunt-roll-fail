@@ -189,11 +189,12 @@ boards and tokens are in `expansion/` for later. Unit figures are in
 expansion), recolored from the `-original` images. The seven core clans'
 warchiefs are drawn as their portraits instead (`chief-<clan>-<color>`, outlined
 in the player's color, from the TTS standees by `nort/tools/warchief-portraits.py`;
-`Warchief.figure`), and the New Blood warchiefs (and Horse's Brok) as pawns
-cut out of their clan card's art down to its text box, outlined the same way
-(same names, `brok` for Brok, by `nort/tools/warchief-pawns.py`, with rembg's
-BiRefNet model; asked for by the owner on 2026-10-24, they were round tokens of
-the warchief's head). The Automa's Leaders are its two miniatures
+`Warchief.figure`), and the New Blood warchiefs (and Horse's Brok) as pawns:
+the video game's unit renders from the Northgard wiki (`expansion/warchief/<name>.webp`,
+like the Lion's Hildegard), without their ground shadow, outlined the same way
+(same names, `brok` for Brok, by `nort/tools/warchief-pawns.py`; asked for by the
+owner on 2026-10-24 and 25, they were round tokens of the warchief's head, then
+cut out of the clan cards' art). The Automa's Leaders are its two miniatures
 (`leader-<1|2>-<color>`, white and black, cut from the Uncharted Horizons
 rulebook photo by `nort/tools/automa-leaders.py`). The old warchief figure is
 now a second warrior design: each stack of warriors is drawn with one of the
