@@ -3,7 +3,8 @@
 # (expansion/board/<clan>.webp, from the TTS mod) in place of their old text, keeping the pictures as they are:
 # the old body text and its icons are painted out (OpenCV inpainting) and the new text is set in Quicksand, white,
 # with the board's icons inline. Writes expansion/board/<clan>-print.webp (Warchief.boardFile picks them in games
-# with the PrintedNewBlood option).
+# with the PrintedNewBlood option). 'dragon-variant' is Robotos's fan-made Dragon power (DragonVariant in nort/options.scala),
+# written to expansion/board/dragon-variant.webp.
 #
 #   pip install opencv-python-headless pillow numpy
 #   board-text.py <Quicksand variable font .ttf> [board ...]
@@ -199,6 +200,16 @@ BOARDS = {
             "from one of your territories.",
         ], 16, 24),
     ]),
+    'dragon-variant': ([(120, 58, 526, 228), (240, 226, 526, 248)], [
+        (335, 60, 370, [
+            "The Sacrificial Pyre starts with",
+            "1 of your units. After each combat,",
+            "place enemy casualties {skull} on it.",
+            "At the start of each Harvest,",
+            "you may move 1 unit from your",
+            "reserve to an empty Pyre spot.",
+        ], 16, 27),
+    ]),
     'squirrel': ([(150, 48, 416, 202)], [
         (285, 46, 290, [
             "After paying winter costs:",
@@ -253,7 +264,7 @@ BOARDS = {
 }
 
 def run(name, out):
-    src = os.path.join(IMAGES, 'expansion', 'board', name + '.webp')
+    src = os.path.join(IMAGES, 'expansion', 'board', name.replace('-variant', '') + '.webp')
     im = Image.open(src).convert('RGBA')
     boxes, texts = BOARDS[name]
     scale = im.width / 616
@@ -268,4 +279,4 @@ if __name__ == '__main__':
     for name in BOARDS:
         if only and name not in only:
             continue
-        run(name, name.replace('-2', '') + '-print')
+        run(name, name if name.endswith('-variant') else name.replace('-2', '') + '-print')

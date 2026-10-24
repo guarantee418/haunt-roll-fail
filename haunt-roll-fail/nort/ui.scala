@@ -1299,7 +1299,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         ((Dragon.name.styled(colorOf(Dragon)) ~ " " ~ "Sacrificial Pyre".hl).hlb.div ~
             pyreElem(styles.pyreLarge).div ~
             ("Units on it: " ~ units ~ " (room for " ~ NewBloodExpansion.pyreSize.hl ~ ")").div ~
-            CombatText("Enemy casualties go on it after each combat. To harvest, Dragon sacrifices a unit from it (back to its owner) or places one of its deployed units on it.").spn(xstyles.smaller85).div ~
+            NewBloodExpansion.variant.?(CombatText("Enemy casualties go on it after each combat. At the start of each Harvest, Dragon may put a unit from its reserve on an empty spot (Robotos's Dragon variant).")).|(
+                CombatText("Enemy casualties go on it after each combat. To harvest, Dragon sacrifices a unit from it (back to its owner) or places one of its deployed units on it.")).spn(xstyles.smaller85).div ~
             HorizontalBreak ~
             "(tap to close)".spn(xstyles.smaller85).div
         ).div
@@ -1612,7 +1613,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val (winterFood, winterWood) = EventsExpansion.winterCost(f)
         // The columns: the icon, the stockpile, the harvest's gain and the Winter cost
         // Dragon Clan: 1 more food or wood for the sacrifice, shown as a range on both, its upper end faint as only one of them gets it
-        val pyre = (f == Dragon && game.dragonHarvest.has(false).not && (game.dragonHarvest.any || NewBloodExpansion.sacrificeOptions(f))).??(NewBloodExpansion.dragonExtra(f, false))
+        // (none in Robotos's Dragon variant)
+        val pyre = (f == Dragon && NewBloodExpansion.variant.not && game.dragonHarvest.has(false).not && (game.dragonHarvest.any || NewBloodExpansion.sacrificeOptions(f))).??(NewBloodExpansion.dragonExtra(f, false))
         // Tapping the lore (its icon or stockpile) opens the clan's Lore Tree
         case class Column(icon : Elem, has : Int, gain : Int, cost : Int, extra : Boolean = false, open : |[Any] = None, hidden : Boolean = false) {
             // Another player's fame is hidden (the fame tokens are kept face down), its harvest's fame isn't

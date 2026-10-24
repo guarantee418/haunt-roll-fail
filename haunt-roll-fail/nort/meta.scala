@@ -278,6 +278,7 @@ object Meta extends MetaGame { mmm =>
         clans./(f => ("clan-" + f.style) -> ("/hrf/webp2/nort/images/clan/" + f.style + ".webp")) ++
         clans./(f => ("board-" + f.style) -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.boardFile(f) + ".webp")) ++
         Warchief.printedBoards./(f => ("board-" + f.style + "-print") -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.printedFile(f) + ".webp")) ++
+        $("board-dragon-variant" -> "/hrf/webp2/nort/images/expansion/board/dragon-variant.webp") ++
         // The combat icons in rules text (CombatText), and the icons in the Tutorial's lessons
         $("axe", "skull", "food", "wood", "lore", "fame", "harvest", "winter", "confirm", "cancel")./(i => ("ui-" + i) -> ("/hrf/webp2/nort/images/ui/" + i + ".webp")) ++
         // The Tutorial's lessons: the blue starting cards, the buildings, the phases aid and the starting tile
@@ -409,7 +410,9 @@ object Meta extends MetaGame { mmm =>
     // The clan boards (clan power, warchief and power), shown below the Lore Tree; loaded when shown
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "expansion/board", "board-", "webp", lzy = Laziness.OnDemand)(
         mmm.clans./(f => ImageAsset(f.style, Warchief.boardFile(f))) ++
-        Warchief.printedBoards./(f => ImageAsset(f.style + "-print", Warchief.printedFile(f)))
+        Warchief.printedBoards./(f => ImageAsset(f.style + "-print", Warchief.printedFile(f))) :+
+        // Robotos's Dragon variant (DragonVariant)
+        ImageAsset("dragon-variant")
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/unit", "unit-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "unit-" + c.id))
