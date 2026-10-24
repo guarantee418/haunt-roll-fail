@@ -999,6 +999,10 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case PyrePlaceAction(_, area, _) => |(gain(game.removeUnits(board.territory(area), self, 1)) + 50)
         case PyreReturnAction(_, area, _) => |(gain(game.addUnits(area, self, 1)))
         case SacrificeCaptureAction(_, area, enemy, _) => |(removeEnemy(area, enemy))
+        // Robotos's Dragon variant: emptying the full Pyre for the card's reward, and filling it for the next one
+        case EnthrallTakeAction(_, area, enemy, _) => |(removeEnemy(area, enemy))
+        case PyreEmptyAction(_, c, _) => |((c.n == 2).?(70.0).|(gain { game.pyre = $ ; if (c.n == 0) self.food += 1 else self.fame += 2 }))
+        case PyreReserveAction(_, _) => |(20)
         case TidePlaceAction(_, area, _) =>
             val t = board.territory(area)
             val (f, w, l) = game.produce(t)

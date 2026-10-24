@@ -71,6 +71,14 @@ case object CookingPrintEffect extends Effect
 // Economics: draw 1; 1 food for a second card, then 2 more for a third
 case object EconomicsPrintEffect extends Effect
 
+// Robotos's Dragon variant (DragonVariant, fan-made)
+// Dragon Clan: Recruit 1; with the Pyre full, may empty it for 1 food
+case object DragonVariantClanEffect extends Effect
+// Reluctant Workforce: draw 2; with the Pyre full, may empty it for a third card
+case object WorkforceVariantEffect extends Effect
+// Enthrall: with the Pyre full, empty it for 2 fame; then an enemy unit next to f's territory goes on the Pyre
+case object EnthrallEffect extends Effect
+
 
 case class NewBloodLabel(s : String) extends Elementary {
     def elem = s.hl
@@ -177,6 +185,21 @@ case class ForcesReturnAction(self : Faction, discard : Boolean, then : ForcedAc
 case class SurtrAskAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class SurtrSacrificeAction(self : Faction, owner : Faction, then : ForcedAction) extends BaseAction("Surtr's Wrath".hl, "before the fight")("Sacrifice a unit of", owner, "for", Amount(1.hl, CombatIcon.axe))
 
+// Robotos's Dragon variant (DragonVariant): the card's reward for emptying the full Pyre (Dragon Clan 1 food, Enthrall 2 fame,
+// Reluctant Workforce a third card)
+case class PyreEmptyAskAction(f : Faction, card : ClanCard, then : ForcedAction) extends ForcedAction
+case class PyreEmptyAction(self : Faction, card : ClanCard, then : ForcedAction) extends BaseAction(card.info.name.hl, "the", "Sacrificial Pyre".hl, "is full")("Empty it to", PyreReward(card.n))
+case class PyreReward(n : Int) extends Elementary {
+    def elem = n match {
+        case 0 => "collect ".txt ~ 1.hl ~ " " ~ Food.elem
+        case 1 => "gain ".txt ~ 2.hl ~ " " ~ FameIcon()
+        case _ => "draw a third card".txt
+    }
+}
+case class EnthrallAction(f : Faction, then : ForcedAction) extends ForcedAction
+case class EnthrallTakeAction(self : Faction, area : AreaRef, enemy : Faction, then : ForcedAction) extends BaseAction("Enthrall".hl, "put on the", "Sacrificial Pyre".hl, "a unit from")(area, InParens(enemy)) with MapTarget { def target = area }
+case class PyreReserveAction(self : Faction, then : ForcedAction) extends BaseAction("Sacrificial Pyre".hl, "at the start of the Harvest")("Put a unit from your reserve on the Pyre")
+
 // Kraken
 case class TidePrintAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction("Endless Tide".hl, "recruit 1 in the neutral territory")(area) with MapTarget { def target = area }
 case class TideReplaceAction(self : Faction, area : AreaRef, enemy : Faction, then : ForcedAction) extends BaseAction("Endless Tide".hl, "replace a unit with one of yours in")(area, InParens(enemy)) with MapTarget { def target = area }
@@ -224,6 +247,9 @@ object NewBloodExpansion extends Expansion {
     def deployed(f : Faction)(implicit game : Game) = game.board.territories.%(t => game.count(t, f) > 0)
 
     def sacrificeOptions(f : Faction)(implicit game : Game) : Boolean = game.pyre.any || (room > 0 && deployed(f).any)
+
+    // Robotos's Dragon variant (DragonVariant): no sacrifice to harvest and no extra resource after it
+    def variant(implicit game : Game) = game.has(DragonVariant)
 
     // Dragon Clan's extra resource after harvesting: food or wood, from one of its territories (DragonExtraFromTerritory: only one that
     // gave it at this harvest, less what Scorched Earth took there; scorched false leaves that out, for the harvest forecast)
@@ -514,6 +540,9 @@ object NewBloodExpansion extends Expansion {
         case CityBuilderPrintEffect => MapExpansion.playable(f, BuildEffect())
         case CookingPrintEffect => MapExpansion.playable(f, BuildEffect())
         case EconomicsPrintEffect => CommonExpansion.available(f) > 0
+        case DragonVariantClanEffect => MapExpansion.playable(f, RecruitEffect(1)) || room == 0
+        case WorkforceVariantEffect => CommonExpansion.available(f) > 0
+        case EnthrallEffect => room == 0 || CardsExpansion.adjacentEnemyUnits(f).any
         case e => HorizonDevsExpansion.playable(f, e)
     }
 
@@ -622,6 +651,19 @@ object NewBloodExpansion extends Expansion {
 
         case EconomicsPrintEffect =>
             Then(DrawCardsAction(f, 1, EconomicsAskAction(f, 2, then)))
+
+        case DragonVariantClanEffect =>
+            Then(RecruitAction(f, 1, RecruitNormal, $, PyreEmptyAskAction(f, ClanCard(f, 0), then)))
+
+        case WorkforceVariantEffect =>
+            Then(DrawCardsAction(f, 2, PyreEmptyAskAction(f, ClanCard(f, 2), then)))
+
+        // Enthrall empties a full Pyre (not a choice), then takes a unit
+        case EnthrallEffect =>
+            if (room == 0)
+                Then(PyreEmptyAction(f, ClanCard(f, 1), EnthrallAction(f, then)))
+            else
+                Then(EnthrallAction(f, then))
 
         case e => HorizonDevsExpansion.resolve(f, e, then)
     }
@@ -755,6 +797,22 @@ object NewBloodExpansion extends Expansion {
             f.log("placed a unit from", a, "on the", "Sacrificial Pyre".hl)
             Then(then)
 
+        // Robotos's Dragon variant: Dragon harvests anyway, and may first put a unit from its reserve on an empty Pyre spot
+        case ScorchedHarvestAction if factions.has(Dragon) && game.dragonHarvest.none && variant =>
+            if (room > 0 && game.reserve(Dragon) > 0)
+                Ask(Dragon).add(PyreReserveAction(Dragon, DragonHarvestAction(Dragon, true)))
+                    .add(DragonHarvestAction(Dragon, true).as("Leave the Pyre as it is")("Sacrificial Pyre".hl, "at the start of the Harvest"))
+            else {
+                game.dragonHarvest = |(true)
+                Then(ScorchedHarvestAction)
+            }
+
+        case PyreReserveAction(f, then) =>
+            game.pyre :+= f
+            f.log("put a unit from the reserve on the", "Sacrificial Pyre".hl)
+            game.note("pyre-reserve")
+            Then(then)
+
         // Harvest: Dragon must sacrifice or place a unit on the Pyre first
         case ScorchedHarvestAction if factions.has(Dragon) && game.dragonHarvest.none =>
             val owners = game.pyre.distinct
@@ -778,7 +836,7 @@ object NewBloodExpansion extends Expansion {
 
         // After harvesting: Dragon's extra food or wood, Squirrel's extra food or wood
         case AfterHarvestAction(then) =>
-            Then(AfterHarvestNBAction(game.from(game.first).%(f => f == Dragon || f == Squirrel && printed.not), then))
+            Then(AfterHarvestNBAction(game.from(game.first).%(f => f == Dragon && variant.not || f == Squirrel && printed.not), then))
 
         case AfterHarvestNBAction(Nil, then) =>
             Then(then)
@@ -1223,6 +1281,46 @@ object NewBloodExpansion extends Expansion {
                 game.peeked += 1
                 Then(ResolveDrawnAction(f, 0, 0, f.drawn.num, then))
             }
+
+        // ROBOTOS'S DRAGON VARIANT (DragonVariant)
+        case PyreEmptyAskAction(f, c, then) =>
+            if (room > 0 || (c.n == 2 && CommonExpansion.available(f) == 0))
+                Then(then)
+            else
+                Ask(f).add(PyreEmptyAction(f, c, then)).add(then.as("Keep the Pyre full")(c.info.name.hl))
+
+        case PyreEmptyAction(f, c, then) =>
+            game.pyre = $
+            f.log("emptied the", "Sacrificial Pyre".hl, "with", c.info.name.hl)
+            game.note("pyre-empty")
+            c.n match {
+                case 0 =>
+                    f.food += 1
+                    f.log("collected", 1.hl, Food)
+                    Then(then)
+                case 1 =>
+                    f.fame += 2
+                    f.log("gained", 2.hl, FameIcon())
+                    Then(then)
+                case _ =>
+                    Then(DrawCardsAction(f, 1, then))
+            }
+
+        case EnthrallAction(f, then) =>
+            val l = (room > 0).??(CardsExpansion.adjacentEnemyUnits(f))
+
+            if (l.none) {
+                f.log("found no enemy unit to put on the", "Sacrificial Pyre".hl)
+                Then(then)
+            }
+            else
+                Ask(f).each(l)((t, g) => EnthrallTakeAction(f, t.anchor, g, then))
+
+        case EnthrallTakeAction(f, a, g, then) =>
+            game.removeUnits(game.board.territory(a), g, 1)
+            game.pyre :+= g
+            f.log("put a unit of", g, "from", a, "on the", "Sacrificial Pyre".hl)
+            Then(then)
 
         // Surtr's Wrath: units sacrificed from the Pyre before the fight, 1 point each
         case GearAskAction(attacker, defender, a, e, then) if attacker == Dragon && e.special == SurtrMove && game.pyre.any =>

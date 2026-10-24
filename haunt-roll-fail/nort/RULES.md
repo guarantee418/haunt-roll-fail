@@ -1477,3 +1477,29 @@ The post has four lines; where it is short:
   attacker (no card bonus, food as usual, ties to the creature). Won, the
   creature is defeated as usual and doesn't act; lost (or skipped), its
   ability then happens. The Automa isn't asked.
+
+## Fan content: Lower skill floor Dragon variant (2026-10-24)
+
+Robotos's variant of the Dragon Clan (Discord, northgard-fanmade-content, thread "Lower skill floor
+Dragon variant", 2026-10-21; Gman sent screenshots on 2026-10-24). Option `ModuleOption(DragonVariant)`,
+under "Fan content", also in Adset. Its aim, in the post: Dragon pumps fewer resources out of thin air,
+every Dragon card burns thralls, and Dragon never kills its own units, so it is easier to pilot.
+
+| | Variant | Replaces |
+|---|---|---|
+| Power | Sacrificial Pyre as before (2 spots, 1 Dragon unit at the start, enemy casualties after each combat). At the start of the Harvest, may put 1 unit from the reserve on an empty spot (`PyreReserveAction`) | The sacrifice to harvest and the extra food or wood |
+| ⚡ Dragon Clan | Recruit 1. With the Pyre full, may empty it to collect 1 food | Dragon Clan |
+| ⚡ Enthrall | With the Pyre full, empty it to gain 2 fame. Then put an enemy unit from a territory adjacent to yours on the Pyre (`EnthrallAction`) | Capture for Sacrifice, Enslavement |
+| Reluctant Workforce | Draw 2. With the Pyre full, may empty it to draw a 3rd card | Reluctant Workforce, Reluctant Forces |
+
+Readings (`CardVersions.dragonVariant` in `editions.scala`, the rules in `newblood.scala`; card pictures by
+`tools/card-text.py`, the board by `tools/board-text.py dragon-variant`):
+
+- "Same rules as original" with "you don't kill yourself" and "fewer resources out of thin air": Dragon
+  harvests every year without a sacrifice, and gets no extra food or wood after it.
+- "Empty it": every unit on the Pyre goes back to its owner's reserve (as a sacrifice does).
+- The post doesn't say which cards are Flash: Dragon Clan says so; Enthrall takes Capture for Sacrifice's
+  (Flash) place, Reluctant Workforce the other's (not Flash). The warchief card (Tenacious Grudge, or the
+  printed Surtr's Wrath) and Surtr's power don't change.
+- Enthrall's emptying is not a choice ("empty it"); its enemy unit must be taken when there is one.
+- 2 fame on Enthrall is as written, though Robotos thinks it is probably too much.

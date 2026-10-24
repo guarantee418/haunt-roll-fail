@@ -95,6 +95,8 @@ object Host extends hrf.host.BaseHost {
             (sys.env.get("NORT_TOWERS").has("1") || random() < 0.5).$(ModuleOption(TowersModule)) ++
             // NORT_PCCHIEFS=1: always with the Warchiefs PC version (fan content), when the warchiefs are in
             (sys.env.get("NORT_PCCHIEFS").has("1") || random() < 0.3).$(ModuleOption(WarchiefsPC)) ++
+            // NORT_DRAGONVAR=1: always with Robotos's Dragon variant (fan content)
+            (sys.env.get("NORT_DRAGONVAR").has("1") || random() < 0.3).$(ModuleOption(DragonVariant)) ++
             // NORT_MILITARY=1: always with the Military paths module (fan content)
             (sys.env.get("NORT_MILITARY").has("1") || random() < 0.5).$(ModuleOption(MilitaryModule)) ++
             // NORT_WASTELANDS=1: always with Wastelands; a random central tile choice either way (it needs no module),
@@ -113,7 +115,7 @@ object Host extends hrf.host.BaseHost {
             // NORT_HUMAN=1: the last seat counts as a person (game.human), the others as bots
             val bots = sys.env.get("NORT_HUMAN").has("1").??(MetaAdset.factions.take(n - 1)./(BotSeatOption(_)))
             bots.foreach(o => assert(MetaAdset.parseOption(MetaAdset.writeOption(o)) == $(o), o))
-            val adset = $(YearsOption.all.shuffle.head) ++ $(EditionChoice.all.shuffle.head) ++ victory ++ (random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.5).$(ModuleOption(Sea)) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(TakeUnrestCard) ++ (random() < 0.8).$(ClanPowerReports) ++ (random() < 0.8).$(MendFigures) ++ (random() < 0.8).$(OxPicksSpace) ++ (random() < 0.8).$(JoinedTilesOnly) ++ (random() < 0.8).$(SimultaneousCurse) ++ (random() < 0.8).$(KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood) ++ (random() < 0.5).$(BalancedStartTiles) ++ (random() < 0.5).$(LionStartingDeck) ++ (random() < 0.4).$(ExtraDevelopment, FewerDevelopments).shuffle.take(1) ++ robotos ++ bots :+ lands
+            val adset = $(YearsOption.all.shuffle.head) ++ $(EditionChoice.all.shuffle.head) ++ victory ++ (random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.5).$(ModuleOption(Sea)) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(TakeUnrestCard) ++ (random() < 0.8).$(ClanPowerReports) ++ (random() < 0.8).$(MendFigures) ++ (random() < 0.8).$(OxPicksSpace) ++ (random() < 0.8).$(JoinedTilesOnly) ++ (random() < 0.8).$(SimultaneousCurse) ++ (random() < 0.8).$(KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood) ++ (random() < 0.5).$(BalancedStartTiles) ++ (random() < 0.5).$(LionStartingDeck) ++ (random() < 0.4).$(ExtraDevelopment, FewerDevelopments).shuffle.take(1) ++ (sys.env.get("NORT_DRAGONVAR").has("1") || random() < 0.3).$(ModuleOption(DragonVariant)) ++ robotos ++ bots :+ lands
             MetaAdset.createGame(MetaAdset.factions.take(n), adset.distinct)
         }
         else {

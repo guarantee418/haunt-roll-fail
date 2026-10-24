@@ -222,7 +222,8 @@ object Harvest {
     // Leaves out the choices made during the harvest: Snake's Scorched Earth and the New Blood clan powers' extra resource
     def forecast(f : Faction)(implicit game : Game) : HarvestForecast = {
         // Dragon Clan harvests only after a sacrifice on its Pyre: nothing if it chose not to, or has nothing to sacrifice or place
-        if (f == Dragon && (game.dragonHarvest.has(false) || (game.dragonHarvest.none && NewBloodExpansion.sacrificeOptions(f).not)))
+        // (not in Robotos's Dragon variant, DragonVariant)
+        if (f == Dragon && NewBloodExpansion.variant.not && (game.dragonHarvest.has(false) || (game.dragonHarvest.none && NewBloodExpansion.sacrificeOptions(f).not)))
             return HarvestForecast(0, 0, 0, 0)
 
         val (food, wood, lore) = resources(f)
