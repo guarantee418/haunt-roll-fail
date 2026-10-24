@@ -645,7 +645,7 @@ object MapExpansion extends Expansion {
             .%(t => e.special != StagSingleMove || game.count(t, f) > 0)
 
     // Two creatures that don't share their territory can't both be fought: nobody may enter
-    def enterable(t : Territory)(implicit game : Game) = game.creaturesIn(t).count(_.kind.shares.not) < 2
+    def enterable(t : Territory)(implicit game : Game) = game.creaturesIn(t).count(game.aggressive) < 2
 
     // f's figures (with Kaija when kaija) entering a teammate's territory or the Swamp t with rem moves left
     // must be able to move on, since they can't stop there
@@ -722,7 +722,7 @@ object MapExpansion extends Expansion {
 
     // A Fallen Valkyrie shares its territory with nobody
     private def valkyrieIn(t : Territory)(implicit game : Game) : Boolean =
-        game.creatureLine.exists(c => c.kind.shares.not && t.areas.contains(game.creatureAt(c)))
+        game.creatureLine.exists(c => game.aggressive(c) && t.areas.contains(game.creatureAt(c)))
 
     // JoinedTilesOnly: the tile at (x, y) joins territories holding two players' units, or a player's units and a Fallen Valkyrie
     // (but not the Robotos bot's, which it ignores, hostileIn). Only the territories joined count: two clans already sharing one

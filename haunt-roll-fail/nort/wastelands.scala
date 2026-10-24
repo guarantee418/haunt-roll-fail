@@ -234,9 +234,9 @@ object WastelandsExpansion extends Expansion {
     def ignored(t : Territory)(implicit game : Game) : Int = Waste.urdarbrunnIn(t).??(1)
 
     // A creature's die: the choice is a point, but a Rock Golem takes the skull; a Giant Boar attacking adds a skull
-    def creatureFace(c : Creature, attacking : Boolean, random : DieFace) : DieFace = {
-        val face = random.choice.?((c.kind == RockGolem).?(NorthgardDie.casualty).|(NorthgardDie.point)).|(random)
-        (c.kind == GiantBoar && attacking.not).?(face.copy(casualties = face.casualties + 1)).|(face)
+    def creatureFace(c : Creature, attacking : Boolean, random : DieFace)(implicit game : Game) : DieFace = {
+        val face = random.choice.?((c.kind == RockGolem && game.noAbilities.not).?(NorthgardDie.casualty).|(NorthgardDie.point)).|(random)
+        (c.kind == GiantBoar && attacking.not && game.noAbilities.not).?(face.copy(casualties = face.casualties + 1)).|(face)
     }
 
     // Extra points of the player and the creature in a fight against a creature, by source; without the dice, the
@@ -246,13 +246,13 @@ object WastelandsExpansion extends Expansion {
 
     // Valdemar alive gives the other creatures 1; a creature defending Landvidi gets 2
     def creatureParts(c : Creature, t : Territory, attacking : Boolean)(implicit game : Game) : $[(Int, Elem)] = $(
-        (c.kind != Valdemar && Waste.valdemarAlive).??(1) -> "Valdemar".hl,
+        (c.kind != Valdemar && Waste.valdemarAlive && game.noAbilities.not).??(1) -> "Valdemar".hl,
         (attacking && Waste.landvidiIn(t)).??(2) -> Waste.elem(Waste.landvidi)
     ).filter(_._1 > 0)
 
     // With the dice: the player's skulls count as points against a Rock Golem, and so do the Golem's
     def creaturePoints(f : Faction, t : Territory, c : Creature, attacking : Boolean, face : DieFace, cface : DieFace)(implicit game : Game) : ($[(Int, Elem)], $[(Int, Elem)]) = {
-        val golem = c.kind == RockGolem
+        val golem = c.kind == RockGolem && game.noAbilities.not
         // Urdarbrunn: a defending creature ignores a skull of the player's die
         val skulls = math.max(0, face.casualties - (attacking && Waste.urdarbrunnIn(t)).??(1))
         val die = "the " ~ CombatIcon.skull ~ " of the die"
@@ -269,7 +269,7 @@ object WastelandsExpansion extends Expansion {
         Waste.controller(Waste.magma, "c").has(f).??(1) + (game.central == Waste.hrimgandr && Waste.hrimgandrAlive.not && Waste.controller(Waste.hrimgandr, "c").has(f)).??(1)
 
     // WINTER: Hrimgandr raises the costs one step (three more units)
-    def winterUnits(implicit game : Game) : Int = (game.has(Wastelands) && Waste.hrimgandrAlive).??(3)
+    def winterUnits(implicit game : Game) : Int = (game.has(Wastelands) && Waste.hrimgandrAlive && game.noAbilities.not).??(3)
 
     // HARVEST: the units (all figures) of each player in the territories around a tile
     def most(tile : String)(implicit game : Game) : $[Map[Faction, Int]] = Waste.around(tile)./(l => factions./(g => g -> l./(t => game.figures(t, g)).sum).toMap)
@@ -326,7 +326,7 @@ object WastelandsExpansion extends Expansion {
     }
 
     // Kobold creatures in f's territories, and f's territories next to a Kobold Camp
-    def kobolds(f : Faction)(implicit game : Game) = game.controlled(f)./(t => game.creaturesIn(t).count(_.kind == Kobold)).sum
+    def kobolds(f : Faction)(implicit game : Game) = game.noAbilities.not.??(game.controlled(f)./(t => game.creaturesIn(t).count(_.kind == Kobold)).sum)
 
     def camps(f : Faction)(implicit game : Game) = Waste.around(Waste.kobold)./(l => l.count(t => game.controlled(f).has(t))).sum
 
