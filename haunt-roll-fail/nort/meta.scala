@@ -75,7 +75,7 @@ object Meta extends MetaGame { mmm =>
     // Team play comes from the choice above the clan picker (pickerModes), the old fixed team variants are no longer offered
     // The Tutorial's practice game has its tips on
     // Chosen casualties are on in every new game (mandatoryFor), not in older ones
-    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
+    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // New Blood has no option: picking one of its clans brings it in
     val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ WarchiefsChoice.all ++ DevelopmentsChoice.all ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons).%(_.fan.not)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles, BalancedStartTiles) ++ AutomaLevelOption.all ++ Module.all.%(_.fan)./(ModuleOption) ++ hiddenOptions
@@ -142,7 +142,7 @@ object Meta extends MetaGame { mmm =>
     }
 
     // Chosen casualties, taking the Unrest card and the clan power report: every new game gets them; a loaded game keeps the options it was started with
-    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear)
+    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood)
 
     // Quick games take only the selected options, not the mandatory ones
     override def randomQuickGame() = super.randomQuickGame() match { case (f, l, d, o) => (f, l, d, (o :+ ChooseCasualties :+ TakeUnrestCard :+ ClanPowerReports :+ ReportsDontWait :+ MendFigures :+ OxPicksSpace :+ JoinedTilesOnly :+ DragonExtraFromTerritory).distinct) }
@@ -276,7 +276,8 @@ object Meta extends MetaGame { mmm =>
     override def menuImages = (
         (clans./~(f => $(0, 1, 2, 3)./(n => ClanCard(f, n).printed.image)) ++ CardVersions.all./(_.info.image).%(_.startsWith("card-clan-")))./(i => i -> ("/hrf/webp2/nort/images/card/clan/" + i.drop("card-clan-".length) + ".webp")) ++
         clans./(f => ("clan-" + f.style) -> ("/hrf/webp2/nort/images/clan/" + f.style + ".webp")) ++
-        clans./(f => Warchief.board(f) -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.boardFile(f) + ".webp")) ++
+        clans./(f => ("board-" + f.style) -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.boardFile(f) + ".webp")) ++
+        Warchief.printedBoards./(f => ("board-" + f.style + "-print") -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.printedFile(f) + ".webp")) ++
         // The combat icons in rules text (CombatText), and the icons in the Tutorial's lessons
         $("axe", "skull", "food", "wood", "lore", "fame", "harvest", "winter", "confirm", "cancel")./(i => ("ui-" + i) -> ("/hrf/webp2/nort/images/ui/" + i + ".webp")) ++
         // The Tutorial's lessons: the blue starting cards, the buildings, the phases aid and the starting tile
@@ -407,7 +408,8 @@ object Meta extends MetaGame { mmm =>
     ) ::
     // The clan boards (clan power, warchief and power), shown below the Lore Tree; loaded when shown
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "expansion/board", "board-", "webp", lzy = Laziness.OnDemand)(
-        mmm.clans./(f => ImageAsset(f.style, Warchief.boardFile(f)))
+        mmm.clans./(f => ImageAsset(f.style, Warchief.boardFile(f))) ++
+        Warchief.printedBoards./(f => ImageAsset(f.style + "-print", Warchief.printedFile(f)))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/unit", "unit-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "unit-" + c.id))

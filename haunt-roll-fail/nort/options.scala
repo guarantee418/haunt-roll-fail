@@ -519,6 +519,15 @@ case object FutureSightLastYear extends GameOption with ToggleOption {
     def valueOn = "Future Sight takes Achievements only in the last year".txt
 }
 
+// New Blood as printed (Gman sent the printed cards and boards on 2026-10-23): the 19 clan cards in CardVersions (editions.scala)
+// and the clan board rules (Lynx's bonus Move and Mielikki, Kraken's High Tide and Kàra, Dragon's harvest, Squirrel after Winter).
+// The site had followed the TTS mod's prototype cards and boards. Hidden, and given to every new game (Meta.mandatoryFor), in either
+// card edition: older games keep the old cards and rules, and replay that way
+case object PrintedNewBlood extends GameOption with ToggleOption {
+    val group = "New Blood".txt
+    def valueOn = "Printed clan cards and boards".txt
+}
+
 // The clan power report (ClanPowers in map.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
 // (Meta.mandatoryFor), like ChooseCasualties: older games' replays must not stop on a step they never recorded
 case object ClanPowerReports extends GameOption with ToggleOption {

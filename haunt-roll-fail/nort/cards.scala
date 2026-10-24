@@ -95,6 +95,11 @@ case object FireArrowsMove extends MoveSpecial
 // The Wise One (Lynx): +1 combat point per casualty inflicted
 case object WiseOneMove extends MoveSpecial
 
+// New Blood as printed (PrintedNewBlood): Surtr's Wrath (Dragon) sacrifices units from the Pyre for points before each fight,
+// Mielikki's Wisdom (Lynx) collects 1 lore once if a casualty is rolled in a fight it starts
+case object SurtrMove extends MoveSpecial
+case object MielikkiMove extends MoveSpecial
+
 // Stag Clan (second edition): a single unit moves
 case object StagSingleMove extends MoveSpecial
 
