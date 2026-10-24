@@ -1026,7 +1026,7 @@ list. In short:
   It loads every online game (Northgard, Adset and Root) with the code as it
   is now, the way a browser does, and prints `ok` or where each one stopped,
   then `games: <n> bad: <n>`. Games last played before 2026-10-07 already
-  stopped loading (14 Northgard, 6 Root, as of 2026-10-18); a game that newly
+  stopped loading (14 Northgard, 5 Root, as of 2026-10-24); a game that newly
   fails means the change would break it, as #180 did on 2026-10-12.
 - **Replay check:** in the same JVM project, `sbt "runMain nort.ReplayCheck
   [games] [dense] [hard]"` (default 10 games) plays bot games with the host's
