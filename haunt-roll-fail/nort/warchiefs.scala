@@ -35,9 +35,12 @@ object Warchief {
 
     // A stack of f's warriors is drawn with one of the two warrior figures (unit- and the old warchief figure, warchief-),
     // picked by a hash of where it is and how many there are, so it changes at random when units arrive or leave
-    // but is the same on every redraw and for every player
-    def warrior(f : Faction, where : String, n : Int)(implicit game : Game) : String =
-        (((where + "/" + f + "/" + n).hashCode & 1) == 0).?("unit-").|("warchief-") + game.colors(f).id
+    // but is the same on every redraw and for every player; the fan-made Lion Kingdom's two are a man-at-arms with a sword
+    // and a longbowman (lion-sword- and lion-bow-, nort/tools/lion-warriors.py)
+    def warrior(f : Faction, where : String, n : Int)(implicit game : Game) : String = {
+        val even = ((where + "/" + f + "/" + n).hashCode & 1) == 0
+        (f == Lion).?(even.?("lion-sword-").|("lion-bow-")).|(even.?("unit-").|("warchief-")) + game.colors(f).id
+    }
 
     // Horse Clan's second warchief, Brok, a pawn like Eitria's
     def brok(implicit game : Game) : String = "chief-brok-" + game.colors(Horse).id

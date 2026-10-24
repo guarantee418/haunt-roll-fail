@@ -424,6 +424,10 @@ object Meta extends MetaGame { mmm =>
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/unit", "warchief-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "warchief-" + c.id))
     ) ::
+    // The Lion Kingdom's two warrior figures (Warchief.warrior)
+    $("sword", "bow")./(k => ConditionalAssetsList((factions : $[F], options : $[O]) => factions.has(Lion), "token/unit", "lion-" + k + "-", "webp")(
+        PlayerColor.all./(c => ImageAsset(c.id, "lion-" + k + "-" + c.id))
+    )) :::
     // The Automa's Leaders
     ConditionalAssetsList((factions : $[F], options : $[O]) => factions.has(Automa), "token/unit", "leader-", "webp")(
         $(1, 2)./~(l => PlayerColor.all./(c => ImageAsset(l + "-" + c.id, "leader-" + l + "-" + c.id)))
