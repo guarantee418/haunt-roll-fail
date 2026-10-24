@@ -55,6 +55,7 @@ draws a tile when no neutral territory is left.
 | Fan content: Tower PC version (fan-made by Marzaus, Discord) | done 2026-10-22 (`towers.scala`, option "Tower PC version" under "Fan content", also in Adset; see Tower PC version below) |
 | Fan content: Warchiefs PC version (fan-made by Marzaus) | done 2026-10-22 (option "Warchiefs PC version" under "Fan content", needs the warchiefs; see Warchiefs PC version below) |
 | Fan content: the Military paths module (fan-made by Marzaus, Discord northgard-fanmade-content) | done 2026-10-22 (`military.scala`, option "Military paths" under "Fan content", also in Adset; see Military paths below) |
+| Fan content: Aggressive creatures (Marzaus's "Fan creatures", Discord northgard-fanmade-content) | 2026-10-24 (`AggressiveCreaturesExpansion` in `creatures.scala`, option "Aggressive creatures" under "Fan content", needs Creatures, also in Adset; see Aggressive creatures below) |
 | Fan content: the Lion Kingdom (the video game's Kingdom of Neustria as a clan; designed here for Gman, with Robotos's Chapel and starting deck) | 2026-10-24 (`lion.scala`, picked like any clan, "Lion Kingdom: alternative starting deck" under "Fan content"; not in Adset or the random picks; see Lion Kingdom below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
@@ -1503,3 +1504,34 @@ Readings (`CardVersions.dragonVariant` in `editions.scala`, the rules in `newblo
   printed Surtr's Wrath) and Surtr's power don't change.
 - Enthrall's emptying is not a choice ("empty it"); its enemy unit must be taken when there is one.
 - 2 fame on Enthrall is as written, though Robotos thinks it is probably too much.
+
+## Fan content: Aggressive creatures (2026-10-24)
+
+Marzaus's "Fan creatures", a fun mode (Discord, northgard-fanmade-content, 2026-10-23; Gman sent a screenshot
+on 2026-10-24): "Creatures have no abilities but they are all aggressive ... if they come to you, they attack,
+every type of creature can't share territory with them." Option `ModuleOption(AggressiveCreatures)`, under
+"Fan content", needs the Creatures module, also in Adset.
+
+"Aggressive" is what the Fallen Valkyrie already does (`game.aggressive`, `game.hostileIn`):
+
+- A creature that appears (Explore, More Creatures) or moves into a territory
+  with one clan's figures attacks it (`AggressiveCreaturesExpansion`, the Valkyrie's `CreatureEffectAction`).
+  A clan losing to it retreats.
+- Units that end a Move in a creature's territory must fight it, one creature a territory; a territory with
+  two creatures can't be entered. Nobody recruits there, moves out of it before fighting, or is placed there at
+  setup. A tile can't join a clan's units and a creature into one territory (`joins`).
+- Stag gains 1 fame for beating any creature as the attacker (it conquers the territory), as with the Valkyrie.
+- The Robotos bot's clans are still ignored by creatures.
+
+Abilities that are off (`game.noAbilities`): Brown Bear's lock, Wolf's and Kobold's harvest losses (and the
+Kobold exchange), Draugr's and Valdemar's kills and Valdemar's +1 to other creatures, Draugr Jötunn's
+payment, Eldthurs's building, Hvedrung's draw, Spectral Warrior's buildings, Myrkalf's double move and payment
+(it moves once), Rock Golem's skulls, Giant Boar's skull and 2 more fame, and the Wyvern's reach, its unit
+before the fight and its return to the Den. Readings:
+
+- Creatures keep their movement priorities, combat value and fame; that is not an ability.
+- Hrimgandr still never moves and stays on its Lair (it is the tile's guardian), but no longer raises Winter
+  costs. The Wyvern, Spectral Warriors and Hrimgandr still leave the game when defeated (they aren't in the
+  creature deck), and the Wyvern's Den and Hrimgandr's Lair tiles still work.
+- Defense Towers (Tower PC version) still get their challenge before the creature attacks.
+

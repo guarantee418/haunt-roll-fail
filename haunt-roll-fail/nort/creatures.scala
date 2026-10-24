@@ -205,7 +205,9 @@ case object Hrimgandr extends CreatureKind {
 
 // A creature card and its miniature; n is the color: 1 beige, 2 brown, 3 dark brown
 case class Creature(kind : CreatureKind, n : Int) extends Card {
-    def info = CardInfo(kind.title, "card-creature-" + kind.id + "-" + n, kind.fame, false, MapEffect, kind.text)
+    // With Aggressive creatures (fan content) the card's ability is off; CardVersions.options follows the game being played
+    def info = CardInfo(kind.title, "card-creature-" + kind.id + "-" + n, kind.fame, false, MapEffect,
+        CardVersions.options.has(ModuleOption(AggressiveCreatures)).?(Creature.aggressiveText(kind)).|(kind.text))
     def color = n match { case 1 => "beige" ; case 2 => "brown" ; case _ => "dark brown" }
     def token = "creature-" + kind.id + "-" + n
     override def removable = false
@@ -213,6 +215,9 @@ case class Creature(kind : CreatureKind, n : Int) extends Card {
 }
 
 object Creature {
+    // Aggressive creatures (fan content): what is left of a creature's card
+    def aggressiveText(k : CreatureKind) : String = "Aggressive creatures: no ability. This creature does not share its territory with a player and attacks them when it appears or moves into a territory." + (k == Hrimgandr).?(" It never moves.").|("")
+
     val all : $[Creature] = $(Creature(CreatureWolf, 1), Creature(CreatureWolf, 2), Creature(CreatureWolf, 3), Creature(BrownBear, 1), Creature(BrownBear, 2), Creature(Draugr, 1), Creature(Draugr, 2), Creature(FallenValkyrie, 1), Creature(FallenValkyrie, 2))
 
     // Wilderness: added to the creature deck
@@ -312,7 +317,7 @@ object CreaturesExpansion extends Expansion {
     // Every territory is adjacent to the Wyvern
     def destinations(c : Creature)(implicit game : Game) : $[Territory] = {
         val t = game.board.territory(game.creatureAt(c))
-        val near = (c.kind == Wyvern).?(game.board.territories.but(t)).|(game.board.adjacent(t).map(_._1))
+        val near = (c.kind == Wyvern && game.noAbilities.not).?(game.board.territories.but(t)).|(game.board.adjacent(t).map(_._1))
         val open = near.%(o => game.creaturesIn(o).none)
         val clear = open.%(o => game.present(o).exists(game.robotos).not)
         val free = clear.any.?(clear).|(open)
@@ -447,7 +452,7 @@ object CreaturesExpansion extends Expansion {
             val l = game.board.territories.%(t => game.present(t) == $(f) && game.creaturesIn(t).any)
             val forced = l.%(game.hostileIn)
 
-            game.creatureFights = forced./(t => CreatureFight(t.anchor, game.creaturesIn(t).%(_.kind.shares.not).head))
+            game.creatureFights = forced./(t => CreatureFight(t.anchor, game.creaturesIn(t).%(game.aggressive).head))
 
             game.creatureFights.foreach(x => f.log("must fight", x.creature, "in", x.area))
 
@@ -490,7 +495,7 @@ object CreaturesExpansion extends Expansion {
             // The Wyvern (Wilderness): the player first removes 1 unit, and may have none left
             val t = game.board.territory(a)
 
-            if (c.kind == Wyvern) {
+            if (c.kind == Wyvern && game.noAbilities.not) {
                 game.removeFigures(t, f, 1)
                 f.log("removed a unit before fighting", c)
             }
@@ -645,7 +650,7 @@ object CreaturesExpansion extends Expansion {
                 val won = pc < units && attacking.?(ps > cs).|(ps >= cs)
 
                 // The combat report, from the same sums; creatures ignore casualties, so the clan inflicts none
-                val wyvernBack = won && c.kind == Wyvern && Wild.homeIn(t).not && Wild.homes.any
+                val wyvernBack = won && c.kind == Wyvern && game.noAbilities.not && Wild.homeIn(t).not && Wild.homes.any
                 val player = FightSide(f, attacking, FightPoints.parts(f, t, attacking, extras ++ $(food -> Food.elem, face.points -> "the die".txt)), ps, $, 0, math.min(pc, units))
                 val creature = FightSide(None, c.elem, attacking.not, ($(c.kind.value -> "its strength".txt, cface.points -> "the die".txt) ++ cws).filter(_._1 > 0), cs,
                     $(cface.casualties -> "the die".txt, -shield -> "cancelled".txt).filter(_._1 != 0), pc, 0, won.?(wyvernBack.?("was driven back to its Den".txt).|("was defeated".txt)).|(Empty))
@@ -673,7 +678,7 @@ object CreaturesExpansion extends Expansion {
                 }
 
                 // The Wyvern goes back to its Den unless it lost there (Wilderness)
-                val den = (c.kind == Wyvern && Wild.homeIn(t).not).??(Wild.homes)
+                val den = (c.kind == Wyvern && game.noAbilities.not && Wild.homeIn(t).not).??(Wild.homes)
 
                 // Sea module: Bold Maneuver gives 2 fame per combat won
                 if (won && attacking && e.special == BoldMove) {
@@ -702,7 +707,7 @@ object CreaturesExpansion extends Expansion {
                     MilitaryExpansion.defeated(f, c)
 
                     // Wastelands: a Giant Boar that attacked gives 2 more fame
-                    if (c.kind == GiantBoar && attacking.not) {
+                    if (c.kind == GiantBoar && attacking.not && game.noAbilities.not) {
                         f.fame += 2
                         f.log("gained", 2.hl, "more", FameIcon(), "for defeating", c, "as the defender")
                     }
@@ -714,7 +719,7 @@ object CreaturesExpansion extends Expansion {
                     }
 
                     // Beating a Fallen Valkyrie takes its territory
-                    if (attacking && f == Stag && c.kind.shares.not) {
+                    if (attacking && f == Stag && game.aggressive(c)) {
                         f.fame += 1
                         f.log("gained", 1.hl, FameIcon(), "for conquering a territory")
                         ClanPowers.note(PowerNote(f, |(a), f.elem ~ " gains 1 fame for each territory it conquers.", fame = 1))
@@ -726,7 +731,7 @@ object CreaturesExpansion extends Expansion {
                     log(c, CombatReport.link("won"), "the fight in", a)
 
                     // Attacking a creature that shares its territory, the units simply stay
-                    if (game.figures(t, f) > 0 && (attacking.not || c.kind.shares.not))
+                    if (game.figures(t, f) > 0 && (attacking.not || game.aggressive(c)))
                         next(RetreatAction(f, a, false, then))
                     else
                         next(then)
@@ -754,6 +759,33 @@ object CreaturesExpansion extends Expansion {
 
         case MoreCreaturesSkipAction(f, then) =>
             Then(then)
+
+        case _ => UnknownContinue
+    }
+}
+
+
+// Marzaus's "Fan creatures" (AggressiveCreatures, fan content; Discord, northgard-fanmade-content, 2026-10-23): creatures have
+// no abilities, and every creature is aggressive. Like a Fallen Valkyrie, a creature that appears or moves into a clan's territory
+// attacks it, and units moving into a creature's territory must fight it (game.aggressive, game.hostileIn). The passive abilities
+// are off in game.bearIn, wolfIn, koboldIn and ghostIn, and the fight ones where they are (game.noAbilities)
+object AggressiveCreaturesExpansion extends Expansion {
+    def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
+        // Every creature acts like a Fallen Valkyrie (and the Robotos bot's clans are still ignored, RobotosExpansion)
+        case CreatureEffectAction(c, then) if game.creatureAt.contains(c) =>
+            val t = game.board.territory(game.creatureAt(c))
+
+            game.present(t).single match {
+                case Some(o) =>
+                    log(c, "attacks", o, "in", t.anchor)
+                    Then(CreatureCombatAction(o, t.anchor, c, MoveEffect(0), false, then))
+                case None =>
+                    Then(then)
+            }
+
+        // A Myrkalf moves once, like every creature (Hrimgandr still never moves)
+        case CreatureActivateAction(c :: rest) if c.kind == Myrkalf =>
+            CreaturesExpansion.perform(action, soft)
 
         case _ => UnknownContinue
     }
