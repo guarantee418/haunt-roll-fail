@@ -422,8 +422,8 @@ object Meta extends MetaGame { mmm =>
     ConditionalAssetsList((factions : $[F], options : $[O]) => factions.has(Automa), "token/unit", "leader-", "webp")(
         $(1, 2)./~(l => PlayerColor.all./(c => ImageAsset(l + "-" + c.id, "leader-" + l + "-" + c.id)))
     ) ::
-    // The warchiefs as portraits (core clans) or round tokens (New Blood, and Horse's Brok) in each player color (Warchief.figure); only the clans in play
-    (Warchief.portraits ++ Warchief.tokens).flatMap(f => (f.style +: (f == Horse).$("brok")).map(n => ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Warchiefs) && factions.has(f), "token/unit", "chief-" + n + "-", "webp")(
+    // The warchiefs as portraits (core clans) or pawns (New Blood, and Horse's Brok) in each player color (Warchief.figure); only the clans in play
+    (Warchief.portraits ++ Warchief.pawns).flatMap(f => (f.style +: (f == Horse).$("brok")).map(n => ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Warchiefs) && factions.has(f), "token/unit", "chief-" + n + "-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "chief-" + n + "-" + c.id))
     ))) :::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token", "token-", "webp")(
