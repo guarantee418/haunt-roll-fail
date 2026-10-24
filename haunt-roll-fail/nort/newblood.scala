@@ -306,7 +306,7 @@ object NewBloodExpansion extends Expansion {
         (attacking && f == Dragon && e.special == GrudgeMove).??(game.pyre.num) -> "Tenacious Grudge".hl,
         (attacking && f == Dragon).??(game.surtrPoints) -> "Surtr's Wrath".hl,
         gearPoints(f, food) -> "Ancestral Equipment".hl
-    )
+    ) ++ LionExpansion.pointParts(f, t, e, attacking)
 
     // Ox Clan's Ancestral Equipment tokens used in the fight: their combat points (against creatures too)
     def gearPoints(f : Faction, food : Int)(implicit game : Game) : Int =
@@ -334,6 +334,9 @@ object NewBloodExpansion extends Expansion {
 
     // After the casualties of a fight between players
     def afterCombat(attacker : Faction, defender : Faction, t : Territory, e : MoveEffect, aUnits : Int, dUnits : Int, aLost : Int, dLost : Int, winner : |[Faction])(implicit game : Game) {
+        // The Lion Kingdom: Hildegard's lore
+        LionExpansion.afterCombat(attacker, defender, aLost, dLost)
+
         // Dragon Clan: enemy units lost go on the Sacrificial Pyre, while there is room
         // (Svarn's Menders puts the attacker's casualties on the card during the combat, so the Pyre doesn't get them)
         $((attacker, defender, dUnits), (defender, attacker, (e.special != SvarnMove).??(aUnits))).foreach { case (f, g, n) =>

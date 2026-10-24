@@ -34,7 +34,7 @@ object Meta extends MetaGame { mmm =>
     val label = "Northgard: Uncharted Lands"
 
     // The core clans, then New Blood's
-    val factions = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf) ++ NewBlood.clans :+ Automa
+    val factions = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf) ++ NewBlood.clans :+ Lion :+ Automa
 
     // The clans with cards and boards (not the Automa)
     val clans = factions.but(Automa)
@@ -78,7 +78,7 @@ object Meta extends MetaGame { mmm =>
     override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // New Blood has no option: picking one of its clans brings it in
-    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ WarchiefsChoice.all ++ DevelopmentsChoice.all ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons).%(_.fan.not)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles, BalancedStartTiles) ++ AutomaLevelOption.all ++ Module.all.%(_.fan)./(ModuleOption) ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ WarchiefsChoice.all ++ DevelopmentsChoice.all ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons).%(_.fan.not)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles, BalancedStartTiles) ++ AutomaLevelOption.all ++ Module.all.%(_.fan).but(LionKingdom)./(ModuleOption) ++ $(LionStartingDeck) ++ hiddenOptions
 
     // Colors and teams only for the clans in the game, as many teams as players
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -86,6 +86,7 @@ object Meta extends MetaGame { mmm =>
         case TeamOption(f, t) => l.has(f) && t < n
         case ModuleOption(m) if Module.teams.contains(m) => false
         case AutomaLevelOption(_) => l.has(Automa)
+        case LionStartingDeck => l.has(Lion)
         case _ : DevelopmentsChoice => l.has(Automa).not
         case ModuleOption(VictoryModule) => false
         case _ => true
@@ -215,11 +216,11 @@ object Meta extends MetaGame { mmm =>
     // f's team in team play: its TeamOption, else alternating by seat
     def teamOf(factions : $[Faction], options : $[O], f : Faction) : Int = options.of[TeamOption].find(_.clan == f)./(_.team).|(factions.indexOf(f) % 2)
 
-    def factionName(f : Faction) = (f == Automa).?("Automa (solo)").|(f.name + " Clan")
+    def factionName(f : Faction) = (f == Automa).?("Automa (solo)").|(f.name + (f == Lion).?(" Kingdom").|(" Clan"))
     // Random clans in the clan picker: one of the core clans, or one of all fourteen (a New Blood clan brings New Blood in)
     override def randomFactions = $(
         (Div("?".hlb.spn(styles.pickRandom), styles.pickRandomBox) ~ Div("Random".hlb) ~ Div("core seven".spn(xstyles.smaller85)), $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf)),
-        (Div("?".hlb.spn(styles.pickRandom), styles.pickRandomBox) ~ Div("Random".hlb) ~ Div("all fourteen".spn(xstyles.smaller85)), clans)
+        (Div("?".hlb.spn(styles.pickRandom), styles.pickRandomBox) ~ Div("Random".hlb) ~ Div("all fourteen".spn(xstyles.smaller85)), clans.but(Lion))
     )
     override def randomName = "Random Clan"
 
@@ -258,6 +259,11 @@ object Meta extends MetaGame { mmm =>
         ("Clan ability: ".hl ~ ClanCard(f, 0).info.textElem ~ otherVersions(ClanCard(f, 0))).div(styles.menuText),
         (ClanCard(f, 1).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 1).info.textElem ~ otherVersions(ClanCard(f, 1))).div(styles.menuText),
         (ClanCard(f, 2).name.hl ~ " (clan upgrade): " ~ ClanCard(f, 2).info.textElem ~ otherVersions(ClanCard(f, 2))).div(styles.menuText),
+    ) ++ (f == Lion).$(
+        // The fan-made Lion Kingdom has no printed clan board: its power and Chapel in words
+        ("Clan power, Forts and Lords: ".hl ~ CombatText("3 Lord tokens. When you build a Defense Tower, put a Lord from your reserve on it. When an enemy attacks a territory with your Lord, each Lord there adds 2 combat points to your defense. Lords never move, never take casualties and are not units; a Lord goes back to your reserve when its tower is removed or you lose the territory.")).div(styles.menuText),
+        ("Chapel: ".hl ~ "you build Chapels instead of Carved Stones, on Carved Stone spaces. Each Chapel gives 1 fame at harvest.".txt).div(styles.menuText),
+        ("Fan-made, not part of the published game.".styled(xstyles.warning)).div(styles.menuText),
     )
 
     // A card's text in the other editions (CardVersions in editions.scala), under its text in the one in play
@@ -421,6 +427,10 @@ object Meta extends MetaGame { mmm =>
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/unit", "warchief-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "warchief-" + c.id))
     ) ::
+    // The Lion Kingdom's two warrior figures (Warchief.warrior)
+    $("sword", "bow")./(k => ConditionalAssetsList((factions : $[F], options : $[O]) => factions.has(Lion), "token/unit", "lion-" + k + "-", "webp")(
+        PlayerColor.all./(c => ImageAsset(c.id, "lion-" + k + "-" + c.id))
+    )) :::
     // The Automa's Leaders
     ConditionalAssetsList((factions : $[F], options : $[O]) => factions.has(Automa), "token/unit", "leader-", "webp")(
         $(1, 2)./~(l => PlayerColor.all./(c => ImageAsset(l + "-" + c.id, "leader-" + l + "-" + c.id)))
@@ -437,6 +447,16 @@ object Meta extends MetaGame { mmm =>
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wastelands), "token/creature", "creature-", "webp")(
         (Creature.waste :+ Creature.hrimgandr)./(c => ImageAsset(c.token.drop("creature-".length)))
+    ) ::
+    // The Lion Kingdom (fan content): the Lord token, the Chapel, and the alternative starting cards
+    ConditionalAssetsList((factions : $[F], options : $[O]) => factions.has(Lion), "token", "token-", "webp")(
+        $(ImageAsset("lord"))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => factions.has(Lion), "token/building", "building-", "webp")(
+        $(ImageAsset(Chapel.image.drop("building-".length)))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => factions.has(Lion) && options.has(LionStartingDeck), "card/start", "card-start-", "webp")(
+        PlayerColor.all./~(c => $("adventure", "toil", "prey")./(n => ImageAsset(c.id + "-" + n, c.cards + "-" + n)))
     ) ::
     // New Blood: Brundr and Kaelinn, the High Tide tokens, the Ancestral Equipment tokens
     ConditionalAssetsList((factions : $[F], options : $[O]) => factions.exists(NewBlood.clans.has), "token", "token-", "webp")(

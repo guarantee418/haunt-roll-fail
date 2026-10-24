@@ -898,6 +898,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             pieces.add(Sprite($(at(b.image, buildingSize(b))), $))(sx(x), sy(y))
         }
 
+        // The Lion Kingdom: a Lord on each of its Defense Towers, in its top right corner (tapped: the clan's cards and power)
+        LionExpansion.lords.foreach { s =>
+            val (x, y) = board.point(s)
+            val n = smallBuilding * 0.7
+            pieces.add(Sprite($(at("token-lord", n)), $(Rectangle(-n / 2, -n / 2, n, n)), $(ClanAbilityInfo(Lion))))(sx(x) + smallBuilding * 0.4, sy(y) - smallBuilding * 0.4)
+        }
+
         // Minerals module: a Stone on each upgraded building, in its bottom right corner
         game.upgraded.foreach { s =>
             game.buildings.get(s).foreach { b =>
@@ -1320,6 +1327,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         (out ++ reserve).merge
     }
 
+    // The Lion Kingdom's three Lords in its panel: those on its Defense Towers in color, those in the reserve grayed out
+    def lordRow : Elem = {
+        val out = LionExpansion.lords./(s => Image("token-lord", styles.gearSmall, "Lord in " + game.board.label(s.area)))
+        val reserve = LionExpansion.reserve.times(Image("token-lord", $(styles.gearSmall, styles.offBoard), |("Lord in reserve")))
+        (out ++ reserve).merge
+    }
+
     // Minerals module: the supply, what each mineral does, the Mines and upgraded buildings
     def mineralsView : Elem = {
         val supply = Mineral.all./(m => Amount(MineralsExpansion.left(m).hl, m.elem)).join(" ")
@@ -1589,6 +1603,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // New Blood: Kraken's High Tide tokens, Ox's Ancestral Equipment tokens
         val nb = f match {
             case Kraken => OnClick(TideView, tideRow.div(styles.gearRow)(xlo.pointer))
+            case Lion => OnClick(ClanAbilityInfo(Lion), lordRow.div(styles.gearRow)(xlo.pointer))
             // no line while Ox has no token ready or used ("Ancestral Equipment: none" sat under the panel's drag handle at the start)
             case Ox if game.gearReady.any || game.gearUsed.any => OnClick(GearView, gearRow.div(styles.gearRow)(xlo.pointer))
             case Automa => ("Cards: ".txt ~ game.automaActions.num.hl ~ " to play, " ~ game.automaDeck.num.hl ~ " in its pile").div

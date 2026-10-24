@@ -23,8 +23,9 @@ object Warchief {
     // The clans whose warchief has a portrait (the core ones, from the Tabletop Simulator standees, nort/tools/warchief-portraits.py)
     val portraits : $[Faction] = $(Bear, Boar, Goat, Raven, Snake, Stag, Wolf)
 
-    // The New Blood clans' warchiefs are pawns cut out of their clan card's art (nort/tools/warchief-pawns.py)
-    val pawns : $[Faction] = $(Dragon, Horse, Kraken, Lynx, Ox, Rat, Squirrel)
+    // The New Blood clans' warchiefs are pawns cut out of their clan card's art (nort/tools/warchief-pawns.py); the fan-made Lion
+    // Kingdom's Hildegard is the video game's unit icon, outlined the same way (nort/tools/lion-art.py)
+    val pawns : $[Faction] = $(Dragon, Horse, Kraken, Lynx, Ox, Rat, Squirrel, Lion)
 
     // The image of f's warchief on the map, outlined in its player's color; the Automa's Leader 1 is its white miniature
     // (nort/tools/automa-leaders.py), Leader 2 (the companion) the black one
@@ -34,9 +35,12 @@ object Warchief {
 
     // A stack of f's warriors is drawn with one of the two warrior figures (unit- and the old warchief figure, warchief-),
     // picked by a hash of where it is and how many there are, so it changes at random when units arrive or leave
-    // but is the same on every redraw and for every player
-    def warrior(f : Faction, where : String, n : Int)(implicit game : Game) : String =
-        (((where + "/" + f + "/" + n).hashCode & 1) == 0).?("unit-").|("warchief-") + game.colors(f).id
+    // but is the same on every redraw and for every player; the fan-made Lion Kingdom's two are a man-at-arms with a sword
+    // and a longbowman (lion-sword- and lion-bow-, nort/tools/lion-warriors.py)
+    def warrior(f : Faction, where : String, n : Int)(implicit game : Game) : String = {
+        val even = ((where + "/" + f + "/" + n).hashCode & 1) == 0
+        (f == Lion).?(even.?("lion-sword-").|("lion-bow-")).|(even.?("unit-").|("warchief-")) + game.colors(f).id
+    }
 
     // Horse Clan's second warchief, Brok, a pawn like Eitria's
     def brok(implicit game : Game) : String = "chief-brok-" + game.colors(Horse).id
@@ -56,6 +60,7 @@ object Warchief {
         case Ox => "Torfin"
         case Rat => "Eir"
         case Squirrel => "Andhrimnir"
+        case Lion => "Hildegard"
         case _ => "Leader 1"
     }
 
@@ -85,6 +90,7 @@ object Warchief {
         case Ox => "When Torfin fights, he can use one additional Ancestral Equipment token that was not already used this year."
         case Rat => "Eir gains 1 combat point when fighting in a territory with at least 1 food in it, excluding Food Silos."
         case Squirrel => "Before step 1 of a defensive combat involving Andhrimnir, you gain 1 food."
+        case Lion => "After a combat involving Hildegard, collect 1 lore for each casualty the enemy suffered."
         case _ => "The Automa's Leaders count as units; with the Warchiefs module they are worth 3 combat points."
     }
 

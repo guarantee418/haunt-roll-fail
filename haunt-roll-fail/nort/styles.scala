@@ -34,6 +34,7 @@ package object elem {
         Ox --> color("#a0522d")
         Rat --> color("#8fa060")
         Squirrel --> color("#d98c3a")
+        Lion --> color("#d9a62b")
 
         Blue --> color(Blue.ink)
         Red --> color(Red.ink)
@@ -228,5 +229,6 @@ package object elem {
         Ox --> outline.color("#50281a")
         Rat --> outline.color("#43502c")
         Squirrel --> outline.color("#6b4216")
+        Lion --> outline.color("#6b5012")
     }
 }

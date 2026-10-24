@@ -182,6 +182,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             v += horizon * 100 * (board.tiles(t) >= 3).?(2).|(1)
 
         v += horizon * 300 * here.count(_ == AltarOfKings)
+        v += horizon * 100 * here.count(_ == Chapel)
         v += horizon * 110 * here.count(_ == Forge)
         v += 35 * here.count(_ == Fortress)
         v += 25 * here.count(_ == DefenseTower)

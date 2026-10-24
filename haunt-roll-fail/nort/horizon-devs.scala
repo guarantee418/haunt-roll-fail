@@ -133,7 +133,7 @@ object HorizonDevsExpansion extends Expansion {
         case ProsperityEffect => prosperous(f).any
         case HouseEffect => MapExpansion.playable(f, BuildEffect())
         case EmissaryEffect => MapExpansion.playable(f, ExploreEffect())
-        case _ => false
+        case e => LionExpansion.playable(f, e)
     }
 
     def resolve(f : Faction, e : Effect, then : ForcedAction)(implicit game : Game) : Continue = e match {
@@ -164,7 +164,7 @@ object HorizonDevsExpansion extends Expansion {
 
         case EmissaryEffect => Then(ExploreAction(f, 1, 1, false, ExploreEffect(), MayDrawAction(f, then)))
 
-        case _ => Then(then)
+        case e => LionExpansion.resolve(f, e, then)
     }
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {

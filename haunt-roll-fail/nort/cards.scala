@@ -203,6 +203,10 @@ object Cards {
         card("card-start-")("explore", "Explore", 0, false, ExploreEffect(), "Explore."),
         card("card-start-")("build", "Build", 0, false, BuildEffect(), "Build."),
         card("card-start-")("feast", "Feast", 0, false, FeastEffect, "Recruit 1, Move 1, Explore or Build."),
+        // The Lion Kingdom's alternative starting deck (LionStartingDeck)
+        card("card-start-")("adventure", "Adventure", 0, false, AdventureEffect, "Explore or Move 1."),
+        card("card-start-")("toil", "Toil", 0, false, ToilEffect, "Build, or collect 1 food or 1 wood."),
+        card("card-start-")("prey", "Prey", 0, false, PreyEffect, "Recruit 1, or gain 1 fame."),
     ).toMap
 
     def starting(color : PlayerColor) : $[Card] = $("recruit", "move", "explore", "build", "feast", "feast")./(StartCard(color, _))
@@ -294,6 +298,13 @@ object Cards {
             "squirrel-cooking-mastery" -> CardInfo("Cooking Mastery", "", 0, false, CookingEffect, "Build. After doing the Build action, you may build one additional Food Silo in any territory you control for free, even if there is already a Food Silo in the territory."),
             "squirrel-economics" -> CardInfo("Economics", "", 0, false, EconomicsEffect, "Draw 1 card. You may pay up to 2 food and draw 1 card for each food paid."),
             "squirrel-eldrich" -> CardInfo("Eldrich", "", 0, false, MoveEffect(2, special = EldrichMove), "Move 2. During all combats triggered by this card, each casualty rolled by your enemy is also applied to their units."),
+        ),
+        // The fan-made Lion Kingdom (lion.scala)
+        clanCards(Lion,
+            "lion" -> CardInfo("Lion Kingdom", "", 0, true, LionClanEffect, "Recruit 1. Then you may pay up to 2 lore: recruit 1 more unit in that territory for each lore paid."),
+            "lion-rise-of-the-twelve-peers" -> CardInfo("Rise of the Twelve Peers", "", 0, true, PeersEffect, "Recruit 1 unit in up to 2 territories you control with a Defense Tower or Training Camp. Then you may put a Lord from your reserve on a Defense Tower you control that has none."),
+            "lion-abundance" -> CardInfo("Abundance", "", 0, false, BuildEffect(special = AbundanceBuild), "Build. Then, if that territory has 3 or more buildings, collect its resources as if it were the Harvest phase."),
+            "lion-hildegards-vow" -> CardInfo("Hildegard's Vow", "", 0, false, MoveEffect(2, special = VowMove), "Move 2. In each combat triggered by this card, gain 2 combat points for each of your Lords in a territory adjacent to the fight."),
         ),
     ).toMap
 

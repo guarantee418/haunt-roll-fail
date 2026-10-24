@@ -29,7 +29,7 @@ case class Seat(n : Int) extends Player with Elementary with Record {
 trait Faction extends NamedToString with Styling with GameElementary with Player with Record {
     def short = name
     def style = name.toLowerCase
-    def elem(implicit game : Game) : Elem = (name + (this != Automa).??(" Clan")).styled(game.colors.get(this)./(c => c : Styling).|(this))(styles.title)(xstyles.bold)
+    def elem(implicit game : Game) : Elem = (name + (this == Lion).?(" Kingdom").|((this != Automa).??(" Clan"))).styled(game.colors.get(this)./(c => c : Styling).|(this))(styles.title)(xstyles.bold)
 }
 
 // The seven clans of the core game
@@ -52,6 +52,9 @@ case object Lynx extends Faction
 case object Ox extends Faction
 case object Rat extends Faction
 case object Squirrel extends Faction
+
+// The fan-made Lion Kingdom (lion.scala)
+case object Lion extends Faction
 
 
 // Player colors mark a player's units and starting cards; they are not tied to the clan
@@ -227,7 +230,7 @@ object Harvest {
         val (wildFame, wildFood) = game.has(Wilderness).?(WildernessExpansion.forecast(f)).|((0, 0))
         val (wasteFame, wasteFood, wasteLore) = game.has(Wastelands).?(WastelandsExpansion.forecast(f)).|((0, 0, 0))
 
-        HarvestForecast(food + wildFood + wasteFood, wood, lore + wasteLore, territoryFame(f) + altarFame(f) + wildFame + wasteFame)
+        HarvestForecast(food + wildFood + wasteFood, wood, lore + wasteLore, territoryFame(f) + altarFame(f) + LionExpansion.chapelFame(f) + wildFame + wasteFame)
     }
 }
 
@@ -513,7 +516,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         if (training)
             $(TrainingFields)
         else
-            Module.all.%(m => Meta.has(options, m) || (m == NewBlood && (adset || setup.exists(NewBlood.clans.has))) || (m == Solo && setup.has(Automa)))
+            Module.all.%(m => Meta.has(options, m) || (m == NewBlood && (adset || setup.exists(NewBlood.clans.has))) || (m == Solo && setup.has(Automa)) || (m == LionKingdom && setup.has(Lion)))
 
     var modules : $[Module] = computeModules
 
@@ -741,6 +744,11 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var harvested : Boolean = false
     // Kraken Clan's High Tide tokens (2 at most), each in a territory with Kraken figures
     var tides : $[AreaRef] = $
+
+    // The Lion Kingdom's Lords: the spaces of the Defense Towers they are on (LionExpansion.lords leaves out those gone)
+    var lordSpaces : $[SpaceRef] = $
+    // Hildegard, the Lion's warchief, is in the fight being resolved (LionExpansion)
+    var hildegard = false
     // Ox Clan's Ancestral Equipment tokens: on the map (face up), the face-down pile, face up in the reserve, and used this year
     var gear : Map[SpaceRef, Int] = Map()
     var gearPile : $[Int] = 1.to(7).$
@@ -1493,7 +1501,7 @@ object CommonExpansion extends Expansion {
             if (Debug.upgradesInDeck)
                 f.upgrades = $
 
-            Shuffle[Card]((Cards.starting(game.colors(f)) :+ ClanCard(f, 0)) ++ Debug.upgradesInDeck.??(upgrades), ShuffledStartingDeckAction(f, _, rest))
+            Shuffle[Card]((LionExpansion.starting(f) :+ ClanCard(f, 0)) ++ Debug.upgradesInDeck.??(upgrades), ShuffledStartingDeckAction(f, _, rest))
 
         case ShuffledStartingDeckAction(f, l, rest) =>
             f.draw = l
@@ -1892,6 +1900,13 @@ object CommonExpansion extends Expansion {
                 if (altars > 0) {
                     f.fame += altars
                     f.log("gained", altars.hl, FameIcon(), "from", AltarOfKings)
+                }
+
+                // The Lion Kingdom's Chapels
+                val chapels = LionExpansion.chapelFame(f)
+                if (chapels > 0) {
+                    f.fame += chapels
+                    f.log("gained", chapels.hl, FameIcon(), "from", (chapels == 1).?(Chapel.elem).|("Chapels".hl))
                 }
 
                 val (food, wood, lore) = Harvest.resources(f)
