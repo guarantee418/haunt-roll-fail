@@ -93,8 +93,11 @@ object CardVersions {
             "Draw 2 cards. If the Sacrificial Pyre is full, you may empty it to draw a 3rd card.")),
     )
 
-    // The Lion Kingdom's Ost (LionOst, the owner, 2026-10-25) in place of Abundance (card picture by nort/tools/lion-art.py)
+    // The Lion Kingdom's Rise of the Twelve Peers recruiting by its Chapels (LionChapelPeers), and Ost (LionOst) in place of Abundance
+    // (the owner, 2026-10-25; card pictures by nort/tools/lion-art.py)
     val lionOst : $[CardVersion] = $(
+        CardVersion(ClanCard(Lion, 1), LionChapelPeers, CardInfo("Rise of the Twelve Peers", "card-clan-lion-rise-of-the-twelve-peers-chapels", 0, true, PeersChapelEffect,
+            "Recruit 1 unit in each territory you control with a Chapel. Then you may put a Lord from your reserve on a Defense Tower you control that has none.")),
         CardVersion(ClanCard(Lion, 2), LionOst, CardInfo("Ost", "card-clan-lion-ost", 0, false, OstEffect,
             "Build 1 Defense Tower for free. Until the end of the year, your Lords next to a combat you start join it: gain 2 combat points for each. Then they return to their towers.")),
     )
@@ -104,13 +107,13 @@ object CardVersions {
     // Fan-made versions are shown in the clan info only in the games that play them
     def fan(v : CardVersion) : Boolean = v.option match {
         case ModuleOption(m) => m.fan
-        case LionOst => true
+        case LionOst | LionChapelPeers => true
         case _ => false
     }
 
     // The options of the game being played, set by the Game (one game runs on a page; the JVM checks run one at a time);
     // before a game, as in the clan picker, the cards new games start with
-    var options : $[GameOption] = $(EditionChoice.default, PrintedNewBlood, LionOst)
+    var options : $[GameOption] = $(EditionChoice.default, PrintedNewBlood, LionOst, LionChapelPeers)
 
     def apply(c : Card, printed : CardInfo) : CardInfo = all.find(v => v.card == c && options.has(v.option))./(_.info).|(printed)
 

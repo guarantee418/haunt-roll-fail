@@ -617,6 +617,7 @@ object MapExpansion extends Expansion {
             case RecruitOsmosis => mine.%(t => game.board.open(t) || t.areas.exists(a => game.board.spec(a).wood > 0)).%(t => placed.forall(p => t.areas.contains(p).not))
             case RecruitClosed => mine.%(game.board.closed).%(t => placed.forall(p => t.areas.contains(p).not))
             case RecruitPeers => LionExpansion.peersTargets(f, placed)
+            case RecruitChapels => LionExpansion.chapelTargets(f, placed)
         }
 
         val same = mode @@ {

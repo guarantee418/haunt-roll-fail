@@ -48,6 +48,9 @@ case object LionFameEffect extends Effect
 
 // Rise of the Twelve Peers: different territories f controls with a Defense Tower or Training Camp
 case object RecruitPeers extends RecruitMode
+// Rise of the Twelve Peers in new games (LionChapelPeers): 1 unit in each territory f controls with a Chapel, then may place a Lord
+case object PeersChapelEffect extends Effect
+case object RecruitChapels extends RecruitMode
 
 // The Lion's Chapel: a small building on a Carved Stone space, 1 fame at harvest; not in Building.all, so games without the Lion
 // never offer it (MineralsExpansion.buildings adds it)
@@ -167,6 +170,10 @@ object LionExpansion extends Expansion {
     def peersTargets(f : Faction, placed : $[AreaRef])(implicit game : Game) : $[Territory] =
         game.controlled(f).%(t => game.working(t).exists(b => b == DefenseTower || b == TrainingCamp)).%(t => placed.forall(p => t.areas.contains(p).not))
 
+    // Rise of the Twelve Peers by the Chapels: the territories f controls with a working Chapel that haven't had their unit yet
+    def chapelTargets(f : Faction, placed : $[AreaRef])(implicit game : Game) : $[Territory] =
+        game.controlled(f).%(t => game.working(t).has(Chapel)).%(t => placed.forall(p => t.areas.contains(p).not))
+
     // The choices of an alternative starting card
     def choices(e : Effect) : $[Effect] = e match {
         case AdventureEffect => $(ExploreEffect(), MoveEffect(1))
@@ -178,6 +185,7 @@ object LionExpansion extends Expansion {
     def playable(f : Faction, e : Effect)(implicit game : Game) : Boolean = e match {
         case LionClanEffect => MapExpansion.playable(f, RecruitEffect(1))
         case PeersEffect => (MapExpansion.canRecruit(f) && peersTargets(f, $).any) || (reserve > 0 && emptyTowers.any)
+        case PeersChapelEffect => (MapExpansion.canRecruit(f) && chapelTargets(f, $).any) || (reserve > 0 && emptyTowers.any)
         case AdventureEffect | ToilEffect | PreyEffect => choices(e).exists(CommonExpansion.playableEffect(f, _))
         case LionFameEffect => true
         case OstEffect => true
@@ -195,6 +203,9 @@ object LionExpansion extends Expansion {
 
         case PeersEffect =>
             Then(RecruitAction(f, 2, RecruitPeers, $, PeersLordAction(f, then)))
+
+        case PeersChapelEffect =>
+            Then(RecruitAction(f, chapelTargets(f, $).num, RecruitChapels, $, PeersLordAction(f, then)))
 
         case AdventureEffect | ToilEffect | PreyEffect =>
             val name = e match {

@@ -1026,8 +1026,10 @@ figure on the map) from the Northgard wiki (`expansion/lion/`, asked for by Gman
   attacker moving in sent it back to the reserve, and Lords never added their combat points.
 - Chapel: the Lion builds Chapels instead of Carved Stones, on Carved Stone spaces (7, cost 1); each gives 1 fame
   at harvest, none under a Kobold (like the Altar of Kings).
-- Rise of the Twelve Peers (upgrade, flash): Recruit 1 in up to 2 territories with a Defense Tower or Training
-  Camp, then may put a Lord from the reserve on a Defense Tower without one.
+- Rise of the Twelve Peers (upgrade, flash): Recruit 1 in each territory the Lion controls with a Chapel, then may put a
+  Lord from the reserve on a Defense Tower without one (every new game: hidden `LionChapelPeers`, the owner,
+  2026-10-25; picture `card/clan/lion-rise-of-the-twelve-peers-chapels.webp`). Older games: Recruit 1 in up to 2
+  territories with a Defense Tower or Training Camp, then the same Lord.
 - Ost (upgrade, in place of Abundance in every new game: hidden `LionOst`, asked for by the owner on 2026-10-25, named after
   the video game's Faith tree entry): build 1 Defense Tower for free (on a free space, with a Lord from the reserve as
   usual); until the end of the year, the Lords next to a combat the Lion starts, against a clan or a creature, join it,

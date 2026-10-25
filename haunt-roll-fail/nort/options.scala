@@ -859,6 +859,14 @@ case object LionOst extends GameOption with ToggleOption {
     def valueOn = "Lion Kingdom plays Ost instead of Abundance".txt
 }
 
+// The Lion's Rise of the Twelve Peers recruits 1 unit in each territory it controls with a Chapel (the owner, 2026-10-25), instead
+// of in up to 2 with a Defense Tower or Training Camp. Hidden, and given to every new game (mandatoryFor); older games keep the old
+// card (CardVersions.lionOst in editions.scala) and replay that way
+case object LionChapelPeers extends GameOption with ToggleOption {
+    val group = "Fan content".txt
+    def valueOn = "Lion Kingdom's Rise of the Twelve Peers recruits by its Chapels".txt
+}
+
 object Module {
     val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, DragonVariant, AggressiveCreatures, LionKingdom)
 

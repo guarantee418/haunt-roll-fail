@@ -144,6 +144,16 @@ def bar_icon(im, box, soft=70):
     i = Image.fromarray(out)
     return i.crop(i.split()[3].point(lambda v: 255 if v > 40 else 0).getbbox())
 vow = bar_icon('card/clan/goat-halvards-craft.webp', (172, 36, 244, 96))
+# A piece of a card's bar as it is, its edges faded into the bar it goes on (icons the color keying leaves a halo around)
+def bar_strip(im, box, fade=12):
+    c = load(im).crop(box)
+    w, h = c.size
+    x = np.minimum(np.arange(w), w - 1 - np.arange(w))[None, :]
+    y = np.minimum(np.arange(h), h - 1 - np.arange(h))[:, None]
+    c.putalpha(Image.fromarray((np.clip(np.minimum(x, y) / fade, 0, 1) * 255).astype(np.uint8)))
+    return c
+# The squirrel clan card's Flash and Recruit icons, as one piece of its bar
+flash_recruit = bar_strip('card/clan/squirrel.webp', (100, 30, 296, 100))
 # Cooking Mastery's Build icon (a hammer)
 build = bar_icon('card/clan/squirrel-cooking-mastery.webp', (172, 30, 244, 100))
 # Forged for War's combat icon with its question mark ("+? combat points")
@@ -151,6 +161,8 @@ axe = bar_icon('card/dev/forged-for-war.webp', (222, 30, 300, 104))
 cards = {
     'lion': ('card/clan/squirrel.webp', 'Lion Kingdom', None, 'Recruit 1. Then you may pay up to 2 lore: recruit 1 more unit in that territory for each lore paid.', None),
     'lion-rise-of-the-twelve-peers': ('card/clan/squirrel.webp', 'Rise of the Twelve Peers', 'CLAN UPGRADE', 'Recruit 1 unit in up to 2 territories you control with a Defense Tower or Training Camp. Then you may put a Lord from your reserve on a Defense Tower you control that has none.', None),
+    # Recruiting in every territory with a Chapel, in new games (LionChapelPeers, the owner, 2026-10-25)
+    'lion-rise-of-the-twelve-peers-chapels': ('card/clan/squirrel.webp', 'Rise of the Twelve Peers', 'CLAN UPGRADE', 'Recruit 1 unit in each territory you control with a Chapel. Then you may put a Lord from your reserve on a Defense Tower you control that has none.', [flash_recruit, load('token/lord.webp').resize((64, 64), Image.LANCZOS)]),
     'lion-abundance': ('card/clan/squirrel-cooking-mastery.webp', 'Abundance', 'CLAN UPGRADE', 'Build. Then, if that territory has 3 or more buildings, collect its resources as if it were the Harvest phase.', None),
     # Ost replaces Abundance in new games (LionOst, the owner, 2026-10-25), after the video game's Faith tree entry
     'lion-ost': ('card/clan/squirrel-cooking-mastery.webp', 'Ost', 'CLAN UPGRADE', 'Build 1 Defense Tower for free. Until the end of the year, your Lords next to a combat you start join it: gain 2 combat points for each. Then they return to their towers.', [build, load('token/lord.webp').resize((64, 64), Image.LANCZOS)]),
