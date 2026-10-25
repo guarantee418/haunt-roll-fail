@@ -875,6 +875,13 @@ case object LionChapelVow extends GameOption with ToggleOption {
     def valueOn = "Lion Kingdom's Hildegard's Vow counts its Chapels".txt
 }
 
+// The Lion's Chapels give 1 lore each at harvest instead of 1 fame (the owner, 2026-10-25; the planned Stoat Kingdom's give fame).
+// Hidden, and given to every new game (mandatoryFor); older games keep the fame and replay that way
+case object LionChapelLore extends GameOption with ToggleOption {
+    val group = "Fan content".txt
+    def valueOn = "Lion Kingdom's Chapels give lore".txt
+}
+
 object Module {
     val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, DragonVariant, AggressiveCreatures, LionKingdom)
 

@@ -1024,8 +1024,9 @@ figure on the map) from the Northgard wiki (`expansion/lion/`, asked for by Gman
   The Lion keeps the territory, for its Lords, while it has figures there (hidden `LordsWhileContested`, every new
   game since 2026-10-25, after a bug report): before it, a Lord needed the Lion to control the territory alone, so an
   attacker moving in sent it back to the reserve, and Lords never added their combat points.
-- Chapel: the Lion builds Chapels instead of Carved Stones, on Carved Stone spaces (7, cost 1); each gives 1 fame
-  at harvest, none under a Kobold (like the Altar of Kings).
+- Chapel: the Lion builds Chapels instead of Carved Stones, on Carved Stone spaces (7, cost 1); each gives 1 lore at
+  harvest in every new game (hidden `LionChapelLore`, the owner, 2026-10-25), 1 fame in older games; none under a
+  Kobold (like the Altar of Kings).
 - Rise of the Twelve Peers (upgrade, flash): Recruit 1 in each territory the Lion controls with a Chapel, then may put a
   Lord from the reserve on a Defense Tower without one (every new game: hidden `LionChapelPeers`, the owner,
   2026-10-25; picture `card/clan/lion-rise-of-the-twelve-peers-chapels.webp`). Older games: Recruit 1 in up to 2
