@@ -153,7 +153,7 @@ cards = {
     'lion-rise-of-the-twelve-peers': ('card/clan/squirrel.webp', 'Rise of the Twelve Peers', 'CLAN UPGRADE', 'Recruit 1 unit in up to 2 territories you control with a Defense Tower or Training Camp. Then you may put a Lord from your reserve on a Defense Tower you control that has none.', None),
     'lion-abundance': ('card/clan/squirrel-cooking-mastery.webp', 'Abundance', 'CLAN UPGRADE', 'Build. Then, if that territory has 3 or more buildings, collect its resources as if it were the Harvest phase.', None),
     # Ost replaces Abundance in new games (LionOst, the owner, 2026-10-25), after the video game's Faith tree entry
-    'lion-ost': ('card/clan/squirrel-cooking-mastery.webp', 'Ost', 'CLAN UPGRADE', 'Build 1 Defense Tower for free. Until the end of the year, your Lords next to a combat you start join it: gain 2 combat points for each. Then they return to their towers.', [build, axe], figure('expansion/lion/lord.webp', 300)),
+    'lion-ost': ('card/clan/squirrel-cooking-mastery.webp', 'Ost', 'CLAN UPGRADE', 'Build 1 Defense Tower for free. Until the end of the year, your Lords next to a combat you start join it: gain 2 combat points for each. Then they return to their towers.', [build, load('token/lord.webp').resize((64, 64), Image.LANCZOS)]),
     'lion-hildegards-vow': ('card/clan/squirrel-cooking-mastery.webp', "Hildegard's Vow", 'CLAN UPGRADE', 'Move 2. In each combat triggered by this card, gain 2 combat points for each of your Lords in a territory adjacent to the fight.', [vow, axe], hildegard(330)),
 }
 only = sys.argv[3:]
