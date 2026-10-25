@@ -843,6 +843,14 @@ case object LionOwnDeck extends GameOption with ToggleOption {
     def valueOn = "Lion Kingdom plays its own starting deck".txt
 }
 
+// A Lord stays on its Defense Tower while the Lion has figures in the territory, so it defends it in a fight (bug report, 2026-10-25):
+// it needed the Lion to control the territory alone, which an attacker moving in ends, so Lords never added their combat points and
+// went back to the reserve at the next move. Hidden, and given to every new game (mandatoryFor); older games replay the old way
+case object LordsWhileContested extends GameOption with ToggleOption {
+    val group = "Fan content".txt
+    def valueOn = "Lion Kingdom's Lords stay while the Lion is in the territory".txt
+}
+
 object Module {
     val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, DragonVariant, AggressiveCreatures, LionKingdom)
 

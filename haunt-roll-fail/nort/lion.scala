@@ -80,7 +80,12 @@ object LionExpansion extends Expansion {
     def on(implicit game : Game) = game.factions.has(Lion)
 
     // The Lords on the map: the spaces of Defense Towers in the Lion's territories that hold one
-    def lords(implicit game : Game) : $[SpaceRef] = game.lordSpaces.%(s => game.buildings.get(s).has(DefenseTower) && game.controlled(Lion).exists(_.areas.contains(s.area)))
+    def lords(implicit game : Game) : $[SpaceRef] = game.lordSpaces.%(s => game.buildings.get(s).has(DefenseTower) && held(s.area))
+
+    // Whether a Lord stays in the territory of a: while the Lion has figures there (LordsWhileContested, every new game), so an
+    // attacker moving in doesn't send it back before it defends; older games needed the Lion to control it alone
+    def held(a : AreaRef)(implicit game : Game) : Boolean =
+        game.options.has(LordsWhileContested).?(game.figures(game.board.territory(a), Lion) > 0).|(game.controlled(Lion).exists(_.areas.contains(a)))
 
     def reserve(implicit game : Game) : Int = lordTokens - lords.num
 

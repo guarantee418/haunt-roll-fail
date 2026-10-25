@@ -1021,6 +1021,9 @@ figure on the map) from the Northgard wiki (`expansion/lion/`, asked for by Gman
   Defending a territory against a clan, each Lord there adds 2 combat points. Lords never move, never take
   casualties, aren't units and don't hold territory; a Lord goes back to the reserve when its tower is gone or
   the Lion loses the territory. (The design had Lords as figures that could be killed; that was simplified.)
+  The Lion keeps the territory, for its Lords, while it has figures there (hidden `LordsWhileContested`, every new
+  game since 2026-10-25, after a bug report): before it, a Lord needed the Lion to control the territory alone, so an
+  attacker moving in sent it back to the reserve, and Lords never added their combat points.
 - Chapel: the Lion builds Chapels instead of Carved Stones, on Carved Stone spaces (7, cost 1); each gives 1 fame
   at harvest, none under a Kobold (like the Altar of Kings).
 - Rise of the Twelve Peers (upgrade, flash): Recruit 1 in up to 2 territories with a Defense Tower or Training
