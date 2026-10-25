@@ -928,6 +928,18 @@ and gated by `LionExpansion.allowed`. The Lion's own deck comes with the hidden 
 (`LionExpansion.starting`). Art from `tools/lion-art.py` (the video game's emblem and Hildegard icon from the Northgard wiki are its sources in
 `webp2/nort/images/expansion/lion/`; Hildegard's map figure is `chief-lion-<color>`, so `Lion` is in `Warchief.pawns`). `NORT_LION=1` puts the Lion in every host game.
 
+## Stoat Kingdom, a planned fan-made clan (notes, 2026-10-25)
+
+Not built yet. The video game's second kingdom, Kernev (the Stoat Kingdom), would follow the Lion Kingdom's pattern, with
+Chapels and Lord tokens. The owner's notes for it so far:
+
+- Its Chapels generate fame. How much, and when, is still open; the Lion's give 1 fame each at harvest (`chapelFame`).
+- Its Lord tokens can move within its own friendly territory. The Lion's never move: they stay on their Defense Towers
+  and only join fights from there (`lords`, `lordsNextTo`).
+
+In the video game the Stoat's Lords can move freely within its territory and the zones next to it (the Faith tree
+entry Inland Protection), and its Forts are limited by the fame it has gained.
+
 ## Known simplifications and gaps
 
 The status table and the Interpretations section in `RULES.md` are the full
