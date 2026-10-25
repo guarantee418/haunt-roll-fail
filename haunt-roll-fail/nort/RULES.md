@@ -1021,12 +1021,25 @@ figure on the map) from the Northgard wiki (`expansion/lion/`, asked for by Gman
   Defending a territory against a clan, each Lord there adds 2 combat points. Lords never move, never take
   casualties, aren't units and don't hold territory; a Lord goes back to the reserve when its tower is gone or
   the Lion loses the territory. (The design had Lords as figures that could be killed; that was simplified.)
+  The Lion keeps the territory, for its Lords, while it has figures there (hidden `LordsWhileContested`, every new
+  game since 2026-10-25, after a bug report): before it, a Lord needed the Lion to control the territory alone, so an
+  attacker moving in sent it back to the reserve, and Lords never added their combat points.
 - Chapel: the Lion builds Chapels instead of Carved Stones, on Carved Stone spaces (7, cost 1); each gives 1 fame
   at harvest, none under a Kobold (like the Altar of Kings).
-- Rise of the Twelve Peers (upgrade, flash): Recruit 1 in up to 2 territories with a Defense Tower or Training
-  Camp, then may put a Lord from the reserve on a Defense Tower without one.
-- Abundance (upgrade): Build; then a territory with 3 or more buildings gives its resources as at harvest.
-- Hildegard's Vow (upgrade): Move 2; in its combats, +2 combat points for each Lord in a territory next to the fight.
+- Rise of the Twelve Peers (upgrade, flash): Recruit 1 in each territory the Lion controls with a Chapel, then may put a
+  Lord from the reserve on a Defense Tower without one (every new game: hidden `LionChapelPeers`, the owner,
+  2026-10-25; picture `card/clan/lion-rise-of-the-twelve-peers-chapels.webp`). Older games: Recruit 1 in up to 2
+  territories with a Defense Tower or Training Camp, then the same Lord.
+- Ost (upgrade, in place of Abundance in every new game: hidden `LionOst`, asked for by the owner on 2026-10-25, named after
+  the video game's Faith tree entry): build 1 Defense Tower for free (on a free space, with a Lord from the reserve as
+  usual); until the end of the year, the Lords next to a combat the Lion starts, against a clan or a creature, join it,
+  2 combat points each, and go back to their towers after it, won or lost (they never take casualties). With Hildegard's Vow a Lord still counts once. The card
+  picture is `card/clan/lion-ost.webp` (`lion-art.py <images> <previews> lion-ost`): the lion emblem, and the Build icon and the Lord token on its bar.
+- Abundance (upgrade, older games): Build; then a territory with 3 or more buildings gives its resources as at harvest.
+- Hildegard's Vow (upgrade): Move 2; in its combats (against clans or creatures), +2 combat points for each of the
+  Lion's Chapels in a territory it controls next to the fight (every new game: hidden `LionChapelVow`, the owner,
+  2026-10-25; picture `card/clan/lion-hildegards-vow-chapels.webp`). Older games: +2 for each Lord next to the fight, in
+  combats against clans.
 - Warchief Hildegard (Warchiefs module): after a combat she was in, 1 lore for each casualty the enemy suffered.
 - Its own starting deck (every new game, hidden `LionOwnDeck`, Gman 2026-10-24; a setup option at first, `LionStartingDeck`, kept for the games that picked it): Adventure (Explore or Move 1), Toil (Build, or collect 1 food or 1 wood) and
   Prey (Recruit 1, or 1 fame), two of each, instead of the six core starting cards.

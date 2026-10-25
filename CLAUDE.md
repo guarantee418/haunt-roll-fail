@@ -38,7 +38,11 @@ Squirrel, with their warchiefs and 28 clan cards, from the TTS mod
 3597126237) in `nort/newblood.scala`; picking one of them turns it on.
 The fan-made Lion Kingdom (the video game's Kingdom of Neustria, designed here for Gman on 2026-10-21 with
 Robotos's Chapel and alternative starting deck) is a fifteenth clan in `nort/lion.scala`: Lords on its Defense
-Towers, Chapels instead of Carved Stones, warchief Hildegard, and its own starting deck (Robotos's Adventure, Toil and Prey; hidden `LionOwnDeck` that every new game gets,
+Towers (a Lord stays while the Lion has figures in the territory, so it defends it: hidden `LordsWhileContested`, every new game
+since a bug report on 2026-10-25; older games sent it back once an attacker moved in), Chapels instead of Carved Stones, warchief Hildegard, the upgrade card Ost (a free Defense Tower, then for the rest of the year the Lords next to a
+combat the Lion starts join it; in place of Abundance in every new game, hidden `LionOst`, the owner, 2026-10-25; Rise of the Twelve Peers recruits
+in each territory with a Chapel and Hildegard's Vow gives 2 combat points for each Chapel next to the fight in new games, hidden
+`LionChapelPeers` and `LionChapelVow`), and its own starting deck (Robotos's Adventure, Toil and Prey; hidden `LionOwnDeck` that every new game gets,
 Gman 2026-10-24; it was the setup option "Lion Kingdom: alternative starting deck", `LionStartingDeck`, now hidden); picking it turns it on (not in Adset or the Random Clan picks); its art is made by `nort/tools/lion-art.py`, with the video game's Lion emblem, Hildegard (also on Hildegard's Vow) and the Lord token's Lord from the Northgard wiki; its warriors are a man-at-arms with a longsword and a longbowman (`lion-sword-`, `lion-bow-`, by `nort/tools/lion-warriors.py`, `Warchief.warrior`; Gman asked for no Norse helmets).
 Uncharted Horizons' Events and Alternative victory conditions modules are in
 `nort/horizons.scala`. Its 13 Development cards and 2 Achievements (option

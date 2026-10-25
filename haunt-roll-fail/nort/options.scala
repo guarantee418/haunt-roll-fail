@@ -843,6 +843,38 @@ case object LionOwnDeck extends GameOption with ToggleOption {
     def valueOn = "Lion Kingdom plays its own starting deck".txt
 }
 
+// A Lord stays on its Defense Tower while the Lion has figures in the territory, so it defends it in a fight (bug report, 2026-10-25):
+// it needed the Lion to control the territory alone, which an attacker moving in ends, so Lords never added their combat points and
+// went back to the reserve at the next move. Hidden, and given to every new game (mandatoryFor); older games replay the old way
+case object LordsWhileContested extends GameOption with ToggleOption {
+    val group = "Fan content".txt
+    def valueOn = "Lion Kingdom's Lords stay while the Lion is in the territory".txt
+}
+
+// The Lion's upgrade card Ost (after the video game's Faith tree entry) in place of Abundance (the owner, 2026-10-25): a free Defense
+// Tower, and for the rest of the year its Lords join the combats it starts next to them. Hidden, and given to every new game
+// (mandatoryFor); older games keep Abundance (CardVersions.lionOst in editions.scala) and replay that way
+case object LionOst extends GameOption with ToggleOption {
+    val group = "Fan content".txt
+    def valueOn = "Lion Kingdom plays Ost instead of Abundance".txt
+}
+
+// The Lion's Rise of the Twelve Peers recruits 1 unit in each territory it controls with a Chapel (the owner, 2026-10-25), instead
+// of in up to 2 with a Defense Tower or Training Camp. Hidden, and given to every new game (mandatoryFor); older games keep the old
+// card (CardVersions.lionOst in editions.scala) and replay that way
+case object LionChapelPeers extends GameOption with ToggleOption {
+    val group = "Fan content".txt
+    def valueOn = "Lion Kingdom's Rise of the Twelve Peers recruits by its Chapels".txt
+}
+
+// The Lion's Hildegard's Vow gives 2 combat points for each of its Chapels next to the fight (the owner, 2026-10-25), instead of
+// for each Lord (Ost brings the Lords). Hidden, and given to every new game (mandatoryFor); older games keep the old card
+// (CardVersions.lionOst in editions.scala) and replay that way
+case object LionChapelVow extends GameOption with ToggleOption {
+    val group = "Fan content".txt
+    def valueOn = "Lion Kingdom's Hildegard's Vow counts its Chapels".txt
+}
+
 object Module {
     val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, DragonVariant, AggressiveCreatures, LionKingdom)
 

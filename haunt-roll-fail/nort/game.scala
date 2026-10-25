@@ -730,6 +730,9 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var kaija : |[AreaRef] = None
     var awakened = false
 
+    // The Lion Kingdom's Ost: for the rest of the year its Lords join the combats it starts next to them
+    var lionOst = false
+
     // Snake Clan's Scorched Earth token
     var scorched : |[AreaRef] = None
 
@@ -1690,6 +1693,7 @@ object CommonExpansion extends Expansion {
             }
 
             game.awakened = false
+            game.lionOst = false
 
             // Each controlled Forge draws one more card; the Automa draws its own cards (automa.scala)
             Then(game.from(game.first).but(Automa).foldRight(RevealDevelopmentsAction : ForcedAction)((f, then) => DrawCardsAction(f, 4 + game.robotos(f).??(1) + game.controlled(f)./~(game.working).count(_ == Forge) + game.has(Wastelands).??(WastelandsExpansion.extraDraw(f)), then)))

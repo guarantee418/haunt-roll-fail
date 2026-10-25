@@ -357,7 +357,9 @@ case class CreatureFightInfo(f : Faction, area : AreaRef, c : Creature, e : Move
             attacking.not.??(2 * game.working(t).count(_ == Fortress)) -> Fortress.elem,
             (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl,
             NewBloodExpansion.gearPoints(f, food) -> "Ancestral Equipment".hl,
-            TowersExpansion.towerPoints(t) -> DefenseTower.elem
+            TowersExpansion.towerPoints(t) -> DefenseTower.elem,
+            LionExpansion.ostPoints(f, t, attacking) -> "Ost".hl,
+            LionExpansion.vowChapelPoints(f, t, e, attacking) -> "Hildegard's Vow".hl
         ) ++ waste.??(WastelandsExpansion.playerCreatureParts(f, t, attacking)) ++ $(
             food -> Food.elem,
             // Casualties don't hurt creatures, so a player always takes the point
@@ -616,6 +618,7 @@ object MapExpansion extends Expansion {
             case RecruitOsmosis => mine.%(t => game.board.open(t) || t.areas.exists(a => game.board.spec(a).wood > 0)).%(t => placed.forall(p => t.areas.contains(p).not))
             case RecruitClosed => mine.%(game.board.closed).%(t => placed.forall(p => t.areas.contains(p).not))
             case RecruitPeers => LionExpansion.peersTargets(f, placed)
+            case RecruitChapels => LionExpansion.chapelTargets(f, placed)
         }
 
         val same = mode @@ {
@@ -770,7 +773,7 @@ object MapExpansion extends Expansion {
             // Ancestral Equipment tokens (Ox Clan) keep their spaces from being built on
             val free = t.areas./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not && game.gear.contains(s).not)
 
-            MineralsExpansion.buildings.%(b => e.duplicate || here.has(b).not).%(b => game.buildingsLeft(b) > 0).%(b => smallOnly.not || b.large.not).%(b => b != Mine || MineralsExpansion.lair(t)).%(b => LionExpansion.allowed(f, b))./~{ b =>
+            MineralsExpansion.buildings.%(b => e.duplicate || here.has(b).not).%(b => game.buildingsLeft(b) > 0).%(b => smallOnly.not || b.large.not).%(b => b != Mine || MineralsExpansion.lair(t)).%(b => LionExpansion.allowed(f, b)).%(b => e.special != OstBuild || b == DefenseTower)./~{ b =>
                 val kinds = b match {
                     // the Lion's Chapel goes on a Carved Stone space too
                     case CarvedStone | Chapel => $(CarvedSpace)
@@ -800,8 +803,8 @@ object MapExpansion extends Expansion {
     // Amenities and Horse Clan: small buildings take no space
     def noSpace(e : BuildEffect) = e.special == AmenitiesBuild || e.special == HorseBuild
 
-    // Tower PC version: a Defense Tower costs 2 wood
-    def buildCost(b : Building, e : BuildEffect)(implicit game : Game) = math.max(0, TowersExpansion.cost(b) - e.discount)
+    // Tower PC version: a Defense Tower costs 2 wood; the Lion's Ost builds one for free
+    def buildCost(b : Building, e : BuildEffect)(implicit game : Game) = (e.special == OstBuild).?(0).|(math.max(0, TowersExpansion.cost(b) - e.discount))
 
     // Why b can't be built on s, if it can't (the same rules as buildOptions)
     def buildBlock(f : Faction, e : BuildEffect, smallOnly : Boolean, s : SpaceRef, b : Building)(implicit game : Game) : |[String] = {
@@ -809,7 +812,8 @@ object MapExpansion extends Expansion {
         val extra = s.index >= SpaceRef.extra
         val cost = MilitaryExpansion.cost(f, b, buildCost(b, e))
 
-        if (smallOnly && b.large) |("small buildings only")
+        if (e.special == OstBuild && b != DefenseTower) |("Ost builds a Defense Tower")
+        else if (smallOnly && b.large) |("small buildings only")
         else if (extra && b.large) |("needs a large space")
         else if (extra && noSpace(e).not && MilitaryExpansion.freeBuild(f, b).not) |("needs a building space")
         else if (extra.not && noSpace(e) && b.large.not) |("needs no space")

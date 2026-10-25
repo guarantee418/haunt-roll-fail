@@ -28,10 +28,15 @@ import nort.elem._
 case object LionClanEffect extends Effect
 // Rise of the Twelve Peers: Recruit 1 in up to 2 territories with a Defense Tower or Training Camp, then may place a Lord
 case object PeersEffect extends Effect
-// Abundance: Build, then collect the territory's resources if it has 3 or more buildings
+// Abundance: Build, then collect the territory's resources if it has 3 or more buildings (older games; Ost in new ones)
 case object AbundanceBuild extends BuildSpecial
-// Hildegard's Vow: Move 2, +2 combat points for each Lord next to the fight
+// Ost: build 1 Defense Tower for free, then for the rest of the year the Lords join the combats the Lion starts next to them
+case object OstEffect extends Effect
+case object OstBuild extends BuildSpecial
+// Hildegard's Vow: Move 2, +2 combat points for each Lord next to the fight (older games)
 case object VowMove extends MoveSpecial
+// Hildegard's Vow in new games (LionChapelVow): Move 2, +2 combat points for each of the Lion's Chapels next to the fight
+case object VowChapelMove extends MoveSpecial
 
 // The Lion's own starting deck (LionOwnDeck, or LionStartingDeck in older games): each card offers two actions
 // Adventure: Explore or Move 1
@@ -45,6 +50,9 @@ case object LionFameEffect extends Effect
 
 // Rise of the Twelve Peers: different territories f controls with a Defense Tower or Training Camp
 case object RecruitPeers extends RecruitMode
+// Rise of the Twelve Peers in new games (LionChapelPeers): 1 unit in each territory f controls with a Chapel, then may place a Lord
+case object PeersChapelEffect extends Effect
+case object RecruitChapels extends RecruitMode
 
 // The Lion's Chapel: a small building on a Carved Stone space, 1 fame at harvest; not in Building.all, so games without the Lion
 // never offer it (MineralsExpansion.buildings adds it)
@@ -80,7 +88,12 @@ object LionExpansion extends Expansion {
     def on(implicit game : Game) = game.factions.has(Lion)
 
     // The Lords on the map: the spaces of Defense Towers in the Lion's territories that hold one
-    def lords(implicit game : Game) : $[SpaceRef] = game.lordSpaces.%(s => game.buildings.get(s).has(DefenseTower) && game.controlled(Lion).exists(_.areas.contains(s.area)))
+    def lords(implicit game : Game) : $[SpaceRef] = game.lordSpaces.%(s => game.buildings.get(s).has(DefenseTower) && held(s.area))
+
+    // Whether a Lord stays in the territory of a: while the Lion has figures there (LordsWhileContested, every new game), so an
+    // attacker moving in doesn't send it back before it defends; older games needed the Lion to control it alone
+    def held(a : AreaRef)(implicit game : Game) : Boolean =
+        game.options.has(LordsWhileContested).?(game.figures(game.board.territory(a), Lion) > 0).|(game.controlled(Lion).exists(_.areas.contains(a)))
 
     def reserve(implicit game : Game) : Int = lordTokens - lords.num
 
@@ -115,12 +128,29 @@ object LionExpansion extends Expansion {
         }
     }
 
-    // Combat points: each Lord defending its territory, and Hildegard's Vow's Lords next to the fight
+    // The Lords in the territories next to t
+    def lordsNextTo(t : Territory)(implicit game : Game) : Int = lords.count(s => game.board.adjacent(t).exists(_._1.areas.contains(s.area)))
+
+    // Combat points: each Lord defending its territory, and the Lords next to the fight with Hildegard's Vow or, for the rest of
+    // the year, Ost (counted once when both apply)
     def pointParts(f : Faction, t : Territory, e : MoveEffect, attacking : Boolean)(implicit game : Game) : $[(Int, Elem)] =
         (f == Lion).??($(
             attacking.not.??(2 * lordsIn(t)) -> "Lords".hl,
-            (attacking && e.special == VowMove).??(2 * lords.count(s => game.board.adjacent(t).exists(_._1.areas.contains(s.area)))) -> "Hildegard's Vow".hl
+            (attacking && (e.special == VowMove || game.lionOst)).??(2 * lordsNextTo(t)) -> (e.special == VowMove).?("Hildegard's Vow").|("Ost").hl,
+            vowChapelPoints(f, t, e, attacking) -> "Hildegard's Vow".hl
         ))
+
+    // Ost: the Lords next to a fight the Lion starts against a creature join it too
+    def ostPoints(f : Faction, t : Territory, attacking : Boolean)(implicit game : Game) : Int =
+        (f == Lion && attacking && game.lionOst).??(2 * lordsNextTo(t))
+
+    // The working Chapels in the territories the Lion controls next to t
+    def chapelsNextTo(t : Territory)(implicit game : Game) : Int =
+        game.controlled(Lion).%(u => game.board.adjacent(t).exists(_._1.areas.contains(u.anchor)))./~(game.working).count(_ == Chapel)
+
+    // Hildegard's Vow (new games): 2 combat points for each Chapel next to a fight its Move starts, against a clan or a creature
+    def vowChapelPoints(f : Faction, t : Territory, e : MoveEffect, attacking : Boolean)(implicit game : Game) : Int =
+        (f == Lion && attacking && e.special == VowChapelMove).??(2 * chapelsNextTo(t))
 
     // Hildegard: 1 lore for each casualty the enemy suffered in a fight she took part in (game.hildegard, set as the fight is resolved)
     def afterCombat(attacker : Faction, defender : Faction, aLost : Int, dLost : Int)(implicit game : Game) {
@@ -151,6 +181,10 @@ object LionExpansion extends Expansion {
     def peersTargets(f : Faction, placed : $[AreaRef])(implicit game : Game) : $[Territory] =
         game.controlled(f).%(t => game.working(t).exists(b => b == DefenseTower || b == TrainingCamp)).%(t => placed.forall(p => t.areas.contains(p).not))
 
+    // Rise of the Twelve Peers by the Chapels: the territories f controls with a working Chapel that haven't had their unit yet
+    def chapelTargets(f : Faction, placed : $[AreaRef])(implicit game : Game) : $[Territory] =
+        game.controlled(f).%(t => game.working(t).has(Chapel)).%(t => placed.forall(p => t.areas.contains(p).not))
+
     // The choices of an alternative starting card
     def choices(e : Effect) : $[Effect] = e match {
         case AdventureEffect => $(ExploreEffect(), MoveEffect(1))
@@ -162,8 +196,10 @@ object LionExpansion extends Expansion {
     def playable(f : Faction, e : Effect)(implicit game : Game) : Boolean = e match {
         case LionClanEffect => MapExpansion.playable(f, RecruitEffect(1))
         case PeersEffect => (MapExpansion.canRecruit(f) && peersTargets(f, $).any) || (reserve > 0 && emptyTowers.any)
+        case PeersChapelEffect => (MapExpansion.canRecruit(f) && chapelTargets(f, $).any) || (reserve > 0 && emptyTowers.any)
         case AdventureEffect | ToilEffect | PreyEffect => choices(e).exists(CommonExpansion.playableEffect(f, _))
         case LionFameEffect => true
+        case OstEffect => true
         case _ => false
     }
 
@@ -179,6 +215,9 @@ object LionExpansion extends Expansion {
         case PeersEffect =>
             Then(RecruitAction(f, 2, RecruitPeers, $, PeersLordAction(f, then)))
 
+        case PeersChapelEffect =>
+            Then(RecruitAction(f, chapelTargets(f, $).num, RecruitChapels, $, PeersLordAction(f, then)))
+
         case AdventureEffect | ToilEffect | PreyEffect =>
             val name = e match {
                 case AdventureEffect => "Adventure"
@@ -186,6 +225,11 @@ object LionExpansion extends Expansion {
                 case _ => "Prey"
             }
             Ask(f).each(choices(e).%(CommonExpansion.playableEffect(f, _)))(c => LionChoiceAction(f, name, c, then))
+
+        case OstEffect =>
+            game.lionOst = true
+            f.log("called the", "Ost".hl, "for the rest of the year")
+            Then(ResolveEffectAction(f, BuildEffect(special = OstBuild), then))
 
         case LionFameEffect =>
             f.fame += 1
