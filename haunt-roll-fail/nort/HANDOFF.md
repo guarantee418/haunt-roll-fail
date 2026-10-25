@@ -937,8 +937,8 @@ Chapels and Lord tokens. The owner's notes for it so far:
   fame in older ones, `chapelFame`).
 - Its Lord tokens can move within its own friendly territory. The Lion's never move: they stay on their Defense Towers
   and only join fights from there (`lords`, `lordsNextTo`).
-- It adds lore tokens, placed in its territories much as the Kraken Clan places its High Tide tokens, and much alike in
-  what they do: they yield harvest gains in their territories and help defend them. The Kraken's are the model to
+- Its Lord tokens work much like the Kraken Clan's High Tide tokens: placed in its territories, and much alike in what
+  they do: they yield harvest gains in their territories and help defend them. The Kraken's are the model to
   start from: two tokens, placed or moved before or after a Kraken card in a territory it controls, back to the reserve
   when it loses the territory or a fight there; the Kraken Clan card and Knowledge from Beyond collect from their
   territories, and enemies fighting the Kraken there suffer 1 casualty (`resourcesIn`, `tideMoves`, `TideMoveAction` in
