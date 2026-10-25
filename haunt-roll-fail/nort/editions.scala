@@ -115,7 +115,7 @@ object CardVersions {
 
     // The options of the game being played, set by the Game (one game runs on a page; the JVM checks run one at a time);
     // before a game, as in the clan picker, the cards new games start with
-    var options : $[GameOption] = $(EditionChoice.default, PrintedNewBlood, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore)
+    var options : $[GameOption] = $(EditionChoice.default, PrintedNewBlood, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore)
 
     def apply(c : Card, printed : CardInfo) : CardInfo = all.find(v => v.card == c && options.has(v.option))./(_.info).|(printed)
 

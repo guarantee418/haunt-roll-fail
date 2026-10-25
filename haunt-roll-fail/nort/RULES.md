@@ -1024,6 +1024,9 @@ figure on the map) from the Northgard wiki (`expansion/lion/`, asked for by Gman
   The Lion keeps the territory, for its Lords, while it has figures there (hidden `LordsWhileContested`, every new
   game since 2026-10-25, after a bug report): before it, a Lord needed the Lion to control the territory alone, so an
   attacker moving in sent it back to the reserve, and Lords never added their combat points.
+  Each Lord adds its 2 combat points to every combat in its territory, the Lion attacking or defending, against a clan
+  or a creature (hidden `LordsInEveryFight`, every new game since 2026-10-25, after a bug report where the Lion attacked
+  a Draugr beside its own Lord; Gman's choice). Older games count them only defending against a clan.
 - Chapel: the Lion builds Chapels instead of Carved Stones, on Carved Stone spaces (7, cost 1); each gives 1 lore at
   harvest in every new game (hidden `LionChapelLore`, the owner, 2026-10-25), 1 fame in older games; none under a
   Kobold (like the Altar of Kings).

@@ -135,10 +135,19 @@ object LionExpansion extends Expansion {
     // the year, Ost (counted once when both apply)
     def pointParts(f : Faction, t : Territory, e : MoveEffect, attacking : Boolean)(implicit game : Game) : $[(Int, Elem)] =
         (f == Lion).??($(
-            attacking.not.??(2 * lordsIn(t)) -> "Lords".hl,
+            lordPoints(f, t, attacking) -> "Lords".hl,
             (attacking && (e.special == VowMove || game.lionOst)).??(2 * lordsNextTo(t)) -> (e.special == VowMove).?("Hildegard's Vow").|("Ost").hl,
             vowChapelPoints(f, t, e, attacking) -> "Hildegard's Vow".hl
         ))
+
+    // The Lords in the fight's territory: 2 points each in every fight there (LordsInEveryFight, every new game), against a clan or a
+    // creature; older games count them only defending against a clan
+    def lordPoints(f : Faction, t : Territory, attacking : Boolean)(implicit game : Game) : Int =
+        (f == Lion && (attacking.not || game.options.has(LordsInEveryFight))).??(2 * lordsIn(t))
+
+    // The same in a fight against a creature, only in new games
+    def creatureLordPoints(f : Faction, t : Territory)(implicit game : Game) : Int =
+        (f == Lion && game.options.has(LordsInEveryFight)).??(2 * lordsIn(t))
 
     // Ost: the Lords next to a fight the Lion starts against a creature join it too
     def ostPoints(f : Faction, t : Territory, attacking : Boolean)(implicit game : Game) : Int =
