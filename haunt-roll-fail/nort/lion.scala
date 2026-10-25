@@ -123,13 +123,20 @@ object LionExpansion extends Expansion {
         }
     }
 
+    // The Lords in the territories next to t
+    def lordsNextTo(t : Territory)(implicit game : Game) : Int = lords.count(s => game.board.adjacent(t).exists(_._1.areas.contains(s.area)))
+
     // Combat points: each Lord defending its territory, and the Lords next to the fight with Hildegard's Vow or, for the rest of
     // the year, Ost (counted once when both apply)
     def pointParts(f : Faction, t : Territory, e : MoveEffect, attacking : Boolean)(implicit game : Game) : $[(Int, Elem)] =
         (f == Lion).??($(
             attacking.not.??(2 * lordsIn(t)) -> "Lords".hl,
-            (attacking && (e.special == VowMove || game.lionOst)).??(2 * lords.count(s => game.board.adjacent(t).exists(_._1.areas.contains(s.area)))) -> (e.special == VowMove).?("Hildegard's Vow").|("Ost").hl
+            (attacking && (e.special == VowMove || game.lionOst)).??(2 * lordsNextTo(t)) -> (e.special == VowMove).?("Hildegard's Vow").|("Ost").hl
         ))
+
+    // Ost: the Lords next to a fight the Lion starts against a creature join it too
+    def ostPoints(f : Faction, t : Territory, attacking : Boolean)(implicit game : Game) : Int =
+        (f == Lion && attacking && game.lionOst).??(2 * lordsNextTo(t))
 
     // Hildegard: 1 lore for each casualty the enemy suffered in a fight she took part in (game.hildegard, set as the fight is resolved)
     def afterCombat(attacker : Faction, defender : Faction, aLost : Int, dLost : Int)(implicit game : Game) {
