@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # The Lion Kingdom's art (fan-made clan): emblem, clan cards, board, Lord token, Chapel, alternative starting cards.
 # Built from the existing Northgard images and the video game's Lion emblem, Hildegard and Lord (expansion/lion/): python3 -I lion-art.py <webp2/nort/images> <out dir for previews>
+# [<card> ...] (only those clan cards, e.g. lion-ost, leaving the rest as they are)
 import sys, random
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
@@ -34,7 +35,11 @@ def emblem(size):
 
 # Hildegard, the video game's Lion warchief (her unit icon from the Northgard wiki, expansion/lion/hildegard.webp)
 def hildegard(height):
-    h = load('expansion/lion/hildegard.webp')
+    return figure('expansion/lion/hildegard.webp', height)
+
+# A unit icon from the wiki, cropped and scaled to height (Hildegard; the Lord, expansion/lion/lord.webp)
+def figure(path, height):
+    h = load(path)
     h = h.crop(h.split()[3].getbbox())
     return h.resize((height * h.width // h.height, height), Image.LANCZOS)
 
@@ -139,16 +144,26 @@ def bar_icon(im, box, soft=70):
     i = Image.fromarray(out)
     return i.crop(i.split()[3].point(lambda v: 255 if v > 40 else 0).getbbox())
 vow = bar_icon('card/clan/goat-halvards-craft.webp', (172, 36, 244, 96))
+# Cooking Mastery's Build icon (a hammer)
+build = bar_icon('card/clan/squirrel-cooking-mastery.webp', (172, 30, 244, 100))
 # Forged for War's combat icon with its question mark ("+? combat points")
 axe = bar_icon('card/dev/forged-for-war.webp', (222, 30, 300, 104))
 cards = {
     'lion': ('card/clan/squirrel.webp', 'Lion Kingdom', None, 'Recruit 1. Then you may pay up to 2 lore: recruit 1 more unit in that territory for each lore paid.', None),
     'lion-rise-of-the-twelve-peers': ('card/clan/squirrel.webp', 'Rise of the Twelve Peers', 'CLAN UPGRADE', 'Recruit 1 unit in up to 2 territories you control with a Defense Tower or Training Camp. Then you may put a Lord from your reserve on a Defense Tower you control that has none.', None),
     'lion-abundance': ('card/clan/squirrel-cooking-mastery.webp', 'Abundance', 'CLAN UPGRADE', 'Build. Then, if that territory has 3 or more buildings, collect its resources as if it were the Harvest phase.', None),
+    # Ost replaces Abundance in new games (LionOst, the owner, 2026-10-25), after the video game's Faith tree entry
+    'lion-ost': ('card/clan/squirrel-cooking-mastery.webp', 'Ost', 'CLAN UPGRADE', 'Build 1 Defense Tower for free. Until the end of the year, your Lords next to a combat you start join it: gain 2 combat points for each. Then they return to their towers.', [build, axe], figure('expansion/lion/lord.webp', 300)),
     'lion-hildegards-vow': ('card/clan/squirrel-cooking-mastery.webp', "Hildegard's Vow", 'CLAN UPGRADE', 'Move 2. In each combat triggered by this card, gain 2 combat points for each of your Lords in a territory adjacent to the fight.', [vow, axe], hildegard(330)),
 }
-for k, (base, name, header, text, icon, *figure) in cards.items():
-    save(clan_card(base, name, header, text, icon, figure=(figure or [None])[0]), 'card/clan/' + k + '.webp')
+only = sys.argv[3:]
+for k, (base, name, header, text, icon, *fig) in cards.items():
+    if only and k not in only:
+        continue
+    save(clan_card(base, name, header, text, icon, figure=(fig or [None])[0]), 'card/clan/' + k + '.webp')
+if only:
+    print('done')
+    sys.exit(0)
 
 # --- the clan emblem token (clan picker, panels)
 tok = load('clan/squirrel.webp')

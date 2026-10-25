@@ -28,8 +28,11 @@ import nort.elem._
 case object LionClanEffect extends Effect
 // Rise of the Twelve Peers: Recruit 1 in up to 2 territories with a Defense Tower or Training Camp, then may place a Lord
 case object PeersEffect extends Effect
-// Abundance: Build, then collect the territory's resources if it has 3 or more buildings
+// Abundance: Build, then collect the territory's resources if it has 3 or more buildings (older games; Ost in new ones)
 case object AbundanceBuild extends BuildSpecial
+// Ost: build 1 Defense Tower for free, then for the rest of the year the Lords join the combats the Lion starts next to them
+case object OstEffect extends Effect
+case object OstBuild extends BuildSpecial
 // Hildegard's Vow: Move 2, +2 combat points for each Lord next to the fight
 case object VowMove extends MoveSpecial
 
@@ -120,11 +123,12 @@ object LionExpansion extends Expansion {
         }
     }
 
-    // Combat points: each Lord defending its territory, and Hildegard's Vow's Lords next to the fight
+    // Combat points: each Lord defending its territory, and the Lords next to the fight with Hildegard's Vow or, for the rest of
+    // the year, Ost (counted once when both apply)
     def pointParts(f : Faction, t : Territory, e : MoveEffect, attacking : Boolean)(implicit game : Game) : $[(Int, Elem)] =
         (f == Lion).??($(
             attacking.not.??(2 * lordsIn(t)) -> "Lords".hl,
-            (attacking && e.special == VowMove).??(2 * lords.count(s => game.board.adjacent(t).exists(_._1.areas.contains(s.area)))) -> "Hildegard's Vow".hl
+            (attacking && (e.special == VowMove || game.lionOst)).??(2 * lords.count(s => game.board.adjacent(t).exists(_._1.areas.contains(s.area)))) -> (e.special == VowMove).?("Hildegard's Vow").|("Ost").hl
         ))
 
     // Hildegard: 1 lore for each casualty the enemy suffered in a fight she took part in (game.hildegard, set as the fight is resolved)
@@ -169,6 +173,7 @@ object LionExpansion extends Expansion {
         case PeersEffect => (MapExpansion.canRecruit(f) && peersTargets(f, $).any) || (reserve > 0 && emptyTowers.any)
         case AdventureEffect | ToilEffect | PreyEffect => choices(e).exists(CommonExpansion.playableEffect(f, _))
         case LionFameEffect => true
+        case OstEffect => true
         case _ => false
     }
 
@@ -191,6 +196,11 @@ object LionExpansion extends Expansion {
                 case _ => "Prey"
             }
             Ask(f).each(choices(e).%(CommonExpansion.playableEffect(f, _)))(c => LionChoiceAction(f, name, c, then))
+
+        case OstEffect =>
+            game.lionOst = true
+            f.log("called the", "Ost".hl, "for the rest of the year")
+            Then(ResolveEffectAction(f, BuildEffect(special = OstBuild), then))
 
         case LionFameEffect =>
             f.fame += 1

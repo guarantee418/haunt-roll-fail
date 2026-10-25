@@ -770,7 +770,7 @@ object MapExpansion extends Expansion {
             // Ancestral Equipment tokens (Ox Clan) keep their spaces from being built on
             val free = t.areas./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not && game.gear.contains(s).not)
 
-            MineralsExpansion.buildings.%(b => e.duplicate || here.has(b).not).%(b => game.buildingsLeft(b) > 0).%(b => smallOnly.not || b.large.not).%(b => b != Mine || MineralsExpansion.lair(t)).%(b => LionExpansion.allowed(f, b))./~{ b =>
+            MineralsExpansion.buildings.%(b => e.duplicate || here.has(b).not).%(b => game.buildingsLeft(b) > 0).%(b => smallOnly.not || b.large.not).%(b => b != Mine || MineralsExpansion.lair(t)).%(b => LionExpansion.allowed(f, b)).%(b => e.special != OstBuild || b == DefenseTower)./~{ b =>
                 val kinds = b match {
                     // the Lion's Chapel goes on a Carved Stone space too
                     case CarvedStone | Chapel => $(CarvedSpace)
@@ -800,8 +800,8 @@ object MapExpansion extends Expansion {
     // Amenities and Horse Clan: small buildings take no space
     def noSpace(e : BuildEffect) = e.special == AmenitiesBuild || e.special == HorseBuild
 
-    // Tower PC version: a Defense Tower costs 2 wood
-    def buildCost(b : Building, e : BuildEffect)(implicit game : Game) = math.max(0, TowersExpansion.cost(b) - e.discount)
+    // Tower PC version: a Defense Tower costs 2 wood; the Lion's Ost builds one for free
+    def buildCost(b : Building, e : BuildEffect)(implicit game : Game) = (e.special == OstBuild).?(0).|(math.max(0, TowersExpansion.cost(b) - e.discount))
 
     // Why b can't be built on s, if it can't (the same rules as buildOptions)
     def buildBlock(f : Faction, e : BuildEffect, smallOnly : Boolean, s : SpaceRef, b : Building)(implicit game : Game) : |[String] = {
@@ -809,7 +809,8 @@ object MapExpansion extends Expansion {
         val extra = s.index >= SpaceRef.extra
         val cost = MilitaryExpansion.cost(f, b, buildCost(b, e))
 
-        if (smallOnly && b.large) |("small buildings only")
+        if (e.special == OstBuild && b != DefenseTower) |("Ost builds a Defense Tower")
+        else if (smallOnly && b.large) |("small buildings only")
         else if (extra && b.large) |("needs a large space")
         else if (extra && noSpace(e).not && MilitaryExpansion.freeBuild(f, b).not) |("needs a building space")
         else if (extra.not && noSpace(e) && b.large.not) |("needs no space")

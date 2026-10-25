@@ -851,6 +851,14 @@ case object LordsWhileContested extends GameOption with ToggleOption {
     def valueOn = "Lion Kingdom's Lords stay while the Lion is in the territory".txt
 }
 
+// The Lion's upgrade card Ost (after the video game's Faith tree entry) in place of Abundance (the owner, 2026-10-25): a free Defense
+// Tower, and for the rest of the year its Lords join the combats it starts next to them. Hidden, and given to every new game
+// (mandatoryFor); older games keep Abundance (CardVersions.lionOst in editions.scala) and replay that way
+case object LionOst extends GameOption with ToggleOption {
+    val group = "Fan content".txt
+    def valueOn = "Lion Kingdom plays Ost instead of Abundance".txt
+}
+
 object Module {
     val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, DragonVariant, AggressiveCreatures, LionKingdom)
 

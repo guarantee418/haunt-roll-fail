@@ -1028,7 +1028,12 @@ figure on the map) from the Northgard wiki (`expansion/lion/`, asked for by Gman
   at harvest, none under a Kobold (like the Altar of Kings).
 - Rise of the Twelve Peers (upgrade, flash): Recruit 1 in up to 2 territories with a Defense Tower or Training
   Camp, then may put a Lord from the reserve on a Defense Tower without one.
-- Abundance (upgrade): Build; then a territory with 3 or more buildings gives its resources as at harvest.
+- Ost (upgrade, in place of Abundance in every new game: hidden `LionOst`, asked for by the owner on 2026-10-25, named after
+  the video game's Faith tree entry): build 1 Defense Tower for free (on a free space, with a Lord from the reserve as
+  usual); until the end of the year, the Lords next to a combat the Lion starts join it, 2 combat points each, and go back
+  to their towers after it (they never take casualties). With Hildegard's Vow a Lord still counts once. The card
+  picture is `card/clan/lion-ost.webp` (`lion-art.py <images> <previews> lion-ost`), with the video game's Lord.
+- Abundance (upgrade, older games): Build; then a territory with 3 or more buildings gives its resources as at harvest.
 - Hildegard's Vow (upgrade): Move 2; in its combats, +2 combat points for each Lord in a territory next to the fight.
 - Warchief Hildegard (Warchiefs module): after a combat she was in, 1 lore for each casualty the enemy suffered.
 - Its own starting deck (every new game, hidden `LionOwnDeck`, Gman 2026-10-24; a setup option at first, `LionStartingDeck`, kept for the games that picked it): Adventure (Explore or Move 1), Toil (Build, or collect 1 food or 1 wood) and
