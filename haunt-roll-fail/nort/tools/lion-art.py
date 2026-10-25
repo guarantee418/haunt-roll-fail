@@ -167,6 +167,8 @@ cards = {
     # Ost replaces Abundance in new games (LionOst, the owner, 2026-10-25), after the video game's Faith tree entry
     'lion-ost': ('card/clan/squirrel-cooking-mastery.webp', 'Ost', 'CLAN UPGRADE', 'Build 1 Defense Tower for free. Until the end of the year, your Lords next to a combat you start join it: gain 2 combat points for each. Then they return to their towers.', [build, load('token/lord.webp').resize((64, 64), Image.LANCZOS)]),
     'lion-hildegards-vow': ('card/clan/squirrel-cooking-mastery.webp', "Hildegard's Vow", 'CLAN UPGRADE', 'Move 2. In each combat triggered by this card, gain 2 combat points for each of your Lords in a territory adjacent to the fight.', [vow, axe], hildegard(330)),
+    # Counting the Chapels instead, in new games (LionChapelVow, the owner, 2026-10-25)
+    'lion-hildegards-vow-chapels': ('card/clan/squirrel-cooking-mastery.webp', "Hildegard's Vow", 'CLAN UPGRADE', 'Move 2. In each combat triggered by this card, gain 2 combat points for each of your Chapels in a territory adjacent to the fight.', [vow, axe], hildegard(330)),
 }
 only = sys.argv[3:]
 for k, (base, name, header, text, icon, *fig) in cards.items():

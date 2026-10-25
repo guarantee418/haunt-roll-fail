@@ -867,6 +867,14 @@ case object LionChapelPeers extends GameOption with ToggleOption {
     def valueOn = "Lion Kingdom's Rise of the Twelve Peers recruits by its Chapels".txt
 }
 
+// The Lion's Hildegard's Vow gives 2 combat points for each of its Chapels next to the fight (the owner, 2026-10-25), instead of
+// for each Lord (Ost brings the Lords). Hidden, and given to every new game (mandatoryFor); older games keep the old card
+// (CardVersions.lionOst in editions.scala) and replay that way
+case object LionChapelVow extends GameOption with ToggleOption {
+    val group = "Fan content".txt
+    def valueOn = "Lion Kingdom's Hildegard's Vow counts its Chapels".txt
+}
+
 object Module {
     val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, DragonVariant, AggressiveCreatures, LionKingdom)
 

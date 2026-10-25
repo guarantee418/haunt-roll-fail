@@ -628,7 +628,8 @@ object CreaturesExpansion extends Expansion {
             val tower = TowersExpansion.towerPoints(t)
             // The Lion Kingdom's Ost: its Lords next to the fight join the attack
             val ost = LionExpansion.ostPoints(f, t, attacking)
-            val ps = game.strength(t, f, attacking) + bonus + axe + fortress + snake + robo + grudge + surtr + gear + tower + ost + food + face.points + pw
+            val vow = LionExpansion.vowChapelPoints(f, t, e, attacking)
+            val ps = game.strength(t, f, attacking) + bonus + axe + fortress + snake + robo + grudge + surtr + gear + tower + ost + vow + food + face.points + pw
             // Shieldbearers cancel 1 casualty; Halvard defending ignores 1 inflicted by the attacking creature
             val shield = math.min(cface.casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1) + Warchief.shield(t, f, attacking) + urdar + NewBloodExpansion.ignored(f))
             val pc = cface.casualties - shield
@@ -644,7 +645,7 @@ object CreaturesExpansion extends Expansion {
                 def extra(l : (Int, Elem)*) : Elem = l.toList.filter(_._1 > 0).map { case (n, what) => "(" ~ n.hl ~ " from " ~ what ~ ")" }.join(" ")
 
                 // Everything but the units and the die, as in the fight with a clan
-                val extras = $(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, robo -> "Robotos".hl, grudge -> "Tenacious Grudge".hl, surtr -> "Surtr's Wrath".hl, gear -> "Ancestral Equipment".hl, tower -> DefenseTower.elem, ost -> "Ost".hl) ++ pws
+                val extras = $(bonus -> "the card".txt, axe -> "Axe Throwers".hl, fortress -> Fortress.elem, snake -> "Scorched Earth".hl, robo -> "Robotos".hl, grudge -> "Tenacious Grudge".hl, surtr -> "Surtr's Wrath".hl, gear -> "Ancestral Equipment".hl, tower -> DefenseTower.elem, ost -> "Ost".hl, vow -> "Hildegard's Vow".hl) ++ pws
                 f.log("scored", CombatIcon.axes(ps), extra((FightPoints.others(f, t, attacking) ++ extras) : _*))
                 log(c, "scored", CombatIcon.axes(cs), extra(cws : _*), (pc > 0 || shield > 0).?("and inflicted " ~ CombatIcon.skulls(pc)).|(Empty), (shield > 0).?("(" ~ shield.hl ~ " cancelled)").|(Empty))
 

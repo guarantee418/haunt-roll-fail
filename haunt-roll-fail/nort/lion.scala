@@ -33,8 +33,10 @@ case object AbundanceBuild extends BuildSpecial
 // Ost: build 1 Defense Tower for free, then for the rest of the year the Lords join the combats the Lion starts next to them
 case object OstEffect extends Effect
 case object OstBuild extends BuildSpecial
-// Hildegard's Vow: Move 2, +2 combat points for each Lord next to the fight
+// Hildegard's Vow: Move 2, +2 combat points for each Lord next to the fight (older games)
 case object VowMove extends MoveSpecial
+// Hildegard's Vow in new games (LionChapelVow): Move 2, +2 combat points for each of the Lion's Chapels next to the fight
+case object VowChapelMove extends MoveSpecial
 
 // The Lion's own starting deck (LionOwnDeck, or LionStartingDeck in older games): each card offers two actions
 // Adventure: Explore or Move 1
@@ -134,12 +136,21 @@ object LionExpansion extends Expansion {
     def pointParts(f : Faction, t : Territory, e : MoveEffect, attacking : Boolean)(implicit game : Game) : $[(Int, Elem)] =
         (f == Lion).??($(
             attacking.not.??(2 * lordsIn(t)) -> "Lords".hl,
-            (attacking && (e.special == VowMove || game.lionOst)).??(2 * lordsNextTo(t)) -> (e.special == VowMove).?("Hildegard's Vow").|("Ost").hl
+            (attacking && (e.special == VowMove || game.lionOst)).??(2 * lordsNextTo(t)) -> (e.special == VowMove).?("Hildegard's Vow").|("Ost").hl,
+            vowChapelPoints(f, t, e, attacking) -> "Hildegard's Vow".hl
         ))
 
     // Ost: the Lords next to a fight the Lion starts against a creature join it too
     def ostPoints(f : Faction, t : Territory, attacking : Boolean)(implicit game : Game) : Int =
         (f == Lion && attacking && game.lionOst).??(2 * lordsNextTo(t))
+
+    // The working Chapels in the territories the Lion controls next to t
+    def chapelsNextTo(t : Territory)(implicit game : Game) : Int =
+        game.controlled(Lion).%(u => game.board.adjacent(t).exists(_._1.areas.contains(u.anchor)))./~(game.working).count(_ == Chapel)
+
+    // Hildegard's Vow (new games): 2 combat points for each Chapel next to a fight its Move starts, against a clan or a creature
+    def vowChapelPoints(f : Faction, t : Territory, e : MoveEffect, attacking : Boolean)(implicit game : Game) : Int =
+        (f == Lion && attacking && e.special == VowChapelMove).??(2 * chapelsNextTo(t))
 
     // Hildegard: 1 lore for each casualty the enemy suffered in a fight she took part in (game.hildegard, set as the fight is resolved)
     def afterCombat(attacker : Faction, defender : Faction, aLost : Int, dLost : Int)(implicit game : Game) {

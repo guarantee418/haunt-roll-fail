@@ -358,7 +358,8 @@ case class CreatureFightInfo(f : Faction, area : AreaRef, c : Creature, e : Move
             (f == Snake && game.scorchedIn(t)).??(1) -> "Scorched Earth".hl,
             NewBloodExpansion.gearPoints(f, food) -> "Ancestral Equipment".hl,
             TowersExpansion.towerPoints(t) -> DefenseTower.elem,
-            LionExpansion.ostPoints(f, t, attacking) -> "Ost".hl
+            LionExpansion.ostPoints(f, t, attacking) -> "Ost".hl,
+            LionExpansion.vowChapelPoints(f, t, e, attacking) -> "Hildegard's Vow".hl
         ) ++ waste.??(WastelandsExpansion.playerCreatureParts(f, t, attacking)) ++ $(
             food -> Food.elem,
             // Casualties don't hurt creatures, so a player always takes the point
