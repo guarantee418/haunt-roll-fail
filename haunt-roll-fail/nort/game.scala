@@ -230,7 +230,7 @@ object Harvest {
         val (wildFame, wildFood) = game.has(Wilderness).?(WildernessExpansion.forecast(f)).|((0, 0))
         val (wasteFame, wasteFood, wasteLore) = game.has(Wastelands).?(WastelandsExpansion.forecast(f)).|((0, 0, 0))
 
-        HarvestForecast(food + wildFood + wasteFood, wood, lore + wasteLore, territoryFame(f) + altarFame(f) + LionExpansion.chapelFame(f) + wildFame + wasteFame)
+        HarvestForecast(food + wildFood + wasteFood, wood, lore + wasteLore + LionExpansion.chapelLore(f), territoryFame(f) + altarFame(f) + LionExpansion.chapelFame(f) + wildFame + wasteFame)
     }
 }
 
@@ -1917,6 +1917,12 @@ object CommonExpansion extends Expansion {
                 if (chapels > 0) {
                     f.fame += chapels
                     f.log("gained", chapels.hl, FameIcon(), "from", (chapels == 1).?(Chapel.elem).|("Chapels".hl))
+                }
+
+                val chapelLore = LionExpansion.chapelLore(f)
+                if (chapelLore > 0) {
+                    f.lore += chapelLore
+                    f.log("collected", chapelLore.hl, Lore, "from", (chapelLore == 1).?(Chapel.elem).|("Chapels".hl))
                 }
 
                 val (food, wood, lore) = Harvest.resources(f)

@@ -75,7 +75,7 @@ object Meta extends MetaGame { mmm =>
     // Team play comes from the choice above the clan picker (pickerModes), the old fixed team variants are no longer offered
     // The Tutorial's practice game has its tips on
     // Chosen casualties are on in every new game (mandatoryFor), not in older ones
-    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood, LionStartingDeck, LionOwnDeck, LordsWhileContested, LionOst, LionChapelPeers, LionChapelVow) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
+    override val hiddenOptions = $(ModuleOption(VictoryModule), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood, LionStartingDeck, LionOwnDeck, LordsWhileContested, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // New Blood has no option: picking one of its clans brings it in
     val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ WarchiefsChoice.all ++ DevelopmentsChoice.all ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ Module.all.but(Warchiefs).but(NewBlood).but(Solo).but(VictoryModule).but(TrainingFields).but(UnchartedHorizons).%(_.fan.not)./(ModuleOption) ++ $(MoreCreatures) ++ CentralChoice.all ++ $(HorizonsTiles, BalancedStartTiles) ++ AutomaLevelOption.all ++ Module.all.%(_.fan).but(LionKingdom)./(ModuleOption) ++ hiddenOptions
@@ -142,7 +142,7 @@ object Meta extends MetaGame { mmm =>
     }
 
     // Chosen casualties, taking the Unrest card and the clan power report: every new game gets them; a loaded game keeps the options it was started with
-    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood, LionOwnDeck, LordsWhileContested, LionOst, LionChapelPeers, LionChapelVow)
+    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood, LionOwnDeck, LordsWhileContested, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore)
 
     // Quick games take only the selected options, not the mandatory ones
     override def randomQuickGame() = super.randomQuickGame() match { case (f, l, d, o) => (f, l, d, (o :+ ChooseCasualties :+ TakeUnrestCard :+ ClanPowerReports :+ ReportsDontWait :+ MendFigures :+ OxPicksSpace :+ JoinedTilesOnly :+ DragonExtraFromTerritory).distinct) }
@@ -261,7 +261,7 @@ object Meta extends MetaGame { mmm =>
     ) ++ (f == Lion).$(
         // The fan-made Lion Kingdom has no printed clan board: its power and Chapel in words
         ("Clan power, Forts and Lords: ".hl ~ CombatText("3 Lord tokens. When you build a Defense Tower, put a Lord from your reserve on it. When an enemy attacks a territory with your Lord, each Lord there adds 2 combat points to your defense. Lords never move, never take casualties and are not units; a Lord goes back to your reserve when its tower is removed or you lose the territory.")).div(styles.menuText),
-        ("Chapel: ".hl ~ "you build Chapels instead of Carved Stones, on Carved Stone spaces. Each Chapel gives 1 fame at harvest.".txt).div(styles.menuText),
+        ("Chapel: ".hl ~ ("you build Chapels instead of Carved Stones, on Carved Stone spaces. Each Chapel gives 1 " + CardVersions.options.has(LionChapelLore).?("lore").|("fame") + " at harvest.").txt).div(styles.menuText),
         ("Fan-made, not part of the published game.".styled(xstyles.warning)).div(styles.menuText),
     )
 

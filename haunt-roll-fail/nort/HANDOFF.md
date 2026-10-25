@@ -933,7 +933,8 @@ and gated by `LionExpansion.allowed`. The Lion's own deck comes with the hidden 
 Not built yet. The video game's second kingdom, Kernev (the Stoat Kingdom), would follow the Lion Kingdom's pattern, with
 Chapels and Lord tokens. The owner's notes for it so far:
 
-- Its Chapels generate fame. How much, and when, is still open; the Lion's give 1 fame each at harvest (`chapelFame`).
+- Its Chapels generate fame at harvest (how much is still open), where the Lion's give lore in new games (`chapelLore`;
+  fame in older ones, `chapelFame`).
 - Its Lord tokens can move within its own friendly territory. The Lion's never move: they stay on their Defense Towers
   and only join fights from there (`lords`, `lordsNextTo`).
 

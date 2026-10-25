@@ -22,7 +22,7 @@ import nort.elem._
 // Clan power, Forts and Lords: 3 Lord tokens. When the Lion builds a Defense Tower and has a Lord in reserve, the Lord goes on it.
 // Defending its territory, each Lord there adds 2 combat points. Lords never move and never take casualties, aren't units and
 // don't hold a territory: a Lord goes back to the reserve when its tower is removed or the Lion loses the territory.
-// Chapel: the Lion builds Chapels instead of Carved Stones, on Carved Stone spaces; each gives 1 fame at harvest.
+// Chapel: the Lion builds Chapels instead of Carved Stones, on Carved Stone spaces; each gives 1 lore at harvest (1 fame in older games).
 
 // Lion Kingdom: Recruit 1, and 1 more in the same territory for each lore paid (up to 2)
 case object LionClanEffect extends Effect
@@ -54,7 +54,7 @@ case object RecruitPeers extends RecruitMode
 case object PeersChapelEffect extends Effect
 case object RecruitChapels extends RecruitMode
 
-// The Lion's Chapel: a small building on a Carved Stone space, 1 fame at harvest; not in Building.all, so games without the Lion
+// The Lion's Chapel: a small building on a Carved Stone space, 1 lore at harvest (1 fame in older games); not in Building.all, so games without the Lion
 // never offer it (MineralsExpansion.buildings adds it)
 case object Chapel extends Building { val large = false }
 
@@ -165,8 +165,12 @@ object LionExpansion extends Expansion {
         game.hildegard = false
     }
 
-    // Chapels: 1 fame each at harvest (none where a Kobold is, like the Altar of Kings)
-    def chapelFame(f : Faction)(implicit game : Game) : Int = (f == Lion).??(game.controlled(f).%(t => game.koboldIn(t).not)./~(game.working).count(_ == Chapel))
+    // Chapels at harvest (none where a Kobold is, like the Altar of Kings): 1 lore each in new games (LionChapelLore), 1 fame in older ones
+    def chapels(f : Faction)(implicit game : Game) : Int = (f == Lion).??(game.controlled(f).%(t => game.koboldIn(t).not)./~(game.working).count(_ == Chapel))
+
+    def chapelLore(f : Faction)(implicit game : Game) : Int = game.options.has(LionChapelLore).??(chapels(f))
+
+    def chapelFame(f : Faction)(implicit game : Game) : Int = game.options.has(LionChapelLore).not.??(chapels(f))
 
     // The buildings f may build: the Lion builds Chapels instead of Carved Stones
     def allowed(f : Faction, b : Building) : Boolean = (b != Chapel || f == Lion) && (b != CarvedStone || f != Lion)
