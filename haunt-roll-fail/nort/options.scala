@@ -851,6 +851,14 @@ case object LordsWhileContested extends GameOption with ToggleOption {
     def valueOn = "Lion Kingdom's Lords stay while the Lion is in the territory".txt
 }
 
+// A Lord adds its 2 combat points to every fight in its territory, the Lion attacking or defending, against a clan or a creature
+// (bug report, 2026-10-25: the Lion attacked a Draugr beside its own Lord, which added nothing; Gman chose this). Hidden, and given
+// to every new game (mandatoryFor); older games count the Lords only defending against a clan, and replay that way
+case object LordsInEveryFight extends GameOption with ToggleOption {
+    val group = "Fan content".txt
+    def valueOn = "Lion Kingdom's Lords fight in every combat in their territory".txt
+}
+
 // The Lion's upgrade card Ost (after the video game's Faith tree entry) in place of Abundance (the owner, 2026-10-25): a free Defense
 // Tower, and for the rest of the year its Lords join the combats it starts next to them. Hidden, and given to every new game
 // (mandatoryFor); older games keep Abundance (CardVersions.lionOst in editions.scala) and replay that way

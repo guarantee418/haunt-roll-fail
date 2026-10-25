@@ -359,6 +359,7 @@ case class CreatureFightInfo(f : Faction, area : AreaRef, c : Creature, e : Move
             NewBloodExpansion.gearPoints(f, food) -> "Ancestral Equipment".hl,
             TowersExpansion.towerPoints(t) -> DefenseTower.elem,
             LionExpansion.ostPoints(f, t, attacking) -> "Ost".hl,
+            LionExpansion.creatureLordPoints(f, t) -> "Lords".hl,
             LionExpansion.vowChapelPoints(f, t, e, attacking) -> "Hildegard's Vow".hl
         ) ++ waste.??(WastelandsExpansion.playerCreatureParts(f, t, attacking)) ++ $(
             food -> Food.elem,
