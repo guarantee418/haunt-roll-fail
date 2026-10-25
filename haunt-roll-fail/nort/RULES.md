@@ -1032,7 +1032,7 @@ figure on the map) from the Northgard wiki (`expansion/lion/`, asked for by Gman
   the video game's Faith tree entry): build 1 Defense Tower for free (on a free space, with a Lord from the reserve as
   usual); until the end of the year, the Lords next to a combat the Lion starts, against a clan or a creature, join it,
   2 combat points each, and go back to their towers after it, won or lost (they never take casualties). With Hildegard's Vow a Lord still counts once. The card
-  picture is `card/clan/lion-ost.webp` (`lion-art.py <images> <previews> lion-ost`), with the video game's Lord.
+  picture is `card/clan/lion-ost.webp` (`lion-art.py <images> <previews> lion-ost`): the lion emblem, and the Build icon and the Lord token on its bar.
 - Abundance (upgrade, older games): Build; then a territory with 3 or more buildings gives its resources as at harvest.
 - Hildegard's Vow (upgrade): Move 2; in its combats, +2 combat points for each Lord in a territory next to the fight.
 - Warchief Hildegard (Warchiefs module): after a combat she was in, 1 lore for each casualty the enemy suffered.
