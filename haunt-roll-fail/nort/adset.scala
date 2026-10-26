@@ -341,11 +341,11 @@ object MetaAdset extends MetaGame {
     // The old combat report options do nothing now (the report is a setting); kept so the games that have them still load
     // Robotos (robotos.scala) comes from the bot chosen for a seat, as in Meta.botOptions
     // Chosen casualties, taking the Unrest card and the clan power report are on in every new game, as in Meta
-    override val hiddenOptions : $[O] = $(CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood) ++ RobotosSeatOption.all ++ BotSeatOption.all
+    override val hiddenOptions : $[O] = $(CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood, NormalDevelopments) ++ RobotosSeatOption.all ++ BotSeatOption.all
 
     override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood)
 
-    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ WarchiefsChoice.all ++ DevelopmentsChoice.all ++ $(NoDefensiveStrategy, ExtraAchievement, BalancedStartTiles) ++ BanDevelopment.all ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ Module.all.%(_.fan).but(LionKingdom)./(ModuleOption) ++ hiddenOptions
+    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ WarchiefsChoice.all ++ $(NoDefensiveStrategy, ExtraAchievement, BalancedStartTiles) ++ BanDevelopment.all ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ DevelopmentsChoice.fan ++ Module.all.%(_.fan).but(LionKingdom)./(ModuleOption) ++ hiddenOptions
 
     // With two players the second seat doesn't choose: an expansion is agreed on here, or none
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -359,7 +359,7 @@ object MetaAdset extends MetaGame {
         case o => Meta.optionShown(o, selected)
     }
 
-    override def defaultsFor(n : Int, l : $[F]) = $(YearsOption.standard, StandardVictory, VictoryModeOption(false), PrivateFame, UnlimitedUndo, EditionChoice.default, NormalDevelopments, (n > 2).?(LandsSeatChooses).|(LandsNeither))
+    override def defaultsFor(n : Int, l : $[F]) = $(YearsOption.standard, StandardVictory, VictoryModeOption(false), PrivateFame, UnlimitedUndo, EditionChoice.default, (n > 2).?(LandsSeatChooses).|(LandsNeither))
 
     override def quickOptions = Map()
 
