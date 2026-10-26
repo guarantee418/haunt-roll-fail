@@ -58,7 +58,7 @@ object Waste {
 
     val centrals = $(magma, yggdrasil, relic, lake, volcano, mimir, hrimgandr, den, helheim)
 
-    def tiles : $[String] = Tiles.wastelands./(_.id)
+    def tiles(implicit game : Game) : $[String] = tilesOn.??(Tiles.wastelands./(_.id).%(BanEnvironment.allowed(_, game.options)))
 
     def name(tile : String) : String = tile match {
         case "start" => "Standard starting tile"
@@ -108,8 +108,10 @@ object Waste {
     def aroundSpot(spot : Spot)(implicit game : Game) : $[Territory] =
         game.board.at(spot.x, spot.y)./~(p => p.spec.areas./(a => game.board.territory(AreaRef(p.x, p.y, a.id)))).distinct
 
-    // The whole Wastelands module: its Environment tiles and creatures, not just a central tile
-    def module(implicit game : Game) = game.options.has(ModuleOption(Wastelands))
+    // The expansion's two modules, its Environment tiles and its creatures (WastelandsTiles, WastelandsCreatures), not just a central
+    // tile; games made before have ModuleOption(Wastelands), both
+    def tilesOn(implicit game : Game) = game.options.has(ModuleOption(Wastelands)) || game.options.has(WastelandsTiles)
+    def creaturesOn(implicit game : Game) = game.options.has(ModuleOption(Wastelands)) || game.options.has(WastelandsCreatures)
 
     def landvidiIn(t : Territory)(implicit game : Game) = in(t, landvidi, "s")
 
@@ -167,8 +169,8 @@ case object HelheimCentral extends CentralTileChoice(Waste.helheim, "its control
 
 // Uncharted Horizons' five map tiles, The Bridge among them, shuffled into the map tiles (game.scala: FirstPlayerAction)
 case object HorizonsTiles extends GameOption with ToggleOption {
-    val group = "Map tiles".txt
-    def valueOn = "Uncharted Horizons map tiles".txt
+    val group = "Uncharted Horizons".txt
+    def valueOn = "Map tiles".txt
     override val explain = $(
         "Shuffles the " ~ 5.hl ~ " map tiles of Uncharted Horizons into the pile of map tiles at setup, as its rulebook allows.",
         "The Bridge".hl ~ ": two cliffs behind impassable borders, linked by a bridge that makes them adjacent and overhangs the valley between them, a third territory.",
@@ -426,8 +428,8 @@ object WastelandsExpansion extends Expansion {
                 central(tiles, tile, soft)
 
             // After setup, the Environment tiles go into the map tile pile; with Wilderness at most 12 of both expansions
-            case ShuffledTilesBackAction(l) if Waste.module && game.wasteSteps.has("environment").not =>
-                if (game.has(Wilderness))
+            case ShuffledTilesBackAction(l) if Waste.tilesOn && game.wasteSteps.has("environment").not =>
+                if (Wild.tilesOn)
                     Shuffle[String](Wild.tiles ++ Waste.tiles, WasteEnvironmentAction(l, _))
                 else {
                     game.wasteSteps :+= "environment"
@@ -439,7 +441,7 @@ object WastelandsExpansion extends Expansion {
             case WasteEnvironmentAction(l, all) =>
                 game.wasteSteps :+= "environment"
                 game.environment = |(all.take(12))
-                log("Twelve Environment tiles of Wilderness and Wastelands were drawn")
+                log(game.environment.get.num.hl, "Environment tiles of Wilderness and Wastelands were drawn")
                 game.internalPerform(ShuffledTilesBackAction(l), soft)
 
             case ShuffledWasteTilesAction(l) =>

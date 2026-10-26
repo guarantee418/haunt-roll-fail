@@ -1747,7 +1747,15 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     }
                 } ++
                 // A foldable section shows only what is picked until its heading is tapped (Folds)
-                meta.optionsFor(seating.num, seating).diff(meta.hiddenOptions).intersect(pages(page)).%(meta.optionShown(_, options.actual)).%(o => o.fold.forall(foldOpen) || options.selected.has(o))./({ o =>
+                // and a folded section with nothing picked shows its heading over "None", so it can still be opened
+                {
+                val shown = meta.optionsFor(seating.num, seating).diff(meta.hiddenOptions).intersect(pages(page)).%(meta.optionShown(_, options.actual))
+                val empty = shown./~(_.fold).distinct.%(s => foldOpen(s).not && shown.exists(o => o.fold.has(s) && options.selected.has(o)).not)
+                shown.%(o => o.fold.forall(foldOpen) || options.selected.has(o) || o.fold.exists(s => empty.has(s) && shown.find(_.fold.has(s)).has(o)))./({ o =>
+                  if (o.fold.exists(empty.has))
+                    ZOption(Folds.heading(o.group.styled(xstyles.larger125), false), Div("None".txt, ZBasic.info ++ $(xstyles.optionE)), _ => {},
+                        groupClick = o.fold./(s => (_ : Any) => { Folds.toggle(s) ; setupQuestions(page) }).orNull)
+                  else {
                     val state = options.selected.has(o)
                     val enabled = options.enabled(o)
                     val active = enabled
@@ -1769,7 +1777,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         },
                         groupClick = o.fold./(s => (_ : Any) => { if (meta.optionFoldOpen(s, seating, options.actual).not) Folds.toggle(s) ; setupQuestions(page) }).orNull
                     )
-                }) ++
+                  }
+                })
+                } ++
                 (page == 0).$(
                     ZOption(vm, picked.?("Back").|("Cancel").txt.div(ZBasic.choice)(xstyles.halfbutton).onClick, _ => {
                         ui.action.scroll.scrollTop = 0

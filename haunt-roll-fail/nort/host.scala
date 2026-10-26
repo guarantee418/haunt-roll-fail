@@ -84,7 +84,10 @@ object Host extends hrf.host.BaseHost {
             (sys.env.get("NORT_WARCHIEFS").has("1") || random() < 0.5).?(WarchiefsChoice.all.shuffle.take(1)).|((random() < 0.3).$(WarchiefCards)) ++ (random() < 0.3).$(NoDrawDevelopments) ++ (random() < 0.3).$(NoDefensiveStrategy) ++ (random() < 0.4).$(ExtraDevelopment, FewerDevelopments).shuffle.take(1) ++ (random() < 0.3).$(ExtraAchievement) ++ (random() < 0.5).$(BalancedStartTiles) ++ (random() < 0.8).$(LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore) ++
             // NORT_HORIZONS=1: always with the Uncharted Horizons Development cards and map tiles
             (sys.env.get("NORT_HORIZONS").has("1") || random() < 0.5).$(HorizonsDevelopments) ++ (sys.env.get("NORT_HORIZONS").has("1") || random() < 0.5).$(HorizonsTiles) ++
-            (sys.env.get("NORT_WILDERNESS").has("1") || random() < 0.5).$(ModuleOption(Wilderness)) ++
+            // Wilderness and Wastelands: the whole expansion as older games have it, or its parts (tiles, creatures) with a few bans
+            (sys.env.get("NORT_WILDERNESS").has("1") || random() < 0.5).??((random() < 0.3).?($[hrf.meta.GameOption](ModuleOption(Wilderness))).|(
+                (random() < 0.7).$(WildernessTiles) ++ (creatures && random() < 0.7).$(WildernessCreatures))) ++
+            (random() < 0.3).??(BanEnvironment.all.shuffle.take(3) ++ BanCreature.all.shuffle.take(2)) ++
             // NORT_EVENTS=1: always with the Events module
             (sys.env.get("NORT_EVENTS").has("1") || random() < 0.5).$(ModuleOption(EventsModule)) ++
             // NORT_SEA=1: always with the Sea module
@@ -103,7 +106,7 @@ object Host extends hrf.host.BaseHost {
             (sys.env.get("NORT_MILITARY").has("1") || random() < 0.5).$(ModuleOption(MilitaryModule)) ++
             // NORT_WASTELANDS=1: always with Wastelands; a random central tile choice either way (it needs no module),
             // NORT_CENTRAL=1: never the standard tile; NORT_CENTRAL=<tile id>: always that tile
-            wastelands.$(ModuleOption(Wastelands)) ++ $(CentralChoice.all.%(c => creatures || c.tile.forall(Waste.creatureOnly.has(_).not)).%(c => c != StandardCentral || sys.env.get("NORT_CENTRAL").has("1").not)
+            wastelands.??((random() < 0.3).?($[hrf.meta.GameOption](ModuleOption(Wastelands))).|((random() < 0.7).$(WastelandsTiles) ++ (creatures && random() < 0.7).$(WastelandsCreatures))) ++ $(CentralChoice.all.%(c => creatures || c.tile.forall(Waste.creatureOnly.has(_).not)).%(c => c != StandardCentral || sys.env.get("NORT_CENTRAL").has("1").not)
                 .%(c => sys.env.get("NORT_CENTRAL").%(_ != "1").forall(c.tile.has)).shuffle.head) ++
             teams
         val level = solo.$(AutomaLevelOption(1 + (random() * 6).toInt))
