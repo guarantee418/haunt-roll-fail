@@ -1693,7 +1693,56 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
             def foldOpen(s : String) = Folds.isOpen(s) || meta.optionFoldOpen(s, seating, options.actual)
 
+            // Back (or Cancel) and Start (or Next), at the top of the page and again at the bottom
+            def buttons =
+                (page == 0).$(
+                    ZOption(vm, picked.?("Back").|("Cancel").txt.div(ZBasic.choice)(xstyles.halfbutton).onClick, _ => {
+                        ui.action.scroll.scrollTop = 0
+                        // metaMenu()
+                        history.popState()
+                    })
+                ) ++
+                (page > 0).$(
+                    ZOption(vm, "Back".txt.div(ZBasic.choice)(xstyles.halfbutton).onClick, _ => {
+                        ui.action.scroll.scrollTop = 0
+                        // setupQuestions(page - 1)
+                        history.popState()
+                    })
+                ) ++
+                v.ok.??(
+                    (page == pages.length - 1).$(
+                        ZOption(vm, "Start".hlb.div(ZBasic.choice)(xstyles.halfbutton).onClick, _ => {
+                            history.destroy(pages.length - 1 + picked.??(1))
+
+                        if (online)
+                            arrangeOnlineGame(seating, difficulties, options.actual, Map(), notes, false, meta.randomGameName(), HRF.now(), $(meta.start), None, g => {})
+                        else {
+                            val title = meta.randomGameName()
+                            val journal = keep./(newLocalGame(_, seating, difficulties, options.actual, title)).|(new MemoryJournal[meta.gaming.ExternalAction](meta))
+
+                            startGame(seating, difficulties, options.actual, $, journal, title, () => Map(), NoSwitches)
+                        }
+                    })
+                ) ++
+                (page < pages.length - 1).$(
+                    ZOption(vm, "Next".hh.div(ZBasic.choice)(xstyles.halfbutton).onClick, _ => {
+                        ui.action.scroll.scrollTop = 0
+                        history.pushState(null, () => setupQuestions(page))
+                        setupQuestions(page + 1)
+                    })
+                )
+            ) ++
+            v.ok.not.??(
+                (page == pages.length - 1).$(
+                    ZOption(vm, "Start".hlb.div(ZBasic.info)(xstyles.halfbutton))
+                ) ++
+                (page < pages.length - 1).$(
+                    ZOption(vm, "Next".hh.div(ZBasic.info)(xstyles.halfbutton))
+                )
+            )
+
             ui.action.asker.zask(
+                buttons ++
                 (page == 0).?? {
                     seating./(f => ZOption("Setup Factions".styled(xstyles.larger125), Div(Empty ~ online.?(Input(notes.get(f).|(""), "Player #" + (seating.indexOf(f) + 1), s => notes += f -> s.sanitize(32), 9, 16, ZBasic.inputT, ZBasic.inputD)) ~ " " ~ (padding(f) ~ hidden.has(f).?(meta.randomName.txt).|(meta.factionElem(f)) ~ padding(f)).div(xstyles.width18ch) ~ " " ~
                         Parameter("difficulty", OnClick(Span((difficulties(f) match {
@@ -1780,51 +1829,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                   }
                 })
                 } ++
-                (page == 0).$(
-                    ZOption(vm, picked.?("Back").|("Cancel").txt.div(ZBasic.choice)(xstyles.halfbutton).onClick, _ => {
-                        ui.action.scroll.scrollTop = 0
-                        // metaMenu()
-                        history.popState()
-                    })
-                ) ++
-                (page > 0).$(
-                    ZOption(vm, "Back".txt.div(ZBasic.choice)(xstyles.halfbutton).onClick, _ => {
-                        ui.action.scroll.scrollTop = 0
-                        // setupQuestions(page - 1)
-                        history.popState()
-                    })
-                ) ++
-                v.ok.??(
-                    (page == pages.length - 1).$(
-                        ZOption(vm, "Start".hlb.div(ZBasic.choice)(xstyles.halfbutton).onClick, _ => {
-                            history.destroy(pages.length - 1 + picked.??(1))
-
-                            if (online)
-                                arrangeOnlineGame(seating, difficulties, options.actual, Map(), notes, false, meta.randomGameName(), HRF.now(), $(meta.start), None, g => {})
-                            else {
-                                val title = meta.randomGameName()
-                                val journal = keep./(newLocalGame(_, seating, difficulties, options.actual, title)).|(new MemoryJournal[meta.gaming.ExternalAction](meta))
-
-                                startGame(seating, difficulties, options.actual, $, journal, title, () => Map(), NoSwitches)
-                            }
-                        })
-                    ) ++
-                    (page < pages.length - 1).$(
-                        ZOption(vm, "Next".hh.div(ZBasic.choice)(xstyles.halfbutton).onClick, _ => {
-                            ui.action.scroll.scrollTop = 0
-                            history.pushState(null, () => setupQuestions(page))
-                            setupQuestions(page + 1)
-                        })
-                    )
-                ) ++
-                v.ok.not.??(
-                    (page == pages.length - 1).$(
-                        ZOption(vm, "Start".hlb.div(ZBasic.info)(xstyles.halfbutton))
-                    ) ++
-                    (page < pages.length - 1).$(
-                        ZOption(vm, "Next".hh.div(ZBasic.info)(xstyles.halfbutton))
-                    )
-                ) ++
+                buttons ++
                 $
 
             )
