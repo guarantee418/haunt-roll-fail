@@ -443,8 +443,9 @@ object FightPoints {
 // "Combat Report" setting is Skip taps OK without seeing it (the UI does, ask in ui.scala).
 // f: the clan (None for a creature, named by who); points: the sources worth something; casualties: the sources of
 // the casualties inflicted, a negative one cancels (its Elem then says how, "ignored by ..."); lost: figures removed;
-// fate: what became of a creature ("was defeated")
-case class FightSide(f : |[Faction], who : Elem, attacking : Boolean, points : $[(Int, Elem)], total : Int, casualties : $[(Int, Elem)], inflicted : Int, lost : Int, fate : Elem = Empty)
+// fate: what became of a creature ("was defeated"); fame: the fame the clan gained for defeating it, with where it came from
+// (asked for by Robotos on 2026-10-26)
+case class FightSide(f : |[Faction], who : Elem, attacking : Boolean, points : $[(Int, Elem)], total : Int, casualties : $[(Int, Elem)], inflicted : Int, lost : Int, fate : Elem = Empty, fame : $[(Int, Elem)] = $)
 
 object FightSide {
     def apply(f : Faction, attacking : Boolean, points : $[(Int, Elem)], total : Int, casualties : $[(Int, Elem)], inflicted : Int, lost : Int)(implicit game : Game) : FightSide =
@@ -494,7 +495,8 @@ object CombatReport {
             from.any.?(" (" ~ from.join(", ") ~ ")").|(Empty) ~
             hits.any.?(", inflicted " ~ CombatIcon.skulls(s.inflicted) ~ " (" ~ hits.join(", ") ~ ")").|(Empty) ~
             (s.lost > 0).?(" and lost " ~ s.lost.hl ~ (s.lost == 1).?(" unit").|(" units")).|(Empty) ~
-            (s.fate != Empty).?(" and " ~ s.fate).|(Empty) ~ "."
+            (s.fate != Empty).?(" and " ~ s.fate).|(Empty) ~
+            s.fame.any.?(" and gained " ~ s.fame.map(_._1).sum.hl ~ " " ~ FameIcon() ~ " (" ~ s.fame./{ case (n, what) => n.hl ~ " for " ~ what }.join(", ") ~ ")").|(Empty) ~ "."
         }
 
         // Your side first

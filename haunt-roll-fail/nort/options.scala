@@ -277,13 +277,16 @@ object BanDevelopment {
 
 // DEVELOPMENT CARDS EACH YEAR: one per player (the rules), one more (suggested by Marzaus for two players on 2026-10-19, for every
 // player count by Gman on 2026-10-20), or one fewer from year 2 on, "hard mode" (Marzaus, 2026-10-22). Game.devsIn; not offered
-// against the Automa (optionsFor in meta.scala). Games made before the choice have none of these, or ExtraDevelopment
-trait DevelopmentsChoice extends GameOption with OneOfGroup {
-    val group = "Development cards each year".txt
+// against the Automa (optionsFor in meta.scala). Games made before the choice have none of these, or ExtraDevelopment.
+// Marzaus's two variants are listed under Fan content as toggles, each turning the other off (Robotos, 2026-10-26); the rules'
+// NormalDevelopments, once the third choice of a "Development cards each year" section, is hidden and kept for the games that have it
+trait DevelopmentsChoice extends GameOption with ToggleOption {
+    val group = "Fan content".txt
+    override def forcedOff(all : $[BaseOption]) = all.of[DevelopmentsChoice].but(this)
 }
 
 case object NormalDevelopments extends DevelopmentsChoice {
-    def valueOn = "One per player".txt
+    def valueOn = "Development cards: one per player".txt
     override val explain = $(
         "The rules: each year as many Development cards are revealed as there are players.",
     )
@@ -291,9 +294,9 @@ case object NormalDevelopments extends DevelopmentsChoice {
 
 // One more Development card revealed each year than there are players; the one left after everyone passes is discarded
 case object ExtraDevelopment extends DevelopmentsChoice {
-    def valueOn = "One extra each year".txt
+    def valueOn = "Development cards: one extra each year".txt
     override val explain = $(
-        "Each year one more Development card is revealed than there are players (" ~ 3.hl ~ " in a two-player game), so the last player to pass still has a choice. The card left over is discarded.",
+        "Fan-made variant by Marzaus. Each year one more Development card is revealed than there are players (" ~ 3.hl ~ " in a two-player game), so the last player to pass still has a choice. The card left over is discarded.",
         "When the decks can't last every year (six players in a long game), the " ~ "Uncharted Horizons Development cards".hl ~ " are added.",
     )
 
@@ -306,14 +309,17 @@ case object ExtraDevelopment extends DevelopmentsChoice {
 
 // One fewer Development card than there are players from the second year on: the last player to pass gets none
 case object FewerDevelopments extends DevelopmentsChoice {
-    def valueOn = "One fewer after year 1 (hard mode)".txt
+    def valueOn = "Development cards: one fewer after year 1 (hard mode)".txt
     override val explain = $(
-        "Year " ~ 1.hl ~ " reveals one Development card per player. From year " ~ 2.hl ~ " on, one fewer is revealed than there are players, so the last player to pass gets none.",
+        "Fan-made variant by Marzaus. Year " ~ 1.hl ~ " reveals one Development card per player. From year " ~ 2.hl ~ " on, one fewer is revealed than there are players, so the last player to pass gets none.",
     )
 }
 
 object DevelopmentsChoice {
     val all : $[DevelopmentsChoice] = $(NormalDevelopments, ExtraDevelopment, FewerDevelopments)
+
+    // The two offered under Fan content
+    val fan : $[DevelopmentsChoice] = $(ExtraDevelopment, FewerDevelopments)
 
     // Development cards revealed in a year (not the last, which reveals the Achievements)
     def in(options : $[BaseOption], players : Int, automa : Boolean, year : Int) : Int =
@@ -373,6 +379,7 @@ case object FirstSeatStarts extends GameOption with ToggleOption {
 // kept face down) and the default; games made before the choice have neither option and stay private
 trait FameChoice extends GameOption with OneOfGroup {
     val group = "Fame".txt
+    override def fold = |("Fame")
 }
 
 case object PrivateFame extends FameChoice {
@@ -397,6 +404,7 @@ object FameChoice {
 // Display only, so recorded games replay the same; games made before the choice have none of these and keep unlimited undo
 trait UndoChoice extends GameOption with OneOfGroup {
     val group = "Undo".txt
+    override def fold = |("Undo")
 }
 
 case object NoUndo extends UndoChoice {
