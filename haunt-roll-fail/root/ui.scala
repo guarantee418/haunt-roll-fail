@@ -969,8 +969,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         drawTrackers(g)
 
+        // The Mountain map's closed paths, loaded with the map's own prefix like its other images
         game.rubble.foreach { case (from, to) =>
-            val pp = $("rubble-" + from.name + "-" + to.name, "rubble-" + to.name + "-" + from.name)
+            val pp = $(mapid + "rubble-" + from.name + "-" + to.name, mapid + "rubble-" + to.name + "-" + from.name)
             pp.%(resources.images.has).take(1)./(p => g.drawImage(resources.images.get(p), 0, 0))
         }
 
@@ -986,7 +987,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             val l = extractClearings(highlight.get)
 
             if (l.num == 2) {
-                val pp = $("path-" + l(0).name + "-" + l(1).name, "path-" + l(1).name + "-" + l(0).name)
+                val pp = $(mapid + "path-" + l(0).name + "-" + l(1).name, mapid + "path-" + l(1).name + "-" + l(0).name)
                 pp.%(resources.images.has).take(1).foreach(p => g.drawImage(resources.images.get(p), 20, 20))
             }
 
@@ -1020,7 +1021,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     val (x, y) = game.board.center(c)
                     g.drawImage(resources.images.get("clearing-highlight-battle"), x - 300, y - 300)
                 case MoveHighlight(from, to) =>
-                    val pp = $(mapid + "path-" + from.name + "-" + to.name, "path-" + to.name + "-" + from.name)
+                    val pp = $(mapid + "path-" + from.name + "-" + to.name, mapid + "path-" + to.name + "-" + from.name)
                     pp.%(resources.images.has).take(1)./{ p => g.drawImage(resources.images.get(p), 20, 20) }
                 case _ =>
             }
