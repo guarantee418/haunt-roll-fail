@@ -218,7 +218,8 @@ picking the drawn clan by hand draws again). The setup options
 (colors, game length, victory conditions, first player, "Ban card draw developments"
 (`NoDrawDevelopments`: leaves the seven Development cards that only draw cards
 out of the decks), "Ban Defensive Strategy" (`NoDefensiveStrategy`, asked for by Gman on 2026-10-14;
-also offered in Adset), "Development cards each year" (`DevelopmentsChoice`: one per player, the default `NormalDevelopments`; `FewerDevelopments`, one fewer from year 2 on, "hard mode", asked for by Marzaus on 2026-10-22; or one extra, `ExtraDevelopment`, `game.devsIn(year)`,
+also offered in Adset), Marzaus's Development card counts, under Fan content (moved there on 2026-10-26, asked for by Robotos; once a "Development cards each year" section whose
+default, one per player, is now the hidden `NormalDevelopments` older games keep) as two toggles that turn each other off (`DevelopmentsChoice`: `FewerDevelopments`, one fewer from year 2 on, "hard mode", asked for by Marzaus on 2026-10-22; or one extra, `ExtraDevelopment`, `game.devsIn(year)`,
 suggested by Marzaus for two players on 2026-10-19, made for every player count by Gman on 2026-10-20; not against the
 Automa; in the main setup and Adset; the card left after everyone passes is discarded; when the core decks can't last
 every year, as with six players in a long game, the Uncharted Horizons Development cards are added, `ExtraDevelopment.needsHorizons`,
