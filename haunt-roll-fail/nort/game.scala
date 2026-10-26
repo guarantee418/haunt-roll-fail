@@ -455,6 +455,9 @@ case class ChooseCasualtiesAction(then : ForcedAction) extends ForcedAction with
 case class KnowledgeEachTerritoryAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for KrakenMovesTide (newblood.scala)
 case class KrakenMovesTideAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// The same for OxPicksSpace (Ox's Ancestral Equipment token on a small building space or a Carved Stone space, picked by Ox);
+// wrapped around Ox's ExploreTurnAction, it also asks for the token of that tile
+case class OxPicksSpaceAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case object EndOfYearAction extends ForcedAction
 case object GameEndAction extends ForcedAction
 case object NewYearAction extends ForcedAction
@@ -2091,6 +2094,12 @@ object CommonExpansion extends Expansion {
         case KrakenMovesTideAction(then) =>
             if (game.options.has(KrakenMovesTide).not)
                 game.addOption(KrakenMovesTide)
+
+            Then(then)
+
+        case OxPicksSpaceAction(then) =>
+            if (game.options.has(OxPicksSpace).not)
+                game.addOption(OxPicksSpace)
 
             Then(then)
 
