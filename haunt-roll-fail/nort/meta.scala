@@ -75,15 +75,16 @@ object Meta extends MetaGame { mmm =>
     // Team play comes from the choice above the clan picker (pickerModes), the old fixed team variants are no longer offered
     // The Tutorial's practice game has its tips on
     // Chosen casualties are on in every new game (mandatoryFor), not in older ones
-    override val hiddenOptions = $(ModuleOption(VictoryModule), ModuleOption(Wilderness), ModuleOption(Wastelands), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood, LionStartingDeck, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, NormalDevelopments) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
+    override val hiddenOptions = $(ModuleOption(VictoryModule), ModuleOption(Wilderness), ModuleOption(Wastelands), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood, LionStartingDeck, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, NormalDevelopments, ModuleOption(DragonVariant)) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
-    // Options no longer offered that older games still have, and log at the start
-    val retired : $[O] = $(ModuleOption(Wilderness), ModuleOption(Wastelands))
+    // Options no longer offered on the setup screen that games still have, and log at the start (Robotos's Dragon is picked as its
+    // own clan in the picker since 2026-10-26, factionVariants)
+    val retired : $[O] = $(ModuleOption(Wilderness), ModuleOption(Wastelands), ModuleOption(DragonVariant))
 
     // New Blood has no option: picking one of its clans brings it in
     // The modules come in one section per box, as Robotos laid them out (2026-10-26): Base game, Warchief expansion, Wilderness and
     // Wastelands expansions (with their bans and the Central tile), Uncharted Horizons; Balanced starting tiles before them (Gman)
-    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ $(BalancedStartTiles, ModuleOption(Creatures), MoreCreatures) ++ WarchiefsChoice.all ++ $(WildernessTiles, WildernessCreatures, WastelandsTiles, WastelandsCreatures) ++ BanEnvironment.all ++ BanCreature.all ++ CentralChoice.all ++ $(ModuleOption(EventsModule), ModuleOption(Sea), HorizonsTiles) ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ AutomaLevelOption.all ++ DevelopmentsChoice.fan ++ Module.all.%(_.fan).but(LionKingdom)./(ModuleOption) ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ $(BalancedStartTiles, ModuleOption(Creatures), MoreCreatures) ++ WarchiefsChoice.all ++ $(WildernessTiles, WildernessCreatures, WastelandsTiles, WastelandsCreatures) ++ BanEnvironment.all ++ BanCreature.all ++ CentralChoice.all ++ $(ModuleOption(EventsModule), ModuleOption(Sea), HorizonsTiles) ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ AutomaLevelOption.all ++ DevelopmentsChoice.fan ++ Module.all.%(_.fan).but(LionKingdom).but(DragonVariant)./(ModuleOption) ++ hiddenOptions
 
     // Colors and teams only for the clans in the game, as many teams as players
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -146,7 +147,8 @@ object Meta extends MetaGame { mmm =>
         }
         // Teams by seat, alternating, for the clans without one
         val teams = l.zipWithIndex.%{ case (f, _) => options.of[TeamOption].exists(o => o.clan == f && o.team < n).not }./{ case (f, i) => TeamOption(f, i % 2) : O }
-        options.%{ case TeamOption(f, t) => t < n ; case _ => true } ++ added ++ teams
+        // Robotos's Dragon comes with its pick in the clan picker (factionVariants), never from the last setup (it was a setup option)
+        options.%{ case TeamOption(f, t) => t < n ; case ModuleOption(DragonVariant) => false ; case _ => true } ++ added ++ teams
     }
 
     // Chosen casualties, taking the Unrest card and the clan power report: every new game gets them; a loaded game keeps the options it was started with
@@ -230,6 +232,28 @@ object Meta extends MetaGame { mmm =>
         (Div("?".hlb.spn(styles.pickRandom), styles.pickRandomBox) ~ Div("Random".hlb) ~ Div("all fourteen".spn(xstyles.smaller85)), clans.but(Lion))
     )
     override def randomName = "Random Clan"
+
+    // The fan-made clans have their own section of the clan picker (Gman, 2026-10-26): the Lion Kingdom, and Robotos's Dragon,
+    // picked as its own clan (it was the setup option "Lower skill floor Dragon", DragonVariant)
+    val fanClans : Elem = "Fan-made clans".txt
+    override def factionGroup(f : Faction) = (f == Lion).?(fanClans)
+    override def factionVariants = $(FactionVariant(Dragon, "Dragon Clan (variant)",
+        Div(Image("clan-" + Dragon.style, styles.pickIcon)) ~ Div(Dragon.name.hlb) ~ Div("lower skill floor".spn(xstyles.smaller85)),
+        Image("clan-" + Dragon.style, styles.menuIcon) ~ "Dragon Clan (variant)".spn(xstyles.bold),
+        |(("i".txt, "Dragon Clan".hlb ~ ", lower skill floor variant", dragonVariantInfo)),
+        |(fanClans), $(ModuleOption(DragonVariant))))
+
+    // Robotos's Dragon in the clan picker: its cards and board as a game with it has them
+    def dragonVariantInfo : $[Elem] = {
+        val before = CardVersions.options
+        CardVersions.options = before :+ ModuleOption(DragonVariant)
+        try {
+            clanAbility(Dragon) ++ DragonVariant.about./(_.div(styles.menuText)) ++ $(HorizontalBreak) ++ warchiefInfo(Dragon)
+        }
+        finally {
+            CardVersions.options = before
+        }
+    }
 
     // No clan colors here: colors belong to players and are chosen on the setup screen
     def factionElem(f : Faction) = factionName(f).txt
