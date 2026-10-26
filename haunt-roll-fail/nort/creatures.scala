@@ -653,9 +653,15 @@ object CreaturesExpansion extends Expansion {
                 // Losing all units loses the fight; otherwise ties go to the defender
                 val won = pc < units && attacking.?(ps > cs).|(ps >= cs)
 
+                // The Wyvern goes back to its Den unless it lost there (Wilderness)
+                val den = (c.kind == Wyvern && game.noAbilities.not && Wild.homeIn(t).not).??(Wild.homes)
+
                 // The combat report, from the same sums; creatures ignore casualties, so the clan inflicts none
                 val wyvernBack = won && c.kind == Wyvern && game.noAbilities.not && Wild.homeIn(t).not && Wild.homes.any
-                val player = FightSide(f, attacking, FightPoints.parts(f, t, attacking, extras ++ $(food -> Food.elem, face.points -> "the die".txt)), ps, $, 0, math.min(pc, units))
+                // The fame for defeating it (below): the creature's own, a Giant Boar's 2 more as the defender, Bold Maneuver's 2
+                val fame = (won && den.none).??($(c.kind.fame -> ("defeating " ~ c.elem), (c.kind == GiantBoar && attacking.not && game.noAbilities.not).??(2) -> "defeating it as the defender".txt) ++
+                    (won && attacking && e.special == BoldMove).$(2 -> RaidCard("bold-maneuver").elem)).filter(_._1 > 0)
+                val player = FightSide(f, attacking, FightPoints.parts(f, t, attacking, extras ++ $(food -> Food.elem, face.points -> "the die".txt)), ps, $, 0, math.min(pc, units)).copy(fame = fame)
                 val creature = FightSide(None, c.elem, attacking.not, ($(c.kind.value -> "its strength".txt, cface.points -> "the die".txt) ++ cws).filter(_._1 > 0), cs,
                     $(cface.casualties -> "the die".txt, -shield -> "cancelled".txt).filter(_._1 != 0), pc, 0, won.?(wyvernBack.?("was driven back to its Den".txt).|("was defeated".txt)).|(Empty))
                 game.fightReport = |(FightReport(a, attacking.?(player).|(creature), attacking.?(creature).|(player), |(won == attacking), won.not && pc >= units))
@@ -680,9 +686,6 @@ object CreaturesExpansion extends Expansion {
                     if (game.options.has(MendFigures))
                         game.mendedFigures ++= specials.diff(game.specialsIn(t, f))
                 }
-
-                // The Wyvern goes back to its Den unless it lost there (Wilderness)
-                val den = (c.kind == Wyvern && game.noAbilities.not && Wild.homeIn(t).not).??(Wild.homes)
 
                 // Sea module: Bold Maneuver gives 2 fame per combat won
                 if (won && attacking && e.special == BoldMove) {
