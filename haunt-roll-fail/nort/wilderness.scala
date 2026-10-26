@@ -30,7 +30,14 @@ object Wild {
     val creatureTiles = $(graveyard, den)
 
     // Not the Great Lake when it is the central tile
-    def tiles(implicit game : Game) : $[String] = Tiles.environment./(_.id).%(t => game.has(Creatures) || creatureTiles.has(t).not).but(den).but(game.central)
+    def tiles(implicit game : Game) : $[String] = tilesOn.??(Tiles.environment./(_.id).%(t => game.has(Creatures) || creatureTiles.has(t).not).but(den).but(game.central).%(BanEnvironment.allowed(_, game.options)))
+
+    // The expansion's two modules (WildernessTiles, WildernessCreatures); games made before have ModuleOption(Wilderness), both
+    def tilesOn(implicit game : Game) = game.options.has(ModuleOption(Wilderness)) || game.options.has(WildernessTiles)
+    def creaturesOn(implicit game : Game) = game.options.has(ModuleOption(Wilderness)) || game.options.has(WildernessCreatures)
+
+    // The Wyvern's Den goes into the pile, below the first tiles
+    def denShuffled(implicit game : Game) = game.has(Creatures) && tilesOn && BanEnvironment.allowed(den, game.options)
 
     // Areas holding a feature: a geyser, ruins and their fame, the Swamp, the graveyard, the Den itself
     val geysers : $[(String, String)] = $("wild-geyser-1" -> "s", "wild-geyser-2" -> "s")
@@ -128,12 +135,12 @@ object WildernessExpansion extends Expansion {
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         // SETUP: after setup, the Environment tiles go into the map tile pile; the Wyvern's Den below the first 3 tiles per player
-        case ShuffledTilesBackAction(l) =>
+        case ShuffledTilesBackAction(l) if Wild.tilesOn =>
             game.pile = l
 
             log("The unused tiles went back into the pile")
 
-            if (game.has(Creatures))
+            if (game.has(Creatures) && BanEnvironment.allowed(Wild.graveyard, game.options))
                 game.spectrals = Creature.spectral
 
             // With Wastelands, the twelve Environment tiles drawn from both expansions
@@ -144,7 +151,7 @@ object WildernessExpansion extends Expansion {
 
             log("The Environment tiles were shuffled into the map tiles")
 
-            if (game.has(Creatures)) {
+            if (Wild.denShuffled) {
                 val top = l.take(3 * game.arity)
                 Shuffle[String]((l.drop(top.num) :+ Wild.den), ShuffledDenAction(top, _))
             }

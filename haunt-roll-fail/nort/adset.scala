@@ -264,7 +264,7 @@ object AdsetExpansion extends Expansion {
             Random[Faction]($(game.setup.first), FirstPlayerAction(_))
 
         // No reshuffle: the pile stays as it is (Wilderness and Wastelands still shuffle their Environment tiles in)
-        case ShuffledTilesBackAction(l) if game.has(Wilderness).not && Waste.module.not =>
+        case ShuffledTilesBackAction(l) if Wild.tilesOn.not && Waste.tilesOn.not =>
             game.pile = l
 
             Then(StartYearAction)

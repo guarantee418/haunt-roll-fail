@@ -48,7 +48,7 @@ Uncharted Horizons' Events and Alternative victory conditions modules are in
 `nort/horizons.scala`. Its 13 Development cards and 2 Achievements (option
 "Uncharted Horizons Development cards", next to "Ban card draw developments")
 are in `nort/horizon-devs.scala`, and its 5 map tiles with The Bridge (option
-"Uncharted Horizons map tiles", under the Central tile choice) are
+"Map tiles" in the setup's Uncharted Horizons section) are
 `Tiles.horizons` (`horizon-*`, made by `nort/tools/horizon-tiles.py`). Its Sea module (Raids: a Beach tile with a Port for each
 player, the Raid phase and the 24 Raid cards, from the TTS mod 3597126237,
 whose rulebook PDF has the rules) is in `nort/sea.scala`; the Beach is four
@@ -110,6 +110,15 @@ the short post are listed in `nort/RULES.md` (Military paths); the player panels
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.
+The setup screen lists the modules one section per box, as Robotos laid them out on 2026-10-26: "Base game" (Creatures module,
+More creatures!), "Warchief expansion" (once "Warchiefs module"), "Wilderness expansion" and "Wastelands expansion", each split into
+its "Environment tiles" and its creatures (`WildernessTiles`, `WildernessCreatures`, `WastelandsTiles`, `WastelandsCreatures` in
+`nort/options.scala`; any part turns the expansion's code on, `Meta.has`; `Wild.tilesOn`/`creaturesOn`, `Waste.tilesOn`/`creaturesOn`
+say which), with the folded "Ban Environment tiles" (`BanEnvironment`, the two Geysers, Ruins and High Peaks together; the Ancestral
+Graveyard and the Wyvern's Den bring their Spectral Warriors and Wyvern) and "Ban creatures" (`BanCreature`, the expansions' deck
+creatures) shown for the parts picked, then the Central tile, then "Uncharted Horizons" (Events, Sea, its map tiles); Balanced
+starting tiles sits right after Card edition (Gman). Older games keep `ModuleOption(Wilderness)` / `ModuleOption(Wastelands)`, both
+parts, now hidden (`Meta.retired`, still logged at the start); Adset still adds the whole expansion it drafts.
 On the map, territories are tinted with their controlling player's color,
 turn gray when invaded and pink during the fight (resource icons and the
 printed building space frames stay untinted: `tint` in `nort/ui.scala` cuts them out); closed territories that give fame have their border dashes
@@ -242,7 +251,8 @@ hook the setup screen in `hrf.scala` calls for every option). Long sections fold
 heading with an arrow (`Folds` in `ui.scala`, `BaseOption.fold`): on the setup screen Game length, Victory conditions,
 Automa difficulty and Central tile, in the settings Font Size, Scroll Speed (every game) and Territory Opacity. Folded,
 a section shows only what is picked (Territory Opacity a one-line summary, `Setting.foldSummary`); every section starts
-folded and the open ones are remembered in the browser (`hrf.open-sections`). Victory conditions stays open while the
+folded and the open ones are remembered in the browser (`hrf.open-sections`). A folded section with nothing picked shows its heading over "None" (before 2026-10-26 it vanished, so the
+Ban sections could not be opened). Victory conditions stays open while the
 chosen cards are the wrong number (`Meta.optionFoldOpen`). Northgard no longer sets `underConstruction`
 in its `Meta` (setting it to `true` would put an "Under Construction" note under
 its name on the game list and a disclaimer at the top of its menu).

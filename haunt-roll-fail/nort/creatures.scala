@@ -234,7 +234,7 @@ object Creature {
     val hrimgandr = Creature(Hrimgandr, 1)
 
     // The creature deck of a game
-    def deck(implicit game : Game) : $[Creature] = all ++ game.has(Wilderness).??(wild) ++ Waste.module.??(waste)
+    def deck(implicit game : Game) : $[Creature] = (all ++ Wild.creaturesOn.??(wild) ++ Waste.creaturesOn.??(waste)).%(c => BanCreature.allowed(c.kind, game.options))
 }
 
 // A creature attacked by the current Move action, in the territory with this anchor
@@ -243,7 +243,7 @@ case class CreatureFight(area : AreaRef, creature : Creature) extends Record
 
 // The More Creatures variant: after passing, a player may make a creature appear
 case object MoreCreatures extends GameOption with ToggleOption {
-    val group = "Creatures".txt
+    val group = "Base game".txt
     def valueOn = "More creatures!".txt
     override val explain = $(
         "Rulebook variant: after taking their Development card, a player may make a creature appear on a free lair (or in any territory without a creature), unless there are already as many creatures on the map as players.",

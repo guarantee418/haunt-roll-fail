@@ -197,10 +197,10 @@ object VictoryCardOption {
     val all : $[VictoryCardOption] = VictoryCard.all./(VictoryCardOption(_))
 }
 
-// WARCHIEFS MODULE: the whole module (ModuleOption(Warchiefs)), only its third clan upgrade cards (WarchiefCards),
-// or only its warchiefs (WarchiefPawns); at most one of the three
+// WARCHIEF EXPANSION: the whole expansion (ModuleOption(Warchiefs)), only its third clan upgrade cards (WarchiefCards),
+// or only its warchiefs (WarchiefPawns); at most one of the three. "Warchiefs module" until Robotos asked for its name (2026-10-26)
 object WarchiefsChoice {
-    val group = "Warchiefs module".txt
+    val group = "Warchief expansion".txt
     def all : $[GameOption] = $(ModuleOption(Warchiefs), WarchiefCards, WarchiefPawns)
     def others(o : BaseOption) : $[BaseOption] = all.%(_ != o)
 }
@@ -891,6 +891,15 @@ case object LionChapelLore extends GameOption with ToggleOption {
 }
 
 object Module {
+    // The setup screen's section of a module that isn't fan-made (Robotos, 2026-10-26: one section per box)
+    def section(m : Module) : String = m match {
+        case Creatures => "Base game"
+        case Wilderness => "Wilderness expansion"
+        case Wastelands => "Wastelands expansion"
+        case EventsModule | Sea | VictoryModule | Solo | TrainingFields | UnchartedHorizons => "Uncharted Horizons"
+        case _ => "Modules and expansions"
+    }
+
     val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, DragonVariant, AggressiveCreatures, LionKingdom)
 
     // The team variants and the number of players each one needs
@@ -900,10 +909,103 @@ object Module {
     val sides : Map[Module, Int] = Map(TeamsVariant -> 2, Teams3v3 -> 2, Teams2v2v2 -> 3)
 }
 
+// WILDERNESS AND WASTELANDS: each expansion is two modules, its Environment tiles and its creatures, and each has bans (asked for by
+// Robotos on 2026-10-26: Wilderness tiles with the base game's creatures only, no Ruins or Graveyard, no Hvedrung). Any part turns
+// the expansion's code on (Meta.has); Wild.tilesOn, Wild.creaturesOn, Waste.tilesOn and Waste.creaturesOn say which. Games made
+// before have ModuleOption(Wilderness) or ModuleOption(Wastelands), both parts, which are no longer offered (Meta.hiddenOptions)
+case object WildernessTiles extends GameOption with ToggleOption with ImportantOption {
+    val group = "Wilderness expansion".txt
+    def valueOn = "Environment tiles".txt
+    override val explain = $(
+        "The Great Lake, two Geysers, two Ruins, the Swamp, the Poisonous Swamp and two High Peaks are shuffled into the map tiles after setup. Impassable borders (orange lines) can't be crossed.",
+        "With the " ~ "Creatures".hl ~ " module, the Ancestral Graveyard (Spectral Warriors) and the Wyvern's Den (the Wyvern) are added too.",
+        "Single tiles can be left out under " ~ "Ban Environment tiles".hl ~ ".",
+    )
+}
+
+case object WildernessCreatures extends GameOption with ToggleOption with ImportantOption {
+    val group = "Wilderness expansion".txt
+    def valueOn = "Wilderness creatures".txt
+    override val explain = $(
+        "The Draugr Jötnar, the Eldthursar and Hvedrung join the creature deck.",
+        "Needs the " ~ "Creatures".hl ~ " module. The Spectral Warriors and the Wyvern come with their tiles, the Ancestral Graveyard and the Wyvern's Den (" ~ "Environment tiles".hl ~ "). Single creatures can be left out under " ~ "Ban creatures".hl ~ ".",
+    )
+    override def required(all : $[BaseOption]) = $($(ModuleOption(Creatures)))
+}
+
+case object WastelandsTiles extends GameOption with ToggleOption with ImportantOption {
+    val group = "Wastelands expansion".txt
+    def valueOn = "Environment tiles".txt
+    override val explain = $(
+        "Seven Environment tiles (the Kobold Camp, the Jötnar Camp with Jötunn Blainn, Naströnd, Landvidi, Thor's Wrath, Urdarbrunn and Vedrfolnir) are shuffled into the map tiles after setup; with the Wilderness Environment tiles, twelve of both are drawn.",
+        "A Central tile can replace the starting tile (" ~ "Central tile".hl ~ " below, also offered without this module). Single tiles can be left out under " ~ "Ban Environment tiles".hl ~ ".",
+    )
+}
+
+case object WastelandsCreatures extends GameOption with ToggleOption with ImportantOption {
+    val group = "Wastelands expansion".txt
+    def valueOn = "Wastelands creatures".txt
+    override val explain = $(
+        "Rock Golems, Myrkalfar, Giant Boars, Kobolds and Valdemar join the creature deck.",
+        "Needs the " ~ "Creatures".hl ~ " module. Single creatures can be left out under " ~ "Ban creatures".hl ~ ".",
+    )
+    override def required(all : $[BaseOption]) = $($(ModuleOption(Creatures)))
+}
+
+// An Environment tile left out of the pile; the two Geysers, Ruins and High Peaks are banned together (Wild.tiles, Waste.tiles)
+case class BanEnvironment(id : String) extends GameOption with ToggleOption {
+    val group = "Ban Environment tiles".txt
+    override def fold = |("Ban Environment tiles")
+    def wild = id.startsWith("wild-")
+    def valueOn = BanEnvironment.name(id).txt
+    override def decorate(e : Elem) = e ~ " " ~ ("(" + wild.?("Wilderness").|("Wastelands") + BanEnvironment.creatureOnly.has(id).??(", Creatures module") + ")").spn(xstyles.smaller85)
+    override val explain = $(("Leaves the " ~ BanEnvironment.name(id).hl ~ " out of the Environment tiles."))
+    override def required(all : $[BaseOption]) = $($(wild.?(WildernessTiles).|(WastelandsTiles)))
+}
+
+object BanEnvironment {
+    val creatureOnly = $("wild-graveyard", "wild-den")
+    val all : $[BanEnvironment] = ($("wild-lake", "wild-geyser", "wild-ruins", "wild-swamp", "wild-poison", "wild-peaks") ++ creatureOnly ++ Tiles.wastelands./(_.id))./(BanEnvironment(_))
+
+    def name(id : String) : String = id match {
+        case "wild-lake" => "Great Lake"
+        case "wild-geyser" => "Geysers (both)"
+        case "wild-ruins" => "Ruins (both)"
+        case "wild-swamp" => "Swamp"
+        case "wild-poison" => "Poisonous Swamp"
+        case "wild-peaks" => "High Peaks (both)"
+        case "wild-graveyard" => "Ancestral Graveyard (Spectral Warriors)"
+        case "wild-den" => "Wyvern's Den (the Wyvern)"
+        case _ => Waste.name(id)
+    }
+
+    def allowed(tile : String, options : $[BaseOption]) = options.of[BanEnvironment].exists(b => tile == b.id || tile.startsWith(b.id + "-")).not
+}
+
+// A Wilderness or Wastelands creature left out of the creature deck (Creature.deck)
+case class BanCreature(id : String) extends GameOption with ToggleOption {
+    val group = "Ban creatures".txt
+    override def fold = |("Ban creatures")
+    def kind = BanCreature.kinds.%(_.id == id).head
+    def wild = Creature.wild.exists(_.kind == kind)
+    def valueOn = kind.title.txt
+    override def decorate(e : Elem) = e ~ " " ~ ("(" + wild.?("Wilderness").|("Wastelands") + ")").spn(xstyles.smaller85)
+    override val explain = $((kind.title.hl ~ ": " ~ CombatText(kind.text)))
+    override def required(all : $[BaseOption]) = $($(wild.?(WildernessCreatures).|(WastelandsCreatures)))
+}
+
+object BanCreature {
+    val kinds : $[CreatureKind] = (Creature.wild ++ Creature.waste)./(_.kind).distinct
+    val all : $[BanCreature] = kinds./(k => BanCreature(k.id))
+
+    def allowed(kind : CreatureKind, options : $[BaseOption]) = options.of[BanCreature].exists(_.id == kind.id).not
+}
+
 case class ModuleOption(module : Module) extends GameOption with ToggleOption with ImportantOption {
-    // The Warchiefs module has its own section, with its parts (WarchiefsChoice); fan-made modules have theirs, Fan content
-    val group = (module == Warchiefs).?(WarchiefsChoice.group).|(module.fan.?("Fan content").|("Modules and expansions").txt)
-    def valueOn = (module == Warchiefs).?("Full module: warchiefs and upgrade cards").|(module.label).txt
+    // The Warchiefs module has its own section, with its parts (WarchiefsChoice); fan-made modules have theirs, Fan content;
+    // the core box's Creatures is under Base game, with More Creatures, and Events and Sea under Uncharted Horizons, with its map tiles
+    val group = (module == Warchiefs).?(WarchiefsChoice.group).|(module.fan.?("Fan content").|(Module.section(module)).txt)
+    def valueOn = (module == Warchiefs).?("Full expansion: warchief pawns and upgrade cards").|((module == Creatures).?("Creatures module").|(module.label)).txt
     override def forcedOff(all : $[BaseOption]) = (module == Warchiefs).??(WarchiefsChoice.others(this))
     override val explain = module.about ++ module.ready.not.$("Not implemented yet.".styled(xstyles.warning))
     // A module that isn't ready requires itself, so it can never be turned on
