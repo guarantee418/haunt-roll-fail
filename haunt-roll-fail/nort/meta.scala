@@ -75,7 +75,7 @@ object Meta extends MetaGame { mmm =>
     // Team play comes from the choice above the clan picker (pickerModes), the old fixed team variants are no longer offered
     // The Tutorial's practice game has its tips on
     // Chosen casualties are on in every new game (mandatoryFor), not in older ones
-    override val hiddenOptions = $(ModuleOption(VictoryModule), ModuleOption(Wilderness), ModuleOption(Wastelands), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood, LionStartingDeck, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
+    override val hiddenOptions = $(ModuleOption(VictoryModule), ModuleOption(Wilderness), ModuleOption(Wastelands), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood, LionStartingDeck, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, NormalDevelopments) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // Options no longer offered that older games still have, and log at the start
     val retired : $[O] = $(ModuleOption(Wilderness), ModuleOption(Wastelands))
@@ -83,7 +83,7 @@ object Meta extends MetaGame { mmm =>
     // New Blood has no option: picking one of its clans brings it in
     // The modules come in one section per box, as Robotos laid them out (2026-10-26): Base game, Warchief expansion, Wilderness and
     // Wastelands expansions (with their bans and the Central tile), Uncharted Horizons; Balanced starting tiles before them (Gman)
-    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ $(BalancedStartTiles, ModuleOption(Creatures), MoreCreatures) ++ WarchiefsChoice.all ++ $(WildernessTiles, WildernessCreatures, WastelandsTiles, WastelandsCreatures) ++ BanEnvironment.all ++ BanCreature.all ++ CentralChoice.all ++ $(ModuleOption(EventsModule), ModuleOption(Sea), HorizonsTiles) ++ DevelopmentsChoice.all ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ AutomaLevelOption.all ++ Module.all.%(_.fan).but(LionKingdom)./(ModuleOption) ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ $(BalancedStartTiles, ModuleOption(Creatures), MoreCreatures) ++ WarchiefsChoice.all ++ $(WildernessTiles, WildernessCreatures, WastelandsTiles, WastelandsCreatures) ++ BanEnvironment.all ++ BanCreature.all ++ CentralChoice.all ++ $(ModuleOption(EventsModule), ModuleOption(Sea), HorizonsTiles) ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ AutomaLevelOption.all ++ DevelopmentsChoice.fan ++ Module.all.%(_.fan).but(LionKingdom)./(ModuleOption) ++ hiddenOptions
 
     // Colors and teams only for the clans in the game, as many teams as players
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -157,7 +157,7 @@ object Meta extends MetaGame { mmm =>
 
     // Colors by seat, as before colors could be chosen
     // Teams alternate by seat (two teams), as the old team variants did
-    override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } ++ l.zipWithIndex./{ case (f, i) => TeamOption(f, i % 2) : O } :+ (YearsOption.standard : O) :+ (StandardVictory : O) :+ (VictoryModeOption(false) : O) :+ (PrivateFame : O) :+ (UnlimitedUndo : O) :+ (EditionChoice.default : O) :+ (StandardCentral : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O) ++ l.has(Automa).not.$(NormalDevelopments : O)
+    override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } ++ l.zipWithIndex./{ case (f, i) => TeamOption(f, i % 2) : O } :+ (YearsOption.standard : O) :+ (StandardVictory : O) :+ (VictoryModeOption(false) : O) :+ (PrivateFame : O) :+ (UnlimitedUndo : O) :+ (EditionChoice.default : O) :+ (StandardCentral : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O)
 
     override def quickOptions = options./(o => o -> 0.0).toMap
 

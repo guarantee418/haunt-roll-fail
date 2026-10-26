@@ -1523,14 +1523,16 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 $(ZOption(t, Div("Against the " ~ meta.factionName(solo).hl, ZBasic.info))) ++
                 meta.randomFactions.map { case (label, pool) => ZOption(Div("Play as".txt), OnClick(randomPick(label)), _ => {
                     val f = pool.but(solo).shuffle.head
-                    startSetup($(f, solo), false, |("solo"), hidden = $(f))
+                    history.pushState(null, () => ask())
+                    startSetup($(f, solo), false, |("solo"), hidden = $(f), picked = true)
                 }) } ++
                 meta.factions.but(solo)./(f => ZOption(Div("Play as".txt), OnClick(factionPick(f)), {
                     case "faction-info" =>
                         meta.factionInfo(f).foreach { case (_, title, l) => showOverlayRaw(title, l) }
                         setTimeout(0) { ask() }
                     case _ =>
-                        startSetup($(f, solo), false, |("solo"))
+                        history.pushState(null, () => ask())
+                        startSetup($(f, solo), false, |("solo"), picked = true)
                 })) ++
                 ZBasic(" ", "Cancel", () => {
                     history.popState()
@@ -1547,7 +1549,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         val ff = meta.factions
 
         if (meta.gradualFactions) {
-            ui.action.asker.zask(
+            def askCount() : Unit = ui.action.asker.zask(
                 ff.drop(meta.minPlayers - 1)./(f => ZOption(meta.label.hl, OnClick(Div((ff.indexOf(f) + 1).hlb(xstyles.larger125) ~ " Players", ZBasic.choice)), _ => {
                     val n = ff.indexOf(f) + 1
                     val fff =
@@ -1561,13 +1563,16 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                                 .sortBy(c => meta.validateFactionCombination(c).is[WarningResult])
                                 .first
 
-                    startSetup(fff, online, online.not.?("hotseat"))
+                    history.pushState(null, () => askCount())
+                    startSetup(fff, online, online.not.?("hotseat"), picked = true)
                 })) ++
                 ZBasic(" " ~ HorizontalBreak, "                                              Cancel                                              ", () => {
                     // metaMenu()
                     history.popState()
                 }).?
             )
+
+            askCount()
         }
         else {
             var opponents = $[meta.F]()
@@ -1594,7 +1599,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         askAdd()
                     }, ZBasic.infoch ++ $(xstyles.optionOn))) ++
                     ZBasic(t, v.ok.?("Start Setup".hl ~ v.message.any.??(" | ")).|(Empty) ~ v.message.styled(v.style), (v.ok).??(() => {
-                        startSetup(opponents, online, online.not.?("hotseat"), hidden = hidden.keys.$, extra = modeOptions)
+                        // The setup screen's Back comes back here with the picks kept
+                        history.pushState(null, () => askAdd())
+                        startSetup(opponents, online, online.not.?("hotseat"), hidden = hidden.keys.$, extra = modeOptions, picked = true)
                     })).? ++
                     meta.pickerModes.zipWithIndex./{ case ((label, _), i) =>
                         ZOption("Game type".styled(xstyles.larger125), OnClick(Div(label, ZBasic.choice ++ (i == mode).$(xstyles.optionOn, xstyles.bold) ++ $(xstyles.optionE, xstyles.halfbutton))), _ => {
@@ -1644,7 +1651,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
     // mode: a mode from the main menu (Meta.modes), whose options are always on; its choices are saved apart from the usual ones
     // keep: the kind of local game to save it as (savedGamesMenu), if it is saved
     // extra: options picked before the setup screen (Meta.pickerModes), always on like the mode's
-    def startSetup(factions : $[meta.F], online : Boolean, keep : |[String] = None, mode : |[String] = None, hidden : $[meta.F] = $, extra : $[meta.O] = $) {
+    // picked: the factions were picked on the screen before, which the first page's Back returns to (the caller pushed it)
+    def startSetup(factions : $[meta.F], online : Boolean, keep : |[String] = None, mode : |[String] = None, hidden : $[meta.F] = $, extra : $[meta.O] = $, picked : Boolean = false) {
         val optionsSaveKey = meta.name + mode./("." + _).|("") + "." + online.?("online").|("offline") + ".options." + factions.num + "p"
         val mandatory = meta.mandatoryFor(factions.num, factions) ++ mode./~(meta.modeOptions) ++ extra
         val saved = hrf.web.Local.get(optionsSaveKey, "").split(' ').$./~(_.some)
@@ -1773,7 +1781,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 })
                 } ++
                 (page == 0).$(
-                    ZOption(vm, "Cancel".txt.div(ZBasic.choice)(xstyles.halfbutton).onClick, _ => {
+                    ZOption(vm, picked.?("Back").|("Cancel").txt.div(ZBasic.choice)(xstyles.halfbutton).onClick, _ => {
                         ui.action.scroll.scrollTop = 0
                         // metaMenu()
                         history.popState()
@@ -1789,7 +1797,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 v.ok.??(
                     (page == pages.length - 1).$(
                         ZOption(vm, "Start".hlb.div(ZBasic.choice)(xstyles.halfbutton).onClick, _ => {
-                            history.destroy(pages.length - 1)
+                            history.destroy(pages.length - 1 + picked.??(1))
 
                             if (online)
                                 arrangeOnlineGame(seating, difficulties, options.actual, Map(), notes, false, meta.randomGameName(), HRF.now(), $(meta.start), None, g => {})
