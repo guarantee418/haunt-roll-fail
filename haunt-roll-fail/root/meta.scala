@@ -377,6 +377,15 @@ case object SkipIdleRallyReconcile extends GameOption with ToggleOption {
     val valueOn = "Rally".hh ~ " or " ~ "Reconcile".hh ~ " skipped when idle"
 }
 
+// A Twilight Council move or battle reveals only the card it was revealed with: a Ferry move draws a card, and when that was
+// another copy of the revealed card it was revealed too (Season against Land, 2026-10-26), and a battle at an assembly
+// discarded such a copy from the hand instead of the revealed card. Hidden and on by default for new games; older games
+// keep the old way so their replays don't change (CouncilRevealOnceAction switches a running one over).
+case object CouncilRevealOnce extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Twilight Council".hh ~ " reveals one card per action"
+}
+
 // The Homeland Frog Ambush goes to the bottom of the Pond whenever it is discarded ("Discard this to the Pond bottom."), not only
 // when spent as an ambush: discarded at the hand limit it went on top (Gman, 2026-10-22). Hidden and on by default for new
 // games; older games keep putting it on top so their replays don't change.
@@ -1373,7 +1382,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1404,6 +1413,7 @@ object Meta extends MetaGame {
         CounterMiceInABush,
         SkipIdleRallyReconcile,
         FrogAmbushBottomOnlyAsAmbush,
+        CouncilRevealOnce,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)

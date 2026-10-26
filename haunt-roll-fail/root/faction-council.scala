@@ -109,6 +109,9 @@ class CouncilPlayer(val faction : Council)(implicit val game : Game) extends Fac
     // Warriors removed by Empower, kept in the supply until they are placed in the Loyalists or not
     var empowered : Int = 0
 
+    // The card revealed for the move or battle under way, already out of the hand (CouncilRevealOnce)
+    var acting : |[DeckCard] = None
+
     def craft = assemblies./(_.asset)
 }
 
@@ -117,6 +120,10 @@ case class CouncilRevealMainAction(f : Council) extends ForcedAction with Soft
 case class CouncilRevealAction(self : Council, d : DeckCard) extends BaseAction("Reveal a card to act")(d.img) with ViewCard with Soft
 case class CouncilRevealedAction(f : Council, d : DeckCard, spend : Boolean, then : ForcedAction) extends ForcedAction
 case class CouncilRevealCardAction(f : Council, d : DeckCard, then : ForcedAction) extends ForcedAction
+
+// A one-time fix for games started before CouncilRevealOnce, added to a live game's log by hand: from here a move or battle
+// reveals only its own card (game.councilRevealOnce), then goes on with then
+case class CouncilRevealOnceAction(then : ForcedAction) extends ForcedAction with SkipValidate
 
 case class CouncilRecruitAction(self : Council, d : DeckCard, c : Clearing) extends ForcedAction
 case class CouncilBattleAction(self : Council, d : DeckCard, c : Clearing) extends ForcedAction with Soft
@@ -390,6 +397,27 @@ object CouncilExpansion extends FactionExpansion[Council] {
                 f.hand --> d --> f.revealed
 
                 f.log("revealed", d)
+
+                if (options.has(CouncilRevealOnce) || game.councilRevealOnce)
+                    f.acting = Some(d)
+            }
+
+            then
+
+        case CouncilRevealOnceAction(then) =>
+            game.councilRevealOnce = true
+
+            then
+
+        // A move or battle has revealed its card already, and the hand may hold another copy of it by now (the Ferry draws a
+        // card), so only the revealed card is spent, and nothing more is revealed (CouncilRevealOnce)
+        case CouncilRevealedAction(f, d, spend, then) if f.acting.has(d) =>
+            f.acting = None
+
+            if (spend && f.revealed.has(d)) {
+                f.revealed --> d --> discard.quiet
+
+                f.log("discarded", d)
             }
 
             then
