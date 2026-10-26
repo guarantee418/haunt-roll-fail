@@ -140,6 +140,7 @@ object CardVersions {
 // The card edition, on the setup screen. Games made before the choice have neither option and play the first edition
 trait EditionChoice extends GameOption with OneOfGroup {
     val group = "Card edition".txt
+    override def fold = |("Card edition")
     def short : String
 }
 

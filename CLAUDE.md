@@ -240,7 +240,8 @@ cards chosen from the 21 listed below it (exactly 1 Map Control and 2 Wealth,
 cards are listed only when they apply (`optionShown` in `nort/meta.scala`, a
 hook the setup screen in `hrf.scala` calls for every option). Long sections fold under a tappable
 heading with an arrow (`Folds` in `ui.scala`, `BaseOption.fold`): on the setup screen Game length, Victory conditions,
-Automa difficulty and Central tile, in the settings Font Size, Scroll Speed (every game) and Territory Opacity. Folded,
+Fame, Undo, Card edition, Development cards each year, Automa difficulty, Central tile and Adset's Wilderness or Wastelands
+(every single-choice setup section, asked for by Robotos on 2026-10-26), in the settings Font Size, Scroll Speed (every game) and Territory Opacity. Folded,
 a section shows only what is picked (Territory Opacity a one-line summary, `Setting.foldSummary`); every section starts
 folded and the open ones are remembered in the browser (`hrf.open-sections`). Victory conditions stays open while the
 chosen cards are the wrong number (`Meta.optionFoldOpen`). Northgard no longer sets `underConstruction`

@@ -280,6 +280,7 @@ object BanDevelopment {
 // against the Automa (optionsFor in meta.scala). Games made before the choice have none of these, or ExtraDevelopment
 trait DevelopmentsChoice extends GameOption with OneOfGroup {
     val group = "Development cards each year".txt
+    override def fold = |("Development cards each year")
 }
 
 case object NormalDevelopments extends DevelopmentsChoice {
@@ -373,6 +374,7 @@ case object FirstSeatStarts extends GameOption with ToggleOption {
 // kept face down) and the default; games made before the choice have neither option and stay private
 trait FameChoice extends GameOption with OneOfGroup {
     val group = "Fame".txt
+    override def fold = |("Fame")
 }
 
 case object PrivateFame extends FameChoice {
@@ -397,6 +399,7 @@ object FameChoice {
 // Display only, so recorded games replay the same; games made before the choice have none of these and keep unlimited undo
 trait UndoChoice extends GameOption with OneOfGroup {
     val group = "Undo".txt
+    override def fold = |("Undo")
 }
 
 case object NoUndo extends UndoChoice {

@@ -26,6 +26,7 @@ import nort.elem._
 // Who decides between Wilderness and Wastelands (or which one was agreed at setup)
 trait AdsetLands extends GameOption with OneOfGroup with ImportantOption {
     val group = "Wilderness or Wastelands".txt
+    override def fold = |("Wilderness or Wastelands")
 }
 
 case object LandsSeatChooses extends AdsetLands {
