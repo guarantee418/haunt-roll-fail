@@ -523,8 +523,11 @@ file covers the build, server and deploy. No session can ssh to the server
   simplifications:
   - Friend of the ___: once per turn, on your turn, an X card in hand is
     replaced by a `FriendCard` of the chosen suit until the end of the turn
-    (`revertDisguises` at `CleanUpAction`). On other players' turns it only
-    works for ambushes. A Dominance card can be disguised too, to be spent as
+    (`revertDisguises` at `CleanUpAction`). On other players' turns it
+    works for ambushes, and for paying a Squires card's cost with a card of
+    the Friend's suit as any suit (`PayFriend`, offered by `payments`, e.g.
+    Mice-in-a-Bush, which only took cards of the clearing's suit until Gman's
+    Wood through Conquest on 2026-10-27; it only adds choices, so no option). A Dominance card can be disguised too, to be spent as
     another suit (e.g. to take a Dominance of that suit; MaKoBwoY, 2026-10-21);
     spent, it goes to the available Dominances when the disguise ends.
   - Silver-Tongue: the chosen clearing counts as ruled until the end of the
