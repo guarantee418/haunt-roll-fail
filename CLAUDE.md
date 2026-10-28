@@ -777,6 +777,10 @@ file covers the build, server and deploy. No session can ssh to the server
   that copy was revealed too (Season against Land, 2026-10-26: two Feather Rufflers for one move), and a battle at an assembly
   would have discarded the hand copy instead. New games get the hidden default option `CouncilRevealOnce` (`acting` in
   `CouncilPlayer`); older games keep the old way, and a running game can be switched over with `CouncilRevealOnceAction(X)`.
+- Root's setup screen folds its sections like Northgard's (asked for by Gman on 2026-10-28): Setup Type, Async, Map, Clearings,
+  Landmarks, Deck, Cards, the AdSet buffs, the faction tweak sections (Marquise, Vagabond, Lizards, Corvids), Mirror Factions and the
+  four Hirelings sections start folded, showing only what is picked (`FoldedOption` in `root/meta.scala`, which sets `BaseOption.fold`
+  to `root.<group>`). Sections of a single option (Dominance, Riverfolk's Export) don't fold. Display only, so no game records change.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.
