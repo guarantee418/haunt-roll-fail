@@ -75,7 +75,7 @@ object Meta extends MetaGame { mmm =>
     // Team play comes from the choice above the clan picker (pickerModes), the old fixed team variants are no longer offered
     // The Tutorial's practice game has its tips on
     // Chosen casualties are on in every new game (mandatoryFor), not in older ones
-    override val hiddenOptions = $(ModuleOption(VictoryModule), ModuleOption(Wilderness), ModuleOption(Wastelands), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood, LionStartingDeck, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, NormalDevelopments, ModuleOption(DragonVariant)) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
+    override val hiddenOptions = $(ModuleOption(VictoryModule), ModuleOption(Wilderness), ModuleOption(Wastelands), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, PrintedNewBlood, LionStartingDeck, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, NormalDevelopments, ModuleOption(DragonVariant)) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // Options no longer offered on the setup screen that games still have, and log at the start (Robotos's Dragon is picked as its
     // own clan in the picker since 2026-10-26, factionVariants)
@@ -152,7 +152,7 @@ object Meta extends MetaGame { mmm =>
     }
 
     // Chosen casualties, taking the Unrest card and the clan power report: every new game gets them; a loaded game keeps the options it was started with
-    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, PrintedNewBlood, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore)
+    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, PrintedNewBlood, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore)
 
     // Quick games take only the selected options, not the mandatory ones
     override def randomQuickGame() = super.randomQuickGame() match { case (f, l, d, o) => (f, l, d, (o :+ ChooseCasualties :+ TakeUnrestCard :+ ClanPowerReports :+ ReportsDontWait :+ MendFigures :+ OxPicksSpace :+ JoinedTilesOnly :+ DragonExtraFromTerritory).distinct) }

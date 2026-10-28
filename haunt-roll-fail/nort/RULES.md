@@ -1314,6 +1314,12 @@ Check these against the rulebook when it is at hand.
   are the cards on offer; before it, only a revealed Development card
   (`FutureSightLastYear`, given to every new game; older games could take
   a face-up Achievement before the last year, and replay that way).
+  An Achievement it takes (or Mimirsbrunn's) is kept aside, face down, and
+  scored at the end, not put on top of the draw pile, where a Replace,
+  Remove or draw effect would bring it into the hand in place of a card
+  (`AchievementsAside`, every new game since 2026-10-28, asked for by
+  Marzaus and Robotos; `takeCard` in `effects.scala`, `FactionState.aside`;
+  a running older game can be switched over with `AchievementsAsideAction(X)`).
 - **Hidden Ways**: to any open territory, also an enemy one (then a fight).
 - **Bribery**: to any adjacent territory (Rough borders ignored) holding at
   most one other player; the moved units attack whoever is there.

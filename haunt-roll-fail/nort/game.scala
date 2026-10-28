@@ -157,7 +157,10 @@ class FactionState(val faction : Faction)(implicit game : Game) {
     // Conqueror was played this year
     var conqueror = false
 
-    def deck = draw ++ hand ++ active ++ discard
+    // Achievements taken by Future Sight or at Mimirsbrunn in the last year, kept face down beside the clan board (AchievementsAside)
+    var aside : $[Card] = $
+
+    def deck = draw ++ hand ++ active ++ discard ++ aside
 
     def unrest = deck.count(_ == UnrestCard)
 
@@ -455,6 +458,8 @@ case class ChooseCasualtiesAction(then : ForcedAction) extends ForcedAction with
 case class KnowledgeEachTerritoryAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for KrakenMovesTide (newblood.scala)
 case class KrakenMovesTideAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// The same for AchievementsAside (Future Sight's and Mimirsbrunn's Achievements kept aside, effects.scala)
+case class AchievementsAsideAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for OxPicksSpace (Ox's Ancestral Equipment token on a small building space or a Carved Stone space, picked by Ox);
 // wrapped around Ox's ExploreTurnAction, it also asks for the token of that tile
 case class OxPicksSpaceAction(then : ForcedAction) extends ForcedAction with SkipValidate
@@ -2094,6 +2099,12 @@ object CommonExpansion extends Expansion {
         case KrakenMovesTideAction(then) =>
             if (game.options.has(KrakenMovesTide).not)
                 game.addOption(KrakenMovesTide)
+
+            Then(then)
+
+        case AchievementsAsideAction(then) =>
+            if (game.options.has(AchievementsAside).not)
+                game.addOption(AchievementsAside)
 
             Then(then)
 

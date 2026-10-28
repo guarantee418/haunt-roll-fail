@@ -180,6 +180,19 @@ object CardsExpansion extends Expansion {
     def briberyTargets(t : Territory, g : Faction)(implicit game : Game) : $[Territory] =
         game.board.adjacent(t).map(_._1).%(o => game.present(o).but(g).num <= 1).%(o => game.hostileIn(o).not).%(o => game.passOnly(g, o).not)
 
+    // A card taken by Future Sight or at Mimirsbrunn goes on top of the draw pile; an Achievement is kept aside instead
+    // (AchievementsAside), so a later draw doesn't bring it into the hand in place of a card
+    def takeCard(f : Faction, c : Card, how : $[Any])(implicit game : Game) {
+        if (c.is[Achievement] && game.options.has(AchievementsAside)) {
+            f.aside :+= c
+            f.log(($("took", c) ++ how :+ "and kept it aside, face down, to score at the end") : _*)
+        }
+        else {
+            f.draw = c +: f.draw
+            f.log(($("took", c) ++ how :+ "and placed it on top of their draw pile") : _*)
+        }
+    }
+
     def futureSightCards(f : Faction)(implicit game : Game) : $[Card] =
         f.foresaw.not.??(game.display ++ (game.year < game.lastYear && game.options.has(FutureSightLastYear).not).??(game.achievements))
 
@@ -427,10 +440,9 @@ object CardsExpansion extends Expansion {
         case FutureSightAction(f, c, then) =>
             game.display = game.display.diff($(c))
             game.achievements = game.achievements.diff($(c))
-            f.draw = c +: f.draw
             f.foresaw = true
 
-            f.log("took", c, "and placed it on top of their draw pile")
+            CardsExpansion.takeCard(f, c, $)
 
             Then(then)
 
