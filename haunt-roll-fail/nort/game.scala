@@ -104,9 +104,14 @@ trait Resource extends NamedToString with Styling with Elementary with Record {
 case object Food extends Resource
 case object Wood extends Resource
 case object Lore extends Resource
+// The Lion Kingdom's Faith (LionFaith, lion.scala): only the Lion has it, so it isn't in Resource.all
+case object Faith extends Resource
 
 object Resource {
     val all : $[Resource] = $(Food, Wood, Lore)
+
+    // The resources f trades: the Lion's Faith too
+    def of(f : Faction)(implicit game : Game) : $[Resource] = LionExpansion.faith(f).?(all :+ Faith).|(all)
 }
 
 
@@ -130,6 +135,8 @@ class FactionState(val faction : Faction)(implicit game : Game) {
     var food = 0
     var wood = 0
     var lore = 0
+    // The Lion Kingdom's Faith (LionFaith)
+    var faith = 0
     var fame = 0
 
     // Units on the map, with the warchief (Warchiefs module); Horse Clan's second warchief, Brok, counts too
@@ -164,18 +171,20 @@ class FactionState(val faction : Faction)(implicit game : Game) {
 
     def unrest = deck.count(_ == UnrestCard)
 
-    def resources = food + wood + lore
+    def resources = food + wood + lore + faith
 
     def has(r : Resource) = r match {
         case Food => food
         case Wood => wood
         case Lore => lore
+        case Faith => faith
     }
 
     def gain(r : Resource, n : Int) = r match {
         case Food => food += n
         case Wood => wood += n
         case Lore => lore += n
+        case Faith => faith += n
     }
 
     // Minerals module (minerals.scala): the Stone, Iron and Gem tokens held, each worth two resources
@@ -200,7 +209,7 @@ object Winter {
 }
 
 // What a clan is set to collect at the next harvest, as things stand (shown in the player panels)
-case class HarvestForecast(food : Int, wood : Int, lore : Int, fame : Int)
+case class HarvestForecast(food : Int, wood : Int, lore : Int, fame : Int, faith : Int = 0)
 
 // Harvest amounts, shared by HarvestAction and the forecast in the player panels
 object Harvest {
@@ -233,7 +242,7 @@ object Harvest {
         val (wildFame, wildFood) = game.has(Wilderness).?(WildernessExpansion.forecast(f)).|((0, 0))
         val (wasteFame, wasteFood, wasteLore) = game.has(Wastelands).?(WastelandsExpansion.forecast(f)).|((0, 0, 0))
 
-        HarvestForecast(food + wildFood + wasteFood, wood, lore + wasteLore + LionExpansion.chapelLore(f), territoryFame(f) + altarFame(f) + LionExpansion.chapelFame(f) + wildFame + wasteFame)
+        HarvestForecast(food + wildFood + wasteFood, wood, lore + wasteLore + LionExpansion.chapelLore(f), territoryFame(f) + altarFame(f) + LionExpansion.chapelFame(f) + wildFame + wasteFame, LionExpansion.chapelFaith(f))
     }
 }
 
@@ -358,7 +367,15 @@ object TurnModeLabel {
     }
 }
 
-case class TurnModeAction(self : Faction, mode : TurnMode) extends BaseAction("Your turn")(TurnModeLabel(mode)) with Soft
+// The same for f: the Lion Kingdom's upgrades cost Faith (LionFaith), and Robotos's 2
+case class TurnModeText(f : Faction, m : TurnMode) extends GameElementary {
+    def elem(implicit game : Game) = m match {
+        case UpgradeMode => "Upgrade for".txt ~ " " ~ Amount(game.upgradeCost(f).hl, LionExpansion.upgradeResource(f).elem)
+        case m => TurnModeLabel(m)
+    }
+}
+
+case class TurnModeAction(self : Faction, mode : TurnMode) extends BaseAction("Your turn")(TurnModeText(self, mode)) with Soft
 
 // Cards in hand once a choice is made, shown as their images: tapping one does it (no full screen view until the turn ends)
 trait HandChoice
@@ -760,6 +777,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var lordSpaces : $[SpaceRef] = $
     // Hildegard, the Lion's warchief, is in the fight being resolved (LionExpansion)
     var hildegard = false
+    // The Lion's Lords add their combat points to the fight being resolved (LionFaith: they then bring Faith)
+    var lionLords = false
     // Ox Clan's Ancestral Equipment tokens: on the map (face up), the face-down pile, face up in the reserve, and used this year
     var gear : Map[SpaceRef, Int] = Map()
     var gearPile : $[Int] = 1.to(7).$
@@ -1272,10 +1291,11 @@ object Debug {
 
 object CommonExpansion extends Expansion {
     // All ways to pay n (3 by default) resources out of what f has
-    def payments(f : Faction, n : Int = 3)(implicit game : Game) : $[$[Resource]] =
-        1.to(n).foldLeft($($[Resource]()))((l, _) => l./~(p => Resource.all./(r => p :+ r)))
-            ./(_.sortBy(Resource.all.indexOf(_))).distinct
-            .%(p => Resource.all.forall(r => p.count(_ == r) <= f.has(r)))
+    // (rs: the resources that may be paid, the Lion's Faith too in its harvest trades)
+    def payments(f : Faction, n : Int = 3, rs : $[Resource] = Resource.all)(implicit game : Game) : $[$[Resource]] =
+        1.to(n).foldLeft($($[Resource]()))((l, _) => l./~(p => rs./(r => p :+ r)))
+            ./(_.sortBy(rs.indexOf(_))).distinct
+            .%(p => rs.forall(r => p.count(_ == r) <= f.has(r)))
 
     def available(f : Faction)(implicit game : Game) = f.draw.num + f.discard.num
 
@@ -1335,8 +1355,10 @@ object CommonExpansion extends Expansion {
     // allows 2 wood for 1 lore), and 1 for 1 with the teammates in mates
     def tradeChoices(f : Faction, mates : $[Faction], then : ForcedAction)(implicit game : Game) : $[UserAction] = {
         val bonfire = game.eventIs("ceremonial-bonfire")
-        val pp = payments(f)./(p => p -> Resource.all.%(r => bonfire || p.has(r).not)).%((_, l) => l.any)
-        val swaps = mates./~(g => Resource.all.%(f.has(_) > 0)./~(r => Resource.all.%(_ != r).%(g.has(_) > 0)./(x => TeamTradeAction(f, g, r, x, then))))
+        // The Lion Kingdom's Faith trades like the other resources (LionFaith); a teammate gets it only if it has Faith too
+        val rs = Resource.of(f)
+        val pp = payments(f, 3, rs)./(p => p -> rs.%(r => bonfire || p.has(r).not)).%((_, l) => l.any)
+        val swaps = mates./~(g => rs.%(Resource.of(g).has).%(f.has(_) > 0)./~(r => rs.%(Resource.of(g).has).%(_ != r).%(g.has(_) > 0)./(x => TeamTradeAction(f, g, r, x, then))))
 
         pp./~((p, l) => l./(r => TradeForAction(f, p, r, then))) ++ (bonfire && f.wood >= 2).$(BonfireTradeAction(f, then)) ++ MineralsExpansion.trades(f, then) ++ swaps
     }
@@ -1346,7 +1368,8 @@ object CommonExpansion extends Expansion {
     def phaseChoices(f : Faction, done : $[Faction], next : TradePhaseAction)(implicit game : Game) : $[UserAction] = {
         val incoming = game.tradeOffers.%(_.to == f)
         val answers = incoming./~(o => $(TeamAcceptAction(f, o.from, o.give, o.take, next), TeamDeclineAction(f, o.from, o.give, o.take, next)))
-        val offers = incoming.none.??(game.mates(f).diff(done)./~(g => Resource.all.%(f.has(_) > 0)./~(r => Resource.all.%(_ != r).%(g.has(_) > 0)
+        def shared(g : Faction) = Resource.of(f).%(Resource.of(g).has)
+        val offers = incoming.none.??(game.mates(f).diff(done)./~(g => shared(g).%(f.has(_) > 0)./~(r => shared(g).%(_ != r).%(g.has(_) > 0)
             .%(x => game.tradeDeclined.has(TradeOffer(f, g, r, x)).not)./(x => TeamOfferAction(f, g, r, x, next)))))
 
         answers ++ tradeChoices(f, $, next) ++ offers
@@ -1430,7 +1453,7 @@ object CommonExpansion extends Expansion {
             .add(TurnModeAction(f, WaitMode).!(f.hand.none, "no cards"))
             .add(TurnModeAction(f, ReplaceMode).!(f.hand.none || f.lore < 1, "needs 1 lore"))
             .add(TurnModeAction(f, RemoveMode).!(f.hand.exists(_.removable).not || f.lore < 2, "needs 2 lore"))
-            .add(TurnModeAction(f, UpgradeMode).!(f.hand.none || f.upgrades.none || f.lore < game.upgradeCost(f), "needs " + game.upgradeCost(f) + " lore"))
+            .add(TurnModeAction(f, UpgradeMode).!(f.hand.none || f.upgrades.none || f.has(LionExpansion.upgradeResource(f)) < game.upgradeCost(f), "needs " + game.upgradeCost(f) + " " + LionExpansion.upgradeResource(f).name.toLowerCase))
             .add(PassAction(f))
 
     // The hand after a choice: tapping a card does it; Cancel goes back to the six choices
@@ -1829,11 +1852,11 @@ object CommonExpansion extends Expansion {
             else
                 f.active :+= c
 
-            f.lore -= game.upgradeCost(f)
+            f.gain(LionExpansion.upgradeResource(f), -game.upgradeCost(f))
             f.upgrades = f.upgrades.diff($(u))
             f.hand :+= u
 
-            f.log("upgraded to", u, "for", game.upgradeCost(f).hl, Lore, game.robotos(f).?("(Robotos)".hl).|(Empty))
+            f.log("upgraded to", u, "for", game.upgradeCost(f).hl, LionExpansion.upgradeResource(f), game.robotos(f).?("(Robotos)".hl).|(Empty))
 
             Then(NextTurnAction(f))
 
@@ -1931,6 +1954,12 @@ object CommonExpansion extends Expansion {
                 if (chapelLore > 0) {
                     f.lore += chapelLore
                     f.log("collected", chapelLore.hl, Lore, "from", (chapelLore == 1).?(Chapel.elem).|("Chapels".hl))
+                }
+
+                val chapelFaith = LionExpansion.chapelFaith(f)
+                if (chapelFaith > 0) {
+                    f.faith += chapelFaith
+                    f.log("collected", chapelFaith.hl, Faith, "from", (chapelFaith == 1).?(Chapel.elem).|("Chapels".hl))
                 }
 
                 val (food, wood, lore) = Harvest.resources(f)

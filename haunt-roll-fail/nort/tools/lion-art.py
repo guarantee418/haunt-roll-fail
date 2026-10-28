@@ -169,6 +169,10 @@ cards = {
     'lion-hildegards-vow': ('card/clan/squirrel-cooking-mastery.webp', "Hildegard's Vow", 'CLAN UPGRADE', 'Move 2. In each combat triggered by this card, gain 2 combat points for each of your Lords in a territory adjacent to the fight.', [vow, axe], hildegard(330)),
     # Counting the Chapels instead, in new games (LionChapelVow, the owner, 2026-10-25)
     'lion-hildegards-vow-chapels': ('card/clan/squirrel-cooking-mastery.webp', "Hildegard's Vow", 'CLAN UPGRADE', 'Move 2. In each combat triggered by this card, gain 2 combat points for each of your Chapels in a territory adjacent to the fight.', [vow, axe], hildegard(330)),
+    # With Faith (LionFaith, Gman, 2026-10-28): Paladins as the clan card, Rise of the Twelve Peers building a free Defense Tower, Ost only the Lords
+    'lion-paladins': ('card/clan/squirrel.webp', 'Paladins', None, 'Recruit 1. Then you may pay up to 4 Faith: recruit 1 more unit in that territory for each Faith paid.', [flash_recruit, load('ui/faith.webp')]),
+    'lion-rise-of-the-twelve-peers-tower': ('card/clan/squirrel.webp', 'Rise of the Twelve Peers', 'CLAN UPGRADE', 'Build 1 Defense Tower for free. Then you may put a Lord from your reserve on another Defense Tower you control that has none.', [build, load('token/lord.webp').resize((64, 64), Image.LANCZOS)]),
+    'lion-ost-lords': ('card/clan/squirrel-cooking-mastery.webp', 'Ost', 'CLAN UPGRADE', 'Until the end of the year, your Lords next to a combat you start join it: gain 2 combat points for each. Then they return to their towers.', [load('token/lord.webp').resize((64, 64), Image.LANCZOS), axe]),
 }
 only = sys.argv[3:]
 for k, (base, name, header, text, icon, *fig) in cards.items():

@@ -1045,6 +1045,22 @@ figure on the map) from the Northgard wiki (`expansion/lion/`, asked for by Gman
   2026-10-25; picture `card/clan/lion-hildegards-vow-chapels.webp`). Older games: +2 for each Lord next to the fight, in
   combats against clans.
 - Warchief Hildegard (Warchiefs module): after a combat she was in, 1 lore for each casualty the enemy suffered.
+- Faith (every new game since 2026-10-28: hidden `LionFaith`, asked for by Gman; the video game's Faith icon from the
+  Northgard wiki, set on a disc by `nort/tools/faith-icon.py`, `ui/faith.webp`): a fourth resource only the Lion has, in its
+  panel between the lore and the fame. It gains 1 Faith for each casualty the enemy suffers in a combat against a clan
+  where its Lords add combat points (in their territory, or next to it with Ost or the older Hildegard's Vow) or Hildegard
+  fights (her lore becomes Faith; 1 per casualty once, with both), and 1 Faith for each Chapel at harvest instead of the
+  lore. Its clan upgrades cost Faith instead of lore (its Lore Tree is the Faith Tree); Replace and Remove still cost lore.
+  Faith is paid and taken in the harvest's 3-for-1 trades like the other resources, and in 1-for-1 trades only with a
+  teammate that has Faith too (another Lion), so no other clan holds it; it counts in the final fame's resources (1 per 3).
+  With Faith the three clan cards change (`CardVersions.lionFaith` in `nort/editions.scala`, pictures by `lion-art.py`):
+  - Paladins, the clan card in place of "Lion Kingdom" (flash): Recruit 1, then pay up to 4 Faith for 1 more unit each in
+    the same territory (5 units at most; `card/clan/lion-paladins.webp`).
+  - Rise of the Twelve Peers (upgrade, flash): build 1 Defense Tower for free (a Lord from the reserve goes on it as usual),
+    then may put a Lord from the reserve on another Defense Tower without one (`lion-rise-of-the-twelve-peers-tower.webp`).
+  - Ost (upgrade): only the Lords joining the combats the Lion starts next to them until the end of the year, with no free
+    Defense Tower (`lion-ost-lords.webp`).
+  Hildegard's Vow doesn't change.
 - Its own starting deck (every new game, hidden `LionOwnDeck`, Gman 2026-10-24; a setup option at first, `LionStartingDeck`, kept for the games that picked it): Adventure (Explore or Move 1), Toil (Build, or collect 1 food or 1 wood) and
   Prey (Recruit 1, or 1 fame), two of each, instead of the six core starting cards.
 

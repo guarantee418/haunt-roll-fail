@@ -104,18 +104,29 @@ object CardVersions {
             "Build 1 Defense Tower for free. Until the end of the year, your Lords next to a combat you start join it: gain 2 combat points for each. Then they return to their towers.")),
     )
 
-    val all : $[CardVersion] = dragonVariant ++ secondEdition ++ printedNewBlood ++ lionOst
+    // The Lion Kingdom's Faith (LionFaith, Gman, 2026-10-28): Paladins as the clan card, Rise of the Twelve Peers building a free Defense
+    // Tower, and Ost only bringing the Lords; before lionOst, which they replace
+    val lionFaith : $[CardVersion] = $(
+        CardVersion(ClanCard(Lion, 0), LionFaith, CardInfo("Paladins", "card-clan-lion-paladins", 0, true, PaladinsEffect,
+            "Recruit 1. Then you may pay up to 4 Faith: recruit 1 more unit in that territory for each Faith paid.")),
+        CardVersion(ClanCard(Lion, 1), LionFaith, CardInfo("Rise of the Twelve Peers", "card-clan-lion-rise-of-the-twelve-peers-tower", 0, true, PeersTowerEffect,
+            "Build 1 Defense Tower for free. Then you may put a Lord from your reserve on another Defense Tower you control that has none.")),
+        CardVersion(ClanCard(Lion, 2), LionFaith, CardInfo("Ost", "card-clan-lion-ost-lords", 0, false, OstLordsEffect,
+            "Until the end of the year, your Lords next to a combat you start join it: gain 2 combat points for each. Then they return to their towers.")),
+    )
+
+    val all : $[CardVersion] = dragonVariant ++ secondEdition ++ printedNewBlood ++ lionFaith ++ lionOst
 
     // Fan-made versions are shown in the clan info only in the games that play them
     def fan(v : CardVersion) : Boolean = v.option match {
         case ModuleOption(m) => m.fan
-        case LionOst | LionChapelPeers | LionChapelVow => true
+        case LionOst | LionChapelPeers | LionChapelVow | LionFaith => true
         case _ => false
     }
 
     // The options of the game being played, set by the Game (one game runs on a page; the JVM checks run one at a time);
     // before a game, as in the clan picker, the cards new games start with
-    var options : $[GameOption] = $(EditionChoice.default, PrintedNewBlood, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore)
+    var options : $[GameOption] = $(EditionChoice.default, PrintedNewBlood, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith)
 
     def apply(c : Card, printed : CardInfo) : CardInfo = all.find(v => v.card == c && options.has(v.option))./(_.info).|(printed)
 
@@ -132,7 +143,8 @@ object CardVersions {
             // New Blood's cards before the print are the TTS mod's prototype ones, not a first edition
             // and a card only a fan version changes is the original
             val base = l.exists(_.option == PrintedNewBlood).?("Earlier version").|(l.forall(fan).?("Original").|(FirstEdition.short))
-            (current.any.$(base -> c.printed) ++ l.%(v => current.contains(v).not)./(v => v.edition -> v.info))
+            // (a fan version another one in play replaces, like the Lion's Ost before its Faith, isn't shown)
+            (current.any.$(base -> c.printed) ++ l.%(v => current.contains(v).not).%(v => fan(v).not)./(v => v.edition -> v.info))
         }
     }
 }

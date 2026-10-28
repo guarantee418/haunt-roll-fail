@@ -94,6 +94,8 @@ package object elem {
         object ledgerCell extends CustomStyle(padding("0.1ex 0.3ex"), display("flex"), SimpleCSSRule("align-items", "center"), SimpleCSSRule("justify-content", "center"), SimpleCSSRule("border-right", "1px solid rgba(255, 255, 255, 0.3)"), SimpleCSSRule("border-bottom", "1px solid rgba(255, 255, 255, 0.3)"))
         // Compact panels: a little smaller, so the season icons' column fits beside the three resources (as cardLine does for the cards)
         object ledgerCompact extends CustomStyle(font.size("90%"))
+        // The Lion Kingdom's ledger, with a column for its Faith (LionFaith)
+        object ledgerFaith extends CustomStyle(SimpleCSSRule("grid-template-columns", "auto auto auto auto auto auto"))
         // The Dragon's sacrifice, which no column holds, on its own row under the harvest's; zero width with a full
         // minimum, so they wrap within the columns instead of widening them
         object ledgerMaybe extends CustomStyle(opacity("0.55"))

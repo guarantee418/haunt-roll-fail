@@ -75,7 +75,7 @@ object Meta extends MetaGame { mmm =>
     // Team play comes from the choice above the clan picker (pickerModes), the old fixed team variants are no longer offered
     // The Tutorial's practice game has its tips on
     // Chosen casualties are on in every new game (mandatoryFor), not in older ones
-    override val hiddenOptions = $(ModuleOption(VictoryModule), ModuleOption(Wilderness), ModuleOption(Wastelands), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, PrintedNewBlood, LionStartingDeck, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, NormalDevelopments, ModuleOption(DragonVariant)) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
+    override val hiddenOptions = $(ModuleOption(VictoryModule), ModuleOption(Wilderness), ModuleOption(Wastelands), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, PrintedNewBlood, LionStartingDeck, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith, NormalDevelopments, ModuleOption(DragonVariant)) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // Options no longer offered on the setup screen that games still have, and log at the start (Robotos's Dragon is picked as its
     // own clan in the picker since 2026-10-26, factionVariants)
@@ -152,7 +152,7 @@ object Meta extends MetaGame { mmm =>
     }
 
     // Chosen casualties, taking the Unrest card and the clan power report: every new game gets them; a loaded game keeps the options it was started with
-    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, PrintedNewBlood, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore)
+    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, PrintedNewBlood, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith)
 
     // Quick games take only the selected options, not the mandatory ones
     override def randomQuickGame() = super.randomQuickGame() match { case (f, l, d, o) => (f, l, d, (o :+ ChooseCasualties :+ TakeUnrestCard :+ ClanPowerReports :+ ReportsDontWait :+ MendFigures :+ OxPicksSpace :+ JoinedTilesOnly :+ DragonExtraFromTerritory).distinct) }
@@ -293,7 +293,10 @@ object Meta extends MetaGame { mmm =>
     ) ++ (f == Lion).$(
         // The fan-made Lion Kingdom has no printed clan board: its power and Chapel in words
         ("Clan power, Forts and Lords: ".hl ~ CombatText("3 Lord tokens. When you build a Defense Tower, put a Lord from your reserve on it. " + CardVersions.options.has(LordsInEveryFight).?("In every combat in a territory with your Lord, attacking or defending, against a clan or a creature, each Lord there adds 2 combat points.").|("When an enemy attacks a territory with your Lord, each Lord there adds 2 combat points to your defense.") + " Lords never move, never take casualties and are not units; a Lord goes back to your reserve when its tower is removed or you lose the territory.")).div(styles.menuText),
-        ("Chapel: ".hl ~ ("you build Chapels instead of Carved Stones, on Carved Stone spaces. Each Chapel gives 1 " + CardVersions.options.has(LionChapelLore).?("lore").|("fame") + " at harvest.").txt).div(styles.menuText),
+        ("Chapel: ".hl ~ ("you build Chapels instead of Carved Stones, on Carved Stone spaces. Each Chapel gives 1 " + CardVersions.options.has(LionFaith).?("Faith").|(CardVersions.options.has(LionChapelLore).?("lore").|("fame")) + " at harvest.").txt).div(styles.menuText),
+    ) ++ (f == Lion && CardVersions.options.has(LionFaith)).$(
+        ("Faith: ".hl ~ ("a fourth resource, only yours. Gain 1 Faith for each casualty your enemy suffers in a combat where your Lords or Hildegard fight. Your clan upgrades cost Faith instead of lore (Replace and Remove still cost lore). Faith is traded like the other resources and counts towards your final fame.").txt).div(styles.menuText),
+    ) ++ (f == Lion).$(
         ("Fan-made, not part of the published game.".styled(xstyles.warning)).div(styles.menuText),
     )
 
@@ -317,7 +320,7 @@ object Meta extends MetaGame { mmm =>
         Warchief.printedBoards./(f => ("board-" + f.style + "-print") -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.printedFile(f) + ".webp")) ++
         $("board-dragon-variant" -> "/hrf/webp2/nort/images/expansion/board/dragon-variant.webp") ++
         // The combat icons in rules text (CombatText), and the icons in the Tutorial's lessons
-        $("axe", "skull", "food", "wood", "lore", "fame", "harvest", "winter", "confirm", "cancel")./(i => ("ui-" + i) -> ("/hrf/webp2/nort/images/ui/" + i + ".webp")) ++
+        $("axe", "skull", "food", "wood", "lore", "faith", "fame", "harvest", "winter", "confirm", "cancel")./(i => ("ui-" + i) -> ("/hrf/webp2/nort/images/ui/" + i + ".webp")) ++
         // The Tutorial's lessons: the blue starting cards, the buildings, the phases aid and the starting tile
         $("recruit", "move", "explore", "build", "feast")./(n => ("card-start-blue-" + n) -> ("/hrf/webp2/nort/images/card/start/blue-" + n + (n == "feast").??("-1") + ".webp")) ++
         Building.all./(b => b.image -> ("/hrf/webp2/nort/images/token/building/" + b.image.drop("building-".length) + ".webp")) ++
@@ -462,6 +465,10 @@ object Meta extends MetaGame { mmm =>
     $("sword", "bow")./(k => ConditionalAssetsList((factions : $[F], options : $[O]) => factions.has(Lion), "token/unit", "lion-" + k + "-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "lion-" + k + "-" + c.id))
     )) :::
+    // The Lion Kingdom's Faith (LionFaith)
+    ConditionalAssetsList((factions : $[F], options : $[O]) => factions.has(Lion), "ui", "ui-", "webp")(
+        $(ImageAsset("faith"))
+    ) ::
     // The Automa's Leaders
     ConditionalAssetsList((factions : $[F], options : $[O]) => factions.has(Automa), "token/unit", "leader-", "webp")(
         $(1, 2)./~(l => PlayerColor.all./(c => ImageAsset(l + "-" + c.id, "leader-" + l + "-" + c.id)))

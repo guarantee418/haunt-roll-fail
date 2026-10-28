@@ -827,7 +827,7 @@ object MapExpansion extends Expansion {
         val extra = s.index >= SpaceRef.extra
         val cost = MilitaryExpansion.cost(f, b, buildCost(b, e))
 
-        if (e.special == OstBuild && b != DefenseTower) |("Ost builds a Defense Tower")
+        if (e.special == OstBuild && b != DefenseTower) |("a free Defense Tower only")
         else if (smallOnly && b.large) |("small buildings only")
         else if (extra && b.large) |("needs a large space")
         else if (extra && noSpace(e).not && MilitaryExpansion.freeBuild(f, b).not) |("needs a building space")

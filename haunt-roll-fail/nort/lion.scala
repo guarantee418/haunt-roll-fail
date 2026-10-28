@@ -33,6 +33,12 @@ case object AbundanceBuild extends BuildSpecial
 // Ost: build 1 Defense Tower for free, then for the rest of the year the Lords join the combats the Lion starts next to them
 case object OstEffect extends Effect
 case object OstBuild extends BuildSpecial
+// With Faith (LionFaith, every new game): Paladins, the clan card: Recruit 1, and 1 more in the same territory for each Faith paid (up to 4)
+case object PaladinsEffect extends Effect
+// Rise of the Twelve Peers: build 1 Defense Tower for free, then may place a Lord on another tower
+case object PeersTowerEffect extends Effect
+// Ost: for the rest of the year the Lords join the combats the Lion starts next to them (no free tower)
+case object OstLordsEffect extends Effect
 // Hildegard's Vow: Move 2, +2 combat points for each Lord next to the fight (older games)
 case object VowMove extends MoveSpecial
 // Hildegard's Vow in new games (LionChapelVow): Move 2, +2 combat points for each of the Lion's Chapels next to the fight
@@ -64,6 +70,13 @@ case class LionPayAction(self : Faction, n : Int, then : ForcedAction) extends B
 
 case class LionPayLabel(n : Int) extends Elementary {
     def elem = (n == 0).?("Pay nothing, recruit 1".txt).|("Pay " ~ Amount(n.hl, Lore.elem) ~ ", recruit " ~ (n + 1).hl)
+}
+
+// Paladins: how much Faith to pay for more units
+case class PaladinsPayAction(self : Faction, n : Int, then : ForcedAction) extends BaseAction("Paladins".hl, "recruit 1 unit, and 1 more in the same territory for each", Faith, "paid")(PaladinsPayLabel(n))
+
+case class PaladinsPayLabel(n : Int) extends Elementary {
+    def elem = (n == 0).?("Pay nothing, recruit 1".txt).|("Pay " ~ Amount(n.hl, Faith.elem) ~ ", recruit " ~ (n + 1).hl)
 }
 
 // Rise of the Twelve Peers: a Lord from the reserve onto a Defense Tower without one
@@ -161,25 +174,51 @@ object LionExpansion extends Expansion {
     def vowChapelPoints(f : Faction, t : Territory, e : MoveEffect, attacking : Boolean)(implicit game : Game) : Int =
         (f == Lion && attacking && e.special == VowChapelMove).??(2 * chapelsNextTo(t))
 
-    // Hildegard: 1 lore for each casualty the enemy suffered in a fight she took part in (game.hildegard, set as the fight is resolved)
+    // Hildegard: 1 lore for each casualty the enemy suffered in a fight she took part in (game.hildegard, set as the fight is resolved);
+    // with Faith (LionFaith), 1 Faith instead, also when only the Lords fought (game.lionLords), once for both
     def afterCombat(attacker : Faction, defender : Faction, aLost : Int, dLost : Int)(implicit game : Game) {
-        if (game.hildegard) {
-            val n = (attacker == Lion).?(dLost).|(aLost)
-            if (n > 0) {
-                Lion.lore += n
-                Lion.log("collected", n.hl, Lore, "with", WarchiefElem(Lion))
-                game.note("lion-hildegard")
+        val n = (attacker == Lion).?(dLost).|(aLost)
+        if (faith(Lion)) {
+            if ((game.hildegard || game.lionLords) && n > 0) {
+                Lion.faith += n
+                val who : Elem = (game.lionLords, game.hildegard) match {
+                    case (true, true) => "Lords".hl ~ " and " ~ WarchiefElem(Lion).elem
+                    case (true, false) => "Lords".hl
+                    case _ => WarchiefElem(Lion).elem
+                }
+                Lion.log("collected", n.hl, Faith, "with", who)
+                game.note("lion-faith")
             }
         }
+        else
+        if (game.hildegard && n > 0) {
+            Lion.lore += n
+            Lion.log("collected", n.hl, Lore, "with", WarchiefElem(Lion))
+            game.note("lion-hildegard")
+        }
         game.hildegard = false
+        game.lionLords = false
     }
+
+    // Faith (LionFaith): the Lion's fourth resource
+    def faith(f : Faction)(implicit game : Game) : Boolean = f == Lion && game.options.has(LionFaith)
+
+    // What f's clan upgrades cost: Faith for the Lion with Faith, lore for everyone else
+    def upgradeResource(f : Faction)(implicit game : Game) : Resource = faith(f).?(Faith : Resource).|(Lore)
+
+    // Whether the Lion's Lords add combat points to its fight in t (the Lion attacking with e, or defending)
+    def lordsFight(t : Territory, e : MoveEffect, attacking : Boolean)(implicit game : Game) : Boolean =
+        lordPoints(Lion, t, attacking) > 0 || (attacking && (e.special == VowMove || game.lionOst) && lordsNextTo(t) > 0)
 
     // Chapels at harvest (none where a Kobold is, like the Altar of Kings): 1 lore each in new games (LionChapelLore), 1 fame in older ones
     def chapels(f : Faction)(implicit game : Game) : Int = (f == Lion).??(game.controlled(f).%(t => game.koboldIn(t).not)./~(game.working).count(_ == Chapel))
 
-    def chapelLore(f : Faction)(implicit game : Game) : Int = game.options.has(LionChapelLore).??(chapels(f))
+    def chapelLore(f : Faction)(implicit game : Game) : Int = (game.options.has(LionChapelLore) && faith(f).not).??(chapels(f))
 
-    def chapelFame(f : Faction)(implicit game : Game) : Int = game.options.has(LionChapelLore).not.??(chapels(f))
+    def chapelFame(f : Faction)(implicit game : Game) : Int = (game.options.has(LionChapelLore).not && faith(f).not).??(chapels(f))
+
+    // With Faith (LionFaith), 1 Faith each instead
+    def chapelFaith(f : Faction)(implicit game : Game) : Int = faith(f).??(chapels(f))
 
     // The buildings f may build: the Lion builds Chapels instead of Carved Stones
     def allowed(f : Faction, b : Building) : Boolean = (b != Chapel || f == Lion) && (b != CarvedStone || f != Lion)
@@ -207,7 +246,9 @@ object LionExpansion extends Expansion {
     }
 
     def playable(f : Faction, e : Effect)(implicit game : Game) : Boolean = e match {
-        case LionClanEffect => MapExpansion.playable(f, RecruitEffect(1))
+        case LionClanEffect | PaladinsEffect => MapExpansion.playable(f, RecruitEffect(1))
+        case PeersTowerEffect => MapExpansion.playable(f, BuildEffect(special = OstBuild)) || (reserve > 0 && emptyTowers.any)
+        case OstLordsEffect => true
         case PeersEffect => (MapExpansion.canRecruit(f) && peersTargets(f, $).any) || (reserve > 0 && emptyTowers.any)
         case PeersChapelEffect => (MapExpansion.canRecruit(f) && chapelTargets(f, $).any) || (reserve > 0 && emptyTowers.any)
         case AdventureEffect | ToilEffect | PreyEffect => choices(e).exists(CommonExpansion.playableEffect(f, _))
@@ -225,8 +266,24 @@ object LionExpansion extends Expansion {
             else
                 Ask(f).each(0.to(max).$)(n => LionPayAction(f, n, then))
 
+        case PaladinsEffect =>
+            // Paying for units that can't be placed would be Faith lost
+            val max = math.min(4, math.min(f.faith, math.max(0, game.reserve(f) - 1)))
+            if (max == 0)
+                Then(RecruitAction(f, 1, RecruitSame, $, then))
+            else
+                Ask(f).each(0.to(max).$)(n => PaladinsPayAction(f, n, then))
+
         case PeersEffect =>
             Then(RecruitAction(f, 2, RecruitPeers, $, PeersLordAction(f, then)))
+
+        case PeersTowerEffect =>
+            Then(ResolveEffectAction(f, BuildEffect(special = OstBuild), PeersLordAction(f, then)))
+
+        case OstLordsEffect =>
+            game.lionOst = true
+            f.log("called the", "Ost".hl, "for the rest of the year")
+            Then(then)
 
         case PeersChapelEffect =>
             Then(RecruitAction(f, chapelTargets(f, $).num, RecruitChapels, $, PeersLordAction(f, then)))
@@ -259,14 +316,22 @@ object LionExpansion extends Expansion {
             UnknownContinue
 
         // Whether Hildegard is in the fight being resolved (her lore comes after the casualties, which may take her)
-        case CombatResolveAction(attacker, defender, a, _, _, _, _) if attacker == Lion || defender == Lion =>
+        case CombatResolveAction(attacker, defender, a, e, _, _, _) if attacker == Lion || defender == Lion =>
             game.hildegard = game.chiefIn(game.board.territory(a), Lion)
+            game.lionLords = faith(Lion) && lordsFight(game.board.territory(a), e, attacker == Lion)
             UnknownContinue
 
         case LionPayAction(f, n, then) =>
             if (n > 0) {
                 f.lore -= n
                 f.log("paid", n.hl, Lore, "to recruit", n.hl, (n == 1).?("more unit").|("more units"))
+            }
+            Then(RecruitAction(f, n + 1, RecruitSame, $, then))
+
+        case PaladinsPayAction(f, n, then) =>
+            if (n > 0) {
+                f.faith -= n
+                f.log("paid", n.hl, Faith, "to recruit", n.hl, (n == 1).?("more unit").|("more units"))
             }
             Then(RecruitAction(f, n + 1, RecruitSame, $, then))
 
