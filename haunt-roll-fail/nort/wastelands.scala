@@ -530,10 +530,9 @@ object WastelandsExpansion extends Expansion {
 
             case MimirTakeAction(f, c) =>
                 game.display = game.display.diff($(c))
-                f.draw = c +: f.draw
                 f.foresaw = true
                 game.note("mimir")
-                f.log("took", c, "with", Waste.elem(Waste.mimir), "and placed it on top of their draw pile")
+                CardsExpansion.takeCard(f, c, $("with", Waste.elem(Waste.mimir)))
                 Then(ActionsPhaseAction)
 
             case MimirSkipAction(f) =>
