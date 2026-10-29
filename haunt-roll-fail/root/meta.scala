@@ -482,6 +482,20 @@ case object ForcedAsyncMode extends GameOption with ToggleOption with FoldedOpti
     )
 }
 
+// Forced Async Mode without the preset damage order: players with a real choice of which pieces (or Vagabond items) to lose
+// pick them as in other games, and nobody sets the order at the end of the turn (asked for in Season in Control, 2026-10-28,
+// for the Woodland Alliance's bases and sympathy). Games started without it can be switched over with ForcedAsyncChooseHitsAction.
+case object ForcedAsyncChooseHits extends GameOption with ToggleOption with FoldedOption {
+    val group = "Async"
+    val valueOn = "Players Choose Hits".hh
+    override def required(all : $[BaseOption]) = $($(ForcedAsyncMode))
+    override val explain = $(
+        &("With " ~ "Forced Async Mode".styled(xstyles.warning) ~ ",") ~ " " ~ &("players " ~ "choose".hl ~ " which pieces they lose to " ~ "hits".styled(styles.hit) ~ ",") ~ " " ~ &("instead of a preset order."),
+        &("The game " ~ "waits".hl ~ " for them " ~ "when there is a choice;".&) ~ " " ~ &("with only one way to assign the hits, it is still automatic."),
+        &("Nobody sets a " ~ "damage order".hl ~ " at the end of the turn."),
+    )
+}
+
 
 trait AdSetBuffOption extends GameOption with OneOfGroup with FoldedOption {
     val group = "AdSet " ~ "MC".styled(MC) ~ ", " ~ "LC".styled(LC) ~ ", " ~ "CC".styled(CC) ~ " Setup Buffs"
@@ -1304,7 +1318,7 @@ object Meta extends MetaGame {
 
     override def optionPages(n : Int, l : $[F]) : $[$[GameOption]] = $(
         hiddenOptions ++
-        $(AutoHitsAssignmentMode, BluffMode, AutoAmbushSkippingMode, ForcedAsyncMode) ++
+        $(AutoHitsAssignmentMode, BluffMode, AutoAmbushSkippingMode, ForcedAsyncMode, ForcedAsyncChooseHits) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
         (n > 2).?(TotalWarDominance) ++
         $,
@@ -1354,7 +1368,7 @@ object Meta extends MetaGame {
         $(NonBirdPartisans, UnthematicCoffinMakers, ErrataCoffinMakers, UnthematicPropagandaBureau) ++
         l.of[Mischief].any.$(TunnelsIgnoreRaid) ++
         l.of[Trader].any.$(TunnelsIgnoreTradePosts) ++
-        $(AutoHitsAssignmentMode, BluffMode, AutoAmbushSkippingMode, ForcedAsyncMode) ++
+        $(AutoHitsAssignmentMode, BluffMode, AutoAmbushSkippingMode, ForcedAsyncMode, ForcedAsyncChooseHits) ++
         (n > 2).?(TotalWarDominance) ++
         (l.of[Feline].num > 1).$(TheWoodMustFlow) ++
         (l.of[Aviary].num > 1).$(OneTrueEmpire) ++
