@@ -759,6 +759,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     None
             }
 
+    def landmarkCard(p : Piece) : |[String] = p @@ {
+        case Ferry => |("ferry")
+        case LostCity => |("lost-city")
+        case Tower => |("tower")
+        case Mousehold => |("mousehold")
+        case Foxburrow => |("foxburrow")
+        case Rabbittown => |("rabbittown")
+        case _ => None
+    }
+
     def translate(s : String) : String = callbacks.settings.has(FrenchLanguage).?(French.text(s)).|(s)
 
     map.node.onclick = (e : dom.MouseEvent) => {
@@ -1336,6 +1346,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         }
 
         pileTargets = $
+
+        // Tapping a landmark on the map shows its card
+        draws.foreach { d =>
+            landmarkCard(d.piece).foreach { _ =>
+                pileTargets :+= ((d.rect.x - 20, d.rect.y - 20, d.rect.width + 40, d.rect.height + 40, ("view-landmark", d.piece, d.region)))
+            }
+        }
 
         drawScoreTrack(g)
 
@@ -4860,6 +4877,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 (game.hirelings ++ game.unhired).has(h).?(hirelingStatusLine(h).div) ~
                 HGap ~
                 ("All Hirelings".hh).div.div(xstyles.choice)(xstyles.xx)(xstyles.chm)(xstyles.chp)(xstyles.thu)(xlo.fullwidth).pointer.onClick.param("view-hirelings")
+            ), onClick)
+
+        case ("view-landmark", p : Piece, r : Region) =>
+            showOverlay(overlayFitX(
+                landmarkCard(p)./(c => Image("landmark-card:" + c, styles.landmarkcard)).|(Empty) ~
+                ((p == LostCity).?("Lost City").|(p.name).hh ~ " in " ~ r.elem).div
             ), onClick)
 
         case ("notifications", Some(f : Faction)) =>

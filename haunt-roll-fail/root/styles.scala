@@ -193,6 +193,7 @@ package object elem {
         // hireling cards (landscape) in the hirelings overlay, and one alone, larger
         object hirelingcard extends CustomStyle(display("block"), width("40ch"), max.width("88vw"), border.radius("1.2ch"))
         object hirelingcardbig extends CustomStyle(display("block"), width("72ch"), max.width("94vw"), border.radius("1.6ch"))
+        object landmarkcard extends CustomStyle(display("block"), width("auto"), height("auto"), max.width("min(54ch, 94%)"), max.height("calc(100% - 4ch)"), min.height("0"), border.radius("1.6ch"))
         object hirelingmarker extends CustomStyle(height("7ch"))
         object factionboard extends CustomStyle(height("64ex"))
 
