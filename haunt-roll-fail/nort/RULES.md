@@ -1054,12 +1054,12 @@ figure on the map) from the Northgard wiki (`expansion/lion/`, asked for by Gman
   Faith is paid and taken in the harvest's 3-for-1 trades like the other resources, and in 1-for-1 trades only with a
   teammate that has Faith too (another Lion), so no other clan holds it; it counts in the final fame's resources (1 per 3).
   With Faith the three clan cards change (`CardVersions.lionFaith` in `nort/editions.scala`, pictures by `lion-art.py`):
-  - Paladins, the clan card in place of "Lion Kingdom" (flash): Recruit 1, then pay up to 4 Faith for 1 more unit each in
-    the same territory (5 units at most; `card/clan/lion-paladins.webp`).
+  - Ost, the clan card in place of "Lion Kingdom" (flash, Gman's correction on 2026-10-29): only the Lords joining the
+    combats the Lion starts next to them until the end of the year, with no free Defense Tower (`lion-ost-lords.webp`).
   - Rise of the Twelve Peers (upgrade, flash): build 1 Defense Tower for free (a Lord from the reserve goes on it as usual),
     then may put a Lord from the reserve on another Defense Tower without one (`lion-rise-of-the-twelve-peers-tower.webp`).
-  - Ost (upgrade): only the Lords joining the combats the Lion starts next to them until the end of the year, with no free
-    Defense Tower (`lion-ost-lords.webp`).
+  - Paladins (upgrade, flash, in Ost's place): Recruit 1, then pay up to 4 Faith for 1 more unit each in the same
+    territory (5 units at most; `card/clan/lion-paladins.webp`).
   Hildegard's Vow doesn't change.
 - Its own starting deck (every new game, hidden `LionOwnDeck`, Gman 2026-10-24; a setup option at first, `LionStartingDeck`, kept for the games that picked it): Adventure (Explore or Move 1), Toil (Build, or collect 1 food or 1 wood) and
   Prey (Recruit 1, or 1 fame), two of each, instead of the six core starting cards.

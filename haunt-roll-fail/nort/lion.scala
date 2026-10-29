@@ -33,11 +33,11 @@ case object AbundanceBuild extends BuildSpecial
 // Ost: build 1 Defense Tower for free, then for the rest of the year the Lords join the combats the Lion starts next to them
 case object OstEffect extends Effect
 case object OstBuild extends BuildSpecial
-// With Faith (LionFaith, every new game): Paladins, the clan card: Recruit 1, and 1 more in the same territory for each Faith paid (up to 4)
+// With Faith (LionFaith, every new game): Paladins, an upgrade in Ost's place: Recruit 1, and 1 more in the same territory for each Faith paid (up to 4)
 case object PaladinsEffect extends Effect
 // Rise of the Twelve Peers: build 1 Defense Tower for free, then may place a Lord on another tower
 case object PeersTowerEffect extends Effect
-// Ost: for the rest of the year the Lords join the combats the Lion starts next to them (no free tower)
+// Ost, the clan card with Faith: for the rest of the year the Lords join the combats the Lion starts next to them (no free tower)
 case object OstLordsEffect extends Effect
 // Hildegard's Vow: Move 2, +2 combat points for each Lord next to the fight (older games)
 case object VowMove extends MoveSpecial

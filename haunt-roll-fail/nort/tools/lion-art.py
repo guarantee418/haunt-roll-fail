@@ -77,7 +77,9 @@ def wrap(d, text, f, width):
 def title_banner(im, d, cx, cy, text, h=27, f=None):
     f = f or font('Inter-Bold', 15)
     w = sum(d.textlength(c, font=f) for c in text) + 2.2 * (len(text) - 1)
-    d.rectangle((cx - w / 2 - 14, cy - h / 2, cx + w / 2 + 14, cy + h / 2), fill=(14, 30, 40, 255))
+    # at least as wide as the base card's own title, so none of it shows beside a short name (Ost)
+    pw = max(w, 200)
+    d.rectangle((cx - pw / 2 - 14, cy - h / 2, cx + pw / 2 + 14, cy + h / 2), fill=(14, 30, 40, 255))
     spaced(d, (cx, cy), text, f, (222, 230, 234), 2.2)
 
 def text_box(im, box, header, text):
@@ -154,6 +156,8 @@ def bar_strip(im, box, fade=12):
     return c
 # The squirrel clan card's Flash and Recruit icons, as one piece of its bar
 flash_recruit = bar_strip('card/clan/squirrel.webp', (100, 30, 296, 100))
+# The Flash icon alone
+flash = bar_strip('card/clan/squirrel.webp', (110, 30, 182, 100))
 # Cooking Mastery's Build icon (a hammer)
 build = bar_icon('card/clan/squirrel-cooking-mastery.webp', (172, 30, 244, 100))
 # Forged for War's combat icon with its question mark ("+? combat points")
@@ -169,10 +173,11 @@ cards = {
     'lion-hildegards-vow': ('card/clan/squirrel-cooking-mastery.webp', "Hildegard's Vow", 'CLAN UPGRADE', 'Move 2. In each combat triggered by this card, gain 2 combat points for each of your Lords in a territory adjacent to the fight.', [vow, axe], hildegard(330)),
     # Counting the Chapels instead, in new games (LionChapelVow, the owner, 2026-10-25)
     'lion-hildegards-vow-chapels': ('card/clan/squirrel-cooking-mastery.webp', "Hildegard's Vow", 'CLAN UPGRADE', 'Move 2. In each combat triggered by this card, gain 2 combat points for each of your Chapels in a territory adjacent to the fight.', [vow, axe], hildegard(330)),
-    # With Faith (LionFaith, Gman, 2026-10-28): Paladins as the clan card, Rise of the Twelve Peers building a free Defense Tower, Ost only the Lords
-    'lion-paladins': ('card/clan/squirrel.webp', 'Paladins', None, 'Recruit 1. Then you may pay up to 4 Faith: recruit 1 more unit in that territory for each Faith paid.', [flash_recruit, load('ui/faith.webp')]),
+    # With Faith (LionFaith, Gman, 2026-10-28): Ost, only the Lords, as the clan card (flash), Rise of the Twelve Peers building a free Defense
+    # Tower, and Paladins as the upgrade in Ost's place
+    'lion-ost-lords': ('card/clan/squirrel.webp', 'Ost', None, 'Until the end of the year, your Lords next to a combat you start join it: gain 2 combat points for each. Then they return to their towers.', [flash, load('token/lord.webp').resize((64, 64), Image.LANCZOS)]),
     'lion-rise-of-the-twelve-peers-tower': ('card/clan/squirrel.webp', 'Rise of the Twelve Peers', 'CLAN UPGRADE', 'Build 1 Defense Tower for free. Then you may put a Lord from your reserve on another Defense Tower you control that has none.', [build, load('token/lord.webp').resize((64, 64), Image.LANCZOS)]),
-    'lion-ost-lords': ('card/clan/squirrel-cooking-mastery.webp', 'Ost', 'CLAN UPGRADE', 'Until the end of the year, your Lords next to a combat you start join it: gain 2 combat points for each. Then they return to their towers.', [load('token/lord.webp').resize((64, 64), Image.LANCZOS), axe]),
+    'lion-paladins': ('card/clan/squirrel.webp', 'Paladins', 'CLAN UPGRADE', 'Recruit 1. Then you may pay up to 4 Faith: recruit 1 more unit in that territory for each Faith paid.', [flash_recruit, load('ui/faith.webp')]),
 }
 only = sys.argv[3:]
 for k, (base, name, header, text, icon, *fig) in cards.items():

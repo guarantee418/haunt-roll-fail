@@ -104,15 +104,15 @@ object CardVersions {
             "Build 1 Defense Tower for free. Until the end of the year, your Lords next to a combat you start join it: gain 2 combat points for each. Then they return to their towers.")),
     )
 
-    // The Lion Kingdom's Faith (LionFaith, Gman, 2026-10-28): Paladins as the clan card, Rise of the Twelve Peers building a free Defense
-    // Tower, and Ost only bringing the Lords; before lionOst, which they replace
+    // The Lion Kingdom's Faith (LionFaith, Gman, 2026-10-28): Ost, only bringing the Lords, as the clan card (flash), Rise of the Twelve Peers
+    // building a free Defense Tower, and Paladins in Ost's place; before lionOst, which they replace
     val lionFaith : $[CardVersion] = $(
-        CardVersion(ClanCard(Lion, 0), LionFaith, CardInfo("Paladins", "card-clan-lion-paladins", 0, true, PaladinsEffect,
-            "Recruit 1. Then you may pay up to 4 Faith: recruit 1 more unit in that territory for each Faith paid.")),
+        CardVersion(ClanCard(Lion, 0), LionFaith, CardInfo("Ost", "card-clan-lion-ost-lords", 0, true, OstLordsEffect,
+            "Until the end of the year, your Lords next to a combat you start join it: gain 2 combat points for each. Then they return to their towers.")),
         CardVersion(ClanCard(Lion, 1), LionFaith, CardInfo("Rise of the Twelve Peers", "card-clan-lion-rise-of-the-twelve-peers-tower", 0, true, PeersTowerEffect,
             "Build 1 Defense Tower for free. Then you may put a Lord from your reserve on another Defense Tower you control that has none.")),
-        CardVersion(ClanCard(Lion, 2), LionFaith, CardInfo("Ost", "card-clan-lion-ost-lords", 0, false, OstLordsEffect,
-            "Until the end of the year, your Lords next to a combat you start join it: gain 2 combat points for each. Then they return to their towers.")),
+        CardVersion(ClanCard(Lion, 2), LionFaith, CardInfo("Paladins", "card-clan-lion-paladins", 0, true, PaladinsEffect,
+            "Recruit 1. Then you may pay up to 4 Faith: recruit 1 more unit in that territory for each Faith paid.")),
     )
 
     val all : $[CardVersion] = dragonVariant ++ secondEdition ++ printedNewBlood ++ lionFaith ++ lionOst
