@@ -838,6 +838,10 @@ file covers the build, server and deploy. No session can ssh to the server
   5+ players one of each pair is left without a suit (`game.unsuited`) and
   gets Mousehold, Foxburrow or Rabbittown at random. Ruins go in Crossing and
   Confluence plus the two lowest numbered slots not flooded (`ruinsIn`).
+- Tapping a landmark on the Root map (Ferry, Lost City, Tower, Mousehold, Foxburrow, Rabbittown) shows its card large
+  over the map (`landmarkCard` and `"view-landmark"` in `root/ui.scala`; asked for by Gman on 2026-10-29). The cards are the
+  English ones from the Leder Card Library (`landmark-<name>.webp`, see the Squires and Disciples note), resized to 600 px
+  wide in `webp2/root/images/card/landmark/` (loaded on demand as `landmark-card:`); there are no French ones.
 - The Homeland landmarks Mousehold, Foxburrow and Rabbittown are landmark
   options on any map (`MouseholdLandmark` etc. in `root/meta.scala`). Each
   adds its suit to its clearing, kept when a Lilypad enclave covers the suit

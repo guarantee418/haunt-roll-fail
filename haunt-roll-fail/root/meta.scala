@@ -1959,6 +1959,10 @@ object Meta extends MetaGame {
     ConditionalAssetsList((factions, options) => true, "faction/hireling/card", "hireling-card:", lzy = Laziness.OnDemand)(
         Meta.hirelings./(h => ImageAsset(h.style + "-card"))
     ) ::
+    // the landmark cards, from the Leder Card Library (https://cards.ledergames.com/), shown when a landmark on the map is tapped
+    ConditionalAssetsList((factions, options) => true, "card/landmark", "landmark-card:", lzy = Laziness.OnDemand)(
+        $("ferry", "lost-city", "tower", "mousehold", "foxburrow", "rabbittown")./(ImageAsset(_))
+    ) ::
     ConditionalAssetsList((factions, options) => options.has(AutumnMap), "autumn", "autumn:")(
         ImageAsset("map"          ,    "map-bright-new-expand" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
