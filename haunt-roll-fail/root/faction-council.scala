@@ -296,10 +296,14 @@ object CouncilExpansion extends FactionExpansion[Council] {
             val l = t.loyalists.$.num
             val gain = t.loyalists.$.num < Council.maxLoyalists && t.pool(t.warrior)
 
-            Ask(t).group(t, "was entreated in", c)
-                .add(CouncilEntreatGainAction(t, then).as("Gain", 1.hl, Loyalists.of(t, 1)).!(gain.not))
-                .each(1.to(l).toList.reverse)(n => CouncilPlaceLoyalistsAction(t, c, n, then).as("Place", n.hl, Loyalists.of(t, n), "in", c).!(t.canPlace(c).not))
-                .skip(then)
+            // with no Loyalists to place there, gaining one is the only choice that does anything (EntreatGainUnasked)
+            if (options.has(EntreatGainUnasked) && (l == 0 || t.canPlace(c).not))
+                gain.?[ForcedAction](CouncilEntreatGainAction(t, then)).|(then)
+            else
+                Ask(t).group(t, "was entreated in", c)
+                    .add(CouncilEntreatGainAction(t, then).as("Gain", 1.hl, Loyalists.of(t, 1)).!(gain.not))
+                    .each(1.to(l).toList.reverse)(n => CouncilPlaceLoyalistsAction(t, c, n, then).as("Place", n.hl, Loyalists.of(t, n), "in", c).!(t.canPlace(c).not))
+                    .skip(then)
 
         case CouncilEntreatGainAction(t, then) =>
             if (toLoyalists(t, 1) > 0)
