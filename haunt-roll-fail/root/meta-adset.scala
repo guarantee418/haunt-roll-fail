@@ -86,6 +86,7 @@ object MetaAdset extends MetaGame {
         SkipIdleRallyReconcile,
         FrogAmbushBottomOnlyAsAmbush,
         CouncilRevealOnce,
+        EntreatGainUnasked,
         FolkHeroCharacter,
         RandomCharacter,
         MapDefaultLandmarks,

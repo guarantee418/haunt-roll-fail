@@ -392,6 +392,14 @@ case object CouncilRevealOnce extends GameOption with ToggleOption {
     val valueOn = "Twilight Council".hh ~ " reveals one card per action"
 }
 
+// An Entreat gives the Twilight Council its Loyalist without asking when it has none it could place in the clearing instead, and
+// asks nothing when it can't gain one either (Hayjay, 2026-10-29: the Council was asked only to place 0). Hidden and on by default
+// for new games; older games keep asking so their replays don't change.
+case object EntreatGainUnasked extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Entreat".hh ~ " gains a Loyalist unasked when none could be placed"
+}
+
 // The Homeland Frog Ambush goes to the bottom of the Pond whenever it is discarded ("Discard this to the Pond bottom."), not only
 // when spent as an ambush: discarded at the hand limit it went on top (Gman, 2026-10-22). Hidden and on by default for new
 // games; older games keep putting it on top so their replays don't change.
@@ -1402,7 +1410,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1434,6 +1442,7 @@ object Meta extends MetaGame {
         SkipIdleRallyReconcile,
         FrogAmbushBottomOnlyAsAmbush,
         CouncilRevealOnce,
+        EntreatGainUnasked,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)

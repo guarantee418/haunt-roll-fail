@@ -683,6 +683,10 @@ file covers the build, server and deploy. No session can ssh to the server
   flip, and none it could place a warrior at (asked for by MaKoBwoY on 2026-10-21); the Birdsong extras (Entreat and the rest)
   are still offered then, with "Done". New games get the hidden default option `SkipIdleRallyReconcile`; older games keep
   asking so their replays don't change.
+- An Entreat (17.2.4) asks the Twilight Council to gain a Loyalist or place some in the clearing only when it has Loyalists it could
+  place there; otherwise it gains one without being asked, or nothing happens when it can't (`CouncilEntreatAction` in
+  `root/faction-council.scala`; Hayjay, 2026-10-29: the Council was asked only to "place 0"). New games get the hidden default option
+  `EntreatGainUnasked`; older games keep asking so their replays don't change.
 - Outrage with no card of the clearing's suit to give shows the hand to the Woodland Alliance in its action pane, and the
   game waits for its "Ok" (`PeekCardsAsk` and `PeekCardsSeenAction` in `root/cards.scala`; the playtest Pacifism the same).
   It was only a notification, and the game went on (Hayjay couldn't see the Lilypad Diaspora's hand on 2026-10-17). New games
