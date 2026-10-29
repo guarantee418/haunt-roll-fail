@@ -20,12 +20,18 @@ import hrf.options._
 import helper.&
 
 
+// Root's setup sections fold like Northgard's (BaseOption.fold, hrf.ui.Folds): folded, a section shows only what is picked.
+// Display only, so games and their records are unchanged; "root." keeps the open sections apart from other games' ones
+trait FoldedOption { self : BaseOption =>
+    override def fold = |("root." + group.text)
+}
+
 case class UnknownOption(o : String) extends GameOption {
     val group = "Unknown"
     val valueOn = "Unknown Option " ~ o
 }
 
-trait MapOption extends GameOption with OneOfGroup with ImportantOption {
+trait MapOption extends GameOption with OneOfGroup with ImportantOption with FoldedOption {
     val group = "Map"
 }
 
@@ -92,7 +98,7 @@ case object MarshMap extends MapOption {
 }
 
 
-trait ClearingsOption extends GameOption with OneOfGroup {
+trait ClearingsOption extends GameOption with OneOfGroup with FoldedOption {
     val group = "Clearings"
 }
 
@@ -132,7 +138,7 @@ case object ThreeFourFiveClearings extends ClearingsOption {
 }
 
 
-trait DeckOption extends GameOption with OneOfGroup with ImportantOption {
+trait DeckOption extends GameOption with OneOfGroup with ImportantOption with FoldedOption {
     val group = "Deck"
 }
 
@@ -169,7 +175,7 @@ case object SquiresDeck extends DeckOption {
     val valueOn = "Squires and Disciples".hh
 }
 
-case object NonBirdPartisans extends GameOption with ToggleOption {
+case object NonBirdPartisans extends GameOption with ToggleOption with FoldedOption {
     val group = "Cards"
     val valueOn = "Partisans".styled(styles.get(Bird)) ~ SpacedDash ~ "Discard".hh ~ " " ~ "Birds".styled(Bird)
     override def required(all : $[BaseOption]) = $($(ExilesDeck), $(MixedDeck))
@@ -179,7 +185,7 @@ case object NonBirdPartisans extends GameOption with ToggleOption {
     )
 }
 
-case object UnthematicCoffinMakers extends GameOption with ToggleOption {
+case object UnthematicCoffinMakers extends GameOption with ToggleOption with FoldedOption {
     val group = "Cards"
     val valueOn = "Coffin Makers".styled(styles.get(Rabbit)) ~ SpacedDash ~ "Any Warrior Recycle".hh
     override def required(all : $[BaseOption]) = $($(ExilesDeck))
@@ -190,7 +196,7 @@ case object UnthematicCoffinMakers extends GameOption with ToggleOption {
     )
 }
 
-case object ErrataCoffinMakers extends GameOption with ToggleOption {
+case object ErrataCoffinMakers extends GameOption with ToggleOption with FoldedOption {
     val group = "Cards"
     val valueOn = "Coffin Makers".styled(styles.get(Rabbit)) ~ SpacedDash ~ "Homeland Errata".hh
     override def required(all : $[BaseOption]) = $($(ExilesDeck))
@@ -201,7 +207,7 @@ case object ErrataCoffinMakers extends GameOption with ToggleOption {
     )
 }
 
-case object UnthematicPropagandaBureau extends GameOption with ToggleOption {
+case object UnthematicPropagandaBureau extends GameOption with ToggleOption with FoldedOption {
     val group = "Cards"
     val valueOn = "Propaganda Bureau".styled(styles.get(Fox)) ~ SpacedDash ~ "Optional Placement".hh
     override def required(all : $[BaseOption]) = $($(ExilesDeck), $(MixedDeck))
@@ -210,7 +216,7 @@ case object UnthematicPropagandaBureau extends GameOption with ToggleOption {
     )
 }
 
-case object TunnelsIgnoreRaid extends GameOption with ToggleOption {
+case object TunnelsIgnoreRaid extends GameOption with ToggleOption with FoldedOption {
     val group = "Cards"
     val valueOn = "Tunnels".styled(styles.get(Rabbit)) ~ SpacedDash ~ "Ignore ".hh ~ "Raid".styled(CC)
     override def required(all : $[BaseOption]) = $($(ExilesDeck), $(MixedDeck))./~(d => $(d ++ $(IncludeFaction(CC)), d ++ $(IncludeFaction(RI))))
@@ -219,7 +225,7 @@ case object TunnelsIgnoreRaid extends GameOption with ToggleOption {
     )
 }
 
-case object TunnelsIgnoreTradePosts extends GameOption with ToggleOption {
+case object TunnelsIgnoreTradePosts extends GameOption with ToggleOption with FoldedOption {
     val group = "Cards"
     val valueOn = "Tunnels".styled(styles.get(Rabbit)) ~ SpacedDash ~ "Ignore ".hh ~ "Trade Posts".styled(RF)
     override def required(all : $[BaseOption]) = $($(ExilesDeck), $(MixedDeck))./~(d => $(d ++ $(IncludeFaction(RF))))
@@ -274,7 +280,7 @@ case object SetupOrderReverse extends SetupOrderOption {
 }
 
 
-trait SetupTypeOption extends GameOption with OneOfGroup {
+trait SetupTypeOption extends GameOption with OneOfGroup with FoldedOption {
     val group = "Setup Type"
 }
 
@@ -377,6 +383,15 @@ case object SkipIdleRallyReconcile extends GameOption with ToggleOption {
     val valueOn = "Rally".hh ~ " or " ~ "Reconcile".hh ~ " skipped when idle"
 }
 
+// A Twilight Council move or battle reveals only the card it was revealed with: a Ferry move draws a card, and when that was
+// another copy of the revealed card it was revealed too (Season against Land, 2026-10-26), and a battle at an assembly
+// discarded such a copy from the hand instead of the revealed card. Hidden and on by default for new games; older games
+// keep the old way so their replays don't change (CouncilRevealOnceAction switches a running one over).
+case object CouncilRevealOnce extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Twilight Council".hh ~ " reveals one card per action"
+}
+
 // The Homeland Frog Ambush goes to the bottom of the Pond whenever it is discarded ("Discard this to the Pond bottom."), not only
 // when spent as an ambush: discarded at the hand limit it went on top (Gman, 2026-10-22). Hidden and on by default for new
 // games; older games keep putting it on top so their replays don't change.
@@ -405,7 +420,7 @@ case object KnavesCaptainsInDraft extends GameOption with ToggleOption {
 // its clearing that turn, the Forest Patrol saves one warrior of each removal, the Spring Uprising has 4 warriors and the
 // Warm Sun Prophets start in every ruin. Hidden and on by default for new games; older games keep the earlier rules so
 // their replays don't change.
-case object HirelingsByTheCard extends GameOption with ToggleOption {
+case object HirelingsByTheCard extends GameOption with ToggleOption with FoldedOption {
     val group = "Hirelings"
     val valueOn = "Hirelings".hh ~ " as their cards say"
 }
@@ -419,7 +434,7 @@ case object LizardsCraftByClearing extends GameOption with ToggleOption {
 }
 
 
-case object AutoHitsAssignmentMode extends GameOption with ToggleOption {
+case object AutoHitsAssignmentMode extends GameOption with ToggleOption with FoldedOption {
     val group = "Async"
     val valueOn = "Auto Hits Assignment".hh
     override val explain = $(
@@ -429,7 +444,7 @@ case object AutoHitsAssignmentMode extends GameOption with ToggleOption {
 
 // Bluff Mode and Auto Skip Ambushes are one choice; Bluff Mode is the default for new games. Games without either
 // (started before Bluff Mode) keep the players' own auto skip settings, so nothing changes for them.
-case object BluffMode extends GameOption with OneOfGroup {
+case object BluffMode extends GameOption with OneOfGroup with FoldedOption {
     val group = "Async"
     val valueOn = "Bluff Mode".hh
     override val explain = $(
@@ -441,7 +456,7 @@ case object BluffMode extends GameOption with OneOfGroup {
     )
 }
 
-case object AutoAmbushSkippingMode extends GameOption with OneOfGroup {
+case object AutoAmbushSkippingMode extends GameOption with OneOfGroup with FoldedOption {
     val group = "Async"
     val valueOn = "Auto Skip Ambushes".hh
     override val explain = $(
@@ -452,7 +467,7 @@ case object AutoAmbushSkippingMode extends GameOption with OneOfGroup {
     )
 }
 
-case object ForcedAsyncMode extends GameOption with ToggleOption {
+case object ForcedAsyncMode extends GameOption with ToggleOption with FoldedOption {
     val group = "Async"
     val valueOn = "Forced Async Mode".styled(xstyles.warning)
     override def forcedOn(all : $[BaseOption]) = $(AutoHitsAssignmentMode, AutoAmbushSkippingMode)
@@ -468,7 +483,7 @@ case object ForcedAsyncMode extends GameOption with ToggleOption {
 }
 
 
-trait AdSetBuffOption extends GameOption with OneOfGroup {
+trait AdSetBuffOption extends GameOption with OneOfGroup with FoldedOption {
     val group = "AdSet " ~ "MC".styled(MC) ~ ", " ~ "LC".styled(LC) ~ ", " ~ "CC".styled(CC) ~ " Setup Buffs"
 }
 
@@ -480,7 +495,7 @@ case object AdSetBuffOff extends AdSetBuffOption {
     val valueOn = "Off".hh
 }
 
-trait MirrorOption extends GameOption with ToggleOption {
+trait MirrorOption extends GameOption with ToggleOption with FoldedOption {
     val group = "Mirror Factions"
 }
 
@@ -569,7 +584,7 @@ case object SharedHistory extends MirrorOption {
 
 
 
-case object UntargetableKeep extends GameOption with ToggleOption {
+case object UntargetableKeep extends GameOption with ToggleOption with FoldedOption {
     val group = MC.title
     val valueOn = "Keep".styled(MC) ~ SpacedDash ~ "Untargetable".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(MC)), $(IncludeFaction(BK)))
@@ -579,7 +594,7 @@ case object UntargetableKeep extends GameOption with ToggleOption {
     )
 }
 
-case object IndestructibleKeep extends GameOption with ToggleOption {
+case object IndestructibleKeep extends GameOption with ToggleOption with FoldedOption {
     val group = MC.title
     val valueOn = "Keep".styled(MC) ~ SpacedDash ~ "Indestructible".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(MC)), $(IncludeFaction(BK)))
@@ -589,7 +604,7 @@ case object IndestructibleKeep extends GameOption with ToggleOption {
     )
 }
 
-case object ThreeHitKeep extends GameOption with ToggleOption {
+case object ThreeHitKeep extends GameOption with ToggleOption with FoldedOption {
     val group = MC.title
     val valueOn = "Keep".styled(MC) ~ SpacedDash ~ "Takes ".hh ~ 3.hit
     override def required(all : $[BaseOption]) = $($(IncludeFaction(MC)), $(IncludeFaction(BK)))
@@ -599,7 +614,7 @@ case object ThreeHitKeep extends GameOption with ToggleOption {
     )
 }
 
-case object InstantRebuildKeep extends GameOption with ToggleOption {
+case object InstantRebuildKeep extends GameOption with ToggleOption with FoldedOption {
     val group = MC.title
     val valueOn = "Keep".styled(MC) ~ SpacedDash ~ "Instant Rebuild".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(MC)), $(IncludeFaction(BK)))
@@ -609,25 +624,25 @@ case object InstantRebuildKeep extends GameOption with ToggleOption {
     )
 }
 
-case object SawmillMassOverwork extends GameOption with ToggleOption {
+case object SawmillMassOverwork extends GameOption with ToggleOption with FoldedOption {
     val group = MC.title
     val valueOn = Sawmill.sof(MC) ~ SpacedDash ~ "Mass Overwork".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(MC)), $(IncludeFaction(BK)))
 }
 
-case object WorkshopEveningCraft extends GameOption with ToggleOption {
+case object WorkshopEveningCraft extends GameOption with ToggleOption with FoldedOption {
     val group = MC.title
     val valueOn = Workshop.sof(MC) ~ SpacedDash ~ "Evening".styled(styles.phase) ~ " Craft".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(MC)), $(IncludeFaction(BK)))
 }
 
-case object WorkshopActionBonuses extends GameOption with ToggleOption {
+case object WorkshopActionBonuses extends GameOption with ToggleOption with FoldedOption {
     val group = MC.title
     val valueOn = Workshop.sof(MC) ~ SpacedDash ~ "Action Bonuses".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(MC)), $(IncludeFaction(BK)))
 }
 
-case object KeepExtraBuildingSlot extends GameOption with ToggleOption {
+case object KeepExtraBuildingSlot extends GameOption with ToggleOption with FoldedOption {
     val group = MC.title
     val valueOn = "Keep".styled(MC) ~ SpacedDash ~ "Extra Building Slot".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(MC)), $(IncludeFaction(BK)))
@@ -636,7 +651,7 @@ case object KeepExtraBuildingSlot extends GameOption with ToggleOption {
     )
 }
 
-case object Catapults extends GameOption with ToggleOption {
+case object Catapults extends GameOption with ToggleOption with FoldedOption {
     val group = MC.title
     val valueOn = "Catapults".styled(MC) ~ SpacedDash ~ "Siege Tokens".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(MC)), $(IncludeFaction(BK)))
@@ -649,7 +664,7 @@ case object Catapults extends GameOption with ToggleOption {
 }
 
 
-case object WarriorsOnlyInfamy extends GameOption with ToggleOption {
+case object WarriorsOnlyInfamy extends GameOption with ToggleOption with FoldedOption {
     val group = VB.title
     val valueOn = "Infamy".styled(VB) ~ SpacedDash ~ "Warriors Only".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(VB)), $(IncludeFaction(NB)), $(IncludeFaction(MB)))
@@ -658,7 +673,7 @@ case object WarriorsOnlyInfamy extends GameOption with ToggleOption {
     )
 }
 
-case object LimitedInfamy extends GameOption with ToggleOption {
+case object LimitedInfamy extends GameOption with ToggleOption with FoldedOption {
     val group = VB.title
     val valueOn = "Infamy".styled(VB) ~ SpacedDash ~ "Max".hh ~ " " ~ (1 + " VP").styled(styles.vp) ~ " per Battle".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(VB)), $(IncludeFaction(NB)), $(IncludeFaction(MB)))
@@ -667,7 +682,7 @@ case object LimitedInfamy extends GameOption with ToggleOption {
     )
 }
 
-case object RevisedQuests extends GameOption with ToggleOption {
+case object RevisedQuests extends GameOption with ToggleOption with FoldedOption {
     val group = VB.title
     val valueOn = "Quests".styled(VB) ~ SpacedDash ~ "Revised Quest Deck".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(VB)), $(IncludeFaction(NB)), $(IncludeFaction(MB)))
@@ -692,7 +707,7 @@ trait VagabondCharOption {
         )))(null, null)(null).div(xstyles.xx)(xstyles.chp)(xstyles.chm)(xstyles.info)(styles.inline)(styles.charback)
 }
 
-case object TinkerNoBag extends GameOption with ToggleOption with VagabondCharOption {
+case object TinkerNoBag extends GameOption with ToggleOption with VagabondCharOption with FoldedOption {
     val group = VB.title
     val valueOn = Tinker.name.styled(VB) ~ SpacedDash ~ "No Starting ".hh ~ Bag.name.spn(styles.itemInfo)
     override def required(all : $[BaseOption]) = $($(IncludeFaction(VB)), $(IncludeFaction(NB)), $(IncludeFaction(MB)))
@@ -703,7 +718,7 @@ case object TinkerNoBag extends GameOption with ToggleOption with VagabondCharOp
     override val grow = xlo.grow16
 }
 
-case object HarrierNoCoins extends GameOption with ToggleOption with VagabondCharOption {
+case object HarrierNoCoins extends GameOption with ToggleOption with VagabondCharOption with FoldedOption {
     val group = VB.title
     val valueOn = Harrier.name.styled(VB) ~ SpacedDash ~ "No Starting ".hh ~ Coins.name.spn(styles.itemInfo)
     override def required(all : $[BaseOption]) = $($(IncludeFaction(VB)), $(IncludeFaction(NB)), $(IncludeFaction(MB)))
@@ -713,7 +728,7 @@ case object HarrierNoCoins extends GameOption with ToggleOption with VagabondCha
     )
 }
 
-case object ScoundrelTeapotNoBoot extends GameOption with ToggleOption with VagabondCharOption {
+case object ScoundrelTeapotNoBoot extends GameOption with ToggleOption with VagabondCharOption with FoldedOption {
     val group = VB.title
     val valueOn = Scoundrel.name.styled(VB) ~ SpacedDash ~ Teapot.name.spn(styles.itemInfo) ~ " instead of ".hh ~ Boots.name.spn(styles.itemInfo)
     override def required(all : $[BaseOption]) = $($(IncludeFaction(VB)), $(IncludeFaction(NB)), $(IncludeFaction(MB)))
@@ -723,7 +738,7 @@ case object ScoundrelTeapotNoBoot extends GameOption with ToggleOption with Vaga
     )
 }
 
-case object ArbiterScoreCard extends GameOption with ToggleOption with VagabondCharOption {
+case object ArbiterScoreCard extends GameOption with ToggleOption with VagabondCharOption with FoldedOption {
     val group = VB.title
     val valueOn = Arbiter.name.styled(VB) ~ SpacedDash ~ Protector.of(VB) ~ " grants ".hh ~ "1 Card".styled(Bird)
     override def required(all : $[BaseOption]) = $($(IncludeFaction(VB)), $(IncludeFaction(NB)), $(IncludeFaction(MB)))
@@ -733,7 +748,7 @@ case object ArbiterScoreCard extends GameOption with ToggleOption with VagabondC
     )
 }
 
-case object RoninSwiftTorch extends GameOption with ToggleOption with VagabondCharOption {
+case object RoninSwiftTorch extends GameOption with ToggleOption with VagabondCharOption with FoldedOption {
     val group = VB.title
     val valueOn = Ronin.name.styled(VB) ~ SpacedDash ~ SwiftStrike.of(VB) ~ " with ".hh ~ Torch.name.spn(styles.itemInfo)
     override def required(all : $[BaseOption]) = $($(IncludeFaction(VB)), $(IncludeFaction(NB)), $(IncludeFaction(MB)))
@@ -743,7 +758,7 @@ case object RoninSwiftTorch extends GameOption with ToggleOption with VagabondCh
     )
 }
 
-case object FolkHeroCharacter extends GameOption with ToggleOption with VagabondCharOption {
+case object FolkHeroCharacter extends GameOption with ToggleOption with VagabondCharOption with FoldedOption {
     val group = VB.title
     val valueOn = FolkHero.name.styled(VB) ~ " " ~ "character"
     override def required(all : $[BaseOption]) = $($(IncludeFaction(VB)), $(IncludeFaction(NB)), $(IncludeFaction(MB)))
@@ -755,7 +770,7 @@ case object FolkHeroCharacter extends GameOption with ToggleOption with Vagabond
 }
 
 
-case object LimitedTrampleDiscard extends GameOption with ToggleOption {
+case object LimitedTrampleDiscard extends GameOption with ToggleOption with FoldedOption {
     val group = LC.title
     val valueOn = "Trampled ".hh ~ "Gardens".styled(LC) ~ SpacedDash ~ "Discard Only ".hh ~ 1.styled(styles.hit) ~ " Card".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(LC)))
@@ -764,7 +779,7 @@ case object LimitedTrampleDiscard extends GameOption with ToggleOption {
     )
 }
 
-case object RevengeFromAnyRemoval extends GameOption with ToggleOption {
+case object RevengeFromAnyRemoval extends GameOption with ToggleOption with FoldedOption {
     val group = LC.title
     val valueOn = "Revenge".styled(LC) ~ SpacedDash ~ "Warriors Removed Out of Turn".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(LC)))
@@ -773,7 +788,7 @@ case object RevengeFromAnyRemoval extends GameOption with ToggleOption {
     )
 }
 
-case object LizardHandSizeSix extends GameOption with ToggleOption {
+case object LizardHandSizeSix extends GameOption with ToggleOption with FoldedOption {
     val group = LC.title
     val valueOn = "Hand".styled(LC) ~ SpacedDash ~ "Hand Size ".hh ~ "Six".styled(Bird) ~ " Cards".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(LC)))
@@ -800,7 +815,7 @@ case object MayorAssemblyAction extends GameOption with ToggleOption {
     )
 }
 
-case object ThreeOfEachPlot extends GameOption with ToggleOption {
+case object ThreeOfEachPlot extends GameOption with ToggleOption with FoldedOption {
     val group = CC.title
     val valueOn = "More Plots".styled(CC) ~ SpacedDash ~ "Three of each Plot".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(CC)), $(IncludeFaction(RI)))
@@ -809,7 +824,7 @@ case object ThreeOfEachPlot extends GameOption with ToggleOption {
     )
 }
 
-case object EmbeddedAgentsBeforeBattle extends GameOption with ToggleOption {
+case object EmbeddedAgentsBeforeBattle extends GameOption with ToggleOption with FoldedOption {
     val group = CC.title
     val valueOn = "Embedded Agents".styled(CC) ~ SpacedDash ~ 1.hit ~ " before Battle".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(CC)), $(IncludeFaction(RI)))
@@ -819,7 +834,7 @@ case object EmbeddedAgentsBeforeBattle extends GameOption with ToggleOption {
     )
 }
 
-case object DiversionPlot extends GameOption with ToggleOption {
+case object DiversionPlot extends GameOption with ToggleOption with FoldedOption {
     val group = CC.title
     val valueOn = "Diversion".styled(CC) ~ SpacedDash ~ "New Plot Type".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(CC)), $(IncludeFaction(RI)))
@@ -830,7 +845,7 @@ case object DiversionPlot extends GameOption with ToggleOption {
     )
 }
 
-case object BrutalHonesty extends GameOption with ToggleOption {
+case object BrutalHonesty extends GameOption with ToggleOption with FoldedOption {
     val group = CC.title
     val valueOn = "Brutal Honesty".hh ~ SpacedDash ~ "Better " ~ "Bombs".styled(CC)
     override def required(all : $[BaseOption]) = $($(IncludeFaction(CC)), $(IncludeFaction(RI)))
@@ -840,7 +855,7 @@ case object BrutalHonesty extends GameOption with ToggleOption {
     )
 }
 
-case object AssassinPlot extends GameOption with ToggleOption {
+case object AssassinPlot extends GameOption with ToggleOption with FoldedOption {
     val group = CC.title
     val valueOn = "New Plot Type".hh ~ SpacedDash ~ "Assassin".styled(CC)
     override def required(all : $[BaseOption]) = $($(IncludeFaction(CC)), $(IncludeFaction(RI)))
@@ -869,7 +884,7 @@ case object SeparateItemsInRuins extends GameOption with ToggleOption {
     )
 }
 
-case object RandomCharacter extends GameOption with ToggleOption {
+case object RandomCharacter extends GameOption with ToggleOption with FoldedOption {
     val group = VB.title
     val valueOn = "Random Character".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(VB)), $(IncludeFaction(NB)), $(IncludeFaction(MB)))
@@ -889,7 +904,7 @@ case object TotalWarDominance extends GameOption with ToggleOption {
 }
 
 
-trait LandmarksOption extends GameOption {
+trait LandmarksOption extends GameOption with FoldedOption {
     val group = "Landmarks"
 }
 
@@ -959,7 +974,7 @@ case object RabbittownLandmark extends Landmark {
 
 
 
-trait HirelingsOption extends GameOption with OneOfGroup {
+trait HirelingsOption extends GameOption with OneOfGroup with FoldedOption {
     val group = "Hirelings"
 }
 
@@ -996,7 +1011,7 @@ case object SelectedHirelings extends HirelingsOption {
 }
 
 
-trait HirelingsClashOption extends GameOption with ToggleOption {
+trait HirelingsClashOption extends GameOption with ToggleOption with FoldedOption {
     val group = "Hirelings Clash"
 }
 
@@ -1017,7 +1032,7 @@ case object FactionHirelingClash extends HirelingsClashOption {
 }
 
 
-case class IncludeHireling(hireling : Hireling) extends GameOption with ToggleOption {
+case class IncludeHireling(hireling : Hireling) extends GameOption with ToggleOption with FoldedOption {
     val group = hireling.demoted.?("Demoted".hh).|("Staunch".styled(styles.hit)) ~ " Hirelings"
     val valueOn = hireling.name.styled(hireling)
     override def required(all : $[BaseOption]) =
@@ -1373,7 +1388,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1404,6 +1419,7 @@ object Meta extends MetaGame {
         CounterMiceInABush,
         SkipIdleRallyReconcile,
         FrogAmbushBottomOnlyAsAmbush,
+        CouncilRevealOnce,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)

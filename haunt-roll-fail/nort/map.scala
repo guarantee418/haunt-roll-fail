@@ -487,22 +487,34 @@ object CombatReport {
                 ) ~ "."
         }
 
-        def side(s : FightSide) : Elem = {
-            val from = s.points./{ case (n, what) => n.hl ~ " from " ~ what }
-            val hits = s.casualties./{ case (n, what) => (n > 0).?(n.hl ~ " from " ~ what).|((-n).hl ~ " " ~ what) }
+        def and(l : $[Elem]) : Elem = l.dropRight(1).some./(i => i.join(", ") ~ " and " ~ l.last).|(l.join(""))
 
-            name(s) ~ s.attacking.?(" (attacking)").|(" (defending)") ~ " had " ~ CombatIcon.axes(s.total) ~
-            from.any.?(" (" ~ from.join(", ") ~ ")").|(Empty) ~
-            hits.any.?(", inflicted " ~ CombatIcon.skulls(s.inflicted) ~ " (" ~ hits.join(", ") ~ ")").|(Empty) ~
-            (s.lost > 0).?(" and lost " ~ s.lost.hl ~ (s.lost == 1).?(" unit").|(" units")).|(Empty) ~
-            (s.fate != Empty).?(" and " ~ s.fate).|(Empty) ~
-            s.fame.any.?(" and gained " ~ s.fame.map(_._1).sum.hl ~ " " ~ FameIcon() ~ " (" ~ s.fame./{ case (n, what) => n.hl ~ " for " ~ what }.join(", ") ~ ")").|(Empty) ~ "."
+        // The summary: each side's totals, the defender first as it wins ties (Robotos, 2026-10-28); the casualties
+        // inflicted, not the figures lost, which say the same
+        def summary(s : FightSide) : Elem = {
+            val role = s.attacking.?("The attacker").|("The defender")
+            val who = (self.any && s.f == self).?("you".txt).|(s.who)
+            val fame = s.fame.any.?("gained " ~ s.fame.map(_._1).sum.hl ~ " " ~ FameIcon())
+
+            role ~ " (" ~ who ~ ") had " ~ and($(CombatIcon.axes(s.total)) ++
+                (s.inflicted > 0).?("inflicted " ~ CombatIcon.skulls(s.inflicted)) ++ (s.fate != Empty).?(s.fate) ++ fame) ~ "."
         }
 
-        // Your side first
-        val sides = (self.any && r.defender.f == self).?($(r.defender, r.attacker)).|($(r.attacker, r.defender))
+        // The breakdown: where each side's combat points, casualties and fame came from
+        def details(s : FightSide) : Elem = {
+            val from = s.points.zipWithIndex./{ case ((n, what), i) => (i == 0).?(CombatIcon.axes(n)).|(n.hl) ~ " from " ~ what }
+            val hits = s.casualties.filter(_._1 > 0).zipWithIndex./{ case ((n, what), i) => (i == 0).?(CombatIcon.skulls(n)).|(n.hl) ~ " from " ~ what }
+            val cancelled = s.casualties.filter(_._1 < 0)./{ case (n, what) => CombatIcon.skulls(-n) ~ " " ~ what }
+            val fame = s.fame./{ case (n, what) => n.hl ~ " " ~ FameIcon() ~ " for " ~ what }
 
-        headline ~ Break ~ side(sides(0)) ~ Break ~ side(sides(1))
+            (from.any || hits.any || cancelled.any || fame.any).?(name(s) ~ " had " ~ and(from ++ hits ++ cancelled ++ fame) ~ ".").|(Empty)
+        }
+
+        val sides = $(r.defender, r.attacker)
+        val breakdown = sides./(details).%(_ != Empty)
+
+        headline ~ Break ~ summary(r.defender) ~ Break ~ summary(r.attacker) ~
+            breakdown.any.?(Break ~ Break ~ breakdown.join(Break)).|(Empty)
     }
 }
 
@@ -815,7 +827,7 @@ object MapExpansion extends Expansion {
         val extra = s.index >= SpaceRef.extra
         val cost = MilitaryExpansion.cost(f, b, buildCost(b, e))
 
-        if (e.special == OstBuild && b != DefenseTower) |("Ost builds a Defense Tower")
+        if (e.special == OstBuild && b != DefenseTower) |("a free Defense Tower only")
         else if (smallOnly && b.large) |("small buildings only")
         else if (extra && b.large) |("needs a large space")
         else if (extra && noSpace(e).not && MilitaryExpansion.freeBuild(f, b).not) |("needs a building space")

@@ -165,7 +165,9 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         r match {
             case Food => 40
             case Wood => 50
-            case Lore => (self.upgrades.any && game.year < game.lastYear).?(55).|(42)
+            case Lore => (self.upgrades.any && game.year < game.lastYear && LionExpansion.faith(self).not).?(55).|(42)
+            // The Lion Kingdom's Faith: its clan upgrades and Paladins' units
+            case Faith => (game.year < game.lastYear).?(55).|(36)
         }
     }
 
@@ -402,7 +404,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         v += (game.companion(f).any).??(60)
         v += (game.chiefs.contains(f)).??(70)
 
-        v += f.food * resourceValueFor(f, Food) + f.wood * resourceValueFor(f, Wood) + f.lore * resourceValueFor(f, Lore)
+        v += f.food * resourceValueFor(f, Food) + f.wood * resourceValueFor(f, Wood) + f.lore * resourceValueFor(f, Lore) + f.faith * resourceValueFor(f, Faith)
 
         // Minerals module: each mineral is worth two resources and more; each Mine about half a mineral at each harvest left
         if (game.has(MineralsModule))
@@ -459,7 +461,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val companion = game.companion(self)
         val lynx2 = game.lynx2
         // Every player's resources and fame (team trades and some effects change another player's)
-        val stocks = players./(f => (f, f.food, f.wood, f.lore, f.fame))
+        val stocks = players./(f => (f, f.food, f.wood, f.lore, f.fame, f.faith))
         // Minerals module: the minerals held, the supply and the Stone upgrades
         val minerals = players./(f => (f, f.minerals))
         val bank = game.mineralBank
@@ -480,11 +482,12 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             game.chiefs = chiefs
             game.setCompanion(self, companion)
             game.lynx2 = lynx2
-            stocks.foreach { case (f, food, wood, lore, fame) =>
+            stocks.foreach { case (f, food, wood, lore, fame, faith) =>
                 f.food = food
                 f.wood = wood
                 f.lore = lore
                 f.fame = fame
+                f.faith = faith
             }
         }
     }
@@ -673,7 +676,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
 
         case RemoveCardAction(_, c) => 150 - 2 * resourceValue(Lore) - cardValue(c) + thin(c) + victoryStep("refinement")
 
-        case UpgradeCardAction(_, c, u, remove) => upgradeValue(u) - game.upgradeCost(self) * resourceValue(Lore) - cardValue(c) + remove.?(thin(c)).|(0.0) + victoryStep("refinement")
+        case UpgradeCardAction(_, c, u, remove) => upgradeValue(u) - game.upgradeCost(self) * resourceValue(LionExpansion.upgradeResource(self)) - cardValue(c) + remove.?(thin(c)).|(0.0) + victoryStep("refinement")
 
         // Every player takes a Development card when passing, so passing now only keeps the pick from going to someone
         // who passes before the bot's next turn (likely with one or two cards left in hand): the best card against the

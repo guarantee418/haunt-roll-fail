@@ -527,6 +527,15 @@ case object FutureSightLastYear extends GameOption with ToggleOption {
     def valueOn = "Future Sight takes Achievements only in the last year".txt
 }
 
+// An Achievement taken by Future Sight or at Mimirsbrunn (the last year) is kept aside, face down, to score at the end, not put on
+// top of the draw pile, where a Replace, Remove or draw effect brought it into the hand in place of a card (Marzaus and Robotos,
+// relayed by Gman on 2026-10-28). Hidden, and given to every new game (Meta.mandatoryFor): older games replay the old way, and a
+// running one can be switched over with AchievementsAsideAction(X)
+case object AchievementsAside extends GameOption with ToggleOption {
+    val group = "Development cards".txt
+    def valueOn = "Achievements taken early are kept aside".txt
+}
+
 // New Blood as printed (Gman sent the printed cards and boards on 2026-10-23): the 19 clan cards in CardVersions (editions.scala)
 // and the clan board rules (Lynx's bonus Move and Mielikki, Kraken's High Tide and Kàra, Dragon's harvest, Squirrel after Winter).
 // The site had followed the TTS mod's prototype cards and boards. Hidden, and given to every new game (Meta.mandatoryFor), in either
@@ -896,6 +905,15 @@ case object LionChapelVow extends GameOption with ToggleOption {
 case object LionChapelLore extends GameOption with ToggleOption {
     val group = "Fan content".txt
     def valueOn = "Lion Kingdom's Chapels give lore".txt
+}
+
+// The Lion's Faith (Gman, 2026-10-28): a fourth resource, 1 for each casualty its Lords or Hildegard deal in a fight and 1 for each
+// Chapel at harvest (instead of lore); its clan upgrades cost Faith; Paladins (Recruit 1, and 1 more for each Faith
+// paid, up to 4) in Ost's place, Rise of the Twelve Peers builds a free Defense Tower and Ost, only bringing the Lords, is the clan card. Hidden, and given to every new
+// game (mandatoryFor); older games keep the lore and the earlier cards (CardVersions.lionFaith in editions.scala) and replay that way
+case object LionFaith extends GameOption with ToggleOption {
+    val group = "Fan content".txt
+    def valueOn = "Lion Kingdom collects and spends Faith".txt
 }
 
 object Module {

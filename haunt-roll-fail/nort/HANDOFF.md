@@ -927,6 +927,9 @@ pruned by `LionExpansion.cleanup` after moves, fights and retreats; their combat
 and gated by `LionExpansion.allowed`. The Lion's own deck comes with the hidden `LionOwnDeck` every new game gets (or the old `LionStartingDeck` option)
 (`LionExpansion.starting`). Art from `tools/lion-art.py` (the video game's emblem and Hildegard icon from the Northgard wiki are its sources in
 `webp2/nort/images/expansion/lion/`; Hildegard's map figure is `chief-lion-<color>`, so `Lion` is in `Warchief.pawns`). `NORT_LION=1` puts the Lion in every host game.
+Faith (hidden `LionFaith`, 2026-10-28) is `Faith`, a `Resource` left out of `Resource.all` so no card or event offers it;
+`FactionState.faith`, `Resource.of(f)` for the trades, `LionExpansion.upgradeResource` for the upgrades, `game.lionLords`
+(set at `CombatResolveAction`, like `game.hildegard`) for the casualties' Faith, and the sixth ledger column (`styles.ledgerFaith`).
 
 ## Stoat Kingdom, a planned fan-made clan (notes, 2026-10-25)
 

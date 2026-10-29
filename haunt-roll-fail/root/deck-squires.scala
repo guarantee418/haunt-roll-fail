@@ -147,6 +147,8 @@ trait SquiresPayment extends Record
 case class PaySelf(e : CardEffect) extends SquiresPayment
 case class PayReturn(e : CardEffect) extends SquiresPayment
 case class PayCard(d : DeckCard) extends SquiresPayment
+// A card spent as another suit with a Friend of the ___ (any turn, as for an ambush), e.g. to pay for Mice-in-a-Bush
+case class PayFriend(d : DeckCard, s : BaseSuit) extends SquiresPayment
 
 
 case class ForcedBy(f : Faction) extends Message {
@@ -221,12 +223,16 @@ object SquiresDeckExpansion extends Expansion {
     }
 
     def payments(f : Faction, e : CardEffect, self : CardEffect => SquiresPayment, cost : SuitCost)(implicit game : Game) : $[SquiresPayment] =
-        f.has(e).$(self(e)) ++ f.hand.%(_.matches(cost))./(PayCard)
+        f.has(e).$(self(e)) ++ f.hand.%(_.matches(cost))./(PayCard) ++ friendPayments(f, cost)
+
+    def friendPayments(f : Faction, cost : SuitCost)(implicit game : Game) : $[SquiresPayment] =
+        FoxRabbitMouse.%(s => f.can(FriendOfThe(s)))./~(s => f.hand.%(_.suit == s).%(_.matches(cost).not)./(PayFriend(_, s)))
 
     def paymentElem(p : SquiresPayment)(implicit game : Game) : Elem = p @@ {
         case PaySelf(e) => "Discard " ~ e.elem
         case PayReturn(e) => "Return " ~ e.elem ~ " to hand"
         case PayCard(d) => "Discard " ~ d.elem
+        case PayFriend(d, s) => "Discard " ~ d.elem ~ " as another suit with " ~ FriendOfThe(s).elem
     }
 
     def defaultTransports(f : Faction)(implicit game : Game) = game.transports./($) ** f.transports ** f.is[Hero].?($($(MoveBoots), $(MoveDoubleBoots))).|($($()))
@@ -351,6 +357,15 @@ object SquiresDeckExpansion extends Expansion {
             f.hand --> d --> discard.quiet
 
             f.log("discarded", d)
+
+            then
+
+        case SquiresPayAction(f, PayFriend(d, s), then) =>
+            f.used :+= FriendOfThe(s)
+
+            f.hand --> d --> discard.quiet
+
+            f.log("discarded", d, "as another suit with", FriendOfThe(s))
 
             then
 

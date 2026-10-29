@@ -1499,14 +1499,23 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
     // A faction in the picker: a tile in a grid when the game has them (Meta.factionTile), else a row with its note;
     // either way with the factionInfo button
-    def factionPick(f : meta.F) : Elem = {
-        def info(styles : Style*) = meta.factionInfo(f)./{ case (label, _, _) => Parameter("faction-info", OnClick(Span(label, (xstyles.outlined +: styles).toList))) }
+    def factionPick(f : meta.F) : Elem = pickElem(meta.factionTile(f), meta.factionElem(f), meta.factionNote(f), meta.factionInfo(f))
 
-        meta.factionTile(f) match {
+    // A faction's variant in the picker (Meta.factionVariants), shown like the factions
+    def variantPick(v : meta.FactionVariant) : Elem = pickElem(meta.factions.exists(meta.factionTile(_).any).?(v.tile), v.tile, Empty, v.info)
+
+    def pickElem(tile : |[Elem], elem : Elem, note : Elem, about : |[(Elem, Elem, $[Elem])]) : Elem = {
+        def info(styles : Style*) = about./{ case (label, _, _) => Parameter("faction-info", OnClick(Span(label, (xstyles.outlined +: styles).toList))) }
+
+        tile match {
             case Some(tile) => Div(Div(tile) ~ info(xstyles.tileButton)./(i => Div(i)).|(Empty), ZBasic.tile)
-            case None => Div(meta.factionElem(f) ~ info()./(" " ~ _).|(Empty) ~ meta.factionNote(f), ZBasic.choice)
+            case None => Div(elem ~ info()./(" " ~ _).|(Empty) ~ note, ZBasic.choice)
         }
     }
+
+    // The picker's entries in their groups (Meta.factionGroup, FactionVariant.group): those without one first, as a group of
+    // entries is headed only where it starts
+    def grouped(l : $[(|[Elem], Elem => ZOption)]) : $[ZOption] = (l.filter(_._1.none) ++ l.filter(_._1.any)).map { case (g, z) => z(g.|("Play as".txt)) }
 
     def randomPick(label : Elem) : Elem = Div(label, meta.factions.exists(meta.factionTile(_).any).?(ZBasic.tile).|(ZBasic.choice))
 
@@ -1526,14 +1535,22 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     history.pushState(null, () => ask())
                     startSetup($(f, solo), false, |("solo"), hidden = $(f), picked = true)
                 }) } ++
-                meta.factions.but(solo)./(f => ZOption(Div("Play as".txt), OnClick(factionPick(f)), {
+                grouped(meta.factions.but(solo)./(f => meta.factionGroup(f) -> ((g : Elem) => ZOption(Div(g), OnClick(factionPick(f)), {
                     case "faction-info" =>
                         meta.factionInfo(f).foreach { case (_, title, l) => showOverlayRaw(title, l) }
                         setTimeout(0) { ask() }
                     case _ =>
                         history.pushState(null, () => ask())
                         startSetup($(f, solo), false, |("solo"), picked = true)
-                })) ++
+                }))) ++
+                meta.factionVariants.%(_.faction != solo)./(v => v.group -> ((g : Elem) => ZOption(Div(g), OnClick(variantPick(v)), {
+                    case "faction-info" =>
+                        v.info.foreach { case (_, title, l) => showOverlayRaw(title, l) }
+                        setTimeout(0) { ask() }
+                    case _ =>
+                        history.pushState(null, () => ask())
+                        startSetup($(v.faction, solo), false, |("solo"), extra = v.options, picked = true, names = Map(v.faction -> v.name))
+                })))) ++
                 ZBasic(" ", "Cancel", () => {
                     history.popState()
                 }).?
@@ -1579,7 +1596,28 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             // Random picks: the faction drawn, kept hidden until the game starts, and the pool it was drawn from
             var hidden = Map[meta.F, $[meta.F]]()
 
-            def chosenElem(f : meta.F) = hidden.contains(f).?(meta.randomName.hlb).|(meta.factionChosenElem(f))
+            // Factions picked as one of their variants (Meta.factionVariants)
+            var variants = Map[meta.F, meta.FactionVariant]()
+
+            def chosenElem(f : meta.F) = hidden.contains(f).?(meta.randomName.hlb).|(variants.get(f)./(_.chosen).|(meta.factionChosenElem(f)))
+
+            // A random pick that drew this faction draws again, so picks never give away what was drawn;
+            // with nothing left to draw, the random pick becomes this pick
+            def pick(f : meta.F) {
+                variants -= f
+                hidden.get(f) match {
+                    case Some(pool) =>
+                        hidden -= f
+                        pool.diff(opponents).shuffle.take(1).foreach { g =>
+                            opponents = opponents./(o => (o == f).?(g).|(o))
+                            hidden += g -> pool
+                        }
+                        if (opponents.has(f).not)
+                            opponents :+= f
+                    case None =>
+                        opponents :+= f
+                }
+            }
 
             // The choice above the picker (Meta.pickerModes, Northgard's free-for-all or teams), remembered for the next game
             val modeKey = meta.name + ".picker-mode"
@@ -1596,12 +1634,13 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     opponents./(f => ZBasic(t, chosenElem(f), () => {
                         opponents :-= f
                         hidden -= f
+                        variants -= f
                         askAdd()
                     }, ZBasic.infoch ++ $(xstyles.optionOn))) ++
                     ZBasic(t, v.ok.?("Start Setup".hl ~ v.message.any.??(" | ")).|(Empty) ~ v.message.styled(v.style), (v.ok).??(() => {
                         // The setup screen's Back comes back here with the picks kept
                         history.pushState(null, () => askAdd())
-                        startSetup(opponents, online, online.not.?("hotseat"), hidden = hidden.keys.$, extra = modeOptions, picked = true)
+                        startSetup(opponents, online, online.not.?("hotseat"), hidden = hidden.keys.$, extra = modeOptions ++ opponents./~(variants.get(_)./~(_.options)), picked = true, names = variants.view.mapValues(_.name).toMap)
                     })).? ++
                     meta.pickerModes.zipWithIndex./{ case ((label, _), i) =>
                         ZOption("Game type".styled(xstyles.larger125), OnClick(Div(label, ZBasic.choice ++ (i == mode).$(xstyles.optionOn, xstyles.bold) ++ $(xstyles.optionE, xstyles.halfbutton))), _ => {
@@ -1616,27 +1655,24 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         hidden += f -> pool
                         askAdd()
                     }) } ++
-                    ff.diff(opponents.diff(hidden.keys.$))./(f => ZOption(Div(meta.factionGroup(f).|("Play as".txt)), OnClick(factionPick(f)), {
+                    grouped(ff.diff(opponents.diff(hidden.keys.$))./(f => meta.factionGroup(f) -> ((g : Elem) => ZOption(Div(g), OnClick(factionPick(f)), {
                         case "faction-info" =>
                             meta.factionInfo(f).foreach { case (_, title, l) => showOverlayRaw(title, l) }
                             setTimeout(0) { askAdd() }
                         case _ =>
-                            // A random pick that drew this faction draws again, so picks never give away what was drawn;
-                            // with nothing left to draw, the random pick becomes this pick
-                            hidden.get(f) match {
-                                case Some(pool) =>
-                                    hidden -= f
-                                    pool.diff(opponents).shuffle.take(1).foreach { g =>
-                                        opponents = opponents./(o => (o == f).?(g).|(o))
-                                        hidden += g -> pool
-                                    }
-                                    if (opponents.has(f).not)
-                                        opponents :+= f
-                                case None =>
-                                    opponents :+= f
-                            }
+                            pick(f)
                             askAdd()
-                    })) ++
+                    }))) ++
+                    // A variant is offered while its faction isn't picked (or only drawn at random)
+                    meta.factionVariants.%(v => opponents.diff(hidden.keys.$).has(v.faction).not)./(v => v.group -> ((g : Elem) => ZOption(Div(g), OnClick(variantPick(v)), {
+                        case "faction-info" =>
+                            v.info.foreach { case (_, title, l) => showOverlayRaw(title, l) }
+                            setTimeout(0) { askAdd() }
+                        case _ =>
+                            pick(v.faction)
+                            variants += v.faction -> v
+                            askAdd()
+                    })))) ++
                     ZBasic(" ", "Cancel", () => {
                         // metaMenu()
                         history.popState()
@@ -1652,7 +1688,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
     // keep: the kind of local game to save it as (savedGamesMenu), if it is saved
     // extra: options picked before the setup screen (Meta.pickerModes), always on like the mode's
     // picked: the factions were picked on the screen before, which the first page's Back returns to (the caller pushed it)
-    def startSetup(factions : $[meta.F], online : Boolean, keep : |[String] = None, mode : |[String] = None, hidden : $[meta.F] = $, extra : $[meta.O] = $, picked : Boolean = false) {
+    def startSetup(factions : $[meta.F], online : Boolean, keep : |[String] = None, mode : |[String] = None, hidden : $[meta.F] = $, extra : $[meta.O] = $, picked : Boolean = false, names : Map[meta.F, String] = Map()) {
         val optionsSaveKey = meta.name + mode./("." + _).|("") + "." + online.?("online").|("offline") + ".options." + factions.num + "p"
         val mandatory = meta.mandatoryFor(factions.num, factions) ++ mode./~(meta.modeOptions) ++ extra
         val saved = hrf.web.Local.get(optionsSaveKey, "").split(' ').$./~(_.some)
@@ -1684,7 +1720,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         def setupQuestions(page : Int) {
             val v = meta.validateFactionSeatingOptions(seating, options.actual)
             // Factions drawn at random are shown only as random until the game starts
-            def shownName(f : meta.F) = hidden.has(f).?(meta.randomName).|(meta.factionName(f))
+            def shownName(f : meta.F) = hidden.has(f).?(meta.randomName).|(names.get(f).|(meta.factionName(f)))
             val maxname = factions./(shownName(_).length).max
 
             def padding(f : meta.F) = "".padTo(maxname - shownName(f).length, ' ').pre.spn(xstyles.compressed)
@@ -1744,7 +1780,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             ui.action.asker.zask(
                 buttons ++
                 (page == 0).?? {
-                    seating./(f => ZOption("Setup Factions".styled(xstyles.larger125), Div(Empty ~ online.?(Input(notes.get(f).|(""), "Player #" + (seating.indexOf(f) + 1), s => notes += f -> s.sanitize(32), 9, 16, ZBasic.inputT, ZBasic.inputD)) ~ " " ~ (padding(f) ~ hidden.has(f).?(meta.randomName.txt).|(meta.factionElem(f)) ~ padding(f)).div(xstyles.width18ch) ~ " " ~
+                    seating./(f => ZOption("Setup Factions".styled(xstyles.larger125), Div(Empty ~ online.?(Input(notes.get(f).|(""), "Player #" + (seating.indexOf(f) + 1), s => notes += f -> s.sanitize(32), 9, 16, ZBasic.inputT, ZBasic.inputD)) ~ " " ~ (padding(f) ~ hidden.has(f).?(meta.randomName.txt).|(names.get(f)./(_.txt).|(meta.factionElem(f))) ~ padding(f)).div(xstyles.width18ch) ~ " " ~
                         Parameter("difficulty", OnClick(Span((difficulties(f) match {
                             case Human  => " Human ".pre.hl
                             case Bot(s) => " Bot / ".pre ~ (s + " ").pre.hl

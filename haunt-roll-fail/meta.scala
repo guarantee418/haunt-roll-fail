@@ -143,6 +143,11 @@ trait MetaBase {
     // the pick is made, among those not already in the game, and stays hidden (shown as randomName) until the game starts.
     def randomFactions : $[(Elem, $[F])] = $
     def randomName : String = "Random"
+    // A faction's variant picked as its own entry in the faction picker (Northgard: Robotos's Dragon): the faction, its name on the
+    // setup screen, its tile (or row), its look once picked, its info pop-up (as factionInfo), its picker group (as factionGroup), and
+    // the options picking it brings to the setup screen, always on there like the picker mode's
+    case class FactionVariant(faction : F, name : String, tile : Elem, chosen : Elem, info : |[(Elem, Elem, $[Elem])], group : |[Elem], options : $[O])
+    def factionVariants : $[FactionVariant] = $
     // A faction already picked for the game, in the faction picker
     def factionChosenElem(f : F) : Elem = factionElem(f).spn(xstyles.bold) ~ factionNote(f)
 
