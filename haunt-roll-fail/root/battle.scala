@@ -929,7 +929,7 @@ object BattleExpansion extends MandatoryExpansion {
                 l => BattleDealHitsAction(f, b, l, q)
             )
 
-            if (options.has(ForcedAsyncMode)) {
+            if (game.autoHits) {
                 val explode = ask.perform(soft).actions.of[HalfExplode]
                 val variants = explode./~(_.expand(None)).of[XXObjectsSelectedAction[Figure]]
 

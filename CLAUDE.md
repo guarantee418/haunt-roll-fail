@@ -777,6 +777,13 @@ file covers the build, server and deploy. No session can ssh to the server
   that copy was revealed too (Season against Land, 2026-10-26: two Feather Rufflers for one move), and a battle at an assembly
   would have discarded the hand copy instead. New games get the hidden default option `CouncilRevealOnce` (`acting` in
   `CouncilPlayer`); older games keep the old way, and a running game can be switched over with `CouncilRevealOnceAction(X)`.
+- Forced Async Mode assigns every hit by a preset damage order, which players set at the end of their turn ("Adjust
+  priorities": which of their kinds of buildings or tokens in one clearing goes first, and the Vagabond's items). The Async
+  option "Players Choose Hits" (`ForcedAsyncChooseHits` in `root/meta.scala`, only with Forced Async; asked for in Season in
+  Control on 2026-10-28, where the Woodland Alliance wanted to pick between a base and sympathy each time) lets players with a
+  real choice pick their hits instead, and drops the end-of-turn order (`game.autoHits` in `root/game.scala`). A running game
+  can be switched over with `ForcedAsyncChooseHitsAction(X)` (`root/turn.scala`). `ReplayCheck <games> base choosehits`
+  (or `async` for the preset order) plays bot games with it.
 - Root's setup screen folds its sections like Northgard's (asked for by Gman on 2026-10-28): Setup Type, Async, Map, Clearings,
   Landmarks, Deck, Cards, the AdSet buffs, the faction tweak sections (Marquise, Vagabond, Lizards, Corvids), Mirror Factions and the
   four Hirelings sections start folded, showing only what is picked (`FoldedOption` in `root/meta.scala`, which sets `BaseOption.fold`

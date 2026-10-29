@@ -1522,9 +1522,13 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var outragePeekNeedsOk = false
     var councilRevealOnce = false
     var counterMiceInABush = false
+    var forcedAsyncChooseHits = false
     var frogAmbushToPondBottom = false
     var companionsUntilSpent = false
     var ptf = Map[Player, Faction]()
+
+    // Forced Async Mode leaves the choice of hits to the player (ForcedAsyncChooseHits, or switched over by ForcedAsyncChooseHitsAction)
+    def autoHits = options.has(ForcedAsyncMode) && options.has(ForcedAsyncChooseHits).not && forcedAsyncChooseHits.not
 
     players.of[Faction].foreach { f =>
         ftp += f -> f
