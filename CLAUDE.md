@@ -842,6 +842,8 @@ file covers the build, server and deploy. No session can ssh to the server
   over the map (`landmarkCard` and `"view-landmark"` in `root/ui.scala`; asked for by Gman on 2026-10-29). The cards are the
   English ones from the Leder Card Library (`landmark-<name>.webp`, see the Squires and Disciples note), resized to 600 px
   wide in `webp2/root/images/card/landmark/` (loaded on demand as `landmark-card:`); there are no French ones.
+  Tapping a hireling's piece on the map opens that hireling's card the same way (`"view-hireling-card"`, the overlay the
+  Hirelings list opens; Gman, 2026-10-29).
 - The Homeland landmarks Mousehold, Foxburrow and Rabbittown are landmark
   options on any map (`MouseholdLandmark` etc. in `root/meta.scala`). Each
   adds its suit to its clearing, kept when a Lilypad enclave covers the suit

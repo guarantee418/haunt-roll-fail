@@ -1347,10 +1347,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         pileTargets = $
 
-        // Tapping a landmark on the map shows its card
+        // Tapping a landmark on the map shows its card, and tapping a hireling's piece the hireling's card
         draws.foreach { d =>
             landmarkCard(d.piece).foreach { _ =>
                 pileTargets :+= ((d.rect.x - 20, d.rect.y - 20, d.rect.width + 40, d.rect.height + 40, ("view-landmark", d.piece, d.region)))
+            }
+
+            d.faction.as[Hireling].foreach { h =>
+                pileTargets :+= ((d.rect.x, d.rect.y, d.rect.width, d.rect.height, ("view-hireling-card", h)))
             }
         }
 
