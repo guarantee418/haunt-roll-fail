@@ -136,7 +136,8 @@ object CardVersions {
     // The card's other versions, for the clan info: the first edition's text in a second edition game and the other way round
     def others(c : Card) : $[(String, CardInfo)] = {
         val l = all.%(_.card == c).%(v => fan(v).not || options.has(v.option))
-        if (l.none)
+        // The Lion Kingdom shows only the cards in play, not its earlier versions (Gman, 2026-10-29)
+        if (l.none || (c match { case ClanCard(Lion, _) => true; case _ => false }))
             $
         else {
             val current = all.find(v => v.card == c && options.has(v.option))
