@@ -184,62 +184,75 @@ for k, (base, name, header, text, icon, *fig) in cards.items():
     if only and k not in only:
         continue
     save(clan_card(base, name, header, text, icon, figure=(fig or [None])[0]), 'card/clan/' + k + '.webp')
-if only:
+if only and 'board-faith' not in only:
     print('done')
     sys.exit(0)
 
 # --- the clan emblem token (clan picker, panels)
-tok = load('clan/squirrel.webp')
-a = np.array(tok)
-yy, xx = np.mgrid[0:160, 0:160]
-inner = (xx - 80) ** 2 + (yy - 80) ** 2 < 64 ** 2
-bg = Image.new('RGBA', (160, 160), (24, 44, 58, 255))
-nz = (np.random.rand(160, 160) * 18).astype(np.uint8)
-bga = np.array(bg); bga[..., :3] = np.clip(bga[..., :3].astype(int) + nz[..., None] - 9, 0, 255)
-a[inner] = bga[inner]
-tok = Image.fromarray(a)
-e = emblem(104)
-tok.alpha_composite(e, (80 - e.width // 2, 80 - e.height // 2 + 2))
-save(tok, 'clan/lion.webp')
+if not only:
+    tok = load('clan/squirrel.webp')
+    a = np.array(tok)
+    yy, xx = np.mgrid[0:160, 0:160]
+    inner = (xx - 80) ** 2 + (yy - 80) ** 2 < 64 ** 2
+    bg = Image.new('RGBA', (160, 160), (24, 44, 58, 255))
+    nz = (np.random.rand(160, 160) * 18).astype(np.uint8)
+    bga = np.array(bg); bga[..., :3] = np.clip(bga[..., :3].astype(int) + nz[..., None] - 9, 0, 255)
+    a[inner] = bga[inner]
+    tok = Image.fromarray(a)
+    e = emblem(104)
+    tok.alpha_composite(e, (80 - e.width // 2, 80 - e.height // 2 + 2))
+    save(tok, 'clan/lion.webp')
 
 # --- the board: the squirrel board's frame and Discard Pile strip, new text and emblem, no portrait
-b = load('expansion/board/squirrel.webp')
-W, H = b.size
-grad = Image.new('RGBA', (W, H))
-ga = np.zeros((H, W, 4), np.uint8)
-t = (yy2 := np.mgrid[0:H, 0:W][0]) / H
-ga[..., 0] = (30 - 10 * t).astype(np.uint8); ga[..., 1] = (56 - 16 * t).astype(np.uint8); ga[..., 2] = (76 - 20 * t).astype(np.uint8); ga[..., 3] = 255
-ga[..., :3] = np.clip(ga[..., :3].astype(int) + (np.array(Image.fromarray((np.random.rand(H, W) * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.2))).astype(int)[..., None] - 128) // 10, 0, 255)
-grad = Image.fromarray(ga)
-strip_x = 540
-board = grad.copy()
-board.paste(b.crop((strip_x, 0, W, H)), (strip_x, 0))
-# Hildegard where the warchief's portrait is, behind the name
-hil = hildegard(420)
-hil.putalpha(hil.split()[3].point(lambda v: v * 0.35))
-board.alpha_composite(hil, (strip_x - hil.width - 4, 120))
-d = ImageDraw.Draw(board)
-gold = (240, 176, 48)
-cx, cy, r = 130, 300, 104
-d.line((cx, 232, strip_x - 10, 232), fill=gold, width=3)
-d.line((cx, 368, strip_x - 10, 368), fill=gold, width=3)
-d.ellipse((cx - r - 8, cy - r - 8, cx + r + 8, cy + r + 8), fill=(20, 38, 50))
-d.ellipse((cx - r, cy - r, cx + r, cy + r), outline=gold, width=7)
-e = emblem(150)
-board.alpha_composite(e, (cx - e.width // 2, cy - e.height // 2 + 2))
-fb = font('InterDisplay-ExtraBold', 38)
-spaced(d, (382, 280), 'LION', fb, gold, 4)
-spaced(d, (382, 326), 'KINGDOM', fb, gold, 4)
-spaced(d, (370, 406), 'HILDEGARD', font('InterDisplay-MediumItalic', 22), (196, 150, 70), 3)
-fh = font('Inter-Bold', 17); ft = font('Inter-Medium', 15)
-def para(y, head, text, width, cxp):
-    d.text((cxp, y), head, font=fh, fill=gold, anchor='mm'); y += 24
-    for l in wrap(d, text, ft, width):
-        d.text((cxp, y), l, font=ft, fill=(240, 240, 240), anchor='mm'); y += 20
-para(26, 'CLAN POWER: FORTS AND LORDS', 'You have 3 Lords. When you build a Defense Tower, put a Lord from your reserve on it. Each Lord adds 2 combat points when you defend its territory. Lords never move and never take casualties.', 330, 300)
-para(462, 'WARCHIEF POWER:', 'After a combat involving Hildegard, collect 1 lore for each casualty the enemy suffered.', 300, 300)
-d.text((24, H - 14), 'Fan-made', font=font('Inter-MediumItalic', 12), fill=(170, 180, 186), anchor='lm')
-save(board.convert('RGB'), 'expansion/board/lion.webp')
+def draw_board(clan, power, out):
+    np.random.seed(7)
+    b = load('expansion/board/squirrel.webp')
+    W, H = b.size
+    grad = Image.new('RGBA', (W, H))
+    ga = np.zeros((H, W, 4), np.uint8)
+    t = (yy2 := np.mgrid[0:H, 0:W][0]) / H
+    ga[..., 0] = (30 - 10 * t).astype(np.uint8); ga[..., 1] = (56 - 16 * t).astype(np.uint8); ga[..., 2] = (76 - 20 * t).astype(np.uint8); ga[..., 3] = 255
+    ga[..., :3] = np.clip(ga[..., :3].astype(int) + (np.array(Image.fromarray((np.random.rand(H, W) * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.2))).astype(int)[..., None] - 128) // 10, 0, 255)
+    grad = Image.fromarray(ga)
+    strip_x = 540
+    board = grad.copy()
+    board.paste(b.crop((strip_x, 0, W, H)), (strip_x, 0))
+    # Hildegard where the warchief's portrait is, behind the name
+    hil = hildegard(420)
+    hil.putalpha(hil.split()[3].point(lambda v: v * 0.35))
+    board.alpha_composite(hil, (strip_x - hil.width - 4, 120))
+    d = ImageDraw.Draw(board)
+    gold = (240, 176, 48)
+    cx, cy, r = 130, 300, 104
+    d.line((cx, 232, strip_x - 10, 232), fill=gold, width=3)
+    d.line((cx, 368, strip_x - 10, 368), fill=gold, width=3)
+    d.ellipse((cx - r - 8, cy - r - 8, cx + r + 8, cy + r + 8), fill=(20, 38, 50))
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), outline=gold, width=7)
+    e = emblem(150)
+    board.alpha_composite(e, (cx - e.width // 2, cy - e.height // 2 + 2))
+    fb = font('InterDisplay-ExtraBold', 38)
+    spaced(d, (382, 280), 'LION', fb, gold, 4)
+    spaced(d, (382, 326), 'KINGDOM', fb, gold, 4)
+    spaced(d, (370, 406), 'HILDEGARD', font('InterDisplay-MediumItalic', 22), (196, 150, 70), 3)
+    fh = font('Inter-Bold', 17); ft = font('Inter-Medium', 15)
+    def para(y, head, text, width, cxp):
+        d.text((cxp, y), head, font=fh, fill=gold, anchor='mm'); y += 24
+        for l in wrap(d, text, ft, width):
+            d.text((cxp, y), l, font=ft, fill=(240, 240, 240), anchor='mm'); y += 20
+    para(26, 'CLAN POWER: FORTS AND LORDS', clan, 330, 300)
+    para(462, 'WARCHIEF POWER:', power, 300, 300)
+    d.text((24, H - 14), 'Fan-made', font=font('Inter-MediumItalic', 12), fill=(170, 180, 186), anchor='lm')
+    save(board.convert('RGB'), out)
+
+if not only:
+    draw_board('You have 3 Lords. When you build a Defense Tower, put a Lord from your reserve on it. Each Lord adds 2 combat points when you defend its territory. Lords never move and never take casualties.',
+               'After a combat involving Hildegard, collect 1 lore for each casualty the enemy suffered.', 'expansion/board/lion.webp')
+# With Faith (LionFaith, Gman, 2026-10-29): Hildegard's casualties give Faith, and the Lords fight in every combat in their territory (LordsInEveryFight)
+draw_board('You have 3 Lords. When you build a Defense Tower, put a Lord from your reserve on it. Each Lord adds 2 combat points to every combat in its territory. Lords never move and never take casualties.',
+           'After a combat involving Hildegard, collect 1 Faith for each casualty the enemy suffered.', 'expansion/board/lion-faith.webp')
+if only:
+    print('done')
+    sys.exit(0)
 
 # --- the Lord token: a gold ring around the video game's Lord unit (its icon from the Northgard wiki, expansion/lion/lord.webp)
 lord = Image.new('RGBA', (300, 300), (0, 0, 0, 0))
