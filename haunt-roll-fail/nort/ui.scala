@@ -1458,7 +1458,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     def activeCards(f : Faction) : Elem = cardPile(f, " active cards (played this year)", game.states(f).active)
 
-    def loreTree(f : Faction) : Elem = cardPile(f, " Lore Tree", game.states(f).upgrades)
+    def loreTree(f : Faction) : Elem = cardPile(f, LionExpansion.faith(f).?(" Faith Tree").|(" Lore Tree"), game.states(f).upgrades)
 
     def cardPile(f : Faction, what : String, l : $[Card]) : Elem = {
         ((f.name.styled(colorOf(f)) ~ what).hlb.div ~
@@ -1638,8 +1638,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val columns = $(
             Column(Food.elem, state.has(Food), next.food, winterFood, pyre.has(Food)),
             Column(Wood.elem, state.has(Wood), next.wood, winterWood, pyre.has(Wood)),
-            Column(Lore.elem, state.has(Lore), next.lore, 0, open = |(LoreTree(f))),
-            Column(FameIcon(), state.fame, next.fame, 0, hidden = fameHidden(f)))
+            Column(Lore.elem, state.has(Lore), next.lore, 0, open = LionExpansion.faith(f).not.?(LoreTree(f))),
+        ) ++
+            // The Lion Kingdom's Faith (LionFaith); its clan upgrades cost Faith, so it opens the Lore Tree
+            LionExpansion.faith(f).$(Column(Faith.elem, state.faith, next.faith, 0, open = |(LoreTree(f)))) :+
+            Column(FameIcon(), state.fame, next.fame, 0, hidden = fameHidden(f))
 
         // Each cell taps through to the Winter chart, the lore's to the Lore Tree (one OnClick per cell: nested ones would pass both)
         def open(o : |[Any], e : Elem) : Elem = o.orElse(if (f != Automa) |(WinterChart(f)) else None)./(x => OnClick(x, e.div(styles.ledgerCell)(xlo.pointer))).|(e.div(styles.ledgerCell))
@@ -1657,7 +1660,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val winter = (f != Automa).?(cell(SeasonIcon.winter) ~ columns./(c => signed(c.cost, "-", styles.ledgerLoss)).merge).|(Empty)
 
         val rows = stacked.?(reverse.?(stock ~ icons ~ harvest ~ winter).|(icons ~ stock ~ harvest ~ winter)).|(stock ~ harvest ~ winter)
-        val grid = stacked.?(rows.div(styles.ledger)).|(rows.div(styles.ledger)(styles.ledgerCompact))
+        val grid = rows.div(styles.ledger)((columns.num > 4).$(styles.ledgerFaith : Style) ++ stacked.not.$(styles.ledgerCompact : Style))
         val ledger = grid
 
         // Minerals module: the Mines, then the Stone, Iron and Gem held (tapping them shows the supply and what each does)

@@ -907,6 +907,15 @@ case object LionChapelLore extends GameOption with ToggleOption {
     def valueOn = "Lion Kingdom's Chapels give lore".txt
 }
 
+// The Lion's Faith (Gman, 2026-10-28): a fourth resource, 1 for each casualty its Lords or Hildegard deal in a fight and 1 for each
+// Chapel at harvest (instead of lore); its clan upgrades cost Faith; Paladins (Recruit 1, and 1 more for each Faith
+// paid, up to 4) in Ost's place, Rise of the Twelve Peers builds a free Defense Tower and Ost, only bringing the Lords, is the clan card. Hidden, and given to every new
+// game (mandatoryFor); older games keep the lore and the earlier cards (CardVersions.lionFaith in editions.scala) and replay that way
+case object LionFaith extends GameOption with ToggleOption {
+    val group = "Fan content".txt
+    def valueOn = "Lion Kingdom collects and spends Faith".txt
+}
+
 object Module {
     // The setup screen's section of a module that isn't fan-made (Robotos, 2026-10-26: one section per box)
     def section(m : Module) : String = m match {
