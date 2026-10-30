@@ -1292,7 +1292,7 @@ object Meta extends MetaGame {
     val label = "Root"
 
     override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, StackWarriors, SeparateWarriors, ShowBoardTrackers, HideBoardTrackers, CardPilesInPanel, CardPilesOnMap, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone, ShowPassScreen, NoPassScreen, EnglishLanguage, FrenchLanguage)
-    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, ShowBoardTrackers, CardPilesInPanel, NoOutOfTurn, HighlightNone, ShowPassScreen, EnglishLanguage)
+    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, ShowBoardTrackers, CardPilesOnMap, NoOutOfTurn, HighlightNone, ShowPassScreen, EnglishLanguage)
 
     override def translation(settings : $[hrf.Setting]) =
         if (settings.has(FrenchLanguage))
