@@ -376,8 +376,8 @@ object Credits {
             ZBasic.info))) ++
         $(ZOption("About this site", Div(
             "Made with the help of AI: Claude Code, Anthropic's coding assistant, wrote most of the code added here " +
-            "(Northgard: Uncharted Lands and the changes to Root), directed by Gman. " +
-            "The rules checks, playtesting and feedback come from Gman and the players of this community, who have put a lot of work into it.",
+            "(Northgard: Uncharted Lands and the changes to Root), directed by geffrey. " +
+            "The rules checks, playtesting and feedback come from geffrey and the players of this community, who have put a lot of work into it.",
             ZBasic.info))) ++
         $(ZOption("About this site", Div(
             "Root belongs to Leder Games, and Northgard and its board game Uncharted Lands to Shiro Games and the board game's publishers. This is an unofficial fan site.",
