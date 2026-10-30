@@ -90,6 +90,7 @@ object MetaAdset extends MetaGame {
         BanishNeedsWarriors,
         FeatherRufflersOnCraft,
         SilverTongueOneEffect,
+        GovernorsStopCrafting,
         FolkHeroCharacter,
         RandomCharacter,
         MapDefaultLandmarks,

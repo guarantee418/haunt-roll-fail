@@ -426,6 +426,15 @@ case object SilverTongueOneEffect extends GameOption with ToggleOption {
     val valueOn = "Silver-Tongue".hh ~ " lasts for one effect"
 }
 
+// Governors (17.2.3): an enemy of the Twilight Council can't craft with its pieces at the Council's Governing assemblies unless it
+// entreats first. Lilypad Diaspora's enclaves and the Corvids' plots there still crafted (Gman, 2026-10-30: the Diaspora crafted with
+// its Bayou enclave in Season in Control). Hidden and on by default for new games; older games keep crafting there so their replays
+// don't change (GovernorsStopCraftingAction switches a running one over).
+case object GovernorsStopCrafting extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Governors".hh ~ " stop crafting"
+}
+
 // The Homeland Frog Ambush goes to the bottom of the Pond whenever it is discarded ("Discard this to the Pond bottom."), not only
 // when spent as an ambush: discarded at the hand limit it went on top (Gman, 2026-10-22). Hidden and on by default for new
 // games; older games keep putting it on top so their replays don't change.
@@ -1436,7 +1445,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1472,6 +1481,7 @@ object Meta extends MetaGame {
         BanishNeedsWarriors,
         FeatherRufflersOnCraft,
         SilverTongueOneEffect,
+        GovernorsStopCrafting,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)

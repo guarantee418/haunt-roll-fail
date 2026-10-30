@@ -696,6 +696,11 @@ file covers the build, server and deploy. No session can ssh to the server
   place there; otherwise it gains one without being asked, or nothing happens when it can't (`CouncilEntreatAction` in
   `root/faction-council.scala`; Hayjay, 2026-10-29: the Council was asked only to "place 0"). New games get the hidden default option
   `EntreatGainUnasked`; older games keep asking so their replays don't change.
+- Governors (17.2.3) stop Lilypad Diaspora's enclaves and the Corvids' plots at an enemy Council's Governing assemblies from
+  crafting until the Council is entreated (`Council.craftingIn` in `root/faction-council.scala`, used by `craftEnclaves` and
+  `MischiefPlayer.craft`; the other factions already left those clearings out). Gman's Diaspora crafted with its Bayou enclave in
+  Season in Control on 2026-10-30. New games get the hidden default option `GovernorsStopCrafting`; older games keep crafting there
+  so their replays don't change, and a running game can be switched over with `GovernorsStopCraftingAction(X)`.
 - The Twilight Council's Banish is offered only against an enemy with warriors it could move in the clearing (not the Warlord),
   or a Lilypad Diaspora Peaceful enclave there, as battling one sets off Fears Come to Pass (`banishable` in
   `root/faction-council.scala`; MaKoBwoY could banish a lone Underground Duchy tunnel on 2026-10-30, geffrey pointed out the frogs).
