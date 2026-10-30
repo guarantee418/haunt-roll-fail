@@ -319,6 +319,7 @@ object Meta extends MetaGame { mmm =>
         clans./(f => ("board-" + f.style) -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.boardFile(f) + ".webp")) ++
         Warchief.printedBoards./(f => ("board-" + f.style + "-print") -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.printedFile(f) + ".webp")) ++
         $("board-dragon-variant" -> "/hrf/webp2/nort/images/expansion/board/dragon-variant.webp") ++
+        $("board-lion-faith" -> "/hrf/webp2/nort/images/expansion/board/lion-faith.webp") ++
         // The combat icons in rules text (CombatText), and the icons in the Tutorial's lessons
         $("axe", "skull", "food", "wood", "lore", "faith", "fame", "harvest", "winter", "confirm", "cancel")./(i => ("ui-" + i) -> ("/hrf/webp2/nort/images/ui/" + i + ".webp")) ++
         // The Tutorial's lessons: the blue starting cards, the buildings, the phases aid and the starting tile
@@ -452,7 +453,9 @@ object Meta extends MetaGame { mmm =>
         mmm.clans./(f => ImageAsset(f.style, Warchief.boardFile(f))) ++
         Warchief.printedBoards./(f => ImageAsset(f.style + "-print", Warchief.printedFile(f))) :+
         // Robotos's Dragon variant (DragonVariant)
-        ImageAsset("dragon-variant")
+        ImageAsset("dragon-variant") :+
+        // The Lion Kingdom's board with Faith (LionFaith)
+        ImageAsset("lion-faith")
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/unit", "unit-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "unit-" + c.id))

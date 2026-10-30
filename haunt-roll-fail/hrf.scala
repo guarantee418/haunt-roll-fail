@@ -981,7 +981,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
             val journal = new MemoryJournal[meta.gaming.ExternalAction](meta)
 
-            startGame(factions, difficulties, options.actual, $, journal, meta.randomGameName(), () => Map(), NoSwitches)
+            startGame(factions, difficulties, meta.startOptions(options.actual), $, journal, meta.randomGameName(), () => Map(), NoSwitches)
         }
         else
             if (hrf.HRF.flag("fastsetup"))
@@ -1775,13 +1775,15 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         ZOption(vm, "Start".hlb.div(ZBasic.choice)(xstyles.halfbutton).onClick, _ => {
                             history.destroy(pages.length - 1 + picked.??(1))
 
+                            val started = meta.startOptions(options.actual)
+
                         if (online)
-                            arrangeOnlineGame(seating, difficulties, options.actual, Map(), notes, false, meta.randomGameName(), HRF.now(), $(meta.start), None, g => {})
+                            arrangeOnlineGame(seating, difficulties, started, Map(), notes, false, meta.randomGameName(), HRF.now(), $(meta.start), None, g => {})
                         else {
                             val title = meta.randomGameName()
-                            val journal = keep./(newLocalGame(_, seating, difficulties, options.actual, title)).|(new MemoryJournal[meta.gaming.ExternalAction](meta))
+                            val journal = keep./(newLocalGame(_, seating, difficulties, started, title)).|(new MemoryJournal[meta.gaming.ExternalAction](meta))
 
-                            startGame(seating, difficulties, options.actual, $, journal, title, () => Map(), NoSwitches)
+                            startGame(seating, difficulties, started, $, journal, title, () => Map(), NoSwitches)
                         }
                     })
                 ) ++
