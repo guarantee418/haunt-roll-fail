@@ -356,6 +356,8 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
     def drawAfter(f : Knaves, n : Int, then : ForcedAction)(implicit game : Game) : ForcedAction =
         (n > 0).?(DrawCardsAction(f, n, NoMessage, AddCardsAction(f, then))).|(then)
 
+    def craftLeft(f : Knaves)(implicit game : Game) : $[SuitAsset] = (f.craft ++ f.frogCraft ++ f.extraCraft).diff(f.crafted)
+
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         // SETUP
         case CreatePlayerAction(f : Knaves) =>
@@ -881,6 +883,16 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
             val m = serve.?(KnavesWith(KnavesServe, true)).|(KnavesFilchMessage)
 
             CraftAction(f, d, m, CraftPerformAction(f, d, m))
+
+        // KnavesCraftAction is recorded and already spent the action, so the pick of the assets can't be cancelled
+        case CraftAction(f : Knaves, d : CraftCard, m, then) if d.cost.diff(craftLeft(f)).any && craftLeft(f).distinct.num > 1 =>
+            val assets : $[SuitAsset] = craftLeft(f)
+            val costs : $[SuitCost] = d.cost
+
+            XXSelectObjectsAction(f, assets./(ToCraft))
+                .withGroup("Craft " ~ d.elem ~ " using")
+                .withRule(_.num(costs.num).all(l => costs.permutations.exists(_.lazyZip(l).forall((c, a) => a.ref.matches(c)))))
+                .withThenElem(l => CraftAssignAction(f, d, assets, l./(_.ref), m, then))("Craft".hh)
 
         case CraftAssignAction(f : Knaves, d, all, used, m, then) =>
             f.crafted ++= used
