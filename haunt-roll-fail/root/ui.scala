@@ -771,18 +771,67 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     def translate(s : String) : String = callbacks.settings.has(FrenchLanguage).?(French.text(s)).|(s)
 
-    map.node.onclick = (e : dom.MouseEvent) => {
-        if (pileTargets.any) {
-            val rect = map.node.getBoundingClientRect()
-            val (tx, ty, sc, dw, dh, bw) = mapTransform
-            val k = bw / rect.width
-            val x = ((e.clientX - rect.left) * k - tx) / sc - dw
-            val y = ((e.clientY - rect.top) * k - ty) / sc - dh
+    // One pixel of a map image (r, g, b, alpha), drawn with its top left corner at (ix, iy) and scaled by k; empty off the image
+    lazy val probe = {
+        val c = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+        c.width = 1
+        c.height = 1
+        c.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+    }
 
-            pileTargets.find { case (px, py, pw, ph, _) => x >= px && x < px + pw && y >= py && y < py + ph }.foreach { case (_, _, _, _, target) =>
-                onClick(target)
+    def pixelAt(key : String, x : Double, y : Double, ix : Double = 0, iy : Double = 0, k : Double = 1) : $[Int] =
+        if (resources.images.has(key).not) $ else {
+            val img = resources.images.get(key)
+            val px = ((x - ix) / k).floor
+            val py = ((y - iy) / k).floor
+
+            if (img.complete.not || px < 0 || py < 0 || px >= img.naturalWidth || py >= img.naturalHeight) $ else {
+                probe.clearRect(0, 0, 1, 1)
+                probe.drawImage(img, px, py, 1, 1, 0, 0, 1, 1)
+                val d = probe.getImageData(0, 0, 1, 1).data
+                $(d(0), d(1), d(2), d(3))
             }
         }
+
+    // What a tap at (x, y) on the map hits on water: a flooded clearing (its flood image), else the map's water mask
+    // (map-water, a quarter of the map's size, made by root/tools/water-masks.py: red for the river or lake, blue for scenery)
+    def waterAt(x : Double, y : Double) : Option[Any] =
+        game.flooded.%(c => waterFlood(c, x, y)).headOption./(c => ("view-water", c) : Any).orElse {
+            pixelAt(mapid + "map-water", x, y, 0, 0, 4) match {
+                case l if l.num < 4 || l(3) <= 64 => None
+                case l if l(0) > 128 => Some(("view-water", "river"))
+                case l if l(2) > 128 => Some(("view-water", "scenery"))
+                case _ => None
+            }
+        }
+
+    // Whether (x, y) is on the flood image drawn over a flooded clearing (drawRule)
+    def waterFlood(c : Clearing, x : Double, y : Double) : Boolean = {
+        val (cx, cy) = game.board.center(c)
+
+        val p : $[Int] = c match {
+            case TidalBoard.HouseBoat => pixelAt(mapid + "flood-north", x, y)
+            case TidalBoard.Stilts => pixelAt(mapid + "flood-south-east", x, y)
+            case TidalBoard.Wetlands => pixelAt(mapid + "flood-south-west", x, y)
+            case c if game.board == MarshBoard =>
+                val key = mapid + "flood-" + c.name.toLowerCase
+                val w = if (resources.images.has(key)) resources.images.get(key).naturalWidth else 0
+                if (w > 0) pixelAt(key, x, y, cx - 180, cy - 180, 360.0 / w) else $
+            case _ => $
+        }
+
+        p.lift(3).exists(_ > 64)
+    }
+
+    map.node.onclick = (e : dom.MouseEvent) => {
+        val rect = map.node.getBoundingClientRect()
+        val (tx, ty, sc, dw, dh, bw) = mapTransform
+        val k = bw / rect.width
+        val x = ((e.clientX - rect.left) * k - tx) / sc - dw
+        val y = ((e.clientY - rect.top) * k - ty) / sc - dh
+
+        // Tapping a card pile, a landmark or a hireling's piece first, then the water
+        pileTargets.find { case (px, py, pw, ph, _) => x >= px && x < px + pw && y >= py && y < py + ph }./ { case (_, _, _, _, target) => target }.orElse(waterAt(x, y)).foreach(onClick)
     }
 
     // A failure drawing the map (seen only on iPhones, Ground and Might, 2026-10-16) must not stop the rest of the
@@ -4888,6 +4937,54 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 landmarkCard(p)./(c => Image("landmark-card:" + c, styles.landmarkcard)).|(Empty) ~
                 ((p == LostCity).?("Lost City").|(p.name).hh ~ " in " ~ r.elem).div
             ), onClick)
+
+        case ("view-water", kind) =>
+            // Words as separate pieces, so a long sentence wraps between them
+            def line(l : Any*) = game.desc(l.$./~{ case s : String => s.split(' ').$.%(_.nonEmpty) ; case x => $(x) } : _*).div(xstyles.info)(xstyles.xx)(xstyles.chm)(xstyles.chp)(xstyles.thu)(styles.extrachp)
+
+            val lake = game.board == LakeBoard
+            val water = lake.?("the lake").|("rivers")
+            val riverside = game.riverside
+
+            def inDeck(e : CardEffect) = game.playingDeck.of[CraftEffectCard].exists(_.effect == e) && game.outOfGameCards.$.of[CraftEffectCard].exists(_.effect == e).not
+            def hired(h : Hireling) = (game.hirelings ++ game.unhired).has(h)
+
+            // What uses the water in this game, listed only when it is in play
+            val uses =
+                factions.of[Trader]./(f => line(f.elem, "warriors move along", water, "as if it were a path, and recruit in any clearing by the water; other players may buy", "Riverboats".hl, "from them to do the same for a turn")) ++
+                factions.of[CommonInvasive]./(f => line(f.elem, "warriors move along", water, "as if it were a path")) ++
+                hired(RiverfolkFlotilla).$(line(RiverfolkFlotilla.elem, "sets up by the water and moves along", water)) ++
+                hired(RiverRoamers).$(line(RiverRoamers.elem, "place their pieces in clearings by the water")) ++
+                hired(OtterDivers).$(line(OtterDivers.elem, "let their controller move into or out of a clearing by the water without ruling it")) ++
+                inDeck(BoatBuilders).$(line("Boat Builders".hl, "(a card) lets the player who crafted it move along", water, "as if it were a path")) ++
+                inDeck(Riversteads).$(line("Riversteads".hl, "(a card) makes its owner draw a card at the start of Birdsong for each clearing by the water with their pieces, then it is discarded")) ++
+                game.ferry./(c => line("The", "Ferry".hl, "in", c.elem, "carries one player a turn from its clearing to another by the water; the Ferry goes along and the player draws a card"))
+
+            val header = kind @@ {
+                case c : Clearing => (c.name.hh ~ " (flooded)").div
+                case "scenery" => "Water".hh.div
+                case _ => lake.?("The Lake").|("The River").hh.div
+            }
+
+            val body = kind @@ {
+                case "scenery" =>
+                    line("This water is only scenery: it isn't part of the river, and nothing in the game uses it")
+
+                case c : Clearing if board.floodPaths(c).any =>
+                    line(c.elem, "is flooded: it isn't a clearing, and the paths on its flood marker make", board.floodPaths(c)./{ case (a, b) => game.desc(a.elem, "and", b.elem) }.commaAnd, "adjacent")
+
+                case c : Clearing =>
+                    line(c.elem, "is flooded: it isn't a clearing, and no piece can go there") ~
+                    line("The clearings around it,", game.desc(board.connected(c).intersect(game.clearings)./(_.elem).commaAnd) ~ ",", "are by the water, and linked to each other along it") ~
+                    uses.merge
+
+                case _ =>
+                    line(lake.?("The lake").|("A river"), "isn't a path: pieces only move along it with what is listed below") ~
+                    riverside.any.?(line("Clearings by the water:", riverside./(_.elem).commaAnd)).|(Empty) ~
+                    uses.some./(_.merge).|(line("Nothing in this game uses", lake.?("the lake").|("the river")))
+            }
+
+            showOverlay(overlayScrollX(header ~ body), onClick)
 
         case ("notifications", Some(f : Faction)) =>
             seen = $

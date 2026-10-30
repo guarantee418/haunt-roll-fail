@@ -2014,6 +2014,7 @@ object Meta extends MetaGame {
     ConditionalAssetsList((factions, options) => options.has(AutumnMap), "autumn", "autumn:")(
         ImageAsset("map"          ,    "map-bright-new-expand" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
+        ImageAsset("map-water"    ).makeLossless ::
         ImageAsset("map-woods"  ) ::
 
         ImageAsset("building-slot", "empty-building-white") ::
@@ -2053,6 +2054,7 @@ object Meta extends MetaGame {
     ConditionalAssetsList((factions, options) => options.has(WinterMap), "winter", "winter:")(
         ImageAsset("map"          ,    "map-bright" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
+        ImageAsset("map-water"    ).makeLossless ::
         ImageAsset("map-woods"  ) ::
 
         ImageAsset("building-slot", "empty-building-black") ::
@@ -2073,6 +2075,7 @@ object Meta extends MetaGame {
     ConditionalAssetsList((factions, options) => options.has(LakeMap), "lake", "lake:")(
         ImageAsset("map"          ,    "map-bright" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
+        ImageAsset("map-water"    ).makeLossless ::
         ImageAsset("map-woods"  ) ::
 
         ImageAsset("building-slot", "empty-building-white") ::
@@ -2093,6 +2096,7 @@ object Meta extends MetaGame {
     ConditionalAssetsList((factions, options) => options.has(MountainMap), "mountain", "mountain:")(
         ImageAsset("map"          ,    "map-bright" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
+        ImageAsset("map-water"    ).makeLossless ::
         ImageAsset("map-woods"  ) ::
 
         ImageAsset("building-slot", "empty-building-white") ::
@@ -2146,6 +2150,7 @@ object Meta extends MetaGame {
     ConditionalAssetsList((factions, options) => options.has(TundraMap), "tundra", "tundra:")(
         ImageAsset("map"          ,    "map-bright" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
+        ImageAsset("map-water"    ).makeLossless ::
         ImageAsset("map-woods"  ) ::
 
         ImageAsset("blizzard"  ) ::
@@ -2170,6 +2175,7 @@ object Meta extends MetaGame {
         // new file names for the taller map (the new art shows more of the bottom), so browsers don't keep the cached ones
         ImageAsset("map"          , "map-art" ) ::
         ImageAsset("map-regions"  , "map-regions-2250").makeLossless ::
+        ImageAsset("map-water"    ).makeLossless ::
         // no "map-woods": the Marsh's was empty (fully transparent), and iPhones failed to load it however it was saved
 
         ImageAsset("building-slot", "empty-building-white") ::
@@ -2200,6 +2206,7 @@ object Meta extends MetaGame {
     ConditionalAssetsList((factions, options) => options.has(GloomMap), "gloom", "gloom:")(
         ImageAsset("map"          , "map-bright" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
+        ImageAsset("map-water"    ).makeLossless ::
         ImageAsset("map-woods"    ) ::
 
         ImageAsset("building-slot", "empty-building-white") ::
@@ -2220,6 +2227,7 @@ object Meta extends MetaGame {
     ConditionalAssetsList((factions, options) => options.has(GorgeMap), "gorge", "gorge:")(
         ImageAsset("map"          , "map-art" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
+        ImageAsset("map-water"    ).makeLossless ::
         // a new file name, so browsers don't keep the cached image with the lowercase "e" label
         ImageAsset("map-woods"    , "map-woods-e") ::
 
