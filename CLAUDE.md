@@ -865,6 +865,10 @@ file covers the build, server and deploy. No session can ssh to the server
   5+ players one of each pair is left without a suit (`game.unsuited`) and
   gets Mousehold, Foxburrow or Rabbittown at random. Ruins go in Crossing and
   Confluence plus the two lowest numbered slots not flooded (`ruinsIn`).
+- Root's Map section has a "Random" choice (`RandomMap` in `root/meta.scala`, asked for by Gman on 2026-10-30): one of the nine
+  maps is drawn when the game is created, by the `startOptions` hook in `meta.scala` (Root and Adset override it; `hrf.scala`
+  calls it at the setup screen's Start), so the game, its log and every client only ever see the drawn map. Default clearings
+  can be picked with it and become No Clusters when the draw isn't Autumn, as on the other maps.
 - Tapping a landmark on the Root map (Ferry, Lost City, Tower, Mousehold, Foxburrow, Rabbittown) shows its card large
   over the map (`landmarkCard` and `"view-landmark"` in `root/ui.scala`; asked for by Gman on 2026-10-29). The cards are the
   English ones from the Leder Card Library (`landmark-<name>.webp`, see the Squires and Disciples note), resized to 600 px
