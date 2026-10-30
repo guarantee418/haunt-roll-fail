@@ -874,6 +874,12 @@ file covers the build, server and deploy. No session can ssh to the server
   wide in `webp2/root/images/card/landmark/` (loaded on demand as `landmark-card:`); there are no French ones.
   Tapping a hireling's piece on the map opens that hireling's card the same way (`"view-hireling-card"`, the overlay the
   Hirelings list opens; Gman, 2026-10-29).
+- Tapping water on the Root map (a river, the Lake map's lake, a flooded clearing on the Tidal Flats or the Marsh) says what it
+  does: what makes pieces move along it, the clearings by it, and only what uses it in that game (Riverfolk, Lilypad Diaspora,
+  Riverboats, Boat Builders, Riversteads, the water hirelings, the Ferry); water that is only scenery (the sea on some maps) says so
+  (`waterAt`, `"view-water"` in `root/ui.scala`; asked for by Gman on 2026-10-30). Where the water is comes from the masks
+  `<map>/map-water.webp` (a quarter of the map's size, red for river or lake, blue for scenery), traced by hand in
+  `root/tools/water-masks.py`; flooded clearings are tested against their flood images.
 - The Homeland landmarks Mousehold, Foxburrow and Rabbittown are landmark
   options on any map (`MouseholdLandmark` etc. in `root/meta.scala`). Each
   adds its suit to its clearing, kept when a Lilypad enclave covers the suit
