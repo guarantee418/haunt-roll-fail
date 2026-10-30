@@ -114,6 +114,8 @@ trait MetaBase {
     def hiddenOptions : $[O] = $
     // Options a game gets from its bots' difficulties (bots that play by other rules); added by startGame, never saved
     def botOptions(seating : $[F], bots : Map[F, String]) : $[O] = $
+    // The setup screen's options as the new game gets them: random choices (Root's Random map) are drawn here, once, before the game is created
+    def startOptions(options : $[O]) : $[O] = options
     // Whether an option is listed on the setup screen with the current choices; used to show options only when they apply
     def optionShown(o : O, selected : $[O]) : Boolean = true
     // Whether a foldable section (BaseOption.fold) is shown open even when folded, e.g. while it holds a mistake to fix
