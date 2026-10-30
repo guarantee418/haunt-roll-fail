@@ -223,7 +223,7 @@ offers two Random Clan picks, one of the seven core clans or one of all fourteen
 (`randomFactions` in `nort/meta.scala`, the hook in `meta.scala`): the clan is
 drawn among those not already picked and is shown only as "Random Clan" until
 the game starts (`hidden` in `customGame` and `startSetup` in `hrf.scala`;
-picking the drawn clan by hand draws again). The setup screen's first page has "Back" instead of "Cancel" when the clans were picked on the screen before (`picked` in `startSetup`): it returns to the picker with the picks kept, in every game (Northgard, Adset, Root and the rest; asked for by Gman on 2026-10-26). The setup options
+picking the drawn clan by hand draws again). The setup screen's first page has "Back" instead of "Cancel" when the clans were picked on the screen before (`picked` in `startSetup`): it returns to the picker with the picks kept, in every game (Northgard, Adset, Root and the rest; asked for by Gman on 2026-10-26). Those buttons (Back or Cancel, then Start or Next) are at the top of every setup page as well as the bottom (`buttons` in `setupQuestions`; Gman, 2026-10-26). The setup options
 (colors, game length, victory conditions, first player, "Ban card draw developments"
 (`NoDrawDevelopments`: leaves the seven Development cards that only draw cards
 out of the decks), "Ban Defensive Strategy" (`NoDefensiveStrategy`, asked for by Gman on 2026-10-14;
