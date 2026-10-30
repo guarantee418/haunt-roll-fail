@@ -603,8 +603,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     }
 
     // The forests' names (Alder, Willow, ...) at their centres, under the pieces, on the Marsh (asked for by the owner on
-    // 2026-10-17) and the Autumn, Winter, Lake, Mountain and Gorge maps (the same day): pale with a dark outline, to read on the woods
-    def forestNames = $[Board](AutumnBoard, WinterBoard, LakeBoard, MountainBoard, GorgeBoard, MarshBoard).has(game.board)
+    // 2026-10-17) and the Autumn, Winter, Lake, Mountain and Gorge maps (the same day), and on the Tidal, Tundra and Gloom maps
+    // (Gman, 2026-10-30): pale with a dark outline, to read on the woods
+    def forestNames = $[Board](AutumnBoard, WinterBoard, LakeBoard, MountainBoard, GorgeBoard, MarshBoard, TidalBoard, TundraBoard, GloomBoard).has(game.board)
 
     def drawForestNames(g : dom.CanvasRenderingContext2D) {
         if (forestNames.not)
@@ -758,6 +759,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     resources.images.getBlobSource(key) { url => i.src = url }
                     None
             }
+
+    def landmarkCard(p : Piece) : |[String] = p @@ {
+        case Ferry => |("ferry")
+        case LostCity => |("lost-city")
+        case Tower => |("tower")
+        case Mousehold => |("mousehold")
+        case Foxburrow => |("foxburrow")
+        case Rabbittown => |("rabbittown")
+        case _ => None
+    }
 
     def translate(s : String) : String = callbacks.settings.has(FrenchLanguage).?(French.text(s)).|(s)
 
@@ -1336,6 +1347,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         }
 
         pileTargets = $
+
+        // Tapping a landmark on the map shows its card, and tapping a hireling's piece the hireling's card
+        draws.foreach { d =>
+            landmarkCard(d.piece).foreach { _ =>
+                pileTargets :+= ((d.rect.x - 20, d.rect.y - 20, d.rect.width + 40, d.rect.height + 40, ("view-landmark", d.piece, d.region)))
+            }
+
+            d.faction.as[Hireling].foreach { h =>
+                pileTargets :+= ((d.rect.x, d.rect.y, d.rect.width, d.rect.height, ("view-hireling-card", h)))
+            }
+        }
 
         drawScoreTrack(g)
 
@@ -4860,6 +4882,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 (game.hirelings ++ game.unhired).has(h).?(hirelingStatusLine(h).div) ~
                 HGap ~
                 ("All Hirelings".hh).div.div(xstyles.choice)(xstyles.xx)(xstyles.chm)(xstyles.chp)(xstyles.thu)(xlo.fullwidth).pointer.onClick.param("view-hirelings")
+            ), onClick)
+
+        case ("view-landmark", p : Piece, r : Region) =>
+            showOverlay(overlayFitX(
+                landmarkCard(p)./(c => Image("landmark-card:" + c, styles.landmarkcard)).|(Empty) ~
+                ((p == LostCity).?("Lost City").|(p.name).hh ~ " in " ~ r.elem).div
             ), onClick)
 
         case ("notifications", Some(f : Faction)) =>

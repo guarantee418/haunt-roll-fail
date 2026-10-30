@@ -535,8 +535,6 @@ object Meta extends MetaGame { mmm =>
     ) ::
     $
 
-    override val showAbout = false
-
     // Map display settings, chosen by each player under "Interface" (like Root's Clearing Rule)
     override def settingsList = super.settingsList ++ $(ShowTerritoryColor, CustomTerritoryColor, FightsTerritoryColor, HideTerritoryColor) ++ TerritoryOpacity.all ++ $(ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels, ReverseStackedPanels, ShowCombatReport, SkipCombatReport, ShowClanPowerReport, SkipClanPowerReport, ShowPassScreen, NoPassScreen)
     override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, StackedPanels, ShowCombatReport, ShowClanPowerReport, ShowPassScreen) ++ PlayerColor.all./(TerritoryOpacity(_, 50))

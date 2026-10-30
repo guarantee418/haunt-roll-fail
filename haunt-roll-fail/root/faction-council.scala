@@ -87,6 +87,10 @@ object Council {
 
     def governedFor(f : Faction, l : $[Clearing])(implicit game : Game) : $[Clearing] = l.%!(c => governs(f, c))
 
+    // GovernorsStopCrafting: the clearings of l a faction may craft with; older games let Lilypad and the Corvids craft anywhere
+    def craftingIn(f : Faction, l : $[Clearing])(implicit game : Game) : $[Clearing] =
+        (game.options.has(GovernorsStopCrafting) || game.governorsStopCrafting).?(governedFor(f, l)).|(l)
+
     // For bots: entreat only where the faction has something to do, that is, it has pieces there or rules the clearing
     def entreatNeeded(f : Faction, c : Clearing)(implicit game : Game) : Boolean =
         (f.present(c) || f.rules(c)) && game.scorched.has(c).not && game.flooded.has(c).not
@@ -153,6 +157,10 @@ case class CouncilSetupPlaceAction(f : Council, c : Clearing, n : Int, then : Fo
 
 case class CouncilEntreatMainAction(self : Faction, t : Council, then : ForcedAction) extends BaseAction(None)("Entreat".styled(t), t) with Soft
 case class CouncilEntreatAction(self : Faction, t : Council, c : Clearing, then : ForcedAction) extends ForcedAction
+
+// A one-time fix for games started before GovernorsStopCrafting, added to a live game's log by hand: from here Lilypad's enclaves
+// and the Corvids' plots can't craft at an enemy Council's Governing assemblies (game.governorsStopCrafting), then goes on with then
+case class GovernorsStopCraftingAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class CouncilEntreatGainAction(self : Council, then : ForcedAction) extends ForcedAction
 
 case class CouncilRemoveLoyalistAction(self : Council, then : ForcedAction) extends ForcedAction
@@ -167,6 +175,11 @@ object CouncilExpansion extends FactionExpansion[Council] {
 
         k
     }
+
+    // Banish moves warriors and can't hit buildings or tokens, so it does something only against warriors it can move,
+    // or a Peaceful enclave, which battling makes the Lilypad Diaspora fear (MaKoBwoY and geffrey, 2026-10-30; BanishNeedsWarriors)
+    def banishable(c : Clearing, e : Faction)(implicit game : Game) : Boolean =
+        e.at(c).of[Warrior].%(_ != Warlord).any || e.as[InvasiveEEE].?(_.at(c).has(PeacefulEEE))
 
     def flip(f : Council, c : Clearing, from : CouncilAssembly, to : CouncilAssembly)(implicit game : Game) {
         if (f.at(c).has(from)) {
@@ -199,6 +212,11 @@ object CouncilExpansion extends FactionExpansion[Council] {
     }
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
+        case GovernorsStopCraftingAction(then) =>
+            game.governorsStopCrafting = true
+
+            then
+
         // SETUP
         case CreatePlayerAction(f : Council) =>
             game.states += f -> new CouncilPlayer(f)
@@ -296,10 +314,14 @@ object CouncilExpansion extends FactionExpansion[Council] {
             val l = t.loyalists.$.num
             val gain = t.loyalists.$.num < Council.maxLoyalists && t.pool(t.warrior)
 
-            Ask(t).group(t, "was entreated in", c)
-                .add(CouncilEntreatGainAction(t, then).as("Gain", 1.hl, Loyalists.of(t, 1)).!(gain.not))
-                .each(1.to(l).toList.reverse)(n => CouncilPlaceLoyalistsAction(t, c, n, then).as("Place", n.hl, Loyalists.of(t, n), "in", c).!(t.canPlace(c).not))
-                .skip(then)
+            // with no Loyalists to place there, gaining one is the only choice that does anything (EntreatGainUnasked)
+            if (options.has(EntreatGainUnasked) && (l == 0 || t.canPlace(c).not))
+                gain.?[ForcedAction](CouncilEntreatGainAction(t, then)).|(then)
+            else
+                Ask(t).group(t, "was entreated in", c)
+                    .add(CouncilEntreatGainAction(t, then).as("Gain", 1.hl, Loyalists.of(t, 1)).!(gain.not))
+                    .each(1.to(l).toList.reverse)(n => CouncilPlaceLoyalistsAction(t, c, n, then).as("Place", n.hl, Loyalists.of(t, n), "in", c).!(t.canPlace(c).not))
+                    .skip(then)
 
         case CouncilEntreatGainAction(t, then) =>
             if (toLoyalists(t, 1) > 0)
@@ -520,7 +542,7 @@ object CouncilExpansion extends FactionExpansion[Council] {
                 val l = f.assemblies.%(_.cost.matched(d.suit))
 
                 Ask(f).group(g)
-                    .some(l)(c => f.enemies.%(_.present(c)).%(f.canAttack(c)).%(_.is[Hero].not)./(e => CouncilBanishAction(f, c, e).as("Banish".styled(f), e, "in", c)))
+                    .some(l)(c => f.enemies.%(_.present(c)).%(f.canAttack(c)).%(_.is[Hero].not).%(e => options.has(BanishNeedsWarriors).not || banishable(c, e))./(e => CouncilBanishAction(f, c, e).as("Banish".styled(f), e, "in", c)))
                     .each(l)(c => CouncilAgitateAction(f, d, c).as("Agitate".styled(f), "in", c, "(spend card)"))
                     .add(l.none.??($(Info("No assembly in a", d.suit, "clearing"))))
                     .skip(CouncilConveneMainAction(f))

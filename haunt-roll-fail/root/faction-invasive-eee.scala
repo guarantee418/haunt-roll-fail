@@ -159,7 +159,10 @@ class InvasiveEEEPlayer(val faction : InvasiveEEE)(implicit val game : Game) ext
     // FrogsCraftByClearing: the clearings whose enclaves crafted this turn; they stay used until the enclave is removed
     var craftedIn : $[Clearing] = $
 
-    def craft = InvasiveEEEExpansion.craftByClearing.?(enclaves.diff(craftedIn)).|(enclaves)./(_.asset)
+    // Governors (17.2.3): not with the enclaves at an enemy Council's Governing assemblies (GovernorsStopCrafting)
+    def craftEnclaves = Council.craftingIn(faction, enclaves)
+
+    def craft = InvasiveEEEExpansion.craftByClearing.?(craftEnclaves.diff(craftedIn)).|(craftEnclaves)./(_.asset)
 }
 
 
@@ -321,7 +324,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
     // every way to pay for d: the enclave clearings and the other crafting assets used
     def craftChoices(f : InvasiveEEE, d : CraftCard)(implicit game : Game) : $[($[Clearing], $[SuitAsset])] = {
         val costs = d.cost
-        val units : $[Either[Clearing, SuitAsset]] = f.enclaves.diff(f.craftedIn)./(Left(_)) ++ craftAssets(f)./(Right(_))
+        val units : $[Either[Clearing, SuitAsset]] = f.craftEnclaves.diff(f.craftedIn)./(Left(_)) ++ craftAssets(f)./(Right(_))
 
         units.combinations(costs.num).toList
             .%(u => costs.permutations.exists(_.lazyZip(u./(_.fold(_.asset, a => a))).forall((c, a) => a.matches(c))))
@@ -892,7 +895,8 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
                 .cancel
 
         case InvasiveEEENegotiateAction(f, e, c, then) =>
-            val r = factions.but(f).%(_.rules(c)).single
+            // a Silver-Tongue ruler is the ruler, and owes no card (SilverTongueOneEffect)
+            val r = if (SquiresDeckExpansion.oneEffect && SquiresDeckExpansion.silverTongueRules(f, c)) None else factions.but(f).%(_.rules(c)).single
 
             if (r.any)
                 YYSelectObjectsAction(f, f.hand)

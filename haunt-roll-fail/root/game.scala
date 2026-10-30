@@ -1521,10 +1521,16 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var governorsStopDelve = false
     var outragePeekNeedsOk = false
     var councilRevealOnce = false
+    var silverTongueOneEffect = false
+    var governorsStopCrafting = false
     var counterMiceInABush = false
+    var forcedAsyncChooseHits = false
     var frogAmbushToPondBottom = false
     var companionsUntilSpent = false
     var ptf = Map[Player, Faction]()
+
+    // Forced Async Mode leaves the choice of hits to the player (ForcedAsyncChooseHits, or switched over by ForcedAsyncChooseHitsAction)
+    def autoHits = options.has(ForcedAsyncMode) && options.has(ForcedAsyncChooseHits).not && forcedAsyncChooseHits.not
 
     players.of[Faction].foreach { f =>
         ftp += f -> f
@@ -1917,6 +1923,9 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
 
     var repeat : |[TopLevelAction] = None
 
+    // a Silver-Tongue ruling is in its one effect (SilverTongueOneEffect)
+    var silverTongueEffect = false
+
     def loggedPerform(action : Action, soft : Void) : Continue = {
         /*hrf.web.timed(100)("> " + action @@ {
             case root.Repeat => this.repeat.get
@@ -1930,7 +1939,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
                 case _ => f
             }
 
-            val c = action.as[SelfPerform]./(_.perform(soft)).|(internalPerform(action, soft)) @@ {
+            val c = SquiresDeckExpansion.silverTongueOneEffect(action, soft, soft => action.as[SelfPerform]./(_.perform(soft)).|(internalPerform(action, soft)))(this) @@ {
                 case c : Ask => c.copy(faction = fixPlayer(c.faction))
                 case c : MultiAsk => c.copy(asks = c.asks./(c => c.copy(faction = fixPlayer(c.faction))))
                 case c => c

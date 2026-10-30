@@ -600,7 +600,9 @@ object BattleExpansion extends MandatoryExpansion {
         case BattleBonusAction(b, f, o, fs, os, fr, or, fh, oh, fe, oe) if os == 0 && o.used.has(Defenseless).not =>
             o.used :+= Defenseless
 
-            f.log("dealt an extra", 1.hit, "to defenseless")
+            // a Banish can't hit buildings or tokens, so the extra Hit does nothing there
+            if (f.used.has(Banishing).not)
+                f.log("dealt an extra", 1.hit, "to defenseless")
 
             BattleBonusAction(b, f, o, fs, os, fr, or, fh, oh, fe + 1, oe)
 
@@ -929,7 +931,7 @@ object BattleExpansion extends MandatoryExpansion {
                 l => BattleDealHitsAction(f, b, l, q)
             )
 
-            if (options.has(ForcedAsyncMode)) {
+            if (game.autoHits) {
                 val explode = ask.perform(soft).actions.of[HalfExplode]
                 val variants = explode./~(_.expand(None)).of[XXObjectsSelectedAction[Figure]]
 

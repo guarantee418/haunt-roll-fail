@@ -1846,6 +1846,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     def refitFolded() {
+        // the shared cards got something to show (or nothing any more) since logBesideAction laid them out
+        if (courtEmptyLaid.exists(_ != courtEmpty) && refitting.not) {
+            refitting = true
+            try resize() finally refitting = false
+            return
+        }
         // (foldBasePx is set only by the layouts that fit the panels: folded, or open in a row above the court)
         if (foldBasePx > 0 && refitting.not) {
             val now = panelNeed(statusNames)
@@ -2359,6 +2365,75 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         }
     }
 
+    // A phone held upright: the layouter puts the log in the row of the player panels, under the shared cards, far from
+    // the action pane. Instead the panels take that whole row, right under the shared cards, and the log goes beside the
+    // action pane at the bottom (on the side it was on), as wide as it was, up to 40% of the action pane. During setup,
+    // when the shared cards have nothing to show, the panels take their room too; and the panels take what their
+    // contents need (measured) from the map under them, up to a third of it, and no more: the map gets the rest (Gman, 2026-10-29)
+    def logBesideAction(width : Int, height : Int)(l : $[PanePlacement]) : $[PanePlacement] = {
+        rowFitPx = 0
+        courtEmptyLaid = None
+        val pp = l.filter(_.name.startsWith("status-"))
+        def near(a : Int, b : Int) = (a - b).abs <= 3
+        (l.find(_.name == "log"), l.find(_.name == "action")) match {
+            case (Some(g), Some(a)) if width < height && pp.any && pp.forall(p => near(p.rect.y, g.rect.y)) && a.rect.y > g.rect.y + g.rect.height - 3 =>
+                val x0 = pp./(_.rect.x).min
+                val x1 = pp./(p => p.rect.x + p.rect.width).max
+                val leftOf = near(g.rect.x + g.rect.width, x0)
+                if (leftOf.not && near(g.rect.x, x1).not)
+                    l
+                else {
+                    val (left, right) = (min(x0, g.rect.x), max(x1, g.rect.x + g.rect.width))
+                    val bottom = ((g.rect.y + g.rect.height) +: pp./(p => p.rect.y + p.rect.height)).max
+                    // the shared cards right above the row, when they have nothing to show
+                    val empty = courtEmpty
+                    courtEmptyLaid = Some(empty)
+                    val court = l.find(c => c.name == "court" && near(c.rect.y + c.rect.height, g.rect.y) && c.rect.x <= left + 3 && c.rect.x + c.rect.width >= right - 3)
+                    val top = court.filter(_ => empty)./(_.rect.y).|(g.rect.y)
+                    // the map right under the row gives what the panels' contents need
+                    val map = l.find(m => m.name == "map-small" && near(m.rect.y, bottom))
+                    val basePx = paneBasePx()
+                    def px(p : PanePlacement) = p.fontSize./(f => basePx * f * 3612 / height / 100).|(basePx)
+                    foldNeed = settle(foldNeed, panelNeed(statusNames))
+                    // (refitFolded lays them out again once they are drawn and measured)
+                    if (map.any)
+                        rowFitPx = basePx
+                    val h0 = bottom - g.rect.y
+                    val rowH = (map, foldNeed) match {
+                        case (Some(m), Some((_, needH))) =>
+                            max(h0, min((px(pp.head) * (needH * 1.15 + 0.6)).ceil.toInt, h0 + m.rect.height / 3))
+                        case _ => h0
+                    }
+                    val end = top + rowH
+                    val n = pp.num
+                    val sorted = pp.sortBy(_.name.drop(7).toIntOption.getOrElse(0))
+                    val r = a.rect
+                    val lw = min(g.rect.width, r.width * 40 / 100)
+                    val ax = leftOf.?(r.x + lw).|(r.x)
+                    val log = Rect(leftOf.?(r.x).|(r.x + r.width - lw), r.y, lw, r.height)
+                    l./{
+                        case p if p.name == "log" => p.copy(rect = log)
+                        case p if p.name == "action" || ((p.name == "undo" || p.name == "settings") && p.rect == r) => p.copy(rect = Rect(ax, r.y, r.width - lw, r.height))
+                        case p if pp.contains(p) =>
+                            val i = sorted.indexOf(p)
+                            val px = left + i * (right - left) / n
+                            p.copy(rect = Rect(px, top, left + (i + 1) * (right - left) / n - px, end - top))
+                        case p if court.has(p) && empty => p.copy(rect = Rect(p.rect.x, p.rect.y, p.rect.width, 0))
+                        case p if (p.name == "map-small" || p.name == "map-small-overlay") && near(p.rect.y, bottom) => p.copy(rect = Rect(p.rect.x, end, p.rect.width, p.rect.y + p.rect.height - end))
+                        case p => p
+                    }
+                }
+            case _ => l
+        }
+    }
+
+    // What logBesideAction fitted the panels with (as foldBasePx, for refitFolded), and whether it found the shared cards empty
+    var rowFitPx = 0.0
+    var courtEmptyLaid : Option[Boolean] = None
+
+    // The shared cards show nothing during setup, except Adset's draft (drawCards), and unless folded into the bar
+    def courtEmpty = try { game.year == 0 && (game.adset && game.seats.any).not && folded.not } catch { case _ : Throwable => false }
+
     // The player panels, when they are in one row right above the court and as wide as it
     def openPanels(l : $[PanePlacement], c : PanePlacement) : $[PanePlacement] =
         l.filter(_.name.startsWith("status-")) match {
@@ -2513,13 +2588,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // rest, wide enough to show the whole hand, and the log on the right.
     override def layout(width : Int, height : Int)(onLayout0 : $[PanePlacement] => Unit) {
         val onLayout = (l0 : $[PanePlacement]) => {
-            val l = panelsBesideCourt(width, height)(l0)
+            val l = panelsBesideCourt(width, height)(logBesideAction(width, height)(l0))
             // Folded, room the player panels' handle gives them is first offered to the folded layout, which
             // may lay them out in more rows with a larger font; split then makes them as tall as asked
             loadSplit(splitKind(width, height))
             val base = foldCourt(height)(l)
             val want = (splitP * height).round.toInt
             val grown = (folded && want > 0).?(foldCourt(height, min(want, height / 2))(l)).|(base)
+            if (foldBasePx == 0)
+                foldBasePx = rowFitPx
             val placed = foldLog(split(width, height, statusBottom(base))(grown))
             onLayout0(placed)
             placeHandles(placed)

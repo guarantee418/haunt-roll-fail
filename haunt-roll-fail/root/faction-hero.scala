@@ -768,7 +768,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
             if (l.num + a.num <= n)
                 VagabondDealHitsAlliesAction(f, b, l, a, then)
             else
-            if (game.current != f && options.has(ForcedAsyncMode)) {
+            if (game.current != f && game.autoHits) {
                 var ll = l
                 var ss = $[ItemRef]()
 
@@ -1312,7 +1312,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
 
             then
 
-        case AfterTurnAction(f : Hero) if options.has(ForcedAsyncMode) =>
+        case AfterTurnAction(f : Hero) if game.autoHits =>
             if (f.region.is[Clearing] && f.inv.notDamaged.any)
                 AdjustItemDamagePrioritiesAction(f, $, 0, f.inv.notDamaged.num /↑ 2, BetweenTurnAction)
             else
