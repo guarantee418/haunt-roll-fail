@@ -169,6 +169,7 @@ case class ShadowCouncilReturnAction(self : Faction) extends BaseAction(ShadowCo
 
 case class FeatherRufflersMainAction(self : WarriorFaction, p : Phase, l : $[Clearing]) extends BaseAction(p)(FeatherRufflers) with Soft
 case class FeatherRufflersAction(self : WarriorFaction, c : Clearing) extends BaseAction(FeatherRufflers, "places warriors in")(c)
+case class FeatherRufflersCraftedAction(self : Faction) extends ForcedAction
 
 case class SpyNetworkMainAction(self : Faction, p : Phase, l : $[(Faction, DeckCard)]) extends BaseAction(p)(SpyNetwork) with Soft
 case class SpyNetworkTargetAction(self : Faction, e : Faction, d : DeckCard) extends BaseAction(SpyNetwork, "takes from", e)(d.img) with ViewCard with Soft
@@ -438,6 +439,27 @@ object SquiresDeckExpansion extends Expansion {
             Ask(f).group(FeatherRufflers, "places", min(2, f.pooled(f.warrior)).hl, f.warrior.of(f), "in")
                 .each(l)(c => FeatherRufflersAction(f, c))
                 .cancel
+
+        // resolved when crafted (FeatherRufflersOnCraft): prepared like any crafted card, then used at once
+        case CraftPerformAction(f, d @ CraftEffectCard(_, _, _, FeatherRufflers), m) if options.has(FeatherRufflersOnCraft) =>
+            f.hand --> d --> f.stuck
+            f.effects :+= FeatherRufflers
+
+            CraftEffectAction(f, d, m, FeatherRufflersCraftedAction(f))
+
+        case FeatherRufflersCraftedAction(f) =>
+            f.as[WarriorFaction].map(f => f -> clearings.%(f.present).%(f.canPlace)).filter { case (f, l) => f.pool(f.warrior) && l.any } match {
+                case Some((f, l)) =>
+                    Ask(f).group(FeatherRufflers, "places", min(2, f.pooled(f.warrior)).hl, f.warrior.of(f), "in")
+                        .each(l)(c => FeatherRufflersAction(f, c))
+
+                case None =>
+                    f.removeStuckEffect(FeatherRufflers)
+
+                    f.log("could not place warriors and discarded", FeatherRufflers)
+
+                    Repeat
+            }
 
         case FeatherRufflersAction(f, c) =>
             val n = min(2, f.pooled(f.warrior))
