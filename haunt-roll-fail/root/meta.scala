@@ -106,6 +106,15 @@ case object RandomMap extends MapOption {
     )
 }
 
+case object RandomOfficialMap extends MapOption {
+    val valueOn = "Random Official".hh
+    override val explain = $(
+        "One of the official maps is picked at random when the game starts:",
+        "Autumn".styled(Mouse) ~ ", " ~ "Winter".styled(Bird) ~ ", " ~ "Lake".styled(Rabbit) ~ ", " ~ "Mountain".styled(Fox) ~ ", " ~ "Gorge".styled(Fox) ~ " or " ~ "Marsh".styled(LDvE) ~ ".",
+        "With " ~ "Default".hh ~ " clearings, a map other than " ~ "Autumn".styled(Mouse) ~ " gets " ~ "No Clusters".hh ~ "."
+    )
+}
+
 
 trait ClearingsOption extends GameOption with OneOfGroup with FoldedOption {
     val group = "Clearings"
@@ -113,7 +122,7 @@ trait ClearingsOption extends GameOption with OneOfGroup with FoldedOption {
 
 case object DefaultClearings extends ClearingsOption {
     val valueOn = "Default".hh
-    override def required(all : $[BaseOption]) = $($(AutumnMap), $(RandomMap))
+    override def required(all : $[BaseOption]) = $($(AutumnMap), $(RandomMap), $(RandomOfficialMap))
     override val explain = $("As printed on the " ~ "Autumn".styled(Mouse) ~ " map," ~ HorizontalBreak ~ "tree leaves color matches the clearing suit.")
 }
 
@@ -1374,7 +1383,7 @@ object Meta extends MetaGame {
         $(SetupTypeCorners, SetupTypeHomelands) ++
         (n > 2).?(TotalWarDominance) ++
         $,
-        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap) ++
+        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(MapDefaultLandmarks, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         $,
@@ -1413,14 +1422,16 @@ object Meta extends MetaGame {
 
     val maps : $[MapOption] = $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap)
 
-    // Random map: one of the maps is drawn; Default clearings, printed only on Autumn, become No Clusters elsewhere
+    val officialMaps : $[MapOption] = $(AutumnMap, WinterMap, LakeMap, MountainMap, GorgeMap, MarshMap)
+
+    // Random map: one of the maps (or of the official ones) is drawn; Default clearings, printed only on Autumn, become No Clusters elsewhere
     override def startOptions(options : $[O]) : $[O] =
-        if (options.has(RandomMap).not)
+        if (options.has(RandomMap).not && options.has(RandomOfficialMap).not)
             options
         else {
-            val map = maps.shuffle.head
+            val map = options.has(RandomOfficialMap).?(officialMaps).|(maps).shuffle.head
             val o = options./{
-                case RandomMap => map
+                case RandomMap | RandomOfficialMap => map
                 case o => o
             }
 
@@ -1432,7 +1443,7 @@ object Meta extends MetaGame {
 
     override def optionsFor(n : Int, l : $[F]) =
         hiddenOptions ++
-        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap) ++
+        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck) ++
