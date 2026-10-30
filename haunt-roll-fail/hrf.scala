@@ -365,6 +365,28 @@ object HRFR {
     }
 }
 
+// Who made the site, shown at the bottom of the main page and in every game's About menu (asked for by Robotos and Gman on 2026-10-30)
+object Credits {
+    def short : Elem = "Built on HRF by JT (hrf.im)." ~ Break ~ "Made with the help of AI." ~ Break ~ "About this site".styled(xstyles.link)
+
+    def options : $[ZOption] =
+        $(ZOption("About this site", Div(
+            "This site is a fan-run copy of HRF (Haunt Roll Fail), the board game engine JT created at hrf.im. " +
+            "The engine, its interface and the original Root adaptation are JT's work, and none of this would exist without it. Thank you, JT.",
+            ZBasic.info))) ++
+        $(ZOption("About this site", Div(
+            "Made with the help of AI: Claude Code, Anthropic's coding assistant, wrote most of the code added here " +
+            "(Northgard: Uncharted Lands and the changes to Root), directed by Gman. " +
+            "The rules checks, playtesting and feedback come from Gman and the players of this community, who have put a lot of work into it.",
+            ZBasic.info))) ++
+        $(ZOption("About this site", Div(
+            "Root belongs to Leder Games, and Northgard and its board game Uncharted Lands to Shiro Games and the board game's publishers. This is an unofficial fan site.",
+            ZBasic.info))) ++
+        $(ZOption("HRF", Link("https://hrf.im", "hrf.im".spn.div, ZBasic.choice ++ $(xstyles.link)))) ++
+        $(ZOption("HRF", Link("https://github.com/haunt-roll-fail/haunt-roll-fail", "Source Code".spn.div, ZBasic.choice ++ $(xstyles.link)))) ++
+        $(ZOption("HRF", Link("https://ko-fi.com/hauntrollfail", "Support JT on Ko-Fi".styled(xstyles.error).div, ZBasic.choice ++ $(xstyles.link))))
+}
+
 class HRFUI(implicit resources : Resources) {
     StyleRegister.add($(xstyles.pane))
     StyleRegister.add($(xstyles.outer))
@@ -427,7 +449,13 @@ class HRFUI(implicit resources : Resources) {
                 )
             else
                 $(entry(m, metaLabel(m), () => new HRFMetaUI(this, m, 0)(resources).withMeta()))
-        ))
+        ) :+
+            ZOption(" ", OnClick(Div(Credits.short, ZBasic.infoch)), _ => creditsMenu())
+        )
+    }
+
+    def creditsMenu() {
+        action.asker.zask(Credits.options :+ ZBasic(" ", "Back", () => topMenu()))
     }
 
     // Root's language is one of its settings (shared by all the Root metas), so the French entry
@@ -1212,10 +1240,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
     def aboutMenu() {
         ui.action.asker.zask(
-            $(ZOption("HRF", Link("https://github.com/haunt-roll-fail/haunt-roll-fail", "Source Code".spn.div, ZBasic.choice ++ $(xstyles.link)))) ++
-            $(ZOption("HRF", Link("https://boardgamegeek.com/user/hauntrollfail", "Contact".spn.div, ZBasic.choice ++ $(xstyles.link)))) ++
-            $(ZOption("HRF", OnClick(Div("History", ZBasic.choice ++ $(xstyles.link))), _ => showOverlayRaw(meta.label.styled(xstyles.bright)(xstyles.larger125), meta.about)).copy(clear = false)) ++
-            $(ZOption("HRF", Link("https://ko-fi.com/hauntrollfail", "Ko-Fi".styled(xstyles.error).div, ZBasic.choice ++ $(xstyles.link)))) ++
+            Credits.options ++
+            $(ZOption("HRF", Link("https://boardgamegeek.com/user/hauntrollfail", "Contact JT".spn.div, ZBasic.choice ++ $(xstyles.link)))) ++
+            meta.about.any.$(ZOption("HRF", OnClick(Div("History", ZBasic.choice ++ $(xstyles.link))), _ => showOverlayRaw(meta.label.styled(xstyles.bright)(xstyles.larger125), meta.about)).copy(clear = false)) ++
             $(ZBasic(" ", "Done".hh, () => {
                 metaMenu()
             }, ZBasic.choice ++ $(xlo.fullwidth)))

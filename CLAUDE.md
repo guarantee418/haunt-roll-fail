@@ -257,7 +257,7 @@ folded and the open ones are remembered in the browser (`hrf.open-sections`). A 
 Ban sections could not be opened). Victory conditions stays open while the
 chosen cards are the wrong number (`Meta.optionFoldOpen`). Northgard no longer sets `underConstruction`
 in its `Meta` (setting it to `true` would put an "Under Construction" note under
-its name on the game list and a disclaimer at the top of its menu).
+its name on the game list and a disclaimer at the top of its menu). The main page (`/play`) ends with a credits note, "Built on HRF by JT (hrf.im). Made with the help of AI.", which opens "About this site" (`Credits` in `hrf.scala`): JT's HRF engine, the AI note (Claude Code wrote most of the added code), the publishers, and links to hrf.im, HRF's source and JT's Ko-Fi; every game's About menu (Northgard's too, since then) starts with the same (asked for by Robotos and Gman on 2026-10-30).
 `nort/host.scala` runs bot games headless (JVM only,
 like the other `host.scala` files). `live-check.scala` (`sbt "runMain hrf.LiveCheck <hrf-games checkout>"`, same setup)
 loads every online game with the code as it is, the way a browser does; run it before deploying (see `nort/HANDOFF.md`). `nort/replay-check.scala` (`sbt "runMain nort.ReplayCheck"`,
