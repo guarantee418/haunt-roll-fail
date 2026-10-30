@@ -530,8 +530,12 @@ file covers the build, server and deploy. No session can ssh to the server
     Wood through Conquest on 2026-10-27; it only adds choices, so no option). A Dominance card can be disguised too, to be spent as
     another suit (e.g. to take a Dominance of that suit; MaKoBwoY, 2026-10-21);
     spent, it goes to the available Dominances when the disguise ends.
-  - Silver-Tongue: the chosen clearing counts as ruled until the end of the
-    current phase, not for a single effect.
+  - Silver-Tongue: in games with the hidden default option `SilverTongueOneEffect` (kayajam, 2026-10-30) the chosen
+    clearing counts as ruled for one effect, as the card says: it ends when someone is next asked after the next recorded
+    move made while it holds (`silverTongueOneEffect` in `root/deck-squires.scala`, called from `loggedPerform`), and a
+    Negotiations there asks no card for the clearing's other ruler. Older games keep it until the end of the current phase,
+    and their Negotiations still asks a card for the other faction that rules the clearing; a running game can be switched over
+    with `SilverTongueOneEffectAction(X)` (done for Destiny in Right, kayajam's game, on 2026-10-30).
   - Brazen Demagogue: the dominance can be activated only right when it is
     taken; the player keeps scoring (`demagogue` flag in `FactionState`).
   - Feather Rufflers, Spy Network, Silver-Tongue and Friend are usable from
