@@ -282,6 +282,7 @@ object BanDevelopment {
 // NormalDevelopments, once the third choice of a "Development cards each year" section, is hidden and kept for the games that have it
 trait DevelopmentsChoice extends GameOption with ToggleOption {
     val group = "Fan content".txt
+    override def fold = |("Fan content")
     override def forcedOff(all : $[BaseOption]) = all.of[DevelopmentsChoice].but(this)
 }
 
@@ -850,6 +851,7 @@ case object LionKingdom extends Module("Lion Kingdom", "fan-made clan") {
 // own deck in every new game (LionOwnDeck, Gman, 2026-10-24), and this option, now hidden, stays for the games that picked it
 case object LionStartingDeck extends GameOption with ToggleOption {
     val group = "Fan content".txt
+    override def fold = |("Fan content")
     def valueOn = "Lion Kingdom: alternative starting deck".txt
 }
 
@@ -857,6 +859,7 @@ case object LionStartingDeck extends GameOption with ToggleOption {
 // usual starting cards unless they picked the old option, so their replays don't change
 case object LionOwnDeck extends GameOption with ToggleOption {
     val group = "Fan content".txt
+    override def fold = |("Fan content")
     def valueOn = "Lion Kingdom plays its own starting deck".txt
 }
 
@@ -865,6 +868,7 @@ case object LionOwnDeck extends GameOption with ToggleOption {
 // went back to the reserve at the next move. Hidden, and given to every new game (mandatoryFor); older games replay the old way
 case object LordsWhileContested extends GameOption with ToggleOption {
     val group = "Fan content".txt
+    override def fold = |("Fan content")
     def valueOn = "Lion Kingdom's Lords stay while the Lion is in the territory".txt
 }
 
@@ -873,6 +877,7 @@ case object LordsWhileContested extends GameOption with ToggleOption {
 // to every new game (mandatoryFor); older games count the Lords only defending against a clan, and replay that way
 case object LordsInEveryFight extends GameOption with ToggleOption {
     val group = "Fan content".txt
+    override def fold = |("Fan content")
     def valueOn = "Lion Kingdom's Lords fight in every combat in their territory".txt
 }
 
@@ -881,6 +886,7 @@ case object LordsInEveryFight extends GameOption with ToggleOption {
 // (mandatoryFor); older games keep Abundance (CardVersions.lionOst in editions.scala) and replay that way
 case object LionOst extends GameOption with ToggleOption {
     val group = "Fan content".txt
+    override def fold = |("Fan content")
     def valueOn = "Lion Kingdom plays Ost instead of Abundance".txt
 }
 
@@ -889,6 +895,7 @@ case object LionOst extends GameOption with ToggleOption {
 // card (CardVersions.lionOst in editions.scala) and replay that way
 case object LionChapelPeers extends GameOption with ToggleOption {
     val group = "Fan content".txt
+    override def fold = |("Fan content")
     def valueOn = "Lion Kingdom's Rise of the Twelve Peers recruits by its Chapels".txt
 }
 
@@ -897,6 +904,7 @@ case object LionChapelPeers extends GameOption with ToggleOption {
 // (CardVersions.lionOst in editions.scala) and replay that way
 case object LionChapelVow extends GameOption with ToggleOption {
     val group = "Fan content".txt
+    override def fold = |("Fan content")
     def valueOn = "Lion Kingdom's Hildegard's Vow counts its Chapels".txt
 }
 
@@ -904,6 +912,7 @@ case object LionChapelVow extends GameOption with ToggleOption {
 // Hidden, and given to every new game (mandatoryFor); older games keep the fame and replay that way
 case object LionChapelLore extends GameOption with ToggleOption {
     val group = "Fan content".txt
+    override def fold = |("Fan content")
     def valueOn = "Lion Kingdom's Chapels give lore".txt
 }
 
@@ -913,6 +922,7 @@ case object LionChapelLore extends GameOption with ToggleOption {
 // game (mandatoryFor); older games keep the lore and the earlier cards (CardVersions.lionFaith in editions.scala) and replay that way
 case object LionFaith extends GameOption with ToggleOption {
     val group = "Fan content".txt
+    override def fold = |("Fan content")
     def valueOn = "Lion Kingdom collects and spends Faith".txt
 }
 
@@ -1031,6 +1041,8 @@ case class ModuleOption(module : Module) extends GameOption with ToggleOption wi
     // The Warchiefs module has its own section, with its parts (WarchiefsChoice); fan-made modules have theirs, Fan content;
     // the core box's Creatures is under Base game, with More Creatures, and Events and Sea under Uncharted Horizons, with its map tiles
     val group = (module == Warchiefs).?(WarchiefsChoice.group).|(module.fan.?("Fan content").|(Module.section(module)).txt)
+    // Fan content folds like the single-choice sections (Gman, 2026-10-29)
+    override def fold = module.fan.?("Fan content")
     def valueOn = (module == Warchiefs).?("Full expansion: warchief pawns and upgrade cards").|((module == Creatures).?("Creatures module").|(module.label)).txt
     override def forcedOff(all : $[BaseOption]) = (module == Warchiefs).??(WarchiefsChoice.others(this))
     override val explain = module.about ++ module.ready.not.$("Not implemented yet.".styled(xstyles.warning))

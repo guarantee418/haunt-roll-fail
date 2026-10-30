@@ -94,6 +94,10 @@ case class ExplodeDamagePriorityAction(self : Faction, l : $[Piece]) extends Hid
 }
 case class SetDamagePriorityAction(f : Faction, l : $[Piece]) extends ForcedAction with SkipValidate
 
+// A one-time fix for Forced Async games started without ForcedAsyncChooseHits, added to a live game's log by hand: from here
+// players choose their hits (game.forcedAsyncChooseHits), then goes on with then
+case class ForcedAsyncChooseHitsAction(then : ForcedAction) extends ForcedAction with SkipValidate
+
 
 case object TransferTurnAction extends ForcedAction
 case object BetweenTurnAction extends ForcedAction
@@ -409,7 +413,7 @@ object TurnExpansion extends MandatoryExpansion {
             else
                 AfterTurnAction(f)
 
-        case AfterTurnAction(f) if options.has(ForcedAsyncMode) =>
+        case AfterTurnAction(f) if game.autoHits =>
             if (clearings.exists { c =>
                 val l = f.at(c)
                 l.of[Scoring].distinct.num > 1 || l.notOf[Scoring].distinct.num > 1
@@ -439,6 +443,11 @@ object TurnExpansion extends MandatoryExpansion {
                 }))
                 .withExtra($(SetDamagePriorityAction(f, p).as("Done"), ExplodeDamagePriorityAction(f, p)))
                 .ask
+
+        case ForcedAsyncChooseHitsAction(then) =>
+            game.forcedAsyncChooseHits = true
+
+            then
 
         case SetDamagePriorityAction(f, p) =>
             f.damagePriorities = p

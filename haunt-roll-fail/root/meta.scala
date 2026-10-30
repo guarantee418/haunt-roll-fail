@@ -392,6 +392,49 @@ case object CouncilRevealOnce extends GameOption with ToggleOption {
     val valueOn = "Twilight Council".hh ~ " reveals one card per action"
 }
 
+// An Entreat gives the Twilight Council its Loyalist without asking when it has none it could place in the clearing instead, and
+// asks nothing when it can't gain one either (Hayjay, 2026-10-29: the Council was asked only to place 0). Hidden and on by default
+// for new games; older games keep asking so their replays don't change.
+case object EntreatGainUnasked extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Entreat".hh ~ " gains a Loyalist unasked when none could be placed"
+}
+
+// Banish is offered only against an enemy with warriors it could move in the clearing, or a Lilypad Diaspora Peaceful enclave
+// there, whose fears a battle sets off (MaKoBwoY, 2026-10-30: he could still banish a lone Duchy tunnel). Hidden and on by
+// default for new games; older games keep offering it so their recorded moves load.
+case object BanishNeedsWarriors extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Banish".hh ~ " only against warriors or a Peaceful enclave"
+}
+
+// Feather Rufflers is resolved when crafted, as its parchment text box says (like the Favor cards): it places two warriors in
+// a clearing with the crafter's pieces and is discarded (Jfthex, 2026-10-30: the Knaves crafted it with Apprentice and it stayed
+// among their crafted cards). Hidden and on by default for new games; older games keep it as a crafted card used later.
+case object FeatherRufflersOnCraft extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Feather Rufflers".hh ~ " resolved when crafted"
+}
+
+// Silver-Tongue follows its card: "During any one effect on your turn ... treat a matching clearing with your pieces as one you
+// rule". The clearing counts as ruled for the next effect only (the next recorded move and what follows it until someone is asked
+// again), not to the end of the phase, and a Negotiations there asks no card for the clearing's other ruler (kayajam, 2026-10-30).
+// Hidden and on by default for new games; older games keep the phase-long ruling so their replays don't change
+// (SilverTongueOneEffectAction switches a running one over).
+case object SilverTongueOneEffect extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Silver-Tongue".hh ~ " lasts for one effect"
+}
+
+// Governors (17.2.3): an enemy of the Twilight Council can't craft with its pieces at the Council's Governing assemblies unless it
+// entreats first. Lilypad Diaspora's enclaves and the Corvids' plots there still crafted (Gman, 2026-10-30: the Diaspora crafted with
+// its Bayou enclave in Season in Control). Hidden and on by default for new games; older games keep crafting there so their replays
+// don't change (GovernorsStopCraftingAction switches a running one over).
+case object GovernorsStopCrafting extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Governors".hh ~ " stop crafting"
+}
+
 // The Homeland Frog Ambush goes to the bottom of the Pond whenever it is discarded ("Discard this to the Pond bottom."), not only
 // when spent as an ambush: discarded at the hand limit it went on top (Gman, 2026-10-22). Hidden and on by default for new
 // games; older games keep putting it on top so their replays don't change.
@@ -479,6 +522,20 @@ case object ForcedAsyncMode extends GameOption with ToggleOption with FoldedOpti
         &("At the end of the turn players with more than one type of " ~ "tokens".hh ~ " or " ~ "buildings".hh ~ " in any one clearing set the " ~ "order".hl ~ " in which they would be " ~ "removed".styled(styles.hit) ~ " in battle."),
         &(Vagabond.of(VB) ~ " player sets the " ~ "order".hl ~ " " ~ ("for at least " ~ "half".hh ~ " of their items").& ~ " " ~ ("to be " ~ "damaged".styled(styles.hit) ~ " in battle " ~ ("or with " ~ "revolts".styled(WA) ~ " or " ~ "bombs".styled(CC) ~ ".").&).&),
         &(MC.elem ~ " player can assign every " ~ "card".hh ~ " in their hand to be either " ~ "skipped".hl ~ " for " ~ "Field Hospitals".styled(MC) ~ ", " ~ "used".hh ~ " for " ~ "any".hl ~ " number of " ~ Cat.sof(MC) ~ ", or " ~ "used".hh ~ " for at least " ~ "two".hl ~ " " ~ Cat.sof(MC) ~ "."),
+    )
+}
+
+// Forced Async Mode without the preset damage order: players with a real choice of which pieces (or Vagabond items) to lose
+// pick them as in other games, and nobody sets the order at the end of the turn (asked for in Season in Control, 2026-10-28,
+// for the Woodland Alliance's bases and sympathy). Games started without it can be switched over with ForcedAsyncChooseHitsAction.
+case object ForcedAsyncChooseHits extends GameOption with ToggleOption with FoldedOption {
+    val group = "Async"
+    val valueOn = "Players Choose Hits".hh
+    override def required(all : $[BaseOption]) = $($(ForcedAsyncMode))
+    override val explain = $(
+        &("With " ~ "Forced Async Mode".styled(xstyles.warning) ~ ",") ~ " " ~ &("players " ~ "choose".hl ~ " which pieces they lose to " ~ "hits".styled(styles.hit) ~ ",") ~ " " ~ &("instead of a preset order."),
+        &("The game " ~ "waits".hl ~ " for them " ~ "when there is a choice;".&) ~ " " ~ &("with only one way to assign the hits, it is still automatic."),
+        &("Nobody sets a " ~ "damage order".hl ~ " at the end of the turn."),
     )
 }
 
@@ -1235,7 +1292,7 @@ object Meta extends MetaGame {
     val label = "Root"
 
     override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, StackWarriors, SeparateWarriors, ShowBoardTrackers, HideBoardTrackers, CardPilesInPanel, CardPilesOnMap, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone, ShowPassScreen, NoPassScreen, EnglishLanguage, FrenchLanguage)
-    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, ShowBoardTrackers, CardPilesInPanel, NoOutOfTurn, HighlightNone, ShowPassScreen, EnglishLanguage)
+    override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, ShowBoardTrackers, CardPilesOnMap, NoOutOfTurn, HighlightNone, ShowPassScreen, EnglishLanguage)
 
     override def translation(settings : $[hrf.Setting]) =
         if (settings.has(FrenchLanguage))
@@ -1304,7 +1361,7 @@ object Meta extends MetaGame {
 
     override def optionPages(n : Int, l : $[F]) : $[$[GameOption]] = $(
         hiddenOptions ++
-        $(AutoHitsAssignmentMode, BluffMode, AutoAmbushSkippingMode, ForcedAsyncMode) ++
+        $(AutoHitsAssignmentMode, BluffMode, AutoAmbushSkippingMode, ForcedAsyncMode, ForcedAsyncChooseHits) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
         (n > 2).?(TotalWarDominance) ++
         $,
@@ -1354,7 +1411,7 @@ object Meta extends MetaGame {
         $(NonBirdPartisans, UnthematicCoffinMakers, ErrataCoffinMakers, UnthematicPropagandaBureau) ++
         l.of[Mischief].any.$(TunnelsIgnoreRaid) ++
         l.of[Trader].any.$(TunnelsIgnoreTradePosts) ++
-        $(AutoHitsAssignmentMode, BluffMode, AutoAmbushSkippingMode, ForcedAsyncMode) ++
+        $(AutoHitsAssignmentMode, BluffMode, AutoAmbushSkippingMode, ForcedAsyncMode, ForcedAsyncChooseHits) ++
         (n > 2).?(TotalWarDominance) ++
         (l.of[Feline].num > 1).$(TheWoodMustFlow) ++
         (l.of[Aviary].num > 1).$(OneTrueEmpire) ++
@@ -1388,7 +1445,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1420,6 +1477,11 @@ object Meta extends MetaGame {
         SkipIdleRallyReconcile,
         FrogAmbushBottomOnlyAsAmbush,
         CouncilRevealOnce,
+        EntreatGainUnasked,
+        BanishNeedsWarriors,
+        FeatherRufflersOnCraft,
+        SilverTongueOneEffect,
+        GovernorsStopCrafting,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
@@ -1944,6 +2006,10 @@ object Meta extends MetaGame {
     // the hireling cards, both sides (staunch on the front, demoted on the back), from the TTS mod "Root - Ultimate Collection"
     ConditionalAssetsList((factions, options) => true, "faction/hireling/card", "hireling-card:", lzy = Laziness.OnDemand)(
         Meta.hirelings./(h => ImageAsset(h.style + "-card"))
+    ) ::
+    // the landmark cards, from the Leder Card Library (https://cards.ledergames.com/), shown when a landmark on the map is tapped
+    ConditionalAssetsList((factions, options) => true, "card/landmark", "landmark-card:", lzy = Laziness.OnDemand)(
+        $("ferry", "lost-city", "tower", "mousehold", "foxburrow", "rabbittown")./(ImageAsset(_))
     ) ::
     ConditionalAssetsList((factions, options) => options.has(AutumnMap), "autumn", "autumn:")(
         ImageAsset("map"          ,    "map-bright-new-expand" ) ::

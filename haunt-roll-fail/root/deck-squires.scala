@@ -169,6 +169,7 @@ case class ShadowCouncilReturnAction(self : Faction) extends BaseAction(ShadowCo
 
 case class FeatherRufflersMainAction(self : WarriorFaction, p : Phase, l : $[Clearing]) extends BaseAction(p)(FeatherRufflers) with Soft
 case class FeatherRufflersAction(self : WarriorFaction, c : Clearing) extends BaseAction(FeatherRufflers, "places warriors in")(c)
+case class FeatherRufflersCraftedAction(self : Faction) extends ForcedAction
 
 case class SpyNetworkMainAction(self : Faction, p : Phase, l : $[(Faction, DeckCard)]) extends BaseAction(p)(SpyNetwork) with Soft
 case class SpyNetworkTargetAction(self : Faction, e : Faction, d : DeckCard) extends BaseAction(SpyNetwork, "takes from", e)(d.img) with ViewCard with Soft
@@ -178,6 +179,9 @@ case class SpyNetworkShuffleAction(shuffled : $[DeckCard], then : ForcedAction) 
 case class SilverTongueMainAction(self : Faction, p : Phase, l : $[Clearing]) extends BaseAction(p)(SilverTongue) with Soft
 case class SilverTongueClearingAction(self : Faction, c : Clearing) extends BaseAction(SilverTongue, "treats as ruled")(c) with Soft
 case class SilverTongueAction(self : Faction, c : Clearing, then : ForcedAction) extends ForcedAction
+// A one-time fix for games started before SilverTongueOneEffect, added to a live game's log by hand: from here Silver-Tongue
+// lasts for one effect (game.silverTongueOneEffect), then goes on with then
+case class SilverTongueOneEffectAction(then : ForcedAction) extends ForcedAction with SkipValidate
 
 case class FriendMainAction(self : Faction, p : Phase, s : BaseSuit) extends BaseAction(p)(FriendOfThe(s)) with Soft
 case class FriendCardAction(self : Faction, s : BaseSuit, d : DeckCard) extends BaseAction(FriendOfThe(s), "treats as another suit")(d.img) with ViewCard with Soft
@@ -259,6 +263,29 @@ object SquiresDeckExpansion extends Expansion {
 
     def silverTongueRules(f : Faction, c : Region)(implicit game : Game) : Boolean =
         game.states.get(f).?(_.silverTongue.?{ case (x, t, p) => x == c && t == game.turn && p == game.phase })
+
+    // SilverTongueOneEffect: the ruling ends once the next effect is done, that is when the next recorded move made while it
+    // holds (the move that bought it doesn't count, as it held only after it) and what it forces, Asks included (the Council's
+    // Assemble asks for Loyalists before it checks the ruling), come back to a menu: the soft action that makes it, right where
+    // replays stop (silverTongueSoft, called by the Void that loggedPerform hands on)
+    def oneEffect(implicit game : Game) = game.options.has(SilverTongueOneEffect) || game.silverTongueOneEffect
+
+    def silverTongueOneEffect(action : Action, soft : Void, perform : Void => Continue)(implicit game : Game) : Continue = {
+        if (oneEffect.not)
+            return perform(soft)
+
+        if (action.isSoft.not && factions.exists(f => f.silverTongue.?{ case (_, t, p) => t == game.turn && p == game.phase }))
+            game.silverTongueEffect = true
+
+        perform(new Void { def apply() : true = { silverTongueSoft(); soft() } })
+    }
+
+    def silverTongueSoft()(implicit game : Game) {
+        if (game.silverTongueEffect) {
+            factions.foreach(_.silverTongue = None)
+            game.silverTongueEffect = false
+        }
+    }
 
     def friendAmbush(f : Faction, c : Clearing)(d : DeckCard)(implicit game : Game) : Boolean = d @@ {
         case Ambush(s : BaseSuit) if FoxRabbitMouse.has(s) => c.cost.matched(s).not && f.can(FriendOfThe(s))
@@ -439,6 +466,27 @@ object SquiresDeckExpansion extends Expansion {
                 .each(l)(c => FeatherRufflersAction(f, c))
                 .cancel
 
+        // resolved when crafted (FeatherRufflersOnCraft): prepared like any crafted card, then used at once
+        case CraftPerformAction(f, d @ CraftEffectCard(_, _, _, FeatherRufflers), m) if options.has(FeatherRufflersOnCraft) =>
+            f.hand --> d --> f.stuck
+            f.effects :+= FeatherRufflers
+
+            CraftEffectAction(f, d, m, FeatherRufflersCraftedAction(f))
+
+        case FeatherRufflersCraftedAction(f) =>
+            f.as[WarriorFaction].map(f => f -> clearings.%(f.present).%(f.canPlace)).filter { case (f, l) => f.pool(f.warrior) && l.any } match {
+                case Some((f, l)) =>
+                    Ask(f).group(FeatherRufflers, "places", min(2, f.pooled(f.warrior)).hl, f.warrior.of(f), "in")
+                        .each(l)(c => FeatherRufflersAction(f, c))
+
+                case None =>
+                    f.removeStuckEffect(FeatherRufflers)
+
+                    f.log("could not place warriors and discarded", FeatherRufflers)
+
+                    Repeat
+            }
+
         case FeatherRufflersAction(f, c) =>
             val n = min(2, f.pooled(f.warrior))
 
@@ -487,8 +535,13 @@ object SquiresDeckExpansion extends Expansion {
             then
 
         // SILVER TONGUE
+        case SilverTongueOneEffectAction(then) =>
+            game.silverTongueOneEffect = true
+
+            then
+
         case SilverTongueMainAction(f, p, l) =>
-            Ask(f).group(SilverTongue, "treats a clearing as ruled until the end of", p)
+            (if (oneEffect) Ask(f).group(SilverTongue, "treats a clearing as ruled for one effect") else Ask(f).group(SilverTongue, "treats a clearing as ruled until the end of", p))
                 .each(l)(c => SilverTongueClearingAction(f, c))
                 .cancel
 
@@ -502,7 +555,10 @@ object SquiresDeckExpansion extends Expansion {
 
             f.silverTongue = Some((c, game.turn, game.phase))
 
-            f.log("treated", c, "as ruled until the end of", game.phase, "with", SilverTongue)
+            if (oneEffect)
+                f.log("treated", c, "as ruled for one effect with", SilverTongue)
+            else
+                f.log("treated", c, "as ruled until the end of", game.phase, "with", SilverTongue)
 
             then
 
