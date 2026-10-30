@@ -416,6 +416,16 @@ case object FeatherRufflersOnCraft extends GameOption with ToggleOption {
     val valueOn = "Feather Rufflers".hh ~ " resolved when crafted"
 }
 
+// Silver-Tongue follows its card: "During any one effect on your turn ... treat a matching clearing with your pieces as one you
+// rule". The clearing counts as ruled for the next effect only (the next recorded move and what follows it until someone is asked
+// again), not to the end of the phase, and a Negotiations there asks no card for the clearing's other ruler (kayajam, 2026-10-30).
+// Hidden and on by default for new games; older games keep the phase-long ruling so their replays don't change
+// (SilverTongueOneEffectAction switches a running one over).
+case object SilverTongueOneEffect extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Silver-Tongue".hh ~ " lasts for one effect"
+}
+
 // The Homeland Frog Ambush goes to the bottom of the Pond whenever it is discarded ("Discard this to the Pond bottom."), not only
 // when spent as an ambush: discarded at the hand limit it went on top (Gman, 2026-10-22). Hidden and on by default for new
 // games; older games keep putting it on top so their replays don't change.
@@ -1426,7 +1436,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1461,6 +1471,7 @@ object Meta extends MetaGame {
         EntreatGainUnasked,
         BanishNeedsWarriors,
         FeatherRufflersOnCraft,
+        SilverTongueOneEffect,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)

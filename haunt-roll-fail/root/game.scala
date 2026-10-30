@@ -1521,6 +1521,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var governorsStopDelve = false
     var outragePeekNeedsOk = false
     var councilRevealOnce = false
+    var silverTongueOneEffect = false
     var counterMiceInABush = false
     var forcedAsyncChooseHits = false
     var frogAmbushToPondBottom = false
@@ -1921,6 +1922,9 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
 
     var repeat : |[TopLevelAction] = None
 
+    // a Silver-Tongue ruling is in its one effect (SilverTongueOneEffect)
+    var silverTongueEffect = false
+
     def loggedPerform(action : Action, soft : Void) : Continue = {
         /*hrf.web.timed(100)("> " + action @@ {
             case root.Repeat => this.repeat.get
@@ -1934,7 +1938,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
                 case _ => f
             }
 
-            val c = action.as[SelfPerform]./(_.perform(soft)).|(internalPerform(action, soft)) @@ {
+            val c = SquiresDeckExpansion.silverTongueOneEffect(action, action.as[SelfPerform]./(_.perform(soft)).|(internalPerform(action, soft)))(this) @@ {
                 case c : Ask => c.copy(faction = fixPlayer(c.faction))
                 case c : MultiAsk => c.copy(asks = c.asks./(c => c.copy(faction = fixPlayer(c.faction))))
                 case c => c
@@ -1962,8 +1966,11 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
             e.perform(action, soft) @@ {
                 case UnknownContinue =>
                 case Force(another) =>
-                    if (action.isSoft.not && another.isSoft)
+                    if (action.isSoft.not && another.isSoft) {
+                        SquiresDeckExpansion.silverTongueSoft()(this)
+
                         soft()
+                    }
 
                     return another.as[SelfPerform]./(_.perform(soft)).|(internalPerform(another, soft))
                 case TryAgain => return internalPerform(action, soft)
