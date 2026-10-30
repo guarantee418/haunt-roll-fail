@@ -89,6 +89,7 @@ object MetaAdset extends MetaGame {
         EntreatGainUnasked,
         BanishNeedsWarriors,
         FeatherRufflersOnCraft,
+        SilverTongueOneEffect,
         FolkHeroCharacter,
         RandomCharacter,
         MapDefaultLandmarks,
