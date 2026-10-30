@@ -265,30 +265,19 @@ object SquiresDeckExpansion extends Expansion {
         game.states.get(f).?(_.silverTongue.?{ case (x, t, p) => x == c && t == game.turn && p == game.phase })
 
     // SilverTongueOneEffect: the ruling ends once the next effect is done, that is when the next recorded move made while it
-    // holds (the move that bought it doesn't count, as it held only after it) and what it forces come back to a menu: a soft
-    // action (silverTongueSoft, called by internalPerform right where replays stop) or an Ask, whichever comes first
+    // holds (the move that bought it doesn't count, as it held only after it) and what it forces, Asks included (the Council's
+    // Assemble asks for Loyalists before it checks the ruling), come back to a menu: the soft action that makes it, right where
+    // replays stop (silverTongueSoft, called by the Void that loggedPerform hands on)
     def oneEffect(implicit game : Game) = game.options.has(SilverTongueOneEffect) || game.silverTongueOneEffect
 
-    def silverTongueOneEffect(action : Action, perform : => Continue)(implicit game : Game) : Continue = {
+    def silverTongueOneEffect(action : Action, soft : Void, perform : Void => Continue)(implicit game : Game) : Continue = {
         if (oneEffect.not)
-            return perform
+            return perform(soft)
 
         if (action.isSoft.not && factions.exists(f => f.silverTongue.?{ case (_, t, p) => t == game.turn && p == game.phase }))
             game.silverTongueEffect = true
 
-        val c = perform
-
-        def asks(c : Continue) : Boolean = c @@ {
-            case _ : Ask => true
-            case _ : MultiAsk => true
-            case Log(_, _, c) => asks(c)
-            case _ => false
-        }
-
-        if (action.isSoft.not && asks(c))
-            silverTongueSoft()
-
-        c
+        perform(new Void { def apply() : true = { silverTongueSoft(); soft() } })
     }
 
     def silverTongueSoft()(implicit game : Game) {
