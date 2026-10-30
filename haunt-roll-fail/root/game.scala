@@ -1521,6 +1521,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var governorsStopDelve = false
     var outragePeekNeedsOk = false
     var councilRevealOnce = false
+    var silverTongueOneEffect = false
     var counterMiceInABush = false
     var forcedAsyncChooseHits = false
     var frogAmbushToPondBottom = false

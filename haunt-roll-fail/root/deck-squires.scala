@@ -179,6 +179,9 @@ case class SpyNetworkShuffleAction(shuffled : $[DeckCard], then : ForcedAction) 
 case class SilverTongueMainAction(self : Faction, p : Phase, l : $[Clearing]) extends BaseAction(p)(SilverTongue) with Soft
 case class SilverTongueClearingAction(self : Faction, c : Clearing) extends BaseAction(SilverTongue, "treats as ruled")(c) with Soft
 case class SilverTongueAction(self : Faction, c : Clearing, then : ForcedAction) extends ForcedAction
+// A one-time fix for games started before SilverTongueOneEffect, added to a live game's log by hand: from here Silver-Tongue
+// lasts for one effect (game.silverTongueOneEffect), then goes on with then
+case class SilverTongueOneEffectAction(then : ForcedAction) extends ForcedAction with SkipValidate
 
 case class FriendMainAction(self : Faction, p : Phase, s : BaseSuit) extends BaseAction(p)(FriendOfThe(s)) with Soft
 case class FriendCardAction(self : Faction, s : BaseSuit, d : DeckCard) extends BaseAction(FriendOfThe(s), "treats as another suit")(d.img) with ViewCard with Soft
@@ -264,8 +267,10 @@ object SquiresDeckExpansion extends Expansion {
     // SilverTongueOneEffect: the ruling ends once the next effect is done, that is when the next recorded move made while it
     // holds (the move that bought it doesn't count, as it held only after it) and what it forces come back to a menu: a soft
     // action (silverTongueSoft, called by internalPerform right where replays stop) or an Ask, whichever comes first
+    def oneEffect(implicit game : Game) = game.options.has(SilverTongueOneEffect) || game.silverTongueOneEffect
+
     def silverTongueOneEffect(action : Action, perform : => Continue)(implicit game : Game) : Continue = {
-        if (game.options.has(SilverTongueOneEffect).not)
+        if (oneEffect.not)
             return perform
 
         if (action.isSoft.not && factions.exists(f => f.silverTongue.?{ case (_, t, p) => t == game.turn && p == game.phase }))
@@ -541,8 +546,13 @@ object SquiresDeckExpansion extends Expansion {
             then
 
         // SILVER TONGUE
+        case SilverTongueOneEffectAction(then) =>
+            game.silverTongueOneEffect = true
+
+            then
+
         case SilverTongueMainAction(f, p, l) =>
-            (if (options.has(SilverTongueOneEffect)) Ask(f).group(SilverTongue, "treats a clearing as ruled for one effect") else Ask(f).group(SilverTongue, "treats a clearing as ruled until the end of", p))
+            (if (oneEffect) Ask(f).group(SilverTongue, "treats a clearing as ruled for one effect") else Ask(f).group(SilverTongue, "treats a clearing as ruled until the end of", p))
                 .each(l)(c => SilverTongueClearingAction(f, c))
                 .cancel
 
@@ -556,7 +566,7 @@ object SquiresDeckExpansion extends Expansion {
 
             f.silverTongue = Some((c, game.turn, game.phase))
 
-            if (options.has(SilverTongueOneEffect))
+            if (oneEffect)
                 f.log("treated", c, "as ruled for one effect with", SilverTongue)
             else
                 f.log("treated", c, "as ruled until the end of", game.phase, "with", SilverTongue)

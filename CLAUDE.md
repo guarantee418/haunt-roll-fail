@@ -534,7 +534,8 @@ file covers the build, server and deploy. No session can ssh to the server
     clearing counts as ruled for one effect, as the card says: it ends when someone is next asked after the next recorded
     move made while it holds (`silverTongueOneEffect` in `root/deck-squires.scala`, called from `loggedPerform`), and a
     Negotiations there asks no card for the clearing's other ruler. Older games keep it until the end of the current phase,
-    and their Negotiations still asks a card for the other faction that rules the clearing.
+    and their Negotiations still asks a card for the other faction that rules the clearing; a running game can be switched over
+    with `SilverTongueOneEffectAction(X)` (done for Destiny in Right, kayajam's game, on 2026-10-30).
   - Brazen Demagogue: the dominance can be activated only right when it is
     taken; the player keeps scoring (`demagogue` flag in `FactionState`).
   - Feather Rufflers, Spy Network, Silver-Tongue and Friend are usable from

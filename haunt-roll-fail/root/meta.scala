@@ -419,7 +419,8 @@ case object FeatherRufflersOnCraft extends GameOption with ToggleOption {
 // Silver-Tongue follows its card: "During any one effect on your turn ... treat a matching clearing with your pieces as one you
 // rule". The clearing counts as ruled for the next effect only (the next recorded move and what follows it until someone is asked
 // again), not to the end of the phase, and a Negotiations there asks no card for the clearing's other ruler (kayajam, 2026-10-30).
-// Hidden and on by default for new games; older games keep the phase-long ruling so their replays don't change.
+// Hidden and on by default for new games; older games keep the phase-long ruling so their replays don't change
+// (SilverTongueOneEffectAction switches a running one over).
 case object SilverTongueOneEffect extends GameOption with ToggleOption {
     val group = "Card Draft"
     val valueOn = "Silver-Tongue".hh ~ " lasts for one effect"

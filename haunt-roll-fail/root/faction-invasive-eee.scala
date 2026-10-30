@@ -893,7 +893,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
 
         case InvasiveEEENegotiateAction(f, e, c, then) =>
             // a Silver-Tongue ruler is the ruler, and owes no card (SilverTongueOneEffect)
-            val r = if (options.has(SilverTongueOneEffect) && SquiresDeckExpansion.silverTongueRules(f, c)) None else factions.but(f).%(_.rules(c)).single
+            val r = if (SquiresDeckExpansion.oneEffect && SquiresDeckExpansion.silverTongueRules(f, c)) None else factions.but(f).%(_.rules(c)).single
 
             if (r.any)
                 YYSelectObjectsAction(f, f.hand)
