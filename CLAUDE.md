@@ -687,6 +687,11 @@ file covers the build, server and deploy. No session can ssh to the server
   place there; otherwise it gains one without being asked, or nothing happens when it can't (`CouncilEntreatAction` in
   `root/faction-council.scala`; Hayjay, 2026-10-29: the Council was asked only to "place 0"). New games get the hidden default option
   `EntreatGainUnasked`; older games keep asking so their replays don't change.
+- The Twilight Council's Banish is offered only against an enemy with warriors it could move in the clearing (not the Warlord),
+  or a Lilypad Diaspora Peaceful enclave there, as battling one sets off Fears Come to Pass (`banishable` in
+  `root/faction-council.scala`; MaKoBwoY could banish a lone Underground Duchy tunnel on 2026-10-30, geffrey pointed out the frogs).
+  New games get the hidden default option `BanishNeedsWarriors`; older games keep offering it so their recorded moves load.
+  While banishing, the defenseless extra Hit isn't logged ("dealt an extra Hit to defenseless"), as a Banish can't hit buildings or tokens.
 - Outrage with no card of the clearing's suit to give shows the hand to the Woodland Alliance in its action pane, and the
   game waits for its "Ok" (`PeekCardsAsk` and `PeekCardsSeenAction` in `root/cards.scala`; the playtest Pacifism the same).
   It was only a notification, and the game went on (Hayjay couldn't see the Lilypad Diaspora's hand on 2026-10-17). New games

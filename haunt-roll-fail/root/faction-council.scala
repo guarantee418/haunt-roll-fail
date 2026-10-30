@@ -168,6 +168,11 @@ object CouncilExpansion extends FactionExpansion[Council] {
         k
     }
 
+    // Banish moves warriors and can't hit buildings or tokens, so it does something only against warriors it can move,
+    // or a Peaceful enclave, which battling makes the Lilypad Diaspora fear (MaKoBwoY and geffrey, 2026-10-30; BanishNeedsWarriors)
+    def banishable(c : Clearing, e : Faction)(implicit game : Game) : Boolean =
+        e.at(c).of[Warrior].%(_ != Warlord).any || e.as[InvasiveEEE].?(_.at(c).has(PeacefulEEE))
+
     def flip(f : Council, c : Clearing, from : CouncilAssembly, to : CouncilAssembly)(implicit game : Game) {
         if (f.at(c).has(from)) {
             f.from(c) --> from --> f.reserve
@@ -524,7 +529,7 @@ object CouncilExpansion extends FactionExpansion[Council] {
                 val l = f.assemblies.%(_.cost.matched(d.suit))
 
                 Ask(f).group(g)
-                    .some(l)(c => f.enemies.%(_.present(c)).%(f.canAttack(c)).%(_.is[Hero].not)./(e => CouncilBanishAction(f, c, e).as("Banish".styled(f), e, "in", c)))
+                    .some(l)(c => f.enemies.%(_.present(c)).%(f.canAttack(c)).%(_.is[Hero].not).%(e => options.has(BanishNeedsWarriors).not || banishable(c, e))./(e => CouncilBanishAction(f, c, e).as("Banish".styled(f), e, "in", c)))
                     .each(l)(c => CouncilAgitateAction(f, d, c).as("Agitate".styled(f), "in", c, "(spend card)"))
                     .add(l.none.??($(Info("No assembly in a", d.suit, "clearing"))))
                     .skip(CouncilConveneMainAction(f))

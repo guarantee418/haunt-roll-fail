@@ -400,6 +400,14 @@ case object EntreatGainUnasked extends GameOption with ToggleOption {
     val valueOn = "Entreat".hh ~ " gains a Loyalist unasked when none could be placed"
 }
 
+// Banish is offered only against an enemy with warriors it could move in the clearing, or a Lilypad Diaspora Peaceful enclave
+// there, whose fears a battle sets off (MaKoBwoY, 2026-10-30: he could still banish a lone Duchy tunnel). Hidden and on by
+// default for new games; older games keep offering it so their recorded moves load.
+case object BanishNeedsWarriors extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Banish".hh ~ " only against warriors or a Peaceful enclave"
+}
+
 // The Homeland Frog Ambush goes to the bottom of the Pond whenever it is discarded ("Discard this to the Pond bottom."), not only
 // when spent as an ambush: discarded at the hand limit it went on top (Gman, 2026-10-22). Hidden and on by default for new
 // games; older games keep putting it on top so their replays don't change.
@@ -1410,7 +1418,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1443,6 +1451,7 @@ object Meta extends MetaGame {
         FrogAmbushBottomOnlyAsAmbush,
         CouncilRevealOnce,
         EntreatGainUnasked,
+        BanishNeedsWarriors,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
