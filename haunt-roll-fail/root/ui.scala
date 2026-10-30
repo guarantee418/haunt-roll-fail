@@ -603,8 +603,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     }
 
     // The forests' names (Alder, Willow, ...) at their centres, under the pieces, on the Marsh (asked for by the owner on
-    // 2026-10-17) and the Autumn, Winter, Lake, Mountain and Gorge maps (the same day): pale with a dark outline, to read on the woods
-    def forestNames = $[Board](AutumnBoard, WinterBoard, LakeBoard, MountainBoard, GorgeBoard, MarshBoard).has(game.board)
+    // 2026-10-17) and the Autumn, Winter, Lake, Mountain and Gorge maps (the same day), and on the Tidal, Tundra and Gloom maps
+    // (Gman, 2026-10-30): pale with a dark outline, to read on the woods
+    def forestNames = $[Board](AutumnBoard, WinterBoard, LakeBoard, MountainBoard, GorgeBoard, MarshBoard, TidalBoard, TundraBoard, GloomBoard).has(game.board)
 
     def drawForestNames(g : dom.CanvasRenderingContext2D) {
         if (forestNames.not)

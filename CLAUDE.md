@@ -531,8 +531,10 @@ file covers the build, server and deploy. No session can ssh to the server
     another suit (e.g. to take a Dominance of that suit; MaKoBwoY, 2026-10-21);
     spent, it goes to the available Dominances when the disguise ends.
   - Silver-Tongue: in games with the hidden default option `SilverTongueOneEffect` (kayajam, 2026-10-30) the chosen
-    clearing counts as ruled for one effect, as the card says: it ends when someone is next asked after the next recorded
-    move made while it holds (`silverTongueOneEffect` in `root/deck-squires.scala`, called from `loggedPerform`), and a
+    clearing counts as ruled for one effect, as the card says: it ends when the next recorded move made while it holds, and
+    the questions it asks on the way (the Council's Assemble asks for Loyalists before it checks the ruling; Hayjay, 2026-10-30),
+    come back to a menu, at the first `soft()` (`silverTongueOneEffect` in `root/deck-squires.scala`, which wraps the `Void`
+    `loggedPerform` hands on, so replays stop at the same point), and a
     Negotiations there asks no card for the clearing's other ruler. Older games keep it until the end of the current phase,
     and their Negotiations still asks a card for the other faction that rules the clearing; a running game can be switched over
     with `SilverTongueOneEffectAction(X)` (done for Destiny in Right, kayajam's game, on 2026-10-30).
@@ -854,7 +856,8 @@ file covers the build, server and deploy. No session can ssh to the server
   Mountain and Gorge maps got the same that day: their unnamed forests (and the Gorge's, once compass points) are named
   after trees (Maple, Fir, Linden, Cedar, Mesquite, ...), the old names (Witchwood, Deadwood, Mirkwood, Acres Wild,
   Heart of Oak, Liar Wind, Nada Moonshine) stay, and `Board.forestLabel` places a name where `center` picks at random
-  or would put it on water. Tidal, Tundra and Gloom draw none (their forests are still compass points).
+  or would put it on water. Tidal, Tundra and Gloom got theirs on 2026-10-30 (Gman): Tupelo, Bayberry, ... on Tidal, Arolla, Silver Fir, ... on Tundra,
+  Blackthorn, Hawthorn, ... on Gloom, drawn at the forests' centres.
   Those maps no longer draw their `map-woods` overlay (shown only with a faction that uses forests, like the Vagabond or
   the Knaves): it printed the old names, or the Gorge's compass letters, a second time (seen on 2026-10-17).
   Region ids must be unique across all boards (`Serialize.parseRegion`),
