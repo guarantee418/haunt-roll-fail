@@ -408,6 +408,14 @@ case object BanishNeedsWarriors extends GameOption with ToggleOption {
     val valueOn = "Banish".hh ~ " only against warriors or a Peaceful enclave"
 }
 
+// Feather Rufflers is resolved when crafted, as its parchment text box says (like the Favor cards): it places two warriors in
+// a clearing with the crafter's pieces and is discarded (Jfthex, 2026-10-30: the Knaves crafted it with Apprentice and it stayed
+// among their crafted cards). Hidden and on by default for new games; older games keep it as a crafted card used later.
+case object FeatherRufflersOnCraft extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Feather Rufflers".hh ~ " resolved when crafted"
+}
+
 // The Homeland Frog Ambush goes to the bottom of the Pond whenever it is discarded ("Discard this to the Pond bottom."), not only
 // when spent as an ambush: discarded at the hand limit it went on top (Gman, 2026-10-22). Hidden and on by default for new
 // games; older games keep putting it on top so their replays don't change.
@@ -1418,7 +1426,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
@@ -1452,6 +1460,7 @@ object Meta extends MetaGame {
         CouncilRevealOnce,
         EntreatGainUnasked,
         BanishNeedsWarriors,
+        FeatherRufflersOnCraft,
         MapDefaultLandmarks,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
