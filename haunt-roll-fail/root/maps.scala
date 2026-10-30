@@ -590,13 +590,13 @@ object TidalBoard extends Board {
 
     val inner = $(HouseBoat, Stilts, Wetlands)
 
-    object TidalN extends NamedForest("North")
-    object TidalNW extends NamedForest("North-West")
-    object TidalNE extends NamedForest("North-East")
-    object TidalC extends NamedForest("Center")
-    object TidalSW extends NamedForest("South-West")
-    object TidalS extends NamedForest("South")
-    object TidalSE extends NamedForest("South-East")
+    object TidalN extends NamedForest("Tupelo")
+    object TidalNW extends NamedForest("Bayberry")
+    object TidalNE extends NamedForest("Sweetgum")
+    object TidalC extends NamedForest("Buttonwood")
+    object TidalSW extends NamedForest("Loblolly")
+    object TidalS extends NamedForest("Seagrape")
+    object TidalSE extends NamedForest("Palmetto")
 
     val forests = $(TidalN, TidalNW, TidalNE, TidalC, TidalSW, TidalS, TidalSE)
 
@@ -702,14 +702,14 @@ object TundraBoard extends Board {
 
     override val blizzard = $((OldFarm, RiverBend), (RiverBend, FrozenHollow), (FrozenHollow, GlacialVale), (GlacialVale, ColdCreek), (ColdCreek, OldFarm), (ColdCreek, RiverBend))
 
-    object TundraNW extends NamedForest("North-West")
-    object TundraNE extends NamedForest("North-East")
-    object TundraW extends NamedForest("West")
-    object TundraE extends NamedForest("East")
-    object TundraC extends NamedForest("Center")
-    object TundraSW extends NamedForest("South-West")
-    object TundraSE extends NamedForest("South-East")
-    object TundraS extends NamedForest("South")
+    object TundraNW extends NamedForest("Arolla")
+    object TundraNE extends NamedForest("Silver Fir")
+    object TundraW extends NamedForest("Jack Pine")
+    object TundraE extends NamedForest("Mugo")
+    object TundraC extends NamedForest("Dwarf Birch")
+    object TundraSW extends NamedForest("Crowberry")
+    object TundraSE extends NamedForest("Cloudberry")
+    object TundraS extends NamedForest("Bearberry")
 
     val forests = $(TundraNW, TundraNE, TundraW, TundraE, TundraC, TundraSW, TundraSE, TundraS)
 
@@ -827,15 +827,15 @@ object GloomBoard extends Board {
 
     val inner = $(Haunted, Runestone, CorkIsle)
 
-    object GloomW extends NamedForest("West")
-    object GloomNW extends NamedForest("North-West")
-    object GloomNE extends NamedForest("North-East")
-    object GloomE extends NamedForest("East")
-    object GloomCW extends NamedForest("Center-West")
-    object GloomC extends NamedForest("Center")
-    object GloomCE extends NamedForest("Center-East")
-    object GloomSW extends NamedForest("South-West")
-    object GloomSE extends NamedForest("South-East")
+    object GloomW extends NamedForest("Blackthorn")
+    object GloomNW extends NamedForest("Hawthorn")
+    object GloomNE extends NamedForest("Elder")
+    object GloomE extends NamedForest("Wych Elm")
+    object GloomCW extends NamedForest("Bloodwood")
+    object GloomC extends NamedForest("Ghost Gum")
+    object GloomCE extends NamedForest("Buckthorn")
+    object GloomSW extends NamedForest("Witch Hazel")
+    object GloomSE extends NamedForest("Spindle")
 
     val forests = $(GloomW, GloomNW, GloomNE, GloomE, GloomCW, GloomC, GloomCE, GloomSW, GloomSE)
 
