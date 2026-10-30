@@ -61,6 +61,8 @@ object MetaAdset extends MetaGame {
 
     override def optionPages(n : Int, l : $[F]) : $[$[GameOption]] = Meta.optionPages(n, realFactions)
 
+    override def startOptions(options : $[O]) : $[O] = Meta.startOptions(options)
+
     override def defaultsFor(n : Int, l : $[F]) = $(
         SeatingRandom,
         FactionSeatingRandom,
