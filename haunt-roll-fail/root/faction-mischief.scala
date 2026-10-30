@@ -101,7 +101,8 @@ class MischiefPlayer(val faction : Mischief)(implicit val game : Game) extends F
 
     def plots = all(HiddenPlot) ++ all(Bomb) ++ all(Snare) ++ all(Extortion) ++ all(Raid) ++ all(Diversion)
 
-    def craft = plots./(_.asset)
+    // Governors (17.2.3): not with the plots at an enemy Council's Governing assemblies (GovernorsStopCrafting)
+    def craft = Council.craftingIn(faction, plots)./(_.asset)
 }
 
 trait CCDaylightQuestion extends FactionAction {

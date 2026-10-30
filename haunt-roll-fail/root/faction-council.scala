@@ -87,6 +87,10 @@ object Council {
 
     def governedFor(f : Faction, l : $[Clearing])(implicit game : Game) : $[Clearing] = l.%!(c => governs(f, c))
 
+    // GovernorsStopCrafting: the clearings of l a faction may craft with; older games let Lilypad and the Corvids craft anywhere
+    def craftingIn(f : Faction, l : $[Clearing])(implicit game : Game) : $[Clearing] =
+        (game.options.has(GovernorsStopCrafting) || game.governorsStopCrafting).?(governedFor(f, l)).|(l)
+
     // For bots: entreat only where the faction has something to do, that is, it has pieces there or rules the clearing
     def entreatNeeded(f : Faction, c : Clearing)(implicit game : Game) : Boolean =
         (f.present(c) || f.rules(c)) && game.scorched.has(c).not && game.flooded.has(c).not
@@ -153,6 +157,10 @@ case class CouncilSetupPlaceAction(f : Council, c : Clearing, n : Int, then : Fo
 
 case class CouncilEntreatMainAction(self : Faction, t : Council, then : ForcedAction) extends BaseAction(None)("Entreat".styled(t), t) with Soft
 case class CouncilEntreatAction(self : Faction, t : Council, c : Clearing, then : ForcedAction) extends ForcedAction
+
+// A one-time fix for games started before GovernorsStopCrafting, added to a live game's log by hand: from here Lilypad's enclaves
+// and the Corvids' plots can't craft at an enemy Council's Governing assemblies (game.governorsStopCrafting), then goes on with then
+case class GovernorsStopCraftingAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class CouncilEntreatGainAction(self : Council, then : ForcedAction) extends ForcedAction
 
 case class CouncilRemoveLoyalistAction(self : Council, then : ForcedAction) extends ForcedAction
@@ -204,6 +212,11 @@ object CouncilExpansion extends FactionExpansion[Council] {
     }
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
+        case GovernorsStopCraftingAction(then) =>
+            game.governorsStopCrafting = true
+
+            then
+
         // SETUP
         case CreatePlayerAction(f : Council) =>
             game.states += f -> new CouncilPlayer(f)
