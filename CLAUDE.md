@@ -772,6 +772,10 @@ file covers the build, server and deploy. No session can ssh to the server
   exactly the same suits, so acclaim at a Lilypad Peaceful enclave (rabbit and frog) or a landmark's second suit was left out
   (MaKoBwoY couldn't craft Coins with his rabbit acclaim in Bayou and Fen on 2026-10-21). Not gated by an option: it only
   adds craft choices, so recorded games replay the same.
+- A Knaves craft (Filch or Serve, `KnavesCraftAction`) is recorded and spends the action before the card's costs are matched
+  to the acclaims, so that pick has no Cancel (`CraftAction(f : Knaves, ...)` in `root/faction-knaves.scala`): the generic one's
+  Cancel after a recorded move threw "cancel on non-soft external action", and Wind of Victory stopped loading on 2026-10-30 when
+  the Knaves served Bake Sale (two rabbits) with frog, rabbit and rabbit-or-frog acclaim. Only takes away a choice that threw.
 - In Advanced Setup the Knaves' four Captain cards are dealt when the factions are drawn, and the draft shows them under
   the Knaves (meeple, name and items; `FactionChoice.desc` in `root/setup.scala`, `game.draftCaptains`, asked for by Gman on
   2026-10-20); the Knaves then choose 3 of those. New games get the hidden default option `KnavesCaptainsInDraft`; older
