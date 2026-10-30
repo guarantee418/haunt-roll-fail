@@ -365,10 +365,8 @@ object HRFR {
     }
 }
 
-// Who made the site, shown at the bottom of the main page and in every game's About menu (asked for by Robotos and Gman on 2026-10-30)
+// Who made the site, opened by About at the bottom of the main page and in every game's About menu (asked for by Robotos and Gman on 2026-10-30)
 object Credits {
-    def short : Elem = "Built on HRF by JT (hrf.im)." ~ Break ~ "Made with the help of AI." ~ Break ~ "About this site".styled(xstyles.link)
-
     def options : $[ZOption] =
         $(ZOption("About this site", Div(
             "This site is a fan-run copy of HRF (Haunt Roll Fail), the board game engine JT created at hrf.im. " +
@@ -450,7 +448,7 @@ class HRFUI(implicit resources : Resources) {
             else
                 $(entry(m, metaLabel(m), () => new HRFMetaUI(this, m, 0)(resources).withMeta()))
         ) :+
-            ZOption(" ", OnClick(Div(Credits.short, ZBasic.infoch)), _ => creditsMenu())
+            ZBasic(" ", "About", () => creditsMenu())
         )
     }
 
