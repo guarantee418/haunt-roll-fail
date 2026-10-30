@@ -1939,7 +1939,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
                 case _ => f
             }
 
-            val c = SquiresDeckExpansion.silverTongueOneEffect(action, action.as[SelfPerform]./(_.perform(soft)).|(internalPerform(action, soft)))(this) @@ {
+            val c = SquiresDeckExpansion.silverTongueOneEffect(action, soft, soft => action.as[SelfPerform]./(_.perform(soft)).|(internalPerform(action, soft)))(this) @@ {
                 case c : Ask => c.copy(faction = fixPlayer(c.faction))
                 case c : MultiAsk => c.copy(asks = c.asks./(c => c.copy(faction = fixPlayer(c.faction))))
                 case c => c
@@ -1967,11 +1967,8 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
             e.perform(action, soft) @@ {
                 case UnknownContinue =>
                 case Force(another) =>
-                    if (action.isSoft.not && another.isSoft) {
-                        SquiresDeckExpansion.silverTongueSoft()(this)
-
+                    if (action.isSoft.not && another.isSoft)
                         soft()
-                    }
 
                     return another.as[SelfPerform]./(_.perform(soft)).|(internalPerform(another, soft))
                 case TryAgain => return internalPerform(action, soft)
