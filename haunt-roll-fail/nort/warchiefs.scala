@@ -65,7 +65,10 @@ object Warchief {
     }
 
     // The printed New Blood boards' wording (PrintedNewBlood; CardVersions.options follows the game being played)
-    def power(f : Faction) : String = printedPower(f).filter(_ => CardVersions.options.has(PrintedNewBlood)).|(earlierPower(f))
+    def power(f : Faction) : String = printedPower(f).filter(_ => CardVersions.options.has(PrintedNewBlood)).|(
+        // The Lion Kingdom with Faith (LionFaith): Hildegard's casualties give Faith instead of lore
+        if (f == Lion && CardVersions.options.has(LionFaith)) "After a combat involving Hildegard, collect 1 Faith for each casualty the enemy suffered."
+        else earlierPower(f))
 
     def printedPower(f : Faction) : |[String] = f match {
         case Horse => |("The Horse clan has 2 warchiefs, each worth 2 combat points. If Eitria and Brok are in the same territory, together they are only worth 3 combat points in combat (and not 4).")
@@ -99,6 +102,7 @@ object Warchief {
     // The clan board with the warchief's portrait and power
     def board(f : Faction) =
         if (f == Dragon && CardVersions.options.has(ModuleOption(DragonVariant))) "board-dragon-variant"
+        else if (f == Lion && CardVersions.options.has(LionFaith)) "board-lion-faith"
         else "board-" + f.style + (CardVersions.options.has(PrintedNewBlood) && printedBoards.has(f)).??("-print")
 
     // The New Blood boards redrawn with the printed text (PrintedNewBlood; nort/tools/board-text.py)
