@@ -93,6 +93,17 @@ object CardVersions {
             "Draw 2 cards. If the Sacrificial Pyre is full, you may empty it to draw a 3rd card.")),
     )
 
+    // Robotos's border Bear (BearBorder, 2026-10-31): Kaija on a border; before the second edition's Protector of the Land
+    // (the warchief upgrade card stays; card pictures by nort/tools/card-text.py)
+    val bearBorder : $[CardVersion] = $(
+        CardVersion(ClanCard(Bear, 0), ModuleOption(BearBorder), CardInfo("Bear Clan", "card-clan-bear-border", 0, true, MoveEffect(1),
+            "Move 1. After placing Kaija on a new border, you may collect 1 food or wood from the territories connected by that border.")),
+        CardVersion(ClanCard(Bear, 1), ModuleOption(BearBorder), CardInfo("The Bear Awakens", "card-clan-bear-the-bear-awakens-border", 0, true, BorderAwakenEffect,
+            "Recruit 2. For the rest of this year, you cross the border with Kaija as if it was a regular border.")),
+        CardVersion(ClanCard(Bear, 2), ModuleOption(BearBorder), CardInfo("Protector of the Land", "card-clan-bear-protector-of-the-land-border", 0, false, BorderProtectorEffect,
+            "Draw 1 card for each of your territories with a Rough border (the border with Kaija counts too), maximum 3 cards.")),
+    )
+
     // The Lion Kingdom's Rise of the Twelve Peers recruiting by its Chapels (LionChapelPeers), and Ost (LionOst) in place of Abundance
     // (the owner, 2026-10-25; card pictures by nort/tools/lion-art.py)
     val lionOst : $[CardVersion] = $(
@@ -115,7 +126,7 @@ object CardVersions {
             "Recruit 1. Then you may pay up to 4 Faith: recruit 1 more unit in that territory for each Faith paid.")),
     )
 
-    val all : $[CardVersion] = dragonVariant ++ secondEdition ++ printedNewBlood ++ lionFaith ++ lionOst
+    val all : $[CardVersion] = dragonVariant ++ bearBorder ++ secondEdition ++ printedNewBlood ++ lionFaith ++ lionOst
 
     // Fan-made versions are shown in the clan info only in the games that play them
     def fan(v : CardVersion) : Boolean = v.option match {

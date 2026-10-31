@@ -403,6 +403,8 @@ object MoveCostLabel {
     def apply(from : AreaRef, to : AreaRef, cost : Int)(implicit game : Game) : Elem =
         if (cost <= 1) Empty
         else
+        if (game.kaijaBetween(game.board.territory(from), game.board.territory(to))) "(Kaija's border)".txt
+        else
         if (game.board.adjacent(game.board.territory(from)).exists(_._1 == game.board.territory(to))) "(Rough border)".txt
         else "(by sea)".txt
 }
@@ -668,7 +670,7 @@ object MapExpansion extends Expansion {
     // f's figures (with Kaija when kaija) entering a teammate's territory or the Swamp t with rem moves left
     // must be able to move on, since they can't stop there
     def canPass(f : Faction, t : Territory, rem : Int, e : MoveEffect, kaija : Boolean)(implicit game : Game) : Boolean =
-        rem > 0 && game.bearIn(t).not && game.hostileIn(t).not && game.board.adjacent(t).exists { case (o, regular) =>
+        rem > 0 && game.bearIn(t).not && game.hostileIn(t).not && game.links(f, t).exists { case (o, regular) =>
             val c = moveCost(regular.not, e.ignoreRough)
             c <= rem && canEnter(f, o, rem - c, e, kaija)
         }
@@ -683,7 +685,7 @@ object MapExpansion extends Expansion {
     def destinations(f : Faction, t : Territory, left : Int, e : MoveEffect)(implicit game : Game) : $[(Territory, Int)] = {
         val kaija = game.passOnly(f, t) && game.kaijaIn(t, f)
         // Sea module: from Port to Port with all the moves left
-        (game.board.adjacent(t).map { case (o, regular) => o -> moveCost(regular.not, e.ignoreRough) } ++ SeaExpansion.sailing(f, t, left).filter(x => game.board.adjacent(t).exists(_._1 == x._1).not))
+        (game.links(f, t).map { case (o, regular) => o -> moveCost(regular.not, e.ignoreRough) } ++ SeaExpansion.sailing(f, t, left).filter(x => game.board.adjacent(t).exists(_._1 == x._1).not))
             .filter { case (o, c) => c <= left && canEnter(f, o, left - c, e, kaija) }
     }
 
@@ -1026,7 +1028,7 @@ object MapExpansion extends Expansion {
     // Where f's figures in t can retreat to: not into a fight, nor where a creature is being attacked or a Fallen Valkyrie is
     def retreats(f : Faction, t : Territory, rough : Boolean)(implicit game : Game) : $[Territory] = {
         val fighting = (game.combats ++ game.creatureFights./(_.area))./(game.board.territory)
-        game.board.adjacent(t).filter(rough || _._2).map(_._1).%(o => fighting.has(o).not).%(o => game.present(o).but(f).none).%(o => game.hostileIn(o).not).%(o => game.swampIn(o).not)
+        game.links(f, t).filter(rough || _._2).map(_._1).%(o => fighting.has(o).not).%(o => game.present(o).but(f).none).%(o => game.hostileIn(o).not).%(o => game.swampIn(o).not)
     }
 
     // How many go (all, or one) after picking where: with one destination the pick was made for the player, so there is
@@ -1306,10 +1308,14 @@ object MapExpansion extends Expansion {
             // Military paths: Militia alone move only into the clan's territories
             val sources = (left > 0).??(game.passing(f).any.?(game.passing(f)).|(moveSources(f, e)).%(t => destinations(f, t, left, e).exists(o => MilitaryExpansion.mayEnter(f, t, o._1))))
 
-            if (sources.none)
+            // Robotos's border Bear (BearBorder): discarding a resource to cross Kaija's border as a regular one for the rest of the Move
+            val tolls = BearBorderExpansion.tolls(f, left, e)
+
+            if (sources.none && tolls.none)
                 Then(MovesMadeAction(f, e, then))
             else
                 Ask(f).each(sources)(t => MoveFromAction(f, t.anchor, left, e, then))
+                    .each(tolls)(r => KaijaTollAction(f, r, left, e, then))
                     // Team play: units can't stop in a teammate's territory
                     .when(game.passing(f).none)(MoveDoneAction(f, e, then))
 
@@ -1397,6 +1403,7 @@ object MapExpansion extends Expansion {
 
         // Before the Move: what f holds (Halvard's Craft), and Borgild's Shield bringing Kaija and Borgild together
         case MoveStartAction(f, e, then) =>
+            game.kaijaToll = $
             game.heldBefore = game.controlled(f)./~(_.areas)
             game.extraMoved = false
             game.mended = 0
@@ -1448,6 +1455,7 @@ object MapExpansion extends Expansion {
             Then(then)
 
         case MoveEndAction(f, e, then) =>
+            game.kaijaToll = $
             Then(CombatsAction(f, e, then))
 
         case CombatsAction(f, e, then) =>

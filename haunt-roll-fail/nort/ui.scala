@@ -1116,6 +1116,26 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             }
         }
 
+        // Robotos's border Bear (BearBorder): Kaija on the middle of a regular border between its two territories (tapped: the clan's cards)
+        game.kaijaBorder.foreach { case (a, b) =>
+            val (ta, tb) = (board.territory(a), board.territory(b))
+            val spots = board.placements./~(p => p.spec.borders.%(_.impassable.not)./~{ d =>
+                val (u, v) = (AreaRef(p.x, p.y, d.a), AreaRef(p.x, p.y, d.b))
+                if ((ta.areas.has(u) && tb.areas.has(v)) || (ta.areas.has(v) && tb.areas.has(u)))
+                    BorderLines.lines.get(p.tile).|($).find(l => $(l.a, l.b).toSet == $(d.a, d.b).toSet).%(_.dashes.any)./{ l =>
+                        val m = l.dashes(l.dashes.num / 2)
+                        val (rx, ry) = board.rotate(m.x1, m.y1, p.r)
+                        (d.rough, p.x + rx, p.y + ry)
+                    }.$
+                else $
+            })
+            val (x, y) = spots.sortBy(_._1).headOption./(s => (s._2, s._3)).|{
+                val ((x1, y1), (x2, y2)) = (board.point(a), board.point(b))
+                ((x1 + x2) / 2, (y1 + y2) / 2)
+            }
+            pieces.add(Sprite($(at("token-kaija", 170)), $(Rectangle(-85, -85, 170, 170)), $(ClanAbilityInfo(Bear))))(sx(x), sy(y))
+        }
+
         // The resource icons over everything, so a piece that has to overlap one never hides it
         board.placements.foreach { p =>
             TileIcons.icons.get(p.tile).|($).indices.foreach { n =>

@@ -817,6 +817,27 @@ case object DragonVariant extends Module("Lower skill floor Dragon", "fan-made v
     )
 }
 
+// Robotos's "Special Unit Hater's Bear, Rough Border's Edition" (Discord, northgard-fanmade-content, 2026-10-22; asked for by Gman on
+// 2026-10-31): Kaija as a token on a border, picked as its own clan in the clan picker (factionVariants in meta.scala), the rules in
+// bear-border.scala, the cards in CardVersions.bearBorder (editions.scala)
+case object BearBorder extends Module("Rough border Bear", "fan-made variant by Robotos") {
+    override def ready = true
+    override def fan = true
+    override def expansion = |(BearBorderExpansion)
+    // With New Blood's and the Lion's, before Wilderness, Creatures and Warchiefs
+    override def priority = -2
+    def about = $(
+        "Bear Clan".hl ~ " plays by Robotos's variant: " ~ "Kaija".hl ~ " is no unit but a token that lies on a border, never in a territory.",
+        "Kaija".hl ~ " starts off the map. Before resolving one of its clan cards (the Bear Clan card or an upgrade, not Borgild's Shield), Bear may place it on a regular border between a territory it controls and an adjacent territory.",
+        "Every clan, Bear too, treats the border with " ~ "Kaija".hl ~ " as a Rough border; a clan may discard any 1 resource to cross it as a regular border for the rest of a Move action.",
+        "Bear Clan".hl ~ " (Flash): Move 1. After placing " ~ "Kaija".hl ~ " on a new border, you may collect 1 " ~ Food.elem ~ " or " ~ Wood.elem ~ " from the territories it connects.",
+        "The Bear Awakens".hl ~ " (Flash): Recruit 2. For the rest of the year, Bear crosses the border with " ~ "Kaija".hl ~ " as a regular border.",
+        "Protector of the Land".hl ~ ": draw 1 card for each of your territories with a Rough border (the border with " ~ "Kaija".hl ~ " counts too), at most 3.",
+        "Borgild and Borgild's Shield don't change; the Shield's part about " ~ "Kaija".hl ~ " does nothing.",
+        "Fan-made, not part of the published game.".styled(xstyles.warning),
+    )
+}
+
 // Marzaus's "Fan creatures" (Discord, northgard-fanmade-content, 2026-10-23; asked for by Gman on 2026-10-24), a fun mode
 // (creatures.scala, AggressiveCreaturesExpansion): no creature has its ability, and every creature is aggressive like the Fallen Valkyrie
 case object AggressiveCreatures extends Module("Aggressive creatures", "fan-made variant by Marzaus") {
@@ -936,7 +957,7 @@ object Module {
         case _ => "Modules and expansions"
     }
 
-    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, DragonVariant, AggressiveCreatures, LionKingdom)
+    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, DragonVariant, AggressiveCreatures, LionKingdom, BearBorder)
 
     // The team variants and the number of players each one needs
     val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6, Teams2v2v2 -> 6)

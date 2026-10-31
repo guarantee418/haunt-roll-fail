@@ -75,16 +75,16 @@ object Meta extends MetaGame { mmm =>
     // Team play comes from the choice above the clan picker (pickerModes), the old fixed team variants are no longer offered
     // The Tutorial's practice game has its tips on
     // Chosen casualties are on in every new game (mandatoryFor), not in older ones
-    override val hiddenOptions = $(ModuleOption(VictoryModule), ModuleOption(Wilderness), ModuleOption(Wastelands), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, PrintedNewBlood, LionStartingDeck, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith, NormalDevelopments, ModuleOption(DragonVariant)) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
+    override val hiddenOptions = $(ModuleOption(VictoryModule), ModuleOption(Wilderness), ModuleOption(Wastelands), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, PrintedNewBlood, LionStartingDeck, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith, NormalDevelopments, ModuleOption(DragonVariant), ModuleOption(BearBorder)) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // Options no longer offered on the setup screen that games still have, and log at the start (Robotos's Dragon is picked as its
     // own clan in the picker since 2026-10-26, factionVariants)
-    val retired : $[O] = $(ModuleOption(Wilderness), ModuleOption(Wastelands), ModuleOption(DragonVariant))
+    val retired : $[O] = $(ModuleOption(Wilderness), ModuleOption(Wastelands), ModuleOption(DragonVariant), ModuleOption(BearBorder))
 
     // New Blood has no option: picking one of its clans brings it in
     // The modules come in one section per box, as Robotos laid them out (2026-10-26): Base game, Warchief expansion, Wilderness and
     // Wastelands expansions (with their bans and the Central tile), Uncharted Horizons; Balanced starting tiles before them (Gman)
-    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ $(BalancedStartTiles, ModuleOption(Creatures), MoreCreatures) ++ WarchiefsChoice.all ++ $(WildernessTiles, WildernessCreatures, WastelandsTiles, WastelandsCreatures) ++ BanEnvironment.all ++ BanCreature.all ++ CentralChoice.all ++ $(ModuleOption(EventsModule), ModuleOption(Sea), HorizonsTiles) ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ AutomaLevelOption.all ++ DevelopmentsChoice.fan ++ Module.all.%(_.fan).but(LionKingdom).but(DragonVariant)./(ModuleOption) ++ hiddenOptions
+    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ $(BalancedStartTiles, ModuleOption(Creatures), MoreCreatures) ++ WarchiefsChoice.all ++ $(WildernessTiles, WildernessCreatures, WastelandsTiles, WastelandsCreatures) ++ BanEnvironment.all ++ BanCreature.all ++ CentralChoice.all ++ $(ModuleOption(EventsModule), ModuleOption(Sea), HorizonsTiles) ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ AutomaLevelOption.all ++ DevelopmentsChoice.fan ++ Module.all.%(_.fan).but(LionKingdom).but(DragonVariant).but(BearBorder)./(ModuleOption) ++ hiddenOptions
 
     // Colors and teams only for the clans in the game, as many teams as players
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -148,7 +148,7 @@ object Meta extends MetaGame { mmm =>
         // Teams by seat, alternating, for the clans without one
         val teams = l.zipWithIndex.%{ case (f, _) => options.of[TeamOption].exists(o => o.clan == f && o.team < n).not }./{ case (f, i) => TeamOption(f, i % 2) : O }
         // Robotos's Dragon comes with its pick in the clan picker (factionVariants), never from the last setup (it was a setup option)
-        options.%{ case TeamOption(f, t) => t < n ; case ModuleOption(DragonVariant) => false ; case _ => true } ++ added ++ teams
+        options.%{ case TeamOption(f, t) => t < n ; case ModuleOption(DragonVariant) => false ; case ModuleOption(BearBorder) => false ; case _ => true } ++ added ++ teams
     }
 
     // Chosen casualties, taking the Unrest card and the clan power report: every new game gets them; a loaded game keeps the options it was started with
@@ -241,7 +241,25 @@ object Meta extends MetaGame { mmm =>
         Div(Image("clan-" + Dragon.style, styles.pickIcon)) ~ Div(Dragon.name.hlb) ~ Div("lower skill floor".spn(xstyles.smaller85)),
         Image("clan-" + Dragon.style, styles.menuIcon) ~ "Dragon Clan (variant)".spn(xstyles.bold),
         |(("i".txt, "Dragon Clan".hlb ~ ", lower skill floor variant", dragonVariantInfo)),
-        |(fanClans), $(ModuleOption(DragonVariant))))
+        |(fanClans), $(ModuleOption(DragonVariant))),
+        // Robotos's border Bear (BearBorder, Gman 2026-10-31)
+        FactionVariant(Bear, "Bear Clan (variant)",
+        Div(Image("clan-" + Bear.style, styles.pickIcon)) ~ Div(Bear.name.hlb) ~ Div("Kaija on a border".spn(xstyles.smaller85)),
+        Image("clan-" + Bear.style, styles.menuIcon) ~ "Bear Clan (variant)".spn(xstyles.bold),
+        |(("i".txt, "Bear Clan".hlb ~ ", Rough Border's Edition", bearBorderInfo)),
+        |(fanClans), $(ModuleOption(BearBorder))))
+
+    // Robotos's border Bear in the clan picker: its cards and board as a game with it has them
+    def bearBorderInfo : $[Elem] = {
+        val before = CardVersions.options
+        CardVersions.options = before :+ ModuleOption(BearBorder)
+        try {
+            clanAbility(Bear) ++ $(HorizontalBreak) ++ warchiefInfo(Bear)
+        }
+        finally {
+            CardVersions.options = before
+        }
+    }
 
     // Robotos's Dragon in the clan picker: its cards and board as a game with it has them
     def dragonVariantInfo : $[Elem] = {
@@ -298,6 +316,10 @@ object Meta extends MetaGame { mmm =>
         ("Faith: ".hl ~ ("a fourth resource, only yours. Gain 1 Faith for each casualty your enemy suffers in a combat where your Lords or Hildegard fight. Your clan upgrades cost Faith instead of lore (Replace and Remove still cost lore). Faith is traded like the other resources and counts towards your final fame.").txt).div(styles.menuText),
     ) ++ (f == Lion).$(
         ("Fan-made, not part of the published game.".styled(xstyles.warning)).div(styles.menuText),
+    ) ++ (f == Bear && CardVersions.options.has(ModuleOption(BearBorder))).$(
+        // Robotos's border Bear: Kaija is a token on a border
+        ("Clan power, Kaija: ".hl ~ "Kaija is a token, not a unit, and never lies in a territory. Before resolving one of your clan cards (not Borgild's Shield), you may place it on a regular border between a territory you control and an adjacent territory. Every clan, you too, treats that border as Rough; a clan may discard any 1 resource to cross it as a regular border for the rest of a Move action.".txt).div(styles.menuText),
+        ("Robotos's fan-made variant (Rough Border's Edition), not part of the published game.".styled(xstyles.warning)).div(styles.menuText),
     )
 
     // A card's text in the other editions (CardVersions in editions.scala), under its text in the one in play
@@ -319,6 +341,7 @@ object Meta extends MetaGame { mmm =>
         clans./(f => ("board-" + f.style) -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.boardFile(f) + ".webp")) ++
         Warchief.printedBoards./(f => ("board-" + f.style + "-print") -> ("/hrf/webp2/nort/images/expansion/board/" + Warchief.printedFile(f) + ".webp")) ++
         $("board-dragon-variant" -> "/hrf/webp2/nort/images/expansion/board/dragon-variant.webp") ++
+        $("board-bear-border" -> "/hrf/webp2/nort/images/expansion/board/bear-border.webp") ++
         $("board-lion-faith" -> "/hrf/webp2/nort/images/expansion/board/lion-faith.webp") ++
         // The combat icons in rules text (CombatText), and the icons in the Tutorial's lessons
         $("axe", "skull", "food", "wood", "lore", "faith", "fame", "harvest", "winter", "confirm", "cancel")./(i => ("ui-" + i) -> ("/hrf/webp2/nort/images/ui/" + i + ".webp")) ++
@@ -454,6 +477,8 @@ object Meta extends MetaGame { mmm =>
         Warchief.printedBoards./(f => ImageAsset(f.style + "-print", Warchief.printedFile(f))) :+
         // Robotos's Dragon variant (DragonVariant)
         ImageAsset("dragon-variant") :+
+        // Robotos's border Bear (BearBorder)
+        ImageAsset("bear-border") :+
         // The Lion Kingdom's board with Faith (LionFaith)
         ImageAsset("lion-faith")
     ) ::
