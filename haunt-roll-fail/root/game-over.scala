@@ -17,7 +17,15 @@ import scala.collection.immutable.ListMap
 
 
 case object GameOverTriggredAction extends ForcedAction
-case class GameOverAction(winners : $[Faction], scores : ListMap[Faction, Int], seating : $[Faction], options : $[Meta.O]) extends ForcedAction
+// The options in any order, as in `OptionsAction`
+case class GameOverAction(winners : $[Faction], scores : ListMap[Faction, Int], seating : $[Faction], options : $[Meta.O]) extends ForcedAction {
+    override def equals(o : Any) = o match {
+        case GameOverAction(w, s, t, l) => w == winners && s == scores && t == seating && l.toSet == options.toSet
+        case _ => false
+    }
+
+    override def hashCode = (winners, scores, seating, options.toSet).##
+}
 
 trait NoGameOverTrigger { self : Action => }
 

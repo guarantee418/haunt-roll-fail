@@ -79,7 +79,8 @@ object LiveCheck {
 
         val unknown = options.filter(_.toString.contains("Unknown"))
 
-        val opts = (options ++ meta.botOptions(seating, bots)).distinct
+        // In the order of meta.options, as the browser makes the game (OptionsState in hrf.scala), not the lobby's
+        val opts = (meta.options.intersect(options) ++ meta.botOptions(seating, bots)).distinct
         val active = seating.filter(f => bots.get(f).has("Off").not)
 
         def newGame() : G = meta.createGame(active, opts).asInstanceOf[G]
