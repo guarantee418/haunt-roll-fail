@@ -501,7 +501,9 @@ Brok's Precision, Kàra's Devotion (was Howl from the Sea), Ox Clan, Torfin's Fe
 Board rules that changed:
 
 - Lynx: Brundr and Kaelinn are two figures, each worth 1 point (`game.lynx` and `game.lynx2`; the second is recruited
-  like the first, never at setup, and is only on the map while the first is). Before or after a Lynx card with the lynx
+  like the first, and is only on the map while the first is). Each starting placement may take one lynx, so Lynx can start
+  with both (hidden `LynxBothAtSetup`, every new game, Gman 2026-10-31; before it a lynx in the second placement moved the
+  first one there). Before or after a Lynx card with the lynx
   icon (the initial card and the two upgrades), a bonus Move 1 with only the lynxes (and Caring Siblings' new units),
   into any territory but not across Rough borders nor into a creature's, starting at most 1 fight (`LynxBonusAction`).
   A Move takes both lynxes in a territory, or one (`MoveOneLynxAction`). The second lynx is lost like a unit, after the units.
