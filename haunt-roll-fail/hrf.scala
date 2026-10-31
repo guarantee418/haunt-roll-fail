@@ -1056,7 +1056,10 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             meta.extLinks./((t, l) => ZOption(Div(meta.extLinksName), Link(l, t.div(xstyles.divint) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough), ZBasic.infoch ++ $(xstyles.link)))) ++
             // $(ZOption(Div(Empty, xlo.grow6), Empty)) ++
             $(ZBasic(" ", Div("Settings"), () => miscellaneous())) ++
-            meta.showAbout.$(ZBasic(" ", Div("About"), () => aboutMenu()))
+            meta.showAbout.$(ZBasic(" ", Div("About"), () => aboutMenu())) ++
+            // Back to the site's main screen (/play), or to the game whose menu links here (Northgard for its Adset);
+            // loaded afresh, so nothing of this game's menus is left over
+            HRF.offline.not.$(ZBasic(" ", Div("Back"), () => dom.document.location.assign("/play" + HRF.metas.%(_.linkedModes.exists(_._2 == meta.name)).single./("/" + _.name).|(""))))
         )
 
         if (HRF.segments.startsWith($("tutorial")) && meta.tutorialLessons.any)
