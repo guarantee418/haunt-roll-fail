@@ -109,6 +109,10 @@ trait MetaBase {
     def optionsFor(n : Int, l : $[F]) : $[O] = options
     def optionPages(n : Int, l : $[F]) : $[$[O]] = $(optionsFor(n, l))
     def presetsFor(n : Int, l : $[F]) : $[(Elem, $[O], $[O])] = $()
+    // What each preset sets, in the order of presetsFor, shown by a ? on its button (none when empty)
+    def presetsInfo(n : Int, l : $[F]) : $[$[Elem]] = $
+    // A ? on a setup section's heading that explains the section as a whole (given any of its options; none when empty)
+    def groupInfo(o : O) : $[Elem] = $
     def defaultsFor(n : Int, l : $[F]) : $[O] = $
     def mandatoryFor(n : Int, l : $[F]) : $[O] = $
     def hiddenOptions : $[O] = $

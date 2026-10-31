@@ -824,6 +824,16 @@ file covers the build, server and deploy. No session can ssh to the server
   Landmarks, Deck, Cards, the AdSet buffs, the faction tweak sections (Marquise, Vagabond, Lizards, Corvids), Mirror Factions and the
   four Hirelings sections start folded, showing only what is picked (`FoldedOption` in `root/meta.scala`, which sets `BaseOption.fold`
   to `root.<group>`). Sections of a single option (Dominance, Riverfolk's Export) don't fold. Display only, so no game records change.
+- Root's setup options were cleaned up on 2026-10-31 (Gman): the Presets are "Site Defaults" and "Official Rules", each with a ?
+  (`presetsInfo`, a hook in `meta.scala`; the Official | Hirelings, Sunday Games and Adset's expansion-pool presets are gone). Auto Hits
+  Assignment and the card rulings Official Rules picked (Partisans discard birds, Coffin Makers errata, Propaganda Bureau, the two Tunnels
+  rulings) are no longer choices (`Meta.settled`); Hostile Takeover and Shared History, which did nothing, and Coffin Makers' "any warrior"
+  are no longer offered (`Meta.retired`, dropped from saved setups by `completeSaved`, still read so old games load). Every new game gets
+  the hidden new-game options through `mandatoryFor` (`Meta.newGame`): before, a setup screen that started from options saved in the
+  browser left out any hidden toggle added since, as toggles aren't added from the defaults. The AdSet setup buffs are always on, and the
+  setup always Homelands, in Adset (`MetaAdset.mandatoryFor`, hidden there), and Off by default in the standard setup. The Async heading
+  has a ? explaining the section (`groupInfo`, a hook in `meta.scala`, shown by `setupQuestions` in `hrf.scala`). Recorded games keep
+  their options, so none of this changes a game already started.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.

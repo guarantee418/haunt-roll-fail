@@ -16,6 +16,8 @@ import hrf.options._
 
 import root.elem._
 
+import helper.&
+
 
 case class IncludeFaction(faction : Faction) extends GameOption with ToggleOption {
     val group = "Available Factions"
@@ -58,6 +60,14 @@ object MetaAdset extends MetaGame {
         .diff($(SeatingGiven, SeatingRandom))
         .diff(realFactions./(IncludeFaction))
         .appended(RandomCharacter)
+        .appendedAll($(AdSetBuffOn, AdSetBuffOff, SetupTypeCorners, SetupTypeHomelands))
+
+    // Advanced Setup always has its setup buffs and Homelands setup (Gman, 2026-10-31), so they aren't choices here
+    override def mandatoryFor(n : Int, l : $[F]) = Meta.newGame ++ $(KnavesCaptainsInDraft, AdSetBuffOn, SetupTypeHomelands)
+
+    override def completeSaved(n : Int, l : $[F], options : $[O]) = options.diff(Meta.retired).diff($(AdSetBuffOff, SetupTypeCorners))
+
+    override def groupInfo(o : O) = Meta.groupInfo(o)
 
     override def optionPages(n : Int, l : $[F]) : $[$[GameOption]] = Meta.optionPages(n, realFactions)
 
@@ -69,6 +79,11 @@ object MetaAdset extends MetaGame {
         AutumnMap,
         DefaultClearings, NoClustersClearings,
         MixedDeck,
+        ErrataCoffinMakers,
+        NonBirdPartisans,
+        UnthematicPropagandaBureau,
+        TunnelsIgnoreRaid,
+        TunnelsIgnoreTradePosts,
         AdSetBuffOn,
         SetupTypeHomelands,
         SetupOrderReverse,
@@ -98,82 +113,25 @@ object MetaAdset extends MetaGame {
         NoHirelings
     ) ++ defaultFactions./(IncludeFaction) ++ Meta.hirelings./(IncludeHireling)
 
+    // Two presets, as in the standard setup (Gman, 2026-10-31)
     override def presetsFor(n : Int, l : $[F]) = $(
-        ("Reset Options".spn, $, $),
+        ("Site Defaults".spn, $, $),
         ("Official".hl ~ " Rules", $(
-            AutoHitsAssignmentMode,
             AllRandomClearings,
             StandardDeck,
-            NonBirdPartisans,
-            ErrataCoffinMakers,
-            UnthematicPropagandaBureau,
-            TunnelsIgnoreRaid,
-            TunnelsIgnoreTradePosts,
         ), $),
-        ("Official".hl ~ " | " ~ "Hirelings".styled(BanditGangs), $(
-            AutoHitsAssignmentMode,
-            AllRandomClearings,
-            StandardDeck,
-            NonBirdPartisans,
-            ErrataCoffinMakers,
-            UnthematicPropagandaBureau,
-            TunnelsIgnoreRaid,
-            TunnelsIgnoreTradePosts,
-        ) :+ (n @@ {
-            case 2 => ThreeNormalHirelings
-            case 3 => OneDemotedTwoNormalHirelings
-            case 4 => TwoDemotedOneNormalHirelings
-            case _ => ThreeDemotedHirelings
-        }), $),
-        ("Sunday".styled(Rabbit) ~ " Games", $(
-            AutoHitsAssignmentMode,
-            WarriorsOnlyInfamy, RevisedQuests,
-            TinkerNoBag, HarrierNoCoins, ScoundrelTeapotNoBoot, ArbiterScoreCard, RoninSwiftTorch,
-            LizardHandSizeSix,
-            ExportToCommitments,
-            ThreeOfEachPlot, DiversionPlot,
-            MayorAssemblyAction,
-            InstantRebuildKeep,
-            TotalWarDominance,
-            ThreeRandomHirelings,
-            IncludeHireling(StreetBand),
-            IncludeHireling(RatSmugglers),
-            IncludeHireling(ForestPatrol),
-            IncludeHireling(SpringUprising)
-        ), $(NB)./(IncludeFaction) ++ Meta.hirelings./(IncludeHireling)),
-        ("Official".hl ~ " | " ~ "Riverfolk".styled(RF) ~ " | " ~ "Exiles & Partisans".hh, $(
-            AutoHitsAssignmentMode,
-            AllRandomClearings,
-            ExilesDeck,
-            NonBirdPartisans,
-            ErrataCoffinMakers,
-            UnthematicPropagandaBureau,
-            TunnelsIgnoreRaid,
-            TunnelsIgnoreTradePosts,
-            IncludeFaction(VB),
-        ), realFactions.drop(6)./(IncludeFaction)),
-        ("Official".hl ~ " | " ~ "Riverfolk".styled(RF) ~ " + " ~ "Underworld".styled(UD) ~ " | " ~ "Exiles & Partisans".hh, $(
-            AutoHitsAssignmentMode,
-            AllRandomClearings,
-            ExilesDeck,
-            NonBirdPartisans,
-            ErrataCoffinMakers,
-            UnthematicPropagandaBureau,
-            TunnelsIgnoreRaid,
-            TunnelsIgnoreTradePosts,
-            IncludeFaction(VB),
-        ), realFactions.drop(8)./(IncludeFaction)),
-        ("Official".hl ~ " | " ~ "Riverfolk".styled(RF) ~ " + " ~ "Underworld".styled(UD) ~ " + " ~ "Marauder".styled(LH) ~ " | " ~ "Exiles & Partisans".hh, $(
-            AutoHitsAssignmentMode,
-            AllRandomClearings,
-            ExilesDeck,
-            NonBirdPartisans,
-            ErrataCoffinMakers,
-            UnthematicPropagandaBureau,
-            TunnelsIgnoreRaid,
-            TunnelsIgnoreTradePosts,
-            IncludeFaction(VB),
-        ), realFactions.drop(10)./(IncludeFaction)),
+    )
+
+    override def presetsInfo(n : Int, l : $[F]) = $(
+        $(
+            "Puts every option back to what the site starts with:",
+            &("Autumn".styled(Mouse) ~ " map, ") ~ &("Default".hh ~ " clearings, ") ~ &("Mixed".hh ~ " deck, ") ~ &("Bluff Mode".hh ~ ", ") ~ &("no hirelings, ") ~ &("and every faction in the draft") ~ " " ~ &("but the " ~ "Vagabond".styled(VB) ~ " and the fan factions."),
+        ),
+        $(
+            "The rules as Leder Games prints them:",
+            &("All Random".hh ~ " clearings") ~ " " ~ &("and the " ~ "Friends and Favors".hh ~ " deck."),
+            "Nothing else changes.",
+        ),
     )
 
     override val indistinguishableFactions : Boolean = true

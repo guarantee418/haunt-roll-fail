@@ -37,18 +37,30 @@ trait MapOption extends GameOption with OneOfGroup with ImportantOption with Fol
 
 case object AutumnMap extends MapOption {
     val valueOn = "Autumn".styled(Mouse)
+    override val explain = $(
+        "The " ~ "Root".hh ~ " base game map.",
+    )
 }
 
 case object WinterMap extends MapOption {
     val valueOn = "Winter".styled(Bird)
+    override val explain = $(
+        "The back of the base game board.",
+    )
 }
 
 case object LakeMap extends MapOption {
     val valueOn = "Lake".styled(Rabbit)
+    override val explain = $(
+        "The " ~ "Underworld".hh ~ " expansion map: a lake in the middle, crossed by the " ~ "Ferry".hh ~ ".",
+    )
 }
 
 case object MountainMap extends MapOption {
     val valueOn = "Mountain".styled(Fox)
+    override val explain = $(
+        "The " ~ "Underworld".hh ~ " expansion map: some paths are closed until cleared, and the " ~ "Tower".hh ~ " stands in the middle.",
+    )
 }
 
 case object TidalMap extends MapOption {
@@ -162,10 +174,16 @@ trait DeckOption extends GameOption with OneOfGroup with ImportantOption with Fo
 
 case object StandardDeck extends DeckOption {
     val valueOn = "Friends and Favors".hh
+    override val explain = $(
+        "The deck from the " ~ "Root".hh ~ " base game.",
+    )
 }
 
 case object ExilesDeck extends DeckOption {
     val valueOn = "Exiles and Partisans".hh
+    override val explain = $(
+        "The official alternative deck, with " ~ "Partisans".hh ~ ", " ~ "Coffin Makers".hh ~ ", " ~ "Tunnels".hh ~ " and other new cards.",
+    )
 }
 
 case object MixedDeck extends DeckOption {
@@ -191,6 +209,9 @@ case object DuskDeck extends DeckOption {
 
 case object SquiresDeck extends DeckOption {
     val valueOn = "Squires and Disciples".hh
+    override val explain = $(
+        "The " ~ "Homeland".hh ~ " deck, with new cards such as " ~ "Friend of the ___".hh ~ ", " ~ "Silver-Tongue".hh ~ " and " ~ "Feather Rufflers".hh ~ ".",
+    )
 }
 
 case object NonBirdPartisans extends GameOption with ToggleOption with FoldedOption {
@@ -499,7 +520,8 @@ case object AutoHitsAssignmentMode extends GameOption with ToggleOption with Fol
     val group = "Async"
     val valueOn = "Auto Hits Assignment".hh
     override val explain = $(
-        &("In battle, all " ~ "hits".styled(styles.hit) ~ " are assigned automatically") ~ " " ~ &("if there's no choice in how they can be assigned.")
+        &("When there is only one way to take a battle's " ~ "hits".styled(styles.hit) ~ ",") ~ " " ~ &("the game takes them without waiting for the player."),
+        &("Every new game has it.")
     )
 }
 
@@ -509,11 +531,9 @@ case object BluffMode extends GameOption with OneOfGroup with FoldedOption {
     val group = "Async"
     val valueOn = "Bluff Mode".hh
     override val explain = $(
-        &("Every player who is " ~ "attacked".styled(styles.hit) ~ " is asked whether to " ~ "Ambush".styled(Bird) ~ ",") ~ " " ~ &("even with no " ~ "ambush".styled(Bird) ~ " card to play,") ~ " " ~ &("so nobody learns who holds one."),
-        &("The game " ~ "waits".hl ~ " for that player, " ~ "as at the table.".&),
-        &("Players' own " ~ "Auto Skip".hh ~ " settings don't skip " ~ "ambushes".styled(Bird) ~ " in this game.") ~ " " ~ &("The attacker's " ~ "counter-ambush".styled(Bird) ~ " is asked the same way."),
-        &("A player is still skipped " ~ "when it gives nothing away:".&) ~ " " ~ &("no cards in hand, ") ~ &("Scouting Party".hh ~ ", ") ~ &("a " ~ "Riverfolk".hh ~ " hand (it's open), ") ~ &("or every " ~ "ambush".styled(Bird) ~ " card already seen."),
-        &("Auto Skip Ambushes".hh ~ " instead skips every player " ~ ("who has no " ~ "ambush".styled(Bird) ~ " they can play,").&) ~ " " ~ &("so the game moves on without them."),
+        &("Every player who is " ~ "attacked".styled(styles.hit) ~ " is asked whether to " ~ "Ambush".styled(Bird) ~ ",") ~ " " ~ &("even with no " ~ "ambush".styled(Bird) ~ " card,") ~ " " ~ &("so nobody learns who holds one."),
+        &("The game " ~ "waits".hl ~ " for their answer, " ~ "as at the table.".&) ~ " " ~ &("The attacker's " ~ "counter-ambush".styled(Bird) ~ " is asked the same way."),
+        &("Players' own " ~ "Auto Skip".hh ~ " settings don't skip " ~ "ambushes".styled(Bird) ~ " in this game.") ~ " " ~ &("A player is still skipped when that gives nothing away:") ~ " " ~ &("no cards in hand, ") ~ &("Scouting Party".hh ~ ", ") ~ &("a " ~ "Riverfolk".hh ~ " hand (it's open), ") ~ &("or every " ~ "ambush".styled(Bird) ~ " card already seen.")
     )
 }
 
@@ -534,12 +554,12 @@ case object ForcedAsyncMode extends GameOption with ToggleOption with FoldedOpti
     override def forcedOn(all : $[BaseOption]) = $(AutoHitsAssignmentMode, AutoAmbushSkippingMode)
     override def decorate(elem : Elem) = Image("swap")(styles.token) ~ " " ~ elem ~ " " ~ Image("swap")(styles.token)
     override val explain = $(
-        &("Ambush".styled(Bird) ~ " prompts are skipped " ~ "if the player doesn't have any.".&),
+        &("For games played over days:") ~ " " ~ &("a battle " ~ "never waits".hl ~ " for a player who isn't there."),
+        &("Turns on " ~ "Auto Skip Ambushes".hh ~ ":") ~ " " ~ &("a player with no " ~ "ambush".styled(Bird) ~ " card to play isn't asked."),
         &("Par".styled(Fox) ~ "tis".styled(Rabbit) ~ "ans".styled(Mouse) ~ " are always used " ~ "if no cards have to be discarded.".&),
-        &("All " ~ "hits".styled(styles.hit) ~ " are assigned automatically."),
-        &("At the end of the turn players with more than one type of " ~ "tokens".hh ~ " or " ~ "buildings".hh ~ " in any one clearing set the " ~ "order".hl ~ " in which they would be " ~ "removed".styled(styles.hit) ~ " in battle."),
-        &(Vagabond.of(VB) ~ " player sets the " ~ "order".hl ~ " " ~ ("for at least " ~ "half".hh ~ " of their items").& ~ " " ~ ("to be " ~ "damaged".styled(styles.hit) ~ " in battle " ~ ("or with " ~ "revolts".styled(WA) ~ " or " ~ "bombs".styled(CC) ~ ".").&).&),
-        &(MC.elem ~ " player can assign every " ~ "card".hh ~ " in their hand to be either " ~ "skipped".hl ~ " for " ~ "Field Hospitals".styled(MC) ~ ", " ~ "used".hh ~ " for " ~ "any".hl ~ " number of " ~ Cat.sof(MC) ~ ", or " ~ "used".hh ~ " for at least " ~ "two".hl ~ " " ~ Cat.sof(MC) ~ "."),
+        &("Hits".styled(styles.hit) ~ " are taken in a preset " ~ "order".hl ~ ":") ~ " " ~ &("at the end of their turn, players with more than one kind of " ~ "building".hh ~ " or " ~ "token".hh ~ " in a clearing") ~ " " ~ &("set which goes first,") ~ " " ~ &("and " ~ VB.elem ~ " sets the order of at least half of their items."),
+        &(MC.elem ~ " marks each " ~ "card".hh ~ " in hand as used or skipped for " ~ "Field Hospitals".styled(MC) ~ "."),
+        &("Players Choose Hits".hh ~ " turns the preset order off.")
     )
 }
 
@@ -562,12 +582,24 @@ trait AdSetBuffOption extends GameOption with OneOfGroup with FoldedOption {
     val group = "AdSet " ~ "MC".styled(MC) ~ ", " ~ "LC".styled(LC) ~ ", " ~ "CC".styled(CC) ~ " Setup Buffs"
 }
 
+object AdSetBuffOption {
+    val explain : $[Elem] = $(
+        "The setup bonuses of the " ~ "Advanced Setup".hh ~ " rules (Law of Root), always played in " ~ "Root: Advanced Setup".hh ~ ":",
+        MC.elem ~ " places a " ~ "warrior".hh ~ " with each starting " ~ "building".hh ~ ".",
+        LC.elem ~ " starts with " ~ 2.hl ~ " " ~ "Acolytes".hh ~ ".",
+        CC.elem ~ " places a " ~ "plot".hh ~ " at setup.",
+        "The standard rules don't have them, so they are " ~ "Off".hh ~ " by default here.",
+    )
+}
+
 case object AdSetBuffOn extends AdSetBuffOption {
     val valueOn = "On".hh
+    override val explain = AdSetBuffOption.explain
 }
 
 case object AdSetBuffOff extends AdSetBuffOption {
     val valueOn = "Off".hh
+    override val explain = AdSetBuffOption.explain
 }
 
 trait MirrorOption extends GameOption with ToggleOption with FoldedOption {
@@ -703,18 +735,28 @@ case object SawmillMassOverwork extends GameOption with ToggleOption with Folded
     val group = MC.title
     val valueOn = Sawmill.sof(MC) ~ SpacedDash ~ "Mass Overwork".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(MC)), $(IncludeFaction(BK)))
+    override val explain = $(
+        "After an " ~ "Overwork".hh ~ ", " ~ MC.elem ~ " may " ~ "Overwork".hh ~ " again in another clearing, " ~ "as long as there is " ~ Wood.of(MC) ~ " left in supply.",
+    )
 }
 
 case object WorkshopEveningCraft extends GameOption with ToggleOption with FoldedOption {
     val group = MC.title
     val valueOn = Workshop.sof(MC) ~ SpacedDash ~ "Evening".styled(styles.phase) ~ " Craft".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(MC)), $(IncludeFaction(BK)))
+    override val explain = $(
+        MC.elem ~ " crafts with " ~ Workshop.sof(MC) ~ " in the " ~ "Evening".styled(styles.phase) ~ " instead of in " ~ "Daylight".styled(styles.phase) ~ ".",
+    )
 }
 
 case object WorkshopActionBonuses extends GameOption with ToggleOption with FoldedOption {
     val group = MC.title
     val valueOn = Workshop.sof(MC) ~ SpacedDash ~ "Action Bonuses".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(MC)), $(IncludeFaction(BK)))
+    override val explain = $(
+        "Each " ~ Workshop.of(MC) ~ " after the first gives a lasting bonus: " ~ "an extra hit in battle, an extra battle, an extra card, an extra move, another battle, another move.",
+        Workshop.sof(MC) ~ " score fewer " ~ "victory points".styled(styles.vp) ~ " to make up for it.",
+    )
 }
 
 case object KeepExtraBuildingSlot extends GameOption with ToggleOption with FoldedOption {
@@ -963,6 +1005,9 @@ case object RandomCharacter extends GameOption with ToggleOption with FoldedOpti
     val group = VB.title
     val valueOn = "Random Character".hh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(VB)), $(IncludeFaction(NB)), $(IncludeFaction(MB)))
+    override val explain = $(
+        VB.elem ~ " gets a character drawn at random instead of choosing one.",
+    )
 }
 
 
@@ -1066,26 +1111,44 @@ trait HirelingsOption extends GameOption with OneOfGroup with FoldedOption {
 
 case object NoHirelings extends HirelingsOption {
     val valueOn = "None".hh
+    override val explain = $(
+        "No hirelings in the game.",
+    )
 }
 
 case object ThreeDemotedHirelings extends HirelingsOption {
     val valueOn = "Demoted".hh ~ ", " ~ "Demoted".hh ~ ", " ~ "Demoted".hh
+    override val explain = $(
+        "Three " ~ "Demoted".hh ~ " hirelings, drawn at random from those selected below.", "The Law of Root count for " ~ "5".hl ~ " or more players.",
+    )
 }
 
 case object TwoDemotedOneNormalHirelings extends HirelingsOption {
     val valueOn = "Demoted".hh ~ ", " ~ "Demoted".hh ~ ", " ~ "Staunch".styled(styles.hit)
+    override val explain = $(
+        "Two " ~ "Demoted".hh ~ " and one " ~ "Staunch".styled(styles.hit) ~ " hireling, drawn at random from those selected below.", "The Law of Root count for " ~ "4".hl ~ " players.",
+    )
 }
 
 case object OneDemotedTwoNormalHirelings extends HirelingsOption {
     val valueOn = "Demoted".hh ~ ", " ~ "Staunch".styled(styles.hit) ~ ", " ~ "Staunch".styled(styles.hit)
+    override val explain = $(
+        "One " ~ "Demoted".hh ~ " and two " ~ "Staunch".styled(styles.hit) ~ " hirelings, drawn at random from those selected below.", "The Law of Root count for " ~ "3".hl ~ " players.",
+    )
 }
 
 case object ThreeNormalHirelings extends HirelingsOption {
     val valueOn = "Staunch".styled(styles.hit) ~ ", " ~ "Staunch".styled(styles.hit) ~ ", " ~ "Staunch".styled(styles.hit)
+    override val explain = $(
+        "Three " ~ "Staunch".styled(styles.hit) ~ " hirelings, drawn at random from those selected below.", "The Law of Root count for " ~ "2".hl ~ " players.",
+    )
 }
 
 case object ThreeRandomHirelings extends HirelingsOption {
     val valueOn = "Random".styled(StreetBand) ~ ", " ~ "Random".styled(StoicProtector) ~ ", " ~ "Random".styled(BanditGangs)
+    override val explain = $(
+        "Three hirelings, each " ~ "Demoted".hh ~ " or " ~ "Staunch".styled(styles.hit) ~ ", drawn at random from those selected below.",
+    )
 }
 
 case object SelectedHirelings extends HirelingsOption {
@@ -1390,7 +1453,7 @@ object Meta extends MetaGame {
 
     override def optionPages(n : Int, l : $[F]) : $[$[GameOption]] = $(
         hiddenOptions ++
-        $(AutoHitsAssignmentMode, BluffMode, AutoAmbushSkippingMode, ForcedAsyncMode, ForcedAsyncChooseHits) ++
+        $(BluffMode, AutoAmbushSkippingMode, ForcedAsyncMode, ForcedAsyncChooseHits) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
         (n > 2).?(TotalWarDominance) ++
         $,
@@ -1399,20 +1462,15 @@ object Meta extends MetaGame {
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         $,
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck) ++
-        $(NonBirdPartisans, UnthematicCoffinMakers, ErrataCoffinMakers, UnthematicPropagandaBureau) ++
-        l.of[Mischief].any.$(TunnelsIgnoreRaid) ++
-        l.of[Trader].any.$(TunnelsIgnoreTradePosts) ++
         $,
         (l.of[Feline].num > 1).$(TheWoodMustFlow) ++
         (l.of[Aviary].num > 1).$(OneTrueEmpire) ++
         (l.of[Insurgent].num > 1).$(Imprinting) ++
         (l.of[Hero].num > 1).$(RootingForTheUnderdog) ++
         (l.of[Fanatic].num > 1).$(DeathToTheInfidels) ++
-        (l.of[Trader].num > 1).$(HostileTakeover) ++
         (l.of[Mischief].num > 1).$(DoubleAgents) ++
         (l.of[Underground].num > 1).$(OldBoys) ++
         (l.of[Horde].num > 1).$(PeerPressure) ++
-        (l.of[Expedition].num > 1).$(SharedHistory) ++
         (l.of[Feline].any || l.of[Fanatic].any || l.of[Mischief].any).$(AdSetBuffOn, AdSetBuffOff) ++
         l.of[Feline].any.$(UntargetableKeep, IndestructibleKeep, ThreeHitKeep, InstantRebuildKeep, KeepExtraBuildingSlot, SawmillMassOverwork, WorkshopEveningCraft, WorkshopActionBonuses, Catapults) ++
         l.of[Hero].any.$(RandomCharacter, FolkHeroCharacter) ++
@@ -1436,7 +1494,7 @@ object Meta extends MetaGame {
     val officialMaps : $[MapOption] = $(AutumnMap, WinterMap, LakeMap, MountainMap, GorgeMap, MarshMap)
 
     // Random map: one of the maps (or of the official ones) is drawn; Default clearings, printed only on Autumn, become No Clusters elsewhere
-    override def startOptions(options : $[O]) : $[O] =
+    override def startOptions(options : $[O]) : $[O] = (
         if (options.has(RandomMap).not && options.has(RandomOfficialMap).not)
             options
         else {
@@ -1451,6 +1509,7 @@ object Meta extends MetaGame {
             else
                 o
         }
+    ).distinct
 
     override def optionsFor(n : Int, l : $[F]) =
         hiddenOptions ++
@@ -1458,21 +1517,16 @@ object Meta extends MetaGame {
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck) ++
-        $(NonBirdPartisans, UnthematicCoffinMakers, ErrataCoffinMakers, UnthematicPropagandaBureau) ++
-        l.of[Mischief].any.$(TunnelsIgnoreRaid) ++
-        l.of[Trader].any.$(TunnelsIgnoreTradePosts) ++
-        $(AutoHitsAssignmentMode, BluffMode, AutoAmbushSkippingMode, ForcedAsyncMode, ForcedAsyncChooseHits) ++
+        $(BluffMode, AutoAmbushSkippingMode, ForcedAsyncMode, ForcedAsyncChooseHits) ++
         (n > 2).?(TotalWarDominance) ++
         (l.of[Feline].num > 1).$(TheWoodMustFlow) ++
         (l.of[Aviary].num > 1).$(OneTrueEmpire) ++
         (l.of[Insurgent].num > 1).$(Imprinting) ++
         (l.of[Hero].num > 1).$(RootingForTheUnderdog) ++
         (l.of[Fanatic].num > 1).$(DeathToTheInfidels) ++
-        (l.of[Trader].num > 1).$(HostileTakeover) ++
         (l.of[Mischief].num > 1).$(DoubleAgents) ++
         (l.of[Underground].num > 1).$(OldBoys) ++
         (l.of[Horde].num > 1).$(PeerPressure) ++
-        (l.of[Expedition].num > 1).$(SharedHistory) ++
         (l.of[Feline].any || l.of[Fanatic].any || l.of[Mischief].any).$(AdSetBuffOn, AdSetBuffOff) ++
         l.of[Feline].any.$(UntargetableKeep, IndestructibleKeep, ThreeHitKeep, InstantRebuildKeep, KeepExtraBuildingSlot, SawmillMassOverwork, WorkshopEveningCraft, WorkshopActionBonuses, Catapults) ++
         l.of[Hero].any.$(RandomCharacter, FolkHeroCharacter) ++
@@ -1495,11 +1549,27 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting)
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting) ++
+        settled ++
+        retired
+
+    // No longer choices (Gman, 2026-10-31): Auto Hits Assignment and the card rulings Official Rules always picked. Every new game gets them
+    // (mandatoryFor); a game started without them keeps its rules, as its options are recorded with it
+    lazy val settled : $[O] = $(AutoHitsAssignmentMode, NonBirdPartisans, ErrataCoffinMakers, UnthematicPropagandaBureau, TunnelsIgnoreRaid, TunnelsIgnoreTradePosts)
+
+    // No longer offered: Hostile Takeover and Shared History did nothing, Coffin Makers' "any warrior" house rule gave way to the errata.
+    // Still read, so the games that have them load; dropped from the options a setup screen saved (completeSaved)
+    lazy val retired : $[O] = $(HostileTakeover, SharedHistory, UnthematicCoffinMakers)
+
+    // The hidden options every new game gets, even when the setup screen starts from options saved before one of them existed
+    // (toggles aren't added to saved options from the defaults, so those games missed them)
+    lazy val newGame : $[O] = settled ++ $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, CounterMiceInABush, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting)
+
+    override def completeSaved(n : Int, l : $[F], options : $[O]) = options.diff(retired)
 
     val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
 
-    override def mandatoryFor(n : Int, l : $[F]) : $[O] = l./(IncludeFaction)
+    override def mandatoryFor(n : Int, l : $[F]) : $[O] = l./(IncludeFaction) ++ newGame
 
     override def defaultsFor(n : Int, l : $[F]) = $(
         SeatingGiven,
@@ -1508,10 +1578,14 @@ object Meta extends MetaGame {
         DefaultClearings, NoClustersClearings,
         MixedDeck,
         ErrataCoffinMakers,
+        NonBirdPartisans,
+        UnthematicPropagandaBureau,
+        TunnelsIgnoreRaid,
+        TunnelsIgnoreTradePosts,
         AutoHitsAssignmentMode,
         BluffMode,
         FolkHeroCharacter,
-        AdSetBuffOn,
+        AdSetBuffOff,
         SetupTypeCorners,
         SetupOrderPriority,
         CardDraftStandard,
@@ -1535,54 +1609,39 @@ object Meta extends MetaGame {
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
 
+    // Two presets (Gman, 2026-10-31): the hirelings one repeated the Hirelings section, Sunday Games was JT's group's house rules
     override def presetsFor(n : Int, l : $[F]) = $(
-        ("Reset Options".spn, hirelings./(IncludeHireling), $),
+        ("Site Defaults".spn, hirelings./(IncludeHireling), $),
         ("Official".hl ~ " Rules", $(
             AllRandomClearings,
             StandardDeck,
-            NonBirdPartisans,
-            ErrataCoffinMakers,
-            UnthematicPropagandaBureau,
-            TunnelsIgnoreRaid,
-            TunnelsIgnoreTradePosts,
-            AutoHitsAssignmentMode,
             AdSetBuffOff
         ), $),
-        ("Official".hl ~ " | " ~ "Hirelings".styled(BanditGangs), $(
-            AllRandomClearings,
-            StandardDeck,
-            NonBirdPartisans,
-            ErrataCoffinMakers,
-            UnthematicPropagandaBureau,
-            TunnelsIgnoreRaid,
-            TunnelsIgnoreTradePosts,
-            AutoHitsAssignmentMode,
-            AdSetBuffOff
-        ) :+ (n @@ {
-            case 2 => ThreeNormalHirelings
-            case 3 => OneDemotedTwoNormalHirelings
-            case 4 => TwoDemotedOneNormalHirelings
-            case _ => ThreeDemotedHirelings
-        }), $),
-        ("Sunday".styled(Rabbit) ~ " Games", $(
-            RandomCharacter,
-            WarriorsOnlyInfamy, RevisedQuests,
-            TinkerNoBag, HarrierNoCoins, ScoundrelTeapotNoBoot, ArbiterScoreCard, RoninSwiftTorch,
-            LizardHandSizeSix,
-            ExportToCommitments,
-            ThreeOfEachPlot, DiversionPlot, BrutalHonesty,
-            MayorAssemblyAction,
-            InstantRebuildKeep,
-            TotalWarDominance,
-            SetupTypeHomelands,
-            ThreeRandomHirelings,
-            IncludeHireling(StreetBand),
-            IncludeHireling(RatSmugglers),
-            IncludeHireling(ForestPatrol),
-            IncludeHireling(SpringUprising),
-            IncludeHireling(RiverfolkFlotilla),
-        ), hirelings./(IncludeHireling))
     )
+
+    override def presetsInfo(n : Int, l : $[F]) = $(
+        $(
+            "Puts every option back to what the site starts with:",
+            &("Autumn".styled(Mouse) ~ " map, ") ~ &("Default".hh ~ " clearings, ") ~ &("Mixed".hh ~ " deck, ") ~ &("Corners".hh ~ " setup, ") ~ &("Bluff Mode".hh ~ ", ") ~ &("no hirelings."),
+        ),
+        $(
+            "The rules as Leder Games prints them:",
+            &("All Random".hh ~ " clearings, ") ~ &("the " ~ "Friends and Favors".hh ~ " deck, ") ~ &("and the " ~ "AdSet".hh ~ " setup buffs " ~ "Off".hh ~ "."),
+            "Nothing else changes.",
+        ),
+    )
+
+    override def groupInfo(o : O) = o.group.text match {
+        case "Async" => $(
+            &("These options decide when a battle " ~ "waits".hl ~ " for a player's answer."),
+            &("Hits".styled(styles.hit) ~ " are always taken automatically") ~ " " ~ &("when there is only one way to take them."),
+            &("Bluff Mode".hh ~ ":") ~ " " ~ &("every attacked player is asked about an " ~ "ambush".styled(Bird) ~ ",") ~ " " ~ &("even without one,") ~ " " ~ &("so nobody learns who holds one."),
+            &("Auto Skip Ambushes".hh ~ ":") ~ " " ~ &("a player with no " ~ "ambush".styled(Bird) ~ " to play is skipped;") ~ " " ~ &("quicker, but it shows who holds none."),
+            &("Forced Async Mode".styled(xstyles.warning) ~ ":") ~ " " ~ &("a battle never waits;") ~ " " ~ &("hits".styled(styles.hit) ~ " follow an order") ~ " " ~ &("each player sets at the end of their turn."),
+            &("Players Choose Hits".hh ~ ":") ~ " " ~ &("with " ~ "Forced Async".styled(xstyles.warning) ~ ",") ~ " " ~ &("players still choose their hits") ~ " " ~ &("when there is a choice."),
+        )
+        case _ => $
+    }
 
     val quickMin = 4
     val quickMax = 4

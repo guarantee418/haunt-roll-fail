@@ -48,17 +48,24 @@ object MetaMirror extends MetaGame {
 
     override val hiddenOptions = Meta.hiddenOptions
 
+    override def mandatoryFor(n : Int, l : $[F]) = Meta.newGame
+
+    override def completeSaved(n : Int, l : $[F], options : $[O]) = Meta.completeSaved(n, l, options)
+
+    override def groupInfo(o : O) = Meta.groupInfo(o)
+
+    // The random map is drawn here too, and options both mandatory and default are kept once
+    override def startOptions(options : $[O]) : $[O] = Meta.startOptions(options)
+
     override def defaultsFor(n : Int, l : $[F]) = Meta.defaultsFor(n, l).but(SetupOrderPriority).appended(SetupOrderReverse) ++ $(
         TheWoodMustFlow,
         OneTrueEmpire,
         Imprinting,
         RootingForTheUnderdog,
         DeathToTheInfidels,
-        HostileTakeover,
         DoubleAgents,
         OldBoys,
-        PeerPressure,
-        SharedHistory
+        PeerPressure
     )
 
     val quickMin = 4

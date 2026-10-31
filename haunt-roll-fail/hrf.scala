@@ -1850,11 +1850,16 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                             seating = a ++ b.drop(1).take(1) ++ b.take(1) ++ b.drop(2)
                             setupQuestions(page)
                     })) ++
-                    presets./{ case (title, included, excluded, neu) =>
+                    presets.zipWithIndex./{ case ((title, included, excluded, neu), i) =>
                         val matches = meta.options.intersect(neu.selected) == meta.options.intersect(options.selected)
-                        ZOption("Presets".styled(xstyles.larger125), OnClick(Div(title, ZBasic.choice ++ matches.$(xstyles.optionOn, xstyles.bold) ++ $(xstyles.optionE))), _ => {
-                            options = neu
-                            setupQuestions(page)
+                        val info = meta.presetsInfo(seating.num, seating).lift(i).|($)
+                        ZOption("Presets".styled(xstyles.larger125), OnClick(Div(title ~ info.any.?(Parameter("preset-info", OnClick(Image("question-mark")(xstyles.explain)))), ZBasic.choice ++ matches.$(xstyles.optionOn, xstyles.bold) ++ $(xstyles.optionE))), {
+                            case "preset-info" =>
+                                showOverlay(info./(ZBasic("Presets".txt ~ " " ~ MDash ~ " " ~ title, _)), xlo.grow4)
+                                setTimeout(0) { setupQuestions(page) }
+                            case _ =>
+                                options = neu
+                                setupQuestions(page)
                         })
                     }
                 } ++
@@ -1871,7 +1876,10 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     val state = options.selected.has(o)
                     val enabled = options.enabled(o)
                     val active = enabled
-                    ZOption(o.fold./(s => Folds.heading(o.group.styled(xstyles.larger125), foldOpen(s))).|(o.group.styled(xstyles.larger125)),
+                    // A section with groupInfo has a ? on its heading; tapping the ? shows it instead of folding or unfolding the section
+                    val groupInfo = meta.groupInfo(o)
+                    val title = o.group.styled(xstyles.larger125) ~ groupInfo.any.?(" ".txt ~ Parameter("group-info", OnClick(Image("question-mark")(xstyles.explain))))
+                    ZOption(o.fold./(s => Folds.heading(title, foldOpen(s))).|(groupInfo.any.?(OnClick(title)).|(title)),
                         OnClick(Div(state.?(o.decorate(o.valueOn).styled(xstyles.bold)).|(o.decorate(o.valueOff))
                         ~ (o.explain.any).?(Parameter(o, OnClick(Image("question-mark")(xstyles.explain)))), (active || state).?(ZBasic.choice).|(ZBasic.info) ++ state.$(xstyles.optionOn) ++ $(xstyles.optionE))), {
                             case o : GameOption if o.explain.any =>
@@ -1887,7 +1895,15 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                                 }
                                 setupQuestions(page)
                         },
-                        groupClick = o.fold./(s => (_ : Any) => { if (meta.optionFoldOpen(s, seating, options.actual).not) Folds.toggle(s) ; setupQuestions(page) }).orNull
+                        // the heading's own parameter comes first when the ? inside it is tapped
+                        groupClick = {
+                            case p if p == "group-info" || (p match { case l : Seq[_] => l.contains("group-info") ; case _ => false }) =>
+                                showOverlay(groupInfo./(ZBasic(o.group, _)), xlo.grow4)
+                                setTimeout(0) { setupQuestions(page) }
+                            case _ =>
+                                o.fold.foreach(s => if (meta.optionFoldOpen(s, seating, options.actual).not) Folds.toggle(s))
+                                setupQuestions(page)
+                        }
                     )
                   }
                 })
