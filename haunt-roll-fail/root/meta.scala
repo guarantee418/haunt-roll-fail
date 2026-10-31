@@ -1785,6 +1785,9 @@ object Meta extends MetaGame {
         ImageAsset("rabbit") ::
         ImageAsset("mouse") ::
         ImageAsset("frog") ::
+        ImageAsset("fox-rabbit") ::
+        ImageAsset("fox-mouse") ::
+        ImageAsset("rabbit-mouse") ::
         ImageAsset("fox-frog") ::
         ImageAsset("rabbit-frog") ::
         ImageAsset("mouse-frog") ::
