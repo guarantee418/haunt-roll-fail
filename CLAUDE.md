@@ -890,6 +890,12 @@ file covers the build, server and deploy. No session can ssh to the server
   (`game.landmarkSuits`). Foxburrow is the `FoxburrowRoads` transport,
   Rabbittown a Daylight action and Mousehold a hook in `battle.scala`; the
   effects are in `MapsExpansion` in `root/maps.scala`.
+  The Landmarks choice "Map Default, or on Mountain a random suited landmark" (`MountainSuitedLandmark`; Gman,
+  2026-10-30) plays Map Default, except that on the Mountain map one of Lost City, Mousehold, Foxburrow and
+  Rabbittown, never of the Tower clearing's own suit, is drawn at setup and goes in the Tower's clearing (Pass)
+  instead of the Tower, making it two-suited (`SuitedLandmarkAtTowerAction` in `root/setup.scala`). Gman's Air of
+  Conquest was switched to it after its draft (Foxburrow), lobby and game options both, as an Adset game won't load
+  when its `OptionsAction` differs from the lobby's `options` line.
 - Root has a French display language: the "Language" setting (`EnglishLanguage`,
   `FrenchLanguage` in `root/meta.scala`, shared by all the Root metas) and a "Root en français"
   entry on the main menu (`rootLanguage` in `hrf.scala`, which only saves that setting). It is
