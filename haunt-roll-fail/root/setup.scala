@@ -39,6 +39,7 @@ case class DraftLimitDiscardAction(f : Faction, l : $[DeckCard], then : ForcedAc
 case class ShuffleDeckAction(shuffled : $[DeckCard], then : ForcedAction) extends ShuffledAction[DeckCard]
 
 case object SetupLandmarksAction extends ForcedAction
+case class SuitedLandmarkAtTowerAction(random : Landmark) extends RandomAction[Landmark]
 case object SetupNextLandmarkAction extends ForcedAction
 case class SetupLandmarkAction(self : Player, l : Landmark, more : Boolean) extends BaseAction(self, "sets up")(l) with Soft
 case class SetupLandmarkClearingAction(self : Player, l : Landmark, c : Clearing) extends BaseAction("Place", l, "in")(c)
@@ -295,6 +296,33 @@ object SetupExpansion extends MandatoryExpansion {
 
             SetupLandmarksAction
 
+        // Mountain with MountainSuitedLandmark: a suited landmark not of the Tower clearing's suit goes in that clearing instead
+        case SetupLandmarksAction if options.has(MountainSuitedLandmark) && board.tower.any && game.lostCity.none && game.mousehold.none && game.foxburrow.none && game.rabbittown.none =>
+            val c = board.tower.head
+            val own = game.mapping.get(c).|($)
+
+            Random[Landmark]($(LostCityLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark).%{
+                case MouseholdLandmark => own.has(Mouse).not
+                case FoxburrowLandmark => own.has(Fox).not
+                case RabbittownLandmark => own.has(Rabbit).not
+                case _ => true
+            }, SuitedLandmarkAtTowerAction(_))
+
+        case SuitedLandmarkAtTowerAction(l) =>
+            val c = board.tower.head
+
+            if (l == LostCityLandmark) {
+                game.lostCity :+= c
+                game.mapping += c -> FoxRabbitMouse
+                game.original = game.mapping
+            }
+            else
+                placeHomelandLandmark(l, c)
+
+            log(l, "was placed in", c, "instead of the", TowerLandmark)
+
+            SetupLandmarksAction
+
         case SetupLandmarksAction =>
             if (options.of[Landmark].%!(l => homelandPlaced(l)).any)
                 SetupNextLandmarkAction
@@ -303,6 +331,13 @@ object SetupExpansion extends MandatoryExpansion {
                 if (options.has(MapDefaultLandmarks)) {
                     game.ferry = board.ferry
                     game.tower = board.tower
+                }
+
+                if (options.has(MountainSuitedLandmark)) {
+                    game.ferry = board.ferry
+
+                    if (game.lostCity.none && game.mousehold.none && game.foxburrow.none && game.rabbittown.none)
+                        game.tower = board.tower
                 }
 
                 SetupHirelingsAction

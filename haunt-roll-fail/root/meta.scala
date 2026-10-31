@@ -994,6 +994,17 @@ case object MapDefaultLandmarks extends LandmarksOption {
     override def forcedOff(all : $[BaseOption]) = all.of[LandmarksOption].but(this).%(_.group == this.group)
 }
 
+// Map Default, but on the Mountain map a suited landmark drawn at setup goes where the Tower would (SuitedLandmarkAtTowerAction)
+case object MountainSuitedLandmark extends LandmarksOption {
+    val valueOn = "Map Default".hh ~ ", or on " ~ "Mountain".hh ~ " a random " ~ "suited".hh ~ " landmark"
+    override def forcedOff(all : $[BaseOption]) = all.of[LandmarksOption].but(this).%(_.group == this.group)
+    override val explain = $(
+        "On the " ~ "Mountain".hh ~ " map, instead of its " ~ "Tower".hh ~ ", one of " ~ "Lost City".hl ~ ", " ~ "Mousehold".styled(Mouse) ~ ", " ~ "Foxburrow".styled(Fox) ~ " and " ~ "Rabbittown".styled(Rabbit) ~ " is drawn at setup and placed in the " ~ "Tower".hh ~ "'s clearing.",
+        "The landmark is never one of that clearing's own suit, so the clearing gets a second suit (or all three with the " ~ "Lost City".hl ~ ").",
+        "On any other map, the map's own landmarks."
+    )
+}
+
 case object NoLandmarks extends LandmarksOption {
     val valueOn = "None".hh
     override def forcedOff(all : $[BaseOption]) = all.of[LandmarksOption].but(this).%(_.group == this.group)
@@ -1001,23 +1012,23 @@ case object NoLandmarks extends LandmarksOption {
 
 case object FerryLandmark extends Landmark {
     val name = "Ferry"
-    override def forcedOff(all : $[BaseOption]) = $(MapDefaultLandmarks, NoLandmarks)
+    override def forcedOff(all : $[BaseOption]) = $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks)
 }
 
 case object LostCityLandmark extends Landmark {
     val name = "Lost City"
-    override def forcedOff(all : $[BaseOption]) = $(MapDefaultLandmarks, NoLandmarks)
+    override def forcedOff(all : $[BaseOption]) = $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks)
 }
 
 case object TowerLandmark extends Landmark {
     val name = "Tower"
-    override def forcedOff(all : $[BaseOption]) = $(MapDefaultLandmarks, NoLandmarks)
+    override def forcedOff(all : $[BaseOption]) = $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks)
 }
 
 case object MouseholdLandmark extends Landmark {
     val name = "Mousehold"
     override def elem = name.styled(Mouse)
-    override def forcedOff(all : $[BaseOption]) = $(MapDefaultLandmarks, NoLandmarks)
+    override def forcedOff(all : $[BaseOption]) = $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks)
     override val explain = $(
         "Homeland".hh ~ " landmark, placed in a " ~ "mouse".styled(Mouse) ~ " clearing.",
         "Adds the " ~ "mouse".styled(Mouse) ~ " suit to its clearing.",
@@ -1028,7 +1039,7 @@ case object MouseholdLandmark extends Landmark {
 case object FoxburrowLandmark extends Landmark {
     val name = "Foxburrow"
     override def elem = name.styled(Fox)
-    override def forcedOff(all : $[BaseOption]) = $(MapDefaultLandmarks, NoLandmarks)
+    override def forcedOff(all : $[BaseOption]) = $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks)
     override val explain = $(
         "Homeland".hh ~ " landmark, placed in a " ~ "fox".styled(Fox) ~ " clearing.",
         "Adds the " ~ "fox".styled(Fox) ~ " suit to its clearing.",
@@ -1039,7 +1050,7 @@ case object FoxburrowLandmark extends Landmark {
 case object RabbittownLandmark extends Landmark {
     val name = "Rabbittown"
     override def elem = name.styled(Rabbit)
-    override def forcedOff(all : $[BaseOption]) = $(MapDefaultLandmarks, NoLandmarks)
+    override def forcedOff(all : $[BaseOption]) = $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks)
     override val explain = $(
         "Homeland".hh ~ " landmark, placed in a " ~ "rabbit".styled(Rabbit) ~ " clearing.",
         "Adds the " ~ "rabbit".styled(Rabbit) ~ " suit to its clearing.",
@@ -1385,7 +1396,7 @@ object Meta extends MetaGame {
         $,
         $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
-        $(MapDefaultLandmarks, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
+        $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         $,
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck) ++
         $(NonBirdPartisans, UnthematicCoffinMakers, ErrataCoffinMakers, UnthematicPropagandaBureau) ++
@@ -1473,7 +1484,7 @@ object Meta extends MetaGame {
         l.of[Mischief].any.$(ThreeOfEachPlot, EmbeddedAgentsBeforeBattle, DiversionPlot, BrutalHonesty) ++
         l.of[Expedition].any.$(ColumnBonusCardVP) ++
         l.of[Horde].any.$(SeparateItemsInRuins) ++
-        $(MapDefaultLandmarks, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
+        $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         $(NoHirelings, ThreeDemotedHirelings, TwoDemotedOneNormalHirelings, OneDemotedTwoNormalHirelings, ThreeNormalHirelings, ThreeRandomHirelings, SelectedHirelings) ++
         $(HirelingHirelingClash, FactionHirelingClash) ++
         hirelings./(IncludeHireling)
