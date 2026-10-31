@@ -1544,6 +1544,37 @@ Readings (`CardVersions.dragonVariant` in `editions.scala`, the rules in `newblo
 - Enthrall's emptying is not a choice ("empty it"); its enemy unit must be taken when there is one.
 - 2 fame on Enthrall is as written, though Robotos thinks it is probably too much.
 
+## Fan content: Rough border Bear (2026-10-31)
+
+Robotos's "Special Unit Hater's Bear - Rough Border's Edition" (Discord, northgard-fanmade-content, 2026-10-22; Gman sent a
+screen recording of the thread on 2026-10-31). Picked as its own clan, "Bear Clan (variant)", in the clan picker's "Fan-made
+clans" section with the Lion Kingdom and the lower skill floor Dragon; its option `ModuleOption(BearBorder)` is hidden, not in
+Adset. The aim, in the thread: a Bear without a special unit, playing around Rough borders and defending; Kaija is "a mobile
+Rough border token" that "occupies borders, not territories".
+
+| | Variant | Replaces |
+|---|---|---|
+| Power | Kaija is a token on a border. Before resolving a Bear clan card (the Bear Clan card or an upgrade), Bear may place it on a regular border between a territory it controls and an adjacent territory (`KaijaPlaceAction`). Every clan treats that border as Rough, and may discard any 1 resource to cross it as a regular border for one Move action (`KaijaTollAction`) | Kaija the unit (2 combat points, no entering enemy territories, no Winter food) |
+| ⚡ Bear Clan | Move 1. After placing Kaija on a new border, may collect 1 food or wood from the territories it connects (`KaijaCollectAction`) | Kaija collects the food and wood of the territory it leaves |
+| ⚡ The Bear Awakens | Recruit 2. For the rest of the year, Bear crosses Kaija's border as a regular border | Kaija may enter enemy territories |
+| Protector of the Land | Draw 1 card for each of your territories with a Rough border (Kaija's counts too), at most 3 | Closed territories of 3 or more tiles |
+
+Readings (`CardVersions.bearBorder` in `editions.scala`, the rules in `bear-border.scala`, the borders in `Game.links`; card
+pictures by `tools/card-text.py`, the board by `tools/board-text.py bear-border`):
+
+- Kaija's border is Rough for Bear too: Robotos said so later in the thread ("I think it's better if it is a rough border to
+  bear as well"), so only The Bear Awakens or a discarded resource lets Bear cross it as a regular one.
+- Kaija is never placed at setup and never recruited ("you put it to play by playing your starting clan card"); it isn't a
+  figure, so it never fights, counts for control or costs food in Winter.
+- One Kaija: placing it again moves it. It stays where it is when Bear loses the territory.
+- Rough means a Move costs 2 to cross it, retreats can't cross it (unless they may cross Rough borders, as Wolf's), and the
+  moves that ignore Rough borders (Stag Clan, second edition) ignore it too.
+- The discard is offered in the Move's menu only when it opens a move the clan couldn't make otherwise; it lasts until the end
+  of that Move action (not its combats).
+- "Up to 3 cards for each of your territories with a rough border" is read as 1 card per territory, at most 3, as the second
+  edition's Protector of the Land.
+- Borgild and Borgild's Shield don't change; the Shield's swap with Kaija does nothing, as Kaija is no figure.
+
 ## Fan content: Aggressive creatures (2026-10-24)
 
 Marzaus's "Fan creatures", a fun mode (Discord, northgard-fanmade-content, 2026-10-23; Gman sent a screenshot

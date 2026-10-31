@@ -102,6 +102,7 @@ object Warchief {
     // The clan board with the warchief's portrait and power
     def board(f : Faction) =
         if (f == Dragon && CardVersions.options.has(ModuleOption(DragonVariant))) "board-dragon-variant"
+        else if (f == Bear && CardVersions.options.has(ModuleOption(BearBorder))) "board-bear-border"
         else if (f == Lion && CardVersions.options.has(LionFaith)) "board-lion-faith"
         else "board-" + f.style + (CardVersions.options.has(PrintedNewBlood) && printedBoards.has(f)).??("-print")
 

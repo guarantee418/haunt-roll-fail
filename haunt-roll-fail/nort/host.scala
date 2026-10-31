@@ -63,7 +63,7 @@ object Host extends hrf.host.BaseHost {
         val training = sys.env.get("NORT_TRAINING").has("1")
         // NORT_CORE=1: the core game only (seven years, no modules), with NORT_PLAYERS players if set
         val core = sys.env.get("NORT_CORE").has("1")
-        val l = training.?($(Bear, Boar, Goat, Raven, Snake, Stag, Wolf).shuffle.take(2)).|(solo.?(factions.shuffle.take(1) :+ Automa).|(sys.env.get("NORT_LION").has("1").?((Lion +: factions.but(Lion).shuffle.take(n - 1)).shuffle).|(factions.shuffle.take(n))))
+        val l = training.?($(Bear, Boar, Goat, Raven, Snake, Stag, Wolf).shuffle.take(2)).|(solo.?(factions.shuffle.take(1) :+ Automa).|(sys.env.get("NORT_LION").has("1").?((Lion +: factions.but(Lion).shuffle.take(n - 1)).shuffle).|(sys.env.get("NORT_BEAR").has("1").?((Bear +: factions.but(Bear).shuffle.take(n - 1)).shuffle).|(factions.shuffle.take(n)))))
         val colors = l.zip(PlayerColor.all.shuffle)./{ case (f, c) => ColorOption(f, c) }
         // NORT_CREATURES=1: always with the Creatures module (and the More Creatures variant half the time); NORT_WARCHIEFS=1: always with Warchiefs; NORT_WILDERNESS=1: always with Wilderness
         val creatures = sys.env.get("NORT_CREATURES").has("1") || random() < 0.5
@@ -100,6 +100,8 @@ object Host extends hrf.host.BaseHost {
             (sys.env.get("NORT_PCCHIEFS").has("1") || random() < 0.3).$(ModuleOption(WarchiefsPC)) ++
             // NORT_DRAGONVAR=1: always with Robotos's Dragon variant (fan content)
             (sys.env.get("NORT_DRAGONVAR").has("1") || random() < 0.3).$(ModuleOption(DragonVariant)) ++
+            // NORT_BEARBORDER=1: always with Robotos's border Bear (fan content)
+            (sys.env.get("NORT_BEARBORDER").has("1") || random() < 0.3).$(ModuleOption(BearBorder)) ++
             // NORT_AGGRESSIVE=1: always with Marzaus's Aggressive creatures (fan content), when the creatures are in
             (creatures && (sys.env.get("NORT_AGGRESSIVE").has("1") || random() < 0.3)).$(ModuleOption(AggressiveCreatures)) ++
             // NORT_MILITARY=1: always with the Military paths module (fan content)

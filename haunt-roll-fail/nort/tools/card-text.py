@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 # Fan-made clan cards drawn on the site's card pictures (card/clan/*.webp): the old text (and title) is painted out
 # (OpenCV inpainting of the marks only, so the art behind shows through) and the new text set in Quicksand, white, with
-# the card's icons inline. So far Robotos's "Lower skill floor Dragon variant" (DragonVariant in nort/options.scala).
+# the card's icons inline. So far Robotos's "Lower skill floor Dragon variant" (DragonVariant in nort/options.scala) and his
+# border Bear (BearBorder).
 #
 #   pip install opencv-python-headless pillow numpy
-#   card-text.py <Quicksand variable font .ttf> [output directory]
+#   card-text.py <Quicksand variable font .ttf> [output directory [card ...]]
+#
+# Naming cards makes only those (other library versions paint the old text out slightly differently).
 #
 # Quicksand is Google Fonts' ofl/quicksand/Quicksand[wght].ttf.
 
@@ -18,6 +21,7 @@ IMAGES = os.path.join(HERE, '..', '..', 'webp2', 'nort', 'images')
 CARDS = os.path.join(IMAGES, 'card', 'clan')
 FONT = sys.argv[1]
 OUT = sys.argv[2] if len(sys.argv) > 2 else CARDS
+ONLY = sys.argv[3:]
 
 def font(size, weight = 500):
     f = ImageFont.truetype(FONT, size)
@@ -40,6 +44,7 @@ def unbacked(path):
 
 ICONS = {
     'food': unbacked(os.path.join(IMAGES, 'ui', 'food.webp')),
+    'wood': unbacked(os.path.join(IMAGES, 'ui', 'wood.webp')),
     'fame': Image.open(os.path.join(IMAGES, 'ui', 'fame.webp')).convert('RGBA'),
 }
 for k in ICONS:
@@ -150,10 +155,31 @@ CARDS_OUT = {
             "adjacent to one of yours.",
         ], 16, 27, {}),
     ]),
+    'bear-border': ('bear', [(34, 492, 378, 574), (220, 515, 340, 552)], [
+        (206, 498, 330, [
+            "Move 1. After placing Kaija on",
+            "a new border, you may collect 1 {food}",
+            "or {wood} from the territories it connects.",
+        ], 16, 24, {}),
+    ]),
+    'bear-the-bear-awakens-border': ('bear-the-bear-awakens', [(34, 519, 378, 576)], [
+        (206, 520, 330, [
+            "For the rest of this year, you cross",
+            "the border with Kaija as a regular one.",
+        ], 16, 24, {}),
+    ]),
+    'bear-protector-of-the-land-border': ('bear-protector-of-the-land', [(34, 519, 378, 576)], [
+        (206, 520, 330, [
+            "Draw 1 card for each of your territories",
+            "with a Rough border (Kaija's too), max 3.",
+        ], 16, 24, {}),
+    ]),
 }
 
 if __name__ == '__main__':
     for name, (src, boxes, texts) in CARDS_OUT.items():
+        if ONLY and name not in ONLY:
+            continue
         im = Image.open(os.path.join(CARDS, src + '.webp')).convert('RGBA')
         for box in boxes:
             im = erase(im, box)
