@@ -17,7 +17,16 @@ case class StartAction(version : String) extends StartGameAction with GameVersio
     def desc(l : $[Action]) = "Once upon a time...".hl
 }
 
-case class OptionsAction(players : $[Player], setup : $[Faction], options : $[Meta.O]) extends ForcedAction
+// The options in any order: a game is made with them in the order of `Meta.options` (`OptionsState` in the browser), which
+// changed when the setup cleanup of 2026-10-31 moved options around, and the recorded games have the old order
+case class OptionsAction(players : $[Player], setup : $[Faction], options : $[Meta.O]) extends ForcedAction {
+    override def equals(o : Any) = o match {
+        case OptionsAction(p, s, l) => p == players && s == setup && l.toSet == options.toSet
+        case _ => false
+    }
+
+    override def hashCode = (players, setup, options.toSet).##
+}
 case object SetupMapAction extends ForcedAction
 case object DraftFactionsAction extends ForcedAction with Soft with OutOfTurn
 case class FloodedAction(random : Clearing, then : ForcedAction) extends RandomAction[Clearing]
