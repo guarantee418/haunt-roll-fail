@@ -537,6 +537,14 @@ case object AchievementsAside extends GameOption with ToggleOption {
     def valueOn = "Achievements taken early are kept aside".txt
 }
 
+// Printed Lynx Clan (PrintedNewBlood): each starting placement may take a lynx, so Lynx can start with both Brundr and Kaelinn
+// (Gman, 2026-10-31: "Lynx is supposed to have 2 cat tokens"). Before it, a lynx placed in the second placement moved the first
+// one there and Lynx started with one. Hidden, and given to every new game (Meta.mandatoryFor); older games replay the old way
+case object LynxBothAtSetup extends GameOption with ToggleOption {
+    val group = "New Blood".txt
+    def valueOn = "Lynx may start with both lynxes".txt
+}
+
 // New Blood as printed (Gman sent the printed cards and boards on 2026-10-23): the 19 clan cards in CardVersions (editions.scala)
 // and the clan board rules (Lynx's bonus Move and Mielikki, Kraken's High Tide and Kàra, Dragon's harvest, Squirrel after Winter).
 // The site had followed the TTS mod's prototype cards and boards. Hidden, and given to every new game (Meta.mandatoryFor), in either
