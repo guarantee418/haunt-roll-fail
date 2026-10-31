@@ -1264,6 +1264,8 @@ object MapsExpansion extends MandatoryExpansion {
             OptionalDiscardCardAction(f, ToRabbittown(c), Rabbit, RabbittownAction(f, c, then))
 
         case RabbittownAction(f, c, then) =>
+            val card = f.drawn.get
+
             f.drawn --> discard.quiet
 
             f.used :+= RabbittownMuster
@@ -1273,9 +1275,9 @@ object MapsExpansion extends MandatoryExpansion {
             1.to(n).foreach(_ => f.reserve --> f.warrior --> c)
 
             if (n > 0)
-                f.log("placed", n.times(f.warrior)./(_.of(f)).comma, "in", c, "with", RabbittownMuster)
+                f.log("placed", n.times(f.warrior)./(_.of(f)).comma, "in", c, "with", RabbittownMuster, "and", card)
             else
-                f.log("used", RabbittownMuster, "in", c, "to battle")
+                f.log("used", RabbittownMuster, "in", c, "with", card, "to battle")
 
             if (f.canAttackIn(c))
                 BattleInitAction(f, f, NoMessage, $(c), $, then)
