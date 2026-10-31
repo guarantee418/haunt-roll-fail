@@ -82,7 +82,6 @@ object MetaAdset extends MetaGame {
         CompanionsUntilSpent,
         HirelingsByTheCard,
         GovernorsStopEnclaveFlips,
-        OutragePeekNeedsOk,
         CounterMiceInABush,
         KnavesCaptainsInDraft,
         SkipIdleRallyReconcile,

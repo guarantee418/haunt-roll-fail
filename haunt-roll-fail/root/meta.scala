@@ -370,8 +370,8 @@ case object GovernorsStopEnclaveFlips extends GameOption with ToggleOption {
 }
 
 // Outrage (and the playtest Pacifism) with no card to give: the hand is shown to the Alliance in its action pane, and the game
-// waits for its OK instead of going on with only a notification. Hidden and on by default for new games; older games keep the
-// notification so their replays don't change.
+// waits for its OK instead of going on with only a notification. Hidden; new games got it from 2026-10-17 to 2026-10-31, when
+// Gman asked for the notification back (it now shows the next time the player opens the game), so those games keep waiting.
 case object OutragePeekNeedsOk extends GameOption with ToggleOption {
     val group = "Card Draft"
     val valueOn = "Outrage".hh ~ " waits until the hand is seen"
@@ -1522,7 +1522,6 @@ object Meta extends MetaGame {
         CompanionsUntilSpent,
         HirelingsByTheCard,
         GovernorsStopEnclaveFlips,
-        OutragePeekNeedsOk,
         CounterMiceInABush,
         SkipIdleRallyReconcile,
         FrogAmbushBottomOnlyAsAmbush,
