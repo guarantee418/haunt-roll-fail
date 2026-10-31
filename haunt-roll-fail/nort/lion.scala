@@ -254,7 +254,7 @@ object LionExpansion extends Expansion {
         case AdventureEffect | ToilEffect | PreyEffect => choices(e).exists(CommonExpansion.playableEffect(f, _))
         case LionFameEffect => true
         case OstEffect => true
-        case _ => false
+        case e => BearBorderExpansion.playable(f, e)
     }
 
     def resolve(f : Faction, e : Effect, then : ForcedAction)(implicit game : Game) : Continue = e match {
@@ -306,7 +306,7 @@ object LionExpansion extends Expansion {
             f.log("gained", 1.hl, FameIcon())
             Then(then)
 
-        case _ => Then(then)
+        case e => BearBorderExpansion.resolve(f, e, then)
     }
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {

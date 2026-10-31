@@ -484,7 +484,7 @@ object MilitaryExpansion extends Expansion {
             game.extraMoved = true
 
             val from = game.board.territory(game.chiefs(f))
-            val l = (game.passOnly(f, from).not && game.bearIn(from).not).??(game.board.adjacent(from).filter(_._2).map(_._1)
+            val l = (game.passOnly(f, from).not && game.bearIn(from).not).??(game.links(f, from).filter(_._2).map(_._1)
                 .%(o => MapExpansion.canEnter(f, o, 0, e, false)).%(o => game.passOnly(f, o).not && game.swampIn(o).not && game.hostileIn(o).not && game.bearIn(o).not))
 
             if (l.none)

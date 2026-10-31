@@ -605,6 +605,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
     def effectGain(e : Effect) : Double = e match {
         case RecruitEffect(n, mode) => recruitGain(n, mode)
         case AwakenEffect => recruitGain(2, RecruitNormal)
+        case BorderAwakenEffect => recruitGain(2, RecruitNormal)
+        case BorderProtectorEffect => 75 * math.min(3, BearBorderExpansion.roughTerritories(self).num)
         case StagClanEffect => recruitGain(1, RecruitNormal) + 15
         case StagMoveEffect => recruitGain(1, RecruitNormal) + 25
         case e : MoveEffect => moveGain(e)
@@ -877,6 +879,14 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         // Accepting: self gives take and gets give
         case TeamAcceptAction(_, from, give, take, _) => |(gain { self.gain(take, -1) ; from.gain(take, 1) ; from.gain(give, -1) ; self.gain(give, 1) } - 5)
         case TeamDeclineAction(_, _, _, _, _) => |(0)
+
+        // BEAR, Robotos's border variant: Kaija best on a border with an enemy, to slow its attacks
+        case KaijaPlaceAction(_, a, b, collect, _) =>
+            val ends = $(board.territory(a), board.territory(b))
+            val enemy = ends.exists(t => game.present(t).exists(game.enemy(self, _)))
+            |(15 + enemy.??(40) + collect.??(20))
+        case KaijaCollectAction(_, r, _) => |(resourceValue(r))
+        case KaijaTollAction(_, r, _, _, _) => |(30 - resourceValue(r))
 
         // SNAKE
         case ScorchedPlaceAction(_, area, _) =>

@@ -755,6 +755,20 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var kaija : |[AreaRef] = None
     var awakened = false
 
+    // Robotos's border Bear (BearBorder, bear-border.scala): Kaija as a token on the border between two territories (an area of each,
+    // so it stays put when the territories grow), and the clans that discarded a resource to cross it this Move action
+    var kaijaBorder : |[(AreaRef, AreaRef)] = None
+    var kaijaToll : $[Faction] = $
+
+    // Kaija lies on the border between t and o
+    def kaijaBetween(t : Territory, o : Territory) : Boolean = kaijaBorder.exists { case (a, b) => (t.areas.has(a) && o.areas.has(b)) || (t.areas.has(b) && o.areas.has(a)) }
+
+    // The territories next to t for f's figures, true when a regular border connects them: Kaija's border is Rough for every clan,
+    // unless it paid to cross it this Move action, or for Bear after The Bear Awakens
+    def links(f : Faction, t : Territory) : $[(Territory, Boolean)] =
+        if (kaijaBorder.none) board.adjacent(t)
+        else board.adjacent(t)./{ case (o, regular) => o -> (regular && (kaijaBetween(t, o) && kaijaToll.has(f).not && (f == Bear && awakened).not).not) }
+
     // The Lion Kingdom's Ost: for the rest of the year its Lords join the combats it starts next to them
     var lionOst = false
 
@@ -1036,7 +1050,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // Brundr and Kaelinn likewise; Brok only with the Warchiefs module
     // The Automa's Leader 2 likewise, always
     // PrintedNewBlood: the second lynx too
-    def kaijaReady(f : Faction) : Boolean = (f == Bear || f == Lynx || f == Automa || f == Horse && has(Warchiefs)) && (companion(f).none || f == Lynx && lynx2.none && options.has(PrintedNewBlood)) && setup.has(f)
+    def kaijaReady(f : Faction) : Boolean = (f == Bear && has(BearBorder).not || f == Lynx || f == Automa || f == Horse && has(Warchiefs)) && (companion(f).none || f == Lynx && lynx2.none && options.has(PrintedNewBlood)) && setup.has(f)
 
     def scorchedIn(t : Territory) : Boolean = scorched.exists(t.areas.contains)
 

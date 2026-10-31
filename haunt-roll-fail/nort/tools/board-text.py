@@ -4,7 +4,8 @@
 # the old body text and its icons are painted out (OpenCV inpainting) and the new text is set in Quicksand, white,
 # with the board's icons inline. Writes expansion/board/<clan>-print.webp (Warchief.boardFile picks them in games
 # with the PrintedNewBlood option). 'dragon-variant' is Robotos's fan-made Dragon power (DragonVariant in nort/options.scala),
-# written to expansion/board/dragon-variant.webp.
+# written to expansion/board/dragon-variant.webp; 'bear-border' is his border Bear's power (BearBorder), written to
+# expansion/board/bear-border.webp.
 #
 #   pip install opencv-python-headless pillow numpy
 #   board-text.py <Quicksand variable font .ttf> [board ...]
@@ -210,6 +211,16 @@ BOARDS = {
             "reserve to an empty Pyre spot.",
         ], 16, 27),
     ]),
+    'bear-border': ([(130, 56, 440, 190)], [
+        (284, 58, 290, [
+            "Kaija is a token on a border.",
+            "Before resolving a clan card, you may",
+            "place it on a regular border of one",
+            "of your territories. All clans treat",
+            "that border as Rough, unless they",
+            "discard 1 resource to cross it.",
+        ], 16, 22),
+    ]),
     'squirrel': ([(150, 48, 416, 202)], [
         (285, 46, 290, [
             "After paying winter costs:",
@@ -264,7 +275,7 @@ BOARDS = {
 }
 
 def run(name, out):
-    src = os.path.join(IMAGES, 'expansion', 'board', name.replace('-variant', '') + '.webp')
+    src = os.path.join(IMAGES, 'expansion', 'board', name.replace('-variant', '').replace('-border', '') + '.webp')
     im = Image.open(src).convert('RGBA')
     boxes, texts = BOARDS[name]
     scale = im.width / 616
@@ -279,4 +290,4 @@ if __name__ == '__main__':
     for name in BOARDS:
         if only and name not in only:
             continue
-        run(name, name if name.endswith('-variant') else name.replace('-2', '') + '-print')
+        run(name, name if name.endswith('-variant') or name.endswith('-border') else name.replace('-2', '') + '-print')
