@@ -713,6 +713,13 @@ file covers the build, server and deploy. No session can ssh to the server
   It was only a notification, and the game went on (Hayjay couldn't see the Lilypad Diaspora's hand on 2026-10-17). New games
   get the hidden default option `OutragePeekNeedsOk`; older games keep the notification so their replays don't change, and a running game can be
   switched over like the fixes above, with `OutragePeekNeedsOkAction(X)` (done for Hayjay's Ground and Might on 2026-10-17).
+  Gman asked for the notification back on 2026-10-31, as it held up the game: new games no longer get `OutragePeekNeedsOk`
+  (still hidden, so the games that have it keep waiting; `InsurgentExpansion.peekWaits`), and a running game can be switched
+  back with `OutragePeekNotifiesAction(X)`.
+- Root remembers in each browser how many notifications (cards drawn, hands seen) it has shown in each online game
+  (`<settingsKey>.notifications-seen.<lobby>`, `seenBefore` and `saveSeen` in `root/ui.scala`), saved at the first tap after
+  they show, so opening a game shows only those that came since; before 2026-10-31 every notification of the game popped up
+  each time a game was opened (Gman took it for a pause in Season in Control). The "Notifications" button shows them all.
 - Mice-in-a-Bush counts as an ambush card, so the attacker is offered a counter-ambush against it before its hit
   (`askCounterAmbush` in `root/battle.scala`, the same menu as against an ambush card, with 1 hit instead of 2, and no other ambush follows it, as it is the defender's ambush); it dealt
   its hit straight away until Gman's Ground and Might on 2026-10-18 (the Root rules channel confirmed it can be countered).

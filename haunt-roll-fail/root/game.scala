@@ -1520,6 +1520,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var governorsStopEnclaveFlips = false
     var governorsStopDelve = false
     var outragePeekNeedsOk = false
+    var outragePeekNotifies = false
     var councilRevealOnce = false
     var silverTongueOneEffect = false
     var governorsStopCrafting = false

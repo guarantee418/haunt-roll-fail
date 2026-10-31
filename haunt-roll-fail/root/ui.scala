@@ -4920,7 +4920,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     override def onClick(a : Any) = a @@ {
         // In pass and play, only the notifications of the player holding the device are seen by a tap
-        case _ if { seen = passing.?(seen ++ game.notifications.diff(seen).%(n => passedTo.exists(n.factions.has))).|(game.notifications) ; false } =>
+        case _ if { seen = passing.?(seen ++ game.notifications.diff(seen).%(n => passedTo.exists(n.factions.has))).|(game.notifications) ; saveSeen() ; false } =>
 
         case "view-hirelings" =>
             showHirelings()
@@ -4990,14 +4990,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         case ("notifications", Some(f : Faction)) =>
             seen = $
+            seenBefore = 0
             showNotifications($(f))
 
         case ("notifications", Some(f : PlayerN)) =>
             seen = $
+            seenBefore = 0
             showNotifications(currentGame.ptf.get(f).$)
 
         case ("notifications", None) =>
             seen = $
+            seenBefore = 0
             showNotifications(factions)
 
         case ("view-scorelog", f : Faction) =>
@@ -5462,9 +5465,22 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     var seen : $[Notification] = $
 
+    // How many notifications this browser has seen in an online game is kept in its storage, so opening the game again
+    // shows only those that came since, not every notification of the game (Gman, 2026-10-31); they are only added to,
+    // newest first, so the oldest seenBefore of them were seen before the page was opened
+    def seenKey = hrf.HRF.lobby.%(_ => hrf.HRF.replay.not)./(settingsKey + ".notifications-seen." + _)
+
+    var seenBefore = seenKey./~(k => try { Local.get(k, "").toIntOption } catch { case e : Throwable => None }).|(0)
+
+    def saveSeen() {
+        seenKey.foreach { k =>
+            try { Local.set(k, game.notifications.num.toString) } catch { case e : Throwable => }
+        }
+    }
+
     override def showNotifications(self : $[F]) : Unit = {
         val newer = game.notifications
-        val older = seen
+        val older = seen ++ newer.takeRight(seenBefore)
 
         val display = newer.diff(older).%(_.factions.intersect(self ++ self./(fix)).any)./~(n => convertActions(self.single, n.infos)).some./~(_ :+ ZOption(Empty, Break))
 

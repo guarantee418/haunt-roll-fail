@@ -229,11 +229,25 @@ case class AddSupportersAction(f : Insurgent, then : ForcedAction) extends Force
 // the hand to the Alliance and waits for its Ok (game.outragePeekNeedsOk), then goes on with then
 case class OutragePeekNeedsOkAction(then : ForcedAction) extends ForcedAction with SkipValidate
 
+// The other way, for games started with OutragePeekNeedsOk, added to a live game's log by hand: from here Outrage shows the hand
+// to the Alliance as a notification again (game.outragePeekNotifies), and the game goes on without waiting for its Ok
+case class OutragePeekNotifiesAction(then : ForcedAction) extends ForcedAction with SkipValidate
+
 
 object InsurgentExpansion extends FactionExpansion[Insurgent] {
+    // Outrage (and the playtest Pacifism) with no card to give waits for the Alliance's Ok after showing it the hand only in
+    // games started from 2026-10-17 until 2026-10-31 (OutragePeekNeedsOk) or switched to it; newer games notify it, and the
+    // notification shows the next time the Alliance's player opens the game (Gman, 2026-10-31)
+    def peekWaits(implicit game : Game) = (game.options.has(OutragePeekNeedsOk) || game.outragePeekNeedsOk) && game.outragePeekNotifies.not
+
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         case OutragePeekNeedsOkAction(then) =>
             game.outragePeekNeedsOk = true
+
+            then
+
+        case OutragePeekNotifiesAction(then) =>
+            game.outragePeekNotifies = true
 
             then
 
@@ -325,7 +339,7 @@ object InsurgentExpansion extends FactionExpansion[Insurgent] {
                 if (o.hand.any) {
                     f.log("looked at", o, "cards, no", c.suits, "cards")
 
-                    if (game.options.has(OutragePeekNeedsOk) || game.outragePeekNeedsOk)
+                    if (InsurgentExpansion.peekWaits)
                         PeekCardsAsk(f, FactionHand(o), o.hand, draw)
                     else
                         NoAsk(o)(PeekCardsMainAction(f, Empty, FactionHand(o), o.hand, draw))
