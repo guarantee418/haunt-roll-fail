@@ -1241,11 +1241,14 @@ object MapsExpansion extends MandatoryExpansion {
                 game.rabbittown.foreach { c =>
                     val n = rabbittownWarriors(f, c)
 
+                    // the battle is offered on its own when no warriors can be placed (Gman, 2026-10-31: the Hundreds with an empty supply)
+                    val battle = f.canAttackIn(c)
+
                     + RabbittownMainAction(f, c, n, Repeat)
                         .!(f.hand.none, "no cards")
-                        .!(n == 0, "no other rabbit clearings")
-                        .!(f.pooled(f.warrior) == 0, "no warriors")
-                        .!(f.canPlace(c).not, "can't place")
+                        .!(n == 0 && battle.not, "no other rabbit clearings")
+                        .!(f.pooled(f.warrior) == 0 && battle.not, "no warriors")
+                        .!(f.canPlace(c).not && battle.not, "can't place")
                 }
         }
     }
@@ -1265,11 +1268,14 @@ object MapsExpansion extends MandatoryExpansion {
 
             f.used :+= RabbittownMuster
 
-            val n = min(rabbittownWarriors(f, c), f.pooled(f.warrior))
+            val n = f.canPlace(c).??(min(rabbittownWarriors(f, c), f.pooled(f.warrior)))
 
             1.to(n).foreach(_ => f.reserve --> f.warrior --> c)
 
-            f.log("placed", n.times(f.warrior)./(_.of(f)).comma, "in", c, "with", RabbittownMuster)
+            if (n > 0)
+                f.log("placed", n.times(f.warrior)./(_.of(f)).comma, "in", c, "with", RabbittownMuster)
+            else
+                f.log("used", RabbittownMuster, "in", c, "to battle")
 
             if (f.canAttackIn(c))
                 BattleInitAction(f, f, NoMessage, $(c), $, then)

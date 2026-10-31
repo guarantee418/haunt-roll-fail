@@ -909,6 +909,9 @@ file covers the build, server and deploy. No session can ssh to the server
   (`game.landmarkSuits`). Foxburrow is the `FoxburrowRoads` transport,
   Rabbittown a Daylight action and Mousehold a hook in `battle.scala`; the
   effects are in `MapsExpansion` in `root/maps.scala`.
+  Rabbittown can be used for its battle alone when no warriors can be placed (empty supply, no other rabbit clearing,
+  or a clearing they can't place in): the card is discarded, nothing is placed, and the battle follows (Gman, 2026-10-31:
+  the Hundreds with no warriors left in Season in Control). Not gated by an option: it only adds a choice.
   The Landmarks choice "Map Default, or on Mountain a random suited landmark" (`MountainSuitedLandmark`; Gman,
   2026-10-30) plays Map Default, except that on the Mountain map one of Lost City, Mousehold, Foxburrow and
   Rabbittown, never of the Tower clearing's own suit, is drawn at setup and goes in the Tower's clearing (Pass)
