@@ -1115,7 +1115,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
                     val nmn = c.name.replace(' ', '-')
                     val nmi = resources.images.get(mapid + "clearing-name-" + nmn)
-                    val stn = game.mapping(c)./(_.name).distinct.join("-")
+                    // the tint names list the suits in Fox, Rabbit, Mouse, Frog order (a landmark can add one before the clearing's own)
+                    val stn = game.mapping(c).distinct.sortBy(s => $[BaseSuit](Fox, Rabbit, Mouse, Frog).indexOf(s))./(_.name).join("-")
 
                     // Marsh: a clearing without a suit (until its landmark is placed) gets an untinted name
                     if (stn == "") {
