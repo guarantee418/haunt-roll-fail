@@ -53,14 +53,14 @@ case class SetupSpotAction(self : Faction, round : Int, l : $[Faction], tile : S
 case class SetupRotateAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot, r : Int, d : Int) extends BaseAction("Place the tile at", spot)(RotateLabel(d)) with Soft with MapTarget { def target = RotateMark(d) }
 case class SetupTurnAction(self : Faction, round : Int, l : $[Faction], tile : String, spot : Spot, r : Int) extends BaseAction("Place the tile at", spot)("Confirm") with TilePreview
 case class SetupUnitsAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place three units in")(area) with MapTarget { def target = area }
-case class SetupKaijaAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place two units and", Companion(self), "in")(area) with MapTarget { def target = area }
+case class SetupKaijaAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place two units and", OneCompanion(self), "in")(area) with MapTarget { def target = area }
 // Warchiefs module: the warchief instead of one unit (and Kaija instead of another)
-case class SetupChiefAction(self : Faction, round : Int, l : $[Faction], area : AreaRef, kaija : Boolean) extends BaseAction(kaija.?("Place one unit, " ~ Companion(self).elem0 ~ " and your warchief in").|("Place two units and your warchief in"))(area) with MapTarget { def target = area }
+case class SetupChiefAction(self : Faction, round : Int, l : $[Faction], area : AreaRef, kaija : Boolean) extends BaseAction(kaija.?("Place one unit, " ~ OneCompanion(self).elem0 ~ " and your warchief in").|("Place two units and your warchief in"))(area) with MapTarget { def target = area }
 // With Kaija or the warchief to place: tap the territory first, then pick what goes there
 case class SetupAreaAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place your starting units in")(area) with Soft with MapTarget { def target = area }
 case class SetupUnitsHereAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place in", area)("Three units")
-case class SetupKaijaHereAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place in", area)("Two units and", Companion(self))
-case class SetupChiefHereAction(self : Faction, round : Int, l : $[Faction], area : AreaRef, kaija : Boolean) extends BaseAction("Place in", area)(kaija.?("One unit, " ~ Companion(self).elem0 ~ " and your warchief").|("Two units and your warchief"))
+case class SetupKaijaHereAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place in", area)("Two units and", OneCompanion(self))
+case class SetupChiefHereAction(self : Faction, round : Int, l : $[Faction], area : AreaRef, kaija : Boolean) extends BaseAction("Place in", area)(kaija.?("One unit, " ~ OneCompanion(self).elem0 ~ " and your warchief").|("Two units and your warchief"))
 case class ShuffledTilesBackAction(shuffled : $[String]) extends ShuffledAction[String]
 case class SetupUnitsAskAction(f : Faction, round : Int, l : $[Faction], tile : String, spot : Spot) extends ForcedAction
 
@@ -70,13 +70,13 @@ case class TilePlacedAction(f : Faction, tile : String, spot : Spot, setup : Boo
 // RECRUIT
 case class RecruitAction(f : Faction, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends ForcedAction
 case class RecruitPlaceAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit", (left > 1).?("(" ~ left.hl ~ " left)").|(""), "in")(area) with MapTarget { def target = area }
-case class RecruitKaijaAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit", Companion(self), "in")(area)
+case class RecruitKaijaAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit", OneCompanion(self), "in")(area)
 case class RecruitChiefAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit", WarchiefElem(self), "in")(area)
 case class RecruitDoneAction(self : Faction, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit")("Done")
 // With Kaija or the warchief ready: tap the territory first, then pick what to recruit there
 case class RecruitAreaAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit", (left > 1).?("(" ~ left.hl ~ " left)").|(""), "in")(area) with Soft with MapTarget { def target = area }
 case class RecruitUnitHereAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit in", area)("A regular unit")
-case class RecruitKaijaHereAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit in", area)(Companion(self))
+case class RecruitKaijaHereAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit in", area)(OneCompanion(self))
 case class RecruitChiefHereAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit in", area)(WarchiefElem(self))
 case class TrainingCampsAction(f : Faction, placed : $[AreaRef], then : ForcedAction) extends ForcedAction
 
@@ -283,6 +283,14 @@ case class Companion(f : Faction) extends Elementary {
         case Automa => "Leader 2"
         case _ => "Kaija"
     }
+    def elem0 : Elem = name.hl
+    def elem : Elem = name.hl
+}
+
+// One companion figure being placed or recruited: with the printed Lynx board (PrintedNewBlood) Brundr and Kaelinn are two
+// figures and each placement or recruit brings one of them (CardVersions.options follows the game being played)
+case class OneCompanion(f : Faction) extends Elementary {
+    def name = (f == Lynx && CardVersions.options.has(PrintedNewBlood)).?("Brundr or Kaelinn").|(Companion(f).name)
     def elem0 : Elem = name.hl
     def elem : Elem = name.hl
 }
@@ -888,12 +896,20 @@ object MapExpansion extends Expansion {
         Then(SetupPlaceAction(round, l.drop(1)))
     }
 
+    // The companion placed at setup. LynxBothAtSetup: a lynx in each starting placement can make the second one; before it,
+    // a lynx in the second placement moved the first one there (setCompanion), so Lynx started with only one
+    def setupCompanion(f : Faction, a : AreaRef)(implicit game : Game) =
+        if (f == Lynx && game.options.has(LynxBothAtSetup))
+            game.placeCompanion(f, a)
+        else
+            game.setCompanion(f, |(a))
+
     def setupKaija(f : Faction, round : Int, l : $[Faction], a : AreaRef)(implicit game : Game) = {
         game.addUnits(a, f, 2)
-        game.setCompanion(f, |(a))
+        setupCompanion(f, a)
         game.note("kaija-setup")
 
-        f.log("placed two units and", Companion(f), "in", a)
+        f.log("placed two units and", OneCompanion(f), "in", a)
 
         robotosSetup(f, round, a)
 
@@ -904,10 +920,10 @@ object MapExpansion extends Expansion {
         game.addUnits(a, f, kaija.?(1).|(2))
         game.chiefs += f -> a
         if (kaija)
-            game.setCompanion(f, |(a))
+            setupCompanion(f, a)
         game.note("chief-setup")
 
-        f.log(kaija.?("placed one unit, " ~ Companion(f).elem0 ~ " and").|("placed two units and"), WarchiefElem(f), "in", a)
+        f.log(kaija.?("placed one unit, " ~ OneCompanion(f).elem0 ~ " and").|("placed two units and"), WarchiefElem(f), "in", a)
 
         robotosSetup(f, round, a)
 
@@ -924,7 +940,7 @@ object MapExpansion extends Expansion {
         game.placeCompanion(f, a)
         game.note("kaija-recruit")
 
-        f.log("recruited", Companion(f), "in", a)
+        f.log("recruited", OneCompanion(f), "in", a)
     }
 
     def recruitChief(f : Faction, a : AreaRef)(implicit game : Game) : Unit = {
