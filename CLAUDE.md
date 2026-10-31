@@ -903,6 +903,9 @@ file covers the build, server and deploy. No session can ssh to the server
   (`waterAt`, `"view-water"` in `root/ui.scala`; asked for by Gman on 2026-10-30). Where the water is comes from the masks
   `<map>/map-water.webp` (a quarter of the map's size, red for river or lake, blue for scenery), traced by hand in
   `root/tools/water-masks.py`; flooded clearings are tested against their flood images.
+- Tapping the Tundra map's blizzard, or one of the snowflakes marking the spots it may move to, says what it does: it blocks the
+  way (path or river) between its two clearings, which aren't adjacent while it is there, and after every round it moves at random
+  to one of its six spots, maybe the same (`"view-blizzard"` in `root/ui.scala`; asked for by Gman on 2026-10-31).
 - The Homeland landmarks Mousehold, Foxburrow and Rabbittown are landmark
   options on any map (`MouseholdLandmark` etc. in `root/meta.scala`). Each
   adds its suit to its clearing, kept when a Lilypad enclave covers the suit

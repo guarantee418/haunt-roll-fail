@@ -1409,6 +1409,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             }
         }
 
+        // Tapping the Tundra's blizzard, or a snowflake marking a spot it may move to, says what it does (after the pieces, so they win)
+        game.board.blizzard.foreach { case (from, to) =>
+            val (x, y) = game.board.mid(from, to)
+            val r = game.blizzard.has((from, to)).?(100).|(50)
+            pileTargets :+= ((x - r, y - r, 2 * r, 2 * r, ("view-blizzard", from, to)))
+        }
+
         drawScoreTrack(g)
 
         drawItemSlots(g)
@@ -4987,6 +4994,26 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             }
 
             showOverlay(overlayScrollX(header ~ body), onClick)
+
+        case ("view-blizzard", a : Clearing, b : Clearing) =>
+            def line(l : Any*) = game.desc(l.$./~{ case s : String => s.split(' ').$.%(_.nonEmpty) ; case x => $(x) } : _*).div(xstyles.info)(xstyles.xx)(xstyles.chm)(xstyles.chp)(xstyles.thu)(styles.extrachp)
+
+            val now = game.blizzard.headOption
+            val here = now.exists(_ == (a, b))
+            val blocks = line("No piece can move between those two clearings, along a path or the river, and they aren't adjacent while the blizzard is there")
+            val spots = game.board.blizzard./{ case (c, d) => game.desc(c.elem, "and", d.elem, now.has((c, d)).?("(the blizzard now)".hl).|(Empty)) }
+
+            showOverlay(overlayScrollX(
+                here.?("Blizzard".hh).|("Blizzard spot".hh).div ~
+                here.?(
+                    line("The blizzard blocks the way between", a.elem, "and", b.elem) ~ blocks
+                ).|(
+                    line("This snowflake marks a spot the blizzard may move to, between", a.elem, "and", b.elem) ~
+                    now./{ case (c, d) => line("The blizzard now blocks the way between", c.elem, "and", d.elem) ~ blocks }.|(Empty)
+                ) ~
+                line("Each time every player has taken a turn, a die is rolled and the blizzard moves to one of its", game.board.blizzard.num.toString, "spots at random (it may stay where it is):") ~
+                spots./(_.div(xstyles.info)(xstyles.xx)(xstyles.chm)(xstyles.chp)(xstyles.thu)(styles.extrachp)).merge
+            ), onClick)
 
         case ("notifications", Some(f : Faction)) =>
             seen = $
