@@ -834,6 +834,8 @@ file covers the build, server and deploy. No session can ssh to the server
   setup always Homelands, in Adset (`MetaAdset.mandatoryFor`, hidden there), and Off by default in the standard setup. The Async heading
   has a ? explaining the section (`groupInfo`, a hook in `meta.scala`, shown by `setupQuestions` in `hrf.scala`). Recorded games keep
   their options, so none of this changes a game already started.
+  The site defaults (Site Defaults, and a new setup) are Random Official map, All Random clearings, the Mountain suited landmark choice
+  and the Squires and Disciples deck, in Root and Adset (`defaultsFor`; Gman, 2026-10-31).
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.

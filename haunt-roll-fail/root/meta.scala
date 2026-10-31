@@ -1574,9 +1574,9 @@ object Meta extends MetaGame {
     override def defaultsFor(n : Int, l : $[F]) = $(
         SeatingGiven,
         FactionSeatingGiven,
-        AutumnMap,
-        DefaultClearings, NoClustersClearings,
-        MixedDeck,
+        RandomOfficialMap,
+        AllRandomClearings,
+        SquiresDeck,
         ErrataCoffinMakers,
         NonBirdPartisans,
         UnthematicPropagandaBureau,
@@ -1605,7 +1605,7 @@ object Meta extends MetaGame {
         FeatherRufflersOnCraft,
         SilverTongueOneEffect,
         GovernorsStopCrafting,
-        MapDefaultLandmarks,
+        MountainSuitedLandmark,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
 
@@ -1622,7 +1622,7 @@ object Meta extends MetaGame {
     override def presetsInfo(n : Int, l : $[F]) = $(
         $(
             "Puts every option back to what the site starts with:",
-            &("Autumn".styled(Mouse) ~ " map, ") ~ &("Default".hh ~ " clearings, ") ~ &("Mixed".hh ~ " deck, ") ~ &("Corners".hh ~ " setup, ") ~ &("Bluff Mode".hh ~ ", ") ~ &("no hirelings."),
+            &("Random Official".hh ~ " map, ") ~ &("All Random".hh ~ " clearings, ") ~ &("Map Default".hh ~ " landmarks (on " ~ "Mountain".styled(Fox) ~ " a random suited one), ") ~ &("Squires and Disciples".hh ~ " deck, ") ~ &("Corners".hh ~ " setup, ") ~ &("Bluff Mode".hh ~ ", ") ~ &("no hirelings."),
         ),
         $(
             "The rules as Leder Games prints them:",
