@@ -341,11 +341,18 @@ object WildernessExpansion extends Expansion {
             CommonExpansion.perform(WinterAction, soft)
 
         // GEYSERS: at the End of the Year, a free unit in each controlled territory per geyser
-        case EndOfYearAction =>
+        // With EndOfYearAfterGeysers, the End of the Year then goes on through the other expansions (the Military paths); before it,
+        // straight to the core one
+        case EndOfYearAction if game.options.has(EndOfYearAfterGeysers).not || game.geysersYear != game.year =>
+            game.geysersYear = game.year
+
             Then(GeysersAction(game.from(game.first)./~(f => game.controlled(f)./~(t => 1.to(Wild.geysersIn(t)).$./(_ => GeyserSpot(f, t.anchor))))))
 
         case GeysersAction(Nil) =>
-            CommonExpansion.perform(EndOfYearAction, soft)
+            if (game.options.has(EndOfYearAfterGeysers))
+                Then(EndOfYearAction)
+            else
+                CommonExpansion.perform(EndOfYearAction, soft)
 
         case GeysersAction(GeyserSpot(f, a) :: rest) =>
             if (game.reserve(f) > 0 && game.controlled(f).has(game.board.territory(a)))
