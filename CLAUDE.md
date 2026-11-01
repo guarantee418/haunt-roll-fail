@@ -106,7 +106,7 @@ levels of a path picked at 5 (`game.paths`): Leadership (only with Warchiefs: a 
 captures, a kill before attacking), Guardian (free Defense Towers on no space that kill before the fight, `game.towersUsed`; four
 Militia, `game.militia`, figures that stay in the clan's territories, one dead one back each year, `game.militiaBack`; a free Fortress a year, `freeFortress`: Marzaus's "Palisade" is the Fortress) and
 Legions (free Training Camps on no space that recruit 2 and train a unit each year, points for big armies, rerolls). The readings of
-the short post are listed in `nort/RULES.md` (Military paths); the player panels show the MXP, with the video game's Military Experience icon (crossed swords, `ui-mxp`, `MXP.icon`, from the game wiki's 20x20 file by `nort/tools/mxp-icon.py`; asked for by the owner on 2026-10-23), and the path (tapping them, every path). The
+the short post are listed in `nort/RULES.md` (Military paths); the player panels show the MXP, with the video game's Military Experience icon (crossed swords, `ui-mxp`, `MXP.icon`, from the game wiki's 20x20 file by `nort/tools/mxp-icon.py`; asked for by the owner on 2026-10-23), and the path (tapping them, every path). The End of the Year gains (Guardian's towers, Legions' camps, Leadership's units) never came in Wilderness games, as its Geysers skipped the expansions after it, until the hidden `EndOfYearAfterGeysers` every new game gets (`wilderness.scala`; Marzaus, 2026-11-01; `EndOfYearAfterGeysersAction(X)` switches a running game). The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.

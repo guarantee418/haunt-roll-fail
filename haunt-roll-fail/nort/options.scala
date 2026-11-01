@@ -545,6 +545,15 @@ case object AchievementsAside extends GameOption with ToggleOption {
     def valueOn = "Achievements taken early are kept aside".txt
 }
 
+// With the Wilderness, its Geysers took over the End of the Year and went straight on to the core one, so the expansions after it
+// (the Military paths' MXP for towers, camps and the warchief's units, Legions' new units, a dead Militia or bodyguard back) never
+// ran (Marzaus, 2026-11-01). Hidden, and given to every new game (Meta.mandatoryFor): the Geysers go first, then the End of the
+// Year goes on through every expansion. A running game can be switched over with EndOfYearAfterGeysersAction(X)
+case object EndOfYearAfterGeysers extends GameOption with ToggleOption {
+    val group = "Wilderness".txt
+    def valueOn = "The End of the Year goes on after the Geysers".txt
+}
+
 // Printed Lynx Clan (PrintedNewBlood): each starting placement may take a lynx, so Lynx can start with both Brundr and Kaelinn
 // (Gman, 2026-10-31: "Lynx is supposed to have 2 cat tokens"). Before it, a lynx placed in the second placement moved the first
 // one there and Lynx started with one. Hidden, and given to every new game (Meta.mandatoryFor); older games replay the old way
