@@ -462,6 +462,14 @@ case object JoinedTilesOnly extends GameOption with ToggleOption {
     def valueOn = "Checks only the territories joined".txt
 }
 
+// Naströnd (Wastelands) prints a wood in its west and in its east territory, which the tile data left out, so neither was
+// counted at harvest, by Quality of Life or anything else collecting from a territory (Marzaus, 2026-11-01). Hidden, and given
+// to every new game (Meta.mandatoryFor): older games had no wood there (Game.areaSpec), and their replays must not change
+case object NastrondWood extends GameOption with ToggleOption {
+    val group = "Naströnd".txt
+    def valueOn = "Wood in the west and east territories".txt
+}
+
 // Svarn's Menders brings back the warchief, the companion (Kaija, Brundr and Kaelinn, Brok) and Jötunn Blainn among the
 // casualties too, not only units (the owner's ruling of 2026-10-12; figures lost for having nowhere to retreat still stay lost).
 // Hidden, and given to every new game (Meta.mandatoryFor): older games brought back units only, and their replays must not stop

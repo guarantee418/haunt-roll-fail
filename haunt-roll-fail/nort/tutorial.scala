@@ -35,7 +35,7 @@ object Tutorial {
     // The practice game: Stag goes first, against the Easy bot, with the standard rules
     def seating : $[Faction] = $(clan, opponent)
     def bots : Map[Faction, String] = Map(opponent -> "Easy")
-    def options : $[GameOption] = Meta.defaultsFor(2, seating).%(_.is[VictoryModeOption].not) ++ $(TutorialOption, FirstSeatStarts, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, DragonExtraFromTerritory)
+    def options : $[GameOption] = Meta.defaultsFor(2, seating).%(_.is[VictoryModeOption].not) ++ $(TutorialOption, FirstSeatStarts, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, DragonExtraFromTerritory)
 
     // Images in the lessons (Meta.menuImages has their URLs for the menus; in the game they are assets)
     def card(n : String) = Image("card-start-blue-" + n, styles.menuCard)

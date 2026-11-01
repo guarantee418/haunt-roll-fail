@@ -1142,9 +1142,18 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
     def buildingsIn(t : Territory) : $[(SpaceRef, Building)] = buildings.toList.%{ case (s, _) => t.areas.contains(s.area) }.sortBy(_._2.toString)
 
+    // An area as printed; games without NastrondWood keep Naströnd's two areas without their wood
+    def areaSpec(a : AreaRef) : AreaSpec = {
+        val s = board.spec(a)
+        if (s.wood > 0 && options.has(NastrondWood).not && board.at(a.x, a.y).exists(_.tile == "waste-nastrond"))
+            s.copy(wood = 0)
+        else
+            s
+    }
+
     // Food, wood and lore shown on a territory and its buildings
     def produce(t : Territory) : (Int, Int, Int) = {
-        val specs = t.areas./(board.spec)
+        val specs = t.areas./(areaSpec)
         val here = working(t)
         (specs./(_.food).sum + here.count(_ == FoodSilo), specs./(_.wood).sum + here.count(_ == WoodcutterLodge), specs./(_.lore).sum + here.count(_ == CarvedStone))
     }
