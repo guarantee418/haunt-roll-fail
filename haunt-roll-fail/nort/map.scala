@@ -642,7 +642,7 @@ object MapExpansion extends Expansion {
             // Raven Mercenaries: a neutral territory, then the same one, which the first unit made Raven's
             case RecruitNeutralSame => neutral ++ placed./(game.board.territory).distinct.diff(neutral)
             case RecruitSameAny => mine ++ neutral
-            case RecruitOsmosis => mine.%(t => game.board.open(t) || t.areas.exists(a => game.board.spec(a).wood > 0)).%(t => placed.forall(p => t.areas.contains(p).not))
+            case RecruitOsmosis => mine.%(t => game.board.open(t) || t.areas.exists(a => game.areaSpec(a).wood > 0)).%(t => placed.forall(p => t.areas.contains(p).not))
             case RecruitClosed => mine.%(game.board.closed).%(t => placed.forall(p => t.areas.contains(p).not))
             case RecruitPeers => LionExpansion.peersTargets(f, placed)
             case RecruitChapels => LionExpansion.chapelTargets(f, placed)
@@ -2136,7 +2136,7 @@ object MapExpansion extends Expansion {
             // Lay of the Land: collect everything shown on the tile
             if (e.collect) {
                 val spec = Tiles(tile)
-                val (food, wood, lore) = (spec.areas./(_.food).sum, spec.areas./(_.wood).sum, spec.areas./(_.lore).sum)
+                val (food, wood, lore) = (spec.areas./(_.food).sum, (tile == "waste-nastrond" && game.options.has(NastrondWood).not).?(0).|(spec.areas./(_.wood).sum), spec.areas./(_.lore).sum)
                 f.food += food
                 f.wood += wood
                 f.lore += lore

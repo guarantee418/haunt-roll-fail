@@ -123,7 +123,7 @@ object Warchief {
         if (f == Automa)
             AutomaExpansion.leaderStrength
         else
-        if (f == Bear && attacking.not || f == Wolf && attacking || f == Boar && (game.board.open(t) || t.areas.exists(a => game.board.spec(a).wood > 0)))
+        if (f == Bear && attacking.not || f == Wolf && attacking || f == Boar && (game.board.open(t) || t.areas.exists(a => game.areaSpec(a).wood > 0)))
             3
         else
         // Mielikki with a Flash card in the active area, Eir where the tiles show food

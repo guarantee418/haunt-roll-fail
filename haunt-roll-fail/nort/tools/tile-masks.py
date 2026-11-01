@@ -169,6 +169,8 @@ ICONS = {
     'horizon-2': [(0.3, 0.43, 0.065), (0.665, 0.875, 0.06)],
     'horizon-4': [(0.44, 0.87, 0.06)],
     'horizon-bridge': [(0.075, 0.555, 0.065)],
+    # Naströnd's east wood, against the dashes of the border under it
+    'waste-nastrond': [(0.868, 0.775, 0.07)],
 }
 
 
