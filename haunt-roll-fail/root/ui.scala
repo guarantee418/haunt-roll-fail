@@ -838,6 +838,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     // A failure drawing the map (seen only on iPhones, Ground and Might, 2026-10-16) must not stop the rest of the
     // update: drawMap is the last step of updateStatus, so an exception left the action pane and the menu (and its
     // Report a Bug) empty. It is logged instead, where Report a Bug collects it.
+    // Once the game is under way the ruins are drawn only when someone can use them: the Vagabond, the Hundreds,
+    // the Brigand hireling, or the Knaves' Adventurer (who draws a card for acclaim at a ruin; Air of Conquest, 2026-10-31)
+    def ruinsHidden = (game.turn > 0) && factions.of[Hero].none && factions.of[Horde].none && game.hirelings.has(Brigand).not &&
+        factions.of[Knaves].%(game.states.contains).forall(_.captains.has(KnaveAdventurer).not)
+
     def drawMap() {
         try {
             drawMapUnsafe()
@@ -1231,7 +1236,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             }
         }
 
-        val noruins = (game.turn > 0) && factions.of[Hero].none && factions.of[Horde].none && game.hirelings.has(Brigand).not
+        val noruins = ruinsHidden
 
         // How many warriors each stacked warrior figure stands for
         val stacks = mutable.Map[(Region, Faction, Piece), Int]()
@@ -1591,7 +1596,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         "Comma" -> AutumnBoard.Weald,
     )./{ (k, c) =>
         Speech.onKey(k) {
-            val noruins = (game.turn > 0) && factions.of[Hero].none && factions.of[Horde].none
+            val noruins = ruinsHidden
 
             val (unruins, figures) = currentGame.ui.graveyard.?(game.graveyard.get(c).|(Nil)).|(game.displayRegion(c)).partition(_.piece.is[Ruins] && noruins)
 

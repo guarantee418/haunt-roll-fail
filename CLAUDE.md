@@ -857,6 +857,9 @@ file covers the build, server and deploy. No session can ssh to the server
   "More Info" toggle with short rule notes. Panes are tappable before a
   faction is set up too (`factionStatus` and `updateStatus`); a faction
   without state yet shows just its board ("Not set up yet").
+- Once play starts, the Root map draws the ruins only when someone can use them (`ruinsHidden` in `root/ui.scala`): the
+  Vagabond, the Hundreds, the Brigand hireling, or the Knaves with the Adventurer as a Captain, who draws a card for acclaim
+  at a ruin (added 2026-10-31: Gman's Air of Conquest showed none). Display only, so no game records change.
 - `itemSlots` (`itemGrid` for the usual 2x6 layout) places the item tracker;
   `drawTrackers` draws `tracker/item-track.webp`, on a dark translucent panel so
   its light slots show on the snowy maps, under
