@@ -242,6 +242,12 @@ object Tutorial {
         if (has[MoveToAction])
             |("Tap where they go. A neutral territory becomes yours; an enemy one starts a fight once all moves are made (the Stag gets +1 fame for each conquest).")
         else
+        if (has[MoveUnitsAction] && (has[FigureCountAction] || has[FigureSwitchAction]))
+            |("Pick who goes: " ~ "−".hl ~ " and " ~ "+".hl ~ " set how many units, and tapping your warchief's name switches it between Yes and No. Then tap the button under them. Leave at least one figure behind to keep the territory they leave.")
+        else
+        if (has[RetreatPartyAction] && has[FigureSwitchAction])
+            |("Pick who retreats there (tap a name to switch it between Yes and No), then tap the button under them. Whoever stays retreats next, maybe somewhere else.")
+        else
         if (has[MoveUnitsAction])
             |("Pick how many units go. Leave at least one behind to keep the territory they leave.")
         else
