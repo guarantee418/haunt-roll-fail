@@ -142,8 +142,8 @@ class FactionState(val faction : Faction)(implicit game : Game) {
     // Units on the map, with the warchief (Warchiefs module); Horse Clan's second warchief, Brok, counts too
     def units = game.onMap(faction) + game.chiefs.contains(faction).??(1) + ((faction == Horse && game.brok.any) || (faction == Automa && game.leader2.any)).??(1) + game.blainnOf(faction).any.??(1) + SeaExpansion.raiders(faction)
 
-    // The units Winter costs count: Warchiefs PC version leaves the warchief out
-    def winterUnits = units - (game.pcChief(faction) && game.chiefs.contains(faction)).??(1)
+    // The units Winter costs count: Warchiefs PC version leaves the warchief out; Brundr and Kaelinn count in games with LynxesCostWinter
+    def winterUnits = units - (game.pcChief(faction) && game.chiefs.contains(faction)).??(1) + (faction == Lynx && game.options.has(LynxesCostWinter)).??(game.lynxes.num)
 
     var draw : $[Card] = $
     var hand : $[Card] = $
