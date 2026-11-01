@@ -495,7 +495,7 @@ object AutomaExpansion extends Expansion {
             val tile = game.pile.head
             game.pile = game.pile.drop(1)
 
-            val rich = Tiles(tile).areas.exists(a => a.food + a.wood + a.lore > 0)
+            val rich = Tiles(tile).areas.exists(a => a.food + (tile == "waste-nastrond" && game.options.has(NastrondWood).not).?(0).|(a.wood) + a.lore > 0)
             val legal = MapExpansion.setupPlacements(tile, round)
             val spots = wanted.%(s => legal.exists(_._1 == s)) ++ legal.map(_._1).distinct.%(s => first.forall(f => (s.x - f.x).abs + (s.y - f.y).abs == 1))
 

@@ -63,7 +63,7 @@ object TileIcons {
         "wild-den" -> $(),
         "waste-kobold" -> $(),
         "waste-jotnar" -> $(Icon(0.497, 0.905, 0.055)),
-        "waste-nastrond" -> $(Icon(0.094, 0.368, 0.072)),
+        "waste-nastrond" -> $(Icon(0.094, 0.368, 0.072), Icon(0.869, 0.776, 0.077)),
         "waste-landvidi" -> $(),
         "waste-thor" -> $(),
         "waste-urdarbrunn" -> $(),
