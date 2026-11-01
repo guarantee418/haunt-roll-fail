@@ -165,7 +165,13 @@ a free space, pick from the menu of all buildings with their costs and how many 
 confirm with the green check mark (or cancel with the red cross) drawn above
 the building on the map. Placing a tile works the same way: the tile is shown at its spot with
 one button just outside each corner: rotate arrows at the top, the check mark and cross at the bottom. A retreat works like a Move: tap the destination on the map (or in the list),
-then pick who goes: everyone, the units without Kaija and the warchief, one unit, or Kaija or the warchief alone (`RetreatPickAction` and `retreatParties` in `nort/map.scala`). Development
+then pick who goes. Every move (a Move card, a retreat, Brand's Bravery, the Lynx bonus Move) picks its figures one by one after the
+destination (`FigurePicker` in `nort/figures.scala`; asked for on Discord on 2026-11-01, when one of Brundr and Kaelinn couldn't retreat alone):
+the units as a counter ("−", "3 of 5 units", "+"), a Yes/No switch for the warchief and for each companion (Kaija, Brok, Brundr and
+Kaelinn separately, though the game doesn't track which lynx is which), and the button that does it, naming who goes. The switches are
+soft and the button is the same recorded action as before (`MoveUnitsAction`, `MoveOneLynxAction`, `RetreatPartyAction`, the new
+`RetreatOneLynxAction`, `LynxGoAction`...), so it needs no option and older games load and replay unchanged; `FiguresExplodeAction` lists
+every button for bots and move checks. Swamp and teammate passes, Stag's single-unit Move and Military Militia moves keep their own lists. Development
 and other card picks show the cards at hand-card size, and the last player to pass
 still sees the one card left before taking it. Copies of the same card in hand (and among
 the Played cards) are drawn as one card with the copies peeking out behind it

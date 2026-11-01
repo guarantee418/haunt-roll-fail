@@ -3013,6 +3013,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         if (a.is[AdsetDraftChoice])
             $(xstyles.choice, xstyles.xx, xstyles.chp, xstyles.factionTile, styles.draftTile, xlo.pointer)
         else
+        // The figure picker's units counter: "−", the count and "+" side by side
+        if (a.is[FigureCountAction] || a.is[FigureCountInfoAction])
+            $(a.is[FigureCountInfoAction].?(xstyles.info).|(unavailable.?(xstyles.info).|(xstyles.choice)), xstyles.xx, xstyles.chp, xstyles.chm, styles.figureCount) ++
+                unavailable.?(xstyles.unavailableText).$ ++ faction./~(f => f.as[Faction]./(elem.borders.get)) ++ (unavailable.not && a.is[FigureCountAction]).$(xlo.pointer)
+        else
         // Adset: the seat's three map tiles side by side
         if (a.is[AdsetTileInfoAction])
             $(xstyles.info, xstyles.xx, xstyles.chp, styles.draftTile, xlo.pointer)
