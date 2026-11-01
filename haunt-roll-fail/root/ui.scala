@@ -1123,13 +1123,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     // the tint names list the suits in Fox, Rabbit, Mouse, Frog order (a landmark can add one before the clearing's own)
                     val stn = game.mapping(c).distinct.sortBy(s => $[BaseSuit](Fox, Rabbit, Mouse, Frog).indexOf(s))./(_.name).join("-")
 
-                    // Marsh: a clearing without a suit (until its landmark is placed) gets an untinted name
-                    if (stn == "") {
+                    val stk = "text-tint:" + stn + (hl && game.mapping(c).has(Frog)).??("-hl")
+
+                    // Marsh: a clearing without a suit (until its landmark is placed) gets an untinted name,
+                    // and so does a mix of suits with no tint image, rather than stopping the whole map
+                    if (stn == "" || resources.images.has(stk).not) {
                         if (nmi.complete)
                             g.drawImage(nmi, x - 240, ny)
                     }
                     else {
-                        val sti = resources.images.get("text-tint:" + stn + (hl && game.mapping(c).has(Frog)).??("-hl"))
+                        val sti = resources.images.get(stk)
 
                         if (nmi.complete && sti.complete) {
                             val nmt = new Bitmap(nmi.width, nmi.height)

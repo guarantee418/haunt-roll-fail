@@ -665,7 +665,9 @@ file covers the build, server and deploy. No session can ssh to the server
   recoloured to it too (owner, 2026-10-17): the frog suit icon beside clearing names (`feature/clearing-suit-frog`), the
   frog card, deck and pile icons (`icon/card/*frog*`), the frog craft icons (`icon/craft/*frog*`), and the playtest frog
   faction's action icons, glyph, enclave tokens and titles (`td-*`, `ld-title`), by shifting the teal hue band onto
-  `#b7b13c`. The playtest frog cards (`faction/invasive/card/`, not `hl-*`), warriors (`td-frog`, `td-frog-x5`), boards and
+  `#b7b13c`. A clearing's name tint is named by its suits in Fox, Rabbit, Mouse, Frog order; every mix up to the four has one,
+  three-suit ones with Frog since 2026-11-01 (Air of Conquest's Pass, Mouse with Foxburrow and a Peaceful enclave, stopped the map),
+  and a mix with no image draws the plain name instead (`stk` in `drawMap`). The playtest frog cards (`faction/invasive/card/`, not `hl-*`), warriors (`td-frog`, `td-frog-x5`), boards and
   character art stay teal (owner's choice). The frog
   decree and relic icons stay `#7b9f3c`, the green of the Homeland frog cards (owner's choice). The solid `frog` tint is saved lossy (a one-colour lossless WebP is a few dozen bytes, the kind iPhones
   failed on).
