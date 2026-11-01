@@ -1225,8 +1225,9 @@ Check these against the rulebook when it is at hand.
     only), use Kaija's rules: one figure, moves with the units, taken as a
     casualty chosen by the player like the warchief, can't be targeted by card
     effects on enemy units, doesn't count for the 14-unit limit. Unlike
-    Kaija they may enter enemy territories. Brundr and Kaelinn don't count
-    for winter (Uncharted Horizons rulebook); Brok does, like a warchief.
+    Kaija they may enter enemy territories. Brundr and Kaelinn count
+    for winter, each like a unit (Gman, 2026-11-01; hidden `LynxesCostWinter`, every new game; older
+    games left them out, reading the Uncharted Horizons rulebook); Brok does too, like a warchief.
     Without the Warchiefs module Horse has no warchief and no Brok.
   - Brundr and Kaelinn's Move 1 doesn't cross Rough borders; the units with
     it may stay behind (any number go). It is offered before the card (or

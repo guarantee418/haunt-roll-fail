@@ -562,6 +562,14 @@ case object LynxBothAtSetup extends GameOption with ToggleOption {
     def valueOn = "Lynx may start with both lynxes".txt
 }
 
+// Brundr and Kaelinn count as units for Winter costs (Gman, 2026-11-01: "The lynx cats count towards winter costs"); the site had
+// left them out, reading the Uncharted Horizons rulebook's note on companions. Hidden, and given to every new game (Meta.mandatoryFor);
+// older games replay the old way (FactionState.winterUnits)
+case object LynxesCostWinter extends GameOption with ToggleOption {
+    val group = "New Blood".txt
+    def valueOn = "Brundr and Kaelinn count for Winter costs".txt
+}
+
 // New Blood as printed (Gman sent the printed cards and boards on 2026-10-23): the 19 clan cards in CardVersions (editions.scala)
 // and the clan board rules (Lynx's bonus Move and Mielikki, Kraken's High Tide and Kàra, Dragon's harvest, Squirrel after Winter).
 // The site had followed the TTS mod's prototype cards and boards. Hidden, and given to every new game (Meta.mandatoryFor), in either
