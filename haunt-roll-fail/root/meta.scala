@@ -1850,11 +1850,17 @@ object Meta extends MetaGame {
         ImageAsset("rabbit-frog") ::
         ImageAsset("mouse-frog") ::
         ImageAsset("fox-rabbit-mouse") ::
+        ImageAsset("fox-rabbit-frog") ::
+        ImageAsset("fox-mouse-frog") ::
+        ImageAsset("rabbit-mouse-frog") ::
         ImageAsset("fox-rabbit-mouse-frog") ::
         ImageAsset("frog-hl") ::
         ImageAsset("fox-frog-hl") ::
         ImageAsset("rabbit-frog-hl") ::
         ImageAsset("mouse-frog-hl") ::
+        ImageAsset("fox-rabbit-frog-hl") ::
+        ImageAsset("fox-mouse-frog-hl") ::
+        ImageAsset("rabbit-mouse-frog-hl") ::
         ImageAsset("fox-rabbit-mouse-frog-hl") ::
     $) ::
     ConditionalAssetsList((factions, options) => true, "icon/craft")(
