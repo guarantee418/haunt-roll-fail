@@ -808,6 +808,27 @@ case object MilitaryModule extends Module("Military paths", "fan-made module by 
     )
 }
 
+// Marzaus's "Alternative fame gains" (fame-gains.scala; Discord, northgard-fanmade-content, 2026-10-22; asked for by Gman on
+// 2026-11-01): fame as things are done, and 120 fame with an Altar of Kings wins at once. It replaces the other victory conditions,
+// so it needs the Standard or Fame only victory
+case object FameGainsModule extends Module("Alternative fame gains", "fan-made variant by Marzaus") {
+    override def ready = true
+    override def fan = true
+    override def expansion = |(FameGainsExpansion)
+    // First, so it deals the Achievements before any other module's start of the first year
+    override def priority = -30
+    override def requires = $($(StandardVictory), $(FameOnly))
+    def about = $(
+        "A clan with " ~ Amount(120.hl, FameIcon()) ~ " that controls an " ~ AltarOfKings.elem ~ " wins at once. This replaces the other victory conditions (three closed territories with large buildings); nobody there by the end of the last year, the most fame wins.",
+        "Building gives fame: " ~ 1.hl ~ " for a small building, " ~ 2.hl ~ " for a large one; an " ~ AltarOfKings.elem ~ " gives " ~ 3.hl ~ " more when built (" ~ 5.hl ~ " in all).",
+        "In a fight against a clan: " ~ 1.hl ~ " fame for each enemy unit killed, " ~ 5.hl ~ " for a warchief, and " ~ 1.hl ~ " for winning.",
+        "Buying an upgrade gives " ~ 5.hl ~ " fame. A Development card gives its fame when taken (not at the end).",
+        "At setup each clan draws 2 random Achievement cards and keeps 1 face down. Once, at any point of its turn (not an action), it may resolve it for the fame it gives then. The last year reveals no Achievement cards.",
+        "Needs the " ~ "standard".hl ~ " or " ~ "Fame victory only".hl ~ " victory conditions.",
+        "Fan-made, not part of the published game.".styled(xstyles.warning),
+    )
+}
+
 // Robotos's "Lower skill floor Dragon variant" (Discord, northgard-fanmade-content, 2026-10-21; asked for by Gman on 2026-10-24):
 // Dragon Clan's power and clan cards (CardVersions.dragonVariant in editions.scala, the rules in newblood.scala)
 case object DragonVariant extends Module("Lower skill floor Dragon", "fan-made variant by Robotos") {
@@ -965,7 +986,7 @@ object Module {
         case _ => "Modules and expansions"
     }
 
-    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, DragonVariant, AggressiveCreatures, LionKingdom, BearBorder)
+    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, FameGainsModule, DragonVariant, AggressiveCreatures, LionKingdom, BearBorder)
 
     // The team variants and the number of players each one needs
     val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6, Teams2v2v2 -> 6)

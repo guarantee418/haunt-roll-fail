@@ -535,6 +535,7 @@ object SeaExpansion extends Expansion {
         case RaidBuildPlaceAction(f, c, s, b, only, small, area, left, then) =>
             game.buildings += s -> b
             f.log("built", b, "in", s.area, "for free with", c)
+            FameGainsExpansion.built(f, b)
             Then(RaidBuildAction(f, c, only, small, area, left - 1, then))
 
         // Sacred Stones: Carved Stones needing no space, in different territories
@@ -545,6 +546,7 @@ object SeaExpansion extends Expansion {
         case RaidStoneAction(f, c, a, left, then) =>
             game.buildings += SpaceRef(a, SpaceRef.extra + game.buildings.keys.count(s => s.area == a && s.index >= SpaceRef.extra)) -> CarvedStone
             f.log("placed a", CarvedStone, "in", a, "with", c)
+            FameGainsExpansion.built(f, CarvedStone)
             Then(RaidStonesAction(f, c, left - 1, then))
 
         // Clear the Frontlines: enemy units (not warchiefs) in open territories

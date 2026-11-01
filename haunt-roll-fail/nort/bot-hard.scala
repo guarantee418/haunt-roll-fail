@@ -866,6 +866,9 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case IronAction(_, use, _) => |(use.?(80).|(0))
         case IronChooseAction(s, attacker, defender, area, e, food, faces, choice, _) => |(faceChoice(s, attacker, defender, area, e, food, faces, choice))
         case GemAction(_, card, _) => |(card.fame * 100.0 - 100)
+        // ALTERNATIVE FAME GAINS: the Achievement worth more now; resolving it when it gives a lot, or late
+        case FameKeepAction(_, card, _, _, _) => |(CommonExpansion.cardFame(self, card) * 100.0)
+        case FameResolveAction(_, card, _) => |(CommonExpansion.cardFame(self, card) * 100.0 - (game.lastYear - game.year) * 150)
         case MineralTradeAction(_, pay, also, r, _) => |(gain { pay.foreach(m => self.gainMineral(m, -1)) ; also.foreach(x => self.gain(x, -1)) ; self.gain(r, 1) })
         case MineralWinterAction(_, _, _) => |(300)
         case MineralWinterSkipAction(_, _) => |(0)

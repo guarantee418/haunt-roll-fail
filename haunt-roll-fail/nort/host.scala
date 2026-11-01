@@ -106,6 +106,8 @@ object Host extends hrf.host.BaseHost {
             (creatures && (sys.env.get("NORT_AGGRESSIVE").has("1") || random() < 0.3)).$(ModuleOption(AggressiveCreatures)) ++
             // NORT_MILITARY=1: always with the Military paths module (fan content)
             (sys.env.get("NORT_MILITARY").has("1") || random() < 0.5).$(ModuleOption(MilitaryModule)) ++
+            // NORT_FAME=1: always with Alternative fame gains (fan content), when the victory isn't Alternative victory
+            (alt.not && (sys.env.get("NORT_FAME").has("1") || random() < 0.4)).$(ModuleOption(FameGainsModule)) ++
             // NORT_WASTELANDS=1: always with Wastelands; a random central tile choice either way (it needs no module),
             // NORT_CENTRAL=1: never the standard tile; NORT_CENTRAL=<tile id>: always that tile
             wastelands.??((random() < 0.3).?($[hrf.meta.GameOption](ModuleOption(Wastelands))).|((random() < 0.7).$(WastelandsTiles) ++ (creatures && random() < 0.7).$(WastelandsCreatures))) ++ $(CentralChoice.all.%(c => creatures || c.tile.forall(Waste.creatureOnly.has(_).not)).%(c => c != StandardCentral || sys.env.get("NORT_CENTRAL").has("1").not)
@@ -122,7 +124,7 @@ object Host extends hrf.host.BaseHost {
             // NORT_HUMAN=1: the last seat counts as a person (game.human), the others as bots
             val bots = sys.env.get("NORT_HUMAN").has("1").??(MetaAdset.factions.take(n - 1)./(BotSeatOption(_)))
             bots.foreach(o => assert(MetaAdset.parseOption(MetaAdset.writeOption(o)) == $(o), o))
-            val adset = $(YearsOption.all.shuffle.head) ++ $(EditionChoice.all.shuffle.head) ++ victory ++ (random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.5).$(ModuleOption(Sea)) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(TakeUnrestCard) ++ (random() < 0.8).$(ClanPowerReports) ++ (random() < 0.8).$(MendFigures) ++ (random() < 0.8).$(OxPicksSpace) ++ (random() < 0.8).$(JoinedTilesOnly) ++ (random() < 0.8).$(SimultaneousCurse) ++ (random() < 0.8).$(KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, PrintedNewBlood, LynxBothAtSetup) ++ (random() < 0.5).$(BalancedStartTiles) ++ (random() < 0.8).$(LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith) ++ (random() < 0.4).$(ExtraDevelopment, FewerDevelopments).shuffle.take(1) ++ (sys.env.get("NORT_AGGRESSIVE").has("1") || random() < 0.3).$(ModuleOption(AggressiveCreatures)) ++ robotos ++ bots :+ lands
+            val adset = $(YearsOption.all.shuffle.head) ++ $(EditionChoice.all.shuffle.head) ++ victory ++ (random() < 0.5).$(ModuleOption(Warchiefs)) ++ (random() < 0.5).$(ModuleOption(Sea)) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(TakeUnrestCard) ++ (random() < 0.8).$(ClanPowerReports) ++ (random() < 0.8).$(MendFigures) ++ (random() < 0.8).$(OxPicksSpace) ++ (random() < 0.8).$(JoinedTilesOnly) ++ (random() < 0.8).$(SimultaneousCurse) ++ (random() < 0.8).$(KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, PrintedNewBlood, LynxBothAtSetup) ++ (random() < 0.5).$(BalancedStartTiles) ++ (random() < 0.8).$(LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith) ++ (random() < 0.4).$(ExtraDevelopment, FewerDevelopments).shuffle.take(1) ++ (sys.env.get("NORT_AGGRESSIVE").has("1") || random() < 0.3).$(ModuleOption(AggressiveCreatures)) ++ (victory.head.is[AltVictoryRandom.type].not && victory.head.is[AltVictoryChosen.type].not && (sys.env.get("NORT_FAME").has("1") || random() < 0.3)).$(ModuleOption(FameGainsModule)) ++ robotos ++ bots :+ lands
             MetaAdset.createGame(MetaAdset.factions.take(n), adset.distinct)
         }
         else {
@@ -148,6 +150,8 @@ object Host extends hrf.host.BaseHost {
 
     // NORT_MXP=n: Military paths MXP gains times n, to reach levels 2 and 3
     Debug.mxpTimes = sys.env.get("NORT_MXP")./(_.toInt).|(1)
+    // NORT_FAME_GOAL=n: Alternative fame gains wins at n fame, to test the win
+    Debug.fameGoal = sys.env.get("NORT_FAME_GOAL")./(_.toInt).|(120)
 
     def winners(a : Action)(implicit g : G) = a @@ {
         case GameOverWonAction(_, l, _) => l

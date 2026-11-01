@@ -925,6 +925,7 @@ object NewBloodExpansion extends Expansion {
             val s = SpaceRef(t.anchor, SpaceRef.extra + game.buildings.keys.count(s => s.area == t.anchor && s.index >= SpaceRef.extra))
             game.buildings += s -> DefenseTower
             f.log("built", DefenseTower, "in", a, "with", "Quality of Life".hl)
+            FameGainsExpansion.built(f, DefenseTower)
             Then(QualityCollectAction(f, game.controlled(f).%(t => game.buildingsIn(t).exists(_._2 == DefenseTower))./(_.anchor), then))
 
         case QualityCollectAction(f, Nil, then) =>
@@ -1537,6 +1538,7 @@ object NewBloodExpansion extends Expansion {
             val t = game.board.territory(a)
             game.buildings += spaceless(t) -> FoodSilo
             f.log("built", FoodSilo, "in", a, "with", "Cooking Mastery".hl)
+            FameGainsExpansion.built(f, FoodSilo)
             Then(then)
 
         case EconomicsAskAction(f, n, then) =>

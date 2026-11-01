@@ -1579,6 +1579,7 @@ object MapExpansion extends Expansion {
                 EventsExpansion.afterCombat(f, defender, 0, 0, |(f))
                 // Military paths: the win against the one unit pushed out
                 MilitaryExpansion.won(f, defender, 1)
+                FameGainsExpansion.won(f, defender)
                 game.note("attack-won")
                 attackWon(f, a)
 
@@ -1838,6 +1839,9 @@ object MapExpansion extends Expansion {
 
                 // Military paths: the winner's MXP, Leadership's captures
                 MilitaryExpansion.afterCombat(attacker, defender, t, soldiers, winner)
+
+                // Alternative fame gains: fame for the win and the kills
+                FameGainsExpansion.afterCombat(attacker, defender, t, soldiers, winner)
 
                 // Events (Blood Moon, Conquests) and the Alternative victory counts
                 EventsExpansion.afterCombat(attacker, defender, math.min(dc, au), math.min(ac, du), winner)
@@ -2240,6 +2244,8 @@ object MapExpansion extends Expansion {
                 game.note("path-build-" + b.name)
 
             MilitaryExpansion.built(f, b)
+
+            FameGainsExpansion.built(f, b)
 
             if (f == Goat) {
                 val n = b.large.?(2).|(1)
