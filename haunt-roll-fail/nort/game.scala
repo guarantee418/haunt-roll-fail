@@ -477,6 +477,8 @@ case class KnowledgeEachTerritoryAction(then : ForcedAction) extends ForcedActio
 case class KrakenMovesTideAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for AchievementsAside (Future Sight's and Mimirsbrunn's Achievements kept aside, effects.scala)
 case class AchievementsAsideAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// The same for EndOfYearAfterGeysers (the End of the Year goes on through every expansion after the Geysers, wilderness.scala)
+case class EndOfYearAfterGeysersAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for OxPicksSpace (Ox's Ancestral Equipment token on a small building space or a Carved Stone space, picked by Ox);
 // wrapped around Ox's ExploreTurnAction, it also asks for the token of that tile
 case class OxPicksSpaceAction(then : ForcedAction) extends ForcedAction with SkipValidate
@@ -700,6 +702,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var fightSize : Map[Faction, Int] = Map()
     var fortressYear : Map[Faction, Int] = Map()
     var militaryYear = 0
+    // The year whose Geysers were placed (EndOfYearAfterGeysers, wilderness.scala)
+    var geysersYear = 0
     var fightStarted = false
     var towersUsed = 0
     var fightKills : Map[Faction, Int] = Map()
@@ -2157,6 +2161,12 @@ object CommonExpansion extends Expansion {
         case AchievementsAsideAction(then) =>
             if (game.options.has(AchievementsAside).not)
                 game.addOption(AchievementsAside)
+
+            Then(then)
+
+        case EndOfYearAfterGeysersAction(then) =>
+            if (game.options.has(EndOfYearAfterGeysers).not)
+                game.addOption(EndOfYearAfterGeysers)
 
             Then(then)
 
