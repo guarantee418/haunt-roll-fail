@@ -626,6 +626,9 @@ file covers the build, server and deploy. No session can ssh to the server
   game can be switched over by hand: replace the last line of its log (a forced action `X`, e.g. `Next`) with
   `FrogCardsToPondAction(X)` through an `hrf-games` fix; it moves any Frog cards in the Lost Souls to the Pond and sets
   `game.frogsSkipLostSouls` (done for Power for Destiny on 2026-10-13).
+- The Woodland Alliance's supporters that are Frog cards show the Frog card back on its player panel, last in the row, and
+  are counted in its hint and info overlay ("5 supporters (3 Frog)"), as Frog cards in hand already do, since their back
+  shows (`supporterBacks` in `root/ui.scala`; Gman, 2026-11-01). Display only.
 - The Pond (Lilypad Diaspora's face-up Frog card pile) is shown only with the deck and the discard pile (or among the
   card piles on the map), like the Lost Souls, as any player may draw from it; it was also on the Diaspora's player
   panel until MaKoBwoY found the two copies confusing and Gman picked the public spot (2026-10-14).
