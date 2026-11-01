@@ -788,6 +788,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case SetupUnitsHereAction(f, round, l, area) => value(SetupUnitsAction(f, round, l, area))
         case SetupKaijaHereAction(f, round, l, area) => value(SetupKaijaAction(f, round, l, area))
         case SetupChiefHereAction(f, round, l, area, kaija) => value(SetupChiefAction(f, round, l, area, kaija))
+        case SetupLynxPairHereAction(_, _, _, area, chief) => |(gain { if (chief.not) game.addUnits(area, self, 1) ; game.lynx = |(area) ; game.lynx2 = |(area) ; if (chief) game.chiefs += self -> area })
         case SetupChiefAction(_, _, _, area, kaija) => |(gain { game.addUnits(area, self, kaija.?(1).|(2)) ; game.chiefs += self -> area ; if (kaija) game.setCompanion(self, |(area)) })
         case ReturnUnitsToAction(_, area, _) => |(gain(game.addUnits(area, self, 3)))
         case SecondChanceTurnAction(_, tile, spot, r, _) => |(setupPlacement(tile, spot, r))
