@@ -149,7 +149,7 @@ case object RandomAnyCentral extends CentralChoice("Random, any center tile") {
     override val explain = $("The standard starting tile, the Wilderness Great Lake or one of the Wastelands central tiles, drawn at random (the Wyvern's Den and the Gate of Helheim only with the " ~ "Creatures".hl ~ " module).")
 }
 
-abstract class CentralTileChoice(val id : String, text : String) extends CentralChoice(Waste.name(id)) {
+abstract class CentralTileChoice(val id : String, val text : String) extends CentralChoice(Waste.name(id)) {
     override def tile = |(id)
     override def decorate(e : Elem) = e ~ Waste.creatureOnly.has(id).?(" (Creatures module)".spn(xstyles.smaller85)).|(Empty)
     override val explain = $(Waste.name(id).hl ~ ": " ~ CombatText(text))

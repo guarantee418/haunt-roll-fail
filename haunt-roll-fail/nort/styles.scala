@@ -167,6 +167,9 @@ package object elem {
         object pyreUnit extends CustomStyle(background.color("#000000"), border.radius("50%"))
 
         object tile extends CustomStyle(display("inline-block"), width("26ex"), max.width("90%"), vertical.align("middle"), margin("0.3ex"))
+        // A tile with a rule of its own, tapped on the map (TileAbilities.view)
+        object abilityTile extends CustomStyle(display("block"), width("30ex"), max.width("70vw"), margin.left("auto"), margin.right("auto"), margin.top("1ex"), margin.bottom("1ex"))
+        object abilityText extends CustomStyle(max.width("50ex"), margin.left("auto"), margin.right("auto"), text.align("center"))
         // Adset: a seat's three map tiles, side by side during the draft
         object seatTile extends CustomStyle(display("inline-block"), width("14ex"), vertical.align("middle"), margin("0.3ex"))
         object rot0 extends CustomStyle()
