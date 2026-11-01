@@ -351,7 +351,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     // The piece on top where the map was tapped (a creature, Blainn, a Raid card, a warchief or a clan token), whose card or info opens when the tap does nothing else
-    def pieceInfo(target : $[Any]) : |[Any] = target.headOption.%(x => x.is[Card] || x.is[WarchiefInfo] || x.is[ClanAbilityInfo] || x.is[GearTokenInfo])
+    def pieceInfo(target : $[Any]) : |[Any] = target.headOption.%(x => x.is[Card] || x.is[WarchiefInfo] || x.is[ClanAbilityInfo] || x.is[GearTokenInfo] || x.is[TileAbilityInfo])
 
     // The single offered action a click on the map stands for (the cross on a building or tile being confirmed cancels)
     def clickable(target : $[Any]) : |[UserAction] = {
@@ -430,6 +430,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 g.moveTo(i.x + i.r, i.y)
                 g.arc(i.x, i.y, i.r, 0, 2 * math.Pi)
             }
+            // and the centrepiece of a tile with a rule of its own (the Vedrfolnir eagle, ...)
+            TileAbilities.features.get(tile).foreach { i =>
+                g.moveTo(i.x + i.r, i.y)
+                g.arc(i.x, i.y, i.r, 0, 2 * math.Pi)
+            }
             Tiles.byId(tile).areas./~(_.spaces).foreach { s =>
                 if (s.kind == LargeSpace) {
                     val (h, c) = (0.145, 0.065)
@@ -453,6 +458,29 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         }
 
         tints.get(key)
+    }
+
+    // The "i" on a tile with a rule of its own (TileAbilities), drawn once: a dark disc with a light ring and a serif i
+    lazy val abilityBadge : hrf.ui.sprites.Image = {
+        val n = 128
+        val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+        canvas.width = n
+        canvas.height = n
+        val c = new CanvasImage(canvas)
+        val g = c.context
+        g.beginPath()
+        g.arc(n / 2, n / 2, n / 2 - 6, 0, 2 * math.Pi)
+        g.fillStyle = "#1d3557"
+        g.fill()
+        g.lineWidth = 8
+        g.strokeStyle = "#f1e9d2"
+        g.stroke()
+        g.fillStyle = "#f1e9d2"
+        g.font = "bold italic 92px Georgia, 'Times New Roman', serif"
+        g.textAlign = "center"
+        g.textBaseline = "middle"
+        g.fillText("i", n / 2, n / 2 + 4)
+        c
     }
 
     // Tint per player colour: the colour of the player's name, as opaque as the player's Territories setting
@@ -892,6 +920,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 pieces.add(Sprite($(at("ui-spot-" + n, T * 0.9)), $(Rectangle(-T * 0.45, -T * 0.45, T * 0.9, T * 0.9)), $(s)))(sx(s.x + 0.5), sy(s.y + 0.5))
         }
 
+        // The centrepiece of each tile with a rule of its own, tapped: the rule (under every other piece, so a piece on it comes first)
+        board.placements.foreach { p =>
+            TileAbilities.features.get(p.tile).foreach { i =>
+                val (x, y) = board.rotate(i.x, i.y, p.r)
+                val z = i.r * T * 2 * 0.8
+                pieces.add(Sprite($, $(Rectangle(-z / 2, -z / 2, z, z)), $(TileAbilityInfo(p.tile))))(sx(p.x + x), sy(p.y + y))
+            }
+        }
+
         // Buildings on their spaces: a large building fills its (bigger) space
         game.buildings.foreach { case (s, b) =>
             val (x, y) = board.point(s)
@@ -1145,6 +1182,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 iconImage(p.tile, p.r, n).foreach { i =>
                     pieces.add(Sprite($(ImageRect(i, Rectangle(-z / 2, -z / 2, z, z), 1.0)), $))(sx(p.x + x), sy(p.y + y))
                 }
+            }
+        }
+
+        // The "i" at the top right of each such centrepiece, over the pieces like the resource icons
+        board.placements.foreach { p =>
+            TileAbilities.features.get(p.tile).foreach { i =>
+                val (x, y) = board.rotate(i.x, i.y, p.r)
+                val d = i.r * T * 0.72
+                val z = 120.0
+                pieces.add(Sprite($(ImageRect(abilityBadge, Rectangle(-z / 2, -z / 2, z, z), 1.0)), $(Rectangle(-z * 0.6, -z * 0.6, z * 1.2, z * 1.2)), $(TileAbilityInfo(p.tile))))(sx(p.x + x) + d, sy(p.y + y) - d)
             }
         }
 
@@ -2764,6 +2811,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Adset: a drafted clan's info, as behind the clan picker's i button
         case ClanInfo(f) =>
             onClick(AdsetClanInfo(f))
+
+        // A tile's centrepiece or its "i" tapped on the map: the tile's rule
+        case TileAbilityInfo(tile) =>
+            showOverlay(overlayScrollX(TileAbilities.view(tile)).onClick, onClick)
 
         // A clan token or warchief tapped on the map
         case ClanAbilityInfo(f) =>

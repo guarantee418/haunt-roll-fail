@@ -137,7 +137,7 @@ again over the pieces, so a figure that must overlap one never hides it. Tapping
 picks its territory for an offered action (`pieceInfo` in `nort/ui.scala`): a creature, Jötunn Blainn
 or a Raid card its card, a warchief (and Horse's Brok) its board, power and upgrade card (`WarchiefInfo`,
 `Meta.warchiefInfo`), and Kaija, Lynx's Brundr and Kaelinn, the High Tide and Scorched Earth tokens their
-clan's three clan cards (`ClanAbilityInfo`, `Meta.clanAbility`). An Ox Ancestral Equipment token says what it does in a fight and how Ox takes it (`GearTokenInfo`, `gearTokenView`; asked for by Gman on 2026-10-21); when taking a token is offered, the tap takes it. The Automa's Leaders open nothing.
+clan's three clan cards (`ClanAbilityInfo`, `Meta.clanAbility`). An Ox Ancestral Equipment token says what it does in a fight and how Ox takes it (`GearTokenInfo`, `gearTokenView`; asked for by Gman on 2026-10-21); when taking a token is offered, the tap takes it. The Automa's Leaders open nothing. The tiles with a rule of their own (the Wilderness and Wastelands Environment tiles, the Wastelands central tiles and The Bridge) keep their centrepiece (the Vedrfolnir eagle, ...) out of the territory tint, like the resource icons, with a small "i" at its top right; tapping either opens the tile's name, picture and rule (`TileAbilities` in `nort/tile-abilities.scala`, `TileAbilityInfo`; asked for by Marzaus and Gman on 2026-11-01).
 The Northgard layout (`layouter` in `nort/ui.scala`) has the map on the left
 and the player panels, log and action pane (choices and hand) on the right;
 the owner asked for that on 2026-10-05, undoing an earlier mirrored layout
