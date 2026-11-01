@@ -61,6 +61,8 @@ case class SetupAreaAction(self : Faction, round : Int, l : $[Faction], area : A
 case class SetupUnitsHereAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place in", area)("Three units")
 case class SetupKaijaHereAction(self : Faction, round : Int, l : $[Faction], area : AreaRef) extends BaseAction("Place in", area)("Two units and", OneCompanion(self))
 case class SetupChiefHereAction(self : Faction, round : Int, l : $[Faction], area : AreaRef, kaija : Boolean) extends BaseAction("Place in", area)(kaija.?("One unit, " ~ OneCompanion(self).elem0 ~ " and your warchief").|("Two units and your warchief"))
+// LynxBothAtSetup: both lynxes in one starting placement, with one unit or with the warchief
+case class SetupLynxPairHereAction(self : Faction, round : Int, l : $[Faction], area : AreaRef, chief : Boolean) extends BaseAction("Place in", area)(chief.?(Companion(self).elem0 ~ " and your warchief").|("One unit and " ~ Companion(self).elem0))
 case class ShuffledTilesBackAction(shuffled : $[String]) extends ShuffledAction[String]
 case class SetupUnitsAskAction(f : Faction, round : Int, l : $[Faction], tile : String, spot : Spot) extends ForcedAction
 
@@ -904,6 +906,28 @@ object MapExpansion extends Expansion {
         else
             game.setCompanion(f, |(a))
 
+    // LynxBothAtSetup: both lynxes may go in one starting placement (Gman, 2026-11-01), in place of two units
+    def lynxPair(f : Faction)(implicit game : Game) = f == Lynx && game.options.has(LynxBothAtSetup) && game.lynx.none && game.lynx2.none && game.kaijaReady(f)
+
+    def setupLynxPair(f : Faction, round : Int, l : $[Faction], a : AreaRef, chief : Boolean)(implicit game : Game) = {
+        if (chief.not)
+            game.addUnits(a, f, 1)
+        game.lynx = |(a)
+        game.lynx2 = |(a)
+        if (chief)
+            game.chiefs += f -> a
+        game.note(chief.?("chief-setup").|("kaija-setup"))
+
+        if (chief)
+            f.log("placed", Companion(f), "and", WarchiefElem(f), "in", a)
+        else
+            f.log("placed one unit and", Companion(f), "in", a)
+
+        robotosSetup(f, round, a)
+
+        Then(SetupPlaceAction(round, l.drop(1)))
+    }
+
     def setupKaija(f : Faction, round : Int, l : $[Faction], a : AreaRef)(implicit game : Game) = {
         game.addUnits(a, f, 2)
         setupCompanion(f, a)
@@ -1216,6 +1240,8 @@ object MapExpansion extends Expansion {
                 .when(chief.not && kaija)(SetupKaijaHereAction(f, round, l, a))
                 .when(chief && kaija && round == 2)(SetupChiefHereAction(f, round, l, a, false))
                 .when(chief && kaija)(SetupKaijaHereAction(f, round, l, a))
+                .when(lynxPair(f) && chief)(SetupLynxPairHereAction(f, round, l, a, true))
+                .when(lynxPair(f))(SetupLynxPairHereAction(f, round, l, a, false))
                 .add(SetupUnitsHereAction(f, round, l, a))
                 .cancel
 
@@ -1239,6 +1265,9 @@ object MapExpansion extends Expansion {
 
         case SetupChiefHereAction(f, round, l, a, kaija) =>
             setupChief(f, round, l, a, kaija)
+
+        case SetupLynxPairHereAction(f, round, l, a, chief) =>
+            setupLynxPair(f, round, l, a, chief)
 
         // RECRUIT
         case RecruitAction(f, left, mode, placed, then) =>
