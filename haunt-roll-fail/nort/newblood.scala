@@ -520,7 +520,7 @@ object NewBloodExpansion extends Expansion {
         case DragonClanEffect => sacrificeOptions(f)
         case SacrificeCaptureEffect => CardsExpansion.adjacentEnemyUnits(f).any
         case WorkforceEffect => CommonExpansion.available(f) > 0 || game.pyre.any
-        case CraftsmenEffect => MapExpansion.playable(f, RecruitEffect(2)) || MapExpansion.replacements(f).any
+        case CraftsmenEffect => MapExpansion.playable(f, RecruitEffect(2)) || MapExpansion.replacements(f, true).any
         case QualityEffect => qualityTargets(f).any || game.controlled(f).exists(t => game.buildingsIn(t).exists(_._2 == DefenseTower))
         case KrakenClanEffect => tideTerritories.any || tideTargets.any
         case EndlessTideEffect => CardsExpansion.enemyUnits(f).exists(x => game.board.open(x._1)) || CommonExpansion.available(f) > 0
@@ -908,7 +908,7 @@ object NewBloodExpansion extends Expansion {
             Then(HorseClosedAction(f, rest, then))
 
         case CraftsmenAction(f, then) =>
-            val l = MapExpansion.replacements(f)
+            val l = MapExpansion.replacements(f, true)
 
             if (l.none)
                 Then(then)
