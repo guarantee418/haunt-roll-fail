@@ -542,6 +542,7 @@ object MilitaryExpansion extends Expansion {
                 game.note("attack-won")
                 MapExpansion.attackWon(f, a)
                 afterCombat(f, defender, t, Map(defender -> (0, false), f -> (0, false)), |(f))
+                FameGainsExpansion.afterCombat(f, defender, t, Map(defender -> (0, false), f -> (0, false)), |(f))
 
                 Then(ClanPowers.report(then))
             }
@@ -552,6 +553,7 @@ object MilitaryExpansion extends Expansion {
                 EventsExpansion.afterCombat(f, defender, killed, game.fightKills.getOrElse(f, 0), |(defender))
                 game.note("attack-lost")
                 afterCombat(f, defender, t, Map(defender -> (0, false), f -> (0, false)), |(defender))
+                FameGainsExpansion.afterCombat(f, defender, t, Map(defender -> (0, false), f -> (0, false)), |(defender))
 
                 Then(ClanPowers.report(then))
             }
