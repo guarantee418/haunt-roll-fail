@@ -736,6 +736,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var casualtyPicks = Map[Faction, (Int, Boolean, Boolean, Boolean)]()
     // Clans whose pick loses both lynxes (CasualtyBothLynxAction)
     var casualtyBothLynx = Set[Faction]()
+    // Clans whose pick loses the bodyguard before the units (CasualtyGuardAction)
+    var casualtyGuard = Set[Faction]()
 
     // The combat report of the fight just decided, until everyone shown it has tapped OK (CombatReportAction)
     var fightReport : |[FightReport] = None
@@ -1136,6 +1138,10 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         casualtyPicks.get(f) match {
             case Some((units, kaija, chief, blainnToo)) =>
                 casualtyPicks -= f
+                if (casualtyGuard.contains(f)) {
+                    casualtyGuard -= f
+                    guards = guards.but(f)
+                }
                 MilitaryExpansion.kill(t, f, units)
                 if (chief)
                     chiefs -= f
