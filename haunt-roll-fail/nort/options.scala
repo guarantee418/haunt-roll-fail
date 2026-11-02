@@ -564,6 +564,14 @@ case object LynxBothAtSetup extends GameOption with ToggleOption {
     def valueOn = "Lynx may start with both lynxes".txt
 }
 
+// Mielikki's power ("attacking, she may bring Brundr or Kaelinn") also when she attacks a creature (Marzaus, 2026-11-02: attacking a
+// Wolf with her, he wanted to bring his lynx); it was only offered against clans. Hidden, and given to every new game (Meta.mandatoryFor);
+// older games replay the old way (MielikkiCreatureAction in newblood.scala)
+case object MielikkiAgainstCreatures extends GameOption with ToggleOption {
+    val group = "New Blood".txt
+    def valueOn = "Mielikki brings a lynx against creatures".txt
+}
+
 // Brundr and Kaelinn count as units for Winter costs (Gman, 2026-11-01: "The lynx cats count towards winter costs"); the site had
 // left them out, reading the Uncharted Horizons rulebook's note on companions. Hidden, and given to every new game (Meta.mandatoryFor);
 // older games replay the old way (FactionState.winterUnits)

@@ -207,18 +207,21 @@ case class TideLaterAction(f : Faction, then : ForcedAction) extends ForcedActio
 case class KaraPlaceAction(self : Faction, area : AreaRef, then : ForcedAction) extends BaseAction(WarchiefElem(Kraken), "place a", "High Tide".hl, "token in her territory")(area)
 
 // Lynx
-case class LynxGoAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, units : Int, then : ForcedAction) extends BaseAction("Brundr and Kaelinn".hl, "bonus Move from", from, "to", to)(LynxParty(n, units)) with MapTarget { def target = to }
+case class LynxGoAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, units : Int, then : ForcedAction) extends BaseAction("Brundr and Kaelinn".hl, "bonus Move from", from, "to", to)(LynxParty(from, n, units)) with MapTarget { def target = to }
 case class LynxBonusToAction(self : Faction, from : AreaRef, to : AreaRef, units : Int, then : ForcedAction) extends BaseAction("Brundr and Kaelinn".hl, "bonus Move from", from, "to")(to) with Soft with MapTarget { def target = to }
-case class LynxParty(n : Int, units : Int) extends Elementary {
-    def elem = ((n == 2).?("both lynxes").|("one lynx") + (units > 0).??(" and " + units + (units == 1).?(" unit").|(" units"))).txt
+case class LynxParty(from : AreaRef, n : Int, units : Int) extends GameElementary {
+    def elem(implicit game : Game) = (n == 2).?("both lynxes".txt).|(game.lynxNameIn(game.board.territory(from)).hl) ~ (units > 0).??(" and " + units + (units == 1).?(" unit").|(" units")).txt
 }
 case class MoveOneLynxAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, chief : Boolean, cost : Int, left : Int, e : MoveEffect, then : ForcedAction) extends BaseAction("Move from", from, "to", to)(MoveOneLynxLabel(n, chief))
-case class MoveOneLynxLabel(n : Int, chief : Boolean) extends Elementary {
-    def elem = ($("one lynx".txt) ++ (n > 0).$((n == 1).?("1 unit").|(n.toString + " units").txt) ++ chief.$("the warchief".txt)).join(" and ")
+// One of the two lynxes in a territory: the second slot's (LynxFirstAction swaps the names first for the other)
+case class MoveOneLynxLabel(n : Int, chief : Boolean) extends GameElementary {
+    def elem(implicit game : Game) = ($(game.lynxName(true).hl) ++ (n > 0).$((n == 1).?("1 unit").|(n.toString + " units").txt) ++ chief.$("the warchief".txt)).join(" and ")
 }
 case class NimbleAction(f : Faction, used : $[AreaRef], then : ForcedAction) extends ForcedAction
 case class NimblePullAction(self : Faction, lynx : AreaRef, from : AreaRef, enemy : Faction, used : $[AreaRef], then : ForcedAction) extends BaseAction("Nimble Paws".hl, "pull a unit to", lynx, "from")(from, InParens(enemy)) with MapTarget { def target = from }
-case class MielikkiLynxAction(self : Faction, from : AreaRef, area : AreaRef, then : ForcedAction) extends BaseAction(WarchiefElem(Lynx), "bring a lynx to her territory from")(from) with MapTarget { def target = from }
+case class MielikkiLynxAction(self : Faction, from : AreaRef, area : AreaRef, then : ForcedAction) extends BaseAction(WarchiefElem(Lynx), "bring a lynx to her territory from")((g : Game) => g.lynxName(g.lynx2.has(from)).hl ~ " from " ~ from.elem(g)) with MapTarget { def target = from }
+// Mielikki attacking a creature (MielikkiAgainstCreatures): her step 1 before the clan's other step 1 powers
+case class MielikkiCreatureAction(a : AreaRef, then : ForcedAction) extends ForcedAction
 
 // Ox
 case class BattlegroundsAfterAction(f : Faction, then : ForcedAction) extends ForcedAction
@@ -442,6 +445,15 @@ object NewBloodExpansion extends Expansion {
     def tileHasLore(tile : String) = Tiles(tile).areas.exists(a => a.lore > 0 || a.spaces.exists(_.kind == CarvedSpace))
 
     // Lynx: Brundr and Kaelinn's Move 1 (with the units there) to a neutral or friendly territory
+    // Mielikki brings a lynx from anywhere: each by name (both from one area: the first slot's through LynxFirstAction)
+    def mielikkiAsk(t : Territory, a : AreaRef, next : ForcedAction)(implicit game : Game) : Ask = {
+        val from = game.lynxes.%(o => t.areas.contains(o).not).distinct
+        Ask(Lynx)
+            .each(from)(o => MielikkiLynxAction(Lynx, o, a, next))
+            .each(from.%(o => game.lynx.has(o) && game.lynx2.has(o)))(o => LynxFirstAction(Lynx, MielikkiLynxAction(Lynx, o, a, next)))
+            .add(next.as("Bring no lynx")(WarchiefElem(Lynx)))
+    }
+
     def lynxTargets(implicit game : Game) : $[Territory] = game.lynx match {
         case Some(a) =>
             val t = game.board.territory(a)
@@ -1404,6 +1416,7 @@ object NewBloodExpansion extends Expansion {
             FigurePicker(LynxBonusGoal(f, from, to, u, then))
 
         case LynxGoAction(f, from, to, n, units, then) =>
+            val party = LynxParty(from, n, units).elem
             val src = game.board.territory(from)
             val dst = game.board.territory(to)
 
@@ -1417,7 +1430,7 @@ object NewBloodExpansion extends Expansion {
 
             val enemy = game.present(dst).%(game.enemy(f, _))
 
-            f.log("moved", LynxParty(n, units), "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty))
+            f.log("moved", party, "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty))
             game.note("lynx-move")
 
             if (enemy.any) {
@@ -1440,7 +1453,7 @@ object NewBloodExpansion extends Expansion {
 
             val enemy = game.present(dst).%(game.enemy(f, _))
 
-            f.log("moved", MoveOneLynxLabel(n, chief), "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty), game.passOnly(f, dst).?("(passing through)".txt).|(Empty))
+            f.log("moved", MoveOneLynxLabel(n, chief).elem, "from", from, "to", to, enemy.any.?("and attacked " ~ enemy./(_.elem).join(", ")).|(Empty), game.passOnly(f, dst).?("(passing through)".txt).|(Empty))
 
             if (game.swampIn(dst) && game.swampIn(src).not) {
                 game.removeFigures(dst, f, 1)
@@ -1485,14 +1498,22 @@ object NewBloodExpansion extends Expansion {
         case ChiefStepOneAction(Lynx :: rest, a, then) if rest.any && printed && game.chiefIn(game.board.territory(a), Lynx) && game.lynxes.exists(o => game.board.territory(a).areas.contains(o).not) =>
             val t = game.board.territory(a)
             val next = ChiefStepOneAction(rest, a, then)
-            Ask(Lynx).each(game.lynxes.%(o => t.areas.contains(o).not).distinct)(o => MielikkiLynxAction(Lynx, o, a, next)).add(next.as("Bring no lynx")(WarchiefElem(Lynx)))
+            mielikkiAsk(t, a, next)
+
+        case MielikkiCreatureAction(a, then) =>
+            val t = game.board.territory(a)
+            if (game.chiefIn(t, Lynx) && game.lynxes.exists(o => t.areas.contains(o).not))
+                mielikkiAsk(t, a, then)
+            else
+                Then(then)
 
         case MielikkiLynxAction(f, from, a, then) =>
+            val name = game.lynxName(game.lynx2.has(from))
             if (game.lynx2.has(from))
                 game.lynx2 = |(a)
             else
                 game.lynx = |(a)
-            f.log("brought a lynx from", from, "with", WarchiefElem(f))
+            f.log("brought", name.hl, "from", from, "with", WarchiefElem(f))
             game.note("mielikki")
             Then(then)
 
