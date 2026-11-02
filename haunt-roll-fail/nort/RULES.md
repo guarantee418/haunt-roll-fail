@@ -1614,3 +1614,48 @@ before the fight and its return to the Den. Readings:
   creature deck), and the Wyvern's Den and Hrimgandr's Lair tiles still work.
 - Defense Towers (Tower PC version) still get their challenge before the creature attacks.
 
+
+## Fan content: Alternative fame gains (2026-11-01)
+
+Marzaus's "Alternative fame gains" (Discord, northgard-fanmade-content, 2026-10-22; Gman sent a screenshot on
+2026-11-01). Option `ModuleOption(FameGainsModule)`, under "Fan content", also in Adset; rules in
+`fame-gains.scala`. The post:
+
+- Reach 120 Fame and control Altar of Fame to win the game immediately (replaces all victory conditions)
+- Altar of Kings gives 3 extra fame when built instantly (5 in total)
+- Killing enemy player unit gives 1 fame (warchiefs give 5)
+- Winning fights against player gives 1 fame
+- Building gives fame (small = 1, big = 2)
+- Purchasing upgrade gives 5 fame
+- Development cards give fame instantly
+- Achievement Card can be resolved during players turn at any point (once only, not an action), gain Fame based
+  on the card (pick 2 random Ach. card and keep 1 hidden at the game setup)
+
+Readings (Gman may change them):
+
+- "Altar of Fame" is the Altar of Kings, the board game's only altar. A clan wins as soon as its fame tokens
+  (`f.fame`) reach 120 while it controls a territory with an Altar of Kings, checked after every action
+  (`Game.loggedPerform`, `FameWinAction`); with teams, its team wins. Several at once: the most fame, then the
+  usual tie-breaks.
+- "Replaces all victory conditions": three closed territories with large buildings no longer win, and the option
+  needs the standard or "Fame victory only" conditions (not Alternative victory). It is the only way to win
+  (Gman, 2026-11-02): nobody at 120 with an Altar after the last year, the game goes on, year after year, until a
+  clan wins (`GameEndAction` in `fame-gains.scala`). The extra years reveal no cards once the Development decks
+  are used up. Bot games stop after `NORT_FAME_YEARS` (4) extra years and are scored as usual.
+- The Altar of Kings still gives its 3 fame each harvest; built, it gives 2 like any large building plus 3 (5).
+- Building: every building a clan places, through a Build card or for free (Quality of Life, Cooking Mastery,
+  Raid cards, Sacred Stones, free Military paths buildings); Mines count as small buildings. Replacing a
+  building (Industrious Villagers, Craftsmen) gives nothing.
+- Kills and wins count only in fights against a clan, not against creatures nor removals by cards outside a
+  fight. Kaija and the other companions aren't units; Militia and bodyguards (Military paths) are. Kills before
+  the fight (Defense Towers with the Tower PC version, Guardian, Leadership) count, and a win without a roll
+  (Intimidate, towers or Leadership killing the last enemy) counts. The Automa gains no fame from these rules.
+- Upgrade: the clan upgrade action (lore, or the Lion's Faith), 5 fame.
+- A Development card gives its fame when taken (picked after passing, Future Sight, Mimirsbrunn) and none at
+  the end of the game, so removing it later loses nothing.
+- Achievements: at setup, once the map and the starting units are placed, before the first year, each
+  clan in turn order draws 2 at random, keeps 1 face down (`game.fameKept`) and shuffles the other back. Once, at any choice
+  of its own turn (the six turn choices, or after a card), it may resolve it for the fame the card gives then
+  (counted as at the end of the game, `cardFame`); it is offered dimmed while it would give nothing. An
+  Achievement never resolved gives nothing. As they are all dealt at setup, the last year reveals no
+  Achievement cards, and passing then takes no card.

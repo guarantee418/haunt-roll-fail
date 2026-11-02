@@ -127,7 +127,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
     val board = game.board
 
     // Harvests still to come, this year's included; values over more than three years are too uncertain to count
-    val harvests : Int = math.max(0, game.lastYear - game.year + 1)
+    // Alternative fame gains: the game goes on past the last year until someone wins, so at least one more harvest
+    val harvests : Int = math.max(game.has(FameGainsModule).??(1), game.lastYear - game.year + 1)
     val horizon : Double = math.min(harvests, 3).toDouble
 
     // The actions phase is over once everyone has passed: the harvest is then in the resources already
@@ -866,6 +867,9 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case IronAction(_, use, _) => |(use.?(80).|(0))
         case IronChooseAction(s, attacker, defender, area, e, food, faces, choice, _) => |(faceChoice(s, attacker, defender, area, e, food, faces, choice))
         case GemAction(_, card, _) => |(card.fame * 100.0 - 100)
+        // ALTERNATIVE FAME GAINS: the Achievement worth more now; resolving it when it gives a lot, or late
+        case FameKeepAction(_, card, _, _, _) => |(CommonExpansion.cardFame(self, card) * 100.0)
+        case FameResolveAction(_, card, _) => |(CommonExpansion.cardFame(self, card) * 100.0 - (game.lastYear - game.year) * 150)
         case MineralTradeAction(_, pay, also, r, _) => |(gain { pay.foreach(m => self.gainMineral(m, -1)) ; also.foreach(x => self.gain(x, -1)) ; self.gain(r, 1) })
         case MineralWinterAction(_, _, _) => |(300)
         case MineralWinterSkipAction(_, _) => |(0)

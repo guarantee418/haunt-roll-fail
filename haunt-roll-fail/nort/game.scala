@@ -612,7 +612,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     val warchiefCards = has(Warchiefs) && options.has(WarchiefPawns).not || options.has(WarchiefCards)
 
     // Three closed territories with large buildings win at the end of a year (not with the Alternative victory module)
-    val domination = options.has(FameOnly).not && has(VictoryModule).not && (setup.has(Automa).not || options.has(AutomaLevelOption(1)))
+    val domination = options.has(FameOnly).not && has(VictoryModule).not && has(FameGainsModule).not && (setup.has(Automa).not || options.has(AutomaLevelOption(1)))
 
     // Team play: each player on the team picked on its row of the setup screen (TeamPlay, TeamOption)
     val teamPlay : Boolean = options.has(TeamPlay)
@@ -708,6 +708,11 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var towersUsed = 0
     var fightKills : Map[Faction, Int] = Map()
     var rerolled : $[Faction] = $
+
+    // Alternative fame gains (fame-gains.scala): whether the Achievements were dealt, each clan's kept Achievement until resolved, the ones resolved
+    var fameDealt = false
+    var fameKept : Map[Faction, Card] = Map()
+    var fameResolved : $[(Faction, Card)] = $
     var extraMoved = false
 
     // Territories where a Move action started a fight
@@ -1229,7 +1234,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
             )
 
         draftInfo ++
-        (year > 0).$(Info("Year", year.hlb, "of", lastYear.hl)) ++
+        (year > 0).$(Info("Year", year.hlb, (year > lastYear).?("(past the last, " ~ lastYear.hl ~ ")").|("of " ~ lastYear.hl))) ++
         self.%(states.contains)./~(f =>
             (choosing || inLoreTree).not.??(f.hand.distinct./(c => turn.?(HandInfoAction(f, "Your hand".styled(colors(f)), c, f.hand.count(c)) : Info).|(CardInfoAction(f, "Your hand".styled(colors(f)), c, f.hand.count(c))))) ++
             f.active.distinct./(c => CardInfoAction(f, "Played".styled(colors(f)), c, f.active.count(c))) ++
@@ -1271,6 +1276,10 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         if (has(TowersModule))
             TowersExpansion.sweep(this)
 
+        // Alternative fame gains: 120 fame and an Altar of Kings win at once
+        if (has(FameGainsModule) && isOver.not && c.is[GameOver].not && FameGainsExpansion.winners(this).any)
+            return Then(FameWinAction(FameGainsExpansion.winners(this)))
+
         highlight.faction = c match {
             case Ask(f, _) => $(f) ++ ptf.get(f).$
             case MultiAsk(a, _) => a./~(a => $(a.faction) ++ ptf.get(a.faction).$)
@@ -1307,6 +1316,10 @@ object Debug {
 
     // Military paths module: MXP gains multiplied, to test the higher levels in bot games (NORT_MXP in host.scala)
     var mxpTimes = 1
+    // Alternative fame gains: the fame to win, lowered to test the win in bot games (NORT_FAME_GOAL in host.scala)
+    var fameGoal = 120
+    // and the years past the last one it may go on for, before the bot games stop (NORT_FAME_YEARS in host.scala)
+    var fameExtraYears = Int.MaxValue / 2
 
     def summary(g : Game) {
         if (stats)
@@ -1463,6 +1476,7 @@ object CommonExpansion extends Expansion {
             case Achievement("warlord") => game.states(f).units
             case Achievement("mountaineer") => 2 * territories.count(HorizonDevsExpansion.rough)
             case Achievement("sailor") => 2 * territories.count(game.board.open)
+            case c if FameGainsExpansion.scoresLater(c).not => 0
             case c => c.fame
         }
     }
@@ -1482,6 +1496,7 @@ object CommonExpansion extends Expansion {
             .add(TurnModeAction(f, RemoveMode).!(f.hand.exists(_.removable).not || f.lore < 2, "needs 2 lore"))
             .add(TurnModeAction(f, UpgradeMode).!(f.hand.none || f.upgrades.none || f.has(LionExpansion.upgradeResource(f)) < game.upgradeCost(f), "needs " + game.upgradeCost(f) + " " + LionExpansion.upgradeResource(f).name.toLowerCase))
             .add(PassAction(f))
+            .add(FameGainsExpansion.resolve(f, TurnAction(f, 0)))
 
     // The hand after a choice: tapping a card does it; Cancel goes back to the six choices
     def modeChoices(f : Faction, m : TurnMode)(implicit game : Game) : Continue = m match {
@@ -1761,7 +1776,8 @@ object CommonExpansion extends Expansion {
                 game.display = game.achievements
                 game.achievements = $
 
-                log("Achievement cards", game.display./(_.elem).join(", "), "are available")
+                if (game.display.any)
+                    log("Achievement cards", game.display./(_.elem).join(", "), "are available")
             }
             else {
                 game.display = game.developments.take(game.devsIn(game.year))
@@ -1783,7 +1799,7 @@ object CommonExpansion extends Expansion {
             if (stage == 0)
                 turnModes(f)
             else
-                playChoices(f, stage).add(EndTurnAction(f))
+                playChoices(f, stage).add(EndTurnAction(f)).add(FameGainsExpansion.resolve(f, TurnAction(f, stage)))
 
         case TurnModeAction(f, m) =>
             modeChoices(f, m)
@@ -1885,6 +1901,8 @@ object CommonExpansion extends Expansion {
 
             f.log("upgraded to", u, "for", game.upgradeCost(f).hl, LionExpansion.upgradeResource(f), game.robotos(f).?("(Robotos)".hl).|(Empty))
 
+            FameGainsExpansion.upgraded(f, u)
+
             Then(NextTurnAction(f))
 
         case PassAction(f) =>
@@ -1913,6 +1931,8 @@ object CommonExpansion extends Expansion {
             f.draw = c +: f.draw
 
             f.log("took", c, "and placed it on top of their draw pile")
+
+            FameGainsExpansion.taken(f, c)
 
             Then(PassedAction(f))
 
