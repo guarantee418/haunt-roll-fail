@@ -511,7 +511,8 @@ object CreaturesExpansion extends Expansion {
 
                 // Step 1: Signy and Brand (Warchiefs module)
                 if (game.has(Warchiefs))
-                    Then(ChiefStepOneAction($(f), a, step))
+                    // Mielikki attacking a creature brings a lynx too (Marzaus, 2026-11-02), in games with MielikkiAgainstCreatures
+                    Then((f == Lynx && attacking && game.options.has(MielikkiAgainstCreatures) && game.options.has(PrintedNewBlood)).?(MielikkiCreatureAction(a, ChiefStepOneAction($(f), a, step)) : ForcedAction).|(ChiefStepOneAction($(f), a, step)))
                 else
                     Then(step)
             }
