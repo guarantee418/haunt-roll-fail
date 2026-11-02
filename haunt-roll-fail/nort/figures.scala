@@ -46,6 +46,10 @@ trait FigureGoal extends GameElementary {
     def finish(p : FigurePick)(implicit game : Game) : |[UserAction]
     def cancel(a : Ask)(implicit game : Game) : Ask = a.cancel
 
+    // One of the two lynxes picked: the second slot's goes (or is lost), so the first slot's needs the names swapped first
+    def named(p : FigurePick, a : UserAction)(implicit game : Game) : UserAction =
+        (owner == Lynx && maxCompanions == 2 && p.first && p.second.not).?(LynxFirstAction(self, a)).|(a)
+
     def picks(implicit game : Game) : $[FigurePick] = {
         def may(b : Boolean) = b.?($(false, true)).|($(false))
         val c = maxCompanions
@@ -56,7 +60,8 @@ trait FigureGoal extends GameElementary {
         val max = maxUnits
         val c = maxCompanions
 
-        val names : $[Elem] = (owner == Lynx && c == 2).?($("Brundr".hl, "Kaelinn".hl)).|((owner == Lynx && game.options.has(PrintedNewBlood)).?($("Brundr or Kaelinn".hl)).|($(Companion(owner).elem)))
+        // Lynx: the first switch is the first slot's lynx, the second the second's (game.lynxName)
+        val names : $[Elem] = (owner == Lynx && c == 2).?($(game.lynxName(false).hl, game.lynxName(true).hl)).|((owner == Lynx && game.options.has(PrintedNewBlood)).?($(game.lynxNameIn(territory).hl)).|($(Companion(owner).elem)))
 
         cancel(Ask(self)
             .add(FiguresExplodeAction(self, picks./~(finish).distinct))
@@ -89,6 +94,17 @@ case class FigureSwitchAction(self : Faction, goal : FigureGoal, p : FigurePick,
 
 case class FiguresNoneAction(self : Faction, goal : FigureGoal, label : Elem) extends BaseInfo(goal)(label)
 
+// The first slot's lynx picked alone out of a pair: the names are swapped (game.lynxSwapped), then the same recorded action as before
+// does it with the second slot's figure, now bearing the picked name; the label is shown with the names swapped
+case class LynxFirstAction(self : Faction, a : UserAction) extends BaseAction((g : Game) => LynxFirstAction.swapped(a.question(g))(g))((g : Game) => LynxFirstAction.swapped(a.option(g))(g))
+
+object LynxFirstAction {
+    def swapped(e : => Elem)(implicit game : Game) : Elem = {
+        game.lynxSwapped = game.lynxSwapped.not
+        try e finally { game.lynxSwapped = game.lynxSwapped.not }
+    }
+}
+
 case class FiguresExplodeAction(self : Faction, all : $[UserAction]) extends HiddenChoice with HalfExplode {
     def expand(target : |[Action]) = all
 }
@@ -105,7 +121,7 @@ case class MoveGoal(self : Faction, from : AreaRef, to : AreaRef, cost : Int, le
     override def maxCompanions(implicit game : Game) = kaija.??(super.maxCompanions)
     def start(implicit game : Game) = FigurePick(maxUnits, false, false, false)
     def finish(p : FigurePick)(implicit game : Game) =
-        p.any.?((owner == Lynx && p.companions == 1 && maxCompanions == 2).?(MoveOneLynxAction(self, from, to, p.units, p.chief, cost, left, e, then) : UserAction).|(MoveUnitsAction(self, from, to, p.units, p.companions > 0, p.chief, cost, left, e, then)))
+        p.any.?((owner == Lynx && p.companions == 1 && maxCompanions == 2).?(named(p, MoveOneLynxAction(self, from, to, p.units, p.chief, cost, left, e, then))).|(MoveUnitsAction(self, from, to, p.units, p.companions > 0, p.chief, cost, left, e, then)))
 }
 
 // A retreat after a lost fight (RetreatPickAction); everyone left goes somewhere, so a pick only splits them
@@ -114,7 +130,7 @@ case class RetreatGoal(self : Faction, from : AreaRef, to : AreaRef, rough : Boo
     def elem(implicit game : Game) = "Retreat from " ~ from.elem ~ " to " ~ to.elem
     def start(implicit game : Game) = FigurePick(maxUnits, maxCompanions > 0, maxCompanions > 1, chiefMay)
     def finish(p : FigurePick)(implicit game : Game) =
-        p.any.?((owner == Lynx && p.companions == 1 && maxCompanions == 2).?(RetreatOneLynxAction(self, from, to, p.units, p.chief, rough, then) : UserAction).|(RetreatPartyAction(self, from, to, p.units, p.companions > 0, p.chief, rough, then)))
+        p.any.?((owner == Lynx && p.companions == 1 && maxCompanions == 2).?(named(p, RetreatOneLynxAction(self, from, to, p.units, p.chief, rough, then))).|(RetreatPartyAction(self, from, to, p.units, p.companions > 0, p.chief, rough, then)))
     override def cancel(a : Ask)(implicit game : Game) = MapExpansion.retreatCount(a, owner, from, rough)
 }
 
@@ -123,7 +139,7 @@ case class BrandRetreatGoal(self : Faction, owner : Faction, from : AreaRef, to 
     def elem(implicit game : Game) = "Brand's Bravery".hl ~ ": " ~ owner.elem ~ " retreats from " ~ from.elem ~ " to " ~ to.elem
     def start(implicit game : Game) = FigurePick(maxUnits, maxCompanions > 0, maxCompanions > 1, chiefMay)
     def finish(p : FigurePick)(implicit game : Game) =
-        p.any.?((owner == Lynx && p.companions == 1 && maxCompanions == 2).?(BrandRetreatOneLynxAction(self, owner, from, to, p.units, p.chief, rough, then) : UserAction).|(BrandRetreatPartyAction(self, owner, from, to, p.units, p.companions > 0, p.chief, rough, then)))
+        p.any.?((owner == Lynx && p.companions == 1 && maxCompanions == 2).?(named(p, BrandRetreatOneLynxAction(self, owner, from, to, p.units, p.chief, rough, then))).|(BrandRetreatPartyAction(self, owner, from, to, p.units, p.companions > 0, p.chief, rough, then)))
     override def cancel(a : Ask)(implicit game : Game) = MapExpansion.retreatCount(a, owner, from, rough)
 }
 
@@ -134,7 +150,7 @@ case class LynxBonusGoal(self : Faction, from : AreaRef, to : AreaRef, units : I
     override def maxUnits(implicit game : Game) = units
     override def chiefMay(implicit game : Game) = false
     def start(implicit game : Game) = FigurePick(0, true, maxCompanions > 1, false)
-    def finish(p : FigurePick)(implicit game : Game) = (p.companions > 0).?(LynxGoAction(self, from, to, p.companions, p.units, then))
+    def finish(p : FigurePick)(implicit game : Game) = (p.companions > 0).?(named(p, LynxGoAction(self, from, to, p.companions, p.units, then)))
 }
 
 // Casualties picked by their player (ChooseCasualties): which k figures are lost. The units counter counts the units, then any
@@ -161,7 +177,7 @@ case class CasualtyGoal(self : Faction, from : AreaRef, k : Int, then : ForcedAc
         p.companions match {
             case 2 if p.units < max => (taken(p) == k).?(CasualtyBothLynxAction(owner, from, k, p.units, p.chief, p.blainn, then))
             case 2 => old(p.units + 1, true)
-            case 1 => old(p.units, true).orElse((p.units == max).??(old(p.units + 1, false)))
+            case 1 => old(p.units, true).orElse((p.units == max).??(old(p.units + 1, false)))./(named(p, _))
             case _ => old(p.units, false)
         }
     }

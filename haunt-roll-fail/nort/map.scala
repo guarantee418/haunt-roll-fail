@@ -158,7 +158,7 @@ case class CasualtyParty(f : Faction, area : AreaRef, n : Int, kaija : Boolean, 
             val s = MilitaryExpansion.soldiers(t, f) - game.extraLynx(t, f)
             val lynxes = both.?(2).|(kaija.??(1) + (n > s).??(1))
             val u = both.?(n).|(math.min(n, s))
-            "Lose " ~ ((u > 0).$((u == 1).?("1 unit").|(u.toString + " units").txt) ++ (lynxes == 2).$("Brundr and Kaelinn".hl) ++ (lynxes == 1).$("one lynx".txt) ++ chief.$("the warchief".txt) ++ blainn.$("Jötunn Blainn".hl)).join(" and ")
+            "Lose " ~ ((u > 0).$((u == 1).?("1 unit").|(u.toString + " units").txt) ++ (lynxes == 2).$("Brundr and Kaelinn".hl) ++ (lynxes == 1).$(game.lynxNameIn(t).hl) ++ chief.$("the warchief".txt) ++ blainn.$("Jötunn Blainn".hl)).join(" and ")
         }
         else
             "Lose " ~ (((n > 0 || kaija || chief).$(Party(f, n, kaija, chief).elem) ++ blainn.$("Jötunn Blainn".hl)) : $[Elem]).join(" and ")
@@ -173,8 +173,8 @@ case class RetreatPickAction(self : Faction, from : AreaRef, to : AreaRef, rough
 case class RetreatToAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to", to)(RetreatGroup(self, from, n, kaija))
 case class RetreatPartyAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to", to)(RetreatParty(self, n, kaija, chief))
 // Printed Lynx Clan: Brundr or Kaelinn alone, the other staying for the next pick (only adds a choice, so no option)
-case class RetreatOneLynxAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, chief : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to", to)("(" ~ MoveOneLynxLabel(n, chief).elem ~ ")")
-case class BrandRetreatOneLynxAction(self : Faction, loser : Faction, from : AreaRef, to : AreaRef, n : Int, chief : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Brand's Bravery".hl, loser, "retreats from", from, "to", to)("(" ~ MoveOneLynxLabel(n, chief).elem ~ ")")
+case class RetreatOneLynxAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, chief : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to", to)((g : Game) => "(" ~ MoveOneLynxLabel(n, chief).elem(g) ~ ")")
+case class BrandRetreatOneLynxAction(self : Faction, loser : Faction, from : AreaRef, to : AreaRef, n : Int, chief : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Brand's Bravery".hl, loser, "retreats from", from, "to", to)((g : Game) => "(" ~ MoveOneLynxLabel(n, chief).elem(g) ~ ")")
 // The figures go
 case class RetreatMoveAction(f : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean, rough : Boolean, then : ForcedAction) extends ForcedAction
 
@@ -1125,7 +1125,7 @@ object MapExpansion extends Expansion {
         if (chief)
             game.chiefs += f -> to
 
-        f.log("retreated", MoveOneLynxLabel(n, chief), "to", to)
+        f.log("retreated", MoveOneLynxLabel(n, chief).elem, "to", to)
 
         // Howl from the Sea (Kraken): a unit where a lost combat retreats
         NewBloodExpansion.howl(f, to)
