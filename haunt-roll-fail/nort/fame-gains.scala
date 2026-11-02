@@ -20,7 +20,8 @@ import nort.elem._
 // controls an Altar of Kings wins at once. RULES.md (Alternative fame gains) lists the readings of the short post:
 // - "Altar of Fame" is the Altar of Kings, the board game's only altar
 // - 120 fame on the fame tokens (f.fame); checked after every action (Game.loggedPerform), it replaces the three closed territories
-//   with large buildings and Alternative victory (the option needs Standard or Fame only victory); nobody there by the end: most fame wins
+//   with large buildings and Alternative victory (the option needs Standard or Fame only victory); it is the only way to win: nobody
+//   there after the last year, the game goes on, year after year, until a clan wins (Gman, 2026-11-02)
 // - the Altar of Kings still gives its 3 fame each harvest; when built it gives 2 like any large building and 3 more (5)
 // - kills and wins only in fights against a clan (not creatures, not card effects outside a fight); Kaija and the other companions
 //   are no units; the warchief is (5); before-the-fight kills (Defense Towers, Leadership) count
@@ -155,6 +156,16 @@ object FameGainsExpansion extends Expansion {
             game.note("fame-achievement")
 
             Then(then)
+
+        // After the last year nobody wins on fame: the game goes on until a clan wins with 120 fame and an Altar of Kings
+        // (Gman, 2026-11-02); the bot games stop after Debug.fameExtraYears more years and score as usual
+        case GameEndAction if game.year < game.lastYear + Debug.fameExtraYears =>
+            log(DoubleLine)
+            log("Nobody has", Amount(goal.hl, FameIcon()), "with an", AltarOfKings, Comma, "so the game goes on")
+
+            game.note("fame-extra-year")
+
+            Then(game.from(game.first).foldRight(NewYearAction : ForcedAction)((f, then) => ReturnUnitsAction(f, then)))
 
         // THE END: 120 fame and an Altar of Kings
         case FameWinAction(rulers) =>

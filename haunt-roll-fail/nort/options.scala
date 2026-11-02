@@ -819,7 +819,7 @@ case object FameGainsModule extends Module("Alternative fame gains", "fan-made v
     override def priority = -30
     override def requires = $($(StandardVictory), $(FameOnly))
     def about = $(
-        "A clan with " ~ Amount(120.hl, FameIcon()) ~ " that controls an " ~ AltarOfKings.elem ~ " wins at once. This replaces the other victory conditions (three closed territories with large buildings); nobody there by the end of the last year, the most fame wins.",
+        "A clan with " ~ Amount(120.hl, FameIcon()) ~ " that controls an " ~ AltarOfKings.elem ~ " wins at once. It is the only way to win: three closed territories with large buildings don't win, and if nobody has won by the end of the last year, the game goes on, year after year, until someone does.",
         "Building gives fame: " ~ 1.hl ~ " for a small building, " ~ 2.hl ~ " for a large one; an " ~ AltarOfKings.elem ~ " gives " ~ 3.hl ~ " more when built (" ~ 5.hl ~ " in all).",
         "In a fight against a clan: " ~ 1.hl ~ " fame for each enemy unit killed, " ~ 5.hl ~ " for a warchief, and " ~ 1.hl ~ " for winning.",
         "Buying an upgrade gives " ~ 5.hl ~ " fame. A Development card gives its fame when taken (not at the end).",

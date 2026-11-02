@@ -127,7 +127,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
     val board = game.board
 
     // Harvests still to come, this year's included; values over more than three years are too uncertain to count
-    val harvests : Int = math.max(0, game.lastYear - game.year + 1)
+    // Alternative fame gains: the game goes on past the last year until someone wins, so at least one more harvest
+    val harvests : Int = math.max(game.has(FameGainsModule).??(1), game.lastYear - game.year + 1)
     val horizon : Double = math.min(harvests, 3).toDouble
 
     // The actions phase is over once everyone has passed: the harvest is then in the resources already

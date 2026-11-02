@@ -1221,7 +1221,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
             )
 
         draftInfo ++
-        (year > 0).$(Info("Year", year.hlb, "of", lastYear.hl)) ++
+        (year > 0).$(Info("Year", year.hlb, (year > lastYear).?("(past the last, " ~ lastYear.hl ~ ")").|("of " ~ lastYear.hl))) ++
         self.%(states.contains)./~(f =>
             (choosing || inLoreTree).not.??(f.hand.distinct./(c => turn.?(HandInfoAction(f, "Your hand".styled(colors(f)), c, f.hand.count(c)) : Info).|(CardInfoAction(f, "Your hand".styled(colors(f)), c, f.hand.count(c))))) ++
             f.active.distinct./(c => CardInfoAction(f, "Played".styled(colors(f)), c, f.active.count(c))) ++
@@ -1305,6 +1305,8 @@ object Debug {
     var mxpTimes = 1
     // Alternative fame gains: the fame to win, lowered to test the win in bot games (NORT_FAME_GOAL in host.scala)
     var fameGoal = 120
+    // and the years past the last one it may go on for, before the bot games stop (NORT_FAME_YEARS in host.scala)
+    var fameExtraYears = Int.MaxValue / 2
 
     def summary(g : Game) {
         if (stats)

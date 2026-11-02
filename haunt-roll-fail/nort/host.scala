@@ -152,6 +152,8 @@ object Host extends hrf.host.BaseHost {
     Debug.mxpTimes = sys.env.get("NORT_MXP")./(_.toInt).|(1)
     // NORT_FAME_GOAL=n: Alternative fame gains wins at n fame, to test the win
     Debug.fameGoal = sys.env.get("NORT_FAME_GOAL")./(_.toInt).|(120)
+    // NORT_FAME_YEARS=n: with Alternative fame gains, at most n years past the last before the game is scored as usual
+    Debug.fameExtraYears = sys.env.get("NORT_FAME_YEARS")./(_.toInt).|(4)
 
     def winners(a : Action)(implicit g : G) = a @@ {
         case GameOverWonAction(_, l, _) => l

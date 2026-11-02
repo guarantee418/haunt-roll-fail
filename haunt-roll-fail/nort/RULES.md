@@ -1632,8 +1632,10 @@ Readings (Gman may change them):
   (`Game.loggedPerform`, `FameWinAction`); with teams, its team wins. Several at once: the most fame, then the
   usual tie-breaks.
 - "Replaces all victory conditions": three closed territories with large buildings no longer win, and the option
-  needs the standard or "Fame victory only" conditions (not Alternative victory). Nobody at 120 by the end of
-  the last year: the most fame wins, as usual (cards, resources and Unrest still count then).
+  needs the standard or "Fame victory only" conditions (not Alternative victory). It is the only way to win
+  (Gman, 2026-11-02): nobody at 120 with an Altar after the last year, the game goes on, year after year, until a
+  clan wins (`GameEndAction` in `fame-gains.scala`). The extra years reveal no cards once the Development decks
+  are used up. Bot games stop after `NORT_FAME_YEARS` (4) extra years and are scored as usual.
 - The Altar of Kings still gives its 3 fame each harvest; built, it gives 2 like any large building plus 3 (5).
 - Building: every building a clan places, through a Build card or for free (Quality of Life, Cooking Mastery,
   Raid cards, Sacred Stones, free Military paths buildings); Mines count as small buildings. Replacing a
