@@ -150,10 +150,20 @@ case class CasualtyPickAction(self : Faction, area : AreaRef, k : Int, n : Int, 
 // Losing both lynxes and n units (fewer than all), which CasualtyPickAction can't say (it takes the second lynx after every unit)
 case class CasualtyBothLynxAction(self : Faction, area : AreaRef, k : Int, n : Int, chief : Boolean, blainn : Boolean, then : ForcedAction) extends BaseAction(CasualtyGoal(self, area, k, then))(CasualtyParty(self, area, n, true, chief, blainn, true))
 
+// The bodyguard (Military paths) and n units (fewer than all), which CasualtyPickAction can't say (it takes the bodyguard after
+// every unit and Militia); kaija is one companion, both both lynxes. Only adds a choice, so no option
+case class CasualtyGuardAction(self : Faction, area : AreaRef, k : Int, n : Int, kaija : Boolean, both : Boolean, chief : Boolean, blainn : Boolean, then : ForcedAction) extends BaseAction(CasualtyGoal(self, area, k, then))(CasualtyParty(self, area, n, kaija, chief, blainn, both, true))
+
 // kaija: the companion (one lynx when both are there); n: units, then Militia, the bodyguard and the second lynx (MilitaryExpansion.kill)
-case class CasualtyParty(f : Faction, area : AreaRef, n : Int, kaija : Boolean, chief : Boolean, blainn : Boolean, both : Boolean) extends GameElementary {
+case class CasualtyParty(f : Faction, area : AreaRef, n : Int, kaija : Boolean, chief : Boolean, blainn : Boolean, both : Boolean, guard : Boolean = false) extends GameElementary {
     def elem(implicit game : Game) = {
         val t = game.board.territory(area)
+        if (guard) {
+            val lynxes = both.?(2).|(kaija.??(1))
+            val who = (f == Lynx && game.options.has(PrintedNewBlood)).?((lynxes == 2).$("Brundr and Kaelinn".hl) ++ (lynxes == 1).$(game.lynxNameIn(t).hl)).|(kaija.$(Companion(f).elem))
+            "Lose " ~ ($("the bodyguard".txt) ++ (n > 0).$((n == 1).?("1 unit").|(n.toString + " units").txt) ++ who ++ chief.$("the warchief".txt) ++ blainn.$("Jötunn Blainn".hl)).join(" and ")
+        }
+        else
         if (f == Lynx && game.options.has(PrintedNewBlood)) {
             val s = MilitaryExpansion.soldiers(t, f) - game.extraLynx(t, f)
             val lynxes = both.?(2).|(kaija.??(1) + (n > s).??(1))
@@ -1920,6 +1930,15 @@ object MapExpansion extends Expansion {
                             next(then)
                 }
             }
+
+        case CasualtyGuardAction(f, _, k, n, kaija, both, chief, blainn, then) =>
+            game.casualtyPicks += f -> (n, kaija, chief, blainn)
+            game.casualtyGuard += f
+            if (both)
+                game.casualtyBothLynx += f
+            game.note("casualties-guard")
+
+            Then(then)
 
         case CasualtyBothLynxAction(f, _, k, n, chief, blainn, then) =>
             game.casualtyPicks += f -> (n, true, chief, blainn)
