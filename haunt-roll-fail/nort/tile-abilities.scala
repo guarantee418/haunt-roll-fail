@@ -52,6 +52,16 @@ object TileAbilities {
         "horizon-bridge" -> Feature(0.50, 0.48, 0.10),
     )
 
+    // The fame icons (crowns) printed on a tile, kept out of the territory tint and clear of the figures like the
+    // resource icons (measured from the art; the Yggdrasil's second circle is its "x5")
+    val fame : Map[String, $[Feature]] = Map(
+        "wild-ruins-1" -> $(Feature(0.631, 0.851, 0.045)),
+        "wild-ruins-2" -> $(Feature(0.649, 0.741, 0.045), Feature(0.650, 0.843, 0.045)),
+        Wild.den -> $(Feature(0.338, 0.698, 0.045), Feature(0.473, 0.698, 0.045)),
+        Waste.den -> $(Feature(0.369, 0.712, 0.045), Feature(0.502, 0.711, 0.045)),
+        Waste.yggdrasil -> $(Feature(0.516, 0.687, 0.045), Feature(0.565, 0.745, 0.035)),
+    )
+
     def name(tile : String) : String = tile match {
         case Wild.lake => "Great Lake"
         case "wild-geyser-1" | "wild-geyser-2" => "Geyser"

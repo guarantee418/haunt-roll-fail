@@ -435,6 +435,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 g.moveTo(i.x + i.r, i.y)
                 g.arc(i.x, i.y, i.r, 0, 2 * math.Pi)
             }
+            // and the printed fame icons (the Ruins' and the Dens' crowns, ...)
+            TileAbilities.fame.get(tile).|($).foreach { i =>
+                g.moveTo(i.x + i.r, i.y)
+                g.arc(i.x, i.y, i.r, 0, 2 * math.Pi)
+            }
             Tiles.byId(tile).areas./~(_.spaces).foreach { s =>
                 if (s.kind == LargeSpace) {
                     val (h, c) = (0.145, 0.065)
@@ -705,9 +710,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         })
     }
 
-    // The resource icons on the map (nort/icons.scala): centre and radius, in tile units
+    // The resource icons on the map (nort/icons.scala), and the printed fame icons: centre and radius, in tile units
     def mapIcons : $[(Double, Double, Double)] = game.board.placements./~{ p =>
         TileIcons.icons.get(p.tile).|($)./{ i =>
+            val (x, y) = game.board.rotate(i.x, i.y, p.r)
+            (p.x + x, p.y + y, i.r)
+        } ++
+        TileAbilities.fame.get(p.tile).|($)./{ i =>
             val (x, y) = game.board.rotate(i.x, i.y, p.r)
             (p.x + x, p.y + y, i.r)
         }
