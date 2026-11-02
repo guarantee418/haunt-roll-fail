@@ -461,6 +461,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val chiefs = game.chiefs
         val companion = game.companion(self)
         val lynx2 = game.lynx2
+        val lynxSwapped = game.lynxSwapped
         // Every player's resources and fame (team trades and some effects change another player's)
         val stocks = players./(f => (f, f.food, f.wood, f.lore, f.fame, f.faith))
         // Minerals module: the minerals held, the supply and the Stone upgrades
@@ -483,6 +484,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             game.chiefs = chiefs
             game.setCompanion(self, companion)
             game.lynx2 = lynx2
+            game.lynxSwapped = lynxSwapped
             stocks.foreach { case (f, food, wood, lore, fame, faith) =>
                 f.food = food
                 f.wood = wood
@@ -805,6 +807,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case RecruitKaijaHereAction(f, area, left, mode, placed, then) => value(RecruitKaijaAction(f, area, left, mode, placed, then))
         case RecruitChiefHereAction(f, area, left, mode, placed, then) => value(RecruitChiefAction(f, area, left, mode, placed, then))
         case RecruitDoneAction(_, _, _) => |(0)
+        case CampUnitAction(_, area, _, _, _) => |(gain(game.addUnits(area, self, 1)))
+        case CampLynxAction(_, area, _, _, _) => |(gain(game.placeCompanion(self, area)) + 20)
         case RecruitCapAction(_, area, _, _, _) => |(gain(game.addUnits(area, self, 1)))
 
         // MOVE

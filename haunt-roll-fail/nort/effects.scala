@@ -99,6 +99,8 @@ case class FutureSightAction(self : Faction, card : Card, then : ForcedAction) e
 
 case class HiddenFromAction(self : Faction, from : AreaRef, then : ForcedAction) extends BaseAction("Hidden Ways", "move from")(from) with Soft with MapTarget { def target = from }
 case class HiddenToAction(self : Faction, from : AreaRef, to : AreaRef, then : ForcedAction) extends BaseAction("Hidden Ways", "move from", from, "to")(to) with Soft with MapTarget { def target = to }
+// One of the two lynxes in a territory (FigurePicker), the other staying; only adds a choice, so no option
+case class HiddenOneLynxAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, chief : Boolean, then : ForcedAction) extends BaseAction("Hidden Ways", "move from", from, "to", to)((g : Game) => MoveOneLynxLabel(n, chief).elem(g))
 case class HiddenUnitsAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean, then : ForcedAction) extends BaseAction("Hidden Ways", "move from", from, "to", to)(Party(self, n, kaija, chief)) {
     def this(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, then : ForcedAction) = this(self, from, to, n, kaija, false, then)
 }
@@ -453,18 +455,23 @@ object CardsExpansion extends Expansion {
             val t = game.board.territory(from)
             Ask(f).each(hiddenTargets(f, t))(o => HiddenToAction(f, from, o.anchor, then)).cancel
 
+        // Who goes, figure by figure (FigurePicker)
         case HiddenToAction(f, from, to, then) =>
-            val t = game.board.territory(from)
-            val n = game.count(t, f)
-            val kaija = game.kaijaIn(t, f) && (game.restrained(f).not || game.present(game.board.territory(to)).forall(game.allied(f, _)))
-            val chief = game.chiefIn(t, f)
+            FigurePicker(HiddenGoal(f, from, to, then))
 
-            Ask(f)
-                .each(n.to(1, -1).$)(k => HiddenUnitsAction(f, from, to, k, false, false, then))
-                .some(kaija.$(n.to(0, -1).$).flatten)(k => $(HiddenUnitsAction(f, from, to, k, true, false, then)))
-                .some(chief.$(n.to(0, -1).$).flatten)(k => $(HiddenUnitsAction(f, from, to, k, false, true, then)))
-                .some((chief && kaija).$(n.to(0, -1).$).flatten)(k => $(HiddenUnitsAction(f, from, to, k, true, true, then)))
-                .cancel
+        case HiddenOneLynxAction(f, from, to, n, chief, then) =>
+            val src = game.board.territory(from)
+            val dst = game.board.territory(to)
+
+            game.removeUnits(src, f, n)
+            game.addUnits(dst.anchor, f, n)
+            game.lynx2 = |(dst.anchor)
+            if (chief)
+                game.chiefs += f -> dst.anchor
+
+            f.log("moved", MoveOneLynxLabel(n, chief).elem, "from", from, "to", to)
+
+            Then(CombatsAction(f, MoveEffect(0), then))
 
         case HiddenUnitsAction(f, from, to, n, kaija, chief, then) =>
             val src = game.board.territory(from)

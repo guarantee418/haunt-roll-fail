@@ -81,6 +81,12 @@ case class RecruitUnitHereAction(self : Faction, area : AreaRef, left : Int, mod
 case class RecruitKaijaHereAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit in", area)(OneCompanion(self))
 case class RecruitChiefHereAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit in", area)(WarchiefElem(self))
 case class TrainingCampsAction(f : Faction, placed : $[AreaRef], then : ForcedAction) extends ForcedAction
+// LynxCampRecruitsLynx: each extra recruit of Lynx's Training Camps may be Brundr or Kaelinn when one is in the reserve;
+// left: the camps' recruits still to come in area, rest: the other territories recruited in (their camps are counted when reached)
+case class CampRecruitAction(f : Faction, rest : $[AreaRef], then : ForcedAction) extends ForcedAction
+case class CampRecruitInAction(f : Faction, area : AreaRef, left : Int, rest : $[AreaRef], then : ForcedAction) extends ForcedAction
+case class CampUnitAction(self : Faction, area : AreaRef, left : Int, rest : $[AreaRef], then : ForcedAction) extends BaseAction(TrainingCamp, "in", area, "recruits")("A regular unit")
+case class CampLynxAction(self : Faction, area : AreaRef, left : Int, rest : $[AreaRef], then : ForcedAction) extends BaseAction(TrainingCamp, "in", area, "recruits")(OneCompanion(self))
 
 // MOVE
 case class MoveAction(f : Faction, left : Int, e : MoveEffect, then : ForcedAction) extends ForcedAction
@@ -146,10 +152,23 @@ case class ClanPowerReportDoneAction(self : Faction, then : ForcedAction) extend
 
 // Casualties chosen by their player (ChooseCasualties): which figures go, then the fight goes on (then decides it again, now
 // with the pick in game.casualtyPicks)
-case class CasualtyPickAction(self : Faction, area : AreaRef, k : Int, n : Int, kaija : Boolean, chief : Boolean, blainn : Boolean, then : ForcedAction) extends BaseAction(self, "takes", CombatIcon.skulls(k), "in", area)(CasualtyParty(self, n, kaija, chief, blainn))
+case class CasualtyPickAction(self : Faction, area : AreaRef, k : Int, n : Int, kaija : Boolean, chief : Boolean, blainn : Boolean, then : ForcedAction) extends BaseAction(CasualtyGoal(self, area, k, then))(CasualtyParty(self, area, n, kaija, chief, blainn, false))
+// Losing both lynxes and n units (fewer than all), which CasualtyPickAction can't say (it takes the second lynx after every unit)
+case class CasualtyBothLynxAction(self : Faction, area : AreaRef, k : Int, n : Int, chief : Boolean, blainn : Boolean, then : ForcedAction) extends BaseAction(CasualtyGoal(self, area, k, then))(CasualtyParty(self, area, n, true, chief, blainn, true))
 
-case class CasualtyParty(f : Faction, n : Int, kaija : Boolean, chief : Boolean, blainn : Boolean) extends GameElementary {
-    def elem(implicit game : Game) = "Lose " ~ (((n > 0 || kaija || chief).$(Party(f, n, kaija, chief).elem) ++ blainn.$("Jötunn Blainn".hl)) : $[Elem]).join(" and ")
+// kaija: the companion (one lynx when both are there); n: units, then Militia, the bodyguard and the second lynx (MilitaryExpansion.kill)
+case class CasualtyParty(f : Faction, area : AreaRef, n : Int, kaija : Boolean, chief : Boolean, blainn : Boolean, both : Boolean) extends GameElementary {
+    def elem(implicit game : Game) = {
+        val t = game.board.territory(area)
+        if (f == Lynx && game.options.has(PrintedNewBlood)) {
+            val s = MilitaryExpansion.soldiers(t, f) - game.extraLynx(t, f)
+            val lynxes = both.?(2).|(kaija.??(1) + (n > s).??(1))
+            val u = both.?(n).|(math.min(n, s))
+            "Lose " ~ ((u > 0).$((u == 1).?("1 unit").|(u.toString + " units").txt) ++ (lynxes == 2).$("Brundr and Kaelinn".hl) ++ (lynxes == 1).$(game.lynxNameIn(t).hl) ++ chief.$("the warchief".txt) ++ blainn.$("Jötunn Blainn".hl)).join(" and ")
+        }
+        else
+            "Lose " ~ (((n > 0 || kaija || chief).$(Party(f, n, kaija, chief).elem) ++ blainn.$("Jötunn Blainn".hl)) : $[Elem]).join(" and ")
+    }
 }
 
 case class RetreatAction(f : Faction, from : AreaRef, rough : Boolean, then : ForcedAction) extends ForcedAction
@@ -160,8 +179,8 @@ case class RetreatPickAction(self : Faction, from : AreaRef, to : AreaRef, rough
 case class RetreatToAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to", to)(RetreatGroup(self, from, n, kaija))
 case class RetreatPartyAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to", to)(RetreatParty(self, n, kaija, chief))
 // Printed Lynx Clan: Brundr or Kaelinn alone, the other staying for the next pick (only adds a choice, so no option)
-case class RetreatOneLynxAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, chief : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to", to)("(" ~ MoveOneLynxLabel(n, chief).elem ~ ")")
-case class BrandRetreatOneLynxAction(self : Faction, loser : Faction, from : AreaRef, to : AreaRef, n : Int, chief : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Brand's Bravery".hl, loser, "retreats from", from, "to", to)("(" ~ MoveOneLynxLabel(n, chief).elem ~ ")")
+case class RetreatOneLynxAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, chief : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to", to)((g : Game) => "(" ~ MoveOneLynxLabel(n, chief).elem(g) ~ ")")
+case class BrandRetreatOneLynxAction(self : Faction, loser : Faction, from : AreaRef, to : AreaRef, n : Int, chief : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Brand's Bravery".hl, loser, "retreats from", from, "to", to)((g : Game) => "(" ~ MoveOneLynxLabel(n, chief).elem(g) ~ ")")
 // The figures go
 case class RetreatMoveAction(f : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean, rough : Boolean, then : ForcedAction) extends ForcedAction
 
@@ -965,6 +984,10 @@ object MapExpansion extends Expansion {
         f.log("recruited in", a)
     }
 
+    // The extra units a Recruit gets in t: its Training Camps (Military paths: Legions' camps recruit two, Guardian's Defense Towers
+    // and Leadership's warchief work as camps)
+    def campsIn(f : Faction, t : Territory)(implicit game : Game) = game.working(t).count(_ == TrainingCamp) + MilitaryExpansion.camps(f, t)
+
     def recruitKaija(f : Faction, a : AreaRef)(implicit game : Game) : Unit = {
         game.placeCompanion(f, a)
         game.note("kaija-recruit")
@@ -1101,7 +1124,7 @@ object MapExpansion extends Expansion {
     // (Robotos's request of 2026-10-11; only in games with ChooseCasualties, and never for the Automa)
     def pickCasualties(l : $[(Faction, Int)], t : Territory, again : ForcedAction)(implicit game : Game) : |[Ask] =
         game.options.has(ChooseCasualties).??(l.%{ case (f, k) => k > 0 && f != Automa && game.casualtyPicks.contains(f).not }./{ case (f, k) => (f, k, casualtyParties(f, t, k)) }.%(_._3.num > 1).headOption./{ case (f, k, l) =>
-            Ask(f).each(l) { case (n, kaija, chief, blainn) => CasualtyPickAction(f, t.anchor, k, n, kaija, chief, blainn, again) }
+            FigurePicker(CasualtyGoal(f, t.anchor, k, again))
         })
 
     // One of the two lynxes retreats (maybe with units and the warchief); the other is still there for the next pick
@@ -1112,7 +1135,7 @@ object MapExpansion extends Expansion {
         if (chief)
             game.chiefs += f -> to
 
-        f.log("retreated", MoveOneLynxLabel(n, chief), "to", to)
+        f.log("retreated", MoveOneLynxLabel(n, chief).elem, "to", to)
 
         // Howl from the Sea (Kraken): a unit where a lost combat retreats
         NewBloodExpansion.howl(f, to)
@@ -1356,17 +1379,51 @@ object MapExpansion extends Expansion {
                 game.note("robotos-recruit")
             }
 
-            placed./(game.board.territory).distinct.foreach { t =>
-                // Military paths: Legions' camps recruit two, Guardian's Defense Towers and Leadership's warchief work as camps
-                val camps = game.working(t).count(_ == TrainingCamp) + MilitaryExpansion.camps(f, t)
-                val n = math.min(camps, game.reserve(f))
-                if (n > 0) {
-                    game.addUnits(t.anchor, f, n)
-                    f.log("recruited", n.hl, "more with", TrainingCamp, "in", t.anchor)
+            // LynxCampRecruitsLynx: Lynx may take Brundr or Kaelinn for a camp's extra recruit (Marzaus, 2026-11-02)
+            if (f == Lynx && game.options.has(LynxCampRecruitsLynx))
+                Then(CampRecruitAction(f, placed./(game.board.territory).distinct./(_.anchor), then))
+            else {
+                placed./(game.board.territory).distinct.foreach { t =>
+                    val n = math.min(campsIn(f, t), game.reserve(f))
+                    if (n > 0) {
+                        game.addUnits(t.anchor, f, n)
+                        f.log("recruited", n.hl, "more with", TrainingCamp, "in", t.anchor)
+                    }
                 }
+
+                Then(then)
             }
 
-            Then(then)
+        case CampRecruitAction(f, rest, then) =>
+            rest match {
+                case Nil => Then(then)
+                case a :: rest => Then(CampRecruitInAction(f, a, campsIn(f, game.board.territory(a)), rest, then))
+            }
+
+        case CampRecruitInAction(f, a, left, rest, then) =>
+            if (left > 0 && game.kaijaReady(f))
+                Ask(f)
+                    .when(game.reserve(f) > 0)(CampUnitAction(f, a, left - 1, rest, then))
+                    .add(CampLynxAction(f, a, left - 1, rest, then))
+            else {
+                val n = math.min(left, game.reserve(f))
+                if (n > 0) {
+                    game.addUnits(a, f, n)
+                    f.log("recruited", n.hl, "more with", TrainingCamp, "in", a)
+                }
+                Then(CampRecruitAction(f, rest, then))
+            }
+
+        case CampUnitAction(f, a, left, rest, then) =>
+            game.addUnits(a, f, 1)
+            f.log("recruited", 1.hl, "more with", TrainingCamp, "in", a)
+            Then(CampRecruitInAction(f, a, left, rest, then))
+
+        case CampLynxAction(f, a, left, rest, then) =>
+            game.placeCompanion(f, a)
+            game.note("lynx-camp-recruit")
+            f.log("recruited", OneCompanion(f), "with", TrainingCamp, "in", a)
+            Then(CampRecruitInAction(f, a, left, rest, then))
 
         // MOVE
         case MoveAction(f, left, e, then) =>
@@ -1907,6 +1964,13 @@ object MapExpansion extends Expansion {
                             next(then)
                 }
             }
+
+        case CasualtyBothLynxAction(f, _, k, n, chief, blainn, then) =>
+            game.casualtyPicks += f -> (n, true, chief, blainn)
+            game.casualtyBothLynx += f
+            game.note("casualties-figure")
+
+            Then(then)
 
         case CasualtyPickAction(f, _, k, n, kaija, chief, blainn, then) =>
             game.casualtyPicks += f -> (n, kaija, chief, blainn)

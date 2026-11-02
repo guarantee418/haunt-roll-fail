@@ -479,6 +479,8 @@ case class KrakenMovesTideAction(then : ForcedAction) extends ForcedAction with 
 case class AchievementsAsideAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for EndOfYearAfterGeysers (the End of the Year goes on through every expansion after the Geysers, wilderness.scala)
 case class EndOfYearAfterGeysersAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to MielikkiAgainstCreatures (an hrf-games fix)
+case class MielikkiAgainstCreaturesAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for OxPicksSpace (Ox's Ancestral Equipment token on a small building space or a Carved Stone space, picked by Ox);
 // wrapped around Ox's ExploreTurnAction, it also asks for the token of that tile
 case class OxPicksSpaceAction(then : ForcedAction) extends ForcedAction with SkipValidate
@@ -732,6 +734,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // Casualties their players chose (ChooseCasualties): the units, companion, warchief and Blainn each clan loses in the fight
     // being decided; taken by removeCasualties
     var casualtyPicks = Map[Faction, (Int, Boolean, Boolean, Boolean)]()
+    // Clans whose pick loses both lynxes (CasualtyBothLynxAction)
+    var casualtyBothLynx = Set[Faction]()
 
     // The combat report of the fight just decided, until everyone shown it has tapped OK (CombatReportAction)
     var fightReport : |[FightReport] = None
@@ -951,6 +955,14 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // only ever on the map with the first: when the first is removed the second takes its place, so the slots don't say which is which
     var lynx2 : |[AreaRef] = None
 
+    // Which lynx is which (Gman, 2026-11-02: "The cats are two separate units"): the slots say where the figures are and the
+    // second slot is always the one that leaves a pair, so the names are a label on the slots, swapped by LynxFirstAction when
+    // the player picks the first slot's lynx, and when the first slot is emptied and the second moves into it
+    var lynxSwapped = false
+    def lynxName(second : Boolean) : String = (second != lynxSwapped).?("Kaelinn").|("Brundr")
+    // The lynx in t that goes or is lost first: the second slot's when both are there
+    def lynxNameIn(t : Territory) : String = lynxName(lynx2.exists(t.areas.contains) || lynx.exists(t.areas.contains).not)
+
     def lynxesIn(t : Territory) : Int = lynx.exists(t.areas.contains).??(1) + lynx2.exists(t.areas.contains).??(1)
 
     // Both lynxes in t: the second one is lost like a unit (after the units), the first like a companion
@@ -981,6 +993,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         else
         if (f == Lynx) {
             if (lynx.exists(t.areas.contains)) {
+                if (lynx2.any)
+                    lynxSwapped = lynxSwapped.not
                 lynx = lynx2
                 lynx2 = None
             }
@@ -1131,6 +1145,10 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
                     blainn = None
                 if (kaija)
                     dropCompanion(t, f)
+                if (casualtyBothLynx.contains(f)) {
+                    casualtyBothLynx -= f
+                    dropCompanion(t, f)
+                }
             case None =>
                 removeFigures(t, f, n)
         }
@@ -2160,6 +2178,10 @@ object CommonExpansion extends Expansion {
 
             Then(WinterPayAction(rest))
 
+        case LynxFirstAction(f, a) =>
+            game.lynxSwapped = game.lynxSwapped.not
+            Then(a)
+
         case ChooseCasualtiesAction(then) =>
             if (game.options.has(ChooseCasualties).not)
                 game.addOption(ChooseCasualties)
@@ -2181,6 +2203,12 @@ object CommonExpansion extends Expansion {
         case AchievementsAsideAction(then) =>
             if (game.options.has(AchievementsAside).not)
                 game.addOption(AchievementsAside)
+
+            Then(then)
+
+        case MielikkiAgainstCreaturesAction(then) =>
+            if (game.options.has(MielikkiAgainstCreatures).not)
+                game.addOption(MielikkiAgainstCreatures)
 
             Then(then)
 

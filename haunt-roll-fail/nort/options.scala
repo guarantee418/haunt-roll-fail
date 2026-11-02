@@ -564,12 +564,28 @@ case object LynxBothAtSetup extends GameOption with ToggleOption {
     def valueOn = "Lynx may start with both lynxes".txt
 }
 
+// Mielikki's power ("attacking, she may bring Brundr or Kaelinn") also when she attacks a creature (Marzaus, 2026-11-02: attacking a
+// Wolf with her, he wanted to bring his lynx); it was only offered against clans. Hidden, and given to every new game (Meta.mandatoryFor);
+// older games replay the old way (MielikkiCreatureAction in newblood.scala)
+case object MielikkiAgainstCreatures extends GameOption with ToggleOption {
+    val group = "New Blood".txt
+    def valueOn = "Mielikki brings a lynx against creatures".txt
+}
+
 // Brundr and Kaelinn count as units for Winter costs (Gman, 2026-11-01: "The lynx cats count towards winter costs"); the site had
 // left them out, reading the Uncharted Horizons rulebook's note on companions. Hidden, and given to every new game (Meta.mandatoryFor);
 // older games replay the old way (FactionState.winterUnits)
 case object LynxesCostWinter extends GameOption with ToggleOption {
     val group = "New Blood".txt
     def valueOn = "Brundr and Kaelinn count for Winter costs".txt
+}
+
+// A Training Camp's extra recruit may be Brundr or Kaelinn when one is in Lynx's reserve (Marzaus, relayed by Gman on 2026-11-02:
+// "i recruited 1 cat and camp added another unit - but i wanted 2 cats"); before it the camp always added a regular unit.
+// Hidden, and given to every new game (Meta.mandatoryFor); older games replay the old way (CampRecruitAction in map.scala)
+case object LynxCampRecruitsLynx extends GameOption with ToggleOption {
+    val group = "New Blood".txt
+    def valueOn = "Training Camps may recruit Brundr or Kaelinn".txt
 }
 
 // New Blood as printed (Gman sent the printed cards and boards on 2026-10-23): the 19 clan cards in CardVersions (editions.scala)

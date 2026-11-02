@@ -276,8 +276,8 @@ object Tutorial {
         if (has[CombatChooseAction])
             |("Your die shows a choice: 1 combat point " ~ CombatIcon.axe ~ " or 1 casualty " ~ CombatIcon.skull ~ " (one enemy unit removed). Pick what helps more.")
         else
-        if (has[CasualtyPickAction])
-            |("You take casualties " ~ CombatIcon.skull ~ " in this fight: pick who is lost, your units or a special figure (it goes back to your reserve). The fight's result doesn't change.")
+        if (has[CasualtyPickAction] || has[CasualtyBothLynxAction] || l.exists { case a : FigureCountAction => a.goal.is[CasualtyGoal] ; case a : FigureSwitchAction => a.goal.is[CasualtyGoal] ; case _ => false })
+            |("You take casualties " ~ CombatIcon.skull ~ " in this fight: pick who is lost (" ~ "−".hl ~ " and " ~ "+".hl ~ " for units, tap a name to switch it between Yes and No), then tap the button under them. Lost figures go back to your reserve. The fight's result doesn't change.")
         else
         if (has[CombatReportDoneAction])
             |("The combat report: who won, each side's points and losses (ties go to the defender; losing every unit loses). Tap " ~ "OK".hl ~ " to go on. The Stag gets +1 fame for each territory it conquers. (Interface > Combat Report can skip these reports.)")
