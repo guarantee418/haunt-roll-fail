@@ -191,6 +191,8 @@ object CardsExpansion extends Expansion {
             f.draw = c +: f.draw
             f.log(($("took", c) ++ how :+ "and placed it on top of their draw pile") : _*)
         }
+
+        FameGainsExpansion.taken(f, c)
     }
 
     def futureSightCards(f : Faction)(implicit game : Game) : $[Card] =

@@ -49,6 +49,7 @@ class GameEvaluation(val self : Faction)(implicit val game : Game) {
             case RecruitDoneAction(_, _, _) => true |=> -5 -> "stop recruiting early"
             case BuildDoneAction(_, _, _) => true |=> -5 -> "stop building"
             case UpgradeCardAction(_, _, _, _) => true |=> 15 -> "upgrade"
+            case FameResolveAction(_, _, _) => true |=> 10 -> "resolve the kept achievement"
             case DefensiveCancelAction(_, _, _, _) => true |=> -3 -> "keep defensive strategy"
             case TeamTradeAction(_, _, _, _, _) => true |=> -3 -> "trade with a teammate"
             case _ =>

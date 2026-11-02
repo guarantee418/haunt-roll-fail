@@ -118,7 +118,10 @@ object TowersExpansion extends Expansion {
                 pick.get
             else {
                 game.towerShield = shield > 0
+                val soldiers = MilitaryExpansion.before(t, $(f))
                 game.removeCasualties(t, f, k)
+                // Alternative fame gains: the defender's fame for the units (and warchief) its towers killed
+                FameGainsExpansion.killed(defender.get, f, math.max(0, soldiers(f)._1 - MilitaryExpansion.soldiers(t, f)), soldiers(f)._2 && game.chiefIn(t, f).not)
                 game.advance(f, "valhalla", k)
                 game.note("tower-volley")
 
@@ -132,6 +135,7 @@ object TowersExpansion extends Expansion {
                     EventsExpansion.afterCombat(f, d, 0, 0, |(d))
                     // Military paths: the win, and the fight is over
                     MilitaryExpansion.won(d, f, game.fightSize.getOrElse(f, 0))
+                    FameGainsExpansion.won(d, f)
                     MilitaryExpansion.fightOver()
                     Then(then)
                 }
