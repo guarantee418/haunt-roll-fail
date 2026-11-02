@@ -482,6 +482,8 @@ case class EndOfYearAfterGeysersAction(then : ForcedAction) extends ForcedAction
 // The same for OxPicksSpace (Ox's Ancestral Equipment token on a small building space or a Carved Stone space, picked by Ox);
 // wrapped around Ox's ExploreTurnAction, it also asks for the token of that tile
 case class OxPicksSpaceAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// The same for LynxCampRecruitsLynx (a Lynx Training Camp's extra recruit may be Brundr or Kaelinn, map.scala)
+case class LynxCampRecruitsLynxAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case object EndOfYearAction extends ForcedAction
 case object GameEndAction extends ForcedAction
 case object NewYearAction extends ForcedAction
@@ -2193,6 +2195,12 @@ object CommonExpansion extends Expansion {
         case OxPicksSpaceAction(then) =>
             if (game.options.has(OxPicksSpace).not)
                 game.addOption(OxPicksSpace)
+
+            Then(then)
+
+        case LynxCampRecruitsLynxAction(then) =>
+            if (game.options.has(LynxCampRecruitsLynx).not)
+                game.addOption(LynxCampRecruitsLynx)
 
             Then(then)
 

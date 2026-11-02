@@ -575,6 +575,7 @@ case object LynxesCostWinter extends GameOption with ToggleOption {
 // A Training Camp's extra recruit may be Brundr or Kaelinn when one is in Lynx's reserve (Marzaus, relayed by Gman on 2026-11-02:
 // "i recruited 1 cat and camp added another unit - but i wanted 2 cats"); before it the camp always added a regular unit.
 // Hidden, and given to every new game (Meta.mandatoryFor); older games replay the old way (CampRecruitAction in map.scala)
+// A running game can be switched over with LynxCampRecruitsLynxAction(X) (game.scala) through an hrf-games fix
 case object LynxCampRecruitsLynx extends GameOption with ToggleOption {
     val group = "New Blood".txt
     def valueOn = "Training Camps may recruit Brundr or Kaelinn".txt
