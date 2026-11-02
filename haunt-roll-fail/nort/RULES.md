@@ -508,6 +508,8 @@ Board rules that changed:
   icon (the initial card and the two upgrades), a bonus Move 1 with only the lynxes (and Caring Siblings' new units),
   into any territory but not across Rough borders nor into a creature's, starting at most 1 fight (`LynxBonusAction`).
   A Move takes both lynxes in a territory, or one (`MoveOneLynxAction`). The second lynx is lost like a unit, after the units.
+  A Training Camp's extra recruit may be a lynx in the reserve instead of a unit, as Lynx picks (hidden `LynxCampRecruitsLynx`,
+  every new game, Marzaus 2026-11-02, `CampRecruitAction`; before it the camp always added a unit).
 - Mielikki: attacking, she may bring Brundr or Kaelinn from any territory (instead of +1 point with a Flash card).
 - Kraken: a High Tide token is placed or moved before or after a Kraken card, and goes back when Kraken loses a fight
   in its territory. Kàra, defending, may place one as well as move one.
