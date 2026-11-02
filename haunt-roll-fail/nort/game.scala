@@ -727,6 +727,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // Casualties their players chose (ChooseCasualties): the units, companion, warchief and Blainn each clan loses in the fight
     // being decided; taken by removeCasualties
     var casualtyPicks = Map[Faction, (Int, Boolean, Boolean, Boolean)]()
+    // Clans whose pick loses both lynxes (CasualtyBothLynxAction)
+    var casualtyBothLynx = Set[Faction]()
 
     // The combat report of the fight just decided, until everyone shown it has tapped OK (CombatReportAction)
     var fightReport : |[FightReport] = None
@@ -1126,6 +1128,10 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
                     blainn = None
                 if (kaija)
                     dropCompanion(t, f)
+                if (casualtyBothLynx.contains(f)) {
+                    casualtyBothLynx -= f
+                    dropCompanion(t, f)
+                }
             case None =>
                 removeFigures(t, f, n)
         }

@@ -146,10 +146,23 @@ case class ClanPowerReportDoneAction(self : Faction, then : ForcedAction) extend
 
 // Casualties chosen by their player (ChooseCasualties): which figures go, then the fight goes on (then decides it again, now
 // with the pick in game.casualtyPicks)
-case class CasualtyPickAction(self : Faction, area : AreaRef, k : Int, n : Int, kaija : Boolean, chief : Boolean, blainn : Boolean, then : ForcedAction) extends BaseAction(self, "takes", CombatIcon.skulls(k), "in", area)(CasualtyParty(self, n, kaija, chief, blainn))
+case class CasualtyPickAction(self : Faction, area : AreaRef, k : Int, n : Int, kaija : Boolean, chief : Boolean, blainn : Boolean, then : ForcedAction) extends BaseAction(CasualtyGoal(self, area, k, then))(CasualtyParty(self, area, n, kaija, chief, blainn, false))
+// Losing both lynxes and n units (fewer than all), which CasualtyPickAction can't say (it takes the second lynx after every unit)
+case class CasualtyBothLynxAction(self : Faction, area : AreaRef, k : Int, n : Int, chief : Boolean, blainn : Boolean, then : ForcedAction) extends BaseAction(CasualtyGoal(self, area, k, then))(CasualtyParty(self, area, n, true, chief, blainn, true))
 
-case class CasualtyParty(f : Faction, n : Int, kaija : Boolean, chief : Boolean, blainn : Boolean) extends GameElementary {
-    def elem(implicit game : Game) = "Lose " ~ (((n > 0 || kaija || chief).$(Party(f, n, kaija, chief).elem) ++ blainn.$("Jötunn Blainn".hl)) : $[Elem]).join(" and ")
+// kaija: the companion (one lynx when both are there); n: units, then Militia, the bodyguard and the second lynx (MilitaryExpansion.kill)
+case class CasualtyParty(f : Faction, area : AreaRef, n : Int, kaija : Boolean, chief : Boolean, blainn : Boolean, both : Boolean) extends GameElementary {
+    def elem(implicit game : Game) = {
+        val t = game.board.territory(area)
+        if (f == Lynx && game.options.has(PrintedNewBlood)) {
+            val s = MilitaryExpansion.soldiers(t, f) - game.extraLynx(t, f)
+            val lynxes = both.?(2).|(kaija.??(1) + (n > s).??(1))
+            val u = both.?(n).|(math.min(n, s))
+            "Lose " ~ ((u > 0).$((u == 1).?("1 unit").|(u.toString + " units").txt) ++ (lynxes == 2).$("Brundr and Kaelinn".hl) ++ (lynxes == 1).$("one lynx".txt) ++ chief.$("the warchief".txt) ++ blainn.$("Jötunn Blainn".hl)).join(" and ")
+        }
+        else
+            "Lose " ~ (((n > 0 || kaija || chief).$(Party(f, n, kaija, chief).elem) ++ blainn.$("Jötunn Blainn".hl)) : $[Elem]).join(" and ")
+    }
 }
 
 case class RetreatAction(f : Faction, from : AreaRef, rough : Boolean, then : ForcedAction) extends ForcedAction
@@ -1101,7 +1114,7 @@ object MapExpansion extends Expansion {
     // (Robotos's request of 2026-10-11; only in games with ChooseCasualties, and never for the Automa)
     def pickCasualties(l : $[(Faction, Int)], t : Territory, again : ForcedAction)(implicit game : Game) : |[Ask] =
         game.options.has(ChooseCasualties).??(l.%{ case (f, k) => k > 0 && f != Automa && game.casualtyPicks.contains(f).not }./{ case (f, k) => (f, k, casualtyParties(f, t, k)) }.%(_._3.num > 1).headOption./{ case (f, k, l) =>
-            Ask(f).each(l) { case (n, kaija, chief, blainn) => CasualtyPickAction(f, t.anchor, k, n, kaija, chief, blainn, again) }
+            FigurePicker(CasualtyGoal(f, t.anchor, k, again))
         })
 
     // One of the two lynxes retreats (maybe with units and the warchief); the other is still there for the next pick
@@ -1903,6 +1916,13 @@ object MapExpansion extends Expansion {
                             next(then)
                 }
             }
+
+        case CasualtyBothLynxAction(f, _, k, n, chief, blainn, then) =>
+            game.casualtyPicks += f -> (n, true, chief, blainn)
+            game.casualtyBothLynx += f
+            game.note("casualties-figure")
+
+            Then(then)
 
         case CasualtyPickAction(f, _, k, n, kaija, chief, blainn, then) =>
             game.casualtyPicks += f -> (n, kaija, chief, blainn)

@@ -22,9 +22,9 @@ import nort.elem._
 // FiguresExplodeAction lists every button the panel can lead to, for bots and move checks.
 
 // Who is picked: units, the first companion (Kaija, Brok, Leader 2, or Brundr), the second lynx (Kaelinn), the warchief
-case class FigurePick(units : Int, first : Boolean, second : Boolean, chief : Boolean) {
+case class FigurePick(units : Int, first : Boolean, second : Boolean, chief : Boolean, blainn : Boolean = false) {
     def companions = first.??(1) + second.??(1)
-    def any = units > 0 || first || second || chief
+    def any = units > 0 || first || second || chief || blainn
 }
 
 // What the figures are picked for: where they are, who is there, and the recorded action a pick leads to
@@ -37,6 +37,10 @@ trait FigureGoal extends GameElementary {
     // How many of the clan's companions may go: 2 for both lynxes
     def maxCompanions(implicit game : Game) : Int = (owner == Lynx).?(game.lynxesIn(territory)).|(game.kaijaIn(territory, owner).??(1))
     def chiefMay(implicit game : Game) : Boolean = game.chiefIn(territory, owner)
+    // Jötunn Blainn (Wastelands), only among the casualties
+    def blainnMay(implicit game : Game) : Boolean = false
+    // What the last button says while the pick leads nowhere
+    def none(p : FigurePick)(implicit game : Game) : Elem = "Pick who goes".txt
     // The pick the panel starts with
     def start(implicit game : Game) : FigurePick
     def finish(p : FigurePick)(implicit game : Game) : |[UserAction]
@@ -45,14 +49,14 @@ trait FigureGoal extends GameElementary {
     def picks(implicit game : Game) : $[FigurePick] = {
         def may(b : Boolean) = b.?($(false, true)).|($(false))
         val c = maxCompanions
-        for (n <- 0.to(maxUnits).$ ; a <- may(c > 0) ; b <- may(c > 1) ; w <- may(chiefMay)) yield FigurePick(n, a, b, w)
+        for (n <- 0.to(maxUnits).$ ; a <- may(c > 0) ; b <- may(c > 1) ; w <- may(chiefMay) ; j <- may(blainnMay)) yield FigurePick(n, a, b, w, j)
     }
 
     def ask(p : FigurePick)(implicit game : Game) : Ask = {
         val max = maxUnits
         val c = maxCompanions
 
-        val names : $[Elem] = (owner == Lynx && c == 2).?($("Brundr".hl, "Kaelinn".hl)).|((owner == Lynx).?($("Brundr or Kaelinn".hl)).|($(Companion(owner).elem)))
+        val names : $[Elem] = (owner == Lynx && c == 2).?($("Brundr".hl, "Kaelinn".hl)).|((owner == Lynx && game.options.has(PrintedNewBlood)).?($("Brundr or Kaelinn".hl)).|($(Companion(owner).elem)))
 
         cancel(Ask(self)
             .add(FiguresExplodeAction(self, picks./~(finish).distinct))
@@ -62,7 +66,8 @@ trait FigureGoal extends GameElementary {
             .when(c > 0)(FigureSwitchAction(self, this, p, 1, names(0), p.first))
             .when(c > 1)(FigureSwitchAction(self, this, p, 2, names(1), p.second))
             .when(chiefMay)(FigureSwitchAction(self, this, p, 0, WarchiefElem(owner).elem, p.chief))
-            .add(finish(p).|(FiguresNoneAction(self, this))))
+            .when(blainnMay)(FigureSwitchAction(self, this, p, 3, "Jötunn Blainn".hl, p.blainn))
+            .add(finish(p).|(FiguresNoneAction(self, this, none(p)))))
     }
 }
 
@@ -77,11 +82,12 @@ case class FigureSwitchAction(self : Faction, goal : FigureGoal, p : FigurePick,
     def perform(soft : Void)(implicit game : Game) = goal.ask(which match {
         case 0 => p.copy(chief = p.chief.not)
         case 1 => p.copy(first = p.first.not)
+        case 3 => p.copy(blainn = p.blainn.not)
         case _ => p.copy(second = p.second.not)
     })
 }
 
-case class FiguresNoneAction(self : Faction, goal : FigureGoal) extends BaseInfo(goal)("Pick who goes")
+case class FiguresNoneAction(self : Faction, goal : FigureGoal, label : Elem) extends BaseInfo(goal)(label)
 
 case class FiguresExplodeAction(self : Faction, all : $[UserAction]) extends HiddenChoice with HalfExplode {
     def expand(target : |[Action]) = all
@@ -129,4 +135,34 @@ case class LynxBonusGoal(self : Faction, from : AreaRef, to : AreaRef, units : I
     override def chiefMay(implicit game : Game) = false
     def start(implicit game : Game) = FigurePick(0, true, maxCompanions > 1, false)
     def finish(p : FigurePick)(implicit game : Game) = (p.companions > 0).?(LynxGoAction(self, from, to, p.companions, p.units, then))
+}
+
+// Casualties picked by their player (ChooseCasualties): which k figures are lost. The units counter counts the units, then any
+// Militia and bodyguard (they go after the units); a pick leads to the same CasualtyPickAction as before, except losing both
+// lynxes while keeping some units, which the old picks couldn't say (CasualtyBothLynxAction)
+case class CasualtyGoal(self : Faction, from : AreaRef, k : Int, then : ForcedAction) extends FigureGoal {
+    def owner = self
+    def elem(implicit game : Game) = self.elem ~ " takes " ~ CombatIcon.skulls(k) ~ " in " ~ from.elem ~ ", who is lost"
+    // the soldiers but the second lynx (MilitaryExpansion.soldiers counts it last)
+    override def maxUnits(implicit game : Game) = MilitaryExpansion.soldiers(territory, owner) - game.extraLynx(territory, owner)
+    override def blainnMay(implicit game : Game) = game.blainnIn(territory, owner)
+    def start(implicit game : Game) = FigurePick(math.min(k, maxUnits), false, false, false)
+    override def cancel(a : Ask)(implicit game : Game) = a
+
+    def taken(p : FigurePick)(implicit game : Game) = p.units + p.companions + p.blainn.??(1) + p.chief.??(game.pcChief(owner).?(2).|(1))
+
+    override def none(p : FigurePick)(implicit game : Game) = "Pick " ~ CombatIcon.skulls(k) ~ " (" ~ taken(p).hl ~ " picked)"
+
+    def finish(p : FigurePick)(implicit game : Game) = {
+        val parties = MapExpansion.casualtyParties(owner, territory, k)
+        val max = maxUnits
+        def old(n : Int, kaija : Boolean) = parties.has((n, kaija, p.chief, p.blainn)).?(CasualtyPickAction(owner, from, k, n, kaija, p.chief, p.blainn, then) : UserAction)
+
+        p.companions match {
+            case 2 if p.units < max => (taken(p) == k).?(CasualtyBothLynxAction(owner, from, k, p.units, p.chief, p.blainn, then))
+            case 2 => old(p.units + 1, true)
+            case 1 => old(p.units, true).orElse((p.units == max).??(old(p.units + 1, false)))
+            case _ => old(p.units, false)
+        }
+    }
 }

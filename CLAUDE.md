@@ -171,7 +171,7 @@ the units as a counter ("−", "3 of 5 units", "+"), a Yes/No switch for the war
 Kaelinn separately, though the game doesn't track which lynx is which), and the button that does it, naming who goes. The switches are
 soft and the button is the same recorded action as before (`MoveUnitsAction`, `MoveOneLynxAction`, `RetreatPartyAction`, the new
 `RetreatOneLynxAction`, `LynxGoAction`...), so it needs no option and older games load and replay unchanged; `FiguresExplodeAction` lists
-every button for bots and move checks. Swamp and teammate passes, Stag's single-unit Move and Military Militia moves keep their own lists. Development
+every button for bots and move checks. Swamp and teammate passes, Stag's single-unit Move and Military Militia moves keep their own lists. Casualties picked by their player (`ChooseCasualties`) use the same picker (`CasualtyGoal`; Gman, 2026-11-02): the units counter (then Militia and bodyguards), Yes/No for the warchief, each lynx or companion and Jötunn Blainn, and a button naming the loss, the same recorded `CasualtyPickAction`, except losing both lynxes while keeping units, which the old list couldn't say (`CasualtyBothLynxAction`, `game.casualtyBothLynx`). Development
 and other card picks show the cards at hand-card size, and the last player to pass
 still sees the one card left before taking it. Copies of the same card in hand (and among
 the Played cards) are drawn as one card with the copies peeking out behind it
