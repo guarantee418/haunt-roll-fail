@@ -357,9 +357,11 @@ case object HorizonsDevelopments extends GameOption with ToggleOption {
 }
 
 // Each player's three starting tiles are one from a food, a wood and a lore pile (Marzaus's group's house rule, asked for
-// by Gman on 2026-10-19, who picked three piles over redrawing; MapExpansion.dealStart)
+// by Gman on 2026-10-19, who picked three piles over redrawing; MapExpansion.dealStart). Listed under Fan content (Gman, 2026-11-02;
+// it was a "Map tiles" section after Card edition)
 case object BalancedStartTiles extends GameOption with ToggleOption {
-    val group = "Map tiles".txt
+    val group = "Fan content".txt
+    override def fold = |("Fan content")
     def valueOn = "Balanced starting tiles".txt
     override val explain = $(
         "Each player's " ~ 3.hl ~ " starting tiles show at least one " ~ Food.elem ~ ", one " ~ Wood.elem ~ " and one " ~ Lore.elem ~ ".",
