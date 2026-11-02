@@ -159,6 +159,9 @@ case class RetreatPickAction(self : Faction, from : AreaRef, to : AreaRef, rough
 // Older games: the warchief went with the first group
 case class RetreatToAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to", to)(RetreatGroup(self, from, n, kaija))
 case class RetreatPartyAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to", to)(RetreatParty(self, n, kaija, chief))
+// Printed Lynx Clan: Brundr or Kaelinn alone, the other staying for the next pick (only adds a choice, so no option)
+case class RetreatOneLynxAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, chief : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Retreat from", from, "to", to)("(" ~ MoveOneLynxLabel(n, chief).elem ~ ")")
+case class BrandRetreatOneLynxAction(self : Faction, loser : Faction, from : AreaRef, to : AreaRef, n : Int, chief : Boolean, rough : Boolean, then : ForcedAction) extends BaseAction("Brand's Bravery".hl, loser, "retreats from", from, "to", to)("(" ~ MoveOneLynxLabel(n, chief).elem ~ ")")
 // The figures go
 case class RetreatMoveAction(f : Faction, from : AreaRef, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean, rough : Boolean, then : ForcedAction) extends ForcedAction
 
@@ -642,7 +645,7 @@ object MapExpansion extends Expansion {
             // Raven Mercenaries: a neutral territory, then the same one, which the first unit made Raven's
             case RecruitNeutralSame => neutral ++ placed./(game.board.territory).distinct.diff(neutral)
             case RecruitSameAny => mine ++ neutral
-            case RecruitOsmosis => mine.%(t => game.board.open(t) || t.areas.exists(a => game.board.spec(a).wood > 0)).%(t => placed.forall(p => t.areas.contains(p).not))
+            case RecruitOsmosis => mine.%(t => game.board.open(t) || t.areas.exists(a => game.areaSpec(a).wood > 0)).%(t => placed.forall(p => t.areas.contains(p).not))
             case RecruitClosed => mine.%(game.board.closed).%(t => placed.forall(p => t.areas.contains(p).not))
             case RecruitPeers => LionExpansion.peersTargets(f, placed)
             case RecruitChapels => LionExpansion.chapelTargets(f, placed)
@@ -1099,6 +1102,22 @@ object MapExpansion extends Expansion {
             Ask(f).each(l) { case (n, kaija, chief, blainn) => CasualtyPickAction(f, t.anchor, k, n, kaija, chief, blainn, again) }
         })
 
+    // One of the two lynxes retreats (maybe with units and the warchief); the other is still there for the next pick
+    def retreatOneLynx(f : Faction, from : AreaRef, to : AreaRef, n : Int, chief : Boolean, rough : Boolean, then : ForcedAction)(implicit game : Game) = {
+        game.removeUnits(game.board.territory(from), f, n)
+        game.addUnits(to, f, n)
+        game.lynx2 = |(to)
+        if (chief)
+            game.chiefs += f -> to
+
+        f.log("retreated", MoveOneLynxLabel(n, chief), "to", to)
+
+        // Howl from the Sea (Kraken): a unit where a lost combat retreats
+        NewBloodExpansion.howl(f, to)
+
+        Then(RetreatAction(f, from, rough, then))
+    }
+
     // Who can retreat together: everyone, then the units without Kaija and the warchief, one unit, Kaija alone, the warchief alone
     def retreatParties(f : Faction, from : AreaRef)(implicit game : Game) : $[(Int, Boolean, Boolean)] = {
         val t = game.board.territory(from)
@@ -1387,15 +1406,7 @@ object MapExpansion extends Expansion {
             if (game.passOnly(f, t))
                 Ask(f).add(MoveUnitsAction(f, from, to, n, game.kaijaIn(t, f), chief, cost, left, e, then)).cancel
             else
-            Ask(f)
-                .each(n.to(1, -1).$)(k => MoveUnitsAction(f, from, to, k, false, false, cost, left, e, then))
-                .some(kaija.$(n.to(0, -1).$).flatten)(k => $(MoveUnitsAction(f, from, to, k, true, false, cost, left, e, then)))
-                .some(chief.$(n.to(0, -1).$).flatten)(k => $(MoveUnitsAction(f, from, to, k, false, true, cost, left, e, then)))
-                .some((chief && kaija).$(n.to(0, -1).$).flatten)(k => $(MoveUnitsAction(f, from, to, k, true, true, cost, left, e, then)))
-                // Printed Lynx Clan: Brundr or Kaelinn alone, the other staying behind
-                .some((kaija && game.extraLynx(t, f) > 0).$(n.to(0, -1).$).flatten)(k => $(MoveOneLynxAction(f, from, to, k, false, cost, left, e, then)))
-                .some((kaija && chief && game.extraLynx(t, f) > 0).$(n.to(0, -1).$).flatten)(k => $(MoveOneLynxAction(f, from, to, k, true, cost, left, e, then)))
-                .cancel
+            FigurePicker(MoveGoal(f, from, to, cost, left, e, kaija, then))
 
         case MoveUnitsAction(f, from, to, n, kaija, chief, cost, left, e, then) =>
             val src = game.board.territory(from)
@@ -1972,10 +1983,16 @@ object MapExpansion extends Expansion {
             }
 
         case RetreatPickAction(f, from, to, rough, then) =>
-            retreatCount(Ask(f).each(retreatParties(f, from)) { case (n, kaija, chief) => RetreatPartyAction(f, from, to, n, kaija, chief, rough, then) }, f, from, rough)
+            FigurePicker(RetreatGoal(f, from, to, rough, then))
 
         case BrandRetreatPickAction(self, f, from, to, rough, then) =>
-            retreatCount(Ask(self).each(retreatParties(f, from)) { case (n, kaija, chief) => BrandRetreatPartyAction(self, f, from, to, n, kaija, chief, rough, then) }, f, from, rough)
+            FigurePicker(BrandRetreatGoal(self, f, from, to, rough, then))
+
+        case BrandRetreatOneLynxAction(_, f, from, to, n, chief, rough, then) =>
+            retreatOneLynx(f, from, to, n, chief, rough, then)
+
+        case RetreatOneLynxAction(f, from, to, n, chief, rough, then) =>
+            retreatOneLynx(f, from, to, n, chief, rough, then)
 
         case BrandRetreatToAction(_, f, from, to, n, kaija, rough, then) =>
             Then(RetreatToAction(f, from, to, n, kaija, rough, then))
@@ -2140,7 +2157,7 @@ object MapExpansion extends Expansion {
             // Lay of the Land: collect everything shown on the tile
             if (e.collect) {
                 val spec = Tiles(tile)
-                val (food, wood, lore) = (spec.areas./(_.food).sum, spec.areas./(_.wood).sum, spec.areas./(_.lore).sum)
+                val (food, wood, lore) = (spec.areas./(_.food).sum, (tile == "waste-nastrond" && game.options.has(NastrondWood).not).?(0).|(spec.areas./(_.wood).sum), spec.areas./(_.lore).sum)
                 f.food += food
                 f.wood += wood
                 f.lore += lore

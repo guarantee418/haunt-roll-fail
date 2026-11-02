@@ -2062,6 +2062,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 &((Image(f.style + "-hawk-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-hawk-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
 
             case f : Insurgent =>
+                // Frog supporters have the Frog card back, so like Frog cards in hand, everyone sees them (last)
+                val supporterFrogNum = f.supporters.get.%(frogBacked(_)).num
+                val supporterFrogs = (supporterFrogNum > 0).??(", " + supporterFrogNum + " " + Frog.name)
+                val supporterBacks = (f.supporters.num - supporterFrogNum).times(dt.CardBackInfo).merge ~ supporterFrogNum.times(Image(frogBackIcon, styles.cardbackinfo, "Frog card")).merge
+
                 Gap ~
                 FoxRabbitMouse./(s => Hint(s.name + " Base: " + f.suits.has(s).?("on the map").|("available") + ", draw 1 extra card", f.suits.has(s).?(Image(f.style + "-base-" + s.name, styles.building)).|(Image("empty-building-card", styles.building)))) ~
                 Gap ~
@@ -2084,11 +2089,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 Gap ~
                 Div(
                     f.bases.none.?(
-                        (Hint("Supporters: " + (f.supporters.num == 0).?("no cards").|((f.supporters.num == 1).?("1 cards").|(f.supporters.num + " cards")) + ", max 5 cards",
-                            f.supporters.num.times(dt.CardBackInfo) ~ (5 - f.supporters.num).times(dt.CardEmptyInfo), styles.supporters5))
+                        (Hint("Supporters: " + (f.supporters.num == 0).?("no cards").|((f.supporters.num == 1).?("1 cards").|(f.supporters.num + " cards")) + supporterFrogs + ", max 5 cards",
+                            supporterBacks ~ (5 - f.supporters.num).times(dt.CardEmptyInfo), styles.supporters5))
                         ).|(
-                            (Hint("Supporters: " + (f.supporters.num == 0).?("no cards").|((f.supporters.num == 1).?("1 cards").|(f.supporters.num + " cards")),
-                            dt.CardEmptyInfo ~ f.supporters.num.times(dt.CardBackInfo).merge ~ dt.CardEmptyInfo, styles.supportersX))
+                            (Hint("Supporters: " + (f.supporters.num == 0).?("no cards").|((f.supporters.num == 1).?("1 cards").|(f.supporters.num + " cards")) + supporterFrogs,
+                            dt.CardEmptyInfo ~ supporterBacks ~ dt.CardEmptyInfo, styles.supportersX))
                         ),
                 styles.centered) ~
                 Gap ~
@@ -4025,7 +4030,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     less("Bases".hl.larger) ~
                     more("Bases".hl.larger, "are placed by a", "revolt".hh, Comma, "which removes all enemy pieces in the clearing", Dot) ~
                     FoxRabbitMouse./(s => f.all(Base(s)).any.?(Image(f.style + "-base-" + s.name)(styles.building3x)).|(Image("empty-building")(styles.building3x))).merge.div ~
-                    desc(f.supporters.num.hl.larger, "supporter".s(f.supporters.num), FoxRabbitMouse.forall(s => f.all(Base(s)).none).?("(at most 5 without a base)")) ~
+                    desc(f.supporters.num.hl.larger, "supporter".s(f.supporters.num), f.supporters.get.%(frogBacked(_)).num.use(n => (n > 0).?("(" ~ n.hl ~ " " ~ Frog.elem ~ ")")), FoxRabbitMouse.forall(s => f.all(Base(s)).none).?("(at most 5 without a base)")) ~
                     HGap ~
                     HGap ~
                     HGap ~

@@ -53,6 +53,8 @@ package object elem {
         object pickIcon extends CustomStyle(height("7ex"), display("block"), margin.left("auto"), margin.right("auto"))
         // Adset: the draft's clans, as in the clan picker's grid
         object draftTile extends CustomStyle(display("inline-flex"), vertical.align("top"))
+        // The units counter of the figure picker (nort/figures.scala): "−", "3 of 5 units", "+" on one row
+        object figureCount extends CustomStyle(display("inline-flex"), width("27%"), justify.content("center"), align.items("center"), vertical.align("middle"))
         object pickRandomBox extends CustomStyle(height("7ex"), display("flex"), align.items("center"), justify.content("center"))
         object pickRandom extends CustomStyle(font.size("300%"), line.height("1"))
         object menuIcon extends CustomStyle(height("2.4em"), vertical.align("middle"), margin.right("1ex"))
@@ -165,6 +167,9 @@ package object elem {
         object pyreUnit extends CustomStyle(background.color("#000000"), border.radius("50%"))
 
         object tile extends CustomStyle(display("inline-block"), width("26ex"), max.width("90%"), vertical.align("middle"), margin("0.3ex"))
+        // A tile with a rule of its own, tapped on the map (TileAbilities.view)
+        object abilityTile extends CustomStyle(display("block"), width("30ex"), max.width("70vw"), margin.left("auto"), margin.right("auto"), margin.top("1ex"), margin.bottom("1ex"))
+        object abilityText extends CustomStyle(max.width("50ex"), margin.left("auto"), margin.right("auto"), text.align("center"))
         // Adset: a seat's three map tiles, side by side during the draft
         object seatTile extends CustomStyle(display("inline-block"), width("14ex"), vertical.align("middle"), margin("0.3ex"))
         object rot0 extends CustomStyle()

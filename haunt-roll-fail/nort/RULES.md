@@ -971,6 +971,11 @@ proposed there, to change if Marzaus answers otherwise.
   and Militia in the warchief's territory; Guardian 1, 3 per Defense Tower
   controlled; Legions 1, 3 per Training Camp controlled; Legions 2, one unit
   from the supply at each Training Camp; Leadership's dead bodyguard comes back.
+  With the Wilderness, its Geysers took over the End of the Year and none of
+  this happened (Marzaus, 2026-11-01); in games with the hidden
+  `EndOfYearAfterGeysers` every new game gets, the Geysers go first and the End
+  of the Year then goes on through the Military paths. A running game can be
+  switched over with `EndOfYearAfterGeysersAction(X)`.
 - Leadership. 1: the bodyguard (`game.guards`) is a figure that is wherever the
   warchief is (it moves, retreats and goes to the reserve with it), worth 1
   combat point, lost as a casualty after the units and Militia and before the
@@ -1220,8 +1225,9 @@ Check these against the rulebook when it is at hand.
     only), use Kaija's rules: one figure, moves with the units, taken as a
     casualty chosen by the player like the warchief, can't be targeted by card
     effects on enemy units, doesn't count for the 14-unit limit. Unlike
-    Kaija they may enter enemy territories. Brundr and Kaelinn don't count
-    for winter (Uncharted Horizons rulebook); Brok does, like a warchief.
+    Kaija they may enter enemy territories. Brundr and Kaelinn count
+    for winter, each like a unit (Gman, 2026-11-01; hidden `LynxesCostWinter`, every new game; older
+    games left them out, reading the Uncharted Horizons rulebook); Brok does too, like a warchief.
     Without the Warchiefs module Horse has no warchief and no Brok.
   - Brundr and Kaelinn's Move 1 doesn't cross Rough borders; the units with
     it may stay behind (any number go). It is offered before the card (or

@@ -342,9 +342,9 @@ object Tiles {
         )(rough("w", "s"), border("s", "n"), border("n", "w")),
         tile("waste-nastrond")(
             area("n", "N", 0.4, 0.05, 0.62, 0.06)(),
-            area("e", "E", 0.95, 0.45, 0.93, 0.6)(),
+            area("e", "E", 0.95, 0.45, 0.93, 0.6)(wood),
             area("s", "S", 0.6, 0.95, 0.36, 0.93)(),
-            area("w", "W", 0.05, 0.6, 0.07, 0.45)(),
+            area("w", "W", 0.05, 0.6, 0.07, 0.45)(wood),
         )(border("n", "e"), border("e", "s"), border("s", "w"), border("w", "n"), wall("n", "s"), wall("e", "w")),
         tile("waste-landvidi")(
             area("n", "N", 0.55, 0.07, 0.38, 0.1)(),

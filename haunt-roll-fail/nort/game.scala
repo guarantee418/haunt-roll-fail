@@ -142,8 +142,8 @@ class FactionState(val faction : Faction)(implicit game : Game) {
     // Units on the map, with the warchief (Warchiefs module); Horse Clan's second warchief, Brok, counts too
     def units = game.onMap(faction) + game.chiefs.contains(faction).??(1) + ((faction == Horse && game.brok.any) || (faction == Automa && game.leader2.any)).??(1) + game.blainnOf(faction).any.??(1) + SeaExpansion.raiders(faction)
 
-    // The units Winter costs count: Warchiefs PC version leaves the warchief out
-    def winterUnits = units - (game.pcChief(faction) && game.chiefs.contains(faction)).??(1)
+    // The units Winter costs count: Warchiefs PC version leaves the warchief out; Brundr and Kaelinn count in games with LynxesCostWinter
+    def winterUnits = units - (game.pcChief(faction) && game.chiefs.contains(faction)).??(1) + (faction == Lynx && game.options.has(LynxesCostWinter)).??(game.lynxes.num)
 
     var draw : $[Card] = $
     var hand : $[Card] = $
@@ -477,6 +477,8 @@ case class KnowledgeEachTerritoryAction(then : ForcedAction) extends ForcedActio
 case class KrakenMovesTideAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for AchievementsAside (Future Sight's and Mimirsbrunn's Achievements kept aside, effects.scala)
 case class AchievementsAsideAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// The same for EndOfYearAfterGeysers (the End of the Year goes on through every expansion after the Geysers, wilderness.scala)
+case class EndOfYearAfterGeysersAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for OxPicksSpace (Ox's Ancestral Equipment token on a small building space or a Carved Stone space, picked by Ox);
 // wrapped around Ox's ExploreTurnAction, it also asks for the token of that tile
 case class OxPicksSpaceAction(then : ForcedAction) extends ForcedAction with SkipValidate
@@ -700,6 +702,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var fightSize : Map[Faction, Int] = Map()
     var fortressYear : Map[Faction, Int] = Map()
     var militaryYear = 0
+    // The year whose Geysers were placed (EndOfYearAfterGeysers, wilderness.scala)
+    var geysersYear = 0
     var fightStarted = false
     var towersUsed = 0
     var fightKills : Map[Faction, Int] = Map()
@@ -1147,9 +1151,18 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
     def buildingsIn(t : Territory) : $[(SpaceRef, Building)] = buildings.toList.%{ case (s, _) => t.areas.contains(s.area) }.sortBy(_._2.toString)
 
+    // An area as printed; games without NastrondWood keep Naströnd's two areas without their wood
+    def areaSpec(a : AreaRef) : AreaSpec = {
+        val s = board.spec(a)
+        if (s.wood > 0 && options.has(NastrondWood).not && board.at(a.x, a.y).exists(_.tile == "waste-nastrond"))
+            s.copy(wood = 0)
+        else
+            s
+    }
+
     // Food, wood and lore shown on a territory and its buildings
     def produce(t : Territory) : (Int, Int, Int) = {
-        val specs = t.areas./(board.spec)
+        val specs = t.areas./(areaSpec)
         val here = working(t)
         (specs./(_.food).sum + here.count(_ == FoodSilo), specs./(_.wood).sum + here.count(_ == WoodcutterLodge), specs./(_.lore).sum + here.count(_ == CarvedStone))
     }
@@ -2168,6 +2181,12 @@ object CommonExpansion extends Expansion {
         case AchievementsAsideAction(then) =>
             if (game.options.has(AchievementsAside).not)
                 game.addOption(AchievementsAside)
+
+            Then(then)
+
+        case EndOfYearAfterGeysersAction(then) =>
+            if (game.options.has(EndOfYearAfterGeysers).not)
+                game.addOption(EndOfYearAfterGeysers)
 
             Then(then)
 

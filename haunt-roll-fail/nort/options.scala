@@ -357,9 +357,11 @@ case object HorizonsDevelopments extends GameOption with ToggleOption {
 }
 
 // Each player's three starting tiles are one from a food, a wood and a lore pile (Marzaus's group's house rule, asked for
-// by Gman on 2026-10-19, who picked three piles over redrawing; MapExpansion.dealStart)
+// by Gman on 2026-10-19, who picked three piles over redrawing; MapExpansion.dealStart). Listed under Fan content (Gman, 2026-11-02;
+// it was a "Map tiles" section after Card edition)
 case object BalancedStartTiles extends GameOption with ToggleOption {
-    val group = "Map tiles".txt
+    val group = "Fan content".txt
+    override def fold = |("Fan content")
     def valueOn = "Balanced starting tiles".txt
     override val explain = $(
         "Each player's " ~ 3.hl ~ " starting tiles show at least one " ~ Food.elem ~ ", one " ~ Wood.elem ~ " and one " ~ Lore.elem ~ ".",
@@ -462,6 +464,14 @@ case object JoinedTilesOnly extends GameOption with ToggleOption {
     def valueOn = "Checks only the territories joined".txt
 }
 
+// Naströnd (Wastelands) prints a wood in its west and in its east territory, which the tile data left out, so neither was
+// counted at harvest, by Quality of Life or anything else collecting from a territory (Marzaus, 2026-11-01). Hidden, and given
+// to every new game (Meta.mandatoryFor): older games had no wood there (Game.areaSpec), and their replays must not change
+case object NastrondWood extends GameOption with ToggleOption {
+    val group = "Naströnd".txt
+    def valueOn = "Wood in the west and east territories".txt
+}
+
 // Svarn's Menders brings back the warchief, the companion (Kaija, Brundr and Kaelinn, Brok) and Jötunn Blainn among the
 // casualties too, not only units (the owner's ruling of 2026-10-12; figures lost for having nowhere to retreat still stay lost).
 // Hidden, and given to every new game (Meta.mandatoryFor): older games brought back units only, and their replays must not stop
@@ -537,12 +547,29 @@ case object AchievementsAside extends GameOption with ToggleOption {
     def valueOn = "Achievements taken early are kept aside".txt
 }
 
+// With the Wilderness, its Geysers took over the End of the Year and went straight on to the core one, so the expansions after it
+// (the Military paths' MXP for towers, camps and the warchief's units, Legions' new units, a dead Militia or bodyguard back) never
+// ran (Marzaus, 2026-11-01). Hidden, and given to every new game (Meta.mandatoryFor): the Geysers go first, then the End of the
+// Year goes on through every expansion. A running game can be switched over with EndOfYearAfterGeysersAction(X)
+case object EndOfYearAfterGeysers extends GameOption with ToggleOption {
+    val group = "Wilderness".txt
+    def valueOn = "The End of the Year goes on after the Geysers".txt
+}
+
 // Printed Lynx Clan (PrintedNewBlood): each starting placement may take a lynx, so Lynx can start with both Brundr and Kaelinn
 // (Gman, 2026-10-31: "Lynx is supposed to have 2 cat tokens"). Before it, a lynx placed in the second placement moved the first
 // one there and Lynx started with one. Hidden, and given to every new game (Meta.mandatoryFor); older games replay the old way
 case object LynxBothAtSetup extends GameOption with ToggleOption {
     val group = "New Blood".txt
     def valueOn = "Lynx may start with both lynxes".txt
+}
+
+// Brundr and Kaelinn count as units for Winter costs (Gman, 2026-11-01: "The lynx cats count towards winter costs"); the site had
+// left them out, reading the Uncharted Horizons rulebook's note on companions. Hidden, and given to every new game (Meta.mandatoryFor);
+// older games replay the old way (FactionState.winterUnits)
+case object LynxesCostWinter extends GameOption with ToggleOption {
+    val group = "New Blood".txt
+    def valueOn = "Brundr and Kaelinn count for Winter costs".txt
 }
 
 // New Blood as printed (Gman sent the printed cards and boards on 2026-10-23): the 19 clan cards in CardVersions (editions.scala)

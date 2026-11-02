@@ -208,6 +208,7 @@ case class KaraPlaceAction(self : Faction, area : AreaRef, then : ForcedAction) 
 
 // Lynx
 case class LynxGoAction(self : Faction, from : AreaRef, to : AreaRef, n : Int, units : Int, then : ForcedAction) extends BaseAction("Brundr and Kaelinn".hl, "bonus Move from", from, "to", to)(LynxParty(n, units)) with MapTarget { def target = to }
+case class LynxBonusToAction(self : Faction, from : AreaRef, to : AreaRef, units : Int, then : ForcedAction) extends BaseAction("Brundr and Kaelinn".hl, "bonus Move from", from, "to")(to) with Soft with MapTarget { def target = to }
 case class LynxParty(n : Int, units : Int) extends Elementary {
     def elem = ((n == 2).?("both lynxes").|("one lynx") + (units > 0).??(" and " + units + (units == 1).?(" unit").|(" units"))).txt
 }
@@ -1396,7 +1397,11 @@ object NewBloodExpansion extends Expansion {
             val n = game.lynxesIn(t)
             val u = math.min(game.count(t, f), units.count(a => t.areas.contains(a)))
 
-            Ask(f).some(lynxGoals(t))(o => 1.to(n).$./~(k => 0.to(u).$./(j => LynxGoAction(f, from, o.anchor, k, j, then)))).cancel
+            Ask(f).each(lynxGoals(t))(o => LynxBonusToAction(f, from, o.anchor, u, then)).cancel
+
+        // Who goes: one or both lynxes, and some of the units recruited there (FigurePicker)
+        case LynxBonusToAction(f, from, to, u, then) =>
+            FigurePicker(LynxBonusGoal(f, from, to, u, then))
 
         case LynxGoAction(f, from, to, n, units, then) =>
             val src = game.board.territory(from)
