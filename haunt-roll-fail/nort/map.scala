@@ -81,6 +81,12 @@ case class RecruitUnitHereAction(self : Faction, area : AreaRef, left : Int, mod
 case class RecruitKaijaHereAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit in", area)(OneCompanion(self))
 case class RecruitChiefHereAction(self : Faction, area : AreaRef, left : Int, mode : RecruitMode, placed : $[AreaRef], then : ForcedAction) extends BaseAction("Recruit in", area)(WarchiefElem(self))
 case class TrainingCampsAction(f : Faction, placed : $[AreaRef], then : ForcedAction) extends ForcedAction
+// LynxCampRecruitsLynx: each extra recruit of Lynx's Training Camps may be Brundr or Kaelinn when one is in the reserve;
+// left: the camps' recruits still to come in area, rest: the other territories recruited in (their camps are counted when reached)
+case class CampRecruitAction(f : Faction, rest : $[AreaRef], then : ForcedAction) extends ForcedAction
+case class CampRecruitInAction(f : Faction, area : AreaRef, left : Int, rest : $[AreaRef], then : ForcedAction) extends ForcedAction
+case class CampUnitAction(self : Faction, area : AreaRef, left : Int, rest : $[AreaRef], then : ForcedAction) extends BaseAction(TrainingCamp, "in", area, "recruits")("A regular unit")
+case class CampLynxAction(self : Faction, area : AreaRef, left : Int, rest : $[AreaRef], then : ForcedAction) extends BaseAction(TrainingCamp, "in", area, "recruits")(OneCompanion(self))
 
 // MOVE
 case class MoveAction(f : Faction, left : Int, e : MoveEffect, then : ForcedAction) extends ForcedAction
@@ -978,6 +984,10 @@ object MapExpansion extends Expansion {
         f.log("recruited in", a)
     }
 
+    // The extra units a Recruit gets in t: its Training Camps (Military paths: Legions' camps recruit two, Guardian's Defense Towers
+    // and Leadership's warchief work as camps)
+    def campsIn(f : Faction, t : Territory)(implicit game : Game) = game.working(t).count(_ == TrainingCamp) + MilitaryExpansion.camps(f, t)
+
     def recruitKaija(f : Faction, a : AreaRef)(implicit game : Game) : Unit = {
         game.placeCompanion(f, a)
         game.note("kaija-recruit")
@@ -1369,17 +1379,51 @@ object MapExpansion extends Expansion {
                 game.note("robotos-recruit")
             }
 
-            placed./(game.board.territory).distinct.foreach { t =>
-                // Military paths: Legions' camps recruit two, Guardian's Defense Towers and Leadership's warchief work as camps
-                val camps = game.working(t).count(_ == TrainingCamp) + MilitaryExpansion.camps(f, t)
-                val n = math.min(camps, game.reserve(f))
-                if (n > 0) {
-                    game.addUnits(t.anchor, f, n)
-                    f.log("recruited", n.hl, "more with", TrainingCamp, "in", t.anchor)
+            // LynxCampRecruitsLynx: Lynx may take Brundr or Kaelinn for a camp's extra recruit (Marzaus, 2026-11-02)
+            if (f == Lynx && game.options.has(LynxCampRecruitsLynx))
+                Then(CampRecruitAction(f, placed./(game.board.territory).distinct./(_.anchor), then))
+            else {
+                placed./(game.board.territory).distinct.foreach { t =>
+                    val n = math.min(campsIn(f, t), game.reserve(f))
+                    if (n > 0) {
+                        game.addUnits(t.anchor, f, n)
+                        f.log("recruited", n.hl, "more with", TrainingCamp, "in", t.anchor)
+                    }
                 }
+
+                Then(then)
             }
 
-            Then(then)
+        case CampRecruitAction(f, rest, then) =>
+            rest match {
+                case Nil => Then(then)
+                case a :: rest => Then(CampRecruitInAction(f, a, campsIn(f, game.board.territory(a)), rest, then))
+            }
+
+        case CampRecruitInAction(f, a, left, rest, then) =>
+            if (left > 0 && game.kaijaReady(f))
+                Ask(f)
+                    .when(game.reserve(f) > 0)(CampUnitAction(f, a, left - 1, rest, then))
+                    .add(CampLynxAction(f, a, left - 1, rest, then))
+            else {
+                val n = math.min(left, game.reserve(f))
+                if (n > 0) {
+                    game.addUnits(a, f, n)
+                    f.log("recruited", n.hl, "more with", TrainingCamp, "in", a)
+                }
+                Then(CampRecruitAction(f, rest, then))
+            }
+
+        case CampUnitAction(f, a, left, rest, then) =>
+            game.addUnits(a, f, 1)
+            f.log("recruited", 1.hl, "more with", TrainingCamp, "in", a)
+            Then(CampRecruitInAction(f, a, left, rest, then))
+
+        case CampLynxAction(f, a, left, rest, then) =>
+            game.placeCompanion(f, a)
+            game.note("lynx-camp-recruit")
+            f.log("recruited", OneCompanion(f), "with", TrainingCamp, "in", a)
+            Then(CampRecruitInAction(f, a, left, rest, then))
 
         // MOVE
         case MoveAction(f, left, e, then) =>
