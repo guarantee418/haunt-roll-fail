@@ -479,6 +479,8 @@ case class KrakenMovesTideAction(then : ForcedAction) extends ForcedAction with 
 case class AchievementsAsideAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for EndOfYearAfterGeysers (the End of the Year goes on through every expansion after the Geysers, wilderness.scala)
 case class EndOfYearAfterGeysersAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to MielikkiAgainstCreatures (an hrf-games fix)
+case class MielikkiAgainstCreaturesAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for OxPicksSpace (Ox's Ancestral Equipment token on a small building space or a Carved Stone space, picked by Ox);
 // wrapped around Ox's ExploreTurnAction, it also asks for the token of that tile
 case class OxPicksSpaceAction(then : ForcedAction) extends ForcedAction with SkipValidate
@@ -2201,6 +2203,12 @@ object CommonExpansion extends Expansion {
         case AchievementsAsideAction(then) =>
             if (game.options.has(AchievementsAside).not)
                 game.addOption(AchievementsAside)
+
+            Then(then)
+
+        case MielikkiAgainstCreaturesAction(then) =>
+            if (game.options.has(MielikkiAgainstCreatures).not)
+                game.addOption(MielikkiAgainstCreatures)
 
             Then(then)
 

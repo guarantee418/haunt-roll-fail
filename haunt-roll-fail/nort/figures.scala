@@ -143,6 +143,17 @@ case class BrandRetreatGoal(self : Faction, owner : Faction, from : AreaRef, to 
     override def cancel(a : Ask)(implicit game : Game) = MapExpansion.retreatCount(a, owner, from, rough)
 }
 
+// Hidden Ways: any figures from one territory to an open one (HiddenToAction)
+case class HiddenGoal(self : Faction, from : AreaRef, to : AreaRef, then : ForcedAction) extends FigureGoal {
+    def owner = self
+    def elem(implicit game : Game) = "Hidden Ways".hl ~ ": move from " ~ from.elem ~ " to " ~ to.elem
+    // Kaija can't enter enemy territories unless awakened (open territories hold none, but as before)
+    override def maxCompanions(implicit game : Game) = (game.restrained(owner).not || game.present(game.board.territory(to)).forall(game.allied(owner, _))).??(super.maxCompanions)
+    def start(implicit game : Game) = FigurePick(maxUnits, false, false, false)
+    def finish(p : FigurePick)(implicit game : Game) =
+        p.any.?((owner == Lynx && p.companions == 1 && maxCompanions == 2).?(named(p, HiddenOneLynxAction(self, from, to, p.units, p.chief, then))).|(HiddenUnitsAction(self, from, to, p.units, p.companions > 0, p.chief, then)))
+}
+
 // Lynx Clan's bonus Move: one or both lynxes, and up to `units` of the units just recruited there
 case class LynxBonusGoal(self : Faction, from : AreaRef, to : AreaRef, units : Int, then : ForcedAction) extends FigureGoal {
     def owner = self
