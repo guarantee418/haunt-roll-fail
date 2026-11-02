@@ -869,9 +869,11 @@ object MapExpansion extends Expansion {
             BuildSlotAction(f, a, b, cost, times, e, smallOnly, then)
 
     // Industrious Villagers: f's buildings and what each could become
-    def replacements(f : Faction)(implicit game : Game) : $[(SpaceRef, Building)] =
+    // Craftsmen ("with no other restriction") may also put a Carved Stone (or the Lion's Chapel) on a small building space
+    // (Marzaus, 2026-11-01); Industrious Villagers keep it to Carved Stone spaces. Only adds choices, so no option
+    def replacements(f : Faction, craftsmen : Boolean = false)(implicit game : Game) : $[(SpaceRef, Building)] =
         game.controlled(f)./~(game.buildingsIn)./~{ case (s, old) =>
-            val carved = s.index >= SpaceRef.extra || game.board.spec(s.area).spaces(s.index).kind == CarvedSpace
+            val carved = craftsmen || s.index >= SpaceRef.extra || game.board.spec(s.area).spaces(s.index).kind == CarvedSpace
             MineralsExpansion.buildings.%(_ != old).%(_.large == old.large).%(b => (b != CarvedStone && b != Chapel) || carved).%(b => LionExpansion.allowed(f, b)).%(b => b != Mine || MineralsExpansion.lair(game.board.territory(s.area))).%(b => game.buildingsLeft(b) > 0)./(b => s -> b)
         }
 
@@ -2306,7 +2308,7 @@ object MapExpansion extends Expansion {
 
         // The new buildings for the tapped one (the replacement itself, ReplaceBuildingAction or CraftsmenReplaceAction, is what the game records)
         case ReplaceSpotAction(f, source, s, then) =>
-            replaceChoices(f, source, replacements(f).filter(_._1 == s), then).cancel
+            replaceChoices(f, source, replacements(f, source == "Craftsmen").filter(_._1 == s), then).cancel
 
         // FEAST
         case FeastChoiceAction(f, e, then) =>
