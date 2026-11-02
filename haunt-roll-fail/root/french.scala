@@ -1031,6 +1031,7 @@ object French {
         "took [a prisoner]" -> "retient",
         "prisoner to" -> "prisonnier dans",
         "to [in order to]" -> "pour",
+        "to dig a" -> "pour creuser un",
         "Prisoners" -> "Prisonniers",
         "prisoners" -> "prisonniers",
         "acts" -> "agit",

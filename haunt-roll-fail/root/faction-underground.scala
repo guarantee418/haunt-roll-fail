@@ -159,7 +159,7 @@ class UndergroundPlayer(val faction : Underground)(implicit val game : Game) ext
 
 
 case class Digs(f : Underground, c : Clearing) extends Message {
-    def elem(implicit game : Game) = " digs " ~ Tunnel.of(f) ~ " to " ~ c.elem
+    def elem(implicit game : Game) = " to dig a " ~ Tunnel.of(f) ~ " in " ~ c.elem
 }
 
 
