@@ -117,7 +117,7 @@ its "Environment tiles" and its creatures (`WildernessTiles`, `WildernessCreatur
 say which), with the folded "Ban Environment tiles" (`BanEnvironment`, the two Geysers, Ruins and High Peaks together; the Ancestral
 Graveyard and the Wyvern's Den bring their Spectral Warriors and Wyvern) and "Ban creatures" (`BanCreature`, the expansions' deck
 creatures) shown for the parts picked, then the Central tile, then "Uncharted Horizons" (Events, Sea, its map tiles); Balanced
-starting tiles sits right after Card edition (Gman). Older games keep `ModuleOption(Wilderness)` / `ModuleOption(Wastelands)`, both
+starting tiles is under Fan content (Gman, 2026-11-02; it sat right after Card edition). Older games keep `ModuleOption(Wilderness)` / `ModuleOption(Wastelands)`, both
 parts, now hidden (`Meta.retired`, still logged at the start); Adset still adds the whole expansion it drafts.
 On the map, territories are tinted with their controlling player's color,
 turn gray when invaded and pink during the fight (resource icons and the
@@ -245,7 +245,7 @@ only with their option, all of them in Adset; `BanDevelopment.cards` gathers eve
 `ShuffledAdvancedAction`, and the setup screen warns when the bans leave too few cards for every year, `Meta.tooManyBans`;
 asked for by Marzaus and Robotos on 2026-10-21), "One more Achievement card" (`ExtraAchievement`: the last year reveals players + 1
 Achievements and the one left is set aside; asked for by Marzaus on 2026-10-19, also in Adset),
-"Balanced starting tiles" (`BalancedStartTiles`, under Map tiles, off by default, also in Adset;
+"Balanced starting tiles" (`BalancedStartTiles`, under Fan content since 2026-11-02 (Gman; first in it), off by default, also in Adset;
 asked for by Gman on 2026-10-19 from Marzaus's group's house rule: each player's three starting tiles show at least one food,
 one wood and one lore: each gets one tile from a food, a wood and a lore pile, a two-resource tile in the pile of the rarer
 one (`startPileOf`), blank tiles not dealt, `dealStart` in `nort/map.scala`; Gman picked that over redrawing), and the modules and
