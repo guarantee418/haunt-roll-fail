@@ -1268,7 +1268,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             case "Jötunn Blainn" => "Blainn"
             case t => t
         }
-        OnClick(CourtToggle, Div(Div(courtSideways.?("▸").|("▾").txt, styles.stripTab) ~ Div((game.year == 0).?("Setup".hlb.spn(item)).|(courtSideways.?(("Year " ~ game.year.hlb ~ (game.year > game.lastYear).?(Empty).|("/" ~ game.lastYear.hl))).spn(item)).|(("Year " ~ game.year.hlb ~ (game.year > game.lastYear).?(" (extra)".txt).|(" of " ~ game.lastYear.hl))).spn(item))) ~ titles./{ case (t, n) => (courtSideways.?(short(t)).|(t) ~ " " ~ ("(" + n + ")").hl).spn(item) }.merge, courtSideways.?(styles.stripFoldedSideText).|(styles.stripFoldedText)), courtSideways.?(styles.stripFoldedSide).|(styles.stripFolded), xlo.pointer))
+        OnClick(CourtToggle, Div(Div(courtSideways.?("▸").|("▾").txt, styles.stripTab) ~ Div((game.year == 0).?("Setup".hlb.spn(item)).|(courtSideways.?(("Year " ~ game.year.hlb ~ (game.year > game.lastYear).?(Empty).|("/" ~ game.lastYear.hl)).spn(item)).|(("Year " ~ game.year.hlb ~ (game.year > game.lastYear).?(" (extra)".txt).|(" of " ~ game.lastYear.hl)).spn(item))) ~ titles./{ case (t, n) => (courtSideways.?(short(t)).|(t) ~ " " ~ ("(" + n + ")").hl).spn(item) }.merge, courtSideways.?(styles.stripFoldedSideText).|(styles.stripFoldedText)), courtSideways.?(styles.stripFoldedSide).|(styles.stripFolded), xlo.pointer))
     }
 
     // Your hand and played cards are in the action pane, like in Arcs and Root (Game.info, TurnModeAction)
