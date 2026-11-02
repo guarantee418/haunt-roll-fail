@@ -129,7 +129,7 @@ object MetaAdset extends MetaGame {
         ),
         $(
             "The rules as Leder Games prints them:",
-            &("All Random".hh ~ " clearings") ~ " " ~ &("and the " ~ "Friends and Favors".hh ~ " deck."),
+            &("All Random".hh ~ " clearings") ~ " " ~ &("and the " ~ "Might and Right".hh ~ " deck."),
             "Nothing else changes.",
         ),
     )
