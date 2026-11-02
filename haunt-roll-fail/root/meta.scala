@@ -173,7 +173,7 @@ trait DeckOption extends GameOption with OneOfGroup with ImportantOption with Fo
 }
 
 case object StandardDeck extends DeckOption {
-    val valueOn = "Friends and Favors".hh
+    val valueOn = "Might and Right".hh
     override val explain = $(
         "The deck from the " ~ "Root".hh ~ " base game.",
     )
@@ -1626,7 +1626,7 @@ object Meta extends MetaGame {
         ),
         $(
             "The rules as Leder Games prints them:",
-            &("All Random".hh ~ " clearings, ") ~ &("the " ~ "Friends and Favors".hh ~ " deck, ") ~ &("and the " ~ "AdSet".hh ~ " setup buffs " ~ "Off".hh ~ "."),
+            &("All Random".hh ~ " clearings, ") ~ &("the " ~ "Might and Right".hh ~ " deck, ") ~ &("and the " ~ "AdSet".hh ~ " setup buffs " ~ "Off".hh ~ "."),
             "Nothing else changes.",
         ),
     )
