@@ -1537,12 +1537,19 @@ object CommonExpansion extends Expansion {
     def playChoices(f : Faction, stage : Int)(implicit game : Game) : Ask = {
         val l = handChoices(f, stage).%(playable(f, _))
         // Minerals module: a Gem before or after the cards played
-        Ask(f).each(f.hand.distinct)(c => PlayCardAction(f, c, stage).!(l.has(c).not, (stage == 2 && c.flash.not).?("only Flash cards now").|("can't be played now"))).add(MineralsExpansion.gems(f, stage))
+        Ask(f).each(f.hand.distinct)(c => PlayCardAction(f, c, stage).!(l.has(c).not, (stage == 2 && c.flash.not).?("only Flash cards now").|(unplayable(f, c.effect).|("can't be played now")))).add(MineralsExpansion.gems(f, stage))
     }
 
     // The cards in hand that can be chosen on a turn: any at the start, then only playable ones (only Flash cards after the first)
     def handChoices(f : Faction, stage : Int)(implicit game : Game) : $[Card] =
         f.hand.distinct.%(c => stage == 0 || (playable(f, c) && (stage == 1 || c.flash)))
+
+    // Why a card with effect e can't be played now, if a reason is known
+    def unplayable(f : Faction, e : Effect)(implicit game : Game) : |[String] = e match {
+        case DrawEffect(n, _, _, _) => |("no cards left to draw")
+        case NegotiationEffect | ResourcefulEffect => |("not enough cards left to draw")
+        case e => MapExpansion.unplayable(f, e)
+    }
 
     def playableEffect(f : Faction, e : Effect)(implicit game : Game) : Boolean = e match {
         case DrawEffect(n, _, _, _) => available(f) >= n
