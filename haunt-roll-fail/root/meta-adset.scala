@@ -108,6 +108,7 @@ object MetaAdset extends MetaGame {
         SilverTongueOneEffect,
         GovernorsStopCrafting,
         MouseholdFromSupply,
+        BuyServicesAgain,
         FolkHeroCharacter,
         RandomCharacter,
         MountainSuitedLandmark,
