@@ -2407,7 +2407,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 Gap ~ Gap ~ f.bag./(i => Image(i.exhaust.imgid, styles.ii)).merge.div(xstyles.smaller75)
 
             case f : Knaves =>
-                f.captains.indexed./((k, i) => Hint(k.name + "\n" + k.text, (Image(f.style + "-captain-" + k.name.toLowerCase, styles.wr) ~ " " ~ f.is(k).?(k.name.hl).|(f.retired.has(k).?(k.name.txt).|(k.name.styled(f))) ~ f.retired.has(k).?(" (retired)".txt)).div(styles.minister))).merge ~
+                f.captains.indexed./((k, i) => Hint(k.name + "\n" + k.text, (Image(f.style + "-captain-" + k.name.toLowerCase, styles.wr) ~ " " ~ f.is(k).?(k.name.hl).|(f.retired.has(k).?(k.name.txt).|(k.name.styled(f))) ~ f.status(k)./(t => (" " + t).txt)).div(styles.minister))).merge ~
                 Hint("Acclaim\n" + f.all(Acclaim).num + " on the map\n" + f.pooled(Acclaim) + " available",
                     (Image("empty-token", styles.token) *** f.all(Acclaim).num) ~ (Image(f.style + "-acclaim", styles.token) *** f.pooled(Acclaim))) ~ Break ~
                 f.prisoners.any.?(Hint("Prisoners\n" + f.prisoners.num + " in the forests", prisonerLine(f, styles.wr).div)).|(Empty) ~
@@ -3742,7 +3742,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     HGap ~
                     HGap ~
                     HGap ~
-                    f.captains./(k => desc(k.elem.larger, k.items./(i => Image(i.imgid, styles.ii)).merge, f.is(k).?("(acting)".hl), f.retired.has(k).?("(retired)".txt)) ~ desc(k.text) ~ HGap).merge ~
+                    f.captains./(k => desc(k.elem.larger, k.items./(i => Image(i.imgid, styles.ii)).merge, f.is(k).?("(acting)".hl), f.status(k)./(_.txt)) ~ desc(k.text) ~ HGap).merge ~
                     HGap ~
                     HGap ~
                     less("Skunks".hl.larger) ~

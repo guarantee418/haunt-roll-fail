@@ -186,6 +186,8 @@ class KnavesPlayer(val faction : Knaves)(implicit val game : Game) extends Facti
     var captains : $[KnaveCaptain] = $
     var dealt : $[KnaveCaptain] = $
     var retired : $[KnaveCaptain] = $
+    // captains that have been on the map: one of them off the map now was removed by someone (display only)
+    var placed : $[KnaveCaptain] = $
     var acting : |[KnaveCaptain] = None
 
     var actions : Int = 0
@@ -214,6 +216,16 @@ class KnavesPlayer(val faction : Knaves)(implicit val game : Game) extends Facti
     def is(k : KnaveCaptain) = acting.has(k)
 
     def faceUp : $[KnaveCaptain] = captains.diff(retired)
+
+    def removed(k : KnaveCaptain) = placed.has(k) && where(k).none
+
+    // shown after a captain's name: retired by the Knaves, or removed from the map by an enemy
+    def status(k : KnaveCaptain) : |[String] = (retired.has(k), removed(k)) match {
+        case (true, true) => Some("(retired, removed)")
+        case (true, false) => Some("(retired)")
+        case (false, true) => Some("(removed)")
+        case _ => None
+    }
 
     def prisoners : $[Figure] = board.forests./~(r => from(Cage(r)).$)
 
@@ -406,6 +418,8 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
             f.reserve --> f.piece(k) --> r
             f.reserve --> f.warrior --> r
 
+            f.placed = (f.placed :+ k).distinct
+
             f.log("placed", k, "and", f.warrior.of(f), "in", r)
 
             FactionSetupAction(f)
@@ -585,6 +599,8 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
 
         case KnavesReadyPlaceAction(f, k, r) =>
             f.figure(k) --> r
+
+            f.placed = (f.placed :+ k).distinct
 
             f.actions = Knaves.maxActions - 1
 

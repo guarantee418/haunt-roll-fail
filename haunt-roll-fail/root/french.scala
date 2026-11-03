@@ -1050,6 +1050,8 @@ object French {
         "spend a matching card to place a" -> "- dépensez une carte correspondante pour placer un",
         "retired" -> "met en retrait le",
         "(retired)" -> "(en retrait)",
+        "(retired, removed)" -> "(en retrait, éliminé)",
+        "(removed)" -> "(éliminé)",
         "a Captain" -> "un Capitaine",
         "flips two items" -> "retourne deux objets",
         "may move after" -> "peut se déplacer après",

@@ -817,6 +817,10 @@ file covers the build, server and deploy. No session can ssh to the server
   to the acclaims, so that pick has no Cancel (`CraftAction(f : Knaves, ...)` in `root/faction-knaves.scala`): the generic one's
   Cancel after a recorded move threw "cancel on non-soft external action", and Wind of Victory stopped loading on 2026-10-30 when
   the Knaves served Bake Sale (two rabbits) with frog, rabbit and rabbit-or-frog acclaim. Only takes away a choice that threw.
+- The Knaves' captain list (player panel and info overlay) says "(retired)" for a captain the Knaves retired, "(removed)" for one
+  an enemy removed from the map, and "(retired, removed)" for both (`status` in `KnavesPlayer`, `root/faction-knaves.scala`;
+  "removed" is a captain that has been on the map, `placed`, and isn't now). Asked for on Discord on 2026-11-03 (Glory through
+  Air: the Harrier, removed by the Keepers, read the same as the Vagrant). Display only, so no game records change.
 - In Advanced Setup the Knaves' four Captain cards are dealt when the factions are drawn, and the draft shows them under
   the Knaves (meeple, name and items; `FactionChoice.desc` in `root/setup.scala`, `game.draftCaptains`, asked for by Gman on
   2026-10-20); the Knaves then choose 3 of those. New games get the hidden default option `KnavesCaptainsInDraft`; older
