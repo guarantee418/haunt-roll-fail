@@ -868,7 +868,9 @@ object TraderExpansion extends FactionExpansion[Trader] {
 
             s.limit -= l.num
 
-            s.limit = 0
+            // BuyServicesAgain: what is left of the limit can be bought in another purchase, in the same Birdsong
+            if (game.options.has(BuyServicesAgain).not)
+                s.limit = 0
 
             Repeat
 

@@ -940,6 +940,11 @@ file covers the build, server and deploy. No session can ssh to the server
   put his cat at the Keep and Mousehold then offered it again). New games get the hidden `MouseholdFromSupply`
   (`MouseholdAction` in `root/maps.scala`, `ForcedRemoveProcessAction` in `root/faction-feline.scala`); a running game can be
   switched over with `MouseholdFromSupplyAction(X)`.
+- A player buying Riverfolk services in Birdsong may buy up to 1, plus 1 for each Riverfolk trade post in a clearing where they
+  have pieces, and what a purchase leaves of that limit is offered again right after it (`BirdsongNAction(22)` repeats while
+  `limit` is above 0, `root/faction-trader.scala`): the first purchase used up the whole limit, so the Underground Duchy, at a
+  trade post and able to buy 2, bought one card and couldn't buy another (Gman, 2026-11-03, Ground in Conquest). New games get
+  the hidden `BuyServicesAgain`; older games keep the single purchase so their replays don't change.
   The Landmarks choice "Map Default, or on Mountain a random suited landmark" (`MountainSuitedLandmark`; Gman,
   2026-10-30) plays Map Default, except that on the Mountain map one of Lost City, Mousehold, Foxburrow and
   Rabbittown, never of the Tower clearing's own suit, is drawn at setup and goes in the Tower's clearing (Pass)
