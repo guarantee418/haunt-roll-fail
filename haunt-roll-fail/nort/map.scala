@@ -1058,6 +1058,41 @@ object MapExpansion extends Expansion {
         case e => CardsExpansion.playable(f, e)
     }
 
+    // Why a card with effect e can't be played now, for the dimmed card in hand (None: the generic "can't be played now")
+    def unplayable(f : Faction, e : Effect)(implicit game : Game) : |[String] = e match {
+        case RecruitEffect(_, mode) =>
+            if (canRecruit(f).not) |("no units left in your supply")
+            else |("nowhere to recruit")
+        case MercenariesEffect | OsmosisEffect =>
+            if (canRecruit(f).not) |("no units left in your supply")
+            else |("nowhere to recruit")
+        case ProtectorEffect | ProtectorMaxEffect(_) =>
+            if (bigClosed(f).none) |("needs a closed territory of 3 or more tiles")
+            else |("no cards left to draw")
+        case MoveEffect(_, _, _, _) => |("no units to move and no creature to attack")
+        case e : ExploreEffect =>
+            val mine = game.controlled(f).%(game.board.open)
+            if (game.pile.none) |("no tiles left to explore")
+            else if (e.anywhere.not && mine.none) |("no open territory you control")
+            else |("a Brown Bear is in every open territory you could explore from")
+        case e : BuildEffect =>
+            val mine = game.controlled(f)
+            lazy val free = mine.%(t => game.bearIn(t).not)
+            lazy val spaces = free./~(t => t.areas./~(a => game.board.spec(a).spaces.indices./(i => SpaceRef(a, i))).%(s => game.buildings.contains(s).not && game.gear.contains(s).not) ++
+                noSpace(e).$(SpaceRef(t.anchor, SpaceRef.extra + game.buildings.keys.count(s => s.area == t.anchor && s.index >= SpaceRef.extra))))
+            lazy val reasons = spaces./~(s => MineralsExpansion.buildings./~(b => buildBlock(f, e, false, s, b)))
+            if (mine.none) |("no territory you control")
+            else if (free.none) |("a Brown Bear is in every territory you control")
+            else if (spaces.none) |("no free building space in your territories")
+            else if (reasons.exists(r => r.startsWith("needs ") && r.endsWith(" wood"))) |("not enough wood")
+            else |("nothing left to build in your territories")
+        case FeastEffect => |("no Recruit, Move, Explore or Build can be done")
+        case RaidEffect => |("no enemy unit to remove")
+        case PlunderEffect | CaptureEffect => |("no enemy unit next to your territories")
+        case SpyEffect | CurseEffect => |("no opponent has cards in hand")
+        case _ => None
+    }
+
     def resolve(f : Faction, e : Effect, then : ForcedAction)(implicit game : Game) : Continue = e match {
         case RecruitEffect(n, mode) => Then(RecruitAction(f, n, mode, $, then))
         case AwakenEffect =>
