@@ -931,6 +931,11 @@ file covers the build, server and deploy. No session can ssh to the server
   Rabbittown can be used for its battle alone when no warriors can be placed (empty supply, no other rabbit clearing,
   or a clearing they can't place in): the card is discarded, nothing is placed, and the battle follows (Gman, 2026-10-31:
   the Hundreds with no warriors left in Season in Control). Not gated by an option: it only adds a choice.
+  Mousehold places only removed warriors that went to the supply, and a Field Hospitals plan the Marquise made at the end of
+  its turn asks instead of healing when Mousehold could take the cats for free (Gman's Control versus Power, 2026-11-02: the plan
+  put his cat at the Keep and Mousehold then offered it again). New games get the hidden `MouseholdFromSupply`
+  (`MouseholdAction` in `root/maps.scala`, `ForcedRemoveProcessAction` in `root/faction-feline.scala`); a running game can be
+  switched over with `MouseholdFromSupplyAction(X)`.
   The Landmarks choice "Map Default, or on Mountain a random suited landmark" (`MountainSuitedLandmark`; Gman,
   2026-10-30) plays Map Default, except that on the Mountain map one of Lost City, Mousehold, Foxburrow and
   Rabbittown, never of the Tower clearing's own suit, is drawn at setup and goes in the Tower's clearing (Pass)
