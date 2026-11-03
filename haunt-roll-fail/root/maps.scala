@@ -1227,6 +1227,9 @@ case class ToRabbittown(c : Clearing) extends Message {
 case class RabbittownMainAction(self : WarriorFaction, c : Clearing, n : Int, then : ForcedAction) extends BaseAction(None)("Rabbittown".styled(Rabbit), "(" ~ n.of("warrior") ~ ")") with Soft
 case class RabbittownAction(self : WarriorFaction, c : Clearing, then : ForcedAction) extends ForcedAction
 case class MouseholdAction(b : Battle) extends ForcedAction
+// A one-time fix for games started before MouseholdFromSupply, added to a live game's log by hand: from here Mousehold places only
+// removed warriors that went to the supply (game.mouseholdFromSupply), then goes on with then
+case class MouseholdFromSupplyAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class MouseholdPlaceAction(self : Faction, c : Clearing, l : $[Piece], then : ForcedAction) extends BaseAction(self, "can place warriors removed in battle at", "Mousehold".styled(Mouse))(l.none.?("Skip").|("Place " ~ l./(_.of(self)).comma))
 
 object MapsExpansion extends MandatoryExpansion {
@@ -1284,6 +1287,11 @@ object MapsExpansion extends MandatoryExpansion {
             else
                 then
 
+        case MouseholdFromSupplyAction(then) =>
+            game.mouseholdFromSupply = true
+
+            then
+
         // Mousehold: removed warriors may be placed there, one faction at a time
         case MouseholdAction(b) =>
             val c = game.mousehold.head
@@ -1297,7 +1305,10 @@ object MapsExpansion extends MandatoryExpansion {
             }
             else {
                 val f = ff.head
-                val pp = game.mouseholdPending.%(_.faction == f)./(_.piece)
+                // MouseholdFromSupply: only the warriors that went to the supply, not those Field Hospitals put at the Keep (or that
+                // went anywhere else); older games offered every removed warrior, so the Marquise placed one cat twice
+                val fromSupply = game.options.has(MouseholdFromSupply) || game.mouseholdFromSupply
+                val pp = game.mouseholdPending.%(_.faction == f).%(x => fromSupply.not || f.reserve.$.has(x))./(_.piece)
                 game.mouseholdPending = game.mouseholdPending.%(_.faction != f)
 
                 val l = pp.distinct./~(p => pp.%(_ == p).take(f.pooled(p)))
