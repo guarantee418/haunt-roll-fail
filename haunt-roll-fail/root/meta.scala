@@ -474,6 +474,14 @@ case object GovernorsStopCrafting extends GameOption with ToggleOption {
     val valueOn = "Governors".hh ~ " stop crafting"
 }
 
+// Mousehold places only the removed warriors that went to the supply: a cat the Marquise's Field Hospitals put at the Keep was offered
+// at Mousehold too, so one removed cat came back twice (Gman, 2026-11-02, Control versus Power). Hidden and on by default for new
+// games; older games keep offering it so their replays don't change (MouseholdFromSupplyAction switches a running one over).
+case object MouseholdFromSupply extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Mousehold".hh ~ " places only warriors in the supply"
+}
+
 // The Homeland Frog Ambush goes to the bottom of the Pond whenever it is discarded ("Discard this to the Pond bottom."), not only
 // when spent as an ambush: discarded at the hand limit it went on top (Gman, 2026-10-22). Hidden and on by default for new
 // games; older games keep putting it on top so their replays don't change.
@@ -1549,7 +1557,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting) ++
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply) ++
         settled ++
         retired
 
@@ -1563,7 +1571,7 @@ object Meta extends MetaGame {
 
     // The hidden options every new game gets, even when the setup screen starts from options saved before one of them existed
     // (toggles aren't added to saved options from the defaults, so those games missed them)
-    lazy val newGame : $[O] = settled ++ $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, CounterMiceInABush, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting)
+    lazy val newGame : $[O] = settled ++ $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, CounterMiceInABush, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply)
 
     override def completeSaved(n : Int, l : $[F], options : $[O]) = options.diff(retired)
 
@@ -1605,6 +1613,7 @@ object Meta extends MetaGame {
         FeatherRufflersOnCraft,
         SilverTongueOneEffect,
         GovernorsStopCrafting,
+        MouseholdFromSupply,
         MountainSuitedLandmark,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
