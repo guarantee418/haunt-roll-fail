@@ -981,6 +981,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         // Military paths: Leadership's and Legions' reroll; keeping goes on to the die as rolled
         case MilitaryRerollAction(_, _, again) => |(rerollOdds(again))
         case MilitaryKeepAction(_, MilitaryKeptAction(attacker, defender, area, e, food, faces, face, _, _)) => |(1000 * rolledOdds(attacker, defender, area, e, food, faces, |(face)))
+        case MilitaryKeepAction(_, MilitaryCreatureKeptAction(_, area, c, e, attacking, food, face, _, _)) => |(1000 * creatureRolledOdds(area, c, e, attacking, food, |(face)))
         // The path: Legions and Guardian pay off with the buildings they make cheaper, Leadership with the warchief's fights
         case MilitaryPathAction(_, p, _) =>
             val held = game.controlled(self)./~(game.working)
