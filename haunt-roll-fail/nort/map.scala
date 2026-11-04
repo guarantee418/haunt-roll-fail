@@ -1533,8 +1533,10 @@ object MapExpansion extends Expansion {
             game.addUnits(dst.anchor, f, n)
             if (kaija)
                 game.moveCompanion(f, src, dst.anchor)
-            if (chief)
+            if (chief) {
                 game.chiefs += f -> dst.anchor
+                game.chiefMoved = true
+            }
 
             val enemy = game.present(dst).%(game.enemy(f, _))
 
@@ -1566,6 +1568,7 @@ object MapExpansion extends Expansion {
             game.kaijaToll = $
             game.heldBefore = game.controlled(f)./~(_.areas)
             game.extraMoved = false
+            game.chiefMoved = false
             game.mended = 0
             game.mendedFigures = $
             game.wisdomTaken = false

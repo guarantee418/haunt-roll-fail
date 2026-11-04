@@ -581,6 +581,14 @@ case object ChiefMoveFromHeld extends GameOption with ToggleOption {
     def valueOn = "The warchief's extra move starts from a controlled territory".txt
 }
 
+// Military paths, Leadership 2: the extra move is "once more", so only after the warchief moved with the Move card (Marzaus, 2026-11-04:
+// Mielikki was offered it without having moved). Hidden, and given to every new game (Meta.mandatoryFor); older games replay the old
+// way. A running game can be switched over with ChiefMoveAfterMoveAction(X)
+case object ChiefMoveAfterMove extends GameOption with ToggleOption {
+    val group = "Military paths".txt
+    def valueOn = "The warchief's extra move only after it moved".txt
+}
+
 // Brundr and Kaelinn count as units for Winter costs (Gman, 2026-11-01: "The lynx cats count towards winter costs"); the site had
 // left them out, reading the Uncharted Horizons rulebook's note on companions. Hidden, and given to every new game (Meta.mandatoryFor);
 // older games replay the old way (FactionState.winterUnits)
