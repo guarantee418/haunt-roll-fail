@@ -3544,7 +3544,7 @@ object Meta extends MetaGame {
         ImageAsset("hl-frog-partisans") ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[InvasiveEEE].any, "faction/invasive")(
-        ImageAsset("hld-glyph"                                   ) ::
+        ImageAsset("hld-glyph"            , "hld-glyph-meeple"  ) ::
         ImageAsset("hld-title"                                   ) ::
         ImageAsset("hld-char"                                    ) ::
         ImageAsset("hld-board"                                   ) ::
