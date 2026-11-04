@@ -1023,6 +1023,9 @@ file covers the build, server and deploy. No session can ssh to the server
   shared link. The client sets the real title when it loads.
 - `good-game` wraps static files in `encodeResponse`, so the 8 MB client is
   sent gzipped (about 2.5 MB).
+- In a Northgard game the tab's icon is the player's clan emblem (`clan/<clan>.webp`, the clan picker's; in Adset the clan the seat
+  drafted), blinking while it is their turn, as Root does with its faction glyphs (`glyph` in `nort/meta.scala` and
+  `nort/adset.scala`; asked for by Gman on 2026-11-04).
 - The site's icon is a drop (the owner's drawing), not HRF's crow: the
   favicon is a 64x64 PNG data URI in the `icon` link of `index.html`
   (`HRF.defaultGlyph`; games swap in faction glyphs), and `drop.png` is the
