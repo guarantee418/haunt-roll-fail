@@ -1448,8 +1448,10 @@ object NewBloodExpansion extends Expansion {
             game.removeUnits(src, f, n)
             game.addUnits(dst.anchor, f, n)
             game.lynx2 = |(dst.anchor)
-            if (chief)
+            if (chief) {
                 game.chiefs += f -> dst.anchor
+                game.chiefMoved = true
+            }
 
             val enemy = game.present(dst).%(game.enemy(f, _))
 

@@ -483,6 +483,8 @@ case class EndOfYearAfterGeysersAction(then : ForcedAction) extends ForcedAction
 case class MielikkiAgainstCreaturesAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to ChiefMoveFromHeld (an hrf-games fix)
 case class ChiefMoveFromHeldAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to ChiefMoveAfterMove (an hrf-games fix)
+case class ChiefMoveAfterMoveAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to MilitaryRerollCreatures (an hrf-games fix)
 case class MilitaryRerollCreaturesAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for OxPicksSpace (Ox's Ancestral Equipment token on a small building space or a Carved Stone space, picked by Ox);
@@ -722,6 +724,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var fameKept : Map[Faction, Card] = Map()
     var fameResolved : $[(Faction, Card)] = $
     var extraMoved = false
+    // Leadership 2 (ChiefMoveAfterMove): the warchief moved during this Move
+    var chiefMoved = false
 
     // Territories where a Move action started a fight
     var combats : $[AreaRef] = $
@@ -2231,15 +2235,21 @@ object CommonExpansion extends Expansion {
 
             Then(then)
 
-        case ChiefMoveFromHeldAction(then) =>
-            if (game.options.has(ChiefMoveFromHeld).not)
-                game.addOption(ChiefMoveFromHeld)
+        case ChiefMoveAfterMoveAction(then) =>
+            if (game.options.has(ChiefMoveAfterMove).not)
+                game.addOption(ChiefMoveAfterMove)
 
             Then(then)
 
         case MilitaryRerollCreaturesAction(then) =>
             if (game.options.has(MilitaryRerollCreatures).not)
                 game.addOption(MilitaryRerollCreatures)
+
+            Then(then)
+
+        case ChiefMoveFromHeldAction(then) =>
+            if (game.options.has(ChiefMoveFromHeld).not)
+                game.addOption(ChiefMoveFromHeld)
 
             Then(then)
 

@@ -505,7 +505,9 @@ object MilitaryExpansion extends Expansion {
             val from = game.board.territory(game.chiefs(f))
             // With ChiefMoveFromHeld, only from a territory f controls, like every Move: not out of a fight, nor on through an enemy's territory
             val held = game.options.has(ChiefMoveFromHeld).not || game.controlled(f).has(from)
-            val l = (held && game.passOnly(f, from).not && game.bearIn(from).not).??(game.links(f, from).filter(_._2).map(_._1)
+            // With ChiefMoveAfterMove, only when the warchief moved with the card ("once more")
+            val moved = game.options.has(ChiefMoveAfterMove).not || game.chiefMoved
+            val l = (held && moved && game.passOnly(f, from).not && game.bearIn(from).not).??(game.links(f, from).filter(_._2).map(_._1)
                 .%(o => MapExpansion.canEnter(f, o, 0, e, false)).%(o => game.passOnly(f, o).not && game.swampIn(o).not && game.hostileIn(o).not && game.bearIn(o).not))
 
             if (l.none)

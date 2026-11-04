@@ -992,7 +992,10 @@ proposed there, to change if Marzaus answers otherwise.
   clan controls, as every Move starts, so not out of a fight it walked into nor
   on through an enemy's territory (reported on Discord on 2026-11-04), in games
   with the hidden `ChiefMoveFromHeld` every new game gets; older games let it
-  move on from anywhere. `ChiefMoveFromHeldAction(X)` switches a running game. 3: the warchief's
+  move on from anywhere. `ChiefMoveFromHeldAction(X)` switches a running game.
+  It is "once more", so only after the warchief moved with the card
+  (`game.chiefMoved`; Marzaus, 2026-11-04), in games with the hidden
+  `ChiefMoveAfterMove` every new game gets (`ChiefMoveAfterMoveAction(X)`). 3: the warchief's
   territory recruits one more unit, like a Training Camp; after a fight the
   warchief's side wins, each enemy unit killed there is replaced by one of the
   clan's from its supply; attacking a clan, the warchief kills 1 enemy unit
