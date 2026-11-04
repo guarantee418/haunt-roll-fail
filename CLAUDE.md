@@ -715,6 +715,12 @@ file covers the build, server and deploy. No session can ssh to the server
   place there; otherwise it gains one without being asked, or nothing happens when it can't (`CouncilEntreatAction` in
   `root/faction-council.scala`; Hayjay, 2026-10-29: the Council was asked only to "place 0"). New games get the hidden default option
   `EntreatGainUnasked`; older games keep asking so their replays don't change.
+- The Twilight Council may clear a Mountain map path in Evening, right after Convene Woodfolk, when it didn't in Daylight
+  (`EveningNAction(30, f : Council)` and `Council.clearPathWanted` in `root/faction-council.scala`): it reveals its cards in
+  Birdsong and gets them back only in Evening, so its Daylight hand was empty and the path never came up (shushub4n4 on Discord,
+  2026-11-04). New games get the hidden default option `CouncilEveningClearPath`; older games keep their Evening so their replays
+  don't change, and a running game can be switched over with `CouncilEveningClearPathAction(X)`. `ReplayCheck <games> mountain`
+  plays the Mountain map with the Council.
 - Governors (17.2.3) stop Lilypad Diaspora's enclaves and the Corvids' plots at an enemy Council's Governing assemblies from
   crafting until the Council is entreated (`Council.craftingIn` in `root/faction-council.scala`, used by `craftEnclaves` and
   `MischiefPlayer.craft`; the other factions already left those clearings out). Gman's Diaspora crafted with its Bayou enclave in

@@ -98,6 +98,10 @@ object Council {
     // An enemy of a Council could want to entreat it: a Governing assembly where it has pieces or rules
     def entreatWanted(f : Faction)(implicit game : Game) : Boolean =
         factions.but(f).of[Council].%(game.states.contains).%(_.friends(f).not).exists(t => t.all(GoverningAssembly).exists(c => entreatNeeded(f, c)))
+
+    // a mountain path the Council could clear now, with a card in hand and pieces at one end (CouncilEveningClearPath)
+    def clearPathWanted(f : Council)(implicit game : Game) : Boolean =
+        game.rubble.any && f.used.has(ClearPath).not && f.hand.any && game.rubble.exists { case (a, b) => f.at(a).any || f.at(b).any }
 }
 
 
@@ -148,6 +152,10 @@ case class CouncilEmpowerSupplyAction(self : Council) extends ForcedAction
 // ignores the first hit as in any battle (game.banishAfterIgnoredHits), then goes on with then
 case class BanishAfterIgnoredHitsAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class CouncilBanishDestinationAction(self : Council, b : Battle, e : Faction, l : $[Figure], t : Clearing, then : ForcedAction) extends ForcedAction
+
+// A one-time fix for games started before CouncilEveningClearPath, added to a live game's log by hand: from here the Council may
+// clear a mountain path in Evening (game.councilEveningClearPath), then goes on with then
+case class CouncilEveningClearPathAction(then : ForcedAction) extends ForcedAction with SkipValidate
 
 case class CouncilInspireAction(f : Council) extends ForcedAction
 case class CouncilAdjournMainAction(f : Council) extends ForcedAction with Soft
@@ -624,6 +632,21 @@ object CouncilExpansion extends FactionExpansion[Council] {
             f.empowered = 0
 
             CouncilConveneMainAction(f)
+
+        // Clear Path (Mountain map) after Convene Woodfolk: the Council reveals its cards in Birdsong and gets them back only in
+        // Evening, so its Daylight has an empty hand and the path could never be cleared (shushub4n4, 2026-11-04; CouncilEveningClearPath).
+        // Once a turn, as in Daylight; then goes on to Craft
+        case EveningNAction(30, f : Council) if (options.has(CouncilEveningClearPath) || game.councilEveningClearPath) && Council.clearPathWanted(f) =>
+            soft()
+
+            Ask(f).group(ClearPath, "in", Evening)
+                .add(ClearPathMainAction(f, Repeat))
+                .skip(Next)
+
+        case CouncilEveningClearPathAction(then) =>
+            game.councilEveningClearPath = true
+
+            then
 
         case EveningNAction(40, f : Council) =>
             XCraftMainAction(f)
