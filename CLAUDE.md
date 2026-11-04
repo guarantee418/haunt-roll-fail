@@ -856,7 +856,7 @@ file covers the build, server and deploy. No session can ssh to the server
 - Advanced Setup's insurgent lock (Gman, 2026-11-04; Destiny and Right drafted four insurgents): the "Insurgent Lock" choice on the
   first setup page, Adset only (`InsurgentLockOn`, the default, or `InsurgentLockOff`; `Meta.adsetOnly` in `root/meta.scala`). With it, the
   last faction drawn, if insurgent, can't be picked until a militant faction (`AdvancedSetup.militant` in `root/setup.scala`: Marquise,
-  Eyrie, Duchy, Hundreds, Keepers) has been, and the draft's heading says so. Games with neither option (started before it) draft as before.
+  Eyrie, Duchy, Hundreds, Keepers, and the Lilypad Diaspora, which the draw now counts too) has been, and the draft's heading says so. Games with neither option (started before it) draft as before.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.

@@ -131,9 +131,9 @@ case class PlayChoiceDescAction(obj : PlayChoice, remaining : $[Faction]) extend
 
 
 object AdvancedSetup {
-    // the militant factions of Advanced Setup, as the draw counts them (DraftFactionsAction)
+    // the militant factions of Advanced Setup, as the draw counts them (DraftFactionsAction); the Homeland Lilypad Diaspora too (Gman, 2026-11-04)
     def militant(f : Faction) : Boolean = f match {
-        case _ : Feline | _ : Aviary | _ : Underground | _ : Horde | _ : Expedition => true
+        case _ : Feline | _ : Aviary | _ : Underground | _ : Horde | _ : Expedition | _ : InvasiveEEE => true
         case _ => false
     }
 }
@@ -525,7 +525,7 @@ object SetupExpansion extends MandatoryExpansion {
                 else
                     game.candidates.%(_.clashKey.in(game.unhired./(_.clashKey)).not)
 
-            val militant = factions.of[Feline] ++ factions.of[Aviary] ++ factions.of[Underground] ++ factions.of[Horde] ++ factions.of[Expedition]
+            val militant = factions.of[Feline] ++ factions.of[Aviary] ++ factions.of[Underground] ++ factions.of[Horde] ++ factions.of[Expedition] ++ factions.of[InvasiveEEE]
 
             val combinations =
                 if (factions.num == players.num)
