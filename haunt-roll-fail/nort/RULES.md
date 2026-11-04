@@ -985,7 +985,11 @@ proposed there, to change if Marzaus answers otherwise.
   fight with the warchief, against a clan (as Liv's; with Liv, one each),
   +1 combat point where the warchief fights, and after a Move card's moves
   the warchief may cross one more regular border (`ChiefMoveAction`; not into
-  the Swamp, a teammate's territory or a Brown Bear's). 3: the warchief's
+  the Swamp, a teammate's territory or a Brown Bear's), from a territory the
+  clan controls, as every Move starts, so not out of a fight it walked into nor
+  on through an enemy's territory (reported on Discord on 2026-11-04), in games
+  with the hidden `ChiefMoveFromHeld` every new game gets; older games let it
+  move on from anywhere. `ChiefMoveFromHeldAction(X)` switches a running game. 3: the warchief's
   territory recruits one more unit, like a Training Camp; after a fight the
   warchief's side wins, each enemy unit killed there is replaced by one of the
   clan's from its supply; attacking a clan, the warchief kills 1 enemy unit
