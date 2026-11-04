@@ -481,6 +481,8 @@ case class AchievementsAsideAction(then : ForcedAction) extends ForcedAction wit
 case class EndOfYearAfterGeysersAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to MielikkiAgainstCreatures (an hrf-games fix)
 case class MielikkiAgainstCreaturesAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to ChiefMoveFromHeld (an hrf-games fix)
+case class ChiefMoveFromHeldAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for OxPicksSpace (Ox's Ancestral Equipment token on a small building space or a Carved Stone space, picked by Ox);
 // wrapped around Ox's ExploreTurnAction, it also asks for the token of that tile
 case class OxPicksSpaceAction(then : ForcedAction) extends ForcedAction with SkipValidate
@@ -2224,6 +2226,12 @@ object CommonExpansion extends Expansion {
         case MielikkiAgainstCreaturesAction(then) =>
             if (game.options.has(MielikkiAgainstCreatures).not)
                 game.addOption(MielikkiAgainstCreatures)
+
+            Then(then)
+
+        case ChiefMoveFromHeldAction(then) =>
+            if (game.options.has(ChiefMoveFromHeld).not)
+                game.addOption(ChiefMoveFromHeld)
 
             Then(then)
 
