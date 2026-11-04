@@ -113,6 +113,7 @@ object MetaAdset extends MetaGame {
         GovernorsStopCrafting,
         MouseholdFromSupply,
         BuyServicesAgain,
+        BanishAfterIgnoredHits,
         FolkHeroCharacter,
         RandomCharacter,
         MountainSuitedLandmark,

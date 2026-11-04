@@ -725,6 +725,10 @@ file covers the build, server and deploy. No session can ssh to the server
   `root/faction-council.scala`; MaKoBwoY could banish a lone Underground Duchy tunnel on 2026-10-30, geffrey pointed out the frogs).
   New games get the hidden default option `BanishNeedsWarriors`; older games keep offering it so their recorded moves load.
   While banishing, the defenseless extra Hit isn't logged ("dealt an extra Hit to defenseless"), as a Banish can't hit buildings or tokens.
+  A banished defender ignores the first hit first (Stubborn, Armored, Devout Knights, Badger Bodyguards, Dazzle;
+  `BattleExpansion.ignoresFirstHit` in `root/battle.scala`), so one warrior fewer moves (kayajam's Season for Revolution, 2026-11-04:
+  two Stubborn Rats were banished by 2 hits). New games get the hidden default option `BanishAfterIgnoredHits`; older games keep the old
+  way, and a running game can be switched over with `BanishAfterIgnoredHitsAction(X)`.
 - Outrage with no card of the clearing's suit to give shows the hand to the Woodland Alliance in its action pane, and the
   game waits for its "Ok" (`PeekCardsAsk` and `PeekCardsSeenAction` in `root/cards.scala`; the playtest Pacifism the same).
   It was only a notification, and the game went on (Hayjay couldn't see the Lilypad Diaspora's hand on 2026-10-17). New games
