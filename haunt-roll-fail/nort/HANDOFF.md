@@ -728,6 +728,27 @@ always plays its own cards.
   Hard Boar pass in year 1 with Move and Explore in hand (Robotos, Discord). Development
   picks count printed fame plus what the card does in the years left;
   Achievements count what they would score now.
+- **Replace, Remove and resources** (2026-11-04, from Gman's Clan against
+  Fjord, `wghkvveeuihrnyns`, two Robotos bots against Gman and Marzaus): the
+  bots passed with Build and Explore cards they had no room for, ended with
+  8 or 9 lore and 15 to 20 wood, and never Replaced or Removed a card, while
+  the humans Removed their weak cards 7 times and traded 6 times. Now a card
+  drawn is worth what the bot's own draw pile (or discard pile, once it is
+  empty) holds (`drawValue`: half the card's value played now, capped at 3
+  fame, half its general `utility`), Replace and Remove draw that
+  (`replaceGain`, `removeGain`), and Remove also gains what the deck gains in
+  the years left without the card (`thinValue`: an average card in its place,
+  less for a card that does nothing now; not below a hand's worth of cards).
+  Pass counts the Replaces the lore could still make in hand. Resources are
+  valued by tiers (`stockValue`, `needs`): what Winter, the free building
+  spaces and the clan upgrades left need, less the coming harvest, at their
+  full value, the rest at what they score at the end (`surplus`, a third of a
+  fame); spending lore (`spendCost`) costs the surplus first. An upgrade's 3
+  lore costs at most 40 each. A/B against the bot from before (JVM host,
+  `NORT_TEAMS=0`, all modules at random): even in two-player games (51 of
+  100) and in three and four players (see the PR); the new bot Removes three
+  times as often, Replaces less, trades and builds more and passes with cards
+  in hand less often. Robotos is the same bot, so it plays the same way.
 - **Strategy notes it follows**, from the BoardGameGeek strategy forum (read
   through the `api.geekdo.com` JSON API, since the site's pages refuse
   scripts): most games end with three closed territories holding large
