@@ -129,6 +129,16 @@ case class ToBattle(e : Faction) extends Message {
 
 
 object BattleExpansion extends MandatoryExpansion {
+    // Whether one of the "ignore the first hit" effects below (Armored, Stubborn, Devout Knights, Badger Bodyguards, Dazzle) will cancel
+    // a hit f takes in b: the Council's Banish waits for them (BanishAfterIgnoredHits)
+    def ignoresFirstHit(f : Faction, b : Battle)(implicit game : Game) : Boolean = f.used.has(IgnoreFirstHit).not && (
+        (f.can(Armored) && f.at(b.clearing).of[Warrior].any) ||
+        f.as[Horde].?(h => h.can(Stubborn) && h.region == Some(b.clearing)) ||
+        (f.can(DevoutKnights) && f.at(b.clearing).of[Warrior].any && f.at(b.clearing).of[Relic].any) ||
+        f.can(BadgerBodyguards) ||
+        f.used.has(Dazzle)
+    )
+
     def canAmbushWith(faction : Faction, clearing : Clearing, opponent : Faction)(d : DeckCard)(implicit game : Game) : Boolean = d @@ {
         case Ambush(Frog) if opponent.is[InvasiveCCC] => false
         case Ambush(Frog) if opponent.is[InvasiveBBB] => false
