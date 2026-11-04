@@ -130,6 +130,14 @@ case class PlayChoiceDescAction(obj : PlayChoice, remaining : $[Faction]) extend
 }
 
 
+object AdvancedSetup {
+    // the militant factions of Advanced Setup, as the draw counts them (DraftFactionsAction); the Homeland Lilypad Diaspora too (Gman, 2026-11-04)
+    def militant(f : Faction) : Boolean = f match {
+        case _ : Feline | _ : Aviary | _ : Underground | _ : Horde | _ : Expedition | _ : InvasiveEEE => true
+        case _ => false
+    }
+}
+
 object SetupExpansion extends MandatoryExpansion {
     def homelandPlaced(l : Landmark)(implicit game : Game) = l @@ {
         case MouseholdLandmark => game.mousehold.any
@@ -517,7 +525,7 @@ object SetupExpansion extends MandatoryExpansion {
                 else
                     game.candidates.%(_.clashKey.in(game.unhired./(_.clashKey)).not)
 
-            val militant = factions.of[Feline] ++ factions.of[Aviary] ++ factions.of[Underground] ++ factions.of[Horde] ++ factions.of[Expedition]
+            val militant = factions.of[Feline] ++ factions.of[Aviary] ++ factions.of[Underground] ++ factions.of[Horde] ++ factions.of[Expedition] ++ factions.of[InvasiveEEE]
 
             val combinations =
                 if (factions.num == players.num)
@@ -591,9 +599,12 @@ object SetupExpansion extends MandatoryExpansion {
 
             val l = game.drawn./(f => f.as[Hero]./(h => FactionCharacterChoice(h, game.chars(h))).|(FactionChoice(f)))
 
+            // InsurgentLockOn: the last faction drawn, if insurgent, can't be picked until a militant faction has been
+            val locked = options.has(InsurgentLockOn).??(game.drawn.drop(players.num).any.??(game.drawn.lastOption.%(f => AdvancedSetup.militant(f).not).$.%(_ => game.drawn.diff(remaining).exists(AdvancedSetup.militant).not)))
+
             YYSelectObjectsAction(game.seating(n), l)
-                .withGroup("Choose faction")
-                .withRule(l => remaining.has(l.faction))
+                .withGroup(locked.any.?("Choose faction" ~ " (" ~ locked./(_.elem).comma ~ " is locked until a militant faction is picked)").|("Choose faction"))
+                .withRule(l => remaining.has(l.faction) && locked.has(l.faction).not)
                 .withThen(f => SelectFactionAction(game.seating(n), n, f))("Play as " ~ _.elem)("~~~")
 
         case SetupNextFactionAction(indices, remaining) =>

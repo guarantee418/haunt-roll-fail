@@ -542,6 +542,27 @@ case object AutoHitsAssignmentMode extends GameOption with ToggleOption with Fol
     )
 }
 
+// Advanced Setup's insurgent lock (Gman, 2026-11-04: Destiny and Right drafted four insurgents): the last faction drawn,
+// if it is insurgent, can't be picked until a militant faction has been (the draft in SetupNextFactionAction). Adset only;
+// games without either option (started before it) draft as before, so their replays don't change.
+trait InsurgentLockOption extends GameOption with OneOfGroup {
+    val group = "Insurgent Lock"
+}
+
+case object InsurgentLockOn extends InsurgentLockOption {
+    val valueOn = "Last Insurgent Locked".hh
+    override val explain = $(
+        &("If the " ~ "last".hl ~ " faction drawn is " ~ "insurgent".hh ~ ",") ~ " " ~ &("nobody can pick it until a " ~ "militant".hh ~ " faction has been picked,") ~ " " ~ &("so the game always has a " ~ "militant".hh ~ " faction, as the rules say."),
+    )
+}
+
+case object InsurgentLockOff extends InsurgentLockOption {
+    val valueOn = "All Insurgents Allowed".hh
+    override val explain = $(
+        &("Any faction drawn can be picked at any time,") ~ " " ~ &("so a game with " ~ "no militant".hh ~ " faction is possible."),
+    )
+}
+
 // Bluff Mode and Auto Skip Ambushes are one choice; Bluff Mode is the default for new games. Games without either
 // (started before Bluff Mode) keep the players' own auto skip settings, so nothing changes for them.
 case object BluffMode extends GameOption with OneOfGroup with FoldedOption {
@@ -1584,7 +1605,10 @@ object Meta extends MetaGame {
 
     override def completeSaved(n : Int, l : $[F], options : $[O]) = options.diff(retired)
 
-    val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction)
+    // offered only in Advanced Setup (MetaAdset), listed here so every game reads them
+    lazy val adsetOnly : $[O] = $(InsurgentLockOn, InsurgentLockOff)
+
+    val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction) ++ adsetOnly
 
     override def mandatoryFor(n : Int, l : $[F]) : $[O] = l./(IncludeFaction) ++ newGame
 

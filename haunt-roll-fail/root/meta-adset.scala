@@ -54,7 +54,7 @@ object MetaAdset extends MetaGame {
 
     val options = Meta.options
 
-    override def optionsFor(n : Int, l : $[F]) = Meta.optionsFor(n, realFactions)
+    override def optionsFor(n : Int, l : $[F]) = Meta.optionsFor(n, realFactions) ++ Meta.adsetOnly
 
     override val hiddenOptions = Meta.hiddenOptions
         .diff($(SeatingGiven, SeatingRandom))
@@ -69,7 +69,10 @@ object MetaAdset extends MetaGame {
 
     override def groupInfo(o : O) = Meta.groupInfo(o)
 
-    override def optionPages(n : Int, l : $[F]) : $[$[GameOption]] = Meta.optionPages(n, realFactions)
+    override def optionPages(n : Int, l : $[F]) : $[$[GameOption]] = Meta.optionPages(n, realFactions) match {
+        case first :: rest => (first ++ Meta.adsetOnly) +: rest
+        case pages => pages
+    }
 
     override def startOptions(options : $[O]) : $[O] = Meta.startOptions(options)
 
@@ -88,6 +91,7 @@ object MetaAdset extends MetaGame {
         SetupTypeHomelands,
         SetupOrderReverse,
         CardDraftFive,
+        InsurgentLockOn,
         AutoHitsAssignmentMode,
         BluffMode,
         FrogCardsAfterStartingHands,
