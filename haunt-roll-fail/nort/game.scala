@@ -74,7 +74,7 @@ trait PlayerColor extends NamedToString with Styling with Elementary with Record
     // and a neon red for red names in the same style (asked for by the owner on 2026-11-04)
     def ink = this match {
         case Yellow => "#fbfb05"
-        case Red => "#ff2a2a"
+        case Red => "#ff0000"
         case c => c.hex
     }
     // The banner on the starting cards: orange has no cards of its own and uses yellow's
