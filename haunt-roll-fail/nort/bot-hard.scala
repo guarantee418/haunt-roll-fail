@@ -172,6 +172,39 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         }
     }
 
+    // STOCKS: the resources the clan can still use (Winter, its free building spaces, the clan upgrades left) are worth
+    // their full value, those beyond it only what they score at the end of the game (1 fame for 3). With every resource
+    // worth the same however many it held, the bot never spent or traded: in Clan against Fjord (2026-11-04) Horse held
+    // 15 to 20 wood from year 4 on and both bots ended with 8 or 9 lore and no upgrades left, never Replacing or Removing a card
+    val surplus = 33.0
+
+    // What the coming harvest adds, if it is still ahead
+    lazy val income : HarvestForecast = if (harvestAhead) (try { Harvest.forecast(self) } catch { case e : Throwable => HarvestForecast(0, 0, 0, 0) }) else HarvestForecast(0, 0, 0, 0)
+
+    // How much of each resource the clan has a use for, before the harvest's income
+    lazy val needs : Map[Resource, Int] = {
+        val (winterFood, winterWood) = winterNeed(self)
+        // Building: 1 wood for a small building, 3 for a large one, on the free spaces of its territories
+        val spaces = game.controlled(self)./~(t => t.areas./~(a => board.spec(a).spaces.indices./(i => SpaceRef(a, i)))).%(s => game.buildings.contains(s).not && game.gear.contains(s).not)
+        val build = math.min(9, spaces./(s => (MapExpansion.spaceKind(s) == LargeSpace).?(3).|(1)).sum) + (self == Horse).??(2) + 1
+        // Clan upgrades, while there is time to play them
+        val upgrades = (LionExpansion.faith(self).not && game.year <= game.lastYear).??(self.upgrades.num * game.upgradeCost(self))
+        Map(
+            Food -> math.max(0, winterFood + 2 - income.food),
+            Wood -> math.max(0, winterWood + build - income.wood),
+            Lore -> math.max(0, upgrades + 1 - income.lore))
+    }
+
+    def stockValue(r : Resource, n : Int) : Double = {
+        val full = resourceValue(r)
+        val need = needs.getOrElse(r, n)
+        val k = math.max(0, math.min(n, need))
+        k * full + math.max(0, n - k) * math.min(full, surplus)
+    }
+
+    // What spending n of r costs the clan, the last ones (the surplus) first
+    def spendCost(r : Resource, n : Int) : Double = stockValue(r, self.has(r)) - stockValue(r, math.max(0, self.has(r) - n))
+
     // TERRITORIES: what controlling one is worth to f over the rest of the game
     def territoryWorth(t : Territory, f : Faction) : Double = {
         val (food, wood, lore) = game.produce(t)
@@ -405,7 +438,10 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         v += (game.companion(f).any).??(60)
         v += (game.chiefs.contains(f)).??(70)
 
-        v += f.food * resourceValueFor(f, Food) + f.wood * resourceValueFor(f, Wood) + f.lore * resourceValueFor(f, Lore) + f.faith * resourceValueFor(f, Faith)
+        if (f == self)
+            v += stockValue(Food, f.food) + stockValue(Wood, f.wood) + stockValue(Lore, f.lore) + f.faith * resourceValue(Faith)
+        else
+            v += f.food * resourceValueFor(f, Food) + f.wood * resourceValueFor(f, Wood) + f.lore * resourceValueFor(f, Lore) + f.faith * resourceValueFor(f, Faith)
 
         // Minerals module: each mineral is worth two resources and more; each Mine about half a mineral at each harvest left
         if (game.has(MineralsModule))
@@ -630,13 +666,47 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
 
     def cardValue(c : Card) : Double = cardValues.getOrElseUpdate(c, if (CommonExpansion.playable(self, c)) effectGain(c.effect) + c.flash.??(15) else 0.0)
 
-    // Cards worth thinning out of the deck
+    // What one card drawn now is likely worth: the cards it may be, from the draw pile (or the discard pile, shuffled once
+    // the draw pile is empty), half as the bot would value playing them now (capped: a big attack open now may be gone
+    // by the time the card is played) and half by what the card does in general
+    lazy val drawValue : Double = {
+        val pool = self.draw.any.?(self.draw).|(self.discard)
+        if (pool.none) 0.0
+        else {
+            val kinds = pool.distinct.take(8)
+            val weights = kinds./(c => pool.count(_ == c).toDouble)
+            kinds.zip(weights)./{ case (c, w) => w * (0.5 * math.min(300.0, math.max(0.0, cardValueSafe(c))) + 0.5 * (c == UnrestCard).?(0.0).|(utility(c))) }.sum / weights.sum
+        }
+    }
+
+    // Replacing (1 lore, draw 1) or removing a card (2 lore, draw 2) turns a card that does little now into new ones
+    def replaceGain(c : Card) : Double = 0.75 * drawValue - spendCost(Lore, 1) - cardValueSafe(c) - 10
+
+    def removeGain(c : Card) : Double = 1.2 * drawValue - spendCost(Lore, 2) - cardValueSafe(c) + thinValue(c) - 10
+
+    // What the deck gains in the years left without c: c is drawn each year with the odds of a card in the deck, and an
+    // average card takes its place; a card that does nothing now (no space to build on, nothing to explore) counts for
+    // less in the years to come too. The humans removed their weakest cards (Recruit, Build, Hunters, ...) and kept the deck
+    // big enough to fill their hand
+    def thinValue(c : Card) : Double = {
+        if (c.removable.not)
+            return -1000
+        val years = game.lastYear - game.year
+        if (years <= 0)
+            return 0
+        val deck = self.deck
+        val left = deck.num - 1
+        val perYear = 4 + game.robotos(self).??(1) + game.controlled(self)./~(game.working).count(_ == Forge)
+        val p = math.min(1.0, perYear.toDouble / math.max(left, 1))
+        val avg = deck./(utility).sum / math.max(deck.num, 1)
+        val mine = utility(c) * (cardValueSafe(c) > 0).?(1.0).|(0.4)
+        years * p * (avg - mine) - (left < perYear + 2).?(150.0).|(0.0)
+    }
+
+    // Cards worth thinning out of the deck (when upgrading)
     def thin(c : Card) : Double = c match {
         case UnrestCard => 0
-        case StartCard(_, "move") => 40
-        case StartCard(_, "explore") => (game.pile.num < 8).?(50).|(10)
-        case Development("market-place") | Development("feast") => 10
-        case _ => -40
+        case _ => thinValue(c)
     }
 
     // A card to take into the deck: fame on it, and what it does each year it is drawn
@@ -677,11 +747,12 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
 
         case WaitCardAction(_, c) => -cardValue(c) - 20 + (c == UnrestCard).??(15)
 
-        case ReplaceCardAction(_, c) => 75 - resourceValue(Lore) - cardValue(c)
+        case ReplaceCardAction(_, c) => replaceGain(c)
 
-        case RemoveCardAction(_, c) => 150 - 2 * resourceValue(Lore) - cardValue(c) + thin(c) + victoryStep("refinement")
+        case RemoveCardAction(_, c) => removeGain(c) + victoryStep("refinement")
 
-        case UpgradeCardAction(_, c, u, remove) => upgradeValue(u) - game.upgradeCost(self) * resourceValue(LionExpansion.upgradeResource(self)) - cardValue(c) + remove.?(thin(c)).|(0.0) + victoryStep("refinement")
+        // The lore kept for the upgrades costs only what it would buy otherwise (Replace, Remove, the final fame)
+        case UpgradeCardAction(_, c, u, remove) => upgradeValue(u) - game.upgradeCost(self) * LionExpansion.faith(self).?(resourceValue(Faith)).|(math.min(resourceValue(Lore), 40.0)) - cardValue(c) + remove.?(thin(c)).|(0.0) + victoryStep("refinement")
 
         // Every player takes a Development card when passing, so passing now only keeps the pick from going to someone
         // who passes before the bot's next turn (likely with one or two cards left in hand): the best card against the
@@ -693,7 +764,10 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             val first = 1 - others./(g => 1 - $(1.0, 0.7, 0.35, 0.15)(math.min(g.hand.num, 3))).product
             val edge = if (picks.any) first * (picks.head - picks(math.min(others.num, picks.num - 1))) else 0.0
             val marker = if (players.forall(_.passed.not)) 15.0 else 0.0
-            edge + marker - self.hand./(c => math.max(0.0, cardValue(c))).sum
+            // A card that does nothing now can still be Replaced for a new one while there is lore (Goat passed with three
+            // Build and Explore cards it had no room for, and 6 lore, in Clan against Fjord)
+            val cycles = self.hand./(c => replaceGain(c)).%(_ > 0).sortBy(-_).take(self.lore).sum
+            edge + marker - self.hand./(c => math.max(0.0, cardValue(c))).sum - cycles
     }
 
     // FIGHTS
