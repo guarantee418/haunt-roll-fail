@@ -407,7 +407,10 @@ object MetaAdset extends MetaGame {
     // Any clan can be drafted, and Wilderness, Wastelands and every central tile can be chosen in the game
     val assets = Meta.assets./(a => ConditionalAssetsList(
         (factions : $[F], options : $[O]) => a.condition(Meta.clans, options ++ always ++ $(ModuleOption(Wilderness), ModuleOption(Wastelands), WildLakeCentral)),
-        a.path, a.prefix, a.ext, a.lzy, a.scale, a.lossless)(a.list)) :+
-    // The clan emblems, for the draft
-    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "clan", "clan-", "webp")(Meta.clans./(f => ImageAsset(f.style)))
+        a.path, a.prefix, a.ext, a.lzy, a.scale, a.lossless)(a.list))
+    // The clan emblems for the draft and the tab's icon are among Meta.assets
+
+    // The tab's icon: the emblem of the clan the seat drafted, blinking while it is the seat's turn
+    override def glyph(g : G) : |[String] = Meta.glyph(g)
+    override def glyph(g : G, s : Seat) : |[String] = g.ptf.get(s)./~(Meta.glyph(_)).%!(_ => g.highlight.faction.has(s) && hrf.HRF.uptime() / 1000 % 2 == 1)
 }

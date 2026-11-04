@@ -281,6 +281,12 @@ object Meta extends MetaGame { mmm =>
             HorizontalBreak ~ "The solo opponent from Uncharted Horizons: a neutral clan with two Leaders that plays by its own cards. Pick it and one clan.".txt
         else
             HorizontalBreak ~ $(0, 1, 2)./(n => Image(ClanCard(f, n).info.image, styles.menuCard)).merge
+    // The browser tab's icon: the emblem of the player's clan, blinking while it is their turn, as in Root
+    // (the clan whose turn it is for spectators); the Automa has no emblem
+    override def glyph(f : Faction) : |[String] = (f != Automa).?("clan-" + f.style)
+    override def glyph(g : G) : |[String] = g.highlight.current./~(glyph)
+    override def glyph(g : G, f : Faction) : |[String] = glyph(f).%!(_ => g.highlight.faction.has(f) && hrf.HRF.uptime() / 1000 % 2 == 1)
+
     // The clan picker is a grid of emblems; the rest is behind each clan's i button
     override def factionTile(f : Faction) = |(
         if (f == Automa)
@@ -537,6 +543,10 @@ object Meta extends MetaGame { mmm =>
     // The Tutorial's lessons, opened in its practice game
     ConditionalAssetsList((factions : $[F], options : $[O]) => options.has(TutorialOption), "card", "card-aid-", "webp", lzy = Laziness.OnDemand)(
         $(ImageAsset("phases", "aid-phases"))
+    ) ::
+    // The clan emblems (the clan picker's), for the tab's icon (glyph)
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "clan", "clan-", "webp")(
+        clans./(f => ImageAsset(f.style))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token/building", "building-", "webp")(
         Building.all./(b => ImageAsset(b.image.drop("building-".length)))
