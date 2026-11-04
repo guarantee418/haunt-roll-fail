@@ -666,7 +666,11 @@ file covers the build, server and deploy. No session can ssh to the server
   the negotiation broke the game on load; found by `ReplayCheck <games> ldkd` on 2026-10-18), sub-menus with Cancel, or
   Hobson's choices. It depends only on the game state, so bots, move checks and replays agree (an earlier try that tracked
   soft choices in a `Game` field broke them); old games replay the same, as it only adds choices. `ReplayCheck <games> ldtc`
-  plays Lilypad with the Council. Those menus head it with the Lilypad faction's name, as the button already says
+  plays Lilypad with the Council. Nor in the payment for Riverfolk services (`paying`: `PayForServicesAction` is soft and its
+  Ask is one hidden button the runner takes by itself; with Negotiations beside it the menu showed only Negotiations and the
+  purchase never went on, MaKoBwoY, 2026-11-04, buying Mercenaries; a card bought with it was already left out by `aboutCard`;
+  no game could get past that menu, so it needs no option). `ReplayCheck <games> ldrf` plays Lilypad with the Riverfolk and
+  fails if a payment menu offers Negotiations. Those menus head it with the Lilypad faction's name, as the button already says
   Negotiations (MaKoBwoY saw "Négociations" twice). The Council's "Convene Woodfolk" is in the Council's colour.
 - Frog suit text (clearing names in menus and the log, and the two-suit gradients, `Frog` and `FoxFrog` ... in
   `root/styles.scala`) is the Homeland Lilypad Diaspora's yellow-green `#b7b13c` (owner, 2026-10-17, after trying the frog

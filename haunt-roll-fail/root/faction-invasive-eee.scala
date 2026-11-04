@@ -378,7 +378,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
     def anytimeNegotiations(action : Action, c : Continue)(implicit game : Game) : Continue = (action, c) @@ {
         case (then : ForcedAction, ask @ Ask(f : Faction, l)) if then.isSoft && f == game.current && game.turn > 0 &&
             game.phase != Night && ask.available && l.exists(_.is[InvasiveEEENegotiateMainAction]).not && l.exists(_.is[Cancel]).not &&
-            (l.num == 1 && l.exists(_.is[WrapAction])).not && aboutCard(then).not && unsaved(then).not =>
+            (l.num == 1 && l.exists(_.is[WrapAction])).not && aboutCard(then).not && unsaved(then).not && paying(then).not =>
             implicit val collector = builder
 
             negotiations(f, then)
@@ -387,6 +387,13 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
             collector.list.of[InvasiveEEENegotiateMainAction].groupBy(_.e).foldLeft(ask) { case (ask, (e, l)) => ask.group(e).add(l) }
 
         case _ => c
+    }
+
+    // A payment for Riverfolk services is one hidden button the runner takes by itself: with Negotiations beside it,
+    // the menu showed only Negotiations and the purchase never went on (MaKoBwoY, 2026-11-04, buying Mercenaries)
+    def paying(x : Any) : Boolean = x @@ {
+        case _ : PayForServicesAction => true
+        case _ => false
     }
 
     def aboutCard(x : Any) : Boolean = x @@ {
