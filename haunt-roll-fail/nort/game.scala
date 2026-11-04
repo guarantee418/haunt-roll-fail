@@ -483,6 +483,10 @@ case class EndOfYearAfterGeysersAction(then : ForcedAction) extends ForcedAction
 case class MielikkiAgainstCreaturesAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to ChiefMoveFromHeld (an hrf-games fix)
 case class ChiefMoveFromHeldAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to ChiefMoveAfterMove (an hrf-games fix)
+case class ChiefMoveAfterMoveAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to MilitaryRerollCreatures (an hrf-games fix)
+case class MilitaryRerollCreaturesAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for OxPicksSpace (Ox's Ancestral Equipment token on a small building space or a Carved Stone space, picked by Ox);
 // wrapped around Ox's ExploreTurnAction, it also asks for the token of that tile
 case class OxPicksSpaceAction(then : ForcedAction) extends ForcedAction with SkipValidate
@@ -720,6 +724,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var fameKept : Map[Faction, Card] = Map()
     var fameResolved : $[(Faction, Card)] = $
     var extraMoved = false
+    // Leadership 2 (ChiefMoveAfterMove): the warchief moved during this Move
+    var chiefMoved = false
 
     // Territories where a Move action started a fight
     var combats : $[AreaRef] = $
@@ -2226,6 +2232,18 @@ object CommonExpansion extends Expansion {
         case MielikkiAgainstCreaturesAction(then) =>
             if (game.options.has(MielikkiAgainstCreatures).not)
                 game.addOption(MielikkiAgainstCreatures)
+
+            Then(then)
+
+        case ChiefMoveAfterMoveAction(then) =>
+            if (game.options.has(ChiefMoveAfterMove).not)
+                game.addOption(ChiefMoveAfterMove)
+
+            Then(then)
+
+        case MilitaryRerollCreaturesAction(then) =>
+            if (game.options.has(MilitaryRerollCreatures).not)
+                game.addOption(MilitaryRerollCreatures)
 
             Then(then)
 

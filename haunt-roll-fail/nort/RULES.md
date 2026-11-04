@@ -982,14 +982,20 @@ proposed there, to change if Marzaus answers otherwise.
   warchief is (it moves, retreats and goes to the reserve with it), worth 1
   combat point, lost as a casualty after the units and Militia and before the
   warchief; not one of the 14 units, no Winter cost. 2: one reroll in each
-  fight with the warchief, against a clan (as Liv's; with Liv, one each),
+  fight with the warchief, against a clan, and against a creature too in games
+  with the hidden `MilitaryRerollCreatures` every new game gets (Gman,
+  2026-11-04; `MilitaryRerollCreaturesAction(X)` switches a running game)
+  (as Liv's; with Liv, one each),
   +1 combat point where the warchief fights, and after a Move card's moves
   the warchief may cross one more regular border (`ChiefMoveAction`; not into
   the Swamp, a teammate's territory or a Brown Bear's), from a territory the
   clan controls, as every Move starts, so not out of a fight it walked into nor
   on through an enemy's territory (reported on Discord on 2026-11-04), in games
   with the hidden `ChiefMoveFromHeld` every new game gets; older games let it
-  move on from anywhere. `ChiefMoveFromHeldAction(X)` switches a running game. 3: the warchief's
+  move on from anywhere. `ChiefMoveFromHeldAction(X)` switches a running game.
+  It is "once more", so only after the warchief moved with the card
+  (`game.chiefMoved`; Marzaus, 2026-11-04), in games with the hidden
+  `ChiefMoveAfterMove` every new game gets (`ChiefMoveAfterMoveAction(X)`). 3: the warchief's
   territory recruits one more unit, like a Training Camp; after a fight the
   warchief's side wins, each enemy unit killed there is replaced by one of the
   clan's from its supply; attacking a clan, the warchief kills 1 enemy unit
@@ -1019,7 +1025,7 @@ proposed there, to change if Marzaus answers otherwise.
 - Legions. 1: Training Camps cost no wood and may take no space; each recruits
   2 units instead of 1. 2: see the end of the year. 3: +1 combat point for
   every 2 of the clan's units in a fight (units only), and one reroll in each
-  fight against a clan.
+  fight against a clan (and a creature, with `MilitaryRerollCreatures`).
 
 ## Fan content: Lion Kingdom (2026-10-24)
 

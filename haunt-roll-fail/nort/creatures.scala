@@ -560,6 +560,10 @@ object CreaturesExpansion extends Expansion {
             Random[DieFace](NorthgardDie.faces, CreaturePlayerRolledAction(f, a, c, e, attacking, food, _, then))
 
         // Casualties don't hurt creatures, so a player always takes the point
+        case CreaturePlayerRolledAction(f, a, c, e, attacking, food, face, then) if MilitaryExpansion.creatureReroll(game.board.territory(a), f) =>
+            // Military paths, Leadership 2 and Legions 3 (MilitaryRerollCreatures): their reroll first, as against a clan (then MilitaryCreatureKeptAction)
+            MilitaryExpansion.creatureRerollAsk(f, a, c, e, attacking, food, face, false, then)
+
         case CreaturePlayerRolledAction(f, a, c, e, attacking, food, face, then) =>
             f.log("rolled", face)
 
@@ -582,6 +586,10 @@ object CreaturesExpansion extends Expansion {
         case CreatureRerollAction(f, a, c, e, attacking, food, then) =>
             Random[DieFace](NorthgardDie.faces, CreatureRerolledAction(f, a, c, e, attacking, food, _, then))
 
+        case CreatureRerolledAction(f, a, c, e, attacking, food, face, then) if MilitaryExpansion.creatureReroll(game.board.territory(a), f) =>
+            // After Liv's or Ancestral Equipment's reroll, the Military path's
+            MilitaryExpansion.creatureRerollAsk(f, a, c, e, attacking, food, face, true, then)
+
         case CreatureRerolledAction(f, a, c, e, attacking, food, face, then) =>
             f.log("rolled", face)
 
@@ -589,6 +597,8 @@ object CreaturesExpansion extends Expansion {
 
         // Surtr (Dragon Clan's warchief) adds the point or the casualty not rolled, against creatures too
         case CreatureFaceAction(f, a, c, e, attacking, food, face, then) =>
+            MilitaryExpansion.creatureDieDone(f)
+
             val own = NewBloodExpansion.surtr(f, game.board.territory(a), face.choice.?(NorthgardDie.point).|(face))
             Random[DieFace](NorthgardDie.faces, CreatureRolledAction(f, a, c, e, attacking, food, own, _, then))
 
