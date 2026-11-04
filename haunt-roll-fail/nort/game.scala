@@ -485,6 +485,8 @@ case class MielikkiAgainstCreaturesAction(then : ForcedAction) extends ForcedAct
 case class ChiefMoveFromHeldAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to ChiefMoveAfterMove (an hrf-games fix)
 case class ChiefMoveAfterMoveAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to MilitaryRerollCreatures (an hrf-games fix)
+case class MilitaryRerollCreaturesAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for OxPicksSpace (Ox's Ancestral Equipment token on a small building space or a Carved Stone space, picked by Ox);
 // wrapped around Ox's ExploreTurnAction, it also asks for the token of that tile
 case class OxPicksSpaceAction(then : ForcedAction) extends ForcedAction with SkipValidate
@@ -2236,6 +2238,12 @@ object CommonExpansion extends Expansion {
         case ChiefMoveAfterMoveAction(then) =>
             if (game.options.has(ChiefMoveAfterMove).not)
                 game.addOption(ChiefMoveAfterMove)
+
+            Then(then)
+
+        case MilitaryRerollCreaturesAction(then) =>
+            if (game.options.has(MilitaryRerollCreatures).not)
+                game.addOption(MilitaryRerollCreatures)
 
             Then(then)
 

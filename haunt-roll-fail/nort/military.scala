@@ -118,6 +118,8 @@ case class MilitaryKeepAction(self : Faction, keep : ForcedAction) extends BaseA
 
 // The die kept: on as CombatRolledAction would (Liv's and Ox's rerolls still offered), or after a reroll (again) as CombatRerolledAction
 case class MilitaryKeptAction(attacker : Faction, defender : Faction, area : AreaRef, e : MoveEffect, food : $[Int], faces : $[DieFace], face : DieFace, again : Boolean, then : ForcedAction) extends ForcedAction
+// The same against a creature (MilitaryRerollCreatures): on as CreaturePlayerRolledAction would, or after a reroll as CreatureRerolledAction
+case class MilitaryCreatureKeptAction(f : Faction, area : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, face : DieFace, again : Boolean, then : ForcedAction) extends ForcedAction
 
 
 // The panel's line (tapped: MilitaryView)
@@ -256,6 +258,23 @@ object MilitaryExpansion extends Expansion {
     // Leadership 2: the reroll is in a fight with the warchief; Legions 3: in every fight
     def reroll(t : Territory, f : Faction)(implicit game : Game) : Boolean =
         on && game.rerolled.has(f).not && (at(f, Leadership, 2) && game.chiefIn(t, f) || at(f, Legions, 3))
+
+    // Against a creature too, in games with MilitaryRerollCreatures
+    def creatureReroll(t : Territory, f : Faction)(implicit game : Game) : Boolean =
+        game.options.has(MilitaryRerollCreatures) && reroll(t, f)
+
+    // The reroll offered against a creature: the die as rolled (again: after Liv's or Ancestral Equipment's reroll)
+    def creatureRerollAsk(f : Faction, a : AreaRef, c : Creature, e : MoveEffect, attacking : Boolean, food : Int, face : DieFace, again : Boolean, then : ForcedAction)(implicit game : Game) : Continue =
+        Ask(f)
+            .add(MilitaryRerollInfoAction(f, CreatureFaceAction(f, a, c, e, attacking, food, face, then)))
+            .add(MilitaryRerollAction(f, face, CreatureRerollAction(f, a, c, e, attacking, food, then)))
+            .add(MilitaryKeepAction(f, MilitaryCreatureKeptAction(f, a, c, e, attacking, food, face, again, then)))
+
+    // The creature fight's die is decided: the reroll is free again for the next fight (fightOver only ends fights against clans)
+    def creatureDieDone(f : Faction)(implicit game : Game) {
+        if (game.options.has(MilitaryRerollCreatures) && game.rerolled.has(f))
+            game.rerolled = game.rerolled.but(f)
+    }
 
     def rerollSource(f : Faction)(implicit game : Game) : Elem = game.paths.get(f)./(_.elem).|(Empty)
 
@@ -589,7 +608,7 @@ object MilitaryExpansion extends Expansion {
 
             f.log("rolled", face, "and rerolled with", rerollSource(f))
 
-            game.note("military-reroll")
+            game.note(again.is[CreatureRerollAction].?("military-reroll-creature").|("military-reroll"))
 
             Then(again)
 
@@ -616,6 +635,28 @@ object MilitaryExpansion extends Expansion {
                     .add(RerollInfoAction(self, false, next))
                     .add(GearRerollAction(self, CombatRerollAction(attacker, defender, a, e, food, faces, then)))
                     .add(GearKeepAction(self, next))
+            else
+                Then(next)
+
+        // THE DIE AGAINST A CREATURE (MilitaryRerollCreatures): offered by CreaturesExpansion (creatureRerollAsk), which handles the creature fight's
+        // actions before this module does
+        // The same as CreaturePlayerRolledAction and CreatureRerolledAction (a RandomAction can't be performed again with Then)
+        case MilitaryCreatureKeptAction(f, a, c, e, attacking, food, face, again, then) =>
+            val next = CreatureFaceAction(f, a, c, e, attacking, food, face, then)
+
+            f.log("rolled", face)
+
+            if (again.not && Warchief.reroll(game.board.territory(a), f))
+                Ask(f)
+                    .add(RerollInfoAction(f, true, next))
+                    .add(LivRerollAction(f, CreatureRerollAction(f, a, c, e, attacking, food, then)))
+                    .add(LivKeepAction(f, next))
+            else
+            if (again.not && f == Ox && game.gearFight.has(3))
+                Ask(f)
+                    .add(RerollInfoAction(f, false, next))
+                    .add(GearRerollAction(f, CreatureRerollAction(f, a, c, e, attacking, food, then)))
+                    .add(GearKeepAction(f, next))
             else
                 Then(next)
 
