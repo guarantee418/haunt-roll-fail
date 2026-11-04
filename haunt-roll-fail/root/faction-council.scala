@@ -144,6 +144,9 @@ case class CouncilEmpowerRolledAction(self : Council, c : Clearing, n : Int) ext
 case class CouncilEmpowerLoyalistsAction(self : Council, n : Int) extends ForcedAction
 case class CouncilEmpowerScoreAction(self : Council, c : Clearing) extends ForcedAction
 case class CouncilEmpowerSupplyAction(self : Council) extends ForcedAction
+// A one-time fix for games started before BanishAfterIgnoredHits, added to a live game's log by hand: from here a banished defender
+// ignores the first hit as in any battle (game.banishAfterIgnoredHits), then goes on with then
+case class BanishAfterIgnoredHitsAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class CouncilBanishDestinationAction(self : Council, b : Battle, e : Faction, l : $[Figure], t : Clearing, then : ForcedAction) extends ForcedAction
 
 case class CouncilInspireAction(f : Council) extends ForcedAction
@@ -352,8 +355,10 @@ object CouncilExpansion extends FactionExpansion[Council] {
 
             BattleFinishRollAction(b, f, o, fs, os, fr, or, fh, 0)
 
-        // Banish: defending warriors move instead of being removed; buildings and tokens cannot be hit
-        case BattleAssignHitsAction(o, b, n, s, then) if n + s > 0 && o == b.defender && b.attacker.as[Council].?(_.used.has(Banishing)) =>
+        // Banish: defending warriors move instead of being removed; buildings and tokens cannot be hit. With BanishAfterIgnoredHits, a
+        // defender that ignores the first hit (Hundreds' Stubborn, Armored, ...) does so first, so one warrior fewer is banished
+        case BattleAssignHitsAction(o, b, n, s, then) if n + s > 0 && o == b.defender && b.attacker.as[Council].?(_.used.has(Banishing)) &&
+            ((options.has(BanishAfterIgnoredHits) || game.banishAfterIgnoredHits).not || BattleExpansion.ignoresFirstHit(o, b).not) =>
             val t = b.attacker.as[Council].get
             val l = o.from(b.clearing).$.%(_.piece.is[Warrior]).%(_.piece != Warlord).sortBy(_.piece.priority).take(n + s)
             val dest = game.connected(b.clearing)
@@ -367,6 +372,11 @@ object CouncilExpansion extends FactionExpansion[Council] {
                 Ask(t).group("Banish", l./(_.elem).comma, "from", b.clearing, "to")
                     .each(dest)(d => CouncilBanishDestinationAction(t, b, o, l, d, then).as(d))
                     .needOk
+
+        case BanishAfterIgnoredHitsAction(then) =>
+            game.banishAfterIgnoredHits = true
+
+            then
 
         case CouncilBanishDestinationAction(t, b, o, l, d, then) =>
             game.highlights :+= MoveHighlight(b.clearing, d)
