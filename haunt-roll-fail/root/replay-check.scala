@@ -26,6 +26,8 @@ object ReplayCheck {
     // "async": Forced Async Mode; "choosehits": with Players Choose Hits too
     var async = false
     var chooseHits = false
+    // "ldrf": every menu of Riverfolk services buys a service when it can
+    var buyServices = false
 
     def options(seating : $[Faction]) : $[Meta.O] = marsh.?($[Meta.O](
         MarshMap, AllRandomClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
@@ -117,6 +119,7 @@ object ReplayCheck {
         squires = args.contains("squires")
         async = args.contains("async")
         chooseHits = args.contains("choosehits")
+        buyServices = args.lift(1).has("ldrf")
         oldFrogs = args.contains("oldfrogs")
         oldHire = args.contains("oldhire")
         hire = args.find(_.startsWith("hire:"))./~(_.drop(5).split(',').$./(n => Meta.hirelings.%(h => h.name == n || h.short == n || h.toString == n).single.|!("no hireling " + n)))
@@ -129,6 +132,7 @@ object ReplayCheck {
             case "ldkd" => $($(MC, ED, LDvE, KD), $(MC, WA, LDvE, KD))
             case "ldlc" => $($(MC, ED, LDvE, LC), $(MC, WA, LDvE, LC))
             case "ldtc" => $($(MC, ED, LDvE, TC), $(MC, WA, LDvE, TC))
+            case "ldrf" => $($(MC, RF, LDvE, UD), $(MC, ED, RF, LDvE))
             case "marsh5" => $($(MC, ED, WA, VB, LDvE), $(MC, ED, WA, KD, TC))
             case "marsh" => $($(MC, ED, WA, VB), $(MC, ED, WA, LDvE), $(MC, WA, KD, TC))
         }).|($($(MC, WA, LDvE, KD), $(MC, ED, LDvE, KD), $(MC, WA, KD, TC), $(MC, WA, LDvE, TC)))
@@ -193,7 +197,20 @@ object ReplayCheck {
                         case GameOver(_, _, _) => over = true
                         case MultiAsk(l, _) => c = l.shuffle.head
                         case Ask(f : Faction, l) =>
-                            val a = if (l.num == 1) l(0) else new BotXX(f).ask(l, 0)(game).immediate
+                            // a Riverfolk services payment must stay a lone button the runner takes, with no Negotiations beside it
+                            if (l.exists(_.unwrap.is[PayGiveWarriorsAction]) && l.exists(_.unwrap.is[InvasiveEEENegotiateMainAction]))
+                                throw new Error("Negotiations offered while paying for services")
+                            if (l.exists(_.unwrap.is[PayGiveWarriorsAction]))
+                                used += "PayGiveWarriors" -> (used.getOrElse("PayGiveWarriors", 0) + 1)
+                            // "ldrf": a menu of Riverfolk services buys a service whenever it can, so the payment is played
+                            val buy = buyServices.??(l./~(_.unwrap match {
+                                case x : HalfExplode => x.expand(None)
+                                case _ => $
+                            }).%(_.unwrap match {
+                                case BuyServicesAction(_, _, o) => o.exists(_.purchase.is[Service])
+                                case _ => false
+                            }).shuffle.take(1))
+                            val a = if (buy.any) buy(0) else if (l.num == 1) l(0) else new BotXX(f).ask(l, 0)(game).immediate
                             chosen = |(a)
                             a match {
                                 case _ if a.isSoft =>

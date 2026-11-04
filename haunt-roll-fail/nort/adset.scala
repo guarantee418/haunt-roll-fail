@@ -341,9 +341,9 @@ object MetaAdset extends MetaGame {
     // The old combat report options do nothing now (the report is a setting); kept so the games that have them still load
     // Robotos (robotos.scala) comes from the bot chosen for a seat, as in Meta.botOptions
     // Chosen casualties, taking the Unrest card and the clan power report are on in every new game, as in Meta
-    override val hiddenOptions : $[O] = $(CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, NormalDevelopments, ModuleOption(DragonVariant), ModuleOption(BearBorder)) ++ RobotosSeatOption.all ++ BotSeatOption.all
+    override val hiddenOptions : $[O] = $(CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, ChiefMoveFromHeld, NormalDevelopments, ModuleOption(DragonVariant), ModuleOption(BearBorder)) ++ RobotosSeatOption.all ++ BotSeatOption.all
 
-    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures)
+    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, ChiefMoveFromHeld)
 
     val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ WarchiefsChoice.all ++ $(NoDefensiveStrategy, ExtraAchievement) ++ BanDevelopment.all ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ $(BalancedStartTiles) ++ DevelopmentsChoice.fan ++ Module.all.%(_.fan).but(LionKingdom).but(DragonVariant).but(BearBorder)./(ModuleOption) ++ hiddenOptions
 
@@ -407,7 +407,10 @@ object MetaAdset extends MetaGame {
     // Any clan can be drafted, and Wilderness, Wastelands and every central tile can be chosen in the game
     val assets = Meta.assets./(a => ConditionalAssetsList(
         (factions : $[F], options : $[O]) => a.condition(Meta.clans, options ++ always ++ $(ModuleOption(Wilderness), ModuleOption(Wastelands), WildLakeCentral)),
-        a.path, a.prefix, a.ext, a.lzy, a.scale, a.lossless)(a.list)) :+
-    // The clan emblems, for the draft
-    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "clan", "clan-", "webp")(Meta.clans./(f => ImageAsset(f.style)))
+        a.path, a.prefix, a.ext, a.lzy, a.scale, a.lossless)(a.list))
+    // The clan emblems for the draft and the tab's icon are among Meta.assets
+
+    // The tab's icon: the emblem of the clan the seat drafted, blinking while it is the seat's turn
+    override def glyph(g : G) : |[String] = Meta.glyph(g)
+    override def glyph(g : G, s : Seat) : |[String] = g.ptf.get(s)./~(Meta.glyph(_)).%!(_ => g.highlight.faction.has(s) && hrf.HRF.uptime() / 1000 % 2 == 1)
 }

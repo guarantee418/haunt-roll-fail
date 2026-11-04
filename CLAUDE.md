@@ -105,7 +105,7 @@ unit killed, 10 per warchief (Marzaus, 2026-10-22), creatures (twice their fame)
 levels of a path picked at 5 (`game.paths`): Leadership (only with Warchiefs: a bodyguard, `game.guards`, drawn as its own figure, a huscarl with a kite shield marked with the Algiz rune and a spear, `token/unit/bodyguard-<color>`, by `nort/tools/bodyguard-figure.py`, asked for by the owner on 2026-10-23, rerolls, an extra move,
 captures, a kill before attacking), Guardian (free Defense Towers on no space that kill before the fight, `game.towersUsed`; four
 Militia, `game.militia`, figures that stay in the clan's territories, one dead one back each year, `game.militiaBack`; a free Fortress a year, `freeFortress`: Marzaus's "Palisade" is the Fortress) and
-Legions (free Training Camps on no space that recruit 2 and train a unit each year, points for big armies, rerolls). The readings of
+Legions (free Training Camps on no space that recruit 2 and train a unit each year, points for big armies, rerolls). Leadership's extra warchief move after a Move card starts only from a territory the clan controls (not out of a fight or on through an enemy's territory), in games with the hidden `ChiefMoveFromHeld` every new game gets (Discord, 2026-11-04; `ChiefMoveFromHeldAction(X)` switches a running game). The readings of
 the short post are listed in `nort/RULES.md` (Military paths); the player panels show the MXP, with the video game's Military Experience icon (crossed swords, `ui-mxp`, `MXP.icon`, from the game wiki's 20x20 file by `nort/tools/mxp-icon.py`; asked for by the owner on 2026-10-23), and the path (tapping them, every path). The End of the Year gains (Guardian's towers, Legions' camps, Leadership's units) never came in Wilderness games, as its Geysers skipped the expansions after it, until the hidden `EndOfYearAfterGeysers` every new game gets (`wilderness.scala`; Marzaus, 2026-11-01; `EndOfYearAfterGeysersAction(X)` switches a running game). The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
@@ -666,7 +666,11 @@ file covers the build, server and deploy. No session can ssh to the server
   the negotiation broke the game on load; found by `ReplayCheck <games> ldkd` on 2026-10-18), sub-menus with Cancel, or
   Hobson's choices. It depends only on the game state, so bots, move checks and replays agree (an earlier try that tracked
   soft choices in a `Game` field broke them); old games replay the same, as it only adds choices. `ReplayCheck <games> ldtc`
-  plays Lilypad with the Council. Those menus head it with the Lilypad faction's name, as the button already says
+  plays Lilypad with the Council. Nor in the payment for Riverfolk services (`paying`: `PayForServicesAction` is soft and its
+  Ask is one hidden button the runner takes by itself; with Negotiations beside it the menu showed only Negotiations and the
+  purchase never went on, MaKoBwoY, 2026-11-04, buying Mercenaries; a card bought with it was already left out by `aboutCard`;
+  no game could get past that menu, so it needs no option). `ReplayCheck <games> ldrf` plays Lilypad with the Riverfolk and
+  fails if a payment menu offers Negotiations. Those menus head it with the Lilypad faction's name, as the button already says
   Negotiations (MaKoBwoY saw "Négociations" twice). The Council's "Convene Woodfolk" is in the Council's colour.
 - Frog suit text (clearing names in menus and the log, and the two-suit gradients, `Frog` and `FoxFrog` ... in
   `root/styles.scala`) is the Homeland Lilypad Diaspora's yellow-green `#b7b13c` (owner, 2026-10-17, after trying the frog
@@ -721,6 +725,10 @@ file covers the build, server and deploy. No session can ssh to the server
   `root/faction-council.scala`; MaKoBwoY could banish a lone Underground Duchy tunnel on 2026-10-30, geffrey pointed out the frogs).
   New games get the hidden default option `BanishNeedsWarriors`; older games keep offering it so their recorded moves load.
   While banishing, the defenseless extra Hit isn't logged ("dealt an extra Hit to defenseless"), as a Banish can't hit buildings or tokens.
+  A banished defender ignores the first hit first (Stubborn, Armored, Devout Knights, Badger Bodyguards, Dazzle;
+  `BattleExpansion.ignoresFirstHit` in `root/battle.scala`), so one warrior fewer moves (kayajam's Season for Revolution, 2026-11-04:
+  two Stubborn Rats were banished by 2 hits). New games get the hidden default option `BanishAfterIgnoredHits`; older games keep the old
+  way, and a running game can be switched over with `BanishAfterIgnoredHitsAction(X)`.
 - Outrage with no card of the clearing's suit to give shows the hand to the Woodland Alliance in its action pane, and the
   game waits for its "Ok" (`PeekCardsAsk` and `PeekCardsSeenAction` in `root/cards.scala`; the playtest Pacifism the same).
   It was only a notification, and the game went on (Hayjay couldn't see the Lilypad Diaspora's hand on 2026-10-17). New games
@@ -1023,6 +1031,9 @@ file covers the build, server and deploy. No session can ssh to the server
   shared link. The client sets the real title when it loads.
 - `good-game` wraps static files in `encodeResponse`, so the 8 MB client is
   sent gzipped (about 2.5 MB).
+- In a Northgard game the tab's icon is the player's clan emblem (`clan/<clan>.webp`, the clan picker's; in Adset the clan the seat
+  drafted), blinking while it is their turn, as Root does with its faction glyphs (`glyph` in `nort/meta.scala` and
+  `nort/adset.scala`; asked for by Gman on 2026-11-04).
 - The site's icon is a drop (the owner's drawing), not HRF's crow: the
   favicon is a 64x64 PNG data URI in the `icon` link of `index.html`
   (`HRF.defaultGlyph`; games swap in faction glyphs), and `drop.png` is the
