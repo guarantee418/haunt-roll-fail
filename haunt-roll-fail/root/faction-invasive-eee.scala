@@ -200,6 +200,8 @@ case class InvasiveEEEReconcileMainAction(self : InvasiveEEE) extends BaseAction
 case class InvasiveEEEReconcileSelectAction(self : InvasiveEEE, l : $[Clearing]) extends ForcedAction with Soft
 case class InvasiveEEEReconcileAction(self : InvasiveEEE, l : $[Clearing]) extends ForcedAction
 case class InvasiveEEEReconcileDrawAction(self : InvasiveEEE, l : $[Clearing]) extends ForcedAction
+case class InvasiveEEEReconcileOneAction(self : InvasiveEEE, c : Clearing) extends ForcedAction
+case class InvasiveEEEReconcileNextAction(self : InvasiveEEE) extends ForcedAction
 
 case class InvasiveEEERetaliateAction(f : InvasiveEEE, c : Clearing) extends ForcedAction
 
@@ -736,6 +738,30 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
 
         case InvasiveEEEReconcileMainAction(f) =>
             InvasiveEEEReconcileSelectAction(f, $)
+
+        // One at a time (ReconcileOneAtATime): each flip is its own move and draws its card before the next is picked
+        case InvasiveEEEReconcileSelectAction(f, Nil) if options.has(ReconcileOneAtATime) =>
+            Ask(f).group("Reconcile".styled(f), "- flip", MilitantEEE.of(f), "to", PeacefulEEE.of(f), "in")
+                .each(flippable(f, f.militant))(c => InvasiveEEEReconcileOneAction(f, c).as(c))
+                .add(InvasiveEEEReconcileAction(f, $).as("Reconcile".styled(f), "without flipping"))
+                .cancel
+
+        case InvasiveEEEReconcileOneAction(f, c) =>
+            flip(f, c, MilitantEEE, PeacefulEEE)
+
+            f.log("reconciled in", c.elem)
+
+            val r = factions.%(_.rules(c)).single
+
+            if (r.any)
+                DrawCardsAction(r.get, 1, NotInLog(NoMessage), AddCardsAction(r.get, InvasiveEEEReconcileNextAction(f)))
+            else
+                InvasiveEEEReconcileNextAction(f)
+
+        case InvasiveEEEReconcileNextAction(f) =>
+            Ask(f).group("Reconcile".styled(f), "- flip another", MilitantEEE.of(f), "to", PeacefulEEE.of(f), "in")
+                .each(flippable(f, f.militant))(c => InvasiveEEEReconcileOneAction(f, c).as(c))
+                .done(Next)
 
         case InvasiveEEEReconcileSelectAction(f, l) =>
             Ask(f).group("Reconcile".styled(f), "- flip", MilitantEEE.sof(f), "to", PeacefulEEE.of(f), l.any.?("in"), l.any.?(l./(_.elem).comma))

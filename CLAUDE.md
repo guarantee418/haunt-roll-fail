@@ -713,6 +713,10 @@ file covers the build, server and deploy. No session can ssh to the server
   flip, and none it could place a warrior at (asked for by MaKoBwoY on 2026-10-21); the Birdsong extras (Entreat and the rest)
   are still offered then, with "Done". New games get the hidden default option `SkipIdleRallyReconcile`; older games keep
   asking so their replays don't change.
+- Lilypad Diaspora's Reconcile flips its Militant enclaves one at a time: each pick is its own move, the clearing's ruler draws
+  its card, and then the Diaspora picks the next one or "Done" (`InvasiveEEEReconcileOneAction` and `InvasiveEEEReconcileNextAction`
+  in `root/faction-invasive-eee.scala`; Cookies on Discord, 2026-11-05: every enclave was picked at once, before any card was seen).
+  New games get the hidden default option `ReconcileOneAtATime`; older games keep picking them all at once so their replays don't change.
 - An Entreat (17.2.4) asks the Twilight Council to gain a Loyalist or place some in the clearing only when it has Loyalists it could
   place there; otherwise it gains one without being asked, or nothing happens when it can't (`CouncilEntreatAction` in
   `root/faction-council.scala`; Hayjay, 2026-10-29: the Council was asked only to "place 0"). New games get the hidden default option

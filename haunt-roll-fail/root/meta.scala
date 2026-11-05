@@ -465,6 +465,14 @@ case object CouncilEveningClearPath extends GameOption with ToggleOption {
     val valueOn = "Twilight Council".hh ~ " may clear a path in Evening"
 }
 
+// Lilypad Diaspora's Reconcile flips its Militant Enclaves one at a time: each flip draws the clearing's ruler a card before the
+// next is picked, so the Diaspora sees what it drew before deciding on the next (Cookies on Discord, 2026-11-05: all were picked
+// at once). Hidden and on by default for new games; older games keep picking them all at once so their replays don't change.
+case object ReconcileOneAtATime extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Reconcile".hh ~ " one enclave at a time"
+}
+
 // Feather Rufflers is resolved when crafted, as its parchment text box says (like the Favor cards): it places two warriors in
 // a clearing with the crafter's pieces and is discarded (Jfthex, 2026-10-30: the Knaves crafted it with Apprentice and it stayed
 // among their crafted cards). Hidden and on by default for new games; older games keep it as a crafted card used later
@@ -1606,7 +1614,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath) ++
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime) ++
         settled ++
         retired
 
@@ -1620,7 +1628,7 @@ object Meta extends MetaGame {
 
     // The hidden options every new game gets, even when the setup screen starts from options saved before one of them existed
     // (toggles aren't added to saved options from the defaults, so those games missed them)
-    lazy val newGame : $[O] = settled ++ $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, CounterMiceInABush, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath)
+    lazy val newGame : $[O] = settled ++ $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, CounterMiceInABush, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime)
 
     override def completeSaved(n : Int, l : $[F], options : $[O]) = options.diff(retired)
 
@@ -1669,6 +1677,7 @@ object Meta extends MetaGame {
         BuyServicesAgain,
         BanishAfterIgnoredHits,
         CouncilEveningClearPath,
+        ReconcileOneAtATime,
         MountainSuitedLandmark,
         NoHirelings
     ) ++ hirelings./(IncludeHireling)
