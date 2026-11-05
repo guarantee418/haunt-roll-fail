@@ -475,7 +475,8 @@ case object ReconcileOneAtATime extends GameOption with ToggleOption {
 
 // Feather Rufflers is resolved when crafted, as its parchment text box says (like the Favor cards): it places two warriors in
 // a clearing with the crafter's pieces and is discarded (Jfthex, 2026-10-30: the Knaves crafted it with Apprentice and it stayed
-// among their crafted cards). Hidden and on by default for new games; older games keep it as a crafted card used later.
+// among their crafted cards). Hidden and on by default for new games; older games keep it as a crafted card used later
+// (FeatherRufflersOnCraftAction switches a running one over).
 case object FeatherRufflersOnCraft extends GameOption with ToggleOption {
     val group = "Card Draft"
     val valueOn = "Feather Rufflers".hh ~ " resolved when crafted"
