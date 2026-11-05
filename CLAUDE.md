@@ -554,7 +554,9 @@ file covers the build, server and deploy. No session can ssh to the server
     `FeatherRufflersOnCraft` (`root/meta.scala`, `FeatherRufflersCraftedAction` in `root/deck-squires.scala`):
     it places its two warriors in a clearing with the crafter's pieces and is discarded, as its parchment text
     box (like the Favor cards') says (Jfthex, 2026-10-30: the Knaves crafted it with Apprentice and it stayed
-    among their crafted cards). Older games keep it as a crafted card used later from those menus.
+    among their crafted cards). Older games keep it as a crafted card used later from those menus (and returned to hand to pay
+    for a Squires card); a running one can be switched over with `FeatherRufflersOnCraftAction(X)` (MaKoBwoY's Air versus Might,
+    2026-11-04, the Council crafting it again after returning it).
 - The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
   Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
   box) and the Homeland errata, from a player's Google Drive (2026-10-10). The shared deck's back follows

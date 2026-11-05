@@ -170,6 +170,9 @@ case class ShadowCouncilReturnAction(self : Faction) extends BaseAction(ShadowCo
 case class FeatherRufflersMainAction(self : WarriorFaction, p : Phase, l : $[Clearing]) extends BaseAction(p)(FeatherRufflers) with Soft
 case class FeatherRufflersAction(self : WarriorFaction, c : Clearing) extends BaseAction(FeatherRufflers, "places warriors in")(c)
 case class FeatherRufflersCraftedAction(self : Faction) extends ForcedAction
+// A one-time fix for games started before FeatherRufflersOnCraft, added to a live game's log by hand: from here a crafted
+// Feather Rufflers is resolved at once and discarded (game.featherRufflersOnCraft), then goes on with then
+case class FeatherRufflersOnCraftAction(then : ForcedAction) extends ForcedAction with SkipValidate
 
 case class SpyNetworkMainAction(self : Faction, p : Phase, l : $[(Faction, DeckCard)]) extends BaseAction(p)(SpyNetwork) with Soft
 case class SpyNetworkTargetAction(self : Faction, e : Faction, d : DeckCard) extends BaseAction(SpyNetwork, "takes from", e)(d.img) with ViewCard with Soft
@@ -467,7 +470,12 @@ object SquiresDeckExpansion extends Expansion {
                 .cancel
 
         // resolved when crafted (FeatherRufflersOnCraft): prepared like any crafted card, then used at once
-        case CraftPerformAction(f, d @ CraftEffectCard(_, _, _, FeatherRufflers), m) if options.has(FeatherRufflersOnCraft) =>
+        case FeatherRufflersOnCraftAction(then) =>
+            game.featherRufflersOnCraft = true
+
+            then
+
+        case CraftPerformAction(f, d @ CraftEffectCard(_, _, _, FeatherRufflers), m) if options.has(FeatherRufflersOnCraft) || game.featherRufflersOnCraft =>
             f.hand --> d --> f.stuck
             f.effects :+= FeatherRufflers
 
