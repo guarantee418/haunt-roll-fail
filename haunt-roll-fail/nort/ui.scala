@@ -1285,7 +1285,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Adset: the first year's Development cards and the Achievements are dealt before the draft and shown during it
         val draft = game.year == 0 && game.adset && game.seats.any
 
-        if (game.year == 0 && draft.not)
+        // Setup: only the Alternative victory cards and the Events, once drawn (setupCourt), else nothing
+        val setup = game.year == 0 && draft.not
+
+        if (setup && setupCourt.not)
             return
 
         val last = game.year == game.lastYear
@@ -1303,7 +1306,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Uncharted Horizons: this year's Event and the next one, and the Alternative victory cards
         val events = game.has(EventsModule).$(("Event" ~ " (this year, next)".spn(xstyles.smaller85)) -> (game.event.$ ++ game.eventDeck.take(1)))
 
-        val victory = game.has(VictoryModule).$(("Victory: " ~ options.has(VictoryModeOption(true)).?("Jarl").|("Thane")) -> game.victory)
+        // its title opens the cards' rules and every clan's progress
+        val victory = game.has(VictoryModule).$(OnClick(VictoryView, ("Victory: " ~ options.has(VictoryModeOption(true)).?("Jarl").|("Thane") ~ " ⓘ").spn(xlo.pointer)) -> game.victory)
 
         // Solo: the Automa's cards played this year, the last on the right
         val automa = game.setup.has(Automa).$(("Automa" ~ " (played this year)".spn(xstyles.smaller85)) -> game.automaPlayed)
@@ -1311,7 +1315,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Sea module: the Raid cards on the Ports, then the ones kept for the next Harvest or Start of Year
         val raids = (game.has(Sea) && (game.raids.values.exists(_.card.any) || game.raidKept.any)).$(("Raids" ~ " (on the Ports, then kept)".spn(xstyles.smaller85)) -> (game.ports./~(p => game.raids(p).card) ++ game.raidKept./(_.card)))
 
-        val groups = automa ++ events ++ victory ++ developments ++ achievements ++ creatures ++ blainn ++ raids
+        val groups = setup.?(events ++ victory).|(automa ++ events ++ victory ++ developments ++ achievements ++ creatures ++ blainn ++ raids)
 
         if (folded) {
             val short = $(automa -> "Automa", events -> "Event", victory -> "Victory", developments -> "Developments", achievements -> "Achievements", creatures -> "Creatures", blainn -> "Jötunn Blainn", raids -> "Raids")
@@ -1456,6 +1460,37 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 }.merge
             }.merge ~
             small("Fan-made by Marzaus (Discord, northgard-fanmade-content).".txt) ~
+            HorizontalBreak ~
+            "(tap to close)".spn(xstyles.smaller85).div
+        ).div
+    }
+
+    // Alternative victory: f's mark for a card, ✓ when fulfilled, the validation count, or ✗
+    def victoryMark(f : Faction, c : VictoryCard) : Elem =
+        if (VictoryExpansion.fulfilled(f, c)) "✓".styled(styles.fame)
+        else c.target./(n => game.progressOf(f, c.id).hl ~ "/" ~ n.toString).|("✗".txt)
+
+    // Alternative victory: the cards in play, what each asks, and where every clan (or team) stands
+    // (the panels' "Victory:" line and the cards in the shared strip open it; asked for by Gman on 2026-11-05)
+    def victoryView : Elem = {
+        val jarl = options.has(VictoryModeOption(true))
+        val clans = game.factions.but(Automa).%(game.states.contains)
+        val how : Elem =
+            if (jarl) ("Jarl".hl ~ ": a " ~ game.teams.?("team").|("clan") ~ " that fulfils all " ~ game.victory.num.hl ~ " cards at the end of a year wins.")
+            else ("Thane".hl ~ ": a " ~ game.teams.?("team").|("clan") ~ " that fulfils the " ~ "Map Control".hl ~ " card and one " ~ "Wealth".hl ~ " card at the end of a year wins" ~ game.teams.?(" (teammates may fulfil different cards)").|("") ~ ".")
+
+        val rows = game.victory./{ c =>
+            val marks = clans./(g => (g.elem ~ " " ~ victoryMark(g, c)).spn(styles.gearRow)).join(", ")
+            OnClick(c, Image(c.info.image, styles.gearLarge, xlo.pointer).alt(c.name).div(styles.gearCell)) ~
+                ((c.mapControl.?("Map Control").|("Wealth").txt.spn(xstyles.smaller85) ~ " " ~ c.elem).div ~
+                    c.info.text.spn(xstyles.smaller85).div ~
+                    marks.spn(xstyles.smaller85).div).div(styles.gearCell)(styles.winterCell)
+        }
+
+        ("Alternative victory".hlb.div ~
+            how.spn(xstyles.smaller85).div ~
+            rows.merge.div(styles.tideTable) ~
+            "✓ fulfilled, 2/6 the count so far, ✗ not yet (checked on the map). Tap a card to see it larger.".spn(xstyles.smaller85).div ~
             HorizontalBreak ~
             "(tap to close)".spn(xstyles.smaller85).div
         ).div
@@ -1693,10 +1728,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val marks = (pyreMark ~ game.teams.?(game.teamName(f) ~ " ").|(Empty) ~ (state.passed && game.isOver.not).?(" Passed".txt).|(Empty)).div
 
         // Alternative victory: one mark per card, in the strip's order: ✓ when fulfilled, the validation count, or ✗
-        val goals = game.has(VictoryModule).?(("Victory: ".txt ~ game.victory./{ c =>
-            if (VictoryExpansion.fulfilled(f, c)) "✓".styled(styles.fame)
-            else c.target./(n => game.progressOf(f, c.id).hl ~ "/" ~ n.toString).|("✗".txt)
-        }.join(" ")).div).|(Empty)
+        // (tapping it lists the cards with their rules and every clan's progress, VictoryView)
+        val goals = game.has(VictoryModule).?(OnClick(VictoryView, ("Victory: ".txt ~ game.victory./(c => victoryMark(f, c)).join(" ")).div(xlo.pointer))).|(Empty)
 
         // The resources and fame, and under them the next harvest as things stand and the Winter costs, one column each (tapping them shows
         // the whole Winter chart). Compact: "2 [food]" in each cell; Stacked: the icons head the columns; Reverse Stacked: they go under the stockpile
@@ -2508,7 +2541,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     var courtEmptyLaid : Option[Boolean] = None
 
     // The shared cards show nothing during setup, except Adset's draft (drawCards), and unless folded into the bar
-    def courtEmpty = try { game.year == 0 && (game.adset && game.seats.any).not && folded.not } catch { case _ : Throwable => false }
+    def courtEmpty = try { game.year == 0 && (game.adset && game.seats.any).not && setupCourt.not && folded.not } catch { case _ : Throwable => false }
+
+    // During setup the shared cards show the Alternative victory cards and the Events once they are drawn (Gman, 2026-11-05:
+    // nothing showed which victory cards were in play until the first year)
+    def setupCourt = (game.has(VictoryModule) && game.victory.any) || (game.has(EventsModule) && game.event.any)
 
     // The player panels, when they are in one row right above the court and as wide as it
     def openPanels(l : $[PanePlacement], c : PanePlacement) : $[PanePlacement] =
@@ -2809,6 +2846,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case MineralsView =>
             showOverlay(overlayScrollX(mineralsView).onClick, onClick)
+
+        case VictoryView =>
+            showOverlay(overlayScrollX(victoryView).onClick, onClick)
 
         case MilitaryView(f) =>
             showOverlay(overlayScrollX(militaryView(f)).onClick, onClick)

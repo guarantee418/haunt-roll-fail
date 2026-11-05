@@ -508,6 +508,9 @@ case class ShuffledMapControlAction(shuffled : $[VictoryCard], achievements : $[
 case class ShuffledWealthAction(shuffled : $[VictoryCard], achievements : $[Card]) extends ShuffledAction[VictoryCard]
 case class AltVictoryAction(winners : $[Faction]) extends ForcedAction
 
+// The panels' "Victory:" line, tapped: the cards in play and every clan's progress
+case object VictoryView
+
 
 object VictoryExpansion extends Expansion {
     def needsCreatures(c : VictoryCard) = $("creature-territories", "hunting").has(c.id)
