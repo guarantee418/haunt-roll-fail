@@ -70,6 +70,8 @@ case object CityBuilderPrintEffect extends Effect
 case object CookingPrintEffect extends Effect
 // Economics: draw 1; 1 food for a second card, then 2 more for a third
 case object EconomicsPrintEffect extends Effect
+// Squirrel Clan as printed (PrintedSquirrelClan): Recruit 1, then 1 food if the unit went into a territory producing food
+case object SquirrelPrintEffect extends Effect
 
 // Robotos's Dragon variant (DragonVariant, fan-made)
 // Dragon Clan: Recruit 1; with the Pyre full, may empty it for 1 food
@@ -168,6 +170,7 @@ case class OverworkCollectAction(self : Faction, area : AreaRef, then : ForcedAc
 // SQUIRREL
 case class SquirrelAfterAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class SquirrelFameAction(self : Faction, n : Int, then : ForcedAction) extends BaseAction("Squirrel Clan".hl)("Gain", n.hl, FameIcon())
+case class SquirrelFoodAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class CookingAction(f : Faction, then : ForcedAction) extends ForcedAction
 case class EconomicsPayAction(self : Faction, n : Int, then : ForcedAction) extends BaseAction("Economics".hl, "pay food to draw cards")("Pay", n.hl, Food)
 
@@ -543,6 +546,7 @@ object NewBloodExpansion extends Expansion {
         case RatClanEffect => buildableWith(f, math.min(2, game.onMap(f)))
         case OverworkEffect => printed.?(game.onMap(f) > 0).|(unitsIn(f).any)
         case SquirrelClanEffect => true
+        case SquirrelPrintEffect => true
         case CookingEffect => MapExpansion.playable(f, BuildEffect())
         case EconomicsEffect => CommonExpansion.available(f) > 0
         case EnslavementEffect => CardsExpansion.adjacentEnemyUnits(f).any && (room > 0 || game.pyre.any)
@@ -620,6 +624,9 @@ object NewBloodExpansion extends Expansion {
 
         case SquirrelClanEffect =>
             Then(RecruitAction(f, 1, RecruitNormal, $, SquirrelAfterAction(f, then)))
+
+        case SquirrelPrintEffect =>
+            Then(RecruitAction(f, 1, RecruitNormal, $, SquirrelFoodAction(f, then)))
 
         case CookingEffect =>
             Then(BuildAction(f, BuildEffect(), 1, false, CookingAction(f, then)))
@@ -1212,6 +1219,15 @@ object NewBloodExpansion extends Expansion {
 
             Ask(f).add(ResolveEffectAction(f, CollectEffect(Food, 1), then).as("Collect", 1.hl, Food)("Squirrel Clan".hl))
                 .when(n > 0)(SquirrelFameAction(f, n, then))
+
+        // As printed: 1 food if the recruited figure went into a territory that produces food (game.harvest, as at the harvest)
+        case SquirrelFoodAction(f, then) =>
+            if (game.recruited./(game.board.territory).exists(t => game.harvest(t)._1 > 0)) {
+                f.gain(Food, 1)
+                f.log("collected", 1.hl, Food, "with", "Squirrel Clan".hl)
+            }
+
+            Then(then)
 
         case SquirrelFameAction(f, n, then) =>
             f.fame += n
