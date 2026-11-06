@@ -494,6 +494,7 @@ Brok's Precision, Kàra's Devotion (was Howl from the Sea), Ox Clan, Torfin's Fe
 | Lynx | Mielikki's Wisdom | The Wise One | Move 3; 1 lore once a casualty is rolled in a fight it starts, once per card (`wisdom`) |
 | Ox | Ancient Battlegrounds | Warcraft | Explore; a tile showing lore may give 1 lore; without it (declined or none), another Explore |
 | Ox | City Builder | City Builder | Build; a small building (or Carved Stone) may draw 1, a large one gives 1 lore (`game.lastBuilt`) |
+| Squirrel | ⚡ Squirrel Clan | Squirrel Clan | Recruit 1; 1 food if the unit went into a territory producing food (as at the harvest), no fame; in games with the hidden `PrintedSquirrelClan` every new game gets since 2026-11-06 (Marzaus), as `PrintedNewBlood` missed it (`SquirrelFoodAction`) |
 | Squirrel | Cooking Mastery | Cooking Mastery | Build, then a free Food Silo needing no space in a territory you control without one |
 | Squirrel | Economics | Economics | Draw 1; 1 food for a second card, 2 more for a third |
 | Rat | ⚡ Overwork | Overwork | The unit removed may be anywhere |
