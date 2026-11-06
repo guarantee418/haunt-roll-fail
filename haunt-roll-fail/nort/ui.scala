@@ -1088,6 +1088,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     taken :+= ((mx(gx), my(gy), 0.1 * scale))
                 }
 
+                // Brok's bodyguard (HorseTwoGuards)
+                if (MilitaryExpansion.brokGuardIn(t, f)) {
+                    val gz = 230.0 * scale
+                    val (gx, gy) = beside(0.1 * scale)
+                    pieces.add(Sprite($(at("bodyguard-" + game.colors(f).id, gz)), $(Rectangle(-gz / 2, -gz / 2, gz, gz)), tag :+ MilitaryView(f)))(gx, gy)
+                    taken :+= ((mx(gx), my(gy), 0.1 * scale))
+                }
+
                 val militia = MilitaryExpansion.militiaIn(t, f)
                 if (militia > 0) {
                     val qz = 270.0 * scale

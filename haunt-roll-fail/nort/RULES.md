@@ -981,7 +981,12 @@ proposed there, to change if Marzaus answers otherwise.
 - Leadership. 1: the bodyguard (`game.guards`) is a figure that is wherever the
   warchief is (it moves, retreats and goes to the reserve with it), worth 1
   combat point, lost as a casualty after the units and Militia and before the
-  warchief; not one of the 14 units, no Winter cost. 2: one reroll in each
+  warchief; not one of the 14 units, no Winter cost. Horse Clan's two
+  warchiefs each have one, Eitria's and Brok's (`game.brokGuard`, beside Brok),
+  in games with the hidden `HorseTwoGuards` every new game gets (Gman,
+  2026-11-06; `HorseTwoGuardsAction(X)` switches a running game); where both
+  are in a fight, Eitria's goes first, and the casualty picker's bodyguard
+  switch is one of them, the other counted with the units. 2: one reroll in each
   fight with the warchief, against a clan, and against a creature too in games
   with the hidden `MilitaryRerollCreatures` every new game gets (Gman,
   2026-11-04; `MilitaryRerollCreaturesAction(X)` switches a running game)
