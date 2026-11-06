@@ -893,6 +893,21 @@ case object MilitaryModule extends Module("Military paths", "fan-made module by 
     )
 }
 
+// Alternative fame gains: the units (Militia too) and warchief a clan loses for having nowhere to retreat after a lost fight against a
+// clan count as killed by the winner (Marzaus, 2026-11-06: "losing units = killing"). Hidden, and given to every new game
+// (Meta.mandatoryFor); older games replay the old way
+case object FameRetreatKills extends GameOption with ToggleOption {
+    val group = "Alternative fame gains".txt
+    def valueOn = "Figures lost with nowhere to retreat count as killed".txt
+}
+
+// Alternative fame gains: the Altar of Kings wins only in a closed territory (Marzaus, 2026-11-06: "the altar must be in closed
+// territory"). Hidden, and given to every new game (Meta.mandatoryFor); older games replay the old way
+case object FameAltarClosed extends GameOption with ToggleOption {
+    val group = "Alternative fame gains".txt
+    def valueOn = "The Altar of Kings must be in a closed territory".txt
+}
+
 // Marzaus's "Alternative fame gains" (fame-gains.scala; Discord, northgard-fanmade-content, 2026-10-22; asked for by Gman on
 // 2026-11-01): fame as things are done, and 120 fame with an Altar of Kings wins at once. It replaces the other victory conditions,
 // so it needs the Standard or Fame only victory
@@ -904,9 +919,9 @@ case object FameGainsModule extends Module("Alternative fame gains", "fan-made v
     override def priority = -30
     override def requires = $($(StandardVictory), $(FameOnly))
     def about = $(
-        "A clan with " ~ Amount(120.hl, FameIcon()) ~ " that controls an " ~ AltarOfKings.elem ~ " wins at once. It is the only way to win: three closed territories with large buildings don't win, and if nobody has won by the end of the last year, the game goes on, year after year, until someone does.",
+        "A clan with " ~ Amount(120.hl, FameIcon()) ~ " that controls an " ~ AltarOfKings.elem ~ " in a closed territory wins at once. It is the only way to win: three closed territories with large buildings don't win, and if nobody has won by the end of the last year, the game goes on, year after year, until someone does.",
         "Building gives fame: " ~ 1.hl ~ " for a small building, " ~ 2.hl ~ " for a large one; an " ~ AltarOfKings.elem ~ " gives " ~ 3.hl ~ " more when built (" ~ 5.hl ~ " in all).",
-        "In a fight against a clan: " ~ 1.hl ~ " fame for each enemy unit killed, " ~ 5.hl ~ " for a warchief, and " ~ 1.hl ~ " for winning.",
+        "In a fight against a clan: " ~ 1.hl ~ " fame for each enemy unit killed, " ~ 5.hl ~ " for a warchief, and " ~ 1.hl ~ " for winning. Units and a warchief the loser loses for having nowhere to retreat count as killed.",
         "Buying an upgrade gives " ~ 5.hl ~ " fame. A Development card gives its fame when taken (not at the end).",
         "At setup each clan draws 2 random Achievement cards and keeps 1 face down. Once, at any point of its turn (not an action), it may resolve it for the fame it gives then. The last year reveals no Achievement cards.",
         "Needs the " ~ "standard".hl ~ " or " ~ "Fame victory only".hl ~ " victory conditions.",

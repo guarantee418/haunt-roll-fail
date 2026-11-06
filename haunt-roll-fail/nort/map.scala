@@ -2006,6 +2006,9 @@ object MapExpansion extends Expansion {
                             if (w == attacker && e.special == BrandMove)
                                 game.retreatBy = |(attacker)
 
+                            // Alternative fame gains: what the loser loses with nowhere to retreat counts as killed by the winner
+                            game.retreatWinner = |(w)
+
                             next(RetreatAction(loser, a, loser == attacker && e.ignoreRough, then))
                         }
                         else
@@ -2086,6 +2089,7 @@ object MapExpansion extends Expansion {
 
             if (n == 0 && kaija.not && game.chiefIn(t, f).not) {
                 game.retreatBy = None
+                game.retreatWinner = None
                 Then(then)
             }
             else {
@@ -2093,9 +2097,14 @@ object MapExpansion extends Expansion {
 
                 if (to.none) {
                     val chief = game.chiefIn(t, f)
+                    val soldiers = MilitaryExpansion.soldiers(t, f)
                     game.removeFigures(t, f, game.toughness(t, f))
                     f.log("had nowhere to retreat and lost", Party(f, n, kaija, chief))
                     game.retreatBy = None
+
+                    // Alternative fame gains: the winner gains fame as if it had killed them
+                    FameGainsExpansion.noRetreat(f, soldiers - MilitaryExpansion.soldiers(t, f), chief && game.chiefIn(t, f).not)
+                    game.retreatWinner = None
                     Then(then)
                 }
                 else
