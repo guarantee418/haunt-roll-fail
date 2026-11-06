@@ -482,7 +482,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
 
         // Military paths module: MXP towards the next level, the Militia and the bodyguard
         if (game.has(MilitaryModule))
-            v += MilitaryExpansion.mxp(f) * 4 + MilitaryExpansion.militiaOnMap(f) * 38 + game.guards.has(f).??(30)
+            v += MilitaryExpansion.mxp(f) * 4 + MilitaryExpansion.militiaOnMap(f) * 38 + game.guards.has(f).??(30) + game.brokGuard.??((f == Horse).??(30))
 
         v += winterValue(f)
 

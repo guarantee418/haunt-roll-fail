@@ -176,7 +176,8 @@ case class CasualtyGoal(self : Faction, from : AreaRef, k : Int, then : ForcedAc
     def owner = self
     def elem(implicit game : Game) = self.elem ~ " takes " ~ CombatIcon.skulls(k) ~ " in " ~ from.elem ~ ", who is lost"
     // The bodyguard has its own switch, so it can be lost before the units (Marzaus, 2026-11-02: it comes back each year)
-    def guard(implicit game : Game) : Int = MilitaryExpansion.guardIn(territory, owner).??(1)
+    // (with Horse's two, HorseTwoGuards, the switch is one of them, the warchief's first, and the other goes with the units)
+    def guard(implicit game : Game) : Int = (MilitaryExpansion.guardsIn(territory, owner) > 0).??(1)
     override def guardMay(implicit game : Game) = guard > 0
     // the soldiers but the bodyguard and the second lynx (MilitaryExpansion.soldiers counts them last)
     override def maxUnits(implicit game : Game) = MilitaryExpansion.soldiers(territory, owner) - game.extraLynx(territory, owner) - guard

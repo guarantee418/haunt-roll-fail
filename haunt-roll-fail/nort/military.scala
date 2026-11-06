@@ -29,7 +29,7 @@ trait MilitaryPath extends NamedToString with Elementary with Record {
 case object Leadership extends MilitaryPath {
     def levels = $(
         $("At the end of the year, 1 MXP for each unit in your warchief's territory (not the warchief or the bodyguard).",
-            "Your warchief has a bodyguard: a warrior that goes wherever the warchief goes. It isn't one of your units and costs no Winter food; dead, it comes back at the end of the year."),
+            "Your warchief has a bodyguard: a warrior that goes wherever the warchief goes. It isn't one of your units and costs no Winter food; dead, it comes back at the end of the year. Horse Clan's two warchiefs, Eitria and Brok, each have one."),
         $("1 reroll of the combat die in each fight with your warchief.",
             "With a Move card, your warchief may move once more across a regular border.",
             "Your warchief gains 1 combat point."),
@@ -165,8 +165,32 @@ object MilitaryExpansion extends Expansion {
 
     def guardIn(t : Territory, f : Faction)(implicit game : Game) : Boolean = game.guards.has(f) && game.chiefIn(t, f)
 
-    // The Militia and the bodyguard: figures beside the units, the warchief and the companions
-    def figures(t : Territory, f : Faction)(implicit game : Game) : Int = militiaIn(t, f) + guardIn(t, f).??(1)
+    // Horse Clan's second bodyguard, with Brok (HorseTwoGuards)
+    def brokGuardIn(t : Territory, f : Faction)(implicit game : Game) : Boolean = f == Horse && game.brokGuard && game.brok.exists(t.areas.contains)
+
+    // The bodyguards in t: the warchief's, and Brok's
+    def guardsIn(t : Territory, f : Faction)(implicit game : Game) : Int = guardIn(t, f).??(1) + brokGuardIn(t, f).??(1)
+
+    // Up to n bodyguards in t killed, the warchief's first; how many
+    def removeGuards(t : Territory, f : Faction, n : Int)(implicit game : Game) : Int = {
+        var k = 0
+        if (k < n && guardIn(t, f)) {
+            game.guards = game.guards.but(f)
+            k += 1
+        }
+        if (k < n && brokGuardIn(t, f)) {
+            game.brokGuard = false
+            game.note("brok-guard-lost")
+            k += 1
+        }
+        k
+    }
+
+    // The bodyguard for each warchief: Horse Clan's Eitria and Brok each have one (HorseTwoGuards)
+    def twoGuards(f : Faction)(implicit game : Game) : Boolean = f == Horse && game.options.has(HorseTwoGuards)
+
+    // The Militia and the bodyguards: figures beside the units, the warchief and the companions
+    def figures(t : Territory, f : Faction)(implicit game : Game) : Int = militiaIn(t, f) + guardsIn(t, f)
 
     // What can be lost as a unit: the units, then the Militia, then the bodyguard
     // (and New Blood's second lynx when both are there, PrintedNewBlood)
@@ -195,9 +219,7 @@ object MilitaryExpansion extends Expansion {
     def removeExtra(t : Territory, f : Faction, n : Int)(implicit game : Game) : Int = {
         val m = math.min(n, militiaIn(t, f))
         removeMilitia(t, f, m)
-        val g = (n > m && guardIn(t, f)).??(1)
-        if (g > 0)
-            game.guards = game.guards.but(f)
+        val g = removeGuards(t, f, n - m)
         // New Blood: the second lynx when both are there (PrintedNewBlood), after the units
         val x = (n > m + g).??(game.extraLynx(t, f))
         if (x > 0)
@@ -215,7 +237,7 @@ object MilitaryExpansion extends Expansion {
     // Combat points beside the units, the warchief and the companions (they add up to game.strength)
     def parts(t : Territory, f : Faction, attacking : Boolean)(implicit game : Game) : $[(Int, Elem)] = on.??($(
         militiaIn(t, f) -> "Militia".hl,
-        guardIn(t, f).??(1) -> "the bodyguard".txt,
+        guardsIn(t, f) -> (guardsIn(t, f) > 1).?("the bodyguards").|("the bodyguard").txt,
         (at(f, Leadership, 2) && game.chiefIn(t, f)).??(1) -> "Leadership".hl,
         at(f, Legions, 3).??(game.count(t, f) / 2) -> "Legions".hl
     ).filter(_._1 > 0))
@@ -397,6 +419,12 @@ object MilitaryExpansion extends Expansion {
                     f.log("got the bodyguard of", Warchief.elem(f), "back")
                     game.note("guard-back")
                 }
+
+                if (at(f, Leadership, 1) && twoGuards(f) && game.brokGuard.not) {
+                    game.brokGuard = true
+                    f.log("got the bodyguard of", Companion(f).elem, "back")
+                    game.note("guard-back")
+                }
             }
 
             Then(MilitaryCheckAction(EndOfYearAction))
@@ -430,6 +458,8 @@ object MilitaryExpansion extends Expansion {
             game.paths += f -> p
             if (p == Leadership)
                 game.guards :+= f
+            if (p == Leadership && twoGuards(f))
+                game.brokGuard = true
 
             f.log("chose the", p, "path")
 
