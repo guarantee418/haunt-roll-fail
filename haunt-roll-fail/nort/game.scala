@@ -487,6 +487,8 @@ case class MielikkiAgainstCreaturesAction(then : ForcedAction) extends ForcedAct
 case class ChiefMoveFromHeldAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to ChiefMoveAfterMove (an hrf-games fix)
 case class ChiefMoveAfterMoveAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to HorseTwoGuards (an hrf-games fix): Brok gets his bodyguard if Horse is on the Leadership path
+case class HorseTwoGuardsAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to MilitaryRerollCreatures (an hrf-games fix)
 case class MilitaryRerollCreaturesAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for OxPicksSpace (Ox's Ancestral Equipment token on a small building space or a Carved Stone space, picked by Ox);
@@ -708,6 +710,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var mxp : Map[Faction, Int] = Map()
     var paths : Map[Faction, MilitaryPath] = Map()
     var guards : $[Faction] = $
+    // Horse Clan's second bodyguard, Brok's (HorseTwoGuards)
+    var brokGuard = false
     var militia : Map[AreaRef, Map[Faction, Int]] = Map()
     var militiaGiven : $[Faction] = $
     var militiaBack : $[Faction] = $
@@ -1152,7 +1156,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
                 casualtyPicks -= f
                 if (casualtyGuard.contains(f)) {
                     casualtyGuard -= f
-                    guards = guards.but(f)
+                    MilitaryExpansion.removeGuards(t, f, 1)
                 }
                 MilitaryExpansion.kill(t, f, units)
                 if (chief)
@@ -2240,6 +2244,15 @@ object CommonExpansion extends Expansion {
         case ChiefMoveAfterMoveAction(then) =>
             if (game.options.has(ChiefMoveAfterMove).not)
                 game.addOption(ChiefMoveAfterMove)
+
+            Then(then)
+
+        case HorseTwoGuardsAction(then) =>
+            if (game.options.has(HorseTwoGuards).not) {
+                game.addOption(HorseTwoGuards)
+                if (game.paths.get(Horse).has(Leadership))
+                    game.brokGuard = true
+            }
 
             Then(then)
 

@@ -597,6 +597,14 @@ case object MilitaryRerollCreatures extends GameOption with ToggleOption {
     def valueOn = "Leadership's and Legions' rerolls against creatures".txt
 }
 
+// Military paths, Leadership 1: Horse Clan's two warchiefs each have a bodyguard, Eitria's (game.guards) and Brok's (game.brokGuard)
+// (Gman, 2026-11-06: "horse leadership should have 2 bodyguards (1 for each chief)"); Brok had none. Hidden, and given to every new
+// game (Meta.mandatoryFor); older games replay the old way. A running game can be switched over with HorseTwoGuardsAction(X)
+case object HorseTwoGuards extends GameOption with ToggleOption {
+    val group = "Military paths".txt
+    def valueOn = "Horse Clan's Brok has a bodyguard too".txt
+}
+
 // Brundr and Kaelinn count as units for Winter costs (Gman, 2026-11-01: "The lynx cats count towards winter costs"); the site had
 // left them out, reading the Uncharted Horizons rulebook's note on companions. Hidden, and given to every new game (Meta.mandatoryFor);
 // older games replay the old way (FactionState.winterUnits)
