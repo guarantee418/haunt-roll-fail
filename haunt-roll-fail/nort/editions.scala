@@ -24,7 +24,7 @@ import nort.elem._
 case class CardVersion(card : Card, option : GameOption, info : CardInfo) {
     def edition : String = option match {
         case o : EditionChoice => o.short
-        case PrintedNewBlood => "Printed card"
+        case PrintedNewBlood | PrintedSquirrelClan => "Printed card"
         case _ => "Fan version"
     }
 }
@@ -80,6 +80,9 @@ object CardVersions {
             "Build. After this Build action, you may also build one Food Silo for free, in any territory you control. It does not require a building space.")),
         CardVersion(ClanCard(Squirrel, 2), PrintedNewBlood, CardInfo("Economics", "card-clan-squirrel-economics-print", 0, false, EconomicsPrintEffect,
             "Draw 1 card. You may pay 1 food to draw a second card. You may pay 2 more food to draw a third and final card.")),
+        // (missed on 2026-10-23, so with its own option: Marzaus, 2026-11-06; the card Gman sent)
+        CardVersion(ClanCard(Squirrel, 0), PrintedSquirrelClan, CardInfo("Squirrel Clan", "card-clan-squirrel-print", 0, true, SquirrelPrintEffect,
+            "Recruit 1. After this Recruit action, collect 1 food if the unit was placed on a territory producing food.")),
     )
 
     // Robotos's fan-made Dragon (DragonVariant, 2026-10-24): in place of both the TTS and the printed Dragon cards, so it comes first
@@ -137,7 +140,7 @@ object CardVersions {
 
     // The options of the game being played, set by the Game (one game runs on a page; the JVM checks run one at a time);
     // before a game, as in the clan picker, the cards new games start with
-    var options : $[GameOption] = $(EditionChoice.default, PrintedNewBlood, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith)
+    var options : $[GameOption] = $(EditionChoice.default, PrintedNewBlood, PrintedSquirrelClan, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith)
 
     def apply(c : Card, printed : CardInfo) : CardInfo = all.find(v => v.card == c && options.has(v.option))./(_.info).|(printed)
 
@@ -154,7 +157,7 @@ object CardVersions {
             val current = all.find(v => v.card == c && options.has(v.option))
             // New Blood's cards before the print are the TTS mod's prototype ones, not a first edition
             // and a card only a fan version changes is the original
-            val base = l.exists(_.option == PrintedNewBlood).?("Earlier version").|(l.forall(fan).?("Original").|(FirstEdition.short))
+            val base = l.exists(v => v.option == PrintedNewBlood || v.option == PrintedSquirrelClan).?("Earlier version").|(l.forall(fan).?("Original").|(FirstEdition.short))
             // (a fan version another one in play replaces, like the Lion's Ost before its Faith, isn't shown)
             (current.any.$(base -> c.printed) ++ l.%(v => current.contains(v).not).%(v => fan(v).not)./(v => v.edition -> v.info))
         }

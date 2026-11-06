@@ -623,6 +623,14 @@ case object PrintedNewBlood extends GameOption with ToggleOption {
     def valueOn = "Printed clan cards and boards".txt
 }
 
+// The printed Squirrel Clan card (Marzaus, 2026-11-06), which PrintedNewBlood missed: Recruit 1, then 1 food if the unit went into a
+// territory producing food (CardVersions.printedNewBlood, SquirrelPrintEffect in newblood.scala). Hidden, and given to every new game
+// (Meta.mandatoryFor): older games keep the prototype card (1 food or a quarter of the units in fame), and replay that way
+case object PrintedSquirrelClan extends GameOption with ToggleOption {
+    val group = "New Blood".txt
+    def valueOn = "Printed Squirrel Clan card".txt
+}
+
 // The clan power report (ClanPowers in map.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
 // (Meta.mandatoryFor), like ChooseCasualties: older games' replays must not stop on a step they never recorded
 case object ClanPowerReports extends GameOption with ToggleOption {
