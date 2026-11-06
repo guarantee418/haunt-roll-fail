@@ -744,7 +744,14 @@ always plays its own cards.
   spaces and the clan upgrades left need, less the coming harvest, at their
   full value, the rest at what they score at the end (`surplus`, a third of a
   fame); spending lore (`spendCost`) costs the surplus first. An upgrade's 3
-  lore costs at most 40 each. A/B against the bot from before (JVM host,
+  lore costs at most 40 each. A territory's production is valued the same
+  way for the bot itself (`productionValue`): once its stock and the coming
+  harvest cover what it can use, the years that spare stock lasts get about
+  80% of the surplus value per resource instead of 45 to 55, so it stops
+  building Woodcutter's Lodges with 10 wood in stock (Gman, 2026-11-06). In 25
+  three-player core games the old bot built 17 of 105 Lodges holding 6 wood or
+  more (4 at 10 or more), the new one none of 79; A/B (new bot in seat 1 of 60
+  three-player core games against an all-old control) 19 wins each. A/B against the bot from before (JVM host,
   `NORT_TEAMS=0`, all modules at random): even in two-player games (51 of
   100) and in three and four players (see the PR); the new bot Removes three
   times as often, Replaces less, trades and builds more and passes with cards
