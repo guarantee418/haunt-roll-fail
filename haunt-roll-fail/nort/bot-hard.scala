@@ -325,7 +325,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         }
     }
 
-    // Thane: one Map Control card and one Wealth card; Jarl: all of them. Winning is worth as much as the three territories
+    // Thane: one Map Control card and one Wealth card; Jarl (and teams, TeamVictoryAllCards): all of them. Winning is worth as much as the three territories
     def victoryValue(f : Faction, extra : Map[String, Int] = Map()) : Double = {
         if (game.has(VictoryModule).not || game.victory.none)
             return 0
@@ -333,7 +333,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val all = game.victory./(c => victoryProgress(f, c, extra))
         def of(map : Boolean) = game.victory.zip(all).filter(_._1.mapControl == map).map(_._2)
 
-        if (options.has(VictoryModeOption(true))) {
+        if (VictoryExpansion.allCards) {
             if (all.forall(_ >= 1)) 6000.0
             else all./(p => 500 * p * p).sum + 1500 * all.product
         }

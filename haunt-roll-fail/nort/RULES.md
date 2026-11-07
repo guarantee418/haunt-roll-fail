@@ -575,7 +575,12 @@ setup would draw), and Thane (default) or Jarl.
 - At each end of year (before the usual checks), a player fulfilling the
   mode's conditions wins at once: Thane, the Map Control card and one Wealth
   card; Jarl, all of them. With teams, each card may be fulfilled by any
-  player of the team. Ties: the most cards fulfilled, then fame. Three closed
+  player of the team, and a team needs every card (1 Map Control and 3
+  Wealth) in both modes, as the rulebook's 2 vs. 2 note says ("A team wins if
+  each Victory Condition card is fulfilled by at least one player from the
+  same team"; Marzaus, 2026-11-07), in games with the hidden
+  `TeamVictoryAllCards` every new game gets; older team games kept Thane's
+  Map Control and one Wealth card. Ties: the most cards fulfilled, then fame. Three closed
   territories with large buildings no longer win; nobody fulfilling the
   conditions by the last year means the most fame wins.
 - Map Control: Many Territories (6 closed), Large Buildings (4 large

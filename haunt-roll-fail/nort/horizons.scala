@@ -558,9 +558,12 @@ object VictoryExpansion extends Expansion {
     // The cards a side (a team, or one player) fulfils
     def done(side : $[Faction])(implicit game : Game) : $[VictoryCard] = game.victory.%(c => side.exists(fulfilled(_, c)))
 
+    // Every card is needed: Jarl, or a team game with TeamVictoryAllCards (the rulebook's 2 vs. 2 note)
+    def allCards(implicit game : Game) : Boolean = options.has(VictoryModeOption(true)) || (game.teams && options.has(TeamVictoryAllCards))
+
     def wins(side : $[Faction])(implicit game : Game) : Boolean = {
         val d = done(side)
-        if (options.has(VictoryModeOption(true)))
+        if (allCards)
             d.num == game.victory.num
         else
             d.exists(_.mapControl) && d.exists(_.mapControl.not)
@@ -646,7 +649,7 @@ object VictoryExpansion extends Expansion {
             val jarl = options.has(VictoryModeOption(true))
             val side = sides.%(_.exists(winners.has)).head
             CommonExpansion.victory(winners, $(
-                "Won in year " ~ game.year.hl ~ " with the " ~ "Alternative victory".hl ~ " conditions (" ~ jarl.?("Jarl").|("Thane").hl ~ ": " ~ jarl.?("all three cards").|("Map Control and one Wealth card") ~ ").",
+                "Won in year " ~ game.year.hl ~ " with the " ~ "Alternative victory".hl ~ " conditions (" ~ jarl.?("Jarl").|("Thane").hl ~ ": " ~ allCards.?("all " + game.victory.num + " cards").|("Map Control and one Wealth card") ~ ").",
                 "Fulfilled: " ~ done(side)./(_.elem).join(", ") ~ "."
             ) ++ (most.num > 1).?("Several did, so the most conditions and then the most fame decided.".txt).$)
 
