@@ -495,7 +495,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // Border dashes of the closed territories a player controls, bright enough to show on the dark roads
     def lineOf(c : PlayerColor) : String = c match {
         case Blue => "#3d7bff"
-        case Red => "#c8140f"
+        case Red => "#ff0000"
         case Yellow => "#ffc400"
         case Purple => "#b54ae6"
         case Green => "#2fb52f"
