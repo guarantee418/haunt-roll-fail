@@ -30,17 +30,20 @@ def shapes(d, colour, detail):
     d.polygon(p((260, 316), (294, 316), (294, 412), (308, 424), (302, 436), (262, 424)), fill=colour)
     # Tunic: shoulders down to a flared hem over the thighs
     d.polygon(p((198, 172), (302, 172), (316, 206), (306, 268), (322, 336), (178, 336), (194, 268), (184, 206)), fill=colour)
-    # Both arms forward to the pitchfork's shaft: the near arm across the body, the far one raised
-    d.polygon(p((192, 182), (176, 192), (172, 250), (268, 270), (276, 252), (196, 232)), fill=colour)
-    d.polygon(p((300, 180), (318, 186), (346, 150), (334, 136)), fill=colour)
+    # Arms: the left one hanging at his side, the right one a thick upper arm out from the shoulder and a forearm bent up to
+    # the pitchfork's shaft, like the bodyguard's spear arm
+    d.polygon(p((198, 176), (180, 186), (166, 262), (172, 290), (192, 290), (194, 262), (204, 206)), fill=colour)
+    d.polygon(p((292, 172), (318, 180), (330, 230), (348, 196), (366, 208), (338, 262), (314, 262), (298, 222)), fill=colour)
     # Neck and bare head, with short hair and a beard
     d.rectangle(p((236, 150), (264, 178)), fill=colour)
     d.ellipse(p((214, 90), (286, 164)), fill=colour)
     d.ellipse(p((206, 118), (222, 142)), fill=colour)
     d.ellipse(p((278, 118), (294, 142)), fill=colour)
     d.chord(p((220, 128), (280, 192)), 0, 180, fill=colour)
-    # Unkempt hair: tufts sticking up over the crown
-    d.polygon(p((212, 112), (214, 84), (228, 98), (234, 72), (248, 92), (258, 70), (266, 94), (280, 78), (282, 100), (292, 96), (288, 116)), fill=colour)
+    # Short hair: a rounded mop over the crown with a fringe over the forehead
+    d.pieslice(p((208, 82), (292, 146)), 180, 360, fill=colour)
+    d.ellipse(p((206, 94), (230, 124)), fill=colour)
+    d.ellipse(p((270, 94), (294, 124)), fill=colour)
     # Pitchfork: shaft, crossbar and three tines
     d.rectangle(p((334, 70), (346, 436)), fill=colour)
     d.rectangle(p((302, 64), (378, 76)), fill=colour)
@@ -50,7 +53,7 @@ def shapes(d, colour, detail):
 def details(d, colour, detail):
     w = 5 * S
     # Hairline and eyes
-    d.line(p((216, 112), (232, 104), (250, 108), (268, 104), (284, 112)), fill=detail, width=w, joint='curve')
+    d.line(p((214, 114), (230, 108), (244, 112), (258, 107), (272, 112), (286, 114)), fill=detail, width=w, joint='curve')
     d.rectangle(p((230, 118), (240, 126)), fill=detail)
     d.rectangle(p((260, 118), (270, 126)), fill=detail)
     # The short beard's edge and the mouth
@@ -60,12 +63,11 @@ def details(d, colour, detail):
     d.line(p((190, 262), (310, 262)), fill=detail, width=6 * S)
     d.line(p((250, 262), (244, 290)), fill=detail, width=4 * S)
     d.line(p((182, 330), (318, 330)), fill=detail, width=4 * S)
-    # The near arm's edge across the tunic, and the hands on the shaft
-    d.line(p((198, 234), (270, 254)), fill=detail, width=4 * S)
-    d.ellipse(p((326, 246), (354, 274)), fill=detail)
-    d.ellipse(p((330, 250), (350, 270)), fill=colour)
-    d.ellipse(p((326, 132), (354, 160)), fill=detail)
-    d.ellipse(p((330, 136), (350, 156)), fill=colour)
+    # The arms' edges against the tunic, the left hand, and the right hand on the shaft
+    d.line(p((204, 206), (196, 262)), fill=detail, width=4 * S)
+    d.line(p((298, 186), (306, 222), (318, 250)), fill=detail, width=4 * S, joint='curve')
+    d.ellipse(p((326, 190), (356, 220)), fill=detail)
+    d.ellipse(p((330, 194), (352, 216)), fill=colour)
 
 def draw(colour, detail):
     sil = Image.new('L', (N, N))
