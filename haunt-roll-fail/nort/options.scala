@@ -178,7 +178,7 @@ case class VictoryModeOption(jarl : Boolean) extends GameOption with ImportantOp
     val group = "Victory conditions".txt
     override def fold = |("Victory conditions")
     def valueOn = jarl.?("Jarl: all three cards").|("Thane: Map Control and one Wealth card").txt
-    override val explain = $("Needs " ~ "Alternative victory".hl ~ ". Thane is the default.")
+    override val explain = $("Needs " ~ "Alternative victory".hl ~ ". Thane is the default. With teams, a team needs every card in both modes.")
     override def required(all : $[BaseOption]) = VictoryChoice.alternative./(o => $[BaseOption](o))
     override def forcedOff(all : $[BaseOption]) = $(VictoryModeOption(jarl.not))
 }
@@ -789,7 +789,7 @@ case object VictoryModule extends Module("Alternative victory", "Uncharted Horiz
     override def expansion = |(VictoryExpansion)
     override def priority = -3
     def about = $(
-        "One Map Control card and two Wealth cards (three with teams) are drawn at setup. At the end of each year, a player who fulfils the chosen mode's conditions wins at once: " ~ "Thane".hl ~ " needs the Map Control card and one Wealth card, " ~ "Jarl".hl ~ " all three.",
+        "One Map Control card and two Wealth cards (three with teams) are drawn at setup. At the end of each year, a player who fulfils the chosen mode's conditions wins at once: " ~ "Thane".hl ~ " needs the Map Control card and one Wealth card, " ~ "Jarl".hl ~ " all three. With teams, a team needs every card in both modes.",
         "The three closed territories with large buildings no longer win. If nobody fulfils the conditions by the end of the last year, the most fame wins.",
     )
 }
@@ -906,6 +906,15 @@ case object FameRetreatKills extends GameOption with ToggleOption {
 case object FameAltarClosed extends GameOption with ToggleOption {
     val group = "Alternative fame gains".txt
     def valueOn = "The Altar of Kings must be in a closed territory".txt
+}
+
+// Alternative victory with teams: a team wins only when its players fulfil every card in play, Thane or Jarl, as the Uncharted
+// Horizons rulebook says for 2 vs. 2 ("A team wins if each Victory Condition card is fulfilled by at least one player from the
+// same team"; Marzaus, 2026-11-07). Hidden, and given to every new game (Meta.mandatoryFor); older games keep Thane's Map Control
+// and one Wealth card for a team. A running game can be switched over with TeamVictoryAllCardsAction(X)
+case object TeamVictoryAllCards extends GameOption with ToggleOption {
+    val group = "Victory conditions".txt
+    def valueOn = "With teams, a team needs every card".txt
 }
 
 // Marzaus's "Alternative fame gains" (fame-gains.scala; Discord, northgard-fanmade-content, 2026-10-22; asked for by Gman on
