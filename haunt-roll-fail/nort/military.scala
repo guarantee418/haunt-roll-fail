@@ -701,6 +701,9 @@ object MilitaryExpansion extends Expansion {
                 f.log("had nowhere to retreat", n.hl, "Militia".hl, "and lost them")
                 game.note("militia-lost")
 
+                // Alternative fame gains: killed by the fight's winner
+                FameGainsExpansion.noRetreat(f, n, false)
+
                 Then(RetreatAction(f, a, rough, then))
             }
             else
