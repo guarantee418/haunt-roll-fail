@@ -1484,7 +1484,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val jarl = options.has(VictoryModeOption(true))
         val clans = game.factions.but(Automa).%(game.states.contains)
         val how : Elem =
-            if (jarl) ("Jarl".hl ~ ": a " ~ game.teams.?("team").|("clan") ~ " that fulfils all " ~ game.victory.num.hl ~ " cards at the end of a year wins.")
+            if (VictoryExpansion.allCards) ((jarl.?("Jarl").|("Thane")).hl ~ ": a " ~ game.teams.?("team").|("clan") ~ " that fulfils all " ~ game.victory.num.hl ~ " cards at the end of a year wins" ~ game.teams.?(" (teammates may fulfil different cards)").|("") ~ ".")
             else ("Thane".hl ~ ": a " ~ game.teams.?("team").|("clan") ~ " that fulfils the " ~ "Map Control".hl ~ " card and one " ~ "Wealth".hl ~ " card at the end of a year wins" ~ game.teams.?(" (teammates may fulfil different cards)").|("") ~ ".")
 
         val rows = game.victory./{ c =>

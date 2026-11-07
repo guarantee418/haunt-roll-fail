@@ -254,7 +254,7 @@ expansions; Creatures, Warchiefs, Wilderness, Wastelands and Events are implemen
 "Victory conditions" picks one of: the standard rules, fame only, Alternative
 victory with random cards (the rulebook's way), or Alternative victory with
 cards chosen from the 21 listed below it (exactly 1 Map Control and 2 Wealth,
-3 with teams, or Start is refused); plus Thane or Jarl. Thane/Jarl and the
+3 with teams, or Start is refused); plus Thane or Jarl (with teams, a team needs every card in both, the rulebook's 2 vs. 2 note, in games with the hidden `TeamVictoryAllCards` every new game gets, `TeamVictoryAllCardsAction(X)` switches a running game; Marzaus, 2026-11-07). Thane/Jarl and the
 cards are listed only when they apply (`optionShown` in `nort/meta.scala`, a
 hook the setup screen in `hrf.scala` calls for every option). Long sections fold under a tappable
 heading with an arrow (`Folds` in `ui.scala`, `BaseOption.fold`): on the setup screen Game length, Victory conditions,
