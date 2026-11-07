@@ -1026,13 +1026,21 @@ object MapExpansion extends Expansion {
     // Warchiefs PC version: no warchief at setup
     def chiefAtSetup(f : Faction)(implicit game : Game) = game.chiefReady(f) && game.pcChief(f).not
 
-    // How many of a Recruit's units the warchief takes: 2 with Warchiefs PC version
-    def chiefPrice(f : Faction)(implicit game : Game) = game.pcChief(f).?(2).|(1)
+    // Warchiefs PC version with PCChiefCampPays: the warchief costs 1 of the Recruit's units and its territory's Training Camp's extra one
+    def campPays(f : Faction)(implicit game : Game) = game.pcChief(f) && game.options.has(PCChiefCampPays)
+
+    // How many of a Recruit's units the warchief takes: 2 with Warchiefs PC version (1 and the camp's extra unit with PCChiefCampPays)
+    def chiefPrice(f : Faction)(implicit game : Game) = (game.pcChief(f) && campPays(f).not).?(2).|(1)
 
     // Whether f's warchief can be recruited in t with left units of the Recruit to go: with Warchiefs PC version, 2 of them,
-    // into a territory f controls with a working Training Camp
+    // into a territory f controls with a working Training Camp (with PCChiefCampPays, 1 of them and that camp's extra unit)
     def recruitChief(f : Faction, t : Territory, left : Int)(implicit game : Game) =
-        game.chiefReady(f) && (game.pcChief(f).not || left >= 2 && game.controlled(f).has(t) && game.working(t).has(TrainingCamp))
+        game.chiefReady(f) && (game.pcChief(f).not ||
+            campPays(f).not && left >= 2 && game.controlled(f).has(t) && game.working(t).has(TrainingCamp) ||
+            campPays(f) && left >= 1 && game.controlled(f).has(t) && campsIn(f, t) > 0)
+
+    // The units the Training Camps in t add to f's Recruit there, less the one that paid for the warchief (PCChiefCampPays)
+    def campBonus(f : Faction, t : Territory)(implicit game : Game) = campsIn(f, t) - game.chiefCamp.exists(t.areas.contains).??(1)
 
     // Closed territories of 3 or more tiles, for Protector of the Land
     def bigClosed(f : Faction)(implicit game : Game) = game.controlled(f).%(game.board.closed).%(t => game.board.tiles(t) >= 3)
@@ -1405,10 +1413,14 @@ object MapExpansion extends Expansion {
 
         case RecruitChiefAction(f, a, left, mode, placed, then) =>
             recruitChief(f, a)
+            if (campPays(f))
+                game.chiefCamp = |(a)
             Then(RecruitAction(f, left - chiefPrice(f), mode, placed :+ a, then))
 
         case RecruitChiefHereAction(f, a, left, mode, placed, then) =>
             recruitChief(f, a)
+            if (campPays(f))
+                game.chiefCamp = |(a)
             Then(RecruitAction(f, left - chiefPrice(f), mode, placed :+ a, then))
 
         case RecruitDoneAction(f, placed, then) =>
@@ -1429,20 +1441,24 @@ object MapExpansion extends Expansion {
                 Then(CampRecruitAction(f, placed./(game.board.territory).distinct./(_.anchor), then))
             else {
                 placed./(game.board.territory).distinct.foreach { t =>
-                    val n = math.min(campsIn(f, t), game.reserve(f))
+                    val n = math.min(campBonus(f, t), game.reserve(f))
                     if (n > 0) {
                         game.addUnits(t.anchor, f, n)
                         f.log("recruited", n.hl, "more with", TrainingCamp, "in", t.anchor)
                     }
                 }
 
+                game.chiefCamp = None
+
                 Then(then)
             }
 
         case CampRecruitAction(f, rest, then) =>
             rest match {
-                case Nil => Then(then)
-                case a :: rest => Then(CampRecruitInAction(f, a, campsIn(f, game.board.territory(a)), rest, then))
+                case Nil =>
+                    game.chiefCamp = None
+                    Then(then)
+                case a :: rest => Then(CampRecruitInAction(f, a, campBonus(f, game.board.territory(a)), rest, then))
             }
 
         case CampRecruitInAction(f, a, left, rest, then) =>
