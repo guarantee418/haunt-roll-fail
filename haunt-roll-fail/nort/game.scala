@@ -492,6 +492,8 @@ case class PCChiefCampPaysAction(then : ForcedAction) extends ForcedAction with 
 
 // Switches a running game to HorseTwoGuards (an hrf-games fix): Brok gets his bodyguard if Horse is on the Leadership path
 case class HorseTwoGuardsAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to TeamVictoryAllCards (an hrf-games fix): a team needs every Alternative victory card
+case class TeamVictoryAllCardsAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to MilitaryRerollCreatures (an hrf-games fix)
 case class MilitaryRerollCreaturesAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // The same for OxPicksSpace (Ox's Ancestral Equipment token on a small building space or a Carved Stone space, picked by Ox);
@@ -2267,6 +2269,12 @@ object CommonExpansion extends Expansion {
                 if (game.paths.get(Horse).has(Leadership))
                     game.brokGuard = true
             }
+
+            Then(then)
+
+        case TeamVictoryAllCardsAction(then) =>
+            if (game.options.has(TeamVictoryAllCards).not)
+                game.addOption(TeamVictoryAllCards)
 
             Then(then)
 
