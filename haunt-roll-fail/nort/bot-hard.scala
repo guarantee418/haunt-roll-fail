@@ -181,8 +181,15 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
     // What the coming harvest adds, if it is still ahead
     lazy val income : HarvestForecast = if (harvestAhead) (try { Harvest.forecast(self) } catch { case e : Throwable => HarvestForecast(0, 0, 0, 0) }) else HarvestForecast(0, 0, 0, 0)
 
-    // How much of each resource the clan has a use for, before the harvest's income
-    lazy val needs : Map[Resource, Int] = {
+    def incomeOf(r : Resource) : Int = r match {
+        case Food => income.food
+        case Wood => income.wood
+        case Lore => income.lore
+        case Faith => income.faith
+    }
+
+    // How much of each resource the clan has a use for, the harvest's income left out
+    lazy val uses : Map[Resource, Int] = {
         val (winterFood, winterWood) = winterNeed(self)
         // Building: 1 wood for a small building, 3 for a large one, on the free spaces of its territories
         val spaces = game.controlled(self)./~(t => t.areas./~(a => board.spec(a).spaces.indices./(i => SpaceRef(a, i)))).%(s => game.buildings.contains(s).not && game.gear.contains(s).not)
@@ -190,9 +197,32 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         // Clan upgrades, while there is time to play them
         val upgrades = (LionExpansion.faith(self).not && game.year <= game.lastYear).??(self.upgrades.num * game.upgradeCost(self))
         Map(
-            Food -> math.max(0, winterFood + 2 - income.food),
-            Wood -> math.max(0, winterWood + build - income.wood),
-            Lore -> math.max(0, upgrades + 1 - income.lore))
+            Food -> (winterFood + 2),
+            Wood -> (winterWood + build),
+            Lore -> (upgrades + 1))
+    }
+
+    // How much of each resource the clan has a use for, before the harvest's income
+    lazy val needs : Map[Resource, Int] = uses.map { case (r, n) => r -> math.max(0, n - incomeOf(r)) }
+
+    // PRODUCTION: what one more of r at each harvest left is worth to the bot. A clan holding far more than it can use
+    // (its stock and the coming harvest against Winter, its free building spaces and its upgrades) gets the extra
+    // production only as surplus, worth a little less than the surplus it already holds, as a third of it rounds away
+    // at the end: the bot built Woodcutter's Lodges while holding 10 wood and more (Gman, 2026-11-06), as a territory's
+    // wood was worth 55 a harvest however much it had. The years its spare stock covers (at about what a year uses)
+    // get the low value, the harvests after them the full one.
+    def productionValue(r : Resource, full : Double) : Double = {
+        val spare = self.has(r) + incomeOf(r) - uses.getOrElse(r, 0)
+        if (spare <= 0 || horizon <= 0)
+            return full
+        val perYear = r match {
+            case Food => math.max(2, winterNeed(self)._1 + 1)
+            case Wood => math.max(2, winterNeed(self)._2 + 2)
+            case _ => 1
+        }
+        val covered = math.min(horizon, spare.toDouble / perYear) / horizon
+        val low = math.min(full, surplus) * 0.8
+        full * (1 - covered) + low * covered
     }
 
     def stockValue(r : Resource, n : Int) : Double = {
@@ -212,7 +242,10 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val closed = board.closed(t)
 
         var v = 20.0
-        v += horizon * (food * 45 + wood * 55 + lore * 50)
+        if (f == self)
+            v += horizon * (food * productionValue(Food, 45) + wood * productionValue(Wood, 55) + lore * productionValue(Lore, 50))
+        else
+            v += horizon * (food * 45 + wood * 55 + lore * 50)
 
         if (closed)
             v += horizon * 100 * (board.tiles(t) >= 3).?(2).|(1)
