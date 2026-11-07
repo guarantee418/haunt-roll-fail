@@ -605,6 +605,15 @@ case object HorseTwoGuards extends GameOption with ToggleOption {
     def valueOn = "Horse Clan's Brok has a bodyguard too".txt
 }
 
+// Warchiefs PC version: the warchief is recruited for 1 of a Recruit's units plus the extra unit of its territory's Training Camp, so the
+// starting Recruit 1 can bring it (Marzaus, 2026-11-06: "i cant recruit the chief, the robobot doesnt have one either"; it took 2 of the
+// Recruit's own units, so only the Recruit 2 cards could). Hidden, and given to every new game (Meta.mandatoryFor); older games replay
+// the old way. A running game can be switched over with PCChiefCampPaysAction(X)
+case object PCChiefCampPays extends GameOption with ToggleOption {
+    val group = "Warchiefs PC version".txt
+    def valueOn = "The warchief costs 1 unit and the Training Camp's extra one".txt
+}
+
 // Brundr and Kaelinn count as units for Winter costs (Gman, 2026-11-01: "The lynx cats count towards winter costs"); the site had
 // left them out, reading the Uncharted Horizons rulebook's note on companions. Hidden, and given to every new game (Meta.mandatoryFor);
 // older games replay the old way (FactionState.winterUnits)
@@ -869,7 +878,7 @@ case object WarchiefsPC extends Module("Warchiefs PC version", "fan-made variant
     override def requires = $($(ModuleOption(Warchiefs)), $(WarchiefPawns))
     def about = $(
         "The warchiefs (not Kaija, Brok, Brundr and Kaelinn) play more like the video game's:",
-        "Recruiting a warchief takes " ~ 2.hl ~ " of a Recruit's units, into a territory with your " ~ TrainingCamp.elem ~ ". No warchief is placed at setup.",
+        "Recruiting a warchief costs " ~ 2.hl ~ " units, into a territory you control with a " ~ TrainingCamp.elem ~ ": " ~ 1.hl ~ " of the Recruit's and the extra unit the " ~ TrainingCamp.elem ~ " would give there. No warchief is placed at setup.",
         CombatText("It takes 2 casualties to kill a warchief; a single one left over does nothing to it. Effects that remove a unit outside a fight never take it."),
         "Warchiefs don't count for Winter costs.",
         "Needs the warchiefs (" ~ "Warchiefs module".hl ~ ").",
