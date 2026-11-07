@@ -63,18 +63,17 @@ trait PlayerColor extends NamedToString with Styling with Elementary with Record
     // The colour of their territories on the map, and of the player's name unless ink differs
     def hex = this match {
         case Blue => "#4e78bc"
-        case Red => "#e8410d"
+        case Red => "#ff0000"
         case Yellow => "#f79c01"
         case Purple => "#a56ca5"
         case Green => "#4f9e3a"
         case Orange => "#ff7a1a"
     }
     // The colour of the player's name and warchief's name in the panels and the log: the units' colour where the
-    // territory tint differs (yellow's tint is darker than its bright yellow units, asked for by the owner on 2026-10-18),
-    // and a neon red for red names in the same style (asked for by the owner on 2026-11-04)
+    // territory tint differs (yellow's tint is darker than its bright yellow units, asked for by the owner on 2026-10-18;
+    // red's names and tint are both the neon #ff0000, the owner, 2026-11-04 and 07)
     def ink = this match {
         case Yellow => "#fbfb05"
-        case Red => "#ff0000"
         case c => c.hex
     }
     // The banner on the starting cards: orange has no cards of its own and uses yellow's
