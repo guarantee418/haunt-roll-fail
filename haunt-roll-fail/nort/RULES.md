@@ -1664,6 +1664,11 @@ Readings (Gman may change them):
 - Building: every building a clan places, through a Build card or for free (Quality of Life, Cooking Mastery,
   Raid cards, Sacred Stones, free Military paths buildings); Mines count as small buildings. Replacing a
   building (Industrious Villagers, Craftsmen) gives nothing.
+- The Altar of Kings must be in a closed territory (Marzaus, 2026-11-06: "the altar must be in closed territory"), in games
+  with the hidden `FameAltarClosed` every new game gets; older games win with an Altar anywhere.
+- Units, Militia and a warchief that the loser of a fight against a clan loses for having nowhere to retreat count as killed
+  by the winner: 1 fame each, 5 for the warchief (Marzaus, 2026-11-06: "losing units = killing"), in games with the hidden
+  `FameRetreatKills` every new game gets (`noRetreat`, `game.retreatWinner`); older games gave nothing for them.
 - Kills and wins count only in fights against a clan, not against creatures nor removals by cards outside a
   fight. Kaija and the other companions aren't units; Militia and bodyguards (Military paths) are. Kills before
   the fight (Defense Towers with the Tower PC version, Guardian, Leadership) count, and a win without a roll

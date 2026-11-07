@@ -723,6 +723,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var fightStarted = false
     var towersUsed = 0
     var fightKills : Map[Faction, Int] = Map()
+    // Alternative fame gains (FameRetreatKills): the winner of the fight against a clan whose loser is retreating
+    var retreatWinner : |[Faction] = None
     var rerolled : $[Faction] = $
 
     // Alternative fame gains (fame-gains.scala): whether the Achievements were dealt, each clan's kept Achievement until resolved, the ones resolved

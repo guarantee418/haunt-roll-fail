@@ -100,6 +100,16 @@ object FameGainsExpansion extends Expansion {
             }
     }
 
+    // The loser of a fight against a clan with nowhere to retreat: its lost units (Militia too) and warchief count as killed by the
+    // winner (FameRetreatKills; Marzaus, 2026-11-06: "losing units = killing")
+    def noRetreat(l : Faction, units : Int, chief : Boolean)(implicit game : Game) {
+        if (on && game.options.has(FameRetreatKills))
+            game.retreatWinner.%(_ != l).foreach { w =>
+                killed(w, l, units, chief)
+                game.note("fame-no-retreat")
+            }
+    }
+
     // ACHIEVEMENTS: the kept card's fame now, as at the end of the game
     def resolveText(f : Faction, c : Card)(implicit game : Game) : Elem = {
         val n = CommonExpansion.cardFame(f, c)
@@ -109,9 +119,9 @@ object FameGainsExpansion extends Expansion {
     def resolve(f : Faction, then : ForcedAction)(implicit game : Game) : $[UserAction] =
         (on && f != Automa).??(game.fameKept.get(f).$./(c => FameResolveAction(f, c, then).!(CommonExpansion.cardFame(f, c) <= 0, "would give no fame now")))
 
-    // Clans with 120 fame or more that control an Altar of Kings
+    // Clans with 120 fame or more that control an Altar of Kings, in a closed territory (FameAltarClosed; Marzaus, 2026-11-06)
     def winners(implicit game : Game) : $[Faction] =
-        game.factions.%(f => game.states.contains(f) && f.fame >= goal && game.controlled(f).exists(t => game.buildingsIn(t).exists(_._2 == AltarOfKings)))
+        game.factions.%(f => game.states.contains(f) && f.fame >= goal && game.controlled(f).exists(t => game.buildingsIn(t).exists(_._2 == AltarOfKings) && (game.options.has(FameAltarClosed).not || game.board.closed(t))))
 
     def perform(action : Action, soft : Void)(implicit game : Game) : Continue = action @@ {
         // SETUP: once the map is set up, before the first year, the Achievements in turn order; none are left for the last year
@@ -171,7 +181,12 @@ object FameGainsExpansion extends Expansion {
         case FameWinAction(rulers) =>
             log(DoubleLine)
 
-            rulers.foreach(f => f.log("reached", Amount(goal.hl, FameIcon()), "and controls an", AltarOfKings))
+            rulers.foreach { f =>
+                if (game.options.has(FameAltarClosed))
+                    f.log("reached", Amount(goal.hl, FameIcon()), "and controls an", AltarOfKings, "in a closed territory")
+                else
+                    f.log("reached", Amount(goal.hl, FameIcon()), "and controls an", AltarOfKings)
+            }
 
             // Team play: their teams win; ties: fame, then territories controlled, units and buildings (added up for teams)
             val contenders = game.teams.?(CommonExpansion.sides(game.factions).%(_.exists(rulers.has))).|(CommonExpansion.sides(rulers))

@@ -75,7 +75,7 @@ object Meta extends MetaGame { mmm =>
     // Team play comes from the choice above the clan picker (pickerModes), the old fixed team variants are no longer offered
     // The Tutorial's practice game has its tips on
     // Chosen casualties are on in every new game (mandatoryFor), not in older ones
-    override val hiddenOptions = $(ModuleOption(VictoryModule), ModuleOption(Wilderness), ModuleOption(Wastelands), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, PrintedSquirrelClan, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, ChiefMoveFromHeld, ChiefMoveAfterMove, MilitaryRerollCreatures, HorseTwoGuards, LionStartingDeck, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith, NormalDevelopments, ModuleOption(DragonVariant), ModuleOption(BearBorder)) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
+    override val hiddenOptions = $(ModuleOption(VictoryModule), ModuleOption(Wilderness), ModuleOption(Wastelands), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, PrintedSquirrelClan, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, ChiefMoveFromHeld, ChiefMoveAfterMove, MilitaryRerollCreatures, HorseTwoGuards, FameRetreatKills, FameAltarClosed, LionStartingDeck, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith, NormalDevelopments, ModuleOption(DragonVariant), ModuleOption(BearBorder)) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // Options no longer offered on the setup screen that games still have, and log at the start (Robotos's Dragon is picked as its
     // own clan in the picker since 2026-10-26, factionVariants)
@@ -152,7 +152,7 @@ object Meta extends MetaGame { mmm =>
     }
 
     // Chosen casualties, taking the Unrest card and the clan power report: every new game gets them; a loaded game keeps the options it was started with
-    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, PrintedSquirrelClan, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, ChiefMoveFromHeld, ChiefMoveAfterMove, MilitaryRerollCreatures, HorseTwoGuards, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith)
+    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, PrintedSquirrelClan, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, ChiefMoveFromHeld, ChiefMoveAfterMove, MilitaryRerollCreatures, HorseTwoGuards, FameRetreatKills, FameAltarClosed, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith)
 
     // Quick games take only the selected options, not the mandatory ones
     override def randomQuickGame() = super.randomQuickGame() match { case (f, l, d, o) => (f, l, d, (o :+ ChooseCasualties :+ TakeUnrestCard :+ ClanPowerReports :+ ReportsDontWait :+ MendFigures :+ OxPicksSpace :+ JoinedTilesOnly :+ NastrondWood :+ DragonExtraFromTerritory).distinct) }
@@ -558,12 +558,15 @@ object Meta extends MetaGame { mmm =>
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, MineralsModule), "ui", "ui-", "webp")(
         Mineral.all./(m => ImageAsset(m.name.toLowerCase))
     ) ::
-    // Military paths module (fan content): the Militia's shield and the Leadership path's bodyguard figure
+    // Military paths module (fan content): the MXP icon, the Leadership path's bodyguard figure and the Guardian path's Militia
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, MilitaryModule), "ui", "ui-", "webp")(
-        $(ImageAsset("militia"), ImageAsset("mxp"))
+        $(ImageAsset("mxp"))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, MilitaryModule), "token/unit", "bodyguard-", "webp")(
         PlayerColor.all./(c => ImageAsset(c.id, "bodyguard-" + c.id))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, MilitaryModule), "token/unit", "militia-", "webp")(
+        PlayerColor.all./(c => ImageAsset(c.id, "militia-" + c.id))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "ui", "ui-", "webp")(
         (1.to(99).map(n => ImageAsset("label-" + n)) ++ 1.to(15).map(n => ImageAsset("count-" + n)) ++ 1.to(40).map(n => ImageAsset("spot-" + n))).toList :+ ImageAsset("target") :+ ImageAsset("lore") :+ ImageAsset("food") :+ ImageAsset("wood") :+ ImageAsset("fame") :+ ImageAsset("confirm") :+ ImageAsset("cancel") :+ ImageAsset("rotate-left") :+ ImageAsset("rotate-right") :+ ImageAsset("unit") :+ ImageAsset("unit-supply") :+ ImageAsset("card-draw") :+ ImageAsset("card-hand") :+ ImageAsset("card-played") :+ ImageAsset("card-discard") :+ ImageAsset("first-player") :+ ImageAsset("axe") :+ ImageAsset("skull") :+ ImageAsset("harvest") :+ ImageAsset("winter") :+ ImageAsset("ship")
