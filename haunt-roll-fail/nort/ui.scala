@@ -1080,7 +1080,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 }
 
                 // Military paths: the bodyguard beside the warchief, its own figure (a huscarl with a kite shield and a spear,
-                // drawn by nort/tools/bodyguard-figure.py); the Militia, warriors with a shield and their count
+                // drawn by nort/tools/bodyguard-figure.py); the Militia, a peasant with a pitchfork and no armor the bodyguard's size, and their
+                // count (nort/tools/militia-figure.py; Gman, 2026-11-06: they were the clan's warriors with a shield badge)
                 if (MilitaryExpansion.guardIn(t, f)) {
                     val gz = 230.0 * scale
                     val (gx, gy) = beside(0.1 * scale)
@@ -1098,10 +1099,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
                 val militia = MilitaryExpansion.militiaIn(t, f)
                 if (militia > 0) {
-                    val qz = 270.0 * scale
+                    val qz = 230.0 * scale
                     val (qx, qy) = beside(0.12 * scale)
-                    pieces.add(Sprite($(at(Warchief.warrior(f, t.toString + "/militia", militia), qz)), $(Rectangle(-qz / 2, -qz / 2, qz, qz)), tag :+ MilitaryView(f)))(qx, qy)
-                    pieces.add(Sprite($(at("ui-militia", 90 * scale)), $))(qx - 55 * scale, qy - 55 * scale)
+                    pieces.add(Sprite($(at("militia-" + game.colors(f).id, qz)), $(Rectangle(-qz / 2, -qz / 2, qz, qz)), tag :+ MilitaryView(f)))(qx, qy)
                     if (militia <= 15)
                         pieces.add(Sprite($(at("ui-count-" + militia, 90 * scale)), $))(qx + 56 * scale, qy + 56 * scale)
                     taken :+= ((mx(qx), my(qy), 0.12 * scale))
