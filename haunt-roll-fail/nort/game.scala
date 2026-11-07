@@ -486,6 +486,9 @@ case class MielikkiAgainstCreaturesAction(then : ForcedAction) extends ForcedAct
 case class ChiefMoveFromHeldAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to ChiefMoveAfterMove (an hrf-games fix)
 case class ChiefMoveAfterMoveAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to PCChiefCampPays (an hrf-games fix)
+case class PCChiefCampPaysAction(then : ForcedAction) extends ForcedAction with SkipValidate
+
 // Switches a running game to HorseTwoGuards (an hrf-games fix): Brok gets his bodyguard if Horse is on the Leadership path
 case class HorseTwoGuardsAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to TeamVictoryAllCards (an hrf-games fix): a team needs every Alternative victory card
@@ -1065,6 +1068,9 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
     // Warchiefs module: where each clan's warchief is (none while in the reserve)
     var chiefs : Map[Faction, AreaRef] = Map()
+
+    // Warchiefs PC version (PCChiefCampPays): where the warchief was recruited this Recruit, its Training Camp's extra unit paying for it
+    var chiefCamp : |[AreaRef] = None
 
     // Legal tile placements by game state (Rules.placements)
     val placementCache = scala.collection.mutable.Map[Any, $[(Spot, Int)]]()
@@ -2247,6 +2253,12 @@ object CommonExpansion extends Expansion {
         case ChiefMoveAfterMoveAction(then) =>
             if (game.options.has(ChiefMoveAfterMove).not)
                 game.addOption(ChiefMoveAfterMove)
+
+            Then(then)
+
+        case PCChiefCampPaysAction(then) =>
+            if (game.options.has(PCChiefCampPays).not)
+                game.addOption(PCChiefCampPays)
 
             Then(then)
 

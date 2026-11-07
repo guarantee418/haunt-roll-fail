@@ -935,8 +935,13 @@ in `game.scala`, `chiefAtSetup`, `chiefPrice` and `recruitChief` in `map.scala`)
 
 - Only the clan's warchief. Kaija, Brundr and Kaelinn, Horse's Brok and the Automa's Leaders
   keep the usual rules.
-- Recruiting it takes 2 of a Recruit's units, into a territory the clan controls with a
-  working Training Camp; the camp's extra unit comes as usual.
+- Recruiting it costs 2 units, into a territory the clan controls with a Training Camp (also
+  the Legions path's free camps): 1 of the Recruit's units and the extra unit that territory's
+  camp would give, so the starting Recruit 1 can bring it (hidden `PCChiefCampPays`, every new
+  game since 2026-11-07, after Marzaus said he couldn't recruit the chief and the bot never had
+  one; `campPays`, `campBonus` and `game.chiefCamp`; `PCChiefCampPaysAction(X)` switches a running
+  game). Older games take 2 of the Recruit's own units, so only a Recruit 2 card brings it, and
+  the camp's extra unit comes as usual.
 - No warchief at setup: three units in each placement.
 - In a fight (against a clan or a creature) it takes 2 casualties to kill it: a side's
   casualties are capped at its figures plus one for the warchief. A player picking casualties
