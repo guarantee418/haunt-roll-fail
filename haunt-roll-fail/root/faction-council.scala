@@ -172,6 +172,9 @@ case class CouncilEntreatAction(self : Faction, t : Council, c : Clearing, then 
 // A one-time fix for games started before GovernorsStopCrafting, added to a live game's log by hand: from here Lilypad's enclaves
 // and the Corvids' plots can't craft at an enemy Council's Governing assemblies (game.governorsStopCrafting), then goes on with then
 case class GovernorsStopCraftingAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// A one-time fix for games started before RiverfolkCraftUngoverned, added to a live game's log by hand: from here the Riverfolk crafts
+// with its trade posts at an enemy Council's Governing assemblies too (game.riverfolkCraftUngoverned), then goes on with then
+case class RiverfolkCraftUngovernedAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class CouncilEntreatGainAction(self : Council, then : ForcedAction) extends ForcedAction
 
 case class CouncilRemoveLoyalistAction(self : Council, then : ForcedAction) extends ForcedAction
@@ -225,6 +228,11 @@ object CouncilExpansion extends FactionExpansion[Council] {
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         case GovernorsStopCraftingAction(then) =>
             game.governorsStopCrafting = true
+
+            then
+
+        case RiverfolkCraftUngovernedAction(then) =>
+            game.riverfolkCraftUngoverned = true
 
             then
 

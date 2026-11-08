@@ -278,7 +278,11 @@ class TraderPlayer(val faction : Trader)(implicit val game : Game) extends Facti
             case s : Purchase => $(Offer(faction, s, prices(s), false))
         })
 
-    def craft = FoxRabbitMouse./~(s => (gone.count(TradePost(s)) + Council.governedFor(faction, all(TradePost(s))).num).times(s))
+    // the crafting icons uncovered on the board by placed trade posts, on the map or since removed (Law of Root 8.2); older games
+    // left out those at an enemy Council's Governing assemblies (RiverfolkCraftUngoverned)
+    def craft = FoxRabbitMouse./~(s => (gone.count(TradePost(s)) + ungoverned.?(all(TradePost(s))).|(Council.governedFor(faction, all(TradePost(s)))).num).times(s))
+
+    def ungoverned = game.options.has(RiverfolkCraftUngoverned) || game.riverfolkCraftUngoverned
 
     def procure(l : $[Fund]) : $[Figure] = {
         val m = l.distinct./~(o => funds.$.%(_.faction == o).take(l.count(o)))
