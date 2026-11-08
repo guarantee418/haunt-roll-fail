@@ -935,6 +935,15 @@ case object TeamVictoryAllCards extends GameOption with ToggleOption {
     def valueOn = "With teams, a team needs every card".txt
 }
 
+// Sea module: Port to Port costs 2 moves and the figures may go on with the moves left, stopping on the shore only for a fight, like any
+// Move (the newer Uncharted Horizons rulebook: "use a Move 2 (similar to crossing rough borders)", "use one Move to get on Port and two
+// to get to a different Port"; addidinu on Discord, relayed by Gman on 2026-11-08). It used up all the moves left. Hidden, and given to
+// every new game (Meta.mandatoryFor); older games replay the old way. A running game can be switched over with SailOnFromPortAction(X)
+case object SailOnFromPort extends GameOption with ToggleOption {
+    val group = "Uncharted Horizons".txt
+    def valueOn = "Port to Port costs 2 moves".txt
+}
+
 // Marzaus's "Alternative fame gains" (fame-gains.scala; Discord, northgard-fanmade-content, 2026-10-22; asked for by Gman on
 // 2026-11-01): fame as things are done, and 120 fame with an Altar of Kings wins at once. It replaces the other victory conditions,
 // so it needs the Standard or Fame only victory

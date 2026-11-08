@@ -558,7 +558,7 @@ on. To implement one:
 - Hooks: `FactionState.units` and `Game.reserve` count the raiders,
   `Game.strength` adds the Port's +1 (`SeaExpansion.defense`, listed by
   `FightPoints` and the combat log), `MapExpansion.destinations` adds
-  `sailing` (Port to Port, cost = moves left; `MoveCostLabel` says "by
+  `sailing` (Port to Port, cost 2 with `SailOnFromPort`, else the moves left; `MoveCostLabel` says "by
   sea"), `explorable` takes open neutral territories while `raidExplore`,
   and `BoldMove` gives 2 fame per won combat in `CombatResolveAction` and
   `CreatureResolveAction`.
@@ -1066,7 +1066,9 @@ list. In short:
   sometimes answers 429 (rate limited); retry after a minute, or put Google's
   mirror first in `~/.sbt/repositories` (`[repositories]`, `local`,
   `gcs: https://maven-central.storage-download.googleapis.com/maven2/`, `maven-central`,
-  and the `sbt-plugin-releases` ivy line) and run sbt with `-Dsbt.override.build.repos=true`.
+  and the `sbt-plugin-releases` ivy line) and run sbt with `-Dsbt.override.build.repos=true`. If the launcher itself still gets 429 (it ignores that file), point coursier at the mirror:
+  `~/.config/coursier/mirror.properties` with `central.from=https://repo1.maven.org/maven2` and
+  `central.to=https://maven-central.storage-download.googleapis.com/maven2` (2026-11-08).
 - **Client:** `cd haunt-roll-fail && SBT_OPTS="-Xmx6G -Xss4M" sbt -batch fullOptJS`
   (about 2–4 minutes). Commit only `hrf-opt.js`, `hrf-opt.js.map`,
   `hrf-opt/main.js` and `hrf-opt/main.js.map` from `target/`; restore or

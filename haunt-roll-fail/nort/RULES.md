@@ -773,7 +773,7 @@ TTS mod 3597126237, a `Custom_PDF` object). The module lists 5 Beach tiles and
   space, the sea beyond it with the Raid card slot, and the Raid unit slots
   (year 1 on the left, year 2 on the right).
 - The Port: units can move from a territory with a Port to another one with a
-  Port with a Move 2 or more (additional moves are ignored); its defender gets
+  Port with a Move 2 or more; its defender gets
   +1 in combat; its controller may launch Raids, as soon as they conquer it.
 - The Raid phase: at the end of the Actions phase, before the Creature phase
   (or the Harvest), each player controlling a Port does, for each Port, in
@@ -1175,8 +1175,16 @@ Check these against the rulebook when it is at hand.
     (-2, -2) and (-2, 2)) and the north and south ones move to (0, -3) and
     (1, 3). Each player gets the free Beach nearest their first tile. The box
     has five Beaches; a sixth is added so six-player games (and 3v3) get one each.
-  - Port to Port costs all the moves left; it is offered only between
-    territories that aren't next to each other.
+  - Port to Port costs 2 moves, like a Rough border, and the figures may go on
+    with the moves left, stopping on the shore only when they attack, like any
+    Move (the newer rulebook: "If a player is on a territory adjacent to a Port,
+    and use a Move 3, they may use one Move to get on Port and another two to get
+    to a different Port"; addidinu on Discord, relayed by Gman on 2026-11-08), in
+    games with the hidden `SailOnFromPort` every new game gets
+    (`SailOnFromPortAction(X)` switches a running game). Effects that ignore Rough
+    borders don't make it cheaper, as the sea isn't a border. Older games read the
+    first rulebook's "additional moves are ignored": it costs all the moves left.
+    It is offered only between territories that aren't next to each other.
   - The Port's +1 is a combat point for whoever defends the Port territory
     against a player or a creature.
   - Raiders stay theirs while no other player has figures in the Port
