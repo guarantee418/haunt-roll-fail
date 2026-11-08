@@ -116,6 +116,7 @@ object MetaAdset extends MetaGame {
         BanishAfterIgnoredHits,
         CouncilEveningClearPath,
         ReconcileOneAtATime,
+        FearsAfterRemoval,
         FolkHeroCharacter,
         RandomCharacter,
         MountainSuitedLandmark,

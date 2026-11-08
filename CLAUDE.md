@@ -717,6 +717,12 @@ file covers the build, server and deploy. No session can ssh to the server
   its card, and then the Diaspora picks the next one or "Done" (`InvasiveEEEReconcileOneAction` and `InvasiveEEEReconcileNextAction`
   in `root/faction-invasive-eee.scala`; Cookies on Discord, 2026-11-05: every enclave was picked at once, before any card was seen).
   New games get the hidden default option `ReconcileOneAtATime`; older games keep picking them all at once so their replays don't change.
+- Lilypad Diaspora's Fears Come to Pass places its warriors once the warriors the battle or removal took are back in the supply, and
+  with too few for every flipped clearing the Diaspora picks which get one (`InvasiveEEEFearsPlaceAction` in
+  `root/faction-invasive-eee.scala`). The removed warriors waited off the map until the removal's cleanup, after the fears, so in Gman's
+  Movement as Betrayal (2026-11-08) the Eyrie's battle at Effigy flipped Effigy and Lower Jaw but only Effigy, listed first, got a frog.
+  New games get the hidden default option `FearsAfterRemoval`; older games keep the old way, and a running game can be switched over
+  with `FearsAfterRemovalAction(X)`.
 - An Entreat (17.2.4) asks the Twilight Council to gain a Loyalist or place some in the clearing only when it has Loyalists it could
   place there; otherwise it gains one without being asked, or nothing happens when it can't (`CouncilEntreatAction` in
   `root/faction-council.scala`; Hayjay, 2026-10-29: the Council was asked only to "place 0"). New games get the hidden default option
