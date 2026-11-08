@@ -51,7 +51,7 @@ are in `nort/horizon-devs.scala`, and its 5 map tiles with The Bridge (option
 "Map tiles" in the setup's Uncharted Horizons section) are
 `Tiles.horizons` (`horizon-*`, made by `nort/tools/horizon-tiles.py`). Its Sea module (Raids: a Beach tile with a Port for each
 player, the Raid phase and the 24 Raid cards, from the TTS mod 3597126237,
-whose rulebook PDF has the rules) is in `nort/sea.scala`; the Beach is four
+whose rulebook PDF has the rules) is in `nort/sea.scala`; Port to Port costs 2 moves and the figures may move on with the rest (hidden `SailOnFromPort`, every new game; addidinu on Discord, relayed by Gman on 2026-11-08; older games used up every move left, `SailOnFromPortAction(X)` switches a running game); the Beach is four
 map cells (`Tiles.beach`), and a tile side no area owns is sea. The Wastelands expansion (Environment tiles
 `waste-*`, the Central tiles `start-*` chosen with the "Central tile" option, which
 is offered in every game (standard tile, any of the nine, the Wilderness Great

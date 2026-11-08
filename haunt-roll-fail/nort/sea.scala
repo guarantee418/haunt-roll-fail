@@ -157,9 +157,9 @@ object SeaExpansion extends Expansion {
     // The Port's defender: +1 combat point
     def defense(t : Territory, f : Faction, attacking : Boolean)(implicit game : Game) : Int = (attacking.not && portIn(t)).??(1)
 
-    // Port to Port with a Move of 2 or more, using up the moves left
+    // Port to Port with a Move of 2 or more: 2 moves, and the figures may go on with the rest (SailOnFromPort), else all the moves left
     def sailing(f : Faction, t : Territory, left : Int)(implicit game : Game) : $[(Territory, Int)] =
-        (left >= 2 && portIn(t)).??(game.ports./(game.board.territory).distinct.%(_ != t)./(o => o -> left))
+        (left >= 2 && portIn(t)).??(game.ports./(game.board.territory).distinct.%(_ != t)./(o => o -> game.options.has(SailOnFromPort).?(2).|(left)))
 
     // Who acts for a Port in the Raid phase: the owner of a Raid under way while no other player is there, else its controller
     def actor(p : AreaRef)(implicit game : Game) : |[Faction] = {
