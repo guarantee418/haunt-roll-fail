@@ -123,6 +123,19 @@ case class MilitaryCreatureKeptAction(f : Faction, area : AreaRef, c : Creature,
 
 
 // The panel's line (tapped: MilitaryView)
+// A unit (or Militia) lost outside a fight, kept as it is or swapped for the bodyguard, Brok's bodyguard or a Militia (PickLoneLoss)
+case class LoneLossKeepAction(self : Faction, area : AreaRef, lost : String, then : ForcedAction) extends BaseAction(self, "lost", LossLabel(lost), "in", area)("Lose", LossLabel(lost)) with MapTarget { def target = area }
+case class LoneLossSwapAction(self : Faction, area : AreaRef, from : AreaRef, lost : String, instead : String, then : ForcedAction) extends BaseAction(self, "lost", LossLabel(lost), "in", area)("Lose", LossLabel(instead), "instead", (instead == "guard" || instead == "brok").?("(back next year)").|("")) with MapTarget { def target = area }
+
+case class LossLabel(k : String) extends Elementary {
+    def elem : Elem = k match {
+        case "unit" => "a unit".txt
+        case "militia" => "a " ~ "Militia".hl
+        case "guard" => "the bodyguard".txt
+        case "brok" => "Brok".hl ~ "'s bodyguard"
+    }
+}
+
 case class MilitaryView(f : Faction)
 
 
@@ -225,6 +238,34 @@ object MilitaryExpansion extends Expansion {
         if (x > 0)
             game.dropCompanion(t, f)
         m + g + x
+    }
+
+    // Before one unit (or, with none, a Militia) of f is removed outside a fight: noted, to ask f whether to lose its bodyguard or a
+    // Militia instead (PickLoneLoss)
+    def noteLoss(t : Territory, f : Faction)(implicit game : Game) {
+        if (on && game.options.has(PickLoneLoss)) {
+            val unit = t.areas.find(a => game.unitsAt(a).getOrElse(f, 0) > 0)./(a => (a, "unit"))
+            val mil = t.areas.find(a => militiaIn(Territory($(a)), f) > 0)./(a => (a, "militia"))
+            unit.orElse(mil).foreach { case (a, k) => game.loneLosses :+= ((f, a, k)) }
+        }
+    }
+
+    // What f may lose in t instead of the figure lost
+    def lossChoices(t : Territory, f : Faction, lost : String)(implicit game : Game) : $[String] =
+        (lost == "unit" && militiaIn(t, f) > 0).$("militia") ++ guardIn(t, f).$("guard") ++ brokGuardIn(t, f).$("brok")
+
+    // The next noted loss that has a choice, asked before next; none, straight on
+    def lossAsk(next : ForcedAction)(implicit game : Game) : Continue = {
+        while (game.loneLosses.any) {
+            val (f, a, k) = game.loneLosses.head
+            game.loneLosses = game.loneLosses.drop(1)
+            val t = game.board.territory(a)
+            val l = lossChoices(t, f, k)
+            if (l.any)
+                return Ask(f).add(LoneLossKeepAction(f, t.anchor, k, next)).each(l)(i => LoneLossSwapAction(f, t.anchor, a, k, i, next))
+        }
+
+        Then(next)
     }
 
     // Soldiers killed by a card or a building (units first)
@@ -381,6 +422,31 @@ object MilitaryExpansion extends Expansion {
     def militiaDue(f : Faction)(implicit game : Game) = at(f, Guardian, 2) && game.militiaGiven.has(f).not
 
     def perform(action : Action, soft : Void)(implicit game : Game) : Continue = action @@ {
+        case LoneLossKeepAction(f, a, lost, then) =>
+            game.note("lone-loss-kept")
+            Then(then)
+
+        case LoneLossSwapAction(f, a, from, lost, instead, then) =>
+            val t = game.board.territory(a)
+
+            if (lost == "unit")
+                game.addUnits(from, f, 1)
+            else
+                addMilitia(from, f, 1)
+
+            instead match {
+                case "militia" => removeMilitia(t, f, 1)
+                case "guard" => game.guards = game.guards.but(f)
+                case "brok" =>
+                    game.brokGuard = false
+                    game.note("brok-guard-lost")
+            }
+
+            game.note("lone-loss-" + instead)
+            f.log("lost", LossLabel(instead), "instead of", LossLabel(lost), "in", a)
+
+            Then(then)
+
         case FightOverAction(then) if pending =>
             Then(MilitaryCheckAction(FightOverAction(then)))
 

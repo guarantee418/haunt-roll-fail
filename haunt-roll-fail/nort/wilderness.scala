@@ -327,8 +327,10 @@ object WildernessExpansion extends Expansion {
             Wild.around(Wild.poison).flatten.distinct.foreach { t =>
                 // A Warchiefs PC version warchief is never removed by it
                 game.present(t).single.%(g => game.count(t, g) > 0 || game.chiefIn(t, g) && game.pcChief(g).not).foreach { g =>
-                    if (game.count(t, g) > 0)
+                    if (game.count(t, g) > 0) {
+                        MilitaryExpansion.noteLoss(t, g)
                         game.removeUnits(t, g, 1)
+                    }
                     else
                         game.chiefs -= g
 

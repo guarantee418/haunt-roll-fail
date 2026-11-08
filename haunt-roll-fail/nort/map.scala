@@ -440,7 +440,7 @@ case class RerollInfo(keep : ForcedAction) extends GameElementary {
     }
 }
 
-// Move to a territory: the cost when more than 1 (a Rough border, or all the moves left to sail from Port to Port)
+// Move to a territory: the cost when more than 1 (a Rough border, or Port to Port by sea)
 object MoveCostLabel {
     def apply(from : AreaRef, to : AreaRef, cost : Int)(implicit game : Game) : Elem =
         if (cost <= 1) Empty
@@ -726,7 +726,7 @@ object MapExpansion extends Expansion {
     // Where f's figures in t can move with left moves, and the cost; figures passing through a teammate's territory all move on together
     def destinations(f : Faction, t : Territory, left : Int, e : MoveEffect)(implicit game : Game) : $[(Territory, Int)] = {
         val kaija = game.passOnly(f, t) && game.kaijaIn(t, f)
-        // Sea module: from Port to Port with all the moves left
+        // Sea module: from Port to Port with 2 moves (SailOnFromPort), or in older games all the moves left
         (game.links(f, t).map { case (o, regular) => o -> moveCost(regular.not, e.ignoreRough) } ++ SeaExpansion.sailing(f, t, left).filter(x => game.board.adjacent(t).exists(_._1 == x._1).not))
             .filter { case (o, c) => c <= left && canEnter(f, o, left - c, e, kaija) }
     }
@@ -1536,6 +1536,12 @@ object MapExpansion extends Expansion {
             if (kaija)
                 game.note("kaija-move")
 
+            // Sea module: Port to Port, and with SailOnFromPort the moves left after it
+            if (game.board.adjacent(src).exists(_._1 == dst).not)
+                game.note(game.options.has(SailOnFromPort).?("sail-2").|("sail-all"))
+            if (game.options.has(SailOnFromPort) && left - cost > 0 && game.board.adjacent(src).exists(_._1 == dst).not)
+                game.note("sail-moves-left")
+
             if (kaija && e.special == BearMove) {
                 game.note("kaija-collect")
                 val (food, wood, _) = game.produce(src)
@@ -2114,7 +2120,7 @@ object MapExpansion extends Expansion {
                 if (to.none) {
                     val chief = game.chiefIn(t, f)
                     val soldiers = MilitaryExpansion.soldiers(t, f)
-                    game.removeFigures(t, f, game.toughness(t, f))
+                    game.removeFigures(t, f, game.toughness(t, f), true)
                     f.log("had nowhere to retreat and lost", Party(f, n, kaija, chief))
                     game.retreatBy = None
 

@@ -473,6 +473,16 @@ case object ReconcileOneAtATime extends GameOption with ToggleOption {
     val valueOn = "Reconcile".hh ~ " one enclave at a time"
 }
 
+// Lilypad Diaspora's Fears Come to Pass places its warriors once the warriors the battle or removal took are back in the supply,
+// and with too few for every flipped clearing the Diaspora picks which get one (Gman, 2026-11-08: in Movement as Betrayal a battle
+// at Effigy flipped Effigy and Lower Jaw, but the two dispersed frogs were still off the map, so only Effigy, listed first, got a
+// warrior). Hidden and on by default for new games; older games keep the old way so their replays don't change
+// (FearsAfterRemovalAction switches a running one over).
+case object FearsAfterRemoval extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Fears Come to Pass".hh ~ " after the removal"
+}
+
 // Feather Rufflers is resolved when crafted, as its parchment text box says (like the Favor cards): it places two warriors in
 // a clearing with the crafter's pieces and is discarded (Jfthex, 2026-10-30: the Knaves crafted it with Apprentice and it stayed
 // among their crafted cards). Hidden and on by default for new games; older games keep it as a crafted card used later
@@ -1624,7 +1634,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, RiverfolkCraftUngoverned) ++
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned) ++
         settled ++
         retired
 
@@ -1638,7 +1648,7 @@ object Meta extends MetaGame {
 
     // The hidden options every new game gets, even when the setup screen starts from options saved before one of them existed
     // (toggles aren't added to saved options from the defaults, so those games missed them)
-    lazy val newGame : $[O] = settled ++ $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, CounterMiceInABush, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, RiverfolkCraftUngoverned)
+    lazy val newGame : $[O] = settled ++ $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, CounterMiceInABush, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned)
 
     override def completeSaved(n : Int, l : $[F], options : $[O]) = options.diff(retired)
 
@@ -1688,6 +1698,7 @@ object Meta extends MetaGame {
         BanishAfterIgnoredHits,
         CouncilEveningClearPath,
         ReconcileOneAtATime,
+        FearsAfterRemoval,
         RiverfolkCraftUngoverned,
         MountainSuitedLandmark,
         NoHirelings

@@ -209,6 +209,12 @@ case class InvasiveEEEIntegrateAction(self : InvasiveEEE, d : DeckCard, s : Base
 
 case class InvasiveEEEFearsAction(f : InvasiveEEE, e : Faction, then : ForcedAction) extends ForcedAction
 
+case class InvasiveEEEFearsPlaceAction(self : InvasiveEEE, l : $[Clearing], then : ForcedAction) extends ForcedAction
+
+// A one-time fix for games started before FearsAfterRemoval, added to a live game's log by hand: from here Fears Come to Pass
+// places its warriors once the removed ones are back in the supply (game.fearsAfterRemoval), then goes on with then
+case class FearsAfterRemovalAction(then : ForcedAction) extends ForcedAction with SkipValidate
+
 // A one-time fix for games started before FrogCardsSkipLostSouls, added to a live game's log by hand: moves the Frog cards
 // in the Lizards' Lost Souls to the Pond and turns the rule on from here (game.frogsSkipLostSouls), then goes on with then
 case class FrogCardsToPondAction(then : ForcedAction) extends ForcedAction with SkipValidate
@@ -302,6 +308,8 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
             refresh(f, c)
         }
     }
+
+    def fearsAfterRemoval(implicit game : Game) = game.options.has(FearsAfterRemoval) || game.fearsAfterRemoval
 
     def craftByClearing(implicit game : Game) = game.options.has(FrogsCraftByClearing) || game.frogsCraftByClearing
 
@@ -431,6 +439,11 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         case GovernorsStopEnclaveFlipsAction(then) =>
             game.governorsStopEnclaveFlips = true
+
+            then
+
+        case FearsAfterRemovalAction(then) =>
+            game.fearsAfterRemoval = true
 
             then
 
@@ -646,10 +659,36 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
 
                 f.log("feared", e, "and flipped", MilitantEEE.sof(f), "in", l./(_.elem).comma, "with", FearsComeToPass.of(f))
 
-                InvasiveEEEMusterClearingsAction(f, NoMessage, l.%(f.canPlace).take(f.pooled(f.warrior)), then)
+                if (fearsAfterRemoval)
+                    InvasiveEEEFearsPlaceAction(f, l.%(f.canPlace), then)
+                else
+                    InvasiveEEEMusterClearingsAction(f, NoMessage, l.%(f.canPlace).take(f.pooled(f.warrior)), then)
             }
             else
                 then
+
+        // FearsAfterRemoval: the warriors just removed are back in the supply first (they waited in limbo until the removal's
+        // cleanup, so a battle's dead frogs couldn't be placed), and with too few for every flipped clearing the Diaspora picks
+        // (it was the first ones listed; Lower Jaw got none in Movement as Betrayal, 2026-11-08)
+        case InvasiveEEEFearsPlaceAction(f, l, then) =>
+            board.clearings.foreach(c => f.limbo(c) --> game.dead)
+
+            val t = f.pooled(f.warrior)
+
+            if (l.none)
+                then
+            else
+            if (t >= l.num)
+                InvasiveEEEMusterClearingsAction(f, NoMessage, l, then)
+            else
+            if (t == 0) {
+                f.log("had no warriors to place")
+
+                then
+            }
+            else
+                Ask(f).group("Place", 1.hl, "warrior at each", MilitantEEE.of(f), "with", FearsComeToPass.of(f))
+                    .each(l.combinations(t).$)(x => InvasiveEEEMusterClearingsAction(f, NoMessage, x, then).as(x.comma))
 
         // HELPER
         case InvasiveEEEMusterAction(f, m, then) =>
