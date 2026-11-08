@@ -989,6 +989,12 @@ proposed there, to change if Marzaus answers otherwise.
   `EndOfYearAfterGeysers` every new game gets, the Geysers go first and the End
   of the Year then goes on through the Military paths. A running game can be
   switched over with `EndOfYearAfterGeysersAction(X)`.
+- A unit lost outside a fight (Draugr, Valdemar, the Swamp, the Poisonous Swamp,
+  the Volcano, the Wyvern, events) may be the bodyguard or a Militia instead: the
+  clan is asked right after, with "Lose a unit" and each of them, in games with
+  the hidden `PickLoneLoss` every new game gets (Marzaus, 2026-11-07: a unit was
+  always lost, so the bodyguard, back each year, never was). Cards that remove
+  an enemy's unit (Plunder, Raid, Endless Tide, ...) still take a unit.
 - Leadership. 1: the bodyguard (`game.guards`) is a figure that is wherever the
   warchief is (it moves, retreats and goes to the reserve with it), worth 1
   combat point, lost as a casualty after the units and Militia and before the
