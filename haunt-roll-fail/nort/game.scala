@@ -491,6 +491,8 @@ case class PCChiefCampPaysAction(then : ForcedAction) extends ForcedAction with 
 
 // Switches a running game to HorseTwoGuards (an hrf-games fix): Brok gets his bodyguard if Horse is on the Leadership path
 case class HorseTwoGuardsAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to PickLoneLoss (an hrf-games fix)
+case class PickLoneLossAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to TeamVictoryAllCards (an hrf-games fix): a team needs every Alternative victory card
 case class TeamVictoryAllCardsAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to MilitaryRerollCreatures (an hrf-games fix)
@@ -716,6 +718,9 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var guards : $[Faction] = $
     // Horse Clan's second bodyguard, Brok's (HorseTwoGuards)
     var brokGuard = false
+    // Units (or Militia) lost one at a time outside a fight, which their clan may swap for the bodyguard or a Militia there
+    // (PickLoneLoss): clan, the area the figure was in, "unit" or "militia"; asked right after the action (loggedPerform)
+    var loneLosses : $[(Faction, AreaRef, String)] = $
     var militia : Map[AreaRef, Map[Faction, Int]] = Map()
     var militiaGiven : $[Faction] = $
     var militiaBack : $[Faction] = $
@@ -1133,7 +1138,10 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
     // Casualties: units first (Military paths: then the Militia and the bodyguard), then the warchief, Jötunn Blainn (back to his camp), Kaija last
     // (a PC version warchief takes 2, so a single removal passes it by)
-    def removeFigures(t : Territory, f : Faction, n : Int) {
+    // fight: a fight's casualties or a lost retreat, which aren't asked again (PickLoneLoss)
+    def removeFigures(t : Territory, f : Faction, n : Int, fight : Boolean = false) {
+        if (n == 1 && fight.not)
+            MilitaryExpansion.noteLoss(t, f)(this)
         val k = math.min(n, count(t, f))
         removeUnits(t, f, k)
         var left = n - k
@@ -1181,7 +1189,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
                     dropCompanion(t, f)
                 }
             case None =>
-                removeFigures(t, f, n)
+                removeFigures(t, f, n, true)
         }
     }
 
@@ -1316,7 +1324,16 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         if (has(TowersModule))
             TowersExpansion.sweep(this)
 
-        val c = action.as[SelfPerform]./(_.perform(soft)).|(internalPerform(action, soft)) match {
+        val raw = action.as[SelfPerform]./(_.perform(soft)).|(internalPerform(action, soft))
+
+        // Military paths: a unit lost outside a fight may be swapped for the bodyguard or a Militia (PickLoneLoss), asked before
+        // the game goes on; a loss waits for an action that goes straight on (an Ask asks first)
+        val swapped = raw match {
+            case Then(next : ForcedAction) if loneLosses.any && action.isSoft.not => MilitaryExpansion.lossAsk(next)(this)
+            case c => c
+        }
+
+        val c = swapped match {
             case c : Ask if adset => c.copy(faction = fix(c.faction))
             case c : MultiAsk if adset => c.copy(asks = c.asks./(a => a.copy(faction = fix(a.faction))))
             case c => c
@@ -2268,6 +2285,12 @@ object CommonExpansion extends Expansion {
                 if (game.paths.get(Horse).has(Leadership))
                     game.brokGuard = true
             }
+
+            Then(then)
+
+        case PickLoneLossAction(then) =>
+            if (game.options.has(PickLoneLoss).not)
+                game.addOption(PickLoneLoss)
 
             Then(then)
 

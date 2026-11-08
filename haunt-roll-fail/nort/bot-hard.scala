@@ -539,6 +539,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val upgraded = game.upgraded
         // Military paths module: the Militia
         val militia = game.militia
+        // Losses waiting for their swap question (PickLoneLoss)
+        val lone = game.loneLosses
         try {
             change
             total
@@ -548,6 +550,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             game.buildings = buildings
             game.upgraded = upgraded
             game.militia = militia
+            game.loneLosses = lone
             game.mineralBank = bank
             minerals.foreach { case (f, m) => f.minerals = m }
             game.chiefs = chiefs

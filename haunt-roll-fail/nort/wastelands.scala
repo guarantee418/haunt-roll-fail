@@ -515,6 +515,7 @@ object WastelandsExpansion extends Expansion {
                     Ask(g).each(l)(t => EruptUnitAction(g, t.anchor, left, then))
 
             case EruptUnitAction(g, a, left, then) =>
+                MilitaryExpansion.noteLoss(game.board.territory(a), g)
                 game.removeUnits(game.board.territory(a), g, 1)
                 g.log("lost a unit in", a, "to the", Waste.elem(Waste.volcano))
                 Then(EruptRemoveAction(g, left - 1, then))
@@ -558,6 +559,7 @@ object WastelandsExpansion extends Expansion {
                         Then(CreatureCombatAction(o, t.anchor, c, MoveEffect(0), false, then))
 
                     case Some(o) if c.kind == Valdemar && game.count(t, o) > 0 =>
+                        MilitaryExpansion.noteLoss(t, o)
                         game.removeUnits(t, o, 1)
                         game.note("valdemar")
                         o.log("lost a unit to", c, "in", t.anchor)

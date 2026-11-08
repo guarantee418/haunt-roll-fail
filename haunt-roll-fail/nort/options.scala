@@ -605,6 +605,15 @@ case object HorseTwoGuards extends GameOption with ToggleOption {
     def valueOn = "Horse Clan's Brok has a bodyguard too".txt
 }
 
+// Military paths: a clan losing one unit outside a fight (Draugr, the Swamp, Valdemar, an event, ...) with its bodyguard or a Militia in
+// that territory picks which of them goes, as the bodyguard comes back each year (Marzaus, 2026-11-07: "if i am to automatically loose
+// a unit, if there is bodyguard available, kill it or let me choose"; a unit always went). Hidden, and given to every new game
+// (Meta.mandatoryFor); older games replay the old way. A running game can be switched over with PickLoneLossAction(X)
+case object PickLoneLoss extends GameOption with ToggleOption {
+    val group = "Military paths".txt
+    def valueOn = "Pick the bodyguard or a Militia for a unit lost outside a fight".txt
+}
+
 // Warchiefs PC version: the warchief is recruited for 1 of a Recruit's units plus the extra unit of its territory's Training Camp, so the
 // starting Recruit 1 can bring it (Marzaus, 2026-11-06: "i cant recruit the chief, the robobot doesnt have one either"; it took 2 of the
 // Recruit's own units, so only the Recruit 2 cards could). Hidden, and given to every new game (Meta.mandatoryFor); older games replay

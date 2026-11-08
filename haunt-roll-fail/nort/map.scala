@@ -2114,7 +2114,7 @@ object MapExpansion extends Expansion {
                 if (to.none) {
                     val chief = game.chiefIn(t, f)
                     val soldiers = MilitaryExpansion.soldiers(t, f)
-                    game.removeFigures(t, f, game.toughness(t, f))
+                    game.removeFigures(t, f, game.toughness(t, f), true)
                     f.log("had nowhere to retreat and lost", Party(f, n, kaija, chief))
                     game.retreatBy = None
 
