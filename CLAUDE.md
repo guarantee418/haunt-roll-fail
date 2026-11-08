@@ -738,6 +738,11 @@ file covers the build, server and deploy. No session can ssh to the server
   `MischiefPlayer.craft`; the other factions already left those clearings out). Gman's Diaspora crafted with its Bayou enclave in
   Season in Control on 2026-10-30. New games get the hidden default option `GovernorsStopCrafting`; older games keep crafting there
   so their replays don't change, and a running game can be switched over with `GovernorsStopCraftingAction(X)`.
+- The Riverfolk Company crafts with the icons its placed trade posts uncover on its board (Law of Root 8.2), not with pieces in a
+  clearing, so Governors don't stop it: a trade post at an enemy Council's Governing assembly still crafts, with no Entreat (`craft` in
+  `TraderPlayer`, `root/faction-trader.scala`). Before, it was left out, and in Destiny and Right (2026-11-07) the Riverfolk had to entreat
+  at Haven to craft, closing the assembly and giving the Council a Loyalist. New games get the hidden default option
+  `RiverfolkCraftUngoverned`; older games keep the old way, and a running game can be switched over with `RiverfolkCraftUngovernedAction(X)`.
 - The Twilight Council's Banish is offered only against an enemy with warriors it could move in the clearing (not the Warlord),
   or a Lilypad Diaspora Peaceful enclave there, as battling one sets off Fears Come to Pass (`banishable` in
   `root/faction-council.scala`; MaKoBwoY could banish a lone Underground Duchy tunnel on 2026-10-30, geffrey pointed out the frogs).

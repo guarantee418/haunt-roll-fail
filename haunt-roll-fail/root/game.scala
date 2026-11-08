@@ -1526,6 +1526,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var fearsAfterRemoval = false
     var silverTongueOneEffect = false
     var governorsStopCrafting = false
+    var riverfolkCraftUngoverned = false
     var mouseholdFromSupply = false
     var banishAfterIgnoredHits = false
     var featherRufflersOnCraft = false
