@@ -920,6 +920,11 @@ file covers the build, server and deploy. No session can ssh to the server
   `drawTrackers` draws `tracker/item-track.webp`, on a dark translucent panel so
   its light slots show on the snowy maps, under
   them and `drawItemSlots` draws `game.uncrafted` on them.
+- The boxes on the Root map (the item tracker, the score tracker and, with the Card Piles on Map setting, the card piles) never
+  hide a piece (Gman, 2026-11-09: in Movement as Betrayal the items covered the pieces in Effigy): warriors, tokens and pawns are
+  placed off them (`overlayRects` in `root/ui.scala`, a cost in the free placement, and pieces kept from an earlier draw under one
+  are placed again), the rule flags too (`findFlagSpot`), and the boxes are drawn after the Marquise's Keep but under every other
+  piece, so a building in a slot under one still shows. The card piles' taps come after the pieces' (`cardPileTargets`). Display only.
 - The Homeland Marsh map is `MarshBoard` in `root/maps.scala` (option
   `MarshMap`, images in `webp2/root/images/marsh/`; the map is the plain board art
   the owner uploaded on 2026-10-06, aligned to the earlier printed-board image and
