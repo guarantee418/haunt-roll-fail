@@ -1785,7 +1785,7 @@ object MapExpansion extends Expansion {
             val t = game.board.territory(a)
             val max = math.min(f.food, game.figures(t, f))
 
-            if (max == 0)
+            if (max <= 0)
                 Then(CombatFoodAction(f, f, defender, a, e, $(0), then))
             else
                 Ask(f).each(0.to(max).$)(k => CombatFoodAction(f, f, defender, a, e, $(k), then))
@@ -1814,7 +1814,7 @@ object MapExpansion extends Expansion {
                 val t = game.board.territory(a)
                 val max = math.min(defender.food, game.figures(t, defender))
 
-                if (max == 0)
+                if (max <= 0)
                     Then(CombatFoodAction(defender, attacker, defender, a, e, food :+ 0, then))
                 else
                     Ask(defender).each(0.to(max).$)(k => CombatFoodAction(defender, attacker, defender, a, e, food :+ k, then))

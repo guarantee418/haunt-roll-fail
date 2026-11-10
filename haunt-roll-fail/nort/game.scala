@@ -490,6 +490,8 @@ case class PCChiefCampPaysAction(then : ForcedAction) extends ForcedAction with 
 
 // Switches a running game to HorseTwoGuards (an hrf-games fix): Brok gets his bodyguard if Horse is on the Leadership path
 case class HorseTwoGuardsAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to ScorchedAfterEvents (an hrf-games fix), and puts any food, wood or lore left below 0 back to 0
+case class ScorchedAfterEventsAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to PickLoneLoss (an hrf-games fix)
 case class PickLoneLossAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to TeamVictoryAllCards (an hrf-games fix): a team needs every Alternative victory card
@@ -2028,7 +2030,9 @@ object CommonExpansion extends Expansion {
         // 3. HARVEST
         case ScorchedHarvestAction =>
             val owner = game.scorched./(game.board.territory)./(game.present).|($).single.%(game.enemy(Snake, _))
-            val (food, wood, lore) = game.scorched./(game.board.territory)./(game.harvest).|((0, 0, 0))
+            // with ScorchedAfterEvents, what the territory gives at this harvest (Infestation, a skipped or doubled harvest)
+            val gives = (t : Territory) => game.options.has(ScorchedAfterEvents).?(EventsExpansion.harvest(t)).|(game.harvest(t))
+            val (food, wood, lore) = game.scorched./(game.board.territory)./(gives).|((0, 0, 0))
             val l = $[(Resource, Int)](Food -> food, Wood -> wood, Lore -> lore).filter(_._2 > 0).map(_._1)
 
             if (factions.has(Snake) && owner.any && l.any)
@@ -2283,6 +2287,22 @@ object CommonExpansion extends Expansion {
                 game.addOption(HorseTwoGuards)
                 if (game.paths.get(Horse).has(Leadership))
                     game.brokGuard = true
+            }
+
+            Then(then)
+
+        case ScorchedAfterEventsAction(then) =>
+            if (game.options.has(ScorchedAfterEvents).not)
+                game.addOption(ScorchedAfterEvents)
+
+            factions.foreach { f =>
+                $[Resource](Food, Wood, Lore).foreach { r =>
+                    val n = f.has(r)
+                    if (n < 0) {
+                        f.gain(r, -n)
+                        f.log("had", n.hl, r, "and now has", 0.hl)
+                    }
+                }
             }
 
             Then(then)
