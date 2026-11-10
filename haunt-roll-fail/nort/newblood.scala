@@ -1246,7 +1246,7 @@ object NewBloodExpansion extends Expansion {
         case EconomicsStartAction(f, then) =>
             val max = math.min(2, f.food)
 
-            if (max == 0 || CommonExpansion.available(f) == 0)
+            if (max <= 0 || CommonExpansion.available(f) == 0)
                 Then(then)
             else
                 Ask(f).each(0.to(max).$)(k => EconomicsPayAction(f, k, then))
