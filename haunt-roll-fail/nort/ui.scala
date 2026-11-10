@@ -488,19 +488,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         c
     }
 
-    // Tint per player colour: the colour of the player's name, as opaque as the player's Territories setting
+    // Tint per player colour: the player's colour, as opaque as the player's Territories setting
     def tintOf(c : PlayerColor) : (String, Double) =
         (c.hex, callbacks.settings.has(CustomTerritoryColor).??(callbacks.settings.collectFirst { case TerritoryOpacity(x, p) if x == c => p }).|(50) / 100.0)
 
-    // Border dashes of the closed territories a player controls, bright enough to show on the dark roads
-    def lineOf(c : PlayerColor) : String = c match {
-        case Blue => "#3d7bff"
-        case Red => "#ff0000"
-        case Yellow => "#ffc400"
-        case Purple => "#b54ae6"
-        case Green => "#2fb52f"
-        case Orange => "#ff8a1f"
-    }
+    // Border dashes of the closed territories a player controls: the player's colour, as their territories and name
+    def lineOf(c : PlayerColor) : String = c.hex
 
     // The two lines beside a Rough border's dashes
     val roughRail = "#ffd21f"

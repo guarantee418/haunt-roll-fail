@@ -626,7 +626,7 @@ on. To implement one:
   apart from orange.
 - Closed territories that give fame at the Harvest (no Wolf creature) and are
   controlled by one player have their border dashes redrawn in that player's
-  colour (`UI.lineOf`, opaque). Where two such territories of different
+  colour (`UI.lineOf`, opaque, the same shade as its names and tint since 2026-11-10). Where two such territories of different
   players meet, the dashes alternate between the two colours; a Rough border
   also gets a dotted yellow line (dark-rimmed dots) on each side of its dashes
   (white when one of the colours is yellow). The dashes are vector data in `nort/lines.scala`

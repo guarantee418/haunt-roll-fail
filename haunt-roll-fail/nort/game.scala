@@ -60,22 +60,19 @@ case object Lion extends Faction
 // Player colors mark a player's units and starting cards; they are not tied to the clan
 trait PlayerColor extends NamedToString with Styling with Elementary with Record {
     def id = name.toLowerCase
-    // The colour of their territories on the map, and of the player's name unless ink differs
+    // The one colour of the player everywhere: their territories on the map, the fame border dashes of the closed
+    // ones they control, and their player and warchief names (the owner, 2026-11-10: red first, on 2026-11-04 and 07,
+    // then every colour; yellow is its units' bright yellow, which the names had since 2026-10-18)
     def hex = this match {
         case Blue => "#4e78bc"
         case Red => "#ff0000"
-        case Yellow => "#f79c01"
+        case Yellow => "#fbfb05"
         case Purple => "#a56ca5"
         case Green => "#4f9e3a"
         case Orange => "#ff7a1a"
     }
-    // The colour of the player's name and warchief's name in the panels and the log: the units' colour where the
-    // territory tint differs (yellow's tint is darker than its bright yellow units, asked for by the owner on 2026-10-18;
-    // red's names and tint are both the neon #ff0000, the owner, 2026-11-04 and 07)
-    def ink = this match {
-        case Yellow => "#fbfb05"
-        case c => c.hex
-    }
+    // The colour of the player's name and warchief's name in the panels and the log: the same as the territories
+    def ink = hex
     // The banner on the starting cards: orange has no cards of its own and uses yellow's
     def cards = this match {
         case Orange => "yellow"
