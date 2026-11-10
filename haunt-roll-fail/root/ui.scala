@@ -317,13 +317,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     }
 
     // The spot in the clearing nearest its centre where the flag covers the fewest building slots and none of the clearing name
-    def findFlagSpot(px : Int, py : Int, fixed : $[DrawItem]) : (Int, Int) = {
+    def findFlagSpot(px : Int, py : Int, fixed : $[DrawItem], overlays : $[DrawRect] = $) : (Int, Int) = {
         val obstacles = fixed.%(_.piece != Keep)./(_.rect).%(_ != null) :+ DrawRect("", px - 240, py + 155, 480, 60)
 
         val spots = for (dx <- -200.to(200, 20); dy <- -120.to(220, 20) if sameRegion(px, py, px + dx, py + dy)) yield (px + dx, py + dy)
 
         (spots :+ (px, py + flagHeight / 2)).minBy { case (x, y) =>
             obstacles./(o => overlap(flagRect(x, y), o)).sum * 10 +
+            overlays./(o => overlap(flagRect(x, y), o)).sum * 30 +
             sameRegion(px, py, x + 36, y - 170).not.??(50000) +
             math.sqrt((x - px) * (x - px) + (y - py - flagHeight / 2) * (y - py - flagHeight / 2))
         }
@@ -493,6 +494,27 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         if (ny + 60 > top && x + w > left && x - w < right) math.min(ny, top - 60 - 4) else ny
     }.getOrElse(ny)
 
+    // The dark panel behind the item tracker: x, y, width, height
+    def itemPanel : |[(Double, Double, Double, Double)] = game.board.itemSlots match {
+        case (_, x, y) :: (_, x1, _) :: _ =>
+            val k = (x1 - x) / 87.4
+            |((x - (31.5 + 14) * k, y - (31.5 + 14) * k, (500 + 28) * k, (147 + 28) * k))
+        case _ => None
+    }
+
+    // The score tracker strip: x, y, width, height
+    def scoreStrip : |[(Double, Double, Double, Double)] = game.board.scoreTrack./ { case (x0, y0, step) =>
+        val k = step / 64.45
+        (x0 - 32.7 * k, y0 - 34 * k, 2000 * k, 68 * k)
+    }
+
+    // The boxes drawn over the map: the item and score trackers (unless hidden) and the card piles (when on the map).
+    // Warriors, tokens and pawns are placed off them, and the rule flags too, so the boxes never hide a piece
+    // (Gman, 2026-11-09: in Movement as Betrayal the items covered the pieces in Effigy)
+    def overlayRects : $[DrawRect] =
+        showTrackers.??(itemPanel.$ ++ scoreStrip.$)./ { case (x, y, w, h) => DrawRect("", x, y, w, h) } ++
+        pilesOnMap.??(cardPilesBox.$)./ { case (x, y, w, h) => DrawRect("", x, y, w, h) }
+
     // The score and item trackers, unless hidden in the settings
     def drawTrackers(g : dom.CanvasRenderingContext2D) {
         if (showTrackers) {
@@ -501,12 +523,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 g.drawImage(resources.images.get("score-track"), x0 - 32.7 * k, y0 - 34 * k, 2000 * k, 68 * k)
             }
 
-            game.board.itemSlots match {
-                case (_, x, y) :: (_, x1, _) :: _ =>
+            (game.board.itemSlots, itemPanel) match {
+                case ((_, x, y) :: (_, x1, _) :: _, Some((px, py, pw, ph))) =>
                     val k = (x1 - x) / 87.4
 
                     // a dark panel behind it, so the light slots show on snow too
-                    val (px, py, pw, ph, r) = (x - (31.5 + 14) * k, y - (31.5 + 14) * k, (500 + 28) * k, (147 + 28) * k, 16 * k)
+                    val r = 16 * k
 
                     g.save()
                     g.beginPath()
@@ -674,8 +696,24 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     // The card piles drawn on the map, in map coordinates, for taps
     var pileTargets : $[(Double, Double, Double, Double, Any)] = $
 
+    val (pileWidth, pileHeight, pilePad, dominanceWidth, dominanceStep) = (176.0, 172.0, 14.0, 120.0, 36.0)
+
+    // The width of the stacked available dominances beside the piles
+    def dominanceStackWidth = game.dominances.any.?(dominanceWidth + 20 + (game.dominances.num - 1) * dominanceStep).|(0.0)
+
+    // The card piles' panel in the top right corner of the map: x, y, width, height
+    def cardPilesBox : |[(Double, Double, Double, Double)] = {
+        val pw = pilePad * 2 + cardPiles.num * pileWidth + dominanceStackWidth
+        |((mp.width - 30 - pw, 24.0, pw, pilePad * 2 + pileHeight))
+    }
+
+    // The tap targets of the card piles, drawn under the pieces but tapped after them
+    var cardPileTargets : $[(Double, Double, Double, Double, Any)] = $
+
     // In the top right corner of the map, in a dark panel like the item tracker's
     def drawCardPiles(g : dom.CanvasRenderingContext2D) {
+        cardPileTargets = $
+
         if (pilesOnMap.not)
             return
 
@@ -684,14 +722,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         // the available dominances, stacked: each card shows a strip of the one under it
         val dominances = game.dominances./(_.id)
 
-        val (cw, ch, iw, ih, pad) = (176.0, 172.0, 128.0, 84.0, 14.0)
-        val (dw, step) = (120.0, 36.0)
-        val stackWidth = dominances.any.?(dw + 20 + (dominances.num - 1) * step).|(0.0)
+        val (cw, ch, iw, ih, pad) = (pileWidth, pileHeight, 128.0, 84.0, pilePad)
+        val (dw, step) = (dominanceWidth, dominanceStep)
+        val stackWidth = dominanceStackWidth
 
-        val pw = pad * 2 + piles.num * cw + stackWidth
-        val ph = pad * 2 + ch
-        val px = mp.width - 30 - pw
-        val py = 24.0
+        val (px, py, pw, ph) = cardPilesBox.get
         val r = 16.0
 
         g.save()
@@ -722,7 +757,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             g.font = "bold 27px sans-serif"
             g.fillText(translate(name), x + cw / 2, py + pad + 4 + ih + 46 + 32)
 
-            pileTargets :+= ((x, py, cw, ph, target))
+            cardPileTargets :+= ((x, py, cw, ph, target))
 
             x += cw
         }
@@ -734,7 +769,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 }
             }
 
-            pileTargets :+= ((x, py, stackWidth, ph, "view-dominances"))
+            cardPileTargets :+= ((x, py, stackWidth, ph, "view-dominances"))
         }
 
         g.restore()
@@ -1032,7 +1067,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         else
             g.drawImage(mp, 0, 0)
 
-        drawTrackers(g)
+        val overlays = overlayRects
 
         // The Mountain map's closed paths, loaded with the map's own prefix like its other images
         game.rubble.foreach { case (from, to) =>
@@ -1287,6 +1322,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                                         fixed +:= o
                                         saved = saved.but(o)
                                         gates = gates.but((o.x, o.y))
+                                    case _ if overlays.exists(r => overlap(o.rect, r) > 0) =>
+                                        free +:= DrawItem(r, p.faction, p.piece, 0, 0)
+                                        saved = saved.but(o)
                                     case _ =>
                                         sticking +:= o
                                         saved = saved.but(o)
@@ -1336,14 +1374,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             val (px, py) = game.board.center(r)
 
             if (callbacks.settings.has(FlagRule) && r.is[Clearing] && game.clearings.contains(r))
-                flagSpots(r) = findFlagSpot(px, py, fixed)
+                flagSpots(r) = findFlagSpot(px, py, fixed, overlays)
             else
                 flagSpots -= r
 
             val flag = flagSpots.get(r)./((flagRect _).tupled)
 
             free.sortBy(d => -rank(d)).foreach { d =>
-                sticking +:= Array.tabulate(40)(n => findAnother(px, py))
+                sticking +:= Array.tabulate(60)(n => findAnother(px, py))
                   .sortBy { case (x, y) => ((x - px).abs * 5 + (y - py).abs) }
                   .map { case (x, y) => DrawItem(d.region, d.faction, d.piece, x, y) }
                   .minBy { dd =>
@@ -1354,7 +1392,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                         val h = min(o.y + o.height, d.y + d.height) - max(o.y, d.y)
                         val s = (w > 0 && h > 0).?(w * h).|(0)
                         s * (1.0 / (o.width * o.height) + 1.0 / (d.width * d.height))
-                    }.sum + flag./(f => overlap(dd.rect, f) * 3.0 / (dd.rect.width * dd.rect.height)).|(0.0)
+                    }.sum + flag./(f => overlap(dd.rect, f) * 3.0 / (dd.rect.width * dd.rect.height)).|(0.0) +
+                    overlays./(o => overlap(dd.rect, o)).sum * 10.0 / (dd.rect.width * dd.rect.height)
                 }
             }
 
@@ -1368,6 +1407,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         draws.%(_.piece == Keep).sortBy(d => d.y - (d.piece.is[Token]).??(10000) - (d.piece == FreeBuildingSlot).??(20000) - (d.piece == Keep).??(40000)).foreach { d =>
             g.drawImage(resources.images.get(d.rect.key), d.rect.x, d.rect.y)
         }
+
+        // The trackers, the items and the card piles go over the Marquise's Keep (its castle reaches the map's edges)
+        // but under the other pieces, which are placed off them (overlayRects) where there is room, so they never hide a piece
+        drawTrackers(g)
+
+        drawItemSlots(g)
+
+        drawCardPiles(g)
 
         game.board.blizzard.foreach { case (from, to) =>
             val (x, y) = game.board.mid(from, to)
@@ -1426,9 +1473,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         drawScoreTrack(g)
 
-        drawItemSlots(g)
-
-        drawCardPiles(g)
+        pileTargets ++= cardPileTargets
 
         hhh.foreach { h =>
             g.globalAlpha = h._2
