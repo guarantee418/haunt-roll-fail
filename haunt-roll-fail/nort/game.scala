@@ -60,22 +60,19 @@ case object Lion extends Faction
 // Player colors mark a player's units and starting cards; they are not tied to the clan
 trait PlayerColor extends NamedToString with Styling with Elementary with Record {
     def id = name.toLowerCase
-    // The colour of their territories on the map, and of the player's name unless ink differs
+    // The one colour of the player everywhere: their territories on the map, the fame border dashes of the closed
+    // ones they control, and their player and warchief names (the owner, 2026-11-10: red first, on 2026-11-04 and 07,
+    // then every colour; yellow is its units' bright yellow, which the names had since 2026-10-18)
     def hex = this match {
         case Blue => "#4e78bc"
         case Red => "#ff0000"
-        case Yellow => "#f79c01"
+        case Yellow => "#fbfb05"
         case Purple => "#a56ca5"
         case Green => "#4f9e3a"
         case Orange => "#ff7a1a"
     }
-    // The colour of the player's name and warchief's name in the panels and the log: the units' colour where the
-    // territory tint differs (yellow's tint is darker than its bright yellow units, asked for by the owner on 2026-10-18;
-    // red's names and tint are both the neon #ff0000, the owner, 2026-11-04 and 07)
-    def ink = this match {
-        case Yellow => "#fbfb05"
-        case c => c.hex
-    }
+    // The colour of the player's name and warchief's name in the panels and the log: the same as the territories
+    def ink = hex
     // The banner on the starting cards: orange has no cards of its own and uses yellow's
     def cards = this match {
         case Orange => "yellow"
@@ -493,6 +490,8 @@ case class PCChiefCampPaysAction(then : ForcedAction) extends ForcedAction with 
 
 // Switches a running game to HorseTwoGuards (an hrf-games fix): Brok gets his bodyguard if Horse is on the Leadership path
 case class HorseTwoGuardsAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to ScorchedAfterEvents (an hrf-games fix), and puts any food, wood or lore left below 0 back to 0
+case class ScorchedAfterEventsAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to PickLoneLoss (an hrf-games fix)
 case class PickLoneLossAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to TeamVictoryAllCards (an hrf-games fix): a team needs every Alternative victory card
@@ -2031,7 +2030,9 @@ object CommonExpansion extends Expansion {
         // 3. HARVEST
         case ScorchedHarvestAction =>
             val owner = game.scorched./(game.board.territory)./(game.present).|($).single.%(game.enemy(Snake, _))
-            val (food, wood, lore) = game.scorched./(game.board.territory)./(game.harvest).|((0, 0, 0))
+            // with ScorchedAfterEvents, what the territory gives at this harvest (Infestation, a skipped or doubled harvest)
+            val gives = (t : Territory) => game.options.has(ScorchedAfterEvents).?(EventsExpansion.harvest(t)).|(game.harvest(t))
+            val (food, wood, lore) = game.scorched./(game.board.territory)./(gives).|((0, 0, 0))
             val l = $[(Resource, Int)](Food -> food, Wood -> wood, Lore -> lore).filter(_._2 > 0).map(_._1)
 
             if (factions.has(Snake) && owner.any && l.any)
@@ -2286,6 +2287,22 @@ object CommonExpansion extends Expansion {
                 game.addOption(HorseTwoGuards)
                 if (game.paths.get(Horse).has(Leadership))
                     game.brokGuard = true
+            }
+
+            Then(then)
+
+        case ScorchedAfterEventsAction(then) =>
+            if (game.options.has(ScorchedAfterEvents).not)
+                game.addOption(ScorchedAfterEvents)
+
+            factions.foreach { f =>
+                $[Resource](Food, Wood, Lore).foreach { r =>
+                    val n = f.has(r)
+                    if (n < 0) {
+                        f.gain(r, -n)
+                        f.log("had", n.hl, r, "and now has", 0.hl)
+                    }
+                }
             }
 
             Then(then)

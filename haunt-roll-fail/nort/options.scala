@@ -605,6 +605,16 @@ case object HorseTwoGuards extends GameOption with ToggleOption {
     def valueOn = "Horse Clan's Brok has a bodyguard too".txt
 }
 
+// Snake Clan's Scorched Earth takes only what its territory gives at this harvest, after the Events that change it (Infestation's
+// 1 food less, a skipped or doubled harvest): Snake took 1 food from Horse's territory that Infestation had left with none, so Horse
+// was left with -1 food and the next fight asked it to spend food from an empty list (Saga and Clan, 2026-11-10). Hidden, and given
+// to every new game (Meta.mandatoryFor); older games replay the old way. A running game can be switched over with
+// ScorchedAfterEventsAction(X), which also puts any resource left below 0 back to 0
+case object ScorchedAfterEvents extends GameOption with ToggleOption {
+    val group = "Snake Clan".txt
+    def valueOn = "Scorched Earth takes only what the territory gives after the Events".txt
+}
+
 // Military paths: a clan losing one unit outside a fight (Draugr, the Swamp, Valdemar, an event, ...) with its bodyguard or a Militia in
 // that territory picks which of them goes, as the bodyguard comes back each year (Marzaus, 2026-11-07: "if i am to automatically loose
 // a unit, if there is bodyguard available, kill it or let me choose"; a unit always went). Hidden, and given to every new game

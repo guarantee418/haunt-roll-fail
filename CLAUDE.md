@@ -155,7 +155,7 @@ allows), or else the pane right under it (the map) does, and nothing else moves 
 Winter chart (`winterChart` in `nort/ui.scala`), except the lore (its icon or number), which opens the clan's Lore Tree (`LoreTree`, `loreTree`; Gman moved it there from the action pane on 2026-10-08). Each player can hide the
 tints and the colored borders under "Interface" (the Territory Color and
 Fame Borders settings in `nort/meta.scala`). The tints are the player colors themselves
-(`PlayerColor.hex`, the same colors as the names, except that yellow names and warchief names use the yellow units' brighter `#fbfb05`, `PlayerColor.ink`, asked for by the owner on 2026-10-18; red is a neon `#ff0000` for the names, the tint and the fame border dashes, Gman, 2026-11-04 and 07), at 50% opacity; picking "Custom" under Territory Color
+(`PlayerColor.hex`: each player color is one shade for the names, the tint and the fame border dashes, `PlayerColor.ink` and `lineOf` in `nort/ui.scala` being the same; red is a neon `#ff0000`, Gman, 2026-11-04 and 07, and yellow the yellow units' `#fbfb05`, which the names had since 2026-10-18; every color made one shade by Gman on 2026-11-10), at 50% opacity; picking "Custom" under Territory Color
 (`CustomTerritoryColor`) shows the "<Color> Territories" rows, where each player sets how
 opaque each color is, 0 to 100% in steps of 10 (default 50%) (`TerritoryOpacity`, a
 `CompactSetting`: its values are one row of small buttons in the settings screen,
@@ -182,6 +182,7 @@ Replacing a building (Industrious Villagers, Horse's Craftsmen) when there is mo
 A tile can't be placed where it joins two players' units (or a player's and a Fallen Valkyrie, which ignores the Robotos bot) into one territory; only the territories the tile joins are checked (`joins` in `nort/map.scala`), in games with the hidden `JoinedTilesOnly` option every new game gets. Older games check every territory on the map, so two clans sharing one anywhere (teammates, or Robotos beside a Valkyrie) stopped every Explore (Winter of Saga, 2026-10-13).
 Naströnd (Wastelands, `waste-nastrond`) gives the two wood it prints, in its west and east territories, at harvest and to everything collecting from a territory (Quality of Life, Lay of the Land, ...), in games with the hidden `NastrondWood` option every new game gets (`Game.areaSpec`); the tile data had no wood there (Marzaus, 2026-11-01), so older games keep none.
 Dragon Clan's extra food or wood after harvesting is only one that one of its territories gave at that harvest, less what Snake's Scorched Earth took there (`dragonExtra` in `nort/newblood.scala`, `game.scorchedTook`; Geffrey collected food from a scorched food territory, reported on Discord on 2026-10-19), in games with the hidden `DragonExtraFromTerritory` option every new game gets; older games offer either.
+Snake's Scorched Earth offers only what its territory gives at that harvest after the Events (Infestation's 1 food less, a skipped or doubled harvest; `ScorchedHarvestAction` in `nort/game.scala`, `EventsExpansion.harvest`), in games with the hidden `ScorchedAfterEvents` every new game gets: in Saga and Clan (2026-11-10) Snake took food Infestation had already removed, Horse was left with -1 food and its next fight asked it to spend food from an empty list, which stopped the game. `ScorchedAfterEventsAction(X)` switches a running game and puts any food, wood or lore below 0 back to 0. Every food payment (fights, creatures, the Lion's and Economics) now skips its question when the stock is 0 or less, so a negative stock can't stop a game again.
 A clan taking casualties in a fight picks which figures go when it has a choice (units, the warchief, Kaija or the other companions, Jötunn Blainn; `CasualtyPickAction` in `nort/map.scala`, asked for by Robotos on 2026-10-11), only in games with the hidden `ChooseCasualties` option that every new game gets (`mandatoryFor` in `nort/meta.scala` and `nort/adset.scala`); older games keep taking units first so their replays don't change. A running older game can be switched over from a given fight by wrapping a recorded step in `ChooseCasualtiesAction(X)` through an `hrf-games` fix (`nort/game.scala`; made on 2026-10-15 for Winter of Saga, where Snake wanted to lose its warchief to the Fallen Valkyrie instead of its last unit).
 Ancestral Curse's opponents pick the card they discard all at once, each on their own screen (a `MultiAsk`, `CurseAllAction` in `nort/effects.scala`; asked for by the owner on 2026-10-16), instead of one after another, only in games with the hidden `SimultaneousCurse` option that every new game gets; older games keep asking in turn order.
 The Kraken Clan card offers only the food or wood that a territory Kraken controls with a High Tide token gives (`resourcesIn` in `nort/newblood.scala`; with neither, it goes straight to the draw), as the card says "from a territory" (reported by Marzaus on 2026-10-19), only in games with the hidden `KrakenFromTerritory` option that every new game gets; older games offer either.
@@ -760,6 +761,10 @@ file covers the build, server and deploy. No session can ssh to the server
   Gman asked for the notification back on 2026-10-31, as it held up the game: new games no longer get `OutragePeekNeedsOk`
   (still hidden, so the games that have it keep waiting; `InsurgentExpansion.peekWaits`), and a running game can be switched
   back with `OutragePeekNotifiesAction(X)`.
+  In every game, the words "looked at" in the log line of that look ("Woodland Alliance looked at ... cards, no ... cards") are tappable
+  and show the cards seen again to the faction that saw them (everyone once the game is over; others get "Only ... saw them"), so
+  the Alliance's player can find them later without the Notifications list (`PeekedHandView` in `root/cards.scala`, shown by
+  `onClick` in `root/ui.scala`; Gman, 2026-11-09). Log text only, so no game records change.
 - Root remembers in each browser how many notifications (cards drawn, hands seen) it has shown in each online game
   (`<settingsKey>.notifications-seen.<lobby>`, `seenBefore` and `saveSeen` in `root/ui.scala`), saved at the first tap after
   they show, so opening a game shows only those that came since; before 2026-10-31 every notification of the game popped up
@@ -916,6 +921,11 @@ file covers the build, server and deploy. No session can ssh to the server
   `drawTrackers` draws `tracker/item-track.webp`, on a dark translucent panel so
   its light slots show on the snowy maps, under
   them and `drawItemSlots` draws `game.uncrafted` on them.
+- The boxes on the Root map (the item tracker, the score tracker and, with the Card Piles on Map setting, the card piles) never
+  hide a piece (Gman, 2026-11-09: in Movement as Betrayal the items covered the pieces in Effigy): warriors, tokens and pawns are
+  placed off them (`overlayRects` in `root/ui.scala`, a cost in the free placement, and pieces kept from an earlier draw under one
+  are placed again), the rule flags too (`findFlagSpot`), and the boxes are drawn after the Marquise's Keep but under every other
+  piece, so a building in a slot under one still shows. The card piles' taps come after the pieces' (`cardPileTargets`). Display only.
 - The Homeland Marsh map is `MarshBoard` in `root/maps.scala` (option
   `MarshMap`, images in `webp2/root/images/marsh/`; the map is the plain board art
   the owner uploaded on 2026-10-06, aligned to the earlier printed-board image and

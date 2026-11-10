@@ -337,7 +337,7 @@ object InsurgentExpansion extends FactionExpansion[Insurgent] {
                 val draw = DrawCardsAction(f, 1, ToSupporters(f), AddSupportersAction(f, then))
 
                 if (o.hand.any) {
-                    f.log("looked at", o, "cards, no", c.suits, "cards")
+                    f.log(PeekedHandView.link(f, o, o.hand.$), o, "cards, no", c.suits, "cards")
 
                     if (InsurgentExpansion.peekWaits)
                         PeekCardsAsk(f, FactionHand(o), o.hand, draw)

@@ -277,6 +277,9 @@ package object elem {
 
         object nowrap extends CustomStyle(white.space("nowrap"))
 
+        // A word in the log that opens something when tapped (PeekedHandView)
+        object tappable extends CustomStyle(SimpleCSSRule("text-decoration", "underline dotted"), SimpleCSSRule("text-underline-offset", "0.3ex"))
+
         object wrap extends CustomStyle(white.space("normal"))
 
         object smbr extends CustomStyle(max.height("0.5ch"))

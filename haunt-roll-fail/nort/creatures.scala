@@ -543,7 +543,7 @@ object CreaturesExpansion extends Expansion {
             val t = game.board.territory(a)
             val max = math.min(f.food, game.figures(t, f))
 
-            if (max == 0)
+            if (max <= 0)
                 Then(CreatureFoodAction(f, a, c, e, attacking, 0, then))
             else
                 Ask(f).each(0.to(max).$)(k => CreatureFoodAction(f, a, c, e, attacking, k, then))

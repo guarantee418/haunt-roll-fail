@@ -261,7 +261,7 @@ object LionExpansion extends Expansion {
         case LionClanEffect =>
             // Paying for units that can't be placed would be lore lost
             val max = math.min(2, math.min(f.lore, math.max(0, game.reserve(f) - 1)))
-            if (max == 0)
+            if (max <= 0)
                 Then(RecruitAction(f, 1, RecruitSame, $, then))
             else
                 Ask(f).each(0.to(max).$)(n => LionPayAction(f, n, then))
@@ -269,7 +269,7 @@ object LionExpansion extends Expansion {
         case PaladinsEffect =>
             // Paying for units that can't be placed would be Faith lost
             val max = math.min(4, math.min(f.faith, math.max(0, game.reserve(f) - 1)))
-            if (max == 0)
+            if (max <= 0)
                 Then(RecruitAction(f, 1, RecruitSame, $, then))
             else
                 Ask(f).each(0.to(max).$)(n => PaladinsPayAction(f, n, then))

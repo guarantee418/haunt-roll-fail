@@ -1372,7 +1372,13 @@ Check these against the rulebook when it is at hand.
   enemy-held territory next to one it controls. Snake gets +1 combat point
   fighting there. At harvest, if another player controls that territory,
   Snake may take one resource of a kind it produces; that player gets one
-  fewer.
+  fewer. In games with the hidden `ScorchedAfterEvents` every new game gets,
+  "produces" is what the territory gives at that harvest, after the Events
+  (Infestation's 1 food less, a skipped or doubled harvest): in Saga and Clan
+  (2026-11-10) Snake took 1 food from a territory Infestation had left with
+  none, Horse went to -1 food, and its next fight stopped the game.
+  `ScorchedAfterEventsAction(X)` switches a running game and puts any
+  resource below 0 back to 0.
 - **Hunters, Woodcutters, Loremasters**: icons on tiles and buildings count;
   if the reserve is too small, units are placed one at a time by choice.
 - **Raiding Party**: any enemy unit on the map; the resource comes from
