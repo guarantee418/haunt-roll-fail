@@ -760,6 +760,10 @@ file covers the build, server and deploy. No session can ssh to the server
   Gman asked for the notification back on 2026-10-31, as it held up the game: new games no longer get `OutragePeekNeedsOk`
   (still hidden, so the games that have it keep waiting; `InsurgentExpansion.peekWaits`), and a running game can be switched
   back with `OutragePeekNotifiesAction(X)`.
+  In every game, the words "looked at" in the log line of that look ("Woodland Alliance looked at ... cards, no ... cards") are tappable
+  and show the cards seen again to the faction that saw them (everyone once the game is over; others get "Only ... saw them"), so
+  the Alliance's player can find them later without the Notifications list (`PeekedHandView` in `root/cards.scala`, shown by
+  `onClick` in `root/ui.scala`; Gman, 2026-11-09). Log text only, so no game records change.
 - Root remembers in each browser how many notifications (cards drawn, hands seen) it has shown in each online game
   (`<settingsKey>.notifications-seen.<lobby>`, `seenBefore` and `saveSeen` in `root/ui.scala`), saved at the first tap after
   they show, so opening a game shows only those that came since; before 2026-10-31 every notification of the game popped up

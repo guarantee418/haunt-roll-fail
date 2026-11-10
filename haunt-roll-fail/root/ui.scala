@@ -5088,6 +5088,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             seenBefore = 0
             showNotifications(factions)
 
+        // The "looked at" of a hand look in the log: the cards seen, for the faction that saw them (or anyone once the game is over)
+        case PeekedHandView(f, o, l) =>
+            val viewer = game.isOver || lastSelf./(fix).has(f) || (callbacks.hotseat && (passing.not || passedTo./(fix).has(f)))
+
+            if (viewer)
+                showOverlay(overlayScrollX((f.elem ~ " looked at " ~ o.elem ~ " cards").div ~
+                    l./{ d => OnClick(d, Div(d.img, xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined)) }.merge), onClick)
+            else
+                showOverlay(overlayScrollX((f.elem ~ " looked at " ~ o.elem ~ " cards").div ~
+                    ("Only " ~ f.elem ~ " saw them.").div(xstyles.info)), onClick)
+
         case ("view-scorelog", f : Faction) =>
             showOverlay(overlayScrollX((f.name.styled(f) ~ " scored").div ~
                 f.scorelog./(_.div(xstyles.info)(xstyles.xx)(xstyles.chm)(xstyles.chp)(xstyles.thu)(styles.extrachp)).merge), onClick)

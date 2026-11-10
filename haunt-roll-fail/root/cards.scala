@@ -420,6 +420,15 @@ case class ViewCardInfoAction(self : Player, s : Elem, d : Card) extends BaseInf
 // The OK after looking at another faction's cards (PeekCardsAskAction), so the game waits until they were seen
 case class PeekCardsSeenAction(self : Faction, then : ForcedAction) extends BaseAction(None)("Ok")
 
+// The words "looked at" in the log line of a look at a hand (Outrage or Pacifism with no card to give): tapping them shows the
+// cards seen again, only to the faction that saw them, or to everyone once the game is over (Gman, 2026-11-09), as the Ok to
+// see them is no longer waited for and the notification is easy to miss. Log text only, so no game records change
+case class PeekedHandView(f : Faction, o : Faction, l : $[DeckCard])
+
+object PeekedHandView {
+    def link(f : Faction, o : Faction, l : $[DeckCard]) : Elem = OnClick(PeekedHandView(f, o, l), "looked at".spn(styles.tappable)(xlo.pointer))
+}
+
 object PeekCardsAsk {
     // Shows the cards to f in its action pane and waits for its OK
     def apply(f : Faction, m : Message, l : $[DeckCard], then : ForcedAction)(implicit game : Game) : Continue =

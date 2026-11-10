@@ -247,9 +247,9 @@ object LegalAAAExpansion extends FactionExpansion[LegalAAA] {
                 val draw = DrawCardsAction(f, 1, NoMessage, AddCardsAction(f, then))
 
                 if (o.hand.any) {
-                    f.log("looked at", o, "cards, no", c.suits, "cards")
-
                     val seen = o.hand.$
+
+                    f.log(PeekedHandView.link(f, o, seen), o, "cards, no", c.suits, "cards")
 
                     if (f.has(IntensifyPacifism)) {
                         o.hand --> discard(o, "due", IntensifyPacifism.of(f))
