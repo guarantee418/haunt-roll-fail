@@ -756,6 +756,13 @@ always plays its own cards.
   100) and in three and four players (see the PR); the new bot Removes three
   times as often, Replaces less, trades and builds more and passes with cards
   in hand less often. Robotos is the same bot, so it plays the same way.
+- **Trades** (`tradeValue` in `bot-hard.scala`): a harvest, teammate or Bonfire trade must pay off by
+  its resources alone (it buys one the clan is short of, `short`, and is worth more than what it pays);
+  only then does it also count towards the Trading victory card, unless that trade wins the game. Before,
+  every trade was a step towards the card, so in a team game with it the bots traded resources away and
+  straight back (Stag: 3 wood for lore, wood and 2 lore for food, 3 food for lore; Gman, 2026-11-10). In 20
+  four-player team games with Alternative victory, trades that gave back what was just bought went from
+  19 to 2.
 - **Strategy notes it follows**, from the BoardGameGeek strategy forum (read
   through the `api.geekdo.com` JSON API, since the site's pages refuse
   scripts): most games end with three closed territories holding large
