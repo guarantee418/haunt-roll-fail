@@ -635,7 +635,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     val warchiefCards = has(Warchiefs) && options.has(WarchiefPawns).not || options.has(WarchiefCards)
 
     // Three closed territories with large buildings win at the end of a year (not with the Alternative victory module)
-    val domination = options.has(FameOnly).not && has(VictoryModule).not && has(FameGainsModule).not && (setup.has(Automa).not || options.has(AutomaLevelOption(1)))
+    val domination = options.has(FameOnly).not && options.has(DominationOnly).not && has(VictoryModule).not && has(FameGainsModule).not && (setup.has(Automa).not || options.has(AutomaLevelOption(1)))
 
     // Team play: each player on the team picked on its row of the setup screen (TeamPlay, TeamOption)
     val teamPlay : Boolean = options.has(TeamPlay)

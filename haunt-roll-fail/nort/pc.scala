@@ -67,7 +67,10 @@ object PCExpansion extends Expansion {
     def on(implicit game : Game) = game.has(PCVersion)
 
     // MAP LAYOUT: the spaces of the map and each Port (its spot and the side its sea is on), by the number of clans, clockwise
-    def layout(n : Int) : ($[(Int, Int)], $[((Int, Int), Side)]) = n match {
+    // (wide: the two-player map with its three middle rows five tiles wide, an oval; Gman, 2026-11-11; PCVersionUpdate)
+    def layout(n : Int, wide : Boolean = false) : ($[(Int, Int)], $[((Int, Int), Side)]) = n match {
+        case 2 if wide =>
+            (for (y <- -2.to(2).$; x <- -2.to(2).$; if y.abs < 2 || x.abs < 2) yield (x, y), $(((0, -2), North), ((0, 2), South)))
         case 2 =>
             (for (y <- -2.to(2).$; x <- -1.to(1).$) yield (x, y), $(((0, -2), North), ((0, 2), South)))
         case 3 =>
@@ -103,7 +106,7 @@ object PCExpansion extends Expansion {
 
     // Build the whole map; the homes, in the layout's Port order
     def buildMap(tiles : $[String])(implicit game : Game) : $[Home] = {
-        val (cells, ports) = layout(game.arity)
+        val (cells, ports) = layout(game.arity, game.options.has(PCVersionUpdate))
         val board = game.board
 
         var best : |[($[Placement], $[String], $[Home])] = None
@@ -145,6 +148,26 @@ object PCExpansion extends Expansion {
 
         def has(x : Int, y : Int) = byXY.contains((x, y))
 
+        // What each placement joined, so the last ones can be taken back
+        private val undos = scala.collection.mutable.ArrayBuffer[($[AreaRef], $[AreaRef], Int)]()
+
+        def removeLast() {
+            val p = placed.remove(placed.size - 1)
+            byXY.remove((p.x, p.y))
+            val (undo, areas, n) = undos.remove(undos.size - 1)
+            borders.remove(borders.size - n, n)
+            undo.reverse.foreach(k => parent(k) = k)
+            areas.foreach(parent.remove)
+        }
+
+        // Places all of l, or none
+        def tryAddAll(l : $[Placement]) : Boolean = {
+            val k = l.takeWhile(tryAdd).num
+            if (k < l.num)
+                0.until(k).foreach(_ => removeLast())
+            k == l.num
+        }
+
         private def find(a : AreaRef) : AreaRef = {
             var x = a
             while (parent(x) != x)
@@ -180,6 +203,7 @@ object PCExpansion extends Expansion {
                 placed += p
                 byXY((p.x, p.y)) = p
                 borders ++= mine
+                undos += ((undo.toList, areas, mine.num))
             }
             else {
                 undo.foreach(k => parent(k) = k)
@@ -214,18 +238,34 @@ object PCExpansion extends Expansion {
             o.any && i.any && o != i && o.get.edges.num == 1 && o.get.lair.not
         }
 
-        // A tile for (x, y) from the pile, or with from a copy of that tile
+        // Mirrored maps (Gman, 2026-11-11: "When possible, it would be good to mirror starting positions"): where the layout turns onto
+        // itself (two clans, four and six), each tile placed is also placed, turned the same way, at the cells the map's turns take it
+        // to, so every home sees the same map around it (PCVersionUpdate; the first levels of retries only, then it may go)
+        val turnsOf : $[Int] = (game.options.has(PCVersionUpdate) && level < 2).??(game.arity match {
+            case 2 | 6 => $(2)
+            case 4 => $(1, 2, 3)
+            case _ => $[Int]()
+        })
+        def images(p : Placement) = turnsOf./{ k =>
+            val (x, y) = 0.until(k).foldLeft((p.x, p.y)) { case ((x, y), _) => (-y, x) }
+            Placement(p.tile, x, y, (p.r + k) % 4)
+        }
+        def put(p : Placement) = (p +: images(p)).distinctBy(q => (q.x, q.y)).use(l => l.num == 1 + turnsOf.num && l.drop(1).forall(q => cells.has((q.x, q.y)) && g.has(q.x, q.y).not) && g.tryAddAll(l))
+
+        // A tile for (x, y) from the pile, or with from a copy of that tile (nothing to do where a mirrored tile is already)
         def fill(x : Int, y : Int, ok : Placement => Boolean, from : |[String] = None) : Boolean = {
+            if (turnsOf.any && g.has(x, y))
+                return true
             val turns = seq.next(4)
             if (from.any)
                 return 0.until(4).exists { k =>
                     val p = Placement(from.get, x, y, (k + turns) % 4)
-                    ok(p) && g.tryAdd(p)
+                    ok(p) && put(p)
                 }
             pile.find { t =>
                 0.until(4).exists { k =>
                     val p = Placement(t, x, y, (k + turns) % 4)
-                    ok(p) && g.tryAdd(p)
+                    ok(p) && put(p)
                 }
             }./(t => pile = pile.diff($(t))).any
         }
@@ -252,8 +292,22 @@ object PCExpansion extends Expansion {
         def besideOk(d : Side, q : Side, wood : Boolean)(p : Placement) =
             besideFits(p, d, q) && only(p.spec.areaOn(d, p.r).get, 0, wood.??(1), wood.not.??(1)) && p.spec.areaOn(q, p.r).exists(a => alone(a) && only(a, 0, 0, 0) && a.lair.not)
 
-        def inlandOk(d : Side)(p : Placement) =
-            p.spec.areaOn(d, p.r).exists(a => alone(a) && only(a, (level < 2).??(1), 0, 0) && a.lair.not)
+        // Mines (Gman, 2026-11-11): beside its food area the inland tile has a lair in an area of its own on a side across the Port's
+        // line, so with the tile beyond that side giving an area of its own with a small building space, every home has a lair
+        // territory with a space for a Mine just outside it
+        // (in games with the hidden PCVersionUpdate every new game gets; older games keep the maps they were dealt)
+        val mines = game.options.has(PCVersionUpdate) && level < 3
+
+        def mineSide(d : Side, x : Int, y : Int)(p : Placement) : |[Side] = mines.??(
+            Side.all.%(s => s != d && s != d.opposite).find(s => cells.has((x + s.dx, y + s.dy)) && g.has(x + s.dx, y + s.dy).not &&
+                p.spec.areaOn(s, p.r).exists(a => a.edges.num == 1 && a.lair && a.wood == 0 && a.lore == 0 && a.food == 0)))
+
+        def inlandOk(d : Side, x : Int, y : Int)(p : Placement) =
+            p.spec.areaOn(d, p.r).exists(a => alone(a) && only(a, (level < 2).??(1), 0, 0) && a.lair.not) && (mines.not || mineSide(d, x, y)(p).any)
+
+        // The tile beyond the lair: its side towards it in an area of its own with a small building space
+        def mineOk(s : Side)(p : Placement) =
+            p.spec.areaOn(s.opposite, p.r).exists(a => a.edges.num == 1 && a.lair.not && a.spaces.exists(_.kind == SmallSpace))
 
         // Every clan's home gets the same three tiles (copies, turned to fit), so the homes are alike: a tile for the wood side, one
         // for the lore side and one inland of the Port, each picked once among the tiles that fit; with none, tiles from the pile
@@ -266,11 +320,12 @@ object PCExpansion extends Expansion {
         val sideOf = beside.take(2)./{ case (_, d, q, wood) => wood -> q }.toMap
         val woodTile = (level < 3).??(pick(besideOk(d0, sideOf(true), true), $))
         val loreTile = (level < 3).??(pick(besideOk(d0, sideOf(false), false), woodTile.$))
-        val foodTile = (level < 3).??(pick(inlandOk(d0), woodTile.$ ++ loreTile.$))
-        val copies = woodTile.any && loreTile.any && foodTile.any
+        val foodTile = (level < 3).??(pick(inlandOk(d0, px0 - d0.dx, py0 - d0.dy), woodTile.$ ++ loreTile.$))
+        val mineTile = mines.??(pick(mineOk(North), woodTile.$ ++ loreTile.$ ++ foodTile.$))
+        val copies = woodTile.any && loreTile.any && foodTile.any && (mines.not || mineTile.any)
 
         if (copies)
-            pile = pile.diff(woodTile.$ ++ loreTile.$ ++ foodTile.$)
+            pile = pile.diff(woodTile.$ ++ loreTile.$ ++ foodTile.$ ++ mineTile.$)
 
         val placedBeside = beside.forall { case ((x, y), d, q, wood) =>
             fill(x, y, besideOk(d, q, wood), copies.??(wood.?(woodTile).|(loreTile)))
@@ -281,8 +336,14 @@ object PCExpansion extends Expansion {
 
         // The tile inland of each Port: its side towards the Port in an area of its own giving 1 food; with the beside tiles' areas
         // by the Port giving nothing, the Port territory is the Port and those three areas, and gives 1 food
+        // (mirrored, a home's tiles are already there where another home's were placed)
         val inland = ports.forall { case ((px, py), d) =>
-            fill(px - d.dx, py - d.dy, inlandOk(d), copies.??(foodTile))
+            val (x, y) = (px - d.dx, py - d.dy)
+            (turnsOf.any && g.has(x, y)) ||
+            fill(x, y, inlandOk(d, x, y), copies.??(foodTile)) && (mines.not || {
+                val s = mineSide(d, x, y)(g.placed.find(p => p.x == x && p.y == y).get).get
+                fill(x + s.dx, y + s.dy, mineOk(s), copies.??(mineTile))
+            })
         }
 
         if (inland.not)
@@ -422,6 +483,10 @@ object PCExpansion extends Expansion {
         case Myrkalf => game.year >= 3
         case _ => false
     }
+
+    // With 3 clans or more the Wilderness and Wastelands creatures are in the deck too, so there are creatures for more territories
+    // between the homes (Gman, 2026-11-11; PCVersionUpdate)
+    def moreCreatures(implicit game : Game) = on && game.options.has(PCVersionUpdate) && game.arity >= 3
 
     // The clans still in the game
     def standing(implicit game : Game) : $[Faction] = game.factions.%(f => game.out.has(f).not)
@@ -654,6 +719,34 @@ object PCExpansion extends Expansion {
                 Then(LastStandingAction(sides.flatten))
             else
                 game.internalPerform(EndOfYearAction, soft)
+
+        // Mines give Stone, with no die roll, as upgrades matter so much here (Gman, 2026-11-11): 1 a Mine (an upgraded one counts
+        // twice), as long as the supply has Stone; in games with the hidden PCVersionUpdate every new game gets
+        case MineHarvestAction(f :: rest, then) if game.options.has(PCVersionUpdate) =>
+            val n = MineralsExpansion.mines(f).min(MineralsExpansion.left(Stone))
+
+            if (n == 0)
+                log("No", Stone, "is left to extract")
+            else {
+                f.gainMineral(Stone, n)
+                game.mineralBank += Stone -> (MineralsExpansion.left(Stone) - n)
+
+                f.log("extracted", MineralsLabel(n.times(Stone)))
+
+                game.note("mined-stone")
+            }
+
+            Then(MineHarvestAction(rest, then))
+
+        // Domination victory only: after the last year the game goes on until one clan (or team) is left holding its Town Hall; the
+        // bot games stop after Debug.fameExtraYears more years and score as usual
+        case GameEndAction if game.options.has(DominationOnly) && game.year < game.lastYear + Debug.fameExtraYears =>
+            log(DoubleLine)
+            log("More than one clan still holds its", TownHall, Comma, "so the game goes on")
+
+            game.note("domination-extra-year")
+
+            Then(game.from(game.first).foldRight(NewYearAction : ForcedAction)((f, then) => ReturnUnitsAction(f, then)))
 
         case LastStandingAction(winners) =>
             game.isOver = true

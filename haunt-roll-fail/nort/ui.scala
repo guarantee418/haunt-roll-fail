@@ -1012,12 +1012,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             pieces.add(Sprite($(at(b.image, buildingSize(b))), $))(sx(x), sy(y))
         }
 
-        // PC version: each clan's Town Hall on its Port, upgraded or not (tapped: what it does)
+        // PC version: each clan's Town Hall in its Port territory, upgraded or not (tapped: what it does), on the meadow left of the
+        // rocks, clear of the Port in the middle of the tile and the small building space (Gman, 2026-11-11: the Port stays visible)
         game.halls.foreach { case (f, a) =>
             if (foggy.contains(a).not)
                 board.at(a.x, a.y).foreach { p =>
-                    val (x, y) = board.rotate(0.52, 0.52, p.r)
-                    val n = largeBuilding
+                    val (x, y) = board.rotate(0.42, 0.19, p.r)
+                    val n = largeBuilding * 0.85
                     pieces.add(Sprite($(at(PCExpansion.upgraded(f).?(TownHall.upgraded).|(TownHall.image), n)), $(Rectangle(-n / 2, -n / 2, n, n)), $(TownHallInfo(f))))(sx(a.x + x), sy(a.y + y))
                 }
         }
