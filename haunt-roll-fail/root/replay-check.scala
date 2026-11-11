@@ -30,6 +30,8 @@ object ReplayCheck {
     var chooseHits = false
     // "ldrf": every menu of Riverfolk services buys a service when it can
     var buyServices = false
+    // "cctc": the Corvids with the Twilight Council, and every menu offering an exposure exposes, at a Governing assembly when it can
+    var exposeAll = false
 
     def options(seating : $[Faction]) : $[Meta.O] = mountain.?($[Meta.O](
         MountainMap, NoClustersClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
@@ -40,7 +42,7 @@ object ReplayCheck {
     )).|($[Meta.O](
         AutumnMap, DefaultClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
         FerryLandmark, LostCityLandmark, SeatingGiven, FactionSeatingGiven, SetupOrderPriority, CardDraftStandard,
-    ))).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (squires && o == MixedDeck).?[Meta.O](SquiresDeck).|(o)).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.??($[Meta.O](FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned)) ++ (async || chooseHits).??($[Meta.O](AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode)) ++ chooseHits.$(ForcedAsyncChooseHits) ++ seating./(IncludeFaction)
+    ))).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (squires && o == MixedDeck).?[Meta.O](SquiresDeck).|(o)).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.??($[Meta.O](FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, GovernorsStopExposure)) ++ (async || chooseHits).??($[Meta.O](AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode)) ++ chooseHits.$(ForcedAsyncChooseHits) ++ seating./(IncludeFaction)
 
     def privateMap(o : AnyRef, suffix : String) : Map[Any, Any] = {
         val f = o.getClass.getDeclaredFields.filter(_.getName.endsWith(suffix)).head
@@ -117,6 +119,27 @@ object ReplayCheck {
         (g, c)
     }
 
+    // "cctc": what goes wrong when the exposure a is made right at an enemy Council's Governing assembly, or None
+    def governedProbe(seating : $[Faction], recorded : $[ExternalAction], a : UserAction) : |[String] = a.unwrap match {
+        case PrepareDiscardCardsAction(f, $(d), ExposeAction(_, e, c, p, _)) =>
+            val (g, _) = rebuild(seating, recorded)
+            implicit val game : Game = g
+            val t = factions.of[Council].single.get
+            if (t == f || t.reserve.has(GoverningAssembly).not)
+                return None
+            t.reserve --> GoverningAssembly --> c
+            e.secret += c -> p
+            val vp = f.vp
+            settle(g, g.performContinue(|(g.continue), a, false).nest) match {
+                case _ if e.secret.get(c).has(p).not => |("plot removed in " + c)
+                case _ if f.vp != vp => |("scored " + (f.vp - vp))
+                case _ if f.hand.has(d).not => |("card not back in hand")
+                case Ask(_, l) if l.exists(_.unwrap match { case ExposeMainAction(_, _, k, _) => k.has(c); case _ => false }) => |("offered again in " + c)
+                case _ => None
+            }
+        case _ => None
+    }
+
     def main(args : Array[String]) {
         val games = args.lift(0)./(_.toInt).|(6)
         marsh = args.exists(_.startsWith("marsh"))
@@ -126,6 +149,7 @@ object ReplayCheck {
         async = args.contains("async")
         chooseHits = args.contains("choosehits")
         buyServices = args.lift(1).has("ldrf")
+        exposeAll = args.lift(1).has("cctc")
         oldFrogs = args.contains("oldfrogs")
         oldHire = args.contains("oldhire")
         hire = args.find(_.startsWith("hire:"))./~(_.drop(5).split(',').$./(n => Meta.hirelings.%(h => h.name == n || h.short == n || h.toString == n).single.|!("no hireling " + n)))
@@ -139,6 +163,7 @@ object ReplayCheck {
             case "ldlc" => $($(MC, ED, LDvE, LC), $(MC, WA, LDvE, LC))
             case "ldtc" => $($(MC, ED, LDvE, TC), $(MC, WA, LDvE, TC))
             case "ldrf" => $($(MC, RF, LDvE, UD), $(MC, ED, RF, LDvE))
+            case "cctc" => $($(MC, ED, CC, TC), $(MC, WA, CC, TC))
             case "marsh5" => $($(MC, ED, WA, VB, LDvE), $(MC, ED, WA, KD, TC))
             case "mountain" => $($(MC, ED, WA, TC), $(MC, TC, KD, LDvE), $(ED, TC, WA, UD))
             case "marsh" => $($(MC, ED, WA, VB), $(MC, ED, WA, LDvE), $(MC, WA, KD, TC))
@@ -146,7 +171,7 @@ object ReplayCheck {
         var failures = 0
         // how often each hireling-related choice was recorded, to see that the bots used them
         var used = Map[String, Int]()
-        val keys = $("Hireling", "WarmSun", "Sunward", "CorvidSpies", "FlameBearers", "VaultKeepers", "FuriousProtector", "HighwayBandit", "PopularBand", "SunnyAdvocates", "BatMessengers", "RiverRoamers", "FrogTinkers", "Farmers", "Brigand", "ClearPath", "LizardEnvoys", "Bluebird", "FelinePhysicians", "MoleArtisians", "RatSmugglers", "ForestPatrol", "Patrol", "LastDynasty", "Uprising", "Exile", "Flotilla", "StreetBand", "BanditGangs", "Scouts")
+        val keys = $("ExposeAction", "Hireling", "WarmSun", "Sunward", "CorvidSpies", "FlameBearers", "VaultKeepers", "FuriousProtector", "HighwayBandit", "PopularBand", "SunnyAdvocates", "BatMessengers", "RiverRoamers", "FrogTinkers", "Farmers", "Brigand", "ClearPath", "LizardEnvoys", "Bluebird", "FelinePhysicians", "MoleArtisians", "RatSmugglers", "ForestPatrol", "Patrol", "LastDynasty", "Uprising", "Exile", "Flotilla", "StreetBand", "BanditGangs", "Scouts")
 
         0.until(games).foreach { gi =>
             val seating = pool(gi % pool.num).shuffle
@@ -217,7 +242,28 @@ object ReplayCheck {
                                 case BuyServicesAction(_, _, o) => o.exists(_.purchase.is[Service])
                                 case _ => false
                             }).shuffle.take(1))
-                            val a = if (buy.any) buy(0) else if (l.num == 1) l(0) else new BotXX(f).ask(l, 0)(game).immediate
+                            // "cctc": take an exposure whenever one is offered, preferring a Governing assembly, and pay its card
+                            val expose = exposeAll.??(l.shuffle.%(_.is[Choice]).%(_.unwrap match {
+                                case _ : ExposeMainAction | _ : ExposePlotAction => true
+                                case _ : ExposeClearingAction => true
+                                case PrepareDiscardCardsAction(_, _, _ : ExposeAction) => true
+                                case _ => false
+                            }).sortBy(_.unwrap match {
+                                case ExposeClearingAction(e, _, c, _) => Council.governs(e, c)(game).?(0).|(1)
+                                case _ => 0
+                            }).take(1))
+                            expose.foreach(_.unwrap match {
+                                case PrepareDiscardCardsAction(_, _, ExposeAction(e, _, c, _, _)) =>
+                                    used += "Exposure" -> (used.getOrElse("Exposure", 0) + 1)
+                                    if (Council.governs(e, c)(game))
+                                        used += "Exposure at a Governing assembly" -> (used.getOrElse("Exposure at a Governing assembly", 0) + 1)
+                                    // on a rebuilt copy, put a Governing assembly there and make the guess right: the plot must stay,
+                                    // nothing be scored, the card come back, and no exposure be offered there again this turn
+                                    governedProbe(seating, recorded, expose(0)).foreach { m => failures += 1; +++("  GOVERNED EXPOSURE", m) }
+                                    used += "Governed exposure probe" -> (used.getOrElse("Governed exposure probe", 0) + 1)
+                                case _ =>
+                            })
+                            val a = if (expose.any) expose(0) else if (buy.any) buy(0) else if (l.num == 1) l(0) else new BotXX(f).ask(l, 0)(game).immediate
                             chosen = |(a)
                             a match {
                                 case _ if a.isSoft =>
@@ -248,6 +294,9 @@ object ReplayCheck {
             }
 
             +++("game", gi, seating./(_.name).mkString(", "), "-", recorded.num, "recorded actions", over.?("finished").|("stopped"))
+            // "cctc": exposures a Council's Governors kept from removing a plot (GovernorsStopExposure)
+            if (game.governedGuesses.any)
+                used += "GovernedGuess" -> (used.getOrElse("GovernedGuess", 0) + game.governedGuesses.num)
 
             var bad = 0
             val points = (if (args.lift(2).has("dense")) 1.until(math.min(recorded.num, 400)).$ else (1.until(recorded.num).by(math.max(1, recorded.num / 80)).$ :+ (recorded.num - 1))).distinct.%(snapshots.contains)

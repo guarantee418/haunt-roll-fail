@@ -184,7 +184,8 @@ object MischiefExpansion extends FactionExpansion[Mischief] {
 
     def expose(f : Faction)(implicit game : Game, ask : ActionCollector) {
         factions.but(f).of[Mischief].foreach { e =>
-            e.hidden.%(f.present).some.foreach { l =>
+            // not again where the faction already guessed right this turn and the Governors still keep the plot (GovernorsStopExposure)
+            e.hidden.%(f.present).%!(c => game.governedGuesses.has((game.turn, f, c)) && Council.governs(f, c)).some.foreach { l =>
                 + ExposeMainAction(f, e, l, Repeat)
                     .!(l.%(c => f.hand.exists(_.matches(c.cost))).none, "no matching cards")
             }
@@ -269,6 +270,14 @@ object MischiefExpansion extends FactionExpansion[Mischief] {
             OptionalDiscardCardAction(f, ToExpose(e, p, c), c.cost, ExposeAction(f, e, c, p, then))
 
         case ExposeAction(f, e, c, p, then) =>
+            // Governors (17.2.3): a correct guess at an enemy Council's Governing assembly can't remove the plot (GovernorsStopExposure)
+            if (e.secret.get(c).has(p) && (game.options.has(GovernorsStopExposure) || game.governorsStopExposure) && Council.governs(f, c)) {
+                e.notify(f.drawn./(d => ViewCardInfoAction(f, f.elem ~ " guessed " ~ p.of(e) ~ " in " ~ c.elem ~ " with", d)))
+                f.log("guessed", p.of(e), "in", c, "but could not remove it due to", CouncilGovernors.of(factions.of[Council].%(_.at(c).has(GoverningAssembly)).first))
+                f.drawn --> f.hand
+                game.governedGuesses :+= ((game.turn, f, c))
+            }
+            else
             if (e.secret.get(c).has(p)) {
                 e.notify(f.drawn./(d => ViewCardInfoAction(f, f.elem ~ " exposed " ~ p.of(e) ~ " in " ~ c.elem ~ " with", d)))
                 f.oscore(1)("exposing", p.of(e), "in", c)

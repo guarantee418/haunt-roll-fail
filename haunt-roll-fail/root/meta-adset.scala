@@ -118,6 +118,7 @@ object MetaAdset extends MetaGame {
         ReconcileOneAtATime,
         FearsAfterRemoval,
         RiverfolkCraftUngoverned,
+        GovernorsStopExposure,
         FolkHeroCharacter,
         RandomCharacter,
         MountainSuitedLandmark,
