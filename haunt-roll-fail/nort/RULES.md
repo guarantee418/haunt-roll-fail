@@ -1723,14 +1723,22 @@ shares a territory with a creature; Gman, 2026-11-11) and the Wilderness, Wastel
 - **Map**: built at setup (`buildMap`), the same on every client (a recorded shuffle and a sequence seeded from it). The
   central tile is always a special one (with "Standard" or nothing picked, any of the nine Wastelands centrals or the Great
   Lake). Each clan gets a Beach with a Port at the map's edge, spread around it (`layout`: 2 clans on a 3x5 map, 3 on 5x5, 4 on
-  a 7x7 diamond, 5 and 6 on a 9x5 map). The tiles beside each Port are picked so the Beach's wings make two small territories
-  of two tiles each; every other space gets a random tile in a legal turn, from the map tiles with every Environment tile.
-  The map is tried again (up to 60 times) until the homes are their own territories and 3 (2 clans) or 2 territories apart.
+  a 7x7 diamond, 5 and 6 on a 9x5 map).
+  The homes are balanced (Gman, 2026-11-11): every clan's home is copies of the same three tiles, turned to fit, picked once
+  among those that can: beside the Port on one side (the same side for every clan) a tile whose area by the wing gives only 1
+  wood, on the other side one giving only 1 lore, so the wings make two small territories of two tiles each, and inland of the
+  Port a tile whose area by the Port gives only 1 food; the beside tiles' areas by the Port give nothing, so the Port territory
+  is the Port and those three areas and gives 1 food. After 20 tries the amounts may be larger, after 40 any food will do,
+  after 60 anything. Every other space gets a random tile in a legal turn, from the map tiles with every Environment tile.
+  The map is tried again (up to 60 times, or 120 with no good try) until the homes are their own territories and 3 (2 clans)
+  or 2 territories apart, one fewer after every 10 tries.
   A tile side with no tile beyond it is coast: it counts as closed (`Board.coast`). The Wyvern's Den isn't used yet.
-- **Setup**: each clan places its starting units in its Port territory, then in one of the two beside it; any of the three
-  still empty gets 1 unit. Creatures from the creature deck go on the territories between the homes (on a shortest way from
+- **Setup**: each clan gets 4 units in its Port territory and 1 in each of the two beside it (Gman, 2026-11-11), with no
+  choice; Kaija, a lynx, Brok or the Automa's second Leader takes the place of one of the Port's units, and Robotos gets 2
+  more there. Creatures from the creature deck go on the territories between the homes (on a shortest way from
   one home to another), lairs first, nearest the centre first, while the deck lasts.
-- **Town Hall** (`game.halls`, drawn on the Port, `TownHallInfo` when tapped): not a building of `game.buildings`, so no card
+- **Town Hall** (`game.halls`, drawn on the Port, the Development card Town Hall's thatched hall and, once upgraded, the
+  video game's slate-roofed one, by `tools/town-hall.py`; `TownHallInfo` when tapped): not a building of `game.buildings`, so no card
   can build, replace or destroy it. A Build's build can upgrade it for 1 Stone and 1 wood (`HallUpgradeAction`), once. It
   doesn't count as a large building yet (question 7 in the doc).
 - **Fog of war**: a clan sees the territories it or a teammate has had figures in or scouted (`game.scouted`, kept by

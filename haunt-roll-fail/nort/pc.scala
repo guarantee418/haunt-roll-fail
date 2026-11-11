@@ -41,7 +41,7 @@ case class PCTilesAction(shuffled : $[String]) extends ShuffledAction[String]
 case class PCPlaceAction(round : Int, l : $[Faction]) extends ForcedAction
 
 // TOWN HALL
-case class HallUpgradeAction(self : Faction, area : AreaRef, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build")("Upgrade your", TownHall.elem, "for", Amount(1.hl, "Stone".hl), "and", Amount(1.hl, Wood.elem)) with MapTarget { def target = area }
+case class HallUpgradeAction(self : Faction, area : AreaRef, times : Int, e : BuildEffect, smallOnly : Boolean, then : ForcedAction) extends BaseAction("Build")("Upgrade your", TownHall.elem, "for", Amount(1.hl, Stone.elem), "and", Amount(1.hl, Wood.elem)) with MapTarget { def target = area }
 
 // SCOUTING
 case class ScoutAction(self : Faction, area : AreaRef, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Scout", (times > 1).?(("(" + times + " left)").txt))(area) with MapTarget { def target = area }
@@ -109,19 +109,19 @@ object PCExpansion extends Expansion {
         var best : |[($[Placement], $[String], $[Home])] = None
 
         // Tries with other turns and other tile orders until the homes are apart and none joins another (the last good try is kept;
-        // after every 20 tries one territory less between the homes will do)
+        // after every 10 tries one territory less between the homes will do)
         var attempt = 0
         var done = false
 
-        while (done.not && attempt < 60) {
+        while (done.not && (attempt < 60 || best.none && attempt < 120)) {
             val seq = new Seq(tiles.mkString(",").hashCode.toLong * 31 + attempt)
             val rest = tiles.drop(attempt % tiles.num.max(1)) ++ tiles.take(attempt % tiles.num.max(1))
-            val result = attemptMap(cells, ports, rest, seq)
+            val result = attemptMap(cells, ports, rest, seq, (attempt / 20).min(3))
 
             if (result.any) {
                 val (placements, left, homes) = result.get
                 best = result
-                done = apart(placements, homes, gap(game.arity) - attempt / 20)
+                done = apart(placements, homes, gap(game.arity) - attempt / 10)
             }
 
             attempt += 1
@@ -191,7 +191,7 @@ object PCExpansion extends Expansion {
     }
 
     // One try: the central tile, the Beaches, the tiles beside the Ports, then the rest in rings from the centre
-    def attemptMap(cells : $[(Int, Int)], ports : $[((Int, Int), Side)], tiles : $[String], seq : Seq)(implicit game : Game) : |[($[Placement], $[String], $[Home])] = {
+    def attemptMap(cells : $[(Int, Int)], ports : $[((Int, Int), Side)], tiles : $[String], seq : Seq, level : Int)(implicit game : Game) : |[($[Placement], $[String], $[Home])] = {
         val g = new Grow
         var pile = tiles
 
@@ -214,8 +214,14 @@ object PCExpansion extends Expansion {
             o.any && i.any && o != i && o.get.edges.num == 1 && o.get.lair.not
         }
 
-        def fill(x : Int, y : Int, ok : Placement => Boolean) : Boolean = {
+        // A tile for (x, y) from the pile, or with from a copy of that tile
+        def fill(x : Int, y : Int, ok : Placement => Boolean, from : |[String] = None) : Boolean = {
             val turns = seq.next(4)
+            if (from.any)
+                return 0.until(4).exists { k =>
+                    val p = Placement(from.get, x, y, (k + turns) % 4)
+                    ok(p) && g.tryAdd(p)
+                }
             pile.find { t =>
                 0.until(4).exists { k =>
                     val p = Placement(t, x, y, (k + turns) % 4)
@@ -224,11 +230,62 @@ object PCExpansion extends Expansion {
             }./(t => pile = pile.diff($(t))).any
         }
 
-        val beside = ports./~{ case ((px, py), d) => wings(d)./(w => ((px + w.dx, py + w.dy), d, w.opposite)) }
+        // Balanced homes (Gman, 2026-11-11): the Port territory gives only food, one small territory only 1 wood, the other only 1 lore
+        // Each level of retries (20 tries each) asks less, when the tiles can't make it (six clans need twelve such tiles):
+        // 0 exactly 1 food, 1 wood and 1 lore; 1 at least that much, the others none; 2 the side's wood or lore, any food;
+        // 3 anything
+        def only(a : AreaSpec, food : Int, wood : Int, lore : Int) = level match {
+            case 0 => a.food == food && a.wood == wood && a.lore == lore
+            case 1 => (a.food > 0) == (food > 0) && (a.wood > 0) == (wood > 0) && (a.lore > 0) == (lore > 0)
+            case 2 => (a.wood > 0) == (wood > 0) && (a.lore > 0) == (lore > 0)
+            case _ => true
+        }
+        def alone(a : AreaSpec) = level >= 2 || a.edges.num == 1
 
-        val placedBeside = beside.forall { case ((x, y), d, q) => fill(x, y, besideFits(_, d, q)) }
+        // The wood on the same side of every Port (left or right, picked once)
+        val woodFirst = seq.next(2) == 0
+
+        val beside = ports./~{ case ((px, py), d) =>
+            wings(d).zipWithIndex./{ case (w, i) => ((px + w.dx, py + w.dy), d, w.opposite, (i == 0) == woodFirst) }
+        }
+
+        def besideOk(d : Side, q : Side, wood : Boolean)(p : Placement) =
+            besideFits(p, d, q) && only(p.spec.areaOn(d, p.r).get, 0, wood.??(1), wood.not.??(1)) && p.spec.areaOn(q, p.r).exists(a => alone(a) && only(a, 0, 0, 0) && a.lair.not)
+
+        def inlandOk(d : Side)(p : Placement) =
+            p.spec.areaOn(d, p.r).exists(a => alone(a) && only(a, (level < 2).??(1), 0, 0) && a.lair.not)
+
+        // Every clan's home gets the same three tiles (copies, turned to fit), so the homes are alike: a tile for the wood side, one
+        // for the lore side and one inland of the Port, each picked once among the tiles that fit; with none, tiles from the pile
+        def pick(ok : Placement => Boolean, but : $[String]) : |[String] = {
+            val l = tiles.distinct.diff(but).%(t => 0.until(4).exists(r => ok(Placement(t, 0, 0, r))))
+            l.any.?(l(seq.next(l.num)))
+        }
+
+        val ((px0, py0), d0) = ports.head
+        val sideOf = beside.take(2)./{ case (_, d, q, wood) => wood -> q }.toMap
+        val woodTile = (level < 3).??(pick(besideOk(d0, sideOf(true), true), $))
+        val loreTile = (level < 3).??(pick(besideOk(d0, sideOf(false), false), woodTile.$))
+        val foodTile = (level < 3).??(pick(inlandOk(d0), woodTile.$ ++ loreTile.$))
+        val copies = woodTile.any && loreTile.any && foodTile.any
+
+        if (copies)
+            pile = pile.diff(woodTile.$ ++ loreTile.$ ++ foodTile.$)
+
+        val placedBeside = beside.forall { case ((x, y), d, q, wood) =>
+            fill(x, y, besideOk(d, q, wood), copies.??(wood.?(woodTile).|(loreTile)))
+        }
 
         if (placedBeside.not)
+            return None
+
+        // The tile inland of each Port: its side towards the Port in an area of its own giving 1 food; with the beside tiles' areas
+        // by the Port giving nothing, the Port territory is the Port and those three areas, and gives 1 food
+        val inland = ports.forall { case ((px, py), d) =>
+            fill(px - d.dx, py - d.dy, inlandOk(d), copies.??(foodTile))
+        }
+
+        if (inland.not)
             return None
 
         cells.filter(c => g.has(c._1, c._2).not).map(c => (c, seq.next(1000))).sortBy { case ((x, y), k) => (x.abs + y.abs, k) }.foreach { case ((x, y), _) =>
@@ -246,6 +303,11 @@ object PCExpansion extends Expansion {
         // Every home territory its own, none of them the central one or another's
         val all = homes./~(h => h.port +: h.sides)./(b.territory)
         if (all.distinct.num != all.num || all.exists(_.areas.exists(a => a.x == 0 && a.y == 0)))
+            return None
+
+        // The Port territory gives food and nothing else
+        def gives(t : Territory) = t.areas./(b.spec)
+        if (level < 3 && homes.exists(h => gives(b.territory(h.port)).use(l => l./(_.food).sum == 0 || l./(_.wood).sum > 0 || l./(_.lore).sum > 0)))
             return None
 
         |((b.placements, pile, homes))
@@ -412,30 +474,25 @@ object PCExpansion extends Expansion {
 
             Then(PCPlaceAction(1, order))
 
-        case PCPlaceAction(1, Nil) =>
-            Then(PCPlaceAction(2, game.from(game.first)))
-
-        case PCPlaceAction(2, Nil) =>
-            // The home territories still empty get a unit each
-            game.from(game.first).foreach { f =>
-                game.homes(f)./(game.board.territory).%(t => game.figures(t, f) == 0).foreach { t =>
-                    game.addUnits(t.anchor, f, 1)
-                    f.log("placed a unit in", t.anchor)
+        // Every clan: 4 units in its Port territory, 1 in each small territory beside it (Gman, 2026-11-11); Kaija, a lynx, Brok or
+        // the Automa's second Leader in place of one of the Port's units, and Robotos 2 more there
+        case PCPlaceAction(_, l) =>
+            l.foreach { f =>
+                val port :: sides = game.homes(f)
+                val companion = game.kaijaReady(f)
+                game.addUnits(port, f, companion.?(3).|(4) + game.robotos(f).??(2))
+                if (companion) {
+                    game.setCompanion(f, |(port))
+                    game.note("kaija-setup")
+                }
+                f.log("placed", companion.?(("three units and " ~ OneCompanion(f).elem0)).|(("four units".txt)), "in", port)
+                sides.foreach { a =>
+                    game.addUnits(a, f, 1)
+                    f.log("placed a unit in", a)
                 }
             }
 
             Then(StartYearAction)
-
-        case PCPlaceAction(round, f :: rest) =>
-            val l = (round == 1).?(game.homes(f).take(1)).|(game.homes(f).drop(1))./(game.board.territory).%(t => game.present(t).none)
-
-            if (l.none)
-                Then(PCPlaceAction(round, rest))
-            else
-            if (game.kaijaReady(f) || MapExpansion.chiefAtSetup(f))
-                Ask(f).each(l)(t => SetupAreaAction(f, round, f :: rest, t.anchor))
-            else
-                Ask(f).each(l)(t => SetupUnitsAction(f, round, f :: rest, t.anchor))
 
         // The setup placements go on with the next clan
         case SetupPlaceAction(round, l) =>
@@ -447,7 +504,7 @@ object PCExpansion extends Expansion {
             f.wood -= 1
             game.hallsUpgraded :+= f
 
-            f.log("upgraded their", TownHall, "for", Amount(1.hl, "Stone".hl), "and", Amount(1.hl, Wood.elem))
+            f.log("upgraded their", TownHall, "for", Amount(1.hl, Stone.elem), "and", Amount(1.hl, Wood.elem))
 
             game.note("hall-upgrade")
 

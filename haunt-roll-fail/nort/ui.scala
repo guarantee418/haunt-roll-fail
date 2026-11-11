@@ -2986,7 +2986,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 Image(up.?(TownHall.upgraded).|(TownHall.image), styles.winnerCard).div ~
                 (f.elem ~ "'s " ~ up.?("upgraded ").|("") ~ TownHall.elem).div ~
                 "A large building on no space, never built, moved or destroyed. A clan that ends a year without its Town Hall is out of the game.".txt.div ~
-                up.?("Upgraded: the clan can scout enemy territories.".txt).|(("A Build can upgrade it for " ~ Amount(1.hl, "Stone".hl) ~ " and " ~ Amount(1.hl, Wood.elem) ~ "; then the clan can scout enemy territories.")).div
+                up.?("Upgraded: the clan can scout enemy territories.".txt).|(("A Build can upgrade it for " ~ Amount(1.hl, Stone.elem) ~ " and " ~ Amount(1.hl, Wood.elem) ~ "; then the clan can scout enemy territories.")).div
             ).div(xlo.flexvcenter)).onClick, onClick)
 
         // A tile's centrepiece or its "i" tapped on the map: the tile's rule
