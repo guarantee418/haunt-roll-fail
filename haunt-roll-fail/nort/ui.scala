@@ -1583,7 +1583,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // Alternative victory: f's mark for a card, ✓ when fulfilled, the validation count, or ✗
     def victoryMark(f : Faction, c : VictoryCard) : Elem =
         if (VictoryExpansion.fulfilled(f, c)) "✓".styled(styles.fame)
-        else c.target./(n => game.progressOf(f, c.id).hl ~ "/" ~ n.toString).|("✗".txt)
+        else c.target./(n => game.progressOf(f, c.id).hl ~ "/" ~ n.toString : Elem).orElse(VictoryExpansion.mapCount(f, c)./ { case (k, n) => k.hl ~ "/" ~ n.toString : Elem }).|("✗".txt)
 
     // Alternative victory: the cards in play, what each asks, and where every clan (or team) stands
     // (the panels' "Victory:" line and the cards in the shared strip open it; asked for by Gman on 2026-11-05)
@@ -1605,7 +1605,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         ("Alternative victory".hlb.div ~
             how.spn(xstyles.smaller85).div ~
             rows.merge.div(styles.tideTable) ~
-            "✓ fulfilled, 2/6 the count so far, ✗ not yet (checked on the map). Tap a card to see it larger.".spn(xstyles.smaller85).div ~
+            "✓ fulfilled, 2/6 the count so far, ✗ not yet. Tap a card to see it larger.".spn(xstyles.smaller85).div ~
             HorizontalBreak ~
             "(tap to close)".spn(xstyles.smaller85).div
         ).div

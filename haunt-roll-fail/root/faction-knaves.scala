@@ -278,6 +278,11 @@ case class KnavesPlaceAcclaimAction(self : Knaves, c : Clearing, then : ForcedAc
 case class KnavesBattleBonusAction(self : Knaves, b : Battle, f : Faction, o : Faction, fs : Int, os : Int, fr : Int, or : Int, fh : Int, oh : Int, fe : Int, oe : Int) extends ForcedAction
 case class KnavesPrisonersAction(self : Knaves, b : Battle, n : Int) extends ForcedAction
 case class KnavesTakePrisonerAction(self : Knaves, b : Battle, p : Piece, r : Forest, n : Int) extends ForcedAction
+// A prisoner from the battle's co-defender (the Twilight Council's Bats, Riverfolk mercenaries...), in games with PrisonersFromCodefenders
+case class KnavesTakeCodefPrisonerAction(self : Knaves, b : Battle, e : Faction, p : Piece, r : Forest, n : Int) extends ForcedAction
+// A one-time fix for games started before PrisonersFromCodefenders, added to a live game's log by hand: from here Have at Thee! can take
+// the co-defender's removed warriors prisoner too (game.prisonersFromCodefenders), then goes on with then
+case class PrisonersFromCodefendersAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class KnavesAfterBattleAcclaimAction(self : Knaves, b : Battle) extends ForcedAction
 case class KnavesNabEscapeAction(self : Knaves, c : Clearing, p : KnavesCaptain, r : Forest, then : ForcedAction) extends ForcedAction
 case class KnavesRunAwayAction(self : Faction, f : Knaves, c : Clearing, r : Forest, then : ForcedAction) extends ForcedAction
@@ -533,6 +538,33 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
             f.used :+= KnavesPrisonersTaken
 
             KnavesPrisonersAction(f, b, f.used.has(KnavesAssaulting).?(99).|(1))
+
+        // Every enemy warrior the Knaves hit can be taken prisoner, the co-defender's too: the Twilight Council's Bats hit when the Knaves
+        // battle another faction at a Council assembly (Root rules channel, 2026-11-11, geffrey's question; Betrayal versus Glory: the
+        // Woodland Alliance gave both hits to Bats at Peat and the Knaves got no prisoner), in games with PrisonersFromCodefenders
+        case KnavesPrisonersAction(f, b, n) if b.codef.any && b.codef.has(f).not && (game.options.has(PrisonersFromCodefenders) || game.prisonersFromCodefenders) =>
+            val c = b.clearing
+            val l = ($[Faction](b.defender) ++ b.codef).distinct./~(e => e.from(Limbo(c)).$.%(_.piece.is[Warrior]).%(_.piece.is[Tenacious].not)./(_.piece).distinct./(p => (e, p)))
+            val rr = f.freeForests(c)
+
+            if (n > 0 && l.any && rr.any)
+                Ask(f).group("Take a prisoner".styled(f), "with", KnavesHaveAtThee.of(f))
+                    .some(l) { case (e, p) => rr./(r => (if (e == b.defender) KnavesTakePrisonerAction(f, b, p, r, n) else KnavesTakeCodefPrisonerAction(f, b, e, p, r, n)).as(p.of(e), "to", r)) }
+                    .needOk
+            else
+                KnavesAfterBattleAcclaimAction(f, b)
+
+        case KnavesTakeCodefPrisonerAction(f, b, e, p, r, n) =>
+            e.from(Limbo(b.clearing)) --> $(p) --> (f, Cage(r))
+
+            f.log("took [a prisoner]", p.of(e), "prisoner to", r)
+
+            KnavesPrisonersAction(f, b, n - 1)
+
+        case PrisonersFromCodefendersAction(then) =>
+            game.prisonersFromCodefenders = true
+
+            then
 
         case KnavesPrisonersAction(f, b, n) =>
             val c = b.clearing

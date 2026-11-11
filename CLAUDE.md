@@ -858,6 +858,12 @@ file covers the build, server and deploy. No session can ssh to the server
   an enemy removed from the map, and "(retired, removed)" for both (`status` in `KnavesPlayer`, `root/faction-knaves.scala`;
   "removed" is a captain that has been on the map, `placed`, and isn't now). Asked for on Discord on 2026-11-03 (Glory through
   Air: the Harrier, removed by the Keepers, read the same as the Vagrant). Display only, so no game records change.
+- The Knaves' Have at Thee! (18.2.6) takes prisoners from every enemy warrior removed in the battle, the co-defender's too: the
+  Twilight Council's Bats when the Knaves battle another faction at a Council assembly, or Riverfolk mercenaries (Root rules channel,
+  2026-11-11; in Betrayal versus Glory the Woodland Alliance gave both hits to Bats at Peat and the Knaves were offered none, as only
+  the defender's warriors were looked at). The Knaves pick which (`KnavesPrisonersAction`, `KnavesTakeCodefPrisonerAction` in
+  `root/faction-knaves.scala`). New games get the hidden default option `PrisonersFromCodefenders`; older games keep the old way, and
+  a running game can be switched over with `PrisonersFromCodefendersAction(X)`.
 - In Advanced Setup the Knaves' four Captain cards are dealt when the factions are drawn, and the draft shows them under
   the Knaves (meeple, name and items; `FactionChoice.desc` in `root/setup.scala`, `game.draftCaptains`, asked for by Gman on
   2026-10-20); the Knaves then choose 3 of those. New games get the hidden default option `KnavesCaptainsInDraft`; older
