@@ -34,7 +34,7 @@ object Wild {
 
     // The expansion's two modules (WildernessTiles, WildernessCreatures); games made before have ModuleOption(Wilderness), both
     def tilesOn(implicit game : Game) = game.options.has(ModuleOption(Wilderness)) || game.options.has(WildernessTiles)
-    def creaturesOn(implicit game : Game) = game.options.has(ModuleOption(Wilderness)) || game.options.has(WildernessCreatures)
+    def creaturesOn(implicit game : Game) = game.options.has(ModuleOption(Wilderness)) || game.options.has(WildernessCreatures) || PCExpansion.moreCreatures
 
     // The Wyvern's Den goes into the pile, below the first tiles
     def denShuffled(implicit game : Game) = game.has(Creatures) && tilesOn && BanEnvironment.allowed(den, game.options)

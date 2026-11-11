@@ -169,6 +169,18 @@ case object AltVictoryChosen extends VictoryChoice {
     override val explain = VictoryModule.about ++ $("Choose exactly one Map Control card and two Wealth cards (three with teams) below.".txt)
 }
 
+// PC version only (Gman, 2026-11-11): the last clan or team with its Town Hall wins, whenever that is; nothing else wins, and after
+// the last year the game goes on year after year (PCExpansion)
+case object DominationOnly extends VictoryChoice {
+    def valueOn = "Domination victory only".txt
+    override def decorate(e : Elem) = e ~ " " ~ "(PC version)".spn(xstyles.smaller85)
+    override val explain = $(
+        "Only for the " ~ "PC version".hl ~ ": the last clan (or team) that still has its " ~ "Town Hall".hl ~ " wins.",
+        "Fame and three closed territories with large buildings don't win, and after the last year the game goes on year after year until one is left.",
+    )
+    override def required(all : $[BaseOption]) = $($(ModuleOption(PCVersion)))
+}
+
 object VictoryChoice {
     val alternative : $[VictoryChoice] = $(AltVictoryRandom, AltVictoryChosen)
 }
@@ -946,6 +958,22 @@ case object FameAltarClosed extends GameOption with ToggleOption {
     def valueOn = "The Altar of Kings must be in a closed territory".txt
 }
 
+// Military paths: a clan taking casualties where its bodyguard is, with other units there, is asked whether the bodyguard goes
+// first even when it has no other choice to make (Gman, 2026-11-11: never asked). Hidden, and given to every new game
+// (Meta.mandatoryFor); older games replay without the question
+case object GuardCasualtyAsked extends GameOption with ToggleOption {
+    val group = "Military paths".txt
+    def valueOn = "Asked whether the bodyguard is lost first".txt
+}
+
+// PC version, the second round (Gman, 2026-11-11): every home has a lair territory with a small building space just outside it,
+// for a Mine; Mines give Stone with no die roll; the two-player map is wider in the middle; with 3 clans or more the Wilderness and
+// Wastelands creatures are in. Hidden, and given to every new game (Meta.mandatoryFor); older PC games keep their maps and rolls
+case object PCVersionUpdate extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "Mine territories, Stone from Mines, the wider two-player map, more creatures".txt
+}
+
 // Alternative victory with teams: a team wins only when its players fulfil every card in play, Thane or Jarl, as the Uncharted
 // Horizons rulebook says for 2 vs. 2 ("A team wins if each Victory Condition card is fulfilled by at least one player from the
 // same team"; Marzaus, 2026-11-07). Hidden, and given to every new game (Meta.mandatoryFor); older games keep Thane's Map Control
@@ -1141,7 +1169,8 @@ case object PCVersion extends Module("PC version", "fan-made mode") {
     override def expansion = |(PCExpansion)
     // First of all: it builds the map in place of the setup's tile placements
     override def priority = -40
-    def needs : $[Module] = $(Creatures, Warchiefs, Sea, TowersModule, WarchiefsPC, MineralsModule, MilitaryModule, AggressiveCreatures)
+    // (the Events module too since 2026-11-11, Gman)
+    def needs : $[Module] = $(Creatures, Warchiefs, Sea, EventsModule, TowersModule, WarchiefsPC, MineralsModule, MilitaryModule, AggressiveCreatures)
     // and the map tiles of every expansion (Gman, 2026-11-11)
     def tiles : $[GameOption] = $(WildernessTiles, WastelandsTiles, HorizonsTiles)
     def about = $(
