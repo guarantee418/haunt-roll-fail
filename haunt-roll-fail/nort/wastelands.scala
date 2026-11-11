@@ -414,6 +414,11 @@ object WastelandsExpansion extends Expansion {
                 game.wasteSteps :+= "central"
 
                 options.of[CentralChoice].single match {
+                    // PC version: always a special central tile, any of them when none was picked
+                    case None | Some(StandardCentral) if game.has(PCVersion) =>
+                        Random[String](Waste.centrals :+ Wild.lake, CentralPickedAction(tiles, _))
+                    case Some(RandomAnyCentral) if game.has(PCVersion) =>
+                        Random[String](Waste.centrals :+ Wild.lake, CentralPickedAction(tiles, _))
                     case Some(RandomCentral) =>
                         Random[String](Waste.centrals.%(t => game.has(Creatures) || Waste.creatureOnly.has(t).not), CentralPickedAction(tiles, _))
                     case Some(RandomAnyCentral) =>

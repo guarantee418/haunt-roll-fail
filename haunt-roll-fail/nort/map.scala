@@ -1060,8 +1060,10 @@ object MapExpansion extends Expansion {
         case ProtectorMaxEffect(_) => bigClosed(f).any && CommonExpansion.available(f) > 0
         // A Move action may be played just to attack creatures
         case MoveEffect(_, _, _, _) => moveSources(f).any || CreaturesExpansion.attackable(f).any
+        // PC version: Explore scouts
+        case e : ExploreEffect if game.has(PCVersion) => PCExpansion.scoutable(f).any
         case e : ExploreEffect => game.pile.any && explorable(f, e.anywhere).any
-        case e : BuildEffect => buildOptions(f, e, false).any
+        case e : BuildEffect => buildOptions(f, e, false).any || PCExpansion.canUpgrade(f)
         case FeastEffect => $(RecruitEffect(1), MoveEffect(1), ExploreEffect(), BuildEffect()).exists(playable(f, _))
         case e => CardsExpansion.playable(f, e)
     }
@@ -1078,6 +1080,9 @@ object MapExpansion extends Expansion {
             if (bigClosed(f).none) |("needs a closed territory of 3 or more tiles")
             else |("no cards left to draw")
         case MoveEffect(_, _, _, _) => |("no units to move and no creature to attack")
+        case e : ExploreEffect if game.has(PCVersion) =>
+            if (PCExpansion.upgraded(f).not) |("nothing left to scout next to your territories (enemy ones need an upgraded Town Hall)")
+            else |("nothing left to scout next to your territories")
         case e : ExploreEffect =>
             val mine = game.controlled(f).%(game.board.open)
             if (game.pile.none) |("no tiles left to explore")
@@ -1490,7 +1495,7 @@ object MapExpansion extends Expansion {
         case MoveAction(f, left, e, then) =>
             // Figures passing through a teammate's territory or the Swamp move on first
             // Military paths: Militia alone move only into the clan's territories
-            val sources = (left > 0).??(game.passing(f).any.?(game.passing(f)).|(moveSources(f, e)).%(t => destinations(f, t, left, e).exists(o => MilitaryExpansion.mayEnter(f, t, o._1))))
+            val sources = (left > 0).??(game.passing(f).any.?(game.passing(f)).|(moveSources(f, e)).%(t => destinations(f, t, left, e).exists(o => MilitaryExpansion.mayEnter(f, t, o._1) && PCExpansion.sees(f, o._1))))
 
             // Robotos's border Bear (BearBorder): discarding a resource to cross Kaija's border as a regular one for the rest of the Move
             val tolls = BearBorderExpansion.tolls(f, left, e)
@@ -1506,7 +1511,7 @@ object MapExpansion extends Expansion {
         case MoveFromAction(f, from, left, e, then) =>
             val t = game.board.territory(from)
 
-            Ask(f).each(destinations(f, t, left, e).%((o, _) => MilitaryExpansion.mayEnter(f, t, o)))((o, cost) => MoveToAction(f, from, o.anchor, cost, left, e, then)).cancel
+            Ask(f).each(destinations(f, t, left, e).%((o, _) => MilitaryExpansion.mayEnter(f, t, o) && PCExpansion.sees(f, o)))((o, cost) => MoveToAction(f, from, o.anchor, cost, left, e, then)).cancel
 
         case MoveToAction(f, from, to, cost, left, e, then) =>
             val t = game.board.territory(from)
@@ -2375,7 +2380,7 @@ object MapExpansion extends Expansion {
         case BuildAction(f, e, times, smallOnly, then) =>
             val spots = (times > 0).??(buildSpots(f, e, smallOnly))
             // Minerals module: one building upgraded with Stone, whether or not anything is built
-            val upgrades = MineralsExpansion.upgrades(f, BuildAction(f, e, times, smallOnly, then))
+            val upgrades = MineralsExpansion.upgrades(f, BuildAction(f, e, times, smallOnly, then)) ++ PCExpansion.hallUpgrade(f, e, times, smallOnly, then)
 
             if (spots.none && upgrades.none)
                 Then(BuildFinishAction(f, e, then))

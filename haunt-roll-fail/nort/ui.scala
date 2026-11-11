@@ -351,7 +351,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     // The piece on top where the map was tapped (a creature, Blainn, a Raid card, a warchief or a clan token), whose card or info opens when the tap does nothing else
-    def pieceInfo(target : $[Any]) : |[Any] = target.headOption.%(x => x.is[Card] || x.is[WarchiefInfo] || x.is[ClanAbilityInfo] || x.is[GearTokenInfo] || x.is[TileAbilityInfo])
+    def pieceInfo(target : $[Any]) : |[Any] = target.headOption.%(x => x.is[Card] || x.is[WarchiefInfo] || x.is[ClanAbilityInfo] || x.is[GearTokenInfo] || x.is[TileAbilityInfo] || x.is[TownHallInfo])
 
     // The single offered action a click on the map stands for (the cross on a building or tile being confirmed cancels)
     def clickable(target : $[Any]) : |[UserAction] = {
@@ -463,6 +463,73 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         }
 
         tints.get(key)
+    }
+
+    // PC version: the fog of war over an area, its mask in black with the resource icons on it (the masks' holes) filled too, turned
+    // with its tile, made once; and a whole tile's
+    val fogs = scala.collection.mutable.Map[(String, String, Int), hrf.ui.sprites.Image]()
+    val fogColor = "#0b0d10"
+
+    def fogImage(tile : String, area : String, r : Int) : |[hrf.ui.sprites.Image] = {
+        val key = (tile, area, r % 4)
+
+        if (fogs.contains(key).not) {
+            val m = img("mask-" + tile + "-" + area)
+
+            if (m.complete.not || m.width == 0)
+                return None
+
+            val (w, h) = (m.width, m.height)
+
+            // Unturned: the mask, and each icon hole whose rim is this area's
+            val flat = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+            flat.width = w
+            flat.height = h
+            val f = flat.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+            f.drawImage(m, 0, 0)
+            val data = f.getImageData(0, 0, w, h).data
+            def opaque(x : Double, y : Double) = {
+                val (px, py) = ((x * w).toInt, (y * h).toInt)
+                px >= 0 && py >= 0 && px < w && py < h && data((py * w + px) * 4 + 3) > 128
+            }
+            f.globalCompositeOperation = "source-in"
+            f.fillStyle = fogColor
+            f.fillRect(0, 0, w, h)
+            f.globalCompositeOperation = "source-over"
+            TileIcons.icons.get(tile).|($).foreach { i =>
+                val rim = $(0, 1, 2, 3, 4, 5, 6, 7)./(k => k * math.Pi / 4)./(t => opaque(i.x + math.cos(t) * i.r * 1.25, i.y + math.sin(t) * i.r * 1.25))
+                if (rim.count(x => x) >= 4) {
+                    f.beginPath()
+                    f.arc(i.x * w, i.y * h, i.r * w * 1.08, 0, 2 * math.Pi)
+                    f.fill()
+                }
+            }
+
+            val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+            canvas.width = w
+            canvas.height = h
+            val c = new CanvasImage(canvas)
+            val g = c.context
+            g.translate(w / 2, h / 2)
+            g.rotate(math.Pi / 2 * (r % 4))
+            g.translate(-w / 2, -h / 2)
+            g.drawImage(flat, 0, 0)
+            g.setTransform(1, 0, 0, 1, 0, 0)
+
+            fogs(key) = c
+        }
+
+        fogs.get(key)
+    }
+
+    lazy val fogSquare : hrf.ui.sprites.Image = {
+        val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+        canvas.width = 16
+        canvas.height = 16
+        val c = new CanvasImage(canvas)
+        c.context.fillStyle = fogColor
+        c.context.fillRect(0, 0, 16, 16)
+        c
     }
 
     // The "i" on a tile with a rule of its own (TileAbilities), drawn once: a dark disc with a light ring and a serif i
@@ -931,10 +998,28 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             }
         }
 
+        // PC version: fog of war, the territories the viewers haven't seen (spectators see everything)
+        // (in pass and play, between two players' turns, all of it)
+        val fogged : Set[Territory] = (game.has(PCVersion) && game.isOver.not).??(
+            if (viewers.none) callbacks.hotseat.??(board.territories)
+            else board.territories.%(t => PCExpansion.visible(viewers, t).not)
+        ).toSet
+        val foggy : Set[AreaRef] = fogged.flatMap(_.areas)
+
         // Buildings on their spaces: a large building fills its (bigger) space
-        game.buildings.foreach { case (s, b) =>
+        game.buildings.filter(x => foggy.contains(x._1.area).not).foreach { case (s, b) =>
             val (x, y) = board.point(s)
             pieces.add(Sprite($(at(b.image, buildingSize(b))), $))(sx(x), sy(y))
+        }
+
+        // PC version: each clan's Town Hall on its Port, upgraded or not (tapped: what it does)
+        game.halls.foreach { case (f, a) =>
+            if (foggy.contains(a).not)
+                board.at(a.x, a.y).foreach { p =>
+                    val (x, y) = board.rotate(0.52, 0.52, p.r)
+                    val n = largeBuilding
+                    pieces.add(Sprite($(at(PCExpansion.upgraded(f).?(TownHall.upgraded).|(TownHall.image), n)), $(Rectangle(-n / 2, -n / 2, n, n)), $(TownHallInfo(f))))(sx(a.x + x), sy(a.y + y))
+                }
         }
 
         // The Lion Kingdom: a Lord on each of its Defense Towers, in its top right corner (tapped: the clan's cards and power)
@@ -961,13 +1046,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         }
 
         // Ox Clan's Ancestral Equipment tokens on their spaces, face up; tapping one picks that token (GearTakeAction targets its space), or else says what it does
-        game.gear.foreach { case (s, n) =>
+        game.gear.filter(x => foggy.contains(x._1.area).not).foreach { case (s, n) =>
             val (x, y) = board.point(s)
             pieces.add(Sprite($(at("token-ox-" + n, 170)), $(Rectangle(-85, -85, 170, 170)), $(s, GearTokenInfo(s, n))))(sx(x), sy(y))
         }
 
         // Territory numbers on every area of the territory, highlighted when it can be chosen; units at its first area
-        board.territories.zipWithIndex.foreach { case (t, i) =>
+        // (PC version: nothing in the fog)
+        board.territories.zipWithIndex.%((t, _) => fogged.contains(t).not).foreach { case (t, i) =>
             val tag = $(t.anchor)
             val box = $(Rectangle(-70, -70, 140, 140))
 
@@ -1202,6 +1288,34 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 val d = i.r * T * 0.72
                 val z = 120.0
                 pieces.add(Sprite($(ImageRect(abilityBadge, Rectangle(-z / 2, -z / 2, z, z), 1.0)), $(Rectangle(-z * 0.6, -z * 0.6, z * 1.2, z * 1.2)), $(TileAbilityInfo(p.tile))))(sx(p.x + x) + d, sy(p.y + y) - d)
+            }
+        }
+
+        // PC version: the fog over every area not seen, a tile not seen at all in one black square; a territory in the fog that can be
+        // chosen (scouting) shows its numbers and target rings over it
+        if (fogged.any) {
+            board.placements.foreach { p =>
+                val areas = p.spec.areas./(a => AreaRef(p.x, p.y, a.id))
+                if (areas.any && areas.forall(foggy.contains))
+                    pieces.add(Sprite($(ImageRect(fogSquare, Rectangle(0, 0, T, T), 1.0)), $))(sx(p.x), sy(p.y))
+                else
+                    areas.filter(foggy.contains).foreach { a =>
+                        fogImage(p.tile, a.id, p.r).foreach { i =>
+                            pieces.add(Sprite($(ImageRect(i, Rectangle(0, 0, T, T), 1.0)), $))(sx(p.x), sy(p.y))
+                        }
+                    }
+            }
+
+            board.territories.filter(fogged.contains).%(t => targets.has(t.anchor)).foreach { t =>
+                val tag = $(t.anchor)
+                val box = $(Rectangle(-70, -70, 140, 140))
+                val i = board.territories.indexOf(t)
+                t.areas.foreach { a =>
+                    val (x, y) = board.point(a)
+                    pieces.add(Sprite($(at("ui-target", 230)), box, tag))(sx(x), sy(y))
+                    if (i < 99)
+                        pieces.add(Sprite($(at("ui-label-" + (i + 1), 110)), box, tag))(sx(x), sy(y))
+                }
             }
         }
 
@@ -1615,6 +1729,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             viewers = l
             if (game.states.nonEmpty)
                 game.factions.%(game.ftp.contains).foreach(factionStatus)
+            // PC version: the fog of war is the viewers'
+            if (game.has(PCVersion) && game.states.nonEmpty)
+                drawMap()
         }
     }
 
@@ -2861,6 +2978,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Adset: a drafted clan's info, as behind the clan picker's i button
         case ClanInfo(f) =>
             onClick(AdsetClanInfo(f))
+
+        // PC version: a Town Hall tapped on the map
+        case TownHallInfo(f) =>
+            val up = PCExpansion.upgraded(f)
+            showOverlay(overlayScrollX((
+                Image(up.?(TownHall.upgraded).|(TownHall.image), styles.winnerCard).div ~
+                (f.elem ~ "'s " ~ up.?("upgraded ").|("") ~ TownHall.elem).div ~
+                "A large building on no space, never built, moved or destroyed. A clan that ends a year without its Town Hall is out of the game.".txt.div ~
+                up.?("Upgraded: the clan can scout enemy territories.".txt).|(("A Build can upgrade it for " ~ Amount(1.hl, "Stone".hl) ~ " and " ~ Amount(1.hl, Wood.elem) ~ "; then the clan can scout enemy territories.")).div
+            ).div(xlo.flexvcenter)).onClick, onClick)
 
         // A tile's centrepiece or its "i" tapped on the map: the tile's rule
         case TileAbilityInfo(tile) =>

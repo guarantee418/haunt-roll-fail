@@ -151,7 +151,10 @@ class Board {
 
     def tiles(t : Territory) : Int = t.areas./(a => (a.x, a.y)).distinct.num
 
-    def closed(t : Territory) : Boolean = t.areas.forall(a => sides(a).forall(s => at(a.x + s.dx, a.y + s.dy).any))
+    // PC version (pc.scala): the map is built at setup and nothing is added later, so a side with no tile beyond it is coast
+    var coast = false
+
+    def closed(t : Territory) : Boolean = t.areas.forall(a => sides(a).forall(s => coast || at(a.x + s.dx, a.y + s.dy).any))
 
     def open(t : Territory) = closed(t).not
 
