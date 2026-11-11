@@ -1008,7 +1008,11 @@ proposed there, to change if Marzaus answers otherwise.
   with his, in games with the hidden `GuardBeforeChief` every new game gets
   (Marzaus, 2026-11-11, Saga and Clan: Horse won a fight, lost Eitria and a unit,
   and her bodyguard went to the reserve with her; `GuardBeforeChiefAction(X)`
-  switches a running game). 2: one reroll in each
+  switches a running game). With the bodyguard and other units in the fight, the
+  clan is asked whether the bodyguard goes first even when that is its only choice
+  (Gman, 2026-11-11: with the Warchiefs PC version's 2-casualty warchief and 1
+  casualty he was never asked), in games with the hidden `GuardCasualtyAsked`
+  every new game gets (`guardChoice` in `map.scala`). 2: one reroll in each
   fight with the warchief, against a clan, and against a creature too in games
   with the hidden `MilitaryRerollCreatures` every new game gets (Gman,
   2026-11-04; `MilitaryRerollCreaturesAction(X)` switches a running game)
@@ -1722,7 +1726,7 @@ Readings (Gman may change them):
 
 A mode Gman designed after the Northgard video game (option `ModuleOption(PCVersion)`, under Fan content; `pc.scala`). The
 design and the questions still open are in the Claude Doc "Northgard PC version mode: design proposal". Picking it turns on
-Creatures, Warchiefs, Sea, Tower PC version, Warchiefs PC version, Minerals, Military paths, Aggressive creatures (no clan
+Creatures, Warchiefs, Sea, Events (since 2026-11-11, Gman), Tower PC version, Warchiefs PC version, Minerals, Military paths, Aggressive creatures (no clan
 shares a territory with a creature; Gman, 2026-11-11) and the Wilderness, Wastelands and Uncharted Horizons map tiles; turning any of them off turns it off. Not against the Automa, and not in Adset (Gman).
 
 - **Map**: built at setup (`buildMap`), the same on every client (a recorded shuffle and a sequence seeded from it). The
@@ -1737,12 +1741,18 @@ shares a territory with a creature; Gman, 2026-11-11) and the Wilderness, Wastel
   after 60 anything. Every other space gets a random tile in a legal turn, from the map tiles with every Environment tile.
   The map is tried again (up to 60 times, or 120 with no good try) until the homes are their own territories and 3 (2 clans)
   or 2 territories apart, one fewer after every 10 tries.
+  Since 2026-11-11 (Gman; hidden `PCVersionUpdate`, every new game; older PC games keep their maps): the two-player map is an
+  oval (its three middle rows 5 tiles wide); every home has a Mine territory just outside it: the inland tile has a lair in an
+  area of its own on a side across the Port's line, and the tile beyond it an area of its own with a small building space
+  there, so lair and space make one territory (a copy of the same fourth tile for every clan); and with 2, 4 and 6 clans the
+  map is mirrored (`turnsOf`): each tile is also placed at the cells the layout's half or quarter turns take it to, turned
+  the same way, so every clan sees the same map around its home (for the first 40 tries; then it may give up the mirror).
   A tile side with no tile beyond it is coast: it counts as closed (`Board.coast`). The Wyvern's Den isn't used yet.
 - **Setup**: each clan gets 4 units in its Port territory and 1 in each of the two beside it (Gman, 2026-11-11), with no
   choice; Kaija, a lynx, Brok or the Automa's second Leader takes the place of one of the Port's units, and Robotos gets 2
   more there. Creatures from the creature deck go on the territories between the homes (on a shortest way from
   one home to another), lairs first, nearest the centre first, while the deck lasts.
-- **Town Hall** (`game.halls`, drawn on the Port, the Development card Town Hall's thatched hall and, once upgraded, the
+- **Town Hall** (`game.halls`, drawn on the Port tile's meadow left of the rocks, clear of the Port itself (Gman, 2026-11-11), the Development card Town Hall's thatched hall and, once upgraded, the
   video game's slate-roofed one, by `tools/town-hall.py`; `TownHallInfo` when tapped): not a building of `game.buildings`, so no card
   can build, replace or destroy it. A Build's build can upgrade it for 1 Stone and 1 wood (`HallUpgradeAction`), once. It
   doesn't count as a large building yet (question 7 in the doc).
@@ -1763,3 +1773,12 @@ shares a territory with a creature; Gman, 2026-11-11) and the Wilderness, Wastel
   buildings in its territories leave the map, its cards, resources and fame are gone, and it passes every turn. If that
   would leave nobody, nobody is out. The last clan or team left wins at once (`LastStandingAction`); the other victory
   conditions still apply.
+- **Domination victory only** (`DominationOnly`, a Victory conditions choice offered only with the PC version; Gman,
+  2026-11-11): the last clan or team holding its Town Hall is the only winner; fame and the three closed territories with
+  large buildings don't win, and after the last year the game goes on year after year until one is left (the bot games stop
+  after `NORT_FAME_YEARS` more years and score as usual; `NORT_DOMINATION=1` with `NORT_PC=1` in the headless host).
+- **Mines** (`PCVersionUpdate`): a Mine gives 1 Stone at the harvest (an upgraded one 2), with no die roll, while the
+  supply has Stone (Gman, 2026-11-11: upgrades matter so much here).
+- **More creatures** (`PCVersionUpdate`): with 3 clans or more the Wilderness and Wastelands creatures are in the creature
+  deck too (`PCExpansion.moreCreatures`, in `Wild.creaturesOn` and `Waste.creaturesOn`), so more territories between the
+  homes get one; with 5 or 6 clans the 23 creatures still don't fill every one.

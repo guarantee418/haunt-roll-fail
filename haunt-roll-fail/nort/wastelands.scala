@@ -111,7 +111,7 @@ object Waste {
     // The expansion's two modules, its Environment tiles and its creatures (WastelandsTiles, WastelandsCreatures), not just a central
     // tile; games made before have ModuleOption(Wastelands), both
     def tilesOn(implicit game : Game) = game.options.has(ModuleOption(Wastelands)) || game.options.has(WastelandsTiles)
-    def creaturesOn(implicit game : Game) = game.options.has(ModuleOption(Wastelands)) || game.options.has(WastelandsCreatures)
+    def creaturesOn(implicit game : Game) = game.options.has(ModuleOption(Wastelands)) || game.options.has(WastelandsCreatures) || PCExpansion.moreCreatures
 
     def landvidiIn(t : Territory)(implicit game : Game) = in(t, landvidi, "s")
 

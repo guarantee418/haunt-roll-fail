@@ -1178,10 +1178,19 @@ object MapExpansion extends Expansion {
             yield (math.min(u, n), kaija, chief, blainn)
     }.sortBy(p => $(p._2, p._3, p._4).count(b => b))
 
+    // Military paths: whether f may lose its bodyguard in t instead of one of the units the k casualties would otherwise take (the
+    // casualty parties don't tell them apart, so with nothing else to pick the player was never asked; Gman, 2026-11-11), in games
+    // with the hidden GuardCasualtyAsked every new game gets
+    def guardChoice(f : Faction, t : Territory, k : Int)(implicit game : Game) = game.options.has(GuardCasualtyAsked) && {
+        val guard = (MilitaryExpansion.guardsIn(t, f) > 0).??(1)
+        val others = MilitaryExpansion.soldiers(t, f) - game.extraLynx(t, f) - guard
+        guard > 0 && others > 0 && k <= others
+    }
+
     // Asks the first of l (a clan and the casualties it takes) with a choice to make, then again; None once all are picked
     // (Robotos's request of 2026-10-11; only in games with ChooseCasualties, and never for the Automa)
     def pickCasualties(l : $[(Faction, Int)], t : Territory, again : ForcedAction)(implicit game : Game) : |[Ask] =
-        game.options.has(ChooseCasualties).??(l.%{ case (f, k) => k > 0 && f != Automa && game.casualtyPicks.contains(f).not }./{ case (f, k) => (f, k, casualtyParties(f, t, k)) }.%(_._3.num > 1).headOption./{ case (f, k, l) =>
+        game.options.has(ChooseCasualties).??(l.%{ case (f, k) => k > 0 && f != Automa && game.casualtyPicks.contains(f).not }./{ case (f, k) => (f, k, casualtyParties(f, t, k)) }.%{ case (f, k, l) => l.num > 1 || guardChoice(f, t, k) }.headOption./{ case (f, k, l) =>
             FigurePicker(CasualtyGoal(f, t.anchor, k, again))
         })
 
