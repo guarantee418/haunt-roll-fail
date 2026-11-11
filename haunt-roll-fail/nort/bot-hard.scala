@@ -594,6 +594,36 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
 
     def gain(change : => Unit) : Double = trying(change) - now
 
+    // A fight's casualties as picked, valued with them lost (Game.removeCasualties), and everything it touches put back
+    def casualtiesGain(area : AreaRef, pick : (Int, Boolean, Boolean, Boolean), guard : Boolean, both : Boolean) : Double = {
+        val picks = game.casualtyPicks
+        val guardPicks = game.casualtyGuard
+        val bothLynx = game.casualtyBothLynx
+        val guards = game.guards
+        val brokGuard = game.brokGuard
+        val blainn = game.blainn
+        val events = game.events
+        try {
+            gain {
+                game.casualtyPicks += self -> pick
+                if (guard)
+                    game.casualtyGuard += self
+                if (both)
+                    game.casualtyBothLynx += self
+                game.removeCasualties(board.territory(area), self, 0)
+            }
+        }
+        finally {
+            game.casualtyPicks = picks
+            game.casualtyGuard = guardPicks
+            game.casualtyBothLynx = bothLynx
+            game.guards = guards
+            game.brokGuard = brokGuard
+            game.blainn = blainn
+            game.events = events
+        }
+    }
+
     def moveFigures(from : Territory, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean) {
         game.removeUnits(from, self, n)
         game.addUnits(to, self, n)
@@ -974,6 +1004,12 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
                 if (kaija)
                     game.moveCompanion(self, t, to)
             } + n * 10)
+        // CASUALTIES picked (ChooseCasualties): the position with those figures lost (the Hard bot picked at random before, and Horse
+        // lost Eitria instead of her bodyguard, Saga and Clan, 2026-11-11)
+        case CasualtyPickAction(_, area, _, n, kaija, chief, blainn, _) => |(casualtiesGain(area, (n, kaija, chief, blainn), false, false))
+        case CasualtyGuardAction(_, area, _, n, kaija, both, chief, blainn, _) => |(casualtiesGain(area, (n, kaija, chief, blainn), true, both))
+        case CasualtyBothLynxAction(_, area, _, n, chief, blainn, _) => |(casualtiesGain(area, (n, true, chief, blainn), false, true))
+
         case RetreatPartyAction(_, from, to, n, kaija, chief, _, _) =>
             val t = board.territory(from)
             |(gain {

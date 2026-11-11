@@ -492,6 +492,8 @@ case class PCChiefCampPaysAction(then : ForcedAction) extends ForcedAction with 
 case class HorseTwoGuardsAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to ScorchedAfterEvents (an hrf-games fix), and puts any food, wood or lore left below 0 back to 0
 case class ScorchedAfterEventsAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to GuardBeforeChief (an hrf-games fix)
+case class GuardBeforeChiefAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to PickLoneLoss (an hrf-games fix)
 case class PickLoneLossAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to TeamVictoryAllCards (an hrf-games fix): a team needs every Alternative victory card
@@ -2322,6 +2324,12 @@ object CommonExpansion extends Expansion {
                     }
                 }
             }
+
+            Then(then)
+
+        case GuardBeforeChiefAction(then) =>
+            if (game.options.has(GuardBeforeChief).not)
+                game.addOption(GuardBeforeChief)
 
             Then(then)
 

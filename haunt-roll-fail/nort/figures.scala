@@ -187,7 +187,22 @@ case class CasualtyGoal(self : Faction, from : AreaRef, k : Int, then : ForcedAc
 
     def taken(p : FigurePick)(implicit game : Game) = p.units + p.guard.??(1) + p.companions + p.blainn.??(1) + p.chief.??(game.pcChief(owner).?(2).|(1))
 
-    override def none(p : FigurePick)(implicit game : Game) = "Pick " ~ CombatIcon.skulls(k) ~ " (" ~ taken(p).hl ~ " picked)"
+    override def none(p : FigurePick)(implicit game : Game) =
+        if (taken(p) == k && guardsKept(p))
+            "The bodyguard goes first".txt
+        else
+            "Pick " ~ CombatIcon.skulls(k) ~ " (" ~ taken(p).hl ~ " picked)"
+
+    // GuardBeforeChief: the warchief is lost only with its bodyguard, and Horse's Brok only with his (HorseTwoGuards), as the bodyguard
+    // goes before them and is wherever they are (a warchief lost took its living bodyguard to the reserve). The bodyguard switch is the
+    // warchief's when it is there, else Brok's; Brok's is otherwise the last of the units counter
+    def guardsKept(p : FigurePick)(implicit game : Game) : Boolean = game.options.has(GuardBeforeChief) && {
+        val chiefGuard = MilitaryExpansion.guardIn(territory, owner)
+        val brokGuard = MilitaryExpansion.brokGuardIn(territory, owner)
+        val chiefGuardLost = chiefGuard.not || p.guard
+        val brokGuardLost = brokGuard.not || chiefGuard.?(p.guard && p.units == maxUnits).|(p.guard)
+        (p.chief && chiefGuardLost.not) || (owner == Horse && p.first && brokGuardLost.not)
+    }
 
     def finish(p : FigurePick)(implicit game : Game) = {
         val parties = MapExpansion.casualtyParties(owner, territory, k)
@@ -200,6 +215,9 @@ case class CasualtyGoal(self : Faction, from : AreaRef, k : Int, then : ForcedAc
         // the bodyguard and fewer than all the units, which CasualtyPickAction can't say (it takes the bodyguard after every unit)
         def first(kaija : Boolean, both : Boolean) = (taken(p) == k).?(CasualtyGuardAction(owner, from, k, p.units, kaija, both, p.chief, p.blainn, then) : UserAction)
 
+        if (guardsKept(p))
+            None
+        else
         if (p.guard && p.units < max)
             first(p.companions > 0, p.companions == 2)./(a => (p.companions == 1).?(named(p, a)).|(a))
         else
