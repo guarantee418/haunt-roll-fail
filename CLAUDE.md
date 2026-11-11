@@ -631,6 +631,11 @@ file covers the build, server and deploy. No session can ssh to the server
   then waits for `SetupDoneAction` (`faction-invasive-eee.scala`); games started before it keep shuffling them
   in during Lilypad's setup, so their replays don't change. `ReplayCheck <games> ldkd` checks starting hands
   (`oldfrogs` for the old timing).
+  Advanced Setup draws the hands first (A.7, `CardDraftFive`) and sets up each faction as it is picked (A.8.3), so there the
+  Diaspora shuffles them in during its own setup, as its board's 3rd setup step says, and a faction set up after it can draw
+  them in its setup (the Woodland Alliance's supporters): new games get the hidden default option `FrogCardsAtDiasporaSetup`
+  (`frogsAfterSetup` in `faction-invasive-eee.scala`; Gman, 2026-11-11, Betrayal of Right). Without the five-card draft the
+  hands are drawn as each faction sets up, so they still wait. `ReplayCheck <games> ldkd draft` checks it.
 - Discarded Frog cards skip the Lizard Cult's Lost Souls and go straight to the Pond (or the playtest Lilypads'
   piles), and so do Companions' disguised Frog cards (asked for by the owner on 2026-10-13). New games get the hidden
   default option `FrogCardsSkipLostSouls` (`root/meta.scala`, checked in `QuietDiscard` in `root/game.scala`); older

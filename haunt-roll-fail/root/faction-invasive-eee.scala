@@ -353,6 +353,11 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
 
     // A Frog Ambush discarded other than as an ambush goes to the Pond bottom too (FrogAmbushToPondBottom), unless the game has
     // FrogAmbushBottomOnlyAsAmbush
+    // FrogCardsAfterStartingHands waits until every faction is set up, unless the starting hands were drawn before the factions
+    // set up (the five-card draft) in a game with FrogCardsAtDiasporaSetup: then the Diaspora shuffles them in in its own setup
+    def frogsAfterSetup(implicit game : Game) =
+        (options.has(FrogCardsAtDiasporaSetup) && options.has(CardDraftFive)).not
+
     def frogAmbushAlwaysBottom(implicit game : Game) =
         (options.has(FrogAmbushToPondBottom) && options.has(FrogAmbushBottomOnlyAsAmbush).not) || game.frogAmbushToPondBottom
 
@@ -475,7 +480,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
                 f.log("removed", EnclaveDominance, "from the game")
             }
 
-            if (options.has(FrogCardsAfterStartingHands))
+            if (options.has(FrogCardsAfterStartingHands) && InvasiveEEEExpansion.frogsAfterSetup)
                 SetupFactionsAction
             else {
                 f.supply --> deck
@@ -484,7 +489,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
             }
 
         // once every faction has drawn its starting hand and set up
-        case SetupDoneAction if options.has(FrogCardsAfterStartingHands) && factions.of[InvasiveEEE].exists(_.supply.any) =>
+        case SetupDoneAction if options.has(FrogCardsAfterStartingHands) && InvasiveEEEExpansion.frogsAfterSetup && factions.of[InvasiveEEE].exists(_.supply.any) =>
             val f = factions.of[InvasiveEEE].%(_.supply.any).first
 
             f.supply --> deck
