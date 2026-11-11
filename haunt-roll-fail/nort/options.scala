@@ -1122,6 +1122,30 @@ case object LionFaith extends GameOption with ToggleOption {
     def valueOn = "Lion Kingdom collects and spends Faith".txt
 }
 
+// PC version (pc.scala; asked for by Gman on 2026-11-11): a mode inspired by the Northgard video game. The map is built at setup,
+// every clan starts on its Port with a Town Hall, fog of war hides what it hasn't scouted, and Explore scouts. It plays with every
+// fan-made "PC" module, Minerals and the Sea module's Ports, which it turns on (and is turned off with them)
+case object PCVersion extends Module("PC version", "fan-made mode") {
+    override def ready = true
+    override def fan = true
+    override def expansion = |(PCExpansion)
+    // First of all: it builds the map in place of the setup's tile placements
+    override def priority = -40
+    def needs : $[Module] = $(Creatures, Warchiefs, Sea, TowersModule, WarchiefsPC, MineralsModule, MilitaryModule, AggressiveCreatures)
+    // and the map tiles of every expansion (Gman, 2026-11-11)
+    def tiles : $[GameOption] = $(WildernessTiles, WastelandsTiles, HorizonsTiles)
+    def about = $(
+        "A mode inspired by the Northgard video game. The map is built at setup around a special central tile (a random one unless one is picked).",
+        "Each clan starts on its " ~ "Port".hl ~ " with a " ~ "Town Hall".hl ~ " and the two small territories beside it; creatures hold the territories between the clans.",
+        "Fog of war".hl ~ ": a clan sees only its territories and the ones it has scouted. Each Explore scouts one territory bordering its own; an enemy's needs an upgraded Town Hall (a build, " ~ Amount(1.hl, Stone.elem) ~ " and " ~ Amount(1.hl, Wood.elem) ~ "). A Defense Tower in the Port territory scouts the coast. A scout gives what an Explore gives: the scouted territory counts as the territory the Explore closed (fame for its tiles, the clan powers, Lay of the Land, the Events).",
+        "Creatures are aggressive (no clan shares a territory with one) and have no abilities.",
+        "Only Wolves and Draugr move (Myrkalfar from year 3). A Wolf killed comes back where it started, unless a clan holds that territory.",
+        "A clan that ends a year without its Town Hall is out of the game; the last clan (or team) standing wins. The other victory conditions still apply.",
+        "Turns on Creatures, Warchiefs, Sea (its Ports), Tower PC version, Warchiefs PC version, Minerals, Military paths, Aggressive creatures, and the Wilderness, Wastelands and Uncharted Horizons map tiles.",
+        "Fan-made, not part of the published game.".styled(xstyles.warning),
+    )
+}
+
 object Module {
     // The setup screen's section of a module that isn't fan-made (Robotos, 2026-10-26: one section per box)
     def section(m : Module) : String = m match {
@@ -1132,7 +1156,7 @@ object Module {
         case _ => "Modules and expansions"
     }
 
-    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, FameGainsModule, DragonVariant, AggressiveCreatures, LionKingdom, BearBorder)
+    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, FameGainsModule, DragonVariant, AggressiveCreatures, LionKingdom, BearBorder, PCVersion)
 
     // The team variants and the number of players each one needs
     val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6, Teams2v2v2 -> 6)
@@ -1244,4 +1268,6 @@ case class ModuleOption(module : Module) extends GameOption with ToggleOption wi
     override val explain = module.about ++ module.ready.not.$("Not implemented yet.".styled(xstyles.warning))
     // A module that isn't ready requires itself, so it can never be turned on
     override def required(all : $[BaseOption]) = module.ready.?(module.requires).|($($[BaseOption](this)))
+    // The PC version turns on the modules it plays with, and is turned off with any of them
+    override def forcedOn(all : $[BaseOption]) = (module == PCVersion).??(PCVersion.needs./(ModuleOption) ++ PCVersion.tiles)
 }

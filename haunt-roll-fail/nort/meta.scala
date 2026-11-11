@@ -163,7 +163,7 @@ object Meta extends MetaGame { mmm =>
 
     override def quickOptions = options./(o => o -> 0.0).toMap
 
-    def has(options : $[O], m : Module) = options.has(ModuleOption(m)) || (m == Warchiefs && options.has(WarchiefPawns)) || (m == TrainingFields && options.has(TrainingFieldsOption)) || (m == VictoryModule && VictoryChoice.alternative.exists(options.has)) || (m == Wastelands && CentralChoice.picked(options)) || (m == Wilderness && (options.has(WildernessTiles) || options.has(WildernessCreatures))) || (m == Wastelands && (options.has(WastelandsTiles) || options.has(WastelandsCreatures)))
+    def has(options : $[O], m : Module) = options.has(ModuleOption(m)) || (m == Warchiefs && options.has(WarchiefPawns)) || (m == TrainingFields && options.has(TrainingFieldsOption)) || (m == VictoryModule && VictoryChoice.alternative.exists(options.has)) || (m == Wastelands && CentralChoice.picked(options)) || (m == Wastelands && options.has(ModuleOption(PCVersion))) || (m == Wilderness && (options.has(WildernessTiles) || options.has(WildernessCreatures))) || (m == Wastelands && (options.has(WastelandsTiles) || options.has(WastelandsCreatures)))
 
     // Quick Game: always three players, core clans and core rules (no option is turned on beyond the defaults)
     val quickMin = 3
@@ -193,6 +193,7 @@ object Meta extends MetaGame { mmm =>
                 val teams = options.has(TeamPlay).??(sides(factions, options))
                 (options.has(TeamPlay) && factions.has(Automa)).?(ErrorResult("No teams against the Automa")) ||
                 (options.has(TeamPlay) && teams.num < 2).?(ErrorResult("Put the players in at least two teams")) ||
+                (factions.has(Automa) && options.has(ModuleOption(PCVersion))).?(ErrorResult("The PC version is not for the Automa")) ||
                 (factions.has(Automa) && options.of[AutomaLevelOption].exists(_.level >= 3) && has(options, Creatures).not).?(ErrorResult("Automa levels 3 and up need the Creatures module")) ||
                 validateVictoryCards(factions, options) ||
                 missing.any.?(WarningResult(missing./(factionName).mkString(", ") + " will get a free color")) ||
@@ -464,10 +465,10 @@ object Meta extends MetaGame { mmm =>
         RaidCard.all./(c => ImageAsset(c.id))
     ) ::
     // Wilderness: the Environment tiles
-    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wilderness) || options.has(WildLakeCentral) || options.has(RandomAnyCentral), "tile", "tile-", "webp")(
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wilderness) || options.has(WildLakeCentral) || options.has(RandomAnyCentral) || has(options, PCVersion), "tile", "tile-", "webp")(
         Tiles.environment./(t => ImageAsset(t.id))
     ) ::
-    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wilderness) || options.has(WildLakeCentral) || options.has(RandomAnyCentral), "tile/mask", "mask-", "webp")(
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wilderness) || options.has(WildLakeCentral) || options.has(RandomAnyCentral) || has(options, PCVersion), "tile/mask", "mask-", "webp")(
         Tiles.environment./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))
     ) ::
     // Wastelands: the Environment and central tiles
@@ -557,6 +558,10 @@ object Meta extends MetaGame { mmm =>
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, MineralsModule), "ui", "ui-", "webp")(
         Mineral.all./(m => ImageAsset(m.name.toLowerCase))
+    ) ::
+    // PC version (fan content): the Town Hall and the upgraded Town Hall (nort/tools/town-hall.py)
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, PCVersion), "token/building", "building-", "webp")(
+        $(ImageAsset("town-hall"), ImageAsset("town-hall-upgraded"))
     ) ::
     // Military paths module (fan content): the MXP icon, the Leadership path's bodyguard figure and the Guardian path's Militia
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, MilitaryModule), "ui", "ui-", "webp")(

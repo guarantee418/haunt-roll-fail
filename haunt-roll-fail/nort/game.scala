@@ -886,6 +886,17 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
     // Uncharted Horizons' Sea module (sea.scala): the Ports (the Beach tiles' land areas), their Raids, the Raid deck
     var raidDeck : $[RaidCard] = $
+    // PC version (pc.scala): each clan's Town Hall (its Port area) and home areas, the territories each clan has scouted (their
+    // anchors), the upgraded Town Halls, the clans out of the game, where each Wolf came back to, and the years done
+    var halls : Map[Faction, AreaRef] = Map()
+    var homes : Map[Faction, $[AreaRef]] = Map()
+    var scouted : Map[Faction, $[AreaRef]] = Map()
+    var hallsUpgraded : $[Faction] = $
+    var out : $[Faction] = $
+    var wolfHomes : Map[Creature, AreaRef] = Map()
+    var wolvesBack = 0
+    var hallsChecked = 0
+
     var raidsShuffled = false
     var ports : $[AreaRef] = $
     var raids : Map[AreaRef, Raid] = Map()
@@ -1325,6 +1336,10 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         if (has(TowersModule))
             TowersExpansion.sweep(this)
 
+        // PC version: the territories a clan has figures in stay seen
+        if (has(PCVersion))
+            PCExpansion.sweep(this)
+
         val raw = action.as[SelfPerform]./(_.perform(soft)).|(internalPerform(action, soft))
 
         // Military paths: a unit lost outside a fight may be swapped for the bodyguard or a Militia (PickLoneLoss), asked before
@@ -1342,6 +1357,9 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
         if (has(TowersModule))
             TowersExpansion.sweep(this)
+
+        if (has(PCVersion))
+            PCExpansion.sweep(this)
 
         // Alternative fame gains: 120 fame and an Altar of Kings win at once
         if (has(FameGainsModule) && isOver.not && c.is[GameOver].not && FameGainsExpansion.winners(this).any)
