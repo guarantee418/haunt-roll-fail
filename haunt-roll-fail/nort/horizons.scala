@@ -555,6 +555,26 @@ object VictoryExpansion extends Expansion {
         }
     }
 
+    // A map-checked card's count so far and the count it needs, for the victory overview (display only;
+    // Prosperity is left out, as other clans' fame is hidden, and cards with no single count give None)
+    def mapCount(f : Faction, c : VictoryCard)(implicit game : Game) : Option[(Int, Int)] = {
+        val mine = game.controlled(f)
+        val closed = mine.%(game.board.closed)
+
+        c.id match {
+            case "many-territories" => Some((closed.num, 6))
+            case "large-buildings" => Some((mine./~(game.buildingsIn).count(_._2.large), 4))
+            case "spreading" => Some((mine.num, 8))
+            case "creature-territories" => Some((closed.count(t => t.areas.exists(a => game.board.spec(a).lair)), 3))
+            case "large-territories" => Some((closed.count(large), 3))
+            case "two-larger-territories" => Some((closed.count(t => game.board.tiles(t) >= 5 && large(t)), 2))
+            case "mountains" => Some((closed.count(rough), 6))
+            case "knowledge" => Some((upgrades(f), game.warchiefCards.?(3).|(2)))
+            case "building-ownership" => Some((mine./~(game.buildingsIn).num, 9))
+            case _ => None
+        }
+    }
+
     // The cards a side (a team, or one player) fulfils
     def done(side : $[Faction])(implicit game : Game) : $[VictoryCard] = game.victory.%(c => side.exists(fulfilled(_, c)))
 
