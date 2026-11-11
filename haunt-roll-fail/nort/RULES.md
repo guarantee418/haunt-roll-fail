@@ -1003,7 +1003,12 @@ proposed there, to change if Marzaus answers otherwise.
   in games with the hidden `HorseTwoGuards` every new game gets (Gman,
   2026-11-06; `HorseTwoGuardsAction(X)` switches a running game); where both
   are in a fight, Eitria's goes first, and the casualty picker's bodyguard
-  switch is one of them, the other counted with the units. 2: one reroll in each
+  switch is one of them, the other counted with the units. A clan picking its
+  casualties loses the warchief only with its bodyguard, and Horse's Brok only
+  with his, in games with the hidden `GuardBeforeChief` every new game gets
+  (Marzaus, 2026-11-11, Saga and Clan: Horse won a fight, lost Eitria and a unit,
+  and her bodyguard went to the reserve with her; `GuardBeforeChiefAction(X)`
+  switches a running game). 2: one reroll in each
   fight with the warchief, against a clan, and against a creature too in games
   with the hidden `MilitaryRerollCreatures` every new game gets (Gman,
   2026-11-04; `MilitaryRerollCreaturesAction(X)` switches a running game)

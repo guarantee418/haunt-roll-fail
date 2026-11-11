@@ -624,6 +624,16 @@ case object PickLoneLoss extends GameOption with ToggleOption {
     def valueOn = "Pick the bodyguard or a Militia for a unit lost outside a fight".txt
 }
 
+// Military paths: a fight's casualties picked by their player (ChooseCasualties) lose the warchief only with its bodyguard, and Horse's
+// Brok only with his (HorseTwoGuards), as the bodyguard goes before the warchief and is wherever it is (Marzaus, 2026-11-11, Saga and
+// Clan: Horse won a fight but lost Eitria and a unit, and its bodyguard went to the reserve with her, so the territory was emptied).
+// Hidden, and given to every new game (Meta.mandatoryFor); older games replay the old way. A running game can be switched over with
+// GuardBeforeChiefAction(X)
+case object GuardBeforeChief extends GameOption with ToggleOption {
+    val group = "Military paths".txt
+    def valueOn = "The warchief is lost in a fight only with its bodyguard".txt
+}
+
 // Warchiefs PC version: the warchief is recruited for 1 of a Recruit's units plus the extra unit of its territory's Training Camp, so the
 // starting Recruit 1 can bring it (Marzaus, 2026-11-06: "i cant recruit the chief, the robobot doesnt have one either"; it took 2 of the
 // Recruit's own units, so only the Recruit 2 cards could). Hidden, and given to every new game (Meta.mandatoryFor); older games replay
