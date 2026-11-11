@@ -352,15 +352,21 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         if (game.has(VictoryModule).not || game.victory.exists(_.id == id).not) 0.0
         else victorySteps.getOrElseUpdate(id + n, victoryValue(self, Map(id -> n)) - victoryValue(self))
 
-    // TRADES: a trade must pay off by its resources alone (buying one the clan is short of, with ones it can spare, or
-    // covering Winter); only then does it also count towards the Trading victory card, unless that trade wins the game.
-    // With the card worth a step for every trade, the bots traded resources away and straight back (Stag in a team game,
+    // TRADES: a trade counts towards the Trading victory card when it pays off by its resources alone (buying one the
+    // clan is short of, or covering Winter), when it pays only with resources beyond what the clan has a use for
+    // (`needs`: Winter, its free building spaces, its upgrades; Gman, 2026-11-11), or when it wins the game. With the
+    // card worth a step for every trade, the bots traded resources away and straight back (Stag in a team game,
     // reported by Gman on 2026-11-10: 3 wood for lore, wood and 2 lore for food, 3 food for lore)
     def short(r : Resource) : Boolean = needs.get(r).forall(self.has(r) < _)
 
-    def tradeValue(merit : Double, bought : |[Resource]) : Double = {
+    def spare(pay : $[Resource]) : Boolean = pay.distinct.forall(x => needs.get(x).exists(n => self.has(x) - pay.count(x) >= n))
+
+    def tradeValue(merit : Double, bought : |[Resource], pay : $[Resource]) : Double = {
         val step = victoryStep("trading")
         if (merit > 0 && bought.forall(short))
+            merit + step
+        else
+        if (step > 0 && spare(pay))
             merit + step
         else
         if (step > 0 && victoryValue(self) + step >= 6000)
@@ -1006,12 +1012,12 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case MineralWinterSkipAction(_, _) => |(0)
 
         // HARVEST
-        case TradeForAction(_, pay, r, _) => |(tradeValue(gain { pay.foreach(x => self.gain(x, -1)) ; self.gain(r, 1) }, Some(r)))
+        case TradeForAction(_, pay, r, _) => |(tradeValue(gain { pay.foreach(x => self.gain(x, -1)) ; self.gain(r, 1) }, Some(r), pay))
         // A teammate's resources count too; a small cost keeps trades from going back and forth
-        case TeamTradeAction(_, mate, give, take, _) => |(tradeValue(gain { self.gain(give, -1) ; mate.gain(give, 1) ; mate.gain(take, -1) ; self.gain(take, 1) } - 15, Some(take)))
+        case TeamTradeAction(_, mate, give, take, _) => |(tradeValue(gain { self.gain(give, -1) ; mate.gain(give, 1) ; mate.gain(take, -1) ; self.gain(take, 1) } - 15, Some(take), $(give)))
         case DoneAction(_) => |(0)
         case TradeDoneAction(_, _) => |(0)
-        case TeamOfferAction(_, mate, give, take, _) => |(tradeValue(gain { self.gain(give, -1) ; mate.gain(give, 1) ; mate.gain(take, -1) ; self.gain(take, 1) } - 15, Some(take)))
+        case TeamOfferAction(_, mate, give, take, _) => |(tradeValue(gain { self.gain(give, -1) ; mate.gain(give, 1) ; mate.gain(take, -1) ; self.gain(take, 1) } - 15, Some(take), $(give)))
         // Accepting: self gives take and gets give
         case TeamAcceptAction(_, from, give, take, _) => |(gain { self.gain(take, -1) ; from.gain(take, 1) ; from.gain(give, -1) ; self.gain(give, 1) } - 5)
         case TeamDeclineAction(_, _, _, _, _) => |(0)
@@ -1191,7 +1197,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
 
         // EVENTS (Uncharted Horizons)
         case OfferingsTakeAction(_, card, _, _, _) => |(utility(card) + cardValueSafe(card) - resourceValue(Lore))
-        case BonfireTradeAction(_, _) => |(tradeValue(gain { self.wood -= 2 ; self.lore += 1 ; self.fame += 1 }, None))
+        case BonfireTradeAction(_, _) => |(tradeValue(gain { self.wood -= 2 ; self.lore += 1 ; self.fame += 1 }, None, $(Wood, Wood)))
         case VolcanoAction(_, space, b, _, _, _) => |(gain(game.buildings -= space) + 70 * b.large.?(2).|(1))
         case HappyUnrestAction(_, _, _, _) => |(500)
         case HappyFameAction(_, area, _, _, _) => |(300 + area./(a => gain(game.addUnits(a, self, 1))).|(0.0))
