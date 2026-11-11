@@ -1530,6 +1530,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var governorsStopExposure = false
     // the clearings where a faction guessed a plot right this turn but the Governors kept it (GovernorsStopExposure): turn, faction, clearing
     var governedGuesses : $[(Int, Faction, Clearing)] = $
+    var prisonersFromCodefenders = false
     var mouseholdFromSupply = false
     var banishAfterIgnoredHits = false
     var featherRufflersOnCraft = false
