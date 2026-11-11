@@ -529,6 +529,16 @@ case object RiverfolkCraftUngoverned extends GameOption with ToggleOption {
     val valueOn = "Governors".hh ~ " don't stop the Riverfolk crafting"
 }
 
+// Governors (17.2.3): an enemy of the Twilight Council can't remove pieces at its Governing assemblies except in battle, so a correct
+// guess exposing a Corvid plot there doesn't remove it: the plot stays face down, nothing is scored and the card goes back to the hand
+// (a wrong guess still gives it to the Corvids). The exposure removed the plot and scored (geffrey and masmackattack on Discord,
+// 2026-11-10, Destiny and Right; Gman picked guessing with no removal over not offering it). Hidden and on by default for new games;
+// older games keep it so their replays don't change (GovernorsStopExposureAction switches a running one over).
+case object GovernorsStopExposure extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Governors".hh ~ " stop exposed plots being removed"
+}
+
 // The Knaves' Have at Thee! takes prisoners from every enemy warrior they removed, the co-defender's too (the Twilight Council's Bats
 // hit when the Knaves battle another faction at a Council assembly; Root rules channel, 2026-11-11): only the defender's were offered,
 // so in Betrayal versus Glory the Knaves took no prisoner when the Woodland Alliance gave both hits to Bats. Hidden and on by default
@@ -1643,7 +1653,7 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders) ++
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure) ++
         settled ++
         retired
 
@@ -1657,7 +1667,7 @@ object Meta extends MetaGame {
 
     // The hidden options every new game gets, even when the setup screen starts from options saved before one of them existed
     // (toggles aren't added to saved options from the defaults, so those games missed them)
-    lazy val newGame : $[O] = settled ++ $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, CounterMiceInABush, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders)
+    lazy val newGame : $[O] = settled ++ $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, CounterMiceInABush, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure)
 
     override def completeSaved(n : Int, l : $[F], options : $[O]) = options.diff(retired)
 
@@ -1709,6 +1719,7 @@ object Meta extends MetaGame {
         ReconcileOneAtATime,
         FearsAfterRemoval,
         RiverfolkCraftUngoverned,
+        GovernorsStopExposure,
         PrisonersFromCodefenders,
         MountainSuitedLandmark,
         NoHirelings

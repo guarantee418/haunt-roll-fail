@@ -744,6 +744,14 @@ file covers the build, server and deploy. No session can ssh to the server
   `TraderPlayer`, `root/faction-trader.scala`). Before, it was left out, and in Destiny and Right (2026-11-07) the Riverfolk had to entreat
   at Haven to craft, closing the assembly and giving the Council a Loyalist. New games get the hidden default option
   `RiverfolkCraftUngoverned`; older games keep the old way, and a running game can be switched over with `RiverfolkCraftUngovernedAction(X)`.
+- Governors (17.2.3) keep a correct exposure of a Corvid plot at an enemy Council's Governing assembly from removing it: the exposer may
+  still show a card and guess, a wrong guess gives the card to the Corvids, and a right one leaves the plot face down, scores nothing and
+  returns the card, and the exposer can't guess there again that turn unless the assembly stops governing (entreated) (`ExposeAction` in
+  `root/faction-mischief.scala`, `game.governedGuesses`). The exposure removed the plot and scored (geffrey on Discord, 2026-11-10,
+  Destiny and Right; Gman picked guessing with no removal over not offering it). New games get the hidden default option
+  `GovernorsStopExposure`; older games keep the old way, and a running game can be switched over with `GovernorsStopExposureAction(X)`.
+  `ReplayCheck <games> cctc` plays the Corvids with the Council, exposing whenever it can, and redoes each exposure on a copy with a
+  Governing assembly there.
 - The Twilight Council's Banish is offered only against an enemy with warriors it could move in the clearing (not the Warlord),
   or a Lilypad Diaspora Peaceful enclave there, as battling one sets off Fears Come to Pass (`banishable` in
   `root/faction-council.scala`; MaKoBwoY could banish a lone Underground Duchy tunnel on 2026-10-30, geffrey pointed out the frogs).

@@ -175,6 +175,9 @@ case class GovernorsStopCraftingAction(then : ForcedAction) extends ForcedAction
 // A one-time fix for games started before RiverfolkCraftUngoverned, added to a live game's log by hand: from here the Riverfolk crafts
 // with its trade posts at an enemy Council's Governing assemblies too (game.riverfolkCraftUngoverned), then goes on with then
 case class RiverfolkCraftUngovernedAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// A one-time fix for games started before GovernorsStopExposure, added to a live game's log by hand: from here a correct exposure at an
+// enemy Council's Governing assembly doesn't remove the plot (game.governorsStopExposure), then goes on with then
+case class GovernorsStopExposureAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class CouncilEntreatGainAction(self : Council, then : ForcedAction) extends ForcedAction
 
 case class CouncilRemoveLoyalistAction(self : Council, then : ForcedAction) extends ForcedAction
@@ -233,6 +236,11 @@ object CouncilExpansion extends FactionExpansion[Council] {
 
         case RiverfolkCraftUngovernedAction(then) =>
             game.riverfolkCraftUngoverned = true
+
+            then
+
+        case GovernorsStopExposureAction(then) =>
+            game.governorsStopExposure = true
 
             then
 
