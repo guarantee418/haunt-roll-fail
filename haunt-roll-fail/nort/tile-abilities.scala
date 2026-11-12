@@ -110,7 +110,7 @@ object TileAbilities {
 
     // The rule in this game: the PC version's Vedrfolnir reveals a territory instead (PCVedrfolnirReveal)
     def textIn(tile : String)(implicit game : Game) : String =
-        if (tile == Waste.vedrfolnir && game.options.has(PCVedrfolnirReveal) && PCExpansion.on) "PC version: at the end of each year, its controller reveals one territory it hasn't seen yet, drawn at random (an enemy's too). It stays seen for the rest of the game. This is not a scout, so it gives no fame and no Explore bonuses."
+        if (tile == Waste.vedrfolnir && game.options.has(PCVedrfolnirReveal) && PCExpansion.on) "PC version: at the end of each year, its controller reveals one territory it hasn't seen yet, drawn at random (an enemy's too). It stays seen for the rest of the game. This is not a scout, so it gives no fame and no Explore bonuses." + game.options.has(PCVedrfolnirNoTile).not.??(" Just before the Harvest, its controller is also asked to add the top map tile, which fits nowhere on the whole map (older games).")
         else text(tile)
 }
 

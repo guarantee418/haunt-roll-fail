@@ -982,6 +982,14 @@ case object PCVedrfolnirReveal extends GameOption with ToggleOption {
     def valueOn = "Vedrfolnir reveals a random territory each year".txt
 }
 
+// PC version: Vedrfolnir's controller isn't asked to add the top map tile just before the Harvest, as the whole map is built at
+// setup and the tile fits nowhere (Winter for Clan, 2026-11-12: Bear drew one and put it back). Hidden, and given to every new
+// game (Meta.mandatoryFor); a running game can be switched over with PCVedrfolnirNoTileAction(X)
+case object PCVedrfolnirNoTile extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "Vedrfolnir adds no map tile".txt
+}
+
 // Alternative victory with teams: a team wins only when its players fulfil every card in play, Thane or Jarl, as the Uncharted
 // Horizons rulebook says for 2 vs. 2 ("A team wins if each Victory Condition card is fulfilled by at least one player from the
 // same team"; Marzaus, 2026-11-07). Hidden, and given to every new game (Meta.mandatoryFor); older games keep Thane's Map Control

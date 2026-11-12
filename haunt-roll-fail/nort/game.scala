@@ -487,6 +487,8 @@ case class MielikkiAgainstCreaturesAction(then : ForcedAction) extends ForcedAct
 case class SailOnFromPortAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to PCVedrfolnirReveal (an hrf-games fix)
 case class PCVedrfolnirRevealAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to PCVedrfolnirNoTile (an hrf-games fix)
+case class PCVedrfolnirNoTileAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to ChiefMoveFromHeld (an hrf-games fix)
 case class ChiefMoveFromHeldAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to ChiefMoveAfterMove (an hrf-games fix)
@@ -2399,6 +2401,12 @@ object CommonExpansion extends Expansion {
         case PCVedrfolnirRevealAction(then) =>
             if (game.options.has(PCVedrfolnirReveal).not)
                 game.addOption(PCVedrfolnirReveal)
+
+            Then(then)
+
+        case PCVedrfolnirNoTileAction(then) =>
+            if (game.options.has(PCVedrfolnirNoTile).not)
+                game.addOption(PCVedrfolnirNoTile)
 
             Then(then)
 
