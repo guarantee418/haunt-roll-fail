@@ -270,6 +270,18 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         v
     }
 
+    // PC VERSION: a clan ending a year without its Town Hall territory is out, so holding it comes first, with a few figures there
+    // against the creatures and clans around (the Hard bot sent its Port's units on Raids and lost its hall to a Wolf in year 1)
+    def hallValue(f : Faction) : Double = {
+        if (PCExpansion.on.not || game.out.has(f))
+            return 0
+        PCExpansion.hallOf(f) match {
+            case Some(h) if PCExpansion.holdsHall(f) => 40 * math.min(3, game.figures(h, f))
+            case Some(h) => -2500
+            case None => 0
+        }
+    }
+
     // Progress towards the sudden win: closed territories with a large building
     def strongholdValue(f : Faction) : Double = {
         if (game.domination.not)
@@ -452,7 +464,20 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
                 hold *= 1 - math.min(1.0, likely * p)
             }
         }
-        (1 - hold) * (worth + 30 * du)
+        // PC VERSION: the Wolves, Draugr and Myrkalfar next door move each year and attack where they go, and a Town Hall
+        // territory lost is the game lost (the Hard bot left its Port to a Wolf in year 1)
+        var stake = 0.0
+        if (PCExpansion.on && game.robotos(f).not) {
+            val hall = PCExpansion.hallOf(f).has(t)
+            // They go where people are, the most buildings first for most of them, so the Town Hall's territory above all
+            board.adjacent(t).map(_._1).distinct./~(game.creaturesIn).%(c => game.aggressive(c) && PCExpansion.moves(c)).foreach { c =>
+                val (win, _) = HardCombat.creatureWin(ds + math.min(du, f.food), c.kind.value, du, false)
+                hold *= 1 - hall.?(0.7).|(0.35) * (1 - win)
+            }
+            if (hall)
+                stake = 2500
+        }
+        (1 - hold) * (worth + 30 * du + stake)
     }
 
     // POSITION: the whole value of f's position
@@ -479,6 +504,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         }
 
         v += strongholdValue(f)
+
+        v += hallValue(f)
 
         v += 100.0 * f.fame
 
@@ -690,7 +717,28 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         case _ => 0
     }
 
+    // PC VERSION: an Explore scouts a territory not seen yet (the map is whole, so there's no tile to place): its fame, its
+    // resources with Lay of the Land, the clans' powers, and the territory opened to the bot's moves, as units only move into
+    // seen ones (Gman, 2026-11-12: Robotos never left its three starting territories, as Explore was worth nothing)
+    def scoutValue(t : Territory, e : ExploreEffect) : Double = {
+        val (food, wood, lore) = game.produce(t)
+        val stuff = food * resourceValue(Food) + wood * resourceValue(Wood) + lore * resourceValue(Lore)
+        val fame = board.tiles(t) * 100 + (self == Stag).??(100) + (self == Boar).??(resourceValue(Lore).toInt)
+        val raven = (self == Raven).?(stuff).|(0.0)
+        val collect = e.collect.?(stuff).|(0.0)
+        // A territory the bot can take: worth more while the game is young
+        val open = game.present(t).exists(game.enemy(self, _)).?(20.0).|(30 + 0.25 * math.max(0.0, territoryWorth(t, self)) * (game.year <= game.lastYear - 1).?(1.0).|(0.3))
+        fame + raven + collect + open + victoryStep("exploration")
+    }
+
+    def scoutGain(e : ExploreEffect) : Double = {
+        val l = PCExpansion.scoutable(self)./(scoutValue(_, e)).sortBy(-_)
+        l.take(1).sum + l.drop(1).take(e.times - 1).sum
+    }
+
     def exploreGain(e : ExploreEffect) : Double = {
+        if (PCExpansion.on)
+            return scoutGain(e)
         if (game.pile.none || MapExpansion.explorable(self, e.anywhere).none)
             return 0
         val sample = game.pile.distinct.shuffle.take(3)
@@ -975,16 +1023,33 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             val t = board.territory(from)
             val o = board.territory(to)
             val attack = game.present(o).exists(game.enemy(self, _))
+            var points = 0
             val g = gain {
                 moveFigures(t, to, n, kaija, chief)
+                points = game.strength(o, self, true)
             }
             // The card's bonus; more moves left can bring more units in
             val bonus = attack.??(e.bonus * 40 + (left - cost > 0).??(30))
             // Hold an attack against a clan that can still answer, unless it's worth a lot
             val wait = (attack && game.present(o).exists(f => game.enemy(self, f) && f.passed.not) && g < 250).??(20)
             val conquest = attack.?(0.6 * victoryStep("conquest")).|(0.0)
-            |(g + bonus - wait + conquest)
+            // An aggressive creature there (Fan creatures, the PC version) fights the units moving in: the territory only with a win,
+            // its fame, and the units it kills (the bot valued the territory as taken and the creatures as a cost, so it never went)
+            val beasts = game.creaturesIn(o).%(game.aggressive)
+            if (game.hostileIn(o) && beasts.any && attack.not) {
+                val c = beasts.maxBy(_.kind.value)
+                val more = beasts.num - 1
+                val (p, lost) = HardCombat.creatureWin(game.robotos(self).??(1) + points + e.bonus + spendable(self) / 2, c.kind.value + 2 * more, n + chief.??(1), true)
+                val won = g + 40 * beasts.num + beasts./(_.kind.fame).sum * 100 + victoryStep("hunting")
+                |(p * won - lost * 45 - (1 - p) * 40 + bonus)
+            }
+            else
+                |(g + bonus - wait + conquest)
         case MoveDoneAction(_, _, _) => |(5)
+
+        // PC VERSION: scouting
+        case ScoutAction(_, area, _, e, _) => |(scoutValue(board.territory(area), e))
+        case ScoutDoneAction(_, _) => |(0)
 
         // FIGHTS
         case CombatFoodAction(_, attacker, defender, area, e, food, _) => |(foodChoice(attacker, defender, area, e, food))
@@ -1092,7 +1157,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             val here = game.working(t)
             val base = (attacking && game.robotos(self)).??(1) + game.strength(t, self, attacking) + attacking.??(e.bonus) + attacking.not.??(2 * here.count(_ == Fortress)) + (self == Snake && game.scorchedIn(t)).??(1)
             val (p, _) = HardCombat.creatureWin(base + food, c.kind.value, game.figures(t, self), attacking)
-            val stake = 100 * c.kind.fame + 80 + attacking.not.?(territoryWorth(t, self)).|(0.0)
+            val stake = 100 * c.kind.fame + 80 + attacking.not.?(territoryWorth(t, self)).|(0.0) + (attacking.not && PCExpansion.hallOf(self).has(t)).?(1500.0).|(0.0)
             val (needFood, _) = winterNeed(self)
             val left = self.food - food
             |(p * stake - food * resourceValue(Food) - (left < needFood).??((needFood - left) * 60))

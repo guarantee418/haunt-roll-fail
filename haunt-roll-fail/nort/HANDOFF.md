@@ -783,6 +783,20 @@ always plays its own cards.
   taken from the Automa's cards (`automa.scala`); the territory valuation
   only covers similar ground to their priority lists (resources, buildings,
   closed territories, spaces, nearby enemies).
+- **PC version** (2026-11-12; Gman: Robotos never left its three starting
+  territories): an Explore there scouts, so `exploreGain` values the best
+  territories in `PCExpansion.scoutable` (`scoutValue`: the fame, Lay of the
+  Land and Raven's resources, Stag's and Boar's bonuses, and the territory
+  opened to its moves), and `ScoutAction` gets the same. A Move into a
+  territory with an aggressive creature (the PC version, Fan creatures) is
+  valued as the fight it starts: the territory, the creature's fame and the
+  hunting step only with the win, less the units it is likely to lose. The
+  Town Hall comes first (`hallValue`: -2500 without it, as the clan is out at
+  the end of the year; a few figures there), and `risk` counts the Wolves,
+  Draugr and Myrkalfar next door, which move and attack, with the hall's
+  stake. In 2-player bot games against Robotos the Hard bot lost its hall in
+  year 1 or 2 in 5 of 6 games before, 4 of 8 after (Robotos is the only clan
+  the creatures leave alone, so every Wolf goes for the other one).
 - **Alternative victory** (2026-10-06): `victoryProgress` measures how far a
   clan is towards each card in play (0 to 1, from the map, its resources, or
   the validation counts), and `victoryValue` turns that into position value:

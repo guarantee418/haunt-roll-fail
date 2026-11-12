@@ -640,6 +640,11 @@ object PCExpansion extends Expansion {
         case ScoutDoneAction(f, then) =>
             Then(then)
 
+        // A clan out of the game doesn't come back with three units in a neutral territory, as a clan with none left on the map
+        // does (4-player bot games, 2026-11-12)
+        case ReturnUnitsAction(f, then) if game.out.has(f) =>
+            Then(then)
+
         // CREATURES: only Wolves and Draugr move (Myrkalfar from year 3); the others act where they are
         case CreatureActivateAction(c :: rest) if game.creatureLine.has(c) && moves(c).not =>
             Then(CreatureEffectAction(c, CreatureActivateAction(rest)))
@@ -699,6 +704,9 @@ object PCExpansion extends Expansion {
                 }
 
                 game.chiefs -= f
+
+                // Its units away on Raids are lost too: they came back to the Port and the clan was in again (bot games, 2026-11-12)
+                game.raids = game.raids.map { case (p, r) => p -> r.owner.has(f).?(r.copy(owner = None, units = 0, years = 0)).|(r) }
 
                 f.hand = $
                 f.draw = $
