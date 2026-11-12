@@ -1782,3 +1782,38 @@ shares a territory with a creature; Gman, 2026-11-11) and the Wilderness, Wastel
 - **More creatures** (`PCVersionUpdate`): with 3 clans or more the Wilderness and Wastelands creatures are in the creature
   deck too (`PCExpansion.moreCreatures`, in `Wild.creaturesOn` and `Waste.creaturesOn`), so more territories between the
   homes get one; with 5 or 6 clans the 23 creatures still don't fill every one.
+
+## Fan content: Clan Fame upgrades (2026-11-12)
+
+Marzaus's "Clan Fame upgrades (PC)" (Discord, northgard-fanmade-content, posted 2026-10-22; asked for by Gman on 2026-11-11):
+option `ModuleOption(FameUpgradesModule)` under Fan content, also turned on by the PC version mode. Code in `fame-upgrades.scala`
+(`FameUpgrade.all` lists the abilities, `FameUpgradesExpansion.sweep` unlocks them after every action). Only the seven core clans
+have upgrades so far ("rest of the clans soon").
+
+| Clan | Fame | Ability | As played here |
+|---|---|---|---|
+| Bear | 20 | Shield Mastery | 1 more combat point in every fight, against clans and creatures, attacking or defending |
+| Bear | 50 | Hibernation | right after Winter, the food and wood of the Harvest again (as the Harvest would give them now) |
+| Boar | 20 | Taming | creatures treat Boar as they treat the Robotos bot where it has figures (no Brown Bear lock or harvest loss; aggressive ones neither attack it nor must be fought; what one does when it appears or moves there doesn't touch Boar). Once a year on its turn, not an action, the warchief tames a creature in its territory (not Hrimgandr; no fame), one at a time: it goes with the warchief and adds its combat points to Boar's fights there, except when Boar attacks a clan; its card ability is left out. It goes to the creature discard pile when the warchief leaves the map or Boar loses Taming |
+| Boar | 50 | Legacy | an Altar of Kings costs 1 wood less; each one Boar controls gives 1 more food, wood and lore at the Harvest |
+| Goat | 20 | Shepherd | a sheep when unlocked and one at the start of each year after, one a year at most and no cap (Gman, 2026-11-12), placed at Goat's next turn in a territory it controls. Sheep aren't units (no fighting, control or Winter cost); each gives 1 food at the Harvest; before each Move card's Move (a Feast's too) each sheep may move up to the card's value, through and into territories with no other clan; on its turn, not an action, Goat may kill one for 2 food; one is lost when another clan has figures in its territory and Goat none. Below 20 fame the sheep stay but do nothing |
+| Goat | 50 | Feasting | a turn choice once a year: a card from hand goes among the played cards (as with Wait), and Goat harvests its food, wood and lore (no fame) |
+| Raven | 20 | Rangers | once a year, after an Explore, one more Explore whose tile may go anywhere; every territory Raven closes gives it its resources (fame only for its own) |
+| Raven | 50 | Wartime Economy | on its turn, not an action, as often as it likes: 1 food for 1 unit in a territory it controls with a Training Camp; harvest trades 2 for 1 |
+| Snake | 20 | Under Pressure | a turn choice once a year: a card from hand goes among the played cards, the Scorched Earth token moves to an enemy territory next to one of Snake's, and Snake collects what it gives |
+| Snake | 50 | Guerilla Tactics | (Warchiefs) before a fight against a clan in Signy's territory, attacking or defending, 1 enemy unit is killed |
+| Stag | 20 | Supplies | 5 food, 3 wood and 2 lore, the first time it is unlocked |
+| Stag | 50 | Glory of the Clan | each Food Silo gives 1 more food at the Harvest; 1 combat point for every 2 units in a fight, at most 1 for every 20 fame |
+| Stag | 100 | Valorous Leader | (Warchiefs) 1 more casualty in a fight against a clan where Brand is; Brand takes 1 more casualty to kill (`Game.chiefCost`) |
+| Wolf | 20 | Spoils of War | winning a fight as the attacker: what the territory gives at the Harvest, fame included (closed territory, Altars of Kings) |
+| Wolf | 50 | Field Rations | Winter costs Wolf at most 1 food (the wood is still owed) |
+
+Readings (open questions sent to Gman on 2026-11-12):
+- A clan has an ability while its fame is at the amount or more: it loses it when its fame drops below, and gets it back with the
+  fame (Gman, 2026-11-12). Supplies is given only the first time.
+- Fame is public in this mode (Gman, 2026-11-12).
+- No card fame at the end (Gman, 2026-11-12): a Development card or an Achievement gives its fame when taken (an Achievement what
+  it would score then), an Unrest card loses 5 fame when taken. The resources left still give 1 fame per 3 at the end.
+- The abilities that need a warchief are unlocked only with the Warchiefs module.
+- `NORT_FAMEUP=1` in the headless host always plays the module; `NORT_FAMEUP_DIV=n` divides the amounts, so bot games reach them;
+  `NORT_CORECLANS=1` draws only the seven core clans.

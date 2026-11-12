@@ -297,7 +297,7 @@ object MilitaryExpansion extends Expansion {
     // Buildings f builds for no wood and with no space (whatever they cost otherwise, as with the Tower PC version): Guardian's Defense Towers, Legions' Training Camps
     def freeBuild(f : Faction, b : Building)(implicit game : Game) : Boolean = on && (b == DefenseTower && at(f, Guardian, 1) || b == TrainingCamp && at(f, Legions, 1))
 
-    def cost(f : Faction, b : Building, base : Int)(implicit game : Game) : Int = (freeBuild(f, b) || b == Fortress && freeFortress(f)).?(0).|(base)
+    def cost(f : Faction, b : Building, base : Int)(implicit game : Game) : Int = (freeBuild(f, b) || b == Fortress && freeFortress(f)).?(0).|(math.max(0, base - FameUpgradesExpansion.discount(f, b)))
 
     // Guardian 3: once a year, a Fortress for no wood (Marzaus's Palisade is the Fortress, 2026-10-22); the first Fortress built that year uses it
     def freeFortress(f : Faction)(implicit game : Game) : Boolean = on && at(f, Guardian, 3) && game.fortressYear.get(f).has(game.year).not

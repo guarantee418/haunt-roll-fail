@@ -52,7 +52,8 @@ object Host extends hrf.host.BaseHost {
 
     // NORT_NEWBLOOD=1: only the New Blood clans
     // NORT_LION=1: the fan-made Lion Kingdom in every game
-    def factions = sys.env.get("NORT_NEWBLOOD").has("1").?(NewBlood.clans).|($(Bear, Boar, Goat, Raven, Snake, Stag, Wolf) ++ NewBlood.clans :+ Lion)
+    // NORT_CORECLANS=1: only the seven core clans
+    def factions = sys.env.get("NORT_NEWBLOOD").has("1").?(NewBlood.clans).|(sys.env.get("NORT_CORECLANS").has("1").?($[Faction](Bear, Boar, Goat, Raven, Snake, Stag, Wolf)).|($(Bear, Boar, Goat, Raven, Snake, Stag, Wolf) ++ NewBlood.clans :+ Lion))
     def subjects = factions
 
     // Random colors, game length and victory options; random teams half the time with three or more players (NORT_TEAMS=1: always)
@@ -83,7 +84,9 @@ object Host extends hrf.host.BaseHost {
             ((alt && random() < 0.5).$(VictoryModeOption(true)) ++ chosen.??(usable.%(_.mapControl).take(1) ++ usable.%(_.mapControl.not).take(teams.any.?(3).|(2)))./(VictoryCardOption(_)))
         val options = colors ++ $(YearsOption.all.shuffle.head) ++ $(EditionChoice.all.shuffle.head) ++ victory ++ (random() < 0.3).$(FirstSeatStarts) ++ (random() < 0.8).$(ChooseCasualties) ++ (random() < 0.8).$(TakeUnrestCard) ++ (random() < 0.8).$(ClanPowerReports) ++ (random() < 0.8).$(MendFigures) ++ (random() < 0.8).$(OxPicksSpace) ++ (random() < 0.8).$(JoinedTilesOnly, NastrondWood) ++ (random() < 0.8).$(SimultaneousCurse) ++ (random() < 0.8).$(KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, PrintedNewBlood, LynxBothAtSetup) ++ (random() < 0.8).$(PrintedSquirrelClan) ++ (random() < 0.8).$(EndOfYearAfterGeysers) ++ (random() < 0.8).$[Meta.O](LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, ChiefMoveFromHeld, ChiefMoveAfterMove, MilitaryRerollCreatures, HorseTwoGuards, FameRetreatKills, FameAltarClosed) ++ (random() < 0.8).$(PCChiefCampPays) ++ (random() < 0.8).$(GuardCasualtyAsked) ++ (random() < 0.8).$(PickLoneLoss, GuardBeforeChief, ScorchedAfterEvents) ++ (random() < 0.8).$(SailOnFromPort) ++ (random() < 0.8).$(TeamVictoryAllCards) ++
             creatures.$(ModuleOption(Creatures)) ++ (creatures && random() < 0.5).$(MoreCreatures) ++
-            (sys.env.get("NORT_WARCHIEFS").has("1") || random() < 0.5).?(WarchiefsChoice.all.shuffle.take(1)).|((random() < 0.3).$(WarchiefCards)) ++ (random() < 0.3).$(NoDrawDevelopments) ++ (random() < 0.3).$(NoDefensiveStrategy) ++ (random() < 0.4).$(ExtraDevelopment, FewerDevelopments).shuffle.take(1) ++ (random() < 0.3).$(ExtraAchievement) ++ (random() < 0.5).$(BalancedStartTiles) ++ (random() < 0.8).$(LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith) ++
+            (sys.env.get("NORT_WARCHIEFS").has("1") || random() < 0.5).?(WarchiefsChoice.all.shuffle.take(1)).|((random() < 0.3).$(WarchiefCards)) ++ (random() < 0.3).$(NoDrawDevelopments) ++ (random() < 0.3).$(NoDefensiveStrategy) ++ (random() < 0.4).$(ExtraDevelopment, FewerDevelopments).shuffle.take(1) ++ (random() < 0.3).$(ExtraAchievement) ++ (random() < 0.5).$(BalancedStartTiles) ++
+            // NORT_FAMEUP=1: always with the Clan Fame upgrades
+            (sys.env.get("NORT_FAMEUP").has("1") || random() < 0.3).$(ModuleOption(FameUpgradesModule)) ++ (random() < 0.8).$(LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith) ++
             // NORT_HORIZONS=1: always with the Uncharted Horizons Development cards and map tiles
             (sys.env.get("NORT_HORIZONS").has("1") || random() < 0.5).$(HorizonsDevelopments) ++ (sys.env.get("NORT_HORIZONS").has("1") || random() < 0.5).$(HorizonsTiles) ++
             // Wilderness and Wastelands: the whole expansion as older games have it, or its parts (tiles, creatures) with a few bans
@@ -156,6 +159,7 @@ object Host extends hrf.host.BaseHost {
     Debug.mxpTimes = sys.env.get("NORT_MXP")./(_.toInt).|(1)
     // NORT_FAME_GOAL=n: Alternative fame gains wins at n fame, to test the win
     Debug.fameGoal = sys.env.get("NORT_FAME_GOAL")./(_.toInt).|(120)
+    Debug.fameUpgradeDiv = sys.env.get("NORT_FAMEUP_DIV")./(_.toInt).|(1)
     // NORT_FAME_YEARS=n: with Alternative fame gains, at most n years past the last before the game is scored as usual
     Debug.fameExtraYears = sys.env.get("NORT_FAME_YEARS")./(_.toInt).|(4)
 

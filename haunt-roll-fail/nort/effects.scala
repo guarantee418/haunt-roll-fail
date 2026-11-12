@@ -195,6 +195,7 @@ object CardsExpansion extends Expansion {
         }
 
         FameGainsExpansion.taken(f, c)
+        FameUpgradesExpansion.taken(f, c)
     }
 
     def futureSightCards(f : Faction)(implicit game : Game) : $[Card] =

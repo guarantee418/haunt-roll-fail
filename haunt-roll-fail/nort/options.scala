@@ -1013,6 +1013,20 @@ case object FameGainsModule extends Module("Alternative fame gains", "fan-made v
     )
 }
 
+// Marzaus's "Clan Fame upgrades (PC)" (fame-upgrades.scala; Discord, northgard-fanmade-content, 2026-10-22; asked for by Gman on
+// 2026-11-11): the seven core clans unlock abilities at 20, 50 and 100 fame. Part of the PC version mode
+case object FameUpgradesModule extends Module("Clan Fame upgrades", "fan-made module by Marzaus") {
+    override def ready = true
+    override def fan = true
+    override def expansion = |(FameUpgradesExpansion)
+    def about = $(
+        "Each of the seven core clans has new abilities while its fame is at least " ~ Amount(20.hl, FameIcon()) ~ ", " ~ Amount(50.hl, FameIcon()) ~ " and (Stag) " ~ Amount(100.hl, FameIcon()) ~ ": it loses one when its fame drops below, and gets it back with the fame.",
+        "Fame is public. The cards' fame (Development cards, Achievements, Unrest) counts when each card is taken, not at the end.".txt,
+    ) ++ FameUpgrade.all./(u => ((u.clan.name + " Clan").hlb ~ ", " ~ Amount(u.fame.hl, FameIcon()) ~ ": " ~ u.name.hl ~ " — " ~ CombatText(u.text) ~ u.ready.not.?(" (not in the game yet)".spn(xstyles.smaller85)).|(Empty)) : Elem) ++ $(
+        "Fan-made, not part of the published game.".styled(xstyles.warning),
+    )
+}
+
 // Robotos's "Lower skill floor Dragon variant" (Discord, northgard-fanmade-content, 2026-10-21; asked for by Gman on 2026-10-24):
 // Dragon Clan's power and clan cards (CardVersions.dragonVariant in editions.scala, the rules in newblood.scala)
 case object DragonVariant extends Module("Lower skill floor Dragon", "fan-made variant by Robotos") {
@@ -1170,7 +1184,7 @@ case object PCVersion extends Module("PC version", "fan-made mode") {
     // First of all: it builds the map in place of the setup's tile placements
     override def priority = -40
     // (the Events module too since 2026-11-11, Gman)
-    def needs : $[Module] = $(Creatures, Warchiefs, Sea, EventsModule, TowersModule, WarchiefsPC, MineralsModule, MilitaryModule, AggressiveCreatures)
+    def needs : $[Module] = $(Creatures, Warchiefs, Sea, EventsModule, TowersModule, WarchiefsPC, MineralsModule, MilitaryModule, AggressiveCreatures, FameUpgradesModule)
     // and the map tiles of every expansion (Gman, 2026-11-11)
     def tiles : $[GameOption] = $(WildernessTiles, WastelandsTiles, HorizonsTiles)
     def about = $(
@@ -1180,7 +1194,7 @@ case object PCVersion extends Module("PC version", "fan-made mode") {
         "Creatures are aggressive (no clan shares a territory with one) and have no abilities.",
         "Only Wolves and Draugr move (Myrkalfar from year 3). A Wolf killed comes back where it started, unless a clan holds that territory.",
         "A clan that ends a year without its Town Hall is out of the game; the last clan (or team) standing wins. The other victory conditions still apply.",
-        "Turns on Creatures, Warchiefs, Sea (its Ports), Tower PC version, Warchiefs PC version, Minerals, Military paths, Aggressive creatures, and the Wilderness, Wastelands and Uncharted Horizons map tiles.",
+        "Turns on Creatures, Warchiefs, Sea (its Ports), Tower PC version, Warchiefs PC version, Minerals, Military paths, Aggressive creatures, Clan Fame upgrades, and the Wilderness, Wastelands and Uncharted Horizons map tiles.",
         "Fan-made, not part of the published game.".styled(xstyles.warning),
     )
 }
@@ -1195,7 +1209,7 @@ object Module {
         case _ => "Modules and expansions"
     }
 
-    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, FameGainsModule, DragonVariant, AggressiveCreatures, LionKingdom, BearBorder, PCVersion)
+    val all : $[Module] = $(Creatures, Warchiefs, Wilderness, Wastelands, NewBlood, EventsModule, VictoryModule, Sea, Solo, UnchartedHorizons, TeamsVariant, Teams3v3, Teams2v2v2, TrainingFields, MineralsModule, TowersModule, WarchiefsPC, MilitaryModule, FameGainsModule, FameUpgradesModule, DragonVariant, AggressiveCreatures, LionKingdom, BearBorder, PCVersion)
 
     // The team variants and the number of players each one needs
     val teams : Map[Module, Int] = Map(TeamsVariant -> 4, Teams3v3 -> 6, Teams2v2v2 -> 6)

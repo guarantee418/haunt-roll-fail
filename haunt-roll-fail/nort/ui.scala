@@ -351,7 +351,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     // The piece on top where the map was tapped (a creature, Blainn, a Raid card, a warchief or a clan token), whose card or info opens when the tap does nothing else
-    def pieceInfo(target : $[Any]) : |[Any] = target.headOption.%(x => x.is[Card] || x.is[WarchiefInfo] || x.is[ClanAbilityInfo] || x.is[GearTokenInfo] || x.is[TileAbilityInfo] || x.is[TownHallInfo])
+    def pieceInfo(target : $[Any]) : |[Any] = target.headOption.%(x => x.is[Card] || x.is[WarchiefInfo] || x.is[ClanAbilityInfo] || x.is[GearTokenInfo] || x.is[TileAbilityInfo] || x.is[TownHallInfo] || x.is[FameUpgradesView])
 
     // The single offered action a click on the map stands for (the cross on a building or tile being confirmed cancels)
     def clickable(target : $[Any]) : |[UserAction] = {
@@ -1130,6 +1130,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     taken :+= ((mx(cx), my(cy), 0.13 * scale))
                 }
 
+                // Clan Fame upgrades: Boar's tamed creature (Taming), beside the warchief
+                if (f == Boar && game.chiefIn(t, f))
+                    game.tamed.foreach { c =>
+                        val z = 220.0 * scale
+                        val (x, y) = beside(z / T / 2)
+                        pieces.add(Sprite($(at(c.token, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag :+ c))(x, y)
+                        taken :+= ((mx(x), my(y), z / T / 2))
+                    }
+
                 // Bear Clan's Kaija and Lynx Clan's Brundr and Kaelinn; the round token fills its box, so 230 matches a warrior's height
                 // Horse Clan's second warchief, Brok, is a pawn like Eitria's; the Automa's Leader 2 is its black miniature
                 if (game.kaijaIn(t, f)) {
@@ -1215,6 +1224,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 val z = 220
                 val (x, y) = freeSpot(t, z / T / 2, taken, |(board.point(t.anchor)), 0.5)
                 pieces.add(Sprite($(at(c.token, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag :+ c))(sx(x), sy(y))
+                taken :+= ((x, y, z / T / 2))
+            }
+
+            // Clan Fame upgrades: Goat's sheep (Shepherd), with their count (drawn by nort/tools/sheep-token.py)
+            val sheep = game.sheep.count(a => t.areas.contains(a))
+            if (sheep > 0) {
+                val z = 170
+                val (x, y) = freeSpot(t, z / T / 2, taken, |(board.point(t.anchor)), 0.5)
+                pieces.add(Sprite($(at("token-sheep", z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag :+ FameUpgradesView(Goat)))(sx(x), sy(y))
+                if (sheep > 1 && sheep <= 15)
+                    pieces.add(Sprite($(at("ui-count-" + sheep, 80)), $))(sx(x) + 50, sy(y) + 50)
                 taken :+= ((x, y, z / T / 2))
             }
         }
@@ -1551,6 +1571,26 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         ).div
     }
 
+    // Clan Fame upgrades: each clan's abilities, those unlocked marked, f's clan first
+    def fameUpgradesView(f : Faction) : Elem = {
+        val clans = (f +: game.factions.but(f)).%(g => FameUpgrade.of(g).any)
+
+        ("Clan Fame upgrades".hlb.div ~
+            "A clan has each ability while its fame is at least the amount.".spn(xstyles.smaller85).div ~
+            clans./{ g =>
+                HorizontalBreak ~
+                g.elem.div ~
+                FameUpgrade.of(g)./{ u =>
+                    val st = game.fameUnlocked.has(u).?($(styles.onBoard)).|($(styles.offBoard))
+                    (Amount(u.fame.hl, FameIcon()) ~ " " ~ u.name.hl ~ ": " ~ CombatText(u.text) ~ u.ready.not.?(" (not in the game yet)").|("") ~ (u.warchief && game.has(Warchiefs).not).?(" (needs the Warchiefs module)").|("")).spn(xstyles.smaller85).styled(st).div
+                }.merge
+            }.merge ~
+            "Fan-made by Marzaus (Discord, northgard-fanmade-content).".spn(xstyles.smaller85).div ~
+            HorizontalBreak ~
+            "(tap to close)".spn(xstyles.smaller85).div
+        ).div
+    }
+
     // Military paths module: the clan's MXP and path, how MXP is gained and the three paths, the clan's levels marked
     def militaryView(f : Faction) : Elem = {
         val path = game.paths.get(f)
@@ -1738,7 +1778,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     // Fame tokens are kept face down: the panels show only the viewer's and its teammates' fame, everyone's once the game is over
     // or in games set to Public fame
-    def fameHidden(f : Faction) : Boolean = game.isOver.not && game.options.has(PublicFame).not && viewers.exists(v => v == f || game.mates(v).has(f)).not
+    // (Clan Fame upgrades: always public, Gman 2026-11-12)
+    def fameHidden(f : Faction) : Boolean = game.isOver.not && game.options.has(PublicFame).not && game.has(FameUpgradesModule).not && viewers.exists(v => v == f || game.mates(v).has(f)).not
 
     // The setup's Undo choice (UndoChoice in options.scala): none, or with Limited undo none past a die roll, a shuffle or a
     // random pick, or past a card, tile or token taken from a face-down pile (Game.revealedSince); the state after n actions is
@@ -1897,7 +1938,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Military paths module: the MXP, the path and its level (tapping them shows the paths)
         val military = (game.has(MilitaryModule) && f != Automa).?(OnClick(MilitaryView(f), MilitaryLabel(f).elem.div(styles.panelLine)(xlo.pointer))).|(Empty)
 
-        val content = (title.div ~ cards ~ units ~ ledger ~ minerals ~ military ~ nb ~ goals ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
+        // Clan Fame upgrades: the abilities unlocked (tapping them shows every clan's)
+        val upgrades = (game.has(FameUpgradesModule) && FameUpgrade.of(f).any).?(OnClick(FameUpgradesView(f), FameUpgradesLabel(f).elem.div(styles.panelLine)(xlo.pointer))).|(Empty)
+
+        val content = (title.div ~ cards ~ units ~ ledger ~ minerals ~ military ~ upgrades ~ nb ~ goals ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
 
         container.replace(content, resources, {
             case x => onClick(x)
@@ -2971,6 +3015,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case MilitaryView(f) =>
             showOverlay(overlayScrollX(militaryView(f)).onClick, onClick)
+
+        case FameUpgradesView(f) =>
+            showOverlay(overlayScrollX(fameUpgradesView(f)).onClick, onClick)
 
         // A fight's result tapped in the log
         case FightReportView(r) =>
