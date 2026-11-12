@@ -671,7 +671,10 @@ object WastelandsExpansion extends Expansion {
             case ScorchedHarvestAction if game.wasteSteps.has("vedrfolnir").not =>
                 game.wasteSteps :+= "vedrfolnir"
 
-                Waste.controller(Waste.vedrfolnir, "s").%(_ => game.pile.any) match {
+                // Not in the PC version, where the map is whole (PCVedrfolnirNoTile)
+                val pcWhole = game.options.has(PCVedrfolnirNoTile) && PCExpansion.on
+
+                Waste.controller(Waste.vedrfolnir, "s").%(_ => game.pile.any && pcWhole.not) match {
                     case Some(f) => Ask(f).add(VedrfolnirAction(f)).add(VedrfolnirSkipAction(f))
                     case None => Then(ScorchedHarvestAction)
                 }

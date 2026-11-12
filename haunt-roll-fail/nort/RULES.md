@@ -703,7 +703,10 @@ with Wilderness too, use at most 12 Environment tiles in all):
   `PCVedrfolnirReveal`; Gman, 2026-11-12) the map is whole, so instead its
   controller reveals one territory it hasn't seen, drawn at random (enemy ones
   too), at the end of each year; it stays seen, gives no fame or Explore
-  bonuses. `PCVedrfolnirRevealAction(X)` switches a running game.
+  bonuses. `PCVedrfolnirRevealAction(X)` switches a running game. Its Wastelands rule (adding the top map tile just before the Harvest) is
+  not offered in the PC version, as the tile fits nowhere (hidden `PCVedrfolnirNoTile`, every new game;
+  Winter for Clan, 2026-11-12, where Bear was asked and drew a tile that went back under the pile);
+  `PCVedrfolnirNoTileAction(X)` switches a running game.
 - Naströnd (Explore): impassable. When revealed, put 2 wood on it; the first
   player to control a territory adjacent to it takes them (a tie during an
   Explore: the explorer).
