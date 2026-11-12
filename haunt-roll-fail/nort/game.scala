@@ -1490,6 +1490,9 @@ object CommonExpansion extends Expansion {
             f.draw = UnrestCard +: f.draw
 
             f.log("could not pay for", f.winterUnits.hl, "units and took", UnrestCard)
+
+            // Clan Fame upgrades: its fame is lost now, not at the end
+            FameUpgradesExpansion.unrest(f)
         }
         else {
             f.fame -= 5
@@ -1538,7 +1541,8 @@ object CommonExpansion extends Expansion {
 
     // Final fame: (fame tokens, cards, resources, Unrest)
     def finalFame(f : Faction)(implicit game : Game) : FinalFame =
-        FinalFame(f.fame, f.deck./(c => cardFame(f, c)).sum, (f.resources + 2 * f.mineralCount) / 3, -5 * f.unrest)
+        // Clan Fame upgrades: the cards' fame, Unrest too, was already counted when each card was taken (Gman, 2026-11-12)
+        FinalFame(f.fame, FameUpgradesExpansion.on.?(0).|(f.deck./(c => cardFame(f, c)).sum), (f.resources + 2 * f.mineralCount) / 3, FameUpgradesExpansion.on.?(0).|(-5 * f.unrest))
 
     // The tie-breaks after fame, as said on the end screen
     val tieBreaks = $("territories controlled", "units", "buildings")
@@ -2050,6 +2054,7 @@ object CommonExpansion extends Expansion {
             f.log("took", c, "and placed it on top of their draw pile")
 
             FameGainsExpansion.taken(f, c)
+            FameUpgradesExpansion.taken(f, c)
 
             Then(PassedAction(f))
 

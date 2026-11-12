@@ -1020,7 +1020,8 @@ case object FameUpgradesModule extends Module("Clan Fame upgrades", "fan-made mo
     override def fan = true
     override def expansion = |(FameUpgradesExpansion)
     def about = $(
-        "Each of the seven core clans unlocks new abilities when its fame first reaches " ~ Amount(20.hl, FameIcon()) ~ ", " ~ Amount(50.hl, FameIcon()) ~ " and (Stag) " ~ Amount(100.hl, FameIcon()) ~ ", and keeps them for the rest of the game. The log tells when a clan unlocks one.",
+        "Each of the seven core clans has new abilities while its fame is at least " ~ Amount(20.hl, FameIcon()) ~ ", " ~ Amount(50.hl, FameIcon()) ~ " and (Stag) " ~ Amount(100.hl, FameIcon()) ~ ": it loses one when its fame drops below, and gets it back with the fame.",
+        "Fame is public. The cards' fame (Development cards, Achievements, Unrest) counts when each card is taken, not at the end.".txt,
     ) ++ FameUpgrade.all./(u => ((u.clan.name + " Clan").hlb ~ ", " ~ Amount(u.fame.hl, FameIcon()) ~ ": " ~ u.name.hl ~ " — " ~ CombatText(u.text) ~ u.ready.not.?(" (not in the game yet)".spn(xstyles.smaller85)).|(Empty)) : Elem) ++ $(
         "Fan-made, not part of the published game.".styled(xstyles.warning),
     )

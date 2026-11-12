@@ -1556,7 +1556,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val clans = (f +: game.factions.but(f)).%(g => FameUpgrade.of(g).any)
 
         ("Clan Fame upgrades".hlb.div ~
-            "Unlocked when the clan's fame first reaches the amount, and kept.".spn(xstyles.smaller85).div ~
+            "A clan has each ability while its fame is at least the amount.".spn(xstyles.smaller85).div ~
             clans./{ g =>
                 HorizontalBreak ~
                 g.elem.div ~
@@ -1758,7 +1758,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     // Fame tokens are kept face down: the panels show only the viewer's and its teammates' fame, everyone's once the game is over
     // or in games set to Public fame
-    def fameHidden(f : Faction) : Boolean = game.isOver.not && game.options.has(PublicFame).not && viewers.exists(v => v == f || game.mates(v).has(f)).not
+    // (Clan Fame upgrades: always public, Gman 2026-11-12)
+    def fameHidden(f : Faction) : Boolean = game.isOver.not && game.options.has(PublicFame).not && game.has(FameUpgradesModule).not && viewers.exists(v => v == f || game.mates(v).has(f)).not
 
     // The setup's Undo choice (UndoChoice in options.scala): none, or with Limited undo none past a die roll, a shuffle or a
     // random pick, or past a card, tile or token taken from a face-down pile (Game.revealedSince); the state after n actions is

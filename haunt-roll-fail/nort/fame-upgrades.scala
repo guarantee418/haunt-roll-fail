@@ -19,8 +19,10 @@ import nort.elem._
 // ModuleOption(FameUpgradesModule) under Fan content, and part of the PC version mode. Each of the seven core clans unlocks abilities
 // when its fame first reaches 20, 50 or 100 (sweep, after every action, Game.loggedPerform). RULES.md (Clan Fame upgrades) lists the
 // readings of the short post:
-// - an ability unlocked stays, even if the clan's fame drops below its threshold again (Unrest); the log tells the unlock, so it
-//   tells the others that the clan's hidden fame has passed the threshold
+// - a clan has an ability while its fame is at its threshold or more: it loses it when its fame drops below, and gets it back
+//   with the fame (Gman, 2026-11-12); fame is public in this mode (ui.scala, fameHidden)
+// - the cards' fame (Development cards, Achievements, Unrest) is counted when each card is taken, and none at the end (Gman,
+//   2026-11-12): Game.finalFame, taken, unrest; the resources left still give their fame at the end
 // - Bear, Shield Mastery: 1 more combat point in every fight, against a clan or a creature, attacking or defending
 // - Bear, Hibernation: after Winter, the food and wood the Harvest gave (as it would now: Harvest.resources) once more
 // - Boar, Legacy: an Altar of Kings costs 1 wood less, and each one Boar controls gives 1 more food, wood and lore at the Harvest
@@ -56,7 +58,7 @@ object FameUpgrade {
         FameUpgrade(Raven, 50, "Wartime Economy", "On your turn, pay 1 food for 1 unit in a territory with your Training Camp, as often as you like. Harvest trades are 2 for 1."),
         FameUpgrade(Snake, 20, "Under Pressure", "Once a year, instead of playing a card: put a card from your hand among your played cards, move the Scorched Earth token to an enemy territory next to yours and collect what it gives."),
         FameUpgrade(Snake, 50, "Guerilla Tactics", "Before a fight against a clan in Signy's territory, Signy kills 1 enemy unit.", warchief = true),
-        FameUpgrade(Stag, 20, "Supplies", "Collect 5 food, 3 wood and 2 lore once."),
+        FameUpgrade(Stag, 20, "Supplies", "Collect 5 food, 3 wood and 2 lore, the first time only."),
         FameUpgrade(Stag, 50, "Glory of the Clan", "Each Food Silo gives 1 more food. 1 combat point for every 2 units in a fight, at most 1 for every 20 fame you have."),
         FameUpgrade(Stag, 100, "Valorous Leader", "Brand inflicts 1 more casualty and takes 1 more casualty to kill.", warchief = true),
         FameUpgrade(Wolf, 20, "Spoils of War", "Winning a fight as the attacker gives you what the territory gives at the Harvest, its fame too."),
@@ -102,23 +104,54 @@ object FameUpgradesExpansion extends Expansion {
 
     def use(f : Faction, name : String)(implicit game : Game) { game.fameUsed += (f -> name) -> game.year }
 
-    // The abilities reached, unlocked once and kept
+    // The abilities held: those whose fame the clan has now; one drops when the fame falls below it, and comes back with the fame
+    // (Gman, 2026-11-12). Supplies is given only the first time
     def sweep(implicit game : Game) {
-        if (on && game.isOver.not)
-            FameUpgrade.all.%(_.ready).%(u => game.states.contains(u.clan)).%(u => game.fameUnlocked.has(u).not).%(u => u.clan.fame >= u.fame / Debug.fameUpgradeDiv).%(u => u.warchief.not || game.has(Warchiefs)).foreach { u =>
+        if (on && game.isOver.not) {
+            val held = FameUpgrade.all.%(_.ready).%(u => game.states.contains(u.clan)).%(u => u.clan.fame >= u.fame / Debug.fameUpgradeDiv).%(u => u.warchief.not || game.has(Warchiefs))
+
+            game.fameUnlocked.diff(held).foreach { u =>
+                game.fameUnlocked = game.fameUnlocked.but(u)
+                game.note("fame-upgrade-lost")
+                u.clan.log("fell below", Amount(u.fame.hl, FameIcon()), "and lost", u.name.hl)
+            }
+
+            held.diff(game.fameUnlocked).foreach { u =>
                 val f = u.clan
                 game.fameUnlocked :+= u
                 game.note("fame-upgrade")
 
                 f.log("reached", Amount(u.fame.hl, FameIcon()), "and unlocked", u.name.hl)
 
-                if (u.name == "Supplies") {
+                if (u.name == "Supplies" && game.fameUsed.contains(f -> "Supplies").not) {
+                    use(f, "Supplies")
                     f.food += 5
                     f.wood += 3
                     f.lore += 2
                     f.log("collected", Amount(5.hl, Food.elem), Comma, Amount(3.hl, Wood.elem), "and", Amount(2.hl, Lore.elem), "with", "Supplies".hl)
                 }
             }
+        }
+    }
+
+    // CARDS: their fame when taken, as nothing is counted at the end (Gman, 2026-11-12); with Alternative fame gains, which gives a
+    // Development card's fame when taken already, only the other cards
+    def taken(f : Faction, c : Card)(implicit game : Game) {
+        if (on && f != Automa && (c.is[Development] && FameGainsExpansion.on).not) {
+            val n = CommonExpansion.cardFame(f, c)
+            if (n != 0) {
+                f.fame += n
+                f.log((n > 0).?("gained").|("lost"), Amount(n.abs.hl, FameIcon()), "for", c)
+            }
+        }
+    }
+
+    // An Unrest card's 5 fame, lost when it is taken
+    def unrest(f : Faction)(implicit game : Game) {
+        if (on) {
+            f.fame -= 5
+            f.log("lost", Amount(5.hl, FameIcon()), "for", UnrestCard)
+        }
     }
 
     // COMBAT: Bear's Shield Mastery and Stag's Glory of the Clan (they add up to game.strength)
