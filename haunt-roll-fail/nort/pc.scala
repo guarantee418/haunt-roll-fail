@@ -491,6 +491,9 @@ object PCExpansion extends Expansion {
     def moreCreatures(implicit game : Game) = on && game.options.has(PCVersionUpdate) && game.arity >= 3
 
     // The clans still in the game
+    // The last clan (or team) holding its Town Hall wins
+    def dominationWins(implicit game : Game) : Boolean = game.options.has(PCDominationChoice).not || game.options.has(DominationVictory) || game.options.has(DominationOnly)
+
     def standing(implicit game : Game) : $[Faction] = game.factions.%(f => game.out.has(f).not)
 
     def perform(action : Action, soft : Void)(implicit game : Game) : Continue = action @@ {
@@ -746,7 +749,9 @@ object PCExpansion extends Expansion {
 
             val sides = CommonExpansion.sides(standing)
 
-            if (sides.num <= 1)
+            // The last one standing wins with Domination victory (in games with the hidden PCDominationChoice every new game gets;
+            // older ones always); a game with nobody left ends anyway
+            if (sides.num == 0 || (sides.num == 1 && PCExpansion.dominationWins))
                 Then(LastStandingAction(sides.flatten))
             else
                 game.internalPerform(EndOfYearAction, soft)

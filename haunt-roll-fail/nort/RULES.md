@@ -1778,12 +1778,16 @@ shares a territory with a creature; Gman, 2026-11-11) and the Wilderness, Wastel
   each Creature phase, a Wolf placed at setup that was killed comes back to where it was placed if nobody is there.
 - **Out of the game**: after Winter, a clan without its Town Hall territory is out (`game.out`): its figures and the
   buildings in its territories leave the map, its cards, resources and fame are gone, and it passes every turn. If that
-  would leave nobody, nobody is out. The last clan or team left wins at once (`LastStandingAction`); the other victory
-  conditions still apply.
-- **Domination victory only** (`DominationOnly`, a Victory conditions choice offered only with the PC version; Gman,
-  2026-11-11): the last clan or team holding its Town Hall is the only winner; fame and the three closed territories with
-  large buildings don't win, and after the last year the game goes on year after year until one is left (the bot games stop
-  after `NORT_FAME_YEARS` more years and score as usual; `NORT_DOMINATION=1` with `NORT_PC=1` in the headless host).
+  would leave nobody, nobody is out. With **Domination victory** (`DominationVictory`, under Fan victories, only with the PC
+  version; Gman, 2026-11-12) the last clan or team left wins at once (`LastStandingAction`); the other victory conditions
+  still apply. Without it the last one left plays on, and the game ends as the victory conditions say. That choice is in
+  games with the hidden `PCDominationChoice` every new game gets; older PC games always had the last one standing win
+  (`PCExpansion.dominationWins`). `NORT_DOMINATION=2` with `NORT_PC=1` in the headless host always picks it.
+- **Domination victory only** (`DominationOnly`, a Victory conditions choice offered with the PC version from 2026-11-11 to
+  2026-11-12, now retired: hidden, still logged, so Winter for Clan keeps it): the last clan or team holding its Town Hall is
+  the only winner; fame and the three closed territories with large buildings don't win, and after the last year the game
+  goes on year after year until one is left (the bot games stop after `NORT_FAME_YEARS` more years and score as usual;
+  `NORT_DOMINATION=1` with `NORT_PC=1` in the headless host).
 - **Mines** (`PCVersionUpdate`): a Mine gives 1 Stone at the harvest (an upgraded one 2), with no die roll, while the
   supply has Stone (Gman, 2026-11-11: upgrades matter so much here).
 - **More creatures** (`PCVersionUpdate`): with 3 clans or more the Wilderness and Wastelands creatures are in the creature
