@@ -842,7 +842,8 @@ file covers the build, server and deploy. No session can ssh to the server
   and play as before. The two Off Turn Actions switches show only where they still change something (`switchesFor` in
   `root/ui.scala`), so in new games the box is gone unless the Out of Turn Actions setting adds shortcuts, and the Interface's
   "Assign Hits" and "Ambush!" fold into one "Hits and Ambushes when Online (Live Games)" section. `ReplayCheck <games> base offline`
-  plays bot games with the preset and Field Hospitals plan.
+  plays bot games with Bluff Mode off and the Field Hospitals plan; `preset` adds the hits preset, but bot games with the preset
+  order (like `async`) run out of memory, as they did before the section.
 - Root pass and play (asked for by the owner on 2026-10-17): in a local game with more than one human faction
   (`Callbacks.hotseat` in `hrf.scala`: a memory or localStorage journal), each time another human faction is asked
   the action pane shows "Pass to <faction>" and a "Show Hand and Choices" button instead of its hand and choices
