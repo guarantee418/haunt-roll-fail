@@ -1540,8 +1540,25 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var companionsUntilSpent = false
     var ptf = Map[Player, Faction]()
 
-    // Forced Async Mode leaves the choice of hits to the player (ForcedAsyncChooseHits, or switched over by ForcedAsyncChooseHitsAction)
-    def autoHits = options.has(ForcedAsyncMode) && options.has(ForcedAsyncChooseHits).not && forcedAsyncChooseHits.not
+    // The setup's "Hits and Ambushes - Offline Players" section (HitsAndAmbushesSetup, every new game since 2026-11-12) unless it is a
+    // Live Game. Older games keep their Async options: Forced Async Mode, Players Choose Hits, Auto Skip Ambushes
+    def offlinePlayers = options.has(HitsAndAmbushesSetup) && options.has(LiveGameMode).not
+
+    // Hits are taken in each player's preset order: Forced Async Mode (unless ForcedAsyncChooseHits, or switched over by
+    // ForcedAsyncChooseHitsAction), or Off Turn Hits Preset
+    def autoHits = (options.has(ForcedAsyncMode) && options.has(ForcedAsyncChooseHits).not && forcedAsyncChooseHits.not) || (offlinePlayers && options.has(OffTurnHitsPreset))
+
+    // Hits with only one way to take them are taken without asking
+    def autoAssignHits = options.has(AutoHitsAssignmentMode) && options.has(LiveGameMode).not
+
+    // An attacked player (or the attacker's counter-ambush) with no ambush to play is skipped
+    def autoSkipAmbush = options.has(AutoAmbushSkippingMode) || (offlinePlayers && options.has(BluffMode).not)
+
+    // Partisans are used off turn without asking when no cards have to be discarded
+    def offTurnPartisans = options.has(ForcedAsyncMode) || offlinePlayers
+
+    // The Marquise plans Field Hospitals at the end of its turn
+    def offTurnFieldHospitals = options.has(ForcedAsyncMode) || (offlinePlayers && options.has(OffTurnFieldHospitals))
 
     players.of[Faction].foreach { f =>
         ftp += f -> f

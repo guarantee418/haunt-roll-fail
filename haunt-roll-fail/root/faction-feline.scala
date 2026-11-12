@@ -842,7 +842,7 @@ object FelineExpansion extends FactionExpansion[Feline] {
 
             CleanUpAction(f)
 
-        case AfterTurnAction(f : Feline) if options.has(ForcedAsyncMode) && f.keep.any && f.hand.any && f.used.has(FieldHospitals).not =>
+        case AfterTurnAction(f : Feline) if game.offTurnFieldHospitals && f.keep.any && f.hand.any && f.used.has(FieldHospitals).not =>
             val h = f.hand.$
             val q = f.hand.$.indices./(_ => "Adjust " ~ HospitalPlan.of(f))
             val o = f.hand.$.indices./(_ => None)

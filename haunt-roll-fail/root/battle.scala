@@ -179,7 +179,7 @@ object BattleExpansion extends MandatoryExpansion {
             skip
         }
         else
-        if (options.has(AutoAmbushSkippingMode) && b.attacker.hand.%(canAmbush).none)
+        if (game.autoSkipAmbush && b.attacker.hand.%(canAmbush).none)
             skip
         else {
             val f = b.attacker
@@ -421,7 +421,7 @@ object BattleExpansion extends MandatoryExpansion {
                 skip
             }
             else
-            if (options.has(AutoAmbushSkippingMode) && b.defender.hand.%(canAmbush).none)
+            if (game.autoSkipAmbush && b.defender.hand.%(canAmbush).none)
                 skip
             else {
                 val f = b.defender
@@ -766,7 +766,7 @@ object BattleExpansion extends MandatoryExpansion {
                     }
                 }
 
-                val auto = (game.current != f && options.has(ForcedAsyncMode)).??(actions.of[PartisansAction].%(_.l.none))
+                val auto = (game.current != f && game.offTurnPartisans).??(actions.of[PartisansAction].%(_.l.none))
 
                 if (auto.any)
                     Ask(f).add(auto.head)
@@ -950,7 +950,7 @@ object BattleExpansion extends MandatoryExpansion {
                 Ask(f).add(variants.minBy(_.values.indexed./((f, n) => priorities.indexOf(f.piece) * 100 * 100 + pow((priorities.indexOf(f.piece) - n).abs, 2)).sum)).add(explode)
             }
             else
-            if (options.has(AutoHitsAssignmentMode)) {
+            if (game.autoAssignHits) {
                 val explode = ask.perform(soft).actions.of[HalfExplode]
                 val variants = explode./~(_.expand(None)).of[XXObjectsSelectedAction[Figure]]
 
