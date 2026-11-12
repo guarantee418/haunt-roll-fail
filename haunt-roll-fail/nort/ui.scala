@@ -351,7 +351,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     // The piece on top where the map was tapped (a creature, Blainn, a Raid card, a warchief or a clan token), whose card or info opens when the tap does nothing else
-    def pieceInfo(target : $[Any]) : |[Any] = target.headOption.%(x => x.is[Card] || x.is[WarchiefInfo] || x.is[ClanAbilityInfo] || x.is[GearTokenInfo] || x.is[TileAbilityInfo] || x.is[TownHallInfo])
+    def pieceInfo(target : $[Any]) : |[Any] = target.headOption.%(x => x.is[Card] || x.is[WarchiefInfo] || x.is[ClanAbilityInfo] || x.is[GearTokenInfo] || x.is[TileAbilityInfo] || x.is[TownHallInfo] || x.is[FameUpgradesView])
 
     // The single offered action a click on the map stands for (the cross on a building or tile being confirmed cancels)
     def clickable(target : $[Any]) : |[UserAction] = {
@@ -1130,6 +1130,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     taken :+= ((mx(cx), my(cy), 0.13 * scale))
                 }
 
+                // Clan Fame upgrades: Boar's tamed creature (Taming), beside the warchief
+                if (f == Boar && game.chiefIn(t, f))
+                    game.tamed.foreach { c =>
+                        val z = 220.0 * scale
+                        val (x, y) = beside(z / T / 2)
+                        pieces.add(Sprite($(at(c.token, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag :+ c))(x, y)
+                        taken :+= ((mx(x), my(y), z / T / 2))
+                    }
+
                 // Bear Clan's Kaija and Lynx Clan's Brundr and Kaelinn; the round token fills its box, so 230 matches a warrior's height
                 // Horse Clan's second warchief, Brok, is a pawn like Eitria's; the Automa's Leader 2 is its black miniature
                 if (game.kaijaIn(t, f)) {
@@ -1215,6 +1224,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 val z = 220
                 val (x, y) = freeSpot(t, z / T / 2, taken, |(board.point(t.anchor)), 0.5)
                 pieces.add(Sprite($(at(c.token, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag :+ c))(sx(x), sy(y))
+                taken :+= ((x, y, z / T / 2))
+            }
+
+            // Clan Fame upgrades: Goat's sheep (Shepherd), with their count (drawn by nort/tools/sheep-token.py)
+            val sheep = game.sheep.count(a => t.areas.contains(a))
+            if (sheep > 0) {
+                val z = 170
+                val (x, y) = freeSpot(t, z / T / 2, taken, |(board.point(t.anchor)), 0.5)
+                pieces.add(Sprite($(at("token-sheep", z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag :+ FameUpgradesView(Goat)))(sx(x), sy(y))
+                if (sheep > 1 && sheep <= 15)
+                    pieces.add(Sprite($(at("ui-count-" + sheep, 80)), $))(sx(x) + 50, sy(y) + 50)
                 taken :+= ((x, y, z / T / 2))
             }
         }

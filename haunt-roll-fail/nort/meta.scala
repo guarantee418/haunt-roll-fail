@@ -519,6 +519,10 @@ object Meta extends MetaGame { mmm =>
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wastelands), "token", "token-", "webp")(
         $(ImageAsset("blainn"), ImageAsset("wood"))
     ) ::
+    // Clan Fame upgrades: Goat's sheep
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, FameUpgradesModule) || options.has(ModuleOption(PCVersion)), "token", "token-", "webp")(
+        $(ImageAsset("sheep"))
+    ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, Wastelands), "token/creature", "creature-", "webp")(
         (Creature.waste :+ Creature.hrimgandr)./(c => ImageAsset(c.token.drop("creature-".length)))
     ) ::

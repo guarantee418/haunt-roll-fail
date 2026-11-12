@@ -593,7 +593,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // Module expansions come first, so they can take over any core action; before them the Uncharted Horizons
     // Development cards, which only act on their own actions and specials (and in an Adset game, its draft)
     // Robotos goes first after the draft: it takes over what creatures do to its clans
-    def computeExpansions : $[Expansion] = adset.$(AdsetExpansion) ++ (cheaters.any || options.of[RobotosSeatOption].any).$(RobotosExpansion) ++ $(HorizonDevsExpansion) ++ modules.sortBy(_.priority)./~(_.expansion) ++ $(MapExpansion, CardsExpansion, CommonExpansion)
+    def computeExpansions : $[Expansion] = adset.$(AdsetExpansion) ++ (cheaters.any || options.of[RobotosSeatOption].any).$(RobotosExpansion) ++ modules.has(FameUpgradesModule).$(FameCreaturesExpansion) ++ $(HorizonDevsExpansion) ++ modules.sortBy(_.priority)./~(_.expansion) ++ $(MapExpansion, CardsExpansion, CommonExpansion)
 
     var expansions : $[Expansion] = computeExpansions
 
@@ -753,6 +753,14 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var fameUnlocked : $[FameUpgrade] = $
     var fameUsed : Map[(Faction, String), Int] = Map()
     var guerillaAt : |[(AreaRef, Int)] = None
+    // Goat's Shepherd: its sheep (one area each, repeated), those to place, the last year one was gained, those moved with this
+    // Move card, and the Move card whose sheep were already moved (MoveStartAction then goes on); Boar's tamed creature (Taming)
+    var sheep : $[AreaRef] = $
+    var sheepDue : Int = 0
+    var sheepYear : Int = 0
+    var sheepMoved : $[AreaRef] = $
+    var sheepAsked : Boolean = false
+    var tamed : |[Creature] = None
     var extraMoved = false
     // Leadership 2 (ChiefMoveAfterMove): the warchief moved during this Move
     var chiefMoved = false
@@ -962,7 +970,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     def ghostIn(t : Territory) : Boolean = creaturesIn(t).exists(_.kind == SpectralWarrior) && robotosIn(t).not && noAbilities.not
 
     // Creatures ignore a Robotos clan (robotos.scala): where it has units, a creature blocks nothing and takes nothing
-    def robotosIn(t : Territory) : Boolean = cheaters.any && present(t).exists(robotos)
+    // Boar's Taming (Clan Fame upgrades, fame-upgrades.scala): creatures are neutral to Boar the same way
+    def robotosIn(t : Territory) : Boolean = (cheaters.any && present(t).exists(robotos)) || FameUpgradesExpansion.tamerIn(t)(this)
 
     // Wilderness: the Spectral Warriors not yet placed by the Ancestral Graveyard
     var spectrals : $[Creature] = $

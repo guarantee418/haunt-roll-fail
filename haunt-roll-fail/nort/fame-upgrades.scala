@@ -42,7 +42,18 @@ import nort.elem._
 //   more casualty to kill (Game.chiefCost)
 // - Wolf, Spoils of War: winning a fight as the attacker gives what the territory gives at the Harvest, its fame too
 // - Wolf, Field Rations: Winter costs Wolf at most 1 food (the wood is still owed)
-// - Boar's Taming and Goat's Shepherd aren't in yet (FameUpgrade.ready), waiting on answers about their rules
+// - Boar, Taming: creatures treat Boar as they treat the Robotos bot where it has figures (Game.robotosIn: no Brown Bear lock, no
+//   harvest loss, aggressive ones neither attack it nor must be fought; FameCreaturesExpansion: what a creature does when it appears
+//   or moves there doesn't touch it). Once a year on its turn, not an action, Boar's warchief tames a creature in its territory (not
+//   Hrimgandr; no fame), Boar having none tamed: the creature goes with the warchief and adds its combat points to Boar's fights in
+//   that territory, except when Boar attacks a clan (it can't attack enemy territory); its card ability is left out. It goes to the
+//   creature discard pile when the warchief leaves the map or Boar loses Taming
+// - Goat, Shepherd: a sheep when unlocked and one at the start of each year after, one a year at most (game.sheepYear) and no cap
+//   (Gman, 2026-11-12); each is placed at Goat's next turn in a territory Goat controls. A sheep isn't a unit: it doesn't fight,
+//   control or cost Winter; it gives 1 food at the Harvest; with each Move card (a Feast's Move too), before the Move, each sheep
+//   may move up to the card's value, through and into territories with no other clan; on its turn, not an action, Goat may kill one
+//   for 2 food; a sheep is lost when another clan has figures in its territory and Goat none. Below 20 fame the sheep stay but do
+//   nothing
 
 case class FameUpgrade(clan : Faction, fame : Int, name : String, text : String, ready : Boolean = true, warchief : Boolean = false)
 
@@ -50,9 +61,9 @@ object FameUpgrade {
     val all : $[FameUpgrade] = $(
         FameUpgrade(Bear, 20, "Shield Mastery", "1 more combat point in every fight."),
         FameUpgrade(Bear, 50, "Hibernation", "After Winter, collect the food and wood of the Harvest again."),
-        FameUpgrade(Boar, 20, "Taming", "Creature abilities don't affect you; once a year your warchief can tame a creature, which then works as a warchief.", ready = false),
+        FameUpgrade(Boar, 20, "Taming", "Creature abilities don't affect you; once a year your warchief can tame a creature in its territory, which then goes with it and adds its strength to your fights (not when you attack a clan)."),
         FameUpgrade(Boar, 50, "Legacy", "An Altar of Kings costs 1 wood less and gives 1 more food, wood and lore at each Harvest."),
-        FameUpgrade(Goat, 20, "Shepherd", "Sheep that move with your Move cards, give 1 food at the Harvest and can be killed for 2 food.", ready = false),
+        FameUpgrade(Goat, 20, "Shepherd", "Sheep that move with your Move cards, give 1 food at the Harvest and can be killed for 2 food; a new one each year."),
         FameUpgrade(Goat, 50, "Feasting", "Once a year, instead of playing a card: put a card from your hand among your played cards and harvest (no fame)."),
         FameUpgrade(Raven, 20, "Rangers", "Once a year, after an Explore, explore once more and place the tile anywhere. Every territory you close gives you its resources (fame only for your own)."),
         FameUpgrade(Raven, 50, "Wartime Economy", "On your turn, pay 1 food for 1 unit in a territory with your Training Camp, as often as you like. Harvest trades are 2 for 1."),
@@ -72,7 +83,9 @@ object FameUpgrade {
 case class FameUpgradesLabel(f : Faction) extends GameElementary {
     def elem(implicit game : Game) = {
         val l = game.fameUnlocked.%(_.clan == f)
-        FameIcon() ~ " " ~ l.any.?(l./(_.name.hl).join(", ")).|("no fame upgrade yet".spn(xstyles.smaller85))
+        val sheep = (f == Goat && game.sheep.any).?(" (" ~ game.sheep.num.hl ~ (game.sheep.num == 1).?(" sheep)").|(" sheep)")).|(Empty)
+        val tamed = (f == Boar).??(game.tamed)./(c => " (tamed " ~ c.kind.title.styled(styles.creature) ~ ")").|(Empty)
+        FameIcon() ~ " " ~ l.any.?(l./(_.name.hl).join(", ")).|("no fame upgrade yet".spn(xstyles.smaller85)) ~ sheep ~ tamed
     }
 }
 
@@ -88,6 +101,17 @@ case class PressureCardAction(self : Faction, area : AreaRef, card : Card) exten
 
 // Raven's Wartime Economy: 1 food for 1 unit, not an action
 case class WartimeAction(self : Faction, area : AreaRef, stage : Int) extends BaseAction("Wartime Economy".hl, "pay", Amount(1.hl, Food.elem), "for 1 unit in")(area) with MapTarget { def target = area }
+
+// Goat's Shepherd: placing a new sheep, killing one, and moving them with a Move card
+case class SheepPlaceAction(self : Faction, area : AreaRef) extends BaseAction("Shepherd".hl, "place a sheep in")(area) with MapTarget { def target = area }
+case class SheepKillAction(self : Faction, area : AreaRef, stage : Int) extends BaseAction("Shepherd".hl, "kill a sheep for", Amount(2.hl, Food.elem), "in")(area) with MapTarget { def target = area }
+case class SheepMovesAction(self : Faction, e : MoveEffect, then : ForcedAction) extends ForcedAction
+case class SheepFromAction(self : Faction, from : AreaRef, e : MoveEffect, then : ForcedAction) extends BaseAction("Shepherd".hl, "move a sheep (up to", e.n.hl, ") from")(from) with Soft with MapTarget { def target = from }
+case class SheepToAction(self : Faction, from : AreaRef, to : AreaRef, e : MoveEffect, then : ForcedAction) extends BaseAction("Shepherd".hl, "move the sheep from", from, "to")(to) with MapTarget { def target = to }
+case class SheepMovesDoneAction(self : Faction, e : MoveEffect, then : ForcedAction) extends BaseAction("Shepherd".hl)("Done moving sheep")
+
+// Boar's Taming: the warchief tames a creature in its territory
+case class TameAction(self : Faction, c : Creature, stage : Int) extends BaseAction("Taming".hl, "(once a year)")("Tame", c) with ViewObject[Creature] { def obj = c }
 
 // Raven's Rangers: one more Explore, anywhere
 case class RangersAction(self : Faction, then : ForcedAction) extends BaseAction("Rangers".hl, "(once a year)")("Explore once more, anywhere on the map")
@@ -131,8 +155,65 @@ object FameUpgradesExpansion extends Expansion {
                     f.log("collected", Amount(5.hl, Food.elem), Comma, Amount(3.hl, Wood.elem), "and", Amount(2.hl, Lore.elem), "with", "Supplies".hl)
                 }
             }
+
+            // Shepherd: a sheep when unlocked and at the start of each year after, one a year (placed at Goat's next turn)
+            if (sheepOn(Goat) && game.sheepYear < game.year) {
+                game.sheepYear = game.year
+                game.sheepDue += 1
+                game.note("fame-sheep")
+                Goat.log("gained a sheep with", "Shepherd".hl)
+            }
+
+            // A sheep is lost where another clan has figures and Goat none
+            game.sheep.distinct.foreach { a =>
+                val t = game.board.territory(a)
+                if (game.figures(t, Goat) == 0 && game.present(t).exists(_ != Goat)) {
+                    val n = game.sheep.count(a)
+                    game.sheep = game.sheep.but(a)
+                    game.note("fame-sheep-lost")
+                    Goat.log("lost", n.hl, (n == 1).?("sheep").|("sheep"), "in", a)
+                }
+            }
+
+            // Taming: the tamed creature runs off when the warchief leaves the map or Boar loses Taming
+            game.tamed.foreach { c =>
+                if (game.chiefs.contains(Boar).not || has(Boar, "Taming").not) {
+                    game.tamed = None
+                    game.creatureDiscard :+= c
+                    game.note("fame-tamed-lost")
+                    Boar.log("lost the tamed", c)
+                }
+            }
         }
     }
+
+    // GOAT: the sheep that may move with this Move card, and where one can go from a territory with n moves: through and into
+    // territories with no other clan
+    def sheepOn(f : Faction)(implicit game : Game) : Boolean = f == Goat && has(f, "Shepherd")
+
+    def sheepMovable(implicit game : Game) : $[AreaRef] = game.sheep.diff(game.sheepMoved).distinct
+
+    def sheepTargets(f : Faction, from : AreaRef, n : Int)(implicit game : Game) : $[Territory] = {
+        val start = game.board.territory(from)
+        def free(t : Territory) = game.present(t).forall(_ == f)
+        var seen : $[Territory] = $(start)
+        var edge : $[Territory] = $(start)
+        1.to(n).foreach { _ =>
+            edge = edge./~(t => game.board.adjacent(t).map(_._1)).distinct.%(o => seen.has(o).not).%(o => free(o))
+            seen ++= edge
+        }
+        seen.but(start)
+    }
+
+    // BOAR: creatures leave Boar alone where it has figures (Game.robotosIn)
+    def tamerIn(t : Territory)(implicit game : Game) : Boolean = on && game.fameUnlocked.exists(_.name == "Taming") && game.present(t).exists(f => has(f, "Taming"))
+
+    def tameable(f : Faction)(implicit game : Game) : $[Creature] =
+        (has(f, "Taming") && used(f, "Taming").not && game.tamed.none).??(game.chiefs.get(f)./~(a => game.creaturesIn(game.board.territory(a))).%(_.kind != Hrimgandr))
+
+    // The tamed creature's combat points: with the warchief, except attacking a clan
+    def tamedPoints(t : Territory, f : Faction, attacking : Boolean)(implicit game : Game) : $[(Int, Elem)] =
+        (f == Boar && game.chiefIn(t, f) && (attacking.not || game.present(t).forall(_ == f))).??(game.tamed./(c => c.kind.value -> ("the tamed " ~ c.kind.title.styled(styles.creature))).$)
 
     // CARDS: their fame when taken, as nothing is counted at the end (Gman, 2026-11-12); with Alternative fame gains, which gives a
     // Development card's fame when taken already, only the other cards
@@ -158,7 +239,7 @@ object FameUpgradesExpansion extends Expansion {
     def parts(t : Territory, f : Faction, attacking : Boolean)(implicit game : Game) : $[(Int, Elem)] = on.??($(
         has(f, "Shield Mastery").??(1) -> "Shield Mastery".hl,
         has(f, "Glory of the Clan").??(math.min(game.count(t, f) / 2, math.max(0, f.fame) / 20)) -> "Glory of the Clan".hl
-    ).filter(_._1 > 0))
+    ) ++ tamedPoints(t, f, attacking)).filter(_._1 > 0)
 
     def strength(t : Territory, f : Faction, attacking : Boolean)(implicit game : Game) : Int = parts(t, f, attacking).map(_._1).sum
 
@@ -176,7 +257,9 @@ object FameUpgradesExpansion extends Expansion {
         val altars = has(f, "Legacy").??(here.count(_ == AltarOfKings))
         val silos = has(f, "Glory of the Clan").??(here.count(_ == FoodSilo))
 
-        (altars + silos, altars, altars)
+        val sheep = sheepOn(f).??(game.sheep.num)
+
+        (altars + silos + sheep, altars, altars)
     }
 
     // Boar's Legacy: an Altar of Kings for 1 wood less
@@ -215,7 +298,9 @@ object FameUpgradesExpansion extends Expansion {
     def actions(f : Faction, stage : Int)(implicit game : Game) : $[UserAction] = on.??(
         (stage == 0 && f.hand.any && has(f, "Feasting") && used(f, "Feasting").not).$(FeastingAction(f)) ++
         (stage == 0 && f.hand.any && has(f, "Under Pressure") && used(f, "Under Pressure").not && pressureTargets(f).any).$(PressureAction(f)) ++
-        (has(f, "Wartime Economy") && f.food >= 1 && game.reserve(f) > 0).??(game.controlled(f).%(t => game.working(t).has(TrainingCamp))./(t => WartimeAction(f, t.anchor, stage)))
+        (has(f, "Wartime Economy") && f.food >= 1 && game.reserve(f) > 0).??(game.controlled(f).%(t => game.working(t).has(TrainingCamp))./(t => WartimeAction(f, t.anchor, stage))) ++
+        sheepOn(f).??(game.sheep.distinct./(a => SheepKillAction(f, a, stage))) ++
+        tameable(f)./(c => TameAction(f, c, stage))
     )
 
     // Under Pressure: enemy territories next to one of Snake's, other than the one the token is on
@@ -238,6 +323,64 @@ object FameUpgradesExpansion extends Expansion {
     }
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
+        // GOAT: Shepherd. New sheep are placed at the start of Goat's turn
+        case TurnAction(f, 0) if sheepOn(f) && game.sheepDue > 0 && game.controlled(f).any =>
+            Ask(f).each(game.controlled(f))(t => SheepPlaceAction(f, t.anchor))
+
+        case SheepPlaceAction(f, a) =>
+            game.sheepDue -= 1
+            game.sheep :+= a
+            f.log("placed a sheep in", a)
+            Then(TurnAction(f, 0))
+
+        case SheepKillAction(f, a, stage) =>
+            game.sheep = game.sheep.diff($(a))
+            f.food += 2
+            game.note("fame-sheep-kill")
+            f.log("killed a sheep in", a, "for", Amount(2.hl, Food.elem))
+            Then(TurnAction(f, stage))
+
+        // Before a Move card's Move, each sheep may move up to its value (once: the Move then goes on, game.sheepAsked)
+        case MoveStartAction(f, e, then) if sheepOn(f) && game.sheepAsked =>
+            game.sheepAsked = false
+            UnknownContinue
+
+        case MoveStartAction(f, e, then) if sheepOn(f) && e.n > 0 && game.sheep.exists(a => sheepTargets(f, a, e.n).any) =>
+            game.sheepMoved = $
+            Then(SheepMovesAction(f, e, then))
+
+        case SheepMovesAction(f, e, then) =>
+            val l = sheepMovable.%(a => sheepTargets(f, a, e.n).any)
+            if (l.none)
+                Then(SheepMovesDoneAction(f, e, then))
+            else
+                Ask(f).each(l)(a => SheepFromAction(f, a, e, then)).add(SheepMovesDoneAction(f, e, then))
+
+        case SheepFromAction(f, from, e, then) =>
+            Ask(f).each(sheepTargets(f, from, e.n))(t => SheepToAction(f, from, t.anchor, e, then)).cancel
+
+        case SheepToAction(f, from, to, e, then) =>
+            game.sheep = game.sheep.diff($(from)) :+ to
+            game.sheepMoved :+= to
+            game.note("fame-sheep-move")
+            f.log("moved a sheep from", from, "to", to)
+            Then(SheepMovesAction(f, e, then))
+
+        case SheepMovesDoneAction(f, e, then) =>
+            game.sheepMoved = $
+            game.sheepAsked = true
+            Then(MoveStartAction(f, e, then))
+
+        // BOAR: Taming
+        case TameAction(f, c, stage) =>
+            game.creatureLine = game.creatureLine.but(c)
+            game.creatureAt -= c
+            game.tamed = |(c)
+            use(f, "Taming")
+            game.note("fame-tame")
+            f.log("tamed", c, "with", WarchiefElem(f), "(" ~ "Taming".hl ~ ")")
+            Then(TurnAction(f, stage))
+
         // GOAT: Feasting
         case FeastingAction(f) =>
             Ask(f).each(f.hand.distinct)(c => FeastingCardAction(f, c)).cancel
@@ -334,6 +477,19 @@ object FameUpgradesExpansion extends Expansion {
             Bear.log("collected", Amount(food.hl, Food.elem), "and", Amount(wood.hl, Wood.elem), "again with", "Hibernation".hl)
 
             Then(EndOfYearAction)
+
+        case _ => UnknownContinue
+    }
+}
+
+// Boar's Taming, ahead of the modules (Game.computeExpansions): what a creature does when it appears or moves into a territory where
+// Boar has figures doesn't touch it, as for the Robotos bot (RobotosExpansion)
+object FameCreaturesExpansion extends Expansion {
+    def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
+        case CreatureEffectAction(c, then) if game.creatureAt.contains(c) && FameUpgradesExpansion.tamerIn(game.board.territory(game.creatureAt(c))) =>
+            log(c, "ignores", Boar, "(" ~ "Taming".hl ~ ")")
+            game.note("fame-taming-ignored")
+            Then(then)
 
         case _ => UnknownContinue
     }
