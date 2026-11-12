@@ -114,7 +114,8 @@ object EventsExpansion extends Expansion {
         // Wastelands: while Hrimgandr lives, the costs are one step (three units) higher
         val (food, wood) = Winter.cost(game.states(f).winterUnits + harsh + WastelandsExpansion.winterUnits)
         val blizzard = game.eventIs("blizzard").??(1)
-        (food + blizzard, wood + blizzard)
+        // Clan Fame upgrades: Wolf's Field Rations
+        (FameUpgradesExpansion.winterFood(f, food + blizzard), wood + blizzard)
     }
 
     // After an Explore: New Horizons pays for closing enemy or neutral territories; Alternative victory counts f's closed territories

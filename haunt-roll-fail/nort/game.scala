@@ -226,8 +226,12 @@ object Harvest {
 
     def altarFame(f : Faction)(implicit game : Game) : Int = 3 * game.controlled(f).%(t => game.koboldIn(t).not)./~(game.working).count(_ == AltarOfKings)
 
-    def resources(f : Faction)(implicit game : Game) : (Int, Int, Int) =
-        game.controlled(f)./(EventsExpansion.harvest).foldLeft((0, 0, 0))((a, b) => (a._1 + b._1, a._2 + b._2, a._3 + b._3))
+    def resources(f : Faction)(implicit game : Game) : (Int, Int, Int) = {
+        val (food, wood, lore) = game.controlled(f)./(EventsExpansion.harvest).foldLeft((0, 0, 0))((a, b) => (a._1 + b._1, a._2 + b._2, a._3 + b._3))
+        // Clan Fame upgrades: Boar's Legacy (Altars of Kings), Stag's Glory of the Clan (Food Silos)
+        val (xf, xw, xl) = FameUpgradesExpansion.harvest(f)
+        (food + xf, wood + xw, lore + xl)
+    }
 
     // Leaves out the choices made during the harvest: Snake's Scorched Earth and the New Blood clan powers' extra resource
     def forecast(f : Faction)(implicit game : Game) : HarvestForecast = {
@@ -743,6 +747,12 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var fameDealt = false
     var fameKept : Map[Faction, Card] = Map()
     var fameResolved : $[(Faction, Card)] = $
+
+    // Clan Fame upgrades (fame-upgrades.scala): the abilities each clan unlocked, the year each once-a-year one was last used, and
+    // the fight Signy's Guerilla Tactics already killed before (its territory and game.fights then)
+    var fameUnlocked : $[FameUpgrade] = $
+    var fameUsed : Map[(Faction, String), Int] = Map()
+    var guerillaAt : |[(AreaRef, Int)] = None
     var extraMoved = false
     // Leadership 2 (ChiefMoveAfterMove): the warchief moved during this Move
     var chiefMoved = false
@@ -1105,7 +1115,10 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     def pcChief(f : Faction) : Boolean = has(WarchiefsPC) && f != Automa
 
     // The casualties it takes to remove all of f's figures in t: one each, two for a PC version warchief
-    def toughness(t : Territory, f : Faction) : Int = figures(t, f) + (pcChief(f) && chiefIn(t, f)).??(1)
+    def toughness(t : Territory, f : Faction) : Int = figures(t, f) + chiefIn(t, f).??(chiefCost(f) - 1)
+
+    // The casualties that kill f's warchief: 1, 2 for a PC version warchief, 1 more with Stag's Valorous Leader (Clan Fame upgrades)
+    def chiefCost(f : Faction) : Int = pcChief(f).?(2).|(1) + FameUpgradesExpansion.valorous(f)(this).??(1)
 
     // Units, Kaija and the warchief (and the Military paths' Militia and bodyguard)
     def figures(t : Territory, f : Faction) : Int = count(t, f) + kaijaIn(t, f).??(1) + extraLynx(t, f) + chiefIn(t, f).??(1) + blainnIn(t, f).??(1) + MilitaryExpansion.figures(t, f)
@@ -1113,7 +1126,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // Combat points of the figures: Kaija is worth 2, a warchief 2 or 3 depending on its power
     // Jötunn Blainn (Wastelands) is worth 2
     // Sea module: +1 defending a Port; Military paths: the Militia, the bodyguard, the paths' points
-    def strength(t : Territory, f : Faction, attacking : Boolean) : Int = count(t, f) + companionStrength(t, f) + Warchief.strength(t, f, attacking) + blainnIn(t, f).??(2) + SeaExpansion.defense(t, f, attacking) + MilitaryExpansion.strength(t, f, attacking)
+    def strength(t : Territory, f : Faction, attacking : Boolean) : Int = count(t, f) + companionStrength(t, f) + Warchief.strength(t, f, attacking) + blainnIn(t, f).??(2) + SeaExpansion.defense(t, f, attacking) + MilitaryExpansion.strength(t, f, attacking) + FameUpgradesExpansion.strength(t, f, attacking)(this)
 
     // Kaija is in Bear Clan's reserve and can be recruited
     // Brundr and Kaelinn likewise; Brok only with the Warchiefs module
@@ -1160,7 +1173,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         removeUnits(t, f, k)
         var left = n - k
         left -= MilitaryExpansion.removeExtra(t, f, left)
-        val cost = pcChief(f).?(2).|(1)
+        val cost = chiefCost(f)
         if (left >= cost && chiefIn(t, f)) {
             chiefs -= f
             left -= cost
@@ -1192,7 +1205,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
                 MilitaryExpansion.kill(t, f, units)
                 if (chief)
                     chiefs -= f
-                if (chief.not && chiefIn(t, f) && pcChief(f))
+                if (chief.not && chiefIn(t, f) && chiefCost(f) > 1)
                     note("pc-chief-spared")
                 if (blainnToo)
                     blainn = None
@@ -1342,6 +1355,10 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         if (has(PCVersion))
             PCExpansion.sweep(this)
 
+        // Clan Fame upgrades: abilities unlocked by the fame reached (before too, as a replay stops at soft actions)
+        if (has(FameUpgradesModule))
+            FameUpgradesExpansion.sweep(this)
+
         val raw = action.as[SelfPerform]./(_.perform(soft)).|(internalPerform(action, soft))
 
         // Military paths: a unit lost outside a fight may be swapped for the bodyguard or a Militia (PickLoneLoss), asked before
@@ -1362,6 +1379,9 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
         if (has(PCVersion))
             PCExpansion.sweep(this)
+
+        if (has(FameUpgradesModule))
+            FameUpgradesExpansion.sweep(this)
 
         // Alternative fame gains: 120 fame and an Altar of Kings win at once
         if (has(FameGainsModule) && isOver.not && c.is[GameOver].not && FameGainsExpansion.winners(this).any)
@@ -1405,6 +1425,8 @@ object Debug {
     var mxpTimes = 1
     // Alternative fame gains: the fame to win, lowered to test the win in bot games (NORT_FAME_GOAL in host.scala)
     var fameGoal = 120
+    // Clan Fame upgrades: the thresholds divided by this, for bot games (NORT_FAMEUP_DIV)
+    var fameUpgradeDiv = 1
     // and the years past the last one it may go on for, before the bot games stop (NORT_FAME_YEARS in host.scala)
     var fameExtraYears = Int.MaxValue / 2
 
@@ -1484,7 +1506,7 @@ object CommonExpansion extends Expansion {
         val bonfire = game.eventIs("ceremonial-bonfire")
         // The Lion Kingdom's Faith trades like the other resources (LionFaith); a teammate gets it only if it has Faith too
         val rs = Resource.of(f)
-        val pp = payments(f, 3, rs)./(p => p -> rs.%(r => bonfire || p.has(r).not)).%((_, l) => l.any)
+        val pp = payments(f, FameUpgradesExpansion.tradeRate(f), rs)./(p => p -> rs.%(r => bonfire || p.has(r).not)).%((_, l) => l.any)
         val swaps = mates./~(g => rs.%(Resource.of(g).has).%(f.has(_) > 0)./~(r => rs.%(Resource.of(g).has).%(_ != r).%(g.has(_) > 0)./(x => TeamTradeAction(f, g, r, x, then))))
 
         pp./~((p, l) => l./(r => TradeForAction(f, p, r, then))) ++ (bonfire && f.wood >= 2).$(BonfireTradeAction(f, then)) ++ MineralsExpansion.trades(f, then) ++ swaps
@@ -1584,6 +1606,7 @@ object CommonExpansion extends Expansion {
             .add(TurnModeAction(f, UpgradeMode).!(f.hand.none || f.upgrades.none || f.has(LionExpansion.upgradeResource(f)) < game.upgradeCost(f), "needs " + game.upgradeCost(f) + " " + LionExpansion.upgradeResource(f).name.toLowerCase))
             .add(PassAction(f))
             .add(FameGainsExpansion.resolve(f, TurnAction(f, 0)))
+            .add(FameUpgradesExpansion.actions(f, 0))
 
     // The hand after a choice: tapping a card does it; Cancel goes back to the six choices
     def modeChoices(f : Faction, m : TurnMode)(implicit game : Game) : Continue = m match {
@@ -1893,7 +1916,7 @@ object CommonExpansion extends Expansion {
             if (stage == 0)
                 turnModes(f)
             else
-                playChoices(f, stage).add(EndTurnAction(f)).add(FameGainsExpansion.resolve(f, TurnAction(f, stage)))
+                playChoices(f, stage).add(EndTurnAction(f)).add(FameGainsExpansion.resolve(f, TurnAction(f, stage))).add(FameUpgradesExpansion.actions(f, stage))
 
         case TurnModeAction(f, m) =>
             modeChoices(f, m)

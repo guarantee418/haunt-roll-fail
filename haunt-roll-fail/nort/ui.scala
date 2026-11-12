@@ -1551,6 +1551,26 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         ).div
     }
 
+    // Clan Fame upgrades: each clan's abilities, those unlocked marked, f's clan first
+    def fameUpgradesView(f : Faction) : Elem = {
+        val clans = (f +: game.factions.but(f)).%(g => FameUpgrade.of(g).any)
+
+        ("Clan Fame upgrades".hlb.div ~
+            "Unlocked when the clan's fame first reaches the amount, and kept.".spn(xstyles.smaller85).div ~
+            clans./{ g =>
+                HorizontalBreak ~
+                g.elem.div ~
+                FameUpgrade.of(g)./{ u =>
+                    val st = game.fameUnlocked.has(u).?($(styles.onBoard)).|($(styles.offBoard))
+                    (Amount(u.fame.hl, FameIcon()) ~ " " ~ u.name.hl ~ ": " ~ CombatText(u.text) ~ u.ready.not.?(" (not in the game yet)").|("") ~ (u.warchief && game.has(Warchiefs).not).?(" (needs the Warchiefs module)").|("")).spn(xstyles.smaller85).styled(st).div
+                }.merge
+            }.merge ~
+            "Fan-made by Marzaus (Discord, northgard-fanmade-content).".spn(xstyles.smaller85).div ~
+            HorizontalBreak ~
+            "(tap to close)".spn(xstyles.smaller85).div
+        ).div
+    }
+
     // Military paths module: the clan's MXP and path, how MXP is gained and the three paths, the clan's levels marked
     def militaryView(f : Faction) : Elem = {
         val path = game.paths.get(f)
@@ -1897,7 +1917,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         // Military paths module: the MXP, the path and its level (tapping them shows the paths)
         val military = (game.has(MilitaryModule) && f != Automa).?(OnClick(MilitaryView(f), MilitaryLabel(f).elem.div(styles.panelLine)(xlo.pointer))).|(Empty)
 
-        val content = (title.div ~ cards ~ units ~ ledger ~ minerals ~ military ~ nb ~ goals ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
+        // Clan Fame upgrades: the abilities unlocked (tapping them shows every clan's)
+        val upgrades = (game.has(FameUpgradesModule) && FameUpgrade.of(f).any).?(OnClick(FameUpgradesView(f), FameUpgradesLabel(f).elem.div(styles.panelLine)(xlo.pointer))).|(Empty)
+
+        val content = (title.div ~ cards ~ units ~ ledger ~ minerals ~ military ~ upgrades ~ nb ~ goals ~ marks).div(styles.statusUpper)(xlo.flexVX)(ExternalStyle("hide-scrollbar")).pointer.onClick.param(f)
 
         container.replace(content, resources, {
             case x => onClick(x)
@@ -2971,6 +2994,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case MilitaryView(f) =>
             showOverlay(overlayScrollX(militaryView(f)).onClick, onClick)
+
+        case FameUpgradesView(f) =>
+            showOverlay(overlayScrollX(fameUpgradesView(f)).onClick, onClick)
 
         // A fight's result tapped in the log
         case FightReportView(r) =>

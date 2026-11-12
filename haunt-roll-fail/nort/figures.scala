@@ -185,7 +185,7 @@ case class CasualtyGoal(self : Faction, from : AreaRef, k : Int, then : ForcedAc
     def start(implicit game : Game) = FigurePick(math.min(k, maxUnits), false, false, false, false, k > maxUnits && guardMay)
     override def cancel(a : Ask)(implicit game : Game) = a
 
-    def taken(p : FigurePick)(implicit game : Game) = p.units + p.guard.??(1) + p.companions + p.blainn.??(1) + p.chief.??(game.pcChief(owner).?(2).|(1))
+    def taken(p : FigurePick)(implicit game : Game) = p.units + p.guard.??(1) + p.companions + p.blainn.??(1) + p.chief.??(game.chiefCost(owner))
 
     override def none(p : FigurePick)(implicit game : Game) =
         if (taken(p) == k && guardsKept(p))

@@ -466,7 +466,7 @@ object FightPoints {
         Warchief.strength(t, f, attacking) -> Warchief.elem(f),
         game.blainnIn(t, f).??(2) -> "Jötunn Blainn".hl,
         SeaExpansion.defense(t, f, attacking) -> "the Port".hl
-    ).filter(_._1 > 0) ++ MilitaryExpansion.parts(t, f, attacking)
+    ).filter(_._1 > 0) ++ MilitaryExpansion.parts(t, f, attacking) ++ FameUpgradesExpansion.parts(t, f, attacking)
 
     def apply(f : Faction, t : Territory, attacking : Boolean, extra : $[(Int, Elem)], casualties : $[(Int, Elem)], cancels : Int, choosing : Boolean = false)(implicit game : Game) : Elem = {
         val points = parts(f, t, attacking, extra)
@@ -646,6 +646,9 @@ object NorthgardDie {
 object MapExpansion extends Expansion {
     // The clan powers of an attacker that won a fight
     def attackWon(attacker : Faction, a : AreaRef)(implicit game : Game) {
+        // Clan Fame upgrades: Wolf's Spoils of War
+        FameUpgradesExpansion.attackWon(attacker, a)
+
         if (attacker == Wolf) {
             attacker.food += 1
             attacker.log("collected", 1.hl, Food, "for winning as the attacker")
@@ -1169,8 +1172,8 @@ object MapExpansion extends Expansion {
         def may(b : Boolean) = b.?($(false, true)).|($(false))
 
         // Warchiefs PC version: the warchief takes 2 casualties, and a single one left over with nothing else to take it is lost
-        val cost = game.pcChief(f).?(2).|(1)
-        val spare = game.pcChief(f) && game.chiefIn(t, f)
+        val cost = game.chiefCost(f)
+        val spare = cost > 1 && game.chiefIn(t, f)
 
         for (chief <- may(game.chiefIn(t, f)); blainn <- may(game.blainnIn(t, f)); kaija <- may(game.kaijaIn(t, f)) ; s = $(kaija, blainn).count(b => b) + chief.??(cost) ;
             u = k - s ; all = kaija == game.kaijaIn(t, f) && blainn == game.blainnIn(t, f) ;
@@ -1584,7 +1587,7 @@ object MapExpansion extends Expansion {
                 game.removeFigures(dst, f, 1)
                 game.note("swamp")
                 // A Warchiefs PC version warchief going in alone loses nothing
-                if (game.figures(dst, f) < had || game.pcChief(f).not)
+                if (game.figures(dst, f) < had || game.chiefCost(f) == 1)
                     f.log("lost a unit in the", "Swamp".hl)
             }
 
@@ -1924,10 +1927,13 @@ object MapExpansion extends Expansion {
             val eldrich = (e.special == EldrichMove).??(faces(1).casualties)
             // Events: Blood Moon adds a casualty to both sides
             val moon = game.eventIs("blood-moon").??(1)
-            val ac = math.max(0, faces(0).casualties - halvard + (e.special == EgilMove).??(1) + NewBloodExpansion.casualties(attacker, t, e, true) + eldrich + moon - NewBloodExpansion.ignored(defender) - urdar)
+            // Clan Fame upgrades: Stag's Valorous Leader, 1 more casualty where Brand fights
+            val valorA = FameUpgradesExpansion.casualties(attacker, t)
+            val valorD = FameUpgradesExpansion.casualties(defender, t)
+            val ac = math.max(0, faces(0).casualties - halvard + (e.special == EgilMove).??(1) + NewBloodExpansion.casualties(attacker, t, e, true) + eldrich + moon + valorA - NewBloodExpansion.ignored(defender) - urdar)
             // Shieldbearers cancel 1 casualty inflicted by the defender
             val shield = ((e.special == ShieldMove || e.special == BorgildMove) && faces(1).casualties + towers > 0 && game.towerShield.not).??(1)
-            val dc = math.max(0, faces(1).casualties + towers - shield + NewBloodExpansion.casualties(defender, t, e, false) + moon - NewBloodExpansion.ignored(attacker))
+            val dc = math.max(0, faces(1).casualties + towers - shield + NewBloodExpansion.casualties(defender, t, e, false) + moon + valorD - NewBloodExpansion.ignored(attacker))
 
             // Each side picks its casualties when it has a choice (ChooseCasualties), before anything is told
             val pick = pickCasualties($(attacker -> math.min(dc, au), defender -> math.min(ac, du)), t, CombatResolveAction(attacker, defender, a, e, food, faces, then))
@@ -1973,11 +1979,11 @@ object MapExpansion extends Expansion {
 
                 game.fightReport = |(FightReport(a,
                     report(attacker, true, $(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl) ++ NewBloodExpansion.pointParts(attacker, t, e, true, food(0)) ++ aws ++ $(wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl, food(0) -> Food.elem, faces(0).points -> "the die".txt),
-                        $(faces(0).casualties -> "the die".txt, (e.special == EgilMove).??(1) -> "the card".txt) ++ NewBloodExpansion.casualtyParts(attacker, t, e, true) ++ $(eldrich -> "Eldrich".hl, moon -> "Blood Moon".hl,
+                        $(faces(0).casualties -> "the die".txt, (e.special == EgilMove).??(1) -> "the card".txt) ++ NewBloodExpansion.casualtyParts(attacker, t, e, true) ++ $(eldrich -> "Eldrich".hl, moon -> "Blood Moon".hl, valorA -> "Valorous Leader".hl,
                             -halvard -> ("ignored by " ~ Warchief.elem(Goat)), -NewBloodExpansion.ignored(defender) -> ("ignored by " ~ "Ancestral Equipment".hl), -urdar -> "ignored by Urdarbrunn".hl),
                         as, ac, math.min(dc, au)),
                     report(defender, false, $(fortress -> Fortress.elem, db -> "Scorched Earth".hl) ++ NewBloodExpansion.pointParts(defender, t, e, false, food(1)) ++ dws ++ $(food(1) -> Food.elem, faces(1).points -> "the die".txt),
-                        $(faces(1).casualties -> "the die".txt, towers -> DefenseTower.elem) ++ NewBloodExpansion.casualtyParts(defender, t, e, false) ++ $(moon -> "Blood Moon".hl,
+                        $(faces(1).casualties -> "the die".txt, towers -> DefenseTower.elem) ++ NewBloodExpansion.casualtyParts(defender, t, e, false) ++ $(moon -> "Blood Moon".hl, valorD -> "Valorous Leader".hl,
                             -shield -> ("cancelled by " ~ "Shieldbearers".hl), -NewBloodExpansion.ignored(attacker) -> ("ignored by " ~ "Ancestral Equipment".hl)),
                         ds, dc, math.min(ac, du)),
                     winner./(_ == attacker), winner.exists(w => (w == attacker).?(ac >= du).|(dc >= au))))
@@ -2357,6 +2363,9 @@ object MapExpansion extends Expansion {
                         ClanPowers.note(PowerNote(f, |(t.anchor), f.elem ~ " collects the resources of its own territories closed by exploring.", food, wood, lore))
                 }
             }
+
+            // Clan Fame upgrades: Raven's Rangers gather the resources of every territory closed, not only its own
+            FameUpgradesExpansion.closed(f, closing.diff(closed))
 
             // Boar Clan: exploring without closing any territory
             if (closing.none && f == Boar) {

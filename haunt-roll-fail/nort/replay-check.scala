@@ -105,6 +105,7 @@ object ReplayCheck {
         val hard = args.contains("hard")
         val batch = Host.batch
         Debug.stats = false
+        Debug.fameUpgradeDiv = sys.env.get("NORT_FAMEUP_DIV")./(_.toInt).|(1)
         var failures = 0
 
         0.until(games).foreach { gi =>
