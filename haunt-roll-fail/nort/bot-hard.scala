@@ -594,34 +594,28 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
 
     def gain(change : => Unit) : Double = trying(change) - now
 
-    // A fight's casualties as picked, valued with them lost (Game.removeCasualties), and everything it touches put back
-    def casualtiesGain(area : AreaRef, pick : (Int, Boolean, Boolean, Boolean), guard : Boolean, both : Boolean) : Double = {
-        val picks = game.casualtyPicks
-        val guardPicks = game.casualtyGuard
-        val bothLynx = game.casualtyBothLynx
-        val guards = game.guards
-        val brokGuard = game.brokGuard
-        val blainn = game.blainn
-        val events = game.events
-        try {
-            gain {
-                game.casualtyPicks += self -> pick
-                if (guard)
-                    game.casualtyGuard += self
-                if (both)
-                    game.casualtyBothLynx += self
-                game.removeCasualties(board.territory(area), self, 0)
-            }
-        }
-        finally {
-            game.casualtyPicks = picks
-            game.casualtyGuard = guardPicks
-            game.casualtyBothLynx = bothLynx
-            game.guards = guards
-            game.brokGuard = brokGuard
-            game.blainn = blainn
-            game.events = events
-        }
+    // A fight's casualties as picked: what the figures lost are worth, as in value() (a unit or Militia 38, the warchief 70, the
+    // companion 60), the bodyguard less (15) as it comes back each year, and a warchief lost with its bodyguard alive takes that
+    // bodyguard to the reserve too. Valuing the position after the losses instead counted fewer figures in the fight still on
+    // as a gain, so the bot lost its warchief rather than a unit (Saga and Clan, 2026-11-11)
+    def casualtiesGain(area : AreaRef, pick : (Int, Boolean, Boolean, Boolean), guardFirst : Boolean, both : Boolean) : Double = {
+        val (n, kaija, chief, blainn) = pick
+        val t = board.territory(area)
+        val units = game.count(t, self)
+        val militia = MilitaryExpansion.militiaIn(t, self)
+        val guards = MilitaryExpansion.guardsIn(t, self)
+        var guardsLost = guardFirst.??(1)
+        val u = math.min(n, units)
+        var left = n - u
+        val m = math.min(left, militia)
+        left -= m
+        val g = math.min(left, guards - guardsLost)
+        left -= g
+        guardsLost += g
+        // the second lynx, after every unit (CasualtyPickAction), or both lynxes (CasualtyBothLynxAction)
+        val lynxes = kaija.??(1) + (both || left > 0).??(1)
+        val guardTaken = chief && MilitaryExpansion.guardIn(t, self) && guardsLost < guards
+        -(38.0 * (u + m) + 15.0 * guardsLost + chief.??(70) + guardTaken.??(15) + 60.0 * math.min(lynxes, 2) + blainn.??(50))
     }
 
     def moveFigures(from : Territory, to : AreaRef, n : Int, kaija : Boolean, chief : Boolean) {
@@ -901,7 +895,9 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val p =
             if (faces.none) HardCombat.attackWinGiven(as, ds, au, du, towers, extra, choice, None)
             else HardCombat.attackWinGiven(as, ds, au, du, towers, extra, faces(0), |(choice))
-        (self == attacker).?(p).|(1 - p) * 1000
+        // a casualty inflicted is worth about a unit, also when the fight is won or lost either way (Saga and Clan, 2026-11-11:
+        // Boar, losing whatever it picked, took the point over the casualty)
+        (self == attacker).?(p).|(1 - p) * 1000 + choice.casualties * 38
     }
 
     // EVALUATION of one action
