@@ -699,7 +699,11 @@ with Wilderness too, use at most 12 Environment tiles in all):
 - Thor's Wrath (Combats): its controller gets +1 axe in all combats anywhere.
 - Vedrfolnir (Harvest): just before the Harvest its controller may add the top
   map tile next to any open territory (not an Explore action: no clan or
-  Development explore effects).
+  Development explore effects). In the PC version (new games, hidden
+  `PCVedrfolnirReveal`; Gman, 2026-11-12) the map is whole, so instead its
+  controller reveals one territory it hasn't seen, drawn at random (enemy ones
+  too), at the end of each year; it stays seen, gives no fame or Explore
+  bonuses. `PCVedrfolnirRevealAction(X)` switches a running game.
 - Naströnd (Explore): impassable. When revealed, put 2 wood on it; the first
   player to control a territory adjacent to it takes them (a tie during an
   Explore: the explorer).

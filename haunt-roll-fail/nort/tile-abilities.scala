@@ -105,8 +105,13 @@ object TileAbilities {
     def has(tile : String) = features.contains(tile)
 
     // The tapped tile's name, picture and rule
-    def view(tile : String) : Elem =
-        (name(tile).hlb.div ~ expansion(tile).txt.div(xstyles.smaller85) ~ Image("tile-" + tile, styles.abilityTile).div ~ CombatText(text(tile)).div(styles.abilityText)).div(xlo.flexvcenter)
+    def view(tile : String)(implicit game : Game) : Elem =
+        (name(tile).hlb.div ~ expansion(tile).txt.div(xstyles.smaller85) ~ Image("tile-" + tile, styles.abilityTile).div ~ CombatText(textIn(tile)).div(styles.abilityText)).div(xlo.flexvcenter)
+
+    // The rule in this game: the PC version's Vedrfolnir reveals a territory instead (PCVedrfolnirReveal)
+    def textIn(tile : String)(implicit game : Game) : String =
+        if (tile == Waste.vedrfolnir && game.options.has(PCVedrfolnirReveal) && PCExpansion.on) "PC version: at the end of each year, its controller reveals one territory it hasn't seen yet, drawn at random (an enemy's too). It stays seen for the rest of the game. This is not a scout, so it gives no fame and no Explore bonuses."
+        else text(tile)
 }
 
 // A tile's centrepiece or its "i" tapped on the map

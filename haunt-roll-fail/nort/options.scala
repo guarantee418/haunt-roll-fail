@@ -974,6 +974,14 @@ case object PCVersionUpdate extends GameOption with ToggleOption {
     def valueOn = "Mine territories, Stone from Mines, the wider two-player map, more creatures".txt
 }
 
+// PC version: Vedrfolnir's controller reveals one random territory it hasn't seen at the end of each year, instead of adding a map
+// tile, as the map is whole (Gman, 2026-11-12). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be
+// switched over with PCVedrfolnirRevealAction(X)
+case object PCVedrfolnirReveal extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "Vedrfolnir reveals a random territory each year".txt
+}
+
 // Alternative victory with teams: a team wins only when its players fulfil every card in play, Thane or Jarl, as the Uncharted
 // Horizons rulebook says for 2 vs. 2 ("A team wins if each Victory Condition card is fulfilled by at least one player from the
 // same team"; Marzaus, 2026-11-07). Hidden, and given to every new game (Meta.mandatoryFor); older games keep Thane's Map Control

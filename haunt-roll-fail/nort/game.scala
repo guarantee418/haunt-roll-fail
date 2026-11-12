@@ -485,6 +485,8 @@ case class EndOfYearAfterGeysersAction(then : ForcedAction) extends ForcedAction
 case class MielikkiAgainstCreaturesAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to SailOnFromPort (an hrf-games fix)
 case class SailOnFromPortAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to PCVedrfolnirReveal (an hrf-games fix)
+case class PCVedrfolnirRevealAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to ChiefMoveFromHeld (an hrf-games fix)
 case class ChiefMoveFromHeldAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to ChiefMoveAfterMove (an hrf-games fix)
@@ -2391,6 +2393,12 @@ object CommonExpansion extends Expansion {
         case SailOnFromPortAction(then) =>
             if (game.options.has(SailOnFromPort).not)
                 game.addOption(SailOnFromPort)
+
+            Then(then)
+
+        case PCVedrfolnirRevealAction(then) =>
+            if (game.options.has(PCVedrfolnirReveal).not)
+                game.addOption(PCVedrfolnirReveal)
 
             Then(then)
 
