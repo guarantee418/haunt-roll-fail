@@ -46,6 +46,8 @@ case class HallUpgradeAction(self : Faction, area : AreaRef, times : Int, e : Bu
 // SCOUTING
 case class ScoutAction(self : Faction, area : AreaRef, times : Int, e : ExploreEffect, then : ForcedAction) extends BaseAction("Scout", (times > 1).?(("(" + times + " left)").txt))(area) with MapTarget { def target = area }
 case class ScoutDoneAction(self : Faction, then : ForcedAction) extends BaseAction(None)("Stop scouting")
+// Vedrfolnir at the end of the year: the territory drawn at random among those its controller hasn't seen (PCVedrfolnirReveal)
+case class VedrfolnirRevealAction(self : Faction, random : AreaRef) extends RandomAction[AreaRef]
 
 // THE END OF THE YEAR: clans without their Town Hall are out
 case class HallLostAction(l : $[Faction]) extends ForcedAction
@@ -672,6 +674,27 @@ object PCExpansion extends Expansion {
         case TurnAction(f, _) if game.out.has(f) =>
             f.passed = true
             Then(NextTurnAction(f))
+
+        // VEDRFOLNIR: the map is whole, so instead of adding a tile its controller reveals one territory it hasn't seen, drawn at
+        // random, enemy ones too, at the end of each year; not a scout, so no fame or Explore bonuses (Gman, 2026-11-12;
+        // PCVedrfolnirReveal); before the Town Hall check, which may end the game
+        case EndOfYearAction if game.options.has(PCVedrfolnirReveal) && game.wasteSteps.has("vedrfolnir-reveal-" + game.year).not =>
+            game.wasteSteps :+= "vedrfolnir-reveal-" + game.year
+
+            val l = Waste.controller(Waste.vedrfolnir, "s").%(f => game.out.has(f).not)./~(f => game.board.territories.%(t => sees(f, t).not)./(_.anchor))
+
+            Waste.controller(Waste.vedrfolnir, "s") match {
+                case Some(f) if l.any => Random[AreaRef](l, VedrfolnirRevealAction(f, _))
+                case _ => game.internalPerform(EndOfYearAction, soft)
+            }
+
+        case VedrfolnirRevealAction(f, a) =>
+            scout(f, game.board.territory(a))
+            game.note("vedrfolnir-reveal")
+
+            f.log("revealed", a, "with", Waste.elem(Waste.vedrfolnir))
+
+            Then(EndOfYearAction)
 
         // THE END OF THE YEAR: a clan without its Town Hall is out
         case EndOfYearAction if game.hallsChecked < game.year =>
