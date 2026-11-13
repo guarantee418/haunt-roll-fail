@@ -491,6 +491,9 @@ case class PCVedrfolnirRevealAction(then : ForcedAction) extends ForcedAction wi
 case class PCVedrfolnirNoTileAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to PCMineChoice (an hrf-games fix)
 case class PCMineChoiceAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Turns Alternative fame gains on in a running game (an hrf-games fix; Winter for Clan, Gman, 2026-11-13): each clan gets the fame
+// the module would have given it so far (worked out from the game's log), then the Achievements are dealt as at setup
+case class FameGainsOnAction(clans : $[Faction], fame : $[Int], then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to PCRangersScout (an hrf-games fix)
 case class PCRangersScoutAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to ChiefMoveFromHeld (an hrf-games fix)
@@ -2419,6 +2422,12 @@ object CommonExpansion extends Expansion {
                 game.addOption(PCMineChoice)
 
             Then(then)
+
+        case FameGainsOnAction(clans, fame, then) =>
+            if (game.has(FameGainsModule).not)
+                game.addOption(ModuleOption(FameGainsModule))
+
+            FameGainsExpansion.switchedOn(clans.zip(fame), then)
 
         case PCRangersScoutAction(then) =>
             if (game.options.has(PCRangersScout).not)
