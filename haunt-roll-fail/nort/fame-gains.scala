@@ -123,6 +123,24 @@ object FameGainsExpansion extends Expansion {
     def winners(implicit game : Game) : $[Faction] =
         game.factions.%(f => game.states.contains(f) && f.fame >= goal && game.controlled(f).exists(t => game.buildingsIn(t).exists(_._2 == AltarOfKings) && (game.options.has(FameAltarClosed).not || game.board.closed(t))))
 
+    // Turned on in a running game (FameGainsOnAction): the fame gained so far, then the Achievements dealt in turn order; the
+    // ones laid out for the last year go, as in a game that had the module from the start
+    def switchedOn(gains : $[(Faction, Int)], then : ForcedAction)(implicit game : Game) : Continue = {
+        log(DoubleLine)
+        log("Alternative fame gains".hl, "are now played")
+
+        gains.foreach { case (f, n) => gain(f, n, "for its buildings, upgrades and fights so far") }
+
+        if (game.fameDealt)
+            Then(then)
+        else {
+            game.fameDealt = true
+            game.achievements = $
+
+            Then(FameDealAction(game.from(game.first).but(Automa), then))
+        }
+    }
+
     def perform(action : Action, soft : Void)(implicit game : Game) : Continue = action @@ {
         // SETUP: once the map is set up, before the first year, the Achievements in turn order; none are left for the last year
         case StartYearAction if game.fameDealt.not =>
