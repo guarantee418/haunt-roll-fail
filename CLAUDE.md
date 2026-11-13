@@ -832,6 +832,19 @@ file covers the build, server and deploy. No session can ssh to the server
   stay (empty hand, Scouting Party, Riverfolk's open hand, every ambush card seen). Games with neither option keep the old
   behaviour; UI only, so no records change. Forced Async Mode now turns on Auto Hits Assignment and Auto Skip Ambushes
   (`forcedOn`) instead of waiting for both to be picked.
+- Root's "Hits and Ambushes – Offline Players" setup section (MaKoBwoY, relayed by Gman on 2026-11-12) replaced the Async
+  section above: toggles `BluffMode` ("Ambush Bluff Mode"; off, an attacked player with no ambush is skipped),
+  `AutoHitsAssignmentMode` ("Auto Assign Hits (If No Choice)", a choice again, no longer `settled`), `OffTurnHitsPreset` (the
+  "Adjust priorities" order Forced Async had) and `OffTurnFieldHospitals` (only with the Marquise; Adset always), or `LiveGameMode`,
+  which `blocked`s them all, so the game decides nothing and each player's own settings apply. Partisans are used off turn when
+  nothing is discarded in every game that isn't a Live Game (Gman). New games get the hidden `HitsAndAmbushesSetup`, which tells them
+  from older ones: `game.offlinePlayers`, `autoSkipAmbush`, `autoAssignHits`, `autoHits`, `offTurnPartisans`, `offTurnFieldHospitals`
+  in `root/game.scala`. `AutoAmbushSkippingMode`, `ForcedAsyncMode` and `ForcedAsyncChooseHits` are `retired`: older games keep them
+  and play as before. The two Off Turn Actions switches show only where they still change something (`switchesFor` in
+  `root/ui.scala`), so in new games the box is gone unless the Out of Turn Actions setting adds shortcuts, and the Interface's
+  "Assign Hits" and "Ambush!" fold into one "Hits and Ambushes when Online (Live Games)" section. `ReplayCheck <games> base offline`
+  plays bot games with Bluff Mode off and the Field Hospitals plan; `preset` adds the hits preset, but bot games with the preset
+  order (like `async`) run out of memory, as they did before the section.
 - Root pass and play (asked for by the owner on 2026-10-17): in a local game with more than one human faction
   (`Callbacks.hotseat` in `hrf.scala`: a memory or localStorage journal), each time another human faction is asked
   the action pane shows "Pass to <faction>" and a "Show Hand and Choices" button instead of its hand and choices

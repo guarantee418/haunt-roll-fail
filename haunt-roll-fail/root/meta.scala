@@ -609,15 +609,6 @@ case object LizardsCraftByClearing extends GameOption with ToggleOption {
 }
 
 
-case object AutoHitsAssignmentMode extends GameOption with ToggleOption with FoldedOption {
-    val group = "Async"
-    val valueOn = "Auto Hits Assignment".hh
-    override val explain = $(
-        &("When there is only one way to take a battle's " ~ "hits".styled(styles.hit) ~ ",") ~ " " ~ &("the game takes them without waiting for the player."),
-        &("Every new game has it.")
-    )
-}
-
 // Advanced Setup's insurgent lock (Gman, 2026-11-04: Destiny and Right drafted four insurgents): the last faction drawn,
 // if it is insurgent, can't be picked until a militant faction has been (the draft in SetupNextFactionAction). Adset only;
 // games without either option (started before it) draft as before, so their replays don't change.
@@ -639,58 +630,94 @@ case object InsurgentLockOff extends InsurgentLockOption {
     )
 }
 
-// Bluff Mode and Auto Skip Ambushes are one choice; Bluff Mode is the default for new games. Games without either
-// (started before Bluff Mode) keep the players' own auto skip settings, so nothing changes for them.
-case object BluffMode extends GameOption with OneOfGroup with FoldedOption {
-    val group = "Async"
-    val valueOn = "Bluff Mode".hh
+// The setup's "Hits and Ambushes - Offline Players" section (MaKoBwoY, relayed by Gman on 2026-11-12) replaced the Async one:
+// four toggles for what the game does by itself while a player is away, or Live Game, where it does none of it and each player's
+// own "Hits and Ambushes when Online" settings apply. Every new game gets the hidden HitsAndAmbushesSetup, which tells these games
+// apart from older ones (game.offlinePlayers); older games keep their Async options (Forced Async Mode, Players Choose Hits,
+// Auto Skip Ambushes, now retired) and play as before.
+object HitsAndAmbushes {
+    val group = "Hits and Ambushes" ~ " – " ~ "Offline Players"
+}
+
+case object HitsAndAmbushesSetup extends GameOption with ToggleOption {
+    val group = "Hits and Ambushes"
+    val valueOn = "Hits and Ambushes".hh ~ " setup"
+}
+
+case object LiveGameMode extends GameOption with ToggleOption with FoldedOption {
+    val group = HitsAndAmbushes.group
+    val valueOn = "Live Game".hh
     override val explain = $(
-        &("Every player who is " ~ "attacked".styled(styles.hit) ~ " is asked whether to " ~ "Ambush".styled(Bird) ~ ",") ~ " " ~ &("even with no " ~ "ambush".styled(Bird) ~ " card,") ~ " " ~ &("so nobody learns who holds one."),
-        &("The game " ~ "waits".hl ~ " for their answer, " ~ "as at the table.".&) ~ " " ~ &("The attacker's " ~ "counter-ambush".styled(Bird) ~ " is asked the same way."),
-        &("Players' own " ~ "Auto Skip".hh ~ " settings don't skip " ~ "ambushes".styled(Bird) ~ " in this game.") ~ " " ~ &("A player is still skipped when that gives nothing away:") ~ " " ~ &("no cards in hand, ") ~ &("Scouting Party".hh ~ ", ") ~ &("a " ~ "Riverfolk".hh ~ " hand (it's open), ") ~ &("or every " ~ "ambush".styled(Bird) ~ " card already seen.")
+        &("Everyone plays " ~ "at the same time".hl ~ ", online.") ~ " " ~ &("The game does " ~ "nothing by itself".hl ~ ":") ~ " " ~ &("the other choices here are off."),
+        &("Each player picks for themselves under " ~ "Interface".hh ~ ", " ~ "Hits and Ambushes when Online".hh ~ ":") ~ " " ~ &("whether to be asked about " ~ "hits".styled(styles.hit) ~ " with only one way to take them,") ~ " " ~ &("and about an " ~ "ambush".styled(Bird) ~ " with none to play."),
+        &("Those settings only act while that player has the game " ~ "open".hl ~ ";") ~ " " ~ &("their " ~ "Off Turn Actions".hh ~ " switches in the game act " ~ "from any open screen".hl ~ "."),
     )
 }
 
-case object AutoAmbushSkippingMode extends GameOption with OneOfGroup with FoldedOption {
+case object BluffMode extends GameOption with ToggleOption with FoldedOption {
+    val group = HitsAndAmbushes.group
+    val valueOn = "Ambush Bluff Mode".hh
+    override def blocked(all : $[BaseOption]) = $($(LiveGameMode))
+    override val explain = $(
+        &("On".hh ~ ":") ~ " " ~ &("every player who is " ~ "attacked".styled(styles.hit) ~ " is asked whether to " ~ "Ambush".styled(Bird) ~ ",") ~ " " ~ &("even with no " ~ "ambush".styled(Bird) ~ " card,") ~ " " ~ &("so nobody learns who holds one.") ~ " " ~ &("The battle " ~ "waits".hl ~ " for the answer."),
+        &("A player is still skipped when that gives nothing away:") ~ " " ~ &("no cards in hand, ") ~ &("Scouting Party".hh ~ ", ") ~ &("a " ~ "Riverfolk".hh ~ " hand (it's open), ") ~ &("or every " ~ "ambush".styled(Bird) ~ " card already seen."),
+        &("Off".hh ~ ":") ~ " " ~ &("an attacked player " ~ "with no ambush".hl ~ " card they can play is skipped,") ~ " " ~ &("for " ~ "every".hl ~ " player:") ~ " " ~ &("quicker, but everyone can tell who holds none."),
+        &("The attacker's " ~ "counter-ambush".styled(Bird) ~ " works the same way."),
+    )
+}
+
+case object AutoHitsAssignmentMode extends GameOption with ToggleOption with FoldedOption {
+    val group = HitsAndAmbushes.group
+    val valueOn = "Auto Assign Hits".hh ~ " (If No Choice)"
+    override def blocked(all : $[BaseOption]) = $($(LiveGameMode), $(OffTurnHitsPreset))
+    override val explain = $(
+        &("On".hh ~ ":") ~ " " ~ &("when there is only one way to take a battle's " ~ "hits".styled(styles.hit) ~ ",") ~ " " ~ &("the game takes them " ~ "without asking".hl ~ "."),
+        &("Off".hh ~ ":") ~ " " ~ &("every player assigns " ~ "every".hl ~ " hit by hand, and the battle waits for them."),
+        &("With " ~ "Off Turn Hits Preset".hh ~ " the preset order decides instead.")
+    )
+}
+
+case object OffTurnHitsPreset extends GameOption with ToggleOption with FoldedOption {
+    val group = HitsAndAmbushes.group
+    val valueOn = "Off Turn Hits Preset".hh
+    override def blocked(all : $[BaseOption]) = $($(LiveGameMode))
+    override val explain = $(
+        &("Hits".styled(styles.hit) ~ " are " ~ "never asked".hl ~ " for:") ~ " " ~ &("they are taken in an order each player sets beforehand."),
+        &("At the end of their turn (" ~ "Adjust priorities".hh ~ "),") ~ " " ~ &("a player with more than one kind of " ~ "building".hh ~ " or " ~ "token".hh ~ " in a clearing") ~ " " ~ &("sets which goes first,") ~ " " ~ &("and " ~ VB.elem ~ " sets the order of their items."),
+        &("Auto Assign Hits".hh ~ " is greyed out with it, as the order covers every hit."),
+    )
+}
+
+case object OffTurnFieldHospitals extends GameOption with ToggleOption with FoldedOption {
+    val group = HitsAndAmbushes.group
+    val valueOn = "Off Turn".hh ~ " " ~ "Field Hospitals".styled(MC)
+    override def blocked(all : $[BaseOption]) = $($(LiveGameMode))
+    override val explain = $(
+        &("At the end of each of its turns (" ~ "Adjust Hospital Plan".hh ~ "),") ~ " " ~ &(MC.elem ~ " marks each " ~ "card".hh ~ " in hand as used or skipped for " ~ "Field Hospitals".styled(MC) ~ ","),
+        &("so a battle on another player's turn " ~ "doesn't wait".hl ~ " for " ~ MC.elem ~ " to decide."),
+    )
+}
+
+// Retired (2026-11-12): Forced Async Mode was the four choices above at once, and Players Choose Hits took its preset order away.
+// Still read, so the games that have them load and play as before
+case object AutoAmbushSkippingMode extends GameOption with ToggleOption {
     val group = "Async"
     val valueOn = "Auto Skip Ambushes".hh
-    override val explain = $(
-        &("An " ~ "attacked".styled(styles.hit) ~ " player " ~ ("who has no " ~ "ambush".styled(Bird) ~ " card they can play").& ~ " " ~ "is skipped,".&) ~ " " ~ &("and the game moves on without waiting for them."),
-        &("The attacker's " ~ "counter-ambush".styled(Bird) ~ " is skipped the same way."),
-        &("Quicker for " ~ "async".hl ~ " games, but everyone can tell " ~ "who holds no ambush.".&),
-        &("Bluff Mode".hh ~ " instead asks every attacked player, " ~ "every time.".&),
-    )
 }
 
-case object ForcedAsyncMode extends GameOption with ToggleOption with FoldedOption {
+case object ForcedAsyncMode extends GameOption with ToggleOption {
     val group = "Async"
     val valueOn = "Forced Async Mode".styled(xstyles.warning)
-    override def forcedOn(all : $[BaseOption]) = $(AutoHitsAssignmentMode, AutoAmbushSkippingMode)
     override def decorate(elem : Elem) = Image("swap")(styles.token) ~ " " ~ elem ~ " " ~ Image("swap")(styles.token)
-    override val explain = $(
-        &("For games played over days:") ~ " " ~ &("a battle " ~ "never waits".hl ~ " for a player who isn't there."),
-        &("Turns on " ~ "Auto Skip Ambushes".hh ~ ":") ~ " " ~ &("a player with no " ~ "ambush".styled(Bird) ~ " card to play isn't asked."),
-        &("Par".styled(Fox) ~ "tis".styled(Rabbit) ~ "ans".styled(Mouse) ~ " are always used " ~ "if no cards have to be discarded.".&),
-        &("Hits".styled(styles.hit) ~ " are taken in a preset " ~ "order".hl ~ ":") ~ " " ~ &("at the end of their turn, players with more than one kind of " ~ "building".hh ~ " or " ~ "token".hh ~ " in a clearing") ~ " " ~ &("set which goes first,") ~ " " ~ &("and " ~ VB.elem ~ " sets the order of at least half of their items."),
-        &(MC.elem ~ " marks each " ~ "card".hh ~ " in hand as used or skipped for " ~ "Field Hospitals".styled(MC) ~ "."),
-        &("Players Choose Hits".hh ~ " turns the preset order off.")
-    )
 }
 
-// Forced Async Mode without the preset damage order: players with a real choice of which pieces (or Vagabond items) to lose
-// pick them as in other games, and nobody sets the order at the end of the turn (asked for in Season in Control, 2026-10-28,
-// for the Woodland Alliance's bases and sympathy). Games started without it can be switched over with ForcedAsyncChooseHitsAction.
-case object ForcedAsyncChooseHits extends GameOption with ToggleOption with FoldedOption {
+// Forced Async Mode without the preset damage order (Season in Control, 2026-10-28). Games started without it can be switched over
+// with ForcedAsyncChooseHitsAction.
+case object ForcedAsyncChooseHits extends GameOption with ToggleOption {
     val group = "Async"
     val valueOn = "Players Choose Hits".hh
     override def required(all : $[BaseOption]) = $($(ForcedAsyncMode))
-    override val explain = $(
-        &("With " ~ "Forced Async Mode".styled(xstyles.warning) ~ ",") ~ " " ~ &("players " ~ "choose".hl ~ " which pieces they lose to " ~ "hits".styled(styles.hit) ~ ",") ~ " " ~ &("instead of a preset order."),
-        &("The game " ~ "waits".hl ~ " for them " ~ "when there is a choice;".&) ~ " " ~ &("with only one way to assign the hits, it is still automatic."),
-        &("Nobody sets a " ~ "damage order".hl ~ " at the end of the turn."),
-    )
 }
-
 
 trait AdSetBuffOption extends GameOption with OneOfGroup with FoldedOption {
     val group = "AdSet " ~ "MC".styled(MC) ~ ", " ~ "LC".styled(LC) ~ ", " ~ "CC".styled(CC) ~ " Setup Buffs"
@@ -1306,8 +1333,16 @@ case class IncludeHireling(hireling : Hireling) extends GameOption with ToggleOp
 }
 
 
+// One folded section, "Hits and Ambushes when Online" (MaKoBwoY, 2026-11-12): they act only while the player has the game open,
+// and only where the game's setup leaves the choice to the players (a Live Game, or a game started before the Hits and Ambushes
+// section with neither Bluff Mode nor Auto Skip Ambushes)
+object HitsAndAmbushesOnline {
+    val fold = "Hits and Ambushes when Online (Live Games)"
+}
+
 trait AssignHitsOption extends hrf.Setting with OneOfGroup {
     val group = "Assign Hits"
+    override def fold = Some(HitsAndAmbushesOnline.fold)
 }
 
 case object PromptAssignHits extends AssignHitsOption {
@@ -1315,12 +1350,13 @@ case object PromptAssignHits extends AssignHitsOption {
 }
 
 case object AutoAssignHits extends AssignHitsOption {
-    val valueOn = "Auto Assign If No Choice".hlb ~ " (Only When Online)".hl
+    val valueOn = "Auto Assign If No Choice".hlb
 }
 
 
 trait AmbushOption extends hrf.Setting with OneOfGroup {
     val group = "Ambush!"
+    override def fold = Some(HitsAndAmbushesOnline.fold)
 }
 
 case object PromptAmbush extends AmbushOption {
@@ -1328,7 +1364,7 @@ case object PromptAmbush extends AmbushOption {
 }
 
 case object AutoAmbush extends AmbushOption {
-    val valueOn = "Auto Skip If None".hlb ~ " (Only When Online, Not in Bluff Mode)".hl
+    val valueOn = "Auto Skip If None".hlb
 }
 
 
@@ -1341,11 +1377,11 @@ case object NoOutOfTurn extends OutOfTurnOption {
 }
 
 case object BasicOutOfTurn extends OutOfTurnOption {
-    val valueOn = "Basic".hlb
+    val valueOn = "Basic".hlb ~ " (Only Shortcuts That Cost You Nothing)".hl
 }
 
 case object DetailedOutOfTurn extends OutOfTurnOption {
-    val valueOn = "Detailed".hlb
+    val valueOn = "Detailed".hlb ~ " (Every Shortcut)".hl
 }
 
 
@@ -1454,8 +1490,9 @@ case object UseAutoAssignHits extends Switch {
     val valueOn = "Auto " ~ "Assign Hits".hl ~ " in " ~ "Battle".hl ~ " (If No Choice)"
 }
 
-// Shown in every game (whatever the Out of Turn Actions setting), so a player away from the game doesn't hold up battles
-// Not offered with Bluff Mode, where every attacked player is asked
+// Shown whatever the Out of Turn Actions setting, so a player away from the game doesn't hold up battles, but only in games
+// where the setup leaves it to the players (switchesFor in root/ui.scala): not with Bluff Mode, where every attacked player is
+// asked, nor where the game already skips them
 case object AutoSkipAmbushIfNone extends Switch {
     val valueOn = "Auto Skip " ~ "Ambush".hl ~ " (If None)"
 }
@@ -1567,7 +1604,7 @@ object Meta extends MetaGame {
 
     override def optionPages(n : Int, l : $[F]) : $[$[GameOption]] = $(
         hiddenOptions ++
-        $(BluffMode, AutoAmbushSkippingMode, ForcedAsyncMode, ForcedAsyncChooseHits) ++
+        hitsAndAmbushes(l) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
         (n > 2).?(TotalWarDominance) ++
         $,
@@ -1603,6 +1640,9 @@ object Meta extends MetaGame {
         $,
     )
 
+    // Off Turn Field Hospitals only with the Marquise (in Advanced Setup always, as the factions are drafted later)
+    def hitsAndAmbushes(l : $[F]) : $[GameOption] = $(LiveGameMode, BluffMode, AutoHitsAssignmentMode, OffTurnHitsPreset) ++ l.of[Feline].any.$(OffTurnFieldHospitals)
+
     val maps : $[MapOption] = $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap)
 
     val officialMaps : $[MapOption] = $(AutumnMap, WinterMap, LakeMap, MountainMap, GorgeMap, MarshMap)
@@ -1631,7 +1671,7 @@ object Meta extends MetaGame {
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck) ++
-        $(BluffMode, AutoAmbushSkippingMode, ForcedAsyncMode, ForcedAsyncChooseHits) ++
+        hitsAndAmbushes(l) ++
         (n > 2).?(TotalWarDominance) ++
         (l.of[Feline].num > 1).$(TheWoodMustFlow) ++
         (l.of[Aviary].num > 1).$(OneTrueEmpire) ++
@@ -1663,21 +1703,23 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup) ++
+        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup) ++
         settled ++
         retired
 
-    // No longer choices (Gman, 2026-10-31): Auto Hits Assignment and the card rulings Official Rules always picked. Every new game gets them
-    // (mandatoryFor); a game started without them keeps its rules, as its options are recorded with it
-    lazy val settled : $[O] = $(AutoHitsAssignmentMode, NonBirdPartisans, ErrataCoffinMakers, UnthematicPropagandaBureau, TunnelsIgnoreRaid, TunnelsIgnoreTradePosts)
+    // No longer choices (Gman, 2026-10-31): the card rulings Official Rules always picked. Every new game gets them
+    // (mandatoryFor); a game started without them keeps its rules, as its options are recorded with it. Auto Hits Assignment was one
+    // too, until the Hits and Ambushes section made it a choice again (2026-11-12)
+    lazy val settled : $[O] = $(NonBirdPartisans, ErrataCoffinMakers, UnthematicPropagandaBureau, TunnelsIgnoreRaid, TunnelsIgnoreTradePosts)
 
-    // No longer offered: Hostile Takeover and Shared History did nothing, Coffin Makers' "any warrior" house rule gave way to the errata.
+    // No longer offered: Hostile Takeover and Shared History did nothing, Coffin Makers' "any warrior" house rule gave way to the errata,
+    // and the Async options gave way to the Hits and Ambushes section (2026-11-12).
     // Still read, so the games that have them load; dropped from the options a setup screen saved (completeSaved)
-    lazy val retired : $[O] = $(HostileTakeover, SharedHistory, UnthematicCoffinMakers)
+    lazy val retired : $[O] = $(HostileTakeover, SharedHistory, UnthematicCoffinMakers, AutoAmbushSkippingMode, ForcedAsyncMode, ForcedAsyncChooseHits)
 
     // The hidden options every new game gets, even when the setup screen starts from options saved before one of them existed
     // (toggles aren't added to saved options from the defaults, so those games missed them)
-    lazy val newGame : $[O] = settled ++ $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, CounterMiceInABush, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup)
+    lazy val newGame : $[O] = settled ++ $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, CounterMiceInABush, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup)
 
     override def completeSaved(n : Int, l : $[F], options : $[O]) = options.diff(retired)
 
@@ -1749,7 +1791,7 @@ object Meta extends MetaGame {
     override def presetsInfo(n : Int, l : $[F]) = $(
         $(
             "Puts every option back to what the site starts with:",
-            &("Random Official".hh ~ " map, ") ~ &("All Random".hh ~ " clearings, ") ~ &("Map Default".hh ~ " landmarks (on " ~ "Mountain".styled(Fox) ~ " a random suited one), ") ~ &("Squires and Disciples".hh ~ " deck, ") ~ &("Corners".hh ~ " setup, ") ~ &("Bluff Mode".hh ~ ", ") ~ &("no hirelings."),
+            &("Random Official".hh ~ " map, ") ~ &("All Random".hh ~ " clearings, ") ~ &("Map Default".hh ~ " landmarks (on " ~ "Mountain".styled(Fox) ~ " a random suited one), ") ~ &("Squires and Disciples".hh ~ " deck, ") ~ &("Corners".hh ~ " setup, ") ~ &("Ambush Bluff Mode".hh ~ " and " ~ "Auto Assign Hits".hh ~ ", ") ~ &("no hirelings."),
         ),
         $(
             "The rules as Leder Games prints them:",
@@ -1759,13 +1801,15 @@ object Meta extends MetaGame {
     )
 
     override def groupInfo(o : O) = o.group.text match {
-        case "Async" => $(
-            &("These options decide when a battle " ~ "waits".hl ~ " for a player's answer."),
-            &("Hits".styled(styles.hit) ~ " are always taken automatically") ~ " " ~ &("when there is only one way to take them."),
-            &("Bluff Mode".hh ~ ":") ~ " " ~ &("every attacked player is asked about an " ~ "ambush".styled(Bird) ~ ",") ~ " " ~ &("even without one,") ~ " " ~ &("so nobody learns who holds one."),
-            &("Auto Skip Ambushes".hh ~ ":") ~ " " ~ &("a player with no " ~ "ambush".styled(Bird) ~ " to play is skipped;") ~ " " ~ &("quicker, but it shows who holds none."),
-            &("Forced Async Mode".styled(xstyles.warning) ~ ":") ~ " " ~ &("a battle never waits;") ~ " " ~ &("hits".styled(styles.hit) ~ " follow an order") ~ " " ~ &("each player sets at the end of their turn."),
-            &("Players Choose Hits".hh ~ ":") ~ " " ~ &("with " ~ "Forced Async".styled(xstyles.warning) ~ ",") ~ " " ~ &("players still choose their hits") ~ " " ~ &("when there is a choice."),
+        case "Hits and Ambushes – Offline Players" => $(
+            &("What the game does " ~ "by itself".hl ~ " in a battle,") ~ " " ~ &("so it doesn't wait for a player who isn't there."),
+            &("What is picked here applies to " ~ "every player".hl ~ " and comes first:") ~ " " ~ &("each player's own " ~ "Hits and Ambushes when Online".hh ~ " settings (under " ~ "Interface".hh ~ ")") ~ " " ~ &("and " ~ "Off Turn Actions".hh ~ " switches in the game") ~ " " ~ &("only act where it leaves the choice to them,") ~ " " ~ &("and the switches show only there."),
+            &("Ambush Bluff Mode".hh ~ ":") ~ " " ~ &("every attacked player is asked about an " ~ "ambush".styled(Bird) ~ ", even without one.") ~ " " ~ &("Off, a player with none is skipped.")
+                ~ " " ~ &("Auto Assign Hits".hh ~ ":") ~ " " ~ &("hits".styled(styles.hit) ~ " with only one way to take them are taken without asking."),
+            &("Off Turn Hits Preset".hh ~ ":") ~ " " ~ &("hits are never asked for;") ~ " " ~ &("each player sets their order at the end of their turn.")
+                ~ " " ~ &("Off Turn".hh ~ " " ~ "Field Hospitals".styled(MC) ~ ":") ~ " " ~ &(MC.elem ~ " plans it at the end of its turn."),
+            &("Par".styled(Fox) ~ "tis".styled(Rabbit) ~ "ans".styled(Mouse) ~ " are used off turn without asking") ~ " " ~ &("when no cards have to be discarded,") ~ " " ~ &("except in a " ~ "Live Game".hh ~ "."),
+            &("Live Game".hh ~ ":") ~ " " ~ &("everyone is online;") ~ " " ~ &("the game does none of this,") ~ " " ~ &("and each player's own settings decide."),
         )
         case _ => $
     }

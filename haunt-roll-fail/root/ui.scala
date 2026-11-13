@@ -5649,8 +5649,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         fix(f).as[Faction]./~(f => allSwitches.%{
             case PickFactionIfAvailable(s) => false
             case _ if game.states.contains(f).not => false
-            case AutoSkipAmbushIfNone => options.has(BluffMode).not
-            case UseAutoAssignHits => true
+            // Only where the game's setup leaves it to the players (MaKoBwoY, 2026-11-12): elsewhere they change nothing
+            case AutoSkipAmbushIfNone => options.has(BluffMode).not && game.autoSkipAmbush.not
+            case UseAutoAssignHits => game.autoAssignHits.not && game.autoHits.not
             case _ if callbacks.settings.has(NoOutOfTurn) => false
             case SkipAmbushSuit(_) if f.hand.none => false
             case SkipAmbushSuit(s) if callbacks.settings.has(BasicOutOfTurn) && (f.hand.has(Ambush(Bird)) || f.hand.has(Ambush(s))) => false
