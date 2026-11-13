@@ -1097,6 +1097,9 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
 
         // MINERALS MODULE
         case MineTakeAction(_, _, _, take, _, _) => |(take./{ case Stone => 100.0 ; case Iron => 120.0 ; case _ => 150.0 }.sum)
+        // PC version: a roll gives about 1.05 minerals a Mine, worth a little more than Stone but uncertain
+        case MineStoneAction(_, n, _, _) => |(n * 100.0)
+        case MineRollAction(_, mines, _, _) => |(mines * 95.0)
         case StoneUpgradeAction(_, space, _, cost, _) => |(gain { self.gainMineral(Stone, -cost) ; game.upgraded :+= space })
         case IronAction(_, use, _) => |(use.?(80).|(0))
         case IronChooseAction(s, attacker, defender, area, e, food, faces, choice, _) => |(faceChoice(s, attacker, defender, area, e, food, faces, choice))

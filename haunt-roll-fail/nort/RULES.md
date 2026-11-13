@@ -1790,6 +1790,10 @@ shares a territory with a creature; Gman, 2026-11-11) and the Wilderness, Wastel
   `NORT_DOMINATION=1` with `NORT_PC=1` in the headless host).
 - **Mines** (`PCVersionUpdate`): a Mine gives 1 Stone at the harvest (an upgraded one 2), with no die roll, while the
   supply has Stone (Gman, 2026-11-11: upgrades matter so much here).
+  Since 2026-11-13 (Gman; hidden `PCMineChoice`, every new game): each clan with Mines picks at the harvest that Stone with
+  no roll, or the Minerals module's roll of the combat die, which may give Iron or Gem (`MineStoneAction`, `MineRollAction`
+  in `nort/pc.scala`); with no Stone left it rolls. Older games always take the Stone; `PCMineChoiceAction(X)` switches a
+  running game.
 - **More creatures** (`PCVersionUpdate`): with 3 clans or more the Wilderness and Wastelands creatures are in the creature
   deck too (`PCExpansion.moreCreatures`, in `Wild.creaturesOn` and `Waste.creaturesOn`), so more territories between the
   homes get one; with 5 or 6 clans the 23 creatures still don't fill every one.

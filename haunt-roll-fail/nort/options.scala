@@ -1007,6 +1007,14 @@ case object PCVersionUpdate extends GameOption with ToggleOption {
     def valueOn = "Mine territories, Stone from Mines, the wider two-player map, more creatures".txt
 }
 
+// PC version: at the harvest each clan with Mines picks 1 Stone a Mine with no roll, or the Minerals module's roll for Stone, Iron
+// or Gem (Gman, 2026-11-13: PCVersionUpdate gave only Stone). Hidden, and given to every new game (Meta.mandatoryFor); a running
+// game can be switched over with PCMineChoiceAction(X)
+case object PCMineChoice extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "Mines: Stone or a roll".txt
+}
+
 // PC version: Vedrfolnir's controller reveals one random territory it hasn't seen at the end of each year, instead of adding a map
 // tile, as the map is whole (Gman, 2026-11-12). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be
 // switched over with PCVedrfolnirRevealAction(X)

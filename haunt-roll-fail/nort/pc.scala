@@ -53,6 +53,10 @@ case class VedrfolnirRevealAction(self : Faction, random : AreaRef) extends Rand
 case class HallLostAction(l : $[Faction]) extends ForcedAction
 case class LastStandingAction(winners : $[Faction]) extends ForcedAction
 
+// Mines at the harvest (PCMineChoice): take 1 Stone a Mine, or roll the combat die as the Minerals module does, for Iron or Gem too
+case class MineStoneAction(self : Faction, n : Int, rest : $[Faction], then : ForcedAction) extends BaseAction("Mines".hl, "at the harvest")("Take", MineralsLabel(n.times(Stone)), "with no roll")
+case class MineRollAction(self : Faction, mines : Int, rest : $[Faction], then : ForcedAction) extends BaseAction("Mines".hl, "at the harvest")("Roll the combat die for", mines.hl, (mines == 1).?("Mine").|("Mines"), "(Stone, Iron or Gem)")
+
 
 // The Town Hall: drawn and named like a building, but not one of the buildings (game.halls)
 object TownHall extends Elementary {
@@ -490,6 +494,16 @@ object PCExpansion extends Expansion {
     // between the homes (Gman, 2026-11-11; PCVersionUpdate)
     def moreCreatures(implicit game : Game) = on && game.options.has(PCVersionUpdate) && game.arity >= 3
 
+    // Mines: f takes n Stone from the supply
+    def mineStone(f : Faction, n : Int)(implicit game : Game) {
+        f.gainMineral(Stone, n)
+        game.mineralBank += Stone -> (MineralsExpansion.left(Stone) - n)
+
+        f.log("extracted", MineralsLabel(n.times(Stone)))
+
+        game.note("mined-stone")
+    }
+
     // The clans still in the game
     // The last clan (or team) holding its Town Hall wins
     def dominationWins(implicit game : Game) : Boolean = game.options.has(PCDominationChoice).not || game.options.has(DominationVictory) || game.options.has(DominationOnly)
@@ -758,19 +772,38 @@ object PCExpansion extends Expansion {
 
         // Mines give Stone, with no die roll, as upgrades matter so much here (Gman, 2026-11-11): 1 a Mine (an upgraded one counts
         // twice), as long as the supply has Stone; in games with the hidden PCVersionUpdate every new game gets
+        // In games with the hidden PCMineChoice every new game gets, each clan picks: that Stone, or the Minerals module's roll, which
+        // may give Iron or Gem (Gman, 2026-11-13: he was never offered the roll); with no Stone left, it rolls
+        case MineHarvestAction(f :: rest, then) if game.options.has(PCVersionUpdate) && game.options.has(PCMineChoice) =>
+            val mines = MineralsExpansion.mines(f)
+            val n = mines.min(MineralsExpansion.left(Stone))
+
+            if (Mineral.all.forall(MineralsExpansion.left(_) == 0)) {
+                log("No minerals are left to extract")
+
+                Then(MineHarvestAction(rest, then))
+            }
+            else
+            if (n == 0)
+                Then(MineRollAction(f, mines, rest, then))
+            else
+                Ask(f).add(MineStoneAction(f, n, rest, then)).add(MineRollAction(f, mines, rest, then))
+
+        case MineStoneAction(f, n, rest, then) =>
+            mineStone(f, n)
+
+            Then(MineHarvestAction(rest, then))
+
+        case MineRollAction(f, mines, rest, then) =>
+            Random[DieFace](NorthgardDie.faces, MineRolledAction(f, mines, _, rest, then))
+
         case MineHarvestAction(f :: rest, then) if game.options.has(PCVersionUpdate) =>
             val n = MineralsExpansion.mines(f).min(MineralsExpansion.left(Stone))
 
             if (n == 0)
                 log("No", Stone, "is left to extract")
-            else {
-                f.gainMineral(Stone, n)
-                game.mineralBank += Stone -> (MineralsExpansion.left(Stone) - n)
-
-                f.log("extracted", MineralsLabel(n.times(Stone)))
-
-                game.note("mined-stone")
-            }
+            else
+                mineStone(f, n)
 
             Then(MineHarvestAction(rest, then))
 
