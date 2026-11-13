@@ -46,6 +46,8 @@ case object DraftCardsDoneAction extends ForcedAction
 case class DraftLimitAction(f : Faction, n : Int, then : ForcedAction) extends ForcedAction
 case class DraftLimitDiscardAction(f : Faction, l : $[DeckCard], then : ForcedAction) extends ForcedAction with Retry
 case class ShuffleDeckAction(shuffled : $[DeckCard], then : ForcedAction) extends ShuffledAction[DeckCard]
+// Frankendeck: the pool of persistent effects shuffled, the recipe takes its cards, the rest leave the game (`Deck.frankenPick`)
+case class FrankenDeckAction(shuffled : $[DeckCard], then : ForcedAction) extends ShuffledAction[DeckCard]
 
 case object SetupLandmarksAction extends ForcedAction
 case class SuitedLandmarkAtTowerAction(random : Landmark) extends RandomAction[Landmark]
@@ -188,6 +190,20 @@ object SetupExpansion extends MandatoryExpansion {
             log("Seating", game.seating./(_.elem).comma)
 
             Milestone(SetupMapAction)
+
+        case SetupMapAction if options.has(FrankenDeck) && game.frankenDealt.not =>
+            Shuffle[DeckCard](Deck.frankenPool, FrankenDeckAction(_, SetupMapAction))
+
+        case FrankenDeckAction(l, then) =>
+            game.frankenDealt = true
+
+            val picked = Deck.frankenPick(l)
+
+            pile --> l.diff(picked) --> game.outOfGameCards
+
+            log("Frankendeck".hl, "took", picked.num.hlb, "persistent effects from the other decks")
+
+            then
 
         case SetupMapAction if board == TidalBoard && game.flooded.none =>
             Random[Clearing](board.inner, c => FloodedAction(c, SetupMapAction))
@@ -667,21 +683,21 @@ object SetupExpansion extends MandatoryExpansion {
         case AfterSetupAction(f : Horde, then) if factions.of[Hero].none && factions.of[Horde].starting.has(f) =>
             AddRuinItemsAction(then)
 
-        case AfterSetupAction(f : RF.type, then) if options.has(MixedDeck) && deck.$.of[CraftEffectCard].exists(_.effect == BoatBuilders) =>
+        case AfterSetupAction(f : RF.type, then) if (options.has(MixedDeck) || options.has(FrankenDeck)) && deck.$.of[CraftEffectCard].exists(_.effect == BoatBuilders) =>
             deck --> deck.$.of[CraftEffectCard].%(_.effect == BoatBuilders) --> game.outOfGameCards
 
             // log(BoatBuilders, "float away")
 
             then
 
-        case AfterSetupAction(f : CommonInvasive, then) if options.has(MixedDeck) && deck.$.of[CraftEffectCard].exists(_.effect == BoatBuilders) =>
+        case AfterSetupAction(f : CommonInvasive, then) if (options.has(MixedDeck) || options.has(FrankenDeck)) && deck.$.of[CraftEffectCard].exists(_.effect == BoatBuilders) =>
             deck --> deck.$.of[CraftEffectCard].%(_.effect == BoatBuilders) --> game.outOfGameCards
 
             // log(BoatBuilders, "float away")
 
             then
 
-        case AfterSetupAction(f : Mischief, then) if options.has(MixedDeck) && deck.$.of[CraftEffectCard].exists(_.effect == CorvidPlanners) =>
+        case AfterSetupAction(f : Mischief, then) if (options.has(MixedDeck) || options.has(FrankenDeck)) && deck.$.of[CraftEffectCard].exists(_.effect == CorvidPlanners) =>
             deck --> deck.$.of[CraftEffectCard].%(_.effect == CorvidPlanners) --> game.outOfGameCards
 
             // log(CorvidPlanners, "fly away")

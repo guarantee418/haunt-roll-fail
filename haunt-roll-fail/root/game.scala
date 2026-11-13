@@ -1800,7 +1800,9 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     var quests = $[Quest]()
 
     val cards = new ValueTracker[Card]
+    Deck.frankenArt = options.has(FrankenDeck)
     val playingDeck = Deck.fromOptions(options, players.num, players.of[Faction])
+    var frankenDealt = false
     val predrafts = players./(p => p -> cards.another[DeckCard]("draft-" + p)).toMap
     val pile = cards.another[DeckCard]("pile", playingDeck)
     val deck = cards.another[DeckCard]("deck")

@@ -44,7 +44,7 @@ object NCards {
 
 trait DeckCard extends Card {
     def id : String
-    def img = Image(id, styles.card).alt(altS)
+    def img = Image(Deck.art(id), styles.card).alt(altS)
     def altS = suit.toString + " " + name
     def altL : String
     override def toString = "DeckCard(" + id + ")"
@@ -117,7 +117,61 @@ object Deck {
         case MixedDeck => ambushes ++ items ++ mixed(known) ++ (arity > 2).??(dominances)
         case DuskDeck => ambushes ++ items ++ effectsDusk ++ (arity > 2).??(dominances)
         case SquiresDeck => ambushes ++ items ++ effectsSquires ++ (arity > 2).??(dominances)
+        case FrankenDeck => ambushes ++ frankenItems ++ $(frankenSabotage) ++ (arity > 2).??(dominances) ++ frankenPool
     }
+
+    // Frankendeck (The Doomed Expansion, fan-made by slugfacekillah and Endgamer1331; Gman, 2026-11-13): a core of 30 cards in its
+    // own art (the 20 items, 5 ambushes, 4 dominances and a Sabotage!) plus 30 persistent effects drawn from the other decks by suit and
+    // crafting cost (`frankenRecipe`). The pool is in the playing deck; at setup `FrankenDeckAction` shuffles it and takes the cards
+    // that leave the game out. The ambushes and dominances are the usual cards (same rules), drawn with the Frankendeck art (`art`),
+    // which follows the game being played (set by `Game`; one game per page, and the JVM checks run one game at a time)
+    var frankenArt = false
+
+    val frankenArtIds = $("bird-ambush", "fox-ambush", "rabbit-ambush", "mouse-ambush", "bird-dominance", "fox-dominance", "rabbit-dominance", "mouse-dominance")
+
+    def art(id : String) = if (frankenArt && frankenArtIds.has(id.toLowerCase)) "franken-" + id.toLowerCase else id
+
+    val frankenItems = $[DeckCard](
+        CraftItemCard(Bird, "franken-birdy-bindle", $(Mouse), Bag, 1, "Birdy Bindle"),
+        CraftItemCard(Bird, "franken-midnight-runners", $(Rabbit), Boots, 1, "Midnight Runners"),
+        CraftItemCard(Bird, "franken-arms-trader", $(Fox, Fox), Sword, 2, "Arms Trader"),
+        CraftItemCard(Bird, "franken-bird-crossbow", $(Fox), Crossbow, 1, "Crossbow"),
+        CraftItemCard(Fox, "franken-gently-used-knapsack", $(Mouse), Bag, 1, "Gently-Used Knapsack"),
+        CraftItemCard(Fox, "franken-fox-root-tea", $(Mouse), Teapot, 2, "Root Tea"),
+        CraftItemCard(Fox, "franken-fox-travel-gear", $(Rabbit), Boots, 1, "Travel Gear"),
+        CraftItemCard(Fox, "franken-protection-racket", $(Rabbit, Rabbit), Coins, 3, "Protection Racket"),
+        CraftItemCard(Fox, "franken-foxfolk-steel", $(Fox, Fox), Sword, 2, "Foxfolk Steel"),
+        CraftItemCard(Fox, "franken-anvil", $(Fox), Hammer, 2, "Anvil"),
+        CraftItemCard(Rabbit, "franken-headhunters-trail", $(Mouse), Bag, 1, "Headhunter's Trail"),
+        CraftItemCard(Rabbit, "franken-rabbit-root-tea", $(Mouse), Teapot, 2, "Root Tea"),
+        CraftItemCard(Rabbit, "franken-a-visit-to-friends", $(Rabbit), Boots, 1, "A Visit to Friends"),
+        CraftItemCard(Rabbit, "franken-wake-sale", $(Rabbit, Rabbit), Coins, 3, "Wake Sale"),
+        CraftItemCard(Mouse, "franken-mouse-in-a-sack", $(Mouse), Bag, 1, "Mouse-in-a-Sack"),
+        CraftItemCard(Mouse, "franken-mouse-root-tea", $(Mouse), Teapot, 2, "Root Tea"),
+        CraftItemCard(Mouse, "franken-mouse-travel-gear", $(Rabbit), Boots, 1, "Travel Gear"),
+        CraftItemCard(Mouse, "franken-investments", $(Rabbit, Rabbit), Coins, 3, "Investments"),
+        CraftItemCard(Mouse, "franken-sword", $(Fox, Fox), Sword, 2, "Sword"),
+        CraftItemCard(Mouse, "franken-mouse-crossbow", $(Fox), Crossbow, 1, "Crossbow"),
+    )
+
+    val frankenSabotage = CraftEffectCard(Bird, "franken-sabotage", $(AnySuit), Saboteurs)
+
+    // Every persistent effect of the site's other decks, all copies; the Favors are left out, as the Frankendeck's rules advise
+    def frankenPool = (effectsBase.filterNot(_.isInstanceOf[Favor]) ++ effectsExiles ++ effectsDusk ++ effectsSquires)
+
+    // Pile of a card: its suit, and whether it costs two or more crafting activations
+    def frankenPile(d : DeckCard) : (Suit, Boolean) = d @@ {
+        case c : CraftCard => (c.suit, c.cost.num >= 2)
+        case c => (c.suit, false)
+    }
+
+    val frankenRecipe = $[((Suit, Boolean), Int)](
+        (Bird, false) -> 3, (Fox, false) -> 3, (Mouse, false) -> 3, (Rabbit, false) -> 4,
+        (Bird, true) -> 4, (Fox, true) -> 4, (Mouse, true) -> 4, (Rabbit, true) -> 5,
+    )
+
+    // The cards the recipe takes from the shuffled pool: the first ones of each pile
+    def frankenPick(shuffled : $[DeckCard]) : $[DeckCard] = frankenRecipe./~{ case (k, n) => shuffled.%(frankenPile(_) == k).take(n) }
 
     val ambushes = $[DeckCard](
         Ambush(Bird),
@@ -409,7 +463,7 @@ object Deck {
 
     val disguisedEEE = frogEEE.distinct./~(d => InvasiveEEEExpansion.disguiseSuits./(DisguisedCard(d, _)))
 
-    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ effectsSquires ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA ++ frogEEE ++ disguisedEEE
+    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ effectsSquires ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA ++ frogEEE ++ disguisedEEE ++ frankenItems ++ $(frankenSabotage)
 }
 
 

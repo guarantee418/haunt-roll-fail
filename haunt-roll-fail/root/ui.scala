@@ -2579,6 +2579,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     def deckBack = game.options.of[DeckOption].lastOption @@ {
         case Some(ExilesDeck) => "card-back-art-ep"
         case Some(SquiresDeck) => "card-back-art-sd"
+        case Some(FrankenDeck) => "card-back-art-fd"
         case _ => "card-back-art"
     }
 
