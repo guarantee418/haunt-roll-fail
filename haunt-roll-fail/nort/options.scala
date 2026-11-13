@@ -1236,6 +1236,8 @@ case object PCVersion extends Module("PC version", "fan-made mode") {
     def needs : $[Module] = $(Creatures, Warchiefs, Sea, EventsModule, TowersModule, WarchiefsPC, MineralsModule, MilitaryModule, AggressiveCreatures, FameUpgradesModule)
     // and the map tiles of every expansion (Gman, 2026-11-11)
     def tiles : $[GameOption] = $(WildernessTiles, WastelandsTiles, HorizonsTiles)
+    // and picks the Fan victories it is played with by default, which can be turned off (Gman, 2026-11-13)
+    def victories : $[GameOption] = $(ModuleOption(FameGainsModule), DominationVictory)
     def about = $(
         "A mode inspired by the Northgard video game. The map is built at setup around a special central tile (a random one unless one is picked).",
         "Each clan starts on its " ~ "Port".hl ~ " with a " ~ "Town Hall".hl ~ " and the two small territories beside it; creatures hold the territories between the clans.",
@@ -1243,6 +1245,7 @@ case object PCVersion extends Module("PC version", "fan-made mode") {
         "Creatures are aggressive (no clan shares a territory with one) and have no abilities.",
         "Only Wolves and Draugr move (Myrkalfar from year 3). A Wolf killed comes back where it started, unless a clan holds that territory.",
         "A clan that ends a year without its Town Hall is out of the game; with " ~ "Domination victory".hl ~ " (under Fan victories), the last clan (or team) standing wins. The other victory conditions still apply.",
+        "Picks the " ~ "Domination victory".hl ~ " and " ~ "Alternative fame gains".hl ~ " (Fan victories), which can be turned off.",
         "Turns on Creatures, Warchiefs, Sea (its Ports), Tower PC version, Warchiefs PC version, Minerals, Military paths, Aggressive creatures, Clan Fame upgrades, and the Wilderness, Wastelands and Uncharted Horizons map tiles.",
         "Fan-made, not part of the published game.".styled(xstyles.warning),
     )
@@ -1372,4 +1375,6 @@ case class ModuleOption(module : Module) extends GameOption with ToggleOption wi
     override def required(all : $[BaseOption]) = module.ready.?(module.requires).|($($[BaseOption](this)))
     // The PC version turns on the modules it plays with, and is turned off with any of them
     override def forcedOn(all : $[BaseOption]) = (module == PCVersion).??(PCVersion.needs./(ModuleOption) ++ PCVersion.tiles)
+    // and picks the Domination and Alternative fame gains victories, which can be turned off (Gman, 2026-11-13)
+    override def alsoOn(all : $[BaseOption]) = (module == PCVersion).??(PCVersion.victories)
 }
