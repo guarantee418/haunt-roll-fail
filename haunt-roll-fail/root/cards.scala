@@ -115,9 +115,9 @@ object Deck {
         case StandardDeck => ambushes ++ items ++ effectsBase ++ (arity > 2).??(dominances)
         case ExilesDeck => ambushes ++ items ++ effectsExiles ++ (arity > 2).??(dominances)
         case MixedDeck => ambushes ++ items ++ mixed(known) ++ (arity > 2).??(dominances)
-        case DuskDeck => ambushes ++ items ++ effectsDusk ++ (arity > 2).??(dominances)
+        case DuskDeck => ambushes ++ items ++ effectsDusk ++ l.has(DuskDeckFixes).$(fowlPlay) ++ (arity > 2).??(dominances)
         case SquiresDeck => ambushes ++ items ++ effectsSquires ++ (arity > 2).??(dominances)
-        case FrankenDeck => ambushes ++ frankenItems ++ $(frankenSabotage) ++ (arity > 2).??(dominances) ++ frankenPool
+        case FrankenDeck => ambushes ++ frankenItems ++ $(frankenSabotage) ++ (arity > 2).??(dominances) ++ frankenPool(l.has(DuskDeckFixes))
     }
 
     // Frankendeck (The Doomed Expansion, fan-made by slugfacekillah and Endgamer1331; Gman, 2026-11-13): a core of 30 cards in its
@@ -157,7 +157,8 @@ object Deck {
     val frankenSabotage = CraftEffectCard(Bird, "franken-sabotage", $(AnySuit), Saboteurs)
 
     // Every persistent effect of the site's other decks, all copies; the Favors are left out, as the Frankendeck's rules advise
-    def frankenPool = (effectsBase.filterNot(_.isInstanceOf[Favor]) ++ effectsExiles ++ effectsDusk ++ effectsSquires)
+    // (with the Dawn and Dusk deck's fixes, Fowl Play too)
+    def frankenPool(fowl : Boolean) = (effectsBase.filterNot(_.isInstanceOf[Favor]) ++ effectsExiles ++ effectsDusk ++ fowl.$(fowlPlay) ++ effectsSquires)
 
     // Pile of a card: its suit, and whether it costs two or more crafting activations
     def frankenPile(d : DeckCard) : (Suit, Boolean) = d @@ {
@@ -345,9 +346,11 @@ object Deck {
         CraftEffectCard(Bird, "night-terrors", $(AnySuit, AnySuit), NightTerrors),
         CraftEffectCard(Bird, "night-terrors", $(AnySuit, AnySuit), NightTerrors),
         CraftEffectCard(Bird, "forest-vigil", $(Fox, Rabbit, Mouse), ForestVigil),
-        // CraftEffectCard(Bird, "fowl-play", $(AnySuit), FowlPlay),
         CraftEffectCard(Bird, "hoarders", $(AnySuit), Hoarders),
     )
+
+    // Fowl Play was left out of the Dawn and Dusk deck, as there was no reroll (it is in games with DuskDeckFixes, Gman, 2026-11-13)
+    val fowlPlay = CraftEffectCard(Bird, "fowl-play", $(AnySuit), FowlPlay)
 
     val effectsSquires = $[DeckCard](
         CraftEffectCard(Bird, "sky-couriers", $(AnySuit), SkyCouriers),
@@ -463,7 +466,7 @@ object Deck {
 
     val disguisedEEE = frogEEE.distinct./~(d => InvasiveEEEExpansion.disguiseSuits./(DisguisedCard(d, _)))
 
-    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ effectsSquires ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA ++ frogEEE ++ disguisedEEE ++ frankenItems ++ $(frankenSabotage)
+    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ effectsSquires ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA ++ frogEEE ++ disguisedEEE ++ frankenItems ++ $(frankenSabotage) ++ $(fowlPlay) // new cards go last: saved games name cards by their place here
 }
 
 

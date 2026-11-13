@@ -52,7 +52,7 @@ object ReplayCheck {
     )).|($[Meta.O](
         AutumnMap, DefaultClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
         FerryLandmark, LostCityLandmark, SeatingGiven, FactionSeatingGiven, SetupOrderPriority, CardDraftStandard,
-    ))).map(o => (draft && o == CardDraftStandard).?[Meta.O](CardDraftFive).|(o)).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (squires && o == MixedDeck).?[Meta.O](SquiresDeck).|(o)).map(o => (franken && o == MixedDeck).?[Meta.O](FrankenDeck).|(o)).map(o => (dusk && o == MixedDeck).?[Meta.O](DuskDeck).|(o)).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.??($[Meta.O](FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup)) ++ (async || chooseHits).??($[Meta.O](AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode)) ++ chooseHits.$(ForcedAsyncChooseHits) ++ offline.??($[Meta.O](HitsAndAmbushesSetup, OffTurnFieldHospitals)) ++ preset.$(OffTurnHitsPreset) ++ seating./(IncludeFaction)
+    ))).map(o => (draft && o == CardDraftStandard).?[Meta.O](CardDraftFive).|(o)).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (squires && o == MixedDeck).?[Meta.O](SquiresDeck).|(o)).map(o => (franken && o == MixedDeck).?[Meta.O](FrankenDeck).|(o)).map(o => (dusk && o == MixedDeck).?[Meta.O](DuskDeck).|(o)).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.??($[Meta.O](FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, DuskDeckFixes)) ++ (async || chooseHits).??($[Meta.O](AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode)) ++ chooseHits.$(ForcedAsyncChooseHits) ++ offline.??($[Meta.O](HitsAndAmbushesSetup, OffTurnFieldHospitals)) ++ preset.$(OffTurnHitsPreset) ++ seating./(IncludeFaction)
 
     def privateMap(o : AnyRef, suffix : String) : Map[Any, Any] = {
         val f = o.getClass.getDeclaredFields.filter(_.getName.endsWith(suffix)).head
@@ -61,7 +61,9 @@ object ReplayCheck {
     }
 
     def fingerprint(g : Game) : String = {
-        val keys : $[(Faction, Region)] = g.pieces.keys
+        // empty regions are left out: the Dawn and Dusk cards' regions (game.dawn, noon, dusk) are lazy vals, registered when first
+        // looked at, which a live game (its bots) does and a rebuilt one may not
+        val keys : $[(Faction, Region)] = g.pieces.keys.filter(k => g.pieces.get(k).nonEmpty)
         val p = keys.map((k : (Faction, Region)) => k.toString + " = " + g.pieces.get(k)./(_.toString).sorted.mkString(",")).sorted
         val c = privateMap(g.cards, "l2e").toList./{ case (k, v) => k.toString + " = " + v.asInstanceOf[$[Any]]./(_.toString).mkString(",") }.sorted
         val v = g.states.toList./{ case (f, s) => f.toString + " vp " + s.vp }.sorted
@@ -182,11 +184,13 @@ object ReplayCheck {
             case "marsh5" => $($(MC, ED, WA, VB, LDvE), $(MC, ED, WA, KD, TC))
             case "mountain" => $($(MC, ED, WA, TC), $(MC, TC, KD, LDvE), $(ED, TC, WA, UD))
             case "marsh" => $($(MC, ED, WA, VB), $(MC, ED, WA, LDvE), $(MC, WA, KD, TC))
+            // every official faction, for the Dawn and Dusk deck ("dusk")
+            case "all" => $($(MC, ED, WA, VB), $(LC, RF, UD, CC), $(KI, LH, TC, KD), $(MC, LDvE, VB, ED), $(WA, RF, LH, KI), $(UD, CC, KD, LC))
         }).|($($(MC, WA, LDvE, KD), $(MC, ED, LDvE, KD), $(MC, WA, KD, TC), $(MC, WA, LDvE, TC)))
         var failures = 0
         // how often each hireling-related choice was recorded, to see that the bots used them
         var used = Map[String, Int]()
-        val keys = $("ExposeAction", "Hireling", "WarmSun", "Sunward", "CorvidSpies", "FlameBearers", "VaultKeepers", "FuriousProtector", "HighwayBandit", "PopularBand", "SunnyAdvocates", "BatMessengers", "RiverRoamers", "FrogTinkers", "Farmers", "Brigand", "ClearPath", "LizardEnvoys", "Bluebird", "FelinePhysicians", "MoleArtisians", "RatSmugglers", "ForestPatrol", "Patrol", "LastDynasty", "Uprising", "Exile", "Flotilla", "StreetBand", "BanditGangs", "Scouts")
+        val keys = $("ExposeAction", "Hireling", "WarmSun", "Sunward", "CorvidSpies", "FlameBearers", "VaultKeepers", "FuriousProtector", "HighwayBandit", "PopularBand", "SunnyAdvocates", "BatMessengers", "RiverRoamers", "FrogTinkers", "Farmers", "Brigand", "ClearPath", "LizardEnvoys", "Bluebird", "FelinePhysicians", "MoleArtisians", "RatSmugglers", "ForestPatrol", "Patrol", "LastDynasty", "Uprising", "Exile", "Flotilla", "StreetBand", "BanditGangs", "Scouts", "SlyDog", "HighNoon", "BreakingDawn", "DuskAwakening", "Merchants", "Spoil", "ServiceOf", "MilitarySupplies", "Guard", "Hoarders", "NightTerrors", "Adventurers", "AnyCard", "FowlPlay")
 
         0.until(games).foreach { gi =>
             val seating = pool(gi % pool.num).shuffle
