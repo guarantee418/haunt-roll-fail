@@ -28,6 +28,8 @@ object ReplayCheck {
     // "franken": the Frankendeck instead of the mixed one; "dusk": the Dawn and Dusk deck
     var franken = false
     var dusk = false
+    // "action": with the Action! Deck Booster (pool "six" or "seven" for more players)
+    var action = false
     // "async": Forced Async Mode; "choosehits": with Players Choose Hits too
     var async = false
     var chooseHits = false
@@ -52,7 +54,7 @@ object ReplayCheck {
     )).|($[Meta.O](
         AutumnMap, DefaultClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
         FerryLandmark, LostCityLandmark, SeatingGiven, FactionSeatingGiven, SetupOrderPriority, CardDraftStandard,
-    ))).map(o => (draft && o == CardDraftStandard).?[Meta.O](CardDraftFive).|(o)).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (squires && o == MixedDeck).?[Meta.O](SquiresDeck).|(o)).map(o => (franken && o == MixedDeck).?[Meta.O](FrankenDeck).|(o)).map(o => (dusk && o == MixedDeck).?[Meta.O](DuskDeck).|(o)).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.??($[Meta.O](FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, DuskDeckFixes)) ++ (async || chooseHits).??($[Meta.O](AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode)) ++ chooseHits.$(ForcedAsyncChooseHits) ++ offline.??($[Meta.O](HitsAndAmbushesSetup, OffTurnFieldHospitals)) ++ preset.$(OffTurnHitsPreset) ++ seating./(IncludeFaction)
+    ))).map(o => (draft && o == CardDraftStandard).?[Meta.O](CardDraftFive).|(o)).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (squires && o == MixedDeck).?[Meta.O](SquiresDeck).|(o)).map(o => (franken && o == MixedDeck).?[Meta.O](FrankenDeck).|(o)).map(o => (dusk && o == MixedDeck).?[Meta.O](DuskDeck).|(o)).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.??($[Meta.O](FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, DuskDeckFixes)) ++ (async || chooseHits).??($[Meta.O](AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode)) ++ chooseHits.$(ForcedAsyncChooseHits) ++ offline.??($[Meta.O](HitsAndAmbushesSetup, OffTurnFieldHospitals)) ++ preset.$(OffTurnHitsPreset) ++ action.$(ActionBooster) ++ seating./(IncludeFaction)
 
     def privateMap(o : AnyRef, suffix : String) : Map[Any, Any] = {
         val f = o.getClass.getDeclaredFields.filter(_.getName.endsWith(suffix)).head
@@ -160,6 +162,7 @@ object ReplayCheck {
         squires = args.contains("squires")
         franken = args.contains("franken")
         dusk = args.contains("dusk")
+        action = args.contains("action")
         async = args.contains("async")
         chooseHits = args.contains("choosehits")
         offline = args.contains("offline") || args.contains("preset")
@@ -181,6 +184,8 @@ object ReplayCheck {
             case "ldtc" => $($(MC, ED, LDvE, TC), $(MC, WA, LDvE, TC))
             case "ldrf" => $($(MC, RF, LDvE, UD), $(MC, ED, RF, LDvE))
             case "cctc" => $($(MC, ED, CC, TC), $(MC, WA, CC, TC))
+            case "six" => $($(MC, ED, WA, VB, RF, LC), $(MC, ED, WA, UD, CC, KD), $(MC, ED, WA, TC, LDvE, KI))
+            case "seven" => $($(MC, ED, WA, VB, RF, LC, UD), $(MC, ED, WA, CC, KD, TC, LDvE))
             case "marsh5" => $($(MC, ED, WA, VB, LDvE), $(MC, ED, WA, KD, TC))
             case "mountain" => $($(MC, ED, WA, TC), $(MC, TC, KD, LDvE), $(ED, TC, WA, UD))
             case "marsh" => $($(MC, ED, WA, VB), $(MC, ED, WA, LDvE), $(MC, WA, KD, TC))
@@ -190,7 +195,7 @@ object ReplayCheck {
         var failures = 0
         // how often each hireling-related choice was recorded, to see that the bots used them
         var used = Map[String, Int]()
-        val keys = $("ExposeAction", "Hireling", "WarmSun", "Sunward", "CorvidSpies", "FlameBearers", "VaultKeepers", "FuriousProtector", "HighwayBandit", "PopularBand", "SunnyAdvocates", "BatMessengers", "RiverRoamers", "FrogTinkers", "Farmers", "Brigand", "ClearPath", "LizardEnvoys", "Bluebird", "FelinePhysicians", "MoleArtisians", "RatSmugglers", "ForestPatrol", "Patrol", "LastDynasty", "Uprising", "Exile", "Flotilla", "StreetBand", "BanditGangs", "Scouts", "SlyDog", "HighNoon", "BreakingDawn", "DuskAwakening", "Merchants", "Spoil", "ServiceOf", "MilitarySupplies", "Guard", "Hoarders", "NightTerrors", "Adventurers", "AnyCard", "FowlPlay")
+        val keys = $("ActionHammer", "ActionBag", "ActionTea", "ActionCoins", "ActionCrossbow", "ActionKey", "ActionSword", "ActionReplace", "ActionPay", "SecretScore", "CounterAmbush", "ExposeAction", "Hireling", "WarmSun", "Sunward", "CorvidSpies", "FlameBearers", "VaultKeepers", "FuriousProtector", "HighwayBandit", "PopularBand", "SunnyAdvocates", "BatMessengers", "RiverRoamers", "FrogTinkers", "Farmers", "Brigand", "ClearPath", "LizardEnvoys", "Bluebird", "FelinePhysicians", "MoleArtisians", "RatSmugglers", "ForestPatrol", "Patrol", "LastDynasty", "Uprising", "Exile", "Flotilla", "StreetBand", "BanditGangs", "Scouts", "SlyDog", "HighNoon", "BreakingDawn", "DuskAwakening", "Merchants", "Spoil", "ServiceOf", "MilitarySupplies", "Guard", "Hoarders", "NightTerrors", "Adventurers", "AnyCard", "FowlPlay")
 
         0.until(games).foreach { gi =>
             val seating = pool(gi % pool.num).shuffle
@@ -213,6 +218,13 @@ object ReplayCheck {
                     val n = a.unwrap.getClass.getSimpleName
                     if (keys.exists(n.contains))
                         used += n -> (used.getOrElse(n, 0) + 1)
+                    // "action": moves and battles paid with an Action! card, and ambushes cancelled with a Secret! card
+                    if (w.contains("ActionPayAction"))
+                        used += "paid with an Action! card" -> (used.getOrElse("paid with an Action! card", 0) + 1)
+                    a.unwrap match {
+                        case BattleCounterAmbushAction(_, _, ActionCard(_, _, SecretCancel), _, _, _) => used += "Secret! counter-ambush" -> (used.getOrElse("Secret! counter-ambush", 0) + 1)
+                        case _ =>
+                    }
                 case a => throw new Error("not external " + a)
             }
 
@@ -282,7 +294,19 @@ object ReplayCheck {
                                     used += "Governed exposure probe" -> (used.getOrElse("Governed exposure probe", 0) + 1)
                                 case _ =>
                             })
-                            val a = if (expose.any) expose(0) else if (buy.any) buy(0) else if (l.num == 1) l(0) else new BotXX(f).ask(l, 0)(game).immediate
+                            // "action": the Secret! cards are kept for scoring and cancelling, not spent to draw
+                            def keep(l : $[UserAction]) = l.%(_.unwrap match {
+                                case ActionCardMainAction(_, _, d) if action && d.secret => false
+                                case _ => true
+                            }).some.|(l)
+                            // "action": score with a Secret! card and cancel ambushes with the other whenever offered
+                            val act = action.??(l.%(_.unwrap match {
+                                case _ : SecretScoreAction => true
+                                case BattleCounterAmbushAction(_, _, ActionCard(_, _, SecretCancel), _, true, _) => true
+                                case _ => false
+                            }).take(1))
+                            act.foreach(x => used += ("forced " + x.unwrap.getClass.getSimpleName) -> (used.getOrElse("forced " + x.unwrap.getClass.getSimpleName, 0) + 1))
+                            val a = if (act.any) act(0) else if (expose.any) expose(0) else if (buy.any) buy(0) else if (l.num == 1) l(0) else new BotXX(f).ask(keep(l), 0)(game).immediate
                             chosen = |(a)
                             a match {
                                 case _ if a.isSoft =>
@@ -316,7 +340,7 @@ object ReplayCheck {
             }
             catch {
                 case e : Throwable =>
-                    +++("game", gi, "live play failed:", e); failures += 1
+                    +++("game", gi, "live play failed:", e); e.getStackTrace.take(12).foreach(s => +++("   at", s.toString)); failures += 1
                     (recorded.num - 6).until(recorded.num).%(_ >= 0).foreach(i => +++("    recorded", i, ":", recorded(i).unwrap.toString.take(300)))
                     Option(e.getCause).foreach { c => +++("  cause:", c); c.getStackTrace.take(14).foreach(t => +++("     ", t)) }
             }

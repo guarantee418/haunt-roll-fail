@@ -1615,6 +1615,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
             ExilesDeckExpansion,
             DuskDeckExpansion,
             SquiresDeckExpansion,
+            ActionDeckExpansion,
 
             SetupExpansion,
             MapsExpansion,

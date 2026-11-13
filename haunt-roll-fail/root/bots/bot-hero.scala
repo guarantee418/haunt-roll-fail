@@ -59,6 +59,8 @@ class GameEvaluationHero(faction : Hero)(implicit game : Game) extends GameEvalu
             case Ambush(Bird) => 1000
 
             case _ : DisguisedCard => 600
+
+            case _ : ActionCard => 900
         }
 
         a.unwrap match {

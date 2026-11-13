@@ -111,14 +111,31 @@ case object EnclaveDominance extends Dominance {
 
 
 object Deck {
-    def fromOptions(l : $[Meta.O], arity : Int, known : $[Faction]) = l.of[DeckOption].last @@ {
+    def fromOptions(l : $[Meta.O], arity : Int, known : $[Faction]) = (l.of[DeckOption].last @@ {
         case StandardDeck => ambushes ++ items ++ effectsBase ++ (arity > 2).??(dominances)
         case ExilesDeck => ambushes ++ items ++ effectsExiles ++ (arity > 2).??(dominances)
         case MixedDeck => ambushes ++ items ++ mixed(known) ++ (arity > 2).??(dominances)
         case DuskDeck => ambushes ++ items ++ effectsDusk ++ l.has(DuskDeckFixes).$(fowlPlay) ++ (arity > 2).??(dominances)
         case SquiresDeck => ambushes ++ items ++ effectsSquires ++ (arity > 2).??(dominances)
         case FrankenDeck => ambushes ++ frankenItems ++ $(frankenSabotage) ++ (arity > 2).??(dominances) ++ frankenPool(l.has(DuskDeckFixes))
-    }
+    }) ++ l.has(ActionBooster).??(boosters(arity).times(actionBooster).flatten)
+
+    // Action! Deck Booster (The Doomed Expansion, `ActionBooster`): one booster for each player above five, one with five players
+    // (or fewer, if the option was kept from another setup), two at most, as the expansion has two
+    def boosters(arity : Int) = max(1, min(2, arity - 5))
+
+    val actionBooster = $[DeckCard](
+        ActionCard(Fox, "action-hammer", ActionHammer),
+        ActionCard(Fox, "action-sword", ActionSword),
+        ActionCard(Mouse, "action-bag", ActionBag),
+        ActionCard(Mouse, "action-tea", ActionTea),
+        ActionCard(Rabbit, "action-coins", ActionCoins),
+        ActionCard(Rabbit, "action-boots", ActionBoots),
+        ActionCard(Bird, "action-crossbow", ActionCrossbow),
+        ActionCard(Bird, "action-key", ActionKey),
+        ActionCard(Bird, "action-secret-cancel", SecretCancel),
+        ActionCard(Bird, "action-secret-score", SecretScore),
+    )
 
     // Frankendeck (The Doomed Expansion, fan-made by slugfacekillah and Endgamer1331; Gman, 2026-11-13): a core of 30 cards in its
     // own art (the 20 items, 5 ambushes, 4 dominances and a Sabotage!) plus 30 persistent effects drawn from the other decks by suit and
@@ -466,7 +483,7 @@ object Deck {
 
     val disguisedEEE = frogEEE.distinct./~(d => InvasiveEEEExpansion.disguiseSuits./(DisguisedCard(d, _)))
 
-    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ effectsSquires ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA ++ frogEEE ++ disguisedEEE ++ frankenItems ++ $(frankenSabotage) ++ $(fowlPlay) // new cards go last: saved games name cards by their place here
+    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ effectsSquires ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA ++ frogEEE ++ disguisedEEE ++ frankenItems ++ $(frankenSabotage) ++ actionBooster ++ $(fowlPlay) // new cards go last: saved games name cards by their place here
 }
 
 
@@ -582,8 +599,8 @@ object CardsExpansion extends MandatoryExpansion {
 
         // DISCARDS
         case HandLimitAction(f, nn, then) =>
-            val min = nn
-            val max = nn + f.has(PublicRelations).??(1)
+            val min = nn + f.used.has(ActionBag).??(2)
+            val max = min + f.has(PublicRelations).??(1)
 
             if (f.hand.num <= min)
                 then

@@ -227,6 +227,19 @@ case object FrankenDeck extends DeckOption {
     )
 }
 
+case object ActionBooster extends GameOption with ToggleOption with FoldedOption {
+    val group = "Deck"
+    val valueOn = "Action! Deck Booster".hh ~ " (fan-made)"
+    override val explain = $(
+        "Ten more cards for big games from " ~ Link("https://boardgamegeek.com/boardgameexpansion/482234/the-doomed-expansion-fan-expansion-for-root", "The Doomed Expansion", $(xstyles.link)) ~ ", fan-made by " ~ "slugfacekillah".hl ~ ".",
+        "One booster is shuffled into the deck for each player above " ~ "5".hh ~ " (two at most), or one with " ~ "5".hh ~ " players.",
+        "An " ~ "Action!".hh ~ " card is spent from hand during its owner's turn for its effect (the sword's extra hit also in a battle they are in); otherwise it is a card of its suit.",
+        "The two " ~ "Secret!".hh ~ " cards are birds: either can be discarded to draw the top card of the deck, one cancels an ambush played against its owner, the other scores " ~ 3.vp ~ " at the start of Birdsong with three crafted improvements or a fulfilled Dominance.",
+        "Using an " ~ "Action!".hh ~ " card as the item it shows is not done yet.",
+        Image("action-sword", styles.card)
+    )
+}
+
 case object NonBirdPartisans extends GameOption with ToggleOption with FoldedOption {
     val group = "Cards"
     val valueOn = "Partisans".styled(styles.get(Bird)) ~ SpacedDash ~ "Discard".hh ~ " " ~ "Birds".styled(Bird)
@@ -1634,6 +1647,7 @@ object Meta extends MetaGame {
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         $,
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck) ++
+        (n >= 5).$(ActionBooster) ++
         $,
         (l.of[Feline].num > 1).$(TheWoodMustFlow) ++
         (l.of[Aviary].num > 1).$(OneTrueEmpire) ++
@@ -1692,6 +1706,7 @@ object Meta extends MetaGame {
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck) ++
+        (n >= 5).$(ActionBooster) ++
         hitsAndAmbushes(l) ++
         (n > 2).?(TotalWarDominance) ++
         (l.of[Feline].num > 1).$(TheWoodMustFlow) ++
@@ -3244,6 +3259,18 @@ object Meta extends MetaGame {
         ImageAsset("revised-logistic-help-fox"     , "logistic-help-fox"            ) ::
         ImageAsset("revised-logistic-help-mouse"   , "logistic-help-mouse"          ) ::
         ImageAsset("revised-escort-fox"            , "revised/escort-fox"           ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => options.has(ActionBooster), "card/action", lzy = Laziness.Later, scale = 50)(
+        ImageAsset("action-hammer") ::
+        ImageAsset("action-sword") ::
+        ImageAsset("action-bag") ::
+        ImageAsset("action-tea") ::
+        ImageAsset("action-coins") ::
+        ImageAsset("action-boots") ::
+        ImageAsset("action-crossbow") ::
+        ImageAsset("action-key") ::
+        ImageAsset("action-secret-cancel") ::
+        ImageAsset("action-secret-score") ::
     $) ::
     ConditionalAssetsList((factions, options) => options.has(FrankenDeck), "card/franken", lzy = Laziness.Later, scale = 50)(
         ImageAsset("franken-a-visit-to-friends") ::
