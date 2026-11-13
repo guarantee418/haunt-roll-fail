@@ -114,8 +114,8 @@ case class SheepMovesDoneAction(self : Faction, e : MoveEffect, then : ForcedAct
 case class TameAction(self : Faction, c : Creature, stage : Int) extends BaseAction("Taming".hl, "(once a year)")("Tame", c) with ViewObject[Creature] { def obj = c }
 
 // Raven's Rangers: one more Explore, anywhere
-case class RangersAction(self : Faction, then : ForcedAction) extends BaseAction("Rangers".hl, "(once a year)")("Explore once more, anywhere on the map")
-case class RangersSkipAction(self : Faction, then : ForcedAction) extends BaseAction("Rangers".hl, "(once a year)")("Don't explore again")
+case class RangersAction(self : Faction, then : ForcedAction) extends BaseAction("Rangers".hl, "(once a year)")((g : Game) => PCExpansion.rangersOn(g).?("Scout once more, anywhere on the map").|("Explore once more, anywhere on the map").txt)
+case class RangersSkipAction(self : Faction, then : ForcedAction) extends BaseAction("Rangers".hl, "(once a year)")((g : Game) => PCExpansion.rangersOn(g).?("Don't scout again").|("Don't explore again").txt)
 
 
 object FameUpgradesExpansion extends Expansion {
@@ -437,7 +437,7 @@ object FameUpgradesExpansion extends Expansion {
             use(f, "Rangers")
             game.note("fame-rangers")
 
-            f.log("explored once more with", "Rangers".hl)
+            f.log(PCExpansion.rangersOn.?("scouted once more with").|("explored once more with"), "Rangers".hl)
 
             Then(ExploreAction(f, 1, 1, false, ExploreEffect(anywhere = true), then))
 

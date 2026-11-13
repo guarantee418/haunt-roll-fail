@@ -483,6 +483,17 @@ object PCExpansion extends Expansion {
         (near ++ coast).distinct.%(t => sees(f, t).not).%(t => upgraded(f) || game.present(t).exists(game.enemy(f, _)).not)
     }
 
+    // Raven's Rangers (Clan Fame upgrades): its one more Explore scouts anywhere on the map, any territory it doesn't see (an enemy's
+    // still needs the upgraded Town Hall). Before PCRangersScout the Rangers were never offered in the PC version, as the map is
+    // whole and the Explore is a scout (Gman, 2026-11-13)
+    def rangersOn(implicit game : Game) = on && game.options.has(PCRangersScout)
+
+    def scoutableAnywhere(f : Faction)(implicit game : Game) : $[Territory] =
+        game.board.territories.%(t => sees(f, t).not).%(t => upgraded(f) || game.present(t).exists(game.enemy(f, _)).not)
+
+    def rangers(f : Faction)(implicit game : Game) : Boolean =
+        rangersOn && FameUpgradesExpansion.has(f, "Rangers") && FameUpgradesExpansion.used(f, "Rangers").not && scoutableAnywhere(f).any
+
     // CREATURES: which ones move in the Creature phase
     def moves(c : Creature)(implicit game : Game) : Boolean = c.kind match {
         case CreatureWolf | Draugr => true
@@ -596,8 +607,11 @@ object PCExpansion extends Expansion {
 
         // SCOUTING: each Explore scouts one territory
         case ExploreAction(f, draw, times, redraw, e, then) =>
-            val l = (times > 0).??(scoutable(f))
+            val l = (times > 0).??((e.anywhere && rangersOn).?(scoutableAnywhere(f)).|(scoutable(f)))
 
+            if (l.none && rangers(f))
+                Ask(f).add(RangersAction(f, then)).add(RangersSkipAction(f, then))
+            else
             if (l.none)
                 Then(then)
             else

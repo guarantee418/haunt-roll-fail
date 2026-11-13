@@ -1794,6 +1794,11 @@ shares a territory with a creature; Gman, 2026-11-11) and the Wilderness, Wastel
   no roll, or the Minerals module's roll of the combat die, which may give Iron or Gem (`MineStoneAction`, `MineRollAction`
   in `nort/pc.scala`); with no Stone left it rolls. Older games always take the Stone; `PCMineChoiceAction(X)` switches a
   running game.
+- **Rangers** (Raven, Clan Fame upgrades; hidden `PCRangersScout`, every new game since 2026-11-13): after a scout, once a
+  year, Raven may scout once more, any territory on the map it doesn't see (an enemy's still needs the upgraded Town Hall;
+  `PCExpansion.rangers`, `scoutableAnywhere`). Before it Rangers was never offered in the PC version (gg's Raven in Longship
+  versus Clan, 2026-11-13), as the whole map is built and the PC scout comes before it; `PCRangersScoutAction(X)` switches a
+  running game.
 - **More creatures** (`PCVersionUpdate`): with 3 clans or more the Wilderness and Wastelands creatures are in the creature
   deck too (`PCExpansion.moreCreatures`, in `Wild.creaturesOn` and `Waste.creaturesOn`), so more territories between the
   homes get one; with 5 or 6 clans the 23 creatures still don't fill every one.

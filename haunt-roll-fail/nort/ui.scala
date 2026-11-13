@@ -1581,7 +1581,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 HorizontalBreak ~
                 g.elem.div ~
                 FameUpgrade.of(g)./{ u =>
-                    val st = game.fameUnlocked.has(u).?($(styles.onBoard)).|($(styles.offBoard))
+                    val st = game.fameUnlocked.has(u).?($(styles.onBoardWrap)).|($(styles.offBoardWrap))
                     (Amount(u.fame.hl, FameIcon()) ~ " " ~ u.name.hl ~ ": " ~ CombatText(u.text) ~ u.ready.not.?(" (not in the game yet)").|("") ~ (u.warchief && game.has(Warchiefs).not).?(" (needs the Warchiefs module)").|("")).spn(xstyles.smaller85).styled(st).div
                 }.merge
             }.merge ~
@@ -1611,7 +1611,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 (p.elem ~ path.has(p).?(" (" ~ f.elem ~ ")").|(Empty)).div ~
                 p.levels.zipWithIndex./{ case (l, i) =>
                     val reached = path.has(p) && level > i
-                    val st = reached.?($(styles.onBoard)).|(path.has(p).?($(styles.offBoard)).|($))
+                    val st = reached.?($(styles.onBoardWrap)).|(path.has(p).?($(styles.offBoardWrap)).|($))
                     (("Level " + (i + 1) + ": ").hl ~ l./(s => CombatText(s)).join(" ")).spn(xstyles.smaller85).styled(st).div
                 }.merge
             }.merge ~

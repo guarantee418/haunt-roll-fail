@@ -1007,6 +1007,14 @@ case object PCVersionUpdate extends GameOption with ToggleOption {
     def valueOn = "Mine territories, Stone from Mines, the wider two-player map, more creatures".txt
 }
 
+// PC version: Raven's Rangers (Clan Fame upgrades) is offered after a scout, and its one more scout goes anywhere on the map (Gman,
+// 2026-11-13: it was never offered, as the PC version's map is whole). Hidden, and given to every new game (Meta.mandatoryFor); a
+// running game can be switched over with PCRangersScoutAction(X)
+case object PCRangersScout extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "Rangers scout anywhere".txt
+}
+
 // PC version: at the harvest each clan with Mines picks 1 Stone a Mine with no roll, or the Minerals module's roll for Stone, Iron
 // or Gem (Gman, 2026-11-13: PCVersionUpdate gave only Stone). Hidden, and given to every new game (Meta.mandatoryFor); a running
 // game can be switched over with PCMineChoiceAction(X)
