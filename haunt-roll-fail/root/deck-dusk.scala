@@ -367,7 +367,7 @@ object DuskDeckExpansion extends Expansion {
         // HIGH NOON
         case HighNoonMainAction(f : WarriorFaction, feed, milk, then) =>
             Ask(f).group(HighNoon)
-                .when(feed)(HighNoonFeedAction(f, then).as("Add", f.warrior.of(f), "to", f.warrior.imgd(f)))
+                .when(feed)(HighNoonFeedAction(f, then).as("Add", f.warrior.of(f), f.warrior.imgd(f), "to", HighNoon))
                 .when(feed && f.presence.any)(HighNoonFeedAction(f, HighNoonMilkAction(f, then)).as("Add", f.warrior.of(f), f.warrior.imgd(f), "to", HighNoon, "then", "place", (milk + 1).warriors, "and discard"))
                 .when(milk > 0 && f.presence.any)(HighNoonMilkAction(f, then).as("Just place", milk.warriors, "and discard"))
                 .cancel
@@ -431,7 +431,7 @@ object DuskDeckExpansion extends Expansion {
         // DUSK AWAKENING
         case DuskAwakeningMainAction(f : WarriorFaction, feed, milk, then) =>
             Ask(f).group(DuskAwakening)
-                .when(feed)(DuskAwakeningFeedAction(f, then).as("Add", f.warrior.of(f), "to", f.warrior.imgd(f)))
+                .when(feed)(DuskAwakeningFeedAction(f, then).as("Add", f.warrior.of(f), f.warrior.imgd(f), "to", DuskAwakening))
                 .when(feed)(DuskAwakeningFeedAction(f, DuskAwakeningMilkAction(f, then)).as("Add", f.warrior.of(f), f.warrior.imgd(f), "to", DuskAwakening, "then", "draw", (milk + 1).cards, "and discard"))
                 .when(milk > 0)(DuskAwakeningMilkAction(f, then).as("Draw just", milk.cards, "and discard"))
                 .cancel
@@ -478,7 +478,9 @@ object DuskDeckExpansion extends Expansion {
             DrawCardsAction(f, n, AndDiscarded(DuskAwakening), AddCardsAction(f, then))
 
         // OLD FRIEND
-        case DrawCardsAction(f, n, m, then) if f.has(OldFriend) =>
+        // Old Friend: only for a draw of at least one card, and only with cards in the discard pile (OldFriendFixes; before it every
+        // draw asked, a draw of no cards too, and an empty pile offered nothing to take)
+        case DrawCardsAction(f, n, m, then) if f.has(OldFriend) && (options.has(DuskDeckFixes).not || (n > 0 && pile.any)) =>
             Ask(f)
                 .add(FindAnyCardAction(f, m, then))
                 .add(DrawCardsFromDeckAction(f, n, m, then).as("Draw " ~ n.times(dt.CardBack).merge))
@@ -492,7 +494,7 @@ object DuskDeckExpansion extends Expansion {
         case TakeAnyCardAction(f, d, then) =>
             pile --> d --> f.drawn
 
-            f.log("took", d, "from the dicard pile")
+            f.log("took", d, "from the discard pile with", OldFriend)
 
             f.removeStuckEffect(OldFriend)
 

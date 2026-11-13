@@ -121,6 +121,7 @@ object MetaAdset extends MetaGame {
         GovernorsStopExposure,
         FrogCardsAtDiasporaSetup,
         PrisonersFromCodefenders,
+        DuskDeckFixes,
         FolkHeroCharacter,
         RandomCharacter,
         MountainSuitedLandmark,

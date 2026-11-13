@@ -85,6 +85,12 @@ case class BattleAttackerPreRollAction(b : Battle) extends ForcedAction
 
 case class BattleRollAction(b : Battle) extends ForcedAction
 case class BattleRolledAction(b : Battle, fr : Int, or : Int) extends RolledAction[Int] { def rolled = $(fr, or) }
+case class BattleRolledDoneAction(b : Battle, fr : Int, or : Int) extends ForcedAction
+case class FowlPlayAskAction(b : Battle, fr : Int, or : Int) extends ForcedAction
+case class FowlPlayDieAction(self : Faction, b : Battle, fr : Int, or : Int, x : Int) extends ForcedAction with Soft
+case class FowlPlayCardAction(self : Faction, b : Battle, fr : Int, or : Int, x : Int, d : Option[DeckCard]) extends ForcedAction
+case class FowlPlayRolledAction(self : Faction, b : Battle, kept : Int, x : Int) extends RolledAction[Int] { def rolled = $(x) }
+case class FowlPlayDoneAction(self : Faction, b : Battle, fr : Int, or : Int) extends ForcedAction
 case class BattleAdjustRollAction(b : Battle, f : Faction, o : Faction, fs : Int, os : Int, fr : Int, or : Int) extends ForcedAction
 case class BattleFinishRollAction(b : Battle, f : Faction, o : Faction, fs : Int, os : Int, fr : Int, or : Int, fh : Int, oh : Int) extends ForcedAction
 case class BattleBonusAction(b : Battle, f : Faction, o : Faction, fs : Int, os : Int, fr : Int, or : Int, fh : Int, oh : Int, fe : Int, oe : Int) extends ForcedAction
@@ -95,6 +101,7 @@ case class PartisansAction(self : Faction, s : BaseSuit, l : $[DeckCard], then :
 case class SwiftStrikeAction(self : Hero, then : ForcedAction) extends BaseAction(self, "in battle")(SwiftStrike.of(self), implicit g => options.has(RoninSwiftTorch).?(Torch).|(Sword).img)
 case class ArmorersAction(self : Faction, then : ForcedAction) extends BaseAction(self, "in battle")("Ignore all rolled", "Hits".styled(styles.hit), "and discard", Armorers)
 
+case class SlyDogSkipAction(self : Faction, then : ForcedAction) extends ForcedAction
 case class GuardMainAction(self : Faction, s : BaseSuit, then : ForcedAction) extends BaseAction(self, "in battle")("Ignore one rolled", 1.hit, "and discard", Guard(s), "or a", s, "card") with Soft
 case class GuardAction(self : Faction, s : BaseSuit, d : DeckCard, then : ForcedAction) extends BaseAction("Discard for", Guard(s))(d.img) with ViewCard
 case class GuardSelfAction(self : Faction, s : BaseSuit, then : ForcedAction) extends BaseAction()("Discard", Guard(s), "itself")
@@ -265,7 +272,9 @@ object BattleExpansion extends MandatoryExpansion {
         case BattleConfirmAction(self, f, a, m, c, o : SpringUprising.type, i, then) if f.used.has(SpringUprising).not =>
             OptionalDiscardCardAction(f, ToBattle(o), c.cost, DiscardDrawnAction(f, UsedEffectAction(f, SpringUprising, BattleStartAction(self, f, a, m, c, o, i, then))))
 
-        case BattleConfirmAction(self, f, a, m, c, o, i, then) if o.can(SlyDog) =>
+        // Sly Dog (DuskDeckFixes): asked only when there is another enemy of the attacker the attacker could battle there, and a skip
+        // passes on this battle alone (it skipped Sly Dog for the rest of the turn, and offered enemies the attacker can't battle)
+        case BattleConfirmAction(self, f, a, m, c, o, i, then) if o.can(SlyDog) && (options.has(DuskDeckFixes).not || f.enemies.but(o).exists(f.validAttackTarget(c))) =>
             NoAsk(f)(SlyDogMainAction(self, f, a, m, c, o, i, then))
 
         case SlyDogMainAction(self, f, a, m, c, o, i, then) =>
@@ -274,9 +283,15 @@ object BattleExpansion extends MandatoryExpansion {
             else
                 f.logtemp("and", a, "wanted to battle", o, "in", c, m)
 
+            val fixed = options.has(DuskDeckFixes)
+
             Ask(o)
-                .each(f.enemies.but(o).%(_.present(c)))(e => SlyDogAction(o, f, e, ForceAction(BattleConfirmAction(self, f, a, m, c, e, i, then))).as("Redirect", f, "attack to", e)(SlyDog))
-                .add(IgnoredEffectAction(o, SlyDog, ForceAction(BattleConfirmAction(self, f, a, m, c, o, i, then))).as("Skip"))
+                .each(f.enemies.but(o).%(e => fixed.?(f.validAttackTarget(c)(e)).|(e.present(c))))(e => SlyDogAction(o, f, e, ForceAction(BattleConfirmAction(self, f, a, m, c, e, i, then))).as("Redirect", f, "attack to", e)(SlyDog))
+                .when(fixed.not)(IgnoredEffectAction(o, SlyDog, ForceAction(BattleConfirmAction(self, f, a, m, c, o, i, then))).as("Skip"))
+                .when(fixed)(SlyDogSkipAction(o, BattleStartAction(self, f, a, m, c, o, i, then)).as("Skip"))
+
+        case SlyDogSkipAction(o, then) =>
+            then
 
         case SlyDogAction(o, f, e, then) =>
             o.log("redirected", f, "attack to", e, "with", SlyDog)
@@ -562,7 +577,55 @@ object BattleExpansion extends MandatoryExpansion {
         case BattleRollAction(b) =>
             Roll[Int](D4 :: D4, l => BattleRolledAction(b, l.max, l.min), b.attacker.elem ~ " in " ~ b.clearing.elem ~ " battles " ~ b.defender.elem)
 
+        // Fowl Play (DuskDeckFixes): "As attacker in battle, may discard a bird card or this card to reroll one die." The attacker
+        // picks the die, pays, and the two dice are read again (the higher one the attacker's); asked again after each reroll
+        case BattleRolledAction(b, fr, or) if options.has(DuskDeckFixes) =>
+            FowlPlayAskAction(b, fr, or)
+
+        case FowlPlayAskAction(b, fr, or) if b.attacker.has(FowlPlay) && (b.attacker.can(FowlPlay) || b.attacker.hand.exists(_.matches(Bird))) =>
+            val f = b.attacker
+
+            Ask(f).group(f, "rolled", fr.roll, "and", b.defender, "rolled", or.roll)
+                .each($(fr, or).distinct)(x => FowlPlayDieAction(f, b, fr, or, x).as("Reroll", x.roll, "with", FowlPlay))
+                .add(FowlPlayDoneAction(f, b, fr, or).as("Keep the roll"))
+                .needOk
+
+        case FowlPlayDieAction(f, b, fr, or, x) =>
+            Ask(f).group(FowlPlay, "rerolls", x.roll)
+                .each(f.hand)(d => FowlPlayCardAction(f, b, fr, or, x, Some(d)).as("Discard", d).!(d.matches(Bird).not))
+                .when(f.can(FowlPlay))(FowlPlayCardAction(f, b, fr, or, x, None).as("Discard", FowlPlay, "itself"))
+                .cancel
+                .needOk
+
+        case FowlPlayCardAction(f, b, fr, or, x, d) =>
+            d @@ {
+                case Some(d) =>
+                    f.hand --> d --> discard.quiet
+                    f.log("discarded", d, "to reroll", x.roll, "with", FowlPlay)
+                case None =>
+                    f.removeStuckEffect(FowlPlay)
+                    f.log("discarded", FowlPlay, "to reroll", x.roll)
+            }
+
+            val kept = (fr == x).?(or).|(fr)
+
+            Roll[Int]($(D4), r => FowlPlayRolledAction(f, b, kept, r(0)), f.elem ~ " rerolls with " ~ FowlPlay.elem)
+
+        case FowlPlayRolledAction(f, b, kept, x) =>
+            f.log("rerolled", x.roll)
+
+            FowlPlayAskAction(b, max(x, kept), min(x, kept))
+
+        case FowlPlayDoneAction(f, b, fr, or) =>
+            BattleRolledDoneAction(b, fr, or)
+
+        case FowlPlayAskAction(b, fr, or) =>
+            BattleRolledDoneAction(b, fr, or)
+
         case BattleRolledAction(b, fr, or) =>
+            BattleRolledDoneAction(b, fr, or)
+
+        case BattleRolledDoneAction(b, fr, or) =>
             val f = b.attacker
             val o = b.defender
             val c = b.clearing
@@ -706,12 +769,14 @@ object BattleExpansion extends MandatoryExpansion {
                 val guards = b.clearing.suits.%(s => f.can(Guard(s)))
                 val hoarders = f.can(Hoarders) && f.forTrade.exists(_.exhausted.not)
                 val maxNegate = guards.num + hoarders.??(1)
+                // DuskDeckFixes: a defender is offered them only when they can save a piece, as an attacker is (min for max offered them always)
+                val fixedGuards = options.has(DuskDeckFixes)
 
                 guards.foreach { s =>
                     if (f == b.attacker && oh > 0 && oe + max(0, oh - maxNegate) < ft)
                         actions :+= GuardMainAction(f, s, BattlePostRollAction(b, fh, oh - 1, fe, oe, full))
 
-                    if (f == b.defender && fh > 0 && fe + min(0, fh - maxNegate) < ot)
+                    if (f == b.defender && fh > 0 && fe + fixedGuards.?(max(0, fh - maxNegate)).|(min(0, fh - maxNegate)) < ot)
                         actions :+= GuardMainAction(f, s, BattlePostRollAction(b, fh - 1, oh, fe, oe, full))
                 }
 
@@ -719,7 +784,7 @@ object BattleExpansion extends MandatoryExpansion {
                     if (f == b.attacker && oh > 0 && oe + max(0, oh - maxNegate) < ft)
                         actions :+= HoardersMainAction(f, BattlePostRollAction(b, fh, oh - 1, fe, oe, full))
 
-                    if (f == b.defender && fh > 0 && fe + min(0, fh - maxNegate) < ot)
+                    if (f == b.defender && fh > 0 && fe + fixedGuards.?(max(0, fh - maxNegate)).|(min(0, fh - maxNegate)) < ot)
                         actions :+= HoardersMainAction(f, BattlePostRollAction(b, fh - 1, oh, fe, oe, full))
                 }
 
@@ -846,7 +911,7 @@ object BattleExpansion extends MandatoryExpansion {
 
         case HoardersMainAction(f, then) =>
             YYSelectObjectsAction(f, f.forTrade./(ToExhaust))
-                .withGroup(Merchants.elem)
+                .withGroup(Hoarders.elem)
                 .withRule(_.ref.exhausted.not)
                 .withThen(i => HoardersAction(f, i.ref, then))(i => "Ignore " ~ 1.hit ~ " with " ~ i.ref.elem)("Ignore " ~ 1.hit)
                 .withExtras(CancelAction)

@@ -280,6 +280,8 @@ object ExilesDeckExpansion extends Expansion {
         case DrawCardsAction(f, n, m, then) if game.phase == Evening && f.has(Informants) =>
             Ask(f)
                 .add(FindAmbushAction(f, m, then))
+                // Old Friend is offered with it, not left out (DuskDeckFixes)
+                .when(options.has(DuskDeckFixes) && f.has(OldFriend) && n > 0 && pile.any)(FindAnyCardAction(f, m, then))
                 .add(DrawCardsFromDeckAction(f, n, m, then).as("Draw " ~ n.times(dt.CardBack).merge))
                 .needOk
 

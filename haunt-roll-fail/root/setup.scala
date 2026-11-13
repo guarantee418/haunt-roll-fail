@@ -192,7 +192,7 @@ object SetupExpansion extends MandatoryExpansion {
             Milestone(SetupMapAction)
 
         case SetupMapAction if options.has(FrankenDeck) && game.frankenDealt.not =>
-            Shuffle[DeckCard](Deck.frankenPool, FrankenDeckAction(_, SetupMapAction))
+            Shuffle[DeckCard](Deck.frankenPool(options.has(DuskDeckFixes)), FrankenDeckAction(_, SetupMapAction))
 
         case FrankenDeckAction(l, then) =>
             game.frankenDealt = true

@@ -561,6 +561,18 @@ file covers the build, server and deploy. No session can ssh to the server
     among their crafted cards). Older games keep it as a crafted card used later from those menus (and returned to hand to pay
     for a Squires card); a running one can be switched over with `FeatherRufflersOnCraftAction(X)` (MaKoBwoY's Air versus Might,
     2026-11-04, the Council crafting it again after returning it).
+- The Dawn and Dusk deck (`effectsDusk` in `root/cards.scala`, effects in `root/deck-dusk.scala` and hooks in `battle.scala`,
+  `turn.scala`, `craft.scala`, `movement.scala`) was checked against its 31 printed cards (`webp2/root/images/card/dusk/`) on
+  2026-11-13 (Gman: it "had a lot of bugs"). New games get the hidden default option `DuskDeckFixes`: Fowl Play is in the deck (it was
+  left out, with no reroll; `Deck.fowlPlay`, last in `Deck.catalog`, as saved games name cards by their place there): after the roll
+  the attacker may pick a die and discard a bird card or Fowl Play to reroll it, again after each reroll (`FowlPlayAskAction` in
+  `battle.scala`); Sly Dog is asked only when the attacker could battle another enemy there, and a skip passes on that battle alone
+  (`SlyDogSkipAction`; it skipped Sly Dog for the rest of the turn); Old Friend is asked only for a draw of a card or more with cards in
+  the discard pile, and is offered beside Informants at the Evening draw; a defender's Guard and Hoarders are offered only when they
+  can save a piece, as an attacker's are. Readings kept: Public Relations is one more card of hand limit, Dusk Awakening draws after the
+  hand limit, and Service of the Foxes, Rabbits and Mice must be used at the next Birdsong (no "may"). `ReplayCheck <games> all dusk`
+  plays it with every official faction and counts the cards' choices (empty regions are left out of its comparison, as the cards'
+  `game.dawn`, `noon` and `dusk` are registered lazily).
 - The fan-made Doomed Expansion for Root (slugfacekillah; BGG 482234, PnP files on Google Drive, rules "LAW of DOOM", section D3;
   asked for by Gman on 2026-11-13, its three "Decks & Things" first): the Frankendeck is the Deck choice "Frankendeck (fan-made)"
   (`FrankenDeck` in `root/meta.scala`): a core of 30 in its own art (`card/franken/`, cut from the PnP 63x88 PNGs with their
