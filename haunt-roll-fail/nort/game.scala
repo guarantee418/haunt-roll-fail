@@ -491,6 +491,8 @@ case class PCVedrfolnirRevealAction(then : ForcedAction) extends ForcedAction wi
 case class PCVedrfolnirNoTileAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to PCMineChoice (an hrf-games fix)
 case class PCMineChoiceAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to PCRangersScout (an hrf-games fix)
+case class PCRangersScoutAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to ChiefMoveFromHeld (an hrf-games fix)
 case class ChiefMoveFromHeldAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to ChiefMoveAfterMove (an hrf-games fix)
@@ -2415,6 +2417,12 @@ object CommonExpansion extends Expansion {
         case PCMineChoiceAction(then) =>
             if (game.options.has(PCMineChoice).not)
                 game.addOption(PCMineChoice)
+
+            Then(then)
+
+        case PCRangersScoutAction(then) =>
+            if (game.options.has(PCRangersScout).not)
+                game.addOption(PCRangersScout)
 
             Then(then)
 

@@ -104,6 +104,9 @@ package object elem {
         // The warchief in the player panels: grayed out while it isn't on the map
         object onBoard extends CustomStyle(white.space("nowrap"))
         object offBoard extends CustomStyle(white.space("nowrap"), filter("grayscale(1)"), opacity("0.45"))
+        // The same for rules text that wraps (Clan Fame upgrades, Military paths): nowrap ran it off a phone's screen
+        object onBoardWrap extends CustomStyle()
+        object offBoardWrap extends CustomStyle(filter("grayscale(1)"), opacity("0.45"))
         object ledgerGain extends CustomStyle(color("#7ccf62"))
         object ledgerLoss extends CustomStyle(color("#e5574a"))
         // Nothing in that column this harvest or winter
