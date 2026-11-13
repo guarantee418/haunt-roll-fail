@@ -561,6 +561,14 @@ file covers the build, server and deploy. No session can ssh to the server
     among their crafted cards). Older games keep it as a crafted card used later from those menus (and returned to hand to pay
     for a Squires card); a running one can be switched over with `FeatherRufflersOnCraftAction(X)` (MaKoBwoY's Air versus Might,
     2026-11-04, the Council crafting it again after returning it).
+- The fan-made Doomed Expansion for Root (slugfacekillah; BGG 482234, PnP files on Google Drive, rules "LAW of DOOM", section D3;
+  asked for by Gman on 2026-11-13, its three "Decks & Things" first): the Frankendeck is the Deck choice "Frankendeck (fan-made)"
+  (`FrankenDeck` in `root/meta.scala`): a core of 30 in its own art (`card/franken/`, cut from the PnP 63x88 PNGs with their
+  bleed trimmed; the 20 items are `Deck.frankenItems`, its Sabotage! is a Saboteurs card, and the ambushes and dominances are the
+  usual cards drawn with the Franken art, `Deck.art` and `Deck.frankenArt`, set by `Game`) plus 30 persistent effects of the
+  Might and Right (no Favors), Exiles and Partisans, Dawn and Dusk and Squires and Disciples decks, drawn at setup by suit and
+  cost (`frankenRecipe`, `FrankenDeckAction` in `root/setup.scala`, before the map); the rest go out of the game. Its back is
+  `card-back-art-fd`. The Action! Deck Booster and the Dark Deck are next. `ReplayCheck <games> franken` plays it.
 - The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
   Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
   box) and the Homeland errata, from a player's Google Drive (2026-10-10). The shared deck's back follows

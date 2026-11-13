@@ -158,7 +158,7 @@ case class TakeAnyCardAction(self : Faction, d : DeckCard, then : ForcedAction) 
 
 
 object DuskDeckExpansion extends Expansion {
-    def active(setup : $[Faction], options : $[Meta.O]) = options.has(DuskDeck)
+    def active(setup : $[Faction], options : $[Meta.O]) = (options.has(DuskDeck) || options.has(FrankenDeck))
 
     override def birdsong(f : Faction)(implicit game : Game, ask : ActionCollector) {
         if (f.can(Merchants) && f.forTrade.exists(_.exhausted.not)) {
@@ -368,8 +368,8 @@ object DuskDeckExpansion extends Expansion {
         case HighNoonMainAction(f : WarriorFaction, feed, milk, then) =>
             Ask(f).group(HighNoon)
                 .when(feed)(HighNoonFeedAction(f, then).as("Add", f.warrior.of(f), "to", f.warrior.imgd(f)))
-                .when(feed)(HighNoonFeedAction(f, HighNoonMilkAction(f, then)).as("Add", f.warrior.of(f), f.warrior.imgd(f), "to", HighNoon, "then", "place", (milk + 1).warriors, "and discard"))
-                .when(milk > 0)(HighNoonMilkAction(f, then).as("Just place", milk.warriors, "and discard"))
+                .when(feed && f.presence.any)(HighNoonFeedAction(f, HighNoonMilkAction(f, then)).as("Add", f.warrior.of(f), f.warrior.imgd(f), "to", HighNoon, "then", "place", (milk + 1).warriors, "and discard"))
+                .when(milk > 0 && f.presence.any)(HighNoonMilkAction(f, then).as("Just place", milk.warriors, "and discard"))
                 .cancel
                 .needOk
 
@@ -413,7 +413,9 @@ object DuskDeckExpansion extends Expansion {
             WageWarAction(f, 1, n, then)
 
         case HighNoonMilkAction(f : WarriorFaction, then) =>
-            Ask(f).each(f.presence)(c => HighNoonPlaceAction(f, c, then).as(c)("Place", game.noon.$, "with", HighNoon, "to")).cancel
+            // No Cancel after the recorded feed (the feed sets `used`): it threw "cancel on non-soft external action", found with the
+            // Frankendeck's bot games on 2026-11-13
+            Ask(f).each(f.presence)(c => HighNoonPlaceAction(f, c, then).as(c)("Place", game.noon.$, "with", HighNoon, "to")).cancelIf(f.used.has(HighNoon).not)
 
         case HighNoonPlaceAction(f, c, then) =>
             val l = game.noon.$

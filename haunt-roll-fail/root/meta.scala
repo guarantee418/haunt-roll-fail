@@ -214,10 +214,23 @@ case object SquiresDeck extends DeckOption {
     )
 }
 
+case object FrankenDeck extends DeckOption {
+    val valueOn = "Frankendeck".hh ~ " (fan-made)"
+    override val explain = $(
+        "A deck builder from " ~ Link("https://boardgamegeek.com/boardgameexpansion/482234/the-doomed-expansion-fan-expansion-for-root", "The Doomed Expansion", $(xstyles.link)) ~ ", fan-made by " ~ "slugfacekillah".hl ~ " with " ~ "Endgamer1331".hl ~ ".",
+        "A core of " ~ "30".hh ~ " cards in its own art: the " ~ "20".hh ~ " items, " ~ "5".hh ~ " ambushes, " ~ "4".hh ~ " dominances and a " ~ "Sabotage!".hh ~ " card.",
+        "Then " ~ "30".hh ~ " persistent effects are drawn at random from the " ~ "Might and Right".hh ~ ", " ~ "Exiles and Partisans".hh ~ ", " ~ "Dawn and Dusk".hh ~ " and " ~ "Squires and Disciples".hh ~ " decks, by suit and crafting cost:",
+        "one crafting activation or none: " ~ "3".hh ~ " bird, " ~ "3".hh ~ " fox, " ~ "3".hh ~ " mouse and " ~ "4".hh ~ " rabbit;",
+        "two or more: " ~ "4".hh ~ " bird, " ~ "4".hh ~ " fox, " ~ "4".hh ~ " mouse and " ~ "5".hh ~ " rabbit.",
+        "Favors".hh ~ " are left out. " ~ "Boat Builders".hh ~ " and " ~ "Corvid Planners".hh ~ " leave the deck with " ~ RF.name.styled(RF) ~ " or " ~ CC.name.styled(CC) ~ ", as in the " ~ "Mixed".hh ~ " deck.",
+        Image("franken-bird-ambush", styles.card)
+    )
+}
+
 case object NonBirdPartisans extends GameOption with ToggleOption with FoldedOption {
     val group = "Cards"
     val valueOn = "Partisans".styled(styles.get(Bird)) ~ SpacedDash ~ "Discard".hh ~ " " ~ "Birds".styled(Bird)
-    override def required(all : $[BaseOption]) = $($(ExilesDeck), $(MixedDeck))
+    override def required(all : $[BaseOption]) = $($(ExilesDeck), $(MixedDeck), $(FrankenDeck))
     override val explain = $(
         "As printed, " ~ "Partisan".hh ~ " cards don't imply that the " ~ Bird.elem ~ " cards are discarded.",
         "This option forces the discard of the " ~ Bird.elem ~ " cards.",
@@ -227,7 +240,7 @@ case object NonBirdPartisans extends GameOption with ToggleOption with FoldedOpt
 case object UnthematicCoffinMakers extends GameOption with ToggleOption with FoldedOption {
     val group = "Cards"
     val valueOn = "Coffin Makers".styled(styles.get(Rabbit)) ~ SpacedDash ~ "Any Warrior Recycle".hh
-    override def required(all : $[BaseOption]) = $($(ExilesDeck))
+    override def required(all : $[BaseOption]) = $($(ExilesDeck), $(FrankenDeck))
     override def forcedOff(all : $[BaseOption]) = $(ErrataCoffinMakers)
     override val explain = $(
         "Without this option, only " ~ "forcibly".styled(styles.hit) ~ " removed warriors go to " ~ (FigureSpace + "Coffin Makers" + FigureSpace).styled(xlo.pre, xstyles.outlined, styles.get(Rabbit)) ~ ".",
@@ -238,7 +251,7 @@ case object UnthematicCoffinMakers extends GameOption with ToggleOption with Fol
 case object ErrataCoffinMakers extends GameOption with ToggleOption with FoldedOption {
     val group = "Cards"
     val valueOn = "Coffin Makers".styled(styles.get(Rabbit)) ~ SpacedDash ~ "Homeland Errata".hh
-    override def required(all : $[BaseOption]) = $($(ExilesDeck))
+    override def required(all : $[BaseOption]) = $($(ExilesDeck), $(FrankenDeck))
     override def forcedOff(all : $[BaseOption]) = $(UnthematicCoffinMakers)
     override val explain = $(
         "As reprinted in " ~ "Homeland".hh ~ ", warriors removed from the map to their supply by any effect go to " ~ (FigureSpace + "Coffin Makers" + FigureSpace).styled(xlo.pre, xstyles.outlined, styles.get(Rabbit)) ~ ", unless they are replaced.",
@@ -249,7 +262,7 @@ case object ErrataCoffinMakers extends GameOption with ToggleOption with FoldedO
 case object UnthematicPropagandaBureau extends GameOption with ToggleOption with FoldedOption {
     val group = "Cards"
     val valueOn = "Propaganda Bureau".styled(styles.get(Fox)) ~ SpacedDash ~ "Optional Placement".hh
-    override def required(all : $[BaseOption]) = $($(ExilesDeck), $(MixedDeck))
+    override def required(all : $[BaseOption]) = $($(ExilesDeck), $(MixedDeck), $(FrankenDeck))
     override val explain = $(
         "With this option, " ~ "Propaganda Bureau".styled(styles.get(Fox)) ~ " can remove an enemy " ~ "warrior".hh ~ " even if own " ~ "warrior".hh ~ " can't be placed" ~ " afterwards."
     )
@@ -258,7 +271,7 @@ case object UnthematicPropagandaBureau extends GameOption with ToggleOption with
 case object TunnelsIgnoreRaid extends GameOption with ToggleOption with FoldedOption {
     val group = "Cards"
     val valueOn = "Tunnels".styled(styles.get(Rabbit)) ~ SpacedDash ~ "Ignore ".hh ~ "Raid".styled(CC)
-    override def required(all : $[BaseOption]) = $($(ExilesDeck), $(MixedDeck))./~(d => $(d ++ $(IncludeFaction(CC)), d ++ $(IncludeFaction(RI))))
+    override def required(all : $[BaseOption]) = $($(ExilesDeck), $(MixedDeck), $(FrankenDeck))./~(d => $(d ++ $(IncludeFaction(CC)), d ++ $(IncludeFaction(RI))))
     override val explain = $(
         "With this option, triggered " ~ "Raid".styled(CC) ~ " doesn't benefit from " ~ (FigureSpace + "Tunnels" + FigureSpace).styled(xlo.pre, xstyles.outlined, styles.get(Rabbit)) ~ "."
     )
@@ -267,7 +280,7 @@ case object TunnelsIgnoreRaid extends GameOption with ToggleOption with FoldedOp
 case object TunnelsIgnoreTradePosts extends GameOption with ToggleOption with FoldedOption {
     val group = "Cards"
     val valueOn = "Tunnels".styled(styles.get(Rabbit)) ~ SpacedDash ~ "Ignore ".hh ~ "Trade Posts".styled(RF)
-    override def required(all : $[BaseOption]) = $($(ExilesDeck), $(MixedDeck))./~(d => $(d ++ $(IncludeFaction(RF))))
+    override def required(all : $[BaseOption]) = $($(ExilesDeck), $(MixedDeck), $(FrankenDeck))./~(d => $(d ++ $(IncludeFaction(RF))))
     override val explain = $(
         "With this option, " ~ "TradePosts".styled(RF) ~ " aren't considered crafting pieces for " ~ (FigureSpace + "Tunnels" + FigureSpace).styled(xlo.pre, xstyles.outlined, styles.get(Rabbit)) ~ "."
     )
@@ -1612,7 +1625,7 @@ object Meta extends MetaGame {
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         $,
-        $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck) ++
+        $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck) ++
         $,
         (l.of[Feline].num > 1).$(TheWoodMustFlow) ++
         (l.of[Aviary].num > 1).$(OneTrueEmpire) ++
@@ -1670,7 +1683,7 @@ object Meta extends MetaGame {
         $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
-        $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck) ++
+        $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck) ++
         hitsAndAmbushes(l) ++
         (n > 2).?(TotalWarDominance) ++
         (l.of[Feline].num > 1).$(TheWoodMustFlow) ++
@@ -2216,6 +2229,7 @@ object Meta extends MetaGame {
         ImageAsset("card-back-art") ::
         ImageAsset("card-back-art-ep") ::
         ImageAsset("card-back-art-sd") ::
+        ImageAsset("card-back-art-fd") ::
 
     $) ::
     ConditionalAssetsList((factions, options) => true, "faction/hireling")(
@@ -3222,6 +3236,37 @@ object Meta extends MetaGame {
         ImageAsset("revised-logistic-help-mouse"   , "logistic-help-mouse"          ) ::
         ImageAsset("revised-escort-fox"            , "revised/escort-fox"           ) ::
     $) ::
+    ConditionalAssetsList((factions, options) => options.has(FrankenDeck), "card/franken", lzy = Laziness.Later, scale = 50)(
+        ImageAsset("franken-a-visit-to-friends") ::
+        ImageAsset("franken-anvil") ::
+        ImageAsset("franken-arms-trader") ::
+        ImageAsset("franken-bird-ambush") ::
+        ImageAsset("franken-bird-crossbow") ::
+        ImageAsset("franken-bird-dominance") ::
+        ImageAsset("franken-birdy-bindle") ::
+        ImageAsset("franken-fox-ambush") ::
+        ImageAsset("franken-fox-dominance") ::
+        ImageAsset("franken-fox-root-tea") ::
+        ImageAsset("franken-fox-travel-gear") ::
+        ImageAsset("franken-foxfolk-steel") ::
+        ImageAsset("franken-gently-used-knapsack") ::
+        ImageAsset("franken-headhunters-trail") ::
+        ImageAsset("franken-investments") ::
+        ImageAsset("franken-midnight-runners") ::
+        ImageAsset("franken-mouse-ambush") ::
+        ImageAsset("franken-mouse-crossbow") ::
+        ImageAsset("franken-mouse-dominance") ::
+        ImageAsset("franken-mouse-in-a-sack") ::
+        ImageAsset("franken-mouse-root-tea") ::
+        ImageAsset("franken-mouse-travel-gear") ::
+        ImageAsset("franken-protection-racket") ::
+        ImageAsset("franken-rabbit-ambush") ::
+        ImageAsset("franken-rabbit-dominance") ::
+        ImageAsset("franken-rabbit-root-tea") ::
+        ImageAsset("franken-sabotage") ::
+        ImageAsset("franken-sword") ::
+        ImageAsset("franken-wake-sale") ::
+    $) ::
     ConditionalAssetsList((factions, options) => true, "card/deck", lzy = Laziness.Later, scale = 50)(
         ImageAsset("bird-ambush"                ) ::
         ImageAsset("fox-ambush"                 ) ::
@@ -3315,7 +3360,7 @@ object Meta extends MetaGame {
     $) ::
     ConditionalAssetsList((factions, options) => true, "card/deck/fr", "fr:", lzy = Laziness.OnDemand, scale = 50)(French.cards./(ImageAsset(_))) ::
     ConditionalAssetsList((factions, options) => true, "faction/fr", "fr:", lzy = Laziness.OnDemand)(French.boards./(ImageAsset(_))) ::
-    ConditionalAssetsList((factions, options) => options.has(DuskDeck), "card/dusk", lzy = Laziness.Later)(
+    ConditionalAssetsList((factions, options) => options.has(DuskDeck) || options.has(FrankenDeck), "card/dusk", lzy = Laziness.Later)(
         ImageAsset("adventurers"                ) ::
         ImageAsset("breaking-dawn"              ) ::
         ImageAsset("dusk-awakening"             ) ::

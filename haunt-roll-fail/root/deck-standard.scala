@@ -65,7 +65,7 @@ case class TaxCollectorAction(self : WarriorFaction, c : Clearing, p : Piece, th
 
 
 object StandardDeckExpansion extends Expansion {
-    def active(setup : $[Faction], options : $[Meta.O]) = options.has(StandardDeck) || options.has(MixedDeck)
+    def active(setup : $[Faction], options : $[Meta.O]) = options.has(StandardDeck) || options.has(MixedDeck) || options.has(FrankenDeck)
 
     override def birdsong(f : Faction)(implicit game : Game, ask : ActionCollector) {
         f.can(StandAndDeliver).??(factions.but(f).%(_.hand.any)).some.foreach { l =>

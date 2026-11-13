@@ -216,7 +216,7 @@ case class BrazenDemagogueActivateAction(self : Faction, d : Dominance, then : F
 
 
 object SquiresDeckExpansion extends Expansion {
-    def active(setup : $[Faction], options : $[Meta.O]) = options.has(SquiresDeck)
+    def active(setup : $[Faction], options : $[Meta.O]) = (options.has(SquiresDeck) || options.has(FrankenDeck))
 
     def isCardOf(e : Effect)(d : DeckCard) = d @@ {
         case CraftEffectCard(_, _, _, x) => x == e
