@@ -170,7 +170,8 @@ case object AltVictoryChosen extends VictoryChoice {
 }
 
 // PC version only (Gman, 2026-11-11): the last clan or team with its Town Hall wins, whenever that is; nothing else wins, and after
-// the last year the game goes on year after year (PCExpansion)
+// the last year the game goes on year after year (PCExpansion). No longer offered (Meta.retired): Domination is one of the Fan
+// victories since 2026-11-12, beside the other victory conditions (DominationVictory); the games that picked it keep it
 case object DominationOnly extends VictoryChoice {
     def valueOn = "Domination victory only".txt
     override def decorate(e : Elem) = e ~ " " ~ "(PC version)".spn(xstyles.smaller85)
@@ -207,6 +208,38 @@ case class VictoryCardOption(card : VictoryCard) extends GameOption with ToggleO
 
 object VictoryCardOption {
     val all : $[VictoryCardOption] = VictoryCard.all./(VictoryCardOption(_))
+}
+
+// FAN VICTORIES: ways to win from fan-made rules, under Fan content (Gman, 2026-11-12; trade, knowledge and the video game's other
+// victories are to come). Each adds to the Victory conditions picked above, unless its own rules say otherwise. A fan-made module
+// that is a victory goes in FanVictories.modules; a plain option extends FanVictory
+object FanVictories {
+    val group = "Fan victories"
+    val modules : $[Module] = $(FameGainsModule)
+}
+
+trait FanVictory extends GameOption with ImportantOption {
+    val group = FanVictories.group.txt
+    override def fold = |(FanVictories.group)
+}
+
+// Domination (PC version): the last clan (or team) still holding its Town Hall wins at once, beside the other victory conditions
+// (Gman, 2026-11-12: "Don't limit Domination victory to Domination victory only"). In PC version games with the hidden
+// PCDominationChoice every new game gets, only this option makes the last one standing win; older ones always did
+case object DominationVictory extends FanVictory with ToggleOption {
+    def valueOn = "Domination victory".txt
+    override def decorate(e : Elem) = e ~ " " ~ "(PC version)".spn(xstyles.smaller85)
+    override val explain = $(
+        "Needs the " ~ "PC version".hl ~ ": the last clan (or team) that still has its " ~ "Town Hall".hl ~ " wins at once.",
+        "The Victory conditions picked above still win too. Without it, a clan that ends a year without its Town Hall is still out, but the last one left doesn't win until the game ends.",
+    )
+    override def required(all : $[BaseOption]) = $($(ModuleOption(PCVersion)))
+}
+
+// Every new game (mandatoryFor): the PC version's last clan standing wins only with DominationVictory
+case object PCDominationChoice extends GameOption with ToggleOption {
+    val group = "Fan victories".txt
+    def valueOn = "Last clan holding its Town Hall wins only with Domination victory".txt
 }
 
 // WARCHIEF EXPANSION: the whole expansion (ModuleOption(Warchiefs)), only its third clan upgrade cards (WarchiefCards),
@@ -974,12 +1007,28 @@ case object PCVersionUpdate extends GameOption with ToggleOption {
     def valueOn = "Mine territories, Stone from Mines, the wider two-player map, more creatures".txt
 }
 
+// PC version: at the harvest each clan with Mines picks 1 Stone a Mine with no roll, or the Minerals module's roll for Stone, Iron
+// or Gem (Gman, 2026-11-13: PCVersionUpdate gave only Stone). Hidden, and given to every new game (Meta.mandatoryFor); a running
+// game can be switched over with PCMineChoiceAction(X)
+case object PCMineChoice extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "Mines: Stone or a roll".txt
+}
+
 // PC version: Vedrfolnir's controller reveals one random territory it hasn't seen at the end of each year, instead of adding a map
 // tile, as the map is whole (Gman, 2026-11-12). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be
 // switched over with PCVedrfolnirRevealAction(X)
 case object PCVedrfolnirReveal extends GameOption with ToggleOption {
     val group = "PC version".txt
     def valueOn = "Vedrfolnir reveals a random territory each year".txt
+}
+
+// PC version: Vedrfolnir's controller isn't asked to add the top map tile just before the Harvest, as the whole map is built at
+// setup and the tile fits nowhere (Winter for Clan, 2026-11-12: Bear drew one and put it back). Hidden, and given to every new
+// game (Meta.mandatoryFor); a running game can be switched over with PCVedrfolnirNoTileAction(X)
+case object PCVedrfolnirNoTile extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "Vedrfolnir adds no map tile".txt
 }
 
 // Alternative victory with teams: a team wins only when its players fulfil every card in play, Thane or Jarl, as the Uncharted
@@ -1195,13 +1244,16 @@ case object PCVersion extends Module("PC version", "fan-made mode") {
     def needs : $[Module] = $(Creatures, Warchiefs, Sea, EventsModule, TowersModule, WarchiefsPC, MineralsModule, MilitaryModule, AggressiveCreatures, FameUpgradesModule)
     // and the map tiles of every expansion (Gman, 2026-11-11)
     def tiles : $[GameOption] = $(WildernessTiles, WastelandsTiles, HorizonsTiles)
+    // and picks the Fan victories it is played with by default, which can be turned off (Gman, 2026-11-13)
+    def victories : $[GameOption] = $(ModuleOption(FameGainsModule), DominationVictory)
     def about = $(
         "A mode inspired by the Northgard video game. The map is built at setup around a special central tile (a random one unless one is picked).",
         "Each clan starts on its " ~ "Port".hl ~ " with a " ~ "Town Hall".hl ~ " and the two small territories beside it; creatures hold the territories between the clans.",
         "Fog of war".hl ~ ": a clan sees only its territories and the ones it has scouted. Each Explore scouts one territory bordering its own; an enemy's needs an upgraded Town Hall (a build, " ~ Amount(1.hl, Stone.elem) ~ " and " ~ Amount(1.hl, Wood.elem) ~ "). A Defense Tower in the Port territory scouts the coast. A scout gives what an Explore gives: the scouted territory counts as the territory the Explore closed (fame for its tiles, the clan powers, Lay of the Land, the Events).",
         "Creatures are aggressive (no clan shares a territory with one) and have no abilities.",
         "Only Wolves and Draugr move (Myrkalfar from year 3). A Wolf killed comes back where it started, unless a clan holds that territory.",
-        "A clan that ends a year without its Town Hall is out of the game; the last clan (or team) standing wins. The other victory conditions still apply.",
+        "A clan that ends a year without its Town Hall is out of the game; with " ~ "Domination victory".hl ~ " (under Fan victories), the last clan (or team) standing wins. The other victory conditions still apply.",
+        "Picks the " ~ "Domination victory".hl ~ " and " ~ "Alternative fame gains".hl ~ " (Fan victories), which can be turned off.",
         "Turns on Creatures, Warchiefs, Sea (its Ports), Tower PC version, Warchiefs PC version, Minerals, Military paths, Aggressive creatures, Clan Fame upgrades, and the Wilderness, Wastelands and Uncharted Horizons map tiles.",
         "Fan-made, not part of the published game.".styled(xstyles.warning),
     )
@@ -1321,9 +1373,9 @@ object BanCreature {
 case class ModuleOption(module : Module) extends GameOption with ToggleOption with ImportantOption {
     // The Warchiefs module has its own section, with its parts (WarchiefsChoice); fan-made modules have theirs, Fan content;
     // the core box's Creatures is under Base game, with More Creatures, and Events and Sea under Uncharted Horizons, with its map tiles
-    val group = (module == Warchiefs).?(WarchiefsChoice.group).|(module.fan.?("Fan content").|(Module.section(module)).txt)
-    // Fan content folds like the single-choice sections (Gman, 2026-10-29)
-    override def fold = module.fan.?("Fan content")
+    val group = (module == Warchiefs).?(WarchiefsChoice.group).|(FanVictories.modules.has(module).?(FanVictories.group).|(module.fan.?("Fan content").|(Module.section(module))).txt)
+    // Fan content folds like the single-choice sections (Gman, 2026-10-29), and so do the Fan victories
+    override def fold = FanVictories.modules.has(module).?(|(FanVictories.group)).|(module.fan.?("Fan content"))
     def valueOn = (module == Warchiefs).?("Full expansion: warchief pawns and upgrade cards").|((module == Creatures).?("Creatures module").|(module.label)).txt
     override def forcedOff(all : $[BaseOption]) = (module == Warchiefs).??(WarchiefsChoice.others(this))
     override val explain = module.about ++ module.ready.not.$("Not implemented yet.".styled(xstyles.warning))
@@ -1331,4 +1383,6 @@ case class ModuleOption(module : Module) extends GameOption with ToggleOption wi
     override def required(all : $[BaseOption]) = module.ready.?(module.requires).|($($[BaseOption](this)))
     // The PC version turns on the modules it plays with, and is turned off with any of them
     override def forcedOn(all : $[BaseOption]) = (module == PCVersion).??(PCVersion.needs./(ModuleOption) ++ PCVersion.tiles)
+    // and picks the Domination and Alternative fame gains victories, which can be turned off (Gman, 2026-11-13)
+    override def alsoOn(all : $[BaseOption]) = (module == PCVersion).??(PCVersion.victories)
 }

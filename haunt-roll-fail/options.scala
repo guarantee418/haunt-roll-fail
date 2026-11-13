@@ -90,7 +90,7 @@ case class OptionsState[O <: BaseOption] private (all : $[O], mandatory : $[O], 
             copy(selected = selected.but(o)).checkDimmed()
         }
         else {
-            val on = all.intersect(o.forcedOn(all))
+            val on = all.intersect(o.forcedOn(all) ++ o.alsoOn(all))
             val off = o.forcedOff(all)
             val clear = o.clear(all)
 
@@ -147,6 +147,8 @@ trait BaseOption extends Record {
     def required(all : $[BaseOption]) : $[$[BaseOption]] = $($())
     def blocked(all : $[BaseOption]) : $[$[BaseOption]] = $()
     def forcedOn(all : $[BaseOption]) : $[BaseOption] = $()
+    // Turned on with this option when it is picked, but free to be turned off again (unlike forcedOn)
+    def alsoOn(all : $[BaseOption]) : $[BaseOption] = $()
     def forcedOff(all : $[BaseOption]) : $[BaseOption] = $()
     def clear(all : $[BaseOption]) : $[BaseOption] = $()
 }
