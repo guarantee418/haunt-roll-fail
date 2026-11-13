@@ -153,7 +153,7 @@ object BattleExpansion extends MandatoryExpansion {
     // The attacker's chance to cancel an ambush that deals n hits: a counter-ambush goes on with then, no counter deals the hits
     // first (an ambush card deals 2, Mice-in-a-Bush 1)
     def askCounterAmbush(b : Battle, n : Int, then : ForcedAction)(implicit game : Game) = {
-        def canAmbush(d : DeckCard) = canAmbushWith(b.attacker, b.clearing, b.defender)(d)
+        def canAmbush(d : DeckCard) = canAmbushWith(b.attacker, b.clearing, b.defender)(d) || d.as[ActionCard].?(_.effect == SecretCancel)
 
         val pass = BattleAmbushHitsAction(b, n, then)
         val skip = Ask(b.attacker).add(pass.as("No " ~ "Ambush".hl))
@@ -184,7 +184,7 @@ object BattleExpansion extends MandatoryExpansion {
         else {
             val f = b.attacker
             val z = f.hand.any
-            val q = f.hand.%(d => d == Ambush(Bird) || b.clearing.suits.exists(s => d == Ambush(s)) || SquiresDeckExpansion.friendAmbush(f, b.clearing)(d))
+            val q = f.hand.%(d => d == Ambush(Bird) || b.clearing.suits.exists(s => d == Ambush(s)) || SquiresDeckExpansion.friendAmbush(f, b.clearing)(d) || d.as[ActionCard].?(_.effect == SecretCancel))
             val h = f.hand./(d => BattleCounterAmbushAction(f, b, d, q.any, q.contains(d), then).!(q.contains(d).not))
 
             if (q.any)
@@ -742,6 +742,15 @@ object BattleExpansion extends MandatoryExpansion {
 
                         if (f == b.defender && oh + oe < ft)
                             actions :+= TheFaithfulAction(f, b.clearing, BattlePostRollAction(b, fh, oh, fe, oe + 1, full))
+                    }
+
+                    // Action! Deck Booster: the sword's extra hit, by attacker or defender
+                    ActionDeckExpansion.cardOf(f, ActionSword).foreach { d =>
+                        if (f == b.attacker && fh + fe < ot)
+                            actions :+= ActionSwordHitAction(f, d, BattlePostRollAction(b, fh, oh, fe + 1, oe, full))
+
+                        if (f == b.defender && oh + oe < ft)
+                            actions :+= ActionSwordHitAction(f, d, BattlePostRollAction(b, fh, oh, fe, oe + 1, full))
                     }
 
                     b.clearing.suits.%(s => f.can(Partisans(s))).foreach { s =>

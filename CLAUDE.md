@@ -568,7 +568,14 @@ file covers the build, server and deploy. No session can ssh to the server
   usual cards drawn with the Franken art, `Deck.art` and `Deck.frankenArt`, set by `Game`) plus 30 persistent effects of the
   Might and Right (no Favors), Exiles and Partisans, Dawn and Dusk and Squires and Disciples decks, drawn at setup by suit and
   cost (`frankenRecipe`, `FrankenDeckAction` in `root/setup.scala`, before the map); the rest go out of the game. Its back is
-  `card-back-art-fd`. The Action! Deck Booster and the Dark Deck are next. `ReplayCheck <games> franken` plays it.
+  `card-back-art-fd`. `ReplayCheck <games> franken` plays it. The Action! Deck Booster (D3.2) is the toggle "Action! Deck Booster (fan-made)"
+  under Deck, offered with 5 or more players (`ActionBooster`): its 10 cards (`Deck.actionBooster`, `ActionCard` in `root/deck-action.scala`,
+  art `card/action/`) go into the deck once for each player above 5, once with 5, twice at most (`Deck.boosters`). An Action! card is spent from
+  its owner's menus on their turn (`ActionCardMainAction`; a move or battle it starts is paid when done, `ActionPayAction`, like the Squires),
+  the sword's extra hit also in a battle they are in (`ActionSwordHitAction`, in `BattlePostRollAction`); the bag adds 2 to the hand limit
+  that turn (`HandLimitAction`); the Secret! cards are birds, either discarded to draw the top card, the Cancel one a counter-ambush
+  (`askCounterAmbush`), the Score one 3 VP at the start of Birdsong (`SecretScoreAction`). Using a card as its item isn't done.
+  `ReplayCheck <games> six action` (or `seven`) plays it. The Dark Deck is next.
 - The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
   Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
   box) and the Homeland errata, from a player's Google Drive (2026-10-10). The shared deck's back follows
