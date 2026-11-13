@@ -1591,6 +1591,50 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         ).div
     }
 
+    // Alternative fame gains: every clan's fame (hidden ones as "?") and Altar of Kings, how fame is gained and how the fame win works,
+    // f's clan first (the player panel's fame tapped; asked for by Gman on 2026-11-13)
+    def fameGainsView(f : Faction) : Elem = {
+        val goal = FameGainsExpansion.goal
+        val closed = game.options.has(FameAltarClosed)
+        def small(e : Elem) = e.spn(xstyles.smaller85).div
+        // An Altar of Kings the viewers can see (PC version: not under the fog of war) in a territory g controls
+        def seen(t : Territory) = game.has(PCVersion).not || game.isOver || viewers.none || PCExpansion.visible(viewers, t)
+        def altar(g : Faction) : Elem = {
+            val altars = game.controlled(g).%(seen).%(t => game.buildingsIn(t).exists(_._2 == AltarOfKings))
+            if (altars.exists(t => closed.not || game.board.closed(t))) ("controls an " ~ AltarOfKings.elem ~ closed.?(" in a closed territory").|("")).spn(styles.onBoardWrap)
+            else if (altars.any) ("its " ~ AltarOfKings.elem ~ " isn't in a closed territory")
+            else ("no " ~ AltarOfKings.elem)
+        }
+        val clans = (f +: game.factions.but(f)).but(Automa).%(game.states.contains)
+        val yours = game.fameKept.get(f).%(_ => viewers.has(f))
+        val domination = game.has(PCVersion) && PCExpansion.dominationWins
+
+        ("Alternative fame gains".hlb.div ~
+            clans./{ g =>
+                (g.elem ~ ": " ~ Amount(fameHidden(g).?("?".hl).|(g.fame.hl), FameIcon()) ~ ", " ~ altar(g) ~
+                    game.fameResolved.filter(_._1 == g).map(x => ", resolved " ~ x._2.elem).merge ~
+                    game.fameKept.contains(g).?(", an Achievement kept").|("")).div
+            }.merge ~
+            HorizontalBreak ~
+            "The fame win".hlb.div ~
+            small("A clan with " ~ Amount(goal.hl, FameIcon()) ~ " or more that controls an " ~ AltarOfKings.elem ~ closed.?(" in a closed territory").|("") ~ " wins at once" ~ game.teams.?(", with its team").|("") ~ ". Several at once: the most fame wins, then the most territories controlled, units and buildings.") ~
+            small(domination.?("Three closed territories with large buildings don't win. The " ~ "Domination victory".hl ~ " still does: the last clan holding its " ~ TownHall.elem ~ " wins at once.").|("It is the only way to win: three closed territories with large buildings don't.".txt)) ~
+            small("If nobody has won after year " ~ game.lastYear.hl ~ ", the game goes on, year after year, until a clan does.") ~
+            HorizontalBreak ~
+            "Fame gained".hlb.div ~
+            small("Building: " ~ Amount(1.hl, FameIcon()) ~ " for each small building placed, " ~ Amount(2.hl, FameIcon()) ~ " for each large one, and " ~ Amount(3.hl, FameIcon()) ~ " more for an " ~ AltarOfKings.elem ~ " (" ~ Amount(5.hl, FameIcon()) ~ "). Free buildings count; a replaced building doesn't.") ~
+            small("Upgrades: " ~ Amount(5.hl, FameIcon()) ~ " for each clan upgrade bought.") ~
+            small("Fights against a clan: " ~ Amount(1.hl, FameIcon()) ~ " for winning, " ~ Amount(1.hl, FameIcon()) ~ " for each enemy unit killed and " ~ Amount(5.hl, FameIcon()) ~ " for an enemy warchief, won or lost" ~ game.options.has(FameRetreatKills).?("; the loser's figures lost with nowhere to retreat count as killed").|("") ~ ". Fights against creatures give only their usual fame.") ~
+            small("Development cards: their fame when taken, none at the end.") ~
+            small("Achievements: each clan was dealt two and kept one face down. Once, on its turn, it may resolve it for the fame it gives then (not an action); unresolved, it gives nothing. The last year reveals no Achievements." ~ yours./(c => " Yours: " ~ c.elem ~ " (" ~ Amount(CommonExpansion.cardFame(f, c).hl, FameIcon()) ~ " now).").|(Empty)) ~
+            small("The usual fame still comes too: exploring closed territories, defeating creatures, the " ~ AltarOfKings.elem ~ " at each harvest, card effects; Unrest still costs fame.") ~
+            game.has(FameUpgradesModule).?(small("Clan Fame upgrades: fame is public, Achievements and Unrest cards count when taken, and each clan has abilities while its fame is at least " ~ 20.hl ~ ", " ~ 50.hl ~ " or " ~ 100.hl ~ " (tap the upgrades line in its panel).")).|(Empty) ~
+            small("Fan-made by Marzaus (Discord, northgard-fanmade-content).".txt) ~
+            HorizontalBreak ~
+            "(tap to close)".spn(xstyles.smaller85).div
+        ).div
+    }
+
     // Military paths module: the clan's MXP and path, how MXP is gained and the three paths, the clan's levels marked
     def militaryView(f : Faction) : Elem = {
         val path = game.paths.get(f)
@@ -1911,7 +1955,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         ) ++
             // The Lion Kingdom's Faith (LionFaith); its clan upgrades cost Faith, so it opens the Lore Tree
             LionExpansion.faith(f).$(Column(Faith.elem, state.faith, next.faith, 0, open = |(LoreTree(f)))) :+
-            Column(FameIcon(), state.fame, next.fame, 0, hidden = fameHidden(f))
+            Column(FameIcon(), state.fame, next.fame, 0, open = (FameGainsExpansion.on && f != Automa).?(FameGainsView(f)), hidden = fameHidden(f))
 
         // Each cell taps through to the Winter chart, the lore's to the Lore Tree (one OnClick per cell: nested ones would pass both)
         def open(o : |[Any], e : Elem) : Elem = o.orElse(if (f != Automa) |(WinterChart(f)) else None)./(x => OnClick(x, e.div(styles.ledgerCell)(xlo.pointer))).|(e.div(styles.ledgerCell))
@@ -3018,6 +3062,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case FameUpgradesView(f) =>
             showOverlay(overlayScrollX(fameUpgradesView(f)).onClick, onClick)
+
+        case FameGainsView(f) =>
+            showOverlay(overlayScrollX(fameGainsView(f)).onClick, onClick)
 
         // A fight's result tapped in the log
         case FightReportView(r) =>

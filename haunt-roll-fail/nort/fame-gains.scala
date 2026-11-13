@@ -40,6 +40,9 @@ case class FameKeepAction(self : Faction, card : Card, other : Card, l : $[Facti
 // TURN: resolving the kept Achievement, then back to the same choices
 case class FameResolveAction(self : Faction, card : Card, then : ForcedAction) extends BaseAction("Your turn")((g : Game) => FameGainsExpansion.resolveText(self, card)(g)) with ViewObject[Card] { def obj = card }
 
+// The player panel's fame tapped: how fame is gained and the fame win (display only, nort/ui.scala fameGainsView)
+case class FameGainsView(f : Faction)
+
 // 120 fame and an Altar of Kings
 case class FameWinAction(l : $[Faction]) extends ForcedAction
 
