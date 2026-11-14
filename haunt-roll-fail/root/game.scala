@@ -52,9 +52,18 @@ sealed trait SuitCost extends AbstractSuit {
 sealed trait SuitAsset extends AbstractSuit {
     def matches(target : SuitCost) : Boolean = this @@ {
         case _ if target == NoSuit => false
+        // the Dark Deck's Cursed card can't be spent for anything
+        case Cursed => false
         case _ if target == AnySuit => true
         case s if target == s => true
         case Bird => true
+        // the Dark Deck's Abomination cards count as fox, rabbit or mouse (not bird), and those suits pay for an Abomination cost
+        case Abomination => target @@ {
+            case s : BaseSuit => FoxRabbitMouse.has(s)
+            case AnyOf(l) => l.exists(FoxRabbitMouse.has)
+            case _ => false
+        }
+        case s : BaseSuit if target == Abomination => FoxRabbitMouse.has(s)
         case OneOf(l) => l.exists(_.matches(target))
         case s => target @@ {
             case AnyOf(l) if l.exists(matches) => true
@@ -111,6 +120,9 @@ trait BaseSuit extends Suit
 case object Fox extends BaseSuit
 case object Rabbit extends BaseSuit
 case object Mouse extends BaseSuit
+// The Dark Deck (The Doomed Expansion): Abomination cards count as fox, rabbit or mouse; the Cursed card has no suit
+case object Abomination extends Suit
+case object Cursed extends Suit
 
 trait Region extends GameElementary {
     def name = id
@@ -444,7 +456,7 @@ trait FactionState {
 
     var damagePriorities = faction.as[WarriorFaction]./~(_.initialDamagePriorities(options))
 
-    def has(e : Effect) = core.contains(e) || effects.contains(e) || transient.contains(e) || services.contains(e)
+    def has(e : Effect) = core.contains(e) || effects.contains(e) || transient.contains(e) || services.contains(e) || dopple.contains(e)
     def can(e : Effect) = has(e) && !used.contains(e) && !ignored.contains(e)
 
     def cards(name : String, init : $[DeckCard] = $, rule : DeckCard => Boolean = (e : DeckCard) => true) = game.cards.another[DeckCard](name + "-" + faction.short, init, rule)
@@ -453,6 +465,9 @@ trait FactionState {
     board.clearings.foreach(c => location(c))
     board.clearings.foreach(c => location(Limbo(c)))
 
+    if (options.has(DarkDeck))
+        location(OnForbiddenScience)
+
     def transient : $[Effect] = $
 
     var effects : $[Effect] = $
@@ -460,6 +475,9 @@ trait FactionState {
     var ignored : $[Effect] = $
 
     var services : $[Effect] = $
+
+    // the Dark Deck's Doppleganger: a crafted card copied for the rest of the turn
+    var dopple : $[Effect] = $
 
     var vp : Int = 0
     var scorelog : $[Elem] = $
@@ -956,6 +974,7 @@ trait GameImplicits {
 
         def canMoveFrom(o : Region) = o @@ {
             case o : Clearing if factions.but(f).of[Mischief].%!(f.friends).%(e => e.at(o).has(Snare) && e.hidden.has(o).not).any => false
+            case o : Clearing if DarkDeckExpansion.trapped(f, o) => false
             // the Bands: enemies can't move out of a clearing with a Band warrior on the turn they moved into it
             case o : Clearing if options.has(HirelingsByTheCard) && game.movedInto.has((f, o)) && $[Hireling](StreetBand, PopularBand).%(hirelings.has).exists(b => b.friends(f).not && b.at(o).of[Warrior].any) => false
             case o : Clearing if options.has(HirelingsByTheCard).not && hirelings.has(StreetBand) && f.has(StreetBand).not && StreetBand.enchanted.has(o) => false
@@ -1107,6 +1126,9 @@ trait GameImplicits {
                 if (Council.governs(f, c))
                     return CouncilGovernors.of(TC)
 
+                if (DarkDeckExpansion.trapped(f, c))
+                    return BearTraps.elem
+
                 if (game.hirelings.has(FuriousProtector) && f != FuriousProtector && FuriousProtector.friends(f).not && FuriousProtector.at(c).any)
                     return FuriousProtector.elem
             }
@@ -1121,7 +1143,8 @@ trait GameImplicits {
             game.flooded.has(c).not &&
             factions.but(f).of[Feline].%(_.keep.has(c)).none &&
             factions.but(f).of[Mischief].%(e => e.at(c).has(Snare) && e.hidden.has(c).not).none &&
-            Council.governs(f, c).not
+            Council.governs(f, c).not &&
+            DarkDeckExpansion.trapped(f, c).not
 
         def ruleValue(c : Region, mercenaries : $[Trader], friends : $[Faction]) : Int = {
             if (game.states.contains(f).not)
@@ -1188,7 +1211,17 @@ trait GameImplicits {
         def ruleSelf(c : Clearing) = SquiresDeckExpansion.silverTongueRules(f, c) || f.ruleValue(c, $, $) > (factions ++ game.unhired).but(f)./(e => e.ruleValue(c, $, $)).maxOr(0)
 
         def removeStuckEffect(effect : Effect) {
+            if (f.effects.has(effect).not && f.dopple.has(effect)) {
+                f.dopple = $
+                f.log("used up the copy of", effect)
+                f.removeStuckEffect(Doppleganger)
+                return
+            }
+
             f.effects :-= effect
+
+            if (options.has(DarkDeck))
+                DarkDeckExpansion.discarded(f, effect)
 
             if (effect == CoffinMakers)
                 game.coffins --> game.pool
@@ -1384,6 +1417,9 @@ trait GameImplicits {
                 case d @ Ambush(Frog) if factions.of[InvasiveEEE].any && InvasiveEEEExpansion.frogAmbushAlwaysBottom =>
                     val e = factions.of[InvasiveEEE].first
                     InvasiveEEEExpansion.pondBottom(e) { source --> d --> e.pond }
+                // the Dark Deck's Cursed card can't be discarded: a drawn one goes to hand, one in hand or crafted stays
+                case d if d.suit == Cursed && factions.exists(e => e.hand == source || e.stuck == source) =>
+                case d if d.suit == Cursed && factions.exists(e => e.drawn == source) => source --> d --> factions.%(e => e.drawn == source).first.hand
                 case d if d.suit == Frog => source --> d -->{
                     factions.of[InvasiveEEE].single./(_.pond) ||
                     factions.of[InvasiveDDD].single./(_.deck) ||
@@ -1616,6 +1652,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
             DuskDeckExpansion,
             SquiresDeckExpansion,
             ActionDeckExpansion,
+            DarkDeckExpansion,
 
             SetupExpansion,
             MapsExpansion,
@@ -1802,12 +1839,17 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
 
     val cards = new ValueTracker[Card]
     Deck.frankenArt = options.has(FrankenDeck)
+    Deck.darkArt = options.has(DarkDeck)
     val playingDeck = Deck.fromOptions(options, players.num, players.of[Faction])
     var frankenDealt = false
     val predrafts = players./(p => p -> cards.another[DeckCard]("draft-" + p)).toMap
     val pile = cards.another[DeckCard]("pile", playingDeck)
     val deck = cards.another[DeckCard]("deck")
     val outOfGameCards = cards.another[DeckCard]("out-of-game-cards")
+    // the Dark Deck: Rabbit Roulette's pool, Bear Traps' traps and the Golden Knight
+    val roulette = cards.another[DeckCard]("roulette")
+    var traps : $[(Faction, Clearing)] = $
+    var knights : $[(Faction, Clearing)] = $
     val dominances = cards.another[Dominance]("dominances")
 
     val pieces = new IdentityTracker[(Faction, Region), Figure]
@@ -1859,7 +1901,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
 
     val pool = RedirectRegion { u => u.faction.reserve }
 
-    var uncrafted : $[Item] = $(Bag, Bag, Crossbow, Boots, Boots, Hammer, Sword, Sword, Teapot, Teapot, Coins, Coins)
+    var uncrafted : $[Item] = $(Bag, Bag, Crossbow, Boots, Boots, Hammer, Sword, Sword, Teapot, Teapot, Coins, Coins) ++ options.has(DarkDeck).??(DarkDeckExpansion.supply)
 
     var turn : Int = 0
 
@@ -1882,7 +1924,9 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
             (mousehold.has(c)).?(Figure(Neutral, Mousehold, 0)) ++
             (foxburrow.has(c)).?(Figure(Neutral, Foxburrow, 0)) ++
             (rabbittown.has(c)).?(Figure(Neutral, Rabbittown, 0)) ++
-            (scorched.contains(c)).??(0.to(11)./(n => Figure(Neutral, ScorchedEarthMarker(n % 6 + 1), n)))
+            (scorched.contains(c)).??(0.to(11)./(n => Figure(Neutral, ScorchedEarthMarker(n % 6 + 1), n))) ++
+            traps.%((_, o) => o == c).indices./(n => Figure(Neutral, BearTrapMarker, n)) ++
+            knights.%((_, o) => o == c).indices./(n => Figure(Neutral, GoldenKnightMarker, n))
     }
 
     def viewHand(f : Faction) = f.hand./(ViewCardInfoAction(f, PreBreak(OwnHand).elem(game), _))

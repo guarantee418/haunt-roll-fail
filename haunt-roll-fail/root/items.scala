@@ -16,8 +16,10 @@ import root.elem._
 
 sealed trait Item extends Record with Elementary {
     def name = toString
-    def elem = name.styled(styles.itemText)
-    def imgid = "item-" + name
+    // what players read; `name` is what saved games write
+    def title = name
+    def elem = title.styled(styles.itemText)
+    def imgid = "item-" + toString
     def img = Image(imgid, styles.piece)
     def imgEmpty = Image(imgid + "-empty", styles.piece)
     def imgD = Image(imgid, styles.iii)
@@ -37,15 +39,19 @@ case object Hammer extends Item
 case object Coins extends Item
 case object Bag extends Item
 case object Club extends Item
+// The Dark Deck's items (The Doomed Expansion): the Vagabond's actions for the Book of Names and the Rabbit's Paw aren't done
+case object BookOfNames extends Item { override def title = "Book of Names" }
+case object RabbitsPaw extends Item { override def title = "Rabbit's Paw" }
+case object CursedIdol extends Item { override def title = "Cursed Idol" }
 
 case class ItemRef(item : Item, exhausted : Boolean, damaged : Boolean) extends HitTarget with Elementary with GoodMatch {
     def elem = (damaged, exhausted) @@ {
-        case (true , true ) => item.name.styled(styles.itemText, styles.damexh)
-        case (true , false) => item.name.styled(styles.itemText, styles.damaged)
-        case (false, true ) => item.name.styled(styles.itemText, styles.exhausted)
-        case (false, false) => item.name.styled(styles.itemText)
+        case (true , true ) => item.title.styled(styles.itemText, styles.damexh)
+        case (true , false) => item.title.styled(styles.itemText, styles.damaged)
+        case (false, true ) => item.title.styled(styles.itemText, styles.exhausted)
+        case (false, false) => item.title.styled(styles.itemText)
     }
-    def imgid = "item-" + item.name + damaged.??("-damaged") + exhausted.??("-exhausted")
+    def imgid = item.imgid + damaged.??("-damaged") + exhausted.??("-exhausted")
     def img = Image(imgid, styles.piece)
     def imgD = Image(imgid, styles.iii)
     def exhaust = item.ref(true, damaged)
@@ -70,7 +76,8 @@ object ItemRef {
 object Item extends GoodMatch {
     def track = $(Teapot, Coins, Bag)./~(i => 3.times(i.ref(false, false)))
     def mucho = order./~(i => 4.times(i.ref(false, false)))
-    def order = $(Teapot, Boots, Sword, Torch, Crossbow, Hammer, Coins, Bag)
+    def order = $(Teapot, Boots, Sword, Torch, Crossbow, Hammer, Coins, Bag) ++ dark
+    def dark = $(BookOfNames, RabbitsPaw, CursedIdol)
 }
 
 trait QuasiItem extends GoodMatch {
@@ -136,7 +143,7 @@ case class ToDamage(ref : ItemRef) extends RealItem {
 }
 
 case class ToDiscard(ref : ItemRef) extends RealItem {
-    def elem(selected : Boolean) = Image(selected.?("item-" + ref.item.name + "-empty").|(ref.imgid))
+    def elem(selected : Boolean) = Image(selected.?(ref.item.imgid + "-empty").|(ref.imgid))
     def available = true
 }
 

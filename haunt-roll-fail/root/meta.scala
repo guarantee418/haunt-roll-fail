@@ -227,6 +227,18 @@ case object FrankenDeck extends DeckOption {
     )
 }
 
+case object DarkDeck extends DeckOption {
+    val valueOn = "Dark Deck".hh ~ " (fan-made)"
+    override val explain = $(
+        "A 66 card deck from " ~ Link("https://boardgamegeek.com/boardgameexpansion/482234/the-doomed-expansion-fan-expansion-for-root", "The Doomed Expansion", $(xstyles.link)) ~ ", fan-made by " ~ "slugfacekillah".hl ~ ".",
+        "Its six " ~ "Abomination".styled(Abomination) ~ " cards count as fox, rabbit or mouse, but not bird.",
+        "The " ~ "Cursed!".hh ~ " card has no suit: it can't be spent or discarded, only given, taken or swapped by effects, or crafted with four of any suit for " ~ 3.vp ~ " and the " ~ "Cursed Idol".hh ~ ".",
+        "A fifth " ~ "Dark Dominance".hh ~ " needs three adjacent ruled clearings and the " ~ "Cursed Idol".hh ~ ".",
+        "Its shared supply adds a " ~ "Torch".hh ~ ", the " ~ "Book of Names".hh ~ ", the " ~ "Rabbit's Paw".hh ~ " and the " ~ "Cursed Idol".hh ~ " to the craftable items.",
+        Image("dark-dark-dominance", styles.card)
+    )
+}
+
 case object ActionBooster extends GameOption with ToggleOption with FoldedOption {
     val group = "Deck"
     val valueOn = "Action! Deck Booster".hh ~ " (fan-made)"
@@ -1646,7 +1658,7 @@ object Meta extends MetaGame {
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         $,
-        $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck) ++
+        $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck, DarkDeck) ++
         (n >= 5).$(ActionBooster) ++
         $,
         (l.of[Feline].num > 1).$(TheWoodMustFlow) ++
@@ -1705,7 +1717,7 @@ object Meta extends MetaGame {
         $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
-        $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck) ++
+        $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck, DarkDeck) ++
         (n >= 5).$(ActionBooster) ++
         hitsAndAmbushes(l) ++
         (n > 2).?(TotalWarDominance) ++
@@ -1997,6 +2009,8 @@ object Meta extends MetaGame {
         ImageAsset("clearing-suit-rabbit-off" ) ::
         ImageAsset("clearing-suit-mouse-off"  ) ::
 
+        ImageAsset("dark-bear-trap"    ) ::
+        ImageAsset("dark-golden-knight") ::
         ImageAsset("scorched-earth-1"  ) ::
         ImageAsset("scorched-earth-2"  ) ::
         ImageAsset("scorched-earth-3"  ) ::
@@ -2102,6 +2116,8 @@ object Meta extends MetaGame {
         ImageAsset("card-suit-mouse-gray"   ) ::
         ImageAsset("card-suit-frog-gray"    ) ::
         ImageAsset("card-suit-anysuit-gray" ) ::
+        ImageAsset("card-suit-abomination-gray" ) ::
+        ImageAsset("card-suit-cursed-gray" ) ::
 
         ImageAsset("deck" ) ::
         ImageAsset("deck-frog" ) ::
@@ -2113,6 +2129,8 @@ object Meta extends MetaGame {
         ImageAsset("pile-rabbit" ) ::
         ImageAsset("pile-mouse"  ) ::
         ImageAsset("pile-frog"   ) ::
+        ImageAsset("pile-abomination" ) ::
+        ImageAsset("pile-cursed" ) ::
     $) ::
     ConditionalAssetsList((factions, options) => true, "faction")(
         ImageAsset("action-black" ) ::
@@ -2210,6 +2228,22 @@ object Meta extends MetaGame {
         ImageAsset("item-club-damaged-exhausted"    ) ::
         ImageAsset("item-club-empty"    ) ::
 
+        ImageAsset("item-bookofnames"                   ) ::
+        ImageAsset("item-bookofnames-exhausted"         ) ::
+        ImageAsset("item-bookofnames-damaged"           ) ::
+        ImageAsset("item-bookofnames-damaged-exhausted" ) ::
+        ImageAsset("item-bookofnames-empty"             ) ::
+        ImageAsset("item-rabbitspaw"                    ) ::
+        ImageAsset("item-rabbitspaw-exhausted"          ) ::
+        ImageAsset("item-rabbitspaw-damaged"            ) ::
+        ImageAsset("item-rabbitspaw-damaged-exhausted"  ) ::
+        ImageAsset("item-rabbitspaw-empty"              ) ::
+        ImageAsset("item-cursedidol"                    ) ::
+        ImageAsset("item-cursedidol-exhausted"          ) ::
+        ImageAsset("item-cursedidol-damaged"            ) ::
+        ImageAsset("item-cursedidol-damaged-exhausted"  ) ::
+        ImageAsset("item-cursedidol-empty"              ) ::
+
         ImageAsset("item-any"         ) ::
         ImageAsset("item-any-damaged" ) ::
 
@@ -2254,6 +2288,7 @@ object Meta extends MetaGame {
         ImageAsset("card-back-art-ep") ::
         ImageAsset("card-back-art-sd") ::
         ImageAsset("card-back-art-fd") ::
+        ImageAsset("card-back-art-dd") ::
 
     $) ::
     ConditionalAssetsList((factions, options) => true, "faction/hireling")(
@@ -3271,6 +3306,67 @@ object Meta extends MetaGame {
         ImageAsset("action-key") ::
         ImageAsset("action-secret-cancel") ::
         ImageAsset("action-secret-score") ::
+    $) ::
+    ConditionalAssetsList((factions, options) => options.has(DarkDeck), "card/dark", lzy = Laziness.Later, scale = 50)(
+        ImageAsset("dark-a-visit-to-friends") ::
+        ImageAsset("dark-abomination-ambush") ::
+        ImageAsset("dark-anvil") ::
+        ImageAsset("dark-arms-trader") ::
+        ImageAsset("dark-bear-traps") ::
+        ImageAsset("dark-bird-ambush") ::
+        ImageAsset("dark-bird-crossbow") ::
+        ImageAsset("dark-bird-dominance") ::
+        ImageAsset("dark-birdy-bindle") ::
+        ImageAsset("dark-blood-gate") ::
+        ImageAsset("dark-book-of-names") ::
+        ImageAsset("dark-bottom-feeder") ::
+        ImageAsset("dark-bunny-bandits") ::
+        ImageAsset("dark-cleansing-fire") ::
+        ImageAsset("dark-cursed") ::
+        ImageAsset("dark-dark-dominance") ::
+        ImageAsset("dark-deadly-deadly-poison") ::
+        ImageAsset("dark-devotion-to-the-deep") ::
+        ImageAsset("dark-doppleganger") ::
+        ImageAsset("dark-felonious-fox") ::
+        ImageAsset("dark-foaming-fury") ::
+        ImageAsset("dark-forbidden-science") ::
+        ImageAsset("dark-fox-ambush") ::
+        ImageAsset("dark-fox-dominance") ::
+        ImageAsset("dark-fox-root-tea") ::
+        ImageAsset("dark-fox-transmutations") ::
+        ImageAsset("dark-fox-travel-gear") ::
+        ImageAsset("dark-foxes-of-fortune") ::
+        ImageAsset("dark-foxfolk-steel") ::
+        ImageAsset("dark-gently-used-knapsack") ::
+        ImageAsset("dark-golden-knight") ::
+        ImageAsset("dark-headhunters-trail") ::
+        ImageAsset("dark-infernal-designs") ::
+        ImageAsset("dark-investments") ::
+        ImageAsset("dark-meat-for-the-masses") ::
+        ImageAsset("dark-midnight-runners") ::
+        ImageAsset("dark-mouse-ambush") ::
+        ImageAsset("dark-mouse-crossbow") ::
+        ImageAsset("dark-mouse-dominance") ::
+        ImageAsset("dark-mouse-in-a-sack") ::
+        ImageAsset("dark-mouse-root-tea") ::
+        ImageAsset("dark-mouse-transmutations") ::
+        ImageAsset("dark-mouse-travel-gear") ::
+        ImageAsset("dark-mouster-criminal") ::
+        ImageAsset("dark-murderous-mice") ::
+        ImageAsset("dark-protection-racket") ::
+        ImageAsset("dark-rabbit-ambush") ::
+        ImageAsset("dark-rabbit-dominance") ::
+        ImageAsset("dark-rabbit-root-tea") ::
+        ImageAsset("dark-rabbit-roulette") ::
+        ImageAsset("dark-rabbit-transmutations") ::
+        ImageAsset("dark-rabbits-paw") ::
+        ImageAsset("dark-rapacious-rabbit") ::
+        ImageAsset("dark-rodent-zero") ::
+        ImageAsset("dark-sabotage") ::
+        ImageAsset("dark-sword") ::
+        ImageAsset("dark-torch") ::
+        ImageAsset("dark-wake-sale") ::
+        ImageAsset("dark-words-of-undoing") ::
     $) ::
     ConditionalAssetsList((factions, options) => options.has(FrankenDeck), "card/franken", lzy = Laziness.Later, scale = 50)(
         ImageAsset("franken-a-visit-to-friends") ::

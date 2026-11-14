@@ -587,7 +587,14 @@ file covers the build, server and deploy. No session can ssh to the server
   the sword's extra hit also in a battle they are in (`ActionSwordHitAction`, in `BattlePostRollAction`); the bag adds 2 to the hand limit
   that turn (`HandLimitAction`); the Secret! cards are birds, either discarded to draw the top card, the Cancel one a counter-ambush
   (`askCounterAmbush`), the Score one 3 VP at the start of Birdsong (`SecretScoreAction`). Using a card as its item isn't done.
-  `ReplayCheck <games> six action` (or `seven`) plays it. The Dark Deck is next.
+  `ReplayCheck <games> six action` (or `seven`) plays it. The Dark Deck (D3.1) is the Deck choice "Dark Deck (fan-made)" (`DarkDeck`):
+  its 66 cards (`Deck.darkDeck`, art `card/dark/`, back `card-back-art-dd`), the Abomination suit (counts as fox, rabbit or mouse,
+  never bird; `SuitAsset.matches`), the Cursed card (can't be spent or discarded, `DirectDiscard` leaves it in hand; crafted with 4 of
+  any suit for 3 VP and the Cursed Idol, then out of the game), Dark Dominance (the Idol and 3 connected ruled clearings), the dark items
+  added to the shared supply (Torch, Book of Names, Rabbit's Paw, Cursed Idol; `Item.title` is their display name, `name` what saves
+  write) and the persistent effects, all in `root/deck-dark.scala` (`DarkDeckExpansion`, its header lists the readings). Traps and the
+  Golden Knight are drawn on the map (`BearTrapMarker`, `GoldenKnightMarker`, display only). Not done: Rodent Zero's Infected and the
+  Vagabond's Book of Names and Rabbit's Paw actions. `ReplayCheck <games> base dark` plays it.
 - The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
   Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
   box) and the Homeland errata, from a player's Google Drive (2026-10-10). The shared deck's back follows

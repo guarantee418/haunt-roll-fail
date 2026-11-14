@@ -56,6 +56,7 @@ object DominanceExpansion extends MandatoryExpansion {
                             (f.vp >= 10).??(f.hand.$.of[BaseSuitDominance]) ++
                             (f.vp >= 10).??(f.hand.$.of[CornersDominance]) ++
                             (f.vp >= 10).??(f.hand.$.of[EnclaveDominance.type]) ++
+                            (f.vp >= 10).??(f.hand.$.of[DarkDominance.type]) ++
                             (clearings.%(_.asset.use(a => a.matches(Frog) && FoxRabbitMouse.exists(a.matches).not)).num * 2 >= clearings.num).??(f.hand.$.of[FrogDominance.type])
 
 

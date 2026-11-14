@@ -122,7 +122,7 @@ case class TakeAmbushAction(self : Faction, d : DeckCard, then : ForcedAction) e
 
 
 object ExilesDeckExpansion extends Expansion {
-    def active(setup : $[Faction], options : $[Meta.O]) = options.has(ExilesDeck) || options.has(MixedDeck) || options.has(FrankenDeck)
+    def active(setup : $[Faction], options : $[Meta.O]) = options.has(ExilesDeck) || options.has(MixedDeck) || options.has(FrankenDeck) || options.has(DarkDeck)
 
     override def birdsong(f : Faction)(implicit game : Game, ask : ActionCollector) {
         f.can(SwapMeet).??(factions.but(f).%(_.hand.any)).some.foreach { l =>
