@@ -789,6 +789,9 @@ object BattleExpansion extends MandatoryExpansion {
                 }
 
                 if (f.canRemove(b.clearing)(o)) {
+                    if (options.has(DarkDeck))
+                        actions ++= DarkDeckExpansion.postRoll(f, b, fh, oh, fe, oe, full, ft, ot)
+
                     if (f.can(BrutalTactics))
                         if (f == b.attacker && fh + fe < ot)
                             actions :+= BrutalTacticsAction(f, b.defender, BattlePostRollAction(b, fh, oh, fe + 1, oe, full))

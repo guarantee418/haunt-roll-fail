@@ -206,6 +206,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case Keep => { DrawRect("castle", -250, -320, 1, 1) }
 
             case ScorchedEarthMarker(n) => { DrawRect("scorched-earth-" + n, -45, -45, 90, 90) }
+            case BearTrapMarker => { DrawRect("dark-bear-trap", -40, -40, 80, 80) }
+            case GoldenKnightMarker => { DrawRect("dark-golden-knight", -45, -45, 90, 90) }
 
             case Cat => { DrawRect(pr + "cat", -35, -82, 70, 92) }
             case Hawk => { DrawRect(pr + "hawk", -43, -80, 76, 90) }
@@ -2246,12 +2248,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 Div(
                     Div(Image("satchel-top-2" + (f.command == 2).??("-" + f.style), styles.ii) ~ Image("satchel-top", styles.ii) ~ Image("satchel-top-3" + (f.command == 3).??("-" + f.style), styles.ii) ~ Image("satchel-top-4" + (f.command == 4).??("-" + f.style), styles.ii), styles.satchel) ~
                     Div(Image("satchel-left-1" + (f.command == 1).??("-" + f.style), styles.iih) ~
-                        f.hoard.command./(i => Image("item-" + i.name, styles.ii)) ~ (ic./(i => Image("item-" + i.name + "-empty", styles.ii)) ++ 4.times(Image("item-x-placeholder", styles.ii))).take(4).dropRight(f.hoard.command.num) ~
+                        f.hoard.command./(i => Image(i.imgid, styles.ii)) ~ (ic./(i => Image(i.imgid + "-empty", styles.ii)) ++ 4.times(Image("item-x-placeholder", styles.ii))).take(4).dropRight(f.hoard.command.num) ~
                         Image("satchel-right-empty", styles.iih)
                     ) ~
                     Div(Image("satchel-middle-start", styles.ii) ~ 3.times(Image("satchel-middle-cont", styles.ii)), styles.satchel) ~
                     Div(Image("satchel-left-1" + (f.prowess == 1).??("-" + f.style), styles.iih) ~
-                        f.hoard.prowess./(i => Image("item-" + i.name, styles.ii)) ~ (ip./(i => Image("item-" + i.name + "-empty", styles.ii)) ++ 4.times(Image("item-x-placeholder", styles.ii))).take(4).dropRight(f.hoard.prowess.num) ~
+                        f.hoard.prowess./(i => Image(i.imgid, styles.ii)) ~ (ip./(i => Image(i.imgid + "-empty", styles.ii)) ++ 4.times(Image("item-x-placeholder", styles.ii))).take(4).dropRight(f.hoard.prowess.num) ~
                         Image("satchel-right-empty", styles.iih)
                     ) ~
                     Div(Image("satchel-bottom-2" + (f.prowess == 2).??("-" + f.style), styles.ii) ~ Image("satchel-bottom", styles.ii) ~ Image("satchel-bottom-3" + (f.prowess == 3).??("-" + f.style), styles.ii) ~ Image("satchel-bottom-4" + (f.prowess == 4).??("-" + f.style), styles.ii), styles.satchel)
@@ -2580,6 +2582,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         case Some(ExilesDeck) => "card-back-art-ep"
         case Some(SquiresDeck) => "card-back-art-sd"
         case Some(FrankenDeck) => "card-back-art-fd"
+        case Some(DarkDeck) => "card-back-art-dd"
         case _ => "card-back-art"
     }
 
@@ -2981,11 +2984,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     less("Command".f.larger, Dash, f.command.hlb.larger, "action".s(f.command), "to", "Command the Hundreds".styled(styles.phase)) ~
                     more("Command".hl.larger, "grants", f.command.hlb.larger, "action".s(f.command), "each turn to", "build".hh, "or", "move".hh, "or", "battle".hh, Dot) ~
                     more(Bag.name.spn(styles.itemInfo), Comma, Boots.name.spn(styles.itemInfo), Comma, Coins.name.spn(styles.itemInfo), "further increase it.") ~
-                    itemLine(n => "item-" + f.hoard.command(n).name, f.hoard.command.num, 4, n => "item-x-placeholder" + $("-2p", "-0p", "-3p", "-4p")(n)) ~
+                    itemLine(n => f.hoard.command(n).imgid, f.hoard.command.num, 4, n => "item-x-placeholder" + $("-2p", "-0p", "-3p", "-4p")(n)) ~
                     less("Prowess".f.larger, Dash, f.prowess.hlb.larger, "action".s(f.prowess), "to", "Advance the Warlord".styled(styles.phase)) ~
                     more("Prowess".hl.larger, "grants", f.prowess.hlb.larger, "action".s(f.prowess), "each turn to", "move".hh, "and then", "battle".hh, "with the", "Warlord".f) ~
                     more($(Sword, Hammer, Teapot, Crossbow)./(_.name.spn(styles.itemInfo)).comma, "further increase it.") ~
-                    itemLine(n => "item-" + f.hoard.prowess(n).name, f.hoard.prowess.num, 4, n => "item-x-placeholder" + $("-2p", "-0p", "-3p", "-4p")(n)) ~
+                    itemLine(n => f.hoard.prowess(n).imgid, f.hoard.prowess.num, 4, n => "item-x-placeholder" + $("-2p", "-0p", "-3p", "-4p")(n)) ~
                     more("Apart from "~ "crafting", "with", "Strongholds".f, Comma, "items".hh, "can also be obtained") ~
                     more("by", "razing".f, "ruins".hh, "or", "looting".f, "other factions in", "battle".hh, Dot) ~
                     HGap ~
@@ -2993,7 +2996,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     game.ruins.values./~(_.items).$.sortBy(i => Item.order.indexOf(i)).distinct.diff(f.fromRuins).some./(l =>
                         desc(l./(_.name.spn(styles.itemInfo)).comma, (l.num > 1 || l.diff($(Boots, Coins)).none).?("are").|("is"), "available in the", "ruins".hh, Dot)
                     ) ~
-                    factions.but(f).%(_.is[Knaves].not).%(_.forTrade.any)./(e => desc(e.forTrade./(_.item.name.spn(styles.itemInfo)).comma, "can be", "looted".f, "from", e.elem, Dot)).merge ~
+                    factions.but(f).%(_.is[Knaves].not).%(_.forTrade.any)./(e => desc(e.forTrade./(_.item.title.spn(styles.itemInfo)).comma, "can be", "looted".f, "from", e.elem, Dot)).merge ~
                     HGap ~
                     HGap ~
                     HGap ~
@@ -3055,7 +3058,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                         HGap ~
                         HGap ~
                         desc() ~
-                        desc((mood.name.styled(f).larger ~ mood.item.but(Torch)./(i => FigureSpace ~ Image("item-" + i.name + (f.hoard.command ++ f.hoard.prowess).has(i).??("-exhausted"), styles.ii))).div(xlo.flexhcenter)) ~
+                        desc((mood.name.styled(f).larger ~ mood.item.but(Torch)./(i => FigureSpace ~ Image(i.imgid + (f.hoard.command ++ f.hoard.prowess).has(i).??("-exhausted"), styles.ii))).div(xlo.flexhcenter)) ~
                         HGap ~
                         Image("info:mood-" + mood)(styles.illustration) ~
                         desc(mood.long(f)) ~
@@ -4857,7 +4860,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     HGap ~
                     HGap ~
                     desc("Items".hl.larger) ~
-                    itemLine(n => "item-" + (n < f.exhausted.num).?(f.exhausted(n).name + "-exhausted").|(f.ready(n - f.exhausted.num).name), f.exhausted.num + f.ready.num, f.exhausted.num + f.ready.num) ~
+                    itemLine(n => (n < f.exhausted.num).?(f.exhausted(n).imgid + "-exhausted").|(f.ready(n - f.exhausted.num).imgid), f.exhausted.num + f.ready.num, f.exhausted.num + f.ready.num) ~
                     HGap ~
                     HGap ~
                     HGap ~
@@ -5212,17 +5215,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             craftable.foreach { c =>
                 if (available.has(c)) {
                     available :-= c
-                    uncrafted :+= Image("item-" + c.name, styles.iii)
+                    uncrafted :+= Image(c.imgid, styles.iii)
                 }
                 else
-                    uncrafted :+= Image("item-" + c.name + "-empty", styles.iii)
+                    uncrafted :+= Image(c.imgid + "-empty", styles.iii)
             }
 
-            val items = (uncrafted.take(6) ~ Break ~ uncrafted.drop(6)).div(styles.margined)
+            val items = (uncrafted.take(6) ~ Break ~ uncrafted.drop(6)).div(styles.margined) ~
+                game.options.has(DarkDeck).?(Break ~ "Dark Deck shared supply".hl.div ~ DarkDeckExpansion.supply./(c => Image(c.imgid + game.uncrafted.has(c).not.??("-empty"), styles.iii)).merge.div(styles.margined)).|(Empty)
 
             val ruins = game.ruins.values./~(_.items).$.sortBy(i => Item.order.indexOf(i))
 
-            showOverlay(overlayScrollX("Craftable Items".hl.div ~ items ~ ruins.some./(Break ~ "In Ruins".hl.div ~ _./(i => Image("item-" + i.name, styles.iii)).merge).|(Empty)), onClick)
+            showOverlay(overlayScrollX("Craftable Items".hl.div ~ items ~ ruins.some./(Break ~ "In Ruins".hl.div ~ _./(i => Image(i.imgid, styles.iii)).merge).|(Empty)), onClick)
 
         case (f : Faction, h : Hireling) =>
             onHirelingStatus(h, false)
@@ -5302,16 +5306,19 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         craftable.foreach { c =>
             if (available.has(c)) {
                 available :-= c
-                uncrafted :+= Image("item-" + c.name, styles.ii)
+                uncrafted :+= Image(c.imgid, styles.ii)
             }
             else
-                uncrafted :+= Image("item-" + c.name + "-empty", styles.ii)
+                uncrafted :+= Image(c.imgid + "-empty", styles.ii)
         }
 
         val items = (uncrafted.take(6).merge.div(xlo.flexhcenter)(xlo.flexnowrap) ~ uncrafted.drop(6).merge.div(xlo.flexhcenter)(xlo.flexnowrap)).div(xlo.pointer).onClick.param("view-items")
 
+        // The Dark Deck's shared supply, beside the item tracker (it has no slots there)
+        val darkItems = game.options.has(DarkDeck).?(DarkDeckExpansion.supply./(c => Image(c.imgid + game.uncrafted.has(c).not.??("-empty"), styles.ii)).merge.div(xlo.flexhcenter)(xlo.flexnowrap).div(xlo.pointer).onClick.param("view-items"))
+
         // The items are on the item tracker when the board trackers are shown, the piles and dominances on the map with Card Piles on the map
-        val s = $(showTrackers.not.?(items), quests, pilesOnMap.not.?(discard), pond.filter(_ => hor && pilesOnMap.not)./(_.div(xlo.flexhcenter)), pilesOnMap.not.?(dominances)).flatten.but(Empty)./(_.div(styles.skipline)).merge
+        val s = $(showTrackers.not.?(items), darkItems, quests, pilesOnMap.not.?(discard), pond.filter(_ => hor && pilesOnMap.not)./(_.div(xlo.flexhcenter)), pilesOnMap.not.?(dominances)).flatten.but(Empty)./(_.div(styles.skipline)).merge
 
         container.replace((s.div(xlo.flexhcenter)(styles.gstatus)), resources, onClick)
     }

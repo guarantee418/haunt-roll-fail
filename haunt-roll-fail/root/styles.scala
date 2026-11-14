@@ -164,6 +164,9 @@ package object elem {
         Bird --> color("#6ac0ba")
         // the green of the Homeland frog cards and of the frog decree icons (asked for by the owner on 2026-10-17)
         Frog --> color("#b7b13c")
+        // the Dark Deck's Abomination suit, fox, rabbit and mouse at once, and its suitless Cursed card
+        Abomination --> color("#f0a040")
+        Cursed --> color("#c8c8c8")
 
         object FoxFrog extends CustomStyle(background("linear-gradient(to bottom, #e53e36 0%, #e53e36 50%, #b7b13c 70%, #b7b13c 100%)"), background.clip("text"), color("transparent"))
         object RabbitFrog extends CustomStyle(background("linear-gradient(to bottom, #f4e74f 0%, #f4e74f 50%, #b7b13c 70%, #b7b13c 100%)"), background.clip("text"), color("transparent"))

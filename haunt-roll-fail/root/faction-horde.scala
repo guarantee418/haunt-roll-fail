@@ -250,7 +250,7 @@ case class AnointWarlordAction(self : Horde, c : Clearing) extends BaseAction("A
 
 case class SelectMoodAction(self : Horde, m : Mood) extends BaseAction("Choose new", "Mood".styled(self))((m.item != Torch).?(m.item.img), m.name.hl, m.desc(self))
 
-case class DiscardLavishItemAction(self : Horde, item : Item, c : Option[Clearing], n : Int) extends BaseAction("Discard an item", implicit g => c./(r => "to place " ~ n.times(Image("lh-rat", styles.action)) ~ " in " ~ r.elem))("Discard", Image("item-" + item.name, styles.piece))
+case class DiscardLavishItemAction(self : Horde, item : Item, c : Option[Clearing], n : Int) extends BaseAction("Discard an item", implicit g => c./(r => "to place " ~ n.times(Image("lh-rat", styles.action)) ~ " in " ~ r.elem))("Discard", Image(item.imgid, styles.piece))
 
 case class BattleLootAction(self : Faction, e : Faction, b : Battle, l : $[ItemRef]) extends BaseAction("Loot", e)(l./(_.img))
 case class BattleNoLootAction(self : Faction, e : Faction, b : Battle) extends BaseAction(None)("Cancel")

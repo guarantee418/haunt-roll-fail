@@ -101,6 +101,15 @@ case object FrogDominance extends Dominance {
     def altL = name + " - change own win condition - now win only if ruling more Frog clearings than each other player"
 }
 
+// The Dark Deck's fifth Dominance: three adjacent ruled clearings and the Cursed Idol
+case object DarkDominance extends Dominance {
+    val suit = Abomination
+    def name = "Dark Dominance"
+    def id = "dark-dark-dominance"
+    override def altS = name
+    def altL = name + " - change own win condition - now win only if ruling three adjacent clearings and having the Cursed Idol at the start of Birdsong"
+}
+
 case object EnclaveDominance extends Dominance {
     val suit = Frog
     def name = "Frog Dominance"
@@ -118,6 +127,7 @@ object Deck {
         case DuskDeck => ambushes ++ items ++ effectsDusk ++ l.has(DuskDeckFixes).$(fowlPlay) ++ (arity > 2).??(dominances)
         case SquiresDeck => ambushes ++ items ++ effectsSquires ++ (arity > 2).??(dominances)
         case FrankenDeck => ambushes ++ frankenItems ++ $(frankenSabotage) ++ (arity > 2).??(dominances) ++ frankenPool(l.has(DuskDeckFixes))
+        case DarkDeck => darkDeck.%(d => arity > 2 || d.is[Dominance].not)
     }) ++ l.has(ActionBooster).??(boosters(arity).times(actionBooster).flatten)
 
     // Action! Deck Booster (The Doomed Expansion, `ActionBooster`): one booster for each player above five, one with five players
@@ -146,7 +156,83 @@ object Deck {
 
     val frankenArtIds = $("bird-ambush", "fox-ambush", "rabbit-ambush", "mouse-ambush", "bird-dominance", "fox-dominance", "rabbit-dominance", "mouse-dominance")
 
-    def art(id : String) = if (frankenArt && frankenArtIds.has(id.toLowerCase)) "franken-" + id.toLowerCase else id
+    def art(id : String) =
+        if (frankenArt && frankenArtIds.has(id.toLowerCase)) "franken-" + id.toLowerCase else
+        if (darkArt && darkArtIds.has(id.toLowerCase)) "dark-" + id.toLowerCase else id
+
+    // The Dark Deck (The Doomed Expansion; Gman, 2026-11-13): its ambushes and dominances are the usual cards in its own art, like the Frankendeck's
+    var darkArt = false
+
+    val darkArtIds = frankenArtIds ++ $("abomination-ambush")
+
+    val darkDeck = $[DeckCard](
+        CraftItemCard(Cursed, "dark-cursed", $(AnySuit, AnySuit, AnySuit, AnySuit), CursedIdol, 3, "Cursed!"),
+        BaseSuitDominance(Rabbit),
+        BaseSuitDominance(Fox),
+        BaseSuitDominance(Mouse),
+        CornersDominance(Bird),
+        DarkDominance,
+        Ambush(Rabbit),
+        Ambush(Fox),
+        Ambush(Mouse),
+        Ambush(Bird),
+        Ambush(Bird),
+        Ambush(Abomination),
+        CraftItemCard(Rabbit, "dark-headhunters-trail", $(Mouse), Bag, 1, "Headhunter's Trail"),
+        CraftItemCard(Fox, "dark-gently-used-knapsack", $(Mouse), Bag, 1, "Gently Used Knapsack"),
+        CraftItemCard(Mouse, "dark-mouse-in-a-sack", $(Mouse), Bag, 1, "Mouse-in-a-Sack"),
+        CraftItemCard(Bird, "dark-birdy-bindle", $(Mouse), Bag, 1, "Birdy Bindle"),
+        CraftItemCard(Rabbit, "dark-rabbit-root-tea", $(Mouse), Teapot, 2, "Root Tea"),
+        CraftItemCard(Fox, "dark-fox-root-tea", $(Mouse), Teapot, 2, "Root Tea"),
+        CraftItemCard(Mouse, "dark-mouse-root-tea", $(Mouse), Teapot, 2, "Root Tea"),
+        CraftItemCard(Rabbit, "dark-a-visit-to-friends", $(Rabbit), Boots, 1, "A Visit to Friends"),
+        CraftItemCard(Fox, "dark-fox-travel-gear", $(Rabbit), Boots, 1, "Travel Gear"),
+        CraftItemCard(Mouse, "dark-mouse-travel-gear", $(Rabbit), Boots, 1, "Travel Gear"),
+        CraftItemCard(Bird, "dark-midnight-runners", $(Rabbit), Boots, 1, "Midnight Runners"),
+        CraftItemCard(Fox, "dark-anvil", $(Fox), Hammer, 2, "Anvil"),
+        CraftItemCard(Mouse, "dark-mouse-crossbow", $(Fox), Crossbow, 1, "Crossbow"),
+        CraftItemCard(Bird, "dark-bird-crossbow", $(Fox), Crossbow, 1, "Crossbow"),
+        CraftItemCard(Mouse, "dark-investments", $(Rabbit, Rabbit), Coins, 3, "Investments"),
+        CraftItemCard(Fox, "dark-protection-racket", $(Rabbit, Rabbit), Coins, 3, "Protection Racket"),
+        CraftItemCard(Rabbit, "dark-wake-sale", $(Rabbit, Rabbit), Coins, 3, "Wake Sale"),
+        CraftItemCard(Mouse, "dark-sword", $(Fox, Fox), Sword, 2, "Sword"),
+        CraftItemCard(Fox, "dark-foxfolk-steel", $(Fox, Fox), Sword, 2, "Foxfolk Steel"),
+        CraftItemCard(Bird, "dark-arms-trader", $(Fox, Fox), Sword, 2, "Arms Trader"),
+        CraftItemCard(Fox, "dark-torch", $(Mouse, Mouse), Torch, 1, "Torch"),
+        CraftItemCard(Rabbit, "dark-rabbits-paw", $(Fox, Fox), RabbitsPaw, 1, "Rabbit's Paw"),
+        CraftItemCard(Mouse, "dark-book-of-names", $(Rabbit, Rabbit), BookOfNames, 1, "Book of Names"),
+        CraftEffectCard(Bird, "dark-sabotage", $(AnySuit), Saboteurs),
+        CraftEffectCard(Bird, "dark-sabotage", $(AnySuit), Saboteurs),
+        CraftEffectCard(Bird, "dark-sabotage", $(AnySuit), Saboteurs),
+        CraftEffectCard(Abomination, "dark-words-of-undoing", $(AnySuit, AnySuit), WordsOfUndoing),
+        CraftEffectCard(Mouse, "dark-mouse-transmutations", $(Mouse), Transmutations(Mouse)),
+        CraftEffectCard(Fox, "dark-fox-transmutations", $(Fox), Transmutations(Fox)),
+        CraftEffectCard(Rabbit, "dark-rabbit-transmutations", $(Rabbit), Transmutations(Rabbit)),
+        CraftEffectCard(Mouse, "dark-murderous-mice", $(Mouse), Bloodlust(Mouse)),
+        CraftEffectCard(Fox, "dark-foxes-of-fortune", $(Fox), Bloodlust(Fox)),
+        CraftEffectCard(Rabbit, "dark-bunny-bandits", $(Rabbit), Bloodlust(Rabbit)),
+        CraftEffectCard(Rabbit, "dark-rabbit-roulette", $(Rabbit), RabbitRoulette),
+        CraftEffectCard(Rabbit, "dark-rabbit-roulette", $(Rabbit), RabbitRoulette),
+        CraftEffectCard(Rabbit, "dark-rabbit-roulette", $(Rabbit), RabbitRoulette),
+        CraftEffectCard(Rabbit, "dark-rapacious-rabbit", $(Rabbit, Rabbit), RapaciousRabbit),
+        CraftEffectCard(Mouse, "dark-mouster-criminal", $(Mouse, Mouse), Swindle(Mouse)),
+        CraftEffectCard(Fox, "dark-felonious-fox", $(Fox, Fox), Swindle(Fox)),
+        CraftEffectCard(Mouse, "dark-infernal-designs", $(Mouse), InfernalDesigns),
+        CraftEffectCard(Mouse, "dark-infernal-designs", $(Mouse), InfernalDesigns),
+        CraftEffectCard(Mouse, "dark-cleansing-fire", $(Mouse, Mouse), CleansingFire),
+        CraftEffectCard(Rabbit, "dark-foaming-fury", $(Rabbit, Rabbit), FoamingFury),
+        CraftEffectCard(Rabbit, "dark-foaming-fury", $(Rabbit, Rabbit), FoamingFury),
+        CraftEffectCard(Fox, "dark-blood-gate", $(Rabbit, Rabbit), BloodGate),
+        CraftEffectCard(Fox, "dark-meat-for-the-masses", $(Fox, Fox), MeatForTheMasses),
+        CraftEffectCard(Bird, "dark-rodent-zero", $(Mouse, Mouse), RodentZero),
+        CraftEffectCard(Bird, "dark-forbidden-science", $(Rabbit, Rabbit), ForbiddenScience),
+        CraftEffectCard(Bird, "dark-bear-traps", $(Fox, Fox), BearTraps),
+        CraftEffectCard(Abomination, "dark-bottom-feeder", $(AnySuit, AnySuit), BottomFeeder),
+        CraftEffectCard(Fox, "dark-golden-knight", $(AnySuit, AnySuit, AnySuit), GoldenKnight),
+        CraftEffectCard(Abomination, "dark-devotion-to-the-deep", $(AnySuit, AnySuit, AnySuit), DevotionToTheDeep),
+        CraftEffectCard(Bird, "dark-deadly-deadly-poison", $(Rabbit, Fox, Mouse), DeadlyPoison),
+        CraftEffectCard(Abomination, "dark-doppleganger", $(Rabbit, Fox, Mouse), Doppleganger),
+    )
 
     val frankenItems = $[DeckCard](
         CraftItemCard(Bird, "franken-birdy-bindle", $(Mouse), Bag, 1, "Birdy Bindle"),
@@ -483,7 +569,7 @@ object Deck {
 
     val disguisedEEE = frogEEE.distinct./~(d => InvasiveEEEExpansion.disguiseSuits./(DisguisedCard(d, _)))
 
-    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ effectsSquires ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA ++ frogEEE ++ disguisedEEE ++ frankenItems ++ $(frankenSabotage) ++ actionBooster ++ $(fowlPlay) // new cards go last: saved games name cards by their place here
+    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ effectsSquires ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA ++ frogEEE ++ disguisedEEE ++ frankenItems ++ $(frankenSabotage) ++ actionBooster ++ $(fowlPlay) ++ darkDeck.%!(_.is[Ambush]).%!(_.is[BaseSuitDominance]).%!(_.is[CornersDominance]) ++ $(Ambush(Abomination)) // new cards go last: saved games name cards by their place here
 }
 
 
@@ -600,7 +686,7 @@ object CardsExpansion extends MandatoryExpansion {
         // DISCARDS
         case HandLimitAction(f, nn, then) =>
             val min = nn + f.used.has(ActionBag).??(2)
-            val max = min + f.has(PublicRelations).??(1)
+            val max = min + f.has(PublicRelations).??(1) + (f.has(RapaciousRabbit) && game.phase == Evening).??(1)
 
             if (f.hand.num <= min)
                 then

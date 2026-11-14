@@ -27,6 +27,7 @@ object ReplayCheck {
     var squires = false
     // "franken": the Frankendeck instead of the mixed one; "dusk": the Dawn and Dusk deck
     var franken = false
+    var dark = false
     var dusk = false
     // "action": with the Action! Deck Booster (pool "six" or "seven" for more players)
     var action = false
@@ -54,7 +55,7 @@ object ReplayCheck {
     )).|($[Meta.O](
         AutumnMap, DefaultClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
         FerryLandmark, LostCityLandmark, SeatingGiven, FactionSeatingGiven, SetupOrderPriority, CardDraftStandard,
-    ))).map(o => (draft && o == CardDraftStandard).?[Meta.O](CardDraftFive).|(o)).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (squires && o == MixedDeck).?[Meta.O](SquiresDeck).|(o)).map(o => (franken && o == MixedDeck).?[Meta.O](FrankenDeck).|(o)).map(o => (dusk && o == MixedDeck).?[Meta.O](DuskDeck).|(o)).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.??($[Meta.O](FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, DuskDeckFixes)) ++ (async || chooseHits).??($[Meta.O](AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode)) ++ chooseHits.$(ForcedAsyncChooseHits) ++ offline.??($[Meta.O](HitsAndAmbushesSetup, OffTurnFieldHospitals)) ++ preset.$(OffTurnHitsPreset) ++ action.$(ActionBooster) ++ seating./(IncludeFaction)
+    ))).map(o => (draft && o == CardDraftStandard).?[Meta.O](CardDraftFive).|(o)).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (squires && o == MixedDeck).?[Meta.O](SquiresDeck).|(o)).map(o => (franken && o == MixedDeck).?[Meta.O](FrankenDeck).|(o)).map(o => (dusk && o == MixedDeck).?[Meta.O](DuskDeck).|(o)).map(o => (dark && o == MixedDeck).?[Meta.O](DarkDeck).|(o)).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.??($[Meta.O](FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, DuskDeckFixes)) ++ (async || chooseHits).??($[Meta.O](AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode)) ++ chooseHits.$(ForcedAsyncChooseHits) ++ offline.??($[Meta.O](HitsAndAmbushesSetup, OffTurnFieldHospitals)) ++ preset.$(OffTurnHitsPreset) ++ action.$(ActionBooster) ++ seating./(IncludeFaction)
 
     def privateMap(o : AnyRef, suffix : String) : Map[Any, Any] = {
         val f = o.getClass.getDeclaredFields.filter(_.getName.endsWith(suffix)).head
@@ -161,6 +162,7 @@ object ReplayCheck {
         exiles = args.contains("exiles")
         squires = args.contains("squires")
         franken = args.contains("franken")
+        dark = args.contains("dark")
         dusk = args.contains("dusk")
         action = args.contains("action")
         async = args.contains("async")
@@ -195,7 +197,7 @@ object ReplayCheck {
         var failures = 0
         // how often each hireling-related choice was recorded, to see that the bots used them
         var used = Map[String, Int]()
-        val keys = $("ActionHammer", "ActionBag", "ActionTea", "ActionCoins", "ActionCrossbow", "ActionKey", "ActionSword", "ActionReplace", "ActionPay", "SecretScore", "CounterAmbush", "ExposeAction", "Hireling", "WarmSun", "Sunward", "CorvidSpies", "FlameBearers", "VaultKeepers", "FuriousProtector", "HighwayBandit", "PopularBand", "SunnyAdvocates", "BatMessengers", "RiverRoamers", "FrogTinkers", "Farmers", "Brigand", "ClearPath", "LizardEnvoys", "Bluebird", "FelinePhysicians", "MoleArtisians", "RatSmugglers", "ForestPatrol", "Patrol", "LastDynasty", "Uprising", "Exile", "Flotilla", "StreetBand", "BanditGangs", "Scouts", "SlyDog", "HighNoon", "BreakingDawn", "DuskAwakening", "Merchants", "Spoil", "ServiceOf", "MilitarySupplies", "Guard", "Hoarders", "NightTerrors", "Adventurers", "AnyCard", "FowlPlay")
+        val keys = $("ActionHammer", "ActionBag", "ActionTea", "ActionCoins", "ActionCrossbow", "ActionKey", "ActionSword", "ActionReplace", "ActionPay", "SecretScore", "CounterAmbush", "ExposeAction", "Hireling", "WarmSun", "Sunward", "CorvidSpies", "FlameBearers", "VaultKeepers", "FuriousProtector", "HighwayBandit", "PopularBand", "SunnyAdvocates", "BatMessengers", "RiverRoamers", "FrogTinkers", "Farmers", "Brigand", "ClearPath", "LizardEnvoys", "Bluebird", "FelinePhysicians", "MoleArtisians", "RatSmugglers", "ForestPatrol", "Patrol", "LastDynasty", "Uprising", "Exile", "Flotilla", "StreetBand", "BanditGangs", "Scouts", "SlyDog", "HighNoon", "BreakingDawn", "DuskAwakening", "Merchants", "Spoil", "ServiceOf", "MilitarySupplies", "Guard", "Hoarders", "NightTerrors", "Adventurers", "AnyCard", "FowlPlay", "WordsUndo", "WordsReroll", "Transmute", "Bloodlust", "DevotionHit", "Roulette", "Rapacious", "Swindle", "Infernal", "Cleansing", "Fury", "BloodGate", "Meat", "BearTrap", "BottomFeeder", "Knight", "Science", "Poison", "Dopple", "DarkMenu")
 
         0.until(games).foreach { gi =>
             val seating = pool(gi % pool.num).shuffle
@@ -346,6 +348,8 @@ object ReplayCheck {
             }
 
             +++("game", gi, seating./(_.name).mkString(", "), "-", recorded.num, "recorded actions", over.?("finished").|("stopped"))
+            if (steps >= 6000)
+                recorded.takeRight(30).foreach(a => +++("    last", a.unwrap))
             // "cctc": exposures a Council's Governors kept from removing a plot (GovernorsStopExposure)
             if (game.governedGuesses.any)
                 used += "GovernedGuess" -> (used.getOrElse("GovernedGuess", 0) + game.governedGuesses.num)

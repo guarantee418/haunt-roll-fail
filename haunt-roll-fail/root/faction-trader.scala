@@ -157,7 +157,7 @@ case object Waterway extends ByWater {
 case object Riverboat extends ByWater {
     override def img = Image("Riverboat", styles.widepiece)
 
-    override def allows(f : Faction)(implicit game : Game) = f.has(Riverboats) || f.has(BoatBuilders)
+    override def allows(f : Faction)(implicit game : Game) = f.has(Riverboats) || f.has(BoatBuilders) || f.has(DevotionToTheDeep)
 }
 
 
