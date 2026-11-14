@@ -444,6 +444,11 @@ object Meta extends MetaGame { mmm =>
     ConditionalAssetsList((factions : $[F], options : $[O]) => options.has(TrainingFieldsOption), "tile", "tile-", "webp")(
         $(ImageAsset("back"))
     ) ::
+    // PC version: the fog of war's colour, an image and not a canvas, over a tile not seen at all, or a whole tile when an
+    // area's fog (a canvas) couldn't be drawn (fogImage in ui.scala)
+    ConditionalAssetsList((factions : $[F], options : $[O]) => has(options, PCVersion), "tile", "tile-", "webp", lossless = true)(
+        $(ImageAsset("fog"))
+    ) ::
     // The shape of each area, tinted on the map with the colour of the player who controls it
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "tile/mask", "mask-", "webp")(
         Tiles.all.diff(Tiles.environment).diff(Tiles.wastelands).diff(Tiles.central).diff(Tiles.beach).diff(Tiles.horizons)./~(t => t.areas./(a => ImageAsset(t.id + "-" + a.id)))

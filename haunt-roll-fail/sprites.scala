@@ -119,6 +119,39 @@ class RawImageRotated270(image : dom.html.Image) extends Image {
 }
 
 
+// An image turned by quarter turns (clockwise, like RawImageRotated90 ...) as it is drawn, with no canvas of its own
+// (RenderableSprite turns the context): a big image turned into a canvas per rotation takes memory a phone may not have,
+// and a canvas the browser couldn't make draws nothing (Northgard's PC version map, 2026-11-14)
+class RawImageTurned(val image : dom.html.Image, val quarter : Int) extends Image {
+    def ready = image.complete && image.width > 0
+    def width = (quarter % 2 == 0).?(image.width).|(image.height)
+    def height = (quarter % 2 == 0).?(image.height).|(image.width)
+    def renderable = image
+
+    lazy val toCanvasImage = (quarter % 4) match {
+        case 0 => new RawImage(image).toCanvasImage
+        case 1 => new RawImageRotated90(image).toCanvasImage
+        case 2 => new RawImageRotated180(image).toCanvasImage
+        case _ => new RawImageRotated270(image).toCanvasImage
+    }
+
+    // Draws the image turned into the rectangle (x, y, w, h), which has the turned image's shape
+    def draw(g : dom.CanvasRenderingContext2D, x : Double, y : Double, w : Double, h : Double) {
+        if (quarter % 4 == 0)
+            g.drawImage(image, x, y, w, h)
+        else {
+            g.save()
+            g.translate(x + w / 2, y + h / 2)
+            g.rotate(math.Pi / 2 * (quarter % 4))
+            if (quarter % 2 == 0)
+                g.drawImage(image, -w / 2, -h / 2, w, h)
+            else
+                g.drawImage(image, -h / 2, -w / 2, h, w)
+            g.restore()
+        }
+    }
+}
+
 class CanvasImage(image : dom.html.Canvas) extends Image {
     def ready = true
     def width = image.width
@@ -164,7 +197,10 @@ case class RenderableSprite(sprite : Sprite, x : Double, y : Double, z : Double,
         sprite.images.foreach { ir =>
             g.globalAlpha = ir.alpha
             if (ir.image.ready)
-                g.drawImage(ir.image.renderable, x + ir.rect.x * scale, y + ir.rect.y * scale, ir.rect.width * scale, ir.rect.height * scale)
+                ir.image match {
+                    case t : RawImageTurned => t.draw(g, x + ir.rect.x * scale, y + ir.rect.y * scale, ir.rect.width * scale, ir.rect.height * scale)
+                    case i => g.drawImage(i.renderable, x + ir.rect.x * scale, y + ir.rect.y * scale, ir.rect.width * scale, ir.rect.height * scale)
+                }
         }
 
         if (hrf.HRF.flag("hitboxes")) {
