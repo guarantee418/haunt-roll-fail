@@ -860,7 +860,7 @@ case object Sea extends Module("Sea", "Uncharted Horizons") {
     // First: the Raid phase comes before the Creature phase, and the Beach tiles before other setup steps
     override def priority = -6
     def about = $(
-        "Each player places a Beach tile after their first map tile, leaving an empty space between them. Its territory has a Port: units can move from one Port to another with a Move of 2 or more, and its defender gets +1 in combat.",
+        "Each player places a Beach tile after their first map tile, leaving an empty space between them. Its territory has a Port: units can move from one Port to another with a Move of 2 or more, and its defender gets +1 in combat (+3 against an attack by sea in the PC version).",
         "At the end of the Actions phase, the controller of a Port may draw 2 Raid cards, keep one and send 1 or 2 units from the Port on the Raid. A year later they come back with resources or the card's action, or 2 units stay away a second year for a bigger reward.",
     )
 }
@@ -939,7 +939,7 @@ case object TowersModule extends Module("Tower PC version", "fan-made by Marzaus
         "A " ~ "Defense Tower".hl ~ " costs " ~ Amount(2.hl, Wood.elem) ~ ".",
         "It is destroyed when its territory is captured or abandoned (the clan holding it has no figure left there).",
         "It kills 1 attacking unit before the fight, not after it; with no attacker left, the defender wins without a roll.",
-        CombatText("A clan fighting a creature in a territory with a Defense Tower gets 1 more combat point; when a creature appears or moves into such a territory, the clan holding it may fight it first, before the creature's ability."),
+        CombatText("A clan fighting a creature in a territory with a Defense Tower gets 1 more combat point per tower (2 in the PC version); when a creature appears or moves into such a territory, the clan holding it may fight it first, before the creature's ability."),
         "Fan-made, not part of the published game.".styled(xstyles.warning),
     )
 }

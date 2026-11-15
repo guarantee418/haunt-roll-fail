@@ -1563,6 +1563,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             CombatText("2 axes give a Stone, an axe and a skull an Iron, 2 skulls a Gem. The die face with a choice gives one symbol per Mine, each picked apart.").spn(xstyles.smaller85).div ~
             ("Each mineral is worth two resources of your choice for trading, Winter and the final fame. Resources can't be traded for minerals, and spent minerals leave the game.").spn(xstyles.smaller85).div ~
             (Stone.elem ~ " During a Build, upgrade one of your buildings for " ~ 1.hl ~ " (small) or " ~ 2.hl ~ " (large): it then counts as two of its kind. Removed, it loses its Stone.").spn(xstyles.smaller85).div ~
+            (game.has(PCVersion) && game.options.has(PCVersionUpdate)).?(("PC version: at the Harvest each " ~ Mine.elem ~ " gives a " ~ Stone.elem ~ " with no roll" ~ game.options.has(PCMineChoice).?(game.options.has(PCMinePerMine).?(", or its clan rolls for it instead, Mine by Mine").|(", or its clan rolls for its Mines instead")).|("") ~ "." ~ game.options.has(PCOneUpgrade).?(" A Build makes one upgrade, the Town Hall's included.").|("")).spn(xstyles.smaller85).div).|(Empty) ~
             (Iron.elem ~ CombatText(" In a fight, after the food, spend one to roll two combat dice and add them up.")).spn(xstyles.smaller85).div ~
             (Gem.elem ~ " When playing cards, before or after, spend one to gain the fame of a card in your discard pile; the card goes on top of your draw pile.").spn(xstyles.smaller85).div ~
             "Fan-made by Maciej Drewing (BoardGameGeek).".spn(xstyles.smaller85).div ~
@@ -1627,6 +1628,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             small("Fights against a clan: " ~ Amount(1.hl, FameIcon()) ~ " for winning, " ~ Amount(1.hl, FameIcon()) ~ " for each enemy unit killed and " ~ Amount(5.hl, FameIcon()) ~ " for an enemy warchief, won or lost" ~ game.options.has(FameRetreatKills).?("; the loser's figures lost with nowhere to retreat count as killed").|("") ~ ". Fights against creatures give only their usual fame.") ~
             small("Development cards: their fame when taken, none at the end.") ~
             small("Achievements: each clan was dealt two and kept one face down. Once, on its turn, it may resolve it for the fame it gives then (not an action); unresolved, it gives nothing. The last year reveals no Achievements." ~ yours./(c => " Yours: " ~ c.elem ~ " (" ~ Amount(CommonExpansion.cardFame(f, c).hl, FameIcon()) ~ " now).").|(Empty)) ~
+            (game.has(PCVersion) && game.options.has(PCScoutFame)).?(small("PC version: each scout gives " ~ Amount(1.hl, FameIcon()) ~ ".")).|(Empty) ~
             small("The usual fame still comes too: exploring closed territories, defeating creatures, the " ~ AltarOfKings.elem ~ " at each harvest, card effects; Unrest still costs fame.") ~
             game.has(FameUpgradesModule).?(small("Clan Fame upgrades: fame is public, Achievements and Unrest cards count when taken, and each clan has abilities while its fame is at least " ~ 20.hl ~ ", " ~ 50.hl ~ " or " ~ 100.hl ~ " (tap the upgrades line in its panel).")).|(Empty) ~
             small("Fan-made by Marzaus (Discord, northgard-fanmade-content).".txt) ~
@@ -3081,7 +3083,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 Image(up.?(TownHall.upgraded).|(TownHall.image), styles.winnerCard).div ~
                 (f.elem ~ "'s " ~ up.?("upgraded ").|("") ~ TownHall.elem).div ~
                 "A large building on no space, never built, moved or destroyed. A clan that ends a year without its Town Hall is out of the game.".txt.div ~
-                up.?("Upgraded: the clan can scout enemy territories.".txt).|(("A Build can upgrade it for " ~ Amount(1.hl, Stone.elem) ~ " and " ~ Amount(1.hl, Wood.elem) ~ "; then the clan can scout enemy territories.")).div
+                up.?("Upgraded: the clan can scout enemy territories.".txt).|(("A Build can upgrade it for " ~ Amount(1.hl, Stone.elem) ~ " and " ~ Amount(1.hl, Wood.elem) ~ "; then the clan can scout enemy territories." ~ game.options.has(PCOneUpgrade).?(" That is the Build's one upgrade.").|(""))).div ~
+                game.options.has(PCHallShield).?(CombatText("In a fight in its territory, against a clan or a creature, it ignores 1 casualty rolled against its clan.").div).|(Empty) ~
+                game.options.has(PCHallSafe).?(("In years 1 and 2 no creature moves into its territory or attacks it" ~ (game.year > 2).?(" (over now)").|("") ~ ".").div).|(Empty)
             ).div(xlo.flexvcenter)).onClick, onClick)
 
         // A tile's centrepiece or its "i" tapped on the map: the tile's rule
