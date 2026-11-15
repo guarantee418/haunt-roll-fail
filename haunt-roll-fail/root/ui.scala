@@ -206,8 +206,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case Keep => { DrawRect("castle", -250, -320, 1, 1) }
 
             case ScorchedEarthMarker(n) => { DrawRect("scorched-earth-" + n, -45, -45, 90, 90) }
-            case BearTrapMarker => { DrawRect("dark-bear-trap", -40, -40, 80, 80) }
-            case GoldenKnightMarker => { DrawRect("dark-golden-knight", -45, -45, 90, 90) }
+            case BearTrap => { DrawRect("dark-trap-token", -40, -40, 80, 80) }
+            case Infected => { DrawRect("ddi-infected", -39, -70, 78, 77) }
+            case GoldenKnightMarker => { DrawRect("dark-knight-token", -45, -45, 90, 90) }
 
             case Cat => { DrawRect(pr + "cat", -35, -82, 70, 92) }
             case Hawk => { DrawRect(pr + "hawk", -43, -80, 76, 90) }
@@ -979,7 +980,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             game.clearings.foreach { c =>
                 val p = regions.center(c)
 
-                (factions ++ game.unhired).foreach { f =>
+                (factions ++ game.unhired ++ DarkDeckExpansion.plague).foreach { f =>
                     if (game.states.contains(f))
                     if (f.rules(c)) {
                         f match {
@@ -1201,7 +1202,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                         g.drawImage(resources.images.get("clearing-suit-" + s + "-off"), x - 30 - dx - 40 * n - (n > 0).??(10) - (n > 2).??(5), ny)
                     }
 
-                    val rulers = (factions ++ game.unhired).%(game.states.contains).%(_.rules(c))
+                    val rulers = (factions ++ game.unhired ++ DarkDeckExpansion.plague).%(game.states.contains).%(_.rules(c))
 
                     if (callbacks.settings.has(FlagRule)) {
                         // A clearing nobody rules gets a bare pole
@@ -1461,7 +1462,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 pileTargets :+= ((d.rect.x - 20, d.rect.y - 20, d.rect.width + 40, d.rect.height + 40, ("view-landmark", d.piece, d.region)))
             }
 
-            d.faction.as[Hireling].foreach { h =>
+            // the Dark Deck's Infected and Bear Traps have no hireling card
+            d.faction.as[Hireling].%(h => h != InfectedHorde && h != TrapLayer).foreach { h =>
                 pileTargets :+= ((d.rect.x, d.rect.y, d.rect.width, d.rect.height, ("view-hireling-card", h)))
             }
         }
@@ -4969,7 +4971,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             game.thresholds.any.?(("Next hireling at " ~ game.thresholds./(_.vp).comma.merge).div).|("All hirelings have been taken".txt.div) ~
             markers.div ~
             HGap ~
-            (game.hirelings ++ game.unhired).distinct./(h =>
+            (game.hirelings ++ game.unhired).distinct.but(InfectedHorde).but(TrapLayer)./(h =>
                 OnClick(("view-hireling-card", h), (
                     Image("hireling-card:" + h.style + "-card", styles.hirelingcard) ~
                     (h.elem ~ (h.demoted).?(" (demoted)").|(" (staunch)")).div ~
@@ -5556,7 +5558,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 }).copy(clear = false)
             ) ++
             $(ZBasic(Break ~ Break, "Notifications".spn, () => { onClick("notifications", self) }).copy(clear = false)).%(_ => self.any || game.isOver) ++
-            $(ZBasic(Break ~ Break, "Hirelings".spn, () => { onClick("view-hirelings") }).copy(clear = false)).%(_ => game.hirelings.any || game.unhired.any) ++
+            $(ZBasic(Break ~ Break, "Hirelings".spn, () => { onClick("view-hirelings") }).copy(clear = false)).%(_ => game.hirelings.but(InfectedHorde).but(TrapLayer).any || game.unhired.any) ++
             $(ZBasic(Break ~ Break, "Interface".spn, () => { callbacks.editSettings { updateStatus() } }).copy(clear = false)) ++
             $(ZBasic(Break ~ Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug) ++
             $(ZBasic(Break ~ Break, "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle)

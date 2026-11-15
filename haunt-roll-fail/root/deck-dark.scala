@@ -31,11 +31,18 @@ import root.elem._
 // - Foaming Fury: a move, a battle, or a move and then a battle; after both, the battle is fought again until either side has no
 //   pieces left there to take hits
 // - Blood Gate moves up to three warriors for each warrior removed; another player's warriors only if that player agrees
-// - Bear Traps' traps stay until the card is discarded; they aren't pieces on the map that can be battled
+// - Bear Traps' two traps are tokens of the card's owner (Law of Doom D3.1.1: they can be battled and removed); placed while
+//   both are out, nothing happens; when the card is discarded they leave the map, scoring nothing
 // - Deadly Deadly Poison: the poisoned bowl goes to a random player in the clearing, who loses a point for each bowl
 // - Forbidden Science holds the warriors removed from the map
 // - Doppleganger copies another player's crafted card for the rest of the turn; using up the copy discards the Doppleganger
-// - Rodent Zero's Infected and the Vagabond's Book of Names and Rabbit's Paw actions aren't done: Rodent Zero is a card without an effect
+// - Rodent Zero (Law of Doom D3.1.1 and the Infected turnling, D8.3): the 20 Infected are their own player (`InfectedHorde`, an
+//   ownerless hireling), only moved by the card, only ever defenders, always taking the higher roll; they count for rule; the
+//   Infected die is the Hundreds' suit die (Gman). At the end of its owner's Evening the die is rolled; into each clearing of that
+//   suit one Infected moves from an adjacent clearing (the owner picks from where), if any can (from a clearing of the suit only
+//   when it has two or more); then in each clearing of that suit with Infected one warrior (anyone's, the owner's too, the owner
+//   picks) goes back to its supply and an Infected takes its place. If the card is discarded the Infected stay, and stop
+//   moving and spreading.
 
 case object WordsOfUndoing extends CardEffect {
     override val name = "Words of Undoing"
@@ -121,8 +128,46 @@ case object Doppleganger extends CardEffect {
 
 case object DevotionHit extends BattleEffect
 
+// the Vagabond's Book of Names, used from the Daylight menu
+case object BookOfNamesUse extends CardEffect {
+    override val name = "Book of Names"
+}
+
 // drawn on the map (`displayRegion` in `game.scala`), not pieces of any faction
-case object BearTrapMarker extends Token
+case object BearTrap extends Token
+
+// the Bear Traps' traps, tokens of the card's owner (`game.trapOwner`, `HirelingEx.owner` in `game.scala`; not an effect, or
+// the hireling transfers would hand it on)
+case object TrapLayer extends Hireling {
+    val name = "Bear Traps"
+    val short = "DDT"
+    val style = "ddt"
+
+    val demoted = false
+    val setup = false
+
+    val clashKey = TrapLayer
+
+    def pieces(options : $[Meta.O]) = BearTrap *** 2
+}
+
+// Rodent Zero's Infected, their own player
+case object Infected extends Warrior
+
+case object InfectedHorde extends Hireling with WarriorFaction {
+    val name = "Infected"
+    val short = "DDI"
+    val style = "ddi"
+
+    val demoted = false
+    val setup = false
+
+    val clashKey = InfectedHorde
+
+    val warrior = Infected
+
+    def pieces(options : $[Meta.O]) = Infected *** 20
+}
 case object GoldenKnightMarker extends Token
 
 // Where the warriors on Forbidden Science wait
@@ -221,6 +266,19 @@ case class SciencePlaceAction(self : WarriorFaction, c : Clearing, then : Forced
 case class PoisonAction(self : Faction, c : Clearing) extends BaseAction(DeadlyPoison, "serves soup in")(c)
 case class PoisonServedAction(self : Faction, c : Clearing, n : Int, random : Faction) extends RandomAction[Faction]
 
+// RODENT ZERO
+case class InfectStartAskAction(self : Faction) extends ForcedAction
+case class InfectStartAction(self : Faction, c : Clearing) extends BaseAction(RodentZero, "places an", Infected.of(InfectedHorde), "in")(c)
+case class InfectReplaceAskAction(self : Faction, c : Clearing, then : ForcedAction) extends ForcedAction
+case class InfectReplaceAction(self : Faction, c : Clearing, e : WarriorFaction, then : ForcedAction) extends BaseAction(RodentZero, "replaces a warrior in", c, "with an", Infected.of(InfectedHorde))(e.warrior.of(e), e.warrior.imgd(e))
+case class InfectRolledAction(self : Faction, s : BaseSuit) extends RolledAction[BaseSuit] { def rolled = $(s) }
+case class InfectMoveAction(self : Faction, s : BaseSuit, l : $[Clearing]) extends ForcedAction
+case class InfectFromAction(self : Faction, s : BaseSuit, c : Clearing, o : Clearing, l : $[Clearing]) extends BaseAction(RodentZero, "moves an", Infected.of(InfectedHorde), "into", c, "from")(o)
+case class InfectSpreadAction(self : Faction, l : $[Clearing]) extends ForcedAction
+
+// BOOK OF NAMES
+case class BookOfNamesAction(self : Hero, e : Faction) extends BaseAction(BookOfNamesUse, "treats as allied until the end of the turn")(e)
+
 // DOPPLEGANGER
 case class DoppleAction(self : Faction, e : Faction, d : CraftEffectCard) extends BaseAction(Doppleganger, "copies a crafted card")(d.img, e) with ViewCard
 
@@ -258,10 +316,21 @@ object DarkDeckExpansion extends Expansion {
         }
     }
 
-    def traps(implicit game : Game) = game.traps
-
     // enemy pieces can't be placed in or moved from a clearing with a trap
-    def trapped(f : Faction, c : Clearing)(implicit game : Game) = game.traps.exists { case (e, o) => o == c && e != f && e.friends(f).not }
+    def trapped(f : Faction, c : Clearing)(implicit game : Game) = game.states.contains(TrapLayer) && f != TrapLayer && TrapLayer.at(c).any && TrapLayer.friends(f).not
+
+    // the Infected count for rule like any player's warriors (`ruleValue` in `game.scala`)
+    def plague(implicit game : Game) : $[Faction] = game.states.contains(InfectedHorde).$(InfectedHorde)
+
+    def ensure(h : Hireling)(implicit game : Game) {
+        if (game.states.contains(h).not) {
+            game.states += h -> new BasicHirelingState(h)
+            game.hirelings :+= h
+        }
+    }
+
+    // the warriors an Infected may replace in a clearing
+    def replaceable(c : Clearing)(implicit game : Game) = (factions ++ hirelings).but(InfectedHorde).of[WarriorFaction].%(game.states.contains).%(e => e.at(c).has(e.warrior))
 
     def phased(f : Faction, p : Phase)(implicit game : Game, ask : ActionCollector) {
         if (game.current != f)
@@ -272,10 +341,14 @@ object DarkDeckExpansion extends Expansion {
         }
 
         if (p == Daylight) {
+            f.as[Hero].%(_.inv.ready.has(BookOfNames.pristine)).foreach { h =>
+                + DarkMenuAction(f, p, BookOfNamesUse)
+            }
+
             if (f.can(RapaciousRabbit))
                 + DarkMenuAction(f, p, RapaciousRabbit)
 
-            if (f.can(BearTraps))
+            if (f.can(BearTraps) && game.trapOwner.has(f))
                 + DarkMenuAction(f, p, BearTraps)
         }
 
@@ -390,6 +463,23 @@ object DarkDeckExpansion extends Expansion {
 
             CraftScoreAction(f, d, d.vp, m, AnotherPlayerCraftsItemAction(f, Repeat))
 
+        case CraftPerformAction(f, d @ CraftEffectCard(_, _, _, BearTraps), m) =>
+            f.hand --> d --> f.stuck
+            f.effects :+= BearTraps
+
+            ensure(TrapLayer)
+            game.trapOwner = Some(f)
+
+            CraftEffectAction(f, d, m, Repeat)
+
+        case CraftPerformAction(f, d @ CraftEffectCard(_, _, _, RodentZero), m) =>
+            f.hand --> d --> f.stuck
+            f.effects :+= RodentZero
+
+            ensure(InfectedHorde)
+
+            CraftEffectAction(f, d, m, InfectStartAskAction(f))
+
         case CraftPerformAction(f, d @ CraftEffectCard(_, _, _, GoldenKnight), m) =>
             f.hand --> d --> f.stuck
             f.effects :+= GoldenKnight
@@ -403,13 +493,6 @@ object DarkDeckExpansion extends Expansion {
                 Ask(f).group(GoldenKnight, "places the Knight").each(l)(c => KnightPlaceAction(f, c))
             else
                 Repeat
-
-        // DOMINANCE
-        case CheckDominanceAction(f, then) if f.dominance.has(DarkDominance) && darkDominanceMet(f) =>
-            f.vp = 999
-            f.log("achieved", "Dark Dominance".styled(Abomination))
-
-            CheckDominanceAction(f, then)
 
         // MENU
         case DarkMenuAction(f, p, e) =>
@@ -445,10 +528,19 @@ object DarkDeckExpansion extends Expansion {
                     ask.each(f.hand.$)(d => RapaciousAction(f, d).!(cursed(d))).when(f.hand.none)(Info("No cards"))
 
                 case BearTraps =>
-                    ask.each(clearings.%(f.present))(c => BearTrapAction(f, c).!(game.traps.has((f, c)), "trapped"))
+                    ask.each(clearings.%(f.present))(c => BearTrapAction(f, c).!(TrapLayer.at(c).any, "trapped").!(game.trapOwner.has(f).not, "copied card").!(TrapLayer.reserve.none, "no traps left"))
 
                 case DeadlyPoison =>
                     ask.each(clearings.%(f.present))(c => PoisonAction(f, c))
+
+                case BookOfNamesUse =>
+                    f.as[Hero] match {
+                        case Some(h : Hero) =>
+                            val l = h.region.as[Clearing].$./~(c => factions.but(h).%(_.present(c))).%!(h.allied)
+                            ask.each(l)(e => BookOfNamesAction(h, e)).when(l.none)(Info("No other player in the clearing"))
+                        case _ =>
+                            ask
+                    }
 
                 case _ =>
                     ask
@@ -843,7 +935,7 @@ object DarkDeckExpansion extends Expansion {
         case BearTrapAction(f, c) =>
             f.used :+= BearTraps
 
-            game.traps :+= (f, c)
+            TrapLayer.reserve --> BearTrap --> c
 
             f.log("placed a trap in", c, "with", BearTraps)
 
@@ -954,6 +1046,90 @@ object DarkDeckExpansion extends Expansion {
 
             Repeat
 
+        // RODENT ZERO
+        case InfectStartAskAction(f) =>
+            val l = clearings.%(_.asset.matches(Mouse))
+
+            if (l.any && InfectedHorde.reserve.any)
+                Ask(f).group(RodentZero, "places an", Infected.of(InfectedHorde)).each(l)(c => InfectStartAction(f, c))
+            else
+                Repeat
+
+        case InfectStartAction(f, c) =>
+            InfectedHorde.reserve --> Infected --> c
+
+            f.log("placed", Infected.of(InfectedHorde), "in", c, "with", RodentZero)
+
+            InfectReplaceAskAction(f, c, Repeat)
+
+        case InfectReplaceAskAction(f, c, then) =>
+            val l = replaceable(c)
+
+            if (l.none || InfectedHorde.reserve.none)
+                then
+            else
+                Ask(f).group(RodentZero, "replaces a warrior in", c).each(l)(e => InfectReplaceAction(f, c, e, then))
+
+        case InfectReplaceAction(f, c, e, then) =>
+            e.from(c) --> e.warrior --> e.reserve
+            InfectedHorde.reserve --> Infected --> c
+
+            f.log("replaced", e.warrior.of(e), "in", c, "with", Infected.of(InfectedHorde))
+
+            then
+
+        // end of the owner's Evening (`CleanUpAction` follows every faction's Evening; the factions' own expansions take
+        // `EveningEndAction` before this one)
+        case CleanUpAction(f) if f.has(RodentZero) && f.used.has(RodentZero).not && game.states.contains(InfectedHorde) && InfectedHorde.presence.any =>
+            f.used :+= RodentZero
+
+            Roll[BaseSuit]($(BaseSuitDie), l => InfectRolledAction(f, l(0)), f.elem ~ " rolls the Infected die")
+
+        case InfectRolledAction(f, s) =>
+            f.log("rolled", s, "for the", Infected.of(InfectedHorde))
+
+            InfectMoveAction(f, s, clearings.%(_.asset.matches(s)))
+
+        case InfectMoveAction(f, s, Nil) =>
+            InfectSpreadAction(f, clearings.%(_.asset.matches(s)).%(InfectedHorde.present))
+
+        case InfectMoveAction(f, s, c :: rest) =>
+            val from = game.connected(c).%(o => InfectedHorde.at(o).count(Infected) >= o.asset.matches(s).?(2).|(1))
+
+            if (from.none)
+                InfectMoveAction(f, s, rest)
+            else
+                Ask(f).group(RodentZero, "moves an", Infected.of(InfectedHorde), "into", c).each(from)(o => InfectFromAction(f, s, c, o, rest))
+
+        case InfectFromAction(f, s, c, o, rest) =>
+            InfectedHorde.from(o) --> Infected --> c
+
+            f.log("moved", Infected.of(InfectedHorde), "from", o, "to", c)
+
+            InfectMoveAction(f, s, rest)
+
+        case InfectSpreadAction(f, Nil) =>
+            CleanUpAction(f)
+
+        case InfectSpreadAction(f, c :: rest) =>
+            InfectReplaceAskAction(f, c, InfectSpreadAction(f, rest))
+
+        // BOOK OF NAMES
+        case BookOfNamesAction(f, e) =>
+            f.exhaust(BookOfNames)
+
+            f.named :+= e
+
+            f.log("exhausted", BookOfNames.exhaust, "to treat", e, "as allied until the end of the turn")
+
+            Repeat
+
+        case CleanUpAction(f) if factions.of[Hero].exists(_.named.any) =>
+            factions.of[Hero].foreach(_.named = $)
+            factions.of[Hero].foreach(_.namedInfamy = 0)
+
+            CleanUpAction(f)
+
         // DOPPLEGANGER
         case DoppleAction(f, e, d) =>
             f.used :+= Doppleganger
@@ -974,8 +1150,9 @@ object DarkDeckExpansion extends Expansion {
 
     // a crafted card changed hands (Mouster Criminal, Felonious Fox): what it put on the map goes with it
     def swapped(f : Faction, e : Faction, effect : Effect)(implicit game : Game) {
-        if (effect == BearTraps)
-            game.traps = game.traps./{ case (o, c) => (o == f).?((e, c)).|((o, c)) }
+        if (effect == BearTraps && game.trapOwner.has(f)) {
+            game.trapOwner = Some(e)
+        }
 
         if (effect == GoldenKnight)
             game.knights = game.knights./{ case (o, c) => (o == f).?((e, c)).|((o, c)) }
@@ -983,11 +1160,13 @@ object DarkDeckExpansion extends Expansion {
 
     // a crafted card was discarded (`removeStuckEffect` in `game.scala`)
     def discarded(f : Faction, effect : Effect)(implicit game : Game) {
-        if (effect == BearTraps) {
-            if (game.traps.exists(_._1 == f))
+        if (effect == BearTraps && game.trapOwner.has(f)) {
+            if (TrapLayer.presence.any)
                 f.log("removed the traps of", BearTraps)
 
-            game.traps = game.traps.%((o, _) => o != f)
+            TrapLayer.presence.foreach { c => TrapLayer.from(c) --> Pool }
+
+            game.trapOwner = None
         }
 
         if (effect == GoldenKnight)

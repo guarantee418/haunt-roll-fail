@@ -650,6 +650,7 @@ object BattleExpansion extends MandatoryExpansion {
 
         case BattleAdjustRollAction(b, f, o, fs, os, fr, or) if fr > or && (
             b.defender.can(GuerillaTactics) ||
+            b.defender == InfectedHorde ||
             b.defender.used.has(RabbitScouts) ||
             (b.attacker.has(HamsterTactics) && b.attacker.at(b.clearing).has(Sheriff).not)
         ) =>
@@ -742,14 +743,14 @@ object BattleExpansion extends MandatoryExpansion {
 
                 lazy val ft = {
                     val all = b.attacker.at(b.clearing).but(Vagabond)
-                    val items = b.attacker.as[Hero]./~(_.inv.notDamaged)
+                    val items = b.attacker.as[Hero]./~(_.inv.notDamaged.%(_.item != CursedIdol))
                     val merc = b.ally./~(_.from(b.clearing).$.%(_.piece.is[Warrior]))
                     all.num + items.num + merc.num
                 }
 
                 lazy val ot = {
                     val all = b.defender.at(b.clearing).but(Vagabond)
-                    val items = b.defender.as[Hero]./~(_.inv.notDamaged)
+                    val items = b.defender.as[Hero]./~(_.inv.notDamaged.%(_.item != CursedIdol))
                     val merc = b.codef./~(_.from(b.clearing).$.%(_.piece.is[Warrior]))
                     all.num + items.num + merc.num
                 }

@@ -1188,7 +1188,7 @@ trait GameImplicits {
             }.sum).sum
 
             val borscht = bk.??(c.as[Clearing]./(game.freeSlots).|(0) * 4)
-            val vigil = fv.??((own > 0).??(4) + (factions ++ game.unhired).forall(_.present(c).not).??(333))
+            val vigil = fv.??((own > 0).??(4) + (factions ++ game.unhired ++ DarkDeckExpansion.plague).forall(_.present(c).not).??(333))
 
             val result = own + borscht + vigil + merced + hired + friended
 
@@ -1205,10 +1205,10 @@ trait GameImplicits {
                 val mercs = traders.%(s => f.has(Mercenaries(s)) || f.has(Peacekeepers(s)))
                 val friends = (game.current == f).??(factions).but(f).%(e => e.as[Farmer].?(_.foes.has(f).not) || f.as[Farmer].?(_.foes.has(e).not))
 
-                f.ruleValue(c, mercs, friends) > (factions ++ game.unhired).but(f).diff(mercs).diff(friends)./(e => e.ruleValue(c, $, $)).maxOr(0)
+                f.ruleValue(c, mercs, friends) > (factions ++ game.unhired ++ DarkDeckExpansion.plague).but(f).diff(mercs).diff(friends)./(e => e.ruleValue(c, $, $)).maxOr(0)
         }
 
-        def ruleSelf(c : Clearing) = SquiresDeckExpansion.silverTongueRules(f, c) || f.ruleValue(c, $, $) > (factions ++ game.unhired).but(f)./(e => e.ruleValue(c, $, $)).maxOr(0)
+        def ruleSelf(c : Clearing) = SquiresDeckExpansion.silverTongueRules(f, c) || f.ruleValue(c, $, $) > (factions ++ game.unhired ++ DarkDeckExpansion.plague).but(f)./(e => e.ruleValue(c, $, $)).maxOr(0)
 
         def removeStuckEffect(effect : Effect) {
             if (f.effects.has(effect).not && f.dopple.has(effect)) {
@@ -1305,7 +1305,7 @@ trait GameImplicits {
     }
 
     implicit class HirelingEx(h : Hireling)(implicit game : Game) {
-        def owner : |[Faction] = game.factions.%(_.has(h)).single
+        def owner : |[Faction] = (h == TrapLayer).?(game.trapOwner).|(game.factions.%(_.has(h)).single)
     }
 
 
@@ -1850,10 +1850,10 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     val pile = cards.another[DeckCard]("pile", playingDeck)
     val deck = cards.another[DeckCard]("deck")
     val outOfGameCards = cards.another[DeckCard]("out-of-game-cards")
-    // the Dark Deck: Rabbit Roulette's pool, Bear Traps' traps and the Golden Knight
+    // the Dark Deck: Rabbit Roulette's pool and the Golden Knight
     val roulette = cards.another[DeckCard]("roulette")
-    var traps : $[(Faction, Clearing)] = $
     var knights : $[(Faction, Clearing)] = $
+    var trapOwner : |[Faction] = None
     val dominances = cards.another[Dominance]("dominances")
 
     val pieces = new IdentityTracker[(Faction, Region), Figure]
@@ -1929,7 +1929,6 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             (foxburrow.has(c)).?(Figure(Neutral, Foxburrow, 0)) ++
             (rabbittown.has(c)).?(Figure(Neutral, Rabbittown, 0)) ++
             (scorched.contains(c)).??(0.to(11)./(n => Figure(Neutral, ScorchedEarthMarker(n % 6 + 1), n))) ++
-            traps.%((_, o) => o == c).indices./(n => Figure(Neutral, BearTrapMarker, n)) ++
             knights.%((_, o) => o == c).indices./(n => Figure(Neutral, GoldenKnightMarker, n))
     }
 

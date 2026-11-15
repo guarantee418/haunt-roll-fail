@@ -266,7 +266,13 @@ class HeroPlayer(val faction : Hero)(implicit val game : Game) extends FactionSt
     var inv : $[ItemRef] = $
 
     var attitude = Map[Faction, Attitude]()
-    def allied(f : Faction) = attitude.get(f).has(Allied)
+    def allied(f : Faction) = attitude.get(f).has(Allied) || named.has(f)
+
+    // the Dark Deck's Book of Names: players treated as allied until the end of the turn, their markers unmoved
+    var named : $[Faction] = $
+    // Infamy scored while battling with a faction named with the Book of Names this turn; only every second one scores (half, rounded down)
+    var namedInfamy = 0
+    def bookAlly(e : Faction) = named.has(e) && attitude.get(e).has(Allied).not
     def hostile(f : Faction) = attitude.get(f).has(Hostile)
 
     var aid = Map[Faction, Int]()
@@ -281,8 +287,11 @@ class HeroPlayer(val faction : Hero)(implicit val game : Game) extends FactionSt
     var fromRuins : $[Item] = $
     var wasted : $[Item] = $
 
-    def ready(i : Item) = inv.ready.count(i)
-    def lacks(i : Item) = inv.ready.count(i) == 0
+    def ready(i : Item) = inv.ready.count(i) + paw(i)
+    def lacks(i : Item) = ready(i) == 0
+
+    // the Dark Deck's Rabbit's Paw: in Daylight, exhausted as any item but the dark ones (Law of Doom D3.1.2)
+    def paw(i : Item) = (i != RabbitsPaw && Item.dark.has(i).not && game.phase == Daylight && inv.ready.count(i) == 0).??(inv.ready.count(RabbitsPaw : Item))
 
     def available = inv.sort.ready./(_.item)
 
@@ -297,6 +306,11 @@ class HeroPlayer(val faction : Hero)(implicit val game : Game) extends FactionSt
     }
 
     def exhaust(i : Item) {
+        if (inv.ready.count(i) == 0 && paw(i) > 0) {
+            game.log(faction, "used", RabbitsPaw.exhaust, "as", i)
+            exhaust(RabbitsPaw)
+        }
+        else
         if (inv.ready.count(i) == 0)
             throw new RuntimeException("Item not found " + i.name.styled(styles.hit) + "!!!")
         else {
@@ -760,7 +774,8 @@ object HeroExpansion extends FactionExpansion[Hero] {
                 case _ => false
             }
 
-            val l = f.inv.notDamaged
+            // the Dark Deck's Cursed Idol can't be damaged
+            val l = f.inv.notDamaged.%(_.item != CursedIdol)
             val a = (b.attacker == f).??(b.ally.?(a => a.from(b.clearing).$.%(_.piece.is[Warrior])))
             if (l.none && a.none)
                 then
@@ -822,13 +837,19 @@ object HeroExpansion extends FactionExpansion[Hero] {
             val bonusA = p.is[Warrior] || options.has(WarriorsOnlyInfamy).not
             val bonusB = e.used.has(Infamy(f)).not || options.has(LimitedInfamy).not
 
-            if (bonusA && bonusB)
+            // the Dark Deck's Book of Names: half the Infamy, rounded down, in a battle alongside the named faction
+            val halved = b.ally.exists(e.bookAlly)
+            if (halved && bonusA && bonusB)
+                e.namedInfamy += 1
+
+            if (bonusA && bonusB && (halved.not || e.namedInfamy % 2 == 0))
                 TryForcedRemoveAction(e, c, f, p, x + 1, SomeHostile(m), UsedEffectAction(e, Infamy(f), then), fail)
+
             else
                 TryForcedRemoveAction(e, c, f, p, x, m, then, fail)
 
         case BattleCleanupAttackerAction(b, f : Hero) =>
-            if (b.balance < 0) {
+            if (b.balance < 0 && f.named.has(b.ally.get).not) {
                 f.attitude += b.ally.get -> Hostile
                 log(b.ally.get, "became", Hostile, "to", f)
             }
@@ -1168,6 +1189,12 @@ object HeroExpansion extends FactionExpansion[Hero] {
 
             AidDoneAction(f, e)
 
+        case AidDoneAction(f, e) if f.bookAlly(e) =>
+            // the Dark Deck's Book of Names: the attitude doesn't move, and aiding scores half (round down) of an ally's 2
+            f.oscore(1)("aiding", e, "with", BookOfNames)
+
+            Repeat
+
         case AidDoneAction(f, e) =>
             val att = f.attitude.get(e).|(Indifferent)
             val aid = f.aid.get(e).|(0) + 1
@@ -1297,11 +1324,13 @@ object HeroExpansion extends FactionExpansion[Hero] {
         case EveningEndAction(f : Hero) =>
             val n = 6 + min(3, f.ready(Bag)) * 2
             val k = f.inv.diff(f.dontCount).num
+            // the Cursed Idol counts, but is never discarded
+            val d = min(k - n, f.inv.diff(f.dontCount).%(_.item != CursedIdol).num)
 
-            if (k <= n)
+            if (d <= 0)
                 CleanUpAction(f)
             else
-                SelectHeroItemsAction(f, "Discard " ~ (k - n).hl ~ " items", $(), true)(_.num(k - n))(ToDiscard(_))(DiscardItemsListAction(f, _, CleanUpAction(f)))
+                SelectHeroItemsAction(f, "Discard " ~ d.hl ~ " items", $(), true)(_.num(d))(ToDiscard(_))(DiscardItemsListAction(f, _, CleanUpAction(f)))
 
         case DiscardItemsListAction(f, l, then) =>
             l.foreach { i =>
@@ -1313,8 +1342,8 @@ object HeroExpansion extends FactionExpansion[Hero] {
             then
 
         case AfterTurnAction(f : Hero) if game.autoHits =>
-            if (f.region.is[Clearing] && f.inv.notDamaged.any)
-                AdjustItemDamagePrioritiesAction(f, $, 0, f.inv.notDamaged.num /↑ 2, BetweenTurnAction)
+            if (f.region.is[Clearing] && f.inv.notDamaged.%(_.item != CursedIdol).any)
+                AdjustItemDamagePrioritiesAction(f, $, 0, f.inv.notDamaged.%(_.item != CursedIdol).num /↑ 2, BetweenTurnAction)
             else
                 BetweenTurnAction
 

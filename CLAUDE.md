@@ -593,8 +593,17 @@ file covers the build, server and deploy. No session can ssh to the server
   any suit for 3 VP and the Cursed Idol, then out of the game), Dark Dominance (the Idol and 3 connected ruled clearings), the dark items
   added to the shared supply (Torch, Book of Names, Rabbit's Paw, Cursed Idol; `Item.title` is their display name, `name` what saves
   write) and the persistent effects, all in `root/deck-dark.scala` (`DarkDeckExpansion`, its header lists the readings). Traps and the
-  Golden Knight are drawn on the map (`BearTrapMarker`, `GoldenKnightMarker`, display only). Not done: Rodent Zero's Infected and the
-  Vagabond's Book of Names and Rabbit's Paw actions. `ReplayCheck <games> base dark` plays it.
+  Golden Knight is drawn on the map (`GoldenKnightMarker`, display only). Two pieces are ownerless-style hirelings added when their card is
+  crafted (`ensure`): Bear Traps' two traps are tokens of the card's owner that can be battled (`TrapLayer`, owner `game.trapOwner`, which
+  `HirelingEx.owner` reads, as an effect would make the hireling transfers hand it on), and Rodent Zero's 20 Infected are their own player
+  (`InfectedHorde`, no owner, so asks for it go to the current player), defenders that always take the higher roll, counting for rule
+  (`DarkDeckExpansion.plague` beside `game.unhired`), spreading at the end of the owner's Evening (at `CleanUpAction`, as the factions'
+  expansions take `EveningEndAction` first) with the Hundreds' suit die (Gman). Neither is listed with the hirelings. The Vagabond's Book of
+  Names (`HeroPlayer.named`, allied until the end of the turn, its marker unmoved), Rabbit's Paw (`HeroPlayer.paw`, in Daylight any other item)
+  and Cursed Idol (never exhausted, damaged or discarded: `ToExhaust`, `ToDamage`, `ToDiscard` in `root/items.scala`; it counts
+  toward the Evening item limit but is never the one dropped) follow Law of Doom D3.1.2; with Book of Names, aiding the named faction
+  scores 1 and leaves its attitude unmoved, and Infamy in a battle alongside it scores every second time (`namedInfamy`, half rounded down).
+  `ReplayCheck <games> base dark` plays it.
 - The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
   Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
   box) and the Homeland errata, from a player's Google Drive (2026-10-10). The shared deck's back follows
