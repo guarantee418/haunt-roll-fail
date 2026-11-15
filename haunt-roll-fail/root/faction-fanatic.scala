@@ -253,7 +253,7 @@ object FanaticExpansion extends FactionExpansion[Fanatic] {
             if ((f.used.has(Revenge) || (game.current != f && options.has(RevengeFromAnyRemoval))) && f.ignored.has(IgnoreWarriorRemovalEffects).not) {
                 var w = 0
 
-                board.clearings.foreach { c =>
+                game.limboClearings.foreach { c =>
                     val l = f.limbo(c).$.%(_.piece.is[Warrior])
 
                     l --> f.acolytes
@@ -267,7 +267,7 @@ object FanaticExpansion extends FactionExpansion[Fanatic] {
 
             var g = 0
 
-            board.clearings.foreach { c =>
+            game.limboClearings.foreach { c =>
                 val l = f.limbo(c).$.%(_.piece.is[Garden])
 
                 g += l.num

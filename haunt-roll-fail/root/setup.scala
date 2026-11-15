@@ -456,7 +456,7 @@ object SetupExpansion extends MandatoryExpansion {
             if (options.has(NoHirelings))
                 DraftCardsAction
             else
-                Shuffle[Hireling](options.of[IncludeHireling]./(_.hireling), ShuffleHirelingsAction(_))
+                Shuffle[Hireling](options.of[IncludeHireling]./(_.hireling).%(TurnlingsExpansion.drawable(_, options)), ShuffleHirelingsAction(_))
 
         case ShuffleHirelingsAction(l) =>
             val (normal, demoted, total) = options.of[HirelingsOption].only @@ {
@@ -574,7 +574,7 @@ object SetupExpansion extends MandatoryExpansion {
         case DraftCaptainsAction if options.has(KnavesCaptainsInDraft) && game.drawn.of[Knaves].exists(f => game.draftCaptains.contains(f).not) =>
             val f = game.drawn.of[Knaves].%(f => game.draftCaptains.contains(f).not).first
 
-            Shuffle[KnaveCaptain](Knaves.captains, l => DraftCaptainsDealtAction(f, l))
+            Shuffle[KnaveCaptain](Knaves.captainsFor(options), l => DraftCaptainsDealtAction(f, l))
 
         case DraftCaptainsDealtAction(f, l) =>
             game.draftCaptains += f -> l.take(4)

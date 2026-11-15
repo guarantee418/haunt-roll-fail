@@ -676,7 +676,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
         // cleanup, so a battle's dead frogs couldn't be placed), and with too few for every flipped clearing the Diaspora picks
         // (it was the first ones listed; Lower Jaw got none in Movement as Betrayal, 2026-11-08)
         case InvasiveEEEFearsPlaceAction(f, l, then) =>
-            board.clearings.foreach(c => f.limbo(c) --> game.dead)
+            game.limboClearings.foreach(c => f.limbo(c) --> game.dead)
 
             val t = f.pooled(f.warrior)
 

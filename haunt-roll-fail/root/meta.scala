@@ -1086,6 +1086,17 @@ case object DoomedVagabonds extends GameOption with ToggleOption with VagabondCh
 }
 
 
+// the Doomed Expansion's six Knave Captains (fan-made by slugfacekillah; Law of Doom D6; `Knaves.doomed` in `root/faction-knaves.scala`)
+case object DoomedCaptains extends GameOption with ToggleOption with FoldedOption {
+    val group = KD.title
+    val valueOn = "Doomed Knave Captains".styled(KD) ~ " " ~ "(fan-made)"
+    override def required(all : $[BaseOption]) = $($(IncludeFaction(KD)))
+    override val explain = $(
+        "Doomed Knave Captains".styled(KD) ~ SpacedDash ~ "six more Captain cards from " ~ "The Doomed Expansion".hl ~ " by " ~ "slugfacekillah".hl ~ ", dealt with the others."
+    ) ++ Knaves.doomed./(k => k.name.styled(KD).styled(xstyles.bold) ~ " " ~ k.items./(_.img).merge ~ SpacedDash ~ k.text)
+}
+
+
 case object LimitedTrampleDiscard extends GameOption with ToggleOption with FoldedOption {
     val group = LC.title
     val valueOn = "Trampled ".hh ~ "Gardens".styled(LC) ~ SpacedDash ~ "Discard Only ".hh ~ 1.styled(styles.hit) ~ " Card".hh
@@ -1380,8 +1391,21 @@ case object FactionHirelingClash extends HirelingsClashOption {
 }
 
 
+// The Doomed Expansion's Turnlings (fan-made by slugfacekillah; Law of Doom D8; `root/turnlings.scala`): taking a hireling
+// marker, the player turns the hireling over to another player, who rolls for its control
+case object TurnOverHirelings extends GameOption with ToggleOption with FoldedOption {
+    val group = "Turnlings".hh ~ " (fan-made)"
+    val valueOn = "Turn Over Hirelings".hh
+    override def required(all : $[BaseOption]) = $($(TwoDemotedOneNormalHirelings), $(OneDemotedTwoNormalHirelings), $(ThreeNormalHirelings), $(ThreeDemotedHirelings), $(ThreeRandomHirelings), $(SelectedHirelings))
+    override val explain = $(
+        "Turn Over Hirelings".hh ~ SpacedDash ~ "the " ~ "Turnlings".hh ~ " rule from " ~ "The Doomed Expansion".hl ~ " by " ~ "slugfacekillah".hl ~ ":",
+        "a player whose score reaches a hireling marker" ~ &(" turns the hireling over to " ~ &("another player,")) ~ &(" who rolls for its control."),
+        "The " ~ "Turnlings".hh ~ " cards below can be drawn" ~ &(" with or without it.")
+    )
+}
+
 case class IncludeHireling(hireling : Hireling) extends GameOption with ToggleOption with FoldedOption {
-    val group = hireling.demoted.?("Demoted".hh).|("Staunch".styled(styles.hit)) ~ " Hirelings"
+    val group = hireling.demoted.?("Demoted".hh).|("Staunch".styled(styles.hit)) ~ hireling.is[Turnling].?(" Turnlings (fan-made)").|(" Hirelings")
     val valueOn = hireling.name.styled(hireling)
     override def required(all : $[BaseOption]) =
         if (hireling.demoted)
@@ -1660,6 +1684,11 @@ object Meta extends MetaGame {
         FelinePhysicians, BluebirdNobles, RabbitScouts, Brigand, LizardEnvoys, OtterDivers, MoleArtisians, RavenSentries, RatSmugglers, BadgerBodyguards, StoicProtector, BanditGangs, StreetBand, BatMessengers, FrogTinkers, StrugglingFarmers,
         ForestPatrol, LastDynasty, SpringUprising, TheExile, WarmSunProphets, RiverfolkFlotilla, SunwardExpedition, CorvidSpies, FlameBearers, VaultKeepers, FuriousProtector, HighwayBandits, PopularBand, SunnyAdvocates, RiverRoamers, ProsperousFarmers)
 
+    // the Doomed Expansion's Turnlings (fan-made), offered apart and not picked by default
+    val turnlings = $[Hireling](
+        ForestConnections, InfectiousSpirits, GoldenPig, CardinalCarts, CorporateOverreach, FeederTurnling, MiracleCureAll, FineSwine,
+        MidnightMurderers, TheInfected, KnightTurnling, RougeAgents, UnionMembers, ConvergingCoup, BuzzlingBuggers, GristlyGrunts)
+
     override def optionPages(n : Int, l : $[F]) : $[$[GameOption]] = $(
         hiddenOptions ++
         hitsAndAmbushes(l) ++
@@ -1669,6 +1698,7 @@ object Meta extends MetaGame {
         $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
+        legendsOptions ++
         $,
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck, DarkDeck) ++
         (n >= 5).$(ActionBooster) ++
@@ -1691,11 +1721,14 @@ object Meta extends MetaGame {
         l.of[Underground].any.$(MayorAssemblyAction) ++
         l.of[Mischief].any.$(ThreeOfEachPlot, EmbeddedAgentsBeforeBattle, DiversionPlot, BrutalHonesty) ++
         l.of[Expedition].any.$(ColumnBonusCardVP) ++
+        l.of[Knaves].any.$(DoomedCaptains) ++
         l.of[Horde].any.$(SeparateItemsInRuins) ++
         $,
         $(NoHirelings, ThreeDemotedHirelings, TwoDemotedOneNormalHirelings, OneDemotedTwoNormalHirelings, ThreeNormalHirelings, ThreeRandomHirelings, SelectedHirelings) ++
         $(HirelingHirelingClash, FactionHirelingClash) ++
         hirelings./(IncludeHireling) ++
+        $(TurnOverHirelings) ++
+        turnlings./(IncludeHireling) ++
         $,
     )
 
@@ -1751,11 +1784,22 @@ object Meta extends MetaGame {
         l.of[Underground].any.$(MayorAssemblyAction) ++
         l.of[Mischief].any.$(ThreeOfEachPlot, EmbeddedAgentsBeforeBattle, DiversionPlot, BrutalHonesty) ++
         l.of[Expedition].any.$(ColumnBonusCardVP) ++
+        l.of[Knaves].any.$(DoomedCaptains) ++
         l.of[Horde].any.$(SeparateItemsInRuins) ++
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         $(NoHirelings, ThreeDemotedHirelings, TwoDemotedOneNormalHirelings, OneDemotedTwoNormalHirelings, ThreeNormalHirelings, ThreeRandomHirelings, SelectedHirelings) ++
         $(HirelingHirelingClash, FactionHirelingClash) ++
-        hirelings./(IncludeHireling)
+        hirelings./(IncludeHireling) ++
+        $(TurnOverHirelings) ++
+        turnlings./(IncludeHireling) ++
+        legendsOptions
+
+    // the Doomed Expansion's Legends Scenarios (root/legends.scala)
+    def legendsOptions : $[GameOption] =
+        $(CastlesAndCatacombs, TheFifthRuin, DarkRituals, HuntTheLegend) ++
+        $(PickShadowmaw, PickWhiteWolf, PickBeaverbot, PickRedKnight, PickDemonBear) ++
+        $(RallyRound, FriendshipRing, BonafiedPrince, Merchandising, ThePrecious, RingOfRage, ReturnOfTheKing, PowerOfTheSchwartz) ++
+        $(FatFingers, LilLooters, FiveFingerFilch, SeizureAndSurrender, Pickpockets)
 
     override val hiddenOptions =
         factions./(IncludeFaction) ++
@@ -1931,7 +1975,7 @@ object Meta extends MetaGame {
     }
 
     def writeFaction(f : Faction) = f.short
-    def parseFaction(s : String) = (factions ++ hirelings).%(_.short == s).single || (s == "XCMDM").?(Mudmen(XC)) || $[Faction](InfectedHorde, TrapLayer).%(_.short == s).single || hirelings.%(_.toString == s).single
+    def parseFaction(s : String) = (factions ++ hirelings ++ turnlings).%(_.short == s).single || (s == "XCMDM").?(Mudmen(XC)) || $[Faction](InfectedHorde, TrapLayer, LegendBeast).%(_.short == s).single || hirelings.%(_.toString == s).single
 
     def writeOption(o : O) = Serialize.write(o)
     def parseOption(s : String) = $(options.find(o => writeOption(o) == s) || options.find(o => o.toString == s) | (s @@ {
@@ -2149,6 +2193,38 @@ object Meta extends MetaGame {
         ImageAsset("vp-kd") ::
         ImageAsset("vp-ld") ::
     $) ::
+    // The Legends Scenarios (root/legends.scala, art by root/tools/legends-art.py)
+    ConditionalAssetsList((factions, options) => LegendsExpansion.on(options), "legends")(
+        ImageAsset("space-suited") ::
+        ImageAsset("space-unsuited") ::
+        ImageAsset("monster-shadowmaw") ::
+        ImageAsset("marker-shadowmaw") ::
+        ImageAsset("monster-card-shadowmaw") ::
+        ImageAsset("monster-card-shadowmaw-weapon") ::
+        ImageAsset("monster-white-wolf") ::
+        ImageAsset("marker-white-wolf") ::
+        ImageAsset("monster-card-white-wolf") ::
+        ImageAsset("monster-card-white-wolf-weapon") ::
+        ImageAsset("monster-beaverbot") ::
+        ImageAsset("marker-beaverbot") ::
+        ImageAsset("monster-card-beaverbot") ::
+        ImageAsset("monster-card-beaverbot-weapon") ::
+        ImageAsset("monster-red-knight") ::
+        ImageAsset("marker-red-knight") ::
+        ImageAsset("monster-card-red-knight") ::
+        ImageAsset("monster-card-red-knight-weapon") ::
+        ImageAsset("monster-demon-bear") ::
+        ImageAsset("marker-demon-bear") ::
+        ImageAsset("monster-card-demon-bear") ::
+        ImageAsset("monster-card-demon-bear-weapon") ::
+        ImageAsset("marker-back") ::
+        ImageAsset("die-1") ::
+        ImageAsset("die-2") ::
+        ImageAsset("die-3") ::
+        ImageAsset("die-4") ::
+        ImageAsset("die-5") ::
+        ImageAsset("die-6") ::
+    $) ::
     // The score and item trackers (the Board Trackers setting)
     ConditionalAssetsList((factions, options) => true, "tracker")(
         ImageAsset("score-track") ::
@@ -2230,6 +2306,42 @@ object Meta extends MetaGame {
         ImageAsset("item-cursedidol-damaged-exhausted"  ) ::
         ImageAsset("item-cursedidol-empty"              ) ::
 
+        ImageAsset("item-ring"                          ) ::
+        ImageAsset("item-ring-exhausted"                ) ::
+        ImageAsset("item-ring-damaged"                  ) ::
+        ImageAsset("item-ring-damaged-exhausted"        ) ::
+        ImageAsset("item-ring-empty"                    ) ::
+
+        ImageAsset("item-mauler") ::
+        ImageAsset("item-mauler-exhausted") ::
+        ImageAsset("item-mauler-damaged") ::
+        ImageAsset("item-mauler-damaged-exhausted") ::
+        ImageAsset("item-mauler-empty") ::
+
+        ImageAsset("item-spiritsword") ::
+        ImageAsset("item-spiritsword-exhausted") ::
+        ImageAsset("item-spiritsword-damaged") ::
+        ImageAsset("item-spiritsword-damaged-exhausted") ::
+        ImageAsset("item-spiritsword-empty") ::
+
+        ImageAsset("item-chainsaw") ::
+        ImageAsset("item-chainsaw-exhausted") ::
+        ImageAsset("item-chainsaw-damaged") ::
+        ImageAsset("item-chainsaw-damaged-exhausted") ::
+        ImageAsset("item-chainsaw-empty") ::
+
+        ImageAsset("item-slaymore") ::
+        ImageAsset("item-slaymore-exhausted") ::
+        ImageAsset("item-slaymore-damaged") ::
+        ImageAsset("item-slaymore-damaged-exhausted") ::
+        ImageAsset("item-slaymore-empty") ::
+
+        ImageAsset("item-bushblazer") ::
+        ImageAsset("item-bushblazer-exhausted") ::
+        ImageAsset("item-bushblazer-damaged") ::
+        ImageAsset("item-bushblazer-damaged-exhausted") ::
+        ImageAsset("item-bushblazer-empty") ::
+
         ImageAsset("item-any"         ) ::
         ImageAsset("item-any-damaged" ) ::
 
@@ -2270,16 +2382,27 @@ object Meta extends MetaGame {
         ImageAsset("move-deg-345"  ) ::
     $) ::
     ConditionalAssetsList((factions, options) => true, "card")(
-        ImageAsset("card-back-art") ::
-        ImageAsset("card-back-art-ep") ::
-        ImageAsset("card-back-art-sd") ::
-        ImageAsset("card-back-art-fd") ::
-        ImageAsset("card-back-art-dd") ::
+        ImageAsset("monster-card-back-art") ::
+        ImageAsset("monster-card-back-art-ep") ::
+        ImageAsset("monster-card-back-art-sd") ::
+        ImageAsset("monster-card-back-art-fd") ::
+        ImageAsset("monster-card-back-art-dd") ::
 
     $) ::
     ConditionalAssetsList((factions, options) => true, "faction/hireling")(
         ImageAsset("ddi-infected"          ) ::
         ImageAsset("ddi-infected-empty"    ) ::
+
+        // the Doomed Expansion's Turnlings, cut from its stickers by `root/tools/turnlings-art.py`
+        ImageAsset("turnling-whisperer"    ) ::
+        ImageAsset("turnling-cardinal"     ) ::
+        ImageAsset("turnling-caravan"      ) ::
+        ImageAsset("turnling-doomsayer"    ) ::
+        ImageAsset("turnling-flame"        ) ::
+        ImageAsset("turnling-vulture"      ) ::
+        ImageAsset("turnling-bug"          ) ::
+        ImageAsset("turnling-grunt"        ) ::
+        ImageAsset("turnling-swine"        ) ::
 
         ImageAsset("stp-deer"              ) ::
         ImageAsset("stp-deer-empty"        ) ::
@@ -2355,7 +2478,7 @@ object Meta extends MetaGame {
     $) ::
     // the hireling cards, both sides (staunch on the front, demoted on the back), from the TTS mod "Root - Ultimate Collection"
     ConditionalAssetsList((factions, options) => true, "faction/hireling/card", "hireling-card:", lzy = Laziness.OnDemand)(
-        Meta.hirelings./(h => ImageAsset(h.style + "-card"))
+        (Meta.hirelings ++ Meta.turnlings)./(h => ImageAsset(h.style + "-card"))
     ) ::
     // the landmark cards, from the Leder Card Library (https://cards.ledergames.com/), shown when a landmark on the map is tapped
     ConditionalAssetsList((factions, options) => true, "card/landmark", "landmark-card:", lzy = Laziness.OnDemand)(
@@ -3733,7 +3856,7 @@ object Meta extends MetaGame {
         ImageAsset("rabbit-integration") ::
         ImageAsset("mouse-integration") ::
         ImageAsset("fox-integration") ::
-        ImageAsset("card-frog-back-art") ::
+        ImageAsset("monster-card-frog-back-art") ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[InvasiveBBB].any, "faction/invasive")(
         ImageAsset("ld-glyph"            , "td-glyph"            ) ::
@@ -3762,7 +3885,7 @@ object Meta extends MetaGame {
         ImageAsset("imitation") ::
         ImageAsset("laborers") ::
         ImageAsset("peace-talks") ::
-        ImageAsset("card-frog-back-art") ::
+        ImageAsset("monster-card-frog-back-art") ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[InvasiveCCC].any, "faction/invasive")(
         ImageAsset("ld-glyph"            , "td-glyph"            ) ::
@@ -3785,7 +3908,7 @@ object Meta extends MetaGame {
         ImageAsset("outcast-mouse"       , "../fanatic/outcast-mouse") ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[InvasiveDDD].any, "faction/invasive/card", lzy = Laziness.Later, scale = 50)(
-        ImageAsset("card-frog-back-art") ::
+        ImageAsset("monster-card-frog-back-art") ::
         ImageAsset("frog-ambush") ::
         ImageAsset("frog-dominance-half") ::
         ImageAsset("fox-laborers") ::
@@ -3815,7 +3938,7 @@ object Meta extends MetaGame {
         ImageAsset("outcast-mouse"       , "../fanatic/outcast-mouse") ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[InvasiveEEE].any, "faction/invasive/card", lzy = Laziness.Later, scale = 50)(
-        ImageAsset("card-frog-back-art") ::
+        ImageAsset("monster-card-frog-back-art") ::
         ImageAsset("hl-card-frog-back-art") ::
         ImageAsset("frog-ambush", "hl-frog-ambush") ::
         ImageAsset("hl-frog-dominance") ::
@@ -3919,6 +4042,13 @@ object Meta extends MetaGame {
         ImageAsset("kd-captain-ranger"     ) ::
         ImageAsset("kd-captain-tinker"     ) ::
         ImageAsset("kd-captain-thief"      ) ::
+        // the Doomed Expansion's Captains, cut from its stickers by root/tools/doomed-captains.py
+        ImageAsset("kd-captain-bard"       ) ::
+        ImageAsset("kd-captain-barkeep"    ) ::
+        ImageAsset("kd-captain-berserker"  ) ::
+        ImageAsset("kd-captain-blacksmith" ) ::
+        ImageAsset("kd-captain-swindler"   ) ::
+        ImageAsset("kd-captain-zealot"     ) ::
 
         ImageAsset("kd-acclaim"          ) ::
     $) ::

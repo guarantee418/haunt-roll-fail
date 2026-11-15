@@ -107,6 +107,20 @@ case object KnaveCheat      extends KnaveCaptain("Cheat",      $(Boots, Teapot),
 case object KnaveGladiator  extends KnaveCaptain("Gladiator",  $(Sword, Hammer),   "When you Assault, draw 1 card at the start of battle.")
 case object KnaveAdventurer extends KnaveCaptain("Adventurer", $(Hammer, Coins),   "After you place acclaim at a ruin, draw 1 card.")
 
+// the Doomed Expansion's six Knave Captains (fan-made by slugfacekillah; Law of Doom D6), option DoomedCaptains; readings:
+// - Bard: the two moves after a Nab are Dash moves (ignoring rule, Skunks may follow), in place of Nab's usual move
+// - Barkeep: Tea pays for any item action, as often as there is Tea to flip
+// - Berserker: in an Assault, a forest that took a prisoner in this battle takes more, beside the empty ones
+// - Blacksmith: a Serve may first flip one exhausted item other than a Hammer face up
+// - Swindler: the Filch before a Nab costs no action and doesn't count as the turn's Filch
+// - Zealot: one of a Gift's draws may be a random card from an enemy with pieces in the Captain's clearing (none in a forest)
+case object KnaveBard       extends KnaveCaptain("Bard",       $(Teapot, Bag),     "If not hit when you Nab, you may move twice, ignoring rule, after the battle.")
+case object KnaveBarkeep    extends KnaveCaptain("Barkeep",    $(Teapot, Hammer),  "When you flip Tea, you may take any item action (not just Revel).")
+case object KnaveBerserker  extends KnaveCaptain("Berserker",  $(Sword, Teapot),   "When you Assault, you can put all Prisoners into the same forest.")
+case object KnaveBlacksmith extends KnaveCaptain("Blacksmith", $(Boots, Hammer),   "When you Serve, you may also flip any non-Serve item face up.")
+case object KnaveSwindler   extends KnaveCaptain("Swindler",   $(Coins, Bag),      "When you Nab, you may Filch once before the battle.")
+case object KnaveZealot     extends KnaveCaptain("Zealot",     $(Crossbow, Coins), "Once per Gift, you may take a random card from a player there instead of drawing.")
+
 
 abstract class KnavesItemPower(val name : String, val item : Item) extends Record with Elementary {
     def elem = name.styled(KD).styled(xstyles.bold)
@@ -125,6 +139,10 @@ trait KnavesPending extends Record
 case object KnavesThiefMove extends KnavesPending
 case object KnavesNabMove extends KnavesPending
 case object KnavesServeCraft extends KnavesPending
+case object KnavesBardMove extends KnavesPending
+case object KnavesBardMoveAgain extends KnavesPending
+case object KnavesSwindleFilch extends KnavesPending
+case object KnavesSwindleNab extends KnavesPending
 
 
 case class KnavesWith(a : KnavesItemPower, ignore : Boolean) extends Message {
@@ -141,6 +159,10 @@ object Knaves {
     val maxActions = 4
 
     val captains = $[KnaveCaptain](KnaveHarrier, KnaveTinker, KnaveVagrant, KnaveThief, KnaveScoundrel, KnaveRonin, KnaveJailor, KnaveRanger, KnaveArbiter, KnaveCheat, KnaveGladiator, KnaveAdventurer)
+
+    val doomed = $[KnaveCaptain](KnaveBard, KnaveBarkeep, KnaveBerserker, KnaveBlacksmith, KnaveSwindler, KnaveZealot)
+
+    def captainsFor(options : $[Meta.O]) : $[KnaveCaptain] = captains ++ options.has(DoomedCaptains).??(doomed)
 
     val itemActions = $[KnavesItemPower](KnavesDash, KnavesAssault, KnavesSkirmish, KnavesNab, KnavesRevel, KnavesGift, KnavesServe)
 }
@@ -198,6 +220,8 @@ class KnavesPlayer(val faction : Knaves)(implicit val game : Game) extends Facti
     var serving : $[Clearing] = $
     var filchCrafting : Boolean = false
     var nabEscaped : Boolean = false
+    // forests that took a prisoner in the current battle (Berserker)
+    var cagedNow : $[Forest] = $
 
     var protectedAcclaim : $[Clearing] = $
 
@@ -273,6 +297,12 @@ case class KnavesGiftAction(self : Knaves) extends ForcedAction
 case class KnavesServeAction(self : Knaves) extends ForcedAction
 case class KnavesTinkerAction(self : Knaves, then : ForcedAction) extends ForcedAction
 
+case class KnavesBardMovedAction(self : Knaves) extends ForcedAction
+case class KnavesBlacksmithMainAction(self : Knaves) extends ForcedAction
+case class KnavesBlacksmithAction(self : Knaves, i : Item) extends ForcedAction
+case class KnavesSwindleAction(self : Knaves, flips : $[Item], via : $[Effect]) extends ForcedAction
+case class KnavesZealotAction(self : Knaves, e : |[Faction]) extends ForcedAction
+
 case class KnavesPlaceAcclaimAction(self : Knaves, c : Clearing, then : ForcedAction) extends ForcedAction
 
 case class KnavesBattleBonusAction(self : Knaves, b : Battle, f : Faction, o : Faction, fs : Int, os : Int, fr : Int, or : Int, fh : Int, oh : Int, fe : Int, oe : Int) extends ForcedAction
@@ -341,7 +371,9 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
         val vagrant = (f.is(KnaveVagrant) && f.used.has(KnavesVagrantFlip).not && $[KnavesItemPower](KnavesRevel, KnavesGift, KnavesServe).has(a)).??(up.distinct.but(a.item)./(i => ($(i), $[Effect](KnavesVagrantFlip))))
         val ranger = (f.is(KnaveRanger) && f.used.has(KnavesRangerFlip).not && $[KnavesItemPower](KnavesAssault, KnavesSkirmish, KnavesNab).has(a)).??(up.distinct.but(a.item)./(i => ($(i), $[Effect](KnavesRangerFlip))))
 
-        own ++ vagrant ++ ranger
+        val barkeep = (f.is(KnaveBarkeep) && a != KnavesRevel && up.has(Teapot)).$(($(Teapot), $[Effect]()))
+
+        own ++ vagrant ++ ranger ++ barkeep
     }
 
     def cheats(f : Knaves)(implicit game : Game) : $[$[Item]] = f.is(KnaveCheat).??(f.stash.combinations(2).$./(_.sortBy(i => Item.order.indexOf(i))).distinct)
@@ -366,12 +398,19 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
     def entry(f : Knaves, a : KnavesItemPower, flips : $[Item], via : $[Effect])(implicit game : Game) : ForcedAction = a match {
         case KnavesRevel => KnavesCommitAction(f, a, flips, via, KnavesRevelAction(f))
         case KnavesGift => KnavesCommitAction(f, a, flips, via, KnavesGiftAction(f))
-        case KnavesServe => KnavesCommitAction(f, a, flips, via, KnavesServeAction(f))
+        case KnavesServe => KnavesCommitAction(f, a, flips, via, f.is(KnaveBlacksmith).?(KnavesBlacksmithMainAction(f)).|(KnavesServeAction(f)))
         case _ => KnavesItemAction(f, a, flips, via)
     }
 
     def drawAfter(f : Knaves, n : Int, then : ForcedAction)(implicit game : Game) : ForcedAction =
         (n > 0).?(DrawCardsAction(f, n, NoMessage, AddCardsAction(f, then))).|(then)
+
+    // Zealot: enemies with pieces in the Acting Captain's clearing and cards in hand
+    def zealotTargets(f : Knaves)(implicit game : Game) : $[Faction] = f.actingWhere./~(_.as[Clearing])./~(r => f.enemies.%(_.present(r)).%(_.hand.any))
+
+    // Berserker: in an Assault, the forests that took a prisoner in this battle take more
+    def prisonForests(f : Knaves, c : Clearing)(implicit game : Game) : $[Forest] =
+        (f.freeForests(c) ++ (f.is(KnaveBerserker) && f.used.has(KnavesAssaulting)).??(f.cagedNow.%(adjacentForests(c).has))).distinct
 
     def craftLeft(f : Knaves)(implicit game : Game) : $[SuitAsset] = (f.craft ++ f.frogCraft ++ f.extraCraft).diff(f.crafted)
 
@@ -390,7 +429,7 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
             FactionSetupAction(f)
 
         case FactionSetupAction(f : Knaves) if f.captains.none && f.dealt.none && game.players.of[PlayerN].any =>
-            Shuffle[KnaveCaptain](Knaves.captains, l => KnavesDealCaptainsAction(f, l))
+            Shuffle[KnaveCaptain](Knaves.captainsFor(options), l => KnavesDealCaptainsAction(f, l))
 
         case KnavesDealCaptainsAction(f, l) =>
             f.dealt = l.take(4)
@@ -400,7 +439,7 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
             FactionSetupAction(f)
 
         case FactionSetupAction(f : Knaves) if f.captains.num < 3 =>
-            Ask(f).each(f.dealt.some.|(Knaves.captains).diff(f.captains))(k => KnavesChooseCaptainAction(f, k)).needOk
+            Ask(f).each(f.dealt.some.|(Knaves.captainsFor(options)).diff(f.captains))(k => KnavesChooseCaptainAction(f, k)).needOk
 
         case KnavesChooseCaptainAction(f, k) =>
             f.captains :+= k
@@ -478,6 +517,7 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
             f.used :+= KnavesBattleStarted
 
             f.nabEscaped = false
+            f.cagedNow = $
 
             if (f.actingWhere.has(c))
                 f.used :+= KnavesActingAttack
@@ -545,7 +585,7 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
         case KnavesPrisonersAction(f, b, n) if b.codef.any && b.codef.has(f).not && (game.options.has(PrisonersFromCodefenders) || game.prisonersFromCodefenders) =>
             val c = b.clearing
             val l = ($[Faction](b.defender) ++ b.codef).distinct./~(e => e.from(Limbo(c)).$.%(_.piece.is[Warrior]).%(_.piece.is[Tenacious].not)./(_.piece).distinct./(p => (e, p)))
-            val rr = f.freeForests(c)
+            val rr = prisonForests(f, c)
 
             if (n > 0 && l.any && rr.any)
                 Ask(f).group("Take a prisoner".styled(f), "with", KnavesHaveAtThee.of(f))
@@ -556,6 +596,8 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
 
         case KnavesTakeCodefPrisonerAction(f, b, e, p, r, n) =>
             e.from(Limbo(b.clearing)) --> $(p) --> (f, Cage(r))
+
+            f.cagedNow :+= r
 
             f.log("took [a prisoner]", p.of(e), "prisoner to", r)
 
@@ -569,7 +611,7 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
         case KnavesPrisonersAction(f, b, n) =>
             val c = b.clearing
             val l = b.defender.from(Limbo(c)).$.%(_.piece.is[Warrior]).%(_.piece.is[Tenacious].not)./(_.piece).distinct
-            val rr = f.freeForests(c)
+            val rr = prisonForests(f, c)
 
             if (n > 0 && l.any && rr.any)
                 Ask(f).group("Take a prisoner".styled(f), "with", KnavesHaveAtThee.of(f))
@@ -580,6 +622,8 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
 
         case KnavesTakePrisonerAction(f, b, p, r, n) =>
             b.defender.from(Limbo(b.clearing)) --> $(p) --> (f, Cage(r))
+
+            f.cagedNow :+= r
 
             f.log("took [a prisoner]", p.of(b.defender), "prisoner to", r)
 
@@ -670,6 +714,34 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
                         .add(MoveInitAction(f, f, moves(f), NoMessage, f.actingWhere.$, f.actingWhere.$, $(KnavesPendingDoneAction(f, KnavesNabMove).as("Skip")), KnavesPendingDoneAction(f, KnavesNabMove)).as("Move".styled(f))(g).!(canMove(f, moves(f)).not))
                         .add(KnavesPendingDoneAction(f, KnavesNabMove).as("Skip"))
 
+                case KnavesBardMove =>
+                    Ask(f).group(k, "may move twice, ignoring rule, after", "Nab".styled(f))
+                        .add(MoveInitAction(f, f, dashes(f), NoMessage, f.actingWhere.$, f.actingWhere.$, $(KnavesPendingDoneAction(f, KnavesBardMove).as("Skip")), KnavesBardMovedAction(f)).as("Move".styled(f))(g).!(canMove(f, dashes(f)).not))
+                        .add(KnavesPendingDoneAction(f, KnavesBardMove).as("Skip"))
+
+                case KnavesBardMoveAgain =>
+                    Ask(f).group(k, "may move again, ignoring rule")
+                        .add(MoveInitAction(f, f, dashes(f), NoMessage, f.actingWhere.$, f.actingWhere.$, $(KnavesPendingDoneAction(f, KnavesBardMoveAgain).as("Skip")), KnavesPendingDoneAction(f, KnavesBardMoveAgain)).as("Move".styled(f))(g).!(canMove(f, dashes(f)).not))
+                        .add(KnavesPendingDoneAction(f, KnavesBardMoveAgain).as("Skip"))
+
+                case KnavesSwindleFilch =>
+                    val c = f.actingWhere./~(_.as[Clearing])
+                    val filch = c.?(c => (Council.governs(f, c).not && f.hand.exists(f.craftableWith($(c.asset), $))) || f.enemies.%(_.present(c)).%(_.is[Hero].not).exists(_.forTrade.any))
+
+                    Ask(f).group(k, "may", "Filch".styled(f), "before the", "Nab".styled(f), "battle")
+                        .add(KnavesFilchMainAction(f).as("Filch".styled(f))(g).!(filch.not, "nothing to filch"))
+                        .add(KnavesPendingDoneAction(f, KnavesSwindleFilch).as("Skip"))
+
+                case KnavesSwindleNab =>
+                    val c = f.actingWhere./~(_.as[Clearing])
+
+                    if (c.?(c => f.canAttackList(c).any))
+                        Ask(f).group(k, "Nab".styled(f), "battle")
+                            .add(BattleInitAction(f, f, KnavesWith(KnavesNab, true), c.$, $, KnavesPendingDoneAction(f, KnavesSwindleNab)).as("Battle".styled(f))(g))
+                    else
+                        Ask(f).group(k, "Nab".styled(f), "battle")
+                            .add(KnavesPendingDoneAction(f, KnavesSwindleNab).as("No targets"))
+
                 case KnavesServeCraft =>
                     val l = f.serving.diff(f.activated)
 
@@ -736,8 +808,18 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
 
             KnavesTinkerAction(f, Repeat)
 
+        case KnavesPendingDoneAction(f, KnavesSwindleNab) =>
+            f.pending = f.pending :- KnavesSwindleNab
+
+            KnavesNabAfterAction(f)
+
         case KnavesPendingDoneAction(f, p) =>
             f.pending = f.pending :- p
+
+            Repeat
+
+        case KnavesBardMovedAction(f) =>
+            f.pending = f.pending.%(_ != KnavesBardMove) :+ KnavesBardMoveAgain
 
             Repeat
 
@@ -753,7 +835,7 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
         // ITEM ACTIONS
         case KnavesItemMainAction(f, a, l) =>
             Ask(f).group(a, "flipping")
-                    .each(l)((i, v) => entry(f, a, i, v).as(i./(_.img).merge, i./(_.elem).comma, v.has(KnavesVagrantFlip).?(("with", KnaveVagrant)), v.has(KnavesRangerFlip).?(("with", KnaveRanger))))
+                    .each(l)((i, v) => entry(f, a, i, v).as(i./(_.img).merge, i./(_.elem).comma, v.has(KnavesVagrantFlip).?(("with", KnaveVagrant)), v.has(KnavesRangerFlip).?(("with", KnaveRanger)), (f.is(KnaveBarkeep) && i == $(Teapot) && a != KnavesRevel).?(("with", KnaveBarkeep))))
                     .cancel
 
         case KnavesCheatMainAction(f) =>
@@ -792,6 +874,12 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
                     else
                         MoveInitAction(f, f, skirmishes(f), KnavesWith(a, false), $(r), $(r), $(CancelAction), commit(KnavesSkirmishBattleAction(f, false)))
 
+                case KnavesNab if f.is(KnaveSwindler) =>
+                    Ask(f).group(k, "may", "Filch".styled(f), "before the battle")
+                        .add(KnavesSwindleAction(f, flips, via).as("Filch".styled(f), "first"))
+                        .add(BattleInitAction(f, f, m, c.$, $(CancelAction), commit(KnavesNabAfterAction(f))).as("Battle".styled(f), "now"))
+                        .cancel
+
                 case KnavesNab =>
                     BattleInitAction(f, f, m, c.$, $(CancelAction), commit(KnavesNabAfterAction(f)))
 
@@ -819,9 +907,22 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
                 case None => NoAsk(f)(Repeat)
             }
 
+        case KnavesSwindleAction(f, flips, via) =>
+            flip(f, flips)
+
+            f.used ++= via
+
+            f.actions -= 1
+
+            f.plog("flipped", flips./(_.elem).comma, "to [in order to]", KnavesNab, "and may", "Filch".styled(f), "first")
+
+            f.pending ++= $(KnavesSwindleFilch, KnavesSwindleNab)
+
+            Repeat
+
         case KnavesNabAfterAction(f) =>
             if (f.nabEscaped.not && f.actingWhere.any)
-                f.pending :+= KnavesNabMove
+                f.pending :+= f.is(KnaveBard).?(KnavesBardMove).|(KnavesNabMove)
 
             Repeat
 
@@ -855,17 +956,57 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
                     Repeat
             }
 
+        case KnavesGiftAction(f) if f.is(KnaveZealot) && zealotTargets(f).any =>
+            Ask(f).group(KnaveZealot, "may take a random card instead of drawing one")
+                .each(zealotTargets(f))(e => KnavesZealotAction(f, Some(e)).as("Take a card from", e))
+                .add(KnavesZealotAction(f, None).as("Draw"))
+                .needOk
+
         case KnavesGiftAction(f) =>
+            KnavesZealotAction(f, None)
+
+        case KnavesZealotAction(f, e) =>
+            def draws(n : Int) : ForcedAction = e match {
+                case Some(e) =>
+                    f.plog("took a random card from", e)
+
+                    StealCardAction(f, e, drawAfter(f, n - 1, Repeat))
+
+                case None =>
+                    drawAfter(f, n, Repeat)
+            }
+
             f.actingWhere.get match {
                 case c : Clearing if f.at(c).has(Acclaim) =>
-                    drawAfter(f, 2, Repeat)
+                    draws(2)
 
                 case c : Clearing if canAcclaim(f, c, false) =>
-                    KnavesPlaceAcclaimAction(f, c, drawAfter(f, 1, Repeat))
+                    KnavesPlaceAcclaimAction(f, c, draws(1))
 
                 case _ =>
-                    drawAfter(f, 1, Repeat)
+                    draws(1)
             }
+
+        case KnavesBlacksmithMainAction(f) =>
+            val l = f.forTrade.%(_.exhausted).%(_.damaged.not)./(_.item).%(_ != Hammer).distinct
+
+            if (l.any)
+                Ask(f).group(KnaveBlacksmith, "may flip an item face up")
+                    .each(l)(i => KnavesBlacksmithAction(f, i).as(i.img, i))
+                    .skip(KnavesServeAction(f))
+                    .needOk
+            else
+                NoAsk(f)(KnavesServeAction(f))
+
+        case KnavesBlacksmithAction(f, i) =>
+            f.forTrade.%(r => r.item == i && r.exhausted && r.damaged.not).starting.foreach { r =>
+                f.forTrade = f.forTrade :- r
+                f.forTrade :+= r.refresh
+            }
+
+            f.plog("flipped", i, "face up")
+
+            KnavesServeAction(f)
 
         case KnavesServeAction(f) =>
             f.actingWhere./~(_.as[Clearing]) match {
@@ -898,8 +1039,12 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
             e.forTrade = e.forTrade :- i
             f.forTrade :+= i.item.pristine
 
-            f.used :+= KnavesFilched
-            f.actions -= 1
+            if (f.pending.has(KnavesSwindleFilch))
+                f.pending = f.pending :- KnavesSwindleFilch
+            else {
+                f.used :+= KnavesFilched
+                f.actions -= 1
+            }
 
             f.plog("filched", i.item, "from", e)
 
@@ -920,6 +1065,9 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
             f.crafted = $
             f.filchCrafting = serve.not
 
+            if (serve.not && f.pending.has(KnavesSwindleFilch))
+                f.pending = f.pending :- KnavesSwindleFilch
+            else
             if (serve.not) {
                 f.used :+= KnavesFilched
                 f.actions -= 1

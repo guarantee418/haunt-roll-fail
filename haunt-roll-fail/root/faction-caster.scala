@@ -313,7 +313,7 @@ object CasterExpansion extends FactionExpansion[Caster] {
 
         case ForcedRemoveProcessAction(f : Caster, then) if f.mana >= 3 && f.spells.has(Resurrection) && f.used.has(Resurrection).not =>
             Ask(f)
-                .some(board.clearings.%(f.canPlace).%(f.present))(c => factions./~(e => e.limbo(c).$.pieces.of[Warrior].use(l => l.combinations(1).$ ++ l.combinations(2).$)./(ResurrectAction(f, c, e, _, then))))
+                .some(game.limboClearings.%(f.canPlace).%(f.present))(c => factions./~(e => e.limbo(c).$.pieces.of[Warrior].use(l => l.combinations(1).$ ++ l.combinations(2).$)./(ResurrectAction(f, c, e, _, then))))
                 .skip(then)
 
         case ResurrectAction(h, c, f, l, then) =>

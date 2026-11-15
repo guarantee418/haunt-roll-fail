@@ -533,7 +533,7 @@ object FelineExpansion extends FactionExpansion[Feline] {
             then
 
         case ForcedRemoveProcessAction(f : Feline, then) if f.has(FelinePhysicians).not && f.keep.any && f.ignored.has(FieldHospitals).not && f.ignored.has(IgnoreWarriorRemovalEffects).not =>
-            val c = board.clearings.diff(f.ignored.of[SkipHeal]./(_.c)).maxBy(c => f.limbo(c).$.%(_.piece.is[Warrior]).num)
+            val c = game.limboClearings.diff(f.ignored.of[SkipHeal]./(_.c)).maxBy(c => f.limbo(c).$.%(_.piece.is[Warrior]).num)
             val n = f.limbo(c).$.%(_.piece.is[Warrior]).num
 
             if (n > 0) {
