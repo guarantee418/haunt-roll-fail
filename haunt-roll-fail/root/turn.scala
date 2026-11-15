@@ -181,7 +181,8 @@ object TurnExpansion extends MandatoryExpansion {
                 f.can(FrogTinkers).$(FrogTinkersAction(f, FrogTinkers)) ++
                 f.can(BluebirdNobles).$(BluebirdNoblesAction(f, clearings.%(f.rules).num).!(clearings.%(f.rules).num < 3)) ++
                 f.can(SpringUprising).?(SpringUprisingMainAction(f, SpringUprising)) ++
-                f.can(RiverfolkFlotilla).$(RiverfolkFlotillaAction(f, RiverfolkFlotilla))
+                f.can(RiverfolkFlotilla).$(RiverfolkFlotillaAction(f, RiverfolkFlotilla)) ++
+                hirelings.of[Turnling].any.??(TurnlingsExpansion.birdsongStart(f))
 
             val optional = $ ++
                 f.can(Saboteurs).??(factions.but(f)./~(e => e.stuck.$.of[CraftEffectCard]./(d => SaboteurAction(f, e, d)))) ++

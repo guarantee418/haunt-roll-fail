@@ -78,7 +78,7 @@ object RemovalExpansion extends MandatoryExpansion {
 
         case ForcedRemoveCleanupAction(f, then) =>
             (factions ++ hirelings).foreach { e =>
-                board.clearings.foreach { c =>
+                game.limboClearings.foreach { c =>
                     e.limbo(c) --> game.dead
                 }
 

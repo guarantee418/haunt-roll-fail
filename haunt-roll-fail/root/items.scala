@@ -43,6 +43,14 @@ case object Club extends Item
 case object BookOfNames extends Item { override def title = "Book of Names" }
 case object RabbitsPaw extends Item { override def title = "Rabbit's Paw" }
 case object CursedIdol extends Item { override def title = "Cursed Idol" }
+// the Legends Scenarios' Ring (root/legends.scala): never crafted, discarded or returned to the supply
+case object Ring extends Item
+// the Legends Scenarios' monsters' weapons (root/legends-monsters.scala), taken by slaying them
+case object Mauler extends Item { override def title = "The Mauler" }
+case object SpiritSword extends Item { override def title = "Spirit Sword" }
+case object Chainsaw extends Item { override def title = "Bloody Chainsaw" }
+case object Slaymore extends Item { override def title = "The Slaymore" }
+case object Bushblazer extends Item
 
 case class ItemRef(item : Item, exhausted : Boolean, damaged : Boolean) extends HitTarget with Elementary with GoodMatch {
     def elem = (damaged, exhausted) @@ {
@@ -76,7 +84,9 @@ object ItemRef {
 object Item extends GoodMatch {
     def track = $(Teapot, Coins, Bag)./~(i => 3.times(i.ref(false, false)))
     def mucho = order./~(i => 4.times(i.ref(false, false)))
-    def order = $(Teapot, Boots, Sword, Torch, Crossbow, Hammer, Coins, Bag) ++ dark
+    def order = $(Teapot, Boots, Sword, Torch, Crossbow, Hammer, Coins, Bag) ++ dark ++ legends
+    def legends = $[Item](Ring) ++ weapons
+    def weapons = $[Item](Mauler, SpiritSword, Chainsaw, Slaymore, Bushblazer)
     def dark = $[Item](BookOfNames, RabbitsPaw, CursedIdol)
 }
 
@@ -145,7 +155,7 @@ case class ToDamage(ref : ItemRef) extends RealItem {
 case class ToDiscard(ref : ItemRef) extends RealItem {
     def elem(selected : Boolean) = Image(selected.?(ref.item.imgid + "-empty").|(ref.imgid))
     // the Dark Deck's Cursed Idol is never discarded, only given, taken or swapped (Law of Doom D3.1.2)
-    def available = ref.item != CursedIdol
+    def available = ref.item != CursedIdol && Item.legends.has(ref.item).not
 }
 
 case class ToShow(ref : ItemRef) extends RealItem {

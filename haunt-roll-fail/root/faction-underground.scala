@@ -330,7 +330,7 @@ object UndergroundExpansion extends FactionExpansion[Underground] {
         case ForcedRemoveProcessAction(f : Underground, then) =>
             var g = 0
 
-            board.clearings.foreach { c =>
+            game.limboClearings.foreach { c =>
                 val l = f.limbo(c).$.%(_.piece.is[Building])
 
                 g += l.num

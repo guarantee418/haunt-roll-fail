@@ -611,6 +611,31 @@ file covers the build, server and deploy. No session can ssh to the server
   Daylight actions). Their pictures and titles are cut from the PnP cards by `root/tools/doomed-vb.py` (the art keeps the card's
   background, as there is no cut-out). `ReplayCheck <games> vb doomedvb` plays two Vagabonds a game and takes their special actions
   whenever they are offered.
+  The Doomed Knave Captains (D6) are the toggle "Doomed Knave Captains (fan-made)" under the Knaves (`DoomedCaptains` in `root/meta.scala`):
+  six more Captain cards, Bard, Barkeep, Berserker, Blacksmith, Swindler and Zealot (`Knaves.doomed` in `root/faction-knaves.scala`, its
+  comment lists the readings), dealt with the twelve official ones (`Knaves.captainsFor`). Their pieces are the stickers' heads, cut by
+  `root/tools/doomed-captains.py`. `ReplayCheck <games> kd doomedcap` picks them whenever dealt and takes their choices whenever offered.
+  The Turnlings (D8) are eight double-sided hireling cards, sixteen hirelings offered in their own folded sections, "Staunch Turnlings
+  (fan-made)" and "Demoted Turnlings (fan-made)", none picked by default (`Meta.turnlings`, apart from `Meta.hirelings`), and the toggle
+  "Turn Over Hirelings" (`TurnOverHirelings`): a player reaching a hireling marker gives the hireling to another player, who rolls for
+  its control (`TurnOverHirelingAction`). All of it is in `root/turnlings.scala` (`TurnlingsExpansion`, before `HirelingsExpansion`; its
+  header lists the readings): Whisperers in forests, the Infected (their own warriors here, not the Dark Deck's `InfectedHorde`), the
+  Golden Knight, Cardinals and Caravans, Doomsayers and the Flame, Vultures, Bugs, Grunts and Fine Swine, Forest Connections
+  (`ForestShortcut` in `game.transports`), Bottom Feeder, Golden Pig, Corporate Overreach's Demand die and Miracle Cure-All (copies a
+  crafted card through `dopple`). The Infected and the Golden Knight aren't drawn with the Dark Deck. Card art and pieces are cut from
+  the PnP cards and stickers by `root/tools/turnlings-art.py` (`card/<style>-card`, `turnling-*`). `ReplayCheck <games> base
+  hire:TMM,TIN,... turnover turn` plays them and takes their choices half the times they are offered.
+  The Legends Scenarios (D5) are the folded choice "Legends Scenario (fan-made)" (`LegendsScenario`, `Meta.legendsOptions`): a
+  thirteenth clearing, the scenario space (`LegendSpace`, `Clearing(0)`, registered by every `FactionState` and in
+  `game.clearings` once placed, `game.limboClearings` for the Limbo loops), put at setup in a forest beside the most inner clearings
+  (`game.legendForest`) and linked by trails (`LegendsExpansion.connected`, `linked` in `Roads` and `ForestRoads`), drawn at that
+  forest's name (`center` in `root/ui.scala`). Castles & Catacombs and The Fifth Ruin (its Ring, a ninth item `Ring`, with eight Ring
+  rules and five capture rules) are in `root/legends.scala`; Dark Rituals and Hunt the Legend, with the five Legendary Monsters (their
+  own player `LegendBeast`, health in `game.monsterHealth`, roaming at the start of each Evening from round 2, blocking moves out of
+  their clearing until appeased, slain at the ghost face for their weapon items `Mauler` ... `Bushblazer`), in
+  `root/legends-monsters.scala`. Both headers list the readings. Art is cut from the PnP sticker sheet and cards by
+  `root/tools/legends-art.py` (`webp2/root/images/legends/`, the items in `item/`). `ReplayCheck <games> base castles legend`,
+  `vb fifth ring:<Rule> capture:<Rule> legend`, `base rituals monster:Pick<Monster> legend` and `vb hunt legend` play them.
 - The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
   Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
   box) and the Homeland errata, from a player's Google Drive (2026-10-10). The shared deck's back follows
