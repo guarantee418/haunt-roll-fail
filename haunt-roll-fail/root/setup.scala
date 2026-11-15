@@ -169,13 +169,14 @@ object SetupExpansion extends MandatoryExpansion {
             if (version != gaming.version)
                 log("Saved game version", version.hlb)
 
-            Milestone(OptionsAction(game.players, game.candidates, game.options))
+            Milestone(OptionsAction(game.players, game.candidates, game.recorded))
 
         case OptionsAction(players, candidates, options) =>
             if (players.of[Faction].any)
                 log("Factions", players.of[Faction]./(_.elem).comma)
 
-            options.foreach { o =>
+            // only the options picked on the setup screen; the hidden ones (rules fixes, the rules version) aren't listed
+            options.diff(Meta.unlisted).foreach { o =>
                 log(o.group, o.valueOn)
             }
 

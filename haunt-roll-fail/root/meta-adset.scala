@@ -65,7 +65,7 @@ object MetaAdset extends MetaGame {
     // Advanced Setup always has its setup buffs and Homelands setup (Gman, 2026-10-31), so they aren't choices here
     override def mandatoryFor(n : Int, l : $[F]) = Meta.newGame ++ $(KnavesCaptainsInDraft, AdSetBuffOn, SetupTypeHomelands)
 
-    override def completeSaved(n : Int, l : $[F], options : $[O]) = options.diff(Meta.retired).diff($(AdSetBuffOff, SetupTypeCorners))
+    override def completeSaved(n : Int, l : $[F], options : $[O]) = options.diff(Meta.retired).diff(RulesVersion.implied).diff($(AdSetBuffOff, SetupTypeCorners))
 
     override def groupInfo(o : O) = Meta.groupInfo(o)
 
@@ -82,11 +82,6 @@ object MetaAdset extends MetaGame {
         RandomOfficialMap,
         AllRandomClearings,
         SquiresDeck,
-        ErrataCoffinMakers,
-        NonBirdPartisans,
-        UnthematicPropagandaBureau,
-        TunnelsIgnoreRaid,
-        TunnelsIgnoreTradePosts,
         AdSetBuffOn,
         SetupTypeHomelands,
         SetupOrderReverse,
@@ -94,34 +89,7 @@ object MetaAdset extends MetaGame {
         InsurgentLockOn,
         AutoHitsAssignmentMode,
         BluffMode,
-        FrogCardsAfterStartingHands,
-        FrogCardsSkipLostSouls,
-        FrogsCraftByClearing,
-        LizardsCraftByClearing,
-        CompanionsUntilSpent,
-        HirelingsByTheCard,
-        GovernorsStopEnclaveFlips,
-        CounterMiceInABush,
         KnavesCaptainsInDraft,
-        SkipIdleRallyReconcile,
-        FrogAmbushBottomOnlyAsAmbush,
-        CouncilRevealOnce,
-        EntreatGainUnasked,
-        BanishNeedsWarriors,
-        FeatherRufflersOnCraft,
-        SilverTongueOneEffect,
-        GovernorsStopCrafting,
-        MouseholdFromSupply,
-        BuyServicesAgain,
-        BanishAfterIgnoredHits,
-        CouncilEveningClearPath,
-        ReconcileOneAtATime,
-        FearsAfterRemoval,
-        RiverfolkCraftUngoverned,
-        GovernorsStopExposure,
-        FrogCardsAtDiasporaSetup,
-        PrisonersFromCodefenders,
-        DuskDeckFixes,
         FolkHeroCharacter,
         RandomCharacter,
         MountainSuitedLandmark,

@@ -1541,7 +1541,11 @@ trait GameImplicits {
 }
 
 
-class Game(val players : $[Player], val candidates : $[Faction], val options : $[Meta.O]) extends BaseGame with ContinueGame with LoggedGame {
+// `recorded` are the options the game was made with, as its first move records them; `options` adds the hidden options a rules
+// version (`RulesVersion`) stands for, so the rules check `options` and every game, old or new, plays the same
+class Game(val players : $[Player], val candidates : $[Faction], val recorded : $[Meta.O]) extends BaseGame with ContinueGame with LoggedGame {
+    val options : $[Meta.O] = RulesVersion.expand(recorded)
+
     if (options.has(FactionSeatingGiven) || options.has(SetupOrderPriority))
         require(candidates.num == players.num)
 
