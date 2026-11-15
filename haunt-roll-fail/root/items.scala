@@ -77,7 +77,7 @@ object Item extends GoodMatch {
     def track = $(Teapot, Coins, Bag)./~(i => 3.times(i.ref(false, false)))
     def mucho = order./~(i => 4.times(i.ref(false, false)))
     def order = $(Teapot, Boots, Sword, Torch, Crossbow, Hammer, Coins, Bag) ++ dark
-    def dark = $(BookOfNames, RabbitsPaw, CursedIdol)
+    def dark = $[Item](BookOfNames, RabbitsPaw, CursedIdol)
 }
 
 trait QuasiItem extends GoodMatch {

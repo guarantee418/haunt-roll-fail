@@ -86,6 +86,9 @@ object DominanceExpansion extends MandatoryExpansion {
                 case Some(EnclaveDominance) if factions.of[InvasiveEEE].exists(e => e.enclaves.%(game.riverside.has).%(f.rules).num >= 2) =>
                     f.vp = 999
                     f.log("achieved", ("Frog Dominance").styled(Frog))
+                case Some(DarkDominance) if DarkDeckExpansion.darkDominanceMet(f) =>
+                    f.vp = 999
+                    f.log("achieved", ("Dark Dominance").styled(Abomination))
                 case Some(FrogDominance) if clearings.%(_.asset.matches(Frog)).use(l => l.%(f.rules).num > f.enemies.notOf[Hireling]./(e => l.%(e.rules).num).max) =>
                     f.vp = 999
                     f.log("achieved", ("Frog Dominance").styled(Frog))

@@ -1945,7 +1945,7 @@ object Meta extends MetaGame {
     }
 
     def writeFaction(f : Faction) = f.short
-    def parseFaction(s : String) = (factions ++ hirelings).%(_.short == s).single || (s == "XCMDM").?(Mudmen(XC)) || hirelings.%(_.toString == s).single
+    def parseFaction(s : String) = (factions ++ hirelings).%(_.short == s).single || (s == "XCMDM").?(Mudmen(XC)) || $[Faction](InfectedHorde, TrapLayer).%(_.short == s).single || hirelings.%(_.toString == s).single
 
     def writeOption(o : O) = Serialize.write(o)
     def parseOption(s : String) = $(options.find(o => writeOption(o) == s) || options.find(o => o.toString == s) | (s @@ {
@@ -2009,8 +2009,8 @@ object Meta extends MetaGame {
         ImageAsset("clearing-suit-rabbit-off" ) ::
         ImageAsset("clearing-suit-mouse-off"  ) ::
 
-        ImageAsset("dark-bear-trap"    ) ::
-        ImageAsset("dark-golden-knight") ::
+        ImageAsset("dark-trap-token"   ) ::
+        ImageAsset("dark-knight-token" ) ::
         ImageAsset("scorched-earth-1"  ) ::
         ImageAsset("scorched-earth-2"  ) ::
         ImageAsset("scorched-earth-3"  ) ::
@@ -2292,6 +2292,9 @@ object Meta extends MetaGame {
 
     $) ::
     ConditionalAssetsList((factions, options) => true, "faction/hireling")(
+        ImageAsset("ddi-infected"          ) ::
+        ImageAsset("ddi-infected-empty"    ) ::
+
         ImageAsset("stp-deer"              ) ::
         ImageAsset("stp-deer-empty"        ) ::
 

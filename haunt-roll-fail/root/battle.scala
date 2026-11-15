@@ -650,6 +650,7 @@ object BattleExpansion extends MandatoryExpansion {
 
         case BattleAdjustRollAction(b, f, o, fs, os, fr, or) if fr > or && (
             b.defender.can(GuerillaTactics) ||
+            b.defender == InfectedHorde ||
             b.defender.used.has(RabbitScouts) ||
             (b.attacker.has(HamsterTactics) && b.attacker.at(b.clearing).has(Sheriff).not)
         ) =>

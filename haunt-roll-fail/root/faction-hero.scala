@@ -266,7 +266,10 @@ class HeroPlayer(val faction : Hero)(implicit val game : Game) extends FactionSt
     var inv : $[ItemRef] = $
 
     var attitude = Map[Faction, Attitude]()
-    def allied(f : Faction) = attitude.get(f).has(Allied)
+    def allied(f : Faction) = attitude.get(f).has(Allied) || named.has(f)
+
+    // the Dark Deck's Book of Names: players treated as allied until the end of the turn, their markers unmoved
+    var named : $[Faction] = $
     def hostile(f : Faction) = attitude.get(f).has(Hostile)
 
     var aid = Map[Faction, Int]()
@@ -281,8 +284,11 @@ class HeroPlayer(val faction : Hero)(implicit val game : Game) extends FactionSt
     var fromRuins : $[Item] = $
     var wasted : $[Item] = $
 
-    def ready(i : Item) = inv.ready.count(i)
-    def lacks(i : Item) = inv.ready.count(i) == 0
+    def ready(i : Item) = inv.ready.count(i) + paw(i)
+    def lacks(i : Item) = ready(i) == 0
+
+    // the Dark Deck's Rabbit's Paw: in Daylight, exhausted as any item but the dark ones (Law of Doom D3.1.2)
+    def paw(i : Item) = (i != RabbitsPaw && Item.dark.has(i).not && game.phase == Daylight && inv.ready.count(i) == 0).??(inv.ready.count(RabbitsPaw : Item))
 
     def available = inv.sort.ready./(_.item)
 
@@ -297,6 +303,11 @@ class HeroPlayer(val faction : Hero)(implicit val game : Game) extends FactionSt
     }
 
     def exhaust(i : Item) {
+        if (inv.ready.count(i) == 0 && paw(i) > 0) {
+            game.log(faction, "used", RabbitsPaw.exhaust, "as", i)
+            exhaust(RabbitsPaw)
+        }
+        else
         if (inv.ready.count(i) == 0)
             throw new RuntimeException("Item not found " + i.name.styled(styles.hit) + "!!!")
         else {
@@ -760,7 +771,8 @@ object HeroExpansion extends FactionExpansion[Hero] {
                 case _ => false
             }
 
-            val l = f.inv.notDamaged
+            // the Dark Deck's Cursed Idol can't be damaged
+            val l = f.inv.notDamaged.%(_.item != CursedIdol)
             val a = (b.attacker == f).??(b.ally.?(a => a.from(b.clearing).$.%(_.piece.is[Warrior])))
             if (l.none && a.none)
                 then
@@ -828,7 +840,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
                 TryForcedRemoveAction(e, c, f, p, x, m, then, fail)
 
         case BattleCleanupAttackerAction(b, f : Hero) =>
-            if (b.balance < 0) {
+            if (b.balance < 0 && f.named.has(b.ally.get).not) {
                 f.attitude += b.ally.get -> Hostile
                 log(b.ally.get, "became", Hostile, "to", f)
             }
