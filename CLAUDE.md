@@ -958,6 +958,13 @@ file covers the build, server and deploy. No session can ssh to the server
   their options, so none of this changes a game already started.
   The site defaults (Site Defaults, and a new setup) are Random Official map, All Random clearings, the Mountain suited landmark choice
   and the Squires and Disciples deck, in Root and Adset (`defaultsFor`; Gman, 2026-10-31).
+- Root's rules fixes are hidden options (`Meta.fixes`), but a new game records only its rules version (`RulesVersion1` in
+  `root/meta.scala`, `Meta.newGame`), which `Game.options` expands to every fix it stands for (`RulesVersion.expand`; `Game.recorded`
+  is what the game was made with, what `OptionsAction` and `GameOverAction` hold). Games made before 2026-11-15 recorded each fix and
+  load as before. A new fix gets its hidden option (for older games and its `...Action(X)` switch) and goes into a new version
+  (`RulesVersion2`, its `fixes` RulesVersion1's and the new one), made `RulesVersion.latest` and added to `RulesVersion.all`; never
+  add to an existing version's fixes, as games that recorded it would change. A game's log no longer lists the fixes, the settled rulings
+  or the rules version (`Meta.unlisted`, in `OptionsAction`; Gman, 2026-11-15: the opening log had about 35 such lines).
 - Advanced Setup's insurgent lock (Gman, 2026-11-04; Destiny and Right drafted four insurgents): the "Insurgent Lock" choice on the
   first setup page, Adset only (`InsurgentLockOn`, the default, or `InsurgentLockOff`; `Meta.adsetOnly` in `root/meta.scala`). With it, the
   last faction drawn, if insurgent, can't be picked until a militant faction (`AdvancedSetup.militant` in `root/setup.scala`: Marquise,
