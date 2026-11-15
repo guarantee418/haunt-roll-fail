@@ -463,7 +463,7 @@ object NewBloodExpansion extends Expansion {
             if (game.bearIn(t) || game.hostileIn(t)) $
             else game.links(Lynx, t).filter(_._2).map(_._1)
                 .%(o => game.present(o).forall(_ == Lynx))
-                .%(o => game.hostileIn(o).not && game.swampIn(o).not && MapExpansion.enterable(o))
+                .%(o => game.hostileIn(o).not && game.swampIn(o).not && MapExpansion.enterable(o) && PCExpansion.mayEnter(Lynx, o))
         case None => $
     }
 
@@ -483,7 +483,7 @@ object NewBloodExpansion extends Expansion {
     def lynxSources(implicit game : Game) : $[Territory] = game.lynxes./(game.board.territory).distinct.%(t => game.bearIn(t).not && game.hostileIn(t).not && lynxGoals(t).any)
 
     def lynxGoals(t : Territory)(implicit game : Game) : $[Territory] =
-        game.links(Lynx, t).filter(_._2).map(_._1).%(o => game.hostileIn(o).not && game.bearIn(o).not && game.swampIn(o).not && game.creaturesIn(o).none && MapExpansion.enterable(o))
+        game.links(Lynx, t).filter(_._2).map(_._1).%(o => game.hostileIn(o).not && game.bearIn(o).not && game.swampIn(o).not && game.creaturesIn(o).none && MapExpansion.enterable(o) && PCExpansion.mayEnter(Lynx, o))
             .%(o => game.present(o).forall(g => g == Lynx || game.enemy(Lynx, g)))
 
     // Nimble Paws: for each lynx not used yet, an enemy unit next to it (across Rough borders too)
