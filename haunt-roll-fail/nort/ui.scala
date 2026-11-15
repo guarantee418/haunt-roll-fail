@@ -372,15 +372,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // Rotated tile images, made once
     val rotated = scala.collection.mutable.Map[(String, Int), hrf.ui.sprites.Image]()
 
-    def tileImage(tile : String, r : Int) : hrf.ui.sprites.Image = rotated.getOrElseUpdate((tile, r % 4), {
-        val i = img("tile-" + tile)
-        (r % 4) match {
-            case 0 => new RawImage(i)
-            case 1 => new RawImageRotated90(i)
-            case 2 => new RawImageRotated180(i)
-            case 3 => new RawImageRotated270(i)
-        }
-    })
+    // Turned as it is drawn, not into a canvas per tile and rotation: a PC version map's dozens of turned tiles took more
+    // canvas memory than a phone gives, and every canvas after that drew nothing, the turned tiles, the tints and the fog of
+    // war (Marzaus, 2026-11-14: only the unturned tiles showed, his own home black and the enemy's in plain view)
+    def tileImage(tile : String, r : Int) : hrf.ui.sprites.Image = rotated.getOrElseUpdate((tile, r % 4), new RawImageTurned(img("tile-" + tile), r % 4))
 
     // How big a building is drawn: its space's printed octagon, so a large building fills its large space
     val smallBuilding = 190.0
@@ -468,10 +463,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // PC version: the fog of war over an area, its mask in black with the resource icons on it (the masks' holes) filled too, turned
     // with its tile, made once; and a whole tile's
     val fogs = scala.collection.mutable.Map[(String, String, Int), hrf.ui.sprites.Image]()
+    val fogsFailed = scala.collection.mutable.Set[(String, String, Int)]()
     val fogColor = "#0b0d10"
 
     def fogImage(tile : String, area : String, r : Int) : |[hrf.ui.sprites.Image] = {
         val key = (tile, area, r % 4)
+
+        if (fogsFailed.contains(key))
+            return None
 
         if (fogs.contains(key).not) {
             val m = img("mask-" + tile + "-" + area)
@@ -515,22 +514,22 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             g.translate(-w / 2, -h / 2)
             g.drawImage(flat, 0, 0)
             g.setTransform(1, 0, 0, 1, 0, 0)
+            // (the unturned one's memory back at once)
+            flat.width = 0
 
-            fogs(key) = c
+            // A canvas the browser had no memory for stays blank: no fog then, and the tile is covered whole instead
+            val drawn = c.data.data
+            if (0.until(drawn.length / 4).exists(k => drawn(k * 4 + 3) > 0))
+                fogs(key) = c
+            else
+                fogsFailed += key
         }
 
         fogs.get(key)
     }
 
-    lazy val fogSquare : hrf.ui.sprites.Image = {
-        val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
-        canvas.width = 16
-        canvas.height = 16
-        val c = new CanvasImage(canvas)
-        c.context.fillStyle = fogColor
-        c.context.fillRect(0, 0, 16, 16)
-        c
-    }
+    // An image, not a canvas, so it shows even when the phone has no canvas memory left
+    lazy val fogSquare : hrf.ui.sprites.Image = new RawImage(img("tile-fog"))
 
     // The "i" on a tile with a rule of its own (TileAbilities), drawn once: a dark disc with a light ring and a serif i
     lazy val abilityBadge : hrf.ui.sprites.Image = {
@@ -1317,13 +1316,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         if (fogged.any) {
             board.placements.foreach { p =>
                 val areas = p.spec.areas./(a => AreaRef(p.x, p.y, a.id))
-                if (areas.any && areas.forall(foggy.contains))
+                val fogs = areas.filter(foggy.contains)./(a => fogImage(p.tile, a.id, p.r))
+                // (a tile with an area whose fog didn't come out, its mask not loaded yet or its canvas blank, is covered whole:
+                // a phone out of canvas memory showed the tiles under the fog, 2026-11-14)
+                if (areas.any && (areas.forall(foggy.contains) || fogs.exists(_.none)))
                     pieces.add(Sprite($(ImageRect(fogSquare, Rectangle(0, 0, T, T), 1.0)), $))(sx(p.x), sy(p.y))
                 else
-                    areas.filter(foggy.contains).foreach { a =>
-                        fogImage(p.tile, a.id, p.r).foreach { i =>
-                            pieces.add(Sprite($(ImageRect(i, Rectangle(0, 0, T, T), 1.0)), $))(sx(p.x), sy(p.y))
-                        }
+                    fogs.flatten.foreach { i =>
+                        pieces.add(Sprite($(ImageRect(i, Rectangle(0, 0, T, T), 1.0)), $))(sx(p.x), sy(p.y))
                     }
             }
 

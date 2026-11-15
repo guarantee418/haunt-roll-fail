@@ -1084,6 +1084,15 @@ file covers the build, server and deploy. No session can ssh to the server
   The same player's Google Drive gave the French Squires and Disciples cards, newer Ambushes (used for every deck)
   and the Homeland Frog cards (`hl-*`, `frog-ambush`, `hl-frog-dominance`) in `card/deck/fr/`, listed in `French.cards`
   with their names; `french-assets.py` no longer makes the Ambushes.
+- Phones give a page only so much canvas memory, and once it is used up every new canvas draws nothing, with no error.
+  Northgard's map turned each rotated tile into a canvas of its own (948x948, about 3.6 MB each); the PC version's whole map,
+  mostly turned tiles as it is mirrored, used it up on Marzaus's phone (2026-11-14): only the unturned tiles showed, and the
+  tints and the fog of war (canvases too) were gone, so his own home was black and Snake's home in plain view. Map tiles are now
+  `RawImageTurned` (`sprites.scala`), which `RenderableSprite` turns while drawing (`tileImage` in `nort/ui.scala`). Don't make a
+  canvas per big image; small ones (the 237 px masks' tints and fog) are fine. So that a failed canvas never shows what the fog
+  hides, a fog image that comes out blank (or whose mask isn't loaded) is not used (`fogsFailed`) and its whole tile is covered with
+  `tile/fog.webp`, a 16 px image in the fog's colour (`fogSquare`, also over every tile not seen at all; it was a canvas).
+  Checked by replaying the game in Chromium with canvases past a pixel budget left blank.
 - Drawing an image that failed to load or decode throws on a canvas ("InvalidStateError: The HTMLImageElement provided is
   in the 'broken' state"), which on iPhones stopped Root's map partway (Ground and Might, Marsh map, 2026-10-16), and with
   it the action pane and the menu. The `broken-images` script in `index.html` wraps `drawImage` for every game: a broken
