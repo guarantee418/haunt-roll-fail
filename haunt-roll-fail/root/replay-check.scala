@@ -29,6 +29,8 @@ object ReplayCheck {
     var franken = false
     var dark = false
     var doomedVB = false
+    // "doomedcap": the Doomed Expansion's Knave Captains, picked whenever dealt, their choices taken whenever offered
+    var doomedCap = false
     var dusk = false
     // "action": with the Action! Deck Booster (pool "six" or "seven" for more players)
     var action = false
@@ -56,7 +58,7 @@ object ReplayCheck {
     )).|($[Meta.O](
         AutumnMap, DefaultClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
         FerryLandmark, LostCityLandmark, SeatingGiven, FactionSeatingGiven, SetupOrderPriority, CardDraftStandard,
-    ))).map(o => (draft && o == CardDraftStandard).?[Meta.O](CardDraftFive).|(o)).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (squires && o == MixedDeck).?[Meta.O](SquiresDeck).|(o)).map(o => (franken && o == MixedDeck).?[Meta.O](FrankenDeck).|(o)).map(o => (dusk && o == MixedDeck).?[Meta.O](DuskDeck).|(o)).map(o => (dark && o == MixedDeck).?[Meta.O](DarkDeck).|(o)).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.??($[Meta.O](RulesVersion.latest, OutragePeekNeedsOk, KnavesCaptainsInDraft)) ++ (async || chooseHits).??($[Meta.O](AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode)) ++ chooseHits.$(ForcedAsyncChooseHits) ++ offline.??($[Meta.O](HitsAndAmbushesSetup, OffTurnFieldHospitals)) ++ preset.$(OffTurnHitsPreset) ++ action.$(ActionBooster) ++ doomedVB.$(DoomedVagabonds, RandomCharacter) ++ seating./(IncludeFaction)
+    ))).map(o => (draft && o == CardDraftStandard).?[Meta.O](CardDraftFive).|(o)).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (squires && o == MixedDeck).?[Meta.O](SquiresDeck).|(o)).map(o => (franken && o == MixedDeck).?[Meta.O](FrankenDeck).|(o)).map(o => (dusk && o == MixedDeck).?[Meta.O](DuskDeck).|(o)).map(o => (dark && o == MixedDeck).?[Meta.O](DarkDeck).|(o)).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.??($[Meta.O](RulesVersion.latest, OutragePeekNeedsOk, KnavesCaptainsInDraft)) ++ (async || chooseHits).??($[Meta.O](AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode)) ++ chooseHits.$(ForcedAsyncChooseHits) ++ offline.??($[Meta.O](HitsAndAmbushesSetup, OffTurnFieldHospitals)) ++ preset.$(OffTurnHitsPreset) ++ action.$(ActionBooster) ++ doomedVB.$(DoomedVagabonds, RandomCharacter) ++ doomedCap.$(DoomedCaptains) ++ seating./(IncludeFaction)
 
     def privateMap(o : AnyRef, suffix : String) : Map[Any, Any] = {
         val f = o.getClass.getDeclaredFields.filter(_.getName.endsWith(suffix)).head
@@ -165,6 +167,7 @@ object ReplayCheck {
         franken = args.contains("franken")
         dark = args.contains("dark")
         doomedVB = args.contains("doomedvb")
+        doomedCap = args.contains("doomedcap")
         dusk = args.contains("dusk")
         action = args.contains("action")
         async = args.contains("async")
@@ -201,7 +204,7 @@ object ReplayCheck {
         var failures = 0
         // how often each hireling-related choice was recorded, to see that the bots used them
         var used = Map[String, Int]()
-        val keys = $("ActionHammer", "ActionBag", "ActionTea", "ActionCoins", "ActionCrossbow", "ActionKey", "ActionSword", "ActionReplace", "ActionPay", "SecretScore", "CounterAmbush", "ExposeAction", "Hireling", "WarmSun", "Sunward", "CorvidSpies", "FlameBearers", "VaultKeepers", "FuriousProtector", "HighwayBandit", "PopularBand", "SunnyAdvocates", "BatMessengers", "RiverRoamers", "FrogTinkers", "Farmers", "Brigand", "ClearPath", "LizardEnvoys", "Bluebird", "FelinePhysicians", "MoleArtisians", "RatSmugglers", "ForestPatrol", "Patrol", "LastDynasty", "Uprising", "Exile", "Flotilla", "StreetBand", "BanditGangs", "Scouts", "SlyDog", "HighNoon", "BreakingDawn", "DuskAwakening", "Merchants", "Spoil", "ServiceOf", "MilitarySupplies", "Guard", "Hoarders", "NightTerrors", "Adventurers", "AnyCard", "FowlPlay", "WordsUndo", "WordsReroll", "Transmute", "Bloodlust", "DevotionHit", "Roulette", "Rapacious", "Swindle", "Infernal", "Cleansing", "Fury", "BloodGate", "Meat", "BearTrap", "BottomFeeder", "Knight", "Science", "Poison", "Dopple", "DarkMenu", "Infect", "BookOfNames", "Raging", "Inspire", "Hammertime", "Encouragement", "Grift", "Devour", "Scram")
+        val keys = $("ActionHammer", "ActionBag", "ActionTea", "ActionCoins", "ActionCrossbow", "ActionKey", "ActionSword", "ActionReplace", "ActionPay", "SecretScore", "CounterAmbush", "ExposeAction", "Hireling", "WarmSun", "Sunward", "CorvidSpies", "FlameBearers", "VaultKeepers", "FuriousProtector", "HighwayBandit", "PopularBand", "SunnyAdvocates", "BatMessengers", "RiverRoamers", "FrogTinkers", "Farmers", "Brigand", "ClearPath", "LizardEnvoys", "Bluebird", "FelinePhysicians", "MoleArtisians", "RatSmugglers", "ForestPatrol", "Patrol", "LastDynasty", "Uprising", "Exile", "Flotilla", "StreetBand", "BanditGangs", "Scouts", "SlyDog", "HighNoon", "BreakingDawn", "DuskAwakening", "Merchants", "Spoil", "ServiceOf", "MilitarySupplies", "Guard", "Hoarders", "NightTerrors", "Adventurers", "AnyCard", "FowlPlay", "WordsUndo", "WordsReroll", "Transmute", "Bloodlust", "DevotionHit", "Roulette", "Rapacious", "Swindle", "Infernal", "Cleansing", "Fury", "BloodGate", "Meat", "BearTrap", "BottomFeeder", "Knight", "Science", "Poison", "Dopple", "DarkMenu", "Infect", "BookOfNames", "Raging", "Inspire", "Hammertime", "Encouragement", "Grift", "Devour", "Scram", "BardMoved", "Blacksmith", "Zealot", "KnavesSwindle")
 
         0.until(games).foreach { gi =>
             val seating = pool(gi % pool.num).shuffle
@@ -225,12 +228,22 @@ object ReplayCheck {
                     if (keys.exists(n.contains))
                         used += n -> (used.getOrElse(n, 0) + 1)
                     // "action": moves and battles paid with an Action! card, and ambushes cancelled with a Secret! card
+                    "KnavesCommitAction[(]KD, *Knaves([A-Za-z]+), *[$A-Za-z]*[(]Teapot[)], *[$A-Za-z]*[(][)]".r.findAllMatchIn(w).map(_.group(1)).filter(_ != "Revel").foreach { a =>
+                        used += ("Barkeep tea to " + a) -> (used.getOrElse("Barkeep tea to " + a, 0) + 1)
+                    }
+                    if (w.contains("KnavesBardMovedAction"))
+                        used += "Bard moved after Nab" -> (used.getOrElse("Bard moved after Nab", 0) + 1)
+                    a.unwrap match {
+                        case KnavesTakePrisonerAction(f, _, _, r, _) if game.states(f).asInstanceOf[KnavesPlayer].cagedNow.has(r) => used += "Berserker shared forest" -> (used.getOrElse("Berserker shared forest", 0) + 1)
+                        case _ =>
+                    }
                     if (w.contains("RagingStartAction"))
                         used += "battle with Raging" -> (used.getOrElse("battle with Raging", 0) + 1)
                     if (w.contains("ActionPayAction"))
                         used += "paid with an Action! card" -> (used.getOrElse("paid with an Action! card", 0) + 1)
                     a.unwrap match {
                         case BattleCounterAmbushAction(_, _, ActionCard(_, _, SecretCancel), _, _, _) => used += "Secret! counter-ambush" -> (used.getOrElse("Secret! counter-ambush", 0) + 1)
+                        case KnavesChooseCaptainAction(_, k) if doomedCap => used += ("captain " + k.name) -> (used.getOrElse("captain " + k.name, 0) + 1)
                         case CharacterRandomAction(_, c) if doomedVB => used += ("character " + c.name) -> (used.getOrElse("character " + c.name, 0) + 1)
                         case CharactersCombinationAction(t) if doomedVB => t.take(seating.of[Hero].num).foreach(c => used += ("character " + c.name) -> (used.getOrElse("character " + c.name, 0) + 1))
                         case _ =>
@@ -320,9 +333,25 @@ object ReplayCheck {
                                 case _ : RagingMainAction | _ : HammertimeMainAction | _ : EncouragementMainAction | _ : GriftMainAction | _ : DevourMainAction | _ : ScramMainAction => true
                                 case _ => false
                             }).take(1))
+                            val cap0 = doomedCap.??(l.shuffle.%(_.is[Choice]).%(_.unwrap match {
+                                case KnavesTakePrisonerAction(f, _, _, r, _) => game.states(f).asInstanceOf[KnavesPlayer].cagedNow.has(r)
+                                case KnavesItemAction(_, a, $(Teapot), $()) => a != KnavesRevel
+                                case KnavesCommitAction(_, a, $(Teapot), $(), _) => a != KnavesRevel
+                                case x => x.toString.contains("KnavesBardMovedAction")
+                            }).take(1))
+                            val cap = doomedCap.??(l.shuffle.%(_.is[Choice]).%(_.unwrap match {
+                                case KnavesChooseCaptainAction(_, k) => Knaves.doomed.has(k)
+                                case KnavesReadyAction(_, k) => Knaves.doomed.has(k)
+                                case x : KnavesItemMainAction => game.states(x.self).asInstanceOf[KnavesPlayer].acting.exists(Knaves.doomed.has)
+                                case x : KnavesItemAction => game.states(x.self).asInstanceOf[KnavesPlayer].acting.exists(Knaves.doomed.has)
+                                case x : KnavesCommitAction => game.states(x.self).asInstanceOf[KnavesPlayer].acting.exists(Knaves.doomed.has)
+                                case _ : KnavesSwindleAction | _ : KnavesBlacksmithAction | KnavesZealotAction(_, Some(_)) => true
+                                case _ => false
+                            }).take(1))
+                            cap.foreach(x => used += ("offered " + x.unwrap.getClass.getSimpleName) -> (used.getOrElse("offered " + x.unwrap.getClass.getSimpleName, 0) + 1))
                             doom.foreach(x => used += ("offered " + x.unwrap.getClass.getSimpleName) -> (used.getOrElse("offered " + x.unwrap.getClass.getSimpleName, 0) + 1))
                             act.foreach(x => used += ("forced " + x.unwrap.getClass.getSimpleName) -> (used.getOrElse("forced " + x.unwrap.getClass.getSimpleName, 0) + 1))
-                            val a = if (act.any) act(0) else if (doom.any) doom(0) else if (expose.any) expose(0) else if (buy.any) buy(0) else if (l.num == 1) l(0) else new BotXX(f).ask(keep(l), 0)(game).immediate
+                            val a = if (act.any) act(0) else if (doom.any) doom(0) else if (cap0.any) cap0(0) else if (cap.any) cap(0) else if (expose.any) expose(0) else if (buy.any) buy(0) else if (l.num == 1) l(0) else new BotXX(f).ask(keep(l), 0)(game).immediate
                             chosen = |(a)
                             a match {
                                 case _ if a.isSoft =>

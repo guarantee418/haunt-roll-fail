@@ -1086,6 +1086,17 @@ case object DoomedVagabonds extends GameOption with ToggleOption with VagabondCh
 }
 
 
+// the Doomed Expansion's six Knave Captains (fan-made by slugfacekillah; Law of Doom D6; `Knaves.doomed` in `root/faction-knaves.scala`)
+case object DoomedCaptains extends GameOption with ToggleOption with FoldedOption {
+    val group = KD.title
+    val valueOn = "Doomed Knave Captains".styled(KD) ~ " " ~ "(fan-made)"
+    override def required(all : $[BaseOption]) = $($(IncludeFaction(KD)))
+    override val explain = $(
+        "Doomed Knave Captains".styled(KD) ~ SpacedDash ~ "six more Captain cards from " ~ "The Doomed Expansion".hl ~ " by " ~ "slugfacekillah".hl ~ ", dealt with the others."
+    ) ++ Knaves.doomed./(k => k.name.styled(KD).styled(xstyles.bold) ~ " " ~ k.items./(_.img).merge ~ SpacedDash ~ k.text)
+}
+
+
 case object LimitedTrampleDiscard extends GameOption with ToggleOption with FoldedOption {
     val group = LC.title
     val valueOn = "Trampled ".hh ~ "Gardens".styled(LC) ~ SpacedDash ~ "Discard Only ".hh ~ 1.styled(styles.hit) ~ " Card".hh
@@ -1691,6 +1702,7 @@ object Meta extends MetaGame {
         l.of[Underground].any.$(MayorAssemblyAction) ++
         l.of[Mischief].any.$(ThreeOfEachPlot, EmbeddedAgentsBeforeBattle, DiversionPlot, BrutalHonesty) ++
         l.of[Expedition].any.$(ColumnBonusCardVP) ++
+        l.of[Knaves].any.$(DoomedCaptains) ++
         l.of[Horde].any.$(SeparateItemsInRuins) ++
         $,
         $(NoHirelings, ThreeDemotedHirelings, TwoDemotedOneNormalHirelings, OneDemotedTwoNormalHirelings, ThreeNormalHirelings, ThreeRandomHirelings, SelectedHirelings) ++
@@ -1751,6 +1763,7 @@ object Meta extends MetaGame {
         l.of[Underground].any.$(MayorAssemblyAction) ++
         l.of[Mischief].any.$(ThreeOfEachPlot, EmbeddedAgentsBeforeBattle, DiversionPlot, BrutalHonesty) ++
         l.of[Expedition].any.$(ColumnBonusCardVP) ++
+        l.of[Knaves].any.$(DoomedCaptains) ++
         l.of[Horde].any.$(SeparateItemsInRuins) ++
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         $(NoHirelings, ThreeDemotedHirelings, TwoDemotedOneNormalHirelings, OneDemotedTwoNormalHirelings, ThreeNormalHirelings, ThreeRandomHirelings, SelectedHirelings) ++
@@ -3919,6 +3932,13 @@ object Meta extends MetaGame {
         ImageAsset("kd-captain-ranger"     ) ::
         ImageAsset("kd-captain-tinker"     ) ::
         ImageAsset("kd-captain-thief"      ) ::
+        // the Doomed Expansion's Captains, cut from its stickers by root/tools/doomed-captains.py
+        ImageAsset("kd-captain-bard"       ) ::
+        ImageAsset("kd-captain-barkeep"    ) ::
+        ImageAsset("kd-captain-berserker"  ) ::
+        ImageAsset("kd-captain-blacksmith" ) ::
+        ImageAsset("kd-captain-swindler"   ) ::
+        ImageAsset("kd-captain-zealot"     ) ::
 
         ImageAsset("kd-acclaim"          ) ::
     $) ::

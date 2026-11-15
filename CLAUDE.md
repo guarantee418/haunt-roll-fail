@@ -611,6 +611,10 @@ file covers the build, server and deploy. No session can ssh to the server
   Daylight actions). Their pictures and titles are cut from the PnP cards by `root/tools/doomed-vb.py` (the art keeps the card's
   background, as there is no cut-out). `ReplayCheck <games> vb doomedvb` plays two Vagabonds a game and takes their special actions
   whenever they are offered.
+  The Doomed Knave Captains (D6) are the toggle "Doomed Knave Captains (fan-made)" under the Knaves (`DoomedCaptains` in `root/meta.scala`):
+  six more Captain cards, Bard, Barkeep, Berserker, Blacksmith, Swindler and Zealot (`Knaves.doomed` in `root/faction-knaves.scala`, its
+  comment lists the readings), dealt with the twelve official ones (`Knaves.captainsFor`). Their pieces are the stickers' heads, cut by
+  `root/tools/doomed-captains.py`. `ReplayCheck <games> kd doomedcap` picks them whenever dealt and takes their choices whenever offered.
 - The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
   Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
   box) and the Homeland errata, from a player's Google Drive (2026-10-10). The shared deck's back follows
