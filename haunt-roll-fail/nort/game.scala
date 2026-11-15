@@ -506,6 +506,7 @@ case class FameGainsOnAction(clans : $[Faction], fame : $[Int], then : ForcedAct
 case class PCNavalPortAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class PCArmyCapAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class PCScoutFameAction(then : ForcedAction) extends ForcedAction with SkipValidate
+case class PCScorchedSeenAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class PCTowerPointsAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class PCHallShieldAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class PCHallSafeAction(then : ForcedAction) extends ForcedAction with SkipValidate
@@ -2462,6 +2463,12 @@ object CommonExpansion extends Expansion {
         case PCScoutFameAction(then) =>
             if (game.options.has(PCScoutFame).not)
                 game.addOption(PCScoutFame)
+
+            Then(then)
+
+        case PCScorchedSeenAction(then) =>
+            if (game.options.has(PCScorchedSeen).not)
+                game.addOption(PCScorchedSeen)
 
             Then(then)
 

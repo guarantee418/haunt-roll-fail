@@ -1054,6 +1054,7 @@ object MapExpansion extends Expansion {
         game.board.territories.%(t => game.present(t).forall(game.enemy(f, _)))
             .%(t => mine.exists(m => game.board.adjacent(m).exists(_._1 == t)))
             .%(t => game.scorchedIn(t).not)
+            .%(t => PCExpansion.mayScorch(f, t))
     }
 
     def playable(f : Faction, e : Effect)(implicit game : Game) : Boolean = e match {

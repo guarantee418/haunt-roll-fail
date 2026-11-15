@@ -444,6 +444,10 @@ object PCExpansion extends Expansion {
     def mayEnter(f : Faction, t : Territory)(implicit game : Game) : Boolean =
         on.not || game.options.has(PCSeenOnly).not || sees(f, t)
 
+    // Whether the Scorched Earth token may go to t: in games with PCScorchedSeen, only a territory f sees
+    def scorchedSeen(implicit game : Game) : Boolean = on && game.options.has(PCScorchedSeen)
+    def mayScorch(f : Faction, t : Territory)(implicit game : Game) : Boolean = scorchedSeen.not || sees(f, t)
+
     // What any of these viewers sees (none: everything, for spectators and once the game is over)
     def visible(viewers : $[Faction], t : Territory)(implicit game : Game) : Boolean =
         on.not || game.isOver || viewers.none || viewers.exists(sees(_, t))

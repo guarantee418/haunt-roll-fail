@@ -1047,6 +1047,15 @@ case object PCScoutFame extends GameOption with ToggleOption {
     def valueOn = "1 fame a scout".txt
 }
 
+// PC version: the Scorched Earth token (the Snake Clan card, Under Pressure) goes only to a territory Snake sees, and Under Pressure
+// may also move it to a neutral territory (no clan there), collecting what it gives as elsewhere (Gman, 2026-11-15: in Winter for
+// Clan, Under Pressure moved it into the fog). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be
+// switched over with PCScorchedSeenAction(X)
+case object PCScorchedSeen extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "Scorched Earth: only where Snake sees, neutral territories too".txt
+}
+
 // PC version: a Port is worth 3 combat points (not 1) to its defender against a clan that attacked it by sea (Gman, 2026-11-14).
 // Hidden, and given to every new game (Meta.mandatoryFor); a running game can be switched over with PCNavalPortAction(X)
 case object PCNavalPort extends GameOption with ToggleOption {
