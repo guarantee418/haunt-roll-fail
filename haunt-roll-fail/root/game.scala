@@ -1305,7 +1305,7 @@ trait GameImplicits {
     }
 
     implicit class HirelingEx(h : Hireling)(implicit game : Game) {
-        def owner : |[Faction] = game.factions.%(_.has(h)).single
+        def owner : |[Faction] = (h == TrapLayer).?(game.trapOwner).|(game.factions.%(_.has(h)).single)
     }
 
 
@@ -1849,6 +1849,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val options : $
     // the Dark Deck: Rabbit Roulette's pool and the Golden Knight
     val roulette = cards.another[DeckCard]("roulette")
     var knights : $[(Faction, Clearing)] = $
+    var trapOwner : |[Faction] = None
     val dominances = cards.another[Dominance]("dominances")
 
     val pieces = new IdentityTracker[(Faction, Region), Figure]

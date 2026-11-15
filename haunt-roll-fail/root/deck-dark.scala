@@ -136,7 +136,8 @@ case object BookOfNamesUse extends CardEffect {
 // drawn on the map (`displayRegion` in `game.scala`), not pieces of any faction
 case object BearTrap extends Token
 
-// the Bear Traps' traps, tokens of the card's owner (`owner`: the faction holding the card has this as an effect)
+// the Bear Traps' traps, tokens of the card's owner (`game.trapOwner`, `HirelingEx.owner` in `game.scala`; not an effect, or
+// the hireling transfers would hand it on)
 case object TrapLayer extends Hireling {
     val name = "Bear Traps"
     val short = "DDT"
@@ -347,7 +348,7 @@ object DarkDeckExpansion extends Expansion {
             if (f.can(RapaciousRabbit))
                 + DarkMenuAction(f, p, RapaciousRabbit)
 
-            if (f.can(BearTraps) && f.effects.has(TrapLayer))
+            if (f.can(BearTraps) && game.trapOwner.has(f))
                 + DarkMenuAction(f, p, BearTraps)
         }
 
@@ -467,7 +468,7 @@ object DarkDeckExpansion extends Expansion {
             f.effects :+= BearTraps
 
             ensure(TrapLayer)
-            f.effects :+= TrapLayer
+            game.trapOwner = Some(f)
 
             CraftEffectAction(f, d, m, Repeat)
 
@@ -527,7 +528,7 @@ object DarkDeckExpansion extends Expansion {
                     ask.each(f.hand.$)(d => RapaciousAction(f, d).!(cursed(d))).when(f.hand.none)(Info("No cards"))
 
                 case BearTraps =>
-                    ask.each(clearings.%(f.present))(c => BearTrapAction(f, c).!(TrapLayer.at(c).any, "trapped").!(f.effects.has(TrapLayer).not, "copied card").!(TrapLayer.reserve.none, "no traps left"))
+                    ask.each(clearings.%(f.present))(c => BearTrapAction(f, c).!(TrapLayer.at(c).any, "trapped").!(game.trapOwner.has(f).not, "copied card").!(TrapLayer.reserve.none, "no traps left"))
 
                 case DeadlyPoison =>
                     ask.each(clearings.%(f.present))(c => PoisonAction(f, c))
@@ -1148,9 +1149,8 @@ object DarkDeckExpansion extends Expansion {
 
     // a crafted card changed hands (Mouster Criminal, Felonious Fox): what it put on the map goes with it
     def swapped(f : Faction, e : Faction, effect : Effect)(implicit game : Game) {
-        if (effect == BearTraps && f.effects.has(TrapLayer)) {
-            f.effects :-= TrapLayer
-            e.effects :+= TrapLayer
+        if (effect == BearTraps && game.trapOwner.has(f)) {
+            game.trapOwner = Some(e)
         }
 
         if (effect == GoldenKnight)
@@ -1159,13 +1159,13 @@ object DarkDeckExpansion extends Expansion {
 
     // a crafted card was discarded (`removeStuckEffect` in `game.scala`)
     def discarded(f : Faction, effect : Effect)(implicit game : Game) {
-        if (effect == BearTraps && f.effects.has(TrapLayer)) {
+        if (effect == BearTraps && game.trapOwner.has(f)) {
             if (TrapLayer.presence.any)
                 f.log("removed the traps of", BearTraps)
 
             TrapLayer.presence.foreach { c => TrapLayer.from(c) --> Pool }
 
-            f.effects :-= TrapLayer
+            game.trapOwner = None
         }
 
         if (effect == GoldenKnight)
