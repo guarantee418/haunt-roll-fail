@@ -604,6 +604,13 @@ file covers the build, server and deploy. No session can ssh to the server
   toward the Evening item limit but is never the one dropped) follow Law of Doom D3.1.2; with Book of Names, aiding the named faction
   scores 1 and leaves its attitude unmoved, and Infamy in a battle alongside it scores every second time (`namedInfamy`, half rounded down).
   `ReplayCheck <games> base dark` plays it.
+  The Doomed Vagabonds (D7) are the toggle "Doomed Vagabonds (fan-made)" under the Vagabond (`DoomedVagabonds` in `root/meta.scala`):
+  seven more characters, Bard, Barkeep, Berserker, Blacksmith, Swindler, Zealot and Grouch (`DoomedCharacters` and
+  `DoomedVagabondsExpansion` in `root/doomed-vagabonds.scala`, its header lists the readings), their starting items and special actions
+  from the cards (Inspire takes hits with cards matching the clearing; Raging, Hammertime, Encouragement, Grift, Devour and Scram! are
+  Daylight actions). Their pictures and titles are cut from the PnP cards by `root/tools/doomed-vb.py` (the art keeps the card's
+  background, as there is no cut-out). `ReplayCheck <games> vb doomedvb` plays two Vagabonds a game and takes their special actions
+  whenever they are offered.
 - The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
   Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
   box) and the Homeland errata, from a player's Google Drive (2026-10-10). The shared deck's back follows

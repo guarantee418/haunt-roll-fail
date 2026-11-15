@@ -1074,6 +1074,18 @@ case object FolkHeroCharacter extends GameOption with ToggleOption with Vagabond
 }
 
 
+// the Doomed Expansion's seven Vagabond characters (fan-made by slugfacekillah; Law of Doom D7; `root/doomed-vagabonds.scala`)
+case object DoomedVagabonds extends GameOption with ToggleOption with VagabondCharOption with FoldedOption {
+    val group = VB.title
+    val valueOn = "Doomed Vagabonds".styled(VB) ~ " " ~ "(fan-made)"
+    override def required(all : $[BaseOption]) = $($(IncludeFaction(VB)), $(IncludeFaction(NB)), $(IncludeFaction(MB)))
+    override val explain = $(
+        "Doomed Vagabonds".styled(VB) ~ SpacedDash ~ "seven more characters from " ~ "The Doomed Expansion".hl ~ " by " ~ "slugfacekillah".hl ~ ": " ~
+        DoomedCharacters.characters./(_.name.styled(VB)).comma ~ "."
+    ) ++ DoomedCharacters.characters./(c => charImage(c, $(this)))
+}
+
+
 case object LimitedTrampleDiscard extends GameOption with ToggleOption with FoldedOption {
     val group = LC.title
     val valueOn = "Trampled ".hh ~ "Gardens".styled(LC) ~ SpacedDash ~ "Discard Only ".hh ~ 1.styled(styles.hit) ~ " Card".hh
@@ -1671,7 +1683,7 @@ object Meta extends MetaGame {
         (l.of[Horde].num > 1).$(PeerPressure) ++
         (l.of[Feline].any || l.of[Fanatic].any || l.of[Mischief].any).$(AdSetBuffOn, AdSetBuffOff) ++
         l.of[Feline].any.$(UntargetableKeep, IndestructibleKeep, ThreeHitKeep, InstantRebuildKeep, KeepExtraBuildingSlot, SawmillMassOverwork, WorkshopEveningCraft, WorkshopActionBonuses, Catapults) ++
-        l.of[Hero].any.$(RandomCharacter, FolkHeroCharacter) ++
+        l.of[Hero].any.$(RandomCharacter, FolkHeroCharacter, DoomedVagabonds) ++
         l.of[Hero].any.$(WarriorsOnlyInfamy, LimitedInfamy, RevisedQuests) ++
         l.of[Hero].any.$(TinkerNoBag, HarrierNoCoins, ScoundrelTeapotNoBoot, ArbiterScoreCard, RoninSwiftTorch) ++
         l.of[Fanatic].any.$(LimitedTrampleDiscard, RevengeFromAnyRemoval, LizardHandSizeSix) ++
@@ -1731,7 +1743,7 @@ object Meta extends MetaGame {
         (l.of[Horde].num > 1).$(PeerPressure) ++
         (l.of[Feline].any || l.of[Fanatic].any || l.of[Mischief].any).$(AdSetBuffOn, AdSetBuffOff) ++
         l.of[Feline].any.$(UntargetableKeep, IndestructibleKeep, ThreeHitKeep, InstantRebuildKeep, KeepExtraBuildingSlot, SawmillMassOverwork, WorkshopEveningCraft, WorkshopActionBonuses, Catapults) ++
-        l.of[Hero].any.$(RandomCharacter, FolkHeroCharacter) ++
+        l.of[Hero].any.$(RandomCharacter, FolkHeroCharacter, DoomedVagabonds) ++
         l.of[Hero].any.$(WarriorsOnlyInfamy, LimitedInfamy, RevisedQuests) ++
         l.of[Hero].any.$(TinkerNoBag, HarrierNoCoins, ScoundrelTeapotNoBoot, ArbiterScoreCard, RoninSwiftTorch) ++
         l.of[Fanatic].any.$(LimitedTrampleDiscard, RevengeFromAnyRemoval, LizardHandSizeSix) ++
@@ -3217,6 +3229,13 @@ object Meta extends MetaGame {
         ImageAsset("vb-char-harrier") ::
 
         ImageAsset("vb-char-folk-hero").scaled(50) ::
+        ImageAsset("vb-char-bard").scaled(50) ::
+        ImageAsset("vb-char-barkeep").scaled(50) ::
+        ImageAsset("vb-char-berserker").scaled(50) ::
+        ImageAsset("vb-char-blacksmith").scaled(50) ::
+        ImageAsset("vb-char-swindler").scaled(50) ::
+        ImageAsset("vb-char-zealot").scaled(50) ::
+        ImageAsset("vb-char-grouch").scaled(50) ::
 
         ImageAsset("vb-char", "vb-char-thief") ::
         ImageAsset("nb-char", "vb-char-thief") ::
@@ -3233,6 +3252,13 @@ object Meta extends MetaGame {
         ImageAsset("vb-title-harrier") ::
 
         ImageAsset("vb-title-folk-hero") ::
+        ImageAsset("vb-title-bard") ::
+        ImageAsset("vb-title-barkeep") ::
+        ImageAsset("vb-title-berserker") ::
+        ImageAsset("vb-title-blacksmith") ::
+        ImageAsset("vb-title-swindler") ::
+        ImageAsset("vb-title-zealot") ::
+        ImageAsset("vb-title-grouch") ::
 
         ImageAsset("vb-title") ::
         ImageAsset("nb-title") ::
