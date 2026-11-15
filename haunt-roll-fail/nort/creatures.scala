@@ -318,7 +318,7 @@ object CreaturesExpansion extends Expansion {
     def destinations(c : Creature)(implicit game : Game) : $[Territory] = {
         val t = game.board.territory(game.creatureAt(c))
         val near = (c.kind == Wyvern && game.noAbilities.not).?(game.board.territories.but(t)).|(game.board.adjacent(t).map(_._1))
-        val open = near.%(o => game.creaturesIn(o).none)
+        val open = near.%(o => game.creaturesIn(o).none).%(o => PCExpansion.hallSafe(o).not)
         val clear = open.%(o => game.present(o).exists(game.robotos).not)
         val free = clear.any.?(clear).|(open)
         val peopled = free.%(o => game.present(o).but(Automa).%(game.robotos(_).not).any)
@@ -643,7 +643,7 @@ object CreaturesExpansion extends Expansion {
             val vow = LionExpansion.vowChapelPoints(f, t, e, attacking)
             val ps = game.strength(t, f, attacking) + bonus + axe + fortress + snake + robo + grudge + surtr + gear + tower + ost + lords + vow + food + face.points + pw
             // Shieldbearers cancel 1 casualty; Halvard defending ignores 1 inflicted by the attacking creature
-            val shield = math.min(cface.casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1) + Warchief.shield(t, f, attacking) + urdar + NewBloodExpansion.ignored(f))
+            val shield = math.min(cface.casualties, (attacking && (e.special == ShieldMove || e.special == BorgildMove)).??(1) + Warchief.shield(t, f, attacking) + urdar + NewBloodExpansion.ignored(f) + PCExpansion.hallShield(f, t))
             val pc = cface.casualties - shield
             val cs = c.kind.value + cface.points + cw
 
@@ -794,6 +794,10 @@ object AggressiveCreaturesExpansion extends Expansion {
             val t = game.board.territory(game.creatureAt(c))
 
             game.present(t).single match {
+                // PC version (PCHallSafe): no attack on a Town Hall in years 1 and 2
+                case Some(o) if PCExpansion.hallSafe(t) =>
+                    game.note("hall-safe")
+                    Then(then)
                 case Some(o) =>
                     log(c, "attacks", o, "in", t.anchor)
                     Then(CreatureCombatAction(o, t.anchor, c, MoveEffect(0), false, then))

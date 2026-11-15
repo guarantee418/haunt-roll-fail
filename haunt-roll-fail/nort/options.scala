@@ -1015,6 +1015,77 @@ case object PCRangersScout extends GameOption with ToggleOption {
     def valueOn = "Rangers scout anywhere".txt
 }
 
+// PC version: no figure enters a territory its clan doesn't see: retreats, the Lynx's moves, Hidden Ways and every other move, as
+// the Move card already did (Gman, 2026-11-14: Marzaus retreated into a territory he hadn't scouted and so scouted it for free).
+// Hidden, and given to every new game (Meta.mandatoryFor); a running game can be switched over with PCSeenOnlyAction(X)
+case object PCSeenOnly extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "Figures enter only territories their clan sees".txt
+}
+
+// PC version: 22 units instead of 14, and Winter costs 5 food and 3 wood for 16 to 18 units, 6 food and 4 wood for 19 or more,
+// Marzaus's "Army cap" (NG Expansions by Marzaus; Gman, 2026-11-14). Hidden, and given to every new game (Meta.mandatoryFor); a
+// running game can be switched over with PCArmyCapAction(X)
+case object PCArmyCap extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "22 units, higher Winter costs".txt
+}
+
+// PC version: a Defense Tower is worth 2 combat points against creatures, not 1 (Gman, 2026-11-14: Marzaus found towers too weak
+// against creatures). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be switched over with
+// PCTowerPointsAction(X)
+case object PCTowerPoints extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "Defense Towers: 2 points against creatures".txt
+}
+
+// PC version: a scout gives 1 fame, not 1 a tile of the scouted territory as a closed one does (Gman, 2026-11-14: Marzaus found
+// the fame win came too fast). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be switched over with
+// PCScoutFameAction(X)
+case object PCScoutFame extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "1 fame a scout".txt
+}
+
+// PC version: a Port is worth 3 combat points (not 1) to its defender against a clan that attacked it by sea (Gman, 2026-11-14).
+// Hidden, and given to every new game (Meta.mandatoryFor); a running game can be switched over with PCNavalPortAction(X)
+case object PCNavalPort extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "Ports: 3 points against attacks by sea".txt
+}
+
+// PC version: a clan fighting in its Town Hall's territory ignores 1 casualty rolled on the die by a clan or a creature, like the
+// video game's Healer's Hut (Gman, 2026-11-14). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be
+// switched over with PCHallShieldAction(X)
+case object PCHallShield extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "Town Hall ignores 1 rolled casualty".txt
+}
+
+// PC version: in the first two years creatures don't move into a Town Hall's territory or attack there (Gman, 2026-11-14: a
+// Draugr killed Marzaus's clan in the first year). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be
+// switched over with PCHallSafeAction(X)
+case object PCHallSafe extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "No creature attacks on Town Halls in years 1 and 2".txt
+}
+
+// PC version: at the harvest a clan with more than one Mine picks for each one, Stone or the roll (Marzaus, relayed by Gman on
+// 2026-11-14: PCMineChoice asked once for them all). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be
+// switched over with PCMinePerMineAction(X)
+case object PCMinePerMine extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "Mines: Stone or a roll for each".txt
+}
+
+// PC version: one upgrade per Build, the Town Hall's or one with Stone (Marzaus, relayed by Gman on 2026-11-14: a Build upgraded
+// the Town Hall and another building). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be switched over
+// with PCOneUpgradeAction(X)
+case object PCOneUpgrade extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "One upgrade per Build".txt
+}
+
 // PC version: at the harvest each clan with Mines picks 1 Stone a Mine with no roll, or the Minerals module's roll for Stone, Iron
 // or Gem (Gman, 2026-11-13: PCVersionUpdate gave only Stone). Hidden, and given to every new game (Meta.mandatoryFor); a running
 // game can be switched over with PCMineChoiceAction(X)
@@ -1257,7 +1328,10 @@ case object PCVersion extends Module("PC version", "fan-made mode") {
     def about = $(
         "A mode inspired by the Northgard video game. The map is built at setup around a special central tile (a random one unless one is picked).",
         "Each clan starts on its " ~ "Port".hl ~ " with a " ~ "Town Hall".hl ~ " and the two small territories beside it; creatures hold the territories between the clans.",
-        "Fog of war".hl ~ ": a clan sees only its territories and the ones it has scouted. Each Explore scouts one territory bordering its own; an enemy's needs an upgraded Town Hall (a build, " ~ Amount(1.hl, Stone.elem) ~ " and " ~ Amount(1.hl, Wood.elem) ~ "). A Defense Tower in the Port territory scouts the coast. A scout gives what an Explore gives: the scouted territory counts as the territory the Explore closed (fame for its tiles, the clan powers, Lay of the Land, the Events).",
+        "Fog of war".hl ~ ": a clan sees only its territories and the ones it has scouted. Each Explore scouts one territory bordering its own; an enemy's needs an upgraded Town Hall (a build, " ~ Amount(1.hl, Stone.elem) ~ " and " ~ Amount(1.hl, Wood.elem) ~ "). A Defense Tower in the Port territory scouts the coast. A scout gives what an Explore gives: the scouted territory counts as the territory the Explore closed (" ~ Amount(1.hl, FameIcon()) ~ ", the clan powers, Lay of the Land, the Events). Figures never enter a territory their clan doesn't see.",
+        "Each clan has up to " ~ 22.hl ~ " units; Winter costs " ~ Amount(5.hl, Food.elem) ~ " " ~ Amount(3.hl, Wood.elem) ~ " for 16 to 18 units, " ~ Amount(6.hl, Food.elem) ~ " " ~ Amount(4.hl, Wood.elem) ~ " for 19 or more.",
+        "The " ~ "Town Hall".hl ~ " ignores 1 casualty rolled against its clan in its territory, by a clan or a creature, and creatures leave it alone in years 1 and 2. A " ~ "Port".hl ~ " gives its defender 3 combat points against an attack by sea. A " ~ "Defense Tower".hl ~ " gives 2 combat points against creatures.",
+        "A Build upgrades one building at most, the Town Hall included. At the harvest, each Mine gives its Stone or is rolled for.",
         "Creatures are aggressive (no clan shares a territory with one) and have no abilities.",
         "Only Wolves and Draugr move (Myrkalfar from year 3). A Wolf killed comes back where it started, unless a clan holds that territory.",
         "A clan that ends a year without its Town Hall is out of the game; with " ~ "Domination victory".hl ~ " (under Fan victories), the last clan (or team) standing wins. The other victory conditions still apply.",

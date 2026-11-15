@@ -173,7 +173,7 @@ object CardsExpansion extends Expansion {
     def hiddenSources(f : Faction)(implicit game : Game) = MapExpansion.moveSources(f).%(t => hiddenTargets(f, t).any)
 
     // Open territories, not with a Fallen Valkyrie, held by a teammate or the Swamp
-    def hiddenTargets(f : Faction, t : Territory)(implicit game : Game) = game.board.territories.%(o => o != t && game.board.open(o) && game.hostileIn(o).not && game.passOnly(f, o).not)
+    def hiddenTargets(f : Faction, t : Territory)(implicit game : Game) = game.board.territories.%(o => o != t && game.board.open(o) && game.hostileIn(o).not && game.passOnly(f, o).not && PCExpansion.mayEnter(f, o))
 
     def briberySources(f : Faction)(implicit game : Game) : $[(Territory, Faction)] =
         enemyUnits(f).%{ case (t, g) => briberyTargets(t, g).any }

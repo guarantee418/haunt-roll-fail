@@ -1803,6 +1803,18 @@ shares a territory with a creature; Gman, 2026-11-11) and the Wilderness, Wastel
   deck too (`PCExpansion.moreCreatures`, in `Wild.creaturesOn` and `Waste.creaturesOn`), so more territories between the
   homes get one; with 5 or 6 clans the 23 creatures still don't fill every one.
 
+- **Marzaus's playtest (Gman, 2026-11-14)**, each a hidden option every new game gets, with a `<Option>Action(X)` switch for a
+  running game: figures never enter a territory their clan doesn't see, by any move, retreat (no retreat into the fog), the
+  Lynx's moves or Hidden Ways (`PCSeenOnly`, `PCExpansion.mayEnter`; Marzaus retreated into a territory he hadn't scouted and so
+  scouted it); each Mine gives its Stone or is rolled for (`PCMinePerMine`, `MineSplitAction`); a Build upgrades one building
+  at most, the Town Hall's upgrade included (`PCOneUpgrade`, `game.stoneUsed`); a Port gives its defender 3 combat points, not 1,
+  against a clan that attacked it by sea, Port to Port (`PCNavalPort`, `game.navalFights`); a clan fighting in its Town Hall's
+  territory ignores 1 casualty rolled on the die against it, by a clan or a creature, like the video game's Healer's Hut
+  (`PCHallShield`, `PCExpansion.hallShield`); in years 1 and 2 creatures don't move into a Town Hall's territory or attack there
+  (`PCHallSafe`); 22 units, and Winter costs 5 food 3 wood for 16 to 18 units, 6 food 4 wood for 19 or more (`PCArmyCap`,
+  Marzaus's "Army cap"); a Defense Tower gives 2 combat points against creatures (`PCTowerPoints`); a scout gives 1 fame, not
+  1 a tile (`PCScoutFame`; the clan powers still apply, Stag's 1 more too).
+
 ## Fan content: Clan Fame upgrades (2026-11-12)
 
 Marzaus's "Clan Fame upgrades (PC)" (Discord, northgard-fanmade-content, posted 2026-10-22; asked for by Gman on 2026-11-11):
