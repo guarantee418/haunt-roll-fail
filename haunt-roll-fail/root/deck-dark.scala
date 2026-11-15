@@ -1126,6 +1126,7 @@ object DarkDeckExpansion extends Expansion {
 
         case CleanUpAction(f) if factions.of[Hero].exists(_.named.any) =>
             factions.of[Hero].foreach(_.named = $)
+            factions.of[Hero].foreach(_.namedInfamy = 0)
 
             CleanUpAction(f)
 

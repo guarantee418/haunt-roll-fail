@@ -743,14 +743,14 @@ object BattleExpansion extends MandatoryExpansion {
 
                 lazy val ft = {
                     val all = b.attacker.at(b.clearing).but(Vagabond)
-                    val items = b.attacker.as[Hero]./~(_.inv.notDamaged)
+                    val items = b.attacker.as[Hero]./~(_.inv.notDamaged.%(_.item != CursedIdol))
                     val merc = b.ally./~(_.from(b.clearing).$.%(_.piece.is[Warrior]))
                     all.num + items.num + merc.num
                 }
 
                 lazy val ot = {
                     val all = b.defender.at(b.clearing).but(Vagabond)
-                    val items = b.defender.as[Hero]./~(_.inv.notDamaged)
+                    val items = b.defender.as[Hero]./~(_.inv.notDamaged.%(_.item != CursedIdol))
                     val merc = b.codef./~(_.from(b.clearing).$.%(_.piece.is[Warrior]))
                     all.num + items.num + merc.num
                 }

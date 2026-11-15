@@ -124,12 +124,12 @@ case class ToRefresh(ref : ItemRef) extends RealItem {
 
 case class ToExhaust(ref : ItemRef) extends RealItem {
     def elem(selected : Boolean) = Image(selected.?(ref.exhaust).|(ref).imgid)
-    def available = ref.exhausted.not && ref.damaged.not
+    def available = ref.exhausted.not && ref.damaged.not && ref.item != CursedIdol
 }
 
 case class ToExhaustDamage(l : $[Item], ref : ItemRef) extends RealItem {
     def elem(selected : Boolean) = Image(selected.?(l.has(ref.item).?(ref.exhaust).|(ref.exhaust.damage)).|(ref).imgid)
-    def available = ref.exhausted.not && ref.damaged.not
+    def available = ref.exhausted.not && ref.damaged.not && ref.item != CursedIdol
 }
 
 case class ToRepair(ref : ItemRef) extends RealItem {
@@ -139,12 +139,13 @@ case class ToRepair(ref : ItemRef) extends RealItem {
 
 case class ToDamage(ref : ItemRef) extends RealItem {
     def elem(selected : Boolean) = Image(selected.?(ref.damage).|(ref).imgid)
-    def available = ref.damaged.not
+    def available = ref.damaged.not && ref.item != CursedIdol
 }
 
 case class ToDiscard(ref : ItemRef) extends RealItem {
     def elem(selected : Boolean) = Image(selected.?(ref.item.imgid + "-empty").|(ref.imgid))
-    def available = true
+    // the Dark Deck's Cursed Idol is never discarded, only given, taken or swapped (Law of Doom D3.1.2)
+    def available = ref.item != CursedIdol
 }
 
 case class ToShow(ref : ItemRef) extends RealItem {

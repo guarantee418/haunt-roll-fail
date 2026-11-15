@@ -600,7 +600,9 @@ file covers the build, server and deploy. No session can ssh to the server
   (`DarkDeckExpansion.plague` beside `game.unhired`), spreading at the end of the owner's Evening (at `CleanUpAction`, as the factions'
   expansions take `EveningEndAction` first) with the Hundreds' suit die (Gman). Neither is listed with the hirelings. The Vagabond's Book of
   Names (`HeroPlayer.named`, allied until the end of the turn, its marker unmoved), Rabbit's Paw (`HeroPlayer.paw`, in Daylight any other item)
-  and Cursed Idol (never damaged) follow Law of Doom D3.1.2; Book of Names' half scoring for Infamy and aiding isn't done.
+  and Cursed Idol (never exhausted, damaged or discarded: `ToExhaust`, `ToDamage`, `ToDiscard` in `root/items.scala`; it counts
+  toward the Evening item limit but is never the one dropped) follow Law of Doom D3.1.2; with Book of Names, aiding the named faction
+  scores 1 and leaves its attitude unmoved, and Infamy in a battle alongside it scores every second time (`namedInfamy`, half rounded down).
   `ReplayCheck <games> base dark` plays it.
 - The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
   Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
