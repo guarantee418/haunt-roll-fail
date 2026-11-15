@@ -1751,9 +1751,16 @@ object Meta extends MetaGame {
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
         $(CardDraftStandard, CardDraftFive) ++
-        $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes) ++
+        fixes ++
         settled ++
-        retired
+        retired ++
+        RulesVersion.all
+
+    // The hidden options of rules fixes, each gating a fix so the games started before it replay the same (most new games get through
+    // their RulesVersion); not listed in a game's log (OptionsAction)
+    lazy val fixes : $[O] = $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes)
+
+    def unlisted : $[O] = fixes ++ settled ++ RulesVersion.all
 
     // No longer choices (Gman, 2026-10-31): the card rulings Official Rules always picked. Every new game gets them
     // (mandatoryFor); a game started without them keeps its rules, as its options are recorded with it. Auto Hits Assignment was one
@@ -1765,11 +1772,11 @@ object Meta extends MetaGame {
     // Still read, so the games that have them load; dropped from the options a setup screen saved (completeSaved)
     lazy val retired : $[O] = $(HostileTakeover, SharedHistory, UnthematicCoffinMakers, AutoAmbushSkippingMode, ForcedAsyncMode, ForcedAsyncChooseHits)
 
-    // The hidden options every new game gets, even when the setup screen starts from options saved before one of them existed
-    // (toggles aren't added to saved options from the defaults, so those games missed them)
-    lazy val newGame : $[O] = settled ++ $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, CounterMiceInABush, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes)
+    // The hidden options every new game gets: one rules version (RulesVersion), which stands for every rules fix made since the
+    // fixes were first gated (RulesVersion.expand, used by Game), so a new game records one option instead of each fix
+    lazy val newGame : $[O] = $(RulesVersion.latest)
 
-    override def completeSaved(n : Int, l : $[F], options : $[O]) = options.diff(retired)
+    override def completeSaved(n : Int, l : $[F], options : $[O]) = options.diff(retired).diff(RulesVersion.implied)
 
     // offered only in Advanced Setup (MetaAdset), listed here so every game reads them
     lazy val adsetOnly : $[O] = $(InsurgentLockOn, InsurgentLockOff)
@@ -1784,11 +1791,6 @@ object Meta extends MetaGame {
         RandomOfficialMap,
         AllRandomClearings,
         SquiresDeck,
-        ErrataCoffinMakers,
-        NonBirdPartisans,
-        UnthematicPropagandaBureau,
-        TunnelsIgnoreRaid,
-        TunnelsIgnoreTradePosts,
         AutoHitsAssignmentMode,
         BluffMode,
         FolkHeroCharacter,
@@ -1796,36 +1798,8 @@ object Meta extends MetaGame {
         SetupTypeCorners,
         SetupOrderPriority,
         CardDraftStandard,
-        FrogCardsAfterStartingHands,
-        FrogCardsSkipLostSouls,
-        FrogsCraftByClearing,
-        LizardsCraftByClearing,
-        CompanionsUntilSpent,
-        HirelingsByTheCard,
-        GovernorsStopEnclaveFlips,
-        CounterMiceInABush,
-        SkipIdleRallyReconcile,
-        FrogAmbushBottomOnlyAsAmbush,
-        CouncilRevealOnce,
-        EntreatGainUnasked,
-        BanishNeedsWarriors,
-        FeatherRufflersOnCraft,
-        SilverTongueOneEffect,
-        GovernorsStopCrafting,
-        MouseholdFromSupply,
-        BuyServicesAgain,
-        BanishAfterIgnoredHits,
-        CouncilEveningClearPath,
-        ReconcileOneAtATime,
-        FearsAfterRemoval,
-        RiverfolkCraftUngoverned,
-        GovernorsStopExposure,
-        FrogCardsAtDiasporaSetup,
-        PrisonersFromCodefenders,
-        DuskDeckFixes,
         MountainSuitedLandmark,
-        NoHirelings
-    ) ++ hirelings./(IncludeHireling)
+        NoHirelings) ++ hirelings./(IncludeHireling)
 
     // Two presets (Gman, 2026-10-31): the hirelings one repeated the Hirelings section, Sunday Games was JT's group's house rules
     override def presetsFor(n : Int, l : $[F]) = $(
@@ -3938,4 +3912,28 @@ object Meta extends MetaGame {
     ConditionalAssetsList((factions, options) => factions.of[Knaves].any, "faction/abduct", lzy = Laziness.OnDemand)(ImageAsset("kd-board-h") :: $)
 
     override def intLinks = $(("Root: Advanced Setup".spn -> "root-adset"), ("Root: Mirror".spn -> "root-mirror"))
+}
+
+
+// A rules version stands for the rules fixes every new game played with when it was made. Each fix is still a hidden option of its own
+// (the games started before it don't have it, and the switch actions, `...Action(X)`, turn it on in a running game), but a new game
+// records only its rules version, which Game.options expands to the fixes: before 2026-11-15 every new game recorded each of them,
+// and its log opened with a line for each. A fix made later goes into a new version (RulesVersion2 = RulesVersion1's fixes and it),
+// made `latest`; the games that recorded an earlier version keep its fixes, so they replay the same.
+abstract class RulesVersion(val n : Int) extends GameOption with ToggleOption {
+    val group = "Rules"
+    val valueOn = ("Rules version " + n).hh
+    def fixes : $[Meta.O]
+}
+
+case object RulesVersion1 extends RulesVersion(1) {
+    def fixes = Meta.settled ++ $[Meta.O](FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, CounterMiceInABush, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes)
+}
+
+object RulesVersion {
+    val all : $[RulesVersion] = $(RulesVersion1)
+    def latest : RulesVersion = RulesVersion1
+    def implied : $[Meta.O] = all./~(_.fixes).distinct
+
+    def expand(l : $[Meta.O]) : $[Meta.O] = l ++ l.of[RulesVersion]./~(_.fixes).distinct.diff(l)
 }

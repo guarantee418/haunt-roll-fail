@@ -51,7 +51,8 @@ object TowersExpansion extends Expansion {
     def towers(t : Territory)(implicit game : Game) : Int = game.working(t).count(_ == DefenseTower)
 
     // Combat points against a creature in t
-    def towerPoints(t : Territory)(implicit game : Game) : Int = on.??(towers(t))
+    // Combat points against a creature in t: 2 a tower in the PC version (PCTowerPoints)
+    def towerPoints(t : Territory)(implicit game : Game) : Int = on.??(towers(t) * (PCExpansion.on && game.options.has(PCTowerPoints)).?(2).|(1))
 
     // Captured or abandoned: a tower whose holder has no figure left in its territory is destroyed;
     // a new tower's holder is the clan alone in its territory

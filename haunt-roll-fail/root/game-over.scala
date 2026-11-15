@@ -79,7 +79,7 @@ object GameOverExpansion extends MandatoryExpansion {
             val cw = factions.%(f => ww.%(w => f.coalition == Some(w)).any)
             val winners = ww ++ cw
 
-            Milestone(GameOverAction(ww ++ cw, factions./(f => f -> f.vp).to(ListMap), game.seating./(game.ptf), game.options))
+            Milestone(GameOverAction(ww ++ cw, factions./(f => f -> f.vp).to(ListMap), game.seating./(game.ptf), game.recorded))
 
         case _ if game.over.none && game.turn > 0 && factions.%(f => f.vp >= 30).any =>
             Milestone("game over triggred", GameOverTriggredAction)

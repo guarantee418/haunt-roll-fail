@@ -56,6 +56,8 @@ case class LastStandingAction(winners : $[Faction]) extends ForcedAction
 // Mines at the harvest (PCMineChoice): take 1 Stone a Mine, or roll the combat die as the Minerals module does, for Iron or Gem too
 case class MineStoneAction(self : Faction, n : Int, rest : $[Faction], then : ForcedAction) extends BaseAction("Mines".hl, "at the harvest")("Take", MineralsLabel(n.times(Stone)), "with no roll")
 case class MineRollAction(self : Faction, mines : Int, rest : $[Faction], then : ForcedAction) extends BaseAction("Mines".hl, "at the harvest")("Roll the combat die for", mines.hl, (mines == 1).?("Mine").|("Mines"), "(Stone, Iron or Gem)")
+// PCMinePerMine: Stone from some Mines, the roll for the others
+case class MineSplitAction(self : Faction, n : Int, roll : Int, rest : $[Faction], then : ForcedAction) extends BaseAction("Mines".hl, "at the harvest")("Take", MineralsLabel(n.times(Stone)), "and roll the combat die for", roll.hl, (roll == 1).?("Mine").|("Mines"))
 
 
 // The Town Hall: drawn and named like a building, but not one of the buildings (game.halls)
@@ -438,6 +440,10 @@ object PCExpansion extends Expansion {
     def sees(f : Faction, t : Territory)(implicit game : Game) : Boolean =
         on.not || (f +: game.mates(f)).exists(g => game.present(t).has(g) || game.scouted.getOrElse(g, $[AreaRef]()).exists(t.areas.contains))
 
+    // Whether f's figures may enter t: in games with PCSeenOnly, only a territory f sees (the Move card always checked it)
+    def mayEnter(f : Faction, t : Territory)(implicit game : Game) : Boolean =
+        on.not || game.options.has(PCSeenOnly).not || sees(f, t)
+
     // What any of these viewers sees (none: everything, for spectators and once the game is over)
     def visible(viewers : $[Faction], t : Territory)(implicit game : Game) : Boolean =
         on.not || game.isOver || viewers.none || viewers.exists(sees(_, t))
@@ -466,7 +472,18 @@ object PCExpansion extends Expansion {
 
     // The Town Hall's upgrade, offered with the builds: f holds its Town Hall, has 1 Stone and 1 wood
     def hallUpgrade(f : Faction, e : BuildEffect, times : Int, smallOnly : Boolean, then : ForcedAction)(implicit game : Game) : $[UserAction] =
-        (on && times > 0 && upgraded(f).not && holdsHall(f) && f.mineral(Stone) >= 1 && f.wood >= 1).$(HallUpgradeAction(f, game.halls(f), times, e, smallOnly, then))
+        (on && times > 0 && upgraded(f).not && holdsHall(f) && f.mineral(Stone) >= 1 && f.wood >= 1 && (oneUpgrade && game.stoneUsed).not).$(HallUpgradeAction(f, game.halls(f), times, e, smallOnly, then))
+
+    // PCHallShield: 1 rolled casualty f ignores fighting in its Town Hall's territory
+    def hallShield(f : Faction, t : Territory)(implicit game : Game) : Int =
+        (on && game.options.has(PCHallShield) && hallOf(f).has(t)).??(1)
+
+    // PCHallSafe: a Town Hall's territory creatures leave alone in years 1 and 2
+    def hallSafe(t : Territory)(implicit game : Game) : Boolean =
+        on && game.options.has(PCHallSafe) && game.year <= 2 && game.halls.exists { case (f, a) => game.out.has(f).not && t.areas.contains(a) }
+
+    // PCOneUpgrade: the Town Hall's upgrade is the Build's one upgrade, like one with Stone (game.stoneUsed)
+    def oneUpgrade(implicit game : Game) = on && game.options.has(PCOneUpgrade)
 
     def canUpgrade(f : Faction)(implicit game : Game) = on && upgraded(f).not && holdsHall(f) && f.mineral(Stone) >= 1 && f.wood >= 1
 
@@ -599,6 +616,9 @@ object PCExpansion extends Expansion {
             f.wood -= 1
             game.hallsUpgraded :+= f
 
+            if (oneUpgrade)
+                game.stoneUsed = true
+
             f.log("upgraded their", TownHall, "for", Amount(1.hl, Stone.elem), "and", Amount(1.hl, Wood.elem))
 
             game.note("hall-upgrade")
@@ -633,8 +653,8 @@ object PCExpansion extends Expansion {
             if (e.collect)
                 MapExpansion.collect(f, t, "from the scouted territory".txt)
 
-            // The fame for closing it, 1 per tile
-            val n = game.board.tiles(t)
+            // The fame for closing it, 1 per tile; 1 in games with PCScoutFame (Gman, 2026-11-14: the fame win came too fast)
+            val n = game.options.has(PCScoutFame).?(1).|(game.board.tiles(t))
             f.fame += n
             f.log("gained", n.hl, FameIcon(), "for scouting", a)
 
@@ -801,7 +821,20 @@ object PCExpansion extends Expansion {
             if (n == 0)
                 Then(MineRollAction(f, mines, rest, then))
             else
+            // PCMinePerMine: each Mine (an upgraded one counting as two) gives its Stone or is rolled for
+            if (game.options.has(PCMinePerMine))
+                Ask(f)
+                    .when(n == mines)(MineStoneAction(f, n, rest, then))
+                    .each(1.to(n).reverse.$.%(k => k < mines))(k => MineSplitAction(f, k, mines - k, rest, then))
+                    .add(MineRollAction(f, mines, rest, then))
+            else
                 Ask(f).add(MineStoneAction(f, n, rest, then)).add(MineRollAction(f, mines, rest, then))
+
+        case MineSplitAction(f, n, roll, rest, then) =>
+            game.note("mine-split")
+            mineStone(f, n)
+
+            Then(MineRollAction(f, roll, rest, then))
 
         case MineStoneAction(f, n, rest, then) =>
             mineStone(f, n)

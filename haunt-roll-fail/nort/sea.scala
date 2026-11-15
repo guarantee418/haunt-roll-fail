@@ -155,7 +155,9 @@ object SeaExpansion extends Expansion {
     def raiders(f : Faction)(implicit game : Game) : Int = game.raids.values.$.%(_.owner.has(f))./(_.units).sum
 
     // The Port's defender: +1 combat point
-    def defense(t : Territory, f : Faction, attacking : Boolean)(implicit game : Game) : Int = (attacking.not && portIn(t)).??(1)
+    // PC version (PCNavalPort): 3 against a clan that attacked by sea
+    def defense(t : Territory, f : Faction, attacking : Boolean)(implicit game : Game) : Int =
+        (attacking.not && portIn(t)).??((PCExpansion.on && game.options.has(PCNavalPort) && game.navalFights.has(t.anchor)).?(3).|(1))
 
     // Port to Port with a Move of 2 or more: 2 moves, and the figures may go on with the rest (SailOnFromPort), else all the moves left
     def sailing(f : Faction, t : Territory, left : Int)(implicit game : Game) : $[(Territory, Int)] =

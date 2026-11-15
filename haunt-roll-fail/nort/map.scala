@@ -722,7 +722,7 @@ object MapExpansion extends Expansion {
 
     // Kaija can't enter enemy territories unless awakened; a teammate's territory only to pass through
     def canEnter(f : Faction, o : Territory, rem : Int, e : MoveEffect, kaija : Boolean)(implicit game : Game) : Boolean =
-        enterable(o) &&
+        enterable(o) && PCExpansion.mayEnter(f, o) &&
         (kaija.not || game.restrained(f).not || game.present(o).forall(game.allied(f, _))) &&
         (game.passOnly(f, o).not || canPass(f, o, rem, e, kaija))
 
@@ -1157,7 +1157,7 @@ object MapExpansion extends Expansion {
     // Where f's figures in t can retreat to: not into a fight, nor where a creature is being attacked or a Fallen Valkyrie is
     def retreats(f : Faction, t : Territory, rough : Boolean)(implicit game : Game) : $[Territory] = {
         val fighting = (game.combats ++ game.creatureFights./(_.area))./(game.board.territory)
-        game.links(f, t).filter(rough || _._2).map(_._1).%(o => fighting.has(o).not).%(o => game.present(o).but(f).none).%(o => game.hostileIn(o).not).%(o => game.swampIn(o).not)
+        game.links(f, t).filter(rough || _._2).map(_._1).%(o => fighting.has(o).not).%(o => game.present(o).but(f).none).%(o => game.hostileIn(o).not).%(o => game.swampIn(o).not).%(o => PCExpansion.mayEnter(f, o))
     }
 
     // How many go (all, or one) after picking where: with one destination the pick was made for the player, so there is
@@ -1594,6 +1594,10 @@ object MapExpansion extends Expansion {
             if (enemy.any && game.combats.has(dst.anchor).not)
                 game.combats :+= dst.anchor
 
+            // PC version: an attack by sea, which the Port's defender meets with 3 points (PCNavalPort)
+            if (enemy.any && game.board.adjacent(src).exists(_._1 == dst).not && game.navalFights.has(dst.anchor).not)
+                game.navalFights :+= dst.anchor
+
             if (game.mateHeld(f, dst))
                 game.note("team-pass")
 
@@ -1670,6 +1674,7 @@ object MapExpansion extends Expansion {
             if (l.none && cl.none) {
                 game.creatureFights = $
                 game.combats = $
+                game.navalFights = $
                 // Snake Clan card: the token may move after the move
                 if (e.special == SnakeMove)
                     Then(ScorchedAction(f, then))
@@ -1920,6 +1925,13 @@ object MapExpansion extends Expansion {
             val aw = aws.map(_._1).sum
             val dw = dws.map(_._1).sum
             val urdar = game.has(Wastelands).??(WastelandsExpansion.ignored(t))
+            // PC version (PCHallShield): the Town Hall's clan ignores 1 casualty rolled against it there
+            val hallA = math.min(faces(1).casualties, PCExpansion.hallShield(attacker, t))
+            val hallD = math.min(faces(0).casualties, PCExpansion.hallShield(defender, t))
+            if (hallA + hallD > 0)
+                game.note("hall-shield")
+            if (game.navalFights.has(a) && SeaExpansion.defense(t, defender, false) > 1)
+                game.note("naval-port")
 
             // Casualties each side inflicts; Halvard defending ignores 1
             val halvard = math.min(faces(0).casualties, Warchief.shield(t, defender, false))
@@ -1930,10 +1942,10 @@ object MapExpansion extends Expansion {
             // Clan Fame upgrades: Stag's Valorous Leader, 1 more casualty where Brand fights
             val valorA = FameUpgradesExpansion.casualties(attacker, t)
             val valorD = FameUpgradesExpansion.casualties(defender, t)
-            val ac = math.max(0, faces(0).casualties - halvard + (e.special == EgilMove).??(1) + NewBloodExpansion.casualties(attacker, t, e, true) + eldrich + moon + valorA - NewBloodExpansion.ignored(defender) - urdar)
+            val ac = math.max(0, faces(0).casualties - halvard + (e.special == EgilMove).??(1) + NewBloodExpansion.casualties(attacker, t, e, true) + eldrich + moon + valorA - NewBloodExpansion.ignored(defender) - urdar - hallD)
             // Shieldbearers cancel 1 casualty inflicted by the defender
             val shield = ((e.special == ShieldMove || e.special == BorgildMove) && faces(1).casualties + towers > 0 && game.towerShield.not).??(1)
-            val dc = math.max(0, faces(1).casualties + towers - shield + NewBloodExpansion.casualties(defender, t, e, false) + moon + valorD - NewBloodExpansion.ignored(attacker))
+            val dc = math.max(0, faces(1).casualties + towers - shield + NewBloodExpansion.casualties(defender, t, e, false) + moon + valorD - NewBloodExpansion.ignored(attacker) - hallA)
 
             // Each side picks its casualties when it has a choice (ChooseCasualties), before anything is told
             val pick = pickCasualties($(attacker -> math.min(dc, au), defender -> math.min(ac, du)), t, CombatResolveAction(attacker, defender, a, e, food, faces, then))
@@ -1980,11 +1992,11 @@ object MapExpansion extends Expansion {
                 game.fightReport = |(FightReport(a,
                     report(attacker, true, $(e.bonus -> "the card".txt, ab -> "Scorched Earth".hl) ++ NewBloodExpansion.pointParts(attacker, t, e, true, food(0)) ++ aws ++ $(wise -> "The Wise One".hl, conquests -> "Conquests".hl, robo -> "Robotos".hl, food(0) -> Food.elem, faces(0).points -> "the die".txt),
                         $(faces(0).casualties -> "the die".txt, (e.special == EgilMove).??(1) -> "the card".txt) ++ NewBloodExpansion.casualtyParts(attacker, t, e, true) ++ $(eldrich -> "Eldrich".hl, moon -> "Blood Moon".hl, valorA -> "Valorous Leader".hl,
-                            -halvard -> ("ignored by " ~ Warchief.elem(Goat)), -NewBloodExpansion.ignored(defender) -> ("ignored by " ~ "Ancestral Equipment".hl), -urdar -> "ignored by Urdarbrunn".hl),
+                            -halvard -> ("ignored by " ~ Warchief.elem(Goat)), -NewBloodExpansion.ignored(defender) -> ("ignored by " ~ "Ancestral Equipment".hl), -urdar -> "ignored by Urdarbrunn".hl, -hallD -> ("ignored by the " ~ TownHall.elem)),
                         as, ac, math.min(dc, au)),
                     report(defender, false, $(fortress -> Fortress.elem, db -> "Scorched Earth".hl) ++ NewBloodExpansion.pointParts(defender, t, e, false, food(1)) ++ dws ++ $(food(1) -> Food.elem, faces(1).points -> "the die".txt),
                         $(faces(1).casualties -> "the die".txt, towers -> DefenseTower.elem) ++ NewBloodExpansion.casualtyParts(defender, t, e, false) ++ $(moon -> "Blood Moon".hl, valorD -> "Valorous Leader".hl,
-                            -shield -> ("cancelled by " ~ "Shieldbearers".hl), -NewBloodExpansion.ignored(attacker) -> ("ignored by " ~ "Ancestral Equipment".hl)),
+                            -shield -> ("cancelled by " ~ "Shieldbearers".hl), -NewBloodExpansion.ignored(attacker) -> ("ignored by " ~ "Ancestral Equipment".hl), -hallA -> ("ignored by the " ~ TownHall.elem)),
                         ds, dc, math.min(ac, du)),
                     winner./(_ == attacker), winner.exists(w => (w == attacker).?(ac >= du).|(dc >= au))))
 

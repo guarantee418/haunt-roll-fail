@@ -198,12 +198,20 @@ class FactionState(val faction : Faction)(implicit game : Game) {
 
 object Winter {
     // Food and wood owed for the number of units on the map
-    def cost(units : Int) : (Int, Int) =
+    def cost(units : Int)(implicit game : Game) : (Int, Int) =
         if (units <= 3) (0, 0)
         else if (units <= 6) (1, 0)
         else if (units <= 9) (2, 0)
         else if (units <= 12) (3, 1)
-        else (4, 2)
+        else if (units <= 15 || armyCap.not) (4, 2)
+        else if (units <= 18) (5, 3)
+        else (6, 4)
+
+    // PC version (PCArmyCap): 22 units, and Winter costs going on past 15 units, from Marzaus's "Army cap"
+    def armyCap(implicit game : Game) = PCExpansion.on && game.options.has(PCArmyCap)
+
+    // The chart's rows
+    def rows(implicit game : Game) : $[(Int, Int)] = $((0, 3), (4, 6), (7, 9), (10, 12)) ++ armyCap.?($((13, 15), (16, 18), (19, 99))).|($((13, 99)))
 }
 
 // What a clan is set to collect at the next harvest, as things stand (shown in the player panels)
@@ -494,6 +502,19 @@ case class PCMineChoiceAction(then : ForcedAction) extends ForcedAction with Ski
 // Turns Alternative fame gains on in a running game (an hrf-games fix; Winter for Clan, Gman, 2026-11-13): each clan gets the fame
 // the module would have given it so far (worked out from the game's log), then the Achievements are dealt as at setup
 case class FameGainsOnAction(clans : $[Faction], fame : $[Int], then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to PCNavalPort, PCHallShield or PCHallSafe (an hrf-games fix)
+case class PCNavalPortAction(then : ForcedAction) extends ForcedAction with SkipValidate
+case class PCArmyCapAction(then : ForcedAction) extends ForcedAction with SkipValidate
+case class PCScoutFameAction(then : ForcedAction) extends ForcedAction with SkipValidate
+case class PCTowerPointsAction(then : ForcedAction) extends ForcedAction with SkipValidate
+case class PCHallShieldAction(then : ForcedAction) extends ForcedAction with SkipValidate
+case class PCHallSafeAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to PCMinePerMine (an hrf-games fix)
+case class PCMinePerMineAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to PCOneUpgrade (an hrf-games fix)
+case class PCOneUpgradeAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to PCSeenOnly (an hrf-games fix)
+case class PCSeenOnlyAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to PCRangersScout (an hrf-games fix)
 case class PCRangersScoutAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to ChiefMoveFromHeld (an hrf-games fix)
@@ -778,6 +799,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
     // Territories where a Move action started a fight
     var combats : $[AreaRef] = $
+    // PC version (PCNavalPort): those of them attacked by sea, Port to Port
+    var navalFights : $[AreaRef] = $
 
     // The territory of the fight being resolved, drawn pink on the map
     var battle : |[AreaRef] = None
@@ -819,7 +842,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     val unitLimit = training.?(Training.units).|(14)
 
     // Robotos has 25 units
-    def unitLimit(f : Faction) : Int = robotos(f).?(25).|(unitLimit)
+    // PC version (PCArmyCap): 22
+    def unitLimit(f : Faction) : Int = robotos(f).?(25).|(Winter.armyCap(this).?(22).|(unitLimit))
 
     // TRAINING FIELDS (training.scala): the tiles still face down, and each player's face-up Action cards
     var hiddenTiles : $[Placement] = $
@@ -2428,6 +2452,60 @@ object CommonExpansion extends Expansion {
                 game.addOption(ModuleOption(FameGainsModule))
 
             FameGainsExpansion.switchedOn(clans.zip(fame), then)
+
+        case PCTowerPointsAction(then) =>
+            if (game.options.has(PCTowerPoints).not)
+                game.addOption(PCTowerPoints)
+
+            Then(then)
+
+        case PCScoutFameAction(then) =>
+            if (game.options.has(PCScoutFame).not)
+                game.addOption(PCScoutFame)
+
+            Then(then)
+
+        case PCArmyCapAction(then) =>
+            if (game.options.has(PCArmyCap).not)
+                game.addOption(PCArmyCap)
+
+            Then(then)
+
+        case PCNavalPortAction(then) =>
+            if (game.options.has(PCNavalPort).not)
+                game.addOption(PCNavalPort)
+
+            Then(then)
+
+        case PCHallShieldAction(then) =>
+            if (game.options.has(PCHallShield).not)
+                game.addOption(PCHallShield)
+
+            Then(then)
+
+        case PCHallSafeAction(then) =>
+            if (game.options.has(PCHallSafe).not)
+                game.addOption(PCHallSafe)
+
+            Then(then)
+
+        case PCMinePerMineAction(then) =>
+            if (game.options.has(PCMinePerMine).not)
+                game.addOption(PCMinePerMine)
+
+            Then(then)
+
+        case PCOneUpgradeAction(then) =>
+            if (game.options.has(PCOneUpgrade).not)
+                game.addOption(PCOneUpgrade)
+
+            Then(then)
+
+        case PCSeenOnlyAction(then) =>
+            if (game.options.has(PCSeenOnly).not)
+                game.addOption(PCSeenOnly)
+
+            Then(then)
 
         case PCRangersScoutAction(then) =>
             if (game.options.has(PCRangersScout).not)
