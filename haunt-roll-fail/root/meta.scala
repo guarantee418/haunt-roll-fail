@@ -1671,7 +1671,7 @@ object Meta extends MetaGame {
     val official = $[Faction](MC, ED, WA, VB, LC, RF, UD, CC, LH, KI)
     val homeland = $[Faction](LDvE, TC, KD)
     val clones = $[Faction](BK, PE, FU, NB, CM, /*WC,*/ DR, RI, LK)
-    val fun = $[Faction](KDvA, TCvA, LDvD, LDvC, LDvB, TD, FH, XC, CUv2, CU, OK, AF, SF, MB)
+    val fun = $[Faction](KDvA, TCvA, LDvD, LDvC, LDvB, TD, FH, WW, DU, WG, XC, CUv2, CU, OK, AF, SF, MB)
 
     val factions = official ++ homeland ++ clones ++ fun
 
@@ -1915,6 +1915,9 @@ object Meta extends MetaGame {
         factions.of[Expedition].num * 8 +
         factions.of[Horde].num * 9 +
         factions.of[Knaves].num * 4 +
+        factions.of[WarriorsWake].num * 5 +
+        factions.of[Doomsayers].num * 6 +
+        factions.of[Whisperers].num * 2 +
         (0 :: 5 :: 7 :: 9)(factions.of[Hero].num)
 
     def validateFactionCombination(factions : $[Faction]) = {
@@ -1926,6 +1929,9 @@ object Meta extends MetaGame {
         else
         if (factions.of[Knaves].any && factions.of[Hero].any)
             ErrorResult("Knaves of the Deepwood can't play with the Vagabond")
+        else
+        if (factions.of[Whisperers].any && factions.num < 5)
+            ErrorResult("The Whisperers Guild only plays with 5 or more players")
         else
         if (reach(factions) < factions.num.of(0 :: 0 :: 17 :: 18 :: 21 :: 25 :: 28 :: 28 :: 28))
             WarningResult("Reach " + reach(factions))
@@ -3802,6 +3808,43 @@ object Meta extends MetaGame {
         ImageAsset("xc-spell-transform"    ) ::
         ImageAsset("xc-spell-teleport"     ) ::
     $) ::
+    ConditionalAssetsList((factions, options) => factions.of[WarriorsWake].any, "faction/wake")(
+        ImageAsset("ww-glyph"                 ) ::
+        ImageAsset("ww-title"                 ) ::
+        ImageAsset("ww-char"                  ) ::
+        ImageAsset("ww-wakevulture"           ) ::
+        ImageAsset("ww-wakevulture-empty"     ) ::
+        ImageAsset("ww-wakevulture-x5"        ) ::
+        ImageAsset("ww-wakevulture-x5-empty"  ) ::
+        ImageAsset("ww-despair"               ) ::
+        ImageAsset("ww-board"                 ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => factions.of[Whisperers].any, "faction/whisperers")(
+        ImageAsset("wg-glyph"                 ) ::
+        ImageAsset("wg-title"                 ) ::
+        ImageAsset("wg-char"                  ) ::
+        ImageAsset("wg-guildwhisperer"        ) ::
+        ImageAsset("wg-guildwhisperer-empty"  ) ::
+        ImageAsset("wg-guildwhisperer-x5"     ) ::
+        ImageAsset("wg-guildwhisperer-x5-empty") ::
+        ImageAsset("wg-wglair"                ) ::
+        ImageAsset("wg-insight"               ) ::
+        ImageAsset("wg-board"                 ) ::
+        Whisperers.kinds./(k => ImageAsset("wg-insight-" + k.id))
+    ) ::
+    ConditionalAssetsList((factions, options) => factions.of[Doomsayers].any, "faction/doomsayers")(
+        ImageAsset("du-glyph"                 ) ::
+        ImageAsset("du-title"                 ) ::
+        ImageAsset("du-char"                  ) ::
+        ImageAsset("du-unioncat"              ) ::
+        ImageAsset("du-unioncat-empty"        ) ::
+        ImageAsset("du-unioncat-x5"           ) ::
+        ImageAsset("du-unioncat-x5-empty"     ) ::
+        ImageAsset("du-church"                ) ::
+        ImageAsset("du-summoningcircle"       ) ::
+        ImageAsset("du-board"                 ) ::
+        $(BlackDemand, OrangeDemand, YellowDemand)./~(c => c.faces.distinct./(x => ImageAsset("du-die-" + c.id + "-" + x.name.toLowerCase)))
+    ) ::
     ConditionalAssetsList((factions, options) => factions.of[Farmer].any, "faction/farmer")(
         ImageAsset("fh-glyph"            ) ::
         ImageAsset("fh-title"            ) ::

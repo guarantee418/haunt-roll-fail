@@ -841,6 +841,9 @@ trait GameImplicits {
     implicit def utopiaState(f : Utopia)(implicit game : Game) = game.states(f).as[UtopiaPlayer].get
     implicit def casterState(f : Caster)(implicit game : Game) = game.states(f).as[CasterPlayer].get
     implicit def farmerState(f : Farmer)(implicit game : Game) = game.states(f).as[FarmerPlayer].get
+    implicit def wakeState(f : WarriorsWake)(implicit game : Game) = game.states(f).as[WarriorsWakePlayer].get
+    implicit def doomState(f : Doomsayers)(implicit game : Game) = game.states(f).as[DoomsayersPlayer].get
+    implicit def whisperersState(f : Whisperers)(implicit game : Game) = game.states(f).as[WhisperersPlayer].get
     implicit def invasiveEEEState(f : InvasiveEEE)(implicit game : Game) = game.states(f).as[InvasiveEEEPlayer].get
     implicit def invasiveDDDState(f : InvasiveDDD)(implicit game : Game) = game.states(f).as[InvasiveDDDPlayer].get
     implicit def invasiveCCCState(f : InvasiveCCC)(implicit game : Game) = game.states(f).as[InvasiveCCCPlayer].get
@@ -961,7 +964,7 @@ trait GameImplicits {
             case f : TheExile.type => game.board.forests
             case f : Underground => $(f.burrow)
             case _ => $()
-        } ++ clearings).diff(game.scorched).diff(game.flooded)
+        } ++ clearings).diff(game.scorched).diff(game.flooded).diff(DoomsayersExpansion.burnt(f))
 
         def moveFrom : $[Region] = f.movePlans(f.movable.%(f.canMoveFrom), game.transports./($) ** f.transports).keys.$
 
@@ -1413,6 +1416,9 @@ trait GameImplicits {
         }
 
         def -->(dest : DirectDiscard.type) {
+            // the Whisperers Guild's Favored Suit
+            WhisperersExpansion.discarded(source, d)
+
             d @@ {
                 case d : Dominance => source --> d --> game.dominances
                 case d : DisguisedCard if factions.of[InvasiveEEE].any =>
@@ -1631,6 +1637,9 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
 
             GameOverExpansion,
 
+            // first, to see what each action did for the Whisperers Guild's Insight
+            WhisperersExpansion,
+
             DominanceExpansion,
 
             LegendsExpansion,
@@ -1656,6 +1665,8 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             UtopiaExpansion,
             CasterExpansion,
             FarmerExpansion,
+            WarriorsWakeExpansion,
+            DoomsayersExpansion,
             InvasiveEEEExpansion,
             InvasiveDDDExpansion,
             InvasiveCCCExpansion,
@@ -1882,7 +1893,9 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
 
     def slots(c : Clearing) = c.capacity + options.has(KeepExtraBuildingSlot).??(factions.of[Feline].%(game.states.contains).%(_.at(c).has(Keep)).num)
 
-    def freeSlots(c : Clearing) = slots(c) - factions./(_.at(c).of[Building].num).sum - hirelings./(_.at(c).of[Building].num).sum - ruins.get(c).any.??(1)
+    def freeSlots(c : Clearing) = WarriorsWake.shadowed(c)(this).?(0).|(freeSlots0(c))
+
+    def freeSlots0(c : Clearing) = slots(c) - factions./(_.at(c).of[Building].num).sum - hirelings./(_.at(c).of[Building].num).sum - ruins.get(c).any.??(1)
 
     var ruins : Map[Clearing, Ruins] = Map()
 
@@ -1901,6 +1914,8 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     val roulette = cards.another[DeckCard]("roulette")
     var knights : $[(Faction, Clearing)] = $
     var trapOwner : |[Faction] = None
+    // the Warriors Wake in their Frenzy
+    var wakeFrenzy : |[Faction] = None
     val dominances = cards.another[Dominance]("dominances")
 
     val pieces = new IdentityTracker[(Faction, Region), Figure]
@@ -1917,6 +1932,10 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
 
     // Forcibly removed
     val dead = RedirectRegion { u =>
+        // the Warriors Wake's Frenzy: any warrior removed goes into their Mess
+        if (wakeFrenzy.any && u.piece.is[Warrior])
+            wakeFrenzy.get -> WakeMess
+        else
         if (coffinable(u))
             coffins
         else
@@ -1965,7 +1984,9 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             (factions.of[Hero] ++ factions.of[Expedition] ++ hirelings.of[TheExile.type] ++ factions.of[OldExpedition]).%(states.contains)./~(_.from(c).$) ++
             (factions.of[CommonAbduct]).%(states.contains)./~(f => f.from(c).$ ++ f.from(Cage(c)).$) ++
             hirelings.of[Turnling].%(states.contains)./~(_.from(c).$) ++
-            TurnlingsExpansion.markers(c)
+            TurnlingsExpansion.markers(c) ++
+            DoomsayersExpansion.markers(c) ++
+            factions.of[Whisperers].%(states.contains)./~(_.from(c).$)
         case c : Clearing if flooded.has(c) => $
         case c : Clearing =>
             (factions ++ hirelings).%(states.contains)./~(_.from(c).$) ++
@@ -1981,13 +2002,15 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             knights.%((_, o) => o == c).indices./(n => Figure(Neutral, GoldenKnightMarker, n)) ++
             ringAt.has(c).$(Figure(Neutral, RingMarker, 0)) ++
             MonstersExpansion.markers(c) ++
-            TurnlingsExpansion.markers(c)
+            TurnlingsExpansion.markers(c) ++
+            WhisperersExpansion.markers(c)
     }
 
     def viewHand(f : Faction) = f.hand./(ViewCardInfoAction(f, PreBreak(OwnHand).elem(game), _))
     def viewSupporters(f : Faction) = f.as[Insurgent].?(f => f.supporters./(ViewCardInfoAction(f, PreBreak(FactionSupporters(f)).elem(game), _)))
     def viewQuests(f : Faction) = f.as[Hero].?(f => quests.take(3)./(QuestInfoAction(f, _, f.inv)))
     def viewPlots(f : Faction) = f.as[Mischief].?(f => f.hidden./(c => PlotInfoAction(f, f.secret(c), c)))
+    def viewInsight(f : Faction) = f.as[Whisperers].?(f => f.insight.toList.sortBy(_._1.name)./((c, k) => WGInsightInfoAction(f, k, c)) ++ f.salvage./(s => WGSalvageInfoAction(f, s)))
     def viewTraderCards(f : Faction) = factions.but(f).of[Trader]./~(t => t.hand./(ViewCardInfoAction(f, PreBreak(FactionHand(t)).elem(game), _)))
     def viewRetinue(f : Faction) = f.as[Expedition]./~(f => Retinue.all./~(r => (f.retinue(r) ++ f.complete(r))./(ViewCardInfoAction(f, Break ~ r.elem, _))))
     def viewDrawnFactions() : $[BaseInfo] = (turn == 0 && drawn.any && (drawn.of[Hero].none || chars.any)).?? {
@@ -2001,6 +2024,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             actions.has(NoDrawnFactions).not.??(viewDrawnFactions()) ++
             actions.has(HiSupporters).??(viewSupporters(f)) ++
             actions.has(NoPlots).not.??(viewPlots(f)) ++
+            actions.has(NoPlots).not.??(viewInsight(f)) ++
             actions.has(NoHand).not.??(viewHand(f)) ++
             (actions.has(NoSupporters).not && actions.has(HiSupporters).not).??(viewSupporters(f)) ++
             viewQuests(f) ++
