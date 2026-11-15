@@ -636,6 +636,32 @@ file covers the build, server and deploy. No session can ssh to the server
   `root/legends-monsters.scala`. Both headers list the readings. Art is cut from the PnP sticker sheet and cards by
   `root/tools/legends-art.py` (`webp2/root/images/legends/`, the items in `item/`). `ReplayCheck <games> base castles legend`,
   `vb fifth ring:<Rule> capture:<Rule> legend`, `base rituals monster:Pick<Monster> legend` and `vb hunt legend` play them.
+  The Doomed factions are three fan factions in the picker's Fun Factions (`Meta.fun`), with their art cut from the PnP boards and token
+  sheets by `root/tools/doomed-factions-art.py` (warriors from the Turnlings' pieces) and a simple bot (`GameEvaluationDoomed` in
+  `root/bots/bot-doomed.scala`); each file's header lists the readings. The Warriors Wake (WW, `root/faction-wake.scala`): Vultures,
+  Despair tokens (no buildings in their clearings, `Game.freeSlots`), the Mess (warriors removed in their Frenzy go there, `game.wakeFrenzy`
+  in `game.dead`), Bolster, Converge, Frenzy, Feast, Consume and Scavenge; the discard pile is hidden from the others (Hoarders). The
+  Doomsayers Union (DU, `root/faction-doomsayers.scala`): demand dice (`DemandDie`, black, orange, yellow), the union card (strikes,
+  locks, Cats on Strike!), Recruit, Renegotiate, Crusade, Consecrate and Craft with revealed cards scored in Evening, Flames in enclosed
+  forests (no enemy moves there, `validDest`) and The End, their win when no Flame is left to light. The Whisperers Guild (WG,
+  `root/faction-whisperers.scala`, only with 5 or more players, `validateFactionCombination`): warriors in the forests, face-down Insight
+  markers known only to the Guild (`insight`, shown to it in the action pane, `Game.viewInsight`, and to everyone as the hex back), revealed
+  on other players' turns: `WhisperersExpansion` is second in `expansionsFor` and looks before every phase step (`TopLevelAction`) at the
+  buildings placed, crafts made and removals since (`watch`), offering what they set off. The Favored Suit counts cards discarded from an
+  enemy's hand (`WhisperersExpansion.discarded`, called from `DirectDiscard`), Midnight actions come at the start of a turn after another
+  player's, and Instigate's points go to the Guild. `ReplayCheck <games> ww`, `du` and `wg` (5 and 6 players) play them.
+  The Re-Imaginings are four more Fun Factions, each file's header listing its readings, art by `root/tools/reimaginings-art.py`.
+  Eyrie's End (EE, `root/faction-eyries-end.scala`) is an `Aviary` (the Eyrie's Decree, Turmoil and leaders, with the new leaders Patron,
+  Megalomaniac and Hedonistic in `faction-aviary.scala`): five Cardinals drawn at random with its warriors, which other factions may move as
+  their own on their turn (The Red Menace, added to every `MoveInitAction` by `EyriesEndExpansion.redMenace`), caravans that craft and move
+  with its warriors, the clearing's ruler drawing a card (Roving Caravans: the transport marker `CaravanDrawn` keeps it to once a move), and
+  rule where tied on its turn (Lords of Corruption, in `ruleValue`). Dawn of the Marquistadors (DM, `root/faction-marquistadors.scala`): the
+  ship landing on an edge river clearing, outposts placed with two matching treaties (cards kept face up), treaties counted as warriors in
+  battle, wood moved to the ship for the Keep (all 8 win). The Doomed Vagabond (DV, `root/faction-doomed-vagabond.scala`, 4 or more players)
+  is a `Hero`: Despot Infamy (`faction-hero.scala`), peace offers with Hostile factions and the Collect Bounty quests (in `Quest.all`, so
+  saves name them) offered in every menu of the current faction (`DoomedVagabondExpansion.anytime`, beside the Lilypad Negotiations in
+  `internalPerform`), quests freshened each Evening. The Naifs of the Deep Woods (NW, `faction-knaves.scala`) are the Knaves with Alliance
+  warriors (`Knaves.warriorName`). `ReplayCheck <games> ee`, `dm`, `dv` and `nw` play them.
 - The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
   Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
   box) and the Homeland errata, from a player's Google Drive (2026-10-10). The shared deck's back follows
