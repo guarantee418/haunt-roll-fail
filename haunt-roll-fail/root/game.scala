@@ -1625,6 +1625,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
 
             HirelingsExpansion,
 
+            DoomedVagabondsExpansion,
             HeroExpansion,
 
             AviaryExpansion,

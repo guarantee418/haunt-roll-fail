@@ -540,7 +540,8 @@ case class SelectHeroItemsAction(f : Hero, m : Elem, extra : $[UserAction], inne
 object HeroExpansion extends FactionExpansion[Hero] {
     def characters(implicit options : $[Meta.O]) : $[Character] =
         $(Thief, Tinker, Ranger, Arbiter, Scoundrel, Vagrant, Adventurer, Ronin, Harrier) ++
-        options.has(FolkHeroCharacter).$(FolkHero)
+        options.has(FolkHeroCharacter).$(FolkHero) ++
+        options.has(DoomedVagabonds).??(DoomedCharacters.characters)
 
     override def extraMoveFrom(f : Faction)(implicit game : Game) = f @@ {
         case f : Hero => $(f.region)
