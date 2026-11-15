@@ -31,6 +31,9 @@ trait Knaves extends WarriorFaction with CommonAbduct {
     def advertising = Acclaim.img(this) ~ KnavesSkunk.img(this) ~ Acclaim.img(this) ~ KnavesSkunk.img(this) ~ Acclaim.img(this)
 
     def motto = "Mock".styled(this)
+
+    // what its warriors are called: Skunks, or the Naifs of the Doomed Expansion's re-imagining
+    def warriorName = "Skunk"
 }
 
 case object KD extends Knaves {
@@ -44,6 +47,22 @@ case object KD extends Knaves {
 case object KnavesSkunk extends Warrior with CommonSkunkWarrior {
     override def id = "Skunk"
     override def name = "Skunk"
+    override def of(f : Faction) : Elem = f.as[Knaves]./(_.warriorName).|(name).styled(f)
+    override def sof(f : Faction) = (f.as[Knaves]./(_.warriorName).|(name) + "s").styled(f)
+    override def nof(n : Int)(f : Faction) = (f.as[Knaves]./(_.warriorName).|(name) + (n != 1).??("s")).styled(f)
+}
+
+// Naifs of the Deep Woods, the Doomed Expansion's re-imagining (slugfacekillah, Law of Doom NW): "100% just a re-colouring" of the
+// Knaves of the Deepwood, with the Woodland Alliance's warriors as Naifs; every rule is the Knaves'
+case object NW extends Knaves {
+    val name = "Naifs of the Deep Woods"
+    override def funName = "Naifs of the " ~ NameReference(name, this)
+    val short = "NW"
+    val style = "nw"
+    val priority = "U'"
+
+    override def warriorName = "Naif"
+    override def note : Elem = HorizontalBreak ~ "Doomed Expansion (fan-made)"
 }
 
 case class KnavesCaptain(slot : Int) extends Warrior with Rearguard {

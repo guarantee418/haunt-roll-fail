@@ -235,6 +235,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
             case Cat => { DrawRect(pr + "cat", -35, -82, 70, 92) }
             case Hawk => { DrawRect(pr + "hawk", -43, -80, 76, 90) }
+            case EECardinal => { DrawRect(pr + "cardinal", -43, -80, 76, 90) }
+            case EECaravan => { DrawRect(pr + "caravan", -45, -45, 90, 90) }
+            case EECaravanDown => { DrawRect(pr + "caravandown", -45, -45, 90, 90) }
+            case Marquistador => { DrawRect(pr + "marquistador", -35, -82, 70, 92) }
+            case DMOutpost => { DrawRect(pr + "outpost", -50, -50, 100, 100) }
+            case DMShip => { DrawRect(pr + "ship", -45, -45, 90, 90) }
+            case DMWood => { DrawRect(pr + "wood", -45, -45, 90, 90) }
             case Critter => { DrawRect(pr + "critter", -42, -72, 83, 83) }
             case Otter => { DrawRect(pr + "otter", -37, -77, 74, 87) }
             case Lizard => { DrawRect(pr + "lizard", -41, -81, 80, 88) }
@@ -2137,18 +2144,31 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     case Charismatic => "Double warrior recruit"
                     case Commander => "Extra hit when attacking"
                     case Despot => "Extra 1 VP destroying buildings or tokens in battle"
+                    case Patron => "One craft activation counts as two"
+                    case Megalomaniac => "Build roosts where there are roosts"
+                    case Hedonistic => "Replace a roost with two warriors"
+                    case _ => ""
                 }), l.name.hl.div(styles.minister))).|("~~~".styled(f)).pointer.onClick.param(("view-leaders", f)) ~
                 Gap ~
                 Hint(h, dddd.pointer.onClick.param(("view-decree", f : Faction))) ~
                 (f.tolerance > 0).?(("Turmoil Tolerance " ~ f.skipped.hl ~ "/" ~ f.tolerance.hl).div(styles.minister)) ~
                 Gap ~
+                (f == EE).?(
+                    Hint("Roosts\n" + f.all(Roost).num + " on the map\n" + f.pooled(Roost) + " on the track\nScore the rightmost empty space: " + EyriesEndExpansion.track(f.pooled(Roost)) + " VP",
+                        (Image(f.style + "-roost", styles.building) *** f.all(Roost).num) ~ (Image("empty-building", styles.building) *** f.pooled(Roost))) ~
+                    Hint("Caravans\n" + f.all(EECaravan).num + " face up\n" + f.all(EECaravanDown).num + " face down",
+                        (Image(f.style + "-caravan", styles.token) *** f.all(EECaravan).num) ~ (Image(f.style + "-caravandown", styles.token) *** f.all(EECaravanDown).num) ~ (Image("empty-token", styles.token) *** (f.pooled(EECaravan) + f.pooled(EECaravanDown) - 3))) ~
+                    Div(Hint("Cardinals\n" + f.all(EECardinal).num + " on the map\n" + f.pooled(EECardinal) + " available",
+                        (Image(f.style + "-cardinal", styles.wr) *** f.all(EECardinal).num) ~ (Image(f.style + "-cardinal-empty", styles.wr) *** f.pooled(EECardinal))), styles.warline)
+                ).|(
                 Hint("Roosts\n" + f.all(Roost).num + " on the map\n" + f.pooled(Roost) + " available" + "\n\n" + "1 Roost"                           , (Image((f.all(Roost).num >= 1).?(f.style + "-roost").|("empty-building"), styles.building))) ~
                 Hint("Roosts\n" + f.all(Roost).num + " on the map\n" + f.pooled(Roost) + " available" + "\n\n" + "2 Roosts: 1 VP"                    , (Image((f.all(Roost).num >= 2).?(f.style + "-roost").|("empty-building-1"), styles.building))) ~
                 Hint("Roosts\n" + f.all(Roost).num + " on the map\n" + f.pooled(Roost) + " available" + "\n\n" + "3 Roosts: 2 VP, draw 1 extra card" , (Image((f.all(Roost).num >= 3).?(f.style + "-roost").|("empty-building-2-card"), styles.building))) ~
                 Hint("Roosts\n" + f.all(Roost).num + " on the map\n" + f.pooled(Roost) + " available" + "\n\n" + "4 Roosts: 3 VP, draw 1 extra card" , (Image((f.all(Roost).num >= 4).?(f.style + "-roost").|("empty-building-3"), styles.building))) ~
                 Hint("Roosts\n" + f.all(Roost).num + " on the map\n" + f.pooled(Roost) + " available" + "\n\n" + "5 Roosts: 4 VP, draw 1 extra card" , (Image((f.all(Roost).num >= 5).?(f.style + "-roost").|("empty-building-4"), styles.building))) ~
                 Hint("Roosts\n" + f.all(Roost).num + " on the map\n" + f.pooled(Roost) + " available" + "\n\n" + "6 Roosts: 4 VP, draw 2 extra cards", (Image((f.all(Roost).num >= 6).?(f.style + "-roost").|("empty-building-4-card"), styles.building))) ~
-                Hint("Roosts\n" + f.all(Roost).num + " on the map\n" + f.pooled(Roost) + " available" + "\n\n" + "7 Roosts: 5 VP, draw 2 extra cards", (Image((f.all(Roost).num >= 7).?(f.style + "-roost").|("empty-building-5"), styles.building))) ~
+                Hint("Roosts\n" + f.all(Roost).num + " on the map\n" + f.pooled(Roost) + " available" + "\n\n" + "7 Roosts: 5 VP, draw 2 extra cards", (Image((f.all(Roost).num >= 7).?(f.style + "-roost").|("empty-building-5"), styles.building)))
+                ) ~
                 Div(Hint("Hawks\n" + f.all(f.warrior).num + " on the map\n" + f.pooled(f.warrior) + " available",
                 &((Image(f.style + "-hawk-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-hawk", styles.wr) *** (f.all(f.warrior).num % 5))) ~
                 &((Image(f.style + "-hawk-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-hawk-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
@@ -2351,6 +2371,19 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 Div(Hint("Frogs\n" + f.all(f.warrior).num + " on the map\n" + f.pooled(f.warrior) + " available",
                 &((Image(f.style + "-frog-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-frog", styles.wr) *** (f.all(f.warrior).num % 5))) ~
                 &((Image(f.style + "-frog-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-frog-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
+
+            case f : Marquistadors =>
+                Hint("Treaties\n" + f.treaties.num + " cards\n" + FoxRabbitMouse./(s => s.name + ": " + f.treaties.%(_.suit == s).num).join("\n") + "\nBird: " + f.treaties.%(_.suit == Bird).num,
+                    ("Treaties".styled(f) ~ ": " ~ f.treaties.none.?("none".txt).|(f.treaties./(d => dt.CardSuitInfo(d.suit)).merge)).div) ~
+                Hint("Outposts\n" + f.all(DMOutpost).num + " on the map\n" + f.pooled(DMOutpost) + " on the track\nDeploy " + f.deploy + ", draw " + f.draws,
+                    (Image(f.style + "-ship", styles.token) *** f.all(DMShip).num) ~ (Image("empty-token", styles.token) *** f.pooled(DMShip)) ~ " " ~
+                    (Image(f.style + "-outpost", styles.building) *** f.all(DMOutpost).num) ~ (Image("empty-building", styles.building) *** f.pooled(DMOutpost))) ~ Break ~ Gap ~
+                Hint("Wood\n" + f.all(DMWood).num + " in clearings\n" + board.forests./(r => f.at(r).count(DMWood)).sum + " in forests\n" + f.keep.num + " in the Keep",
+                    ((Image(f.style + "-wood", styles.token) *** (f.all(DMWood).num + board.forests./(r => f.at(r).count(DMWood)).sum)) ~ " " ~ "Keep".styled(f) ~ " " ~ f.keep.num.hl ~ "/8").div) ~
+                (game.current == f && game.phase == Daylight).?(Gap ~ 1.to(f.acted)./(_ => Image("action-black", styles.building)) ~ (f.acted.until(3 + f.extra)./(_ => Image("action-bird", styles.building)))) ~
+                Div(Hint("Marquistadors\n" + f.all(f.warrior).num + " on the map\n" + f.pooled(f.warrior) + " available",
+                &((Image(f.style + "-marquistador-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-marquistador", styles.wr) *** (f.all(f.warrior).num % 5))) ~
+                &((Image(f.style + "-marquistador-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-marquistador-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
 
             case f : WarriorsWake =>
                 Hint("Despair\n" + f.all(Despair).num + " on the map\n" + f.pooled(Despair) + " on the track\nScavenge: look at " + f.looks + ", take " + f.takes + f.shuffles.??(", may shuffle back"),
@@ -2667,7 +2700,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     def boardImage(f : Faction) : |[String] = f @@ {
         case _ : Feline => Some("mc-board")
+        case EE => Some("ee-board")
         case _ : Aviary => Some("ed-board")
+        case DV => Some("dv-board")
+        case NW => Some("nw-board")
+        case _ : Marquistadors => Some("dm-board")
         case _ : Insurgent => Some("wa-board")
         case _ : Hero => Some("vb-board")
         case _ : Trader => Some("rf-board")
@@ -3516,6 +3553,47 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                         overlayPane.clear()
                 })
 
+            case f : Marquistadors =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    f.name.f.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    Image("dm-board")(styles.factionboard) ~
+                    HGap ~
+                    HGap ~
+                    less("Treaties".hl.larger) ~
+                    more("Treaties".hl.larger, "craft cards and place outposts, and in battle in clearings without outposts each matching one adds to the max rolled hits and is discarded to take a hit", Dot) ~
+                    desc(f.treaties.num.hl.larger, "treaties") ~
+                    f.treaties.any.?(f.treaties./(d => OnClick(d, Div(d.img, xstyles.info, xstyles.xx, xstyles.chm, xstyles.chp, styles.inline, styles.margined))).merge.div) ~
+                    HGap ~
+                    HGap ~
+                    less("The Ship".hl.larger) ~
+                    more("The Ship".hl.larger, "lands on an edge river clearing; only the", f, "can place pieces in its clearing", Dot) ~
+                    desc("Deploy".hh, f.deploy.hl, "warriors,", "draw".hh, (1 + f.draws).hl, "cards") ~
+                    HGap ~
+                    buildingLine(_ => f.style + "-outpost", f.all(DMOutpost).num, f.pooled(DMOutpost)) ~
+                    HGap ~
+                    HGap ~
+                    less("The Keep".hl.larger) ~
+                    more("The Keep".hl.larger, Colon, "a wood moved into the ship's clearing scores the wood in the Keep and goes there; with all 8 the", f, "win", Dot) ~
+                    desc(f.keep.num.hl.larger, "wood in the Keep") ~
+                    HGap ~
+                    warriorLine(f.style + "-marquistador", f.all(f.warrior).num, f.pooled(f.warrior)) ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), {
+                    case (f : Faction, more : Boolean) => onFactionStatus(f, more, None)
+                    case d : DeckCard => onClick(d)
+                    case _ =>
+                        overlayPane.invis()
+                        overlayPane.clear()
+                })
+
             case f : WarriorsWake =>
                 showOverlay(overlayScrollX((
                     HGap ~
@@ -4233,7 +4311,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     HGap ~
                     HGap ~
                     HGap ~
-                    more("Disdain for Trade".hh, Colon, "crafted items score only 1 VP unless the leader is the", "Builder".hh, Dot) ~
+                    (f == EE).?(
+                        less("Cardinals".hl.larger) ~
+                        more("Cardinals".hl.larger, "are mixed into the supply and drawn at random; on their own turns the other factions may move them as their own, ignoring rule", "(" ~ TheRedMenace.of(f) ~ ")", Dot) ~
+                        desc(f.all(EECardinal).num.hl.larger, "on the map,", f.pooled(EECardinal).hl.larger, "in reserve") ~
+                        HGap ~
+                        more("Caravans".hh, Colon, "face up ones craft in", "Evening".hh, Comma, "and they move with the warriors", "(" ~ RovingCaravans.of(f) ~ ")", Dot) ~
+                        desc(f.all(EECaravan).num.hl.larger, "face up,", f.all(EECaravanDown).num.hl.larger, "face down")
+                    ).|(
+                    more("Disdain for Trade".hh, Colon, "crafted items score only 1 VP unless the leader is the", "Builder".hh, Dot)) ~
                     HGap ~
                     HGap ~
                     HGap ~

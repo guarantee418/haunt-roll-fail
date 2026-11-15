@@ -204,6 +204,11 @@ object ReplayCheck {
             // the Doomed Expansion's factions
             case "wg" => $($(MC, ED, WA, VB, WG), $(MC, ED, LC, RF, UD, WG), $(DU, WW, MC, ED, WG), $(KD, TC, LDvE, MC, WG))
             case "du" => $($(MC, ED, WA, DU), $(DU, ED, LC, VB), $(MC, DU, RF, UD), $(DU, KD, TC, LDvE))
+            // the Doomed Expansion's Re-Imaginings
+            case "ee" => $($(EE, MC, WA, VB), $(EE, MC, LC, RF), $(EE, DM, UD, KD))
+            case "dm" => $($(DM, ED, WA, VB), $(DM, ED, LC, RF), $(DM, EE, UD, KD))
+            case "dv" => $($(MC, ED, WA, DV), $(MC, ED, LC, RF, DV), $(DM, EE, UD, DV))
+            case "nw" => $($(MC, ED, WA, NW), $(MC, ED, LC, NW), $(DM, EE, NW, UD))
             case "ww" => $($(MC, ED, WA, WW), $(MC, WW, LC, VB), $(ED, WW, RF, UD), $(WW, KD, TC, LDvE))
             case "tc" => $($(MC, ED, WA, TC))
             case "kd" => $($(MC, ED, WA, KD))
@@ -224,7 +229,7 @@ object ReplayCheck {
         var failures = 0
         // how often each hireling-related choice was recorded, to see that the bots used them
         var used = Map[String, Int]()
-        val keys = $("ActionHammer", "ActionBag", "ActionTea", "ActionCoins", "ActionCrossbow", "ActionKey", "ActionSword", "ActionReplace", "ActionPay", "SecretScore", "CounterAmbush", "ExposeAction", "Hireling", "WarmSun", "Sunward", "CorvidSpies", "FlameBearers", "VaultKeepers", "FuriousProtector", "HighwayBandit", "PopularBand", "SunnyAdvocates", "BatMessengers", "RiverRoamers", "FrogTinkers", "Farmers", "Brigand", "ClearPath", "LizardEnvoys", "Bluebird", "FelinePhysicians", "MoleArtisians", "RatSmugglers", "ForestPatrol", "Patrol", "LastDynasty", "Uprising", "Exile", "Flotilla", "StreetBand", "BanditGangs", "Scouts", "SlyDog", "HighNoon", "BreakingDawn", "DuskAwakening", "Merchants", "Spoil", "ServiceOf", "MilitarySupplies", "Guard", "Hoarders", "NightTerrors", "Adventurers", "AnyCard", "FowlPlay", "WordsUndo", "WordsReroll", "Transmute", "Bloodlust", "DevotionHit", "Roulette", "Rapacious", "Swindle", "Infernal", "Cleansing", "Fury", "BloodGate", "Meat", "BearTrap", "BottomFeeder", "Knight", "Science", "Poison", "Dopple", "DarkMenu", "Infect", "BookOfNames", "Raging", "Inspire", "Hammertime", "Encouragement", "Grift", "Devour", "Scram", "BardMoved", "Blacksmith", "Zealot", "KnavesSwindle", "TurnOver", "Murderers", "Infected", "Spirits", "KnightTurnling", "GoldenPig", "RougeAgents", "Caravan", "Union", "Demand", "Coup", "Feeder", "Bugs", "CureAll", "Grunts", "Swine", "TurnPlace", "TurnMoveBattle", "Legends", "FifthRuin", "Rally", "Friendship", "Prince", "Merchandising", "Precious", "ReturnKing", "Schwartz", "Capture", "Filch", "Pickpockets", "TakeRuinItem", "Monster", "Roam", "Appease", "Slay", "Ritual", "Investigate", "HuntStack", "Bushblazer", "Mauler", "Wake", "Doom", "WG")
+        val keys = $("ActionHammer", "ActionBag", "ActionTea", "ActionCoins", "ActionCrossbow", "ActionKey", "ActionSword", "ActionReplace", "ActionPay", "SecretScore", "CounterAmbush", "ExposeAction", "Hireling", "WarmSun", "Sunward", "CorvidSpies", "FlameBearers", "VaultKeepers", "FuriousProtector", "HighwayBandit", "PopularBand", "SunnyAdvocates", "BatMessengers", "RiverRoamers", "FrogTinkers", "Farmers", "Brigand", "ClearPath", "LizardEnvoys", "Bluebird", "FelinePhysicians", "MoleArtisians", "RatSmugglers", "ForestPatrol", "Patrol", "LastDynasty", "Uprising", "Exile", "Flotilla", "StreetBand", "BanditGangs", "Scouts", "SlyDog", "HighNoon", "BreakingDawn", "DuskAwakening", "Merchants", "Spoil", "ServiceOf", "MilitarySupplies", "Guard", "Hoarders", "NightTerrors", "Adventurers", "AnyCard", "FowlPlay", "WordsUndo", "WordsReroll", "Transmute", "Bloodlust", "DevotionHit", "Roulette", "Rapacious", "Swindle", "Infernal", "Cleansing", "Fury", "BloodGate", "Meat", "BearTrap", "BottomFeeder", "Knight", "Science", "Poison", "Dopple", "DarkMenu", "Infect", "BookOfNames", "Raging", "Inspire", "Hammertime", "Encouragement", "Grift", "Devour", "Scram", "BardMoved", "Blacksmith", "Zealot", "KnavesSwindle", "TurnOver", "Murderers", "Infected", "Spirits", "KnightTurnling", "GoldenPig", "RougeAgents", "Caravan", "Union", "Demand", "Coup", "Feeder", "Bugs", "CureAll", "Grunts", "Swine", "TurnPlace", "TurnMoveBattle", "Legends", "FifthRuin", "Rally", "Friendship", "Prince", "Merchandising", "Precious", "ReturnKing", "Schwartz", "Capture", "Filch", "Pickpockets", "TakeRuinItem", "Monster", "Roam", "Appease", "Slay", "Ritual", "Investigate", "HuntStack", "Bushblazer", "Mauler", "Wake", "Doom", "WG", "EE", "DM", "DV")
 
         0.until(games).foreach { gi =>
             val seating = pool(gi % pool.num).shuffle
@@ -251,6 +256,10 @@ object ReplayCheck {
                     "KnavesCommitAction[(]KD, *Knaves([A-Za-z]+), *[$A-Za-z]*[(]Teapot[)], *[$A-Za-z]*[(][)]".r.findAllMatchIn(w).map(_.group(1)).filter(_ != "Revel").foreach { a =>
                         used += ("Barkeep tea to " + a) -> (used.getOrElse("Barkeep tea to " + a, 0) + 1)
                     }
+                    if (w.contains("RedMenaceMsg"))
+                        used += "Red Menace move" -> (used.getOrElse("Red Menace move", 0) + 1)
+                    if (w.contains("TreatyHit"))
+                        used += "treaty took a hit" -> (used.getOrElse("treaty took a hit", 0) + 1)
                     if (w.contains("ForestShortcut"))
                         used += "Forest Connections move" -> (used.getOrElse("Forest Connections move", 0) + 1)
                     if (w.contains("KnavesBardMovedAction"))

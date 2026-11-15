@@ -650,6 +650,18 @@ file covers the build, server and deploy. No session can ssh to the server
   buildings placed, crafts made and removals since (`watch`), offering what they set off. The Favored Suit counts cards discarded from an
   enemy's hand (`WhisperersExpansion.discarded`, called from `DirectDiscard`), Midnight actions come at the start of a turn after another
   player's, and Instigate's points go to the Guild. `ReplayCheck <games> ww`, `du` and `wg` (5 and 6 players) play them.
+  The Re-Imaginings are four more Fun Factions, each file's header listing its readings, art by `root/tools/reimaginings-art.py`.
+  Eyrie's End (EE, `root/faction-eyries-end.scala`) is an `Aviary` (the Eyrie's Decree, Turmoil and leaders, with the new leaders Patron,
+  Megalomaniac and Hedonistic in `faction-aviary.scala`): five Cardinals drawn at random with its warriors, which other factions may move as
+  their own on their turn (The Red Menace, added to every `MoveInitAction` by `EyriesEndExpansion.redMenace`), caravans that craft and move
+  with its warriors, the clearing's ruler drawing a card (Roving Caravans: the transport marker `CaravanDrawn` keeps it to once a move), and
+  rule where tied on its turn (Lords of Corruption, in `ruleValue`). Dawn of the Marquistadors (DM, `root/faction-marquistadors.scala`): the
+  ship landing on an edge river clearing, outposts placed with two matching treaties (cards kept face up), treaties counted as warriors in
+  battle, wood moved to the ship for the Keep (all 8 win). The Doomed Vagabond (DV, `root/faction-doomed-vagabond.scala`, 4 or more players)
+  is a `Hero`: Despot Infamy (`faction-hero.scala`), peace offers with Hostile factions and the Collect Bounty quests (in `Quest.all`, so
+  saves name them) offered in every menu of the current faction (`DoomedVagabondExpansion.anytime`, beside the Lilypad Negotiations in
+  `internalPerform`), quests freshened each Evening. The Naifs of the Deep Woods (NW, `faction-knaves.scala`) are the Knaves with Alliance
+  warriors (`Knaves.warriorName`). `ReplayCheck <games> ee`, `dm`, `dv` and `nw` play them.
 - The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
   Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
   box) and the Homeland errata, from a player's Google Drive (2026-10-10). The shared deck's back follows

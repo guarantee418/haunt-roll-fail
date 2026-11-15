@@ -243,6 +243,7 @@ object MovementExpansion extends MandatoryExpansion {
                     case Some((t, l)) => MoveFromAction(self, f, t, m, o, l, then)
                     case None => MoveFromAction(self, f, Nil, m, o, Nil, then).!(f.canMoveFrom(o).not, "snared").!(true)
                 })
+                .add(EyriesEndExpansion.redMenace(self, f, m, then))
                 .add(extra.notOf[PreMove])
 
         case MoveFromAction(self, f, tt, m, from, to, then) =>

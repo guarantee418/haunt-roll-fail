@@ -1671,7 +1671,7 @@ object Meta extends MetaGame {
     val official = $[Faction](MC, ED, WA, VB, LC, RF, UD, CC, LH, KI)
     val homeland = $[Faction](LDvE, TC, KD)
     val clones = $[Faction](BK, PE, FU, NB, CM, /*WC,*/ DR, RI, LK)
-    val fun = $[Faction](KDvA, TCvA, LDvD, LDvC, LDvB, TD, FH, WW, DU, WG, XC, CUv2, CU, OK, AF, SF, MB)
+    val fun = $[Faction](KDvA, TCvA, LDvD, LDvC, LDvB, TD, FH, WW, DU, WG, EE, DM, DV, NW, XC, CUv2, CU, OK, AF, SF, MB)
 
     val factions = official ++ homeland ++ clones ++ fun
 
@@ -1918,6 +1918,7 @@ object Meta extends MetaGame {
         factions.of[WarriorsWake].num * 5 +
         factions.of[Doomsayers].num * 6 +
         factions.of[Whisperers].num * 2 +
+        factions.of[Marquistadors].num * 9 +
         (0 :: 5 :: 7 :: 9)(factions.of[Hero].num)
 
     def validateFactionCombination(factions : $[Faction]) = {
@@ -1932,6 +1933,21 @@ object Meta extends MetaGame {
         else
         if (factions.of[Whisperers].any && factions.num < 5)
             ErrorResult("The Whisperers Guild only plays with 5 or more players")
+        else
+        if (factions.has(DV) && factions.num < 4)
+            ErrorResult("The Doomed Vagabond only plays with 4 or more players")
+        else
+        if (factions.has(DV) && factions.of[Hero].num > 1)
+            ErrorResult("The Doomed Vagabond can't play with another Vagabond")
+        else
+        if (factions.has(EE) && factions.but(EE).of[Aviary].any)
+            ErrorResult("Eyrie's End can't play with the Eyrie Dynasties")
+        else
+        if (factions.has(DM) && factions.of[Feline].any)
+            ErrorResult("Dawn of the Marquistadors can't play with the Marquise de Cat")
+        else
+        if (factions.has(NW) && factions.but(NW).of[Knaves].any)
+            ErrorResult("The Naifs can't play with the Knaves of the Deepwood")
         else
         if (reach(factions) < factions.num.of(0 :: 0 :: 17 :: 18 :: 21 :: 25 :: 28 :: 28 :: 28))
             WarningResult("Reach " + reach(factions))
@@ -3808,6 +3824,65 @@ object Meta extends MetaGame {
         ImageAsset("xc-spell-transform"    ) ::
         ImageAsset("xc-spell-teleport"     ) ::
     $) ::
+    // the Doomed Expansion's Re-Imaginings (art by root/tools/reimaginings-art.py)
+    ConditionalAssetsList((factions, options) => factions.has(EE), "faction/aviary")(
+        ImageAsset("ee-glyph"             ) ::
+        ImageAsset("ee-title"             ) ::
+        ImageAsset("ee-char"              ) ::
+        ImageAsset("ee-hawk"              , "ed-hawk"          ) ::
+        ImageAsset("ee-hawk-x5"           , "ed-hawk-x5"       ) ::
+        ImageAsset("ee-hawk-empty"        , "ed-hawk-empty"    ) ::
+        ImageAsset("ee-hawk-x5-empty"     , "ed-hawk-x5-empty" ) ::
+        ImageAsset("ee-cardinal"          ) ::
+        ImageAsset("ee-cardinal-empty"    ) ::
+        ImageAsset("ee-roost"             , "ed-roost"         ) ::
+        ImageAsset("ee-caravan"           ) ::
+        ImageAsset("ee-caravandown"       ) ::
+        ImageAsset("ed-patron"            ) ::
+        ImageAsset("ed-megalomaniac"      ) ::
+        ImageAsset("ed-hedonistic"        ) ::
+        ImageAsset("ee-board"             ) ::
+        $("recruit", "double-recruit", "move", "battle", "build")./~(a => $("bird", "fox", "rabbit", "mouse", "frog")./~(s => $("", "-done")./(d => ImageAsset("ee-" + a + "-" + s + d, "ed-" + a + "-" + s + d))))
+    ) ::
+    ConditionalAssetsList((factions, options) => factions.of[Marquistadors].any, "faction/marquistadors")(
+        ImageAsset("dm-glyph"                 ) ::
+        ImageAsset("dm-title"                 ) ::
+        ImageAsset("dm-char"                  ) ::
+        ImageAsset("dm-marquistador"          ) ::
+        ImageAsset("dm-marquistador-empty"    ) ::
+        ImageAsset("dm-marquistador-x5"       ) ::
+        ImageAsset("dm-marquistador-x5-empty" ) ::
+        ImageAsset("dm-outpost"               ) ::
+        ImageAsset("dm-ship"                  ) ::
+        ImageAsset("dm-wood"                  ) ::
+        ImageAsset("dm-board"                 ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => factions.has(DV), "faction/hero")(
+        ImageAsset("dv-glyph"          , "vb-glyph" ) ::
+        ImageAsset("dv-vagabond"       , "vb-vagabond" ) ::
+        ImageAsset("dv-char"           , "vb-char-thief" ) ::
+        ImageAsset("dv-title"          ) ::
+        ImageAsset("dv-board"          ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => factions.has(DV), "card/quest", "quest:", lzy = Laziness.OnDemand)(
+        1.to(5)./(i => ImageAsset("collect-bounty-" + i, "collect-bounty"))
+    ) ::
+    ConditionalAssetsList((factions, options) => factions.has(DV), "artwork/quest", "artwork:", lzy = Laziness.OnDemand)(
+        1.to(5)./(i => ImageAsset("collect-bounty-" + i, "collect-bounty"))
+    ) ::
+    ConditionalAssetsList((factions, options) => factions.has(NW), "faction/abduct")(
+        ImageAsset("nw-glyph"            ) ::
+        ImageAsset("nw-title"            ) ::
+        ImageAsset("nw-char"             , "kd-char" ).scaled(20) ::
+        ImageAsset("nw-board"            ) ::
+        ImageAsset("nw-skunk"            ) ::
+        ImageAsset("nw-skunk-empty"      ) ::
+        ImageAsset("nw-skunk-x5"         ) ::
+        ImageAsset("nw-skunk-x5-empty"   ) ::
+        ImageAsset("nw-acclaim"          ) ::
+        ImageAsset("nw-captain-empty"    , "kd-captain-empty" ) ::
+        $("birdsong", "daylight", "evening", "gladiator", "cheat", "jailor", "harrier", "ronin", "adventurer", "scoundrel", "arbiter", "vagrant", "ranger", "tinker", "thief", "bard", "barkeep", "berserker", "blacksmith", "swindler", "zealot")./(k => ImageAsset("nw-captain-" + k, "kd-captain-" + k))
+    ) ::
     ConditionalAssetsList((factions, options) => factions.of[WarriorsWake].any, "faction/wake")(
         ImageAsset("ww-glyph"                 ) ::
         ImageAsset("ww-title"                 ) ::

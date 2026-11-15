@@ -246,7 +246,7 @@ object Quest {
         Quest(Mouse, "Logistic Help", "revised-logistic-help-mouse", Boots, Bag)
     )
 
-    val all = default ++ revised
+    val all = default ++ revised ++ DoomedVagabond.bounties
 }
 
 case object Effort extends SpecialRegion
@@ -835,8 +835,9 @@ object HeroExpansion extends FactionExpansion[Hero] {
             then
 
         case BattlePostHitOutAction(b, _, _, _, TryForcedRemoveAction(e : Hero, c, f : WarriorFaction, p, x, m, then, fail)) if e.hostile(f) && (b.attacker == e || b.instigator.has(e)) =>
-            val bonusA = p.is[Warrior] || options.has(WarriorsOnlyInfamy).not
-            val bonusB = e.used.has(Infamy(f)).not || options.has(LimitedInfamy).not
+            // the Doomed Vagabond's Despot Infamy: one point a battle for each Hostile faction, whatever piece is removed
+            val bonusA = p.is[Warrior] || options.has(WarriorsOnlyInfamy).not || e == DV
+            val bonusB = e.used.has(Infamy(f)).not || (options.has(LimitedInfamy).not && e != DV)
 
             // the Dark Deck's Book of Names: half the Infamy, rounded down, in a battle alongside the named faction
             val halved = b.ally.exists(e.bookAlly)
@@ -940,7 +941,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
                     actions :+= VagabondScorchedEarthMainAction(f, c).!(f.lacks(Torch), "no torch").!(!f.canPlace(c), "forbidden").!((factions ++ hirelings).%(_.present(c)).%!(f.canRemove(c)).any, "protector")
 
                 if (f.can(Improvise)) {
-                    val qq = game.quests.take(3).%(_.suit.matches(c.cost))
+                    val qq = game.quests.take(3).%(_.suit != Bird).%(_.suit.matches(c.cost))
                     val inv = f.inv.ready./(_.item)
                     val ss = (inv.num > 1).??(qq.%(q => inv.has(q.a) || inv.has(q.b)).%(q => inv.diff(q.ab).any))
                     actions :+= VagabondImproviseMainAction(f, c).!(!f.can(Improvise), "once per turn").!(qq.none, "no matching quests").!(inv.num < 2, "not enough items").!(ss.none, "not a single matching item")
@@ -953,7 +954,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
 
                 actions :+= VagabondAidMainAction(f, c.cost, ee.notOf[Hero]).!(ee.notOf[Hero].none, "no target").!(f.inv.ready.none, "no items").!(f.hand.%(_.matches(c.cost)).none, "no matching cards")
 
-                val qq0 = game.quests.take(3).%(_.suit.matches(c.cost))
+                val qq0 = game.quests.take(3).%(_.suit != Bird).%(_.suit.matches(c.cost))
                 val qq = qq0.%(q => q.ab.diff(f.inv.ready./(_.item)).none)
 
                 actions :+= VagabondQuestMainAction(f, c, qq).!(qq0.none, "wrong suit").!(qq.none, "no items")
@@ -1122,13 +1123,13 @@ object HeroExpansion extends FactionExpansion[Hero] {
             Force(BattleStartAction(a, a, a, NoMessage, c, d, Some(f), Repeat))
 
         case VagabondImproviseMainAction(f, c) =>
-            val qq = game.quests.take(3).%(_.suit.matches(c.cost))
+            val qq = game.quests.take(3).%(_.suit != Bird).%(_.suit.matches(c.cost))
             val ii = f.inv.ready.sort./(_.item)
 
             val iq = qq.%(q => q.ab.distinct./~(x => ii.has(x).??(ii.diff(q.ab).but(q.other(x)).distinct)).any)
 
             Ask(f)
-                .each(game.quests.take(3))(q => ImproviseQuestAction(f, c, q, f.inv, (f.quests.count(q.suit) + 1)).!(iq.has(q).not))
+                .each(game.quests.take(3).%(_.suit != Bird))(q => ImproviseQuestAction(f, c, q, f.inv, (f.quests.count(q.suit) + 1)).!(iq.has(q).not))
                 .cancel
 
         case ImproviseQuestAction(f, _, q, _, _) =>
@@ -1231,7 +1232,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
 
         case VagabondQuestMainAction(f, c, _) =>
             Ask(f)
-                .each(game.quests.take(3))(q => QuestAction(f, c, q, f.inv, f.quests.count(q.suit) + 1).!(q.suit.matches(c.cost).not).!(q.ab.diff(f.inv.ready./(_.item)).any))
+                .each(game.quests.take(3).%(_.suit != Bird))(q => QuestAction(f, c, q, f.inv, f.quests.count(q.suit) + 1).!(q.suit.matches(c.cost).not).!(q.ab.diff(f.inv.ready./(_.item)).any))
                 .cancel
 
         case QuestAction(f, c, q, _, _) =>

@@ -98,6 +98,25 @@ case object Despot extends Leader with BattleEffect {
     val desc = "Extra " ~ dt.VP ~ " destroying"
 }
 
+// the Doomed Expansion's Eyrie's End leaders (with Charismatic, Commander and Despot; faction-eyries-end.scala)
+case object Patron extends Leader {
+    val name = "Patron"
+    val starting = $(Decree.Recruit, Decree.Move)
+    val desc = "One craft activation counts as two"
+}
+
+case object Megalomaniac extends Leader {
+    val name = "Megalomaniac"
+    val starting = $(Decree.Battle, Decree.Build)
+    val desc = "Build roosts where there are roosts"
+}
+
+case object Hedonistic extends Leader {
+    val name = "Hedonistic"
+    val starting = $(Decree.Recruit, Decree.Build)
+    val desc = "Replace a roost with two warriors"
+}
+
 case object LoyalVizier extends Card with Record {
     val suit = Bird
     val name = "Loyal Vizier"
@@ -306,7 +325,7 @@ object AviaryExpansion extends FactionExpansion[Aviary] {
 
             TryForcedRemoveAction(e, c, f, p, x + 1, AsDespot(m), then, fail)
 
-        case CraftScoreAction(f : Aviary, d, n, m, then) if n > 1 && f.has(Builder).not =>
+        case CraftScoreAction(f : Aviary, d, n, m, then) if n > 1 && f.has(Builder).not && f.has(DisdainForTrade) =>
             CraftScoreAction(f, d, 1, m, then)
 
         // TURN
