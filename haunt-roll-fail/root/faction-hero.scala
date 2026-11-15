@@ -337,7 +337,7 @@ case object Slip extends Transport {
 
 case object ForestRoads extends Transport {
     override def allows(f : Faction, o : Region, d : Region)(implicit game : Game) = (o, d) @@ {
-        case (o : Clearing, d : Clearing) => game.connected(o).has(d)
+        case (o : Clearing, d : Clearing) => game.connected(o).has(d) || LegendsExpansion.linked(f, o, d)
         case (o : Forest, d : Clearing) => game.fromForest(o).has(d)
         case (o : Clearing, d : Forest) => game.fromForest(d).has(o)
         case (o : Forest, d : Forest) => game.board.forestsConnected(o, d)
@@ -894,7 +894,7 @@ object HeroExpansion extends FactionExpansion[Hero] {
 
             val o = f.region
 
-            val (t, l) = f.movePlans($(o), $($(Slip)) ** game.transports.but(Roads).appended(ForestRoads)./($))(o)
+            val (t, l) = f.movePlans($(o), $($(Slip)) ** game.transports.but(Roads).appended(ForestRoads)./($)).get(o).|(($[$[Transport]](), $[Region]()))
 
             Ask(f)
                 .each(l) { d =>

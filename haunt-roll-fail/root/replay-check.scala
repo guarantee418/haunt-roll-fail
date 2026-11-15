@@ -33,6 +33,11 @@ object ReplayCheck {
     var doomedCap = false
     // "turnover": the Turnlings rule (Turn Over Hirelings); "turn": the Turnlings' choices taken whenever offered (hire:TMM,... names them)
     var turnOver = false
+    // "castles", "fifth": the Legends Scenarios' Castles & Catacombs or The Fifth Ruin; "ring:<rule>", "capture:<rule>" pick the Ring's rules
+    // (by their object names); "rituals", "hunt": Dark Rituals or Hunt the Legend, "monster:<PickName>" the Dark Rituals monster;
+    // "legend": the scenarios' choices taken half of the times they are offered
+    var legends = $[Meta.O]()
+    var legendPicks = false
     var turnPicks = false
     var dusk = false
     // "action": with the Action! Deck Booster (pool "six" or "seven" for more players)
@@ -61,7 +66,7 @@ object ReplayCheck {
     )).|($[Meta.O](
         AutumnMap, DefaultClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
         FerryLandmark, LostCityLandmark, SeatingGiven, FactionSeatingGiven, SetupOrderPriority, CardDraftStandard,
-    ))).map(o => (draft && o == CardDraftStandard).?[Meta.O](CardDraftFive).|(o)).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (squires && o == MixedDeck).?[Meta.O](SquiresDeck).|(o)).map(o => (franken && o == MixedDeck).?[Meta.O](FrankenDeck).|(o)).map(o => (dusk && o == MixedDeck).?[Meta.O](DuskDeck).|(o)).map(o => (dark && o == MixedDeck).?[Meta.O](DarkDeck).|(o)).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.??($[Meta.O](RulesVersion.latest, OutragePeekNeedsOk, KnavesCaptainsInDraft)) ++ (async || chooseHits).??($[Meta.O](AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode)) ++ chooseHits.$(ForcedAsyncChooseHits) ++ offline.??($[Meta.O](HitsAndAmbushesSetup, OffTurnFieldHospitals)) ++ preset.$(OffTurnHitsPreset) ++ action.$(ActionBooster) ++ doomedVB.$(DoomedVagabonds, RandomCharacter) ++ doomedCap.$(DoomedCaptains) ++ turnOver.$(TurnOverHirelings) ++ seating./(IncludeFaction)
+    ))).map(o => (draft && o == CardDraftStandard).?[Meta.O](CardDraftFive).|(o)).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (squires && o == MixedDeck).?[Meta.O](SquiresDeck).|(o)).map(o => (franken && o == MixedDeck).?[Meta.O](FrankenDeck).|(o)).map(o => (dusk && o == MixedDeck).?[Meta.O](DuskDeck).|(o)).map(o => (dark && o == MixedDeck).?[Meta.O](DarkDeck).|(o)).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.??($[Meta.O](RulesVersion.latest, OutragePeekNeedsOk, KnavesCaptainsInDraft)) ++ (async || chooseHits).??($[Meta.O](AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode)) ++ chooseHits.$(ForcedAsyncChooseHits) ++ offline.??($[Meta.O](HitsAndAmbushesSetup, OffTurnFieldHospitals)) ++ preset.$(OffTurnHitsPreset) ++ action.$(ActionBooster) ++ doomedVB.$(DoomedVagabonds, RandomCharacter) ++ doomedCap.$(DoomedCaptains) ++ turnOver.$(TurnOverHirelings) ++ legends ++ seating./(IncludeFaction)
 
     def privateMap(o : AnyRef, suffix : String) : Map[Any, Any] = {
         val f = o.getClass.getDeclaredFields.filter(_.getName.endsWith(suffix)).head
@@ -173,6 +178,12 @@ object ReplayCheck {
         doomedCap = args.contains("doomedcap")
         turnOver = args.contains("turnover")
         turnPicks = args.contains("turn")
+        legendPicks = args.contains("legend")
+        legends = args.contains("castles").$(CastlesAndCatacombs) ++ args.contains("fifth").$(TheFifthRuin) ++
+            args.contains("rituals").$(DarkRituals) ++ args.contains("hunt").$(HuntTheLegend) ++
+            args.find(_.startsWith("monster:"))./~(a => Meta.legendsOptions.%(_.toString == a.drop(8))) ++
+            args.find(_.startsWith("ring:"))./~(a => Meta.legendsOptions.%(_.toString == a.drop(5))) ++
+            args.find(_.startsWith("capture:"))./~(a => Meta.legendsOptions.%(_.toString == a.drop(8)))
         dusk = args.contains("dusk")
         action = args.contains("action")
         async = args.contains("async")
@@ -209,7 +220,7 @@ object ReplayCheck {
         var failures = 0
         // how often each hireling-related choice was recorded, to see that the bots used them
         var used = Map[String, Int]()
-        val keys = $("ActionHammer", "ActionBag", "ActionTea", "ActionCoins", "ActionCrossbow", "ActionKey", "ActionSword", "ActionReplace", "ActionPay", "SecretScore", "CounterAmbush", "ExposeAction", "Hireling", "WarmSun", "Sunward", "CorvidSpies", "FlameBearers", "VaultKeepers", "FuriousProtector", "HighwayBandit", "PopularBand", "SunnyAdvocates", "BatMessengers", "RiverRoamers", "FrogTinkers", "Farmers", "Brigand", "ClearPath", "LizardEnvoys", "Bluebird", "FelinePhysicians", "MoleArtisians", "RatSmugglers", "ForestPatrol", "Patrol", "LastDynasty", "Uprising", "Exile", "Flotilla", "StreetBand", "BanditGangs", "Scouts", "SlyDog", "HighNoon", "BreakingDawn", "DuskAwakening", "Merchants", "Spoil", "ServiceOf", "MilitarySupplies", "Guard", "Hoarders", "NightTerrors", "Adventurers", "AnyCard", "FowlPlay", "WordsUndo", "WordsReroll", "Transmute", "Bloodlust", "DevotionHit", "Roulette", "Rapacious", "Swindle", "Infernal", "Cleansing", "Fury", "BloodGate", "Meat", "BearTrap", "BottomFeeder", "Knight", "Science", "Poison", "Dopple", "DarkMenu", "Infect", "BookOfNames", "Raging", "Inspire", "Hammertime", "Encouragement", "Grift", "Devour", "Scram", "BardMoved", "Blacksmith", "Zealot", "KnavesSwindle", "TurnOver", "Murderers", "Infected", "Spirits", "KnightTurnling", "GoldenPig", "RougeAgents", "Caravan", "Union", "Demand", "Coup", "Feeder", "Bugs", "CureAll", "Grunts", "Swine", "TurnPlace", "TurnMoveBattle")
+        val keys = $("ActionHammer", "ActionBag", "ActionTea", "ActionCoins", "ActionCrossbow", "ActionKey", "ActionSword", "ActionReplace", "ActionPay", "SecretScore", "CounterAmbush", "ExposeAction", "Hireling", "WarmSun", "Sunward", "CorvidSpies", "FlameBearers", "VaultKeepers", "FuriousProtector", "HighwayBandit", "PopularBand", "SunnyAdvocates", "BatMessengers", "RiverRoamers", "FrogTinkers", "Farmers", "Brigand", "ClearPath", "LizardEnvoys", "Bluebird", "FelinePhysicians", "MoleArtisians", "RatSmugglers", "ForestPatrol", "Patrol", "LastDynasty", "Uprising", "Exile", "Flotilla", "StreetBand", "BanditGangs", "Scouts", "SlyDog", "HighNoon", "BreakingDawn", "DuskAwakening", "Merchants", "Spoil", "ServiceOf", "MilitarySupplies", "Guard", "Hoarders", "NightTerrors", "Adventurers", "AnyCard", "FowlPlay", "WordsUndo", "WordsReroll", "Transmute", "Bloodlust", "DevotionHit", "Roulette", "Rapacious", "Swindle", "Infernal", "Cleansing", "Fury", "BloodGate", "Meat", "BearTrap", "BottomFeeder", "Knight", "Science", "Poison", "Dopple", "DarkMenu", "Infect", "BookOfNames", "Raging", "Inspire", "Hammertime", "Encouragement", "Grift", "Devour", "Scram", "BardMoved", "Blacksmith", "Zealot", "KnavesSwindle", "TurnOver", "Murderers", "Infected", "Spirits", "KnightTurnling", "GoldenPig", "RougeAgents", "Caravan", "Union", "Demand", "Coup", "Feeder", "Bugs", "CureAll", "Grunts", "Swine", "TurnPlace", "TurnMoveBattle", "Legends", "FifthRuin", "Rally", "Friendship", "Prince", "Merchandising", "Precious", "ReturnKing", "Schwartz", "Capture", "Filch", "Pickpockets", "TakeRuinItem", "Monster", "Roam", "Appease", "Slay", "Ritual", "Investigate", "HuntStack", "Bushblazer", "Mauler")
 
         0.until(games).foreach { gi =>
             val seating = pool(gi % pool.num).shuffle
@@ -358,11 +369,14 @@ object ReplayCheck {
                             // "turn": a Turnling's choice, half of the times one is offered (a menu may be cancelled and offered again)
                             val turnKeys = $("Murderers", "Infected", "Spirits", "KnightTurnling", "GoldenPig", "RougeAgents", "Caravan", "Union", "Demand", "Coup", "Bugs", "CureAll", "Grunts", "Swine", "Feeder")
                             val turn = (turnPicks && scala.util.Random.nextBoolean()).??(l.shuffle.%(_.is[Choice]).%(x => turnKeys.exists(x.unwrap.getClass.getSimpleName.contains)).%(x => x.unwrap.getClass.getSimpleName.contains("Skip").not).take(1))
+                            val legendKeys = $("RallyRound", "Friendship", "Prince", "Merchandising", "Precious", "ReturnKing", "Schwartz", "CaptureDeclare", "Pickpockets", "FilchMove", "Appease", "Slay", "Ritual", "Investigate", "Bushblazer", "Mauler")
+                            val legend = (legendPicks && scala.util.Random.nextBoolean()).??(l.shuffle.%(_.is[Choice]).%(x => legendKeys.exists(x.unwrap.getClass.getSimpleName.contains)).take(1))
+                            legend.foreach(x => used += ("offered " + x.unwrap.getClass.getSimpleName) -> (used.getOrElse("offered " + x.unwrap.getClass.getSimpleName, 0) + 1))
                             turn.foreach(x => used += ("offered " + x.unwrap.getClass.getSimpleName) -> (used.getOrElse("offered " + x.unwrap.getClass.getSimpleName, 0) + 1))
                             cap.foreach(x => used += ("offered " + x.unwrap.getClass.getSimpleName) -> (used.getOrElse("offered " + x.unwrap.getClass.getSimpleName, 0) + 1))
                             doom.foreach(x => used += ("offered " + x.unwrap.getClass.getSimpleName) -> (used.getOrElse("offered " + x.unwrap.getClass.getSimpleName, 0) + 1))
                             act.foreach(x => used += ("forced " + x.unwrap.getClass.getSimpleName) -> (used.getOrElse("forced " + x.unwrap.getClass.getSimpleName, 0) + 1))
-                            val a = if (act.any) act(0) else if (doom.any) doom(0) else if (cap0.any) cap0(0) else if (cap.any) cap(0) else if (turn.any) turn(0) else if (expose.any) expose(0) else if (buy.any) buy(0) else if (l.num == 1) l(0) else new BotXX(f).ask(keep(l), 0)(game).immediate
+                            val a = if (act.any) act(0) else if (doom.any) doom(0) else if (cap0.any) cap0(0) else if (cap.any) cap(0) else if (turn.any) turn(0) else if (legend.any) legend(0) else if (expose.any) expose(0) else if (buy.any) buy(0) else if (l.num == 1) l(0) else new BotXX(f).ask(keep(l), 0)(game).immediate
                             chosen = |(a)
                             a match {
                                 case _ if a.isSoft =>

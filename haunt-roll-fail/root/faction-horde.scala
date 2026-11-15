@@ -25,7 +25,7 @@ trait Horde extends WarriorFaction {
     def pieces(options : $[Meta.O]) = Warlord *** 1 ++ Rat *** 20 ++ Stronghold *** 6 ++ Mob *** 5
 
     object items {
-      val command = $[Item](Boots, Coins, Bag)
+      val command = $[Item](Boots, Coins, Bag) ++ Item.legends
       val prowess = $[Item](Hammer, Teapot, Sword, Crossbow)
     }
 

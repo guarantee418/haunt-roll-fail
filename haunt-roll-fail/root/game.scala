@@ -465,6 +465,13 @@ trait FactionState {
     board.clearings.foreach(c => location(c))
     board.clearings.foreach(c => location(Limbo(c)))
 
+    // the Legends Scenarios' scenario space, and the warriors The Precious swaps off the map
+    if (LegendsExpansion.on(options)) {
+        location(LegendSpace)
+        location(Limbo(LegendSpace))
+        location(RingBox)
+    }
+
     if (options.has(DarkDeck))
         location(OnForbiddenScience)
 
@@ -975,6 +982,7 @@ trait GameImplicits {
         def canMoveFrom(o : Region) = o @@ {
             case o : Clearing if factions.but(f).of[Mischief].%!(f.friends).%(e => e.at(o).has(Snare) && e.hidden.has(o).not).any => false
             case o : Clearing if DarkDeckExpansion.trapped(f, o) => false
+            case o : Clearing if MonstersExpansion.blocked(f, o) => false
             // the Bands: enemies can't move out of a clearing with a Band warrior on the turn they moved into it
             case o : Clearing if options.has(HirelingsByTheCard) && game.movedInto.has((f, o)) && $[Hireling](StreetBand, PopularBand).%(hirelings.has).exists(b => b.friends(f).not && b.at(o).of[Warrior].any) => false
             case o : Clearing if options.has(HirelingsByTheCard).not && hirelings.has(StreetBand) && f.has(StreetBand).not && StreetBand.enchanted.has(o) => false
@@ -1144,7 +1152,8 @@ trait GameImplicits {
             factions.but(f).of[Feline].%(_.keep.has(c)).none &&
             factions.but(f).of[Mischief].%(e => e.at(c).has(Snare) && e.hidden.has(c).not).none &&
             Council.governs(f, c).not &&
-            DarkDeckExpansion.trapped(f, c).not
+            DarkDeckExpansion.trapped(f, c).not &&
+            LegendsExpansion.canPlace(f, c)
 
         def ruleValue(c : Region, mercenaries : $[Trader], friends : $[Faction]) : Int = {
             if (game.states.contains(f).not)
@@ -1464,6 +1473,7 @@ trait GameImplicits {
     implicit class FactionFriendsEx(f : Faction)(implicit game : Game) {
         def friends(e : Faction) : Boolean = (f, e) match {
             case (a, b) if a == b => true
+            case (a, b) if LegendsExpansion.friendly(a, b) => true
             case (a : Hireling, b) => a.owner.?(_.friends(b))
             case (a, b : Hireling) => b.owner.?(_.friends(a))
             case (a : Hero, b : Hero) => a.coalition.any && b.coalition.any && a.coalition == b.coalition
@@ -1623,6 +1633,9 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
 
             DominanceExpansion,
 
+            LegendsExpansion,
+            MonstersExpansion,
+
             TurnlingsExpansion,
             HirelingsExpansion,
 
@@ -1745,12 +1758,44 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     // Marsh with 5+ players: clearings without a suit marker
     var unsuited : $[Clearing] = $
 
+    // the Legends Scenarios (root/legends.scala): the forest the scenario space is in, the players that had warriors or pawns
+    // there after the last scenario battle, and the Ring
+    var legendForest : |[Forest] = None
+    var legendDone = false
+    var legendHolders : $[Faction] = $
+    var legendsBusy = false
+    var legendPool = false
+    var ringRule : |[RingRule] = None
+    var captureRule : |[CaptureRule] = None
+    var ringAt : |[Clearing] = None
+    var ringOwner : |[Faction] = None
+    var ringFriends : $[(Faction, Faction)] = $
+    var seizureHits : Map[Faction, Int] = Map()
+    var seizureCounted : |[Battle] = None
+    var ringRaged : |[Battle] = None
+    // the Legends Scenarios' monsters (root/legends-monsters.scala)
+    var monster : |[LegendMonster] = None
+    var monsterHealth : Int = 0
+    var monsterSlain : Boolean = false
+    var legendDie : |[Clearing] = None
+    var legendDieValue : Int = 6
+    var huntStack : $[LegendMonster] = $
+    var huntMarkers : $[(Clearing, LegendMonster, Boolean)] = $
+    var roamedTurn : Int = 0
+    var appeased : $[(Faction, Clearing)] = $
+    var legendBonusDone : $[String] = $
+    var weaponUsed : $[(Faction, Item, Int)] = $
+    var monsterRider : |[Faction] = None
+
     // Mousehold: warriors removed in battle in other mouse clearings during the current battle
     var mouseholdPending : $[Figure] = $
 
     var used : $[Effect] = $
 
-    def clearings = board.clearings.diff(scorched).diff(flooded)
+    def clearings = board.clearings.diff(scorched).diff(flooded) ++ legendForest.any.$(LegendSpace)
+
+    // the clearings with a Limbo, where removed pieces wait
+    def limboClearings = board.clearings ++ LegendsExpansion.on(options).$(LegendSpace)
     def suited = clearings.diff(unsuited)
 
     // Marsh: clearings linked through a flooded clearing by the paths on its flood marker
@@ -1759,15 +1804,15 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
         case (a, b) if b == c => $(a)
         case _ => $()
     }
-    def riverside = clearings.%(c => byRiver(c).any || board.byRiver(c).any)
+    def riverside = clearings.%(c => c != LegendSpace && (byRiver(c).any || board.byRiver(c).any))
 
     def fromForest(f : Forest) = board.fromForest(f).diff(scorched).diff(flooded)
 
-    def byRiver(c : Clearing) = (board.byRiver(c) ++ board.connected(c).intersect(flooded.%(board.floodPaths(_).none))./~(board.connected).but(c)).distinct.diff(scorched).%(o => blizzard.has((c, o)).not && blizzard.has((o, c)).not)
+    def byRiver(c : Clearing) = if (c == LegendSpace) $[Clearing]() else (board.byRiver(c) ++ board.connected(c).intersect(flooded.%(board.floodPaths(_).none))./~(board.connected).but(c)).distinct.diff(scorched).%(o => blizzard.has((c, o)).not && blizzard.has((o, c)).not)
 
     def connected(c : Clearing) = {
         val ll =
-        (board.connected(c) ++ floodLinked(c)).distinct
+        ((c != LegendSpace).??(board.connected(c)) ++ floodLinked(c) ++ LegendsExpansion.connected(c)).distinct
             .diff(scorched)
             .diff(flooded)
             .%!(o => rubble  .has((c, o)) || rubble  .has((o, c)))
@@ -1934,6 +1979,8 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             (rabbittown.has(c)).?(Figure(Neutral, Rabbittown, 0)) ++
             (scorched.contains(c)).??(0.to(11)./(n => Figure(Neutral, ScorchedEarthMarker(n % 6 + 1), n))) ++
             knights.%((_, o) => o == c).indices./(n => Figure(Neutral, GoldenKnightMarker, n)) ++
+            ringAt.has(c).$(Figure(Neutral, RingMarker, 0)) ++
+            MonstersExpansion.markers(c) ++
             TurnlingsExpansion.markers(c)
     }
 

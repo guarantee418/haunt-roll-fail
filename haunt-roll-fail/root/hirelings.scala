@@ -1209,7 +1209,7 @@ object HirelingsExpansion extends Expansion {
 
         case ForcedRemoveProcessAction(f : WarriorFaction, then) if f.can(FelinePhysicians) && f.ignored.has(IgnoreWarriorRemovalEffects).not =>
             val l = (clearings.%(f.canPlace) ++ f.as[Underground]./(_.burrow)).%(f.present)
-            val c = board.clearings.diff(f.ignored.of[SkipHeal]./(_.c)).maxBy(c => f.limbo(c).$.%(_.piece.is[Warrior]).num)
+            val c = game.limboClearings.diff(f.ignored.of[SkipHeal]./(_.c)).maxBy(c => f.limbo(c).$.%(_.piece.is[Warrior]).num)
 
             if (l.any && f.limbo(c).$.%(_.piece.is[Warrior]).num > 0) {
                 YYSelectObjectsAction(f, f.hand)

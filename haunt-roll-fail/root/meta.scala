@@ -1698,6 +1698,7 @@ object Meta extends MetaGame {
         $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
+        legendsOptions ++
         $,
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck, DarkDeck) ++
         (n >= 5).$(ActionBooster) ++
@@ -1790,7 +1791,15 @@ object Meta extends MetaGame {
         $(HirelingHirelingClash, FactionHirelingClash) ++
         hirelings./(IncludeHireling) ++
         $(TurnOverHirelings) ++
-        turnlings./(IncludeHireling)
+        turnlings./(IncludeHireling) ++
+        legendsOptions
+
+    // the Doomed Expansion's Legends Scenarios (root/legends.scala)
+    def legendsOptions : $[GameOption] =
+        $(CastlesAndCatacombs, TheFifthRuin, DarkRituals, HuntTheLegend) ++
+        $(PickShadowmaw, PickWhiteWolf, PickBeaverbot, PickRedKnight, PickDemonBear) ++
+        $(RallyRound, FriendshipRing, BonafiedPrince, Merchandising, ThePrecious, RingOfRage, ReturnOfTheKing, PowerOfTheSchwartz) ++
+        $(FatFingers, LilLooters, FiveFingerFilch, SeizureAndSurrender, Pickpockets)
 
     override val hiddenOptions =
         factions./(IncludeFaction) ++
@@ -1966,7 +1975,7 @@ object Meta extends MetaGame {
     }
 
     def writeFaction(f : Faction) = f.short
-    def parseFaction(s : String) = (factions ++ hirelings ++ turnlings).%(_.short == s).single || (s == "XCMDM").?(Mudmen(XC)) || $[Faction](InfectedHorde, TrapLayer).%(_.short == s).single || hirelings.%(_.toString == s).single
+    def parseFaction(s : String) = (factions ++ hirelings ++ turnlings).%(_.short == s).single || (s == "XCMDM").?(Mudmen(XC)) || $[Faction](InfectedHorde, TrapLayer, LegendBeast).%(_.short == s).single || hirelings.%(_.toString == s).single
 
     def writeOption(o : O) = Serialize.write(o)
     def parseOption(s : String) = $(options.find(o => writeOption(o) == s) || options.find(o => o.toString == s) | (s @@ {
@@ -2184,6 +2193,38 @@ object Meta extends MetaGame {
         ImageAsset("vp-kd") ::
         ImageAsset("vp-ld") ::
     $) ::
+    // The Legends Scenarios (root/legends.scala, art by root/tools/legends-art.py)
+    ConditionalAssetsList((factions, options) => LegendsExpansion.on(options), "legends")(
+        ImageAsset("space-suited") ::
+        ImageAsset("space-unsuited") ::
+        ImageAsset("monster-shadowmaw") ::
+        ImageAsset("marker-shadowmaw") ::
+        ImageAsset("monster-card-shadowmaw") ::
+        ImageAsset("monster-card-shadowmaw-weapon") ::
+        ImageAsset("monster-white-wolf") ::
+        ImageAsset("marker-white-wolf") ::
+        ImageAsset("monster-card-white-wolf") ::
+        ImageAsset("monster-card-white-wolf-weapon") ::
+        ImageAsset("monster-beaverbot") ::
+        ImageAsset("marker-beaverbot") ::
+        ImageAsset("monster-card-beaverbot") ::
+        ImageAsset("monster-card-beaverbot-weapon") ::
+        ImageAsset("monster-red-knight") ::
+        ImageAsset("marker-red-knight") ::
+        ImageAsset("monster-card-red-knight") ::
+        ImageAsset("monster-card-red-knight-weapon") ::
+        ImageAsset("monster-demon-bear") ::
+        ImageAsset("marker-demon-bear") ::
+        ImageAsset("monster-card-demon-bear") ::
+        ImageAsset("monster-card-demon-bear-weapon") ::
+        ImageAsset("marker-back") ::
+        ImageAsset("die-1") ::
+        ImageAsset("die-2") ::
+        ImageAsset("die-3") ::
+        ImageAsset("die-4") ::
+        ImageAsset("die-5") ::
+        ImageAsset("die-6") ::
+    $) ::
     // The score and item trackers (the Board Trackers setting)
     ConditionalAssetsList((factions, options) => true, "tracker")(
         ImageAsset("score-track") ::
@@ -2265,6 +2306,42 @@ object Meta extends MetaGame {
         ImageAsset("item-cursedidol-damaged-exhausted"  ) ::
         ImageAsset("item-cursedidol-empty"              ) ::
 
+        ImageAsset("item-ring"                          ) ::
+        ImageAsset("item-ring-exhausted"                ) ::
+        ImageAsset("item-ring-damaged"                  ) ::
+        ImageAsset("item-ring-damaged-exhausted"        ) ::
+        ImageAsset("item-ring-empty"                    ) ::
+
+        ImageAsset("item-mauler") ::
+        ImageAsset("item-mauler-exhausted") ::
+        ImageAsset("item-mauler-damaged") ::
+        ImageAsset("item-mauler-damaged-exhausted") ::
+        ImageAsset("item-mauler-empty") ::
+
+        ImageAsset("item-spiritsword") ::
+        ImageAsset("item-spiritsword-exhausted") ::
+        ImageAsset("item-spiritsword-damaged") ::
+        ImageAsset("item-spiritsword-damaged-exhausted") ::
+        ImageAsset("item-spiritsword-empty") ::
+
+        ImageAsset("item-chainsaw") ::
+        ImageAsset("item-chainsaw-exhausted") ::
+        ImageAsset("item-chainsaw-damaged") ::
+        ImageAsset("item-chainsaw-damaged-exhausted") ::
+        ImageAsset("item-chainsaw-empty") ::
+
+        ImageAsset("item-slaymore") ::
+        ImageAsset("item-slaymore-exhausted") ::
+        ImageAsset("item-slaymore-damaged") ::
+        ImageAsset("item-slaymore-damaged-exhausted") ::
+        ImageAsset("item-slaymore-empty") ::
+
+        ImageAsset("item-bushblazer") ::
+        ImageAsset("item-bushblazer-exhausted") ::
+        ImageAsset("item-bushblazer-damaged") ::
+        ImageAsset("item-bushblazer-damaged-exhausted") ::
+        ImageAsset("item-bushblazer-empty") ::
+
         ImageAsset("item-any"         ) ::
         ImageAsset("item-any-damaged" ) ::
 
@@ -2305,11 +2382,11 @@ object Meta extends MetaGame {
         ImageAsset("move-deg-345"  ) ::
     $) ::
     ConditionalAssetsList((factions, options) => true, "card")(
-        ImageAsset("card-back-art") ::
-        ImageAsset("card-back-art-ep") ::
-        ImageAsset("card-back-art-sd") ::
-        ImageAsset("card-back-art-fd") ::
-        ImageAsset("card-back-art-dd") ::
+        ImageAsset("monster-card-back-art") ::
+        ImageAsset("monster-card-back-art-ep") ::
+        ImageAsset("monster-card-back-art-sd") ::
+        ImageAsset("monster-card-back-art-fd") ::
+        ImageAsset("monster-card-back-art-dd") ::
 
     $) ::
     ConditionalAssetsList((factions, options) => true, "faction/hireling")(
@@ -3779,7 +3856,7 @@ object Meta extends MetaGame {
         ImageAsset("rabbit-integration") ::
         ImageAsset("mouse-integration") ::
         ImageAsset("fox-integration") ::
-        ImageAsset("card-frog-back-art") ::
+        ImageAsset("monster-card-frog-back-art") ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[InvasiveBBB].any, "faction/invasive")(
         ImageAsset("ld-glyph"            , "td-glyph"            ) ::
@@ -3808,7 +3885,7 @@ object Meta extends MetaGame {
         ImageAsset("imitation") ::
         ImageAsset("laborers") ::
         ImageAsset("peace-talks") ::
-        ImageAsset("card-frog-back-art") ::
+        ImageAsset("monster-card-frog-back-art") ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[InvasiveCCC].any, "faction/invasive")(
         ImageAsset("ld-glyph"            , "td-glyph"            ) ::
@@ -3831,7 +3908,7 @@ object Meta extends MetaGame {
         ImageAsset("outcast-mouse"       , "../fanatic/outcast-mouse") ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[InvasiveDDD].any, "faction/invasive/card", lzy = Laziness.Later, scale = 50)(
-        ImageAsset("card-frog-back-art") ::
+        ImageAsset("monster-card-frog-back-art") ::
         ImageAsset("frog-ambush") ::
         ImageAsset("frog-dominance-half") ::
         ImageAsset("fox-laborers") ::
@@ -3861,7 +3938,7 @@ object Meta extends MetaGame {
         ImageAsset("outcast-mouse"       , "../fanatic/outcast-mouse") ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[InvasiveEEE].any, "faction/invasive/card", lzy = Laziness.Later, scale = 50)(
-        ImageAsset("card-frog-back-art") ::
+        ImageAsset("monster-card-frog-back-art") ::
         ImageAsset("hl-card-frog-back-art") ::
         ImageAsset("frog-ambush", "hl-frog-ambush") ::
         ImageAsset("hl-frog-dominance") ::

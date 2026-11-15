@@ -36,7 +36,7 @@ case class Party(transport : $[Transport], movable : $[Movable])
 
 case object Roads extends Transport {
     override def allows(f : Faction, o : Region, d : Region)(implicit game : Game) = (o, d) @@ {
-        case (o : Clearing, d : Clearing) => (board.connected(o).has(d) || game.floodLinked(o).has(d)) &&
+        case (o : Clearing, d : Clearing) => ((o != LegendSpace && board.connected(o).has(d)) || game.floodLinked(o).has(d) || LegendsExpansion.linked(f, o, d)) &&
             game.rubble.has((o, d)).not &&
             game.rubble.has((d, o)).not &&
             game.blizzard.has((o, d)).not &&

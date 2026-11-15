@@ -988,9 +988,9 @@ object DarkDeckExpansion extends Expansion {
                 then
 
         // FORBIDDEN SCIENCE
-        case ForcedRemoveCleanupAction(e, then) if factions.exists(_.has(ForbiddenScience)) && (factions ++ hirelings).%(game.states.contains).exists(x => board.clearings.exists(c => x.limbo(c).$.exists(_.piece.is[Warrior]))) =>
+        case ForcedRemoveCleanupAction(e, then) if factions.exists(_.has(ForbiddenScience)) && (factions ++ hirelings).%(game.states.contains).exists(x => game.limboClearings.exists(c => x.limbo(c).$.exists(_.piece.is[Warrior]))) =>
             (factions ++ hirelings).%(game.states.contains).foreach { x =>
-                board.clearings.foreach { c =>
+                game.limboClearings.foreach { c =>
                     x.limbo(c).$.%(_.piece.is[Warrior]).foreach { w =>
                         w --> OnForbiddenScience
                     }

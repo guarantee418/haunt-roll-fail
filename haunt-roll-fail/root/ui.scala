@@ -72,7 +72,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     mapSmall.replace(Div(Div(title, styles.title), xstyles.overlay), resources)
 
-    lazy val regions = new IndexedImageRegions[Region](new RawImage(resources.images.get(mapid + "map-regions")), 0, 0, game.board.clearings./(c => c -> XY(game.board.center(c)._1, game.board.center(c)._2)).toMap)
+    lazy val regions = new IndexedImageRegions[Region](new RawImage(resources.images.get(mapid + "map-regions")), 0, 0, game.board.clearings./(c => c -> XY(center(c)._1, center(c)._2)).toMap)
 
     lazy val pieces = new FitLayer[Region, Figure](regions, FitOptions(kX = 2))
 
@@ -110,6 +110,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     }
 
     def sameRegion(x : Int, y : Int, xx : Int, yy : Int) = xx >= 0 && yy >= 0 && xx < place.length && yy < place(0).length && place(xx)(yy) == place(x)(y)
+
+    // a region's centre on the map: the Legends Scenarios' space is in its forest
+    def center(r : Region) : (Int, Int) = r match {
+        case LegendSpace => game.legendForest./(f => game.board.forestLabel(f)).|((0, 0))
+        case r => game.board.center(r)
+    }
+
+    // the regions pieces are drawn in
+    def mapRegions : $[Region] = game.board.regions ++ game.legendForest.any.$(LegendSpace)
 
     lazy val findAnother = {
         val width = place.length
@@ -209,6 +218,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case BearTrap => { DrawRect("dark-trap-token", -40, -40, 80, 80) }
             case Infected => { DrawRect("ddi-infected", -39, -70, 78, 77) }
             case GoldenKnightMarker => { DrawRect("dark-knight-token", -45, -45, 90, 90) }
+            case RingMarker => { DrawRect("item-ring", -55, -55, 110, 110) }
+            case MonsterPawn => { DrawRect("monster-" + game.monster./(_.id).|("demon-bear"), -60, -110, 120, 120) }
+            case LegendsDie(n) => { DrawRect("die-" + n, -32, -32, 64, 64) }
+            case MonsterMarker(m) => { DrawRect("marker-" + m./(_.id).|("back"), -45, -45, 90, 90) }
 
             case Whisperer => { DrawRect("turnling-whisperer", -45, -90, 90, 96) }
             case Cardinal => { DrawRect("turnling-cardinal", -40, -80, 80, 86) }
@@ -658,7 +671,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         game.board.forests.foreach { f =>
             f.label.foreach { name =>
-                val (x, y) = game.board.forestLabel(f)
+                val (x, y) = game.board.forestLabel(f).use { case (x, y) => (x, y + game.legendForest.has(f).??(200)) }
                 g.strokeText(name, x, y)
                 g.fillText(name, x, y)
             }
@@ -856,7 +869,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     // Whether (x, y) is on the flood image drawn over a flooded clearing (drawRule)
     def waterFlood(c : Clearing, x : Double, y : Double) : Boolean = {
-        val (cx, cy) = game.board.center(c)
+        val (cx, cy) = center(c)
 
         val p : $[Int] = c match {
             case TidalBoard.HouseBoat => pixelAt(mapid + "flood-north", x, y)
@@ -1106,7 +1119,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
             l.foreach { c =>
                 g.globalAlpha = 1.0
-                val (x, y) = game.board.center(c)
+                val (x, y) = center(c)
                 g.drawImage(resources.images.get("clearing-highlight-placement"), x - 300, y - 300)
             }
         }
@@ -1127,11 +1140,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             h._1 match {
                 case PlaceHighlight(l) =>
                     l.foreach { c =>
-                        val (x, y) = game.board.center(c)
+                        val (x, y) = center(c)
                         g.drawImage(resources.images.get("clearing-highlight-placement"), x - 300, y - 300)
                     }
                 case BattleHighlight(c) =>
-                    val (x, y) = game.board.center(c)
+                    val (x, y) = center(c)
                     g.drawImage(resources.images.get("clearing-highlight-battle"), x - 300, y - 300)
                 case MoveHighlight(from, to) =>
                     val pp = $(mapid + "path-" + from.name + "-" + to.name, mapid + "path-" + to.name + "-" + from.name)
@@ -1147,10 +1160,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     case TidalBoard.Stilts => g.drawImage(resources.images.get(mapid + "flood-south-east"), 0, 0)
                     case TidalBoard.Wetlands => g.drawImage(resources.images.get(mapid + "flood-south-west"), 0, 0)
                     case c if game.board == MarshBoard =>
-                        val (x, y) = game.board.center(c)
+                        val (x, y) = center(c)
                         g.drawImage(resources.images.get(mapid + "flood-" + c.name.toLowerCase), x - 180, y - 180, 360, 360)
                     case c =>
-                        val (x, y) = game.board.center(c)
+                        val (x, y) = center(c)
                         g.drawImage(resources.images.get(mapid + "flood"), x - 248 - 40, y - 213 + 10 - (c != TidalBoard.HouseBoat).??(30))
                 }
             }
@@ -1160,7 +1173,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 val hl = factions.of[InvasiveEEE].any
 
                 game.clearings.foreach { c =>
-                    val (x, y) = game.board.center(c)
+                    val (x, y) = center(c)
                     val dx = c.name.length * 12 + 38
 
                     // the name (60 pixels tall) goes under the clearing, or just above the score tracker if it would cover it
@@ -1292,7 +1305,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         // How many warriors each stacked warrior figure stands for
         val stacks = mutable.Map[(Region, Faction, Piece), Int]()
 
-        game.board.regions.foreach { r =>
+        mapRegions.foreach { r =>
             var fixed : $[DrawItem] = $
             var tofix : $[DrawItem] = $
             var all : $[DrawItem] = $
@@ -1319,7 +1332,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             figures.foreach { p =>
                 p.piece match {
                     case Keep =>
-                        val (x, y) = game.board.center(r)
+                        val (x, y) = center(r)
                         fixed :+= DrawItem(r, p.faction, p.piece, x, y)
                     case Ferry if AutumnBoard.clearings.contains(r) || LakeBoard.clearings.contains(r) =>
                         val (x, y) = game.board.port(r)(game.flooded)
@@ -1384,7 +1397,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 case b : Building => 5
             }
 
-            val (px, py) = game.board.center(r)
+            val (px, py) = center(r)
 
             if (callbacks.settings.has(FlagRule) && r.is[Clearing] && game.clearings.contains(r))
                 flagSpots(r) = findFlagSpot(px, py, fixed, overlays)
@@ -1394,7 +1407,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             val flag = flagSpots.get(r)./((flagRect _).tupled)
 
             free.sortBy(d => -rank(d)).foreach { d =>
-                sticking +:= Array.tabulate(60)(n => findAnother(px, py))
+                sticking +:= Array.tabulate(60)(n => (r == LegendSpace).?((px + (math.random() * 240 - 120).toInt, py + (math.random() * 240 - 120).toInt)).|(findAnother(px, py)))
                   .sortBy { case (x, y) => ((x - px).abs * 5 + (y - py).abs) }
                   .map { case (x, y) => DrawItem(d.region, d.faction, d.piece, x, y) }
                   .minBy { dd =>
@@ -1423,6 +1436,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         // The trackers, the items and the card piles go over the Marquise's Keep (its castle reaches the map's edges)
         // but under the other pieces, which are placed off them (overlayRects) where there is room, so they never hide a piece
+        // the Legends Scenarios' space, under the pieces
+        game.legendForest.foreach { f =>
+            val (x, y) = center(LegendSpace)
+            val img = resources.images.get(game.mapping.get(LegendSpace).exists(_.any).?("space-suited").|("space-unsuited"))
+            g.drawImage(img, x - 165, y - 165, 330, 330)
+        }
+
         drawTrackers(g)
 
         drawItemSlots(g)
@@ -1473,8 +1493,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             }
 
             // the Dark Deck's Infected and Bear Traps have no hireling card
-            d.faction.as[Hireling].%(h => h != InfectedHorde && h != TrapLayer).foreach { h =>
+            d.faction.as[Hireling].%(h => h != InfectedHorde && h != TrapLayer && h != LegendBeast).foreach { h =>
                 pileTargets :+= ((d.rect.x, d.rect.y, d.rect.width, d.rect.height, ("view-hireling-card", h)))
+            }
+
+            // the Legends Scenarios' monster and its face up marker show the monster's card, both sides
+            ((d.faction == LegendBeast).??(game.monster) || d.piece.as[MonsterMarker].flatMap(_.m)).foreach { m =>
+                pileTargets :+= ((d.rect.x, d.rect.y, d.rect.width, d.rect.height, ("view-monster", m)))
             }
         }
 
@@ -1494,7 +1519,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             h._1 match {
                 case NukeHighlight(l) =>
                     l.foreach { c =>
-                        val (x, y) = game.board.center(c)
+                        val (x, y) = center(c)
                         g.drawImage(resources.images.get("clearing-highlight-nuke"), x - 300, y - 300)
                     }
                 case _ =>
@@ -1534,7 +1559,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         var connected = ""
         var connectedE : Elem = Empty
 
-        game.board.regions.foreach { r =>
+        mapRegions.foreach { r =>
             var gates = game.board.slots.get(r).|(Nil).take(r.as[Clearing].?(game.slots))
 
             val figures = currentGame.ui.graveyard.?(game.graveyard.get(r).|(Nil)).|(game.displayRegion(r))
@@ -4981,7 +5006,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             game.thresholds.any.?(("Next hireling at " ~ game.thresholds./(_.vp).comma.merge).div).|("All hirelings have been taken".txt.div) ~
             markers.div ~
             HGap ~
-            (game.hirelings ++ game.unhired).distinct.but(InfectedHorde).but(TrapLayer)./(h =>
+            (game.hirelings ++ game.unhired).distinct.but(InfectedHorde).but(TrapLayer).but(LegendBeast)./(h =>
                 OnClick(("view-hireling-card", h), (
                     Image("hireling-card:" + h.style + "-card", styles.hirelingcard) ~
                     (h.elem ~ (h.demoted).?(" (demoted)").|(" (staunch)")).div ~
@@ -5013,6 +5038,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 (game.hirelings ++ game.unhired).has(h).?(hirelingStatusLine(h).div) ~
                 HGap ~
                 ("All Hirelings".hh).div.div(xstyles.choice)(xstyles.xx)(xstyles.chm)(xstyles.chp)(xstyles.thu)(xlo.fullwidth).pointer.onClick.param("view-hirelings")
+            ), onClick)
+
+        case ("view-monster", m : LegendMonster) =>
+            showOverlay(overlayFitX(
+                Image("monster-card-" + m.id, styles.landmarkcard) ~ Image("monster-card-" + m.id + "-weapon", styles.landmarkcard) ~
+                (m.elem ~ (game.monster.has(m) && game.monsterHealth > 0).?(" (health " ~ (game.monsterHealth > 1).?(game.monsterHealth.hl).|("the ghost".hh) ~ ")")).div
             ), onClick)
 
         case ("view-landmark", p : Piece, r : Region) =>
@@ -5568,7 +5599,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 }).copy(clear = false)
             ) ++
             $(ZBasic(Break ~ Break, "Notifications".spn, () => { onClick("notifications", self) }).copy(clear = false)).%(_ => self.any || game.isOver) ++
-            $(ZBasic(Break ~ Break, "Hirelings".spn, () => { onClick("view-hirelings") }).copy(clear = false)).%(_ => game.hirelings.but(InfectedHorde).but(TrapLayer).any || game.unhired.any) ++
+            $(ZBasic(Break ~ Break, "Hirelings".spn, () => { onClick("view-hirelings") }).copy(clear = false)).%(_ => game.hirelings.but(InfectedHorde).but(TrapLayer).but(LegendBeast).any || game.unhired.any) ++
             $(ZBasic(Break ~ Break, "Interface".spn, () => { callbacks.editSettings { updateStatus() } }).copy(clear = false)) ++
             $(ZBasic(Break ~ Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug) ++
             $(ZBasic(Break ~ Break, "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle)

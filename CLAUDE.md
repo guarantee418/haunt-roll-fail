@@ -625,6 +625,17 @@ file covers the build, server and deploy. No session can ssh to the server
   crafted card through `dopple`). The Infected and the Golden Knight aren't drawn with the Dark Deck. Card art and pieces are cut from
   the PnP cards and stickers by `root/tools/turnlings-art.py` (`card/<style>-card`, `turnling-*`). `ReplayCheck <games> base
   hire:TMM,TIN,... turnover turn` plays them and takes their choices half the times they are offered.
+  The Legends Scenarios (D5) are the folded choice "Legends Scenario (fan-made)" (`LegendsScenario`, `Meta.legendsOptions`): a
+  thirteenth clearing, the scenario space (`LegendSpace`, `Clearing(0)`, registered by every `FactionState` and in
+  `game.clearings` once placed, `game.limboClearings` for the Limbo loops), put at setup in a forest beside the most inner clearings
+  (`game.legendForest`) and linked by trails (`LegendsExpansion.connected`, `linked` in `Roads` and `ForestRoads`), drawn at that
+  forest's name (`center` in `root/ui.scala`). Castles & Catacombs and The Fifth Ruin (its Ring, a ninth item `Ring`, with eight Ring
+  rules and five capture rules) are in `root/legends.scala`; Dark Rituals and Hunt the Legend, with the five Legendary Monsters (their
+  own player `LegendBeast`, health in `game.monsterHealth`, roaming at the start of each Evening from round 2, blocking moves out of
+  their clearing until appeased, slain at the ghost face for their weapon items `Mauler` ... `Bushblazer`), in
+  `root/legends-monsters.scala`. Both headers list the readings. Art is cut from the PnP sticker sheet and cards by
+  `root/tools/legends-art.py` (`webp2/root/images/legends/`, the items in `item/`). `ReplayCheck <games> base castles legend`,
+  `vb fifth ring:<Rule> capture:<Rule> legend`, `base rituals monster:Pick<Monster> legend` and `vb hunt legend` play them.
 - The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
   Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
   box) and the Homeland errata, from a player's Google Drive (2026-10-10). The shared deck's back follows

@@ -127,6 +127,7 @@ package object elem {
         // the Dark Deck: Rodent Zero's Infected and the Bear Traps
         InfectedHorde --> color("#b5b36a")
         TrapLayer --> color("#9a9a9a")
+        LegendBeast --> color("#b04a3a")
         StoicProtector --> color("#d2a02a")
         BanditGangs --> color("#f17497")
         FelinePhysicians --> color("#d26228")
