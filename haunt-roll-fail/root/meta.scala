@@ -1391,8 +1391,21 @@ case object FactionHirelingClash extends HirelingsClashOption {
 }
 
 
+// The Doomed Expansion's Turnlings (fan-made by slugfacekillah; Law of Doom D8; `root/turnlings.scala`): taking a hireling
+// marker, the player turns the hireling over to another player, who rolls for its control
+case object TurnOverHirelings extends GameOption with ToggleOption with FoldedOption {
+    val group = "Turnlings".hh ~ " (fan-made)"
+    val valueOn = "Turn Over Hirelings".hh
+    override def required(all : $[BaseOption]) = $($(TwoDemotedOneNormalHirelings), $(OneDemotedTwoNormalHirelings), $(ThreeNormalHirelings), $(ThreeDemotedHirelings), $(ThreeRandomHirelings), $(SelectedHirelings))
+    override val explain = $(
+        "Turn Over Hirelings".hh ~ SpacedDash ~ "the " ~ "Turnlings".hh ~ " rule from " ~ "The Doomed Expansion".hl ~ " by " ~ "slugfacekillah".hl ~ ":",
+        "a player whose score reaches a hireling marker" ~ &(" turns the hireling over to " ~ &("another player,")) ~ &(" who rolls for its control."),
+        "The " ~ "Turnlings".hh ~ " cards below can be drawn" ~ &(" with or without it.")
+    )
+}
+
 case class IncludeHireling(hireling : Hireling) extends GameOption with ToggleOption with FoldedOption {
-    val group = hireling.demoted.?("Demoted".hh).|("Staunch".styled(styles.hit)) ~ " Hirelings"
+    val group = hireling.demoted.?("Demoted".hh).|("Staunch".styled(styles.hit)) ~ hireling.is[Turnling].?(" Turnlings (fan-made)").|(" Hirelings")
     val valueOn = hireling.name.styled(hireling)
     override def required(all : $[BaseOption]) =
         if (hireling.demoted)
@@ -1671,6 +1684,11 @@ object Meta extends MetaGame {
         FelinePhysicians, BluebirdNobles, RabbitScouts, Brigand, LizardEnvoys, OtterDivers, MoleArtisians, RavenSentries, RatSmugglers, BadgerBodyguards, StoicProtector, BanditGangs, StreetBand, BatMessengers, FrogTinkers, StrugglingFarmers,
         ForestPatrol, LastDynasty, SpringUprising, TheExile, WarmSunProphets, RiverfolkFlotilla, SunwardExpedition, CorvidSpies, FlameBearers, VaultKeepers, FuriousProtector, HighwayBandits, PopularBand, SunnyAdvocates, RiverRoamers, ProsperousFarmers)
 
+    // the Doomed Expansion's Turnlings (fan-made), offered apart and not picked by default
+    val turnlings = $[Hireling](
+        ForestConnections, InfectiousSpirits, GoldenPig, CardinalCarts, CorporateOverreach, FeederTurnling, MiracleCureAll, FineSwine,
+        MidnightMurderers, TheInfected, KnightTurnling, RougeAgents, UnionMembers, ConvergingCoup, BuzzlingBuggers, GristlyGrunts)
+
     override def optionPages(n : Int, l : $[F]) : $[$[GameOption]] = $(
         hiddenOptions ++
         hitsAndAmbushes(l) ++
@@ -1708,6 +1726,8 @@ object Meta extends MetaGame {
         $(NoHirelings, ThreeDemotedHirelings, TwoDemotedOneNormalHirelings, OneDemotedTwoNormalHirelings, ThreeNormalHirelings, ThreeRandomHirelings, SelectedHirelings) ++
         $(HirelingHirelingClash, FactionHirelingClash) ++
         hirelings./(IncludeHireling) ++
+        $(TurnOverHirelings) ++
+        turnlings./(IncludeHireling) ++
         $,
     )
 
@@ -1768,7 +1788,9 @@ object Meta extends MetaGame {
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         $(NoHirelings, ThreeDemotedHirelings, TwoDemotedOneNormalHirelings, OneDemotedTwoNormalHirelings, ThreeNormalHirelings, ThreeRandomHirelings, SelectedHirelings) ++
         $(HirelingHirelingClash, FactionHirelingClash) ++
-        hirelings./(IncludeHireling)
+        hirelings./(IncludeHireling) ++
+        $(TurnOverHirelings) ++
+        turnlings./(IncludeHireling)
 
     override val hiddenOptions =
         factions./(IncludeFaction) ++
@@ -1944,7 +1966,7 @@ object Meta extends MetaGame {
     }
 
     def writeFaction(f : Faction) = f.short
-    def parseFaction(s : String) = (factions ++ hirelings).%(_.short == s).single || (s == "XCMDM").?(Mudmen(XC)) || $[Faction](InfectedHorde, TrapLayer).%(_.short == s).single || hirelings.%(_.toString == s).single
+    def parseFaction(s : String) = (factions ++ hirelings ++ turnlings).%(_.short == s).single || (s == "XCMDM").?(Mudmen(XC)) || $[Faction](InfectedHorde, TrapLayer).%(_.short == s).single || hirelings.%(_.toString == s).single
 
     def writeOption(o : O) = Serialize.write(o)
     def parseOption(s : String) = $(options.find(o => writeOption(o) == s) || options.find(o => o.toString == s) | (s @@ {
@@ -2294,6 +2316,17 @@ object Meta extends MetaGame {
         ImageAsset("ddi-infected"          ) ::
         ImageAsset("ddi-infected-empty"    ) ::
 
+        // the Doomed Expansion's Turnlings, cut from its stickers by `root/tools/turnlings-art.py`
+        ImageAsset("turnling-whisperer"    ) ::
+        ImageAsset("turnling-cardinal"     ) ::
+        ImageAsset("turnling-caravan"      ) ::
+        ImageAsset("turnling-doomsayer"    ) ::
+        ImageAsset("turnling-flame"        ) ::
+        ImageAsset("turnling-vulture"      ) ::
+        ImageAsset("turnling-bug"          ) ::
+        ImageAsset("turnling-grunt"        ) ::
+        ImageAsset("turnling-swine"        ) ::
+
         ImageAsset("stp-deer"              ) ::
         ImageAsset("stp-deer-empty"        ) ::
 
@@ -2368,7 +2401,7 @@ object Meta extends MetaGame {
     $) ::
     // the hireling cards, both sides (staunch on the front, demoted on the back), from the TTS mod "Root - Ultimate Collection"
     ConditionalAssetsList((factions, options) => true, "faction/hireling/card", "hireling-card:", lzy = Laziness.OnDemand)(
-        Meta.hirelings./(h => ImageAsset(h.style + "-card"))
+        (Meta.hirelings ++ Meta.turnlings)./(h => ImageAsset(h.style + "-card"))
     ) ::
     // the landmark cards, from the Leder Card Library (https://cards.ledergames.com/), shown when a landmark on the map is tapped
     ConditionalAssetsList((factions, options) => true, "card/landmark", "landmark-card:", lzy = Laziness.OnDemand)(

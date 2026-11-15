@@ -456,7 +456,7 @@ object SetupExpansion extends MandatoryExpansion {
             if (options.has(NoHirelings))
                 DraftCardsAction
             else
-                Shuffle[Hireling](options.of[IncludeHireling]./(_.hireling), ShuffleHirelingsAction(_))
+                Shuffle[Hireling](options.of[IncludeHireling]./(_.hireling).%(TurnlingsExpansion.drawable(_, options)), ShuffleHirelingsAction(_))
 
         case ShuffleHirelingsAction(l) =>
             val (normal, demoted, total) = options.of[HirelingsOption].only @@ {

@@ -210,6 +210,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case Infected => { DrawRect("ddi-infected", -39, -70, 78, 77) }
             case GoldenKnightMarker => { DrawRect("dark-knight-token", -45, -45, 90, 90) }
 
+            case Whisperer => { DrawRect("turnling-whisperer", -45, -90, 90, 96) }
+            case Cardinal => { DrawRect("turnling-cardinal", -40, -80, 80, 86) }
+            case CartCaravan => { DrawRect("turnling-caravan", -45, -45, 90, 90) }
+            case Doomsayer => { DrawRect("turnling-doomsayer", -40, -80, 80, 86) }
+            case UnionFlame => { DrawRect("turnling-flame", -45, -100, 90, 110) }
+            case CoupVulture => { DrawRect("turnling-vulture", -45, -90, 90, 96) }
+            case Bug => { DrawRect("turnling-bug", -45, -90, 90, 96) }
+            case Grunt => { DrawRect("turnling-grunt", -45, -90, 90, 96) }
+            case Swine => { DrawRect("turnling-swine", -45, -90, 90, 96) }
+
             case Cat => { DrawRect(pr + "cat", -35, -82, 70, 92) }
             case Hawk => { DrawRect(pr + "hawk", -43, -80, 76, 90) }
             case Critter => { DrawRect(pr + "critter", -42, -72, 83, 83) }

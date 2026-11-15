@@ -982,7 +982,7 @@ trait GameImplicits {
         }
 
         def connectedFor(o : Region) = {
-            val tt = game.transports.but(Ferry).but(OffTrail).but(FoxburrowRoads).%(_.allows(f, o))
+            val tt = game.transports.but(Ferry).but(OffTrail).but(FoxburrowRoads).but(ForestShortcut).%(_.allows(f, o))
             f.validDest.but(o).%(d => tt.exists(_.allows(f, o, d)))
         }
 
@@ -1623,6 +1623,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
 
             DominanceExpansion,
 
+            TurnlingsExpansion,
             HirelingsExpansion,
 
             DoomedVagabondsExpansion,
@@ -1832,7 +1833,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     var corners : $[Clearing] = $
     var homelands : $[Clearing] = $
 
-    val transports = $[Transport](Roads, Riverboat, Ferry, Swimmers, BurrowRoads, TunnelRoads, OffTrail, FoxburrowRoads)
+    val transports = $[Transport](Roads, Riverboat, Ferry, Swimmers, BurrowRoads, TunnelRoads, OffTrail, FoxburrowRoads, ForestShortcut)
 
     def slots(c : Clearing) = c.capacity + options.has(KeepExtraBuildingSlot).??(factions.of[Feline].%(game.states.contains).%(_.at(c).has(Keep)).num)
 
@@ -1917,7 +1918,9 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     def displayRegion(r : Region) : $[Figure] = r match {
         case c : Forest =>
             (factions.of[Hero] ++ factions.of[Expedition] ++ hirelings.of[TheExile.type] ++ factions.of[OldExpedition]).%(states.contains)./~(_.from(c).$) ++
-            (factions.of[CommonAbduct]).%(states.contains)./~(f => f.from(c).$ ++ f.from(Cage(c)).$)
+            (factions.of[CommonAbduct]).%(states.contains)./~(f => f.from(c).$ ++ f.from(Cage(c)).$) ++
+            hirelings.of[Turnling].%(states.contains)./~(_.from(c).$) ++
+            TurnlingsExpansion.markers(c)
         case c : Clearing if flooded.has(c) => $
         case c : Clearing =>
             (factions ++ hirelings).%(states.contains)./~(_.from(c).$) ++
@@ -1930,7 +1933,8 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             (foxburrow.has(c)).?(Figure(Neutral, Foxburrow, 0)) ++
             (rabbittown.has(c)).?(Figure(Neutral, Rabbittown, 0)) ++
             (scorched.contains(c)).??(0.to(11)./(n => Figure(Neutral, ScorchedEarthMarker(n % 6 + 1), n))) ++
-            knights.%((_, o) => o == c).indices./(n => Figure(Neutral, GoldenKnightMarker, n))
+            knights.%((_, o) => o == c).indices./(n => Figure(Neutral, GoldenKnightMarker, n)) ++
+            TurnlingsExpansion.markers(c)
     }
 
     def viewHand(f : Faction) = f.hand./(ViewCardInfoAction(f, PreBreak(OwnHand).elem(game), _))
