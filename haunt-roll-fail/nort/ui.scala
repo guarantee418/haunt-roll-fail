@@ -1583,7 +1583,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 g.elem.div ~
                 FameUpgrade.of(g)./{ u =>
                     val st = game.fameUnlocked.has(u).?($(styles.onBoardWrap)).|($(styles.offBoardWrap))
-                    (Amount(u.fame.hl, FameIcon()) ~ " " ~ u.name.hl ~ ": " ~ CombatText(u.text) ~ u.ready.not.?(" (not in the game yet)").|("") ~ (u.warchief && game.has(Warchiefs).not).?(" (needs the Warchiefs module)").|("")).spn(xstyles.smaller85).styled(st).div
+                    (Amount(u.fame.hl, FameIcon()) ~ " " ~ u.name.hl ~ ": " ~ CombatText(u.text) ~ u.ready.not.?(" (not in the game yet)").|("") ~ (u.warchief && game.has(Warchiefs).not).?(" (needs the Warchiefs module)").|("") ~ (u.name == "Under Pressure" && PCExpansion.scorchedSeen).?(" PC version: only to a territory you see, and a neutral one (no clan there) too.").|("")).spn(xstyles.smaller85).styled(st).div
                 }.merge
             }.merge ~
             "Fan-made by Marzaus (Discord, northgard-fanmade-content).".spn(xstyles.smaller85).div ~
