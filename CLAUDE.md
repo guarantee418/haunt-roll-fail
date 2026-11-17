@@ -655,7 +655,7 @@ file covers the build, server and deploy. No session can ssh to the server
   Megalomaniac and Hedonistic in `faction-aviary.scala`): five Cardinals drawn at random with its warriors, which other factions may move as
   their own on their turn (The Red Menace, added to every `MoveInitAction` by `EyriesEndExpansion.redMenace`), caravans that craft and move
   with its warriors, the clearing's ruler drawing a card (Roving Caravans: the transport marker `CaravanDrawn` keeps it to once a move), and
-  rule where tied on its turn (Lords of Corruption, in `ruleValue`). Dawn of the Marquistadors (DM, `root/faction-marquistadors.scala`): the
+  rule where tied on its turn (Lords of Corruption, in `ruleValue`); A New Roost places 3 warriors, as the rules say, and the board picture was changed from "up to 6" to 3 (Gman, 2026-11-15; `new_roost_3` in the art script). Dawn of the Marquistadors (DM, `root/faction-marquistadors.scala`): the
   ship landing on an edge river clearing, outposts placed with two matching treaties (cards kept face up), treaties counted as warriors in
   battle, wood moved to the ship for the Keep (all 8 win). The Doomed Vagabond (DV, `root/faction-doomed-vagabond.scala`, 4 or more players)
   is a `Hero`: Despot Infamy (`faction-hero.scala`), peace offers with Hostile factions and the Collect Bounty quests (in `Quest.all`, so
