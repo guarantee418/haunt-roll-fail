@@ -138,6 +138,18 @@ object AdvancedSetup {
         case _ : Feline | _ : Aviary | _ : Underground | _ : Horde | _ : Expedition | _ : InvasiveEEE => true
         case _ => false
     }
+
+    // the Doomed Expansion's factions and Re-Imaginings, offered in the Advanced Setup pool (Gman, 2026-11-17)
+    val doomed = $[Faction](WW, DU, WG, EE, DM, DV, NW)
+
+    // a drawn set of factions holding two that can't play together (the standard setup's rules), or one that needs more players
+    def clash(t : $[Faction], players : Int) : Boolean =
+        (t.has(WG) && players < 5) ||
+        (t.has(DV) && (players < 4 || t.of[Hero].num > 1)) ||
+        (t.of[Knaves].any && t.of[Hero].any) ||
+        (t.has(EE) && t.but(EE).of[Aviary].any) ||
+        (t.has(DM) && t.of[Feline].any) ||
+        (t.has(NW) && t.but(NW).of[Knaves].any)
 }
 
 object SetupExpansion extends MandatoryExpansion {
@@ -544,7 +556,7 @@ object SetupExpansion extends MandatoryExpansion {
 
             val militant = factions.of[Feline] ++ factions.of[Aviary] ++ factions.of[Underground] ++ factions.of[Horde] ++ factions.of[Expedition] ++ factions.of[InvasiveEEE]
 
-            val combinations =
+            val all =
                 if (factions.num == players.num)
                     $(game.candidates)
                 else
@@ -552,6 +564,10 @@ object SetupExpansion extends MandatoryExpansion {
                     militant./~(m => factions.but(m)./~(l => factions.but(m).but(l).combinations(players.num - 1)./(c => m +: (c :+ l))))
                 else
                     factions.combinations(players.num + 1).$
+
+            // with a Doomed Expansion faction in the pool, no draw that could seat factions that can't play together
+            // (pools without one draw as before, so older games replay the same)
+            val combinations = factions.intersect(AdvancedSetup.doomed).any.?(all.%(t => AdvancedSetup.clash(t, players.num).not).some.|(all)).|(all)
 
             Random[$[Faction]](combinations, t => FactionsCombinationAction(t))
 

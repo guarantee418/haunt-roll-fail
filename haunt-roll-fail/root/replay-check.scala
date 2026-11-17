@@ -59,6 +59,10 @@ object ReplayCheck {
 
     // "urban" or "legendsmap": the Doomed Expansion's Urban Legends maps, with All Random clearings and the map's own landmarks
     var fanMap : |[Meta.O] = None
+    // "adset": Advanced Setup, seats drafting from the pool (one faction more than the seats)
+    var adset = false
+
+    def players(seating : $[Faction]) : $[Player] = adset.?(1.to(seating.num - 1).$./(n => PlayerN(n) : Player)).|(seating)
 
     def options(seating : $[Faction]) : $[Meta.O] = mountain.?($[Meta.O](
         MountainMap, NoClustersClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
@@ -78,7 +82,14 @@ object ReplayCheck {
             case o => $(o)
         }
         case None => $(o)
-    }).map(o => (draft && o == CardDraftStandard).?[Meta.O](CardDraftFive).|(o)).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (squires && o == MixedDeck).?[Meta.O](SquiresDeck).|(o)).map(o => (franken && o == MixedDeck).?[Meta.O](FrankenDeck).|(o)).map(o => (dusk && o == MixedDeck).?[Meta.O](DuskDeck).|(o)).map(o => (dark && o == MixedDeck).?[Meta.O](DarkDeck).|(o)).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.??($[Meta.O](RulesVersion.latest, OutragePeekNeedsOk, KnavesCaptainsInDraft)) ++ (async || chooseHits).??($[Meta.O](AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode)) ++ chooseHits.$(ForcedAsyncChooseHits) ++ offline.??($[Meta.O](HitsAndAmbushesSetup, OffTurnFieldHospitals)) ++ preset.$(OffTurnHitsPreset) ++ action.$(ActionBooster) ++ doomedVB.$(DoomedVagabonds, RandomCharacter) ++ doomedCap.$(DoomedCaptains) ++ turnOver.$(TurnOverHirelings) ++ legends ++ seating./(IncludeFaction)
+    }).map(o => adset.?(o @@ {
+        case SetupTypeCorners => SetupTypeHomelands
+        case SeatingGiven => SeatingRandom
+        case FactionSeatingGiven => FactionSeatingRandom
+        case SetupOrderPriority => SetupOrderReverse
+        case CardDraftStandard => CardDraftFive
+        case o => o
+    }).|(o)).map(o => (draft && o == CardDraftStandard).?[Meta.O](CardDraftFive).|(o)).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (squires && o == MixedDeck).?[Meta.O](SquiresDeck).|(o)).map(o => (franken && o == MixedDeck).?[Meta.O](FrankenDeck).|(o)).map(o => (dusk && o == MixedDeck).?[Meta.O](DuskDeck).|(o)).map(o => (dark && o == MixedDeck).?[Meta.O](DarkDeck).|(o)).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.??($[Meta.O](RulesVersion.latest, OutragePeekNeedsOk, KnavesCaptainsInDraft)) ++ (async || chooseHits).??($[Meta.O](AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode)) ++ chooseHits.$(ForcedAsyncChooseHits) ++ offline.??($[Meta.O](HitsAndAmbushesSetup, OffTurnFieldHospitals)) ++ preset.$(OffTurnHitsPreset) ++ action.$(ActionBooster) ++ doomedVB.$(DoomedVagabonds, RandomCharacter) ++ doomedCap.$(DoomedCaptains) ++ turnOver.$(TurnOverHirelings) ++ legends ++ adset.??($(InsurgentLockOn, RandomCharacter)) ++ seating./(IncludeFaction)
 
     def privateMap(o : AnyRef, suffix : String) : Map[Any, Any] = {
         val f = o.getClass.getDeclaredFields.filter(_.getName.endsWith(suffix)).head
@@ -150,7 +161,7 @@ object ReplayCheck {
     }
 
     def rebuild(seating : $[Faction], recorded : $[ExternalAction]) : (Game, Continue) = {
-        val g = new Game(seating, seating, options(seating))
+        val g = new Game(players(seating), seating, options(seating))
         g.logging = false
         recorded.dropRight(1).foreach(g.performVoid)
         val c = settle(g, g.performContinue(|(g.continue), recorded.last, false).nest)
@@ -206,6 +217,7 @@ object ReplayCheck {
         exposeAll = args.lift(1).has("cctc")
         oldFrogs = args.contains("oldfrogs")
         draft = args.contains("draft")
+        adset = args.contains("adset")
         fanMap = args.contains("urban").$(UrbanMap).++(args.contains("legendsmap").$(LegendsMap)).headOption
         oldHire = args.contains("oldhire")
         hire = args.find(_.startsWith("hire:"))./~(_.drop(5).split(',').$./(n => (Meta.hirelings ++ Meta.turnlings).%(h => h.name == n || h.short == n || h.toString == n).single.|!("no hireling " + n)))
@@ -223,6 +235,8 @@ object ReplayCheck {
             case "dv" => $($(MC, ED, WA, DV), $(MC, ED, LC, RF, DV), $(DM, EE, UD, DV))
             case "nw" => $($(MC, ED, WA, NW), $(MC, ED, LC, NW), $(DM, EE, NW, UD))
             case "ww" => $($(MC, ED, WA, WW), $(MC, WW, LC, VB), $(ED, WW, RF, UD), $(WW, KD, TC, LDvE))
+            // "adset": the Doomed Expansion's factions in Advanced Setup pools
+            case "doomed" => $($(MC, ED, WA, WW, DU, EE, RF), $(DM, ED, UD, DV, NW, LC), $(MC, WA, WG, DU, WW, RF, TC), $(EE, DM, NW, DV, KI, LH))
             case "tc" => $($(MC, ED, WA, TC))
             case "kd" => $($(MC, ED, WA, KD))
             case "ki" => $($(MC, KI, WA, TC))
@@ -246,7 +260,7 @@ object ReplayCheck {
 
         0.until(games).foreach { gi =>
             val seating = pool(gi % pool.num).shuffle
-            val game = new Game(seating, seating, options(seating))
+            val game = new Game(players(seating), seating, options(seating))
             game.logging = false
 
             var recorded : $[ExternalAction] = $
@@ -326,6 +340,17 @@ object ReplayCheck {
                         case Random(l, x, _) => val a = x(l.shuffle(0)); chosen = |(a); record(a)
                         case GameOver(_, _, _) => over = true
                         case MultiAsk(l, _) => c = l.shuffle.head
+                        // "adset": a seat's draft choices, picked at random
+                        case Ask(p : PlayerN, l) =>
+                            // once the seat has its faction, that faction's bot; before, a random draft pick
+                            val a = game.ptf.get(p)./(f => if (l.num == 1) l(0) else new BotXX(f).ask(l, 0)(game).immediate).|(l./~(x => x.unwrap match {
+                                case _ : HiddenChoice => $
+                                case h : HalfExplode => h.expand(None)
+                                case _ if x.is[Choice] && x.is[Info].not => $(x)
+                                case _ => $
+                            }).shuffle.head)
+                            chosen = |(a)
+                            if (a.isSoft.not && a.is[DontRecord].not) record(a)
                         case Ask(f : Faction, l) =>
                             // a Riverfolk services payment must stay a lone button the runner takes, with no Negotiations beside it
                             if (l.exists(_.unwrap.is[PayGiveWarriorsAction]) && l.exists(_.unwrap.is[InvasiveEEENegotiateMainAction]))

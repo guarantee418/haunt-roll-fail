@@ -47,10 +47,11 @@ object MetaAdset extends MetaGame {
 
     val minPlayers = 2
 
-    val realFactions = Meta.official ++ $(NB) ++ $(XC) ++ $(CUv2) ++ $(FH) ++ $(LDvE) ++ $(TC) ++ $(KD)
+    // the Doomed Expansion's factions and Re-Imaginings last (Gman, 2026-11-17); the draw keeps out sets that can't play together
+    val realFactions = Meta.official ++ $(NB) ++ $(XC) ++ $(CUv2) ++ $(FH) ++ $(LDvE) ++ $(TC) ++ $(KD) ++ AdvancedSetup.doomed
 
     // not in the pool by default: Vagabond, Negabond and the fan factions
-    val defaultFactions = realFactions.diff($(VB, NB, XC, CUv2, FH))
+    val defaultFactions = realFactions.diff($(VB, NB, XC, CUv2, FH)).diff(AdvancedSetup.doomed)
 
     val options = Meta.options
 
