@@ -12,7 +12,7 @@
 # - Doomed Vagabond: the Collect Bounty quest card from the cards sheet
 import sys
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 src, out = sys.argv[1], sys.argv[2]
 fac = out + "/faction"
@@ -20,8 +20,27 @@ fac = out + "/faction"
 def save(im, path):
     im.save(path, lossless=True) if im.mode == "RGBA" else im.save(path, quality=88)
 
-def board(x, name, folder):
+def new_roost_3(im):
+    # Eyrie's End's Birdsong step 3 says "up to 6 warriors"; the rules (EE.4.3) say 3, and Gman picked 3 (2026-11-15):
+    # "up to 6" is painted over with a "3" (Liberation Serif, thickened to the board's weight) and "warriors" moved up
+    bg = (248, 228, 179)
+    y0, y1 = 1013, 1042
+    war = im.crop((786, y0, 882, y1))
+    ImageDraw.Draw(im).rectangle((694, y0, 890, y1 - 1), fill = bg)
+    k = 8
+    f = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf", 26 * k)
+    m = Image.new("L", (40 * k, 40 * k), 0)
+    ImageDraw.Draw(m).text((2 * k, 0), "3", font = f, fill = 255, stroke_width = 3, stroke_fill = 255)
+    m = m.crop(m.getbbox())
+    m = m.resize((round(m.size[0] * 18 / m.size[1]), 18), Image.LANCZOS)
+    im.paste(Image.new("RGB", m.size, (0, 0, 0)), (698, 1017), m)
+    im.paste(war, (698 + m.size[0] + 9, y0))
+    return im
+
+def board(x, name, folder, fix = None):
     im = Image.open(f"{src}/{x}front-1.png").convert("RGB")
+    if fix:
+        im = fix(im)
     save(im.resize((1232, round(im.size[1] * 1232 / im.size[0])), Image.LANCZOS), f"{fac}/{folder}/{name}")
 
 # boards are rendered at 200 dpi; boxes are given at 150 dpi (the scale of the earlier renders)
@@ -118,7 +137,7 @@ which = sys.argv[3:] or ["ee", "dm", "dv", "nw"]
 
 if "ee" in which:
     d = f"{fac}/aviary"
-    board("ee", "ee-board.webp", "aviary")
+    board("ee", "ee-board.webp", "aviary", new_roost_3)
     title("ee", (540, 268, 1080, 380), "ee-title.webp", "aviary")
     crop(f"{src}/eefront-1.png", b((1225, 215, 1355, 375)), 160, 194, f"{d}/ee-char.webp")
     square("stkee-1.png", (984, 288, 1091, 395), 90, f"{d}/ee-glyph.webp")
