@@ -1879,7 +1879,11 @@ object Meta extends MetaGame {
     // fixes were first gated (RulesVersion.expand, used by Game), so a new game records one option instead of each fix
     lazy val newGame : $[O] = $(RulesVersion.latest)
 
-    override def completeSaved(n : Int, l : $[F], options : $[O]) = options.diff(retired).diff(RulesVersion.implied)
+    override def completeSaved(n : Int, l : $[F], options : $[O]) = autoHitsOn(options.diff(retired).diff(RulesVersion.implied))
+
+    // Auto Assign Hits is on by default (Gman, 2026-11-17): a setup a browser saved with none of it, Live Game or the hits preset
+    // (from before the Hits and Ambushes section, when it was always on and so never saved) starts with it on too
+    def autoHitsOn(options : $[O]) : $[O] = options.intersect($(AutoHitsAssignmentMode, LiveGameMode, OffTurnHitsPreset)).any.?(options).|(options :+ AutoHitsAssignmentMode)
 
     // offered only in Advanced Setup (MetaAdset), listed here so every game reads them
     lazy val adsetOnly : $[O] = $(InsurgentLockOn, InsurgentLockOff)

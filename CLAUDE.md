@@ -982,6 +982,9 @@ file covers the build, server and deploy. No session can ssh to the server
   "Assign Hits" and "Ambush!" fold into one "Hits and Ambushes when Online (Live Games)" section. `ReplayCheck <games> base offline`
   plays bot games with Bluff Mode off and the Field Hospitals plan; `preset` adds the hits preset, but bot games with the preset
   order (like `async`) run out of memory, as they did before the section.
+  Auto Assign Hits is on by default (`defaultsFor`), also when a browser's saved setup holds none of it, Live Game or the hits
+  preset (`Meta.autoHitsOn`, in `completeSaved`): setups saved before the section never held it, as it was then always on, so
+  it showed off (Gman, 2026-11-17).
 - Root pass and play (asked for by the owner on 2026-10-17): in a local game with more than one human faction
   (`Callbacks.hotseat` in `hrf.scala`: a memory or localStorage journal), each time another human faction is asked
   the action pane shows "Pass to <faction>" and a "Show Hand and Choices" button instead of its hand and choices
