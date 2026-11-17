@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Military paths module (fan content): draws the Guardian path's Militia (token/unit/militia-<color>.webp), a peasant levy in
 # the flat style of unit-original and the bodyguard (bodyguard-figure.py): no helmet or armor, bare-headed with short hair and
-# a beard, a belted tunic over trousers, holding a pitchfork upright (Gman, 2026-11-06). It is drawn in the originals' brown
+# a beard, a belted tunic over trousers, holding a pitchfork upright (2026-11-06). It is drawn in the originals' brown
 # and white, as militia-original, then recolored to each player color with the fill and detail colors the unit figures use.
 # Run from haunt-roll-fail/: python3 nort/tools/militia-figure.py
 from PIL import Image, ImageDraw, ImageFilter

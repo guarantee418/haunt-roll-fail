@@ -213,7 +213,7 @@ on. To implement one:
   `chiefIn`, `chiefReady`. `figures` counts it, `strength(t, f, attacking)`
   adds 2 or 3 (`Warchief.strength`), `removeFigures` takes it after the
   units. `FactionState.units` includes it (winter, Warlord, ties).
-- Chosen casualties (asked for by Robotos, 2026-10-11): in a fight, a clan
+- Chosen casualties (asked for, 2026-10-11): in a fight, a clan
   that can lose its casualties more than one way (units, the warchief, the
   companion, Blainn) picks which (`casualtyParties`, `pickCasualties` and
   `CasualtyPickAction` in `map.scala`). `CombatResolveAction` and
@@ -233,13 +233,13 @@ on. To implement one:
 - Combat: `ChiefStepOneAction` (Signy, Brand) runs before food, for player
   and creature fights; Liv's reroll is offered in `CombatRolledAction` and
   `CreaturePlayerRolledAction`.
-- Combat report (asked for by Robotos, 2026-10-07): once `CombatResolveAction`
+- Combat report (asked for, 2026-10-07): once `CombatResolveAction`
   (or `CreatureResolveAction`, against a creature) has decided a fight, it
   stores a `FightReport` in `game.fightReport` (each side's combat points and
   casualties with their sources, from the same sums, `FightPoints.parts` for
   the figures) and asks both sides (never the Automa) to tap OK
   (`CombatReportAction`, `CombatReportDoneAction`, shown by
-  `CombatReport(self)` in `map.scala`) before the retreat. On 2026-10-08 Gman
+  `CombatReport(self)` in `map.scala`) before the retreat. On 2026-10-08 the owner
   asked for it on by default with an in-game way to turn it off, like Root's
   Ambush! setting: each player's "Combat Report" setting under Interface
   (`ShowCombatReport`, the default, or `SkipCombatReport` in `meta.scala`);
@@ -247,7 +247,7 @@ on. To implement one:
   options of 2026-10-07 (`CombatReportAttackers`, `CombatReportDefenders`) are
   hidden and do nothing, kept so the games that have them still load. Saved
   games replay as they were: recorded moves carry their own continuation.
-- Clan power report (asked for by Robotos, 2026-10-12): a clan power that
+- Clan power report (asked for, 2026-10-12): a clan power that
   goes off by itself (Raven's collect and Stag's fame when closing, Boar's
   lore, Goat's food, Wolf's food and Stag's fame when winning an attack, also
   against a creature or by Intimidate, Dragon's Pyre captures, Ox's
@@ -314,7 +314,7 @@ on. To implement one:
   `wild-*` outputs were committed.
 - Since 2026-10-10 the Great Lake's water is also no territory in the grid
   (`.`, like the ringed middles), so Kaija, warchiefs and creatures are never
-  put on it (Robotos saw Kaija and a bear standing on the lake), and on the
+  put on it (a player saw Kaija and a bear standing on the lake), and on the
   Wilderness and Wastelands tiles (`expansion` in `tile-masks.py`) the cells
   within 0.1 of an orange line or 0.075 of a rough border's yellow dashes
   count as cluttered, keeping figures off the ridges, cliffs and rock walls.
@@ -653,7 +653,7 @@ on. To implement one:
   mask covers it) to draw it again over all the pieces. Rerun the tool after
   regenerating the masks.
 - The layout has the map on the left and the player panels, log and action
-  pane on the right (the owner's request on 2026-10-05; an earlier session had
+  pane on the right (the request on 2026-10-05; an earlier session had
   mirrored it with the log on the left). The ultrawide `layout` override puts
   the log on the far right. `layoutKey` was bumped to drop layouts cached in
   the browser.
@@ -725,11 +725,11 @@ always plays its own cards.
   them passes before the bot's next turn, judged by the cards they hold) and
   the first player marker, less the cards left in hand, which are discarded
   unplayed. Until 2026-10-12 it was worth 30% of the best card, which made a
-  Hard Boar pass in year 1 with Move and Explore in hand (Robotos, Discord). Development
+  Hard Boar pass in year 1 with Move and Explore in hand (Discord). Development
   picks count printed fame plus what the card does in the years left;
   Achievements count what they would score now.
-- **Replace, Remove and resources** (2026-11-04, from Gman's Clan against
-  Fjord, `wghkvveeuihrnyns`, two Robotos bots against Gman and Marzaus): the
+- **Replace, Remove and resources** (2026-11-04, from Clan against
+  Fjord, two Robotos bots against two players): the
   bots passed with Build and Explore cards they had no room for, ended with
   8 or 9 lore and 15 to 20 wood, and never Replaced or Removed a card, while
   the humans Removed their weak cards 7 times and traded 6 times. Now a card
@@ -748,7 +748,7 @@ always plays its own cards.
   way for the bot itself (`productionValue`): once its stock and the coming
   harvest cover what it can use, the years that spare stock lasts get about
   80% of the surplus value per resource instead of 45 to 55, so it stops
-  building Woodcutter's Lodges with 10 wood in stock (Gman, 2026-11-06). In 25
+  building Woodcutter's Lodges with 10 wood in stock (2026-11-06). In 25
   three-player core games the old bot built 17 of 105 Lodges holding 6 wood or
   more (4 at 10 or more), the new one none of 79; A/B (new bot in seat 1 of 60
   three-player core games against an all-old control) 19 wins each. A/B against the bot from before (JVM host,
@@ -759,9 +759,9 @@ always plays its own cards.
 - **Trades** (`tradeValue` in `bot-hard.scala`): a harvest, teammate or Bonfire trade counts towards the
   Trading victory card only when it pays off by its resources alone (it buys one the clan is short of,
   `short`, and is worth more than what it pays), when it pays only with resources beyond what the clan has
-  a use for (`spare`, from `needs`; Gman, 2026-11-11), or when it wins the game. Before 2026-11-10, every
+  a use for (`spare`, from `needs`; 2026-11-11), or when it wins the game. Before 2026-11-10, every
   trade was a step towards the card, so in a team game with it the bots traded resources away and straight
-  back, giving up what they needed (Stag: 3 wood for lore, wood and 2 lore for food, 3 food for lore; Gman).
+  back, giving up what they needed (Stag: 3 wood for lore, wood and 2 lore for food, 3 food for lore).
 - **Strategy notes it follows**, from the BoardGameGeek strategy forum (read
   through the `api.geekdo.com` JSON API, since the site's pages refuse
   scripts): most games end with three closed territories holding large
@@ -783,7 +783,7 @@ always plays its own cards.
   taken from the Automa's cards (`automa.scala`); the territory valuation
   only covers similar ground to their priority lists (resources, buildings,
   closed territories, spaces, nearby enemies).
-- **PC version** (2026-11-12; Gman: Robotos never left its three starting
+- **PC version** (2026-11-12; the Robotos bot never left its three starting
   territories): an Explore there scouts, so `exploreGain` values the best
   territories in `PCExpansion.scoutable` (`scoutValue`: the fame, Lay of the
   Land and Raven's resources, Stag's and Boar's bonuses, and the territory

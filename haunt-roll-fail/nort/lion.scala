@@ -16,7 +16,7 @@ import nort.elem._
 
 
 // The Lion Kingdom (fan-made, LionKingdom in options.scala): the video game's Kingdom of Neustria as a clan, from the design
-// Gman asked for on 2026-10-21 (Claude Doc "Lion Kingdom for Uncharted Lands") with Robotos's Chapel and alternative starting
+// The owner asked for on 2026-10-21 (Claude Doc "Lion Kingdom for Uncharted Lands") with Robotos's Chapel and alternative starting
 // deck (Discord, "Generic Kingdom", 2026-10-21). On whenever the Lion plays, like New Blood. RULES.md (Lion Kingdom) has the rules.
 //
 // Clan power, Forts and Lords: 3 Lord tokens. When the Lion builds a Defense Tower and has a Lord in reserve, the Lord goes on it.

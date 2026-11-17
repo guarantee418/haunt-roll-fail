@@ -542,7 +542,7 @@ object FelineExpansion extends FactionExpansion[Feline] {
                 val l = f.hand.%(_.matches(c.cost))
 
                 // MouseholdFromSupply: a plan made at the end of the turn doesn't heal cats removed in battle that Mousehold could take
-                // for free; the Marquise is asked instead (Gman, 2026-11-02: the plan put a cat at the Keep he wanted at Mousehold)
+                // for free; the Marquise is asked instead (2026-11-02: the plan put a cat at the Keep he wanted at Mousehold)
                 val mousehold = (game.options.has(MouseholdFromSupply) || game.mouseholdFromSupply) && game.mouseholdPending.exists(_.faction == f) && game.mousehold.exists(f.canPlace)
 
                 val plan = (game.current != f && mousehold.not).??(f.plan).toMap

@@ -73,7 +73,7 @@ object AutumnBoard extends Board {
         case Quarry => $(Mountain, Creek, Beach)
     }
 
-    // Named after trees, like the Marsh forests (asked for by the owner on 2026-10-17); only the labels, as saved games
+    // Named after trees, like the Marsh forests (asked for on 2026-10-17); only the labels, as saved games
     // name regions by their objects
     object AutumnN extends NamedForest("Maple")
     object AutumnNW extends NamedForest("Hazel")
@@ -197,7 +197,7 @@ object WinterBoard extends Board {
     // The score tracker along the bottom edge of this board's image, 8 pixels taller than most
     override val scoreTrack = |((88.3, 2130.0, 74.63))
 
-    // Named after trees, like the Marsh forests (asked for by the owner on 2026-10-17); only the labels, as saved games
+    // Named after trees, like the Marsh forests (asked for on 2026-10-17); only the labels, as saved games
     // name regions by their objects
     object WinterNW extends NamedForest("Fir")
     object Deadwood extends NamedForest("Deadwood")
@@ -323,7 +323,7 @@ object LakeBoard extends Board {
 
     val coastal = $(Gulf, Marsh, Shoal, Bay)
 
-    // Named after trees, like the Marsh forests (asked for by the owner on 2026-10-17); only the labels, as saved games
+    // Named after trees, like the Marsh forests (asked for on 2026-10-17); only the labels, as saved games
     // name regions by their objects
     object LakeW extends NamedForest("Linden")
     object LakeNW extends NamedForest("Aspen")
@@ -468,7 +468,7 @@ object MountainBoard extends Board {
 
     override val tower = $(Pass)
 
-    // Named after trees, like the Marsh forests (asked for by the owner on 2026-10-17); only the labels, as saved games
+    // Named after trees, like the Marsh forests (asked for on 2026-10-17); only the labels, as saved games
     // name regions by their objects
     object MountainW extends NamedForest("Cedar")
     object MountainNW extends NamedForest("Whitebark")
@@ -949,7 +949,7 @@ object GorgeBoard extends Board {
 
     val inner = $(Fork, Pueblo)
 
-    // Named after desert trees, like the Marsh forests (asked for by the owner on 2026-10-17; they were compass points);
+    // Named after desert trees, like the Marsh forests (asked for on 2026-10-17; they were compass points);
     // only the labels, as saved games name regions by their objects
     object GorgeNW extends NamedForest("Mesquite")
     object GorgeN extends NamedForest("Cottonwood")
@@ -1627,7 +1627,7 @@ object MarshBoard extends Board {
         case _ => $()
     }
 
-    // Named after wetland trees and woods, like the made-up clearing names (asked for by the owner on 2026-10-17);
+    // Named after wetland trees and woods, like the made-up clearing names (asked for on 2026-10-17);
     // only the labels, as saved games name regions by their objects
     object MarshNW extends NamedForest("Alder")
     object MarshW extends NamedForest("Willow")
@@ -1764,7 +1764,7 @@ object MapsExpansion extends MandatoryExpansion {
                 game.rabbittown.foreach { c =>
                     val n = rabbittownWarriors(f, c)
 
-                    // the battle is offered on its own when no warriors can be placed (Gman, 2026-10-31: the Hundreds with an empty supply)
+                    // the battle is offered on its own when no warriors can be placed (2026-10-31: the Hundreds with an empty supply)
                     val battle = f.canAttackIn(c)
 
                     + RabbittownMainAction(f, c, n, Repeat)

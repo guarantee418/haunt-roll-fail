@@ -133,13 +133,13 @@ case class PlayChoiceDescAction(obj : PlayChoice, remaining : $[Faction]) extend
 
 
 object AdvancedSetup {
-    // the militant factions of Advanced Setup, as the draw counts them (DraftFactionsAction); the Homeland Lilypad Diaspora too (Gman, 2026-11-04)
+    // the militant factions of Advanced Setup, as the draw counts them (DraftFactionsAction); the Homeland Lilypad Diaspora too (2026-11-04)
     def militant(f : Faction) : Boolean = f match {
         case _ : Feline | _ : Aviary | _ : Underground | _ : Horde | _ : Expedition | _ : InvasiveEEE => true
         case _ => false
     }
 
-    // the Doomed Expansion's factions and Re-Imaginings, offered in the Advanced Setup pool (Gman, 2026-11-17), and the Outsiders Expansion's
+    // the Doomed Expansion's factions and Re-Imaginings, offered in the Advanced Setup pool (2026-11-17), and the Outsiders Expansion's
     val doomed = $[Faction](WW, DU, WG, EE, DM, DV, NW, BP)
 
     // a drawn set of factions holding two that can't play together (the standard setup's rules), or one that needs more players

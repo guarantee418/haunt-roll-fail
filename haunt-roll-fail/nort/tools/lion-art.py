@@ -165,15 +165,15 @@ axe = bar_icon('card/dev/forged-for-war.webp', (222, 30, 300, 104))
 cards = {
     'lion': ('card/clan/squirrel.webp', 'Lion Kingdom', None, 'Recruit 1. Then you may pay up to 2 lore: recruit 1 more unit in that territory for each lore paid.', None),
     'lion-rise-of-the-twelve-peers': ('card/clan/squirrel.webp', 'Rise of the Twelve Peers', 'CLAN UPGRADE', 'Recruit 1 unit in up to 2 territories you control with a Defense Tower or Training Camp. Then you may put a Lord from your reserve on a Defense Tower you control that has none.', None),
-    # Recruiting in every territory with a Chapel, in new games (LionChapelPeers, the owner, 2026-10-25)
+    # Recruiting in every territory with a Chapel, in new games (LionChapelPeers, 2026-10-25)
     'lion-rise-of-the-twelve-peers-chapels': ('card/clan/squirrel.webp', 'Rise of the Twelve Peers', 'CLAN UPGRADE', 'Recruit 1 unit in each territory you control with a Chapel. Then you may put a Lord from your reserve on a Defense Tower you control that has none.', [flash_recruit, load('token/lord.webp').resize((64, 64), Image.LANCZOS)]),
     'lion-abundance': ('card/clan/squirrel-cooking-mastery.webp', 'Abundance', 'CLAN UPGRADE', 'Build. Then, if that territory has 3 or more buildings, collect its resources as if it were the Harvest phase.', None),
-    # Ost replaces Abundance in new games (LionOst, the owner, 2026-10-25), after the video game's Faith tree entry
+    # Ost replaces Abundance in new games (LionOst, 2026-10-25), after the video game's Faith tree entry
     'lion-ost': ('card/clan/squirrel-cooking-mastery.webp', 'Ost', 'CLAN UPGRADE', 'Build 1 Defense Tower for free. Until the end of the year, your Lords next to a combat you start join it: gain 2 combat points for each. Then they return to their towers.', [build, load('token/lord.webp').resize((64, 64), Image.LANCZOS)]),
     'lion-hildegards-vow': ('card/clan/squirrel-cooking-mastery.webp', "Hildegard's Vow", 'CLAN UPGRADE', 'Move 2. In each combat triggered by this card, gain 2 combat points for each of your Lords in a territory adjacent to the fight.', [vow, axe], hildegard(330)),
-    # Counting the Chapels instead, in new games (LionChapelVow, the owner, 2026-10-25)
+    # Counting the Chapels instead, in new games (LionChapelVow, 2026-10-25)
     'lion-hildegards-vow-chapels': ('card/clan/squirrel-cooking-mastery.webp', "Hildegard's Vow", 'CLAN UPGRADE', 'Move 2. In each combat triggered by this card, gain 2 combat points for each of your Chapels in a territory adjacent to the fight.', [vow, axe], hildegard(330)),
-    # With Faith (LionFaith, Gman, 2026-10-28): Ost, only the Lords, as the clan card (flash), Rise of the Twelve Peers building a free Defense
+    # With Faith (LionFaith, 2026-10-28): Ost, only the Lords, as the clan card (flash), Rise of the Twelve Peers building a free Defense
     # Tower, and Paladins as the upgrade in Ost's place
     'lion-ost-lords': ('card/clan/squirrel.webp', 'Ost', None, 'Until the end of the year, your Lords next to a combat you start join it: gain 2 combat points for each. Then they return to their towers.', [flash, load('token/lord.webp').resize((64, 64), Image.LANCZOS)]),
     'lion-rise-of-the-twelve-peers-tower': ('card/clan/squirrel.webp', 'Rise of the Twelve Peers', 'CLAN UPGRADE', 'Build 1 Defense Tower for free. Then you may put a Lord from your reserve on another Defense Tower you control that has none.', [build, load('token/lord.webp').resize((64, 64), Image.LANCZOS)]),
@@ -247,7 +247,7 @@ def draw_board(clan, power, out):
 if not only:
     draw_board('You have 3 Lords. When you build a Defense Tower, put a Lord from your reserve on it. Each Lord adds 2 combat points when you defend its territory. Lords never move and never take casualties.',
                'After a combat involving Hildegard, collect 1 lore for each casualty the enemy suffered.', 'expansion/board/lion.webp')
-# With Faith (LionFaith, Gman, 2026-10-29): Hildegard's casualties give Faith, and the Lords fight in every combat in their territory (LordsInEveryFight)
+# With Faith (LionFaith, 2026-10-29): Hildegard's casualties give Faith, and the Lords fight in every combat in their territory (LordsInEveryFight)
 draw_board('You have 3 Lords. When you build a Defense Tower, put a Lord from your reserve on it. Each Lord adds 2 combat points to every combat in its territory. Lords never move and never take casualties.',
            'After a combat involving Hildegard, collect 1 Faith for each casualty the enemy suffered.', 'expansion/board/lion-faith.webp')
 if only:

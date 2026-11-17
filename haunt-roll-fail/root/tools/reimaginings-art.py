@@ -21,7 +21,7 @@ def save(im, path):
     im.save(path, lossless=True) if im.mode == "RGBA" else im.save(path, quality=88)
 
 def new_roost_3(im):
-    # Eyrie's End's Birdsong step 3 says "up to 6 warriors"; the rules (EE.4.3) say 3, and Gman picked 3 (2026-11-15):
+    # Eyrie's End's Birdsong step 3 says "up to 6 warriors"; the rules (EE.4.3) say 3, and the owner picked 3 (2026-11-15):
     # "up to 6" is painted over with a "3" (Liberation Serif, thickened to the board's weight) and "warriors" moved up
     bg = (248, 228, 179)
     y0, y1 = 1013, 1042

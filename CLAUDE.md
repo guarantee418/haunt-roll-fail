@@ -36,14 +36,14 @@ the Ancestral Graveyard's Spectral Warriors and the Wyvern's Den) in
 New Blood expansion's seven clans (Dragon, Horse, Kraken, Lynx, Ox, Rat,
 Squirrel, with their warchiefs and 28 clan cards, from the TTS mod
 3597126237) in `nort/newblood.scala`; picking one of them turns it on.
-The fan-made Lion Kingdom (the video game's Kingdom of Neustria, designed here for Gman on 2026-10-21 with
+The fan-made Lion Kingdom (the video game's Kingdom of Neustria, designed here on 2026-10-21 with
 Robotos's Chapel and alternative starting deck) is a fifteenth clan in `nort/lion.scala`: Lords on its Defense
 Towers (a Lord stays while the Lion has figures in the territory, so it defends it: hidden `LordsWhileContested`, every new game
-since a bug report on 2026-10-25; older games sent it back once an attacker moved in), and adds its 2 combat points to every fight in its territory, the Lion attacking or defending, against a clan or a creature (hidden `LordsInEveryFight`, every new game, after a bug report on 2026-10-25; older games count it only defending against a clan), Chapels instead of Carved Stones (1 lore each at harvest in new games, hidden `LionChapelLore`, the owner, 2026-10-25; 1 fame in older ones), warchief Hildegard, Faith (a fourth resource only it has: 1 for each casualty the enemy suffers in a fight its Lords or Hildegard join and 1 for each Chapel at harvest, instead of lore; its clan upgrades cost Faith, it trades like the other resources; the clan card becomes Ost without its free tower (flash), the upgrade Paladins takes its place (Recruit 1 and 1 more per Faith paid, up to 4), and Rise of the Twelve Peers builds a free Defense Tower before its Lord; hidden `LionFaith`, every new game, Gman 2026-10-28; `Faith` and `Resource.of` in `nort/game.scala`, `CardVersions.lionFaith`, the icon `ui-faith` from the video game's by `nort/tools/faith-icon.py`; the clan board saying Faith, `expansion/board/lion-faith.webp`, `Warchief.board`, drawn by `nort/tools/lion-art.py board-faith`), the upgrade card Ost (a free Defense Tower, then for the rest of the year the Lords next to a
-combat the Lion starts join it; in place of Abundance in every new game, hidden `LionOst`, the owner, 2026-10-25; Rise of the Twelve Peers recruits
+since a bug report on 2026-10-25; older games sent it back once an attacker moved in), and adds its 2 combat points to every fight in its territory, the Lion attacking or defending, against a clan or a creature (hidden `LordsInEveryFight`, every new game, after a bug report on 2026-10-25; older games count it only defending against a clan), Chapels instead of Carved Stones (1 lore each at harvest in new games, hidden `LionChapelLore`, 2026-10-25; 1 fame in older ones), warchief Hildegard, Faith (a fourth resource only it has: 1 for each casualty the enemy suffers in a fight its Lords or Hildegard join and 1 for each Chapel at harvest, instead of lore; its clan upgrades cost Faith, it trades like the other resources; the clan card becomes Ost without its free tower (flash), the upgrade Paladins takes its place (Recruit 1 and 1 more per Faith paid, up to 4), and Rise of the Twelve Peers builds a free Defense Tower before its Lord; hidden `LionFaith`, every new game, 2026-10-28; `Faith` and `Resource.of` in `nort/game.scala`, `CardVersions.lionFaith`, the icon `ui-faith` from the video game's by `nort/tools/faith-icon.py`; the clan board saying Faith, `expansion/board/lion-faith.webp`, `Warchief.board`, drawn by `nort/tools/lion-art.py board-faith`), the upgrade card Ost (a free Defense Tower, then for the rest of the year the Lords next to a
+combat the Lion starts join it; in place of Abundance in every new game, hidden `LionOst`, 2026-10-25; Rise of the Twelve Peers recruits
 in each territory with a Chapel and Hildegard's Vow gives 2 combat points for each Chapel next to the fight in new games, hidden
-`LionChapelPeers` and `LionChapelVow`), and its own starting deck (Robotos's Adventure, Toil and Prey; hidden `LionOwnDeck` that every new game gets,
-Gman 2026-10-24; it was the setup option "Lion Kingdom: alternative starting deck", `LionStartingDeck`, now hidden); picking it turns it on (it is in the clan picker's "Fan-made clans" section, `factionGroup`; not in Adset or the Random Clan picks); its art is made by `nort/tools/lion-art.py`, with the video game's Lion emblem, Hildegard (also on Hildegard's Vow) and the Lord token's Lord from the Northgard wiki; its warriors are a man-at-arms with a longsword and a longbowman (`lion-sword-`, `lion-bow-`, by `nort/tools/lion-warriors.py`, `Warchief.warrior`; Gman asked for no Norse helmets).
+`LionChapelPeers` and `LionChapelVow`), and its own starting deck (the Adventure, Toil and Prey; hidden `LionOwnDeck` that every new game gets,
+2026-10-24; it was the setup option "Lion Kingdom: alternative starting deck", `LionStartingDeck`, now hidden); picking it turns it on (it is in the clan picker's "Fan-made clans" section, `factionGroup`; not in Adset or the Random Clan picks); its art is made by `nort/tools/lion-art.py`, with the video game's Lion emblem, Hildegard (also on Hildegard's Vow) and the Lord token's Lord from the Northgard wiki; its warriors are a man-at-arms with a longsword and a longbowman (`lion-sword-`, `lion-bow-`, by `nort/tools/lion-warriors.py`, `Warchief.warrior`; no Norse helmets, as asked).
 Uncharted Horizons' Events and Alternative victory conditions modules are in
 `nort/horizons.scala`. Its 13 Development cards and 2 Achievements (option
 "Uncharted Horizons Development cards", next to "Ban card draw developments")
@@ -51,7 +51,7 @@ are in `nort/horizon-devs.scala`, and its 5 map tiles with The Bridge (option
 "Map tiles" in the setup's Uncharted Horizons section) are
 `Tiles.horizons` (`horizon-*`, made by `nort/tools/horizon-tiles.py`). Its Sea module (Raids: a Beach tile with a Port for each
 player, the Raid phase and the 24 Raid cards, from the TTS mod 3597126237,
-whose rulebook PDF has the rules) is in `nort/sea.scala`; Port to Port costs 2 moves and the figures may move on with the rest (hidden `SailOnFromPort`, every new game; addidinu on Discord, relayed by Gman on 2026-11-08; older games used up every move left, `SailOnFromPortAction(X)` switches a running game); the Beach is four
+whose rulebook PDF has the rules) is in `nort/sea.scala`; Port to Port costs 2 moves and the figures may move on with the rest (hidden `SailOnFromPort`, every new game; Discord, 2026-11-08; older games used up every move left, `SailOnFromPortAction(X)` switches a running game); the Beach is four
 map cells (`Tiles.beach`), and a tile side no area owns is sea. The Wastelands expansion (Environment tiles
 `waste-*`, the Central tiles `start-*` chosen with the "Central tile" option, which
 is offered in every game (standard tile, any of the nine, the Wilderness Great
@@ -84,7 +84,7 @@ during setup (random seat order, players + 2 clans drawn, a ban, Wilderness or
 Wastelands, the central tile, then picks and placements from the last seat), always
 with Creatures and the Horizons Development cards. The first year's Development cards and the Achievements
 are dealt before the draft and shown during it, in the action pane (`AdsetCardInfoAction`) and the card strip
-(`drawCards` in `nort/ui.scala`; asked for by Gman on 2026-10-14). `Game` takes `players` (clans,
+(`drawCards` in `nort/ui.scala`; asked for on 2026-10-14). `Game` takes `players` (clans,
 or seats in Adset) and maps them with `ptf`/`ftp`, as Root's Advanced Setup does;
 asks for a clan go to its seat in `loggedPerform`, and the in-game choices are added
 to `game.options` (`addOption`). Solo, Quick and Local (hotseat) games are saved in the
@@ -94,34 +94,34 @@ with kind `solo`, `quick` or `hotseat`; the 12 newest of each kind are kept, and
 is full the oldest of any kind make room), so "Quick Game", "Local Game" and "Solo vs Automa"
 offer a new game or a saved one to continue (straight to a new one when none is saved),
 like Play Online. Training Grounds games aren't saved. Fan-made modules are listed under "Fan content" on the setup
-screen (`Module.fan`, also in Adset): the Minerals module by Maciej Drewing (BoardGameGeek file 255809; asked for by Gman on
+screen (`Module.fan`, also in Adset): the Minerals module by Maciej Drewing (BoardGameGeek file 255809; asked for on
 2026-10-21) is in `nort/minerals.scala`: Mines (a small building, `Mine`, not in `Building.all`, only in a territory with a creature
 lair) roll the combat die at the harvest for Stone, Iron and Gem (`game.mineralBank`, each clan's `minerals`), each worth two
 resources for trading, Winter and the final fame; Stone upgrades a building during a Build (`game.upgraded`, counted twice by
-`Game.counted` and `working`, cleared when the space's building changes, `buildings_=`); in games with the hidden `BuildOrUpgrade` every new game gets, a Build builds or upgrades (the Stone upgrade or the PC version's Town Hall), not both (Gman, 2026-11-16; `game.builtThisBuild`; `BuildOrUpgradeAction(X)` switches a running game), Iron rolls two dice in a fight, Gem takes a
-discarded card's fame while playing cards. The player panels show the Mines and minerals (tapping them, the supply and rules). The "Tower PC version" (fan-made by Marzaus on Discord, asked for by Gman on 2026-10-22, `TowersModule`, also under Fan content) is in `nort/towers.scala`: a Defense Tower costs 2 wood (`TowersExpansion.cost`, in `buildCost`), is destroyed once the clan holding its territory has no figure left there (`sweep`, run by `Game.loggedPerform` before and after each action, `game.towerHolder`), kills 1 attacking unit per tower before each fight instead of adding a casualty after it (`TowerVolleyAction`, before `FightStartAction`; `killFirst`, the hook for any other rule that makes towers fire first), gives 1 combat point per tower against creatures (`towerPoints`), and lets the holder fight a creature that appears or moves into its territory before the creature's ability (`TowerChallengeAction`). Marzaus's "Warchiefs PC version" (asked for by Gman on 2026-10-22; `WarchiefsPC` in `nort/options.scala`, needs the warchiefs) makes the clan's warchief (not Kaija, Brok or the Automa's Leaders) cost 2 units, only into a territory with its Training Camp (1 of the Recruit's and the camp's extra unit there, so the starting Recruit 1 brings it, in games with the hidden `PCChiefCampPays` every new game gets; Marzaus, 2026-11-06, couldn't recruit it, as it took 2 of the Recruit's own units; `PCChiefCampPaysAction(X)` switches a running game), never placed at setup, killed only by 2 casualties in one fight (`game.toughness`; a single one left over spares it), passed by every one-figure removal outside a fight, and left out of Winter costs (`FactionState.winterUnits`); see `nort/RULES.md`. Robotos's "Lower skill floor Dragon variant" (Discord northgard-fanmade-content; asked for by Gman on 2026-10-24; `DragonVariant` in `nort/options.scala`; since 2026-10-26 picked as its own clan, "Dragon, lower skill floor", in the clan picker's "Fan-made clans" section with the Lion Kingdom, not on the setup screen or in Adset: `factionVariants` and `factionGroup` in `nort/meta.scala`, the `FactionVariant` hook in `meta.scala`, picked in `customGame` and `soloGame` in `hrf.scala`, which pass its option to the setup screen as always on; the option is now hidden and `Meta.retired`, so older games, Adset ones too, still load and log it) replaces the Dragon Clan's power and clan cards: no sacrifice to harvest and no extra food or wood, a reserve unit may go on an empty Pyre spot at the start of the Harvest (`PyreReserveAction`), and Dragon Clan, Enthrall and Reluctant Workforce empty a full Pyre for 1 food, 2 fame or a third card (`CardVersions.dragonVariant` in `nort/editions.scala`, before the other versions; `PyreEmptyAction` and `EnthrallAction` in `nort/newblood.scala`; card pictures by `nort/tools/card-text.py`, the board `expansion/board/dragon-variant.webp` by `nort/tools/board-text.py`). Fan versions show in the clan info only in games that play them (`CardVersions.fan`). Robotos's "Rough Border's Edition" Bear (Discord northgard-fanmade-content; asked for by Gman on 2026-10-31; `BearBorder` in `nort/options.scala`, rules in `nort/bear-border.scala`) is a third fan clan in the picker, "Bear Clan (variant)" (`factionVariants`; hidden option, logged, not in Adset): Kaija is a token on a border (`game.kaijaBorder`, drawn on the border's middle dash), placed before a Bear clan card on a regular border of a Bear territory; every clan, Bear too, treats that border as Rough (`Game.links`, used by the moves and retreats), unless it discards a resource for the Move (`KaijaTollAction`) or is Bear after The Bear Awakens; its cards are `CardVersions.bearBorder` (pictures by `nort/tools/card-text.py`, board `expansion/board/bear-border.webp` by `nort/tools/board-text.py`); see `nort/RULES.md`. Marzaus's "Fan creatures" (Discord northgard-fanmade-content; asked for by Gman on 2026-10-24; `AggressiveCreatures` in `nort/options.scala`, under Fan content, needs Creatures) takes away every creature's ability (`game.noAbilities`, checked in `bearIn`, `wolfIn`, `koboldIn`, `ghostIn` and the fight and Wastelands hooks) and makes every creature aggressive like the Fallen Valkyrie (`game.aggressive`, used by `hostileIn`): it attacks a clan whose territory it appears or moves into (`AggressiveCreaturesExpansion` in `nort/creatures.scala`), and units must fight a creature whose territory they move into; Hrimgandr still never moves; see `nort/RULES.md`. The Military paths module by Marzaus (Discord
-northgard-fanmade-content; asked for by Gman on 2026-10-22) is in `nort/military.scala`: MXP (`game.mxp`) from fights: winning one, 1 per enemy figure it began with (`game.fightSize`; the owner, 2026-10-23), and won or lost, 2 per enemy
-unit killed, 10 per warchief (Marzaus, 2026-10-22), creatures (twice their fame) and enemy Defense Towers destroyed (3), and at 5, 50 and 100 MXP the
-levels of a path picked at 5 (`game.paths`): Leadership (only with Warchiefs: a bodyguard, `game.guards`, drawn as its own figure (Horse's Eitria and Brok each have one in games with the hidden `HorseTwoGuards` every new game gets, `game.brokGuard`; Gman, 2026-11-06; `HorseTwoGuardsAction(X)` switches a running game), a huscarl with a kite shield marked with the Algiz rune and a spear, `token/unit/bodyguard-<color>`, by `nort/tools/bodyguard-figure.py`, asked for by the owner on 2026-10-23, rerolls, an extra move,
+`Game.counted` and `working`, cleared when the space's building changes, `buildings_=`); in games with the hidden `BuildOrUpgrade` every new game gets, a Build builds or upgrades (the Stone upgrade or the PC version's Town Hall), not both (2026-11-16; `game.builtThisBuild`; `BuildOrUpgradeAction(X)` switches a running game), Iron rolls two dice in a fight, Gem takes a
+discarded card's fame while playing cards. The player panels show the Mines and minerals (tapping them, the supply and rules). The "Tower PC version" (fan-made, asked for on 2026-10-22, `TowersModule`, also under Fan content) is in `nort/towers.scala`: a Defense Tower costs 2 wood (`TowersExpansion.cost`, in `buildCost`), is destroyed once the clan holding its territory has no figure left there (`sweep`, run by `Game.loggedPerform` before and after each action, `game.towerHolder`), kills 1 attacking unit per tower before each fight instead of adding a casualty after it (`TowerVolleyAction`, before `FightStartAction`; `killFirst`, the hook for any other rule that makes towers fire first), gives 1 combat point per tower against creatures (`towerPoints`), and lets the holder fight a creature that appears or moves into its territory before the creature's ability (`TowerChallengeAction`). Marzaus's "Warchiefs PC version" (asked for on 2026-10-22; `WarchiefsPC` in `nort/options.scala`, needs the warchiefs) makes the clan's warchief (not Kaija, Brok or the Automa's Leaders) cost 2 units, only into a territory with its Training Camp (1 of the Recruit's and the camp's extra unit there, so the starting Recruit 1 brings it, in games with the hidden `PCChiefCampPays` every new game gets; 2026-11-06, couldn't recruit it, as it took 2 of the Recruit's own units; `PCChiefCampPaysAction(X)` switches a running game), never placed at setup, killed only by 2 casualties in one fight (`game.toughness`; a single one left over spares it), passed by every one-figure removal outside a fight, and left out of Winter costs (`FactionState.winterUnits`); see `nort/RULES.md`. Robotos's "Lower skill floor Dragon variant" (Discord northgard-fanmade-content; asked for on 2026-10-24; `DragonVariant` in `nort/options.scala`; since 2026-10-26 picked as its own clan, "Dragon, lower skill floor", in the clan picker's "Fan-made clans" section with the Lion Kingdom, not on the setup screen or in Adset: `factionVariants` and `factionGroup` in `nort/meta.scala`, the `FactionVariant` hook in `meta.scala`, picked in `customGame` and `soloGame` in `hrf.scala`, which pass its option to the setup screen as always on; the option is now hidden and `Meta.retired`, so older games, Adset ones too, still load and log it) replaces the Dragon Clan's power and clan cards: no sacrifice to harvest and no extra food or wood, a reserve unit may go on an empty Pyre spot at the start of the Harvest (`PyreReserveAction`), and Dragon Clan, Enthrall and Reluctant Workforce empty a full Pyre for 1 food, 2 fame or a third card (`CardVersions.dragonVariant` in `nort/editions.scala`, before the other versions; `PyreEmptyAction` and `EnthrallAction` in `nort/newblood.scala`; card pictures by `nort/tools/card-text.py`, the board `expansion/board/dragon-variant.webp` by `nort/tools/board-text.py`). Fan versions show in the clan info only in games that play them (`CardVersions.fan`). Robotos's "Rough Border's Edition" Bear (Discord northgard-fanmade-content; asked for on 2026-10-31; `BearBorder` in `nort/options.scala`, rules in `nort/bear-border.scala`) is a third fan clan in the picker, "Bear Clan (variant)" (`factionVariants`; hidden option, logged, not in Adset): Kaija is a token on a border (`game.kaijaBorder`, drawn on the border's middle dash), placed before a Bear clan card on a regular border of a Bear territory; every clan, Bear too, treats that border as Rough (`Game.links`, used by the moves and retreats), unless it discards a resource for the Move (`KaijaTollAction`) or is Bear after The Bear Awakens; its cards are `CardVersions.bearBorder` (pictures by `nort/tools/card-text.py`, board `expansion/board/bear-border.webp` by `nort/tools/board-text.py`); see `nort/RULES.md`. Marzaus's "Fan creatures" (Discord northgard-fanmade-content; asked for on 2026-10-24; `AggressiveCreatures` in `nort/options.scala`, under Fan content, needs Creatures) takes away every creature's ability (`game.noAbilities`, checked in `bearIn`, `wolfIn`, `koboldIn`, `ghostIn` and the fight and Wastelands hooks) and makes every creature aggressive like the Fallen Valkyrie (`game.aggressive`, used by `hostileIn`): it attacks a clan whose territory it appears or moves into (`AggressiveCreaturesExpansion` in `nort/creatures.scala`), and units must fight a creature whose territory they move into; Hrimgandr still never moves; see `nort/RULES.md`. The Military paths module by Marzaus (Discord
+northgard-fanmade-content; asked for on 2026-10-22) is in `nort/military.scala`: MXP (`game.mxp`) from fights: winning one, 1 per enemy figure it began with (`game.fightSize`; 2026-10-23), and won or lost, 2 per enemy
+unit killed, 10 per warchief (2026-10-22), creatures (twice their fame) and enemy Defense Towers destroyed (3), and at 5, 50 and 100 MXP the
+levels of a path picked at 5 (`game.paths`): Leadership (only with Warchiefs: a bodyguard, `game.guards`, drawn as its own figure (Horse's Eitria and Brok each have one in games with the hidden `HorseTwoGuards` every new game gets, `game.brokGuard`; 2026-11-06; `HorseTwoGuardsAction(X)` switches a running game), a huscarl with a kite shield marked with the Algiz rune and a spear, `token/unit/bodyguard-<color>`, by `nort/tools/bodyguard-figure.py`, asked for on 2026-10-23, rerolls, an extra move,
 captures, a kill before attacking), Guardian (free Defense Towers on no space that kill before the fight, `game.towersUsed`; four
-Militia, `game.militia`, figures that stay in the clan's territories (drawn as an unarmored peasant with a pitchfork, the bodyguard's size, `token/unit/militia-<color>`, by `nort/tools/militia-figure.py`; Gman, 2026-11-06), one dead one back each year, `game.militiaBack`; a free Fortress a year, `freeFortress`: Marzaus's "Palisade" is the Fortress) and
-Legions (free Training Camps on no space that recruit 2 and train a unit each year, points for big armies, rerolls). Leadership's extra warchief move after a Move card starts only from a territory the clan controls (not out of a fight or on through an enemy's territory), in games with the hidden `ChiefMoveFromHeld` every new game gets (Discord, 2026-11-04; `ChiefMoveFromHeldAction(X)` switches a running game), and only after the warchief moved with the card (hidden `ChiefMoveAfterMove`, `game.chiefMoved`; Marzaus, 2026-11-04; `ChiefMoveAfterMoveAction(X)`). Leadership's and Legions' reroll of the combat die is offered against creatures too (once per fight, `MilitaryCreatureKeptAction` in `nort/military.scala`), in games with the hidden `MilitaryRerollCreatures` every new game gets (Gman, 2026-11-04; `MilitaryRerollCreaturesAction(X)` switches a running game). A clan losing one unit outside a fight (Draugr, Valdemar, the Swamp, the Poisonous Swamp, the Volcano, Wyvern, events) with its bodyguard (or Brok's) or a Militia in that territory is asked right after which of them goes, as the bodyguard comes back each year (`noteLoss`, `lossAsk`, `LoneLossKeepAction`, `LoneLossSwapAction` in `nort/military.scala`, asked from `Game.loggedPerform` when the action goes straight on, `game.loneLosses`), in games with the hidden `PickLoneLoss` every new game gets (Marzaus, 2026-11-07; `PickLoneLossAction(X)` switches a running game). A clan taking fight casualties where its bodyguard is, with other units there, is asked whether the bodyguard goes first even when it has no other choice to make (`guardChoice` in `nort/map.scala`, `pickCasualties`), in games with the hidden `GuardCasualtyAsked` every new game gets (Gman, 2026-11-11: with the Warchiefs PC version's 2-casualty warchief he was never asked). A clan picking a fight's casualties loses the warchief only with its bodyguard, and Horse's Brok only with his (`guardsKept` in `CasualtyGoal`, `nort/figures.scala`), in games with the hidden `GuardBeforeChief` every new game gets (Marzaus, 2026-11-11: in Saga and Clan Horse won a fight but lost Eitria and a unit, and her bodyguard went to the reserve with her, emptying the territory; `GuardBeforeChiefAction(X)` switches a running game); the Hard bot (and Robotos) values each casualty pick by what the figures lost are worth (a unit or Militia 38, the warchief 70 and the bodyguard it takes along, the bodyguard alone 15, as it comes back each year; `casualtiesGain` in `nort/bot-hard.scala`), where it picked at random before, and counts a casualty it inflicts as worth a unit when picking "1 point or 1 casualty" (`faceChoice`; Boar took the point in a fight it lost anyway, 2026-11-11). The readings of
-the short post are listed in `nort/RULES.md` (Military paths); the player panels show the MXP, with the video game's Military Experience icon (crossed swords, `ui-mxp`, `MXP.icon`, from the game wiki's 20x20 file by `nort/tools/mxp-icon.py`; asked for by the owner on 2026-10-23), and the path (tapping them, every path). The End of the Year gains (Guardian's towers, Legions' camps, Leadership's units) never came in Wilderness games, as its Geysers skipped the expansions after it, until the hidden `EndOfYearAfterGeysers` every new game gets (`wilderness.scala`; Marzaus, 2026-11-01; `EndOfYearAfterGeysersAction(X)` switches a running game). The
+Militia, `game.militia`, figures that stay in the clan's territories (drawn as an unarmored peasant with a pitchfork, the bodyguard's size, `token/unit/militia-<color>`, by `nort/tools/militia-figure.py`; 2026-11-06), one dead one back each year, `game.militiaBack`; a free Fortress a year, `freeFortress`: Marzaus's "Palisade" is the Fortress) and
+Legions (free Training Camps on no space that recruit 2 and train a unit each year, points for big armies, rerolls). Leadership's extra warchief move after a Move card starts only from a territory the clan controls (not out of a fight or on through an enemy's territory), in games with the hidden `ChiefMoveFromHeld` every new game gets (Discord, 2026-11-04; `ChiefMoveFromHeldAction(X)` switches a running game), and only after the warchief moved with the card (hidden `ChiefMoveAfterMove`, `game.chiefMoved`; 2026-11-04; `ChiefMoveAfterMoveAction(X)`). Leadership's and Legions' reroll of the combat die is offered against creatures too (once per fight, `MilitaryCreatureKeptAction` in `nort/military.scala`), in games with the hidden `MilitaryRerollCreatures` every new game gets (2026-11-04; `MilitaryRerollCreaturesAction(X)` switches a running game). A clan losing one unit outside a fight (Draugr, Valdemar, the Swamp, the Poisonous Swamp, the Volcano, Wyvern, events) with its bodyguard (or Brok's) or a Militia in that territory is asked right after which of them goes, as the bodyguard comes back each year (`noteLoss`, `lossAsk`, `LoneLossKeepAction`, `LoneLossSwapAction` in `nort/military.scala`, asked from `Game.loggedPerform` when the action goes straight on, `game.loneLosses`), in games with the hidden `PickLoneLoss` every new game gets (2026-11-07; `PickLoneLossAction(X)` switches a running game). A clan taking fight casualties where its bodyguard is, with other units there, is asked whether the bodyguard goes first even when it has no other choice to make (`guardChoice` in `nort/map.scala`, `pickCasualties`), in games with the hidden `GuardCasualtyAsked` every new game gets (2026-11-11: with the Warchiefs PC version's 2-casualty warchief he was never asked). A clan picking a fight's casualties loses the warchief only with its bodyguard, and Horse's Brok only with his (`guardsKept` in `CasualtyGoal`, `nort/figures.scala`), in games with the hidden `GuardBeforeChief` every new game gets (2026-11-11: in Saga and Clan Horse won a fight but lost Eitria and a unit, and her bodyguard went to the reserve with her, emptying the territory; `GuardBeforeChiefAction(X)` switches a running game); the Hard bot (and Robotos) values each casualty pick by what the figures lost are worth (a unit or Militia 38, the warchief 70 and the bodyguard it takes along, the bodyguard alone 15, as it comes back each year; `casualtiesGain` in `nort/bot-hard.scala`), where it picked at random before, and counts a casualty it inflicts as worth a unit when picking "1 point or 1 casualty" (`faceChoice`; Boar took the point in a fight it lost anyway, 2026-11-11). The readings of
+the short post are listed in `nort/RULES.md` (Military paths); the player panels show the MXP, with the video game's Military Experience icon (crossed swords, `ui-mxp`, `MXP.icon`, from the game wiki's 20x20 file by `nort/tools/mxp-icon.py`; asked for on 2026-10-23), and the path (tapping them, every path). The End of the Year gains (Guardian's towers, Legions' camps, Leadership's units) never came in Wilderness games, as its Geysers skipped the expansions after it, until the hidden `EndOfYearAfterGeysers` every new game gets (`wilderness.scala`; 2026-11-01; `EndOfYearAfterGeysersAction(X)` switches a running game). The
 code was checked against the English core rulebook on 2026-10-03; rule
 choices the rulebook leaves open are listed under Interpretations in
 `nort/RULES.md`.
-The setup's "Fan victories" section, right under Fan content (Gman, 2026-11-12; `FanVictories` and `FanVictory` in `nort/options.scala`: a fan module that is a victory goes in `FanVictories.modules`, a plain option extends `FanVictory`), holds Alternative fame gains and Domination victory; the PC version's trade, knowledge and other victories are to go there.
-Marzaus's "Alternative fame gains" (Discord northgard-fanmade-content; asked for by Gman on 2026-11-01; `FameGainsModule` in `nort/options.scala`, under Fan victories, rules in `nort/fame-gains.scala`, needs the standard or Fame only victory) gives fame as things are done: 1 or 2 per building placed, 3 more for an Altar of Kings, 1 per enemy unit and 5 per warchief killed and 1 per win in fights against clans (the loser's figures lost with nowhere to retreat count as killed, hidden `FameRetreatKills`, every new game; Marzaus, 2026-11-06), 5 per upgrade, a Development card's fame when taken (none at the end, `cardFame`), and a face-down Achievement each clan keeps of 2 dealt before the first year (`game.fameKept`; none are revealed in the last year), resolved once on its turn for the fame it gives then (`FameResolveAction`); a clan with 120 fame controlling an Altar of Kings (in a closed territory, in games with the hidden `FameAltarClosed` every new game gets; Marzaus, 2026-11-06) wins at once (checked in `Game.loggedPerform`, `FameWinAction`; `NORT_FAME_GOAL` lowers it in bot games), the only way to win: three closed territories with large buildings don't, and after the last year the game goes on year after year until someone does (Gman, 2026-11-02; `NORT_FAME_YEARS` caps it in bot games); readings in `nort/RULES.md`; `FameGainsOnAction(clans, fame, X)` turns it on in a running game, giving each clan the fame worked out from its log and dealing the kept Achievements (done for Winter for Clan, 2026-11-13). Tapping a clan's fame (its icon or number) in the player panel opens every clan's fame and Altar of Kings, how fame is gained and how the fame win works (`FameGainsView`, `fameGainsView` in `nort/ui.scala`; display only; Gman, 2026-11-13).
-Marzaus's "Clan Fame upgrades (PC)" (Discord northgard-fanmade-content; asked for by Gman on 2026-11-11; `FameUpgradesModule` in `nort/options.scala`, under Fan content and in the PC version, rules in `nort/fame-upgrades.scala`): the seven core clans have abilities while their fame is at least 20, 50 or 100, losing them below (`FameUpgrade.all`, `game.fameUnlocked`, updated by `sweep` from `Game.loggedPerform`; once-a-year ones in `game.fameUsed`), fame is public (`fameHidden`), and the cards' fame (Development cards, Achievements, Unrest) is counted when each is taken, none at the end (`finalFame`; Gman, 2026-11-12), shown on the player panels (tapping them, every clan's, the lines wrapping: `onBoardWrap`, as in the Military paths list); Goat's sheep (Shepherd: one a year, no cap, Gman 2026-11-12; `game.sheep`, moved before each Move card's Move, `SheepMovesAction`; drawn `token/sheep.webp` by `nort/tools/sheep-token.py`) and Boar's tamed creature (Taming: `game.tamed`, with the warchief; creatures leave Boar alone through `Game.robotosIn` and `FameCreaturesExpansion`); Valorous Leader's tougher Brand goes through `Game.chiefCost`, which the Warchiefs PC version's 2-casualty warchief uses too; readings in `nort/RULES.md`.
-Gman's "PC version" mode (asked for on 2026-11-11, `PCVersion` in `nort/options.scala`, under Fan content, rules in `nort/pc.scala`; design and open questions in the Claude Doc "Northgard PC version mode: design proposal") is played after the video game: picking it turns on (and is turned off with) Creatures, Warchiefs, Sea, Events, Tower PC version, Warchiefs PC version, Minerals, Military paths, Aggressive creatures, Clan Fame upgrades and the Wilderness, Wastelands and Horizons map tiles (`PCVersion.needs`, `tiles`, `ModuleOption.forcedOn`), and picks Domination victory and Alternative fame gains, which can be turned off (`PCVersion.victories`, `alsoOn`, a `BaseOption` hook turned on with an option but not required by it; Gman, 2026-11-13); the whole map is built at setup (`buildMap`: a special central tile, a Beach with a Port per clan at the edge, every other space filled, the edge counting as coast, `Board.coast`), each clan starts on its Port (4 units) and the two small territories beside it (1 each), balanced: every home is copies of the same three tiles, 1 food in the Port territory, 1 wood on one side, 1 lore on the other (`attemptMap`), with a Town Hall (`game.halls`, the Town Hall Development card's hall, upgraded the video game's hall from the wiki, `token/building/town-hall*.webp` by `nort/tools/town-hall.py`; upgraded by a build for 1 Stone and 1 wood, `HallUpgradeAction`), creatures hold the territories between, fog of war hides what a clan hasn't had figures in or scouted (`game.scouted`, drawn black by `fogImage` in `nort/ui.scala` for the `viewers`), Explore scouts (`ScoutAction`; enemy territories need the upgraded hall, coastal ones a Defense Tower in the Port territory; a scout gives an Explore's fame and bonuses, the scouted territory counting as the one closed), only Wolves, Draugr and (from year 3) Myrkalfar move, Wolves come back where they started, and a clan ending a year without its Town Hall is out (`game.out`; its Raid units are lost with it, and it gets no three units back as a clan left with none does, 2026-11-12); the Hard bot and Robotos scout, move into creature territories and guard their Town Hall there (`scoutValue`, `hallValue` in `nort/bot-hard.scala`; Gman, 2026-11-12: Robotos never left home); in new games (hidden `PCVersionUpdate`, 2026-11-11) the two-player map is an oval, every home has a lair territory with a small building space just outside it for a Mine, Mines give Stone with no roll (or, in games with the hidden `PCMineChoice` every new game gets, each clan picks that Stone or the Minerals roll for Stone, Iron or Gem at each harvest; Gman, 2026-11-13; `PCMineChoiceAction(X)` switches a running game); Raven's Rangers (Clan Fame upgrades) scouts once more, anywhere it doesn't see, after a scout (hidden `PCRangersScout`, every new game; Gman, 2026-11-13: it was never offered in PC games; `PCRangersScoutAction(X)` switches a running game), the 2, 4 and 6 clan maps are mirrored (`turnsOf` in `attemptMap`) and with 3 clans or more the Wilderness and Wastelands creatures are in (`moreCreatures`); the Town Hall is drawn beside the Port, not over it; Vedrfolnir's controller reveals one random territory it hasn't seen at the end of each year, enemy ones too (hidden `PCVedrfolnirReveal`, every new game; Gman, 2026-11-12; `PCVedrfolnirRevealAction(X)` switches a running game; the tile's info box says so, `TileAbilities.textIn`), and its Wastelands tile adding before the Harvest is not offered (hidden `PCVedrfolnirNoTile`, every new game; Bear was asked in Winter for Clan and the tile fit nowhere, 2026-11-12; `PCVedrfolnirNoTileAction(X)` switches a running game); "Domination victory" (`DominationVictory`, under Fan victories, shown only with the PC version) makes the last clan holding its Town Hall win at once, beside the other victory conditions (in games with the hidden `PCDominationChoice` every new game gets; older PC games always had it); the retired "Domination victory only" (`DominationOnly`, hidden, still in Winter for Clan) made it the only winner, the game going on after the last year; from Marzaus's playtest (Gman, 2026-11-14), new games get hidden `PCSeenOnly` (no move or retreat into a territory the clan doesn't see, `PCExpansion.mayEnter`), `PCMinePerMine` (Stone or the roll for each Mine), `PCOneUpgrade` (one upgrade per Build, the Town Hall's too), `PCNavalPort` (a Port gives 3 combat points against an attack by sea, `game.navalFights`), `PCHallShield` (the Town Hall ignores 1 rolled casualty in its territory, against clans and creatures), `PCHallSafe` (no creature moves into or attacks a Town Hall in years 1 and 2), `PCArmyCap` (22 units, Winter costs up to 6 food 4 wood), `PCTowerPoints` (a Defense Tower gives 2 points against creatures), `PCScoutFame` (a scout gives 1 fame) and `PCScorchedSeen` (Gman, 2026-11-15: the Scorched Earth token, the Snake Clan card's and Under Pressure's, only goes where Snake sees, `PCExpansion.mayScorch`, and Under Pressure may also move it to a neutral territory, collecting what it gives), each with a `<Option>Action(X)` switch; `NORT_PC=1` in the headless host; see `nort/RULES.md`.
-The setup screen lists the modules one section per box, as Robotos laid them out on 2026-10-26: "Base game" (Creatures module,
+The setup's "Fan victories" section, right under Fan content (2026-11-12; `FanVictories` and `FanVictory` in `nort/options.scala`: a fan module that is a victory goes in `FanVictories.modules`, a plain option extends `FanVictory`), holds Alternative fame gains and Domination victory; the PC version's trade, knowledge and other victories are to go there.
+Marzaus's "Alternative fame gains" (Discord northgard-fanmade-content; asked for on 2026-11-01; `FameGainsModule` in `nort/options.scala`, under Fan victories, rules in `nort/fame-gains.scala`, needs the standard or Fame only victory) gives fame as things are done: 1 or 2 per building placed, 3 more for an Altar of Kings, 1 per enemy unit and 5 per warchief killed and 1 per win in fights against clans (the loser's figures lost with nowhere to retreat count as killed, hidden `FameRetreatKills`, every new game; 2026-11-06), 5 per upgrade, a Development card's fame when taken (none at the end, `cardFame`), and a face-down Achievement each clan keeps of 2 dealt before the first year (`game.fameKept`; none are revealed in the last year), resolved once on its turn for the fame it gives then (`FameResolveAction`); a clan with 120 fame controlling an Altar of Kings (in a closed territory, in games with the hidden `FameAltarClosed` every new game gets; 2026-11-06) wins at once (checked in `Game.loggedPerform`, `FameWinAction`; `NORT_FAME_GOAL` lowers it in bot games), the only way to win: three closed territories with large buildings don't, and after the last year the game goes on year after year until someone does (2026-11-02; `NORT_FAME_YEARS` caps it in bot games); readings in `nort/RULES.md`; `FameGainsOnAction(clans, fame, X)` turns it on in a running game, giving each clan the fame worked out from its log and dealing the kept Achievements (done for Winter for Clan, 2026-11-13). Tapping a clan's fame (its icon or number) in the player panel opens every clan's fame and Altar of Kings, how fame is gained and how the fame win works (`FameGainsView`, `fameGainsView` in `nort/ui.scala`; display only; 2026-11-13).
+Marzaus's "Clan Fame upgrades (PC)" (Discord northgard-fanmade-content; asked for on 2026-11-11; `FameUpgradesModule` in `nort/options.scala`, under Fan content and in the PC version, rules in `nort/fame-upgrades.scala`): the seven core clans have abilities while their fame is at least 20, 50 or 100, losing them below (`FameUpgrade.all`, `game.fameUnlocked`, updated by `sweep` from `Game.loggedPerform`; once-a-year ones in `game.fameUsed`), fame is public (`fameHidden`), and the cards' fame (Development cards, Achievements, Unrest) is counted when each is taken, none at the end (`finalFame`; 2026-11-12), shown on the player panels (tapping them, every clan's, the lines wrapping: `onBoardWrap`, as in the Military paths list); Goat's sheep (Shepherd: one a year, no cap, 2026-11-12; `game.sheep`, moved before each Move card's Move, `SheepMovesAction`; drawn `token/sheep.webp` by `nort/tools/sheep-token.py`) and Boar's tamed creature (Taming: `game.tamed`, with the warchief; creatures leave Boar alone through `Game.robotosIn` and `FameCreaturesExpansion`); Valorous Leader's tougher Brand goes through `Game.chiefCost`, which the Warchiefs PC version's 2-casualty warchief uses too; readings in `nort/RULES.md`.
+The owner's "PC version" mode (asked for on 2026-11-11, `PCVersion` in `nort/options.scala`, under Fan content, rules in `nort/pc.scala`; design and open questions in the Claude Doc "Northgard PC version mode: design proposal") is played after the video game: picking it turns on (and is turned off with) Creatures, Warchiefs, Sea, Events, Tower PC version, Warchiefs PC version, Minerals, Military paths, Aggressive creatures, Clan Fame upgrades and the Wilderness, Wastelands and Horizons map tiles (`PCVersion.needs`, `tiles`, `ModuleOption.forcedOn`), and picks Domination victory and Alternative fame gains, which can be turned off (`PCVersion.victories`, `alsoOn`, a `BaseOption` hook turned on with an option but not required by it; 2026-11-13); the whole map is built at setup (`buildMap`: a special central tile, a Beach with a Port per clan at the edge, every other space filled, the edge counting as coast, `Board.coast`), each clan starts on its Port (4 units) and the two small territories beside it (1 each), balanced: every home is copies of the same three tiles, 1 food in the Port territory, 1 wood on one side, 1 lore on the other (`attemptMap`), with a Town Hall (`game.halls`, the Town Hall Development card's hall, upgraded the video game's hall from the wiki, `token/building/town-hall*.webp` by `nort/tools/town-hall.py`; upgraded by a build for 1 Stone and 1 wood, `HallUpgradeAction`), creatures hold the territories between, fog of war hides what a clan hasn't had figures in or scouted (`game.scouted`, drawn black by `fogImage` in `nort/ui.scala` for the `viewers`), Explore scouts (`ScoutAction`; enemy territories need the upgraded hall, coastal ones a Defense Tower in the Port territory; a scout gives an Explore's fame and bonuses, the scouted territory counting as the one closed), only Wolves, Draugr and (from year 3) Myrkalfar move, Wolves come back where they started, and a clan ending a year without its Town Hall is out (`game.out`; its Raid units are lost with it, and it gets no three units back as a clan left with none does, 2026-11-12); the Hard bot and Robotos scout, move into creature territories and guard their Town Hall there (`scoutValue`, `hallValue` in `nort/bot-hard.scala`; 2026-11-12: the Robotos bot never left home); in new games (hidden `PCVersionUpdate`, 2026-11-11) the two-player map is an oval, every home has a lair territory with a small building space just outside it for a Mine, Mines give Stone with no roll (or, in games with the hidden `PCMineChoice` every new game gets, each clan picks that Stone or the Minerals roll for Stone, Iron or Gem at each harvest; 2026-11-13; `PCMineChoiceAction(X)` switches a running game); Raven's Rangers (Clan Fame upgrades) scouts once more, anywhere it doesn't see, after a scout (hidden `PCRangersScout`, every new game; 2026-11-13: it was never offered in PC games; `PCRangersScoutAction(X)` switches a running game), the 2, 4 and 6 clan maps are mirrored (`turnsOf` in `attemptMap`) and with 3 clans or more the Wilderness and Wastelands creatures are in (`moreCreatures`); the Town Hall is drawn beside the Port, not over it; Vedrfolnir's controller reveals one random territory it hasn't seen at the end of each year, enemy ones too (hidden `PCVedrfolnirReveal`, every new game; 2026-11-12; `PCVedrfolnirRevealAction(X)` switches a running game; the tile's info box says so, `TileAbilities.textIn`), and its Wastelands tile adding before the Harvest is not offered (hidden `PCVedrfolnirNoTile`, every new game; Bear was asked in Winter for Clan and the tile fit nowhere, 2026-11-12; `PCVedrfolnirNoTileAction(X)` switches a running game); "Domination victory" (`DominationVictory`, under Fan victories, shown only with the PC version) makes the last clan holding its Town Hall win at once, beside the other victory conditions (in games with the hidden `PCDominationChoice` every new game gets; older PC games always had it); the retired "Domination victory only" (`DominationOnly`, hidden, still in Winter for Clan) made it the only winner, the game going on after the last year; from Marzaus's playtest (2026-11-14), new games get hidden `PCSeenOnly` (no move or retreat into a territory the clan doesn't see, `PCExpansion.mayEnter`), `PCMinePerMine` (Stone or the roll for each Mine), `PCOneUpgrade` (one upgrade per Build, the Town Hall's too), `PCNavalPort` (a Port gives 3 combat points against an attack by sea, `game.navalFights`), `PCHallShield` (the Town Hall ignores 1 rolled casualty in its territory, against clans and creatures), `PCHallSafe` (no creature moves into or attacks a Town Hall in years 1 and 2), `PCArmyCap` (22 units, Winter costs up to 6 food 4 wood), `PCTowerPoints` (a Defense Tower gives 2 points against creatures), `PCScoutFame` (a scout gives 1 fame) and `PCScorchedSeen` (2026-11-15: the Scorched Earth token, the Snake Clan card's and Under Pressure's, only goes where Snake sees, `PCExpansion.mayScorch`, and Under Pressure may also move it to a neutral territory, collecting what it gives), each with a `<Option>Action(X)` switch; `NORT_PC=1` in the headless host; see `nort/RULES.md`.
+The setup screen lists the modules one section per box, as a player laid them out on 2026-10-26: "Base game" (Creatures module,
 More creatures!), "Warchief expansion" (once "Warchiefs module"), "Wilderness expansion" and "Wastelands expansion", each split into
 its "Environment tiles" and its creatures (`WildernessTiles`, `WildernessCreatures`, `WastelandsTiles`, `WastelandsCreatures` in
 `nort/options.scala`; any part turns the expansion's code on, `Meta.has`; `Wild.tilesOn`/`creaturesOn`, `Waste.tilesOn`/`creaturesOn`
 say which), with the folded "Ban Environment tiles" (`BanEnvironment`, the two Geysers, Ruins and High Peaks together; the Ancestral
 Graveyard and the Wyvern's Den bring their Spectral Warriors and Wyvern) and "Ban creatures" (`BanCreature`, the expansions' deck
 creatures) shown for the parts picked, then the Central tile, then "Uncharted Horizons" (Events, Sea, its map tiles); Balanced
-starting tiles is under Fan content (Gman, 2026-11-02; it sat right after Card edition). Older games keep `ModuleOption(Wilderness)` / `ModuleOption(Wastelands)`, both
+starting tiles is under Fan content (2026-11-02; it sat right after Card edition). Older games keep `ModuleOption(Wilderness)` / `ModuleOption(Wastelands)`, both
 parts, now hidden (`Meta.retired`, still logged at the start); Adset still adds the whole expansion it drafts.
 On the map, territories are tinted with their controlling player's color,
 turn gray when invaded and pink during the fight (resource icons and the
@@ -141,7 +141,7 @@ again over the pieces, so a figure that must overlap one never hides it. Tapping
 picks its territory for an offered action (`pieceInfo` in `nort/ui.scala`): a creature, Jötunn Blainn
 or a Raid card its card, a warchief (and Horse's Brok) its board, power and upgrade card (`WarchiefInfo`,
 `Meta.warchiefInfo`), and Kaija, Lynx's Brundr and Kaelinn, the High Tide and Scorched Earth tokens their
-clan's three clan cards (`ClanAbilityInfo`, `Meta.clanAbility`). An Ox Ancestral Equipment token says what it does in a fight and how Ox takes it (`GearTokenInfo`, `gearTokenView`; asked for by Gman on 2026-10-21); when taking a token is offered, the tap takes it. The Automa's Leaders open nothing. The tiles with a rule of their own (the Wilderness and Wastelands Environment tiles, the Wastelands central tiles and The Bridge) keep their centrepiece (the Vedrfolnir eagle, ...) out of the territory tint, like the resource icons, with a small "i" at its top right; tapping either opens the tile's name, picture and rule (`TileAbilities` in `nort/tile-abilities.scala`, `TileAbilityInfo`; asked for by Marzaus and Gman on 2026-11-01). The fame icons printed on the Ruins, both Wyvern's Dens and Yggdrasil stay out of the tint too, and figures are kept off them (`TileAbilities.fame`; Gman, 2026-11-02).
+clan's three clan cards (`ClanAbilityInfo`, `Meta.clanAbility`). An Ox Ancestral Equipment token says what it does in a fight and how Ox takes it (`GearTokenInfo`, `gearTokenView`; asked for on 2026-10-21); when taking a token is offered, the tap takes it. The Automa's Leaders open nothing. The tiles with a rule of their own (the Wilderness and Wastelands Environment tiles, the Wastelands central tiles and The Bridge) keep their centrepiece (the Vedrfolnir eagle, ...) out of the territory tint, like the resource icons, with a small "i" at its top right; tapping either opens the tile's name, picture and rule (`TileAbilities` in `nort/tile-abilities.scala`, `TileAbilityInfo`; asked for on 2026-11-01). The fame icons printed on the Ruins, both Wyvern's Dens and Yggdrasil stay out of the tint too, and figures are kept off them (`TileAbilities.fame`; 2026-11-02).
 The Northgard layout (`layouter` in `nort/ui.scala`) has the map on the left
 and the player panels, log and action pane (choices and hand) on the right;
 the owner asked for that on 2026-10-05, undoing an earlier mirrored layout
@@ -153,12 +153,12 @@ log on the far right, with the
 hand cards sized to the pane (`--nort-hand-card`) so the whole hand fits. The shared cards strip (Developments, Achievements, Creatures and the rest, the `court` pane)
 has a tab on its left that folds it into a one-line bar listing each group with its card count, and back;
 the player panels right above it (ultrawide) grow into the room with a larger font (as far as their width
-allows), or else the pane right under it (the map) does, and nothing else moves (`foldCourt` in `nort/ui.scala`). Folded, the player panels are laid out again in one row or several (2x2 for four panels on a phone), whichever gives the largest font that still fits their measured contents, each only as tall as it needs; the rest of the room goes to the pane below. They are measured again once their icons have loaded (an icon takes no room before), so a game loaded folded fits too (`refitFolded`). Open, a row of panels right above the strip (a phone held upright, three players or more) takes the room its contents need from the strip, up to half of it, and shrinks its font for the rest (`openPanels` in `foldCourt0`); their tables were cut off before (2026-10-18). On a phone the map's zoom and arrow buttons start folded into their one corner button until the player unfolds them (`mapButtons`, `<settingsKey>.map-buttons-folded`). The folded bar starts with "Year X of 7". Where the strip sits left of the panels at the top (16:9 and 16:10), its tab points sideways (◂ to fold, ▸ to unfold): folded, it is a narrow tab on the left with its text running down in two columns, and the panels run across the top from it, with the map and log under them (`courtSideways`). There the tab swaps the top row between the two instead of sharing it (asked for by Robotos on 2026-10-12): the panels across it with the strip folded into that tab (the default), or the strip across the whole row and no panels (`courtWide`, remembered apart from the other shapes' folding as `<settingsKey>.court-wide`). On a tall screen (a phone held upright) the log is moved out of the player panels' row to beside the action pane at the bottom, the panels take that whole row under the strip and the height their contents need from the map, and during setup, when the strip is empty, its room too (`logBesideAction` in `nort/ui.scala`; asked for by Gman on 2026-10-29). With two players (or one) on a tall screen (a phone held upright), the panels are moved up beside the strip (`panelsBesideCourt`), wherever the layouter put them, so it folds sideways there too. Each browser remembers it (`<settingsKey>.court-folded`). The divider right of the map, the one between the log and the action pane, and the bottom edge of the player panels have round drag handles with arrows (`split` and `placeHandles` in `nort/ui.scala`; asked for by Gman on 2026-10-08): dragging moves the panes along that edge, each kept at least 15% of the window (moving the map's edge left, an unfolded row of court and panels above it follows; a row of panels starting at the edge shares the room), double-tapping one puts it back, and each browser remembers the offsets per screen shape (`<settingsKey>.split-<tall|wide|ultrawide>`, "x,y,panels,bottom"). The panels' edge stretches or shrinks the panels (to half their height at least) and their font with them, as far as their measured contents fit their width; the court right under them moves along, the panes under that give the room (the log down to 15%, then the action pane). Folded, the extra height is first given to `foldCourt` (its `extra`), which may lay the panels out in more rows with a larger font. The map's bottom edge has one too when panes are right under it (the log and the action pane on a phone held upright, asked for by the owner on 2026-10-11): dragging it up makes them taller and their font larger (by the square root of the height), down the other way. A layout with no pane past the map's right edge or under the log or the map shows none of those handles. The log folds in every layout (`foldLog` and `placeLogToggle` in `nort/ui.scala`): a small "–" button in its top right corner (bottom right when a handle is there) folds it into a "+ Log" strip, beside the pane it touches or across, and that pane (the action pane first, else the map) takes the room; each browser remembers it (`<settingsKey>.log-folded`). A page runs one game: `startGame` in `hrf.scala` ignores a second start (`gameStarted`, reset by Play Again), and the handles remove any left by an earlier game UI, after Robotos saw two of each handle on 2026-10-09. The player panels run left to right in turn order, starting with the clan that went first this year (the order doesn't change when the first player marker moves during the year; `panelOrder` in `nort/ui.scala`, `game.yearFirst`; Adset uses its random seat order, `game.seats`; asked for by Gman on 2026-10-13). The player panels show the card counts, then units, warchief and supply, then a small table with grid lines around its cells (`ledger` in `factionStatus`, `nort/ui.scala`; asked for by the player Robotos on 2026-10-08): a column per resource and one for fame, the stockpile (other players' fame is "?" until the game is over, as the fame tokens are face down: only the clan whose player is asked or waiting on this screen, and its teammates, show theirs; `viewers` and `fameHidden` in `nort/ui.scala`; spectators see none; the setup screen's "Fame" choice, Private (the default) or Public, `PrivateFame`/`PublicFame` in `nort/options.scala`, shows everyone's in Public games), then under it the clan's next harvest as things stand
-(`Harvest.forecast` in `nort/game.scala`, the same sums `HarvestAction` uses; the Dragon's food and wood as ranges, "+1-2", the upper end faint since its sacrifice adds 1 to only one of them) in green (grayed out once that year's harvest is collected, through trading and Winter, as it then only forecasts next year's: `game.harvested`; asked for by Robotos on 2026-10-22) and its Winter cost (as losses, "-1") in red, on rows marked with a wheat sheaf and a snowflake (`SeasonIcon`, drawn by `nort/tools/panel-icons.py`); tapping the table opens the whole
-Winter chart (`winterChart` in `nort/ui.scala`), except the lore (its icon or number), which opens the clan's Lore Tree (`LoreTree`, `loreTree`; Gman moved it there from the action pane on 2026-10-08). Each player can hide the
+allows), or else the pane right under it (the map) does, and nothing else moves (`foldCourt` in `nort/ui.scala`). Folded, the player panels are laid out again in one row or several (2x2 for four panels on a phone), whichever gives the largest font that still fits their measured contents, each only as tall as it needs; the rest of the room goes to the pane below. They are measured again once their icons have loaded (an icon takes no room before), so a game loaded folded fits too (`refitFolded`). Open, a row of panels right above the strip (a phone held upright, three players or more) takes the room its contents need from the strip, up to half of it, and shrinks its font for the rest (`openPanels` in `foldCourt0`); their tables were cut off before (2026-10-18). On a phone the map's zoom and arrow buttons start folded into their one corner button until the player unfolds them (`mapButtons`, `<settingsKey>.map-buttons-folded`). The folded bar starts with "Year X of 7". Where the strip sits left of the panels at the top (16:9 and 16:10), its tab points sideways (◂ to fold, ▸ to unfold): folded, it is a narrow tab on the left with its text running down in two columns, and the panels run across the top from it, with the map and log under them (`courtSideways`). There the tab swaps the top row between the two instead of sharing it (asked for on 2026-10-12): the panels across it with the strip folded into that tab (the default), or the strip across the whole row and no panels (`courtWide`, remembered apart from the other shapes' folding as `<settingsKey>.court-wide`). On a tall screen (a phone held upright) the log is moved out of the player panels' row to beside the action pane at the bottom, the panels take that whole row under the strip and the height their contents need from the map, and during setup, when the strip is empty, its room too (`logBesideAction` in `nort/ui.scala`; asked for on 2026-10-29). With two players (or one) on a tall screen (a phone held upright), the panels are moved up beside the strip (`panelsBesideCourt`), wherever the layouter put them, so it folds sideways there too. Each browser remembers it (`<settingsKey>.court-folded`). The divider right of the map, the one between the log and the action pane, and the bottom edge of the player panels have round drag handles with arrows (`split` and `placeHandles` in `nort/ui.scala`; asked for on 2026-10-08): dragging moves the panes along that edge, each kept at least 15% of the window (moving the map's edge left, an unfolded row of court and panels above it follows; a row of panels starting at the edge shares the room), double-tapping one puts it back, and each browser remembers the offsets per screen shape (`<settingsKey>.split-<tall|wide|ultrawide>`, "x,y,panels,bottom"). The panels' edge stretches or shrinks the panels (to half their height at least) and their font with them, as far as their measured contents fit their width; the court right under them moves along, the panes under that give the room (the log down to 15%, then the action pane). Folded, the extra height is first given to `foldCourt` (its `extra`), which may lay the panels out in more rows with a larger font. The map's bottom edge has one too when panes are right under it (the log and the action pane on a phone held upright, asked for on 2026-10-11): dragging it up makes them taller and their font larger (by the square root of the height), down the other way. A layout with no pane past the map's right edge or under the log or the map shows none of those handles. The log folds in every layout (`foldLog` and `placeLogToggle` in `nort/ui.scala`): a small "–" button in its top right corner (bottom right when a handle is there) folds it into a "+ Log" strip, beside the pane it touches or across, and that pane (the action pane first, else the map) takes the room; each browser remembers it (`<settingsKey>.log-folded`). A page runs one game: `startGame` in `hrf.scala` ignores a second start (`gameStarted`, reset by Play Again), and the handles remove any left by an earlier game UI, after a player saw two of each handle on 2026-10-09. The player panels run left to right in turn order, starting with the clan that went first this year (the order doesn't change when the first player marker moves during the year; `panelOrder` in `nort/ui.scala`, `game.yearFirst`; Adset uses its random seat order, `game.seats`; asked for on 2026-10-13). The player panels show the card counts, then units, warchief and supply, then a small table with grid lines around its cells (`ledger` in `factionStatus`, `nort/ui.scala`; asked for on 2026-10-08): a column per resource and one for fame, the stockpile (other players' fame is "?" until the game is over, as the fame tokens are face down: only the clan whose player is asked or waiting on this screen, and its teammates, show theirs; `viewers` and `fameHidden` in `nort/ui.scala`; spectators see none; the setup screen's "Fame" choice, Private (the default) or Public, `PrivateFame`/`PublicFame` in `nort/options.scala`, shows everyone's in Public games), then under it the clan's next harvest as things stand
+(`Harvest.forecast` in `nort/game.scala`, the same sums `HarvestAction` uses; the Dragon's food and wood as ranges, "+1-2", the upper end faint since its sacrifice adds 1 to only one of them) in green (grayed out once that year's harvest is collected, through trading and Winter, as it then only forecasts next year's: `game.harvested`; asked for on 2026-10-22) and its Winter cost (as losses, "-1") in red, on rows marked with a wheat sheaf and a snowflake (`SeasonIcon`, drawn by `nort/tools/panel-icons.py`); tapping the table opens the whole
+Winter chart (`winterChart` in `nort/ui.scala`), except the lore (its icon or number), which opens the clan's Lore Tree (`LoreTree`, `loreTree`; moved there from the action pane on 2026-10-08). Each player can hide the
 tints and the colored borders under "Interface" (the Territory Color and
 Fame Borders settings in `nort/meta.scala`). The tints are the player colors themselves
-(`PlayerColor.hex`: each player color is one shade for the names, the tint and the fame border dashes, `PlayerColor.ink` and `lineOf` in `nort/ui.scala` being the same; red is a neon `#ff0000`, Gman, 2026-11-04 and 07, and yellow the yellow units' `#fbfb05`, which the names had since 2026-10-18; every color made one shade by Gman on 2026-11-10), at 50% opacity; picking "Custom" under Territory Color
+(`PlayerColor.hex`: each player color is one shade for the names, the tint and the fame border dashes, `PlayerColor.ink` and `lineOf` in `nort/ui.scala` being the same; red is a neon `#ff0000`, 2026-11-04 and 07, and yellow the yellow units' `#fbfb05`, which the names had since 2026-10-18; every color made one shade on 2026-11-10), at 50% opacity; picking "Custom" under Territory Color
 (`CustomTerritoryColor`) shows the "<Color> Territories" rows, where each player sets how
 opaque each color is, 0 to 100% in steps of 10 (default 50%) (`TerritoryOpacity`, a
 `CompactSetting`: its values are one row of small buttons in the settings screen,
@@ -172,34 +172,34 @@ one button just outside each corner: rotate arrows at the top, the check mark an
 then pick who goes. Every move (a Move card, a retreat, Brand's Bravery, the Lynx bonus Move) picks its figures one by one after the
 destination (`FigurePicker` in `nort/figures.scala`; asked for on Discord on 2026-11-01, when one of Brundr and Kaelinn couldn't retreat alone):
 the units as a counter ("−", "3 of 5 units", "+"), a Yes/No switch for the warchief and for each companion (Kaija, Brok, Brundr and
-Kaelinn separately, by name: `game.lynxSwapped` names the two lynx slots, and picking the first slot's lynx alone out of a pair records `LynxFirstAction`, which swaps the names before the same recorded action as before (Gman, 2026-11-02: "The cats are two separate units")), and the button that does it, naming who goes. The switches are
+Kaelinn separately, by name: `game.lynxSwapped` names the two lynx slots, and picking the first slot's lynx alone out of a pair records `LynxFirstAction`, which swaps the names before the same recorded action as before (2026-11-02: "The cats are two separate units")), and the button that does it, naming who goes. The switches are
 soft and the button is the same recorded action as before (`MoveUnitsAction`, `MoveOneLynxAction`, `RetreatPartyAction`, the new
 `RetreatOneLynxAction`, `LynxGoAction`...), so it needs no option and older games load and replay unchanged; `FiguresExplodeAction` lists
-every button for bots and move checks. Hidden Ways uses it too (`HiddenGoal`, `HiddenOneLynxAction`). Swamp and teammate passes, Stag's single-unit Move and Military Militia moves keep their own lists. Casualties picked by their player (`ChooseCasualties`) use the same picker (`CasualtyGoal`; Gman, 2026-11-02): the units counter (then Militia), Yes/No for the warchief, each lynx or companion, Jötunn Blainn and the Military paths' bodyguard, and a button naming the loss, the same recorded `CasualtyPickAction`, except losing both lynxes while keeping units, which the old list couldn't say (`CasualtyBothLynxAction`, `game.casualtyBothLynx`), and losing the bodyguard before all the units, as it comes back each year (`CasualtyGuardAction`, `game.casualtyGuard`; Marzaus, 2026-11-02; it only adds a choice, so no option). Development
+every button for bots and move checks. Hidden Ways uses it too (`HiddenGoal`, `HiddenOneLynxAction`). Swamp and teammate passes, Stag's single-unit Move and Military Militia moves keep their own lists. Casualties picked by their player (`ChooseCasualties`) use the same picker (`CasualtyGoal`; 2026-11-02): the units counter (then Militia), Yes/No for the warchief, each lynx or companion, Jötunn Blainn and the Military paths' bodyguard, and a button naming the loss, the same recorded `CasualtyPickAction`, except losing both lynxes while keeping units, which the old list couldn't say (`CasualtyBothLynxAction`, `game.casualtyBothLynx`), and losing the bodyguard before all the units, as it comes back each year (`CasualtyGuardAction`, `game.casualtyGuard`; 2026-11-02; it only adds a choice, so no option). Development
 and other card picks show the cards at hand-card size, and the last player to pass
 still sees the one card left before taking it. Copies of the same card in hand (and among
 the Played cards) are drawn as one card with the copies peeking out behind it
-(`Card.handStack` in `nort/cards.scala`), in the hand and in every pick from it. The front card casts a shadow on the copies, which are darkened with a light edge, and its bottom right corner says how many there are ("×2"; asked for on Discord on 2026-10-14, as players kept missing their second Feast). Tapping a player's name in its panel opens its clan's info (`ClanInfo`, the same as the clan picker's "i" button); the clan board that was shown under the Lore Tree was removed for it on 2026-10-08 (asked for by Robotos). The player panels show numbers with icons, on rows that don't wrap: cards to draw, in hand, played this year (the active cards) and discarded (card icons outlined yellow, green, white and red, `ui-card-draw`, `-hand`, `-played`, `-discard`, drawn on the start card back by `nort/tools/panel-icons.py`; tapping the white card shows the active cards, the red one the discard pile), then the units on the map (the Recruit card's figure, `ui-unit`; with the Sea module, the units away on Raids in brackets beside it with a longship, `ShipIcon`, `ui-ship`, drawn by `nort/tools/panel-icons.py`), the warchief with the Warchiefs module (its token and name, grayed out while in the reserve) and the units left in the supply (`SupplyIcon`, `ui-unit-supply`, the units icon grayed out, by `nort/tools/panel-icons.py`), then the food, wood, lore and fame table, and the first player marker beside the clan name (`ui-first-player`). Ox Clan's panel shows its Ancestral Equipment tokens themselves, the ready ones face up and those used this year grayed out (no line while it has none: "Ancestral Equipment: none" sat under the panels' drag handle); tapping them lists all seven, what each does and where it is (`gearRow`, `gearView` and `GearView` in `nort/ui.scala`; asked for by Robotos on 2026-10-12). Kraken Clan's panel shows its two High Tide tokens the same way, those on the map in color and those in the reserve grayed out; tapping them says what High Tide does and where each token is (`tideRow`, `tideView` and `TideView` in `nort/ui.scala`; asked for by the owner on 2026-10-21, it said "High Tide: 0 in reserve").
-Ox Clan picks the free small building space or Carved Stone space of an explored tile its Ancestral Equipment token goes on (`GearPlaceAction` in `nort/newblood.scala`, asked for by Robotos on 2026-10-12), only in games with the hidden `OxPicksSpace` option every new game gets; older games keep the first free small building space, and so put no token on a tile with no free small building space. A running older game can be switched over with `OxPicksSpaceAction(X)` through an `hrf-games` fix; `OxPicksSpaceAction(GearPlaceAskAction(Ox, <tile>, <spot>, X))` also asks Ox to place the token a tile missed (Draugr against Winter, 2026-10-26: Robotos's Ox explored `tile-05`, whose only free space is a Carved Stone space, and got none).
-Replacing a building (Industrious Villagers, Horse's Craftsmen) when there is more than one to replace asks for the building first (tap it on the map or pick it in the list), then what it becomes (`ReplaceSpotAction` and `replaceAsk` in `nort/map.scala`; before, every building's choices were one list with the same names twice, reported by Robotos on 2026-10-14). Only the soft first step is new, so the recorded moves and old games are unchanged. Craftsmen ("with no other restriction") also offers a Carved Stone in place of a small building on a small building space, which Industrious Villagers and builds keep to Carved Stone spaces (`replacements(f, craftsmen)`; Marzaus, 2026-11-01); it only adds choices, so no option.
+(`Card.handStack` in `nort/cards.scala`), in the hand and in every pick from it. The front card casts a shadow on the copies, which are darkened with a light edge, and its bottom right corner says how many there are ("×2"; asked for on Discord on 2026-10-14, as players kept missing their second Feast). Tapping a player's name in its panel opens its clan's info (`ClanInfo`, the same as the clan picker's "i" button); the clan board that was shown under the Lore Tree was removed for it on 2026-10-08 (asked for). The player panels show numbers with icons, on rows that don't wrap: cards to draw, in hand, played this year (the active cards) and discarded (card icons outlined yellow, green, white and red, `ui-card-draw`, `-hand`, `-played`, `-discard`, drawn on the start card back by `nort/tools/panel-icons.py`; tapping the white card shows the active cards, the red one the discard pile), then the units on the map (the Recruit card's figure, `ui-unit`; with the Sea module, the units away on Raids in brackets beside it with a longship, `ShipIcon`, `ui-ship`, drawn by `nort/tools/panel-icons.py`), the warchief with the Warchiefs module (its token and name, grayed out while in the reserve) and the units left in the supply (`SupplyIcon`, `ui-unit-supply`, the units icon grayed out, by `nort/tools/panel-icons.py`), then the food, wood, lore and fame table, and the first player marker beside the clan name (`ui-first-player`). Ox Clan's panel shows its Ancestral Equipment tokens themselves, the ready ones face up and those used this year grayed out (no line while it has none: "Ancestral Equipment: none" sat under the panels' drag handle); tapping them lists all seven, what each does and where it is (`gearRow`, `gearView` and `GearView` in `nort/ui.scala`; asked for on 2026-10-12). Kraken Clan's panel shows its two High Tide tokens the same way, those on the map in color and those in the reserve grayed out; tapping them says what High Tide does and where each token is (`tideRow`, `tideView` and `TideView` in `nort/ui.scala`; asked for on 2026-10-21, it said "High Tide: 0 in reserve").
+Ox Clan picks the free small building space or Carved Stone space of an explored tile its Ancestral Equipment token goes on (`GearPlaceAction` in `nort/newblood.scala`, asked for on 2026-10-12), only in games with the hidden `OxPicksSpace` option every new game gets; older games keep the first free small building space, and so put no token on a tile with no free small building space. A running older game can be switched over with `OxPicksSpaceAction(X)` through an `hrf-games` fix; `OxPicksSpaceAction(GearPlaceAskAction(Ox, <tile>, <spot>, X))` also asks Ox to place the token a tile missed (Draugr against Winter, 2026-10-26: an Ox player explored `tile-05`, whose only free space is a Carved Stone space, and got none).
+Replacing a building (Industrious Villagers, Horse's Craftsmen) when there is more than one to replace asks for the building first (tap it on the map or pick it in the list), then what it becomes (`ReplaceSpotAction` and `replaceAsk` in `nort/map.scala`; before, every building's choices were one list with the same names twice, reported on 2026-10-14). Only the soft first step is new, so the recorded moves and old games are unchanged. Craftsmen ("with no other restriction") also offers a Carved Stone in place of a small building on a small building space, which Industrious Villagers and builds keep to Carved Stone spaces (`replacements(f, craftsmen)`; 2026-11-01); it only adds choices, so no option.
 A tile can't be placed where it joins two players' units (or a player's and a Fallen Valkyrie, which ignores the Robotos bot) into one territory; only the territories the tile joins are checked (`joins` in `nort/map.scala`), in games with the hidden `JoinedTilesOnly` option every new game gets. Older games check every territory on the map, so two clans sharing one anywhere (teammates, or Robotos beside a Valkyrie) stopped every Explore (Winter of Saga, 2026-10-13).
-Naströnd (Wastelands, `waste-nastrond`) gives the two wood it prints, in its west and east territories, at harvest and to everything collecting from a territory (Quality of Life, Lay of the Land, ...), in games with the hidden `NastrondWood` option every new game gets (`Game.areaSpec`); the tile data had no wood there (Marzaus, 2026-11-01), so older games keep none.
-Dragon Clan's extra food or wood after harvesting is only one that one of its territories gave at that harvest, less what Snake's Scorched Earth took there (`dragonExtra` in `nort/newblood.scala`, `game.scorchedTook`; Geffrey collected food from a scorched food territory, reported on Discord on 2026-10-19), in games with the hidden `DragonExtraFromTerritory` option every new game gets; older games offer either.
+Naströnd (Wastelands, `waste-nastrond`) gives the two wood it prints, in its west and east territories, at harvest and to everything collecting from a territory (Quality of Life, Lay of the Land, ...), in games with the hidden `NastrondWood` option every new game gets (`Game.areaSpec`); the tile data had no wood there (2026-11-01), so older games keep none.
+Dragon Clan's extra food or wood after harvesting is only one that one of its territories gave at that harvest, less what Snake's Scorched Earth took there (`dragonExtra` in `nort/newblood.scala`, `game.scorchedTook`; Dragon collected food from a scorched food territory, reported on Discord on 2026-10-19), in games with the hidden `DragonExtraFromTerritory` option every new game gets; older games offer either.
 Snake's Scorched Earth offers only what its territory gives at that harvest after the Events (Infestation's 1 food less, a skipped or doubled harvest; `ScorchedHarvestAction` in `nort/game.scala`, `EventsExpansion.harvest`), in games with the hidden `ScorchedAfterEvents` every new game gets: in Saga and Clan (2026-11-10) Snake took food Infestation had already removed, Horse was left with -1 food and its next fight asked it to spend food from an empty list, which stopped the game. `ScorchedAfterEventsAction(X)` switches a running game and puts any food, wood or lore below 0 back to 0. Every food payment (fights, creatures, the Lion's and Economics) now skips its question when the stock is 0 or less, so a negative stock can't stop a game again.
-A clan taking casualties in a fight picks which figures go when it has a choice (units, the warchief, Kaija or the other companions, Jötunn Blainn; `CasualtyPickAction` in `nort/map.scala`, asked for by Robotos on 2026-10-11), only in games with the hidden `ChooseCasualties` option that every new game gets (`mandatoryFor` in `nort/meta.scala` and `nort/adset.scala`); older games keep taking units first so their replays don't change. A running older game can be switched over from a given fight by wrapping a recorded step in `ChooseCasualtiesAction(X)` through an `hrf-games` fix (`nort/game.scala`; made on 2026-10-15 for Winter of Saga, where Snake wanted to lose its warchief to the Fallen Valkyrie instead of its last unit).
-Ancestral Curse's opponents pick the card they discard all at once, each on their own screen (a `MultiAsk`, `CurseAllAction` in `nort/effects.scala`; asked for by the owner on 2026-10-16), instead of one after another, only in games with the hidden `SimultaneousCurse` option that every new game gets; older games keep asking in turn order.
-The Kraken Clan card offers only the food or wood that a territory Kraken controls with a High Tide token gives (`resourcesIn` in `nort/newblood.scala`; with neither, it goes straight to the draw), as the card says "from a territory" (reported by Marzaus on 2026-10-19), only in games with the hidden `KrakenFromTerritory` option that every new game gets; older games offer either.
-Kraken's Knowledge from Beyond follows the print card (Marzaus, 2026-10-20): each High Tide territory gets its own free choice of Recruit 1 there (its Training Camp adds a unit, like every Recruit card), Collect 1 resource that territory gives, or Draw 1, so the same one can be picked for every territory, only in games with the hidden `KnowledgeEachTerritory` option that every new game gets; older games offer each option once and any resource.
-Before a Kraken card, with both High Tide tokens already out, Kraken may move one to another territory it controls (`TideMoveAction` and `tideMoves` in `nort/newblood.scala`; the board only says "place", and Kraken got nothing to do, reported by the owner on 2026-10-21), only in games with the hidden `KrakenMovesTide` option that every new game gets; a running older game can be switched over with `KrakenMovesTideAction(X)` through an `hrf-games` fix, like `KnowledgeEachTerritoryAction`.
-Future Sight takes an Achievement only in the last year, when the Achievements are the cards on offer; before it, only a revealed Development card (`futureSightCards` in `nort/effects.scala`; asked for by Gman on 2026-10-21), in games with the hidden `FutureSightLastYear` option that every new game gets; older games could take a face-up Achievement in any earlier year, and replay that way. An Achievement taken by Future Sight or at Mimirsbrunn is kept aside, face down, to score at the end (`FactionState.aside`, counted in `deck`), not put on top of the draw pile, where a draw brought it into the hand in place of a card (Marzaus and Robotos, relayed by Gman on 2026-10-28), in games with the hidden `AchievementsAside` option every new game gets; a running older game can be switched over with `AchievementsAsideAction(X)`.
-The setup's "Card edition" choice (`EditionChoice` in `nort/editions.scala`, also in Adset; asked for by Robotos on 2026-10-22): 1st edition or 2nd edition (`EditionChoice.default`, new games, the Quick Game and the Tutorial). Games made before it have neither and play the 1st edition. Cards that differ are entries in `CardVersions` (`nort/editions.scala`), each naming the card it replaces, the option that turns it on and its own name, image, effect and text; `Card.info` gives the version in play (`Card.printed` is the first printing), so a later erratum or a fan-made card is one entry plus an option. `CardVersions.options` follows the game being played (set by `Game` and `addOption`; one game per page, and the JVM checks run one game at a time), and before a game, as in the clan picker, holds the default edition. The clan info shows the other edition's text under each card that has one. The 2nd edition cards (images `card/clan/*-2e.webp`, cut from screenshots Gman forwarded from Discord): Stag Clan's card lets one unit make a Move 1 ignoring Rough borders from anywhere, a real Move that can attack (`StagMoveEffect`, `StagSingleMove`), Protector of the Land draws at most 3 (`ProtectorMaxEffect`), and Rapacious Exploitation then may draw 1 (`RapaciousDrawEffect`).
-The printed New Blood cards and boards (photos from Gman, 2026-10-23; the site's were the TTS prototype) are on in games with the hidden `PrintedNewBlood` option every new game gets: 19 clan cards in `CardVersions.printedNewBlood`, and the Squirrel Clan card, missed until Marzaus saw it on 2026-11-06 (1 food after the Recruit if the unit went into a territory producing food; hidden `PrintedSquirrelClan`, every new game) (`nort/editions.scala`, effects in `nort/newblood.scala`), the board rules (Lynx's Brundr and Kaelinn as two figures, `game.lynx2`, each starting placement may take one, so Lynx can start with both, in games with the hidden `LynxBothAtSetup` every new game gets (Gman, 2026-10-31; before it a second one placed at setup moved the first), and one placement may take both, with one unit or with the warchief (`SetupLynxPairHereAction`, Gman, 2026-11-01; it only adds choices to those games); both count as units for Winter costs in games with the hidden `LynxesCostWinter` every new game gets (Gman, 2026-11-01; `FactionState.winterUnits`; older games left them out); a Training Camp's extra recruit may be a lynx from the reserve, Lynx picking, in games with the hidden `LynxCampRecruitsLynx` every new game gets (Marzaus, 2026-11-02; `CampRecruitAction` in `nort/map.scala`; older games always got a unit; a running game can be switched over with `LynxCampRecruitsLynxAction(X)`); with a bonus Move of only them; Mielikki brings a lynx (by name, `mielikkiAsk`; also when she attacks a creature, in games with the hidden `MielikkiAgainstCreatures` every new game gets, Marzaus, 2026-11-02, `MielikkiCreatureAction`; `MielikkiAgainstCreaturesAction(X)` switches a running game); Kraken places or moves High Tide before or after its cards and loses it with a lost fight; Dragon's Pyre; Squirrel after Winter, `AfterWinterAction`) and the board pictures with the printed text (`expansion/board/<clan>-print.webp`, drawn over the old text by `nort/tools/board-text.py`; `Warchief.board`, `Warchief.power`). Older games keep the TTS cards; see `nort/RULES.md` (New Blood).
-The setup's "Undo" choice (`UndoChoice` in `nort/options.scala`, also in Adset; asked for by Robotos on 2026-10-20): Unlimited undo (the default, and every older game), Limited undo, or No undo. It only changes the log's "Undo to here" (`undoBlocked`, a hook in `grey.scala` that `nort/ui.scala` overrides), so no game records change: No undo never offers it, and Limited undo doesn't go back past a die roll, a shuffle or a random pick (an `OracleAction`), nor past a card, tile or token taken from a face-down pile or a hand looked at (`Game.revealedSince`: each pile in `hiddenPiles` must still end with what it held then, and `peeked` counts cards drawn and put back on top and Spy's and Rapacious's looks at a hand).
-A clan that can't pay for Winter takes its Unrest card itself: the card is shown and the player taps it (or, with none of the ten left, taps to lose 5 fame and discard the top card of their draw pile), one clan at a time in turn order (`WinterPayAction`, `TakeUnrestAction`, `UnrestGoneAction` in `nort/game.scala`, asked for by Robotos on 2026-10-12 as it was easy to miss), only in games with the hidden `TakeUnrestCard` option that every new game gets; older games hand it over without asking.
-After the die decides a fight (against a clan or a creature), a combat report (one sentence a line: who won and how, then the defender's and the attacker's totals, combat points, casualties inflicted and the fame a clan gained for defeating a creature, `FightSide.fame`, then each side's sources, defender first; the figures lost aren't listed, as the casualties say it; laid out by Robotos on 2026-10-26 and 28) is shown to both sides before the retreat, to be tapped OK (`CombatReportAction` in `nort/map.scala`); each player can skip theirs with the in-game "Combat Report" setting under Interface (`ShowCombatReport`, the default, or `SkipCombatReport`, like Root's Ambush! setting; the UI then taps OK for them, `ask` in `nort/ui.scala`). The old game options `CombatReportAttackers` and `CombatReportDefenders` are hidden and do nothing. In a local game with more than one human clan, each time another of them is asked the action pane shows "Pass to <clan>" and a "Show Hand and Choices" button instead of its hand and choices, and every clan's fame shows "?" until the tap (`passTo`, `passedTo` and `passing` in `nort/ui.scala`, like Root's pass screen; `Callbacks.hotseat` in `hrf.scala`); notifications wait for the tap too. The "Pass and Play" setting under Interface (`ShowPassScreen`, the default, or `NoPassScreen` in `nort/meta.scala`) turns it off (asked for by the owner on 2026-10-17).
-A clan power that goes off by itself (Raven, Stag, Boar, Goat, Wolf, Dragon's Pyre, Ox's token, Rat's units) is told to its player in a box after the action, "You activated your clan power in <territory>." with a button naming the gains ("Collect 1 Lore"), in games with the hidden `ClanPowerReports` option that every new game gets (`ClanPowers` and `ClanPowerReportAction` in `nort/map.scala`, asked for by Robotos on 2026-10-12); the gains are already made, and the in-game "Clan Power Report" setting under Interface (`ShowClanPowerReport`, the default, or `SkipClanPowerReport`) skips it. The reroll step (Liv's, with the Warchiefs module, and Ox Clan's Ancestral Equipment token 3) shows what was rolled and both sides' combat points with that roll above "Reroll the combat die" and "Keep the result", and, for the attacker, that the defender rolls next (`RerollInfoAction` in `nort/map.scala`, asked for by Robotos on 2026-10-13; an info box, so no game records change).
-In games with the hidden `ReportsDontWait` option every new game gets (not the Tutorial's practice game, which explains the boxes), the combat report and the clan power report don't stop the game: each reader gets them as a notification (`ReportNote` in `nort/map.scala`, `game.notify`), shown over their screen the next time it updates (`showNotifications` in `nort/ui.scala`, which leaves out the kinds their Skip settings turn off); asked for by Robotos on 2026-10-21, as nobody should wait for another player to tap OK on a box only they read.
-Explore writes "drew a tile to explore" when the tile is drawn (`ExploreChooseAction` in `nort/map.scala`), so the log has a line between the draw and the placement and Limited undo can go back to the drawn tile to place it again (Robotos, 2026-10-21; the line before was the card played before the draw, which Limited undo refuses).
+A clan taking casualties in a fight picks which figures go when it has a choice (units, the warchief, Kaija or the other companions, Jötunn Blainn; `CasualtyPickAction` in `nort/map.scala`, asked for on 2026-10-11), only in games with the hidden `ChooseCasualties` option that every new game gets (`mandatoryFor` in `nort/meta.scala` and `nort/adset.scala`); older games keep taking units first so their replays don't change. A running older game can be switched over from a given fight by wrapping a recorded step in `ChooseCasualtiesAction(X)` through an `hrf-games` fix (`nort/game.scala`; made on 2026-10-15 for Winter of Saga, where Snake wanted to lose its warchief to the Fallen Valkyrie instead of its last unit).
+Ancestral Curse's opponents pick the card they discard all at once, each on their own screen (a `MultiAsk`, `CurseAllAction` in `nort/effects.scala`; asked for on 2026-10-16), instead of one after another, only in games with the hidden `SimultaneousCurse` option that every new game gets; older games keep asking in turn order.
+The Kraken Clan card offers only the food or wood that a territory Kraken controls with a High Tide token gives (`resourcesIn` in `nort/newblood.scala`; with neither, it goes straight to the draw), as the card says "from a territory" (reported on 2026-10-19), only in games with the hidden `KrakenFromTerritory` option that every new game gets; older games offer either.
+Kraken's Knowledge from Beyond follows the print card (2026-10-20): each High Tide territory gets its own free choice of Recruit 1 there (its Training Camp adds a unit, like every Recruit card), Collect 1 resource that territory gives, or Draw 1, so the same one can be picked for every territory, only in games with the hidden `KnowledgeEachTerritory` option that every new game gets; older games offer each option once and any resource.
+Before a Kraken card, with both High Tide tokens already out, Kraken may move one to another territory it controls (`TideMoveAction` and `tideMoves` in `nort/newblood.scala`; the board only says "place", and Kraken got nothing to do, reported on 2026-10-21), only in games with the hidden `KrakenMovesTide` option that every new game gets; a running older game can be switched over with `KrakenMovesTideAction(X)` through an `hrf-games` fix, like `KnowledgeEachTerritoryAction`.
+Future Sight takes an Achievement only in the last year, when the Achievements are the cards on offer; before it, only a revealed Development card (`futureSightCards` in `nort/effects.scala`; asked for on 2026-10-21), in games with the hidden `FutureSightLastYear` option that every new game gets; older games could take a face-up Achievement in any earlier year, and replay that way. An Achievement taken by Future Sight or at Mimirsbrunn is kept aside, face down, to score at the end (`FactionState.aside`, counted in `deck`), not put on top of the draw pile, where a draw brought it into the hand in place of a card (2026-10-28), in games with the hidden `AchievementsAside` option every new game gets; a running older game can be switched over with `AchievementsAsideAction(X)`.
+The setup's "Card edition" choice (`EditionChoice` in `nort/editions.scala`, also in Adset; asked for on 2026-10-22): 1st edition or 2nd edition (`EditionChoice.default`, new games, the Quick Game and the Tutorial). Games made before it have neither and play the 1st edition. Cards that differ are entries in `CardVersions` (`nort/editions.scala`), each naming the card it replaces, the option that turns it on and its own name, image, effect and text; `Card.info` gives the version in play (`Card.printed` is the first printing), so a later erratum or a fan-made card is one entry plus an option. `CardVersions.options` follows the game being played (set by `Game` and `addOption`; one game per page, and the JVM checks run one game at a time), and before a game, as in the clan picker, holds the default edition. The clan info shows the other edition's text under each card that has one. The 2nd edition cards (images `card/clan/*-2e.webp`, cut from screenshots forwarded from Discord): Stag Clan's card lets one unit make a Move 1 ignoring Rough borders from anywhere, a real Move that can attack (`StagMoveEffect`, `StagSingleMove`), Protector of the Land draws at most 3 (`ProtectorMaxEffect`), and Rapacious Exploitation then may draw 1 (`RapaciousDrawEffect`).
+The printed New Blood cards and boards (photos from 2026-10-23; the site's were the TTS prototype) are on in games with the hidden `PrintedNewBlood` option every new game gets: 19 clan cards in `CardVersions.printedNewBlood`, and the Squirrel Clan card, missed until a player saw it on 2026-11-06 (1 food after the Recruit if the unit went into a territory producing food; hidden `PrintedSquirrelClan`, every new game) (`nort/editions.scala`, effects in `nort/newblood.scala`), the board rules (Lynx's Brundr and Kaelinn as two figures, `game.lynx2`, each starting placement may take one, so Lynx can start with both, in games with the hidden `LynxBothAtSetup` every new game gets (2026-10-31; before it a second one placed at setup moved the first), and one placement may take both, with one unit or with the warchief (`SetupLynxPairHereAction`, 2026-11-01; it only adds choices to those games); both count as units for Winter costs in games with the hidden `LynxesCostWinter` every new game gets (2026-11-01; `FactionState.winterUnits`; older games left them out); a Training Camp's extra recruit may be a lynx from the reserve, Lynx picking, in games with the hidden `LynxCampRecruitsLynx` every new game gets (2026-11-02; `CampRecruitAction` in `nort/map.scala`; older games always got a unit; a running game can be switched over with `LynxCampRecruitsLynxAction(X)`); with a bonus Move of only them; Mielikki brings a lynx (by name, `mielikkiAsk`; also when she attacks a creature, in games with the hidden `MielikkiAgainstCreatures` every new game gets, 2026-11-02, `MielikkiCreatureAction`; `MielikkiAgainstCreaturesAction(X)` switches a running game); Kraken places or moves High Tide before or after its cards and loses it with a lost fight; Dragon's Pyre; Squirrel after Winter, `AfterWinterAction`) and the board pictures with the printed text (`expansion/board/<clan>-print.webp`, drawn over the old text by `nort/tools/board-text.py`; `Warchief.board`, `Warchief.power`). Older games keep the TTS cards; see `nort/RULES.md` (New Blood).
+The setup's "Undo" choice (`UndoChoice` in `nort/options.scala`, also in Adset; asked for on 2026-10-20): Unlimited undo (the default, and every older game), Limited undo, or No undo. It only changes the log's "Undo to here" (`undoBlocked`, a hook in `grey.scala` that `nort/ui.scala` overrides), so no game records change: No undo never offers it, and Limited undo doesn't go back past a die roll, a shuffle or a random pick (an `OracleAction`), nor past a card, tile or token taken from a face-down pile or a hand looked at (`Game.revealedSince`: each pile in `hiddenPiles` must still end with what it held then, and `peeked` counts cards drawn and put back on top and Spy's and Rapacious's looks at a hand).
+A clan that can't pay for Winter takes its Unrest card itself: the card is shown and the player taps it (or, with none of the ten left, taps to lose 5 fame and discard the top card of their draw pile), one clan at a time in turn order (`WinterPayAction`, `TakeUnrestAction`, `UnrestGoneAction` in `nort/game.scala`, asked for on 2026-10-12 as it was easy to miss), only in games with the hidden `TakeUnrestCard` option that every new game gets; older games hand it over without asking.
+After the die decides a fight (against a clan or a creature), a combat report (one sentence a line: who won and how, then the defender's and the attacker's totals, combat points, casualties inflicted and the fame a clan gained for defeating a creature, `FightSide.fame`, then each side's sources, defender first; the figures lost aren't listed, as the casualties say it; laid out on 2026-10-26 and 28) is shown to both sides before the retreat, to be tapped OK (`CombatReportAction` in `nort/map.scala`); each player can skip theirs with the in-game "Combat Report" setting under Interface (`ShowCombatReport`, the default, or `SkipCombatReport`, like Root's Ambush! setting; the UI then taps OK for them, `ask` in `nort/ui.scala`). The old game options `CombatReportAttackers` and `CombatReportDefenders` are hidden and do nothing. In a local game with more than one human clan, each time another of them is asked the action pane shows "Pass to <clan>" and a "Show Hand and Choices" button instead of its hand and choices, and every clan's fame shows "?" until the tap (`passTo`, `passedTo` and `passing` in `nort/ui.scala`, like Root's pass screen; `Callbacks.hotseat` in `hrf.scala`); notifications wait for the tap too. The "Pass and Play" setting under Interface (`ShowPassScreen`, the default, or `NoPassScreen` in `nort/meta.scala`) turns it off (asked for on 2026-10-17).
+A clan power that goes off by itself (Raven, Stag, Boar, Goat, Wolf, Dragon's Pyre, Ox's token, Rat's units) is told to its player in a box after the action, "You activated your clan power in <territory>." with a button naming the gains ("Collect 1 Lore"), in games with the hidden `ClanPowerReports` option that every new game gets (`ClanPowers` and `ClanPowerReportAction` in `nort/map.scala`, asked for on 2026-10-12); the gains are already made, and the in-game "Clan Power Report" setting under Interface (`ShowClanPowerReport`, the default, or `SkipClanPowerReport`) skips it. The reroll step (Liv's, with the Warchiefs module, and Ox Clan's Ancestral Equipment token 3) shows what was rolled and both sides' combat points with that roll above "Reroll the combat die" and "Keep the result", and, for the attacker, that the defender rolls next (`RerollInfoAction` in `nort/map.scala`, asked for on 2026-10-13; an info box, so no game records change).
+In games with the hidden `ReportsDontWait` option every new game gets (not the Tutorial's practice game, which explains the boxes), the combat report and the clan power report don't stop the game: each reader gets them as a notification (`ReportNote` in `nort/map.scala`, `game.notify`), shown over their screen the next time it updates (`showNotifications` in `nort/ui.scala`, which leaves out the kinds their Skip settings turn off); asked for on 2026-10-21, as nobody should wait for another player to tap OK on a box only they read.
+Explore writes "drew a tile to explore" when the tile is drawn (`ExploreChooseAction` in `nort/map.scala`), so the log has a line between the draw and the placement and Limited undo can go back to the drawn tile to place it again (2026-10-21; the line before was the card played before the draw, which Limited undo refuses).
 In every game, the log's word for how a fight ended ("won", "defeated", "drove", "wiped out") opens that fight's report (`CombatReport.link`, `FightReportView`).
 Combat points and casualties are drawn as the battle die's axe and skull wherever they come up (fight info, die results, the log, card and rules text): `CombatIcon` and, for rules text, `CombatText` in `nort/game.scala`, with `ui-axe` and `ui-skull` cut from the die texture `token/die.webp` (TTS mod 2838546142) by `nort/tools/dice-icons.py`.
 Images are in `webp2/nort/images/` (`card/`, `tile/`, `token/`), from a
@@ -235,41 +235,41 @@ offers two Random Clan picks, one of the seven core clans or one of all fourteen
 (`randomFactions` in `nort/meta.scala`, the hook in `meta.scala`): the clan is
 drawn among those not already picked and is shown only as "Random Clan" until
 the game starts (`hidden` in `customGame` and `startSetup` in `hrf.scala`;
-picking the drawn clan by hand draws again). The setup screen's first page has "Back" instead of "Cancel" when the clans were picked on the screen before (`picked` in `startSetup`): it returns to the picker with the picks kept, in every game (Northgard, Adset, Root and the rest; asked for by Gman on 2026-10-26). Those buttons (Back or Cancel, then Start or Next) are at the top of every setup page as well as the bottom (`buttons` in `setupQuestions`; Gman, 2026-10-26). The setup options
+picking the drawn clan by hand draws again). The setup screen's first page has "Back" instead of "Cancel" when the clans were picked on the screen before (`picked` in `startSetup`): it returns to the picker with the picks kept, in every game (Northgard, Adset, Root and the rest; asked for on 2026-10-26). Those buttons (Back or Cancel, then Start or Next) are at the top of every setup page as well as the bottom (`buttons` in `setupQuestions`; 2026-10-26). The setup options
 (colors, game length, victory conditions, first player, "Ban card draw developments"
 (`NoDrawDevelopments`: leaves the seven Development cards that only draw cards
-out of the decks), "Ban Defensive Strategy" (`NoDefensiveStrategy`, asked for by Gman on 2026-10-14;
-also offered in Adset), Marzaus's Development card counts, under Fan content (moved there on 2026-10-26, asked for by Robotos; once a "Development cards each year" section whose
-default, one per player, is now the hidden `NormalDevelopments` older games keep) as two toggles that turn each other off (`DevelopmentsChoice`: `FewerDevelopments`, one fewer from year 2 on, "hard mode", asked for by Marzaus on 2026-10-22; or one extra, `ExtraDevelopment`, `game.devsIn(year)`,
-suggested by Marzaus for two players on 2026-10-19, made for every player count by Gman on 2026-10-20; not against the
+out of the decks), "Ban Defensive Strategy" (`NoDefensiveStrategy`, asked for on 2026-10-14;
+also offered in Adset), Marzaus's Development card counts, under Fan content (moved there on 2026-10-26, asked for; once a "Development cards each year" section whose
+default, one per player, is now the hidden `NormalDevelopments` older games keep) as two toggles that turn each other off (`DevelopmentsChoice`: `FewerDevelopments`, one fewer from year 2 on, "hard mode", asked for on 2026-10-22; or one extra, `ExtraDevelopment`, `game.devsIn(year)`,
+suggested for two players on 2026-10-19, made for every player count on 2026-10-20; not against the
 Automa; in the main setup and Adset; the card left after everyone passes is discarded; when the core decks can't last
 every year, as with six players in a long game, the Uncharted Horizons Development cards are added, `ExtraDevelopment.needsHorizons`,
-`game.horizonsDevelopments`, asked for by Gman on 2026-10-20, and the setup screen warns of it),
+`game.horizonsDevelopments`, asked for on 2026-10-20, and the setup screen warns of it),
 "Ban Development cards" (`BanDevelopment(id)`, one toggle per Development card, a folded section; the Uncharted Horizons ones
 only with their option, all of them in Adset; `BanDevelopment.cards` gathers every ban for `ShuffledEarlyAction` and
 `ShuffledAdvancedAction`, and the setup screen warns when the bans leave too few cards for every year, `Meta.tooManyBans`;
-asked for by Marzaus and Robotos on 2026-10-21), "One more Achievement card" (`ExtraAchievement`: the last year reveals players + 1
-Achievements and the one left is set aside; asked for by Marzaus on 2026-10-19, also in Adset),
-"Balanced starting tiles" (`BalancedStartTiles`, under Fan content since 2026-11-02 (Gman; first in it), off by default, also in Adset;
-asked for by Gman on 2026-10-19 from Marzaus's group's house rule: each player's three starting tiles show at least one food,
+asked for on 2026-10-21), "One more Achievement card" (`ExtraAchievement`: the last year reveals players + 1
+Achievements and the one left is set aside; asked for on 2026-10-19, also in Adset),
+"Balanced starting tiles" (`BalancedStartTiles`, under Fan content since 2026-11-02 (first in it), off by default, also in Adset;
+asked for on 2026-10-19 from Marzaus's group's house rule: each player's three starting tiles show at least one food,
 one wood and one lore: each gets one tile from a food, a wood and a lore pile, a two-resource tile in the pile of the rarer
-one (`startPileOf`), blank tiles not dealt, `dealStart` in `nort/map.scala`; Gman picked that over redrawing), and the modules and
+one (`startPileOf`), blank tiles not dealt, `dealStart` in `nort/map.scala`; picked over redrawing), and the modules and
 expansions; Creatures, Warchiefs, Wilderness, Wastelands and Events are implemented, the others are shown but disabled) are in `nort/options.scala`.
 "Victory conditions" picks one of: the standard rules, fame only, Alternative
 victory with random cards (the rulebook's way), or Alternative victory with
 cards chosen from the 21 listed below it (exactly 1 Map Control and 2 Wealth,
-3 with teams, or Start is refused); plus Thane or Jarl (with teams, a team needs every card in both, the rulebook's 2 vs. 2 note, in games with the hidden `TeamVictoryAllCards` every new game gets, `TeamVictoryAllCardsAction(X)` switches a running game; Marzaus, 2026-11-07). Thane/Jarl and the
+3 with teams, or Start is refused); plus Thane or Jarl (with teams, a team needs every card in both, the rulebook's 2 vs. 2 note, in games with the hidden `TeamVictoryAllCards` every new game gets, `TeamVictoryAllCardsAction(X)` switches a running game; 2026-11-07). Thane/Jarl and the
 cards are listed only when they apply (`optionShown` in `nort/meta.scala`, a
 hook the setup screen in `hrf.scala` calls for every option). Long sections fold under a tappable
 heading with an arrow (`Folds` in `ui.scala`, `BaseOption.fold`): on the setup screen Game length, Victory conditions,
 Fame, Undo, Card edition, Automa difficulty, Central tile and Adset's Wilderness or Wastelands
-(every single-choice setup section, asked for by Robotos on 2026-10-26) and Fan content (Gman, 2026-10-29), in the settings Font Size, Scroll Speed (every game) and Territory Opacity. Folded,
+(every single-choice setup section, asked for on 2026-10-26) and Fan content (2026-10-29), in the settings Font Size, Scroll Speed (every game) and Territory Opacity. Folded,
 a section shows only what is picked (Territory Opacity a one-line summary, `Setting.foldSummary`); every section starts
 folded and the open ones are remembered in the browser (`hrf.open-sections`). A folded section with nothing picked shows its heading over "None" (before 2026-10-26 it vanished, so the
 Ban sections could not be opened). Victory conditions stays open while the
 chosen cards are the wrong number (`Meta.optionFoldOpen`). Northgard no longer sets `underConstruction`
 in its `Meta` (setting it to `true` would put an "Under Construction" note under
-its name on the game list and a disclaimer at the top of its menu). The main page (`/play`) ends with an "About" button that opens "About this site" (`Credits` in `hrf.scala`): JT's HRF engine, the AI note (Claude Code wrote most of the added code), the publishers, and links to hrf.im, HRF's source and JT's Ko-Fi; every game's About menu (Northgard's too, since then) starts with the same (asked for by Robotos and Gman on 2026-10-30). Every game's own menu (`/play/nort`, `/play/root` and the rest) ends with "Back", which loads the main page `/play` afresh, or for Adset its parent game's menu `/play/nort` (`metaMenu` in `hrf.scala`, a meta whose `linkedModes` name it; asked for by Gman on 2026-10-31).
+its name on the game list and a disclaimer at the top of its menu). The main page (`/play`) ends with an "About" button that opens "About this site" (`Credits` in `hrf.scala`): JT's HRF engine, the AI note (Claude Code wrote most of the added code), the publishers, and links to hrf.im, HRF's source and JT's Ko-Fi; every game's About menu (Northgard's too, since then) starts with the same (asked for on 2026-10-30). Every game's own menu (`/play/nort`, `/play/root` and the rest) ends with "Back", which loads the main page `/play` afresh, or for Adset its parent game's menu `/play/nort` (`metaMenu` in `hrf.scala`, a meta whose `linkedModes` name it; asked for on 2026-10-31).
 `nort/host.scala` runs bot games headless (JVM only,
 like the other `host.scala` files). `live-check.scala` (`sbt "runMain hrf.LiveCheck <hrf-games checkout>"`, same setup)
 loads every online game with the code as it is, the way a browser does; run it before deploying (see `nort/HANDOFF.md`). `nort/replay-check.scala` (`sbt "runMain nort.ReplayCheck"`,
@@ -313,168 +313,27 @@ cd haunt-roll-fail && sbt fullOptJS
 
 ## Live server
 
-- URL: https://games.clean5110.com/play (Let's Encrypt certificate).
-  `http://` links redirect to it.
-- Oracle Cloud Always Free instance `hrf-server`: Ubuntu 24.04 aarch64,
-  2 OCPUs, 12 GB RAM, ephemeral public IP 157.151.177.11
-- DNS: A record `games` -> 157.151.177.11 under Custom Records in the
-  Squarespace DNS settings for `clean5110.com`. The bare domain and `www`
-  are a Squarespace website; leave the Squarespace presets alone. If the IP
-  changes, update the `games` record.
-- SSH from the owner's Mac: `ssh -i ~/.ssh/oracle.key ubuntu@157.151.177.11`
-- Checkout at `~/hrf` on a local branch `hrf`; database at
-  `~/hrf/good-game-database*`; `SBT_OPTS` is set in `~/.bashrc`
-- The server runs in a tmux session named `hrf`, listening on port 443, with
-  a redirect server on port 80
-- Ports 80, 443 and 7070 are open in the Oracle security list and in the
-  instance's iptables (rules placed above the `REJECT` line, saved with
-  `netfilter-persistent save`). `/etc/sysctl.d/50-hrf-ports.conf` lets the
-  non-root server bind ports below 1024.
+- URL: https://games.clean5110.com/play. `live-server.sh` runs it (`deploy`, `start`, `stop`,
+  `restart`, `log`, `auto-deploy`, `backup-sync`, ...), and `setup-https.sh` sets up its
+  Let's Encrypt certificate.
+- Where it runs, how to reach it, DNS, https, starting and stopping, auto-deploy, the game
+  copies and fixes, backups and the bug report setup are in `notes/server.md` in the private
+  repository `guarantee418/hrf-games` (add it with `add_repo`). They were moved there on
+  2026-11-17 because this repository is public. Keep server addresses, hosting and access
+  details, and players' names, out of this repository.
+- Deploying: no session can reach the server; it watches the GitHub branch `deploy` and
+  deploys any commit on `main` that branch is pushed to, within about 2 minutes:
 
-### https
+  ```
+  git fetch origin main && git push origin origin/main:refs/heads/deploy
+  ```
 
-- The server turns on https when `certificate.pkcs12` (PKCS12, empty
-  password) exists in its working directory, `~/hrf/good-game`, and rereads
-  that file within a minute when it changes, so renewals need no restart.
-- When it runs on a port other than 80 and that file or `good-game/acme/`
-  exists, it also starts a port 80 server. That server serves Let's Encrypt
-  challenges from `good-game/acme/` and redirects everything else to the URL
-  argument, keeping the path.
-- Set up with `~/hrf/setup-https.sh games.clean5110.com` (arguments:
-  hostname, optional email for expiry notices). It allows non-root use of
-  ports 80/443, opens them in iptables, installs certbot and the renewal
-  hook, and gets the certificate. It is safe to run again, for example for a
-  new hostname; then change `URL` in `live-server.sh`, restart, and
-  `sudo certbot delete --cert-name <old name>`.
-- Certbot renews through `certbot.timer`. Its hook
-  `/etc/letsencrypt/renewal-hooks/deploy/hrf-pkcs12.sh` rewrites
-  `certificate.pkcs12` for the hostname it was set up for.
-- `certificate.pkcs12` holds the private key and is gitignored. Never commit it.
-- Old `http://157.151.177.11:7070` links can be sent to the redirect server
-  (only while the server is not on 7070, or it makes a redirect loop):
-  `sudo iptables -t nat -A PREROUTING -p tcp --dport 7070 -j REDIRECT --to-ports 80`
-  then `sudo netfilter-persistent save`.
-
-### Starting, stopping and deploying
-
-`live-server.sh` in the checkout runs the server in the tmux session `hrf`
-with the right arguments. Run it from the owner's Mac over ssh:
-
-```
-ssh -i ~/.ssh/oracle.key ubuntu@157.151.177.11 '~/hrf/live-server.sh deploy'
-```
-
-- `deploy`: stop the server, check out `origin/main` (`git checkout -f -B hrf
-  origin/main`; `-f` because builds on the server modify committed `target/`
-  files), then start it and wait until it prints `Started server.`
-  `deploy <commit>` deploys that commit instead (used by auto-deploy, below).
-- `start`, `stop`, `restart`: as named. `start` does nothing if the tmux
-  session already exists.
-- `log`: the last 40 lines of server output, e.g. after an error page.
-- `install-autostart`: adds a crontab entry
-  `@reboot sleep 30 && ~/hrf/live-server.sh start`, so the server starts
-  after a reboot. Installed once; output of those starts goes to
-  `~/hrf-autostart.log`. Running it again changes nothing.
-- The script starts tmux with a login shell, so `sbt` and `SBT_OPTS` come
-  from the profile and `~/.bashrc` even under cron.
-- `run create ...` (same arguments as the server) only creates the database,
-  then exits. It was already run once; don't run it again.
-- The URL arguments (`URL` in the script) must be the public address, not
-  `localhost` or the IP. The server writes them into every page, and only
-  serves `/hrf/` files to requests whose `Referer` starts with that URL.
-  Starting it with a different address than people use gives a blank page or
-  a "Loading assets" hang.
-- `pkill -f "hrf[.]gg[.]GoodGame"` in the script: the brackets stop `pkill`
-  from matching the command line of the shell running it.
-- `Address already in use` on start means an old server is still running:
-  `live-server.sh stop`, then `start`.
-
-### Deploying from GitHub (auto-deploy)
-
-Cloud Claude sessions can't ssh to the server, so the server watches the
-GitHub branch `deploy` instead. To deploy what is on `main`:
-
-```
-git fetch origin main && git push origin origin/main:refs/heads/deploy
-```
-
-- A crontab entry runs `live-server.sh auto-deploy` every 2 minutes. When
-  `deploy` points at a commit it hasn't handled, it runs `deploy` for that
-  commit: the same stop, checkout and start as above, so the server restarts.
-- It only deploys commits that are on `main`; a `deploy` branch pointing
-  anywhere else is logged as `Not deploying ...: not on main` and skipped.
-- `~/hrf-deployed` holds the last `deploy` commit it handled (written before
-  deploying, so a commit that fails to start isn't retried every 2 minutes;
-  push a new commit or delete the file to retry). Output goes to
-  `~/hrf-auto-deploy.log`. Runs don't overlap (`flock` on
-  `~/.hrf-auto-deploy.lock`).
-- No `deploy` branch on GitHub means nothing happens.
-- `install-auto-deploy` adds the crontab entry. Running it again changes
-  nothing. To turn auto-deploy off, remove the `auto-deploy` line with
-  `crontab -e`.
-- A manual `live-server.sh deploy` still deploys `origin/main`; auto-deploy
-  only acts when `deploy` moves.
-
-### Game copies, fixes and backups
-
-Cloud sessions can't reach the server, so the games are copied to a private
-GitHub repository, `guarantee418/hrf-games`, and fixed through it.
-
-- Every minute the server (`good-game/Backup.scala`) writes every game as
-  text to the directory named in `good-game/backup-dir` (or
-  `HRF_BACKUP_DIR`), `~/hrf-games`, a clone of that repository, and applies
-  the fixes committed to its `fixes/`. `live-server.sh backup-sync` (cron,
-  every 5 minutes, log in `~/hrf-backup.log`) commits that copy, pulls and
-  pushes; the server's files win conflicts. `good-game/games-README.md` is
-  copied into the repository as its README: it describes the files and how
-  to fix a game.
-- To fix a game from a cloud session: add `guarantee418/hrf-games` with
-  `add_repo`, copy `games/<id>.tsv` to `fixes/<id>.tsv`, edit the moves,
-  keep the first line (`# game <id> entries <n>`), commit and push to its
-  `main`. The server applies it only if the game still has `<n>` entries,
-  and writes `fixes/<id>.result` and the old log `fixes/<id>.before.tsv`.
-  Players reload afterwards: the server refuses moves that would leave a gap
-  in a game's log, so a stale browser can't corrupt it.
-- The repository holds the player secrets (`users.tsv`, `plays.tsv`): the
-  owner chose that so a restore keeps every link working. It must stay
-  private; never copy those files anywhere public, including this repo.
-- Set up once with `~/hrf/live-server.sh install-backup`: it makes the deploy
-  key `~/.ssh/hrf-games`, clones the repository (or prints the key to add
-  under the repository's Settings > Deploy keys, with write access), writes
-  `good-game/backup-dir` and adds the cron entry. The server reads
-  `backup-dir` each minute, so no restart is needed.
-- Once a day the server also saves a database copy in
-  `~/hrf/good-game/db-backups/` (`.tar.gz`), kept 14 days.
-- `sbt "run restore <database> <directory>"` in `good-game` rebuilds a new
-  database from a copy of the repository.
-- `backup-dir` and `db-backups/` are gitignored.
-
-### Bug reports
-
-- The in-game menu (under "Interface") has a "Report a Bug" button. The
-  player types a summary and description; the client adds the game, factions,
-  options, online game id, the last 300 moves, the last 50 console errors and
-  warnings (collected by the `console-capture` script in `index.html`) and the
-  browser. It posts that to `/report-bug`, and the server opens a GitHub issue
-  labeled `bug report` and shows the player its link (to add a screenshot).
-- The server saves every report to `~/hrf/good-game/bug-reports/` first, so
-  none are lost if posting fails, and copies each one to `bug-reports/` in the
-  `hrf-games` repository (`reports` in `good-game/Backup.scala`), so cloud
-  sessions can read them. Until 2026-10-18 no token was set up, so the
-  players' reports never reached GitHub and the player saw no issue link.
-- Posting needs a GitHub token: a fine-grained personal access token for
-  `guarantee418/haunt-roll-fail` with Issues: read and write. Put it in
-  `~/hrf/good-game/github-token` (or the `HRF_GITHUB_TOKEN` environment
-  variable) and `chmod 600` it; the server reads it for each report, so no
-  restart is needed. `github-repo` / `HRF_GITHUB_REPO` overrides the
-  repository. Without a token the reports are only saved on the server.
-  `github-token` and `bug-reports/` are gitignored. Never commit the token.
-- Limits: 10 reports per IP address per hour, 60,000 characters per report,
-  and only from pages whose `Referer` starts with the server URL. A failed
-  post is logged as `Bug report not posted: ...` (see `live-server.sh log`).
-- Reports never include the page URL, because player links contain the
-  player's secret.
-- Under "Report a Bug", every game's in-game menu has a "Main Menu" button (asked for by Robotos on
+- Fixing a running game: through the `hrf-games` repository (copy `games/<id>.tsv` to
+  `fixes/<id>.tsv` and edit it; its README and `notes/server.md` say how).
+- The in-game "Report a Bug" button posts to `/report-bug`; the server saves the report,
+  copies it to `bug-reports/` in `hrf-games` and opens a GitHub issue labeled `bug report`.
+  Reports never include the page URL, because player links contain the player's secret.
+- Under "Report a Bug", every game's in-game menu has a "Main Menu" button (asked for on
   2026-10-13): it loads `/play/<meta>` afresh (`returnToTitle` in `hrf.scala`), where online and saved
   local games can be picked up again; a game kept only in memory (Training Grounds) asks first.
 
@@ -484,8 +343,8 @@ More than one Claude account (or person) can work on the site. Each needs
 write access to `guarantee418/haunt-roll-fail` (a GitHub collaborator) and
 GitHub connected in Claude (https://claude.ai/connect-github); the Claude
 GitHub App is already installed on the repo. Nothing else is needed: this
-file covers the build, server and deploy. No session can ssh to the server
-(the key is only on the owner's Mac), and none needs to.
+file covers the build and deploy, and `notes/server.md` in `hrf-games` the
+server. No session can reach the server, and none needs to.
 
 - Anyone with write access can deploy, and so restart the live server, by
   pushing the `deploy` branch. Only give write access to people trusted with
@@ -538,18 +397,18 @@ file covers the build, server and deploy. No session can ssh to the server
     (`revertDisguises` at `CleanUpAction`). On other players' turns it
     works for ambushes, and for paying a Squires card's cost with a card of
     the Friend's suit as any suit (`PayFriend`, offered by `payments`, e.g.
-    Mice-in-a-Bush, which only took cards of the clearing's suit until Gman's
+    Mice-in-a-Bush, which only took cards of the clearing's suit until
     Wood through Conquest on 2026-10-27; it only adds choices, so no option). A Dominance card can be disguised too, to be spent as
-    another suit (e.g. to take a Dominance of that suit; MaKoBwoY, 2026-10-21);
+    another suit (e.g. to take a Dominance of that suit; 2026-10-21);
     spent, it goes to the available Dominances when the disguise ends.
-  - Silver-Tongue: in games with the hidden default option `SilverTongueOneEffect` (kayajam, 2026-10-30) the chosen
+  - Silver-Tongue: in games with the hidden default option `SilverTongueOneEffect` (2026-10-30) the chosen
     clearing counts as ruled for one effect, as the card says: it ends when the next recorded move made while it holds, and
-    the questions it asks on the way (the Council's Assemble asks for Loyalists before it checks the ruling; Hayjay, 2026-10-30),
+    the questions it asks on the way (the Council's Assemble asks for Loyalists before it checks the ruling; 2026-10-30),
     come back to a menu, at the first `soft()` (`silverTongueOneEffect` in `root/deck-squires.scala`, which wraps the `Void`
     `loggedPerform` hands on, so replays stop at the same point), and a
     Negotiations there asks no card for the clearing's other ruler. Older games keep it until the end of the current phase,
     and their Negotiations still asks a card for the other faction that rules the clearing; a running game can be switched over
-    with `SilverTongueOneEffectAction(X)` (done for Destiny in Right, kayajam's game, on 2026-10-30).
+    with `SilverTongueOneEffectAction(X)` (done for Destiny in Right on 2026-10-30).
   - Brazen Demagogue: the dominance can be activated only right when it is
     taken; the player keeps scoring (`demagogue` flag in `FactionState`).
   - Feather Rufflers, Spy Network, Silver-Tongue and Friend are usable from
@@ -557,13 +416,13 @@ file covers the build, server and deploy. No session can ssh to the server
   - Feather Rufflers is resolved when crafted in games with the hidden default option
     `FeatherRufflersOnCraft` (`root/meta.scala`, `FeatherRufflersCraftedAction` in `root/deck-squires.scala`):
     it places its two warriors in a clearing with the crafter's pieces and is discarded, as its parchment text
-    box (like the Favor cards') says (Jfthex, 2026-10-30: the Knaves crafted it with Apprentice and it stayed
+    box (like the Favor cards') says (2026-10-30: the Knaves crafted it with Apprentice and it stayed
     among their crafted cards). Older games keep it as a crafted card used later from those menus (and returned to hand to pay
-    for a Squires card); a running one can be switched over with `FeatherRufflersOnCraftAction(X)` (MaKoBwoY's Air versus Might,
+    for a Squires card); a running one can be switched over with `FeatherRufflersOnCraftAction(X)` (the Air versus Might,
     2026-11-04, the Council crafting it again after returning it).
 - The Dawn and Dusk deck (`effectsDusk` in `root/cards.scala`, effects in `root/deck-dusk.scala` and hooks in `battle.scala`,
   `turn.scala`, `craft.scala`, `movement.scala`) was checked against its 31 printed cards (`webp2/root/images/card/dusk/`) on
-  2026-11-13 (Gman: it "had a lot of bugs"). New games get the hidden default option `DuskDeckFixes`: Fowl Play is in the deck (it was
+  2026-11-13 (it "had a lot of bugs"). New games get the hidden default option `DuskDeckFixes`: Fowl Play is in the deck (it was
   left out, with no reroll; `Deck.fowlPlay`, last in `Deck.catalog`, as saved games name cards by their place there): after the roll
   the attacker may pick a die and discard a bird card or Fowl Play to reroll it, again after each reroll (`FowlPlayAskAction` in
   `battle.scala`); Sly Dog is asked only when the attacker could battle another enemy there, and a skip passes on that battle alone
@@ -574,7 +433,7 @@ file covers the build, server and deploy. No session can ssh to the server
   plays it with every official faction and counts the cards' choices (empty regions are left out of its comparison, as the cards'
   `game.dawn`, `noon` and `dusk` are registered lazily).
 - The fan-made Doomed Expansion for Root (slugfacekillah; BGG 482234, PnP files on Google Drive, rules "LAW of DOOM", section D3;
-  asked for by Gman on 2026-11-13, its three "Decks & Things" first): the Frankendeck is the Deck choice "Frankendeck (fan-made)"
+  asked for on 2026-11-13, its three "Decks & Things" first): the Frankendeck is the Deck choice "Frankendeck (fan-made)"
   (`FrankenDeck` in `root/meta.scala`): a core of 30 in its own art (`card/franken/`, cut from the PnP 63x88 PNGs with their
   bleed trimmed; the 20 items are `Deck.frankenItems`, its Sabotage! is a Saboteurs card, and the ambushes and dominances are the
   usual cards drawn with the Franken art, `Deck.art` and `Deck.frankenArt`, set by `Game`) plus 30 persistent effects of the
@@ -598,7 +457,7 @@ file covers the build, server and deploy. No session can ssh to the server
   `HirelingEx.owner` reads, as an effect would make the hireling transfers hand it on), and Rodent Zero's 20 Infected are their own player
   (`InfectedHorde`, no owner, so asks for it go to the current player), defenders that always take the higher roll, counting for rule
   (`DarkDeckExpansion.plague` beside `game.unhired`), spreading at the end of the owner's Evening (at `CleanUpAction`, as the factions'
-  expansions take `EveningEndAction` first) with the Hundreds' suit die (Gman). Neither is listed with the hirelings. The Vagabond's Book of
+  expansions take `EveningEndAction` first) with the Hundreds' suit die. Neither is listed with the hirelings. The Vagabond's Book of
   Names (`HeroPlayer.named`, allied until the end of the turn, its marker unmoved), Rabbit's Paw (`HeroPlayer.paw`, in Daylight any other item)
   and Cursed Idol (never exhausted, damaged or discarded: `ToExhaust`, `ToDamage`, `ToDiscard` in `root/items.scala`; it counts
   toward the Evening item limit but is never the one dropped) follow Law of Doom D3.1.2; with Book of Names, aiding the named faction
@@ -655,25 +514,24 @@ file covers the build, server and deploy. No session can ssh to the server
   Megalomaniac and Hedonistic in `faction-aviary.scala`): five Cardinals drawn at random with its warriors, which other factions may move as
   their own on their turn (The Red Menace, added to every `MoveInitAction` by `EyriesEndExpansion.redMenace`), caravans that craft and move
   with its warriors, the clearing's ruler drawing a card (Roving Caravans: the transport marker `CaravanDrawn` keeps it to once a move), and
-  rule where tied on its turn (Lords of Corruption, in `ruleValue`); A New Roost places 3 warriors, as the rules say, and the board picture was changed from "up to 6" to 3 (Gman, 2026-11-15; `new_roost_3` in the art script). Dawn of the Marquistadors (DM, `root/faction-marquistadors.scala`): the
+  rule where tied on its turn (Lords of Corruption, in `ruleValue`); A New Roost places 3 warriors, as the rules say, and the board picture was changed from "up to 6" to 3 (2026-11-15; `new_roost_3` in the art script). Dawn of the Marquistadors (DM, `root/faction-marquistadors.scala`): the
   ship landing on an edge river clearing, outposts placed with two matching treaties (cards kept face up), treaties counted as warriors in
   battle, wood moved to the ship for the Keep (all 8 win). The Doomed Vagabond (DV, `root/faction-doomed-vagabond.scala`, 4 or more players)
   is a `Hero`: Despot Infamy (`faction-hero.scala`), peace offers with Hostile factions and the Collect Bounty quests (in `Quest.all`, so
   saves name them) offered in every menu of the current faction (`DoomedVagabondExpansion.anytime`, beside the Lilypad Negotiations in
   `internalPerform`), quests freshened each Evening. The Naifs of the Deep Woods (NW, `faction-knaves.scala`) are the Knaves with Alliance
   warriors (`Knaves.warriorName`). `ReplayCheck <games> ee`, `dm`, `dv` and `nw` play them.
-  The Urban Legends maps (the Drive's "And what is THIS" folder; Gman, 2026-11-17) are two more Map choices, "Urban (fan-made)" and
+  The Urban Legends maps (the Drive's "And what is THIS" folder; 2026-11-17) are two more Map choices, "Urban (fan-made)" and
   "Legends (fan-made)" (`UrbanMap`, `LegendsMap`; `UrbanBoard` and `LegendsBoard` in `root/maps.scala`, images in `urban/` and `legends-map/`,
   as `legends/` holds the Legends Scenarios art), also drawn by "Random" (not "Random Official"). The boards print no names, so the clearing
   and forest names are made up (Lumberyard, not Sawmill, as region ids must not clash with piece names); Urban's ruins are its three R slots and
   the 0 slot, Legends' its four keeps, and a Legends Scenario's space is always in Legends' stone circle (`Board.scenarioForest`).
   The regions, water masks and names are made by `root/tools/urban-legends-art.py`. `ReplayCheck <games> urban` or `legendsmap` plays them.
   The seven Doomed factions and Re-Imaginings are in Advanced Setup's faction pool too, off by default like the other fan factions
-  (`AdvancedSetup.doomed`; Gman, 2026-11-17). With one of them in the pool, the draw leaves out sets that hold factions that can't play
+  (`AdvancedSetup.doomed`; 2026-11-17). With one of them in the pool, the draw leaves out sets that hold factions that can't play
   together, or the Whisperers Guild under 5 seats or the Doomed Vagabond under 4 (`AdvancedSetup.clash`); pools without one draw as before.
   `ReplayCheck <games> doomed adset` plays Advanced Setup games, the seats drafting at random.
-- The Outsiders Expansion for Root (slugfacekillah; BGG's top-rated fan expansion; PnP files on Google Drive, rules "Law of Slug"; asked for by
-  Gman on 2026-11-17) is being added one part at a time; Croakers Coven (`XC`) and the Grouch Vagabond were already on the site. Art is cut
+- The Outsiders Expansion for Root (slugfacekillah; BGG's top-rated fan expansion; PnP files on Google Drive, rules "Law of Slug"; asked for on 2026-11-17) is being added one part at a time; Croakers Coven (`XC`) and the Grouch Vagabond were already on the site. Art is cut
   by `root/tools/outsiders-art.py` from the token sheets and boards, and the warriors from the meeple file "Meeples.svg" (Outsiders meeples
   by The Irreverend; its header says how to render it). Bone Patrol! (BP, `root/faction-bone-patrol.scala`, its header lists the readings)
   is a Fun Faction and in Advanced Setup's pool (`AdvancedSetup.doomed`): pugs (`Pug`) led by the Alpha (`Alpha`, never removed, an extra
@@ -686,7 +544,7 @@ file covers the build, server and deploy. No session can ssh to the server
   Its two maps are Fan Maps, "Deep Woods" and "Wastelands" (`DeepWoodsMap`, `WastelandsMap`; `DeepWoodsBoard` and `WastelandsBoard` in
   `root/maps.scala`, images in `deep-woods/` and `wastelands/` made by `root/tools/outsiders-maps.py`, which also prints the Deep Woods
   building slots), also drawn by "Random". Clearing and forest names are made up. Their own rules are toggles in the setup's "Fan Map
-  Rules", shown only with their map (Gman, 2026-11-17), all in `root/outsiders-maps.scala` (`OutsidersMaps`, its header lists the
+  Rules", shown only with their map (2026-11-17), all in `root/outsiders-maps.scala` (`OutsidersMaps`, its header lists the
   readings). Off, the Deep Woods is played settled, each clearing tile baked into the art on the clearing of its number (Law of Slug
   S.1.7), and the Wastelands' barren trails are plain paths. "Deep Woods - Settling" (`DeepWoodsSettling`, S.1): clearings start
   unsettled (wild, crafting pieces pay for nothing, `Unusable` in `root/game.scala`; one slot; two pieces a player), drawn with their
@@ -696,11 +554,11 @@ file covers the build, server and deploy. No session can ssh to the server
   (`game.water`, `waterSupply`), the `BarrenTrail` transport (paid with a Water, a staying warrior or a Vagabond item), the Water
   actions, Surrender and Seizure. The "Map Rules" button under the action pane (and tapping a barren trail) shows the rules and where
   the game stands (`"view-map-rules"` in `root/ui.scala`). `ReplayCheck <games> deepwoods [settling]` or `wastelands [water]` plays them.
-- Every fan, playtest and mirror faction has a "?" (Gman, 2026-11-17): who made it, then what it does and how it plays, a line
+- Every fan, playtest and mirror faction has a "?" (2026-11-17): who made it, then what it does and how it plays, a line
   each (`FanInfo.about` in `root/fan-info.scala`). The faction picker shows it as a "?" button beside the name (`Meta.factionInfo`,
   `xstyles.infoButton` in `pickElem`), and Advanced Setup's "Available Factions" toggles as the setup's usual ? (`IncludeFaction.explain`).
   Official factions have none. Display only.
-- Root's fan content is grouped apart from the official (Gman, 2026-11-17): the faction picker's "Fan Factions" (once "Fun Factions",
+- Root's fan content is grouped apart from the official (2026-11-17): the faction picker's "Fan Factions" (once "Fun Factions",
   `factionGroup`) starts folded to one line ("18 Fan Factions") and opens on a tap (`Meta.foldedFactionGroups`, `grouped` in `hrf.scala`,
   remembered as `picker.<meta>.<group>`); the setup has "Fan Maps" and "Fan Decks" sections (`FanMap`, `FanDeck` in `root/meta.scala`:
   the same single choice as Map and Deck, through `OneOfGroup.oneOf`, so a folded Map shows "Urban (Fan Maps)"), Adset's "Available Fan
@@ -708,8 +566,8 @@ file covers the build, server and deploy. No session can ssh to the server
   Turnlings) and "Scenarios" (the Legends Scenarios; Ring Rule, Capture Rule and the monster only once their scenario is picked,
   `Meta.optionShown`). A new fan map or deck extends `FanMap` or `FanDeck`, a fan faction goes in `Meta.fun`, a scenario sets
   `folder = Meta.scenarios`. Display only, as options are saved by name.
-- The playtest Lilypad Diaspora versions (`LDvB`, `LDvC`, `LDvD`) and the Tidepool Diaspora (`TD`) are no longer offered (Gman,
-  2026-11-17): they are `Meta.retiredFactions`, out of `Meta.factions`, but still parsed (`parseFaction`) and their `IncludeFaction`
+- The playtest Lilypad Diaspora versions (`LDvB`, `LDvC`, `LDvD`) and the Tidepool Diaspora (`TD`) are no longer offered
+  (2026-11-17): they are `Meta.retiredFactions`, out of `Meta.factions`, but still parsed (`parseFaction`) and their `IncludeFaction`
   options kept (older Adset games list them), so older games load.
 - The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
   Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
@@ -786,10 +644,10 @@ file covers the build, server and deploy. No session can ssh to the server
   Advanced Setup draws the hands first (A.7, `CardDraftFive`) and sets up each faction as it is picked (A.8.3), so there the
   Diaspora shuffles them in during its own setup, as its board's 3rd setup step says, and a faction set up after it can draw
   them in its setup (the Woodland Alliance's supporters): new games get the hidden default option `FrogCardsAtDiasporaSetup`
-  (`frogsAfterSetup` in `faction-invasive-eee.scala`; Gman, 2026-11-11, Betrayal of Right). Without the five-card draft the
+  (`frogsAfterSetup` in `faction-invasive-eee.scala`; 2026-11-11, Betrayal of Right). Without the five-card draft the
   hands are drawn as each faction sets up, so they still wait. `ReplayCheck <games> ldkd draft` checks it.
 - Discarded Frog cards skip the Lizard Cult's Lost Souls and go straight to the Pond (or the playtest Lilypads'
-  piles), and so do Companions' disguised Frog cards (asked for by the owner on 2026-10-13). New games get the hidden
+  piles), and so do Companions' disguised Frog cards (asked for on 2026-10-13). New games get the hidden
   default option `FrogCardsSkipLostSouls` (`root/meta.scala`, checked in `QuietDiscard` in `root/game.scala`); older
   games keep putting them in the Lost Souls. `ReplayCheck <games> ldlc` plays Lilypad with the Lizards. A running
   game can be switched over by hand: replace the last line of its log (a forced action `X`, e.g. `Next`) with
@@ -797,28 +655,28 @@ file covers the build, server and deploy. No session can ssh to the server
   `game.frogsSkipLostSouls` (done for Power for Destiny on 2026-10-13).
 - The Woodland Alliance's supporters that are Frog cards show the Frog card back on its player panel, last in the row, and
   are counted in its hint and info overlay ("5 supporters (3 Frog)"), as Frog cards in hand already do, since their back
-  shows (`supporterBacks` in `root/ui.scala`; Gman, 2026-11-01). Display only.
+  shows (`supporterBacks` in `root/ui.scala`; 2026-11-01). Display only.
 - The Pond (Lilypad Diaspora's face-up Frog card pile) is shown only with the deck and the discard pile (or among the
   card piles on the map), like the Lost Souls, as any player may draw from it; it was also on the Diaspora's player
-  panel until MaKoBwoY found the two copies confusing and Gman picked the public spot (2026-10-14).
+  panel until a player found the two copies confusing and the public spot was picked (2026-10-14).
 - A spent Frog Ambush goes to the bottom of the Pond (`toPondBottom` in `root/faction-invasive-eee.scala`), as the Homeland
-  card says; the log says so. MaKoBwoY's first reformatted Ambush cards (`hl-frog-ambush`, `card/deck/fr/frog-ambush`) left
+  card says; the log says so. The first reformatted Ambush cards (`hl-frog-ambush`, `card/deck/fr/frog-ambush`) left
   that out, and he replaced them on 2026-10-20.
   Every other discard of it (hand limit, Lizard Cult's Lost Souls skip, Companions) goes there too, as the card says
-  "Discard this to the Pond bottom." (Gman, 2026-10-22: the Lizards' hand limit discard put it on top), in games with the
+  "Discard this to the Pond bottom." (2026-10-22: the Lizards' hand limit discard put it on top), in games with the
   hidden default option `FrogAmbushToPondBottom` (`DirectDiscard` in `root/game.scala`, `pondBottom`); older games keep it on top.
   A running game can be switched over with `FrogAmbushToPondBottomAction(X)`, which also moves one already in the Pond to the bottom.
-  Guerric Samples ruled that it goes to the bottom only when played as an ambush (relayed by Gman on 2026-10-23), so new games
+  Leder Games ruled that it goes to the bottom only when played as an ambush (relayed on 2026-10-23), so new games
   get the hidden default option `FrogAmbushBottomOnlyAsAmbush` instead, which turns `FrogAmbushToPondBottom` off
   (`frogAmbushAlwaysBottom` in `root/faction-invasive-eee.scala`): any other discard puts it on top like every Frog card. Games
   started from 2026-10-22 with `FrogAmbushToPondBottom` alone, or switched over by the action, keep it.
 - Lilypad Diaspora's Companions stays with the faction that crafted it until the Frog card it turned into another suit
-  is discarded (spent), and can't turn a second card meanwhile (asked for by the owner on 2026-10-15); it was
+  is discarded (spent), and can't turn a second card meanwhile (asked for on 2026-10-15); it was
   discarded as soon as the card was turned. New games get the hidden default option `CompanionsUntilSpent`
   (`root/meta.scala`; `disguisedBy` in `InvasiveEEEPlayer`, `disguiseSpent` called from `DirectDiscard` in
   `root/game.scala`). A card added to the Eyrie decree is discarded only at Turmoil, so Companions stays until then.
   A running game can be switched over like the fixes below, with `CompanionsUntilSpentAction(X)`.
-- Lilypad Diaspora's Negotiations is offered in every menu of an enemy's turn that a soft action makes (MaKoBwoY couldn't
+- Lilypad Diaspora's Negotiations is offered in every menu of an enemy's turn that a soft action makes (a player couldn't
   negotiate from the Twilight Council's Convene menu on 2026-10-16), not only where a faction's menus call the phase hooks
   (`birdsong`, `daylight`, `evening`): `internalPerform` in `root/game.scala` passes each Ask to
   `InvasiveEEEExpansion.anytimeNegotiations`, which adds it with that soft action as its `then`, as a soft action is safe to
@@ -829,10 +687,10 @@ file covers the build, server and deploy. No session can ssh to the server
   soft choices in a `Game` field broke them); old games replay the same, as it only adds choices. `ReplayCheck <games> ldtc`
   plays Lilypad with the Council. Nor in the payment for Riverfolk services (`paying`: `PayForServicesAction` is soft and its
   Ask is one hidden button the runner takes by itself; with Negotiations beside it the menu showed only Negotiations and the
-  purchase never went on, MaKoBwoY, 2026-11-04, buying Mercenaries; a card bought with it was already left out by `aboutCard`;
+  purchase never went on, 2026-11-04, buying Mercenaries; a card bought with it was already left out by `aboutCard`;
   no game could get past that menu, so it needs no option). `ReplayCheck <games> ldrf` plays Lilypad with the Riverfolk and
   fails if a payment menu offers Negotiations. Those menus head it with the Lilypad faction's name, as the button already says
-  Negotiations (MaKoBwoY saw "Négociations" twice). The Council's "Convene Woodfolk" is in the Council's colour.
+  Negotiations ("Négociations" showed twice). The Council's "Convene Woodfolk" is in the Council's colour.
 - Frog suit text (clearing names in menus and the log, and the two-suit gradients, `Frog` and `FoxFrog` ... in
   `root/styles.scala`) is the Homeland Lilypad Diaspora's yellow-green `#b7b13c` (owner, 2026-10-17, after trying the frog
   decree icons' `#7b9f3c`), and so are the playtest frog factions (`TD`, `LDvB` to `LDvD`, once teal `#3c7174`) and the frog
@@ -847,7 +705,7 @@ file covers the build, server and deploy. No session can ssh to the server
   character art stay teal (owner's choice). The frog
   decree and relic icons stay `#7b9f3c`, the green of the Homeland frog cards (owner's choice). The solid `frog` tint is saved lossy (a one-colour lossless WebP is a few dozen bytes, the kind iPhones
   failed on).
-- Lilypad Diaspora crafts by clearing (asked for by the owner on 2026-10-13): when more than one set of its enclaves could
+- Lilypad Diaspora crafts by clearing (asked for on 2026-10-13): when more than one set of its enclaves could
   pay for a card, it picks the clearings (`InvasiveEEECraftSelectAction`), and the enclaves used stay used for the turn
   (`craftedIn` in `InvasiveEEEPlayer`) until removed (`ForcedRemoveTargetEffectAction`), so losing an unused enclave
   doesn't use up the craft of a used one, and flipping a used enclave doesn't free it. New games get the hidden default
@@ -858,7 +716,7 @@ file covers the build, server and deploy. No session can ssh to the server
   out of memory with many enclaves (found 2026-10-16).
 - Governors (17.2.3) stop Lilypad Diaspora's enclave flips at an enemy Council's Governing assemblies, as they already stopped
   placing (`canPlace`): Provoke, Reconcile, Fears Come to Pass, Negotiations and the Militias Frog card leave those clearings out
-  (`flippable` in `root/faction-invasive-eee.scala`; reported by MaKoBwoY on 2026-10-17, who could Provoke at Delta and Bayou).
+  (`flippable` in `root/faction-invasive-eee.scala`; reported on 2026-10-17, who could Provoke at Delta and Bayou).
   New games get the hidden default option `GovernorsStopEnclaveFlips`; older games keep flipping there so their replays don't
   change, and a running game can be switched over like the fixes above, with `GovernorsStopEnclaveFlipsAction(X)`. Provoke's log
   now says "flipped Peaceful Enclave to Militant Enclave".
@@ -869,32 +727,32 @@ file covers the build, server and deploy. No session can ssh to the server
   the Delve still offers its Entreat choice so their recorded moves load (`RetinueDelveAction` in `root/faction-expedition.scala`).
   `ReplayCheck <games> ki` plays the Keepers with the Council.
 - Lilypad Diaspora's Birdsong "Rally or Reconcile" is skipped when neither would do anything: no Militant enclave it may
-  flip, and none it could place a warrior at (asked for by MaKoBwoY on 2026-10-21); the Birdsong extras (Entreat and the rest)
+  flip, and none it could place a warrior at (asked for on 2026-10-21); the Birdsong extras (Entreat and the rest)
   are still offered then, with "Done". New games get the hidden default option `SkipIdleRallyReconcile`; older games keep
   asking so their replays don't change.
 - Lilypad Diaspora's Reconcile flips its Militant enclaves one at a time: each pick is its own move, the clearing's ruler draws
   its card, and then the Diaspora picks the next one or "Done" (`InvasiveEEEReconcileOneAction` and `InvasiveEEEReconcileNextAction`
-  in `root/faction-invasive-eee.scala`; Cookies on Discord, 2026-11-05: every enclave was picked at once, before any card was seen).
+  in `root/faction-invasive-eee.scala`; 2026-11-05: every enclave was picked at once, before any card was seen).
   New games get the hidden default option `ReconcileOneAtATime`; older games keep picking them all at once so their replays don't change.
 - Lilypad Diaspora's Fears Come to Pass places its warriors once the warriors the battle or removal took are back in the supply, and
   with too few for every flipped clearing the Diaspora picks which get one (`InvasiveEEEFearsPlaceAction` in
-  `root/faction-invasive-eee.scala`). The removed warriors waited off the map until the removal's cleanup, after the fears, so in Gman's
+  `root/faction-invasive-eee.scala`). The removed warriors waited off the map until the removal's cleanup, after the fears, so in
   Movement as Betrayal (2026-11-08) the Eyrie's battle at Effigy flipped Effigy and Lower Jaw but only Effigy, listed first, got a frog.
   New games get the hidden default option `FearsAfterRemoval`; older games keep the old way, and a running game can be switched over
   with `FearsAfterRemovalAction(X)`.
 - An Entreat (17.2.4) asks the Twilight Council to gain a Loyalist or place some in the clearing only when it has Loyalists it could
   place there; otherwise it gains one without being asked, or nothing happens when it can't (`CouncilEntreatAction` in
-  `root/faction-council.scala`; Hayjay, 2026-10-29: the Council was asked only to "place 0"). New games get the hidden default option
+  `root/faction-council.scala`; 2026-10-29: the Council was asked only to "place 0"). New games get the hidden default option
   `EntreatGainUnasked`; older games keep asking so their replays don't change.
 - The Twilight Council may clear a Mountain map path in Evening, right after Convene Woodfolk, when it didn't in Daylight
   (`EveningNAction(30, f : Council)` and `Council.clearPathWanted` in `root/faction-council.scala`): it reveals its cards in
-  Birdsong and gets them back only in Evening, so its Daylight hand was empty and the path never came up (shushub4n4 on Discord,
+  Birdsong and gets them back only in Evening, so its Daylight hand was empty and the path never came up (Discord,
   2026-11-04). New games get the hidden default option `CouncilEveningClearPath`; older games keep their Evening so their replays
   don't change, and a running game can be switched over with `CouncilEveningClearPathAction(X)`. `ReplayCheck <games> mountain`
   plays the Mountain map with the Council.
 - Governors (17.2.3) stop Lilypad Diaspora's enclaves and the Corvids' plots at an enemy Council's Governing assemblies from
   crafting until the Council is entreated (`Council.craftingIn` in `root/faction-council.scala`, used by `craftEnclaves` and
-  `MischiefPlayer.craft`; the other factions already left those clearings out). Gman's Diaspora crafted with its Bayou enclave in
+  `MischiefPlayer.craft`; the other factions already left those clearings out). The Diaspora crafted with its Bayou enclave in
   Season in Control on 2026-10-30. New games get the hidden default option `GovernorsStopCrafting`; older games keep crafting there
   so their replays don't change, and a running game can be switched over with `GovernorsStopCraftingAction(X)`.
 - The Riverfolk Company crafts with the icons its placed trade posts uncover on its board (Law of Root 8.2), not with pieces in a
@@ -905,39 +763,39 @@ file covers the build, server and deploy. No session can ssh to the server
 - Governors (17.2.3) keep a correct exposure of a Corvid plot at an enemy Council's Governing assembly from removing it: the exposer may
   still show a card and guess, a wrong guess gives the card to the Corvids, and a right one leaves the plot face down, scores nothing and
   returns the card, and the exposer can't guess there again that turn unless the assembly stops governing (entreated) (`ExposeAction` in
-  `root/faction-mischief.scala`, `game.governedGuesses`). The exposure removed the plot and scored (geffrey on Discord, 2026-11-10,
-  Destiny and Right; Gman picked guessing with no removal over not offering it). New games get the hidden default option
+  `root/faction-mischief.scala`, `game.governedGuesses`). The exposure removed the plot and scored (2026-11-10,
+  Destiny and Right; the owner picked guessing with no removal over not offering it). New games get the hidden default option
   `GovernorsStopExposure`; older games keep the old way, and a running game can be switched over with `GovernorsStopExposureAction(X)`.
   `ReplayCheck <games> cctc` plays the Corvids with the Council, exposing whenever it can, and redoes each exposure on a copy with a
   Governing assembly there.
 - The Twilight Council's Banish is offered only against an enemy with warriors it could move in the clearing (not the Warlord),
   or a Lilypad Diaspora Peaceful enclave there, as battling one sets off Fears Come to Pass (`banishable` in
-  `root/faction-council.scala`; MaKoBwoY could banish a lone Underground Duchy tunnel on 2026-10-30, geffrey pointed out the frogs).
+  `root/faction-council.scala`; a lone Underground Duchy tunnel could be banished on 2026-10-30, and the frogs were pointed out).
   New games get the hidden default option `BanishNeedsWarriors`; older games keep offering it so their recorded moves load.
   While banishing, the defenseless extra Hit isn't logged ("dealt an extra Hit to defenseless"), as a Banish can't hit buildings or tokens.
   A banished defender ignores the first hit first (Stubborn, Armored, Devout Knights, Badger Bodyguards, Dazzle;
-  `BattleExpansion.ignoresFirstHit` in `root/battle.scala`), so one warrior fewer moves (kayajam's Season for Revolution, 2026-11-04:
+  `BattleExpansion.ignoresFirstHit` in `root/battle.scala`), so one warrior fewer moves (the Season for Revolution, 2026-11-04:
   two Stubborn Rats were banished by 2 hits). New games get the hidden default option `BanishAfterIgnoredHits`; older games keep the old
   way, and a running game can be switched over with `BanishAfterIgnoredHitsAction(X)`.
 - Outrage with no card of the clearing's suit to give shows the hand to the Woodland Alliance in its action pane, and the
   game waits for its "Ok" (`PeekCardsAsk` and `PeekCardsSeenAction` in `root/cards.scala`; the playtest Pacifism the same).
-  It was only a notification, and the game went on (Hayjay couldn't see the Lilypad Diaspora's hand on 2026-10-17). New games
+  It was only a notification, and the game went on (the Alliance couldn't see the Lilypad Diaspora's hand on 2026-10-17). New games
   get the hidden default option `OutragePeekNeedsOk`; older games keep the notification so their replays don't change, and a running game can be
-  switched over like the fixes above, with `OutragePeekNeedsOkAction(X)` (done for Hayjay's Ground and Might on 2026-10-17).
-  Gman asked for the notification back on 2026-10-31, as it held up the game: new games no longer get `OutragePeekNeedsOk`
+  switched over like the fixes above, with `OutragePeekNeedsOkAction(X)` (done for Ground and Might on 2026-10-17).
+  The owner asked for the notification back on 2026-10-31, as it held up the game: new games no longer get `OutragePeekNeedsOk`
   (still hidden, so the games that have it keep waiting; `InsurgentExpansion.peekWaits`), and a running game can be switched
   back with `OutragePeekNotifiesAction(X)`.
   In every game, the words "looked at" in the log line of that look ("Woodland Alliance looked at ... cards, no ... cards") are tappable
   and show the cards seen again to the faction that saw them (everyone once the game is over; others get "Only ... saw them"), so
   the Alliance's player can find them later without the Notifications list (`PeekedHandView` in `root/cards.scala`, shown by
-  `onClick` in `root/ui.scala`; Gman, 2026-11-09). Log text only, so no game records change.
+  `onClick` in `root/ui.scala`; 2026-11-09). Log text only, so no game records change.
 - Root remembers in each browser how many notifications (cards drawn, hands seen) it has shown in each online game
   (`<settingsKey>.notifications-seen.<lobby>`, `seenBefore` and `saveSeen` in `root/ui.scala`), saved at the first tap after
   they show, so opening a game shows only those that came since; before 2026-10-31 every notification of the game popped up
-  each time a game was opened (Gman took it for a pause in Season in Control). The "Notifications" button shows them all.
+  each time a game was opened (taken for a pause in Season in Control). The "Notifications" button shows them all.
 - Mice-in-a-Bush counts as an ambush card, so the attacker is offered a counter-ambush against it before its hit
   (`askCounterAmbush` in `root/battle.scala`, the same menu as against an ambush card, with 1 hit instead of 2, and no other ambush follows it, as it is the defender's ambush); it dealt
-  its hit straight away until Gman's Ground and Might on 2026-10-18 (the Root rules channel confirmed it can be countered).
+  its hit straight away until Ground and Might on 2026-10-18 (the Root rules channel confirmed it can be countered).
   New games get the hidden default option `CounterMiceInABush`; older games keep the old way so their replays don't change,
   and a running game can be switched over like the fixes above, with `CounterMiceInABushAction(X)`.
   `ReplayCheck <games> base squires` plays with the Squires and Disciples deck.
@@ -950,12 +808,12 @@ file covers the build, server and deploy. No session can ssh to the server
   (`anytime` in `root/hirelings.scala`, `canAidExile` in `root/game.scala`).
 - The Lizard Cult's clearing rule flag (`flag-bg-lizards.webp`, drawn under the cloth by `flag` in `root/ui.scala`) was
   recoloured on 2026-10-22 to the lime of its warriors and gardens (`#b6dc6c`), lighter than the olive it had (owner's ask).
-- Lizard Cult crafting (house rule, asked for by the owner on 2026-10-13): gardens of the Outcast suit craft as
+- Lizard Cult crafting (house rule, asked for on 2026-10-13): gardens of the Outcast suit craft as
   usual, and every other garden pays only for wild (any suit) cost icons (`WildOnly` in `root/game.scala`, `craft` in
   `root/faction-fanatic.scala`). Law of Root 10.2.1 allows only Outcast gardens. Not gated by an option: it only adds
   craft choices, so recorded games replay the same.
 - Lizard Cult Outcast gardens pay for their clearing's suits, not their printed suit (Homeland Lilypad Diaspora rules,
-  posted by MaKoBwoY on 2026-10-15): only frog at a Militant enclave, either at a Peaceful one, any of the Lost City's three,
+  posted on 2026-10-15): only frog at a Militant enclave, either at a Peaceful one, any of the Lost City's three,
   and either of a double suited Mousehold, Foxburrow or Rabbittown clearing (`c.asset`, a `OneOf`). New games get the hidden
   default option `LizardsCraftByClearing` (`root/meta.scala`, `FanaticExpansion.craftByClearing`); older games keep the
   printed suit. A running game can be switched over like the Frog fixes above, with `LizardsCraftByClearingAction(X)`
@@ -968,26 +826,26 @@ file covers the build, server and deploy. No session can ssh to the server
   picks figures in order, and the old check counted buildings picked in another order as another choice, so
   losing, say, both a sawmill and a workshop still asked (reported 2026-10-16).
 - Those two settings act only on the asked player's own device while the game is open, so an absent player held up every
-  battle (Gman, 2026-10-18). Each player's in-game switches under the action pane while waiting, "Auto Assign Hits in
+  battle (2026-10-18). Each player's in-game switches under the action pane while waiting, "Auto Assign Hits in
   Battle (If No Choice)" (`UseAutoAssignHits`) and "Auto Skip Ambush (If None)" (`AutoSkipAmbushIfNone`, `root/meta.scala`),
   are stored with the game (`callbacks.switches`) and shown whatever the Out of Turn Actions setting; any open client takes
   the only choice for that player (`shadowCheck` in `root/ui.scala`). New Adset games also start with
   `AutoHitsAssignmentMode`, as Root's do.
-- Root's "Bluff Mode" (asked for by Gman on 2026-10-21): under Async in setup, `BluffMode` and `AutoAmbushSkippingMode`
+- Root's "Bluff Mode" (asked for on 2026-10-21): under Async in setup, `BluffMode` and `AutoAmbushSkippingMode`
   ("Auto Skip Ambushes", once "Auto Ambush Skipping", same saved name) are one choice (`OneOfGroup`), Bluff Mode the default
-  for new games and Adset; each has a "?" popup. Auto Skip skips an attacked player (and the attacker's counter-ambush, also
+  for new games and Adset until 2026-11-17 (now off by default, see below); each has a "?" popup. Auto Skip skips an attacked player (and the attacker's counter-ambush, also
   against Mice-in-a-Bush) holding no ambush they can play (`battle.scala`). Bluff Mode asks every time, and stops the
   "Ambush!: Auto Skip If None" setting and the "Auto Skip Ambush (If None)" switch (`ask` and `shadowCheck` in
   `root/ui.scala`, `switchesFor` hides it), which skipped at once and so showed who held none. Skips that reveal nothing
   stay (empty hand, Scouting Party, Riverfolk's open hand, every ambush card seen). Games with neither option keep the old
   behaviour; UI only, so no records change. Forced Async Mode now turns on Auto Hits Assignment and Auto Skip Ambushes
   (`forcedOn`) instead of waiting for both to be picked.
-- Root's "Hits and Ambushes – Offline Players" setup section (MaKoBwoY, relayed by Gman on 2026-11-12) replaced the Async
+- Root's "Hits and Ambushes – Offline Players" setup section (2026-11-12) replaced the Async
   section above: toggles `BluffMode` ("Ambush Bluff Mode"; off, an attacked player with no ambush is skipped),
   `AutoHitsAssignmentMode` ("Auto Assign Hits (If No Choice)", a choice again, no longer `settled`), `OffTurnHitsPreset` (the
   "Adjust priorities" order Forced Async had) and `OffTurnFieldHospitals` (only with the Marquise; Adset always), or `LiveGameMode`,
   which `blocked`s them all, so the game decides nothing and each player's own settings apply. Partisans are used off turn when
-  nothing is discarded in every game that isn't a Live Game (Gman). New games get the hidden `HitsAndAmbushesSetup`, which tells them
+  nothing is discarded in every game that isn't a Live Game. New games get the hidden `HitsAndAmbushesSetup`, which tells them
   from older ones: `game.offlinePlayers`, `autoSkipAmbush`, `autoAssignHits`, `autoHits`, `offTurnPartisans`, `offTurnFieldHospitals`
   in `root/game.scala`. `AutoAmbushSkippingMode`, `ForcedAsyncMode` and `ForcedAsyncChooseHits` are `retired`: older games keep them
   and play as before. The two Off Turn Actions switches show only where they still change something (`switchesFor` in
@@ -995,13 +853,16 @@ file covers the build, server and deploy. No session can ssh to the server
   "Assign Hits" and "Ambush!" fold into one "Hits and Ambushes when Online (Live Games)" section. `ReplayCheck <games> base offline`
   plays bot games with Bluff Mode off and the Field Hospitals plan; `preset` adds the hits preset, but bot games with the preset
   order (like `async`) run out of memory, as they did before the section.
-- Root pass and play (asked for by the owner on 2026-10-17): in a local game with more than one human faction
+  Auto Assign Hits is on by default and Ambush Bluff Mode off (`defaultsFor`; 2026-11-17), also when a browser's saved setup
+  holds none of Auto Assign Hits, Live Game or the hits preset (`Meta.autoHitsOn`, in `completeSaved`): setups saved before the section
+  never held Auto Assign Hits, as it was then always on, so it showed off, and held Bluff Mode, then the default.
+- Root pass and play (asked for on 2026-10-17): in a local game with more than one human faction
   (`Callbacks.hotseat` in `hrf.scala`: a memory or localStorage journal), each time another human faction is asked
   the action pane shows "Pass to <faction>" and a "Show Hand and Choices" button instead of its hand and choices
   (`passTo` and `passedTo` in `root/ui.scala`). Notifications (cards drawn or given) wait for that tap too: `wait`
   shows none, and a tap marks only the revealed faction's as seen. The "Pass and Play" setting (`ShowPassScreen`,
   the default, or `NoPassScreen` in `root/meta.scala`) turns it off. Display only, so no game records change.
-- Root hirelings (asked for by the owner on 2026-10-17): all 26 cards, the 20 of the Marauder, Riverfolk and Underworld
+- Root hirelings (asked for on 2026-10-17): all 26 cards, the 20 of the Marauder, Riverfolk and Underworld
   packs and Homeland's Sunny Advocates / Bat Messengers, River Roamers / Frog Tinkers and Prosperous / Struggling Farmers,
   are in `root/hirelings.scala` and offered in setup (`Meta.hirelings`). The rules follow the cards and the hireling
   booklet from the TTS mod "Root - Ultimate Collection" (Steam workshop 2516434159; its `Hirelings` entries hold each card,
@@ -1026,7 +887,7 @@ file covers the build, server and deploy. No session can ssh to the server
 - The Knaves' Serve activates acclaim in every clearing sharing a suit with the acting clearing, and each acclaim pays for
   the suits the two share (`serveSuits` and `serveAsset` in `root/faction-knaves.scala`). It matched only clearings with
   exactly the same suits, so acclaim at a Lilypad Peaceful enclave (rabbit and frog) or a landmark's second suit was left out
-  (MaKoBwoY couldn't craft Coins with his rabbit acclaim in Bayou and Fen on 2026-10-21). Not gated by an option: it only
+  (the Knaves couldn't craft Coins with their rabbit acclaim in Bayou and Fen on 2026-10-21). Not gated by an option: it only
   adds craft choices, so recorded games replay the same.
 - A Knaves craft (Filch or Serve, `KnavesCraftAction`) is recorded and spends the action before the card's costs are matched
   to the acclaims, so that pick has no Cancel (`CraftAction(f : Knaves, ...)` in `root/faction-knaves.scala`): the generic one's
@@ -1043,7 +904,7 @@ file covers the build, server and deploy. No session can ssh to the server
   `root/faction-knaves.scala`). New games get the hidden default option `PrisonersFromCodefenders`; older games keep the old way, and
   a running game can be switched over with `PrisonersFromCodefendersAction(X)`.
 - In Advanced Setup the Knaves' four Captain cards are dealt when the factions are drawn, and the draft shows them under
-  the Knaves (meeple, name and items; `FactionChoice.desc` in `root/setup.scala`, `game.draftCaptains`, asked for by Gman on
+  the Knaves (meeple, name and items; `FactionChoice.desc` in `root/setup.scala`, `game.draftCaptains`, asked for on
   2026-10-20); the Knaves then choose 3 of those. New games get the hidden default option `KnavesCaptainsInDraft`; older
   games deal them when the Knaves set up, so their replays don't change.
 - A Twilight Council move or battle reveals its card before it happens (`CouncilRevealCardAction`), and the end of the action
@@ -1058,11 +919,11 @@ file covers the build, server and deploy. No session can ssh to the server
   real choice pick their hits instead, and drops the end-of-turn order (`game.autoHits` in `root/game.scala`). A running game
   can be switched over with `ForcedAsyncChooseHitsAction(X)` (`root/turn.scala`). `ReplayCheck <games> base choosehits`
   (or `async` for the preset order) plays bot games with it.
-- Root's setup screen folds its sections like Northgard's (asked for by Gman on 2026-10-28): Setup Type, Async, Map, Clearings,
+- Root's setup screen folds its sections like Northgard's (asked for on 2026-10-28): Setup Type, Async, Map, Clearings,
   Landmarks, Deck, Cards, the AdSet buffs, the faction tweak sections (Marquise, Vagabond, Lizards, Corvids), Mirror Factions and the
   four Hirelings sections start folded, showing only what is picked (`FoldedOption` in `root/meta.scala`, which sets `BaseOption.fold`
   to `root.<group>`). Sections of a single option (Dominance, Riverfolk's Export) don't fold. Display only, so no game records change.
-- Root's setup options were cleaned up on 2026-10-31 (Gman): the Presets are "Site Defaults" and "Official Rules", each with a ?
+- Root's setup options were cleaned up on 2026-10-31: the Presets are "Site Defaults" and "Official Rules", each with a ?
   (`presetsInfo`, a hook in `meta.scala`; the Official | Hirelings, Sunday Games and Adset's expansion-pool presets are gone). Auto Hits
   Assignment and the card rulings Official Rules picked (Partisans discard birds, Coffin Makers errata, Propaganda Bureau, the two Tunnels
   rulings) are no longer choices (`Meta.settled`); Hostile Takeover and Shared History, which did nothing, and Coffin Makers' "any warrior"
@@ -1073,15 +934,15 @@ file covers the build, server and deploy. No session can ssh to the server
   has a ? explaining the section (`groupInfo`, a hook in `meta.scala`, shown by `setupQuestions` in `hrf.scala`). Recorded games keep
   their options, so none of this changes a game already started.
   The site defaults (Site Defaults, and a new setup) are Random Official map, All Random clearings, the Mountain suited landmark choice
-  and the Squires and Disciples deck, in Root and Adset (`defaultsFor`; Gman, 2026-10-31).
+  and the Squires and Disciples deck, in Root and Adset (`defaultsFor`; 2026-10-31).
 - Root's rules fixes are hidden options (`Meta.fixes`), but a new game records only its rules version (`RulesVersion1` in
   `root/meta.scala`, `Meta.newGame`), which `Game.options` expands to every fix it stands for (`RulesVersion.expand`; `Game.recorded`
   is what the game was made with, what `OptionsAction` and `GameOverAction` hold). Games made before 2026-11-15 recorded each fix and
   load as before. A new fix gets its hidden option (for older games and its `...Action(X)` switch) and goes into a new version
   (`RulesVersion2`, its `fixes` RulesVersion1's and the new one), made `RulesVersion.latest` and added to `RulesVersion.all`; never
   add to an existing version's fixes, as games that recorded it would change. A game's log no longer lists the fixes, the settled rulings
-  or the rules version (`Meta.unlisted`, in `OptionsAction`; Gman, 2026-11-15: the opening log had about 35 such lines).
-- Advanced Setup's insurgent lock (Gman, 2026-11-04; Destiny and Right drafted four insurgents): the "Insurgent Lock" choice on the
+  or the rules version (`Meta.unlisted`, in `OptionsAction`; 2026-11-15: the opening log had about 35 such lines).
+- Advanced Setup's insurgent lock (2026-11-04; Destiny and Right drafted four insurgents): the "Insurgent Lock" choice on the
   first setup page, Adset only (`InsurgentLockOn`, the default, or `InsurgentLockOff`; `Meta.adsetOnly` in `root/meta.scala`). With it, the
   last faction drawn, if insurgent, can't be picked until a militant faction (`AdvancedSetup.militant` in `root/setup.scala`: Marquise,
   Eyrie, Duchy, Hundreds, Keepers, and the Lilypad Diaspora, which the draw now counts too) has been, and the draft's heading says so. Games with neither option (started before it) draft as before.
@@ -1089,12 +950,12 @@ file covers the build, server and deploy. No session can ssh to the server
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.
 - Root's layout (`layoutsFor` in `root/ui.scala`) mostly picks the "-fulldim" map, which fills the window's height, so
-  going full screen used to widen the map and squeeze the player boards, log and cards (MaKoBwoY, 2026-10-14). In full
+  going full screen used to widen the map and squeeze the player boards, log and cards (2026-10-14). In full
   screen the map is now capped at the height the window had before (`mapMaxHeight`, remembered per screen width as
   `root.windowed-height.<width>`, else 90% of the screen; `FullDimPane`'s `maxHeight` in `panes-again.scala`), so the
   side panes keep their width and the action pane takes the extra height. Other games don't pass `maxHeight`.
 - The Twilight Council's Loyalists on its player panel are drawn head down, hanging like bats (`styles.hanging` in
-  `root/styles.scala`; MaKoBwoY, relayed by Gman on 2026-11-17). Display only.
+  `root/styles.scala`; 2026-11-17). Display only.
 - Tapping a Root faction's status pane opens its overlay (`onFactionStatus` in
   `root/ui.scala`) with its faction board. The boards of the base and
   expansion factions (`boardImage`; `mc-board`,
@@ -1110,13 +971,13 @@ file covers the build, server and deploy. No session can ssh to the server
   without state yet shows just its board ("Not set up yet").
 - Once play starts, the Root map draws the ruins only when someone can use them (`ruinsHidden` in `root/ui.scala`): the
   Vagabond, the Hundreds, the Brigand hireling, or the Knaves with the Adventurer as a Captain, who draws a card for acclaim
-  at a ruin (added 2026-10-31: Gman's Air of Conquest showed none). Display only, so no game records change.
+  at a ruin (added 2026-10-31: Air of Conquest showed none). Display only, so no game records change.
 - `itemSlots` (`itemGrid` for the usual 2x6 layout) places the item tracker;
   `drawTrackers` draws `tracker/item-track.webp`, on a dark translucent panel so
   its light slots show on the snowy maps, under
   them and `drawItemSlots` draws `game.uncrafted` on them.
 - The boxes on the Root map (the item tracker, the score tracker and, with the Card Piles on Map setting, the card piles) never
-  hide a piece (Gman, 2026-11-09: in Movement as Betrayal the items covered the pieces in Effigy): warriors, tokens and pawns are
+  hide a piece (2026-11-09: in Movement as Betrayal the items covered the pieces in Effigy): warriors, tokens and pawns are
   placed off them (`overlayRects` in `root/ui.scala`, a cost in the free placement, and pieces kept from an earlier draw under one
   are placed again), the rule flags too (`findFlagSpot`), and the boxes are drawn after the Marquise's Keep but under every other
   piece, so a building in a slot under one still shows. The card piles' taps come after the pieces' (`cardPileTargets`). Display only.
@@ -1134,7 +995,7 @@ file covers the build, server and deploy. No session can ssh to the server
   Mountain and Gorge maps got the same that day: their unnamed forests (and the Gorge's, once compass points) are named
   after trees (Maple, Fir, Linden, Cedar, Mesquite, ...), the old names (Witchwood, Deadwood, Mirkwood, Acres Wild,
   Heart of Oak, Liar Wind, Nada Moonshine) stay, and `Board.forestLabel` places a name where `center` picks at random
-  or would put it on water. Tidal, Tundra and Gloom got theirs on 2026-10-30 (Gman): Tupelo, Bayberry, ... on Tidal, Arolla, Silver Fir, ... on Tundra,
+  or would put it on water. Tidal, Tundra and Gloom got theirs on 2026-10-30: Tupelo, Bayberry, ... on Tidal, Arolla, Silver Fir, ... on Tundra,
   Blackthorn, Hawthorn, ... on Gloom, drawn at the forests' centres.
   Those maps no longer draw their `map-woods` overlay (shown only with a faction that uses forests, like the Vagabond or
   the Knaves): it printed the old names, or the Gorge's compass letters, a second time (seen on 2026-10-17).
@@ -1146,25 +1007,25 @@ file covers the build, server and deploy. No session can ssh to the server
   5+ players one of each pair is left without a suit (`game.unsuited`) and
   gets Mousehold, Foxburrow or Rabbittown at random. Ruins go in Crossing and
   Confluence plus the two lowest numbered slots not flooded (`ruinsIn`).
-- Root's Map section has a "Random" choice (`RandomMap` in `root/meta.scala`, asked for by Gman on 2026-10-30): one of the nine
+- Root's Map section has a "Random" choice (`RandomMap` in `root/meta.scala`, asked for on 2026-10-30): one of the nine
   maps is drawn (or, with "Random Official", `RandomOfficialMap`, one of Autumn, Winter, Lake, Mountain, Gorge and Marsh, `officialMaps`) when the game is created, by the `startOptions` hook in `meta.scala` (Root and Adset override it; `hrf.scala`
   calls it at the setup screen's Start), so the game, its log and every client only ever see the drawn map. Default clearings
   can be picked with it and become No Clusters when the draw isn't Autumn, as on the other maps.
 - Tapping a landmark on the Root map (Ferry, Lost City, Tower, Mousehold, Foxburrow, Rabbittown) shows its card large
-  over the map (`landmarkCard` and `"view-landmark"` in `root/ui.scala`; asked for by Gman on 2026-10-29). The cards are the
+  over the map (`landmarkCard` and `"view-landmark"` in `root/ui.scala`; asked for on 2026-10-29). The cards are the
   English ones from the Leder Card Library (`landmark-<name>.webp`, see the Squires and Disciples note), resized to 600 px
   wide in `webp2/root/images/card/landmark/` (loaded on demand as `landmark-card:`); there are no French ones.
   Tapping a hireling's piece on the map opens that hireling's card the same way (`"view-hireling-card"`, the overlay the
-  Hirelings list opens; Gman, 2026-10-29).
+  Hirelings list opens; 2026-10-29).
 - Tapping water on the Root map (a river, the Lake map's lake, a flooded clearing on the Tidal Flats or the Marsh) says what it
   does: what makes pieces move along it, the clearings by it, and only what uses it in that game (Riverfolk, Lilypad Diaspora,
   Riverboats, Boat Builders, Riversteads, the water hirelings, the Ferry); water that is only scenery (the sea on some maps) says so
-  (`waterAt`, `"view-water"` in `root/ui.scala`; asked for by Gman on 2026-10-30). Where the water is comes from the masks
+  (`waterAt`, `"view-water"` in `root/ui.scala`; asked for on 2026-10-30). Where the water is comes from the masks
   `<map>/map-water.webp` (a quarter of the map's size, red for river or lake, blue for scenery), traced by hand in
   `root/tools/water-masks.py`; flooded clearings are tested against their flood images.
 - Tapping the Tundra map's blizzard, or one of the snowflakes marking the spots it may move to, says what it does: it blocks the
   way (path or river) between its two clearings, which aren't adjacent while it is there, and after every round it moves at random
-  to one of its six spots, maybe the same (`"view-blizzard"` in `root/ui.scala`; asked for by Gman on 2026-10-31).
+  to one of its six spots, maybe the same (`"view-blizzard"` in `root/ui.scala`; asked for on 2026-10-31).
 - The Homeland landmarks Mousehold, Foxburrow and Rabbittown are landmark
   options on any map (`MouseholdLandmark` etc. in `root/meta.scala`). Each
   adds its suit to its clearing, kept when a Lilypad enclave covers the suit
@@ -1172,22 +1033,22 @@ file covers the build, server and deploy. No session can ssh to the server
   Rabbittown a Daylight action and Mousehold a hook in `battle.scala`; the
   effects are in `MapsExpansion` in `root/maps.scala`.
   Rabbittown can be used for its battle alone when no warriors can be placed (empty supply, no other rabbit clearing,
-  or a clearing they can't place in): the card is discarded, nothing is placed, and the battle follows (Gman, 2026-10-31:
+  or a clearing they can't place in): the card is discarded, nothing is placed, and the battle follows (2026-10-31:
   the Hundreds with no warriors left in Season in Control). Not gated by an option: it only adds a choice.
   Mousehold places only removed warriors that went to the supply, and a Field Hospitals plan the Marquise made at the end of
-  its turn asks instead of healing when Mousehold could take the cats for free (Gman's Control versus Power, 2026-11-02: the plan
+  its turn asks instead of healing when Mousehold could take the cats for free (the Control versus Power, 2026-11-02: the plan
   put his cat at the Keep and Mousehold then offered it again). New games get the hidden `MouseholdFromSupply`
   (`MouseholdAction` in `root/maps.scala`, `ForcedRemoveProcessAction` in `root/faction-feline.scala`); a running game can be
   switched over with `MouseholdFromSupplyAction(X)`.
 - A player buying Riverfolk services in Birdsong may buy up to 1, plus 1 for each Riverfolk trade post in a clearing where they
   have pieces, and what a purchase leaves of that limit is offered again right after it (`BirdsongNAction(22)` repeats while
   `limit` is above 0, `root/faction-trader.scala`): the first purchase used up the whole limit, so the Underground Duchy, at a
-  trade post and able to buy 2, bought one card and couldn't buy another (Gman, 2026-11-03, Ground in Conquest). New games get
+  trade post and able to buy 2, bought one card and couldn't buy another (2026-11-03, Ground in Conquest). New games get
   the hidden `BuyServicesAgain`; older games keep the single purchase so their replays don't change.
-  The Landmarks choice "Map Default, or on Mountain a random suited landmark" (`MountainSuitedLandmark`; Gman,
+  The Landmarks choice "Map Default, or on Mountain a random suited landmark" (`MountainSuitedLandmark`;
   2026-10-30) plays Map Default, except that on the Mountain map one of Lost City, Mousehold, Foxburrow and
   Rabbittown, never of the Tower clearing's own suit, is drawn at setup and goes in the Tower's clearing (Pass)
-  instead of the Tower, making it two-suited (`SuitedLandmarkAtTowerAction` in `root/setup.scala`). Gman's Air of
+  instead of the Tower, making it two-suited (`SuitedLandmarkAtTowerAction` in `root/setup.scala`). Air of
   Conquest was switched to it after its draft (Foxburrow), lobby and game options both, as an Adset game won't load
   when its `OptionsAction` differs from the lobby's `options` line.
 - Root has a French display language: the "Language" setting (`EnglishLanguage`,
@@ -1201,7 +1062,7 @@ file covers the build, server and deploy. No session can ssh to the server
   English), following the official French edition. A word the game uses with another meaning in one place gets a
   context in square brackets in the code, `"to [in order to]"` (Knaves' "flipped Teapot to Revel"): `Translation.text`
   in `elem.scala` shows it without the brackets, and `french.scala` translates it apart from the plain "to"
-  (asked for by MaKoBwoY on 2026-10-15). French card art for the base and Exiles and
+  (asked for on 2026-10-15). French card art for the base and Exiles and
   Partisans decks and the eight base and Riverfolk/Underworld faction boards are in
   `webp2/root/images/card/deck/fr/` and `faction/fr/` (asset prefix `fr:`), cut by
   `root/tools/french-assets.py` from the TTS mod "Root FR" (Steam workshop 1829904481); the boards
@@ -1211,7 +1072,7 @@ file covers the build, server and deploy. No session can ssh to the server
   with their names; `french-assets.py` no longer makes the Ambushes.
 - Phones give a page only so much canvas memory, and once it is used up every new canvas draws nothing, with no error.
   Northgard's map turned each rotated tile into a canvas of its own (948x948, about 3.6 MB each); the PC version's whole map,
-  mostly turned tiles as it is mirrored, used it up on Marzaus's phone (2026-11-14): only the unturned tiles showed, and the
+  mostly turned tiles as it is mirrored, used it up on a player's phone (2026-11-14): only the unturned tiles showed, and the
   tints and the fog of war (canvases too) were gone, so his own home was black and Snake's home in plain view. Map tiles are now
   `RawImageTurned` (`sprites.scala`), which `RenderableSprite` turns while drawing (`tileImage` in `nort/ui.scala`). Don't make a
   canvas per big image; small ones (the 237 px masks' tints and fog) are fine. So that a failed canvas never shows what the fog
@@ -1250,9 +1111,9 @@ file covers the build, server and deploy. No session can ssh to the server
   `host.xsbt` setup. `ReplayCheck <games> marsh` or `marsh5` plays the
   Marsh map with 4 or 5 players and the three Homeland landmarks.
 - Looking at an earlier state in the log (tapping a line) no longer jumps to the latest state when other players' moves come
-  in (`ui.overrideGame` checks in `runner.scala`; Robotos, spectating, 2026-10-21); "Back", or the player's own turn, does.
+  in (`ui.overrideGame` checks in `runner.scala`; a spectator, 2026-10-21); "Back", or the player's own turn, does.
 - A finished game's "Save Replay As File" (`Quine.save` in `quine.scala`) inlines the whole client and every image of
-  the game, about 63 MB for Northgard, too big for Discord (Robotos, 2026-10-23). "Save Small Replay File" under it
+  the game, about 63 MB for Northgard, too big for Discord (2026-10-23). "Save Small Replay File" under it
   (Northgard and Root, not offline) saves an .html of a few dozen KB (`Quine.saveSmall`): it only sends the browser to
   `/play/<meta>#small-replay=<moves>`, the lobby lines and moves deflated (`CompressionStream`) and base64url encoded.
   `onDocumentLoad` in `hrf.scala` unpacks that (`Quine.openSmall`) into the page's `lobby` and `replay` elements and
@@ -1269,8 +1130,8 @@ file covers the build, server and deploy. No session can ssh to the server
   sent gzipped (about 2.5 MB).
 - In a Northgard game the tab's icon is the player's clan emblem (`clan/<clan>.webp`, the clan picker's; in Adset the clan the seat
   drafted), blinking while it is their turn, as Root does with its faction glyphs (`glyph` in `nort/meta.scala` and
-  `nort/adset.scala`; asked for by Gman on 2026-11-04).
-- The site's icon is a drop (the owner's drawing), not HRF's crow: the
+  `nort/adset.scala`; asked for on 2026-11-04).
+- The site's icon is a drop (the drawing), not HRF's crow: the
   favicon is a 64x64 PNG data URI in the `icon` link of `index.html`
   (`HRF.defaultGlyph`; games swap in faction glyphs), and `drop.png` is the
   backdrop behind the loading screen, in the crow's old dark red.

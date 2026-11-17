@@ -556,7 +556,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     // The boxes drawn over the map: the item and score trackers (unless hidden) and the card piles (when on the map).
     // Warriors, tokens and pawns are placed off them, and the rule flags too, so the boxes never hide a piece
-    // (Gman, 2026-11-09: in Movement as Betrayal the items covered the pieces in Effigy)
+    // (2026-11-09: in Movement as Betrayal the items covered the pieces in Effigy)
     def overlayRects : $[DrawRect] =
         showTrackers.??(itemPanel.$ ++ scoreStrip.$)./ { case (x, y, w, h) => DrawRect("", x, y, w, h) } ++
         pilesOnMap.??(cardPilesBox.$)./ { case (x, y, w, h) => DrawRect("", x, y, w, h) }
@@ -672,7 +672,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     // The forests' names (Alder, Willow, ...) at their centres, under the pieces, on the Marsh (asked for by the owner on
     // 2026-10-17) and the Autumn, Winter, Lake, Mountain and Gorge maps (the same day), and on the Tidal, Tundra and Gloom maps
-    // (Gman, 2026-10-30): pale with a dark outline, to read on the woods
+    // (2026-10-30): pale with a dark outline, to read on the woods
     def forestNames = $[Board](AutumnBoard, WinterBoard, LakeBoard, MountainBoard, GorgeBoard, MarshBoard, TidalBoard, TundraBoard, GloomBoard, UrbanBoard, LegendsBoard, DeepWoodsBoard, WastelandsBoard).has(game.board)
 
     def drawForestNames(g : dom.CanvasRenderingContext2D) {
@@ -5769,7 +5769,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     val zoom = 0.72
 
     // In full screen the map keeps the height it had in the window, and the room it gains goes to the other panes
-    // (MaKoBwoY, 2026-10-14): the browser's height before full screen is remembered per screen width, or taken as 90%
+    // (2026-10-14): the browser's height before full screen is remembered per screen width, or taken as 90%
     var mapMaxHeight : Int = Int.MaxValue
 
     def fullScreen = dom.document.fullscreenElement != null || (dom.window.innerHeight >= dom.window.screen.height && dom.window.innerWidth >= dom.window.screen.width)
@@ -5970,7 +5970,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     var seen : $[Notification] = $
 
     // How many notifications this browser has seen in an online game is kept in its storage, so opening the game again
-    // shows only those that came since, not every notification of the game (Gman, 2026-10-31); they are only added to,
+    // shows only those that came since, not every notification of the game (2026-10-31); they are only added to,
     // newest first, so the oldest seenBefore of them were seen before the page was opened
     def seenKey = hrf.HRF.lobby.%(_ => hrf.HRF.replay.not)./(settingsKey + ".notifications-seen." + _)
 
@@ -6057,7 +6057,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         fix(f).as[Faction]./~(f => allSwitches.%{
             case PickFactionIfAvailable(s) => false
             case _ if game.states.contains(f).not => false
-            // Only where the game's setup leaves it to the players (MaKoBwoY, 2026-11-12): elsewhere they change nothing
+            // Only where the game's setup leaves it to the players (2026-11-12): elsewhere they change nothing
             case AutoSkipAmbushIfNone => options.has(BluffMode).not && game.autoSkipAmbush.not
             case UseAutoAssignHits => game.autoAssignHits.not && game.autoHits.not
             case _ if callbacks.settings.has(NoOutOfTurn) => false

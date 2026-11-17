@@ -15,12 +15,12 @@ import hrf.elem._
 import nort.elem._
 
 
-// PC version (option ModuleOption(PCVersion), under Fan content; asked for by Gman on 2026-11-11): a mode inspired by the Northgard
-// video game. RULES.md (PC version) has the rules and the readings; the design proposal with Gman's questions is the Claude Doc
+// PC version (option ModuleOption(PCVersion), under Fan content; asked for on 2026-11-11): a mode inspired by the Northgard
+// video game. RULES.md (PC version) has the rules and the readings; the design proposal with the owner's questions is the Claude Doc
 // "Northgard PC version mode: design proposal".
 // - SETUP: the map is built at once (buildMap): the central tile (always a special one), a Beach with a Port for each clan at the
 //   edge (homes), the two tiles beside each Port, then every other space, each tile in a legal turn, from the map tiles with the
-//   Uncharted Horizons ones and every Wilderness and Wastelands Environment tile (Gman, 2026-11-11), which the mode turns on. A side with no tile beyond it is
+//   Uncharted Horizons ones and every Wilderness and Wastelands Environment tile (2026-11-11), which the mode turns on. A side with no tile beyond it is
 //   coast and closes its territory (Board.coast). Each clan's home is its Port territory and the two small territories beside it
 //   (the Beach's wings, each joined to the tile beside the Port); it places its starting units in the Port territory, then in one of
 //   the two, and 1 unit goes into any of the three still empty. Creatures hold the territories between the homes.
@@ -75,7 +75,7 @@ object PCExpansion extends Expansion {
     def on(implicit game : Game) = game.has(PCVersion)
 
     // MAP LAYOUT: the spaces of the map and each Port (its spot and the side its sea is on), by the number of clans, clockwise
-    // (wide: the two-player map with its three middle rows five tiles wide, an oval; Gman, 2026-11-11; PCVersionUpdate)
+    // (wide: the two-player map with its three middle rows five tiles wide, an oval; 2026-11-11; PCVersionUpdate)
     def layout(n : Int, wide : Boolean = false) : ($[(Int, Int)], $[((Int, Int), Side)]) = n match {
         case 2 if wide =>
             (for (y <- -2.to(2).$; x <- -2.to(2).$; if y.abs < 2 || x.abs < 2) yield (x, y), $(((0, -2), North), ((0, 2), South)))
@@ -246,7 +246,7 @@ object PCExpansion extends Expansion {
             o.any && i.any && o != i && o.get.edges.num == 1 && o.get.lair.not
         }
 
-        // Mirrored maps (Gman, 2026-11-11: "When possible, it would be good to mirror starting positions"): where the layout turns onto
+        // Mirrored maps (2026-11-11: "When possible, it would be good to mirror starting positions"): where the layout turns onto
         // itself (two clans, four and six), each tile placed is also placed, turned the same way, at the cells the map's turns take it
         // to, so every home sees the same map around it (PCVersionUpdate; the first levels of retries only, then it may go)
         val turnsOf : $[Int] = (game.options.has(PCVersionUpdate) && level < 2).??(game.arity match {
@@ -278,7 +278,7 @@ object PCExpansion extends Expansion {
             }./(t => pile = pile.diff($(t))).any
         }
 
-        // Balanced homes (Gman, 2026-11-11): the Port territory gives only food, one small territory only 1 wood, the other only 1 lore
+        // Balanced homes (2026-11-11): the Port territory gives only food, one small territory only 1 wood, the other only 1 lore
         // Each level of retries (20 tries each) asks less, when the tiles can't make it (six clans need twelve such tiles):
         // 0 exactly 1 food, 1 wood and 1 lore; 1 at least that much, the others none; 2 the side's wood or lore, any food;
         // 3 anything
@@ -300,7 +300,7 @@ object PCExpansion extends Expansion {
         def besideOk(d : Side, q : Side, wood : Boolean)(p : Placement) =
             besideFits(p, d, q) && only(p.spec.areaOn(d, p.r).get, 0, wood.??(1), wood.not.??(1)) && p.spec.areaOn(q, p.r).exists(a => alone(a) && only(a, 0, 0, 0) && a.lair.not)
 
-        // Mines (Gman, 2026-11-11): beside its food area the inland tile has a lair in an area of its own on a side across the Port's
+        // Mines (2026-11-11): beside its food area the inland tile has a lair in an area of its own on a side across the Port's
         // line, so with the tile beyond that side giving an area of its own with a small building space, every home has a lair
         // territory with a space for a Mine just outside it
         // (in games with the hidden PCVersionUpdate every new game gets; older games keep the maps they were dealt)
@@ -506,7 +506,7 @@ object PCExpansion extends Expansion {
 
     // Raven's Rangers (Clan Fame upgrades): its one more Explore scouts anywhere on the map, any territory it doesn't see (an enemy's
     // still needs the upgraded Town Hall). Before PCRangersScout the Rangers were never offered in the PC version, as the map is
-    // whole and the Explore is a scout (Gman, 2026-11-13)
+    // whole and the Explore is a scout (2026-11-13)
     def rangersOn(implicit game : Game) = on && game.options.has(PCRangersScout)
 
     def scoutableAnywhere(f : Faction)(implicit game : Game) : $[Territory] =
@@ -523,7 +523,7 @@ object PCExpansion extends Expansion {
     }
 
     // With 3 clans or more the Wilderness and Wastelands creatures are in the deck too, so there are creatures for more territories
-    // between the homes (Gman, 2026-11-11; PCVersionUpdate)
+    // between the homes (2026-11-11; PCVersionUpdate)
     def moreCreatures(implicit game : Game) = on && game.options.has(PCVersionUpdate) && game.arity >= 3
 
     // Mines: f takes n Stone from the supply
@@ -590,7 +590,7 @@ object PCExpansion extends Expansion {
 
             Then(PCPlaceAction(1, order))
 
-        // Every clan: 4 units in its Port territory, 1 in each small territory beside it (Gman, 2026-11-11); Kaija, a lynx, Brok or
+        // Every clan: 4 units in its Port territory, 1 in each small territory beside it (2026-11-11); Kaija, a lynx, Brok or
         // the Automa's second Leader in place of one of the Port's units, and Robotos 2 more there
         case PCPlaceAction(_, l) =>
             l.foreach { f =>
@@ -653,7 +653,7 @@ object PCExpansion extends Expansion {
 
             game.note("scout")
 
-            // Gman, 2026-11-11: "You still get fame and all the other bonuses when exploring." The scouted territory counts as
+            // The owner, 2026-11-11: "You still get fame and all the other bonuses when exploring." The scouted territory counts as
             // the one the Explore closed, whoever holds it (it is never held yet), and nothing else on the map closes
             val tile = game.board.placements.find(p => p.x == a.x && p.y == a.y).get.tile
 
@@ -661,7 +661,7 @@ object PCExpansion extends Expansion {
             if (e.collect)
                 MapExpansion.collect(f, t, "from the scouted territory".txt)
 
-            // The fame for closing it, 1 per tile; 1 in games with PCScoutFame (Gman, 2026-11-14: the fame win came too fast)
+            // The fame for closing it, 1 per tile; 1 in games with PCScoutFame (2026-11-14: the fame win came too fast)
             val n = game.options.has(PCScoutFame).?(1).|(game.board.tiles(t))
             f.fame += n
             f.log("gained", n.hl, FameIcon(), "for scouting", a)
@@ -735,7 +735,7 @@ object PCExpansion extends Expansion {
             Then(NextTurnAction(f))
 
         // VEDRFOLNIR: the map is whole, so instead of adding a tile its controller reveals one territory it hasn't seen, drawn at
-        // random, enemy ones too, at the end of each year; not a scout, so no fame or Explore bonuses (Gman, 2026-11-12;
+        // random, enemy ones too, at the end of each year; not a scout, so no fame or Explore bonuses (2026-11-12;
         // PCVedrfolnirReveal); before the Town Hall check, which may end the game
         case EndOfYearAction if game.options.has(PCVedrfolnirReveal) && game.wasteSteps.has("vedrfolnir-reveal-" + game.year).not =>
             game.wasteSteps :+= "vedrfolnir-reveal-" + game.year
@@ -812,10 +812,10 @@ object PCExpansion extends Expansion {
             else
                 game.internalPerform(EndOfYearAction, soft)
 
-        // Mines give Stone, with no die roll, as upgrades matter so much here (Gman, 2026-11-11): 1 a Mine (an upgraded one counts
+        // Mines give Stone, with no die roll, as upgrades matter so much here (2026-11-11): 1 a Mine (an upgraded one counts
         // twice), as long as the supply has Stone; in games with the hidden PCVersionUpdate every new game gets
         // In games with the hidden PCMineChoice every new game gets, each clan picks: that Stone, or the Minerals module's roll, which
-        // may give Iron or Gem (Gman, 2026-11-13: he was never offered the roll); with no Stone left, it rolls
+        // may give Iron or Gem (2026-11-13: he was never offered the roll); with no Stone left, it rolls
         case MineHarvestAction(f :: rest, then) if game.options.has(PCVersionUpdate) && game.options.has(PCMineChoice) =>
             val mines = MineralsExpansion.mines(f)
             val n = mines.min(MineralsExpansion.left(Stone))

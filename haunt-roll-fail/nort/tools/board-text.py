@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# The printed New Blood clan board texts (Gman's photos of the print, 2026-10-23) drawn on the site's board pictures
+# The printed New Blood clan board texts (the photos of the print, 2026-10-23) drawn on the site's board pictures
 # (expansion/board/<clan>.webp, from the TTS mod) in place of their old text, keeping the pictures as they are:
 # the old body text and its icons are painted out (OpenCV inpainting) and the new text is set in Quicksand, white,
 # with the board's icons inline. Writes expansion/board/<clan>-print.webp (Warchief.boardFile picks them in games

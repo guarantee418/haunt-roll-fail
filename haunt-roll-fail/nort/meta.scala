@@ -77,13 +77,13 @@ object Meta extends MetaGame { mmm =>
     // Chosen casualties are on in every new game (mandatoryFor), not in older ones
     override val hiddenOptions = $(ModuleOption(VictoryModule), ModuleOption(Wilderness), ModuleOption(Wastelands), TrainingFieldsOption, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, PrintedSquirrelClan, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, ChiefMoveFromHeld, ChiefMoveAfterMove, MilitaryRerollCreatures, HorseTwoGuards, PickLoneLoss, GuardBeforeChief, ScorchedAfterEvents, PCChiefCampPays, FameRetreatKills, FameAltarClosed, GuardCasualtyAsked, TeamVictoryAllCards, SailOnFromPort, PCVersionUpdate, PCVedrfolnirReveal, PCVedrfolnirNoTile, PCMineChoice, PCRangersScout, PCSeenOnly, PCMinePerMine, PCOneUpgrade, BuildOrUpgrade, PCNavalPort, PCHallShield, PCHallSafe, PCArmyCap, PCTowerPoints, PCScoutFame, PCScorchedSeen, PCDominationChoice, DominationOnly, LionStartingDeck, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith, NormalDevelopments, ModuleOption(DragonVariant), ModuleOption(BearBorder)) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
-    // Options no longer offered on the setup screen that games still have, and log at the start (Robotos's Dragon is picked as its
+    // Options no longer offered on the setup screen that games still have, and log at the start (the Dragon is picked as its
     // own clan in the picker since 2026-10-26, factionVariants)
     val retired : $[O] = $(DominationOnly, ModuleOption(Wilderness), ModuleOption(Wastelands), ModuleOption(DragonVariant), ModuleOption(BearBorder))
 
     // New Blood has no option: picking one of its clans brings it in
     // The modules come in one section per box, as Robotos laid them out (2026-10-26): Base game, Warchief expansion, Wilderness and
-    // Wastelands expansions (with their bans and the Central tile), Uncharted Horizons; Balanced starting tiles before them (Gman)
+    // Wastelands expansions (with their bans and the Central tile), Uncharted Horizons; Balanced starting tiles before them
     val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ $(ModuleOption(Creatures), MoreCreatures) ++ WarchiefsChoice.all ++ $(WildernessTiles, WildernessCreatures, WastelandsTiles, WastelandsCreatures) ++ BanEnvironment.all ++ BanCreature.all ++ CentralChoice.all ++ $(ModuleOption(EventsModule), ModuleOption(Sea), HorizonsTiles) ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ AutomaLevelOption.all ++ $(BalancedStartTiles) ++ DevelopmentsChoice.fan ++ Module.all.%(_.fan).but(LionKingdom).but(DragonVariant).but(BearBorder).diff(FanVictories.modules)./(ModuleOption) ++ FanVictories.modules./(ModuleOption) ++ $(DominationVictory) ++ hiddenOptions
 
     // Colors and teams only for the clans in the game, as many teams as players
@@ -235,7 +235,7 @@ object Meta extends MetaGame { mmm =>
     )
     override def randomName = "Random Clan"
 
-    // The fan-made clans have their own section of the clan picker (Gman, 2026-10-26): the Lion Kingdom, and Robotos's Dragon,
+    // The fan-made clans have their own section of the clan picker (2026-10-26): the Lion Kingdom, and Robotos's Dragon,
     // picked as its own clan (it was the setup option "Lower skill floor Dragon", DragonVariant)
     val fanClans : Elem = "Fan-made clans".txt
     override def factionGroup(f : Faction) = (f == Lion).?(fanClans)
@@ -244,7 +244,7 @@ object Meta extends MetaGame { mmm =>
         Image("clan-" + Dragon.style, styles.menuIcon) ~ "Dragon Clan (variant)".spn(xstyles.bold),
         |(("i".txt, "Dragon Clan".hlb ~ ", lower skill floor variant", dragonVariantInfo)),
         |(fanClans), $(ModuleOption(DragonVariant))),
-        // Robotos's border Bear (BearBorder, Gman 2026-10-31)
+        // Robotos's border Bear (BearBorder, 2026-10-31)
         FactionVariant(Bear, "Bear Clan (variant)",
         Div(Image("clan-" + Bear.style, styles.pickIcon)) ~ Div(Bear.name.hlb) ~ Div("Kaija on a border".spn(xstyles.smaller85)),
         Image("clan-" + Bear.style, styles.menuIcon) ~ "Bear Clan (variant)".spn(xstyles.bold),

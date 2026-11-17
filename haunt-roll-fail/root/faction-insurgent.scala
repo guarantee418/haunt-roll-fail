@@ -237,7 +237,7 @@ case class OutragePeekNotifiesAction(then : ForcedAction) extends ForcedAction w
 object InsurgentExpansion extends FactionExpansion[Insurgent] {
     // Outrage (and the playtest Pacifism) with no card to give waits for the Alliance's Ok after showing it the hand only in
     // games started from 2026-10-17 until 2026-10-31 (OutragePeekNeedsOk) or switched to it; newer games notify it, and the
-    // notification shows the next time the Alliance's player opens the game (Gman, 2026-10-31)
+    // notification shows the next time the Alliance's player opens the game (2026-10-31)
     def peekWaits(implicit game : Game) = (game.options.has(OutragePeekNeedsOk) || game.outragePeekNeedsOk) && game.outragePeekNotifies.not
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {

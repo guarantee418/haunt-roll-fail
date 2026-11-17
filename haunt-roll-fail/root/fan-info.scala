@@ -14,7 +14,7 @@ import hrf.elem._
 
 import root.elem._
 
-// The "?" of the fan, playtest and mirror factions (Gman, 2026-11-17): who made the faction, then what it does and how
+// The "?" of the fan, playtest and mirror factions (2026-11-17): who made the faction, then what it does and how
 // it plays, a line each. Shown by the faction picker's ? button (Meta.factionInfo) and Advanced Setup's faction toggles
 // (IncludeFaction.explain). Official factions have none.
 object FanInfo {
@@ -24,7 +24,7 @@ object FanInfo {
     private def hrf : Elem = "Made by ".txt ~ "JT".hl ~ " for " ~ "HRF".hh ~ " (hrf.im), the site this one is built on."
     private def mirror(o : Faction) : Elem = "A second copy of the " ~ o.elem ~ ", with its own name and colour, so two of them can play in one game. It plays exactly like the " ~ o.elem ~ "."
     private def line(head : String, text : Elem) : Elem = (head + ": ").hh ~ text
-    // The designer's own print-and-play folder, open to anyone with the link (Gman, 2026-11-17: let players see the whole expansion).
+    // The designer's own print-and-play folder, open to anyone with the link (2026-11-17: so players can see the whole expansion).
     private def outsiders(version : String) : Elem = "version " ~ version.txt ~ ", from the fan-made " ~ "Outsiders Expansion".hh
     private def outsidersLink : Elem = "See the whole " ~ Link("https://drive.google.com/drive/folders/19tCC_9QTW682DUeLCUIr7CEyjfczjxA6", "Outsiders Expansion", $(xstyles.link)) ~ ": every faction, map and card, with the rules (the designer's print-and-play files on Google Drive)."
 

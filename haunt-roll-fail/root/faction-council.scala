@@ -194,7 +194,7 @@ object CouncilExpansion extends FactionExpansion[Council] {
     }
 
     // Banish moves warriors and can't hit buildings or tokens, so it does something only against warriors it can move,
-    // or a Peaceful enclave, which battling makes the Lilypad Diaspora fear (MaKoBwoY and geffrey, 2026-10-30; BanishNeedsWarriors)
+    // or a Peaceful enclave, which battling makes the Lilypad Diaspora fear (2026-10-30; BanishNeedsWarriors)
     def banishable(c : Clearing, e : Faction)(implicit game : Game) : Boolean =
         e.at(c).of[Warrior].%(_ != Warlord).any || e.as[InvasiveEEE].?(_.at(c).has(PeacefulEEE))
 
@@ -583,7 +583,7 @@ object CouncilExpansion extends FactionExpansion[Council] {
             }
 
             // With nothing to do but skip, the menu used to be skipped by itself, so the card went back to hand
-            // without a word (Jfthex, 2026-10-18); wait for the skip, which is soft, so no recorded moves change
+            // without a word (2026-10-18); wait for the skip, which is soft, so no recorded moves change
             ask.needOkIf(ask.choice.not)
 
         case CouncilBanishAction(f, c, e) =>
@@ -650,7 +650,7 @@ object CouncilExpansion extends FactionExpansion[Council] {
             CouncilConveneMainAction(f)
 
         // Clear Path (Mountain map) after Convene Woodfolk: the Council reveals its cards in Birdsong and gets them back only in
-        // Evening, so its Daylight has an empty hand and the path could never be cleared (shushub4n4, 2026-11-04; CouncilEveningClearPath).
+        // Evening, so its Daylight has an empty hand and the path could never be cleared (2026-11-04; CouncilEveningClearPath).
         // Once a turn, as in Daylight; then goes on to Craft
         case EveningNAction(30, f : Council) if (options.has(CouncilEveningClearPath) || game.councilEveningClearPath) && Council.clearPathWanted(f) =>
             soft()

@@ -23,7 +23,7 @@ import root.elem._
 // - Setup: always first in the standard setup (its priority); in Advanced Setup it sets up when drafted. Its caravan corner is any
 //   corner; the warrior in "every clearing except the opposite corner" goes in the caravan corner too, which the piece count needs
 //   (20 Eyrie warriors: 12 + 3, and 5 left with the Cardinals)
-// - A New Roost: 3 warriors, as the rules say (the board said up to 6; its picture now says 3, Gman 2026-11-15); they are drawn at random, like every warrior it places
+// - A New Roost: 3 warriors, as the rules say (the board said up to 6; its picture now says 3, 2026-11-15); they are drawn at random, like every warrior it places
 // - The Red Menace: on their own turn the other factions (not the Vagabond) may move Cardinals in place of their own warriors in any
 //   move they make, from any clearing with Cardinals, ignoring rule (a move from the Eyrie Dynasties' Decree still needs a matching
 //   clearing). They don't battle with them or rule with them. Allied Without Aid (the Vagabond's) isn't done

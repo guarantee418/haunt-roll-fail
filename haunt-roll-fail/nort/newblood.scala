@@ -1018,7 +1018,7 @@ object NewBloodExpansion extends Expansion {
             l match {
                 case Nil => Then(then)
                 case a :: rest if game.options.has(KnowledgeEachTerritory) =>
-                    // The print card (Marzaus, 2026-10-20): any option for each territory, collecting only what it gives
+                    // The print card (2026-10-20): any option for each territory, collecting only what it gives
                     val recruit = (game.reserve(f) > 0 && game.controlled(f).exists(_.areas.contains(a))).$(KnowledgeChoiceAction(f, a, 0, None, rest, used, then))
                     val collect = resourcesIn(game.board.territory(a))./(r => KnowledgeChoiceAction(f, a, 1, |(r), rest, used, then))
                     val draw = (CommonExpansion.available(f) > 0).$(KnowledgeChoiceAction(f, a, 2, None, rest, used, then))

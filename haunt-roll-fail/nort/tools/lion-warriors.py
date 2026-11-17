@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Lion Kingdom (fan content): the clan's two warrior figures, in the flat style of unit-original and bodyguard-figure.py, with no
 # Norse horns: a man-at-arms in a steel cap holding a longsword upright (lion-sword-<color>.webp), and a longbowman in a
-# kettle hat with a quiver (lion-bow-<color>.webp). Asked for by Gman on 2026-10-24, so the Lion's warriors look English or French.
+# kettle hat with a quiver (lion-bow-<color>.webp). Asked for by the owner on 2026-10-24, so the Lion's warriors look English or French.
 # Drawn in the originals' brown and white (-original), then in each player color with the unit figures' fill and detail colors.
 # Run from haunt-roll-fail/: python3 nort/tools/lion-warriors.py
 import math
@@ -32,7 +32,7 @@ def body(d, colour):
     d.polygon(p((198, 170), (302, 170), (316, 210), (312, 324), (188, 324), (184, 210)), fill=colour)
 
 # --- the man-at-arms: a round steel cap, both hands on a longsword held upright at his right; drawn like the longbowman, with curves
-# and rounded corners, and no shield or helm, so he looks nothing like the bodyguard (Gman, 2026-10-24)
+# and rounded corners, and no shield or helm, so he looks nothing like the bodyguard (2026-10-24)
 POMMEL, BLADE = (336, 262), (0.30, -0.954)   # the sword's pommel and the direction of its point
 
 def along(t, side=0):
@@ -85,7 +85,7 @@ def sword_details(d, colour, detail):
     d.line(p(along(64), along(218)), fill=detail, width=3 * S)
 
 # --- the longbowman: kettle hat, drawing a longbow, a quiver of arrows at his hip; drawn with curves and then rounded, so he
-# isn't built of boxes (Gman, 2026-10-24)
+# isn't built of boxes (2026-10-24)
 def curve(pts, n=12):
     # a closed Catmull-Rom curve through the points
     out = []

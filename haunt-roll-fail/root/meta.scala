@@ -37,7 +37,7 @@ trait MapOption extends GameOption with OneOfGroup with ImportantOption with Fol
     override def oneOf : Any = "Map"
 }
 
-// Fan content gets sections of its own, after the official ones, each folded like the rest (Gman, 2026-11-17): Fan Maps, Fan Decks,
+// Fan content gets sections of its own, after the official ones, each folded like the rest (2026-11-17): Fan Maps, Fan Decks,
 // the Fan Hirelings folder, the Scenarios folder and, in the faction picker and Advanced Setup's pool, Fan Factions. A new fan map or
 // deck extends FanMap or FanDeck; a new fan hireling option or scenario option sets its folder (Meta.fanHirelings, Meta.scenarios).
 // Display only: the options and what games record are unchanged
@@ -467,7 +467,7 @@ case object FrogCardsAfterStartingHands extends GameOption with ToggleOption {
 // With the five-card draft (Advanced Setup's A.7 to A.10) the starting hands are drawn before any faction sets up, so the
 // Frog cards go into the shared deck during Lilypad Diaspora's own setup, as its board says (3rd step), and a faction set up
 // after it may draw them in its setup (the Woodland Alliance's supporters). Without the draft FrogCardsAfterStartingHands still
-// waits until every faction is set up, as the hands are drawn then. Hidden and on by default for new games (Gman, 2026-11-11);
+// waits until every faction is set up, as the hands are drawn then. Hidden and on by default for new games (2026-11-11);
 // older games keep waiting so their replays don't change.
 case object FrogCardsAtDiasporaSetup extends GameOption with ToggleOption {
     val group = "Card Draft"
@@ -508,7 +508,7 @@ case object GovernorsStopEnclaveFlips extends GameOption with ToggleOption {
 
 // Outrage (and the playtest Pacifism) with no card to give: the hand is shown to the Alliance in its action pane, and the game
 // waits for its OK instead of going on with only a notification. Hidden; new games got it from 2026-10-17 to 2026-10-31, when
-// Gman asked for the notification back (it now shows the next time the player opens the game), so those games keep waiting.
+// The owner asked for the notification back (it now shows the next time the player opens the game), so those games keep waiting.
 case object OutragePeekNeedsOk extends GameOption with ToggleOption {
     val group = "Card Draft"
     val valueOn = "Outrage".hh ~ " waits until the hand is seen"
@@ -522,7 +522,7 @@ case object CounterMiceInABush extends GameOption with ToggleOption {
     val valueOn = "Mice-in-a-Bush".hh ~ " can be counter-ambushed"
 }
 
-// Withdrawn: Governors (17.2.3) were taken to stop the Keepers' Delve at an enemy Council's Governing assemblies (Gman, 2026-10-21),
+// Withdrawn: Governors (17.2.3) were taken to stop the Keepers' Delve at an enemy Council's Governing assemblies (2026-10-21),
 // but delving moves a relic from the forest to the clearing, it places nothing (owner, 2026-10-21). New games no longer get it; the
 // games started with it keep its extra Entreat choice in the Delve, so their recorded moves still load (RetinueDelveAction)
 case object GovernorsStopDelve extends GameOption with ToggleOption {
@@ -531,7 +531,7 @@ case object GovernorsStopDelve extends GameOption with ToggleOption {
 }
 
 // Lilypad Diaspora's Rally or Reconcile is skipped when neither would do anything: no Militant Enclave to flip, and none to place
-// a warrior at (asked for by MaKoBwoY on 2026-10-21). Hidden and on by default for new games; older games keep asking so their
+// a warrior at (asked for on 2026-10-21). Hidden and on by default for new games; older games keep asking so their
 // replays don't change.
 case object SkipIdleRallyReconcile extends GameOption with ToggleOption {
     val group = "Card Draft"
@@ -548,7 +548,7 @@ case object CouncilRevealOnce extends GameOption with ToggleOption {
 }
 
 // An Entreat gives the Twilight Council its Loyalist without asking when it has none it could place in the clearing instead, and
-// asks nothing when it can't gain one either (Hayjay, 2026-10-29: the Council was asked only to place 0). Hidden and on by default
+// asks nothing when it can't gain one either (2026-10-29: the Council was asked only to place 0). Hidden and on by default
 // for new games; older games keep asking so their replays don't change.
 case object EntreatGainUnasked extends GameOption with ToggleOption {
     val group = "Card Draft"
@@ -556,7 +556,7 @@ case object EntreatGainUnasked extends GameOption with ToggleOption {
 }
 
 // Banish is offered only against an enemy with warriors it could move in the clearing, or a Lilypad Diaspora Peaceful enclave
-// there, whose fears a battle sets off (MaKoBwoY, 2026-10-30: he could still banish a lone Duchy tunnel). Hidden and on by
+// there, whose fears a battle sets off (2026-10-30: he could still banish a lone Duchy tunnel). Hidden and on by
 // default for new games; older games keep offering it so their recorded moves load.
 case object BanishNeedsWarriors extends GameOption with ToggleOption {
     val group = "Card Draft"
@@ -564,7 +564,7 @@ case object BanishNeedsWarriors extends GameOption with ToggleOption {
 }
 
 // A defender banished by the Twilight Council ignores the first hit as in any other battle (Hundreds' Stubborn, Armored, Devout Knights,
-// Badger Bodyguards, Dazzle): the Banish moved the warriors before those effects (Gman, 2026-11-04, Season for Revolution: the Hundreds
+// Badger Bodyguards, Dazzle): the Banish moved the warriors before those effects (2026-11-04, Season for Revolution: the Hundreds
 // were Stubborn with the Warlord there). Hidden and on by default for new games; older games keep the old way so their replays don't
 // change (BanishAfterIgnoredHitsAction switches a running one over).
 case object BanishAfterIgnoredHits extends GameOption with ToggleOption {
@@ -573,7 +573,7 @@ case object BanishAfterIgnoredHits extends GameOption with ToggleOption {
 }
 
 // On the Mountain map the Twilight Council may clear a path in Evening, after Convene Woodfolk, if it didn't in Daylight: its cards
-// are revealed in Birdsong and come back to hand only in Evening, so its Daylight had none to discard (shushub4n4 on Discord,
+// are revealed in Birdsong and come back to hand only in Evening, so its Daylight had none to discard (Discord,
 // 2026-11-04). Hidden and on by default for new games; older games keep their Evening so their replays don't change
 // (CouncilEveningClearPathAction switches a running one over).
 case object CouncilEveningClearPath extends GameOption with ToggleOption {
@@ -582,7 +582,7 @@ case object CouncilEveningClearPath extends GameOption with ToggleOption {
 }
 
 // Lilypad Diaspora's Reconcile flips its Militant Enclaves one at a time: each flip draws the clearing's ruler a card before the
-// next is picked, so the Diaspora sees what it drew before deciding on the next (Cookies on Discord, 2026-11-05: all were picked
+// next is picked, so the Diaspora sees what it drew before deciding on the next (2026-11-05: all were picked
 // at once). Hidden and on by default for new games; older games keep picking them all at once so their replays don't change.
 case object ReconcileOneAtATime extends GameOption with ToggleOption {
     val group = "Card Draft"
@@ -590,7 +590,7 @@ case object ReconcileOneAtATime extends GameOption with ToggleOption {
 }
 
 // Lilypad Diaspora's Fears Come to Pass places its warriors once the warriors the battle or removal took are back in the supply,
-// and with too few for every flipped clearing the Diaspora picks which get one (Gman, 2026-11-08: in Movement as Betrayal a battle
+// and with too few for every flipped clearing the Diaspora picks which get one (2026-11-08: in Movement as Betrayal a battle
 // at Effigy flipped Effigy and Lower Jaw, but the two dispersed frogs were still off the map, so only Effigy, listed first, got a
 // warrior). Hidden and on by default for new games; older games keep the old way so their replays don't change
 // (FearsAfterRemovalAction switches a running one over).
@@ -600,7 +600,7 @@ case object FearsAfterRemoval extends GameOption with ToggleOption {
 }
 
 // Feather Rufflers is resolved when crafted, as its parchment text box says (like the Favor cards): it places two warriors in
-// a clearing with the crafter's pieces and is discarded (Jfthex, 2026-10-30: the Knaves crafted it with Apprentice and it stayed
+// a clearing with the crafter's pieces and is discarded (2026-10-30: the Knaves crafted it with Apprentice and it stayed
 // among their crafted cards). Hidden and on by default for new games; older games keep it as a crafted card used later
 // (FeatherRufflersOnCraftAction switches a running one over).
 case object FeatherRufflersOnCraft extends GameOption with ToggleOption {
@@ -610,7 +610,7 @@ case object FeatherRufflersOnCraft extends GameOption with ToggleOption {
 
 // Silver-Tongue follows its card: "During any one effect on your turn ... treat a matching clearing with your pieces as one you
 // rule". The clearing counts as ruled for the next effect only (the next recorded move and what follows it until someone is asked
-// again), not to the end of the phase, and a Negotiations there asks no card for the clearing's other ruler (kayajam, 2026-10-30).
+// again), not to the end of the phase, and a Negotiations there asks no card for the clearing's other ruler (2026-10-30).
 // Hidden and on by default for new games; older games keep the phase-long ruling so their replays don't change
 // (SilverTongueOneEffectAction switches a running one over).
 case object SilverTongueOneEffect extends GameOption with ToggleOption {
@@ -619,7 +619,7 @@ case object SilverTongueOneEffect extends GameOption with ToggleOption {
 }
 
 // Governors (17.2.3): an enemy of the Twilight Council can't craft with its pieces at the Council's Governing assemblies unless it
-// entreats first. Lilypad Diaspora's enclaves and the Corvids' plots there still crafted (Gman, 2026-10-30: the Diaspora crafted with
+// entreats first. Lilypad Diaspora's enclaves and the Corvids' plots there still crafted (2026-10-30: the Diaspora crafted with
 // its Bayou enclave in Season in Control). Hidden and on by default for new games; older games keep crafting there so their replays
 // don't change (GovernorsStopCraftingAction switches a running one over).
 case object GovernorsStopCrafting extends GameOption with ToggleOption {
@@ -628,7 +628,7 @@ case object GovernorsStopCrafting extends GameOption with ToggleOption {
 }
 
 // Mousehold places only the removed warriors that went to the supply: a cat the Marquise's Field Hospitals put at the Keep was offered
-// at Mousehold too, so one removed cat came back twice (Gman, 2026-11-02, Control versus Power). Hidden and on by default for new
+// at Mousehold too, so one removed cat came back twice (2026-11-02, Control versus Power). Hidden and on by default for new
 // games; older games keep offering it so their replays don't change (MouseholdFromSupplyAction switches a running one over).
 case object MouseholdFromSupply extends GameOption with ToggleOption {
     val group = "Card Draft"
@@ -637,7 +637,7 @@ case object MouseholdFromSupply extends GameOption with ToggleOption {
 
 // The Riverfolk Company crafts with the crafting icons its placed trade posts uncover on its faction board (Law of Root 8.2), not with
 // pieces in a clearing, so the Twilight Council's Governors (17.2.3) don't stop it and it never needs to entreat for it: a trade post
-// at a Governing assembly left the Riverfolk one icon short until it entreated (shushub4n4 and geffrey, 2026-11-07, Destiny and Right).
+// at a Governing assembly left the Riverfolk one icon short until it entreated (2026-11-07, Destiny and Right).
 // Hidden and on by default for new games; older games keep it so their replays don't change (RiverfolkCraftUngovernedAction switches
 // a running one over).
 case object RiverfolkCraftUngoverned extends GameOption with ToggleOption {
@@ -647,8 +647,8 @@ case object RiverfolkCraftUngoverned extends GameOption with ToggleOption {
 
 // Governors (17.2.3): an enemy of the Twilight Council can't remove pieces at its Governing assemblies except in battle, so a correct
 // guess exposing a Corvid plot there doesn't remove it: the plot stays face down, nothing is scored and the card goes back to the hand
-// (a wrong guess still gives it to the Corvids). The exposure removed the plot and scored (geffrey and masmackattack on Discord,
-// 2026-11-10, Destiny and Right; Gman picked guessing with no removal over not offering it). Hidden and on by default for new games;
+// (a wrong guess still gives it to the Corvids). The exposure removed the plot and scored (Discord,
+// 2026-11-10, Destiny and Right; the owner picked guessing with no removal over not offering it). Hidden and on by default for new games;
 // older games keep it so their replays don't change (GovernorsStopExposureAction switches a running one over).
 case object GovernorsStopExposure extends GameOption with ToggleOption {
     val group = "Card Draft"
@@ -664,7 +664,7 @@ case object PrisonersFromCodefenders extends GameOption with ToggleOption {
     val valueOn = "Knaves".hh ~ " take co-defenders prisoner"
 }
 
-// The Dawn and Dusk deck's fixes after a check against its cards (Gman, 2026-11-13): Fowl Play in the deck, Sly Dog and Old Friend
+// The Dawn and Dusk deck's fixes after a check against its cards (2026-11-13): Fowl Play in the deck, Sly Dog and Old Friend
 // asked only when they can be used (and Sly Dog again in every battle of the turn), see root/deck-dusk.scala. Hidden and on by default
 // for new games (the Frankendeck draws from the deck too); older games keep the old way so their replays don't change.
 case object DuskDeckFixes extends GameOption with ToggleOption {
@@ -674,7 +674,7 @@ case object DuskDeckFixes extends GameOption with ToggleOption {
 
 // A player buying fewer Riverfolk services than their limit (1, plus 1 for each trade post in a clearing where they have pieces) is
 // offered the rest right after, in the same Birdsong: the first purchase used up the whole limit, so the Underground Duchy, which
-// could buy 2, bought one card and couldn't buy another (Gman, 2026-11-03, Ground in Conquest). Hidden and on by default for new
+// could buy 2, bought one card and couldn't buy another (2026-11-03, Ground in Conquest). Hidden and on by default for new
 // games; older games keep the single purchase so their replays don't change.
 case object BuyServicesAgain extends GameOption with ToggleOption {
     val group = "Card Draft"
@@ -682,7 +682,7 @@ case object BuyServicesAgain extends GameOption with ToggleOption {
 }
 
 // The Homeland Frog Ambush goes to the bottom of the Pond whenever it is discarded ("Discard this to the Pond bottom."), not only
-// when spent as an ambush: discarded at the hand limit it went on top (Gman, 2026-10-22). Hidden and on by default for new
+// when spent as an ambush: discarded at the hand limit it went on top (2026-10-22). Hidden and on by default for new
 // games; older games keep putting it on top so their replays don't change.
 case object FrogAmbushToPondBottom extends GameOption with ToggleOption {
     val group = "Card Draft"
@@ -690,7 +690,7 @@ case object FrogAmbushToPondBottom extends GameOption with ToggleOption {
 }
 
 // The Frog Ambush goes to the bottom of the Pond only when played as an ambush (or counter-ambush); any other discard puts it
-// on top like every Frog card (Guerric Samples's ruling, relayed by Gman on 2026-10-23). Hidden and on by default for new games
+// on top like every Frog card (the ruling, relayed on 2026-10-23). Hidden and on by default for new games
 // in place of FrogAmbushToPondBottom, and it turns that one off; games started with FrogAmbushToPondBottom alone keep it.
 case object FrogAmbushBottomOnlyAsAmbush extends GameOption with ToggleOption {
     val group = "Card Draft"
@@ -698,7 +698,7 @@ case object FrogAmbushBottomOnlyAsAmbush extends GameOption with ToggleOption {
 }
 
 // Advanced Setup deals the Knaves their four Captain cards when the factions are drawn, so the draft shows them
-// (asked for by Gman on 2026-10-20). Hidden and on by default for new games; older games deal them when the Knaves
+// (asked for on 2026-10-20). Hidden and on by default for new games; older games deal them when the Knaves
 // set up, so their replays don't change.
 case object KnavesCaptainsInDraft extends GameOption with ToggleOption {
     val group = "Card Draft"
@@ -723,7 +723,7 @@ case object LizardsCraftByClearing extends GameOption with ToggleOption {
 }
 
 
-// Advanced Setup's insurgent lock (Gman, 2026-11-04: Destiny and Right drafted four insurgents): the last faction drawn,
+// Advanced Setup's insurgent lock (2026-11-04: Destiny and Right drafted four insurgents): the last faction drawn,
 // if it is insurgent, can't be picked until a militant faction has been (the draft in SetupNextFactionAction). Adset only;
 // games without either option (started before it) draft as before, so their replays don't change.
 trait InsurgentLockOption extends GameOption with OneOfGroup {
@@ -744,7 +744,7 @@ case object InsurgentLockOff extends InsurgentLockOption {
     )
 }
 
-// The setup's "Hits and Ambushes - Offline Players" section (MaKoBwoY, relayed by Gman on 2026-11-12) replaced the Async one:
+// The setup's "Hits and Ambushes - Offline Players" section (2026-11-12) replaced the Async one:
 // four toggles for what the game does by itself while a player is away, or Live Game, where it does none of it and each player's
 // own "Hits and Ambushes when Online" settings apply. Every new game gets the hidden HitsAndAmbushesSetup, which tells these games
 // apart from older ones (game.offlinePlayers); older games keep their Async options (Forced Async Mode, Players Choose Hits,
@@ -1485,7 +1485,7 @@ case class IncludeHireling(hireling : Hireling) extends GameOption with ToggleOp
 }
 
 
-// One folded section, "Hits and Ambushes when Online" (MaKoBwoY, 2026-11-12): they act only while the player has the game open,
+// One folded section, "Hits and Ambushes when Online" (2026-11-12): they act only while the player has the game open,
 // and only where the game's setup leaves the choice to the players (a Live Game, or a game started before the Hits and Ambushes
 // section with neither Bluff Mode nor Auto Skip Ambushes)
 object HitsAndAmbushesOnline {
@@ -1745,7 +1745,7 @@ object Meta extends MetaGame {
 
     val factions = official ++ homeland ++ clones ++ fun
 
-    // The playtest Lilypad Diaspora versions and the Tidepool Diaspora, no longer offered (Gman, 2026-11-17), still read so older games load
+    // The playtest Lilypad Diaspora versions and the Tidepool Diaspora, no longer offered (2026-11-17), still read so older games load
     val retiredFactions = $[Faction](LDvD, LDvC, LDvB, TD)
 
     override def factionGroup(f : F) : |[Elem] = homeland.has(f).?("Homeland".txt) || clones.has(f).?("Mirror Factions".txt) || fun.has(f).?("Fan Factions".txt)
@@ -1900,7 +1900,7 @@ object Meta extends MetaGame {
 
     def unlisted : $[O] = fixes ++ settled ++ RulesVersion.all
 
-    // No longer choices (Gman, 2026-10-31): the card rulings Official Rules always picked. Every new game gets them
+    // No longer choices (2026-10-31): the card rulings Official Rules always picked. Every new game gets them
     // (mandatoryFor); a game started without them keeps its rules, as its options are recorded with it. Auto Hits Assignment was one
     // too, until the Hits and Ambushes section made it a choice again (2026-11-12)
     lazy val settled : $[O] = $(NonBirdPartisans, ErrataCoffinMakers, UnthematicPropagandaBureau, TunnelsIgnoreRaid, TunnelsIgnoreTradePosts)
@@ -1914,7 +1914,12 @@ object Meta extends MetaGame {
     // fixes were first gated (RulesVersion.expand, used by Game), so a new game records one option instead of each fix
     lazy val newGame : $[O] = $(RulesVersion.latest)
 
-    override def completeSaved(n : Int, l : $[F], options : $[O]) = options.diff(retired).diff(RulesVersion.implied)
+    override def completeSaved(n : Int, l : $[F], options : $[O]) = autoHitsOn(options.diff(retired).diff(RulesVersion.implied))
+
+    // Auto Assign Hits is on by default and Ambush Bluff Mode off (2026-11-17): a setup a browser saved with none of Auto Assign
+    // Hits, Live Game or the hits preset (from before the Hits and Ambushes section, when Auto Assign Hits was always on and so never
+    // saved, and Bluff Mode was the default) starts with Auto Assign Hits on and Bluff Mode off
+    def autoHitsOn(options : $[O]) : $[O] = options.intersect($(AutoHitsAssignmentMode, LiveGameMode, OffTurnHitsPreset)).any.?(options).|(options.but(BluffMode) :+ AutoHitsAssignmentMode)
 
     // offered only in Advanced Setup (MetaAdset), listed here so every game reads them
     lazy val adsetOnly : $[O] = $(InsurgentLockOn, InsurgentLockOff)
@@ -1930,7 +1935,6 @@ object Meta extends MetaGame {
         AllRandomClearings,
         SquiresDeck,
         AutoHitsAssignmentMode,
-        BluffMode,
         FolkHeroCharacter,
         AdSetBuffOff,
         SetupTypeCorners,
@@ -1939,7 +1943,7 @@ object Meta extends MetaGame {
         MountainSuitedLandmark,
         NoHirelings) ++ hirelings./(IncludeHireling)
 
-    // Two presets (Gman, 2026-10-31): the hirelings one repeated the Hirelings section, Sunday Games was JT's group's house rules
+    // Two presets (2026-10-31): the hirelings one repeated the Hirelings section, Sunday Games was JT's group's house rules
     override def presetsFor(n : Int, l : $[F]) = $(
         ("Site Defaults".spn, hirelings./(IncludeHireling), $),
         ("Official".hl ~ " Rules", $(
@@ -1952,7 +1956,7 @@ object Meta extends MetaGame {
     override def presetsInfo(n : Int, l : $[F]) = $(
         $(
             "Puts every option back to what the site starts with:",
-            &("Random Official".hh ~ " map, ") ~ &("All Random".hh ~ " clearings, ") ~ &("Map Default".hh ~ " landmarks (on " ~ "Mountain".styled(Fox) ~ " a random suited one), ") ~ &("Squires and Disciples".hh ~ " deck, ") ~ &("Corners".hh ~ " setup, ") ~ &("Ambush Bluff Mode".hh ~ " and " ~ "Auto Assign Hits".hh ~ ", ") ~ &("no hirelings."),
+            &("Random Official".hh ~ " map, ") ~ &("All Random".hh ~ " clearings, ") ~ &("Map Default".hh ~ " landmarks (on " ~ "Mountain".styled(Fox) ~ " a random suited one), ") ~ &("Squires and Disciples".hh ~ " deck, ") ~ &("Corners".hh ~ " setup, ") ~ &("Auto Assign Hits".hh ~ " (no " ~ "Ambush Bluff Mode".hh ~ "), ") ~ &("no hirelings."),
         ),
         $(
             "The rules as Leder Games prints them:",

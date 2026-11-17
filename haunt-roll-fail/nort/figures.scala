@@ -14,7 +14,7 @@ import hrf.elem._
 
 import nort.elem._
 
-// Picking who goes, figure by figure (asked for on Discord on 2026-11-01, relayed by Gman): after the destination,
+// Picking who goes, figure by figure (asked for on Discord on 2026-11-01, relayed): after the destination,
 // one panel with the units as a counter ("−" and "+"), a Yes/No switch for the warchief and for each companion
 // (Kaija, Brok, the Automa's Leader 2, Brundr and Kaelinn each), and the button that does it, naming who goes.
 // The switches and the counter are soft (nothing is recorded); the button is the same recorded action as before
@@ -175,7 +175,7 @@ case class LynxBonusGoal(self : Faction, from : AreaRef, to : AreaRef, units : I
 case class CasualtyGoal(self : Faction, from : AreaRef, k : Int, then : ForcedAction) extends FigureGoal {
     def owner = self
     def elem(implicit game : Game) = self.elem ~ " takes " ~ CombatIcon.skulls(k) ~ " in " ~ from.elem ~ ", who is lost"
-    // The bodyguard has its own switch, so it can be lost before the units (Marzaus, 2026-11-02: it comes back each year)
+    // The bodyguard has its own switch, so it can be lost before the units (2026-11-02: it comes back each year)
     // (with Horse's two, HorseTwoGuards, the switch is one of them, the warchief's first, and the other goes with the units)
     def guard(implicit game : Game) : Int = (MilitaryExpansion.guardsIn(territory, owner) > 0).??(1)
     override def guardMay(implicit game : Game) = guard > 0

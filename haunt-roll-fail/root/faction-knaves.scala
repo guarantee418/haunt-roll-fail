@@ -599,7 +599,7 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
             KnavesPrisonersAction(f, b, f.used.has(KnavesAssaulting).?(99).|(1))
 
         // Every enemy warrior the Knaves hit can be taken prisoner, the co-defender's too: the Twilight Council's Bats hit when the Knaves
-        // battle another faction at a Council assembly (Root rules channel, 2026-11-11, geffrey's question; Betrayal versus Glory: the
+        // battle another faction at a Council assembly (Root rules channel, 2026-11-11, a player's question; Betrayal versus Glory: the
         // Woodland Alliance gave both hits to Bats at Peat and the Knaves got no prisoner), in games with PrisonersFromCodefenders
         case KnavesPrisonersAction(f, b, n) if b.codef.any && b.codef.has(f).not && (game.options.has(PrisonersFromCodefenders) || game.prisonersFromCodefenders) =>
             val c = b.clearing
