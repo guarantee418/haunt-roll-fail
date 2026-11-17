@@ -111,6 +111,7 @@ package object elem {
 
         FH --> color("#989745")
         WW --> color("#a88f80")
+        BP --> color("#c49a5c")
         DU --> color("#e2832b")
         WG --> color("#8a7fd6")
         EE --> color("#4f7fc4")
@@ -441,6 +442,7 @@ package object elem {
         CUv2 --> outline.color("#63576c")
         FH --> outline.color("#4c4b22")
         WW --> outline.color("#3b3833")
+        BP --> outline.color("#3a2814")
         DU --> outline.color("#2a1a10")
         WG --> outline.color("#1e1a3a")
         EE --> outline.color("#1e3352")
@@ -489,6 +491,7 @@ package object elem {
         CUv2 --> $(width("16ch"), top("-1.5ch"))
         FH --> $(width("15ch"), top("-0.1ch"))
         WW --> $(width("15ch"), top("-0.1ch"))
+        BP --> $(width("15ch"), top("-0.1ch"))
         DU --> $(width("15ch"), top("-0.1ch"))
         WG --> $(width("15ch"), top("-0.1ch"))
         EE --> $(width("15ch"), top("-0.1ch"))

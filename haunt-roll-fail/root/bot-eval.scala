@@ -50,6 +50,7 @@ class BotXX(f : Faction) extends EvalBot {
             case f : Utopia => new GameEvaluationUtopia(f)
             case f : Farmer => new GameEvaluationFarmer(f)
             case f : WarriorsWake => new GameEvaluationDoomed(f)
+            case f : BonePatrol => new GameEvaluationDoomed(f)
             case f : Doomsayers => new GameEvaluationDoomed(f)
             case f : Whisperers => new GameEvaluationDoomed(f)
             case f : Marquistadors => new GameEvaluationDoomed(f)

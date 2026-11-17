@@ -235,6 +235,8 @@ object ReplayCheck {
             case "dv" => $($(MC, ED, WA, DV), $(MC, ED, LC, RF, DV), $(DM, EE, UD, DV))
             case "nw" => $($(MC, ED, WA, NW), $(MC, ED, LC, NW), $(DM, EE, NW, UD))
             case "ww" => $($(MC, ED, WA, WW), $(MC, WW, LC, VB), $(ED, WW, RF, UD), $(WW, KD, TC, LDvE))
+            // the Outsiders Expansion's factions
+            case "bp" => $($(MC, ED, WA, BP), $(MC, BP, LC, VB), $(ED, BP, RF, UD), $(BP, KD, TC, LDvE))
             // "adset": the Doomed Expansion's factions in Advanced Setup pools
             case "doomed" => $($(MC, ED, WA, WW, DU, EE, RF), $(DM, ED, UD, DV, NW, LC), $(MC, WA, WG, DU, WW, RF, TC), $(EE, DM, NW, DV, KI, LH))
             case "tc" => $($(MC, ED, WA, TC))

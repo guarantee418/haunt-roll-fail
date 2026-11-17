@@ -1690,7 +1690,7 @@ object Meta extends MetaGame {
     val official = $[Faction](MC, ED, WA, VB, LC, RF, UD, CC, LH, KI)
     val homeland = $[Faction](LDvE, TC, KD)
     val clones = $[Faction](BK, PE, FU, NB, CM, /*WC,*/ DR, RI, LK)
-    val fun = $[Faction](KDvA, TCvA, LDvD, LDvC, LDvB, TD, FH, WW, DU, WG, EE, DM, DV, NW, XC, CUv2, CU, OK, AF, SF, MB)
+    val fun = $[Faction](KDvA, TCvA, LDvD, LDvC, LDvB, TD, FH, WW, DU, WG, EE, DM, DV, NW, XC, BP, CUv2, CU, OK, AF, SF, MB)
 
     val factions = official ++ homeland ++ clones ++ fun
 
@@ -1935,6 +1935,7 @@ object Meta extends MetaGame {
         factions.of[Horde].num * 9 +
         factions.of[Knaves].num * 4 +
         factions.of[WarriorsWake].num * 5 +
+        factions.of[BonePatrol].num * 5 +
         factions.of[Doomsayers].num * 6 +
         factions.of[Whisperers].num * 2 +
         factions.of[Marquistadors].num * 9 +
@@ -3942,6 +3943,24 @@ object Meta extends MetaGame {
         ImageAsset("nw-captain-empty"    , "kd-captain-empty" ) ::
         $("birdsong", "daylight", "evening", "gladiator", "cheat", "jailor", "harrier", "ronin", "adventurer", "scoundrel", "arbiter", "vagrant", "ranger", "tinker", "thief", "bard", "barkeep", "berserker", "blacksmith", "swindler", "zealot")./(k => ImageAsset("nw-captain-" + k, "kd-captain-" + k))
     ) ::
+    ConditionalAssetsList((factions, options) => factions.of[BonePatrol].any, "faction/bone")(
+        ImageAsset("bp-glyph"                 ) ::
+        ImageAsset("bp-title"                 ) ::
+        ImageAsset("bp-char"                  ) ::
+        ImageAsset("bp-action"                ) ::
+        ImageAsset("bp-pug"                   ) ::
+        ImageAsset("bp-pug-empty"             ) ::
+        ImageAsset("bp-pug-x5"                ) ::
+        ImageAsset("bp-pug-x5-empty"          ) ::
+        ImageAsset("bp-alpha"                 ) ::
+        ImageAsset("bp-alpha-empty"           ) ::
+        ImageAsset("bp-stash"                 ) ::
+        ImageAsset("bp-bone-fox"              ) ::
+        ImageAsset("bp-bone-rabbit"           ) ::
+        ImageAsset("bp-bone-mouse"            ) ::
+        ImageAsset("bp-bone-buried"           ) ::
+        ImageAsset("bp-board"                 ) ::
+    $) ::
     ConditionalAssetsList((factions, options) => factions.of[WarriorsWake].any, "faction/wake")(
         ImageAsset("ww-glyph"                 ) ::
         ImageAsset("ww-title"                 ) ::
