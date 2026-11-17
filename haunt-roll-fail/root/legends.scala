@@ -113,8 +113,9 @@ case class PickpocketsRolledAction(self : Faction, c : Clearing, e : Faction, l 
 
 
 // the scenario chosen in setup
-trait LegendsScenario extends GameOption with ToggleOption with OneOfGroup with FoldedOption {
-    val group = "Legends Scenario".hh ~ " (fan-made)"
+trait LegendsScenario extends GameOption with ToggleOption with OneOfGroup {
+    val group = "Legends Scenario".hh
+    override def folder = Meta.scenarios
     def title : String
     def suited : Boolean
     val valueOn = title.hh
@@ -142,8 +143,9 @@ case object TheFifthRuin extends LegendsScenario {
 }
 
 // the Ring's rules (D5.R): ringbearer and exhaust rules, then the capture rules
-trait RingRule extends GameOption with ToggleOption with OneOfGroup with FoldedOption {
-    val group = "Ring Rule".hh ~ " (fan-made)"
+trait RingRule extends GameOption with ToggleOption with OneOfGroup {
+    val group = "Ring Rule".hh
+    override def folder = Meta.scenarios
     def title : String
     def text : String
     val valueOn = title.hh
@@ -194,8 +196,9 @@ case object PowerOfTheSchwartz extends RingRule {
     def text = "once a turn, from a clearing with their pieces, the bearer may move up to half (rounded up) of an enemy's warriors, or one enemy token or building, to an adjacent clearing, ignoring rule."
 }
 
-trait CaptureRule extends GameOption with ToggleOption with OneOfGroup with FoldedOption {
-    val group = "Capture Rule".hh ~ " (fan-made)"
+trait CaptureRule extends GameOption with ToggleOption with OneOfGroup {
+    val group = "Capture Rule".hh
+    override def folder = Meta.scenarios
     def title : String
     def text : String
     val valueOn = title.hh
