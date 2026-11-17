@@ -846,6 +846,7 @@ trait GameImplicits {
     implicit def casterState(f : Caster)(implicit game : Game) = game.states(f).as[CasterPlayer].get
     implicit def farmerState(f : Farmer)(implicit game : Game) = game.states(f).as[FarmerPlayer].get
     implicit def wakeState(f : WarriorsWake)(implicit game : Game) = game.states(f).as[WarriorsWakePlayer].get
+    implicit def bonePatrolState(f : BonePatrol)(implicit game : Game) = game.states(f).as[BonePatrolPlayer].get
     implicit def doomState(f : Doomsayers)(implicit game : Game) = game.states(f).as[DoomsayersPlayer].get
     implicit def whisperersState(f : Whisperers)(implicit game : Game) = game.states(f).as[WhisperersPlayer].get
     implicit def invasiveEEEState(f : InvasiveEEE)(implicit game : Game) = game.states(f).as[InvasiveEEEPlayer].get
@@ -1023,6 +1024,10 @@ trait GameImplicits {
             if (e.at(c).none)
                 return false
 
+            // Bone Patrol's buried bones are as if not there
+            if (e.at(c).forall(_.is[BuriedBone]))
+                return false
+
             if (e == BanditGangs && BanditGangs.owner.?(_.present(c)))
                 return false
 
@@ -1179,6 +1184,9 @@ trait GameImplicits {
             val fv = f.has(ForestVigil)
 
             val own = f.at(c)./{
+                // Bone Patrol always rules the Alpha's clearing
+                case Alpha => 99999
+                case _ : BuriedBone => 0
                 case Garden(_) => 333
                 case b : Building => 4
                 case w : Warrior => 4
@@ -1218,6 +1226,7 @@ trait GameImplicits {
 
         def rules(c : Region) : Boolean = f @@ {
             case f if SquiresDeckExpansion.silverTongueRules(f, c) => true
+            case f if BonePatrolExpansion.guarded(f, c) => true
             case h : Hireling if factions.%(_.has(h)).%(f => f.rules(c)).any => true
             case f =>
                 val mercs = traders.%(s => f.has(Mercenaries(s)) || f.has(Peacekeepers(s)))
@@ -1675,6 +1684,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             CasterExpansion,
             FarmerExpansion,
             WarriorsWakeExpansion,
+            BonePatrolExpansion,
             DoomsayersExpansion,
             InvasiveEEEExpansion,
             InvasiveDDDExpansion,

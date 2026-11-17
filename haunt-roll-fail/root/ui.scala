@@ -290,6 +290,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case Mudman => { DrawRect(pr + "mudman", -73, -149, 146, 153) }
 
             case Hamster => { DrawRect(pr + "hamster", -41, -80, 80, 86) }
+            case Pug => { DrawRect(pr + "pug", -38, -90, 76, 96) }
+            case Alpha => { DrawRect(pr + "alpha", -40, -118, 79, 124) }
+            case Stash => { DrawRect(pr + "stash", -50, -50, 100, 100) }
+            case Bone(s) => { DrawRect(pr + "bone-" + s.name.toLowerCase, -40, -40, 80, 80) }
+            case BuriedBone(_) => { DrawRect(pr + "bone-buried", -40, -40, 80, 80) }
             case WakeVulture => { DrawRect(pr + "wakevulture", -45, -90, 90, 96) }
             case Despair => { DrawRect(pr + "despair", -45, -45, 90, 90) }
             case UnionCat => { DrawRect(pr + "unioncat", -40, -80, 80, 86) }
@@ -2385,6 +2390,19 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 &((Image(f.style + "-marquistador-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-marquistador", styles.wr) *** (f.all(f.warrior).num % 5))) ~
                 &((Image(f.style + "-marquistador-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-marquistador-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
 
+            case f : BonePatrol =>
+                Hint("Stashes\n" + f.all(Stash).num + " on the map\n" + f.pooled(Stash) + " on the track\nScout " + f.scouts + ", draw " + f.draws,
+                    (Image(f.style + "-stash", styles.building) *** f.all(Stash).num) ~ (Image("empty-building", styles.building) *** f.pooled(Stash))) ~ Break ~ Gap ~
+                Hint("Bone Collection\n" + FoxRabbitMouse./(s => s.name + ": " + f.collected(s) + "/3").join("\n"),
+                    ("Collection".styled(f) ~ ": " ~ FoxRabbitMouse./~(s => (Image(f.style + "-bone-" + s.name.toLowerCase, styles.token) *** f.collected(s))).merge ~ (f.collection.num == 0).?("none".txt)).div) ~
+                Hint("Rollover\n" + f.rollover.num + " bones" + (f.rollover.num >= 4).??(", ready to bury"),
+                    ("Rollover".styled(f) ~ " " ~ f.rollover.num.hl ~ " " ~ "Buried".styled(f) ~ " " ~ FoxRabbitMouse./(s => f.all(BuriedBone(s)).num).sum.hl).div) ~
+                (game.current == f && game.phase == Daylight).?(Gap ~ 1.to(f.acted)./(_ => Image("action-black", styles.building)) ~ (f.acted.until(3 + f.extra)./(_ => Image(f.style + "-action", styles.building)))) ~
+                Div(Hint("Pugs\n" + f.all(f.warrior).num + " on the map\n" + f.pooled(f.warrior) + " available" + f.alpha./(c => "\nThe Alpha in " + c.name).|(""),
+                Image(f.style + "-alpha", styles.wr) ~
+                &((Image(f.style + "-pug-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-pug", styles.wr) *** (f.all(f.warrior).num % 5))) ~
+                &((Image(f.style + "-pug-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-pug-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
+
             case f : WarriorsWake =>
                 Hint("Despair\n" + f.all(Despair).num + " on the map\n" + f.pooled(Despair) + " on the track\nScavenge: look at " + f.looks + ", take " + f.takes + f.shuffles.??(", may shuffle back"),
                     (Image(f.style + "-despair", styles.token) *** f.all(Despair).num) ~ (Image("empty-token", styles.token) *** f.pooled(Despair))) ~ Break ~ Gap ~
@@ -2720,6 +2738,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         case _ : Caster => Some("xc-board")
         case _ : Farmer => Some("fh-board-v2")
         case _ : WarriorsWake => Some("ww-board")
+        case _ : BonePatrol => Some("bp-board")
         case _ : Doomsayers => Some("du-board")
         case _ : Whisperers => Some("wg-board")
         case _ : OldExpedition => Some("ok-board")
@@ -3589,6 +3608,49 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 ).div(xlo.flexvcenter)), {
                     case (f : Faction, more : Boolean) => onFactionStatus(f, more, None)
                     case d : DeckCard => onClick(d)
+                    case _ =>
+                        overlayPane.invis()
+                        overlayPane.clear()
+                })
+
+            case f : BonePatrol =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    f.name.f.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    Image("bp-board")(styles.factionboard) ~
+                    HGap ~
+                    HGap ~
+                    less("Pugs".hl.larger) ~
+                    more("Pugs".hl.larger, "are", "warriors".hh, Comma, "they", "battle".hh, "and provide", "rule".hh, Dot, "They only move to or from the clearing of", Alpha.of(f), "(" ~ Obedient.of(f) ~ ")", Dot) ~
+                    desc(f.all(f.warrior).num.hl.larger, "on the map,", f.pooled(f.warrior).hl.larger, "in reserve") ~
+                    HGap ~
+                    warriorLine(f.style + "-pug", f.all(f.warrior).num, f.pooled(f.warrior)) ~
+                    HGap ~
+                    HGap ~
+                    less(Alpha.of(f).larger) ~
+                    more(Alpha.of(f).larger, "deals an extra", "hit".styled(styles.hit), "attacking, is never removed and moves only on", f, "turn", Dot, f, "always rule its clearing, and the enemies need one more", "hit".styled(styles.hit), "than", f, "have other warriors there to remove their buildings and tokens", Dot) ~
+                    f.alpha./(c => desc("In", c)) ~
+                    HGap ~
+                    HGap ~
+                    less("Bones".hl.larger) ~
+                    more("Bones".hl.larger, "are buried around the map, where other players can't touch them, fetched in", "Evening".hh, Comma, "and recalled from clearings with a", Stash.of(f), "and a warrior for", 2.vp, "each", Dot) ~
+                    desc("Bone Collection".styled(f), FoxRabbitMouse./(s => s.elem ~ " " ~ f.collected(s).hl ~ "/3").join(", ")) ~
+                    desc("Rollover".styled(f), f.rollover.num.hl, "bones") ~
+                    HGap ~
+                    HGap ~
+                    less("Stashes".hl.larger) ~
+                    more("Stashes".hl.larger, "recruit and recall bones, and each one off the track uncovers a scout or draws", Dot) ~
+                    desc("Scout".hh, f.scouts.hl, Comma, "draw".hh, f.draws.hl) ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), {
+                    case (f : Faction, more : Boolean) => onFactionStatus(f, more, None)
                     case _ =>
                         overlayPane.invis()
                         overlayPane.clear()

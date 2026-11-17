@@ -84,6 +84,16 @@ object FanInfo {
             line("Daylight", "up to 4 actions: Move, Battle, Build (a school where it rules) and Recruit (a warrior at each school).".txt),
             line("Evening", "Research a new spell into the Repertoire, Brew magic into the Cauldron with matching cards, then draw.".txt),
         )
+        case BP => $(
+            by("slugfacekillah", "version 2.1, from the fan-made " ~ "Outsiders Expansion".hh),
+            "A gang of pugs led by their Alpha, digging up the bones buried around the Woodland and bringing them home for points.".txt,
+            line("The Alpha", "deals an extra hit attacking, is never removed, and takes one hit in its clearing; Bone Patrol always rules where it is.".txt),
+            line("Obedient", "its warriors only move to or from the Alpha's clearing.".txt),
+            line("Guard Dogs", "on their turn, other players may give it a matching card to share rule of a clearing it rules.".txt),
+            line("Bones", "buried face down where nobody else can touch them; fetched in Evening, carried by the pugs and recalled at stashes for 2 points each, into the Bone Collection (to craft with) or the Rollover (to bury again).".txt),
+            line("Daylight", "3 actions, plus 1 per bird card: March, Battle, Recruit (a pug at each stash) and Build (a stash).".txt),
+            line("Evening", "fetch or bury bones, craft with the Bone Collection, then draw 1, or 1 for each draw showing on its tracks.".txt),
+        )
         case FH => $(
             by("jgregory17", "fan-made".txt),
             "Hamster farmers who want nothing more than to raise their crops and give gifts to their friends.".txt,

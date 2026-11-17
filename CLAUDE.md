@@ -672,6 +672,17 @@ file covers the build, server and deploy. No session can ssh to the server
   (`AdvancedSetup.doomed`; Gman, 2026-11-17). With one of them in the pool, the draw leaves out sets that hold factions that can't play
   together, or the Whisperers Guild under 5 seats or the Doomed Vagabond under 4 (`AdvancedSetup.clash`); pools without one draw as before.
   `ReplayCheck <games> doomed adset` plays Advanced Setup games, the seats drafting at random.
+- The Outsiders Expansion for Root (slugfacekillah; BGG's top-rated fan expansion; PnP files on Google Drive, rules "Law of Slug"; asked for by
+  Gman on 2026-11-17) is being added one part at a time; Croakers Coven (`XC`) and the Grouch Vagabond were already on the site. Art is cut
+  by `root/tools/outsiders-art.py` from the token sheets and boards, and the warriors from the meeple file "Meeples.svg" (Outsiders meeples
+  by The Irreverend; its header says how to render it). Bone Patrol! (BP, `root/faction-bone-patrol.scala`, its header lists the readings)
+  is a Fun Faction and in Advanced Setup's pool (`AdvancedSetup.doomed`): pugs (`Pug`) led by the Alpha (`Alpha`, never removed, an extra
+  hit attacking, absorbs one hit where it is, Protective Breed; always rules its clearing, 99999 in `ruleValue`), stashes, and twelve bones,
+  `Bone(suit)` face up (a token moving with the warriors, `BoneMove`) or `BuriedBone(suit)` face down (Tenacious, never hittable or
+  attackable: `BonePatrolExpansion.hittable` in the battle's hit assignment, `validAttackTarget`), with the Rollover and the Bone Collection
+  as locations of the player (`rollover`, `collection`). Obedient moves (`ObedientMove`) start or end at the Alpha; Guard Dogs is offered
+  in every phase menu of the other players (`guardDogs`, shared rule in `rules` through `BonePatrolExpansion.guarded`, cleared at their
+  `CleanUpAction`). `ReplayCheck <games> bp` plays it.
 - Every fan, playtest and mirror faction has a "?" (Gman, 2026-11-17): who made it, then what it does and how it plays, a line
   each (`FanInfo.about` in `root/fan-info.scala`). The faction picker shows it as a "?" button beside the name (`Meta.factionInfo`,
   `xstyles.infoButton` in `pickElem`), and Advanced Setup's "Available Factions" toggles as the setup's usual ? (`IncludeFaction.explain`).
