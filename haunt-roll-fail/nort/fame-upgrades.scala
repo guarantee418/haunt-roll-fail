@@ -303,10 +303,12 @@ object FameUpgradesExpansion extends Expansion {
         tameable(f)./(c => TameAction(f, c, stage))
     )
 
-    // Under Pressure: enemy territories next to one of Snake's, other than the one the token is on
+    // Under Pressure: enemy territories next to one of Snake's, other than the one the token is on; in PC games with
+    // PCScorchedSeen, neutral ones (no clan there) too, and only those Snake sees
     def pressureTargets(f : Faction)(implicit game : Game) : $[Territory] = {
         val own = game.controlled(f)
-        game.board.territories.%(t => game.present(t).single.exists(g => game.enemy(f, g))).%(t => own.exists(o => game.board.adjacent(o).exists(_._1 == t))).%(t => game.scorchedIn(t).not)
+        val neutral = PCExpansion.scorchedSeen
+        game.board.territories.%(t => game.present(t).single.exists(g => game.enemy(f, g)) || (neutral && game.present(t).none)).%(t => PCExpansion.mayScorch(f, t)).%(t => own.exists(o => game.board.adjacent(o).exists(_._1 == t))).%(t => game.scorchedIn(t).not)
     }
 
     // Raven's Rangers, once a year after an Explore

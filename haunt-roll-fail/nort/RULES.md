@@ -1813,7 +1813,10 @@ shares a territory with a creature; Gman, 2026-11-11) and the Wilderness, Wastel
   (`PCHallShield`, `PCExpansion.hallShield`); in years 1 and 2 creatures don't move into a Town Hall's territory or attack there
   (`PCHallSafe`); 22 units, and Winter costs 5 food 3 wood for 16 to 18 units, 6 food 4 wood for 19 or more (`PCArmyCap`,
   Marzaus's "Army cap"); a Defense Tower gives 2 combat points against creatures (`PCTowerPoints`); a scout gives 1 fame, not
-  1 a tile (`PCScoutFame`; the clan powers still apply, Stag's 1 more too).
+  1 a tile (`PCScoutFame`; the clan powers still apply, Stag's 1 more too). The Scorched Earth token (the Snake Clan card, Under Pressure)
+  goes only to a territory Snake sees, and Under Pressure may also move it to a neutral territory (no clan there, creatures
+  allowed), collecting what that territory gives as anywhere else (`PCScorchedSeen`, `PCExpansion.mayScorch`; Gman, 2026-11-15:
+  in Winter for Clan it moved into the fog). A neutral territory has no owner, so the token takes nothing there at the Harvest.
 
 ## Fan content: Clan Fame upgrades (2026-11-12)
 
