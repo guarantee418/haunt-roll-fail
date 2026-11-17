@@ -57,6 +57,9 @@ object ReplayCheck {
     // "draft": the five-card draft (CardDraftFive), with the starting hands drawn before the factions set up
     var draft = false
 
+    // "urban" or "legendsmap": the Doomed Expansion's Urban Legends maps, with All Random clearings and the map's own landmarks
+    var fanMap : |[Meta.O] = None
+
     def options(seating : $[Faction]) : $[Meta.O] = mountain.?($[Meta.O](
         MountainMap, NoClustersClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
         MapDefaultLandmarks, SeatingGiven, FactionSeatingGiven, SetupOrderPriority, CardDraftStandard,
@@ -66,7 +69,16 @@ object ReplayCheck {
     )).|($[Meta.O](
         AutumnMap, DefaultClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
         FerryLandmark, LostCityLandmark, SeatingGiven, FactionSeatingGiven, SetupOrderPriority, CardDraftStandard,
-    ))).map(o => (draft && o == CardDraftStandard).?[Meta.O](CardDraftFive).|(o)).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (squires && o == MixedDeck).?[Meta.O](SquiresDeck).|(o)).map(o => (franken && o == MixedDeck).?[Meta.O](FrankenDeck).|(o)).map(o => (dusk && o == MixedDeck).?[Meta.O](DuskDeck).|(o)).map(o => (dark && o == MixedDeck).?[Meta.O](DarkDeck).|(o)).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.??($[Meta.O](RulesVersion.latest, OutragePeekNeedsOk, KnavesCaptainsInDraft)) ++ (async || chooseHits).??($[Meta.O](AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode)) ++ chooseHits.$(ForcedAsyncChooseHits) ++ offline.??($[Meta.O](HitsAndAmbushesSetup, OffTurnFieldHospitals)) ++ preset.$(OffTurnHitsPreset) ++ action.$(ActionBooster) ++ doomedVB.$(DoomedVagabonds, RandomCharacter) ++ doomedCap.$(DoomedCaptains) ++ turnOver.$(TurnOverHirelings) ++ legends ++ seating./(IncludeFaction)
+    ))).flatMap(o => fanMap match {
+        case Some(m) => o match {
+            case AutumnMap => $(m)
+            case DefaultClearings => $(AllRandomClearings)
+            case FerryLandmark => $(MapDefaultLandmarks)
+            case LostCityLandmark => $()
+            case o => $(o)
+        }
+        case None => $(o)
+    }).map(o => (draft && o == CardDraftStandard).?[Meta.O](CardDraftFive).|(o)).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (squires && o == MixedDeck).?[Meta.O](SquiresDeck).|(o)).map(o => (franken && o == MixedDeck).?[Meta.O](FrankenDeck).|(o)).map(o => (dusk && o == MixedDeck).?[Meta.O](DuskDeck).|(o)).map(o => (dark && o == MixedDeck).?[Meta.O](DarkDeck).|(o)).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.??($[Meta.O](RulesVersion.latest, OutragePeekNeedsOk, KnavesCaptainsInDraft)) ++ (async || chooseHits).??($[Meta.O](AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode)) ++ chooseHits.$(ForcedAsyncChooseHits) ++ offline.??($[Meta.O](HitsAndAmbushesSetup, OffTurnFieldHospitals)) ++ preset.$(OffTurnHitsPreset) ++ action.$(ActionBooster) ++ doomedVB.$(DoomedVagabonds, RandomCharacter) ++ doomedCap.$(DoomedCaptains) ++ turnOver.$(TurnOverHirelings) ++ legends ++ seating./(IncludeFaction)
 
     def privateMap(o : AnyRef, suffix : String) : Map[Any, Any] = {
         val f = o.getClass.getDeclaredFields.filter(_.getName.endsWith(suffix)).head
@@ -194,6 +206,7 @@ object ReplayCheck {
         exposeAll = args.lift(1).has("cctc")
         oldFrogs = args.contains("oldfrogs")
         draft = args.contains("draft")
+        fanMap = args.contains("urban").$(UrbanMap).++(args.contains("legendsmap").$(LegendsMap)).headOption
         oldHire = args.contains("oldhire")
         hire = args.find(_.startsWith("hire:"))./~(_.drop(5).split(',').$./(n => (Meta.hirelings ++ Meta.turnlings).%(h => h.name == n || h.short == n || h.toString == n).single.|!("no hireling " + n)))
         val pool : $[$[Faction]] = args.lift(1)./(_ match {
