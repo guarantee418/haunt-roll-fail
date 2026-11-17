@@ -24,6 +24,9 @@ object FanInfo {
     private def hrf : Elem = "Made by ".txt ~ "JT".hl ~ " for " ~ "HRF".hh ~ " (hrf.im), the site this one is built on."
     private def mirror(o : Faction) : Elem = "A second copy of the " ~ o.elem ~ ", with its own name and colour, so two of them can play in one game. It plays exactly like the " ~ o.elem ~ "."
     private def line(head : String, text : Elem) : Elem = (head + ": ").hh ~ text
+    // The designer's own print-and-play folder, open to anyone with the link (2026-11-17: so players can see the whole expansion).
+    private def outsiders(version : String) : Elem = "version " ~ version.txt ~ ", from the fan-made " ~ "Outsiders Expansion".hh
+    private def outsidersLink : Elem = "See the whole " ~ Link("https://drive.google.com/drive/folders/19tCC_9QTW682DUeLCUIr7CEyjfczjxA6", "Outsiders Expansion", $(xstyles.link)) ~ ": every faction, map and card, with the rules (the designer's print-and-play files on Google Drive)."
 
     def about(f : Faction) : $[Elem] = f match {
         case WW => $(
@@ -76,7 +79,8 @@ object FanInfo {
             "The Knaves of the Deepwood, played with Woodland Alliance warriors: the same Captains, items and hostages.".txt,
         )
         case XC => $(
-            by("slugfacekillah", "version 1.5, from the fan-made " ~ "Outsiders Expansion".hh),
+            by("slugfacekillah", outsiders("1.5")),
+            outsidersLink,
             "Frog wizards who cast spells and brew magic.".txt,
             line("Wizardry", "cast a spell from the Repertoire, paying its cost, in Daylight or whenever a battle starts where it has warriors.".txt),
             line("Enchanted", "its tokens other than statues can't be removed by other players.".txt),
@@ -85,7 +89,8 @@ object FanInfo {
             line("Evening", "Research a new spell into the Repertoire, Brew magic into the Cauldron with matching cards, then draw.".txt),
         )
         case BP => $(
-            by("slugfacekillah", "version 2.1, from the fan-made " ~ "Outsiders Expansion".hh),
+            by("slugfacekillah", outsiders("2.1")),
+            outsidersLink,
             "A gang of pugs led by their Alpha, digging up the bones buried around the Woodland and bringing them home for points.".txt,
             line("The Alpha", "deals an extra hit attacking, is never removed, and takes one hit in its clearing; Bone Patrol always rules where it is.".txt),
             line("Obedient", "its warriors only move to or from the Alpha's clearing.".txt),

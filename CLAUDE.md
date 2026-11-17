@@ -541,6 +541,19 @@ server. No session can reach the server, and none needs to.
   as locations of the player (`rollover`, `collection`). Obedient moves (`ObedientMove`) start or end at the Alpha; Guard Dogs is offered
   in every phase menu of the other players (`guardDogs`, shared rule in `rules` through `BonePatrolExpansion.guarded`, cleared at their
   `CleanUpAction`). `ReplayCheck <games> bp` plays it.
+  Its two maps are Fan Maps, "Deep Woods" and "Wastelands" (`DeepWoodsMap`, `WastelandsMap`; `DeepWoodsBoard` and `WastelandsBoard` in
+  `root/maps.scala`, images in `deep-woods/` and `wastelands/` made by `root/tools/outsiders-maps.py`, which also prints the Deep Woods
+  building slots), also drawn by "Random". Clearing and forest names are made up. Their own rules are toggles in the setup's "Fan Map
+  Rules", shown only with their map (2026-11-17), all in `root/outsiders-maps.scala` (`OutsidersMaps`, its header lists the
+  readings). Off, the Deep Woods is played settled, each clearing tile baked into the art on the clearing of its number (Law of Slug
+  S.1.7), and the Wastelands' barren trails are plain paths. "Deep Woods - Settling" (`DeepWoodsSettling`, S.1): clearings start
+  unsettled (wild, crafting pieces pay for nothing, `Unusable` in `root/game.scala`; one slot; two pieces a player), drawn with their
+  printed circle (`unsettled-<n>`) until a card settles them with a face-down tile (`tile-<n>`, `game.settled`; slots from
+  `DeepWoodsBoard.tileSlots`, `OutsidersMaps.gates` for the UI); a move that would bring a third piece settles first (`mayEnter`), a
+  placement is checked before the next step (`TopLevelAction`). "Wastelands - Water and Barren Trails" (`WastelandsWater`, S.2): Water
+  (`game.water`, `waterSupply`), the `BarrenTrail` transport (paid with a Water, a staying warrior or a Vagabond item), the Water
+  actions, Surrender and Seizure. The "Map Rules" button under the action pane (and tapping a barren trail) shows the rules and where
+  the game stands (`"view-map-rules"` in `root/ui.scala`). `ReplayCheck <games> deepwoods [settling]` or `wastelands [water]` plays them.
 - Every fan, playtest and mirror faction has a "?" (2026-11-17): who made it, then what it does and how it plays, a line
   each (`FanInfo.about` in `root/fan-info.scala`). The faction picker shows it as a "?" button beside the name (`Meta.factionInfo`,
   `xstyles.infoButton` in `pickElem`), and Advanced Setup's "Available Factions" toggles as the setup's usual ? (`IncludeFaction.explain`).

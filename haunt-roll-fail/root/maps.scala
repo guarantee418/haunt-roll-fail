@@ -1310,6 +1310,272 @@ object LegendsBoard extends Board {
     }
 }
 
+// The Outsiders Expansion's maps (slugfacekillah; root/tools/outsiders-maps.py), boards of the usual size. They print no
+// clearing names, so these are made up from the art; forests too.
+// The Deep Woods ("the past") is played settled, each clearing tile on the clearing of its priority number (the Law of Slug's
+// way to play it without settling, S.1.7); comments give those numbers. The tiles numbered 9 to 12 print the ruins.
+// The river runs across the middle from Thicket and Wildmere to Fernbank, its bridges joining the clearings on either bank.
+object DeepWoodsBoard extends Board {
+    val id = "deep-woods"
+    val name = "Deep Woods"
+
+    object Thicket extends Clearing(2)     // 1
+    object Bramble extends Clearing(1)     // 2
+    object Fernbank extends Clearing(1)    // 3
+    object Mossgrove extends Clearing(2)   // 4
+    object Pinecrest extends Clearing(2)   // 5
+    object Briarfold extends Clearing(2)   // 6
+    object Hazeldell extends Clearing(1)   // 7
+    object Wildmere extends Clearing(1)    // 8
+    object Oldroot extends Clearing(2)     // 9
+    object Deepden extends Clearing(2)     // 10
+    object Shadowvale extends Clearing(3)  // 11
+    object Elderglen extends Clearing(3)   // 12
+
+    val clearings = $(Thicket, Bramble, Fernbank, Mossgrove, Pinecrest, Briarfold, Hazeldell, Wildmere, Oldroot, Deepden, Shadowvale, Elderglen)
+
+    val ruins = $(Oldroot, Deepden, Shadowvale, Elderglen)
+
+    val diagonals = $((Thicket, Fernbank), (Bramble, Mossgrove))
+
+    val inner = $(Oldroot, Deepden, Shadowvale, Elderglen)
+
+    // the priority numbers printed on the clearings, and the clearing tiles' building slots around the tile's centre (measured on the
+    // board drawn settled, each tile on the clearing of its number; a ruin tile's ruin takes the first)
+    val number : Map[Clearing, Int] = Map(Thicket -> 1, Bramble -> 2, Fernbank -> 3, Mossgrove -> 4, Pinecrest -> 5, Briarfold -> 6,
+        Hazeldell -> 7, Wildmere -> 8, Oldroot -> 9, Deepden -> 10, Shadowvale -> 11, Elderglen -> 12)
+
+    def tileSlots(t : Int) : $[(Int, Int)] = number.find(_._2 == t)./ { case (c, _) =>
+        val (x, y) = center(c)
+        gates(c)./ { case (gx, gy) => (gx - x, gy - y) }
+    }.|($)
+
+    object DeepWoodsBlackwood extends NamedForest("Blackwood")
+    object DeepWoodsSloe extends NamedForest("Sloe")
+    object DeepWoodsMistletoe extends NamedForest("Mistletoe")
+    object DeepWoodsIvy extends NamedForest("Ivy")
+    object DeepWoodsWychwood extends NamedForest("Wychwood")
+    object DeepWoodsBracken extends NamedForest("Bracken")
+    object DeepWoodsNightshade extends NamedForest("Nightshade")
+
+    val forests = $(DeepWoodsBlackwood, DeepWoodsSloe, DeepWoodsMistletoe, DeepWoodsIvy, DeepWoodsWychwood, DeepWoodsBracken, DeepWoodsNightshade)
+
+    override val scoreTrack = |((191.0, 2039.0, 67.8))
+
+    override def itemSlots = itemGrid(644.0, 79.5, 187.0, 262.5)
+
+    def connected(c : Clearing) = c @@ {
+        case Thicket => $(Pinecrest, Oldroot, Wildmere)
+        case Bramble => $(Pinecrest, Deepden, Briarfold)
+        case Fernbank => $(Shadowvale, Briarfold, Hazeldell)
+        case Mossgrove => $(Wildmere, Elderglen, Hazeldell)
+        case Pinecrest => $(Thicket, Bramble)
+        case Briarfold => $(Bramble, Shadowvale, Fernbank)
+        case Hazeldell => $(Elderglen, Mossgrove, Fernbank)
+        case Wildmere => $(Thicket, Mossgrove)
+        case Oldroot => $(Thicket, Deepden, Elderglen)
+        case Deepden => $(Oldroot, Bramble, Shadowvale)
+        case Shadowvale => $(Deepden, Elderglen, Briarfold, Fernbank)
+        case Elderglen => $(Oldroot, Mossgrove, Shadowvale, Hazeldell)
+    }
+
+    def fromForest(f : Forest) = f @@ {
+        case DeepWoodsBlackwood => $(Thicket, Pinecrest, Bramble, Deepden, Oldroot)
+        case DeepWoodsSloe => $(Thicket, Oldroot, Elderglen, Mossgrove, Wildmere)
+        case DeepWoodsMistletoe => $(Oldroot, Deepden, Shadowvale, Elderglen)
+        case DeepWoodsIvy => $(Deepden, Bramble, Briarfold, Shadowvale)
+        case DeepWoodsWychwood => $(Elderglen, Shadowvale, Fernbank, Hazeldell)
+        case DeepWoodsBracken => $(Elderglen, Hazeldell, Mossgrove)
+        case DeepWoodsNightshade => $(Shadowvale, Briarfold, Fernbank)
+    }
+
+    // the clearings by the river: each bridge's two clearings are by it, and on to the next bridge downstream
+    // (Thicket and Wildmere, Oldroot and Elderglen, Deepden and Shadowvale, then Briarfold and Fernbank)
+    def byRiver(c : Clearing) = c @@ {
+        case Thicket => $(Oldroot, Elderglen)
+        case Wildmere => $(Oldroot, Elderglen)
+        case Oldroot => $(Thicket, Wildmere, Deepden, Shadowvale)
+        case Elderglen => $(Thicket, Wildmere, Deepden, Shadowvale)
+        case Deepden => $(Oldroot, Elderglen, Briarfold)
+        case Shadowvale => $(Oldroot, Elderglen, Briarfold)
+        case Briarfold => $(Deepden, Shadowvale, Fernbank)
+        case Fernbank => $(Briarfold)
+        case _ => $()
+    }
+
+    def center(r : Region) : (Int, Int) = r @@ {
+        case Thicket => (376, 400)
+        case Bramble => (2005, 599)
+        case Fernbank => (2035, 1787)
+        case Mossgrove => (407, 1760)
+        case Pinecrest => (1414, 346)
+        case Briarfold => (2060, 1161)
+        case Hazeldell => (1221, 1803)
+        case Wildmere => (369, 1072)
+        case Oldroot => (891, 745)
+        case Deepden => (1472, 855)
+        case Shadowvale => (1545, 1374)
+        case Elderglen => (875, 1362)
+
+        case DeepWoodsBlackwood => (1237, 573)
+        case DeepWoodsSloe => (650, 1260)
+        case DeepWoodsMistletoe => (1190, 980)
+        case DeepWoodsIvy => (1787, 1008)
+        case DeepWoodsWychwood => (1421, 1604)
+        case DeepWoodsBracken => (848, 1650)
+        case DeepWoodsNightshade => (1879, 1467)
+
+        case Burrow(_) => (1208, 999999)
+        case _ => (0, 0); throw new Error("no center for " + r)
+    }
+
+    override def gates(r : Region) = r @@ {
+        case Thicket => $((352, 361), (411, 447))
+        case Bramble => $((1944, 597))
+        case Fernbank => $((1989, 1782))
+        case Mossgrove => $((453, 1763), (347, 1800))
+        case Pinecrest => $((1413, 300), (1454, 376))
+        case Briarfold => $((2015, 1142), (2082, 1227))
+        case Hazeldell => $((1250, 1790))
+        case Wildmere => $((369, 1071))
+        case Oldroot => $((908, 782), (825, 694))
+        case Deepden => $((1430, 787), (1511, 852))
+        case Shadowvale => $((1526, 1293), (1622, 1330), (1506, 1397))
+        case Elderglen => $((849, 1329), (941, 1365), (826, 1440))
+        case _ => super.gates(r)
+    }
+}
+
+// The Wastelands ("the future"): a walled city in the middle (Cistern, Gatehouse, Granary; the triangle between them is no
+// forest), four ruins, and three rivers: two meet at the Cistern, and the city's drain runs out past Ferrytown. Its barren
+// trails (the dark dotted paths) are played as plain paths, and its water rules (Law of Slug S.2) are left out.
+object WastelandsBoard extends Board {
+    val id = "wastelands"
+    val name = "Wastelands"
+
+    object Driftcamp extends Clearing(2)
+    object Scrapyard extends Clearing(1)
+    object Ashpit extends Clearing(2)
+    object Tollpost extends Clearing(1)
+    object Farmstead extends Clearing(2)
+    object Manor extends Clearing(1)
+    object Ferrytown extends Clearing(3)
+    object Dugout extends Clearing(2)
+    object Junkshop extends Clearing(2)
+    object Cistern extends Clearing(3)
+    object Gatehouse extends Clearing(3)
+    object Granary extends Clearing(2)
+
+    val clearings = $(Driftcamp, Scrapyard, Ashpit, Tollpost, Farmstead, Manor, Ferrytown, Dugout, Junkshop, Cistern, Gatehouse, Granary)
+
+    val ruins = $(Ferrytown, Junkshop, Cistern, Granary)
+
+    val diagonals = $((Driftcamp, Manor), (Tollpost, Dugout))
+
+    val inner = $(Cistern, Gatehouse, Granary)
+
+    // the barren trails (pale, with bones on them): paths for adjacency, but moving along one with the water rules on
+    // (WastelandsWater) costs a warrior from the clearing moved from, an undamaged item or a Water (S.2.2)
+    val barren = $((Ashpit, Tollpost), (Driftcamp, Gatehouse), (Driftcamp, Junkshop), (Granary, Farmstead), (Granary, Ferrytown), (Ferrytown, Dugout))
+
+    object WastelandsSagebrush extends NamedForest("Sagebrush")
+    object WastelandsThistle extends NamedForest("Thistle")
+    object WastelandsTumbleweed extends NamedForest("Tumbleweed")
+    object WastelandsDeadfall extends NamedForest("Deadfall")
+    object WastelandsCinderwood extends NamedForest("Cinderwood")
+    object WastelandsNettle extends NamedForest("Nettle")
+    object WastelandsScrubland extends NamedForest("Scrubland")
+    object WastelandsSaltbush extends NamedForest("Saltbush")
+    object WastelandsDustwood extends NamedForest("Dustwood")
+
+    val forests = $(WastelandsSagebrush, WastelandsThistle, WastelandsTumbleweed, WastelandsDeadfall, WastelandsCinderwood, WastelandsNettle, WastelandsScrubland, WastelandsSaltbush, WastelandsDustwood)
+
+    override val scoreTrack = |((191.0, 2039.0, 67.8))
+
+    override def itemSlots = itemGrid(1769.5, 79.5, 378.0, 453.5)
+
+    def connected(c : Clearing) = c @@ {
+        case Driftcamp => $(Scrapyard, Gatehouse, Junkshop)
+        case Scrapyard => $(Driftcamp, Ashpit, Cistern)
+        case Ashpit => $(Scrapyard, Cistern, Tollpost)
+        case Tollpost => $(Ashpit, Farmstead, Granary)
+        case Farmstead => $(Tollpost, Granary, Ferrytown, Manor)
+        case Manor => $(Farmstead, Ferrytown)
+        case Ferrytown => $(Granary, Farmstead, Manor, Dugout)
+        case Dugout => $(Ferrytown, Junkshop, Gatehouse)
+        case Junkshop => $(Driftcamp, Dugout, Gatehouse)
+        case Cistern => $(Scrapyard, Ashpit, Gatehouse, Granary)
+        case Gatehouse => $(Driftcamp, Dugout, Junkshop, Cistern, Granary)
+        case Granary => $(Tollpost, Farmstead, Ferrytown, Cistern, Gatehouse)
+    }
+
+    def fromForest(f : Forest) = f @@ {
+        case WastelandsSagebrush => $(Driftcamp, Scrapyard, Cistern, Gatehouse)
+        case WastelandsThistle => $(Scrapyard, Ashpit, Cistern)
+        case WastelandsTumbleweed => $(Ashpit, Tollpost, Granary, Cistern)
+        case WastelandsDeadfall => $(Tollpost, Farmstead, Granary)
+        case WastelandsCinderwood => $(Granary, Farmstead, Ferrytown)
+        case WastelandsNettle => $(Farmstead, Manor, Ferrytown)
+        case WastelandsScrubland => $(Granary, Ferrytown, Dugout, Gatehouse)
+        case WastelandsSaltbush => $(Dugout, Junkshop, Gatehouse)
+        case WastelandsDustwood => $(Driftcamp, Gatehouse, Junkshop)
+    }
+
+    // two rivers come in by Driftcamp and Tollpost and meet at the Cistern; the river runs on through the city wall and out of its
+    // drain to Ferrytown (S.2.8, City Drains), so Gatehouse and Granary aren't by it
+    def byRiver(c : Clearing) = c @@ {
+        case Driftcamp => $(Cistern)
+        case Tollpost => $(Cistern)
+        case Cistern => $(Driftcamp, Tollpost, Ferrytown)
+        case Ferrytown => $(Cistern)
+        case _ => $()
+    }
+
+    def center(r : Region) : (Int, Int) = r @@ {
+        case Driftcamp => (345, 650)
+        case Scrapyard => (900, 300)
+        case Ashpit => (1320, 270)
+        case Tollpost => (2050, 700)
+        case Farmstead => (2080, 1260)
+        case Manor => (2000, 1760)
+        case Ferrytown => (1480, 1780)
+        case Dugout => (560, 1780)
+        case Junkshop => (300, 1370)
+        case Cistern => (1060, 830)
+        case Gatehouse => (840, 1180)
+        case Granary => (1300, 1150)
+
+        case WastelandsSagebrush => (760, 820)
+        case WastelandsThistle => (1100, 450)
+        case WastelandsTumbleweed => (1580, 700)
+        case WastelandsDeadfall => (1820, 1050)
+        case WastelandsCinderwood => (1630, 1400)
+        case WastelandsNettle => (1850, 1600)
+        case WastelandsScrubland => (850, 1500)
+        case WastelandsSaltbush => (560, 1450)
+        case WastelandsDustwood => (480, 1050)
+
+        case Burrow(_) => (1208, 999999)
+        case _ => (0, 0); throw new Error("no center for " + r)
+    }
+
+    override def gates(r : Region) = r @@ {
+        case Driftcamp => $((353, 573), (316, 729))
+        case Scrapyard => $((880, 294))
+        case Ashpit => $((1282, 272), (1385, 301))
+        case Tollpost => $((2070, 728))
+        case Farmstead => $((2122, 1220), (2071, 1331))
+        case Manor => $((2006, 1777))
+        case Ferrytown => $((1424, 1786), (1543, 1720), (1504, 1854))
+        case Dugout => $((535, 1730), (606, 1819))
+        case Junkshop => $((253, 1394), (375, 1363))
+        case Cistern => $((1098, 726), (945, 860), (1161, 889))
+        case Gatehouse => $((801, 1190), (936, 1150), (924, 1256))
+        case Granary => $((1306, 1074), (1279, 1216))
+        case _ => super.gates(r)
+    }
+}
+
 // Root: Homeland Marsh map. The printed board has no clearing names.
 // Numbers in comments are the ones on the Law of Root map diagram.
 object MarshBoard extends Board {
