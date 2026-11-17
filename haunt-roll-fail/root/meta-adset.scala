@@ -94,7 +94,6 @@ object MetaAdset extends MetaGame {
         CardDraftFive,
         InsurgentLockOn,
         AutoHitsAssignmentMode,
-        BluffMode,
         KnavesCaptainsInDraft,
         FolkHeroCharacter,
         RandomCharacter,
@@ -114,7 +113,7 @@ object MetaAdset extends MetaGame {
     override def presetsInfo(n : Int, l : $[F]) = $(
         $(
             "Puts every option back to what the site starts with:",
-            &("Random Official".hh ~ " map, ") ~ &("All Random".hh ~ " clearings, ") ~ &("Map Default".hh ~ " landmarks (on " ~ "Mountain".styled(Fox) ~ " a random suited one), ") ~ &("Squires and Disciples".hh ~ " deck, ") ~ &("Bluff Mode".hh ~ ", ") ~ &("no hirelings, ") ~ &("and every faction in the draft") ~ " " ~ &("but the " ~ "Vagabond".styled(VB) ~ " and the fan factions."),
+            &("Random Official".hh ~ " map, ") ~ &("All Random".hh ~ " clearings, ") ~ &("Map Default".hh ~ " landmarks (on " ~ "Mountain".styled(Fox) ~ " a random suited one), ") ~ &("Squires and Disciples".hh ~ " deck, ") ~ &("Auto Assign Hits".hh ~ " (no " ~ "Bluff Mode".hh ~ "), ") ~ &("no hirelings, ") ~ &("and every faction in the draft") ~ " " ~ &("but the " ~ "Vagabond".styled(VB) ~ " and the fan factions."),
         ),
         $(
             "The rules as Leder Games prints them:",
