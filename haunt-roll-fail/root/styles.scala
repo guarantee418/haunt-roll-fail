@@ -272,6 +272,8 @@ package object elem {
         object action extends CustomStyle(width("4.3ch"), vertical.align("middle"), margin("0.1ch"))
 
         object wr extends CustomStyle(height("1.8ex"), vertical.align("middle"), padding.left("0.15ch"), padding.right("0.15ch"))
+        // the Twilight Council's Loyalists hang head down, as bats do (MaKoBwoY, 2026-11-17)
+        object hanging extends CustomStyle(transform("scaleY(-1)"))
         object wr3x extends CustomStyle(height("5.4ch"), vertical.align("middle"), padding.left("0.15ch"), padding.right("0.15ch"))
 
         object narrow extends CustomStyle(letter.spacing("-0.5ch"), vertical.align("middle"))
