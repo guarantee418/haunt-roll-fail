@@ -1090,6 +1090,15 @@ case object PCMinePerMine extends GameOption with ToggleOption {
 // PC version: one upgrade per Build, the Town Hall's or one with Stone (Marzaus, relayed by Gman on 2026-11-14: a Build upgraded
 // the Town Hall and another building). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be switched over
 // with PCOneUpgradeAction(X)
+// Minerals module: a Build either builds or upgrades, never both (Gman, 2026-11-16: in Winter for Clan Snake's Feast built a Food
+// Silo and was then offered a Stone upgrade, as the module's text allows, "regardless if new building has been placed or not").
+// The upgrade (with Stone, or the PC version's Town Hall) is offered only before anything is built, and ends the Build. Hidden, and
+// given to every new game (Meta.mandatoryFor); a running game can be switched over with BuildOrUpgradeAction(X)
+case object BuildOrUpgrade extends GameOption with ToggleOption {
+    val group = "Minerals".txt
+    def valueOn = "A Build builds or upgrades".txt
+}
+
 case object PCOneUpgrade extends GameOption with ToggleOption {
     val group = "PC version".txt
     def valueOn = "One upgrade per Build".txt

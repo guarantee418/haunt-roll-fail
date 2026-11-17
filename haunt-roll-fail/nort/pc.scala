@@ -627,7 +627,11 @@ object PCExpansion extends Expansion {
 
             game.note("hall-upgrade")
 
-            Then(BuildAction(f, e, times - 1, smallOnly, then))
+            // BuildOrUpgrade: the upgrade is the whole Build
+            if (game.options.has(BuildOrUpgrade))
+                Then(BuildFinishAction(f, e, then))
+            else
+                Then(BuildAction(f, e, times - 1, smallOnly, then))
 
         // SCOUTING: each Explore scouts one territory
         case ExploreAction(f, draw, times, redraw, e, then) =>

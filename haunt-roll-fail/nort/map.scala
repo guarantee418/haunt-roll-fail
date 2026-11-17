@@ -2410,8 +2410,10 @@ object MapExpansion extends Expansion {
         // BUILD
         case BuildAction(f, e, times, smallOnly, then) =>
             val spots = (times > 0).??(buildSpots(f, e, smallOnly))
-            // Minerals module: one building upgraded with Stone, whether or not anything is built
-            val upgrades = MineralsExpansion.upgrades(f, BuildAction(f, e, times, smallOnly, then)) ++ PCExpansion.hallUpgrade(f, e, times, smallOnly, then)
+            // Minerals module: one building upgraded with Stone, whether or not anything is built; with BuildOrUpgrade only before
+            // anything is built, and the upgrade ends the Build
+            val either = game.options.has(BuildOrUpgrade)
+            val upgrades = (either && game.builtThisBuild).not.??(MineralsExpansion.upgrades(f, either.?(BuildFinishAction(f, e, then) : ForcedAction).|(BuildAction(f, e, times, smallOnly, then))) ++ PCExpansion.hallUpgrade(f, e, times, smallOnly, then))
 
             if (spots.none && upgrades.none)
                 Then(BuildFinishAction(f, e, then))
@@ -2444,6 +2446,7 @@ object MapExpansion extends Expansion {
             f.wood -= cost
             game.buildings += s -> b
             game.lastBuilt = |(b)
+            game.builtThisBuild = true
 
             f.log("built", b, "in", a)
 
@@ -2480,6 +2483,7 @@ object MapExpansion extends Expansion {
 
         case BuildFinishAction(f, e, then) =>
             game.stoneUsed = false
+            game.builtThisBuild = false
 
             // Industrious Villagers: may replace one of f's buildings by another of the same size
             val l = (e.special == IndustriousBuild).??(replacements(f))
