@@ -1080,6 +1080,8 @@ file covers the build, server and deploy. No session can ssh to the server
   screen the map is now capped at the height the window had before (`mapMaxHeight`, remembered per screen width as
   `root.windowed-height.<width>`, else 90% of the screen; `FullDimPane`'s `maxHeight` in `panes-again.scala`), so the
   side panes keep their width and the action pane takes the extra height. Other games don't pass `maxHeight`.
+- The Twilight Council's Loyalists on its player panel are drawn head down, hanging like bats (`styles.hanging` in
+  `root/styles.scala`; MaKoBwoY, relayed by Gman on 2026-11-17). Display only.
 - Tapping a Root faction's status pane opens its overlay (`onFactionStatus` in
   `root/ui.scala`) with its faction board. The boards of the base and
   expansion factions (`boardImage`; `mc-board`,
