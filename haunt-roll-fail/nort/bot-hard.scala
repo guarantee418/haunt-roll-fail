@@ -208,7 +208,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
     // PRODUCTION: what one more of r at each harvest left is worth to the bot. A clan holding far more than it can use
     // (its stock and the coming harvest against Winter, its free building spaces and its upgrades) gets the extra
     // production only as surplus, worth a little less than the surplus it already holds, as a third of it rounds away
-    // at the end: the bot built Woodcutter's Lodges while holding 10 wood and more (Gman, 2026-11-06), as a territory's
+    // at the end: the bot built Woodcutter's Lodges while holding 10 wood and more (2026-11-06), as a territory's
     // wood was worth 55 a harvest however much it had. The years its spare stock covers (at about what a year uses)
     // get the low value, the harvests after them the full one.
     def productionValue(r : Resource, full : Double) : Double = {
@@ -366,9 +366,9 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
 
     // TRADES: a trade counts towards the Trading victory card when it pays off by its resources alone (buying one the
     // clan is short of, or covering Winter), when it pays only with resources beyond what the clan has a use for
-    // (`needs`: Winter, its free building spaces, its upgrades; Gman, 2026-11-11), or when it wins the game. With the
+    // (`needs`: Winter, its free building spaces, its upgrades; 2026-11-11), or when it wins the game. With the
     // card worth a step for every trade, the bots traded resources away and straight back (Stag in a team game,
-    // reported by Gman on 2026-11-10: 3 wood for lore, wood and 2 lore for food, 3 food for lore)
+    // reported on 2026-11-10: 3 wood for lore, wood and 2 lore for food, 3 food for lore)
     def short(r : Resource) : Boolean = needs.get(r).forall(self.has(r) < _)
 
     def spare(pay : $[Resource]) : Boolean = pay.distinct.forall(x => needs.get(x).exists(n => self.has(x) - pay.count(x) >= n))
@@ -719,7 +719,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
 
     // PC VERSION: an Explore scouts a territory not seen yet (the map is whole, so there's no tile to place): its fame, its
     // resources with Lay of the Land, the clans' powers, and the territory opened to the bot's moves, as units only move into
-    // seen ones (Gman, 2026-11-12: Robotos never left its three starting territories, as Explore was worth nothing)
+    // seen ones (2026-11-12: Robotos never left its three starting territories, as Explore was worth nothing)
     def scoutValue(t : Territory, e : ExploreEffect) : Double = {
         val (food, wood, lore) = game.produce(t)
         val stuff = food * resourceValue(Food) + wood * resourceValue(Wood) + lore * resourceValue(Lore)
@@ -1349,7 +1349,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         near./(o => game.present(o)./(f => (f == self).?(-1.0).|(game.allied(self, f).?(-0.7).|(enemyWeight(f) * 1.5)) * (game.figures(o, f) * 10 + territoryWorth(o, f) * 0.2)).sum).sum
     }
 
-    // A creature movement tie: always towards the human players the bot is against (geffrey, 2026-10-12: "have the bots
+    // A creature movement tie: always towards the human players the bot is against (2026-10-12: "have the bots
     // intentionally move the creatures", as the Automa's creatures do): the territory nearest their figures first, then
     // the one with the most of them on it and around it, then creatureSpot. With no human enemy on the map, creatureSpot
     lazy val humans : $[Faction] = enemies.%(game.human)

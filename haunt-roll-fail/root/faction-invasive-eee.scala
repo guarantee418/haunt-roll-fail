@@ -280,7 +280,7 @@ case class GovernorsStopEnclaveFlipsAction(then : ForcedAction) extends ForcedAc
 case class FrogAmbushToPondBottomAction(then : ForcedAction) extends ForcedAction with SkipValidate
 
 object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
-    // Governors (17.2.3): no flipping at an enemy Council's Governing assemblies (reported by MaKoBwoY on 2026-10-17: Provoke
+    // Governors (17.2.3): no flipping at an enemy Council's Governing assemblies (reported on 2026-10-17: Provoke
     // flipped one); games started before keep the earlier rules so their replays don't change
     def flippable(e : InvasiveEEE, l : $[Clearing])(implicit game : Game) : $[Clearing] =
         (game.options.has(GovernorsStopEnclaveFlips) || game.governorsStopEnclaveFlips).?(Council.governedFor(e, l)).|(l)
@@ -386,7 +386,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
     }
 
     // Negotiations in every menu of the enemy's turn, not only those calling the phase hooks (Council's Convene didn't;
-    // asked for by the owner on 2026-10-16): added to an Ask made by a soft action, which it then returns to, as a soft action
+    // asked for on 2026-10-16): added to an Ask made by a soft action, which it then returns to, as a soft action
     // only offers choices and is safe to perform again. Not to a menu about a card (the card may be the one given away), nor to
     // a sub-menu with Cancel (back to a menu with Negotiations), which also keeps it out of its own steps. It depends only on
     // the game, so bots, move checks and replays see the same choices; recorded games replay the same, as it only adds choices.
@@ -405,7 +405,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
     }
 
     // A payment for Riverfolk services is one hidden button the runner takes by itself: with Negotiations beside it,
-    // the menu showed only Negotiations and the purchase never went on (MaKoBwoY, 2026-11-04, buying Mercenaries)
+    // the menu showed only Negotiations and the purchase never went on (2026-11-04, buying Mercenaries)
     def paying(x : Any) : Boolean = x @@ {
         case _ : PayForServicesAction => true
         case _ => false

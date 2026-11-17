@@ -15,8 +15,8 @@ import hrf.elem._
 import nort.elem._
 
 
-// The Tower PC version (option ModuleOption(TowersModule), under Fan content), fan-made by Marzaus (Discord, #northgard-fanmade-content,
-// asked for by Gman on 2026-10-22): Defense Towers work as in the Northgard video game.
+// The Tower PC version (option ModuleOption(TowersModule), under Fan content), fan-made (Discord, #northgard-fanmade-content,
+// asked for on 2026-10-22): Defense Towers work as in the Northgard video game.
 // - A Defense Tower is destroyed (back to the supply) once the clan that held its territory no longer has a figure there:
 //   captured or abandoned (sweep, run by Game.loggedPerform before and after each action).
 // - It costs 2 wood (discounts still apply; free builds stay free).

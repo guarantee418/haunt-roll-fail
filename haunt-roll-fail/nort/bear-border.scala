@@ -15,7 +15,7 @@ import hrf.elem._
 import nort.elem._
 
 
-// Robotos's "Special Unit Hater's Bear, Rough Border's Edition" (Discord, northgard-fanmade-content, 2026-10-22; asked for by Gman
+// Robotos's "Special Unit Hater's Bear, Rough Border's Edition" (Discord, northgard-fanmade-content, 2026-10-22; asked for by the owner
 // on 2026-10-31), picked as its own clan in the clan picker's "Fan-made clans" section (BearBorder in options.scala, factionVariants
 // in meta.scala). Kaija is no figure but a token on a border: before each of Bear's clan cards it may be placed on a regular border
 // between a territory Bear controls and an adjacent one, and every clan, Bear too, treats that border as Rough (Game.links), unless it

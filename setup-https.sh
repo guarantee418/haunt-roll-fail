@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# One-time https setup for the live server (see CLAUDE.md, "Setting up https").
+# One-time https setup for the live server (see the server notes in the private games repository).
 # Run on the server as ubuntu, while the server is running this branch:
 #   ./setup-https.sh [hostname] [email]
 # Default hostname: <public-ip-with-dashes>.sslip.io
 set -euo pipefail
 
 if [ "$(uname)" != Linux ] || ! command -v netfilter-persistent > /dev/null; then
-    echo "Run this on the server, not here: ssh -i ~/.ssh/oracle.key ubuntu@157.151.177.11" >&2
+    echo "Run this on the server, not here." >&2
     exit 1
 fi
 
@@ -49,7 +49,7 @@ echo ok > "$GG_DIR/acme/.well-known/acme-challenge/hrf-check"
 if [ "$(curl -s http://localhost/.well-known/acme-challenge/hrf-check)" != "ok" ]; then
     echo "Nothing is serving $GG_DIR/acme on port 80." >&2
     echo "Restart the server so it starts its port 80 server (it does when good-game/acme exists)," >&2
-    echo "check that ports 80 and 443 are open in the Oracle security list, then run this again." >&2
+    echo "check that ports 80 and 443 are open in the cloud firewall, then run this again." >&2
     exit 1
 fi
 rm "$GG_DIR/acme/.well-known/acme-challenge/hrf-check"

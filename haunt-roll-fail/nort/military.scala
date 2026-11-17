@@ -15,8 +15,8 @@ import hrf.elem._
 import nort.elem._
 
 
-// The Military paths module (option ModuleOption(MilitaryModule), under Fan content), fan-made by Marzaus (Discord,
-// northgard-fanmade-content, 2026-10-22; asked for by Gman the same day): military experience (MXP) from fights, and at
+// The Military paths module (option ModuleOption(MilitaryModule), under Fan content), fan-made (Discord,
+// northgard-fanmade-content, 2026-10-22; asked for by the owner the same day): military experience (MXP) from fights, and at
 // 5 MXP a path, Leadership, Guardian or Legions, with three levels (5, 50 and 100 MXP).
 // RULES.md (Military paths) lists the choices made where the post is short
 
@@ -299,7 +299,7 @@ object MilitaryExpansion extends Expansion {
 
     def cost(f : Faction, b : Building, base : Int)(implicit game : Game) : Int = (freeBuild(f, b) || b == Fortress && freeFortress(f)).?(0).|(math.max(0, base - FameUpgradesExpansion.discount(f, b)))
 
-    // Guardian 3: once a year, a Fortress for no wood (Marzaus's Palisade is the Fortress, 2026-10-22); the first Fortress built that year uses it
+    // Guardian 3: once a year, a Fortress for no wood (the Palisade is the Fortress, 2026-10-22); the first Fortress built that year uses it
     def freeFortress(f : Faction)(implicit game : Game) : Boolean = on && at(f, Guardian, 3) && game.fortressYear.get(f).has(game.year).not
 
     def built(f : Faction, b : Building)(implicit game : Game) {
@@ -359,7 +359,7 @@ object MilitaryExpansion extends Expansion {
     }
 
     // Winning a fight against a clan: 1 MXP for each enemy figure it began with, whether or not any was killed
-    // (asked for by the owner on 2026-10-23)
+    // (asked for on 2026-10-23)
     def won(w : Faction, l : Faction, n : Int)(implicit game : Game) {
         if (n > 0) {
             gain(w, n, "for winning the fight against", n.hl, (n == 1).?("figure").|("figures"), "of", l)
@@ -476,7 +476,7 @@ object MilitaryExpansion extends Expansion {
                         }
                     }
 
-                // Guardian 2: one dead Militia comes back each year (Marzaus, 2026-10-22)
+                // Guardian 2: one dead Militia comes back each year (2026-10-22)
                 if (at(f, Guardian, 2) && game.militiaGiven.has(f) && militiaOnMap(f) < 4 && game.controlled(f).any)
                     game.militiaBack :+= f
 

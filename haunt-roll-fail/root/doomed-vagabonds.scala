@@ -14,7 +14,7 @@ import hrf.elem._
 import root.elem._
 
 
-// The Doomed Vagabonds (The Doomed Expansion, fan-made by slugfacekillah; Law of Doom D7; Gman, 2026-11-15): seven more Vagabond
+// The Doomed Vagabonds (The Doomed Expansion, fan-made by slugfacekillah; Law of Doom D7; 2026-11-15): seven more Vagabond
 // characters, offered with the option `DoomedVagabonds`. Their starting items and special actions follow the cards (the card shows the
 // item each special action exhausts); the Law of Doom says nothing more about them.
 //

@@ -374,7 +374,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     // Turned as it is drawn, not into a canvas per tile and rotation: a PC version map's dozens of turned tiles took more
     // canvas memory than a phone gives, and every canvas after that drew nothing, the turned tiles, the tints and the fog of
-    // war (Marzaus, 2026-11-14: only the unturned tiles showed, his own home black and the enemy's in plain view)
+    // war (2026-11-14: only the unturned tiles showed, his own home black and the enemy's in plain view)
     def tileImage(tile : String, r : Int) : hrf.ui.sprites.Image = rotated.getOrElseUpdate((tile, r % 4), new RawImageTurned(img("tile-" + tile), r % 4))
 
     // How big a building is drawn: its space's printed octagon, so a large building fills its large space
@@ -1012,7 +1012,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         }
 
         // PC version: each clan's Town Hall in its Port territory, upgraded or not (tapped: what it does), on the meadow left of the
-        // rocks, clear of the Port in the middle of the tile and the small building space (Gman, 2026-11-11: the Port stays visible)
+        // rocks, clear of the Port in the middle of the tile and the small building space (2026-11-11: the Port stays visible)
         game.halls.foreach { case (f, a) =>
             if (foggy.contains(a).not)
                 board.at(a.x, a.y).foreach { p =>
@@ -1169,7 +1169,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
                 // Military paths: the bodyguard beside the warchief, its own figure (a huscarl with a kite shield and a spear,
                 // drawn by nort/tools/bodyguard-figure.py); the Militia, a peasant with a pitchfork and no armor the bodyguard's size, and their
-                // count (nort/tools/militia-figure.py; Gman, 2026-11-06: they were the clan's warriors with a shield badge)
+                // count (nort/tools/militia-figure.py; 2026-11-06: they were the clan's warriors with a shield badge)
                 if (MilitaryExpansion.guardIn(t, f)) {
                     val gz = 230.0 * scale
                     val (gx, gy) = beside(0.1 * scale)
@@ -1386,7 +1386,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     var courtFolded : Boolean = try { hrf.web.Local.get(courtKey, "") == "yes" } catch { case _ : Throwable => false }
 
     // Where the court is beside the player panels at the top (courtSideways), the tab swaps the row between
-    // the two instead (asked for by Robotos on 2026-10-12, as sharing it left both squashed): the panels across
+    // the two instead (asked for on 2026-10-12, as sharing it left both squashed): the panels across
     // the row with the court folded into a tab on the left (the default), or the court across the whole row
     // and no panels. Kept apart from courtFolded, so other screen shapes keep their own choice
     def courtWideKey = Meta.settingsKey + ".court-wide"
@@ -1593,7 +1593,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     // Alternative fame gains: every clan's fame (hidden ones as "?") and Altar of Kings, how fame is gained and how the fame win works,
-    // f's clan first (the player panel's fame tapped; asked for by Gman on 2026-11-13)
+    // f's clan first (the player panel's fame tapped; asked for on 2026-11-13)
     def fameGainsView(f : Faction) : Elem = {
         val goal = FameGainsExpansion.goal
         val closed = game.options.has(FameAltarClosed)
@@ -1673,7 +1673,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         else c.target./(n => game.progressOf(f, c.id).hl ~ "/" ~ n.toString : Elem).orElse(VictoryExpansion.mapCount(f, c)./ { case (k, n) => k.hl ~ "/" ~ n.toString : Elem }).|("✗".txt)
 
     // Alternative victory: the cards in play, what each asks, and where every clan (or team) stands
-    // (the panels' "Victory:" line and the cards in the shared strip open it; asked for by Gman on 2026-11-05)
+    // (the panels' "Victory:" line and the cards in the shared strip open it; asked for on 2026-11-05)
     def victoryView : Elem = {
         val jarl = options.has(VictoryModeOption(true))
         val clans = game.factions.but(Automa).%(game.states.contains)
@@ -1824,7 +1824,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
     // Fame tokens are kept face down: the panels show only the viewer's and its teammates' fame, everyone's once the game is over
     // or in games set to Public fame
-    // (Clan Fame upgrades: always public, Gman 2026-11-12)
+    // (Clan Fame upgrades: always public, 2026-11-12)
     def fameHidden(f : Faction) : Boolean = game.isOver.not && game.options.has(PublicFame).not && game.has(FameUpgradesModule).not && viewers.exists(v => v == f || game.mates(v).has(f)).not
 
     // The setup's Undo choice (UndoChoice in options.scala): none, or with Limited undo none past a die roll, a shuffle or a
@@ -2687,7 +2687,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // the action pane. Instead the panels take that whole row, right under the shared cards, and the log goes beside the
     // action pane at the bottom (on the side it was on), as wide as it was, up to 40% of the action pane. During setup,
     // when the shared cards have nothing to show, the panels take their room too; and the panels take what their
-    // contents need (measured) from the map under them, up to a third of it, and no more: the map gets the rest (Gman, 2026-10-29)
+    // contents need (measured) from the map under them, up to a third of it, and no more: the map gets the rest (2026-10-29)
     def logBesideAction(width : Int, height : Int)(l : $[PanePlacement]) : $[PanePlacement] = {
         rowFitPx = 0
         courtEmptyLaid = None
@@ -2752,7 +2752,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     // The shared cards show nothing during setup, except Adset's draft (drawCards), and unless folded into the bar
     def courtEmpty = try { game.year == 0 && (game.adset && game.seats.any).not && setupCourt.not && folded.not } catch { case _ : Throwable => false }
 
-    // During setup the shared cards show the Alternative victory cards and the Events once they are drawn (Gman, 2026-11-05:
+    // During setup the shared cards show the Alternative victory cards and the Events once they are drawn (2026-11-05:
     // nothing showed which victory cards were in play until the first year)
     def setupCourt = (game.has(VictoryModule) && game.victory.any) || (game.has(EventsModule) && game.event.any)
 

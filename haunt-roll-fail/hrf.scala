@@ -365,7 +365,7 @@ object HRFR {
     }
 }
 
-// Who made the site, opened by About at the bottom of the main page and in every game's About menu (asked for by Robotos and Gman on 2026-10-30)
+// Who made the site, opened by About at the bottom of the main page and in every game's About menu (asked for on 2026-10-30)
 object Credits {
     def options : $[ZOption] =
         $(ZOption("About this site", Div(

@@ -350,7 +350,7 @@ object MetaAdset extends MetaGame {
     // With two players the second seat doesn't choose: an expansion is agreed on here, or none
     override def optionsFor(n : Int, l : $[F]) = options.%{
         case LandsSeatChooses => n > 2
-        // No fan-made clans in Adset (Gman, 2026-10-26): Robotos's Dragon was an option here, older games still have it
+        // No fan-made clans in Adset (2026-10-26): Robotos's Dragon was an option here, older games still have it
         case ModuleOption(DragonVariant) => false
         case ModuleOption(BearBorder) => false
         case _ => true
