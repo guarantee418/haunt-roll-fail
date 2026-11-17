@@ -512,6 +512,8 @@ case class PCHallShieldAction(then : ForcedAction) extends ForcedAction with Ski
 case class PCHallSafeAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to PCMinePerMine (an hrf-games fix)
 case class PCMinePerMineAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to BuildOrUpgrade (an hrf-games fix)
+case class BuildOrUpgradeAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to PCOneUpgrade (an hrf-games fix)
 case class PCOneUpgradeAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to PCSeenOnly (an hrf-games fix)
@@ -740,6 +742,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     var upgraded : $[SpaceRef] = $
     var minedYear = 0
     var stoneUsed = false
+    // BuildOrUpgrade: this Build has placed a building, so it offers no upgrade
+    var builtThisBuild = false
     var ironAsked : $[Faction] = $
     var ironFight : $[Faction] = $
 
@@ -2499,6 +2503,12 @@ object CommonExpansion extends Expansion {
         case PCMinePerMineAction(then) =>
             if (game.options.has(PCMinePerMine).not)
                 game.addOption(PCMinePerMine)
+
+            Then(then)
+
+        case BuildOrUpgradeAction(then) =>
+            if (game.options.has(BuildOrUpgrade).not)
+                game.addOption(BuildOrUpgrade)
 
             Then(then)
 

@@ -919,6 +919,10 @@ used (Gem, not Ruby). The art
   It still takes one space and one supply token, and is one building for the
   tie-breaks and the three-territories win. When it leaves the map (removed
   or replaced) its Stone goes back to the box (`buildings_=` in `game.scala`).
+  In games with the hidden `BuildOrUpgrade` every new game gets (Gman, 2026-11-16: Snake's Feast built a Food Silo in
+  Winter for Clan and was then offered the upgrade), a Build either builds or upgrades: the upgrade (with Stone, or the PC
+  version's Town Hall) is offered only before anything is built, and ends the Build (`game.builtThisBuild`);
+  `BuildOrUpgradeAction(X)` switches a running game.
 - Iron: "during Step 3 of Combat", so in every fight: after each side's food,
   that side may spend one Iron to roll two combat dice and add them up; "1
   point or 1 casualty" faces are picked as usual against a clan, and give the
