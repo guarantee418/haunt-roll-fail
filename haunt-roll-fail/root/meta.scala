@@ -109,6 +109,25 @@ case object MarshMap extends MapOption {
     )
 }
 
+// The Doomed Expansion's Urban Legends maps (fan-made, UrbanBoard and LegendsBoard in root/maps.scala)
+case object UrbanMap extends MapOption {
+    val valueOn = "Urban (fan-made)".styled(Fox)
+    override val explain = $(
+        "Urban: Districts & Denizens".hh ~ ", a city map from slugfacekillah's " ~ "Doomed Expansion".hl ~ ".",
+        "The city blocks between the roads are the forests.",
+        "Two rivers meet at the " ~ "Wharf".hh ~ "."
+    )
+}
+
+case object LegendsMap extends MapOption {
+    val valueOn = "Legends (fan-made)".styled(styles.forest)
+    override val explain = $(
+        "Legends".hh ~ ", a forest map with a castle in each corner, from slugfacekillah's " ~ "Doomed Expansion".hl ~ ".",
+        "The ruins are in the four castles.",
+        "With a " ~ "Legends Scenario".hh ~ ", its space goes in the stone circle, in the forest south of the " ~ "Watchtower".hh ~ "."
+    )
+}
+
 // Drawn once when the game is created (Meta.startOptions), so the game and its log only ever have the drawn map
 case object RandomMap extends MapOption {
     val valueOn = "Random".hh
@@ -1695,7 +1714,7 @@ object Meta extends MetaGame {
         $(SetupTypeCorners, SetupTypeHomelands) ++
         (n > 2).?(TotalWarDominance) ++
         $,
-        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap) ++
+        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, UrbanMap, LegendsMap, RandomMap, RandomOfficialMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         legendsOptions ++
@@ -1735,7 +1754,7 @@ object Meta extends MetaGame {
     // Off Turn Field Hospitals only with the Marquise (in Advanced Setup always, as the factions are drafted later)
     def hitsAndAmbushes(l : $[F]) : $[GameOption] = $(LiveGameMode, BluffMode, AutoHitsAssignmentMode, OffTurnHitsPreset) ++ l.of[Feline].any.$(OffTurnFieldHospitals)
 
-    val maps : $[MapOption] = $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap)
+    val maps : $[MapOption] = $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, UrbanMap, LegendsMap)
 
     val officialMaps : $[MapOption] = $(AutumnMap, WinterMap, LakeMap, MountainMap, GorgeMap, MarshMap)
 
@@ -1759,7 +1778,7 @@ object Meta extends MetaGame {
 
     override def optionsFor(n : Int, l : $[F]) =
         hiddenOptions ++
-        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap) ++
+        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, UrbanMap, LegendsMap, RandomMap, RandomOfficialMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck, DarkDeck) ++
@@ -2718,6 +2737,46 @@ object Meta extends MetaGame {
         ImageAsset("clearing-name-bog" ) ::
         ImageAsset("clearing-name-tailbone" ) ::
         ImageAsset("clearing-name-effigy" ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => options.has(UrbanMap), "urban", "urban:")(
+        ImageAsset("map"          , "map-art" ) ::
+        ImageAsset("map-regions"  ).makeLossless ::
+        ImageAsset("map-water"    ).makeLossless ::
+
+        ImageAsset("building-slot", "empty-building-white") ::
+
+        ImageAsset("clearing-name-tollgate" ) ::
+        ImageAsset("clearing-name-mill" ) ::
+        ImageAsset("clearing-name-guildhall" ) ::
+        ImageAsset("clearing-name-belfry" ) ::
+        ImageAsset("clearing-name-tannery" ) ::
+        ImageAsset("clearing-name-bazaar" ) ::
+        ImageAsset("clearing-name-barracks" ) ::
+        ImageAsset("clearing-name-wharf" ) ::
+        ImageAsset("clearing-name-abbey" ) ::
+        ImageAsset("clearing-name-sluice" ) ::
+        ImageAsset("clearing-name-plaza" ) ::
+        ImageAsset("clearing-name-arcade" ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => options.has(LegendsMap), "legends-map", "legends-map:")(
+        ImageAsset("map"          , "map-art" ) ::
+        ImageAsset("map-regions"  ).makeLossless ::
+        ImageAsset("map-water"    ).makeLossless ::
+
+        ImageAsset("building-slot", "empty-building-white") ::
+
+        ImageAsset("clearing-name-thornkeep" ) ::
+        ImageAsset("clearing-name-lumberyard" ) ::
+        ImageAsset("clearing-name-stormkeep" ) ::
+        ImageAsset("clearing-name-woodcutter" ) ::
+        ImageAsset("clearing-name-lodge" ) ::
+        ImageAsset("clearing-name-hollow" ) ::
+        ImageAsset("clearing-name-watchtower" ) ::
+        ImageAsset("clearing-name-smithy" ) ::
+        ImageAsset("clearing-name-hamlet" ) ::
+        ImageAsset("clearing-name-oakkeep" ) ::
+        ImageAsset("clearing-name-hermitage" ) ::
+        ImageAsset("clearing-name-redkeep" ) ::
     $) ::
     ConditionalAssetsList((factions, options) => options.has(GorgeMap), "gorge", "gorge:")(
         ImageAsset("map"          , "map-art" ) ::

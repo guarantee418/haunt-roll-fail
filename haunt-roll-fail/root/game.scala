@@ -173,6 +173,9 @@ trait Board {
     val ferry : $[Clearing] = $
     val tower : $[Clearing] = $
 
+    // the forest the Legends Scenarios' space goes in, where the board prints a place for it (else picked at setup)
+    val scenarioForest : |[Forest] = None
+
     // The score tracker: the centre of the 0 box and the distance between boxes, with boxes 0 to
     // scoreTrackMax in a row. It runs along the bottom edge, as on the printed boards.
     val scoreTrack : |[(Double, Double, Double)] = |((88.3, 2122.0, 74.63))
@@ -1752,6 +1755,8 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
         case GloomMap => Some(GloomBoard)
         case MarshMap => Some(MarshBoard)
         case GorgeMap => Some(GorgeBoard)
+        case UrbanMap => Some(UrbanBoard)
+        case LegendsMap => Some(LegendsBoard)
         case _ => None
     }.only
 

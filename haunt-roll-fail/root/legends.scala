@@ -509,12 +509,16 @@ object LegendsExpansion extends Expansion {
 
             then
 
-        // SETUP: the space goes in a forest by the most clearings off the edge, after the map and the landmarks
+        // SETUP: the space goes in a forest by the most clearings off the edge, after the map and the landmarks, or in the
+        // forest the map prints a place for (the Legends map's stone circle)
         case SetupHirelingsAction if game.legendForest.none && game.legendDone.not =>
             val ff = board.forests.%(r => game.fromForest(r).intersect(board.inner).any)
             val best = ff.%(r => game.fromForest(r).intersect(board.inner).num == ff./(r => game.fromForest(r).intersect(board.inner).num).maxOr(0))
 
-            Random[Forest](best.some.|(board.forests), LegendsSpaceAction(_, SetupHirelingsAction))
+            board.scenarioForest match {
+                case Some(f) => Force(LegendsSpaceAction(f, SetupHirelingsAction))
+                case None => Random[Forest](best.some.|(board.forests), LegendsSpaceAction(_, SetupHirelingsAction))
+            }
 
         case LegendsSpaceAction(r, then) =>
             game.legendForest = |(r)
