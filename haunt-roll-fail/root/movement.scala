@@ -41,6 +41,7 @@ case object Roads extends Transport {
             game.rubble.has((d, o)).not &&
             game.blizzard.has((o, d)).not &&
             game.blizzard.has((d, o)).not &&
+            OutsidersMaps.barren(o, d).not &&
             factions.of[Caster].%(game.states.contains).exists(f => f.growth.has((o, d)) || f.growth.has((d, o))).not
 
         case (o : Forest, d : Clearing) => game.fromForest(o).has(d)
@@ -254,7 +255,7 @@ object MovementExpansion extends MandatoryExpansion {
                         .!({
                             val mv = f.at(from).of[Movable]
                             val cm = 1.to(mv.num)./~(n => mv.combinations(n))
-                            tt.exists(t => cm.exists(l => t.forall(_.allows(f, from, d, l)))).not
+                            tt.exists(t => cm.exists(l => t.forall(_.allows(f, from, d, l)) && OutsidersMaps.mayEnter(f, d, l))).not
                         }, "disallowed")
                 )
                 .cancel
@@ -262,7 +263,7 @@ object MovementExpansion extends MandatoryExpansion {
         case MoveToAction(self, f, tt, m, from : Region, to : Region, then) =>
             val mv = f.at(from).of[Movable]
             val cm = 1.to(mv.num)./~(n => mv.combinations(n))
-            val pp = tt./~(t => cm.%(l => t.forall(_.allows(f, from, to, l)))./(l => l.sortBy(m => t./(_.sortBy(m)).sum))./(Party(t, _))).sortBy(p => p.transport./(t => t.order(p.movable)).sum)
+            val pp = tt./~(t => cm.%(l => t.forall(_.allows(f, from, to, l)) && OutsidersMaps.mayEnter(f, to, l))./(l => l.sortBy(m => t./(_.sortBy(m)).sum))./(Party(t, _))).sortBy(p => p.transport./(t => t.order(p.movable)).sum)
 
             Ask(self)
                 .each(pp)(p => MoveListAction(self, f, p.transport, m, from, to, p.movable, then))

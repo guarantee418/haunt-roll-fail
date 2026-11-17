@@ -878,14 +878,26 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     // What a tap at (x, y) on the map hits on water: a flooded clearing (its flood image), else the map's water mask
     // (map-water, a quarter of the map's size, made by root/tools/water-masks.py: red for the river or lake, blue for scenery)
     def waterAt(x : Double, y : Double) : Option[Any] =
-        game.flooded.%(c => waterFlood(c, x, y)).headOption./(c => ("view-water", c) : Any).orElse {
+        barrenAt(x, y).?("view-map-rules" : Any).orElse(game.flooded.%(c => waterFlood(c, x, y)).headOption./(c => ("view-water", c) : Any).orElse {
             pixelAt(mapid + "map-water", x, y, 0, 0, 4) match {
                 case l if l.num < 4 || l(3) <= 64 => None
                 case l if l(0) > 128 => Some(("view-water", "river"))
                 case l if l(2) > 128 => Some(("view-water", "scenery"))
                 case _ => None
             }
-        }
+        })
+
+    // Whether (x, y) is on a Wastelands barren trail, with its rules on: tapping one shows the map's rules
+    def barrenAt(x : Double, y : Double) : Boolean = OutsidersMaps.water(game) && WastelandsBoard.barren.exists { case (a, b) =>
+        val (ax, ay) = center(a)
+        val (bx, by) = center(b)
+        val dx = bx - ax
+        val dy = by - ay
+        val len = math.sqrt(dx * dx + dy * dy)
+        val t = ((x - ax) * dx + (y - ay) * dy) / len
+        val d = ((x - ax) * dy - (y - ay) * dx).abs / len
+        t > 180 && t < len - 180 && d < 45
+    }
 
     // Whether (x, y) is on the flood image drawn over a flooded clearing (drawRule)
     def waterFlood(c : Clearing, x : Double, y : Double) : Boolean = {
@@ -1174,6 +1186,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         }
 
         def drawRule() {
+            // the Deep Woods with the Settling rules: each clearing as printed while unsettled, or the tile drawn for it
+            if (OutsidersMaps.settling(game))
+                DeepWoodsBoard.number.foreach { case (c, n) =>
+                    val (x, y) = center(c)
+                    val img = resources.images.get(mapid + game.settled.get(c)./("tile-" + _).|("unsettled-" + n))
+
+                    if (img.complete)
+                        g.drawImage(img, x - 176, y - 176)
+                }
+
             game.flooded.foreach { c =>
                 c @@ {
                     case TidalBoard.HouseBoat => g.drawImage(resources.images.get(mapid + "flood-north"), 0, 0)
@@ -1347,7 +1369,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
             val figures = others ++ kinds./{ case (f, p) => warriors.find(w => w.faction == f && w.piece == p).get }
 
-            var gates = game.board.slots.get(r).|(Nil).take(r.as[Clearing].?(game.slots)).drop(unruins.num)
+            var gates = OutsidersMaps.gates(r)(game).|(game.board.slots.get(r).|(Nil)).take(r.as[Clearing].?(game.slots)).drop(unruins.num)
 
             figures.foreach { p =>
                 p.piece match {
@@ -1580,7 +1602,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         var connectedE : Elem = Empty
 
         mapRegions.foreach { r =>
-            var gates = game.board.slots.get(r).|(Nil).take(r.as[Clearing].?(game.slots))
+            var gates = OutsidersMaps.gates(r)(game).|(game.board.slots.get(r).|(Nil)).take(r.as[Clearing].?(game.slots))
 
             val figures = currentGame.ui.graveyard.?(game.graveyard.get(r).|(Nil)).|(game.displayRegion(r))
 
@@ -1707,7 +1729,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
             val (unruins, figures) = currentGame.ui.graveyard.?(game.graveyard.get(c).|(Nil)).|(game.displayRegion(c)).partition(_.piece.is[Ruins] && noruins)
 
-            var gates = game.board.slots.get(c).|(Nil).take(game.slots(c)).drop(unruins.num)
+            var gates = OutsidersMaps.gates(c)(game).|(game.board.slots.get(c).|(Nil)).take(game.slots(c)).drop(unruins.num)
 
             val pp = figures./(_.piece)
 
@@ -5360,6 +5382,27 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 ((p == LostCity).?("Lost City").|(p.name).hh ~ " in " ~ r.elem).div
             ), onClick)
 
+        // the Outsiders maps' own rules, with where the game stands (root/outsiders-maps.scala)
+        case "view-map-rules" =>
+            def para(e : Elem) = e.div(xstyles.info)(xstyles.xx)(xstyles.chm)(xstyles.chp)(xstyles.thu)(styles.extrachp)
+
+            val settling = OutsidersMaps.settling(game).?(
+                ("Deep Woods".styled(styles.forest) ~ " " ~ SpacedDash ~ " " ~ "Settling".hh).div ~
+                OutsidersMaps.settlingRules./(para).merge ~
+                para("Settled".hh ~ ": " ~ game.settled.keys.$.some./(_./(c => c.elem ~ " (" ~ game.mapping(c)./(_.elem).merge ~ ", " ~ game.slots(c).hl ~ " " ~ (game.slots(c) == 1).?("slot").|("slots") ~ ")").reduce(_ ~ ", " ~ _)).|("none yet".txt)) ~
+                para("Unsettled".hh ~ ": " ~ game.clearings.%(c => OutsidersMaps.unsettled(c)(game)).some./(_./(_.elem).reduce(_ ~ ", " ~ _)).|("none".txt)) ~
+                para("Settlers left".hh ~ ": " ~ FoxRabbitMouse./(s => s.elem ~ " " ~ OutsidersMaps.settlersLeft(s)(game).hl).reduce(_ ~ ", " ~ _) ~ "; clearing tiles left: " ~ game.settleTiles.num.hl ~ " and " ~ game.settleRuinTiles.num.hl ~ " " ~ "R".hh)
+            ).|(Empty)
+
+            val water = OutsidersMaps.water(game).?(
+                ("Wastelands".styled(Rabbit) ~ " " ~ SpacedDash ~ " " ~ "Water and Barren Trails".hh).div ~
+                OutsidersMaps.waterRules./(para).merge ~
+                para("Barren trails".hh ~ ": " ~ WastelandsBoard.barren./{ case (a, b) => a.elem ~ " - " ~ b.elem }.reduce(_ ~ ", " ~ _)) ~
+                para("Water".hh ~ ": " ~ factions./(f => f.elem ~ " " ~ OutsidersMaps.waterOf(f)(game).hl).reduce(_ ~ ", " ~ _) ~ "; in the supply: " ~ (game.waterSupply < 0).?(game.players.num).|(game.waterSupply).hl)
+            ).|(Empty)
+
+            showOverlay(overlayScrollX(settling ~ water), onClick)
+
         case ("view-water", kind) =>
             // Words as separate pieces, so a long sentence wraps between them
             def line(l : Any*) = game.desc(l.$./~{ case s : String => s.split(' ').$.%(_.nonEmpty) ; case x => $(x) } : _*).div(xstyles.info)(xstyles.xx)(xstyles.chm)(xstyles.chp)(xstyles.thu)(styles.extrachp)
@@ -5912,6 +5955,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 }).copy(clear = false)
             ) ++
             $(ZBasic(Break ~ Break, "Notifications".spn, () => { onClick("notifications", self) }).copy(clear = false)).%(_ => self.any || game.isOver) ++
+            $(ZBasic(Break ~ Break, "Map Rules".spn, () => { onClick("view-map-rules") }).copy(clear = false)).%(_ => OutsidersMaps.settling(game) || OutsidersMaps.water(game)) ++
             $(ZBasic(Break ~ Break, "Hirelings".spn, () => { onClick("view-hirelings") }).copy(clear = false)).%(_ => game.hirelings.but(InfectedHorde).but(TrapLayer).but(LegendBeast).any || game.unhired.any) ++
             $(ZBasic(Break ~ Break, "Interface".spn, () => { callbacks.editSettings { updateStatus() } }).copy(clear = false)) ++
             $(ZBasic(Break ~ Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug) ++

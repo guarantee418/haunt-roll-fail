@@ -156,6 +156,21 @@ case object WastelandsMap extends FanMap {
     )
 }
 
+// The Outsiders maps' own rules (Law of Slug S.1 and S.2, root/outsiders-maps.scala), only with their map
+case object DeepWoodsSettling extends GameOption with ToggleOption with FoldedOption {
+    val group = "Fan Map Rules"
+    val valueOn = "Deep Woods".styled(styles.forest) ~ SpacedDash ~ "Settling".hh
+    override def required(all : $[BaseOption]) = $($(DeepWoodsMap))
+    override val explain = OutsidersMaps.settlingRules
+}
+
+case object WastelandsWater extends GameOption with ToggleOption with FoldedOption {
+    val group = "Fan Map Rules"
+    val valueOn = "Wastelands".styled(Rabbit) ~ SpacedDash ~ "Water and Barren Trails".hh
+    override def required(all : $[BaseOption]) = $($(WastelandsMap))
+    override val explain = OutsidersMaps.waterRules
+}
+
 // Drawn once when the game is created (Meta.startOptions), so the game and its log only ever have the drawn map
 case object RandomMap extends MapOption {
     val valueOn = "Random".hh
@@ -1761,6 +1776,7 @@ object Meta extends MetaGame {
         (n > 2).?(TotalWarDominance) ++
         $,
         $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap, UrbanMap, LegendsMap, DeepWoodsMap, WastelandsMap) ++
+        $(DeepWoodsSettling, WastelandsWater) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         legendsOptions ++
@@ -1825,6 +1841,7 @@ object Meta extends MetaGame {
     override def optionsFor(n : Int, l : $[F]) =
         hiddenOptions ++
         $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap, UrbanMap, LegendsMap, DeepWoodsMap, WastelandsMap) ++
+        $(DeepWoodsSettling, WastelandsWater) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck, DarkDeck) ++
@@ -1946,7 +1963,7 @@ object Meta extends MetaGame {
 
     // In the Scenarios folder, a scenario's own choices (the Ring's rules, the capture rule, the starting monster) show only once it is picked
     override def optionShown(o : O, selected : $[O]) : Boolean = o match {
-        case _ : RingRule | _ : CaptureRule | _ : MonsterChoice => o.required(options).exists(_.forall(r => selected.exists(_ == r)))
+        case _ : RingRule | _ : CaptureRule | _ : MonsterChoice | DeepWoodsSettling | WastelandsWater => o.required(options).exists(_.forall(r => selected.exists(_ == r)))
         case _ => true
     }
 
@@ -2854,6 +2871,10 @@ object Meta extends MetaGame {
         ImageAsset("clearing-name-shadowvale" ) ::
         ImageAsset("clearing-name-elderglen" ) ::
     $) ::
+    // the Settling rules: each clearing as printed (unsettled) and the twelve clearing tiles
+    ConditionalAssetsList((factions, options) => options.has(DeepWoodsMap) && options.has(DeepWoodsSettling), "deep-woods", "deep-woods:")(
+        1.to(12).$./~(n => $(ImageAsset("tile-" + n), ImageAsset("unsettled-" + n)))
+    ) ::
     ConditionalAssetsList((factions, options) => options.has(WastelandsMap), "wastelands", "wastelands:")(
         ImageAsset("map"          , "map-art" ) ::
         ImageAsset("map-regions"  ).makeLossless ::

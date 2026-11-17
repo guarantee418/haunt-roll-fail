@@ -1340,6 +1340,16 @@ object DeepWoodsBoard extends Board {
 
     val inner = $(Oldroot, Deepden, Shadowvale, Elderglen)
 
+    // the priority numbers printed on the clearings, and the clearing tiles' building slots around the tile's centre (measured on the
+    // board drawn settled, each tile on the clearing of its number; a ruin tile's ruin takes the first)
+    val number : Map[Clearing, Int] = Map(Thicket -> 1, Bramble -> 2, Fernbank -> 3, Mossgrove -> 4, Pinecrest -> 5, Briarfold -> 6,
+        Hazeldell -> 7, Wildmere -> 8, Oldroot -> 9, Deepden -> 10, Shadowvale -> 11, Elderglen -> 12)
+
+    def tileSlots(t : Int) : $[(Int, Int)] = number.find(_._2 == t)./ { case (c, _) =>
+        val (x, y) = center(c)
+        gates(c)./ { case (gx, gy) => (gx - x, gy - y) }
+    }.|($)
+
     object DeepWoodsBlackwood extends NamedForest("Blackwood")
     object DeepWoodsSloe extends NamedForest("Sloe")
     object DeepWoodsMistletoe extends NamedForest("Mistletoe")
@@ -1464,6 +1474,10 @@ object WastelandsBoard extends Board {
 
     val inner = $(Cistern, Gatehouse, Granary)
 
+    // the barren trails (pale, with bones on them): paths for adjacency, but moving along one with the water rules on
+    // (WastelandsWater) costs a warrior from the clearing moved from, an undamaged item or a Water (S.2.2)
+    val barren = $((Ashpit, Tollpost), (Driftcamp, Gatehouse), (Driftcamp, Junkshop), (Granary, Farmstead), (Granary, Ferrytown), (Ferrytown, Dugout))
+
     object WastelandsSagebrush extends NamedForest("Sagebrush")
     object WastelandsThistle extends NamedForest("Thistle")
     object WastelandsTumbleweed extends NamedForest("Tumbleweed")
@@ -1507,12 +1521,13 @@ object WastelandsBoard extends Board {
         case WastelandsDustwood => $(Driftcamp, Gatehouse, Junkshop)
     }
 
-    // two rivers come in by Driftcamp and Tollpost and meet at the Cistern; the drain, from under the city's south wall, passes
-    // only Ferrytown, so it links no clearings
+    // two rivers come in by Driftcamp and Tollpost and meet at the Cistern; the river runs on through the city wall and out of its
+    // drain to Ferrytown (S.2.8, City Drains), so Gatehouse and Granary aren't by it
     def byRiver(c : Clearing) = c @@ {
         case Driftcamp => $(Cistern)
         case Tollpost => $(Cistern)
-        case Cistern => $(Driftcamp, Tollpost)
+        case Cistern => $(Driftcamp, Tollpost, Ferrytown)
+        case Ferrytown => $(Cistern)
         case _ => $()
     }
 

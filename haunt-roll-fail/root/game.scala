@@ -52,6 +52,7 @@ sealed trait SuitCost extends AbstractSuit {
 sealed trait SuitAsset extends AbstractSuit {
     def matches(target : SuitCost) : Boolean = this @@ {
         case _ if target == NoSuit => false
+        case Unusable => false
         // the Dark Deck's Cursed card can't be spent for anything
         case Cursed => false
         case _ if target == AnySuit => true
@@ -96,6 +97,11 @@ object AnyOf {
 
 case class OneOf(suits : $[BaseSuit]) extends SuitAsset {
     def elem = suits./(_.elem).spaceCommaOr
+}
+
+// A crafting piece that pays for nothing: one in an unsettled Deep Woods clearing (root/outsiders-maps.scala)
+case object Unusable extends SuitAsset {
+    def elem = "None".hl
 }
 
 // A crafting piece that pays only for wild (Any suit) costs: Lizard Cult gardens not of the Outcast suit (house rule).
@@ -952,7 +958,9 @@ trait GameImplicits {
             case List(s) => s
             case l => AnyOf(l)
         }
-        def asset : SuitAsset = suits @@ {
+        // an unsettled Deep Woods clearing is wild, but its crafting pieces can't be used (S.1.3)
+        def asset : SuitAsset = OutsidersMaps.unsettled(c).?[SuitAsset](Unusable).|(asset0)
+        def asset0 : SuitAsset = suits @@ {
             case List(s) => s
             case l => OneOf(l)
         }
@@ -981,7 +989,7 @@ trait GameImplicits {
 
             from./~{ o =>
                 val tt = ttt.%(_.forall(_.allows(f, o)))
-                val l = dest.but(o).%(d => tt.exists(_.forall(_.allows(f, o, d))))
+                val l = dest.but(o).%(d => tt.exists(_.forall(_.allows(f, o, d)))).%(d => OutsidersMaps.mayEnter(f, d, f.at(o).of[Movable].take(1)))
                 val t = tt.%(t => l.exists(d => t.forall(_.allows(f, o, d))))
                 (t.any && l.any).?(o -> (t, l))
             }.toMap
@@ -1655,6 +1663,9 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             // first, to see what each action did for the Whisperers Guild's Insight
             WhisperersExpansion,
 
+            // the Outsiders maps' rules: before the moves, removals and setup steps it adds to
+            OutsidersMaps,
+
             DominanceExpansion,
 
             LegendsExpansion,
@@ -1792,6 +1803,19 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     // Marsh with 5+ players: clearings without a suit marker
     var unsuited : $[Clearing] = $
 
+    // the Outsiders maps' own rules (root/outsiders-maps.scala): the Deep Woods' settled clearings (the tile on each), the face-down
+    // clearing tiles left (top first), the settlers taken of each suit; the Wastelands' Water of each player, in the supply (-1 before
+    // it is filled), the turn the last Water was taken at, and the enemy pieces the current player removed this turn
+    var settled : Map[Clearing, Int] = Map()
+    var settleTiles : $[Int] = $
+    var settleRuinTiles : $[Int] = $
+    var settlers : Map[BaseSuit, Int] = Map()
+    var settlingSetupDone = false
+    var water : Map[Faction, Int] = Map()
+    var waterSupply : Int = -1
+    var waterTurn : Int = -1
+    var seized : Map[Faction, Int] = Map()
+
     // the Legends Scenarios (root/legends.scala): the forest the scenario space is in, the players that had warriors or pawns
     // there after the last scenario battle, and the Ring
     var legendForest : |[Forest] = None
@@ -1912,9 +1936,9 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     var corners : $[Clearing] = $
     var homelands : $[Clearing] = $
 
-    val transports = $[Transport](Roads, Riverboat, Ferry, Swimmers, BurrowRoads, TunnelRoads, OffTrail, FoxburrowRoads, ForestShortcut)
+    val transports = $[Transport](Roads, Riverboat, Ferry, Swimmers, BurrowRoads, TunnelRoads, OffTrail, FoxburrowRoads, ForestShortcut, BarrenTrail)
 
-    def slots(c : Clearing) = c.capacity + options.has(KeepExtraBuildingSlot).??(factions.of[Feline].%(game.states.contains).%(_.at(c).has(Keep)).num)
+    def slots(c : Clearing) = OutsidersMaps.slots(c)(this).|(c.capacity) + options.has(KeepExtraBuildingSlot).??(factions.of[Feline].%(game.states.contains).%(_.at(c).has(Keep)).num)
 
     def freeSlots(c : Clearing) = WarriorsWake.shadowed(c)(this).?(0).|(freeSlots0(c))
 

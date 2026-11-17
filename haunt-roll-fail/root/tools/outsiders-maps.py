@@ -9,7 +9,8 @@
 # each clearing, a dot at each forest's centre; the centres are the same as in maps.scala), the water mask (a quarter of the size,
 # red on the rivers, found by their colour near a line traced by hand) and the clearing names, drawn like the Urban map's.
 # The Deep Woods board is drawn settled, each clearing tile on the clearing of its number (the Law of Slug's way to play it without
-# settling, S.1.7). Its building slots (`gates` in maps.scala) are the tiles' white squares, printed by this script.
+# settling, S.1.7), and with the Settling rules each clearing is drawn over with its printed circle (unsettled-<number>) or the
+# tile drawn for it (tile-<number>), 352 pixels across around the clearing's centre. Its building slots (`gates` in maps.scala) are the tiles' white squares, printed by this script.
 import sys, os, shutil
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
@@ -79,8 +80,20 @@ def settle(art):
             m = Image.new("L", tile.size, 0)
             ImageDraw.Draw(m).ellipse((0, 0, 2 * CIRCLE_R - 1, 2 * CIRCLE_R - 1), fill = 255)
             x, y, k = by[n]
+
+            # for the Settling rules (DeepWoodsSettling): the clearing as printed, drawn while it is unsettled, and the tile alone
+            raw = art.crop((x - CIRCLE_R - 4, y - CIRCLE_R - 4, x + CIRCLE_R + 4, y + CIRCLE_R + 4)).convert("RGBA")
+            rm = Image.new("L", raw.size, 0)
+            ImageDraw.Draw(rm).ellipse((0, 0, raw.size[0] - 1, raw.size[1] - 1), fill = 255)
+            raw.putalpha(rm)
+            raw.save(f"{out}/deep-woods/unsettled-{n}.webp", quality = 88)
+
             art.paste(tile, (x - CIRCLE_R, y - CIRCLE_R), m)
             ImageDraw.Draw(art).ellipse((x - CIRCLE_R, y - CIRCLE_R, x + CIRCLE_R, y + CIRCLE_R), outline = (238, 232, 208), width = 4)
+
+            t = art.crop((x - CIRCLE_R - 4, y - CIRCLE_R - 4, x + CIRCLE_R + 4, y + CIRCLE_R + 4)).convert("RGBA")
+            t.putalpha(rm)
+            t.save(f"{out}/deep-woods/tile-{n}.webp", quality = 88)
 
             # the building slots: the white squares
             sub = a[cy - TILE_R:cy + TILE_R, cx - TILE_R:cx + TILE_R]

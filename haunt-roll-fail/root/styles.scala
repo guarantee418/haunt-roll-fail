@@ -46,6 +46,8 @@ package object elem {
             case OneOf(List(s)) => Image("craft-suit-" + s, styles.dt.token, s.toString)
             case OneOf(l) => $[BaseSuit](Fox, Rabbit, Mouse, Frog).%(l.has) @@ { l => Image("craft-suit-" + l.mkString("-"), styles.dt.token, l.mkString("-")) }
             case WildOnly(s) => Image("craft-suit-" + s, styles.dt.token, s.toString + " (any suit costs only)")
+            // an unsettled Deep Woods clearing's crafting piece, which pays for nothing
+            case Unusable => Image("card-empty", styles.dt.token, "unsettled, pays for nothing")
         }
 
         val VP = Span("VP", xstyles.smaller75, styles.vp)
