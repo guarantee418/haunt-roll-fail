@@ -1537,7 +1537,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         tile match {
             case Some(tile) => Div(Div(tile) ~ info(xstyles.tileButton)./(i => Div(i)).|(Empty), ZBasic.tile)
-            case None => Div(elem ~ info()./(" " ~ _).|(Empty) ~ note, ZBasic.choice)
+            case None => Div(elem ~ info(xstyles.infoButton)./(" " ~ _).|(Empty) ~ note, ZBasic.choice)
         }
     }
 
