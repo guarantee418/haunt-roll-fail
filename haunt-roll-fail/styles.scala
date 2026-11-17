@@ -148,6 +148,8 @@ object xstyles {
 
     // A faction in the faction picker's grid (MetaGame.factionTile)
     object tileButton extends CustomStyle(padding.left("1.2ex"), padding.right("1.2ex"), padding.top("0.2ex"), padding.bottom("0.2ex"), display("inline-block"), margin.top("0.4ex"))
+    // The info button of a faction in the picker's rows (Root's ?)
+    object infoButton extends CustomStyle(padding.left("0.8ex"), padding.right("0.8ex"), margin.left("0.4ex"))
     object factionTile extends CustomStyle(width("11ex"), min.height("13ex"), flex.direction("column"), margin("0.6ex"), text.align("center"))
 
     object horbreak extends CustomStyle(width("100%"))

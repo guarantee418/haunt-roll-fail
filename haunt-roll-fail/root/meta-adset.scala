@@ -22,6 +22,8 @@ import helper.&
 case class IncludeFaction(faction : Faction) extends GameOption with ToggleOption {
     val group = "Available Factions"
     val valueOn = faction.elem
+    // the fan, playtest and mirror factions' ? (who made it, what it does)
+    override val explain = FanInfo.about(faction)
 }
 
 object MetaAdset extends MetaGame {
