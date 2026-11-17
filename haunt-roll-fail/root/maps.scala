@@ -1058,8 +1058,8 @@ object GorgeBoard extends Board {
 
 // The Doomed Expansion's Urban Legends maps (slugfacekillah; root/tools/urban-legends-art.py), boards of the usual size
 // with no rules of their own in Law of Doom. They print no clearing or forest names, so these are made up from the art.
-// Two building slots on each print an "R" (the ruins) and four a number from 0 to 3, like the Marsh's numbered ruin slots:
-// with nothing flooded here, the ruins go in the R slots and the 0 and 1 slots (the first slot listed in `gates`).
+// Three building slots print an "R" (the ruins) and four a number from 0 to 3, like the Marsh's numbered ruin slots:
+// with nothing flooded here, the ruins go in the R slots and the 0 slot (the first slot listed in `gates`).
 object UrbanBoard extends Board {
     val id = "urban"
     val name = "Urban"
@@ -1069,7 +1069,7 @@ object UrbanBoard extends Board {
     object Guildhall extends Clearing(1)
     object Belfry extends Clearing(2)
     object Tannery extends Clearing(3)
-    object Bazaar extends Clearing(2)
+    object Bazaar extends Clearing(3)
     object Barracks extends Clearing(2)
     object Wharf extends Clearing(3)
     object Abbey extends Clearing(1)
@@ -1079,8 +1079,8 @@ object UrbanBoard extends Board {
 
     val clearings = $(Tollgate, Mill, Guildhall, Belfry, Tannery, Bazaar, Barracks, Wharf, Abbey, Sluice, Plaza, Arcade)
 
-    // the R slots (Tannery, Barracks), then 0 (Wharf) and 1 (Mill)
-    val ruins = $(Tannery, Barracks, Wharf, Mill)
+    // the R slots (Tannery, Barracks, Bazaar), then 0 (Wharf)
+    val ruins = $(Tannery, Barracks, Bazaar, Wharf)
 
     val diagonals = $((Tollgate, Arcade), (Belfry, Sluice))
 
@@ -1177,7 +1177,7 @@ object UrbanBoard extends Board {
         case Guildhall => $((1511, 429))
         case Belfry => $((2033, 507), (2183, 462))
         case Tannery => $((783, 868), (891, 780), (933, 925))
-        case Bazaar => $((1609, 900), (1479, 963))
+        case Bazaar => $((1622, 1040), (1609, 900), (1479, 963))
         case Barracks => $((401, 1247), (278, 1190))
         case Wharf => $((1209, 1473), (1159, 1294), (1051, 1387))
         case Abbey => $((2136, 1225))

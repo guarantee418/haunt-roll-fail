@@ -665,8 +665,8 @@ file covers the build, server and deploy. No session can ssh to the server
   The Urban Legends maps (the Drive's "And what is THIS" folder; Gman, 2026-11-17) are two more Map choices, "Urban (fan-made)" and
   "Legends (fan-made)" (`UrbanMap`, `LegendsMap`; `UrbanBoard` and `LegendsBoard` in `root/maps.scala`, images in `urban/` and `legends-map/`,
   as `legends/` holds the Legends Scenarios art), also drawn by "Random" (not "Random Official"). The boards print no names, so the clearing
-  and forest names are made up (Lumberyard, not Sawmill, as region ids must not clash with piece names); Urban's ruins are its R slots and
-  the 0 and 1 slots, Legends' its four keeps, and a Legends Scenario's space is always in Legends' stone circle (`Board.scenarioForest`).
+  and forest names are made up (Lumberyard, not Sawmill, as region ids must not clash with piece names); Urban's ruins are its three R slots and
+  the 0 slot, Legends' its four keeps, and a Legends Scenario's space is always in Legends' stone circle (`Board.scenarioForest`).
   The regions, water masks and names are made by `root/tools/urban-legends-art.py`. `ReplayCheck <games> urban` or `legendsmap` plays them.
 - The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
   Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
