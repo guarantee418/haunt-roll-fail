@@ -53,6 +53,7 @@ object MetaMirror extends MetaGame {
     override def completeSaved(n : Int, l : $[F], options : $[O]) = Meta.completeSaved(n, l, options)
 
     override def groupInfo(o : O) = Meta.groupInfo(o)
+    override def optionShown(o : O, selected : $[O]) = Meta.optionShown(o, selected)
 
     // The random map is drawn here too, and options both mandatory and default are kept once
     override def startOptions(options : $[O]) : $[O] = Meta.startOptions(options)

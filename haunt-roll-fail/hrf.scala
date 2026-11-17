@@ -1542,8 +1542,31 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
     }
 
     // The picker's entries in their groups (Meta.factionGroup, FactionVariant.group): those without one first, as a group of
-    // entries is headed only where it starts
-    def grouped(l : $[(|[Elem], Elem => ZOption)]) : $[ZOption] = (l.filter(_._1.none) ++ l.filter(_._1.any)).map { case (g, z) => z(g.|("Play as".txt)) }
+    // entries is headed only where it starts. A group in Meta.foldedFactionGroups folds under its heading (Folds): folded, it is
+    // one line saying how many it holds; tapping the heading or that line opens it, and again (the heading) closes it
+    def grouped(l : $[(|[Elem], Elem => ZOption)], reask : () => Unit) : $[ZOption] = {
+        val ordered = l.filter(_._1.none) ++ l.filter(_._1.any)
+        def key(g : Elem) = "picker." + meta.name + "." + g.text
+        def foldable(g : |[Elem]) = g.exists(g => meta.foldedFactionGroups.has(g.text))
+        def toggle(g : Elem) = (_ : Any) => { Folds.toggle(key(g)) ; reask() }
+
+        ordered.zipWithIndex./~ { case ((g, z), i) =>
+            if (foldable(g)) {
+                val h = g.get
+                val open = Folds.isOpen(key(h))
+                val first = ordered.indexWhere(_._1 == g) == i
+                val heading = Folds.heading(h, open)
+                if (open)
+                    $(z(heading).copy(groupClick = toggle(h)))
+                else if (first)
+                    $(ZOption(heading, OnClick(Div(ordered.count(_._1 == g).hl ~ " " ~ h, ZBasic.choice)), toggle(h), groupClick = toggle(h)))
+                else
+                    $
+            }
+            else
+                $(z(g.|("Play as".txt)))
+        }
+    }
 
     def randomPick(label : Elem) : Elem = Div(label, meta.factions.exists(meta.factionTile(_).any).?(ZBasic.tile).|(ZBasic.choice))
 
@@ -1578,7 +1601,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     case _ =>
                         history.pushState(null, () => ask())
                         startSetup($(v.faction, solo), false, |("solo"), extra = v.options, picked = true, names = Map(v.faction -> v.name))
-                })))) ++
+                }))), () => ask()) ++
                 ZBasic(" ", "Cancel", () => {
                     history.popState()
                 }).?
@@ -1700,7 +1723,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                             pick(v.faction)
                             variants += v.faction -> v
                             askAdd()
-                    })))) ++
+                    }))), () => askAdd()) ++
                     ZBasic(" ", "Cancel", () => {
                         // metaMenu()
                         history.popState()
@@ -1871,9 +1894,35 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 {
                 val shown = meta.optionsFor(seating.num, seating).diff(meta.hiddenOptions).intersect(pages(page)).%(meta.optionShown(_, options.actual))
                 val empty = shown./~(_.fold).distinct.%(s => foldOpen(s).not && shown.exists(o => o.fold.has(s) && options.selected.has(o)).not)
-                shown.%(o => o.fold.forall(foldOpen) || options.selected.has(o) || o.fold.exists(s => empty.has(s) && shown.find(_.fold.has(s)).has(o)))./({ o =>
+                // A folder (BaseOption.folder) is one heading over several sections; folded, it shows only a line of what is picked in it
+                def folderKey(d : String) = "folder." + d
+                def folderOpen(d : String) = Folds.isOpen(folderKey(d))
+                def toggleFolder(d : String) = (_ : Any) => { Folds.toggle(folderKey(d)) ; setupQuestions(page) }
+                // a section's heading, smaller inside a folder, so the folder's heading stands over it
+                def heading(o : meta.O) = o.folder.any.?(o.group).|(o.group.styled(xstyles.larger125))
+                // a folded section with nothing picked: "None", or what is picked in a later section that shares its choice (OneOfGroup.oneOf),
+                // as the Map with a pick from the Fan Maps under it
+                def noneOf(o : meta.O) : Elem = o match {
+                    case g : OneOfGroup => shown.drop(shown.indexOf(o) + 1).%(options.selected.has).%{ case q : OneOfGroup => q.oneOf == g.oneOf ; case _ => false }.headOption./(q => q.valueOn ~ " (" ~ q.group ~ ")").|("None".txt)
+                    case _ => "None".txt
+                }
+                val entries : $[Either[ZOption, meta.O]] = shown./~{ o =>
+                  o.folder.%(d => shown.find(_.folder.has(d)).has(o))./{ d =>
+                    val open = folderOpen(d)
+                    val picked = shown.%(_.folder.has(d)).%(options.selected.has)
+                    Left(ZOption(Folds.heading(d.txt.styled(xstyles.larger125), open), open.?(Empty).|(OnClick(Div(picked./(_.valueOn).reduceOption((a, b) => a ~ " · " ~ b).|("None".txt), ZBasic.choice ++ $(xstyles.optionE)))),
+                        toggleFolder(d), clear = false, groupClick = toggleFolder(d))) : Either[ZOption, meta.O]
+                  }.$ ++
+                  o.folder.forall(folderOpen).$(Right(o) : Either[ZOption, meta.O])
+                }
+                entries.%{
+                    case Left(_) => true
+                    case Right(o) => o.fold.forall(foldOpen) || options.selected.has(o) || o.fold.exists(s => empty.has(s) && shown.find(_.fold.has(s)).has(o))
+                }./({
+                  case Left(z) => z
+                  case Right(o) =>
                   if (o.fold.exists(empty.has))
-                    ZOption(Folds.heading(o.group.styled(xstyles.larger125), false), Div("None".txt, ZBasic.info ++ $(xstyles.optionE)), _ => {},
+                    ZOption(Folds.heading(heading(o), false), Div(noneOf(o), ZBasic.info ++ $(xstyles.optionE)), _ => {},
                         groupClick = o.fold./(s => (_ : Any) => { Folds.toggle(s) ; setupQuestions(page) }).orNull)
                   else {
                     val state = options.selected.has(o)
@@ -1881,7 +1930,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     val active = enabled
                     // A section with groupInfo has a ? on its heading; tapping the ? shows it instead of folding or unfolding the section
                     val groupInfo = meta.groupInfo(o)
-                    val title = o.group.styled(xstyles.larger125) ~ groupInfo.any.?(" ".txt ~ Parameter("group-info", OnClick(Image("question-mark")(xstyles.explain))))
+                    val title = heading(o) ~ groupInfo.any.?(" ".txt ~ Parameter("group-info", OnClick(Image("question-mark")(xstyles.explain))))
                     ZOption(o.fold./(s => Folds.heading(title, foldOpen(s))).|(groupInfo.any.?(OnClick(title)).|(title)),
                         OnClick(Div(state.?(o.decorate(o.valueOn).styled(xstyles.bold)).|(o.decorate(o.valueOff))
                         ~ (o.explain.any).?(Parameter(o, OnClick(Image("question-mark")(xstyles.explain)))), (active || state).?(ZBasic.choice).|(ZBasic.info) ++ state.$(xstyles.optionOn) ++ $(xstyles.optionE))), {

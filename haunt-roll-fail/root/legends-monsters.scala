@@ -138,8 +138,9 @@ case object HuntTheLegend extends LegendsScenario {
 }
 
 // the monster Dark Rituals starts with
-trait MonsterChoice extends GameOption with ToggleOption with OneOfGroup with FoldedOption {
-    val group = "Legendary Monster".hh ~ " (fan-made)"
+trait MonsterChoice extends GameOption with ToggleOption with OneOfGroup {
+    val group = "Legendary Monster".hh
+    override def folder = Meta.scenarios
     def monster : LegendMonster
     val valueOn = monster.title.hh
     override def required(all : $[BaseOption]) = $($(DarkRituals))

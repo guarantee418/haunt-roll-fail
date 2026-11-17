@@ -143,6 +143,8 @@ trait BaseOption extends Record {
 
     // The foldable section it belongs to (hrf.ui.Folds): folded, the section shows only what is picked
     def fold : |[String] = None
+    // The folder it belongs to on the setup screen: one heading over several sections (each may fold too), folded until opened
+    def folder : |[String] = None
 
     def required(all : $[BaseOption]) : $[$[BaseOption]] = $($())
     def blocked(all : $[BaseOption]) : $[$[BaseOption]] = $()
@@ -154,7 +156,10 @@ trait BaseOption extends Record {
 }
 
 trait OneOfGroup { self : BaseOption =>
-    override def forcedOff(all : $[BaseOption]) = all.of[OneOfGroup].but(this).%(_.group == this.group)
+    // the options only one of which can be picked: those of its group, unless a section of its own shares another's choice
+    // (Root's Fan Maps pick the Map)
+    def oneOf : Any = group
+    override def forcedOff(all : $[BaseOption]) = all.of[OneOfGroup].but(this).%(_.oneOf == this.oneOf)
 }
 
 trait ToggleOption { self : BaseOption =>
@@ -173,13 +178,13 @@ object BaseOption {
             val x = r
             f = x.any
             r = r.diff(x) ++ x./~{
-                case o : OneOfGroup => l.diff(x).collect { case q : OneOfGroup if q.group == o.group => q }.lastOption
+                case o : OneOfGroup => l.diff(x).collect { case q : OneOfGroup if q.oneOf == o.oneOf => q }.lastOption
                 case _ => None
             }
         }
 
         r = r./~{
-            case o : OneOfGroup => r.collect { case q : OneOfGroup if q.group == o.group => q }.lastOption.%(_ == o)
+            case o : OneOfGroup => r.collect { case q : OneOfGroup if q.oneOf == o.oneOf => q }.lastOption.%(_ == o)
             case o => Some(o)
         }
 
