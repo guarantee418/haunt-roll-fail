@@ -2570,7 +2570,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     0.until(Council.maxAssemblies)./(i => (i < placed).?(Image("empty-token" + (i % 2 == 1).??("-card"), styles.token)).|(Image(f.style + "-assembly", styles.token))).merge) ~ Break ~
                 f.all(GoverningAssembly)./(_ => Image(f.style + "-convened", styles.token)).merge ~ f.all(ClosedAssembly)./(_ => Image(f.style + "-assembly", styles.token)).merge ~ Break ~ Gap ~
                 Hint("Loyalists\n" + f.loyalists.$.num + " of " + Council.maxLoyalists,
-                    (Image(f.style + "-bat", styles.wr) *** f.loyalists.$.num) ~ (Image(f.style + "-bat-empty", styles.wr) *** (Council.maxLoyalists - f.loyalists.$.num))) ~ Break ~
+                    (Image(f.style + "-bat", styles.wr, styles.hanging) *** f.loyalists.$.num) ~ (Image(f.style + "-bat-empty", styles.wr, styles.hanging) *** (Council.maxLoyalists - f.loyalists.$.num))) ~ Break ~
                 f.revealed./(d => dt.CardSuitInfo(d.suit).pointer.onClick.param(d)).merge ~
                 Div(Hint("Bats\n" + f.all(f.warrior).num + " on the map\n" + f.pooled(f.warrior) + " available",
                 &((Image(f.style + "-bat-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-bat", styles.wr) *** (f.all(f.warrior).num % 5))) ~

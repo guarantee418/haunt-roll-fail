@@ -32,7 +32,17 @@ case class UnknownOption(o : String) extends GameOption {
 }
 
 trait MapOption extends GameOption with OneOfGroup with ImportantOption with FoldedOption {
-    val group = "Map"
+    val group : Elem = "Map"
+    // the Fan Maps section picks the Map too
+    override def oneOf : Any = "Map"
+}
+
+// Fan content gets sections of its own, after the official ones, each folded like the rest (Gman, 2026-11-17): Fan Maps, Fan Decks,
+// the Fan Hirelings folder, the Scenarios folder and, in the faction picker and Advanced Setup's pool, Fan Factions. A new fan map or
+// deck extends FanMap or FanDeck; a new fan hireling option or scenario option sets its folder (Meta.fanHirelings, Meta.scenarios).
+// Display only: the options and what games record are unchanged
+trait FanMap extends MapOption {
+    override val group : Elem = "Fan Maps"
 }
 
 case object AutumnMap extends MapOption {
@@ -110,8 +120,8 @@ case object MarshMap extends MapOption {
 }
 
 // The Doomed Expansion's Urban Legends maps (fan-made, UrbanBoard and LegendsBoard in root/maps.scala)
-case object UrbanMap extends MapOption {
-    val valueOn = "Urban (fan-made)".styled(Fox)
+case object UrbanMap extends FanMap {
+    val valueOn = "Urban".styled(Fox)
     override val explain = $(
         "Urban: Districts & Denizens".hh ~ ", a city map from slugfacekillah's " ~ "Doomed Expansion".hl ~ ".",
         "The city blocks between the roads are the forests.",
@@ -119,8 +129,8 @@ case object UrbanMap extends MapOption {
     )
 }
 
-case object LegendsMap extends MapOption {
-    val valueOn = "Legends (fan-made)".styled(styles.forest)
+case object LegendsMap extends FanMap {
+    val valueOn = "Legends".styled(styles.forest)
     override val explain = $(
         "Legends".hh ~ ", a forest map with a castle in each corner, from slugfacekillah's " ~ "Doomed Expansion".hl ~ ".",
         "The ruins are in the four castles.",
@@ -188,7 +198,13 @@ case object ThreeFourFiveClearings extends ClearingsOption {
 
 
 trait DeckOption extends GameOption with OneOfGroup with ImportantOption with FoldedOption {
-    val group = "Deck"
+    val group : Elem = "Deck"
+    // the Fan Decks section picks the Deck too
+    override def oneOf : Any = "Deck"
+}
+
+trait FanDeck extends DeckOption {
+    override val group : Elem = "Fan Decks"
 }
 
 case object StandardDeck extends DeckOption {
@@ -233,8 +249,8 @@ case object SquiresDeck extends DeckOption {
     )
 }
 
-case object FrankenDeck extends DeckOption {
-    val valueOn = "Frankendeck".hh ~ " (fan-made)"
+case object FrankenDeck extends FanDeck {
+    val valueOn = "Frankendeck".hh
     override val explain = $(
         "A deck builder from " ~ Link("https://boardgamegeek.com/boardgameexpansion/482234/the-doomed-expansion-fan-expansion-for-root", "The Doomed Expansion", $(xstyles.link)) ~ ", fan-made by " ~ "slugfacekillah".hl ~ " with " ~ "Endgamer1331".hl ~ ".",
         "A core of " ~ "30".hh ~ " cards in its own art: the " ~ "20".hh ~ " items, " ~ "5".hh ~ " ambushes, " ~ "4".hh ~ " dominances and a " ~ "Sabotage!".hh ~ " card.",
@@ -246,8 +262,8 @@ case object FrankenDeck extends DeckOption {
     )
 }
 
-case object DarkDeck extends DeckOption {
-    val valueOn = "Dark Deck".hh ~ " (fan-made)"
+case object DarkDeck extends FanDeck {
+    val valueOn = "Dark Deck".hh
     override val explain = $(
         "A 66 card deck from " ~ Link("https://boardgamegeek.com/boardgameexpansion/482234/the-doomed-expansion-fan-expansion-for-root", "The Doomed Expansion", $(xstyles.link)) ~ ", fan-made by " ~ "slugfacekillah".hl ~ ".",
         "Its six " ~ "Abomination".styled(Abomination) ~ " cards count as fox, rabbit or mouse, but not bird.",
@@ -259,8 +275,8 @@ case object DarkDeck extends DeckOption {
 }
 
 case object ActionBooster extends GameOption with ToggleOption with FoldedOption {
-    val group = "Deck"
-    val valueOn = "Action! Deck Booster".hh ~ " (fan-made)"
+    val group = "Fan Decks"
+    val valueOn = "Action! Deck Booster".hh
     override val explain = $(
         "Ten more cards for big games from " ~ Link("https://boardgamegeek.com/boardgameexpansion/482234/the-doomed-expansion-fan-expansion-for-root", "The Doomed Expansion", $(xstyles.link)) ~ ", fan-made by " ~ "slugfacekillah".hl ~ ".",
         "One booster is shuffled into the deck for each player above " ~ "5".hh ~ " (two at most), or one with " ~ "5".hh ~ " players.",
@@ -1413,7 +1429,8 @@ case object FactionHirelingClash extends HirelingsClashOption {
 // The Doomed Expansion's Turnlings (fan-made by slugfacekillah; Law of Doom D8; `root/turnlings.scala`): taking a hireling
 // marker, the player turns the hireling over to another player, who rolls for its control
 case object TurnOverHirelings extends GameOption with ToggleOption with FoldedOption {
-    val group = "Turnlings".hh ~ " (fan-made)"
+    val group = "Turnlings".hh
+    override def folder = Meta.fanHirelings
     val valueOn = "Turn Over Hirelings".hh
     override def required(all : $[BaseOption]) = $($(TwoDemotedOneNormalHirelings), $(OneDemotedTwoNormalHirelings), $(ThreeNormalHirelings), $(ThreeDemotedHirelings), $(ThreeRandomHirelings), $(SelectedHirelings))
     override val explain = $(
@@ -1424,7 +1441,8 @@ case object TurnOverHirelings extends GameOption with ToggleOption with FoldedOp
 }
 
 case class IncludeHireling(hireling : Hireling) extends GameOption with ToggleOption with FoldedOption {
-    val group = hireling.demoted.?("Demoted".hh).|("Staunch".styled(styles.hit)) ~ hireling.is[Turnling].?(" Turnlings (fan-made)").|(" Hirelings")
+    val group = hireling.demoted.?("Demoted".hh).|("Staunch".styled(styles.hit)) ~ hireling.is[Turnling].?(" Turnlings").|(" Hirelings")
+    override def folder = hireling.is[Turnling].??(Meta.fanHirelings)
     val valueOn = hireling.name.styled(hireling)
     override def required(all : $[BaseOption]) =
         if (hireling.demoted)
@@ -1697,7 +1715,14 @@ object Meta extends MetaGame {
     // The playtest Lilypad Diaspora versions and the Tidepool Diaspora, no longer offered (Gman, 2026-11-17), still read so older games load
     val retiredFactions = $[Faction](LDvD, LDvC, LDvB, TD)
 
-    override def factionGroup(f : F) : |[Elem] = homeland.has(f).?("Homeland".txt) || clones.has(f).?("Mirror Factions".txt) || fun.has(f).?("Fun Factions".txt)
+    override def factionGroup(f : F) : |[Elem] = homeland.has(f).?("Homeland".txt) || clones.has(f).?("Mirror Factions".txt) || fun.has(f).?("Fan Factions".txt)
+
+    // the picker's Fan Factions fold, like the setup's fan sections
+    override def foldedFactionGroups : $[String] = $("Fan Factions")
+
+    // the setup's folders of fan content (BaseOption.folder)
+    val fanHirelings = |("Fan Hirelings")
+    val scenarios = |("Scenarios")
 
     val minPlayers = 2
 
@@ -1717,7 +1742,7 @@ object Meta extends MetaGame {
         $(SetupTypeCorners, SetupTypeHomelands) ++
         (n > 2).?(TotalWarDominance) ++
         $,
-        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, UrbanMap, LegendsMap, RandomMap, RandomOfficialMap) ++
+        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap, UrbanMap, LegendsMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         legendsOptions ++
@@ -1781,7 +1806,7 @@ object Meta extends MetaGame {
 
     override def optionsFor(n : Int, l : $[F]) =
         hiddenOptions ++
-        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, UrbanMap, LegendsMap, RandomMap, RandomOfficialMap) ++
+        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap, UrbanMap, LegendsMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck, DarkDeck) ++
@@ -1900,6 +1925,12 @@ object Meta extends MetaGame {
             "Nothing else changes.",
         ),
     )
+
+    // In the Scenarios folder, a scenario's own choices (the Ring's rules, the capture rule, the starting monster) show only once it is picked
+    override def optionShown(o : O, selected : $[O]) : Boolean = o match {
+        case _ : RingRule | _ : CaptureRule | _ : MonsterChoice => o.required(options).exists(_.forall(r => selected.exists(_ == r)))
+        case _ => true
+    }
 
     override def groupInfo(o : O) = o.group.text match {
         case "Hits and Ambushes – Offline Players" => $(

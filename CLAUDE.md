@@ -687,6 +687,14 @@ file covers the build, server and deploy. No session can ssh to the server
   each (`FanInfo.about` in `root/fan-info.scala`). The faction picker shows it as a "?" button beside the name (`Meta.factionInfo`,
   `xstyles.infoButton` in `pickElem`), and Advanced Setup's "Available Factions" toggles as the setup's usual ? (`IncludeFaction.explain`).
   Official factions have none. Display only.
+- Root's fan content is grouped apart from the official (Gman, 2026-11-17): the faction picker's "Fan Factions" (once "Fun Factions",
+  `factionGroup`) starts folded to one line ("18 Fan Factions") and opens on a tap (`Meta.foldedFactionGroups`, `grouped` in `hrf.scala`,
+  remembered as `picker.<meta>.<group>`); the setup has "Fan Maps" and "Fan Decks" sections (`FanMap`, `FanDeck` in `root/meta.scala`:
+  the same single choice as Map and Deck, through `OneOfGroup.oneOf`, so a folded Map shows "Urban (Fan Maps)"), Adset's "Available Fan
+  Factions", and two folders (`BaseOption.folder`, a heading that folds several sections, `folder.<name>`): "Fan Hirelings" (the
+  Turnlings) and "Scenarios" (the Legends Scenarios; Ring Rule, Capture Rule and the monster only once their scenario is picked,
+  `Meta.optionShown`). A new fan map or deck extends `FanMap` or `FanDeck`, a fan faction goes in `Meta.fun`, a scenario sets
+  `folder = Meta.scenarios`. Display only, as options are saved by name.
 - The playtest Lilypad Diaspora versions (`LDvB`, `LDvC`, `LDvD`) and the Tidepool Diaspora (`TD`) are no longer offered (Gman,
   2026-11-17): they are `Meta.retiredFactions`, out of `Meta.factions`, but still parsed (`parseFaction`) and their `IncludeFaction`
   options kept (older Adset games list them), so older games load.
@@ -1072,6 +1080,8 @@ file covers the build, server and deploy. No session can ssh to the server
   screen the map is now capped at the height the window had before (`mapMaxHeight`, remembered per screen width as
   `root.windowed-height.<width>`, else 90% of the screen; `FullDimPane`'s `maxHeight` in `panes-again.scala`), so the
   side panes keep their width and the action pane takes the extra height. Other games don't pass `maxHeight`.
+- The Twilight Council's Loyalists on its player panel are drawn head down, hanging like bats (`styles.hanging` in
+  `root/styles.scala`; MaKoBwoY, relayed by Gman on 2026-11-17). Display only.
 - Tapping a Root faction's status pane opens its overlay (`onFactionStatus` in
   `root/ui.scala`) with its faction board. The boards of the base and
   expansion factions (`boardImage`; `mc-board`,

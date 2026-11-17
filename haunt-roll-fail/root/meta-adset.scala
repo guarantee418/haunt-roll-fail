@@ -20,7 +20,9 @@ import helper.&
 
 
 case class IncludeFaction(faction : Faction) extends GameOption with ToggleOption {
-    val group = "Available Factions"
+    // the fan factions in a folded section of their own, like the picker's
+    val group = Meta.fun.has(faction).?("Available Fan Factions").|("Available Factions")
+    override def fold = Meta.fun.has(faction).?("root.Available Fan Factions")
     val valueOn = faction.elem
     // the fan, playtest and mirror factions' ? (who made it, what it does)
     override val explain = FanInfo.about(faction)
@@ -71,6 +73,7 @@ object MetaAdset extends MetaGame {
     override def completeSaved(n : Int, l : $[F], options : $[O]) = options.diff(Meta.retired).diff(RulesVersion.implied).diff($(AdSetBuffOff, SetupTypeCorners))
 
     override def groupInfo(o : O) = Meta.groupInfo(o)
+    override def optionShown(o : O, selected : $[O]) = Meta.optionShown(o, selected)
 
     override def optionPages(n : Int, l : $[F]) : $[$[GameOption]] = Meta.optionPages(n, realFactions) match {
         case first :: rest => (first ++ Meta.adsetOnly) +: rest

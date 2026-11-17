@@ -104,6 +104,8 @@ trait MetaBase {
     val factions : $[F]
 
     def factionGroup(f : F) : |[Elem] = None
+    // The picker's groups (by their text) that fold under their heading, folded until opened (Folds)
+    def foldedFactionGroups : $[String] = $
 
     val options : $[O]
     def optionsFor(n : Int, l : $[F]) : $[O] = options
