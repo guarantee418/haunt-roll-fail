@@ -672,6 +672,10 @@ file covers the build, server and deploy. No session can ssh to the server
   (`AdvancedSetup.doomed`; Gman, 2026-11-17). With one of them in the pool, the draw leaves out sets that hold factions that can't play
   together, or the Whisperers Guild under 5 seats or the Doomed Vagabond under 4 (`AdvancedSetup.clash`); pools without one draw as before.
   `ReplayCheck <games> doomed adset` plays Advanced Setup games, the seats drafting at random.
+- Every fan, playtest and mirror faction has a "?" (Gman, 2026-11-17): who made it, then what it does and how it plays, a line
+  each (`FanInfo.about` in `root/fan-info.scala`). The faction picker shows it as a "?" button beside the name (`Meta.factionInfo`,
+  `xstyles.infoButton` in `pickElem`), and Advanced Setup's "Available Factions" toggles as the setup's usual ? (`IncludeFaction.explain`).
+  Official factions have none. Display only.
 - The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
   Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
   box) and the Homeland errata, from a player's Google Drive (2026-10-10). The shared deck's back follows

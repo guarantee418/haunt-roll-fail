@@ -1992,6 +1992,9 @@ object Meta extends MetaGame {
     def factionElem(f : Faction) = f.elem
     override def factionNote(f : Faction) : Elem = f.note
 
+    // The picker's ? for the fan, playtest and mirror factions: who made it, what it does and how it plays (FanInfo)
+    override def factionInfo(f : Faction) = FanInfo.about(f).some./(l => ("?".txt, f.elem, l))
+
     override def glyph(g : G) : |[String] = g.current.but(Neutral)./(_.style + "-glyph")
     override def glyph(f : F) : |[String] = |(f.style + "-glyph")
     override def glyph(g : G, f : F) : |[String] = glyph(f).%!(_ => g.highlightFaction.has(f) && hrf.HRF.uptime() / 1000 % 2 == 1)
