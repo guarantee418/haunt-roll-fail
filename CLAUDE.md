@@ -962,7 +962,7 @@ file covers the build, server and deploy. No session can ssh to the server
   `AutoHitsAssignmentMode`, as Root's do.
 - Root's "Bluff Mode" (asked for by Gman on 2026-10-21): under Async in setup, `BluffMode` and `AutoAmbushSkippingMode`
   ("Auto Skip Ambushes", once "Auto Ambush Skipping", same saved name) are one choice (`OneOfGroup`), Bluff Mode the default
-  for new games and Adset; each has a "?" popup. Auto Skip skips an attacked player (and the attacker's counter-ambush, also
+  for new games and Adset until 2026-11-17 (now off by default, see below); each has a "?" popup. Auto Skip skips an attacked player (and the attacker's counter-ambush, also
   against Mice-in-a-Bush) holding no ambush they can play (`battle.scala`). Bluff Mode asks every time, and stops the
   "Ambush!: Auto Skip If None" setting and the "Auto Skip Ambush (If None)" switch (`ask` and `shadowCheck` in
   `root/ui.scala`, `switchesFor` hides it), which skipped at once and so showed who held none. Skips that reveal nothing
@@ -982,6 +982,9 @@ file covers the build, server and deploy. No session can ssh to the server
   "Assign Hits" and "Ambush!" fold into one "Hits and Ambushes when Online (Live Games)" section. `ReplayCheck <games> base offline`
   plays bot games with Bluff Mode off and the Field Hospitals plan; `preset` adds the hits preset, but bot games with the preset
   order (like `async`) run out of memory, as they did before the section.
+  Auto Assign Hits is on by default and Ambush Bluff Mode off (`defaultsFor`; Gman, 2026-11-17), also when a browser's saved setup
+  holds none of Auto Assign Hits, Live Game or the hits preset (`Meta.autoHitsOn`, in `completeSaved`): setups saved before the section
+  never held Auto Assign Hits, as it was then always on, so it showed off, and held Bluff Mode, then the default.
 - Root pass and play (asked for by the owner on 2026-10-17): in a local game with more than one human faction
   (`Callbacks.hotseat` in `hrf.scala`: a memory or localStorage journal), each time another human faction is asked
   the action pane shows "Pass to <faction>" and a "Show Hand and Choices" button instead of its hand and choices

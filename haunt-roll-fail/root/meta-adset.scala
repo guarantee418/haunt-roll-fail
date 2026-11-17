@@ -70,7 +70,7 @@ object MetaAdset extends MetaGame {
     // Advanced Setup always has its setup buffs and Homelands setup (Gman, 2026-10-31), so they aren't choices here
     override def mandatoryFor(n : Int, l : $[F]) = Meta.newGame ++ $(KnavesCaptainsInDraft, AdSetBuffOn, SetupTypeHomelands)
 
-    override def completeSaved(n : Int, l : $[F], options : $[O]) = options.diff(Meta.retired).diff(RulesVersion.implied).diff($(AdSetBuffOff, SetupTypeCorners))
+    override def completeSaved(n : Int, l : $[F], options : $[O]) = Meta.autoHitsOn(options.diff(Meta.retired).diff(RulesVersion.implied).diff($(AdSetBuffOff, SetupTypeCorners)))
 
     override def groupInfo(o : O) = Meta.groupInfo(o)
     override def optionShown(o : O, selected : $[O]) = Meta.optionShown(o, selected)
@@ -94,7 +94,6 @@ object MetaAdset extends MetaGame {
         CardDraftFive,
         InsurgentLockOn,
         AutoHitsAssignmentMode,
-        BluffMode,
         KnavesCaptainsInDraft,
         FolkHeroCharacter,
         RandomCharacter,
@@ -114,7 +113,7 @@ object MetaAdset extends MetaGame {
     override def presetsInfo(n : Int, l : $[F]) = $(
         $(
             "Puts every option back to what the site starts with:",
-            &("Random Official".hh ~ " map, ") ~ &("All Random".hh ~ " clearings, ") ~ &("Map Default".hh ~ " landmarks (on " ~ "Mountain".styled(Fox) ~ " a random suited one), ") ~ &("Squires and Disciples".hh ~ " deck, ") ~ &("Bluff Mode".hh ~ ", ") ~ &("no hirelings, ") ~ &("and every faction in the draft") ~ " " ~ &("but the " ~ "Vagabond".styled(VB) ~ " and the fan factions."),
+            &("Random Official".hh ~ " map, ") ~ &("All Random".hh ~ " clearings, ") ~ &("Map Default".hh ~ " landmarks (on " ~ "Mountain".styled(Fox) ~ " a random suited one), ") ~ &("Squires and Disciples".hh ~ " deck, ") ~ &("Auto Assign Hits".hh ~ " (no " ~ "Bluff Mode".hh ~ "), ") ~ &("no hirelings, ") ~ &("and every faction in the draft") ~ " " ~ &("but the " ~ "Vagabond".styled(VB) ~ " and the fan factions."),
         ),
         $(
             "The rules as Leder Games prints them:",

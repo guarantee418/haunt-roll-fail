@@ -1879,7 +1879,12 @@ object Meta extends MetaGame {
     // fixes were first gated (RulesVersion.expand, used by Game), so a new game records one option instead of each fix
     lazy val newGame : $[O] = $(RulesVersion.latest)
 
-    override def completeSaved(n : Int, l : $[F], options : $[O]) = options.diff(retired).diff(RulesVersion.implied)
+    override def completeSaved(n : Int, l : $[F], options : $[O]) = autoHitsOn(options.diff(retired).diff(RulesVersion.implied))
+
+    // Auto Assign Hits is on by default and Ambush Bluff Mode off (Gman, 2026-11-17): a setup a browser saved with none of Auto Assign
+    // Hits, Live Game or the hits preset (from before the Hits and Ambushes section, when Auto Assign Hits was always on and so never
+    // saved, and Bluff Mode was the default) starts with Auto Assign Hits on and Bluff Mode off
+    def autoHitsOn(options : $[O]) : $[O] = options.intersect($(AutoHitsAssignmentMode, LiveGameMode, OffTurnHitsPreset)).any.?(options).|(options.but(BluffMode) :+ AutoHitsAssignmentMode)
 
     // offered only in Advanced Setup (MetaAdset), listed here so every game reads them
     lazy val adsetOnly : $[O] = $(InsurgentLockOn, InsurgentLockOff)
@@ -1895,7 +1900,6 @@ object Meta extends MetaGame {
         AllRandomClearings,
         SquiresDeck,
         AutoHitsAssignmentMode,
-        BluffMode,
         FolkHeroCharacter,
         AdSetBuffOff,
         SetupTypeCorners,
@@ -1917,7 +1921,7 @@ object Meta extends MetaGame {
     override def presetsInfo(n : Int, l : $[F]) = $(
         $(
             "Puts every option back to what the site starts with:",
-            &("Random Official".hh ~ " map, ") ~ &("All Random".hh ~ " clearings, ") ~ &("Map Default".hh ~ " landmarks (on " ~ "Mountain".styled(Fox) ~ " a random suited one), ") ~ &("Squires and Disciples".hh ~ " deck, ") ~ &("Corners".hh ~ " setup, ") ~ &("Ambush Bluff Mode".hh ~ " and " ~ "Auto Assign Hits".hh ~ ", ") ~ &("no hirelings."),
+            &("Random Official".hh ~ " map, ") ~ &("All Random".hh ~ " clearings, ") ~ &("Map Default".hh ~ " landmarks (on " ~ "Mountain".styled(Fox) ~ " a random suited one), ") ~ &("Squires and Disciples".hh ~ " deck, ") ~ &("Corners".hh ~ " setup, ") ~ &("Auto Assign Hits".hh ~ " (no " ~ "Ambush Bluff Mode".hh ~ "), ") ~ &("no hirelings."),
         ),
         $(
             "The rules as Leder Games prints them:",
