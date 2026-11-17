@@ -61,7 +61,7 @@ case object Lion extends Faction
 trait PlayerColor extends NamedToString with Styling with Elementary with Record {
     def id = name.toLowerCase
     // The one colour of the player everywhere: their territories on the map, the fame border dashes of the closed
-    // ones they control, and their player and warchief names (the owner, 2026-11-10: red first, on 2026-11-04 and 07,
+    // ones they control, and their player and warchief names (2026-11-10: red first, on 2026-11-04 and 07,
     // then every colour; yellow is its units' bright yellow, which the names had since 2026-10-18)
     def hex = this match {
         case Blue => "#4e78bc"
@@ -499,7 +499,7 @@ case class PCVedrfolnirRevealAction(then : ForcedAction) extends ForcedAction wi
 case class PCVedrfolnirNoTileAction(then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to PCMineChoice (an hrf-games fix)
 case class PCMineChoiceAction(then : ForcedAction) extends ForcedAction with SkipValidate
-// Turns Alternative fame gains on in a running game (an hrf-games fix; Winter for Clan, Gman, 2026-11-13): each clan gets the fame
+// Turns Alternative fame gains on in a running game (an hrf-games fix; Winter for Clan, 2026-11-13): each clan gets the fame
 // the module would have given it so far (worked out from the game's log), then the Achievements are dealt as at setup
 case class FameGainsOnAction(clans : $[Faction], fame : $[Int], then : ForcedAction) extends ForcedAction with SkipValidate
 // Switches a running game to PCNavalPort, PCHallShield or PCHallSafe (an hrf-games fix)
@@ -1057,7 +1057,7 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
     // only ever on the map with the first: when the first is removed the second takes its place, so the slots don't say which is which
     var lynx2 : |[AreaRef] = None
 
-    // Which lynx is which (Gman, 2026-11-02: "The cats are two separate units"): the slots say where the figures are and the
+    // Which lynx is which (2026-11-02: "The cats are two separate units"): the slots say where the figures are and the
     // second slot is always the one that leaves a pair, so the names are a label on the slots, swapped by LynxFirstAction when
     // the player picks the first slot's lynx, and when the first slot is emptied and the second moves into it
     var lynxSwapped = false
@@ -1590,7 +1590,7 @@ object CommonExpansion extends Expansion {
 
     // Final fame: (fame tokens, cards, resources, Unrest)
     def finalFame(f : Faction)(implicit game : Game) : FinalFame =
-        // Clan Fame upgrades: the cards' fame, Unrest too, was already counted when each card was taken (Gman, 2026-11-12)
+        // Clan Fame upgrades: the cards' fame, Unrest too, was already counted when each card was taken (2026-11-12)
         FinalFame(f.fame, FameUpgradesExpansion.on.?(0).|(f.deck./(c => cardFame(f, c)).sum), (f.resources + 2 * f.mineralCount) / 3, FameUpgradesExpansion.on.?(0).|(-5 * f.unrest))
 
     // The tie-breaks after fame, as said on the end screen

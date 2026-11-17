@@ -14,7 +14,7 @@ import hrf.elem._
 import root.elem._
 
 
-// The Dark Deck (The Doomed Expansion, fan-made by slugfacekillah; Law of Doom D3.1; Gman, 2026-11-13): a 66 card deck, the Deck
+// The Dark Deck (The Doomed Expansion, fan-made by slugfacekillah; Law of Doom D3.1; 2026-11-13): a 66 card deck, the Deck
 // choice `DarkDeck`. Its six Abomination cards count as fox, rabbit or mouse, never bird (`Abomination` in `game.scala`); the Cursed
 // card (`Cursed`) can't be spent or discarded (a discard leaves it where it was, or puts it back in hand), only crafted with four of any
 // suit for 3 points and the Cursed Idol, then it leaves the game; a fifth Dominance needs three adjacent ruled clearings and the Idol;
@@ -38,7 +38,7 @@ import root.elem._
 // - Doppleganger copies another player's crafted card for the rest of the turn; using up the copy discards the Doppleganger
 // - Rodent Zero (Law of Doom D3.1.1 and the Infected turnling, D8.3): the 20 Infected are their own player (`InfectedHorde`, an
 //   ownerless hireling), only moved by the card, only ever defenders, always taking the higher roll; they count for rule; the
-//   Infected die is the Hundreds' suit die (Gman). At the end of its owner's Evening the die is rolled; into each clearing of that
+//   Infected die is the Hundreds' suit die. At the end of its owner's Evening the die is rolled; into each clearing of that
 //   suit one Infected moves from an adjacent clearing (the owner picks from where), if any can (from a clearing of the suit only
 //   when it has two or more); then in each clearing of that suit with Infected one warrior (anyone's, the owner's too, the owner
 //   picks) goes back to its supply and an Infected takes its place. If the card is discarded the Infected stay, and stop

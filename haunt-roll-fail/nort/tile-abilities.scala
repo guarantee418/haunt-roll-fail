@@ -17,7 +17,7 @@ import nort.elem._
 // The map tiles with a rule of their own (the Wilderness and Wastelands Environment tiles, the Wastelands central tiles
 // and The Bridge): the centrepiece of each tile's art (centre and radius, in tile units, on the unturned tile) is left out
 // of the territory tints like the resource icons, marked with a small "i", and tapping either opens the tile's rule
-// (TileAbilityInfo, asked for by Marzaus and Gman on 2026-11-01)
+// (TileAbilityInfo, asked for on 2026-11-01)
 object TileAbilities {
     case class Feature(x : Double, y : Double, r : Double)
 

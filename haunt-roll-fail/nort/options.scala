@@ -169,7 +169,7 @@ case object AltVictoryChosen extends VictoryChoice {
     override val explain = VictoryModule.about ++ $("Choose exactly one Map Control card and two Wealth cards (three with teams) below.".txt)
 }
 
-// PC version only (Gman, 2026-11-11): the last clan or team with its Town Hall wins, whenever that is; nothing else wins, and after
+// PC version only (2026-11-11): the last clan or team with its Town Hall wins, whenever that is; nothing else wins, and after
 // the last year the game goes on year after year (PCExpansion). No longer offered (Meta.retired): Domination is one of the Fan
 // victories since 2026-11-12, beside the other victory conditions (DominationVictory); the games that picked it keep it
 case object DominationOnly extends VictoryChoice {
@@ -210,7 +210,7 @@ object VictoryCardOption {
     val all : $[VictoryCardOption] = VictoryCard.all./(VictoryCardOption(_))
 }
 
-// FAN VICTORIES: ways to win from fan-made rules, under Fan content (Gman, 2026-11-12; trade, knowledge and the video game's other
+// FAN VICTORIES: ways to win from fan-made rules, under Fan content (2026-11-12; trade, knowledge and the video game's other
 // victories are to come). Each adds to the Victory conditions picked above, unless its own rules say otherwise. A fan-made module
 // that is a victory goes in FanVictories.modules; a plain option extends FanVictory
 object FanVictories {
@@ -224,7 +224,7 @@ trait FanVictory extends GameOption with ImportantOption {
 }
 
 // Domination (PC version): the last clan (or team) still holding its Town Hall wins at once, beside the other victory conditions
-// (Gman, 2026-11-12: "Don't limit Domination victory to Domination victory only"). In PC version games with the hidden
+// (2026-11-12: "Don't limit Domination victory to Domination victory only"). In PC version games with the hidden
 // PCDominationChoice every new game gets, only this option makes the last one standing win; older ones always did
 case object DominationVictory extends FanVictory with ToggleOption {
     def valueOn = "Domination victory".txt
@@ -297,7 +297,7 @@ case object NoDefensiveStrategy extends GameOption with ToggleOption {
     val cards : $[Card] = $(Development("defensive-strategy"))
 }
 
-// Development cards left out of the decks one by one (asked for by Marzaus and Robotos on 2026-10-21: Future Sight, Market Place,
+// Development cards left out of the decks one by one (asked for on 2026-10-21: Future Sight, Market Place,
 // "any cards you want"); Game: ShuffledEarlyAction, ShuffledAdvancedAction
 case class BanDevelopment(id : String) extends GameOption with ToggleOption {
     val group = "Ban Development cards".txt
@@ -321,9 +321,9 @@ object BanDevelopment {
 }
 
 // DEVELOPMENT CARDS EACH YEAR: one per player (the rules), one more (suggested by Marzaus for two players on 2026-10-19, for every
-// player count by Gman on 2026-10-20), or one fewer from year 2 on, "hard mode" (Marzaus, 2026-10-22). Game.devsIn; not offered
+// player count by the owner on 2026-10-20), or one fewer from year 2 on, "hard mode" (2026-10-22). Game.devsIn; not offered
 // against the Automa (optionsFor in meta.scala). Games made before the choice have none of these, or ExtraDevelopment.
-// Marzaus's two variants are listed under Fan content as toggles, each turning the other off (Robotos, 2026-10-26); the rules'
+// Marzaus's two variants are listed under Fan content as toggles, each turning the other off (2026-10-26); the rules'
 // NormalDevelopments, once the third choice of a "Development cards each year" section, is hidden and kept for the games that have it
 trait DevelopmentsChoice extends GameOption with ToggleOption {
     val group = "Fan content".txt
@@ -401,8 +401,8 @@ case object HorizonsDevelopments extends GameOption with ToggleOption {
     )
 }
 
-// Each player's three starting tiles are one from a food, a wood and a lore pile (Marzaus's group's house rule, asked for
-// by Gman on 2026-10-19, who picked three piles over redrawing; MapExpansion.dealStart). Listed under Fan content (Gman, 2026-11-02;
+// Each player's three starting tiles are one from a food, a wood and a lore pile (the group's house rule, asked for
+// by the owner on 2026-10-19, who picked three piles over redrawing; MapExpansion.dealStart). Listed under Fan content (2026-11-02;
 // it was a "Map tiles" section after Card edition)
 case object BalancedStartTiles extends GameOption with ToggleOption {
     val group = "Fan content".txt
@@ -448,7 +448,7 @@ object FameChoice {
     val all : $[FameChoice] = $(PrivateFame, PublicFame)
 }
 
-// UNDO: how far "Undo to here" in the log may go back (undoBlocked in nort/ui.scala; asked for by Robotos on 2026-10-20).
+// UNDO: how far "Undo to here" in the log may go back (undoBlocked in nort/ui.scala; asked for on 2026-10-20).
 // Display only, so recorded games replay the same; games made before the choice have none of these and keep unlimited undo
 trait UndoChoice extends GameOption with OneOfGroup {
     val group = "Undo".txt
@@ -483,7 +483,7 @@ object UndoChoice {
 
 
 // Casualties are chosen by their player: units, the warchief, Kaija (or Brundr and Kaelinn, or Brok) and Jötunn Blainn,
-// in any mix (CasualtyPickAction in map.scala; asked for by Robotos on 2026-10-11). Hidden, and given to every new game
+// in any mix (CasualtyPickAction in map.scala; asked for on 2026-10-11). Hidden, and given to every new game
 // (Meta.mandatoryFor): games started before it took units first, then the warchief, Blainn and the companion, and their
 // replays must not stop on a choice they never recorded
 case object ChooseCasualties extends GameOption with ToggleOption {
@@ -492,7 +492,7 @@ case object ChooseCasualties extends GameOption with ToggleOption {
 }
 
 // Ox Clan's Ancestral Equipment token after an Explore goes on a free small building space or Carved Stone space of the tile
-// that Ox picks (GearPlaceAction in newblood.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
+// that Ox picks (GearPlaceAction in newblood.scala; asked for on 2026-10-12). Hidden, and given to every new game
 // (Meta.mandatoryFor): games started before it put the token on the tile's first free small building space, never on a
 // Carved Stone space, and their replays must not stop on a choice they never recorded
 case object OxPicksSpace extends GameOption with ToggleOption {
@@ -510,7 +510,7 @@ case object JoinedTilesOnly extends GameOption with ToggleOption {
 }
 
 // Naströnd (Wastelands) prints a wood in its west and in its east territory, which the tile data left out, so neither was
-// counted at harvest, by Quality of Life or anything else collecting from a territory (Marzaus, 2026-11-01). Hidden, and given
+// counted at harvest, by Quality of Life or anything else collecting from a territory (2026-11-01). Hidden, and given
 // to every new game (Meta.mandatoryFor): older games had no wood there (Game.areaSpec), and their replays must not change
 case object NastrondWood extends GameOption with ToggleOption {
     val group = "Naströnd".txt
@@ -518,7 +518,7 @@ case object NastrondWood extends GameOption with ToggleOption {
 }
 
 // Svarn's Menders brings back the warchief, the companion (Kaija, Brundr and Kaelinn, Brok) and Jötunn Blainn among the
-// casualties too, not only units (the owner's ruling of 2026-10-12; figures lost for having nowhere to retreat still stay lost).
+// casualties too, not only units (the ruling of 2026-10-12; figures lost for having nowhere to retreat still stay lost).
 // Hidden, and given to every new game (Meta.mandatoryFor): older games brought back units only, and their replays must not stop
 // on a choice they never recorded
 case object MendFigures extends GameOption with ToggleOption {
@@ -527,7 +527,7 @@ case object MendFigures extends GameOption with ToggleOption {
 }
 
 // Ancestral Curse's opponents pick the card they discard all at once, each on their own screen (CurseAllAction in effects.scala;
-// asked for by the owner on 2026-10-16), instead of one after another in turn order. Hidden, and given to every new game
+// asked for on 2026-10-16), instead of one after another in turn order. Hidden, and given to every new game
 // (Meta.mandatoryFor): older games recorded the discards one by one, and their replays must not change
 case object SimultaneousCurse extends GameOption with ToggleOption {
     val group = "Ancestral Curse".txt
@@ -567,7 +567,7 @@ case object KrakenMovesTide extends GameOption with ToggleOption {
     def valueOn = "Clan cards move a High Tide token".txt
 }
 
-// The combat report and the clan power report are notifications that don't stop the game (Robotos, 2026-10-21: nobody
+// The combat report and the clan power report are notifications that don't stop the game (2026-10-21: nobody
 // should wait for another player to tap OK on a box only they read): each player sees them over their screen the next time
 // it updates (ReportNote in map.scala). Hidden, and given to every new game (Meta.mandatoryFor): older games recorded the OKs
 case object ReportsDontWait extends GameOption with ToggleOption {
@@ -575,7 +575,7 @@ case object ReportsDontWait extends GameOption with ToggleOption {
     def valueOn = "Reports don't wait".txt
 }
 
-// Future Sight's "or Achievement" only in the last year (Gman, 2026-10-21): the Achievements are the cards on offer then, so
+// Future Sight's "or Achievement" only in the last year (2026-10-21): the Achievements are the cards on offer then, so
 // before it Future Sight takes only a revealed Development card. Hidden, and given to every new game (Meta.mandatoryFor):
 // older games could take an Achievement early, and replay that way
 case object FutureSightLastYear extends GameOption with ToggleOption {
@@ -585,7 +585,7 @@ case object FutureSightLastYear extends GameOption with ToggleOption {
 
 // An Achievement taken by Future Sight or at Mimirsbrunn (the last year) is kept aside, face down, to score at the end, not put on
 // top of the draw pile, where a Replace, Remove or draw effect brought it into the hand in place of a card (Marzaus and Robotos,
-// relayed by Gman on 2026-10-28). Hidden, and given to every new game (Meta.mandatoryFor): older games replay the old way, and a
+// relayed on 2026-10-28). Hidden, and given to every new game (Meta.mandatoryFor): older games replay the old way, and a
 // running one can be switched over with AchievementsAsideAction(X)
 case object AchievementsAside extends GameOption with ToggleOption {
     val group = "Development cards".txt
@@ -594,7 +594,7 @@ case object AchievementsAside extends GameOption with ToggleOption {
 
 // With the Wilderness, its Geysers took over the End of the Year and went straight on to the core one, so the expansions after it
 // (the Military paths' MXP for towers, camps and the warchief's units, Legions' new units, a dead Militia or bodyguard back) never
-// ran (Marzaus, 2026-11-01). Hidden, and given to every new game (Meta.mandatoryFor): the Geysers go first, then the End of the
+// ran (2026-11-01). Hidden, and given to every new game (Meta.mandatoryFor): the Geysers go first, then the End of the
 // Year goes on through every expansion. A running game can be switched over with EndOfYearAfterGeysersAction(X)
 case object EndOfYearAfterGeysers extends GameOption with ToggleOption {
     val group = "Wilderness".txt
@@ -602,14 +602,14 @@ case object EndOfYearAfterGeysers extends GameOption with ToggleOption {
 }
 
 // Printed Lynx Clan (PrintedNewBlood): each starting placement may take a lynx, so Lynx can start with both Brundr and Kaelinn
-// (Gman, 2026-10-31: "Lynx is supposed to have 2 cat tokens"). Before it, a lynx placed in the second placement moved the first
+// (2026-10-31: "Lynx is supposed to have 2 cat tokens"). Before it, a lynx placed in the second placement moved the first
 // one there and Lynx started with one. Hidden, and given to every new game (Meta.mandatoryFor); older games replay the old way
 case object LynxBothAtSetup extends GameOption with ToggleOption {
     val group = "New Blood".txt
     def valueOn = "Lynx may start with both lynxes".txt
 }
 
-// Mielikki's power ("attacking, she may bring Brundr or Kaelinn") also when she attacks a creature (Marzaus, 2026-11-02: attacking a
+// Mielikki's power ("attacking, she may bring Brundr or Kaelinn") also when she attacks a creature (2026-11-02: attacking a
 // Wolf with her, he wanted to bring his lynx); it was only offered against clans. Hidden, and given to every new game (Meta.mandatoryFor);
 // older games replay the old way (MielikkiCreatureAction in newblood.scala)
 case object MielikkiAgainstCreatures extends GameOption with ToggleOption {
@@ -626,7 +626,7 @@ case object ChiefMoveFromHeld extends GameOption with ToggleOption {
     def valueOn = "The warchief's extra move starts from a controlled territory".txt
 }
 
-// Military paths, Leadership 2: the extra move is "once more", so only after the warchief moved with the Move card (Marzaus, 2026-11-04:
+// Military paths, Leadership 2: the extra move is "once more", so only after the warchief moved with the Move card (2026-11-04:
 // Mielikki was offered it without having moved). Hidden, and given to every new game (Meta.mandatoryFor); older games replay the old
 // way. A running game can be switched over with ChiefMoveAfterMoveAction(X)
 case object ChiefMoveAfterMove extends GameOption with ToggleOption {
@@ -634,7 +634,7 @@ case object ChiefMoveAfterMove extends GameOption with ToggleOption {
     def valueOn = "The warchief's extra move only after it moved".txt
 }
 
-// Military paths, Leadership 2 and Legions 3: the reroll of the combat die works in fights against creatures too (Gman, 2026-11-04:
+// Military paths, Leadership 2 and Legions 3: the reroll of the combat die works in fights against creatures too (2026-11-04:
 // "leadership rerolls arent working against creatures and they should"); it was offered only against clans. Hidden, and given to
 // every new game (Meta.mandatoryFor); older games replay the old way. A running game can be switched over with MilitaryRerollCreaturesAction(X)
 case object MilitaryRerollCreatures extends GameOption with ToggleOption {
@@ -643,7 +643,7 @@ case object MilitaryRerollCreatures extends GameOption with ToggleOption {
 }
 
 // Military paths, Leadership 1: Horse Clan's two warchiefs each have a bodyguard, Eitria's (game.guards) and Brok's (game.brokGuard)
-// (Gman, 2026-11-06: "horse leadership should have 2 bodyguards (1 for each chief)"); Brok had none. Hidden, and given to every new
+// (2026-11-06: "horse leadership should have 2 bodyguards (1 for each chief)"); Brok had none. Hidden, and given to every new
 // game (Meta.mandatoryFor); older games replay the old way. A running game can be switched over with HorseTwoGuardsAction(X)
 case object HorseTwoGuards extends GameOption with ToggleOption {
     val group = "Military paths".txt
@@ -661,7 +661,7 @@ case object ScorchedAfterEvents extends GameOption with ToggleOption {
 }
 
 // Military paths: a clan losing one unit outside a fight (Draugr, the Swamp, Valdemar, an event, ...) with its bodyguard or a Militia in
-// that territory picks which of them goes, as the bodyguard comes back each year (Marzaus, 2026-11-07: "if i am to automatically loose
+// that territory picks which of them goes, as the bodyguard comes back each year (2026-11-07: "if i am to automatically loose
 // a unit, if there is bodyguard available, kill it or let me choose"; a unit always went). Hidden, and given to every new game
 // (Meta.mandatoryFor); older games replay the old way. A running game can be switched over with PickLoneLossAction(X)
 case object PickLoneLoss extends GameOption with ToggleOption {
@@ -670,7 +670,7 @@ case object PickLoneLoss extends GameOption with ToggleOption {
 }
 
 // Military paths: a fight's casualties picked by their player (ChooseCasualties) lose the warchief only with its bodyguard, and Horse's
-// Brok only with his (HorseTwoGuards), as the bodyguard goes before the warchief and is wherever it is (Marzaus, 2026-11-11, Saga and
+// Brok only with his (HorseTwoGuards), as the bodyguard goes before the warchief and is wherever it is (2026-11-11, Saga and
 // Clan: Horse won a fight but lost Eitria and a unit, and its bodyguard went to the reserve with her, so the territory was emptied).
 // Hidden, and given to every new game (Meta.mandatoryFor); older games replay the old way. A running game can be switched over with
 // GuardBeforeChiefAction(X)
@@ -680,7 +680,7 @@ case object GuardBeforeChief extends GameOption with ToggleOption {
 }
 
 // Warchiefs PC version: the warchief is recruited for 1 of a Recruit's units plus the extra unit of its territory's Training Camp, so the
-// starting Recruit 1 can bring it (Marzaus, 2026-11-06: "i cant recruit the chief, the robobot doesnt have one either"; it took 2 of the
+// starting Recruit 1 can bring it (2026-11-06: "i cant recruit the chief, the robobot doesnt have one either"; it took 2 of the
 // Recruit's own units, so only the Recruit 2 cards could). Hidden, and given to every new game (Meta.mandatoryFor); older games replay
 // the old way. A running game can be switched over with PCChiefCampPaysAction(X)
 case object PCChiefCampPays extends GameOption with ToggleOption {
@@ -688,7 +688,7 @@ case object PCChiefCampPays extends GameOption with ToggleOption {
     def valueOn = "The warchief costs 1 unit and the Training Camp's extra one".txt
 }
 
-// Brundr and Kaelinn count as units for Winter costs (Gman, 2026-11-01: "The lynx cats count towards winter costs"); the site had
+// Brundr and Kaelinn count as units for Winter costs (2026-11-01: "The lynx cats count towards winter costs"); the site had
 // left them out, reading the Uncharted Horizons rulebook's note on companions. Hidden, and given to every new game (Meta.mandatoryFor);
 // older games replay the old way (FactionState.winterUnits)
 case object LynxesCostWinter extends GameOption with ToggleOption {
@@ -696,7 +696,7 @@ case object LynxesCostWinter extends GameOption with ToggleOption {
     def valueOn = "Brundr and Kaelinn count for Winter costs".txt
 }
 
-// A Training Camp's extra recruit may be Brundr or Kaelinn when one is in Lynx's reserve (Marzaus, relayed by Gman on 2026-11-02:
+// A Training Camp's extra recruit may be Brundr or Kaelinn when one is in Lynx's reserve (Marzaus, relayed on 2026-11-02:
 // "i recruited 1 cat and camp added another unit - but i wanted 2 cats"); before it the camp always added a regular unit.
 // Hidden, and given to every new game (Meta.mandatoryFor); older games replay the old way (CampRecruitAction in map.scala)
 // A running game can be switched over with LynxCampRecruitsLynxAction(X) (game.scala) through an hrf-games fix
@@ -705,7 +705,7 @@ case object LynxCampRecruitsLynx extends GameOption with ToggleOption {
     def valueOn = "Training Camps may recruit Brundr or Kaelinn".txt
 }
 
-// New Blood as printed (Gman sent the printed cards and boards on 2026-10-23): the 19 clan cards in CardVersions (editions.scala)
+// New Blood as printed (the owner sent the printed cards and boards on 2026-10-23): the 19 clan cards in CardVersions (editions.scala)
 // and the clan board rules (Lynx's bonus Move and Mielikki, Kraken's High Tide and Kàra, Dragon's harvest, Squirrel after Winter).
 // The site had followed the TTS mod's prototype cards and boards. Hidden, and given to every new game (Meta.mandatoryFor), in either
 // card edition: older games keep the old cards and rules, and replay that way
@@ -714,7 +714,7 @@ case object PrintedNewBlood extends GameOption with ToggleOption {
     def valueOn = "Printed clan cards and boards".txt
 }
 
-// The printed Squirrel Clan card (Marzaus, 2026-11-06), which PrintedNewBlood missed: Recruit 1, then 1 food if the unit went into a
+// The printed Squirrel Clan card (2026-11-06), which PrintedNewBlood missed: Recruit 1, then 1 food if the unit went into a
 // territory producing food (CardVersions.printedNewBlood, SquirrelPrintEffect in newblood.scala). Hidden, and given to every new game
 // (Meta.mandatoryFor): older games keep the prototype card (1 food or a quarter of the units in fame), and replay that way
 case object PrintedSquirrelClan extends GameOption with ToggleOption {
@@ -722,7 +722,7 @@ case object PrintedSquirrelClan extends GameOption with ToggleOption {
     def valueOn = "Printed Squirrel Clan card".txt
 }
 
-// The clan power report (ClanPowers in map.scala; asked for by Robotos on 2026-10-12). Hidden, and given to every new game
+// The clan power report (ClanPowers in map.scala; asked for on 2026-10-12). Hidden, and given to every new game
 // (Meta.mandatoryFor), like ChooseCasualties: older games' replays must not stop on a step they never recorded
 case object ClanPowerReports extends GameOption with ToggleOption {
     val group = "Clan powers".txt
@@ -910,7 +910,7 @@ case object Teams2v2v2 extends Module("2v2v2 Teams", "variant, 2v2 rules") {
 }
 
 // FAN CONTENT
-// The Minerals module (minerals.scala), fan-made by Maciej "Niedźwiedź" Drewing (BoardGameGeek file 255809, 2023; asked for by Gman
+// The Minerals module (minerals.scala), fan-made by Maciej "Niedźwiedź" Drewing (BoardGameGeek file 255809, 2023; asked for by the owner
 // on 2026-10-21): Mines on territories with a creature lair dig up Stone, Iron and Gem at the Harvest
 case object MineralsModule extends Module("Minerals", "fan-made module by Maciej Drewing") {
     override def ready = true
@@ -927,7 +927,7 @@ case object MineralsModule extends Module("Minerals", "fan-made module by Maciej
     )
 }
 
-// The Tower PC version (towers.scala), fan-made by Marzaus (Discord, 2026-10-22): Defense Towers as in the video game.
+// The Tower PC version (towers.scala), fan-made (Discord, 2026-10-22): Defense Towers as in the video game.
 // First of all the module expansions, so it steps in before the Creatures module and the fights
 case object TowersModule extends Module("Tower PC version", "fan-made by Marzaus") {
     override def ready = true
@@ -944,7 +944,7 @@ case object TowersModule extends Module("Tower PC version", "fan-made by Marzaus
     )
 }
 
-// Warchiefs PC version (game.scala, map.scala), fan-made by Marzaus (Discord, northgard-fanmade-content; asked for by Gman on
+// Warchiefs PC version (game.scala, map.scala), fan-made (Discord, northgard-fanmade-content; asked for by the owner on
 // 2026-10-22): the warchiefs play more like the video game's. Needs the warchiefs (the Warchiefs module or its pawns)
 case object WarchiefsPC extends Module("Warchiefs PC version", "fan-made variant by Marzaus") {
     override def ready = true
@@ -960,7 +960,7 @@ case object WarchiefsPC extends Module("Warchiefs PC version", "fan-made variant
     )
 }
 
-// The Military paths module (military.scala), fan-made by Marzaus (Discord, northgard-fanmade-content; asked for by Gman on
+// The Military paths module (military.scala), fan-made (Discord, northgard-fanmade-content; asked for by the owner on
 // 2026-10-22): MXP from fights, and at 5 MXP one of three paths, each with three levels
 case object MilitaryModule extends Module("Military paths", "fan-made module by Marzaus") {
     override def ready = true
@@ -977,14 +977,14 @@ case object MilitaryModule extends Module("Military paths", "fan-made module by 
 }
 
 // Alternative fame gains: the units (Militia too) and warchief a clan loses for having nowhere to retreat after a lost fight against a
-// clan count as killed by the winner (Marzaus, 2026-11-06: "losing units = killing"). Hidden, and given to every new game
+// clan count as killed by the winner (2026-11-06: "losing units = killing"). Hidden, and given to every new game
 // (Meta.mandatoryFor); older games replay the old way
 case object FameRetreatKills extends GameOption with ToggleOption {
     val group = "Alternative fame gains".txt
     def valueOn = "Figures lost with nowhere to retreat count as killed".txt
 }
 
-// Alternative fame gains: the Altar of Kings wins only in a closed territory (Marzaus, 2026-11-06: "the altar must be in closed
+// Alternative fame gains: the Altar of Kings wins only in a closed territory (2026-11-06: "the altar must be in closed
 // territory"). Hidden, and given to every new game (Meta.mandatoryFor); older games replay the old way
 case object FameAltarClosed extends GameOption with ToggleOption {
     val group = "Alternative fame gains".txt
@@ -992,14 +992,14 @@ case object FameAltarClosed extends GameOption with ToggleOption {
 }
 
 // Military paths: a clan taking casualties where its bodyguard is, with other units there, is asked whether the bodyguard goes
-// first even when it has no other choice to make (Gman, 2026-11-11: never asked). Hidden, and given to every new game
+// first even when it has no other choice to make (2026-11-11: never asked). Hidden, and given to every new game
 // (Meta.mandatoryFor); older games replay without the question
 case object GuardCasualtyAsked extends GameOption with ToggleOption {
     val group = "Military paths".txt
     def valueOn = "Asked whether the bodyguard is lost first".txt
 }
 
-// PC version, the second round (Gman, 2026-11-11): every home has a lair territory with a small building space just outside it,
+// PC version, the second round (2026-11-11): every home has a lair territory with a small building space just outside it,
 // for a Mine; Mines give Stone with no die roll; the two-player map is wider in the middle; with 3 clans or more the Wilderness and
 // Wastelands creatures are in. Hidden, and given to every new game (Meta.mandatoryFor); older PC games keep their maps and rolls
 case object PCVersionUpdate extends GameOption with ToggleOption {
@@ -1007,7 +1007,7 @@ case object PCVersionUpdate extends GameOption with ToggleOption {
     def valueOn = "Mine territories, Stone from Mines, the wider two-player map, more creatures".txt
 }
 
-// PC version: Raven's Rangers (Clan Fame upgrades) is offered after a scout, and its one more scout goes anywhere on the map (Gman,
+// PC version: Raven's Rangers (Clan Fame upgrades) is offered after a scout, and its one more scout goes anywhere on the map (the owner,
 // 2026-11-13: it was never offered, as the PC version's map is whole). Hidden, and given to every new game (Meta.mandatoryFor); a
 // running game can be switched over with PCRangersScoutAction(X)
 case object PCRangersScout extends GameOption with ToggleOption {
@@ -1016,7 +1016,7 @@ case object PCRangersScout extends GameOption with ToggleOption {
 }
 
 // PC version: no figure enters a territory its clan doesn't see: retreats, the Lynx's moves, Hidden Ways and every other move, as
-// the Move card already did (Gman, 2026-11-14: Marzaus retreated into a territory he hadn't scouted and so scouted it for free).
+// the Move card already did (2026-11-14: Marzaus retreated into a territory he hadn't scouted and so scouted it for free).
 // Hidden, and given to every new game (Meta.mandatoryFor); a running game can be switched over with PCSeenOnlyAction(X)
 case object PCSeenOnly extends GameOption with ToggleOption {
     val group = "PC version".txt
@@ -1024,14 +1024,14 @@ case object PCSeenOnly extends GameOption with ToggleOption {
 }
 
 // PC version: 22 units instead of 14, and Winter costs 5 food and 3 wood for 16 to 18 units, 6 food and 4 wood for 19 or more,
-// Marzaus's "Army cap" (NG Expansions by Marzaus; Gman, 2026-11-14). Hidden, and given to every new game (Meta.mandatoryFor); a
+// Marzaus's "Army cap" (NG Expansions by Marzaus; 2026-11-14). Hidden, and given to every new game (Meta.mandatoryFor); a
 // running game can be switched over with PCArmyCapAction(X)
 case object PCArmyCap extends GameOption with ToggleOption {
     val group = "PC version".txt
     def valueOn = "22 units, higher Winter costs".txt
 }
 
-// PC version: a Defense Tower is worth 2 combat points against creatures, not 1 (Gman, 2026-11-14: Marzaus found towers too weak
+// PC version: a Defense Tower is worth 2 combat points against creatures, not 1 (2026-11-14: Marzaus found towers too weak
 // against creatures). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be switched over with
 // PCTowerPointsAction(X)
 case object PCTowerPoints extends GameOption with ToggleOption {
@@ -1039,7 +1039,7 @@ case object PCTowerPoints extends GameOption with ToggleOption {
     def valueOn = "Defense Towers: 2 points against creatures".txt
 }
 
-// PC version: a scout gives 1 fame, not 1 a tile of the scouted territory as a closed one does (Gman, 2026-11-14: Marzaus found
+// PC version: a scout gives 1 fame, not 1 a tile of the scouted territory as a closed one does (2026-11-14: Marzaus found
 // the fame win came too fast). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be switched over with
 // PCScoutFameAction(X)
 case object PCScoutFame extends GameOption with ToggleOption {
@@ -1048,7 +1048,7 @@ case object PCScoutFame extends GameOption with ToggleOption {
 }
 
 // PC version: the Scorched Earth token (the Snake Clan card, Under Pressure) goes only to a territory Snake sees, and Under Pressure
-// may also move it to a neutral territory (no clan there), collecting what it gives as elsewhere (Gman, 2026-11-15: in Winter for
+// may also move it to a neutral territory (no clan there), collecting what it gives as elsewhere (2026-11-15: in Winter for
 // Clan, Under Pressure moved it into the fog). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be
 // switched over with PCScorchedSeenAction(X)
 case object PCScorchedSeen extends GameOption with ToggleOption {
@@ -1056,7 +1056,7 @@ case object PCScorchedSeen extends GameOption with ToggleOption {
     def valueOn = "Scorched Earth: only where Snake sees, neutral territories too".txt
 }
 
-// PC version: a Port is worth 3 combat points (not 1) to its defender against a clan that attacked it by sea (Gman, 2026-11-14).
+// PC version: a Port is worth 3 combat points (not 1) to its defender against a clan that attacked it by sea (2026-11-14).
 // Hidden, and given to every new game (Meta.mandatoryFor); a running game can be switched over with PCNavalPortAction(X)
 case object PCNavalPort extends GameOption with ToggleOption {
     val group = "PC version".txt
@@ -1064,14 +1064,14 @@ case object PCNavalPort extends GameOption with ToggleOption {
 }
 
 // PC version: a clan fighting in its Town Hall's territory ignores 1 casualty rolled on the die by a clan or a creature, like the
-// video game's Healer's Hut (Gman, 2026-11-14). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be
+// video game's Healer's Hut (2026-11-14). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be
 // switched over with PCHallShieldAction(X)
 case object PCHallShield extends GameOption with ToggleOption {
     val group = "PC version".txt
     def valueOn = "Town Hall ignores 1 rolled casualty".txt
 }
 
-// PC version: in the first two years creatures don't move into a Town Hall's territory or attack there (Gman, 2026-11-14: a
+// PC version: in the first two years creatures don't move into a Town Hall's territory or attack there (2026-11-14: a
 // Draugr killed Marzaus's clan in the first year). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be
 // switched over with PCHallSafeAction(X)
 case object PCHallSafe extends GameOption with ToggleOption {
@@ -1079,7 +1079,7 @@ case object PCHallSafe extends GameOption with ToggleOption {
     def valueOn = "No creature attacks on Town Halls in years 1 and 2".txt
 }
 
-// PC version: at the harvest a clan with more than one Mine picks for each one, Stone or the roll (Marzaus, relayed by Gman on
+// PC version: at the harvest a clan with more than one Mine picks for each one, Stone or the roll (relayed on
 // 2026-11-14: PCMineChoice asked once for them all). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be
 // switched over with PCMinePerMineAction(X)
 case object PCMinePerMine extends GameOption with ToggleOption {
@@ -1087,10 +1087,10 @@ case object PCMinePerMine extends GameOption with ToggleOption {
     def valueOn = "Mines: Stone or a roll for each".txt
 }
 
-// PC version: one upgrade per Build, the Town Hall's or one with Stone (Marzaus, relayed by Gman on 2026-11-14: a Build upgraded
+// PC version: one upgrade per Build, the Town Hall's or one with Stone (Marzaus, relayed on 2026-11-14: a Build upgraded
 // the Town Hall and another building). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be switched over
 // with PCOneUpgradeAction(X)
-// Minerals module: a Build either builds or upgrades, never both (Gman, 2026-11-16: in Winter for Clan Snake's Feast built a Food
+// Minerals module: a Build either builds or upgrades, never both (2026-11-16: in Winter for Clan Snake's Feast built a Food
 // Silo and was then offered a Stone upgrade, as the module's text allows, "regardless if new building has been placed or not").
 // The upgrade (with Stone, or the PC version's Town Hall) is offered only before anything is built, and ends the Build. Hidden, and
 // given to every new game (Meta.mandatoryFor); a running game can be switched over with BuildOrUpgradeAction(X)
@@ -1105,7 +1105,7 @@ case object PCOneUpgrade extends GameOption with ToggleOption {
 }
 
 // PC version: at the harvest each clan with Mines picks 1 Stone a Mine with no roll, or the Minerals module's roll for Stone, Iron
-// or Gem (Gman, 2026-11-13: PCVersionUpdate gave only Stone). Hidden, and given to every new game (Meta.mandatoryFor); a running
+// or Gem (2026-11-13: PCVersionUpdate gave only Stone). Hidden, and given to every new game (Meta.mandatoryFor); a running
 // game can be switched over with PCMineChoiceAction(X)
 case object PCMineChoice extends GameOption with ToggleOption {
     val group = "PC version".txt
@@ -1113,7 +1113,7 @@ case object PCMineChoice extends GameOption with ToggleOption {
 }
 
 // PC version: Vedrfolnir's controller reveals one random territory it hasn't seen at the end of each year, instead of adding a map
-// tile, as the map is whole (Gman, 2026-11-12). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be
+// tile, as the map is whole (2026-11-12). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be
 // switched over with PCVedrfolnirRevealAction(X)
 case object PCVedrfolnirReveal extends GameOption with ToggleOption {
     val group = "PC version".txt
@@ -1130,7 +1130,7 @@ case object PCVedrfolnirNoTile extends GameOption with ToggleOption {
 
 // Alternative victory with teams: a team wins only when its players fulfil every card in play, Thane or Jarl, as the Uncharted
 // Horizons rulebook says for 2 vs. 2 ("A team wins if each Victory Condition card is fulfilled by at least one player from the
-// same team"; Marzaus, 2026-11-07). Hidden, and given to every new game (Meta.mandatoryFor); older games keep Thane's Map Control
+// same team"; 2026-11-07). Hidden, and given to every new game (Meta.mandatoryFor); older games keep Thane's Map Control
 // and one Wealth card for a team. A running game can be switched over with TeamVictoryAllCardsAction(X)
 case object TeamVictoryAllCards extends GameOption with ToggleOption {
     val group = "Victory conditions".txt
@@ -1139,14 +1139,14 @@ case object TeamVictoryAllCards extends GameOption with ToggleOption {
 
 // Sea module: Port to Port costs 2 moves and the figures may go on with the moves left, stopping on the shore only for a fight, like any
 // Move (the newer Uncharted Horizons rulebook: "use a Move 2 (similar to crossing rough borders)", "use one Move to get on Port and two
-// to get to a different Port"; addidinu on Discord, relayed by Gman on 2026-11-08). It used up all the moves left. Hidden, and given to
+// to get to a different Port"; Discord, relayed on 2026-11-08). It used up all the moves left. Hidden, and given to
 // every new game (Meta.mandatoryFor); older games replay the old way. A running game can be switched over with SailOnFromPortAction(X)
 case object SailOnFromPort extends GameOption with ToggleOption {
     val group = "Uncharted Horizons".txt
     def valueOn = "Port to Port costs 2 moves".txt
 }
 
-// Marzaus's "Alternative fame gains" (fame-gains.scala; Discord, northgard-fanmade-content, 2026-10-22; asked for by Gman on
+// Marzaus's "Alternative fame gains" (fame-gains.scala; Discord, northgard-fanmade-content, 2026-10-22; asked for by the owner on
 // 2026-11-01): fame as things are done, and 120 fame with an Altar of Kings wins at once. It replaces the other victory conditions,
 // so it needs the Standard or Fame only victory
 case object FameGainsModule extends Module("Alternative fame gains", "fan-made variant by Marzaus") {
@@ -1167,7 +1167,7 @@ case object FameGainsModule extends Module("Alternative fame gains", "fan-made v
     )
 }
 
-// Marzaus's "Clan Fame upgrades (PC)" (fame-upgrades.scala; Discord, northgard-fanmade-content, 2026-10-22; asked for by Gman on
+// Marzaus's "Clan Fame upgrades (PC)" (fame-upgrades.scala; Discord, northgard-fanmade-content, 2026-10-22; asked for by the owner on
 // 2026-11-11): the seven core clans unlock abilities at 20, 50 and 100 fame. Part of the PC version mode
 case object FameUpgradesModule extends Module("Clan Fame upgrades", "fan-made module by Marzaus") {
     override def ready = true
@@ -1181,7 +1181,7 @@ case object FameUpgradesModule extends Module("Clan Fame upgrades", "fan-made mo
     )
 }
 
-// Robotos's "Lower skill floor Dragon variant" (Discord, northgard-fanmade-content, 2026-10-21; asked for by Gman on 2026-10-24):
+// Robotos's "Lower skill floor Dragon variant" (Discord, northgard-fanmade-content, 2026-10-21; asked for on 2026-10-24):
 // Dragon Clan's power and clan cards (CardVersions.dragonVariant in editions.scala, the rules in newblood.scala)
 case object DragonVariant extends Module("Lower skill floor Dragon", "fan-made variant by Robotos") {
     override def ready = true
@@ -1198,7 +1198,7 @@ case object DragonVariant extends Module("Lower skill floor Dragon", "fan-made v
     )
 }
 
-// Robotos's "Special Unit Hater's Bear, Rough Border's Edition" (Discord, northgard-fanmade-content, 2026-10-22; asked for by Gman on
+// Robotos's "Special Unit Hater's Bear, Rough Border's Edition" (Discord, northgard-fanmade-content, 2026-10-22; asked for by the owner on
 // 2026-10-31): Kaija as a token on a border, picked as its own clan in the clan picker (factionVariants in meta.scala), the rules in
 // bear-border.scala, the cards in CardVersions.bearBorder (editions.scala)
 case object BearBorder extends Module("Rough border Bear", "fan-made variant by Robotos") {
@@ -1219,7 +1219,7 @@ case object BearBorder extends Module("Rough border Bear", "fan-made variant by 
     )
 }
 
-// Marzaus's "Fan creatures" (Discord, northgard-fanmade-content, 2026-10-23; asked for by Gman on 2026-10-24), a fun mode
+// Marzaus's "Fan creatures" (Discord, northgard-fanmade-content, 2026-10-23; asked for on 2026-10-24), a fun mode
 // (creatures.scala, AggressiveCreaturesExpansion): no creature has its ability, and every creature is aggressive like the Fallen Valkyrie
 case object AggressiveCreatures extends Module("Aggressive creatures", "fan-made variant by Marzaus") {
     override def ready = true
@@ -1237,7 +1237,7 @@ case object AggressiveCreatures extends Module("Aggressive creatures", "fan-made
     )
 }
 
-// The Lion Kingdom (lion.scala), a fan-made clan: the video game's Kingdom of Neustria (Gman, 2026-10-21, with Robotos's Chapel and
+// The Lion Kingdom (lion.scala), a fan-made clan: the video game's Kingdom of Neustria (2026-10-21, with Robotos's Chapel and
 // alternative starting deck). On whenever the Lion plays (Game.modules), like New Blood, so its option isn't listed
 case object LionKingdom extends Module("Lion Kingdom", "fan-made clan") {
     override def ready = true
@@ -1250,7 +1250,7 @@ case object LionKingdom extends Module("Lion Kingdom", "fan-made clan") {
 
 // Robotos's alternative starting deck for the Lion Kingdom (Discord, 2026-10-21): 2 Adventure (Explore or Move 1), 2 Toil (Build, or
 // 1 food or 1 wood) and 2 Prey (Recruit 1, or 1 fame) instead of the usual six cards. It was a setup option at first; it is the Lion's
-// own deck in every new game (LionOwnDeck, Gman, 2026-10-24), and this option, now hidden, stays for the games that picked it
+// own deck in every new game (LionOwnDeck, 2026-10-24), and this option, now hidden, stays for the games that picked it
 case object LionStartingDeck extends GameOption with ToggleOption {
     val group = "Fan content".txt
     override def fold = |("Fan content")
@@ -1275,7 +1275,7 @@ case object LordsWhileContested extends GameOption with ToggleOption {
 }
 
 // A Lord adds its 2 combat points to every fight in its territory, the Lion attacking or defending, against a clan or a creature
-// (bug report, 2026-10-25: the Lion attacked a Draugr beside its own Lord, which added nothing; Gman chose this). Hidden, and given
+// (bug report, 2026-10-25: the Lion attacked a Draugr beside its own Lord, which added nothing; the owner chose this). Hidden, and given
 // to every new game (mandatoryFor); older games count the Lords only defending against a clan, and replay that way
 case object LordsInEveryFight extends GameOption with ToggleOption {
     val group = "Fan content".txt
@@ -1283,7 +1283,7 @@ case object LordsInEveryFight extends GameOption with ToggleOption {
     def valueOn = "Lion Kingdom's Lords fight in every combat in their territory".txt
 }
 
-// The Lion's upgrade card Ost (after the video game's Faith tree entry) in place of Abundance (the owner, 2026-10-25): a free Defense
+// The Lion's upgrade card Ost (after the video game's Faith tree entry) in place of Abundance (2026-10-25): a free Defense
 // Tower, and for the rest of the year its Lords join the combats it starts next to them. Hidden, and given to every new game
 // (mandatoryFor); older games keep Abundance (CardVersions.lionOst in editions.scala) and replay that way
 case object LionOst extends GameOption with ToggleOption {
@@ -1292,7 +1292,7 @@ case object LionOst extends GameOption with ToggleOption {
     def valueOn = "Lion Kingdom plays Ost instead of Abundance".txt
 }
 
-// The Lion's Rise of the Twelve Peers recruits 1 unit in each territory it controls with a Chapel (the owner, 2026-10-25), instead
+// The Lion's Rise of the Twelve Peers recruits 1 unit in each territory it controls with a Chapel (2026-10-25), instead
 // of in up to 2 with a Defense Tower or Training Camp. Hidden, and given to every new game (mandatoryFor); older games keep the old
 // card (CardVersions.lionOst in editions.scala) and replay that way
 case object LionChapelPeers extends GameOption with ToggleOption {
@@ -1301,7 +1301,7 @@ case object LionChapelPeers extends GameOption with ToggleOption {
     def valueOn = "Lion Kingdom's Rise of the Twelve Peers recruits by its Chapels".txt
 }
 
-// The Lion's Hildegard's Vow gives 2 combat points for each of its Chapels next to the fight (the owner, 2026-10-25), instead of
+// The Lion's Hildegard's Vow gives 2 combat points for each of its Chapels next to the fight (2026-10-25), instead of
 // for each Lord (Ost brings the Lords). Hidden, and given to every new game (mandatoryFor); older games keep the old card
 // (CardVersions.lionOst in editions.scala) and replay that way
 case object LionChapelVow extends GameOption with ToggleOption {
@@ -1310,7 +1310,7 @@ case object LionChapelVow extends GameOption with ToggleOption {
     def valueOn = "Lion Kingdom's Hildegard's Vow counts its Chapels".txt
 }
 
-// The Lion's Chapels give 1 lore each at harvest instead of 1 fame (the owner, 2026-10-25; the planned Stoat Kingdom's give fame).
+// The Lion's Chapels give 1 lore each at harvest instead of 1 fame (2026-10-25; the planned Stoat Kingdom's give fame).
 // Hidden, and given to every new game (mandatoryFor); older games keep the fame and replay that way
 case object LionChapelLore extends GameOption with ToggleOption {
     val group = "Fan content".txt
@@ -1318,7 +1318,7 @@ case object LionChapelLore extends GameOption with ToggleOption {
     def valueOn = "Lion Kingdom's Chapels give lore".txt
 }
 
-// The Lion's Faith (Gman, 2026-10-28): a fourth resource, 1 for each casualty its Lords or Hildegard deal in a fight and 1 for each
+// The Lion's Faith (2026-10-28): a fourth resource, 1 for each casualty its Lords or Hildegard deal in a fight and 1 for each
 // Chapel at harvest (instead of lore); its clan upgrades cost Faith; Paladins (Recruit 1, and 1 more for each Faith
 // paid, up to 4) in Ost's place, Rise of the Twelve Peers builds a free Defense Tower and Ost, only bringing the Lords, is the clan card. Hidden, and given to every new
 // game (mandatoryFor); older games keep the lore and the earlier cards (CardVersions.lionFaith in editions.scala) and replay that way
@@ -1328,7 +1328,7 @@ case object LionFaith extends GameOption with ToggleOption {
     def valueOn = "Lion Kingdom collects and spends Faith".txt
 }
 
-// PC version (pc.scala; asked for by Gman on 2026-11-11): a mode inspired by the Northgard video game. The map is built at setup,
+// PC version (pc.scala; asked for on 2026-11-11): a mode inspired by the Northgard video game. The map is built at setup,
 // every clan starts on its Port with a Town Hall, fog of war hides what it hasn't scouted, and Explore scouts. It plays with every
 // fan-made "PC" module, Minerals and the Sea module's Ports, which it turns on (and is turned off with them)
 case object PCVersion extends Module("PC version", "fan-made mode") {
@@ -1337,11 +1337,11 @@ case object PCVersion extends Module("PC version", "fan-made mode") {
     override def expansion = |(PCExpansion)
     // First of all: it builds the map in place of the setup's tile placements
     override def priority = -40
-    // (the Events module too since 2026-11-11, Gman)
+    // (the Events module too since 2026-11-11, the owner)
     def needs : $[Module] = $(Creatures, Warchiefs, Sea, EventsModule, TowersModule, WarchiefsPC, MineralsModule, MilitaryModule, AggressiveCreatures, FameUpgradesModule)
-    // and the map tiles of every expansion (Gman, 2026-11-11)
+    // and the map tiles of every expansion (2026-11-11)
     def tiles : $[GameOption] = $(WildernessTiles, WastelandsTiles, HorizonsTiles)
-    // and picks the Fan victories it is played with by default, which can be turned off (Gman, 2026-11-13)
+    // and picks the Fan victories it is played with by default, which can be turned off (2026-11-13)
     def victories : $[GameOption] = $(ModuleOption(FameGainsModule), DominationVictory)
     def about = $(
         "A mode inspired by the Northgard video game. The map is built at setup around a special central tile (a random one unless one is picked).",
@@ -1360,7 +1360,7 @@ case object PCVersion extends Module("PC version", "fan-made mode") {
 }
 
 object Module {
-    // The setup screen's section of a module that isn't fan-made (Robotos, 2026-10-26: one section per box)
+    // The setup screen's section of a module that isn't fan-made (2026-10-26: one section per box)
     def section(m : Module) : String = m match {
         case Creatures => "Base game"
         case Wilderness => "Wilderness expansion"
@@ -1474,7 +1474,7 @@ case class ModuleOption(module : Module) extends GameOption with ToggleOption wi
     // The Warchiefs module has its own section, with its parts (WarchiefsChoice); fan-made modules have theirs, Fan content;
     // the core box's Creatures is under Base game, with More Creatures, and Events and Sea under Uncharted Horizons, with its map tiles
     val group = (module == Warchiefs).?(WarchiefsChoice.group).|(FanVictories.modules.has(module).?(FanVictories.group).|(module.fan.?("Fan content").|(Module.section(module))).txt)
-    // Fan content folds like the single-choice sections (Gman, 2026-10-29), and so do the Fan victories
+    // Fan content folds like the single-choice sections (2026-10-29), and so do the Fan victories
     override def fold = FanVictories.modules.has(module).?(|(FanVictories.group)).|(module.fan.?("Fan content"))
     def valueOn = (module == Warchiefs).?("Full expansion: warchief pawns and upgrade cards").|((module == Creatures).?("Creatures module").|(module.label)).txt
     override def forcedOff(all : $[BaseOption]) = (module == Warchiefs).??(WarchiefsChoice.others(this))
@@ -1483,6 +1483,6 @@ case class ModuleOption(module : Module) extends GameOption with ToggleOption wi
     override def required(all : $[BaseOption]) = module.ready.?(module.requires).|($($[BaseOption](this)))
     // The PC version turns on the modules it plays with, and is turned off with any of them
     override def forcedOn(all : $[BaseOption]) = (module == PCVersion).??(PCVersion.needs./(ModuleOption) ++ PCVersion.tiles)
-    // and picks the Domination and Alternative fame gains victories, which can be turned off (Gman, 2026-11-13)
+    // and picks the Domination and Alternative fame gains victories, which can be turned off (2026-11-13)
     override def alsoOn(all : $[BaseOption]) = (module == PCVersion).??(PCVersion.victories)
 }

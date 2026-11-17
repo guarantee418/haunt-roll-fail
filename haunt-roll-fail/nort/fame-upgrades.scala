@@ -15,13 +15,13 @@ import hrf.elem._
 import nort.elem._
 
 
-// Marzaus's "Clan Fame upgrades (PC)" (Discord, northgard-fanmade-content, 2026-10-22; asked for by Gman on 2026-11-11), option
+// Marzaus's "Clan Fame upgrades (PC)" (Discord, northgard-fanmade-content, 2026-10-22; asked for on 2026-11-11), option
 // ModuleOption(FameUpgradesModule) under Fan content, and part of the PC version mode. Each of the seven core clans unlocks abilities
 // when its fame first reaches 20, 50 or 100 (sweep, after every action, Game.loggedPerform). RULES.md (Clan Fame upgrades) lists the
 // readings of the short post:
 // - a clan has an ability while its fame is at its threshold or more: it loses it when its fame drops below, and gets it back
-//   with the fame (Gman, 2026-11-12); fame is public in this mode (ui.scala, fameHidden)
-// - the cards' fame (Development cards, Achievements, Unrest) is counted when each card is taken, and none at the end (Gman,
+//   with the fame (2026-11-12); fame is public in this mode (ui.scala, fameHidden)
+// - the cards' fame (Development cards, Achievements, Unrest) is counted when each card is taken, and none at the end (the owner,
 //   2026-11-12): Game.finalFame, taken, unrest; the resources left still give their fame at the end
 // - Bear, Shield Mastery: 1 more combat point in every fight, against a clan or a creature, attacking or defending
 // - Bear, Hibernation: after Winter, the food and wood the Harvest gave (as it would now: Harvest.resources) once more
@@ -49,7 +49,7 @@ import nort.elem._
 //   that territory, except when Boar attacks a clan (it can't attack enemy territory); its card ability is left out. It goes to the
 //   creature discard pile when the warchief leaves the map or Boar loses Taming
 // - Goat, Shepherd: a sheep when unlocked and one at the start of each year after, one a year at most (game.sheepYear) and no cap
-//   (Gman, 2026-11-12); each is placed at Goat's next turn in a territory Goat controls. A sheep isn't a unit: it doesn't fight,
+//   (2026-11-12); each is placed at Goat's next turn in a territory Goat controls. A sheep isn't a unit: it doesn't fight,
 //   control or cost Winter; it gives 1 food at the Harvest; with each Move card (a Feast's Move too), before the Move, each sheep
 //   may move up to the card's value, through and into territories with no other clan; on its turn, not an action, Goat may kill one
 //   for 2 food; a sheep is lost when another clan has figures in its territory and Goat none. Below 20 fame the sheep stay but do
@@ -129,7 +129,7 @@ object FameUpgradesExpansion extends Expansion {
     def use(f : Faction, name : String)(implicit game : Game) { game.fameUsed += (f -> name) -> game.year }
 
     // The abilities held: those whose fame the clan has now; one drops when the fame falls below it, and comes back with the fame
-    // (Gman, 2026-11-12). Supplies is given only the first time
+    // (2026-11-12). Supplies is given only the first time
     def sweep(implicit game : Game) {
         if (on && game.isOver.not) {
             val held = FameUpgrade.all.%(_.ready).%(u => game.states.contains(u.clan)).%(u => u.clan.fame >= u.fame / Debug.fameUpgradeDiv).%(u => u.warchief.not || game.has(Warchiefs))
@@ -215,7 +215,7 @@ object FameUpgradesExpansion extends Expansion {
     def tamedPoints(t : Territory, f : Faction, attacking : Boolean)(implicit game : Game) : $[(Int, Elem)] =
         (f == Boar && game.chiefIn(t, f) && (attacking.not || game.present(t).forall(_ == f))).??(game.tamed./(c => c.kind.value -> ("the tamed " ~ c.kind.title.styled(styles.creature))).$)
 
-    // CARDS: their fame when taken, as nothing is counted at the end (Gman, 2026-11-12); with Alternative fame gains, which gives a
+    // CARDS: their fame when taken, as nothing is counted at the end (2026-11-12); with Alternative fame gains, which gives a
     // Development card's fame when taken already, only the other cards
     def taken(f : Faction, c : Card)(implicit game : Game) {
         if (on && f != Automa && (c.is[Development] && FameGainsExpansion.on).not) {

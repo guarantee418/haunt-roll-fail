@@ -3,7 +3,7 @@
 # of the other large buildings (the Forge's outline).
 # The Town Hall is the thatched hall of the Development card Town Hall (card/dev/town-hall.webp). The upgraded one is the
 # Northgard video game's upgraded hall (slate roof), from the game wiki (https://northgard.fandom.com/wiki/File:Town_Hall_icon.png,
-# the render on grass, kept here as town-hall-source.webp); Gman, 2026-11-11.
+# the render on grass, kept here as town-hall-source.webp); 2026-11-11.
 # Run from haunt-roll-fail/: python3 nort/tools/town-hall.py
 from PIL import Image, ImageFilter
 

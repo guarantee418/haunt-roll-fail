@@ -37,8 +37,8 @@ draws a tile when no neutral territory is left.
 | "Ban card draw developments" house rule (not in the rulebook): leaves out Merchant, Market Place, Upgraded Market Place, Upgraded Trading Post, Greater Trade Routes, Trading Post and Cunning Merchant | done 2026-10-05 (`NoDrawDevelopments` in `options.scala`); Negociation, Spy, Ancestral Curse and Veiled Threats stay |
 | "Ban Defensive Strategy" house rule (not in the rulebook): leaves Defensive Strategy out of the Development cards | done 2026-10-14 (`NoDefensiveStrategy` in `options.scala`), in the main setup and in Adset |
 | "One extra Development card each year" house rule (not in the rulebook): one more Development card revealed each year than there are players, the one left over discarded | done 2026-10-20 (`ExtraDevelopment` in `options.scala`, now one of the "Development cards each year" choices, `DevelopmentsChoice`; `devsIn` in `game.scala`), in the main setup and in Adset, not against the Automa; the Uncharted Horizons Development cards are added when the core decks can't last every year (six players in a long game) |
-| "One fewer after year 1 (hard mode)" house rule (not in the rulebook; Marzaus, 2026-10-22): year 1 reveals one Development card per player, every later year but the last one fewer, so the last player to pass gets none | done 2026-10-22 (`FewerDevelopments`, a `DevelopmentsChoice` with `NormalDevelopments` and `ExtraDevelopment`, in `options.scala`; `devsIn`, `earlyDevs` and `advancedDevs` in `game.scala`), in the main setup and in Adset, not against the Automa |
-| "One more Achievement card" house rule (asked for by Marzaus on 2026-10-19, not in the rulebook): the last year reveals one Achievement card more than there are players, so the last to pass still chooses; the one left is set aside | done 2026-10-19 (`ExtraAchievement` in `options.scala`), in the main setup and in Adset |
+| "One fewer after year 1 (hard mode)" house rule (not in the rulebook; 2026-10-22): year 1 reveals one Development card per player, every later year but the last one fewer, so the last player to pass gets none | done 2026-10-22 (`FewerDevelopments`, a `DevelopmentsChoice` with `NormalDevelopments` and `ExtraDevelopment`, in `options.scala`; `devsIn`, `earlyDevs` and `advancedDevs` in `game.scala`), in the main setup and in Adset, not against the Automa |
+| "One more Achievement card" house rule (asked for on 2026-10-19, not in the rulebook): the last year reveals one Achievement card more than there are players, so the last to pass still chooses; the one left is set aside | done 2026-10-19 (`ExtraAchievement` in `options.scala`), in the main setup and in Adset |
 | "Fame" setup choice (not in the rulebook): Private fame (the rule, fame tokens face down; the default) or Public fame (every clan's fame shown in the panels) | done 2026-10-14 (`PrivateFame`, `PublicFame` in `options.scala`, `fameHidden` in `ui.scala`), in the main setup and in Adset |
 | The Warchiefs box's 7 extra clan upgrade cards | done 2026-10-03: with the module, or alone with "Warchief upgrade cards only" in the "Warchiefs module" section |
 | Wilderness expansion: Environment tiles and five more creatures, with the Ancestral Graveyard and the Wyvern's Den | done 2026-10-04 (`wilderness.scala`, see Wilderness below) |
@@ -52,11 +52,11 @@ draws a tile when no neutral territory is left.
 | Tutorial (not in the rulebook): lessons as the Stag Clan, then a practice game against the Easy bot with a tip for every choice | done 2026-10-10 (`tutorial.scala`, "Tutorial" on the main menu) |
 | Uncharted Horizons: Training Fields module (two-player duel) | done 2026-10-05 (`training.scala`, "Training Grounds" on the main menu, see Training Fields below) |
 | Fan content: the Minerals module (fan-made by Maciej Drewing, BoardGameGeek file 255809) | done 2026-10-21 (`minerals.scala`, option "Minerals" under "Fan content", also in Adset; see Minerals below) |
-| Fan content: Tower PC version (fan-made by Marzaus, Discord) | done 2026-10-22 (`towers.scala`, option "Tower PC version" under "Fan content", also in Adset; see Tower PC version below) |
-| Fan content: Warchiefs PC version (fan-made by Marzaus) | done 2026-10-22 (option "Warchiefs PC version" under "Fan content", needs the warchiefs; see Warchiefs PC version below) |
-| Fan content: the Military paths module (fan-made by Marzaus, Discord northgard-fanmade-content) | done 2026-10-22 (`military.scala`, option "Military paths" under "Fan content", also in Adset; see Military paths below) |
-| Fan content: Aggressive creatures (Marzaus's "Fan creatures", Discord northgard-fanmade-content) | 2026-10-24 (`AggressiveCreaturesExpansion` in `creatures.scala`, option "Aggressive creatures" under "Fan content", needs Creatures, also in Adset; see Aggressive creatures below) |
-| Fan content: the Lion Kingdom (the video game's Kingdom of Neustria as a clan; designed here for Gman, with Robotos's Chapel and starting deck) | 2026-10-24 (`lion.scala`, picked like any clan, with its own starting deck; not in Adset or the random picks; see Lion Kingdom below) |
+| Fan content: Tower PC version (fan-made, Discord) | done 2026-10-22 (`towers.scala`, option "Tower PC version" under "Fan content", also in Adset; see Tower PC version below) |
+| Fan content: Warchiefs PC version (fan-made) | done 2026-10-22 (option "Warchiefs PC version" under "Fan content", needs the warchiefs; see Warchiefs PC version below) |
+| Fan content: the Military paths module (fan-made, Discord northgard-fanmade-content) | done 2026-10-22 (`military.scala`, option "Military paths" under "Fan content", also in Adset; see Military paths below) |
+| Fan content: Aggressive creatures (the "Fan creatures", Discord northgard-fanmade-content) | 2026-10-24 (`AggressiveCreaturesExpansion` in `creatures.scala`, option "Aggressive creatures" under "Fan content", needs Creatures, also in Adset; see Aggressive creatures below) |
+| Fan content: the Lion Kingdom (the video game's Kingdom of Neustria as a clan; designed here, with Robotos's Chapel and starting deck) | 2026-10-24 (`lion.scala`, picked like any clan, with its own starting deck; not in Adset or the random picks; see Lion Kingdom below) |
 | Other modules and expansions | options shown, disabled; `Module` groundwork in `options.scala` |
 | Buildings, combat, three-closed-territories win | done |
 | Clan powers | done: all seven (Bear's Kaija and Snake's Scorched Earth added 2026-10-03) |
@@ -463,7 +463,7 @@ marked ⚡):
 | Clan | Initial | Upgrade | Upgrade | Warchief upgrade |
 |---|---|---|---|---|
 | Dragon | ⚡ Dragon Clan: sacrifice 1 unit or place 1 deployed unit on the Pyre, then draw 1 and collect 1 food | ⚡ Capture for Sacrifice: from a territory you control, remove 1 enemy unit from an adjacent territory and put it on the Pyre; you may return 1 own unit from the Pyre to a territory you control | Reluctant Workforce: draw 1; sacrifice up to 2 units, 1 card each | Tenacious Grudge: Move 3, +1 point per unit on the Pyre |
-| Horse | ⚡ Horse Clan: Build; small buildings (Carved Stone too) need no space | Craftsmen: Recruit 2, then may replace a building you control with another of the same size (a small one with a Carved Stone too, on any space: "no other restriction"; Marzaus, 2026-11-01) | ⚡ Quality of Life: may build a free Defense Tower needing no space, then collect a resource from each of your territories with a Defense Tower | Eitria and Brok's Precision: Move 2; before, may pay any 1 resource for +1 point and Move 3 |
+| Horse | ⚡ Horse Clan: Build; small buildings (Carved Stone too) need no space | Craftsmen: Recruit 2, then may replace a building you control with another of the same size (a small one with a Carved Stone too, on any space: "no other restriction"; 2026-11-01) | ⚡ Quality of Life: may build a free Defense Tower needing no space, then collect a resource from each of your territories with a Defense Tower | Eitria and Brok's Precision: Move 2; before, may pay any 1 resource for +1 point and Move 3 |
 | Kraken | ⚡ Kraken Clan: collect 1 food or 1 wood from a territory you control with a High Tide token; may draw 1 | ⚡ Endless Tide: may remove 1 enemy unit from an open territory for 1 lore; may draw 1 | Knowledge from Beyond: per High Tide territory you control, one of Recruit 1 there, Collect 1 resource from it, Draw 1 (any option for each territory) | Howl from the Sea: Move 2; where you win, add 1 unit per casualty inflicted; for each combat lost, 1 unit where you retreat |
 | Lynx | ⚡ Lynx Clan: Explore; may put the tile at the bottom and draw another | ⚡ Fire Arrows: Move 1, +1 point and +1 casualty | Poaching: draw 2; if either is Flash, reveal it and draw 1 more | The Wise One: Move 2, +1 point per casualty inflicted |
 | Ox | ⚡ Ox Clan: Move 1; the token may be taken after the card instead | Warcraft: Explore; 1 lore if the tile shows lore, otherwise another Explore | City Builder: Build, then 1 lore and may draw 1 | The True Hero: Move 2; before a combat with Torfin, may give up his power to remove a building there |
@@ -472,7 +472,7 @@ marked ⚡):
 
 ### Printed New Blood cards and boards (2026-10-23)
 
-Gman sent photos of the printed New Blood clan cards (19) and of the clan board texts (9) on 2026-10-23. The TTS
+Photos of the printed New Blood clan cards (19) and of the clan board texts (9) on 2026-10-23. The TTS
 cards above were a prototype. New games get the hidden `PrintedNewBlood` option (`options.scala`, in `mandatoryFor`),
 which turns on the printed cards (`CardVersions.printedNewBlood` in `editions.scala`: own name, image, effect, text)
 and the printed board rules; games started before keep the TTS cards and rules, so their replays don't change. The
@@ -494,7 +494,7 @@ Brok's Precision, Kàra's Devotion (was Howl from the Sea), Ox Clan, Torfin's Fe
 | Lynx | Mielikki's Wisdom | The Wise One | Move 3; 1 lore once a casualty is rolled in a fight it starts, once per card (`wisdom`) |
 | Ox | Ancient Battlegrounds | Warcraft | Explore; a tile showing lore may give 1 lore; without it (declined or none), another Explore |
 | Ox | City Builder | City Builder | Build; a small building (or Carved Stone) may draw 1, a large one gives 1 lore (`game.lastBuilt`) |
-| Squirrel | ⚡ Squirrel Clan | Squirrel Clan | Recruit 1; 1 food if the unit went into a territory producing food (as at the harvest), no fame; in games with the hidden `PrintedSquirrelClan` every new game gets since 2026-11-06 (Marzaus), as `PrintedNewBlood` missed it (`SquirrelFoodAction`) |
+| Squirrel | ⚡ Squirrel Clan | Squirrel Clan | Recruit 1; 1 food if the unit went into a territory producing food (as at the harvest), no fame; in games with the hidden `PrintedSquirrelClan` every new game gets since 2026-11-06, as `PrintedNewBlood` missed it (`SquirrelFoodAction`) |
 | Squirrel | Cooking Mastery | Cooking Mastery | Build, then a free Food Silo needing no space in a territory you control without one |
 | Squirrel | Economics | Economics | Draw 1; 1 food for a second card, 2 more for a third |
 | Rat | ⚡ Overwork | Overwork | The unit removed may be anywhere |
@@ -503,14 +503,14 @@ Board rules that changed:
 
 - Lynx: Brundr and Kaelinn are two figures, each worth 1 point (`game.lynx` and `game.lynx2`; the second is recruited
   like the first, and is only on the map while the first is). Each starting placement may take one lynx, so Lynx can start
-  with both (hidden `LynxBothAtSetup`, every new game, Gman 2026-10-31; before it a lynx in the second placement moved the
+  with both (hidden `LynxBothAtSetup`, every new game, 2026-10-31; before it a lynx in the second placement moved the
   first one there). One placement may also take both, in place of two units: one unit and both lynxes, or both with
-  the warchief (Gman, 2026-11-01). Before or after a Lynx card with the lynx
+  the warchief (2026-11-01). Before or after a Lynx card with the lynx
   icon (the initial card and the two upgrades), a bonus Move 1 with only the lynxes (and Caring Siblings' new units),
   into any territory but not across Rough borders nor into a creature's, starting at most 1 fight (`LynxBonusAction`).
   A Move takes both lynxes in a territory, or one (`MoveOneLynxAction`). The second lynx is lost like a unit, after the units.
   A Training Camp's extra recruit may be a lynx in the reserve instead of a unit, as Lynx picks (hidden `LynxCampRecruitsLynx`,
-  every new game, Marzaus 2026-11-02, `CampRecruitAction`; before it the camp always added a unit).
+  every new game, 2026-11-02, `CampRecruitAction`; before it the camp always added a unit).
 - Mielikki: attacking, she may bring Brundr or Kaelinn from any territory (instead of +1 point with a Flash card).
 - Kraken: a High Tide token is placed or moved before or after a Kraken card, and goes back when Kraken loses a fight
   in its territory. Kàra, defending, may place one as well as move one.
@@ -578,7 +578,7 @@ setup would draw), and Thane (default) or Jarl.
   player of the team, and a team needs every card (1 Map Control and 3
   Wealth) in both modes, as the rulebook's 2 vs. 2 note says ("A team wins if
   each Victory Condition card is fulfilled by at least one player from the
-  same team"; Marzaus, 2026-11-07), in games with the hidden
+  same team"; 2026-11-07), in games with the hidden
   `TeamVictoryAllCards` every new game gets; older team games kept Thane's
   Map Control and one Wealth card. Ties: the most cards fulfilled, then fame. Three closed
   territories with large buildings no longer win; nobody fulfilling the
@@ -700,7 +700,7 @@ with Wilderness too, use at most 12 Environment tiles in all):
 - Vedrfolnir (Harvest): just before the Harvest its controller may add the top
   map tile next to any open territory (not an Explore action: no clan or
   Development explore effects). In the PC version (new games, hidden
-  `PCVedrfolnirReveal`; Gman, 2026-11-12) the map is whole, so instead its
+  `PCVedrfolnirReveal`; 2026-11-12) the map is whole, so instead its
   controller reveals one territory it hasn't seen, drawn at random (enemy ones
   too), at the end of each year; it stays seen, gives no fame or Explore
   bonuses. `PCVedrfolnirRevealAction(X)` switches a running game. Its Wastelands rule (adding the top map tile just before the Harvest) is
@@ -882,7 +882,7 @@ Fan-made by Maciej "Niedźwiedź" Drewing (BoardGameGeek user Niedwiediew,
 file 255809, "[Fan-made] Module: Minerals [ENG/PL/HU]", v2 of 2023). Built from
 its Polish print-and-play version by Czacha Games (3 pages, the same rules,
 with the Mine tokens) and the author's answer under the BGG file, then checked
-against the English one-page PDF Gman uploaded (2026-10-21), whose names are
+against the English one-page PDF uploaded on 2026-10-21, whose names are
 used (Gem, not Ruby). The art
 (`token/building/mine`, `ui/stone`, `ui/iron`, `ui/gem`) is cut from that PDF.
 
@@ -919,7 +919,7 @@ used (Gem, not Ruby). The art
   It still takes one space and one supply token, and is one building for the
   tie-breaks and the three-territories win. When it leaves the map (removed
   or replaced) its Stone goes back to the box (`buildings_=` in `game.scala`).
-  In games with the hidden `BuildOrUpgrade` every new game gets (Gman, 2026-11-16: Snake's Feast built a Food Silo in
+  In games with the hidden `BuildOrUpgrade` every new game gets (2026-11-16: Snake's Feast built a Food Silo in
   Winter for Clan and was then offered the upgrade), a Build either builds or upgrades: the upgrade (with Stone, or the PC
   version's Town Hall) is offered only before anything is built, and ends the Build (`game.builtThisBuild`);
   `BuildOrUpgradeAction(X)` switches a running game.
@@ -965,9 +965,9 @@ in `game.scala`, `chiefAtSetup`, `chiefPrice` and `recruitChief` in `map.scala`)
 
 ## Fan content: Military paths module (2026-10-22)
 
-Fan-made by Marzaus, posted in the Discord channel northgard-fanmade-content
-(thread "Military paths"); Gman sent screenshots of the post on 2026-10-22.
-The post is short, so the open points were put to Gman in a Claude Doc
+Fan-made, posted in the Discord channel northgard-fanmade-content
+(thread "Military paths"); screenshots of the post came on 2026-10-22.
+The post is short, so the open points were put to the owner in a Claude Doc
 ("Military paths: rule questions and plan"); the readings below are the ones
 proposed there, to change if Marzaus answers otherwise.
 
@@ -982,7 +982,7 @@ proposed there, to change if Marzaus answers otherwise.
   enemy figure the fight began with (units, Militia, the bodyguard, the
   warchief, Kaija and the other companions, Blainn; counted before any kill,
   the towers' and Leadership's before the fight included; `game.fightSize`),
-  even if it killed none (the owner, 2026-10-23: "If I fought against 8 units
+  even if it killed none (2026-10-23: "If I fought against 8 units
   and I won that battle, even if I didn't kill anybody, I should still get 8
   MXP"; Intimidate pushing out the last unit is a win against 1). And each
   side, won, lost or tied, 2 per enemy unit it killed (Militia and the bodyguard too, and
@@ -996,14 +996,14 @@ proposed there, to change if Marzaus answers otherwise.
   controlled; Legions 1, 3 per Training Camp controlled; Legions 2, one unit
   from the supply at each Training Camp; Leadership's dead bodyguard comes back.
   With the Wilderness, its Geysers took over the End of the Year and none of
-  this happened (Marzaus, 2026-11-01); in games with the hidden
+  this happened (2026-11-01); in games with the hidden
   `EndOfYearAfterGeysers` every new game gets, the Geysers go first and the End
   of the Year then goes on through the Military paths. A running game can be
   switched over with `EndOfYearAfterGeysersAction(X)`.
 - A unit lost outside a fight (Draugr, Valdemar, the Swamp, the Poisonous Swamp,
   the Volcano, the Wyvern, events) may be the bodyguard or a Militia instead: the
   clan is asked right after, with "Lose a unit" and each of them, in games with
-  the hidden `PickLoneLoss` every new game gets (Marzaus, 2026-11-07: a unit was
+  the hidden `PickLoneLoss` every new game gets (2026-11-07: a unit was
   always lost, so the bodyguard, back each year, never was). Cards that remove
   an enemy's unit (Plunder, Raid, Endless Tide, ...) still take a unit.
 - Leadership. 1: the bodyguard (`game.guards`) is a figure that is wherever the
@@ -1011,22 +1011,22 @@ proposed there, to change if Marzaus answers otherwise.
   combat point, lost as a casualty after the units and Militia and before the
   warchief; not one of the 14 units, no Winter cost. Horse Clan's two
   warchiefs each have one, Eitria's and Brok's (`game.brokGuard`, beside Brok),
-  in games with the hidden `HorseTwoGuards` every new game gets (Gman,
-  2026-11-06; `HorseTwoGuardsAction(X)` switches a running game); where both
+  in games with the hidden `HorseTwoGuards` every new game gets
+  (2026-11-06; `HorseTwoGuardsAction(X)` switches a running game); where both
   are in a fight, Eitria's goes first, and the casualty picker's bodyguard
   switch is one of them, the other counted with the units. A clan picking its
   casualties loses the warchief only with its bodyguard, and Horse's Brok only
   with his, in games with the hidden `GuardBeforeChief` every new game gets
-  (Marzaus, 2026-11-11, Saga and Clan: Horse won a fight, lost Eitria and a unit,
+  (2026-11-11, Saga and Clan: Horse won a fight, lost Eitria and a unit,
   and her bodyguard went to the reserve with her; `GuardBeforeChiefAction(X)`
   switches a running game). With the bodyguard and other units in the fight, the
   clan is asked whether the bodyguard goes first even when that is its only choice
-  (Gman, 2026-11-11: with the Warchiefs PC version's 2-casualty warchief and 1
+  (2026-11-11: with the Warchiefs PC version's 2-casualty warchief and 1
   casualty he was never asked), in games with the hidden `GuardCasualtyAsked`
   every new game gets (`guardChoice` in `map.scala`). 2: one reroll in each
   fight with the warchief, against a clan, and against a creature too in games
-  with the hidden `MilitaryRerollCreatures` every new game gets (Gman,
-  2026-11-04; `MilitaryRerollCreaturesAction(X)` switches a running game)
+  with the hidden `MilitaryRerollCreatures` every new game gets
+  (2026-11-04; `MilitaryRerollCreaturesAction(X)` switches a running game)
   (as Liv's; with Liv, one each),
   +1 combat point where the warchief fights, and after a Move card's moves
   the warchief may cross one more regular border (`ChiefMoveAction`; not into
@@ -1036,7 +1036,7 @@ proposed there, to change if Marzaus answers otherwise.
   with the hidden `ChiefMoveFromHeld` every new game gets; older games let it
   move on from anywhere. `ChiefMoveFromHeldAction(X)` switches a running game.
   It is "once more", so only after the warchief moved with the card
-  (`game.chiefMoved`; Marzaus, 2026-11-04), in games with the hidden
+  (`game.chiefMoved`; 2026-11-04), in games with the hidden
   `ChiefMoveAfterMove` every new game gets (`ChiefMoveAfterMoveAction(X)`). 3: the warchief's
   territory recruits one more unit, like a Training Camp; after a fight the
   warchief's side wins, each enemy unit killed there is replaced by one of the
@@ -1072,11 +1072,11 @@ proposed there, to change if Marzaus answers otherwise.
 ## Fan content: Lion Kingdom (2026-10-24)
 
 A clan made up for the site, not published anywhere: the Northgard video game's Kingdom of Neustria (its
-Lion clan), from the design Gman asked for on 2026-10-21 (Claude Doc "Lion Kingdom for Uncharted Lands"),
+Lion clan), from the design asked for on 2026-10-21 (Claude Doc "Lion Kingdom for Uncharted Lands"),
 with Robotos's Chapel and alternative starting deck from Discord. Picking it in the clan picker turns it on
 (module `LionKingdom`, hidden); it isn't offered in Adset or by the Random Clan picks. Its art is made from the
 game's own images by `nort/tools/lion-art.py`, with the video game's Lion emblem and Hildegard (her unit icon, also her
-figure on the map) from the Northgard wiki (`expansion/lion/`, asked for by Gman on 2026-10-24).
+figure on the map) from the Northgard wiki (`expansion/lion/`, asked for on 2026-10-24).
 
 - Clan card "Lion Kingdom" (flash): Recruit 1, then pay up to 2 lore for 1 more unit each in the same territory.
 - Clan power, Forts and Lords: 3 Lord tokens. Building a Defense Tower puts a Lord from the reserve on it.
@@ -1088,15 +1088,15 @@ figure on the map) from the Northgard wiki (`expansion/lion/`, asked for by Gman
   attacker moving in sent it back to the reserve, and Lords never added their combat points.
   Each Lord adds its 2 combat points to every combat in its territory, the Lion attacking or defending, against a clan
   or a creature (hidden `LordsInEveryFight`, every new game since 2026-10-25, after a bug report where the Lion attacked
-  a Draugr beside its own Lord; Gman's choice). Older games count them only defending against a clan.
+  a Draugr beside its own Lord; the owner's choice). Older games count them only defending against a clan.
 - Chapel: the Lion builds Chapels instead of Carved Stones, on Carved Stone spaces (7, cost 1); each gives 1 lore at
-  harvest in every new game (hidden `LionChapelLore`, the owner, 2026-10-25), 1 fame in older games; none under a
+  harvest in every new game (hidden `LionChapelLore`, 2026-10-25), 1 fame in older games; none under a
   Kobold (like the Altar of Kings).
 - Rise of the Twelve Peers (upgrade, flash): Recruit 1 in each territory the Lion controls with a Chapel, then may put a
   Lord from the reserve on a Defense Tower without one (every new game: hidden `LionChapelPeers`, the owner,
   2026-10-25; picture `card/clan/lion-rise-of-the-twelve-peers-chapels.webp`). Older games: Recruit 1 in up to 2
   territories with a Defense Tower or Training Camp, then the same Lord.
-- Ost (upgrade, in place of Abundance in every new game: hidden `LionOst`, asked for by the owner on 2026-10-25, named after
+- Ost (upgrade, in place of Abundance in every new game: hidden `LionOst`, asked for on 2026-10-25, named after
   the video game's Faith tree entry): build 1 Defense Tower for free (on a free space, with a Lord from the reserve as
   usual); until the end of the year, the Lords next to a combat the Lion starts, against a clan or a creature, join it,
   2 combat points each, and go back to their towers after it, won or lost (they never take casualties). With Hildegard's Vow a Lord still counts once. The card
@@ -1107,7 +1107,7 @@ figure on the map) from the Northgard wiki (`expansion/lion/`, asked for by Gman
   2026-10-25; picture `card/clan/lion-hildegards-vow-chapels.webp`). Older games: +2 for each Lord next to the fight, in
   combats against clans.
 - Warchief Hildegard (Warchiefs module): after a combat she was in, 1 lore for each casualty the enemy suffered.
-- Faith (every new game since 2026-10-28: hidden `LionFaith`, asked for by Gman; the video game's Faith icon from the
+- Faith (every new game since 2026-10-28: hidden `LionFaith`, asked for; the video game's Faith icon from the
   Northgard wiki, set on a disc by `nort/tools/faith-icon.py`, `ui/faith.webp`): a fourth resource only the Lion has, in its
   panel between the lore and the fame. It gains 1 Faith for each casualty the enemy suffers in a combat against a clan
   where its Lords add combat points (in their territory, or next to it with Ost or the older Hildegard's Vow) or Hildegard
@@ -1116,14 +1116,14 @@ figure on the map) from the Northgard wiki (`expansion/lion/`, asked for by Gman
   Faith is paid and taken in the harvest's 3-for-1 trades like the other resources, and in 1-for-1 trades only with a
   teammate that has Faith too (another Lion), so no other clan holds it; it counts in the final fame's resources (1 per 3).
   With Faith the three clan cards change (`CardVersions.lionFaith` in `nort/editions.scala`, pictures by `lion-art.py`):
-  - Ost, the clan card in place of "Lion Kingdom" (flash, Gman's correction on 2026-10-29): only the Lords joining the
+  - Ost, the clan card in place of "Lion Kingdom" (flash, corrected on 2026-10-29): only the Lords joining the
     combats the Lion starts next to them until the end of the year, with no free Defense Tower (`lion-ost-lords.webp`).
   - Rise of the Twelve Peers (upgrade, flash): build 1 Defense Tower for free (a Lord from the reserve goes on it as usual),
     then may put a Lord from the reserve on another Defense Tower without one (`lion-rise-of-the-twelve-peers-tower.webp`).
   - Paladins (upgrade, flash, in Ost's place): Recruit 1, then pay up to 4 Faith for 1 more unit each in the same
     territory (5 units at most; `card/clan/lion-paladins.webp`).
   Hildegard's Vow doesn't change.
-- Its own starting deck (every new game, hidden `LionOwnDeck`, Gman 2026-10-24; a setup option at first, `LionStartingDeck`, kept for the games that picked it): Adventure (Explore or Move 1), Toil (Build, or collect 1 food or 1 wood) and
+- Its own starting deck (every new game, hidden `LionOwnDeck`, 2026-10-24; a setup option at first, `LionStartingDeck`, kept for the games that picked it): Adventure (Explore or Move 1), Toil (Build, or collect 1 food or 1 wood) and
   Prey (Recruit 1, or 1 fame), two of each, instead of the six core starting cards.
 
 ## Expansions (later)
@@ -1199,7 +1199,7 @@ Check these against the rulebook when it is at hand.
     with the moves left, stopping on the shore only when they attack, like any
     Move (the newer rulebook: "If a player is on a territory adjacent to a Port,
     and use a Move 3, they may use one Move to get on Port and another two to get
-    to a different Port"; addidinu on Discord, relayed by Gman on 2026-11-08), in
+    to a different Port"; Discord, 2026-11-08), in
     games with the hidden `SailOnFromPort` every new game gets
     (`SailOnFromPortAction(X)` switches a running game). Effects that ignore Rough
     borders don't make it cheaper, as the sea isn't a border. Older games read the
@@ -1247,7 +1247,7 @@ Check these against the rulebook when it is at hand.
   - Creatures: the Automa never moves into a territory with a creature;
     creature prompts aimed at it are answered by its bot.
     When a creature picks where to move, the Automa's figures are ignored
-    (a ruling from Robotos, 2026-10-05): a territory with only Automa
+    (a ruling from 2026-10-05): a territory with only Automa
     figures counts as empty, and only the player's figures count for "most
     units".
   - The die's choice face: the casualty only when the enemy has one figure
@@ -1288,7 +1288,7 @@ Check these against the rulebook when it is at hand.
     casualty chosen by the player like the warchief, can't be targeted by card
     effects on enemy units, doesn't count for the 14-unit limit. Unlike
     Kaija they may enter enemy territories. Brundr and Kaelinn count
-    for winter, each like a unit (Gman, 2026-11-01; hidden `LynxesCostWinter`, every new game; older
+    for winter, each like a unit (2026-11-01; hidden `LynxesCostWinter`, every new game; older
     games left them out, reading the Uncharted Horizons rulebook); Brok does too, like a warchief.
     Without the Warchiefs module Horse has no warchief and no Brok.
   - Brundr and Kaelinn's Move 1 doesn't cross Rough borders; the units with
@@ -1311,9 +1311,9 @@ Check these against the rulebook when it is at hand.
     Kraken Clan card's food or wood must be one a territory Kraken controls
     with a High Tide token gives at harvest (its icons and buildings; with
     neither, only the draw is left), as the card says "from a territory"
-    (Marzaus, 2026-10-19; games started before that, without the hidden
+    (2026-10-19; games started before that, without the hidden
     `KrakenFromTerritory` option, offer either whatever the territory gives).
-    Knowledge from Beyond follows the print card Marzaus posted on 2026-10-20:
+    Knowledge from Beyond follows the print card posted on 2026-10-20:
     each territory gets its own choice, so one option can be taken for every
     territory; Collect offers only a resource that territory gives at harvest
     (food, wood or lore), and Recruit is a Recruit, so the territory's Training
@@ -1323,10 +1323,10 @@ Check these against the rulebook when it is at hand.
     no Training Camp unit.
   - Ox: the token goes on a free small building space or Carved Stone space
     of the explored tile that Ox picks (small buildings go on both), even in a
-    neutral or enemy territory; none if the tile has no such space (Robotos,
-    2026-10-12; games started before that put it on the first free small
+    neutral or enemy territory; none if the tile has no such space
+    (2026-10-12; games started before that put it on the first free small
     building space, never a Carved Stone one, `OxPicksSpace`). Tokens are used in every fight, against
-    creatures too (Gman, 2026-10-11), chosen before food is spent; against a
+    creatures too (2026-10-11), chosen before food is spent; against a
     creature token 6's extra casualty does nothing, as creatures ignore
     casualties. A space with a token can't be built on.
   - Horse: "close a territory" means one Horse controls, closed by Horse's
@@ -1410,8 +1410,7 @@ Check these against the rulebook when it is at hand.
   An Achievement it takes (or Mimirsbrunn's) is kept aside, face down, and
   scored at the end, not put on top of the draw pile, where a Replace,
   Remove or draw effect would bring it into the hand in place of a card
-  (`AchievementsAside`, every new game since 2026-10-28, asked for by
-  Marzaus and Robotos; `takeCard` in `effects.scala`, `FactionState.aside`;
+  (`AchievementsAside`, every new game since 2026-10-28; `takeCard` in `effects.scala`, `FactionState.aside`;
   a running older game can be switched over with `AchievementsAsideAction(X)`).
 - **Hidden Ways**: to any open territory, also an enemy one (then a fight).
 - **Bribery**: to any adjacent territory (Rough borders ignored) holding at
@@ -1432,7 +1431,7 @@ Check these against the rulebook when it is at hand.
   neutral or the defender's and not in a fight; if no defender is left, the
   attacker wins the combat without rolling (the FAQ: Intimidate is step 1 of
   the combat, so a combat took place), with Wolf's food, Stag's fame and a
-  Conquest win (reported by Robotos, 2026-10-11).
+  Conquest win (reported, 2026-10-11).
 - **Amenities**: small buildings never take a space; they are drawn next to
   the territory number.
 - **Industrious Villagers**: a Carved Stone can only replace a building on a
@@ -1488,11 +1487,11 @@ Check these against the rulebook when it is at hand.
     (Raven Clan closing, Glory of the Clan).
   - With the second chance tile, a lair creature acts as from an Explore.
 - **Warchiefs**, where the rulebook says nothing or the game simplifies
-  (confirmed by the owner on 2026-10-03):
+  (confirmed on 2026-10-03):
   - Casualties in a fight (against a clan or a creature) are chosen by their
     player, as the rulebook says: any mix of units, the warchief, Kaija (or
     Brundr and Kaelinn, or Brok) and Jötunn Blainn, asked only when there is
-    more than one way (`CasualtyPickAction`; asked for by Robotos on
+    more than one way (`CasualtyPickAction`; asked for on
     2026-10-11). Games started before 2026-10-11 (without the hidden
     `ChooseCasualties` option) take units first, then the warchief, Blainn
     and Kaija, as the owner had confirmed on 2026-10-03. The Automa still
@@ -1515,7 +1514,7 @@ Check these against the rulebook when it is at hand.
   - Svarn's Menders brings back every casualty, the warchief, the
     companion (Kaija, Brundr and Kaelinn, Brok) and Jötunn Blainn included,
     but only casualties, not figures lost for having nowhere to retreat
-    (the owner's ruling of 2026-10-12; the hidden `MendFigures` option that
+    (the ruling of 2026-10-12; the hidden `MendFigures` option that
     every new game gets; older games bring back units only).
   - Not confirmed yet:
     - Halvard's Craft: a "new" territory is one with none of the areas the
@@ -1568,7 +1567,7 @@ Check these against the rulebook when it is at hand.
 
 ## Fan content: Tower PC version (done 2026-10-22)
 
-Fan-made by Marzaus, posted in the Discord's #northgard-fanmade-content
+Fan-made, posted in the Discord's #northgard-fanmade-content
 ("Tower PC version", 2026-10-22): Defense Towers as in the video game.
 The post has four lines; where it is short:
 
@@ -1598,7 +1597,7 @@ The post has four lines; where it is short:
 ## Fan content: Lower skill floor Dragon variant (2026-10-24)
 
 Robotos's variant of the Dragon Clan (Discord, northgard-fanmade-content, thread "Lower skill floor
-Dragon variant", 2026-10-21; Gman sent screenshots on 2026-10-24). Option `ModuleOption(DragonVariant)`,
+Dragon variant", 2026-10-21; screenshots on 2026-10-24). Option `ModuleOption(DragonVariant)`,
 under "Fan content", also in Adset. Its aim, in the post: Dragon pumps fewer resources out of thin air,
 every Dragon card burns thralls, and Dragon never kills its own units, so it is easier to pilot.
 
@@ -1623,7 +1622,7 @@ Readings (`CardVersions.dragonVariant` in `editions.scala`, the rules in `newblo
 
 ## Fan content: Rough border Bear (2026-10-31)
 
-Robotos's "Special Unit Hater's Bear - Rough Border's Edition" (Discord, northgard-fanmade-content, 2026-10-22; Gman sent a
+Robotos's "Special Unit Hater's Bear - Rough Border's Edition" (Discord, northgard-fanmade-content, 2026-10-22; a
 screen recording of the thread on 2026-10-31). Picked as its own clan, "Bear Clan (variant)", in the clan picker's "Fan-made
 clans" section with the Lion Kingdom and the lower skill floor Dragon; its option `ModuleOption(BearBorder)` is hidden, not in
 Adset. The aim, in the thread: a Bear without a special unit, playing around Rough borders and defending; Kaija is "a mobile
@@ -1654,7 +1653,7 @@ pictures by `tools/card-text.py`, the board by `tools/board-text.py bear-border`
 
 ## Fan content: Aggressive creatures (2026-10-24)
 
-Marzaus's "Fan creatures", a fun mode (Discord, northgard-fanmade-content, 2026-10-23; Gman sent a screenshot
+Marzaus's "Fan creatures", a fun mode (Discord, northgard-fanmade-content, 2026-10-23; a screenshot
 on 2026-10-24): "Creatures have no abilities but they are all aggressive ... if they come to you, they attack,
 every type of creature can't share territory with them." Option `ModuleOption(AggressiveCreatures)`, under
 "Fan content", needs the Creatures module, also in Adset.
@@ -1685,7 +1684,7 @@ before the fight and its return to the Den. Readings:
 
 ## Fan content: Alternative fame gains (2026-11-01)
 
-Marzaus's "Alternative fame gains" (Discord, northgard-fanmade-content, 2026-10-22; Gman sent a screenshot on
+Marzaus's "Alternative fame gains" (Discord, northgard-fanmade-content, 2026-10-22; a screenshot on
 2026-11-01). Option `ModuleOption(FameGainsModule)`, under "Fan content", also in Adset; rules in
 `fame-gains.scala`. The post:
 
@@ -1699,7 +1698,7 @@ Marzaus's "Alternative fame gains" (Discord, northgard-fanmade-content, 2026-10-
 - Achievement Card can be resolved during players turn at any point (once only, not an action), gain Fame based
   on the card (pick 2 random Ach. card and keep 1 hidden at the game setup)
 
-Readings (Gman may change them):
+Readings (the owner may change them):
 
 - "Altar of Fame" is the Altar of Kings, the board game's only altar. A clan wins as soon as its fame tokens
   (`f.fame`) reach 120 while it controls a territory with an Altar of Kings, checked after every action
@@ -1707,17 +1706,17 @@ Readings (Gman may change them):
   usual tie-breaks.
 - "Replaces all victory conditions": three closed territories with large buildings no longer win, and the option
   needs the standard or "Fame victory only" conditions (not Alternative victory). It is the only way to win
-  (Gman, 2026-11-02): nobody at 120 with an Altar after the last year, the game goes on, year after year, until a
+  (2026-11-02): nobody at 120 with an Altar after the last year, the game goes on, year after year, until a
   clan wins (`GameEndAction` in `fame-gains.scala`). The extra years reveal no cards once the Development decks
   are used up. Bot games stop after `NORT_FAME_YEARS` (4) extra years and are scored as usual.
 - The Altar of Kings still gives its 3 fame each harvest; built, it gives 2 like any large building plus 3 (5).
 - Building: every building a clan places, through a Build card or for free (Quality of Life, Cooking Mastery,
   Raid cards, Sacred Stones, free Military paths buildings); Mines count as small buildings. Replacing a
   building (Industrious Villagers, Craftsmen) gives nothing.
-- The Altar of Kings must be in a closed territory (Marzaus, 2026-11-06: "the altar must be in closed territory"), in games
+- The Altar of Kings must be in a closed territory (2026-11-06: "the altar must be in closed territory"), in games
   with the hidden `FameAltarClosed` every new game gets; older games win with an Altar anywhere.
 - Units, Militia and a warchief that the loser of a fight against a clan loses for having nowhere to retreat count as killed
-  by the winner: 1 fame each, 5 for the warchief (Marzaus, 2026-11-06: "losing units = killing"), in games with the hidden
+  by the winner: 1 fame each, 5 for the warchief (2026-11-06: "losing units = killing"), in games with the hidden
   `FameRetreatKills` every new game gets (`noRetreat`, `game.retreatWinner`); older games gave nothing for them.
 - Kills and wins count only in fights against a clan, not against creatures nor removals by cards outside a
   fight. Kaija and the other companions aren't units; Militia and bodyguards (Military paths) are. Kills before
@@ -1735,16 +1734,16 @@ Readings (Gman may change them):
 
 ## Fan content: PC version (2026-11-11)
 
-A mode Gman designed after the Northgard video game (option `ModuleOption(PCVersion)`, under Fan content; `pc.scala`). The
+A mode the owner designed after the Northgard video game (option `ModuleOption(PCVersion)`, under Fan content; `pc.scala`). The
 design and the questions still open are in the Claude Doc "Northgard PC version mode: design proposal". Picking it turns on
-Creatures, Warchiefs, Sea, Events (since 2026-11-11, Gman), Tower PC version, Warchiefs PC version, Minerals, Military paths, Aggressive creatures (no clan
-shares a territory with a creature; Gman, 2026-11-11) and the Wilderness, Wastelands and Uncharted Horizons map tiles; turning any of them off turns it off. Not against the Automa, and not in Adset (Gman).
+Creatures, Warchiefs, Sea, Events (since 2026-11-11), Tower PC version, Warchiefs PC version, Minerals, Military paths, Aggressive creatures (no clan
+shares a territory with a creature; 2026-11-11) and the Wilderness, Wastelands and Uncharted Horizons map tiles; turning any of them off turns it off. Not against the Automa, and not in Adset.
 
 - **Map**: built at setup (`buildMap`), the same on every client (a recorded shuffle and a sequence seeded from it). The
   central tile is always a special one (with "Standard" or nothing picked, any of the nine Wastelands centrals or the Great
   Lake). Each clan gets a Beach with a Port at the map's edge, spread around it (`layout`: 2 clans on a 3x5 map, 3 on 5x5, 4 on
   a 7x7 diamond, 5 and 6 on a 9x5 map).
-  The homes are balanced (Gman, 2026-11-11): every clan's home is copies of the same three tiles, turned to fit, picked once
+  The homes are balanced (2026-11-11): every clan's home is copies of the same three tiles, turned to fit, picked once
   among those that can: beside the Port on one side (the same side for every clan) a tile whose area by the wing gives only 1
   wood, on the other side one giving only 1 lore, so the wings make two small territories of two tiles each, and inland of the
   Port a tile whose area by the Port gives only 1 food; the beside tiles' areas by the Port give nothing, so the Port territory
@@ -1752,18 +1751,18 @@ shares a territory with a creature; Gman, 2026-11-11) and the Wilderness, Wastel
   after 60 anything. Every other space gets a random tile in a legal turn, from the map tiles with every Environment tile.
   The map is tried again (up to 60 times, or 120 with no good try) until the homes are their own territories and 3 (2 clans)
   or 2 territories apart, one fewer after every 10 tries.
-  Since 2026-11-11 (Gman; hidden `PCVersionUpdate`, every new game; older PC games keep their maps): the two-player map is an
+  Since 2026-11-11 (hidden `PCVersionUpdate`, every new game; older PC games keep their maps): the two-player map is an
   oval (its three middle rows 5 tiles wide); every home has a Mine territory just outside it: the inland tile has a lair in an
   area of its own on a side across the Port's line, and the tile beyond it an area of its own with a small building space
   there, so lair and space make one territory (a copy of the same fourth tile for every clan); and with 2, 4 and 6 clans the
   map is mirrored (`turnsOf`): each tile is also placed at the cells the layout's half or quarter turns take it to, turned
   the same way, so every clan sees the same map around its home (for the first 40 tries; then it may give up the mirror).
   A tile side with no tile beyond it is coast: it counts as closed (`Board.coast`). The Wyvern's Den isn't used yet.
-- **Setup**: each clan gets 4 units in its Port territory and 1 in each of the two beside it (Gman, 2026-11-11), with no
+- **Setup**: each clan gets 4 units in its Port territory and 1 in each of the two beside it (2026-11-11), with no
   choice; Kaija, a lynx, Brok or the Automa's second Leader takes the place of one of the Port's units, and Robotos gets 2
   more there. Creatures from the creature deck go on the territories between the homes (on a shortest way from
   one home to another), lairs first, nearest the centre first, while the deck lasts.
-- **Town Hall** (`game.halls`, drawn on the Port tile's meadow left of the rocks, clear of the Port itself (Gman, 2026-11-11), the Development card Town Hall's thatched hall and, once upgraded, the
+- **Town Hall** (`game.halls`, drawn on the Port tile's meadow left of the rocks, clear of the Port itself (2026-11-11), the Development card Town Hall's thatched hall and, once upgraded, the
   video game's slate-roofed one, by `tools/town-hall.py`; `TownHallInfo` when tapped): not a building of `game.buildings`, so no card
   can build, replace or destroy it. A Build's build can upgrade it for 1 Stone and 1 wood (`HallUpgradeAction`), once. It
   doesn't count as a large building yet (question 7 in the doc).
@@ -1773,7 +1772,7 @@ shares a territory with a creature; Gman, 2026-11-11) and the Wilderness, Wastel
   territories their clan sees. The log is not hidden.
 - **Scouting**: each Explore of a card scouts one territory bordering one the clan controls (`ScoutAction`), or with a
   Defense Tower in its Port territory any coastal one (a side on the map's edge, or a Port); enemy territories need the
-  upgraded Town Hall. A scout gives what an Explore gives (Gman, 2026-11-11: "You still get fame and all the other bonuses
+  upgraded Town Hall. A scout gives what an Explore gives (2026-11-11: "You still get fame and all the other bonuses
   when exploring"): the scouted territory counts as the territory the Explore closed, though the clan doesn't hold it: fame
   for its tiles, Stag's 1 more, Raven collects it, Horse's wood, Rat's unit (only if nobody, creature or clan, is there), Ox's
   token on its tile, Lay of the Land collects it, the Events (New Horizons, the exploration count); Boar's lore too, as
@@ -1783,7 +1782,7 @@ shares a territory with a creature; Gman, 2026-11-11) and the Wilderness, Wastel
 - **Out of the game**: after Winter, a clan without its Town Hall territory is out (`game.out`): its figures and the
   buildings in its territories leave the map, its cards, resources and fame are gone, and it passes every turn. If that
   would leave nobody, nobody is out. With **Domination victory** (`DominationVictory`, under Fan victories, only with the PC
-  version; Gman, 2026-11-12) the last clan or team left wins at once (`LastStandingAction`); the other victory conditions
+  version; 2026-11-12) the last clan or team left wins at once (`LastStandingAction`); the other victory conditions
   still apply. Without it the last one left plays on, and the game ends as the victory conditions say. That choice is in
   games with the hidden `PCDominationChoice` every new game gets; older PC games always had the last one standing win
   (`PCExpansion.dominationWins`). `NORT_DOMINATION=2` with `NORT_PC=1` in the headless host always picks it.
@@ -1793,8 +1792,8 @@ shares a territory with a creature; Gman, 2026-11-11) and the Wilderness, Wastel
   goes on year after year until one is left (the bot games stop after `NORT_FAME_YEARS` more years and score as usual;
   `NORT_DOMINATION=1` with `NORT_PC=1` in the headless host).
 - **Mines** (`PCVersionUpdate`): a Mine gives 1 Stone at the harvest (an upgraded one 2), with no die roll, while the
-  supply has Stone (Gman, 2026-11-11: upgrades matter so much here).
-  Since 2026-11-13 (Gman; hidden `PCMineChoice`, every new game): each clan with Mines picks at the harvest that Stone with
+  supply has Stone (2026-11-11: upgrades matter so much here).
+  Since 2026-11-13 (hidden `PCMineChoice`, every new game): each clan with Mines picks at the harvest that Stone with
   no roll, or the Minerals module's roll of the combat die, which may give Iron or Gem (`MineStoneAction`, `MineRollAction`
   in `nort/pc.scala`); with no Stone left it rolls. Older games always take the Stone; `PCMineChoiceAction(X)` switches a
   running game.
@@ -1807,9 +1806,9 @@ shares a territory with a creature; Gman, 2026-11-11) and the Wilderness, Wastel
   deck too (`PCExpansion.moreCreatures`, in `Wild.creaturesOn` and `Waste.creaturesOn`), so more territories between the
   homes get one; with 5 or 6 clans the 23 creatures still don't fill every one.
 
-- **Marzaus's playtest (Gman, 2026-11-14)**, each a hidden option every new game gets, with a `<Option>Action(X)` switch for a
+- **Marzaus's playtest (2026-11-14)**, each a hidden option every new game gets, with a `<Option>Action(X)` switch for a
   running game: figures never enter a territory their clan doesn't see, by any move, retreat (no retreat into the fog), the
-  Lynx's moves or Hidden Ways (`PCSeenOnly`, `PCExpansion.mayEnter`; Marzaus retreated into a territory he hadn't scouted and so
+  Lynx's moves or Hidden Ways (`PCSeenOnly`, `PCExpansion.mayEnter`; a clan retreated into a territory it hadn't scouted and so
   scouted it); each Mine gives its Stone or is rolled for (`PCMinePerMine`, `MineSplitAction`); a Build upgrades one building
   at most, the Town Hall's upgrade included (`PCOneUpgrade`, `game.stoneUsed`); a Port gives its defender 3 combat points, not 1,
   against a clan that attacked it by sea, Port to Port (`PCNavalPort`, `game.navalFights`); a clan fighting in its Town Hall's
@@ -1819,12 +1818,12 @@ shares a territory with a creature; Gman, 2026-11-11) and the Wilderness, Wastel
   Marzaus's "Army cap"); a Defense Tower gives 2 combat points against creatures (`PCTowerPoints`); a scout gives 1 fame, not
   1 a tile (`PCScoutFame`; the clan powers still apply, Stag's 1 more too). The Scorched Earth token (the Snake Clan card, Under Pressure)
   goes only to a territory Snake sees, and Under Pressure may also move it to a neutral territory (no clan there, creatures
-  allowed), collecting what that territory gives as anywhere else (`PCScorchedSeen`, `PCExpansion.mayScorch`; Gman, 2026-11-15:
+  allowed), collecting what that territory gives as anywhere else (`PCScorchedSeen`, `PCExpansion.mayScorch`; 2026-11-15:
   in Winter for Clan it moved into the fog). A neutral territory has no owner, so the token takes nothing there at the Harvest.
 
 ## Fan content: Clan Fame upgrades (2026-11-12)
 
-Marzaus's "Clan Fame upgrades (PC)" (Discord, northgard-fanmade-content, posted 2026-10-22; asked for by Gman on 2026-11-11):
+Marzaus's "Clan Fame upgrades (PC)" (Discord, northgard-fanmade-content, posted 2026-10-22; asked for on 2026-11-11):
 option `ModuleOption(FameUpgradesModule)` under Fan content, also turned on by the PC version mode. Code in `fame-upgrades.scala`
 (`FameUpgrade.all` lists the abilities, `FameUpgradesExpansion.sweep` unlocks them after every action). Only the seven core clans
 have upgrades so far ("rest of the clans soon").
@@ -1835,7 +1834,7 @@ have upgrades so far ("rest of the clans soon").
 | Bear | 50 | Hibernation | right after Winter, the food and wood of the Harvest again (as the Harvest would give them now) |
 | Boar | 20 | Taming | creatures treat Boar as they treat the Robotos bot where it has figures (no Brown Bear lock or harvest loss; aggressive ones neither attack it nor must be fought; what one does when it appears or moves there doesn't touch Boar). Once a year on its turn, not an action, the warchief tames a creature in its territory (not Hrimgandr; no fame), one at a time: it goes with the warchief and adds its combat points to Boar's fights there, except when Boar attacks a clan; its card ability is left out. It goes to the creature discard pile when the warchief leaves the map or Boar loses Taming |
 | Boar | 50 | Legacy | an Altar of Kings costs 1 wood less; each one Boar controls gives 1 more food, wood and lore at the Harvest |
-| Goat | 20 | Shepherd | a sheep when unlocked and one at the start of each year after, one a year at most and no cap (Gman, 2026-11-12), placed at Goat's next turn in a territory it controls. Sheep aren't units (no fighting, control or Winter cost); each gives 1 food at the Harvest; before each Move card's Move (a Feast's too) each sheep may move up to the card's value, through and into territories with no other clan; on its turn, not an action, Goat may kill one for 2 food; one is lost when another clan has figures in its territory and Goat none. Below 20 fame the sheep stay but do nothing |
+| Goat | 20 | Shepherd | a sheep when unlocked and one at the start of each year after, one a year at most and no cap (2026-11-12), placed at Goat's next turn in a territory it controls. Sheep aren't units (no fighting, control or Winter cost); each gives 1 food at the Harvest; before each Move card's Move (a Feast's too) each sheep may move up to the card's value, through and into territories with no other clan; on its turn, not an action, Goat may kill one for 2 food; one is lost when another clan has figures in its territory and Goat none. Below 20 fame the sheep stay but do nothing |
 | Goat | 50 | Feasting | a turn choice once a year: a card from hand goes among the played cards (as with Wait), and Goat harvests its food, wood and lore (no fame) |
 | Raven | 20 | Rangers | once a year, after an Explore, one more Explore whose tile may go anywhere; every territory Raven closes gives it its resources (fame only for its own) |
 | Raven | 50 | Wartime Economy | on its turn, not an action, as often as it likes: 1 food for 1 unit in a territory it controls with a Training Camp; harvest trades 2 for 1 |
@@ -1847,11 +1846,11 @@ have upgrades so far ("rest of the clans soon").
 | Wolf | 20 | Spoils of War | winning a fight as the attacker: what the territory gives at the Harvest, fame included (closed territory, Altars of Kings) |
 | Wolf | 50 | Field Rations | Winter costs Wolf at most 1 food (the wood is still owed) |
 
-Readings (open questions sent to Gman on 2026-11-12):
+Readings (open questions sent to the owner on 2026-11-12):
 - A clan has an ability while its fame is at the amount or more: it loses it when its fame drops below, and gets it back with the
-  fame (Gman, 2026-11-12). Supplies is given only the first time.
-- Fame is public in this mode (Gman, 2026-11-12).
-- No card fame at the end (Gman, 2026-11-12): a Development card or an Achievement gives its fame when taken (an Achievement what
+  fame (2026-11-12). Supplies is given only the first time.
+- Fame is public in this mode (2026-11-12).
+- No card fame at the end (2026-11-12): a Development card or an Achievement gives its fame when taken (an Achievement what
   it would score then), an Unrest card loses 5 fame when taken. The resources left still give 1 fame per 3 at the end.
 - The abilities that need a warchief are unlocked only with the Warchiefs module.
 - `NORT_FAMEUP=1` in the headless host always plays the module; `NORT_FAMEUP_DIV=n` divides the amounts, so bot games reach them;

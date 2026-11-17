@@ -14,7 +14,7 @@ import hrf.elem._
 
 import root.elem._
 
-// The "?" of the fan, playtest and mirror factions (Gman, 2026-11-17): who made the faction, then what it does and how
+// The "?" of the fan, playtest and mirror factions (2026-11-17): who made the faction, then what it does and how
 // it plays, a line each. Shown by the faction picker's ? button (Meta.factionInfo) and Advanced Setup's faction toggles
 // (IncludeFaction.explain). Official factions have none.
 object FanInfo {

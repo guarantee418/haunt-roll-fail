@@ -51,7 +51,7 @@ object MetaAdset extends MetaGame {
 
     val minPlayers = 2
 
-    // the Doomed Expansion's factions and Re-Imaginings last (Gman, 2026-11-17); the draw keeps out sets that can't play together
+    // the Doomed Expansion's factions and Re-Imaginings last (2026-11-17); the draw keeps out sets that can't play together
     val realFactions = Meta.official ++ $(NB) ++ $(XC) ++ $(CUv2) ++ $(FH) ++ $(LDvE) ++ $(TC) ++ $(KD) ++ AdvancedSetup.doomed
 
     // not in the pool by default: Vagabond, Negabond and the fan factions
@@ -67,7 +67,7 @@ object MetaAdset extends MetaGame {
         .appended(RandomCharacter)
         .appendedAll($(AdSetBuffOn, AdSetBuffOff, SetupTypeCorners, SetupTypeHomelands))
 
-    // Advanced Setup always has its setup buffs and Homelands setup (Gman, 2026-10-31), so they aren't choices here
+    // Advanced Setup always has its setup buffs and Homelands setup (2026-10-31), so they aren't choices here
     override def mandatoryFor(n : Int, l : $[F]) = Meta.newGame ++ $(KnavesCaptainsInDraft, AdSetBuffOn, SetupTypeHomelands)
 
     override def completeSaved(n : Int, l : $[F], options : $[O]) = Meta.autoHitsOn(options.diff(Meta.retired).diff(RulesVersion.implied).diff($(AdSetBuffOff, SetupTypeCorners)))
@@ -101,7 +101,7 @@ object MetaAdset extends MetaGame {
         NoHirelings
     ) ++ defaultFactions./(IncludeFaction) ++ Meta.hirelings./(IncludeHireling)
 
-    // Two presets, as in the standard setup (Gman, 2026-10-31)
+    // Two presets, as in the standard setup (2026-10-31)
     override def presetsFor(n : Int, l : $[F]) = $(
         ("Site Defaults".spn, $, $),
         ("Official".hl ~ " Rules", $(

@@ -39,8 +39,8 @@ object CardVersions {
             "Look at an opponent's hand and choose 1 card from it. They choose either to discard it or give you 2 resources of their choice (if they don't have enough resources, they must discard). Then you may draw 1 card.")),
     )
 
-    // New Blood as printed (Gman, 2026-10-23), in place of the TTS mod's prototype cards: the clan cards in the same slots
-    // (images cut from the cards Gman sent)
+    // New Blood as printed (2026-10-23), in place of the TTS mod's prototype cards: the clan cards in the same slots
+    // (images cut from the cards the owner sent)
     val printedNewBlood : $[CardVersion] = $(
         CardVersion(ClanCard(Dragon, 1), PrintedNewBlood, CardInfo("Enslavement", "card-clan-dragon-enslavement", 0, true, EnslavementEffect,
             "Move 1 or 2 enemy units to available spots on the Sacrificial Pyre from different territories adjacent to your territories. (If the pyre was already full, beforehand you may Sacrifice 1 unit to collect 1 food.)")),
@@ -80,7 +80,7 @@ object CardVersions {
             "Build. After this Build action, you may also build one Food Silo for free, in any territory you control. It does not require a building space.")),
         CardVersion(ClanCard(Squirrel, 2), PrintedNewBlood, CardInfo("Economics", "card-clan-squirrel-economics-print", 0, false, EconomicsPrintEffect,
             "Draw 1 card. You may pay 1 food to draw a second card. You may pay 2 more food to draw a third and final card.")),
-        // (missed on 2026-10-23, so with its own option: Marzaus, 2026-11-06; the card Gman sent)
+        // (missed on 2026-10-23, so with its own option: Marzaus, 2026-11-06; the card the owner sent)
         CardVersion(ClanCard(Squirrel, 0), PrintedSquirrelClan, CardInfo("Squirrel Clan", "card-clan-squirrel-print", 0, true, SquirrelPrintEffect,
             "Recruit 1. After this Recruit action, collect 1 food if the unit was placed on a territory producing food.")),
     )
@@ -108,7 +108,7 @@ object CardVersions {
     )
 
     // The Lion Kingdom's Rise of the Twelve Peers recruiting by its Chapels (LionChapelPeers), and Ost (LionOst) in place of Abundance
-    // (the owner, 2026-10-25; card pictures by nort/tools/lion-art.py)
+    // (2026-10-25; card pictures by nort/tools/lion-art.py)
     val lionOst : $[CardVersion] = $(
         CardVersion(ClanCard(Lion, 1), LionChapelPeers, CardInfo("Rise of the Twelve Peers", "card-clan-lion-rise-of-the-twelve-peers-chapels", 0, true, PeersChapelEffect,
             "Recruit 1 unit in each territory you control with a Chapel. Then you may put a Lord from your reserve on a Defense Tower you control that has none.")),
@@ -118,7 +118,7 @@ object CardVersions {
             "Build 1 Defense Tower for free. Until the end of the year, your Lords next to a combat you start join it: gain 2 combat points for each. Then they return to their towers.")),
     )
 
-    // The Lion Kingdom's Faith (LionFaith, Gman, 2026-10-28): Ost, only bringing the Lords, as the clan card (flash), Rise of the Twelve Peers
+    // The Lion Kingdom's Faith (LionFaith, 2026-10-28): Ost, only bringing the Lords, as the clan card (flash), Rise of the Twelve Peers
     // building a free Defense Tower, and Paladins in Ost's place; before lionOst, which they replace
     val lionFaith : $[CardVersion] = $(
         CardVersion(ClanCard(Lion, 0), LionFaith, CardInfo("Ost", "card-clan-lion-ost-lords", 0, true, OstLordsEffect,
@@ -150,7 +150,7 @@ object CardVersions {
     // The card's other versions, for the clan info: the first edition's text in a second edition game and the other way round
     def others(c : Card) : $[(String, CardInfo)] = {
         val l = all.%(_.card == c).%(v => fan(v).not || options.has(v.option))
-        // The Lion Kingdom shows only the cards in play, not its earlier versions (Gman, 2026-10-29)
+        // The Lion Kingdom shows only the cards in play, not its earlier versions (2026-10-29)
         if (l.none || (c match { case ClanCard(Lion, _) => true; case _ => false }))
             $
         else {

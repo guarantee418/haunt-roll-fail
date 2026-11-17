@@ -147,7 +147,7 @@ object Deck {
         ActionCard(Bird, "action-secret-score", SecretScore),
     )
 
-    // Frankendeck (The Doomed Expansion, fan-made by slugfacekillah and Endgamer1331; Gman, 2026-11-13): a core of 30 cards in its
+    // Frankendeck (The Doomed Expansion, fan-made by slugfacekillah and Endgamer1331; 2026-11-13): a core of 30 cards in its
     // own art (the 20 items, 5 ambushes, 4 dominances and a Sabotage!) plus 30 persistent effects drawn from the other decks by suit and
     // crafting cost (`frankenRecipe`). The pool is in the playing deck; at setup `FrankenDeckAction` shuffles it and takes the cards
     // that leave the game out. The ambushes and dominances are the usual cards (same rules), drawn with the Frankendeck art (`art`),
@@ -160,7 +160,7 @@ object Deck {
         if (frankenArt && frankenArtIds.has(id.toLowerCase)) "franken-" + id.toLowerCase else
         if (darkArt && darkArtIds.has(id.toLowerCase)) "dark-" + id.toLowerCase else id
 
-    // The Dark Deck (The Doomed Expansion; Gman, 2026-11-13): its ambushes and dominances are the usual cards in its own art, like the Frankendeck's
+    // The Dark Deck (The Doomed Expansion; 2026-11-13): its ambushes and dominances are the usual cards in its own art, like the Frankendeck's
     var darkArt = false
 
     val darkArtIds = frankenArtIds ++ $("abomination-ambush")
@@ -452,7 +452,7 @@ object Deck {
         CraftEffectCard(Bird, "hoarders", $(AnySuit), Hoarders),
     )
 
-    // Fowl Play was left out of the Dawn and Dusk deck, as there was no reroll (it is in games with DuskDeckFixes, Gman, 2026-11-13)
+    // Fowl Play was left out of the Dawn and Dusk deck, as there was no reroll (it is in games with DuskDeckFixes, 2026-11-13)
     val fowlPlay = CraftEffectCard(Bird, "fowl-play", $(AnySuit), FowlPlay)
 
     val effectsSquires = $[DeckCard](
@@ -581,7 +581,7 @@ case class ViewCardInfoAction(self : Player, s : Elem, d : Card) extends BaseInf
 case class PeekCardsSeenAction(self : Faction, then : ForcedAction) extends BaseAction(None)("Ok")
 
 // The words "looked at" in the log line of a look at a hand (Outrage or Pacifism with no card to give): tapping them shows the
-// cards seen again, only to the faction that saw them, or to everyone once the game is over (Gman, 2026-11-09), as the Ok to
+// cards seen again, only to the faction that saw them, or to everyone once the game is over (2026-11-09), as the Ok to
 // see them is no longer waited for and the notification is easy to miss. Log text only, so no game records change
 case class PeekedHandView(f : Faction, o : Faction, l : $[DeckCard])
 

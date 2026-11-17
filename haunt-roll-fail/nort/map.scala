@@ -488,7 +488,7 @@ object FightPoints {
 // f: the clan (None for a creature, named by who); points: the sources worth something; casualties: the sources of
 // the casualties inflicted, a negative one cancels (its Elem then says how, "ignored by ..."); lost: figures removed;
 // fate: what became of a creature ("was defeated"); fame: the fame the clan gained for defeating it, with where it came from
-// (asked for by Robotos on 2026-10-26)
+// (asked for on 2026-10-26)
 case class FightSide(f : |[Faction], who : Elem, attacking : Boolean, points : $[(Int, Elem)], total : Int, casualties : $[(Int, Elem)], inflicted : Int, lost : Int, fate : Elem = Empty, fame : $[(Int, Elem)] = $)
 
 object FightSide {
@@ -533,7 +533,7 @@ object CombatReport {
 
         def and(l : $[Elem]) : Elem = l.dropRight(1).some./(i => i.join(", ") ~ " and " ~ l.last).|(l.join(""))
 
-        // The summary: each side's totals, the defender first as it wins ties (Robotos, 2026-10-28); the casualties
+        // The summary: each side's totals, the defender first as it wins ties (2026-10-28); the casualties
         // inflicted, not the figures lost, which say the same
         def summary(s : FightSide) : Elem = {
             val role = s.attacking.?("The attacker").|("The defender")
@@ -565,7 +565,7 @@ object CombatReport {
 // A combat report or clan power report sent as a notification (ReportsDontWait), its text as it was then
 case class ReportNote(self : Faction, combat : Boolean, body : Elem) extends BaseInfo(combat.?("Combat report").|("Clan power").hl)(body)
 
-// The clan power report (asked for by Robotos on 2026-10-12): after an action that set off a clan's own power without
+// The clan power report (asked for on 2026-10-12): after an action that set off a clan's own power without
 // asking anything (Raven, Stag, Boar, Goat, Wolf, Dragon's Pyre, Ox's Ancestral Equipment, Rat's units), a box tells
 // its player where it went off and what it did, with a button naming what was collected ("Collect 1 Lore"). The power
 // has already done its work when the box shows (the button only tells it), so the game is the same with or without it.
@@ -902,7 +902,7 @@ object MapExpansion extends Expansion {
 
     // Industrious Villagers: f's buildings and what each could become
     // Craftsmen ("with no other restriction") may also put a Carved Stone (or the Lion's Chapel) on a small building space
-    // (Marzaus, 2026-11-01); Industrious Villagers keep it to Carved Stone spaces. Only adds choices, so no option
+    // (2026-11-01); Industrious Villagers keep it to Carved Stone spaces. Only adds choices, so no option
     def replacements(f : Faction, craftsmen : Boolean = false)(implicit game : Game) : $[(SpaceRef, Building)] =
         game.controlled(f)./~(game.buildingsIn)./~{ case (s, old) =>
             val carved = craftsmen || s.index >= SpaceRef.extra || game.board.spec(s.area).spaces(s.index).kind == CarvedSpace
@@ -943,7 +943,7 @@ object MapExpansion extends Expansion {
         else
             game.setCompanion(f, |(a))
 
-    // LynxBothAtSetup: both lynxes may go in one starting placement (Gman, 2026-11-01), in place of two units
+    // LynxBothAtSetup: both lynxes may go in one starting placement (2026-11-01), in place of two units
     def lynxPair(f : Faction)(implicit game : Game) = f == Lynx && game.options.has(LynxBothAtSetup) && game.lynx.none && game.lynx2.none && game.kaijaReady(f)
 
     def setupLynxPair(f : Faction, round : Int, l : $[Faction], a : AreaRef, chief : Boolean)(implicit game : Game) = {
@@ -1183,7 +1183,7 @@ object MapExpansion extends Expansion {
     }.sortBy(p => $(p._2, p._3, p._4).count(b => b))
 
     // Military paths: whether f may lose its bodyguard in t instead of one of the units the k casualties would otherwise take (the
-    // casualty parties don't tell them apart, so with nothing else to pick the player was never asked; Gman, 2026-11-11), in games
+    // casualty parties don't tell them apart, so with nothing else to pick the player was never asked; 2026-11-11), in games
     // with the hidden GuardCasualtyAsked every new game gets
     def guardChoice(f : Faction, t : Territory, k : Int)(implicit game : Game) = game.options.has(GuardCasualtyAsked) && {
         val guard = (MilitaryExpansion.guardsIn(t, f) > 0).??(1)
@@ -1192,7 +1192,7 @@ object MapExpansion extends Expansion {
     }
 
     // Asks the first of l (a clan and the casualties it takes) with a choice to make, then again; None once all are picked
-    // (Robotos's request of 2026-10-11; only in games with ChooseCasualties, and never for the Automa)
+    // (the request of 2026-10-11; only in games with ChooseCasualties, and never for the Automa)
     def pickCasualties(l : $[(Faction, Int)], t : Territory, again : ForcedAction)(implicit game : Game) : |[Ask] =
         game.options.has(ChooseCasualties).??(l.%{ case (f, k) => k > 0 && f != Automa && game.casualtyPicks.contains(f).not }./{ case (f, k) => (f, k, casualtyParties(f, t, k)) }.%{ case (f, k, l) => l.num > 1 || guardChoice(f, t, k) }.headOption./{ case (f, k, l) =>
             FigurePicker(CasualtyGoal(f, t.anchor, k, again))
@@ -1454,7 +1454,7 @@ object MapExpansion extends Expansion {
                 game.note("robotos-recruit")
             }
 
-            // LynxCampRecruitsLynx: Lynx may take Brundr or Kaelinn for a camp's extra recruit (Marzaus, 2026-11-02)
+            // LynxCampRecruitsLynx: Lynx may take Brundr or Kaelinn for a camp's extra recruit (2026-11-02)
             if (f == Lynx && game.options.has(LynxCampRecruitsLynx))
                 Then(CampRecruitAction(f, placed./(game.board.territory).distinct./(_.anchor), then))
             else {
@@ -2299,7 +2299,7 @@ object MapExpansion extends Expansion {
                 Then(then)
             }
             else {
-                // A log line of its own (Robotos, 2026-10-21): "Undo to here" on it goes back to the tile drawn but not yet
+                // A log line of its own (2026-10-21): "Undo to here" on it goes back to the tile drawn but not yet
                 // placed, which Limited undo allows, while the line before was the card played before the draw
                 if (game.exploring.num == 1)
                     f.log("drew a tile to explore")

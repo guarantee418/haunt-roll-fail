@@ -14,7 +14,7 @@ import hrf.elem._
 import root.elem._
 
 
-// Action! Deck Booster (The Doomed Expansion, fan-made by slugfacekillah; Law of Doom D3.2; Gman, 2026-11-13): ten cards shuffled
+// Action! Deck Booster (The Doomed Expansion, fan-made by slugfacekillah; Law of Doom D3.2; 2026-11-13): ten cards shuffled
 // into the shared deck, one booster for each player above five (or one with five players, `ActionBooster`). An Action! card is
 // spent from hand on its owner's turn (or, for the sword's extra hit, in a battle they are in) for its effect; it is also a card
 // of its suit for everything else. The two Secret! cards are birds: either one can be spent to draw the top card of the deck in

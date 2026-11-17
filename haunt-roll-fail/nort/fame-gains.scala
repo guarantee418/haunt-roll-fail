@@ -15,13 +15,13 @@ import hrf.elem._
 import nort.elem._
 
 
-// Marzaus's "Alternative fame gains" (Discord, northgard-fanmade-content, 2026-10-22; asked for by Gman on 2026-11-01), option
+// Marzaus's "Alternative fame gains" (Discord, northgard-fanmade-content, 2026-10-22; asked for on 2026-11-01), option
 // ModuleOption(FameGainsModule) under Fan content. Fame comes from what a clan does, as it is done, and a clan with 120 fame that
 // controls an Altar of Kings wins at once. RULES.md (Alternative fame gains) lists the readings of the short post:
 // - "Altar of Fame" is the Altar of Kings, the board game's only altar
 // - 120 fame on the fame tokens (f.fame); checked after every action (Game.loggedPerform), it replaces the three closed territories
 //   with large buildings and Alternative victory (the option needs Standard or Fame only victory); it is the only way to win: nobody
-//   there after the last year, the game goes on, year after year, until a clan wins (Gman, 2026-11-02)
+//   there after the last year, the game goes on, year after year, until a clan wins (2026-11-02)
 // - the Altar of Kings still gives its 3 fame each harvest; when built it gives 2 like any large building and 3 more (5)
 // - kills and wins only in fights against a clan (not creatures, not card effects outside a fight); Kaija and the other companions
 //   are no units; the warchief is (5); before-the-fight kills (Defense Towers, Leadership) count
@@ -104,7 +104,7 @@ object FameGainsExpansion extends Expansion {
     }
 
     // The loser of a fight against a clan with nowhere to retreat: its lost units (Militia too) and warchief count as killed by the
-    // winner (FameRetreatKills; Marzaus, 2026-11-06: "losing units = killing")
+    // winner (FameRetreatKills; 2026-11-06: "losing units = killing")
     def noRetreat(l : Faction, units : Int, chief : Boolean)(implicit game : Game) {
         if (on && game.options.has(FameRetreatKills))
             game.retreatWinner.%(_ != l).foreach { w =>
@@ -122,7 +122,7 @@ object FameGainsExpansion extends Expansion {
     def resolve(f : Faction, then : ForcedAction)(implicit game : Game) : $[UserAction] =
         (on && f != Automa).??(game.fameKept.get(f).$./(c => FameResolveAction(f, c, then).!(CommonExpansion.cardFame(f, c) <= 0, "would give no fame now")))
 
-    // Clans with 120 fame or more that control an Altar of Kings, in a closed territory (FameAltarClosed; Marzaus, 2026-11-06)
+    // Clans with 120 fame or more that control an Altar of Kings, in a closed territory (FameAltarClosed; 2026-11-06)
     def winners(implicit game : Game) : $[Faction] =
         game.factions.%(f => game.states.contains(f) && f.fame >= goal && game.controlled(f).exists(t => game.buildingsIn(t).exists(_._2 == AltarOfKings) && (game.options.has(FameAltarClosed).not || game.board.closed(t))))
 
@@ -189,7 +189,7 @@ object FameGainsExpansion extends Expansion {
             Then(then)
 
         // After the last year nobody wins on fame: the game goes on until a clan wins with 120 fame and an Altar of Kings
-        // (Gman, 2026-11-02); the bot games stop after Debug.fameExtraYears more years and score as usual
+        // (2026-11-02); the bot games stop after Debug.fameExtraYears more years and score as usual
         case GameEndAction if game.year < game.lastYear + Debug.fameExtraYears =>
             log(DoubleLine)
             log("Nobody has", Amount(goal.hl, FameIcon()), "with an", AltarOfKings, Comma, "so the game goes on")

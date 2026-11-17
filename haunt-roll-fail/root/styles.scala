@@ -191,7 +191,7 @@ package object elem {
         Rabbit --> color("#f4e74f")
         Mouse --> color("#f68b56")
         Bird --> color("#6ac0ba")
-        // the green of the Homeland frog cards and of the frog decree icons (asked for by the owner on 2026-10-17)
+        // the green of the Homeland frog cards and of the frog decree icons (asked for on 2026-10-17)
         Frog --> color("#b7b13c")
         // the Dark Deck's Abomination suit, fox, rabbit and mouse at once, and its suitless Cursed card
         Abomination --> color("#f0a040")
@@ -272,7 +272,7 @@ package object elem {
         object action extends CustomStyle(width("4.3ch"), vertical.align("middle"), margin("0.1ch"))
 
         object wr extends CustomStyle(height("1.8ex"), vertical.align("middle"), padding.left("0.15ch"), padding.right("0.15ch"))
-        // the Twilight Council's Loyalists hang head down, as bats do (MaKoBwoY, 2026-11-17)
+        // the Twilight Council's Loyalists hang head down, as bats do (2026-11-17)
         object hanging extends CustomStyle(transform("scaleY(-1)"))
         object wr3x extends CustomStyle(height("5.4ch"), vertical.align("middle"), padding.left("0.15ch"), padding.right("0.15ch"))
 

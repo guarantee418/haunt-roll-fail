@@ -730,7 +730,7 @@ object Runner {
                     logged += 1
 
                     // Someone looking at an earlier state in the log (a spectator, or a player waiting) stays there as
-                    // other players' moves come in (Robotos, 2026-10-21); "Back" or their own turn brings them to the latest
+                    // other players' moves come in (2026-10-21); "Back" or their own turn brings them to the latest
                     if (ui.overrideGame.none) {
                         line = lines.num
 
