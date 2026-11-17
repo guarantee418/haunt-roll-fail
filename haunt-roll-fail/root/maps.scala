@@ -1056,6 +1056,260 @@ object GorgeBoard extends Board {
     }
 }
 
+// The Doomed Expansion's Urban Legends maps (slugfacekillah; root/tools/urban-legends-art.py), boards of the usual size
+// with no rules of their own in Law of Doom. They print no clearing or forest names, so these are made up from the art.
+// Two building slots on each print an "R" (the ruins) and four a number from 0 to 3, like the Marsh's numbered ruin slots:
+// with nothing flooded here, the ruins go in the R slots and the 0 and 1 slots (the first slot listed in `gates`).
+object UrbanBoard extends Board {
+    val id = "urban"
+    val name = "Urban"
+
+    object Tollgate extends Clearing(1)
+    object Mill extends Clearing(2)
+    object Guildhall extends Clearing(1)
+    object Belfry extends Clearing(2)
+    object Tannery extends Clearing(3)
+    object Bazaar extends Clearing(2)
+    object Barracks extends Clearing(2)
+    object Wharf extends Clearing(3)
+    object Abbey extends Clearing(1)
+    object Sluice extends Clearing(2)
+    object Plaza extends Clearing(1)
+    object Arcade extends Clearing(2)
+
+    val clearings = $(Tollgate, Mill, Guildhall, Belfry, Tannery, Bazaar, Barracks, Wharf, Abbey, Sluice, Plaza, Arcade)
+
+    // the R slots (Tannery, Barracks), then 0 (Wharf) and 1 (Mill)
+    val ruins = $(Tannery, Barracks, Wharf, Mill)
+
+    val diagonals = $((Tollgate, Arcade), (Belfry, Sluice))
+
+    val inner = $(Tannery, Bazaar, Wharf)
+
+    // the city blocks between the roads are the forests
+    object UrbanRookery extends NamedForest("Rookery")
+    object UrbanShambles extends NamedForest("Shambles")
+    object UrbanTenements extends NamedForest("Tenements")
+    object UrbanWarrens extends NamedForest("Warrens")
+    object UrbanGutters extends NamedForest("Gutters")
+    object UrbanCobbles extends NamedForest("Cobbles")
+    object UrbanLanes extends NamedForest("Lanes")
+    object UrbanMews extends NamedForest("Mews")
+    object UrbanSlums extends NamedForest("Slums")
+    object UrbanGarrets extends NamedForest("Garrets")
+
+    val forests = $(UrbanRookery, UrbanShambles, UrbanTenements, UrbanWarrens, UrbanGutters, UrbanCobbles, UrbanLanes, UrbanMews, UrbanSlums, UrbanGarrets)
+
+    override val scoreTrack = |((190.0, 2043.0, 67.97))
+
+    override def itemSlots = itemGrid(1716.0, 79.0, 172.0, 248.0)
+
+    def connected(c : Clearing) = c @@ {
+        case Tollgate => $(Mill, Tannery, Barracks)
+        case Mill => $(Tollgate, Guildhall, Tannery)
+        case Guildhall => $(Mill, Belfry, Bazaar)
+        case Belfry => $(Guildhall, Bazaar, Abbey)
+        case Tannery => $(Tollgate, Mill, Bazaar, Barracks, Wharf)
+        case Bazaar => $(Guildhall, Belfry, Tannery, Wharf, Abbey)
+        case Barracks => $(Tollgate, Tannery, Wharf, Sluice)
+        case Wharf => $(Tannery, Bazaar, Barracks, Plaza, Arcade)
+        case Abbey => $(Belfry, Bazaar, Arcade)
+        case Sluice => $(Barracks, Plaza)
+        case Plaza => $(Wharf, Sluice, Arcade)
+        case Arcade => $(Wharf, Abbey, Plaza)
+    }
+
+    def fromForest(f : Forest) = f @@ {
+        case UrbanRookery => $(Tollgate, Mill, Tannery)
+        case UrbanShambles => $(Tollgate, Tannery, Barracks)
+        case UrbanTenements => $(Mill, Guildhall, Bazaar, Tannery)
+        case UrbanWarrens => $(Guildhall, Belfry, Bazaar)
+        case UrbanGutters => $(Belfry, Abbey, Bazaar)
+        case UrbanCobbles => $(Tannery, Bazaar, Wharf)
+        case UrbanLanes => $(Tannery, Wharf, Barracks)
+        case UrbanMews => $(Bazaar, Abbey, Arcade, Wharf)
+        case UrbanSlums => $(Barracks, Wharf, Plaza, Sluice)
+        case UrbanGarrets => $(Wharf, Arcade, Plaza)
+    }
+
+    // one river runs down from the top through Mill to Wharf, the other from the bottom left by Sluice through Wharf
+    // and out on the right by Abbey
+    def byRiver(c : Clearing) = c @@ {
+        case Mill => $(Wharf)
+        case Sluice => $(Wharf)
+        case Wharf => $(Mill, Sluice, Abbey)
+        case Abbey => $(Wharf)
+        case _ => $()
+    }
+
+    def center(r : Region) : (Int, Int) = r @@ {
+        case Tollgate => (311, 356)
+        case Mill => (953, 311)
+        case Guildhall => (1511, 429)
+        case Belfry => (2108, 485)
+        case Tannery => (869, 858)
+        case Bazaar => (1544, 932)
+        case Barracks => (340, 1219)
+        case Wharf => (1140, 1385)
+        case Abbey => (2136, 1225)
+        case Sluice => (339, 1798)
+        case Plaza => (1128, 1848)
+        case Arcade => (2032, 1802)
+
+        case UrbanRookery => (711, 508)
+        case UrbanShambles => (506, 811)
+        case UrbanTenements => (1219, 632)
+        case UrbanWarrens => (1721, 615)
+        case UrbanGutters => (1929, 880)
+        case UrbanCobbles => (1184, 1058)
+        case UrbanLanes => (783, 1154)
+        case UrbanMews => (1713, 1336)
+        case UrbanSlums => (736, 1562)
+        case UrbanGarrets => (1433, 1678)
+
+        case Burrow(_) => (1208, 999999)
+        case _ => (0, 0); throw new Error("no center for " + r)
+    }
+
+    override def gates(r : Region) = r @@ {
+        case Tollgate => $((311, 356))
+        case Mill => $((1029, 328), (878, 294))
+        case Guildhall => $((1511, 429))
+        case Belfry => $((2033, 507), (2183, 462))
+        case Tannery => $((783, 868), (891, 780), (933, 925))
+        case Bazaar => $((1609, 900), (1479, 963))
+        case Barracks => $((401, 1247), (278, 1190))
+        case Wharf => $((1209, 1473), (1159, 1294), (1051, 1387))
+        case Abbey => $((2136, 1225))
+        case Sluice => $((253, 1765), (425, 1830))
+        case Plaza => $((1128, 1848))
+        case Arcade => $((2081, 1749), (1982, 1855))
+        case _ => super.gates(r)
+    }
+}
+
+// Legends: a castle in each corner, and a stone circle in the forest south of the Watchtower, where the Legends
+// Scenarios' space goes (`scenarioForest`)
+object LegendsBoard extends Board {
+    val id = "legends-map"
+    val name = "Legends"
+
+    object Thornkeep extends Clearing(3)
+    object Lumberyard extends Clearing(1)
+    object Stormkeep extends Clearing(3)
+    object Woodcutter extends Clearing(1)
+    object Lodge extends Clearing(2)
+    object Hollow extends Clearing(1)
+    object Watchtower extends Clearing(1)
+    object Smithy extends Clearing(1)
+    object Hamlet extends Clearing(2)
+    object Oakkeep extends Clearing(3)
+    object Hermitage extends Clearing(1)
+    object Redkeep extends Clearing(3)
+
+    val clearings = $(Thornkeep, Lumberyard, Stormkeep, Woodcutter, Lodge, Hollow, Watchtower, Smithy, Hamlet, Oakkeep, Hermitage, Redkeep)
+
+    // each castle has an R slot
+    val ruins = $(Thornkeep, Stormkeep, Oakkeep, Redkeep)
+
+    val diagonals = $((Thornkeep, Redkeep), (Stormkeep, Oakkeep))
+
+    val inner = $(Woodcutter, Lodge, Watchtower, Hamlet)
+
+    object LegendsWildwood extends NamedForest("Wildwood")
+    object LegendsGreenwood extends NamedForest("Greenwood")
+    object LegendsHighwood extends NamedForest("Highwood")
+    object LegendsHeartwood extends NamedForest("Heartwood")
+    object LegendsShadewood extends NamedForest("Shadewood")
+    object LegendsBrightwood extends NamedForest("Brightwood")
+    object LegendsRingwood extends NamedForest("Ringwood")
+
+    val forests = $(LegendsWildwood, LegendsGreenwood, LegendsHighwood, LegendsHeartwood, LegendsShadewood, LegendsBrightwood, LegendsRingwood)
+
+    override val scenarioForest : |[Forest] = |(LegendsRingwood)
+
+    override val scoreTrack = |((190.0, 2043.0, 67.97))
+
+    override def itemSlots = itemGrid(1376.0, 79.5, 176.0, 252.0)
+
+    def connected(c : Clearing) = c @@ {
+        case Thornkeep => $(Lumberyard, Hollow)
+        case Lumberyard => $(Thornkeep, Stormkeep, Woodcutter, Lodge)
+        case Stormkeep => $(Lumberyard, Smithy)
+        case Woodcutter => $(Lumberyard, Lodge, Hollow, Watchtower)
+        case Lodge => $(Lumberyard, Woodcutter, Smithy)
+        case Hollow => $(Thornkeep, Woodcutter, Hamlet, Oakkeep)
+        case Watchtower => $(Woodcutter, Smithy, Hamlet)
+        case Smithy => $(Stormkeep, Lodge, Watchtower, Redkeep)
+        case Hamlet => $(Hollow, Watchtower, Hermitage)
+        case Oakkeep => $(Hollow, Hermitage)
+        case Hermitage => $(Hamlet, Oakkeep, Redkeep)
+        case Redkeep => $(Smithy, Hermitage)
+    }
+
+    def fromForest(f : Forest) = f @@ {
+        case LegendsWildwood => $(Thornkeep, Lumberyard, Woodcutter, Hollow)
+        case LegendsGreenwood => $(Lumberyard, Woodcutter, Lodge)
+        case LegendsHighwood => $(Lumberyard, Stormkeep, Smithy, Lodge)
+        case LegendsHeartwood => $(Woodcutter, Lodge, Smithy, Watchtower)
+        case LegendsShadewood => $(Woodcutter, Watchtower, Hamlet, Hollow)
+        case LegendsBrightwood => $(Hollow, Hamlet, Hermitage, Oakkeep)
+        case LegendsRingwood => $(Watchtower, Smithy, Redkeep, Hermitage, Hamlet)
+    }
+
+    // the river comes down from the top by the Lumberyard, passes the Smithy, bends round the stone circle to the Hamlet
+    // and runs out round the Oakkeep's walls
+    def byRiver(c : Clearing) = c @@ {
+        case Lumberyard => $(Smithy)
+        case Smithy => $(Lumberyard, Hamlet)
+        case Hamlet => $(Smithy, Oakkeep)
+        case Oakkeep => $(Hamlet)
+        case _ => $()
+    }
+
+    def center(r : Region) : (Int, Int) = r @@ {
+        case Thornkeep => (333, 508)
+        case Lumberyard => (1051, 315)
+        case Stormkeep => (2070, 390)
+        case Woodcutter => (800, 778)
+        case Lodge => (1672, 712)
+        case Hollow => (345, 1079)
+        case Watchtower => (1344, 1162)
+        case Smithy => (2081, 1046)
+        case Hamlet => (867, 1427)
+        case Oakkeep => (335, 1761)
+        case Hermitage => (1290, 1847)
+        case Redkeep => (2085, 1749)
+
+        case LegendsWildwood => (632, 670)
+        case LegendsGreenwood => (1174, 601)
+        case LegendsHighwood => (1900, 640)
+        case LegendsHeartwood => (1474, 924)
+        case LegendsShadewood => (839, 1111)
+        case LegendsBrightwood => (709, 1528)
+        case LegendsRingwood => (1670, 1480)
+
+        case Burrow(_) => (1208, 999999)
+        case _ => (0, 0); throw new Error("no center for " + r)
+    }
+
+    override def gates(r : Region) = r @@ {
+        case Thornkeep => $((312, 585), (245, 495), (441, 444))
+        case Lumberyard => $((1051, 315))
+        case Stormkeep => $((2117, 484), (1990, 362), (2102, 323))
+        case Woodcutter => $((800, 778))
+        case Lodge => $((1731, 652), (1612, 773))
+        case Hollow => $((345, 1079))
+        case Watchtower => $((1344, 1162))
+        case Smithy => $((2081, 1046))
+        case Hamlet => $((933, 1391), (801, 1463))
+        case Oakkeep => $((270, 1825), (333, 1676), (401, 1783))
+        case Hermitage => $((1290, 1847))
+        case Redkeep => $((2184, 1742), (1973, 1692), (2097, 1813))
+        case _ => super.gates(r)
+    }
+}
+
 // Root: Homeland Marsh map. The printed board has no clearing names.
 // Numbers in comments are the ones on the Law of Root map diagram.
 object MarshBoard extends Board {
