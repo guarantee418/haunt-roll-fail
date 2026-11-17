@@ -138,6 +138,24 @@ case object LegendsMap extends FanMap {
     )
 }
 
+case object DeepWoodsMap extends FanMap {
+    val valueOn = "Deep Woods".styled(styles.forest)
+    override val explain = $(
+        "Deep Woods".hh ~ ", the past, a map from slugfacekillah's fan-made " ~ "Outsiders Expansion".hl ~ ".",
+        "Played settled: each clearing tile is on the clearing of its number (the rules' way to play it without " ~ "Settling".hh ~ ").",
+        "A river runs across the middle, with a bridge on each path over it. The ruins are in the four inner clearings."
+    )
+}
+
+case object WastelandsMap extends FanMap {
+    val valueOn = "Wastelands".styled(Rabbit)
+    override val explain = $(
+        "Wastelands".hh ~ ", the future, a map from slugfacekillah's fan-made " ~ "Outsiders Expansion".hl ~ ".",
+        "A walled city of three clearings in the middle, where two rivers meet at the " ~ "Cistern".hh ~ ".",
+        "Its barren trails are plain paths here, and its water rules are left out."
+    )
+}
+
 // Drawn once when the game is created (Meta.startOptions), so the game and its log only ever have the drawn map
 case object RandomMap extends MapOption {
     val valueOn = "Random".hh
@@ -1742,7 +1760,7 @@ object Meta extends MetaGame {
         $(SetupTypeCorners, SetupTypeHomelands) ++
         (n > 2).?(TotalWarDominance) ++
         $,
-        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap, UrbanMap, LegendsMap) ++
+        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap, UrbanMap, LegendsMap, DeepWoodsMap, WastelandsMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         legendsOptions ++
@@ -1782,7 +1800,7 @@ object Meta extends MetaGame {
     // Off Turn Field Hospitals only with the Marquise (in Advanced Setup always, as the factions are drafted later)
     def hitsAndAmbushes(l : $[F]) : $[GameOption] = $(LiveGameMode, BluffMode, AutoHitsAssignmentMode, OffTurnHitsPreset) ++ l.of[Feline].any.$(OffTurnFieldHospitals)
 
-    val maps : $[MapOption] = $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, UrbanMap, LegendsMap)
+    val maps : $[MapOption] = $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, UrbanMap, LegendsMap, DeepWoodsMap, WastelandsMap)
 
     val officialMaps : $[MapOption] = $(AutumnMap, WinterMap, LakeMap, MountainMap, GorgeMap, MarshMap)
 
@@ -1806,7 +1824,7 @@ object Meta extends MetaGame {
 
     override def optionsFor(n : Int, l : $[F]) =
         hiddenOptions ++
-        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap, UrbanMap, LegendsMap) ++
+        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap, UrbanMap, LegendsMap, DeepWoodsMap, WastelandsMap) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
         $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck, DarkDeck) ++
@@ -2815,6 +2833,46 @@ object Meta extends MetaGame {
         ImageAsset("clearing-name-oakkeep" ) ::
         ImageAsset("clearing-name-hermitage" ) ::
         ImageAsset("clearing-name-redkeep" ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => options.has(DeepWoodsMap), "deep-woods", "deep-woods:")(
+        ImageAsset("map"          , "map-art" ) ::
+        ImageAsset("map-regions"  ).makeLossless ::
+        ImageAsset("map-water"    ).makeLossless ::
+
+        ImageAsset("building-slot", "empty-building-white") ::
+
+        ImageAsset("clearing-name-thicket" ) ::
+        ImageAsset("clearing-name-bramble" ) ::
+        ImageAsset("clearing-name-fernbank" ) ::
+        ImageAsset("clearing-name-mossgrove" ) ::
+        ImageAsset("clearing-name-pinecrest" ) ::
+        ImageAsset("clearing-name-briarfold" ) ::
+        ImageAsset("clearing-name-hazeldell" ) ::
+        ImageAsset("clearing-name-wildmere" ) ::
+        ImageAsset("clearing-name-oldroot" ) ::
+        ImageAsset("clearing-name-deepden" ) ::
+        ImageAsset("clearing-name-shadowvale" ) ::
+        ImageAsset("clearing-name-elderglen" ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => options.has(WastelandsMap), "wastelands", "wastelands:")(
+        ImageAsset("map"          , "map-art" ) ::
+        ImageAsset("map-regions"  ).makeLossless ::
+        ImageAsset("map-water"    ).makeLossless ::
+
+        ImageAsset("building-slot", "empty-building-white") ::
+
+        ImageAsset("clearing-name-driftcamp" ) ::
+        ImageAsset("clearing-name-scrapyard" ) ::
+        ImageAsset("clearing-name-ashpit" ) ::
+        ImageAsset("clearing-name-tollpost" ) ::
+        ImageAsset("clearing-name-farmstead" ) ::
+        ImageAsset("clearing-name-manor" ) ::
+        ImageAsset("clearing-name-ferrytown" ) ::
+        ImageAsset("clearing-name-dugout" ) ::
+        ImageAsset("clearing-name-junkshop" ) ::
+        ImageAsset("clearing-name-cistern" ) ::
+        ImageAsset("clearing-name-gatehouse" ) ::
+        ImageAsset("clearing-name-granary" ) ::
     $) ::
     ConditionalAssetsList((factions, options) => options.has(GorgeMap), "gorge", "gorge:")(
         ImageAsset("map"          , "map-art" ) ::

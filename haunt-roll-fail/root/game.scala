@@ -1767,6 +1767,8 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
         case GorgeMap => Some(GorgeBoard)
         case UrbanMap => Some(UrbanBoard)
         case LegendsMap => Some(LegendsBoard)
+        case DeepWoodsMap => Some(DeepWoodsBoard)
+        case WastelandsMap => Some(WastelandsBoard)
         case _ => None
     }.only
 

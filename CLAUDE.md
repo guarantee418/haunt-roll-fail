@@ -683,6 +683,11 @@ file covers the build, server and deploy. No session can ssh to the server
   as locations of the player (`rollover`, `collection`). Obedient moves (`ObedientMove`) start or end at the Alpha; Guard Dogs is offered
   in every phase menu of the other players (`guardDogs`, shared rule in `rules` through `BonePatrolExpansion.guarded`, cleared at their
   `CleanUpAction`). `ReplayCheck <games> bp` plays it.
+  Its two maps are Fan Maps, "Deep Woods" and "Wastelands" (`DeepWoodsMap`, `WastelandsMap`; `DeepWoodsBoard` and `WastelandsBoard` in
+  `root/maps.scala`, images in `deep-woods/` and `wastelands/` made by `root/tools/outsiders-maps.py`, which also prints the Deep Woods
+  building slots), also drawn by "Random". The Deep Woods is played settled, each clearing tile baked into the art on the clearing of its
+  number (Law of Slug S.1.7); its Settling (S.1) isn't done. The Wastelands' barren trails are plain paths and its water rules (S.2)
+  aren't done. Clearing and forest names are made up. `ReplayCheck <games> deepwoods` or `wastelands` plays them.
 - Every fan, playtest and mirror faction has a "?" (Gman, 2026-11-17): who made it, then what it does and how it plays, a line
   each (`FanInfo.about` in `root/fan-info.scala`). The faction picker shows it as a "?" button beside the name (`Meta.factionInfo`,
   `xstyles.infoButton` in `pickElem`), and Advanced Setup's "Available Factions" toggles as the setup's usual ? (`IncludeFaction.explain`).

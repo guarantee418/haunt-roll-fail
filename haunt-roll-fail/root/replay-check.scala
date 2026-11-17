@@ -57,7 +57,8 @@ object ReplayCheck {
     // "draft": the five-card draft (CardDraftFive), with the starting hands drawn before the factions set up
     var draft = false
 
-    // "urban" or "legendsmap": the Doomed Expansion's Urban Legends maps, with All Random clearings and the map's own landmarks
+    // "urban" or "legendsmap": the Doomed Expansion's Urban Legends maps, "deepwoods" or "wastelands" the Outsiders Expansion's maps,
+    // with All Random clearings and the map's own landmarks
     var fanMap : |[Meta.O] = None
     // "adset": Advanced Setup, seats drafting from the pool (one faction more than the seats)
     var adset = false
@@ -218,7 +219,7 @@ object ReplayCheck {
         oldFrogs = args.contains("oldfrogs")
         draft = args.contains("draft")
         adset = args.contains("adset")
-        fanMap = args.contains("urban").$(UrbanMap).++(args.contains("legendsmap").$(LegendsMap)).headOption
+        fanMap = args.contains("urban").$(UrbanMap).++(args.contains("legendsmap").$(LegendsMap)).++(args.contains("deepwoods").$(DeepWoodsMap)).++(args.contains("wastelands").$(WastelandsMap)).headOption
         oldHire = args.contains("oldhire")
         hire = args.find(_.startsWith("hire:"))./~(_.drop(5).split(',').$./(n => (Meta.hirelings ++ Meta.turnlings).%(h => h.name == n || h.short == n || h.toString == n).single.|!("no hireling " + n)))
         val pool : $[$[Faction]] = args.lift(1)./(_ match {
