@@ -676,6 +676,9 @@ file covers the build, server and deploy. No session can ssh to the server
   each (`FanInfo.about` in `root/fan-info.scala`). The faction picker shows it as a "?" button beside the name (`Meta.factionInfo`,
   `xstyles.infoButton` in `pickElem`), and Advanced Setup's "Available Factions" toggles as the setup's usual ? (`IncludeFaction.explain`).
   Official factions have none. Display only.
+- The playtest Lilypad Diaspora versions (`LDvB`, `LDvC`, `LDvD`) and the Tidepool Diaspora (`TD`) are no longer offered (Gman,
+  2026-11-17): they are `Meta.retiredFactions`, out of `Meta.factions`, but still parsed (`parseFaction`) and their `IncludeFaction`
+  options kept (older Adset games list them), so older games load.
 - The deck cards of the base, Exiles and Partisans and Squires and Disciples decks and the Homeland
   Lilypad Diaspora cards (`faction/invasive/card/hl-*`) have the newer text layout (no title in the text
   box) and the Homeland errata, from a player's Google Drive (2026-10-10). The shared deck's back follows

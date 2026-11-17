@@ -1690,9 +1690,12 @@ object Meta extends MetaGame {
     val official = $[Faction](MC, ED, WA, VB, LC, RF, UD, CC, LH, KI)
     val homeland = $[Faction](LDvE, TC, KD)
     val clones = $[Faction](BK, PE, FU, NB, CM, /*WC,*/ DR, RI, LK)
-    val fun = $[Faction](KDvA, TCvA, LDvD, LDvC, LDvB, TD, FH, WW, DU, WG, EE, DM, DV, NW, XC, CUv2, CU, OK, AF, SF, MB)
+    val fun = $[Faction](KDvA, TCvA, FH, WW, DU, WG, EE, DM, DV, NW, XC, CUv2, CU, OK, AF, SF, MB)
 
     val factions = official ++ homeland ++ clones ++ fun
+
+    // The playtest Lilypad Diaspora versions and the Tidepool Diaspora, no longer offered (Gman, 2026-11-17), still read so older games load
+    val retiredFactions = $[Faction](LDvD, LDvC, LDvB, TD)
 
     override def factionGroup(f : F) : |[Elem] = homeland.has(f).?("Homeland".txt) || clones.has(f).?("Mirror Factions".txt) || fun.has(f).?("Fun Factions".txt)
 
@@ -1821,7 +1824,7 @@ object Meta extends MetaGame {
         $(FatFingers, LilLooters, FiveFingerFilch, SeizureAndSurrender, Pickpockets)
 
     override val hiddenOptions =
-        factions./(IncludeFaction) ++
+        (factions ++ retiredFactions)./(IncludeFaction) ++
         $(SeatingGiven, SeatingRandom) ++
         $(FactionSeatingGiven, FactionSeatingRandom) ++
         $(SetupOrderPriority, SetupOrderReverse) ++
@@ -1856,7 +1859,7 @@ object Meta extends MetaGame {
     // offered only in Advanced Setup (MetaAdset), listed here so every game reads them
     lazy val adsetOnly : $[O] = $(InsurgentLockOn, InsurgentLockOff)
 
-    val options = optionsFor(4, factions) ++ hiddenOptions ++ factions./(IncludeFaction) ++ adsetOnly
+    val options = optionsFor(4, factions) ++ hiddenOptions ++ (factions ++ retiredFactions)./(IncludeFaction) ++ adsetOnly
 
     override def mandatoryFor(n : Int, l : $[F]) : $[O] = l./(IncludeFaction) ++ newGame
 
@@ -2019,7 +2022,7 @@ object Meta extends MetaGame {
     }
 
     def writeFaction(f : Faction) = f.short
-    def parseFaction(s : String) = (factions ++ hirelings ++ turnlings).%(_.short == s).single || (s == "XCMDM").?(Mudmen(XC)) || $[Faction](InfectedHorde, TrapLayer, LegendBeast).%(_.short == s).single || hirelings.%(_.toString == s).single
+    def parseFaction(s : String) = (factions ++ retiredFactions ++ hirelings ++ turnlings).%(_.short == s).single || (s == "XCMDM").?(Mudmen(XC)) || $[Faction](InfectedHorde, TrapLayer, LegendBeast).%(_.short == s).single || hirelings.%(_.toString == s).single
 
     def writeOption(o : O) = Serialize.write(o)
     def parseOption(s : String) = $(options.find(o => writeOption(o) == s) || options.find(o => o.toString == s) | (s @@ {
