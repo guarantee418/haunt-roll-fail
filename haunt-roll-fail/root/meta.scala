@@ -591,6 +591,15 @@ case object BanishAfterIgnoredHits extends GameOption with ToggleOption {
     val valueOn = "Banish".hh ~ " after ignored hits"
 }
 
+// The Twilight Council's Banish moves the Knaves' Captains only once no other Knave warrior there is left to move, as hits reach a
+// Captain only then (Rearguard): it took the warriors in the order they came, so a Captain could go before a Skunk (2026-11-18,
+// Control as Struggle: the Captain was banished from Pit to Trench, the Skunk stayed). Hidden, in RulesVersion2; older games keep
+// the old way so their replays don't change (BanishCaptainsLastAction switches a running one over).
+case object BanishCaptainsLast extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Banish".hh ~ " Captains last"
+}
+
 // On the Mountain map the Twilight Council may clear a path in Evening, after Convene Woodfolk, if it didn't in Daylight: its cards
 // are revealed in Birdsong and come back to hand only in Evening, so its Daylight had none to discard (Discord,
 // 2026-11-04). Hidden and on by default for new games; older games keep their Evening so their replays don't change
@@ -1924,7 +1933,7 @@ object Meta extends MetaGame {
 
     // The hidden options of rules fixes, each gating a fix so the games started before it replay the same (most new games get through
     // their RulesVersion); not listed in a game's log (OptionsAction)
-    lazy val fixes : $[O] = $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes)
+    lazy val fixes : $[O] = $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes, BanishCaptainsLast)
 
     def unlisted : $[O] = fixes ++ settled ++ RulesVersion.all
 
@@ -2112,6 +2121,22 @@ object Meta extends MetaGame {
     override def glyph(g : G, f : F) : |[String] = glyph(f).%!(_ => g.highlightFaction.has(f) && hrf.HRF.uptime() / 1000 % 2 == 1)
 
     def createGame(factions : $[Faction], options : $[O]) = new Game(factions, factions, options)
+
+    // Rankings (asked for on 2026-11-18): every Root game (the standard setup, Advanced Setup and Mirror) goes to one ladder; each
+    // faction is a side, so a Vagabond in a coalition wins beside its ally
+    override def ranking = |("root")
+    override def rankingSides(g : G, winners : $[Any]) = rankSides(g, winners)
+    override def rankingSeat(g : G, f : F) = rankSeat(g, f)
+
+    def rankSides(game : Game, winners : $[Any]) : $[($[Faction], Boolean)] = game.factions./(f => $(f) -> winners.contains(f))
+
+    // the faction (a Vagabond with its character), its place in the turn order set up and its VP ("D" for a dominance)
+    def rankSeat(implicit game : Game, f : Faction) : |[RankingSeat] = game.factions.has(f).?{
+        val name = f.as[Hero]./~(h => game.states.get(h)./~(_.as[HeroPlayer])./~(_.character))./(c => f.name + " (" + c.name + ")").|(f.name)
+        // game.factions turns with each turn; game.ordering keeps the order set up
+        val seat = game.ordering.find(_._2 == f)./(_._1).|(game.factions.indexOf(f))
+        RankingSeat(name, seat + 1, game.factions.num, |((f.vp < 0).?("D").|(f.vp.toString)))
+    }
 
     def getBots(f : Faction) = f match {
         case _ : Feline => $("Easy")
@@ -4557,9 +4582,14 @@ case object RulesVersion1 extends RulesVersion(1) {
     def fixes = Meta.settled ++ $[Meta.O](FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, CounterMiceInABush, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes)
 }
 
+// Banish moves the Knaves' Captains last (2026-11-18)
+case object RulesVersion2 extends RulesVersion(2) {
+    def fixes = RulesVersion1.fixes ++ $[Meta.O](BanishCaptainsLast)
+}
+
 object RulesVersion {
-    val all : $[RulesVersion] = $(RulesVersion1)
-    def latest : RulesVersion = RulesVersion1
+    val all : $[RulesVersion] = $(RulesVersion1, RulesVersion2)
+    def latest : RulesVersion = RulesVersion2
     def implied : $[Meta.O] = all./~(_.fixes).distinct
 
     def expand(l : $[Meta.O]) : $[Meta.O] = l ++ l.of[RulesVersion]./~(_.fixes).distinct.diff(l)

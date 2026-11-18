@@ -25,6 +25,7 @@ import scala.jdk.CollectionConverters._
 //   fixes/applied.log the fixes seen so far (by hash), so none is tried twice
 //   bug-reports/<time>.md the reports sent with the in-game Report a Bug button
 //   ranking/<file>.tsv the rankings' claimed names, seats and results (Ranking.scala)
+//   ranking-changes/<name>.txt names released or moved by hand (Ranking.change), applied once each, with <name>.result
 //
 // Fields are separated by tabs; tabs, newlines and backslashes in them are escaped.
 // "restore" rebuilds a database from such a directory.
@@ -220,8 +221,28 @@ object Backup {
             }
         }
 
+        // The name releases and renames committed to ranking-changes/<name>.txt (Ranking.change), each applied once (by hash,
+        // in its own ledger), the outcome in <name>.result
+        def rankingChanges() {
+            val d = dir.resolve("ranking-changes")
+            val ledger = d.resolve("applied.log")
+            def seen = if (Files.exists(ledger)) Files.readAllLines(ledger, UTF_8).asScala.map(_.takeWhile(_ != ' ')).toSet else Set[String]()
+            if (Files.isDirectory(d))
+                Files.list(d).iterator.asScala.toList.filter(p => Files.isRegularFile(p) && p.toString.endsWith(".txt")).sorted.foreach { p =>
+                    val content = read(p)
+                    val hash = sha256(content)
+                    if (!seen.contains(hash)) {
+                        val name = p.getFileName.toString.stripSuffix(".txt")
+                        val result = try Ranking.change(content).mkString("\n") catch { case e : Exception => "Not applied: " + e.getMessage }
+                        write(d.resolve(name + ".result"), now() + "\n" + result + "\n")
+                        Files.write(ledger, (hash + " " + now() + " " + name + "\n").getBytes(UTF_8), java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND)
+                        println("Ranking changes " + name + ": " + result.replace("\n", "; "))
+                    }
+                }
+        }
+
         def tick() {
-            List[(String, () => Unit)]("fixes" -> (() => fixes()), "export" -> (() => export()), "reports" -> (() => reports()), "ranking" -> (() => ranking())).foreach { case (what, f) =>
+            List[(String, () => Unit)]("fixes" -> (() => fixes()), "export" -> (() => export()), "reports" -> (() => reports()), "ranking changes" -> (() => rankingChanges()), "ranking" -> (() => ranking())).foreach { case (what, f) =>
                 try f()
                 catch {
                     case e : Exception => println("Backup " + what + " failed: " + e)

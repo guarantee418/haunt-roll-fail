@@ -253,6 +253,8 @@ object ReplayCheck {
             case "doomed" => $($(MC, ED, WA, WW, DU, EE, RF), $(DM, ED, UD, DV, NW, LC), $(MC, WA, WG, DU, WW, RF, TC), $(EE, DM, NW, DV, KI, LH))
             case "tc" => $($(MC, ED, WA, TC))
             case "kd" => $($(MC, ED, WA, KD))
+            // "tckd": the Twilight Council with the Knaves, whose Captains a Banish moves last (BanishCaptainsLast)
+            case "tckd" => $($(MC, ED, TC, KD), $(WA, TC, KD, LC))
             case "ki" => $($(MC, KI, WA, TC))
             case "ldkd" => $($(MC, ED, LDvE, KD), $(MC, WA, LDvE, KD))
             case "ldlc" => $($(MC, ED, LDvE, LC), $(MC, WA, LDvE, LC))

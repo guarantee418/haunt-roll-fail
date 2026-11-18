@@ -1633,6 +1633,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     var prisonersFromCodefenders = false
     var mouseholdFromSupply = false
     var banishAfterIgnoredHits = false
+    var banishCaptainsLast = false
     var featherRufflersOnCraft = false
     var counterMiceInABush = false
     var forcedAsyncChooseHits = false

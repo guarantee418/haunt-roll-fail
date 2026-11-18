@@ -198,6 +198,9 @@ trait MetaBase {
     // one share it, as Northgard and its Adset do), and its sides (a player, or a team) with whether each won; bots are left out later
     def ranking : |[String] = None
     def rankingSides(g : G, winners : $[Any]) : $[($[F], Boolean)] = $
+    // and, for the faction and turn order stats, what each seat played: its faction, its place in the turn order (from 1), the
+    // number of players and its score (VP or fame, "D" for a Root dominance)
+    def rankingSeat(g : G, f : F) : |[RankingSeat] = None
     // Other games on the main menu that are their own meta (Northgard's Adset): the menu label and the meta's name
     def linkedModes : $[(String, String)] = $
     // A tutorial on the main menu (Northgard's): a line about it, its lessons (each a title and its paragraphs), and the
@@ -338,6 +341,13 @@ trait MetaBots extends MetaBase {
 
         throw new Error("could not create a valid quick game setup")
     }
+}
+
+
+// A seat of a finished ranked game (MetaGame.rankingSeat)
+case class RankingSeat(faction : String, seat : Int, players : Int, score : |[String]) {
+    // what a report adds to the seat's user: "/faction/seat/players/score", spaces in the faction as "_" (Elo.entry in hrf.scala)
+    def token = "/" + faction.replace(' ', '_').toList.filter(c => c.isLetterOrDigit || "_'().-!&".contains(c)).mkString.take(48) + "/" + seat + "/" + players + "/" + score.|("").toList.filter(_.isLetterOrDigit).mkString.take(8)
 }
 
 trait MetaGame extends MetaBase with MetaBots
