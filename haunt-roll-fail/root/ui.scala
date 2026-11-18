@@ -304,6 +304,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case Capitol => { DrawRect(pr + "capitol", -50, -50, 100, 100) }
             case Common => { DrawRect(pr + "common", -40, -40, 80, 80) }
             case HistoricalSite => { DrawRect(pr + "historical-site", -50, -50, 100, 100) }
+            case Drone => { DrawRect(pr + "drone", -40, -40, 80, 80) }
+            case Gear => { DrawRect(pr + "gear", -40, -40, 80, 80) }
+            case RobotGear(_) => { DrawRect(pr + "gear", -24, -24, 48, 48) }
+            case OldMan => { DrawRect(pr + "old-man", -40, -84, 80, 90) }
+            case TinkerFactory => { DrawRect(pr + "factory", -50, -50, 100, 100) }
+            case b : Robot => { DrawRect(pr + b.id + faction.as[OldManTinker].?(t => t.rsi(b) == 0).??("-broken"), -48, -86, 96, 92) }
             case Infestation => { DrawRect(pr + "infestation", -50, -50, 100, 100) }
             case Cave => { DrawRect("wm-cave", -50, -50, 100, 100) }
             case Guano => { DrawRect("wm-guano", -40, -40, 80, 80) }
@@ -2449,6 +2455,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 &((Image(f.style + "-bat-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-bat", styles.wr) *** (f.all(f.warrior).num % 5))) ~
                 &((Image(f.style + "-bat-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-bat-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
 
+            case f : OldManTinker =>
+                Hint("Production\nLevel " + f.level + ", " + f.drones.?("drones").|("gears") + "\n" + f.tokensLeft + " of 20 tokens in the supply",
+                    ("Production".styled(f) ~ " " ~ f.level.hl ~ " " ~ Image(f.style + f.drones.?("-drone").|("-gear"), styles.token) ~ " " ~ "Supply".styled(f) ~ " " ~ f.tokensLeft.hl).div) ~
+                Hint("Robots (gears on each R.S.I.)\n" + TinkerRobots.robots./(b => b.name + ": " + f.rsi(b) + "/3" + (f.rsi(b) == 0).??(", broken")).mkString("\n"),
+                    TinkerRobots.robots./(b => Image(f.style + "-" + b.id + (f.rsi(b) == 0).??("-broken"), styles.wr) ~ f.rsi(b).hl ~ " ").merge.div(styles.warline)) ~
+                (Image(f.style + "-factory", styles.building) *** f.factories.num) ~ (Image("empty-building", styles.building) *** f.pooled(TinkerFactory)) ~ Break ~ Gap ~
+                Div(Hint("Drones and gears\n" + f.onMap(Drone) + " drones and " + f.onMap(Gear) + " gears on the map\nThe Old Man: " + f.oldMan./(_.name).|("-"),
+                    Image(f.style + "-old-man", styles.wr) ~ (Image(f.style + "-drone", styles.token) *** f.onMap(Drone)) ~ (Image(f.style + "-gear", styles.token) *** f.onMap(Gear))), styles.warline)
+
             case f : TwelveColonies =>
                 Hint("The Law\n" + f.law./(l => l.name + " (" + l.kind + ", " + l.suitName + ")\n" + l.text + f.target./(t => "\nElected: " + t.toString)).|("none in effect") + f.kept./(l => "\nA Law is kept, face down, for the next Birdsong").|(""),
                     ("Law".styled(f) ~ ": " ~ f.law./(l => l.elem ~ f.target./(t => " (" ~ t.elem ~ ")")).|("none".txt)).div) ~
@@ -2828,6 +2843,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         case _ : WingedMenace => Some("wm-board")
         case _ : OrderOfTheForest => Some("of-board")
         case _ : TwelveColonies => Some("tw-board")
+        case _ : OldManTinker => Some("omt-board")
         case _ : Doomsayers => Some("du-board")
         case _ : Whisperers => Some("wg-board")
         case _ : OldExpedition => Some("ok-board")
@@ -3736,6 +3752,41 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     less(DarkPassage.of(f).larger) ~
                     more(DarkPassage.of(f).larger, "On their turn, other players may give", f, "a card to place any number of their warriors from one", "cave".hh, "in another", Dot) ~
                     desc("Caves".hh, game.caves./(_.elem).comma) ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), {
+                    case (f : Faction, more : Boolean) => onFactionStatus(f, more, None)
+                    case _ =>
+                        overlayPane.invis()
+                        overlayPane.clear()
+                })
+
+            case f : OldManTinker =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    f.name.f.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    Image("omt-board")(styles.factionboard) ~
+                    HGap ~
+                    HGap ~
+                    less("Robots".hl.larger) ~
+                    more("Robots".hl.larger, "are never removed: each gear on a robot's", "R.S.I.".hh, "is a warrior in its clearing, ruling, battling and moving with it; a hit knocks a gear off into the clearing, and a robot with none is", "broken".hh, Dot, "The", BreakageDie.elem, "deal a hit to each robot rolled", Dot) ~
+                    TinkerRobots.robots./(b => desc(b.of(f), f.robotAt(b)./(c => "in ".txt ~ c.elem), "with", f.rsi(b).hl, "gears", (f.rsi(b) == 0).?("(broken)"))).merge ~
+                    HGap ~
+                    HGap ~
+                    less("Production".hl.larger) ~
+                    more("Production".hl.larger, "places as many tokens as the level at each factory, gears or drones as the marker shows, scoring", 1.vp, "for each factory; drones are warriors, gears are tokens", Dot, Meltdown.of(f), "lowers the level when factories are removed", Dot) ~
+                    desc("Level", f.level.hl, Comma, f.drones.?("drones").|("gears").hh, Comma, f.tokensLeft.hl, "of", 20.hl, "tokens in the supply") ~
+                    HGap ~
+                    HGap ~
+                    less("The Old Man".hl.larger) ~
+                    more("The Old Man".hl.larger, "ignores rule, moves between clearings and forests carrying up to three gears, and is a token in battle (the remover scores", 1.vp ~ ", and he goes to a forest nearby); the Tinker crafts with the gears in his clearing", Dot) ~
+                    desc("The Old Man is in", f.oldMan./(_.elem).|("none".txt)) ~
                     HGap ~
                     HGap ~
                     info() ~

@@ -578,6 +578,13 @@ server. No session can reach the server, and none needs to.
   by removing warriors), the Colonies breaking ties. A Law in effect reaches the rest of the game through `TwelveColoniesExpansion`'s
   checks: `battleAllowed` in `canAttack` (the Paxes, Omnius Exitus), `usable` in `canPlace` and `passable` in `Roads`, `artifex` in
   `craftableWith`, `ruleless` in `RuledMove`, `noWild` in `canAmbushWith`. `ReplayCheck <games> tw` plays it.
+  Old Man Tinker (OMT, `root/faction-old-man-tinker.scala`, its header lists the readings; images in `faction/tinker/`) is a Fun Faction
+  and in Advanced Setup's pool: three robot pawns (`Robot`: Wolfbot, Birdbot, Owlbot, never hit, `OldManTinkerExpansion.hittable` in the
+  battle's hit assignment) whose R.S.I. gears are warriors of their own in the robot's clearing (`RobotGear(robot)`, moving only all
+  together with the robot, `RobotMove`; a hit turns one into a gear token there), gear tokens (`Gear`) and drones (`Drone`, warriors)
+  sharing twenty tokens (`tokensLeft`), the Old Man (`OldMan`, a token that moves into forests too, so the player registers the forests as
+  locations), factories, Production (level 0 to 2, gears or drones), the Breakage Dice, Bustle, Tinker, Repair, Overproduce, Restructure
+  and Do-Over. `ReplayCheck <games> omt` plays it.
   Its two maps are Fan Maps, "Deep Woods" and "Wastelands" (`DeepWoodsMap`, `WastelandsMap`; `DeepWoodsBoard` and `WastelandsBoard` in
   `root/maps.scala`, images in `deep-woods/` and `wastelands/` made by `root/tools/outsiders-maps.py`, which also prints the Deep Woods
   building slots), also drawn by "Random". Clearing and forest names are made up. Their own rules are toggles in the setup's "Fan Map

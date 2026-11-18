@@ -140,7 +140,7 @@ object AdvancedSetup {
     }
 
     // the Doomed Expansion's factions and Re-Imaginings, offered in the Advanced Setup pool (2026-11-17), and the Outsiders Expansion's
-    val doomed = $[Faction](WW, DU, WG, EE, DM, DV, NW, BP, WM, OF, TW)
+    val doomed = $[Faction](WW, DU, WG, EE, DM, DV, NW, BP, WM, OF, TW, OMT)
 
     // a drawn set of factions holding two that can't play together (the standard setup's rules), or one that needs more players
     def clash(t : $[Faction], players : Int) : Boolean =

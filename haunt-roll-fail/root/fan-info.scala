@@ -134,6 +134,16 @@ object FanInfo {
             line("Daylight", "Minister (a soup token draws 2, a coins token places 2 warriors), Witness, Build an abbey.".txt),
             line("Evening", "Congregate (craft with pawns and abbeys of their own suit, in one clearing), then Rest and score the Ranks.".txt),
         )
+        case OMT => $(
+            by("slugfacekillah", outsiders("2.1")),
+            outsidersLink,
+            "A beaver from the future with three robots and a network of factories producing gears and drones; he scores each time they produce.".txt,
+            line("Robots", "never removed: the gears on each robot are its warriors, and hits knock them off into the clearing; a robot with none is broken until repaired.".txt),
+            line("The Old Man", "ignores rule, moves between clearings and forests carrying gears, and the Tinker crafts with the gears in his clearing.".txt),
+            line("Birdsong", "Do-Over if it likes, roll the Breakage Dice (a hit to each robot rolled), Produce at every factory, Bustle (the Old Man moves 3 times).".txt),
+            line("Daylight", "Craft with gears, then 4 actions: Crusade (battle, or move and battle), Tinker (flip tokens), Repair (gears onto a robot), Overproduce (a card for an extra Production); then Build factories, never two side by side with a third.".txt),
+            line("Evening", "Restructure (a card matching a factory raises or lowers the level or flips gears to drones), then draw 2 or take a matching card from the discard pile.".txt),
+        )
         case TW => $(
             by("slugfacekillah", "inspired by lhammer, ".txt ~ outsiders("2.1")),
             outsidersLink,

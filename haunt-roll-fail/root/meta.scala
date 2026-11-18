@@ -1752,7 +1752,7 @@ object Meta extends MetaGame {
     val official = $[Faction](MC, ED, WA, VB, LC, RF, UD, CC, LH, KI)
     val homeland = $[Faction](LDvE, TC, KD)
     val clones = $[Faction](BK, PE, FU, NB, CM, /*WC,*/ DR, RI, LK)
-    val fun = $[Faction](KDvA, TCvA, FH, WW, DU, WG, EE, DM, DV, NW, XC, BP, WM, OF, TW, CUv2, CU, OK, AF, SF, MB)
+    val fun = $[Faction](KDvA, TCvA, FH, WW, DU, WG, EE, DM, DV, NW, XC, BP, WM, OF, TW, OMT, CUv2, CU, OK, AF, SF, MB)
 
     val factions = official ++ homeland ++ clones ++ fun
 
@@ -2029,6 +2029,7 @@ object Meta extends MetaGame {
         factions.of[WingedMenace].num * 6 +
         factions.of[OrderOfTheForest].num * 5 +
         factions.of[TwelveColonies].num * 5 +
+        factions.of[OldManTinker].num * 6 +
         factions.of[Doomsayers].num * 6 +
         factions.of[Whisperers].num * 2 +
         factions.of[Marquistadors].num * 9 +
@@ -4125,6 +4126,23 @@ object Meta extends MetaGame {
         ImageAsset("of-soup"                  ) ::
         ImageAsset("of-coins"                 ) ::
         ImageAsset("of-board"                 ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => factions.of[OldManTinker].any, "faction/tinker")(
+        ImageAsset("omt-glyph"                ) ::
+        ImageAsset("omt-title"                ) ::
+        ImageAsset("omt-char"                 ) ::
+        ImageAsset("omt-action"               ) ::
+        ImageAsset("omt-drone"                ) ::
+        ImageAsset("omt-gear"                 ) ::
+        ImageAsset("omt-factory"              ) ::
+        ImageAsset("omt-old-man"              ) ::
+        ImageAsset("omt-wolfbot"              ) ::
+        ImageAsset("omt-birdbot"              ) ::
+        ImageAsset("omt-owlbot"               ) ::
+        ImageAsset("omt-wolfbot-broken"       ) ::
+        ImageAsset("omt-birdbot-broken"       ) ::
+        ImageAsset("omt-owlbot-broken"        ) ::
+        ImageAsset("omt-board"                ) ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[TwelveColonies].any, "faction/colonies")(
         ImageAsset("tw-glyph"                 ) ::

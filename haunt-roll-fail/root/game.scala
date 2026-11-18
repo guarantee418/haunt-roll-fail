@@ -856,6 +856,7 @@ trait GameImplicits {
     implicit def wingedMenaceState(f : WingedMenace)(implicit game : Game) = game.states(f).as[WingedMenacePlayer].get
     implicit def orderForestState(f : OrderOfTheForest)(implicit game : Game) = game.states(f).as[OrderForestPlayer].get
     implicit def twelveColoniesState(f : TwelveColonies)(implicit game : Game) = game.states(f).as[TwelveColoniesPlayer].get
+    implicit def oldManTinkerState(f : OldManTinker)(implicit game : Game) = game.states(f).as[OldManTinkerPlayer].get
     implicit def doomState(f : Doomsayers)(implicit game : Game) = game.states(f).as[DoomsayersPlayer].get
     implicit def whisperersState(f : Whisperers)(implicit game : Game) = game.states(f).as[WhisperersPlayer].get
     implicit def invasiveEEEState(f : InvasiveEEE)(implicit game : Game) = game.states(f).as[InvasiveEEEPlayer].get
@@ -1709,6 +1710,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             WingedMenaceExpansion,
             OrderForestExpansion,
             TwelveColoniesExpansion,
+            OldManTinkerExpansion,
             DoomsayersExpansion,
             InvasiveEEEExpansion,
             InvasiveDDDExpansion,

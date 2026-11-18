@@ -3,6 +3,7 @@
 #   pdftoppm -r 220 -png <X>-board-front.pdf b-<x> (and back, bb-<x>)
 #   the meeples: "Meeples.svg" (Outsiders meeple files by The Irreverend), its "ORIGINAL" half rendered in Chromium with the
 #   viewBox "-2143.55 -1000 700 600" at 5600x4800 with a transparent background, as meeples.png
+#   Old Man Tinker: b-omt.png at 220 dpi and t-omt.png at 300 dpi, like the others
 #   the Twelve Colonies laws: the cards zip unpacked, its fronts folder linked as "laws" in that dir
 #   python3 outsiders-art.py <dir with those renders> <webp2/root/images/faction> [bp ...]
 # - the board front, at the size of the other fan boards (1232 wide)
@@ -206,4 +207,44 @@ if "tc" in which:
         im = Image.open(f"{src}/laws/TwelveColonies-CARDSfront{i + 1:02d}.png").convert("RGB")
         im = im.crop((37, 37, im.size[0] - 37, im.size[1] - 37)).resize((375, 525), Image.LANCZOS)
         im.save(f"{out}/tw-law-{n}.webp", quality = 85)
+    out = keep
+
+if "omt" in which:
+    # Old Man Tinker: board b-omt.png (220 dpi), token sheet t-omt.png (300 dpi). The sheet has no drone side, so the drone token is
+    # a round cut of the first drone over the board's banner. The robots and the Old Man are cut out of the sheet's gray squares.
+    o = f"{out}/tinker"
+    out, keep = o, out
+    os.makedirs(out, exist_ok = True)
+    board("omt", "omt-board.webp")
+    title("omt", (860, 150, 1720, 300), "omt-title.webp")
+    disc("t-omt.png", 1050, 660, 118, 80, "omt-gear.webp")
+    disc("b-omt.png", 1745, 172, 112, 80, "omt-drone.webp")
+    disc("t-omt.png", 1650, 1417, 104, 100, "omt-factory.webp", square = True)
+    disc("t-omt.png", 1650, 850, 104, 86, "omt-glyph.webp", square = True)
+    crop(f"{src}/t-omt.png", (1556, 1040, 1744, 1226), 160, 194, "omt-char.webp")
+    def cutout(cx, cy, r, height, name):
+        im = Image.open(f"{src}/t-omt.png").convert("RGBA").crop((cx - r, cy - r, cx + r, cy + r))
+        a = np.asarray(im).astype(int)
+        bg = a[6, 6, :3]
+        far = np.abs(a[:, :, :3] - bg).sum(axis = 2) > 60
+        # keep what the background doesn't reach from the edges
+        from scipy import ndimage
+        lab, _ = ndimage.label(~far)
+        outside = np.isin(lab, np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]])))
+        a[:, :, 3] = np.where(outside & ~far, 0, 255)
+        p = Image.fromarray(a.astype(np.uint8), "RGBA")
+        p = p.crop(p.getbbox())
+        p = p.resize((round(p.size[0] * height / p.size[1]), height), Image.LANCZOS)
+        p.save(f"{out}/{name}.webp", lossless = True)
+        # broken: gray and faded, lying on its side
+        e = np.asarray(p.rotate(90, expand = True)).astype(int)
+        g = e[:, :, :3].mean(axis = 2) * 0.55
+        e[:, :, 0] = e[:, :, 1] = e[:, :, 2] = g
+        e[:, :, 3] = e[:, :, 3] * 0.8
+        Image.fromarray(e.astype(np.uint8), "RGBA").save(f"{out}/{name}-broken.webp", lossless = True)
+    cutout(1003, 297, 92, 90, "omt-wolfbot")
+    cutout(1521, 297, 92, 90, "omt-birdbot")
+    cutout(2039, 297, 92, 90, "omt-owlbot")
+    cutout(1650, 1133, 104, 90, "omt-old-man")
+    Image.open(f"{out}/omt-gear.webp").resize((100, 100), Image.LANCZOS).save(f"{out}/omt-action.webp", lossless = True)
     out = keep
