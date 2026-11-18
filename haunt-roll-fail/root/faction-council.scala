@@ -151,6 +151,9 @@ case class CouncilEmpowerSupplyAction(self : Council) extends ForcedAction
 // A one-time fix for games started before BanishAfterIgnoredHits, added to a live game's log by hand: from here a banished defender
 // ignores the first hit as in any battle (game.banishAfterIgnoredHits), then goes on with then
 case class BanishAfterIgnoredHitsAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// A one-time fix for games started before BanishCaptainsLast, added to a live game's log by hand: from here a Banish moves the Knaves'
+// Captains only after their other warriors there (game.banishCaptainsLast), then goes on with then
+case class BanishCaptainsLastAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class CouncilBanishDestinationAction(self : Council, b : Battle, e : Faction, l : $[Figure], t : Clearing, then : ForcedAction) extends ForcedAction
 
 // A one-time fix for games started before CouncilEveningClearPath, added to a live game's log by hand: from here the Council may
@@ -384,7 +387,10 @@ object CouncilExpansion extends FactionExpansion[Council] {
         case BattleAssignHitsAction(o, b, n, s, then) if n + s > 0 && o == b.defender && b.attacker.as[Council].?(_.used.has(Banishing)) &&
             ((options.has(BanishAfterIgnoredHits) || game.banishAfterIgnoredHits).not || BattleExpansion.ignoresFirstHit(o, b).not) =>
             val t = b.attacker.as[Council].get
-            val l = o.from(b.clearing).$.%(_.piece.is[Warrior]).%(_.piece != Warlord).sortBy(_.piece.priority).take(n + s)
+            // With BanishCaptainsLast, warriors that are hit only once no other warrior of theirs is left (the Knaves' Captains, Rearguard)
+            // are banished last, as they would be removed last
+            val captainsLast = options.has(BanishCaptainsLast) || game.banishCaptainsLast
+            val l = o.from(b.clearing).$.%(_.piece.is[Warrior]).%(_.piece != Warlord).sortBy(x => (x.piece.priority, captainsLast && x.piece.is[Rearguard])).take(n + s)
             val dest = game.connected(b.clearing)
 
             if (l.none || dest.none) {
@@ -399,6 +405,11 @@ object CouncilExpansion extends FactionExpansion[Council] {
 
         case BanishAfterIgnoredHitsAction(then) =>
             game.banishAfterIgnoredHits = true
+
+            then
+
+        case BanishCaptainsLastAction(then) =>
+            game.banishCaptainsLast = true
 
             then
 
