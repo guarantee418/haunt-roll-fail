@@ -293,6 +293,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case Pug => { DrawRect(pr + "pug", -38, -90, 76, 96) }
             case Alpha => { DrawRect(pr + "alpha", -40, -118, 79, 124) }
             case Stash => { DrawRect(pr + "stash", -50, -50, 100, 100) }
+            case Bat => { DrawRect(pr + "bat", -40, -84, 80, 90) }
+            case Infestation => { DrawRect(pr + "infestation", -50, -50, 100, 100) }
+            case Cave => { DrawRect("wm-cave", -50, -50, 100, 100) }
+            case Guano => { DrawRect("wm-guano", -40, -40, 80, 80) }
             case Bone(s) => { DrawRect(pr + "bone-" + s.name.toLowerCase, -40, -40, 80, 80) }
             case BuriedBone(_) => { DrawRect(pr + "bone-buried", -40, -40, 80, 80) }
             case WakeVulture => { DrawRect(pr + "wakevulture", -45, -90, 90, 96) }
@@ -1535,7 +1539,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             }
 
             // the Dark Deck's Infected and Bear Traps have no hireling card
-            d.faction.as[Hireling].%(h => h != InfectedHorde && h != TrapLayer && h != LegendBeast).foreach { h =>
+            d.faction.as[Hireling].%(h => h != InfectedHorde && h != TrapLayer && h != LegendBeast && h != GuanoMess).foreach { h =>
                 pileTargets :+= ((d.rect.x, d.rect.y, d.rect.width, d.rect.height, ("view-hireling-card", h)))
             }
 
@@ -2412,6 +2416,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 &((Image(f.style + "-marquistador-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-marquistador", styles.wr) *** (f.all(f.warrior).num % 5))) ~
                 &((Image(f.style + "-marquistador-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-marquistador-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
 
+            case f : WingedMenace =>
+                Hint("Infestations\n" + f.all(Infestation).num + " on the map\n" + f.pooled(Infestation) + " on the track\nTop row " + f.top + "/4 (+" + f.warriorBonus + " Spawn)\nBottom row " + f.bottom + "/4 (+" + f.drawBonus + " draws)",
+                    (Image(f.style + "-infestation", styles.building) *** f.top) ~ (Image("empty-building", styles.building) *** (4 - f.top)) ~ Break ~
+                    (Image(f.style + "-infestation", styles.building) *** f.bottom) ~ (Image("empty-building", styles.building) *** (4 - f.bottom))) ~ Break ~
+                game.states.contains(GuanoMess).?(Hint("Guano\n" + GuanoMess.pooled(Guano) + " on the track, " + GuanoMess.all(Guano).num + " on the map",
+                    ("Guano".styled(f) ~ " " ~ (Image("wm-guano", styles.token) *** GuanoMess.pooled(Guano)) ~ (GuanoMess.pooled(Guano) == 0).?("none".txt) ~ " " ~ "Nexus".styled(f) ~ " " ~ f.nexus.num.hl).div)) ~
+                (game.current == f && game.phase == Evening).?(Gap ~ 1.to(f.acted)./(_ => Image("action-black", styles.building)) ~ (f.acted.until(3)./(_ => Image(f.style + "-action", styles.building)))) ~
+                Div(Hint("Bats\n" + f.all(f.warrior).num + " on the map\n" + f.nexus.num + " in the Nexus\n" + f.pooled(f.warrior) + " available",
+                &((Image(f.style + "-bat-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-bat", styles.wr) *** (f.all(f.warrior).num % 5))) ~
+                &((Image(f.style + "-bat-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-bat-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
+
             case f : BonePatrol =>
                 Hint("Stashes\n" + f.all(Stash).num + " on the map\n" + f.pooled(Stash) + " on the track\nScout " + f.scouts + ", draw " + f.draws,
                     (Image(f.style + "-stash", styles.building) *** f.all(Stash).num) ~ (Image("empty-building", styles.building) *** f.pooled(Stash))) ~ Break ~ Gap ~
@@ -2761,6 +2776,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         case _ : Farmer => Some("fh-board-v2")
         case _ : WarriorsWake => Some("ww-board")
         case _ : BonePatrol => Some("bp-board")
+        case _ : WingedMenace => Some("wm-board")
         case _ : Doomsayers => Some("du-board")
         case _ : Whisperers => Some("wg-board")
         case _ : OldExpedition => Some("ok-board")
@@ -3630,6 +3646,52 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 ).div(xlo.flexvcenter)), {
                     case (f : Faction, more : Boolean) => onFactionStatus(f, more, None)
                     case d : DeckCard => onClick(d)
+                    case _ =>
+                        overlayPane.invis()
+                        overlayPane.clear()
+                })
+
+            case f : WingedMenace =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    f.name.f.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    Image("wm-board")(styles.factionboard) ~
+                    HGap ~
+                    HGap ~
+                    less("Bats".hl.larger) ~
+                    more("Bats".hl.larger, "are", "warriors".hh, Comma, "they", "battle".hh, "and provide", "rule".hh, Dot, "They spawn in", TheNexus.elem, Comma, "a clearing of no suit next to the four", "caves".hh, Comma, "where only they go", Dot) ~
+                    desc(f.all(f.warrior).num.hl.larger, "on the map,", f.nexus.num.hl.larger, "in", TheNexus.elem ~ ",", f.pooled(f.warrior).hl.larger, "in reserve") ~
+                    HGap ~
+                    warriorLine(f.style + "-bat", f.all(f.warrior).num, f.pooled(f.warrior)) ~
+                    HGap ~
+                    HGap ~
+                    less(FightOrFright.of(f).larger) ~
+                    more(FightOrFright.of(f).larger, "At the start of each battle", f, "picks", "Fight".hh, "or", "Fright".hh, Comma, "revealed after the roll", Dot, "With", "Fright".hh ~ Comma, "their hits make enemy warriors run to an adjacent clearing instead, and they score", 1.vp, "for each if none is left", Dot) ~
+                    HGap ~
+                    HGap ~
+                    less("Infestations".hl.larger) ~
+                    more("Infestations".hl.larger, "are", "buildings".hh, "that", "craft".hh, Comma, "placed from either row of the track", Dot, "Each one off the top row adds a warrior to", "Spawn".hh, Comma, "off the bottom row a card to the draw", Dot, Squatters.of(f), "places one free where", f, "remove an enemy building", Dot) ~
+                    desc("Top row".hh, f.top.hl ~ "/4,", "bottom row".hh, f.bottom.hl ~ "/4") ~
+                    HGap ~
+                    HGap ~
+                    less("Guano".hl.larger) ~
+                    more("Guano".hl.larger, "is left where", f, "would have more than four warriors in a clearing, the second and later ones costing points", Dot, "It is its own defenseless player, and anyone removing it scores", 1.vp, Dot) ~
+                    game.states.contains(GuanoMess).?(desc(GuanoMess.pooled(Guano).hl, "on the track,", GuanoMess.all(Guano).num.hl, "on the map")) ~
+                    HGap ~
+                    HGap ~
+                    less(DarkPassage.of(f).larger) ~
+                    more(DarkPassage.of(f).larger, "On their turn, other players may give", f, "a card to place any number of their warriors from one", "cave".hh, "in another", Dot) ~
+                    desc("Caves".hh, game.caves./(_.elem).comma) ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), {
+                    case (f : Faction, more : Boolean) => onFactionStatus(f, more, None)
                     case _ =>
                         overlayPane.invis()
                         overlayPane.clear()
@@ -5336,7 +5398,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             game.thresholds.any.?(("Next hireling at " ~ game.thresholds./(_.vp).comma.merge).div).|("All hirelings have been taken".txt.div) ~
             markers.div ~
             HGap ~
-            (game.hirelings ++ game.unhired).distinct.but(InfectedHorde).but(TrapLayer).but(LegendBeast)./(h =>
+            (game.hirelings ++ game.unhired).distinct.but(InfectedHorde).but(TrapLayer).but(LegendBeast).but(GuanoMess)./(h =>
                 OnClick(("view-hireling-card", h), (
                     Image("hireling-card:" + h.style + "-card", styles.hirelingcard) ~
                     (h.elem ~ (h.demoted).?(" (demoted)").|(" (staunch)")).div ~
@@ -5956,7 +6018,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             ) ++
             $(ZBasic(Break ~ Break, "Notifications".spn, () => { onClick("notifications", self) }).copy(clear = false)).%(_ => self.any || game.isOver) ++
             $(ZBasic(Break ~ Break, "Map Rules".spn, () => { onClick("view-map-rules") }).copy(clear = false)).%(_ => OutsidersMaps.settling(game) || OutsidersMaps.water(game)) ++
-            $(ZBasic(Break ~ Break, "Hirelings".spn, () => { onClick("view-hirelings") }).copy(clear = false)).%(_ => game.hirelings.but(InfectedHorde).but(TrapLayer).but(LegendBeast).any || game.unhired.any) ++
+            $(ZBasic(Break ~ Break, "Hirelings".spn, () => { onClick("view-hirelings") }).copy(clear = false)).%(_ => game.hirelings.but(InfectedHorde).but(TrapLayer).but(LegendBeast).but(GuanoMess).any || game.unhired.any) ++
             $(ZBasic(Break ~ Break, "Interface".spn, () => { callbacks.editSettings { updateStatus() } }).copy(clear = false)) ++
             $(ZBasic(Break ~ Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug) ++
             $(ZBasic(Break ~ Break, "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle)

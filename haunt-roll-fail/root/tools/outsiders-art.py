@@ -112,3 +112,29 @@ if "bp" in which:
     w = p.size[0]
     head = p.crop((0, 0, w, w)).resize((100, 100), Image.LANCZOS)
     head.save(f"{o}/bp-action.webp", lossless=True)
+
+if "wm" in which:
+    # the Winged Menace: board b-wm.png (220 dpi), token sheet t-wm.png (300 dpi)
+    o = f"{out}/menace"
+    out, keep = o, out
+    os.makedirs(out, exist_ok = True)
+    board("wm", "wm-board.webp")
+    title("wm", (790, 166, 1706, 258), "wm-title.webp")
+    disc("t-wm.png", 1082, 1134, 104, 100, "wm-infestation.webp", square = True)
+    disc("t-wm.png", 1364, 1134, 104, 100, "wm-cave.webp", square = True)
+    disc("t-wm.png", 788, 1122, 116, 80, "wm-guano.webp")
+    disc("t-wm.png", 1650, 1416, 104, 86, "wm-glyph.webp", square = True)
+    crop(f"{src}/b-wm.png", (2080, 1500, 2480, 1930), 160, 194, "wm-char.webp")
+    # the bat meeple is nearly black: a light rim keeps it visible on the dark parts of the maps
+    from PIL import ImageFilter
+    p = m[10]
+    pad = Image.new("RGBA", (p.size[0] + 40, p.size[1] + 40), (0, 0, 0, 0))
+    pad.paste(p, (20, 20), p)
+    rim = pad.getchannel("A").point(lambda v: 255 if v > 20 else 0).filter(ImageFilter.MaxFilter(19))
+    lit = Image.new("RGBA", pad.size, (196, 186, 220, 0))
+    lit.putalpha(rim)
+    lit.alpha_composite(pad)
+    warrior(lit, 90, "wm-bat")
+    w = p.size[0]
+    p.crop((0, 0, w, w)).resize((100, 100), Image.LANCZOS).save(f"{out}/wm-action.webp", lossless=True)
+    out = keep
