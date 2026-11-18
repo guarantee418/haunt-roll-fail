@@ -1425,7 +1425,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         val metas = HRF.metas.%(m => m.ranking.any && m.ranking == meta.ranking)./(_.name).distinct.join(",")
 
         // the faction glyphs, before the game's assets load (the same paths as the game's)
-        val glyphSources = meta.assets./~(_.get).%(_.name.endsWith("-glyph"))./(a => a.name.toLowerCase -> ("webp2/" + meta.path + "/images/" + a.copy(ext = "webp").src)).toMap
+        // the metas on this ladder: Advanced Setup's factions are seats, so a seat's faction is looked up in all of them (Root's)
+        val ladderMetas = (meta +: HRF.metas.%(m => m.ranking.any && m.ranking == meta.ranking)).distinct
+        val glyphSources = ladderMetas./~(m => m.assets./~(_.get).%(_.name.endsWith("-glyph"))./(a => a.name.toLowerCase -> ("webp2/" + m.path + "/images/" + a.copy(ext = "webp").src))).toMap
 
         implicit val resources : Resources = this.resources.copy(images = this.resources.images.copy(sources = glyphSources ++ this.resources.images.sources))
 
@@ -1449,11 +1451,15 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         def percent0(x : Double) = math.round(x * 100) + "%"
         def plural(n : Int, s : String) = n + " " + s + (n != 1).??("s")
 
-        // a faction as a seat records it ("Vagabond (Thief)"), its glyph and its colour (the style of the faction's name)
-        def factionOf(name : String) : |[meta.F] = {
+        // a faction as a seat records it ("Vagabond (Thief)"): its glyph and its name as the game styles it (its colour)
+        case class Ranked(glyph : |[String], elem : Elem)
+
+        val rankedCache = mutable.Map[String, |[Ranked]]()
+
+        def factionOf(name : String) : |[Ranked] = rankedCache.getOrElseUpdate(name, {
             val base = name.takeWhile(_ != '(').trim
-            meta.factions.find(f => meta.factionName(f) == base)
-        }
+            ladderMetas.view.flatMap(m => m.factions.find(f => m.factionName(f) == base)./(f => Ranked(m.glyph(f), m.factionElem(f)))).headOption
+        })
 
         def colourStyles(e : Elem) : $[Style] = e match {
             case Span(Text(_), ss) => ss
@@ -1463,10 +1469,10 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             case _ => $
         }
 
-        def colour(name : String) : $[Style] = factionOf(name)./(f => colourStyles(meta.factionElem(f))).|($)
+        def colour(name : String) : $[Style] = factionOf(name)./(r => colourStyles(r.elem)).|($)
 
         def glyph(name : String, size : String = "rk-glyph") : Elem =
-            factionOf(name).flatMap(f => meta.glyph(f)).filter(g => glyphSources.contains(g.toLowerCase)).map(g => Image(g, css(size), |(name)) : Elem).getOrElse(tag(Text(name.take(1)), size, "rk-glyph-none"))
+            factionOf(name).flatMap(_.glyph).filter(g => glyphSources.contains(g.toLowerCase)).map(g => Image(g, css(size), |(name)) : Elem).getOrElse(tag(Text(name.take(1)), size, "rk-glyph-none"))
 
         def factionName(name : String) : Elem = Span(Text(name), colour(name) ++ css("rk-fname"))
 
