@@ -1741,7 +1741,7 @@ object Meta extends MetaGame {
     val official = $[Faction](MC, ED, WA, VB, LC, RF, UD, CC, LH, KI)
     val homeland = $[Faction](LDvE, TC, KD)
     val clones = $[Faction](BK, PE, FU, NB, CM, /*WC,*/ DR, RI, LK)
-    val fun = $[Faction](KDvA, TCvA, FH, WW, DU, WG, EE, DM, DV, NW, XC, BP, CUv2, CU, OK, AF, SF, MB)
+    val fun = $[Faction](KDvA, TCvA, FH, WW, DU, WG, EE, DM, DV, NW, XC, BP, WM, CUv2, CU, OK, AF, SF, MB)
 
     val factions = official ++ homeland ++ clones ++ fun
 
@@ -2009,6 +2009,7 @@ object Meta extends MetaGame {
         factions.of[Knaves].num * 4 +
         factions.of[WarriorsWake].num * 5 +
         factions.of[BonePatrol].num * 5 +
+        factions.of[WingedMenace].num * 6 +
         factions.of[Doomsayers].num * 6 +
         factions.of[Whisperers].num * 2 +
         factions.of[Marquistadors].num * 9 +
@@ -2093,7 +2094,7 @@ object Meta extends MetaGame {
     }
 
     def writeFaction(f : Faction) = f.short
-    def parseFaction(s : String) = (factions ++ retiredFactions ++ hirelings ++ turnlings).%(_.short == s).single || (s == "XCMDM").?(Mudmen(XC)) || $[Faction](InfectedHorde, TrapLayer, LegendBeast).%(_.short == s).single || hirelings.%(_.toString == s).single
+    def parseFaction(s : String) = (factions ++ retiredFactions ++ hirelings ++ turnlings).%(_.short == s).single || (s == "XCMDM").?(Mudmen(XC)) || $[Faction](InfectedHorde, TrapLayer, LegendBeast, GuanoMess).%(_.short == s).single || hirelings.%(_.toString == s).single
 
     def writeOption(o : O) = Serialize.write(o)
     def parseOption(s : String) = $(options.find(o => writeOption(o) == s) || options.find(o => o.toString == s) | (s @@ {
@@ -4080,6 +4081,20 @@ object Meta extends MetaGame {
         ImageAsset("bp-bone-mouse"            ) ::
         ImageAsset("bp-bone-buried"           ) ::
         ImageAsset("bp-board"                 ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => factions.of[WingedMenace].any, "faction/menace")(
+        ImageAsset("wm-glyph"                 ) ::
+        ImageAsset("wm-title"                 ) ::
+        ImageAsset("wm-char"                  ) ::
+        ImageAsset("wm-action"                ) ::
+        ImageAsset("wm-bat"                   ) ::
+        ImageAsset("wm-bat-empty"             ) ::
+        ImageAsset("wm-bat-x5"                ) ::
+        ImageAsset("wm-bat-x5-empty"          ) ::
+        ImageAsset("wm-infestation"           ) ::
+        ImageAsset("wm-cave"                  ) ::
+        ImageAsset("wm-guano"                 ) ::
+        ImageAsset("wm-board"                 ) ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[WarriorsWake].any, "faction/wake")(
         ImageAsset("ww-glyph"                 ) ::

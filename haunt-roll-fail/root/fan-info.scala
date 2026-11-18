@@ -99,6 +99,19 @@ object FanInfo {
             line("Daylight", "3 actions, plus 1 per bird card: March, Battle, Recruit (a pug at each stash) and Build (a stash).".txt),
             line("Evening", "fetch or bury bones, craft with the Bone Collection, then draw 1, or 1 for each draw showing on its tracks.".txt),
         )
+        case WM => $(
+            by("slugfacekillah", outsiders("2.4")),
+            outsidersLink,
+            "Bats from the Nexus who frighten the other warriors out of their clearings for points, take over the buildings they remove and leave Guano behind.".txt,
+            line("Fight or Fright", "at the start of each battle it picks Fight or Fright, revealed after the roll; with Fright its hits make enemy warriors run to an adjacent clearing, scoring 1 for each if none is left.".txt),
+            line("Squatters", "when it removes an enemy building, it may place an infestation there for free.".txt),
+            line("Caves and the Nexus", "the ruins become caves that stay when emptied; the Nexus, a clearing only it uses, is next to all four.".txt),
+            line("Dark Passage", "on their turn, other players may give it a card to place any number of their warriors from one cave in another.".txt),
+            line("Guano", "left where it would have more than four warriors; the 2nd, 3rd and 4th cost 1, 2 and 3 points, and anyone removing it scores 1.".txt),
+            line("Birdsong", "Scatter warriors from one clearing into adjacent ones.".txt),
+            line("Daylight", "Spawn in the Nexus and with cards (more with infestations off the top row), then Explore a cave for an item and 1 point.".txt),
+            line("Evening", "3 actions: Bite, Build (an infestation), Swarm (battle, again with a matching card) and Swoop; craft with infestations, then draw.".txt),
+        )
         case FH => $(
             by("jgregory17", "fan-made".txt),
             "Hamster farmers who want nothing more than to raise their crops and give gifts to their friends.".txt,
