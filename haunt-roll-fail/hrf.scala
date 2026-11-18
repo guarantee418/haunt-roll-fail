@@ -1423,11 +1423,25 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         )
     }
 
-    // Rankings (Elo, PlayerKey): every rated player, tapping one shows their games; the names this browser holds and its player code
+    // Rankings (Elo, PlayerKey): every rated player, tapping one shows their games; the names this browser holds and its player code.
+    // The look (2026-11-18) is the rk- classes in index.html: the faction glyphs and colours, rating badges, bars and the ladder rows.
     def rankingsMenu() {
         val server = HRF.server.get
         val title = (meta.label + " Rankings").hl.spn(xstyles.larger110)
         val metas = HRF.metas.%(m => m.ranking.any && m.ranking == meta.ranking)./(_.name).distinct.join(",")
+
+        // the faction glyphs, before the game's assets load (the same paths as the game's)
+        // the metas on this ladder: Advanced Setup's factions are seats, so a seat's faction is looked up in all of them (Root's)
+        val ladderMetas = (meta +: HRF.metas.%(m => m.ranking.any && m.ranking == meta.ranking)).distinct
+        val glyphSources = ladderMetas./~(m => m.assets./~(_.get).%(_.name.endsWith("-glyph"))./(a => a.name.toLowerCase -> ("webp2/" + m.path + "/images/" + a.copy(ext = "webp").src))).toMap
+
+        implicit val resources : Resources = this.resources.copy(images = this.resources.images.copy(sources = glyphSources ++ this.resources.images.sources))
+
+        def css(names : String*) : $[Style] = names.$./(n => ExternalStyle(n))
+        def box(e : Elem, names : String*) = Div(e, css(names : _*))
+        def tag(e : Elem, names : String*) = Span(e, css(names : _*))
+        def num(s : String) = tag(Text(s), "rk-num")
+        def heading(s : String) : Elem = tag(Text(s), "rk-h")
 
         def back = ZBasic(" ", Div("Back"), () => metaMenu())
 
@@ -1440,29 +1454,89 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         var results = $[Elo.Result]()
 
         def percent(x : Double) = (math.round(x * 1000) / 10.0).toString + "%"
+        def percent0(x : Double) = math.round(x * 100) + "%"
+        def plural(n : Int, s : String) = n + " " + s + (n != 1).??("s")
 
-        def statLine(st : Elo.Stat, expected : |[Double]) =
-            (st.games + " game" + (st.games != 1).??("s") + ", score " + (math.round(st.score * 100) / 100.0) + ", ").spn ~ percent(st.relative).hl ~
-            expected./(e => (" (" + percent(e) + " expected)").spn(xstyles.smaller75)).|(Empty) ~
-            st.average./(a => (", average score " + (math.round(a * 10) / 10.0)).spn).|(Empty)
+        // a faction as a seat records it ("Vagabond (Thief)"): its glyph and its name as the game styles it (its colour)
+        case class Ranked(glyph : |[String], elem : Elem)
 
-        // the stats of the seats listed, by faction or by place in the turn order
-        def statOptions(group : String, l : $[Elo.Stat], label : String => Elem, expected : String => |[Double]) =
-            l./(st => ZOption(group, Div(label(st.key) ~ ": " ~ statLine(st, expected(st.key)), ZBasic.info)))
+        val rankedCache = mutable.Map[String, |[Ranked]]()
+
+        def factionOf(name : String) : |[Ranked] = rankedCache.getOrElseUpdate(name, {
+            val base = name.takeWhile(_ != '(').trim
+            ladderMetas.view.flatMap(m => m.factions.find(f => m.factionName(f) == base)./(f => Ranked(m.glyph(f), m.factionElem(f)))).headOption
+        })
+
+        def colourStyles(e : Elem) : $[Style] = e match {
+            case Span(Text(_), ss) => ss
+            case Span(e, _) => colourStyles(e)
+            case Div(e, _) => colourStyles(e)
+            case Concat(a, _) => colourStyles(a)
+            case _ => $
+        }
+
+        def colour(name : String) : $[Style] = factionOf(name)./(r => colourStyles(r.elem)).|($)
+
+        def glyph(name : String, size : String = "rk-glyph") : Elem =
+            factionOf(name).flatMap(_.glyph).filter(g => glyphSources.contains(g.toLowerCase)).map(g => Image(g, css(size), |(name)) : Elem).getOrElse(tag(Text(name.take(1)), size, "rk-glyph-none"))
+
+        def factionName(name : String) : Elem = Span(Text(name), colour(name) ++ css("rk-fname"))
+
+        // a bar: the share (0 to 1) filled in the faction's colour, a tick at what a seat would expect
+        def width(x : Double) = math.max(0, math.min(100, math.round(x * 100).toInt))
+
+        def bar(x : Double, expected : |[Double], colours : $[Style]) : Elem =
+            Span(tag(Empty, "rk-fill", "rk-w" + width(x)) ~ expected./(e => tag(Empty, "rk-exp", "rk-x" + width(e)) : Elem).|(Empty), colours ++ css("rk-track") ++ colours.any.$(ExternalStyle("rk-has-colour")))
+
+        // a rating as a badge, its ring by band: 1100 and up, 1000 and up, under 1000; a provisional rating has a dashed ring
+        def badge(p : Elo.Player, large : Boolean = false) =
+            tag(num(p.rating.round.toString) ~ p.provisional.?(tag(Text("?"), "rk-q")).|(Empty), "rk-badge", large.?("rk-badge-large").|("rk-badge-small"), (p.rating >= 1100).?("rk-t3").|((p.rating >= 1000).?("rk-t2").|("rk-t1")), p.provisional.?("rk-prov").|("rk-firm"))
+
+        def delta(d : Double) = { val r = d.round ; tag(Text(signed(d)), "rk-num", "rk-delta", (r > 0).?("rk-up").|((r < 0).?("rk-down").|("rk-even"))) }
+
+        // the factions a player played most, for their row
+        def favourites(p : Elo.Player) : $[String] = p.history.flatMap(_.entry.seat).map(_.faction.takeWhile(_ != '(').trim).groupBy(identity).toList.sortBy(x => (-x._2.size, x._1)).map(_._1).take(3)
+
+        // one stat (a faction, a seat): its glyph or seat number, its name, games and average score, and a bar of its relative score
+        def statRow(st : Elo.Stat, icon : Elem, label : Elem, colours : $[Style], expected : |[Double]) =
+            box(
+                icon ~
+                tag(label ~ tag(Text(plural(st.games, "game") + " · score " + (math.round(st.score * 100) / 100.0) + st.average./(a => " · avg " + (math.round(a * 10) / 10.0) + " " + unit).|("") + expected./(e => " · " + percent0(e) + " expected").|("")), "rk-sub"), "rk-who") ~
+                bar(st.relative, expected, colours) ~
+                num(percent(st.relative))(css("rk-pct")),
+            "rk-stat")
+
+        def factionRows(group : Elem, l : $[Elo.Stat], expected : String => |[Double]) =
+            l./(st => ZOption(group, statRow(st, glyph(st.key), factionName(st.key), colour(st.key), expected(st.key))))
+
+        def seatRows(group : Elem, l : $[Elo.Stat], expected : String => |[Double]) =
+            l./(st => ZOption(group, statRow(st, tag(num(st.key.takeWhile(_ != ' ')), "rk-seat"), tag(Text("Seat " + st.key), "rk-fname"), $, expected(st.key))))
+
+        def note(group : Elem, e : Elem) = ZOption(group, box(e, "rk-note"))
 
         def player(p : Elo.Player, all : $[Elo.Player]) {
             val seats = p.history./~(c => c.entry.seat./(e => (c.result, c.side, e)))
+            val rank = all.indexOf(p) + 1
+
+            def figure(n : String, label : String) = tag(num(n)(css("rk-figure-n")) ~ tag(Text(label), "rk-figure-l"), "rk-figure")
 
             ui.action.asker.zask(
-                $(ZOption(p.name.hlb.spn(xstyles.larger110), Div(("Rating " ~ rating(p).hlb ~ ", peak " ~ p.peak.round.toString.hl ~ ", " ~ p.games.hl ~ " game" ~ (p.games != 1).??("s") ~ ", " ~ p.wins.hl ~ " won (" ~ percent(p.wins.toDouble / p.games) ~ ")").spn, ZBasic.info))) ++
-                statOptions("By faction", Elo.stats(seats, _.faction), _.hlb, _ => None) ++
-                statOptions("By turn order", Elo.stats(seats, e => e.seat + " of " + e.players).sortBy(_.key), k => ("Seat " + k).hlb, k => k.split(' ').last.toIntOption./(1.0 / _)) ++
+                $(ZOption(Empty, box(
+                    box(badge(p, true) ~ tag(Text(p.name), "rk-profile-name") ~ tag(Text(p.provisional.?("Provisional").|("Rank " + rank)), "rk-profile-rank"), "rk-profile-head") ~
+                    box(figure(p.games.toString, "games") ~ figure(p.wins.toString, "won") ~ figure(percent0(p.wins.toDouble / p.games), "win rate") ~ figure(p.peak.round.toString, "peak"), "rk-figures"),
+                "rk-profile"))) ++
+                factionRows(heading("By faction"), Elo.stats(seats, _.faction), _ => None) ++
+                seatRows(heading("By turn order"), Elo.stats(seats, e => e.seat + " of " + e.players).sortBy(_.key), k => k.split(' ').last.toIntOption./(1.0 / _)) ++
                 p.history.reverse./{ c =>
-                    ZOption("Games", Div(
-                        c.result.time.take(10).spn(xstyles.smaller75) ~ " " ~ c.result.title.hh ~ ": " ~
-                        c.entry.seat./(e => (e.faction + ", seat " + e.seat + e.score./(x => ", " + (x == "D").?("dominance").|(x + " " + unit)).|("") + ", ").spn).|(Empty) ~
-                        (c.won.?("won".hlb).|("lost".txt)) ~ " against " ~ c.opponents.join(", ") ~ ", " ~ signed(c.after - c.before).hl ~ " (" ~ c.after.round.toString ~ ")",
-                    ZBasic.info))
+                    ZOption(heading("Games"), box(
+                        tag(Text(c.won.?("Won").|("Lost")), "rk-result", c.won.?("rk-won").|("rk-lost")) ~
+                        c.entry.seat./(e => glyph(e.faction)).|(tag(Empty, "rk-glyph", "rk-glyph-none")) ~
+                        tag(
+                            tag(Text(c.result.title), "rk-game-title") ~
+                            tag(Text(c.result.time.take(10) + c.entry.seat./(e => " · " + e.faction + ", seat " + e.seat + e.score./(x => " · " + (x == "D").?("dominance").|(x + " " + unit)).|("")).|("") + " · against " + c.opponents.join(", ")), "rk-sub"),
+                        "rk-who") ~
+                        tag(delta(c.after - c.before) ~ tag(num(c.after.round.toString), "rk-after"), "rk-change"),
+                    "rk-game"))
                 } ++
                 $(ZBasic(" ", Div("Back"), () => show(all)))
             )
@@ -1471,9 +1545,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         // the players counts the games had, for the stats' filter (None: every game)
         def playerCounts = results./(_.players).distinct.sorted
 
-        def filterOptions(group : String, n : |[Int], go : |[Int] => Unit) =
-            (playerCounts.num > 1).$(ZBasic(group, Div("All games".hlIf(n.none)), () => go(None))) ++
-            (playerCounts.num > 1).??(playerCounts./(k => ZBasic(group, Div((k + " players").hlIf(n.has(k))), () => go(|(k)))))
+        def filterOptions(group : Elem, n : |[Int], go : |[Int] => Unit) =
+            (playerCounts.num > 1).$(ZBasic(group, tag(Text("All games"), "rk-chip-text"), () => go(None), css("rk-chip") ++ n.none.$(ExternalStyle("rk-chip-on")) ++ $(xlo.pointer))) ++
+            (playerCounts.num > 1).??(playerCounts./(k => ZBasic(group, tag(Text(k + " players"), "rk-chip-text"), () => go(|(k)), css("rk-chip") ++ n.has(k).$(ExternalStyle("rk-chip-on")) ++ $(xlo.pointer))))
 
         def unit = meta.ranking.has("root").?("VP").|("fame")
 
@@ -1482,10 +1556,10 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         def factions(all : $[Elo.Player], n : |[Int]) {
             val seats = Elo.seats(results.%(r => n.forall(_ == r.players)))
             ui.action.asker.zask(
-                $(ZOption((meta.label + " Faction Stats").hl.spn(xstyles.larger110), Div(explainStats, ZBasic.info))) ++
-                filterOptions("Players", n, factions(all, _)) ++
-                statOptions("Factions", Elo.stats(seats, _.faction), _.hlb, _ => n./(1.0 / _)) ++
-                seats.none.$(ZOption("Factions", Div("No games yet.", ZBasic.info))) ++
+                $(ZOption((meta.label + " Faction Stats").hl.spn(xstyles.larger110), box(explainStats ~ n./(k => " The tick on each bar is what a seat would expect in a " + k + " player game (" + percent0(1.0 / k) + ").").|(""), "rk-note"))) ++
+                filterOptions(heading("Players"), n, factions(all, _)) ++
+                factionRows(heading("Factions"), Elo.stats(seats, _.faction), _ => n./(1.0 / _)) ++
+                seats.none.$(note(heading("Factions"), "No games yet.".txt)) ++
                 $(ZBasic(" ", Div("Back"), () => show(all)))
             )
         }
@@ -1493,11 +1567,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         def turns(all : $[Elo.Player]) {
             val seats = Elo.seats(results)
             ui.action.asker.zask(
-                $(ZOption((meta.label + " Turn Order Stats").hl.spn(xstyles.larger110), Div(explainStats ~ " Seat " ~ "1".hl ~ " is the first player.", ZBasic.info))) ++
+                $(ZOption((meta.label + " Turn Order Stats").hl.spn(xstyles.larger110), box(explainStats ~ " Seat " ~ "1".hl ~ " is the first player; the tick on each bar is what a seat would expect.", "rk-note"))) ++
                 seats./(_._3.players).distinct.sorted./~{ k =>
-                    statOptions(k + " players", Elo.stats(seats.%(_._3.players == k), _.seat.toString).sortBy(_.key.toInt), x => ("Seat " + x).hlb, _ => |(1.0 / k))
+                    seatRows(heading(k + " players"), Elo.stats(seats.%(_._3.players == k), _.seat.toString).sortBy(_.key.toInt), _ => |(1.0 / k))
                 } ++
-                seats.none.$(ZOption("Seats", Div("No games yet.", ZBasic.info))) ++
+                seats.none.$(note(heading("Seats"), "No games yet.".txt)) ++
                 $(ZBasic(" ", Div("Back"), () => show(all)))
             )
         }
@@ -1520,29 +1594,57 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             }) :: BasicOption(" ", "Cancel", Nil, () => load()))
         }
 
+        // a player's row on the ladder: place (a medal for the first three), name, the factions played most, record, last change, rating
+        def ladderRow(p : Elo.Player, i : Int, all : $[Elo.Player], group : Elem) = {
+            val place = p.provisional.?(tag(Empty, "rk-place", "rk-place-none")).|(Span(num((i + 1).toString), css((i < 3).?($("rk-place", "rk-medal", "rk-medal-" + (i + 1))).|($("rk-place", "rk-place-plain")) : _*)))
+            val yours = mine.exists(_.toLowerCase == p.name.toLowerCase)
+
+            ZBasic(group,
+                place ~
+                tag(
+                    tag(Text(p.name), "rk-name") ~ yours.?(tag(Text("you"), "rk-you")).|(Empty) ~
+                    tag(favourites(p)./(f => glyph(f, "rk-glyph-mini")).merge ~ tag(Text(p.wins + "–" + (p.games - p.wins) + " · " + percent0(p.wins.toDouble / p.games) + " won · peak " + p.peak.round + " · " + p.last.take(10)), "rk-num-inline"), "rk-sub"),
+                "rk-who") ~
+                tag(delta(p.lastChange), "rk-last") ~
+                badge(p),
+            () => player(p, all), css("rk-row", (i < 3 && p.provisional.not).?("rk-row-top").|("rk-row-plain")) ++ yours.$(ExternalStyle("rk-row-yours")) ++ $(xlo.pointer))
+        }
+
         def show(all : $[Elo.Player]) {
             val explain = "Elo ratings from finished online games with people on two sides or more (teams count as one side; bots and local games don't count). Everyone starts at " ~ Elo.start.round.toString.hl ~ "; a " ~ "?".hl ~ " marks fewer than " ~ Elo.provisional.hl ~ " games." ~ meta.ranking.has("root").??(" Root ratings count the games played from 2026-11-18.") ~ " Games with fan content (" ~ meta.ranking.has("root").?("fan, playtest or mirror factions, fan maps, decks, hirelings or scenarios").|("fan clans, modules or variants") ~ ") don't count in the ratings. The stats count every game."
             val you = mine.any.?("Your name" ~ (mine.num > 1).??("s") ~ " on this device: " ~ mine./(_.hlb).join(", ")).|("Names you type when joining an online game are claimed for this device. Play on another device with your player code.".txt)
 
+            val ranked = all.%(_.provisional.not)
+            val provisional = all.%(_.provisional)
+            val seats = Elo.seats(results)
+            val factionStats = Elo.stats(seats, _.faction)
+            val top = 6
+
             ui.action.asker.zask(
-                $(ZOption(title, Div(explain, ZBasic.info))) ++
-                all.zipWithIndex./{ case (p, i) =>
-                    ZBasic("Players", Div(((i + 1) + ". ").spn ~ p.name.hlb ~ " " ~ rating(p).hl ~ Break ~ (p.games + " game" + (p.games != 1).??("s") + ", " + p.wins + " won (" + percent(p.wins.toDouble / p.games) + "), peak " + p.peak.round + ", last " + signed(p.lastChange) + " on " + p.last.take(10)).spn(xstyles.smaller75)), () => player(p, all))
-                } ++
-                all.none.$(ZOption("Players", Div("No rated games yet.", ZBasic.info))) ++
-                Elo.seats(results).any.$(ZBasic("Stats", Div("Faction stats"), () => factions(all, None))) ++
-                Elo.seats(results).any.$(ZBasic("Stats", Div("Turn order stats"), () => turns(all))) ++
-                $(ZOption("Your player code", Div(you, ZBasic.info))) ++
-                $(ZBasic("Your player code", Div("Show my player code"), () => {
+                $(ZOption(title, box(
+                    tag(num(all.num.toString) ~ " rated player" ~ (all.num != 1).??("s"), "rk-count") ~
+                    tag(num(results.num.toString) ~ " game" ~ (results.num != 1).??("s") ~ " recorded", "rk-count") ~
+                    tag(num(results.%(_.rated).num.toString) ~ " rated", "rk-count"),
+                "rk-counts"))) ++
+                ranked.zipWithIndex./{ case (p, i) => ladderRow(p, i, all, heading("Ladder")) } ++
+                (ranked.none && provisional.any).$(note(heading("Ladder"), "No one has " ~ Elo.provisional.hl ~ " rated games yet. Ranks start at " ~ Elo.provisional.hl ~ " games; until then a rating is provisional.")) ++
+                provisional.zipWithIndex./{ case (p, i) => ladderRow(p, ranked.num + i, all, heading("Provisional · fewer than " + Elo.provisional + " games")) } ++
+                all.none.$(note(heading("Ladder"), tag(Text("No rated games yet."), "rk-empty-title") ~ Break ~ "The ladder starts with the first finished online game with people on two sides or more. Bots, local games and games with fan content don't count.".txt)) ++
+                factionRows(heading("Factions · relative score, every game"), factionStats.take(top), _ => None) ++
+                seats.any.$(ZBasic(" ", Div((factionStats.num > top).?("All " + factionStats.num + " factions, by player count").|("Faction stats by player count")), () => factions(all, None))) ++
+                seats.any.$(ZBasic(" ", Div("Turn order stats"), () => turns(all))) ++
+                $(ZOption(heading("Your player code"), box(you, "rk-note"))) ++
+                $(ZBasic(heading("Your player code"), Div("Show my player code"), () => {
                     showOverlayRaw("Your player code".hl, $("Enter it under Rankings on another device to play there under your names. Keep it to yourself: anyone with it can.".txt, PlayerKey.get.hlb.spn(xstyles.larger110)))
                 })) ++
-                $(ZBasic("Your player code", Div("Use a code from another device"), () => useCode())) ++
+                $(ZBasic(heading("Your player code"), Div("Use a code from another device"), () => useCode())) ++
+                $(note(heading("How the rankings work"), explain)) ++
                 $(back)
             )
         }
 
         def load() {
-            ui.action.asker.zask($(ZOption(title, Div("Loading...", ZBasic.info)), back))
+            ui.action.asker.zask($(ZOption(title, box(tag(Empty, "rk-skeleton") ~ tag(Empty, "rk-skeleton") ~ tag(Empty, "rk-skeleton"), "rk-loading")), back))
 
             def rankings() =
                 getF(server + "/rankings/" + metas) { text =>

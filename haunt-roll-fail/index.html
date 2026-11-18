@@ -332,6 +332,495 @@
                     url("background.png");
             }
 
+
+            /* Rankings (rankingsMenu in hrf.scala, 2026-11-18): the ladder, faction and seat bars, rating badges. A faction's colour
+               comes from its own name style (color), which the bars pick up as currentColor. */
+            .rk-num, .rk-num-inline {
+                font-family: system-ui, "Fira Sans", "Segoe UI", sans-serif;
+                font-variant-numeric: tabular-nums;
+                letter-spacing: 0;
+            }
+
+            .rk-h {
+                display: block;
+                margin: 1.6ex 0 0.2ex 0;
+                color: #b8b0a0;
+                letter-spacing: 0.02em;
+            }
+
+            .rk-counts, .rk-note, .rk-row, .rk-stat, .rk-game, .rk-profile, .rk-loading {
+                box-sizing: border-box;
+                width: calc(100% - 8ex);
+                margin: 0.35ex 4ex;
+                text-align: left;
+            }
+
+            .rk-counts {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.4ex 2.4ex;
+                padding: 0.6ex 0 0.2ex 0;
+                color: #8c8c8c;
+            }
+
+            .rk-count .rk-num {
+                color: #e6e0d4;
+                font-weight: 600;
+            }
+
+            .rk-note {
+                padding: 1ex 1.4ex;
+                background-color: #181818;
+                border: 1px solid #2a2a2a;
+                border-radius: 6px;
+                color: #8c8c8c;
+                text-align: center;
+                text-wrap: pretty;
+            }
+
+            .rk-empty-title {
+                color: #d3d3d3;
+                font-size: 115%;
+            }
+
+            /* a ladder row: place, who, last change, rating */
+            .rk-row {
+                display: grid;
+                grid-template-columns: 3.2em minmax(0, 1fr) auto auto;
+                align-items: center;
+                column-gap: 1.2ex;
+                padding: 0.8ex 1.2ex;
+                background-color: #151515;
+                border: 1px solid #2c2c2c;
+                border-radius: 8px;
+                transition: background-color 160ms ease-out, border-color 160ms ease-out, transform 160ms ease-out;
+            }
+
+            .rk-row:hover {
+                background-color: #1d1d1d;
+                border-color: #4a4a4a;
+            }
+
+            .rk-row:active {
+                transform: scale(0.99);
+            }
+
+            .rk-row-top {
+                background-color: #19170f;
+                border-color: #3a3424;
+            }
+
+            .rk-row-top:hover {
+                background-color: #221f14;
+                border-color: #5a5036;
+            }
+
+            .rk-row-yours {
+                border-color: #5b6f86;
+            }
+
+            .rk-place {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 2.2em;
+                height: 2.2em;
+                justify-self: center;
+                border-radius: 50%;
+                color: #9a9a9a;
+                font-weight: 600;
+            }
+
+            .rk-place-plain {
+                border: 1px solid #3a3a3a;
+            }
+
+            .rk-place-none {
+                width: 0.7em;
+                height: 0.7em;
+                background-color: #3a3a3a;
+            }
+
+            .rk-medal {
+                color: #141414;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 -3px 0 rgba(0, 0, 0, 0.18);
+            }
+
+            .rk-medal-1 { background: radial-gradient(circle at 35% 30%, #f6dc8a, #d4a531 55%, #a27718); }
+            .rk-medal-2 { background: radial-gradient(circle at 35% 30%, #f1f3f5, #b9c0c8 55%, #858d97); }
+            .rk-medal-3 { background: radial-gradient(circle at 35% 30%, #efbf94, #b8743f 55%, #87512a); }
+
+            .rk-who {
+                display: flex;
+                flex-direction: column;
+                min-width: 0;
+            }
+
+            .rk-name, .rk-fname {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .rk-name {
+                color: #e6e0d4;
+                font-size: 112%;
+            }
+
+            .rk-row-top .rk-name {
+                color: #f3e7c6;
+            }
+
+            .rk-you {
+                align-self: flex-start;
+                margin-top: 0.2ex;
+                padding: 0 0.8ex;
+                border-radius: 999px;
+                background-color: #24303d;
+                color: #a9c3de;
+                font-size: 70%;
+            }
+
+            .rk-sub {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 0 0.6ex;
+                margin-top: 0.15ex;
+                color: #8c8c8c;
+                font-size: 78%;
+            }
+
+            .rk-glyph, .rk-glyph-big, .rk-glyph-mini {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                object-fit: contain;
+                flex-shrink: 0;
+            }
+
+            .rk-glyph { width: 2.3em; height: 2.3em; }
+            .rk-glyph-mini { width: 1.35em; height: 1.35em; }
+
+            .rk-glyph-none {
+                border-radius: 50%;
+                background-color: #262626;
+                color: #8c8c8c;
+            }
+
+            .rk-delta {
+                font-size: 85%;
+                white-space: nowrap;
+            }
+
+            .rk-delta::before {
+                content: "";
+                display: inline-block;
+                margin-right: 0.35em;
+                vertical-align: 0.12em;
+                border-left: 0.32em solid transparent;
+                border-right: 0.32em solid transparent;
+            }
+
+            .rk-up { color: #7fc47f; }
+            .rk-up::before { border-bottom: 0.45em solid currentColor; }
+            .rk-down { color: #e08070; }
+            .rk-down::before { border-top: 0.45em solid currentColor; }
+            .rk-even { color: #8c8c8c; }
+            .rk-even::before { width: 0.55em; height: 2px; border: none; background-color: currentColor; vertical-align: 0.3em; }
+
+            /* a rating: a shield, ringed by band */
+            .rk-badge {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 3.6em;
+                padding: 0.35ex 0.9ex 0.6ex 0.9ex;
+                clip-path: polygon(0 0, 100% 0, 100% 72%, 50% 100%, 0 72%);
+                font-weight: 700;
+                color: #f2ece0;
+            }
+
+            .rk-badge-large {
+                min-width: 5.4em;
+                padding: 0.8ex 1.2ex 1.6ex 1.2ex;
+                font-size: 150%;
+            }
+
+            .rk-t3 { background: linear-gradient(180deg, #8d6a1d, #5c4512); box-shadow: inset 0 0 0 2px #e0b54a; }
+            .rk-t2 { background: linear-gradient(180deg, #4d545c, #31363c); box-shadow: inset 0 0 0 2px #b9c0c8; }
+            .rk-t1 { background: linear-gradient(180deg, #5a3a22, #3a2515); box-shadow: inset 0 0 0 2px #b8743f; }
+            .rk-prov { background: #222222; box-shadow: inset 0 0 0 2px #555555; color: #b0b0b0; }
+
+            .rk-q {
+                margin-left: 0.1em;
+                color: #8c8c8c;
+                font-weight: 400;
+            }
+
+            /* a stat: icon, who, bar, relative score */
+            .rk-stat {
+                display: grid;
+                grid-template-columns: 2.6em minmax(8em, 1.1fr) minmax(5em, 1.4fr) 4.2em;
+                align-items: center;
+                column-gap: 1.4ex;
+                padding: 0.55ex 1.2ex;
+                border-bottom: 1px solid #242424;
+            }
+
+            .rk-fname {
+                color: #d3d3d3;
+            }
+
+            .rk-track {
+                position: relative;
+                display: block;
+                height: 0.75em;
+                border-radius: 999px;
+                background-color: #262626;
+                overflow: visible;
+            }
+
+            .rk-fill {
+                display: block;
+                height: 100%;
+                border-radius: 999px;
+                background-color: currentColor;
+                opacity: 0.9;
+                min-width: 2px;
+            }
+
+            .rk-track:not(.rk-has-colour) .rk-fill {
+                background-color: #a59a84;
+            }
+
+            .rk-exp {
+                position: absolute;
+                top: -0.25em;
+                bottom: -0.25em;
+                width: 2px;
+                margin-left: -1px;
+                background-color: #e6e0d4;
+                opacity: 0.7;
+            }
+
+            .rk-pct {
+                justify-self: end;
+                color: #e6e0d4;
+            }
+
+            .rk-seat {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 1.9em;
+                height: 1.9em;
+                justify-self: center;
+                border-radius: 6px;
+                background-color: #262626;
+                color: #e6e0d4;
+            }
+
+            /* the chips filtering the stats by player count */
+            .rk-chip {
+                margin: 0.4ex 0.5ex;
+                padding: 0.4ex 1.4ex;
+                border: 1px solid #444444;
+                border-radius: 999px;
+                background-color: #151515;
+                transition: background-color 160ms ease-out, border-color 160ms ease-out;
+            }
+
+            .rk-chip:hover {
+                border-color: #777777;
+            }
+
+            .rk-chip-on {
+                border-color: #c9b98f;
+                background-color: #2a2518;
+                color: #f3e7c6;
+            }
+
+            /* a player's page */
+            .rk-profile {
+                padding: 1.4ex 1.6ex;
+                background-color: #151515;
+                border: 1px solid #2c2c2c;
+                border-radius: 10px;
+            }
+
+            .rk-profile-head {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.4ex;
+            }
+
+            .rk-profile-name {
+                color: #f3e7c6;
+                font-size: 150%;
+                text-align: center;
+            }
+
+            .rk-profile-rank {
+                color: #8c8c8c;
+                font-size: 85%;
+            }
+
+            .rk-figures {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                margin-top: 1.2ex;
+                border-top: 1px solid #262626;
+                padding-top: 1ex;
+            }
+
+            .rk-figure {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .rk-figure-n {
+                color: #e6e0d4;
+                font-size: 125%;
+                font-weight: 600;
+            }
+
+            .rk-figure-l {
+                color: #8c8c8c;
+                font-size: 78%;
+            }
+
+            .rk-game {
+                display: grid;
+                grid-template-columns: 3.6em 2.3em minmax(0, 1fr) auto;
+                align-items: center;
+                column-gap: 1.2ex;
+                padding: 0.6ex 1.2ex;
+                border-bottom: 1px solid #242424;
+            }
+
+            .rk-result {
+                justify-self: start;
+                padding: 0.1ex 0.9ex;
+                border-radius: 999px;
+                font-size: 80%;
+            }
+
+            .rk-won { background-color: #233a23; color: #a6dba6; }
+            .rk-lost { background-color: #2a2020; color: #c9a19a; }
+
+            .rk-game-title {
+                color: #d3d3d3;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .rk-change {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+            }
+
+            .rk-after {
+                color: #8c8c8c;
+                font-size: 78%;
+            }
+
+            .rk-loading {
+                display: flex;
+                flex-direction: column;
+                gap: 0.8ex;
+            }
+
+            .rk-skeleton {
+                display: block;
+                height: 3.2em;
+                border-radius: 8px;
+                background: linear-gradient(90deg, #161616 0%, #202020 50%, #161616 100%);
+                background-size: 200% 100%;
+                animation: rk-shimmer 1.4s ease-in-out infinite;
+            }
+
+            @keyframes rk-shimmer {
+                from { background-position: 100% 0; }
+                to { background-position: -100% 0; }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .rk-skeleton { animation: none; }
+                .rk-row, .rk-chip { transition: none; }
+            }
+
+            /* phones: the bar goes under the name, the place and rating stay */
+            @media (max-width: 640px) {
+                .rk-counts, .rk-note, .rk-row, .rk-stat, .rk-game, .rk-profile, .rk-loading {
+                    width: calc(100% - 2ex);
+                    margin: 0.35ex 1ex;
+                }
+
+                .rk-row {
+                    grid-template-columns: 2.4em minmax(0, 1fr) auto;
+                    grid-template-areas: "place who badge" "place who last";
+                    row-gap: 0.2ex;
+                }
+
+                .rk-row > .rk-place { grid-area: place; }
+                .rk-row > .rk-who { grid-area: who; }
+                .rk-row > .rk-badge { grid-area: badge; justify-self: end; }
+                .rk-row > .rk-last { grid-area: last; justify-self: end; }
+
+                .rk-stat {
+                    grid-template-columns: 2.4em minmax(0, 1fr) 4em;
+                    grid-template-areas: "icon who pct" "icon bar bar";
+                    row-gap: 0.5ex;
+                }
+
+                .rk-stat > :nth-child(1) { grid-area: icon; }
+                .rk-stat > .rk-who { grid-area: who; }
+                .rk-stat > .rk-track { grid-area: bar; }
+                .rk-stat > .rk-pct { grid-area: pct; }
+
+                .rk-game {
+                    grid-template-columns: 2.3em minmax(0, 1fr) auto;
+                    grid-template-areas: "icon who change" "icon result change";
+                }
+
+                .rk-game > .rk-result { grid-area: result; margin-top: 0.3ex; }
+                .rk-game > :nth-child(2) { grid-area: icon; }
+                .rk-game > .rk-who { grid-area: who; }
+                .rk-game > .rk-change { grid-area: change; }
+
+                .rk-figures { grid-template-columns: repeat(2, 1fr); row-gap: 1ex; }
+            }
+
+            /* bar widths and expected ticks, by whole percent */
+            .rk-w0{width:0%} .rk-w1{width:1%} .rk-w2{width:2%} .rk-w3{width:3%} .rk-w4{width:4%} .rk-w5{width:5%} .rk-w6{width:6%} .rk-w7{width:7%} .rk-w8{width:8%} .rk-w9{width:9%}
+            .rk-w10{width:10%} .rk-w11{width:11%} .rk-w12{width:12%} .rk-w13{width:13%} .rk-w14{width:14%} .rk-w15{width:15%} .rk-w16{width:16%} .rk-w17{width:17%} .rk-w18{width:18%} .rk-w19{width:19%}
+            .rk-w20{width:20%} .rk-w21{width:21%} .rk-w22{width:22%} .rk-w23{width:23%} .rk-w24{width:24%} .rk-w25{width:25%} .rk-w26{width:26%} .rk-w27{width:27%} .rk-w28{width:28%} .rk-w29{width:29%}
+            .rk-w30{width:30%} .rk-w31{width:31%} .rk-w32{width:32%} .rk-w33{width:33%} .rk-w34{width:34%} .rk-w35{width:35%} .rk-w36{width:36%} .rk-w37{width:37%} .rk-w38{width:38%} .rk-w39{width:39%}
+            .rk-w40{width:40%} .rk-w41{width:41%} .rk-w42{width:42%} .rk-w43{width:43%} .rk-w44{width:44%} .rk-w45{width:45%} .rk-w46{width:46%} .rk-w47{width:47%} .rk-w48{width:48%} .rk-w49{width:49%}
+            .rk-w50{width:50%} .rk-w51{width:51%} .rk-w52{width:52%} .rk-w53{width:53%} .rk-w54{width:54%} .rk-w55{width:55%} .rk-w56{width:56%} .rk-w57{width:57%} .rk-w58{width:58%} .rk-w59{width:59%}
+            .rk-w60{width:60%} .rk-w61{width:61%} .rk-w62{width:62%} .rk-w63{width:63%} .rk-w64{width:64%} .rk-w65{width:65%} .rk-w66{width:66%} .rk-w67{width:67%} .rk-w68{width:68%} .rk-w69{width:69%}
+            .rk-w70{width:70%} .rk-w71{width:71%} .rk-w72{width:72%} .rk-w73{width:73%} .rk-w74{width:74%} .rk-w75{width:75%} .rk-w76{width:76%} .rk-w77{width:77%} .rk-w78{width:78%} .rk-w79{width:79%}
+            .rk-w80{width:80%} .rk-w81{width:81%} .rk-w82{width:82%} .rk-w83{width:83%} .rk-w84{width:84%} .rk-w85{width:85%} .rk-w86{width:86%} .rk-w87{width:87%} .rk-w88{width:88%} .rk-w89{width:89%}
+            .rk-w90{width:90%} .rk-w91{width:91%} .rk-w92{width:92%} .rk-w93{width:93%} .rk-w94{width:94%} .rk-w95{width:95%} .rk-w96{width:96%} .rk-w97{width:97%} .rk-w98{width:98%} .rk-w99{width:99%}
+            .rk-w100{width:100%}
+            .rk-x0{left:0%} .rk-x1{left:1%} .rk-x2{left:2%} .rk-x3{left:3%} .rk-x4{left:4%} .rk-x5{left:5%} .rk-x6{left:6%} .rk-x7{left:7%} .rk-x8{left:8%} .rk-x9{left:9%}
+            .rk-x10{left:10%} .rk-x11{left:11%} .rk-x12{left:12%} .rk-x13{left:13%} .rk-x14{left:14%} .rk-x15{left:15%} .rk-x16{left:16%} .rk-x17{left:17%} .rk-x18{left:18%} .rk-x19{left:19%}
+            .rk-x20{left:20%} .rk-x21{left:21%} .rk-x22{left:22%} .rk-x23{left:23%} .rk-x24{left:24%} .rk-x25{left:25%} .rk-x26{left:26%} .rk-x27{left:27%} .rk-x28{left:28%} .rk-x29{left:29%}
+            .rk-x30{left:30%} .rk-x31{left:31%} .rk-x32{left:32%} .rk-x33{left:33%} .rk-x34{left:34%} .rk-x35{left:35%} .rk-x36{left:36%} .rk-x37{left:37%} .rk-x38{left:38%} .rk-x39{left:39%}
+            .rk-x40{left:40%} .rk-x41{left:41%} .rk-x42{left:42%} .rk-x43{left:43%} .rk-x44{left:44%} .rk-x45{left:45%} .rk-x46{left:46%} .rk-x47{left:47%} .rk-x48{left:48%} .rk-x49{left:49%}
+            .rk-x50{left:50%} .rk-x51{left:51%} .rk-x52{left:52%} .rk-x53{left:53%} .rk-x54{left:54%} .rk-x55{left:55%} .rk-x56{left:56%} .rk-x57{left:57%} .rk-x58{left:58%} .rk-x59{left:59%}
+            .rk-x60{left:60%} .rk-x61{left:61%} .rk-x62{left:62%} .rk-x63{left:63%} .rk-x64{left:64%} .rk-x65{left:65%} .rk-x66{left:66%} .rk-x67{left:67%} .rk-x68{left:68%} .rk-x69{left:69%}
+            .rk-x70{left:70%} .rk-x71{left:71%} .rk-x72{left:72%} .rk-x73{left:73%} .rk-x74{left:74%} .rk-x75{left:75%} .rk-x76{left:76%} .rk-x77{left:77%} .rk-x78{left:78%} .rk-x79{left:79%}
+            .rk-x80{left:80%} .rk-x81{left:81%} .rk-x82{left:82%} .rk-x83{left:83%} .rk-x84{left:84%} .rk-x85{left:85%} .rk-x86{left:86%} .rk-x87{left:87%} .rk-x88{left:88%} .rk-x89{left:89%}
+            .rk-x90{left:90%} .rk-x91{left:91%} .rk-x92{left:92%} .rk-x93{left:93%} .rk-x94{left:94%} .rk-x95{left:95%} .rk-x96{left:96%} .rk-x97{left:97%} .rk-x98{left:98%} .rk-x99{left:99%}
+            .rk-x100{left:100%}
+
             /* )} /* */
         </style>
 
