@@ -159,6 +159,7 @@ object MetaAdset extends MetaGame {
     override def ranking = Meta.ranking
     override def rankingSides(g : G, winners : $[Any]) = Meta.rankSides(g, winners)./{ case (l, w) => (l./~(f => g.ftp.get(f))./~(_.as[PlayerN]), w) }
     override def rankingSeat(g : G, f : F) = g.ptf.get(f)./~(c => Meta.rankSeat(g, c))
+    override def rankingFan(g : G) = Meta.rankFan(g)
 
     def getBots(f : F) = $("None")
 

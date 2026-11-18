@@ -156,6 +156,8 @@ object Ranking {
 
         rr.flatMap { r =>
             val sides = r(4).split(';').toList.filter(_.length > 2).map { s =>
+                // "X:fan", a game with fan content, as it is
+                if (s.startsWith("X:")) s else
                 s.take(2) + s.drop(2).split(',').toList.flatMap { t =>
                     val u = t.takeWhile(_ != '/')
                     (if (u == "*") Some("*") else nameOf(u)).map(_.replace(",", " ").replace(";", " ").replace("/", " ") + t.drop(u.length))
