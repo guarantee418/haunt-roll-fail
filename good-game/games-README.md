@@ -28,6 +28,12 @@ are written `\t`, `\n` and `\\`. Lines starting with `#` are headers.
   "Report a Bug" button (summary, description, game, options, the last 300
   moves, console errors), copied from the server's `bug-reports/` folder
   whether or not they were also posted as GitHub issues
+- `ranking/`: the rankings' files (`good-game/Ranking.scala`), copied from
+  the server's `ranking/` folder: `names.tsv` (each claimed name in lower
+  case, as claimed, the SHA-256 of the player code, time), `seats.tsv` (a
+  seat's user and the claimed name it played under) and `results.tsv` (game,
+  meta, time, title, sides `W:user,user;L:user`). The server reads only its
+  own copies, so editing these changes nothing
 
 The git history keeps every earlier version, so a game can be looked at as it
 was at any time.

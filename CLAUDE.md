@@ -328,6 +328,18 @@ cd haunt-roll-fail && sbt fullOptJS
   git fetch origin main && git push origin origin/main:refs/heads/deploy
   ```
 
+- Rankings (Northgard and its Adset, one ladder; asked for on 2026-11-18): there are no accounts, so the name a player types on
+  joining a ranked game (`Meta.ranking`) is claimed with a random key kept in that browser (`PlayerKey`, `hrf.player-key`;
+  `claimName` in `hrf.scala`): the server (`good-game/Ranking.scala`, files in `good-game/ranking/`, copied to `ranking/` in
+  `hrf-games`) keeps the key's SHA-256 with the name and refuses the name to any other key. The key is the player's "player code",
+  shown under Rankings, which another device can enter to play under the same names. A seat named before then claims its name when
+  the game is opened. The first client to reach a game's end (`onOver` in `Runner.run`) posts its sides (`Meta.rankingSides`: a team
+  or a clan; people only, by seat user) to `/report-result`, and the server keeps one report per game. "Rankings" on the Northgard menu
+  (`rankingsMenu`, URL `/play/nort/rankings`) gets every result (`/rankings/nort,nort-adset`, names resolved: the seat's claimed name,
+  else the name typed for it) and works out Elo there (`Elo` in `hrf.scala`: start 1000, K 32 split over the other sides, a winning
+  side beats each losing side, sides rated by their people's average; fewer than 5 games is "provisional", shown with "?"), only
+  games with people on two sides or more. The games that ended before are in `good-game/ranking-seed.tsv` (found with
+  `LiveCheck <hrf-games> ranking`; their times only keep the order).
 - Fixing a running game: through the `hrf-games` repository (copy `games/<id>.tsv` to
   `fixes/<id>.tsv` and edit it; its README and `notes/server.md` say how).
 - The in-game "Report a Bug" button posts to `/report-bug`; the server saves the report,

@@ -65,6 +65,16 @@ object Meta extends MetaGame { mmm =>
     // The main menu's "Adset": its own game (MetaAdset in adset.scala), where the clans are drafted during setup
     override def linkedModes = $(("Adset", "nort-adset"))
 
+    // Rankings (asked for on 2026-11-18): Northgard and its Adset share one ladder; a team is one side, else each clan
+    override def ranking = |("nort")
+    override def rankingSides(g : G, winners : $[Any]) = Meta.rankSides(g, winners)
+
+    def rankSides(game : Game, winners : $[Any]) : $[($[Faction], Boolean)] = {
+        val clans = game.setup.but(Automa)
+        val groups = game.teams.?(clans.groupBy(game.team).toList.sortBy(_._1).map(_._2)).|(clans./(f => $(f)))
+        groups./(l => l -> l.exists(f => winners.contains(f)))
+    }
+
     val minPlayers = 2
     // Six players build on the five-player rules
     override val maxPlayers = 6

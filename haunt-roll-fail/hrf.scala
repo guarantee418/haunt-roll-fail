@@ -385,6 +385,90 @@ object Credits {
         $(ZOption("HRF", Link("https://ko-fi.com/hauntrollfail", "Support JT on Ko-Fi".styled(xstyles.error).div, ZBasic.choice ++ $(xstyles.link))))
 }
 
+// Rankings (Northgard, asked for on 2026-11-18; the server side is good-game/Ranking.scala). There are no accounts: a name typed on
+// joining an online game is claimed with this browser's key, which only this browser (or one given the key as its "player code")
+// can play under again. The rating is Elo, worked out here from every finished online game with people on two sides or more.
+object PlayerKey {
+    val key = "hrf.player-key"
+
+    def get : String = {
+        val k = try { Local.get(key, "") } catch { case _ : Throwable => "" }
+        if (k.length >= 16) k
+        else {
+            val n = 0.until(24).map(_ => "abcdefghijklmnopqrstuvwxyz".charAt(scala.util.Random.nextInt(26))).mkString
+            try { Local.set(key, n) } catch { case _ : Throwable => }
+            n
+        }
+    }
+
+    def set(k : String) = try { Local.set(key, k) } catch { case _ : Throwable => }
+}
+
+object Elo {
+    // a finished game: its sides, each with the names on it and whether it won
+    case class Result(game : String, time : String, title : String, sides : $[($[String], Boolean)])
+    case class Change(result : Result, before : Double, after : Double, won : Boolean, opponents : $[String])
+    case class Player(name : String, rating : Double, games : Int, wins : Int, last : String, history : $[Change]) {
+        def provisional = games < Elo.provisional
+    }
+
+    val start = 1000.0
+    val K = 32.0
+    val provisional = 5
+
+    def unesc(s : String) = s.replace("\\t", "\t").replace("\\n", "\n").replace("\\\\", "\\")
+
+    // the server's lines: game, time, title, "W:name,name;L:name"
+    def parse(text : String) : $[Result] = text.split('\n').$.%(_.nonEmpty)./~{ line =>
+        line.split('\t').$./(unesc) match {
+            case $(game, time, title, sides) =>
+                val ss = sides.split(';').$.%(_.length > 2)./(s => (s.drop(2).split(',').$.%(_.nonEmpty).distinct, s.startsWith("W:")))
+                val names = ss.flatMap(_._1).map(_.toLowerCase)
+                (names.distinct.num == names.num).?(Result(game, time, title, ss))
+            case _ => None
+        }
+    }.sortBy(_.time)
+
+    def compute(results : $[Result]) : $[Player] = {
+        var rating = Map[String, Double]()
+        var display = Map[String, String]()
+        var history = Map[String, $[Change]]()
+
+        results.foreach { r =>
+            r.sides.flatMap(_._1).foreach(n => display += n.toLowerCase -> n)
+
+            def of(n : String) = rating.get(n.toLowerCase).|(start)
+            def avg(l : $[String]) = l./(of).sum / l.num
+
+            val n = r.sides.num
+            var delta = Map[String, Double]()
+
+            for ((w, true) <- r.sides; (l, false) <- r.sides) {
+                val e = 1 / (1 + math.pow(10, (avg(l) - avg(w)) / 400))
+                val d = K / (n - 1) * (1 - e)
+                w.foreach(x => delta += x.toLowerCase -> (delta.get(x.toLowerCase).|(0.0) + d))
+                l.foreach(x => delta += x.toLowerCase -> (delta.get(x.toLowerCase).|(0.0) - d))
+            }
+
+            r.sides.foreach { case (l, won) =>
+                l.foreach { x =>
+                    val k = x.toLowerCase
+                    val before = of(x)
+                    val after = before + delta.get(k).|(0.0)
+                    history += k -> (history.get(k).|($) :+ Change(r, before, after, won, r.sides.filter(_._1 != l).flatMap(_._1)))
+                }
+            }
+
+            delta.foreach { case (k, d) => rating += k -> (rating.get(k).|(start) + d) }
+        }
+
+        history.keys.$./{ k =>
+            val h = history(k)
+            Player(display(k), rating.get(k).|(start), h.num, h.count(_.won), h.last.result.time, h)
+        }.sortBy(p => (p.provisional, -p.rating))
+    }
+}
+
 class HRFUI(implicit resources : Resources) {
     StyleRegister.add($(xstyles.pane))
     StyleRegister.add($(xstyles.outer))
@@ -860,8 +944,28 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                             askName(name)
                     }
 
-                    def askName(name : String) {
-                        ui.action.asker.iask(InputOption(|("Name").|("What's your name, punk?"), name, Nil, v => postName(v, 0)) :: BasicOption(" ", "Generate Random", Nil, () => randomName()))
+                    // Ranked games (Meta.ranking) claim the name with this browser's key first (Rankings); a name another
+                    // player holds is refused. When the server can't be reached the name is used unclaimed.
+                    def claimName(value : String) {
+                        val name = value.split(' ').filter(_ != "").join(" ").sanitize(32)
+                        if (meta.ranking.none || HRF.server.none || name != value)
+                            postName(value, 0)
+                        else
+                            postF(HRF.server.get + "/claim-name/" + user + "/" + HRF.secret.get, name + "\n" + PlayerKey.get) { r =>
+                                if (r.startsWith("ok"))
+                                    postName(value, 0)
+                                else
+                                if (r.startsWith("taken"))
+                                    askName(name, |("Taken by another player: pick another name"))
+                                else
+                                    askName(name, |("Pick another name."))
+                            } {
+                                postName(value, 0)
+                            }
+                    }
+
+                    def askName(name : String, problem : |[String] = None) {
+                        ui.action.asker.iask(InputOption(problem.|(|("Name").|("What's your name, punk?")), name, Nil, v => claimName(v)) :: BasicOption(" ", "Generate Random", Nil, () => randomName()))
                     }
 
                     askName(getCookie("name").|(""))
@@ -905,7 +1009,27 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
                     HRF.spectator = self.none && HRF.replay.not
 
-                    startGame(seating, difficulties, state.selected, self, journal, title.|("%untitled%"), () => names, ServerSwitches)
+                    // A seat named before rankings (or offline then) claims its name now, if no one holds it
+                    if (meta.ranking.any && HRF.replay.not)
+                        self.single.foreach { f =>
+                            enteredNames.get(user).foreach { n =>
+                                postF(HRF.server.get + "/claim-name/" + user + "/" + HRF.secret.get, n + "\n" + PlayerKey.get)(_ => ())(())
+                            }
+                        }
+
+                    // Rankings: the first client to reach the end reports the sides, by seat, people only; the server keeps one report
+                    var reported = false
+
+                    def reportResult(g : meta.G, winners : $[Any]) {
+                        if (reported.not && HRF.replay.not && meta.ranking.any && server.any) {
+                            reported = true
+                            val sides = meta.rankingSides(g, winners)./{ case (l, won) => (l./~(users.get), won) }.filter(_._1.any)
+                            if (sides.num >= 2 && sides.exists(_._2) && sides.exists(_._2.not))
+                                post(HRF.server.get + "/report-result/" + user + "/" + HRF.secret.get + "/" + server.get, (meta.name +: title.|("%untitled%") +: sides./{ case (l, won) => (won.?("W").|("L") +: l).join(" ") }).join("\n"))(_ => ())
+                        }
+                    }
+
+                    startGame(seating, difficulties, state.selected, self, journal, title.|("%untitled%"), () => names, ServerSwitches, reportResult)
 
                     reread()
 
@@ -1032,6 +1156,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             modeMenu(mode)
         }
 
+        def goRankings() {
+            history.pushState("/play/" + meta.name + "/rankings", () => metaMenu())
+            rankingsMenu()
+        }
+
         ui.action.asker.zask(
             meta.underConstruction.$(ZOption(title, Div("This game is very much " ~ "under construction".styled(xstyles.warning) ~ "." ~ Break ~ "Expect missing rules, bugs and placeholder art.", ZBasic.info))) ++
             meta.menuAbout./(e => ZOption(title, Div(e, ZBasic.info))).$ ++
@@ -1046,7 +1175,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         new HRFMetaUI(ui, m, 800)(baseResources).withMeta()
                     }.|(throw new Error("meta not found " + l))
                 }) } ++
-                $(ZBasic(title, "Play Online".hlb, (HRF.server.any && HRF.offline.not).??(() => goOnline())))
+                $(ZBasic(title, "Play Online".hlb, (HRF.server.any && HRF.offline.not).??(() => goOnline()))) ++
+                (meta.ranking.any && HRF.server.any && HRF.offline.not).$(ZBasic(title, "Rankings".hhb, () => goRankings()))
             ) ++
             meta.intLinks./((t, l) => ZBasic("Other", t, () => {
                 HRF.metas.%(_.name == l).single./{ m =>
@@ -1064,6 +1194,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         if (HRF.segments.startsWith($("tutorial")) && meta.tutorialLessons.any)
             goTutorial()
+        else
+        if (HRF.segments.startsWith($("rankings")) && meta.ranking.any && HRF.server.any && HRF.offline.not)
+            goRankings()
         else
         if (HRF.segments.startsWith($("quick")))
             goQuickGame()
@@ -1237,6 +1370,86 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 metaMenu()
             }, ZBasic.choice ++ $(xlo.fullwidth)))
         )
+    }
+
+    // Rankings (Elo, PlayerKey): every rated player, tapping one shows their games; the names this browser holds and its player code
+    def rankingsMenu() {
+        val server = HRF.server.get
+        val title = (meta.label + " Rankings").hl.spn(xstyles.larger110)
+        val metas = HRF.metas.%(m => m.ranking.any && m.ranking == meta.ranking)./(_.name).distinct.join(",")
+
+        def back = ZBasic(" ", Div("Back"), () => metaMenu())
+
+        def rating(p : Elo.Player) = p.rating.round.toString + p.provisional.??("?")
+
+        def signed(d : Double) = { val r = d.round ; (r >= 0).?("+" + r).|(r.toString) }
+
+        var mine = $[String]()
+
+        def player(p : Elo.Player, all : $[Elo.Player]) {
+            ui.action.asker.zask(
+                $(ZOption(p.name.hlb.spn(xstyles.larger110), Div(("Rating " ~ rating(p).hlb ~ ", " ~ p.games.hl ~ " game" ~ (p.games != 1).??("s") ~ ", " ~ p.wins.hl ~ " won").spn, ZBasic.info))) ++
+                p.history.reverse./{ c =>
+                    ZOption("Games", Div(
+                        c.result.time.take(10).spn(xstyles.smaller75) ~ " " ~ c.result.title.hh ~ ": " ~
+                        (c.won.?("won".hlb).|("lost".txt)) ~ " against " ~ c.opponents.join(", ") ~ ", " ~ signed(c.after - c.before).hl ~ " (" ~ c.after.round.toString ~ ")",
+                    ZBasic.info))
+                } ++
+                $(ZBasic(" ", Div("Back"), () => show(all)))
+            )
+        }
+
+        def useCode() {
+            ui.action.asker.iask(InputOption("Enter the player code from your other device", "", Nil, v => {
+                val code = v.trim
+                postF(server + "/player-code", code) { r =>
+                    val names = r.split('\n').$.%(_.nonEmpty)
+                    if (names.any) {
+                        PlayerKey.set(code)
+                        mine = names
+                        load()
+                    }
+                    else
+                        ui.action.asker.zask($(ZOption(title, Div("No name was claimed with that code.", ZBasic.info)), ZBasic(" ", Div("Try again"), () => useCode()), back))
+                } {
+                    ui.action.asker.zask($(ZOption(title, Div("The server can't be reached.", ZBasic.info)), back))
+                }
+            }) :: BasicOption(" ", "Cancel", Nil, () => load()))
+        }
+
+        def show(all : $[Elo.Player]) {
+            val explain = "Elo ratings from finished online games with people on two sides or more (teams count as one side; bots and local games don't count). Everyone starts at " ~ Elo.start.round.toString.hl ~ "; a " ~ "?".hl ~ " marks fewer than " ~ Elo.provisional.hl ~ " games."
+            val you = mine.any.?("Your name" ~ (mine.num > 1).??("s") ~ " on this device: " ~ mine./(_.hlb).join(", ")).|("Names you type when joining an online game are claimed for this device. Play on another device with your player code.".txt)
+
+            ui.action.asker.zask(
+                $(ZOption(title, Div(explain, ZBasic.info))) ++
+                all.zipWithIndex./{ case (p, i) =>
+                    ZBasic("Players", Div(((i + 1) + ". ").spn ~ p.name.hlb ~ " " ~ rating(p).hl ~ Break ~ (p.games + " game" + (p.games != 1).??("s") + ", " + p.wins + " won, last " + p.last.take(10)).spn(xstyles.smaller75)), () => player(p, all))
+                } ++
+                all.none.$(ZOption("Players", Div("No rated games yet.", ZBasic.info))) ++
+                $(ZOption("Your player code", Div(you, ZBasic.info))) ++
+                $(ZBasic("Your player code", Div("Show my player code"), () => {
+                    showOverlayRaw("Your player code".hl, $("Enter it under Rankings on another device to play there under your names. Keep it to yourself: anyone with it can.".txt, PlayerKey.get.hlb.spn(xstyles.larger110)))
+                })) ++
+                $(ZBasic("Your player code", Div("Use a code from another device"), () => useCode())) ++
+                $(back)
+            )
+        }
+
+        def load() {
+            ui.action.asker.zask($(ZOption(title, Div("Loading...", ZBasic.info)), back))
+
+            def rankings() =
+                getF(server + "/rankings/" + metas) { text =>
+                    show(Elo.compute(Elo.parse(text)))
+                } {
+                    ui.action.asker.zask($(ZOption(title, Div("The server can't be reached.", ZBasic.info)), back))
+                }
+
+            postF(server + "/player-code", PlayerKey.get) { r => mine = r.split('\n').$.%(_.nonEmpty) ; rankings() } { rankings() }
+        }
+
+        load()
     }
 
     def aboutMenu() {
@@ -1975,7 +2188,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
     // first, its drag handles and all. Play Again clears the page and resets it
     var gameStarted = false
 
-    def startGame(seatingX : $[meta.F], difficulties : Map[meta.F, Difficulty], optionsX : $[meta.O], self : $[meta.F], journal : Journal[meta.gaming.ExternalAction], title : String, names : () => Map[meta.F, String], swt : Switches) {
+    def startGame(seatingX : $[meta.F], difficulties : Map[meta.F, Difficulty], optionsX : $[meta.O], self : $[meta.F], journal : Journal[meta.gaming.ExternalAction], title : String, names : () => Map[meta.F, String], swt : Switches, onOver : (meta.G, $[Any]) => Unit = (_ : meta.G, _ : $[Any]) => ()) {
         if (gameStarted) {
             dom.console.warn("game already started, second start ignored")
             return
@@ -2135,7 +2348,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
             import meta.tagF
 
-            Runner.run(meta)(seating, options, resources, renderer, (g, f) => f.as[meta.F]./(f => ask(g, f)).|!("unsuitable ask"), journal)
+            Runner.run(meta)(seating, options, resources, renderer, (g, f) => f.as[meta.F]./(f => ask(g, f)).|!("unsuitable ask"), journal, onOver)
         }
 
     }
