@@ -24,6 +24,7 @@ import scala.jdk.CollectionConverters._
 //                    files people commit, so git merges stay simple.
 //   fixes/applied.log the fixes seen so far (by hash), so none is tried twice
 //   bug-reports/<time>.md the reports sent with the in-game Report a Bug button
+//   ranking/<file>.tsv the rankings' claimed names, seats and results (Ranking.scala)
 //
 // Fields are separated by tabs; tabs, newlines and backslashes in them are escaped.
 // "restore" rebuilds a database from such a directory.
@@ -212,8 +213,15 @@ object Backup {
             }
         }
 
+        // The rankings' names (with key hashes, not keys), seats and results (Ranking.scala), overwritten as they change
+        def ranking() {
+            List(Ranking.names, Ranking.seats, Ranking.results).filter(Files.exists(_)).foreach { p =>
+                write(dir.resolve("ranking").resolve(p.getFileName.toString), read(p))
+            }
+        }
+
         def tick() {
-            List[(String, () => Unit)]("fixes" -> (() => fixes()), "export" -> (() => export()), "reports" -> (() => reports())).foreach { case (what, f) =>
+            List[(String, () => Unit)]("fixes" -> (() => fixes()), "export" -> (() => export()), "reports" -> (() => reports()), "ranking" -> (() => ranking())).foreach { case (what, f) =>
                 try f()
                 catch {
                     case e : Exception => println("Backup " + what + " failed: " + e)

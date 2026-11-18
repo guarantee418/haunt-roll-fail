@@ -194,6 +194,10 @@ trait MetaBase {
     def modeAbout(mode : String) : Elem = Empty
     def modeFactions(mode : String) : $[F] = $
     def modeOptions(mode : String) : $[O] = $
+    // Rankings (good-game/Ranking.scala, Rankings in hrf.scala): the ladder a finished online game goes to (metas with the same
+    // one share it, as Northgard and its Adset do), and its sides (a player, or a team) with whether each won; bots are left out later
+    def ranking : |[String] = None
+    def rankingSides(g : G, winners : $[Any]) : $[($[F], Boolean)] = $
     // Other games on the main menu that are their own meta (Northgard's Adset): the menu label and the meta's name
     def linkedModes : $[(String, String)] = $
     // A tutorial on the main menu (Northgard's): a line about it, its lessons (each a title and its paragraphs), and the

@@ -24,7 +24,7 @@ import scalajs.js
 import scalajs.js.timers.setTimeout
 
 object Runner {
-    def run(meta : MetaGame)(seating : $[meta.F], options : $[meta.O], resources : Resources, ui : meta.gaming.GameUI, auto : (meta.G, meta.gaming.F) => meta.gaming.AskResult, journal : Journal[meta.gaming.ExternalAction]) {
+    def run(meta : MetaGame)(seating : $[meta.F], options : $[meta.O], resources : Resources, ui : meta.gaming.GameUI, auto : (meta.G, meta.gaming.F) => meta.gaming.AskResult, journal : Journal[meta.gaming.ExternalAction], onOver : (meta.G, $[Any]) => Unit = (_ : meta.G, _ : $[Any]) => ()) {
         import meta.gaming._
 
         sealed trait UIState
@@ -704,6 +704,9 @@ object Runner {
                     dirty = true
 
                     sounds = false
+
+                    // the rankings (an online game reports its result; the server keeps the first report)
+                    try { onOver(game, w) } catch { case e : Throwable => dom.console.warn("game over hook failed", e.toString) }
 
                     interacted()
 

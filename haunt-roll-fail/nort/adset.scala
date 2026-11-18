@@ -386,6 +386,10 @@ object MetaAdset extends MetaGame {
     // Robotos: the Hard bot, cheating, for the clan the seat drafts (robotos.scala)
     def getBots(f : F) = $("Easy", "Hard", "Robotos")
 
+    // Rankings: the Northgard ladder, each clan's side given to the seat that drafted it
+    override def ranking = |("nort")
+    override def rankingSides(g : G, winners : $[Any]) = Meta.rankSides(g, winners)./{ case (l, w) => (l./~(f => g.ftp.get(f))./~(_.as[Seat]), w) }
+
     override def botOptions(seating : $[F], bots : Map[F, String]) =
         seating.%(f => bots.get(f).has("Robotos"))./(RobotosSeatOption(_)) ++ seating.%(bots.contains)./(BotSeatOption(_))
 
