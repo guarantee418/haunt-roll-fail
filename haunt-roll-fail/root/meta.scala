@@ -1778,7 +1778,7 @@ object Meta extends MetaGame {
     val official = $[Faction](MC, ED, WA, VB, LC, RF, UD, CC, LH, KI)
     val homeland = $[Faction](LDvE, TC, KD)
     val clones = $[Faction](BK, PE, FU, NB, CM, /*WC,*/ DR, RI, LK)
-    val fun = $[Faction](KDvA, TCvA, FH, WW, DU, WG, EE, DM, DV, NW, XC, BP, WM, OF, TW, OMT, CUv2, CU, OK, AF, SF, MB)
+    val fun = $[Faction](KDvA, TCvA, FH, WW, DU, WG, EE, DM, DV, NW, XC, BP, WM, OF, TW, OMT, NX, CUv2, CU, OK, AF, SF, MB)
 
     val factions = official ++ homeland ++ clones ++ fun
 
@@ -2056,6 +2056,7 @@ object Meta extends MetaGame {
         factions.of[OrderOfTheForest].num * 5 +
         factions.of[TwelveColonies].num * 5 +
         factions.of[OldManTinker].num * 6 +
+        factions.of[NoxiousBattery].num * 5 +
         factions.of[Doomsayers].num * 6 +
         factions.of[Whisperers].num * 2 +
         factions.of[Marquistadors].num * 9 +
@@ -4221,6 +4222,21 @@ object Meta extends MetaGame {
         ImageAsset("omt-birdbot-broken"       ) ::
         ImageAsset("omt-owlbot-broken"        ) ::
         ImageAsset("omt-board"                ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => factions.of[NoxiousBattery].any, "faction/battery")(
+        ImageAsset("nx-glyph"                 ) ::
+        ImageAsset("nx-title"                 ) ::
+        ImageAsset("nx-char"                  ) ::
+        ImageAsset("nx-action"                ) ::
+        ImageAsset("nx-skunk"                 ) ::
+        ImageAsset("nx-skunk-empty"           ) ::
+        ImageAsset("nx-skunk-x5"              ) ::
+        ImageAsset("nx-skunk-x5-empty"        ) ::
+        ImageAsset("nx-cannon"                ) ::
+        ImageAsset("nx-cannon-damaged"        ) ::
+        ImageAsset("nx-cannonball"            ) ::
+        ImageAsset("nx-scent"                 ) ::
+        ImageAsset("nx-board"                 ) ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[TwelveColonies].any, "faction/colonies")(
         ImageAsset("tw-glyph"                 ) ::

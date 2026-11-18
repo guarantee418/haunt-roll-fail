@@ -998,7 +998,7 @@ object BattleExpansion extends MandatoryExpansion {
             BattleAssignHitsAction(f, b, n - (n > 0).??(1), s - (n == 0).??(1), then)
 
         case BattleAssignHitsAction(f, b, n, s, then) if n > 0 && soft =>
-            val all = f.from(b.clearing).%(x => BonePatrolExpansion.hittable(x.piece) && OldManTinkerExpansion.hittable(x.piece)).sortBy(_.piece.priority)
+            val all = f.from(b.clearing).%(x => BonePatrolExpansion.hittable(x.piece) && OldManTinkerExpansion.hittable(x.piece) && NoxiousBatteryExpansion.hittable(x)).sortBy(_.piece.priority)
             val own = all.%(_.piece.is[Warrior]).%(_.piece.is[Scoring].not)
             val merc = ((f == b.attacker).??(b.ally./~(_.from(b.clearing).$.%(_.piece.is[Warrior]))) ++ (f == b.defender).??(b.codef./~(_.from(b.clearing).$.%(_.piece.is[Warrior])))).sortBy(_.piece.priority)
             val rear = all.diff(own)
@@ -1049,7 +1049,7 @@ object BattleExpansion extends MandatoryExpansion {
 
 
         case BattleAssignHitsAction(f, b, 0, s, then) if soft =>
-            val all = f.from(b.clearing).%(x => BonePatrolExpansion.hittable(x.piece) && OldManTinkerExpansion.hittable(x.piece)).sortBy(_.piece.priority)
+            val all = f.from(b.clearing).%(x => BonePatrolExpansion.hittable(x.piece) && OldManTinkerExpansion.hittable(x.piece) && NoxiousBatteryExpansion.hittable(x)).sortBy(_.piece.priority)
             val own = all.%(_.piece.is[Warrior])
             val merc = ((f == b.attacker).??(b.ally./~(_.from(b.clearing).$.%(_.piece.is[Warrior]))) ++ (f == b.defender).??(b.codef./~(_.from(b.clearing).$.%(_.piece.is[Warrior])))).sortBy(_.piece.priority)
             val rear = all.diff(own)

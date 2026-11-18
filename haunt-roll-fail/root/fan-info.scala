@@ -29,6 +29,7 @@ object FanInfo {
     // faction's ? and the Doomed setup options' ?.
     def doomedLink : Elem = "See the whole " ~ Link("https://drive.google.com/drive/folders/1XK3bxRh_fkBbaFopR5p8CMFRHxq27sEa", "Doomed Expansion", $(xstyles.link)) ~ ": every faction, deck, map, scenario and card, with the rules (the designer's print-and-play files on Google Drive)."
     private def outsiders(version : String) : Elem = "version " ~ version.txt ~ ", from the fan-made " ~ "Outsiders Expansion".hh
+    def nemesisLink : Elem = "See the " ~ Link("https://drive.google.com/drive/folders/1QeHVQl7j-wXh7f7vjuFASBakE9uyzij4", "Noxious Battery", $(xstyles.link)) ~ ": its board, pieces and rules (the designer's print-and-play files on Google Drive)."
     def outsidersLink : Elem = "See the whole " ~ Link("https://drive.google.com/drive/folders/19tCC_9QTW682DUeLCUIr7CEyjfczjxA6", "Outsiders Expansion", $(xstyles.link)) ~ ": every faction, map and card, with the rules (the designer's print-and-play files on Google Drive)."
 
     def about(f : Faction) : $[Elem] = f match {
@@ -143,6 +144,16 @@ object FanInfo {
             line("Birdsong", "Do-Over if it likes, roll the Breakage Dice (a hit to each robot rolled), Produce at every factory, Bustle (the Old Man moves 3 times).".txt),
             line("Daylight", "Craft with gears, then 4 actions: Crusade (battle, or move and battle), Tinker (flip tokens), Repair (gears onto a robot), Overproduce (a card for an extra Production); then Build factories, never two side by side with a third.".txt),
             line("Evening", "Restructure (a card matching a factory raises or lowers the level or flips gears to drones), then draw 2 or take a matching card from the discard pile.".txt),
+        )
+        case NX => $(
+            by("S.P. Shaman", "art by disasterman, from the fan-made ".txt ~ "Nemesis Expansion".hh),
+            nemesisLink,
+            "Skunks with a rusty cannon, scoring by firing cannonballs into the clearings around it, and spraying scent marks that drive the others out.".txt,
+            line("The Cannon", "starts damaged on a ruin; repaired each Birdsong; moves ignoring rule; an enemy removing it undamaged scores 1 and makes the loaded cannonballs roll away.".txt),
+            line("Foul Stench", "at the end of each enemy's turn, its warriors and pawns in clearings with a scent mark move out to clearings without one.".txt),
+            line("Birdsong", "Levy (a skunk at the cannon and at each cannonball), Fire! (a loaded cannonball at a clearing next to the cannon, scoring 3, 2 or 1 and removing a piece for each cannonball there), Repair.".txt),
+            line("Daylight", "Craft with scent marks, then 4 actions: Recruit at the cannon, Battle, Rollout (a move, cannonballs going along with the skunks), Rearm (a card matching the cannon's clearing returns its cannonballs).".txt),
+            line("Evening", "Spray scent marks where 2 skunks are, Load cannonballs into the Bore, draw 1 and more for the marks off the track.".txt),
         )
         case TW => $(
             by("slugfacekillah", "inspired by lhammer, ".txt ~ outsiders("2.1")),
