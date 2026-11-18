@@ -125,7 +125,8 @@ case object UrbanMap extends FanMap {
     override val explain = $(
         "Urban: Districts & Denizens".hh ~ ", a city map from slugfacekillah's " ~ "Doomed Expansion".hl ~ ".",
         "The city blocks between the roads are the forests.",
-        "Two rivers meet at the " ~ "Wharf".hh ~ "."
+        "Two rivers meet at the " ~ "Wharf".hh ~ ".",
+        FanInfo.doomedLink
     )
 }
 
@@ -134,7 +135,8 @@ case object LegendsMap extends FanMap {
     override val explain = $(
         "Legends".hh ~ ", a forest map with a castle in each corner, from slugfacekillah's " ~ "Doomed Expansion".hl ~ ".",
         "The ruins are in the four castles.",
-        "With a " ~ "Legends Scenario".hh ~ ", its space goes in the stone circle, in the forest south of the " ~ "Watchtower".hh ~ "."
+        "With a " ~ "Legends Scenario".hh ~ ", its space goes in the stone circle, in the forest south of the " ~ "Watchtower".hh ~ ".",
+        FanInfo.doomedLink
     )
 }
 
@@ -143,7 +145,8 @@ case object DeepWoodsMap extends FanMap {
     override val explain = $(
         "Deep Woods".hh ~ ", the past, a map from slugfacekillah's fan-made " ~ "Outsiders Expansion".hl ~ ".",
         "Played settled: each clearing tile is on the clearing of its number (the rules' way to play it without " ~ "Settling".hh ~ ").",
-        "A river runs across the middle, with a bridge on each path over it. The ruins are in the four inner clearings."
+        "A river runs across the middle, with a bridge on each path over it. The ruins are in the four inner clearings.",
+        FanInfo.outsidersLink
     )
 }
 
@@ -152,7 +155,8 @@ case object WastelandsMap extends FanMap {
     override val explain = $(
         "Wastelands".hh ~ ", the future, a map from slugfacekillah's fan-made " ~ "Outsiders Expansion".hl ~ ".",
         "A walled city of three clearings in the middle, where two rivers meet at the " ~ "Cistern".hh ~ ".",
-        "Its barren trails are plain paths here, and its water rules are left out."
+        "Its barren trails are plain paths here, and its water rules are left out.",
+        FanInfo.outsidersLink
     )
 }
 
@@ -292,6 +296,7 @@ case object FrankenDeck extends FanDeck {
         "one crafting activation or none: " ~ "3".hh ~ " bird, " ~ "3".hh ~ " fox, " ~ "3".hh ~ " mouse and " ~ "4".hh ~ " rabbit;",
         "two or more: " ~ "4".hh ~ " bird, " ~ "4".hh ~ " fox, " ~ "4".hh ~ " mouse and " ~ "5".hh ~ " rabbit.",
         "Favors".hh ~ " are left out. " ~ "Boat Builders".hh ~ " and " ~ "Corvid Planners".hh ~ " leave the deck with " ~ RF.name.styled(RF) ~ " or " ~ CC.name.styled(CC) ~ ", as in the " ~ "Mixed".hh ~ " deck.",
+        FanInfo.doomedLink,
         Image("franken-bird-ambush", styles.card)
     )
 }
@@ -304,6 +309,7 @@ case object DarkDeck extends FanDeck {
         "The " ~ "Cursed!".hh ~ " card has no suit: it can't be spent or discarded, only given, taken or swapped by effects, or crafted with four of any suit for " ~ 3.vp ~ " and the " ~ "Cursed Idol".hh ~ ".",
         "A fifth " ~ "Dark Dominance".hh ~ " needs three adjacent ruled clearings and the " ~ "Cursed Idol".hh ~ ".",
         "Its shared supply adds a " ~ "Torch".hh ~ ", the " ~ "Book of Names".hh ~ ", the " ~ "Rabbit's Paw".hh ~ " and the " ~ "Cursed Idol".hh ~ " to the craftable items.",
+        FanInfo.doomedLink,
         Image("dark-dark-dominance", styles.card)
     )
 }
@@ -317,6 +323,7 @@ case object ActionBooster extends GameOption with ToggleOption with FoldedOption
         "An " ~ "Action!".hh ~ " card is spent from hand during its owner's turn for its effect (the sword's extra hit also in a battle they are in); otherwise it is a card of its suit.",
         "The two " ~ "Secret!".hh ~ " cards are birds: either can be discarded to draw the top card of the deck, one cancels an ambush played against its owner, the other scores " ~ 3.vp ~ " at the start of Birdsong with three crafted improvements or a fulfilled Dominance.",
         "Using an " ~ "Action!".hh ~ " card as the item it shows is not done yet.",
+        FanInfo.doomedLink,
         Image("action-sword", styles.card)
     )
 }
@@ -1150,7 +1157,8 @@ case object DoomedVagabonds extends GameOption with ToggleOption with VagabondCh
     override def required(all : $[BaseOption]) = $($(IncludeFaction(VB)), $(IncludeFaction(NB)), $(IncludeFaction(MB)))
     override val explain = $(
         "Doomed Vagabonds".styled(VB) ~ SpacedDash ~ "seven more characters from " ~ "The Doomed Expansion".hl ~ " by " ~ "slugfacekillah".hl ~ ": " ~
-        DoomedCharacters.characters./(_.name.styled(VB)).comma ~ "."
+        DoomedCharacters.characters./(_.name.styled(VB)).comma ~ ".",
+        FanInfo.doomedLink
     ) ++ DoomedCharacters.characters./(c => charImage(c, $(this)))
 }
 
@@ -1161,7 +1169,8 @@ case object DoomedCaptains extends GameOption with ToggleOption with FoldedOptio
     val valueOn = "Doomed Knave Captains".styled(KD) ~ " " ~ "(fan-made)"
     override def required(all : $[BaseOption]) = $($(IncludeFaction(KD)))
     override val explain = $(
-        "Doomed Knave Captains".styled(KD) ~ SpacedDash ~ "six more Captain cards from " ~ "The Doomed Expansion".hl ~ " by " ~ "slugfacekillah".hl ~ ", dealt with the others."
+        "Doomed Knave Captains".styled(KD) ~ SpacedDash ~ "six more Captain cards from " ~ "The Doomed Expansion".hl ~ " by " ~ "slugfacekillah".hl ~ ", dealt with the others.",
+        FanInfo.doomedLink
     ) ++ Knaves.doomed./(k => k.name.styled(KD).styled(xstyles.bold) ~ " " ~ k.items./(_.img).merge ~ SpacedDash ~ k.text)
 }
 
@@ -1470,7 +1479,8 @@ case object TurnOverHirelings extends GameOption with ToggleOption with FoldedOp
     override val explain = $(
         "Turn Over Hirelings".hh ~ SpacedDash ~ "the " ~ "Turnlings".hh ~ " rule from " ~ "The Doomed Expansion".hl ~ " by " ~ "slugfacekillah".hl ~ ":",
         "a player whose score reaches a hireling marker" ~ &(" turns the hireling over to " ~ &("another player,")) ~ &(" who rolls for its control."),
-        "The " ~ "Turnlings".hh ~ " cards below can be drawn" ~ &(" with or without it.")
+        "The " ~ "Turnlings".hh ~ " cards below can be drawn" ~ &(" with or without it."),
+        FanInfo.doomedLink
     )
 }
 

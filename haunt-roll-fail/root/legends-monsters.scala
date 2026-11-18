@@ -124,6 +124,7 @@ case object DarkRituals extends LegendsScenario {
         "Dark Rituals".hh ~ SpacedDash ~ "a " ~ "Legends Scenario".hh ~ " from " ~ "The Doomed Expansion".hl ~ " by " ~ "slugfacekillah".hl ~ ":",
         "a " ~ "Legendary Monster".hh ~ " starts in the " ~ "scenario space".hh ~ &(", which only warriors and pawns can enter") ~ &(" and nothing leaves."),
         "Alone there, a player sacrifices a warrior to move the monster" ~ &(" or have it attack;") ~ &(" each Evening it roams;") ~ &(" items can be captured."),
+        FanInfo.doomedLink,
     )
 }
 
@@ -133,7 +134,8 @@ case object HuntTheLegend extends LegendsScenario {
     override val explain = $(
         "Hunt the Legend".hh ~ SpacedDash ~ "a " ~ "Legends Scenario".hh ~ " from " ~ "The Doomed Expansion".hl ~ " by " ~ "slugfacekillah".hl ~ ":",
         "three monster markers are stacked and the " ~ "Legends die".hh ~ " roams the map" ~ &(", counting down;") ~ &(" each ghost leaves a marker,") ~ &(" and the last one is the monster."),
-        "Players investigate the markers in Daylight;" ~ &(" items can be captured.")
+        "Players investigate the markers in Daylight;" ~ &(" items can be captured."),
+        FanInfo.doomedLink
     )
 }
 
