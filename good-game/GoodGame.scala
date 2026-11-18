@@ -345,6 +345,52 @@ object GoodGame {
                         }
                 }
             } ~
+            // Rankings (Ranking.scala): claim a name for a seat with the browser's key, list the names a key holds,
+            // report a finished game, and list the results
+            (post & path("claim-name" / Segment / Segment)) { (userId, userSecret) =>
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        val l = body.split('\n').toList
+                        val ok = execute(users.filter(_.id === userId).filter(_.secret === userSecret).exists.result)
+                        if (!ok || l.size < 2)
+                            complete(StatusCodes.Forbidden, "")
+                        else
+                            plain(Ranking.claim(userId, l(0).trim.safeplus, l(1).trim.ascii))
+                    }
+                }
+            } ~
+            (post & path("player-code")) {
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        plain(Ranking.owned(body.trim.ascii).mkString("\n"))
+                    }
+                }
+            } ~
+            (post & path("report-result" / Segment / Segment / Segment)) { (userId, userSecret, journalId) =>
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        val l = body.split('\n').toList.map(_.trim)
+                        val sides = l.drop(2).filter(s => s.startsWith("W ") || s.startsWith("L ")).map(s => s.take(1) + ":" + s.drop(2).split(' ').filter(_.nonEmpty).mkString(","))
+                        val listed = sides.flatMap(_.drop(2).split(',').toList).filter(_.nonEmpty)
+                        // the reporter can read the game, and every user listed plays in it
+                        val ok = l.size >= 3 && execute(hasRight(userId, userSecret, journalId, "read") {
+                            accessRights.filter(_.journalId === journalId).filter(_.right === "append").map(_.userId).result
+                        }.asInstanceOf[DBIOAction[Seq[String], NoStream, Effect.Read]]).toSet.intersect(listed.toSet).size == listed.distinct.size
+                        if (!ok || listed.distinct.size != listed.size)
+                            complete(StatusCodes.Forbidden, "")
+                        else
+                            plain(Ranking.report(journalId, l(0).safe.take(32), l(1).safeplus.take(128), sides.mkString(";")).toString)
+                    }
+                }
+            } ~
+            (get & path("rankings" / Segment)) { metas =>
+                plain(Ranking.list(metas.split(',').toSet, uu => execute(
+                    entries.filter(_.userId inSet uu).filter(_.text like "name %").map(e => (e.userId, e.text)).result
+                ).flatMap { case (u, t) => t.split(' ').toList match {
+                    case "name" :: id :: n if id == u => Some(u -> n.mkString(" "))
+                    case _ => None
+                } }.toMap))
+            } ~
             (post & path("new-user")) {
                 decodeRequest {
                     entity(as[String]) { body =>

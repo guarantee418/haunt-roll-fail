@@ -6,7 +6,8 @@ package hrf
 // Run it with the code about to be deployed, in the JVM host project (see nort/HANDOFF.md):
 //   sbt "runMain hrf.LiveCheck <hrf-games checkout> [full] [id:<game id>]"
 // "full" also counts the moves anywhere in a game that fail validation (only the last 40 are
-// validated on load, so those don't stop it); "id:" checks one game.
+// validated on load, so those don't stop it); "id:" checks one game. "ranking" prints, for each finished game of a meta with
+// rankings (Meta.ranking), a line of good-game/ranking-seed.tsv's format but the time, as the browser would report it.
 import hrf.colmat._
 import hrf.meta._
 
@@ -17,6 +18,7 @@ object LiveCheck {
         val dir = args(0)
         val full = args.contains("full")
         val only = args.find(_.startsWith("id:")).map(_.drop(3))
+        ranking = args.contains("ranking")
         val src = scala.io.Source.fromFile(dir + "/journals.tsv")
         val journals = src.getLines().drop(1).map(_.split("\t", -1).toList).toList
         src.close()
@@ -41,7 +43,7 @@ object LiveCheck {
                 server.filter(s => only.forall(_ == s)).foreach { gid =>
                     val title = j(1).dropRight(6)
                     total += 1
-                    val r = try { check(meta, lobby, read(gid).map(_._2), full) } catch { case e : Throwable => "EXCEPTION " + e.toString + "\n" + e.getStackTrace.take(12).mkString("\n") }
+                    val r = try { check(meta, lobby, read(gid).map(_._2), full, gid, title) } catch { case e : Throwable => "EXCEPTION " + e.toString + "\n" + e.getStackTrace.take(12).mkString("\n") }
                     if (r.startsWith("ok").not) bad += 1
                     println(meta.name + " " + gid + " [" + title + "] " + r)
                 }
@@ -51,7 +53,9 @@ object LiveCheck {
         println("games: " + total + " bad: " + bad)
     }
 
-    def check(meta : MetaGame, lobby : $[String], recorded : $[String], full : Boolean) : String = {
+    var ranking = false
+
+    def check(meta : MetaGame, lobby : $[String], recorded : $[String], full : Boolean, gid : String = "", title : String = "") : String = {
         import meta.gaming._
 
         var seating : $[meta.F] = $
@@ -163,6 +167,21 @@ object LiveCheck {
             case Ask(_, List(a)) if a.isSoft => c = unlog(game.performContinue(|(game.continue), a, false).nest); true
             case _ => false
         })) steps += 1
+
+        c match {
+            case GameOver(w, _, _) if ranking && meta.ranking.any =>
+                var users = Map[meta.F, String]()
+                lobby.foreach { line =>
+                    line.split(' ').toList match {
+                        case "user" :: f :: u :: _ => users += meta.parseFaction(f).get -> u
+                        case _ =>
+                    }
+                }
+                val sides = meta.rankingSides(game.asInstanceOf[meta.G], w).map { case (l, won) => (l.flatMap(users.get), won) }.filter(_._1.nonEmpty)
+                if (sides.size >= 2 && sides.exists(_._2) && sides.exists(!_._2))
+                    println("RANKING\t" + gid + "\t" + meta.name + "\t" + title + "\t" + sides.map { case (l, won) => (if (won) "W:" else "L:") + l.mkString(",") }.mkString(";"))
+            case _ =>
+        }
 
         val end = c match {
             case ErrorContinue(e, m) => "ERROR after last action: " + m + " " + e
