@@ -25,12 +25,16 @@ object FanInfo {
     private def mirror(o : Faction) : Elem = "A second copy of the " ~ o.elem ~ ", with its own name and colour, so two of them can play in one game. It plays exactly like the " ~ o.elem ~ "."
     private def line(head : String, text : Elem) : Elem = (head + ": ").hh ~ text
     // The designer's own print-and-play folder, open to anyone with the link (2026-11-17: so players can see the whole expansion).
+    // The designer's Doomed Expansion print-and-play folder, also open to anyone with the link (2026-11-18), on every Doomed
+    // faction's ? and the Doomed setup options' ?.
+    def doomedLink : Elem = "See the whole " ~ Link("https://drive.google.com/drive/folders/1XK3bxRh_fkBbaFopR5p8CMFRHxq27sEa", "Doomed Expansion", $(xstyles.link)) ~ ": every faction, deck, map, scenario and card, with the rules (the designer's print-and-play files on Google Drive)."
     private def outsiders(version : String) : Elem = "version " ~ version.txt ~ ", from the fan-made " ~ "Outsiders Expansion".hh
-    private def outsidersLink : Elem = "See the whole " ~ Link("https://drive.google.com/drive/folders/19tCC_9QTW682DUeLCUIr7CEyjfczjxA6", "Outsiders Expansion", $(xstyles.link)) ~ ": every faction, map and card, with the rules (the designer's print-and-play files on Google Drive)."
+    def outsidersLink : Elem = "See the whole " ~ Link("https://drive.google.com/drive/folders/19tCC_9QTW682DUeLCUIr7CEyjfczjxA6", "Outsiders Expansion", $(xstyles.link)) ~ ": every faction, map and card, with the rules (the designer's print-and-play files on Google Drive)."
 
     def about(f : Faction) : $[Elem] = f match {
         case WW => $(
             by("slugfacekillah", doomed),
+            doomedLink,
             "Carrion birds that feed on battle: they follow the fighting, take the warriors others lose, and spread despair where nobody can build.".txt,
             line("Vultures and the Mess", "warriors removed in their Frenzy go to the Mess, which feeds them later.".txt),
             line("Despair", "Despair tokens stop anyone building in their clearings.".txt),
@@ -38,6 +42,7 @@ object FanInfo {
         )
         case DU => $(
             by("slugfacekillah", doomed),
+            doomedLink,
             "A doomsday cult run like a trade union: it makes demands with dice, goes on strike, and lights Flames in the forests until the world ends.".txt,
             line("Demand dice", "black, orange and yellow dice set what the Union asks of the others; the union card holds strikes, locks and Cats on Strike!".txt),
             line("Actions", "Recruit, Renegotiate, Crusade, Consecrate, and Craft with revealed cards that score in Evening.".txt),
@@ -46,6 +51,7 @@ object FanInfo {
         )
         case WG => $(
             by("slugfacekillah", doomed),
+            doomedLink,
             "A secret guild that lives in the forests and plays mostly on other players' turns. Only with 5 or more players.".txt,
             line("Forests", "its warriors stand in forests, not clearings.".txt),
             line("Insight", "face-down Insight markers, known only to the Guild, are revealed on other players' turns when what they wait for happens (buildings placed, crafts, removals).".txt),
@@ -54,6 +60,7 @@ object FanInfo {
         )
         case EE => $(
             by("slugfacekillah", "a Re-Imagining of the " ~ ED.elem ~ " " ~ doomed),
+            doomedLink,
             "The Eyrie in its decline: still bound by a Decree with Turmoil and leaders, but its five Cardinals can be moved by anyone.".txt,
             line("The Red Menace", "other factions may move the Cardinals with its warriors as their own, on their turn.".txt),
             line("Caravans", "caravans craft and move with its warriors, and the clearing's ruler draws a card when one arrives (Roving Caravans).".txt),
@@ -62,6 +69,7 @@ object FanInfo {
         )
         case DM => $(
             by("slugfacekillah", "a Re-Imagining of the " ~ MC.elem ~ " " ~ doomed),
+            doomedLink,
             "The cats arrive by sea to conquer the Woodland.".txt,
             line("Landing", "its ship lands on a river clearing at the map's edge.".txt),
             line("Outposts", "an outpost is placed with two matching treaties, cards kept face up, and treaties count as warriors in battle.".txt),
@@ -69,6 +77,7 @@ object FanInfo {
         )
         case DV => $(
             by("slugfacekillah", "a Re-Imagining of the " ~ VB.elem ~ " " ~ doomed),
+            doomedLink,
             "A Vagabond gone bad, who makes deals and collects bounties. With 4 or more players.".txt,
             line("Despot Infamy", "it scores by Infamy differently from the Vagabond.".txt),
             line("Peace offers", "it makes peace offers to Hostile factions.".txt),
@@ -76,6 +85,7 @@ object FanInfo {
         )
         case NW => $(
             by("slugfacekillah", "a Re-Imagining of the " ~ KD.elem ~ " " ~ doomed),
+            doomedLink,
             "The Knaves of the Deepwood, played with Woodland Alliance warriors: the same Captains, items and hostages.".txt,
         )
         case XC => $(

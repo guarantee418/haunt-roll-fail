@@ -128,6 +128,7 @@ case object CastlesAndCatacombs extends LegendsScenario {
         "Castles & Catacombs".hh ~ SpacedDash ~ "a " ~ "Legends Scenario".hh ~ " from " ~ "The Doomed Expansion".hl ~ " by " ~ "slugfacekillah".hl ~ ":",
         "a thirteenth " ~ "clearing".hh ~ ", the " ~ "scenario space".hh ~ &(" of every suit, in a forest,") ~ &(" linked to its clearings off the edge") ~ &(" and to the four corners."),
         "Only warriors and pawns can be there;" ~ &(" players arriving where another is battle") ~ &(" until one is gone,") ~ &(" who keeps at most three."),
+        FanInfo.doomedLink,
     )
 }
 
@@ -139,6 +140,7 @@ case object TheFifthRuin extends LegendsScenario {
         "The Fifth Ruin".hh ~ SpacedDash ~ "a " ~ "Legends Scenario".hh ~ " from " ~ "The Doomed Expansion".hl ~ " by " ~ "slugfacekillah".hl ~ ":",
         "a fifth ruin in the " ~ "scenario space".hh ~ &(" only the Vagabond can enter,") ~ &(" with a rare item: ") ~ &("Hammer, Tea, Crossbow, Coins or the " ~ "Ring".hh ~ "."),
         "The " ~ "Ring".hh ~ " has a rule of its own and a way to capture it, " ~ &("picked below or drawn."),
+        FanInfo.doomedLink,
     )
 }
 

@@ -577,6 +577,9 @@ server. No session can reach the server, and none needs to.
   each (`FanInfo.about` in `root/fan-info.scala`). The faction picker shows it as a "?" button beside the name (`Meta.factionInfo`,
   `xstyles.infoButton` in `pickElem`), and Advanced Setup's "Available Factions" toggles as the setup's usual ? (`IncludeFaction.explain`).
   Official factions have none. Display only.
+  Every Doomed and Outsiders faction's ?, and the ? of the Doomed setup options (its decks, maps, Vagabonds, Captains, Turnlings and
+  Legends Scenarios) and the Outsiders maps, link the designer's print-and-play folder for the whole expansion (`FanInfo.doomedLink`,
+  `FanInfo.outsidersLink`; 2026-11-17 and 18): a new part of either gets that link too.
 - Root's fan content is grouped apart from the official (2026-11-17): the faction picker's "Fan Factions" (once "Fun Factions",
   `factionGroup`) starts folded to one line ("18 Fan Factions") and opens on a tap (`Meta.foldedFactionGroups`, `grouped` in `hrf.scala`,
   remembered as `picker.<meta>.<group>`); the setup has "Fan Maps" (Tidal Flats, Tundra and Gloom too, since 2026-11-18) and "Fan Decks" sections (`FanMap`, `FanDeck` in `root/meta.scala`:
