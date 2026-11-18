@@ -73,7 +73,7 @@ case object MountainMap extends MapOption {
     )
 }
 
-case object TidalMap extends MapOption {
+case object TidalMap extends FanMap {
     val valueOn = "Tidal Flats".styled(ED)
     override val explain = $(
         "A beautiful map by " ~ "Endgamer1331".hl ~ "!",
@@ -82,7 +82,7 @@ case object TidalMap extends MapOption {
     )
 }
 
-case object TundraMap extends MapOption {
+case object TundraMap extends FanMap {
     val valueOn = "Tundra".styled(RF)
     override val explain = $(
         "A winter map by " ~ "Endgamer1331".hl ~ "!",
@@ -90,7 +90,7 @@ case object TundraMap extends MapOption {
     )
 }
 
-case object GloomMap extends MapOption {
+case object GloomMap extends FanMap {
     val valueOn = "Gloom".styled(styles.forest)
     override val explain = $(
         "A spooky map by " ~ "totgeboren".hl ~ "!",
@@ -171,7 +171,8 @@ case object WastelandsWater extends GameOption with ToggleOption with FoldedOpti
     override val explain = OutsidersMaps.waterRules
 }
 
-// Drawn once when the game is created (Meta.startOptions), so the game and its log only ever have the drawn map
+// Drawn once when the game is created (Meta.startOptions), so the game and its log only ever have the drawn map.
+// No longer offered (2026-11-18): only Random Official is; a setup a browser saved with it gets Random Official (completeSaved)
 case object RandomMap extends MapOption {
     val valueOn = "Random".hh
     override val explain = $(
@@ -1775,7 +1776,7 @@ object Meta extends MetaGame {
         $(SetupTypeCorners, SetupTypeHomelands) ++
         (n > 2).?(TotalWarDominance) ++
         $,
-        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap, UrbanMap, LegendsMap, DeepWoodsMap, WastelandsMap) ++
+        $(AutumnMap, WinterMap, LakeMap, MountainMap, GorgeMap, MarshMap, RandomOfficialMap, TidalMap, TundraMap, GloomMap, UrbanMap, LegendsMap, DeepWoodsMap, WastelandsMap) ++
         $(DeepWoodsSettling, WastelandsWater) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
@@ -1840,7 +1841,7 @@ object Meta extends MetaGame {
 
     override def optionsFor(n : Int, l : $[F]) =
         hiddenOptions ++
-        $(AutumnMap, WinterMap, LakeMap, MountainMap, TidalMap, TundraMap, GloomMap, GorgeMap, MarshMap, RandomMap, RandomOfficialMap, UrbanMap, LegendsMap, DeepWoodsMap, WastelandsMap) ++
+        $(AutumnMap, WinterMap, LakeMap, MountainMap, GorgeMap, MarshMap, RandomOfficialMap, TidalMap, TundraMap, GloomMap, UrbanMap, LegendsMap, DeepWoodsMap, WastelandsMap) ++
         $(DeepWoodsSettling, WastelandsWater) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
@@ -1906,15 +1907,21 @@ object Meta extends MetaGame {
     lazy val settled : $[O] = $(NonBirdPartisans, ErrataCoffinMakers, UnthematicPropagandaBureau, TunnelsIgnoreRaid, TunnelsIgnoreTradePosts)
 
     // No longer offered: Hostile Takeover and Shared History did nothing, Coffin Makers' "any warrior" house rule gave way to the errata,
-    // and the Async options gave way to the Hits and Ambushes section (2026-11-12).
+    // the Async options gave way to the Hits and Ambushes section (2026-11-12), and Random map to Random Official (2026-11-18).
     // Still read, so the games that have them load; dropped from the options a setup screen saved (completeSaved)
-    lazy val retired : $[O] = $(HostileTakeover, SharedHistory, UnthematicCoffinMakers, AutoAmbushSkippingMode, ForcedAsyncMode, ForcedAsyncChooseHits)
+    lazy val retired : $[O] = $(HostileTakeover, SharedHistory, UnthematicCoffinMakers, AutoAmbushSkippingMode, ForcedAsyncMode, ForcedAsyncChooseHits, RandomMap)
 
     // The hidden options every new game gets: one rules version (RulesVersion), which stands for every rules fix made since the
     // fixes were first gated (RulesVersion.expand, used by Game), so a new game records one option instead of each fix
     lazy val newGame : $[O] = $(RulesVersion.latest)
 
-    override def completeSaved(n : Int, l : $[F], options : $[O]) = autoHitsOn(options.diff(retired).diff(RulesVersion.implied))
+    override def completeSaved(n : Int, l : $[F], options : $[O]) = autoHitsOn(randomOfficial(options).diff(retired).diff(RulesVersion.implied))
+
+    // A setup saved with the retired Random map gets Random Official instead
+    def randomOfficial(options : $[O]) : $[O] = options./{
+        case RandomMap => RandomOfficialMap
+        case o => o
+    }.distinct
 
     // Auto Assign Hits is on by default and Ambush Bluff Mode off (2026-11-17): a setup a browser saved with none of Auto Assign
     // Hits, Live Game or the hits preset (from before the Hits and Ambushes section, when Auto Assign Hits was always on and so never

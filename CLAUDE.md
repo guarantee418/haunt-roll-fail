@@ -567,7 +567,7 @@ server. No session can reach the server, and none needs to.
   Official factions have none. Display only.
 - Root's fan content is grouped apart from the official (2026-11-17): the faction picker's "Fan Factions" (once "Fun Factions",
   `factionGroup`) starts folded to one line ("18 Fan Factions") and opens on a tap (`Meta.foldedFactionGroups`, `grouped` in `hrf.scala`,
-  remembered as `picker.<meta>.<group>`); the setup has "Fan Maps" and "Fan Decks" sections (`FanMap`, `FanDeck` in `root/meta.scala`:
+  remembered as `picker.<meta>.<group>`); the setup has "Fan Maps" (Tidal Flats, Tundra and Gloom too, since 2026-11-18) and "Fan Decks" sections (`FanMap`, `FanDeck` in `root/meta.scala`:
   the same single choice as Map and Deck, through `OneOfGroup.oneOf`, so a folded Map shows "Urban (Fan Maps)"), Adset's "Available Fan
   Factions", and two folders (`BaseOption.folder`, a heading that folds several sections, `folder.<name>`): "Fan Hirelings" (the
   Turnlings) and "Scenarios" (the Legends Scenarios; Ring Rule, Capture Rule and the monster only once their scenario is picked,
@@ -1014,8 +1014,9 @@ server. No session can reach the server, and none needs to.
   5+ players one of each pair is left without a suit (`game.unsuited`) and
   gets Mousehold, Foxburrow or Rabbittown at random. Ruins go in Crossing and
   Confluence plus the two lowest numbered slots not flooded (`ruinsIn`).
-- Root's Map section has a "Random" choice (`RandomMap` in `root/meta.scala`, asked for on 2026-10-30): one of the nine
-  maps is drawn (or, with "Random Official", `RandomOfficialMap`, one of Autumn, Winter, Lake, Mountain, Gorge and Marsh, `officialMaps`) when the game is created, by the `startOptions` hook in `meta.scala` (Root and Adset override it; `hrf.scala`
+- Root's Map section has a "Random Official" choice (`RandomOfficialMap` in `root/meta.scala`, asked for on 2026-10-30): one of Autumn,
+  Winter, Lake, Mountain, Gorge and Marsh (`officialMaps`) is drawn when the game is created (the "Random" choice of any map, `RandomMap`,
+  is retired since 2026-11-18: a setup a browser saved with it gets Random Official, `Meta.randomOfficial` in `completeSaved`), by the `startOptions` hook in `meta.scala` (Root and Adset override it; `hrf.scala`
   calls it at the setup screen's Start), so the game, its log and every client only ever see the drawn map. Default clearings
   can be picked with it and become No Clusters when the draw isn't Autumn, as on the other maps.
 - Tapping a landmark on the Root map (Ferry, Lost City, Tower, Mousehold, Foxburrow, Rabbittown) shows its card large
