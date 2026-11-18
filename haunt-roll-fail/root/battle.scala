@@ -150,6 +150,8 @@ object BattleExpansion extends MandatoryExpansion {
         case Ambush(Frog) if opponent.is[InvasiveCCC] => false
         case Ambush(Frog) if opponent.is[InvasiveBBB] => false
         case Ambush(Frog) if opponent.is[InvasiveAAA] => false
+        // the Twelve Colonies' Non Variablis: a bird ambush is played as wild
+        case Ambush(Bird) if TwelveColoniesExpansion.noWild => false
         case Ambush(s) => clearing.cost.matched(s) || SquiresDeckExpansion.friendAmbush(faction, clearing)(d)
         case CraftItemCard(_, _, _, Sword, _, _)  => faction.has(TrickyClaws) && clearing.cost.matched(Fox)
         case CraftItemCard(_, _, _, Coins, _, _)  => faction.has(TrickyEars)  && clearing.cost.matched(Rabbit)
@@ -789,6 +791,9 @@ object BattleExpansion extends MandatoryExpansion {
                         actions :+= HoardersMainAction(f, BattlePostRollAction(b, fh - 1, oh, fe, oe, full))
                 }
 
+                if (options.has(UpstartsDeck))
+                    actions ++= UpstartsDeckExpansion.postRoll(f, b, fh, oh, fe, oe, full)
+
                 if (f.canRemove(b.clearing)(o)) {
                     if (options.has(DarkDeck))
                         actions ++= DarkDeckExpansion.postRoll(f, b, fh, oh, fe, oe, full, ft, ot)
@@ -993,7 +998,7 @@ object BattleExpansion extends MandatoryExpansion {
             BattleAssignHitsAction(f, b, n - (n > 0).??(1), s - (n == 0).??(1), then)
 
         case BattleAssignHitsAction(f, b, n, s, then) if n > 0 && soft =>
-            val all = f.from(b.clearing).%(x => BonePatrolExpansion.hittable(x.piece)).sortBy(_.piece.priority)
+            val all = f.from(b.clearing).%(x => BonePatrolExpansion.hittable(x.piece) && OldManTinkerExpansion.hittable(x.piece)).sortBy(_.piece.priority)
             val own = all.%(_.piece.is[Warrior]).%(_.piece.is[Scoring].not)
             val merc = ((f == b.attacker).??(b.ally./~(_.from(b.clearing).$.%(_.piece.is[Warrior]))) ++ (f == b.defender).??(b.codef./~(_.from(b.clearing).$.%(_.piece.is[Warrior])))).sortBy(_.piece.priority)
             val rear = all.diff(own)
@@ -1044,7 +1049,7 @@ object BattleExpansion extends MandatoryExpansion {
 
 
         case BattleAssignHitsAction(f, b, 0, s, then) if soft =>
-            val all = f.from(b.clearing).%(x => BonePatrolExpansion.hittable(x.piece)).sortBy(_.piece.priority)
+            val all = f.from(b.clearing).%(x => BonePatrolExpansion.hittable(x.piece) && OldManTinkerExpansion.hittable(x.piece)).sortBy(_.piece.priority)
             val own = all.%(_.piece.is[Warrior])
             val merc = ((f == b.attacker).??(b.ally./~(_.from(b.clearing).$.%(_.piece.is[Warrior]))) ++ (f == b.defender).??(b.codef./~(_.from(b.clearing).$.%(_.piece.is[Warrior])))).sortBy(_.piece.priority)
             val rear = all.diff(own)

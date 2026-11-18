@@ -3,6 +3,8 @@
 #   pdftoppm -r 220 -png <X>-board-front.pdf b-<x> (and back, bb-<x>)
 #   the meeples: "Meeples.svg" (Outsiders meeple files by The Irreverend), its "ORIGINAL" half rendered in Chromium with the
 #   viewBox "-2143.55 -1000 700 600" at 5600x4800 with a transparent background, as meeples.png
+#   Old Man Tinker: b-omt.png at 220 dpi and t-omt.png at 300 dpi, like the others
+#   the Twelve Colonies laws: the cards zip unpacked, its fronts folder linked as "laws" in that dir
 #   python3 outsiders-art.py <dir with those renders> <webp2/root/images/faction> [bp ...]
 # - the board front, at the size of the other fan boards (1232 wide)
 # - the title cut from the board's banner, the glyph and character art from the token sheet and the board
@@ -137,4 +139,112 @@ if "wm" in which:
     warrior(lit, 90, "wm-bat")
     w = p.size[0]
     p.crop((0, 0, w, w)).resize((100, 100), Image.LANCZOS).save(f"{out}/wm-action.webp", lossless=True)
+    out = keep
+
+if "of" in which:
+    # the Order of the Forest: board b-of.png (220 dpi), token sheet t-of.png (300 dpi)
+    o = f"{out}/order"
+    out, keep = o, out
+    os.makedirs(out, exist_ok = True)
+    board("of", "of-board.webp")
+    title("of", (826, 176, 1668, 290), "of-title.webp")
+    disc("t-of.png", 1344, 840, 116, 80, "of-soup.webp")
+    disc("t-of.png", 1344, 1710, 116, 80, "of-coins.webp")
+    for suit, x, y in (("fox", 1366, 1134), ("bird", 1934, 1134), ("mouse", 1366, 1416), ("rabbit", 1934, 1416)):
+        disc("t-of.png", x, y, 104, 100, f"of-abbey-{suit}.webp", square = True)
+    disc("t-of.png", 1650, 1134, 104, 86, "of-glyph.webp", square = True)
+    crop(f"{src}/t-of.png", (1560, 1310, 1740, 1522), 160, 194, "of-char.webp")
+    # the meeples are dark green: a light rim keeps them visible on the forests of the maps
+    from PIL import ImageFilter
+    def rimmed(p, colour):
+        pad = Image.new("RGBA", (p.size[0] + 40, p.size[1] + 40), (0, 0, 0, 0))
+        pad.paste(p, (20, 20), p)
+        rim = pad.getchannel("A").point(lambda v: 255 if v > 20 else 0).filter(ImageFilter.MaxFilter(15))
+        lit = Image.new("RGBA", pad.size, colour + (0,))
+        lit.putalpha(rim)
+        lit.alpha_composite(pad)
+        return lit
+    warrior(rimmed(m[2], (236, 228, 196)), 90, "of-devotee")
+    for suit, i in (("bird", 0), ("mouse", 4), ("rabbit", 8), ("fox", 12)):
+        warrior(rimmed(m[i], (236, 228, 196)), 100, f"of-priest-{suit}", stack = False)
+    p = m[2]
+    w = p.size[0]
+    p.crop((0, 0, w, w)).resize((100, 100), Image.LANCZOS).save(f"{out}/of-action.webp", lossless=True)
+    out = keep
+
+if "tc" in which:
+    # the Twelve Colonies: board b-tc.png (220 dpi), token sheet t-tc.png (300 dpi), the laws from the cards zip's fronts 01-16
+    # (TwelveColonies-CARDSfrontNN.png, 825x1125) in the "laws" folder of the renders
+    o = f"{out}/colonies"
+    out, keep = o, out
+    os.makedirs(out, exist_ok = True)
+    board("tc", "tw-board.webp")
+    title("tc", (770, 166, 1745, 290), "tw-title.webp")
+    disc("t-tc.png", 504, 966, 120, 80, "tw-common.webp")
+    disc("t-tc.png", 798, 990, 106, 100, "tw-capitol.webp", square = True)
+    disc("t-tc.png", 1080, 990, 106, 70, "tw-ballot.webp", square = True)
+    disc("t-tc.png", 1650, 990, 106, 100, "tw-historical-site.webp", square = True)
+    disc("t-tc.png", 1650, 1275, 106, 86, "tw-glyph.webp", square = True)
+    crop(f"{src}/t-tc.png", (1560, 1460, 1740, 1660), 160, 194, "tw-char.webp")
+    from PIL import ImageFilter
+    def rimmed(p, colour):
+        pad = Image.new("RGBA", (p.size[0] + 40, p.size[1] + 40), (0, 0, 0, 0))
+        pad.paste(p, (20, 20), p)
+        rim = pad.getchannel("A").point(lambda v: 255 if v > 20 else 0).filter(ImageFilter.MaxFilter(15))
+        lit = Image.new("RGBA", pad.size, colour + (0,))
+        lit.putalpha(rim)
+        lit.alpha_composite(pad)
+        return lit
+    warrior(rimmed(m[3], (246, 232, 120)), 90, "tw-snake")
+    warrior(rimmed(m[7], (246, 232, 120)), 90, "tw-turtle")
+    p = m[3]
+    w = p.size[0]
+    p.crop((0, 0, w, w)).resize((100, 100), Image.LANCZOS).save(f"{out}/tw-action.webp", lossless=True)
+    names = ["militaris-subsidium", "feris-ratio", "omnius-exitus", "pax-vulpes", "amplius-actum", "communia-divitiae", "publico-auxilio",
+        "pax-lepus", "defensio-optimum", "artifex-contentio", "insidae-tutela", "pax-mus", "non-variablis", "arcitectus-corvidae",
+        "valorem-historiae", "status-aequalis", "public-trust"]
+    for i, n in enumerate(names):
+        im = Image.open(f"{src}/laws/TwelveColonies-CARDSfront{i + 1:02d}.png").convert("RGB")
+        im = im.crop((37, 37, im.size[0] - 37, im.size[1] - 37)).resize((375, 525), Image.LANCZOS)
+        im.save(f"{out}/tw-law-{n}.webp", quality = 85)
+    out = keep
+
+if "omt" in which:
+    # Old Man Tinker: board b-omt.png (220 dpi), token sheet t-omt.png (300 dpi). The sheet has no drone side, so the drone token is
+    # a round cut of the first drone over the board's banner. The robots and the Old Man are cut out of the sheet's gray squares.
+    o = f"{out}/tinker"
+    out, keep = o, out
+    os.makedirs(out, exist_ok = True)
+    board("omt", "omt-board.webp")
+    title("omt", (860, 150, 1720, 300), "omt-title.webp")
+    disc("t-omt.png", 1050, 660, 118, 80, "omt-gear.webp")
+    disc("b-omt.png", 1745, 172, 112, 80, "omt-drone.webp")
+    disc("t-omt.png", 1650, 1417, 104, 100, "omt-factory.webp", square = True)
+    disc("t-omt.png", 1650, 850, 104, 86, "omt-glyph.webp", square = True)
+    crop(f"{src}/t-omt.png", (1556, 1040, 1744, 1226), 160, 194, "omt-char.webp")
+    def cutout(cx, cy, r, height, name):
+        im = Image.open(f"{src}/t-omt.png").convert("RGBA").crop((cx - r, cy - r, cx + r, cy + r))
+        a = np.asarray(im).astype(int)
+        bg = a[6, 6, :3]
+        far = np.abs(a[:, :, :3] - bg).sum(axis = 2) > 60
+        # keep what the background doesn't reach from the edges
+        from scipy import ndimage
+        lab, _ = ndimage.label(~far)
+        outside = np.isin(lab, np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]])))
+        a[:, :, 3] = np.where(outside & ~far, 0, 255)
+        p = Image.fromarray(a.astype(np.uint8), "RGBA")
+        p = p.crop(p.getbbox())
+        p = p.resize((round(p.size[0] * height / p.size[1]), height), Image.LANCZOS)
+        p.save(f"{out}/{name}.webp", lossless = True)
+        # broken: gray and faded, lying on its side
+        e = np.asarray(p.rotate(90, expand = True)).astype(int)
+        g = e[:, :, :3].mean(axis = 2) * 0.55
+        e[:, :, 0] = e[:, :, 1] = e[:, :, 2] = g
+        e[:, :, 3] = e[:, :, 3] * 0.8
+        Image.fromarray(e.astype(np.uint8), "RGBA").save(f"{out}/{name}-broken.webp", lossless = True)
+    cutout(1003, 297, 92, 90, "omt-wolfbot")
+    cutout(1521, 297, 92, 90, "omt-birdbot")
+    cutout(2039, 297, 92, 90, "omt-owlbot")
+    cutout(1650, 1133, 104, 90, "omt-old-man")
+    Image.open(f"{out}/omt-gear.webp").resize((100, 100), Image.LANCZOS).save(f"{out}/omt-action.webp", lossless = True)
     out = keep

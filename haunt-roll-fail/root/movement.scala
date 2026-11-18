@@ -42,6 +42,7 @@ case object Roads extends Transport {
             game.blizzard.has((o, d)).not &&
             game.blizzard.has((d, o)).not &&
             OutsidersMaps.barren(o, d).not &&
+            TwelveColoniesExpansion.passable(f, o, d) &&
             factions.of[Caster].%(game.states.contains).exists(f => f.growth.has((o, d)) || f.growth.has((d, o))).not
 
         case (o : Forest, d : Clearing) => game.fromForest(o).has(d)
@@ -118,10 +119,15 @@ case object TunnelRoads extends Transport {
 }
 
 case object RuledMove extends Transport {
-    override def allows(f : Faction, o : Region, d : Region)(implicit game : Game) = (o, d) @@ {
-        case (o : Rulable, d : Rulable) => f.rules(o) || f.rules(d) || f.has(CorvidPlanners) || ((game.riverside.contains(o) || game.riverside.contains(d)) && f.has(OtterDivers))
+    def ruled(f : Faction, o : Region, d : Region)(implicit game : Game) = (o, d) @@ {
+        case (o : Rulable, d : Rulable) => f.rules(o) || f.rules(d) || f.has(CorvidPlanners) || TwelveColoniesExpansion.ruleless || ((game.riverside.contains(o) || game.riverside.contains(d)) && f.has(OtterDivers))
         case _ => false
     }
+
+    // the Upstarts & Renegades deck's Murder Hawk: moving with it ignores rule
+    override def allows(f : Faction, o : Region, d : Region)(implicit game : Game) = ruled(f, o, d) || (UpstartsDeckExpansion.hawkAt(f, o) && o.is[Rulable] && d.is[Rulable])
+
+    override def allows(f : Faction, o : Region, d : Region, l : $[Movable])(implicit game : Game) = ruled(f, o, d) || (l.has(MurderHawk) && o.is[Rulable] && d.is[Rulable])
 }
 
 case object HalfWarriors extends Transport {

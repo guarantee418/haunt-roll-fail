@@ -64,6 +64,48 @@ class GameEvaluationDoomed(faction : Faction)(implicit game : Game) extends Game
             case MenaceSwarmTargetAction(f, c, e) =>
                 true |=> 50 -> "swarm"
 
+            // the Order of the Forest
+            case OrderMinisterAction(f, _, t) =>
+                true |=> 70 -> "minister"
+
+            case OrderBuildAction(f, _, _) =>
+                true |=> 60 -> "build"
+
+            case OrderWitnessTargetAction(f, _, _, n) =>
+                true |=> 50 - 10 * n -> "witness"
+
+            case OrderCongregateAction(f, _, _) =>
+                true |=> 80 -> "congregate"
+
+            case OrderConfessAction(f, _) =>
+                true |=> 20 -> "confess"
+
+            // Old Man Tinker
+            case OMTDoOverAction(f) =>
+                true |=> -1000 -> "do-over"
+
+            case OMTRepairAction(f, _, n) =>
+                true |=> 50 + 10 * n -> "repair"
+
+            case OMTBuildAction(f, _) =>
+                true |=> 90 -> "build"
+
+            case OMTTinkerAction(f, _, a, b) =>
+                true |=> 30 + 5 * a -> "tinker"
+
+            case OMTRestructureAction(f, _, k) =>
+                true |=> (k == 1).?(40).|(-50) -> "restructure"
+
+            // the Twelve Colonies
+            case TWColonizeClearingAction(f, _, _, _) =>
+                true |=> 80 -> "colonize"
+
+            case TWClaimAction(f, n) =>
+                true |=> 20 * n -> "claim"
+
+            case TWRecruitAction(f, _, l) =>
+                true |=> 40 -> "recruit"
+
             case MenaceActiveAction(f, b, fright) =>
                 true |=> (math.random() * 20).round.toInt -> "fight or fright"
 

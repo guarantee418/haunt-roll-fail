@@ -96,6 +96,8 @@ case object CatapultMove extends Transport {
     override def sortBy(m : Movable) : Int = m @@ {
         case Cat => 1
         case Catapult => 2
+        // another of the Marquise's movable pieces (the Upstarts & Renegades deck's Murder Hawk)
+        case _ => 3
     }
 }
 

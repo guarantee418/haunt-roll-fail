@@ -259,7 +259,7 @@ case object ExilesDeck extends DeckOption {
     )
 }
 
-case object MixedDeck extends DeckOption {
+case object MixedDeck extends FanDeck {
     val valueOn = "Mixed".hh
     override val explain = $(
         "Both official decks mixed to take one instance" ~ &("of the most " ~ "effect cards".hh ~ "."),
@@ -272,7 +272,7 @@ case object MixedDeck extends DeckOption {
     )
 }
 
-case object DuskDeck extends DeckOption {
+case object DuskDeck extends FanDeck {
     val valueOn = "Dawn and Dusk".hh
     override val explain = $(
         "An alternative deck by " ~ "its_rudimentary".hl ~ " and " ~ "Endgamer1331".hl ~ "!",
@@ -311,6 +311,17 @@ case object DarkDeck extends FanDeck {
         "Its shared supply adds a " ~ "Torch".hh ~ ", the " ~ "Book of Names".hh ~ ", the " ~ "Rabbit's Paw".hh ~ " and the " ~ "Cursed Idol".hh ~ " to the craftable items.",
         FanInfo.doomedLink,
         Image("dark-dark-dominance", styles.card)
+    )
+}
+
+case object UpstartsDeck extends FanDeck {
+    val valueOn = "Upstarts & Renegades".hh
+    override val explain = $(
+        "A 54 card deck from " ~ "The Outsiders Expansion".hh ~ ", fan-made by " ~ "slugfacekillah".hl ~ ".",
+        "Its ambushes, items and dominances are the base deck's; its " ~ "25".hh ~ " persistent effects are new: " ~ "Escorts".hh ~ ", " ~ "Field Medic".hh ~ ", " ~ "Murder Hawk".hh ~ ", " ~ "Trailblazers".hh ~ ", " ~ "Baron Von Costume".hh ~ ", " ~ "Goon for Hire".hh ~ " and more.",
+        "Its three " ~ "Sabotage!".hh ~ " cards are the " ~ "Exiles and Partisans".hh ~ "' " ~ "Saboteurs".hh ~ ".",
+        FanInfo.outsidersLink,
+        Image("upstarts-murder-hawk", styles.card)
     )
 }
 
@@ -684,6 +695,12 @@ case object PrisonersFromCodefenders extends GameOption with ToggleOption {
 // The Dawn and Dusk deck's fixes after a check against its cards (2026-11-13): Fowl Play in the deck, Sly Dog and Old Friend
 // asked only when they can be used (and Sly Dog again in every battle of the turn), see root/deck-dusk.scala. Hidden and on by default
 // for new games (the Frankendeck draws from the deck too); older games keep the old way so their replays don't change.
+// ReplayCheck's "upstartsall": every Upstarts & Renegades effect is dealt out crafted at the first Birdsong, to test them (not offered)
+case object UpstartsTestDeal extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Upstarts & Renegades".hh ~ " effects dealt crafted"
+}
+
 case object DuskDeckFixes extends GameOption with ToggleOption {
     val group = "Card Draft"
     val valueOn = "Dawn and Dusk".hh ~ " deck fixes"
@@ -1761,7 +1778,7 @@ object Meta extends MetaGame {
     val official = $[Faction](MC, ED, WA, VB, LC, RF, UD, CC, LH, KI)
     val homeland = $[Faction](LDvE, TC, KD)
     val clones = $[Faction](BK, PE, FU, NB, CM, /*WC,*/ DR, RI, LK)
-    val fun = $[Faction](KDvA, TCvA, FH, WW, DU, WG, EE, DM, DV, NW, XC, BP, WM, CUv2, CU, OK, AF, SF, MB)
+    val fun = $[Faction](KDvA, TCvA, FH, WW, DU, WG, EE, DM, DV, NW, XC, BP, WM, OF, TW, OMT, CUv2, CU, OK, AF, SF, MB)
 
     val factions = official ++ homeland ++ clones ++ fun
 
@@ -1801,7 +1818,7 @@ object Meta extends MetaGame {
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         legendsOptions ++
         $,
-        $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck, DarkDeck) ++
+        $(StandardDeck, ExilesDeck, SquiresDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck) ++
         (n >= 5).$(ActionBooster) ++
         $,
         (l.of[Feline].num > 1).$(TheWoodMustFlow) ++
@@ -1864,7 +1881,7 @@ object Meta extends MetaGame {
         $(DeepWoodsSettling, WastelandsWater) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
-        $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck, DarkDeck) ++
+        $(StandardDeck, ExilesDeck, SquiresDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck) ++
         (n >= 5).$(ActionBooster) ++
         hitsAndAmbushes(l) ++
         (n > 2).?(TotalWarDominance) ++
@@ -2036,6 +2053,9 @@ object Meta extends MetaGame {
         factions.of[WarriorsWake].num * 5 +
         factions.of[BonePatrol].num * 5 +
         factions.of[WingedMenace].num * 6 +
+        factions.of[OrderOfTheForest].num * 5 +
+        factions.of[TwelveColonies].num * 5 +
+        factions.of[OldManTinker].num * 6 +
         factions.of[Doomsayers].num * 6 +
         factions.of[Whisperers].num * 2 +
         factions.of[Marquistadors].num * 9 +
@@ -2112,6 +2132,8 @@ object Meta extends MetaGame {
     // fan content (rankingFan): a faction that isn't an official one (fan, playtest and mirror factions), a fan map or deck, the
     // Doomed Vagabonds, Knave Captains, Turnlings or Legends Scenarios, or the Action! Deck Booster
     def rankFan(game : Game) : Boolean = game.factions.exists(f => (official ++ homeland).has(f).not) || game.options.exists {
+        // Mixed and Dawn and Dusk sit under Fan Decks on the setup screen but aren't fan-made
+        case MixedDeck | DuskDeck => false
         case _ : FanMap | _ : FanDeck => true
         case IncludeHireling(h) => turnlings.has(h)
         case o => $[GameOption](ActionBooster, DoomedVagabonds, DoomedCaptains, TurnOverHirelings, DeepWoodsSettling, WastelandsWater).has(o) || legendsOptions.has(o)
@@ -3687,6 +3709,31 @@ object Meta extends MetaGame {
         ImageAsset("action-secret-cancel") ::
         ImageAsset("action-secret-score") ::
     $) ::
+    ConditionalAssetsList((factions, options) => options.has(UpstartsDeck), "card/upstarts", lzy = Laziness.Later, scale = 50)(
+        ImageAsset("upstarts-sabotage") ::
+        ImageAsset("upstarts-prophetic-sight") ::
+        ImageAsset("upstarts-cooperative-housing") ::
+        ImageAsset("upstarts-birdy-boom-boom") ::
+        ImageAsset("upstarts-murder-hawk") ::
+        ImageAsset("upstarts-fox-escort") ::
+        ImageAsset("upstarts-mouse-escort") ::
+        ImageAsset("upstarts-rabbit-escort") ::
+        ImageAsset("upstarts-field-medic") ::
+        ImageAsset("upstarts-coordinated-movement") ::
+        ImageAsset("upstarts-burglar-extraordinaire") ::
+        ImageAsset("upstarts-rabbit-hood") ::
+        ImageAsset("upstarts-cobbler-commander") ::
+        ImageAsset("upstarts-salt-factory") ::
+        ImageAsset("upstarts-peace-offering") ::
+        ImageAsset("upstarts-trailblazers") ::
+        ImageAsset("upstarts-salvagers") ::
+        ImageAsset("upstarts-tagalongs") ::
+        ImageAsset("upstarts-baron-von-costume") ::
+        ImageAsset("upstarts-goon-for-hire") ::
+        ImageAsset("upstarts-hawk") ::
+        ImageAsset("upstarts-housing") ::
+        ImageAsset("upstarts-trail") ::
+    $) ::
     ConditionalAssetsList((factions, options) => options.has(DarkDeck), "card/dark", lzy = Laziness.Later, scale = 50)(
         ImageAsset("dark-a-visit-to-friends") ::
         ImageAsset("dark-abomination-ambush") ::
@@ -4132,6 +4179,84 @@ object Meta extends MetaGame {
         ImageAsset("bp-bone-mouse"            ) ::
         ImageAsset("bp-bone-buried"           ) ::
         ImageAsset("bp-board"                 ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => factions.of[OrderOfTheForest].any, "faction/order")(
+        ImageAsset("of-glyph"                 ) ::
+        ImageAsset("of-title"                 ) ::
+        ImageAsset("of-char"                  ) ::
+        ImageAsset("of-action"                ) ::
+        ImageAsset("of-devotee"               ) ::
+        ImageAsset("of-devotee-empty"         ) ::
+        ImageAsset("of-devotee-x5"            ) ::
+        ImageAsset("of-devotee-x5-empty"      ) ::
+        ImageAsset("of-priest-fox"            ) ::
+        ImageAsset("of-priest-rabbit"         ) ::
+        ImageAsset("of-priest-mouse"          ) ::
+        ImageAsset("of-priest-bird"           ) ::
+        ImageAsset("of-priest-fox-empty"      ) ::
+        ImageAsset("of-priest-rabbit-empty"   ) ::
+        ImageAsset("of-priest-mouse-empty"    ) ::
+        ImageAsset("of-priest-bird-empty"     ) ::
+        ImageAsset("of-abbey-fox"             ) ::
+        ImageAsset("of-abbey-rabbit"          ) ::
+        ImageAsset("of-abbey-mouse"           ) ::
+        ImageAsset("of-abbey-bird"            ) ::
+        ImageAsset("of-soup"                  ) ::
+        ImageAsset("of-coins"                 ) ::
+        ImageAsset("of-board"                 ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => factions.of[OldManTinker].any, "faction/tinker")(
+        ImageAsset("omt-glyph"                ) ::
+        ImageAsset("omt-title"                ) ::
+        ImageAsset("omt-char"                 ) ::
+        ImageAsset("omt-action"               ) ::
+        ImageAsset("omt-drone"                ) ::
+        ImageAsset("omt-gear"                 ) ::
+        ImageAsset("omt-factory"              ) ::
+        ImageAsset("omt-old-man"              ) ::
+        ImageAsset("omt-wolfbot"              ) ::
+        ImageAsset("omt-birdbot"              ) ::
+        ImageAsset("omt-owlbot"               ) ::
+        ImageAsset("omt-wolfbot-broken"       ) ::
+        ImageAsset("omt-birdbot-broken"       ) ::
+        ImageAsset("omt-owlbot-broken"        ) ::
+        ImageAsset("omt-board"                ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => factions.of[TwelveColonies].any, "faction/colonies")(
+        ImageAsset("tw-glyph"                 ) ::
+        ImageAsset("tw-title"                 ) ::
+        ImageAsset("tw-char"                  ) ::
+        ImageAsset("tw-action"                ) ::
+        ImageAsset("tw-snake"                 ) ::
+        ImageAsset("tw-snake-empty"           ) ::
+        ImageAsset("tw-snake-x5"              ) ::
+        ImageAsset("tw-snake-x5-empty"        ) ::
+        ImageAsset("tw-turtle"                ) ::
+        ImageAsset("tw-turtle-empty"          ) ::
+        ImageAsset("tw-turtle-x5"             ) ::
+        ImageAsset("tw-turtle-x5-empty"       ) ::
+        ImageAsset("tw-capitol"               ) ::
+        ImageAsset("tw-common"                ) ::
+        ImageAsset("tw-historical-site"       ) ::
+        ImageAsset("tw-ballot"                ) ::
+        ImageAsset("tw-board"                 ) ::
+        ImageAsset("tw-law-amplius-actum"     ) ::
+        ImageAsset("tw-law-arcitectus-corvidae") ::
+        ImageAsset("tw-law-artifex-contentio" ) ::
+        ImageAsset("tw-law-communia-divitiae" ) ::
+        ImageAsset("tw-law-defensio-optimum"  ) ::
+        ImageAsset("tw-law-feris-ratio"       ) ::
+        ImageAsset("tw-law-insidae-tutela"    ) ::
+        ImageAsset("tw-law-militaris-subsidium") ::
+        ImageAsset("tw-law-non-variablis"     ) ::
+        ImageAsset("tw-law-omnius-exitus"     ) ::
+        ImageAsset("tw-law-pax-lepus"         ) ::
+        ImageAsset("tw-law-pax-mus"           ) ::
+        ImageAsset("tw-law-pax-vulpes"        ) ::
+        ImageAsset("tw-law-public-trust"      ) ::
+        ImageAsset("tw-law-publico-auxilio"   ) ::
+        ImageAsset("tw-law-status-aequalis"   ) ::
+        ImageAsset("tw-law-valorem-historiae" ) ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[WingedMenace].any, "faction/menace")(
         ImageAsset("wm-glyph"                 ) ::

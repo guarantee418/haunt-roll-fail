@@ -122,6 +122,39 @@ object FanInfo {
             line("Daylight", "Spawn in the Nexus and with cards (more with infestations off the top row), then Explore a cave for an item and 1 point.".txt),
             line("Evening", "3 actions: Bite, Build (an infestation), Swarm (battle, again with a matching card) and Swoop; craft with infestations, then draw.".txt),
         )
+        case OF => $(
+            by("slugfacekillah", outsiders("2.1")),
+            outsidersLink,
+            "Altruists whose High Priests herald from clearing to clearing and minister soup and coins to the poor; in battle their words turn enemy warriors to their side.".txt,
+            line("The Order Card", "the Foreseen card is revealed each Birdsong; Daylight actions must be in clearings matching it, and it goes into the hand in Evening instead of a draw.".txt),
+            line("High Priests", "four suited pawns that move ignoring rule but never rule; removed, they go to the Altar and give an ability of their suit.".txt),
+            line("Witness", "spend cards to battle; hits on enemy warriors swap them for the Order's own, the converted going to the Ranks, which score in Evening.".txt),
+            line("Power of Faith and Confessions", "its tokens can each deal a hit; once in Birdsong it looks at the hand of an enemy at an abbey.".txt),
+            line("Birdsong", "Proclaim the Order Card, Anoint a High Priest from the Altar, Foresee the next card, Herald (up to 3 moves).".txt),
+            line("Daylight", "Minister (a soup token draws 2, a coins token places 2 warriors), Witness, Build an abbey.".txt),
+            line("Evening", "Congregate (craft with pawns and abbeys of their own suit, in one clearing), then Rest and score the Ranks.".txt),
+        )
+        case OMT => $(
+            by("slugfacekillah", outsiders("2.1")),
+            outsidersLink,
+            "A beaver from the future with three robots and a network of factories producing gears and drones; he scores each time they produce.".txt,
+            line("Robots", "never removed: the gears on each robot are its warriors, and hits knock them off into the clearing; a robot with none is broken until repaired.".txt),
+            line("The Old Man", "ignores rule, moves between clearings and forests carrying gears, and the Tinker crafts with the gears in his clearing.".txt),
+            line("Birdsong", "Do-Over if it likes, roll the Breakage Dice (a hit to each robot rolled), Produce at every factory, Bustle (the Old Man moves 3 times).".txt),
+            line("Daylight", "Craft with gears, then 4 actions: Crusade (battle, or move and battle), Tinker (flip tokens), Repair (gears onto a robot), Overproduce (a card for an extra Production); then Build factories, never two side by side with a third.".txt),
+            line("Evening", "Restructure (a card matching a factory raises or lowers the level or flips gears to drones), then draw 2 or take a matching card from the discard pile.".txt),
+        )
+        case TW => $(
+            by("slugfacekillah", "inspired by lhammer, ".txt ~ outsiders("2.1")),
+            outsidersLink,
+            "Snakes and turtles who colonize the Woodland with Capitols and Commons, and put a Law to every player's vote each Birdsong.".txt,
+            line("The Democratic Process", "the Colonies put up the one Law they kept of 3 drawn; for an Election players nominate and second targets; then everyone votes in two rounds with ballots, bought from the Public Trust by removing warriors.".txt),
+            line("The Laws", "16 of them: peace in a suit's clearings, an extra hit for an elected player, no crafting, no ambushes, cards dealt around, points to the last and from the first, and more; a Law lasts until the next vote.".txt),
+            line("Turtles", "deal no hits and walk onto paths, where any other player pays a matching card to pass; Hard Shelled ignores a hit where a turtle is.".txt),
+            line("Birdsong", "Recruit with ballots at Capitols and Commons, then Convene the vote.".txt),
+            line("Daylight", "Craft with Capitols and Commons, then 3 actions: Campaign (two moves or two battles), Colonize (a Capitol or a Common with cards matching the clearing and the Law), Claim (1 point for each Capitol).".txt),
+            line("Evening", "Ballots come back, draw 1 plus 1 for every 2 Commons, and draft a Law for the next Birdsong.".txt),
+        )
         case FH => $(
             by("jgregory17", "fan-made".txt),
             "Hamster farmers who want nothing more than to raise their crops and give gifts to their friends.".txt,

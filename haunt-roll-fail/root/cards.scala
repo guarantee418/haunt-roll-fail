@@ -128,6 +128,7 @@ object Deck {
         case SquiresDeck => ambushes ++ items ++ effectsSquires ++ (arity > 2).??(dominances)
         case FrankenDeck => ambushes ++ frankenItems ++ $(frankenSabotage) ++ (arity > 2).??(dominances) ++ frankenPool(l.has(DuskDeckFixes))
         case DarkDeck => darkDeck.%(d => arity > 2 || d.is[Dominance].not)
+        case UpstartsDeck => ambushes ++ items ++ upstarts ++ (arity > 2).??(dominances)
     }) ++ l.has(ActionBooster).??(boosters(arity).times(actionBooster).flatten)
 
     // Action! Deck Booster (The Doomed Expansion, `ActionBooster`): one booster for each player above five, one with five players
@@ -232,6 +233,36 @@ object Deck {
         CraftEffectCard(Abomination, "dark-devotion-to-the-deep", $(AnySuit, AnySuit, AnySuit), DevotionToTheDeep),
         CraftEffectCard(Bird, "dark-deadly-deadly-poison", $(Rabbit, Fox, Mouse), DeadlyPoison),
         CraftEffectCard(Abomination, "dark-doppleganger", $(Rabbit, Fox, Mouse), Doppleganger),
+    )
+
+    // Upstarts & Renegades (The Outsiders Expansion, fan-made by slugfacekillah; 2026-11-18): the base deck's ambushes, items and
+    // dominances, and these 25 persistent effects (`root/deck-upstarts.scala`)
+    val upstarts = $[DeckCard](
+        CraftEffectCard(Bird, "upstarts-sabotage", $(AnySuit), Saboteurs),
+        CraftEffectCard(Bird, "upstarts-sabotage", $(AnySuit), Saboteurs),
+        CraftEffectCard(Bird, "upstarts-sabotage", $(AnySuit), Saboteurs),
+        CraftEffectCard(Bird, "upstarts-prophetic-sight", $(AnySuit, AnySuit), ProphecySight),
+        CraftEffectCard(Bird, "upstarts-cooperative-housing", $(AnySuit, AnySuit), CooperativeHousing),
+        CraftEffectCard(Bird, "upstarts-birdy-boom-boom", $(Fox, Fox), BirdyBoomBoom),
+        CraftEffectCard(Bird, "upstarts-murder-hawk", $(Rabbit, Fox, Mouse), MurderHawkCard),
+        CraftEffectCard(Fox, "upstarts-fox-escort", $(Fox), Escort(Fox)),
+        CraftEffectCard(Mouse, "upstarts-mouse-escort", $(Mouse), Escort(Mouse)),
+        CraftEffectCard(Rabbit, "upstarts-rabbit-escort", $(Rabbit), Escort(Rabbit)),
+        CraftEffectCard(Fox, "upstarts-field-medic", $(Fox), FieldMedic),
+        CraftEffectCard(Fox, "upstarts-field-medic", $(Fox), FieldMedic),
+        CraftEffectCard(Fox, "upstarts-coordinated-movement", $(Fox, Fox), CoordinatedMovement),
+        CraftEffectCard(Fox, "upstarts-burglar-extraordinaire", $(Fox, Fox), ItemThief(Fox)),
+        CraftEffectCard(Rabbit, "upstarts-rabbit-hood", $(Rabbit, Rabbit), ItemThief(Rabbit)),
+        CraftEffectCard(Rabbit, "upstarts-cobbler-commander", $(Rabbit, Rabbit), CobblerCommander),
+        CraftEffectCard(Rabbit, "upstarts-salt-factory", $(Rabbit, Rabbit), SaltFactory),
+        CraftEffectCard(Rabbit, "upstarts-peace-offering", $(Rabbit), PeaceOffering),
+        CraftEffectCard(Rabbit, "upstarts-peace-offering", $(Rabbit), PeaceOffering),
+        CraftEffectCard(Rabbit, "upstarts-trailblazers", $(Rabbit), Trailblazers),
+        CraftEffectCard(Mouse, "upstarts-salvagers", $(Mouse), Salvagers),
+        CraftEffectCard(Mouse, "upstarts-salvagers", $(Mouse), Salvagers),
+        CraftEffectCard(Mouse, "upstarts-tagalongs", $(Mouse, Mouse), Tagalongs),
+        CraftEffectCard(Mouse, "upstarts-baron-von-costume", $(Mouse, Mouse), BaronVonCostume),
+        CraftEffectCard(Fox, "upstarts-goon-for-hire", $(AnySuit, AnySuit, AnySuit), GoonForHire),
     )
 
     val frankenItems = $[DeckCard](
@@ -569,7 +600,7 @@ object Deck {
 
     val disguisedEEE = frogEEE.distinct./~(d => InvasiveEEEExpansion.disguiseSuits./(DisguisedCard(d, _)))
 
-    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ effectsSquires ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA ++ frogEEE ++ disguisedEEE ++ frankenItems ++ $(frankenSabotage) ++ actionBooster ++ $(fowlPlay) ++ darkDeck.%!(_.is[Ambush]).%!(_.is[BaseSuitDominance]).%!(_.is[CornersDominance]) ++ $(Ambush(Abomination)) // new cards go last: saved games name cards by their place here
+    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ effectsSquires ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA ++ frogEEE ++ disguisedEEE ++ frankenItems ++ $(frankenSabotage) ++ actionBooster ++ $(fowlPlay) ++ darkDeck.%!(_.is[Ambush]).%!(_.is[BaseSuitDominance]).%!(_.is[CornersDominance]) ++ $(Ambush(Abomination)) ++ upstarts // new cards go last: saved games name cards by their place here
 }
 
 

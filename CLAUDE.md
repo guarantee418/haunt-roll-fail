@@ -573,6 +573,41 @@ server. No session can reach the server, and none needs to.
   (an infestation where it removes an enemy building), infestations on two rows (`top`, `bottom`: Spawn and draw bonuses), Guano as
   its own ownerless player (`GuanoMess`, not listed with the hirelings) and Dark Passage, offered in every phase menu of the other
   players. `ReplayCheck <games> wm` plays it.
+  The Order of the Forest (OF, `root/faction-order-forest.scala`, its header lists the readings) is a Fun Faction and in Advanced
+  Setup's pool: warriors (`Devotee`) and four suited High Priest pawns (`HighPriest(suit)`, warriors in battle removed last, `Rearguard`,
+  never ruling, `case _ : HighPriest => 0` in `ruleValue`, moving alone ignoring rule, `PriestsMove`), the Foreseen and the Order Card
+  (`foreseen`, `order` card piles; Daylight actions only in clearings matching it), Minister (soup and coins tokens), Witness (its hits
+  swap enemy warriors for its own, the swapped ones going to The Ranks, `ranks`, a location of the Order holding other factions'
+  figures, scored at Rest), abbeys (`OrderAbbey(suit)`) and Congregate (crafting with pawns and abbeys of their own suit, in one clearing,
+  `pick`), Martyrs (removed pawns go to `altar`, each giving its suit's ability), Power of Faith (tokens add to its hits) and Reclamation
+  (an enemy removing its warriors on its turn may return as many of one player's from the Ranks, at `ForcedRemoveCleanupAction`).
+  `ReplayCheck <games> of` plays it.
+  The Twelve Colonies (TW, `root/faction-twelve-colonies.scala`, its header lists the readings; "TC" is the Twilight Council's, so its
+  images are `tw-*` in `faction/colonies/`) is a Fun Faction and in Advanced Setup's pool: snakes (`Snake`, warriors) and turtles
+  (`Turtle`, warriors dealing no hits, Hard Shelled; on a path they are in `onPaths` and counted in `paths`, drawn at the path's middle,
+  and any other player moving along that path by trail pays a card matching one of its clearings, `TWTollAction`), Capitols and Commons
+  (Colonize, Recruit with ballots, Claim), and the Democratic Process each Birdsong: the one of 3 Laws (of 16, `ColonyLaw`, art `tw-law-<name>`)
+  drawn and kept, nominations and seconds for an Election (`Nominee`), two voting rounds with ballots from the Public Trust (bought
+  by removing warriors), the Colonies breaking ties. A Law in effect reaches the rest of the game through `TwelveColoniesExpansion`'s
+  checks: `battleAllowed` in `canAttack` (the Paxes, Omnius Exitus), `usable` in `canPlace` and `passable` in `Roads`, `artifex` in
+  `craftableWith`, `ruleless` in `RuledMove`, `noWild` in `canAmbushWith`. `ReplayCheck <games> tw` plays it.
+  Old Man Tinker (OMT, `root/faction-old-man-tinker.scala`, its header lists the readings; images in `faction/tinker/`) is a Fun Faction
+  and in Advanced Setup's pool: three robot pawns (`Robot`: Wolfbot, Birdbot, Owlbot, never hit, `OldManTinkerExpansion.hittable` in the
+  battle's hit assignment) whose R.S.I. gears are warriors of their own in the robot's clearing (`RobotGear(robot)`, moving only all
+  together with the robot, `RobotMove`; a hit turns one into a gear token there), gear tokens (`Gear`) and drones (`Drone`, warriors)
+  sharing twenty tokens (`tokensLeft`), the Old Man (`OldMan`, a token that moves into forests too, so the player registers the forests as
+  locations), factories, Production (level 0 to 2, gears or drones), the Breakage Dice, Bustle, Tinker, Repair, Overproduce, Restructure
+  and Do-Over. `ReplayCheck <games> omt` plays it.
+  Its Upstarts & Renegades deck is the Fan Deck "Upstarts & Renegades" (`UpstartsDeck`; 2026-11-18): the base deck's ambushes, items and
+  dominances (its cards 1 to 29 are those) and 25 persistent effects (`Deck.upstarts`, art `card/upstarts/` and back `card-back-art-ur` cut
+  by `root/tools/upstarts-art.py`), all in `root/deck-upstarts.scala` (`UpstartsDeckExpansion`, before the other decks' expansions; its header
+  lists the readings; its Sabotage! cards are the Saboteurs, so `ExilesDeckExpansion` is on with it). State is `game.upstarts`. The Murder Hawk
+  is a warrior of the crafter (`MurderHawk`, waiting in each faction's `HawkPerch`; moving with it ignores rule, `RuledMove`), the warriors on
+  Baron Von Costume sit in `OnCostume`, the Trailblazers' trail is a transport (`TrailMove`, only in games with the deck), the Escorts' ruled
+  clearing goes through `rules` (`escortRules`), Cooperative Housing adds a slot (`game.slots`), and one check before every recorded action
+  scores its clearing's new enemy buildings, discards the Murder Hawk's card when the hawk is removed and Baron Von Costume when none of its
+  owner's warriors are left on it. `ReplayCheck <games> base upstarts` plays it; `upstartsall` deals every effect out crafted at the first
+  Birdsong (the hidden `UpstartsTestDeal`) and counts their choices.
   Its two maps are Fan Maps, "Deep Woods" and "Wastelands" (`DeepWoodsMap`, `WastelandsMap`; `DeepWoodsBoard` and `WastelandsBoard` in
   `root/maps.scala`, images in `deep-woods/` and `wastelands/` made by `root/tools/outsiders-maps.py`, which also prints the Deep Woods
   building slots), also drawn by "Random". Clearing and forest names are made up. Their own rules are toggles in the setup's "Fan Map
@@ -595,7 +630,7 @@ server. No session can reach the server, and none needs to.
   `FanInfo.outsidersLink`; 2026-11-17 and 18): a new part of either gets that link too.
 - Root's fan content is grouped apart from the official (2026-11-17): the faction picker's "Fan Factions" (once "Fun Factions",
   `factionGroup`) starts folded to one line ("18 Fan Factions") and opens on a tap (`Meta.foldedFactionGroups`, `grouped` in `hrf.scala`,
-  remembered as `picker.<meta>.<group>`); the setup has "Fan Maps" (Tidal Flats, Tundra and Gloom too, since 2026-11-18) and "Fan Decks" sections (`FanMap`, `FanDeck` in `root/meta.scala`:
+  remembered as `picker.<meta>.<group>`); the setup has "Fan Maps" (Tidal Flats, Tundra and Gloom too, since 2026-11-18) and "Fan Decks" sections (Mixed and Dawn and Dusk too, since 2026-11-18) (`FanMap`, `FanDeck` in `root/meta.scala`:
   the same single choice as Map and Deck, through `OneOfGroup.oneOf`, so a folded Map shows "Urban (Fan Maps)"), Adset's "Available Fan
   Factions", and two folders (`BaseOption.folder`, a heading that folds several sections, `folder.<name>`): "Fan Hirelings" (the
   Turnlings) and "Scenarios" (the Legends Scenarios; Ring Rule, Capture Rule and the monster only once their scenario is picked,
