@@ -2127,6 +2127,17 @@ object Meta extends MetaGame {
     override def ranking = |("root")
     override def rankingSides(g : G, winners : $[Any]) = rankSides(g, winners)
     override def rankingSeat(g : G, f : F) = rankSeat(g, f)
+    override def rankingFan(g : G) = rankFan(g)
+
+    // fan content (rankingFan): a faction that isn't an official one (fan, playtest and mirror factions), a fan map or deck, the
+    // Doomed Vagabonds, Knave Captains, Turnlings or Legends Scenarios, or the Action! Deck Booster
+    def rankFan(game : Game) : Boolean = game.factions.exists(f => (official ++ homeland).has(f).not) || game.options.exists {
+        // Mixed and Dawn and Dusk sit under Fan Decks on the setup screen but aren't fan-made
+        case MixedDeck | DuskDeck => false
+        case _ : FanMap | _ : FanDeck => true
+        case IncludeHireling(h) => turnlings.has(h)
+        case o => $[GameOption](ActionBooster, DoomedVagabonds, DoomedCaptains, TurnOverHirelings, DeepWoodsSettling, WastelandsWater).has(o) || legendsOptions.has(o)
+    }
 
     def rankSides(game : Game, winners : $[Any]) : $[($[Faction], Boolean)] = game.factions./(f => $(f) -> winners.contains(f))
 

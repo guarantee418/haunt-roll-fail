@@ -411,12 +411,13 @@ object Elo {
     case class Side(entries : $[Entry], won : Boolean) {
         def names = entries./(_.name)
     }
-    case class Result(game : String, time : String, title : String, sides : $[Side]) {
+    // fan: played with fan-made content (MetaGame.rankingFan), counted only in the stats
+    case class Result(game : String, time : String, title : String, sides : $[Side], fan : Boolean = false) {
         // the tournament score of a winning side: the win shared between the winning sides (a coalition, ...)
         def share = 1.0 / sides.count(_.won)
         def score(s : Side) = if (s.won) share else 0.0
         // a seat "*" is no one: a game before rankings, counted only in the stats
-        def rated = sides.forall(_.names.has("*").not)
+        def rated = fan.not && sides.forall(_.names.has("*").not)
         def players = sides./~(_.entries)./~(_.seat)./(_.players).maxOption.|(sides./(_.entries.num).sum)
     }
     case class Change(result : Result, side : Side, entry : Entry, before : Double, after : Double, won : Boolean, opponents : $[String])
@@ -438,13 +439,14 @@ object Elo {
         case _ => Entry(s, None)
     }
 
-    // the server's lines: game, time, title, "W:name,name;L:name", each name maybe followed by its seat (token)
+    // the server's lines: game, time, title, "W:name,name;L:name", each name maybe followed by its seat (token), and ";X:fan" for a
+    // game with fan content
     def parse(text : String) : $[Result] = text.split('\n').$.%(_.nonEmpty)./~{ line =>
         line.split('\t').$./(unesc) match {
             case game :: time :: title :: sides :: _ =>
-                val ss = sides.split(';').$.%(_.length > 2)./(s => Side(s.drop(2).split(',').$.%(_.nonEmpty)./(entry).distinctBy(e => (e.name == "*").?(e.seat.toString).|(e.name.toLowerCase)), s.startsWith("W:")))
+                val ss = sides.split(';').$.%(_.length > 2).%(s => s.startsWith("W:") || s.startsWith("L:"))./(s => Side(s.drop(2).split(',').$.%(_.nonEmpty)./(entry).distinctBy(e => (e.name == "*").?(e.seat.toString).|(e.name.toLowerCase)), s.startsWith("W:")))
                 val names = ss.flatMap(_.names).map(_.toLowerCase).but("*")
-                (names.distinct.num == names.num).?(Result(game, time, title, ss))
+                (names.distinct.num == names.num).?(Result(game, time, title, ss, sides.split(';').$.has("X:fan")))
             case _ => None
         }
     }.sortBy(_.time)
@@ -1068,7 +1070,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                             reported = true
                             val sides = meta.rankingSides(g, winners)./{ case (l, won) => (l./~(f => users.get(f)./(_ + meta.rankingSeat(g, f)./(_.token).|(""))), won) }.filter(_._1.any)
                             if (sides.num >= 2 && sides.exists(_._2) && sides.exists(_._2.not))
-                                post(HRF.server.get + "/report-result/" + user + "/" + HRF.secret.get + "/" + server.get, (meta.name +: title.|("%untitled%") +: sides./{ case (l, won) => (won.?("W").|("L") +: l).join(" ") }).join("\n"))(_ => showRatings(note))
+                                post(HRF.server.get + "/report-result/" + user + "/" + HRF.secret.get + "/" + server.get, (meta.name +: title.|("%untitled%") +: (sides./{ case (l, won) => (won.?("W").|("L") +: l).join(" ") } ++ meta.rankingFan(g).$("X fan"))).join("\n"))(_ => showRatings(note))
                         }
                     }
 
@@ -1513,7 +1515,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         }
 
         def show(all : $[Elo.Player]) {
-            val explain = "Elo ratings from finished online games with people on two sides or more (teams count as one side; bots and local games don't count). Everyone starts at " ~ Elo.start.round.toString.hl ~ "; a " ~ "?".hl ~ " marks fewer than " ~ Elo.provisional.hl ~ " games." ~ meta.ranking.has("root").??(" Root ratings count the games played from 2026-11-18; the stats count every game.")
+            val explain = "Elo ratings from finished online games with people on two sides or more (teams count as one side; bots and local games don't count). Everyone starts at " ~ Elo.start.round.toString.hl ~ "; a " ~ "?".hl ~ " marks fewer than " ~ Elo.provisional.hl ~ " games." ~ meta.ranking.has("root").??(" Root ratings count the games played from 2026-11-18.") ~ " Games with fan content (" ~ meta.ranking.has("root").?("fan, playtest or mirror factions, fan maps, decks, hirelings or scenarios").|("fan clans, modules or variants") ~ ") don't count in the ratings. The stats count every game."
             val you = mine.any.?("Your name" ~ (mine.num > 1).??("s") ~ " on this device: " ~ mine./(_.hlb).join(", ")).|("Names you type when joining an online game are claimed for this device. Play on another device with your player code.".txt)
 
             ui.action.asker.zask(

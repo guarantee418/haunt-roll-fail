@@ -201,6 +201,8 @@ trait MetaBase {
     // and, for the faction and turn order stats, what each seat played: its faction, its place in the turn order (from 1), the
     // number of players and its score (VP or fame, "D" for a Root dominance)
     def rankingSeat(g : G, f : F) : |[RankingSeat] = None
+    // a game played with fan-made content: kept in the stats, left out of the ratings (asked for on 2026-11-18)
+    def rankingFan(g : G) : Boolean = false
     // Other games on the main menu that are their own meta (Northgard's Adset): the menu label and the meta's name
     def linkedModes : $[(String, String)] = $
     // A tutorial on the main menu (Northgard's): a line about it, its lessons (each a title and its paragraphs), and the

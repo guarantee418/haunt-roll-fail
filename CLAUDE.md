@@ -347,7 +347,10 @@ cd haunt-roll-fail && sbt fullOptJS
   each player's page has them too, and the leaderboard the win rate, peak and last change. Root's Elo starts with the games
   reported from 2026-11-18 (owner's ask); its finished games before then are in the seed with every seat (bots too) as "*", no one,
   so they count in the stats but in no rating (`Result.rated`; `STATS` lines of `LiveCheck <hrf-games> ranking`). When a game ends,
-  each browser shows once the rating changes it made (`showRatings` in `hrf.scala`, `hrf.rating-shown.<game>`). Names are released or
+  the rating changes it made are added as a line at the end of its log (`showRatings` in `hrf.scala`). Games with fan content
+  (`Meta.rankingFan`: Northgard's fan clans, modules and variants, `rankFan` in `nort/meta.scala`; Root's fan, playtest and mirror
+  factions, fan maps, decks, hirelings and scenarios, `rankFan` in `root/meta.scala`; asked for on 2026-11-18) are reported with an
+  "X fan" line, kept as the side `X:fan`, and count in the stats but in no rating (`Result.fan`). Names are released or
   moved by committing `ranking-changes/<name>.txt` to `hrf-games` (`release <name>`, `rename <name> -> <new>`, `seat <user> <name>`;
   `Ranking.change`, applied once each by `Backup`, outcome in `<name>.result`).
 - Fixing a running game: through the `hrf-games` repository (copy `games/<id>.tsv` to

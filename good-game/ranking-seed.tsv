@@ -9,9 +9,9 @@ zablhtnvuucizerb	nort	2026-10-06T00:00:00	Longship of Winter	W:qvgfdrghnahqcpxy/
 ucavvdzfiahoocbh	nort-adset	2026-10-08T00:00:00	Draugr through Fjord	L:rdhuyaaoetqgqfin/Bear_Clan/1/2/29;W:gziznnigemrelyno/Kraken_Clan/2/2/86
 hphiucdzpuishobo	nort	2026-10-17T00:00:00	Winter of Saga	L:bcrpurwveatfyqee/Snake_Clan/3/4/37;W:filslzcutkcomimu/Dragon_Clan/4/4/26
 hwsttpuuzmqyxvjy	nort-adset	2026-11-01T00:00:00	Draugr against Winter	W:zysngjfihwdokqbu/Rat_Clan/1/4/29;L:gqoeplnfwwycgqzh/Ox_Clan/2/4/61;L:jazzqgcikuihsyub/Stag_Clan/3/4/78;L:avdrhrxrjysynfds/Boar_Clan/4/4/48
-ityxgmdxhzkyrosx	nort	2026-11-17T00:00:00	Winter for Clan	W:bcgyykmocxzkaphz/Bear_Clan/1/2/125;L:xmjiqibhiktxdblq/Snake_Clan/2/2/73
+ityxgmdxhzkyrosx	nort	2026-11-17T00:00:00	Winter for Clan	W:bcgyykmocxzkaphz/Bear_Clan/1/2/125;L:xmjiqibhiktxdblq/Snake_Clan/2/2/73;X:fan
 nizxgtpsatcbhrto	root-adset	2026-10-03T18:45:01	Command versus Upheaval	W:*/Underground_Duchy/4/4/30;L:*/Corvid_Conspiracy/1/4/4;L:*/Marquise_de_Cat/2/4/19;L:*/Woodland_Alliance/3/4/13
-nrwvxixxxhvvgzvm	root-adset	2026-10-03T18:45:01	Wood versus Command	W:*/Marquise_de_Cat/2/4/31;L:*/Knaves_of_the_Deepwood/3/4/4;L:*/Twilight_Council/4/4/2;L:*/Woodland_Alliance/1/4/17
+nrwvxixxxhvvgzvm	root-adset	2026-10-03T18:45:01	Wood versus Command	W:*/Marquise_de_Cat/2/4/31;L:*/Knaves_of_the_Deepwood/3/4/4;L:*/Twilight_Council/4/4/2;L:*/Woodland_Alliance/1/4/17;X:fan
 yczgspvmnmxedehj	root-adset	2026-10-03T18:45:01	Revolution as Betrayal	W:*/Knaves_of_the_Deepwood/4/4/32;L:*/Marquise_de_Cat/1/4/22;L:*/Lilypad_Diaspora/2/4/6;L:*/Woodland_Alliance/3/4/15
 xbgeznbiixfjrdpl	root-adset	2026-10-04T02:40:01	Control versus Fight	W:*/Vagabond_(Arbiter)/3/4/30;L:*/Lilypad_Diaspora/4/4/28;L:*/Knaves_of_the_Deepwood/1/4/0;L:*/Eyrie_Dynasties/2/4/15
 dgttzwxyaasssudw	root-adset	2026-10-10T22:10:01	Upheaval of Right	W:*/Lord_of_the_Hundreds/2/3/30;L:*/Underground_Duchy/3/3/29;L:*/The_Lizard_Cult/1/3/25
@@ -33,13 +33,13 @@ scfdyvkskwupijpk	root-adset	2026-11-01T03:05:01	Season in Control	W:*/Lord_of_th
 yjtmsynywpzrhkzs	root-adset	2026-11-02T09:05:01	Right in Land	W:*/Woodland_Alliance/1/4/31;L:*/Twilight_Council/2/4/20;L:*/Eyrie_Dynasties/3/4/5;L:*/Lord_of_the_Hundreds/4/4/26
 xdahvsaxhnrkgysd	root-adset	2026-11-02T15:50:01	Season versus Wind	W:*/Knaves_of_the_Deepwood/3/4/31;L:*/Twilight_Council/4/4/16;L:*/The_Lizard_Cult/1/4/21;L:*/Lord_of_the_Hundreds/2/4/6
 pcbuwlpcoqbgusba	root-adset	2026-11-02T19:05:01	War as Upheaval	W:*/Lilypad_Diaspora/4/4/31;L:*/Underground_Duchy/1/4/26;L:*/Knaves_of_the_Deepwood/2/4/21;L:*/Twilight_Council/3/4/26
-eiwyhntxtvvsrchn	root-adset	2026-11-04T07:05:01	Ground in Conquest	W:*/Lord_of_the_Hundreds/4/4/30;L:*/Riverfolk_Company/1/4/23;L:*/Underground_Duchy/2/4/20;L:*/Lilypad_Diaspora/3/4/27
-obtnpieonsfqpyys	root-adset	2026-11-05T04:25:01	Glory in Revolution	W:*/Underground_Duchy/4/4/30;L:*/Woodland_Alliance/1/4/15;L:*/Lilypad_Diaspora/2/4/23;L:*/Lord_of_the_Hundreds/3/4/29
+eiwyhntxtvvsrchn	root-adset	2026-11-04T07:05:01	Ground in Conquest	W:*/Lord_of_the_Hundreds/4/4/30;L:*/Riverfolk_Company/1/4/23;L:*/Underground_Duchy/2/4/20;L:*/Lilypad_Diaspora/3/4/27;X:fan
+obtnpieonsfqpyys	root-adset	2026-11-05T04:25:01	Glory in Revolution	W:*/Underground_Duchy/4/4/30;L:*/Woodland_Alliance/1/4/15;L:*/Lilypad_Diaspora/2/4/23;L:*/Lord_of_the_Hundreds/3/4/29;X:fan
 bymeupscxjkbniuh	root-adset	2026-11-07T01:10:01	Land through Season	W:*/Twilight_Council/2/4/31;L:*/Knaves_of_the_Deepwood/3/4/23;L:*/Lord_of_the_Hundreds/4/4/22;L:*/Woodland_Alliance/1/4/24
 vujkjxjrzxwpwsri	root-adset	2026-11-07T22:55:01	Glory through Air	W:*/Woodland_Alliance/1/4/33;L:*/Keepers_in_Iron/2/4/29;L:*/Knaves_of_the_Deepwood/3/4/9;L:*/Twilight_Council/4/4/25
 ekuvtorvwaladeox	root-adset	2026-11-08T13:45:02	Control versus Power	W:*/Marquise_de_Cat/2/4/30;L:*/Keepers_in_Iron/3/4/26;L:*/Twilight_Council/4/4/13;L:*/Riverfolk_Company/1/4/16
 tkpcbovxawlgsbaa	root-adset	2026-11-09T19:05:01	Season for Revolution	W:*/Woodland_Alliance/1/4/31;L:*/Lord_of_the_Hundreds/2/4/24;L:*/Twilight_Council/3/4/26;L:*/Lilypad_Diaspora/4/4/24
-qnquwspfntuidkmj	root-adset	2026-11-09T23:20:02	Movement as Betrayal	W:*/Knaves_of_the_Deepwood/2/4/32;L:*/Twilight_Council/3/4/18;L:*/Lilypad_Diaspora/4/4/18;L:*/Eyrie_Dynasties/1/4/28
+qnquwspfntuidkmj	root-adset	2026-11-09T23:20:02	Movement as Betrayal	W:*/Knaves_of_the_Deepwood/2/4/32;L:*/Twilight_Council/3/4/18;L:*/Lilypad_Diaspora/4/4/18;L:*/Eyrie_Dynasties/1/4/28;X:fan
 yftqcvifylbnnehd	root-adset	2026-11-10T20:35:01	Air of Conquest	W:*/Marquise_de_Cat/1/4/31;L:*/Eyrie_Dynasties/2/4/22;L:*/Knaves_of_the_Deepwood/3/4/26;L:*/Lilypad_Diaspora/4/4/27
 pbqarbwhurnzrekj	root-adset	2026-11-11T04:35:01	Destiny and Right	W:*/Riverfolk_Company/3/4/31;L:*/Twilight_Council/4/4/27;L:*/Corvid_Conspiracy/1/4/28;L:*/The_Lizard_Cult/2/4/28
 niyljxzgyiztrcqn	root-adset	2026-11-11T14:45:01	Betrayal versus Glory	W:*/Twilight_Council/2/4/30;L:*/Eyrie_Dynasties/3/4/21;L:*/Knaves_of_the_Deepwood/4/4/25;L:*/Woodland_Alliance/1/4/23
@@ -47,4 +47,4 @@ muhjdyhaaqeakebd	root-adset	2026-11-13T11:45:01	Season versus Movement	W:*/Under
 rjqksklftlzropan	root-adset	2026-11-14T14:20:01	Dominance for Air	W:*/Lord_of_the_Hundreds/2/4/31;L:*/Eyrie_Dynasties/3/4/23;L:*/Lilypad_Diaspora/4/4/23;L:*/Underground_Duchy/1/4/26
 sojxyxbxinbmkmto	root-adset	2026-11-15T04:30:01	Betrayal of Right	W:*/Lilypad_Diaspora/3/4/30;L:*/Twilight_Council/4/4/21;L:*/Woodland_Alliance/1/4/15;L:*/Marquise_de_Cat/2/4/19
 vbsjcatzhhsuhkkl	root-adset	2026-11-15T15:25:01	Air through Control	W:*/Marquise_de_Cat/1/4/30;L:*/Woodland_Alliance/2/4/21;L:*/Keepers_in_Iron/3/4/21;L:*/Lilypad_Diaspora/4/4/24
-lmbjpgltkrjtgqci	root-adset	2026-11-17T23:20:01	Right through Wind	W:*/The_Lizard_Cult/2/4/31;L:*/Eyrie_Dynasties/3/4/17;L:*/Knaves_of_the_Deepwood/4/4/15;L:*/Riverfolk_Company/1/4/22
+lmbjpgltkrjtgqci	root-adset	2026-11-17T23:20:01	Right through Wind	W:*/The_Lizard_Cult/2/4/31;L:*/Eyrie_Dynasties/3/4/17;L:*/Knaves_of_the_Deepwood/4/4/15;L:*/Riverfolk_Company/1/4/22;X:fan
