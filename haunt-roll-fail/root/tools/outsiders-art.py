@@ -138,3 +138,34 @@ if "wm" in which:
     w = p.size[0]
     p.crop((0, 0, w, w)).resize((100, 100), Image.LANCZOS).save(f"{out}/wm-action.webp", lossless=True)
     out = keep
+
+if "of" in which:
+    # the Order of the Forest: board b-of.png (220 dpi), token sheet t-of.png (300 dpi)
+    o = f"{out}/order"
+    out, keep = o, out
+    os.makedirs(out, exist_ok = True)
+    board("of", "of-board.webp")
+    title("of", (826, 176, 1668, 290), "of-title.webp")
+    disc("t-of.png", 1344, 840, 116, 80, "of-soup.webp")
+    disc("t-of.png", 1344, 1710, 116, 80, "of-coins.webp")
+    for suit, x, y in (("fox", 1366, 1134), ("bird", 1934, 1134), ("mouse", 1366, 1416), ("rabbit", 1934, 1416)):
+        disc("t-of.png", x, y, 104, 100, f"of-abbey-{suit}.webp", square = True)
+    disc("t-of.png", 1650, 1134, 104, 86, "of-glyph.webp", square = True)
+    crop(f"{src}/t-of.png", (1560, 1310, 1740, 1522), 160, 194, "of-char.webp")
+    # the meeples are dark green: a light rim keeps them visible on the forests of the maps
+    from PIL import ImageFilter
+    def rimmed(p, colour):
+        pad = Image.new("RGBA", (p.size[0] + 40, p.size[1] + 40), (0, 0, 0, 0))
+        pad.paste(p, (20, 20), p)
+        rim = pad.getchannel("A").point(lambda v: 255 if v > 20 else 0).filter(ImageFilter.MaxFilter(15))
+        lit = Image.new("RGBA", pad.size, colour + (0,))
+        lit.putalpha(rim)
+        lit.alpha_composite(pad)
+        return lit
+    warrior(rimmed(m[2], (236, 228, 196)), 90, "of-devotee")
+    for suit, i in (("bird", 0), ("mouse", 4), ("rabbit", 8), ("fox", 12)):
+        warrior(rimmed(m[i], (236, 228, 196)), 100, f"of-priest-{suit}", stack = False)
+    p = m[2]
+    w = p.size[0]
+    p.crop((0, 0, w, w)).resize((100, 100), Image.LANCZOS).save(f"{out}/of-action.webp", lossless=True)
+    out = keep

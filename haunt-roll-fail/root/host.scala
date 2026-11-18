@@ -88,6 +88,7 @@ object Host {
         case WW => fansi.Color.True(0xa88f80)(f.name)
         case BP => fansi.Color.True(0xc49a5c)(f.name)
         case WM => fansi.Color.True(0xa596c8)(f.name)
+        case OF => fansi.Color.True(0x8fb35c)(f.name)
         case DU => fansi.Color.True(0xe2832b)(f.name)
         case WG => fansi.Color.True(0x8a7fd6)(f.name)
         case EE => fansi.Color.True(0x4f7fc4)(f.name)

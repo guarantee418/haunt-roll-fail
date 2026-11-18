@@ -854,6 +854,7 @@ trait GameImplicits {
     implicit def wakeState(f : WarriorsWake)(implicit game : Game) = game.states(f).as[WarriorsWakePlayer].get
     implicit def bonePatrolState(f : BonePatrol)(implicit game : Game) = game.states(f).as[BonePatrolPlayer].get
     implicit def wingedMenaceState(f : WingedMenace)(implicit game : Game) = game.states(f).as[WingedMenacePlayer].get
+    implicit def orderForestState(f : OrderOfTheForest)(implicit game : Game) = game.states(f).as[OrderForestPlayer].get
     implicit def doomState(f : Doomsayers)(implicit game : Game) = game.states(f).as[DoomsayersPlayer].get
     implicit def whisperersState(f : Whisperers)(implicit game : Game) = game.states(f).as[WhisperersPlayer].get
     implicit def invasiveEEEState(f : InvasiveEEE)(implicit game : Game) = game.states(f).as[InvasiveEEEPlayer].get
@@ -1195,6 +1196,8 @@ trait GameImplicits {
             val own = f.at(c)./{
                 // Bone Patrol always rules the Alpha's clearing
                 case Alpha => 99999
+                // the Order of the Forest's High Priests never rule
+                case _ : HighPriest => 0
                 case _ : BuriedBone => 0
                 case Garden(_) => 333
                 case b : Building => 4
@@ -1698,6 +1701,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             WarriorsWakeExpansion,
             BonePatrolExpansion,
             WingedMenaceExpansion,
+            OrderForestExpansion,
             DoomsayersExpansion,
             InvasiveEEEExpansion,
             InvasiveDDDExpansion,

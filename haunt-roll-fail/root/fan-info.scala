@@ -122,6 +122,18 @@ object FanInfo {
             line("Daylight", "Spawn in the Nexus and with cards (more with infestations off the top row), then Explore a cave for an item and 1 point.".txt),
             line("Evening", "3 actions: Bite, Build (an infestation), Swarm (battle, again with a matching card) and Swoop; craft with infestations, then draw.".txt),
         )
+        case OF => $(
+            by("slugfacekillah", outsiders("2.1")),
+            outsidersLink,
+            "Altruists whose High Priests herald from clearing to clearing and minister soup and coins to the poor; in battle their words turn enemy warriors to their side.".txt,
+            line("The Order Card", "the Foreseen card is revealed each Birdsong; Daylight actions must be in clearings matching it, and it goes into the hand in Evening instead of a draw.".txt),
+            line("High Priests", "four suited pawns that move ignoring rule but never rule; removed, they go to the Altar and give an ability of their suit.".txt),
+            line("Witness", "spend cards to battle; hits on enemy warriors swap them for the Order's own, the converted going to the Ranks, which score in Evening.".txt),
+            line("Power of Faith and Confessions", "its tokens can each deal a hit; once in Birdsong it looks at the hand of an enemy at an abbey.".txt),
+            line("Birdsong", "Proclaim the Order Card, Anoint a High Priest from the Altar, Foresee the next card, Herald (up to 3 moves).".txt),
+            line("Daylight", "Minister (a soup token draws 2, a coins token places 2 warriors), Witness, Build an abbey.".txt),
+            line("Evening", "Congregate (craft with pawns and abbeys of their own suit, in one clearing), then Rest and score the Ranks.".txt),
+        )
         case FH => $(
             by("jgregory17", "fan-made".txt),
             "Hamster farmers who want nothing more than to raise their crops and give gifts to their friends.".txt,

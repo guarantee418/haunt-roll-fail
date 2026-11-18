@@ -560,6 +560,15 @@ server. No session can reach the server, and none needs to.
   (an infestation where it removes an enemy building), infestations on two rows (`top`, `bottom`: Spawn and draw bonuses), Guano as
   its own ownerless player (`GuanoMess`, not listed with the hirelings) and Dark Passage, offered in every phase menu of the other
   players. `ReplayCheck <games> wm` plays it.
+  The Order of the Forest (OF, `root/faction-order-forest.scala`, its header lists the readings) is a Fun Faction and in Advanced
+  Setup's pool: warriors (`Devotee`) and four suited High Priest pawns (`HighPriest(suit)`, warriors in battle removed last, `Rearguard`,
+  never ruling, `case _ : HighPriest => 0` in `ruleValue`, moving alone ignoring rule, `PriestsMove`), the Foreseen and the Order Card
+  (`foreseen`, `order` card piles; Daylight actions only in clearings matching it), Minister (soup and coins tokens), Witness (its hits
+  swap enemy warriors for its own, the swapped ones going to The Ranks, `ranks`, a location of the Order holding other factions'
+  figures, scored at Rest), abbeys (`OrderAbbey(suit)`) and Congregate (crafting with pawns and abbeys of their own suit, in one clearing,
+  `pick`), Martyrs (removed pawns go to `altar`, each giving its suit's ability), Power of Faith (tokens add to its hits) and Reclamation
+  (an enemy removing its warriors on its turn may return as many of one player's from the Ranks, at `ForcedRemoveCleanupAction`).
+  `ReplayCheck <games> of` plays it.
   Its two maps are Fan Maps, "Deep Woods" and "Wastelands" (`DeepWoodsMap`, `WastelandsMap`; `DeepWoodsBoard` and `WastelandsBoard` in
   `root/maps.scala`, images in `deep-woods/` and `wastelands/` made by `root/tools/outsiders-maps.py`, which also prints the Deep Woods
   building slots), also drawn by "Random". Clearing and forest names are made up. Their own rules are toggles in the setup's "Fan Map

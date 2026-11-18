@@ -64,6 +64,22 @@ class GameEvaluationDoomed(faction : Faction)(implicit game : Game) extends Game
             case MenaceSwarmTargetAction(f, c, e) =>
                 true |=> 50 -> "swarm"
 
+            // the Order of the Forest
+            case OrderMinisterAction(f, _, t) =>
+                true |=> 70 -> "minister"
+
+            case OrderBuildAction(f, _, _) =>
+                true |=> 60 -> "build"
+
+            case OrderWitnessTargetAction(f, _, _, n) =>
+                true |=> 50 - 10 * n -> "witness"
+
+            case OrderCongregateAction(f, _, _) =>
+                true |=> 80 -> "congregate"
+
+            case OrderConfessAction(f, _) =>
+                true |=> 20 -> "confess"
+
             case MenaceActiveAction(f, b, fright) =>
                 true |=> (math.random() * 20).round.toInt -> "fight or fright"
 

@@ -1752,7 +1752,7 @@ object Meta extends MetaGame {
     val official = $[Faction](MC, ED, WA, VB, LC, RF, UD, CC, LH, KI)
     val homeland = $[Faction](LDvE, TC, KD)
     val clones = $[Faction](BK, PE, FU, NB, CM, /*WC,*/ DR, RI, LK)
-    val fun = $[Faction](KDvA, TCvA, FH, WW, DU, WG, EE, DM, DV, NW, XC, BP, WM, CUv2, CU, OK, AF, SF, MB)
+    val fun = $[Faction](KDvA, TCvA, FH, WW, DU, WG, EE, DM, DV, NW, XC, BP, WM, OF, CUv2, CU, OK, AF, SF, MB)
 
     val factions = official ++ homeland ++ clones ++ fun
 
@@ -2027,6 +2027,7 @@ object Meta extends MetaGame {
         factions.of[WarriorsWake].num * 5 +
         factions.of[BonePatrol].num * 5 +
         factions.of[WingedMenace].num * 6 +
+        factions.of[OrderOfTheForest].num * 5 +
         factions.of[Doomsayers].num * 6 +
         factions.of[Whisperers].num * 2 +
         factions.of[Marquistadors].num * 9 +
@@ -4098,6 +4099,31 @@ object Meta extends MetaGame {
         ImageAsset("bp-bone-mouse"            ) ::
         ImageAsset("bp-bone-buried"           ) ::
         ImageAsset("bp-board"                 ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => factions.of[OrderOfTheForest].any, "faction/order")(
+        ImageAsset("of-glyph"                 ) ::
+        ImageAsset("of-title"                 ) ::
+        ImageAsset("of-char"                  ) ::
+        ImageAsset("of-action"                ) ::
+        ImageAsset("of-devotee"               ) ::
+        ImageAsset("of-devotee-empty"         ) ::
+        ImageAsset("of-devotee-x5"            ) ::
+        ImageAsset("of-devotee-x5-empty"      ) ::
+        ImageAsset("of-priest-fox"            ) ::
+        ImageAsset("of-priest-rabbit"         ) ::
+        ImageAsset("of-priest-mouse"          ) ::
+        ImageAsset("of-priest-bird"           ) ::
+        ImageAsset("of-priest-fox-empty"      ) ::
+        ImageAsset("of-priest-rabbit-empty"   ) ::
+        ImageAsset("of-priest-mouse-empty"    ) ::
+        ImageAsset("of-priest-bird-empty"     ) ::
+        ImageAsset("of-abbey-fox"             ) ::
+        ImageAsset("of-abbey-rabbit"          ) ::
+        ImageAsset("of-abbey-mouse"           ) ::
+        ImageAsset("of-abbey-bird"            ) ::
+        ImageAsset("of-soup"                  ) ::
+        ImageAsset("of-coins"                 ) ::
+        ImageAsset("of-board"                 ) ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[WingedMenace].any, "faction/menace")(
         ImageAsset("wm-glyph"                 ) ::

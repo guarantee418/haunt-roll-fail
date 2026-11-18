@@ -294,6 +294,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case Alpha => { DrawRect(pr + "alpha", -40, -118, 79, 124) }
             case Stash => { DrawRect(pr + "stash", -50, -50, 100, 100) }
             case Bat => { DrawRect(pr + "bat", -40, -84, 80, 90) }
+            case Devotee => { DrawRect(pr + "devotee", -33, -84, 65, 90) }
+            case HighPriest(s) => { DrawRect(pr + "priest-" + s.name.toLowerCase, -37, -94, 75, 100) }
+            case OrderAbbey(s) => { DrawRect(pr + "abbey-" + s.name.toLowerCase, -50, -50, 100, 100) }
+            case OrderSoup => { DrawRect(pr + "soup", -40, -40, 80, 80) }
+            case OrderCoins => { DrawRect(pr + "coins", -40, -40, 80, 80) }
             case Infestation => { DrawRect(pr + "infestation", -50, -50, 100, 100) }
             case Cave => { DrawRect("wm-cave", -50, -50, 100, 100) }
             case Guano => { DrawRect("wm-guano", -40, -40, 80, 80) }
@@ -2427,6 +2432,21 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 &((Image(f.style + "-bat-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-bat", styles.wr) *** (f.all(f.warrior).num % 5))) ~
                 &((Image(f.style + "-bat-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-bat-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
 
+            case f : OrderOfTheForest =>
+                Hint("The Order Card\n" + f.card./(d => d.name + " (" + d.suit.name + ")").|("none") + "\nThe Foreseen: " + f.foreseen.num + " card face down",
+                    ("Order Card".styled(f) ~ ": " ~ f.card./(d => dt.CardSuitInfo(d.suit) ~ " " ~ d.elem).|("none".txt) ~ " " ~ "Foreseen".styled(f) ~ " " ~ f.foreseen.num.hl).div) ~
+                Hint("The Altar\n" + f.altar.$./(_.piece.name).mkString(", ") + (f.altar.none).??("empty"),
+                    ("Altar".styled(f) ~ ": " ~ f.altar.$./(u => Image(u.piece.imgid(f), styles.fund)).merge ~ f.altar.none.?("empty".txt)).div) ~
+                Hint("The Ranks\n" + f.ranks.num + " of 10 enemy warriors\nScore " + OrderForestExpansion.ranksScore(f.ranks.num) + " in Evening",
+                    ("Ranks".styled(f) ~ " " ~ f.ranks.num.hl ~ "/10 " ~ f.ranks.$./(u => Image(u.piece.imgid(u.faction), styles.fund)).merge).div(styles.warline)) ~
+                (Image(f.style + "-soup", styles.token) *** f.all(OrderSoup).num) ~ (Image("empty-token", styles.token) *** f.pooled(OrderSoup)) ~ " " ~
+                (Image(f.style + "-coins", styles.token) *** f.all(OrderCoins).num) ~ (Image("empty-token", styles.token) *** f.pooled(OrderCoins)) ~ Break ~ Gap ~
+                OrderForest.suits./(s => f.pool(OrderAbbey(s)).?(Image("empty-building", styles.building)).|(Image(f.style + "-abbey-" + s.name.toLowerCase, styles.building))).merge ~ Break ~ Gap ~
+                Div(Hint("Devotees\n" + f.all(f.warrior).num + " on the map\n" + f.pooled(f.warrior) + " available\nHigh Priests: " + OrderForest.suits./(s => s.name + " " + f.all(HighPriest(s)).headOption./(_.name).getOrElse(f.altar.$.exists(_.piece == HighPriest(s)).?("on the Altar").|("-"))).mkString(", "),
+                OrderForest.suits.%(s => f.all(HighPriest(s)).any)./(s => Image(f.style + "-priest-" + s.name.toLowerCase, styles.wr)).merge ~
+                &((Image(f.style + "-devotee-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-devotee", styles.wr) *** (f.all(f.warrior).num % 5))) ~
+                &((Image(f.style + "-devotee-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-devotee-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
+
             case f : BonePatrol =>
                 Hint("Stashes\n" + f.all(Stash).num + " on the map\n" + f.pooled(Stash) + " on the track\nScout " + f.scouts + ", draw " + f.draws,
                     (Image(f.style + "-stash", styles.building) *** f.all(Stash).num) ~ (Image("empty-building", styles.building) *** f.pooled(Stash))) ~ Break ~ Gap ~
@@ -2777,6 +2797,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         case _ : WarriorsWake => Some("ww-board")
         case _ : BonePatrol => Some("bp-board")
         case _ : WingedMenace => Some("wm-board")
+        case _ : OrderOfTheForest => Some("of-board")
         case _ : Doomsayers => Some("du-board")
         case _ : Whisperers => Some("wg-board")
         case _ : OldExpedition => Some("ok-board")
@@ -3685,6 +3706,52 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     less(DarkPassage.of(f).larger) ~
                     more(DarkPassage.of(f).larger, "On their turn, other players may give", f, "a card to place any number of their warriors from one", "cave".hh, "in another", Dot) ~
                     desc("Caves".hh, game.caves./(_.elem).comma) ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), {
+                    case (f : Faction, more : Boolean) => onFactionStatus(f, more, None)
+                    case _ =>
+                        overlayPane.invis()
+                        overlayPane.clear()
+                })
+
+            case f : OrderOfTheForest =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    f.name.f.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    Image("of-board")(styles.factionboard) ~
+                    HGap ~
+                    HGap ~
+                    less("Devotees".hl.larger) ~
+                    more("Devotees".hl.larger, "are", "warriors".hh, Comma, "they", "battle".hh, "and provide", "rule".hh, Dot) ~
+                    desc(f.all(f.warrior).num.hl.larger, "on the map,", f.pooled(f.warrior).hl.larger, "in reserve") ~
+                    HGap ~
+                    warriorLine(f.style + "-devotee", f.all(f.warrior).num, f.pooled(f.warrior)) ~
+                    HGap ~
+                    HGap ~
+                    less(HighPriests.of(f).larger) ~
+                    more(HighPriests.of(f).larger, "move ignoring rule and never rule; in battle they are warriors, removed last. Removed, they go to", TheAltar.elem, "and give an ability (", Martyrs.of(f), "): fox an extra hit defending, mouse", "Minister".hh, "twice, rabbit a card at the start of Evening, bird", 1.vp, "more for", TheRanks.elem, Dot) ~
+                    desc("On", TheAltar.elem ~ ":", f.altar.none.?("none".txt).|(f.altar.$./(_.piece.of(f)).comma)) ~
+                    HGap ~
+                    HGap ~
+                    less("The Order Card".hl.larger) ~
+                    more("The Order Card".hl.larger, "is", "the Foreseen".hh, "revealed in Birdsong; Daylight actions must be taken in clearings matching it, and it goes into the hand in Evening instead of a draw", Dot) ~
+                    desc("Order Card".styled(f) ~ ":", f.card./(_.elem).|("none".txt)) ~
+                    HGap ~
+                    HGap ~
+                    less(TheRanks.elem.larger) ~
+                    more(TheRanks.elem.larger, "hold up to", 10.hl, "enemy warriors that", "Witness".hh, "turned to the Order's side, scoring", 1.vp, Comma, 2.vp, "or", 3.vp, "in Evening for 2, 5 or 9 of them", Dot, Reclamation.of(f), "lets an enemy that removes Order warriors on its turn send back as many of one player's", Dot) ~
+                    desc(f.ranks.num.hl, "warriors in", TheRanks.elem) ~
+                    HGap ~
+                    HGap ~
+                    less(PowerOfFaith.of(f).larger) ~
+                    more(PowerOfFaith.of(f).larger, "Soup".hh, "and", "coins".hh, "tokens are not defenseless: each can deal up to one rolled hit", Dot) ~
                     HGap ~
                     HGap ~
                     info() ~
