@@ -853,6 +853,7 @@ trait GameImplicits {
     implicit def farmerState(f : Farmer)(implicit game : Game) = game.states(f).as[FarmerPlayer].get
     implicit def wakeState(f : WarriorsWake)(implicit game : Game) = game.states(f).as[WarriorsWakePlayer].get
     implicit def bonePatrolState(f : BonePatrol)(implicit game : Game) = game.states(f).as[BonePatrolPlayer].get
+    implicit def wingedMenaceState(f : WingedMenace)(implicit game : Game) = game.states(f).as[WingedMenacePlayer].get
     implicit def doomState(f : Doomsayers)(implicit game : Game) = game.states(f).as[DoomsayersPlayer].get
     implicit def whisperersState(f : Whisperers)(implicit game : Game) = game.states(f).as[WhisperersPlayer].get
     implicit def invasiveEEEState(f : InvasiveEEE)(implicit game : Game) = game.states(f).as[InvasiveEEEPlayer].get
@@ -1696,6 +1697,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             FarmerExpansion,
             WarriorsWakeExpansion,
             BonePatrolExpansion,
+            WingedMenaceExpansion,
             DoomsayersExpansion,
             InvasiveEEEExpansion,
             InvasiveDDDExpansion,
@@ -1942,9 +1944,12 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
 
     def freeSlots(c : Clearing) = WarriorsWake.shadowed(c)(this).?(0).|(freeSlots0(c))
 
-    def freeSlots0(c : Clearing) = slots(c) - factions./(_.at(c).of[Building].num).sum - hirelings./(_.at(c).of[Building].num).sum - ruins.get(c).any.??(1)
+    def freeSlots0(c : Clearing) = slots(c) - factions./(_.at(c).of[Building].num).sum - hirelings./(_.at(c).of[Building].num).sum - (ruins.get(c).any || caves.has(c)).??(1)
 
     var ruins : Map[Clearing, Ruins] = Map()
+
+    // the Winged Menace's caves: the ruins' clearings, kept when their last item is taken
+    var caves : $[Clearing] = $
 
     var quests = $[Quest]()
     // the Doomed Vagabond's Collect Bounty quests: the item and the relationship marker an enemy put on each (by quest id)
@@ -2043,7 +2048,8 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
         case c : Clearing =>
             (factions ++ hirelings).%(states.contains)./~(_.from(c).$) ++
             options.has(UntargetableKeep).??(factions.of[Feline]./~(f => f.keep.has(c).?(Figure(f, Keep, 0)))) ++
-            ruins.get(c)./(Figure(Neutral, _, 0)) ++
+            caves.has(c).?(Figure(Neutral, Cave, 0)) ++
+            caves.has(c).not.??(ruins.get(c)./(Figure(Neutral, _, 0))) ++
             (tower.contains(c)).?(Figure(Neutral, Tower, 0)) ++
             (ferry.contains(c)).?(Figure(Neutral, Ferry, 0)) ++
             (lostCity.has(c)).?(Figure(Neutral, LostCity, 0)) ++

@@ -553,6 +553,13 @@ server. No session can reach the server, and none needs to.
   as locations of the player (`rollover`, `collection`). Obedient moves (`ObedientMove`) start or end at the Alpha; Guard Dogs is offered
   in every phase menu of the other players (`guardDogs`, shared rule in `rules` through `BonePatrolExpansion.guarded`, cleared at their
   `CleanUpAction`). `ReplayCheck <games> bp` plays it.
+  The Winged Menace (WM, `root/faction-winged-menace.scala`, its header lists the readings) is a Fun Faction and in Advanced Setup's
+  pool: bats (`Bat`) spawning in The Nexus (`TheNexus`, a region of its own next to the four caves, `WingedMenaceExpansion.adjacent`),
+  the ruins turned into caves (`game.caves`, drawn as `Cave` and taking their slot when emptied, `freeSlots0`), Fight or Fright picked at
+  each battle's start and revealed before the hits (Fright moves the enemy's warriors instead, `MenaceFrightAction`), Squatters
+  (an infestation where it removes an enemy building), infestations on two rows (`top`, `bottom`: Spawn and draw bonuses), Guano as
+  its own ownerless player (`GuanoMess`, not listed with the hirelings) and Dark Passage, offered in every phase menu of the other
+  players. `ReplayCheck <games> wm` plays it.
   Its two maps are Fan Maps, "Deep Woods" and "Wastelands" (`DeepWoodsMap`, `WastelandsMap`; `DeepWoodsBoard` and `WastelandsBoard` in
   `root/maps.scala`, images in `deep-woods/` and `wastelands/` made by `root/tools/outsiders-maps.py`, which also prints the Deep Woods
   building slots), also drawn by "Random". Clearing and forest names are made up. Their own rules are toggles in the setup's "Fan Map

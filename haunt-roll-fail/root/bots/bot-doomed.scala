@@ -45,6 +45,28 @@ class GameEvaluationDoomed(faction : Faction)(implicit game : Game) extends Game
                 true |=> 50 - (math.pow(10, 2 + n) * math.random()).round.toInt -> "cost"
 
 
+            // the Winged Menace: act rather than pass
+            case MenaceSpawnAction(f, _, n, _) =>
+                true |=> 40 + 10 * n -> "spawn"
+
+            case MenaceExploreAction(f, _, _) =>
+                true |=> 80 -> "explore"
+
+            case MenaceBuildRowAction(f, _, _, _) =>
+                true |=> 60 -> "build"
+
+            case MenaceSquatAction(f, _, _, _) =>
+                true |=> 70 -> "squat"
+
+            case MenaceBiteTargetAction(f, _, _, _) =>
+                true |=> 30 -> "bite"
+
+            case MenaceSwarmTargetAction(f, c, e) =>
+                true |=> 50 -> "swarm"
+
+            case MenaceActiveAction(f, b, fright) =>
+                true |=> (math.random() * 20).round.toInt -> "fight or fright"
+
             case _ =>
         }
 
