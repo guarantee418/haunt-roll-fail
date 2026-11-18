@@ -32,6 +32,9 @@ object FanInfo {
     def nemesisLink : Elem = "See the " ~ Link("https://drive.google.com/drive/folders/1QeHVQl7j-wXh7f7vjuFASBakE9uyzij4", "Noxious Battery", $(xstyles.link)) ~ ": its board, pieces and rules (the designer's print-and-play files on Google Drive)."
     def outsidersLink : Elem = "See the whole " ~ Link("https://drive.google.com/drive/folders/19tCC_9QTW682DUeLCUIr7CEyjfczjxA6", "Outsiders Expansion", $(xstyles.link)) ~ ": every faction, map and card, with the rules (the designer's print-and-play files on Google Drive)."
 
+    // the designer's print-and-play folder of a fan faction, linked in its in-game overlay too
+    def pnpLink(f : Faction) : |[Elem] = about(f).find(e => e == doomedLink || e == outsidersLink || e == nemesisLink)
+
     def about(f : Faction) : $[Elem] = f match {
         case WW => $(
             by("slugfacekillah", doomed),

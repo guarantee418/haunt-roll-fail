@@ -2889,6 +2889,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         def lessGap = isMore.not.?(HGap)
 
         def info() =
+            FanInfo.pnpLink(faction)./(l => desc(l) ~ HGap) ~
             less(("More Info".hh).div.div(xstyles.choice)(xstyles.xx)(xstyles.chm)(xstyles.chp)(xstyles.thu)(xlo.fullwidth)(new CustomStyle(rules.width("60ex"))(new StylePrefix("test")){}).pointer.onClick.param(faction, !isMore)) ~
             more(("Less Info".hh).div.div(xstyles.choice)(xstyles.xx)(xstyles.chm)(xstyles.chp)(xstyles.thu)(xlo.fullwidth)(new CustomStyle(rules.width("60ex"))(new StylePrefix("test")){}).pointer.onClick.param(faction, !isMore))
 
@@ -2916,6 +2917,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     HGap ~
                     HGap ~
                     desc("Not set up yet") ~
+                    FanInfo.pnpLink(f)./(l => HGap ~ desc(l)) ~
                     HGap ~
                     HGap ~
                     HGap ~

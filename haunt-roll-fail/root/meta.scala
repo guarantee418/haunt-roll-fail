@@ -144,7 +144,7 @@ case object DeepWoodsMap extends FanMap {
     val valueOn = "Deep Woods".styled(styles.forest)
     override val explain = $(
         "Deep Woods".hh ~ ", the past, a map from slugfacekillah's fan-made " ~ "Outsiders Expansion".hl ~ ".",
-        "Played settled: each clearing tile is on the clearing of its number (the rules' way to play it without " ~ "Settling".hh ~ ").",
+        "With " ~ "Settling".hh ~ " (the toggle under the maps, on by default) the clearings start unsettled and are settled during the game; without it each clearing tile is on the clearing of its number from the start.",
         "A river runs across the middle, with a bridge on each path over it. The ruins are in the four inner clearings.",
         FanInfo.outsidersLink
     )
@@ -160,15 +160,16 @@ case object WastelandsMap extends FanMap {
     )
 }
 
-// The Outsiders maps' own rules (Law of Slug S.1 and S.2, root/outsiders-maps.scala), only with their map
-case object DeepWoodsSettling extends GameOption with ToggleOption with FoldedOption {
+// The Outsiders maps' own rules (Law of Slug S.1 and S.2, root/outsiders-maps.scala), only with their map, shown unfolded right under
+// the maps so they are seen when the map is picked (2026-11-18); Settling is on by default
+case object DeepWoodsSettling extends GameOption with ToggleOption {
     val group = "Fan Map Rules"
     val valueOn = "Deep Woods".styled(styles.forest) ~ SpacedDash ~ "Settling".hh
     override def required(all : $[BaseOption]) = $($(DeepWoodsMap))
     override val explain = OutsidersMaps.settlingRules
 }
 
-case object WastelandsWater extends GameOption with ToggleOption with FoldedOption {
+case object WastelandsWater extends GameOption with ToggleOption {
     val group = "Fan Map Rules"
     val valueOn = "Wastelands".styled(Rabbit) ~ SpacedDash ~ "Water and Barren Trails".hh
     override def required(all : $[BaseOption]) = $($(WastelandsMap))
@@ -1951,7 +1952,10 @@ object Meta extends MetaGame {
     // fixes were first gated (RulesVersion.expand, used by Game), so a new game records one option instead of each fix
     lazy val newGame : $[O] = $(RulesVersion.latest)
 
-    override def completeSaved(n : Int, l : $[F], options : $[O]) = autoHitsOn(randomOfficial(options).diff(retired).diff(RulesVersion.implied))
+    override def completeSaved(n : Int, l : $[F], options : $[O]) = settlingOn(autoHitsOn(randomOfficial(options).diff(retired).diff(RulesVersion.implied)))
+
+    // Deep Woods Settling is on by default (2026-11-18): a setup a browser saved without the Deep Woods map picked starts with it on
+    def settlingOn(options : $[O]) : $[O] = options.has(DeepWoodsMap).?(options).|((options :+ DeepWoodsSettling).distinct)
 
     // A setup saved with the retired Random map gets Random Official instead
     def randomOfficial(options : $[O]) : $[O] = options./{
@@ -1984,6 +1988,7 @@ object Meta extends MetaGame {
         SetupOrderPriority,
         CardDraftStandard,
         MountainSuitedLandmark,
+        DeepWoodsSettling,
         NoHirelings) ++ hirelings./(IncludeHireling)
 
     // Two presets (2026-10-31): the hirelings one repeated the Hirelings section, Sunday Games was JT's group's house rules
