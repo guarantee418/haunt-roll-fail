@@ -405,11 +405,25 @@ object PlayerKey {
 }
 
 object Elo {
-    // a finished game: its sides, each with the names on it and whether it won
-    case class Result(game : String, time : String, title : String, sides : $[($[String], Boolean)])
-    case class Change(result : Result, before : Double, after : Double, won : Boolean, opponents : $[String])
+    // a seat of a finished game: the player's name and, in games reported since 2026-11-18 (MetaGame.rankingSeat), what it played
+    case class Entry(name : String, seat : |[RankingSeat])
+    // a side: the seats on it and whether it won
+    case class Side(entries : $[Entry], won : Boolean) {
+        def names = entries./(_.name)
+    }
+    case class Result(game : String, time : String, title : String, sides : $[Side]) {
+        // the tournament score of a winning side: the win shared between the winning sides (a coalition, ...)
+        def share = 1.0 / sides.count(_.won)
+        def score(s : Side) = if (s.won) share else 0.0
+        // a seat "*" is no one: a game before rankings, counted only in the stats
+        def rated = sides.forall(_.names.has("*").not)
+        def players = sides./~(_.entries)./~(_.seat)./(_.players).maxOption.|(sides./(_.entries.num).sum)
+    }
+    case class Change(result : Result, side : Side, entry : Entry, before : Double, after : Double, won : Boolean, opponents : $[String])
     case class Player(name : String, rating : Double, games : Int, wins : Int, last : String, history : $[Change]) {
         def provisional = games < Elo.provisional
+        def peak = history./(_.after).max
+        def lastChange = history.last.after - history.last.before
     }
 
     val start = 1000.0
@@ -418,12 +432,18 @@ object Elo {
 
     def unesc(s : String) = s.replace("\\t", "\t").replace("\\n", "\n").replace("\\\\", "\\")
 
-    // the server's lines: game, time, title, "W:name,name;L:name"
+    def entry(s : String) : Entry = s.split('/').$ match {
+        case n :: f :: seat :: players :: rest if seat.toIntOption.any && players.toIntOption.any => Entry(n, |(RankingSeat(f.replace('_', ' '), seat.toInt, players.toInt, rest.headOption.filter(_.nonEmpty))))
+        case n :: _ => Entry(n, None)
+        case _ => Entry(s, None)
+    }
+
+    // the server's lines: game, time, title, "W:name,name;L:name", each name maybe followed by its seat (token)
     def parse(text : String) : $[Result] = text.split('\n').$.%(_.nonEmpty)./~{ line =>
         line.split('\t').$./(unesc) match {
-            case $(game, time, title, sides) =>
-                val ss = sides.split(';').$.%(_.length > 2)./(s => (s.drop(2).split(',').$.%(_.nonEmpty).distinct, s.startsWith("W:")))
-                val names = ss.flatMap(_._1).map(_.toLowerCase)
+            case game :: time :: title :: sides :: _ =>
+                val ss = sides.split(';').$.%(_.length > 2)./(s => Side(s.drop(2).split(',').$.%(_.nonEmpty)./(entry).distinctBy(e => (e.name == "*").?(e.seat.toString).|(e.name.toLowerCase)), s.startsWith("W:")))
+                val names = ss.flatMap(_.names).map(_.toLowerCase).but("*")
                 (names.distinct.num == names.num).?(Result(game, time, title, ss))
             case _ => None
         }
@@ -434,8 +454,8 @@ object Elo {
         var display = Map[String, String]()
         var history = Map[String, $[Change]]()
 
-        results.foreach { r =>
-            r.sides.flatMap(_._1).foreach(n => display += n.toLowerCase -> n)
+        results.%(_.rated).foreach { r =>
+            r.sides.flatMap(_.names).foreach(n => display += n.toLowerCase -> n)
 
             def of(n : String) = rating.get(n.toLowerCase).|(start)
             def avg(l : $[String]) = l./(of).sum / l.num
@@ -443,19 +463,19 @@ object Elo {
             val n = r.sides.num
             var delta = Map[String, Double]()
 
-            for ((w, true) <- r.sides; (l, false) <- r.sides) {
-                val e = 1 / (1 + math.pow(10, (avg(l) - avg(w)) / 400))
+            for (w <- r.sides.%(_.won); l <- r.sides.%(_.won.not)) {
+                val e = 1 / (1 + math.pow(10, (avg(l.names) - avg(w.names)) / 400))
                 val d = K / (n - 1) * (1 - e)
-                w.foreach(x => delta += x.toLowerCase -> (delta.get(x.toLowerCase).|(0.0) + d))
-                l.foreach(x => delta += x.toLowerCase -> (delta.get(x.toLowerCase).|(0.0) - d))
+                w.names.foreach(x => delta += x.toLowerCase -> (delta.get(x.toLowerCase).|(0.0) + d))
+                l.names.foreach(x => delta += x.toLowerCase -> (delta.get(x.toLowerCase).|(0.0) - d))
             }
 
-            r.sides.foreach { case (l, won) =>
-                l.foreach { x =>
-                    val k = x.toLowerCase
-                    val before = of(x)
+            r.sides.foreach { s =>
+                s.entries.foreach { e =>
+                    val k = e.name.toLowerCase
+                    val before = of(e.name)
                     val after = before + delta.get(k).|(0.0)
-                    history += k -> (history.get(k).|($) :+ Change(r, before, after, won, r.sides.filter(_._1 != l).flatMap(_._1)))
+                    history += k -> (history.get(k).|($) :+ Change(r, s, e, before, after, s.won, r.sides.filter(_ != s).flatMap(_.names)))
                 }
             }
 
@@ -467,6 +487,18 @@ object Elo {
             Player(display(k), rating.get(k).|(start), h.num, h.count(_.won), h.last.result.time, h)
         }.sortBy(p => (p.provisional, -p.rating))
     }
+
+    // The faction and turn order stats, like the Root leagues': games, tournament score (a win, shared between the winning
+    // sides), relative score (score per game) and the average game score
+    case class Stat(key : String, games : Int, score : Double, scores : $[Int]) {
+        def relative = score / games
+        def average = scores.any.?(scores.sum.toDouble / scores.num)
+    }
+
+    def seats(results : $[Result]) : $[(Result, Side, RankingSeat)] = results./~(r => r.sides./~(s => s.entries./~(_.seat)./(e => (r, s, e))))
+
+    def stats(l : $[(Result, Side, RankingSeat)], key : RankingSeat => String) : $[Stat] =
+        l.groupBy(x => key(x._3)).toList.map { case (k, xx) => Stat(k, xx.num, xx./{ case (r, s, _) => r.score(s) }.sum, xx./~(_._3.score)./~(_.toIntOption)) }.sortBy(s => (-s.relative, -s.games))
 }
 
 class HRFUI(implicit resources : Resources) {
@@ -1020,12 +1052,23 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     // Rankings: the first client to reach the end reports the sides, by seat, people only; the server keeps one report
                     var reported = false
 
-                    def reportResult(g : meta.G, winners : $[Any]) {
+                    // the rating changes the game made, as a line at the end of its log (asked for on 2026-11-18)
+                    def showRatings(note : Elem => Unit) {
+                        val metas = HRF.metas.%(m => m.ranking.any && m.ranking == meta.ranking)./(_.name).distinct.join(",")
+                        getF(HRF.server.get + "/rankings/" + metas) { text =>
+                            val changes = Elo.compute(Elo.parse(text))./~(_.history).%(_.result.game == server.get)
+                            def signed(d : Double) = { val r = d.round ; (r >= 0).?("+" + r).|(r.toString) }
+                            if (changes.any)
+                                note("Rankings: ".hl ~ changes.sortBy(c => -c.after)./(c => c.entry.name.hlb ~ " " ~ c.after.round.toString.hl ~ " (" ~ signed(c.after - c.before) ~ ")").join(", "))
+                        }(())
+                    }
+
+                    def reportResult(g : meta.G, winners : $[Any], note : Elem => Unit) {
                         if (reported.not && HRF.replay.not && meta.ranking.any && server.any) {
                             reported = true
-                            val sides = meta.rankingSides(g, winners)./{ case (l, won) => (l./~(users.get), won) }.filter(_._1.any)
+                            val sides = meta.rankingSides(g, winners)./{ case (l, won) => (l./~(f => users.get(f)./(_ + meta.rankingSeat(g, f)./(_.token).|(""))), won) }.filter(_._1.any)
                             if (sides.num >= 2 && sides.exists(_._2) && sides.exists(_._2.not))
-                                post(HRF.server.get + "/report-result/" + user + "/" + HRF.secret.get + "/" + server.get, (meta.name +: title.|("%untitled%") +: sides./{ case (l, won) => (won.?("W").|("L") +: l).join(" ") }).join("\n"))(_ => ())
+                                post(HRF.server.get + "/report-result/" + user + "/" + HRF.secret.get + "/" + server.get, (meta.name +: title.|("%untitled%") +: sides./{ case (l, won) => (won.?("W").|("L") +: l).join(" ") }).join("\n"))(_ => showRatings(note))
                         }
                     }
 
@@ -1386,15 +1429,67 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         var mine = $[String]()
 
+        var results = $[Elo.Result]()
+
+        def percent(x : Double) = (math.round(x * 1000) / 10.0).toString + "%"
+
+        def statLine(st : Elo.Stat, expected : |[Double]) =
+            (st.games + " game" + (st.games != 1).??("s") + ", score " + (math.round(st.score * 100) / 100.0) + ", ").spn ~ percent(st.relative).hl ~
+            expected./(e => (" (" + percent(e) + " expected)").spn(xstyles.smaller75)).|(Empty) ~
+            st.average./(a => (", average score " + (math.round(a * 10) / 10.0)).spn).|(Empty)
+
+        // the stats of the seats listed, by faction or by place in the turn order
+        def statOptions(group : String, l : $[Elo.Stat], label : String => Elem, expected : String => |[Double]) =
+            l./(st => ZOption(group, Div(label(st.key) ~ ": " ~ statLine(st, expected(st.key)), ZBasic.info)))
+
         def player(p : Elo.Player, all : $[Elo.Player]) {
+            val seats = p.history./~(c => c.entry.seat./(e => (c.result, c.side, e)))
+
             ui.action.asker.zask(
-                $(ZOption(p.name.hlb.spn(xstyles.larger110), Div(("Rating " ~ rating(p).hlb ~ ", " ~ p.games.hl ~ " game" ~ (p.games != 1).??("s") ~ ", " ~ p.wins.hl ~ " won").spn, ZBasic.info))) ++
+                $(ZOption(p.name.hlb.spn(xstyles.larger110), Div(("Rating " ~ rating(p).hlb ~ ", peak " ~ p.peak.round.toString.hl ~ ", " ~ p.games.hl ~ " game" ~ (p.games != 1).??("s") ~ ", " ~ p.wins.hl ~ " won (" ~ percent(p.wins.toDouble / p.games) ~ ")").spn, ZBasic.info))) ++
+                statOptions("By faction", Elo.stats(seats, _.faction), _.hlb, _ => None) ++
+                statOptions("By turn order", Elo.stats(seats, e => e.seat + " of " + e.players).sortBy(_.key), k => ("Seat " + k).hlb, k => k.split(' ').last.toIntOption./(1.0 / _)) ++
                 p.history.reverse./{ c =>
                     ZOption("Games", Div(
                         c.result.time.take(10).spn(xstyles.smaller75) ~ " " ~ c.result.title.hh ~ ": " ~
+                        c.entry.seat./(e => (e.faction + ", seat " + e.seat + e.score./(x => ", " + (x == "D").?("dominance").|(x + " " + unit)).|("") + ", ").spn).|(Empty) ~
                         (c.won.?("won".hlb).|("lost".txt)) ~ " against " ~ c.opponents.join(", ") ~ ", " ~ signed(c.after - c.before).hl ~ " (" ~ c.after.round.toString ~ ")",
                     ZBasic.info))
                 } ++
+                $(ZBasic(" ", Div("Back"), () => show(all)))
+            )
+        }
+
+        // the players counts the games had, for the stats' filter (None: every game)
+        def playerCounts = results./(_.players).distinct.sorted
+
+        def filterOptions(group : String, n : |[Int], go : |[Int] => Unit) =
+            (playerCounts.num > 1).$(ZBasic(group, Div("All games".hlIf(n.none)), () => go(None))) ++
+            (playerCounts.num > 1).??(playerCounts./(k => ZBasic(group, Div((k + " players").hlIf(n.has(k))), () => go(|(k)))))
+
+        def unit = meta.ranking.has("root").?("VP").|("fame")
+
+        def explainStats = "From the finished online games" ~ meta.ranking.has("root").?(" (bots too, before 2026-11-18)").|(" with people on two sides or more") ~ ". Score: " ~ "1".hl ~ " for a win, shared between the winning sides (a coalition, a shared win); relative score: score per game; average score: the " ~ unit ~ " at the end" ~ meta.ranking.has("root").??(" (a dominance not counted)") ~ "."
+
+        def factions(all : $[Elo.Player], n : |[Int]) {
+            val seats = Elo.seats(results.%(r => n.forall(_ == r.players)))
+            ui.action.asker.zask(
+                $(ZOption((meta.label + " Faction Stats").hl.spn(xstyles.larger110), Div(explainStats, ZBasic.info))) ++
+                filterOptions("Players", n, factions(all, _)) ++
+                statOptions("Factions", Elo.stats(seats, _.faction), _.hlb, _ => n./(1.0 / _)) ++
+                seats.none.$(ZOption("Factions", Div("No games yet.", ZBasic.info))) ++
+                $(ZBasic(" ", Div("Back"), () => show(all)))
+            )
+        }
+
+        def turns(all : $[Elo.Player]) {
+            val seats = Elo.seats(results)
+            ui.action.asker.zask(
+                $(ZOption((meta.label + " Turn Order Stats").hl.spn(xstyles.larger110), Div(explainStats ~ " Seat " ~ "1".hl ~ " is the first player.", ZBasic.info))) ++
+                seats./(_._3.players).distinct.sorted./~{ k =>
+                    statOptions(k + " players", Elo.stats(seats.%(_._3.players == k), _.seat.toString).sortBy(_.key.toInt), x => ("Seat " + x).hlb, _ => |(1.0 / k))
+                } ++
+                seats.none.$(ZOption("Seats", Div("No games yet.", ZBasic.info))) ++
                 $(ZBasic(" ", Div("Back"), () => show(all)))
             )
         }
@@ -1418,15 +1513,17 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         }
 
         def show(all : $[Elo.Player]) {
-            val explain = "Elo ratings from finished online games with people on two sides or more (teams count as one side; bots and local games don't count). Everyone starts at " ~ Elo.start.round.toString.hl ~ "; a " ~ "?".hl ~ " marks fewer than " ~ Elo.provisional.hl ~ " games."
+            val explain = "Elo ratings from finished online games with people on two sides or more (teams count as one side; bots and local games don't count). Everyone starts at " ~ Elo.start.round.toString.hl ~ "; a " ~ "?".hl ~ " marks fewer than " ~ Elo.provisional.hl ~ " games." ~ meta.ranking.has("root").??(" Root ratings count the games played from 2026-11-18; the stats count every game.")
             val you = mine.any.?("Your name" ~ (mine.num > 1).??("s") ~ " on this device: " ~ mine./(_.hlb).join(", ")).|("Names you type when joining an online game are claimed for this device. Play on another device with your player code.".txt)
 
             ui.action.asker.zask(
                 $(ZOption(title, Div(explain, ZBasic.info))) ++
                 all.zipWithIndex./{ case (p, i) =>
-                    ZBasic("Players", Div(((i + 1) + ". ").spn ~ p.name.hlb ~ " " ~ rating(p).hl ~ Break ~ (p.games + " game" + (p.games != 1).??("s") + ", " + p.wins + " won, last " + p.last.take(10)).spn(xstyles.smaller75)), () => player(p, all))
+                    ZBasic("Players", Div(((i + 1) + ". ").spn ~ p.name.hlb ~ " " ~ rating(p).hl ~ Break ~ (p.games + " game" + (p.games != 1).??("s") + ", " + p.wins + " won (" + percent(p.wins.toDouble / p.games) + "), peak " + p.peak.round + ", last " + signed(p.lastChange) + " on " + p.last.take(10)).spn(xstyles.smaller75)), () => player(p, all))
                 } ++
                 all.none.$(ZOption("Players", Div("No rated games yet.", ZBasic.info))) ++
+                Elo.seats(results).any.$(ZBasic("Stats", Div("Faction stats"), () => factions(all, None))) ++
+                Elo.seats(results).any.$(ZBasic("Stats", Div("Turn order stats"), () => turns(all))) ++
                 $(ZOption("Your player code", Div(you, ZBasic.info))) ++
                 $(ZBasic("Your player code", Div("Show my player code"), () => {
                     showOverlayRaw("Your player code".hl, $("Enter it under Rankings on another device to play there under your names. Keep it to yourself: anyone with it can.".txt, PlayerKey.get.hlb.spn(xstyles.larger110)))
@@ -1441,7 +1538,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
             def rankings() =
                 getF(server + "/rankings/" + metas) { text =>
-                    show(Elo.compute(Elo.parse(text)))
+                    results = Elo.parse(text)
+                    show(Elo.compute(results))
                 } {
                     ui.action.asker.zask($(ZOption(title, Div("The server can't be reached.", ZBasic.info)), back))
                 }
@@ -2188,7 +2286,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
     // first, its drag handles and all. Play Again clears the page and resets it
     var gameStarted = false
 
-    def startGame(seatingX : $[meta.F], difficulties : Map[meta.F, Difficulty], optionsX : $[meta.O], self : $[meta.F], journal : Journal[meta.gaming.ExternalAction], title : String, names : () => Map[meta.F, String], swt : Switches, onOver : (meta.G, $[Any]) => Unit = (_ : meta.G, _ : $[Any]) => ()) {
+    def startGame(seatingX : $[meta.F], difficulties : Map[meta.F, Difficulty], optionsX : $[meta.O], self : $[meta.F], journal : Journal[meta.gaming.ExternalAction], title : String, names : () => Map[meta.F, String], swt : Switches, onOver : (meta.G, $[Any], Elem => Unit) => Unit = (_ : meta.G, _ : $[Any], _ : Elem => Unit) => ()) {
         if (gameStarted) {
             dom.console.warn("game already started, second start ignored")
             return

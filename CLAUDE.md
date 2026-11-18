@@ -328,7 +328,7 @@ cd haunt-roll-fail && sbt fullOptJS
   git fetch origin main && git push origin origin/main:refs/heads/deploy
   ```
 
-- Rankings (Northgard and its Adset, one ladder; asked for on 2026-11-18): there are no accounts, so the name a player types on
+- Rankings (two ladders, Northgard with its Adset, and Root with its Advanced Setup and Mirror; asked for on 2026-11-18): there are no accounts, so the name a player types on
   joining a ranked game (`Meta.ranking`) is claimed with a random key kept in that browser (`PlayerKey`, `hrf.player-key`;
   `claimName` in `hrf.scala`): the server (`good-game/Ranking.scala`, files in `good-game/ranking/`, copied to `ranking/` in
   `hrf-games`) keeps the key's SHA-256 with the name and refuses the name to any other key. The key is the player's "player code",
@@ -340,6 +340,16 @@ cd haunt-roll-fail && sbt fullOptJS
   side beats each losing side, sides rated by their people's average; fewer than 5 games is "provisional", shown with "?"), only
   games with people on two sides or more. The games that ended before are in `good-game/ranking-seed.tsv` (found with
   `LiveCheck <hrf-games> ranking`; their times only keep the order).
+  Each seat reported also says what it played (`Meta.rankingSeat`, `RankingSeat.token`: "user/faction/seat/players/score", the clan
+  and final fame, or the Root faction, a Vagabond with its character, and VP, "D" for a dominance), for the menu's "Faction stats"
+  (filtered by player count) and "Turn order stats" (by player count), like the Root leagues' (rootleague.pliskin.dev): games,
+  score (1 per win, shared between winning sides), relative score (per game, beside what a seat would expect) and average score;
+  each player's page has them too, and the leaderboard the win rate, peak and last change. Root's Elo starts with the games
+  reported from 2026-11-18 (owner's ask); its finished games before then are in the seed with every seat (bots too) as "*", no one,
+  so they count in the stats but in no rating (`Result.rated`; `STATS` lines of `LiveCheck <hrf-games> ranking`). When a game ends,
+  each browser shows once the rating changes it made (`showRatings` in `hrf.scala`, `hrf.rating-shown.<game>`). Names are released or
+  moved by committing `ranking-changes/<name>.txt` to `hrf-games` (`release <name>`, `rename <name> -> <new>`, `seat <user> <name>`;
+  `Ranking.change`, applied once each by `Backup`, outcome in `<name>.result`).
 - Fixing a running game: through the `hrf-games` repository (copy `games/<id>.tsv` to
   `fixes/<id>.tsv` and edit it; its README and `notes/server.md` say how).
 - The in-game "Report a Bug" button posts to `/report-bug`; the server saves the report,

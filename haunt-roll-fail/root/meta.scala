@@ -2093,6 +2093,22 @@ object Meta extends MetaGame {
 
     def createGame(factions : $[Faction], options : $[O]) = new Game(factions, factions, options)
 
+    // Rankings (asked for on 2026-11-18): every Root game (the standard setup, Advanced Setup and Mirror) goes to one ladder; each
+    // faction is a side, so a Vagabond in a coalition wins beside its ally
+    override def ranking = |("root")
+    override def rankingSides(g : G, winners : $[Any]) = rankSides(g, winners)
+    override def rankingSeat(g : G, f : F) = rankSeat(g, f)
+
+    def rankSides(game : Game, winners : $[Any]) : $[($[Faction], Boolean)] = game.factions./(f => $(f) -> winners.contains(f))
+
+    // the faction (a Vagabond with its character), its place in the turn order set up and its VP ("D" for a dominance)
+    def rankSeat(implicit game : Game, f : Faction) : |[RankingSeat] = game.factions.has(f).?{
+        val name = f.as[Hero]./~(h => game.states.get(h)./~(_.as[HeroPlayer])./~(_.character))./(c => f.name + " (" + c.name + ")").|(f.name)
+        // game.factions turns with each turn; game.ordering keeps the order set up
+        val seat = game.ordering.find(_._2 == f)./(_._1).|(game.factions.indexOf(f))
+        RankingSeat(name, seat + 1, game.factions.num, |((f.vp < 0).?("D").|(f.vp.toString)))
+    }
+
     def getBots(f : Faction) = f match {
         case _ : Feline => $("Easy")
         case _ : Aviary => $("Easy")
