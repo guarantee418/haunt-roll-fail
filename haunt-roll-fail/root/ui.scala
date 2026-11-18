@@ -218,6 +218,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case BearTrap => { DrawRect("dark-trap-token", -40, -40, 80, 80) }
             case Infected => { DrawRect("ddi-infected", -39, -70, 78, 77) }
             case GoldenKnightMarker => { DrawRect("dark-knight-token", -45, -45, 90, 90) }
+            case MurderHawk => { DrawRect("upstarts-hawk", -50, -50, 100, 100) }
+            case HousingSlot => { DrawRect("upstarts-housing", -45, -45, 90, 90) }
             case RingMarker => { DrawRect("item-ring", -55, -55, 110, 110) }
             case MonsterPawn => { DrawRect("monster-" + game.monster./(_.id).|("demon-bear"), -60, -110, 120, 120) }
             case LegendsDie(n) => { DrawRect("die-" + n, -32, -32, 64, 64) }
@@ -1520,6 +1522,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 g.drawImage(resources.images.get(mapid + "blizzard-mark"), x - 32, y - 32)
         }
 
+        // the Upstarts & Renegades deck's Trailblazers: the trail between its two clearings
+        game.upstarts.trail.foreach { case (_, a, b) =>
+            val (x, y) = game.board.mid(a, b)
+            g.drawImage(resources.images.get("upstarts-trail"), x - 45, y - 45, 90, 90)
+        }
+
         // the Twelve Colonies' turtles on paths, at the path's middle
         factions.of[TwelveColonies].%(game.states.contains).foreach { f =>
             f.paths.foreach { case (k : (Clearing, Clearing), n : Int) =>
@@ -2814,6 +2822,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         case Some(SquiresDeck) => "card-back-art-sd"
         case Some(FrankenDeck) => "card-back-art-fd"
         case Some(DarkDeck) => "card-back-art-dd"
+        case Some(UpstartsDeck) => "card-back-art-ur"
         case _ => "card-back-art"
     }
 

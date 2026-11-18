@@ -484,6 +484,12 @@ trait FactionState {
     if (options.has(DarkDeck))
         location(OnForbiddenScience)
 
+    // the Upstarts & Renegades deck: the Murder Hawk off the map, and the warriors on Baron Von Costume
+    if (options.has(UpstartsDeck)) {
+        location(OnCostume)
+        location(HawkPerch, content = faction.is[Hireling].not.$(Figure(faction, MurderHawk, 1)))
+    }
+
     def transient : $[Effect] = $
 
     var effects : $[Effect] = $
@@ -1010,7 +1016,7 @@ trait GameImplicits {
         }
 
         def connectedFor(o : Region) = {
-            val tt = game.transports.but(Ferry).but(OffTrail).but(FoxburrowRoads).but(ForestShortcut).%(_.allows(f, o))
+            val tt = game.transports.but(Ferry).but(OffTrail).but(FoxburrowRoads).but(ForestShortcut).but(TrailMove).%(_.allows(f, o))
             f.validDest.but(o).%(d => tt.exists(_.allows(f, o, d)))
         }
 
@@ -1243,6 +1249,7 @@ trait GameImplicits {
 
         def rules(c : Region) : Boolean = f @@ {
             case f if SquiresDeckExpansion.silverTongueRules(f, c) => true
+            case f if UpstartsDeckExpansion.escortRules(f, c) => true
             case f if BonePatrolExpansion.guarded(f, c) => true
             case h : Hireling if factions.%(_.has(h)).%(f => f.rules(c)).any => true
             case f =>
@@ -1266,6 +1273,9 @@ trait GameImplicits {
 
             if (options.has(DarkDeck))
                 DarkDeckExpansion.discarded(f, effect)
+
+            if (options.has(UpstartsDeck))
+                UpstartsDeckExpansion.discarded(f, effect)
 
             if (effect == CoffinMakers)
                 game.coffins --> game.pool
@@ -1722,6 +1732,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             AbductAAAExpansion,
             KnavesExpansion,
 
+            UpstartsDeckExpansion,
             StandardDeckExpansion,
             ExilesDeckExpansion,
             DuskDeckExpansion,
@@ -1951,9 +1962,12 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     var corners : $[Clearing] = $
     var homelands : $[Clearing] = $
 
-    val transports = $[Transport](Roads, Riverboat, Ferry, Swimmers, BurrowRoads, TunnelRoads, OffTrail, FoxburrowRoads, ForestShortcut, BarrenTrail)
+    val transports = $[Transport](Roads, Riverboat, Ferry, Swimmers, BurrowRoads, TunnelRoads, OffTrail, FoxburrowRoads, ForestShortcut, BarrenTrail) ++ options.has(UpstartsDeck).$(TrailMove)
 
-    def slots(c : Clearing) = OutsidersMaps.slots(c)(this).|(c.capacity) + options.has(KeepExtraBuildingSlot).??(factions.of[Feline].%(game.states.contains).%(_.at(c).has(Keep)).num)
+    // the Upstarts & Renegades deck
+    val upstarts = new UpstartsState
+
+    def slots(c : Clearing) = OutsidersMaps.slots(c)(this).|(c.capacity) + UpstartsDeckExpansion.extraSlot(c)(this).??(1) + options.has(KeepExtraBuildingSlot).??(factions.of[Feline].%(game.states.contains).%(_.at(c).has(Keep)).num)
 
     def freeSlots(c : Clearing) = WarriorsWake.shadowed(c)(this).?(0).|(freeSlots0(c))
 
@@ -2074,7 +2088,8 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             ringAt.has(c).$(Figure(Neutral, RingMarker, 0)) ++
             MonstersExpansion.markers(c) ++
             TurnlingsExpansion.markers(c) ++
-            WhisperersExpansion.markers(c)
+            WhisperersExpansion.markers(c) ++
+            UpstartsDeckExpansion.markers(c)
     }
 
     def viewHand(f : Faction) = f.hand./(ViewCardInfoAction(f, PreBreak(OwnHand).elem(game), _))

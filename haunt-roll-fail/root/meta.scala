@@ -259,7 +259,7 @@ case object ExilesDeck extends DeckOption {
     )
 }
 
-case object MixedDeck extends DeckOption {
+case object MixedDeck extends FanDeck {
     val valueOn = "Mixed".hh
     override val explain = $(
         "Both official decks mixed to take one instance" ~ &("of the most " ~ "effect cards".hh ~ "."),
@@ -272,7 +272,7 @@ case object MixedDeck extends DeckOption {
     )
 }
 
-case object DuskDeck extends DeckOption {
+case object DuskDeck extends FanDeck {
     val valueOn = "Dawn and Dusk".hh
     override val explain = $(
         "An alternative deck by " ~ "its_rudimentary".hl ~ " and " ~ "Endgamer1331".hl ~ "!",
@@ -311,6 +311,17 @@ case object DarkDeck extends FanDeck {
         "Its shared supply adds a " ~ "Torch".hh ~ ", the " ~ "Book of Names".hh ~ ", the " ~ "Rabbit's Paw".hh ~ " and the " ~ "Cursed Idol".hh ~ " to the craftable items.",
         FanInfo.doomedLink,
         Image("dark-dark-dominance", styles.card)
+    )
+}
+
+case object UpstartsDeck extends FanDeck {
+    val valueOn = "Upstarts & Renegades".hh
+    override val explain = $(
+        "A 54 card deck from " ~ "The Outsiders Expansion".hh ~ ", fan-made by " ~ "slugfacekillah".hl ~ ".",
+        "Its ambushes, items and dominances are the base deck's; its " ~ "25".hh ~ " persistent effects are new: " ~ "Escorts".hh ~ ", " ~ "Field Medic".hh ~ ", " ~ "Murder Hawk".hh ~ ", " ~ "Trailblazers".hh ~ ", " ~ "Baron Von Costume".hh ~ ", " ~ "Goon for Hire".hh ~ " and more.",
+        "Its three " ~ "Sabotage!".hh ~ " cards are the " ~ "Exiles and Partisans".hh ~ "' " ~ "Saboteurs".hh ~ ".",
+        FanInfo.outsidersLink,
+        Image("upstarts-murder-hawk", styles.card)
     )
 }
 
@@ -675,6 +686,12 @@ case object PrisonersFromCodefenders extends GameOption with ToggleOption {
 // The Dawn and Dusk deck's fixes after a check against its cards (2026-11-13): Fowl Play in the deck, Sly Dog and Old Friend
 // asked only when they can be used (and Sly Dog again in every battle of the turn), see root/deck-dusk.scala. Hidden and on by default
 // for new games (the Frankendeck draws from the deck too); older games keep the old way so their replays don't change.
+// ReplayCheck's "upstartsall": every Upstarts & Renegades effect is dealt out crafted at the first Birdsong, to test them (not offered)
+case object UpstartsTestDeal extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Upstarts & Renegades".hh ~ " effects dealt crafted"
+}
+
 case object DuskDeckFixes extends GameOption with ToggleOption {
     val group = "Card Draft"
     val valueOn = "Dawn and Dusk".hh ~ " deck fixes"
@@ -1792,7 +1809,7 @@ object Meta extends MetaGame {
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         legendsOptions ++
         $,
-        $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck, DarkDeck) ++
+        $(StandardDeck, ExilesDeck, SquiresDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck) ++
         (n >= 5).$(ActionBooster) ++
         $,
         (l.of[Feline].num > 1).$(TheWoodMustFlow) ++
@@ -1855,7 +1872,7 @@ object Meta extends MetaGame {
         $(DeepWoodsSettling, WastelandsWater) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
-        $(StandardDeck, ExilesDeck, MixedDeck, DuskDeck, SquiresDeck, FrankenDeck, DarkDeck) ++
+        $(StandardDeck, ExilesDeck, SquiresDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck) ++
         (n >= 5).$(ActionBooster) ++
         hitsAndAmbushes(l) ++
         (n > 2).?(TotalWarDominance) ++
@@ -3655,6 +3672,31 @@ object Meta extends MetaGame {
         ImageAsset("action-key") ::
         ImageAsset("action-secret-cancel") ::
         ImageAsset("action-secret-score") ::
+    $) ::
+    ConditionalAssetsList((factions, options) => options.has(UpstartsDeck), "card/upstarts", lzy = Laziness.Later, scale = 50)(
+        ImageAsset("upstarts-sabotage") ::
+        ImageAsset("upstarts-prophetic-sight") ::
+        ImageAsset("upstarts-cooperative-housing") ::
+        ImageAsset("upstarts-birdy-boom-boom") ::
+        ImageAsset("upstarts-murder-hawk") ::
+        ImageAsset("upstarts-fox-escort") ::
+        ImageAsset("upstarts-mouse-escort") ::
+        ImageAsset("upstarts-rabbit-escort") ::
+        ImageAsset("upstarts-field-medic") ::
+        ImageAsset("upstarts-coordinated-movement") ::
+        ImageAsset("upstarts-burglar-extraordinaire") ::
+        ImageAsset("upstarts-rabbit-hood") ::
+        ImageAsset("upstarts-cobbler-commander") ::
+        ImageAsset("upstarts-salt-factory") ::
+        ImageAsset("upstarts-peace-offering") ::
+        ImageAsset("upstarts-trailblazers") ::
+        ImageAsset("upstarts-salvagers") ::
+        ImageAsset("upstarts-tagalongs") ::
+        ImageAsset("upstarts-baron-von-costume") ::
+        ImageAsset("upstarts-goon-for-hire") ::
+        ImageAsset("upstarts-hawk") ::
+        ImageAsset("upstarts-housing") ::
+        ImageAsset("upstarts-trail") ::
     $) ::
     ConditionalAssetsList((factions, options) => options.has(DarkDeck), "card/dark", lzy = Laziness.Later, scale = 50)(
         ImageAsset("dark-a-visit-to-friends") ::

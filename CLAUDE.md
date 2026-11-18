@@ -585,6 +585,16 @@ server. No session can reach the server, and none needs to.
   sharing twenty tokens (`tokensLeft`), the Old Man (`OldMan`, a token that moves into forests too, so the player registers the forests as
   locations), factories, Production (level 0 to 2, gears or drones), the Breakage Dice, Bustle, Tinker, Repair, Overproduce, Restructure
   and Do-Over. `ReplayCheck <games> omt` plays it.
+  Its Upstarts & Renegades deck is the Fan Deck "Upstarts & Renegades" (`UpstartsDeck`; 2026-11-18): the base deck's ambushes, items and
+  dominances (its cards 1 to 29 are those) and 25 persistent effects (`Deck.upstarts`, art `card/upstarts/` and back `card-back-art-ur` cut
+  by `root/tools/upstarts-art.py`), all in `root/deck-upstarts.scala` (`UpstartsDeckExpansion`, before the other decks' expansions; its header
+  lists the readings; its Sabotage! cards are the Saboteurs, so `ExilesDeckExpansion` is on with it). State is `game.upstarts`. The Murder Hawk
+  is a warrior of the crafter (`MurderHawk`, waiting in each faction's `HawkPerch`; moving with it ignores rule, `RuledMove`), the warriors on
+  Baron Von Costume sit in `OnCostume`, the Trailblazers' trail is a transport (`TrailMove`, only in games with the deck), the Escorts' ruled
+  clearing goes through `rules` (`escortRules`), Cooperative Housing adds a slot (`game.slots`), and one check before every recorded action
+  scores its clearing's new enemy buildings, discards the Murder Hawk's card when the hawk is removed and Baron Von Costume when none of its
+  owner's warriors are left on it. `ReplayCheck <games> base upstarts` plays it; `upstartsall` deals every effect out crafted at the first
+  Birdsong (the hidden `UpstartsTestDeal`) and counts their choices.
   Its two maps are Fan Maps, "Deep Woods" and "Wastelands" (`DeepWoodsMap`, `WastelandsMap`; `DeepWoodsBoard` and `WastelandsBoard` in
   `root/maps.scala`, images in `deep-woods/` and `wastelands/` made by `root/tools/outsiders-maps.py`, which also prints the Deep Woods
   building slots), also drawn by "Random". Clearing and forest names are made up. Their own rules are toggles in the setup's "Fan Map
@@ -607,7 +617,7 @@ server. No session can reach the server, and none needs to.
   `FanInfo.outsidersLink`; 2026-11-17 and 18): a new part of either gets that link too.
 - Root's fan content is grouped apart from the official (2026-11-17): the faction picker's "Fan Factions" (once "Fun Factions",
   `factionGroup`) starts folded to one line ("18 Fan Factions") and opens on a tap (`Meta.foldedFactionGroups`, `grouped` in `hrf.scala`,
-  remembered as `picker.<meta>.<group>`); the setup has "Fan Maps" (Tidal Flats, Tundra and Gloom too, since 2026-11-18) and "Fan Decks" sections (`FanMap`, `FanDeck` in `root/meta.scala`:
+  remembered as `picker.<meta>.<group>`); the setup has "Fan Maps" (Tidal Flats, Tundra and Gloom too, since 2026-11-18) and "Fan Decks" sections (Mixed and Dawn and Dusk too, since 2026-11-18) (`FanMap`, `FanDeck` in `root/meta.scala`:
   the same single choice as Map and Deck, through `OneOfGroup.oneOf`, so a folded Map shows "Urban (Fan Maps)"), Adset's "Available Fan
   Factions", and two folders (`BaseOption.folder`, a heading that folds several sections, `folder.<name>`): "Fan Hirelings" (the
   Turnlings) and "Scenarios" (the Legends Scenarios; Ring Rule, Capture Rule and the monster only once their scenario is picked,

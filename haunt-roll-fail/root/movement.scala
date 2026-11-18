@@ -119,10 +119,15 @@ case object TunnelRoads extends Transport {
 }
 
 case object RuledMove extends Transport {
-    override def allows(f : Faction, o : Region, d : Region)(implicit game : Game) = (o, d) @@ {
+    def ruled(f : Faction, o : Region, d : Region)(implicit game : Game) = (o, d) @@ {
         case (o : Rulable, d : Rulable) => f.rules(o) || f.rules(d) || f.has(CorvidPlanners) || TwelveColoniesExpansion.ruleless || ((game.riverside.contains(o) || game.riverside.contains(d)) && f.has(OtterDivers))
         case _ => false
     }
+
+    // the Upstarts & Renegades deck's Murder Hawk: moving with it ignores rule
+    override def allows(f : Faction, o : Region, d : Region)(implicit game : Game) = ruled(f, o, d) || (UpstartsDeckExpansion.hawkAt(f, o) && o.is[Rulable] && d.is[Rulable])
+
+    override def allows(f : Faction, o : Region, d : Region, l : $[Movable])(implicit game : Game) = ruled(f, o, d) || (l.has(MurderHawk) && o.is[Rulable] && d.is[Rulable])
 }
 
 case object HalfWarriors extends Transport {

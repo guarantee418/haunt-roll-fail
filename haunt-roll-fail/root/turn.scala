@@ -191,7 +191,8 @@ object TurnExpansion extends MandatoryExpansion {
                 f.can(SkyCouriers).?(SkyCouriersMainAction(f).!(f.hand.none)) ++
                 f.can(HiddenWarrens).?(HiddenWarrensMainAction(f)) ++
                 f.can(LizardEnvoys).?(LizardEnvoysMainAction(f).!(pile.none)) ++
-                options.has(DarkDeck).??(DarkDeckExpansion.birdsongStart(f))
+                options.has(DarkDeck).??(DarkDeckExpansion.birdsongStart(f)) ++
+                options.has(UpstartsDeck).??(UpstartsDeckExpansion.birdsongStart(f))
 
             val ask = Ask(f).add(RawElemGroup("Start of " ~ Birdsong.elem)).add(mandatory)
 

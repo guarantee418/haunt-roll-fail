@@ -791,6 +791,9 @@ object BattleExpansion extends MandatoryExpansion {
                         actions :+= HoardersMainAction(f, BattlePostRollAction(b, fh - 1, oh, fe, oe, full))
                 }
 
+                if (options.has(UpstartsDeck))
+                    actions ++= UpstartsDeckExpansion.postRoll(f, b, fh, oh, fe, oe, full)
+
                 if (f.canRemove(b.clearing)(o)) {
                     if (options.has(DarkDeck))
                         actions ++= DarkDeckExpansion.postRoll(f, b, fh, oh, fe, oe, full, ft, ot)
