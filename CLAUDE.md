@@ -621,6 +621,15 @@ server. No session can reach the server, and none needs to.
   (`game.water`, `waterSupply`), the `BarrenTrail` transport (paid with a Water, a staying warrior or a Vagabond item), the Water
   actions, Surrender and Seizure. The "Map Rules" button under the action pane (and tapping a barren trail) shows the rules and where
   the game stands (`"view-map-rules"` in `root/ui.scala`). `ReplayCheck <games> deepwoods [settling]` or `wastelands [water]` plays them.
+- The Noxious Battery (NX, `root/faction-noxious-battery.scala`, its header lists the readings; images `nx-*` in `faction/battery/`, cut by
+  `root/tools/noxious-art.py` from the print-and-play folder's ASSETS; S.P. Shaman's fan Nemesis Expansion, art by disasterman; asked for on
+  2026-11-18) is a Fun Faction and in Advanced Setup's pool (reach 5): skunks (`Skunk`), a cannon pawn (`Cannon`, starting damaged on a ruin,
+  `damaged` in `NoxiousBatteryPlayer`; damaged it isn't hit, removed or battled alone, `NoxiousBatteryExpansion.hittable` in the battle's hit
+  assignment and `untouchable` in `validAttackTarget`; a move with it ignores rule, in `RuledMove`; removed undamaged by an enemy it flips, the
+  enemy scores 1 and the Bore's cannonballs roll to adjacent clearings), cannonballs (`Cannonball`, in The Bore, `bore`, scoring 3, 2, 1 when
+  fired; Keep on Rollin' rolls one an enemy removes to an adjacent clearing), scent marks (`ScentMark`; Foul Stench moves each enemy's warriors
+  and pawns out of their clearings at its `CleanUpAction`). Birdsong: Levy, Fire! (any number of times), Repair; Daylight: craft with scent
+  marks, then 4 of Recruit, Battle, Rollout (`CannonballMove`), Rearm; Evening: Spray, Load, draw. `ReplayCheck <games> nx` plays it.
 - Every fan, playtest and mirror faction has a "?" (2026-11-17): who made it, then what it does and how it plays, a line
   each (`FanInfo.about` in `root/fan-info.scala`). The faction picker shows it as a "?" button beside the name (`Meta.factionInfo`,
   `xstyles.infoButton` in `pickElem`), and Advanced Setup's "Available Factions" toggles as the setup's usual ? (`IncludeFaction.explain`).

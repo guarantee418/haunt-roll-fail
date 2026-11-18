@@ -311,6 +311,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case RobotGear(_) => { DrawRect(pr + "gear", -24, -24, 48, 48) }
             case OldMan => { DrawRect(pr + "old-man", -40, -84, 80, 90) }
             case TinkerFactory => { DrawRect(pr + "factory", -50, -50, 100, 100) }
+            case Skunk => { DrawRect(pr + "skunk", -55, -86, 110, 88) }
+            case Cannon => { DrawRect(pr + "cannon" + faction.as[NoxiousBattery].?(_.damaged).??("-damaged"), -68, -88, 135, 92) }
+            case Cannonball => { DrawRect(pr + "cannonball", -40, -40, 80, 80) }
+            case ScentMark => { DrawRect(pr + "scent", -40, -40, 80, 80) }
             case b : Robot => { DrawRect(pr + b.id + faction.as[OldManTinker].?(t => t.rsi(b) == 0).??("-broken"), -48, -86, 96, 92) }
             case Infestation => { DrawRect(pr + "infestation", -50, -50, 100, 100) }
             case Cave => { DrawRect("wm-cave", -50, -50, 100, 100) }
@@ -2463,6 +2467,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 &((Image(f.style + "-bat-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-bat", styles.wr) *** (f.all(f.warrior).num % 5))) ~
                 &((Image(f.style + "-bat-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-bat-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
 
+            case f : NoxiousBattery =>
+                Hint("The Cannon\n" + f.cannon./(_.name).|("-") + (f.damaged).?(", damaged").|("") + "\nThe Bore: " + f.bore.num + " of 3 cannonballs loaded, next fire " + f.nextVP + " VP\n" + f.pooled(Cannonball) + " in the supply, " + f.all(Cannonball).num + " on the map",
+                    (Image(f.style + "-cannon" + f.damaged.??("-damaged"), styles.wr) ~ " " ~ "Bore".styled(f) ~ " " ~ (Image(f.style + "-cannonball", styles.token) *** f.bore.num) ~ (Image("empty-token", styles.token) *** (3 - f.bore.num)) ~ " " ~ f.nextVP.vp).div(styles.warline)) ~
+                Hint("Scent Marks\n" + f.marks.num + " on the map, " + f.pooled(ScentMark) + " on the track\nDraw " + f.draws + " in Evening, load " + f.loads,
+                    (Image(f.style + "-scent", styles.token) *** f.marks.num) ~ (Image("empty-token", styles.token) *** f.pooled(ScentMark)) ~ " " ~ "Draw".styled(f) ~ " " ~ f.draws.hl ~ " " ~ "Load".styled(f) ~ " " ~ f.loads.hl) ~ Break ~
+                (game.current == f && game.phase == Daylight).?(Gap ~ 1.to(f.acted)./(_ => Image("action-black", styles.building)) ~ (f.acted.until(4)./(_ => Image(f.style + "-action", styles.building)))) ~
+                Div(Hint("Skunks\n" + f.all(f.warrior).num + " on the map\n" + f.pooled(f.warrior) + " available",
+                &((Image(f.style + "-skunk-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-skunk", styles.wr) *** (f.all(f.warrior).num % 5))) ~
+                &((Image(f.style + "-skunk-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-skunk-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
+
             case f : OldManTinker =>
                 Hint("Production\nLevel " + f.level + ", " + f.drones.?("drones").|("gears") + "\n" + f.tokensLeft + " of 20 tokens in the supply",
                     ("Production".styled(f) ~ " " ~ f.level.hl ~ " " ~ Image(f.style + f.drones.?("-drone").|("-gear"), styles.token) ~ " " ~ "Supply".styled(f) ~ " " ~ f.tokensLeft.hl).div) ~
@@ -2853,6 +2867,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         case _ : OrderOfTheForest => Some("of-board")
         case _ : TwelveColonies => Some("tw-board")
         case _ : OldManTinker => Some("omt-board")
+        case _ : NoxiousBattery => Some("nx-board")
         case _ : Doomsayers => Some("du-board")
         case _ : Whisperers => Some("wg-board")
         case _ : OldExpedition => Some("ok-board")
@@ -3761,6 +3776,36 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     less(DarkPassage.of(f).larger) ~
                     more(DarkPassage.of(f).larger, "On their turn, other players may give", f, "a card to place any number of their warriors from one", "cave".hh, "in another", Dot) ~
                     desc("Caves".hh, game.caves./(_.elem).comma) ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), {
+                    case (f : Faction, more : Boolean) => onFactionStatus(f, more, None)
+                    case _ =>
+                        overlayPane.invis()
+                        overlayPane.clear()
+                })
+
+            case f : NoxiousBattery =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    f.name.f.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    Image("nx-board")(styles.factionboard) ~
+                    HGap ~
+                    HGap ~
+                    less("The Cannon".hl.larger) ~
+                    more("The Cannon".hl.larger, "fires in Birdsong at a clearing next to it: a cannonball from", "the Bore".hh, "scores as many points as are loaded, then removes a piece of an enemy for each cannonball there; a move with it ignores rule", Dot, "Damaged, it can't fire or be hit; an enemy removing it undamaged scores", 1.vp, "and the loaded cannonballs roll away", Dot) ~
+                    desc("The Cannon is in", f.cannon./(_.elem).|("none".txt), f.damaged.?("(damaged)"), Comma, f.bore.num.hl, "of", 3.hl, "cannonballs loaded") ~
+                    HGap ~
+                    HGap ~
+                    less("Scent Marks".hl.larger) ~
+                    more("Scent Marks".hl.larger, "are sprayed in Evening where", 2.hl, "skunks are; at the end of each enemy's turn its warriors and pawns leave every clearing with one (", FoulStench.of(f), ")", Dot, "Each mark off the track draws or loads more", Dot) ~
+                    desc(f.marks.num.hl, "on the map", Comma, "draw", f.draws.hl, Comma, "load", f.loads.hl) ~
                     HGap ~
                     HGap ~
                     info() ~

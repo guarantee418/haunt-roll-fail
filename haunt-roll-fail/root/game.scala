@@ -863,6 +863,7 @@ trait GameImplicits {
     implicit def orderForestState(f : OrderOfTheForest)(implicit game : Game) = game.states(f).as[OrderForestPlayer].get
     implicit def twelveColoniesState(f : TwelveColonies)(implicit game : Game) = game.states(f).as[TwelveColoniesPlayer].get
     implicit def oldManTinkerState(f : OldManTinker)(implicit game : Game) = game.states(f).as[OldManTinkerPlayer].get
+    implicit def noxiousBatteryState(f : NoxiousBattery)(implicit game : Game) = game.states(f).as[NoxiousBatteryPlayer].get
     implicit def doomState(f : Doomsayers)(implicit game : Game) = game.states(f).as[DoomsayersPlayer].get
     implicit def whisperersState(f : Whisperers)(implicit game : Game) = game.states(f).as[WhisperersPlayer].get
     implicit def invasiveEEEState(f : InvasiveEEE)(implicit game : Game) = game.states(f).as[InvasiveEEEPlayer].get
@@ -1025,6 +1026,9 @@ trait GameImplicits {
                 return false
 
             if (e == RiverfolkFlotilla)
+                return false
+
+            if (NoxiousBatteryExpansion.untouchable(e, c))
                 return false
 
             if (e == StoicProtector)
@@ -1722,6 +1726,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             OrderForestExpansion,
             TwelveColoniesExpansion,
             OldManTinkerExpansion,
+            NoxiousBatteryExpansion,
             DoomsayersExpansion,
             InvasiveEEEExpansion,
             InvasiveDDDExpansion,

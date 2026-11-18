@@ -125,9 +125,9 @@ case object RuledMove extends Transport {
     }
 
     // the Upstarts & Renegades deck's Murder Hawk: moving with it ignores rule
-    override def allows(f : Faction, o : Region, d : Region)(implicit game : Game) = ruled(f, o, d) || (UpstartsDeckExpansion.hawkAt(f, o) && o.is[Rulable] && d.is[Rulable])
+    override def allows(f : Faction, o : Region, d : Region)(implicit game : Game) = ruled(f, o, d) || ((UpstartsDeckExpansion.hawkAt(f, o) || NoxiousBatteryExpansion.cannonAt(f, o)) && o.is[Rulable] && d.is[Rulable])
 
-    override def allows(f : Faction, o : Region, d : Region, l : $[Movable])(implicit game : Game) = ruled(f, o, d) || (l.has(MurderHawk) && o.is[Rulable] && d.is[Rulable])
+    override def allows(f : Faction, o : Region, d : Region, l : $[Movable])(implicit game : Game) = ruled(f, o, d) || ((l.has(MurderHawk) || l.has(Cannon)) && o.is[Rulable] && d.is[Rulable])
 }
 
 case object HalfWarriors extends Transport {
