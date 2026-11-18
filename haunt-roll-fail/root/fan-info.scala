@@ -134,6 +134,17 @@ object FanInfo {
             line("Daylight", "Minister (a soup token draws 2, a coins token places 2 warriors), Witness, Build an abbey.".txt),
             line("Evening", "Congregate (craft with pawns and abbeys of their own suit, in one clearing), then Rest and score the Ranks.".txt),
         )
+        case TW => $(
+            by("slugfacekillah", "inspired by lhammer, ".txt ~ outsiders("2.1")),
+            outsidersLink,
+            "Snakes and turtles who colonize the Woodland with Capitols and Commons, and put a Law to every player's vote each Birdsong.".txt,
+            line("The Democratic Process", "the Colonies put up the one Law they kept of 3 drawn; for an Election players nominate and second targets; then everyone votes in two rounds with ballots, bought from the Public Trust by removing warriors.".txt),
+            line("The Laws", "16 of them: peace in a suit's clearings, an extra hit for an elected player, no crafting, no ambushes, cards dealt around, points to the last and from the first, and more; a Law lasts until the next vote.".txt),
+            line("Turtles", "deal no hits and walk onto paths, where any other player pays a matching card to pass; Hard Shelled ignores a hit where a turtle is.".txt),
+            line("Birdsong", "Recruit with ballots at Capitols and Commons, then Convene the vote.".txt),
+            line("Daylight", "Craft with Capitols and Commons, then 3 actions: Campaign (two moves or two battles), Colonize (a Capitol or a Common with cards matching the clearing and the Law), Claim (1 point for each Capitol).".txt),
+            line("Evening", "Ballots come back, draw 1 plus 1 for every 2 Commons, and draft a Law for the next Birdsong.".txt),
+        )
         case FH => $(
             by("jgregory17", "fan-made".txt),
             "Hamster farmers who want nothing more than to raise their crops and give gifts to their friends.".txt,

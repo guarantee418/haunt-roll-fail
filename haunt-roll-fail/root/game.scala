@@ -855,6 +855,7 @@ trait GameImplicits {
     implicit def bonePatrolState(f : BonePatrol)(implicit game : Game) = game.states(f).as[BonePatrolPlayer].get
     implicit def wingedMenaceState(f : WingedMenace)(implicit game : Game) = game.states(f).as[WingedMenacePlayer].get
     implicit def orderForestState(f : OrderOfTheForest)(implicit game : Game) = game.states(f).as[OrderForestPlayer].get
+    implicit def twelveColoniesState(f : TwelveColonies)(implicit game : Game) = game.states(f).as[TwelveColoniesPlayer].get
     implicit def doomState(f : Doomsayers)(implicit game : Game) = game.states(f).as[DoomsayersPlayer].get
     implicit def whisperersState(f : Whisperers)(implicit game : Game) = game.states(f).as[WhisperersPlayer].get
     implicit def invasiveEEEState(f : InvasiveEEE)(implicit game : Game) = game.states(f).as[InvasiveEEEPlayer].get
@@ -1097,9 +1098,9 @@ trait GameImplicits {
             || canAttackFromForest(c)
         )
 
-        def canAttack(c : Clearing)(e : Faction) = hasAttackingForce(c) && f.validAttackTarget(c)(e)
+        def canAttack(c : Clearing)(e : Faction) = TwelveColoniesExpansion.battleAllowed(c) && hasAttackingForce(c) && f.validAttackTarget(c)(e)
 
-        def canAttackList(c : Clearing) = hasAttackingForce(c).??(f.enemies.%(f.validAttackTarget(c)))
+        def canAttackList(c : Clearing) = (TwelveColoniesExpansion.battleAllowed(c) && hasAttackingForce(c)).??(f.enemies.%(f.validAttackTarget(c)))
 
         def canAttackIn(c : Clearing) = canAttackList(c).any
 
@@ -1176,7 +1177,8 @@ trait GameImplicits {
             Council.governs(f, c).not &&
             DarkDeckExpansion.trapped(f, c).not &&
             MarquistadorsExpansion.blocks(f, c).not &&
-            LegendsExpansion.canPlace(f, c)
+            LegendsExpansion.canPlace(f, c) &&
+            TwelveColoniesExpansion.usable(c)
 
         def ruleValue(c : Region, mercenaries : $[Trader], friends : $[Faction]) : Int = {
             if (game.states.contains(f).not)
@@ -1199,6 +1201,8 @@ trait GameImplicits {
                 // the Order of the Forest's High Priests never rule
                 case _ : HighPriest => 0
                 case _ : BuriedBone => 0
+                // the Twelve Colonies' Historical Site rules nothing
+                case HistoricalSite => 0
                 case Garden(_) => 333
                 case b : Building => 4
                 case w : Warrior => 4
@@ -1282,6 +1286,8 @@ trait GameImplicits {
 
         def craftableWith(craft : $[SuitAsset], used : $[SuitAsset], limit : Int = 999) = (d : DeckCard) => d @@ {
             case d if d.suit == Frog && f.is[InvasiveDDD] => false
+            // the Twelve Colonies' Artifex Contentio
+            case _ if TwelveColoniesExpansion.artifex => false
             case d : CraftItemCard if game.uncrafted.has(d.item).not => false
             case d : CraftEffectCard if f.has(d.effect) => false
             case d : CraftEffectCard if d.effect.is[FriendOfThe] && f.effects.of[FriendOfThe].any => false
@@ -1702,6 +1708,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             BonePatrolExpansion,
             WingedMenaceExpansion,
             OrderForestExpansion,
+            TwelveColoniesExpansion,
             DoomsayersExpansion,
             InvasiveEEEExpansion,
             InvasiveDDDExpansion,

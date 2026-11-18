@@ -569,6 +569,15 @@ server. No session can reach the server, and none needs to.
   `pick`), Martyrs (removed pawns go to `altar`, each giving its suit's ability), Power of Faith (tokens add to its hits) and Reclamation
   (an enemy removing its warriors on its turn may return as many of one player's from the Ranks, at `ForcedRemoveCleanupAction`).
   `ReplayCheck <games> of` plays it.
+  The Twelve Colonies (TW, `root/faction-twelve-colonies.scala`, its header lists the readings; "TC" is the Twilight Council's, so its
+  images are `tw-*` in `faction/colonies/`) is a Fun Faction and in Advanced Setup's pool: snakes (`Snake`, warriors) and turtles
+  (`Turtle`, warriors dealing no hits, Hard Shelled; on a path they are in `onPaths` and counted in `paths`, drawn at the path's middle,
+  and any other player moving along that path by trail pays a card matching one of its clearings, `TWTollAction`), Capitols and Commons
+  (Colonize, Recruit with ballots, Claim), and the Democratic Process each Birdsong: the one of 3 Laws (of 16, `ColonyLaw`, art `tw-law-<name>`)
+  drawn and kept, nominations and seconds for an Election (`Nominee`), two voting rounds with ballots from the Public Trust (bought
+  by removing warriors), the Colonies breaking ties. A Law in effect reaches the rest of the game through `TwelveColoniesExpansion`'s
+  checks: `battleAllowed` in `canAttack` (the Paxes, Omnius Exitus), `usable` in `canPlace` and `passable` in `Roads`, `artifex` in
+  `craftableWith`, `ruleless` in `RuledMove`, `noWild` in `canAmbushWith`. `ReplayCheck <games> tw` plays it.
   Its two maps are Fan Maps, "Deep Woods" and "Wastelands" (`DeepWoodsMap`, `WastelandsMap`; `DeepWoodsBoard` and `WastelandsBoard` in
   `root/maps.scala`, images in `deep-woods/` and `wastelands/` made by `root/tools/outsiders-maps.py`, which also prints the Deep Woods
   building slots), also drawn by "Random". Clearing and forest names are made up. Their own rules are toggles in the setup's "Fan Map

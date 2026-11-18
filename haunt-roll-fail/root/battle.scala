@@ -150,6 +150,8 @@ object BattleExpansion extends MandatoryExpansion {
         case Ambush(Frog) if opponent.is[InvasiveCCC] => false
         case Ambush(Frog) if opponent.is[InvasiveBBB] => false
         case Ambush(Frog) if opponent.is[InvasiveAAA] => false
+        // the Twelve Colonies' Non Variablis: a bird ambush is played as wild
+        case Ambush(Bird) if TwelveColoniesExpansion.noWild => false
         case Ambush(s) => clearing.cost.matched(s) || SquiresDeckExpansion.friendAmbush(faction, clearing)(d)
         case CraftItemCard(_, _, _, Sword, _, _)  => faction.has(TrickyClaws) && clearing.cost.matched(Fox)
         case CraftItemCard(_, _, _, Coins, _, _)  => faction.has(TrickyEars)  && clearing.cost.matched(Rabbit)

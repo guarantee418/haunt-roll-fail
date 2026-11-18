@@ -3,6 +3,7 @@
 #   pdftoppm -r 220 -png <X>-board-front.pdf b-<x> (and back, bb-<x>)
 #   the meeples: "Meeples.svg" (Outsiders meeple files by The Irreverend), its "ORIGINAL" half rendered in Chromium with the
 #   viewBox "-2143.55 -1000 700 600" at 5600x4800 with a transparent background, as meeples.png
+#   the Twelve Colonies laws: the cards zip unpacked, its fronts folder linked as "laws" in that dir
 #   python3 outsiders-art.py <dir with those renders> <webp2/root/images/faction> [bp ...]
 # - the board front, at the size of the other fan boards (1232 wide)
 # - the title cut from the board's banner, the glyph and character art from the token sheet and the board
@@ -168,4 +169,41 @@ if "of" in which:
     p = m[2]
     w = p.size[0]
     p.crop((0, 0, w, w)).resize((100, 100), Image.LANCZOS).save(f"{out}/of-action.webp", lossless=True)
+    out = keep
+
+if "tc" in which:
+    # the Twelve Colonies: board b-tc.png (220 dpi), token sheet t-tc.png (300 dpi), the laws from the cards zip's fronts 01-16
+    # (TwelveColonies-CARDSfrontNN.png, 825x1125) in the "laws" folder of the renders
+    o = f"{out}/colonies"
+    out, keep = o, out
+    os.makedirs(out, exist_ok = True)
+    board("tc", "tw-board.webp")
+    title("tc", (770, 166, 1745, 290), "tw-title.webp")
+    disc("t-tc.png", 504, 966, 120, 80, "tw-common.webp")
+    disc("t-tc.png", 798, 990, 106, 100, "tw-capitol.webp", square = True)
+    disc("t-tc.png", 1080, 990, 106, 70, "tw-ballot.webp", square = True)
+    disc("t-tc.png", 1650, 990, 106, 100, "tw-historical-site.webp", square = True)
+    disc("t-tc.png", 1650, 1275, 106, 86, "tw-glyph.webp", square = True)
+    crop(f"{src}/t-tc.png", (1560, 1460, 1740, 1660), 160, 194, "tw-char.webp")
+    from PIL import ImageFilter
+    def rimmed(p, colour):
+        pad = Image.new("RGBA", (p.size[0] + 40, p.size[1] + 40), (0, 0, 0, 0))
+        pad.paste(p, (20, 20), p)
+        rim = pad.getchannel("A").point(lambda v: 255 if v > 20 else 0).filter(ImageFilter.MaxFilter(15))
+        lit = Image.new("RGBA", pad.size, colour + (0,))
+        lit.putalpha(rim)
+        lit.alpha_composite(pad)
+        return lit
+    warrior(rimmed(m[3], (246, 232, 120)), 90, "tw-snake")
+    warrior(rimmed(m[7], (246, 232, 120)), 90, "tw-turtle")
+    p = m[3]
+    w = p.size[0]
+    p.crop((0, 0, w, w)).resize((100, 100), Image.LANCZOS).save(f"{out}/tw-action.webp", lossless=True)
+    names = ["militaris-subsidium", "feris-ratio", "omnius-exitus", "pax-vulpes", "amplius-actum", "communia-divitiae", "publico-auxilio",
+        "pax-lepus", "defensio-optimum", "artifex-contentio", "insidae-tutela", "pax-mus", "non-variablis", "arcitectus-corvidae",
+        "valorem-historiae", "status-aequalis", "public-trust"]
+    for i, n in enumerate(names):
+        im = Image.open(f"{src}/laws/TwelveColonies-CARDSfront{i + 1:02d}.png").convert("RGB")
+        im = im.crop((37, 37, im.size[0] - 37, im.size[1] - 37)).resize((375, 525), Image.LANCZOS)
+        im.save(f"{out}/tw-law-{n}.webp", quality = 85)
     out = keep

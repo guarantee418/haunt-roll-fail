@@ -42,6 +42,7 @@ case object Roads extends Transport {
             game.blizzard.has((o, d)).not &&
             game.blizzard.has((d, o)).not &&
             OutsidersMaps.barren(o, d).not &&
+            TwelveColoniesExpansion.passable(f, o, d) &&
             factions.of[Caster].%(game.states.contains).exists(f => f.growth.has((o, d)) || f.growth.has((d, o))).not
 
         case (o : Forest, d : Clearing) => game.fromForest(o).has(d)
@@ -119,7 +120,7 @@ case object TunnelRoads extends Transport {
 
 case object RuledMove extends Transport {
     override def allows(f : Faction, o : Region, d : Region)(implicit game : Game) = (o, d) @@ {
-        case (o : Rulable, d : Rulable) => f.rules(o) || f.rules(d) || f.has(CorvidPlanners) || ((game.riverside.contains(o) || game.riverside.contains(d)) && f.has(OtterDivers))
+        case (o : Rulable, d : Rulable) => f.rules(o) || f.rules(d) || f.has(CorvidPlanners) || TwelveColoniesExpansion.ruleless || ((game.riverside.contains(o) || game.riverside.contains(d)) && f.has(OtterDivers))
         case _ => false
     }
 }

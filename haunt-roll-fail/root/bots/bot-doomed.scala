@@ -80,6 +80,16 @@ class GameEvaluationDoomed(faction : Faction)(implicit game : Game) extends Game
             case OrderConfessAction(f, _) =>
                 true |=> 20 -> "confess"
 
+            // the Twelve Colonies
+            case TWColonizeClearingAction(f, _, _, _) =>
+                true |=> 80 -> "colonize"
+
+            case TWClaimAction(f, n) =>
+                true |=> 20 * n -> "claim"
+
+            case TWRecruitAction(f, _, l) =>
+                true |=> 40 -> "recruit"
+
             case MenaceActiveAction(f, b, fright) =>
                 true |=> (math.random() * 20).round.toInt -> "fight or fright"
 

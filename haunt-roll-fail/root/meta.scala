@@ -1752,7 +1752,7 @@ object Meta extends MetaGame {
     val official = $[Faction](MC, ED, WA, VB, LC, RF, UD, CC, LH, KI)
     val homeland = $[Faction](LDvE, TC, KD)
     val clones = $[Faction](BK, PE, FU, NB, CM, /*WC,*/ DR, RI, LK)
-    val fun = $[Faction](KDvA, TCvA, FH, WW, DU, WG, EE, DM, DV, NW, XC, BP, WM, OF, CUv2, CU, OK, AF, SF, MB)
+    val fun = $[Faction](KDvA, TCvA, FH, WW, DU, WG, EE, DM, DV, NW, XC, BP, WM, OF, TW, CUv2, CU, OK, AF, SF, MB)
 
     val factions = official ++ homeland ++ clones ++ fun
 
@@ -2028,6 +2028,7 @@ object Meta extends MetaGame {
         factions.of[BonePatrol].num * 5 +
         factions.of[WingedMenace].num * 6 +
         factions.of[OrderOfTheForest].num * 5 +
+        factions.of[TwelveColonies].num * 5 +
         factions.of[Doomsayers].num * 6 +
         factions.of[Whisperers].num * 2 +
         factions.of[Marquistadors].num * 9 +
@@ -4124,6 +4125,42 @@ object Meta extends MetaGame {
         ImageAsset("of-soup"                  ) ::
         ImageAsset("of-coins"                 ) ::
         ImageAsset("of-board"                 ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => factions.of[TwelveColonies].any, "faction/colonies")(
+        ImageAsset("tw-glyph"                 ) ::
+        ImageAsset("tw-title"                 ) ::
+        ImageAsset("tw-char"                  ) ::
+        ImageAsset("tw-action"                ) ::
+        ImageAsset("tw-snake"                 ) ::
+        ImageAsset("tw-snake-empty"           ) ::
+        ImageAsset("tw-snake-x5"              ) ::
+        ImageAsset("tw-snake-x5-empty"        ) ::
+        ImageAsset("tw-turtle"                ) ::
+        ImageAsset("tw-turtle-empty"          ) ::
+        ImageAsset("tw-turtle-x5"             ) ::
+        ImageAsset("tw-turtle-x5-empty"       ) ::
+        ImageAsset("tw-capitol"               ) ::
+        ImageAsset("tw-common"                ) ::
+        ImageAsset("tw-historical-site"       ) ::
+        ImageAsset("tw-ballot"                ) ::
+        ImageAsset("tw-board"                 ) ::
+        ImageAsset("tw-law-amplius-actum"     ) ::
+        ImageAsset("tw-law-arcitectus-corvidae") ::
+        ImageAsset("tw-law-artifex-contentio" ) ::
+        ImageAsset("tw-law-communia-divitiae" ) ::
+        ImageAsset("tw-law-defensio-optimum"  ) ::
+        ImageAsset("tw-law-feris-ratio"       ) ::
+        ImageAsset("tw-law-insidae-tutela"    ) ::
+        ImageAsset("tw-law-militaris-subsidium") ::
+        ImageAsset("tw-law-non-variablis"     ) ::
+        ImageAsset("tw-law-omnius-exitus"     ) ::
+        ImageAsset("tw-law-pax-lepus"         ) ::
+        ImageAsset("tw-law-pax-mus"           ) ::
+        ImageAsset("tw-law-pax-vulpes"        ) ::
+        ImageAsset("tw-law-public-trust"      ) ::
+        ImageAsset("tw-law-publico-auxilio"   ) ::
+        ImageAsset("tw-law-status-aequalis"   ) ::
+        ImageAsset("tw-law-valorem-historiae" ) ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[WingedMenace].any, "faction/menace")(
         ImageAsset("wm-glyph"                 ) ::

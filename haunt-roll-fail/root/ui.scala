@@ -299,6 +299,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case OrderAbbey(s) => { DrawRect(pr + "abbey-" + s.name.toLowerCase, -50, -50, 100, 100) }
             case OrderSoup => { DrawRect(pr + "soup", -40, -40, 80, 80) }
             case OrderCoins => { DrawRect(pr + "coins", -40, -40, 80, 80) }
+            case Snake => { DrawRect(pr + "snake", -45, -86, 90, 90) }
+            case Turtle => { DrawRect(pr + "turtle", -40, -86, 81, 90) }
+            case Capitol => { DrawRect(pr + "capitol", -50, -50, 100, 100) }
+            case Common => { DrawRect(pr + "common", -40, -40, 80, 80) }
+            case HistoricalSite => { DrawRect(pr + "historical-site", -50, -50, 100, 100) }
             case Infestation => { DrawRect(pr + "infestation", -50, -50, 100, 100) }
             case Cave => { DrawRect("wm-cave", -50, -50, 100, 100) }
             case Guano => { DrawRect("wm-guano", -40, -40, 80, 80) }
@@ -1509,6 +1514,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 g.drawImage(resources.images.get(mapid + "blizzard-mark"), x - 32, y - 32)
         }
 
+        // the Twelve Colonies' turtles on paths, at the path's middle
+        factions.of[TwelveColonies].%(game.states.contains).foreach { f =>
+            f.paths.foreach { case (k : (Clearing, Clearing), n : Int) =>
+                if (n > 0) {
+                    val (x, y) = game.board.mid(k._1, k._2)
+                    g.drawImage(resources.images.get(f.style + "-turtle"), x - 40, y - 60)
+                    if (n > 1)
+                        drawCount(g, n, x + 34, y + 14)
+                }
+            }
+        }
+
         drawRule()
 
         drawForestNames(g)
@@ -2432,6 +2449,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 &((Image(f.style + "-bat-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-bat", styles.wr) *** (f.all(f.warrior).num % 5))) ~
                 &((Image(f.style + "-bat-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-bat-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
 
+            case f : TwelveColonies =>
+                Hint("The Law\n" + f.law./(l => l.name + " (" + l.kind + ", " + l.suitName + ")\n" + l.text + f.target./(t => "\nElected: " + t.toString)).|("none in effect") + f.kept./(l => "\nA Law is kept, face down, for the next Birdsong").|(""),
+                    ("Law".styled(f) ~ ": " ~ f.law./(l => l.elem ~ f.target./(t => " (" ~ t.elem ~ ")")).|("none".txt)).div) ~
+                Hint("Ballots\n" + factions./(e => e.name + ": " + f.ballotsOf(e)).mkString("\n") + "\nThe Public Trust: " + f.trust,
+                    ("Ballots".styled(f) ~ " " ~ (Image(f.style + "-ballot", styles.token) *** f.ballotsOf(f)) ~ " " ~ "Trust".styled(f) ~ " " ~ f.trust.hl).div) ~
+                (Image(f.style + "-capitol", styles.building) *** f.all(Capitol).num) ~ (Image("empty-building", styles.building) *** f.pooled(Capitol)) ~ Break ~ Gap ~
+                (Image(f.style + "-common", styles.token) *** f.all(Common).num) ~ (Image("empty-token", styles.token) *** f.pooled(Common)) ~ Break ~ Gap ~
+                Div(Hint("Snakes\n" + f.all(f.warrior).num + " on the map\n" + f.pooled(f.warrior) + " available\nTurtles: " + f.all(Turtle).num + " in clearings, " + f.onPaths.num + " on paths, " + f.pooled(Turtle) + " available",
+                (Image(f.style + "-turtle", styles.wr) *** (f.all(Turtle).num + f.onPaths.num)) ~ (Image(f.style + "-turtle-empty", styles.wr) *** f.pooled(Turtle)) ~
+                &((Image(f.style + "-snake-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-snake", styles.wr) *** (f.all(f.warrior).num % 5))) ~
+                &((Image(f.style + "-snake-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-snake-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
+
             case f : OrderOfTheForest =>
                 Hint("The Order Card\n" + f.card./(d => d.name + " (" + d.suit.name + ")").|("none") + "\nThe Foreseen: " + f.foreseen.num + " card face down",
                     ("Order Card".styled(f) ~ ": " ~ f.card./(d => dt.CardSuitInfo(d.suit) ~ " " ~ d.elem).|("none".txt) ~ " " ~ "Foreseen".styled(f) ~ " " ~ f.foreseen.num.hl).div) ~
@@ -2798,6 +2827,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         case _ : BonePatrol => Some("bp-board")
         case _ : WingedMenace => Some("wm-board")
         case _ : OrderOfTheForest => Some("of-board")
+        case _ : TwelveColonies => Some("tw-board")
         case _ : Doomsayers => Some("du-board")
         case _ : Whisperers => Some("wg-board")
         case _ : OldExpedition => Some("ok-board")
@@ -3706,6 +3736,51 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     less(DarkPassage.of(f).larger) ~
                     more(DarkPassage.of(f).larger, "On their turn, other players may give", f, "a card to place any number of their warriors from one", "cave".hh, "in another", Dot) ~
                     desc("Caves".hh, game.caves./(_.elem).comma) ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), {
+                    case (f : Faction, more : Boolean) => onFactionStatus(f, more, None)
+                    case _ =>
+                        overlayPane.invis()
+                        overlayPane.clear()
+                })
+
+            case f : TwelveColonies =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    f.name.f.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    Image("tw-board")(styles.factionboard) ~
+                    HGap ~
+                    HGap ~
+                    less("The Law".hl.larger) ~
+                    more("The Law".hl.larger, "is put to every player's vote each Birdsong: the Colonies keep one of the", 3.hl, "Laws they drew in Evening, players nominate and second targets for an Election, then vote with their", "ballots".hh, "in two rounds; the Colonies break ties", Dot) ~
+                    desc("In effect:", f.law./(_.elem).|("none".txt), f.target./(t => "electing ".txt ~ t.elem)) ~
+                    f.law./(l => desc(l.text)) ~
+                    f.law./(l => Image("tw-law-" + l.image)(styles.card)) ~
+                    f.kept./(l => desc("A Law is kept, face down, for the next Birdsong")) ~
+                    HGap ~
+                    HGap ~
+                    less("Ballots".hl.larger) ~
+                    more("Ballots".hl.larger, "come from the", "Public Trust".hh, "(12 in all); in Evening each player gets", 1.hl, "back, the Colonies first and then from the lowest score, and during the vote they are bought by removing warriors", Dot) ~
+                    desc(factions./(e => e.elem ~ " " ~ f.ballotsOf(e).hl).comma, Comma, "Public Trust".hh, f.trust.hl) ~
+                    HGap ~
+                    HGap ~
+                    less("Snakes and Turtles".hl.larger) ~
+                    more("Snakes".hl.larger, "are warriors.", "Turtles".hh, "deal no hits and move only with their own steps, onto a path and off it; a path with a turtle costs any other player a matching card", Comma, HardShelled.of(f), "ignores a hit where a turtle is", Dot) ~
+                    desc(f.all(f.warrior).num.hl.larger, "snakes on the map,", f.pooled(f.warrior).hl.larger, "in reserve;", f.all(Turtle).num.hl, "turtles in clearings,", f.onPaths.num.hl, "on paths") ~
+                    HGap ~
+                    warriorLine(f.style + "-snake", f.all(f.warrior).num, f.pooled(f.warrior)) ~
+                    HGap ~
+                    HGap ~
+                    less("Capitols and Commons".hl.larger) ~
+                    more("Capitols".hl.larger, "and", "Commons".hh, "are placed by", "Colonize".hh, "with cards matching the clearing and the Law; they recruit with a ballot, and", "Claim".hh, "scores", 1.vp, "for each Capitol", Dot) ~
+                    desc(f.all(Capitol).num.hl, "Capitols,", f.all(Common).num.hl, "Commons") ~
                     HGap ~
                     HGap ~
                     info() ~
