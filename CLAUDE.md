@@ -611,7 +611,8 @@ server. No session can reach the server, and none needs to.
   Its two maps are Fan Maps, "Deep Woods" and "Wastelands" (`DeepWoodsMap`, `WastelandsMap`; `DeepWoodsBoard` and `WastelandsBoard` in
   `root/maps.scala`, images in `deep-woods/` and `wastelands/` made by `root/tools/outsiders-maps.py`, which also prints the Deep Woods
   building slots), also drawn by "Random". Clearing and forest names are made up. Their own rules are toggles in the setup's "Fan Map
-  Rules", shown only with their map (2026-11-17), all in `root/outsiders-maps.scala` (`OutsidersMaps`, its header lists the
+  Rules", shown only with their map (2026-11-17), unfolded right under the maps, Settling on by default (2026-11-18; `defaultsFor`, and
+  `Meta.settlingOn` in `completeSaved` for setups saved without the Deep Woods picked), all in `root/outsiders-maps.scala` (`OutsidersMaps`, its header lists the
   readings). Off, the Deep Woods is played settled, each clearing tile baked into the art on the clearing of its number (Law of Slug
   S.1.7), and the Wastelands' barren trails are plain paths. "Deep Woods - Settling" (`DeepWoodsSettling`, S.1): clearings start
   unsettled (wild, crafting pieces pay for nothing, `Unusable` in `root/game.scala`; one slot; two pieces a player), drawn with their
@@ -630,6 +631,10 @@ server. No session can reach the server, and none needs to.
   fired; Keep on Rollin' rolls one an enemy removes to an adjacent clearing), scent marks (`ScentMark`; Foul Stench moves each enemy's warriors
   and pawns out of their clearings at its `CleanUpAction`). Birdsong: Levy, Fire! (any number of times), Repair; Daylight: craft with scent
   marks, then 4 of Recruit, Battle, Rollout (`CannonballMove`), Rearm; Evening: Spray, Load, draw. `ReplayCheck <games> nx` plays it.
+- A fan faction's in-game overlay (tapping its player panel) links the designer's print-and-play folder above "More Info"
+  (`FanInfo.pnpLink`, the link its ? has; 2026-11-18). The fan decks' ? pictures are in the setup screen's image list
+  (`original` in `hrf.scala`), as the setup screen loads no game assets: missing, the picture threw and the box had no Ok
+  (2026-11-18); `showOverlay` now always shows the Ok.
 - Every fan, playtest and mirror faction has a "?" (2026-11-17): who made it, then what it does and how it plays, a line
   each (`FanInfo.about` in `root/fan-info.scala`). The faction picker shows it as a "?" button beside the name (`Meta.factionInfo`,
   `xstyles.infoButton` in `pickElem`), and Advanced Setup's "Available Factions" toggles as the setup's usual ? (`IncludeFaction.explain`).

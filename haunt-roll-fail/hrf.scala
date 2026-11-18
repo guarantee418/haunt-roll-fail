@@ -347,6 +347,12 @@ object HRFR {
         "quest:fundraising-fox"        -> "/hrf/webp2/root/images/card/quest/revised/fundraising-fox.webp",
         "quest:escort-fox"             -> "/hrf/webp2/root/images/card/quest/revised/escort-fox.webp",
 
+        // pictured by the fan decks' ? on the setup screen, before any game's assets are loaded
+        "action-sword"         -> "/hrf/webp2/root/images/card/action/action-sword.webp",
+        "dark-dark-dominance"  -> "/hrf/webp2/root/images/card/dark/dark-dark-dominance.webp",
+        "franken-bird-ambush"  -> "/hrf/webp2/root/images/card/franken/franken-bird-ambush.webp",
+        "upstarts-murder-hawk" -> "/hrf/webp2/root/images/card/upstarts/upstarts-murder-hawk.webp",
+
         "borscht-kitchens"        -> "/hrf/webp2/root/images/card/deck/borscht-kitchens.webp",
     ), HRF.imageCache), () => Map())
 
@@ -2684,12 +2690,19 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
     def showOverlay(l : $[ZOption], grow : Style) {
         ui.overlay.pane.vis()
 
-        ui.overlay.asker.zask(l ++
-            $(ZOption(Div(Empty, grow), Empty)) ++
-            $(ZBasic(Empty, "Ok", () => {
-                ui.overlay.pane.invis()
-            }))
-        )
+        val ok = $(ZBasic(Empty, "Ok", () => {
+            ui.overlay.pane.invis()
+        }))
+
+        // a picture missing from the loaded assets throws; the Ok must still come, or the player is stuck behind the overlay
+        try {
+            ui.overlay.asker.zask(l ++ $(ZOption(Div(Empty, grow), Empty)) ++ ok)
+        }
+        catch {
+            case e : Throwable =>
+                println("overlay failed: " + e)
+                ui.overlay.asker.zask(ok)
+        }
     }
 
     def showOverlayRaw(title : Elem, l : $[Elem]) {
