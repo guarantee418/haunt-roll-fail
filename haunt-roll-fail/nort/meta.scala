@@ -68,6 +68,13 @@ object Meta extends MetaGame { mmm =>
     // Rankings (asked for on 2026-11-18): Northgard and its Adset share one ladder; a team is one side, else each clan
     override def ranking = |("nort")
     override def rankingSides(g : G, winners : $[Any]) = Meta.rankSides(g, winners)
+    override def rankingSeat(g : G, f : F) = Meta.rankSeat(g, f)
+
+    // the clan, its place in the first year's turn order, and its final fame
+    def rankSeat(game : Game, f : Faction) : |[RankingSeat] = {
+        val order = game.firstYearFirst./(game.from).|(game.seating).but(Automa)
+        order.has(f).?(RankingSeat(factionName(f), order.indexOf(f) + 1, order.num, |(CommonExpansion.finalFame(f)(game).total.toString)))
+    }
 
     def rankSides(game : Game, winners : $[Any]) : $[($[Faction], Boolean)] = {
         val clans = game.setup.but(Automa)

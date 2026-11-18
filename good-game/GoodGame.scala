@@ -370,8 +370,9 @@ object GoodGame {
                 decodeRequest {
                     entity(as[String]) { body =>
                         val l = body.split('\n').toList.map(_.trim)
-                        val sides = l.drop(2).filter(s => s.startsWith("W ") || s.startsWith("L ")).map(s => s.take(1) + ":" + s.drop(2).split(' ').filter(_.nonEmpty).mkString(","))
-                        val listed = sides.flatMap(_.drop(2).split(',').toList).filter(_.nonEmpty)
+                        // each user maybe followed by "/faction/seat/players/score" (Elo.token in hrf.scala)
+                        val sides = l.drop(2).filter(s => s.startsWith("W ") || s.startsWith("L ")).map(s => s.take(1) + ":" + s.drop(2).split(' ').filter(_.nonEmpty).map(Ranking.cleanToken).mkString(","))
+                        val listed = sides.flatMap(_.drop(2).split(',').toList).map(_.takeWhile(_ != '/')).filter(_.nonEmpty)
                         // the reporter can read the game, and every user listed plays in it
                         val ok = l.size >= 3 && execute(hasRight(userId, userSecret, journalId, "read") {
                             accessRights.filter(_.journalId === journalId).filter(_.right === "append").map(_.userId).result
