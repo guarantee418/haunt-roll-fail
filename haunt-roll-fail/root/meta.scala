@@ -580,6 +580,15 @@ case object BanishAfterIgnoredHits extends GameOption with ToggleOption {
     val valueOn = "Banish".hh ~ " after ignored hits"
 }
 
+// The Twilight Council's Banish moves the Knaves' Captains only once no other Knave warrior there is left to move, as hits reach a
+// Captain only then (Rearguard): it took the warriors in the order they came, so a Captain could go before a Skunk (2026-11-18,
+// Control as Struggle: the Captain was banished from Pit to Trench, the Skunk stayed). Hidden, in RulesVersion2; older games keep
+// the old way so their replays don't change (BanishCaptainsLastAction switches a running one over).
+case object BanishCaptainsLast extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Banish".hh ~ " Captains last"
+}
+
 // On the Mountain map the Twilight Council may clear a path in Evening, after Convene Woodfolk, if it didn't in Daylight: its cards
 // are revealed in Birdsong and come back to hand only in Evening, so its Daylight had none to discard (Discord,
 // 2026-11-04). Hidden and on by default for new games; older games keep their Evening so their replays don't change
@@ -1907,7 +1916,7 @@ object Meta extends MetaGame {
 
     // The hidden options of rules fixes, each gating a fix so the games started before it replay the same (most new games get through
     // their RulesVersion); not listed in a game's log (OptionsAction)
-    lazy val fixes : $[O] = $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes)
+    lazy val fixes : $[O] = $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes, BanishCaptainsLast)
 
     def unlisted : $[O] = fixes ++ settled ++ RulesVersion.all
 
@@ -4450,9 +4459,14 @@ case object RulesVersion1 extends RulesVersion(1) {
     def fixes = Meta.settled ++ $[Meta.O](FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, CounterMiceInABush, SkipIdleRallyReconcile, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes)
 }
 
+// Banish moves the Knaves' Captains last (2026-11-18)
+case object RulesVersion2 extends RulesVersion(2) {
+    def fixes = RulesVersion1.fixes ++ $[Meta.O](BanishCaptainsLast)
+}
+
 object RulesVersion {
-    val all : $[RulesVersion] = $(RulesVersion1)
-    def latest : RulesVersion = RulesVersion1
+    val all : $[RulesVersion] = $(RulesVersion1, RulesVersion2)
+    def latest : RulesVersion = RulesVersion2
     def implied : $[Meta.O] = all./~(_.fixes).distinct
 
     def expand(l : $[Meta.O]) : $[Meta.O] = l ++ l.of[RulesVersion]./~(_.fixes).distinct.diff(l)

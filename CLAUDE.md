@@ -809,6 +809,10 @@ server. No session can reach the server, and none needs to.
   `BattleExpansion.ignoresFirstHit` in `root/battle.scala`), so one warrior fewer moves (the Season for Revolution, 2026-11-04:
   two Stubborn Rats were banished by 2 hits). New games get the hidden default option `BanishAfterIgnoredHits`; older games keep the old
   way, and a running game can be switched over with `BanishAfterIgnoredHitsAction(X)`.
+  A Banish moves the Knaves' Captains only once no other Knave warrior there is left to move (`Rearguard`, as hits reach a Captain
+  only then; 2026-11-18, Control as Struggle: the Captain was banished from Pit and the Skunk stayed). New games get the hidden
+  `BanishCaptainsLast`, the first fix of `RulesVersion2`; a running game can be switched over with `BanishCaptainsLastAction(X)`.
+  `ReplayCheck <games> tckd` plays the Council with the Knaves.
 - Outrage with no card of the clearing's suit to give shows the hand to the Woodland Alliance in its action pane, and the
   game waits for its "Ok" (`PeekCardsAsk` and `PeekCardsSeenAction` in `root/cards.scala`; the playtest Pacifism the same).
   It was only a notification, and the game went on (the Alliance couldn't see the Lilypad Diaspora's hand on 2026-10-17). New games
