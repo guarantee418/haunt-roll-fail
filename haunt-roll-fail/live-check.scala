@@ -181,10 +181,12 @@ object LiveCheck {
                 val sides = meta.rankingSides(g, w).map { case (l, won) => (l.flatMap(f => users.get(f).map(_ + meta.rankingSeat(g, f).map(_.token).getOrElse(""))), won) }.filter(_._1.nonEmpty)
                 // every seat, bots too, as "*", for the faction and turn order stats only (Root's games before rankings)
                 val all = meta.rankingSides(g, w).map { case (l, won) => (l.flatMap(f => meta.rankingSeat(g, f).map("*" + _.token)), won) }.filter(_._1.nonEmpty)
+                // a game with fan content, kept in the stats and left out of the ratings
+                val fan = if (meta.rankingFan(g)) ";X:fan" else ""
                 if (all.exists(_._2) && all.exists(!_._2))
-                    println("STATS\t" + gid + "\t" + meta.name + "\t" + title + "\t" + all.map { case (l, won) => (if (won) "W:" else "L:") + l.mkString(",") }.mkString(";"))
+                    println("STATS\t" + gid + "\t" + meta.name + "\t" + title + "\t" + all.map { case (l, won) => (if (won) "W:" else "L:") + l.mkString(",") }.mkString(";") + fan)
                 if (sides.size >= 2 && sides.exists(_._2) && sides.exists(!_._2))
-                    println("RANKING\t" + gid + "\t" + meta.name + "\t" + title + "\t" + sides.map { case (l, won) => (if (won) "W:" else "L:") + l.mkString(",") }.mkString(";"))
+                    println("RANKING\t" + gid + "\t" + meta.name + "\t" + title + "\t" + sides.map { case (l, won) => (if (won) "W:" else "L:") + l.mkString(",") }.mkString(";") + fan)
             case _ =>
         }
 

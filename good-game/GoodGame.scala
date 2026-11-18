@@ -380,7 +380,8 @@ object GoodGame {
                         if (!ok || listed.distinct.size != listed.size)
                             complete(StatusCodes.Forbidden, "")
                         else
-                            plain(Ranking.report(journalId, l(0).safe.take(32), l(1).safeplus.take(128), sides.mkString(";")).toString)
+                            // "X fan": played with fan-made content, left out of the ratings (MetaGame.rankingFan)
+                            plain(Ranking.report(journalId, l(0).safe.take(32), l(1).safeplus.take(128), (sides ++ (if (l.drop(2).contains("X fan")) List("X:fan") else Nil)).mkString(";")).toString)
                     }
                 }
             } ~

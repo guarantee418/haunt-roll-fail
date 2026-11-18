@@ -69,11 +69,19 @@ object Meta extends MetaGame { mmm =>
     override def ranking = |("nort")
     override def rankingSides(g : G, winners : $[Any]) = Meta.rankSides(g, winners)
     override def rankingSeat(g : G, f : F) = Meta.rankSeat(g, f)
+    override def rankingFan(g : G) = Meta.rankFan(g)
 
     // the clan, its place in the first year's turn order, and its final fame
     def rankSeat(game : Game, f : Faction) : |[RankingSeat] = {
         val order = game.firstYearFirst./(game.from).|(game.seating).but(Automa)
         order.has(f).?(RankingSeat(factionName(f), order.indexOf(f) + 1, order.num, |(CommonExpansion.finalFame(f)(game).total.toString)))
+    }
+
+    // fan content (rankingFan): a fan clan or module, or a fan option picked on the setup screen; the hidden options every new game
+    // gets (LionOwnDeck, NormalDevelopments, ...) don't count
+    def rankFan(game : Game) : Boolean = game.setup.has(Lion) || game.options.exists {
+        case ModuleOption(m) => m.fan
+        case o => ($[BaseOption](BalancedStartTiles, DominationVictory, DominationOnly, LionStartingDeck) ++ DevelopmentsChoice.fan).has(o)
     }
 
     def rankSides(game : Game, winners : $[Any]) : $[($[Faction], Boolean)] = {
