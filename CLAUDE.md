@@ -353,6 +353,13 @@ cd haunt-roll-fail && sbt fullOptJS
   "X fan" line, kept as the side `X:fan`, and count in the stats but in no rating (`Result.fan`). Names are released or
   moved by committing `ranking-changes/<name>.txt` to `hrf-games` (`release <name>`, `rename <name> -> <new>`, `seat <user> <name>`;
   `Ranking.change`, applied once each by `Backup`, outcome in `<name>.result`).
+  A name can have several player keys (each `names.tsv` row with a hash adds one, a row with an empty hash releases it), and
+  its owner can set a code of their own under Rankings, "Set my own code" (8 characters or more, `codes.tsv`, salted SHA-256,
+  never copied to `hrf-games`; `/set-code`): "Use a code from another device" then takes the name and that code (`/has-code`,
+  `/sign-in`), which adds the device's key to the name; 5 wrong codes lock the name for an hour (`Ranking.wrong`, in memory).
+  "Lost my code" sends a reset request (`/name-reset`, `Ranking.request`): the name, an optional message and what the server
+  knows of the name go to `ranking/requests.tsv` (copied to `hrf-games`), and a GitHub issue labeled `name reset` gives only the
+  request id, as issues are public; the owner releases the name with a `ranking-changes` file if satisfied (2026-11-19).
 - Fixing a running game: through the `hrf-games` repository (copy `games/<id>.tsv` to
   `fixes/<id>.tsv` and edit it; its README and `notes/server.md` say how).
 - The in-game "Report a Bug" button posts to `/report-bug`; the server saves the report,
