@@ -315,6 +315,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case Cannon => { DrawRect(pr + "cannon" + faction.as[NoxiousBattery].?(_.damaged).??("-damaged"), -68, -88, 135, 92) }
             case Cannonball => { DrawRect(pr + "cannonball", -40, -40, 80, 80) }
             case ScentMark => { DrawRect(pr + "scent", -40, -40, 80, 80) }
+            case Dove => { DrawRect(pr + "dove", -36, -88, 72, 94) }
+            case DoveClinic => { DrawRect(pr + "clinic", -50, -50, 100, 100) }
+            case DoveSchool => { DrawRect(pr + "school", -50, -50, 100, 100) }
+            case Ceasefire => { DrawRect(pr + "ceasefire", -40, -40, 80, 80) }
+            case PeaceToken => { DrawRect(pr + "peace", -40, -40, 80, 80) }
+            case AdultSpider => { DrawRect(pr + "adult", -44, -90, 88, 96) }
+            case Spiderling => { DrawRect(pr + "spiderling", -30, -62, 60, 66) }
+            case SpiderWeb => { DrawRect(pr + "web", -40, -40, 80, 80) }
+            case SpiderWebFull => { DrawRect(pr + "web-full", -40, -40, 80, 80) }
+            case SpiderEgg => { DrawRect(pr + "egg", -40, -40, 80, 80) }
+            case SpiderHatched => { DrawRect(pr + "hatched", -40, -40, 80, 80) }
             case b : Robot => { DrawRect(pr + b.id + faction.as[OldManTinker].?(t => t.rsi(b) == 0).??("-broken"), -48, -86, 96, 92) }
             case Infestation => { DrawRect(pr + "infestation", -50, -50, 100, 100) }
             case Cave => { DrawRect("wm-cave", -50, -50, 100, 100) }
@@ -1532,6 +1543,21 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             g.drawImage(resources.images.get("upstarts-trail"), x - 45, y - 45, 90, 90)
         }
 
+        // the Arachnid Association's webs on paths, at the path's middle, with the warrior captured on one
+        factions.of[ArachnidAssociation].%(game.states.contains).foreach { f =>
+            f.paths.foreach { k =>
+                val (x, y) = game.board.mid(k._1, k._2)
+                g.drawImage(resources.images.get(f.style + "-web"), x - 40, y - 40, 80, 80)
+                f.held.%(h => h._2.has(k._2) && h._1 == k._1).foreach { h =>
+                    h._3.faction.as[WarriorFaction].foreach { w =>
+                        val img = resources.images.get(h._3.faction.style + "-" + w.warrior.id)
+                        val s = 50.0 / img.height
+                        g.drawImage(img, x - img.width * s / 2, y - 35, img.width * s, 50)
+                    }
+                }
+            }
+        }
+
         // the Twelve Colonies' turtles on paths, at the path's middle
         factions.of[TwelveColonies].%(game.states.contains).foreach { f =>
             f.paths.foreach { case (k : (Clearing, Clearing), n : Int) =>
@@ -2467,6 +2493,32 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 &((Image(f.style + "-bat-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-bat", styles.wr) *** (f.all(f.warrior).num % 5))) ~
                 &((Image(f.style + "-bat-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-bat-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
 
+            case f : UnitedDoveCorps =>
+                Hint("Refugees\n" + f.refugees.num + " cards\n" + "Mandate: " + UnitedDoveCorps.mandate(f, f.mandate).text,
+                    ("Refugees".styled(f) ~ " " ~ (dt.CardBack *** f.refugees.num) ~ (f.refugees.none).?(" " ~ "none".hh) ~ (f.mandate > 0).?(" " ~ UnitedDoveCorps.mandate(f, f.mandate))).div(styles.warline)) ~
+                Hint("Ceasefire and Peace\n" + f.ceasefires.num + " ceasefire, " + f.peace.num + " peace on the map, " + f.tokensLeft + " left",
+                    (Image(f.style + "-ceasefire", styles.token) *** f.ceasefires.num) ~ (Image(f.style + "-peace", styles.token) *** f.peace.num) ~ (Image("empty-token", styles.token) *** f.tokensLeft)) ~ Break ~
+                Hint("Buildings\nClinics: " + f.pooled(DoveClinic) + " on the track\nSchools: " + f.pooled(DoveSchool) + " on the track\nDraw " + f.draws + " in Evening",
+                    (Image(f.style + "-clinic", styles.building) *** f.all(DoveClinic).num) ~ (Image("empty-building", styles.building) *** f.pooled(DoveClinic)) ~ " " ~
+                    (Image(f.style + "-school", styles.building) *** f.all(DoveSchool).num) ~ (Image("empty-building", styles.building) *** f.pooled(DoveSchool)) ~ " " ~ "Draw".styled(f) ~ " " ~ f.draws.hl) ~ Break ~
+                (game.current == f && game.phase == Daylight && f.mandate > 0).?(Gap ~ 1.to(f.acted)./(_ => Image("action-black", styles.building)) ~ (f.acted.until(3)./(_ => Image(f.style + "-action", styles.building)))) ~
+                Div(Hint("Doves\n" + f.all(f.warrior).num + " on the map\n" + f.pooled(f.warrior) + " available",
+                &((Image(f.style + "-dove-x5", styles.wr) *** (f.all(f.warrior).num / 5)) ~ (Image(f.style + "-dove", styles.wr) *** (f.all(f.warrior).num % 5))) ~
+                &((Image(f.style + "-dove-empty", styles.wr) *** (f.pooled(f.warrior) % 5)) ~ (Image(f.style + "-dove-x5-empty", styles.wr) *** (f.pooled(f.warrior) / 5)))), styles.warline)
+
+            case f : ArachnidAssociation =>
+                Hint("Webs\n" + (f.all(SpiderWeb).num + f.all(SpiderWebFull).num) + " in clearings, " + f.paths.num + " on paths, " + f.websLeft + " left\nCaptives: " + f.held./(h => h._3.faction.name).mkString(", "),
+                    ("Webs".styled(f) ~ " " ~ (Image(f.style + "-web", styles.token) *** (f.all(SpiderWeb).num + f.paths.num - f.held.count(_._2.any))) ~ (Image(f.style + "-web-full", styles.token) *** f.held.num) ~ " " ~ f.websLeft.hl ~ " left").div(styles.warline)) ~
+                Hint("Eggs\n" + f.eggs.num + " on the map, " + f.eggsLeft + " on the track\nDraw " + f.draws + " in Evening",
+                    (Image(f.style + "-egg", styles.token) *** f.all(SpiderEgg).num) ~ (Image(f.style + "-hatched", styles.token) *** f.all(SpiderHatched).num) ~ (Image("empty-token", styles.token) *** f.eggsLeft) ~ " " ~ "Draw".styled(f) ~ " " ~ f.draws.hl) ~ Break ~
+                Hint("Mutations\n" + f.mutations./(m => m.name + ": " + m.text).mkString("\n"),
+                    ("Mutations".styled(f) ~ " " ~ f.mutations.none.?("none".hh).|(f.mutations./(_.of(f)).comma)).div(styles.warline)) ~
+                (game.current == f && game.phase == Daylight).?(Gap ~ 1.to(f.acted)./(_ => Image("action-black", styles.building)) ~ (f.acted.until(f.actions)./(_ => Image(f.style + "-action", styles.building)))) ~
+                Div(Hint("Spiders\n" + f.all(AdultSpider).num + " adults and " + f.all(Spiderling).num + " spiderlings on the map\n" + f.pooled(AdultSpider) + " adults and " + f.pooled(Spiderling) + " spiderlings available",
+                (Image(f.style + "-adult", styles.wr) *** f.all(AdultSpider).num) ~ (Image(f.style + "-adult-empty", styles.wr) *** f.pooled(AdultSpider)) ~ " " ~
+                &((Image(f.style + "-spiderling-x5", styles.wr) *** (f.all(Spiderling).num / 5)) ~ (Image(f.style + "-spiderling", styles.wr) *** (f.all(Spiderling).num % 5))) ~
+                &((Image(f.style + "-spiderling-empty", styles.wr) *** (f.pooled(Spiderling) % 5)) ~ (Image(f.style + "-spiderling-x5-empty", styles.wr) *** (f.pooled(Spiderling) / 5)))), styles.warline)
+
             case f : NoxiousBattery =>
                 Hint("The Cannon\n" + f.cannon./(_.name).|("-") + (f.damaged).?(", damaged").|("") + "\nThe Bore: " + f.bore.num + " of 3 cannonballs loaded, next fire " + f.nextVP + " VP\n" + f.pooled(Cannonball) + " in the supply, " + f.all(Cannonball).num + " on the map",
                     (Image(f.style + "-cannon" + f.damaged.??("-damaged"), styles.wr) ~ " " ~ "Bore".styled(f) ~ " " ~ (Image(f.style + "-cannonball", styles.token) *** f.bore.num) ~ (Image("empty-token", styles.token) *** (3 - f.bore.num)) ~ " " ~ f.nextVP.vp).div(styles.warline)) ~
@@ -2868,6 +2920,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         case _ : TwelveColonies => Some("tw-board")
         case _ : OldManTinker => Some("omt-board")
         case _ : NoxiousBattery => Some("nx-board")
+        case _ : UnitedDoveCorps => Some("udc-board")
+        case _ : ArachnidAssociation => Some("aa-board")
         case _ : Doomsayers => Some("du-board")
         case _ : Whisperers => Some("wg-board")
         case _ : OldExpedition => Some("ok-board")
@@ -3778,6 +3832,66 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     less(DarkPassage.of(f).larger) ~
                     more(DarkPassage.of(f).larger, "On their turn, other players may give", f, "a card to place any number of their warriors from one", "cave".hh, "in another", Dot) ~
                     desc("Caves".hh, game.caves./(_.elem).comma) ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), {
+                    case (f : Faction, more : Boolean) => onFactionStatus(f, more, None)
+                    case _ =>
+                        overlayPane.invis()
+                        overlayPane.clear()
+                })
+
+            case f : ArachnidAssociation =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    f.name.f.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    Image("aa-board")(styles.factionboard) ~
+                    HGap ~
+                    HGap ~
+                    less("Webs and Captives".hl.larger) ~
+                    more("Webs and Captives".hl.larger, "are woven in clearings with an adult spider and on the paths next to them; attacking, the warriors the spiders' hits remove are captured on free webs (", Hunters.of(f), "), and so is a warrior moving along a path with an empty web; captives on webs next to an adult spider are consumed in Birdsong", Dot) ~
+                    desc((f.all(SpiderWeb).num + f.all(SpiderWebFull).num).hl, "webs in clearings,", f.paths.num.hl, "on paths;", f.held.num.hl, "captives", f.held.any.?("(" ~ f.held./(h => h._3.piece.of(h._3.faction)).comma ~ ")")) ~
+                    HGap ~
+                    HGap ~
+                    less("Mutations".hl.larger) ~
+                    more("Mutations".hl.larger, "are gained by consuming captives:", AAMutation.all./(m => m.of(f) ~ " (" ~ m.text ~ ")").comma, Dot) ~
+                    desc(f.mutations.none.?("none".hh).|(f.mutations./(_.of(f)).comma)) ~
+                    HGap ~
+                    HGap ~
+                    info() ~
+                    HGap ~
+                    HGap
+                ).div(xlo.flexvcenter)), {
+                    case (f : Faction, more : Boolean) => onFactionStatus(f, more, None)
+                    case _ =>
+                        overlayPane.invis()
+                        overlayPane.clear()
+                })
+
+            case f : UnitedDoveCorps =>
+                showOverlay(overlayScrollX((
+                    HGap ~
+                    HGap ~
+                    f.name.f.larger.larger ~
+                    HGap ~
+                    HGap ~
+                    Image("udc-board")(styles.factionboard) ~
+                    HGap ~
+                    HGap ~
+                    less("Ceasefire and Peace".hl.larger) ~
+                    more("Ceasefire and Peace".hl.larger, "tokens: on their turn, the others can't battle or remove the Corps' pieces where a ceasefire is (", CivilianSafety.of(f), "); the Corps can't battle where its peace is, and loses a refugee card at random when a peace token is removed (", UpholdThePeace.of(f), ")", Dot) ~
+                    desc(f.ceasefires.num.hl, "ceasefire", Comma, f.peace.num.hl, "peace on the map", Comma, f.tokensLeft.hl, "left") ~
+                    HGap ~
+                    HGap ~
+                    less("Refugees".hl.larger) ~
+                    more("Refugees".hl.larger, "are cards the Corps keeps aside: added in Evening from the clearings with peace and clinics, and for each enemy building or token removed in a battle (", HostageRescue.of(f), "); in Birdsong those matching a peace clearing score", 1.vp, Comma, 3.vp, Comma, 5.vp, "or", 7.vp, Dot) ~
+                    desc(f.refugees.num.hl, "cards") ~
                     HGap ~
                     HGap ~
                     info() ~

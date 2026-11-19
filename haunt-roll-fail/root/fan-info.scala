@@ -30,10 +30,12 @@ object FanInfo {
     def doomedLink : Elem = "See the whole " ~ Link("https://drive.google.com/drive/folders/1XK3bxRh_fkBbaFopR5p8CMFRHxq27sEa", "Doomed Expansion", $(xstyles.link)) ~ ": every faction, deck, map, scenario and card, with the rules (the designer's print-and-play files on Google Drive)."
     private def outsiders(version : String) : Elem = "version " ~ version.txt ~ ", from the fan-made " ~ "Outsiders Expansion".hh
     def nemesisLink : Elem = "See the " ~ Link("https://drive.google.com/drive/folders/1QeHVQl7j-wXh7f7vjuFASBakE9uyzij4", "Noxious Battery", $(xstyles.link)) ~ ": its board, pieces and rules (the designer's print-and-play files on Google Drive)."
+    def arachnidLink : Elem = "See the " ~ Link("https://www.therootdatabase.com/faction/arachnid-association-ii/", "Arachnid Association ii", $(xstyles.link)) ~ " on the Root Database: its board, pieces and the Tabletop Simulator mod it is played in."
+    def doveLink : Elem = "See the " ~ Link("https://www.therootdatabase.com/faction/united-dove-corps-ii/", "United Dove Corps ii", $(xstyles.link)) ~ " on the Root Database: its board, pieces and the Tabletop Simulator mod it is played in."
     def outsidersLink : Elem = "See the whole " ~ Link("https://drive.google.com/drive/folders/19tCC_9QTW682DUeLCUIr7CEyjfczjxA6", "Outsiders Expansion", $(xstyles.link)) ~ ": every faction, map and card, with the rules (the designer's print-and-play files on Google Drive)."
 
     // the designer's print-and-play folder of a fan faction, linked in its in-game overlay too
-    def pnpLink(f : Faction) : |[Elem] = about(f).find(e => e == doomedLink || e == outsidersLink || e == nemesisLink)
+    def pnpLink(f : Faction) : |[Elem] = about(f).find(e => e == doomedLink || e == outsidersLink || e == nemesisLink || e == doveLink || e == arachnidLink)
 
     def about(f : Faction) : $[Elem] = f match {
         case WW => $(
@@ -147,6 +149,25 @@ object FanInfo {
             line("Birdsong", "Do-Over if it likes, roll the Breakage Dice (a hit to each robot rolled), Produce at every factory, Bustle (the Old Man moves 3 times).".txt),
             line("Daylight", "Craft with gears, then 4 actions: Crusade (battle, or move and battle), Tinker (flip tokens), Repair (gears onto a robot), Overproduce (a card for an extra Production); then Build factories, never two side by side with a third.".txt),
             line("Evening", "Restructure (a card matching a factory raises or lowers the level or flips gears to drones), then draw 2 or take a matching card from the discard pile.".txt),
+        )
+        case UDC => $(
+            by("MarcustheCat", "version ii, from ".txt ~ "L'Arbre".hh ~ "'s United Dove Corps, art by SuPaCatOnE".txt),
+            doveLink,
+            "Doves protecting the woodland's inhabitants: they declare ceasefires that keep their pieces safe, turn them into peace and score the refugees they rescue.".txt,
+            line("Ceasefire and Peace", "on its own turn, no one else can battle or remove the Corps' pieces where a ceasefire is; the Corps can't battle where its peace is, and a peace token removed costs a refugee card at random.".txt),
+            line("Refugees", "cards kept aside, added in Evening (one for each peace token and clinic) and for each enemy building or token removed in a battle.".txt),
+            line("Birdsong", "Resettle the refugees matching the peace clearings: 1, 2, 3 or 4 cards score 1, 3, 5 or 7.".txt),
+            line("Daylight", "a Mandate with 3 actions: Emergency Intervention (Recruit anywhere, Expedition, Declare Ceasefire, then Resupply the ceasefires), Civilian Protection (Declare Peace for 1 each, then Recruit at peace, Move, Ransom Hostages) or Stabilization (Move, Build clinics and schools, Repatriate Refugees, then Craft).".txt),
+            line("Evening", "Evacuate refugees, then draw 1 and 1 more for each school.".txt),
+        )
+        case AA => $(
+            by("chemicalreaction", "version ii, art by SuPaCatOnE".txt),
+            arachnidLink,
+            "Spiders weaving webs, capturing the woodland's warriors on them and consuming them, laying eggs that hatch more spiders, and frightening the others out of the clearings they rule.".txt,
+            line("Hunters and Webs", "attacking, the warriors the spiders remove are captured on free webs, and a warrior moving along a path with an empty web is caught there.".txt),
+            line("Birdsong", "Consume the captives next to an adult spider (2 VP, 2 spiderlings or a mutation each), then the eggs incubate, a hatched one placing 3 spiderlings and an adult for 3 VP.".txt),
+            line("Daylight", "3 actions, and one more for each bird card spent: Battle, Move (one adult at most), Weave (once per adult), Craft with webs or eggs (no items), Lay an egg.".txt),
+            line("Evening", "Capture a warrior next to an adult spider with a matching card, draw 1 and 1 more for each of the first two eggs, then Arachnophobia: in each clearing the spiders rule, opponents give a card or flee.".txt),
         )
         case NX => $(
             by("S.P. Shaman", "art by disasterman, from the fan-made ".txt ~ "Nemesis Expansion".hh),
