@@ -220,6 +220,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case GoldenKnightMarker => { DrawRect("dark-knight-token", -45, -45, 90, 90) }
             case MurderHawk => { DrawRect("upstarts-hawk", -50, -50, 100, 100) }
             case HousingSlot => { DrawRect("upstarts-housing", -45, -45, 90, 90) }
+            case GloryGarden => { DrawRect("sorcery-garden", -45, -45, 90, 90) }
+            case WizardsTower => { DrawRect("sorcery-tower", -50, -50, 100, 100) }
             case RingMarker => { DrawRect("item-ring", -55, -55, 110, 110) }
             case MonsterPawn => { DrawRect("monster-" + game.monster./(_.id).|("demon-bear"), -60, -110, 120, 120) }
             case LegendsDie(n) => { DrawRect("die-" + n, -32, -32, 64, 64) }
@@ -2837,6 +2839,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         case Some(FrankenDeck) => "card-back-art-fd"
         case Some(DarkDeck) => "card-back-art-dd"
         case Some(UpstartsDeck) => "card-back-art-ur"
+        case Some(SorceryDeck) => "card-back-art-se"
         case _ => "card-back-art"
     }
 

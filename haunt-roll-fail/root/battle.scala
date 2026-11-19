@@ -648,7 +648,11 @@ object BattleExpansion extends MandatoryExpansion {
             val fs = f.is[RiverfolkFlotilla.type].?(3) || f.as[TheExile.type]./(f => f.ready.num + f.exhausted.num) || f.as[Hero]./(_.swords) || f.used.has(Siege).?(f.at(c).count(Catapult)) | f.at(c).of[Warrior].num
             val os = o.is[RiverfolkFlotilla.type].?(3) || o.as[TheExile.type]./(o => o.ready.num + o.exhausted.num) || o.as[Hero]./(_.swords) || o.used.has(Siege).?(o.at(c).count(Catapult)) | o.at(c).of[Warrior].num
 
-            BattleAdjustRollAction(b, b.attacker, b.defender, fs + as, os + ds, fr, or)
+            // Living Buildings (Sorcery of the Enchanted Woods): one more maximum rolled hit for a side with warriors there
+            val fl = (fs > 0).??(SorceryDeckExpansion.livingBonus(f, c))
+            val ol = (os > 0).??(SorceryDeckExpansion.livingBonus(o, c))
+
+            BattleAdjustRollAction(b, b.attacker, b.defender, fs + as + fl, os + ds + ol, fr, or)
 
         case BattleAdjustRollAction(b, f, o, fs, os, fr, or) if fr > or && (
             b.defender.can(GuerillaTactics) ||
@@ -797,6 +801,9 @@ object BattleExpansion extends MandatoryExpansion {
                 if (f.canRemove(b.clearing)(o)) {
                     if (options.has(DarkDeck))
                         actions ++= DarkDeckExpansion.postRoll(f, b, fh, oh, fe, oe, full, ft, ot)
+
+                    if (options.has(SorceryDeck))
+                        actions ++= SorceryDeckExpansion.postRoll(f, b, fh, oh, fe, oe, full, ft, ot)
 
                     if (f.can(BrutalTactics))
                         if (f == b.attacker && fh + fe < ot)

@@ -490,6 +490,12 @@ trait FactionState {
         location(HawkPerch, content = faction.is[Hireling].not.$(Figure(faction, MurderHawk, 1)))
     }
 
+    // the Sorcery of the Enchanted Woods deck: the Garden of Glory and The Wizards Tower off the map, and the warriors on the Onyx Cauldron
+    if (options.has(SorceryDeck)) {
+        location(OnCauldron)
+        location(SorceryShelf, content = faction.is[Hireling].not.??($(Figure(faction, GloryGarden, 1), Figure(faction, WizardsTower, 1))))
+    }
+
     def transient : $[Effect] = $
 
     var effects : $[Effect] = $
@@ -530,7 +536,8 @@ trait FactionState {
     def frogCraft : $[SuitAsset] =
         factions.but(faction).of[InvasiveDDD]./~(e => effects.of[SuitLaborers].%(_.faction == e)./(_.suit)./~(s => e.all(PeacefulDDD(s))))./(_.asset) ++
         factions.but(faction).of[InvasiveCCC]./~(e => effects.of[Laborers].%(_.faction == e)./~(_ => FoxRabbitMouse./~(s => e.all(PeacefulCCC(s)))))./(_.asset) ++
-        factions.but(faction).of[InvasiveBBB]./~(e => effects.of[Integration].%(_.faction == e)./(_.suit)./~(s => (e.all(PeacefulBBB(s)) ++ e.all(MilitantBBB(s)))))./(_.asset)
+        factions.but(faction).of[InvasiveBBB]./~(e => effects.of[Integration].%(_.faction == e)./(_.suit)./~(s => (e.all(PeacefulBBB(s)) ++ e.all(MilitantBBB(s)))))./(_.asset) ++
+        SorceryDeckExpansion.towerCraft(faction)
 
     var extraCraft : $[SuitAsset] = $
 
@@ -1205,6 +1212,7 @@ trait GameImplicits {
             val sk = f.has(SoupKitchens)
             val bk = f.has(BorschtKitchens)
             val fv = f.has(ForestVigil)
+            val lb = SorceryDeckExpansion.living(f)
 
             val own = f.at(c)./{
                 // Bone Patrol always rules the Alpha's clearing
@@ -1215,6 +1223,7 @@ trait GameImplicits {
                 // the Twelve Colonies' Historical Site rules nothing
                 case HistoricalSite => 0
                 case Garden(_) => 333
+                case b : Building if lb => 4 + 4
                 case b : Building => 4
                 case w : Warrior => 4
                 case t : Token if sk => 4 + 4
@@ -1280,6 +1289,9 @@ trait GameImplicits {
 
             if (options.has(UpstartsDeck))
                 UpstartsDeckExpansion.discarded(f, effect)
+
+            if (options.has(SorceryDeck))
+                SorceryDeckExpansion.discarded(f, effect)
 
             if (effect == CoffinMakers)
                 game.coffins --> game.pool
@@ -1739,6 +1751,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             KnavesExpansion,
 
             UpstartsDeckExpansion,
+            SorceryDeckExpansion,
             StandardDeckExpansion,
             ExilesDeckExpansion,
             DuskDeckExpansion,
@@ -1968,10 +1981,11 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     var corners : $[Clearing] = $
     var homelands : $[Clearing] = $
 
-    val transports = $[Transport](Roads, Riverboat, Ferry, Swimmers, BurrowRoads, TunnelRoads, OffTrail, FoxburrowRoads, ForestShortcut, BarrenTrail) ++ options.has(UpstartsDeck).$(TrailMove)
+    val transports = $[Transport](Roads, Riverboat, Ferry, Swimmers, BurrowRoads, TunnelRoads, OffTrail, FoxburrowRoads, ForestShortcut, BarrenTrail) ++ options.has(UpstartsDeck).$(TrailMove) ++ options.has(SorceryDeck).$(TreeWalk)
 
     // the Upstarts & Renegades deck
     val upstarts = new UpstartsState
+    val sorcery = new SorceryState
 
     def slots(c : Clearing) = OutsidersMaps.slots(c)(this).|(c.capacity) + UpstartsDeckExpansion.extraSlot(c)(this).??(1) + options.has(KeepExtraBuildingSlot).??(factions.of[Feline].%(game.states.contains).%(_.at(c).has(Keep)).num)
 

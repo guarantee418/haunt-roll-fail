@@ -326,6 +326,17 @@ case object UpstartsDeck extends FanDeck {
     )
 }
 
+case object SorceryDeck extends FanDeck {
+    val valueOn = "Sorcery of the Enchanted Woods".hh
+    override val explain = $(
+        "A 55 card fan deck from the " ~ Link("https://steamcommunity.com/sharedfiles/filedetails/?id=2413287097", "Tabletop Simulator mod", $(xstyles.link)) ~ " uploaded by " ~ "slugfacekillah".hl ~ " (not his own; its designer isn't named).",
+        "Its ambushes, items and four dominances are the base deck's; its " ~ "25".hh ~ " persistent effects are spells: " ~ "The Wizards Tower".hh ~ ", " ~ "Garden of Glory".hh ~ ", " ~ "Hailstorm".hh ~ ", " ~ "Dispel".hh ~ ", " ~ "Spell of Flight".hh ~ ", " ~ "Treewalking".hh ~ " and more.",
+        "A fifth " ~ "Dominance".hh ~ " wins with six crafted improvements.",
+        "There is no rulebook: the card text is the rules.",
+        Image("sorcery-wizards-tower", styles.card)
+    )
+}
+
 case object ActionBooster extends GameOption with ToggleOption with FoldedOption {
     val group = "Fan Decks"
     val valueOn = "Action! Deck Booster".hh
@@ -700,6 +711,12 @@ case object PrisonersFromCodefenders extends GameOption with ToggleOption {
 case object UpstartsTestDeal extends GameOption with ToggleOption {
     val group = "Card Draft"
     val valueOn = "Upstarts & Renegades".hh ~ " effects dealt crafted"
+}
+
+// ReplayCheck's "sorceryall": every Sorcery of the Enchanted Woods effect but Hailstorm dealt out crafted at the first Birdsong (not offered)
+case object SorceryTestDeal extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Sorcery of the Enchanted Woods".hh ~ " effects dealt crafted"
 }
 
 case object DuskDeckFixes extends GameOption with ToggleOption {
@@ -1819,7 +1836,7 @@ object Meta extends MetaGame {
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
         legendsOptions ++
         $,
-        $(StandardDeck, ExilesDeck, SquiresDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck) ++
+        $(StandardDeck, ExilesDeck, SquiresDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck, SorceryDeck) ++
         (n >= 5).$(ActionBooster) ++
         $,
         (l.of[Feline].num > 1).$(TheWoodMustFlow) ++
@@ -1882,7 +1899,7 @@ object Meta extends MetaGame {
         $(DeepWoodsSettling, WastelandsWater) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
-        $(StandardDeck, ExilesDeck, SquiresDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck) ++
+        $(StandardDeck, ExilesDeck, SquiresDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck, SorceryDeck) ++
         (n >= 5).$(ActionBooster) ++
         hitsAndAmbushes(l) ++
         (n > 2).?(TotalWarDominance) ++
@@ -3719,6 +3736,30 @@ object Meta extends MetaGame {
         ImageAsset("action-key") ::
         ImageAsset("action-secret-cancel") ::
         ImageAsset("action-secret-score") ::
+    $) ::
+    ConditionalAssetsList((factions, options) => options.has(SorceryDeck), "card/sorcery", lzy = Laziness.Later, scale = 50)(
+        ImageAsset("sorcery-dominance") ::
+        ImageAsset("sorcery-garden-of-glory") ::
+        ImageAsset("sorcery-enchanted-objects") ::
+        ImageAsset("sorcery-living-buildings") ::
+        ImageAsset("sorcery-mantra-of-frenzy") ::
+        ImageAsset("sorcery-favor-of-the-phoenix") ::
+        ImageAsset("sorcery-foresight") ::
+        ImageAsset("sorcery-knowledge-of-the-fallen") ::
+        ImageAsset("sorcery-enchanted-gifts") ::
+        ImageAsset("sorcery-spell-of-flight") ::
+        ImageAsset("sorcery-onyx-cauldron") ::
+        ImageAsset("sorcery-misdirection") ::
+        ImageAsset("sorcery-hailstorm") ::
+        ImageAsset("sorcery-scepter-of-majesty") ::
+        ImageAsset("sorcery-visions-from-beyond") ::
+        ImageAsset("sorcery-treewalking") ::
+        ImageAsset("sorcery-wizards-tower") ::
+        ImageAsset("sorcery-fire-and-lightning") ::
+        ImageAsset("sorcery-dispel") ::
+        ImageAsset("sorcery-summon-river-beast") ::
+        ImageAsset("sorcery-tower") ::
+        ImageAsset("sorcery-garden") ::
     $) ::
     ConditionalAssetsList((factions, options) => options.has(UpstartsDeck), "card/upstarts", lzy = Laziness.Later, scale = 50)(
         ImageAsset("upstarts-sabotage") ::

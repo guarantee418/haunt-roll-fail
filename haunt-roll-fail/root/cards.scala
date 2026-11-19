@@ -129,6 +129,7 @@ object Deck {
         case FrankenDeck => ambushes ++ frankenItems ++ $(frankenSabotage) ++ (arity > 2).??(dominances) ++ frankenPool(l.has(DuskDeckFixes))
         case DarkDeck => darkDeck.%(d => arity > 2 || d.is[Dominance].not)
         case UpstartsDeck => ambushes ++ items ++ upstarts ++ (arity > 2).??(dominances)
+        case SorceryDeck => ambushes ++ items ++ sorcery ++ (arity > 2).??(dominances :+ SorceryDominance)
     }) ++ l.has(ActionBooster).??(boosters(arity).times(actionBooster).flatten)
 
     // Action! Deck Booster (The Doomed Expansion, `ActionBooster`): one booster for each player above five, one with five players
@@ -263,6 +264,36 @@ object Deck {
         CraftEffectCard(Mouse, "upstarts-tagalongs", $(Mouse, Mouse), Tagalongs),
         CraftEffectCard(Mouse, "upstarts-baron-von-costume", $(Mouse, Mouse), BaronVonCostume),
         CraftEffectCard(Fox, "upstarts-goon-for-hire", $(AnySuit, AnySuit, AnySuit), GoonForHire),
+    )
+
+    // Sorcery of the Enchanted Woods (fan-made, TTS workshop 2413287097; 2026-11-19): the base deck's ambushes, items and dominances,
+    // a fifth dominance and these 25 persistent effects (`root/deck-sorcery.scala`)
+    val sorcery = $[DeckCard](
+        CraftEffectCard(Rabbit, "sorcery-garden-of-glory", $(Rabbit, Rabbit), GardenOfGlory),
+        CraftEffectCard(Mouse, "sorcery-enchanted-objects", $(Mouse, Mouse), EnchantedObjects),
+        CraftEffectCard(Rabbit, "sorcery-living-buildings", $(Rabbit, Rabbit), LivingBuildings),
+        CraftEffectCard(Fox, "sorcery-mantra-of-frenzy", $(Fox, Fox, Fox), MantraOfFrenzy),
+        CraftEffectCard(Fox, "sorcery-favor-of-the-phoenix", $(Fox, Fox), FavorOfThePhoenix),
+        CraftEffectCard(Mouse, "sorcery-foresight", $(Mouse, Mouse), Foresight),
+        CraftEffectCard(Bird, "sorcery-knowledge-of-the-fallen", $(AnySuit, AnySuit), KnowledgeOfTheFallen),
+        CraftEffectCard(Bird, "sorcery-knowledge-of-the-fallen", $(AnySuit, AnySuit), KnowledgeOfTheFallen),
+        CraftEffectCard(Mouse, "sorcery-enchanted-gifts", $(Mouse), EnchantedGifts),
+        CraftEffectCard(Mouse, "sorcery-enchanted-gifts", $(Mouse), EnchantedGifts),
+        CraftEffectCard(Bird, "sorcery-spell-of-flight", $(Rabbit), SpellOfFlight),
+        CraftEffectCard(Bird, "sorcery-spell-of-flight", $(Rabbit), SpellOfFlight),
+        CraftEffectCard(Fox, "sorcery-onyx-cauldron", $(Fox, Fox), OnyxCauldron),
+        CraftEffectCard(Mouse, "sorcery-misdirection", $(Mouse, Mouse, Mouse), Misdirection),
+        CraftEffectCard(Fox, "sorcery-hailstorm", $(AnySuit, AnySuit, AnySuit, AnySuit), Hailstorm),
+        CraftEffectCard(Bird, "sorcery-scepter-of-majesty", $(Fox, Rabbit, Mouse), ScepterOfMajesty),
+        CraftEffectCard(Bird, "sorcery-visions-from-beyond", $(Rabbit, Rabbit), VisionsFromBeyond),
+        CraftEffectCard(Rabbit, "sorcery-treewalking", $(Rabbit, Rabbit, Rabbit), Treewalking),
+        CraftEffectCard(Mouse, "sorcery-wizards-tower", $(Mouse), WizardsTowerCard),
+        CraftEffectCard(Fox, "sorcery-fire-and-lightning", $(Fox), FireAndLightning),
+        CraftEffectCard(Fox, "sorcery-fire-and-lightning", $(Fox), FireAndLightning),
+        CraftEffectCard(Rabbit, "sorcery-dispel", $(AnySuit), Dispel),
+        CraftEffectCard(Rabbit, "sorcery-dispel", $(AnySuit), Dispel),
+        CraftEffectCard(Rabbit, "sorcery-dispel", $(AnySuit), Dispel),
+        CraftEffectCard(Fox, "sorcery-summon-river-beast", $(Fox), SummonRiverBeast),
     )
 
     val frankenItems = $[DeckCard](
@@ -600,7 +631,7 @@ object Deck {
 
     val disguisedEEE = frogEEE.distinct./~(d => InvasiveEEEExpansion.disguiseSuits./(DisguisedCard(d, _)))
 
-    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ effectsSquires ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA ++ frogEEE ++ disguisedEEE ++ frankenItems ++ $(frankenSabotage) ++ actionBooster ++ $(fowlPlay) ++ darkDeck.%!(_.is[Ambush]).%!(_.is[BaseSuitDominance]).%!(_.is[CornersDominance]) ++ $(Ambush(Abomination)) ++ upstarts // new cards go last: saved games name cards by their place here
+    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ effectsSquires ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA ++ frogEEE ++ disguisedEEE ++ frankenItems ++ $(frankenSabotage) ++ actionBooster ++ $(fowlPlay) ++ darkDeck.%!(_.is[Ambush]).%!(_.is[BaseSuitDominance]).%!(_.is[CornersDominance]) ++ $(Ambush(Abomination)) ++ upstarts ++ sorcery ++ $(SorceryDominance) // new cards go last: saved games name cards by their place here
 }
 
 
