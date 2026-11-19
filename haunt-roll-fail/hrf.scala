@@ -1433,7 +1433,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         // the faction glyphs, before the game's assets load (the same paths as the game's)
         // the metas on this ladder: Advanced Setup's factions are seats, so a seat's faction is looked up in all of them (Root's)
         val ladderMetas = (meta +: HRF.metas.%(m => m.ranking.any && m.ranking == meta.ranking)).distinct
-        val glyphSources = ladderMetas./~(m => m.assets./~(_.get).%(_.name.endsWith("-glyph"))./(a => a.name.toLowerCase -> ("webp2/" + m.path + "/images/" + a.copy(ext = "webp").src))).toMap
+        // (each meta names its own: Root's "<faction>-glyph", Northgard's "clan-<clan>")
+        val glyphSources = ladderMetas./~{ m =>
+            val names = m.factions./~(f => m.glyph(f))./(_.toLowerCase).toSet
+            m.assets./~(_.get).%(a => a.name.endsWith("-glyph") || names.contains(a.name.toLowerCase))./(a => a.name.toLowerCase -> ("webp2/" + m.path + "/images/" + a.copy(ext = "webp").src))
+        }.toMap
 
         implicit val resources : Resources = this.resources.copy(images = this.resources.images.copy(sources = glyphSources ++ this.resources.images.sources))
 
@@ -1464,7 +1468,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         def factionOf(name : String) : |[Ranked] = rankedCache.getOrElseUpdate(name, {
             val base = name.takeWhile(_ != '(').trim
-            ladderMetas.view.flatMap(m => m.factions.find(f => m.factionName(f) == base)./(f => Ranked(m.glyph(f), m.factionElem(f)))).headOption
+            ladderMetas.view.flatMap(m => m.factions.find(f => m.factionName(f) == base)./(f => Ranked(m.glyph(f), m.rankingElem(f)))).headOption
         })
 
         def colourStyles(e : Elem) : $[Style] = e match {
