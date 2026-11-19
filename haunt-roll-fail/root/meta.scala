@@ -155,13 +155,13 @@ case object WastelandsMap extends FanMap {
     override val explain = $(
         "Wastelands".hh ~ ", the future, a map from slugfacekillah's fan-made " ~ "Outsiders Expansion".hl ~ ".",
         "A walled city of three clearings in the middle, where two rivers meet at the " ~ "Cistern".hh ~ ".",
-        "Its barren trails are plain paths here, and its water rules are left out.",
+        "With " ~ "Water and Barren Trails".hh ~ " (the toggle under the maps, on by default) Water is the currency and moving along a barren trail costs something; without it the barren trails are plain paths.",
         FanInfo.outsidersLink
     )
 }
 
 // The Outsiders maps' own rules (Law of Slug S.1 and S.2, root/outsiders-maps.scala), only with their map, shown unfolded right under
-// the maps so they are seen when the map is picked (2026-11-18); Settling is on by default
+// the maps so they are seen when the map is picked (2026-11-18); both are on by default (Water and Barren Trails since 2026-11-19)
 case object DeepWoodsSettling extends GameOption with ToggleOption {
     val group = "Fan Map Rules"
     val valueOn = "Deep Woods".styled(styles.forest) ~ SpacedDash ~ "Settling".hh
@@ -1955,7 +1955,11 @@ object Meta extends MetaGame {
     override def completeSaved(n : Int, l : $[F], options : $[O]) = settlingOn(autoHitsOn(randomOfficial(options).diff(retired).diff(RulesVersion.implied)))
 
     // Deep Woods Settling is on by default (2026-11-18): a setup a browser saved without the Deep Woods map picked starts with it on
-    def settlingOn(options : $[O]) : $[O] = options.has(DeepWoodsMap).?(options).|((options :+ DeepWoodsSettling).distinct)
+    // the Outsiders maps' own rules are on by default (2026-11-18 and 19), also in a setup a browser saved without that map picked
+    def settlingOn(options : $[O]) : $[O] = {
+        val a = options.has(DeepWoodsMap).?(options).|((options :+ DeepWoodsSettling).distinct)
+        a.has(WastelandsMap).?(a).|((a :+ WastelandsWater).distinct)
+    }
 
     // A setup saved with the retired Random map gets Random Official instead
     def randomOfficial(options : $[O]) : $[O] = options./{
@@ -1989,6 +1993,7 @@ object Meta extends MetaGame {
         CardDraftStandard,
         MountainSuitedLandmark,
         DeepWoodsSettling,
+        WastelandsWater,
         NoHirelings) ++ hirelings./(IncludeHireling)
 
     // Two presets (2026-10-31): the hirelings one repeated the Hirelings section, Sunday Games was JT's group's house rules
