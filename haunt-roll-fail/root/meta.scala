@@ -2131,6 +2131,15 @@ object Meta extends MetaGame {
 
     override def glyph(g : G) : |[String] = g.current.but(Neutral)./(_.style + "-glyph")
     override def glyph(f : F) : |[String] = |(f.style + "-glyph")
+    // The rankings' tiers, after the rootelo ladder's (asked for on 2026-11-19), 200 lower as ratings here start at 1000
+    // not 1200; the suits' card icons for the four suited tiers
+    override def rankingTiers = $(
+        RankingTier("Stag", |(1400), "Legend of the woods", None),
+        RankingTier("Bird", |(1300), "Rules the canopy", |("card-suit-bird-gray")),
+        RankingTier("Fox", |(1200), "Sly and seasoned", |("card-suit-fox-gray")),
+        RankingTier("Rabbit", |(1100), "Quick on their feet", |("card-suit-rabbit-gray")),
+        RankingTier("Mouse", |(1000), "Holding their ground", |("card-suit-mouse-gray")),
+        RankingTier("Squirrel", None, "Still gathering acorns", None))
     override def glyph(g : G, f : F) : |[String] = glyph(f).%!(_ => g.highlightFaction.has(f) && hrf.HRF.uptime() / 1000 % 2 == 1)
 
     def createGame(factions : $[Faction], options : $[O]) = new Game(factions, factions, options)

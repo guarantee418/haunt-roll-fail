@@ -755,6 +755,166 @@
                 .rk-row, .rk-chip { transition: none; }
             }
 
+            /* Root's tabs, tiers, leaderboard table, Top Tables and journey (rankingTiers) */
+            .rk-tab { margin: 0.3ex 0.35ex; }
+            .rk-tiers {
+                box-sizing: border-box;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.6ex 1.4ex;
+                width: calc(100% - 8ex);
+                margin: 0.8ex 4ex 0.2ex 4ex;
+            }
+            .rk-tier-key { display: inline-flex; align-items: center; gap: 0.6ex; }
+            .rk-tier-min { color: #8c8c8c; font-size: 82%; }
+            .rk-tier {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5ex;
+                justify-self: start;
+                padding: 0.15ex 0.9ex 0.15ex 0.3ex;
+                border-radius: 999px;
+                border: 1px solid #3a3a3a;
+                background-color: #1b1b1b;
+                color: #d8d2c4;
+                font-size: 88%;
+                white-space: nowrap;
+            }
+            .rk-tier-none { padding: 0.15ex 0.9ex; border-color: transparent; background: none; color: #555555; }
+            .rk-tier-icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 1.5em;
+                height: 1.5em;
+                object-fit: contain;
+            }
+            .rk-tier-letter { border-radius: 50%; background-color: #2c2c2c; color: #e6e0d4; font-size: 80%; }
+            .rk-tier-stag { border-color: #b7913a; background-color: #2a2312; color: #f3dfa6; }
+            .rk-tier-stag .rk-tier-letter { background: radial-gradient(circle at 35% 30%, #f6dc8a, #b7913a); color: #1a1408; }
+            .rk-tier-bird { border-color: #2f7f77; background-color: #12211f; }
+            .rk-tier-fox { border-color: #9c3a26; background-color: #24130f; }
+            .rk-tier-rabbit { border-color: #a59a3b; background-color: #222011; }
+            .rk-tier-mouse { border-color: #a8673a; background-color: #24180f; }
+            .rk-tier-squirrel { border-color: #4a4a4a; }
+            .rk-tier-rimesteel { border-color: #8fd3e8; background-color: #10202a; color: #d8f2fa; }
+            .rk-tier-rimesteel .rk-tier-letter { background: linear-gradient(135deg, #d8f2fa, #5fa9c4); color: #0c1a20; }
+            .rk-tier-gemstone { border-color: #9a6fd0; background-color: #1c1428; }
+            .rk-tier-gemstone .rk-tier-letter { background: linear-gradient(135deg, #c6a6f0, #6f47a6); color: #140c20; }
+            .rk-tier-gold { border-color: #c9a23a; background-color: #262010; }
+            .rk-tier-gold .rk-tier-letter { background: radial-gradient(circle at 35% 30%, #f6dc8a, #b88a22); color: #1a1408; }
+            .rk-tier-iron { border-color: #7c8a96; background-color: #181c20; }
+            .rk-tier-iron .rk-tier-letter { background: linear-gradient(135deg, #b4bec8, #5c6670); color: #101418; }
+            .rk-tier-stone { border-color: #6c6a64; background-color: #1a1a18; }
+            .rk-tier-stone .rk-tier-letter { background: linear-gradient(135deg, #a8a49a, #5e5b54); color: #121210; }
+            .rk-tier-wood { border-color: #7a5634; background-color: #1e160e; }
+            .rk-tier-wood .rk-tier-letter { background: linear-gradient(135deg, #b58556, #6a4526); color: #140d06; }
+            .rk-title { align-self: flex-start; color: #c9b98f; font-size: 78%; letter-spacing: 0.06em; text-transform: uppercase; }
+            .rk-title-big { align-self: center; font-size: 92%; }
+
+            .rk-row.rk-lb, .rk-lb-head {
+                grid-template-columns: 2.2em 5.4em minmax(0, 1fr) 4.2em 2.6em 2.6em 3.2em 3em 2.8em;
+                column-gap: 0.9ex;
+            }
+            .rk-row.rk-lb > .rk-lb-c { font-size: 92%; }
+            .rk-row.rk-lb > .rk-lb-c { justify-self: end; color: #c9c3b6; }
+            .rk-row.rk-lb > .rk-last { justify-self: end; }
+            .rk-row.rk-lb .rk-lb-phone { display: none; }
+            .rk-lb-head {
+                display: grid;
+                align-items: end;
+                box-sizing: border-box;
+                width: calc(100% - 8ex);
+                margin: 0.6ex 4ex 0 4ex;
+                padding: 0 1.2ex 0.3ex 1.2ex;
+                border-bottom: 1px solid #2c2c2c;
+            }
+            .rk-lb-h { color: #8c8c8c; font-size: 78%; letter-spacing: 0.04em; }
+            .rk-lb-head > :nth-child(1) { justify-self: center; }
+            .rk-lb-head > :nth-child(n+4) { justify-self: end; }
+            .rk-lb-head > :nth-child(3) { justify-self: start; }
+            .rk-lb-head > :nth-child(4) { justify-self: center; }
+            .rk-lb-head > :nth-child(2) { justify-self: start; padding-left: 0.6ex; }
+            .rk-place-dash { color: #555555; }
+            .rk-toggle { display: block; margin: 0.8ex auto; }
+
+            .rk-tt {
+                display: grid;
+                grid-template-columns: 2.2em 5em minmax(0, 1fr);
+                align-items: center;
+                column-gap: 1.4ex;
+                box-sizing: border-box;
+                width: calc(100% - 8ex);
+                margin: 0.35ex 4ex;
+                padding: 0.9ex 1.2ex;
+                background-color: #151515;
+                border: 1px solid #2c2c2c;
+                border-radius: 8px;
+                text-align: left;
+            }
+            .rk-tt-rank { justify-self: center; color: #8c8c8c; }
+            .rk-tt-sumbox { display: flex; flex-direction: column; align-items: center; }
+            .rk-tt-sum { color: #f3e7c6; font-size: 125%; font-weight: 600; }
+            .rk-tt-l { color: #8c8c8c; font-size: 72%; }
+            .rk-lineup { display: flex; flex-wrap: wrap; gap: 0.5ex 1.6ex; margin-top: 0.5ex; }
+            .rk-lu { display: inline-flex; align-items: center; gap: 0.5ex; white-space: nowrap; }
+            .rk-lu-name { color: #d3d3d3; }
+            .rk-lu-won .rk-lu-name { color: #f3e7c6; }
+
+            .rk-pick { display: inline-flex; align-items: center; gap: 0.6ex; }
+            .rk-pick .rk-tier-icon { width: 1.3em; height: 1.3em; }
+            .rk-chip-n { margin-left: 0.7ex; color: #8c8c8c; font-size: 85%; }
+
+            .rk-chart {
+                display: grid;
+                grid-template-columns: 3.4em minmax(0, 1fr);
+                grid-template-rows: 9em auto;
+                column-gap: 1ex;
+                box-sizing: border-box;
+                width: calc(100% - 8ex);
+                margin: 0.35ex 4ex;
+                padding: 1.2ex 1.4ex 0.8ex 1ex;
+                background-color: #151515;
+                border: 1px solid #2c2c2c;
+                border-radius: 8px;
+            }
+            .rk-chart-axis { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; color: #8c8c8c; font-size: 80%; }
+            .rk-chart-bars { display: flex; align-items: flex-end; gap: 2px; height: 100%; border-bottom: 1px solid #333333; }
+            .rk-bar { flex: 1 1 0; min-width: 2px; max-width: 22px; border-radius: 3px 3px 0 0; }
+            .rk-bar-won { background-color: #6fae6f; }
+            .rk-bar-lost { background-color: #a5584e; }
+            .rk-chart-dates { grid-column: 2; display: flex; justify-content: space-between; margin-top: 0.3ex; }
+            .rk-row.rk-hl { grid-template-columns: minmax(0, 1fr); }
+            .rk-hl-l { color: #c9b98f; font-size: 82%; }
+            .rk-tier-row {
+                display: grid;
+                grid-template-columns: 8em 5em minmax(0, 1fr);
+                align-items: center;
+                column-gap: 1.4ex;
+                box-sizing: border-box;
+                width: calc(100% - 8ex);
+                margin: 0.25ex 4ex;
+                padding: 0.5ex 1.2ex;
+                border-bottom: 1px solid #242424;
+                text-align: left;
+            }
+
+            @media (max-width: 640px) {
+                .rk-tiers, .rk-lb-head, .rk-tt, .rk-chart, .rk-tier-row { width: calc(100% - 2ex); margin-left: 1ex; margin-right: 1ex; }
+                .rk-lb-head { display: none; }
+                .rk-row.rk-lb {
+                    grid-template-columns: 2.4em minmax(0, 1fr) auto;
+                    grid-template-areas: "place who badge" "place tier last";
+                }
+                .rk-row.rk-lb > .rk-lb-c { display: none; }
+                .rk-row.rk-lb > .rk-tier { grid-area: tier; margin-top: 0.4ex; }
+                .rk-row.rk-lb .rk-lb-phone { display: inline; }
+                .rk-tt { grid-template-columns: 1.6em 4em minmax(0, 1fr); column-gap: 1ex; }
+                .rk-tier-row { grid-template-columns: 6.6em 5.6em minmax(0, 1fr); column-gap: 1ex; }
+            }
+            .rk-ht0{height:0%} .rk-ht1{height:1%} .rk-ht2{height:2%} .rk-ht3{height:3%} .rk-ht4{height:4%} .rk-ht5{height:5%} .rk-ht6{height:6%} .rk-ht7{height:7%} .rk-ht8{height:8%} .rk-ht9{height:9%} .rk-ht10{height:10%} .rk-ht11{height:11%} .rk-ht12{height:12%} .rk-ht13{height:13%} .rk-ht14{height:14%} .rk-ht15{height:15%} .rk-ht16{height:16%} .rk-ht17{height:17%} .rk-ht18{height:18%} .rk-ht19{height:19%} .rk-ht20{height:20%} .rk-ht21{height:21%} .rk-ht22{height:22%} .rk-ht23{height:23%} .rk-ht24{height:24%} .rk-ht25{height:25%} .rk-ht26{height:26%} .rk-ht27{height:27%} .rk-ht28{height:28%} .rk-ht29{height:29%} .rk-ht30{height:30%} .rk-ht31{height:31%} .rk-ht32{height:32%} .rk-ht33{height:33%} .rk-ht34{height:34%} .rk-ht35{height:35%} .rk-ht36{height:36%} .rk-ht37{height:37%} .rk-ht38{height:38%} .rk-ht39{height:39%} .rk-ht40{height:40%} .rk-ht41{height:41%} .rk-ht42{height:42%} .rk-ht43{height:43%} .rk-ht44{height:44%} .rk-ht45{height:45%} .rk-ht46{height:46%} .rk-ht47{height:47%} .rk-ht48{height:48%} .rk-ht49{height:49%} .rk-ht50{height:50%} .rk-ht51{height:51%} .rk-ht52{height:52%} .rk-ht53{height:53%} .rk-ht54{height:54%} .rk-ht55{height:55%} .rk-ht56{height:56%} .rk-ht57{height:57%} .rk-ht58{height:58%} .rk-ht59{height:59%} .rk-ht60{height:60%} .rk-ht61{height:61%} .rk-ht62{height:62%} .rk-ht63{height:63%} .rk-ht64{height:64%} .rk-ht65{height:65%} .rk-ht66{height:66%} .rk-ht67{height:67%} .rk-ht68{height:68%} .rk-ht69{height:69%} .rk-ht70{height:70%} .rk-ht71{height:71%} .rk-ht72{height:72%} .rk-ht73{height:73%} .rk-ht74{height:74%} .rk-ht75{height:75%} .rk-ht76{height:76%} .rk-ht77{height:77%} .rk-ht78{height:78%} .rk-ht79{height:79%} .rk-ht80{height:80%} .rk-ht81{height:81%} .rk-ht82{height:82%} .rk-ht83{height:83%} .rk-ht84{height:84%} .rk-ht85{height:85%} .rk-ht86{height:86%} .rk-ht87{height:87%} .rk-ht88{height:88%} .rk-ht89{height:89%} .rk-ht90{height:90%} .rk-ht91{height:91%} .rk-ht92{height:92%} .rk-ht93{height:93%} .rk-ht94{height:94%} .rk-ht95{height:95%} .rk-ht96{height:96%} .rk-ht97{height:97%} .rk-ht98{height:98%} .rk-ht99{height:99%} .rk-ht100{height:100%}
+
             /* phones: the bar goes under the name, the place and rating stay */
             @media (max-width: 640px) {
                 .rk-counts, .rk-note, .rk-row, .rk-stat, .rk-game, .rk-profile, .rk-loading {

@@ -1435,7 +1435,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         val ladderMetas = (meta +: HRF.metas.%(m => m.ranking.any && m.ranking == meta.ranking)).distinct
         // (each meta names its own: Root's "<faction>-glyph", Northgard's "clan-<clan>")
         val glyphSources = ladderMetas./~{ m =>
-            val names = m.factions./~(f => m.glyph(f))./(_.toLowerCase).toSet
+            val names = (m.factions./~(f => m.glyph(f)) ++ m.rankingTiers./~(_.icon))./(_.toLowerCase).toSet
             m.assets./~(_.get).%(a => a.name.endsWith("-glyph") || names.contains(a.name.toLowerCase))./(a => a.name.toLowerCase -> ("webp2/" + m.path + "/images/" + a.copy(ext = "webp").src))
         }.toMap
 
@@ -1455,7 +1455,39 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         var mine = $[String]()
 
+        // the tiers (Root's, after rootelo): a player's tier once they're past the provisional games
+        val tiers = ladderMetas./(_.rankingTiers).find(_.any).|($)
+
+        def tierOf(p : Elo.Player) : |[RankingTier] = if (p.provisional) None else tiers.find(t => t.min.forall(p.rating >= _))
+
+        def tierRange(t : RankingTier) = t.min./(m => m.round + "+").|("under " + tiers.flatMap(_.min).minOption./(_.round).|(0))
+
+        // the ladder hides the provisional players until asked, as rootelo hides its tierless ones
+        var showProvisional = false
+
+        val tierWord = ladderMetas./(_.rankingTierWord).find(_ != "Tier").|("Tier")
+        val titles = ladderMetas./(_.rankingTitles).find(_.any).|($)
+        val modes = ladderMetas.exists(_.rankingModes)
+
+
+        // a game's mode: one player a side, two sides (1v1) or more (free-for-all); two sides of two (2v2); other teams
+        def modeOf(r : Elo.Result) : String = {
+            val sizes = r.sides./(_.entries.num)
+            if (sizes.forall(_ == 1)) (sizes.num == 2).?("1v1").|("FFA")
+            else if (sizes == $(2, 2)) "2v2"
+            else "Teams"
+        }
+
+        val modeNames = $("1v1", "2v2", "FFA", "Teams")
+
+        // the mode the ladder and the clan stats show (None: every mode)
+        var mode : |[String] = None
+
         var results = $[Elo.Result]()
+
+        // by wins in every mode, as the game's ranks are, whatever mode the ladder shows
+        def winsOf(name : String) = results.%(_.rated).count(r => r.sides.exists(s => s.won && s.names.exists(_.toLowerCase == name.toLowerCase)))
+        def titleOf(p : Elo.Player) : |[String] = titles.filter(_._2 <= winsOf(p.name)).lastOption./(_._1)
 
         def percent(x : Double) = (math.round(x * 1000) / 10.0).toString + "%"
         def percent0(x : Double) = math.round(x * 100) + "%"
@@ -1525,10 +1557,12 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             def figure(n : String, label : String) = tag(num(n)(css("rk-figure-n")) ~ tag(Text(label), "rk-figure-l"), "rk-figure")
 
             ui.action.asker.zask(
+                tabs("Player's Journey", all) ++
                 $(ZOption(Empty, box(
-                    box(badge(p, true) ~ tag(Text(p.name), "rk-profile-name") ~ tag(Text(p.provisional.?("Provisional").|("Rank " + rank)), "rk-profile-rank"), "rk-profile-head") ~
+                    box(badge(p, true) ~ tag(Text(p.name), "rk-profile-name") ~ tierOf(p)./(t => tierPill(t)).|(Empty) ~ titleOf(p)./(t => tag(Text(t), "rk-title")).|(Empty) ~ tag(Text(p.provisional.?("Provisional · " + p.games + " of " + Elo.provisional + " games").|("Rank " + rank)), "rk-profile-rank"), "rk-profile-head") ~
                     box(figure(p.games.toString, "games") ~ figure(p.wins.toString, "won") ~ figure(percent0(p.wins.toDouble / p.games), "win rate") ~ figure(p.peak.round.toString, "peak"), "rk-figures"),
                 "rk-profile"))) ++
+                tiers.any.??(journey(p, all)) ++
                 factionRows(heading("By faction"), Elo.stats(seats, _.faction), _ => None) ++
                 seatRows(heading("By turn order"), Elo.stats(seats, e => e.seat + " of " + e.players).sortBy(_.key), k => k.split(' ').last.toIntOption./(1.0 / _)) ++
                 p.history.reverse./{ c =>
@@ -1558,9 +1592,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         def explainStats = "From the finished online games" ~ meta.ranking.has("root").?(" (bots too, before 2026-11-18)").|(" with people on two sides or more") ~ ". Score: " ~ "1".hl ~ " for a win, shared between the winning sides (a coalition, a shared win); relative score: score per game; average score: the " ~ unit ~ " at the end" ~ meta.ranking.has("root").??(" (a dominance not counted)") ~ "."
 
         def factions(all : $[Elo.Player], n : |[Int]) {
-            val seats = Elo.seats(results.%(r => n.forall(_ == r.players)))
+            val seats = Elo.seats(results.%(r => n.forall(_ == r.players) && (modes.not || mode.forall(_ == modeOf(r)))))
             ui.action.asker.zask(
                 $(ZOption((meta.label + " Faction Stats").hl.spn(xstyles.larger110), box(explainStats ~ n./(k => " The tick on each bar is what a seat would expect in a " + k + " player game (" + percent0(1.0 / k) + ").").|(""), "rk-note"))) ++
+                tabs(modes.?("Clans").|("Factions"), all) ++
+                modeChips(heading("Mode"), () => factions(all, n)) ++
                 filterOptions(heading("Players"), n, factions(all, _)) ++
                 factionRows(heading("Factions"), Elo.stats(seats, _.faction), _ => n./(1.0 / _)) ++
                 seats.none.$(note(heading("Factions"), "No games yet.".txt)) ++
@@ -1572,6 +1608,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             val seats = Elo.seats(results)
             ui.action.asker.zask(
                 $(ZOption((meta.label + " Turn Order Stats").hl.spn(xstyles.larger110), box(explainStats ~ " Seat " ~ "1".hl ~ " is the first player; the tick on each bar is what a seat would expect.", "rk-note"))) ++
+                tabs("Turn Order", all) ++
                 seats./(_._3.players).distinct.sorted./~{ k =>
                     seatRows(heading(k + " players"), Elo.stats(seats.%(_._3.players == k), _.seat.toString).sortBy(_.key.toInt), _ => |(1.0 / k))
                 } ++
@@ -1663,8 +1700,183 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             () => player(p, all), css("rk-row", (i < 3 && p.provisional.not).?("rk-row-top").|("rk-row-plain")) ++ yours.$(ExternalStyle("rk-row-yours")) ++ $(xlo.pointer))
         }
 
-        def show(all : $[Elo.Player]) {
-            val explain = "Elo ratings from finished online games with people on two sides or more (teams count as one side; bots and local games don't count). Everyone starts at " ~ Elo.start.round.toString.hl ~ "; a " ~ "?".hl ~ " marks fewer than " ~ Elo.provisional.hl ~ " games." ~ meta.ranking.has("root").??(" Root ratings count the games played from 2026-11-18.") ~ " Games with fan content (" ~ meta.ranking.has("root").?("fan, playtest or mirror factions, fan maps, decks, hirelings or scenarios").|("fan clans, modules or variants") ~ ") don't count in the ratings. The stats count every game."
+        def explainRatings : Elem = "Elo ratings from finished online games with people on two sides or more (teams count as one side; bots and local games don't count). Everyone starts at " ~ Elo.start.round.toString.hl ~ "; a " ~ "?".hl ~ " marks fewer than " ~ Elo.provisional.hl ~ " games." ~ meta.ranking.has("root").??(" Root ratings count the games played from 2026-11-18.") ~ " Games with fan content (" ~ meta.ranking.has("root").?("fan, playtest or mirror factions, fan maps, decks, hirelings or scenarios").|("fan clans, modules or variants") ~ ") don't count in the ratings. The stats count every game."
+
+        // Root's page, after rootelo: Leaderboard, Top Tables, Player's Journey, the stats and the Codex, as tabs
+        def tabs(current : String, all : $[Elo.Player]) =
+            tiers.any.??(modes.?($[(String, () => Unit)](
+                "Leaderboard" -> (() => show(all)),
+                "Clans" -> (() => factions(all, None)),
+                "Turn Order" -> (() => turns(all)),
+                "Leagues" -> (() => codex(all))
+            )).|($[(String, () => Unit)](
+                "Leaderboard" -> (() => show(all)),
+                "Top Tables" -> (() => topTables(all)),
+                "Player's Journey" -> (() => journeys(all)),
+                "Factions" -> (() => factions(all, None)),
+                "Turn Order" -> (() => turns(all)),
+                "Codex" -> (() => codex(all))
+            ))./{ case (l, f) => ZBasic(Empty, tag(Text(l), "rk-chip-text"), f, css("rk-chip", "rk-tab") ++ (l == current).$(ExternalStyle("rk-chip-on")) ++ $(xlo.pointer)) })
+
+        def tierIcon(t : RankingTier) : Elem =
+            t.icon.filter(i => glyphSources.contains(i.toLowerCase)).map(i => Image(i, css("rk-tier-icon"), |(t.name)) : Elem).getOrElse(tag(Text(t.name.take(1)), "rk-tier-icon", "rk-tier-letter"))
+
+        def tierPill(t : RankingTier) : Elem = tag(tierIcon(t) ~ tag(Text(t.name), "rk-tier-name"), "rk-tier", "rk-tier-" + t.name.toLowerCase)
+
+        def tierStrip = ZOption(Empty, box(tiers./(t => tag(tierPill(t) ~ tag(Text(tierRange(t)), "rk-tier-min"), "rk-tier-key")).merge, "rk-tiers"))
+
+        // a leaderboard row: rank, tier, player, rating, games, wins, win rate, peak, last change (phones: the figures go under the name)
+        def lbRow(p : Elo.Player, i : Int, all : $[Elo.Player], group : Elem) = {
+            val place = p.provisional.?(tag(Text("–"), "rk-place", "rk-place-dash")).|(Span(num((i + 1).toString), css((i < 3).?($("rk-place", "rk-medal", "rk-medal-" + (i + 1))).|($("rk-place", "rk-place-plain")) : _*)))
+            val yours = mine.exists(_.toLowerCase == p.name.toLowerCase)
+            def cell(s : String) = num(s)(css("rk-lb-c"))
+
+            ZBasic(group,
+                place ~
+                tierOf(p)./(t => tierPill(t)).|(tag(Text("–"), "rk-tier", "rk-tier-none")) ~
+                tag(
+                    tag(Text(p.name), "rk-name") ~ yours.?(tag(Text("you"), "rk-you")).|(Empty) ~ titleOf(p)./(t => tag(Text(t), "rk-title")).|(Empty) ~
+                    tag(favourites(p)./(f => glyph(f, "rk-glyph-mini")).merge ~ tag(Text(plural(p.games, "game") + " · " + p.wins + " won · " + percent0(p.wins.toDouble / p.games) + " · peak " + p.peak.round), "rk-num-inline", "rk-lb-phone"), "rk-sub"),
+                "rk-who") ~
+                badge(p) ~
+                cell(p.games.toString) ~ cell(p.wins.toString) ~ cell(percent0(p.wins.toDouble / p.games)) ~ cell(p.peak.round.toString) ~
+                tag(delta(p.lastChange), "rk-last"),
+            () => player(p, all), css("rk-row", "rk-lb", (i < 3 && p.provisional.not).?("rk-row-top").|("rk-row-plain")) ++ yours.$(ExternalStyle("rk-row-yours")) ++ $(xlo.pointer))
+        }
+
+        def lbHead(group : Elem) = ZOption(group, box($("Rank", tierWord, "Player", "Rating", "Games", "Wins", "Win %", "Peak", "Last")./(l => tag(Text(l), "rk-lb-h")).merge, "rk-lb", "rk-lb-head"))
+
+        def counts(all : $[Elo.Player]) = ZOption(title, box(
+            tag(num(all.num.toString) ~ " rated player" ~ (all.num != 1).??("s"), "rk-count") ~
+            tag(num(results.num.toString) ~ " game" ~ (results.num != 1).??("s") ~ " recorded", "rk-count") ~
+            tag(num(results.%(_.rated).num.toString) ~ " rated", "rk-count"),
+        "rk-counts"))
+
+        // the mode chips (Northgard): every mode, then each mode its games have
+        def modeChips(group : Elem, again : () => Unit) = modes.??({
+            val counts = results.groupBy(modeOf)./{ case (k, l) => k -> l.num }.toMap
+            ZBasic(group, tag(Text("All modes"), "rk-chip-text"), () => { mode = None ; again() }, css("rk-chip") ++ mode.none.$(ExternalStyle("rk-chip-on")) ++ $(xlo.pointer)) +:
+            modeNames.%(counts.contains)./(k => ZBasic(group, tag(Text(k), "rk-chip-text") ~ tag(Text(counts(k).toString), "rk-num", "rk-chip-n"), () => { mode = |(k) ; again() }, css("rk-chip") ++ mode.has(k).$(ExternalStyle("rk-chip-on")) ++ $(xlo.pointer)))
+        })
+
+        def showTiered(everyone : $[Elo.Player]) {
+            val all = mode.filter(_ => modes)./(m => Elo.compute(results.%(r => modeOf(r) == m))).|(everyone)
+            val you = mine.any.?("Your name" ~ (mine.num > 1).??("s") ~ " on this device: " ~ mine./(_.hlb).join(", ")).|("Names you type when joining an online game are claimed for this device. Play on another device with your player code.".txt)
+            val ranked = all.%(_.provisional.not)
+            val provisional = all.%(_.provisional)
+            val showing = showProvisional || ranked.none
+            val group = heading("Leaderboard · only players with a " + tierWord.toLowerCase + " are ranked")
+
+            ui.action.asker.zask(
+                $(counts(everyone)) ++
+                tabs("Leaderboard", everyone) ++
+                $(tierStrip) ++
+                modeChips(heading("Mode"), () => show(everyone)) ++
+                mode.filter(_ => modes)./(m => note(group, "Ratings from " ~ m.hl ~ " games only.")).$ ++
+                (all.any).$(lbHead(group)) ++
+                ranked.zipWithIndex./{ case (p, i) => lbRow(p, i, all, group) } ++
+                (ranked.none && provisional.any).$(note(group, "No one has a " ~ tierWord.toLowerCase ~ " yet: a " ~ tierWord.toLowerCase ~ " comes after " ~ Elo.provisional.hl ~ " rated games.")) ++
+                showing.??(provisional.zipWithIndex./{ case (p, i) => lbRow(p, ranked.num + i, all, group) }) ++
+                (provisional.any && ranked.any).$(ZBasic(group, tag(Text(showing.?("Hide").|("Show") + " the " + plural(provisional.num, "provisional player") + " (fewer than " + Elo.provisional + " games)"), "rk-chip-text"), () => { showProvisional = showing.not ; show(everyone) }, css("rk-chip", "rk-toggle") ++ showing.$(ExternalStyle("rk-chip-on")) ++ $(xlo.pointer))) ++
+                all.none.$(note(group, tag(Text("No rated games yet."), "rk-empty-title") ~ Break ~ "The ladder starts with the first finished online game with people on two sides or more. Bots, local games and games with fan content don't count.".txt)) ++
+                $(ZOption(heading("Your player code"), box(you, "rk-note"))) ++
+                $(ZBasic(heading("Your player code"), Div("Show my player code"), () => {
+                    showOverlayRaw("Your player code".hl, $("Enter it under Rankings on another device to play there under your names. Keep it to yourself: anyone with it can.".txt, PlayerKey.get.hlb.spn(xstyles.larger110)))
+                })) ++
+                $(ZBasic(heading("Your player code"), Div("Use a code from another device"), () => useCode())) ++
+                mine.any.$(ZBasic(heading("Your player code"), Div("Set my own code"), () => setCode())) ++
+                $(ZBasic(heading("Your player code"), Div("Lost my code"), () => lostCode())) ++
+                $(back)
+            )
+        }
+
+        // each rated game's changes, by game
+        def changesByGame(all : $[Elo.Player]) = all./~(_.history).groupBy(_.result.game)
+
+        // Top Tables: the rated games by the sum of their players' ratings at the table
+        def topTables(all : $[Elo.Player]) {
+            val games = changesByGame(all).values.$./(cs => (cs.head.result, cs.sortBy(c => (c.won.not, -(c.after - c.before))), cs./(_.before).sum)).sortBy(x => (-x._3, x._1.time))
+            val group = heading("Top Tables · rated games by total rating")
+
+            ui.action.asker.zask(
+                $(counts(all)) ++
+                tabs("Top Tables", all) ++
+                $(note(group, "The sum of the players' ratings when the game started; the strongest tables first, each player's change after it.".txt)) ++
+                games.take(50).zipWithIndex./{ case ((r, cs, sum), i) =>
+                    ZOption(group, box(
+                        num((i + 1).toString)(css("rk-tt-rank")) ~
+                        tag(num(sum.round.toString)(css("rk-tt-sum")) ~ tag(Text("total"), "rk-tt-l"), "rk-tt-sumbox") ~
+                        tag(
+                            tag(Text(r.title), "rk-game-title") ~
+                            tag(Text(r.time.take(10) + " · " + plural(r.players, "player")), "rk-sub") ~
+                            tag(cs./(c => tag(c.entry.seat./(e => glyph(e.faction, "rk-glyph-mini")).|(Empty) ~ tag(Text(c.entry.name), "rk-lu-name") ~ delta(c.after - c.before), "rk-lu", c.won.?("rk-lu-won").|("rk-lu-lost"))).merge, "rk-lineup"),
+                        "rk-who"),
+                    "rk-tt"))
+                } ++
+                games.none.$(note(group, "No rated games yet.".txt)) ++
+                $(back)
+            )
+        }
+
+        // Player's Journey: pick a player
+        def journeys(all : $[Elo.Player]) {
+            val group = heading("Player's Journey")
+            ui.action.asker.zask(
+                $(counts(all)) ++
+                tabs("Player's Journey", all) ++
+                $(note(group, "Pick a player to see their rating game by game, their best win and their toughest loss.".txt)) ++
+                all./(p => ZBasic(group, tierOf(p)./(t => tierIcon(t)).|(Empty) ~ tag(Text(p.name), "rk-chip-text") ~ tag(Text(rating(p)), "rk-num", "rk-chip-n"), () => player(p, all), css("rk-chip", "rk-pick") ++ $(xlo.pointer))) ++
+                all.none.$(note(group, "No rated games yet.".txt)) ++
+                $(back)
+            )
+        }
+
+        // a player's journey: the rating after each game, the strongest opponent beaten and the weakest lost to (their rating then)
+        def journey(p : Elo.Player, all : $[Elo.Player]) = {
+            val byGame = changesByGame(all)
+            def opponents(c : Elo.Change, won : Boolean) = byGame.get(c.result.game).|($).%(o => o.side != c.side && (won || o.won))
+            val best = p.history.%(_.won)./~(c => opponents(c, true)).sortBy(o => -o.before).headOption
+            val worst = p.history.%(_.won.not)./~(c => opponents(c, false)).sortBy(o => o.before).headOption
+
+            val points = p.history./(_.after)
+            val lo = (points :+ Elo.start).min
+            val hi = (points :+ Elo.start).max
+            def height(v : Double) = (hi - lo < 1).?(50).|(math.round(10 + 90 * (v - lo) / (hi - lo)).toInt)
+            val chart = box(
+                box(tag(num(hi.round.toString), "rk-chart-max") ~ tag(num(lo.round.toString), "rk-chart-min"), "rk-chart-axis") ~
+                box(p.history./(c => tag(Empty, "rk-bar", "rk-ht" + height(c.after), c.won.?("rk-bar-won").|("rk-bar-lost"))).merge, "rk-chart-bars") ~
+                box(tag(Text(p.history.head.result.time.take(10)), "rk-sub") ~ tag(Text(p.history.last.result.time.take(10)), "rk-sub"), "rk-chart-dates"),
+            "rk-chart")
+
+            def highlight(label : String, o : |[Elo.Change], none : String) = o./(o => ZBasic(heading("Highlights"),
+                tag(tag(Text(label), "rk-hl-l") ~ tag(Text(o.entry.name), "rk-name") ~ tag(Text("rated " + o.before.round + " then · " + o.result.time.take(10) + " · see their journey"), "rk-sub"), "rk-who"),
+                () => all.find(_.name.toLowerCase == o.entry.name.toLowerCase).foreach(q => player(q, all)), css("rk-row", "rk-hl") ++ $(xlo.pointer))).|(note(heading("Highlights"), (label + ": " + none).txt))
+
+            $(ZOption(heading("Rating game by game"), chart)) ++
+            $(highlight("Best win · the highest-rated opponent beaten", best, "no win yet")) ++
+            $(highlight("Toughest loss · the lowest-rated opponent lost to", worst, "no loss yet"))
+        }
+
+        // Codex: the tiers and how the ratings work
+        def codex(all : $[Elo.Player]) {
+            ui.action.asker.zask(
+                $(counts(all)) ++
+                tabs("Codex", all) ++
+                tiers./(t => ZOption(heading(tierWord + "s"), box(tierPill(t) ~ tag(num(tierRange(t)), "rk-tier-min") ~ tag(Text(t.note), "rk-sub"), "rk-tier-row"))) ++
+                $(note(heading(tierWord + "s"), modes.?("A league comes after " ~ Elo.provisional.hl ~ " rated games; until then a rating is provisional and shows a " ~ "?".hl ~ ". The leagues are the game's ranked leagues; here they follow the rating, not Glory Points, 100 apart, with everyone starting in Stone at " ~ Elo.start.round.toString.hl ~ ", as the game starts everyone in Stone.").|("A tier comes after " ~ Elo.provisional.hl ~ " rated games; until then a rating is provisional and shows a " ~ "?".hl ~ ". The tiers follow the rootelo ladder's, each 200 lower, as ratings here start at " ~ Elo.start.round.toString.hl ~ " (rootelo's start at 1200)."))) ++
+                titles./{ case (t, w) => ZOption(heading("Ranks · by wins"), box(tag(Text(t), "rk-title", "rk-title-big") ~ tag(num((w == 0).?("start").|(w + "+")), "rk-tier-min") ~ tag(Text((w == 0).?("Where everyone starts").|(plural(w, "win") + " in any mode, with any clan")), "rk-sub"), "rk-tier-row")) } ++
+                modes.$(note(heading("Modes"), "1v1".hl ~ ": two players. " ~ "2v2".hl ~ ": two teams of two. " ~ "FFA".hl ~ ": three players or more, each on their own. " ~ "Teams".hl ~ ": any other teams. The ladder counts every mode together; pick a mode to see a ladder of its games only.")) ++
+                $(note(heading("How the rankings work"), explainRatings)) ++
+                $(note(heading("Not tracked here"), modes.?("Glory Points and seasons: one rating ladder counts every rated game.").|("Seasons and leagues: every rated game since 2026-11-18 counts in one ladder. Live or async play: games don't record it.").txt)) ++
+                $(back)
+            )
+        }
+
+
+        def show(all : $[Elo.Player]) = if (tiers.any) showTiered(all) else showPlain(all)
+
+        def showPlain(all : $[Elo.Player]) {
+            val explain = explainRatings
             val you = mine.any.?("Your name" ~ (mine.num > 1).??("s") ~ " on this device: " ~ mine./(_.hlb).join(", ")).|("Names you type when joining an online game are claimed for this device. Play on another device with your player code.".txt)
 
             val ranked = all.%(_.provisional.not)
