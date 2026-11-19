@@ -57,6 +57,7 @@ object DominanceExpansion extends MandatoryExpansion {
                             (f.vp >= 10).??(f.hand.$.of[CornersDominance]) ++
                             (f.vp >= 10).??(f.hand.$.of[EnclaveDominance.type]) ++
                             (f.vp >= 10).??(f.hand.$.of[DarkDominance.type]) ++
+                            (f.vp >= 10 && SorceryDeckExpansion.improvements(f) < 4).??(f.hand.$.of[SorceryDominance.type]) ++
                             (clearings.%(_.asset.use(a => a.matches(Frog) && FoxRabbitMouse.exists(a.matches).not)).num * 2 >= clearings.num).??(f.hand.$.of[FrogDominance.type])
 
 
@@ -86,6 +87,9 @@ object DominanceExpansion extends MandatoryExpansion {
                 case Some(EnclaveDominance) if factions.of[InvasiveEEE].exists(e => e.enclaves.%(game.riverside.has).%(f.rules).num >= 2) =>
                     f.vp = 999
                     f.log("achieved", ("Frog Dominance").styled(Frog))
+                case Some(SorceryDominance) if SorceryDeckExpansion.dominanceMet(f) =>
+                    f.vp = 999
+                    f.log("achieved", ("Sorcery Dominance").styled(Bird))
                 case Some(DarkDominance) if DarkDeckExpansion.darkDominanceMet(f) =>
                     f.vp = 999
                     f.log("achieved", ("Dark Dominance").styled(Abomination))

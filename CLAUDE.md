@@ -615,6 +615,16 @@ server. No session can reach the server, and none needs to.
   scores its clearing's new enemy buildings, discards the Murder Hawk's card when the hawk is removed and Baron Von Costume when none of its
   owner's warriors are left on it. `ReplayCheck <games> base upstarts` plays it; `upstartsall` deals every effect out crafted at the first
   Birdsong (the hidden `UpstartsTestDeal`) and counts their choices.
+- The fan deck "Sorcery of the Enchanted Woods" (`SorceryDeck`, a Fan Deck; 2026-11-19, asked for on Discord as "the Magic deck") is from
+  the Tabletop Simulator mod 2413287097 (uploaded by slugfacekillah, "Not Mine": its designer isn't named; no rulebook, the card text is
+  the rules): the base deck's ambushes, items and dominances, 25 persistent effects (`Deck.sorcery`) and a fifth, bird Dominance for six
+  crafted improvements (`SorceryDominance`, last in `Deck.catalog`), all in `root/deck-sorcery.scala` (`SorceryDeckExpansion`; its header
+  lists the readings). Art `card/sorcery/`, back `card-back-art-se` and the Garden of Glory and Wizards Tower pieces (`GloryGarden`, a
+  token, and `WizardsTower`, a building, waiting off the map in `SorceryShelf`) are cut from the mod's sheet by `root/tools/sorcery-art.py`.
+  State is `game.sorcery`. Living Buildings counts its owner's buildings twice in `ruleValue` and adds a rolled hit in battle; The Wizards
+  Tower is a crafting piece of any suit (`frogCraft`); Treewalking is the `TreeWalk` transport; Hailstorm's picks are recorded one clearing at
+  a time (`game.sorcery.hail`), as a soft pick made the bots try every combination. `ReplayCheck <games> base sorcery` plays it;
+  `sorceryall` deals every effect but Hailstorm out crafted at the first Birdsong (the hidden `SorceryTestDeal`) and counts their choices.
   Its two maps are Fan Maps, "Deep Woods" and "Wastelands" (`DeepWoodsMap`, `WastelandsMap`; `DeepWoodsBoard` and `WastelandsBoard` in
   `root/maps.scala`, images in `deep-woods/` and `wastelands/` made by `root/tools/outsiders-maps.py`, which also prints the Deep Woods
   building slots), also drawn by "Random". Clearing and forest names are made up. Their own rules are toggles in the setup's "Fan Map

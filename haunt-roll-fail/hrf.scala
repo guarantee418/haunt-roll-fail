@@ -352,6 +352,7 @@ object HRFR {
         "dark-dark-dominance"  -> "/hrf/webp2/root/images/card/dark/dark-dark-dominance.webp",
         "franken-bird-ambush"  -> "/hrf/webp2/root/images/card/franken/franken-bird-ambush.webp",
         "upstarts-murder-hawk" -> "/hrf/webp2/root/images/card/upstarts/upstarts-murder-hawk.webp",
+        "sorcery-wizards-tower" -> "/hrf/webp2/root/images/card/sorcery/sorcery-wizards-tower.webp",
 
         "borscht-kitchens"        -> "/hrf/webp2/root/images/card/deck/borscht-kitchens.webp",
     ), HRF.imageCache), () => Map())
