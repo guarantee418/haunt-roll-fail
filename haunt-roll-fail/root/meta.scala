@@ -2613,11 +2613,13 @@ object Meta extends MetaGame {
         ImageAsset("move-deg-345"  ) ::
     $) ::
     ConditionalAssetsList((factions, options) => true, "card")(
-        ImageAsset("monster-card-back-art") ::
-        ImageAsset("monster-card-back-art-ep") ::
-        ImageAsset("monster-card-back-art-sd") ::
-        ImageAsset("monster-card-back-art-fd") ::
-        ImageAsset("monster-card-back-art-dd") ::
+        ImageAsset("card-back-art") ::
+        ImageAsset("card-back-art-ep") ::
+        ImageAsset("card-back-art-sd") ::
+        ImageAsset("card-back-art-fd") ::
+        ImageAsset("card-back-art-dd") ::
+        ImageAsset("card-back-art-ur") ::
+        ImageAsset("card-back-art-se") ::
 
     $) ::
     ConditionalAssetsList((factions, options) => true, "faction/hireling")(
@@ -4478,7 +4480,7 @@ object Meta extends MetaGame {
         ImageAsset("rabbit-integration") ::
         ImageAsset("mouse-integration") ::
         ImageAsset("fox-integration") ::
-        ImageAsset("monster-card-frog-back-art") ::
+        ImageAsset("card-frog-back-art") ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[InvasiveBBB].any, "faction/invasive")(
         ImageAsset("ld-glyph"            , "td-glyph"            ) ::
@@ -4507,7 +4509,7 @@ object Meta extends MetaGame {
         ImageAsset("imitation") ::
         ImageAsset("laborers") ::
         ImageAsset("peace-talks") ::
-        ImageAsset("monster-card-frog-back-art") ::
+        ImageAsset("card-frog-back-art") ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[InvasiveCCC].any, "faction/invasive")(
         ImageAsset("ld-glyph"            , "td-glyph"            ) ::
@@ -4530,7 +4532,7 @@ object Meta extends MetaGame {
         ImageAsset("outcast-mouse"       , "../fanatic/outcast-mouse") ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[InvasiveDDD].any, "faction/invasive/card", lzy = Laziness.Later, scale = 50)(
-        ImageAsset("monster-card-frog-back-art") ::
+        ImageAsset("card-frog-back-art") ::
         ImageAsset("frog-ambush") ::
         ImageAsset("frog-dominance-half") ::
         ImageAsset("fox-laborers") ::
@@ -4560,7 +4562,7 @@ object Meta extends MetaGame {
         ImageAsset("outcast-mouse"       , "../fanatic/outcast-mouse") ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[InvasiveEEE].any, "faction/invasive/card", lzy = Laziness.Later, scale = 50)(
-        ImageAsset("monster-card-frog-back-art") ::
+        ImageAsset("card-frog-back-art") ::
         ImageAsset("hl-card-frog-back-art") ::
         ImageAsset("frog-ambush", "hl-frog-ambush") ::
         ImageAsset("hl-frog-dominance") ::
