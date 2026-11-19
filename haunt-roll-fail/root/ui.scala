@@ -2512,7 +2512,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 Hint("Eggs\n" + f.eggs.num + " on the map, " + f.eggsLeft + " on the track\nDraw " + f.draws + " in Evening",
                     (Image(f.style + "-egg", styles.token) *** f.all(SpiderEgg).num) ~ (Image(f.style + "-hatched", styles.token) *** f.all(SpiderHatched).num) ~ (Image("empty-token", styles.token) *** f.eggsLeft) ~ " " ~ "Draw".styled(f) ~ " " ~ f.draws.hl) ~ Break ~
                 Hint("Mutations\n" + f.mutations./(m => m.name + ": " + m.text).mkString("\n"),
-                    ("Mutations".styled(f) ~ " " ~ f.mutations.none.?("none".hh).|(f.mutations./(_.of(f)).comma)).div(styles.warline)) ~
+                    ("Mutations".styled(f) ~ " " ~ (if (f.mutations.none) "none".hh else f.mutations./(_.of(f)).comma.merge : Elem)).div(styles.warline)) ~
                 (game.current == f && game.phase == Daylight).?(Gap ~ 1.to(f.acted)./(_ => Image("action-black", styles.building)) ~ (f.acted.until(f.actions)./(_ => Image(f.style + "-action", styles.building)))) ~
                 Div(Hint("Spiders\n" + f.all(AdultSpider).num + " adults and " + f.all(Spiderling).num + " spiderlings on the map\n" + f.pooled(AdultSpider) + " adults and " + f.pooled(Spiderling) + " spiderlings available",
                 (Image(f.style + "-adult", styles.wr) *** f.all(AdultSpider).num) ~ (Image(f.style + "-adult-empty", styles.wr) *** f.pooled(AdultSpider)) ~ " " ~
@@ -3861,7 +3861,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                     HGap ~
                     less("Mutations".hl.larger) ~
                     more("Mutations".hl.larger, "are gained by consuming captives:", AAMutation.all./(m => m.of(f) ~ " (" ~ m.text ~ ")").comma, Dot) ~
-                    desc(f.mutations.none.?("none".hh).|(f.mutations./(_.of(f)).comma)) ~
+                    desc((if (f.mutations.none) "none".hh else f.mutations./(_.of(f)).comma.merge : Elem)) ~
                     HGap ~
                     HGap ~
                     info() ~
