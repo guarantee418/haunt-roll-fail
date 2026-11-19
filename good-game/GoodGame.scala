@@ -222,13 +222,13 @@ object GoodGame {
 
             val client = java.net.http.HttpClient.newHttpClient()
 
-            def send(token : String, title : String, body : String, labels : Boolean) = {
+            def send(token : String, title : String, body : String, labels : Boolean, label : String = "bug report") = {
                 val request = java.net.http.HttpRequest.newBuilder(java.net.URI.create("https://api.github.com/repos/" + repo + "/issues"))
                     .header("Accept", "application/vnd.github+json")
                     .header("Authorization", "Bearer " + token)
                     .header("X-GitHub-Api-Version", "2022-11-28")
                     .header("Content-Type", "application/json")
-                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString("{\"title\":" + json(title) + ",\"body\":" + json(body) + (if (labels) ",\"labels\":[\"bug report\"]" else "") + "}", UTF_8))
+                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString("{\"title\":" + json(title) + ",\"body\":" + json(body) + (if (labels) ",\"labels\":[" + json(label) + "]" else "") + "}", UTF_8))
                     .build()
 
                 import scala.jdk.FutureConverters._
@@ -237,10 +237,10 @@ object GoodGame {
             }
 
             // the issue URL, or "" if no token is set up
-            def post(title : String, body : String) : scala.concurrent.Future[String] = token match {
+            def post(title : String, body : String, label : String = "bug report") : scala.concurrent.Future[String] = token match {
                 case None => scala.concurrent.Future.successful("")
                 case Some(token) =>
-                    send(token, title, body, true).flatMap { response =>
+                    send(token, title, body, true, label).flatMap { response =>
                         // a token that can't create the label: post without it
                         if (response.statusCode() == 422) send(token, title, body, false) else scala.concurrent.Future.successful(response)
                     }.map { response =>
@@ -364,6 +364,53 @@ object GoodGame {
                     entity(as[String]) { body =>
                         plain(Ranking.owned(body.trim.ascii).mkString("\n"))
                     }
+                }
+            } ~
+            // a name's own code (Ranking.setCode, signIn): set it for the names a key holds, ask whether a name has one, sign in with it
+            (post & path("set-code")) {
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        val l = body.split('\n').toList
+                        if (l.size < 2) complete(StatusCodes.Forbidden, "")
+                        else plain(Ranking.setCode(l(0).trim.ascii, l.drop(1).mkString("\n").trim))
+                    }
+                }
+            } ~
+            (post & path("has-code")) {
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        plain(if (Ranking.hasCode(body.trim.safeplus)) "yes" else "no")
+                    }
+                }
+            } ~
+            (post & path("sign-in")) {
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        val l = body.split('\n').toList
+                        if (l.size < 3) complete(StatusCodes.Forbidden, "")
+                        else plain(Ranking.signIn(l(0).trim.safeplus, l(1).trim, l(2).trim.ascii))
+                    }
+                }
+            } ~
+            // a request to release a name whose code was lost: kept on the server (and in the private games backup), and announced
+            // by an issue that leaves the name out, as the issues are public
+            (post & path("name-reset")) {
+                extractClientIP { ip =>
+                    if (!bugs.allow(ip.toOption.map(_.getHostAddress).getOrElse("unknown")))
+                        complete(StatusCodes.TooManyRequests, "Too many requests, try again later.")
+                    else
+                        decodeRequest {
+                            entity(as[String]) { body =>
+                                val l = body.split('\n').toList
+                                val id = Ranking.request(l.headOption.getOrElse("").trim.safeplus.take(32), l.drop(1).mkString("\n").trim.safeplus)
+                                if (id == "invalid")
+                                    complete(StatusCodes.Forbidden, "")
+                                else
+                                    onComplete(bugs.post("Ranking name reset request " + id, "A player lost their player code and asks for their ranking name to be released.\n\nThe name and what they wrote are request `" + id + "` in `ranking/requests.tsv` of the private games backup, with when the name was claimed and the games played under it. To release it, commit `ranking-changes/<file>.txt` there with `release <name>`.\n\n---\n_Sent with the Rankings' \"Lost my code\" button._\n", "name reset")) {
+                                        case _ => plain(id)
+                                    }
+                            }
+                        }
                 }
             } ~
             (post & path("report-result" / Segment / Segment / Segment)) { (userId, userSecret, journalId) =>

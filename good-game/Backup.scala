@@ -24,7 +24,7 @@ import scala.jdk.CollectionConverters._
 //                    files people commit, so git merges stay simple.
 //   fixes/applied.log the fixes seen so far (by hash), so none is tried twice
 //   bug-reports/<time>.md the reports sent with the in-game Report a Bug button
-//   ranking/<file>.tsv the rankings' claimed names, seats and results (Ranking.scala)
+//   ranking/<file>.tsv the rankings' claimed names, seats, results and reset requests (Ranking.scala; not codes.tsv)
 //   ranking-changes/<name>.txt names released or moved by hand (Ranking.change), applied once each, with <name>.result
 //
 // Fields are separated by tabs; tabs, newlines and backslashes in them are escaped.
@@ -214,9 +214,10 @@ object Backup {
             }
         }
 
-        // The rankings' names (with key hashes, not keys), seats and results (Ranking.scala), overwritten as they change
+        // The rankings' names (with key hashes, not keys), seats, results and reset requests (Ranking.scala), overwritten as they
+        // change; not the names' own codes (codes.tsv), which players pick and so may be guessed from their hashes
         def ranking() {
-            List(Ranking.names, Ranking.seats, Ranking.results).filter(Files.exists(_)).foreach { p =>
+            List(Ranking.names, Ranking.seats, Ranking.results, Ranking.requests).filter(Files.exists(_)).foreach { p =>
                 write(dir.resolve("ranking").resolve(p.getFileName.toString), read(p))
             }
         }

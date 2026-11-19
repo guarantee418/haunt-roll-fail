@@ -33,6 +33,8 @@ object Ranking {
     val names = dir.resolve("names.tsv")
     val seats = dir.resolve("seats.tsv")
     val results = dir.resolve("results.tsv")
+    val codes = dir.resolve("codes.tsv")
+    val requests = dir.resolve("requests.tsv")
     val seed = Paths.get("ranking-seed.tsv")
 
     def sha(s : String) = java.security.MessageDigest.getInstance("SHA-256").digest(s.getBytes(UTF_8)).map("%02x".format(_)).mkString
@@ -46,10 +48,16 @@ object Ranking {
 
     def clean(name : String) = name.split(' ').filter(_ != "").mkString(" ").take(32)
 
-    case class Claim(key : String, display : String, hash : String)
+    // a claimed name and the hashes of the keys (browsers) that may play under it: the one that claimed it, and any other a sign-in
+    // with the name's own code added (2026-11-19)
+    case class Claim(key : String, display : String, hashes : List[String])
 
-    // the last row of each name wins; a row with no key is a release
-    def claims() : Map[String, Claim] = rows(names).collect { case k :: d :: h :: _ => k -> Claim(k, d, h) }.toMap.filter(_._2.hash.nonEmpty)
+    // each row with a key adds it to the name's keys; a row with no key is a release, which drops them all
+    def claims() : Map[String, Claim] = rows(names).foldLeft(Map[String, Claim]()) {
+        case (m, k :: d :: h :: _) if h.isEmpty => m - k
+        case (m, k :: d :: h :: _) => m + (k -> m.get(k).map(c => Claim(k, d, (c.hashes :+ h).distinct)).getOrElse(Claim(k, d, List(h))))
+        case (m, _) => m
+    }
 
     def seatNames() : Map[String, String] = rows(seats).collect { case u :: k :: _ => u -> k }.toMap
 
@@ -63,11 +71,11 @@ object Ranking {
             return "invalid"
 
         val c = claims().get(k) match {
-            case Some(c) if c.hash == sha(key) => c
+            case Some(c) if c.hashes.contains(sha(key)) => c
             case Some(_) => return "taken"
             case None =>
-                val c = Claim(k, n, sha(key))
-                append(names, row(c.key, c.display, c.hash, now()))
+                val c = Claim(k, n, List(sha(key)))
+                append(names, row(c.key, c.display, sha(key), now()))
                 c
         }
 
@@ -80,7 +88,83 @@ object Ranking {
     // the names claimed with this key
     def owned(key : String) : List[String] = synchronized {
         val h = sha(key)
-        claims().values.filter(_.hash == h).map(_.display).toList.sorted
+        claims().values.filter(_.hashes.contains(h)).map(_.display).toList.sorted
+    }
+
+    // OWN CODES (2026-11-19). A player may pick a code of their own for the names their browser holds, to sign in with a name
+    // and its code on another device (the browser's random key is still the player code). codes.tsv: name in lower case, a random
+    // salt, SHA-256 of the salt and the code, time; the last row of a name wins, and an empty one (a release) clears it. A sign-in
+    // adds the new browser's key to the name's keys. Five wrong codes for a name keep it from signing in for an hour.
+
+    val minCode = 8
+
+    def codeOf(k : String) : Option[(String, String)] = rows(codes).collect { case n :: s :: h :: _ if n == k => (s, h) }.lastOption.filter(_._2.nonEmpty)
+
+    // "ok\n<names>" once the code is set for every name the key holds
+    def setCode(key : String, code : String) : String = synchronized {
+        val h = sha(key)
+        val mine = claims().values.filter(_.hashes.contains(h)).toList.sortBy(_.key)
+        if (code.length < minCode || code.length > 64) "short"
+        else
+        if (mine.isEmpty) "none"
+        else {
+            mine.foreach { c =>
+                val salt = java.util.UUID.randomUUID().toString
+                append(codes, row(c.key, salt, sha(salt + "\n" + code), now()))
+            }
+            "ok\n" + mine.map(_.display).mkString("\n")
+        }
+    }
+
+    // whether a name has a code of its own
+    def hasCode(name : String) : Boolean = synchronized { claims().contains(clean(name).toLowerCase) && codeOf(clean(name).toLowerCase).nonEmpty }
+
+    val wrong = scala.collection.mutable.Map[String, List[Long]]()
+
+    // "ok\n<name>" and the key may play under the name; "wrong", "locked" (five wrong codes in the last hour), "none" (no code set)
+    def signIn(name : String, code : String, key : String) : String = synchronized {
+        val k = clean(name).toLowerCase
+        val now0 = System.currentTimeMillis()
+        val tries = wrong.getOrElse(k, Nil).filter(_ > now0 - 3600 * 1000)
+        wrong(k) = tries
+        (claims().get(k), codeOf(k)) match {
+            case _ if key.length < 16 => "invalid"
+            case _ if tries.size >= 5 => "locked"
+            case (Some(c), Some((salt, hash))) =>
+                if (sha(salt + "\n" + code) == hash) {
+                    wrong(k) = Nil
+                    if (!c.hashes.contains(sha(key)))
+                        append(names, row(k, c.display, sha(key), now()))
+                    "ok\n" + c.display
+                }
+                else {
+                    wrong(k) = now0 :: tries
+                    "wrong"
+                }
+            case _ => "none"
+        }
+    }
+
+    // RESET REQUESTS (2026-11-19): a player who lost their code asks for their name to be released. The request is kept in
+    // requests.tsv (copied to the private games backup, as it names the player) and the owner decides; the name is released
+    // through ranking-changes. What the owner needs to judge it: when the name was claimed, the games played under it, the last one
+    def nameFacts(name : String) : String = synchronized {
+        val k = clean(name).toLowerCase
+        val claimed = rows(names).collect { case n :: _ :: h :: t :: _ if n == k && h.nonEmpty => t }
+        val users = seatNames().filter(_._2 == k).keySet
+        val played = recorded().filter(r => r.size >= 5 && r(4).split(';').exists(_.drop(2).split(',').exists(t => users.contains(t.takeWhile(_ != '/')))))
+        if (!claims().contains(k)) "not claimed"
+        else "claimed " + claimed.headOption.getOrElse("?") + ", " + claimed.size + " device(s), " + users.size + " seat(s), " + played.size + " ranked game(s)" + played.map(_(2)).sorted.lastOption.map(", last " + _).getOrElse("") + (if (codeOf(k).nonEmpty) ", own code set" else "")
+    }
+
+    def request(name : String, message : String) : String = synchronized {
+        val n = clean(name)
+        if (n.isEmpty) "invalid"
+        else {
+            val id = java.util.UUID.randomUUID().toString.take(8)
+            append(requests, row(id, n, message.take(1000), nameFacts(n), now()))
+            id
+        }
     }
 
     // a seat's user and what it played, as reported (Elo.token): letters, digits and a few signs
@@ -97,6 +181,7 @@ object Ranking {
                     claims().get(k) match {
                         case Some(c) =>
                             append(names, row(k, c.display, "", now()))
+                            append(codes, row(k, "", "", now()))
                             "released " + c.display
                         case None => "not done: " + n(name) + " is not claimed"
                     }
@@ -109,9 +194,11 @@ object Ranking {
                     else
                     cc.get(k) match {
                         case Some(c) =>
-                            append(names, row(t.toLowerCase, t, c.hash, now()))
+                            c.hashes.foreach(h => append(names, row(t.toLowerCase, t, h, now())))
                             if (t.toLowerCase != k) {
+                                codeOf(k).foreach { case (salt, hash) => append(codes, row(t.toLowerCase, salt, hash, now())) }
                                 append(names, row(k, c.display, "", now()))
+                                append(codes, row(k, "", "", now()))
                                 // only the seats that played under the claim: a seat that never claimed its typed name may be another
                                 // player's (the one the name was taken from), and is moved with "seat"
                                 seatNames().filter(_._2 == k).keys.toList.sorted.foreach(u => append(seats, row(u, t.toLowerCase)))

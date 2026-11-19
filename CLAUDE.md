@@ -353,6 +353,13 @@ cd haunt-roll-fail && sbt fullOptJS
   "X fan" line, kept as the side `X:fan`, and count in the stats but in no rating (`Result.fan`). Names are released or
   moved by committing `ranking-changes/<name>.txt` to `hrf-games` (`release <name>`, `rename <name> -> <new>`, `seat <user> <name>`;
   `Ranking.change`, applied once each by `Backup`, outcome in `<name>.result`).
+  A name can have several player keys (each `names.tsv` row with a hash adds one, a row with an empty hash releases it), and
+  its owner can set a code of their own under Rankings, "Set my own code" (8 characters or more, `codes.tsv`, salted SHA-256,
+  never copied to `hrf-games`; `/set-code`): "Use a code from another device" then takes the name and that code (`/has-code`,
+  `/sign-in`), which adds the device's key to the name; 5 wrong codes lock the name for an hour (`Ranking.wrong`, in memory).
+  "Lost my code" sends a reset request (`/name-reset`, `Ranking.request`): the name, an optional message and what the server
+  knows of the name go to `ranking/requests.tsv` (copied to `hrf-games`), and a GitHub issue labeled `name reset` gives only the
+  request id, as issues are public; the owner releases the name with a `ranking-changes` file if satisfied (2026-11-19).
 - Fixing a running game: through the `hrf-games` repository (copy `games/<id>.tsv` to
   `fixes/<id>.tsv` and edit it; its README and `notes/server.md` say how).
 - The in-game "Report a Bug" button posts to `/report-bug`; the server saves the report,
@@ -611,8 +618,8 @@ server. No session can reach the server, and none needs to.
   Its two maps are Fan Maps, "Deep Woods" and "Wastelands" (`DeepWoodsMap`, `WastelandsMap`; `DeepWoodsBoard` and `WastelandsBoard` in
   `root/maps.scala`, images in `deep-woods/` and `wastelands/` made by `root/tools/outsiders-maps.py`, which also prints the Deep Woods
   building slots), also drawn by "Random". Clearing and forest names are made up. Their own rules are toggles in the setup's "Fan Map
-  Rules", shown only with their map (2026-11-17), unfolded right under the maps, Settling on by default (2026-11-18; `defaultsFor`, and
-  `Meta.settlingOn` in `completeSaved` for setups saved without the Deep Woods picked), all in `root/outsiders-maps.scala` (`OutsidersMaps`, its header lists the
+  Rules", shown only with their map (2026-11-17), unfolded right under the maps, both on by default (Settling 2026-11-18, Water and Barren Trails 2026-11-19; `defaultsFor`, and
+  `Meta.settlingOn` in `completeSaved` for setups saved without that map picked), all in `root/outsiders-maps.scala` (`OutsidersMaps`, its header lists the
   readings). Off, the Deep Woods is played settled, each clearing tile baked into the art on the clearing of its number (Law of Slug
   S.1.7), and the Wastelands' barren trails are plain paths. "Deep Woods - Settling" (`DeepWoodsSettling`, S.1): clearings start
   unsettled (wild, crafting pieces pay for nothing, `Unusable` in `root/game.scala`; one slot; two pieces a player), drawn with their
@@ -621,7 +628,7 @@ server. No session can reach the server, and none needs to.
   placement is checked before the next step (`TopLevelAction`). "Wastelands - Water and Barren Trails" (`WastelandsWater`, S.2): Water
   (`game.water`, `waterSupply`), the `BarrenTrail` transport (paid with a Water, a staying warrior or a Vagabond item), the Water
   actions, Surrender and Seizure. The "Map Rules" button under the action pane (and tapping a barren trail) shows the rules and where
-  the game stands (`"view-map-rules"` in `root/ui.scala`). `ReplayCheck <games> deepwoods [settling]` or `wastelands [water]` plays them.
+  the game stands (`"view-map-rules"` in `root/ui.scala`); it shows on both maps, saying so when their rules are off (2026-11-19). `ReplayCheck <games> deepwoods [settling]` or `wastelands [water]` plays them.
 - The Noxious Battery (NX, `root/faction-noxious-battery.scala`, its header lists the readings; images `nx-*` in `faction/battery/`, cut by
   `root/tools/noxious-art.py` from the print-and-play folder's ASSETS; S.P. Shaman's fan Nemesis Expansion, art by disasterman; asked for on
   2026-11-18) is a Fun Faction and in Advanced Setup's pool (reach 5): skunks (`Skunk`), a cannon pawn (`Cannon`, starting damaged on a ruin,
