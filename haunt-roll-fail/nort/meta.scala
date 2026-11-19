@@ -304,6 +304,19 @@ object Meta extends MetaGame { mmm =>
     def factionElem(f : Faction) = factionName(f).txt
     // The rankings page has no players' colors to go by, so each clan shows in its own color there (styles.scala)
     override def rankingElem(f : Faction) = factionName(f).styled(f)
+    // The rankings follow the video game's ranked play (asked for on 2026-11-19): its leagues (Wood to Rimesteel, 200 Glory
+    // Points apart, new players in Stone at 300 GP) as rating bands 100 apart with Stone around the 1000 start, its player
+    // ranks by wins, and its modes
+    override def rankingTiers = $(
+        RankingTier("Rimesteel", |(1350), "The very top", None),
+        RankingTier("Gemstone", |(1250), "Few get this far", None),
+        RankingTier("Gold", |(1150), "Proven in many battles", None),
+        RankingTier("Iron", |(1050), "Above the start", None),
+        RankingTier("Stone", |(950), "Where everyone starts", None),
+        RankingTier("Wood", None, "Below the start", None))
+    override def rankingTierWord = "League"
+    override def rankingTitles = $("Villager" -> 0, "Warrior" -> 10, "Warchief" -> 25, "Thane" -> 50, "Jarl" -> 100, "King" -> 250, "High King" -> 500, "Norse God" -> 1000)
+    override def rankingModes = true
     // The initial clan card and its two upgrades (the clan's i button shows them)
     override def factionNote(f : Faction) =
         if (f == Automa)
