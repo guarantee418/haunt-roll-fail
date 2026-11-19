@@ -4128,9 +4128,13 @@ object Meta extends MetaGame {
         ImageAsset("ee-roost"             , "ed-roost"         ) ::
         ImageAsset("ee-caravan"           ) ::
         ImageAsset("ee-caravandown"       ) ::
-        ImageAsset("ed-patron"            ) ::
-        ImageAsset("ed-megalomaniac"      ) ::
-        ImageAsset("ed-hedonistic"        ) ::
+        // leader cards are drawn as "ee-<leader>" (ShowLeaderAction); without them the leader pick threw and showed no choices
+        ImageAsset("ee-patron"            , "ed-patron"        ) ::
+        ImageAsset("ee-megalomaniac"      , "ed-megalomaniac"  ) ::
+        ImageAsset("ee-hedonistic"        , "ed-hedonistic"    ) ::
+        ImageAsset("ee-charismatic"       , "ed-charismatic"   ) ::
+        ImageAsset("ee-commander"         , "ed-commander"     ) ::
+        ImageAsset("ee-despot"            , "ed-despot"        ) ::
         ImageAsset("ee-board"             ) ::
         $("recruit", "double-recruit", "move", "battle", "build")./~(a => $("bird", "fox", "rabbit", "mouse", "frog")./~(s => $("", "-done")./(d => ImageAsset("ee-" + a + "-" + s + d, "ed-" + a + "-" + s + d))))
     ) ::
