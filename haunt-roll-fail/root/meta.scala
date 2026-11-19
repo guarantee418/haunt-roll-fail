@@ -1779,7 +1779,7 @@ object Meta extends MetaGame {
     val official = $[Faction](MC, ED, WA, VB, LC, RF, UD, CC, LH, KI)
     val homeland = $[Faction](LDvE, TC, KD)
     val clones = $[Faction](BK, PE, FU, NB, CM, /*WC,*/ DR, RI, LK)
-    val fun = $[Faction](KDvA, TCvA, FH, WW, DU, WG, EE, DM, DV, NW, XC, BP, WM, OF, TW, OMT, NX, CUv2, CU, OK, AF, SF, MB)
+    val fun = $[Faction](KDvA, TCvA, FH, WW, DU, WG, EE, DM, DV, NW, XC, BP, WM, OF, TW, OMT, NX, UDC, AA, CUv2, CU, OK, AF, SF, MB)
 
     val factions = official ++ homeland ++ clones ++ fun
 
@@ -2067,6 +2067,8 @@ object Meta extends MetaGame {
         factions.of[TwelveColonies].num * 5 +
         factions.of[OldManTinker].num * 6 +
         factions.of[NoxiousBattery].num * 5 +
+        factions.of[UnitedDoveCorps].num * 6 +
+        factions.of[ArachnidAssociation].num * 5 +
         factions.of[Doomsayers].num * 6 +
         factions.of[Whisperers].num * 2 +
         factions.of[Marquistadors].num * 9 +
@@ -4137,9 +4139,13 @@ object Meta extends MetaGame {
         ImageAsset("ee-roost"             , "ed-roost"         ) ::
         ImageAsset("ee-caravan"           ) ::
         ImageAsset("ee-caravandown"       ) ::
-        ImageAsset("ed-patron"            ) ::
-        ImageAsset("ed-megalomaniac"      ) ::
-        ImageAsset("ed-hedonistic"        ) ::
+        // leader cards are drawn as "ee-<leader>" (ShowLeaderAction); without them the leader pick threw and showed no choices
+        ImageAsset("ee-patron"            , "ed-patron"        ) ::
+        ImageAsset("ee-megalomaniac"      , "ed-megalomaniac"  ) ::
+        ImageAsset("ee-hedonistic"        , "ed-hedonistic"    ) ::
+        ImageAsset("ee-charismatic"       , "ed-charismatic"   ) ::
+        ImageAsset("ee-commander"         , "ed-commander"     ) ::
+        ImageAsset("ee-despot"            , "ed-despot"        ) ::
         ImageAsset("ee-board"             ) ::
         $("recruit", "double-recruit", "move", "battle", "build")./~(a => $("bird", "fox", "rabbit", "mouse", "frog")./~(s => $("", "-done")./(d => ImageAsset("ee-" + a + "-" + s + d, "ed-" + a + "-" + s + d))))
     ) ::
@@ -4256,6 +4262,39 @@ object Meta extends MetaGame {
         ImageAsset("nx-cannonball"            ) ::
         ImageAsset("nx-scent"                 ) ::
         ImageAsset("nx-board"                 ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => factions.of[UnitedDoveCorps].any, "faction/dove")(
+        ImageAsset("udc-glyph"                ) ::
+        ImageAsset("udc-title"                ) ::
+        ImageAsset("udc-char"                 ) ::
+        ImageAsset("udc-action"               ) ::
+        ImageAsset("udc-dove"                 ) ::
+        ImageAsset("udc-dove-empty"           ) ::
+        ImageAsset("udc-dove-x5"              ) ::
+        ImageAsset("udc-dove-x5-empty"        ) ::
+        ImageAsset("udc-clinic"               ) ::
+        ImageAsset("udc-school"               ) ::
+        ImageAsset("udc-ceasefire"            ) ::
+        ImageAsset("udc-peace"                ) ::
+        ImageAsset("udc-board"                ) ::
+    $) ::
+    ConditionalAssetsList((factions, options) => factions.of[ArachnidAssociation].any, "faction/arachnid")(
+        ImageAsset("aa-glyph"                 ) ::
+        ImageAsset("aa-title"                 ) ::
+        ImageAsset("aa-char"                  ) ::
+        ImageAsset("aa-action"                ) ::
+        ImageAsset("aa-adult"                 ) ::
+        ImageAsset("aa-adult-empty"           ) ::
+        ImageAsset("aa-spiderling"            ) ::
+        ImageAsset("aa-spiderling-empty"      ) ::
+        ImageAsset("aa-spiderling-x5"         ) ::
+        ImageAsset("aa-spiderling-x5-empty"   ) ::
+        ImageAsset("aa-web"                   ) ::
+        ImageAsset("aa-web-full"              ) ::
+        ImageAsset("aa-egg"                   ) ::
+        ImageAsset("aa-hatched"               ) ::
+        ImageAsset("aa-mutation"              ) ::
+        ImageAsset("aa-board"                 ) ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[TwelveColonies].any, "faction/colonies")(
         ImageAsset("tw-glyph"                 ) ::

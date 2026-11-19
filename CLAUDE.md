@@ -638,6 +638,16 @@ server. No session can reach the server, and none needs to.
   fired; Keep on Rollin' rolls one an enemy removes to an adjacent clearing), scent marks (`ScentMark`; Foul Stench moves each enemy's warriors
   and pawns out of their clearings at its `CleanUpAction`). Birdsong: Levy, Fire! (any number of times), Repair; Daylight: craft with scent
   marks, then 4 of Recruit, Battle, Rollout (`CannonballMove`), Rearm; Evening: Spray, Load, draw. `ReplayCheck <games> nx` plays it.
+- United Dove Corps ii (UDC, `root/faction-dove-corps.scala`) and Arachnid Association ii (AA, `root/faction-arachnid-association.scala`) are Fan
+  Factions and in Advanced Setup's pool (2026-11-19; asked for from a Discord post). There is no rulebook: the rules are their faction boards and
+  Advanced Setup cards in the TTS mod "Root - Ultimate Collection" (its `Fan Factions` block), and each header lists the readings; the ii versions
+  were picked over the originals. Art in `faction/dove/` and `faction/arachnid/`, cut by `root/tools/dove-arachnid-art.py`; their ? links the Root
+  Database page. The Corps: ceasefire and peace tokens (`UnitedDoveCorpsExpansion.battleAllowed` in `canAttack`, `protectedFrom` in `canRemove`),
+  refugee cards, a Mandate each Daylight. The Association: adult spiders and spiderlings (`SpiderMove` lets a move take one adult), webs in
+  clearings (`SpiderWebFull` holds a captive) and on paths (`paths`, drawn at the path's middle), captives in `cocoon` (`held` says on which web),
+  Hunters in `BattleDealHitAction`, path webs catching movers in `MoveListAction`, eggs, mutations (`AAMutation`; Agility is the `SpiderForest`
+  transport), Weavers in `craftableWith`, Arachnophobia after the hand limit. `ReplayCheck <games> udc` or `aa` plays them, `dovearachnid adset`
+  in Advanced Setup.
 - A fan faction's in-game overlay (tapping its player panel) links the designer's print-and-play folder above "More Info"
   (`FanInfo.pnpLink`, the link its ? has; 2026-11-18). The fan decks' ? pictures are in the setup screen's image list
   (`original` in `hrf.scala`), as the setup screen loads no game assets: missing, the picture threw and the box had no Ok

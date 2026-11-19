@@ -864,6 +864,8 @@ trait GameImplicits {
     implicit def twelveColoniesState(f : TwelveColonies)(implicit game : Game) = game.states(f).as[TwelveColoniesPlayer].get
     implicit def oldManTinkerState(f : OldManTinker)(implicit game : Game) = game.states(f).as[OldManTinkerPlayer].get
     implicit def noxiousBatteryState(f : NoxiousBattery)(implicit game : Game) = game.states(f).as[NoxiousBatteryPlayer].get
+    implicit def doveCorpsState(f : UnitedDoveCorps)(implicit game : Game) = game.states(f).as[UnitedDoveCorpsPlayer].get
+    implicit def arachnidState(f : ArachnidAssociation)(implicit game : Game) = game.states(f).as[ArachnidAssociationPlayer].get
     implicit def doomState(f : Doomsayers)(implicit game : Game) = game.states(f).as[DoomsayersPlayer].get
     implicit def whisperersState(f : Whisperers)(implicit game : Game) = game.states(f).as[WhisperersPlayer].get
     implicit def invasiveEEEState(f : InvasiveEEE)(implicit game : Game) = game.states(f).as[InvasiveEEEPlayer].get
@@ -1017,7 +1019,7 @@ trait GameImplicits {
         }
 
         def connectedFor(o : Region) = {
-            val tt = game.transports.but(Ferry).but(OffTrail).but(FoxburrowRoads).but(ForestShortcut).but(TrailMove).%(_.allows(f, o))
+            val tt = game.transports.but(Ferry).but(OffTrail).but(FoxburrowRoads).but(ForestShortcut).but(SpiderForest).but(TrailMove).%(_.allows(f, o))
             f.validDest.but(o).%(d => tt.exists(_.allows(f, o, d)))
         }
 
@@ -1109,14 +1111,17 @@ trait GameImplicits {
             || canAttackFromForest(c)
         )
 
-        def canAttack(c : Clearing)(e : Faction) = TwelveColoniesExpansion.battleAllowed(c) && hasAttackingForce(c) && f.validAttackTarget(c)(e)
+        def canAttack(c : Clearing)(e : Faction) = TwelveColoniesExpansion.battleAllowed(c) && UnitedDoveCorpsExpansion.battleAllowed(f, c) && hasAttackingForce(c) && f.validAttackTarget(c)(e)
 
-        def canAttackList(c : Clearing) = (TwelveColoniesExpansion.battleAllowed(c) && hasAttackingForce(c)).??(f.enemies.%(f.validAttackTarget(c)))
+        def canAttackList(c : Clearing) = (TwelveColoniesExpansion.battleAllowed(c) && UnitedDoveCorpsExpansion.battleAllowed(f, c) && hasAttackingForce(c)).??(f.enemies.%(f.validAttackTarget(c)))
 
         def canAttackIn(c : Clearing) = canAttackList(c).any
 
         def canRemove(c : Clearing)(e : Faction) : Boolean = {
             if (e == RiverfolkFlotilla)
+                return false
+
+            if (UnitedDoveCorpsExpansion.protectedFrom(f, c, e))
                 return false
 
             if (e == FuriousProtector)
@@ -1304,6 +1309,8 @@ trait GameImplicits {
             // the Twelve Colonies' Artifex Contentio
             case _ if TwelveColoniesExpansion.artifex => false
             case d : CraftItemCard if game.uncrafted.has(d.item).not => false
+            // the Arachnid Association's Weavers
+            case d : CraftItemCard if f.is[ArachnidAssociation] => false
             case d : CraftEffectCard if f.has(d.effect) => false
             case d : CraftEffectCard if d.effect.is[FriendOfThe] && f.effects.of[FriendOfThe].any => false
             case d : CraftCard if d.cost.num > limit => false
@@ -1727,6 +1734,8 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             TwelveColoniesExpansion,
             OldManTinkerExpansion,
             NoxiousBatteryExpansion,
+            UnitedDoveCorpsExpansion,
+            ArachnidAssociationExpansion,
             DoomsayersExpansion,
             InvasiveEEEExpansion,
             InvasiveDDDExpansion,
@@ -1968,7 +1977,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     var corners : $[Clearing] = $
     var homelands : $[Clearing] = $
 
-    val transports = $[Transport](Roads, Riverboat, Ferry, Swimmers, BurrowRoads, TunnelRoads, OffTrail, FoxburrowRoads, ForestShortcut, BarrenTrail) ++ options.has(UpstartsDeck).$(TrailMove)
+    val transports = $[Transport](Roads, Riverboat, Ferry, Swimmers, BurrowRoads, TunnelRoads, OffTrail, FoxburrowRoads, ForestShortcut, BarrenTrail, SpiderForest) ++ options.has(UpstartsDeck).$(TrailMove)
 
     // the Upstarts & Renegades deck
     val upstarts = new UpstartsState
