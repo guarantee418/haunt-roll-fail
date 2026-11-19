@@ -106,6 +106,51 @@ class GameEvaluationDoomed(faction : Faction)(implicit game : Game) extends Game
             case TWRecruitAction(f, _, l) =>
                 true |=> 40 -> "recruit"
 
+            // the United Dove Corps
+            case UDCMandateAction(f, m) =>
+                true |=> (m @@ {
+                    case UnitedDoveCorps.emergency => (f.ceasefires.num < 2).?(60).|(20)
+                    case UnitedDoveCorps.protection => 10 + 20 * f.ceasefires.num
+                    case _ => (f.hand.num >= 3).?(40).|(5) + (f.refugees.num > 2).??(10)
+                }) + (math.random() * 20).round.toInt -> "mandate"
+
+            case UDCCeasefireClearingAction(f, _) =>
+                true |=> 90 -> "ceasefire"
+
+            case UDCDeclarePeaceAction(f, _) =>
+                true |=> 80 -> "peace"
+
+            case UDCBuildCardsAction(f, _, _, _) =>
+                true |=> 70 -> "build"
+
+            case UDCRecruitClearingAction(f, _) =>
+                true |=> 30 -> "recruit"
+
+            case UDCEvacuateCardAction(f, _, _) =>
+                true |=> 50 -> "evacuate"
+
+            // the Arachnid Association
+            case AAWeaveStartAction(f, _, o) =>
+                true |=> (o.any.?(60).|(70) + (math.random() * 20).round.toInt) -> "weave"
+
+            case AAWeaveCardAction(f, _, _, _) =>
+                true |=> 30 -> "weave more"
+
+            case AALayCardAction(f, _, _) =>
+                true |=> 90 -> "lay"
+
+            case AACaptureCardAction(f, _, _, _, _) =>
+                true |=> 80 -> "capture"
+
+            case AAConsumeMutateAction(f, _, _) =>
+                true |=> (f.mutations.num < 3).?(60).|(10) + (math.random() * 20).round.toInt -> "mutate"
+
+            case AAConsumeVPAction(f, _) =>
+                true |=> 40 -> "consume"
+
+            case AAPhobiaPayAction(e, f, _, _) =>
+                true |=> (ArachnidAssociationExpansion.frightened(f, e).num > 2).?(40).|(-20) -> "pay off"
+
             case MenaceActiveAction(f, b, fright) =>
                 true |=> (math.random() * 20).round.toInt -> "fight or fright"
 

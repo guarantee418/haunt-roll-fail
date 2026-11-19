@@ -145,6 +145,14 @@ trait MetaBase {
     def factionElem(f : F) : Elem
     // The faction's name on the rankings page, in the faction's own colour when it has one (the bars take it too)
     def rankingElem(f : F) : Elem = factionElem(f)
+    // The rankings page's tiers, best first (none: no tiers); a tier's icon is one of the game's images
+    def rankingTiers : $[RankingTier] = $
+    // what a tier is called ("Tier", Northgard's "League")
+    def rankingTierWord : String = "Tier"
+    // titles by wins, lowest first (Northgard's player ranks)
+    def rankingTitles : $[(String, Int)] = $
+    // the ladder and stats can be filtered by mode (1v1, 2v2, free-for-all, teams), as Northgard's ranked play is
+    def rankingModes : Boolean = false
     def factionNote(f : F) : Elem = Empty
     // The faction picker shows the factions as a grid of tiles when this gives one (Northgard: the clan's emblem
     // and name), each with the factionInfo button, instead of rows with factionElem and factionNote
@@ -347,6 +355,10 @@ trait MetaBots extends MetaBase {
     }
 }
 
+
+// A tier of the rankings page (MetaGame.rankingTiers): its name, the lowest rating in it (None: the bottom tier), a line about it
+// and its icon among the game's images
+case class RankingTier(name : String, min : |[Double], note : String, icon : |[String])
 
 // A seat of a finished ranked game (MetaGame.rankingSeat)
 case class RankingSeat(faction : String, seat : Int, players : Int, score : |[String]) {
