@@ -1163,8 +1163,9 @@ server. No session can reach the server, and none needs to.
   the hidden `BuyServicesAgain`; older games keep the single purchase so their replays don't change.
   The Landmarks choice "Map Default, or on Mountain a random suited landmark" (`MountainSuitedLandmark`;
   2026-10-30) plays Map Default, except that on the Mountain map one of Lost City, Mousehold, Foxburrow and
-  Rabbittown, never of the Tower clearing's own suit, is drawn at setup and goes in the Tower's clearing (Pass)
-  instead of the Tower, making it two-suited (`SuitedLandmarkAtTowerAction` in `root/setup.scala`). Air of
+  Rabbittown is drawn at setup and goes in the Tower's clearing (Pass)
+  instead of the Tower, making it two-suited unless it is of the clearing's own suit (`SuitedLandmarkAtTowerAction` in `root/setup.scala`; games
+  before the hidden `SuitedLandmarkAnySuit`, in `RulesVersion3`, 2026-11-19, never drew the clearing's own suit). Air of
   Conquest was switched to it after its draft (Foxburrow), lobby and game options both, as an Adset game won't load
   when its `OptionsAction` differs from the lobby's `options` line.
 - Root has a French display language: the "Language" setting (`EnglishLanguage`,

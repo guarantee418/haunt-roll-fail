@@ -612,6 +612,13 @@ case object BanishCaptainsLast extends GameOption with ToggleOption {
     val valueOn = "Banish".hh ~ " Captains last"
 }
 
+// With MountainSuitedLandmark, the landmark drawn for the Mountain's Tower clearing may be of that clearing's own suit (owner,
+// 2026-11-19): older games left those out. Hidden, in RulesVersion3; it only changes a setup draw, so running games need no switch.
+case object SuitedLandmarkAnySuit extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Suited landmark".hh ~ " of any suit"
+}
+
 // On the Mountain map the Twilight Council may clear a path in Evening, after Convene Woodfolk, if it didn't in Daylight: its cards
 // are revealed in Birdsong and come back to hand only in Evening, so its Daylight had none to discard (Discord,
 // 2026-11-04). Hidden and on by default for new games; older games keep their Evening so their replays don't change
@@ -1377,7 +1384,7 @@ case object MountainSuitedLandmark extends LandmarksOption {
     override def forcedOff(all : $[BaseOption]) = all.of[LandmarksOption].but(this).%(_.group == this.group)
     override val explain = $(
         "On the " ~ "Mountain".hh ~ " map, instead of its " ~ "Tower".hh ~ ", one of " ~ "Lost City".hl ~ ", " ~ "Mousehold".styled(Mouse) ~ ", " ~ "Foxburrow".styled(Fox) ~ " and " ~ "Rabbittown".styled(Rabbit) ~ " is drawn at setup and placed in the " ~ "Tower".hh ~ "'s clearing.",
-        "The landmark is never one of that clearing's own suit, so the clearing gets a second suit (or all three with the " ~ "Lost City".hl ~ ").",
+        "The landmark may be of that clearing's own suit, which then keeps its one suit; otherwise it gets a second suit (or all three with the " ~ "Lost City".hl ~ ").",
         "On any other map, the map's own landmarks."
     )
 }
@@ -1951,7 +1958,7 @@ object Meta extends MetaGame {
 
     // The hidden options of rules fixes, each gating a fix so the games started before it replay the same (most new games get through
     // their RulesVersion); not listed in a game's log (OptionsAction)
-    lazy val fixes : $[O] = $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes, BanishCaptainsLast)
+    lazy val fixes : $[O] = $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes, BanishCaptainsLast, SuitedLandmarkAnySuit)
 
     def unlisted : $[O] = fixes ++ settled ++ RulesVersion.all
 
@@ -4715,9 +4722,14 @@ case object RulesVersion2 extends RulesVersion(2) {
     def fixes = RulesVersion1.fixes ++ $[Meta.O](BanishCaptainsLast)
 }
 
+// The Mountain's suited landmark may be of the Tower clearing's own suit (2026-11-19)
+case object RulesVersion3 extends RulesVersion(3) {
+    def fixes = RulesVersion2.fixes ++ $[Meta.O](SuitedLandmarkAnySuit)
+}
+
 object RulesVersion {
-    val all : $[RulesVersion] = $(RulesVersion1, RulesVersion2)
-    def latest : RulesVersion = RulesVersion2
+    val all : $[RulesVersion] = $(RulesVersion1, RulesVersion2, RulesVersion3)
+    def latest : RulesVersion = RulesVersion3
     def implied : $[Meta.O] = all./~(_.fixes).distinct
 
     def expand(l : $[Meta.O]) : $[Meta.O] = l ++ l.of[RulesVersion]./~(_.fixes).distinct.diff(l)
