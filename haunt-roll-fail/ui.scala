@@ -207,7 +207,16 @@ class Asker(val body : AttachmentPoint, assets : String => dom.html.Image) {
         actionDiv.scrollTop = 0
     }
 
+    // iask clears the whole action div, zask's container with it: iask keeps what was there and zask puts it back, so a menu
+    // after a text box (the Rankings' player codes) isn't drawn into a detached container (2026-11-19)
+    var kept : $[dom.Node] = $
+
     def zask(options : List[ZOption])(implicit resources : Resources) {
+        if (!actionDiv.contains(cont.node)) {
+            clear(actionDiv)
+            kept.foreach(actionDiv.appendChild)
+        }
+
         cont.vis()
         cont.attach.clear()
 
@@ -247,6 +256,9 @@ class Asker(val body : AttachmentPoint, assets : String => dom.html.Image) {
     }
 
     def iask(options : List[AskOption]) {
+        if (actionDiv.contains(cont.node))
+            kept = 0.until(actionDiv.childNodes.length)./(actionDiv.childNodes.item)
+
         clear(actionDiv)
 
         var prev : Option[String] = None
