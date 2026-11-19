@@ -342,10 +342,11 @@ object SetupExpansion extends MandatoryExpansion {
 
             SetupLandmarksAction
 
-        // Mountain with MountainSuitedLandmark: a suited landmark not of the Tower clearing's suit goes in that clearing instead
+        // Mountain with MountainSuitedLandmark: a suited landmark goes in the Tower clearing instead (older games, without
+        // SuitedLandmarkAnySuit, leave out the landmarks of that clearing's own suit)
         case SetupLandmarksAction if options.has(MountainSuitedLandmark) && board.tower.any && game.lostCity.none && game.mousehold.none && game.foxburrow.none && game.rabbittown.none =>
             val c = board.tower.head
-            val own = game.mapping.get(c).|($)
+            val own = options.has(SuitedLandmarkAnySuit).?($[BaseSuit]()).|(game.mapping.get(c).|($))
 
             Random[Landmark]($(LostCityLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark).%{
                 case MouseholdLandmark => own.has(Mouse).not
