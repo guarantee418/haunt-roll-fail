@@ -1576,21 +1576,70 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             )
         }
 
+        def says(e : Elem, again : |[() => Unit] = None) = ui.action.asker.zask($(ZOption(title, Div(e, ZBasic.info))) ++ again./(f => ZBasic(" ", Div("Try again"), f)) ++ $(ZBasic(" ", Div("Back"), () => load())))
+        def unreachable() = says("The server can't be reached.".txt)
+
+        // the player code from another device, or a name and its own code (Ranking.signIn; 2026-11-19)
         def useCode() {
-            ui.action.asker.iask(InputOption("Enter the player code from your other device", "", Nil, v => {
+            ui.action.asker.iask(InputOption("Enter the player code from your other device, or your name if you set a code of your own", "", Nil, v => {
                 val code = v.trim
                 postF(server + "/player-code", code) { r =>
                     val names = r.split('\n').$.%(_.nonEmpty)
-                    if (names.any) {
+                    if (names.any && code.length >= 16) {
                         PlayerKey.set(code)
                         mine = names
                         load()
                     }
                     else
-                        ui.action.asker.zask($(ZOption(title, Div("No name was claimed with that code.", ZBasic.info)), ZBasic(" ", Div("Try again"), () => useCode()), back))
-                } {
-                    ui.action.asker.zask($(ZOption(title, Div("The server can't be reached.", ZBasic.info)), back))
-                }
+                        postF(server + "/has-code", code) { r =>
+                            if (r.trim == "yes")
+                                signIn(code)
+                            else
+                                says("No name was claimed with that player code, and no name " ~ code.hlb ~ " has a code of its own.", |(() => useCode()))
+                        } { unreachable() }
+                } { unreachable() }
+            }) :: BasicOption(" ", "Cancel", Nil, () => load()))
+        }
+
+        def signIn(name : String) {
+            ui.action.asker.iask(InputOption("Enter the code you picked for " + name, "", Nil, v => {
+                postF(server + "/sign-in", name + "\n" + v.trim + "\n" + PlayerKey.get) { r =>
+                    r.split('\n').$ match {
+                        case "ok" :: n :: _ => mine = (mine :+ n).distinct ; load()
+                        case "locked" :: _ => says("Too many wrong codes for " ~ name.hlb ~ ". Try again in an hour, or ask for a reset with " ~ "Lost my code".hl ~ ".")
+                        case _ => says("That isn't the code for " ~ name.hlb ~ ".", |(() => signIn(name)))
+                    }
+                } { unreachable() }
+            }) :: BasicOption(" ", "Cancel", Nil, () => load()))
+        }
+
+        // a code of the player's own for the names this browser holds (Ranking.setCode)
+        def setCode() {
+            ui.action.asker.iask(InputOption("Pick a code of your own for " + mine.join(", ") + " (8 characters or more)", "", Nil, v => {
+                val code = v.trim
+                if (code.length < 8)
+                    says("A code needs 8 characters or more.".txt, |(() => setCode()))
+                else
+                    postF(server + "/set-code", PlayerKey.get + "\n" + code) { r =>
+                        r.split('\n').$ match {
+                            case "ok" :: names => says("Your code is set for " ~ names./(_.hlb).join(", ") ~ ". On another device, open Rankings, tap " ~ "Use a code from another device".hl ~ ", enter your name, then this code. Keep it to yourself: anyone with your name and code can play as you.")
+                            case _ => says("The code wasn't set: this device holds no name.".txt)
+                        }
+                    } { unreachable() }
+            }) :: BasicOption(" ", "Cancel", Nil, () => load()))
+        }
+
+        // a lost code: ask the site's owner to release the name (Ranking.request)
+        def lostCode() {
+            ui.action.asker.iask(InputOption("Your name", "", Nil, n => {
+                val name = n.trim
+                if (name.isEmpty) load()
+                else
+                ui.action.asker.iask(InputOption("Anything that shows " + name + " is yours, such as the games you played or who you played against (optional)", "", Nil, m => {
+                    postF(server + "/name-reset", name + "\n" + m.trim) { _ =>
+                        says("Your request was sent. Once the site's owner releases " ~ name.hlb ~ ", type it again when you join a game, or open one of your games, to claim it on this device. Your past games stay under it.")
+                    } { unreachable() }
+                }, _ => true) :: BasicOption(" ", "Cancel", Nil, () => load()))
             }) :: BasicOption(" ", "Cancel", Nil, () => load()))
         }
 
@@ -1638,6 +1687,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     showOverlayRaw("Your player code".hl, $("Enter it under Rankings on another device to play there under your names. Keep it to yourself: anyone with it can.".txt, PlayerKey.get.hlb.spn(xstyles.larger110)))
                 })) ++
                 $(ZBasic(heading("Your player code"), Div("Use a code from another device"), () => useCode())) ++
+                mine.any.$(ZBasic(heading("Your player code"), Div("Set my own code"), () => setCode())) ++
+                $(ZBasic(heading("Your player code"), Div("Lost my code"), () => lostCode())) ++
                 $(note(heading("How the rankings work"), explain)) ++
                 $(back)
             )
