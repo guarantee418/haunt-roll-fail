@@ -5712,7 +5712,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 para("Water".hh ~ ": " ~ factions./(f => f.elem ~ " " ~ OutsidersMaps.waterOf(f)(game).hl).reduce(_ ~ ", " ~ _) ~ "; in the supply: " ~ (game.waterSupply < 0).?(game.players.num).|(game.waterSupply).hl)
             ).|(Empty)
 
-            showOverlay(overlayScrollX(settling ~ water), onClick)
+            // the map's rules off in this game: the Map Rules button is shown on both maps all the same, so say so (2026-11-19)
+            val off =
+                (game.board == DeepWoodsBoard && OutsidersMaps.settling(game).not).?(
+                    ("Deep Woods".styled(styles.forest) ~ " " ~ SpacedDash ~ " " ~ "Settling".hh).div ~
+                    para("Off in this game: every clearing tile is on the clearing of its number from the start, so there is nothing to settle.".txt)
+                ).|(Empty) ~
+                (game.board == WastelandsBoard && OutsidersMaps.water(game).not).?(
+                    ("Wastelands".styled(Rabbit) ~ " " ~ SpacedDash ~ " " ~ "Water and Barren Trails".hh).div ~
+                    para("Off in this game: the barren trails are plain paths, and there is no Water.".txt)
+                ).|(Empty)
+
+            showOverlay(overlayScrollX(settling ~ water ~ off), onClick)
 
         case ("view-water", kind) =>
             // Words as separate pieces, so a long sentence wraps between them
@@ -6266,7 +6277,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
                 }).copy(clear = false)
             ) ++
             $(ZBasic(Break ~ Break, "Notifications".spn, () => { onClick("notifications", self) }).copy(clear = false)).%(_ => self.any || game.isOver) ++
-            $(ZBasic(Break ~ Break, "Map Rules".spn, () => { onClick("view-map-rules") }).copy(clear = false)).%(_ => OutsidersMaps.settling(game) || OutsidersMaps.water(game)) ++
+            $(ZBasic(Break ~ Break, "Map Rules".spn, () => { onClick("view-map-rules") }).copy(clear = false)).%(_ => game.board == DeepWoodsBoard || game.board == WastelandsBoard) ++
             $(ZBasic(Break ~ Break, "Hirelings".spn, () => { onClick("view-hirelings") }).copy(clear = false)).%(_ => game.hirelings.but(InfectedHorde).but(TrapLayer).but(LegendBeast).but(GuanoMess).any || game.unhired.any) ++
             $(ZBasic(Break ~ Break, "Interface".spn, () => { callbacks.editSettings { updateStatus() } }).copy(clear = false)) ++
             $(ZBasic(Break ~ Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug) ++

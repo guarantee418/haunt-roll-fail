@@ -99,6 +99,7 @@ object MetaAdset extends MetaGame {
         RandomCharacter,
         MountainSuitedLandmark,
         DeepWoodsSettling,
+        WastelandsWater,
         NoHirelings
     ) ++ defaultFactions./(IncludeFaction) ++ Meta.hirelings./(IncludeHireling)
 

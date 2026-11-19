@@ -618,8 +618,8 @@ server. No session can reach the server, and none needs to.
   Its two maps are Fan Maps, "Deep Woods" and "Wastelands" (`DeepWoodsMap`, `WastelandsMap`; `DeepWoodsBoard` and `WastelandsBoard` in
   `root/maps.scala`, images in `deep-woods/` and `wastelands/` made by `root/tools/outsiders-maps.py`, which also prints the Deep Woods
   building slots), also drawn by "Random". Clearing and forest names are made up. Their own rules are toggles in the setup's "Fan Map
-  Rules", shown only with their map (2026-11-17), unfolded right under the maps, Settling on by default (2026-11-18; `defaultsFor`, and
-  `Meta.settlingOn` in `completeSaved` for setups saved without the Deep Woods picked), all in `root/outsiders-maps.scala` (`OutsidersMaps`, its header lists the
+  Rules", shown only with their map (2026-11-17), unfolded right under the maps, both on by default (Settling 2026-11-18, Water and Barren Trails 2026-11-19; `defaultsFor`, and
+  `Meta.settlingOn` in `completeSaved` for setups saved without that map picked), all in `root/outsiders-maps.scala` (`OutsidersMaps`, its header lists the
   readings). Off, the Deep Woods is played settled, each clearing tile baked into the art on the clearing of its number (Law of Slug
   S.1.7), and the Wastelands' barren trails are plain paths. "Deep Woods - Settling" (`DeepWoodsSettling`, S.1): clearings start
   unsettled (wild, crafting pieces pay for nothing, `Unusable` in `root/game.scala`; one slot; two pieces a player), drawn with their
@@ -628,7 +628,7 @@ server. No session can reach the server, and none needs to.
   placement is checked before the next step (`TopLevelAction`). "Wastelands - Water and Barren Trails" (`WastelandsWater`, S.2): Water
   (`game.water`, `waterSupply`), the `BarrenTrail` transport (paid with a Water, a staying warrior or a Vagabond item), the Water
   actions, Surrender and Seizure. The "Map Rules" button under the action pane (and tapping a barren trail) shows the rules and where
-  the game stands (`"view-map-rules"` in `root/ui.scala`). `ReplayCheck <games> deepwoods [settling]` or `wastelands [water]` plays them.
+  the game stands (`"view-map-rules"` in `root/ui.scala`); it shows on both maps, saying so when their rules are off (2026-11-19). `ReplayCheck <games> deepwoods [settling]` or `wastelands [water]` plays them.
 - The Noxious Battery (NX, `root/faction-noxious-battery.scala`, its header lists the readings; images `nx-*` in `faction/battery/`, cut by
   `root/tools/noxious-art.py` from the print-and-play folder's ASSETS; S.P. Shaman's fan Nemesis Expansion, art by disasterman; asked for on
   2026-11-18) is a Fun Faction and in Advanced Setup's pool (reach 5): skunks (`Skunk`), a cannon pawn (`Cannon`, starting damaged on a ruin,
