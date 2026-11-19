@@ -302,6 +302,8 @@ object Meta extends MetaGame { mmm =>
 
     // No clan colors here: colors belong to players and are chosen on the setup screen
     def factionElem(f : Faction) = factionName(f).txt
+    // The rankings page has no players' colors to go by, so each clan shows in its own color there (styles.scala)
+    override def rankingElem(f : Faction) = factionName(f).styled(f)
     // The initial clan card and its two upgrades (the clan's i button shows them)
     override def factionNote(f : Faction) =
         if (f == Automa)

@@ -143,6 +143,8 @@ trait MetaBase {
 
     def factionName(f : F) : String
     def factionElem(f : F) : Elem
+    // The faction's name on the rankings page, in the faction's own colour when it has one (the bars take it too)
+    def rankingElem(f : F) : Elem = factionElem(f)
     def factionNote(f : F) : Elem = Empty
     // The faction picker shows the factions as a grid of tiles when this gives one (Northgard: the clan's emblem
     // and name), each with the factionInfo button, instead of rows with factionElem and factionNote
