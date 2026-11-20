@@ -1083,7 +1083,10 @@ server. No session can reach the server, and none needs to.
   of the start, each table's winner and the champion, and invited to sign up, with the Tournament page's link, once for each
   tournament as soon as its sign-ups open and a webhook is set (`invite` in `good-game/Tournament.scala`, `tournament/invited.tsv`;
   at the server's start, when the webhook is set, when a final starts or a tournament is cancelled; the `invite` change posts it
-  again; asked for on 2026-11-20, as nobody could find the page, which is only on the Root menu), and at 8, 12 and 15 sign-ups.
+  again; asked for on 2026-11-20, as nobody could find the page, which is only on the Root menu), and at 8, 12 and 15 sign-ups. Pointed at a forum channel, each tournament's posts go in a thread of their own and each table (and the final)
+  gets a thread at its start naming its players, pinged by the Discord user ID each gave on the Tournament page (asked right after
+  signing up, changeable there; `/tournament/discord`, `tournament/discord.tsv`, thread ids in `tournament/threads.tsv`); a text
+  channel gets them all in the channel (2026-11-20).
   `Tournament.start` takes the server's URL argument for the link. The games have the hidden `TournamentDraft` (`root/tournament.scala`):
   the factions are drawn first (the flop), the first seat picks the deck, the second the map, on the Mountain the third the one
   landmark for the Tower's clearing (the Tower, a suited landmark or the Birdsong Tower), then the factions are picked as usual; the game starts with no
