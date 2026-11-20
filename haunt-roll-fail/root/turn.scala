@@ -154,7 +154,7 @@ object TurnExpansion extends MandatoryExpansion {
 
             val mandatory =
                 FoxRabbitMouse.%(s => f.can(ServiceOfThe(s)))./(s => ServiceOfMainAction(f, s)) ++
-                f.can(BetterBurrowBank).??(factions.but(f)./(BetterBurrowBankAction(f, _))) ++
+                (f.can(BetterBurrowBank) && options.has(CapitalistsDeck).not).??(factions.but(f)./(BetterBurrowBankAction(f, _))) ++
                 f.can(ShadowCouncil).?(ShadowCouncilMainAction(f)) ++
                 f.can(Apprentice).?(ApprenticeMainAction(f)) ++
                 f.can(Riversteads).?(RiversteadsAction(f)) ++
@@ -193,7 +193,8 @@ object TurnExpansion extends MandatoryExpansion {
                 f.can(LizardEnvoys).?(LizardEnvoysMainAction(f).!(pile.none)) ++
                 options.has(DarkDeck).??(DarkDeckExpansion.birdsongStart(f)) ++
                 options.has(UpstartsDeck).??(UpstartsDeckExpansion.birdsongStart(f)) ++
-                options.has(SorceryDeck).??(SorceryDeckExpansion.birdsongStart(f))
+                options.has(SorceryDeck).??(SorceryDeckExpansion.birdsongStart(f)) ++
+                options.has(CapitalistsDeck).??(CapitalistsDeckExpansion.birdsongStart(f))
 
             val ask = Ask(f).add(RawElemGroup("Start of " ~ Birdsong.elem)).add(mandatory)
 
