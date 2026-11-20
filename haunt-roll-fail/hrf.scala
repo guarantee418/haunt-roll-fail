@@ -1646,7 +1646,13 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         // the player code from another device, or a name and its own code (Ranking.signIn; 2026-11-19)
         def useCode() {
-            ui.action.asker.iask(InputOption("Enter the player code from your other device, or your name if you set a code of your own", "", Nil, v => {
+            // (a code the player picked, typed here, was taken for a name and refused: it now asks which name the code is for (2026-11-20))
+            // (the prompt's two choices on lines of their own, the choice itself bright: "or your name" was missed in one line (2026-11-20))
+            val b = "<span style='color:#f2f2f2;font-weight:bold'>"
+            val d = "<span style='font-size:85%;opacity:0.8'>"
+            ui.action.asker.iask(InputOption(b + "Enter either code" + "</span>\n\n" +
+                b + "Your player code</span>\n" + d + "the 24 letters under Show my player code on your other device</span>\n\n" +
+                b + "or a code you picked yourself</span>\n" + d + "your name comes next</span>\n", "", Nil, v => {
                 val code = v.trim
                 postF(server + "/player-code", code) { r =>
                     val names = r.split('\n').$.%(_.nonEmpty)
@@ -1660,8 +1666,25 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                             if (r.trim == "yes")
                                 signIn(code)
                             else
-                                says("No name was claimed with that player code, and no name " ~ code.hlb ~ " has a code of its own.", |(() => useCode()))
+                                codeFor(code)
                         } { unreachable() }
+                } { unreachable() }
+            }) :: BasicOption(" ", "Cancel", Nil, () => load()))
+        }
+
+        // a code the player picked: which name it was picked for
+        def codeFor(code : String) {
+            ui.action.asker.iask(InputOption("<span style='color:#f2f2f2;font-weight:bold'>Which name did you pick this code for?</span>\n", "", Nil, n => {
+                val name = n.trim
+                if (name.isEmpty) useCode()
+                else
+                postF(server + "/sign-in", name + "\n" + code + "\n" + PlayerKey.get) { r =>
+                    r.split('\n').$ match {
+                        case "ok" :: n :: _ => mine = (mine :+ n).distinct ; load()
+                        case "locked" :: _ => says("Too many wrong codes for " ~ name.hlb ~ ". Try again in an hour, or ask for a reset with " ~ "Lost my code".hl ~ ".")
+                        case "wrong" :: _ => says("That isn't the code for " ~ name.hlb ~ ". Check the name and the code: the code is case-sensitive.", |(() => useCode()))
+                        case _ => says(name.hlb ~ " has no code of its own yet, and " ~ code.hlb ~ " isn't a player code. On the device that holds " ~ name.hlb ~ ", tap " ~ "Set or change my own code".hl ~ " first.", |(() => useCode()))
+                    }
                 } { unreachable() }
             }) :: BasicOption(" ", "Cancel", Nil, () => load()))
         }
