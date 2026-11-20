@@ -64,7 +64,7 @@ module ("Solo vs Automa" on the main menu). Its Training Fields module, a two-pl
 a 4x3 grid of face-down tiles with seven Action cards each, is in
 `nort/training.scala`: "Training Grounds" on the main menu opens a page
 offering a local or an online game (the `modes` hooks in `meta.scala`,
-`modeMenu` in `hrf.scala`). "Tutorial", first on the main menu (the `tutorialLessons`,
+`modeMenu` in `hrf.scala`); its Explore offers a face-down tile beside a territory the player controls, in games with the hidden `TrainingExploreSides` every new Training Grounds game gets (`Meta.modeOptions`; 2026-11-20: the far side of the neighbouring tile was checked, so a tile under the player's territory wasn't offered and one two tiles away was). "Tutorial", first on the main menu (the `tutorialLessons`,
 `tutorialAbout` and `tutorialGame` hooks in `meta.scala`, `tutorialMenu` in `hrf.scala`, URL
 `/play/nort/tutorial`), teaches the game as the Stag Clan: nine lessons on the rules and on
 playing them on this site (`Tutorial.lessons` in `nort/tutorial.scala`, all the text in one place),

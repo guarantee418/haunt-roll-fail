@@ -136,10 +136,14 @@ object Training {
 
     def canBuild(f : Faction)(implicit game : Game) : Boolean = spaces(f).any && supply.exists(x => buildable(f, x._1))
 
-    // Face-down tiles next to a territory f controls
+    // Face-down tiles next to a territory f controls: a tile side the territory's area runs along. With TrainingExploreSides
+    // (every new Training Grounds game, 2026-11-20) the side checked is the neighbour's side facing the face-down tile; before
+    // it, the neighbour's far side was checked, so the tile right under a territory wasn't offered, and a tile beyond a tile
+    // was, from a territory on that tile's far side. Older games keep the old check so their recorded moves load
     def explorable(f : Faction)(implicit game : Game) : $[Placement] = {
         val held = game.controlled(f)
-        game.hiddenTiles.%(p => Side.all.exists(d => game.board.areaAt(p.x - d.dx, p.y - d.dy, d.opposite).exists(a => held.has(game.board.territory(a)))))
+        val facing = game.options.has(TrainingExploreSides)
+        game.hiddenTiles.%(p => Side.all.exists(d => game.board.areaAt(p.x - d.dx, p.y - d.dy, facing.?(d).|(d.opposite)).exists(a => held.has(game.board.territory(a)))))
     }
 
     def canMove(f : Faction, n : Int)(implicit game : Game) : Boolean = {
