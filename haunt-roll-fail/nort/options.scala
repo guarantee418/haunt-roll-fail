@@ -834,6 +834,15 @@ case object TrainingFieldsOption extends GameOption with ToggleOption {
     def valueOn = "Training Fields duel".txt
 }
 
+// Training Fields: Explore offers the face-down tiles next to a territory the player controls, checking the side of the
+// neighbouring tile that faces the face-down tile (Training.explorable). Before it, the neighbour's far side was checked
+// (Discord, 2026-11-20: a tile far from the player's base was offered, and the tile right under their territory wasn't).
+// Hidden, and given to every new Training Grounds game (Meta.modeOptions); older games keep the old check
+case object TrainingExploreSides extends GameOption with ToggleOption {
+    val group = "Training Fields".txt
+    def valueOn = "Explore next to your territories".txt
+}
+
 // Uncharted Horizons' Solo module: on whenever the Automa plays (Game.modules), so its option isn't listed
 case object Solo extends Module("Solo", "Uncharted Horizons") {
     override def ready = true

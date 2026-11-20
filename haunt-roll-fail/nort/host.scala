@@ -123,7 +123,7 @@ object Host extends hrf.host.BaseHost {
                 .%(c => sys.env.get("NORT_CENTRAL").%(_ != "1").forall(c.tile.has)).shuffle.head) ++
             teams
         val level = solo.$(AutomaLevelOption(1 + (random() * 6).toInt))
-        val all = training.?(colors ++ $(TrainingFieldsOption) ++ (random() < 0.3).$(FirstSeatStarts)).|(core.?(colors).|(options ++ level ++ level.exists(_.level >= 3).$(ModuleOption(Creatures))))
+        val all = training.?(colors ++ $(TrainingFieldsOption) ++ (random() < 0.8).$(TrainingExploreSides) ++ (random() < 0.3).$(FirstSeatStarts)).|(core.?(colors).|(options ++ level ++ level.exists(_.level >= 3).$(ModuleOption(Creatures))))
         all.foreach(o => assert(Meta.parseOption(Meta.writeOption(o)) == $(o), o))
         // NORT_ADSET=1: Adset games, with seats that draft their clans (random setup choices)
         if (sys.env.get("NORT_ADSET").has("1")) {
