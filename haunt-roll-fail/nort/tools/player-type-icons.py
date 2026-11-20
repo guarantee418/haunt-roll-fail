@@ -1,5 +1,5 @@
-# Makes the player panels' icons for who plays a clan (run from haunt-roll-fail/), in the style of panel-icons.py:
-# human.webp, a person's head and shoulders; bot.webp, a robot's head with an antenna.
+# Makes the player panels' icon for a clan played by a bot (run from haunt-roll-fail/), in the style of panel-icons.py:
+# bot.webp, a robot's head with an antenna.
 # Drawn 8 times larger then scaled down to 64x64, with a dark outline.
 from PIL import Image, ImageDraw, ImageFilter
 
@@ -12,14 +12,6 @@ def outlined(shape, out, outline=(40, 30, 20, 255)):
     edge.putalpha(shape.getchannel('A').filter(ImageFilter.MaxFilter(2 * K + 1)))
     edge.alpha_composite(shape)
     edge.resize((64, 64), Image.LANCZOS).save(IMAGES + 'ui/' + out, quality=90)
-
-# human.webp: a round head over rounded shoulders, in the parchment color of the cards
-skin = (236, 214, 170, 255)
-human = Image.new('RGBA', (S, S))
-d = ImageDraw.Draw(human)
-d.ellipse((S * 0.33, S * 0.08, S * 0.67, S * 0.44), fill=skin)
-d.rounded_rectangle((S * 0.14, S * 0.50, S * 0.86, S * 0.98), radius=S * 0.22, fill=skin)
-outlined(human, 'human.webp')
 
 # bot.webp: a steel-blue square head with two glowing eyes, a grille mouth, ears and an antenna
 steel, dark, glow = (150, 176, 198, 255), (52, 66, 80, 255), (120, 230, 255, 255)

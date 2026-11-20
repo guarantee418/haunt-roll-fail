@@ -1871,16 +1871,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             return
         }
 
-        // Who plays the clan: a person, or a bot and its level ("Easy", "Hard", "Robotos", the Automa's level); tapping it says more
-        // (Robotos: lists the cheats, as the "(Robotos)" tag did)
-        val playedBy = game.robotos(f).?(OnClick(RobotosInfo(f), (BotIcon() ~ " Robotos").spn(styles.tappable)(xlo.pointer))).|(
-            playerType(f)./(t => OnClick(PlayerTypeInfo(f), (BotIcon() ~ " " ~ t).spn(styles.tappable)(xlo.pointer))).|(
-                OnClick(PlayerTypeInfo(f), HumanIcon().spn(styles.tappable)(xlo.pointer))))
+        // A bot playing the clan: a robot's head before the name, tapped, its level (Easy, Hard, the Automa's; Robotos lists
+        // the cheats); a person gets no icon
+        val bot = game.robotos(f).?(OnClick(RobotosInfo(f), BotIcon().spn(styles.tappable)(xlo.pointer)) ~ " ".txt).|(
+            playerType(f)./(_ => OnClick(PlayerTypeInfo(f), BotIcon().spn(styles.tappable)(xlo.pointer)) ~ " ".txt).|(Empty))
 
         // The first player marker beside the name
         val first = (game.first == f).?(" ".txt ~ FirstPlayerIcon()).|(Empty)
 
-        val title = Div(Div(name ~ first ~ " ".txt ~ playedBy), styles.smallname, styles.titleLine, xlo.pointer)
+        val title = Div(Div(bot ~ name ~ first), styles.smallname, styles.titleLine, xlo.pointer)
 
         val state = game.states(f)
 
@@ -3043,7 +3042,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 case Some("Easy") => f.elem ~ " is played by the " ~ "Easy".hl ~ " bot, which picks its moves at random."
                 case Some("Hard") => f.elem ~ " is played by the " ~ "Hard".hl ~ " bot, which tries each choice on the game and picks the one that leaves it best placed."
                 case Some(t) => f.elem ~ " is played by a bot (" ~ t.hl ~ ")."
-                case None => f.elem ~ " is played by a " ~ "person".hl ~ "."
+                case None => f.elem ~ " is played by a person."
             }
             showOverlay(overlayScrollX(text.div).onClick, onClick)
 
