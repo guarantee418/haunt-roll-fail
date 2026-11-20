@@ -2520,6 +2520,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
             case f : Utopia =>
                 ("Corruption " ~ f.corruption.styled(styles.hit)).div(styles.minister) ~
+                Hint("Corruption track\nCorruption " + f.corruption + ": morality on spaces " + (f.corruption < 7).?((f.corruption + 1) + " to 7").|("none") +
+                    "\nSpace 1 never has one\nCelebrate Freedoms scores the rightmost empty space, " + f.freedom + " VP",
+                    1.to(7)./(k => Image("cu-track-" + f.trackBoard + "-" + k + (k > f.corruption).??("-m"), styles.corruption)).merge) ~ Break ~
                 ("Draw " ~ f.draw.hl ~ " " ~ Cards(f.draw).elem).div(styles.minister) ~
                 ("Freedom " ~ f.freedom.vp).div(styles.minister) ~
                 (Image(f.style + "-palace", styles.building) *** f.all(Palace).num) ~ (Image("empty-building", styles.building) *** f.pooled(Palace)) ~ Break ~
