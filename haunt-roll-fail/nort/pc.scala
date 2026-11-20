@@ -446,6 +446,15 @@ object PCExpansion extends Expansion {
 
     // Whether the Scorched Earth token may go to t: in games with PCScorchedSeen, only a territory f sees
     def scorchedSeen(implicit game : Game) : Boolean = on && game.options.has(PCScorchedSeen)
+
+    // PCJotnarCamp: Jötunn Blainn waits at the Jötnar Camp of the built map, as he would when its tile is explored
+    def jotnarCamp()(implicit game : Game) {
+        if (game.jotnarCamp.none && game.blainn.none)
+            game.board.placements.find(_.tile == Waste.jotnar).foreach { p =>
+                game.jotnarCamp = |(Spot(p.x, p.y))
+                log("Jötunn Blainn".hl, "waits at the", Waste.elem(Waste.jotnar))
+            }
+    }
     def mayScorch(f : Faction, t : Territory)(implicit game : Game) : Boolean = scorchedSeen.not || sees(f, t)
 
     // What any of these viewers sees (none: everything, for spectators and once the game is over)
@@ -557,6 +566,9 @@ object PCExpansion extends Expansion {
             val homes : $[Home] = buildMap(l)
 
             log("The map was built")
+
+            if (game.options.has(PCJotnarCamp))
+                jotnarCamp()
 
             val order = game.from(game.first)
 

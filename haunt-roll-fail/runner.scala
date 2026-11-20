@@ -24,10 +24,6 @@ import scalajs.js
 import scalajs.js.timers.setTimeout
 
 object Runner {
-    // after catching up with an online game's log, the factions it waits for and the log's length (Discord turn pings, set by
-    // the online game in hrf.scala; 2026-11-20)
-    var waitingHook : ($[Any], Int) => Unit = (_, _) => ()
-
     def run(meta : MetaGame)(seating : $[meta.F], options : $[meta.O], resources : Resources, ui : meta.gaming.GameUI, auto : (meta.G, meta.gaming.F) => meta.gaming.AskResult, journal : Journal[meta.gaming.ExternalAction], onOver : (meta.G, $[Any], Elem => Unit) => Unit = (_ : meta.G, _ : $[Any], _ : Elem => Unit) => ()) {
         import meta.gaming._
 
@@ -587,6 +583,8 @@ object Runner {
                     UIRecord("#unchoice 3", c, a)
 
                 case UIContinue(c @ Ask(faction, actions), Nil) =>
+                    journal.turn((faction != null).$(meta.writeFaction(faction.asInstanceOf[meta.F])))
+
                     auto(game, faction) match {
                         case AskHuman => UIAsk(c, Some(faction), actions, $)
                         case AskBot(q) =>
@@ -603,6 +601,8 @@ object Runner {
                         case a @ Ask(f, actions) => Some(Ask(f, actions))
                         case _ => None
                     })
+
+                    journal.turn(asks./(_.faction).%(_ != null)./(f => meta.writeFaction(f.asInstanceOf[meta.F])).distinct)
 
                     lazy val waits = asks./~(ask => auto(game, ask.faction) match {
                         case WaitRemote => Some(ask.faction)
@@ -866,18 +866,8 @@ object Runner {
                             else
                             if (c == StartContinue)
                                 later(() => UIRecord("#start", c, meta.start))
-                            else {
-                                try {
-                                    waitingHook(c match {
-                                        case Ask(f, _) => $(f)
-                                        case MultiAsk(as, _) => as./~({ case Ask(f, _) => Some(f) ; case _ => None })
-                                        case _ => $
-                                    }, actions.num)
-                                }
-                                catch { case e : Throwable => }
-
+                            else
                                 later(() => UIWait(c, waitingFor))
-                            }
                         }
                     }
 

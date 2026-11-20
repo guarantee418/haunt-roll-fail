@@ -1087,19 +1087,6 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         }
                     }
 
-                    // Discord turn pings: the seats the game waits for, told to the server each time they change (TurnPings in good-game)
-                    if (HRF.replay.not && server.any) {
-                        var told = ""
-                        Runner.waitingHook = (ff, n) => {
-                            val uu = ff./~(f => users.get(f.asInstanceOf[meta.F])).distinct.sorted
-                            val key = n + " " + uu.join(",")
-                            if (key != told) {
-                                told = key
-                                postF(HRF.server.get + "/turn/" + user + "/" + HRF.secret.get + "/" + server.get + "/" + n, uu.join(" "))(_ => ())(())
-                            }
-                        }
-                    }
-
                     startGame(seating, difficulties, state.selected, self, journal, title.|("%untitled%"), () => names, ServerSwitches, reportResult)
 
                     reread()
@@ -2409,16 +2396,23 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             heldNames { n => h = |(n) ; again() }
         }
 
-        // a game of the player's own: its title, the game when it isn't this one, the name played under; it opens the seat
+        // the game waits on the player (the server's sixth field, good-game/Turns.scala; 2026-11-20)
+        def myTurn(r : $[String]) = r.lift(5).has("1")
+
+        // a game of the player's own: its title, the game when it isn't this one, the name played under; it opens the seat;
+        // highlighted in gold, with "Your turn", while it waits on the player
         def myGame(group : Elem, r : $[String]) = {
             val label = HRF.metas.find(_.name == r(0))./(_.label).|(r(0))
             val other = (r(0) != meta.name).??(label + " · ")
-            ZOption(group, (Link(HRF.server.get + "/play/" + r(0) + "/" + r(2), r(1).but("")./(_.hh).|(label.hh) ~ Break ~ (other + "as " + r(3)).spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice))
+            val turn = myTurn(r)
+            val sub = turn.?(Span(Text("Your turn"), $(ExternalStyle("hrf-my-turn-tag"))) ~ " · ".txt).|(Empty) ~ (other + "as " + r(3)).txt
+            ZOption(group, (Link(HRF.server.get + "/play/" + r(0) + "/" + r(2), r(1).but("")./(_.hh).|(label.hh) ~ Break ~ sub.spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice ++ turn.$(ExternalStyle("hrf-my-turn"))))
         }
 
         val tourSecrets = tour.|($)./(_(3)).toSet
         val myGames = mine.|($).%(r => tourSecrets.contains(r(2)).not)
-        val active = myGames.%(_(4) != "1")
+        // the games waiting on the player first, each part in the server's order (newest first)
+        val active = myGames.%(_(4) != "1").sortBy(r => myTurn(r).?(0).|(1))
         val done = myGames.%(_(4) == "1")
         val names = myGames./(_(3)).distinct
 

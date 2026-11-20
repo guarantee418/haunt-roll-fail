@@ -471,21 +471,6 @@ object GoodGame {
                     }
                 }
             } ~
-            // Discord turn pings (TurnPings.scala): a client's report of the seats a game waits for after its first <index> entries
-            // (user ids, space-separated), from a seat or spectator of the game, about seats of the game
-            (post & path("turn" / Segment / Segment / Segment / IntNumber)) { (userId, userSecret, journalId, index) =>
-                decodeRequest {
-                    entity(as[String]) { body =>
-                        val waiting = body.trim.ascii.split(' ').toList.filter(_.nonEmpty).take(12).toSet
-                        try {
-                            val reader = execute(hasRight(userId, userSecret, journalId, "read") { accessRights.filter(_.journalId === journalId).filter(_.right === "append").map(_.userId).result })
-                            TurnPings.report(journalId, index, waiting.filter(reader.contains))
-                        }
-                        catch { case e : Exception => }
-                        plain("")
-                    }
-                }
-            } ~
             // the names a player code holds, with their Discord and turn pings; and turning the pings on or off
             (post & path("discord" / "mine")) {
                 decodeRequest {
@@ -519,8 +504,24 @@ object GoodGame {
                     }
                 }
             } ~
+            // Whose turn it is (Turns.scala): a client that can read the game posts the factions asked after the entries it has read,
+            // "<entries>\n<faction> <faction>..."
+            (post & path("turn" / Segment / Segment / Segment)) { (userId, userSecret, journalId) =>
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        val l = body.split('\n').toList
+                        val n = l.headOption.map(_.trim).filter(s => s.nonEmpty && s.size < 9 && s.forall(_.isDigit)).map(_.toInt)
+                        val ff = l.drop(1).mkString(" ").split(" ").toList.map(_.safe).filter(_.nonEmpty).take(12).map(_.take(40))
+                        val allowed = n.nonEmpty && scala.util.Try(execute(hasRight(userId, userSecret, journalId, "read") { journals.filter(_.id === journalId).result.head })).isSuccess
+                        if (allowed)
+                            Turns.report(journalId, n.get, ff, execute(entries.filter(_.journalId === journalId).map(_.index).max.result).map(_ + 1).getOrElse(0))
+                        plain(if (allowed) "ok" else "")
+                    }
+                }
+            } ~
             // A player's own online games (2026-11-20): every seat a name the player code holds was claimed for, newest first, as
-            // "meta, title, the seat's secret (its link), name, done" with done 1 once the game's result is in
+            // "meta, title, the seat's secret (its link), name, done, turn" with done 1 once the game's result is in, and turn 1 while
+            // the game waits on that seat (Turns.scala; the "user <faction> <user>" lines of the lobby say which seat is whose)
             (post & path("my-games")) {
                 decodeRequest {
                     entity(as[String]) { body =>
@@ -531,15 +532,20 @@ object GoodGame {
                         else {
                             val ps = execute(plays.filter(_.userId inSet seated.map(_._1)).result)
                             val info = execute(entries.filter(_.journalId inSet ps.map(_.journalId).distinct)
-                                .filter(e => (e.text like "meta %") || (e.text like "title %") || (e.text like "server %"))
+                                .filter(e => (e.text like "meta %") || (e.text like "title %") || (e.text like "server %") || (e.text like "user %"))
                                 .map(e => (e.journalId, e.text)).result)
-                                .groupBy(_._1).view.mapValues(_.map(_._2.split(" ", 2).toList).collect { case k :: v :: Nil => k -> v }.toMap).toMap
+                                .groupBy(_._1).view.mapValues(_.map(_._2)).toMap
+                            val metaOf = info.view.mapValues(_.map(_.split(" ", 2).toList).collect { case k :: v :: Nil if k != "user" => k -> v }.toMap).toMap
+                            // the faction each seat (user) plays, from "user <faction> <user>"
+                            val factionOf = info.view.mapValues(_.map(_.split(" ").toList).collect { case "user" :: f :: u :: Nil => u -> f }.toMap).toMap
                             val done = Ranking.recorded().flatMap(_.headOption).toSet
                             val dd = Ranking.displays()
                             plain(seated.flatMap { case (u, k) =>
                                 ps.filter(_.userId == u).flatMap { p =>
-                                    info.get(p.journalId).filter(m => m.contains("meta") && m.contains("server")).map { m =>
-                                        Backup.row(m("meta"), m.getOrElse("title", ""), p.secret, dd.getOrElse(k, k), if (done.contains(m("server"))) "1" else "0")
+                                    metaOf.get(p.journalId).filter(m => m.contains("meta") && m.contains("server")).map { m =>
+                                        val over = done.contains(m("server"))
+                                        val turn = !over && factionOf.get(p.journalId).flatMap(_.get(p.userId)).exists(f => Turns.asked(m("server")).contains(f))
+                                        Backup.row(m("meta"), m.getOrElse("title", ""), p.secret, dd.getOrElse(k, k), if (over) "1" else "0", if (turn) "1" else "0")
                                     }
                                 }
                             }.distinct.mkString("\n"))

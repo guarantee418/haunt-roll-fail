@@ -1820,6 +1820,9 @@ shares a territory with a creature; 2026-11-11) and the Wilderness, Wastelands a
   goes only to a territory Snake sees, and Under Pressure may also move it to a neutral territory (no clan there, creatures
   allowed), collecting what that territory gives as anywhere else (`PCScorchedSeen`, `PCExpansion.mayScorch`; 2026-11-15:
   in Winter for Clan it moved into the fog). A neutral territory has no owner, so the token takes nothing there at the Harvest.
+  The Jötnar Camp is on the map from the start, so Jötunn Blainn waits there from the start too, and a clan controlling a
+  territory next to the camp may recruit him for 1 food at each Harvest, as in the Wastelands rules (`PCJotnarCamp`,
+  `PCExpansion.jotnarCamp`; 2026-11-20: the camp was set only when its tile was explored, so in PC games he never came).
 
 ## Fan content: Clan Fame upgrades (2026-11-12)
 

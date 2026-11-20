@@ -834,6 +834,15 @@ case object TrainingFieldsOption extends GameOption with ToggleOption {
     def valueOn = "Training Fields duel".txt
 }
 
+// Training Fields: Explore offers the face-down tiles next to a territory the player controls, checking the side of the
+// neighbouring tile that faces the face-down tile (Training.explorable). Before it, the neighbour's far side was checked
+// (Discord, 2026-11-20: a tile far from the player's base was offered, and the tile right under their territory wasn't).
+// Hidden, and given to every new Training Grounds game (Meta.modeOptions); older games keep the old check
+case object TrainingExploreSides extends GameOption with ToggleOption {
+    val group = "Training Fields".txt
+    def valueOn = "Explore next to your territories".txt
+}
+
 // Uncharted Horizons' Solo module: on whenever the Automa plays (Game.modules), so its option isn't listed
 case object Solo extends Module("Solo", "Uncharted Horizons") {
     override def ready = true
@@ -1126,6 +1135,15 @@ case object PCVedrfolnirReveal extends GameOption with ToggleOption {
 case object PCVedrfolnirNoTile extends GameOption with ToggleOption {
     val group = "PC version".txt
     def valueOn = "Vedrfolnir adds no map tile".txt
+}
+
+// PC version: Jötunn Blainn waits at the Jötnar Camp when the map is built with it, so a clan next to the camp can recruit him at
+// the Harvest. The camp was only set when its tile was explored, which never happens in the PC version's whole map, so he was
+// never there (Winter of Draugr, 2026-11-20). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be
+// switched over with PCJotnarCampAction(X)
+case object PCJotnarCamp extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "Jötunn Blainn at his camp".txt
 }
 
 // Alternative victory with teams: a team wins only when its players fulfil every card in play, Thane or Jarl, as the Uncharted

@@ -507,6 +507,8 @@ case class PCNavalPortAction(then : ForcedAction) extends ForcedAction with Skip
 case class PCArmyCapAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class PCScoutFameAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class PCScorchedSeenAction(then : ForcedAction) extends ForcedAction with SkipValidate
+// Switches a running game to PCJotnarCamp (an hrf-games fix): Jötunn Blainn goes to his camp if the map has it
+case class PCJotnarCampAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class PCTowerPointsAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class PCHallShieldAction(then : ForcedAction) extends ForcedAction with SkipValidate
 case class PCHallSafeAction(then : ForcedAction) extends ForcedAction with SkipValidate
@@ -2477,6 +2479,14 @@ object CommonExpansion extends Expansion {
         case PCScorchedSeenAction(then) =>
             if (game.options.has(PCScorchedSeen).not)
                 game.addOption(PCScorchedSeen)
+
+            Then(then)
+
+        case PCJotnarCampAction(then) =>
+            if (game.options.has(PCJotnarCamp).not) {
+                game.addOption(PCJotnarCamp)
+                PCExpansion.jotnarCamp()
+            }
 
             Then(then)
 

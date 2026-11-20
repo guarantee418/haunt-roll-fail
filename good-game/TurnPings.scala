@@ -12,8 +12,8 @@ import scala.concurrent.duration.Duration
 // in HRF_DISCORD_TURNS_WEBHOOK (or the file discord-turns-webhook, set by the tournament change "turns <url>"), opened when the game
 // is created, with its players and spectator link, and a player is @mentioned there when it becomes their turn.
 //
-// The server can't read a game, so the clients tell it: after catching up with a game's log, a client reports which seats (users)
-// the game is now waiting for (/turn, Runner.waitingHook in the client). A seat newly waited for is pinged a minute later if:
+// The server can't read a game, so the clients tell it which factions the game asks (/turn, Turns.scala), and the lobby's
+// "user <faction> <user>" lines say whose seats they are. A seat newly waited for is pinged a minute later if:
 //   - the game still waits for it then (a later report hasn't taken it off),
 //   - its player hasn't had the game open in the last 90 seconds (their client reads the log while it is open),
 //   - its seat plays under a ranking name whose owner gave a Discord user ID and turned turn pings on (Rankings, "Discord turn pings"),
@@ -151,11 +151,22 @@ object TurnPings {
         }
     }
 
-    // a client's report: the game waits for these users after the log's first index entries
-    def report(game : String, index : Int, waiting : Set[String]) : Unit = synchronized {
+    // a client's report (Turns.report): the game asks these factions after the log's first index entries
+    def report(game : String, index : Int, factions : List[String]) : Unit =
+        try {
+            if (webhook.nonEmpty)
+                lobbyOf(game).filter(l => metas.contains(l.meta)).foreach { l =>
+                    val seats = l.lines.map(_.split(' ').toList).collect { case "user" :: f :: u :: _ => f -> u }.toMap
+                    waiting(game, index, factions.flatMap(seats.get).toSet)
+                }
+        }
+        catch {
+            case e : Exception => println("Turn pings: report failed: " + e)
+        }
+
+    def waiting(game : String, index : Int, waiting : Set[String]) : Unit = synchronized {
+        // (Turns.report has already dropped stale reports, and kept those after a fix shortened the log)
         val before = latest.get(game)
-        if (before.exists(_.index > index))
-            return
         if (before.exists(b => b.index == index && b.users == waiting))
             return
 
