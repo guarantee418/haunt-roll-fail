@@ -30,6 +30,9 @@ trait Journal[T] {
         else
             fail
     }
+
+    // tells the server whose turn it is, once the whole log is read (good-game/Turns.scala); only online games have a server
+    def turn(factions : $[String]) {}
 }
 
 
@@ -49,6 +52,16 @@ class ServerJournal[T](val meta : MetaGame, server : String, user : String, secr
     def write(n : Int, message : T, comment : |[String])(then : => Unit)(fail : => Unit) {
         val prefix = comment./("// " + _ + "\n").|("")
         postF(server + "/append/" + user + "/" + secret + "/" + journal + "/" + n, prefix + write(message))(_ => { size += 1 ; then})(fail)
+    }
+
+    private var lastTurn = ""
+
+    override def turn(factions : $[String]) {
+        val report = size + "\n" + factions.join(" ")
+        if (report != lastTurn) {
+            lastTurn = report
+            postF(server + "/turn/" + user + "/" + secret + "/" + journal, report)(_ => ()) { lastTurn = "" }
+        }
     }
 }
 
