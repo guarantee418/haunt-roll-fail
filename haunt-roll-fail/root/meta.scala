@@ -1431,6 +1431,44 @@ case object FoxburrowLandmark extends Landmark {
     )
 }
 
+// Simple Landmarks (the owner's own rules, 2026-11-20; root/simple-landmarks.scala): the Landmarks Pack's Legendary Forge, Black
+// Market and Elder Treetop pieces and the Tower, with simpler effects; a section of their own, so they go with any Landmarks choice
+trait SimpleLandmark extends Landmark {
+    override val group = "Simple Landmarks"
+}
+
+case object SimpleForgeLandmark extends SimpleLandmark {
+    val name = "Forge"
+    override val explain = $(
+        "Simple Landmarks".hh ~ " (house rules), with the " ~ "Legendary Forge".hh ~ " piece; placed in a clearing without a landmark, not next to one.",
+        "If your faction pieces are in its clearing, treat it as one of your crafting pieces."
+    )
+}
+
+case object SimpleMarketLandmark extends SimpleLandmark {
+    val name = "Market"
+    override val explain = $(
+        "Simple Landmarks".hh ~ " (house rules), with the " ~ "Black Market".hh ~ " piece; placed in a clearing with exactly one building slot and no ruin, without a landmark and not next to one.",
+        "Once per turn, if your faction pieces are in its clearing, you may discard a card to draw a card."
+    )
+}
+
+case object BirdsongTowerLandmark extends SimpleLandmark {
+    val name = "Birdsong Tower"
+    override val explain = $(
+        "Simple Landmarks".hh ~ " (house rules), with the " ~ "Tower".hh ~ " piece; placed in a clearing with a ruin and no landmark.",
+        "If you rule its clearing at the start of your " ~ "Birdsong".hh ~ ", score a point."
+    )
+}
+
+case object RoyalTreeLandmark extends SimpleLandmark {
+    val name = "Royal Tree"
+    override val explain = $(
+        "Simple Landmarks".hh ~ " (house rules), with the " ~ "Elder Treetop".hh ~ " piece; placed in a corner clearing without a landmark, not next to one.",
+        "Adds a building slot. While it's your turn, if your faction pieces are in its clearing, you rule its clearing."
+    )
+}
+
 case object RabbittownLandmark extends Landmark {
     val name = "Rabbittown"
     override def elem = name.styled(Rabbit)
@@ -1841,6 +1879,7 @@ object Meta extends MetaGame {
         $(DeepWoodsSettling, WastelandsWater) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
+        $(SimpleForgeLandmark, SimpleMarketLandmark, BirdsongTowerLandmark, RoyalTreeLandmark) ++
         legendsOptions ++
         $,
         $(StandardDeck, ExilesDeck, SquiresDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck, SorceryDeck) ++
@@ -1931,6 +1970,7 @@ object Meta extends MetaGame {
         l.of[Knaves].any.$(DoomedCaptains) ++
         l.of[Horde].any.$(SeparateItemsInRuins) ++
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
+        $(SimpleForgeLandmark, SimpleMarketLandmark, BirdsongTowerLandmark, RoyalTreeLandmark) ++
         $(NoHirelings, ThreeDemotedHirelings, TwoDemotedOneNormalHirelings, OneDemotedTwoNormalHirelings, ThreeNormalHirelings, ThreeRandomHirelings, SelectedHirelings) ++
         $(HirelingHirelingClash, FactionHirelingClash) ++
         hirelings./(IncludeHireling) ++
@@ -2180,11 +2220,12 @@ object Meta extends MetaGame {
     override def rankingFan(g : G) = rankFan(g)
 
     // fan content (rankingFan): a faction that isn't an official one (fan, playtest and mirror factions), a fan map or deck, the
-    // Doomed Vagabonds, Knave Captains, Turnlings or Legends Scenarios, or the Action! Deck Booster
+    // Doomed Vagabonds, Knave Captains, Turnlings or Legends Scenarios, the Action! Deck Booster, or the Simple Landmarks (house rules)
     def rankFan(game : Game) : Boolean = game.factions.exists(f => (official ++ homeland).has(f).not) || game.options.exists {
         // Mixed and Dawn and Dusk sit under Fan Decks on the setup screen but aren't fan-made
         case MixedDeck | DuskDeck => false
         case _ : FanMap | _ : FanDeck => true
+        case _ : SimpleLandmark => true
         case IncludeHireling(h) => turnlings.has(h)
         case o => $[GameOption](ActionBooster, DoomedVagabonds, DoomedCaptains, TurnOverHirelings, DeepWoodsSettling, WastelandsWater).has(o) || legendsOptions.has(o)
     }
@@ -2245,6 +2286,9 @@ object Meta extends MetaGame {
         ImageAsset("ferry"                ) ::
         ImageAsset("tower"                ) ::
         ImageAsset("lost-city"            ) ::
+        ImageAsset("simple-forge"         ) ::
+        ImageAsset("simple-market"        ) ::
+        ImageAsset("royal-tree"           ) ::
         ImageAsset("mousehold"            ) ::
         ImageAsset("foxburrow"            ) ::
         ImageAsset("rabbittown"           ) ::
