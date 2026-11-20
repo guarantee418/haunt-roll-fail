@@ -409,6 +409,9 @@ object PlayerKey {
     }
 
     def set(k : String) = try { Local.set(key, k) } catch { case _ : Throwable => }
+
+    // signing out: a new key, so this browser holds no name (Play Online's Sign out and Switch account; 2026-11-20)
+    def fresh() = set(0.until(24).map(_ => "abcdefghijklmnopqrstuvwxyz".charAt(scala.util.Random.nextInt(26))).mkString)
 }
 
 object Elo {
@@ -997,7 +1000,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                                     postName(value, 0)
                                 else
                                 if (r.startsWith("taken"))
-                                    askName(name, |("Taken by another player: pick another name"))
+                                    askName(name, |("Taken by another player: pick another name, or sign in if " + name + " is you"), |(name))
                                 else
                                     askName(name, |("Pick another name."))
                             } {
@@ -1005,8 +1008,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                             }
                     }
 
-                    def askName(name : String, problem : |[String] = None) {
-                        ui.action.asker.iask(InputOption(problem.|(|("Name").|("What's your name, punk?")), name, Nil, v => claimName(v)) :: BasicOption(" ", "Generate Random", Nil, () => randomName()))
+                    // taken: the name is held by another device, which may be the player's own: they sign in to it here (2026-11-20)
+                    def askName(name : String, problem : |[String] = None, taken : |[String] = None) {
+                        ui.action.asker.iask(InputOption(problem.|(|("Name").|("What's your name, punk?")), name, Nil, v => claimName(v)) ::
+                            taken./(t => BasicOption(" ", "It's me: sign in as " + t, Nil, () => signInAs(|(t), n => claimName(n), () => askName(name, problem, taken)))).$ ++
+                            $(BasicOption(" ", "Generate Random", Nil, () => randomName())))
                     }
 
                     askName(getCookie("name").|(""))
@@ -2201,30 +2207,147 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         }))
     }
 
+    // Accounts on Play Online (asked for on 2026-11-20): a player signed in on one device couldn't sign in on another, as typing
+    // their name there said it was taken. A name is held by the devices whose keys claimed it (PlayerKey, good-game/Ranking.scala);
+    // another device signs in with the name's own code (Ranking.signIn) or a held device's player code, which it then uses as its key.
+    def accountSays(e : Elem, back : () => Unit, again : |[() => Unit] = None) =
+        ui.action.asker.zask($(ZOption("Account".hl, Div(e.spn, ZBasic.info))) ++ again./(f => ZBasic(" ", Div("Try again"), f)) ++ $(ZBasic(" ", Div("Back"), back)))
+
+    val accountBright = "<span style='color:#f2f2f2;font-weight:bold'>"
+    val accountDim = "<span style='font-size:85%;opacity:0.8'>"
+
+    // sign in as a name (asked for when none is given); done gets the name as the server spells it
+    def signInAs(name0 : |[String], done : String => Unit, back : () => Unit) {
+        val server = HRF.server.get
+        val b = accountBright
+        val d = accountDim
+        def unreachable() = accountSays("The server can't be reached.".txt, back)
+
+        def askCode(name : String) {
+            ui.action.asker.iask(InputOption(b + "Sign in as " + name + "</span>\n\n" +
+                b + "Your code</span>\n" + d + "the code you picked for " + name + ",\nor the 24-letter player code\nfrom a device signed in as " + name + "</span>\n", "", Nil, v => {
+                val code = v.trim
+
+                def own() = postF(server + "/sign-in", name + "\n" + code + "\n" + PlayerKey.get) { r =>
+                    r.split('\n').$ match {
+                        case "ok" :: n :: _ => done(n)
+                        case "locked" :: _ => accountSays("Too many wrong codes for " ~ name.hlb ~ ". Try again in an hour.", back)
+                        case "wrong" :: _ => accountSays("That isn't the code for " ~ name.hlb ~ ". Check the name and the code: the code is case-sensitive.", back, |(() => askCode(name)))
+                        case _ => accountSays(name.hlb ~ " has no code of its own yet, and that isn't a player code for " ~ name.hlb ~ ". On a device signed in as " ~ name.hlb ~ ", open " ~ "Play Online".hl ~ " and tap " ~ "Sign in on another device".hl ~ ": it shows the code to enter here.", back, |(() => askCode(name)))
+                    }
+                } { unreachable() }
+
+                if (code.isEmpty)
+                    askCode(name)
+                else
+                // a player code is 24 small letters: its names, if this is one (a code picked may look the same, so then it's tried as one)
+                if (code.length >= 16 && code.forall(c => c >= 'a' && c <= 'z'))
+                    postF(server + "/player-code", code) { r =>
+                        r.split('\n').$.%(_.nonEmpty).find(_.toLowerCase == name.toLowerCase) match {
+                            case Some(n) => PlayerKey.set(code) ; done(n)
+                            case None => own()
+                        }
+                    } { unreachable() }
+                else
+                    own()
+            }) :: BasicOption(" ", "Cancel", Nil, back))
+        }
+
+        name0 match {
+            case Some(n) => askCode(n)
+            case None =>
+                ui.action.asker.iask(InputOption(b + "Sign in</span>\n" + d + "the name you play under\non your other device</span>\n", "", Nil, v => {
+                    val n = v.trim
+                    if (n.isEmpty) back() else askCode(n)
+                }) :: BasicOption(" ", "Cancel", Nil, back))
+        }
+    }
+
+    // the names this device holds, then whether each has a code of its own
+    def heldNames(then : $[String] => Unit) = postF(HRF.server.get + "/player-code", PlayerKey.get) { r => then(r.split('\n').$.%(_.nonEmpty)) } { then($) }
+
+    def ownCodes(names : $[String], then : $[String] => Unit) {
+        def check(rest : $[String], own : $[String]) : Unit = rest match {
+            case n :: more => postF(HRF.server.get + "/has-code", n) { r => check(more, (r.trim == "yes").?(own :+ n).|(own)) } { check(more, own) }
+            case Nil => then(own)
+        }
+        check(names, $)
+    }
+
+    // a code of the player's own for the names this device holds (Ranking.setCode)
+    def setOwnCode(names : $[String], done : () => Unit, back : () => Unit) {
+        ui.action.asker.iask(InputOption(accountBright + "Pick a code of your own for " + names.join(", ") + "</span>\n" + accountDim + "8 to 64 characters;\nit replaces one set before</span>\n", "", Nil, v => {
+            val code = v.trim
+            if (code.length < 8 || code.length > 64)
+                accountSays("A code needs 8 to 64 characters.".txt, back, |(() => setOwnCode(names, done, back)))
+            else
+                postF(HRF.server.get + "/set-code", PlayerKey.get + "\n" + code) { r =>
+                    if (r.startsWith("ok")) done() else accountSays("The code wasn't set: this device holds no name.".txt, back)
+                } { accountSays("The server can't be reached.".txt, back) }
+        }) :: BasicOption(" ", "Cancel", Nil, back))
+    }
+
+    // on the device signed in: what to enter on the other one
+    def otherDevice(names : $[String], back : () => Unit) {
+        val again = () => otherDevice(names, back)
+        ownCodes(names, own => ui.action.asker.zask(
+            $(ZOption("Sign in on another device".hl, Div(("On the other device, open " ~ "Play Online".hl ~ ", tap " ~ "Sign in".hl ~ ", type " ~ names./(_.hlb).join(" or ") ~ ", then one of these codes. Keep them to yourself: anyone with them can play as you.").spn, ZBasic.info))) ++
+            $(ZOption("This device's player code".hl, Div(PlayerKey.get.hlb.spn(xstyles.larger110), ZBasic.info))) ++
+            $(ZOption("Your own code".hl, Div((own.any.?("You set a code of your own for " ~ own./(_.hlb).join(", ") ~ ". It's kept scrambled, so it can't be shown, but it works. Forgot it? Pick a new one below.").|("Easier to type than the player code: pick one below.".txt)).spn, ZBasic.info))) ++
+            $(ZBasic(" ", Div(own.any.?("Change my own code").|("Pick my own code")), () => setOwnCode(names, () => accountSays("Your code is set for " ~ names./(_.hlb).join(", ") ~ ". On the other device, sign in with your name and this code.", again), again))) ++
+            $(ZBasic(" ", Div("Back"), back))))
+    }
+
+    // sign out (a new key), then, for Switch account, sign in as another name; a name with no code of its own is warned of first,
+    // as this device couldn't sign back in to it without one
+    def signOut(names : $[String], switch : Boolean, back : () => Unit) {
+        def go() {
+            PlayerKey.fresh()
+            if (switch) signInAs(None, _ => onlineGame(), () => onlineGame()) else onlineGame()
+        }
+
+        ownCodes(names, own => {
+            val none = names.%(n => own.contains(n).not)
+            if (none.none)
+                go()
+            else
+                ui.action.asker.zask(
+                    $(ZOption("Account".hl, Div((none./(_.hlb).join(", ") ~ " has no code of its own. Once you sign out, this device can't sign back in as " ~ none./(_.hlb).join(" or ") ~ " without one, and if no other device is signed in, the name is lost. Pick a code first.").spn, ZBasic.info))) ++
+                    $(ZBasic(" ", Div("Pick a code, then sign out"), () => setOwnCode(names, () => go(), back))) ++
+                    $(ZBasic(" ", Div("Sign out anyway"), () => go())) ++
+                    $(ZBasic(" ", Div("Cancel"), back)))
+        })
+    }
+
     // tour: the player's tournament games (good-game/Tournament.scala), shown at the top once the server has said which
     // mine: the player's own games from the server (good-game "my-games"), shown while their names are claimed on this device;
     // the completed ones in a folder, open when doneOpen (2026-11-20)
-    def onlineGame(tour : |[$[$[String]]] = None, mine : |[$[$[String]]] = None, doneOpen : Boolean = false) {
+    // held: the names this device holds (Account; 2026-11-20); fetch: ask the server for all three (once: the answers re-render)
+    def onlineGame(tour : |[$[$[String]]] = None, mine : |[$[$[String]]] = None, doneOpen : Boolean = false, held : |[$[String]] = None, fetch : Boolean = true) {
         val prefix = meta.settingsKey + ".online.game."
         val l = Local.list(prefix)./(_.drop(prefix.length).split('.'))./(l => l(0) -> l(1).toDouble).sortBy(-_._2)
         val games = l./{ case (lobby, time) => HRF.parseOnlineGame(lobby, time, Local.get(prefix + lobby + "." + time, "")) }
 
-        if (tour.none && meta.tournament.any && HRF.server.any && HRF.offline.not) {
+        // (each answer re-renders with the answers so far: one re-render used to drop the other's, and ask again)
+        if (fetch && HRF.server.any && HRF.offline.not) {
             val at = dom.document.location.pathname
-            postF(HRF.server.get + "/tournament/mine", PlayerKey.get) { r =>
-                val l = r.split('\n').$.%(_.nonEmpty)./(_.split('\t').$).%(_.num >= 6)
-                if (l.any && dom.document.location.pathname == at)
-                    onlineGame(|(l), mine, doneOpen)
-            } { }
-        }
+            var t = tour
+            var m = mine
+            var h = held
+            def again() = if (dom.document.location.pathname == at) onlineGame(t, m, doneOpen, h, false)
 
-        if (mine.none && HRF.server.any && HRF.offline.not) {
-            val at = dom.document.location.pathname
+            if (meta.tournament.any)
+                postF(HRF.server.get + "/tournament/mine", PlayerKey.get) { r =>
+                    val l = r.split('\n').$.%(_.nonEmpty)./(_.split('\t').$).%(_.num >= 6)
+                    if (l.any) { t = |(l) ; again() }
+                } { }
+
             postF(HRF.server.get + "/my-games", PlayerKey.get) { r =>
                 val l = r.split('\n').$.%(_.nonEmpty)./(_.split('\t').$).%(_.num >= 5)
-                if (l.any && dom.document.location.pathname == at)
-                    onlineGame(tour, |(l), doneOpen)
+                if (l.any) { m = |(l) ; again() }
             } { }
+
+            heldNames { n => h = |(n) ; again() }
         }
 
         // a game of the player's own: its title, the game when it isn't this one, the name played under; it opens the seat
@@ -2243,10 +2366,27 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         val myGameRows =
             active./(r => myGame(("Your Active Games" + (names.num == 1).??(" · " + names.head)).hl, r)) ++
             (myGames.any && active.none).$(ZOption("Your Active Games".hl, Div("None right now.".txt, ZBasic.info))) ++
-            done.any.$(ZBasic(" ", ((doneOpen.?("▾ ").|("▸ ") + "Completed Games (" + done.num + ")").hh).div($(xlo.fullwidth, xlo.fullheight)), () => onlineGame(tour, mine, doneOpen.not))) ++
+            done.any.$(ZBasic(" ", ((doneOpen.?("▾ ").|("▸ ") + "Completed Games (" + done.num + ")").hh).div($(xlo.fullwidth, xlo.fullheight)), () => onlineGame(tour, mine, doneOpen.not, held, false))) ++
             doneOpen.??(done./(r => myGame(" ".spn, r)))
 
         val tournamentGames = tour.|($)./(r => ZOption("Your Tournament Game".hl, (Link(HRF.server.get + "/play/" + meta.tournament.get + "/" + r(3), r(2).hh ~ Break ~ ("as " + r(4) + " against " + r(5)).spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice)))
+
+        def accountMenu(n : $[String]) {
+            val back = () => onlineGame()
+            ui.action.asker.zask(
+                $(ZOption("Account".hl, Div(("Signed in as " ~ n./(_.hlb).join(", ")).spn, ZBasic.info))) ++
+                $(ZBasic(" ", Div("Sign in on another device"), () => otherDevice(n, () => accountMenu(n)))) ++
+                $(ZBasic(" ", Div("Switch account"), () => signOut(n, true, () => accountMenu(n)))) ++
+                $(ZBasic(" ", Div("Sign out"), () => signOut(n, false, () => accountMenu(n)))) ++
+                $(ZBasic(" ", Div("Back"), back)))
+        }
+
+        // signed out: Sign in; signed in: the names, opening the Account screen
+        val accountRows : $[ZOption] = held match {
+            case Some(Nil) => $(ZBasic("Account".hl, ("Sign in".hh ~ Break ~ "Played on another device? Sign in to play as the same name here.".spn(xstyles.smaller75)).div($(xlo.fullwidth, xlo.fullheight)), () => signInAs(None, _ => onlineGame(), () => onlineGame())))
+            case Some(n) => $(ZBasic("Account".hl, (("Signed in as " + n.join(", ")).hh ~ Break ~ "Sign in on another device, switch account or sign out".spn(xstyles.smaller75)).div($(xlo.fullwidth, xlo.fullheight)), () => accountMenu(n)))
+            case None => $
+        }
 
         def goOnlineNew() {
             history.pushState("/play/" + meta.name + "/online/new", () => onlineGame())
@@ -2278,6 +2418,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 ui.logger.alog(" Reload " + url)
                 dom.document.location.assign(url)
             })).$ ++
+            accountRows ++
             tournamentGames ++
             myGameRows ++
             ZBasic(meta.label.hl, "New Online Game".hl.styled(xstyles.larger110), () => {
