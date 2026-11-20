@@ -311,6 +311,9 @@ case class KnavesDashMoreAction(self : Knaves, n : Int) extends ForcedAction wit
 case class KnavesAssaultAfterMoveAction(self : Knaves) extends ForcedAction with Soft
 case class KnavesSkirmishBattleAction(self : Knaves, ignore : Boolean) extends ForcedAction with Soft
 case class KnavesNabAfterAction(self : Knaves) extends ForcedAction
+// NabFearsOrder: the Knaves pick whether the Fears Come to Pass their Nab battle set off or the Nab move resolves first
+case class KnavesNabFearsFirstAction(self : Knaves, d : InvasiveEEE) extends ForcedAction
+case class KnavesNabMoveFirstAction(self : Knaves, d : InvasiveEEE) extends ForcedAction
 case class KnavesRevelAction(self : Knaves) extends ForcedAction
 case class KnavesGiftAction(self : Knaves) extends ForcedAction
 case class KnavesServeAction(self : Knaves) extends ForcedAction
@@ -832,6 +835,16 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
 
             KnavesNabAfterAction(f)
 
+        // NabFearsOrder: the Nab move went first, so the Fears it waited for come now, where the Knaves ended up
+        case KnavesPendingDoneAction(f, p) if (p == KnavesNabMove || p == KnavesBardMove || p == KnavesBardMoveAgain) && factions.of[InvasiveEEE].exists(_.nabFears.has(f)) =>
+            f.pending = f.pending :- p
+
+            val d = factions.of[InvasiveEEE].%(_.nabFears.has(f)).first
+
+            d.nabFears = d.nabFears :- f
+
+            InvasiveEEEFearsAction(d, f, Repeat)
+
         case KnavesPendingDoneAction(f, p) =>
             f.pending = f.pending :- p
 
@@ -936,6 +949,30 @@ object KnavesExpansion extends FactionExpansion[Knaves] {
             f.plog("flipped", flips./(_.elem).comma, "to [in order to]", KnavesNab, "and may", "Filch".styled(f), "first")
 
             f.pending ++= $(KnavesSwindleFilch, KnavesSwindleNab)
+
+            Repeat
+
+        // NabFearsOrder: Fears Come to Pass and the Nab move have the same timing, and the Knaves, the active player, pick the order
+        // (Root rules channel, 2026-11-20); asked only when the Acting Captain can move and the Diaspora has Peaceful enclaves to flip
+        case KnavesNabAfterAction(f) if factions.of[InvasiveEEE].exists(_.nabFears.has(f)) =>
+            val d = factions.of[InvasiveEEE].%(_.nabFears.has(f)).first
+
+            if (f.nabEscaped.not && f.actingWhere.any && d.peaceful.any && canMove(f, f.is(KnaveBard).?(dashes(f)).|(moves(f))))
+                Ask(f).group(f.acting.get.elem, "Nab".styled(f), "move and", FearsComeToPass.of(d), "go off together, pick the first")
+                    .add(KnavesNabFearsFirstAction(f, d).as(FearsComeToPass.of(d), "first"))
+                    .add(KnavesNabMoveFirstAction(f, d).as("Move".styled(f), "first"))
+            else
+                KnavesNabFearsFirstAction(f, d)
+
+        case KnavesNabFearsFirstAction(f, d) =>
+            d.nabFears = d.nabFears :- f
+
+            InvasiveEEEFearsAction(d, f, KnavesNabAfterAction(f))
+
+        case KnavesNabMoveFirstAction(f, d) =>
+            f.log("moves before", FearsComeToPass.of(d))
+
+            f.pending :+= f.is(KnaveBard).?(KnavesBardMove).|(KnavesNabMove)
 
             Repeat
 
