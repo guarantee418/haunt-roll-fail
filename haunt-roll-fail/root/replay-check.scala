@@ -231,6 +231,8 @@ object ReplayCheck {
         adset = args.contains("adset")
         fanMap = args.contains("urban").$(UrbanMap).++(args.contains("legendsmap").$(LegendsMap)).++(args.contains("deepwoods").$(DeepWoodsMap)).++(args.contains("wastelands").$(WastelandsMap)).headOption
         mapRules = args.contains("settling").$(DeepWoodsSettling) ++ args.contains("water").$(WastelandsWater)
+        // "simplelm": the four Simple Landmarks (root/simple-landmarks.scala), beside the map's own landmarks
+        mapRules ++= args.contains("simplelm").$(SimpleForgeLandmark, SimpleMarketLandmark, BirdsongTowerLandmark, RoyalTreeLandmark)
         oldHire = args.contains("oldhire")
         hire = args.find(_.startsWith("hire:"))./~(_.drop(5).split(',').$./(n => (Meta.hirelings ++ Meta.turnlings).%(h => h.name == n || h.short == n || h.toString == n).single.|!("no hireling " + n)))
         val pool : $[$[Faction]] = args.lift(1)./(_ match {

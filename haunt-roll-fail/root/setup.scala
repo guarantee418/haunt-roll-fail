@@ -370,6 +370,24 @@ object SetupExpansion extends MandatoryExpansion {
 
             SetupLandmarksAction
 
+        // Simple Landmarks go with any Landmarks choice: the map's own landmarks are set first, so they keep away from them
+        case SetupLandmarksAction if options.of[SimpleLandmark].any && game.landmarkDefaultsSet.not =>
+            game.landmarkDefaultsSet = true
+
+            if (options.has(MapDefaultLandmarks)) {
+                game.ferry = board.ferry
+                game.tower = board.tower
+            }
+
+            if (options.has(MountainSuitedLandmark)) {
+                game.ferry = board.ferry
+
+                if (game.lostCity.none && game.mousehold.none && game.foxburrow.none && game.rabbittown.none)
+                    game.tower = board.tower
+            }
+
+            SetupLandmarksAction
+
         case SetupLandmarksAction =>
             if (options.of[Landmark].%!(l => homelandPlaced(l)).any)
                 SetupNextLandmarkAction
@@ -396,6 +414,7 @@ object SetupExpansion extends MandatoryExpansion {
                 case FerryLandmark => game.ferry.any
                 case LostCityLandmark => game.lostCity.any
                 case TowerLandmark => game.tower.any
+                case l : SimpleLandmark => SimpleLandmarksExpansion.placed(l)
                 case l => homelandPlaced(l)
             }
 
@@ -414,7 +433,7 @@ object SetupExpansion extends MandatoryExpansion {
         case SetupLandmarkAction(f, FerryLandmark, more) =>
             val l = game.riverside.diff(game.landmarks)
 
-            Ask(f).each(l.diff(game.landmarks./~(game.connected)).some.|(l))(c => SetupLandmarkClearingAction(f, FerryLandmark, c)).cancelIf(more)
+            Ask(f).each(l.diff(game.landmarks./~(game.connected)).some.|(l).some.|(clearings.diff(game.landmarks)))(c => SetupLandmarkClearingAction(f, FerryLandmark, c)).cancelIf(more)
 
         case SetupLandmarkClearingAction(f, FerryLandmark, c) =>
             game.ferry :+= c
@@ -424,7 +443,8 @@ object SetupExpansion extends MandatoryExpansion {
             SetupNextLandmarkAction
 
         case SetupLandmarkAction(f, TowerLandmark, more) =>
-            Ask(f).each(game.ruins.keys.$.diff(game.landmarks))(c => SetupLandmarkClearingAction(f, TowerLandmark, c)).cancelIf(more)
+            // with the Simple Landmarks taking clearings first, a wider choice when nothing fits (it was never empty before them)
+            Ask(f).each(game.ruins.keys.$.diff(game.landmarks).some.|(clearings.diff(game.landmarks)))(c => SetupLandmarkClearingAction(f, TowerLandmark, c)).cancelIf(more)
 
         case SetupLandmarkClearingAction(f, TowerLandmark, c) =>
             game.tower :+= c
@@ -434,7 +454,9 @@ object SetupExpansion extends MandatoryExpansion {
             SetupNextLandmarkAction
 
         case SetupLandmarkAction(f, LostCityLandmark, more) =>
-            Ask(f).each(game.riverside.diff(game.landmarks).diff(game.landmarks./~(board.connected)))(c => SetupLandmarkClearingAction(f, LostCityLandmark, c)).cancelIf(more)
+            // with the Simple Landmarks taking clearings first, a wider choice when nothing fits (it was never empty before them)
+            val free = game.riverside.diff(game.landmarks)
+            Ask(f).each(free.diff(game.landmarks./~(board.connected)).some.|(free).some.|(clearings.diff(game.landmarks)))(c => SetupLandmarkClearingAction(f, LostCityLandmark, c)).cancelIf(more)
 
         case SetupLandmarkClearingAction(f, LostCityLandmark, c) =>
             game.lostCity :+= c
