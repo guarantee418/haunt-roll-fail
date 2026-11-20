@@ -20,7 +20,7 @@ import root.elem._
 // - Command Warren, Cobbler and Brutal Tactics are paid for each time: a card from hand matching the clearing (the battle's, or the
 //   one Cobbler's move starts from; a bird matches any), or the crafted card itself, discarded, which counts as a bird
 // - Better Burrow Bank is optional at the start of Birdsong and goes back to its owner's hand when used
-// - Stand and Deliver!, Tax Collector (draws two) and Codebreakers are used once, right when crafted, and discarded
+// - Stand and Deliver! (the enemy draws a card instead of scoring), Tax Collector (draws two) and Codebreakers are used once, right when crafted, and discarded
 // - Scouting Party is discarded to cancel one ambush played against its owner attacking
 // - Royal Claim must be used at the next Birdsong
 
@@ -36,6 +36,7 @@ case class CapitalistsBankAction(self : Faction, o : Faction) extends BaseAction
 case class CapitalistsScoutingAction(self : Faction, b : Battle, then : ForcedAction) extends BaseAction(self, "can cancel the ambush")("Discard", ScoutingParty, "to cancel the", "Ambush".hl)
 
 case class CapitalistsCraftedAction(self : Faction, d : CraftEffectCard, m : Message) extends ForcedAction
+case class CapitalistsStealAction(self : Faction, e : Faction) extends BaseAction(StandAndDeliver, "takes a card from")(e)
 case class CapitalistsTaxAction(self : WarriorFaction, c : Clearing, p : Piece) extends BaseAction(TaxCollector, "removes")(p.of(self), "in", c)
 
 
@@ -188,7 +189,7 @@ object CapitalistsDeckExpansion extends Expansion {
                     Repeat
                 }
                 else
-                    Ask(f).each(l)(e => StandAndDeliverFactionAction(f, e, Repeat))
+                    Ask(f).each(l)(e => CapitalistsStealAction(f, e))
 
             case TaxCollector =>
                 val l = f.as[WarriorFaction]./~(f => clearings./~(c => f.at(c).of[Warrior].notOf[Tenacious].distinct./(p => CapitalistsTaxAction(f, c, p))))
@@ -214,6 +215,11 @@ object CapitalistsDeckExpansion extends Expansion {
 
             case _ => Repeat
         }
+
+        case CapitalistsStealAction(f, e) =>
+            f.log("took a random card from", e, "with", StandAndDeliver, "and", e, "drew a card")
+
+            StealCardAction(f, e, DrawCardsAction(e, 1, SuppressLog, AddCardsAction(e, Repeat)))
 
         case CapitalistsTaxAction(f, c, p) =>
             f.from(c) --> p --> game.removed

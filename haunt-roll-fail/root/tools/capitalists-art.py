@@ -18,7 +18,7 @@ CARDS = [
     ("cobbler", "a-visit-to-friends", "Cobbler", "At start of Evening, may take a move. Spend a card matching the clearing moved from, or discard this.", False),
     ("better-burrow-bank", "a-visit-to-friends", None, "At start of Birdsong, you may return this card to your hand to draw one card. If you do, choose an enemy to draw one card.", False),
     ("brutal-tactics", "armorers", "Brutal Tactics", "In battle as attacker, may deal an extra hit, but defender scores one point. Spend a card matching the clearing, or discard this.", False),
-    ("stand-and-deliver", "codebreakers", "Stand and Deliver!", "Take a random card from an enemy. They score one point. Then discard.", True),
+    ("stand-and-deliver", "codebreakers", "Stand and Deliver!", "Take a random card from an enemy. They must draw one card. Then discard this card.", True),
     ("tax-collector", "saboteurs", "Tax Collector", "Remove a warrior of your faction from a clearing on the map to draw two cards, then discard.", True),
     ("scouting-party", "codebreakers", "Scouting Party", "As attacker in battle, may discard this to cancel an ambush card played against you.", False),
     ("royal-claim", None, "Royal Claim", "In Birdsong, must discard this to score one point per clearing you rule.", False),

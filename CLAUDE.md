@@ -643,7 +643,7 @@ server. No session can reach the server, and none needs to.
   2026-11-19) keeps the base deck's items, ambushes, dominances, Armorers and Sappers, puts Dawn and Dusk's three Services in place of the
   Favors, and changes the other effects (`Deck.capitalists`; rules in `root/deck-capitalists.scala`, `CapitalistsDeckExpansion`, its header
   lists them): Command Warren, Cobbler and Brutal Tactics cost one card and are paid for at each use with a card matching the clearing (a bird
-  matches) or by discarding them; Better Burrow Bank (1 rabbit) is optional and goes back to hand; Stand and Deliver! (1 mouse), Tax Collector
+  matches) or by discarding them; Better Burrow Bank (1 rabbit) is optional and goes back to hand; Stand and Deliver! (1 mouse; the enemy draws a card, no point), Tax Collector
   (1 of any suit, draws two) and Codebreakers are used once when crafted; Scouting Party (1 mouse) is discarded to cancel one ambush; Royal Claim
   must be used at the next Birdsong. The effects are the base deck's objects, changed where `options.has(CapitalistsDeck)` (`turn.scala`,
   `battle.scala`, the effect hints in `root/ui.scala`). Pictures `card/capitalists/ca-*` by `root/tools/capitalists-art.py` (the base card
