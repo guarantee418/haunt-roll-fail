@@ -1257,11 +1257,17 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         if (HRF.segments.startsWith($("tutorial")) && meta.tutorialLessons.any)
             goTutorial()
         else
-        if (HRF.segments.startsWith($("rankings")) && meta.ranking.any && HRF.server.any && HRF.offline.not)
+        // (the segments used up, so that their pages' Back, which shows this menu again, doesn't open them again: a page opened
+        // from its link, as the Tournament's from Discord, couldn't be left, 2026-11-20)
+        if (HRF.segments.startsWith($("rankings")) && meta.ranking.any && HRF.server.any && HRF.offline.not) {
+            HRF.segments = $
             goRankings()
+        }
         else
-        if (HRF.segments.startsWith($("tournament")) && meta.tournament.exists(_ != meta.name) && HRF.server.any && HRF.offline.not)
+        if (HRF.segments.startsWith($("tournament")) && meta.tournament.exists(_ != meta.name) && HRF.server.any && HRF.offline.not) {
+            HRF.segments = $
             goTournament()
+        }
         else
         if (HRF.segments.startsWith($("quick")))
             goQuickGame()
