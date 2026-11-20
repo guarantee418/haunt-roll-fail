@@ -608,7 +608,7 @@ object GoodGame {
 
         Backup.start(db)
 
-        Tournament.start(db)
+        Tournament.start(db, url)
 
         // Webroot for Let's Encrypt HTTP-01 challenges (certbot --webroot -w good-game/acme)
         val acmeDir = new java.io.File("acme")

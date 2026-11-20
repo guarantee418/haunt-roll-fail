@@ -1069,7 +1069,11 @@ server. No session can reach the server, and none needs to.
   Vagabond, no hirelings). Each table's winner, as reported to the rankings, goes to the final; its winner's name is golden
   (`hrf-golden` in `index.html`) on the Tournament and Rankings pages until the next champion. Play Online lists the player's
   tournament game first (`/tournament/mine`). A Discord webhook (`HRF_DISCORD_WEBHOOK`, or the file `discord-webhook`) is told
-  of the start, each table's winner and the champion. The games have the hidden `TournamentDraft` (`root/tournament.scala`):
+  of the start, each table's winner and the champion, and invited to sign up, with the Tournament page's link, once for each
+  tournament as soon as its sign-ups open and a webhook is set (`invite` in `good-game/Tournament.scala`, `tournament/invited.tsv`;
+  at the server's start, when the webhook is set, when a final starts or a tournament is cancelled; the `invite` change posts it
+  again; asked for on 2026-11-20, as nobody could find the page, which is only on the Root menu), and at 8, 12 and 15 sign-ups.
+  `Tournament.start` takes the server's URL argument for the link. The games have the hidden `TournamentDraft` (`root/tournament.scala`):
   the factions are drawn first (the flop), the first seat picks the deck, the second the map, on the Mountain the third what
   goes in the Tower's clearing (the Tower or a suited landmark), then the factions are picked as usual; the game starts with no
   map or deck, `game.options` and `game.board` are vars set by the picks, and `root/ui.scala` rebuilds its board view

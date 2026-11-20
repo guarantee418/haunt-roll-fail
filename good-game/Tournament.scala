@@ -25,6 +25,7 @@ import scala.concurrent.duration.Duration
 //                   winner <table id> <name>, replace <table id> <old name> <new name>, champion <name>, cancel
 //                 names in lower case, as Ranking keeps them; the final is table "F"
 //   template.tsv  version, options line
+//   invited.tsv   the tournaments whose sign-ups were announced on Discord (time, number), so each invitation goes out once
 //
 // Changes by hand go through the games backup (hrf-games) like the ranking's: each file tournament-changes/<name>.txt there is
 // applied once (Backup.scala), its outcome in tournament-changes/<name>.result. One change a line:
@@ -34,8 +35,12 @@ import scala.concurrent.duration.Duration
 //   cancel                            the running tournament ends with no champion; sign-ups for the next one open
 //   webhook <url>                     the Discord webhook (written to the file discord-webhook; "webhook off" removes it);
 //                                     delete the change file once its .result says "set"
-// The Discord channel of the webhook in HRF_DISCORD_WEBHOOK (or the file discord-webhook) is told when a tournament starts,
-// each table is won, the final starts and the champion is known.
+//   invite                            posts the invitation to sign up again
+// The Discord channel of the webhook in HRF_DISCORD_WEBHOOK (or the file discord-webhook) is invited to sign up, with the link to
+// the Tournament page, once for each tournament as soon as its sign-ups open and a webhook is set (at the server's start, when the
+// webhook is set, when a final starts or a tournament is cancelled; asked for on 2026-11-20, as nobody could find the page), told
+// how the sign-ups go (8, 12 and 15 of 16), and told when a tournament starts, each table is won, the final starts and the champion
+// is known.
 object Tournament {
     import GoodGame._
     import Backup.{rows, row}
@@ -49,13 +54,46 @@ object Tournament {
     val dir = Paths.get("tournament")
     val events = dir.resolve("events.tsv")
     val template = dir.resolve("template.tsv")
+    val invited = dir.resolve("invited.tsv")
 
     var db : Database = null
 
+    // the site's address (the server's URL argument), for the sign-up link
+    var site = ""
+
+    def signUpLink = site + "/play/root/tournament"
+
     def execute[E <: Effect](actions : DBIOAction[_, NoStream, E]*) = Await.result(db.run(DBIO.seq(actions : _*).withPinnedSession), Duration.Inf)
 
-    def start(database : Database) {
+    def start(database : Database, url : String) {
         db = database
+        site = url.stripSuffix("/")
+
+        try invite(false) catch { case e : Exception => println("Tournament invitation not posted: " + e) }
+    }
+
+    // DISCORD: the invitation to sign up for the tournament taking sign-ups, once for each (again with again, the "invite" change)
+    def invite(again : Boolean) : String = synchronized {
+        val cc = cups()
+
+        openNumber(cc) match {
+            case None => "not done: no tournament taking sign-ups"
+            case Some(_) if webhook.isEmpty => "not done: no webhook"
+            case Some(n) if !again && rows(invited).exists(_.lift(1).contains(n.toString)) => "already invited"
+            case Some(n) =>
+                val count = cc.find(_.n == n).map(_.signups.size).getOrElse(0)
+
+                announce("**Root Tournament " + n + ": sign-ups are open!**\n" +
+                    size + " players, four tables of " + seats + ", each an Advanced Setup game with the tournament draft: the first seat picks the deck, the second the map, and the factions are drafted from a flop of five (official factions, no Vagabond). " +
+                    "Each table's winner goes to the final, and the champion's name is golden on the Rankings until the next champion. Every game counts toward the rankings.\n" +
+                    "**Sign up with your ranking name:** " + signUpLink + "\n" +
+                    count + " of " + size + " signed up so far. It starts by itself when the " + size + "th player signs up.")
+
+                Files.createDirectories(dir)
+                Ranking.append(invited, row(Ranking.now(), n))
+
+                "invited"
+        }
     }
 
     def newSecret(n : Int) = {
@@ -184,8 +222,13 @@ object Tournament {
 
         event("signup", n, k, Ranking.sha(key))
 
-        if (c.signups.size + 1 >= size)
+        val count = c.signups.size + 1
+
+        if (count >= size)
             begin(n)
+        else
+        if (count == size / 2 || count == size * 3 / 4 || count == size - 1)
+            announce(display(k) + " signed up for Root Tournament " + n + ": " + count + " of " + size + (if (count == size - 1) ", one spot left!" else ".") + " Sign up: " + signUpLink)
 
         "ok"
     }
@@ -308,6 +351,7 @@ object Tournament {
                 val l = scala.util.Random.shuffle(c.heats.flatMap(_.winner))
                 create(n, finalId, l)
                 announce("**The final of Root Tournament " + n + " has started:** " + l.map(display).mkString(", ") + ". Sign-ups for Tournament " + (n + 1) + " are open.")
+                invite(false)
             }
         }
     }
@@ -349,7 +393,7 @@ object Tournament {
                     }
                 case "cancel" =>
                     running match {
-                        case Some(c) => event("cancel", c.n); announce("Root Tournament " + c.n + " was cancelled."); "cancelled"
+                        case Some(c) => event("cancel", c.n); announce("Root Tournament " + c.n + " was cancelled."); invite(false); "cancelled"
                         case None => "not done: no tournament running"
                     }
                 // the Discord webhook, set from the games backup as no session can reach the server; written to the file
@@ -358,6 +402,7 @@ object Tournament {
                     if (rest.startsWith("https://discord.com/api/webhooks/") || rest.startsWith("https://discordapp.com/api/webhooks/")) {
                         Files.write(Paths.get("discord-webhook"), (rest + "\n").getBytes(UTF_8))
                         announce("The Root tournament's announcements will be posted here.")
+                        invite(false)
                         "set"
                     }
                     else if (rest == "off") {
@@ -366,7 +411,8 @@ object Tournament {
                     }
                     else
                         "not done: webhook <https://discord.com/api/webhooks/...> or webhook off"
-                case _ => "not done: not a change (remove, winner, replace, cancel or webhook)"
+                case "invite" => invite(true)
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook or invite)"
             }
 
             (if (word == "webhook") "webhook" else line) + ": " + result
