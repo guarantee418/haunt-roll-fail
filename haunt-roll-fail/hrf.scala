@@ -1672,11 +1672,20 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         }
 
         // a code of the player's own for the names this browser holds (Ranking.setCode)
+        // the player code, in the menu itself: the overlay it was shown in left the menu hidden once closed (2026-11-19)
+        def showCode() = ui.action.asker.zask(
+            $(ZOption(heading("Your player code"), Div("Enter it under Rankings on another device to play there under your names. Keep it to yourself: anyone with it can.".txt ~ Break ~ PlayerKey.get.hlb.spn(xstyles.larger110), ZBasic.info))) ++
+            $(ZBasic(" ", Div("Back"), () => load())))
+
+        // a code is set, or changed (the last one set wins), for the names this device holds; with none, say how to get one
         def setCode() {
-            ui.action.asker.iask(InputOption("Pick a code of your own for " + mine.join(", ") + " (8 characters or more)", "", Nil, v => {
+            if (mine.none)
+                says("This device holds no name yet. Type a name when you join an online game: it is claimed for this device, and then you can set a code for it here.".txt)
+            else
+            ui.action.asker.iask(InputOption("Pick a code of your own for " + mine.join(", ") + " (8 to 64 characters). If you set one before, this one replaces it.", "", Nil, v => {
                 val code = v.trim
-                if (code.length < 8)
-                    says("A code needs 8 characters or more.".txt, |(() => setCode()))
+                if (code.length < 8 || code.length > 64)
+                    says("A code needs 8 to 64 characters.".txt, |(() => setCode()))
                 else
                     postF(server + "/set-code", PlayerKey.get + "\n" + code) { r =>
                         r.split('\n').$ match {
@@ -1797,11 +1806,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 (provisional.any && ranked.any).$(ZBasic(group, tag(Text(showing.?("Hide").|("Show") + " the " + plural(provisional.num, "provisional player") + " (fewer than " + Elo.provisional + " games)"), "rk-chip-text"), () => { showProvisional = showing.not ; show(everyone) }, css("rk-chip", "rk-toggle") ++ showing.$(ExternalStyle("rk-chip-on")) ++ $(xlo.pointer))) ++
                 all.none.$(note(group, tag(Text("No rated games yet."), "rk-empty-title") ~ Break ~ "The ladder starts with the first finished online game with people on two sides or more. Bots, local games and games with fan content don't count.".txt)) ++
                 $(ZOption(heading("Your player code"), box(you, "rk-note"))) ++
-                $(ZBasic(heading("Your player code"), Div("Show my player code"), () => {
-                    showOverlayRaw("Your player code".hl, $("Enter it under Rankings on another device to play there under your names. Keep it to yourself: anyone with it can.".txt, PlayerKey.get.hlb.spn(xstyles.larger110)))
-                })) ++
+                $(ZBasic(heading("Your player code"), Div("Show my player code"), () => showCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Use a code from another device"), () => useCode())) ++
-                mine.any.$(ZBasic(heading("Your player code"), Div("Set my own code"), () => setCode())) ++
+                $(ZBasic(heading("Your player code"), Div("Set or change my own code"), () => setCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Lost my code"), () => lostCode())) ++
                 $(back)
             )
@@ -1916,11 +1923,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 seats.any.$(ZBasic(" ", Div((factionStats.num > top).?("All " + factionStats.num + " factions, by player count").|("Faction stats by player count")), () => factions(all, None))) ++
                 seats.any.$(ZBasic(" ", Div("Turn order stats"), () => turns(all))) ++
                 $(ZOption(heading("Your player code"), box(you, "rk-note"))) ++
-                $(ZBasic(heading("Your player code"), Div("Show my player code"), () => {
-                    showOverlayRaw("Your player code".hl, $("Enter it under Rankings on another device to play there under your names. Keep it to yourself: anyone with it can.".txt, PlayerKey.get.hlb.spn(xstyles.larger110)))
-                })) ++
+                $(ZBasic(heading("Your player code"), Div("Show my player code"), () => showCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Use a code from another device"), () => useCode())) ++
-                mine.any.$(ZBasic(heading("Your player code"), Div("Set my own code"), () => setCode())) ++
+                $(ZBasic(heading("Your player code"), Div("Set or change my own code"), () => setCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Lost my code"), () => lostCode())) ++
                 $(note(heading("How the rankings work"), explain)) ++
                 $(back)
