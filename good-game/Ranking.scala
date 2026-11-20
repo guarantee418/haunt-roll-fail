@@ -85,6 +85,23 @@ object Ranking {
         "ok\n" + c.display
     }
 
+    // a name claimed with this key without a seat (the tournament's sign-up): "ok\n<name as claimed>", "taken" or "invalid"
+    def claimName(name : String, key : String) : String = synchronized {
+        val n = clean(name)
+        val k = n.toLowerCase
+
+        if (n.isEmpty || key.length < 16)
+            return "invalid"
+
+        claims().get(k) match {
+            case Some(c) if c.hashes.contains(sha(key)) => "ok\n" + c.display
+            case Some(_) => "taken"
+            case None =>
+                append(names, row(k, n, sha(key), now()))
+                "ok\n" + n
+        }
+    }
+
     // the names claimed with this key
     def owned(key : String) : List[String] = synchronized {
         val h = sha(key)

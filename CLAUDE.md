@@ -1061,6 +1061,20 @@ server. No session can reach the server, and none needs to.
   first setup page, Adset only (`InsurgentLockOn`, the default, or `InsurgentLockOff`; `Meta.adsetOnly` in `root/meta.scala`). With it, the
   last faction drawn, if insurgent, can't be picked until a militant faction (`AdvancedSetup.militant` in `root/setup.scala`: Marquise,
   Eyrie, Duchy, Hundreds, Keepers, and the Lilypad Diaspora, which the draw now counts too) has been, and the draft's heading says so. Games with neither option (started before it) draft as before.
+- The Root tournament (asked for on 2026-11-20): "Tournament" on the Root menu (`tournamentMenu` in `hrf.scala`, URL
+  `/play/root/tournament`, `Meta.tournament` names the meta its games use) signs players up with their ranking name; the
+  16th sign-up starts it, and the server (`good-game/Tournament.scala`, its header has the files and the hand changes,
+  `tournament-changes/<name>.txt` in `hrf-games`) makes four Advanced Setup tables of four itself, from the version and
+  options a client sent with its sign-up (`Meta.tournamentOptions` in `root/meta-adset.scala`: official factions without the
+  Vagabond, no hirelings). Each table's winner, as reported to the rankings, goes to the final; its winner's name is golden
+  (`hrf-golden` in `index.html`) on the Tournament and Rankings pages until the next champion. Play Online lists the player's
+  tournament game first (`/tournament/mine`). A Discord webhook (`HRF_DISCORD_WEBHOOK`, or the file `discord-webhook`) is told
+  of the start, each table's winner and the champion. The games have the hidden `TournamentDraft` (`root/tournament.scala`):
+  the factions are drawn first (the flop), the first seat picks the deck, the second the map, on the Mountain the third what
+  goes in the Tower's clearing (the Tower or a suited landmark), then the factions are picked as usual; the game starts with no
+  map or deck, `game.options` and `game.board` are vars set by the picks, and `root/ui.scala` rebuilds its board view
+  (`BoardView`) when the board changes and draws no map until it is picked (`game.mapPending`). `ReplayCheck <games> official
+  tournament` plays it.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.
