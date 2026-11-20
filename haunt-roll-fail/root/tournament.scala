@@ -105,8 +105,9 @@ object TournamentExpansion extends Expansion {
 
         case TournamentMapAction(p, m) =>
             game.tournamentMap = Some(m)
-            // every map with All Random clearings and its own landmarks (the Mountain's Tower clearing is picked next)
-            game.options = game.options.notOf[MapOption].notOf[ClearingsOption].notOf[LandmarksOption] :+ m :+ AllRandomClearings :+ MountainSuitedLandmark
+            // every map with All Random clearings and its own landmarks (the Mountain's Tower clearing is picked next), keeping the
+            // Simple Landmarks the game has (the Birdsong Tower, 2026-11-20), placed after the map's own
+            game.options = game.options.notOf[MapOption].notOf[ClearingsOption].%(o => o.is[LandmarksOption].not || o.is[SimpleLandmark]) :+ m :+ AllRandomClearings :+ MountainSuitedLandmark
 
             game.board = mapBoard(m)
             game.rubble = game.board.rubble
@@ -140,7 +141,13 @@ object TournamentExpansion extends Expansion {
                     game.ferry = game.board.ferry
                     game.tower = game.board.tower
 
-                    SetupHirelingsAction
+                    // the Simple Landmarks are placed next (SetupLandmarksAction would draw a suited landmark for the Tower)
+                    if (game.options.of[SimpleLandmark].any) {
+                        game.landmarkDefaultsSet = true
+                        SetupNextLandmarkAction
+                    }
+                    else
+                        SetupHirelingsAction
 
                 case LostCityLandmark =>
                     game.lostCity :+= c

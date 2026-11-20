@@ -1163,8 +1163,10 @@ server. No session can reach the server, and none needs to.
   it with any piece there, `treeRules` in `rules`), all in `root/simple-landmarks.scala` (its header lists the readings). They are placed at
   setup like the other landmark toggles, where the Landmarks Pack's setup cards put them, after the map's own landmarks. Their pieces are the
   Landmarks Pack's Legendary Forge, Black Market and Elder Treetop (`feature/simple-forge`, `simple-market`, `royal-tree`, cut from the Leder
-  Card Library cards by `root/tools/simple-landmarks-art.py`) and the Tower. They count as fan content for the rankings. `ReplayCheck <games>
-  base simplelm` plays them.
+  Card Library cards by `root/tools/simple-landmarks-art.py`) and the Tower. They count as fan content for the rankings, except the Birdsong
+  Tower, which the owner made official for the site on 2026-11-20 (`rankFan`): it counts toward Elo and every tournament game has it
+  (`tournamentOptions`; the Tournament page says so). `ReplayCheck <games> base simplelm` plays them, `ReplayCheck <games> official
+  tournament birdsong` the tournament's games.
 - The Homeland landmarks Mousehold, Foxburrow and Rabbittown are landmark
   options on any map (`MouseholdLandmark` etc. in `root/meta.scala`). Each
   adds its suit to its clearing, kept when a Lilypad enclave covers the suit
