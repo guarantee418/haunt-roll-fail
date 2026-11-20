@@ -1453,7 +1453,8 @@ case object SimpleMarketLandmark extends SimpleLandmark {
     )
 }
 
-// official for the site: it counts toward the rankings and is in every tournament game (the owner, 2026-11-20)
+// official for the site (the owner, 2026-11-20): it counts toward the rankings, and in the tournament it is one of the Mountain's
+// choices for the Tower's clearing (root/tournament.scala); on the setup screen it stays with the Simple Landmarks
 case object BirdsongTowerLandmark extends SimpleLandmark {
     val name = "Birdsong Tower"
     override val explain = $(
