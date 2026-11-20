@@ -32,6 +32,8 @@ import scala.concurrent.duration.Duration
 //   winner <table> <name>             the table's winner (a shared win, or a table that won't finish), A to D or F
 //   replace <table> <name> -> <new>   a player at a table is replaced: the seat now plays (and is ranked) under the new name
 //   cancel                            the running tournament ends with no champion; sign-ups for the next one open
+//   webhook <url>                     the Discord webhook (written to the file discord-webhook; "webhook off" removes it);
+//                                     delete the change file once its .result says "set"
 // The Discord channel of the webhook in HRF_DISCORD_WEBHOOK (or the file discord-webhook) is told when a tournament starts,
 // each table is won, the final starts and the champion is known.
 object Tournament {
@@ -350,10 +352,24 @@ object Tournament {
                         case Some(c) => event("cancel", c.n); announce("Root Tournament " + c.n + " was cancelled."); "cancelled"
                         case None => "not done: no tournament running"
                     }
-                case _ => "not done: not a change (remove, winner, replace or cancel)"
+                // the Discord webhook, set from the games backup as no session can reach the server; written to the file
+                // discord-webhook, and the URL is never written back in the .result
+                case "webhook" =>
+                    if (rest.startsWith("https://discord.com/api/webhooks/") || rest.startsWith("https://discordapp.com/api/webhooks/")) {
+                        Files.write(Paths.get("discord-webhook"), (rest + "\n").getBytes(UTF_8))
+                        announce("The Root tournament's announcements will be posted here.")
+                        "set"
+                    }
+                    else if (rest == "off") {
+                        Files.deleteIfExists(Paths.get("discord-webhook"))
+                        "removed"
+                    }
+                    else
+                        "not done: webhook <https://discord.com/api/webhooks/...> or webhook off"
+                case _ => "not done: not a change (remove, winner, replace, cancel or webhook)"
             }
 
-            line + ": " + result
+            (if (word == "webhook") "webhook" else line) + ": " + result
         }
     }
 
