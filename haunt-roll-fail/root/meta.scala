@@ -1450,6 +1450,46 @@ case object FoxburrowLandmark extends Landmark {
     )
 }
 
+// Simple Landmarks (the owner's own rules, 2026-11-20; root/simple-landmarks.scala): the Landmarks Pack's Legendary Forge, Black
+// Market and Elder Treetop pieces and the Tower, with simpler effects; a section of their own, so they go with any Landmarks choice
+trait SimpleLandmark extends Landmark {
+    override val group = "Simple Landmarks"
+}
+
+case object SimpleForgeLandmark extends SimpleLandmark {
+    val name = "Forge"
+    override val explain = $(
+        "Simple Landmarks".hh ~ " (house rules), with the " ~ "Legendary Forge".hh ~ " piece; placed in a clearing without a landmark, not next to one.",
+        "If your faction pieces are in its clearing, treat it as one of your crafting pieces."
+    )
+}
+
+case object SimpleMarketLandmark extends SimpleLandmark {
+    val name = "Market"
+    override val explain = $(
+        "Simple Landmarks".hh ~ " (house rules), with the " ~ "Black Market".hh ~ " piece; placed in a clearing with exactly one building slot and no ruin, without a landmark and not next to one.",
+        "Once per turn, if your faction pieces are in its clearing, you may discard a card to draw a card."
+    )
+}
+
+// official for the site (the owner, 2026-11-20): it counts toward the rankings, and in the tournament it is one of the Mountain's
+// choices for the Tower's clearing (root/tournament.scala); on the setup screen it stays with the Simple Landmarks
+case object BirdsongTowerLandmark extends SimpleLandmark {
+    val name = "Birdsong Tower"
+    override val explain = $(
+        "Simple Landmarks".hh ~ ", with the " ~ "Tower".hh ~ " piece; placed in a clearing with a ruin and no landmark. Official on this site: it counts toward the rankings.",
+        "If you rule its clearing at the start of your " ~ "Birdsong".hh ~ ", score a point."
+    )
+}
+
+case object RoyalTreeLandmark extends SimpleLandmark {
+    val name = "Royal Tree"
+    override val explain = $(
+        "Simple Landmarks".hh ~ " (house rules), with the " ~ "Elder Treetop".hh ~ " piece; placed in a corner clearing without a landmark, not next to one.",
+        "Adds a building slot. While it's your turn, if your faction pieces are in its clearing, you rule its clearing."
+    )
+}
+
 case object RabbittownLandmark extends Landmark {
     val name = "Rabbittown"
     override def elem = name.styled(Rabbit)
@@ -1860,6 +1900,7 @@ object Meta extends MetaGame {
         $(DeepWoodsSettling, WastelandsWater) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
+        $(SimpleForgeLandmark, SimpleMarketLandmark, BirdsongTowerLandmark, RoyalTreeLandmark) ++
         legendsOptions ++
         $,
         $(StandardDeck, ExilesDeck, SquiresDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck, SorceryDeck, CapitalistsDeck) ++
@@ -1950,6 +1991,7 @@ object Meta extends MetaGame {
         l.of[Knaves].any.$(DoomedCaptains) ++
         l.of[Horde].any.$(SeparateItemsInRuins) ++
         $(MapDefaultLandmarks, MountainSuitedLandmark, NoLandmarks, FerryLandmark, LostCityLandmark, TowerLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark) ++
+        $(SimpleForgeLandmark, SimpleMarketLandmark, BirdsongTowerLandmark, RoyalTreeLandmark) ++
         $(NoHirelings, ThreeDemotedHirelings, TwoDemotedOneNormalHirelings, OneDemotedTwoNormalHirelings, ThreeNormalHirelings, ThreeRandomHirelings, SelectedHirelings) ++
         $(HirelingHirelingClash, FactionHirelingClash) ++
         hirelings./(IncludeHireling) ++
@@ -1973,7 +2015,8 @@ object Meta extends MetaGame {
         fixes ++
         settled ++
         retired ++
-        RulesVersion.all
+        RulesVersion.all ++
+        $(TournamentDraft)
 
     // The hidden options of rules fixes, each gating a fix so the games started before it replay the same (most new games get through
     // their RulesVersion); not listed in a game's log (OptionsAction)
@@ -2190,16 +2233,22 @@ object Meta extends MetaGame {
     // Rankings (asked for on 2026-11-18): every Root game (the standard setup, Advanced Setup and Mirror) goes to one ladder; each
     // faction is a side, so a Vagabond in a coalition wins beside its ally
     override def ranking = |("root")
+
+    // the tournament's tables are Advanced Setup games with the tournament draft (root/tournament.scala)
+    override def tournament = |("root-adset")
     override def rankingSides(g : G, winners : $[Any]) = rankSides(g, winners)
     override def rankingSeat(g : G, f : F) = rankSeat(g, f)
     override def rankingFan(g : G) = rankFan(g)
 
     // fan content (rankingFan): a faction that isn't an official one (fan, playtest and mirror factions), a fan map or deck, the
-    // Doomed Vagabonds, Knave Captains, Turnlings or Legends Scenarios, or the Action! Deck Booster
+    // Doomed Vagabonds, Knave Captains, Turnlings or Legends Scenarios, the Action! Deck Booster, or the Simple Landmarks (house rules) but the Birdsong Tower
     def rankFan(game : Game) : Boolean = game.factions.exists(f => (official ++ homeland).has(f).not) || game.options.exists {
         // Mixed and Dawn and Dusk sit under Fan Decks on the setup screen but aren't fan-made
         case MixedDeck | DuskDeck => false
         case _ : FanMap | _ : FanDeck => true
+        // the Birdsong Tower is official for the site (2026-11-20), the other Simple Landmarks are house rules
+        case BirdsongTowerLandmark => false
+        case _ : SimpleLandmark => true
         case IncludeHireling(h) => turnlings.has(h)
         case o => $[GameOption](ActionBooster, DoomedVagabonds, DoomedCaptains, TurnOverHirelings, DeepWoodsSettling, WastelandsWater).has(o) || legendsOptions.has(o)
     }
@@ -2260,6 +2309,9 @@ object Meta extends MetaGame {
         ImageAsset("ferry"                ) ::
         ImageAsset("tower"                ) ::
         ImageAsset("lost-city"            ) ::
+        ImageAsset("simple-forge"         ) ::
+        ImageAsset("simple-market"        ) ::
+        ImageAsset("royal-tree"           ) ::
         ImageAsset("mousehold"            ) ::
         ImageAsset("foxburrow"            ) ::
         ImageAsset("rabbittown"           ) ::
@@ -2743,7 +2795,7 @@ object Meta extends MetaGame {
     ConditionalAssetsList((factions, options) => true, "card/landmark", "landmark-card:", lzy = Laziness.OnDemand)(
         $("ferry", "lost-city", "tower", "mousehold", "foxburrow", "rabbittown")./(ImageAsset(_))
     ) ::
-    ConditionalAssetsList((factions, options) => options.has(AutumnMap), "autumn", "autumn:")(
+    ConditionalAssetsList((factions, options) => options.has(AutumnMap) || options.has(TournamentDraft), "autumn", "autumn:")(
         ImageAsset("map"          ,    "map-bright-new-expand" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
         ImageAsset("map-water"    ).makeLossless ::
@@ -2783,7 +2835,7 @@ object Meta extends MetaGame {
         ImageAsset("path-weald-mountain"        ) ::
         ImageAsset("path-weald-waterfall"       ) ::
     $) ::
-    ConditionalAssetsList((factions, options) => options.has(WinterMap), "winter", "winter:")(
+    ConditionalAssetsList((factions, options) => options.has(WinterMap) || options.has(TournamentDraft), "winter", "winter:")(
         ImageAsset("map"          ,    "map-bright" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
         ImageAsset("map-water"    ).makeLossless ::
@@ -2804,7 +2856,7 @@ object Meta extends MetaGame {
         ImageAsset("clearing-name-trench"       ) ::
         ImageAsset("clearing-name-wade"         ) ::
     $) ::
-    ConditionalAssetsList((factions, options) => options.has(LakeMap), "lake", "lake:")(
+    ConditionalAssetsList((factions, options) => options.has(LakeMap) || options.has(TournamentDraft), "lake", "lake:")(
         ImageAsset("map"          ,    "map-bright" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
         ImageAsset("map-water"    ).makeLossless ::
@@ -2825,7 +2877,7 @@ object Meta extends MetaGame {
         ImageAsset("clearing-name-vert"    ) ::
         ImageAsset("clearing-name-yard"    ) ::
     $) ::
-    ConditionalAssetsList((factions, options) => options.has(MountainMap), "mountain", "mountain:")(
+    ConditionalAssetsList((factions, options) => options.has(MountainMap) || options.has(TournamentDraft), "mountain", "mountain:")(
         ImageAsset("map"          ,    "map-bright" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
         ImageAsset("map-water"    ).makeLossless ::
@@ -2903,7 +2955,7 @@ object Meta extends MetaGame {
         ImageAsset("clearing-name-hovel" ) ::
         ImageAsset("clearing-name-deep-woods" ) ::
     $) ::
-    ConditionalAssetsList((factions, options) => options.has(MarshMap), "marsh", "marsh:")(
+    ConditionalAssetsList((factions, options) => options.has(MarshMap) || options.has(TournamentDraft), "marsh", "marsh:")(
         // new file names for the taller map (the new art shows more of the bottom), so browsers don't keep the cached ones
         ImageAsset("map"          , "map-art" ) ::
         ImageAsset("map-regions"  , "map-regions-2250").makeLossless ::
@@ -3040,7 +3092,7 @@ object Meta extends MetaGame {
         ImageAsset("clearing-name-gatehouse" ) ::
         ImageAsset("clearing-name-granary" ) ::
     $) ::
-    ConditionalAssetsList((factions, options) => options.has(GorgeMap), "gorge", "gorge:")(
+    ConditionalAssetsList((factions, options) => options.has(GorgeMap) || options.has(TournamentDraft), "gorge", "gorge:")(
         ImageAsset("map"          , "map-art" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
         ImageAsset("map-water"    ).makeLossless ::

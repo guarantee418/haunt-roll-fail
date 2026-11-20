@@ -1071,6 +1071,25 @@ server. No session can reach the server, and none needs to.
   first setup page, Adset only (`InsurgentLockOn`, the default, or `InsurgentLockOff`; `Meta.adsetOnly` in `root/meta.scala`). With it, the
   last faction drawn, if insurgent, can't be picked until a militant faction (`AdvancedSetup.militant` in `root/setup.scala`: Marquise,
   Eyrie, Duchy, Hundreds, Keepers, and the Lilypad Diaspora, which the draw now counts too) has been, and the draft's heading says so. Games with neither option (started before it) draft as before.
+- The Root tournament (asked for on 2026-11-20): "Tournament" on the Root menu (`tournamentMenu` in `hrf.scala`, URL
+  `/play/root/tournament`, `Meta.tournament` names the meta its games use; Root's Adset menu has the button too, opening that page,
+  2026-11-20) signs players up with their ranking name; the
+  16th sign-up starts it, and the server (`good-game/Tournament.scala`, its header has the files and the hand changes,
+  `tournament-changes/<name>.txt` in `hrf-games`) makes four Advanced Setup tables of four itself, from the version and
+  options a client sent with its sign-up (`Meta.tournamentOptions` in `root/meta-adset.scala`: official factions without the
+  Vagabond, no hirelings). Each table's winner, as reported to the rankings, goes to the final; its winner's name is golden
+  (`hrf-golden` in `index.html`) on the Tournament and Rankings pages until the next champion. Play Online lists the player's
+  tournament game first (`/tournament/mine`). A Discord webhook (`HRF_DISCORD_WEBHOOK`, or the file `discord-webhook`) is told
+  of the start, each table's winner and the champion, and invited to sign up, with the Tournament page's link, once for each
+  tournament as soon as its sign-ups open and a webhook is set (`invite` in `good-game/Tournament.scala`, `tournament/invited.tsv`;
+  at the server's start, when the webhook is set, when a final starts or a tournament is cancelled; the `invite` change posts it
+  again; asked for on 2026-11-20, as nobody could find the page, which is only on the Root menu), and at 8, 12 and 15 sign-ups.
+  `Tournament.start` takes the server's URL argument for the link. The games have the hidden `TournamentDraft` (`root/tournament.scala`):
+  the factions are drawn first (the flop), the first seat picks the deck, the second the map, on the Mountain the third what
+  goes in the Tower's clearing (the Tower or a suited landmark), then the factions are picked as usual; the game starts with no
+  map or deck, `game.options` and `game.board` are vars set by the picks, and `root/ui.scala` rebuilds its board view
+  (`BoardView`) when the board changes and draws no map until it is picked (`game.mapPending`). `ReplayCheck <games> official
+  tournament` plays it.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.
@@ -1152,6 +1171,19 @@ server. No session can reach the server, and none needs to.
 - Tapping the Tundra map's blizzard, or one of the snowflakes marking the spots it may move to, says what it does: it blocks the
   way (path or river) between its two clearings, which aren't adjacent while it is there, and after every round it moves at random
   to one of its six spots, maybe the same (`"view-blizzard"` in `root/ui.scala`; asked for on 2026-10-31).
+- Simple Landmarks (the owner's own rules, 2026-11-20) are four toggles in their own setup section, "Simple Landmarks" (`SimpleLandmark`
+  in `root/meta.scala`), beside any Landmarks choice: Forge (a crafting piece of its clearing for anyone with pieces there, `forgeCraft` in
+  `frogCraft`), Market (once a turn, with pieces there, discard a card to draw one; offered in the phase menus), Birdsong Tower (ruling it
+  at the start of Birdsong scores 1, at `BirdsongStartAction`) and Royal Tree (one more building slot, `game.slots`, and on your turn you rule
+  it with any piece there, `treeRules` in `rules`), all in `root/simple-landmarks.scala` (its header lists the readings). They are placed at
+  setup like the other landmark toggles, where the Landmarks Pack's setup cards put them, after the map's own landmarks. Their pieces are the
+  Landmarks Pack's Legendary Forge, Black Market and Elder Treetop (`feature/simple-forge`, `simple-market`, `royal-tree`, cut from the Leder
+  Card Library cards by `root/tools/simple-landmarks-art.py`) and the Tower. They count as fan content for the rankings, except the Birdsong
+  Tower, which the owner made official for the site on 2026-11-20 (`rankFan`): it counts toward Elo (on the setup screen it stays with the
+  Simple Landmarks), and in the tournament draft it is one of the third seat's
+  choices for the Mountain's Tower clearing (`landmarks` in `root/tournament.scala`; the Tournament page says so). The draft keeps any
+  Simple Landmark options when it sets the map's landmarks. `ReplayCheck <games> base simplelm` plays them, `birdsong` the Birdsong
+  Tower alone.
 - The Homeland landmarks Mousehold, Foxburrow and Rabbittown are landmark
   options on any map (`MouseholdLandmark` etc. in `root/meta.scala`). Each
   adds its suit to its clearing, kept when a Lilypad enclave covers the suit

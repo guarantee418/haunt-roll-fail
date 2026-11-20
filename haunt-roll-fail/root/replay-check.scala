@@ -71,10 +71,12 @@ object ReplayCheck {
     var mapRules : $[Meta.O] = $
     // "adset": Advanced Setup, seats drafting from the pool (one faction more than the seats)
     var adset = false
+    // "tournament": with "adset", the tournament draft (TournamentDraft): no map or deck, picked by the first seats in the game
+    var tournament = false
 
     def players(seating : $[Faction]) : $[Player] = adset.?(1.to(seating.num - 1).$./(n => PlayerN(n) : Player)).|(seating)
 
-    def options(seating : $[Faction]) : $[Meta.O] = mountain.?($[Meta.O](
+    def baseOptions(seating : $[Faction]) : $[Meta.O] = mountain.?($[Meta.O](
         MountainMap, NoClustersClearings, SetupTypeCorners, MixedDeck, AdSetBuffOn, NoHirelings,
         MapDefaultLandmarks, SeatingGiven, FactionSeatingGiven, SetupOrderPriority, CardDraftStandard,
     )).|(marsh.?($[Meta.O](
@@ -100,6 +102,8 @@ object ReplayCheck {
         case CardDraftStandard => CardDraftFive
         case o => o
     }).|(o)).map(o => (draft && o == CardDraftStandard).?[Meta.O](CardDraftFive).|(o)).map(o => (exiles && o == MixedDeck).?[Meta.O](ExilesDeck).|(o)).map(o => (squires && o == MixedDeck).?[Meta.O](SquiresDeck).|(o)).map(o => (franken && o == MixedDeck).?[Meta.O](FrankenDeck).|(o)).map(o => (dusk && o == MixedDeck).?[Meta.O](DuskDeck).|(o)).map(o => (dark && o == MixedDeck).?[Meta.O](DarkDeck).|(o)).map(o => (upstartsDeck && o == MixedDeck).?[Meta.O](UpstartsDeck).|(o)).map(o => (sorceryDeck && o == MixedDeck).?[Meta.O](SorceryDeck).|(o)).map(o => (capitalists && o == MixedDeck).?[Meta.O](CapitalistsDeck).|(o)) ++ sorceryAll.$(SorceryTestDeal) ++ capitalistsAll.$(CapitalistsTestDeal) ++ upstartsAll.$(UpstartsTestDeal).map(o => (hire.any && o == NoHirelings).?[Meta.O](SelectedHirelings).|(o)) ++ hire.any.??($(HirelingHirelingClash, FactionHirelingClash) ++ oldHire.not.$(HirelingsByTheCard) ++ hire./(IncludeHireling)) ++ exiles.$(ErrataCoffinMakers) ++ oldFrogs.not.??($[Meta.O](RulesVersion.latest, OutragePeekNeedsOk, KnavesCaptainsInDraft)) ++ (async || chooseHits).??($[Meta.O](AutoHitsAssignmentMode, AutoAmbushSkippingMode, ForcedAsyncMode)) ++ chooseHits.$(ForcedAsyncChooseHits) ++ offline.??($[Meta.O](HitsAndAmbushesSetup, OffTurnFieldHospitals)) ++ preset.$(OffTurnHitsPreset) ++ action.$(ActionBooster) ++ doomedVB.$(DoomedVagabonds, RandomCharacter) ++ doomedCap.$(DoomedCaptains) ++ turnOver.$(TurnOverHirelings) ++ legends ++ mapRules ++ adset.??($(InsurgentLockOn, RandomCharacter)) ++ seating./(IncludeFaction)
+
+    def options(seating : $[Faction]) : $[Meta.O] = tournament.?(baseOptions(seating).notOf[MapOption].notOf[DeckOption].notOf[ClearingsOption] :+ TournamentDraft).|(baseOptions(seating))
 
     def privateMap(o : AnyRef, suffix : String) : Map[Any, Any] = {
         val f = o.getClass.getDeclaredFields.filter(_.getName.endsWith(suffix)).head
@@ -233,9 +237,14 @@ object ReplayCheck {
         exposeAll = args.lift(1).has("cctc")
         oldFrogs = args.contains("oldfrogs")
         draft = args.contains("draft")
-        adset = args.contains("adset")
+        adset = args.contains("adset") || args.contains("tournament")
+        tournament = args.contains("tournament")
         fanMap = args.contains("urban").$(UrbanMap).++(args.contains("legendsmap").$(LegendsMap)).++(args.contains("deepwoods").$(DeepWoodsMap)).++(args.contains("wastelands").$(WastelandsMap)).headOption
         mapRules = args.contains("settling").$(DeepWoodsSettling) ++ args.contains("water").$(WastelandsWater)
+        // "simplelm": the four Simple Landmarks (root/simple-landmarks.scala), beside the map's own landmarks
+        mapRules ++= args.contains("simplelm").$(SimpleForgeLandmark, SimpleMarketLandmark, BirdsongTowerLandmark, RoyalTreeLandmark)
+        // "birdsong": the Birdsong Tower alone, as the tournament games have it
+        mapRules ++= (args.contains("birdsong") && args.contains("simplelm").not).$(BirdsongTowerLandmark)
         oldHire = args.contains("oldhire")
         hire = args.find(_.startsWith("hire:"))./~(_.drop(5).split(',').$./(n => (Meta.hirelings ++ Meta.turnlings).%(h => h.name == n || h.short == n || h.toString == n).single.|!("no hireling " + n)))
         val pool : $[$[Faction]] = args.lift(1)./(_ match {
@@ -264,6 +273,8 @@ object ReplayCheck {
             // "adset": the Doomed Expansion's factions in Advanced Setup pools
             case "doomed" => $($(MC, ED, WA, WW, DU, EE, RF), $(DM, ED, UD, DV, NW, LC), $(MC, WA, WG, DU, WW, RF, TC), $(EE, DM, NW, DV, KI, LH))
             case "dovearachnid" => $($(MC, ED, WA, UDC, AA, RF), $(UDC, AA, UD, VB, LC), $(MC, AA, KD, TC, UDC, CC))
+            // "tournament": five official factions a game (no Vagabond), the flop of a four-seat tournament table
+            case "official" => $($(MC, ED, WA, LC, RF), $(UD, CC, LH, KI, TC), $(KD, LDvE, MC, ED, UD), $(WA, RF, CC, KD, TC), $(LH, KI, LDvE, LC, ED))
             case "tc" => $($(MC, ED, WA, TC))
             case "kd" => $($(MC, ED, WA, KD))
             // "tckd": the Twilight Council with the Knaves, whose Captains a Banish moves last (BanishCaptainsLast)
@@ -285,7 +296,7 @@ object ReplayCheck {
         var failures = 0
         // how often each hireling-related choice was recorded, to see that the bots used them
         var used = Map[String, Int]()
-        val keys = $("ActionHammer", "ActionBag", "ActionTea", "ActionCoins", "ActionCrossbow", "ActionKey", "ActionSword", "ActionReplace", "ActionPay", "SecretScore", "CounterAmbush", "ExposeAction", "Hireling", "WarmSun", "Sunward", "CorvidSpies", "FlameBearers", "VaultKeepers", "FuriousProtector", "HighwayBandit", "PopularBand", "SunnyAdvocates", "BatMessengers", "RiverRoamers", "FrogTinkers", "Farmers", "Brigand", "ClearPath", "LizardEnvoys", "Bluebird", "FelinePhysicians", "MoleArtisians", "RatSmugglers", "ForestPatrol", "Patrol", "LastDynasty", "Uprising", "Exile", "Flotilla", "StreetBand", "BanditGangs", "Scouts", "SlyDog", "HighNoon", "BreakingDawn", "DuskAwakening", "Merchants", "Spoil", "ServiceOf", "MilitarySupplies", "Guard", "Hoarders", "NightTerrors", "Adventurers", "AnyCard", "FowlPlay", "WordsUndo", "WordsReroll", "Transmute", "Bloodlust", "DevotionHit", "Roulette", "Rapacious", "Swindle", "Infernal", "Cleansing", "Fury", "BloodGate", "Meat", "BearTrap", "BottomFeeder", "Knight", "Science", "Poison", "Dopple", "DarkMenu", "Infect", "BookOfNames", "Raging", "Inspire", "Hammertime", "Encouragement", "Grift", "Devour", "Scram", "BardMoved", "Blacksmith", "Zealot", "KnavesSwindle", "TurnOver", "Murderers", "Infected", "Spirits", "KnightTurnling", "GoldenPig", "RougeAgents", "Caravan", "Union", "Demand", "Coup", "Feeder", "Bugs", "CureAll", "Grunts", "Swine", "TurnPlace", "TurnMoveBattle", "Legends", "FifthRuin", "Rally", "Friendship", "Prince", "Merchandising", "Precious", "ReturnKing", "Schwartz", "Capture", "Filch", "Pickpockets", "TakeRuinItem", "Monster", "Roam", "Appease", "Slay", "Ritual", "Investigate", "HuntStack", "Bushblazer", "Mauler", "Wake", "Doom", "WG", "EE", "DM", "DV", "Settle", "Barren", "Water", "Surrender", "Seizure", "Menace", "DarkPassage", "Order", "TW", "OMT", "NXFire", "NXStench", "NXRoll", "NXSpill", "NXRearm", "NXRollout", "UDCRansom", "UDCBuild", "UDCCeasefire", "UDCDeclarePeace", "UDCEvacuate", "UDCRepatriate", "UDCExpedition", "UDCResupply", "UDCRescue", "AAConsume", "AAWeave", "AALay", "AACapture", "AAPhobia", "AABird", "AADiscard", "AATrap", "Prophecy", "Housing", "Boom", "Hawk", "Escort", "Medic", "Tagalong", "Coord", "Thief", "Commander", "Salt", "Peace", "Trail", "Salvage", "Baron", "Goon", "Garden", "Tower", "Hail", "Enchanted", "Mantra", "Foresight", "Misdirect", "Gifts", "Flight", "Scepter", "Visions", "Cauldron", "FireLightning", "RiverBeast", "Dispel", "Capitalists", "RoyalClaim", "StandAndDeliver", "Codebreakers", "BrutalTactics")
+        val keys = $("SetupLandmark", "TournamentDeck", "TournamentMap", "TournamentLandmark", "ActionHammer", "ActionBag", "ActionTea", "ActionCoins", "ActionCrossbow", "ActionKey", "ActionSword", "ActionReplace", "ActionPay", "SecretScore", "CounterAmbush", "ExposeAction", "Hireling", "WarmSun", "Sunward", "CorvidSpies", "FlameBearers", "VaultKeepers", "FuriousProtector", "HighwayBandit", "PopularBand", "SunnyAdvocates", "BatMessengers", "RiverRoamers", "FrogTinkers", "Farmers", "Brigand", "ClearPath", "LizardEnvoys", "Bluebird", "FelinePhysicians", "MoleArtisians", "RatSmugglers", "ForestPatrol", "Patrol", "LastDynasty", "Uprising", "Exile", "Flotilla", "StreetBand", "BanditGangs", "Scouts", "SlyDog", "HighNoon", "BreakingDawn", "DuskAwakening", "Merchants", "Spoil", "ServiceOf", "MilitarySupplies", "Guard", "Hoarders", "NightTerrors", "Adventurers", "AnyCard", "FowlPlay", "WordsUndo", "WordsReroll", "Transmute", "Bloodlust", "DevotionHit", "Roulette", "Rapacious", "Swindle", "Infernal", "Cleansing", "Fury", "BloodGate", "Meat", "BearTrap", "BottomFeeder", "Knight", "Science", "Poison", "Dopple", "DarkMenu", "Infect", "BookOfNames", "Raging", "Inspire", "Hammertime", "Encouragement", "Grift", "Devour", "Scram", "BardMoved", "Blacksmith", "Zealot", "KnavesSwindle", "TurnOver", "Murderers", "Infected", "Spirits", "KnightTurnling", "GoldenPig", "RougeAgents", "Caravan", "Union", "Demand", "Coup", "Feeder", "Bugs", "CureAll", "Grunts", "Swine", "TurnPlace", "TurnMoveBattle", "Legends", "FifthRuin", "Rally", "Friendship", "Prince", "Merchandising", "Precious", "ReturnKing", "Schwartz", "Capture", "Filch", "Pickpockets", "TakeRuinItem", "Monster", "Roam", "Appease", "Slay", "Ritual", "Investigate", "HuntStack", "Bushblazer", "Mauler", "Wake", "Doom", "WG", "EE", "DM", "DV", "Settle", "Barren", "Water", "Surrender", "Seizure", "Menace", "DarkPassage", "Order", "TW", "OMT", "NXFire", "NXStench", "NXRoll", "NXSpill", "NXRearm", "NXRollout", "UDCRansom", "UDCBuild", "UDCCeasefire", "UDCDeclarePeace", "UDCEvacuate", "UDCRepatriate", "UDCExpedition", "UDCResupply", "UDCRescue", "AAConsume", "AAWeave", "AALay", "AACapture", "AAPhobia", "AABird", "AADiscard", "AATrap", "Prophecy", "Housing", "Boom", "Hawk", "Escort", "Medic", "Tagalong", "Coord", "Thief", "Commander", "Salt", "Peace", "Trail", "Salvage", "Baron", "Goon", "Garden", "Tower", "Hail", "Enchanted", "Mantra", "Foresight", "Misdirect", "Gifts", "Flight", "Scepter", "Visions", "Cauldron", "FireLightning", "RiverBeast", "Dispel", "Capitalists", "RoyalClaim", "StandAndDeliver", "Codebreakers", "BrutalTactics")
 
         0.until(games).foreach { gi =>
             val seating = pool(gi % pool.num).shuffle

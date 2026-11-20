@@ -207,6 +207,10 @@ trait MetaBase {
     // Rankings (good-game/Ranking.scala, Rankings in hrf.scala): the ladder a finished online game goes to (metas with the same
     // one share it, as Northgard and its Adset do), and its sides (a player, or a team) with whether each won; bots are left out later
     def ranking : |[String] = None
+    // The site's tournament (good-game/Tournament.scala, tournamentMenu in hrf.scala; Root's, 2026-11-20): the meta its games are
+    // played in, shown as "Tournament" on this meta's menu, and the options that meta gives a tournament game
+    def tournament : |[String] = None
+    def tournamentOptions : $[O] = $
     def rankingSides(g : G, winners : $[Any]) : $[($[F], Boolean)] = $
     // and, for the faction and turn order stats, what each seat played: its faction, its place in the turn order (from 1), the
     // number of players and its score (VP or fame, "D" for a Root dominance)

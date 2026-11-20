@@ -1213,6 +1213,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             rankingsMenu()
         }
 
+        def goTournament() {
+            history.pushState("/play/" + meta.name + "/tournament", () => metaMenu())
+            tournamentMenu()
+        }
+
         ui.action.asker.zask(
             meta.underConstruction.$(ZOption(title, Div("This game is very much " ~ "under construction".styled(xstyles.warning) ~ "." ~ Break ~ "Expect missing rules, bugs and placeholder art.", ZBasic.info))) ++
             meta.menuAbout./(e => ZOption(title, Div(e, ZBasic.info))).$ ++
@@ -1228,7 +1233,12 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     }.|(throw new Error("meta not found " + l))
                 }) } ++
                 $(ZBasic(title, "Play Online".hlb, (HRF.server.any && HRF.offline.not).??(() => goOnline()))) ++
-                (meta.ranking.any && HRF.server.any && HRF.offline.not).$(ZBasic(title, "Rankings".hhb, () => goRankings()))
+                (meta.ranking.any && HRF.server.any && HRF.offline.not).$(ZBasic(title, "Rankings".hhb, () => goRankings())) ++
+                // the site's tournament, on the menu of the game whose tournament it is (Root's, played in Advanced Setup), and on
+                // the menu of the meta its games use (Root's Adset, 2026-11-20), where it opens that game's Tournament page
+                (meta.tournament.exists(_ != meta.name) && HRF.server.any && HRF.offline.not).$(ZBasic(title, "Tournament".hhb, () => goTournament())) ++
+                (meta.tournament.has(meta.name) && HRF.server.any && HRF.offline.not).??(
+                    HRF.metas.%(m => m.name != meta.name && m.tournament.has(meta.name)).take(1)./(m => ZBasic(title, "Tournament".hhb, () => dom.document.location.assign("/play/" + m.name + "/tournament"))))
             ) ++
             meta.intLinks./((t, l) => ZBasic("Other", t, () => {
                 HRF.metas.%(_.name == l).single./{ m =>
@@ -1247,8 +1257,17 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         if (HRF.segments.startsWith($("tutorial")) && meta.tutorialLessons.any)
             goTutorial()
         else
-        if (HRF.segments.startsWith($("rankings")) && meta.ranking.any && HRF.server.any && HRF.offline.not)
+        // (the segments used up, so that their pages' Back, which shows this menu again, doesn't open them again: a page opened
+        // from its link, as the Tournament's from Discord, couldn't be left, 2026-11-20)
+        if (HRF.segments.startsWith($("rankings")) && meta.ranking.any && HRF.server.any && HRF.offline.not) {
+            HRF.segments = $
             goRankings()
+        }
+        else
+        if (HRF.segments.startsWith($("tournament")) && meta.tournament.exists(_ != meta.name) && HRF.server.any && HRF.offline.not) {
+            HRF.segments = $
+            goTournament()
+        }
         else
         if (HRF.segments.startsWith($("quick")))
             goQuickGame()
@@ -1447,6 +1466,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         def tag(e : Elem, names : String*) = Span(e, css(names : _*))
         def num(s : String) = tag(Text(s), "rk-num")
         def heading(s : String) : Elem = tag(Text(s), "rk-h")
+        // the tournament champion's name is golden on the ladder until the next champion (good-game/Tournament.scala)
+        var golden : |[String] = None
+        def rkName(n : String) : Elem = tag(Text(n), (golden.exists(_.toLowerCase == n.toLowerCase)).?($("rk-name", "hrf-golden")).|($("rk-name")) : _*)
 
         def back = ZBasic(" ", Div("Back"), () => metaMenu())
 
@@ -1656,11 +1678,20 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         }
 
         // a code of the player's own for the names this browser holds (Ranking.setCode)
+        // the player code, in the menu itself: the overlay it was shown in left the menu hidden once closed (2026-11-19)
+        def showCode() = ui.action.asker.zask(
+            $(ZOption(heading("Your player code"), Div("Enter it under Rankings on another device to play there under your names. Keep it to yourself: anyone with it can.".txt ~ Break ~ PlayerKey.get.hlb.spn(xstyles.larger110), ZBasic.info))) ++
+            $(ZBasic(" ", Div("Back"), () => load())))
+
+        // a code is set, or changed (the last one set wins), for the names this device holds; with none, say how to get one
         def setCode() {
-            ui.action.asker.iask(InputOption("Pick a code of your own for " + mine.join(", ") + " (8 characters or more)", "", Nil, v => {
+            if (mine.none)
+                says("This device holds no name yet. Type a name when you join an online game: it is claimed for this device, and then you can set a code for it here.".txt)
+            else
+            ui.action.asker.iask(InputOption("Pick a code of your own for " + mine.join(", ") + " (8 to 64 characters). If you set one before, this one replaces it.", "", Nil, v => {
                 val code = v.trim
-                if (code.length < 8)
-                    says("A code needs 8 characters or more.".txt, |(() => setCode()))
+                if (code.length < 8 || code.length > 64)
+                    says("A code needs 8 to 64 characters.".txt, |(() => setCode()))
                 else
                     postF(server + "/set-code", PlayerKey.get + "\n" + code) { r =>
                         r.split('\n').$ match {
@@ -1693,7 +1724,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             ZBasic(group,
                 place ~
                 tag(
-                    tag(Text(p.name), "rk-name") ~ yours.?(tag(Text("you"), "rk-you")).|(Empty) ~
+                    rkName(p.name) ~ yours.?(tag(Text("you"), "rk-you")).|(Empty) ~
                     tag(favourites(p)./(f => glyph(f, "rk-glyph-mini")).merge ~ tag(Text(p.wins + "–" + (p.games - p.wins) + " · " + percent0(p.wins.toDouble / p.games) + " won · peak " + p.peak.round + " · " + p.last.take(10)), "rk-num-inline"), "rk-sub"),
                 "rk-who") ~
                 tag(delta(p.lastChange), "rk-last") ~
@@ -1736,7 +1767,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 place ~
                 tierOf(p)./(t => tierPill(t)).|(tag(Text("–"), "rk-tier", "rk-tier-none")) ~
                 tag(
-                    tag(Text(p.name), "rk-name") ~ yours.?(tag(Text("you"), "rk-you")).|(Empty) ~ titleOf(p)./(t => tag(Text(t), "rk-title")).|(Empty) ~
+                    rkName(p.name) ~ yours.?(tag(Text("you"), "rk-you")).|(Empty) ~ titleOf(p)./(t => tag(Text(t), "rk-title")).|(Empty) ~
                     tag(favourites(p)./(f => glyph(f, "rk-glyph-mini")).merge ~ tag(Text(plural(p.games, "game") + " · " + p.wins + " won · " + percent0(p.wins.toDouble / p.games) + " · peak " + p.peak.round), "rk-num-inline", "rk-lb-phone"), "rk-sub"),
                 "rk-who") ~
                 badge(p) ~
@@ -1781,11 +1812,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 (provisional.any && ranked.any).$(ZBasic(group, tag(Text(showing.?("Hide").|("Show") + " the " + plural(provisional.num, "provisional player") + " (fewer than " + Elo.provisional + " games)"), "rk-chip-text"), () => { showProvisional = showing.not ; show(everyone) }, css("rk-chip", "rk-toggle") ++ showing.$(ExternalStyle("rk-chip-on")) ++ $(xlo.pointer))) ++
                 all.none.$(note(group, tag(Text("No rated games yet."), "rk-empty-title") ~ Break ~ "The ladder starts with the first finished online game with people on two sides or more. Bots, local games and games with fan content don't count.".txt)) ++
                 $(ZOption(heading("Your player code"), box(you, "rk-note"))) ++
-                $(ZBasic(heading("Your player code"), Div("Show my player code"), () => {
-                    showOverlayRaw("Your player code".hl, $("Enter it under Rankings on another device to play there under your names. Keep it to yourself: anyone with it can.".txt, PlayerKey.get.hlb.spn(xstyles.larger110)))
-                })) ++
+                $(ZBasic(heading("Your player code"), Div("Show my player code"), () => showCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Use a code from another device"), () => useCode())) ++
-                mine.any.$(ZBasic(heading("Your player code"), Div("Set my own code"), () => setCode())) ++
+                $(ZBasic(heading("Your player code"), Div("Set or change my own code"), () => setCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Lost my code"), () => lostCode())) ++
                 $(back)
             )
@@ -1850,7 +1879,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             "rk-chart")
 
             def highlight(label : String, o : |[Elo.Change], none : String) = o./(o => ZBasic(heading("Highlights"),
-                tag(tag(Text(label), "rk-hl-l") ~ tag(Text(o.entry.name), "rk-name") ~ tag(Text("rated " + o.before.round + " then · " + o.result.time.take(10) + " · see their journey"), "rk-sub"), "rk-who"),
+                tag(tag(Text(label), "rk-hl-l") ~ rkName(o.entry.name) ~ tag(Text("rated " + o.before.round + " then · " + o.result.time.take(10) + " · see their journey"), "rk-sub"), "rk-who"),
                 () => all.find(_.name.toLowerCase == o.entry.name.toLowerCase).foreach(q => player(q, all)), css("rk-row", "rk-hl") ++ $(xlo.pointer))).|(note(heading("Highlights"), (label + ": " + none).txt))
 
             $(ZOption(heading("Rating game by game"), chart)) ++
@@ -1900,11 +1929,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 seats.any.$(ZBasic(" ", Div((factionStats.num > top).?("All " + factionStats.num + " factions, by player count").|("Faction stats by player count")), () => factions(all, None))) ++
                 seats.any.$(ZBasic(" ", Div("Turn order stats"), () => turns(all))) ++
                 $(ZOption(heading("Your player code"), box(you, "rk-note"))) ++
-                $(ZBasic(heading("Your player code"), Div("Show my player code"), () => {
-                    showOverlayRaw("Your player code".hl, $("Enter it under Rankings on another device to play there under your names. Keep it to yourself: anyone with it can.".txt, PlayerKey.get.hlb.spn(xstyles.larger110)))
-                })) ++
+                $(ZBasic(heading("Your player code"), Div("Show my player code"), () => showCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Use a code from another device"), () => useCode())) ++
-                mine.any.$(ZBasic(heading("Your player code"), Div("Set my own code"), () => setCode())) ++
+                $(ZBasic(heading("Your player code"), Div("Set or change my own code"), () => setCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Lost my code"), () => lostCode())) ++
                 $(note(heading("How the rankings work"), explain)) ++
                 $(back)
@@ -1922,7 +1949,110 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     ui.action.asker.zask($(ZOption(title, Div("The server can't be reached.", ZBasic.info)), back))
                 }
 
-            postF(server + "/player-code", PlayerKey.get) { r => mine = r.split('\n').$.%(_.nonEmpty) ; rankings() } { rankings() }
+            def code() = postF(server + "/player-code", PlayerKey.get) { r => mine = r.split('\n').$.%(_.nonEmpty) ; rankings() } { rankings() }
+
+            if (HRF.metas.exists(m => meta.ranking.any && m.ranking == meta.ranking && m.tournament.any))
+                getF(server + "/tournament") { text =>
+                    golden = text.split('\n').$./(_.split('\t').$).%(_.headOption.has("golden")).headOption./~(_.lift(1))
+                    code()
+                } { code() }
+            else
+                code()
+        }
+
+        load()
+    }
+
+    // THE TOURNAMENT (good-game/Tournament.scala; Root's, asked for on 2026-11-20): sign-ups with a ranking name, the tables with
+    // their winners and spectator links, the player's own games and the champion, whose name is golden until the next one's
+    def tournamentMenu() {
+        val server = HRF.server.get
+        val tmeta = HRF.metas.%(m => meta.tournament.has(m.name)).single.|(meta)
+        val title = (meta.label.split(':').head + " Tournament").hl.spn(xstyles.larger110)
+
+        def back = ZBasic(" ", Div("Back"), () => metaMenu())
+        def note(group : Elem, e : Elem) = ZOption(group, Div(e, ZBasic.info))
+        def golden(n : String) : Elem = Span(Text(n), $(ExternalStyle("hrf-golden")))
+        def url(secret : String) = server + "/play/" + tmeta.name + "/" + secret
+        def linked(u : String, e : Elem) = (Link(u, e, $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice)
+
+        def says(e : Elem) = ui.action.asker.zask($(note(title, e), ZBasic(" ", Div("Back"), () => load())))
+        def unreachable() = says("The server can't be reached.".txt)
+
+        def signUp(name : String) {
+            val n = name.split(' ').filter(_ != "").join(" ").sanitize(32)
+            val options = tmeta.tournamentOptions./(o => tmeta.writeOption(o)).join(" ")
+            postF(server + "/tournament/sign-up", PlayerKey.get + "\n" + n + "\n" + HRF.version + "\n" + options) { r =>
+                r.trim match {
+                    case "ok" => load()
+                    case "taken" => says(n.hlb ~ " is another player's name. Pick another, or use your code from another device under " ~ "Rankings".hl ~ ".")
+                    case "already" => says(n.hlb ~ " has already signed up.")
+                    case "one" => says("This device has already signed up a name for this tournament.".txt)
+                    case "playing" => says(n.hlb ~ " is still playing at a table of the tournament.")
+                    case "closed" => says("Sign-ups are closed until the final of the tournament being played starts.".txt)
+                    case _ => says("That name can't be used.".txt)
+                }
+            } { unreachable() }
+        }
+
+        def withdraw(name : String) {
+            postF(server + "/tournament/withdraw", PlayerKey.get + "\n" + name) { _ => load() } { unreachable() }
+        }
+
+        def askName() {
+            ui.action.asker.iask(InputOption("Your name for the rankings and the tournament", "", Nil, v => signUp(v)) :: BasicOption(" ", "Cancel", Nil, () => load()))
+        }
+
+        def show(text : String, owned : $[String], mine : $[$[String]]) {
+            val rows = text.split('\n').$.%(_.nonEmpty)./(_.split('\t').$)
+            def lines(k : String) = rows.%(r => r.headOption.has(k))
+            val size = lines("size").headOption./~(_.lift(1))./~(_.toIntOption).|(16)
+            val champion = lines("golden").headOption./~(_.lift(1))
+            val open = lines("open").headOption
+            val signups = lines("signup")./~(_.lift(2))
+            val tables = lines("table").%(_.num >= 6)
+            val champions = lines("champion").%(_.num >= 3)
+            val cancelled = lines("cancelled")./~(_.lift(1))
+            def isGolden(n : String) = champion.exists(_.toLowerCase == n.toLowerCase)
+            def name(n : String) : Elem = isGolden(n).?(golden(n)).|(n.hh)
+            def names(l : $[String]) : Elem = l./(name).join(", ")
+
+            val signGroup : Elem = open./(o => ("Tournament " + o(1) + " · sign-ups " + o(2) + " of " + size).hl).|("Sign-ups".hl)
+            val signed = owned.%(n => signups.exists(_.toLowerCase == n.toLowerCase))
+
+            ui.action.asker.zask(
+                $(note(title, "Sign up with your ranking name. The tournament starts by itself when " ~ size.hl ~ " players have signed up: four tables of four, each an " ~ "Advanced Setup".hh ~ " game. Each table's winner goes to the final, and the final's winner is the champion, whose name is golden until the next champion." ~ Break ~ "The draft: the flop of five factions, then the first seat picks the deck, the second the map, on the " ~ "Mountain".hh ~ " the third what goes in the " ~ "Tower".hh ~ "'s clearing, and the factions are picked, last seat first. Official factions, decks and maps, no " ~ "Vagabond".hh ~ ". On the " ~ "Mountain".hh ~ ", the " ~ "Birdsong Tower".hh ~ " is one of the choices for the " ~ "Tower".hh ~ "'s clearing (rule it at the start of your Birdsong to score 1).")) ++
+                champion./(c => note("Champion".hl, golden(c) ~ " won the last tournament.")).$ ++
+                mine./(r => ZOption("Your Tournament Game".hl, linked(url(r(3)), r(2).hh ~ Break ~ ("as " + r(4) + " against " + r(5)).spn(xstyles.smaller75)))) ++
+                open./(_ => note(signGroup, signups.any.?(names(signups)).|("No one has signed up yet.".txt))).$ ++
+                open.any.??(owned.diff(signed)./(n => ZBasic(signGroup, "Sign up as " ~ n.hh, () => signUp(n)))) ++
+                open.any.$(ZBasic(signGroup, owned.any.?("Sign up with another name").|("Sign up"), () => askName())) ++
+                open.any.??(signed./(n => ZBasic(signGroup, "Withdraw " ~ n.hh, () => withdraw(n)))) ++
+                open.none.$(note("Sign-ups".hl, "Sign-ups for the next tournament open when the final of this one starts.".txt)) ++
+                tables.groupBy(_(1)).toList.sortBy(-_._1.toIntOption.|(0))./~{ case (n, l) =>
+                    val group = ("Tournament " + n + champions.find(_(1) == n)./(c => " · champion " + c(2)).|("") + cancelled.has(n).??(" · cancelled")).hl
+                    l.sortBy(_(2).replace("F", "Z"))./{ t =>
+                        val label = (t(2) == "F").?("Final").|("Table " + t(2))
+                        val winner = t(4)
+                        ZOption(group, linked(url(t(3)), label.hh ~ ": " ~ names(t.drop(5)) ~ Break ~ (winner.nonEmpty.?("Won by " ~ name(winner) ~ " · ").|(Empty) ~ "Spectate").spn(xstyles.smaller75)))
+                    }
+                } ++
+                $(note("Your player code".hl, owned.any.?("Your names on this device: " ~ owned./(_.hlb).join(", ") ~ ". On another device, use your player code under " ~ "Rankings".hl ~ " to play there under the same names.").|(Empty ~ "No name is claimed on this device yet. Signing up claims one; if you have one on another device, use its player code under " ~ "Rankings".hl ~ " first."))) ++
+                $(back)
+            )
+        }
+
+        def load() {
+            ui.action.asker.zask($(note(title, "Loading...".txt), back))
+
+            getF(server + "/tournament") { text =>
+                postF(server + "/player-code", PlayerKey.get) { owned =>
+                    val names = owned.split('\n').$.%(_.nonEmpty)
+                    postF(server + "/tournament/mine", PlayerKey.get) { mine =>
+                        show(text, names, mine.split('\n').$.%(_.nonEmpty)./(_.split('\t').$).%(_.num >= 6))
+                    } { show(text, names, $) }
+                } { show(text, $, $) }
+            } { unreachable() }
         }
 
         load()
@@ -2012,10 +2142,22 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         }))
     }
 
-    def onlineGame() {
+    // tour: the player's tournament games (good-game/Tournament.scala), shown at the top once the server has said which
+    def onlineGame(tour : |[$[$[String]]] = None) {
         val prefix = meta.settingsKey + ".online.game."
         val l = Local.list(prefix)./(_.drop(prefix.length).split('.'))./(l => l(0) -> l(1).toDouble).sortBy(-_._2)
         val games = l./{ case (lobby, time) => HRF.parseOnlineGame(lobby, time, Local.get(prefix + lobby + "." + time, "")) }
+
+        if (tour.none && meta.tournament.any && HRF.server.any && HRF.offline.not) {
+            val at = dom.document.location.pathname
+            postF(HRF.server.get + "/tournament/mine", PlayerKey.get) { r =>
+                val l = r.split('\n').$.%(_.nonEmpty)./(_.split('\t').$).%(_.num >= 6)
+                if (l.any && dom.document.location.pathname == at)
+                    onlineGame(|(l))
+            } { }
+        }
+
+        val tournamentGames = tour.|($)./(r => ZOption("Your Tournament Game".hl, (Link(HRF.server.get + "/play/" + meta.tournament.get + "/" + r(3), r(2).hh ~ Break ~ ("as " + r(4) + " against " + r(5)).spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice)))
 
         def goOnlineNew() {
             history.pushState("/play/" + meta.name + "/online/new", () => onlineGame())
@@ -2047,6 +2189,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 ui.logger.alog(" Reload " + url)
                 dom.document.location.assign(url)
             })).$ ++
+            tournamentGames ++
             ZBasic(meta.label.hl, "New Online Game".hl.styled(xstyles.larger110), () => {
                 goOnlineNew()
             }).?.$ ++

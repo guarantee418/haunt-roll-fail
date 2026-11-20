@@ -454,6 +454,11 @@ case object LostCity extends Pawn with Tenacious
 case object Mousehold extends Pawn with Tenacious
 case object Foxburrow extends Pawn with Tenacious
 case object Rabbittown extends Pawn with Tenacious
+// Simple Landmarks (root/simple-landmarks.scala)
+case object SimpleForge extends Pawn with Tenacious
+case object SimpleMarket extends Pawn with Tenacious
+case object BirdsongTower extends Pawn with Tenacious
+case object RoyalTree extends Pawn with Tenacious
 
 
 
@@ -537,7 +542,8 @@ trait FactionState {
         factions.but(faction).of[InvasiveDDD]./~(e => effects.of[SuitLaborers].%(_.faction == e)./(_.suit)./~(s => e.all(PeacefulDDD(s))))./(_.asset) ++
         factions.but(faction).of[InvasiveCCC]./~(e => effects.of[Laborers].%(_.faction == e)./~(_ => FoxRabbitMouse./~(s => e.all(PeacefulCCC(s)))))./(_.asset) ++
         factions.but(faction).of[InvasiveBBB]./~(e => effects.of[Integration].%(_.faction == e)./(_.suit)./~(s => (e.all(PeacefulBBB(s)) ++ e.all(MilitantBBB(s)))))./(_.asset) ++
-        SorceryDeckExpansion.towerCraft(faction)
+        SorceryDeckExpansion.towerCraft(faction) ++
+        SimpleLandmarksExpansion.forgeCraft(faction)
 
     var extraCraft : $[SuitAsset] = $
 
@@ -1269,6 +1275,7 @@ trait GameImplicits {
             case f if SquiresDeckExpansion.silverTongueRules(f, c) => true
             case f if UpstartsDeckExpansion.escortRules(f, c) => true
             case f if BonePatrolExpansion.guarded(f, c) => true
+            case f if SimpleLandmarksExpansion.treeRules(f, c) => true
             case h : Hireling if factions.%(_.has(h)).%(f => f.rules(c)).any => true
             case f =>
                 val mercs = traders.%(s => f.has(Mercenaries(s)) || f.has(Peacekeepers(s)))
@@ -1277,7 +1284,7 @@ trait GameImplicits {
                 f.ruleValue(c, mercs, friends) > (factions ++ game.unhired ++ DarkDeckExpansion.plague).but(f).diff(mercs).diff(friends)./(e => e.ruleValue(c, $, $)).maxOr(0)
         }
 
-        def ruleSelf(c : Clearing) = SquiresDeckExpansion.silverTongueRules(f, c) || f.ruleValue(c, $, $) > (factions ++ game.unhired ++ DarkDeckExpansion.plague).but(f)./(e => e.ruleValue(c, $, $)).maxOr(0)
+        def ruleSelf(c : Clearing) = SquiresDeckExpansion.silverTongueRules(f, c) || SimpleLandmarksExpansion.treeRules(f, c) || f.ruleValue(c, $, $) > (factions ++ game.unhired ++ DarkDeckExpansion.plague).but(f)./(e => e.ruleValue(c, $, $)).maxOr(0)
 
         def removeStuckEffect(effect : Effect) {
             if (f.effects.has(effect).not && f.dopple.has(effect)) {
@@ -1627,7 +1634,8 @@ trait GameImplicits {
 // `recorded` are the options the game was made with, as its first move records them; `options` adds the hidden options a rules
 // version (`RulesVersion`) stands for, so the rules check `options` and every game, old or new, plays the same
 class Game(val players : $[Player], val candidates : $[Faction], val recorded : $[Meta.O]) extends BaseGame with ContinueGame with LoggedGame {
-    val options : $[Meta.O] = RulesVersion.expand(recorded)
+    // a tournament game (TournamentDraft) adds the deck and the map picked in its draft (TournamentExpansion)
+    var options : $[Meta.O] = RulesVersion.expand(recorded)
 
     if (options.has(FactionSeatingGiven) || options.has(SetupOrderPriority))
         require(candidates.num == players.num)
@@ -1769,7 +1777,11 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             ActionDeckExpansion,
             DarkDeckExpansion,
 
+            // the tournament draft's steps, before the setup's own (tournament.scala)
+            TournamentExpansion,
+
             SetupExpansion,
+            SimpleLandmarksExpansion,
             MapsExpansion,
             CardsExpansion,
             CraftExpansion,
@@ -1821,7 +1833,8 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
 
     var highlightFaction : $[Faction] = $
 
-    val board : Board = options./~{
+    // a tournament game has no map until its draft picks one (TournamentExpansion): the Autumn map stands in until then
+    var board : Board = TournamentExpansion.boardOf(options).|(options./~{
         case AutumnMap => Some(AutumnBoard)
         case WinterMap => Some(WinterBoard)
         case LakeMap => Some(LakeBoard)
@@ -1836,7 +1849,14 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
         case DeepWoodsMap => Some(DeepWoodsBoard)
         case WastelandsMap => Some(WastelandsBoard)
         case _ => None
-    }.only
+    }.only)
+
+    // the tournament draft (TournamentDraft): the deck, map and Mountain landmark picked by the first three seats
+    var tournamentDeck : |[DeckOption] = None
+    var tournamentMap : |[MapOption] = None
+    var tournamentLandmark : |[Landmark] = None
+
+    def mapPending = options.has(TournamentDraft) && tournamentMap.none
 
     var scorched : $[Clearing] = $
     var flooded : $[Clearing] = $
@@ -1850,7 +1870,15 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     var foxburrow : $[Clearing] = $
     var rabbittown : $[Clearing] = $
 
-    def landmarks : $[Clearing] = ferry ++ tower ++ lostCity ++ mousehold ++ foxburrow ++ rabbittown
+    // Simple Landmarks (root/simple-landmarks.scala), and the turn the Birdsong Tower last scored at
+    var simpleForge : $[Clearing] = $
+    var simpleMarket : $[Clearing] = $
+    var birdsongTower : $[Clearing] = $
+    var royalTree : $[Clearing] = $
+    var birdsongTowerTurn : Int = -1
+    var landmarkDefaultsSet = false
+
+    def landmarks : $[Clearing] = ferry ++ tower ++ lostCity ++ mousehold ++ foxburrow ++ rabbittown ++ simpleForge ++ simpleMarket ++ birdsongTower ++ royalTree
 
     // Suits the Homeland landmarks add to their clearings, kept even when the printed suit is covered
     def landmarkSuits(c : Clearing) : $[BaseSuit] = mousehold.has(c).$(Mouse) ++ foxburrow.has(c).$(Fox) ++ rabbittown.has(c).$(Rabbit)
@@ -1997,7 +2025,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     val upstarts = new UpstartsState
     val sorcery = new SorceryState
 
-    def slots(c : Clearing) = OutsidersMaps.slots(c)(this).|(c.capacity) + UpstartsDeckExpansion.extraSlot(c)(this).??(1) + options.has(KeepExtraBuildingSlot).??(factions.of[Feline].%(game.states.contains).%(_.at(c).has(Keep)).num)
+    def slots(c : Clearing) = OutsidersMaps.slots(c)(this).|(c.capacity) + UpstartsDeckExpansion.extraSlot(c)(this).??(1) + royalTree.has(c).??(1) + options.has(KeepExtraBuildingSlot).??(factions.of[Feline].%(game.states.contains).%(_.at(c).has(Keep)).num)
 
     def freeSlots(c : Clearing) = WarriorsWake.shadowed(c)(this).?(0).|(freeSlots0(c))
 
@@ -2017,7 +2045,8 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     val cards = new ValueTracker[Card]
     Deck.frankenArt = options.has(FrankenDeck)
     Deck.darkArt = options.has(DarkDeck)
-    val playingDeck = Deck.fromOptions(options, players.num, players.of[Faction])
+    // a tournament game's deck is dealt when its draft picks it (TournamentExpansion)
+    val playingDeck = (options.has(TournamentDraft) && options.of[DeckOption].none).?($[DeckCard]()).|(Deck.fromOptions(options, players.num, players.of[Faction]))
     var frankenDealt = false
     val predrafts = players./(p => p -> cards.another[DeckCard]("draft-" + p)).toMap
     val pile = cards.another[DeckCard]("pile", playingDeck)
@@ -2113,6 +2142,10 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             (mousehold.has(c)).?(Figure(Neutral, Mousehold, 0)) ++
             (foxburrow.has(c)).?(Figure(Neutral, Foxburrow, 0)) ++
             (rabbittown.has(c)).?(Figure(Neutral, Rabbittown, 0)) ++
+            (simpleForge.has(c)).?(Figure(Neutral, SimpleForge, 0)) ++
+            (simpleMarket.has(c)).?(Figure(Neutral, SimpleMarket, 0)) ++
+            (birdsongTower.has(c)).?(Figure(Neutral, BirdsongTower, 0)) ++
+            (royalTree.has(c)).?(Figure(Neutral, RoyalTree, 0)) ++
             (scorched.contains(c)).??(0.to(11)./(n => Figure(Neutral, ScorchedEarthMarker(n % 6 + 1), n))) ++
             knights.%((_, o) => o == c).indices./(n => Figure(Neutral, GoldenKnightMarker, n)) ++
             ringAt.has(c).$(Figure(Neutral, RingMarker, 0)) ++
