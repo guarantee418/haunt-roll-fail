@@ -4239,6 +4239,35 @@ object Meta extends MetaGame {
         ImageAsset("cu-board-v1"       ) ::
         ImageAsset("cu-board-v2"       ) ::
         ImageAsset("cu-board-v3"       ) ::
+
+        ImageAsset("cu-track-v1-1") ::
+        ImageAsset("cu-track-v1-1-m") ::
+        ImageAsset("cu-track-v1-2") ::
+        ImageAsset("cu-track-v1-2-m") ::
+        ImageAsset("cu-track-v1-3") ::
+        ImageAsset("cu-track-v1-3-m") ::
+        ImageAsset("cu-track-v1-4") ::
+        ImageAsset("cu-track-v1-4-m") ::
+        ImageAsset("cu-track-v1-5") ::
+        ImageAsset("cu-track-v1-5-m") ::
+        ImageAsset("cu-track-v1-6") ::
+        ImageAsset("cu-track-v1-6-m") ::
+        ImageAsset("cu-track-v1-7") ::
+        ImageAsset("cu-track-v1-7-m") ::
+        ImageAsset("cu-track-v3-1") ::
+        ImageAsset("cu-track-v3-1-m") ::
+        ImageAsset("cu-track-v3-2") ::
+        ImageAsset("cu-track-v3-2-m") ::
+        ImageAsset("cu-track-v3-3") ::
+        ImageAsset("cu-track-v3-3-m") ::
+        ImageAsset("cu-track-v3-4") ::
+        ImageAsset("cu-track-v3-4-m") ::
+        ImageAsset("cu-track-v3-5") ::
+        ImageAsset("cu-track-v3-5-m") ::
+        ImageAsset("cu-track-v3-6") ::
+        ImageAsset("cu-track-v3-6-m") ::
+        ImageAsset("cu-track-v3-7") ::
+        ImageAsset("cu-track-v3-7-m") ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[Caster].any, "faction/caster")(
         ImageAsset("xc-glyph"          ) ::
