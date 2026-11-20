@@ -1137,6 +1137,15 @@ case object PCVedrfolnirNoTile extends GameOption with ToggleOption {
     def valueOn = "Vedrfolnir adds no map tile".txt
 }
 
+// PC version: Jötunn Blainn waits at the Jötnar Camp when the map is built with it, so a clan next to the camp can recruit him at
+// the Harvest. The camp was only set when its tile was explored, which never happens in the PC version's whole map, so he was
+// never there (Winter of Draugr, 2026-11-20). Hidden, and given to every new game (Meta.mandatoryFor); a running game can be
+// switched over with PCJotnarCampAction(X)
+case object PCJotnarCamp extends GameOption with ToggleOption {
+    val group = "PC version".txt
+    def valueOn = "Jötunn Blainn at his camp".txt
+}
+
 // Alternative victory with teams: a team wins only when its players fulfil every card in play, Thane or Jarl, as the Uncharted
 // Horizons rulebook says for 2 vs. 2 ("A team wins if each Victory Condition card is fulfilled by at least one player from the
 // same team"; 2026-11-07). Hidden, and given to every new game (Meta.mandatoryFor); older games keep Thane's Map Control
