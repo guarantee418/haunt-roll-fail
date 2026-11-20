@@ -101,7 +101,7 @@ object TurnPings {
     // the Discord user ID to ping for a seat: its ranking name's, if pings are on for it
     // (in a tournament game, unless turned off: the players gave their ID to be pinged in their table's thread)
     def mentionOf(user : String, tournament : Boolean = false) : Option[String] =
-        Ranking.seatNames().get(user).filter(k => if (tournament) setting(k) != Some(false) else pingsOn(k)).flatMap(Tournament.discordOf).filter(Tournament.isDiscordId)
+        Ranking.seatNames().get(user).filter(k => if (tournament) setting(k) != Some(false) else pingsOn(k)).flatMap(Tournament.discordId)
 
     def setting(k : String) : Option[Boolean] = rows(settings).filter(_.headOption.contains(k)).lastOption.flatMap(_.lift(1)).map(_ == "on")
 
@@ -120,7 +120,7 @@ object TurnPings {
 
     // the names a code holds: name, Discord, pings on or off
     def mine(key : String) : String =
-        Tournament.ownedKeys(key).toList.sorted.map(k => row(Tournament.display(k), Tournament.discordOf(k).getOrElse(""), if (pingsOn(k)) "on" else "off")).mkString("\n")
+        Tournament.ownedKeys(key).toList.sorted.map(k => row(Tournament.display(k), Tournament.discordOf(k).getOrElse(""), if (pingsOn(k)) "on" else "off", if (Tournament.storedId(k).nonEmpty) "ping" else "")).mkString("\n")
 
     // a tournament table's game: its table's own thread (Tournament.scala), which its players already follow
     def table(game : String) : Option[(Int, String)] = Tournament.cups().flatMap(c => c.tables.find(_.game == game).map(t => (c.n, t.id))).headOption

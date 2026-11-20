@@ -1451,6 +1451,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
     // Rankings (Elo, PlayerKey): every rated player, tapping one shows their games; the names this browser holds and its player code.
     // The look (2026-11-18) is the rk- classes in index.html: the faction glyphs and colours, rating badges, bars and the ladder rows.
+    // the server's answers to a Discord username (DiscordBot in good-game; 2026-11-20)
+    def discordNotFound = "No one on the Discord server has that username. Check the spelling (it's the name under your display name in your Discord profile), and join the server first if you haven't."
+
+    def discordNoBot = "Usernames can't be looked up yet, so give your Discord user ID for now. " + "In Discord, open Settings, then Advanced (on a phone, it's under App Settings), and turn on Developer Mode. Then tap or right-click your own name and pick Copy User ID: a long number like 123456789012345678. Your username can't ping you."
+
     def rankingsMenu() {
         val server = HRF.server.get
         val title = (meta.label + " Rankings").hl.spn(xstyles.larger110)
@@ -1719,7 +1724,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     r.trim match {
                         case "ok" if value.trim.nonEmpty => setPings(name, true)
                         case "ok" => discordPings()
-                        case "invalid" => says(("That isn't a Discord user ID. " + "In Discord, open Settings, then Advanced (on a phone, it's under App Settings), and turn on Developer Mode. Then tap or right-click your own name and pick Copy User ID: a long number like 123456789012345678. Your username can't ping you.").txt, |(() => askId(name)))
+                        case "invalid" => says("That isn't a Discord username or user ID.".txt, |(() => askId(name)))
+                        case "notfound" => says(discordNotFound.txt, |(() => askId(name)))
+                        case "nobot" => says(discordNoBot.txt, |(() => askId(name)))
                         case _ => says("Only the device that holds the name can set its Discord.".txt)
                     }
                 } { unreachable() }
@@ -1730,9 +1737,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             }
 
             def askId(name : String) {
-                val head = "Discord user ID for " + name
+                val head = "Discord username for " + name
                 ui.action.asker.iask(
-                    BasicOption(head, "In Discord, open Settings, then Advanced (on a phone, it's under App Settings), and turn on Developer Mode. Then tap or right-click your own name and pick Copy User ID: a long number like 123456789012345678. Your username can't ping you. Leave it empty to forget it.", Nil, null) ::
+                    BasicOption(head, "Your Discord username (or your user ID). You need to be a member of the Discord server. Leave it empty to forget it.", Nil, null) ::
                     InputOption(head, "", Nil, v => setId(name, v), _ => true) ::
                     BasicOption(" ", "Cancel", Nil, () => discordPings()))
             }
@@ -1741,14 +1748,15 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 val rows = text.split('\n').$.%(_.nonEmpty)./(_.split('\t').$ ++ $("", "", ""))
                 val group = heading("Discord turn pings")
                 ui.action.asker.zask(
-                    $(note(group, "Each online Root game gets its own post in the Discord server's games forum. When it becomes your turn, you are mentioned (pinged) there, unless you had the game open in the last minute or two. It needs your Discord user ID, not your username. Tournament games ping you in your table's thread whenever you gave your ID, unless you turn pings off here.".txt)) ++
+                    $(note(group, "Each online Root game gets its own post in the Discord server's games forum. When it becomes your turn, you are mentioned (pinged) there, unless you had the game open in the last minute or two. It needs your Discord username, and you need to be a member of the Discord server. Tournament games ping you in your table's thread whenever you gave it, unless you turn pings off here.".txt)) ++
                     rows.none.$(note(group, "This device holds no name yet. Join an online game, or use your code from another device.".txt)) ++
                     rows./~{ r =>
+                        // the fourth field: "ping" when the server has a user ID to ping (given, or a username the Discord bot found)
                         val (n, id, on) = (r(0), r(1), r(2) == "on")
-                        val digits = id.forall(_.isDigit) && id.nonEmpty
-                        $(ZBasic(heading(n), "Discord user ID: " ~ id.any.?(id.hh).|("not set".txt), () => askId(n))) ++
+                        val digits = id.any && (id.forall(_.isDigit) || r(3) == "ping")
+                        $(ZBasic(heading(n), "Discord: " ~ id.any.?(id.hh).|("not set".txt), () => askId(n))) ++
                         digits.$(ZBasic(heading(n), "Turn pings: " ~ on.?("On".hlb).|("Off".hh) ~ " (tap to turn " ~ on.?("off").|("on") ~ ")", () => setPings(n, on.not))) ++
-                        (id.any && digits.not).$(note(heading(n), id.hlb ~ " is a username, which can't be pinged: give your user ID instead."))
+                        (id.any && digits.not).$(note(heading(n), id.hlb ~ " wasn't found on the Discord server yet, so it can't be pinged: tap it to give it again."))
                     } ++
                     $(ZBasic(" ", Div("Back"), () => load()))
                 )
@@ -2092,13 +2100,15 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             ui.action.asker.iask(InputOption("Your name for the rankings and the tournament", "", Nil, v => signUp(v)) :: BasicOption(" ", "Cancel", Nil, () => load()))
         }
 
-        // the Discord a name's player gives, so its table's thread on the Discord server can mention them: a user ID pings, a
-        // username is only shown (a webhook can't look one up)
+        // the Discord a name's player gives, so its table's thread on the Discord server can mention them: a username, which the
+        // server's Discord bot looks up (DiscordBot in good-game; 2026-11-20), or a user ID
         def setDiscord(name : String, value : String) {
             postF(server + "/tournament/discord", PlayerKey.get + "\n" + name + "\n" + value.trim) { r =>
                 r.trim match {
                     case "ok" => load()
-                    case "invalid" => says(("That isn't a Discord user ID. " + "In Discord, open Settings, then Advanced (on a phone, it's under App Settings), and turn on Developer Mode. Then tap or right-click your own name and pick Copy User ID: a long number like 123456789012345678. Your username can't ping you.").txt)
+                    case "invalid" => says("That isn't a Discord username or user ID.".txt)
+                    case "notfound" => says(discordNotFound.txt)
+                    case "nobot" => says(discordNoBot.txt)
                     case _ => says("Only the device that holds the name can set its Discord.".txt)
                 }
             } { unreachable() }
@@ -2107,7 +2117,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         def askDiscord(name : String, first : Boolean) {
             val head = (if (first) "Signed up as " + name + ". " else "") + "Discord for " + name + " (optional)"
             ui.action.asker.iask(
-                BasicOption(head, "Each table gets its own thread on the Discord server. Give your Discord user ID to be mentioned (pinged) there. " + "In Discord, open Settings, then Advanced (on a phone, it's under App Settings), and turn on Developer Mode. Then tap or right-click your own name and pick Copy User ID: a long number like 123456789012345678. Your username can't ping you.", Nil, null) ::
+                BasicOption(head, "Each table gets its own thread on the Discord server. Give your Discord username to be mentioned (pinged) there. You need to be a member of the Discord server.", Nil, null) ::
                 InputOption(head, "", Nil, v => setDiscord(name, v), _ => true) ::
                 BasicOption(" ", first.?("Skip").|("Cancel"), Nil, () => load()))
         }
@@ -2137,7 +2147,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 open.any.??(owned.diff(signed)./(n => ZBasic(signGroup, "Sign up as " ~ n.hh, () => signUp(n)))) ++
                 open.any.$(ZBasic(signGroup, owned.any.?("Sign up with another name").|("Sign up"), () => askName())) ++
                 open.any.??(signed./(n => ZBasic(signGroup, "Withdraw " ~ n.hh, () => withdraw(n)))) ++
-                owned./(n => ZBasic("Discord".hl, "Discord for " ~ n.hh ~ ": " ~ discord.find(_.lift(1).exists(_.toLowerCase == n.toLowerCase))./~(_.lift(2))./(v => v.forall(_.isDigit).?(v.hh).|(v.hh ~ " (a username, which can't ping you: tap to give your user ID)".txt)).|("not set".txt), () => askDiscord(n, false))) ++
+                owned./(n => ZBasic("Discord".hl, "Discord for " ~ n.hh ~ ": " ~ discord.find(_.lift(1).exists(_.toLowerCase == n.toLowerCase))./~(_.lift(2))./(v => (v.forall(_.isDigit) || discord.exists(d => d.lift(2).has(v) && d.lift(3).has("ping"))).?(v.hh).|(v.hh ~ " (not found on the Discord server yet: tap to give it again)".txt)).|("not set".txt), () => askDiscord(n, false))) ++
                 open.none.$(note("Sign-ups".hl, "Sign-ups for the next tournament open when the final of this one starts.".txt)) ++
                 tables.groupBy(_(1)).toList.sortBy(-_._1.toIntOption.|(0))./~{ case (n, l) =>
                     val group = ("Tournament " + n + champions.find(_(1) == n)./(c => " · champion " + c(2)).|("") + cancelled.has(n).??(" · cancelled")).hl
