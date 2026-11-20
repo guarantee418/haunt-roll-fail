@@ -518,7 +518,7 @@ object Tournament {
     // "Name (@mention)" for a table's thread
     def tagged(k : String) = display(k) + discordOf(k).map(v => if (isDiscordId(v)) " (<@" + v + ">)" else " (@" + v + ")").getOrElse("")
 
-    // a player's Discord: an ID (17 to 20 digits) or a username, or "" to forget it
+    // a player's Discord user ID (17 to 20 digits), or "" to forget it
     def setDiscord(key : String, name : String, value : String) : String = synchronized {
         val k = Ranking.clean(name).toLowerCase
         val v = value.trim.stripPrefix("@").stripPrefix("<@").stripSuffix(">")
@@ -526,7 +526,8 @@ object Tournament {
         if (!ownedKeys(key).contains(k))
             "no"
         else
-        if (v.nonEmpty && !isDiscordId(v) && !(v.length >= 2 && v.length <= 32 && v.forall(c => c.isLetterOrDigit || c == '_' || c == '.')))
+        // only a user ID: a webhook can mention (ping) no one by username, and the usernames given first pinged no one (2026-11-20)
+        if (v.nonEmpty && !isDiscordId(v))
             "invalid"
         else {
             Files.createDirectories(dir)

@@ -8,7 +8,8 @@ import java.nio.file.{Files, Path, Paths}
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-// Discord turn pings (asked for on 2026-11-20): Root's online games each get a post (a thread) in the forum channel of the webhook
+// Discord turn pings (asked for on 2026-11-20): a tournament table's game pings in its table's thread (Tournament.scala); the
+// other Root online games each get a post (a thread) in the forum channel of the webhook
 // in HRF_DISCORD_TURNS_WEBHOOK (or the file discord-turns-webhook, set by the tournament change "turns <url>"), opened when the game
 // is created, with its players and spectator link, and a player is @mentioned there when it becomes their turn.
 //
@@ -98,10 +99,13 @@ object TurnPings {
         }.getOrElse("an open seat")
 
     // the Discord user ID to ping for a seat: its ranking name's, if pings are on for it
-    def mentionOf(user : String) : Option[String] =
-        Ranking.seatNames().get(user).filter(pingsOn).flatMap(Tournament.discordOf).filter(Tournament.isDiscordId)
+    // (in a tournament game, unless turned off: the players gave their ID to be pinged in their table's thread)
+    def mentionOf(user : String, tournament : Boolean = false) : Option[String] =
+        Ranking.seatNames().get(user).filter(k => if (tournament) setting(k) != Some(false) else pingsOn(k)).flatMap(Tournament.discordOf).filter(Tournament.isDiscordId)
 
-    def pingsOn(k : String) = rows(settings).filter(_.headOption.contains(k)).lastOption.flatMap(_.lift(1)).contains("on")
+    def setting(k : String) : Option[Boolean] = rows(settings).filter(_.headOption.contains(k)).lastOption.flatMap(_.lift(1)).map(_ == "on")
+
+    def pingsOn(k : String) = setting(k).contains(true)
 
     // "ok", or "no" for a name the code doesn't hold
     def setPings(key : String, name : String, on : Boolean) : String = synchronized {
@@ -118,10 +122,20 @@ object TurnPings {
     def mine(key : String) : String =
         Tournament.ownedKeys(key).toList.sorted.map(k => row(Tournament.display(k), Tournament.discordOf(k).getOrElse(""), if (pingsOn(k)) "on" else "off")).mkString("\n")
 
+    // a tournament table's game: its table's own thread (Tournament.scala), which its players already follow
+    def table(game : String) : Option[(Int, String)] = Tournament.cups().flatMap(c => c.tables.find(_.game == game).map(t => (c.n, t.id))).headOption
+
     def post(game : String, lobby : Lobby, text : String, ids : List[String]) {
-        webhook.foreach { url =>
-            val name = (if (lobby.title.nonEmpty) lobby.title else "Game " + game.take(6)) + " · " + metas.getOrElse(lobby.meta, lobby.meta)
-            Tournament.poster.execute(() => Tournament.post(url, text, game, name, ids, threads))
+        table(game) match {
+            case Some((n, id)) =>
+                Tournament.forumWebhook.orElse(Tournament.webhook).foreach { url =>
+                    Tournament.poster.execute(() => Tournament.post(url, text, Tournament.threadKey(n, id), Tournament.threadName(n, id), ids))
+                }
+            case None =>
+                webhook.foreach { url =>
+                    val name = (if (lobby.title.nonEmpty) lobby.title else "Game " + game.take(6)) + " · " + metas.getOrElse(lobby.meta, lobby.meta)
+                    Tournament.poster.execute(() => Tournament.post(url, text, game, name, ids, threads))
+                }
         }
     }
 
@@ -154,7 +168,7 @@ object TurnPings {
     // a client's report (Turns.report): the game asks these factions after the log's first index entries
     def report(game : String, index : Int, factions : List[String]) : Unit =
         try {
-            if (webhook.nonEmpty)
+            if (webhook.nonEmpty || table(game).nonEmpty)
                 lobbyOf(game).filter(l => metas.contains(l.meta)).foreach { l =>
                     val seats = l.lines.map(_.split(' ').toList).collect { case "user" :: f :: u :: _ => f -> u }.toMap
                     waiting(game, index, factions.flatMap(seats.get).toSet)
@@ -187,7 +201,7 @@ object TurnPings {
             return
         if (pings.get((game, user)).exists(now - _ < cooldown))
             return
-        val id = mentionOf(user).getOrElse(return)
+        val id = mentionOf(user, table(game).nonEmpty).getOrElse(return)
         val lobby = lobbyOf(game).getOrElse(return)
         if (!metas.contains(lobby.meta))
             return
