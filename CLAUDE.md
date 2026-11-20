@@ -1156,6 +1156,15 @@ server. No session can reach the server, and none needs to.
 - Tapping the Tundra map's blizzard, or one of the snowflakes marking the spots it may move to, says what it does: it blocks the
   way (path or river) between its two clearings, which aren't adjacent while it is there, and after every round it moves at random
   to one of its six spots, maybe the same (`"view-blizzard"` in `root/ui.scala`; asked for on 2026-10-31).
+- Simple Landmarks (the owner's own rules, 2026-11-20) are four toggles in their own setup section, "Simple Landmarks" (`SimpleLandmark`
+  in `root/meta.scala`), beside any Landmarks choice: Forge (a crafting piece of its clearing for anyone with pieces there, `forgeCraft` in
+  `frogCraft`), Market (once a turn, with pieces there, discard a card to draw one; offered in the phase menus), Birdsong Tower (ruling it
+  at the start of Birdsong scores 1, at `BirdsongStartAction`) and Royal Tree (one more building slot, `game.slots`, and on your turn you rule
+  it with any piece there, `treeRules` in `rules`), all in `root/simple-landmarks.scala` (its header lists the readings). They are placed at
+  setup like the other landmark toggles, where the Landmarks Pack's setup cards put them, after the map's own landmarks. Their pieces are the
+  Landmarks Pack's Legendary Forge, Black Market and Elder Treetop (`feature/simple-forge`, `simple-market`, `royal-tree`, cut from the Leder
+  Card Library cards by `root/tools/simple-landmarks-art.py`) and the Tower. They count as fan content for the rankings. `ReplayCheck <games>
+  base simplelm` plays them.
 - The Homeland landmarks Mousehold, Foxburrow and Rabbittown are landmark
   options on any map (`MouseholdLandmark` etc. in `root/meta.scala`). Each
   adds its suit to its clearing, kept when a Lilypad enclave covers the suit

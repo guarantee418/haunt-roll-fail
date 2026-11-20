@@ -211,6 +211,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case Mousehold => { DrawRect("mousehold", -80, -98, 160, 102) }
             case Foxburrow => { DrawRect("foxburrow", -85, -98, 170, 102) }
             case Rabbittown => { DrawRect("rabbittown", -77, -98, 154, 102) }
+            case SimpleForge => { DrawRect("simple-forge", -64, -91, 128, 91) }
+            case SimpleMarket => { DrawRect("simple-market", -59, -91, 118, 91) }
+            case BirdsongTower => { DrawRect("tower", -49, -145, 97, 153) }
+            case RoyalTree => { DrawRect("royal-tree", -53, -100, 105, 100) }
 
             case Wood => { DrawRect(pr + "wood", -45, -45, 90, 90) }
             case Sympathy => { DrawRect(pr + "sympathy", -45, -45, 90, 90) }
@@ -916,6 +920,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         case Mousehold => |("mousehold")
         case Foxburrow => |("foxburrow")
         case Rabbittown => |("rabbittown")
+        case _ => None
+    }
+
+    // the Simple Landmarks have no card: tapping one shows its rules
+    def simpleLandmark(p : Piece) : |[SimpleLandmark] = p @@ {
+        case SimpleForge => |(SimpleForgeLandmark)
+        case SimpleMarket => |(SimpleMarketLandmark)
+        case BirdsongTower => |(BirdsongTowerLandmark)
+        case RoyalTree => |(RoyalTreeLandmark)
         case _ => None
     }
 
@@ -1658,7 +1671,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         // Tapping a landmark on the map shows its card, and tapping a hireling's piece the hireling's card
         draws.foreach { d =>
-            landmarkCard(d.piece).foreach { _ =>
+            (landmarkCard(d.piece) || simpleLandmark(d.piece)./(_.name)).foreach { _ =>
                 pileTargets :+= ((d.rect.x - 20, d.rect.y - 20, d.rect.width + 40, d.rect.height + 40, ("view-landmark", d.piece, d.region)))
             }
 
@@ -5863,7 +5876,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         case ("view-landmark", p : Piece, r : Region) =>
             showOverlay(overlayFitX(
                 landmarkCard(p)./(c => Image("landmark-card:" + c, styles.landmarkcard)).|(Empty) ~
-                ((p == LostCity).?("Lost City").|(p.name).hh ~ " in " ~ r.elem).div
+                simpleLandmark(p)./(l => (l.elem ~ " in " ~ r.elem).div ~ l.explain.drop(1)./(_.div).merge).|(
+                ((p == LostCity).?("Lost City").|(p.name).hh ~ " in " ~ r.elem).div)
             ), onClick)
 
         // the Outsiders maps' own rules, with where the game stands (root/outsiders-maps.scala)
