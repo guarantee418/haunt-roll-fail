@@ -46,6 +46,7 @@ import scala.concurrent.duration.Duration
 //   bot <token>                       the Discord bot's token, so a username given on the Tournament page pings (DiscordBot.scala;
 //                                     the file discord-bot-token, "bot off" removes it); delete the change file once its .result is read
 //   guild <id>                        the Discord server the bot looks usernames up in, if not the webhook's (the file discord-guild)
+//   ping waiting                      pings every seat the games wait for at once (TurnPings.pingWaiting)
 //   discord <name> -> <username>      a name's Discord, for a player who didn't give it (a username the bot finds, or a user ID;
 //                                     "-> off" forgets it)
 // The Discord channel of the webhook in HRF_DISCORD_WEBHOOK (or the file discord-webhook) is invited to sign up, with the link to
@@ -540,7 +541,9 @@ object Tournament {
                             }
                         case _ => "not done: discord <name> -> <username or user ID>, or -> off"
                     }
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, bot, guild, discord or invite)"
+                // every seat the games wait for, pinged at once (TurnPings.pingWaiting; 2026-11-20)
+                case "ping" if rest == "waiting" => TurnPings.pingWaiting() + " pinged"
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, bot, guild, discord, ping waiting or invite)"
             }
 
             (if (word == "webhook" || word == "forum" || word == "turns" || word == "bot") word else line) + ": " + result
