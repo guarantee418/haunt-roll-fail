@@ -1954,7 +1954,8 @@ object Meta extends MetaGame {
         fixes ++
         settled ++
         retired ++
-        RulesVersion.all
+        RulesVersion.all ++
+        $(TournamentDraft)
 
     // The hidden options of rules fixes, each gating a fix so the games started before it replay the same (most new games get through
     // their RulesVersion); not listed in a game's log (OptionsAction)
@@ -2171,6 +2172,9 @@ object Meta extends MetaGame {
     // Rankings (asked for on 2026-11-18): every Root game (the standard setup, Advanced Setup and Mirror) goes to one ladder; each
     // faction is a side, so a Vagabond in a coalition wins beside its ally
     override def ranking = |("root")
+
+    // the tournament's tables are Advanced Setup games with the tournament draft (root/tournament.scala)
+    override def tournament = |("root-adset")
     override def rankingSides(g : G, winners : $[Any]) = rankSides(g, winners)
     override def rankingSeat(g : G, f : F) = rankSeat(g, f)
     override def rankingFan(g : G) = rankFan(g)
@@ -2724,7 +2728,7 @@ object Meta extends MetaGame {
     ConditionalAssetsList((factions, options) => true, "card/landmark", "landmark-card:", lzy = Laziness.OnDemand)(
         $("ferry", "lost-city", "tower", "mousehold", "foxburrow", "rabbittown")./(ImageAsset(_))
     ) ::
-    ConditionalAssetsList((factions, options) => options.has(AutumnMap), "autumn", "autumn:")(
+    ConditionalAssetsList((factions, options) => options.has(AutumnMap) || options.has(TournamentDraft), "autumn", "autumn:")(
         ImageAsset("map"          ,    "map-bright-new-expand" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
         ImageAsset("map-water"    ).makeLossless ::
@@ -2764,7 +2768,7 @@ object Meta extends MetaGame {
         ImageAsset("path-weald-mountain"        ) ::
         ImageAsset("path-weald-waterfall"       ) ::
     $) ::
-    ConditionalAssetsList((factions, options) => options.has(WinterMap), "winter", "winter:")(
+    ConditionalAssetsList((factions, options) => options.has(WinterMap) || options.has(TournamentDraft), "winter", "winter:")(
         ImageAsset("map"          ,    "map-bright" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
         ImageAsset("map-water"    ).makeLossless ::
@@ -2785,7 +2789,7 @@ object Meta extends MetaGame {
         ImageAsset("clearing-name-trench"       ) ::
         ImageAsset("clearing-name-wade"         ) ::
     $) ::
-    ConditionalAssetsList((factions, options) => options.has(LakeMap), "lake", "lake:")(
+    ConditionalAssetsList((factions, options) => options.has(LakeMap) || options.has(TournamentDraft), "lake", "lake:")(
         ImageAsset("map"          ,    "map-bright" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
         ImageAsset("map-water"    ).makeLossless ::
@@ -2806,7 +2810,7 @@ object Meta extends MetaGame {
         ImageAsset("clearing-name-vert"    ) ::
         ImageAsset("clearing-name-yard"    ) ::
     $) ::
-    ConditionalAssetsList((factions, options) => options.has(MountainMap), "mountain", "mountain:")(
+    ConditionalAssetsList((factions, options) => options.has(MountainMap) || options.has(TournamentDraft), "mountain", "mountain:")(
         ImageAsset("map"          ,    "map-bright" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
         ImageAsset("map-water"    ).makeLossless ::
@@ -2884,7 +2888,7 @@ object Meta extends MetaGame {
         ImageAsset("clearing-name-hovel" ) ::
         ImageAsset("clearing-name-deep-woods" ) ::
     $) ::
-    ConditionalAssetsList((factions, options) => options.has(MarshMap), "marsh", "marsh:")(
+    ConditionalAssetsList((factions, options) => options.has(MarshMap) || options.has(TournamentDraft), "marsh", "marsh:")(
         // new file names for the taller map (the new art shows more of the bottom), so browsers don't keep the cached ones
         ImageAsset("map"          , "map-art" ) ::
         ImageAsset("map-regions"  , "map-regions-2250").makeLossless ::
@@ -3021,7 +3025,7 @@ object Meta extends MetaGame {
         ImageAsset("clearing-name-gatehouse" ) ::
         ImageAsset("clearing-name-granary" ) ::
     $) ::
-    ConditionalAssetsList((factions, options) => options.has(GorgeMap), "gorge", "gorge:")(
+    ConditionalAssetsList((factions, options) => options.has(GorgeMap) || options.has(TournamentDraft), "gorge", "gorge:")(
         ImageAsset("map"          , "map-art" ) ::
         ImageAsset("map-regions"  ).makeLossless ::
         ImageAsset("map-water"    ).makeLossless ::

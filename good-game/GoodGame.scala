@@ -427,8 +427,16 @@ object GoodGame {
                         if (!ok || listed.distinct.size != listed.size)
                             complete(StatusCodes.Forbidden, "")
                         else
+                        {
                             // "X fan": played with fan-made content, left out of the ratings (MetaGame.rankingFan)
-                            plain(Ranking.report(journalId, l(0).safe.take(32), l(1).safeplus.take(128), (sides ++ (if (l.drop(2).contains("X fan")) List("X:fan") else Nil)).mkString(";")).toString)
+                            val all = (sides ++ (if (l.drop(2).contains("X fan")) List("X:fan") else Nil)).mkString(";")
+                            val first = Ranking.report(journalId, l(0).safe.take(32), l(1).safeplus.take(128), all)
+                            // a tournament table's result moves the tournament on (Tournament.scala)
+                            if (first)
+                                try Tournament.reported(journalId, all)
+                                catch { case e : Exception => println("Tournament result not taken: " + e) }
+                            plain(first.toString)
+                        }
                     }
                 }
             } ~
@@ -439,6 +447,36 @@ object GoodGame {
                     case "name" :: id :: n if id == u => Some(u -> n.mkString(" "))
                     case _ => None
                 } }.toMap))
+            } ~
+            // The Root tournament (Tournament.scala): its state, a sign-up or withdrawal with a ranking name and the player code,
+            // and the games of a player code's names
+            (get & path("tournament")) {
+                plain(Tournament.state())
+            } ~
+            (post & path("tournament" / "sign-up")) {
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        val l = body.split('\n').toList
+                        if (l.size < 4) complete(StatusCodes.Forbidden, "")
+                        else plain(try Tournament.signUp(l(0).trim.ascii, l(1).trim.safeplus, l(2).trim.safe, l(3).trim.safe) catch { case e : Exception => println("Tournament sign-up failed: " + e); "error" })
+                    }
+                }
+            } ~
+            (post & path("tournament" / "withdraw")) {
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        val l = body.split('\n').toList
+                        if (l.size < 2) complete(StatusCodes.Forbidden, "")
+                        else plain(Tournament.withdraw(l(0).trim.ascii, l(1).trim.safeplus))
+                    }
+                }
+            } ~
+            (post & path("tournament" / "mine")) {
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        plain(Tournament.mine(body.trim.ascii))
+                    }
+                }
             } ~
             (post & path("new-user")) {
                 decodeRequest {
@@ -569,6 +607,8 @@ object GoodGame {
         println("Started server.")
 
         Backup.start(db)
+
+        Tournament.start(db)
 
         // Webroot for Let's Encrypt HTTP-01 challenges (certbot --webroot -w good-game/acme)
         val acmeDir = new java.io.File("acme")

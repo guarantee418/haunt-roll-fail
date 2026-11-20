@@ -66,11 +66,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     val replayAsker = new NewAsker(replayPane.attach.appendContainer(Content.div(xlo.flexhcenter)(xlo.fullwidth), resources), resources.images.get)
 
-    lazy val mapid = game.board.id + ":"
-
     var map = new CachedBitmap(mapSmall.attach.parent)
 
     mapSmall.replace(Div(Div(title, styles.title), xstyles.overlay), resources)
+
+    // Everything worked out from the board, made again when the board changes: a tournament game (TournamentDraft) has its
+    // map picked in the draft, after the page has been drawn (2026-11-20)
+    class BoardView(val board : Board) {
+    lazy val mapid = board.id + ":"
 
     lazy val regions = new IndexedImageRegions[Region](new RawImage(resources.images.get(mapid + "map-regions")), 0, 0, game.board.clearings./(c => c -> XY(center(c)._1, center(c)._2)).toMap)
 
@@ -88,7 +91,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     lazy val scene = {
         val mp = resources.images.get(mapid + "map")
 
-        val d = options.has(AutumnMap).?(0).|(12)
+        val d = (board == AutumnBoard).?(0).|(12)
 
         new Scene($(layers.background, layers.clearings, layers.rule, pieces), mp.width, mp.height, Margins(d, d, d, d))
     }
@@ -142,6 +145,32 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             (xx, yy)
         }
     }
+
+    lazy val mp = resources.images.get(mapid + "map")
+    }
+
+    var boardView : BoardView = null
+
+    def view = {
+        if (boardView == null || boardView.board != game.board) {
+            boardView = new BoardView(game.board)
+            deadmp = null
+            oldPositions = $
+            oldGates = $
+            flagSpots.clear()
+        }
+
+        boardView
+    }
+
+    def mapid = view.mapid
+    def regions = view.regions
+    def pieces = view.pieces
+    def layers = view.layers
+    def scene = view.scene
+    def place = view.place
+    def findAnother = view.findAnother
+    def mp = view.mp
 
     case object FreeBuildingSlot extends Building
     case object Battle extends Token
@@ -382,7 +411,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     var oldPositions : $[DrawItem] = $
     var oldGates : $[Region] = $
 
-    lazy val mp = resources.images.get(mapid + "map")
     var deadmp : Bitmap = null
 
     val flags = mutable.Map[Faction, Bitmap]()
@@ -1023,7 +1051,34 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         catch { case _ : Throwable => }
     }
 
+    // a tournament game before its map is picked in the draft (TournamentDraft): no map yet, just a word on it
+    def drawPendingMap() {
+        val width = (map.node.clientWidth * dom.window.devicePixelRatio).round.toInt.max(1)
+        val height = (map.node.clientHeight * dom.window.devicePixelRatio).round.toInt.max(1)
+
+        val b = map.get(width, height)
+
+        b.canvas.style.width = "100%"
+        b.canvas.style.height = "100%"
+
+        val g = b.context
+        g.setTransform(1, 0, 0, 1, 0, 0)
+        g.clearRect(0, 0, b.width, b.height)
+
+        val size = (b.width / 24).max(12)
+        g.fillStyle = "#c0c0c0"
+        g.font = size + "px sans-serif"
+        g.textAlign = "center"
+        g.textBaseline = "middle"
+        g.fillText(translate("The map is picked in the tournament draft"), b.width / 2, b.height / 2, b.width - size)
+    }
+
     def drawMapUnsafe() {
+        if (game.mapPending) {
+            drawPendingMap()
+            return
+        }
+
         // The map images may still be loading (slow connections, phones);
         // retry instead of leaving the map blank until the next update
         if (resources.images.get(mapid + "map").complete.not || resources.images.get(mapid + "map-regions").complete.not) {
@@ -1096,7 +1151,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
         g.clearRect(0, 0, bitmap.width, bitmap.height)
 
-        val d = options.has(AutumnMap).?(0).|(12)
+        val d = (game.board == AutumnBoard).?(0).|(12)
         val dw = d
         val dh = d
 
