@@ -345,6 +345,9 @@ object ReplayCheck {
                         used += "paid with an Action! card" -> (used.getOrElse("paid with an Action! card", 0) + 1)
                     a.unwrap match {
                         case BattleCounterAmbushAction(_, _, ActionCard(_, _, SecretCancel), _, _, _) => used += "Secret! counter-ambush" -> (used.getOrElse("Secret! counter-ambush", 0) + 1)
+                        // "ldkd": the Knaves picking the order of their Nab move and the Fears it set off (NabFearsOrder)
+                        case _ : KnavesNabFearsFirstAction => used += "Nab: Fears first" -> (used.getOrElse("Nab: Fears first", 0) + 1)
+                        case _ : KnavesNabMoveFirstAction => used += "Nab: move first" -> (used.getOrElse("Nab: move first", 0) + 1)
                         case KnavesChooseCaptainAction(_, k) if doomedCap => used += ("captain " + k.name) -> (used.getOrElse("captain " + k.name, 0) + 1)
                         case CharacterRandomAction(_, c) if doomedVB => used += ("character " + c.name) -> (used.getOrElse("character " + c.name, 0) + 1)
                         case CharactersCombinationAction(t) if doomedVB => t.take(seating.of[Hero].num).foreach(c => used += ("character " + c.name) -> (used.getOrElse("character " + c.name, 0) + 1))
@@ -471,7 +474,18 @@ object ReplayCheck {
                             cap.foreach(x => used += ("offered " + x.unwrap.getClass.getSimpleName) -> (used.getOrElse("offered " + x.unwrap.getClass.getSimpleName, 0) + 1))
                             doom.foreach(x => used += ("offered " + x.unwrap.getClass.getSimpleName) -> (used.getOrElse("offered " + x.unwrap.getClass.getSimpleName, 0) + 1))
                             act.foreach(x => used += ("forced " + x.unwrap.getClass.getSimpleName) -> (used.getOrElse("forced " + x.unwrap.getClass.getSimpleName, 0) + 1))
-                            val a = if (act.any) act(0) else if (doom.any) doom(0) else if (cap0.any) cap0(0) else if (cap.any) cap(0) else if (turn.any) turn(0) else if (legend.any) legend(0) else if (expose.any) expose(0) else if (buy.any) buy(0) else if (l.num == 1) l(0) else new BotXX(f).ask(keep(l), 0)(game).immediate
+                            // the Nab move or the Fears first (NabFearsOrder), at random; and a Knaves menu offering Nab takes it half the time
+                            val nab = l.shuffle.%(_.is[Choice]).%(_.is[Info].not).%(_.unwrap match {
+                                case _ : KnavesNabFearsFirstAction | _ : KnavesNabMoveFirstAction => true
+                                case KnavesItemMainAction(_, KnavesNab, _) | KnavesItemAction(_, KnavesNab, _, _) => scala.util.Random.nextBoolean()
+                                case _ => false
+                            }).take(1)
+                            l.foreach(x => x.unwrap match {
+                                case KnavesItemMainAction(_, KnavesNab, _) | KnavesItemAction(_, KnavesNab, _, _) => used += "Nab offered" -> (used.getOrElse("Nab offered", 0) + 1)
+                                case _ : KnavesNabMoveFirstAction => used += "Nab order asked" -> (used.getOrElse("Nab order asked", 0) + 1)
+                                case _ =>
+                            })
+                            val a = if (nab.any) nab(0) else if (act.any) act(0) else if (doom.any) doom(0) else if (cap0.any) cap0(0) else if (cap.any) cap(0) else if (turn.any) turn(0) else if (legend.any) legend(0) else if (expose.any) expose(0) else if (buy.any) buy(0) else if (l.num == 1) l(0) else new BotXX(f).ask(keep(l), 0)(game).immediate
                             chosen = |(a)
                             a match {
                                 case _ if a.isSoft =>

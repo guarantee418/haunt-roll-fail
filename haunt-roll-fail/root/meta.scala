@@ -624,6 +624,15 @@ case object BanishCaptainsLast extends GameOption with ToggleOption {
     val valueOn = "Banish".hh ~ " Captains last"
 }
 
+// When the Knaves' Nab battle sets off the Lilypad Diaspora's Fears Come to Pass, the Fears and the Acting Captain's move after the Nab
+// have the same timing, and the Knaves (the active player) pick which resolves first (Root rules channel, 2026-11-20): moving first,
+// the Fears flip the Peaceful enclaves where the Knaves are after the move. The Fears always came first, during the battle's removal.
+// Hidden, in RulesVersion4; older games keep the old way so their replays don't change (NabFearsOrderAction switches a running one over).
+case object NabFearsOrder extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Nab".hh ~ " move or " ~ "Fears Come to Pass".hh ~ " first"
+}
+
 // With MountainSuitedLandmark, the landmark drawn for the Mountain's Tower clearing may be of that clearing's own suit (owner,
 // 2026-11-19): older games left those out. Hidden, in RulesVersion3; it only changes a setup draw, so running games need no switch.
 case object SuitedLandmarkAnySuit extends GameOption with ToggleOption {
@@ -2020,7 +2029,7 @@ object Meta extends MetaGame {
 
     // The hidden options of rules fixes, each gating a fix so the games started before it replay the same (most new games get through
     // their RulesVersion); not listed in a game's log (OptionsAction)
-    lazy val fixes : $[O] = $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes, BanishCaptainsLast, SuitedLandmarkAnySuit)
+    lazy val fixes : $[O] = $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes, BanishCaptainsLast, SuitedLandmarkAnySuit, NabFearsOrder)
 
     def unlisted : $[O] = fixes ++ settled ++ RulesVersion.all
 
@@ -4230,6 +4239,35 @@ object Meta extends MetaGame {
         ImageAsset("cu-board-v1"       ) ::
         ImageAsset("cu-board-v2"       ) ::
         ImageAsset("cu-board-v3"       ) ::
+
+        ImageAsset("cu-track-v1-1") ::
+        ImageAsset("cu-track-v1-1-m") ::
+        ImageAsset("cu-track-v1-2") ::
+        ImageAsset("cu-track-v1-2-m") ::
+        ImageAsset("cu-track-v1-3") ::
+        ImageAsset("cu-track-v1-3-m") ::
+        ImageAsset("cu-track-v1-4") ::
+        ImageAsset("cu-track-v1-4-m") ::
+        ImageAsset("cu-track-v1-5") ::
+        ImageAsset("cu-track-v1-5-m") ::
+        ImageAsset("cu-track-v1-6") ::
+        ImageAsset("cu-track-v1-6-m") ::
+        ImageAsset("cu-track-v1-7") ::
+        ImageAsset("cu-track-v1-7-m") ::
+        ImageAsset("cu-track-v3-1") ::
+        ImageAsset("cu-track-v3-1-m") ::
+        ImageAsset("cu-track-v3-2") ::
+        ImageAsset("cu-track-v3-2-m") ::
+        ImageAsset("cu-track-v3-3") ::
+        ImageAsset("cu-track-v3-3-m") ::
+        ImageAsset("cu-track-v3-4") ::
+        ImageAsset("cu-track-v3-4-m") ::
+        ImageAsset("cu-track-v3-5") ::
+        ImageAsset("cu-track-v3-5-m") ::
+        ImageAsset("cu-track-v3-6") ::
+        ImageAsset("cu-track-v3-6-m") ::
+        ImageAsset("cu-track-v3-7") ::
+        ImageAsset("cu-track-v3-7-m") ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[Caster].any, "faction/caster")(
         ImageAsset("xc-glyph"          ) ::
@@ -4809,9 +4847,14 @@ case object RulesVersion3 extends RulesVersion(3) {
     def fixes = RulesVersion2.fixes ++ $[Meta.O](SuitedLandmarkAnySuit)
 }
 
+// The Knaves pick whether the Nab move or the Diaspora's Fears Come to Pass resolves first (2026-11-20)
+case object RulesVersion4 extends RulesVersion(4) {
+    def fixes = RulesVersion3.fixes ++ $[Meta.O](NabFearsOrder)
+}
+
 object RulesVersion {
-    val all : $[RulesVersion] = $(RulesVersion1, RulesVersion2, RulesVersion3)
-    def latest : RulesVersion = RulesVersion3
+    val all : $[RulesVersion] = $(RulesVersion1, RulesVersion2, RulesVersion3, RulesVersion4)
+    def latest : RulesVersion = RulesVersion4
     def implied : $[Meta.O] = all./~(_.fixes).distinct
 
     def expand(l : $[Meta.O]) : $[Meta.O] = l ++ l.of[RulesVersion]./~(_.fixes).distinct.diff(l)

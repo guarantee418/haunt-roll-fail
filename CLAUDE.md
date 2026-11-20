@@ -861,6 +861,13 @@ server. No session can reach the server, and none needs to.
   Movement as Betrayal (2026-11-08) the Eyrie's battle at Effigy flipped Effigy and Lower Jaw but only Effigy, listed first, got a frog.
   New games get the hidden default option `FearsAfterRemoval`; older games keep the old way, and a running game can be switched over
   with `FearsAfterRemovalAction(X)`.
+- When the Knaves' Nab battle sets off Lilypad Diaspora's Fears Come to Pass, the Knaves (the active player) pick whether the Fears
+  or the Acting Captain's move after the Nab resolves first, as they have the same timing (Root rules channel, 2026-11-20): moving first,
+  the Fears flip the Peaceful enclaves where the Knaves are after the move. The Fears wait in `nabFears` (`InvasiveEEEPlayer`) for the
+  battle's end, where `KnavesNabAfterAction` asks (`KnavesNabFearsFirstAction`, `KnavesNabMoveFirstAction` in `root/faction-knaves.scala`),
+  only when the Captain can move and the Diaspora has a Peaceful enclave; a Nab move put first sets them off when it is done or skipped.
+  The Fears always came first, during the battle's removal. New games get the hidden `NabFearsOrder`, in `RulesVersion4`; a running game
+  can be switched over with `NabFearsOrderAction(X)`. `ReplayCheck <games> ldkd` takes Nab half the times it is offered and picks the order at random.
 - An Entreat (17.2.4) asks the Twilight Council to gain a Loyalist or place some in the clearing only when it has Loyalists it could
   place there; otherwise it gains one without being asked, or nothing happens when it can't (`CouncilEntreatAction` in
   `root/faction-council.scala`; 2026-10-29: the Council was asked only to "place 0"). New games get the hidden default option
@@ -1098,6 +1105,10 @@ server. No session can reach the server, and none needs to.
   screen the map is now capped at the height the window had before (`mapMaxHeight`, remembered per screen width as
   `root.windowed-height.<width>`, else 90% of the screen; `FullDimPane`'s `maxHeight` in `panes-again.scala`), so the
   side panes keep their width and the action pane takes the extra height. Other games don't pass `maxHeight`.
+- Chancellor's Utopia (fan, `root/faction-utopia.scala`) shows its Corruption track on its player panel (2026-11-20, asked for on
+  Discord): the seven spaces cut from its board (`cu-track-<v1|v3>-<n>`, `Utopia.trackBoard`, by `root/tools/utopia-track.py`), each
+  space above the corruption with a morality token drawn on it (`-m`); space 1 never has one, so at corruption 1 no space is
+  emptied but the first. Display only.
 - The Twilight Council's Loyalists on its player panel are drawn head down, hanging like bats (`styles.hanging` in
   `root/styles.scala`; 2026-11-17). Display only.
 - Tapping a Root faction's status pane opens its overlay (`onFactionStatus` in
