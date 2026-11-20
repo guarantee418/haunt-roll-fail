@@ -1106,6 +1106,15 @@ server. No session can reach the server, and none needs to.
   map or deck, `game.options` and `game.board` are vars set by the picks, and `root/ui.scala` rebuilds its board view
   (`BoardView`) when the board changes and draws no map until it is picked (`game.mapPending`). `ReplayCheck <games> official
   tournament` plays it.
+- Discord turn pings (asked for on 2026-11-20; `good-game/TurnPings.scala`, its header has the rules and files): each online Root game
+  (`root`, `root-adset`; `TurnPings.metas`) gets a post (a thread) in the forum channel of the webhook `HRF_DISCORD_TURNS_WEBHOOK` or
+  the file `discord-turns-webhook` (set by the tournament change `turns <url>`; the owner's "Command Warren" webhook, forum #root-games)
+  when its lobby is written, naming its players and its spectator link, and a seat is @mentioned there when the game starts waiting for
+  it, a minute later, unless the game moved on, its player read the game in the last 90 seconds, or it was pinged in that game in the
+  last 10 minutes. The server can't read a game: it takes the factions asked from the clients' turn reports (`/turn`,
+  `good-game/Turns.scala`, which calls `TurnPings.report`) and the lobby's "user <faction> <user>" lines. Only seats under a ranking name whose owner gave a Discord user
+  ID and turned pings on ("Discord turn pings" under Rankings, `discordPings` in `rankingsMenu`; `/discord/mine`, `/discord/pings`,
+  `tournament/discord-pings.tsv`; setting an ID there turns them on) are mentioned.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.

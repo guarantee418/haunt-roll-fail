@@ -471,6 +471,23 @@ object GoodGame {
                     }
                 }
             } ~
+            // the names a player code holds, with their Discord and turn pings; and turning the pings on or off
+            (post & path("discord" / "mine")) {
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        plain(TurnPings.mine(body.trim.ascii))
+                    }
+                }
+            } ~
+            (post & path("discord" / "pings")) {
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        val l = body.split('\n').toList
+                        if (l.size < 3) complete(StatusCodes.Forbidden, "")
+                        else plain(TurnPings.setPings(l(0).trim.ascii, l(1).trim.safeplus, l(2).trim == "on"))
+                    }
+                }
+            } ~
             (post & path("tournament" / "withdraw")) {
                 decodeRequest {
                     entity(as[String]) { body =>
@@ -601,6 +618,7 @@ object GoodGame {
                 val log = execute(hasRight(userId, userSecret, journalId, "read") {
                     entries.filter(_.journalId === journalId).filter(_.index >= from).map(_.text).result
                 })
+                TurnPings.read(userId, journalId)
                 plain(log.mkString("\n"))
             } ~
             (post & path("append" / Segment / Segment / Segment / IntNumber)) { (userId, userSecret, journalId, from) =>
@@ -618,6 +636,9 @@ object GoodGame {
                                 execute(hasRight(userId, userSecret, journalId, "append") {
                                     entries ++= 0.until(ss.size).map(n => Entry(journalId, from + n, userId, ss(n)))
                                 })
+                                // a new game's lobby: its Discord post (TurnPings.scala)
+                                if (from == 0 && ss.exists(_.startsWith("server ")))
+                                    TurnPings.lobbyWritten(journalId, ss)
                                 complete(StatusCodes.Accepted)
                             }
                         }

@@ -26,6 +26,7 @@ object Turns {
 
         if (keep && !turns.get(journal).contains((n, factions))) {
             turns += journal -> (n, factions)
+            TurnPings.report(journal, n, factions)
             write(file, lines(turns.toList.sortBy(_._1).map { case (j, (n, ff)) => row(j, n, ff.mkString(" ")) }))
         }
     }

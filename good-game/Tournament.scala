@@ -40,6 +40,8 @@ import scala.concurrent.duration.Duration
 //   forum <url>                       a forum channel's webhook for the tables' threads (the file discord-forum-webhook;
 //                                     "forum off" removes it); delete the change file once its .result says "set"
 //   invite                            posts the invitation to sign up again
+//   turns <url>                       the webhook of the channel for turn pings and new games (TurnPings.scala; the file
+//                                     discord-turns-webhook, "turns off" removes it); delete the change file once its .result says "set"
 // The Discord channel of the webhook in HRF_DISCORD_WEBHOOK (or the file discord-webhook) is invited to sign up, with the link to
 // the Tournament page, once for each tournament as soon as its sign-ups open and a webhook is set (at the server's start, when the
 // webhook is set, when a final starts or a tournament is cancelled; asked for on 2026-11-20, as nobody could find the page), told
@@ -455,10 +457,24 @@ object Tournament {
                     else
                         "not done: forum <https://discord.com/api/webhooks/...> or forum off"
                 case "invite" => invite(true)
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum or invite)"
+                // the channel (a forum: a post for each game) for the turn pings and new games (TurnPings.scala; 2026-11-20)
+                case "turns" =>
+                    if (rest.startsWith("https://discord.com/api/webhooks/") || rest.startsWith("https://discordapp.com/api/webhooks/")) {
+                        Files.write(Paths.get("discord-turns-webhook"), (rest + "\n").getBytes(UTF_8))
+                        Files.deleteIfExists(TurnPings.threads)
+                        plainChannels = Set()
+                        "set"
+                    }
+                    else if (rest == "off") {
+                        Files.deleteIfExists(Paths.get("discord-turns-webhook"))
+                        "removed"
+                    }
+                    else
+                        "not done: turns <https://discord.com/api/webhooks/...> or turns off"
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns or invite)"
             }
 
-            (if (word == "webhook" || word == "forum") word else line) + ": " + result
+            (if (word == "webhook" || word == "forum" || word == "turns") word else line) + ": " + result
         }
     }
 
@@ -489,7 +505,7 @@ object Tournament {
     def threadKey(n : Int, id : String = "") = if (id == "") n.toString else n + " " + id
     def threadName(n : Int, id : String = "") = "Root Tournament " + n + (if (id == "") "" else if (id == finalId) " · Final" else " · Table " + id)
 
-    def threadOf(key : String) : Option[String] = rows(threads).filter(_.headOption.contains(key)).lastOption.flatMap(_.lift(1))
+    def threadOf(key : String, file : Path = threads) : Option[String] = rows(file).filter(_.headOption.contains(key)).lastOption.flatMap(_.lift(1))
 
     // the posts go out one at a time, in order, so a thread exists before the next post to it
     lazy val poster = java.util.concurrent.Executors.newSingleThreadExecutor()
@@ -546,7 +562,7 @@ object Tournament {
     // the webhook's channel took a plain post after refusing a thread (Discord text channels do)
     @volatile var plainChannels = Set[String]()
 
-    def post(url : String, text : String, key : String, name : String, ids : List[String]) {
+    def post(url : String, text : String, key : String, name : String, ids : List[String], file : Path = threads) {
         def send(fields : String, query : String) = {
             val body = "{\"content\":" + json(text.take(1900)) + ",\"allowed_mentions\":{\"parse\":[],\"users\":[" + ids.map(json).mkString(",") + "]}" + fields + "}"
             val request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(url + "?wait=true" + query))
@@ -571,7 +587,7 @@ object Tournament {
         def fresh() = {
             val r = send(",\"thread_name\":" + json(name.take(100)), "")
             if (ok(r))
-                "\"channel_id\"\\s*:\\s*\"(\\d+)\"".r.findFirstMatchIn(r.body).foreach(m => Ranking.append(threads, row(key, m.group(1))))
+                "\"channel_id\"\\s*:\\s*\"(\\d+)\"".r.findFirstMatchIn(r.body).foreach(m => Ranking.append(file, row(key, m.group(1))))
             r
         }
 
@@ -580,7 +596,7 @@ object Tournament {
             // a channel that took no thread (a text channel) is tried first after that, until it refuses a plain post
             val plain = () => { val r = send("", "") ; plainChannels = if (ok(r)) plainChannels + url else plainChannels - url ; r }
             val inThread = List[() => java.net.http.HttpResponse[String]](
-                () => threadOf(key).map(t => send("", "&thread_id=" + t)).getOrElse(null),
+                () => threadOf(key, file).map(t => send("", "&thread_id=" + t)).getOrElse(null),
                 () => fresh())
             val r = (if (plainChannels.contains(url)) plain +: inThread else inThread :+ plain).foldLeft(null : java.net.http.HttpResponse[String]) { (last, f) =>
                 if (last != null && (ok(last) || last.statusCode / 100 != 4)) last else Option(f()).getOrElse(last)
