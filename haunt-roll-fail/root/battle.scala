@@ -412,7 +412,7 @@ object BattleExpansion extends MandatoryExpansion {
             def skip = Ask(b.defender).add(then.as("No " ~ "Ambush".hl))
 
             val ask =
-            if (b.attacker.has(ScoutingParty))
+            if (b.attacker.has(ScoutingParty) && options.has(CapitalistsDeck).not)
                 skip
             else
             if (b.defender.hand.none)
@@ -807,7 +807,10 @@ object BattleExpansion extends MandatoryExpansion {
 
                     if (f.can(BrutalTactics))
                         if (f == b.attacker && fh + fe < ot)
-                            actions :+= BrutalTacticsAction(f, b.defender, BattlePostRollAction(b, fh, oh, fe + 1, oe, full))
+                            if (options.has(CapitalistsDeck))
+                                actions :+= CapitalistsDeckExpansion.brutal(f, b, BattlePostRollAction(b, fh, oh, fe + 1, oe, full))
+                            else
+                                actions :+= BrutalTacticsAction(f, b.defender, BattlePostRollAction(b, fh, oh, fe + 1, oe, full))
 
                     if (f.used.has(NightTerrors))
                         if (f == b.attacker && fh + fe < ot)
