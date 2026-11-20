@@ -1234,8 +1234,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 }) } ++
                 $(ZBasic(title, "Play Online".hlb, (HRF.server.any && HRF.offline.not).??(() => goOnline()))) ++
                 (meta.ranking.any && HRF.server.any && HRF.offline.not).$(ZBasic(title, "Rankings".hhb, () => goRankings())) ++
-                // the site's tournament, on the menu of the game whose tournament it is (Root's, played in Advanced Setup)
-                (meta.tournament.exists(_ != meta.name) && HRF.server.any && HRF.offline.not).$(ZBasic(title, "Tournament".hhb, () => goTournament()))
+                // the site's tournament, on the menu of the game whose tournament it is (Root's, played in Advanced Setup), and on
+                // the menu of the meta its games use (Root's Adset, 2026-11-20), where it opens that game's Tournament page
+                (meta.tournament.exists(_ != meta.name) && HRF.server.any && HRF.offline.not).$(ZBasic(title, "Tournament".hhb, () => goTournament())) ++
+                (meta.tournament.has(meta.name) && HRF.server.any && HRF.offline.not).??(
+                    HRF.metas.%(m => m.name != meta.name && m.tournament.has(meta.name)).take(1)./(m => ZBasic(title, "Tournament".hhb, () => dom.document.location.assign("/play/" + m.name + "/tournament"))))
             ) ++
             meta.intLinks./((t, l) => ZBasic("Other", t, () => {
                 HRF.metas.%(_.name == l).single./{ m =>

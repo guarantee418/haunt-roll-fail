@@ -1062,7 +1062,8 @@ server. No session can reach the server, and none needs to.
   last faction drawn, if insurgent, can't be picked until a militant faction (`AdvancedSetup.militant` in `root/setup.scala`: Marquise,
   Eyrie, Duchy, Hundreds, Keepers, and the Lilypad Diaspora, which the draw now counts too) has been, and the draft's heading says so. Games with neither option (started before it) draft as before.
 - The Root tournament (asked for on 2026-11-20): "Tournament" on the Root menu (`tournamentMenu` in `hrf.scala`, URL
-  `/play/root/tournament`, `Meta.tournament` names the meta its games use) signs players up with their ranking name; the
+  `/play/root/tournament`, `Meta.tournament` names the meta its games use; Root's Adset menu has the button too, opening that page,
+  2026-11-20) signs players up with their ranking name; the
   16th sign-up starts it, and the server (`good-game/Tournament.scala`, its header has the files and the hand changes,
   `tournament-changes/<name>.txt` in `hrf-games`) makes four Advanced Setup tables of four itself, from the version and
   options a client sent with its sign-up (`Meta.tournamentOptions` in `root/meta-adset.scala`: official factions without the
