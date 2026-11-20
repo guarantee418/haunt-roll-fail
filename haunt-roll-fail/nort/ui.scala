@@ -1849,6 +1849,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             None
     }
 
+    // The bot playing a clan (or its Adset seat) and its level, None for a person: the seats the game was started with know it
+    // (callbacks.bot); a bot they don't know (a game opened some other way) is just "Bot"
+    def playerType(f : Faction) : Option[String] =
+        if (f == Automa)
+            |("Level " + AutomaExpansion.level(game))
+        else
+            callbacks.bot(game.ftp(f)).orElse(game.human(f).not.?("Bot"))
+
     def factionStatus(f : Faction) {
         val container = statusPane(game.ftp(f))
 
@@ -1863,13 +1871,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             return
         }
 
-        // Robotos: a tag beside the clan name; tapping it lists the cheats
-        val robotos = game.robotos(f).?(" ".txt ~ OnClick(RobotosInfo(f), "(Robotos)".spn(styles.tappable)(xlo.pointer))).|(Empty)
+        // Who plays the clan: a person, or a bot and its level ("Easy", "Hard", "Robotos", the Automa's level); tapping it says more
+        // (Robotos: lists the cheats, as the "(Robotos)" tag did)
+        val playedBy = game.robotos(f).?(OnClick(RobotosInfo(f), (BotIcon() ~ " Robotos").spn(styles.tappable)(xlo.pointer))).|(
+            playerType(f)./(t => OnClick(PlayerTypeInfo(f), (BotIcon() ~ " " ~ t).spn(styles.tappable)(xlo.pointer))).|(
+                OnClick(PlayerTypeInfo(f), HumanIcon().spn(styles.tappable)(xlo.pointer))))
 
         // The first player marker beside the name
         val first = (game.first == f).?(" ".txt ~ FirstPlayerIcon()).|(Empty)
 
-        val title = Div(Div(name ~ first ~ robotos), styles.smallname, styles.titleLine, xlo.pointer)
+        val title = Div(Div(name ~ first ~ " ".txt ~ playedBy), styles.smallname, styles.titleLine, xlo.pointer)
 
         val state = game.states(f)
 
@@ -3025,6 +3036,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
 
         case WinterChart(f) =>
             showOverlay(overlayScrollX(winterChart(f)).onClick, onClick)
+
+        case PlayerTypeInfo(f) =>
+            val text = playerType(f) match {
+                case Some(t) if f == Automa => f.elem ~ " is the " ~ "Automa".hl ~ " (Solo module), at " ~ t.hl ~ ", playing by its own cards."
+                case Some("Easy") => f.elem ~ " is played by the " ~ "Easy".hl ~ " bot, which picks its moves at random."
+                case Some("Hard") => f.elem ~ " is played by the " ~ "Hard".hl ~ " bot, which tries each choice on the game and picks the one that leaves it best placed."
+                case Some(t) => f.elem ~ " is played by a bot (" ~ t.hl ~ ")."
+                case None => f.elem ~ " is played by a " ~ "person".hl ~ "."
+            }
+            showOverlay(overlayScrollX(text.div).onClick, onClick)
 
         case RobotosInfo(f) =>
             showOverlay(overlayScrollX((f.elem ~ " is played by " ~ "Robotos".hl ~ ", the Hard bot with cheats:").div ~ RobotosExpansion.cheats./(_.txt.div).merge).onClick, onClick)
