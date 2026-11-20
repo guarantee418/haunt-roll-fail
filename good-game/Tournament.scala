@@ -46,6 +46,8 @@ import scala.concurrent.duration.Duration
 //   bot <token>                       the Discord bot's token, so a username given on the Tournament page pings (DiscordBot.scala;
 //                                     the file discord-bot-token, "bot off" removes it); delete the change file once its .result is read
 //   guild <id>                        the Discord server the bot looks usernames up in, if not the webhook's (the file discord-guild)
+//   discord <name> -> <username>      a name's Discord, for a player who didn't give it (a username the bot finds, or a user ID;
+//                                     "-> off" forgets it)
 // The Discord channel of the webhook in HRF_DISCORD_WEBHOOK (or the file discord-webhook) is invited to sign up, with the link to
 // the Tournament page, once for each tournament as soon as its sign-ups open and a webhook is set (at the server's start, when the
 // webhook is set, when a final starts or a tournament is cancelled; asked for on 2026-11-20, as nobody could find the page), told
@@ -504,7 +506,41 @@ object Tournament {
                     if (rest == "off") { Files.deleteIfExists(Paths.get("discord-guild")) ; "removed" }
                     else if (isDiscordId(rest)) { Files.write(Paths.get("discord-guild"), (rest + "\n").getBytes(UTF_8)) ; DiscordBot.found.clear() ; "set" }
                     else "not done: guild <the server's ID> or guild off"
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, bot, guild or invite)"
+                // a name's Discord, set by the owner for a player who didn't give it (2026-11-20, matched from the server's member
+                // list): discord <name> -> <username or user ID>, looked up by the Discord bot like one given on the Tournament page;
+                // discord <name> -> off forgets it
+                case "discord" =>
+                    rest.split(" -> ").toList.map(_.trim) match {
+                        case name :: value :: Nil if name.nonEmpty =>
+                            val k = key(name)
+                            val v = value.stripPrefix("<@").stripPrefix("@").stripSuffix(">").trim
+                            if (!Ranking.displays().contains(k))
+                                "not done: no such ranking name"
+                            else if (v == "off") {
+                                Files.createDirectories(dir)
+                                Ranking.append(discords, row(k, ""))
+                                "forgotten"
+                            }
+                            else if (isDiscordId(v)) {
+                                Files.createDirectories(dir)
+                                Ranking.append(discords, row(k, v))
+                                "set"
+                            }
+                            else if (!isUsername(v))
+                                "not done: not a Discord username or user ID"
+                            else if (!DiscordBot.configured)
+                                "not done: no Discord bot (the bot change) to look the username up"
+                            else DiscordBot.lookup(v) match {
+                                case DiscordBot.Found(id) =>
+                                    Files.createDirectories(dir)
+                                    Ranking.append(discords, row(k, DiscordBot.cleanName(v), id))
+                                    "set (found)"
+                                case DiscordBot.NotFound => "not done: no member of the Discord server has that name"
+                                case DiscordBot.Unavailable => "not done: Discord couldn't be asked; try again"
+                            }
+                        case _ => "not done: discord <name> -> <username or user ID>, or -> off"
+                    }
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, bot, guild, discord or invite)"
             }
 
             (if (word == "webhook" || word == "forum" || word == "turns" || word == "bot") word else line) + ": " + result

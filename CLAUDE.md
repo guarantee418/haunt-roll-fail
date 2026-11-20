@@ -1120,7 +1120,8 @@ server. No session can reach the server, and none needs to.
   `HRF_DISCORD_BOT_TOKEN` or the file `discord-bot-token`, set by the tournament change `bot <token>`; the server is the
   announcements' webhook's, or `guild <id>`), a username is looked up among the server's members when given (`Tournament.setDiscord`;
   "notfound" if no member has it) and kept with the user ID found (`tournament/discord.tsv`'s third field, `Tournament.discordId`,
-  used by the threads and the turn pings); without the bot only user IDs are taken ("nobot"). The bot needs the Server Members
+  used by the threads and the turn pings); without the bot only user IDs are taken ("nobot"). The owner can set a name's Discord for a player
+  who didn't give it with the tournament change `discord <name> -> <username or user ID>` (`-> off` forgets it). The bot needs the Server Members
   Intent and only to be in the server. Keep its token out of this repository.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
