@@ -1075,8 +1075,8 @@ server. No session can reach the server, and none needs to.
   at the server's start, when the webhook is set, when a final starts or a tournament is cancelled; the `invite` change posts it
   again; asked for on 2026-11-20, as nobody could find the page, which is only on the Root menu), and at 8, 12 and 15 sign-ups.
   `Tournament.start` takes the server's URL argument for the link. The games have the hidden `TournamentDraft` (`root/tournament.scala`):
-  the factions are drawn first (the flop), the first seat picks the deck, the second the map, on the Mountain the third what
-  goes in the Tower's clearing (the Tower or a suited landmark), then the factions are picked as usual; the game starts with no
+  the factions are drawn first (the flop), the first seat picks the deck, the second the map, on the Mountain the third the one
+  landmark for the Tower's clearing (the Tower, a suited landmark or the Birdsong Tower), then the factions are picked as usual; the game starts with no
   map or deck, `game.options` and `game.board` are vars set by the picks, and `root/ui.scala` rebuilds its board view
   (`BoardView`) when the board changes and draws no map until it is picked (`game.mapPending`). `ReplayCheck <games> official
   tournament` plays it.
