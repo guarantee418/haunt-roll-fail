@@ -478,6 +478,34 @@ object GoodGame {
                     }
                 }
             } ~
+            // A player's own online games (2026-11-20): every seat a name the player code holds was claimed for, newest first, as
+            // "meta, title, the seat's secret (its link), name, done" with done 1 once the game's result is in
+            (post & path("my-games")) {
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        val kk = Tournament.ownedKeys(body.trim.ascii)
+                        val seated = Ranking.seatsOf(kk)
+                        if (seated.isEmpty)
+                            plain("")
+                        else {
+                            val ps = execute(plays.filter(_.userId inSet seated.map(_._1)).result)
+                            val info = execute(entries.filter(_.journalId inSet ps.map(_.journalId).distinct)
+                                .filter(e => (e.text like "meta %") || (e.text like "title %") || (e.text like "server %"))
+                                .map(e => (e.journalId, e.text)).result)
+                                .groupBy(_._1).view.mapValues(_.map(_._2.split(" ", 2).toList).collect { case k :: v :: Nil => k -> v }.toMap).toMap
+                            val done = Ranking.recorded().flatMap(_.headOption).toSet
+                            val dd = Ranking.displays()
+                            plain(seated.flatMap { case (u, k) =>
+                                ps.filter(_.userId == u).flatMap { p =>
+                                    info.get(p.journalId).filter(m => m.contains("meta") && m.contains("server")).map { m =>
+                                        Backup.row(m("meta"), m.getOrElse("title", ""), p.secret, dd.getOrElse(k, k), if (done.contains(m("server"))) "1" else "0")
+                                    }
+                                }
+                            }.distinct.mkString("\n"))
+                        }
+                    }
+                }
+            } ~
             (post & path("new-user")) {
                 decodeRequest {
                     entity(as[String]) { body =>

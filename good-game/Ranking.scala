@@ -61,6 +61,12 @@ object Ranking {
 
     def seatNames() : Map[String, String] = rows(seats).collect { case u :: k :: _ => u -> k }.toMap
 
+    // the seats (users) under the given names, newest first, each with the name it plays under now
+    def seatsOf(kk : Set[String]) : List[(String, String)] = {
+        val now = seatNames()
+        rows(seats).collect { case u :: _ => u }.reverse.distinct.flatMap(u => now.get(u).filter(kk.contains).map(u -> _))
+    }
+
     // "ok\n<name as claimed>" when the name is free (now claimed with this key) or already claimed with it, else "taken";
     // the seat then plays under it
     def claim(user : String, name : String, key : String) : String = synchronized {

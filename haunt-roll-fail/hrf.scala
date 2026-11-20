@@ -2180,7 +2180,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
     }
 
     // tour: the player's tournament games (good-game/Tournament.scala), shown at the top once the server has said which
-    def onlineGame(tour : |[$[$[String]]] = None) {
+    // mine: the player's own games from the server (good-game "my-games"), shown while their names are claimed on this device;
+    // the completed ones in a folder, open when doneOpen (2026-11-20)
+    def onlineGame(tour : |[$[$[String]]] = None, mine : |[$[$[String]]] = None, doneOpen : Boolean = false) {
         val prefix = meta.settingsKey + ".online.game."
         val l = Local.list(prefix)./(_.drop(prefix.length).split('.'))./(l => l(0) -> l(1).toDouble).sortBy(-_._2)
         val games = l./{ case (lobby, time) => HRF.parseOnlineGame(lobby, time, Local.get(prefix + lobby + "." + time, "")) }
@@ -2190,9 +2192,37 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             postF(HRF.server.get + "/tournament/mine", PlayerKey.get) { r =>
                 val l = r.split('\n').$.%(_.nonEmpty)./(_.split('\t').$).%(_.num >= 6)
                 if (l.any && dom.document.location.pathname == at)
-                    onlineGame(|(l))
+                    onlineGame(|(l), mine, doneOpen)
             } { }
         }
+
+        if (mine.none && HRF.server.any && HRF.offline.not) {
+            val at = dom.document.location.pathname
+            postF(HRF.server.get + "/my-games", PlayerKey.get) { r =>
+                val l = r.split('\n').$.%(_.nonEmpty)./(_.split('\t').$).%(_.num >= 5)
+                if (l.any && dom.document.location.pathname == at)
+                    onlineGame(tour, |(l), doneOpen)
+            } { }
+        }
+
+        // a game of the player's own: its title, the game when it isn't this one, the name played under; it opens the seat
+        def myGame(group : Elem, r : $[String]) = {
+            val label = HRF.metas.find(_.name == r(0))./(_.label).|(r(0))
+            val other = (r(0) != meta.name).??(label + " · ")
+            ZOption(group, (Link(HRF.server.get + "/play/" + r(0) + "/" + r(2), r(1).but("")./(_.hh).|(label.hh) ~ Break ~ (other + "as " + r(3)).spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice))
+        }
+
+        val tourSecrets = tour.|($)./(_(3)).toSet
+        val myGames = mine.|($).%(r => tourSecrets.contains(r(2)).not)
+        val active = myGames.%(_(4) != "1")
+        val done = myGames.%(_(4) == "1")
+        val names = myGames./(_(3)).distinct
+
+        val myGameRows =
+            active./(r => myGame(("Your Active Games" + (names.num == 1).??(" · " + names.head)).hl, r)) ++
+            (myGames.any && active.none).$(ZOption("Your Active Games".hl, Div("None right now.".txt, ZBasic.info))) ++
+            done.any.$(ZBasic(" ", ((doneOpen.?("▾ ").|("▸ ") + "Completed Games (" + done.num + ")").hh).div($(xlo.fullwidth, xlo.fullheight)), () => onlineGame(tour, mine, doneOpen.not))) ++
+            doneOpen.??(done./(r => myGame(" ".spn, r)))
 
         val tournamentGames = tour.|($)./(r => ZOption("Your Tournament Game".hl, (Link(HRF.server.get + "/play/" + meta.tournament.get + "/" + r(3), r(2).hh ~ Break ~ ("as " + r(4) + " against " + r(5)).spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice)))
 
@@ -2227,6 +2257,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 dom.document.location.assign(url)
             })).$ ++
             tournamentGames ++
+            myGameRows ++
             ZBasic(meta.label.hl, "New Online Game".hl.styled(xstyles.larger110), () => {
                 goOnlineNew()
             }).?.$ ++
