@@ -1719,7 +1719,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     r.trim match {
                         case "ok" if value.trim.nonEmpty => setPings(name, true)
                         case "ok" => discordPings()
-                        case "invalid" => says("That isn't a Discord user ID (17 to 20 digits).".txt, |(() => askId(name)))
+                        case "invalid" => says(("That isn't a Discord user ID. " + "In Discord, open Settings, then Advanced (on a phone, it's under App Settings), and turn on Developer Mode. Then tap or right-click your own name and pick Copy User ID: a long number like 123456789012345678. Your username can't ping you.").txt, |(() => askId(name)))
                         case _ => says("Only the device that holds the name can set its Discord.".txt)
                     }
                 } { unreachable() }
@@ -1732,7 +1732,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             def askId(name : String) {
                 val head = "Discord user ID for " + name
                 ui.action.asker.iask(
-                    BasicOption(head, "In Discord, turn on Settings, Advanced, Developer Mode, then tap your name and Copy User ID. Leave it empty to forget it.", Nil, null) ::
+                    BasicOption(head, "In Discord, open Settings, then Advanced (on a phone, it's under App Settings), and turn on Developer Mode. Then tap or right-click your own name and pick Copy User ID: a long number like 123456789012345678. Your username can't ping you. Leave it empty to forget it.", Nil, null) ::
                     InputOption(head, "", Nil, v => setId(name, v), _ => true) ::
                     BasicOption(" ", "Cancel", Nil, () => discordPings()))
             }
@@ -1741,7 +1741,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 val rows = text.split('\n').$.%(_.nonEmpty)./(_.split('\t').$ ++ $("", "", ""))
                 val group = heading("Discord turn pings")
                 ui.action.asker.zask(
-                    $(note(group, "Each online Root game gets its own post in the Discord server's games forum. When it becomes your turn, you are mentioned (pinged) there, unless you had the game open in the last minute or two. It needs your Discord user ID, not your username.".txt)) ++
+                    $(note(group, "Each online Root game gets its own post in the Discord server's games forum. When it becomes your turn, you are mentioned (pinged) there, unless you had the game open in the last minute or two. It needs your Discord user ID, not your username. Tournament games ping you in your table's thread whenever you gave your ID, unless you turn pings off here.".txt)) ++
                     rows.none.$(note(group, "This device holds no name yet. Join an online game, or use your code from another device.".txt)) ++
                     rows./~{ r =>
                         val (n, id, on) = (r(0), r(1), r(2) == "on")
@@ -2098,7 +2098,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             postF(server + "/tournament/discord", PlayerKey.get + "\n" + name + "\n" + value.trim) { r =>
                 r.trim match {
                     case "ok" => load()
-                    case "invalid" => says("That isn't a Discord user ID (17 to 20 digits) or username.".txt)
+                    case "invalid" => says(("That isn't a Discord user ID. " + "In Discord, open Settings, then Advanced (on a phone, it's under App Settings), and turn on Developer Mode. Then tap or right-click your own name and pick Copy User ID: a long number like 123456789012345678. Your username can't ping you.").txt)
                     case _ => says("Only the device that holds the name can set its Discord.".txt)
                 }
             } { unreachable() }
@@ -2107,7 +2107,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         def askDiscord(name : String, first : Boolean) {
             val head = (if (first) "Signed up as " + name + ". " else "") + "Discord for " + name + " (optional)"
             ui.action.asker.iask(
-                BasicOption(head, "Each table gets its own thread on the Discord server. Give your Discord user ID to be mentioned (pinged) there: in Discord, turn on Settings, Advanced, Developer Mode, then tap your name and Copy User ID. A username is shown but can't ping you.", Nil, null) ::
+                BasicOption(head, "Each table gets its own thread on the Discord server. Give your Discord user ID to be mentioned (pinged) there. " + "In Discord, open Settings, then Advanced (on a phone, it's under App Settings), and turn on Developer Mode. Then tap or right-click your own name and pick Copy User ID: a long number like 123456789012345678. Your username can't ping you.", Nil, null) ::
                 InputOption(head, "", Nil, v => setDiscord(name, v), _ => true) ::
                 BasicOption(" ", first.?("Skip").|("Cancel"), Nil, () => load()))
         }
@@ -2137,7 +2137,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 open.any.??(owned.diff(signed)./(n => ZBasic(signGroup, "Sign up as " ~ n.hh, () => signUp(n)))) ++
                 open.any.$(ZBasic(signGroup, owned.any.?("Sign up with another name").|("Sign up"), () => askName())) ++
                 open.any.??(signed./(n => ZBasic(signGroup, "Withdraw " ~ n.hh, () => withdraw(n)))) ++
-                owned./(n => ZBasic("Discord".hl, "Discord for " ~ n.hh ~ ": " ~ discord.find(_.lift(1).exists(_.toLowerCase == n.toLowerCase))./~(_.lift(2))./(_.hh).|("not set".txt), () => askDiscord(n, false))) ++
+                owned./(n => ZBasic("Discord".hl, "Discord for " ~ n.hh ~ ": " ~ discord.find(_.lift(1).exists(_.toLowerCase == n.toLowerCase))./~(_.lift(2))./(v => v.forall(_.isDigit).?(v.hh).|(v.hh ~ " (a username, which can't ping you: tap to give your user ID)".txt)).|("not set".txt), () => askDiscord(n, false))) ++
                 open.none.$(note("Sign-ups".hl, "Sign-ups for the next tournament open when the final of this one starts.".txt)) ++
                 tables.groupBy(_(1)).toList.sortBy(-_._1.toIntOption.|(0))./~{ case (n, l) =>
                     val group = ("Tournament " + n + champions.find(_(1) == n)./(c => " · champion " + c(2)).|("") + cancelled.has(n).??(" · cancelled")).hl
