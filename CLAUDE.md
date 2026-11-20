@@ -360,6 +360,11 @@ cd haunt-roll-fail && sbt fullOptJS
   "Lost my code" sends a reset request (`/name-reset`, `Ranking.request`): the name, an optional message and what the server
   knows of the name go to `ranking/requests.tsv` (copied to `hrf-games`), and a GitHub issue labeled `name reset` gives only the
   request id, as issues are public; the owner releases the name with a `ranking-changes` file if satisfied (2026-11-19).
+- Play Online's "Your Active Games" (`onlineGame` in `hrf.scala`, the server's `/my-games`) highlights in gold, with "Your turn", and lists
+  first the games waiting on the signed-in player (asked for on 2026-11-20). The server doesn't run the games, so each client, once it has
+  read the whole log and reached a question, posts the factions asked (`Journal.turn`, called from `Runner.run`'s `Ask` and `MultiAsk`
+  cases; `/turn/<user>/<secret>/<game>`, kept in `turns.tsv` by `good-game/Turns.scala`), and `/my-games` matches them to the lobby's
+  "user <faction> <user>" lines. A game nobody has opened since this was deployed shows no highlight until a player opens it.
 - Fixing a running game: through the `hrf-games` repository (copy `games/<id>.tsv` to
   `fixes/<id>.tsv` and edit it; its README and `notes/server.md` say how).
 - The in-game "Report a Bug" button posts to `/report-bug`; the server saves the report,
