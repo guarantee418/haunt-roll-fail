@@ -1453,10 +1453,12 @@ case object SimpleMarketLandmark extends SimpleLandmark {
     )
 }
 
+// official for the site (the owner, 2026-11-20): it counts toward the rankings, and in the tournament it is one of the Mountain's
+// choices for the Tower's clearing (root/tournament.scala); on the setup screen it stays with the Simple Landmarks
 case object BirdsongTowerLandmark extends SimpleLandmark {
     val name = "Birdsong Tower"
     override val explain = $(
-        "Simple Landmarks".hh ~ " (house rules), with the " ~ "Tower".hh ~ " piece; placed in a clearing with a ruin and no landmark.",
+        "Simple Landmarks".hh ~ ", with the " ~ "Tower".hh ~ " piece; placed in a clearing with a ruin and no landmark. Official on this site: it counts toward the rankings.",
         "If you rule its clearing at the start of your " ~ "Birdsong".hh ~ ", score a point."
     )
 }
@@ -2220,11 +2222,13 @@ object Meta extends MetaGame {
     override def rankingFan(g : G) = rankFan(g)
 
     // fan content (rankingFan): a faction that isn't an official one (fan, playtest and mirror factions), a fan map or deck, the
-    // Doomed Vagabonds, Knave Captains, Turnlings or Legends Scenarios, the Action! Deck Booster, or the Simple Landmarks (house rules)
+    // Doomed Vagabonds, Knave Captains, Turnlings or Legends Scenarios, the Action! Deck Booster, or the Simple Landmarks (house rules) but the Birdsong Tower
     def rankFan(game : Game) : Boolean = game.factions.exists(f => (official ++ homeland).has(f).not) || game.options.exists {
         // Mixed and Dawn and Dusk sit under Fan Decks on the setup screen but aren't fan-made
         case MixedDeck | DuskDeck => false
         case _ : FanMap | _ : FanDeck => true
+        // the Birdsong Tower is official for the site (2026-11-20), the other Simple Landmarks are house rules
+        case BirdsongTowerLandmark => false
         case _ : SimpleLandmark => true
         case IncludeHireling(h) => turnlings.has(h)
         case o => $[GameOption](ActionBooster, DoomedVagabonds, DoomedCaptains, TurnOverHirelings, DeepWoodsSettling, WastelandsWater).has(o) || legendsOptions.has(o)

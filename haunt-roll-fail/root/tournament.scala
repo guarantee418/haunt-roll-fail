@@ -47,7 +47,8 @@ object TournamentExpansion extends Expansion {
 
     val decks : $[DeckOption] = $(StandardDeck, ExilesDeck, SquiresDeck)
     val maps : $[MapOption] = $(AutumnMap, WinterMap, LakeMap, MountainMap, GorgeMap, MarshMap)
-    val landmarks : $[Landmark] = $(TowerLandmark, LostCityLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark)
+    // the Birdsong Tower, official on the site, is one of them (the owner, 2026-11-20)
+    val landmarks : $[Landmark] = $(TowerLandmark, LostCityLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark, BirdsongTowerLandmark)
 
     def mapBoard(m : MapOption) : Board = m match {
         case AutumnMap => AutumnBoard
@@ -105,8 +106,9 @@ object TournamentExpansion extends Expansion {
 
         case TournamentMapAction(p, m) =>
             game.tournamentMap = Some(m)
-            // every map with All Random clearings and its own landmarks (the Mountain's Tower clearing is picked next)
-            game.options = game.options.notOf[MapOption].notOf[ClearingsOption].notOf[LandmarksOption] :+ m :+ AllRandomClearings :+ MountainSuitedLandmark
+            // every map with All Random clearings and its own landmarks (the Mountain's Tower clearing is picked next), keeping the
+            // Simple Landmarks the game has (the Birdsong Tower, 2026-11-20), placed after the map's own
+            game.options = game.options.notOf[MapOption].notOf[ClearingsOption].%(o => o.is[LandmarksOption].not || o.is[SimpleLandmark]) :+ m :+ AllRandomClearings :+ MountainSuitedLandmark
 
             game.board = mapBoard(m)
             game.rubble = game.board.rubble
@@ -140,7 +142,27 @@ object TournamentExpansion extends Expansion {
                     game.ferry = game.board.ferry
                     game.tower = game.board.tower
 
-                    SetupHirelingsAction
+                    // the Simple Landmarks are placed next (SetupLandmarksAction would draw a suited landmark for the Tower)
+                    if (game.options.of[SimpleLandmark].any) {
+                        game.landmarkDefaultsSet = true
+                        SetupNextLandmarkAction
+                    }
+                    else
+                        SetupHirelingsAction
+
+                // the Birdsong Tower in place of the Tower (SetupLandmarksAction would put the Tower there too, or draw a suited
+                // landmark, so the rest of the landmark setup is done here)
+                case BirdsongTowerLandmark =>
+                    game.ferry = game.board.ferry
+                    game.birdsongTower :+= c
+                    game.landmarkDefaultsSet = true
+
+                    log(BirdsongTowerLandmark, "was placed in", c, "instead of the", TowerLandmark)
+
+                    if (game.options.of[Landmark].but(BirdsongTowerLandmark).any)
+                        SetupNextLandmarkAction
+                    else
+                        SetupHirelingsAction
 
                 case LostCityLandmark =>
                     game.lostCity :+= c
