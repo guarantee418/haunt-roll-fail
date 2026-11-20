@@ -68,7 +68,7 @@ object StandardDeckExpansion extends Expansion {
     def active(setup : $[Faction], options : $[Meta.O]) = options.has(StandardDeck) || options.has(MixedDeck) || options.has(FrankenDeck) || options.has(CapitalistsDeck)
 
     override def birdsong(f : Faction)(implicit game : Game, ask : ActionCollector) {
-        f.can(StandAndDeliver).??(factions.but(f).%(_.hand.any)).some.foreach { l =>
+        (f.can(StandAndDeliver) && options.has(CapitalistsDeck).not).??(factions.but(f).%(_.hand.any)).some.foreach { l =>
             + StandAndDeliverAction(f, l, Repeat)
         }
     }

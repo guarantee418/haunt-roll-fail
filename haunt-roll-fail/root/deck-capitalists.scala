@@ -20,7 +20,9 @@ import root.elem._
 // - Command Warren, Cobbler and Brutal Tactics are paid for each time: a card from hand matching the clearing (the battle's, or the
 //   one Cobbler's move starts from; a bird matches any), or the crafted card itself, discarded, which counts as a bird
 // - Better Burrow Bank is optional at the start of Birdsong and goes back to its owner's hand when used
-// - Stand and Deliver! (the enemy draws a card instead of scoring), Tax Collector (draws two) and Codebreakers are used once, right when crafted, and discarded
+// - Stand and Deliver! must be used at the start of the next Birdsong (once an enemy holds a card) and is discarded; the enemy draws a card
+//   instead of scoring
+// - Tax Collector (draws two) and Codebreakers are used once, right when crafted, and discarded
 // - Scouting Party is discarded to cancel one ambush played against its owner attacking
 // - Royal Claim must be used at the next Birdsong
 
@@ -36,14 +38,14 @@ case class CapitalistsBankAction(self : Faction, o : Faction) extends BaseAction
 case class CapitalistsScoutingAction(self : Faction, b : Battle, then : ForcedAction) extends BaseAction(self, "can cancel the ambush")("Discard", ScoutingParty, "to cancel the", "Ambush".hl)
 
 case class CapitalistsCraftedAction(self : Faction, d : CraftEffectCard, m : Message) extends ForcedAction
-case class CapitalistsStealAction(self : Faction, e : Faction) extends BaseAction(StandAndDeliver, "takes a card from")(e)
+case class CapitalistsStealAction(self : Faction, e : Faction, then : ForcedAction) extends BaseAction(StandAndDeliver, "takes a card from")(e)
 case class CapitalistsTaxAction(self : WarriorFaction, c : Clearing, p : Piece) extends BaseAction(TaxCollector, "removes")(p.of(self), "in", c)
 
 
 object CapitalistsDeckExpansion extends Expansion {
     def active(setup : $[Faction], options : $[Meta.O]) = options.has(CapitalistsDeck)
 
-    val lasting = $[Effect](CommandWarren, Cobbler, BetterBurrowBank, BrutalTactics, ScoutingParty, RoyalClaim)
+    val lasting = $[Effect](CommandWarren, Cobbler, BetterBurrowBank, BrutalTactics, ScoutingParty, RoyalClaim, StandAndDeliver)
 
     def on(implicit game : Game) = options.has(CapitalistsDeck)
 
@@ -156,6 +158,11 @@ object CapitalistsDeckExpansion extends Expansion {
 
             DrawCardsAction(f, 1, SuppressLog, AddCardsAction(f, DrawCardsAction(o, 1, SuppressLog, AddCardsAction(o, Repeat))))
 
+        // STAND AND DELIVER!: must be used at the start of the next Birdsong (kept while no enemy holds a card)
+        case BirdsongNAction(0, f) if f.can(StandAndDeliver) && factions.but(f).exists(_.hand.any) =>
+            Ask(f).group("Start of", Birdsong, "-", StandAndDeliver, "takes a card from")
+                .each(factions.but(f).%(_.hand.any))(e => CapitalistsStealAction(f, e, BirdsongNAction(0, f)))
+
         // ROYAL CLAIM: must be used at the next Birdsong
         case BirdsongNAction(0, f) if f.can(RoyalClaim) =>
             Ask(f).add(RoyalClaimAction(f, clearings.%(f.ruleSelf).num))
@@ -172,7 +179,7 @@ object CapitalistsDeckExpansion extends Expansion {
             then
 
         // ONE-TIME EFFECTS, used when crafted
-        case CraftPerformAction(f, d @ CraftEffectCard(_, _, _, StandAndDeliver | TaxCollector | Codebreakers), m) =>
+        case CraftPerformAction(f, d @ CraftEffectCard(_, _, _, TaxCollector | Codebreakers), m) =>
             f.hand --> d --> discard.quiet
 
             f.log("crafted", d, "(" ~ d.cost.ss ~ ")", m)
@@ -180,17 +187,6 @@ object CapitalistsDeckExpansion extends Expansion {
             CapitalistsCraftedAction(f, d, m)
 
         case CapitalistsCraftedAction(f, d, m) => d.effect match {
-            case StandAndDeliver =>
-                val l = factions.but(f).%(_.hand.any)
-
-                if (l.none) {
-                    f.log("had no one to take a card from")
-
-                    Repeat
-                }
-                else
-                    Ask(f).each(l)(e => CapitalistsStealAction(f, e))
-
             case TaxCollector =>
                 val l = f.as[WarriorFaction]./~(f => clearings./~(c => f.at(c).of[Warrior].notOf[Tenacious].distinct./(p => CapitalistsTaxAction(f, c, p))))
 
@@ -216,10 +212,12 @@ object CapitalistsDeckExpansion extends Expansion {
             case _ => Repeat
         }
 
-        case CapitalistsStealAction(f, e) =>
+        case CapitalistsStealAction(f, e, then) =>
+            f.removeStuckEffect(StandAndDeliver)
+
             f.log("took a random card from", e, "with", StandAndDeliver, "and", e, "drew a card")
 
-            StealCardAction(f, e, DrawCardsAction(e, 1, SuppressLog, AddCardsAction(e, Repeat)))
+            StealCardAction(f, e, DrawCardsAction(e, 1, SuppressLog, AddCardsAction(e, then)))
 
         case CapitalistsTaxAction(f, c, p) =>
             f.from(c) --> p --> game.removed

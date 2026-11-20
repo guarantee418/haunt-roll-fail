@@ -342,7 +342,7 @@ case object CapitalistsDeck extends FanDeck {
     override val explain = $(
         "A variation of the " ~ "Might and Right".hh ~ " deck by the site's owner. Its items, ambushes and dominances are the base deck's.",
         "Command Warren".hh ~ ", " ~ "Cobbler".hh ~ ", " ~ "Better Burrow Bank".hh ~ " and " ~ "Brutal Tactics".hh ~ " cost one card; the first two and " ~ "Brutal Tactics".hh ~ " are paid for each use with a card matching the clearing, or by discarding them.",
-        "Better Burrow Bank".hh ~ " goes back to hand when used. " ~ "Stand and Deliver!".hh ~ ", " ~ "Tax Collector".hh ~ " and " ~ "Codebreakers".hh ~ " are used once, when crafted.",
+        "Better Burrow Bank".hh ~ " goes back to hand when used. " ~ "Stand and Deliver!".hh ~ " is used once, at the next Birdsong. " ~ "Tax Collector".hh ~ " and " ~ "Codebreakers".hh ~ " are used once, when crafted.",
         "Scouting Party".hh ~ " cancels one ambush. " ~ "Royal Claim".hh ~ " must be used at the next Birdsong.",
         "The " ~ "Dawn and Dusk".hh ~ " deck's three " ~ "Service".styled(styles.FoxRabbitMouse) ~ " cards replace the " ~ "Favors".hh ~ ".",
         Image("ca-command-warren", styles.card)

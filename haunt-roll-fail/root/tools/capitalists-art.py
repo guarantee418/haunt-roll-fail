@@ -12,17 +12,17 @@ from PIL import Image, ImageDraw, ImageFont
 
 font, deck, out = sys.argv[1:4]
 
-# card, plank donor (a card with the new cost), title (None: no title, as printed), text, tan box
+# card, plank donor (a card with the new cost), title (None: no title, like the newer printed layout), text, tan box
 CARDS = [
-    ("command-warren", "a-visit-to-friends", "Command Warren", "At start of Daylight, may initiate a battle. Spend a card matching its clearing, or discard this.", False),
-    ("cobbler", "a-visit-to-friends", "Cobbler", "At start of Evening, may take a move. Spend a card matching the clearing moved from, or discard this.", False),
+    ("command-warren", "a-visit-to-friends", None, "At start of Daylight, may initiate a battle. Spend a card matching its clearing, or discard this.", False),
+    ("cobbler", "a-visit-to-friends", None, "At start of Evening, may take a move. Spend a card matching the clearing moved from, or discard this.", False),
     ("better-burrow-bank", "a-visit-to-friends", None, "At start of Birdsong, you may return this card to your hand to draw one card. If you do, choose an enemy to draw one card.", False),
-    ("brutal-tactics", "armorers", "Brutal Tactics", "In battle as attacker, may deal an extra hit, but defender scores one point. Spend a card matching the clearing, or discard this.", False),
-    ("stand-and-deliver", "codebreakers", "Stand and Deliver!", "Take a random card from an enemy. They must draw one card. Then discard this card.", True),
-    ("tax-collector", "saboteurs", "Tax Collector", "Remove a warrior of your faction from a clearing on the map to draw two cards, then discard.", True),
-    ("scouting-party", "codebreakers", "Scouting Party", "As attacker in battle, may discard this to cancel an ambush card played against you.", False),
-    ("royal-claim", None, "Royal Claim", "In Birdsong, must discard this to score one point per clearing you rule.", False),
-    ("codebreakers", None, "Codebreakers", "Look at another player's hand, then discard.", True),
+    ("brutal-tactics", "armorers", None, "In battle as attacker, may deal an extra hit, but defender scores one point. Spend a card matching the clearing, or discard this.", False),
+    ("stand-and-deliver", "codebreakers", None, "At start of Birdsong, take a random card from an enemy. They must draw one card. Then discard this card.", False),
+    ("tax-collector", "saboteurs", None, "Remove a warrior of your faction from a clearing on the map to draw two cards, then discard.", True),
+    ("scouting-party", "codebreakers", None, "As attacker in battle, may discard this to cancel an ambush card played against you.", False),
+    ("royal-claim", None, None, "In Birdsong, must discard this to score one point per clearing you rule.", False),
+    ("codebreakers", None, None, "Look at another player's hand, then discard.", True),
 ]
 
 INK = (35, 31, 32)

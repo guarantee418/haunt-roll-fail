@@ -2125,6 +2125,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case Sappers => "Sappers: Deal an extra hit in battle as defender (discard after use)"
             case BrutalTactics => "Brutal Tactics: May deal an extra hit in battle as attacker, but defender will score one point"
             case RoyalClaim => "Royal Claim: Score one point per clearing ruled at the start of the turn (discard after use)"
+            case StandAndDeliver if capitalists => "Stand and Deliver! Must take a random card from another player at the start of Birdsong; that player draws a card"
             case StandAndDeliver => "Stand and Deliver! May take a random card from another player in Birdsong, but that player will score one point"
             case TaxCollector => "Tax Collector: May remove one warrior to draw a card once in Daylight"
             case CommandWarren => "Command Warren: May initiate a battle at the start of Daylight"
