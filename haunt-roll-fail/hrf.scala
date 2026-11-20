@@ -1087,6 +1087,19 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         }
                     }
 
+                    // Discord turn pings: the seats the game waits for, told to the server each time they change (TurnPings in good-game)
+                    if (HRF.replay.not && server.any) {
+                        var told = ""
+                        Runner.waitingHook = (ff, n) => {
+                            val uu = ff./~(f => users.get(f.asInstanceOf[meta.F])).distinct.sorted
+                            val key = n + " " + uu.join(",")
+                            if (key != told) {
+                                told = key
+                                postF(HRF.server.get + "/turn/" + user + "/" + HRF.secret.get + "/" + server.get + "/" + n, uu.join(" "))(_ => ())(())
+                            }
+                        }
+                    }
+
                     startGame(seating, difficulties, state.selected, self, journal, title.|("%untitled%"), () => names, ServerSwitches, reportResult)
 
                     reread()
@@ -1711,6 +1724,50 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         // the player code, in the menu itself: the overlay it was shown in left the menu hidden once closed (2026-11-19)
         // a code of the player's own is kept only scrambled (Ranking.setCode), so it can't be shown: the screen says which names
         // have one, as players who set one took the device's code shown here for their old one (2026-11-20)
+        // Discord turn pings (TurnPings in good-game; 2026-11-20): for each name this device holds, its Discord user ID and
+        // whether it is mentioned in the game's Discord post when it becomes its turn
+        def discordPings() {
+            def setId(name : String, value : String) {
+                postF(server + "/tournament/discord", PlayerKey.get + "\n" + name + "\n" + value.trim) { r =>
+                    r.trim match {
+                        case "ok" if value.trim.nonEmpty => setPings(name, true)
+                        case "ok" => discordPings()
+                        case "invalid" => says("That isn't a Discord user ID (17 to 20 digits).".txt, |(() => askId(name)))
+                        case _ => says("Only the device that holds the name can set its Discord.".txt)
+                    }
+                } { unreachable() }
+            }
+
+            def setPings(name : String, on : Boolean) {
+                postF(server + "/discord/pings", PlayerKey.get + "\n" + name + "\n" + on.?("on").|("off")) { _ => discordPings() } { unreachable() }
+            }
+
+            def askId(name : String) {
+                val head = "Discord user ID for " + name
+                ui.action.asker.iask(
+                    BasicOption(head, "In Discord, turn on Settings, Advanced, Developer Mode, then tap your name and Copy User ID. Leave it empty to forget it.", Nil, null) ::
+                    InputOption(head, "", Nil, v => setId(name, v), _ => true) ::
+                    BasicOption(" ", "Cancel", Nil, () => discordPings()))
+            }
+
+            postF(server + "/discord/mine", PlayerKey.get) { text =>
+                val rows = text.split('\n').$.%(_.nonEmpty)./(_.split('\t').$ ++ $("", "", ""))
+                val group = heading("Discord turn pings")
+                ui.action.asker.zask(
+                    $(note(group, "Each online Root game gets its own post in the Discord server's games forum. When it becomes your turn, you are mentioned (pinged) there, unless you had the game open in the last minute or two. It needs your Discord user ID, not your username.".txt)) ++
+                    rows.none.$(note(group, "This device holds no name yet. Join an online game, or use your code from another device.".txt)) ++
+                    rows./~{ r =>
+                        val (n, id, on) = (r(0), r(1), r(2) == "on")
+                        val digits = id.forall(_.isDigit) && id.nonEmpty
+                        $(ZBasic(heading(n), "Discord user ID: " ~ id.any.?(id.hh).|("not set".txt), () => askId(n))) ++
+                        digits.$(ZBasic(heading(n), "Turn pings: " ~ on.?("On".hlb).|("Off".hh) ~ " (tap to turn " ~ on.?("off").|("on") ~ ")", () => setPings(n, on.not))) ++
+                        (id.any && digits.not).$(note(heading(n), id.hlb ~ " is a username, which can't be pinged: give your user ID instead."))
+                    } ++
+                    $(ZBasic(" ", Div("Back"), () => load()))
+                )
+            } { unreachable() }
+        }
+
         def showCode() {
             def shown(own : $[String]) = ui.action.asker.zask(
                 $(ZOption(heading("This device's player code"), Div("Enter it under Rankings on another device to play there under your names. Keep it to yourself: anyone with it can.".txt ~ Break ~ PlayerKey.get.hlb.spn(xstyles.larger110), ZBasic.info))) ++
@@ -1858,6 +1915,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 $(ZBasic(heading("Your player code"), Div("Use a code from another device"), () => useCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Set or change my own code"), () => setCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Lost my code"), () => lostCode())) ++
+                $(ZBasic(heading("Your player code"), Div("Discord turn pings"), () => discordPings())) ++
                 $(back)
             )
         }
@@ -1975,6 +2033,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 $(ZBasic(heading("Your player code"), Div("Use a code from another device"), () => useCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Set or change my own code"), () => setCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Lost my code"), () => lostCode())) ++
+                $(ZBasic(heading("Your player code"), Div("Discord turn pings"), () => discordPings())) ++
                 $(note(heading("How the rankings work"), explain)) ++
                 $(back)
             )
