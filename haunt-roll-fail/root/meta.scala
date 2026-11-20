@@ -337,6 +337,18 @@ case object SorceryDeck extends FanDeck {
     )
 }
 
+case object CapitalistsDeck extends FanDeck {
+    val valueOn = "Capitalists and Anarchists".hh
+    override val explain = $(
+        "A variation of the " ~ "Might and Right".hh ~ " deck by the site's owner. Its items, ambushes and dominances are the base deck's.",
+        "Command Warren".hh ~ ", " ~ "Cobbler".hh ~ ", " ~ "Better Burrow Bank".hh ~ " and " ~ "Brutal Tactics".hh ~ " cost one card; the first two and " ~ "Brutal Tactics".hh ~ " are paid for each use with a card matching the clearing, or by discarding them.",
+        "Better Burrow Bank".hh ~ " goes back to hand when used. " ~ "Stand and Deliver!".hh ~ " is used once, at the next Birdsong. " ~ "Tax Collector".hh ~ " and " ~ "Codebreakers".hh ~ " are used once, when crafted.",
+        "Scouting Party".hh ~ " cancels one ambush. " ~ "Royal Claim".hh ~ " must be used at the next Birdsong.",
+        "The " ~ "Dawn and Dusk".hh ~ " deck's three " ~ "Service".styled(styles.FoxRabbitMouse) ~ " cards replace the " ~ "Favors".hh ~ ".",
+        Image("ca-command-warren", styles.card)
+    )
+}
+
 case object ActionBooster extends GameOption with ToggleOption with FoldedOption {
     val group = "Fan Decks"
     val valueOn = "Action! Deck Booster".hh
@@ -733,6 +745,13 @@ case object UpstartsTestDeal extends GameOption with ToggleOption {
 case object SorceryTestDeal extends GameOption with ToggleOption {
     val group = "Card Draft"
     val valueOn = "Sorcery of the Enchanted Woods".hh ~ " effects dealt crafted"
+}
+
+// ReplayCheck's "capitalistsall": the Capitalists and Anarchists effects that stay dealt out crafted at the first Birdsong, the ones
+// used when crafted and the Services dealt into hands (not offered)
+case object CapitalistsTestDeal extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Capitalists and Anarchists".hh ~ " effects dealt"
 }
 
 case object DuskDeckFixes extends GameOption with ToggleOption {
@@ -1893,7 +1912,7 @@ object Meta extends MetaGame {
         $(SimpleForgeLandmark, SimpleMarketLandmark, BirdsongTowerLandmark, RoyalTreeLandmark) ++
         legendsOptions ++
         $,
-        $(StandardDeck, ExilesDeck, SquiresDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck, SorceryDeck) ++
+        $(StandardDeck, ExilesDeck, SquiresDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck, SorceryDeck, CapitalistsDeck) ++
         (n >= 5).$(ActionBooster) ++
         $,
         (l.of[Feline].num > 1).$(TheWoodMustFlow) ++
@@ -1956,7 +1975,7 @@ object Meta extends MetaGame {
         $(DeepWoodsSettling, WastelandsWater) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
-        $(StandardDeck, ExilesDeck, SquiresDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck, SorceryDeck) ++
+        $(StandardDeck, ExilesDeck, SquiresDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck, SorceryDeck, CapitalistsDeck) ++
         (n >= 5).$(ActionBooster) ++
         hitsAndAmbushes(l) ++
         (n > 2).?(TotalWarDominance) ++
@@ -3818,6 +3837,17 @@ object Meta extends MetaGame {
         ImageAsset("action-secret-cancel") ::
         ImageAsset("action-secret-score") ::
     $) ::
+    ConditionalAssetsList((factions, options) => options.has(CapitalistsDeck), "card/capitalists", lzy = Laziness.Later, scale = 50)(
+        ImageAsset("ca-command-warren") ::
+        ImageAsset("ca-cobbler") ::
+        ImageAsset("ca-better-burrow-bank") ::
+        ImageAsset("ca-brutal-tactics") ::
+        ImageAsset("ca-stand-and-deliver") ::
+        ImageAsset("ca-tax-collector") ::
+        ImageAsset("ca-scouting-party") ::
+        ImageAsset("ca-royal-claim") ::
+        ImageAsset("ca-codebreakers") ::
+    $) ::
     ConditionalAssetsList((factions, options) => options.has(SorceryDeck), "card/sorcery", lzy = Laziness.Later, scale = 50)(
         ImageAsset("sorcery-dominance") ::
         ImageAsset("sorcery-garden-of-glory") ::
@@ -4052,7 +4082,7 @@ object Meta extends MetaGame {
     $) ::
     ConditionalAssetsList((factions, options) => true, "card/deck/fr", "fr:", lzy = Laziness.OnDemand, scale = 50)(French.cards./(ImageAsset(_))) ::
     ConditionalAssetsList((factions, options) => true, "faction/fr", "fr:", lzy = Laziness.OnDemand)(French.boards./(ImageAsset(_))) ::
-    ConditionalAssetsList((factions, options) => options.has(DuskDeck) || options.has(FrankenDeck), "card/dusk", lzy = Laziness.Later)(
+    ConditionalAssetsList((factions, options) => options.has(DuskDeck) || options.has(FrankenDeck) || options.has(CapitalistsDeck), "card/dusk", lzy = Laziness.Later)(
         ImageAsset("adventurers"                ) ::
         ImageAsset("breaking-dawn"              ) ::
         ImageAsset("dusk-awakening"             ) ::

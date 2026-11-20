@@ -639,6 +639,16 @@ server. No session can reach the server, and none needs to.
   (`game.water`, `waterSupply`), the `BarrenTrail` transport (paid with a Water, a staying warrior or a Vagabond item), the Water
   actions, Surrender and Seizure. The "Map Rules" button under the action pane (and tapping a barren trail) shows the rules and where
   the game stands (`"view-map-rules"` in `root/ui.scala`); it shows on both maps, saying so when their rules are off (2026-11-19). `ReplayCheck <games> deepwoods [settling]` or `wastelands [water]` plays them.
+- The Capitalists and Anarchists deck (`CapitalistsDeck`, a Fan Deck; the owner's own variation of Might and Right, designed in a thread on
+  2026-11-19) keeps the base deck's items, ambushes, dominances, Armorers and Sappers, puts Dawn and Dusk's three Services in place of the
+  Favors, and changes the other effects (`Deck.capitalists`; rules in `root/deck-capitalists.scala`, `CapitalistsDeckExpansion`, its header
+  lists them): Command Warren, Cobbler and Brutal Tactics cost one card and are paid for at each use with a card matching the clearing (a bird
+  matches) or by discarding them; Better Burrow Bank (1 rabbit) is optional and goes back to hand; Stand and Deliver! (1 mouse) must be used at the start of the next Birdsong
+  and is discarded, the enemy drawing a card instead of scoring; Tax Collector (1 of any suit, draws two) and Codebreakers are used once when crafted; Scouting Party (1 mouse) is discarded to cancel one ambush; Royal Claim
+  must be used at the next Birdsong. The effects are the base deck's objects, changed where `options.has(CapitalistsDeck)` (`turn.scala`,
+  `battle.scala`, the effect hints in `root/ui.scala`). Pictures `card/capitalists/ca-*` by `root/tools/capitalists-art.py` (the base card
+  with another card's cost plank and new text, a tan box for the once-used ones). `ReplayCheck <games> base capitalists` plays it;
+  `capitalistsall` deals the effects out at the first Birdsong (the hidden `CapitalistsTestDeal`).
 - The Noxious Battery (NX, `root/faction-noxious-battery.scala`, its header lists the readings; images `nx-*` in `faction/battery/`, cut by
   `root/tools/noxious-art.py` from the print-and-play folder's ASSETS; S.P. Shaman's fan Nemesis Expansion, art by disasterman; asked for on
   2026-11-18) is a Fun Faction and in Advanced Setup's pool (reach 5): skunks (`Skunk`), a cannon pawn (`Cannon`, starting damaged on a ruin,

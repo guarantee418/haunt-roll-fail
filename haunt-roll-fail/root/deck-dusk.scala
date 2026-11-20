@@ -158,7 +158,7 @@ case class TakeAnyCardAction(self : Faction, d : DeckCard, then : ForcedAction) 
 
 
 object DuskDeckExpansion extends Expansion {
-    def active(setup : $[Faction], options : $[Meta.O]) = (options.has(DuskDeck) || options.has(FrankenDeck))
+    def active(setup : $[Faction], options : $[Meta.O]) = (options.has(DuskDeck) || options.has(FrankenDeck) || options.has(CapitalistsDeck))
 
     override def birdsong(f : Faction)(implicit game : Game, ask : ActionCollector) {
         if (f.can(Merchants) && f.forTrade.exists(_.exhausted.not)) {
