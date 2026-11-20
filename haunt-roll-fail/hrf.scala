@@ -1971,7 +1971,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         val title = (meta.label.split(':').head + " Tournament").hl.spn(xstyles.larger110)
 
         def back = ZBasic(" ", Div("Back"), () => metaMenu())
-        def note(group : Elem, e : Elem) = ZOption(group, Div(e, ZBasic.info))
+        // (the text in one span: the info box lays out its children apart, so each highlighted word was on a line of its own)
+        def note(group : Elem, e : Elem) = ZOption(group, Div(e.spn, ZBasic.info))
         def golden(n : String) : Elem = Span(Text(n), $(ExternalStyle("hrf-golden")))
         def url(secret : String) = server + "/play/" + tmeta.name + "/" + secret
         def linked(u : String, e : Elem) = (Link(u, e, $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice)
@@ -2021,7 +2022,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             val signed = owned.%(n => signups.exists(_.toLowerCase == n.toLowerCase))
 
             ui.action.asker.zask(
-                $(note(title, "Sign up with your ranking name. The tournament starts by itself when " ~ size.hl ~ " players have signed up: four tables of four, each an " ~ "Advanced Setup".hh ~ " game. Each table's winner goes to the final, and the final's winner is the champion, whose name is golden until the next champion." ~ Break ~ "The draft: the flop of five factions, then the first seat picks the deck, the second the map, on the " ~ "Mountain".hh ~ " the third what goes in the " ~ "Tower".hh ~ "'s clearing, and the factions are picked, last seat first. Official factions, decks and maps, no " ~ "Vagabond".hh ~ ". On the " ~ "Mountain".hh ~ ", the " ~ "Birdsong Tower".hh ~ " is one of the choices for the " ~ "Tower".hh ~ "'s clearing (rule it at the start of your Birdsong to score 1).")) ++
+                $(note(title, "Sign up with your ranking name. The tournament starts by itself when " ~ size.hl ~ " players have signed up: four tables of four, each an " ~ "Advanced Setup".hh ~ " game. Each table's winner goes to the final, and the final's winner is the champion, whose name is golden until the next champion." ~ Break ~ "The draft: the flop of five factions, then the first seat picks the deck and the second the map. On the " ~ "Mountain".hh ~ ", the third seat picks the one landmark for " ~ "Pass".hh ~ ", where the " ~ "Tower".hh ~ " usually stands: the " ~ "Tower".hh ~ ", or instead " ~ "Lost City".hh ~ ", " ~ "Mousehold".hh ~ ", " ~ "Foxburrow".hh ~ ", " ~ "Rabbittown".hh ~ " or the " ~ "Birdsong Tower".hh ~ " (rule its clearing at the start of your Birdsong to score 1). Then the factions are picked, last seat first. Official factions, decks and maps, no " ~ "Vagabond".hh ~ ".")) ++
                 champion./(c => note("Champion".hl, golden(c) ~ " won the last tournament.")).$ ++
                 mine./(r => ZOption("Your Tournament Game".hl, linked(url(r(3)), r(2).hh ~ Break ~ ("as " + r(4) + " against " + r(5)).spn(xstyles.smaller75)))) ++
                 open./(_ => note(signGroup, signups.any.?(names(signups)).|("No one has signed up yet.".txt))).$ ++

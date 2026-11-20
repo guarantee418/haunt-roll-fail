@@ -21,7 +21,7 @@ import root.elem._
 //   1. the flop: the factions drawn for the draft (players + 1), shown to everyone,
 //   2. the first seat picks the deck (one of the official ones),
 //   3. the second seat picks the map (one of the official ones),
-//   4. on the Mountain, the third seat picks what goes in the Tower's clearing (the Tower, or a suited landmark),
+//   4. on the Mountain, the third seat picks the one landmark for the Tower's clearing (the Tower, a suited landmark or the Birdsong Tower),
 //   5. the factions are picked as in Advanced Setup, last seat first.
 // The game is created with no map or deck; the picks are added to game.options, and the board, the deck and the expansions
 // are made again from them. Until the map is picked the game stands on the Autumn map, which the UI doesn't draw (mapPending).
@@ -40,7 +40,7 @@ case object TournamentLandmarkAskAction extends ForcedAction
 
 case class TournamentDeckAction(self : Player, d : DeckOption) extends BaseAction(self, "picks the deck")(d.valueOn)
 case class TournamentMapAction(self : Player, m : MapOption) extends BaseAction(self, "picks the map")(m.valueOn)
-case class TournamentLandmarkAction(self : Player, l : Landmark) extends BaseAction(self, "picks what goes in the", TowerLandmark, "clearing")(l)
+case class TournamentLandmarkAction(self : Player, l : Landmark) extends BaseAction(self, "picks the one landmark for the", TowerLandmark, "clearing")(l)
 
 object TournamentExpansion extends Expansion {
     def active(factions : $[Faction], options : $[Meta.O]) = options.has(TournamentDraft)
@@ -124,7 +124,7 @@ object TournamentExpansion extends Expansion {
         case TournamentLandmarkAskAction =>
             val p = seat(2)
 
-            Ask(p).group("The flop".hl ~ ": " ~ flop ~ Break ~ p.elem ~ " picks what goes in the " ~ TowerLandmark.elem ~ "'s clearing (" ~ game.board.tower./(_.elem).join(Text(", ")) ~ ")").each(landmarks)(l => TournamentLandmarkAction(p, l))
+            Ask(p).group("The flop".hl ~ ": " ~ flop ~ Break ~ p.elem ~ " picks the one landmark for " ~ game.board.tower./(_.elem).join(Text(", ")) ~ ", where the " ~ TowerLandmark.elem ~ " usually stands").each(landmarks)(l => TournamentLandmarkAction(p, l))
 
         case TournamentLandmarkAction(p, l) =>
             game.tournamentLandmark = Some(l)
