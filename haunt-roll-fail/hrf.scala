@@ -1646,7 +1646,13 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         // the player code from another device, or a name and its own code (Ranking.signIn; 2026-11-19)
         def useCode() {
-            ui.action.asker.iask(InputOption("Enter the player code from your other device, or your name if you set a code of your own", "", Nil, v => {
+            // (a code the player picked, typed here, was taken for a name and refused: it now asks which name the code is for (2026-11-20))
+            // (the prompt's two choices on lines of their own, the choice itself bright: "or your name" was missed in one line (2026-11-20))
+            val b = "<span style='color:#f2f2f2;font-weight:bold'>"
+            val d = "<span style='font-size:85%;opacity:0.8'>"
+            ui.action.asker.iask(InputOption(b + "Enter either code" + "</span>\n\n" +
+                b + "Your player code</span>\n" + d + "the 24 letters under Show my player code on your other device</span>\n\n" +
+                b + "or a code you picked yourself</span>\n" + d + "your name comes next</span>\n", "", Nil, v => {
                 val code = v.trim
                 postF(server + "/player-code", code) { r =>
                     val names = r.split('\n').$.%(_.nonEmpty)
@@ -1660,8 +1666,25 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                             if (r.trim == "yes")
                                 signIn(code)
                             else
-                                says("No name was claimed with that player code, and no name " ~ code.hlb ~ " has a code of its own.", |(() => useCode()))
+                                codeFor(code)
                         } { unreachable() }
+                } { unreachable() }
+            }) :: BasicOption(" ", "Cancel", Nil, () => load()))
+        }
+
+        // a code the player picked: which name it was picked for
+        def codeFor(code : String) {
+            ui.action.asker.iask(InputOption("<span style='color:#f2f2f2;font-weight:bold'>Which name did you pick this code for?</span>\n", "", Nil, n => {
+                val name = n.trim
+                if (name.isEmpty) useCode()
+                else
+                postF(server + "/sign-in", name + "\n" + code + "\n" + PlayerKey.get) { r =>
+                    r.split('\n').$ match {
+                        case "ok" :: n :: _ => mine = (mine :+ n).distinct ; load()
+                        case "locked" :: _ => says("Too many wrong codes for " ~ name.hlb ~ ". Try again in an hour, or ask for a reset with " ~ "Lost my code".hl ~ ".")
+                        case "wrong" :: _ => says("That isn't the code for " ~ name.hlb ~ ". Check the name and the code: the code is case-sensitive.", |(() => useCode()))
+                        case _ => says(name.hlb ~ " has no code of its own yet, and " ~ code.hlb ~ " isn't a player code. On the device that holds " ~ name.hlb ~ ", tap " ~ "Set or change my own code".hl ~ " first.", |(() => useCode()))
+                    }
                 } { unreachable() }
             }) :: BasicOption(" ", "Cancel", Nil, () => load()))
         }
@@ -2179,7 +2202,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
     }
 
     // tour: the player's tournament games (good-game/Tournament.scala), shown at the top once the server has said which
-    def onlineGame(tour : |[$[$[String]]] = None) {
+    // mine: the player's own games from the server (good-game "my-games"), shown while their names are claimed on this device;
+    // the completed ones in a folder, open when doneOpen (2026-11-20)
+    def onlineGame(tour : |[$[$[String]]] = None, mine : |[$[$[String]]] = None, doneOpen : Boolean = false) {
         val prefix = meta.settingsKey + ".online.game."
         val l = Local.list(prefix)./(_.drop(prefix.length).split('.'))./(l => l(0) -> l(1).toDouble).sortBy(-_._2)
         val games = l./{ case (lobby, time) => HRF.parseOnlineGame(lobby, time, Local.get(prefix + lobby + "." + time, "")) }
@@ -2189,9 +2214,37 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             postF(HRF.server.get + "/tournament/mine", PlayerKey.get) { r =>
                 val l = r.split('\n').$.%(_.nonEmpty)./(_.split('\t').$).%(_.num >= 6)
                 if (l.any && dom.document.location.pathname == at)
-                    onlineGame(|(l))
+                    onlineGame(|(l), mine, doneOpen)
             } { }
         }
+
+        if (mine.none && HRF.server.any && HRF.offline.not) {
+            val at = dom.document.location.pathname
+            postF(HRF.server.get + "/my-games", PlayerKey.get) { r =>
+                val l = r.split('\n').$.%(_.nonEmpty)./(_.split('\t').$).%(_.num >= 5)
+                if (l.any && dom.document.location.pathname == at)
+                    onlineGame(tour, |(l), doneOpen)
+            } { }
+        }
+
+        // a game of the player's own: its title, the game when it isn't this one, the name played under; it opens the seat
+        def myGame(group : Elem, r : $[String]) = {
+            val label = HRF.metas.find(_.name == r(0))./(_.label).|(r(0))
+            val other = (r(0) != meta.name).??(label + " · ")
+            ZOption(group, (Link(HRF.server.get + "/play/" + r(0) + "/" + r(2), r(1).but("")./(_.hh).|(label.hh) ~ Break ~ (other + "as " + r(3)).spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice))
+        }
+
+        val tourSecrets = tour.|($)./(_(3)).toSet
+        val myGames = mine.|($).%(r => tourSecrets.contains(r(2)).not)
+        val active = myGames.%(_(4) != "1")
+        val done = myGames.%(_(4) == "1")
+        val names = myGames./(_(3)).distinct
+
+        val myGameRows =
+            active./(r => myGame(("Your Active Games" + (names.num == 1).??(" · " + names.head)).hl, r)) ++
+            (myGames.any && active.none).$(ZOption("Your Active Games".hl, Div("None right now.".txt, ZBasic.info))) ++
+            done.any.$(ZBasic(" ", ((doneOpen.?("▾ ").|("▸ ") + "Completed Games (" + done.num + ")").hh).div($(xlo.fullwidth, xlo.fullheight)), () => onlineGame(tour, mine, doneOpen.not))) ++
+            doneOpen.??(done./(r => myGame(" ".spn, r)))
 
         val tournamentGames = tour.|($)./(r => ZOption("Your Tournament Game".hl, (Link(HRF.server.get + "/play/" + meta.tournament.get + "/" + r(3), r(2).hh ~ Break ~ ("as " + r(4) + " against " + r(5)).spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice)))
 
@@ -2226,6 +2279,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 dom.document.location.assign(url)
             })).$ ++
             tournamentGames ++
+            myGameRows ++
             ZBasic(meta.label.hl, "New Online Game".hl.styled(xstyles.larger110), () => {
                 goOnlineNew()
             }).?.$ ++
