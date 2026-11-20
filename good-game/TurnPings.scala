@@ -17,7 +17,8 @@ import scala.concurrent.duration.Duration
 // "user <faction> <user>" lines say whose seats they are. A seat newly waited for is pinged a minute later if:
 //   - the game still waits for it then (a later report hasn't taken it off),
 //   - its player hasn't had the game open in the last 90 seconds (their client reads the log while it is open),
-//   - its seat plays under a ranking name whose owner gave a Discord user ID and turned turn pings on (Rankings, "Discord turn pings"),
+//   - its seat plays under a ranking name with a Discord (given, or set by the owner) and turn pings not turned off (Rankings,
+//     "Discord turn pings"; on unless turned off since 2026-11-20, asked for: "start pinging people whenever it is their turn"),
 //   - it wasn't pinged in that game in the last 10 minutes.
 // Several prompts in a row (a whole turn) are one ping, as the seat stays waited for between them.
 //
@@ -26,7 +27,8 @@ import scala.concurrent.duration.Duration
 //   threads.tsv   game, the Discord thread made for it
 //   pings.tsv     time, game, user: the pings sent
 //   created.tsv   game: the games whose post went out, so each goes out once
-// and in tournament/: discord-pings.tsv  name, on or off (the last row counts); off unless turned on
+// and in tournament/: discord-pings.tsv  name, on or off (the last row counts); on unless turned off
+// The tournament change "ping waiting" pings at once every seat the games wait for (the same checks but the minute's delay).
 object TurnPings {
     import GoodGame._
     import Backup.{rows, row}
@@ -101,11 +103,11 @@ object TurnPings {
     // the Discord user ID to ping for a seat: its ranking name's, if pings are on for it
     // (in a tournament game, unless turned off: the players gave their ID to be pinged in their table's thread)
     def mentionOf(user : String, tournament : Boolean = false) : Option[String] =
-        Ranking.seatNames().get(user).filter(k => if (tournament) setting(k) != Some(false) else pingsOn(k)).flatMap(Tournament.discordOf).filter(Tournament.isDiscordId)
+        Ranking.seatNames().get(user).filter(k => if (tournament) setting(k) != Some(false) else pingsOn(k)).flatMap(Tournament.discordId)
 
     def setting(k : String) : Option[Boolean] = rows(settings).filter(_.headOption.contains(k)).lastOption.flatMap(_.lift(1)).map(_ == "on")
 
-    def pingsOn(k : String) = setting(k).contains(true)
+    def pingsOn(k : String) = !setting(k).contains(false)
 
     // "ok", or "no" for a name the code doesn't hold
     def setPings(key : String, name : String, on : Boolean) : String = synchronized {
@@ -120,7 +122,7 @@ object TurnPings {
 
     // the names a code holds: name, Discord, pings on or off
     def mine(key : String) : String =
-        Tournament.ownedKeys(key).toList.sorted.map(k => row(Tournament.display(k), Tournament.discordOf(k).getOrElse(""), if (pingsOn(k)) "on" else "off")).mkString("\n")
+        Tournament.ownedKeys(key).toList.sorted.map(k => row(Tournament.display(k), Tournament.discordOf(k).getOrElse(""), if (pingsOn(k)) "on" else "off", if (Tournament.storedId(k).nonEmpty) "ping" else "")).mkString("\n")
 
     // a tournament table's game: its table's own thread (Tournament.scala), which its players already follow
     def table(game : String) : Option[(Int, String)] = Tournament.cups().flatMap(c => c.tables.find(_.game == game).map(t => (c.n, t.id))).headOption
@@ -156,7 +158,7 @@ object TurnPings {
                 val text = "New " + metas(meta) + " game: **" + l.title + "**\n" +
                     "Players: " + (if (who.isEmpty) "none" else who.mkString(", ")) + (if (bots > 0) ", and " + bots + " bot" + (if (bots > 1) "s" else "") else "") + "\n" +
                     spectator.map(s => "Watch: <" + Tournament.site + "/play/" + meta + "/" + s + ">\n").getOrElse("") +
-                    "Each player is mentioned here when it's their turn, if they turned turn pings on under Rankings."
+                    "Each player is mentioned here when it's their turn, unless they turned turn pings off under Rankings."
                 post(game, l, text, ids)
             }
         }
@@ -193,22 +195,31 @@ object TurnPings {
         }
     }
 
-    def ping(game : String, user : String) : Unit = synchronized {
+    // every seat the games wait for, at once (the "ping waiting" change): how many were pinged
+    def pingWaiting() : Int = synchronized {
+        latest.toList.sortBy(_._1).flatMap { case (g, r) => r.users.toList.sorted.map(u => (g, u)) }.count { case (g, u) =>
+            try ping(g, u) catch { case e : Exception => println("Turn ping failed: " + e) ; false }
+        }
+    }
+
+    // true when the ping went out
+    def ping(game : String, user : String) : Boolean = synchronized {
         val now = System.currentTimeMillis
         if (!latest.get(game).exists(_.users.contains(user)))
-            return
+            return false
         if (readSince(user, game, watching))
-            return
+            return false
         if (pings.get((game, user)).exists(now - _ < cooldown))
-            return
-        val id = mentionOf(user, table(game).nonEmpty).getOrElse(return)
-        val lobby = lobbyOf(game).getOrElse(return)
+            return false
+        val id = mentionOf(user, table(game).nonEmpty).getOrElse(return false)
+        val lobby = lobbyOf(game).getOrElse(return false)
         if (!metas.contains(lobby.meta))
-            return
+            return false
 
         lastPing = pings + ((game, user) -> now)
         Ranking.append(pinged, row(Ranking.now(), game, user))
 
         post(game, lobby, "<@" + id + ">, it's your turn in **" + lobby.title + "**" + " (" + nameOf(lobby, user) + ").", List(id))
+        true
     }
 }

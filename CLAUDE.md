@@ -1113,10 +1113,18 @@ server. No session can reach the server, and none needs to.
   it, a minute later, unless the game moved on, its player read the game in the last 90 seconds, or it was pinged in that game in the
   last 10 minutes. The server can't read a game: it takes the factions asked from the clients' turn reports (`/turn`,
   `good-game/Turns.scala`, which calls `TurnPings.report`) and the lobby's "user <faction> <user>" lines. Only seats under a ranking name whose owner gave a Discord user
-  ID and turned pings on ("Discord turn pings" under Rankings, `discordPings` in `rankingsMenu`; `/discord/mine`, `/discord/pings`,
-  `tournament/discord-pings.tsv`; setting an ID there turns them on) are mentioned. A tournament table's game pings in its table's thread (the forum webhook's), with no
-  turns webhook needed, every player who gave a user ID unless they turned pings off. Only user IDs are taken (`Tournament.setDiscord`):
-  a webhook can't ping a username, and the first tournament's players gave usernames, so no one was pinged (2026-11-20).
+  ID (or a username the bot found, or one the owner set) and didn't turn pings off ("Discord turn pings" under Rankings, `discordPings` in `rankingsMenu`; `/discord/mine`, `/discord/pings`,
+  `tournament/discord-pings.tsv`; on unless turned off since 2026-11-20, asked for) are mentioned, each by their own mention
+  (`allowed_mentions` lists only them, never @everyone). The tournament change `ping waiting` pings every seat the games wait
+  for at once (`TurnPings.pingWaiting`). A tournament table's game pings in its table's thread (the forum webhook's), with no
+  turns webhook needed, every player who gave a user ID unless they turned pings off. A webhook can't ping a username, and the first tournament's players
+  gave usernames, so no one was pinged (2026-11-20): with the Discord bot set up (`good-game/DiscordBot.scala`; its token in
+  `HRF_DISCORD_BOT_TOKEN` or the file `discord-bot-token`, set by the tournament change `bot <token>`; the server is the
+  announcements' webhook's, or `guild <id>`), a username is looked up among the server's members when given (`Tournament.setDiscord`;
+  "notfound" if no member has it) and kept with the user ID found (`tournament/discord.tsv`'s third field, `Tournament.discordId`,
+  used by the threads and the turn pings); without the bot only user IDs are taken ("nobot"). The owner can set a name's Discord for a player
+  who didn't give it with the tournament change `discord <name> -> <username or user ID>` (`-> off` forgets it). The bot needs the Server Members
+  Intent and only to be in the server. Keep its token out of this repository.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.
