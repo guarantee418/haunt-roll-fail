@@ -462,6 +462,15 @@ object GoodGame {
                     }
                 }
             } ~
+            (post & path("tournament" / "discord")) {
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        val l = body.split('\n').toList
+                        if (l.size < 2) complete(StatusCodes.Forbidden, "")
+                        else plain(Tournament.setDiscord(l(0).trim.ascii, l(1).trim.safeplus, l.lift(2).getOrElse("").trim.safe.take(40)))
+                    }
+                }
+            } ~
             (post & path("tournament" / "withdraw")) {
                 decodeRequest {
                     entity(as[String]) { body =>

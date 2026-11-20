@@ -26,6 +26,8 @@ import scala.concurrent.duration.Duration
 //                 names in lower case, as Ranking keeps them; the final is table "F"
 //   template.tsv  version, options line
 //   invited.tsv   the tournaments whose sign-ups were announced on Discord (time, number), so each invitation goes out once
+//   threads.tsv   the Discord threads made for the posts (key, thread id): "<n>" for a tournament, "<n> <table>" for a table
+//   discord.tsv   the Discord user ID (pinged) or username (shown) each name's owner gave (name, value; the last row counts)
 //
 // Changes by hand go through the games backup (hrf-games) like the ranking's: each file tournament-changes/<name>.txt there is
 // applied once (Backup.scala), its outcome in tournament-changes/<name>.result. One change a line:
@@ -34,13 +36,18 @@ import scala.concurrent.duration.Duration
 //   replace <table> <name> -> <new>   a player at a table is replaced: the seat now plays (and is ranked) under the new name
 //   cancel                            the running tournament ends with no champion; sign-ups for the next one open
 //   webhook <url>                     the Discord webhook (written to the file discord-webhook; "webhook off" removes it);
-//                                     delete the change file once its .result says "set"
+//                                     delete the change file once its .result says "set"; forgets the threads made
+//   forum <url>                       a forum channel's webhook for the tables' threads (the file discord-forum-webhook;
+//                                     "forum off" removes it); delete the change file once its .result says "set"
 //   invite                            posts the invitation to sign up again
 // The Discord channel of the webhook in HRF_DISCORD_WEBHOOK (or the file discord-webhook) is invited to sign up, with the link to
 // the Tournament page, once for each tournament as soon as its sign-ups open and a webhook is set (at the server's start, when the
 // webhook is set, when a final starts or a tournament is cancelled; asked for on 2026-11-20, as nobody could find the page), told
 // how the sign-ups go (8, 12 and 15 of 16), and told when a tournament starts, each table is won, the final starts and the champion
-// is known.
+// is known. Each table (the final too) gets a Discord thread of its own (asked for on 2026-11-20), opened at its start with its
+// players, pinged by the Discord user ID they gave on the Tournament page (/tournament/discord), in the forum channel of the
+// webhook in HRF_DISCORD_FORUM_WEBHOOK (or the file discord-forum-webhook), else in the announcements' channel. A forum channel
+// gets every post in a thread (each tournament has one for the rest); a text channel, which takes no thread, in the channel itself.
 object Tournament {
     import GoodGame._
     import Backup.{rows, row}
@@ -87,7 +94,7 @@ object Tournament {
                     size + " players, four tables of " + seats + ", each an Advanced Setup game with the tournament draft: the first seat picks the deck, the second the map, and the factions are drafted from a flop of five (official factions, no Vagabond). " +
                     "Each table's winner goes to the final, and the champion's name is golden on the Rankings until the next champion. Every game counts toward the rankings.\n" +
                     "**Sign up with your ranking name:** " + signUpLink + "\n" +
-                    count + " of " + size + " signed up so far. It starts by itself when the " + size + "th player signs up.")
+                    count + " of " + size + " signed up so far. It starts by itself when the " + size + "th player signs up.", n)
 
                 Files.createDirectories(dir)
                 Ranking.append(invited, row(Ranking.now(), n))
@@ -228,7 +235,7 @@ object Tournament {
             begin(n)
         else
         if (count == size / 2 || count == size * 3 / 4 || count == size - 1)
-            announce(display(k) + " signed up for Root Tournament " + n + ": " + count + " of " + size + (if (count == size - 1) ", one spot left!" else ".") + " Sign up: " + signUpLink)
+            announce(display(k) + " signed up for Root Tournament " + n + ": " + count + " of " + size + (if (count == size - 1) ", one spot left!" else ".") + " Sign up: " + signUpLink, n)
 
         "ok"
     }
@@ -249,13 +256,24 @@ object Tournament {
     def mine(key : String) : String = synchronized {
         val kk = ownedKeys(key)
 
+        // the Discord each of the code's names gave: "discord", name, value
+        val dd = kk.toList.sorted.flatMap(k => discordOf(k).map(v => row("discord", display(k), v)))
+
         cups().filter(c => c.started && !c.done).flatMap { c =>
             c.tables.filter(_.winner.isEmpty).flatMap { t =>
                 t.names.zipWithIndex.filter(x => kk.contains(x._1)).map { case (k, i) =>
                     row(c.n, t.id, t.title(c.n), t.secrets(i), display(k), t.names.filter(_ != k).map(display).mkString(", "))
                 }
             }
-        }.mkString("\n")
+        }.++(dd).mkString("\n")
+    }
+
+    // a table's own Discord thread, started with its players (mentioned when they gave their Discord user ID) and the spectator link
+    def tableThread(n : Int, t : Table) {
+        announce("**" + t.title(n).replace("Tournament", "Root Tournament") + "**: " + t.names.map(tagged).mkString(", ") + "\n" +
+            "Your game is at the top of Play Online, or on the Tournament page: " + signUpLink + "\n" +
+            "Watch it: " + site + "/play/" + meta + "/" + t.spectate + "\n" +
+            "This thread is for the table: arrange times and talk about the game here.", n, t.id)
     }
 
     // the 16th sign-up: four tables of four, in random order
@@ -267,7 +285,9 @@ object Tournament {
 
         val dd = Ranking.displays()
         announce("**Root Tournament " + n + " has started!** Find your game at the top of Play Online, or on the Tournament page.\n" +
-            heatIds.zip(names.grouped(seats).toList).map { case (id, l) => "Table " + id + ": " + l.map(k => dd.getOrElse(k, k)).mkString(", ") }.mkString("\n"))
+            heatIds.zip(names.grouped(seats).toList).map { case (id, l) => "Table " + id + ": " + l.map(k => dd.getOrElse(k, k)).mkString(", ") }.mkString("\n"), n)
+
+        cups().find(_.n == n).toList.flatMap(_.heats).foreach(t => tableThread(n, t))
     }
 
     // a table's game, made as the client makes an online game (arrangeOnlineGame in hrf.scala): a host, a lobby, the game and a
@@ -329,7 +349,10 @@ object Tournament {
 
                 ww match {
                     case w :: Nil => win(c.n, t.id, w)
-                    case _ => announce("Root Tournament " + c.n + ", " + t.title(c.n).split(' ').drop(2).mkString(" ") + " ended with " + (if (ww.isEmpty) "no winner" else "a shared win (" + ww.map(display).mkString(", ") + ")") + ": the organizer picks who goes on.")
+                    case _ =>
+                        val text = "Root Tournament " + c.n + ", " + t.title(c.n).split(' ').drop(2).mkString(" ") + " ended with " + (if (ww.isEmpty) "no winner" else "a shared win (" + ww.map(display).mkString(", ") + ")") + ": the organizer picks who goes on."
+                        announce(text, c.n)
+                        announce(text, c.n, t.id)
                 }
             }
         }
@@ -342,15 +365,18 @@ object Tournament {
 
         if (id == finalId) {
             event("champion", n, k)
-            announce("**" + display(k) + " is the champion of Root Tournament " + n + "!**")
+            announce("**" + display(k) + " is the champion of Root Tournament " + n + "!**", n)
+            announce("**" + display(k) + " won the final and is the champion!**", n, id)
         }
         else {
-            announce(display(k) + " won Table " + id + " of Root Tournament " + n + ".")
+            announce(display(k) + " won Table " + id + " of Root Tournament " + n + ".", n)
+            announce("**" + display(k) + " won this table** and goes to the final.", n, id)
 
             if (c.heats.size == heatIds.size && c.heats.forall(_.winner.nonEmpty) && c.fin.isEmpty) {
                 val l = scala.util.Random.shuffle(c.heats.flatMap(_.winner))
                 create(n, finalId, l)
-                announce("**The final of Root Tournament " + n + " has started:** " + l.map(display).mkString(", ") + ". Sign-ups for Tournament " + (n + 1) + " are open.")
+                announce("**The final of Root Tournament " + n + " has started:** " + l.map(display).mkString(", ") + ". Sign-ups for Tournament " + (n + 1) + " are open.", n)
+                cups().find(_.n == n).flatMap(_.fin).foreach(t => tableThread(n, t))
                 invite(false)
             }
         }
@@ -393,7 +419,7 @@ object Tournament {
                     }
                 case "cancel" =>
                     running match {
-                        case Some(c) => event("cancel", c.n); announce("Root Tournament " + c.n + " was cancelled."); invite(false); "cancelled"
+                        case Some(c) => event("cancel", c.n); announce("Root Tournament " + c.n + " was cancelled.", c.n); invite(false); "cancelled"
                         case None => "not done: no tournament running"
                     }
                 // the Discord webhook, set from the games backup as no session can reach the server; written to the file
@@ -401,6 +427,8 @@ object Tournament {
                 case "webhook" =>
                     if (rest.startsWith("https://discord.com/api/webhooks/") || rest.startsWith("https://discordapp.com/api/webhooks/")) {
                         Files.write(Paths.get("discord-webhook"), (rest + "\n").getBytes(UTF_8))
+                        Files.deleteIfExists(threads)
+                        plainChannels = Set()
                         announce("The Root tournament's announcements will be posted here.")
                         invite(false)
                         "set"
@@ -411,22 +439,85 @@ object Tournament {
                     }
                     else
                         "not done: webhook <https://discord.com/api/webhooks/...> or webhook off"
+                // the forum channel's webhook for the tables' threads (the file discord-forum-webhook); "forum off" sends them
+                // to the announcements' webhook again
+                case "forum" =>
+                    if (rest.startsWith("https://discord.com/api/webhooks/") || rest.startsWith("https://discordapp.com/api/webhooks/")) {
+                        Files.write(Paths.get("discord-forum-webhook"), (rest + "\n").getBytes(UTF_8))
+                        Files.deleteIfExists(threads)
+                        plainChannels = Set()
+                        "set"
+                    }
+                    else if (rest == "off") {
+                        Files.deleteIfExists(Paths.get("discord-forum-webhook"))
+                        "removed"
+                    }
+                    else
+                        "not done: forum <https://discord.com/api/webhooks/...> or forum off"
                 case "invite" => invite(true)
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook or invite)"
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum or invite)"
             }
 
-            (if (word == "webhook") "webhook" else line) + ": " + result
+            (if (word == "webhook" || word == "forum") word else line) + ": " + result
         }
     }
 
     // DISCORD: a message to the channel of the webhook, if one is set up
-    def webhook : Option[String] =
-        sys.env.get("HRF_DISCORD_WEBHOOK").map(_.trim).filter(_.nonEmpty).orElse {
-            val f = Paths.get("discord-webhook")
+    def hook(env : String, file : String) : Option[String] =
+        sys.env.get(env).map(_.trim).filter(_.nonEmpty).orElse {
+            val f = Paths.get(file)
             if (Files.exists(f)) Some(new String(Files.readAllBytes(f), UTF_8).trim).filter(_.nonEmpty) else None
         }
 
+    // the announcements' webhook
+    def webhook = hook("HRF_DISCORD_WEBHOOK", "discord-webhook")
+
+    // a forum channel's webhook for the tables' threads, if they go to a channel of their own (2026-11-20)
+    def forumWebhook = hook("HRF_DISCORD_FORUM_WEBHOOK", "discord-forum-webhook")
+
     lazy val client = java.net.http.HttpClient.newHttpClient()
+
+
+    // DISCORD THREADS (asked for on 2026-11-20): with the webhook in a forum channel, each tournament has its thread ("Root Tournament
+    // <n>": the invitation, the sign-ups, the start, the winners, the champion), and each table its own ("Root Tournament <n> · Table A",
+    // "· Final"), started with its players, @mentioned when they gave their Discord user ID, and told its winner. A webhook posts in a
+    // forum only with a thread_name (a new thread) or a thread_id; a thread's id is the channel_id of its first message, kept in
+    // threads.tsv. In a plain text channel the thread fields are refused, so everything goes to the channel as before.
+    val threads = dir.resolve("threads.tsv")
+    val discords = dir.resolve("discord.tsv")
+
+    def threadKey(n : Int, id : String = "") = if (id == "") n.toString else n + " " + id
+    def threadName(n : Int, id : String = "") = "Root Tournament " + n + (if (id == "") "" else if (id == finalId) " · Final" else " · Table " + id)
+
+    def threadOf(key : String) : Option[String] = rows(threads).filter(_.headOption.contains(key)).lastOption.flatMap(_.lift(1))
+
+    // the posts go out one at a time, in order, so a thread exists before the next post to it
+    lazy val poster = java.util.concurrent.Executors.newSingleThreadExecutor()
+
+    // the Discord user ID (a mention) or name (plain text) a player gave for a ranking name
+    def discordOf(k : String) : Option[String] = rows(discords).filter(_.headOption.contains(k)).lastOption.flatMap(_.lift(1)).filter(_.nonEmpty)
+
+    def isDiscordId(v : String) = v.length >= 17 && v.length <= 20 && v.forall(_.isDigit)
+
+    // "Name (@mention)" for a table's thread
+    def tagged(k : String) = display(k) + discordOf(k).map(v => if (isDiscordId(v)) " (<@" + v + ">)" else " (@" + v + ")").getOrElse("")
+
+    // a player's Discord: an ID (17 to 20 digits) or a username, or "" to forget it
+    def setDiscord(key : String, name : String, value : String) : String = synchronized {
+        val k = Ranking.clean(name).toLowerCase
+        val v = value.trim.stripPrefix("@").stripPrefix("<@").stripSuffix(">")
+
+        if (!ownedKeys(key).contains(k))
+            "no"
+        else
+        if (v.nonEmpty && !isDiscordId(v) && !(v.length >= 2 && v.length <= 32 && v.forall(c => c.isLetterOrDigit || c == '_' || c == '.')))
+            "invalid"
+        else {
+            Files.createDirectories(dir)
+            Ranking.append(discords, row(k, v))
+            "ok"
+        }
+    }
 
     def json(s : String) = "\"" + s.flatMap {
         case '"' => "\\\""
@@ -436,23 +527,70 @@ object Tournament {
         case c => c.toString
     } + "\""
 
-    def announce(text : String) {
+    // to the tournament's thread (and, with table, to that table's thread too; new tables' threads are started with start)
+    def announce(text : String, n : Int = 0, table : String = "") {
         println("Tournament: " + text.replace("\n", "; "))
 
         Ranking.append(dir.resolve("announcements.tsv"), row(Ranking.now(), text))
 
-        webhook.foreach { url =>
-            try {
-                val request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(url))
-                    .header("Content-Type", "application/json")
-                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString("{\"content\":" + json(text.take(1900)) + ",\"allowed_mentions\":{\"parse\":[]}}", UTF_8))
-                    .build()
+        (if (table != "") forumWebhook.orElse(webhook) else webhook).foreach { url =>
+            val number = if (n > 0) n else cups().lastOption.map(_.n).getOrElse(1)
+            val key = threadKey(number, table)
+            val name = threadName(number, table)
+            val ids = "<@(\\d{17,20})>".r.findAllMatchIn(text).map(_.group(1)).toList.distinct
 
-                client.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString(UTF_8))
+            poster.execute(() => post(url, text, key, name, ids))
+        }
+    }
+
+    // the webhook's channel took a plain post after refusing a thread (Discord text channels do)
+    @volatile var plainChannels = Set[String]()
+
+    def post(url : String, text : String, key : String, name : String, ids : List[String]) {
+        def send(fields : String, query : String) = {
+            val body = "{\"content\":" + json(text.take(1900)) + ",\"allowed_mentions\":{\"parse\":[],\"users\":[" + ids.map(json).mkString(",") + "]}" + fields + "}"
+            val request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(url + "?wait=true" + query))
+                .header("Content-Type", "application/json")
+                .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body, UTF_8))
+                .build()
+            // Discord's rate limit (a table's threads start together): wait as long as it says, a few times
+            var r = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString(UTF_8))
+            var tries = 0
+            while (r.statusCode == 429 && tries < 5) {
+                val wait = "\"retry_after\"\\s*:\\s*([0-9.]+)".r.findFirstMatchIn(r.body).flatMap(_.group(1).toDoubleOption).getOrElse(2.0)
+                Thread.sleep((wait.min(30.0) * 1000).toLong + 250)
+                r = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString(UTF_8))
+                tries += 1
             }
-            catch {
-                case e : Exception => println("Tournament announcement not posted: " + e)
+            r
+        }
+
+        def ok(r : java.net.http.HttpResponse[String]) = r.statusCode / 100 == 2
+
+        // a new thread named name, its id kept for the next posts
+        def fresh() = {
+            val r = send(",\"thread_name\":" + json(name.take(100)), "")
+            if (ok(r))
+                "\"channel_id\"\\s*:\\s*\"(\\d+)\"".r.findFirstMatchIn(r.body).foreach(m => Ranking.append(threads, row(key, m.group(1))))
+            r
+        }
+
+        try {
+            // the thread kept, or a new one (a kept thread may be gone, or from another webhook's channel), or the channel itself;
+            // a channel that took no thread (a text channel) is tried first after that, until it refuses a plain post
+            val plain = () => { val r = send("", "") ; plainChannels = if (ok(r)) plainChannels + url else plainChannels - url ; r }
+            val inThread = List[() => java.net.http.HttpResponse[String]](
+                () => threadOf(key).map(t => send("", "&thread_id=" + t)).getOrElse(null),
+                () => fresh())
+            val r = (if (plainChannels.contains(url)) plain +: inThread else inThread :+ plain).foldLeft(null : java.net.http.HttpResponse[String]) { (last, f) =>
+                if (last != null && (ok(last) || last.statusCode / 100 != 4)) last else Option(f()).getOrElse(last)
             }
+
+            if (r != null && !ok(r))
+                println("Tournament announcement not posted: " + r.statusCode + " " + r.body.take(200))
+        }
+        catch {
+            case e : Exception => println("Tournament announcement not posted: " + e)
         }
     }
 }

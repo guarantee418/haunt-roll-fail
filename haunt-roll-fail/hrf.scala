@@ -2021,7 +2021,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             val options = tmeta.tournamentOptions./(o => tmeta.writeOption(o)).join(" ")
             postF(server + "/tournament/sign-up", PlayerKey.get + "\n" + n + "\n" + HRF.version + "\n" + options) { r =>
                 r.trim match {
-                    case "ok" => load()
+                    case "ok" => askDiscord(n, true)
                     case "taken" => says(n.hlb ~ " is another player's name. Pick another, or use your code from another device under " ~ "Rankings".hl ~ ".")
                     case "already" => says(n.hlb ~ " has already signed up.")
                     case "one" => says("This device has already signed up a name for this tournament.".txt)
@@ -2040,7 +2040,27 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             ui.action.asker.iask(InputOption("Your name for the rankings and the tournament", "", Nil, v => signUp(v)) :: BasicOption(" ", "Cancel", Nil, () => load()))
         }
 
-        def show(text : String, owned : $[String], mine : $[$[String]]) {
+        // the Discord a name's player gives, so its table's thread on the Discord server can mention them: a user ID pings, a
+        // username is only shown (a webhook can't look one up)
+        def setDiscord(name : String, value : String) {
+            postF(server + "/tournament/discord", PlayerKey.get + "\n" + name + "\n" + value.trim) { r =>
+                r.trim match {
+                    case "ok" => load()
+                    case "invalid" => says("That isn't a Discord user ID (17 to 20 digits) or username.".txt)
+                    case _ => says("Only the device that holds the name can set its Discord.".txt)
+                }
+            } { unreachable() }
+        }
+
+        def askDiscord(name : String, first : Boolean) {
+            val head = (if (first) "Signed up as " + name + ". " else "") + "Discord for " + name + " (optional)"
+            ui.action.asker.iask(
+                BasicOption(head, "Each table gets its own thread on the Discord server. Give your Discord user ID to be mentioned (pinged) there: in Discord, turn on Settings, Advanced, Developer Mode, then tap your name and Copy User ID. A username is shown but can't ping you.", Nil, null) ::
+                InputOption(head, "", Nil, v => setDiscord(name, v), _ => true) ::
+                BasicOption(" ", first.?("Skip").|("Cancel"), Nil, () => load()))
+        }
+
+        def show(text : String, owned : $[String], mine : $[$[String]], discord : $[$[String]] = $) {
             val rows = text.split('\n').$.%(_.nonEmpty)./(_.split('\t').$)
             def lines(k : String) = rows.%(r => r.headOption.has(k))
             val size = lines("size").headOption./~(_.lift(1))./~(_.toIntOption).|(16)
@@ -2065,6 +2085,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 open.any.??(owned.diff(signed)./(n => ZBasic(signGroup, "Sign up as " ~ n.hh, () => signUp(n)))) ++
                 open.any.$(ZBasic(signGroup, owned.any.?("Sign up with another name").|("Sign up"), () => askName())) ++
                 open.any.??(signed./(n => ZBasic(signGroup, "Withdraw " ~ n.hh, () => withdraw(n)))) ++
+                owned./(n => ZBasic("Discord".hl, "Discord for " ~ n.hh ~ ": " ~ discord.find(_.lift(1).exists(_.toLowerCase == n.toLowerCase))./~(_.lift(2))./(_.hh).|("not set".txt), () => askDiscord(n, false))) ++
                 open.none.$(note("Sign-ups".hl, "Sign-ups for the next tournament open when the final of this one starts.".txt)) ++
                 tables.groupBy(_(1)).toList.sortBy(-_._1.toIntOption.|(0))./~{ case (n, l) =>
                     val group = ("Tournament " + n + champions.find(_(1) == n)./(c => " · champion " + c(2)).|("") + cancelled.has(n).??(" · cancelled")).hl
@@ -2086,7 +2107,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 postF(server + "/player-code", PlayerKey.get) { owned =>
                     val names = owned.split('\n').$.%(_.nonEmpty)
                     postF(server + "/tournament/mine", PlayerKey.get) { mine =>
-                        show(text, names, mine.split('\n').$.%(_.nonEmpty)./(_.split('\t').$).%(_.num >= 6))
+                        val rr = mine.split('\n').$.%(_.nonEmpty)./(_.split('\t').$)
+                        show(text, names, rr.%(_.num >= 6), rr.%(_.headOption.has("discord")))
                     } { show(text, names, $) }
                 } { show(text, $, $) }
             } { unreachable() }
