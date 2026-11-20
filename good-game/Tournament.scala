@@ -27,7 +27,8 @@ import scala.concurrent.duration.Duration
 //   template.tsv  version, options line
 //   invited.tsv   the tournaments whose sign-ups were announced on Discord (time, number), so each invitation goes out once
 //   threads.tsv   the Discord threads made for the posts (key, thread id): "<n>" for a tournament, "<n> <table>" for a table
-//   discord.tsv   the Discord user ID (pinged) or username (shown) each name's owner gave (name, value; the last row counts)
+//   discord.tsv   the Discord user ID or username each name's owner gave (name, value, and the user ID a username was found as by
+//                 the Discord bot, DiscordBot.scala; the last row counts); pinged by the ID, a username without one is only shown
 //
 // Changes by hand go through the games backup (hrf-games) like the ranking's: each file tournament-changes/<name>.txt there is
 // applied once (Backup.scala), its outcome in tournament-changes/<name>.result. One change a line:
@@ -42,6 +43,9 @@ import scala.concurrent.duration.Duration
 //   invite                            posts the invitation to sign up again
 //   turns <url>                       the webhook of the channel for turn pings and new games (TurnPings.scala; the file
 //                                     discord-turns-webhook, "turns off" removes it); delete the change file once its .result says "set"
+//   bot <token>                       the Discord bot's token, so a username given on the Tournament page pings (DiscordBot.scala;
+//                                     the file discord-bot-token, "bot off" removes it); delete the change file once its .result is read
+//   guild <id>                        the Discord server the bot looks usernames up in, if not the webhook's (the file discord-guild)
 // The Discord channel of the webhook in HRF_DISCORD_WEBHOOK (or the file discord-webhook) is invited to sign up, with the link to
 // the Tournament page, once for each tournament as soon as its sign-ups open and a webhook is set (at the server's start, when the
 // webhook is set, when a final starts or a tournament is cancelled; asked for on 2026-11-20, as nobody could find the page), told
@@ -258,8 +262,8 @@ object Tournament {
     def mine(key : String) : String = synchronized {
         val kk = ownedKeys(key)
 
-        // the Discord each of the code's names gave: "discord", name, value
-        val dd = kk.toList.sorted.flatMap(k => discordOf(k).map(v => row("discord", display(k), v)))
+        // the Discord each of the code's names gave: "discord", name, value, "ping" when it has a user ID to ping
+        val dd = kk.toList.sorted.flatMap(k => discordOf(k).map(v => row("discord", display(k), v, if (storedId(k).nonEmpty) "ping" else "")))
 
         cups().filter(c => c.started && !c.done).flatMap { c =>
             c.tables.filter(_.winner.isEmpty).flatMap { t =>
@@ -471,10 +475,39 @@ object Tournament {
                     }
                     else
                         "not done: turns <https://discord.com/api/webhooks/...> or turns off"
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns or invite)"
+                // the Discord bot's token, so usernames can be pinged (DiscordBot.scala; the file discord-bot-token, never written
+                // back in the .result); "bot off" removes it
+                case "bot" =>
+                    if (rest == "off") {
+                        Files.deleteIfExists(Paths.get("discord-bot-token"))
+                        DiscordBot.found.clear()
+                        "removed"
+                    }
+                    else if (rest.length >= 50 && !rest.contains(' ') && rest.count(_ == '.') == 2) {
+                        Files.write(Paths.get("discord-bot-token"), (rest + "\n").getBytes(UTF_8))
+                        DiscordBot.found.clear()
+                        DiscordBot.missing.clear()
+                        DiscordBot.guild match {
+                            case None => "set, but no Discord server: set a webhook, or the change guild <server id>"
+                            case Some(g) =>
+                                try DiscordBot.get("https://discord.com/api/v10/guilds/" + g, Some(rest)) match {
+                                    case Some(_) => "set"
+                                    case None => "set, but Discord refused it: check the token, and that the bot was invited to the server"
+                                }
+                                catch { case e : Exception => "set, but Discord couldn't be reached: " + e.getClass.getSimpleName }
+                        }
+                    }
+                    else
+                        "not done: bot <the bot's token from the Developer Portal> or bot off"
+                // the Discord server the bot looks usernames up in, when it isn't the webhook's (the file discord-guild)
+                case "guild" =>
+                    if (rest == "off") { Files.deleteIfExists(Paths.get("discord-guild")) ; "removed" }
+                    else if (isDiscordId(rest)) { Files.write(Paths.get("discord-guild"), (rest + "\n").getBytes(UTF_8)) ; DiscordBot.found.clear() ; "set" }
+                    else "not done: guild <the server's ID> or guild off"
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, bot, guild or invite)"
             }
 
-            (if (word == "webhook" || word == "forum" || word == "turns") word else line) + ": " + result
+            (if (word == "webhook" || word == "forum" || word == "turns" || word == "bot") word else line) + ": " + result
         }
     }
 
@@ -515,24 +548,50 @@ object Tournament {
 
     def isDiscordId(v : String) = v.length >= 17 && v.length <= 20 && v.forall(_.isDigit)
 
-    // "Name (@mention)" for a table's thread
-    def tagged(k : String) = display(k) + discordOf(k).map(v => if (isDiscordId(v)) " (<@" + v + ">)" else " (@" + v + ")").getOrElse("")
+    def isUsername(v : String) = v.length >= 2 && v.length <= 32 && v.forall(c => c.isLetterOrDigit || c == '_' || c == '.')
 
-    // a player's Discord user ID (17 to 20 digits), or "" to forget it
-    def setDiscord(key : String, name : String, value : String) : String = synchronized {
+    // the user ID to ping for a ranking name: the ID it gave, the one its username was found as when it was given (the row's third
+    // field), or the username looked up now by the Discord bot (DiscordBot.scala), if one is set up
+    def discordId(k : String) : Option[String] = rows(discords).filter(_.headOption.contains(k)).lastOption.flatMap { r =>
+        r.lift(1).filter(_.nonEmpty).flatMap { v =>
+            if (isDiscordId(v)) Some(v) else r.lift(2).filter(isDiscordId).orElse(if (DiscordBot.configured) DiscordBot.idOf(v) else None)
+        }
+    }
+
+    // the user ID kept for a ranking name, given or found when its username was given (no lookup: for the pages)
+    def storedId(k : String) : Option[String] = rows(discords).filter(_.headOption.contains(k)).lastOption.flatMap(r => r.lift(1).filter(isDiscordId).orElse(r.lift(2).filter(isDiscordId)))
+
+    // "Name (@mention)" for a table's thread
+    def tagged(k : String) = display(k) + discordId(k).map(i => " (<@" + i + ">)").orElse(discordOf(k).map(v => " (@" + v + ")")).getOrElse("")
+
+    // a player's Discord user ID (17 to 20 digits), or username with the Discord bot set up, or "" to forget it; a username is
+    // looked up at once (outside the lock: it asks Discord), and kept with the ID it was found as. Without the bot, only an ID:
+    // a webhook can mention (ping) no one by username, and the usernames given first pinged no one (2026-11-20)
+    def setDiscord(key : String, name : String, value : String) : String = {
         val k = Ranking.clean(name).toLowerCase
-        val v = value.trim.stripPrefix("@").stripPrefix("<@").stripSuffix(">")
+        val v = value.trim.stripPrefix("<@").stripPrefix("@").stripSuffix(">").trim
 
         if (!ownedKeys(key).contains(k))
             "no"
         else
-        // only a user ID: a webhook can mention (ping) no one by username, and the usernames given first pinged no one (2026-11-20)
-        if (v.nonEmpty && !isDiscordId(v))
+        if (v.nonEmpty && !isDiscordId(v) && !isUsername(v))
             "invalid"
+        else
+        if (v.nonEmpty && !isDiscordId(v) && !DiscordBot.configured)
+            "nobot"
         else {
-            Files.createDirectories(dir)
-            Ranking.append(discords, row(k, v))
-            "ok"
+            val found = if (v.nonEmpty && !isDiscordId(v)) DiscordBot.lookup(v) else DiscordBot.Unavailable
+
+            if (found == DiscordBot.NotFound)
+                "notfound"
+            else synchronized {
+                Files.createDirectories(dir)
+                found match {
+                    case DiscordBot.Found(id) => Ranking.append(discords, row(k, DiscordBot.cleanName(v), id))
+                    case _ => Ranking.append(discords, row(k, if (isDiscordId(v)) v else DiscordBot.cleanName(v)))
+                }
+                "ok"
+            }
         }
     }
 
