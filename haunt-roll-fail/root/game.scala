@@ -1767,6 +1767,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
             AbductAAAExpansion,
             KnavesExpansion,
 
+            CapitalistsDeckExpansion,
             UpstartsDeckExpansion,
             SorceryDeckExpansion,
             StandardDeckExpansion,

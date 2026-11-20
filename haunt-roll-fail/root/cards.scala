@@ -130,6 +130,7 @@ object Deck {
         case DarkDeck => darkDeck.%(d => arity > 2 || d.is[Dominance].not)
         case UpstartsDeck => ambushes ++ items ++ upstarts ++ (arity > 2).??(dominances)
         case SorceryDeck => ambushes ++ items ++ sorcery ++ (arity > 2).??(dominances :+ SorceryDominance)
+        case CapitalistsDeck => ambushes ++ items ++ capitalists ++ (arity > 2).??(dominances)
     }) ++ l.has(ActionBooster).??(boosters(arity).times(actionBooster).flatten)
 
     // Action! Deck Booster (The Doomed Expansion, `ActionBooster`): one booster for each player above five, one with five players
@@ -407,6 +408,36 @@ object Deck {
 
     val favors = effectsBase.of[Favor]
 
+    // Capitalists and Anarchists (`CapitalistsDeck`, 2026-11-19): the site owner's variation of the base deck's effects
+    // (`root/deck-capitalists.scala`); Armorers and Sappers as printed, Dawn and Dusk's Services in place of the Favors
+    val capitalists = $[DeckCard](
+        CraftEffectCard(Bird, "armorers", $(Fox), Armorers),
+        CraftEffectCard(Bird, "armorers", $(Fox), Armorers),
+        CraftEffectCard(Bird, "sappers", $(Mouse), Sappers),
+        CraftEffectCard(Bird, "sappers", $(Mouse), Sappers),
+        CraftEffectCard(Bird, "ca-brutal-tactics", $(Fox), BrutalTactics),
+        CraftEffectCard(Bird, "ca-brutal-tactics", $(Fox), BrutalTactics),
+        CraftEffectCard(Bird, "ca-royal-claim", $(AnySuit, AnySuit, AnySuit, AnySuit), RoyalClaim),
+        CraftEffectCard(Fox, "ca-stand-and-deliver", $(Mouse), StandAndDeliver),
+        CraftEffectCard(Fox, "ca-stand-and-deliver", $(Mouse), StandAndDeliver),
+        CraftEffectCard(Fox, "ca-tax-collector", $(AnySuit), TaxCollector),
+        CraftEffectCard(Fox, "ca-tax-collector", $(AnySuit), TaxCollector),
+        CraftEffectCard(Fox, "ca-tax-collector", $(AnySuit), TaxCollector),
+        CraftEffectCard(Fox, "service-of-the-foxes", $(Fox, Fox), ServiceOfTheFoxes),
+        CraftEffectCard(Rabbit, "ca-command-warren", $(Rabbit), CommandWarren),
+        CraftEffectCard(Rabbit, "ca-command-warren", $(Rabbit), CommandWarren),
+        CraftEffectCard(Rabbit, "ca-better-burrow-bank", $(Rabbit), BetterBurrowBank),
+        CraftEffectCard(Rabbit, "ca-better-burrow-bank", $(Rabbit), BetterBurrowBank),
+        CraftEffectCard(Rabbit, "ca-cobbler", $(Rabbit), Cobbler),
+        CraftEffectCard(Rabbit, "ca-cobbler", $(Rabbit), Cobbler),
+        CraftEffectCard(Rabbit, "service-of-the-rabbits", $(Rabbit, Rabbit), ServiceOfTheRabbits),
+        CraftEffectCard(Mouse, "ca-scouting-party", $(Mouse), ScoutingParty),
+        CraftEffectCard(Mouse, "ca-scouting-party", $(Mouse), ScoutingParty),
+        CraftEffectCard(Mouse, "ca-codebreakers", $(Mouse), Codebreakers),
+        CraftEffectCard(Mouse, "ca-codebreakers", $(Mouse), Codebreakers),
+        CraftEffectCard(Mouse, "service-of-the-mice", $(Mouse, Mouse), ServiceOfTheMice),
+    )
+
     def mixed(known : $[Faction]) = $[DeckCard](
         CraftEffectCard(Bird, "armorers", $(Fox), Armorers),
         CraftEffectCard(Bird, "sappers", $(Mouse), Sappers),
@@ -631,7 +662,7 @@ object Deck {
 
     val disguisedEEE = frogEEE.distinct./~(d => InvasiveEEEExpansion.disguiseSuits./(DisguisedCard(d, _)))
 
-    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ effectsSquires ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA ++ frogEEE ++ disguisedEEE ++ frankenItems ++ $(frankenSabotage) ++ actionBooster ++ $(fowlPlay) ++ darkDeck.%!(_.is[Ambush]).%!(_.is[BaseSuitDominance]).%!(_.is[CornersDominance]) ++ $(Ambush(Abomination)) ++ upstarts ++ sorcery ++ $(SorceryDominance) // new cards go last: saved games name cards by their place here
+    val catalog = ambushes ++ dominances ++ items ++ effectsBase ++ effectsExiles ++ effectsExtra ++ effectsDusk ++ effectsSquires ++ frogDDD ++ frogCCC ++ frogBBB ++ frogAAA ++ frogEEE ++ disguisedEEE ++ frankenItems ++ $(frankenSabotage) ++ actionBooster ++ $(fowlPlay) ++ darkDeck.%!(_.is[Ambush]).%!(_.is[BaseSuitDominance]).%!(_.is[CornersDominance]) ++ $(Ambush(Abomination)) ++ upstarts ++ sorcery ++ $(SorceryDominance) ++ capitalists // new cards go last: saved games name cards by their place here
 }
 
 
