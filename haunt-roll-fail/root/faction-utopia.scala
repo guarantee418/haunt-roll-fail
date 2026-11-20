@@ -27,6 +27,9 @@ trait Utopia extends WarriorFaction {
     def getFreedom(corruption : Int) : Int
 
     def getDraw(corruption : Int) : Int
+
+    // the board whose Corruption track the player panel shows, cu-track-<trackBoard>-<n> (root/tools/utopia-track.py)
+    def trackBoard : String
 }
 
 case object CU extends Utopia {
@@ -43,6 +46,8 @@ case object CU extends Utopia {
     def getFreedom(corruption : Int) = 1 + (corruption < 4).??(1) + (corruption < 6).??(1)
 
     def getDraw(corruption : Int) = 1 + (corruption < 2).??(1) + (corruption < 4).??(1) + (corruption < 6).??(1)
+
+    def trackBoard = "v1"
 }
 
 case object CUv2 extends Utopia {
@@ -60,6 +65,8 @@ case object CUv2 extends Utopia {
     def getFreedom(corruption : Int) = 1 + (corruption < 4).??(1) + (corruption < 6).??(1)
 
     def getDraw(corruption : Int) = 1 + (corruption < 2).??(1) + (corruption < 3).??(1) + (corruption < 4).??(1)
+
+    def trackBoard = "v3"
 }
 
 

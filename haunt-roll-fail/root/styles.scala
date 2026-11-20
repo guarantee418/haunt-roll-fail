@@ -306,6 +306,7 @@ package object elem {
         object building3x extends CustomStyle(width("6ch"), vertical.align("middle"))
 
         object token extends CustomStyle(width("2ex"), vertical.align("middle"), padding("0.11ex"))
+        object corruption extends CustomStyle(width("2.5ex"), vertical.align("middle"), padding("0.06ex"))
         object tokengl extends CustomStyle(width("2ex"), vertical.align("middle"), padding.ver("0.11ex"))
 
         object token3x extends CustomStyle(width("6ex"), vertical.align("middle"), padding("0.33ex"))

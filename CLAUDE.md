@@ -1098,6 +1098,10 @@ server. No session can reach the server, and none needs to.
   screen the map is now capped at the height the window had before (`mapMaxHeight`, remembered per screen width as
   `root.windowed-height.<width>`, else 90% of the screen; `FullDimPane`'s `maxHeight` in `panes-again.scala`), so the
   side panes keep their width and the action pane takes the extra height. Other games don't pass `maxHeight`.
+- Chancellor's Utopia (fan, `root/faction-utopia.scala`) shows its Corruption track on its player panel (2026-11-20, asked for on
+  Discord): the seven spaces cut from its board (`cu-track-<v1|v3>-<n>`, `Utopia.trackBoard`, by `root/tools/utopia-track.py`), each
+  space above the corruption with a morality token drawn on it (`-m`); space 1 never has one, so at corruption 1 no space is
+  emptied but the first. Display only.
 - The Twilight Council's Loyalists on its player panel are drawn head down, hanging like bats (`styles.hanging` in
   `root/styles.scala`; 2026-11-17). Display only.
 - Tapping a Root faction's status pane opens its overlay (`onFactionStatus` in
