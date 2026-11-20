@@ -861,6 +861,13 @@ server. No session can reach the server, and none needs to.
   Movement as Betrayal (2026-11-08) the Eyrie's battle at Effigy flipped Effigy and Lower Jaw but only Effigy, listed first, got a frog.
   New games get the hidden default option `FearsAfterRemoval`; older games keep the old way, and a running game can be switched over
   with `FearsAfterRemovalAction(X)`.
+- When the Knaves' Nab battle sets off Lilypad Diaspora's Fears Come to Pass, the Knaves (the active player) pick whether the Fears
+  or the Acting Captain's move after the Nab resolves first, as they have the same timing (Root rules channel, 2026-11-20): moving first,
+  the Fears flip the Peaceful enclaves where the Knaves are after the move. The Fears wait in `nabFears` (`InvasiveEEEPlayer`) for the
+  battle's end, where `KnavesNabAfterAction` asks (`KnavesNabFearsFirstAction`, `KnavesNabMoveFirstAction` in `root/faction-knaves.scala`),
+  only when the Captain can move and the Diaspora has a Peaceful enclave; a Nab move put first sets them off when it is done or skipped.
+  The Fears always came first, during the battle's removal. New games get the hidden `NabFearsOrder`, in `RulesVersion4`; a running game
+  can be switched over with `NabFearsOrderAction(X)`. `ReplayCheck <games> ldkd` takes Nab half the times it is offered and picks the order at random.
 - An Entreat (17.2.4) asks the Twilight Council to gain a Loyalist or place some in the clearing only when it has Loyalists it could
   place there; otherwise it gains one without being asked, or nothing happens when it can't (`CouncilEntreatAction` in
   `root/faction-council.scala`; 2026-10-29: the Council was asked only to "place 0"). New games get the hidden default option

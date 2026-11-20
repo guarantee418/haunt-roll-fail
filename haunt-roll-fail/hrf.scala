@@ -1640,7 +1640,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             )
         }
 
-        def says(e : Elem, again : |[() => Unit] = None) = ui.action.asker.zask($(ZOption(title, Div(e, ZBasic.info))) ++ again./(f => ZBasic(" ", Div("Try again"), f)) ++ $(ZBasic(" ", Div("Back"), () => load())))
+        // (the text in one span: the info box lays out its children apart, so each highlighted word was on a line of its own)
+        def says(e : Elem, again : |[() => Unit] = None) = ui.action.asker.zask($(ZOption(title, Div(e.spn, ZBasic.info))) ++ again./(f => ZBasic(" ", Div("Try again"), f)) ++ $(ZBasic(" ", Div("Back"), () => load())))
         def unreachable() = says("The server can't be reached.".txt)
 
         // the player code from another device, or a name and its own code (Ranking.signIn; 2026-11-19)
@@ -1679,9 +1680,21 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         // a code of the player's own for the names this browser holds (Ranking.setCode)
         // the player code, in the menu itself: the overlay it was shown in left the menu hidden once closed (2026-11-19)
-        def showCode() = ui.action.asker.zask(
-            $(ZOption(heading("Your player code"), Div("Enter it under Rankings on another device to play there under your names. Keep it to yourself: anyone with it can.".txt ~ Break ~ PlayerKey.get.hlb.spn(xstyles.larger110), ZBasic.info))) ++
-            $(ZBasic(" ", Div("Back"), () => load())))
+        // a code of the player's own is kept only scrambled (Ranking.setCode), so it can't be shown: the screen says which names
+        // have one, as players who set one took the device's code shown here for their old one (2026-11-20)
+        def showCode() {
+            def shown(own : $[String]) = ui.action.asker.zask(
+                $(ZOption(heading("This device's player code"), Div("Enter it under Rankings on another device to play there under your names. Keep it to yourself: anyone with it can.".txt ~ Break ~ PlayerKey.get.hlb.spn(xstyles.larger110), ZBasic.info))) ++
+                own.any.$(ZOption(heading("Your own code"), Div(("You set a code of your own for " ~ own./(_.hlb).join(", ") ~ ". It isn't shown here: the site keeps it only scrambled, so no one can read it, the site included. It still works, and the code above does too. On another device, tap " ~ "Use a code from another device".hl ~ ", enter your name, then your own code. Forgot it? Pick a new one with " ~ "Set or change my own code".hl ~ ".").spn, ZBasic.info))) ++
+                $(ZBasic(" ", Div("Back"), () => load())))
+
+            def check(rest : $[String], own : $[String]) : Unit = rest match {
+                case n :: more => postF(server + "/has-code", n) { r => check(more, (r.trim == "yes").?(own :+ n).|(own)) } { check(more, own) }
+                case Nil => shown(own)
+            }
+
+            check(mine, $)
+        }
 
         // a code is set, or changed (the last one set wins), for the names this device holds; with none, say how to get one
         def setCode() {
@@ -1695,7 +1708,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 else
                     postF(server + "/set-code", PlayerKey.get + "\n" + code) { r =>
                         r.split('\n').$ match {
-                            case "ok" :: names => says("Your code is set for " ~ names./(_.hlb).join(", ") ~ ". On another device, open Rankings, tap " ~ "Use a code from another device".hl ~ ", enter your name, then this code. Keep it to yourself: anyone with your name and code can play as you.")
+                            case "ok" :: names => says("Your code is set for " ~ names./(_.hlb).join(", ") ~ ". On another device, open Rankings, tap " ~ "Use a code from another device".hl ~ ", enter your name, then this code. Keep it to yourself: anyone with your name and code can play as you. " ~ "Show my player code".hl ~ " still shows this device's code, which works too: your own code is kept scrambled and never shown.")
                             case _ => says("The code wasn't set: this device holds no name.".txt)
                         }
                     } { unreachable() }

@@ -141,6 +141,8 @@ class InvasiveEEEPlayer(val faction : InvasiveEEE)(implicit val game : Game) ext
     var watched : |[Battle] = None
     var fears : $[Faction] = $
     var calm = false
+    // NabFearsOrder: the Knaves that set off the Fears with a Nab battle, waiting for the Knaves to pick the order with the Nab move
+    var nabFears : $[Faction] = $
 
     // Negotiations, once per turn for each enemy
     var negotiated : $[(Int, Faction)] = $
@@ -214,6 +216,10 @@ case class InvasiveEEEFearsPlaceAction(self : InvasiveEEE, l : $[Clearing], then
 // A one-time fix for games started before FearsAfterRemoval, added to a live game's log by hand: from here Fears Come to Pass
 // places its warriors once the removed ones are back in the supply (game.fearsAfterRemoval), then goes on with then
 case class FearsAfterRemovalAction(then : ForcedAction) extends ForcedAction with SkipValidate
+
+// A one-time fix for games started before NabFearsOrder, added to a live game's log by hand: from here the Knaves pick whether their
+// Nab move or the Fears Come to Pass it set off resolves first (game.nabFearsOrder), then goes on with then
+case class NabFearsOrderAction(then : ForcedAction) extends ForcedAction with SkipValidate
 
 // A one-time fix for games started before FrogCardsSkipLostSouls, added to a live game's log by hand: moves the Frog cards
 // in the Lizards' Lost Souls to the Pond and turns the rule on from here (game.frogsSkipLostSouls), then goes on with then
@@ -310,6 +316,7 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
     }
 
     def fearsAfterRemoval(implicit game : Game) = game.options.has(FearsAfterRemoval) || game.fearsAfterRemoval
+    def nabFearsOrder(implicit game : Game) = game.options.has(NabFearsOrder) || game.nabFearsOrder
 
     def craftByClearing(implicit game : Game) = game.options.has(FrogsCraftByClearing) || game.frogsCraftByClearing
 
@@ -444,6 +451,11 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         case GovernorsStopEnclaveFlipsAction(then) =>
             game.governorsStopEnclaveFlips = true
+
+            then
+
+        case NabFearsOrderAction(then) =>
+            game.nabFearsOrder = true
 
             then
 
@@ -648,8 +660,12 @@ object InvasiveEEEExpansion extends FactionExpansion[InvasiveEEE] {
             BattleStartedAction(b)
 
         case ForcedRemoveProcessAction(f : InvasiveEEE, then) =>
-            val l = f.fears.distinct
+            // NabFearsOrder: the Fears the Knaves set off with a Nab battle wait for the battle's end, where the Knaves pick whether
+            // they or the Nab move come first (KnavesNabAfterAction)
+            val nab = nabFearsOrder.??(f.fears.distinct.%(e => e.is[Knaves] && e.used.has(KnavesNabbing)))
+            val l = f.fears.distinct.diff(nab)
 
+            f.nabFears = (f.nabFears ++ nab).distinct
             f.fears = $
             f.watched = None
             f.calm = false
