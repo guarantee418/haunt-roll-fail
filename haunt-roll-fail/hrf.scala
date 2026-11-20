@@ -2023,7 +2023,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         ZOption(group, linked(url(t(3)), label.hh ~ ": " ~ names(t.drop(5)) ~ Break ~ (winner.nonEmpty.?("Won by " ~ name(winner) ~ " · ").|(Empty) ~ "Spectate").spn(xstyles.smaller75)))
                     }
                 } ++
-                $(note("Your player code".hl, owned.any.?("Your names on this device: " ~ owned./(_.hlb).join(", ") ~ ". On another device, use your player code under " ~ "Rankings".hl ~ " to play there under the same names.").|(("No name is claimed on this device yet. Signing up claims one; if you have one on another device, use its player code under " ~ "Rankings".hl ~ " first.").txt))) ++
+                $(note("Your player code".hl, owned.any.?("Your names on this device: " ~ owned./(_.hlb).join(", ") ~ ". On another device, use your player code under " ~ "Rankings".hl ~ " to play there under the same names.").|(Empty ~ "No name is claimed on this device yet. Signing up claims one; if you have one on another device, use its player code under " ~ "Rankings".hl ~ " first."))) ++
                 $(back)
             )
         }

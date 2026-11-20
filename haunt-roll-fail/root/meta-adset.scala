@@ -163,7 +163,7 @@ object MetaAdset extends MetaGame {
     override def tournamentOptions : $[O] = {
         val four = factions.take(4)
         (mandatoryFor(4, four) ++
-            defaultsFor(4, four).notOf[MapOption].notOf[DeckOption].notOf[ClearingsOption].notOf[LandmarksOption].notOf[IncludeFaction].notOf[IncludeHireling] ++
+            defaultsFor(4, four).notOf[MapOption].notOf[DeckOption].notOf[ClearingsOption].notOf[LandmarksOption].notOf[IncludeFaction].notOf[IncludeHireling].but(DeepWoodsSettling).but(WastelandsWater) ++
             $(AllRandomClearings, MountainSuitedLandmark, TournamentDraft) ++
             (Meta.official.but(VB) ++ $(LDvE, TC, KD))./(IncludeFaction)
         ).distinct

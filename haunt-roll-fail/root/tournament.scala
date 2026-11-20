@@ -67,7 +67,7 @@ object TournamentExpansion extends Expansion {
 
     def seat(n : Int)(implicit game : Game) = game.seating(n % game.seating.num)
 
-    def flop(implicit game : Game) : Elem = game.playChoices./(_.elem).comma.merge
+    def flop(implicit game : Game) : Elem = game.playChoices./(_.elem).join(Text(", "))
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         // the factions are drawn first, before the map is set up
@@ -78,7 +78,7 @@ object TournamentExpansion extends Expansion {
             TournamentFlopAction
 
         case TournamentFlopAction =>
-            log("The flop".hl ~ ":", flop)
+            log("The flop".hl ~ ":", game.playChoices./(_.elem).comma)
 
             Milestone(TournamentDeckAskAction)
 
@@ -122,7 +122,7 @@ object TournamentExpansion extends Expansion {
         case TournamentLandmarkAskAction =>
             val p = seat(2)
 
-            Ask(p).group("The flop".hl ~ ": " ~ flop ~ Break ~ p.elem ~ " picks what goes in the " ~ TowerLandmark.elem ~ "'s clearing (" ~ game.board.tower./(_.elem).comma.merge ~ ")").each(landmarks)(l => TournamentLandmarkAction(p, l))
+            Ask(p).group("The flop".hl ~ ": " ~ flop ~ Break ~ p.elem ~ " picks what goes in the " ~ TowerLandmark.elem ~ "'s clearing (" ~ game.board.tower./(_.elem).join(Text(", ")) ~ ")").each(landmarks)(l => TournamentLandmarkAction(p, l))
 
         case TournamentLandmarkAction(p, l) =>
             game.tournamentLandmark = Some(l)

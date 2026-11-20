@@ -72,6 +72,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
     // Everything worked out from the board, made again when the board changes: a tournament game (TournamentDraft) has its
     // map picked in the draft, after the page has been drawn (2026-11-20)
+    val sprites = mutable.Map[String, Sprite]()
+
+    def sprite(key : String) = sprites.getOrElseUpdate(key, {
+        val image = resources.images.get(key)
+        Sprite($(ImageRect(new RawImage(image), Rectangle(0, 0, image.width, image.height), 1.0)), $)
+    })
+
     class BoardView(val board : Board) {
     lazy val mapid = board.id + ":"
 
@@ -96,12 +103,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         new Scene($(layers.background, layers.clearings, layers.rule, pieces), mp.width, mp.height, Margins(d, d, d, d))
     }
 
-    val sprites = mutable.Map[String, Sprite]()
-
-    def sprite(key : String) = sprites.getOrElseUpdate(key, {
-        val image = resources.images.get(key)
-        Sprite($(ImageRect(new RawImage(image), Rectangle(0, 0, image.width, image.height), 1.0)), $)
-    })
 
 
     lazy val place = {
@@ -111,17 +112,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         val placed = placeb.context.getImageData(0, 0, placeb.width, placeb.height).data
         Array.tabulate(placeb.width, placeb.height)((x, y) => placed((y * placeb.width + x) * 4) * 0x010000 + placed((y * placeb.width + x) * 4 + 1) * 0x0100 + placed((y * placeb.width + x) * 4 + 2))
     }
-
-    def sameRegion(x : Int, y : Int, xx : Int, yy : Int) = xx >= 0 && yy >= 0 && xx < place.length && yy < place(0).length && place(xx)(yy) == place(x)(y)
-
-    // a region's centre on the map: the Legends Scenarios' space is in its forest
-    def center(r : Region) : (Int, Int) = r match {
-        case LegendSpace => game.legendForest./(f => game.board.forestLabel(f)).|((0, 0))
-        case r => game.board.center(r)
-    }
-
-    // the regions pieces are drawn in
-    def mapRegions : $[Region] = game.board.regions ++ game.legendForest.any.$(LegendSpace)
 
     lazy val findAnother = {
         val width = place.length
@@ -171,6 +161,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
     def place = view.place
     def findAnother = view.findAnother
     def mp = view.mp
+
+    def sameRegion(x : Int, y : Int, xx : Int, yy : Int) = xx >= 0 && yy >= 0 && xx < place.length && yy < place(0).length && place(xx)(yy) == place(x)(y)
+
+    // a region's centre on the map: the Legends Scenarios' space is in its forest
+    def center(r : Region) : (Int, Int) = r match {
+        case LegendSpace => game.legendForest./(f => game.board.forestLabel(f)).|((0, 0))
+        case r => game.board.center(r)
+    }
+
+    // the regions pieces are drawn in
+    def mapRegions : $[Region] = game.board.regions ++ game.legendForest.any.$(LegendSpace)
 
     case object FreeBuildingSlot extends Building
     case object Battle extends Token
