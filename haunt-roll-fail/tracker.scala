@@ -137,6 +137,14 @@ class ValueTracker[T] extends Tracker[T] {
 
     def get[S <: T](location : Location[T]) : $[S] = l2e(location).map(_.asInstanceOf[S])
 
+    // a location's content put in place of what it holds (Root's tournament draft deals the deck it picks)
+    def replace[S <: T](location : Location[T], content : $[S]) {
+        if (!locations.contains(location))
+            throw new Error("location not registered " + location)
+
+        l2e += location -> content
+    }
+
     def locationsOf(entity : T) : $[Location[T]] = locations.filter(l => l2e(l).contains(entity))
 
     def dump() {

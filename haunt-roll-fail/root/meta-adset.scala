@@ -157,6 +157,18 @@ object MetaAdset extends MetaGame {
 
     def createGame(factions : $[F], options : $[O]) = new Game(factions, options.of[IncludeFaction]./(_.faction), options)
 
+    // The site's tournament (root/tournament.scala): Advanced Setup with the tournament draft, which picks the deck, the map and
+    // the Mountain's landmark in the game, and the official factions but the Vagabond (2026-11-20)
+    override def tournament = |(name)
+    override def tournamentOptions : $[O] = {
+        val four = factions.take(4)
+        (mandatoryFor(4, four) ++
+            defaultsFor(4, four).notOf[MapOption].notOf[DeckOption].notOf[ClearingsOption].notOf[LandmarksOption].notOf[IncludeFaction].notOf[IncludeHireling].but(DeepWoodsSettling).but(WastelandsWater) ++
+            $(AllRandomClearings, MountainSuitedLandmark, TournamentDraft) ++
+            (Meta.official.but(VB) ++ $(LDvE, TC, KD))./(IncludeFaction)
+        ).distinct
+    }
+
     // Rankings: the Root ladder, each faction's side given to the seat that drafted it
     override def ranking = Meta.ranking
     override def rankingSides(g : G, winners : $[Any]) = Meta.rankSides(g, winners)./{ case (l, w) => (l./~(f => g.ftp.get(f))./~(_.as[PlayerN]), w) }
