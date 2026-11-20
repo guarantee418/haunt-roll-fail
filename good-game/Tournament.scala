@@ -37,14 +37,17 @@ import scala.concurrent.duration.Duration
 //   cancel                            the running tournament ends with no champion; sign-ups for the next one open
 //   webhook <url>                     the Discord webhook (written to the file discord-webhook; "webhook off" removes it);
 //                                     delete the change file once its .result says "set"; forgets the threads made
+//   forum <url>                       a forum channel's webhook for the tables' threads (the file discord-forum-webhook;
+//                                     "forum off" removes it); delete the change file once its .result says "set"
 //   invite                            posts the invitation to sign up again
 // The Discord channel of the webhook in HRF_DISCORD_WEBHOOK (or the file discord-webhook) is invited to sign up, with the link to
 // the Tournament page, once for each tournament as soon as its sign-ups open and a webhook is set (at the server's start, when the
 // webhook is set, when a final starts or a tournament is cancelled; asked for on 2026-11-20, as nobody could find the page), told
 // how the sign-ups go (8, 12 and 15 of 16), and told when a tournament starts, each table is won, the final starts and the champion
-// is known. In a forum channel (asked for on 2026-11-20) each tournament gets a thread for its sign-ups and results, and each table
-// (the final too) a thread of its own, opened at its start with its players, pinged by the Discord user ID they gave on the
-// Tournament page (/tournament/discord); a text channel, which takes no thread, gets every post in the channel itself.
+// is known. Each table (the final too) gets a Discord thread of its own (asked for on 2026-11-20), opened at its start with its
+// players, pinged by the Discord user ID they gave on the Tournament page (/tournament/discord), in the forum channel of the
+// webhook in HRF_DISCORD_FORUM_WEBHOOK (or the file discord-forum-webhook), else in the announcements' channel. A forum channel
+// gets every post in a thread (each tournament has one for the rest); a text channel, which takes no thread, in the channel itself.
 object Tournament {
     import GoodGame._
     import Backup.{rows, row}
@@ -425,7 +428,7 @@ object Tournament {
                     if (rest.startsWith("https://discord.com/api/webhooks/") || rest.startsWith("https://discordapp.com/api/webhooks/")) {
                         Files.write(Paths.get("discord-webhook"), (rest + "\n").getBytes(UTF_8))
                         Files.deleteIfExists(threads)
-                        plainChannel = false
+                        plainChannels = Set()
                         announce("The Root tournament's announcements will be posted here.")
                         invite(false)
                         "set"
@@ -436,20 +439,41 @@ object Tournament {
                     }
                     else
                         "not done: webhook <https://discord.com/api/webhooks/...> or webhook off"
+                // the forum channel's webhook for the tables' threads (the file discord-forum-webhook); "forum off" sends them
+                // to the announcements' webhook again
+                case "forum" =>
+                    if (rest.startsWith("https://discord.com/api/webhooks/") || rest.startsWith("https://discordapp.com/api/webhooks/")) {
+                        Files.write(Paths.get("discord-forum-webhook"), (rest + "\n").getBytes(UTF_8))
+                        Files.deleteIfExists(threads)
+                        plainChannels = Set()
+                        "set"
+                    }
+                    else if (rest == "off") {
+                        Files.deleteIfExists(Paths.get("discord-forum-webhook"))
+                        "removed"
+                    }
+                    else
+                        "not done: forum <https://discord.com/api/webhooks/...> or forum off"
                 case "invite" => invite(true)
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook or invite)"
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum or invite)"
             }
 
-            (if (word == "webhook") "webhook" else line) + ": " + result
+            (if (word == "webhook" || word == "forum") word else line) + ": " + result
         }
     }
 
     // DISCORD: a message to the channel of the webhook, if one is set up
-    def webhook : Option[String] =
-        sys.env.get("HRF_DISCORD_WEBHOOK").map(_.trim).filter(_.nonEmpty).orElse {
-            val f = Paths.get("discord-webhook")
+    def hook(env : String, file : String) : Option[String] =
+        sys.env.get(env).map(_.trim).filter(_.nonEmpty).orElse {
+            val f = Paths.get(file)
             if (Files.exists(f)) Some(new String(Files.readAllBytes(f), UTF_8).trim).filter(_.nonEmpty) else None
         }
+
+    // the announcements' webhook
+    def webhook = hook("HRF_DISCORD_WEBHOOK", "discord-webhook")
+
+    // a forum channel's webhook for the tables' threads, if they go to a channel of their own (2026-11-20)
+    def forumWebhook = hook("HRF_DISCORD_FORUM_WEBHOOK", "discord-forum-webhook")
 
     lazy val client = java.net.http.HttpClient.newHttpClient()
 
@@ -509,7 +533,7 @@ object Tournament {
 
         Ranking.append(dir.resolve("announcements.tsv"), row(Ranking.now(), text))
 
-        webhook.foreach { url =>
+        (if (table != "") forumWebhook.orElse(webhook) else webhook).foreach { url =>
             val number = if (n > 0) n else cups().lastOption.map(_.n).getOrElse(1)
             val key = threadKey(number, table)
             val name = threadName(number, table)
@@ -520,7 +544,7 @@ object Tournament {
     }
 
     // the webhook's channel took a plain post after refusing a thread (Discord text channels do)
-    @volatile var plainChannel = false
+    @volatile var plainChannels = Set[String]()
 
     def post(url : String, text : String, key : String, name : String, ids : List[String]) {
         def send(fields : String, query : String) = {
@@ -554,11 +578,11 @@ object Tournament {
         try {
             // the thread kept, or a new one (a kept thread may be gone, or from another webhook's channel), or the channel itself;
             // a channel that took no thread (a text channel) is tried first after that, until it refuses a plain post
-            val plain = () => { val r = send("", "") ; plainChannel = ok(r) ; r }
+            val plain = () => { val r = send("", "") ; plainChannels = if (ok(r)) plainChannels + url else plainChannels - url ; r }
             val inThread = List[() => java.net.http.HttpResponse[String]](
                 () => threadOf(key).map(t => send("", "&thread_id=" + t)).getOrElse(null),
                 () => fresh())
-            val r = (if (plainChannel) plain +: inThread else inThread :+ plain).foldLeft(null : java.net.http.HttpResponse[String]) { (last, f) =>
+            val r = (if (plainChannels.contains(url)) plain +: inThread else inThread :+ plain).foldLeft(null : java.net.http.HttpResponse[String]) { (last, f) =>
                 if (last != null && (ok(last) || last.statusCode / 100 != 4)) last else Option(f()).getOrElse(last)
             }
 
