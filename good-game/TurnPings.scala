@@ -35,6 +35,7 @@ import scala.concurrent.duration.Duration
 //   threads.tsv   game, the Discord thread made for it
 //   pings.tsv     time, game, user: the pings sent
 //   created.tsv   game: the games whose post went out, so each goes out once
+//   firsts.tsv    game, watch or told: the games whose first player the thread is told of (announceFirst)
 // and in tournament/: discord-pings.tsv  name, on or off (the last row counts); on unless turned off
 // The tournament change "ping waiting" pings at once every seat the games wait for (the same checks but the minute's delay).
 //
@@ -305,6 +306,34 @@ object TurnPings {
         Files.createDirectories(dir)
         Ranking.append(state, row(game, index, waiting.toList.sorted.mkString(","), Ranking.now()))
         // (the sweep pings the seats newly waited for a minute from now)
+
+        // WHO GOES FIRST (2026-11-21: in an Advanced Setup game the seat order is drawn in the game, the first player opened the
+        // game before the minute was up, so the thread never said it was their turn): a game whose first report comes now is
+        // watched (firsts.tsv, "watch"), and the first time it waits for one seat alone the thread says who that is, mentioning
+        // them unless they have the game open ("told"); games reported before this keep their pings only
+        if (before.isEmpty)
+            Ranking.append(firsts, row(game, "watch"))
+        if (waiting.size == 1 && firstState(game).contains("watch"))
+            try announceFirst(game, waiting.head) catch { case e : Exception => println("Turn pings: first player not posted: " + e) }
+    }
+
+    val firsts = dir.resolve("firsts.tsv")
+
+    def firstState(game : String) : Option[String] = rows(firsts).filter(_.headOption.contains(game)).lastOption.flatMap(_.lift(1))
+
+    def announceFirst(game : String, user : String) {
+        Ranking.append(firsts, row(game, "told"))
+        lobbyOf(game).filter(l => metas.contains(l.meta)).foreach { l =>
+            if (introduced(game) || table(game).nonEmpty) {
+                val id = mentionOf(user, table(game).nonEmpty).filter(_ => !readSince(user, game, watching))
+                post(game, l, "**" + nameOf(l, user) + "** takes the first turn in **" + l.title + "**" + id.map(i => " (<@" + i + ">)").getOrElse("") + ".", id.toList)
+                // the seat is told now: its first ping waits for its next turn
+                id.foreach { _ =>
+                    sent = pings + ((game, user) -> (System.currentTimeMillis :: pings.getOrElse((game, user), Nil)))
+                    Ranking.append(pinged, row(Ranking.now(), game, user))
+                }
+            }
+        }
     }
 
     // every seat the games wait for, at once (the "ping waiting" change): how many were pinged
