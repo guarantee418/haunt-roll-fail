@@ -254,7 +254,7 @@ for c in sorted(os.listdir(N + 'card/victory')):
 for o, t, label in [('DenCentral', 'start-den', 'DEN'), ('GreatLakeCentral', 'start-lake', 'LAKE'), ('HelheimCentral', 'start-helheim', 'HELHEIM'),
                     ('HrimgandrCentral', 'start-hrimgandr', 'LAIR'), ('MagmaFlowCentral', 'start-magma', 'MAGMA'),
                     ('MimirCentral', 'start-mimir', 'MIMIR'), ('RelicCentral', 'start-relic', 'RELIC'), ('VolcanoCentral', 'start-volcano', 'VOLCANO'),
-                    ('WildLakeCentral', 'wild-lake', 'LAKE'), ('YggdrasilCentral', 'start-yggdrasil', 'YGGDRAS')]:
+                    ('WildLakeCentral', 'wild-lake', 'LAKE'), ('YggdrasilCentral', 'start-yggdrasil', 'TREE')]:
     im = load(N + 'tile/' + t + '.webp')
     w, h = im.size
     m = int(min(w, h) * 0.5)
