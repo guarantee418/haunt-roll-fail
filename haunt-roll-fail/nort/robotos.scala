@@ -28,7 +28,7 @@ import nort.elem._
 // - 25 units instead of 14 (game.unitLimit);
 // - clan upgrades cost 2 lore instead of 3 (game.upgradeCost).
 // "Units" as in the rules: warriors, the warchief and Kaija.
-// Its player panel says "(Robotos)"; tapping that lists the cheats (RobotosInfo in ui.scala).
+// Its player panel has the bot icon before the clan name; tapping it lists the cheats (RobotosInfo in ui.scala).
 // The Hard bot's valuation knows these rules for any clan that has them (game.robotos), so it plays them out,
 // and opponents played by the Hard bot judge a Robotos clan rightly.
 

@@ -116,14 +116,14 @@ object Host extends hrf.host.BaseHost {
             // NORT_FAME=1: always with Alternative fame gains (fan content), when the victory isn't Alternative victory
             (alt.not && (sys.env.get("NORT_FAME").has("1") || random() < 0.4)).$(ModuleOption(FameGainsModule)) ++
             // NORT_PC=1: always the PC version (fan content), with the modules it turns on (not against the Automa)
-            (sys.env.get("NORT_PC").has("1") && solo.not).??(PCVersion.needs./(ModuleOption) ++ PCVersion.tiles ++ $(ModuleOption(PCVersion)) ++ sys.env.get("NORT_PCOLD").has("1").not.??($(PCVersionUpdate, PCVedrfolnirReveal, PCVedrfolnirNoTile, PCMineChoice, PCRangersScout, PCSeenOnly, PCMinePerMine, PCOneUpgrade, PCNavalPort, PCHallShield, PCHallSafe, PCArmyCap, PCTowerPoints, PCScoutFame, PCScorchedSeen))) ++
+            (sys.env.get("NORT_PC").has("1") && solo.not).??(PCVersion.needs./(ModuleOption) ++ PCVersion.tiles ++ $(ModuleOption(PCVersion)) ++ sys.env.get("NORT_PCOLD").has("1").not.??($(PCVersionUpdate, PCVedrfolnirReveal, PCVedrfolnirNoTile, PCMineChoice, PCRangersScout, PCSeenOnly, PCMinePerMine, PCOneUpgrade, PCNavalPort, PCHallShield, PCHallSafe, PCArmyCap, PCTowerPoints, PCScoutFame, PCScorchedSeen, PCJotnarCamp))) ++
             // NORT_WASTELANDS=1: always with Wastelands; a random central tile choice either way (it needs no module),
             // NORT_CENTRAL=1: never the standard tile; NORT_CENTRAL=<tile id>: always that tile
             wastelands.??((random() < 0.3).?($[hrf.meta.GameOption](ModuleOption(Wastelands))).|((random() < 0.7).$(WastelandsTiles) ++ (creatures && random() < 0.7).$(WastelandsCreatures))) ++ $(CentralChoice.all.%(c => creatures || c.tile.forall(Waste.creatureOnly.has(_).not)).%(c => c != StandardCentral || sys.env.get("NORT_CENTRAL").has("1").not)
                 .%(c => sys.env.get("NORT_CENTRAL").%(_ != "1").forall(c.tile.has)).shuffle.head) ++
             teams
         val level = solo.$(AutomaLevelOption(1 + (random() * 6).toInt))
-        val all = training.?(colors ++ $(TrainingFieldsOption) ++ (random() < 0.3).$(FirstSeatStarts)).|(core.?(colors).|(options ++ level ++ level.exists(_.level >= 3).$(ModuleOption(Creatures))))
+        val all = training.?(colors ++ $(TrainingFieldsOption) ++ (random() < 0.8).$(TrainingExploreSides) ++ (random() < 0.3).$(FirstSeatStarts)).|(core.?(colors).|(options ++ level ++ level.exists(_.level >= 3).$(ModuleOption(Creatures))))
         all.foreach(o => assert(Meta.parseOption(Meta.writeOption(o)) == $(o), o))
         // NORT_ADSET=1: Adset games, with seats that draft their clans (random setup choices)
         if (sys.env.get("NORT_ADSET").has("1")) {

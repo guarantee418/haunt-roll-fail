@@ -84,6 +84,7 @@ object HRF {
     def paramList(p : String) = param(p)./~(_.split(' ').$)
 
     val versionOverride = hashParam("version") || urlParam("version")
+    var lfgSent = false
 
     var segments = dom.window.location.pathname.split('/').$.drop(3)
 
@@ -288,6 +289,9 @@ trait Callbacks {
     def returnToTitle() : Unit
     // A local game (hotseat) with more than one human player on this device
     def hotseat : Boolean
+    // The bot playing a seat (its name: "Easy", "Hard", ...), from the seats the game was started with (an online game's lobby
+    // lines, a local game's save); None for a person. Display only (Northgard's player panels)
+    def bot(f : Any) : Option[String] = None
 }
 
 sealed trait Difficulty
@@ -1451,6 +1455,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
     // Rankings (Elo, PlayerKey): every rated player, tapping one shows their games; the names this browser holds and its player code.
     // The look (2026-11-18) is the rk- classes in index.html: the faction glyphs and colours, rating badges, bars and the ladder rows.
+    // the server's answers to a Discord username (DiscordBot in good-game; 2026-11-20)
+    def discordNotFound = "No one on the Discord server has that username. Check the spelling (it's the name under your display name in your Discord profile), and join the server first if you haven't."
+
+    def discordNoBot = "Usernames can't be looked up yet, so give your Discord user ID for now. " + "In Discord, open Settings, then Advanced (on a phone, it's under App Settings), and turn on Developer Mode. Then tap or right-click your own name and pick Copy User ID: a long number like 123456789012345678. Your username can't ping you."
+
     def rankingsMenu() {
         val server = HRF.server.get
         val title = (meta.label + " Rankings").hl.spn(xstyles.larger110)
@@ -1711,6 +1720,53 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         // the player code, in the menu itself: the overlay it was shown in left the menu hidden once closed (2026-11-19)
         // a code of the player's own is kept only scrambled (Ranking.setCode), so it can't be shown: the screen says which names
         // have one, as players who set one took the device's code shown here for their old one (2026-11-20)
+        // Discord turn pings (TurnPings in good-game; 2026-11-20): for each name this device holds, its Discord user ID and
+        // whether it is mentioned in the game's Discord post when it becomes its turn
+        def discordPings() {
+            def setId(name : String, value : String) {
+                postF(server + "/tournament/discord", PlayerKey.get + "\n" + name + "\n" + value.trim) { r =>
+                    r.trim match {
+                        case "ok" if value.trim.nonEmpty => setPings(name, true)
+                        case "ok" => discordPings()
+                        case "invalid" => says("That isn't a Discord username or user ID.".txt, |(() => askId(name)))
+                        case "notfound" => says(discordNotFound.txt, |(() => askId(name)))
+                        case "nobot" => says(discordNoBot.txt, |(() => askId(name)))
+                        case _ => says("Only the device that holds the name can set its Discord.".txt)
+                    }
+                } { unreachable() }
+            }
+
+            def setPings(name : String, on : Boolean) {
+                postF(server + "/discord/pings", PlayerKey.get + "\n" + name + "\n" + on.?("on").|("off")) { _ => discordPings() } { unreachable() }
+            }
+
+            def askId(name : String) {
+                val head = "Discord username for " + name
+                ui.action.asker.iask(
+                    BasicOption(head, "Your Discord username (or your user ID). You need to be a member of the Discord server. Leave it empty to forget it.", Nil, null) ::
+                    InputOption(head, "", Nil, v => setId(name, v), _ => true) ::
+                    BasicOption(" ", "Cancel", Nil, () => discordPings()))
+            }
+
+            postF(server + "/discord/mine", PlayerKey.get) { text =>
+                val rows = text.split('\n').$.%(_.nonEmpty)./(_.split('\t').$ ++ $("", "", ""))
+                val group = heading("Discord turn pings")
+                ui.action.asker.zask(
+                    $(note(group, "Each online Root game gets its own post in the Discord server's games forum. When it becomes your turn, you are mentioned (pinged) there, unless you had the game open in the last minute or two. It needs your Discord username, and you need to be a member of the Discord server. Tournament games ping you in your table's thread whenever you gave it, unless you turn pings off here.".txt)) ++
+                    rows.none.$(note(group, "This device holds no name yet. Join an online game, or use your code from another device.".txt)) ++
+                    rows./~{ r =>
+                        // the fourth field: "ping" when the server has a user ID to ping (given, or a username the Discord bot found)
+                        val (n, id, on) = (r(0), r(1), r(2) == "on")
+                        val digits = id.any && (id.forall(_.isDigit) || r(3) == "ping")
+                        $(ZBasic(heading(n), "Discord: " ~ id.any.?(id.hh).|("not set".txt), () => askId(n))) ++
+                        digits.$(ZBasic(heading(n), "Turn pings: " ~ on.?("On".hlb).|("Off".hh) ~ " (tap to turn " ~ on.?("off").|("on") ~ ")", () => setPings(n, on.not))) ++
+                        (id.any && digits.not).$(note(heading(n), id.hlb ~ " wasn't found on the Discord server yet, so it can't be pinged: tap it to give it again."))
+                    } ++
+                    $(ZBasic(" ", Div("Back"), () => load()))
+                )
+            } { unreachable() }
+        }
+
         def showCode() {
             def shown(own : $[String]) = ui.action.asker.zask(
                 $(ZOption(heading("This device's player code"), Div("Enter it under Rankings on another device to play there under your names. Keep it to yourself: anyone with it can.".txt ~ Break ~ PlayerKey.get.hlb.spn(xstyles.larger110), ZBasic.info))) ++
@@ -1858,6 +1914,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 $(ZBasic(heading("Your player code"), Div("Use a code from another device"), () => useCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Set or change my own code"), () => setCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Lost my code"), () => lostCode())) ++
+                $(ZBasic(heading("Your player code"), Div("Discord turn pings"), () => discordPings())) ++
                 $(back)
             )
         }
@@ -1975,6 +2032,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 $(ZBasic(heading("Your player code"), Div("Use a code from another device"), () => useCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Set or change my own code"), () => setCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Lost my code"), () => lostCode())) ++
+                $(ZBasic(heading("Your player code"), Div("Discord turn pings"), () => discordPings())) ++
                 $(note(heading("How the rankings work"), explain)) ++
                 $(back)
             )
@@ -2046,13 +2104,15 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             ui.action.asker.iask(InputOption("Your name for the rankings and the tournament", "", Nil, v => signUp(v)) :: BasicOption(" ", "Cancel", Nil, () => load()))
         }
 
-        // the Discord a name's player gives, so its table's thread on the Discord server can mention them: a user ID pings, a
-        // username is only shown (a webhook can't look one up)
+        // the Discord a name's player gives, so its table's thread on the Discord server can mention them: a username, which the
+        // server's Discord bot looks up (DiscordBot in good-game; 2026-11-20), or a user ID
         def setDiscord(name : String, value : String) {
             postF(server + "/tournament/discord", PlayerKey.get + "\n" + name + "\n" + value.trim) { r =>
                 r.trim match {
                     case "ok" => load()
-                    case "invalid" => says("That isn't a Discord user ID (17 to 20 digits) or username.".txt)
+                    case "invalid" => says("That isn't a Discord username or user ID.".txt)
+                    case "notfound" => says(discordNotFound.txt)
+                    case "nobot" => says(discordNoBot.txt)
                     case _ => says("Only the device that holds the name can set its Discord.".txt)
                 }
             } { unreachable() }
@@ -2061,7 +2121,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         def askDiscord(name : String, first : Boolean) {
             val head = (if (first) "Signed up as " + name + ". " else "") + "Discord for " + name + " (optional)"
             ui.action.asker.iask(
-                BasicOption(head, "Each table gets its own thread on the Discord server. Give your Discord user ID to be mentioned (pinged) there: in Discord, turn on Settings, Advanced, Developer Mode, then tap your name and Copy User ID. A username is shown but can't ping you.", Nil, null) ::
+                BasicOption(head, "Each table gets its own thread on the Discord server. Give your Discord username to be mentioned (pinged) there. You need to be a member of the Discord server.", Nil, null) ::
                 InputOption(head, "", Nil, v => setDiscord(name, v), _ => true) ::
                 BasicOption(" ", first.?("Skip").|("Cancel"), Nil, () => load()))
         }
@@ -2091,7 +2151,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 open.any.??(owned.diff(signed)./(n => ZBasic(signGroup, "Sign up as " ~ n.hh, () => signUp(n)))) ++
                 open.any.$(ZBasic(signGroup, owned.any.?("Sign up with another name").|("Sign up"), () => askName())) ++
                 open.any.??(signed./(n => ZBasic(signGroup, "Withdraw " ~ n.hh, () => withdraw(n)))) ++
-                owned./(n => ZBasic("Discord".hl, "Discord for " ~ n.hh ~ ": " ~ discord.find(_.lift(1).exists(_.toLowerCase == n.toLowerCase))./~(_.lift(2))./(_.hh).|("not set".txt), () => askDiscord(n, false))) ++
+                owned./(n => ZBasic("Discord".hl, "Discord for " ~ n.hh ~ ": " ~ discord.find(_.lift(1).exists(_.toLowerCase == n.toLowerCase))./~(_.lift(2))./(v => (v.forall(_.isDigit) || discord.exists(d => d.lift(2).has(v) && d.lift(3).has("ping"))).?(v.hh).|(v.hh ~ " (not found on the Discord server yet: tap to give it again)".txt)).|("not set".txt), () => askDiscord(n, false))) ++
                 open.none.$(note("Sign-ups".hl, "Sign-ups for the next tournament open when the final of this one starts.".txt)) ++
                 tables.groupBy(_(1)).toList.sortBy(-_._1.toIntOption.|(0))./~{ case (n, l) =>
                     val group = ("Tournament " + n + champions.find(_(1) == n)./(c => " · champion " + c(2)).|("") + cancelled.has(n).??(" · cancelled")).hl
@@ -2348,18 +2408,33 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             } { }
 
             heldNames { n => h = |(n) ; again() }
+
+            // Discord LFG games (good-game/Lfg.scala): the options this version of the site gives them, once a page load
+            if (HRF.lfgSent.not) {
+                HRF.lfgSent = true
+                HRF.metas.%(_.lfgOptions.any).foreach { m =>
+                    postF(HRF.server.get + "/lfg/template", m.name + "\n" + HRF.version + "\n" + m.lfgOptions./(o => m.writeOption(o)).join(" "))(_ => ())(())
+                }
+            }
         }
 
-        // a game of the player's own: its title, the game when it isn't this one, the name played under; it opens the seat
+        // the game waits on the player (the server's sixth field, good-game/Turns.scala; 2026-11-20)
+        def myTurn(r : $[String]) = r.lift(5).has("1")
+
+        // a game of the player's own: its title, the game when it isn't this one, the name played under; it opens the seat;
+        // highlighted in gold, with "Your turn", while it waits on the player
         def myGame(group : Elem, r : $[String]) = {
             val label = HRF.metas.find(_.name == r(0))./(_.label).|(r(0))
             val other = (r(0) != meta.name).??(label + " · ")
-            ZOption(group, (Link(HRF.server.get + "/play/" + r(0) + "/" + r(2), r(1).but("")./(_.hh).|(label.hh) ~ Break ~ (other + "as " + r(3)).spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice))
+            val turn = myTurn(r)
+            val sub = turn.?(Span(Text("Your turn"), $(ExternalStyle("hrf-my-turn-tag"))) ~ " · ".txt).|(Empty) ~ (other + "as " + r(3)).txt
+            ZOption(group, (Link(HRF.server.get + "/play/" + r(0) + "/" + r(2), r(1).but("")./(_.hh).|(label.hh) ~ Break ~ sub.spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice ++ turn.$(ExternalStyle("hrf-my-turn"))))
         }
 
         val tourSecrets = tour.|($)./(_(3)).toSet
         val myGames = mine.|($).%(r => tourSecrets.contains(r(2)).not)
-        val active = myGames.%(_(4) != "1")
+        // the games waiting on the player first, each part in the server's order (newest first)
+        val active = myGames.%(_(4) != "1").sortBy(r => myTurn(r).?(0).|(1))
         val done = myGames.%(_(4) == "1")
         val names = myGames./(_(3)).distinct
 
@@ -2418,15 +2493,14 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 ui.logger.alog(" Reload " + url)
                 dom.document.location.assign(url)
             })).$ ++
-            accountRows ++
-            tournamentGames ++
-            myGameRows ++
             ZBasic(meta.label.hl, "New Online Game".hl.styled(xstyles.larger110), () => {
                 goOnlineNew()
             }).?.$ ++
-            games.%(_.status.has("archived").not)./(g => ZBasic("Recent Games", (new scalajs.js.Date(g.time).asInstanceOf[Dynamic].toLocaleString("sv-SE").toString.spn(xstyles.smaller75) ~ Break ~ g.title.hh).div($(xlo.fullwidth, xlo.fullheight)), () => {
-                goOnlineLobby(g.lobby)
-            })) ++
+            accountRows ++
+            tournamentGames ++
+            myGameRows ++
+            // (the Recent Games list, every online game this browser opened, was removed on 2026-11-20, asked for: the player's own
+            // games are under Your Active Games; a game's links menu is still at /play/<meta>/online/lobby/<lobby>)
             ZBasic("  ", "Archived Games".hh, () => {
                 goOnlineArchive()
             }).?.$.%(_ => games.exists(_.status.has("archived"))) ++
@@ -3080,6 +3154,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
             val callbacks = new Callbacks {
                 def switches = swt
+                override def bot(f : Any) = difficulties.toList.collectFirst { case (k, Bot(d)) if k == f => d ; case (k, BotDebug(d)) if k == f => d }
                 def saveReplay(onSave : => Unit) = {
                     val filename = "hrf--" + meta.name + "--" + HRF.version + "--replay--" + HRF.startAt.toISOString().take(16).replace("T", "--")
 

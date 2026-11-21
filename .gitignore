@@ -18,8 +18,17 @@ good-game/acme/
 # Bug reports saved by the server, and its GitHub token for posting them
 good-game/bug-reports/
 good-game/ranking/
+good-game/turns.tsv
 good-game/github-token
 
 # Games copy settings and the server's daily database copies (good-game/Backup.scala)
 good-game/backup-dir
 good-game/db-backups/
+
+# The tournaments' and the Discord turn pings' files, and the Discord webhooks (good-game/Tournament.scala, TurnPings.scala)
+good-game/tournament/
+good-game/turns/
+good-game/discord-webhook
+good-game/discord-forum-webhook
+good-game/discord-turns-webhook
+good-game/discord-public-key
