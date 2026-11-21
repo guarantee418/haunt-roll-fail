@@ -16,10 +16,13 @@ import java.nio.file.{Files, Path, Paths}
 //
 // The panels are kept in memory only (a restart loses one being set up; /root starts again). The Discord server's own emojis are
 // shown beside the options they stand for (emojiNames; factions by their short name), looked up with the bot's token.
+//
+// Each game (Lfg.Kind: Root's Advanced Setup, Northgard's Adset since 2026-11-21) has its own catalog (Root's in lfg-catalog.tsv,
+// the others in lfg-catalog-<meta>.tsv), the sections its command sets (sections) and the ones its panel lists (pages).
 object LfgSetup {
     import Backup.{rows, row}
 
-    val file = TurnPings.dir.resolve("lfg-catalog.tsv")
+    def file(meta : String) = TurnPings.dir.resolve(if (meta == Lfg.root.meta) "lfg-catalog.tsv" else "lfg-catalog-" + meta + ".tsv")
 
     case class Opt(name : String, page : Int, ns : Set[Int], toggle : Boolean, cond : Boolean, important : Boolean, group : String, label : String)
 
@@ -32,15 +35,16 @@ object LfgSetup {
         def label(o : String) = byName.get(o).map(_.label).getOrElse(o)
     }
 
-    @volatile var cached : Option[(Long, Catalog)] = None
+    val cached = new java.util.concurrent.ConcurrentHashMap[String, (Long, Option[Catalog])]()
 
-    def catalog() : Option[Catalog] = {
-        if (!Files.exists(file))
+    def catalog(meta : String) : Option[Catalog] = {
+        val f = file(meta)
+        if (!Files.exists(f))
             return None
-        val t = Files.getLastModifiedTime(file).toMillis
-        if (!cached.exists(_._1 == t))
-            cached = parse(new String(Files.readAllBytes(file), UTF_8)).map(c => (t, c))
-        cached.map(_._2)
+        val t = Files.getLastModifiedTime(f).toMillis
+        if (!Option(cached.get(meta)).exists(_._1 == t))
+            cached.put(meta, (t, parse(new String(Files.readAllBytes(f), UTF_8)).filter(_.meta == meta)))
+        cached.get(meta)._2
     }
 
     def words(s : String) = s.split(' ').toList.filter(_.nonEmpty)
@@ -65,19 +69,19 @@ object LfgSetup {
     }.toOption
 
     // the hash of the copy kept: "have" when the client's is the same, else "need"
-    def check(meta : String, hash : String) = if (catalog().exists(c => c.meta == meta && c.hash == hash)) "have" else "need"
+    def check(meta : String, hash : String) = if (catalog(meta).exists(c => c.meta == meta && c.hash == hash)) "have" else "need"
 
     // the client's catalog: "<version>\n<lines>"
     def setCatalog(meta : String, hash : String, body : String) : String = synchronized {
-        val ok = meta == Lfg.meta && hash.nonEmpty && hash.length <= 20 && hash.forall(_.isDigit) && body.length < 4000000
+        val ok = Lfg.kinds.exists(_.meta == meta) && hash.nonEmpty && hash.length <= 20 && hash.forall(_.isDigit) && body.length < 4000000
         val parsed = if (ok) parse(meta + "\t" + hash + "\n" + body) else None
         parsed.filter(c => c.players.nonEmpty && c.options.nonEmpty) match {
             case Some(_) =>
                 Files.createDirectories(TurnPings.dir)
-                Files.write(file, (meta + "\t" + hash + "\n" + body).getBytes(UTF_8))
-                // /root's choices come from it: registered again
+                Files.write(file(meta), (meta + "\t" + hash + "\n" + body).getBytes(UTF_8))
+                // the command's choices come from it: registered again
                 if (Lfg.publicKey.nonEmpty)
-                    new Thread(() => println("LFG: /root " + Lfg.register())).start()
+                    new Thread(() => println("LFG: " + Lfg.commands + " " + Lfg.register())).start()
                 "ok"
             case None => "no"
         }
@@ -193,7 +197,9 @@ object LfgSetup {
         "AutumnMap" -> "autumn", "WinterMap" -> "winter", "LakeMap" -> "lake", "MarshMap" -> "marsh", "MountainMap" -> "mount", "GorgeMap" -> "gorge",
         "WastelandsMap" -> "wastelands", "RandomOfficialMap" -> "rm", "RandomMap" -> "rm", "AllRandomClearings" -> "rc",
         "SquiresDeck" -> "sd", "StandardDeck" -> "base", "ExilesDeck" -> "ep", "HarrierNoCoins" -> "harrier", "IncludeFaction(LDvE)" -> "ld",
-        "players 3" -> "3p", "players 4" -> "4p", "players 5" -> "5p", "title" -> "adset")
+        "players 3" -> "3p", "players 4" -> "4p", "players 5" -> "5p", "title" -> "adset",
+        // Northgard's posts (2026-11-21): its emoji, if the server has one of these names
+        "title-nort" -> "northgard", "LandsWilderness" -> "wilderness", "LandsWastelands" -> "wastelands")
 
     def emojiOf(key : String) : Option[(String, String, Boolean)] = {
         // a deck with no emoji of its own: the base deck's (asked for on 2026-11-20: only ep and sd have their own)
@@ -211,8 +217,9 @@ object LfgSetup {
     // the picks a post shows: the Important ones (map, deck...) and the factions in the draft
     def summary(c : Catalog, options : List[String]) : String = {
         val pool = c.need.map(_._1).toList.flatMap(p => options.filter(_.startsWith(p)))
-        val important = options.filter(o => c.byName.get(o).exists(_.important)).map(o => emojiText(o) + c.label(o))
-        val set = commandSections.flatMap(g => options.filter(o => c.byName.get(o).exists(_.group == g)).map(o => g + ": " + c.label(o)))
+        // (an option whose needs aren't picked is left out: Northgard's Thane with the standard victory)
+        val important = options.filter(o => c.byName.get(o).exists(_.important)).filter(o => c.required.getOrElse(o, List(Nil)).exists(_.forall(options.contains))).map(o => emojiText(o) + c.label(o))
+        val set = summarySections(c.meta).flatMap(g => options.filter(o => c.byName.get(o).exists(_.group == g)).map(o => g + ": " + c.label(o)))
         (if (important.isEmpty) "" else important.mkString(" · ") + "\n") +
         (if (set.isEmpty) "" else set.mkString(" · ") + "\n") +
         (if (pool.isEmpty) "" else "Factions in the draft: " + pool.map(o => emojiText(o).trim match { case "" => c.label(o) ; case e => e }).mkString(" ") + "\n")
@@ -228,6 +235,23 @@ object LfgSetup {
 
     // the setup screen's sections /root sets (one pick each), beside the map and the deck
     val commandSections = List("Clearings", "Hirelings", "Landmarks", "Insurgent Lock")
+
+    // NORTHGARD (2026-11-21): /northgard sets the game length, the victory conditions, the Wilderness or Wastelands, the warchiefs,
+    // the card edition, the fame and the undo; the panel lists Uncharted Horizons (the Sea), the Development cards, Fan content and
+    // Fan victories, the rest keeping the site's defaults
+    val nortCommand = List(("length", "The game's length", "Game length"), ("victory", "The victory conditions", "Victory conditions"),
+        ("lands", "Wilderness or Wastelands", "Wilderness or Wastelands"), ("warchiefs", "The Warchief expansion", "Warchief expansion"),
+        ("edition", "The card edition", "Card edition"), ("fame", "Whether fame is public", "Fame"), ("undo", "How much undo is allowed", "Undo"))
+    val nortPanel = List("Uncharted Horizons", "Development cards", "Fan content", "Fan victories")
+
+    // the sections a post lists, beside the Important ones
+    def summarySections(meta : String) = if (meta == Lfg.nort.meta) List("Warchief expansion", "Card edition", "Fame", "Undo") else commandSections
+
+    // the command's options: its name, description and the setup screen's section (Root's map and deck: its Important sections, "#0", "#1")
+    def sections(k : Lfg.Kind) : List[(String, String, String)] =
+        if (k == Lfg.nort) nortCommand
+        else List(("map", "The map", "#0"), ("deck", "The deck", "#1"), ("clearings", "How the clearings' suits are set", "Clearings"), ("hirelings", "The hirelings", "Hirelings"),
+            ("landmarks", "A landmark", "Landmarks"), ("insurgent_lock", "Whether the last insurgent is locked", "Insurgent Lock"))
     // the panel's sections: the hits and ambushes (the section whose name starts so), and the hirelings in their draft, when the
     // hirelings picked aren't none
     val hitsSection = "Hits and Ambushes"
@@ -249,7 +273,13 @@ object LfgSetup {
     // landmarks and the insurgent lock are given with /root (else the site's defaults), so the panel has the hits and ambushes, the
     // factions in the draft (the first section of them: the official ones) and, with hirelings, the hirelings in their draft. The rest
     // (faction rules, fan factions...) keep the site's defaults.
-    def pages(d : Draft) : List[List[Menu]] = {
+    def pages(d : Draft) : List[List[Menu]] = if (d.state.c.meta == Lfg.nort.meta) {
+        // Northgard: a menu for each of its panel's sections, of several when it has toggles
+        val s = d.state
+        def listed(g : List[Opt]) = g.filter(o => !s.mandatory.contains(o.name) && (s.selected.contains(o.name) || s.enabled(o.name)))
+        val shown = s.c.options.filter(s.shown)
+        List(nortPanel.map(g => listed(shown.filter(_.group == g)).take(25)).filter(_.nonEmpty).map(oo => Menu(oo.head.group, oo, oo.exists(_.toggle))).take(4))
+    } else {
         val s = d.state
         def listed(g : List[Opt]) = g.filter(o => !s.mandatory.contains(o.name) && (s.selected.contains(o.name) || s.enabled(o.name)))
         val shown = s.c.options.filter(s.shown)
@@ -305,12 +335,17 @@ object LfgSetup {
             button("−", 2, k + "fewer", !s.c.players.exists(_ < d.n)), button(d.n + " players", 2, k + "count", true), button("+", 2, k + "more", !s.c.players.exists(_ > d.n)),
             button("Open the game", 3, k + "open"), button("Cancel", 4, k + "cancel")).mkString(",") + "]}"
 
-        val text = emojiText("title") + "**" + Lfg.label + ": " + d.title + "**, " + d.n + " players\n" +
+        val kind = Lfg.kind(s.c.meta)
+        val text = emojiText(kind.emoji) + "**" + kind.label + ": " + d.title + "**, " + d.n + " players\n" +
             summary(s.c, s.actual) +
             (if (d.note.nonEmpty) "**" + d.note + "**\n" else "") +
+            (if (kind == Lfg.nort)
+            "The game length, victory conditions, Wilderness or Wastelands, warchiefs, card edition, fame and undo are as given with /" + kind.command + " (or the site's defaults). " +
+            "Pick the Uncharted Horizons modules, the Development cards and any fan content, then press **Open the game** to post it here for players to join. Only you see this."
+            else
             "The map, deck, clearings, hirelings, landmarks and insurgent lock are as given with /root (or the site's defaults). Pick the hits and ambushes, the factions in the draft" +
             (if (menus.exists(m => hirelingDraft.contains(m.group))) " and the hirelings in their draft" else "") +
-            ", then press **Open the game** to post it here for players to join. Only you see this."
+            ", then press **Open the game** to post it here for players to join. Only you see this.")
 
         "{\"content\":" + Lfg.json(cut(text, 1990)) + ",\"flags\":64,\"components\":[" + (rows :+ buttons).mkString(",") + "],\"allowed_mentions\":{\"parse\":[]}}"
     }
@@ -319,7 +354,7 @@ object LfgSetup {
 
     // /root: a new panel, or nothing without a catalog (the plain post then, as before the panel)
     // picks: the options given with the command (map, deck...), picked over the defaults as if tapped on the panel
-    def open(uid : String, name : String, n : Int, title : String, picks : List[String] = Nil) : Option[String] = catalog().filter(_.meta == Lfg.meta).map { c =>
+    def open(k : Lfg.Kind, uid : String, name : String, n : Int, title : String, picks : List[String] = Nil) : Option[String] = catalog(k.meta).map { c =>
         val players = if (c.players.contains(n)) n else c.players.find(_ >= n).getOrElse(c.players.last)
         var state = State.defaults(c, players)
         picks.foreach(o => if (!state.selected.contains(o) && state.enabled(o)) state = state.click(o))
@@ -330,21 +365,20 @@ object LfgSetup {
 
     // THE COMMAND'S OPTIONS (asked for on 2026-11-20): /root map, deck, clearings, hirelings and landmarks, their choices the panel's
     // (the catalog's, for four players), registered with the command (Lfg.register, again when the catalog changes)
-    def commandOptions() : List[(String, String, List[(String, String)])] = catalog().filter(_.meta == Lfg.meta).toList.flatMap { c =>
+    // (Northgard's: the choices of its sections that are always listed, so a victory card waits for the panel)
+    def commandOptions(k : Lfg.Kind) : List[(String, String, List[(String, String)])] = catalog(k.meta).toList.flatMap { c =>
         val s = State.defaults(c, 4)
         val main = mainSections(s)
         val shown = c.options.filter(s.shown).filter(o => !s.mandatory.contains(o.name))
-        def section(g : String) = shown.filter(_.group == g)
-        List(("map", "The map", main.lift(0).getOrElse(Nil)), ("deck", "The deck", main.lift(1).getOrElse(Nil)),
-            ("clearings", "How the clearings' suits are set", section("Clearings")), ("hirelings", "The hirelings", section("Hirelings")),
-            ("landmarks", "A landmark", section("Landmarks")), ("insurgent_lock", "Whether the last insurgent is locked", section("Insurgent Lock")))
+        def section(g : String) = if (g.startsWith("#")) main.lift(g.drop(1).toInt).getOrElse(Nil) else shown.filter(_.group == g).filter(o => k != Lfg.nort || !o.cond)
+        sections(k).map { case (n, d, g) => (n, d, section(g)) }
             .map { case (n, d, oo) => (n, d, oo.take(25).map(o => (o.label, o.name))) }.filter(_._3.nonEmpty)
     }
 
     // a menu picked or a button pressed on a panel
     def press(uid : String, custom : String, values : List[String], app : String, token : String) : String = {
         val parts = custom.split(':').toList
-        val d = Option(drafts.get(parts.lift(1).getOrElse(""))).getOrElse(return Lfg.privately("This setup was lost (the server restarted): type /root again."))
+        val d = Option(drafts.get(parts.lift(1).getOrElse(""))).getOrElse(return Lfg.privately("This setup was lost (the server restarted): type " + Lfg.commands + " again."))
         if (d.host != uid)
             return Lfg.privately("Only the host can change this game's options.")
         val c = d.state.c
