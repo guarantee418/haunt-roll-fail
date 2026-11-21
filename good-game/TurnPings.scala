@@ -37,6 +37,10 @@ import scala.concurrent.duration.Duration
 //   created.tsv   game: the games whose post went out, so each goes out once
 // and in tournament/: discord-pings.tsv  name, on or off (the last row counts); on unless turned off
 // The tournament change "ping waiting" pings at once every seat the games wait for (the same checks but the minute's delay).
+//
+// NORTHGARD (2026-11-21, with its Discord LFG games, Lfg.scala): Northgard's online games (nort, nort-adset) get the same, in the
+// forum channel of their own webhook, HRF_DISCORD_NORT_TURNS_WEBHOOK or the file discord-nort-turns-webhook (the change
+// "nort-turns <url>"), their threads in threads-nort.tsv; with none set, they get no posts or pings (webhookFor).
 object TurnPings {
     import GoodGame._
     import Backup.{rows, row}
@@ -49,7 +53,14 @@ object TurnPings {
     val settings = Tournament.dir.resolve("discord-pings.tsv")
 
     // the games that get a thread and pings
-    val metas = Map("root" -> "Root", "root-adset" -> "Root Advanced Setup")
+    val metas = Map("root" -> "Root", "root-adset" -> "Root Advanced Setup", "nort" -> "Northgard", "nort-adset" -> "Northgard Adset")
+
+    val nortMetas = Set("nort", "nort-adset")
+    val nortThreads = dir.resolve("threads-nort.tsv")
+
+    // the channel a game's posts and pings go to, and the file its threads are kept in
+    def webhookFor(meta : String) = if (nortMetas.contains(meta)) nortWebhook else webhook
+    def threadsFor(meta : String) = if (nortMetas.contains(meta)) nortThreads else threads
 
     val delay = 60 * 1000L
     val watching = 90 * 1000L
@@ -59,6 +70,7 @@ object TurnPings {
     val every = 30L
 
     def webhook = Tournament.hook("HRF_DISCORD_TURNS_WEBHOOK", "discord-turns-webhook")
+    def nortWebhook = Tournament.hook("HRF_DISCORD_NORT_TURNS_WEBHOOK", "discord-nort-turns-webhook")
 
     def run[R](a : DBIOAction[R, NoStream, Nothing]) : R = Await.result(Tournament.db.run(a), Duration.Inf)
 
@@ -225,9 +237,9 @@ object TurnPings {
                     Tournament.poster.execute(() => Tournament.post(url, text, Tournament.threadKey(n, id), Tournament.threadName(n, id), ids))
                 }
             case None =>
-                webhook.foreach { url =>
+                webhookFor(lobby.meta).foreach { url =>
                     val name = (if (lobby.title.nonEmpty) lobby.title else "Game " + game.take(6)) + " · " + metas.getOrElse(lobby.meta, lobby.meta)
-                    Tournament.poster.execute(() => Tournament.post(url, text, game, name, ids, threads))
+                    Tournament.poster.execute(() => Tournament.post(url, text, game, name, ids, threadsFor(lobby.meta)))
                 }
         }
     }
@@ -237,7 +249,7 @@ object TurnPings {
         try {
             val game = lines.find(_.startsWith("server ")).map(_.drop(7).trim).getOrElse("")
             val meta = lines.find(_.startsWith("meta ")).map(_.drop(5).trim).getOrElse("")
-            if (game.nonEmpty && metas.contains(meta) && webhook.nonEmpty && !introduced(game)) {
+            if (game.nonEmpty && metas.contains(meta) && webhookFor(meta).nonEmpty && !introduced(game)) {
                 val l = Lobby(meta, lines.find(_.startsWith("title ")).map(_.drop(6)).getOrElse(""), lines, lobby)
                 lobbies.put(game, l)
                 introduce(game, l, "New")
@@ -334,15 +346,15 @@ object TurnPings {
             return "not pinged: has the game open"
         if (now - lastPing(game, user) < gap)
             return "not pinged: pinged in the last 5 minutes"
-        if (table(game).isEmpty && webhook.isEmpty)
-            return "not pinged: no turns webhook (the turns change)"
-        val id = mentionOf(user, table(game).nonEmpty).getOrElse(return "not pinged: no Discord, or turn pings off")
         val lobby = lobbyOf(game).getOrElse(return "not pinged: lobby not found")
         if (!metas.contains(lobby.meta))
-            return "not pinged: not a Root game"
+            return "not pinged: not a Root or Northgard game"
+        if (table(game).isEmpty && webhookFor(lobby.meta).isEmpty)
+            return "not pinged: no turns webhook (the " + (if (nortMetas.contains(lobby.meta)) "nort-turns" else "turns") + " change)"
+        val id = mentionOf(user, table(game).nonEmpty).getOrElse(return "not pinged: no Discord, or turn pings off")
 
         // a game with no thread of its own yet gets its post first (a tournament table's game uses its table's thread)
-        if (table(game).isEmpty && webhook.nonEmpty && !introduced(game))
+        if (table(game).isEmpty && webhookFor(lobby.meta).nonEmpty && !introduced(game))
             introduce(game, lobby, "Ongoing")
 
         sent = pings + ((game, user) -> (now :: pings.getOrElse((game, user), Nil)))

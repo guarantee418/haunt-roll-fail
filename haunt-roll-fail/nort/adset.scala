@@ -392,6 +392,21 @@ object MetaAdset extends MetaGame {
     override def rankingSeat(g : G, f : F) = g.ptf.get(f)./~(c => Meta.rankSeat(g, c))
     override def rankingFan(g : G) = Meta.rankFan(g)
 
+    // Discord LFG games (good-game/Lfg.scala, /northgard; 2026-11-21, like Root's Advanced Setup): the site's defaults, as New
+    // Online Game starts with them for four players, and two to six players
+    override def lfgOptions : $[O] = {
+        val four = factions.take(4)
+        (mandatoryFor(4, four) ++ completeSaved(4, four, defaultsFor(4, four))).distinct
+    }
+    override def lfgPlayers = $(2, 3, 4, 5, 6)
+
+    // the seat that drafted the clan asked (P1, P2...), as the lobby's "user" lines name the seats; a seat still drafting is asked itself
+    override def turnSeat(g : G, f : Any) : String = f match {
+        case s : Seat => s.short
+        case c : Faction => g.ftp.get(c).collect { case s : Seat => s.short }.|("")
+        case _ => ""
+    }
+
     override def botOptions(seating : $[F], bots : Map[F, String]) =
         seating.%(f => bots.get(f).has("Robotos"))./(RobotosSeatOption(_)) ++ seating.%(bots.contains)./(BotSeatOption(_))
 
