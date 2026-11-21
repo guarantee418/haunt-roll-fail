@@ -237,15 +237,16 @@ object LfgSetup {
     val commandSections = List("Clearings", "Hirelings", "Landmarks", "Insurgent Lock")
 
     // NORTHGARD (2026-11-21): /northgard sets the game length, the victory conditions, the Wilderness or Wastelands, the warchiefs,
-    // the card edition, the fame and the undo; the panel lists Uncharted Horizons (the Sea), the Development cards, Fan content and
+    // the fame and the undo (not the card edition: always the site's default, the 2nd edition, as the owner asked on 2026-11-21);
+    // the panel lists Uncharted Horizons (the Sea), the Development cards, Fan content and
     // Fan victories, the rest keeping the site's defaults
     val nortCommand = List(("length", "The game's length", "Game length"), ("victory", "The victory conditions", "Victory conditions"),
         ("lands", "Wilderness or Wastelands", "Wilderness or Wastelands"), ("warchiefs", "The Warchief expansion", "Warchief expansion"),
-        ("edition", "The card edition", "Card edition"), ("fame", "Whether fame is public", "Fame"), ("undo", "How much undo is allowed", "Undo"))
+        ("fame", "Whether fame is public", "Fame"), ("undo", "How much undo is allowed", "Undo"))
     val nortPanel = List("Uncharted Horizons", "Development cards", "Fan content", "Fan victories")
 
     // the sections a post lists, beside the Important ones
-    def summarySections(meta : String) = if (meta == Lfg.nort.meta) List("Warchief expansion", "Card edition", "Fame", "Undo") else commandSections
+    def summarySections(meta : String) = if (meta == Lfg.nort.meta) List("Warchief expansion", "Fame", "Undo") else commandSections
 
     // the command's options: its name, description and the setup screen's section (Root's map and deck: its Important sections, "#0", "#1")
     def sections(k : Lfg.Kind) : List[(String, String, String)] =
@@ -340,7 +341,7 @@ object LfgSetup {
             summary(s.c, s.actual) +
             (if (d.note.nonEmpty) "**" + d.note + "**\n" else "") +
             (if (kind == Lfg.nort)
-            "The game length, victory conditions, Wilderness or Wastelands, warchiefs, card edition, fame and undo are as given with /" + kind.command + " (or the site's defaults). " +
+            "The game length, victory conditions, Wilderness or Wastelands, warchiefs, fame and undo are as given with /" + kind.command + " (or the site's defaults). " +
             "Pick the Uncharted Horizons modules, the Development cards and any fan content, then press **Open the game** to post it here for players to join. Only you see this."
             else
             "The map, deck, clearings, hirelings, landmarks and insurgent lock are as given with /root (or the site's defaults). Pick the hits and ambushes, the factions in the draft" +
