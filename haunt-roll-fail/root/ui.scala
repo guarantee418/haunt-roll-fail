@@ -2190,12 +2190,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         val capitalists = game.options.has(CapitalistsDeck)
 
         val effects = (f.effects ++ f.services)./(e => Hint(e match {
-            case BrutalTactics if capitalists => "Brutal Tactics: May deal an extra hit in battle as attacker, spending a card matching the clearing or this card, but defender will score one point"
+            case BrutalTactics if capitalists => "Brutal Tactics: May deal an extra hit in battle as attacker, spending a card matching the clearing or this card"
             case RoyalClaim if capitalists => "Royal Claim: Must score one point per clearing ruled at the start of the next Birdsong (discard after use)"
             case CommandWarren if capitalists => "Command Warren: May initiate a battle at the start of Daylight, spending a card matching the clearing or this card"
             case BetterBurrowBank if capitalists => "Better Burrow Bank: May return this card to hand at the start of Birdsong to draw a card, choose another player to draw a card"
             case Cobbler if capitalists => "Cobbler: May take a move at the start of Evening, spending a card matching the clearing moved from or this card"
-            case ScoutingParty if capitalists => "Scouting Party: May discard to cancel an Ambush card played against you as attacker"
+            case ScoutingParty if capitalists => "Scouting Party: May cancel an Ambush card played against you as attacker, spending a card matching the clearing or this card"
             case Armorers => "Armorers: Ignore all rolled hits taken in battle (discard after use)"
             case Sappers => "Sappers: Deal an extra hit in battle as defender (discard after use)"
             case BrutalTactics => "Brutal Tactics: May deal an extra hit in battle as attacker, but defender will score one point"
