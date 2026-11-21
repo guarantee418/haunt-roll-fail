@@ -62,6 +62,15 @@ object DiscordBot {
         }
     }
 
+    // a direct message from the bot (Lfg.scala: a new player's seat link): its DM channel with the user, then the message; false if
+    // Discord refused (no token, or the user takes no DMs from the server's members)
+    def dm(user : String, text : String) : Boolean = token.exists { t =>
+        send("POST", "https://discord.com/api/v10/users/@me/channels", "{\"recipient_id\":" + Tournament.json(user) + "}", Some(t))
+            .flatMap(b => "\"id\"\\s*:\\s*\"(\\d+)\"".r.findFirstMatchIn(b).map(_.group(1)))
+            .flatMap(c => send("POST", "https://discord.com/api/v10/channels/" + c + "/messages", "{\"content\":" + Tournament.json(text.take(1900)) + ",\"allowed_mentions\":{\"parse\":[]}}", Some(t)))
+            .nonEmpty
+    }
+
     // the webhook whose server was looked up, and that server
     @volatile var webhookGuild : Option[(String, String)] = None
 
