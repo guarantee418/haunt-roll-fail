@@ -214,21 +214,35 @@ object LfgSetup {
     // in a menu's option
     def emojiField(key : String) = emojiOf(key).map { case (n, id, a) => ",\"emoji\":{\"id\":" + Lfg.json(id) + ",\"name\":" + Lfg.json(n) + ",\"animated\":" + a + "}" }.getOrElse("")
 
-    // the picks a post shows: the Important ones (map, deck...) and the factions in the draft
-    def summary(c : Catalog, options : List[String]) : String = {
-        val pool = c.need.map(_._1).toList.flatMap(p => options.filter(_.startsWith(p)))
-        // (an option whose needs aren't picked is left out: Northgard's Thane with the standard victory)
-        val imp = options.filter(o => c.byName.get(o).exists(_.important)).filter(o => c.required.getOrElse(o, List(Nil)).exists(_.forall(options.contains)))
-        // (a label two picks share, "Environment tiles", is named with its section)
-        val important = imp.map(o => emojiText(o) + (if (imp.count(x => c.label(x) == c.label(o)) > 1) c.byName(o).group + ": " else "") + c.label(o))
-        val set = summarySections(c.meta).flatMap(g => options.filter(o => c.byName.get(o).exists(_.group == g)).map(o => g + ": " + c.label(o)))
-        (if (important.isEmpty) "" else important.mkString(" · ") + "\n") +
-        (if (set.isEmpty) "" else set.mkString(" · ") + "\n") +
-        (if (pool.isEmpty) "" else "Factions in the draft: " + pool.map(o => emojiText(o).trim match { case "" => c.label(o) ; case e => e }).mkString(" ") + "\n")
+    // the picks a post shows (2026-11-21: the options its host chose, in the command and on the setup panel, not the defaults they
+    // left as they were): each section of the setup screen with those picks, in the setup screen's order, the server's emoji beside a
+    // pick that has one (the factions in the draft by their emoji alone); left out are the options the setup screen doesn't list
+    // (hidden, mandatory), those whose needs aren't picked in the game (`all`; Northgard's Thane with the standard victory), the clans'
+    // colors and teams and, to fit a Discord message, the sections past `limit` characters
+    def summary(c : Catalog, options : List[String], all : List[String] = Nil, limit : Int = 1300) : String = {
+        val mandatory = c.mandatory.values.flatten.toSet
+        val picked = options.toSet ++ all
+        val listed = c.options.filter(o => options.contains(o.name) && o.page >= 0 && !mandatory.contains(o.name))
+            .filterNot(o => o.name.startsWith("ColorOption(") || o.name.startsWith("TeamOption("))
+            .filter(o => c.required.getOrElse(o.name, List(Nil)).exists(_.forall(picked.contains)))
+        val pool = c.need.map(_._1)
+        val lines = listed.map(_.group).distinct.map { g =>
+            val oo = listed.filter(_.group == g)
+            val emojiOnly = pool.exists(p => oo.forall(_.name.startsWith(p)))
+            "**" + g + "**: " + oo.map(o => if (emojiOnly) emojiText(o.name).trim match { case "" => o.label ; case e => e } else emojiText(o.name) + o.label).mkString(if (emojiOnly) " " else ", ")
+        }
+        var out = List[String]()
+        var left = lines
+        while (left.nonEmpty && (out :+ left.head).mkString("\n").length <= limit) { out :+= left.head ; left = left.tail }
+        (out ++ (if (left.isEmpty) Nil else List("…and " + left.size + " more " + (if (left.size == 1) "section" else "sections") + " (all of them are in the game's log)")))
+            .map(_ + "\n").mkString
     }
 
     // THE PANELS, by id: the host, their name, the players, the title, the options, the page shown
-    case class Draft(id : String, host : String, name : String, n : Int, title : String, state : State, page : Int, note : String = "")
+    // chosen: the options the host picked (in the command, on the panel), which the post lists
+    case class Draft(id : String, host : String, name : String, n : Int, title : String, state : State, page : Int, note : String = "", chosen : List[String] = Nil) {
+        def picked = chosen.filter(state.actual.contains)
+    }
 
     val drafts = new java.util.concurrent.ConcurrentHashMap[String, Draft]()
 
@@ -372,7 +386,7 @@ object LfgSetup {
 
         val kind = Lfg.kind(s.c.meta)
         val text = emojiText(kind.emoji) + "**" + kind.label + ": " + d.title + "**, " + d.n + " players\n" +
-            summary(s.c, s.actual) +
+            summary(s.c, d.picked, s.actual) +
             (if (d.note.nonEmpty) "**" + d.note + "**\n" else "") +
             (if (isNort(kind.meta))
             "The game length, victory conditions, " + (if (kind.clans) "Creatures, " else "the expansion drafted, ") + "Wilderness and Wastelands parts, warchiefs, fame and undo are as given with /" + kind.command + " (or the site's defaults). " +
@@ -393,7 +407,7 @@ object LfgSetup {
         val players = if (c.players.contains(n)) n else c.players.find(_ >= n).getOrElse(c.players.last)
         var state = State.defaults(c, players)
         picks.foreach(o => if (!state.selected.contains(o) && state.enabled(o)) state = state.click(o))
-        val d = Draft(Tournament.newSecret(10), uid, name, players, title, state, 0)
+        val d = Draft(Tournament.newSecret(10), uid, name, players, title, state, 0, chosen = picks.filter(state.selected.contains).distinct)
         drafts.put(d.id, d)
         reply(4, panel(d))
     }
@@ -443,7 +457,7 @@ object LfgSetup {
                             if (s.selected.contains(o)) { if (m.many && s.toggle(o)) s = s.click(o) }
                             else if (s.enabled(o)) s = s.click(o)
                         }
-                        show(d.copy(state = s, note = ""))
+                        show(d.copy(state = s, note = "", chosen = (d.chosen ++ values.filter(offered.contains)).distinct))
                     case Some(_) => show(d.copy(note = ""))
                 }
             case "back" :: Nil => show(d.copy(page = (d.page - 1).max(0), note = ""))

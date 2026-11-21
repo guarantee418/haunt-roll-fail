@@ -35,7 +35,7 @@ import java.nio.file.{Files, Path, Paths}
 // each clan gets its seat's color and team as the setup screen gives them (ColorOption, TeamOption).
 //
 // File turns/lfg.tsv, the posts' events (the last state counts):
-//   time, open, id, host's Discord ID, host's name, seats, title, options, meta
+//   time, open, id, host's Discord ID, host's name, seats, title, options, meta, the options the host chose
 //   time, join, id, Discord ID, name, clan    time, clan, id, Discord ID, clan    time, leave, id, Discord ID    time, cancel, id
 //   time, start, id, lobby, game, spectator secret, Discord IDs, seat users, seat secrets (comma-separated, in seat order)
 object Lfg {
@@ -119,9 +119,15 @@ object Lfg {
     // in a message, and in a menu option
     def clanIcon(c : String) = clanEmoji(c).map { case (n, id, a) => "<" + (if (a) "a" else "") + ":" + n + ":" + id + "> " }.getOrElse("")
     // a clan as the post and the replies show it: its emoji alone (asked for on 2026-11-21), else its name ("a random clan" ...)
-    def clanShown(c : String) = Some(clanIcon(c).trim).filter(_.nonEmpty).getOrElse(clanLabel(c))
+    // (a random pick as ❓ with how many clans it draws from, 7 or 14, asked for on 2026-11-21)
+    def clanShown(c : String) = c match {
+        case `randomCore` => "❓ (7)"
+        case `randomAny` => "❓ (14)"
+        case _ => Some(clanIcon(c).trim).filter(_.nonEmpty).getOrElse(clanLabel(c))
+    }
 
-    def clanIconField(c : String) = clanEmoji(c).map { case (n, id, a) => ",\"emoji\":{\"id\":" + json(id) + ",\"name\":" + json(n) + ",\"animated\":" + a + "}" }.getOrElse("")
+    def clanIconField(c : String) = if (c == randomCore || c == randomAny) ",\"emoji\":{\"name\":\"❓\"}" else clanIconField0(c)
+    def clanIconField0(c : String) = clanEmoji(c).map { case (n, id, a) => ",\"emoji\":{\"id\":" + json(id) + ",\"name\":" + json(n) + ",\"animated\":" + a + "}" }.getOrElse("")
 
     def clanLabel(c : String) = c match {
         case `randomCore` => "a random core clan"
@@ -137,7 +143,8 @@ object Lfg {
     def publicKey = Tournament.hook("HRF_DISCORD_PUBLIC_KEY", "discord-public-key")
 
     // options: the ones its host picked on the setup panel (LfgSetup.scala); none, the site's defaults (the template)
-    case class Post(id : String, host : String, size : Int, title : String, players : List[(String, String)], cancelled : Boolean, game : Option[Started], options : List[String] = Nil, meta : String = root.meta, clans : Map[String, String] = Map()) {
+    // chosen: the options its host picked, which the post lists (none: an older post, which lists none)
+    case class Post(id : String, host : String, size : Int, title : String, players : List[(String, String)], cancelled : Boolean, game : Option[Started], options : List[String] = Nil, meta : String = root.meta, clans : Map[String, String] = Map(), chosen : List[String] = Nil) {
         def kind = Lfg.kind(meta)
         def clan(u : String) = clans.getOrElse(u, "")
         // every player has a clan (always, in a game whose clans aren't picked on Join)
@@ -150,7 +157,7 @@ object Lfg {
     def posts() : Map[String, Post] = {
         var m = Map[String, Post]()
         rows(file).foreach {
-            case _ :: "open" :: id :: host :: name :: size :: title :: rest => m += id -> Post(id, host, size.toIntOption.getOrElse(4), title, List(host -> name), false, None, rest.headOption.toList.flatMap(_.split(' ').toList.filter(_.nonEmpty)), rest.lift(1).filter(_.nonEmpty).getOrElse(root.meta))
+            case _ :: "open" :: id :: host :: name :: size :: title :: rest => m += id -> Post(id, host, size.toIntOption.getOrElse(4), title, List(host -> name), false, None, rest.headOption.toList.flatMap(_.split(' ').toList.filter(_.nonEmpty)), rest.lift(1).filter(_.nonEmpty).getOrElse(root.meta), chosen = rest.lift(2).toList.flatMap(_.split(' ').toList.filter(_.nonEmpty)))
             case _ :: "join" :: id :: u :: name :: rest => m.get(id).foreach(p => if (!p.players.exists(_._1 == u)) m += id -> p.copy(players = p.players :+ (u -> name), clans = p.clans ++ rest.headOption.filter(_.nonEmpty).map(u -> _)))
             case _ :: "clan" :: id :: u :: c :: _ => m.get(id).foreach(p => m += id -> p.copy(clans = p.clans + (u -> c)))
             case _ :: "leave" :: id :: u :: _ => m.get(id).foreach(p => m += id -> p.copy(players = p.players.filter(_._1 != u), clans = p.clans - u))
@@ -362,7 +369,8 @@ object Lfg {
 
     def message(p : Post) : String = {
         val label = p.kind.label
-        val picks = if (p.options.isEmpty) "" else LfgSetup.catalog(p.meta).map(c => LfgSetup.summary(c, p.options)).getOrElse("")
+        // the options its host chose
+        val picks = if (p.game.nonEmpty || p.cancelled || p.chosen.isEmpty) "" else LfgSetup.catalog(p.meta).map(c => LfgSetup.summary(c, p.chosen, p.options)).getOrElse("")
         val head = LfgSetup.emojiText(p.kind.emoji)
         val (text, bb) = p.game match {
             case Some(s) =>
@@ -376,9 +384,13 @@ object Lfg {
                 val minSeats = p.kind.minSeats
                 (head + "**" + label + ": " + p.title + "**, looking for players (" + p.players.size + "/" + p.size + ")\n" + picks +
                     "Host: " + mention(p.host) + "\n" +
-                    "Players: " + p.players.map(x => mention(x._1) + " " + (Some(clanIcon(p.clan(x._1)).trim).filter(_.nonEmpty).getOrElse("(" + clanLabel(p.clan(x._1)) + ")"))).mkString(", ") + "\n" +
-                    "Press **Join** and pick a clan to play; **Clan** changes yours. The game starts by itself when all " + p.size + " seats are taken and everyone has a clan, or when the host presses **Start** (" + minSeats + " players or more).",
-                    buttons(button("Join", 1, "join", p.id, "👍"), button("Clan", 2, "clan", p.id), button("Leave", 2, "leave", p.id), button("Start", 3, "start", p.id), button("Cancel", 4, "cancel", p.id)))
+                    "Players: " + p.players.map(x => mention(x._1) + " " + (p.clan(x._1) match {
+                        case c if c == randomCore || c == randomAny || clanIcon(c).nonEmpty => clanShown(c)
+                        case c => "(" + clanLabel(c) + ")"
+                    })).mkString(", ") + "\n" +
+                    "Press **Select clan** to join, or to change your clan. The game starts by itself when all " + p.size + " seats are taken and everyone has a clan, or when the host presses **Start** (" + minSeats + " players or more).",
+                    // (one button joins and changes the clan, asked for on 2026-11-21; the Clan button of the first posts still works)
+                    buttons(button("Select clan", 1, "join", p.id, "👍"), button("Leave", 2, "leave", p.id), button("Start", 3, "start", p.id), button("Cancel", 4, "cancel", p.id)))
             case None =>
                 val minSeats = p.kind.minSeats
                 (head + "**" + label + ": " + p.title + "**, looking for players (" + p.players.size + "/" + p.size + ")\n" + picks +
@@ -396,7 +408,7 @@ object Lfg {
     // a game set up on the panel (LfgSetup.scala): its post in the channel, as a follow-up to the panel (the host already in)
     def posted(d : LfgSetup.Draft, app : String, token : String) = synchronized {
         val id = Tournament.newSecret(10)
-        event("open", id, d.host, clean(d.name), d.n, d.title, d.state.actual.mkString(" "), d.state.c.meta)
+        event("open", id, d.host, clean(d.name), d.n, d.title, d.state.actual.mkString(" "), d.state.c.meta, d.picked.mkString(" "))
         val body = announced(posts()(id))
         Tournament.poster.execute { () =>
             try DiscordBot.send("POST", "https://discord.com/api/v10/webhooks/" + app + "/" + token, body, None)
@@ -523,7 +535,7 @@ object Lfg {
     // (its channel and message, from the button's interaction, ride in the menu's id)
     def clanMenu(p : Post, uid : String, channel : String, message : String, text : String) = {
         val taken = p.taken(uid)
-        val choices = (coreClans ++ bloodClans).filterNot(taken.contains).map(c => (c + " Clan", c)) ++ List(("Random core clan", randomCore), ("Random clan (any of the 14)", randomAny))
+        val choices = (coreClans ++ bloodClans).filterNot(taken.contains).map(c => (c + " Clan", c)) ++ List(("Random core clan (7)", randomCore), ("Random clan (14)", randomAny))
         val menu = LfgSetup.select("lfg:pick:" + p.id + ":" + channel + ":" + message, "Pick your clan", 1, 1,
             choices.map { case (l, v) => (l, v, p.clan(uid) == v, clanIconField(v), "") })
         reply(4, "{\"content\":" + json(text) + ",\"flags\":64,\"components\":[" + menu + "],\"allowed_mentions\":{\"parse\":[]}}")
@@ -602,7 +614,7 @@ object Lfg {
                             case (_, Some(_)) => privately("**" + p.title + "** has already started.")
                             case (_, None) if p.cancelled => privately("**" + p.title + "** was cancelled.")
                             case ("join" | "clan", None) if p.kind.clans && seated => clanMenu(p, uid, channel, messageId, "Pick your clan for **" + p.title + "** (now " + clanShown(p.clan(uid)) + ").")
-                            case ("clan", None) if p.kind.clans => privately("Press **Join** first.")
+                            case ("clan", None) if p.kind.clans => privately("Press **Select clan** first.")
                             case ("join", None) if p.kind.clans && p.players.size < p.size => clanMenu(p, uid, channel, messageId, "Pick your clan to join **" + p.title + "**.")
                             case ("join", None) if seated => privately("You're already in.")
                             case ("join", None) if p.players.size >= p.size => privately("All seats are taken.")
@@ -617,7 +629,7 @@ object Lfg {
                                 update(p.copy(players = p.players.filter(_._1 != uid)))
                             case ("start", None) if !host => privately("Only the host (" + mention(p.host) + ") can start the game early.")
                             case ("start", None) if p.players.size < p.kind.minSeats => privately("At least " + p.kind.minSeats + " players are needed.")
-                            case ("start", None) if !p.clansPicked => privately("Not everyone has a clan yet: " + p.players.filter(x => p.clan(x._1).isEmpty).map(x => mention(x._1)).mkString(", ") + " (press **Clan**).")
+                            case ("start", None) if !p.clansPicked => privately("Not everyone has a clan yet: " + p.players.filter(x => p.clan(x._1).isEmpty).map(x => mention(x._1)).mkString(", ") + " (press **Select clan**).")
                             case ("start", None) => start(p)
                             case ("cancel", None) if !host => privately("Only the host (" + mention(p.host) + ") can cancel the game.")
                             case ("cancel", None) =>
