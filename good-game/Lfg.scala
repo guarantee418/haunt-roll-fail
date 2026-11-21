@@ -241,7 +241,7 @@ object Lfg {
         val (text, bb) = p.game match {
             case Some(s) =>
                 (head + "**" + label + ": " + p.title + "** has started with " + s.ids.size + " players: " + s.ids.map(mention).mkString(", ") + "\n" +
-                    "Press **Get my link** for your own seat link (only you see it). Your turns are pinged in the game's post in the games channel.\n" +
+                    "Your seat link was sent to you by DM; **Get my link** gives it again (only you see it). Your turns are pinged in the game's post in the games channel.\n" +
                     "Watch: <" + link(p, s.spectate) + ">",
                     buttons(button("Get my link", 1, "link", p.id)))
             case None if p.cancelled =>
@@ -276,7 +276,7 @@ object Lfg {
 
     // the players pinged once, when their game starts: a follow-up message to the post (the interaction's webhook, no bot rights needed)
     def announceStart(app : String, token : String, p : Post, s : Started) {
-        val text = s.ids.map(mention).mkString(" ") + ": **" + p.title + "** is ready. Press **Get my link** above for your seat."
+        val text = s.ids.map(mention).mkString(" ") + ": **" + p.title + "** is ready. Your seat link is in your DMs from the bot (or press **Get my link** above)."
         val body = "{\"content\":" + json(text) + ",\"allowed_mentions\":{\"parse\":[],\"users\":[" + s.ids.take(100).map(json).mkString(",") + "]}}"
         Tournament.poster.execute { () =>
             try DiscordBot.send("POST", "https://discord.com/api/v10/webhooks/" + app + "/" + token, body, None)
@@ -284,9 +284,10 @@ object Lfg {
         }
     }
 
-    // NEW PLAYERS (asked for on 2026-11-20): a player the site doesn't know yet (no ranking name was given their Discord, on the
-    // Tournament page or by the change "discord", and none was typed in an LFG game they joined before) gets their seat link from the
-    // bot in a direct message when their game starts, with a word on what to do; the others press Get my link
+    // SEAT LINKS BY DM: every player gets their seat link from the bot in a direct message when their game starts (2026-11-21,
+    // asked for: the players didn't find Get my link; before, only players the site didn't know yet got one). A player the site
+    // doesn't know yet (no ranking name was given their Discord, on the Tournament page or by the change "discord", and none was
+    // typed in an LFG game they joined before) gets a word on what to do with it; Get my link still works for anyone the DM missed
     def known(id : String) : Boolean =
         rows(Tournament.discords).groupBy(_.headOption.getOrElse("")).values.map(_.last).exists(r => r.lift(1).contains(id) || r.lift(2).contains(id)) || {
             val named = Ranking.seatNames()
@@ -294,18 +295,26 @@ object Lfg {
         }
 
     def welcome(p : Post, s : Started) {
-        val strangers = s.ids.zip(s.secrets).filter { case (id, _) => !known(id) }
-        if (strangers.nonEmpty && DiscordBot.configured)
+        if (DiscordBot.configured) {
+            val players = s.ids.zip(s.secrets).map { case (id, secret) => (id, secret, known(id)) }
             Tournament.poster.execute { () =>
-                strangers.foreach { case (id, secret) =>
-                    val text = "Welcome to Clean5110! You joined **" + p.title + "**, an online game of " + p.kind.game + " (" + p.kind.label.split(": ").last + ").\n" +
-                        "**Your seat:** " + link(p, secret) + "\n" +
-                        "Open it and type the name you want to play under: that name is yours on the site's rankings from then on. " +
-                        "Keep this link to yourself, as it plays your seat. Your turns are pinged in the game's post on the Discord server."
-                    try { if (!DiscordBot.dm(id, text)) println("LFG: no DM to a new player (they may not take DMs); Get my link still works") }
+                players.foreach { case (id, secret, old) =>
+                    val game = p.kind.game + " (" + p.kind.label.split(": ").last + ")"
+                    val text =
+                        if (old)
+                            "**" + p.title + "**, your " + game + " game, has started.\n" +
+                            "**Your seat:** " + link(p, secret) + "\n" +
+                            "Keep this link to yourself, as it plays your seat. Your turns are pinged in the game's post on the Discord server."
+                        else
+                            "Welcome to Clean5110! You joined **" + p.title + "**, an online game of " + game + ".\n" +
+                            "**Your seat:** " + link(p, secret) + "\n" +
+                            "Open it and type the name you want to play under: that name is yours on the site's rankings from then on. " +
+                            "Keep this link to yourself, as it plays your seat. Your turns are pinged in the game's post on the Discord server."
+                    try { if (!DiscordBot.dm(id, text)) println("LFG: no DM to a player (they may not take DMs); Get my link still works") }
                     catch { case e : Exception => println("LFG: DM failed: " + e) }
                 }
             }
+        }
     }
 
     // Discord's signature (Ed25519, of the timestamp and the body) with the application's public key

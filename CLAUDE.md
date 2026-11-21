@@ -1132,7 +1132,8 @@ server. No session can reach the server, and none needs to.
 - Discord LFG games (`good-game/Lfg.scala`, `LfgSetup.scala`; their headers have the rules and files): in the LFG channel `/root` (Root:
   Advanced Setup, pinging the `root-lfg` role) and, since 2026-11-21, `/northgard` (Northgard: Adset, the clan draft, pinging `ng-lfg`)
   open a setup panel only the host sees, then post the game with Join, Leave, Start and Cancel; the server creates the game when the
-  seats fill (or the host starts it) and Get my link gives each player their seat. Each game is an `Lfg.Kind`; its options come from
+  seats fill (or the host starts it), the bot DMs each player their seat link (every player since 2026-11-21, `welcome`;
+  only players the site didn't know before) and Get my link gives it again. Each game is an `Lfg.Kind`; its options come from
   the client (`lfgOptions`, `lfgPlayers`, `lfgCatalog` in `meta.scala`, overridden in `root/meta-adset.scala` and `nort/adset.scala`,
   sent by Play Online), kept per meta (`lfg-catalog-<meta>.tsv`, `lfg-template-<meta>.tsv`; Root's keep their first names). Northgard's
   online games get their posts and turn pings in their own forum (`TurnPings.webhookFor`: `HRF_DISCORD_NORT_TURNS_WEBHOOK` or the file
