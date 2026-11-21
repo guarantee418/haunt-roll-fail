@@ -1101,7 +1101,7 @@ server. No session can reach the server, and none needs to.
   `discord-forum-webhook`, set by the `forum <url>` change), else in the announcements' channel; a forum channel gets every post in
   a thread, a text channel in the channel itself (2026-11-20).
   `Tournament.start` takes the server's URL argument for the link. The games have the hidden `TournamentDraft` (`root/tournament.scala`):
-  the factions are drawn first (the flop), the first seat picks the deck, the second the map, on the Mountain the third the one
+  the factions are drawn first (the flop), the first seat picks the deck (Capitalists and Anarchists, Exiles and Partisans or Squires and Disciples, in games with the hidden `TournamentCapitalists` every new tournament game gets, 2026-11-21; older ones offered Might and Right in its place), the second the map, on the Mountain the third the one
   landmark for the Tower's clearing (the Tower, a suited landmark or the Birdsong Tower), then the factions are picked as usual; the game starts with no
   map or deck, `game.options` and `game.board` are vars set by the picks, and `root/ui.scala` rebuilds its board view
   (`BoardView`) when the board changes and draws no map until it is picked (`game.mapPending`). `ReplayCheck <games> official

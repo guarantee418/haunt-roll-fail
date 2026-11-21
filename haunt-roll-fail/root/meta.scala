@@ -1915,7 +1915,7 @@ object Meta extends MetaGame {
         $(SimpleForgeLandmark, SimpleMarketLandmark, BirdsongTowerLandmark, RoyalTreeLandmark) ++
         legendsOptions ++
         $,
-        $(ExilesDeck, SquiresDeck, CapitalistsDeck, StandardDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck, SorceryDeck) ++
+        $(CapitalistsDeck, ExilesDeck, SquiresDeck, StandardDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck, SorceryDeck) ++
         (n >= 5).$(ActionBooster) ++
         $,
         (l.of[Feline].num > 1).$(TheWoodMustFlow) ++
@@ -1978,7 +1978,7 @@ object Meta extends MetaGame {
         $(DeepWoodsSettling, WastelandsWater) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
-        $(ExilesDeck, SquiresDeck, CapitalistsDeck, StandardDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck, SorceryDeck) ++
+        $(CapitalistsDeck, ExilesDeck, SquiresDeck, StandardDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck, SorceryDeck) ++
         (n >= 5).$(ActionBooster) ++
         hitsAndAmbushes(l) ++
         (n > 2).?(TotalWarDominance) ++
@@ -2028,7 +2028,7 @@ object Meta extends MetaGame {
         settled ++
         retired ++
         RulesVersion.all ++
-        $(TournamentDraft)
+        $(TournamentDraft, TournamentCapitalists)
 
     // The hidden options of rules fixes, each gating a fix so the games started before it replay the same (most new games get through
     // their RulesVersion); not listed in a game's log (OptionsAction)
@@ -3841,7 +3841,7 @@ object Meta extends MetaGame {
         ImageAsset("action-secret-cancel") ::
         ImageAsset("action-secret-score") ::
     $) ::
-    ConditionalAssetsList((factions, options) => options.has(CapitalistsDeck), "card/capitalists", lzy = Laziness.Later, scale = 50)(
+    ConditionalAssetsList((factions, options) => options.has(CapitalistsDeck) || options.has(TournamentCapitalists), "card/capitalists", lzy = Laziness.Later, scale = 50)(
         ImageAsset("ca-command-warren") ::
         ImageAsset("ca-cobbler") ::
         ImageAsset("ca-better-burrow-bank") ::
@@ -4086,7 +4086,7 @@ object Meta extends MetaGame {
     $) ::
     ConditionalAssetsList((factions, options) => true, "card/deck/fr", "fr:", lzy = Laziness.OnDemand, scale = 50)(French.cards./(ImageAsset(_))) ::
     ConditionalAssetsList((factions, options) => true, "faction/fr", "fr:", lzy = Laziness.OnDemand)(French.boards./(ImageAsset(_))) ::
-    ConditionalAssetsList((factions, options) => options.has(DuskDeck) || options.has(FrankenDeck) || options.has(CapitalistsDeck), "card/dusk", lzy = Laziness.Later)(
+    ConditionalAssetsList((factions, options) => options.has(DuskDeck) || options.has(FrankenDeck) || options.has(CapitalistsDeck) || options.has(TournamentCapitalists), "card/dusk", lzy = Laziness.Later)(
         ImageAsset("adventurers"                ) ::
         ImageAsset("breaking-dawn"              ) ::
         ImageAsset("dusk-awakening"             ) ::

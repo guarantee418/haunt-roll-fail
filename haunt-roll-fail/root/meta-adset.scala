@@ -164,7 +164,7 @@ object MetaAdset extends MetaGame {
         val four = factions.take(4)
         (mandatoryFor(4, four) ++
             defaultsFor(4, four).notOf[MapOption].notOf[DeckOption].notOf[ClearingsOption].notOf[LandmarksOption].notOf[IncludeFaction].notOf[IncludeHireling].but(DeepWoodsSettling).but(WastelandsWater) ++
-            $(AllRandomClearings, MountainSuitedLandmark, TournamentDraft) ++
+            $(AllRandomClearings, MountainSuitedLandmark, TournamentDraft, TournamentCapitalists) ++
             (Meta.official.but(VB) ++ $(LDvE, TC, KD))./(IncludeFaction)
         ).distinct
     }

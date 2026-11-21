@@ -33,6 +33,13 @@ case object TournamentDraft extends GameOption with ToggleOption {
     )
 }
 
+// Capitalists and Anarchists in place of Might and Right among the decks the first seat picks from (the owner, 2026-11-21); every new
+// tournament game gets it (MetaAdset.tournamentOptions), older ones keep Might and Right, as their recorded pick must be one offered
+case object TournamentCapitalists extends GameOption with ToggleOption {
+    val group = "Tournament"
+    val valueOn = "Capitalists and Anarchists".hh ~ " in the tournament"
+}
+
 case object TournamentFlopAction extends ForcedAction
 case object TournamentDeckAskAction extends ForcedAction
 case object TournamentMapAskAction extends ForcedAction
@@ -45,7 +52,7 @@ case class TournamentLandmarkAction(self : Player, l : Landmark) extends BaseAct
 object TournamentExpansion extends Expansion {
     def active(factions : $[Faction], options : $[Meta.O]) = options.has(TournamentDraft)
 
-    val decks : $[DeckOption] = $(StandardDeck, ExilesDeck, SquiresDeck)
+    def decks(options : $[Meta.O]) : $[DeckOption] = options.has(TournamentCapitalists).?($[DeckOption](CapitalistsDeck, ExilesDeck, SquiresDeck)).|($(StandardDeck, ExilesDeck, SquiresDeck))
     val maps : $[MapOption] = $(AutumnMap, WinterMap, LakeMap, MountainMap, GorgeMap, MarshMap)
     // the Birdsong Tower, official on the site, is one of them (the owner, 2026-11-20)
     val landmarks : $[Landmark] = $(TowerLandmark, LostCityLandmark, MouseholdLandmark, FoxburrowLandmark, RabbittownLandmark, BirdsongTowerLandmark)
@@ -86,7 +93,7 @@ object TournamentExpansion extends Expansion {
         case TournamentDeckAskAction =>
             val p = seat(0)
 
-            Ask(p).group("The flop".hl ~ ": " ~ flop).each(decks)(d => TournamentDeckAction(p, d))
+            Ask(p).group("The flop".hl ~ ": " ~ flop).each(decks(game.options))(d => TournamentDeckAction(p, d))
 
         case TournamentDeckAction(p, d) =>
             game.tournamentDeck = Some(d)
