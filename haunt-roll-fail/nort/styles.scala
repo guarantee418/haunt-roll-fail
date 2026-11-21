@@ -117,6 +117,18 @@ package object elem {
         // The end screen: the winners' clan cards, and warchief cards with the Warchiefs module
         object winnerCard extends CustomStyle(display("inline-block"), width("18ex"), margin("0.5ex"), vertical.align("top"))
         object winnerLine extends CustomStyle(font.size("120%"), margin.bottom("0.5ex"))
+        // The end screen's fame table: a column of row names, then one per clan (fameCols<n>: n columns in all), the winners' gold
+        object fameTable extends CustomStyle(display("grid"), SimpleCSSRule("width", "max-content"), max.width("100%"), SimpleCSSRule("overflow-x", "auto"), margin("1ex auto"), white.space("nowrap"), SimpleCSSRule("border-top", "1px solid rgba(255, 255, 255, 0.3)"), SimpleCSSRule("border-left", "1px solid rgba(255, 255, 255, 0.3)"))
+        object fameCols2 extends CustomStyle(SimpleCSSRule("grid-template-columns", "repeat(2, auto)"))
+        object fameCols3 extends CustomStyle(SimpleCSSRule("grid-template-columns", "repeat(3, auto)"))
+        object fameCols4 extends CustomStyle(SimpleCSSRule("grid-template-columns", "repeat(4, auto)"))
+        object fameCols5 extends CustomStyle(SimpleCSSRule("grid-template-columns", "repeat(5, auto)"))
+        object fameCols6 extends CustomStyle(SimpleCSSRule("grid-template-columns", "repeat(6, auto)"))
+        object fameCols7 extends CustomStyle(SimpleCSSRule("grid-template-columns", "repeat(7, auto)"))
+        object fameCell extends CustomStyle(padding("0.3ex 0.8ex"), display("flex"), SimpleCSSRule("align-items", "center"), SimpleCSSRule("justify-content", "center"), SimpleCSSRule("border-right", "1px solid rgba(255, 255, 255, 0.3)"), SimpleCSSRule("border-bottom", "1px solid rgba(255, 255, 255, 0.3)"))
+        object fameLabel extends CustomStyle(SimpleCSSRule("justify-content", "flex-start"))
+        object fameWinner extends CustomStyle(SimpleCSSRule("background-color", "rgba(255, 196, 0, 0.22)"))
+        object fameTotal extends CustomStyle(font.size("115%"), SimpleCSSRule("border-top", "2px solid rgba(255, 255, 255, 0.5)"))
         object loreCard extends CustomStyle(display("block"), width("36ex"), max.width("100%"), margin.left("auto"), margin.right("auto"))
 
         object zoomCard extends CustomStyle(height("100%"), width("100%"), objectFit("contain"))

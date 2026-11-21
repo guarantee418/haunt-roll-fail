@@ -193,6 +193,12 @@ class FactionState(val faction : Faction)(implicit game : Game) {
     def gainMineral(m : Mineral, n : Int) { minerals += m -> (mineral(m) + n) }
 
     def mineralCount = minerals.values.sum
+
+    // Fame gained or lost, with where it came from, for the end screen's table (game.fameFrom)
+    def addFame(n : Int, source : FameSource) {
+        fame += n
+        game.fameFrom += (faction, source) -> (game.fameFrom.getOrElse((faction, source), 0) + n)
+    }
 }
 
 
@@ -563,6 +569,26 @@ case class FinalFame(tokens : Int, cards : Int, sets : Int, unrest : Int) {
     def total = tokens + cards + sets + unrest
 }
 
+// Where fame tokens came from (FactionState.addFame, game.fameFrom), for the end screen's table (asked for on Discord, 2026-11-21)
+sealed abstract class FameSource(val name : String)
+case object FameExplore extends FameSource("Exploring")
+case object FameHarvest extends FameSource("Harvests")
+case object FameFights extends FameSource("Fights")
+case object FameCreatures extends FameSource("Creatures")
+case object FameEffects extends FameSource("Card and clan effects")
+case object FameEvents extends FameSource("Events")
+case object FameTrades extends FameSource("Trading")
+case object FameRaids extends FameSource("Raids")
+case object FameDeeds extends FameSource("Fame gains")
+case object FameOther extends FameSource("Other")
+// Counted with the cards' and Unrest's fame at the end (Clan Fame upgrades counts them when taken)
+case object FameCards extends FameSource("Cards")
+case object FameUnrest extends FameSource("Unrest")
+
+object FameSource {
+    val tokens = $[FameSource](FameExplore, FameHarvest, FameFights, FameCreatures, FameEffects, FameEvents, FameTrades, FameRaids, FameDeeds)
+}
+
 // The end screen: the winners' clan cards (and warchief cards), the Jarl line and how they won
 case class GameOverWonAction(self : Faction, winners : $[Faction], message : Elem) extends BaseInfo("Game Over")(message)
 
@@ -793,6 +819,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
     // Alternative fame gains (fame-gains.scala): whether the Achievements were dealt, each clan's kept Achievement until resolved, the ones resolved
     var fameDealt = false
+    // Fame tokens gained and lost by each clan, by where they came from (FactionState.addFame), for the end screen's table
+    var fameFrom : Map[(Faction, FameSource), Int] = Map()
     var fameKept : Map[Faction, Card] = Map()
     var fameResolved : $[(Faction, Card)] = $
 
@@ -1555,7 +1583,7 @@ object CommonExpansion extends Expansion {
             FameUpgradesExpansion.unrest(f)
         }
         else {
-            f.fame -= 5
+            f.addFame(-5, FameUnrest)
             f.discard ++= f.draw.take(1)
             f.draw = f.draw.drop(1)
 
@@ -1621,13 +1649,43 @@ object CommonExpansion extends Expansion {
     // Clans as "A, B and C"
     def and(l : $[Faction])(implicit game : Game) : Elem = (l.num > 1).?(l.dropRight(1)./(_.elem).join(", ") ~ " and " ~ l.last.elem).|(l.head.elem)
 
-    // The end of the game: the winners' clan cards (and warchief cards), the Jarl line, then how they won
-    def victory(winners : $[Faction], how : $[Elem])(implicit game : Game) : Continue = {
+    // The end screen's table: each clan's fame by where it came from, the cards, resources and Unrest, and the total, the winners'
+    // columns in gold (asked for on Discord, 2026-11-21). Rows no clan has anything in are left out; "Other" is the fame tokens
+    // no source was noted for
+    def fameTable(winners : $[Faction])(implicit game : Game) : Elem = {
+        val l = factions
+        val last = l./(f => f -> finalFame(f)).toMap
+        def from(f : Faction, s : FameSource) = game.fameFrom.getOrElse((f, s), 0)
+        def other(f : Faction) = f.fame - game.fameFrom.filter(_._1._1 == f).values.sum + from(f, FameOther)
+
+        val rows = FameSource.tokens./(s => (s.name.txt : Elem, (f : Faction) => from(f, s))) ++ $[(Elem, Faction => Int)](
+            ("Other".txt, f => other(f)),
+            ("Cards".txt, f => last(f).cards + from(f, FameCards)),
+            ("Resources".txt, f => last(f).sets),
+            (UnrestCard.elem, f => last(f).unrest + from(f, FameUnrest))
+        )
+        val shown = rows.filter { case (_, value) => l.exists(f => value(f) != 0) }
+
+        def cell(e : Elem, f : |[Faction], extra : $[Style] = $) : Elem =
+            (extra ++ f.%(winners.has).$./(_ => styles.fameWinner : Style)).foldLeft(e.div(styles.fameCell))((d, x) => d(x))
+
+        val cols = l.num + 1
+        val table = $[Style](styles.fameCols2, styles.fameCols3, styles.fameCols4, styles.fameCols5, styles.fameCols6, styles.fameCols7)(math.min(cols, 7) - 2)
+
+        val header = cell(Empty, None) +: l./(f => cell(winners.has(f).?("★ ".txt ~ f.elem).|(f.elem), |(f)))
+        val body = shown./~ { case (name, value) => cell(name, None, $(styles.fameLabel)) +: l./(f => cell((value(f) == 0).?("–".spn(styles.ledgerNone)).|(value(f).hl), |(f))) }
+        val total = cell("Total".hlb, None, $(styles.fameLabel, styles.fameTotal)) +: l./(f => cell(Amount(last(f).total.hlb, FameIcon()), |(f), $(styles.fameTotal)))
+
+        (header ++ body ++ total).merge.div(styles.fameTable)(table)
+    }
+
+    // The end of the game: the winners' clan cards (and warchief cards), the Jarl line, how they won, then every clan's fame
+    def victory(winners : $[Faction], how : $[Elem], table : Boolean = true)(implicit game : Game) : Continue = {
         val cards = winners.but(Automa)./~(f => $(ClanCard(f, 0)) ++ game.warchiefCards.$(ClanCard(f, 3)))./(c => Image(c.info.image, styles.winnerCard))
         val who = and(winners)
         val line = (winners.num > 1).?(who ~ " tame these lands and triumph as the supreme " ~ "Jarls".hl).|(who ~ " tames these lands and triumphs as the supreme " ~ "Jarl".hl)
 
-        val message = cards.join(" ").div ~ line.div(styles.winnerLine) ~ how./(_.div).merge
+        val message = cards.join(" ").div ~ line.div(styles.winnerLine) ~ how./(_.div).merge ~ table.?(fameTable(winners)).|(Empty)
 
         GameOver(winners, "Game Over" ~ Break ~ winners./(_.elem).join(Break) ~ Break ~ "won", $(GameOverWonAction(null, winners, message)))
     }
@@ -2166,20 +2224,20 @@ object CommonExpansion extends Expansion {
             game.from(game.first).%(f => f != Dragon || game.dragonHarvest.has(false).not).foreach { f =>
                 val fame = Harvest.territoryFame(f)
                 if (fame > 0) {
-                    f.fame += fame
+                    f.addFame(fame, FameHarvest)
                     f.log("gained", fame.hl, FameIcon(), "from closed territories")
                 }
 
                 val altars = Harvest.altarFame(f)
                 if (altars > 0) {
-                    f.fame += altars
+                    f.addFame(altars, FameHarvest)
                     f.log("gained", altars.hl, FameIcon(), "from", AltarOfKings)
                 }
 
                 // The Lion Kingdom's Chapels
                 val chapels = LionExpansion.chapelFame(f)
                 if (chapels > 0) {
-                    f.fame += chapels
+                    f.addFame(chapels, FameHarvest)
                     f.log("gained", chapels.hl, FameIcon(), "from", (chapels == 1).?(Chapel.elem).|("Chapels".hl))
                 }
 

@@ -166,7 +166,14 @@ object Host extends hrf.host.BaseHost {
     Debug.fameExtraYears = sys.env.get("NORT_FAME_YEARS")./(_.toInt).|(4)
 
     def winners(a : Action)(implicit g : G) = a @@ {
-        case GameOverWonAction(_, l, _) => l
+        case GameOverWonAction(_, l, _) =>
+            // Fame tokens with no source noted (FactionState.addFame), which the end screen's table shows as "Other"
+            g.factions.foreach { f =>
+                val untracked = g.states(f).fame - g.fameFrom.filter(_._1._1 == f).values.sum
+                if (untracked != 0)
+                    println("FAME UNTRACKED " + f.name + " " + untracked)
+            }
+            l
     }
 
     def winnersFromFaction(f : F)(implicit g : G) = {

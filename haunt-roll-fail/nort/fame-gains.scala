@@ -53,7 +53,7 @@ object FameGainsExpansion extends Expansion {
 
     def gain(f : Faction, n : Int, why : Any*)(implicit game : Game) {
         if (on && f != Automa && n > 0 && game.states.contains(f)) {
-            f.fame += n
+            f.addFame(n, FameDeeds)
             f.log(("gained" +: Amount(n.hl, FameIcon()) +: why.toList) : _*)
             game.note("fame-gains")
         }

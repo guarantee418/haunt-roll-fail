@@ -279,7 +279,7 @@ object MineralsExpansion extends Expansion {
             spend(f, $(Gem))
             f.discard = f.discard.diff($(c))
             f.draw = c +: f.draw
-            f.fame += c.fame
+            f.addFame(c.fame, FameEffects)
 
             f.log("spent", Gem, "and gained", c.fame.hl, FameIcon(), "for", c, Comma, "now on top of their draw pile")
 

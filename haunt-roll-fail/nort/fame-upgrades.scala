@@ -221,7 +221,7 @@ object FameUpgradesExpansion extends Expansion {
         if (on && f != Automa && (c.is[Development] && FameGainsExpansion.on).not) {
             val n = CommonExpansion.cardFame(f, c)
             if (n != 0) {
-                f.fame += n
+                f.addFame(n, FameCards)
                 f.log((n > 0).?("gained").|("lost"), Amount(n.abs.hl, FameIcon()), "for", c)
             }
         }
@@ -230,7 +230,7 @@ object FameUpgradesExpansion extends Expansion {
     // An Unrest card's 5 fame, lost when it is taken
     def unrest(f : Faction)(implicit game : Game) {
         if (on) {
-            f.fame -= 5
+            f.addFame(-5, FameUnrest)
             f.log("lost", Amount(5.hl, FameIcon()), "for", UnrestCard)
         }
     }
@@ -278,7 +278,7 @@ object FameUpgradesExpansion extends Expansion {
             MapExpansion.collect(f, t, "with " ~ "Spoils of War".hl)
             val fame = game.board.closed(t).??((game.board.tiles(t) >= 3).?(2).|(1)) + 3 * game.working(t).count(_ == AltarOfKings)
             if (fame > 0) {
-                f.fame += fame
+                f.addFame(fame, FameFights)
                 f.log("gained", Amount(fame.hl, FameIcon()), "with", "Spoils of War".hl)
             }
             game.note("fame-spoils")

@@ -124,7 +124,7 @@ object EventsExpansion extends Expansion {
 
         if (game.eventIs("new-horizons"))
             closing.%(t => game.present(t).forall(game.enemy(f, _))).foreach { t =>
-                game.states(f).fame += 2
+                game.states(f).addFame(2, FameEvents)
                 val lore = (game.board.tiles(t) >= 4).??(1)
                 game.states(f).lore += lore
                 f.log("gained", 2.hl, FameIcon(), (lore > 0).?("and " ~ Amount(1.hl, Lore.elem)).|(Empty), "for closing", t.anchor, "with", EventCard("new-horizons"))
@@ -136,13 +136,13 @@ object EventsExpansion extends Expansion {
         if (game.eventIs("blood-moon"))
             $(attacker -> aLost, defender -> dLost).foreach { case (f, n) =>
                 if (n > 0) {
-                    game.states(f).fame += n
+                    game.states(f).addFame(n, FameEvents)
                     f.log("gained", n.hl, FameIcon(), "with", EventCard("blood-moon"))
                 }
             }
 
         if (game.eventIs("conquests") && winner.has(defender)) {
-            game.states(defender).fame += 2
+            game.states(defender).addFame(2, FameEvents)
             defender.log("gained", 2.hl, FameIcon(), "with", EventCard("conquests"))
         }
 
@@ -278,7 +278,7 @@ object EventsExpansion extends Expansion {
                 case "krakens-attack" =>
                     val l = game.controlled(f).%(game.board.open).%(t => game.figures(t, f) > 0)
                     if (l.none) {
-                        f.fame += 2
+                        f.addFame(2, FameEvents)
                         f.log("gained", 2.hl, FameIcon(), "with", e)
                         Then(n)
                     }
@@ -286,7 +286,7 @@ object EventsExpansion extends Expansion {
                         Ask(f).each(l)(t => KrakenAttackAction(f, t.anchor, step, rest, then))
 
                 case "draugr-invasion" =>
-                    f.fame += 2
+                    f.addFame(2, FameEvents)
                     f.log("gained", 2.hl, FameIcon(), "with", e)
                     game.controlled(f).%(t => game.count(t, f) >= 3).foreach { t =>
                         val here = game.working(t)
@@ -303,7 +303,7 @@ object EventsExpansion extends Expansion {
                     val paid = math.min(f.wood, l.num)
                     if (paid > 0) {
                         f.wood -= paid
-                        f.fame += paid
+                        f.addFame(paid, FameEvents)
                         f.log("paid", paid.hl, Wood, "and gained", paid.hl, FameIcon(), "with", e)
                     }
                     // The territories left unpaid lose a building: the ones with the fewest large buildings first
@@ -326,7 +326,7 @@ object EventsExpansion extends Expansion {
                     f.log("collected", 1.hl, r)
                 }
                 if (fame > 0) {
-                    f.fame += fame
+                    f.addFame(fame, FameEvents)
                     f.log("gained", fame.hl, FameIcon())
                 }
                 if (draw > 0)
@@ -361,7 +361,7 @@ object EventsExpansion extends Expansion {
             Then(next(step, l, then))
 
         case HappyFameAction(f, a, step, l, then) =>
-            f.fame += 3
+            f.addFame(3, FameEvents)
             a.foreach(a => game.addUnits(a, f, 1))
             f.log("gained", 3.hl, FameIcon(), a./(a => "and added a unit in " ~ a.elem).|(Empty))
             Then(next(step, l, then))
@@ -396,7 +396,7 @@ object EventsExpansion extends Expansion {
             }
             else {
                 game.harvestLessFood :+= a
-                f.fame += 1
+                f.addFame(1, FameEvents)
                 f.log("will collect 1 food less from", a, "and gained", 1.hl, FameIcon())
             }
             Then(InfestationAction(f, rest, step, l, then))
@@ -405,7 +405,7 @@ object EventsExpansion extends Expansion {
             val t = game.board.territory(a)
             val n = math.min(2, game.count(t, f))
             game.removeUnits(t, f, n)
-            f.fame += 2 * n
+            f.addFame(2 * n, FameEvents)
             f.log("lost", n.hl, "units in", a, "to the", EventCard("sailor-ghosts"), "and gained", (2 * n).hl, FameIcon())
             Then(next(step, l, then))
 
@@ -431,21 +431,21 @@ object EventsExpansion extends Expansion {
         case BonfireTradeAction(f, then) =>
             f.wood -= 2
             f.lore += 1
-            f.fame += 1
+            f.addFame(1, FameEvents)
             f.log("traded", Wood, Wood, "for", Lore, "and gained", 1.hl, FameIcon())
             game.advance(f, "trading")
             Then(CommonExpansion.afterTrade(f, then))
 
         case TradeForAction(f, _, _, _) =>
             if (game.eventIs("ceremonial-bonfire")) {
-                f.fame += 1
+                f.addFame(1, FameEvents)
                 f.log("gained", 1.hl, FameIcon(), "with", EventCard("ceremonial-bonfire"))
             }
             UnknownContinue
 
         case TeamTradeAction(f, _, _, _, _) =>
             if (game.eventIs("ceremonial-bonfire")) {
-                f.fame += 1
+                f.addFame(1, FameEvents)
                 f.log("gained", 1.hl, FameIcon(), "with", EventCard("ceremonial-bonfire"))
             }
             UnknownContinue
