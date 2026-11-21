@@ -364,7 +364,7 @@ cd haunt-roll-fail && sbt fullOptJS
   first the games waiting on the signed-in player (asked for on 2026-11-20). The server doesn't run the games, so each client, once it has
   read the whole log and reached a question, posts the factions asked (`Journal.turn`, called from `Runner.run`'s `Ask` and `MultiAsk`
   cases; `/turn/<user>/<secret>/<game>`, kept in `turns.tsv` by `good-game/Turns.scala`), and `/my-games` matches them to the lobby's
-  "user <faction> <user>" lines. A game nobody has opened since this was deployed shows no highlight until a player opens it.
+  "user <faction> <user>" lines. A game nobody has opened since this was deployed shows no highlight until a player opens it. The tournament game ("Your Tournament Game", `/tournament/mine`, its seventh field from `Tournament.mine`) is highlighted the same way (2026-11-21).
 - Fixing a running game: through the `hrf-games` repository (copy `games/<id>.tsv` to
   `fixes/<id>.tsv` and edit it; its README and `notes/server.md` say how).
 - The in-game "Report a Bug" button posts to `/report-bug`; the server saves the report,
