@@ -1132,8 +1132,11 @@ server. No session can reach the server, and none needs to.
   who didn't give it with the tournament change `discord <name> -> <username or user ID>` (`-> off` forgets it). The bot needs the Server Members
   Intent and only to be in the server. Keep its token out of this repository.
 - Discord LFG games (`good-game/Lfg.scala`, `LfgSetup.scala`; their headers have the rules and files): in the LFG channel `/root` (Root:
-  Advanced Setup, pinging the `root-lfg` role) and, since 2026-11-21, `/northgard` (Northgard: Adset, the clan draft, pinging `ng-lfg`)
-  open a setup panel only the host sees, then post the game with Join, Leave, Start and Cancel; the server creates the game when the
+  Advanced Setup, pinging the `root-lfg` role) and, since 2026-11-21, `/northgard` (pinging `ng-lfg`; its `mode` a standard game, the
+  default, whose players pick their clans on Join from a menu only they see, or a random one drawn at the start, and each clan gets its
+  seat's color and team; or Adset, the clan draft; in both, Wilderness and Wastelands as tiles, creatures or both: a standard game's
+  `WildernessTiles` ..., Adset's `WildPartsBoth` ... for the expansion drafted or agreed, `AdsetParts` in `nort/adset.scala`, whose absence
+  is the whole module) open a setup panel only the host sees, then post the game with Join, Leave, Start and Cancel; the server creates the game when the
   seats fill (or the host starts it), the bot DMs each player their seat link (every player since 2026-11-21, `welcome`;
   only players the site didn't know before) and Get my link gives it again. A player whose Discord is linked to a ranking name (given
   on the Tournament page, set by the `discord` change, or an earlier LFG seat's) plays under it from the start, so the game is in
