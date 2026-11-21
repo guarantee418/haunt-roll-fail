@@ -35,7 +35,7 @@ import java.nio.file.{Files, Path, Paths}
 // each clan gets its seat's color and team as the setup screen gives them (ColorOption, TeamOption).
 //
 // File turns/lfg.tsv, the posts' events (the last state counts):
-//   time, open, id, host's Discord ID, host's name, seats, title, options, meta
+//   time, open, id, host's Discord ID, host's name, seats, title, options, meta, the options the host chose
 //   time, join, id, Discord ID, name, clan    time, clan, id, Discord ID, clan    time, leave, id, Discord ID    time, cancel, id
 //   time, start, id, lobby, game, spectator secret, Discord IDs, seat users, seat secrets (comma-separated, in seat order)
 object Lfg {
@@ -143,7 +143,8 @@ object Lfg {
     def publicKey = Tournament.hook("HRF_DISCORD_PUBLIC_KEY", "discord-public-key")
 
     // options: the ones its host picked on the setup panel (LfgSetup.scala); none, the site's defaults (the template)
-    case class Post(id : String, host : String, size : Int, title : String, players : List[(String, String)], cancelled : Boolean, game : Option[Started], options : List[String] = Nil, meta : String = root.meta, clans : Map[String, String] = Map()) {
+    // chosen: the options its host picked, which the post lists (none: an older post, which lists none)
+    case class Post(id : String, host : String, size : Int, title : String, players : List[(String, String)], cancelled : Boolean, game : Option[Started], options : List[String] = Nil, meta : String = root.meta, clans : Map[String, String] = Map(), chosen : List[String] = Nil) {
         def kind = Lfg.kind(meta)
         def clan(u : String) = clans.getOrElse(u, "")
         // every player has a clan (always, in a game whose clans aren't picked on Join)
@@ -156,7 +157,7 @@ object Lfg {
     def posts() : Map[String, Post] = {
         var m = Map[String, Post]()
         rows(file).foreach {
-            case _ :: "open" :: id :: host :: name :: size :: title :: rest => m += id -> Post(id, host, size.toIntOption.getOrElse(4), title, List(host -> name), false, None, rest.headOption.toList.flatMap(_.split(' ').toList.filter(_.nonEmpty)), rest.lift(1).filter(_.nonEmpty).getOrElse(root.meta))
+            case _ :: "open" :: id :: host :: name :: size :: title :: rest => m += id -> Post(id, host, size.toIntOption.getOrElse(4), title, List(host -> name), false, None, rest.headOption.toList.flatMap(_.split(' ').toList.filter(_.nonEmpty)), rest.lift(1).filter(_.nonEmpty).getOrElse(root.meta), chosen = rest.lift(2).toList.flatMap(_.split(' ').toList.filter(_.nonEmpty)))
             case _ :: "join" :: id :: u :: name :: rest => m.get(id).foreach(p => if (!p.players.exists(_._1 == u)) m += id -> p.copy(players = p.players :+ (u -> name), clans = p.clans ++ rest.headOption.filter(_.nonEmpty).map(u -> _)))
             case _ :: "clan" :: id :: u :: c :: _ => m.get(id).foreach(p => m += id -> p.copy(clans = p.clans + (u -> c)))
             case _ :: "leave" :: id :: u :: _ => m.get(id).foreach(p => m += id -> p.copy(players = p.players.filter(_._1 != u), clans = p.clans - u))
@@ -368,7 +369,8 @@ object Lfg {
 
     def message(p : Post) : String = {
         val label = p.kind.label
-        val picks = if (p.options.isEmpty) "" else LfgSetup.catalog(p.meta).map(c => LfgSetup.summary(c, p.options)).getOrElse("")
+        // the options its host chose
+        val picks = if (p.game.nonEmpty || p.cancelled || p.chosen.isEmpty) "" else LfgSetup.catalog(p.meta).map(c => LfgSetup.summary(c, p.chosen, p.options)).getOrElse("")
         val head = LfgSetup.emojiText(p.kind.emoji)
         val (text, bb) = p.game match {
             case Some(s) =>
@@ -406,7 +408,7 @@ object Lfg {
     // a game set up on the panel (LfgSetup.scala): its post in the channel, as a follow-up to the panel (the host already in)
     def posted(d : LfgSetup.Draft, app : String, token : String) = synchronized {
         val id = Tournament.newSecret(10)
-        event("open", id, d.host, clean(d.name), d.n, d.title, d.state.actual.mkString(" "), d.state.c.meta)
+        event("open", id, d.host, clean(d.name), d.n, d.title, d.state.actual.mkString(" "), d.state.c.meta, d.picked.mkString(" "))
         val body = announced(posts()(id))
         Tournament.poster.execute { () =>
             try DiscordBot.send("POST", "https://discord.com/api/v10/webhooks/" + app + "/" + token, body, None)
