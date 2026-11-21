@@ -46,6 +46,9 @@ import scala.concurrent.duration.Duration
 //   bot <token>                       the Discord bot's token, so a username given on the Tournament page pings (DiscordBot.scala;
 //                                     the file discord-bot-token, "bot off" removes it); delete the change file once its .result is read
 //   guild <id>                        the Discord server the bot looks usernames up in, if not the webhook's (the file discord-guild)
+//   lfg-key <public key>              the Discord application's public key, for /root and the LFG posts' buttons (Lfg.scala; the
+//                                     file discord-public-key, "lfg-key off" removes it); registers /root in the Discord server
+//   lfg-commands                      registers /root again
 //   discord <name> -> <username>      a name's Discord, for a player who didn't give it (a username the bot finds, or a user ID;
 //                                     "-> off" forgets it)
 // The Discord channel of the webhook in HRF_DISCORD_WEBHOOK (or the file discord-webhook) is invited to sign up, with the link to
@@ -506,6 +509,17 @@ object Tournament {
                     if (rest == "off") { Files.deleteIfExists(Paths.get("discord-guild")) ; "removed" }
                     else if (isDiscordId(rest)) { Files.write(Paths.get("discord-guild"), (rest + "\n").getBytes(UTF_8)) ; DiscordBot.found.clear() ; "set" }
                     else "not done: guild <the server's ID> or guild off"
+                // the Discord application's public key, for the LFG posts' slash command and buttons (Lfg.scala; the file
+                // discord-public-key), and /root registered in the Discord server; "lfg-key off" removes it
+                case "lfg-key" =>
+                    if (rest == "off") { Files.deleteIfExists(Paths.get("discord-public-key")) ; "removed" }
+                    else if (rest.length == 64 && rest.forall(c => "0123456789abcdefABCDEF".contains(c))) {
+                        Files.write(Paths.get("discord-public-key"), (rest.toLowerCase + "\n").getBytes(UTF_8))
+                        "set; /root " + Lfg.register()
+                    }
+                    else "not done: lfg-key <the application's public key from the Developer Portal> or lfg-key off"
+                // /root registered again (after the bot's token or the server changed)
+                case "lfg-commands" => "/root " + Lfg.register()
                 // a name's Discord, set by the owner for a player who didn't give it (2026-11-20, matched from the server's member
                 // list): discord <name> -> <username or user ID>, looked up by the Discord bot like one given on the Tournament page;
                 // discord <name> -> off forgets it
@@ -540,7 +554,7 @@ object Tournament {
                             }
                         case _ => "not done: discord <name> -> <username or user ID>, or -> off"
                     }
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, bot, guild, discord or invite)"
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, bot, guild, discord, lfg-key, lfg-commands or invite)"
             }
 
             (if (word == "webhook" || word == "forum" || word == "turns" || word == "bot") word else line) + ": " + result

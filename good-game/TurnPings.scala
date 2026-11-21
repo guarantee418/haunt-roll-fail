@@ -100,8 +100,10 @@ object TurnPings {
 
     // the Discord user ID to ping for a seat: its ranking name's, if pings are on for it
     // (in a tournament game, unless turned off: the players gave their ID to be pinged in their table's thread)
+    // (in a Discord LFG game, Lfg.scala: the ID the player joined with, unless the name they play under turned pings off)
     def mentionOf(user : String, tournament : Boolean = false) : Option[String] =
-        Ranking.seatNames().get(user).filter(k => if (tournament) setting(k) != Some(false) else pingsOn(k)).flatMap(Tournament.discordId)
+        Lfg.discordOf(user).filter(_ => !Ranking.seatNames().get(user).exists(k => setting(k) == Some(false))).orElse(
+        Ranking.seatNames().get(user).filter(k => if (tournament) setting(k) != Some(false) else pingsOn(k)).flatMap(Tournament.discordId))
 
     def setting(k : String) : Option[Boolean] = rows(settings).filter(_.headOption.contains(k)).lastOption.flatMap(_.lift(1)).map(_ == "on")
 
