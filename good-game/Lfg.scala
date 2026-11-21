@@ -118,6 +118,9 @@ object Lfg {
 
     // in a message, and in a menu option
     def clanIcon(c : String) = clanEmoji(c).map { case (n, id, a) => "<" + (if (a) "a" else "") + ":" + n + ":" + id + "> " }.getOrElse("")
+    // a clan as the post and the replies show it: its emoji alone (asked for on 2026-11-21), else its name ("a random clan" ...)
+    def clanShown(c : String) = Some(clanIcon(c).trim).filter(_.nonEmpty).getOrElse(clanLabel(c))
+
     def clanIconField(c : String) = clanEmoji(c).map { case (n, id, a) => ",\"emoji\":{\"id\":" + json(id) + ",\"name\":" + json(n) + ",\"animated\":" + a + "}" }.getOrElse("")
 
     def clanLabel(c : String) = c match {
@@ -373,7 +376,7 @@ object Lfg {
                 val minSeats = p.kind.minSeats
                 (head + "**" + label + ": " + p.title + "**, looking for players (" + p.players.size + "/" + p.size + ")\n" + picks +
                     "Host: " + mention(p.host) + "\n" +
-                    "Players: " + p.players.map(x => mention(x._1) + " (" + clanIcon(p.clan(x._1)) + clanLabel(p.clan(x._1)) + ")").mkString(", ") + "\n" +
+                    "Players: " + p.players.map(x => mention(x._1) + " " + (Some(clanIcon(p.clan(x._1)).trim).filter(_.nonEmpty).getOrElse("(" + clanLabel(p.clan(x._1)) + ")"))).mkString(", ") + "\n" +
                     "Press **Join** and pick a clan to play; **Clan** changes yours. The game starts by itself when all " + p.size + " seats are taken and everyone has a clan, or when the host presses **Start** (" + minSeats + " players or more).",
                     buttons(button("Join", 1, "join", p.id, "👍"), button("Clan", 2, "clan", p.id), button("Leave", 2, "leave", p.id), button("Start", 3, "start", p.id), button("Cancel", 4, "cancel", p.id)))
             case None =>
@@ -566,11 +569,11 @@ object Lfg {
                                         editPost(ch, msg, r)
                                         announceStart(app, token, r, s)
                                         welcome(r, s)
-                                        done("You play " + clanLabel(c) + " in **" + p.title + "**, which has started: your seat link is in your DMs.")
+                                        done("You play " + clanShown(c) + " in **" + p.title + "**, which has started: your seat link is in your DMs.")
                                 }
                             else {
                                 editPost(ch, msg, q)
-                                done("You play " + clanIcon(c) + clanLabel(c) + " in **" + p.title + "**." + (if (q.players.size < q.size) " The game starts when all " + q.size + " seats are taken." else ""))
+                                done("You play " + clanShown(c) + " in **" + p.title + "**." + (if (q.players.size < q.size) " The game starts when all " + q.size + " seats are taken." else ""))
                             }
                         }
                 }
@@ -598,7 +601,7 @@ object Lfg {
                                 }
                             case (_, Some(_)) => privately("**" + p.title + "** has already started.")
                             case (_, None) if p.cancelled => privately("**" + p.title + "** was cancelled.")
-                            case ("join" | "clan", None) if p.kind.clans && seated => clanMenu(p, uid, channel, messageId, "Pick your clan for **" + p.title + "** (now " + clanLabel(p.clan(uid)) + ").")
+                            case ("join" | "clan", None) if p.kind.clans && seated => clanMenu(p, uid, channel, messageId, "Pick your clan for **" + p.title + "** (now " + clanShown(p.clan(uid)) + ").")
                             case ("clan", None) if p.kind.clans => privately("Press **Join** first.")
                             case ("join", None) if p.kind.clans && p.players.size < p.size => clanMenu(p, uid, channel, messageId, "Pick your clan to join **" + p.title + "**.")
                             case ("join", None) if seated => privately("You're already in.")
