@@ -644,7 +644,7 @@ server. No session can reach the server, and none needs to.
   (`game.water`, `waterSupply`), the `BarrenTrail` transport (paid with a Water, a staying warrior or a Vagabond item), the Water
   actions, Surrender and Seizure. The "Map Rules" button under the action pane (and tapping a barren trail) shows the rules and where
   the game stands (`"view-map-rules"` in `root/ui.scala`); it shows on both maps, saying so when their rules are off (2026-11-19). `ReplayCheck <games> deepwoods [settling]` or `wastelands [water]` plays them.
-- The Capitalists and Anarchists deck (`CapitalistsDeck`, a Fan Deck; the owner's own variation of Might and Right, designed in a thread on
+- The Capitalists and Anarchists deck (`CapitalistsDeck`, among the Decks since 2026-11-21, a Fan Deck before; the owner's own variation of Might and Right, designed in a thread on
   2026-11-19) keeps the base deck's items, ambushes, dominances, Armorers and Sappers, puts Dawn and Dusk's three Services in place of the
   Favors, and changes the other effects (`Deck.capitalists`; rules in `root/deck-capitalists.scala`, `CapitalistsDeckExpansion`, its header
   lists them): Command Warren, Cobbler, Brutal Tactics (no point for the defender) and Scouting Party (cancels one ambush; 1 mouse) cost one card and are paid for at each use with a card matching the clearing (a bird
@@ -686,7 +686,7 @@ server. No session can reach the server, and none needs to.
   `FanInfo.outsidersLink`; 2026-11-17 and 18): a new part of either gets that link too.
 - Root's fan content is grouped apart from the official (2026-11-17): the faction picker's "Fan Factions" (once "Fun Factions",
   `factionGroup`) starts folded to one line ("18 Fan Factions") and opens on a tap (`Meta.foldedFactionGroups`, `grouped` in `hrf.scala`,
-  remembered as `picker.<meta>.<group>`); the setup has "Fan Maps" (Tidal Flats, Tundra and Gloom too, since 2026-11-18) and "Fan Decks" sections (Mixed and Dawn and Dusk too, since 2026-11-18) (`FanMap`, `FanDeck` in `root/meta.scala`:
+  remembered as `picker.<meta>.<group>`); the setup has "Fan Maps" (Tidal Flats, Tundra and Gloom too, since 2026-11-18) and "Fan Decks" sections (Mixed and Dawn and Dusk too, since 2026-11-18, and Might and Right since 2026-11-21, when Capitalists and Anarchists took its place among the Decks as the base deck's playable version; the three still count as official for the rankings) (`FanMap`, `FanDeck` in `root/meta.scala`:
   the same single choice as Map and Deck, through `OneOfGroup.oneOf`, so a folded Map shows "Urban (Fan Maps)"), Adset's "Available Fan
   Factions", and two folders (`BaseOption.folder`, a heading that folds several sections, `folder.<name>`): "Fan Hirelings" (the
   Turnlings) and "Scenarios" (the Legends Scenarios; Ring Rule, Capture Rule and the monster only once their scenario is picked,
@@ -1101,7 +1101,7 @@ server. No session can reach the server, and none needs to.
   `discord-forum-webhook`, set by the `forum <url>` change), else in the announcements' channel; a forum channel gets every post in
   a thread, a text channel in the channel itself (2026-11-20).
   `Tournament.start` takes the server's URL argument for the link. The games have the hidden `TournamentDraft` (`root/tournament.scala`):
-  the factions are drawn first (the flop), the first seat picks the deck, the second the map, on the Mountain the third the one
+  the factions are drawn first (the flop), the first seat picks the deck (Capitalists and Anarchists, Exiles and Partisans or Squires and Disciples, in games with the hidden `TournamentCapitalists` every new tournament game gets, 2026-11-21; older ones offered Might and Right in its place), the second the map, on the Mountain the third the one
   landmark for the Tower's clearing (the Tower, a suited landmark or the Birdsong Tower), then the factions are picked as usual; the game starts with no
   map or deck, `game.options` and `game.board` are vars set by the picks, and `root/ui.scala` rebuilds its board view
   (`BoardView`) when the board changes and draws no map until it is picked (`game.mapPending`). `ReplayCheck <games> official
