@@ -129,8 +129,22 @@ object Lfg {
     // a name as the lobby keeps it (the client's sanitize(32)): no tabs or new lines, no < > " \
     def clean(s : String) = s.filter(c => c >= 32 && c != '<' && c != '>' && c != '"' && c != '\\' && c != '\t').trim.take(32)
 
+    // THE RANKING NAME a Discord user plays under (2026-11-21: LFG games didn't show under Play Online, as a seat is listed there only
+    // once its player types a ranking name in it): the claimed name whose Discord they are (given on the Tournament page or set by the
+    // change "discord"), else the one their seat in an earlier LFG game played under
+    def rankingNameOf(id : String) : Option[String] = {
+        val claimed = Ranking.claims()
+        rows(Tournament.discords).groupBy(_.headOption.getOrElse("")).values.map(_.last).toList
+            .filter(r => r.lift(1).contains(id) || r.lift(2).contains(id)).flatMap(_.headOption).filter(claimed.contains).sorted.headOption.orElse {
+                val named = Ranking.seatNames()
+                posts().values.toList.flatMap(_.game).flatMap(s => s.ids.zip(s.users)).filter(_._1 == id).flatMap(x => named.get(x._2)).filter(claimed.contains).sorted.headOption
+            }
+    }
+
     // the game, made as Tournament.create makes a table's: a host, a lobby, the game and a seat (and a link) for each player and a
-    // spectator; each seat's name is the player's Discord name until they type their own (a "prename", as New Online Game's notes)
+    // spectator; a player with a ranking name (rankingNameOf) plays under it from the start, as at the tournament ("name" in the lobby,
+    // the seat counted under it, so the game is in their Play Online), and the others' seats are named with their Discord name until
+    // they type their own (a "prename", as New Online Game's notes)
     def create(p : Post) : Either[String, Started] = {
         val meta = p.meta
         val (version, options) = (if (p.options.nonEmpty) LfgSetup.catalog(meta).map(c => (c.version, p.options)) else None).getOrElse(rows(p.kind.template).lastOption match {
@@ -147,16 +161,21 @@ object Lfg {
         val spectator = User("Spectator", newSecret(16), newSecret(16))
         val spectate = newSecret(16)
         val seats = p.players.indices.map(i => (User("Player #" + (i + 1), newSecret(16), newSecret(16)), newSecret(16))).toList
+        val ranked = p.players.map(x => rankingNameOf(x._1))
+        val dd = Ranking.displays()
 
         val lines =
             List("meta " + meta, "version " + version, "title " + title) ++
             seats.zipWithIndex.map { case ((u, _), i) => "user P" + (i + 1) + " " + u.id } ++
-            seats.zip(p.players).map { case ((u, _), (_, name)) => "prename " + u.id + " " + clean(name) }.filter(_.split(' ').length > 2) ++
+            seats.zip(p.players).zip(ranked).collect { case (((u, _), (_, name)), None) => "prename " + u.id + " " + clean(name) }.filter(_.split(' ').length > 2) ++
             List(
                 "seating " + scala.util.Random.shuffle(seats.indices.map(i => "P" + (i + 1)).toList).mkString(" "),
                 "options " + (if (meta == root.meta) startOptions(options) else options).distinct.mkString(" "),
                 "server " + game
             )
+
+        // a ranked player's seat names itself, as a player typing their name would
+        val named = seats.zip(ranked).collect { case ((u, _), Some(k)) => (u.id, "name " + u.id + " " + clean(dd.getOrElse(k, k))) }
 
         def rights(j : String, u : String, rr : String*) = rr.map(r => AccessRight(j, u, r))
 
@@ -171,13 +190,15 @@ object Lfg {
             users ++= seats.map(_._1),
             accessRights ++= seats.flatMap { case (u, _) => rights(lobby, u.id, "read", "append") ++ rights(game, u.id, "read", "append") },
             plays ++= seats.map { case (u, s) => Play(lobby, u.id, s) },
-            entries ++= lines.zipWithIndex.map { case (t, i) => Entry(lobby, i, host.id, t) },
+            entries ++= (lines.map(t => (host.id, t)) ++ named).zipWithIndex.map { case ((u, t), i) => Entry(lobby, i, u, t) },
             entries += Entry(game, 0, host.id, "StartAction(\"" + version + "\")")
         )
 
         val s = Started(lobby, game, spectate, p.players.map(_._1), seats.map(_._1.id), seats.map(_._2))
         event("start", p.id, lobby, game, spectate, s.ids.mkString(","), s.users.mkString(","), s.secrets.mkString(","))
         seatIds = null
+
+        seats.zip(ranked).foreach { case ((u, _), k) => k.foreach(k => Ranking.append(Ranking.seats, row(u.id, k))) }
 
         // its post in the turns channel, with its players and spectator link (and turn pings from there)
         TurnPings.lobbyWritten(lobby, lines)
