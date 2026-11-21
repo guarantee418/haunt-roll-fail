@@ -148,25 +148,34 @@ object TurnPings {
         try {
             val game = lines.find(_.startsWith("server ")).map(_.drop(7).trim).getOrElse("")
             val meta = lines.find(_.startsWith("meta ")).map(_.drop(5).trim).getOrElse("")
-            if (game.nonEmpty && metas.contains(meta) && webhook.nonEmpty && !rows(created).exists(_.headOption.contains(game))) {
-                Ranking.append(created, row(game))
+            if (game.nonEmpty && metas.contains(meta) && webhook.nonEmpty && !introduced(game)) {
                 val l = Lobby(meta, lines.find(_.startsWith("title ")).map(_.drop(6)).getOrElse(""), lines, lobby)
                 lobbies.put(game, l)
-                val seats = lines.filter(_.startsWith("user ")).map(_.split(' ').toList).collect { case _ :: f :: u :: _ => (f, u) }
-                val bots = lines.count(_.startsWith("bot "))
-                val spectator = run((for { p <- plays.filter(_.journalId === lobby) ; u <- users.filter(_.id === p.userId).filter(_.name === "Spectator") } yield p.secret).result.headOption)
-                val ids = seats.flatMap(s => mentionOf(s._2))
-                val who = seats.map { case (_, u) => nameOf(l, u) + mentionOf(u).map(i => " (<@" + i + ">)").getOrElse("") }
-                val text = "New " + metas(meta) + " game: **" + l.title + "**\n" +
-                    "Players: " + (if (who.isEmpty) "none" else who.mkString(", ")) + (if (bots > 0) ", and " + bots + " bot" + (if (bots > 1) "s" else "") else "") + "\n" +
-                    spectator.map(s => "Watch: <" + Tournament.site + "/play/" + meta + "/" + s + ">\n").getOrElse("") +
-                    "Each player is mentioned here when it's their turn, unless they turned turn pings off under Rankings."
-                post(game, l, text, ids)
+                introduce(game, l, "New")
             }
         }
         catch {
             case e : Exception => println("Turn pings: new game not posted: " + e)
         }
+    }
+
+    def introduced(game : String) = rows(created).exists(_.headOption.contains(game))
+
+    // a game's post, with its players and spectator link, which opens its thread: when its lobby is written ("New"), or before the
+    // first ping of a game made before turn pings or before the turns webhook was set (2026-11-21), so its thread starts with it
+    def introduce(game : String, l : Lobby, what : String) {
+        Ranking.append(created, row(game))
+        val lines = l.lines
+        val seats = lines.filter(_.startsWith("user ")).map(_.split(' ').toList).collect { case _ :: f :: u :: _ => (f, u) }
+        val bots = lines.count(_.startsWith("bot "))
+        val spectator = run((for { p <- plays.filter(_.journalId === l.lobby) ; u <- users.filter(_.id === p.userId).filter(_.name === "Spectator") } yield p.secret).result.headOption)
+        val ids = seats.flatMap(s => mentionOf(s._2))
+        val who = seats.map { case (_, u) => nameOf(l, u) + mentionOf(u).map(i => " (<@" + i + ">)").getOrElse("") }
+        val text = what + " " + metas(l.meta) + " game: **" + l.title + "**\n" +
+            "Players: " + (if (who.isEmpty) "none" else who.mkString(", ")) + (if (bots > 0) ", and " + bots + " bot" + (if (bots > 1) "s" else "") else "") + "\n" +
+            spectator.map(s => "Watch: <" + Tournament.site + "/play/" + l.meta + "/" + s + ">\n").getOrElse("") +
+            "Each player is mentioned here when it's their turn, unless they turned turn pings off under Rankings."
+        post(game, l, text, ids)
     }
 
     // a client's report (Turns.report): the game asks these factions after the log's first index entries
@@ -237,6 +246,10 @@ object TurnPings {
         val lobby = lobbyOf(game).getOrElse(return "not pinged: lobby not found")
         if (!metas.contains(lobby.meta))
             return "not pinged: not a Root game"
+
+        // a game with no thread of its own yet gets its post first (a tournament table's game uses its table's thread)
+        if (table(game).isEmpty && webhook.nonEmpty && !introduced(game))
+            introduce(game, lobby, "Ongoing")
 
         lastPing = pings + ((game, user) -> now)
         Ranking.append(pinged, row(Ranking.now(), game, user))
