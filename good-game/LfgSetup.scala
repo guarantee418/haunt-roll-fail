@@ -376,8 +376,10 @@ object LfgSetup {
         ("wilderness", "Wilderness: tiles, creatures or both", "@wilderness"), ("wastelands", "Wastelands: tiles, creatures or both", "@wastelands"),
         ("warchiefs", "The Warchief expansion", "Warchief expansion"),
         ("fame", "Whether fame is public", "Fame"), ("undo", "How much undo is allowed", "Undo"))
-    val nortStdCommand = nortCommand.take(2) ++ List(("creatures", "The Creatures module (Wilderness and Wastelands creatures turn it on)", "@creatures")) ++ nortCommand.drop(2)
-    val nortAdsetCommand = nortCommand.take(2) ++ List(("lands", "Wilderness or Wastelands", "Wilderness or Wastelands")) ++ nortCommand.drop(2)
+    // (the two modes share /northgard, and Discord can't hide an option by mode, so the options one mode skips say so: Adset ignores
+    // `creatures`, a standard game `lands`, as `sections` leaves them out; 2026-11-21)
+    val nortStdCommand = nortCommand.take(2) ++ List(("creatures", "Standard only (Adset always has it): the Creatures module", "@creatures")) ++ nortCommand.drop(2)
+    val nortAdsetCommand = nortCommand.take(2) ++ List(("lands", "Adset only, standard games skip it: Wilderness or Wastelands", "Wilderness or Wastelands")) ++ nortCommand.drop(2)
     val nortPanel = List("Uncharted Horizons", "Development cards", "Fan content", "Fan victories")
 
     def isNort(meta : String) = meta == Lfg.nort.meta || meta == Lfg.nortStd.meta
