@@ -719,7 +719,7 @@ object GoodGame {
 
         Tournament.start(db, url)
 
-        Lfg.start()
+        Lfg.start(directory)
 
         // the turn pings' sweep (TurnPings.scala)
         TurnPings.start()

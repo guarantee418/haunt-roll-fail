@@ -1136,7 +1136,8 @@ server. No session can reach the server, and none needs to.
   default, whose players pick their clans on Join from a menu only they see, or a random one drawn at the start, and each clan gets its
   seat's color and team; or Adset, the clan draft; in both, Wilderness and Wastelands as tiles, creatures or both: a standard game's
   `WildernessTiles` ..., Adset's `WildPartsBoth` ... for the expansion drafted or agreed, `AdsetParts` in `nort/adset.scala`, whose absence
-  is the whole module) open a setup panel only the host sees, then post the game with Join, Leave, Start and Cancel; the server creates the game when the
+  is the whole module; the clans shown with their emblems, the bot's own application emojis `ng_<clan>` it uploads at
+  the server's start from `webp2/nort/images/clan/emoji/`, `Lfg.syncClanEmojis`) open a setup panel only the host sees, then post the game with Join, Leave, Start and Cancel; the server creates the game when the
   seats fill (or the host starts it), the bot DMs each player their seat link (every player since 2026-11-21, `welcome`;
   only players the site didn't know before) and Get my link gives it again. A player whose Discord is linked to a ranking name (given
   on the Tournament page, set by the `discord` change, or an earlier LFG seat's) plays under it from the start, so the game is in
