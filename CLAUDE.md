@@ -350,7 +350,7 @@ cd haunt-roll-fail && sbt fullOptJS
   reported from 2026-11-18 (owner's ask); its finished games before then are in the seed with every seat (bots too) as "*", no one,
   so they count in the stats but in no rating (`Result.rated`; `STATS` lines of `LiveCheck <hrf-games> ranking`). When a game ends,
   the rating changes it made are added as a line at the end of its log (`showRatings` in `hrf.scala`). Games with fan content
-  (`Meta.rankingFan`: Northgard's fan clans, modules and variants, `rankFan` in `nort/meta.scala`; Root's fan, playtest and mirror
+  (`Meta.rankingFan`: Northgard's fan clans only, the Lion Kingdom and the Dragon and Bear variants, `rankFan` in `nort/meta.scala`, as its fan modules and options are rated since 2026-11-21 (owner: much modular content, few players); Root's fan, playtest and mirror
   factions, fan maps, decks, hirelings and scenarios, `rankFan` in `root/meta.scala`; asked for on 2026-11-18) are reported with an
   "X fan" line, kept as the side `X:fan`, and count in the stats but in no rating (`Result.fan`). Names are released or
   moved by committing `ranking-changes/<name>.txt` to `hrf-games` (`release <name>`, `rename <name> -> <new>`, `seat <user> <name>`;
