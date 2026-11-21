@@ -222,6 +222,30 @@ object Lfg {
         }
     }
 
+    // NEW PLAYERS (asked for on 2026-11-20): a player the site doesn't know yet (no ranking name was given their Discord, on the
+    // Tournament page or by the change "discord", and none was typed in an LFG game they joined before) gets their seat link from the
+    // bot in a direct message when their game starts, with a word on what to do; the others press Get my link
+    def known(id : String) : Boolean =
+        rows(Tournament.discords).groupBy(_.headOption.getOrElse("")).values.map(_.last).exists(r => r.lift(1).contains(id) || r.lift(2).contains(id)) || {
+            val named = Ranking.seatNames()
+            posts().values.flatMap(_.game).exists(s => s.ids.zip(s.users).exists { case (i, u) => i == id && named.contains(u) })
+        }
+
+    def welcome(p : Post, s : Started) {
+        val strangers = s.ids.zip(s.secrets).filter { case (id, _) => !known(id) }
+        if (strangers.nonEmpty && DiscordBot.configured)
+            Tournament.poster.execute { () =>
+                strangers.foreach { case (id, secret) =>
+                    val text = "Welcome to Clean5110! You joined **" + p.title + "**, an online game of Root (" + label.split(": ").last + ").\n" +
+                        "**Your seat:** " + link(secret) + "\n" +
+                        "Open it and type the name you want to play under: that name is yours on the site's rankings from then on. " +
+                        "Keep this link to yourself, as it plays your seat. Your turns are pinged in the game's post on the Discord server."
+                    try { if (!DiscordBot.dm(id, text)) println("LFG: no DM to a new player (they may not take DMs); Get my link still works") }
+                    catch { case e : Exception => println("LFG: DM failed: " + e) }
+                }
+            }
+    }
+
     // Discord's signature (Ed25519, of the timestamp and the body) with the application's public key
     def verified(signature : String, timestamp : String, body : Array[Byte]) : Boolean = publicKey.exists { k =>
         try {
@@ -300,6 +324,7 @@ object Lfg {
                             case Right(s) =>
                                 val r = q.copy(game = Some(s))
                                 announceStart(app, token, r, s)
+                                welcome(r, s)
                                 update(r)
                         }
 
