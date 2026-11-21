@@ -216,35 +216,44 @@ object LfgSetup {
 
     val drafts = new java.util.concurrent.ConcurrentHashMap[String, Draft]()
 
-    // a menu: its section, the options it lists, whether it takes several
-    case class Menu(group : String, options : List[Opt], many : Boolean)
+    // a menu: its section, the options it lists, whether it takes several; or the players' menu, or the presets'
+    case class Menu(group : String, options : List[Opt], many : Boolean, kind : String = "options")
 
-    // the panel's pages: the setup screen's pages, each split into pages of four menus at most (the first page of the panel also has
-    // the players and the presets)
+    // the panel's pages (asked for on 2026-11-20: the main picks first, the on/off menus closed): the first has the players and the
+    // main picks (the Important sections: the map, the deck), then the setup screen's pages, four menus a page. One-pick sections
+    // that share their choice (each turns the other's options off: Map and Fan Maps, Deck and Fan Decks) are one menu
     def pages(d : Draft) : List[List[Menu]] = {
         val s = d.state
-        val menus = s.c.options.filter(s.shown).groupBy(_.page).toList.sortBy(_._1).map { case (_, oo) =>
+        def listed(g : List[Opt]) = g.filter(o => !s.mandatory.contains(o.name) && (s.selected.contains(o.name) || s.enabled(o.name)))
+        val site = s.c.options.filter(s.shown).groupBy(_.page).toList.sortBy(_._1).map { case (_, oo) =>
             val groups = oo.map(_.group).distinct.map(g => oo.filter(_.group == g))
-            groups.flatMap { g =>
-                val listed = g.filter(o => !s.mandatory.contains(o.name) && (s.selected.contains(o.name) || s.enabled(o.name)))
-                listed.grouped(25).toList.map(l => Menu(g.head.group, l, l.exists(_.toggle)))
-            }.filter(_.options.nonEmpty)
+            var merged = List[List[Opt]]()
+            groups.foreach { g =>
+                val single = !g.exists(_.toggle)
+                val i = merged.indexWhere(m => single && !m.exists(_.toggle) && m.size + g.size <= 25 && m.exists(o => s.forcedOff(o.name).exists(x => g.exists(_.name == x))))
+                if (i >= 0) merged = merged.updated(i, merged(i) ++ g) else merged :+= g
+            }
+            merged.flatMap(g => listed(g).grouped(25).toList.map(l => Menu(g.head.group, l, l.exists(_.toggle)))).filter(_.options.nonEmpty)
         }
-        val first = 4 - 1 - (if (s.c.presets.getOrElse(d.n, Nil).nonEmpty) 1 else 0)
-        menus.zipWithIndex.flatMap { case (mm, i) =>
-            if (i == 0) List(mm.take(first)) ++ mm.drop(first).grouped(4).toList else mm.grouped(4).toList
-        } match {
-            case Nil => List(Nil)
-            case l => l.head +: l.tail.filter(_.nonEmpty)
-        }
+        val featured = site.flatten.filter(m => !m.many && m.options.exists(_.important))
+        val rest = site.map(_.filterNot(featured.contains))
+        val players = Menu("Players", Nil, false, "players")
+        val presets = if (s.c.presets.getOrElse(d.n, Nil).nonEmpty) List(Menu("Presets", Nil, false, "preset")) else Nil
+        val first = players :: featured.take(3)
+        val firstSite = rest.headOption.getOrElse(Nil)
+        val room = 4 - first.size
+        val after = (featured.drop(3) ++ presets ++ firstSite.drop(room)).grouped(4).toList ++ rest.drop(1).flatMap(_.grouped(4))
+        (first ++ firstSite.take(room)) :: after.filter(_.nonEmpty)
     }
 
     def cut(s : String, n : Int) = if (s.length <= n) s else s.take(n - 1) + "…"
 
-    def select(id : String, placeholder : String, min : Int, max : Int, options : List[(String, String, Boolean, String)]) =
+    // a menu: each option's name, value, whether it's shown as picked, emoji and a line under it ("" for none)
+    def select(id : String, placeholder : String, min : Int, max : Int, options : List[(String, String, Boolean, String, String)]) =
         "{\"type\":1,\"components\":[{\"type\":3,\"custom_id\":" + Lfg.json(id) + ",\"placeholder\":" + Lfg.json(cut(placeholder, 150)) +
         ",\"min_values\":" + min + ",\"max_values\":" + max + ",\"options\":[" +
-        options.map { case (label, value, on, emoji) => "{\"label\":" + Lfg.json(cut(label, 100)) + ",\"value\":" + Lfg.json(value) + ",\"default\":" + on + emoji + "}" }.mkString(",") + "]}]}"
+        options.map { case (label, value, on, emoji, line) => "{\"label\":" + Lfg.json(cut(label, 100)) + ",\"value\":" + Lfg.json(value) + ",\"default\":" + on + emoji +
+            (if (line.isEmpty) "" else ",\"description\":" + Lfg.json(cut(line, 100))) + "}" }.mkString(",") + "]}]}"
 
     def button(label : String, style : Int, id : String, disabled : Boolean = false) =
         "{\"type\":2,\"style\":" + style + ",\"label\":" + Lfg.json(label) + ",\"custom_id\":" + Lfg.json(id) + ",\"disabled\":" + disabled + "}"
@@ -257,22 +266,26 @@ object LfgSetup {
         val menus = pp(page)
         val k = "lfgs:" + d.id + ":"
 
-        val presets : List[(String, String, Boolean, String)] = s.c.presets.getOrElse(d.n, Nil).zipWithIndex.map { case ((t, _), i) => (t, i.toString, false, "") }
-        val top = if (page != 0) Nil else
-            List(select(k + "players", "Players", 1, 1, s.c.players.map(n => (n + " players", n.toString, n == d.n, emojiField("players " + n))))) ++
-            (if (presets.isEmpty) Nil else List(select(k + "preset", "Presets: set every option at once", 1, 1, presets)))
-
-        val rows = top ++ menus.zipWithIndex.map { case (m, i) =>
-            val oo = m.options.map(o => (o.label, o.name, s.selected.contains(o.name), emojiField(o.name)))
-            if (m.many) select(k + "m:" + page + ":" + i, m.group, 0, oo.size, oo)
-            else select(k + "m:" + page + ":" + i, m.group, 1, 1, oo)
+        // a menu of several shows no picks when closed (each would take a line): its count, and In or Out under each option, a pick
+        // changing it
+        val rows = menus.zipWithIndex.map { case (m, i) =>
+            m.kind match {
+                case "players" => select(k + "players", "Players", 1, 1, s.c.players.map(n => (n + " players", n.toString, n == d.n, emojiField("players " + n), "")))
+                case "preset" => select(k + "preset", "Presets: set every option at once", 1, 1, s.c.presets.getOrElse(d.n, Nil).zipWithIndex.map { case ((t, _), i) => (t, i.toString, false, "", "") })
+                case _ if m.many =>
+                    val on = m.options.count(o => s.selected.contains(o.name))
+                    select(k + "m:" + page + ":" + i, m.group + ": " + on + " of " + m.options.size + " picked · pick to change", 0, m.options.size,
+                        m.options.map(o => (o.label, o.name, false, emojiField(o.name), if (s.selected.contains(o.name)) "✅ Picked · pick to take it out" else "Not picked · pick to add it")))
+                case _ =>
+                    select(k + "m:" + page + ":" + i, m.group, 1, 1, m.options.map(o => (o.label, o.name, s.selected.contains(o.name), emojiField(o.name), "")))
+            }
         }
 
         val buttons = "{\"type\":1,\"components\":[" + List(
             button("Back", 2, k + "back", page == 0), button("Next", 2, k + "next", page == pp.size - 1),
             button("Open the game", 3, k + "open"), button("Cancel", 4, k + "cancel")).mkString(",") + "]}"
 
-        val groups = menus.map(_.group).distinct
+        val groups = menus.filter(_.kind == "options").map(_.group).distinct
         val text = emojiText("title") + "**" + Lfg.label + ": " + d.title + "**, " + d.n + " players. Page " + (page + 1) + " of " + pp.size +
             (if (groups.nonEmpty) ": " + groups.mkString(", ") else "") + "\n" +
             summary(s.c, s.actual) +
@@ -314,13 +327,17 @@ object LfgSetup {
             case "m" :: p :: i :: Nil =>
                 pages(d).lift(p.toIntOption.getOrElse(-1)).flatMap(_.lift(i.toIntOption.getOrElse(-1))) match {
                     case None => show(d.copy(note = ""))
-                    case Some(m) =>
+                    case Some(m) if m.kind == "options" =>
                         val offered = m.options.map(_.name)
                         var s = d.state
-                        // turned off first, then on, as if each were tapped on the setup screen
-                        offered.filter(o => s.selected.contains(o) && !values.contains(o)).foreach(o => if (s.toggle(o)) s = s.click(o))
-                        values.filter(offered.contains).foreach(o => if (!s.selected.contains(o) && s.enabled(o)) s = s.click(o))
+                        // as if each were tapped on the setup screen: a menu of several changes each one picked (in or out), a menu
+                        // of one picks it
+                        values.filter(offered.contains).foreach { o =>
+                            if (s.selected.contains(o)) { if (m.many && s.toggle(o)) s = s.click(o) }
+                            else if (s.enabled(o)) s = s.click(o)
+                        }
                         show(d.copy(state = s, note = ""))
+                    case Some(_) => show(d.copy(note = ""))
                 }
             case "back" :: Nil => show(d.copy(page = (d.page - 1).max(0), note = ""))
             case "next" :: Nil => show(d.copy(page = (d.page + 1).min(pages(d).size - 1), note = ""))
