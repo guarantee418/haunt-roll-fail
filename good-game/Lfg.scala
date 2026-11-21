@@ -119,9 +119,15 @@ object Lfg {
     // in a message, and in a menu option
     def clanIcon(c : String) = clanEmoji(c).map { case (n, id, a) => "<" + (if (a) "a" else "") + ":" + n + ":" + id + "> " }.getOrElse("")
     // a clan as the post and the replies show it: its emoji alone (asked for on 2026-11-21), else its name ("a random clan" ...)
-    def clanShown(c : String) = Some(clanIcon(c).trim).filter(_.nonEmpty).getOrElse(clanLabel(c))
+    // (a random pick as ❓ with how many clans it draws from, 7 or 14, asked for on 2026-11-21)
+    def clanShown(c : String) = c match {
+        case `randomCore` => "❓ (7)"
+        case `randomAny` => "❓ (14)"
+        case _ => Some(clanIcon(c).trim).filter(_.nonEmpty).getOrElse(clanLabel(c))
+    }
 
-    def clanIconField(c : String) = clanEmoji(c).map { case (n, id, a) => ",\"emoji\":{\"id\":" + json(id) + ",\"name\":" + json(n) + ",\"animated\":" + a + "}" }.getOrElse("")
+    def clanIconField(c : String) = if (c == randomCore || c == randomAny) ",\"emoji\":{\"name\":\"❓\"}" else clanIconField0(c)
+    def clanIconField0(c : String) = clanEmoji(c).map { case (n, id, a) => ",\"emoji\":{\"id\":" + json(id) + ",\"name\":" + json(n) + ",\"animated\":" + a + "}" }.getOrElse("")
 
     def clanLabel(c : String) = c match {
         case `randomCore` => "a random core clan"
@@ -376,7 +382,10 @@ object Lfg {
                 val minSeats = p.kind.minSeats
                 (head + "**" + label + ": " + p.title + "**, looking for players (" + p.players.size + "/" + p.size + ")\n" + picks +
                     "Host: " + mention(p.host) + "\n" +
-                    "Players: " + p.players.map(x => mention(x._1) + " " + (Some(clanIcon(p.clan(x._1)).trim).filter(_.nonEmpty).getOrElse("(" + clanLabel(p.clan(x._1)) + ")"))).mkString(", ") + "\n" +
+                    "Players: " + p.players.map(x => mention(x._1) + " " + (p.clan(x._1) match {
+                        case c if c == randomCore || c == randomAny || clanIcon(c).nonEmpty => clanShown(c)
+                        case c => "(" + clanLabel(c) + ")"
+                    })).mkString(", ") + "\n" +
                     "Press **Select clan** to join, or to change your clan. The game starts by itself when all " + p.size + " seats are taken and everyone has a clan, or when the host presses **Start** (" + minSeats + " players or more).",
                     // (one button joins and changes the clan, asked for on 2026-11-21; the Clan button of the first posts still works)
                     buttons(button("Select clan", 1, "join", p.id, "👍"), button("Leave", 2, "leave", p.id), button("Start", 3, "start", p.id), button("Cancel", 4, "cancel", p.id)))
@@ -524,7 +533,7 @@ object Lfg {
     // (its channel and message, from the button's interaction, ride in the menu's id)
     def clanMenu(p : Post, uid : String, channel : String, message : String, text : String) = {
         val taken = p.taken(uid)
-        val choices = (coreClans ++ bloodClans).filterNot(taken.contains).map(c => (c + " Clan", c)) ++ List(("Random core clan", randomCore), ("Random clan (any of the 14)", randomAny))
+        val choices = (coreClans ++ bloodClans).filterNot(taken.contains).map(c => (c + " Clan", c)) ++ List(("Random core clan (7)", randomCore), ("Random clan (14)", randomAny))
         val menu = LfgSetup.select("lfg:pick:" + p.id + ":" + channel + ":" + message, "Pick your clan", 1, 1,
             choices.map { case (l, v) => (l, v, p.clan(uid) == v, clanIconField(v), "") })
         reply(4, "{\"content\":" + json(text) + ",\"flags\":64,\"components\":[" + menu + "],\"allowed_mentions\":{\"parse\":[]}}")
