@@ -76,6 +76,13 @@ object Lfg {
 
     def emojiName(c : String) = "ng_" + c.toLowerCase
 
+    // THE OPTIONS' ICONS (asked for on 2026-11-21: "use icons/emojis as much as possible"): the option (or "#<section>") -> its icon's
+    // slug (webp2/lfg/emoji/icons.tsv), and each slug -> the bot's emoji hrf_<slug>
+    @volatile var iconOf : Map[String, String] = Map()
+    @volatile var iconEmojis : Map[String, String] = Map()
+
+    def iconEmoji(key : String) : Option[(String, String, Boolean)] = iconOf.get(key).flatMap(s => iconEmojis.get(s).map(id => ("hrf_" + s, id, false)))
+
     def syncClanEmojis() : String = (DiscordBot.token match {
         case None => "no bot token"
         case Some(t) =>
@@ -98,7 +105,27 @@ object Lfg {
                             }
                         }
                         clanEmojis = (coreClans ++ bloodClans).flatMap(c => found.get(emojiName(c)).map(c -> _)).toMap
-                        (coreClans ++ bloodClans).count(c => serverEmoji(c).nonEmpty) + " clan icons on the server, " + clanEmojis.size + " of the bot's"
+                        // the options' icons (webp2/lfg/emoji, made by tools/lfg-emoji.py), each as the bot's hrf_<slug>; one made once is kept
+                        // (a changed picture needs a new slug)
+                        val dir = Paths.get(assets, "webp2", "lfg", "emoji")
+                        val tsv = dir.resolve("icons.tsv")
+                        iconOf = if (Files.exists(tsv)) scala.io.Source.fromFile(tsv.toFile, "UTF-8").getLines().toList.map(_.split('\t')).collect { case Array(o, s) => o -> s }.toMap else Map()
+                        var failed = 0
+                        iconOf.values.toList.distinct.sorted.foreach { s =>
+                            val f = dir.resolve(s + ".png")
+                            if (!found.contains("hrf_" + s) && Files.exists(f) && failed < 5) {
+                                val image = "data:image/png;base64," + java.util.Base64.getEncoder.encodeToString(Files.readAllBytes(f))
+                                DiscordBot.send("POST", url, "{\"name\":" + json("hrf_" + s) + ",\"image\":" + json(image) + "}", Some(t)) match {
+                                    case Some(b) =>
+                                        val e = obj(Json.parse(b))
+                                        found += str(e.get("name")) -> str(e.get("id"))
+                                    case None => failed += 1
+                                }
+                            }
+                        }
+                        iconEmojis = found.collect { case (n, id) if n.startsWith("hrf_") => n.drop(4) -> id }
+                        (coreClans ++ bloodClans).count(c => serverEmoji(c).nonEmpty) + " clan icons on the server, " + clanEmojis.size + " of the bot's, " +
+                            iconEmojis.size + " of " + iconOf.values.toSet.size + " option icons"
                 }
             }
             catch { case e : Exception => "failed: " + e.getClass.getSimpleName }
@@ -374,30 +401,30 @@ object Lfg {
         val head = LfgSetup.emojiText(p.kind.emoji)
         val (text, bb) = p.game match {
             case Some(s) =>
-                (head + "**" + label + ": " + p.title + "** has started with " + s.ids.size + " players: " + s.ids.map(mention).mkString(", ") + "\n" +
-                    "Your seat link was sent to you by DM; **Get my link** gives it again (only you see it). Your turns are pinged in the game's post in the games channel.\n" +
-                    "Watch: <" + link(p, s.spectate) + ">",
-                    buttons(button("Get my link", 1, "link", p.id)))
+                (head + "✅ **" + label + ": " + p.title + "** has started with " + s.ids.size + " players: " + s.ids.map(mention).mkString(", ") + "\n" +
+                    "📩 Your seat link was sent to you by DM; **Get my link** gives it again (only you see it). 🔔 Your turns are pinged in the game's post in the games channel.\n" +
+                    "👁️ Watch: <" + link(p, s.spectate) + ">",
+                    buttons(button("Get my link", 1, "link", p.id, "🔗")))
             case None if p.cancelled =>
-                ("~~" + label + ": " + p.title + "~~ was cancelled by its host.", buttons())
+                ("❌ ~~" + label + ": " + p.title + "~~ was cancelled by its host.", buttons())
             case None if p.kind.clans =>
                 val minSeats = p.kind.minSeats
-                (head + "**" + label + ": " + p.title + "**, looking for players (" + p.players.size + "/" + p.size + ")\n" + picks +
-                    "Host: " + mention(p.host) + "\n" +
-                    "Players: " + p.players.map(x => mention(x._1) + " " + (p.clan(x._1) match {
+                (head + "**" + label + ": " + p.title + "**, looking for players 🪑 " + p.players.size + "/" + p.size + "\n" + picks +
+                    "👑 Host: " + mention(p.host) + "\n" +
+                    "👥 Players: " + p.players.map(x => mention(x._1) + " " + (p.clan(x._1) match {
                         case c if c == randomCore || c == randomAny || clanIcon(c).nonEmpty => clanShown(c)
                         case c => "(" + clanLabel(c) + ")"
                     })).mkString(", ") + "\n" +
-                    "Press **Select clan** to join, or to change your clan. The game starts by itself when all " + p.size + " seats are taken and everyone has a clan, or when the host presses **Start** (" + minSeats + " players or more).",
+                    "👍 Press **Select clan** to join, or to change your clan. The game starts by itself when all " + p.size + " seats are taken and everyone has a clan, or when the host presses **Start** (" + minSeats + " players or more).",
                     // (one button joins and changes the clan, asked for on 2026-11-21; the Clan button of the first posts still works)
-                    buttons(button("Select clan", 1, "join", p.id, "👍"), button("Leave", 2, "leave", p.id), button("Start", 3, "start", p.id), button("Cancel", 4, "cancel", p.id)))
+                    buttons(button("Select clan", 1, "join", p.id, "👍"), button("Leave", 2, "leave", p.id, "🚪"), button("Start", 3, "start", p.id, "▶️"), button("Cancel", 4, "cancel", p.id, "✖️")))
             case None =>
                 val minSeats = p.kind.minSeats
-                (head + "**" + label + ": " + p.title + "**, looking for players (" + p.players.size + "/" + p.size + ")\n" + picks +
-                    "Host: " + mention(p.host) + "\n" +
-                    "Players: " + p.players.map(x => mention(x._1)).mkString(", ") + "\n" +
-                    "Press **Join** to play. The game starts by itself when all " + p.size + " seats are taken, or when the host presses **Start** (" + minSeats + " players or more).",
-                    buttons(button("Join", 1, "join", p.id, "👍"), button("Leave", 2, "leave", p.id), button("Start", 3, "start", p.id), button("Cancel", 4, "cancel", p.id)))
+                (head + "**" + label + ": " + p.title + "**, looking for players 🪑 " + p.players.size + "/" + p.size + "\n" + picks +
+                    "👑 Host: " + mention(p.host) + "\n" +
+                    "👥 Players: " + p.players.map(x => mention(x._1)).mkString(", ") + "\n" +
+                    "👍 Press **Join** to play. The game starts by itself when all " + p.size + " seats are taken, or when the host presses **Start** (" + minSeats + " players or more).",
+                    buttons(button("Join", 1, "join", p.id, "👍"), button("Leave", 2, "leave", p.id, "🚪"), button("Start", 3, "start", p.id, "▶️"), button("Cancel", 4, "cancel", p.id, "✖️")))
         }
         "{\"content\":" + json(role(p.kind).map("<@&" + _ + "> ").getOrElse("") + text) + ",\"components\":" + bb +
             ",\"allowed_mentions\":{\"parse\":[],\"users\":[" + listed(p).map(json).mkString(",") + "]" + role(p.kind).map(r => ",\"roles\":[" + json(r) + "]").getOrElse("") + "}}"
@@ -421,7 +448,7 @@ object Lfg {
 
     // the players pinged once, when their game starts: a follow-up message to the post (the interaction's webhook, no bot rights needed)
     def announceStart(app : String, token : String, p : Post, s : Started) {
-        val text = s.ids.map(mention).mkString(" ") + ": **" + p.title + "** is ready. Your seat link is in your DMs from the bot (or press **Get my link** above)."
+        val text = "🎲 " + s.ids.map(mention).mkString(" ") + ": **" + p.title + "** is ready. Your seat link is in your DMs from the bot (or press **Get my link** above)."
         val body = "{\"content\":" + json(text) + ",\"allowed_mentions\":{\"parse\":[],\"users\":[" + s.ids.take(100).map(json).mkString(",") + "]}}"
         Tournament.poster.execute { () =>
             try DiscordBot.send("POST", "https://discord.com/api/v10/webhooks/" + app + "/" + token, body, None)
@@ -681,10 +708,11 @@ object Lfg {
     def start(directory : String) {
         assets = directory
         new Thread(() => {
-            if (DiscordBot.configured)
-                println("LFG: " + syncClanEmojis())
+            // (the commands first: the first start uploads every icon, a few minutes)
             if (publicKey.nonEmpty)
                 println("LFG: " + commands + " " + register())
+            if (DiscordBot.configured)
+                println("LFG: " + syncClanEmojis())
         }).start()
     }
 }

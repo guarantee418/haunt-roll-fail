@@ -202,17 +202,60 @@ object LfgSetup {
         "title-nort" -> "northgard", "LandsWilderness" -> "wilderness", "LandsWastelands" -> "wastelands")
 
     def emojiOf(key : String) : Option[(String, String, Boolean)] = {
-        // a deck with no emoji of its own: the base deck's (asked for on 2026-11-20: only ep and sd have their own)
-        val n = emojiNames.get(key).orElse(Some(key).filter(_.startsWith("IncludeFaction(")).map(_.stripPrefix("IncludeFaction(").stripSuffix(")").toLowerCase))
-            .orElse(Some("base").filter(_ => key.endsWith("Deck")))
-        n.flatMap(x => emojiMap().get(x).map { case (id, a) => (x, id, a) })
+        def server(x : String) = emojiMap().get(x).map { case (id, a) => (x, id, a) }
+        // the server's emoji of that name (a faction by its short name), else the bot's own icon (Lfg.iconOf, made from the game's art
+        // by tools/lfg-emoji.py), else for a deck with neither the base deck's (asked for on 2026-11-20: only ep and sd have their own)
+        emojiNames.get(key).orElse(Some(key).filter(_.startsWith("IncludeFaction(")).map(_.stripPrefix("IncludeFaction(").stripSuffix(")").toLowerCase))
+            .flatMap(server).orElse(Lfg.iconEmoji(key)).orElse(Some(key).filter(k => k.endsWith("Deck") && !k.startsWith("#") && !unicode.contains(k)).flatMap(_ => server("base")))
     }
 
-    // in a message: <:name:id>
-    def emojiText(key : String) = emojiOf(key).map { case (n, id, a) => "<" + (if (a) "a" else "") + ":" + n + ":" + id + "> " }.getOrElse("")
+    // THE UNICODE EMOJIS of the options and sections with no picture of their own (asked for on 2026-11-21: "use icons/emojis as much as
+    // possible"); a section by "#<its name>", which a faction's section finds as that faction's icon (icons.tsv) first
+    val unicode = Map(
+        // Root
+        "#Map" -> "🗺️", "#Fan Maps" -> "🗺️", "#Fan Map Rules" -> "📜", "#Deck" -> "🃏", "#Fan Decks" -> "🃏", "#Clearings" -> "🌲",
+        "#Landmarks" -> "🏛️", "#Simple Landmarks" -> "🏛️", "#Hirelings" -> "💰", "#Staunch Hirelings" -> "💰", "#Demoted Hirelings" -> "💰",
+        "#Staunch Turnlings" -> "🔄", "#Demoted Turnlings" -> "🔄", "#Turnlings" -> "🔄", "#Hirelings Clash" -> "⚔️",
+        "#Insurgent Lock" -> "🔒", "#Available Factions" -> "🐾", "#Available Fan Factions" -> "🐾", "#Seating Order" -> "🪑",
+        "#Dominance" -> "👑", "#Hits and Ambushes – Offline Players" -> "🎯", "#Legends Scenario" -> "📜", "#Legendary Monster" -> "👹",
+        "#Ring Rule" -> "💍", "#Capture Rule" -> "🫳", "#Mirror Factions" -> "🪞",
+        "RandomOfficialMap" -> "🎲", "RandomMap" -> "🎲", "AllRandomClearings" -> "🎲", "DefaultClearings" -> "🌲", "ConnectedClearings" -> "🔗",
+        "NoClustersClearings" -> "✳️", "SuitPairsClearings" -> "👯", "ThreeFourFiveClearings" -> "🔢", "MixedDeck" -> "🔀",
+        "MapDefaultLandmarks" -> "🗺️", "MountainSuitedLandmark" -> "⛰️", "NoLandmarks" -> "🚫", "NoHirelings" -> "🚫",
+        "ThreeRandomHirelings" -> "🎲", "SelectedHirelings" -> "✅", "HirelingsByTheCard" -> "📇", "TurnOverHirelings" -> "🔄",
+        "InsurgentLockOn" -> "🔒", "InsurgentLockOff" -> "🔓", "SeatingRandom" -> "🎲", "SeatingGiven" -> "📋", "TotalWarDominance" -> "⚔️",
+        "BluffMode" -> "🃏", "AutoHitsAssignmentMode" -> "🤖", "LiveGameMode" -> "🟢", "OffTurnHitsPreset" -> "📋",
+        "OffTurnFieldHospitals" -> "🏥", "CastlesAndCatacombs" -> "🏰", "DarkRituals" -> "🕯️", "HuntTheLegend" -> "🏹", "TheFifthRuin" -> "💍",
+        "DeepWoodsSettling" -> "🏕️", "WastelandsWater" -> "💧", "OneTrueEmpire" -> "👑", "RootingForTheUnderdog" -> "🐶",
+        // Northgard
+        "#Game length" -> "⏳", "#Victory conditions" -> "🏆", "#Fame" -> "⭐", "#Undo" -> "↩️", "#Card edition" -> "🃏",
+        "#Base game" -> "🐺", "#Warchief expansion" -> "⚔️", "#Wilderness expansion" -> "🌲", "#Wastelands expansion" -> "🌋",
+        "#Wilderness or Wastelands" -> "🗺️", "#Wilderness, if played" -> "🌲", "#Wastelands, if played" -> "🌋",
+        "#Uncharted Horizons" -> "⛵", "#Development cards" -> "🃏", "#Fan content" -> "🛠️", "#Fan victories" -> "🏅",
+        "#Central tile" -> "🎯", "#First player" -> "🥇", "#Ban Development cards" -> "🚫", "#Ban Environment tiles" -> "🚫",
+        "#Ban creatures" -> "🚫",
+        "YearsOption(5)" -> "5️⃣", "YearsOption(6)" -> "6️⃣", "YearsOption(7)" -> "7️⃣", "YearsOption(8)" -> "8️⃣", "YearsOption(9)" -> "9️⃣",
+        "YearsOption(10)" -> "🔟", "PrivateFame" -> "🔒", "UnlimitedUndo" -> "♾️", "LimitedUndo" -> "⏪", "NoUndo" -> "🚫",
+        "FirstEdition" -> "1️⃣", "SecondEdition" -> "2️⃣", "RandomAnyCentral" -> "🎲", "RandomCentral" -> "🎲", "LandsNeither" -> "🚫",
+        "LandsSeatChooses" -> "🪑", "VictoryModeOption(false)" -> "🛡️", "VictoryModeOption(true)" -> "👑", "TeamVictoryAllCards" -> "🤝",
+        "FirstSeatStarts" -> "🥇",
+        // the posts' titles, with no server emoji
+        "title" -> "🌳", "title-nort" -> "🪓")
+
+    // the emoji: the server's or the bot's, else a Unicode one
+    def emojiOrUnicode(key : String) : Option[Either[(String, String, Boolean), String]] = emojiOf(key).map(Left(_)).orElse(unicode.get(key).map(Right(_)))
+
+    // in a message: <:name:id>, or the Unicode emoji
+    def emojiText(key : String) = emojiOrUnicode(key).map {
+        case Left((n, id, a)) => "<" + (if (a) "a" else "") + ":" + n + ":" + id + "> "
+        case Right(u) => u + " "
+    }.getOrElse("")
 
     // in a menu's option
-    def emojiField(key : String) = emojiOf(key).map { case (n, id, a) => ",\"emoji\":{\"id\":" + Lfg.json(id) + ",\"name\":" + Lfg.json(n) + ",\"animated\":" + a + "}" }.getOrElse("")
+    def emojiField(key : String) = emojiOrUnicode(key).map {
+        case Left((n, id, a)) => ",\"emoji\":{\"id\":" + Lfg.json(id) + ",\"name\":" + Lfg.json(n) + ",\"animated\":" + a + "}"
+        case Right(u) => ",\"emoji\":{\"name\":" + Lfg.json(u) + "}"
+    }.getOrElse("")
 
     // the picks a post shows (2026-11-21: the options its host chose, in the command and on the setup panel, not the defaults they
     // left as they were): each section of the setup screen with those picks, in the setup screen's order, the server's emoji beside a
@@ -229,7 +272,7 @@ object LfgSetup {
         val lines = listed.map(_.group).distinct.map { g =>
             val oo = listed.filter(_.group == g)
             val emojiOnly = pool.exists(p => oo.forall(_.name.startsWith(p)))
-            "**" + g + "**: " + oo.map(o => if (emojiOnly) emojiText(o.name).trim match { case "" => o.label ; case e => e } else emojiText(o.name) + o.label).mkString(if (emojiOnly) " " else ", ")
+            emojiText("#" + g) + "**" + g + "**: " + oo.map(o => if (emojiOnly) emojiText(o.name).trim match { case "" => o.label ; case e => e } else emojiText(o.name) + o.label).mkString(if (emojiOnly) " " else ", ")
         }
         var out = List[String]()
         var left = lines
