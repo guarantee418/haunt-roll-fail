@@ -30,6 +30,8 @@ object Host extends hrf.host.BaseHost {
     def askBot(g : G, p : F, actions : $[UserAction]) = {
         val f = clan(g, p)
         val bot = (f == null || g.adset).?(new BotAdset(p, hard(g, p)) : Bot).|(g.robotos(f).?(new BotRobotos(f) : Bot).|(hard(g, p).?(new BotHard(f) : Bot).|(new BotXX(f))))
+        // NORT_REASONS=1: why each seat is asked, as its Discord turn ping says (TurnReasons), and the action that asked
+        if (sys.env.get("NORT_REASONS").has("1")) println("REASON " + TurnReasons.of(g, p, actions) + " <- " + (g.asker match { case a : Product => a.productPrefix ; case _ => "" }))
         val start = System.nanoTime
         val r = bot.ask(actions, 0)(g)
         val ms = (System.nanoTime - start) / 1000000

@@ -238,6 +238,9 @@ icon('ng_chiefpc', B(N + 'token/unit/bodyguard-blue.webp', 'PC', fill=False), 'M
 icon('ng_domination', B(N + 'token/building/town-hall.webp', 'DOMINATE', fill=False), 'DominationVictory', 'DominationOnly')
 icon('ng_famegains', B(N + 'token/building/altar-of-kings.webp', 'FAME', fill=False), 'ModuleOption(FameGainsModule)', 'FameOnly')
 icon('ng_standardwin', B(N + 'token/building/fortress.webp', 'VICTORY', fill=False), 'StandardVictory')
+# the Discord turn pings' reasons (good-game/TurnPings.scala reasonOf): harvest trading and Winter
+icon('ng_trade', B(N + 'ui/harvest.webp', 'TRADE', fill=False), 'turn:trade')
+icon('ng_winter', B(N + 'ui/winter.webp', 'WINTER', fill=False), 'turn:winter')
 vic = lambda c: load(N + 'card/victory/' + c).crop
 def victory(c, label):
     im = load(N + 'card/victory/' + c)

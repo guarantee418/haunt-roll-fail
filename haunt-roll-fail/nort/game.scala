@@ -1370,6 +1370,9 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
     def revealedSince(before : Game) : Boolean = peeked != before.peeked || before.hiddenPiles.exists { case (k, l) => hiddenPiles.get(k).|($).endsWith(l).not }
 
+    // the last action that asked a question (display only: the Discord turn pings' reason, nort/turn-reasons.scala)
+    var asker : Action = null
+
     object highlight {
         var faction : $[Player] = $
         var current : |[Faction] = None
@@ -1494,7 +1497,10 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
 
                     return another.as[SelfPerform]./(_.perform(soft)).|(internalPerform(another, soft))
                 case TryAgain => return internalPerform(action, soft)
-                case c => return c
+                case c =>
+                    // the action that asked (the Discord turn pings' reason, TurnReasons)
+                    c @@ { case _ : Ask | _ : MultiAsk => asker = action ; case _ => }
+                    return c
             }
         }
 

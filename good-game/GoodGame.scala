@@ -505,16 +505,17 @@ object GoodGame {
                 }
             } ~
             // Whose turn it is (Turns.scala): a client that can read the game posts the factions asked after the entries it has read,
-            // "<entries>\n<faction> <faction>..."
+            // "<entries>\n<faction> <faction>...", and from 2026-11-21 "\n<faction>=<reason> ..." (why each is asked, TurnPings.reasonOf)
             (post & path("turn" / Segment / Segment / Segment)) { (userId, userSecret, journalId) =>
                 decodeRequest {
                     entity(as[String]) { body =>
                         val l = body.split('\n').toList
                         val n = l.headOption.map(_.trim).filter(s => s.nonEmpty && s.size < 9 && s.forall(_.isDigit)).map(_.toInt)
-                        val ff = l.drop(1).mkString(" ").split(" ").toList.map(_.safe).filter(_.nonEmpty).take(12).map(_.take(40))
+                        val ff = l.lift(1).getOrElse("").split(" ").toList.map(_.safe).filter(_.nonEmpty).take(12).map(_.take(40))
+                        val why = l.lift(2).getOrElse("").split(" ").toList.map(_.split("=", 2).toList).collect { case s :: r :: Nil if s.nonEmpty && r.nonEmpty => s.safe.take(40) -> r.filter(c => c.isLetterOrDigit || c == '/').take(40) }.take(12).toMap
                         val allowed = n.nonEmpty && scala.util.Try(execute(hasRight(userId, userSecret, journalId, "read") { journals.filter(_.id === journalId).result.head })).isSuccess
                         if (allowed)
-                            Turns.report(journalId, n.get, ff, execute(entries.filter(_.journalId === journalId).map(_.index).max.result).map(_ + 1).getOrElse(0))
+                            Turns.report(journalId, n.get, ff, execute(entries.filter(_.journalId === journalId).map(_.index).max.result).map(_ + 1).getOrElse(0), why)
                         plain(if (allowed) "ok" else "")
                     }
                 }
