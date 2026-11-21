@@ -2415,6 +2415,15 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 HRF.metas.%(_.lfgOptions.any).foreach { m =>
                     postF(HRF.server.get + "/lfg/template", m.name + "\n" + HRF.version + "\n" + m.lfgOptions./(o => m.writeOption(o)).join(" "))(_ => ())(())
                 }
+                // and every setup option, for the Discord setup panel, when the server's copy differs from this version's
+                HRF.metas.%(_.lfgPlayers.any).foreach { m =>
+                    val catalog = m.lfgCatalog.join("\n")
+                    val hash = (catalog.hashCode.toLong & 0xffffffffL).toString
+                    postF(HRF.server.get + "/lfg/catalog/" + m.name + "/" + hash, "") { r =>
+                        if (r.trim == "need")
+                            postF(HRF.server.get + "/lfg/catalog/" + m.name + "/" + hash, HRF.version + "\n" + catalog)(_ => ())(())
+                    }(())
+                }
             }
         }
 

@@ -561,6 +561,15 @@ object GoodGame {
                     }
                 }
             } ~
+            // the setup options the client gives Discord's setup panel (LfgSetup.scala): an empty body asks whether the server has
+            // this copy ("have" or "need"), "<version>\n<lines>" sends it
+            (post & path("lfg" / "catalog" / Segment / Segment)) { (meta, hash) =>
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        plain(if (body.isEmpty) LfgSetup.check(meta, hash) else LfgSetup.setCatalog(meta, hash, body))
+                    }
+                }
+            } ~
             // Discord's interactions (Lfg.scala): the /root command and the LFG posts' buttons, signed with the application's key
             (post & path("discord" / "interactions")) {
                 optionalHeaderValueByName("X-Signature-Ed25519") { signature =>

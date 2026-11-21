@@ -175,6 +175,10 @@ object MetaAdset extends MetaGame {
         (mandatoryFor(4, four) ++ completeSaved(4, four, defaultsFor(4, four))).distinct
     }
 
+    // Discord setup (good-game/Lfg.scala): two to six players, with at least as many factions in the draft as players
+    override def lfgPlayers = $(2, 3, 4, 5, 6)
+    override def lfgNeed = |(("IncludeFaction(", 0))
+
     // the seat that drafted the faction asked (P1, P2...), as the lobby's "user" lines name the seats; a seat still drafting is asked itself
     override def turnSeat(g : G, f : Any) : String = f match {
         case p : PlayerN => writeFaction(p)

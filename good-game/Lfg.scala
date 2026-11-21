@@ -40,13 +40,14 @@ object Lfg {
 
     def publicKey = Tournament.hook("HRF_DISCORD_PUBLIC_KEY", "discord-public-key")
 
-    case class Post(id : String, host : String, size : Int, title : String, players : List[(String, String)], cancelled : Boolean, game : Option[Started])
+    // options: the ones its host picked on the setup panel (LfgSetup.scala); none, the site's defaults (the template)
+    case class Post(id : String, host : String, size : Int, title : String, players : List[(String, String)], cancelled : Boolean, game : Option[Started], options : List[String] = Nil)
     case class Started(lobby : String, game : String, spectate : String, ids : List[String], users : List[String], secrets : List[String])
 
     def posts() : Map[String, Post] = {
         var m = Map[String, Post]()
         rows(file).foreach {
-            case _ :: "open" :: id :: host :: name :: size :: title :: _ => m += id -> Post(id, host, size.toIntOption.getOrElse(4), title, List(host -> name), false, None)
+            case _ :: "open" :: id :: host :: name :: size :: title :: rest => m += id -> Post(id, host, size.toIntOption.getOrElse(4), title, List(host -> name), false, None, rest.headOption.toList.flatMap(_.split(' ').toList.filter(_.nonEmpty)))
             case _ :: "join" :: id :: u :: name :: _ => m.get(id).foreach(p => if (!p.players.exists(_._1 == u)) m += id -> p.copy(players = p.players :+ (u -> name)))
             case _ :: "leave" :: id :: u :: _ => m.get(id).foreach(p => m += id -> p.copy(players = p.players.filter(_._1 != u)))
             case _ :: "cancel" :: id :: _ => m.get(id).foreach(p => m += id -> p.copy(cancelled = true))
@@ -108,10 +109,10 @@ object Lfg {
     // the game, made as Tournament.create makes a table's: a host, a lobby, the game and a seat (and a link) for each player and a
     // spectator; each seat's name is the player's Discord name until they type their own (a "prename", as New Online Game's notes)
     def create(p : Post) : Either[String, Started] = {
-        val (version, options) = rows(template).lastOption match {
+        val (version, options) = (if (p.options.nonEmpty) LfgSetup.catalog().map(c => (c.version, p.options)) else None).getOrElse(rows(template).lastOption match {
             case Some(m :: v :: o :: _) if m == meta => (v, o.split(' ').toList.filter(_.nonEmpty))
             case _ => return Left("The server doesn't know the game's options yet: open Play Online on the site once, then press Start again.")
-        }
+        })
 
         import Tournament.{execute, newSecret}
 
@@ -129,7 +130,7 @@ object Lfg {
             seats.zip(p.players).map { case ((u, _), (_, name)) => "prename " + u.id + " " + clean(name) }.filter(_.split(' ').length > 2) ++
             List(
                 "seating " + scala.util.Random.shuffle(seats.indices.map(i => "P" + (i + 1)).toList).mkString(" "),
-                "options " + startOptions(options).mkString(" "),
+                "options " + startOptions(options).distinct.mkString(" "),
                 "server " + game
             )
 
@@ -175,16 +176,18 @@ object Lfg {
 
     // the post as it stands: its text and buttons; nobody is pinged by an edit, or by the lists (allowed_mentions: none)
     def message(p : Post) : String = {
+        val picks = if (p.options.isEmpty) "" else LfgSetup.catalog().map(c => LfgSetup.summary(c, p.options)).getOrElse("")
+        val head = LfgSetup.emojiText("title")
         val (text, bb) = p.game match {
             case Some(s) =>
-                ("**" + label + ": " + p.title + "** has started with " + s.ids.size + " players: " + s.ids.map(mention).mkString(", ") + "\n" +
+                (head + "**" + label + ": " + p.title + "** has started with " + s.ids.size + " players: " + s.ids.map(mention).mkString(", ") + "\n" +
                     "Press **Get my link** for your own seat link (only you see it). Your turns are pinged in the game's post in the games channel.\n" +
                     "Watch: <" + link(s.spectate) + ">",
                     buttons(button("Get my link", 1, "link", p.id)))
             case None if p.cancelled =>
                 ("~~" + label + ": " + p.title + "~~ was cancelled by its host.", buttons())
             case None =>
-                ("**" + label + ": " + p.title + "**, looking for players (" + p.players.size + "/" + p.size + ")\n" +
+                (head + "**" + label + ": " + p.title + "**, looking for players (" + p.players.size + "/" + p.size + ")\n" + picks +
                     "Host: " + mention(p.host) + "\n" +
                     "Players: " + p.players.map(x => mention(x._1)).mkString(", ") + "\n" +
                     "Press **Join** to play. The game starts by itself when all " + p.size + " seats are taken, or when the host presses **Start** (" + minSeats + " players or more).",
@@ -194,6 +197,17 @@ object Lfg {
     }
 
     def reply(kind : Int, data : String) = "{\"type\":" + kind + ",\"data\":" + data + "}"
+
+    // a game set up on the panel (LfgSetup.scala): its post in the channel, as a follow-up to the panel (the host already in)
+    def posted(d : LfgSetup.Draft, app : String, token : String) = synchronized {
+        val id = Tournament.newSecret(10)
+        event("open", id, d.host, clean(d.name), d.n, d.title, d.state.actual.mkString(" "))
+        val body = message(posts()(id))
+        Tournament.poster.execute { () =>
+            try DiscordBot.send("POST", "https://discord.com/api/v10/webhooks/" + app + "/" + token, body, None)
+            catch { case e : Exception => println("LFG: post not made: " + e) }
+        }
+    }
 
     // a reply only the one who pressed sees
     def privately(text : String) = reply(4, "{\"content\":" + json(text) + ",\"flags\":64,\"allowed_mentions\":{\"parse\":[]}}")
@@ -206,6 +220,30 @@ object Lfg {
             try DiscordBot.send("POST", "https://discord.com/api/v10/webhooks/" + app + "/" + token, body, None)
             catch { case e : Exception => println("LFG: start not announced: " + e) }
         }
+    }
+
+    // NEW PLAYERS (asked for on 2026-11-20): a player the site doesn't know yet (no ranking name was given their Discord, on the
+    // Tournament page or by the change "discord", and none was typed in an LFG game they joined before) gets their seat link from the
+    // bot in a direct message when their game starts, with a word on what to do; the others press Get my link
+    def known(id : String) : Boolean =
+        rows(Tournament.discords).groupBy(_.headOption.getOrElse("")).values.map(_.last).exists(r => r.lift(1).contains(id) || r.lift(2).contains(id)) || {
+            val named = Ranking.seatNames()
+            posts().values.flatMap(_.game).exists(s => s.ids.zip(s.users).exists { case (i, u) => i == id && named.contains(u) })
+        }
+
+    def welcome(p : Post, s : Started) {
+        val strangers = s.ids.zip(s.secrets).filter { case (id, _) => !known(id) }
+        if (strangers.nonEmpty && DiscordBot.configured)
+            Tournament.poster.execute { () =>
+                strangers.foreach { case (id, secret) =>
+                    val text = "Welcome to Clean5110! You joined **" + p.title + "**, an online game of Root (" + label.split(": ").last + ").\n" +
+                        "**Your seat:** " + link(secret) + "\n" +
+                        "Open it and type the name you want to play under: that name is yours on the site's rankings from then on. " +
+                        "Keep this link to yourself, as it plays your seat. Your turns are pinged in the game's post on the Discord server."
+                    try { if (!DiscordBot.dm(id, text)) println("LFG: no DM to a new player (they may not take DMs); Get my link still works") }
+                    catch { case e : Exception => println("LFG: DM failed: " + e) }
+                }
+            }
     }
 
     // Discord's signature (Ed25519, of the timestamp and the body) with the application's public key
@@ -246,6 +284,8 @@ object Lfg {
             str(i.get("type")) match {
                 case "1" => "{\"type\":1}"
                 case "2" if str(data.get("name")) == "root" && uid.nonEmpty => command(uid, name, data)
+                case "3" if uid.nonEmpty && str(data.get("custom_id")).startsWith("lfgs:") =>
+                    LfgSetup.press(uid, str(data.get("custom_id")), data.get("values").collect { case l : List[_] => l.collect { case v : String => v } }.getOrElse(Nil), str(i.get("application_id")), str(i.get("token")))
                 case "3" if uid.nonEmpty => press(uid, name, str(data.get("custom_id")), str(i.get("application_id")), str(i.get("token")))
                 case _ => privately("That isn't something I know.")
             }
@@ -262,9 +302,12 @@ object Lfg {
         val options = data.get("options").collect { case l : List[_] => l.map(obj) }.getOrElse(Nil).map(o => str(o.get("name")) -> o.get("value").orNull).toMap
         val size = options.get("players").map(v => str(Option(v)).toIntOption.getOrElse(4)).getOrElse(4).max(minSeats).min(maxSeats)
         val title = Some(clean(str(options.get("title").flatMap(Option(_))).replace("*", "").replace("~", "").replace("`", ""))).filter(_.nonEmpty).getOrElse(randomTitle())
-        val id = Tournament.newSecret(10)
-        event("open", id, uid, clean(name), size, title)
-        reply(4, message(posts()(id)))
+        // the setup panel, with every option, once the site has sent them (LfgSetup.scala); else the post with the site's defaults
+        LfgSetup.open(uid, clean(name), size, title).getOrElse {
+            val id = Tournament.newSecret(10)
+            event("open", id, uid, clean(name), size, title)
+            reply(4, message(posts()(id)))
+        }
     }
 
     def press(uid : String, name : String, custom : String, app : String, token : String) : String = synchronized {
@@ -281,6 +324,7 @@ object Lfg {
                             case Right(s) =>
                                 val r = q.copy(game = Some(s))
                                 announceStart(app, token, r, s)
+                                welcome(r, s)
                                 update(r)
                         }
 
