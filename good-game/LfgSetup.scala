@@ -196,7 +196,7 @@ object LfgSetup {
     val emojiNames = Map(
         "AutumnMap" -> "autumn", "WinterMap" -> "winter", "LakeMap" -> "lake", "MarshMap" -> "marsh", "MountainMap" -> "mount", "GorgeMap" -> "gorge",
         "WastelandsMap" -> "wastelands", "RandomOfficialMap" -> "rm", "RandomMap" -> "rm", "AllRandomClearings" -> "rc",
-        "SquiresDeck" -> "sd", "StandardDeck" -> "base", "ExilesDeck" -> "ep", "HarrierNoCoins" -> "harrier", "IncludeFaction(LDvE)" -> "ld",
+        "SquiresDeck" -> "sd", "StandardDeck" -> "base", "CapitalistsDeck" -> "base", "ExilesDeck" -> "ep", "HarrierNoCoins" -> "harrier", "IncludeFaction(LDvE)" -> "ld",
         "players 3" -> "3p", "players 4" -> "4p", "players 5" -> "5p", "title" -> "adset",
         // Northgard's posts (2026-11-21): its emoji, if the server has one of these names
         "title-nort" -> "northgard", "LandsWilderness" -> "wilderness", "LandsWastelands" -> "wastelands")

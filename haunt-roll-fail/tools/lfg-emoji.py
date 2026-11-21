@@ -173,9 +173,11 @@ first = lambda d: R + 'card/' + d + '/' + sorted(x for x in os.listdir(R + 'card
 for o, s_, p in [('StandardDeck', 'base', R + 'card/card-back-art.webp'), ('ExilesDeck', 'ep', R + 'card/card-back-art-ep.webp'),
                  ('SquiresDeck', 'sd', R + 'card/card-back-art-sd.webp'), ('DarkDeck', 'dd', R + 'card/card-back-art-dd.webp'),
                  ('FrankenDeck', 'fd', R + 'card/card-back-art-fd.webp'), ('SorceryDeck', 'se', R + 'card/card-back-art-se.webp'),
-                 ('UpstartsDeck', 'ur', R + 'card/card-back-art-ur.webp'), ('CapitalistsDeck', 'ca', first('capitalists')),
+                 ('UpstartsDeck', 'ur', R + 'card/card-back-art-ur.webp'),
                  ('DuskDeck', 'dusk', R + 'card/dusk/dusk-awakening.webp'), ('ActionBooster', 'action', first('action'))]:
     icon('rd_' + s_, deck_card(load(p)), o)
+# Capitalists and Anarchists is the base deck reimagined, played in its place (owner, 2026-11-21): the base deck's icon
+keys.append(('CapitalistsDeck', 'rd_base'))
 
 # the landmarks
 for o, f in [('FerryLandmark', 'ferry'), ('FoxburrowLandmark', 'foxburrow'), ('LostCityLandmark', 'lost-city'),
