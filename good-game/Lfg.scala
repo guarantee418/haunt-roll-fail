@@ -377,8 +377,9 @@ object Lfg {
                 (head + "**" + label + ": " + p.title + "**, looking for players (" + p.players.size + "/" + p.size + ")\n" + picks +
                     "Host: " + mention(p.host) + "\n" +
                     "Players: " + p.players.map(x => mention(x._1) + " " + (Some(clanIcon(p.clan(x._1)).trim).filter(_.nonEmpty).getOrElse("(" + clanLabel(p.clan(x._1)) + ")"))).mkString(", ") + "\n" +
-                    "Press **Join** and pick a clan to play; **Clan** changes yours. The game starts by itself when all " + p.size + " seats are taken and everyone has a clan, or when the host presses **Start** (" + minSeats + " players or more).",
-                    buttons(button("Join", 1, "join", p.id, "👍"), button("Clan", 2, "clan", p.id), button("Leave", 2, "leave", p.id), button("Start", 3, "start", p.id), button("Cancel", 4, "cancel", p.id)))
+                    "Press **Select clan** to join, or to change your clan. The game starts by itself when all " + p.size + " seats are taken and everyone has a clan, or when the host presses **Start** (" + minSeats + " players or more).",
+                    // (one button joins and changes the clan, asked for on 2026-11-21; the Clan button of the first posts still works)
+                    buttons(button("Select clan", 1, "join", p.id, "👍"), button("Leave", 2, "leave", p.id), button("Start", 3, "start", p.id), button("Cancel", 4, "cancel", p.id)))
             case None =>
                 val minSeats = p.kind.minSeats
                 (head + "**" + label + ": " + p.title + "**, looking for players (" + p.players.size + "/" + p.size + ")\n" + picks +
@@ -602,7 +603,7 @@ object Lfg {
                             case (_, Some(_)) => privately("**" + p.title + "** has already started.")
                             case (_, None) if p.cancelled => privately("**" + p.title + "** was cancelled.")
                             case ("join" | "clan", None) if p.kind.clans && seated => clanMenu(p, uid, channel, messageId, "Pick your clan for **" + p.title + "** (now " + clanShown(p.clan(uid)) + ").")
-                            case ("clan", None) if p.kind.clans => privately("Press **Join** first.")
+                            case ("clan", None) if p.kind.clans => privately("Press **Select clan** first.")
                             case ("join", None) if p.kind.clans && p.players.size < p.size => clanMenu(p, uid, channel, messageId, "Pick your clan to join **" + p.title + "**.")
                             case ("join", None) if seated => privately("You're already in.")
                             case ("join", None) if p.players.size >= p.size => privately("All seats are taken.")
@@ -617,7 +618,7 @@ object Lfg {
                                 update(p.copy(players = p.players.filter(_._1 != uid)))
                             case ("start", None) if !host => privately("Only the host (" + mention(p.host) + ") can start the game early.")
                             case ("start", None) if p.players.size < p.kind.minSeats => privately("At least " + p.kind.minSeats + " players are needed.")
-                            case ("start", None) if !p.clansPicked => privately("Not everyone has a clan yet: " + p.players.filter(x => p.clan(x._1).isEmpty).map(x => mention(x._1)).mkString(", ") + " (press **Clan**).")
+                            case ("start", None) if !p.clansPicked => privately("Not everyone has a clan yet: " + p.players.filter(x => p.clan(x._1).isEmpty).map(x => mention(x._1)).mkString(", ") + " (press **Select clan**).")
                             case ("start", None) => start(p)
                             case ("cancel", None) if !host => privately("Only the host (" + mention(p.host) + ") can cancel the game.")
                             case ("cancel", None) =>
