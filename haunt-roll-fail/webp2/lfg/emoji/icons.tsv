@@ -8,10 +8,10 @@ IncludeFaction(UD)	rt_ud
 IncludeFaction(CC)	rt_cc
 IncludeFaction(LH)	rt_lh
 IncludeFaction(KI)	rt_ki
-IncludeFaction(LDvE)	rt_ld
 IncludeFaction(KD)	rt_kd
 IncludeFaction(TC)	rt_tc
 IncludeFaction(NB)	rt_nb
+IncludeFaction(LDvE)	rt_ld
 IncludeFaction(AA)	rt_aa
 IncludeFaction(BP)	rt_bp
 IncludeFaction(CUv2)	rt_cuv2
@@ -39,6 +39,29 @@ IncludeFaction(XC)	rt_xc
 #Keepers in Iron	rt_ki
 #Riverfolk Company	rt_rf
 #Knaves of the Deepwood	rt_kd
+AutumnMap	rm_autumn
+WinterMap	rm_winter
+LakeMap	rm_lake
+MountainMap	rm_mountain
+GorgeMap	rm_gorge
+MarshMap	rm_marsh
+TidalMap	rm_tidal
+TundraMap	rm_tundra
+GloomMap	rm_gloom
+UrbanMap	rm_urban
+LegendsMap	rm_legendsmap
+DeepWoodsMap	rm_deepwoods
+WastelandsMap	rm_wastelands
+StandardDeck	rd_base
+ExilesDeck	rd_ep
+SquiresDeck	rd_sd
+DarkDeck	rd_dd
+FrankenDeck	rd_fd
+SorceryDeck	rd_se
+UpstartsDeck	rd_ur
+CapitalistsDeck	rd_ca
+DuskDeck	rd_dusk
+ActionBooster	rd_action
 FerryLandmark	rl_ferry
 FoxburrowLandmark	rl_foxburrow
 LostCityLandmark	rl_lostcity
