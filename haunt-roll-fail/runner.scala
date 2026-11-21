@@ -583,7 +583,7 @@ object Runner {
                     UIRecord("#unchoice 3", c, a)
 
                 case UIContinue(c @ Ask(faction, actions), Nil) =>
-                    journal.turn((faction != null).$(meta.writeFaction(faction.asInstanceOf[meta.F])))
+                    journal.turn((faction != null).$(meta.turnSeat(game, faction)).%(_.nonEmpty))
 
                     auto(game, faction) match {
                         case AskHuman => UIAsk(c, Some(faction), actions, $)
@@ -602,7 +602,7 @@ object Runner {
                         case _ => None
                     })
 
-                    journal.turn(asks./(_.faction).%(_ != null)./(f => meta.writeFaction(f.asInstanceOf[meta.F])).distinct)
+                    journal.turn(asks./(_.faction).%(_ != null)./(f => meta.turnSeat(game, f)).%(_.nonEmpty).distinct)
 
                     lazy val waits = asks./~(ask => auto(game, ask.faction) match {
                         case WaitRemote => Some(ask.faction)
