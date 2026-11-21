@@ -207,7 +207,7 @@ object LfgSetup {
         // the bot's own icon (Lfg.iconOf, made from the game's art by tools/lfg-emoji.py), else for a deck with none of these the base
         // deck's (asked for on 2026-11-20: only ep and sd have their own)
         emojiNames.get(key).orElse(Some(key).filter(_.startsWith("IncludeFaction(")).map(_.stripPrefix("IncludeFaction(").stripSuffix(")").toLowerCase))
-            .flatMap(server).orElse(if (themed(key)) None else serverMatch(key)).orElse(Lfg.iconEmoji(key))
+            .flatMap(server).orElse(titles.get(key).flatMap(serverNamedEmoji)).orElse(if (themed(key)) None else serverMatch(key)).orElse(Lfg.iconEmoji(key))
             .orElse(Some(key).filter(k => k.endsWith("Deck") && !k.startsWith("#") && !unicode.contains(k)).flatMap(_ => server("base")))
     }
 
@@ -242,8 +242,10 @@ object LfgSetup {
     }
 
     // the server's emoji with one of these names (letters and digits, maybe with "ng" or "root" before or after), as message text
-    def serverNamed(names : List[String]) : Option[String] = {
-        val byNorm = emojiMap().toList.sortBy(_._1).map { case (n, (id, a)) => (norm(n), "<" + (if (a) "a" else "") + ":" + n + ":" + id + "> ") }
+    def serverNamed(names : List[String]) : Option[String] = serverNamedEmoji(names).map { case (n, id, a) => "<" + (if (a) "a" else "") + ":" + n + ":" + id + "> " }
+
+    def serverNamedEmoji(names : List[String]) : Option[(String, String, Boolean)] = {
+        val byNorm = emojiMap().toList.sortBy(_._1).map { case (n, (id, a)) => (norm(n), (n, id, a)) }
         names.iterator.map(c => byNorm.collectFirst { case (n, t) if n == c || n == "ng" + c || n == "root" + c || n == c + "ng" || n == c + "root" => t }).collectFirst { case Some(t) => t }
     }
 
@@ -264,6 +266,10 @@ object LfgSetup {
         val used = keys.flatMap(k => emojiOf(k).map(e => e._1 -> k)).groupBy(_._1).map { case (n, l) => n -> l.map(_._2) }
         emojiMap().keys.toList.sorted.map(n => n + ": " + used.get(n).map(_.take(6).mkString(", ")).getOrElse(if ((Lfg.coreClans ++ Lfg.bloodClans).exists(c => Lfg.serverEmoji(c).exists(_._1 == n))) "a clan" else "unused")).mkString("; ")
     }
+
+    // the posts' titles by the server's game emojis, when it has no emoji named for the post (2026-11-21: Northgard's showed the
+    // Unicode axe beside the server's own :axe-ng:)
+    val titles = Map("title-nort" -> List("northgard", "axeng", "axe"))
 
     // THE UNICODE EMOJIS of the options and sections with no picture of their own (asked for on 2026-11-21: "use icons/emojis as much as
     // possible"); a section by "#<its name>", which a faction's section finds as that faction's icon (icons.tsv) first
@@ -370,8 +376,10 @@ object LfgSetup {
         ("wilderness", "Wilderness: tiles, creatures or both", "@wilderness"), ("wastelands", "Wastelands: tiles, creatures or both", "@wastelands"),
         ("warchiefs", "The Warchief expansion", "Warchief expansion"),
         ("fame", "Whether fame is public", "Fame"), ("undo", "How much undo is allowed", "Undo"))
-    val nortStdCommand = nortCommand.take(2) ++ List(("creatures", "The Creatures module (Wilderness and Wastelands creatures turn it on)", "@creatures")) ++ nortCommand.drop(2)
-    val nortAdsetCommand = nortCommand.take(2) ++ List(("lands", "Wilderness or Wastelands", "Wilderness or Wastelands")) ++ nortCommand.drop(2)
+    // (the two modes share /northgard, and Discord can't hide an option by mode, so the options one mode skips say so: Adset ignores
+    // `creatures`, a standard game `lands`, as `sections` leaves them out; 2026-11-21)
+    val nortStdCommand = nortCommand.take(2) ++ List(("creatures", "Standard only (Adset always has it): the Creatures module", "@creatures")) ++ nortCommand.drop(2)
+    val nortAdsetCommand = nortCommand.take(2) ++ List(("lands", "Adset only, standard games skip it: Wilderness or Wastelands", "Wilderness or Wastelands")) ++ nortCommand.drop(2)
     val nortPanel = List("Uncharted Horizons", "Development cards", "Fan content", "Fan victories")
 
     def isNort(meta : String) = meta == Lfg.nort.meta || meta == Lfg.nortStd.meta
