@@ -177,6 +177,37 @@ object Lfg {
     def buttons(bb : String*) = if (bb.isEmpty) "[]" else "[{\"type\":1,\"components\":[" + bb.mkString(",") + "]}]"
 
     // the post as it stands: its text and buttons; nobody is pinged by an edit, or by the lists (allowed_mentions: none)
+    // THE LFG ROLE (asked for on 2026-11-20): a new post pings the Discord server's role of this name (its members asked for LFG
+    // posts), once, when it goes up; the post's edits ping no one. Looked up by the bot, for 10 minutes
+    val roleName = "root-lfg"
+
+    @volatile var roleCache : (Long, Option[String]) = (0L, None)
+
+    def role() : Option[String] = {
+        if (System.currentTimeMillis - roleCache._1 > 10 * 60 * 1000) {
+            roleCache = (System.currentTimeMillis, roleCache._2)
+            try (DiscordBot.token, DiscordBot.guild) match {
+                case (Some(t), Some(g)) =>
+                    DiscordBot.get("https://discord.com/api/v10/guilds/" + g + "/roles", Some(t)).foreach { b =>
+                        Json.parse(b) match {
+                            case l : List[_] => roleCache = (System.currentTimeMillis, l.map(obj).find(r => str(r.get("name")).equalsIgnoreCase(roleName)).map(r => str(r.get("id"))).filter(_.nonEmpty))
+                            case _ =>
+                        }
+                    }
+                case _ =>
+            }
+            catch { case e : Exception => println("LFG: role not read: " + e) }
+        }
+        roleCache._2
+    }
+
+    // the new post, pinging the LFG role
+    def announced(p : Post) : String = role() match {
+        case Some(r) => message(p).replaceFirst("^\\{\"content\":\"", java.util.regex.Matcher.quoteReplacement("{\"content\":\"<@&" + r + "> "))
+            .replace(",\"allowed_mentions\":{\"parse\":[]}}", ",\"allowed_mentions\":{\"parse\":[],\"roles\":[" + json(r) + "]}}")
+        case None => message(p)
+    }
+
     def message(p : Post) : String = {
         val picks = if (p.options.isEmpty) "" else LfgSetup.catalog().map(c => LfgSetup.summary(c, p.options)).getOrElse("")
         val head = LfgSetup.emojiText("title")
@@ -204,7 +235,7 @@ object Lfg {
     def posted(d : LfgSetup.Draft, app : String, token : String) = synchronized {
         val id = Tournament.newSecret(10)
         event("open", id, d.host, clean(d.name), d.n, d.title, d.state.actual.mkString(" "))
-        val body = message(posts()(id))
+        val body = announced(posts()(id))
         Tournament.poster.execute { () =>
             try DiscordBot.send("POST", "https://discord.com/api/v10/webhooks/" + app + "/" + token, body, None)
             catch { case e : Exception => println("LFG: post not made: " + e) }
@@ -309,7 +340,7 @@ object Lfg {
         LfgSetup.open(uid, clean(name), size, title, picks).getOrElse {
             val id = Tournament.newSecret(10)
             event("open", id, uid, clean(name), size, title)
-            reply(4, message(posts()(id)))
+            reply(4, announced(posts()(id)))
         }
     }
 
