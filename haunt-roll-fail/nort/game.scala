@@ -1672,7 +1672,7 @@ object CommonExpansion extends Expansion {
         val cols = l.num + 1
         val table = $[Style](styles.fameCols2, styles.fameCols3, styles.fameCols4, styles.fameCols5, styles.fameCols6, styles.fameCols7)(math.min(cols, 7) - 2)
 
-        val header = cell(Empty, None) +: l./(f => cell(winners.has(f).?("★ ".txt ~ f.elem).|(f.elem), |(f)))
+        val header = cell(Empty, None) +: l./(f => cell(winners.has(f).?("★".styled(styles.fameStar).div ~ f.elem.div).|(f.elem.div), |(f), $(styles.fameHead)))
         val body = shown./~ { case (name, value) => cell(name, None, $(styles.fameLabel)) +: l./(f => cell((value(f) == 0).?("–".spn(styles.ledgerNone)).|(value(f).hl), |(f))) }
         val total = cell("Total".hlb, None, $(styles.fameLabel, styles.fameTotal)) +: l./(f => cell(Amount(last(f).total.hlb, FameIcon()), |(f), $(styles.fameTotal)))
 
