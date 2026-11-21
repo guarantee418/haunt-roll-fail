@@ -1087,6 +1087,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         g.fillText(translate("The map is picked in the tournament draft"), b.width / 2, b.height / 2, b.width - size)
     }
 
+    // the most pixels the map's canvas gets (iOS Safari's limit for one canvas is 16,777,216)
+    val mapCanvasPixels = 16000000.0
+
     def drawMapUnsafe() {
         if (game.mapPending) {
             drawPendingMap()
@@ -1107,9 +1110,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             val width = map.node.clientWidth * dom.window.devicePixelRatio
             val height = map.node.clientHeight * dom.window.devicePixelRatio
 
-            val upscale = 2
+            // twice the screen's pixels, but no more than a phone or tablet's browser gives a canvas: past that (16.7 million
+            // pixels in iOS Safari) the canvas stays blank, with no error, so the map and the note of mapNote are both gone
+            // (Tournament 1 Table C, 2026-11-21: a player saw a blank map once the Gorge was picked)
+            val upscale = 2.0.min(math.sqrt(mapCanvasPixels / (width * height).max(1)))
 
-            val b = map.get(width.round.toInt * upscale, height.round.toInt * upscale)
+            val b = map.get((width * upscale).round.toInt.max(1), (height * upscale).round.toInt.max(1))
 
             b.canvas.style.width = "100%"
             b.canvas.style.height = "100%"
