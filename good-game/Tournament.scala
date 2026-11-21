@@ -537,7 +537,7 @@ object Tournament {
                     }
                     else "not done: lfg-key <the application's public key from the Developer Portal> or lfg-key off"
                 // /root registered again (after the bot's token or the server changed)
-                case "lfg-commands" => Lfg.commands + " " + Lfg.register()
+                case "lfg-commands" => Lfg.syncClanEmojis() + "; " + Lfg.commands + " " + Lfg.register()
                 // a name's Discord, set by the owner for a player who didn't give it (2026-11-20, matched from the server's member
                 // list): discord <name> -> <username or user ID>, looked up by the Discord bot like one given on the Tournament page;
                 // discord <name> -> off forgets it

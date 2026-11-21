@@ -67,6 +67,46 @@ object Lfg {
     val randomAny = "RandomAny"
     val colors = List("Blue", "Red", "Yellow", "Purple", "Green", "Orange")
 
+    // THE CLAN ICONS (asked for on 2026-11-21): the clan emblems as the bot's own application emojis (ng_bear ...), uploaded by the
+    // server from the client's webp2/nort/images/clan/emoji/<clan>.png when the bot has none of that name (at the server's start), so
+    // no server emoji slots or rights are needed; shown in the clan menu and beside each player's clan in the post
+    @volatile var assets = "."
+    @volatile var clanEmojis : Map[String, String] = Map()
+
+    def emojiName(c : String) = "ng_" + c.toLowerCase
+
+    def syncClanEmojis() : String = (DiscordBot.token match {
+        case None => "no bot token"
+        case Some(t) =>
+            try {
+                DiscordBot.get("https://discord.com/api/v10/oauth2/applications/@me", Some(t)).map(b => str(obj(Json.parse(b)).get("id"))).filter(_.nonEmpty) match {
+                    case None => "no application"
+                    case Some(a) =>
+                        val url = "https://discord.com/api/v10/applications/" + a + "/emojis"
+                        def have() = DiscordBot.get(url, Some(t)).toList.flatMap(b => obj(Json.parse(b)).get("items").collect { case l : List[_] => l.map(obj) }.getOrElse(Nil))
+                            .map(e => str(e.get("name")) -> str(e.get("id"))).filter(_._2.nonEmpty).toMap
+                        var found = have()
+                        (coreClans ++ bloodClans).foreach { c =>
+                            val f = Paths.get(assets, "webp2", "nort", "images", "clan", "emoji", c.toLowerCase + ".png")
+                            if (!found.contains(emojiName(c)) && Files.exists(f)) {
+                                val image = "data:image/png;base64," + java.util.Base64.getEncoder.encodeToString(Files.readAllBytes(f))
+                                DiscordBot.send("POST", url, "{\"name\":" + json(emojiName(c)) + ",\"image\":" + json(image) + "}", Some(t)).foreach { b =>
+                                    val e = obj(Json.parse(b))
+                                    found += str(e.get("name")) -> str(e.get("id"))
+                                }
+                            }
+                        }
+                        clanEmojis = (coreClans ++ bloodClans).flatMap(c => found.get(emojiName(c)).map(c -> _)).toMap
+                        clanEmojis.size + " of 14 clan icons"
+                }
+            }
+            catch { case e : Exception => "failed: " + e.getClass.getSimpleName }
+    })
+
+    // in a message, and in a menu option
+    def clanIcon(c : String) = clanEmojis.get(c).map(id => "<:" + emojiName(c) + ":" + id + "> ").getOrElse("")
+    def clanIconField(c : String) = clanEmojis.get(c).map(id => ",\"emoji\":{\"id\":" + json(id) + ",\"name\":" + json(emojiName(c)) + "}").getOrElse("")
+
     def clanLabel(c : String) = c match {
         case `randomCore` => "a random core clan"
         case `randomAny` => "a random clan"
@@ -320,7 +360,7 @@ object Lfg {
                 val minSeats = p.kind.minSeats
                 (head + "**" + label + ": " + p.title + "**, looking for players (" + p.players.size + "/" + p.size + ")\n" + picks +
                     "Host: " + mention(p.host) + "\n" +
-                    "Players: " + p.players.map(x => mention(x._1) + " (" + clanLabel(p.clan(x._1)) + ")").mkString(", ") + "\n" +
+                    "Players: " + p.players.map(x => mention(x._1) + " (" + clanIcon(p.clan(x._1)) + clanLabel(p.clan(x._1)) + ")").mkString(", ") + "\n" +
                     "Press **Join** and pick a clan to play; **Clan** changes yours. The game starts by itself when all " + p.size + " seats are taken and everyone has a clan, or when the host presses **Start** (" + minSeats + " players or more).",
                     buttons(button("Join", 1, "join", p.id, "👍"), button("Clan", 2, "clan", p.id), button("Leave", 2, "leave", p.id), button("Start", 3, "start", p.id), button("Cancel", 4, "cancel", p.id)))
             case None =>
@@ -469,7 +509,7 @@ object Lfg {
         val taken = p.taken(uid)
         val choices = (coreClans ++ bloodClans).filterNot(taken.contains).map(c => (c + " Clan", c)) ++ List(("Random core clan", randomCore), ("Random clan (any of the 14)", randomAny))
         val menu = LfgSetup.select("lfg:pick:" + p.id + ":" + channel + ":" + message, "Pick your clan", 1, 1,
-            choices.map { case (l, v) => (l, v, p.clan(uid) == v, LfgSetup.emojiField(v), "") })
+            choices.map { case (l, v) => (l, v, p.clan(uid) == v, clanIconField(v), "") })
         reply(4, "{\"content\":" + json(text) + ",\"flags\":64,\"components\":[" + menu + "],\"allowed_mentions\":{\"parse\":[]}}")
     }
 
@@ -517,7 +557,7 @@ object Lfg {
                                 }
                             else {
                                 editPost(ch, msg, q)
-                                done("You play " + clanLabel(c) + " in **" + p.title + "**." + (if (q.players.size < q.size) " The game starts when all " + q.size + " seats are taken." else ""))
+                                done("You play " + clanIcon(c) + clanLabel(c) + " in **" + p.title + "**." + (if (q.players.size < q.size) " The game starts when all " + q.size + " seats are taken." else ""))
                             }
                         }
                 }
@@ -609,8 +649,14 @@ object Lfg {
         }
     }
 
-    def start() {
-        if (publicKey.nonEmpty)
-            new Thread(() => println("LFG: " + commands + " " + register())).start()
+    // directory: the client's, where the clan icons are
+    def start(directory : String) {
+        assets = directory
+        new Thread(() => {
+            if (DiscordBot.configured)
+                println("LFG: " + syncClanEmojis())
+            if (publicKey.nonEmpty)
+                println("LFG: " + commands + " " + register())
+        }).start()
     }
 }
