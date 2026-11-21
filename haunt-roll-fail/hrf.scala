@@ -84,6 +84,7 @@ object HRF {
     def paramList(p : String) = param(p)./~(_.split(' ').$)
 
     val versionOverride = hashParam("version") || urlParam("version")
+    var lfgSent = false
 
     var segments = dom.window.location.pathname.split('/').$.drop(3)
 
@@ -2407,6 +2408,14 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             } { }
 
             heldNames { n => h = |(n) ; again() }
+
+            // Discord LFG games (good-game/Lfg.scala): the options this version of the site gives them, once a page load
+            if (HRF.lfgSent.not) {
+                HRF.lfgSent = true
+                HRF.metas.%(_.lfgOptions.any).foreach { m =>
+                    postF(HRF.server.get + "/lfg/template", m.name + "\n" + HRF.version + "\n" + m.lfgOptions./(o => m.writeOption(o)).join(" "))(_ => ())(())
+                }
+            }
         }
 
         // the game waits on the player (the server's sixth field, good-game/Turns.scala; 2026-11-20)
