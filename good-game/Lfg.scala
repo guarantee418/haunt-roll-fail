@@ -169,8 +169,10 @@ object Lfg {
 
     def mention(id : String) = "<@" + id + ">"
 
-    def button(label : String, style : Int, action : String, id : String) =
-        "{\"type\":2,\"style\":" + style + ",\"label\":" + json(label) + ",\"custom_id\":" + json("lfg:" + action + ":" + id) + "}"
+    // emoji: a Unicode emoji shown before the label (Join's 👍, asked for on 2026-11-20)
+    def button(label : String, style : Int, action : String, id : String, emoji : String = "") =
+        "{\"type\":2,\"style\":" + style + ",\"label\":" + json(label) + ",\"custom_id\":" + json("lfg:" + action + ":" + id) +
+            (if (emoji.isEmpty) "" else ",\"emoji\":{\"name\":" + json(emoji) + "}") + "}"
 
     def buttons(bb : String*) = if (bb.isEmpty) "[]" else "[{\"type\":1,\"components\":[" + bb.mkString(",") + "]}]"
 
@@ -191,7 +193,7 @@ object Lfg {
                     "Host: " + mention(p.host) + "\n" +
                     "Players: " + p.players.map(x => mention(x._1)).mkString(", ") + "\n" +
                     "Press **Join** to play. The game starts by itself when all " + p.size + " seats are taken, or when the host presses **Start** (" + minSeats + " players or more).",
-                    buttons(button("Join", 1, "join", p.id), button("Leave", 2, "leave", p.id), button("Start", 3, "start", p.id), button("Cancel", 4, "cancel", p.id)))
+                    buttons(button("Join", 1, "join", p.id, "👍"), button("Leave", 2, "leave", p.id), button("Start", 3, "start", p.id), button("Cancel", 4, "cancel", p.id)))
         }
         "{\"content\":" + json(text) + ",\"components\":" + bb + ",\"allowed_mentions\":{\"parse\":[]}}"
     }
@@ -303,7 +305,8 @@ object Lfg {
         val size = options.get("players").map(v => str(Option(v)).toIntOption.getOrElse(4)).getOrElse(4).max(minSeats).min(maxSeats)
         val title = Some(clean(str(options.get("title").flatMap(Option(_))).replace("*", "").replace("~", "").replace("`", ""))).filter(_.nonEmpty).getOrElse(randomTitle())
         // the setup panel, with every option, once the site has sent them (LfgSetup.scala); else the post with the site's defaults
-        LfgSetup.open(uid, clean(name), size, title).getOrElse {
+        val picks = List("map", "deck", "clearings", "hirelings", "landmarks").flatMap(k => options.get(k).flatMap(v => Option(v)).collect { case v : String => v })
+        LfgSetup.open(uid, clean(name), size, title, picks).getOrElse {
             val id = Tournament.newSecret(10)
             event("open", id, uid, clean(name), size, title)
             reply(4, message(posts()(id)))
@@ -374,7 +377,11 @@ object Lfg {
                         case Some(a) =>
                             val command = "[{\"name\":\"root\",\"type\":1,\"description\":\"Look for players for an online Root game (Advanced Setup) on the site\",\"options\":[" +
                                 "{\"type\":4,\"name\":\"players\",\"description\":\"How many players (2 to 6, 4 if not given)\",\"required\":false,\"min_value\":" + minSeats + ",\"max_value\":" + maxSeats + "}," +
-                                "{\"type\":3,\"name\":\"title\",\"description\":\"The game's name (a random one if not given)\",\"required\":false,\"max_length\":32}]}]"
+                                "{\"type\":3,\"name\":\"title\",\"description\":\"The game's name (a random one if not given)\",\"required\":false,\"max_length\":32}" +
+                                LfgSetup.commandOptions().map { case (n, d, cc) =>
+                                    ",{\"type\":3,\"name\":" + json(n) + ",\"description\":" + json(d + " (the site's default if not given)") + ",\"required\":false,\"choices\":[" +
+                                    cc.map { case (label, value) => "{\"name\":" + json(LfgSetup.cut(label, 100)) + ",\"value\":" + json(value) + "}" }.mkString(",") + "]}"
+                                }.mkString + "]}]"
                             if (DiscordBot.send("PUT", "https://discord.com/api/v10/applications/" + a + "/guilds/" + g + "/commands", command, Some(t)).nonEmpty) "registered" else "not registered: Discord refused it"
                     }
                 }
