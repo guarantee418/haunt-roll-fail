@@ -246,7 +246,8 @@ trait FanDeck extends DeckOption {
     override val group : Elem = "Fan Decks"
 }
 
-case object StandardDeck extends DeckOption {
+// under Fan Decks since 2026-11-21 (owner's ask), Capitalists and Anarchists taking its place among the Decks; still official for the rankings
+case object StandardDeck extends FanDeck {
     val valueOn = "Might and Right".hh
     override val explain = $(
         "The deck from the " ~ "Root".hh ~ " base game.",
@@ -337,10 +338,11 @@ case object SorceryDeck extends FanDeck {
     )
 }
 
-case object CapitalistsDeck extends FanDeck {
+// among the Decks since 2026-11-21 (owner's ask): the site's playable version of the base deck
+case object CapitalistsDeck extends DeckOption {
     val valueOn = "Capitalists and Anarchists".hh
     override val explain = $(
-        "A variation of the " ~ "Might and Right".hh ~ " deck by the site's owner. Its items, ambushes and dominances are the base deck's.",
+        "A playable version of the " ~ "Root".hh ~ " base game's deck, " ~ "Might and Right".hh ~ ", by the site's owner. Its items, ambushes and dominances are the base deck's, and some of its effect cards are changed:",
         "Command Warren".hh ~ ", " ~ "Cobbler".hh ~ ", " ~ "Better Burrow Bank".hh ~ ", " ~ "Brutal Tactics".hh ~ " and " ~ "Scouting Party".hh ~ " cost one card; all but " ~ "Better Burrow Bank".hh ~ " are paid for each use with a card matching the clearing, or by discarding them, and " ~ "Brutal Tactics".hh ~ " gives the defender no point.",
         "Better Burrow Bank".hh ~ " goes back to hand when used. " ~ "Stand and Deliver!".hh ~ " is used once, at the next Birdsong. " ~ "Tax Collector".hh ~ " and " ~ "Codebreakers".hh ~ " are used once, when crafted.",
         "Scouting Party".hh ~ " cancels an ambush. " ~ "Royal Claim".hh ~ " must be used at the next Birdsong.",
@@ -1913,7 +1915,7 @@ object Meta extends MetaGame {
         $(SimpleForgeLandmark, SimpleMarketLandmark, BirdsongTowerLandmark, RoyalTreeLandmark) ++
         legendsOptions ++
         $,
-        $(StandardDeck, ExilesDeck, SquiresDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck, SorceryDeck, CapitalistsDeck) ++
+        $(ExilesDeck, SquiresDeck, CapitalistsDeck, StandardDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck, SorceryDeck) ++
         (n >= 5).$(ActionBooster) ++
         $,
         (l.of[Feline].num > 1).$(TheWoodMustFlow) ++
@@ -1976,7 +1978,7 @@ object Meta extends MetaGame {
         $(DeepWoodsSettling, WastelandsWater) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
-        $(StandardDeck, ExilesDeck, SquiresDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck, SorceryDeck, CapitalistsDeck) ++
+        $(ExilesDeck, SquiresDeck, CapitalistsDeck, StandardDeck, MixedDeck, DuskDeck, FrankenDeck, DarkDeck, UpstartsDeck, SorceryDeck) ++
         (n >= 5).$(ActionBooster) ++
         hitsAndAmbushes(l) ++
         (n > 2).?(TotalWarDominance) ++
@@ -2251,10 +2253,11 @@ object Meta extends MetaGame {
     override def rankingFan(g : G) = rankFan(g)
 
     // fan content (rankingFan): a faction that isn't an official one (fan, playtest and mirror factions), a fan map or deck, the
+    // (Capitalists and Anarchists is among the official Decks since 2026-11-21, so it counts as official)
     // Doomed Vagabonds, Knave Captains, Turnlings or Legends Scenarios, the Action! Deck Booster, or the Simple Landmarks (house rules) but the Birdsong Tower
     def rankFan(game : Game) : Boolean = game.factions.exists(f => (official ++ homeland).has(f).not) || game.options.exists {
-        // Mixed and Dawn and Dusk sit under Fan Decks on the setup screen but aren't fan-made
-        case MixedDeck | DuskDeck => false
+        // Might and Right, Mixed and Dawn and Dusk sit under Fan Decks on the setup screen but aren't fan-made
+        case StandardDeck | MixedDeck | DuskDeck => false
         case _ : FanMap | _ : FanDeck => true
         // the Birdsong Tower is official for the site (2026-11-20), the other Simple Landmarks are house rules
         case BirdsongTowerLandmark => false
