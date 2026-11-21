@@ -377,8 +377,9 @@ object TurnPings {
         }
         val nort = nortMetas.contains(lobby.meta)
         def head = faction.map(f => if (nort) Lfg.clanIcon(f) else LfgSetup.emojiText("IncludeFaction(" + f + ")")).getOrElse("")
-        def sword = LfgSetup.serverNamed(List("sword", "swords", "battle", "attack")).getOrElse("⚔️ ")
-        def axe = LfgSetup.serverNamed(List("axe", "battleaxe", "fight")).getOrElse("🪓 ")
+        // (the server's are :sword-root: and :axe-ng:, seen on 2026-11-21)
+        def sword = LfgSetup.serverNamed(List("swordroot", "sword", "swords", "battle", "attack")).getOrElse("⚔️ ")
+        def axe = LfgSetup.serverNamed(List("axeng", "axe", "battleaxe", "fight")).getOrElse("🪓 ")
         def e(key : String) = LfgSetup.emojiText(key)
         val (icon, words) = (nort, tag) match {
             case (false, "defend") => (sword, "you're under attack")
