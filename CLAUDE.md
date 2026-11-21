@@ -1109,9 +1109,12 @@ server. No session can reach the server, and none needs to.
 - Discord turn pings (asked for on 2026-11-20; `good-game/TurnPings.scala`, its header has the rules and files): each online Root game
   (`root`, `root-adset`; `TurnPings.metas`) gets a post (a thread) in the forum channel of the webhook `HRF_DISCORD_TURNS_WEBHOOK` or
   the file `discord-turns-webhook` (set by the tournament change `turns <url>`; the owner's "Command Warren" webhook, forum #root-games)
-  when its lobby is written, naming its players and its spectator link, and a seat is @mentioned there when the game starts waiting for
-  it, a minute later, unless the game moved on, its player read the game in the last 90 seconds, or it was pinged in that game in the
-  last 10 minutes. The server can't read a game: it takes the factions asked from the clients' turn reports (`/turn`,
+  when its lobby is written, naming its players and its spectator link, and a seat is @mentioned there a minute after the game starts waiting for
+  it, unless its player read the game meanwhile, and reminded 12 hours after its last ping or read, twice at most; a sweep every 30 seconds
+  (`TurnPings.start`, `sweep`) sends them, never within 90 seconds of the player reading the game, 5 minutes of their last ping in that game
+  (it waits), or after the game's end (`over`). Each seat's start is the time on its `turns/state.tsv` row, so restarts lose and repeat
+  none; seats waited for since before that (2026-11-21, when the owner found the pings inconsistent: timers lost at restarts, and pings
+  within 10 minutes dropped) are pinged only by the `ping waiting` changes, and from their next turn on. The server can't read a game: it takes the factions asked from the clients' turn reports (`/turn`,
   `good-game/Turns.scala`, which calls `TurnPings.report`) and the lobby's "user <faction> <user>" lines. Only seats under a ranking name whose owner gave a Discord user
   ID (or a username the bot found, or one the owner set) and didn't turn pings off ("Discord turn pings" under Rankings, `discordPings` in `rankingsMenu`; `/discord/mine`, `/discord/pings`,
   `tournament/discord-pings.tsv`; on unless turned off since 2026-11-20, asked for) are mentioned, each by their own mention
