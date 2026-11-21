@@ -14,16 +14,24 @@ import scala.concurrent.duration.Duration
 // is created, with its players and spectator link, and a player is @mentioned there when it becomes their turn.
 //
 // The server can't read a game, so the clients tell it which factions the game asks (/turn, Turns.scala), and the lobby's
-// "user <faction> <user>" lines say whose seats they are. A seat newly waited for is pinged a minute later if:
-//   - the game still waits for it then (a later report hasn't taken it off),
-//   - its player hasn't had the game open in the last 90 seconds (their client reads the log while it is open),
+// "user <faction> <user>" lines say whose seats they are. Every 30 seconds a sweep (started with the server) pings the seats due
+// (2026-11-21: the owner found the pings inconsistent; a ping was a timer a restart lost, and one within 10 minutes of the last was
+// dropped, so a seat pinged for an ambush wasn't for the turn that followed). A seat waited for since <start> is due:
+//   - a minute after start, if its player hasn't read the game since (the client reads the log while it is open),
+//   - again 12 hours after its last ping (or its player's last read of the game), at most twice ("reminder"),
+// and pinged then if:
+//   - its player hasn't had the game open in the last 90 seconds,
+//   - it wasn't pinged in that game in the last 5 minutes (it waits until then, as the sweep comes back),
 //   - its seat plays under a ranking name with a Discord (given, or set by the owner) and turn pings not turned off (Rankings,
-//     "Discord turn pings"; on unless turned off since 2026-11-20, asked for: "start pinging people whenever it is their turn"),
-//   - it wasn't pinged in that game in the last 10 minutes.
-// Several prompts in a row (a whole turn) are one ping, as the seat stays waited for between them.
+//     "Discord turn pings"; on unless turned off since 2026-11-20, asked for: "start pinging people whenever it is their turn").
+// Several prompts in a row (a whole turn) are one ping, as the seat stays waited for between them. When a seat started being
+// waited for is the time on its state.tsv row, so a restart neither loses nor repeats a ping. A seat waited for since before
+// that (rows with no time, and the games Turns.scala knows of but this file doesn't, reports from before the turns webhook was
+// set, added at the server's start) isn't pinged by the sweep, as an abandoned game can't be told from a live one: the
+// "ping waiting" changes ping it, and its next turn is pinged as usual.
 //
 // Files, in turns/ in the server's working directory:
-//   state.tsv     game, log index, the users waited for (comma-separated): the latest report of each game (the last row counts)
+//   state.tsv     game, log index, the users waited for (comma-separated), time: each game's reports (its last row counts)
 //   threads.tsv   game, the Discord thread made for it
 //   pings.tsv     time, game, user: the pings sent
 //   created.tsv   game: the games whose post went out, so each goes out once
@@ -45,7 +53,10 @@ object TurnPings {
 
     val delay = 60 * 1000L
     val watching = 90 * 1000L
-    val cooldown = 10 * 60 * 1000L
+    val gap = 5 * 60 * 1000L
+    val remind = 12 * 60 * 60 * 1000L
+    val reminders = 2
+    val every = 30L
 
     def webhook = Tournament.hook("HRF_DISCORD_TURNS_WEBHOOK", "discord-turns-webhook")
 
@@ -58,6 +69,10 @@ object TurnPings {
 
     def readSince(user : String, game : String, ms : Long) = Option(reads.get((user, game))).exists(t => System.currentTimeMillis - t < ms)
 
+    def lastRead(user : String, game : String) : Long = Option(reads.get((user, game))).map(_.longValue).getOrElse(0L)
+
+    def time(t : String) : Option[Long] = scala.util.Try(java.time.LocalDateTime.parse(t).toInstant(java.time.ZoneOffset.UTC).toEpochMilli).toOption
+
     case class Report(index : Int, users : Set[String])
 
     var reports : Map[String, Report] = null
@@ -68,15 +83,89 @@ object TurnPings {
         reports
     }
 
-    var lastPing : Map[(String, String), Long] = null
+    // the pings sent: (game, user) -> their times
+    var sent : Map[(String, String), List[Long]] = null
 
-    def pings : Map[(String, String), Long] = {
-        if (lastPing == null)
-            lastPing = rows(pinged).collect { case t :: g :: u :: _ => (g, u) -> scala.util.Try(java.time.LocalDateTime.parse(t).toInstant(java.time.ZoneOffset.UTC).toEpochMilli).getOrElse(0L) }.toMap
-        lastPing
+    def pings : Map[(String, String), List[Long]] = {
+        if (sent == null)
+            sent = rows(pinged).collect { case t :: g :: u :: _ => ((g, u), time(t).getOrElse(0L)) }.groupBy(_._1).map { case (k, l) => k -> l.map(_._2) }
+        sent
+    }
+
+    def lastPing(game : String, user : String) : Long = pings.get((game, user)).map(_.max).getOrElse(0L)
+
+    // since when each seat has been waited for: (game, user) -> time
+    var waitedSince : Map[(String, String), Long] = null
+
+    def since : Map[(String, String), Long] = {
+        if (waitedSince == null) {
+            var m = Map[(String, String), Long]()
+            var now = Map[String, Set[String]]()
+            rows(state).collect { case g :: i :: u :: rest if i.toIntOption.nonEmpty => (g, u.split(',').filter(_.nonEmpty).toSet, rest.headOption.flatMap(time)) }.foreach { case (g, us, t) =>
+                val before = now.getOrElse(g, Set())
+                (before -- us).foreach(u => m -= ((g, u)))
+                (us -- before).foreach(u => m += ((g, u)) -> t.getOrElse(0L))
+                now += g -> us
+            }
+            waitedSince = m
+        }
+        waitedSince
     }
 
     lazy val timer = java.util.concurrent.Executors.newSingleThreadScheduledExecutor()
+
+    // at the server's start: the games Turns knows of and this file doesn't, then the sweep every 30 seconds
+    def start() {
+        try {
+            Turns.all.foreach { case (g, (n, factions)) => if (!latest.contains(g)) seed(g, n, factions) }
+        }
+        catch {
+            case e : Exception => println("Turn pings: games not added: " + e)
+        }
+        timer.scheduleAtFixedRate(new Runnable { def run() = try sweep() catch { case e : Throwable => println("Turn pings: sweep failed: " + e) } }, every, every, java.util.concurrent.TimeUnit.SECONDS)
+    }
+
+    // a game's report that Turns kept but this file missed: its seats waited for since a time unknown
+    def seed(g : String, n : Int, factions : List[String]) : Unit = synchronized {
+        lobbyOf(g).filter(l => metas.contains(l.meta)).foreach { l =>
+            val seats = l.lines.map(_.split(' ').toList).collect { case "user" :: f :: u :: _ => f -> u }.toMap
+            val users = factions.flatMap(seats.get).toSet
+            reports = latest + (g -> Report(n, users))
+            waitedSince = since -- since.keys.filter(_._1 == g) ++ users.map(u => (g, u) -> 0L)
+            Files.createDirectories(dir)
+            Ranking.append(state, row(g, n, users.toList.sorted.mkString(",")))
+        }
+    }
+
+    // games that have ended (their log holds the game over), never pinged: a game's last report is from before its end, as the
+    // client asks nothing after it, so its last seat would look waited for; asked only when a ping is due, and kept once true
+    var ended = Set[String]()
+
+    def over(g : String) : Boolean = ended.contains(g) || {
+        val r = run(entries.filter(_.journalId === g).filter(_.text like "%GameOver%").exists.result)
+        if (r)
+            ended += g
+        r
+    }
+
+    // the seats due a ping (see above), pinged
+    def sweep() : Unit = synchronized {
+        val now = System.currentTimeMillis
+        latest.toList.sortBy(_._1).foreach { case (g, r) =>
+            r.users.toList.sorted.foreach { u =>
+                val start = since.getOrElse((g, u), 0L)
+                val mine = pings.getOrElse((g, u), Nil).filter(_ >= start)
+                val read = lastRead(u, g)
+                val due =
+                    if (mine.isEmpty && read < start)
+                        now - start >= delay
+                    else
+                        mine.size <= reminders && now - (start +: read +: mine).max >= remind
+                if (start > 0 && due && now - lastPing(g, u) >= gap && !readSince(u, g, watching) && !over(g))
+                    try attempt(g, u, reminder = mine.nonEmpty || read >= start) catch { case e : Exception => println("Turn ping failed: " + e) }
+            }
+        }
+    }
 
     // a game's lobby lines, by the "server <game>" line its lobby holds
     case class Lobby(meta : String, title : String, lines : List[String], lobby : String)
@@ -181,8 +270,8 @@ object TurnPings {
     // a client's report (Turns.report): the game asks these factions after the log's first index entries
     def report(game : String, index : Int, factions : List[String]) : Unit =
         try {
-            if (webhook.nonEmpty || table(game).nonEmpty)
-                lobbyOf(game).filter(l => metas.contains(l.meta)).foreach { l =>
+            // kept whether or not a webhook is set yet, so the pings can start as soon as one is
+            lobbyOf(game).filter(l => metas.contains(l.meta)).foreach { l =>
                     val seats = l.lines.map(_.split(' ').toList).collect { case "user" :: f :: u :: _ => f -> u }.toMap
                     waiting(game, index, factions.flatMap(seats.get).toSet)
                 }
@@ -197,13 +286,13 @@ object TurnPings {
         if (before.exists(b => b.index == index && b.users == waiting))
             return
 
+        val now = System.currentTimeMillis
+        val was = before.map(_.users).getOrElse(Set())
         reports = latest + (game -> Report(index, waiting))
-        Ranking.append(state, row(game, index, waiting.toList.sorted.mkString(",")))
-
-        val fresh = waiting -- before.map(_.users).getOrElse(Set())
-        fresh.foreach { u =>
-            timer.schedule(new Runnable { def run() = try ping(game, u) catch { case e : Exception => println("Turn ping failed: " + e) } }, delay, java.util.concurrent.TimeUnit.MILLISECONDS)
-        }
+        waitedSince = since -- (was -- waiting).map(u => (game, u)) ++ (waiting -- was).map(u => (game, u) -> now)
+        Files.createDirectories(dir)
+        Ranking.append(state, row(game, index, waiting.toList.sorted.mkString(","), Ranking.now()))
+        // (the sweep pings the seats newly waited for a minute from now)
     }
 
     // every seat the games wait for, at once (the "ping waiting" change): how many were pinged
@@ -219,14 +308,7 @@ object TurnPings {
         games.map { g =>
             // a game whose reports came while no turns webhook was set has none here: the one Turns kept stands in for it
             if (latest.get(g).isEmpty)
-                Turns.last(g).foreach { case (n, factions) =>
-                    lobbyOf(g).filter(l => metas.contains(l.meta)).foreach { l =>
-                        val seats = l.lines.map(_.split(' ').toList).collect { case "user" :: f :: u :: _ => f -> u }.toMap
-                        val users = factions.flatMap(seats.get).toSet
-                        reports = latest + (g -> Report(n, users))
-                        Ranking.append(state, row(g, n, users.toList.sorted.mkString(",")))
-                    }
-                }
+                Turns.last(g).foreach { case (n, factions) => seed(g, n, factions) }
             latest.get(g) match {
                 case None => g + ": no turn report yet (no one has opened it since turn reports came)"
                 case Some(r) if r.users.isEmpty => g + ": waits for no seat with a user"
@@ -244,14 +326,14 @@ object TurnPings {
     def ping(game : String, user : String) : Boolean = attempt(game, user) == "pinged"
 
     // "pinged", or why not
-    def attempt(game : String, user : String) : String = synchronized {
+    def attempt(game : String, user : String, reminder : Boolean = false) : String = synchronized {
         val now = System.currentTimeMillis
         if (!latest.get(game).exists(_.users.contains(user)))
             return "not waited for"
         if (readSince(user, game, watching))
             return "not pinged: has the game open"
-        if (pings.get((game, user)).exists(now - _ < cooldown))
-            return "not pinged: pinged in the last 10 minutes"
+        if (now - lastPing(game, user) < gap)
+            return "not pinged: pinged in the last 5 minutes"
         if (table(game).isEmpty && webhook.isEmpty)
             return "not pinged: no turns webhook (the turns change)"
         val id = mentionOf(user, table(game).nonEmpty).getOrElse(return "not pinged: no Discord, or turn pings off")
@@ -263,10 +345,11 @@ object TurnPings {
         if (table(game).isEmpty && webhook.nonEmpty && !introduced(game))
             introduce(game, lobby, "Ongoing")
 
-        lastPing = pings + ((game, user) -> now)
+        sent = pings + ((game, user) -> (now :: pings.getOrElse((game, user), Nil)))
+        Files.createDirectories(dir)
         Ranking.append(pinged, row(Ranking.now(), game, user))
 
-        post(game, lobby, "<@" + id + ">, it's your turn in **" + lobby.title + "**" + " (" + nameOf(lobby, user) + ").", List(id))
+        post(game, lobby, "<@" + id + ">, " + (if (reminder) "a reminder: it's still your turn" else "it's your turn") + " in **" + lobby.title + "**" + " (" + nameOf(lobby, user) + ").", List(id))
         "pinged"
     }
 }

@@ -721,6 +721,9 @@ object GoodGame {
 
         Lfg.start()
 
+        // the turn pings' sweep (TurnPings.scala)
+        TurnPings.start()
+
         // Webroot for Let's Encrypt HTTP-01 challenges (certbot --webroot -w good-game/acme)
         val acmeDir = new java.io.File("acme")
 
