@@ -214,6 +214,45 @@ trait MetaBase {
     // Discord LFG games (good-game/Lfg.scala, 2026-11-20): the meta a game started from a Discord LFG post is played in, and the
     // options the site gives a new game of it by default (before startOptions draws the map), sent to the server by Play Online
     def lfgOptions : $[O] = $
+    // The player counts a game started from Discord can have (none: no Discord setup), and the options to pick at least as many of
+    // as the players plus k (Root's Advanced Setup: the factions in the draft, "IncludeFaction(" and 0)
+    def lfgPlayers : $[Int] = $
+    def lfgNeed : |[(String, Int)] = None
+    // Every setup option, for the Discord setup panel (good-game/Lfg.scala; 2026-11-20): tab-separated lines the server turns into
+    // menus, so the options are never written out on the server. For each player count, the mandatory options, the defaults and
+    // the presets; for each option, its page on the setup screen (-1: not listed), the player counts it's offered for, whether it
+    // toggles, whether it's listed only once what it needs is picked (optionShown), whether it's Important, its section and its
+    // name; then how options turn each other on and off (BaseOption's required, blocked, forcedOn, alsoOn, forcedOff, clear)
+    def lfgCatalog : $[String] = {
+        def w(l : $[BaseOption]) = l./(o => writeOption(o.asInstanceOf[O])).join(" ")
+        def alts(l : $[$[BaseOption]]) = l.num + "\t" + l./(w).join("|")
+        def seats(n : Int) = factions.take(n)
+        def clean(s : String) = s.replace("\t", " ").replace("\n", " ").trim
+        val top = lfgPlayers.max
+        val all = optionsFor(top, seats(top))
+        val pages = optionPages(top, seats(top))./(_.intersect(all))
+        def page(o : O) = hiddenOptions.contains(o).?(-1).|(pages.indexWhere(_.contains(o)))
+        val base = all./(o => o : BaseOption)
+
+        $("players\t" + lfgPlayers.mkString(" ")) ++
+        lfgNeed./{ case (p, k) => "need\t" + p + "\t" + k }.$ ++
+        lfgPlayers./~{ n =>
+            val l = seats(n)
+            $("mandatory\t" + n + "\t" + w(mandatoryFor(n, l)), "defaults\t" + n + "\t" + w(completeSaved(n, l, defaultsFor(n, l)))) ++
+            presetsFor(n, l)./{ case (title, included, excluded) => "preset\t" + n + "\t" + clean(title.text) + "\t" + w(included ++ defaultsFor(n, l).diff(excluded)) }
+        } ++
+        all./~{ o =>
+            val n = writeOption(o)
+            $("option\t" + n + "\t" + page(o) + "\t" + lfgPlayers.%(k => optionsFor(k, seats(k)).contains(o)).mkString(",") + "\t" + o.toggle.?(1).|(0) + "\t" +
+                optionShown(o, $).?(0).|(1) + "\t" + o.is[ImportantOption].?(1).|(0) + "\t" + clean(o.group.text) + "\t" + clean(o.valueOn.text),
+                "required\t" + n + "\t" + alts(o.required(base)),
+                "blocked\t" + n + "\t" + alts(o.blocked(base)),
+                "on\t" + n + "\t" + w(o.forcedOn(base)),
+                "also\t" + n + "\t" + w(o.alsoOn(base)),
+                "off\t" + n + "\t" + w(o.forcedOff(base)),
+                "clear\t" + n + "\t" + w(o.clear(base)))
+        }
+    }
     // the seat a turn report names (good-game/Turns.scala), as the lobby's "user <seat> <user>" lines write it: the faction asked,
     // unless the game's seats aren't its factions (Root's Advanced Setup: a seat drafts its faction in the game)
     def turnSeat(g : G, f : Any) : String = writeFaction(f.asInstanceOf[F])
