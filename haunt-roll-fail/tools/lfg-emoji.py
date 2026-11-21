@@ -77,24 +77,8 @@ for group, s in [('Marquise de Cat', 'mc'), ('Vagabond', 'vb'), ('The Lizard Cul
                  ('Knaves of the Deepwood', 'kd')]:
     keys.append(('#' + group, 'rt_' + s))
 
-# the maps, whole
-for o, d, f in [('AutumnMap', 'autumn', 'map-bright-new-expand'), ('WinterMap', 'winter', 'map-bright'), ('LakeMap', 'lake', 'map-bright'),
-                ('MountainMap', 'mountain', 'map-bright'), ('GorgeMap', 'gorge', 'map-art'), ('MarshMap', 'marsh', 'map-art'),
-                ('TidalMap', 'tidal', 'map-bright'), ('TundraMap', 'tundra', 'map-bright'), ('GloomMap', 'gloom', 'map-bright'),
-                ('UrbanMap', 'urban', 'map-art'), ('LegendsMap', 'legends-map', 'map-art'), ('DeepWoodsMap', 'deep-woods', 'map-art'),
-                ('WastelandsMap', 'wastelands', 'map-art')]:
-    icon('rm_' + d.replace('-', ''), fit(R + d + '/' + f + '.webp'), o)
-
-# the decks: their card backs, else a card of theirs
-for o, s, p in [('StandardDeck', 'base', 'card/card-back-art'), ('ExilesDeck', 'ep', 'card/card-back-art-ep'),
-                ('SquiresDeck', 'sd', 'card/card-back-art-sd'), ('DarkDeck', 'dd', 'card/card-back-art-dd'),
-                ('FrankenDeck', 'fd', 'card/card-back-art-fd'), ('SorceryDeck', 'se', 'card/card-back-art-se'),
-                ('UpstartsDeck', 'ur', 'card/card-back-art-ur')]:
-    icon('rd_' + s, top(R + p + '.webp'), o)
-first = lambda d: R + 'card/' + d + '/' + sorted(x for x in os.listdir(R + 'card/' + d) if x.endswith('.webp'))[0]
-icon('rd_ca', box(first('capitalists'), 0.08, 0.1, 0.92, 0.5), 'CapitalistsDeck')
-icon('rd_dusk', box(R + 'card/dusk/dusk-awakening.webp', 0.08, 0.1, 0.92, 0.5), 'DuskDeck')
-icon('rd_action', box(first('action'), 0.08, 0.1, 0.92, 0.5), 'ActionBooster')
+# the maps and decks have none: they show an emoji of what they stand for (LfgSetup.unicode, asked for on 2026-11-21), as a whole
+# map or a card back was unreadable at emoji size
 
 # the landmarks
 for o, f in [('FerryLandmark', 'ferry'), ('FoxburrowLandmark', 'foxburrow'), ('LostCityLandmark', 'lost-city'),

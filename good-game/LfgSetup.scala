@@ -207,9 +207,13 @@ object LfgSetup {
         // the bot's own icon (Lfg.iconOf, made from the game's art by tools/lfg-emoji.py), else for a deck with none of these the base
         // deck's (asked for on 2026-11-20: only ep and sd have their own)
         emojiNames.get(key).orElse(Some(key).filter(_.startsWith("IncludeFaction(")).map(_.stripPrefix("IncludeFaction(").stripSuffix(")").toLowerCase))
-            .flatMap(server).orElse(serverMatch(key)).orElse(Lfg.iconEmoji(key))
+            .flatMap(server).orElse(if (themed(key)) None else serverMatch(key)).orElse(Lfg.iconEmoji(key))
             .orElse(Some(key).filter(k => k.endsWith("Deck") && !k.startsWith("#") && !unicode.contains(k)).flatMap(_ => server("base")))
     }
+
+    // a map or deck: its own server emoji (emojiNames) or its themed one (`unicode`), never one found by a word of its name (the Northgard
+    // Wastelands' for Root's Wastelands map)
+    def themed(key : String) = !key.startsWith("#") && (key.endsWith("Map") || key.endsWith("Deck") || key == "ActionBooster")
 
     // THE SERVER'S EMOJIS BY NAME (2026-11-21: the server has emojis the posts didn't use): an option (or "#<section>") takes the
     // server's emoji whose name, its letters and digits in lower case, maybe with "ng" or "root" before it, is the option's label, its
@@ -265,6 +269,11 @@ object LfgSetup {
         "#Insurgent Lock" -> "🔒", "#Available Factions" -> "🐾", "#Available Fan Factions" -> "🐾", "#Seating Order" -> "🪑",
         "#Dominance" -> "👑", "#Hits and Ambushes – Offline Players" -> "🎯", "#Legends Scenario" -> "📜", "#Legendary Monster" -> "👹",
         "#Ring Rule" -> "💍", "#Capture Rule" -> "🫳", "#Mirror Factions" -> "🪞",
+        // the maps and decks by what they stand for (asked for on 2026-11-21), unless the server has an emoji of their own
+        "AutumnMap" -> "🍂", "WinterMap" -> "❄️", "LakeMap" -> "🏞️", "MountainMap" -> "⛰️", "GorgeMap" -> "🏜️", "MarshMap" -> "🐸",
+        "TidalMap" -> "🌊", "TundraMap" -> "🧊", "GloomMap" -> "🌑", "UrbanMap" -> "🏙️", "LegendsMap" -> "🏰", "DeepWoodsMap" -> "🌲",
+        "WastelandsMap" -> "🌵", "StandardDeck" -> "⚔️", "ExilesDeck" -> "🗡️", "SquiresDeck" -> "🛡️", "CapitalistsDeck" -> "💰",
+        "DuskDeck" -> "🌅", "DarkDeck" -> "💀", "FrankenDeck" -> "🧟", "SorceryDeck" -> "🔮", "UpstartsDeck" -> "🐣", "ActionBooster" -> "⚡",
         "RandomOfficialMap" -> "🎲", "RandomMap" -> "🎲", "AllRandomClearings" -> "🎲", "DefaultClearings" -> "🌲", "ConnectedClearings" -> "🔗",
         "NoClustersClearings" -> "✳️", "SuitPairsClearings" -> "👯", "ThreeFourFiveClearings" -> "🔢", "MixedDeck" -> "🔀",
         "MapDefaultLandmarks" -> "🗺️", "MountainSuitedLandmark" -> "⛰️", "NoLandmarks" -> "🚫", "NoHirelings" -> "🚫",

@@ -1147,7 +1147,8 @@ server. No session can reach the server, and none needs to.
   (the Discord server's emoji of that name, else the server's emoji whose name matches the option's label, saved name or a word of
   them or its section, `LfgSetup.serverMatch`, so the server's emojis are used first; else the bot's own `hrf_<slug>`, made from the game's art by `haunt-roll-fail/tools/lfg-emoji.py`
   into `webp2/lfg/emoji/` with `icons.tsv` naming each option's icon and uploaded at the server's start, `Lfg.iconOf`, else a Unicode one,
-  `LfgSetup.unicode`), and the Host, Players, seats and buttons; a changed picture needs a new slug, as an uploaded one is kept. The tournament change `emojis` lists the server's emojis and what each is shown for ("unused" for none). Northgard's
+  `LfgSetup.unicode`; the maps and decks by an emoji of what they stand for, 🍂 Autumn, ❄️ Winter, 🛡️ Squires and Disciples ..., unless
+  the server has one named for them, `LfgSetup.themed`), and the Host, Players, seats and buttons; a changed picture needs a new slug, as an uploaded one is kept. The tournament change `emojis` lists the server's emojis and what each is shown for ("unused" for none). Northgard's
   online games get their posts and turn pings in their own forum (`TurnPings.webhookFor`: `HRF_DISCORD_NORT_TURNS_WEBHOOK` or the file
   `discord-nort-turns-webhook`, set by the tournament change `nort-turns <url>`); with none set they get none.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
