@@ -204,24 +204,44 @@ object TurnPings {
         }
     }
 
+    // the seats the given games wait for, pinged at once (the "ping waiting <game> ..." change; 2026-11-21): a line for each game,
+    // saying who was pinged and why anyone wasn't
+    def pingWaitingIn(games : List[String]) : List[String] = synchronized {
+        games.map { g =>
+            latest.get(g) match {
+                case None => g + ": no turn report yet (no one has opened it since turn pings came)"
+                case Some(r) if r.users.isEmpty => g + ": waits for no seat with a user"
+                case Some(r) =>
+                    val name = lobbyOf(g).map(l => (if (l.title.nonEmpty) l.title + " " else "")).getOrElse("")
+                    g + " " + name + "(log " + r.index + "): " + r.users.toList.sorted.map { u =>
+                        val who = lobbyOf(g).map(l => nameOf(l, u)).getOrElse(u)
+                        who + " " + (try attempt(g, u) catch { case e : Exception => "failed: " + e })
+                    }.mkString(", ")
+            }
+        }
+    }
+
     // true when the ping went out
-    def ping(game : String, user : String) : Boolean = synchronized {
+    def ping(game : String, user : String) : Boolean = attempt(game, user) == "pinged"
+
+    // "pinged", or why not
+    def attempt(game : String, user : String) : String = synchronized {
         val now = System.currentTimeMillis
         if (!latest.get(game).exists(_.users.contains(user)))
-            return false
+            return "not waited for"
         if (readSince(user, game, watching))
-            return false
+            return "not pinged: has the game open"
         if (pings.get((game, user)).exists(now - _ < cooldown))
-            return false
-        val id = mentionOf(user, table(game).nonEmpty).getOrElse(return false)
-        val lobby = lobbyOf(game).getOrElse(return false)
+            return "not pinged: pinged in the last 10 minutes"
+        val id = mentionOf(user, table(game).nonEmpty).getOrElse(return "not pinged: no Discord, or turn pings off")
+        val lobby = lobbyOf(game).getOrElse(return "not pinged: lobby not found")
         if (!metas.contains(lobby.meta))
-            return false
+            return "not pinged: not a Root game"
 
         lastPing = pings + ((game, user) -> now)
         Ranking.append(pinged, row(Ranking.now(), game, user))
 
         post(game, lobby, "<@" + id + ">, it's your turn in **" + lobby.title + "**" + " (" + nameOf(lobby, user) + ").", List(id))
-        true
+        "pinged"
     }
 }

@@ -1116,7 +1116,8 @@ server. No session can reach the server, and none needs to.
   ID (or a username the bot found, or one the owner set) and didn't turn pings off ("Discord turn pings" under Rankings, `discordPings` in `rankingsMenu`; `/discord/mine`, `/discord/pings`,
   `tournament/discord-pings.tsv`; on unless turned off since 2026-11-20, asked for) are mentioned, each by their own mention
   (`allowed_mentions` lists only them, never @everyone). The tournament change `ping waiting` pings every seat the games wait
-  for at once (`TurnPings.pingWaiting`). A tournament table's game pings in its table's thread (the forum webhook's), with no
+  for at once (`TurnPings.pingWaiting`). `ping waiting <game> ...` pings only those games (their server ids, the `server` line of their lobbies), and its `.result` says for each
+  who was pinged and why anyone wasn't (`TurnPings.pingWaitingIn`; 2026-11-21). A tournament table's game pings in its table's thread (the forum webhook's), with no
   turns webhook needed, every player who gave a user ID unless they turned pings off. A webhook can't ping a username, and the first tournament's players
   gave usernames, so no one was pinged (2026-11-20): with the Discord bot set up (`good-game/DiscordBot.scala`; its token in
   `HRF_DISCORD_BOT_TOKEN` or the file `discord-bot-token`, set by the tournament change `bot <token>`; the server is the
