@@ -55,6 +55,13 @@ class CachedBitmap(val node : dom.html.Element) {
                 if (bitmap.canvas.parentNode != null)
                     bitmap.canvas.parentNode.removeChild(bitmap.canvas)
 
+            // let the browser free the old canvas's memory now: iOS Safari counts every canvas not yet collected
+            // toward one limit, past which new canvases draw nothing
+            if (bitmap != null) {
+                bitmap.canvas.width = 0
+                bitmap.canvas.height = 0
+            }
+
             bitmap = new Bitmap(w, h)
         }
 
