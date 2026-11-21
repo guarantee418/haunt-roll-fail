@@ -305,7 +305,7 @@ object Lfg {
         val size = options.get("players").map(v => str(Option(v)).toIntOption.getOrElse(4)).getOrElse(4).max(minSeats).min(maxSeats)
         val title = Some(clean(str(options.get("title").flatMap(Option(_))).replace("*", "").replace("~", "").replace("`", ""))).filter(_.nonEmpty).getOrElse(randomTitle())
         // the setup panel, with every option, once the site has sent them (LfgSetup.scala); else the post with the site's defaults
-        val picks = List("map", "deck", "clearings", "hirelings", "landmarks").flatMap(k => options.get(k).flatMap(v => Option(v)).collect { case v : String => v })
+        val picks = List("map", "deck", "clearings", "hirelings", "landmarks", "insurgent_lock").flatMap(k => options.get(k).flatMap(v => Option(v)).collect { case v : String => v })
         LfgSetup.open(uid, clean(name), size, title, picks).getOrElse {
             val id = Tournament.newSecret(10)
             event("open", id, uid, clean(name), size, title)

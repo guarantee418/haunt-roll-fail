@@ -196,7 +196,9 @@ object LfgSetup {
         "players 3" -> "3p", "players 4" -> "4p", "players 5" -> "5p", "title" -> "adset")
 
     def emojiOf(key : String) : Option[(String, String, Boolean)] = {
+        // a deck with no emoji of its own: the base deck's (asked for on 2026-11-20: only ep and sd have their own)
         val n = emojiNames.get(key).orElse(Some(key).filter(_.startsWith("IncludeFaction(")).map(_.stripPrefix("IncludeFaction(").stripSuffix(")").toLowerCase))
+            .orElse(Some("base").filter(_ => key.endsWith("Deck")))
         n.flatMap(x => emojiMap().get(x).map { case (id, a) => (x, id, a) })
     }
 
@@ -210,7 +212,9 @@ object LfgSetup {
     def summary(c : Catalog, options : List[String]) : String = {
         val pool = c.need.map(_._1).toList.flatMap(p => options.filter(_.startsWith(p)))
         val important = options.filter(o => c.byName.get(o).exists(_.important)).map(o => emojiText(o) + c.label(o))
+        val set = commandSections.flatMap(g => options.filter(o => c.byName.get(o).exists(_.group == g)).map(o => g + ": " + c.label(o)))
         (if (important.isEmpty) "" else important.mkString(" · ") + "\n") +
+        (if (set.isEmpty) "" else set.mkString(" · ") + "\n") +
         (if (pool.isEmpty) "" else "Factions in the draft: " + pool.map(o => emojiText(o).trim match { case "" => c.label(o) ; case e => e }).mkString(" ") + "\n")
     }
 
@@ -222,28 +226,39 @@ object LfgSetup {
     // a menu: its section, the options it lists, whether it takes several; or the players' menu, or the presets'
     case class Menu(group : String, options : List[Opt], many : Boolean, kind : String = "options")
 
-    // the sections one menu holds together, each option named with its section (asked for on 2026-11-20: what is random must say
-    // what it is): the setup screen's section names
-    val together = List("Clearings", "Hirelings")
+    // the setup screen's sections /root sets (one pick each), beside the map and the deck
+    val commandSections = List("Clearings", "Hirelings", "Landmarks", "Insurgent Lock")
+    // the panel's sections: the hits and ambushes (the section whose name starts so), and the hirelings in their draft, when the
+    // hirelings picked aren't none
+    val hitsSection = "Hits and Ambushes"
+    val hirelingDraft = List("Demoted Hirelings", "Staunch Hirelings")
+    val noHirelings = "NoHirelings"
 
-    // THE PANEL, one page (asked for on 2026-11-20): Discord shows four menus and a row of buttons, so it has the main picks (the
-    // Important sections, the map and the deck, each with the section that shares its choice: Fan Maps, Fan Decks), the clearings and
-    // hirelings together, and the factions in the draft (the first section of them: the official ones). The rest (faction rules,
-    // landmarks, fan factions...) keep the site's defaults.
+    // the map and the deck: the Important sections, each with the one that shares its choice (Fan Maps, Fan Decks)
+    def mainSections(s : State) : List[List[Opt]] = {
+        val shown = s.c.options.filter(s.shown)
+        var main = List[List[Opt]]()
+        shown.filter(_.important).map(_.group).distinct.map(g => shown.filter(_.group == g)).foreach { g =>
+            val i = main.indexWhere(m => m.size + g.size <= 25 && m.exists(o => s.forcedOff(o.name).exists(x => g.exists(_.name == x))))
+            if (i >= 0) main = main.updated(i, main(i) ++ g) else main :+= g
+        }
+        main
+    }
+
+    // THE PANEL, one page (asked for on 2026-11-20): what /root didn't set. The map, the deck, the clearings, the hirelings, the
+    // landmarks and the insurgent lock are given with /root (else the site's defaults), so the panel has the hits and ambushes, the
+    // factions in the draft (the first section of them: the official ones) and, with hirelings, the hirelings in their draft. The rest
+    // (faction rules, fan factions...) keep the site's defaults.
     def pages(d : Draft) : List[List[Menu]] = {
         val s = d.state
         def listed(g : List[Opt]) = g.filter(o => !s.mandatory.contains(o.name) && (s.selected.contains(o.name) || s.enabled(o.name)))
         val shown = s.c.options.filter(s.shown)
         def section(g : String) = shown.filter(_.group == g)
-        var main = List[List[Opt]]()
-        shown.filter(_.important).map(_.group).distinct.map(section).foreach { g =>
-            val i = main.indexWhere(m => m.size + g.size <= 25 && m.exists(o => s.forcedOff(o.name).exists(x => g.exists(_.name == x))))
-            if (i >= 0) main = main.updated(i, main(i) ++ g) else main :+= g
-        }
-        val picks = main.take(2).map(g => Menu(g.head.group, listed(g), false))
-        val choices = Menu(together.mkString(" and "), listed(together.flatMap(section)), true, "choices")
+        val hits = shown.find(_.group.startsWith(hitsSection)).map(o => Menu(hitsSection, listed(section(o.group)), true)).toList
         val pool = s.c.need.map(_._1).flatMap(p => shown.find(_.name.startsWith(p))).map(o => Menu("Factions in the draft", listed(section(o.group)), true)).toList
-        List((picks :+ choices) ++ pool).map(_.filter(_.options.nonEmpty))
+        val hirelings = s.actual.exists(o => s.c.byName.get(o).exists(_.group == "Hirelings")) && !s.actual.contains(noHirelings)
+        val draft = if (hirelings) hirelingDraft.map(g => Menu(g, listed(section(g)), true)) else Nil
+        List((hits ++ pool ++ draft).take(4).filter(_.options.nonEmpty))
     }
 
     def cut(s : String, n : Int) = if (s.length <= n) s else s.take(n - 1) + "…"
@@ -293,7 +308,9 @@ object LfgSetup {
         val text = emojiText("title") + "**" + Lfg.label + ": " + d.title + "**, " + d.n + " players\n" +
             summary(s.c, s.actual) +
             (if (d.note.nonEmpty) "**" + d.note + "**\n" else "") +
-            "Pick the map, the deck, the clearings and hirelings and the factions (the site's defaults are picked; everything else is as the site sets it), then press **Open the game** to post it here for players to join. Only you see this."
+            "The map, deck, clearings, hirelings, landmarks and insurgent lock are as given with /root (or the site's defaults). Pick the hits and ambushes, the factions in the draft" +
+            (if (menus.exists(m => hirelingDraft.contains(m.group))) " and the hirelings in their draft" else "") +
+            ", then press **Open the game** to post it here for players to join. Only you see this."
 
         "{\"content\":" + Lfg.json(cut(text, 1990)) + ",\"flags\":64,\"components\":[" + (rows :+ buttons).mkString(",") + "],\"allowed_mentions\":{\"parse\":[]}}"
     }
@@ -315,12 +332,12 @@ object LfgSetup {
     // (the catalog's, for four players), registered with the command (Lfg.register, again when the catalog changes)
     def commandOptions() : List[(String, String, List[(String, String)])] = catalog().filter(_.meta == Lfg.meta).toList.flatMap { c =>
         val s = State.defaults(c, 4)
-        val main = pages(Draft("", "", "", 4, "", s, 0)).head.filter(m => m.kind == "options" && !m.many)
+        val main = mainSections(s)
         val shown = c.options.filter(s.shown).filter(o => !s.mandatory.contains(o.name))
         def section(g : String) = shown.filter(_.group == g)
-        List(("map", "The map", main.lift(0).map(_.options).getOrElse(Nil)), ("deck", "The deck", main.lift(1).map(_.options).getOrElse(Nil)),
+        List(("map", "The map", main.lift(0).getOrElse(Nil)), ("deck", "The deck", main.lift(1).getOrElse(Nil)),
             ("clearings", "How the clearings' suits are set", section("Clearings")), ("hirelings", "The hirelings", section("Hirelings")),
-            ("landmarks", "A landmark", section("Landmarks")))
+            ("landmarks", "A landmark", section("Landmarks")), ("insurgent_lock", "Whether the last insurgent is locked", section("Insurgent Lock")))
             .map { case (n, d, oo) => (n, d, oo.take(25).map(o => (o.label, o.name))) }.filter(_._3.nonEmpty)
     }
 
