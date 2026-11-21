@@ -288,6 +288,9 @@ trait Callbacks {
     def returnToTitle() : Unit
     // A local game (hotseat) with more than one human player on this device
     def hotseat : Boolean
+    // The bot playing a seat (its name: "Easy", "Hard", ...), from the seats the game was started with (an online game's lobby
+    // lines, a local game's save); None for a person. Display only (Northgard's player panels)
+    def bot(f : Any) : Option[String] = None
 }
 
 sealed trait Difficulty
@@ -3143,6 +3146,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
             val callbacks = new Callbacks {
                 def switches = swt
+                override def bot(f : Any) = difficulties.toList.collectFirst { case (k, Bot(d)) if k == f => d ; case (k, BotDebug(d)) if k == f => d }
                 def saveReplay(onSave : => Unit) = {
                     val filename = "hrf--" + meta.name + "--" + HRF.version + "--replay--" + HRF.startAt.toISOString().take(16).replace("T", "--")
 

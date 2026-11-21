@@ -363,6 +363,11 @@ object SeasonIcon {
     def winter : Elem = Image("ui-winter", styles.inlineIcon).alt("Winter")
 }
 
+// A clan played by a bot: before its name in the player panel (nort/tools/player-type-icons.py)
+object BotIcon {
+    def apply() : Elem = Image("ui-bot", styles.inlineIcon).alt("Bot")
+}
+
 object FirstPlayerIcon {
     def apply() : Elem = Image("ui-first-player", styles.inlineIcon).alt("First player")
 }
@@ -409,6 +414,8 @@ case class HandInfoAction(self : Faction, title : Elem, card : Card, n : Int = 1
 // The Winter cost chart, opened from a player panel
 case class WinterChart(f : Faction)
 case class RobotosInfo(f : Faction)
+// Tapping the bot icon before a clan's name in its panel: the bot's level
+case class PlayerTypeInfo(f : Faction)
 // Tapping a player's name or clan in its panel shows the clan's abilities, upgrades and warchief, as the clan picker's i button does
 case class ClanInfo(f : Faction)
 // Tapping a piece on the map: a clan token (Kaija, Brundr and Kaelinn, High Tide, Scorched Earth) shows the clan's cards, a warchief its board and card
