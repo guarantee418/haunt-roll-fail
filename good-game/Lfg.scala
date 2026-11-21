@@ -20,7 +20,8 @@ import java.nio.file.{Files, Path, Paths}
 // the Discord server (DiscordBot.guild) with the bot's token when the key is set and at the server's start.
 //
 // Mentions: Discord user IDs only (allowed_mentions), never @everyone, and the root-lfg role once, when a post goes up (`announced`). The
-// lists in the post show players without pinging them; the players are pinged once, when their game starts.
+// lists in the post are its allowed mentions, so it is highlighted for them (the first version notifies them, as its host and first
+// players; an edit notifies no one); the players are pinged once more when their game starts.
 //
 // File turns/lfg.tsv, the posts' events (the last state counts):
 //   time, open, id, host's Discord ID, host's name, seats, title
@@ -176,11 +177,11 @@ object Lfg {
 
     def buttons(bb : String*) = if (bb.isEmpty) "[]" else "[{\"type\":1,\"components\":[" + bb.mkString(",") + "]}]"
 
-    // the post as it stands: its text and buttons; nobody is pinged by an edit, or by the lists (allowed_mentions: none)
+    // the post as it stands: its text and buttons; nobody is pinged by an edit; the players it lists are its allowed mentions (`listed`)
     // THE LFG ROLE (asked for on 2026-11-20): a new post pings the Discord server's role of this name (its members asked for LFG
     // posts), once, when it goes up; the post's edits ping no one. Looked up by the bot, for 10 minutes. Every version of the post
-    // starts with the role's mention, so it stays highlighted after a Join or Leave (2026-11-21: the edits dropped it); only the
-    // first one allows it to ping
+    // starts with the role's mention and allows it, so it stays highlighted after a Join or Leave (2026-11-21: the edits dropped it,
+    // then kept the text but not the allowance, so nobody saw it highlighted); an edit notifies no one, so only the first one pings
     val roleName = "root-lfg"
 
     @volatile var roleCache : (Long, Option[String]) = (0L, None)
@@ -204,10 +205,12 @@ object Lfg {
     }
 
     // the new post, pinging the LFG role
-    def announced(p : Post) : String = role() match {
-        case Some(r) => message(p).replace(",\"allowed_mentions\":{\"parse\":[]}}", ",\"allowed_mentions\":{\"parse\":[],\"roles\":[" + json(r) + "]}}")
-        case None => message(p)
-    }
+    def announced(p : Post) : String = message(p)
+
+    // the players the post lists (the host and the players, or the started game's), allowed as mentions so the post is highlighted
+    // for each of them, as Discord highlights a message only for those it lets it mention (2026-11-21: the owner saw his own name
+    // in a post that wasn't highlighted for him); an edit notifies no one, so a Join or Leave pings nobody
+    def listed(p : Post) : List[String] = (p.game.map(_.ids).getOrElse(p.host :: p.players.map(_._1))).filter(_.nonEmpty).distinct.take(100)
 
     def message(p : Post) : String = {
         val picks = if (p.options.isEmpty) "" else LfgSetup.catalog().map(c => LfgSetup.summary(c, p.options)).getOrElse("")
@@ -227,7 +230,8 @@ object Lfg {
                     "Press **Join** to play. The game starts by itself when all " + p.size + " seats are taken, or when the host presses **Start** (" + minSeats + " players or more).",
                     buttons(button("Join", 1, "join", p.id, "👍"), button("Leave", 2, "leave", p.id), button("Start", 3, "start", p.id), button("Cancel", 4, "cancel", p.id)))
         }
-        "{\"content\":" + json(role().map("<@&" + _ + "> ").getOrElse("") + text) + ",\"components\":" + bb + ",\"allowed_mentions\":{\"parse\":[]}}"
+        "{\"content\":" + json(role().map("<@&" + _ + "> ").getOrElse("") + text) + ",\"components\":" + bb +
+            ",\"allowed_mentions\":{\"parse\":[],\"users\":[" + listed(p).map(json).mkString(",") + "]" + role().map(r => ",\"roles\":[" + json(r) + "]").getOrElse("") + "}}"
     }
 
     def reply(kind : Int, data : String) = "{\"type\":" + kind + ",\"data\":" + data + "}"
