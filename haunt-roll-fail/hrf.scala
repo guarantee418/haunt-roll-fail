@@ -2484,15 +2484,14 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 ui.logger.alog(" Reload " + url)
                 dom.document.location.assign(url)
             })).$ ++
-            accountRows ++
-            tournamentGames ++
-            myGameRows ++
             ZBasic(meta.label.hl, "New Online Game".hl.styled(xstyles.larger110), () => {
                 goOnlineNew()
             }).?.$ ++
-            games.%(_.status.has("archived").not)./(g => ZBasic("Recent Games", (new scalajs.js.Date(g.time).asInstanceOf[Dynamic].toLocaleString("sv-SE").toString.spn(xstyles.smaller75) ~ Break ~ g.title.hh).div($(xlo.fullwidth, xlo.fullheight)), () => {
-                goOnlineLobby(g.lobby)
-            })) ++
+            accountRows ++
+            tournamentGames ++
+            myGameRows ++
+            // (the Recent Games list, every online game this browser opened, was removed on 2026-11-20, asked for: the player's own
+            // games are under Your Active Games; a game's links menu is still at /play/<meta>/online/lobby/<lobby>)
             ZBasic("  ", "Archived Games".hh, () => {
                 goOnlineArchive()
             }).?.$.%(_ => games.exists(_.status.has("archived"))) ++
