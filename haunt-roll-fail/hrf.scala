@@ -84,6 +84,7 @@ object HRF {
     def paramList(p : String) = param(p)./~(_.split(' ').$)
 
     val versionOverride = hashParam("version") || urlParam("version")
+    var lfgSent = false
 
     var segments = dom.window.location.pathname.split('/').$.drop(3)
 
@@ -288,6 +289,9 @@ trait Callbacks {
     def returnToTitle() : Unit
     // A local game (hotseat) with more than one human player on this device
     def hotseat : Boolean
+    // The bot playing a seat (its name: "Easy", "Hard", ...), from the seats the game was started with (an online game's lobby
+    // lines, a local game's save); None for a person. Display only (Northgard's player panels)
+    def bot(f : Any) : Option[String] = None
 }
 
 sealed trait Difficulty
@@ -2404,6 +2408,14 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             } { }
 
             heldNames { n => h = |(n) ; again() }
+
+            // Discord LFG games (good-game/Lfg.scala): the options this version of the site gives them, once a page load
+            if (HRF.lfgSent.not) {
+                HRF.lfgSent = true
+                HRF.metas.%(_.lfgOptions.any).foreach { m =>
+                    postF(HRF.server.get + "/lfg/template", m.name + "\n" + HRF.version + "\n" + m.lfgOptions./(o => m.writeOption(o)).join(" "))(_ => ())(())
+                }
+            }
         }
 
         // the game waits on the player (the server's sixth field, good-game/Turns.scala; 2026-11-20)
@@ -2481,15 +2493,14 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 ui.logger.alog(" Reload " + url)
                 dom.document.location.assign(url)
             })).$ ++
-            accountRows ++
-            tournamentGames ++
-            myGameRows ++
             ZBasic(meta.label.hl, "New Online Game".hl.styled(xstyles.larger110), () => {
                 goOnlineNew()
             }).?.$ ++
-            games.%(_.status.has("archived").not)./(g => ZBasic("Recent Games", (new scalajs.js.Date(g.time).asInstanceOf[Dynamic].toLocaleString("sv-SE").toString.spn(xstyles.smaller75) ~ Break ~ g.title.hh).div($(xlo.fullwidth, xlo.fullheight)), () => {
-                goOnlineLobby(g.lobby)
-            })) ++
+            accountRows ++
+            tournamentGames ++
+            myGameRows ++
+            // (the Recent Games list, every online game this browser opened, was removed on 2026-11-20, asked for: the player's own
+            // games are under Your Active Games; a game's links menu is still at /play/<meta>/online/lobby/<lobby>)
             ZBasic("  ", "Archived Games".hh, () => {
                 goOnlineArchive()
             }).?.$.%(_ => games.exists(_.status.has("archived"))) ++
@@ -3143,6 +3154,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
             val callbacks = new Callbacks {
                 def switches = swt
+                override def bot(f : Any) = difficulties.toList.collectFirst { case (k, Bot(d)) if k == f => d ; case (k, BotDebug(d)) if k == f => d }
                 def saveReplay(onSave : => Unit) = {
                     val filename = "hrf--" + meta.name + "--" + HRF.version + "--replay--" + HRF.startAt.toISOString().take(16).replace("T", "--")
 

@@ -38,6 +38,30 @@ object DiscordBot {
         }
     }
 
+    // a POST, PUT or PATCH of JSON (Lfg.scala: the slash command, the follow-ups), with the bot's token when auth is given; the body when 2xx
+    def send(method : String, url : String, body : String, auth : Option[String]) : Option[String] = {
+        val b = java.net.http.HttpRequest.newBuilder(java.net.URI.create(url)).timeout(java.time.Duration.ofSeconds(10))
+            .header("Content-Type", "application/json").method(method, java.net.http.HttpRequest.BodyPublishers.ofString(body, UTF_8))
+        auth.foreach(t => b.header("Authorization", "Bot " + t))
+        val request = b.build()
+
+        var r = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString(UTF_8))
+        var tries = 0
+        while (r.statusCode == 429 && tries < 3) {
+            val wait = "\"retry_after\"\\s*:\\s*([0-9.]+)".r.findFirstMatchIn(r.body).flatMap(_.group(1).toDoubleOption).getOrElse(2.0)
+            Thread.sleep((wait.min(10.0) * 1000).toLong + 250)
+            r = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString(UTF_8))
+            tries += 1
+        }
+
+        if (r.statusCode / 100 == 2)
+            Some(r.body)
+        else {
+            println("Discord bot: " + method + " " + url.replaceAll("/webhooks/.*", "/webhooks/...") + " answered " + r.statusCode + " " + r.body.take(200))
+            None
+        }
+    }
+
     // the webhook whose server was looked up, and that server
     @volatile var webhookGuild : Option[(String, String)] = None
 

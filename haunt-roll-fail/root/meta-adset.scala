@@ -169,6 +169,19 @@ object MetaAdset extends MetaGame {
         ).distinct
     }
 
+    // Discord LFG games (good-game/Lfg.scala): the site's defaults, as New Online Game starts with them for four players
+    override def lfgOptions : $[O] = {
+        val four = factions.take(4)
+        (mandatoryFor(4, four) ++ completeSaved(4, four, defaultsFor(4, four))).distinct
+    }
+
+    // the seat that drafted the faction asked (P1, P2...), as the lobby's "user" lines name the seats; a seat still drafting is asked itself
+    override def turnSeat(g : G, f : Any) : String = f match {
+        case p : PlayerN => writeFaction(p)
+        case f : Faction => g.ftp.get(f).collect { case p : PlayerN => writeFaction(p) }.|(f.short)
+        case _ => ""
+    }
+
     // Rankings: the Root ladder, each faction's side given to the seat that drafted it
     override def ranking = Meta.ranking
     override def rankingSides(g : G, winners : $[Any]) = Meta.rankSides(g, winners)./{ case (l, w) => (l./~(f => g.ftp.get(f))./~(_.as[PlayerN]), w) }

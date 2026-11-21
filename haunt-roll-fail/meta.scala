@@ -211,6 +211,12 @@ trait MetaBase {
     // played in, shown as "Tournament" on this meta's menu, and the options that meta gives a tournament game
     def tournament : |[String] = None
     def tournamentOptions : $[O] = $
+    // Discord LFG games (good-game/Lfg.scala, 2026-11-20): the meta a game started from a Discord LFG post is played in, and the
+    // options the site gives a new game of it by default (before startOptions draws the map), sent to the server by Play Online
+    def lfgOptions : $[O] = $
+    // the seat a turn report names (good-game/Turns.scala), as the lobby's "user <seat> <user>" lines write it: the faction asked,
+    // unless the game's seats aren't its factions (Root's Advanced Setup: a seat drafts its faction in the game)
+    def turnSeat(g : G, f : Any) : String = writeFaction(f.asInstanceOf[F])
     def rankingSides(g : G, winners : $[Any]) : $[($[F], Boolean)] = $
     // and, for the faction and turn order stats, what each seat played: its faction, its place in the turn order (from 1), the
     // number of players and its score (VP or fame, "D" for a Root dominance)

@@ -553,6 +553,27 @@ object GoodGame {
                     }
                 }
             } ~
+            // Discord LFG games (Lfg.scala): the options the client gives them, "<meta>\n<version>\n<options>"
+            (post & path("lfg" / "template")) {
+                decodeRequest {
+                    entity(as[String]) { body =>
+                        plain(Lfg.setTemplate(body.take(25000)))
+                    }
+                }
+            } ~
+            // Discord's interactions (Lfg.scala): the /root command and the LFG posts' buttons, signed with the application's key
+            (post & path("discord" / "interactions")) {
+                optionalHeaderValueByName("X-Signature-Ed25519") { signature =>
+                    optionalHeaderValueByName("X-Signature-Timestamp") { timestamp =>
+                        entity(as[Array[Byte]]) { body =>
+                            Lfg.interaction(signature, timestamp, body) match {
+                                case Some(answer) => complete(HttpEntity(ContentTypes.`application/json`, answer))
+                                case None => complete(StatusCodes.Unauthorized, "invalid request signature")
+                            }
+                        }
+                    }
+                }
+            } ~
             (post & path("new-user")) {
                 decodeRequest {
                     entity(as[String]) { body =>
@@ -688,6 +709,8 @@ object GoodGame {
         Backup.start(db)
 
         Tournament.start(db, url)
+
+        Lfg.start()
 
         // Webroot for Let's Encrypt HTTP-01 challenges (certbot --webroot -w good-game/acme)
         val acmeDir = new java.io.File("acme")
