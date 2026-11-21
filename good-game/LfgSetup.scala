@@ -219,31 +219,28 @@ object LfgSetup {
     // a menu: its section, the options it lists, whether it takes several; or the players' menu, or the presets'
     case class Menu(group : String, options : List[Opt], many : Boolean, kind : String = "options")
 
-    // the panel's pages (asked for on 2026-11-20: the main picks first, the on/off menus closed): the first has the players and the
-    // main picks (the Important sections: the map, the deck), then the setup screen's pages, four menus a page. One-pick sections
-    // that share their choice (each turns the other's options off: Map and Fan Maps, Deck and Fan Decks) are one menu
+    // the sections one menu holds together, each option named with its section (asked for on 2026-11-20: what is random must say
+    // what it is): the setup screen's section names
+    val together = List("Clearings", "Hirelings")
+
+    // THE PANEL, one page (asked for on 2026-11-20): Discord shows four menus and a row of buttons, so it has the main picks (the
+    // Important sections, the map and the deck, each with the section that shares its choice: Fan Maps, Fan Decks), the clearings and
+    // hirelings together, and the factions in the draft (the first section of them: the official ones). The rest (faction rules,
+    // landmarks, fan factions...) keep the site's defaults.
     def pages(d : Draft) : List[List[Menu]] = {
         val s = d.state
         def listed(g : List[Opt]) = g.filter(o => !s.mandatory.contains(o.name) && (s.selected.contains(o.name) || s.enabled(o.name)))
-        val site = s.c.options.filter(s.shown).groupBy(_.page).toList.sortBy(_._1).map { case (_, oo) =>
-            val groups = oo.map(_.group).distinct.map(g => oo.filter(_.group == g))
-            var merged = List[List[Opt]]()
-            groups.foreach { g =>
-                val single = !g.exists(_.toggle)
-                val i = merged.indexWhere(m => single && !m.exists(_.toggle) && m.size + g.size <= 25 && m.exists(o => s.forcedOff(o.name).exists(x => g.exists(_.name == x))))
-                if (i >= 0) merged = merged.updated(i, merged(i) ++ g) else merged :+= g
-            }
-            merged.flatMap(g => listed(g).grouped(25).toList.map(l => Menu(g.head.group, l, l.exists(_.toggle)))).filter(_.options.nonEmpty)
+        val shown = s.c.options.filter(s.shown)
+        def section(g : String) = shown.filter(_.group == g)
+        var main = List[List[Opt]]()
+        shown.filter(_.important).map(_.group).distinct.map(section).foreach { g =>
+            val i = main.indexWhere(m => m.size + g.size <= 25 && m.exists(o => s.forcedOff(o.name).exists(x => g.exists(_.name == x))))
+            if (i >= 0) main = main.updated(i, main(i) ++ g) else main :+= g
         }
-        val featured = site.flatten.filter(m => !m.many && m.options.exists(_.important))
-        val rest = site.map(_.filterNot(featured.contains))
-        val players = Menu("Players", Nil, false, "players")
-        val presets = if (s.c.presets.getOrElse(d.n, Nil).nonEmpty) List(Menu("Presets", Nil, false, "preset")) else Nil
-        val first = players :: featured.take(3)
-        val firstSite = rest.headOption.getOrElse(Nil)
-        val room = 4 - first.size
-        val after = (featured.drop(3) ++ presets ++ firstSite.drop(room)).grouped(4).toList ++ rest.drop(1).flatMap(_.grouped(4))
-        (first ++ firstSite.take(room)) :: after.filter(_.nonEmpty)
+        val picks = main.take(2).map(g => Menu(g.head.group, listed(g), false))
+        val choices = Menu(together.mkString(" and "), listed(together.flatMap(section)), true, "choices")
+        val pool = s.c.need.map(_._1).flatMap(p => shown.find(_.name.startsWith(p))).map(o => Menu("Factions in the draft", listed(section(o.group)), true)).toList
+        List((picks :+ choices) ++ pool).map(_.filter(_.options.nonEmpty))
     }
 
     def cut(s : String, n : Int) = if (s.length <= n) s else s.take(n - 1) + "…"
@@ -266,31 +263,34 @@ object LfgSetup {
         val menus = pp(page)
         val k = "lfgs:" + d.id + ":"
 
-        // a menu of several shows no picks when closed (each would take a line): its count, and In or Out under each option, a pick
-        // changing it
+        def picked(o : Opt) = s.selected.contains(o.name)
+        // each option named with its section in a menu of one pick (the closed menu shows only the pick) and in the menu of several
+        // sections; a menu of several shows no picks when closed (each would take a line), only a count or the picks' names, and
+        // under each option whether it's picked, a pick changing it
         val rows = menus.zipWithIndex.map { case (m, i) =>
+            val id = k + "m:" + page + ":" + i
             m.kind match {
-                case "players" => select(k + "players", "Players", 1, 1, s.c.players.map(n => (n + " players", n.toString, n == d.n, emojiField("players " + n), "")))
-                case "preset" => select(k + "preset", "Presets: set every option at once", 1, 1, s.c.presets.getOrElse(d.n, Nil).zipWithIndex.map { case ((t, _), i) => (t, i.toString, false, "", "") })
+                case "choices" =>
+                    val now = m.options.filter(picked).map(o => o.group + ": " + o.label).mkString(" · ")
+                    select(id, if (now.isEmpty) m.group else now, 0, m.options.size,
+                        m.options.map(o => (o.group + ": " + o.label, o.name, false, emojiField(o.name), if (picked(o)) "✅ Picked" else "Pick to switch to this")))
                 case _ if m.many =>
-                    val on = m.options.count(o => s.selected.contains(o.name))
-                    select(k + "m:" + page + ":" + i, m.group + ": " + on + " of " + m.options.size + " picked · pick to change", 0, m.options.size,
-                        m.options.map(o => (o.label, o.name, false, emojiField(o.name), if (s.selected.contains(o.name)) "✅ Picked · pick to take it out" else "Not picked · pick to add it")))
+                    val on = m.options.count(picked)
+                    select(id, m.group + ": " + on + " of " + m.options.size + " · pick to change", 0, m.options.size,
+                        m.options.map(o => (o.label, o.name, false, emojiField(o.name), if (picked(o)) "✅ Picked · pick to take it out" else "Not picked · pick to add it")))
                 case _ =>
-                    select(k + "m:" + page + ":" + i, m.group, 1, 1, m.options.map(o => (o.label, o.name, s.selected.contains(o.name), emojiField(o.name), "")))
+                    select(id, m.group, 1, 1, m.options.map(o => (m.group + ": " + o.label, o.name, picked(o), emojiField(o.name), "")))
             }
         }
 
         val buttons = "{\"type\":1,\"components\":[" + List(
-            button("Back", 2, k + "back", page == 0), button("Next", 2, k + "next", page == pp.size - 1),
+            button("−", 2, k + "fewer", !s.c.players.exists(_ < d.n)), button(d.n + " players", 2, k + "count", true), button("+", 2, k + "more", !s.c.players.exists(_ > d.n)),
             button("Open the game", 3, k + "open"), button("Cancel", 4, k + "cancel")).mkString(",") + "]}"
 
-        val groups = menus.filter(_.kind == "options").map(_.group).distinct
-        val text = emojiText("title") + "**" + Lfg.label + ": " + d.title + "**, " + d.n + " players. Page " + (page + 1) + " of " + pp.size +
-            (if (groups.nonEmpty) ": " + groups.mkString(", ") else "") + "\n" +
+        val text = emojiText("title") + "**" + Lfg.label + ": " + d.title + "**, " + d.n + " players\n" +
             summary(s.c, s.actual) +
             (if (d.note.nonEmpty) "**" + d.note + "**\n" else "") +
-            "Pick the options (the site's defaults are picked), then press **Open the game** to post it here for players to join. Only you see this."
+            "Pick the map, the deck, the clearings and hirelings and the factions (the site's defaults are picked; everything else is as the site sets it), then press **Open the game** to post it here for players to join. Only you see this."
 
         "{\"content\":" + Lfg.json(cut(text, 1990)) + ",\"flags\":64,\"components\":[" + (rows :+ buttons).mkString(",") + "],\"allowed_mentions\":{\"parse\":[]}}"
     }
@@ -315,6 +315,9 @@ object LfgSetup {
         def show(x : Draft) = { drafts.put(x.id, x) ; reply(7, panel(x)) }
 
         parts.drop(2) match {
+            case ("fewer" | "more") :: Nil =>
+                val n = (if (parts(2) == "fewer") c.players.filter(_ < d.n).lastOption else c.players.find(_ > d.n)).getOrElse(d.n)
+                show(d.copy(n = n, state = State.of(c, n, d.state.selected), note = ""))
             case "players" :: Nil =>
                 val n = values.headOption.flatMap(_.toIntOption).filter(c.players.contains).getOrElse(d.n)
                 show(d.copy(n = n, state = State.of(c, n, d.state.selected), note = ""))
@@ -327,7 +330,7 @@ object LfgSetup {
             case "m" :: p :: i :: Nil =>
                 pages(d).lift(p.toIntOption.getOrElse(-1)).flatMap(_.lift(i.toIntOption.getOrElse(-1))) match {
                     case None => show(d.copy(note = ""))
-                    case Some(m) if m.kind == "options" =>
+                    case Some(m) if m.kind == "options" || m.kind == "choices" =>
                         val offered = m.options.map(_.name)
                         var s = d.state
                         // as if each were tapped on the setup screen: a menu of several changes each one picked (in or out), a menu
