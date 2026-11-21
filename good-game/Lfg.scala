@@ -303,7 +303,8 @@ object Lfg {
         val size = options.get("players").map(v => str(Option(v)).toIntOption.getOrElse(4)).getOrElse(4).max(minSeats).min(maxSeats)
         val title = Some(clean(str(options.get("title").flatMap(Option(_))).replace("*", "").replace("~", "").replace("`", ""))).filter(_.nonEmpty).getOrElse(randomTitle())
         // the setup panel, with every option, once the site has sent them (LfgSetup.scala); else the post with the site's defaults
-        LfgSetup.open(uid, clean(name), size, title).getOrElse {
+        val picks = List("map", "deck", "clearings", "hirelings", "landmarks").flatMap(k => options.get(k).flatMap(v => Option(v)).collect { case v : String => v })
+        LfgSetup.open(uid, clean(name), size, title, picks).getOrElse {
             val id = Tournament.newSecret(10)
             event("open", id, uid, clean(name), size, title)
             reply(4, message(posts()(id)))
@@ -374,7 +375,11 @@ object Lfg {
                         case Some(a) =>
                             val command = "[{\"name\":\"root\",\"type\":1,\"description\":\"Look for players for an online Root game (Advanced Setup) on the site\",\"options\":[" +
                                 "{\"type\":4,\"name\":\"players\",\"description\":\"How many players (2 to 6, 4 if not given)\",\"required\":false,\"min_value\":" + minSeats + ",\"max_value\":" + maxSeats + "}," +
-                                "{\"type\":3,\"name\":\"title\",\"description\":\"The game's name (a random one if not given)\",\"required\":false,\"max_length\":32}]}]"
+                                "{\"type\":3,\"name\":\"title\",\"description\":\"The game's name (a random one if not given)\",\"required\":false,\"max_length\":32}" +
+                                LfgSetup.commandOptions().map { case (n, d, cc) =>
+                                    ",{\"type\":3,\"name\":" + json(n) + ",\"description\":" + json(d + " (the site's default if not given)") + ",\"required\":false,\"choices\":[" +
+                                    cc.map { case (label, value) => "{\"name\":" + json(LfgSetup.cut(label, 100)) + ",\"value\":" + json(value) + "}" }.mkString(",") + "]}"
+                                }.mkString + "]}]"
                             if (DiscordBot.send("PUT", "https://discord.com/api/v10/applications/" + a + "/guilds/" + g + "/commands", command, Some(t)).nonEmpty) "registered" else "not registered: Discord refused it"
                     }
                 }

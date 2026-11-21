@@ -75,6 +75,9 @@ object LfgSetup {
             case Some(_) =>
                 Files.createDirectories(TurnPings.dir)
                 Files.write(file, (meta + "\t" + hash + "\n" + body).getBytes(UTF_8))
+                // /root's choices come from it: registered again
+                if (Lfg.publicKey.nonEmpty)
+                    new Thread(() => println("LFG: /root " + Lfg.register())).start()
                 "ok"
             case None => "no"
         }
@@ -298,11 +301,27 @@ object LfgSetup {
     def reply(kind : Int, data : String) = "{\"type\":" + kind + ",\"data\":" + data + "}"
 
     // /root: a new panel, or nothing without a catalog (the plain post then, as before the panel)
-    def open(uid : String, name : String, n : Int, title : String) : Option[String] = catalog().filter(_.meta == Lfg.meta).map { c =>
+    // picks: the options given with the command (map, deck...), picked over the defaults as if tapped on the panel
+    def open(uid : String, name : String, n : Int, title : String, picks : List[String] = Nil) : Option[String] = catalog().filter(_.meta == Lfg.meta).map { c =>
         val players = if (c.players.contains(n)) n else c.players.find(_ >= n).getOrElse(c.players.last)
-        val d = Draft(Tournament.newSecret(10), uid, name, players, title, State.defaults(c, players), 0)
+        var state = State.defaults(c, players)
+        picks.foreach(o => if (!state.selected.contains(o) && state.enabled(o)) state = state.click(o))
+        val d = Draft(Tournament.newSecret(10), uid, name, players, title, state, 0)
         drafts.put(d.id, d)
         reply(4, panel(d))
+    }
+
+    // THE COMMAND'S OPTIONS (asked for on 2026-11-20): /root map, deck, clearings, hirelings and landmarks, their choices the panel's
+    // (the catalog's, for four players), registered with the command (Lfg.register, again when the catalog changes)
+    def commandOptions() : List[(String, String, List[(String, String)])] = catalog().filter(_.meta == Lfg.meta).toList.flatMap { c =>
+        val s = State.defaults(c, 4)
+        val main = pages(Draft("", "", "", 4, "", s, 0)).head.filter(m => m.kind == "options" && !m.many)
+        val shown = c.options.filter(s.shown).filter(o => !s.mandatory.contains(o.name))
+        def section(g : String) = shown.filter(_.group == g)
+        List(("map", "The map", main.lift(0).map(_.options).getOrElse(Nil)), ("deck", "The deck", main.lift(1).map(_.options).getOrElse(Nil)),
+            ("clearings", "How the clearings' suits are set", section("Clearings")), ("hirelings", "The hirelings", section("Hirelings")),
+            ("landmarks", "A landmark", section("Landmarks")))
+            .map { case (n, d, oo) => (n, d, oo.take(25).map(o => (o.label, o.name))) }.filter(_._3.nonEmpty)
     }
 
     // a menu picked or a button pressed on a panel
