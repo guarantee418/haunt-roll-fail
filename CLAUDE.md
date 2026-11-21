@@ -57,7 +57,9 @@ map cells (`Tiles.beach`), and a tile side no area owns is sea. The Wastelands e
 is offered in every game (standard tile, any of the nine, the Wilderness Great
 Lake, or random) and needs
 the module only for the rest of Wastelands,
-five more creatures, Hrimgandr and Jötunn Blainn) is in `nort/wastelands.scala`.
+five more creatures, Hrimgandr and Jötunn Blainn) is in `nort/wastelands.scala`. Tamer (Horizons) never moves Hrimgandr in games with
+the hidden `TamerSparesHrimgandr` every new game gets (2026-11-21: a bot game's Tamer moved him, and with the Creatures module off the
+step after stopped the game; `tamerCreatures` in `nort/horizon-devs.scala`), and his move does nothing in older games.
 The solo Automa (Uncharted Horizons' Solo module) is
 in `nort/automa.scala`, with its 15 cards transcribed from the Tabletopia
 module ("Solo vs Automa" on the main menu). Its Training Fields module, a two-player duel on

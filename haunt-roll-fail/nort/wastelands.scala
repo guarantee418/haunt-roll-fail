@@ -409,6 +409,11 @@ object WastelandsExpansion extends Expansion {
             case a if game.has(Creatures).not && game.creatureLine.any && creatureCombat(a) =>
                 CreaturesExpansion.perform(a, soft)
 
+            // Hrimgandr does nothing where he goes (Tamer moved him in games before TamerSparesHrimgandr, and with the Creatures
+            // module off nothing took the step, which stopped the game; 2026-11-21)
+            case CreatureEffectAction(c, then) if c.kind == Hrimgandr && game.has(Creatures).not =>
+                Then(then)
+
             // SETUP: the central tile, chosen or drawn
             case ShuffledTilesAction(tiles) if game.wasteSteps.has("central").not =>
                 game.wasteSteps :+= "central"
