@@ -274,7 +274,11 @@ object Ranking {
                 }.mkString(",")
             }.filter(_.length > 2)
 
-            if (sides.size >= 2 && sides.exists(_.startsWith("W:")) && sides.exists(_.startsWith("L:")))
+            // a game with a bot in it counts nowhere, ratings or stats (owner, 2026-11-21): its lobby has a "bot <seat> <level>" line
+            // (games before this were rated between their people, leaving the bots out); TurnPings.lobbyOf keeps the lobbies read
+            val bot = scala.util.Try(TurnPings.lobbyOf(r(0)).exists(_.lines.exists(_.startsWith("bot ")))).getOrElse(false)
+
+            if (!bot && sides.size >= 2 && sides.exists(_.startsWith("W:")) && sides.exists(_.startsWith("L:")))
                 Some(List(r(0), r(2), r(3), sides.mkString(";")).map(esc).mkString("\t"))
             else
                 None

@@ -340,7 +340,7 @@ cd haunt-roll-fail && sbt fullOptJS
   (`rankingsMenu`, URL `/play/nort/rankings`) gets every result (`/rankings/nort,nort-adset`, names resolved: the seat's claimed name,
   else the name typed for it) and works out Elo there (`Elo` in `hrf.scala`: start 1000, K 32 split over the other sides, a winning
   side beats each losing side, sides rated by their people's average; fewer than 5 games is "provisional", shown with "?"), only
-  games with people on two sides or more. The games that ended before are in `good-game/ranking-seed.tsv` (found with
+  games with people on two sides or more, and never a game with a bot in it, in ratings or stats (its lobby's `bot` line, checked by `Ranking.list` on the server, so games already reported drop out too; owner, 2026-11-21). The games that ended before are in `good-game/ranking-seed.tsv` (found with
   `LiveCheck <hrf-games> ranking`; their times only keep the order).
   Each seat reported also says what it played (`Meta.rankingSeat`, `RankingSeat.token`: "user/faction/seat/players/score", the clan
   and final fame, or the Root faction, a Vagabond with its character, and VP, "D" for a dominance), for the menu's "Faction stats"
