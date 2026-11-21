@@ -19,8 +19,8 @@ import java.nio.file.{Files, Path, Paths}
 // (HRF_DISCORD_PUBLIC_KEY, or the file discord-public-key, set by the tournament change "lfg-key <key>"); /root is registered in
 // the Discord server (DiscordBot.guild) with the bot's token when the key is set and at the server's start.
 //
-// Mentions: Discord user IDs only (allowed_mentions), never @everyone or roles. The lists in the post show players without pinging
-// them; the players are pinged once, when their game starts.
+// Mentions: Discord user IDs only (allowed_mentions), never @everyone, and the root-lfg role once, when a post goes up (`announced`). The
+// lists in the post show players without pinging them; the players are pinged once, when their game starts.
 //
 // File turns/lfg.tsv, the posts' events (the last state counts):
 //   time, open, id, host's Discord ID, host's name, seats, title
@@ -178,7 +178,9 @@ object Lfg {
 
     // the post as it stands: its text and buttons; nobody is pinged by an edit, or by the lists (allowed_mentions: none)
     // THE LFG ROLE (asked for on 2026-11-20): a new post pings the Discord server's role of this name (its members asked for LFG
-    // posts), once, when it goes up; the post's edits ping no one. Looked up by the bot, for 10 minutes
+    // posts), once, when it goes up; the post's edits ping no one. Looked up by the bot, for 10 minutes. Every version of the post
+    // starts with the role's mention, so it stays highlighted after a Join or Leave (2026-11-21: the edits dropped it); only the
+    // first one allows it to ping
     val roleName = "root-lfg"
 
     @volatile var roleCache : (Long, Option[String]) = (0L, None)
@@ -203,8 +205,7 @@ object Lfg {
 
     // the new post, pinging the LFG role
     def announced(p : Post) : String = role() match {
-        case Some(r) => message(p).replaceFirst("^\\{\"content\":\"", java.util.regex.Matcher.quoteReplacement("{\"content\":\"<@&" + r + "> "))
-            .replace(",\"allowed_mentions\":{\"parse\":[]}}", ",\"allowed_mentions\":{\"parse\":[],\"roles\":[" + json(r) + "]}}")
+        case Some(r) => message(p).replace(",\"allowed_mentions\":{\"parse\":[]}}", ",\"allowed_mentions\":{\"parse\":[],\"roles\":[" + json(r) + "]}}")
         case None => message(p)
     }
 
@@ -226,7 +227,7 @@ object Lfg {
                     "Press **Join** to play. The game starts by itself when all " + p.size + " seats are taken, or when the host presses **Start** (" + minSeats + " players or more).",
                     buttons(button("Join", 1, "join", p.id, "👍"), button("Leave", 2, "leave", p.id), button("Start", 3, "start", p.id), button("Cancel", 4, "cancel", p.id)))
         }
-        "{\"content\":" + json(text) + ",\"components\":" + bb + ",\"allowed_mentions\":{\"parse\":[]}}"
+        "{\"content\":" + json(role().map("<@&" + _ + "> ").getOrElse("") + text) + ",\"components\":" + bb + ",\"allowed_mentions\":{\"parse\":[]}}"
     }
 
     def reply(kind : Int, data : String) = "{\"type\":" + kind + ",\"data\":" + data + "}"
