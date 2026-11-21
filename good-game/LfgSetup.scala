@@ -203,10 +203,56 @@ object LfgSetup {
 
     def emojiOf(key : String) : Option[(String, String, Boolean)] = {
         def server(x : String) = emojiMap().get(x).map { case (id, a) => (x, id, a) }
-        // the server's emoji of that name (a faction by its short name), else the bot's own icon (Lfg.iconOf, made from the game's art
-        // by tools/lfg-emoji.py), else for a deck with neither the base deck's (asked for on 2026-11-20: only ep and sd have their own)
+        // the server's emoji of that name (a faction by its short name), else one whose name matches the option's (`serverMatch`), else
+        // the bot's own icon (Lfg.iconOf, made from the game's art by tools/lfg-emoji.py), else for a deck with none of these the base
+        // deck's (asked for on 2026-11-20: only ep and sd have their own)
         emojiNames.get(key).orElse(Some(key).filter(_.startsWith("IncludeFaction(")).map(_.stripPrefix("IncludeFaction(").stripSuffix(")").toLowerCase))
-            .flatMap(server).orElse(Lfg.iconEmoji(key)).orElse(Some(key).filter(k => k.endsWith("Deck") && !k.startsWith("#") && !unicode.contains(k)).flatMap(_ => server("base")))
+            .flatMap(server).orElse(serverMatch(key)).orElse(Lfg.iconEmoji(key))
+            .orElse(Some(key).filter(k => k.endsWith("Deck") && !k.startsWith("#") && !unicode.contains(k)).flatMap(_ => server("base")))
+    }
+
+    // THE SERVER'S EMOJIS BY NAME (2026-11-21: the server has emojis the posts didn't use): an option (or "#<section>") takes the
+    // server's emoji whose name, its letters and digits in lower case, maybe with "ng" or "root" before it, is the option's label, its
+    // saved name (without the Option(...) around it, or Map, Deck, Landmark, Central, Option or Module after it), or a word of its label
+    // of four letters or more, in that order (the clans' names are left to Lfg.serverEmoji)
+    def norm(s : String) = s.toLowerCase.filter(c => c.isLetterOrDigit && c < 128)
+
+    def optOf(key : String) : Option[Opt] = Lfg.kinds.map(_.meta).distinct.flatMap(m => catalog(m).flatMap(_.byName.get(key))).headOption
+
+    val ignoredWords = Set("only", "with", "from", "each", "that", "this", "your", "their", "cards", "card", "tiles", "tile", "rule", "rules",
+        "mode", "game", "full", "none", "default", "seat", "chooses", "allowed", "player", "players", "first", "second", "after", "year",
+        "years", "base", "module", "option", "expansion", "version", "played", "both", "parts", "more", "extra", "central", "center", "include",
+        "landmark", "landmarks", "deck", "map", "available")
+
+    def nameWords(s : String) = s.replaceAll("([a-z])([A-Z])", "$1 $2").split("[^A-Za-z0-9']+").toList.map(norm).filter(w => w.length >= 4 && !ignoredWords.contains(w))
+
+    // the names to look for: the label, the saved name (with and without what is around it), the saved name's words, the section's
+    // words, the label's words
+    def candidates(key : String) : List[String] = {
+        val inner = key.replaceAll("^[A-Za-z]+\\((.*)\\)$", "$1").replaceAll("^[A-Za-z]+\\(\"?(.*?)\"?\\)$", "$1")
+        val bare = inner.replaceAll("(Map|Deck|Landmark|Landmarks|Central|Option|Module)$", "")
+        val o = optOf(key)
+        val label = if (key.startsWith("#")) key.drop(1) else o.map(_.label).getOrElse("")
+        (List(norm(label), norm(key.stripPrefix("#")), norm(inner), norm(bare)) ++ nameWords(inner) ++ o.toList.flatMap(x => nameWords(x.group)) ++ nameWords(label))
+            .filter(_.length >= 2).distinct
+    }
+
+    def serverMatch(key : String) : Option[(String, String, Boolean)] = {
+        val m = emojiMap()
+        if (m.isEmpty) None
+        else {
+            val clans = (Lfg.coreClans ++ Lfg.bloodClans).map(_.toLowerCase).toSet
+            val byNorm = m.toList.sortBy(_._1).map { case (n, (id, a)) => (norm(n), (n, id, a)) }
+            def find(c : String) = byNorm.collectFirst { case (n, e) if (n == c || n == "ng" + c || n == "root" + c || n == c + "s" || n + "s" == c) && !clans.contains(n) => e }
+            candidates(key).iterator.map(find).collectFirst { case Some(e) => e }
+        }
+    }
+
+    // the server's emojis and the options and sections that show each (the tournament change "emojis")
+    def serverEmojiUse() : String = {
+        val keys = Lfg.kinds.map(_.meta).distinct.flatMap(m => catalog(m).toList.flatMap(c => c.options.map(_.name) ++ c.options.map("#" + _.group))).distinct
+        val used = keys.flatMap(k => emojiOf(k).map(e => e._1 -> k)).groupBy(_._1).map { case (n, l) => n -> l.map(_._2) }
+        emojiMap().keys.toList.sorted.map(n => n + ": " + used.get(n).map(_.take(6).mkString(", ")).getOrElse(if ((Lfg.coreClans ++ Lfg.bloodClans).exists(c => Lfg.serverEmoji(c).exists(_._1 == n))) "a clan" else "unused")).mkString("; ")
     }
 
     // THE UNICODE EMOJIS of the options and sections with no picture of their own (asked for on 2026-11-21: "use icons/emojis as much as
