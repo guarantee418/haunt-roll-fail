@@ -2293,6 +2293,8 @@ object Meta extends MetaGame {
         case (f : Faction, "Normal") => new BotTT(f, 1, 6, 3, o => new BotXX(o))
     }
 
+    override def turnReason(g : G, f : Any, actions : $[Any]) : String = TurnReasons.of(g, f, actions)
+
     def writeFaction(f : Faction) = f.short
     def parseFaction(s : String) = (factions ++ retiredFactions ++ hirelings ++ turnlings).%(_.short == s).single || (s == "XCMDM").?(Mudmen(XC)) || $[Faction](InfectedHorde, TrapLayer, LegendBeast, GuanoMess).%(_.short == s).single || hirelings.%(_.toString == s).single
 

@@ -583,7 +583,7 @@ object Runner {
                     UIRecord("#unchoice 3", c, a)
 
                 case UIContinue(c @ Ask(faction, actions), Nil) =>
-                    journal.turn((faction != null).$(meta.turnSeat(game, faction)).%(_.nonEmpty))
+                    journal.turn((faction != null).$(meta.turnSeat(game, faction)).%(_.nonEmpty), (faction != null).$(meta.turnSeat(game, faction) + "=" + scala.util.Try(meta.turnReason(game, faction, actions)).getOrElse("")).%(r => r.startsWith("=").not && r.endsWith("=").not))
 
                     auto(game, faction) match {
                         case AskHuman => UIAsk(c, Some(faction), actions, $)
@@ -602,7 +602,8 @@ object Runner {
                         case _ => None
                     })
 
-                    journal.turn(asks./(_.faction).%(_ != null)./(f => meta.turnSeat(game, f)).%(_.nonEmpty).distinct)
+                    journal.turn(asks./(_.faction).%(_ != null)./(f => meta.turnSeat(game, f)).%(_.nonEmpty).distinct,
+                        asks./(_.faction).%(_ != null)./(f => meta.turnSeat(game, f) + "=" + scala.util.Try(meta.turnReason(game, f, asks.%(_.faction == f)./~(_.actions))).getOrElse("")).%(r => r.startsWith("=").not && r.endsWith("=").not).distinct)
 
                     lazy val waits = asks./~(ask => auto(game, ask.faction) match {
                         case WaitRemote => Some(ask.faction)

@@ -166,6 +166,8 @@ DominationOnly	ng_domination
 ModuleOption(FameGainsModule)	ng_famegains
 FameOnly	ng_famegains
 StandardVictory	ng_standardwin
+turn:trade	ng_trade
+turn:winter	ng_winter
 AltVictoryChosen	ng_altvictory
 AltVictoryRandom	ng_altvictory
 VictoryCardOption(VictoryCard("architecture"))	ng_v_architecture

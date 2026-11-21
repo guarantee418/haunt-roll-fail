@@ -241,6 +241,12 @@ object LfgSetup {
             .filter(_.length >= 2).distinct
     }
 
+    // the server's emoji with one of these names (letters and digits, maybe with "ng" or "root" before or after), as message text
+    def serverNamed(names : List[String]) : Option[String] = {
+        val byNorm = emojiMap().toList.sortBy(_._1).map { case (n, (id, a)) => (norm(n), "<" + (if (a) "a" else "") + ":" + n + ":" + id + "> ") }
+        names.iterator.map(c => byNorm.collectFirst { case (n, t) if n == c || n == "ng" + c || n == "root" + c || n == c + "ng" || n == c + "root" => t }).collectFirst { case Some(t) => t }
+    }
+
     def serverMatch(key : String) : Option[(String, String, Boolean)] = {
         val m = emojiMap()
         if (m.isEmpty) None
@@ -294,6 +300,8 @@ object LfgSetup {
         "FirstEdition" -> "1️⃣", "SecondEdition" -> "2️⃣", "RandomAnyCentral" -> "🎲", "RandomCentral" -> "🎲", "LandsNeither" -> "🚫",
         "LandsSeatChooses" -> "🪑", "VictoryModeOption(false)" -> "🛡️", "VictoryModeOption(true)" -> "👑", "TeamVictoryAllCards" -> "🤝",
         "FirstSeatStarts" -> "🥇",
+        // the turn pings' reasons with no picture of their own (TurnPings.reasonOf)
+        "turn:trade" -> "⚖️", "turn:winter" -> "❄️",
         // the posts' titles, with no server emoji
         "title" -> "🌳", "title-nort" -> "🪓")
 

@@ -363,6 +363,54 @@ object TurnPings {
         }
     }
 
+    // WHY IT'S THEIR TURN (asked for on 2026-11-21): the reason the seat's client gave (Turns.reason; the client's Meta.turnReason,
+    // root/turn-reasons.scala and nort/turn-reasons.scala: a tag, maybe "/<faction>") as an emoji in the server's own style (the
+    // Discord server's sword or axe, its deck, map and faction emojis, else the bot's icons, LfgSetup.emojiText) and a few words;
+    // ("", "it's your turn") for a client that gave none
+    def reasonOf(game : String, lobby : Lobby, user : String) : (String, String) = {
+        val seat = lobby.lines.map(_.split(" ").toList).collectFirst { case "user" :: s :: u :: _ if u == user => s }
+        val r = seat.flatMap(s => Turns.reason(game, s)).getOrElse("")
+        val (tag, faction) = r.split("/", 2).toList match {
+            case t :: f :: Nil => (t, Some(f))
+            case t :: _ => (t, None)
+            case _ => ("", None)
+        }
+        val nort = nortMetas.contains(lobby.meta)
+        def head = faction.map(f => if (nort) Lfg.clanIcon(f) else LfgSetup.emojiText("IncludeFaction(" + f + ")")).getOrElse("")
+        // (the server's are :sword-root: and :axe-ng:, seen on 2026-11-21)
+        def sword = LfgSetup.serverNamed(List("swordroot", "sword", "swords", "battle", "attack")).getOrElse("⚔️ ")
+        def axe = LfgSetup.serverNamed(List("axeng", "axe", "battleaxe", "fight")).getOrElse("🪓 ")
+        def e(key : String) = LfgSetup.emojiText(key)
+        val (icon, words) = (nort, tag) match {
+            case (false, "defend") => (sword, "you're under attack")
+            case (false, "battle") => (sword, "your battle needs you")
+            case (false, "keep") => (e("StandardDeck"), "pick the cards you keep")
+            case (false, "handlimit") => (e("StandardDeck"), "discard down to your hand limit")
+            case (false, "draft") => (e("title"), "your pick in the faction draft")
+            case (false, "pickdeck") => (e("StandardDeck"), "pick the deck")
+            case (false, "pickmap") => (e("RandomOfficialMap"), "pick the map")
+            case (false, "picklandmark") => (e("TowerLandmark"), "pick the landmark for the Tower's clearing")
+            case (false, "partisans") => (e("ExilesDeck"), "Partisans can join your battle")
+            case (false, "prisoners") => (e("IncludeFaction(KD)"), "prisoners to deal with")
+            case (false, "negotiate") => (e("IncludeFaction(LDvE)"), "a negotiation awaits you")
+            case (false, "entreat") => (e("IncludeFaction(TC)"), "you were entreated")
+            case (false, "hospitals") => (e("IncludeFaction(MC)"), "Field Hospitals: save your cats?")
+            case (false, "setup") => (head, "time to set up")
+            case (true, "defend") => (axe, "you're under attack")
+            case (true, "fight") => (axe, "your fight needs you")
+            case (true, "trade") => (e("turn:trade"), "harvest trading")
+            case (true, "winter") => (e("turn:winter"), "Winter is here")
+            case (true, "cards") => (e("HorizonsDevelopments"), "pick a card")
+            case (true, "draft") => (e("title"), "your pick in the clan draft")
+            case (true, "setup") => (head, "time to place your clan")
+            case (true, "raid") => (e("ModuleOption(Sea)"), "your raid")
+            case (true, "event") => (e("ModuleOption(EventsModule)"), "an event needs you")
+            case (_, "asked") => (head, "you're needed")
+            case _ => (head, "it's your turn")
+        }
+        (icon, words)
+    }
+
     // true when the ping went out
     def ping(game : String, user : String) : Boolean = attempt(game, user) == "pinged"
 
@@ -390,7 +438,8 @@ object TurnPings {
         Files.createDirectories(dir)
         Ranking.append(pinged, row(Ranking.now(), game, user))
 
-        post(game, lobby, "<@" + id + ">, " + (if (reminder) "a reminder: it's still your turn" else "it's your turn") + " in **" + lobby.title + "**" + " (" + nameOf(lobby, user) + ").", List(id))
+        val (icon, words) = reasonOf(game, lobby, user)
+        post(game, lobby, icon + "<@" + id + ">, " + (if (reminder) "a reminder: " + (if (words == "it's your turn") "it's still your turn" else words) else words) + " in **" + lobby.title + "**" + " (" + nameOf(lobby, user) + ").", List(id))
         "pinged"
     }
 }

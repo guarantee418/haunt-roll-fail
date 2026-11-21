@@ -1118,7 +1118,15 @@ server. No session can reach the server, and none needs to.
   `good-game/Turns.scala`, which calls `TurnPings.report`) and the lobby's "user <faction> <user>" lines. Only seats under a ranking name whose owner gave a Discord user
   ID (or a username the bot found, or one the owner set) and didn't turn pings off ("Discord turn pings" under Rankings, `discordPings` in `rankingsMenu`; `/discord/mine`, `/discord/pings`,
   `tournament/discord-pings.tsv`; on unless turned off since 2026-11-20, asked for) are mentioned, each by their own mention
-  (`allowed_mentions` lists only them, never @everyone). A game's thread also says who takes the first turn, the first time the game waits on one seat alone
+  (`allowed_mentions` lists only them, never @everyone). Each ping says why the seat is asked, with an emoji in the server's style (asked for on 2026-11-21; `TurnPings.reasonOf`): the
+  client adds a third line to its turn report, "<seat>=<reason>", from `Meta.turnReason` (`root/turn-reasons.scala` and
+  `nort/turn-reasons.scala`, `TurnReasons`: the action that asked, `game.asker`, set in `internalPerform`, and the choices offered),
+  kept in `turns.tsv`'s fourth column (`Turns.reason`): Root's under attack or a battle (the server's sword emoji), the cards kept
+  at the start, the hand limit, the faction draft, the tournament picks, Partisans, prisoners, a Lilypad negotiation, an Entreat,
+  Field Hospitals, setup and the faction's own turn (its head); Northgard's fights (the axe), harvest trading and Winter (the bot's
+  `ng_trade` and `ng_winter` badges), card picks, setup, the Adset draft, raids, Events and the clan's own turn (its emblem). The
+  reasons say nothing only the seat may know (an ambush question and assigning hits are both "under attack"). `NORT_REASONS=1` in
+  `nort.Host` prints them. A game's thread also says who takes the first turn, the first time the game waits on one seat alone
   (`announceFirst`, `turns/firsts.tsv`; mentioning them unless they have the game open; only games first reported since 2026-11-21, when
   an Advanced Setup game's drawn first player opened it within the minute and the thread never said whose turn it was). The tournament change `ping waiting` pings every seat the games wait
   for at once (`TurnPings.pingWaiting`). `ping waiting <game> ...` pings only those games (their server ids, the `server` line of their lobbies), and its `.result` says for each

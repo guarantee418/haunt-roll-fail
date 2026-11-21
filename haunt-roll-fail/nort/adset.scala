@@ -453,6 +453,8 @@ object MetaAdset extends MetaGame {
 
     def defaultBot(f : F) = "Easy"
 
+    override def turnReason(g : G, f : Any, actions : $[Any]) : String = TurnReasons.of(g, f, actions)
+
     def writeFaction(f : F) = f.short
     def parseFaction(s : String) : |[F] = factions.%(_.short == s).single
 
