@@ -218,7 +218,9 @@ object LfgSetup {
     def summary(c : Catalog, options : List[String]) : String = {
         val pool = c.need.map(_._1).toList.flatMap(p => options.filter(_.startsWith(p)))
         // (an option whose needs aren't picked is left out: Northgard's Thane with the standard victory)
-        val important = options.filter(o => c.byName.get(o).exists(_.important)).filter(o => c.required.getOrElse(o, List(Nil)).exists(_.forall(options.contains))).map(o => emojiText(o) + c.label(o))
+        val imp = options.filter(o => c.byName.get(o).exists(_.important)).filter(o => c.required.getOrElse(o, List(Nil)).exists(_.forall(options.contains)))
+        // (a label two picks share, "Environment tiles", is named with its section)
+        val important = imp.map(o => emojiText(o) + (if (imp.count(x => c.label(x) == c.label(o)) > 1) c.byName(o).group + ": " else "") + c.label(o))
         val set = summarySections(c.meta).flatMap(g => options.filter(o => c.byName.get(o).exists(_.group == g)).map(o => g + ": " + c.label(o)))
         (if (important.isEmpty) "" else important.mkString(" · ") + "\n") +
         (if (set.isEmpty) "" else set.mkString(" · ") + "\n") +
@@ -237,19 +239,52 @@ object LfgSetup {
     val commandSections = List("Clearings", "Hirelings", "Landmarks", "Insurgent Lock")
 
     // NORTHGARD (2026-11-21): /northgard sets the game length, the victory conditions, the Wilderness or Wastelands, the warchiefs,
-    // the card edition, the fame and the undo; the panel lists Uncharted Horizons (the Sea), the Development cards, Fan content and
+    // the fame and the undo (not the card edition: always the site's default, the 2nd edition, as the owner asked on 2026-11-21);
+    // the panel lists Uncharted Horizons (the Sea), the Development cards, Fan content and
     // Fan victories, the rest keeping the site's defaults
+    // Both modes (standard and Adset) take Wilderness and Wastelands as tiles, creatures or both (asked for on 2026-11-21): in a standard
+    // game the expansion's parts (WildernessTiles ...), in Adset the parts of the expansion drafted or agreed (WildPartsBoth ...); a
+    // standard game also takes the Creatures module (and More creatures!), which Adset always has. These sections ("@...") have the
+    // same choices in both modes (`translate` turns them into each mode's options)
     val nortCommand = List(("length", "The game's length", "Game length"), ("victory", "The victory conditions", "Victory conditions"),
-        ("lands", "Wilderness or Wastelands", "Wilderness or Wastelands"), ("warchiefs", "The Warchief expansion", "Warchief expansion"),
-        ("edition", "The card edition", "Card edition"), ("fame", "Whether fame is public", "Fame"), ("undo", "How much undo is allowed", "Undo"))
+        ("wilderness", "Wilderness: tiles, creatures or both", "@wilderness"), ("wastelands", "Wastelands: tiles, creatures or both", "@wastelands"),
+        ("warchiefs", "The Warchief expansion", "Warchief expansion"),
+        ("fame", "Whether fame is public", "Fame"), ("undo", "How much undo is allowed", "Undo"))
+    val nortStdCommand = nortCommand.take(2) ++ List(("creatures", "The Creatures module (Wilderness and Wastelands creatures turn it on)", "@creatures")) ++ nortCommand.drop(2)
+    val nortAdsetCommand = nortCommand.take(2) ++ List(("lands", "Wilderness or Wastelands", "Wilderness or Wastelands")) ++ nortCommand.drop(2)
     val nortPanel = List("Uncharted Horizons", "Development cards", "Fan content", "Fan victories")
 
+    def isNort(meta : String) = meta == Lfg.nort.meta || meta == Lfg.nortStd.meta
+
+    // the fixed choices of the "@..." sections, and the options each stands for in each mode
+    val parts = Map(
+        "@wilderness" -> List(("Environment tiles and creatures", "both"), ("Environment tiles only", "tiles"), ("Creatures only", "creatures")),
+        "@wastelands" -> List(("Environment tiles and creatures", "both"), ("Environment tiles only", "tiles"), ("Creatures only", "creatures")),
+        "@creatures" -> List(("Creatures module", "on"), ("Creatures module and More creatures!", "more")))
+
+    def translate(k : Lfg.Kind, key : String, v : String) : List[String] = (k.meta, key, v) match {
+        case ("nort", "wilderness" | "wastelands", _) =>
+            val (t, c) = if (key == "wilderness") ("WildernessTiles", "WildernessCreatures") else ("WastelandsTiles", "WastelandsCreatures")
+            v match {
+                case "tiles" => List(t)
+                case "creatures" => List("ModuleOption(Creatures)", c)
+                case _ => List("ModuleOption(Creatures)", t, c)
+            }
+        case ("nort", "creatures", "more") => List("ModuleOption(Creatures)", "MoreCreatures")
+        case ("nort", "creatures", _) => List("ModuleOption(Creatures)")
+        case ("nort-adset", "wilderness" | "wastelands", _) =>
+            List((if (key == "wilderness") "WildParts" else "WasteParts") + (v match { case "tiles" => "Tiles" ; case "creatures" => "Creatures" ; case _ => "Both" }))
+        case ("nort-adset", "creatures", _) => Nil
+        case _ => List(v)
+    }
+
     // the sections a post lists, beside the Important ones
-    def summarySections(meta : String) = if (meta == Lfg.nort.meta) List("Warchief expansion", "Card edition", "Fame", "Undo") else commandSections
+    def summarySections(meta : String) = if (meta == Lfg.nortStd.meta) List("Base game", "Warchief expansion", "Fame", "Undo") else if (isNort(meta)) List("Warchief expansion", "Fame", "Undo") else commandSections
 
     // the command's options: its name, description and the setup screen's section (Root's map and deck: its Important sections, "#0", "#1")
     def sections(k : Lfg.Kind) : List[(String, String, String)] =
-        if (k == Lfg.nort) nortCommand
+        if (k == Lfg.nort) nortAdsetCommand
+        else if (k == Lfg.nortStd) nortStdCommand
         else List(("map", "The map", "#0"), ("deck", "The deck", "#1"), ("clearings", "How the clearings' suits are set", "Clearings"), ("hirelings", "The hirelings", "Hirelings"),
             ("landmarks", "A landmark", "Landmarks"), ("insurgent_lock", "Whether the last insurgent is locked", "Insurgent Lock"))
     // the panel's sections: the hits and ambushes (the section whose name starts so), and the hirelings in their draft, when the
@@ -273,7 +308,7 @@ object LfgSetup {
     // landmarks and the insurgent lock are given with /root (else the site's defaults), so the panel has the hits and ambushes, the
     // factions in the draft (the first section of them: the official ones) and, with hirelings, the hirelings in their draft. The rest
     // (faction rules, fan factions...) keep the site's defaults.
-    def pages(d : Draft) : List[List[Menu]] = if (d.state.c.meta == Lfg.nort.meta) {
+    def pages(d : Draft) : List[List[Menu]] = if (isNort(d.state.c.meta)) {
         // Northgard: a menu for each of its panel's sections, of several when it has toggles
         val s = d.state
         def listed(g : List[Opt]) = g.filter(o => !s.mandatory.contains(o.name) && (s.selected.contains(o.name) || s.enabled(o.name)))
@@ -339,8 +374,8 @@ object LfgSetup {
         val text = emojiText(kind.emoji) + "**" + kind.label + ": " + d.title + "**, " + d.n + " players\n" +
             summary(s.c, s.actual) +
             (if (d.note.nonEmpty) "**" + d.note + "**\n" else "") +
-            (if (kind == Lfg.nort)
-            "The game length, victory conditions, Wilderness or Wastelands, warchiefs, card edition, fame and undo are as given with /" + kind.command + " (or the site's defaults). " +
+            (if (isNort(kind.meta))
+            "The game length, victory conditions, " + (if (kind.clans) "Creatures, " else "the expansion drafted, ") + "Wilderness and Wastelands parts, warchiefs, fame and undo are as given with /" + kind.command + " (or the site's defaults). " +
             "Pick the Uncharted Horizons modules, the Development cards and any fan content, then press **Open the game** to post it here for players to join. Only you see this."
             else
             "The map, deck, clearings, hirelings, landmarks and insurgent lock are as given with /root (or the site's defaults). Pick the hits and ambushes, the factions in the draft" +
@@ -370,9 +405,8 @@ object LfgSetup {
         val s = State.defaults(c, 4)
         val main = mainSections(s)
         val shown = c.options.filter(s.shown).filter(o => !s.mandatory.contains(o.name))
-        def section(g : String) = if (g.startsWith("#")) main.lift(g.drop(1).toInt).getOrElse(Nil) else shown.filter(_.group == g).filter(o => k != Lfg.nort || !o.cond)
-        sections(k).map { case (n, d, g) => (n, d, section(g)) }
-            .map { case (n, d, oo) => (n, d, oo.take(25).map(o => (o.label, o.name))) }.filter(_._3.nonEmpty)
+        def section(g : String) = if (g.startsWith("#")) main.lift(g.drop(1).toInt).getOrElse(Nil) else shown.filter(_.group == g).filter(o => !isNort(k.meta) || !o.cond)
+        sections(k).map { case (n, d, g) => (n, d, if (g.startsWith("@")) parts.getOrElse(g, Nil) else section(g).take(25).map(o => (o.label, o.name))) }.filter(_._3.nonEmpty)
     }
 
     // a menu picked or a button pressed on a panel

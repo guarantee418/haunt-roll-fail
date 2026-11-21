@@ -406,6 +406,14 @@ object Meta extends MetaGame { mmm =>
     // Robotos: the Hard bot, cheating (robotos.scala)
     def getBots(f : Faction) = (f == Automa).?($("Easy")).|($("Easy", "Hard", "Robotos"))
 
+    // Discord LFG games (good-game/Lfg.scala, /northgard; 2026-11-21): the site's defaults for four players, without the clans' colors
+    // and teams (the server gives each clan picked on Join its seat's color, as the setup screen does), and two to six players
+    override def lfgOptions : $[O] = {
+        val four = clans.take(4)
+        (mandatoryFor(4, four) ++ completeSaved(4, four, defaultsFor(4, four))).distinct.%{ case _ : ColorOption | _ : TeamOption => false ; case _ => true }
+    }
+    override def lfgPlayers = $(2, 3, 4, 5, 6)
+
     override def botOptions(seating : $[Faction], bots : Map[Faction, String]) =
         seating.%(f => bots.get(f).has("Robotos") && f != Automa)./(RobotosOption(_)) ++ seating.%(f => bots.contains(f) && f != Automa)./(BotClanOption(_))
 
