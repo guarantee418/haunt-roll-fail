@@ -1143,7 +1143,13 @@ server. No session can reach the server, and none needs to.
   on the Tournament page, set by the `discord` change, or an earlier LFG seat's) plays under it from the start, so the game is in
   their Play Online (`rankingNameOf`, a `name` lobby line and a `seats.tsv` row, as the tournament does; 2026-11-21). Each game is an `Lfg.Kind`; its options come from
   the client (`lfgOptions`, `lfgPlayers`, `lfgCatalog` in `meta.scala`, overridden in `root/meta-adset.scala` and `nort/adset.scala`,
-  sent by Play Online), kept per meta (`lfg-catalog-<meta>.tsv`, `lfg-template-<meta>.tsv`; Root's keep their first names). Northgard's
+  sent by Play Online), kept per meta (`lfg-catalog-<meta>.tsv`, `lfg-template-<meta>.tsv`; Root's keep their first names). The posts and the panel's menus show an emoji wherever they can (asked for on 2026-11-21): each section and pick
+  (the Discord server's emoji of that name, else the server's emoji whose name matches the option's label, saved name or a word of
+  them or its section, `LfgSetup.serverMatch`, so the server's emojis are used first; else the bot's own `hrf_<slug>`, made from the game's art by `haunt-roll-fail/tools/lfg-emoji.py`
+  into `webp2/lfg/emoji/` with `icons.tsv` naming each option's icon and uploaded at the server's start, `Lfg.iconOf`, else a Unicode one,
+  `LfgSetup.unicode`; a map or deck takes only a server emoji named for it, `LfgSetup.themed`). The bot's icons follow the server's own
+  emojis' style (seen 2026-11-21): Root's factions as their heads, maps as a square of the map, decks as a card tilted in a white border,
+  Northgard's options in a gold-ringed round badge with a ribbon naming them, like the server's clans and WILD and WASTE. And the Host, Players, seats and buttons; a changed picture needs a new slug, as an uploaded one is kept. The tournament change `emojis` lists the server's emojis and what each is shown for ("unused" for none). Northgard's
   online games get their posts and turn pings in their own forum (`TurnPings.webhookFor`: `HRF_DISCORD_NORT_TURNS_WEBHOOK` or the file
   `discord-nort-turns-webhook`, set by the tournament change `nort-turns <url>`); with none set they get none.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond

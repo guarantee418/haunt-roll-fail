@@ -53,6 +53,7 @@ import scala.concurrent.duration.Duration
 //   lfg-key <public key>              the Discord application's public key, for /root, /northgard and the LFG posts' buttons (Lfg.scala;
 //                                     the file discord-public-key, "lfg-key off" removes it); registers the commands in the Discord server
 //   lfg-commands                      registers /root and /northgard again
+//   emojis                            lists the Discord server's emojis and the LFG options and sections each is shown for
 //   discord <name> -> <username>      a name's Discord, for a player who didn't give it (a username the bot finds, or a user ID;
 //                                     "-> off" forgets it)
 // The Discord channel of the webhook in HRF_DISCORD_WEBHOOK (or the file discord-webhook) is invited to sign up, with the link to
@@ -539,6 +540,8 @@ object Tournament {
                         "set; " + Lfg.commands + " " + Lfg.register()
                     }
                     else "not done: lfg-key <the application's public key from the Developer Portal> or lfg-key off"
+                // the server's emojis and what the LFG posts show each for (LfgSetup.serverEmojiUse; 2026-11-21)
+                case "emojis" => LfgSetup.serverEmojiUse()
                 // /root registered again (after the bot's token or the server changed)
                 case "lfg-commands" => Lfg.syncClanEmojis() + "; " + Lfg.commands + " " + Lfg.register()
                 // a name's Discord, set by the owner for a player who didn't give it (2026-11-20, matched from the server's member
