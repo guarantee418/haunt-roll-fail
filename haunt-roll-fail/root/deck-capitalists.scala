@@ -17,24 +17,27 @@ import root.elem._
 // Capitalists and Anarchists (`CapitalistsDeck`; the site owner's variation of the Might and Right deck, 2026-11-19): the base deck's
 // items, ambushes and dominances, Armorers and Sappers as printed, Dawn and Dusk's three Services in place of the Favors, and the
 // other effects changed (`Deck.capitalists`, pictures `card/capitalists/` by `root/tools/capitalists-art.py`):
-// - Command Warren, Cobbler and Brutal Tactics are paid for each time: a card from hand matching the clearing (the battle's, or the
+// - Command Warren, Cobbler, Brutal Tactics (no point for the defender) and Scouting Party are paid for each time: a card from hand matching the clearing (the battle's, or the
 //   one Cobbler's move starts from; a bird matches any), or the crafted card itself, discarded, which counts as a bird
 // - Better Burrow Bank is optional at the start of Birdsong and goes back to its owner's hand when used
 // - Stand and Deliver! must be used at the start of the next Birdsong (once an enemy holds a card) and is discarded; the enemy draws a card
 //   instead of scoring
 // - Tax Collector (draws two) and Codebreakers are used once, right when crafted, and discarded
-// - Scouting Party is discarded to cancel one ambush played against its owner attacking
+// - Scouting Party cancels an ambush played against its owner attacking
 // - Royal Claim must be used at the next Birdsong
 
 
 case class CapitalistsPayCardAction(self : Faction, e : CardEffect, d : DeckCard, then : ForcedAction) extends BaseAction(e, "spending")(d.img) with ViewCard
 case class CapitalistsPaySelfAction(self : Faction, e : CardEffect, then : ForcedAction) extends BaseAction(e, "spending")("Discard", e, "itself, as a bird")
 
-case class CapitalistsBrutalMainAction(self : Faction, o : Faction, c : Clearing, then : ForcedAction) extends BaseAction(self, "in battle")("Deal an extra", 1.hit, BrutalTactics, "and give", o, 1.vp) with Soft
+case class CapitalistsBrutalMainAction(self : Faction, o : Faction, c : Clearing, then : ForcedAction) extends BaseAction(self, "in battle")("Deal an extra", 1.hit, "with", BrutalTactics) with Soft
 case class CapitalistsBrutalAction(self : Faction, o : Faction, then : ForcedAction) extends ForcedAction
 
 case class CapitalistsBankAction(self : Faction, o : Faction) extends BaseAction(self, "may return", BetterBurrowBank, "to hand to draw a card and share with")(o)
 
+case class CapitalistsScoutMainAction(self : Faction, b : Battle, then : ForcedAction) extends BaseAction(self, "can cancel the ambush")("Cancel the", "Ambush".hl, "with", ScoutingParty) with Soft
+case class CapitalistsScoutedAction(self : Faction, then : ForcedAction) extends ForcedAction
+// kept so that a game that recorded it before Scouting Party was paid for at each use still loads
 case class CapitalistsScoutingAction(self : Faction, b : Battle, then : ForcedAction) extends BaseAction(self, "can cancel the ambush")("Discard", ScoutingParty, "to cancel the", "Ambush".hl)
 
 case class CapitalistsCraftedAction(self : Faction, d : CraftEffectCard, m : Message) extends ForcedAction
@@ -140,8 +143,6 @@ object CapitalistsDeckExpansion extends Expansion {
 
             f.log("employed", BrutalTactics, "to deal an extra", 1.hit)
 
-            o.oscore(1)("from", BrutalTactics)
-
             then
 
         // BETTER BURROW BANK
@@ -167,9 +168,23 @@ object CapitalistsDeckExpansion extends Expansion {
         case BirdsongNAction(0, f) if f.can(RoyalClaim) =>
             Ask(f).add(RoyalClaimAction(f, clearings.%(f.ruleSelf).num))
 
-        // SCOUTING PARTY: the ambush is played, then the attacker may discard it to cancel it
+        // SCOUTING PARTY: the ambush is played, then the attacker may cancel it, spending a card matching the clearing or Scouting Party
         case BattleAskCounterAmbushAction(b, then) if b.attacker.can(ScoutingParty) =>
-            BattleExpansion.askCounterAmbush(b, 2, then).prepend(CapitalistsScoutingAction(b.attacker, b, then)).needOk
+            BattleExpansion.askCounterAmbush(b, 2, then).prepend(CapitalistsScoutMainAction(b.attacker, b, then)).needOk
+
+        case CapitalistsScoutMainAction(f, b, then) =>
+            val next = CapitalistsScoutedAction(f, then)
+
+            Ask(f)
+                .each(f.hand.$)(d => CapitalistsPayCardAction(f, ScoutingParty, d, next).!(pays(d, b.clearing).not))
+                .add(CapitalistsPaySelfAction(f, ScoutingParty, next))
+                .cancel
+                .needOk
+
+        case CapitalistsScoutedAction(f, then) =>
+            f.log("cancelled the", "Ambush".hl, "with", ScoutingParty)
+
+            then
 
         case CapitalistsScoutingAction(f, b, then) =>
             f.removeStuckEffect(ScoutingParty)
