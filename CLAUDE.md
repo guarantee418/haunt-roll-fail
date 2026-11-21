@@ -1118,7 +1118,9 @@ server. No session can reach the server, and none needs to.
   `good-game/Turns.scala`, which calls `TurnPings.report`) and the lobby's "user <faction> <user>" lines. Only seats under a ranking name whose owner gave a Discord user
   ID (or a username the bot found, or one the owner set) and didn't turn pings off ("Discord turn pings" under Rankings, `discordPings` in `rankingsMenu`; `/discord/mine`, `/discord/pings`,
   `tournament/discord-pings.tsv`; on unless turned off since 2026-11-20, asked for) are mentioned, each by their own mention
-  (`allowed_mentions` lists only them, never @everyone). The tournament change `ping waiting` pings every seat the games wait
+  (`allowed_mentions` lists only them, never @everyone). A game's thread also says who takes the first turn, the first time the game waits on one seat alone
+  (`announceFirst`, `turns/firsts.tsv`; mentioning them unless they have the game open; only games first reported since 2026-11-21, when
+  an Advanced Setup game's drawn first player opened it within the minute and the thread never said whose turn it was). The tournament change `ping waiting` pings every seat the games wait
   for at once (`TurnPings.pingWaiting`). `ping waiting <game> ...` pings only those games (their server ids, the `server` line of their lobbies), and its `.result` says for each
   who was pinged and why anyone wasn't (`TurnPings.pingWaitingIn`; 2026-11-21). A tournament table's game pings in its table's thread (the forum webhook's), with no
   turns webhook needed, every player who gave a user ID unless they turned pings off. A webhook can't ping a username, and the first tournament's players
@@ -1132,7 +1134,10 @@ server. No session can reach the server, and none needs to.
 - Discord LFG games (`good-game/Lfg.scala`, `LfgSetup.scala`; their headers have the rules and files): in the LFG channel `/root` (Root:
   Advanced Setup, pinging the `root-lfg` role) and, since 2026-11-21, `/northgard` (Northgard: Adset, the clan draft, pinging `ng-lfg`)
   open a setup panel only the host sees, then post the game with Join, Leave, Start and Cancel; the server creates the game when the
-  seats fill (or the host starts it) and Get my link gives each player their seat. Each game is an `Lfg.Kind`; its options come from
+  seats fill (or the host starts it), the bot DMs each player their seat link (every player since 2026-11-21, `welcome`;
+  only players the site didn't know before) and Get my link gives it again. A player whose Discord is linked to a ranking name (given
+  on the Tournament page, set by the `discord` change, or an earlier LFG seat's) plays under it from the start, so the game is in
+  their Play Online (`rankingNameOf`, a `name` lobby line and a `seats.tsv` row, as the tournament does; 2026-11-21). Each game is an `Lfg.Kind`; its options come from
   the client (`lfgOptions`, `lfgPlayers`, `lfgCatalog` in `meta.scala`, overridden in `root/meta-adset.scala` and `nort/adset.scala`,
   sent by Play Online), kept per meta (`lfg-catalog-<meta>.tsv`, `lfg-template-<meta>.tsv`; Root's keep their first names). Northgard's
   online games get their posts and turn pings in their own forum (`TurnPings.webhookFor`: `HRF_DISCORD_NORT_TURNS_WEBHOOK` or the file
