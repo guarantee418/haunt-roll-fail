@@ -32,4 +32,7 @@ object Turns {
     }
 
     def asked(journal : String) : List[String] = synchronized { turns.get(journal).map(_._2).getOrElse(Nil) }
+
+    // the last report kept: the entries read and the factions asked
+    def last(journal : String) : Option[(Int, List[String])] = synchronized { turns.get(journal) }
 }
