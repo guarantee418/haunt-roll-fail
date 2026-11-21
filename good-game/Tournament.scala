@@ -46,6 +46,7 @@ import scala.concurrent.duration.Duration
 //   bot <token>                       the Discord bot's token, so a username given on the Tournament page pings (DiscordBot.scala;
 //                                     the file discord-bot-token, "bot off" removes it); delete the change file once its .result is read
 //   guild <id>                        the Discord server the bot looks usernames up in, if not the webhook's (the file discord-guild)
+//   ping waiting                      pings every seat the games wait for at once (TurnPings.pingWaiting)
 //   lfg-key <public key>              the Discord application's public key, for /root and the LFG posts' buttons (Lfg.scala; the
 //                                     file discord-public-key, "lfg-key off" removes it); registers /root in the Discord server
 //   lfg-commands                      registers /root again
@@ -554,7 +555,9 @@ object Tournament {
                             }
                         case _ => "not done: discord <name> -> <username or user ID>, or -> off"
                     }
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, bot, guild, discord, lfg-key, lfg-commands or invite)"
+                // every seat the games wait for, pinged at once (TurnPings.pingWaiting; 2026-11-20)
+                case "ping" if rest == "waiting" => TurnPings.pingWaiting() + " pinged"
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, bot, guild, discord, ping waiting, lfg-key, lfg-commands or invite)"
             }
 
             (if (word == "webhook" || word == "forum" || word == "turns" || word == "bot") word else line) + ": " + result
