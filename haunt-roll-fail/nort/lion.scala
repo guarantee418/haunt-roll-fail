@@ -302,7 +302,7 @@ object LionExpansion extends Expansion {
             Then(ResolveEffectAction(f, BuildEffect(special = OstBuild), then))
 
         case LionFameEffect =>
-            f.fame += 1
+            f.addFame(1, FameEffects)
             f.log("gained", 1.hl, FameIcon())
             Then(then)
 

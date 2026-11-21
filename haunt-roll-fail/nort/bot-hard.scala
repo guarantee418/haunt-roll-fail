@@ -591,6 +591,8 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
         val militia = game.militia
         // Losses waiting for their swap question (PickLoneLoss)
         val lone = game.loneLosses
+        // Where fame came from, for the end screen
+        val fameFrom = game.fameFrom
         try {
             change
             total
@@ -601,6 +603,7 @@ class HardEvaluation(val self : Faction)(implicit val game : Game) {
             game.upgraded = upgraded
             game.militia = militia
             game.loneLosses = lone
+            game.fameFrom = fameFrom
             game.mineralBank = bank
             minerals.foreach { case (f, m) => f.minerals = m }
             game.chiefs = chiefs

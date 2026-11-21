@@ -675,11 +675,11 @@ object PCExpansion extends Expansion {
 
             // The fame for closing it, 1 per tile; 1 in games with PCScoutFame (2026-11-14: the fame win came too fast)
             val n = game.options.has(PCScoutFame).?(1).|(game.board.tiles(t))
-            f.fame += n
+            f.addFame(n, FameExplore)
             f.log("gained", n.hl, FameIcon(), "for scouting", a)
 
             if (f == Stag) {
-                f.fame += 1
+                f.addFame(1, FameExplore)
                 f.log("gained", 1.hl, "more", FameIcon(), "for closing a territory")
                 ClanPowers.note(PowerNote(f, |(a), f.elem ~ " gains 1 fame for each territory it closes.", fame = 1))
             }
@@ -810,6 +810,7 @@ object PCExpansion extends Expansion {
                 f.wood = 0
                 f.lore = 0
                 f.fame = 0
+                game.fameFrom = game.fameFrom.filter(_._1._1 != f)
 
                 log(DoubleLine)
                 f.log("ended the year without their", TownHall, "and is out of the game")

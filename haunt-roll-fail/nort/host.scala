@@ -170,6 +170,13 @@ object Host extends hrf.host.BaseHost {
     }
 
     def winnersFromFaction(f : F)(implicit g : G) = {
+        // Fame tokens with no source noted (FactionState.addFame), which the end screen's table shows as "Other"
+        g.factions.foreach { c =>
+            val untracked = g.states(c).fame - g.fameFrom.filter(_._1._1 == c).values.sum
+            if (untracked != 0)
+                println("FAME UNTRACKED " + c.name + " " + untracked)
+        }
+
         // NORT_UNVALUED=1: after each game, the actions so far the Hard bot left to the Easy bot's valuation (by class)
         if (sys.env.get("NORT_UNVALUED").has("1"))
             println("UNVALUED " + HardEvaluation.unvalued.toList.sortBy(-_._2)./{ case (k, n) => k + " " + n }.mkString(", "))

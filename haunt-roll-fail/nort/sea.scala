@@ -184,7 +184,7 @@ object SeaExpansion extends Expansion {
         f.food += g.food
         f.wood += g.wood
         f.lore += g.lore
-        f.fame += g.fame
+        f.addFame(g.fame, FameRaids)
     }
 
     // Free spaces in t a raid building fits: Carved Stones also on small spaces when `small`
@@ -446,7 +446,7 @@ object SeaExpansion extends Expansion {
                 case "predators-pride" =>
                     val lairs = game.controlled(f)./~(_.areas).%(a => game.board.spec(a).lair).num
                     val n = lairs * two.?(2).|(1)
-                    f.fame += n
+                    f.addFame(n, FameRaids)
                     f.log("gained", n.hl, FameIcon(), "for", lairs.hl, (lairs == 1).?("lair").|("lairs"))
                     Then(then)
                 case "raze-and-conquer" =>
@@ -455,13 +455,13 @@ object SeaExpansion extends Expansion {
                 case "glory-of-the-homeland" =>
                     if (two) {
                         val n = Harvest.territoryFame(f)
-                        f.fame += n
+                        f.addFame(n, FameRaids)
                         f.log("gained", n.hl, FameIcon(), "for closed territories")
                         Then(RaidShiftAction(f, c, false, true, then))
                     }
                     else {
                         val n = game.controlled(f).%(t => game.board.tiles(t) <= 2).num
-                        f.fame += n
+                        f.addFame(n, FameRaids)
                         f.log("gained", n.hl, FameIcon(), "for territories of 1 or 2 tiles")
                         Then(then)
                     }
@@ -476,7 +476,7 @@ object SeaExpansion extends Expansion {
                 case "bounty-of-the-harvest" => Then(RaidBuildAction(f, c, $(FoodSilo), false, None, 1, then))
                 case "valors-reward" =>
                     val large = game.controlled(f)./~(game.buildingsIn).count(_._2.large)
-                    f.fame += 2 * large
+                    f.addFame(2 * large, FameRaids)
                     f.log("gained", (2 * large).hl, FameIcon(), "for", large.hl, (large == 1).?("large building").|("large buildings"))
                     Then(then)
                 case _ => Then(then)
@@ -646,7 +646,7 @@ object SeaExpansion extends Expansion {
                 case "conquerors-tribute" =>
                     val open = enemyTerritories(f).%(game.board.open).num
                     val n = two.?(math.min(10, 2 * open)).|(open)
-                    f.fame += n
+                    f.addFame(n, FameRaids)
                     f.log("gained", n.hl, FameIcon(), "for", open.hl, "open enemy territories with", c)
                     Then(done)
 
@@ -689,8 +689,8 @@ object SeaExpansion extends Expansion {
                     }
                     val fame = math.min(g.fame, (game.board.closed(t) && game.wolfIn(t).not).??((game.board.tiles(t) >= 3).?(2).|(1)))
                     if (fame > 0) {
-                        g.fame -= fame
-                        f.fame += fame
+                        g.addFame(-fame, FameRaids)
+                        f.addFame(fame, FameRaids)
                         f.log("took", fame.hl, FameIcon(), "from", g)
                     }
             }
@@ -705,7 +705,7 @@ object SeaExpansion extends Expansion {
             f.gain(r, -1)
             f.gain(x, 1)
             if (fame)
-                f.fame += 1
+                f.addFame(1, FameRaids)
             f.log("exchanged", 1.hl, r, "for", 1.hl, x, fame.?("and gained " ~ Amount(1.hl, FameIcon())).|(Empty), "with", c)
             if (fame)
                 Then(RaidTriumphAction(f, c, (given :+ r).distinct, (taken :+ x).distinct, k, rest, then))
@@ -714,7 +714,7 @@ object SeaExpansion extends Expansion {
 
         case RaidFortuneAction(f, c, r, n, k, rest, then) =>
             f.gain(r, -n)
-            f.fame += n
+            f.addFame(n, FameRaids)
             f.log("turned", n.hl, r, "into", n.hl, FameIcon(), "with", c)
             Then(RaidHarvestAction(k :: rest, then))
 

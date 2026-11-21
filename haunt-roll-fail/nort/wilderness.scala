@@ -117,13 +117,13 @@ object WildernessExpansion extends Expansion {
     def harvest(f : Faction)(implicit game : Game) {
         val ruins = ruinsFame(f)
         if (ruins > 0) {
-            f.fame += ruins
+            f.addFame(ruins, FameHarvest)
             f.log("gained", ruins.hl, FameIcon(), "from", "Ruins".hl)
         }
 
         val dens = denFame(f)
         if (dens > 0) {
-            f.fame += dens
+            f.addFame(dens, FameHarvest)
             f.log("gained", dens.hl, FameIcon(), "from the", "Wyvern's Den".hl)
         }
 
