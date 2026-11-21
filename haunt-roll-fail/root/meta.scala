@@ -1878,7 +1878,8 @@ object Meta extends MetaGame {
     // The playtest Lilypad Diaspora versions and the Tidepool Diaspora, no longer offered (2026-11-17), still read so older games load
     val retiredFactions = $[Faction](LDvD, LDvC, LDvB, TD)
 
-    override def factionGroup(f : F) : |[Elem] = homeland.has(f).?("Homeland".txt) || clones.has(f).?("Mirror Factions".txt) || fun.has(f).?("Fan Factions".txt)
+    // the official Homeland factions are listed with the other official ones, after the Keepers (2026-11-20)
+    override def factionGroup(f : F) : |[Elem] = clones.has(f).?("Mirror Factions".txt) || fun.has(f).?("Fan Factions".txt)
 
     // the picker's Fan Factions fold, like the setup's fan sections
     override def foldedFactionGroups : $[String] = $("Fan Factions")
