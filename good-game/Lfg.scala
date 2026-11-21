@@ -67,9 +67,10 @@ object Lfg {
     val randomAny = "RandomAny"
     val colors = List("Blue", "Red", "Yellow", "Purple", "Green", "Orange")
 
-    // THE CLAN ICONS (asked for on 2026-11-21): the clan emblems as the bot's own application emojis (ng_bear ...), uploaded by the
-    // server from the client's webp2/nort/images/clan/emoji/<clan>.png when the bot has none of that name (at the server's start), so
-    // no server emoji slots or rights are needed; shown in the clan menu and beside each player's clan in the post
+    // THE CLAN ICONS (asked for on 2026-11-21): the Discord server's own clan emojis, found by name (bear, bearclan, bear_clan, ng_bear,
+    // ...: the name with its non-letters dropped is the clan's, maybe with "ng" before or "clan" after; LfgSetup.emojiMap), or for a clan
+    // the server has none of, the clan emblem as the bot's own application emoji (ng_bear ...), uploaded by the server from the client's
+    // webp2/nort/images/clan/emoji/<clan>.png at its start; shown in the clan menu and beside each player's clan in the post
     @volatile var assets = "."
     @volatile var clanEmojis : Map[String, String] = Map()
 
@@ -88,7 +89,7 @@ object Lfg {
                         var found = have()
                         (coreClans ++ bloodClans).foreach { c =>
                             val f = Paths.get(assets, "webp2", "nort", "images", "clan", "emoji", c.toLowerCase + ".png")
-                            if (!found.contains(emojiName(c)) && Files.exists(f)) {
+                            if (serverEmoji(c).isEmpty && !found.contains(emojiName(c)) && Files.exists(f)) {
                                 val image = "data:image/png;base64," + java.util.Base64.getEncoder.encodeToString(Files.readAllBytes(f))
                                 DiscordBot.send("POST", url, "{\"name\":" + json(emojiName(c)) + ",\"image\":" + json(image) + "}", Some(t)).foreach { b =>
                                     val e = obj(Json.parse(b))
@@ -97,15 +98,27 @@ object Lfg {
                             }
                         }
                         clanEmojis = (coreClans ++ bloodClans).flatMap(c => found.get(emojiName(c)).map(c -> _)).toMap
-                        clanEmojis.size + " of 14 clan icons"
+                        (coreClans ++ bloodClans).count(c => serverEmoji(c).nonEmpty) + " clan icons on the server, " + clanEmojis.size + " of the bot's"
                 }
             }
             catch { case e : Exception => "failed: " + e.getClass.getSimpleName }
     })
 
+    // the server's emoji for a clan: (name, id, animated)
+    def serverEmoji(c : String) : Option[(String, String, Boolean)] = {
+        val k = c.toLowerCase
+        LfgSetup.emojiMap().toList.sortBy(_._1).collectFirst { case (n, (id, a)) if {
+            val m = n.toLowerCase.filter(_.isLetter)
+            m == k || m == k + "clan" || m == "ng" + k || m == "ng" + k + "clan" || m == "clan" + k
+        } => (n, id, a) }
+    }
+
+    // the clan's emoji: the server's, else the bot's own
+    def clanEmoji(c : String) : Option[(String, String, Boolean)] = serverEmoji(c).orElse(clanEmojis.get(c).map(id => (emojiName(c), id, false)))
+
     // in a message, and in a menu option
-    def clanIcon(c : String) = clanEmojis.get(c).map(id => "<:" + emojiName(c) + ":" + id + "> ").getOrElse("")
-    def clanIconField(c : String) = clanEmojis.get(c).map(id => ",\"emoji\":{\"id\":" + json(id) + ",\"name\":" + json(emojiName(c)) + "}").getOrElse("")
+    def clanIcon(c : String) = clanEmoji(c).map { case (n, id, a) => "<" + (if (a) "a" else "") + ":" + n + ":" + id + "> " }.getOrElse("")
+    def clanIconField(c : String) = clanEmoji(c).map { case (n, id, a) => ",\"emoji\":{\"id\":" + json(id) + ",\"name\":" + json(n) + ",\"animated\":" + a + "}" }.getOrElse("")
 
     def clanLabel(c : String) = c match {
         case `randomCore` => "a random core clan"
