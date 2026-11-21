@@ -169,8 +169,10 @@ object Lfg {
 
     def mention(id : String) = "<@" + id + ">"
 
-    def button(label : String, style : Int, action : String, id : String) =
-        "{\"type\":2,\"style\":" + style + ",\"label\":" + json(label) + ",\"custom_id\":" + json("lfg:" + action + ":" + id) + "}"
+    // emoji: a Unicode emoji shown before the label (Join's 👍, asked for on 2026-11-20)
+    def button(label : String, style : Int, action : String, id : String, emoji : String = "") =
+        "{\"type\":2,\"style\":" + style + ",\"label\":" + json(label) + ",\"custom_id\":" + json("lfg:" + action + ":" + id) +
+            (if (emoji.isEmpty) "" else ",\"emoji\":{\"name\":" + json(emoji) + "}") + "}"
 
     def buttons(bb : String*) = if (bb.isEmpty) "[]" else "[{\"type\":1,\"components\":[" + bb.mkString(",") + "]}]"
 
@@ -191,7 +193,7 @@ object Lfg {
                     "Host: " + mention(p.host) + "\n" +
                     "Players: " + p.players.map(x => mention(x._1)).mkString(", ") + "\n" +
                     "Press **Join** to play. The game starts by itself when all " + p.size + " seats are taken, or when the host presses **Start** (" + minSeats + " players or more).",
-                    buttons(button("Join", 1, "join", p.id), button("Leave", 2, "leave", p.id), button("Start", 3, "start", p.id), button("Cancel", 4, "cancel", p.id)))
+                    buttons(button("Join", 1, "join", p.id, "👍"), button("Leave", 2, "leave", p.id), button("Start", 3, "start", p.id), button("Cancel", 4, "cancel", p.id)))
         }
         "{\"content\":" + json(text) + ",\"components\":" + bb + ",\"allowed_mentions\":{\"parse\":[]}}"
     }
