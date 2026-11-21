@@ -277,7 +277,10 @@ object Tournament {
         cups().filter(c => c.started && !c.done).flatMap { c =>
             c.tables.filter(_.winner.isEmpty).flatMap { t =>
                 t.names.zipWithIndex.filter(x => kk.contains(x._1)).map { case (k, i) =>
-                    row(c.n, t.id, t.title(c.n), t.secrets(i), display(k), t.names.filter(_ != k).map(display).mkString(", "))
+                    // the seventh field: "1" while the game waits on this seat (Turns.scala, the lobby's "user <faction> <user>"; 2026-11-21)
+                    val turn = TurnPings.lobbyOf(t.game).flatMap(_.lines.map(_.split(" ").toList).collectFirst { case "user" :: f :: u :: Nil if u == t.users(i) => f })
+                        .exists(f => Turns.asked(t.game).contains(f)) && !TurnPings.over(t.game)
+                    row(c.n, t.id, t.title(c.n), t.secrets(i), display(k), t.names.filter(_ != k).map(display).mkString(", "), if (turn) "1" else "0")
                 }
             }
         }.++(dd).mkString("\n")
