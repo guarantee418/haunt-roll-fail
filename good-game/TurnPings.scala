@@ -217,8 +217,18 @@ object TurnPings {
     // saying who was pinged and why anyone wasn't
     def pingWaitingIn(games : List[String]) : List[String] = synchronized {
         games.map { g =>
+            // a game whose reports came while no turns webhook was set has none here: the one Turns kept stands in for it
+            if (latest.get(g).isEmpty)
+                Turns.last(g).foreach { case (n, factions) =>
+                    lobbyOf(g).filter(l => metas.contains(l.meta)).foreach { l =>
+                        val seats = l.lines.map(_.split(' ').toList).collect { case "user" :: f :: u :: _ => f -> u }.toMap
+                        val users = factions.flatMap(seats.get).toSet
+                        reports = latest + (g -> Report(n, users))
+                        Ranking.append(state, row(g, n, users.toList.sorted.mkString(",")))
+                    }
+                }
             latest.get(g) match {
-                case None => g + ": no turn report yet (no one has opened it since turn pings came)"
+                case None => g + ": no turn report yet (no one has opened it since turn reports came)"
                 case Some(r) if r.users.isEmpty => g + ": waits for no seat with a user"
                 case Some(r) =>
                     val name = lobbyOf(g).map(l => (if (l.title.nonEmpty) l.title + " " else "")).getOrElse("")
@@ -242,6 +252,8 @@ object TurnPings {
             return "not pinged: has the game open"
         if (pings.get((game, user)).exists(now - _ < cooldown))
             return "not pinged: pinged in the last 10 minutes"
+        if (table(game).isEmpty && webhook.isEmpty)
+            return "not pinged: no turns webhook (the turns change)"
         val id = mentionOf(user, table(game).nonEmpty).getOrElse(return "not pinged: no Discord, or turn pings off")
         val lobby = lobbyOf(game).getOrElse(return "not pinged: lobby not found")
         if (!metas.contains(lobby.meta))
