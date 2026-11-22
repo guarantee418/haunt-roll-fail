@@ -1148,7 +1148,8 @@ server. No session can reach the server, and none needs to.
 - Discord LFG games (`good-game/Lfg.scala`, `LfgSetup.scala`; their headers have the rules and files): in the LFG channel `/root` (Root:
   Advanced Setup, pinging the `root-lfg` role) and, since 2026-11-21, `/northgard` (pinging `ng-lfg`; its `mode` a standard game, the
   default, whose players pick their clans on Join from a menu only they see, or a random one drawn at the start, and each clan gets its
-  seat's color and team; or Adset, the clan draft; in both, Wilderness and Wastelands as tiles, creatures or both: a standard game's
+  seat's color and team, and the command's `central` option sets its central (starting) tile (2026-11-22, `nortStdCommand` in
+  `LfgSetup.scala`; Adset drafts it in the game); or Adset, the clan draft; in both, Wilderness and Wastelands as tiles, creatures or both: a standard game's
   `WildernessTiles` ..., Adset's `WildPartsBoth` ... for the expansion drafted or agreed, `AdsetParts` in `nort/adset.scala`, whose absence
   is the whole module; the clans shown with the Discord server's own clan emojis, found by name (`Lfg.serverEmoji`), or for a clan
   it has none of, the bot's application emoji `ng_<clan>` uploaded at the server's start from `webp2/nort/images/clan/emoji/`, `Lfg.syncClanEmojis`) open a setup panel only the host sees, then post the game with Join, Leave, Start and Cancel; the server creates the game when the

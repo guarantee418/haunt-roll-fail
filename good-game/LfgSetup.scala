@@ -378,7 +378,10 @@ object LfgSetup {
         ("fame", "Whether fame is public", "Fame"), ("undo", "How much undo is allowed", "Undo"))
     // (the two modes share /northgard, and Discord can't hide an option by mode, so the options one mode skips say so: Adset ignores
     // `creatures`, a standard game `lands`, as `sections` leaves them out; 2026-11-21)
-    val nortStdCommand = nortCommand.take(2) ++ List(("creatures", "Standard only (Adset always has it): the Creatures module", "@creatures")) ++ nortCommand.drop(2)
+    // and the central (starting) tile, standard only too, as Adset's seats draft it in the game (asked for on 2026-11-22); last, so the
+    // modules picked before it let the Wyvern's Den and the Gate of Helheim in (`translate` adds the Creatures module they need)
+    val nortStdCommand = nortCommand.take(2) ++ List(("creatures", "Standard only (Adset always has it): the Creatures module", "@creatures")) ++ nortCommand.drop(2) ++
+        List(("central", "Standard only (Adset drafts it): the central, starting tile", "Central tile"))
     val nortAdsetCommand = nortCommand.take(2) ++ List(("lands", "Adset only, standard games skip it: Wilderness or Wastelands", "Wilderness or Wastelands")) ++ nortCommand.drop(2)
     val nortPanel = List("Uncharted Horizons", "Development cards", "Fan content", "Fan victories")
 
@@ -400,6 +403,8 @@ object LfgSetup {
             }
         case ("nort", "creatures", "more") => List("ModuleOption(Creatures)", "MoreCreatures")
         case ("nort", "creatures", _) => List("ModuleOption(Creatures)")
+        case ("nort", "central", "DenCentral" | "HelheimCentral") => List("ModuleOption(Creatures)", v)
+        case ("nort-adset", "central", _) => Nil
         case ("nort-adset", "wilderness" | "wastelands", _) =>
             List((if (key == "wilderness") "WildParts" else "WasteParts") + (v match { case "tiles" => "Tiles" ; case "creatures" => "Creatures" ; case _ => "Both" }))
         case ("nort-adset", "creatures", _) => Nil
@@ -503,7 +508,7 @@ object LfgSetup {
             summary(s.c, d.picked, s.actual) +
             (if (d.note.nonEmpty) "**" + d.note + "**\n" else "") +
             (if (isNort(kind.meta))
-            "The game length, victory conditions, " + (if (kind.clans) "Creatures, " else "the expansion drafted, ") + "Wilderness and Wastelands parts, warchiefs, fame and undo are as given with /" + kind.command + " (or the site's defaults). " +
+            "The game length, victory conditions, " + (if (kind.clans) "Creatures, " else "the expansion drafted, ") + "Wilderness and Wastelands parts, warchiefs, " + (if (kind.clans) "central tile, " else "") + "fame and undo are as given with /" + kind.command + " (or the site's defaults). " +
             "Pick the Uncharted Horizons modules, the Development cards and any fan content, then press **Open the game** to post it here for players to join. Only you see this."
             else
             "The map, deck, clearings, hirelings, landmarks and insurgent lock are as given with /root (or the site's defaults). Pick the hits and ambushes, the factions in the draft" +
