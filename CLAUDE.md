@@ -365,6 +365,10 @@ cd haunt-roll-fail && sbt fullOptJS
   read the whole log and reached a question, posts the factions asked (`Journal.turn`, called from `Runner.run`'s `Ask` and `MultiAsk`
   cases; `/turn/<user>/<secret>/<game>`, kept in `turns.tsv` by `good-game/Turns.scala`), and `/my-games` matches them to the lobby's
   "user <faction> <user>" lines. A game nobody has opened since this was deployed shows no highlight until a player opens it.
+  The games with fan content, which count toward no rating (`Meta.rankingFan`), are in an "Unranked Games" folder under them, finished
+  ones too (open by default while one waits on the player; 2026-11-21): the turn report adds a third line "fan" (`Runner.run`'s
+  `unranked`), kept in `turns.tsv`'s fourth field (`Turns.fan`), and a finished game's result says it ("X:fan"); `/my-games` gives it as
+  the seventh field. A game nobody has opened since that was deployed stays under Your Active Games until a player opens it.
 - Fixing a running game: through the `hrf-games` repository (copy `games/<id>.tsv` to
   `fixes/<id>.tsv` and edit it; its README and `notes/server.md` say how).
 - The in-game "Report a Bug" button posts to `/report-bug`; the server saves the report,

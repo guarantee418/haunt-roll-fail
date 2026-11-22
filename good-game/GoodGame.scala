@@ -511,17 +511,21 @@ object GoodGame {
                     entity(as[String]) { body =>
                         val l = body.split('\n').toList
                         val n = l.headOption.map(_.trim).filter(s => s.nonEmpty && s.size < 9 && s.forall(_.isDigit)).map(_.toInt)
-                        val ff = l.drop(1).mkString(" ").split(" ").toList.map(_.safe).filter(_.nonEmpty).take(12).map(_.take(40))
+                        // the factions asked, then "fan" for a game with fan content (newer clients; older ones sent no third line)
+                        val ff = l.drop(1).take(1).mkString(" ").split(" ").toList.map(_.safe).filter(_.nonEmpty).take(12).map(_.take(40))
+                        val fan = l.drop(2).exists(_.trim == "fan")
                         val allowed = n.nonEmpty && scala.util.Try(execute(hasRight(userId, userSecret, journalId, "read") { journals.filter(_.id === journalId).result.head })).isSuccess
                         if (allowed)
-                            Turns.report(journalId, n.get, ff, execute(entries.filter(_.journalId === journalId).map(_.index).max.result).map(_ + 1).getOrElse(0))
+                            Turns.report(journalId, n.get, ff, fan, execute(entries.filter(_.journalId === journalId).map(_.index).max.result).map(_ + 1).getOrElse(0))
                         plain(if (allowed) "ok" else "")
                     }
                 }
             } ~
             // A player's own online games (2026-11-20): every seat a name the player code holds was claimed for, newest first, as
-            // "meta, title, the seat's secret (its link), name, done, turn" with done 1 once the game's result is in, and turn 1 while
-            // the game waits on that seat (Turns.scala; the "user <faction> <user>" lines of the lobby say which seat is whose)
+            // "meta, title, the seat's secret (its link), name, done, turn, unranked" with done 1 once the game's result is in, turn 1 while
+            // the game waits on that seat (Turns.scala; the "user <faction> <user>" lines of the lobby say which seat is whose), and
+            // unranked 1 for a game with fan content, which counts toward no rating: its result says so ("X:fan"), or, before the end,
+            // the last turn report (2026-11-21)
             (post & path("my-games")) {
                 decodeRequest {
                     entity(as[String]) { body =>
@@ -538,14 +542,17 @@ object GoodGame {
                             val metaOf = info.view.mapValues(_.map(_.split(" ", 2).toList).collect { case k :: v :: Nil if k != "user" => k -> v }.toMap).toMap
                             // the faction each seat (user) plays, from "user <faction> <user>"
                             val factionOf = info.view.mapValues(_.map(_.split(" ").toList).collect { case "user" :: f :: u :: Nil => u -> f }.toMap).toMap
-                            val done = Ranking.recorded().flatMap(_.headOption).toSet
+                            val recorded = Ranking.recorded()
+                            val done = recorded.flatMap(_.headOption).toSet
+                            val fanDone = recorded.filter(r => r.lift(4).exists(_.split(';').contains("X:fan"))).flatMap(_.headOption).toSet
                             val dd = Ranking.displays()
                             plain(seated.flatMap { case (u, k) =>
                                 ps.filter(_.userId == u).flatMap { p =>
                                     metaOf.get(p.journalId).filter(m => m.contains("meta") && m.contains("server")).map { m =>
                                         val over = done.contains(m("server"))
                                         val turn = !over && factionOf.get(p.journalId).flatMap(_.get(p.userId)).exists(f => Turns.asked(m("server")).contains(f))
-                                        Backup.row(m("meta"), m.getOrElse("title", ""), p.secret, dd.getOrElse(k, k), if (over) "1" else "0", if (turn) "1" else "0")
+                                        Backup.row(m("meta"), m.getOrElse("title", ""), p.secret, dd.getOrElse(k, k), if (over) "1" else "0", if (turn) "1" else "0",
+                                            if (if (over) fanDone.contains(m("server")) else Turns.fan(m("server"))) "1" else "0")
                                     }
                                 }
                             }.distinct.mkString("\n"))

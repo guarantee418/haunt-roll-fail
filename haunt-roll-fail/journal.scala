@@ -31,8 +31,9 @@ trait Journal[T] {
             fail
     }
 
-    // tells the server whose turn it is, once the whole log is read (good-game/Turns.scala); only online games have a server
-    def turn(factions : $[String]) {}
+    // tells the server whose turn it is, once the whole log is read (good-game/Turns.scala); only online games have a server;
+    // fan: the game has fan content and so counts toward no rating (MetaGame.rankingFan), for the Unranked Games folder
+    def turn(factions : $[String], fan : Boolean = false) {}
 }
 
 
@@ -56,8 +57,8 @@ class ServerJournal[T](val meta : MetaGame, server : String, user : String, secr
 
     private var lastTurn = ""
 
-    override def turn(factions : $[String]) {
-        val report = size + "\n" + factions.join(" ")
+    override def turn(factions : $[String], fan : Boolean = false) {
+        val report = size + "\n" + factions.join(" ") + fan.??("\nfan")
         if (report != lastTurn) {
             lastTurn = report
             postF(server + "/turn/" + user + "/" + secret + "/" + journal, report)(_ => ()) { lastTurn = "" }

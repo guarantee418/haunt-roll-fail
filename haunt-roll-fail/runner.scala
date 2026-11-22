@@ -55,6 +55,10 @@ object Runner {
 
         def newGame() = meta.createGame(seating, options)
 
+        // the game has fan content and counts toward no rating (MetaGame.rankingFan), told with each turn report for the
+        // Unranked Games folder of Play Online (2026-11-21)
+        def unranked(g : G) : Boolean = try { meta.rankingFan(g) } catch { case e : Throwable => false }
+
         var check : Option[meta.G] = None
         var game = newGame()
 
@@ -583,7 +587,7 @@ object Runner {
                     UIRecord("#unchoice 3", c, a)
 
                 case UIContinue(c @ Ask(faction, actions), Nil) =>
-                    journal.turn((faction != null).$(meta.turnSeat(game, faction)).%(_.nonEmpty))
+                    journal.turn((faction != null).$(meta.turnSeat(game, faction)).%(_.nonEmpty), unranked(game))
 
                     auto(game, faction) match {
                         case AskHuman => UIAsk(c, Some(faction), actions, $)
@@ -602,7 +606,7 @@ object Runner {
                         case _ => None
                     })
 
-                    journal.turn(asks./(_.faction).%(_ != null)./(f => meta.turnSeat(game, f)).%(_.nonEmpty).distinct)
+                    journal.turn(asks./(_.faction).%(_ != null)./(f => meta.turnSeat(game, f)).%(_.nonEmpty).distinct, unranked(game))
 
                     lazy val waits = asks./~(ask => auto(game, ask.faction) match {
                         case WaitRemote => Some(ask.faction)

@@ -2382,8 +2382,10 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
     // tour: the player's tournament games (good-game/Tournament.scala), shown at the top once the server has said which
     // mine: the player's own games from the server (good-game "my-games"), shown while their names are claimed on this device;
     // the completed ones in a folder, open when doneOpen (2026-11-20)
-    // held: the names this device holds (Account; 2026-11-20); fetch: ask the server for all three (once: the answers re-render)
-    def onlineGame(tour : |[$[$[String]]] = None, mine : |[$[$[String]]] = None, doneOpen : Boolean = false, held : |[$[String]] = None, fetch : Boolean = true) {
+    // held: the names this device holds (Account; 2026-11-20); fetch: ask the server for all three (once: the answers re-render);
+    // the games with fan content, which count toward no rating, in the Unranked Games folder, open when unrankedOpen, or by
+    // default while one of them waits on the player (2026-11-21)
+    def onlineGame(tour : |[$[$[String]]] = None, mine : |[$[$[String]]] = None, doneOpen : Boolean = false, held : |[$[String]] = None, fetch : Boolean = true, unrankedOpen : |[Boolean] = None) {
         val prefix = meta.settingsKey + ".online.game."
         val l = Local.list(prefix)./(_.drop(prefix.length).split('.'))./(l => l(0) -> l(1).toDouble).sortBy(-_._2)
         val games = l./{ case (lobby, time) => HRF.parseOnlineGame(lobby, time, Local.get(prefix + lobby + "." + time, "")) }
@@ -2394,7 +2396,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             var t = tour
             var m = mine
             var h = held
-            def again() = if (dom.document.location.pathname == at) onlineGame(t, m, doneOpen, h, false)
+            def again() = if (dom.document.location.pathname == at) onlineGame(t, m, doneOpen, h, false, unrankedOpen)
 
             if (meta.tournament.any)
                 postF(HRF.server.get + "/tournament/mine", PlayerKey.get) { r =>
@@ -2430,27 +2432,40 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         // the game waits on the player (the server's sixth field, good-game/Turns.scala; 2026-11-20)
         def myTurn(r : $[String]) = r.lift(5).has("1")
 
+        // the game has fan content and counts toward no rating (the server's seventh field: its result, or the last turn report)
+        def unranked(r : $[String]) = r.lift(6).has("1")
+
         // a game of the player's own: its title, the game when it isn't this one, the name played under; it opens the seat;
         // highlighted in gold, with "Your turn", while it waits on the player
         def myGame(group : Elem, r : $[String]) = {
             val label = HRF.metas.find(_.name == r(0))./(_.label).|(r(0))
             val other = (r(0) != meta.name).??(label + " · ")
             val turn = myTurn(r)
-            val sub = turn.?(Span(Text("Your turn"), $(ExternalStyle("hrf-my-turn-tag"))) ~ " · ".txt).|(Empty) ~ (other + "as " + r(3)).txt
+            // (a finished game in the Unranked Games folder says so)
+            val sub = turn.?(Span(Text("Your turn"), $(ExternalStyle("hrf-my-turn-tag"))) ~ " · ".txt).|(Empty) ~ ((r(4) == "1" && unranked(r)).??("Finished · ") + other + "as " + r(3)).txt
             ZOption(group, (Link(HRF.server.get + "/play/" + r(0) + "/" + r(2), r(1).but("")./(_.hh).|(label.hh) ~ Break ~ sub.spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice ++ turn.$(ExternalStyle("hrf-my-turn"))))
         }
 
         val tourSecrets = tour.|($)./(_(3)).toSet
         val myGames = mine.|($).%(r => tourSecrets.contains(r(2)).not)
         // the games waiting on the player first, each part in the server's order (newest first)
-        val active = myGames.%(_(4) != "1").sortBy(r => myTurn(r).?(0).|(1))
-        val done = myGames.%(_(4) == "1")
+        val active = myGames.%(_(4) != "1").%(r => unranked(r).not).sortBy(r => myTurn(r).?(0).|(1))
+        val done = myGames.%(_(4) == "1").%(r => unranked(r).not)
+        // the unranked ones, finished or not: those waiting on the player first, then the others still going, then the finished
+        val fan = myGames.%(unranked).sortBy(r => (r(4) == "1").?(2).|(myTurn(r).?(0).|(1)))
+        val fanTurns = fan.%(myTurn).num
+        val fanOpen = unrankedOpen.|(fanTurns > 0)
         val names = myGames./(_(3)).distinct
+
+        def folder(open : Boolean, label : String, turns : Int, toggle : () => Unit) =
+            ZBasic(" ", ((open.?("▾ ").|("▸ ") + label).hh ~ (turns > 0).?(" · ".txt ~ Span(Text("Your turn" + (turns > 1).??(" (" + turns + ")")), $(ExternalStyle("hrf-my-turn-tag")))).|(Empty)).div($(xlo.fullwidth, xlo.fullheight)), toggle)
 
         val myGameRows =
             active./(r => myGame(("Your Active Games" + (names.num == 1).??(" · " + names.head)).hl, r)) ++
             (myGames.any && active.none).$(ZOption("Your Active Games".hl, Div("None right now.".txt, ZBasic.info))) ++
-            done.any.$(ZBasic(" ", ((doneOpen.?("▾ ").|("▸ ") + "Completed Games (" + done.num + ")").hh).div($(xlo.fullwidth, xlo.fullheight)), () => onlineGame(tour, mine, doneOpen.not, held, false))) ++
+            fan.any.$(folder(fanOpen, "Unranked Games (" + fan.num + ")", fanTurns, () => onlineGame(tour, mine, doneOpen, held, false, |(fanOpen.not)))) ++
+            fanOpen.??(fan.any.$(ZOption(" ".spn, Div("Games with fan content count toward no ranking.".txt, ZBasic.info))) ++ fan./(r => myGame(" ".spn, r))) ++
+            done.any.$(folder(doneOpen, "Completed Games (" + done.num + ")", 0, () => onlineGame(tour, mine, doneOpen.not, held, false, unrankedOpen))) ++
             doneOpen.??(done./(r => myGame(" ".spn, r)))
 
         val tournamentGames = tour.|($)./(r => ZOption("Your Tournament Game".hl, (Link(HRF.server.get + "/play/" + meta.tournament.get + "/" + r(3), r(2).hh ~ Break ~ ("as " + r(4) + " against " + r(5)).spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice)))
