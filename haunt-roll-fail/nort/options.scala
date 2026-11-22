@@ -1172,6 +1172,15 @@ case object SailOnFromPort extends GameOption with ToggleOption {
     def valueOn = "Port to Port costs 2 moves".txt
 }
 
+// Sea module, three players: the Beaches where the rulebook's 3 PLAYER SETUP picture puts them (SeaExpansion.threePlayerBeaches):
+// west and north straight out from the first tiles, the third one south, under the east first tile (Discord, northgard-feedback,
+// relayed on 2026-11-22); each Beach went straight out from its first tile. Hidden, and given to every new game (Meta.mandatoryFor);
+// older games keep their Beaches. Setup only, so no switch for running games
+case object ThreePlayerBeaches extends GameOption with ToggleOption {
+    val group = "Uncharted Horizons".txt
+    def valueOn = "Three-player Beaches as in the rulebook".txt
+}
+
 // Marzaus's "Alternative fame gains" (fame-gains.scala; Discord, northgard-fanmade-content, 2026-10-22; asked for by the owner on
 // 2026-11-01): fame as things are done, and 120 fame with an Altar of Kings wins at once. It replaces the other victory conditions,
 // so it needs the Standard or Fame only victory
