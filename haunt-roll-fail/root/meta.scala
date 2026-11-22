@@ -31,6 +31,32 @@ case class UnknownOption(o : String) extends GameOption {
     val valueOn = "Unknown Option " ~ o
 }
 
+// RANKED OR UNRANKED (asked for on 2026-11-22): an online game picks whether it counts toward the rankings. A ranked game can't be
+// started with anything not approved for ranked play (Meta.rankedCheck), and those options are marked "unranked" on the setup screen
+// (Meta.rankingUnapproved). An unranked game counts in neither the ratings nor the stats. Not offered in local games or Mirror
+trait RankingOption extends RankingChoice with OneOfGroup with FoldedOption {
+    val group : Elem = "Ranking"
+}
+
+case object RankedGame extends RankingOption {
+    val ranked = true
+    val valueOn = "Ranked".hlb
+    override val explain = $(
+        "Counts toward the " ~ "Elo ratings".hh ~ " and the faction and turn order stats, when every seat is a person (a game with a bot never counts).",
+        "Approved for ranked play: the official factions (base, expansions and " ~ "Homeland".hh ~ "), the official maps and the fan maps " ~ "Tidal Flats".styled(ED) ~ ", " ~ "Tundra".styled(RF) ~ " and " ~ "Gloom".styled(styles.forest) ~ ", the decks " ~ "Capitalists and Anarchists".hh ~ ", " ~ "Exiles and Partisans".hh ~ ", " ~ "Squires and Disciples".hh ~ ", " ~ "Might and Right".hh ~ ", " ~ "Mixed".hh ~ " and " ~ "Dawn and Dusk".hh ~ ", the official landmarks and the " ~ "Birdsong Tower".hh ~ ", and the official hirelings.",
+        "Not approved: fan, playtest and mirror factions, the other fan maps and decks, the " ~ "Action! Deck Booster".hh ~ ", the other " ~ "Simple Landmarks".hh ~ ", " ~ "Turnlings".hh ~ ", " ~ "Doomed Vagabonds".hh ~ " and " ~ "Knave Captains".hh ~ ", and the " ~ "Legends Scenarios".hh ~ ". The setup screen marks each of them " ~ "unranked".styled(xstyles.warning) ~ ".",
+    )
+}
+
+case object UnrankedGame extends RankingOption {
+    val ranked = false
+    val valueOn = "Unranked".hlb
+    override val explain = $(
+        "Counts toward neither the " ~ "Elo ratings".hh ~ " nor the stats, whatever is played.",
+        "Anything may be played, approved for ranked play or not.",
+    )
+}
+
 trait MapOption extends GameOption with OneOfGroup with ImportantOption with FoldedOption {
     val group : Elem = "Map"
     // the Fan Maps section picks the Map too
@@ -1904,6 +1930,7 @@ object Meta extends MetaGame {
 
     override def optionPages(n : Int, l : $[F]) : $[$[GameOption]] = $(
         hiddenOptions ++
+        rankingOptions ++
         hitsAndAmbushes(l) ++
         $(SetupTypeCorners, SetupTypeHomelands) ++
         (n > 2).?(TotalWarDominance) ++
@@ -1972,8 +1999,11 @@ object Meta extends MetaGame {
         }
     ).distinct
 
+    val rankingOptions : $[GameOption] = $(RankedGame, UnrankedGame)
+
     override def optionsFor(n : Int, l : $[F]) =
         hiddenOptions ++
+        rankingOptions ++
         $(AutumnMap, WinterMap, LakeMap, MountainMap, GorgeMap, MarshMap, RandomOfficialMap, TidalMap, TundraMap, GloomMap, UrbanMap, LegendsMap, DeepWoodsMap, WastelandsMap) ++
         $(DeepWoodsSettling, WastelandsWater) ++
         $(DefaultClearings, NoClustersClearings, AllRandomClearings, SuitPairsClearings, ConnectedClearings, ThreeFourFiveClearings) ++
@@ -2078,6 +2108,7 @@ object Meta extends MetaGame {
     override def mandatoryFor(n : Int, l : $[F]) : $[O] = l./(IncludeFaction) ++ newGame
 
     override def defaultsFor(n : Int, l : $[F]) = $(
+        RankedGame,
         SeatingGiven,
         FactionSeatingGiven,
         RandomOfficialMap,
@@ -2209,7 +2240,7 @@ object Meta extends MetaGame {
     def validateFactionSeatingOptions(factions : $[Faction], options : $[O]) = {
         val ff = factions.of[Hero]./(h => (factions.dropWhile(_ != h) ++ factions.takeWhile(_ != h)).drop(1).takeWhile(_.is[Hero].not).num)
 
-        validateFactionCombination(factions) && (
+        validateFactionCombination(factions) && rankedCheck(factions, options) && (
             if (factions.of[Feline].num + factions.of[Aviary].num + factions.of[Fanatic].num + factions.of[Underground].num + factions.of[Horde].num > 4 && options.has(SetupTypeCorners))
                 ErrorResult("Too many corner factions")
             else
@@ -2270,15 +2301,40 @@ object Meta extends MetaGame {
     // fan content (rankingFan): a faction that isn't an official one (fan, playtest and mirror factions), a fan map or deck, the
     // (Capitalists and Anarchists is among the official Decks since 2026-11-21, so it counts as official)
     // Doomed Vagabonds, Knave Captains, Turnlings or Legends Scenarios, the Action! Deck Booster, or the Simple Landmarks (house rules) but the Birdsong Tower
-    def rankFan(game : Game) : Boolean = game.factions.exists(f => (official ++ homeland).has(f).not) || game.options.exists {
-        // Might and Right, Mixed and Dawn and Dusk sit under Fan Decks on the setup screen but aren't fan-made
+    // and a game picked as unranked (UnrankedGame, 2026-11-22)
+    def rankFan(game : Game) : Boolean = game.options.has(UnrankedGame) || game.factions.exists(approved(_).not) || game.options.exists(unapproved)
+
+    // approved for ranked play: the official factions, Homeland's too
+    def approved(f : Faction) = (official ++ homeland).has(f)
+
+    // an option not approved for ranked play
+    def unapproved(o : GameOption) : Boolean = o match {
+        // Might and Right, Mixed and Dawn and Dusk sit under Fan Decks on the setup screen; approved (Dawn and Dusk since 2026-11-22)
         case StandardDeck | MixedDeck | DuskDeck => false
+        // the fan maps Tidal Flats, Tundra and Gloom are approved for ranked play (owner, 2026-11-22)
+        case TidalMap | TundraMap | GloomMap => false
         case _ : FanMap | _ : FanDeck => true
         // the Birdsong Tower is official for the site (2026-11-20), the other Simple Landmarks are house rules
         case BirdsongTowerLandmark => false
         case _ : SimpleLandmark => true
         case IncludeHireling(h) => turnlings.has(h)
         case o => $[GameOption](ActionBooster, DoomedVagabonds, DoomedCaptains, TurnOverHirelings, DeepWoodsSettling, WastelandsWater).has(o) || legendsOptions.has(o)
+    }
+
+    // the setup screen and the Discord setup panel mark these: the options above, and the fan factions in Advanced Setup's pool
+    def unapprovedPick(o : GameOption) : Boolean = o match {
+        case IncludeFaction(f) => approved(f).not
+        case o => unapproved(o)
+    }
+    override def rankingUnapproved(o : O) = unapprovedPick(o)
+
+    // a ranked game with something not approved for ranked play is refused (the setup screen's Start), naming them
+    def rankedCheck(factions : $[Faction], options : $[GameOption]) : |[ValidationResult] = options.has(RankedGame).??{
+        val why = (factions.%(approved(_).not)./(_.name) ++ options.%(unapprovedPick)./{
+            case IncludeFaction(f) => f.name
+            case o => o.valueOn.text
+        }).distinct
+        why.any.?(ErrorResult("Not approved for ranked play: " + why.mkString(", ") + ". Pick Unranked to play with " + (why.num > 1).?("them").|("it")))
     }
 
     def rankSides(game : Game, winners : $[Any]) : $[($[Faction], Boolean)] = game.factions./(f => $(f) -> winners.contains(f))

@@ -384,7 +384,7 @@ object MetaAdset extends MetaGame {
 
     override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, TamerSparesHrimgandr, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, PrintedSquirrelClan, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, ChiefMoveFromHeld, ChiefMoveAfterMove, MilitaryRerollCreatures, HorseTwoGuards, PickLoneLoss, GuardBeforeChief, ScorchedAfterEvents, PCChiefCampPays, FameRetreatKills, FameAltarClosed, GuardCasualtyAsked, SailOnFromPort, BuildOrUpgrade)
 
-    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ WarchiefsChoice.all ++ $(NoDefensiveStrategy, ExtraAchievement) ++ BanDevelopment.all ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ AdsetParts.all ++ $(BalancedStartTiles) ++ DevelopmentsChoice.fan ++ Module.all.%(_.fan).but(LionKingdom).but(DragonVariant).but(BearBorder).but(PCVersion).diff(FanVictories.modules)./(ModuleOption) ++ FanVictories.modules./(ModuleOption) ++ hiddenOptions
+    val options : $[O] = RankingOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ WarchiefsChoice.all ++ $(NoDefensiveStrategy, ExtraAchievement) ++ BanDevelopment.all ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ AdsetParts.all ++ $(BalancedStartTiles) ++ DevelopmentsChoice.fan ++ Module.all.%(_.fan).but(LionKingdom).but(DragonVariant).but(BearBorder).but(PCVersion).diff(FanVictories.modules)./(ModuleOption) ++ FanVictories.modules./(ModuleOption) ++ hiddenOptions
 
     // With two players the second seat doesn't choose: an expansion is agreed on here, or none
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -401,7 +401,7 @@ object MetaAdset extends MetaGame {
         case o => Meta.optionShown(o, selected)
     }
 
-    override def defaultsFor(n : Int, l : $[F]) = $(YearsOption.standard, StandardVictory, VictoryModeOption(false), PrivateFame, UnlimitedUndo, EditionChoice.default, (n > 2).?(LandsSeatChooses).|(LandsNeither), WildPartsBoth, WastePartsBoth)
+    override def defaultsFor(n : Int, l : $[F]) = $(RankedGame, YearsOption.standard, StandardVictory, VictoryModeOption(false), PrivateFame, UnlimitedUndo, EditionChoice.default, (n > 2).?(LandsSeatChooses).|(LandsNeither), WildPartsBoth, WastePartsBoth)
 
     override def quickOptions = Map()
 

@@ -423,6 +423,35 @@ case object FirstSeatStarts extends GameOption with ToggleOption {
     )
 }
 
+// RANKED OR UNRANKED (asked for on 2026-11-22): an online game picks whether it counts toward the rankings; offered only online
+// (startSetup in hrf.scala). A ranked game can't be started with a fan clan (Meta.rankedCheck); fan modules and options are rated
+// (owner, 2026-11-21). An unranked game counts in neither the ratings nor the stats
+trait RankingOption extends RankingChoice with OneOfGroup {
+    val group = "Ranking".txt
+    override def fold = |("Ranking")
+}
+
+case object RankedGame extends RankingOption {
+    val ranked = true
+    def valueOn = "Ranked".hlb
+    override val explain = $(
+        "Counts toward the Elo ratings and the clan and turn order stats, when every seat is a person (a game with a bot never counts).",
+        "Everything is approved for ranked play, the fan modules and options too, but the fan clans: the Lion Kingdom, the lower skill floor Dragon and the Bear variant.",
+    )
+}
+
+case object UnrankedGame extends RankingOption {
+    val ranked = false
+    def valueOn = "Unranked".hlb
+    override val explain = $(
+        "Counts toward neither the Elo ratings nor the stats, whatever is played.",
+    )
+}
+
+object RankingOption {
+    val all : $[RankingOption] = $(RankedGame, UnrankedGame)
+}
+
 // FAME: whether the player panels show every clan's fame (nort/ui.scala, fameHidden). Private is the rule (the fame tokens are
 // kept face down) and the default; games made before the choice have neither option and stay private
 trait FameChoice extends GameOption with OneOfGroup {

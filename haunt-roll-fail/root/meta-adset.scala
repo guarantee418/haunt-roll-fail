@@ -83,6 +83,7 @@ object MetaAdset extends MetaGame {
     override def startOptions(options : $[O]) : $[O] = Meta.startOptions(options)
 
     override def defaultsFor(n : Int, l : $[F]) = $(
+        RankedGame,
         SeatingRandom,
         FactionSeatingRandom,
         RandomOfficialMap,
@@ -141,13 +142,13 @@ object MetaAdset extends MetaGame {
     def validateFactionCombination(factions : $[F]) = InfoResult("")
 
     def validateFactionSeatingOptions(factions : $[F], options : $[O]) =
-        if (realFactions./(IncludeFaction).intersect(options).num < factions.num)
+        (if (realFactions./(IncludeFaction).intersect(options).num < factions.num)
             ErrorResult("Not enough factions selected")
         else
         if (realFactions./(IncludeFaction).intersect(options).num < factions.num + 1)
             WarningResult("Not enough factions selected")
         else
-            InfoResult("")
+            InfoResult("")) && Meta.rankedCheck($, options)
 
     def factionName(f : F) = f.name
     def factionElem(f : F) = f.name.hh
@@ -195,6 +196,7 @@ object MetaAdset extends MetaGame {
     override def overview(g : G) = Meta.overviewOf(g)
     override def status(g : G) = Meta.statusOf(g, f => turnSeat(g, f))
     override def rankingFan(g : G) = Meta.rankFan(g)
+    override def rankingUnapproved(o : O) = Meta.rankingUnapproved(o)
 
     def getBots(f : F) = $("None")
 
