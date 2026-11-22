@@ -385,6 +385,7 @@ object TurnPings {
         def sword = LfgSetup.serverNamed(List("swordroot", "sword", "swords", "battle", "attack")).getOrElse("⚔️ ")
         def axe = LfgSetup.serverNamed(List("axeng", "axe", "battleaxe", "fight")).getOrElse("🪓 ")
         def e(key : String) = LfgSetup.emojiText(key)
+        def w(icon : String) = icon.trim
         // the other faction as its emoji and name ("by <emoji>**Marquise de Cat**"), its name from the LFG catalog when it has one
         // (a Northgard creature comes as "~<its name>": the Discord server's emoji of that name, if any, and the name)
         def creature(n : String) = LfgSetup.serverNamed(List(LfgSetup.norm(n))).getOrElse("") + "the **" + n + "**"
@@ -394,8 +395,9 @@ object TurnPings {
             iconOf(o) + "**" + name + "**"
         } }
         val (icon, words) = (nort, tag) match {
-            case (false, "defend") => (sword, "you're under attack" + them.map(" by " + _).getOrElse(""))
-            case (false, "battle") => (sword, them.map("your battle against " + _ + " needs you").getOrElse("your battle needs you"))
+            // (the sword or axe right after "attack", "battle" or "fight", 2026-11-22, asked for)
+            case (false, "defend") => (head, "you're under attack " + w(sword) + them.map(" by " + _).getOrElse(""))
+            case (false, "battle") => (head, "your battle " + w(sword) + them.map(" against " + _).getOrElse("") + " needs you")
             case (false, "keep") => (e("StandardDeck"), "pick the cards you keep")
             case (false, "handlimit") => (e("StandardDeck"), "discard down to your hand limit")
             case (false, "draft") => (e("title"), "your pick in the faction draft")
@@ -408,8 +410,8 @@ object TurnPings {
             case (false, "entreat") => (e("IncludeFaction(TC)"), them.map(_ + " entreated you").getOrElse("you were entreated"))
             case (false, "hospitals") => (e("IncludeFaction(MC)"), "Field Hospitals: save your cats?")
             case (false, "setup") => (head, "time to set up")
-            case (true, "defend") => (axe, "you're under attack" + them.map(" by " + _).getOrElse(""))
-            case (true, "fight") => (axe, them.map("your fight against " + _ + " needs you").getOrElse("your fight needs you"))
+            case (true, "defend") => (head, "you're under attack " + w(axe) + them.map(" by " + _).getOrElse(""))
+            case (true, "fight") => (head, "your fight " + w(axe) + them.map(" against " + _).getOrElse("") + " needs you")
             case (true, "trade") => (e("turn:trade"), "harvest trading")
             case (true, "winter") => (e("turn:winter"), "Winter is here")
             case (true, "cards") => (e("HorizonsDevelopments"), "pick a card")
