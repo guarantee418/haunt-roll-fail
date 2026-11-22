@@ -33,6 +33,9 @@ class GameEvaluationCouncil(faction : Council)(implicit game : Game) extends Gam
             case TakeDominanceAction(f, d, _) =>
                 true |=> -500 -> "dont"
 
+            case CouncilConveneAllAction(f) =>
+                true |=> -500 -> "dont"
+
             case BattleAmbushAction(_, _, _, _, _, _) =>
                 true |=> 1000 -> "ambush"
 

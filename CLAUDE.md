@@ -879,6 +879,9 @@ server. No session can reach the server, and none needs to.
   only when the Captain can move and the Diaspora has a Peaceful enclave; a Nab move put first sets them off when it is done or skipped.
   The Fears always came first, during the battle's removal. New games get the hidden `NabFearsOrder`, in `RulesVersion4`; a running game
   can be switched over with `NabFearsOrderAction(X)`. `ReplayCheck <games> ldkd` takes Nab half the times it is offered and picks the order at random.
+- The Twilight Council's Convene Woodfolk (17.6.1) offers "Return all to hand" beside the revealed cards: every card left goes back
+  to hand at once and none of them acts, ending the step (`CouncilConveneAllAction` in `root/faction-council.scala`; 2026-11-22, asked
+  for in Right of Betrayal). It only adds a choice, so no option; the bots never take it.
 - An Entreat (17.2.4) asks the Twilight Council to gain a Loyalist or place some in the clearing only when it has Loyalists it could
   place there; otherwise it gains one without being asked, or nothing happens when it can't (`CouncilEntreatAction` in
   `root/faction-council.scala`; 2026-10-29: the Council was asked only to "place 0"). New games get the hidden default option
