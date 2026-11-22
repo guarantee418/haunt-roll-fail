@@ -25,6 +25,9 @@ import java.nio.file.{Files, Path, Paths}
 //   rename <name> -> <new> the claim and the games its seats played move to the new name, which must be free; the old name
 //                          is free again (seats that played under the name typed, never claimed, stay: "seat" moves them)
 //   seat <user> <name>     a seat counts under that name (claimed or not) from now on
+//   merge <name> -> <into> one player under two names (a second device that couldn't take the name, 2026-11-22): <into>, which
+//                          must be claimed, gets every key of <name> (so those devices play under it), the seats that played
+//                          under <name> move to it, and <name> is free again; <name> needn't be claimed (its seats still move)
 // Names may have spaces; "#" starts a comment line. The files are only appended to: a release is a row with no key.
 object Ranking {
     import Backup.{esc, unesc, rows, row}
@@ -229,11 +232,29 @@ object Ranking {
                             "renamed " + c.display + " to " + t
                         case None => "not done: " + n(from) + " is not claimed"
                     }
+                case ("merge", from :: into :: Nil) =>
+                    val (k, t) = (n(from).toLowerCase, n(into).toLowerCase)
+                    val cc = claims()
+                    if (k == t) "not done: the same name"
+                    else
+                    cc.get(t) match {
+                        case None => "not done: " + n(into) + " is not claimed"
+                        case Some(target) =>
+                            val keys = cc.get(k).toList.flatMap(_.hashes).filterNot(target.hashes.contains)
+                            keys.foreach(h => append(names, row(t, target.display, h, now())))
+                            val moved = seatNames().filter(_._2 == k).keys.toList.sorted
+                            moved.foreach(u => append(seats, row(u, t)))
+                            cc.get(k).foreach { c =>
+                                append(names, row(k, c.display, "", now()))
+                                append(codes, row(k, "", "", now()))
+                            }
+                            "merged " + cc.get(k).map(_.display).getOrElse(n(from) + " (not claimed)") + " into " + target.display + ": " + keys.size + " device(s), " + moved.size + " seat(s)"
+                    }
                 case ("seat", u :: Nil) if u.contains(' ') && n(u.dropWhile(_ != ' ')).nonEmpty =>
                     val (user, name) = (u.takeWhile(_ != ' '), n(u.dropWhile(_ != ' ')))
                     append(seats, row(user, name.toLowerCase))
                     "seat " + user + " counts as " + name
-                case _ => "not done: not a change (release, rename or seat)"
+                case _ => "not done: not a change (release, rename, merge or seat)"
             }
             line + ": " + result
         }
