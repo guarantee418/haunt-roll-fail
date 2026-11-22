@@ -353,7 +353,7 @@ cd haunt-roll-fail && sbt fullOptJS
   (`Meta.rankingFan`: Northgard's fan clans only, the Lion Kingdom and the Dragon and Bear variants, `rankFan` in `nort/meta.scala`, as its fan modules and options are rated since 2026-11-21 (owner: much modular content, few players); Root's fan, playtest and mirror
   factions, fan maps, decks, hirelings and scenarios, `rankFan` in `root/meta.scala`; asked for on 2026-11-18) are reported with an
   "X fan" line, kept as the side `X:fan`, and count in the stats but in no rating (`Result.fan`). Names are released or
-  moved by committing `ranking-changes/<name>.txt` to `hrf-games` (`release <name>`, `rename <name> -> <new>`, `seat <user> <name>`;
+  moved by committing `ranking-changes/<name>.txt` to `hrf-games` (`release <name>`, `rename <name> -> <new>`, `seat <user> <name>`, and `merge <name> -> <into>` for one player under two names, which gives `<into>` the first name's devices and seats and frees it, 2026-11-22;
   `Ranking.change`, applied once each by `Backup`, outcome in `<name>.result`).
   A name can have several player keys (each `names.tsv` row with a hash adds one, a row with an empty hash releases it), and
   its owner can set a code of their own under Rankings, "Set my own code" (8 characters or more, `codes.tsv`, salted SHA-256,
