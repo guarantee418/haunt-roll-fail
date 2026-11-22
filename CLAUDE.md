@@ -1156,7 +1156,7 @@ server. No session can reach the server, and none needs to.
   seats fill (or the host starts it), the bot DMs each player their seat link (every player since 2026-11-21, `welcome`;
   only players the site didn't know before) and Get my link gives it again. A player whose Discord is linked to a ranking name (given
   on the Tournament page, set by the `discord` change, or an earlier LFG seat's) plays under it from the start, so the game is in
-  their Play Online (`rankingNameOf`, a `name` lobby line and a `seats.tsv` row, as the tournament does; 2026-11-21). Each game is an `Lfg.Kind`; its options come from
+  their Play Online (`rankingNameOf`, a `name` lobby line and a `seats.tsv` row, as the tournament does; 2026-11-21). The other way round, an LFG seat's player who claims a ranking name gives that name the Discord user ID they joined with, when it has none yet (`Lfg.learnDiscord`, after `/claim-name`; seats claimed before are caught up at the server's start, `learnAll`), so the Rankings page, the tournament and the turn pings of Play Online games know it too (2026-11-22). Each game is an `Lfg.Kind`; its options come from
   the client (`lfgOptions`, `lfgPlayers`, `lfgCatalog` in `meta.scala`, overridden in `root/meta-adset.scala` and `nort/adset.scala`,
   sent by Play Online), kept per meta (`lfg-catalog-<meta>.tsv`, `lfg-template-<meta>.tsv`; Root's keep their first names). The posts and the panel's menus show an emoji wherever they can (asked for on 2026-11-21): each section and pick
   (the Discord server's emoji of that name, else the server's emoji whose name matches the option's label, saved name or a word of
