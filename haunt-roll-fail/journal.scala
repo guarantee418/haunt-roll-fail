@@ -38,10 +38,56 @@ trait Journal[T] {
 }
 
 
+// A page loaded before a deploy kept running the old client, and its turn reports went on saying what the old code said (2026-11-22:
+// a ping for an attack named no attacker, from the attacker's page left open since before the deploy). An online game's page asks the
+// server for the client build's fingerprint (good-game's /client-version) when it starts, and again before each turn report and each
+// time it comes back into view; when the fingerprint has changed it reloads itself, which brings it back to the same game with the new
+// client, and sends no report from the old one. Nothing is lost: an online game's moves are on the server.
+object ClientVersion {
+    private var server = ""
+    private var loaded : |[String] = None
+    private var reloading = false
+
+    def start(s : String) {
+        if (server == "") {
+            server = s
+            getF(server + "/client-version") { v => if (v.trim.nonEmpty) loaded = |(v.trim) } { }
+            scala.util.Try {
+                val d = scalajs.js.Dynamic.global.document
+                d.addEventListener("visibilitychange", { (e : scalajs.js.Any) =>
+                    if (!d.hidden.asInstanceOf[Boolean])
+                        check { }
+                } : scalajs.js.Function1[scalajs.js.Any, Unit])
+            }
+        }
+    }
+
+    // then: the client is current (or the server can't say)
+    def check(then : => Unit) {
+        if (reloading)
+            ()
+        else
+        if (server == "" || loaded.none)
+            then
+        else
+            getF(server + "/client-version?" + scala.util.Random.nextInt(1000000)) { v =>
+                if (v.trim.nonEmpty && !loaded.has(v.trim)) {
+                    reloading = true
+                    scala.util.Try(scalajs.js.Dynamic.global.location.reload())
+                }
+                else
+                    then
+            } { then }
+    }
+}
+
+
 class ServerJournal[T](val meta : MetaGame, server : String, user : String, secret : String, val journal : String, parse : String => T, write : T => String, readLimit : Int = 999999) extends Journal[T] {
     var size : Int = 0
 
     def known = size
+
+    ClientVersion.start(server)
 
     // the page hidden or not in front: the server doesn't count this read as the player having the game open, so their turn
     // pings still come (good-game/TurnPings.scala; 2026-11-22: a tab left open in the background read the log every minute or so,
@@ -73,7 +119,9 @@ class ServerJournal[T](val meta : MetaGame, server : String, user : String, secr
         val report = $(size.toString, factions.join(" "), reasons.join(" "), overview.join(" "), fan.??("fan"), status.join(" ")).reverse.dropWhile(_.isEmpty).reverse.join("\n")
         if (report != lastTurn) {
             lastTurn = report
-            postF(server + "/turn/" + user + "/" + secret + "/" + journal, report)(_ => ()) { lastTurn = "" }
+            ClientVersion.check {
+                postF(server + "/turn/" + user + "/" + secret + "/" + journal, report)(_ => ()) { lastTurn = "" }
+            }
         }
     }
 }
