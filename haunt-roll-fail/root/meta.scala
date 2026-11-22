@@ -2256,7 +2256,8 @@ object Meta extends MetaGame {
     // the tournament's status posts (MetaGame.status): the round and each faction's VP ("D" for a dominance), by its seat
     def statusOf(g : Game, seat : Faction => String) : $[String] = {
         implicit val game = g
-        val fs = g.factions.%(g.states.contains)
+        // seat order: game.factions turns with each turn, game.ordering keeps the order set up
+        val fs = g.ordering.toList.sortBy(_._1).map(_._2).some.|(g.factions).%(g.states.contains)
         $("r" + (if (g.turn > 0 && fs.any) (g.turn - 1) / fs.num + 1 else 0)) ++ fs./(f => seat(f) + ":" + f.name.replace(' ', '_') + ":" + (if (f.vp < 0) "D" else f.vp.toString))
     }
     override def status(g : G) = statusOf(g, f => writeFaction(f))

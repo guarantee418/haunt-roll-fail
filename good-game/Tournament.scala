@@ -309,12 +309,12 @@ object Tournament {
                     val waiting = Turns.asked(t.game).map(s => seatName(t, s)).distinct
                     val state = t.winner.map(w => "won by **" + display(w) + "**").getOrElse {
                         round match {
-                            case None => "no progress reported yet"
+                            case None => "no progress reported yet" + (if (waiting.nonEmpty) ", waiting on " + waiting.mkString(", ") else "")
                             case Some(0) => "drafting" + (if (waiting.nonEmpty) ", waiting on " + waiting.mkString(", ") else "")
                             case Some(r) => "round " + r + (if (waiting.nonEmpty) ", waiting on " + waiting.mkString(", ") else "")
                         }
                     }
-                    head + ": " + state + (if (players.nonEmpty) "\n" + players.mkString(" · ") else "") + "\n" + watch
+                    head + ": " + state + "\n" + (if (players.nonEmpty) players else t.names.map(display)).mkString(" · ") + "\n" + watch
                 }
                 announce("**Root Tournament " + c.n + "** status\n\n" + parts.mkString("\n\n"), c.n)
                 "posted " + c.tables.size + " tables"
