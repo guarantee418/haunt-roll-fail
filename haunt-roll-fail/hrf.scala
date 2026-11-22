@@ -2434,7 +2434,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         // what's in each game (2026-11-22, asked for): its map and factions as icons, from the overview a client reported (the server's
         // seventh field, Meta.overview), else worked out from its seats and options (the eighth and ninth, Meta.overviewLobby)
-        val overviewSources = HRF.metas./~{ m =>
+        val overviewSources = HRF.metas.%(_.overviewIcons.any)./~{ m =>
             val names = m.factions./~(f => m.glyph(f))./(_.toLowerCase).toSet
             m.assets./~(_.get).%(a => a.name.endsWith("-glyph") || names.contains(a.name.toLowerCase))./(a => a.name.toLowerCase -> ("webp2/" + m.path + "/images/" + a.copy(ext = "webp").src)) ++
             m.overviewIcons./((_, i) => ("lfg:" + i) -> ("webp2/lfg/emoji/" + i + ".png"))
@@ -2444,7 +2444,10 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         def overviewOf(r : $[String]) : Elem = {
             def words(i : Int) = r.lift(i).|("").split(' ').$.but("")
-            val icons = words(6).some.|(HRF.metas.find(_.name == r(0))./(m => scala.util.Try(m.overviewLobby(words(7), words(8))).getOrElse(Nil)).getOrElse(Nil))
+            overviewIcons(words(6).some.|(HRF.metas.find(_.name == r(0))./(m => scala.util.Try(m.overviewLobby(words(7), words(8))).getOrElse(Nil)).getOrElse(Nil)))
+        }
+
+        def overviewIcons(icons : $[String]) : Elem = {
             val shown = icons.%(i => overviewSources.contains(i.toLowerCase))
             shown.none.?(Break : Elem).|(Div(shown./(i => Image(i, $(ExternalStyle(i.startsWith("lfg:").?("hrf-overview-map").|("hrf-overview-faction"))), None) : Elem).merge, $(ExternalStyle("hrf-overview"))))
         }
@@ -2490,7 +2493,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         val tournamentGames = tour.|($)./{ r =>
             val turn = r.lift(6).has("1")
             val sub = turn.?(Span(Text("Your turn"), $(ExternalStyle("hrf-my-turn-tag"))) ~ " · ".txt).|(Empty) ~ ("as " + r(4) + " against " + r(5)).txt
-            ZOption("Your Tournament Game".hl, (Link(HRF.server.get + "/play/" + meta.tournament.get + "/" + r(3), r(2).hh ~ Break ~ sub.spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice ++ turn.$(ExternalStyle("hrf-my-turn"))))
+            // (the map and factions, the server's eighth field, once a player's client has reported them: the draft picks the map)
+            ZOption("Your Tournament Game".hl, (Link(HRF.server.get + "/play/" + meta.tournament.get + "/" + r(3), r(2).hh ~ overviewIcons(r.lift(7).|("").split(' ').$.but("")) ~ sub.spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice ++ turn.$(ExternalStyle("hrf-my-turn"))))
         }
 
         def accountMenu(n : $[String]) {

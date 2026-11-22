@@ -281,7 +281,8 @@ object Tournament {
                     // the seventh field: "1" while the game waits on this seat (Turns.scala, the lobby's "user <faction> <user>"; 2026-11-21)
                     val turn = TurnPings.lobbyOf(t.game).flatMap(_.lines.map(_.split(" ").toList).collectFirst { case "user" :: f :: u :: Nil if u == t.users(i) => f })
                         .exists(f => Turns.asked(t.game).contains(f)) && !TurnPings.over(t.game)
-                    row(c.n, t.id, t.title(c.n), t.secrets(i), display(k), t.names.filter(_ != k).map(display).mkString(", "), if (turn) "1" else "0")
+                    // the eighth: the game's map and factions as icons, as a client reported them (Turns.overview; 2026-11-22)
+                    row(c.n, t.id, t.title(c.n), t.secrets(i), display(k), t.names.filter(_ != k).map(display).mkString(", "), if (turn) "1" else "0", Turns.overview(t.game).mkString(" "))
                 }
             }
         }.++(dd).mkString("\n")
