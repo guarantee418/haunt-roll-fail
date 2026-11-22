@@ -455,7 +455,10 @@ object GoodGame {
                         else
                         {
                             // "X fan": played with fan-made content, left out of the ratings (MetaGame.rankingFan)
-                            val all = (sides ++ (if (l.drop(2).contains("X fan")) List("X:fan") else Nil)).mkString(";")
+                            // "U <faction> ..." and "B <faction> ...": the draft's factions no seat took and those banned (MetaGame.rankingDraft;
+                            // 2026-11-22), for the draft stats
+                            val draft = l.drop(2).filter(s => s.startsWith("U ") || s.startsWith("B ")).map(s => s.take(1) + ":" + s.drop(2).split(' ').filter(_.nonEmpty).map(Ranking.cleanToken).map(_.replace("/", "")).filter(_.nonEmpty).take(16).mkString(",")).filter(_.length > 2).distinctBy(_.take(1))
+                            val all = (sides ++ (if (l.drop(2).contains("X fan")) List("X:fan") else Nil) ++ draft).mkString(";")
                             val first = Ranking.report(journalId, l(0).safe.take(32), l(1).safeplus.take(128), all)
                             // a tournament table's result moves the tournament on (Tournament.scala)
                             if (first)

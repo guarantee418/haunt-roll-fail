@@ -197,6 +197,7 @@ object MetaAdset extends MetaGame {
     override def status(g : G) = Meta.statusOf(g, f => turnSeat(g, f))
     override def rankingFan(g : G) = Meta.rankFan(g)
     override def rankingUnapproved(o : O) = Meta.rankingUnapproved(o)
+    override def rankingDraft(g : G) = Meta.rankDraft(g)
 
     def getBots(f : F) = $("None")
 

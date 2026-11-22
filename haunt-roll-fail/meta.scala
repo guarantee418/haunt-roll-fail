@@ -287,6 +287,9 @@ trait MetaBase {
     // an option not approved for ranked play (2026-11-22): marked "unranked" on the setup screen and in the Discord setup panel, and a
     // ranked game can't be started with it (validateFactionSeatingOptions)
     def rankingUnapproved(o : O) : Boolean = false
+    // a draft's factions no seat took (2026-11-22, asked for: Advanced Setup's offered factions, for pick rates): "U" and the
+    // faction, as rankingSeat names it, for one offered and not picked, "B" for one banned from the draft (Northgard's Adset)
+    def rankingDraft(g : G) : $[(String, String)] = $
     // Other games on the main menu that are their own meta (Northgard's Adset): the menu label and the meta's name
     def linkedModes : $[(String, String)] = $
     // A tutorial on the main menu (Northgard's): a line about it, its lessons (each a title and its paragraphs), and the
@@ -435,9 +438,16 @@ trait MetaBots extends MetaBase {
 case class RankingTier(name : String, min : |[Double], note : String, icon : |[String])
 
 // A seat of a finished ranked game (MetaGame.rankingSeat)
+object RankingSeat {
+    // a faction's name as a report writes it, spaces as "_" (also the draft's "U:" and "B:" lists, MetaGame.rankingDraft)
+    def name(faction : String) = faction.replace(' ', '_').toList.filter(c => c.isLetterOrDigit || "_'().-!&".contains(c)).mkString.take(48)
+    // what a report adds for a draft: ";U:name,name;B:name"
+    def draft(l : $[(String, String)]) : String = $("U", "B")./{ k => val nn = l.filter(_._1 == k).map(x => name(x._2)).filter(_.nonEmpty) ; nn.any.??(";" + k + ":" + nn.mkString(",")) }.mkString
+}
+
 case class RankingSeat(faction : String, seat : Int, players : Int, score : |[String]) {
     // what a report adds to the seat's user: "/faction/seat/players/score", spaces in the faction as "_" (Elo.entry in hrf.scala)
-    def token = "/" + faction.replace(' ', '_').toList.filter(c => c.isLetterOrDigit || "_'().-!&".contains(c)).mkString.take(48) + "/" + seat + "/" + players + "/" + score.|("").toList.filter(_.isLetterOrDigit).mkString.take(8)
+    def token = "/" + RankingSeat.name(faction) + "/" + seat + "/" + players + "/" + score.|("").toList.filter(_.isLetterOrDigit).mkString.take(8)
 }
 
 trait MetaGame extends MetaBase with MetaBots

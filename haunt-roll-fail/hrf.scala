@@ -428,7 +428,10 @@ object Elo {
         def names = entries./(_.name)
     }
     // fan: played with fan-made content (MetaGame.rankingFan), counted only in the stats
-    case class Result(game : String, time : String, title : String, sides : $[Side], fan : Boolean = false) {
+    // undrafted, banned: a draft's factions no seat took, and those banned from it (MetaGame.rankingDraft; reported since
+    // 2026-11-22, and for the games before from good-game/ranking-drafts.tsv); drafted: the game had a draft
+    case class Result(game : String, time : String, title : String, sides : $[Side], fan : Boolean = false, undrafted : $[String] = $, banned : $[String] = $) {
+        def drafted = undrafted.any || banned.any
         // the tournament score of a winning side: the win shared between the winning sides (a coalition, ...)
         def share = 1.0 / sides.count(_.won)
         def score(s : Side) = if (s.won) share else 0.0
@@ -462,7 +465,8 @@ object Elo {
             case game :: time :: title :: sides :: _ =>
                 val ss = sides.split(';').$.%(_.length > 2).%(s => s.startsWith("W:") || s.startsWith("L:"))./(s => Side(s.drop(2).split(',').$.%(_.nonEmpty)./(entry).distinctBy(e => (e.name == "*").?(e.seat.toString).|(e.name.toLowerCase)), s.startsWith("W:")))
                 val names = ss.flatMap(_.names).map(_.toLowerCase).but("*")
-                (names.distinct.num == names.num).?(Result(game, time, title, ss, sides.split(';').$.has("X:fan")))
+                def draft(k : String) = sides.split(';').$.%(_.startsWith(k + ":"))./~(_.drop(2).split(',').$.%(_.nonEmpty)./(_.replace('_', ' ')))
+                (names.distinct.num == names.num).?(Result(game, time, title, ss, sides.split(';').$.has("X:fan"), draft("U"), draft("B")))
             case _ => None
         }
     }.sortBy(_.time)
@@ -511,6 +515,27 @@ object Elo {
     case class Stat(key : String, games : Int, score : Double, scores : $[Int]) {
         def relative = score / games
         def average = scores.any.?(scores.sum.toDouble / scores.num)
+    }
+
+    // The draft stats (2026-11-22, asked for): in the games with a draft, how often each faction was offered (picked, left or
+    // banned), picked and banned, and how picked ones did (their score, as in the faction stats)
+    case class Draft(key : String, offered : Int, picked : Int, banned : Int, score : Double) {
+        def pickRate = picked.toDouble / offered
+        def banRate = banned.toDouble / offered
+        def relative = (picked > 0).?(score / picked)
+    }
+
+    def drafts(results : $[Result]) : $[Draft] = {
+        val rr = results.%(_.drafted)
+        // a Vagabond's character isn't part of the faction here
+        def base(f : String) = f.takeWhile(_ != '(').trim
+        val picks = rr./~(r => r.sides./~(s => s.entries./~(_.seat)./(e => (base(e.faction), r.score(s)))))
+        val left = rr./~(_.undrafted)./(base)
+        val banned = rr./~(_.banned)./(base)
+        (picks.map(_._1) ++ left ++ banned).distinct./{ k =>
+            val p = picks.filter(_._1 == k)
+            Draft(k, p.num + left.count(_ == k) + banned.count(_ == k), p.num, banned.count(_ == k), p.map(_._2).sum)
+        }.sortBy(d => (-d.pickRate, -d.offered))
     }
 
     def seats(results : $[Result]) : $[(Result, Side, RankingSeat)] = results./~(r => r.sides./~(s => s.entries./~(_.seat)./(e => (r, s, e))))
@@ -1084,12 +1109,18 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         }(())
                     }
 
+                    // the draft's factions no seat took, "U <faction> ...", and those banned, "B <faction> ..." (MetaGame.rankingDraft; 2026-11-22)
+                    def draftLines(g : meta.G) : $[String] = {
+                        val d : $[(String, String)] = scala.util.Try(meta.rankingDraft(g)).getOrElse($)
+                        $("U", "B")./~{ k => val l = d.filter(_._1 == k).map(x => RankingSeat.name(x._2)).filter(_.nonEmpty) ; l.any.$((k +: l).join(" ")) }
+                    }
+
                     def reportResult(g : meta.G, winners : $[Any], note : Elem => Unit) {
                         if (reported.not && HRF.replay.not && meta.ranking.any && server.any) {
                             reported = true
                             val sides = meta.rankingSides(g, winners)./{ case (l, won) => (l./~(f => users.get(f)./(_ + meta.rankingSeat(g, f)./(_.token).|(""))), won) }.filter(_._1.any)
                             if (sides.num >= 2 && sides.exists(_._2) && sides.exists(_._2.not))
-                                post(HRF.server.get + "/report-result/" + user + "/" + HRF.secret.get + "/" + server.get, (meta.name +: title.|("%untitled%") +: (sides./{ case (l, won) => (won.?("W").|("L") +: l).join(" ") } ++ meta.rankingFan(g).$("X fan"))).join("\n"))(_ => showRatings(note))
+                                post(HRF.server.get + "/report-result/" + user + "/" + HRF.secret.get + "/" + server.get, (meta.name +: title.|("%untitled%") +: (sides./{ case (l, won) => (won.?("W").|("L") +: l).join(" ") } ++ meta.rankingFan(g).$("X fan") ++ draftLines(g))).join("\n"))(_ => showRatings(note))
                         }
                     }
 
@@ -1644,6 +1675,25 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             )
         }
 
+        // the draft stats (2026-11-22, asked for): in the games with a draft (Advanced Setup, Northgard's Adset), how often each
+        // faction was offered, picked and banned, and how it did when picked
+        def drafts(all : $[Elo.Player]) {
+            val dd = Elo.drafts(results)
+            val banning = dd.exists(_.banned > 0)
+            ui.action.asker.zask(
+                $(ZOption((meta.label + " Draft Stats").hl.spn(xstyles.larger110), box("From the finished online games with a draft (" ~ results.count(_.drafted).hl ~ "). Pick rate: how often a " ~ modes.?("clan").|("faction") ~ " drawn for the draft was picked" ~ banning.??(" (banned ones count as not picked)") ~ "; score: " ~ "1".hl ~ " for a win, shared between the winning sides, per game it was picked.", "rk-note"))) ++
+                tabs("Draft", all) ++
+                dd./(d => ZOption(heading(modes.?("Clans").|("Factions") + " · pick rate"), box(
+                    glyph(d.key) ~
+                    tag(factionName(d.key) ~ tag(Text("picked " + d.picked + " of " + d.offered + banning.??(" · banned " + d.banned) + d.relative./(r => " · score " + percent(r)).|("")), "rk-sub"), "rk-who") ~
+                    bar(d.pickRate, None, colour(d.key)) ~
+                    num(percent(d.pickRate))(css("rk-pct")),
+                "rk-stat"))) ++
+                dd.none.$(note(heading("Drafts"), "No finished games with a draft yet.".txt)) ++
+                $(ZBasic(" ", Div("Back"), () => show(all)))
+            )
+        }
+
         def turns(all : $[Elo.Player]) {
             val seats = Elo.seats(results)
             ui.action.asker.zask(
@@ -1840,6 +1890,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 "Leaderboard" -> (() => show(all)),
                 "Clans" -> (() => factions(all, None)),
                 "Turn Order" -> (() => turns(all)),
+                "Draft" -> (() => drafts(all)),
                 "Leagues" -> (() => codex(all))
             )).|($[(String, () => Unit)](
                 "Leaderboard" -> (() => show(all)),
@@ -1847,6 +1898,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 "Player's Journey" -> (() => journeys(all)),
                 "Factions" -> (() => factions(all, None)),
                 "Turn Order" -> (() => turns(all)),
+                "Draft" -> (() => drafts(all)),
                 "Codex" -> (() => codex(all))
             ))./{ case (l, f) => ZBasic(Empty, tag(Text(l), "rk-chip-text"), f, css("rk-chip", "rk-tab") ++ (l == current).$(ExternalStyle("rk-chip-on")) ++ $(xlo.pointer)) })
 
@@ -2029,6 +2081,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 factionRows(heading("Factions · relative score, every game"), factionStats.take(top), _ => None) ++
                 seats.any.$(ZBasic(" ", Div((factionStats.num > top).?("All " + factionStats.num + " factions, by player count").|("Faction stats by player count")), () => factions(all, None))) ++
                 seats.any.$(ZBasic(" ", Div("Turn order stats"), () => turns(all))) ++
+                results.exists(_.drafted).$(ZBasic(" ", Div("Draft stats"), () => drafts(all))) ++
                 $(ZOption(heading("Your player code"), box(you, "rk-note"))) ++
                 $(ZBasic(heading("Your player code"), Div("Show my player code"), () => showCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Use a code from another device"), () => useCode())) ++
@@ -2456,9 +2509,10 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             overviewIcons(words(6).some.|(HRF.metas.find(_.name == r(0))./(m => scala.util.Try(m.overviewLobby(words(7), words(8))).getOrElse(Nil)).getOrElse(Nil)))
         }
 
+        // "off:<glyph>" is a draft's faction no seat took, grayed out after the others (Meta.overview; 2026-11-22, asked for)
         def overviewIcons(icons : $[String]) : Elem = {
-            val shown = icons.%(i => overviewSources.contains(i.toLowerCase))
-            shown.none.?(Break : Elem).|(Div(shown./(i => Image(i, $(ExternalStyle(i.startsWith("lfg:").?("hrf-overview-map").|("hrf-overview-faction"))), None) : Elem).merge, $(ExternalStyle("hrf-overview"))))
+            val shown = icons./(i => i.startsWith("off:").?(i.drop(4) -> true).|(i -> false)).%((i, _) => overviewSources.contains(i.toLowerCase))
+            shown.none.?(Break : Elem).|(Div(shown./((i, off) => Image(i, $(ExternalStyle(i.startsWith("lfg:").?("hrf-overview-map").|("hrf-overview-faction"))) ++ off.$(ExternalStyle("hrf-overview-off")), None) : Elem).merge, $(ExternalStyle("hrf-overview"))))
         }
 
         // the game has a bot or fan content and counts toward no rating (the server's tenth field: its result, or the last turn report)
