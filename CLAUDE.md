@@ -371,6 +371,13 @@ cd haunt-roll-fail && sbt fullOptJS
   go on (finished ones go to Completed Games, marked "Unranked"; open by default while one waits on the player; 2026-11-21): the turn report adds a fifth line "fan" (`Runner.run`'s
   `unranked`), kept in `turns.tsv`'s fifth field (`Turns.fan`), and a finished game's result says it ("X:fan"); `/my-games` gives it as
   the tenth field. A game nobody has opened since that was deployed stays under Your Active Games until a player opens it.
+- The main page (`/play`) has "My Online Games" and "My Account" above About (`topMenu` in `hrf.scala`; asked for on 2026-11-22),
+  each its own page, `/play/my-games` and `/play/account` (served like a meta's page, `data-meta` naming them, and shown by a Root
+  `HRFMetaUI` with `siteWide` set, whose Back loads `/play`). My Online Games is Play Online's list for every game (`onlineGame` with
+  `siteWide`: the account row opens My Account, no New Online Game or Archived Games, "Start a new online game" buttons opening each
+  game's `/play/<meta>/online/new`). My Account (`myAccount`) gathers the names this device holds, each name's rating on every ladder
+  (from `/rankings/<metas>`, tapping opens that game's Rankings), Discord and turn pings, other devices and codes, Switch account and
+  Sign out; Play Online's Account and the Rankings' player code section stay. Client only.
 - Fixing a running game: through the `hrf-games` repository (copy `games/<id>.tsv` to
   `fixes/<id>.tsv` and edit it; its README and `notes/server.md` say how).
 - The in-game "Report a Bug" button posts to `/report-bug`; the server saves the report,
