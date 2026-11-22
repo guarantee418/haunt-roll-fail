@@ -208,6 +208,28 @@ object Lfg {
         seatIds.get(user)
     }
 
+    // AN LFG PLAYER'S DISCORD FOR THEIR RANKING NAME (2026-11-22): a seat's player who claims a ranking name in an LFG game gives the
+    // name the Discord user ID they joined with, as if given on the Tournament page, so the Rankings page, the tournament and the turn
+    // pings of games made from Play Online know it too; only for a name with no Discord row yet (one given, or forgotten with "off",
+    // is kept). Called after each claim (/claim-name) and, for the seats claimed before, at the start (learnAll)
+    def learnDiscord(user : String) : Unit = try {
+        discordOf(user).filter(Tournament.isDiscordId).foreach { id =>
+            Ranking.seatNames().get(user).filter(Ranking.claims().contains).foreach { k =>
+                Tournament.synchronized {
+                    if (!rows(Tournament.discords).exists(_.headOption.contains(k))) {
+                        Files.createDirectories(Tournament.discords.getParent)
+                        Ranking.append(Tournament.discords, row(k, id))
+                        println("LFG: Discord of " + k + " learned from an LFG seat")
+                    }
+                }
+            }
+        }
+    } catch { case e : Exception => println("LFG: learnDiscord failed: " + e) }
+
+    def learnAll() : Unit = try {
+        posts().values.flatMap(_.game).flatMap(_.users).toList.distinct.foreach(learnDiscord)
+    } catch { case e : Exception => println("LFG: learnAll failed: " + e) }
+
     // the options the site's latest client gives a new LFG game: (version, options), from Play Online
     def setTemplate(body : String) : String = synchronized {
         body.split('\n').toList.map(_.trim) match {
@@ -708,6 +730,7 @@ object Lfg {
     def start(directory : String) {
         assets = directory
         new Thread(() => {
+            learnAll()
             // (the commands first: the first start uploads every icon, a few minutes)
             if (publicKey.nonEmpty)
                 println("LFG: " + commands + " " + register())
