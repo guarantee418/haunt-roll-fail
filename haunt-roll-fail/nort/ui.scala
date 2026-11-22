@@ -3233,11 +3233,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     })
                 }).copy(clear = false)
             ) ++
-            tutorial.$(ZBasic(Break ~ Break, "Tutorial Lessons".spn, () => onClick(TutorialLessonView(0))).copy(clear = false)) ++
-            (tutorial && tutorialTipsHidden && currentGame.isOver.not).$(ZBasic(Break, "Show tutorial tips".spn, () => hideTutorialTips(false)).copy(clear = false)) ++
-            $(ZBasic(Break ~ Break, "Interface".spn, () => { callbacks.editSettings { updateStatus() } }).copy(clear = false)) ++
-            $(ZBasic(Break ~ Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug) ++
-            $(ZBasic(Break ~ Break, "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle)
+            // On one row, three to a row (menuRowButton), all under one heading so they aren't spaced apart
+            {
+                val row = $(xstyles.choice, xstyles.xx, xstyles.chm, xstyles.chp, styles.menuRowButton, xlo.pointer)
+                def b(t : String, click : () => Unit) = ZBasic(Break ~ Break, t.spn, click, row).copy(clear = false)
+                tutorial.$(b("Tutorial Lessons", () => onClick(TutorialLessonView(0)))) ++
+                (tutorial && tutorialTipsHidden && currentGame.isOver.not).$(b("Show tutorial tips", () => hideTutorialTips(false))) ++
+                $(b("Interface", () => { callbacks.editSettings { updateStatus() } })) ++
+                $(b("Report a Bug", () => { callbacks.reportBug() })).%(_ => callbacks.canReportBug) ++
+                $(b("Main Menu", () => { callbacks.returnToTitle() })).%(_ => callbacks.canReturnToTitle)
+            }
     }
 
     var shown : $[Notification] = $
@@ -3360,8 +3365,60 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         hideSwitches()
     }
 
-    // Adset: a clan's "i" button opens its info instead of choosing it
+    // The six turn choices (Play cards, Replace, Remove, Upgrade, Wait, Pass) on one row: a short name with its cost under it,
+    // the full text and why one can't be taken as a tooltip (asked for on Discord, 2026-11-22)
+    def turnChoice(a : UserAction) : Boolean = a @@ {
+        case UnavailableReasonAction(b, _) => b.is[TurnModeAction] || b.is[PassAction]
+        case b => b.is[TurnModeAction] || b.is[PassAction]
+    }
+
+    def turnRank(a : UserAction) : Int = (a @@ {
+        case UnavailableReasonAction(b, _) => b
+        case b => b
+    }) @@ {
+        case TurnModeAction(_, PlayMode) => 0
+        case TurnModeAction(_, ReplaceMode) => 1
+        case TurnModeAction(_, RemoveMode) => 2
+        case TurnModeAction(_, UpgradeMode) => 3
+        case TurnModeAction(_, WaitMode) => 4
+        case _ => 5
+    }
+
+    def turnButton(faction : |[F], actions : $[UserAction], a : UserAction, then : UserAction => Unit) : ZOption = {
+        val (b, reason) = a @@ {
+            case UnavailableReasonAction(b, r) => (b, |(r).%(_ != ""))
+            case b => (b, None)
+        }
+        val unavailable = a.is[UnavailableReasonAction]
+        val (name, cost, full) : (String, Elem, String) = b @@ {
+            case TurnModeAction(f, PlayMode) => ("Play", 1.hl ~ " + " ~ "⚡".hl, "Play cards: one card, and any Flash cards")
+            case TurnModeAction(f, ReplaceMode) => ("Replace", Amount(1.hl, LoreIcon()), "Replace a card from your hand for 1 lore")
+            case TurnModeAction(f, RemoveMode) => ("Remove", Amount(2.hl, LoreIcon()), "Remove a card from the game for 2 lore")
+            case TurnModeAction(f, UpgradeMode) => ("Upgrade", Amount(game.upgradeCost(f).hl, LionExpansion.upgradeResource(f).elem), "Take a clan upgrade for " + game.upgradeCost(f) + " " + LionExpansion.upgradeResource(f).name.toLowerCase)
+            case TurnModeAction(f, WaitMode) => ("Wait", Empty, "Wait: put a card from your hand with your played cards")
+            case _ => ("Pass", Empty, "Pass for the rest of the year")
+        }
+        val hint = full + reason./(" (" + _ + ")").|("")
+        val body = Hint(hint, Div(Div(name.txt) ~ Div((cost == Empty).?("·".spn(xstyles.hidden)).|(cost), xstyles.smaller85), styles.turnButtonText))
+        val ss = $(unavailable.?(xstyles.info).|(xstyles.choice), xstyles.chp, xstyles.chm, styles.turnButton) ++ unavailable.$(xstyles.unavailableText) ++
+            faction./~(f => f.as[Faction]./(elem.borders.get)) ++ unavailable.not.$(xlo.pointer)
+        val q = Div(fixActionElem(b.question(game)))(xlo.fullwidth)
+        if (unavailable || then == null)
+            ZOption(q, Div(body, ss))
+        else
+            ZOption(q, OnOverOut(OnClick(Div(body, ss))), _ => then(b.as[UserAction].get), true, _ => updateHighlight(Some(b.as[UserAction].get)), _ => updateHighlight(None))
+    }
+
     override def convertActions(faction : |[F], actions : $[UserAction], then : UserAction => Unit = null) : $[ZOption] =
+        if (actions.count(turnChoice) >= 2) {
+            val (tt, rest) = actions.partition(turnChoice)
+            tt.sortBy(turnRank)./(a => turnButton(faction, actions, a, then)) ++ convertActions0(faction, rest, then)
+        }
+        else
+            convertActions0(faction, actions, then)
+
+    // Adset: a clan's "i" button opens its info instead of choosing it
+    def convertActions0(faction : |[F], actions : $[UserAction], then : UserAction => Unit = null) : $[ZOption] =
         if (actions.exists(_.is[AdsetDraftChoice]).not || then == null)
             super.convertActions(faction, actions, then)
         else
