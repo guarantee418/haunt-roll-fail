@@ -1116,12 +1116,12 @@ server. No session can reach the server, and none needs to.
   (`root`, `root-adset`; `TurnPings.metas`) gets a post (a thread) in the forum channel of the webhook `HRF_DISCORD_TURNS_WEBHOOK` or
   the file `discord-turns-webhook` (set by the tournament change `turns <url>`; the owner's "Command Warren" webhook, forum #root-games)
   when its lobby is written, naming its players and its spectator link, and a seat is @mentioned there a minute after the game starts waiting for
-  it, unless its player read the game meanwhile, and reminded 12 hours after its last ping or read, twice at most; a sweep every 30 seconds
-  (`TurnPings.start`, `sweep`) sends them, never within 90 seconds of the player reading the game, 5 minutes of their last ping in that game
-  (it waits), or after the game's end (`over`). Each seat's start is the time on its `turns/state.tsv` row, so restarts lose and repeat
+  it, and reminded 12 hours after its last ping, twice at most, whether or not its player has the game open (owner, 2026-11-22: "Always ping
+  players even if their tab is open"); a sweep every 30 seconds (`TurnPings.start`, `sweep`) sends them, never within 5 minutes of their last
+  ping in that game (it waits), or after the game's end (`over`). Each seat's start is the time on its `turns/state.tsv` row, so restarts lose and repeat
   none; seats waited for since before that (2026-11-21, when the owner found the pings inconsistent: timers lost at restarts, and pings
   within 10 minutes dropped) are pinged only by the `ping waiting` changes, and from their next turn on. The server can't read a game: it takes the factions asked from the clients' turn reports (`/turn`,
-  `good-game/Turns.scala`, which calls `TurnPings.report`) and the lobby's "user <faction> <user>" lines. A read of the log from a page hidden or not in front (`?away=1`, `ServerJournal.read`) doesn't count as the player having the game open, and a soft step inside a MultiAsk (a card picked before "Keep") still reports every seat it asks (`turnMulti` in `runner.scala`): a background tab kept its player from being pinged, and one player's pick took the others off the list (2026-11-22). Only seats under a ranking name whose owner gave a Discord user
+  `good-game/Turns.scala`, which calls `TurnPings.report`) and the lobby's "user <faction> <user>" lines. A soft step inside a MultiAsk (a card picked before "Keep") still reports every seat it asks (`turnMulti` in `runner.scala`): one player's pick took the others off the list (2026-11-22). Only seats under a ranking name whose owner gave a Discord user
   ID (or a username the bot found, or one the owner set) and didn't turn pings off ("Discord turn pings" under Rankings, `discordPings` in `rankingsMenu`; `/discord/mine`, `/discord/pings`,
   `tournament/discord-pings.tsv`; on unless turned off since 2026-11-20, asked for) are mentioned, each by their own mention
   (`allowed_mentions` lists only them, never @everyone). Each ping says why the seat is asked, with an emoji in the server's style (asked for on 2026-11-21; `TurnPings.reasonOf`): the
@@ -1133,7 +1133,7 @@ server. No session can reach the server, and none needs to.
   `ng_trade` and `ng_winter` badges), card picks, setup, the Adset draft, raids, Events and the clan's own turn (its emblem). The
   reasons say nothing only the seat may know (an ambush question and assigning hits are both "under attack"). `NORT_REASONS=1` in
   `nort.Host` prints them. A game's thread also says who takes the first turn, the first time the game waits on one seat alone
-  (`announceFirst`, `turns/firsts.tsv`; mentioning them unless they have the game open; only games first reported since 2026-11-21, when
+  (`announceFirst`, `turns/firsts.tsv`; mentioning them; only games first reported since 2026-11-21, when
   an Advanced Setup game's drawn first player opened it within the minute and the thread never said whose turn it was). The tournament change `ping waiting` pings every seat the games wait
   for at once (`TurnPings.pingWaiting`). `ping waiting <game> ...` pings only those games (their server ids, the `server` line of their lobbies), and its `.result` says for each
   who was pinged and why anyone wasn't (`TurnPings.pingWaitingIn`; 2026-11-21). A tournament table's game pings in its table's thread (the forum webhook's), with no
