@@ -15,9 +15,9 @@ import root.elem._
 
 
 // Capitalists and Anarchists (`CapitalistsDeck`; the site owner's variation of the Might and Right deck, 2026-11-19): the base deck's
-// items, ambushes and dominances, Armorers and Sappers as printed, Dawn and Dusk's three Services in place of the Favors, and the
+// items, ambushes, dominances and Armorers as printed, Dawn and Dusk's three Services in place of the Favors, and the
 // other effects changed (`Deck.capitalists`, pictures `card/capitalists/` by `root/tools/capitalists-art.py`):
-// - Command Warren, Cobbler, Brutal Tactics (no point for the defender) and Scouting Party are paid for each time: a card from hand matching the clearing (the battle's, or the
+// - Command Warren, Cobbler, Brutal Tactics (no point for the defender), Sappers and Scouting Party are paid for each time: a card from hand matching the clearing (the battle's, or the
 //   one Cobbler's move starts from; a bird matches any), or the crafted card itself, discarded, which counts as a bird
 // - Better Burrow Bank is optional at the start of Birdsong and goes back to its owner's hand when used
 // - Stand and Deliver! must be used at the start of the next Birdsong (once an enemy holds a card) and is discarded; the enemy draws a card
@@ -32,6 +32,8 @@ case class CapitalistsPaySelfAction(self : Faction, e : CardEffect, then : Force
 
 case class CapitalistsBrutalMainAction(self : Faction, o : Faction, c : Clearing, then : ForcedAction) extends BaseAction(self, "in battle")("Deal an extra", 1.hit, "with", BrutalTactics) with Soft
 case class CapitalistsBrutalAction(self : Faction, o : Faction, then : ForcedAction) extends ForcedAction
+case class CapitalistsSappersMainAction(self : Faction, c : Clearing, then : ForcedAction) extends BaseAction(self, "in battle")("Deal an extra", 1.hit, "with", Sappers) with Soft
+case class CapitalistsSappersAction(self : Faction, then : ForcedAction) extends ForcedAction
 
 case class CapitalistsBankAction(self : Faction, o : Faction) extends BaseAction(self, "may return", BetterBurrowBank, "to hand to draw a card and share with")(o)
 
@@ -48,7 +50,7 @@ case class CapitalistsTaxAction(self : WarriorFaction, c : Clearing, p : Piece) 
 object CapitalistsDeckExpansion extends Expansion {
     def active(setup : $[Faction], options : $[Meta.O]) = options.has(CapitalistsDeck)
 
-    val lasting = $[Effect](CommandWarren, Cobbler, BetterBurrowBank, BrutalTactics, ScoutingParty, RoyalClaim, StandAndDeliver)
+    val lasting = $[Effect](CommandWarren, Cobbler, BetterBurrowBank, BrutalTactics, Sappers, ScoutingParty, RoyalClaim, StandAndDeliver)
 
     def on(implicit game : Game) = options.has(CapitalistsDeck)
 
@@ -64,6 +66,9 @@ object CapitalistsDeckExpansion extends Expansion {
 
     // Brutal Tactics in a battle's post-roll menu: paid with a card matching the battle's clearing or the card itself
     def brutal(f : Faction, b : Battle, then : ForcedAction) : UserAction = CapitalistsBrutalMainAction(f, b.defender, b.clearing, then)
+
+    // Sappers in a battle's post-roll menu, as defender: paid the same way, once a battle
+    def sappers(f : Faction, b : Battle, then : ForcedAction) : UserAction = CapitalistsSappersMainAction(f, b.clearing, then)
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
         // ReplayCheck: the lasting effects dealt out crafted, the others into hands, at the first player's first Birdsong
@@ -142,6 +147,23 @@ object CapitalistsDeckExpansion extends Expansion {
             f.used :+= BrutalTactics
 
             f.log("employed", BrutalTactics, "to deal an extra", 1.hit)
+
+            then
+
+        // SAPPERS
+        case CapitalistsSappersMainAction(f, c, then) =>
+            val next = CapitalistsSappersAction(f, then)
+
+            Ask(f)
+                .each(f.hand.$)(d => CapitalistsPayCardAction(f, Sappers, d, next).!(pays(d, c).not))
+                .add(CapitalistsPaySelfAction(f, Sappers, next))
+                .cancel
+                .needOk
+
+        case CapitalistsSappersAction(f, then) =>
+            f.used :+= Sappers
+
+            f.log("used", Sappers, "to deal an extra", 1.hit)
 
             then
 

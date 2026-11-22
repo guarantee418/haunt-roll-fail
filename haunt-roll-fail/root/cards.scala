@@ -159,7 +159,7 @@ object Deck {
 
     val frankenArtIds = $("bird-ambush", "fox-ambush", "rabbit-ambush", "mouse-ambush", "bird-dominance", "fox-dominance", "rabbit-dominance", "mouse-dominance")
 
-    def art(id : String) =
+    def art(id : String) : String =
         if (frankenArt && frankenArtIds.has(id.toLowerCase)) "franken-" + id.toLowerCase else
         if (darkArt && darkArtIds.has(id.toLowerCase)) "dark-" + id.toLowerCase else id
 
@@ -409,12 +409,12 @@ object Deck {
     val favors = effectsBase.of[Favor]
 
     // Capitalists and Anarchists (`CapitalistsDeck`, 2026-11-19): the site owner's variation of the base deck's effects
-    // (`root/deck-capitalists.scala`); Armorers and Sappers as printed, Dawn and Dusk's Services in place of the Favors
+    // (`root/deck-capitalists.scala`); Armorers as printed, Dawn and Dusk's Services in place of the Favors
     val capitalists = $[DeckCard](
         CraftEffectCard(Bird, "armorers", $(Fox), Armorers),
         CraftEffectCard(Bird, "armorers", $(Fox), Armorers),
-        CraftEffectCard(Bird, "sappers", $(Mouse), Sappers),
-        CraftEffectCard(Bird, "sappers", $(Mouse), Sappers),
+        CraftEffectCard(Bird, "ca-sappers", $(Mouse), Sappers),
+        CraftEffectCard(Bird, "ca-sappers", $(Mouse), Sappers),
         CraftEffectCard(Bird, "ca-brutal-tactics", $(Fox), BrutalTactics),
         CraftEffectCard(Bird, "ca-brutal-tactics", $(Fox), BrutalTactics),
         CraftEffectCard(Bird, "ca-royal-claim", $(AnySuit, AnySuit, AnySuit, AnySuit), RoyalClaim),
