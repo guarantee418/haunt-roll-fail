@@ -267,6 +267,9 @@ trait MetaBase {
     def overviewIcons : $[(String, String)] = $
     def overviewOptions(options : $[String]) : $[String] = overviewIcons.%((o, _) => options.has(o))./((_, i) => "lfg:" + i).distinct
     def overview(g : G) : $[String] = $
+    // the game's progress, for the tournament's status posts (good-game/Tournament.scala; 2026-11-22): "r<round>" (0 before the
+    // first turn), then "<seat>:<faction name, spaces as _>:<score>" for each faction, the seat as turnSeat writes it
+    def status(g : G) : $[String] = $
     def overviewLobby(factions : $[String], options : $[String]) : $[String] = overviewOptions(options) ++ factions./~(parseFaction)./~(f => glyph(f)).distinct
     def rankingSides(g : G, winners : $[Any]) : $[($[F], Boolean)] = $
     // and, for the faction and turn order stats, what each seat played: its faction, its place in the turn order (from 1), the

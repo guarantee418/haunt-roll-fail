@@ -48,6 +48,8 @@ import scala.concurrent.duration.Duration
 //                                     the file discord-bot-token, "bot off" removes it); delete the change file once its .result is read
 //   guild <id>                        the Discord server the bot looks usernames up in, if not the webhook's (the file discord-guild)
 //   ping waiting                      pings every seat the games wait for at once (TurnPings.pingWaiting)
+//   status                            posts the tournament's tables to the announcements' webhook: each table's round, its players'
+//                                     factions and scores, whose turn it is, or its winner, and its spectator link (Tournament.status)
 //   ping waiting <game> ...           pings the seats those games wait for (their server ids, the "server" line of their
 //                                     lobbies), saying for each who was pinged and why anyone wasn't (TurnPings.pingWaitingIn)
 //   lfg-key <public key>              the Discord application's public key, for /root, /northgard and the LFG posts' buttons (Lfg.scala;
@@ -286,6 +288,37 @@ object Tournament {
                 }
             }
         }.++(dd).mkString("\n")
+    }
+
+    // STATUS POSTS (asked for on 2026-11-22, the "status" change): the running tournament's tables (else the last one's), each with its
+    // round, every player's faction and score (Turns.status, from the clients' turn reports), whose turn it is (Turns.asked) or its winner,
+    // and its spectator link, posted to the announcements' webhook
+    def status() : String = {
+        val cc = cups().filter(_.started)
+        cc.filterNot(_.done).lastOption.orElse(cc.lastOption) match {
+            case None => "not done: no tournament has started"
+            case Some(c) =>
+                def seatName(t : Table, seat : String) = seat.stripPrefix("P").toIntOption.flatMap(i => t.names.lift(i - 1)).map(display).getOrElse(seat)
+                val parts = c.tables.map { t =>
+                    val head = "**" + t.title(c.n).replace("Tournament " + c.n + " ", "") + "**"
+                    val watch = "Watch: <" + site + "/play/" + meta + "/" + t.spectate + ">"
+                    val ss = Turns.status(t.game)
+                    val players = ss.drop(1).map(_.split(":").toList).collect { case seat :: faction :: score :: _ =>
+                        seatName(t, seat) + " (" + faction.replace('_', ' ') + ") " + (if (score == "D") "dominance" else score + " VP") }
+                    val round = ss.headOption.filter(_.startsWith("r")).flatMap(_.drop(1).toIntOption)
+                    val waiting = Turns.asked(t.game).map(s => seatName(t, s)).distinct
+                    val state = t.winner.map(w => "won by **" + display(w) + "**").getOrElse {
+                        round match {
+                            case None => "no progress reported yet"
+                            case Some(0) => "drafting" + (if (waiting.nonEmpty) ", waiting on " + waiting.mkString(", ") else "")
+                            case Some(r) => "round " + r + (if (waiting.nonEmpty) ", waiting on " + waiting.mkString(", ") else "")
+                        }
+                    }
+                    head + ": " + state + (if (players.nonEmpty) "\n" + players.mkString(" · ") else "") + "\n" + watch
+                }
+                announce("**Root Tournament " + c.n + "** status\n\n" + parts.mkString("\n\n"), c.n)
+                "posted " + c.tables.size + " tables"
+        }
     }
 
     // a table's own Discord thread, started with its players (mentioned when they gave their Discord user ID) and the spectator link
@@ -581,9 +614,11 @@ object Tournament {
                     }
                 // every seat the games wait for, pinged at once (TurnPings.pingWaiting; 2026-11-20)
                 case "ping" if rest == "waiting" => TurnPings.pingWaiting() + " pinged"
+                // every table's progress and spectator link, posted (2026-11-22)
+                case "status" => status()
                 // only those games (2026-11-21)
                 case "ping" if rest.startsWith("waiting ") => TurnPings.pingWaitingIn(rest.drop(8).split("[ ,]+").toList.filter(_.nonEmpty)).mkString("; ")
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, bot, guild, discord, ping waiting, lfg-key, lfg-commands or invite)"
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, bot, guild, discord, ping waiting, status, lfg-key, lfg-commands or invite)"
             }
 
             (if (word == "webhook" || word == "forum" || word == "turns" || word == "nort-turns" || word == "bot") word else line) + ": " + result

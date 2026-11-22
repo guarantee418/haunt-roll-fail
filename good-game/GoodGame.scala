@@ -527,6 +527,10 @@ object GoodGame {
                             Turns.report(journalId, n.get, ff, execute(entries.filter(_.journalId === journalId).map(_.index).max.result).map(_ + 1).getOrElse(0), why, fan)
                         if (allowed)
                             Turns.setOverview(journalId, icons)
+                        // the sixth, the game's progress (2026-11-22): "r<round> <seat>:<faction>:<score> ...", for the tournament's status posts
+                        val status = l.lift(5).getOrElse("").split(" ").toList.map(_.filter(c => c.isLetterOrDigit || c == '_' || c == ':' || c == '-' || c == '\'').take(60)).filter(_.nonEmpty).take(16)
+                        if (allowed)
+                            Turns.setStatus(journalId, status)
                         plain(if (allowed) "ok" else "")
                     }
                 }
