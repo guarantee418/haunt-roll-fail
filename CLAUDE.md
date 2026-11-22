@@ -353,7 +353,7 @@ cd haunt-roll-fail && sbt fullOptJS
   (`Meta.rankingFan`: Northgard's fan clans only, the Lion Kingdom and the Dragon and Bear variants, `rankFan` in `nort/meta.scala`, as its fan modules and options are rated since 2026-11-21 (owner: much modular content, few players); Root's fan, playtest and mirror
   factions, fan maps, decks, hirelings and scenarios, `rankFan` in `root/meta.scala`; asked for on 2026-11-18) are reported with an
   "X fan" line, kept as the side `X:fan`, and count in the stats but in no rating (`Result.fan`). Names are released or
-  moved by committing `ranking-changes/<name>.txt` to `hrf-games` (`release <name>`, `rename <name> -> <new>`, `seat <user> <name>`;
+  moved by committing `ranking-changes/<name>.txt` to `hrf-games` (`release <name>`, `rename <name> -> <new>`, `seat <user> <name>`, and `merge <name> -> <into>` for one player under two names, which gives `<into>` the first name's devices and seats and frees it, 2026-11-22;
   `Ranking.change`, applied once each by `Backup`, outcome in `<name>.result`).
   A name can have several player keys (each `names.tsv` row with a hash adds one, a row with an empty hash releases it), and
   its owner can set a code of their own under Rankings, "Set my own code" (8 characters or more, `codes.tsv`, salted SHA-256,
@@ -1122,7 +1122,7 @@ server. No session can reach the server, and none needs to.
   the file `discord-turns-webhook` (set by the tournament change `turns <url>`; the owner's "Command Warren" webhook, forum #root-games)
   when its lobby is written, naming its players and its spectator link, and a seat is @mentioned there a minute after the game starts waiting for
   it, and reminded 12 hours after its last ping, twice at most, whether or not its player has the game open (owner, 2026-11-22: "Always ping
-  players even if their tab is open"); a sweep every 30 seconds (`TurnPings.start`, `sweep`) sends them, never within 5 minutes of their last
+  players even if their tab is open"); a sweep every 30 seconds (`TurnPings.start`, `sweep`) sends them, never within 2 minutes of their last
   ping in that game (it waits), or after the game's end (`over`). Each seat's start is the time on its `turns/state.tsv` row, so restarts lose and repeat
   none; seats waited for since before that (2026-11-21, when the owner found the pings inconsistent: timers lost at restarts, and pings
   within 10 minutes dropped) are pinged only by the `ping waiting` changes, and from their next turn on. The server can't read a game: it takes the factions asked from the clients' turn reports (`/turn`,
