@@ -17,11 +17,10 @@ import scala.concurrent.duration.Duration
 // "user <faction> <user>" lines say whose seats they are. Every 30 seconds a sweep (started with the server) pings the seats due
 // (2026-11-21: the owner found the pings inconsistent; a ping was a timer a restart lost, and one within 10 minutes of the last was
 // dropped, so a seat pinged for an ambush wasn't for the turn that followed). A seat waited for since <start> is due:
-//   - a minute after start, if its player hasn't read the game since (the client reads the log while it is open),
-//   - again 12 hours after its last ping (or its player's last read of the game), at most twice ("reminder"),
-// and pinged then if:
-//   - its player hasn't had the game open in the last 90 seconds (a read from a page hidden or not in front, "?away=1",
-//     doesn't count: 2026-11-22, a background tab polled the log about once a minute, and its player was never pinged),
+//   - a minute after start,
+//   - again 12 hours after its last ping, at most twice ("reminder"),
+// whether or not its player has the game open (2026-11-22, owner: "Always ping players even if their tab is open"; a player
+// with the game open was skipped, and one who didn't see it was never pinged), and pinged then if:
 //   - it wasn't pinged in that game in the last 5 minutes (it waits until then, as the sweep comes back),
 //   - its seat plays under a ranking name with a Discord (given, or set by the owner) and turn pings not turned off (Rankings,
 //     "Discord turn pings"; on unless turned off since 2026-11-20, asked for: "start pinging people whenever it is their turn").
@@ -169,14 +168,13 @@ object TurnPings {
             r.users.toList.sorted.foreach { u =>
                 val start = since.getOrElse((g, u), 0L)
                 val mine = pings.getOrElse((g, u), Nil).filter(_ >= start)
-                val read = lastRead(u, g)
                 val due =
-                    if (mine.isEmpty && read < start)
+                    if (mine.isEmpty)
                         now - start >= delay
                     else
-                        mine.size <= reminders && now - (start +: read +: mine).max >= remind
-                if (start > 0 && due && now - lastPing(g, u) >= gap && !readSince(u, g, watching) && !over(g))
-                    try attempt(g, u, reminder = mine.nonEmpty || read >= start) catch { case e : Exception => println("Turn ping failed: " + e) }
+                        mine.size <= reminders && now - (start +: mine).max >= remind
+                if (start > 0 && due && now - lastPing(g, u) >= gap && !over(g))
+                    try attempt(g, u, reminder = mine.nonEmpty) catch { case e : Exception => println("Turn ping failed: " + e) }
             }
         }
     }
@@ -311,7 +309,7 @@ object TurnPings {
         // WHO GOES FIRST (2026-11-21: in an Advanced Setup game the seat order is drawn in the game, the first player opened the
         // game before the minute was up, so the thread never said it was their turn): a game whose first report comes now is
         // watched (firsts.tsv, "watch"), and the first time it waits for one seat alone the thread says who that is, mentioning
-        // them unless they have the game open ("told"); games reported before this keep their pings only
+        // them ("told"); games reported before this keep their pings only
         if (before.isEmpty)
             Ranking.append(firsts, row(game, "watch"))
         if (waiting.size == 1 && firstState(game).contains("watch"))
@@ -326,7 +324,7 @@ object TurnPings {
         Ranking.append(firsts, row(game, "told"))
         lobbyOf(game).filter(l => metas.contains(l.meta)).foreach { l =>
             if (introduced(game) || table(game).nonEmpty) {
-                val id = mentionOf(user, table(game).nonEmpty).filter(_ => !readSince(user, game, watching))
+                val id = mentionOf(user, table(game).nonEmpty)
                 post(game, l, "**" + nameOf(l, user) + "** takes the first turn in **" + l.title + "**" + id.map(i => " (<@" + i + ">)").getOrElse("") + ".", id.toList)
                 // the seat is told now: its first ping waits for its next turn
                 id.foreach { _ =>
@@ -420,8 +418,6 @@ object TurnPings {
         val now = System.currentTimeMillis
         if (!latest.get(game).exists(_.users.contains(user)))
             return "not waited for"
-        if (readSince(user, game, watching))
-            return "not pinged: has the game open"
         if (now - lastPing(game, user) < gap)
             return "not pinged: pinged in the last 5 minutes"
         val lobby = lobbyOf(game).getOrElse(return "not pinged: lobby not found")
