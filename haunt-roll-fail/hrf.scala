@@ -2459,10 +2459,19 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         // highlighted in gold, with "Your turn", while it waits on the player
         def myGame(group : Elem, r : $[String]) = {
             val label = HRF.metas.find(_.name == r(0))./(_.label).|(r(0))
-            val other = (r(0) != meta.name).??(label + " · ")
+            // the game's short name, as players say it (owner, 2026-11-22)
+            val short = r(0) @@ {
+                case "nort" => "NGUL"
+                case "nort-adset" => "NGUL Adset"
+                case "root-adset" => "Root Adset"
+                case _ => label
+            }
+            val other = (r(0) != meta.name).??(short + " · ")
+            // the other players, the server's eleventh field (2026-11-22)
+            val against = r.lift(10).|("").trim.some./(" against " + _).|("")
             val turn = myTurn(r)
             // (a finished unranked game in Completed Games says so)
-            val sub = turn.?(Span(Text("Your turn"), $(ExternalStyle("hrf-my-turn-tag"))) ~ " · ".txt).|(Empty) ~ ((r(4) == "1" && unranked(r)).??("Unranked · ") + other + "as " + r(3)).txt
+            val sub = turn.?(Span(Text("Your turn"), $(ExternalStyle("hrf-my-turn-tag"))) ~ " · ".txt).|(Empty) ~ ((r(4) == "1" && unranked(r)).??("Unranked · ") + other + "as " + r(3) + against).txt
             ZOption(group, (Link(HRF.server.get + "/play/" + r(0) + "/" + r(2), r(1).but("")./(_.hh).|(label.hh) ~ overviewOf(r) ~ sub.spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice ++ turn.$(ExternalStyle("hrf-my-turn"))))
         }
 
