@@ -1767,15 +1767,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     // A player's discard pile, newest card last
-    def discardPile(f : Faction) : Elem = cardPile(f, " discard pile", game.states(f).discard)
+    def discardPile(f : Faction) : Elem = cardPile(f, " discard pile", game.states(f).discard, DiscardPile(f))
 
-    def activeCards(f : Faction) : Elem = cardPile(f, " active cards (played this year)", game.states(f).active)
+    def activeCards(f : Faction) : Elem = cardPile(f, " active cards (played this year)", game.states(f).active, ActiveCards(f))
 
-    def loreTree(f : Faction) : Elem = cardPile(f, LionExpansion.faith(f).?(" Faith Tree").|(" Lore Tree"), game.states(f).upgrades)
+    def loreTree(f : Faction) : Elem = cardPile(f, LionExpansion.faith(f).?(" Faith Tree").|(" Lore Tree"), game.states(f).upgrades, LoreTree(f))
 
-    def cardPile(f : Faction, what : String, l : $[Card]) : Elem = {
+    // Tapping a card opens it full screen, and tapping again comes back to the pile (PileCard), as Root does
+    def cardPile(f : Faction, what : String, l : $[Card], back : Any) : Elem = {
         ((f.name.styled(colorOf(f)) ~ what).hlb.div ~
-            l.none.?("No cards".txt.div).|(Div(l./(c => Image(c.info.image, styles.discardCard)).merge, styles.discardCards)) ~
+            l.none.?("No cards".txt.div).|(Div(l./(c => OnClick(PileCard(c, back), Image(c.info.image, styles.discardCard, xlo.pointer))).merge, styles.discardCards)) ~
             "(tap to close)".spn(xstyles.smaller85).div
         ).div
     }
@@ -2914,6 +2915,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             l
     }
 
+    // Hand cards (styles.handCard) at most a fifth of the action pane, so five fit on a line (and a hand of five needs no
+    // scrolling); never larger than before (22ex). The ultrawide layout sizes them itself (--nort-hand-card)
+    def handFive(l : $[PanePlacement]) {
+        val root = dom.document.documentElement.asInstanceOf[dom.html.Element].style
+        l.find(_.name == "action") match {
+            // a fifth of the pane less its padding (about 24 px); styles.handCard takes off each card's frame and margins
+            case Some(p) => root.setProperty("--nort-hand-five", math.max(40, ((p.rect.width - 24) / 5.0).floor.toInt) + "px")
+            case None => root.removeProperty("--nort-hand-five")
+        }
+    }
+
     // Ultrawide screens (21:9 and wider): the layouter stretches the player panels to the full height
     // and leaves empty space around the map, so the hand gets a narrow column. Instead: the map on the
     // left, then short player panels in a row, the shared cards below them and the hand filling the
@@ -2930,6 +2942,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             if (foldBasePx == 0)
                 foldBasePx = rowFitPx
             val placed = foldLog(split(width, height, statusBottom(base))(grown))
+            handFive(placed)
             onLayout0(placed)
             placeHandles(placed)
             placeLogToggle()
@@ -3030,6 +3043,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             showOverlay(overlayFitX(Image(c.info.image, styles.zoomCard)).onClick, onClick)
 
         // A map tile shown in the action pane (Adset's drawn tiles, the tile being explored with) opens full screen too
+        // A card in a pile (discard pile, active cards, Lore Tree) full screen: tapping it goes back to the pile
+        case PileCard(c, back) =>
+            showOverlay(overlayFit(Image(c.info.image, styles.zoomCard))(styles.seeThroughInner).onClick.param(back), onClick)
+
         case TileRef(id) =>
             showOverlay(overlayFitX(Image("tile-" + id, styles.zoomCard)).onClick, onClick)
 

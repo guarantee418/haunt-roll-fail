@@ -437,6 +437,8 @@ case class DiscardPile(f : Faction)
 case class ActiveCards(f : Faction)
 // A player's Lore Tree (the clan upgrades left), opened from the lore in its panel
 case class LoreTree(f : Faction)
+// A card of a pile shown full screen, and the pile to go back to (DiscardPile, ActiveCards, LoreTree)
+case class PileCard(card : Card, back : Any)
 // Tapping Dragon Clan's Sacrificial Pyre in its panel shows it full size
 case object PyreView
 // Tapping Ox Clan's Ancestral Equipment tokens in its panel shows all seven, what each does and where it is
