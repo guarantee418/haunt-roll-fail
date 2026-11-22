@@ -587,7 +587,7 @@ object Runner {
                     UIRecord("#unchoice 3", c, a)
 
                 case UIContinue(c @ Ask(faction, actions), Nil) =>
-                    journal.turn((faction != null).$(meta.turnSeat(game, faction)).%(_.nonEmpty), (faction != null).$(meta.turnSeat(game, faction) + "=" + scala.util.Try(meta.turnReason(game, faction, actions)).getOrElse("")).%(r => r.startsWith("=").not && r.endsWith("=").not), unranked(game))
+                    journal.turn((faction != null).$(meta.turnSeat(game, faction)).%(_.nonEmpty), (faction != null).$(meta.turnSeat(game, faction) + "=" + scala.util.Try(meta.turnReason(game, faction, actions)).getOrElse("")).%(r => r.startsWith("=").not && r.endsWith("=").not), scala.util.Try(meta.overview(game)).getOrElse($), unranked(game))
 
                     auto(game, faction) match {
                         case AskHuman => UIAsk(c, Some(faction), actions, $)
@@ -607,7 +607,7 @@ object Runner {
                     })
 
                     journal.turn(asks./(_.faction).%(_ != null)./(f => meta.turnSeat(game, f)).%(_.nonEmpty).distinct,
-                        asks./(_.faction).%(_ != null)./(f => meta.turnSeat(game, f) + "=" + scala.util.Try(meta.turnReason(game, f, asks.%(_.faction == f)./~(_.actions))).getOrElse("")).%(r => r.startsWith("=").not && r.endsWith("=").not).distinct, unranked(game))
+                        asks./(_.faction).%(_ != null)./(f => meta.turnSeat(game, f) + "=" + scala.util.Try(meta.turnReason(game, f, asks.%(_.faction == f)./~(_.actions))).getOrElse("")).%(r => r.startsWith("=").not && r.endsWith("=").not).distinct, scala.util.Try(meta.overview(game)).getOrElse($), unranked(game))
 
                     lazy val waits = asks./~(ask => auto(game, ask.faction) match {
                         case WaitRemote => Some(ask.faction)

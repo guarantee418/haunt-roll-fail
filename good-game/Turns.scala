@@ -10,7 +10,7 @@ import java.nio.file.{Path, Paths}
 //
 // File turns.tsv in the server's working directory: game journal, entries, the factions asked (space-separated), and why each is
 // asked ("<faction>=<reason>", space-separated; 2026-11-21, the Discord turn pings' reasons, TurnPings.reasonOf), and "fan" for a
-// game with fan content, which counts toward no rating (MetaGame.rankingFan; the report's fourth line), for the Unranked Games folder
+// game with fan content, which counts toward no rating (MetaGame.rankingFan; the report's fifth line), for the Unranked Games folder
 // of Play Online (2026-11-21).
 object Turns {
     import Backup.{rows, row, write, lines}
@@ -57,4 +57,20 @@ object Turns {
     def last(journal : String) : Option[(Int, List[String])] = synchronized { turns.get(journal) }
 
     def all : Map[String, (Int, List[String])] = synchronized { turns }
+
+    // Each game's overview (2026-11-22): the icons Play Online's games list shows for it, its map and factions (Meta.overview in the
+    // client), as the last client reporting a turn gave them. File overviews.tsv: game journal, the icon names (space-separated)
+    val overviewFile : Path = Paths.get("overviews.tsv").toAbsolutePath
+
+    private var overviews : Map[String, List[String]] =
+        rows(overviewFile).collect { case j :: ii :: _ => j -> ii.split(" ").toList.filter(_.nonEmpty) }.toMap
+
+    def setOverview(journal : String, icons : List[String]) : Unit = synchronized {
+        if (icons.nonEmpty && !overviews.get(journal).contains(icons)) {
+            overviews += journal -> icons
+            write(overviewFile, lines(overviews.toList.sortBy(_._1).map { case (j, ii) => row(j, ii.mkString(" ")) }))
+        }
+    }
+
+    def overview(journal : String) : List[String] = synchronized { overviews.getOrElse(journal, Nil) }
 }

@@ -491,6 +491,30 @@
                 font-weight: bold;
             }
 
+            /* what's in a game of the Active Games list: its map, then its factions (overviewOf in hrf.scala) */
+            .hrf-overview {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                align-items: center;
+                gap: 0.5ex;
+                margin: 0.4ex 0 0.3ex 0;
+                padding: 0 1.2em;
+                pointer-events: none;
+            }
+
+            .hrf-overview-map {
+                height: 1.9em;
+                width: 1.9em;
+                border-radius: 0.4ex;
+            }
+
+            .hrf-overview-faction {
+                height: 1.5em;
+                width: 1.5em;
+                object-fit: contain;
+            }
+
             .rk-you {
                 align-self: flex-start;
                 margin-top: 0.2ex;
