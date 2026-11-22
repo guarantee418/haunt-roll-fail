@@ -32,8 +32,9 @@ trait Journal[T] {
     }
 
     // tells the server whose turn it is, once the whole log is read (good-game/Turns.scala); only online games have a server
-    // (and the game's overview, the icons Play Online's games list shows, Meta.overview)
-    def turn(factions : $[String], reasons : $[String] = $, overview : $[String] = $) {}
+    // (and the game's overview, the icons Play Online's games list shows, Meta.overview);
+    // fan: the game has fan content and so counts toward no rating (MetaGame.rankingFan), for the Unranked Games folder
+    def turn(factions : $[String], reasons : $[String] = $, overview : $[String] = $, fan : Boolean = false) {}
 }
 
 
@@ -66,9 +67,9 @@ class ServerJournal[T](val meta : MetaGame, server : String, user : String, secr
     private var lastTurn = ""
 
     // (the third line, "<seat>=<reason> ...": why each is asked, Meta.turnReason)
-    // (the fourth, the game's overview: icon names, Meta.overview; 2026-11-22)
-    override def turn(factions : $[String], reasons : $[String] = $, overview : $[String] = $) {
-        val report = size + "\n" + factions.join(" ") + (reasons.any || overview.any).??("\n" + reasons.join(" ")) + overview.any.??("\n" + overview.join(" "))
+    // (the fourth, the game's overview: icon names, Meta.overview; 2026-11-22; the fifth, "fan", a game with fan content)
+    override def turn(factions : $[String], reasons : $[String] = $, overview : $[String] = $, fan : Boolean = false) {
+        val report = size + "\n" + factions.join(" ") + (reasons.any || overview.any || fan).??("\n" + reasons.join(" ")) + (overview.any || fan).??("\n" + overview.join(" ")) + fan.??("\nfan")
         if (report != lastTurn) {
             lastTurn = report
             postF(server + "/turn/" + user + "/" + secret + "/" + journal, report)(_ => ()) { lastTurn = "" }
