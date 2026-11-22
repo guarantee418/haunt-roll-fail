@@ -606,7 +606,12 @@ class HRFUI(implicit resources : Resources) {
                 )
             else
                 $(entry(m, metaLabel(m), () => new HRFMetaUI(this, m, 0)(resources).withMeta()))
-        ) :+
+        ) ++
+            // the player's online games of every game, and their account (names, ratings, Discord, codes), above About (2026-11-22, asked for)
+            (HRF.server.any && HRF.offline.not).??($(
+                ZBasic(" ", "My Online Games", () => dom.document.location.assign("/play/my-games")),
+                ZBasic(" ", "My Account", () => dom.document.location.assign("/play/account"))
+            )) :+
             ZBasic(" ", "About", () => creditsMenu())
         )
     }
@@ -645,10 +650,25 @@ class HRFUI(implicit resources : Resources) {
         else
             m.label.spn(xstyles.larger110)(ExternalStyle(m.titleFont.|("")))
 
+    // /play/my-games and /play/account, the main menu's My Online Games and My Account: pages of no one game, shown by a menu of
+    // Root's, whose tournament they list too (siteWide)
     HRF.param("meta")./~(mn => HRF.metas.%(_.name == mn).single)./{m =>
         new HRFMetaUI(this, m, 800)(resources).withMeta()
     }.|{
-        topMenu()
+        HRF.param("meta").filter(p => (p == "my-games" || p == "account") && HRF.server.any && HRF.offline.not) match {
+            case Some(p) =>
+                val site = new HRFMetaUI(this, root.Meta, 0)(resources)
+                site.siteWide = true
+                if (p == "account") {
+                    dom.document.title = "My Account"
+                    site.myAccount()
+                }
+                else {
+                    dom.document.title = "My Online Games"
+                    site.onlineGame()
+                }
+            case None => topMenu()
+        }
     }
 
 }
@@ -2415,10 +2435,10 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
     // sign out (a new key), then, for Switch account, sign in as another name; a name with no code of its own is warned of first,
     // as this device couldn't sign back in to it without one
-    def signOut(names : $[String], switch : Boolean, back : () => Unit) {
+    def signOut(names : $[String], switch : Boolean, back : () => Unit, done : () => Unit = () => onlineGame()) {
         def go() {
             PlayerKey.fresh()
-            if (switch) signInAs(None, _ => onlineGame(), () => onlineGame()) else onlineGame()
+            if (switch) signInAs(None, _ => done(), () => done()) else done()
         }
 
         ownCodes(names, own => {
@@ -2434,12 +2454,157 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         })
     }
 
+
+    // My Account (/play/account, the main menu's; 2026-11-22, asked for): the names this device holds, their ratings on every
+    // ladder, their Discord and turn pings, other devices and codes, switch account and sign out, gathered from Play Online's
+    // Account and the Rankings' player code section, which stay where they are
+    def myAccount() {
+        val server = HRF.server.get
+        val title = "My Account".hl.spn(xstyles.larger110)
+        val again = () => myAccount()
+        val home = () => dom.document.location.assign("/play")
+        def says(e : Elem, retry : |[() => Unit] = None) = ui.action.asker.zask($(ZOption(title, Div(e.spn, ZBasic.info))) ++ retry./(f => ZBasic(" ", Div("Try again"), f)) ++ $(ZBasic(" ", Div("Back"), again)))
+        def unreachable() = says("The server can't be reached.".txt)
+
+        // each ladder (MetaGame.ranking): its metas, and the one whose menu has its Rankings page
+        val ladders = HRF.metas.%(_.ranking.any).groupBy(_.ranking.get).toList./{ case (k, l) => (k, l.sortBy(m => (m.name != k, HRF.menuMetas.contains(m).not))) }.sortBy(x => HRF.menuMetas.indexWhere(m => x._2.contains(m)) match { case -1 => 99 ; case i => i })
+
+        ui.action.asker.zask($(ZOption(title, Div("Loading...".txt, ZBasic.info)), ZBasic(" ", Div("Back"), home)))
+
+        def setId(name : String, value : String) {
+            postF(server + "/tournament/discord", PlayerKey.get + "\n" + name + "\n" + value.trim) { r =>
+                r.trim match {
+                    case "ok" if value.trim.nonEmpty => setPings(name, true)
+                    case "ok" => myAccount()
+                    case "invalid" => says("That isn't a Discord username or user ID.".txt, |(() => askId(name)))
+                    case "notfound" => says(discordNotFound.txt, |(() => askId(name)))
+                    case "nobot" => says(discordNoBot.txt, |(() => askId(name)))
+                    case _ => says("Only the device that holds the name can set its Discord.".txt)
+                }
+            } { unreachable() }
+        }
+
+        def setPings(name : String, on : Boolean) {
+            postF(server + "/discord/pings", PlayerKey.get + "\n" + name + "\n" + on.?("on").|("off")) { _ =>
+                HRF.discordMissing = None
+                myAccount()
+            } { unreachable() }
+        }
+
+        def askId(name : String) {
+            val head = "Discord username for " + name
+            ui.action.asker.iask(
+                BasicOption(head, "Your Discord username (or your user ID). You need to be a member of the Discord server. Leave it empty to forget it.", Nil, null) ::
+                InputOption(head, "", Nil, v => setId(name, v), _ => true) ::
+                BasicOption(" ", "Cancel", Nil, again))
+        }
+
+        // a lost code: ask the site's owner to release the name (Ranking.request), as on the Rankings page
+        def lostCode() {
+            ui.action.asker.iask(InputOption("Your name", "", Nil, n => {
+                val name = n.trim
+                if (name.isEmpty) myAccount()
+                else
+                ui.action.asker.iask(InputOption("Anything that shows " + name + " is yours, such as the games you played or who you played against (optional)", "", Nil, m => {
+                    postF(server + "/name-reset", name + "\n" + m.trim) { _ =>
+                        says("Your request was sent. Once the site's owner releases " ~ name.hlb ~ ", type it again when you join a game, or open one of your games, to claim it on this device. Your past games stay under it.")
+                    } { unreachable() }
+                }, _ => true) :: BasicOption(" ", "Cancel", Nil, again))
+            }) :: BasicOption(" ", "Cancel", Nil, again))
+        }
+
+        def show(names : $[String], own : $[String], discord : $[$[String]], ratings : $[(String, $[MetaGame], |[$[Elo.Player]])]) {
+            def is(a : String, b : String) = a.toLowerCase == b.toLowerCase
+            val signed = names.any
+
+            // (the text in one span: the info box lays out its children apart)
+            val head = ZOption(title, Div(signed.?(("Signed in on this device as " ~ names./(_.hlb).join(", ") ~ ".").spn).|(("This device isn't signed in. The name you type when you join an online game is claimed for this device, and no other device can play under it unless you sign in there. Played on another device? " ~ "Sign in".hl ~ " below with your name and code.").spn), ZBasic.info))
+
+            val ratingRows : $[ZOption] = signed.??(ratings./~{ case (_, ms, players) =>
+                val m = ms.head
+                val group = "Your Ratings".hl
+                // (the short name: Northgard's full one took two lines on a phone)
+                val label = HRF.menuMetas.find(ms.contains)./(_.label.takeWhile(_ != ':')).|(m.label)
+                val tiers = ms./(_.rankingTiers).find(_.any).|($)
+                val ladder = players.|($).%(_.provisional.not)
+                names./{ n =>
+                    val line : Elem = players match {
+                        case None => "can't be reached".txt
+                        case Some(all) => all.find(p => is(p.name, n)) match {
+                            case Some(p) =>
+                                val tier = (p.provisional.not).??(tiers.find(t => t.min.forall(p.rating >= _))./(" · " + _.name).|(""))
+                                val place = ladder.indexWhere(q => is(q.name, n)) @@ { case -1 => "provisional (" + p.games + " of " + Elo.provisional + " games)" ; case i => "#" + (i + 1) + " of " + ladder.num }
+                                val change = p.lastChange
+                                (p.rating.round.toString + p.provisional.??("?")).hlb ~ (tier + " · " + place + " · " + p.games + " game" + (p.games != 1).??("s") + ", " + p.wins + " won · last " + (change >= 0).?("+").|("") + (math.round(change * 10) / 10.0)).txt
+                            case None => "no rated games yet".txt
+                        }
+                    }
+                    ZBasic(group, (label + (names.num > 1).??(" · " + n)).hh ~ Break ~ line.spn(xstyles.smaller75), () => dom.document.location.assign("/play/" + m.name + "/rankings"))
+                }
+            })
+
+            val discordRows : $[ZOption] = signed.??(
+                $(ZOption("Discord".hl, Div("When it's your turn in an online game, you are mentioned (pinged) in the game's post in the Discord server. It needs your Discord username, and you need to be a member of the server.".txt, ZBasic.info))) ++
+                names./~{ n =>
+                    val r = discord.find(r => is(r(0), n)).|($(n, "", "on", ""))
+                    val (id, on) = (r(1), r(2) == "on")
+                    val digits = id.any && (id.forall(_.isDigit) || r(3) == "ping")
+                    val sub = (names.num > 1).??(n + " · ")
+                    $(ZBasic("Discord".hl, (sub + "Discord: ").txt ~ id.any.?(id.hh).|("not set (tap to add)".txt), () => askId(n))) ++
+                    digits.$(ZBasic("Discord".hl, (sub + "Turn pings: ").txt ~ on.?("On".hlb).|("Off".hh) ~ " (tap to turn " ~ on.?("off").|("on") ~ ")", () => setPings(n, on.not))) ++
+                    (id.any && digits.not).$(ZOption("Discord".hl, Div((id.hlb ~ " wasn't found on the Discord server yet, so it can't be pinged: tap it above to give it again.").spn, ZBasic.info)))
+                })
+
+            val group = "Devices and Codes".hl
+            val codeRows : $[ZOption] =
+                signed.$(ZBasic(group, "Sign in on another device".hh ~ Break ~ "Shows the codes to enter there".spn(xstyles.smaller75), () => otherDevice(names, again))) ++
+                signed.$(ZBasic(group, (own.any.?("Change my own code").|("Pick my own code")).hh ~ Break ~ (own.any.?("Set for " + own.join(", ")).|("Easier to type than the player code")).spn(xstyles.smaller75), () => setOwnCode(names, () => says("Your code is set for " ~ names./(_.hlb).join(", ") ~ ". On another device, sign in with your name and this code."), again))) ++
+                $(ZBasic(group, signed.?("Use a code from another device").|("Sign in").hh ~ Break ~ "Your name, then your own code or a player code".spn(xstyles.smaller75), () => signInAs(None, _ => myAccount(), again))) ++
+                $(ZBasic(group, "Lost my code".hh, () => lostCode()))
+
+            val leave : $[ZOption] = signed.??($(
+                ZBasic("Account".hl, "Switch account".hh, () => signOut(names, true, again, again)),
+                ZBasic("Account".hl, "Sign out".hh, () => signOut(names, false, again, again))
+            ))
+
+            ui.action.asker.zask(
+                $(head) ++
+                ratingRows ++
+                discordRows ++
+                codeRows ++
+                leave ++
+                $(ZBasic(" ", "My Online Games".hh, () => dom.document.location.assign("/play/my-games"))) ++
+                $(ZBasic(" ", Div("Back"), home))
+            )
+        }
+
+        heldNames { names =>
+            if (names.none)
+                show($, $, $, $)
+            else
+            ownCodes(names, own => {
+                postF(server + "/discord/mine", PlayerKey.get) { text =>
+                    val discord = text.split('\n').$.%(_.nonEmpty)./(_.split('\t').$ ++ $("", "", ""))
+                    def rate(rest : $[(String, $[MetaGame])], done : $[(String, $[MetaGame], |[$[Elo.Player]])]) : Unit = rest match {
+                        case (k, ms) :: more =>
+                            getF(server + "/rankings/" + ms./(_.name).distinct.join(",")) { t => rate(more, done :+ ((k, ms, |(Elo.compute(Elo.parse(t)))))) } { rate(more, done :+ ((k, ms, None))) }
+                        case Nil => show(names, own, discord, done)
+                    }
+                    rate(ladders, $)
+                } { unreachable() }
+            })
+        }
+    }
+
     // tour: the player's tournament games (good-game/Tournament.scala), shown at the top once the server has said which
     // mine: the player's own games from the server (good-game "my-games"), shown while their names are claimed on this device;
     // the completed ones in a folder, open when doneOpen (2026-11-20)
     // held: the names this device holds (Account; 2026-11-20); fetch: ask the server for all three (once: the answers re-render);
     // the games with fan content, which count toward no rating, in the Unranked Games folder, open when unrankedOpen, or by
     // default while one of them waits on the player (2026-11-21)
+    // the main menu's My Online Games and My Account (/play/my-games, /play/account): every game's, Back to the main menu
+    var siteWide = false
+
     def onlineGame(tour : |[$[$[String]]] = None, mine : |[$[$[String]]] = None, doneOpen : Boolean = false, held : |[$[String]] = None, fetch : Boolean = true, unrankedOpen : |[Boolean] = None) {
         val prefix = meta.settingsKey + ".online.game."
         val l = Local.list(prefix)./(_.drop(prefix.length).split('.'))./(l => l(0) -> l(1).toDouble).sortBy(-_._2)
@@ -2529,7 +2694,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 case "root-adset" => "Root Adset"
                 case _ => label
             }
-            val other = (r(0) != meta.name).??(short + " · ")
+            val other = (siteWide || r(0) != meta.name).??(short + " · ")
             // the other players, the server's eleventh field (2026-11-22)
             val against = r.lift(10).|("").trim.some./(" against " + _).|("")
             val turn = myTurn(r)
@@ -2616,6 +2781,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         // signed out: Sign in; signed in: the names, opening the Account screen
         val accountRows : $[ZOption] = held match {
             case Some(Nil) => $(ZBasic("Account".hl, ("Sign in".hh ~ Break ~ "Played on another device? Sign in to play as the same name here.".spn(xstyles.smaller75)).div($(xlo.fullwidth, xlo.fullheight)), () => signInAs(None, _ => onlineGame(), () => onlineGame())))
+            case Some(n) if siteWide => $(ZBasic("Account".hl, (("Signed in as " + n.join(", ")).hh ~ Break ~ "My Account: ratings, Discord, devices and codes".spn(xstyles.smaller75)).div($(xlo.fullwidth, xlo.fullheight)), () => dom.document.location.assign("/play/account")))
             case Some(n) => $(ZBasic("Account".hl, (("Signed in as " + n.join(", ")).hh ~ Break ~ "Sign in on another device, switch account or sign out".spn(xstyles.smaller75)).div($(xlo.fullwidth, xlo.fullheight)), () => accountMenu(n)))
             case None => $
         }
@@ -2642,29 +2808,36 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             }
         }
 
+        // My Online Games: a new game is started on its game's own Play Online; a device holding no name has no games to list
+        val siteRows : $[ZOption] = siteWide.??(
+            (held.exists(_.none) && mine.forall(_.none)).$(ZOption("My Online Games".hl, Div(("This device isn't signed in, so it has no games to list. The name you type when you join an online game is claimed for this device; played on another device? " ~ "Sign in".hl ~ " above.").spn, ZBasic.info))) ++
+            (held.exists(_.any) && mine.forall(_.none) && tour.none).$(ZOption("Your Active Games".hl, Div("No online games yet.".txt, ZBasic.info))) ++
+            HRF.menuMetas./(m => ZBasic("Start a new online game".hl, m.label.hh, () => dom.document.location.assign("/play/" + m.name + "/online/new"))))
+
         ui.action.asker.zask(
-            meta.recommendedVersion.but("")./(v => ZBasic("This version is currently under development or testing.".styled(xstyles.error) ~ Break ~ "If you are not feeling adventurous, please use the following version instead:".styled(xstyles.warning), v.styled(xstyles.link).styled(xstyles.larger125), () => {
+            siteWide.not.??(meta.recommendedVersion.but("")./(v => ZBasic("This version is currently under development or testing.".styled(xstyles.error) ~ Break ~ "If you are not feeling adventurous, please use the following version instead:".styled(xstyles.warning), v.styled(xstyles.link).styled(xstyles.larger125), () => {
                 val l = dom.document.location
                 val search = ("version=" + v) +: l.search.drop(1).split('&').$.%(_.startsWith("version").not).but("")
                 val url = l.origin + l.pathname + "?" + search.join("&") + l.hash
                 ui.logger.alog(" Reload " + url)
                 dom.document.location.assign(url)
-            })).$ ++
-            ZBasic(meta.label.hl, "New Online Game".hl.styled(xstyles.larger110), () => {
+            })).$) ++
+            siteWide.not.??(ZBasic(meta.label.hl, "New Online Game".hl.styled(xstyles.larger110), () => {
                 goOnlineNew()
-            }).?.$ ++
+            }).?.$) ++
             accountRows ++
             discordRows ++
             tournamentGames ++
             myGameRows ++
             // (the Recent Games list, every online game this browser opened, was removed on 2026-11-20, asked for: the player's own
             // games are under Your Active Games; a game's links menu is still at /play/<meta>/online/lobby/<lobby>)
+            siteRows ++
             ZBasic("  ", "Archived Games".hh, () => {
                 goOnlineArchive()
-            }).?.$.%(_ => games.exists(_.status.has("archived"))) ++
+            }).?.$.%(_ => siteWide.not && games.exists(_.status.has("archived"))) ++
             ZBasic(" ", "Back", () => {
                 // metaMenu()
-                history.popState()
+                if (siteWide) dom.document.location.assign("/play") else history.popState()
             }).?
         )
 
