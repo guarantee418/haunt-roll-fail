@@ -28,6 +28,18 @@ object TurnReasons {
         }
         val head = f./("/" + _.short).|("")
 
+        // the other side (2026-11-22, "for attacks and entreaties, can you say who is x who?"): a battle's attacker for the
+        // defending side, its defender for the attacking side, and the faction that entreated the Council; "/<faction>" after the head
+        val battle = asker @@ {
+            case p : Product => p.productIterator.collectFirst { case b : Battle => b }
+            case _ => None
+        }
+        val other : Option[Faction] = asker @@ {
+            case CouncilEntreatAction(e, _, _, _) => Some(e)
+            case _ => battle.map(b => if (f.exists(x => x == b.attacker || b.ally.has(x))) b.defender else b.attacker)
+        }
+        val versus = other.filterNot(o => f.has(o))./("/" + _.short).|("")
+
         val tag =
             if (actions.exists(_.isInstanceOf[TournamentDeckAction])) "pickdeck"
             else if (actions.exists(_.isInstanceOf[TournamentMapAction])) "pickmap"
@@ -50,6 +62,7 @@ object TurnReasons {
 
         tag @@ {
             case "draft" | "keep" | "pickdeck" | "pickmap" | "picklandmark" => tag
+            case "defend" | "battle" | "entreat" if head.nonEmpty => tag + head + versus
             case _ => tag + head
         }
     }
