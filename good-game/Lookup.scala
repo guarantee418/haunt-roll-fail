@@ -27,7 +27,7 @@ trait BotCommand {
 }
 
 object BotCommands {
-    val all : List[BotCommand] = List(CardLookup)
+    val all : List[BotCommand] = List(CardLookup, RuleLookup)
 
     def of(name : String) = all.find(_.name == name)
 }
@@ -62,7 +62,7 @@ object CardLookup extends BotCommand {
         loaded._2
     }
 
-    // the image files the list names (and so /art serves)
+    // the image files the list names (and so /art serves; the rulebook pages are RuleLookup's)
     def served(path : String) = arts.exists(_.path == path)
 
     def registration = "{\"name\":\"card\",\"type\":1,\"description\":\"Show a card or other art from Root or Northgard, as the site has it\",\"options\":[" +
@@ -124,6 +124,116 @@ object CardLookup extends BotCommand {
     }
 }
 
+// /rule <rule> [game] (asked for on 2026-11-22): a rule cited, not interpreted. Root's by its Law of Root number or name, with its text and
+// the link to it on the Root Database (webp2/lfg/rules-root.tsv, made by haunt-roll-fail/tools/law-index.py from the Root Database's copy);
+// Northgard's rulebooks have no numbers, so a rule there is its book, page and section heading, shown with the page itself
+// (webp2/lfg/rules-nort.tsv and webp2/lfg/rulebook/nort/, made by haunt-roll-fail/tools/nort-rules-index.py from the rulebook PDFs).
+object RuleLookup extends BotCommand {
+    val name = "rule"
+
+    case class Rule(game : String, id : String, number : String, title : String, group : String, text : String, link : String, path : String) {
+        // as the suggestions list it: "6.5.1 Battle · Marquise de Cat (Root)", "Combat steps · Core rulebook, p. 14 (Northgard)"
+        def label = if (game == "root") number + " " + title + " · " + group.replaceFirst("^[0-9A-Z]+\\. ", "") + " (Root)" else title + " · " + group + " (Northgard)"
+        lazy val key = Lookup.norm(title)
+        lazy val words = title.toLowerCase.split("[^\\p{L}\\p{N}]+").toList.filter(_.nonEmpty).map(Lookup.norm)
+    }
+
+    @volatile var loaded : (Long, List[Rule]) = (-1L, Nil)
+
+    def files = List("root", "nort").map(g => g -> Paths.get(Lfg.assets, "webp2", "lfg", "rules-" + g + ".tsv"))
+
+    def rows(f : Path) = new String(Files.readAllBytes(f), UTF_8).split('\n').toList.drop(1).filter(_.trim.nonEmpty).map(_.split('\t').toList)
+
+    // the lists, read again when a file changes (a deploy)
+    def rules : List[Rule] = {
+        val t = files.map { case (_, f) => if (Files.exists(f)) Files.getLastModifiedTime(f).toMillis else 0L }.sum
+        if (t != loaded._1)
+            loaded = (t, files.filter(x => Files.exists(x._2)).flatMap {
+                case ("root", f) => rows(f).collect { case n :: ti :: ch :: tx :: l :: _ => Rule("root", n, n, ti, ch, tx, l.trim, "") }
+                case (_, f) => rows(f).collect { case b :: pg :: se :: p :: _ if p.startsWith("webp2/") && !p.contains("..") =>
+                    Rule("nort", b + "|" + pg + "|" + se, "", se, b + ", p. " + pg, "", "", p.trim) }
+            })
+        loaded._2
+    }
+
+    // the rulebook pages the list names (and so /art serves)
+    def served(path : String) = rules.exists(_.path == path)
+
+    def registration = "{\"name\":\"rule\",\"type\":1,\"description\":\"Cite a rule: Root's by its Law of Root number or name, Northgard's by its name\",\"options\":[" +
+        "{\"type\":3,\"name\":\"rule\",\"description\":\"A rule number (4.3.2) or name (pick from the suggestions)\",\"required\":true,\"autocomplete\":true,\"max_length\":100}," +
+        "{\"type\":3,\"name\":\"game\",\"description\":\"Only this game's rules\",\"required\":false,\"choices\":[" +
+        Lookup.games.toList.map { case (v, n) => "{\"name\":" + Lfg.json(n) + ",\"value\":" + Lfg.json(v) + "}" }.mkString(",") + "]}," +
+        "{\"type\":5,\"name\":\"private\",\"description\":\"Show it only to me\",\"required\":false}]}"
+
+    // a Law of Root number: 4, 4.3, 4.3.2, 2.1.1.I, H.2.1 (a dot or comma, any case)
+    def numberOf(q : String) = Some(q.trim.toUpperCase.replace(',', '.').stripSuffix(".")).filter(_.matches("([0-9]{1,2}|[A-Z])(\\.[0-9]{1,2})*(\\.[IVX]+)?"))
+
+    // the best matches: a number and the rules under it; or the name, then its start, a word's start, anywhere, every word somewhere
+    def search(q : String, game : Option[String]) : List[Rule] = {
+        val l = rules.filter(r => game.forall(_ == r.game))
+        numberOf(q).filter(n => l.exists(r => r.game == "root" && (r.number == n || r.number.startsWith(n + ".")))) match {
+            case Some(n) =>
+                l.filter(r => r.game == "root" && (r.number == n || r.number.startsWith(n + "."))).sortBy(r => (r.number != n, r.number.count(_ == '.')))
+            case None =>
+                val k = Lookup.norm(q)
+                val words = q.toLowerCase.split("[^\\p{L}\\p{N}]+").toList.filter(_.nonEmpty).map(Lookup.norm)
+                if (k.isEmpty)
+                    l.filter(r => r.game == "nort" || r.number.count(_ == '.') <= 1)
+                else {
+                    def score(r : Rule) : Int =
+                        if (r.key == k) 0
+                        else if (r.key.startsWith(k)) 1
+                        else if (r.words.exists(_.startsWith(k))) 2
+                        else if (r.key.contains(k)) 3
+                        else if (words.nonEmpty && words.forall(w => r.words.exists(_.startsWith(w)))) 4
+                        else if (words.nonEmpty && words.forall(w => (r.key + Lookup.norm(r.group)).contains(w))) 5
+                        else if (words.nonEmpty && words.forall(w => Lookup.norm(r.text).contains(w))) 7
+                        else 99
+                    l.map(r => r -> score(r)).filter(_._2 < 99).sortBy { case (r, s) => (s, r.title.length, r.game, r.number.count(_ == '.')) }.map(_._1)
+                }
+        }
+    }
+
+    override def autocomplete(data : Lfg.J) = {
+        val o = options(data)
+        val game = o.get("game").collect { case v : String => v }.filter(Lookup.games.contains)
+        val typed = focused(data).filter(_._1 == "rule").map(_._2).getOrElse("")
+        choices(search(typed, game).take(25).map(r => r.label -> ("@" + r.game + ":" + r.id)))
+    }
+
+    def run(uid : String, user : String, data : Lfg.J) = {
+        val o = options(data)
+        val game = o.get("game").collect { case v : String => v }.filter(Lookup.games.contains)
+        val typed = o.get("rule").collect { case v : String => v }.getOrElse("").trim
+        val hidden = o.get("private").contains(true)
+        // a suggestion picked is its game and id; anything else typed is searched
+        val picked = Some(typed).filter(_.startsWith("@")).map(_.drop(1)).flatMap(v => rules.find(r => r.game + ":" + r.id == v))
+        val found = picked.map(List(_)).getOrElse(search(typed, game))
+        found match {
+            case Nil if rules.isEmpty => Lfg.privately("The rule lists aren't on the server yet.")
+            case Nil => Lfg.privately("No rule **" + Lfg.clean(typed) + "**" + game.map(g => " in " + Lookup.games(g)).getOrElse("") + ". Type a Law of Root number (4.3.2) or pick one of the suggestions.")
+            case r :: _ =>
+                val embed = if (r.game == "root") {
+                    // a section shows the rules under it by number and title
+                    val under = rules.filter(x => x.game == "root" && x.number.startsWith(r.number + ".") && x.number.count(_ == '.') == r.number.count(_ == '.') + 1)
+                    val more = if (under.isEmpty) "" else "\n\n" + under.map(x => "**" + x.number + "** " + x.title).mkString("\n")
+                    "{\"title\":" + Lfg.json(LfgSetup.cut(r.number + " " + r.title, 256)) + ",\"url\":" + Lfg.json(r.link) +
+                    ",\"description\":" + Lfg.json(LfgSetup.cut(r.text + more, 4000)) +
+                    ",\"footer\":{\"text\":" + Lfg.json("Law of Root · " + r.group + " · from the Root Database") + "}" +
+                    ",\"color\":" + Lookup.colors("root") + "}"
+                }
+                else {
+                    // the other sections on that page, so the reader knows where to look
+                    val also = rules.filter(x => x.game == "nort" && x.path == r.path && x.id != r.id).map(_.title)
+                    "{\"title\":" + Lfg.json(LfgSetup.cut(r.title, 256)) +
+                    ",\"description\":" + Lfg.json("Northgard: Uncharted Lands, " + r.group + (if (also.isEmpty) "" else "\nAlso on this page: " + also.mkString(", "))) +
+                    ",\"color\":" + Lookup.colors("nort") + ",\"image\":{\"url\":" + Lfg.json(Lookup.artUrl(r.path)) + "}}"
+                }
+                Lfg.reply(4, "{\"embeds\":[" + embed + "]" + (if (hidden) ",\"flags\":64" else "") + ",\"allowed_mentions\":{\"parse\":[]}}")
+        }
+    }
+}
+
 object Lookup {
     // the games the list has: its game field -> the name shown
     val games = scala.collection.immutable.ListMap("root" -> "Root", "nort" -> "Northgard")
@@ -140,7 +250,7 @@ object Lookup {
     // /art/<path>: the file, if the list names it
     def artFile(path : String) : Option[Path] = {
         val p = "webp2/" + path
-        if (path.contains("..") || !CardLookup.served(p)) None
+        if (path.contains("..") || !(CardLookup.served(p) || RuleLookup.served(p))) None
         else Some(Paths.get(Lfg.assets, p)).filter(Files.isRegularFile(_))
     }
 }

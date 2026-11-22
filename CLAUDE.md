@@ -1179,6 +1179,14 @@ server. No session can reach the server, and none needs to.
   only the files that list names (`Lookup.artFile`). The bot's commands other than the LFG ones are `BotCommand`s in `BotCommands.all`
   (`good-game/Lookup.scala`), registered with `/root` and `/northgard` and answered by `Lfg.interaction` (use and autocomplete); a new one
   (a translator, a rules helper) is one more entry there.
+- The bot's `/rule <rule> [game] [private]` (2026-11-22, asked for as a bot "to help cite the rules", not to interpret them): Root's
+  rules by their Law of Root number (`4.3.2`, `H.1`, a section lists the rules under it) or name, with the rule's text and the link to
+  it on the Root Database (`webp2/lfg/rules-root.tsv`, made by `haunt-roll-fail/tools/law-index.py` from the Root Database's copy, kept up
+  to date with Leder's; official chapters only); Northgard's rulebooks have no numbers, so its rules are cited by book, page and section
+  heading and shown with the page (`webp2/lfg/rules-nort.tsv` and the pages in `webp2/lfg/rulebook/nort/`, made by
+  `haunt-roll-fail/tools/nort-rules-index.py` from the rulebook PDFs, kept in the project files, not in this repository; its sections are
+  listed by hand in the script). `RuleLookup` in `good-game/Lookup.scala`; `/art` serves those pages too. Run the scripts again when
+  the Law of Root changes or a rulebook is added.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.
