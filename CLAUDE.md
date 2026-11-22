@@ -879,6 +879,9 @@ server. No session can reach the server, and none needs to.
   only when the Captain can move and the Diaspora has a Peaceful enclave; a Nab move put first sets them off when it is done or skipped.
   The Fears always came first, during the battle's removal. New games get the hidden `NabFearsOrder`, in `RulesVersion4`; a running game
   can be switched over with `NabFearsOrderAction(X)`. `ReplayCheck <games> ldkd` takes Nab half the times it is offered and picks the order at random.
+- The Twilight Council's Convene Woodfolk (17.6.1) offers "Return all to hand" beside the revealed cards: every card left goes back
+  to hand at once and none of them acts, ending the step (`CouncilConveneAllAction` in `root/faction-council.scala`; 2026-11-22, asked
+  for in Right of Betrayal). It only adds a choice, so no option; the bots never take it.
 - An Entreat (17.2.4) asks the Twilight Council to gain a Loyalist or place some in the clearing only when it has Loyalists it could
   place there; otherwise it gains one without being asked, or nothing happens when it can't (`CouncilEntreatAction` in
   `root/faction-council.scala`; 2026-10-29: the Council was asked only to "place 0"). New games get the hidden default option
@@ -1129,7 +1132,7 @@ server. No session can reach the server, and none needs to.
   `good-game/Turns.scala`, which calls `TurnPings.report`) and the lobby's "user <faction> <user>" lines. A soft step inside a MultiAsk (a card picked before "Keep") still reports every seat it asks (`turnMulti` in `runner.scala`): one player's pick took the others off the list (2026-11-22). Only seats under a ranking name whose owner gave a Discord user
   ID (or a username the bot found, or one the owner set) and didn't turn pings off ("Discord turn pings" under Rankings, `discordPings` in `rankingsMenu`; `/discord/mine`, `/discord/pings`,
   `tournament/discord-pings.tsv`; on unless turned off since 2026-11-20, asked for) are mentioned, each by their own mention
-  (`allowed_mentions` lists only them, never @everyone). Each ping leads with the seat's faction or clan emoji (the one its reason names, else the seat's own in a standard game; 2026-11-22, as some pings had none), as does the first-turn line; a battle, a fight or an Entreat also names the other side with its emoji and name, "you're under attack by X", "your battle against X", "X entreated you" (the reason's third part, "defend/<seat faction>/<other>", from the asking action's attacker and defender, else the clan whose turn it is or the other clan in the fought territory; 2026-11-22; a Northgard creature as "~<its name>", from the asking action's creature, else `game.creatureFights` or the fought territory, shown as "the **Brown Bear**" with the Discord server's emoji of that name if it has one), and says why the seat is asked, with an emoji in the server's style (asked for on 2026-11-21; `TurnPings.reasonOf`): the
+  (`allowed_mentions` lists only them, never @everyone). Each ping leads with the seat's faction or clan emoji (the one its reason names, else the seat's own in a standard game; 2026-11-22, as some pings had none), as does the first-turn line; a battle, a fight or an Entreat also names the other side with its emoji and name, "you're under attack ⚔️ by X", "your battle ⚔️ against X", "X entreated you" (the sword or axe right after "attack", "battle" or "fight") (the reason's third part, "defend/<seat faction>/<other>", from the asking action's attacker and defender, else the clan whose turn it is or the other clan in the fought territory; 2026-11-22; a Northgard creature as "~<its name>", from the asking action's creature, else `game.creatureFights` or the fought territory, shown as "the **Brown Bear**" with the Discord server's emoji of that name if it has one), and says why the seat is asked, with an emoji in the server's style (asked for on 2026-11-21; `TurnPings.reasonOf`): the
   client adds a third line to its turn report, "<seat>=<reason>", from `Meta.turnReason` (`root/turn-reasons.scala` and
   `nort/turn-reasons.scala`, `TurnReasons`: the action that asked, `game.asker`, set in `internalPerform`, and the choices offered),
   kept in `turns.tsv`'s fourth column (`Turns.reason`): Root's under attack or a battle (the server's sword emoji), the cards kept
@@ -1386,6 +1389,11 @@ server. No session can reach the server, and none needs to.
   empty `<title>` and no `og:title` (`gameIndex` in `GoodGame.scala`), so
   Discord and other chat apps show no "Chronicles" preview card under each
   shared link. The client sets the real title when it loads.
+- An online game's page reloads itself when a new client is deployed (2026-11-22: a page open since before a deploy kept sending turn
+  reports from the old code, so a ping named no attacker): it asks the server for the client build's fingerprint (`/client-version`,
+  a hash of `hrf-opt.js`, `clientVersion` in `GoodGame.scala`) when the game starts, and again before each turn report and each time the
+  page comes back into view, and reloads when it has changed, sending no report from the old code (`ClientVersion` in `journal.scala`).
+  Nothing is lost, as the moves are on the server; a server-only deploy changes no fingerprint, so it reloads nothing.
 - `good-game` wraps static files in `encodeResponse`, so the 8 MB client is
   sent gzipped (about 2.5 MB).
 - In a Northgard game the tab's icon is the player's clan emblem (`clan/<clan>.webp`, the clan picker's; in Adset the clan the seat

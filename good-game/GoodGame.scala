@@ -172,6 +172,22 @@ object GoodGame {
             .replace(">Chronicles</title>", "></title>")
             .replace("<meta property=\"og:title\" content=\"Chronicles\" />", "")
 
+        // the client build's fingerprint (2026-11-22): open game pages ask for it and reload when it changes, so a page loaded before a
+        // deploy doesn't keep running old code (it sent turn reports without the attacker after the turn pings were changed);
+        // a hash of hrf-opt.js, worked out again only when the file's time or size changes
+        var clientSeen : (Long, Long, String) = (0L, 0L, "")
+        def clientVersion : String = synchronized {
+            val f = new java.io.File(directory + "/target/scala-2.13/hrf-opt.js")
+            if (!f.exists) "" else {
+                val (t, n) = (f.lastModified, f.length)
+                if (clientSeen._1 != t || clientSeen._2 != n) {
+                    val d = java.security.MessageDigest.getInstance("SHA-256").digest(java.nio.file.Files.readAllBytes(f.toPath))
+                    clientSeen = (t, n, d.take(8).map("%02x".format(_)).mkString)
+                }
+                clientSeen._3
+            }
+        }
+
         def html(s : String) = complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s))
         def plain(s : String) = complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, s))
         def redir(s : String) = redirect(s, StatusCodes.SeeOther)
@@ -277,6 +293,11 @@ object GoodGame {
             } ~
             (get & path("play" / "")) {
                 redir("/play")
+            } ~
+            (get & path("client-version")) {
+                respondWithHeader(`Cache-Control`(CacheDirectives.`no-cache`)) {
+                    plain(clientVersion)
+                }
             } ~
             (get & path("play")) {
                 html(index
