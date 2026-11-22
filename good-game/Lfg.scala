@@ -74,6 +74,9 @@ object Lfg {
     @volatile var assets = "."
     @volatile var clanEmojis : Map[String, String] = Map()
 
+    // the ids of the bot's own (application) emojis, which only the bot can post (Tournament.post)
+    def appEmojiIds : Set[String] = (clanEmojis.values ++ iconEmojis.values).toSet
+
     def emojiName(c : String) = "ng_" + c.toLowerCase
 
     // THE OPTIONS' ICONS (asked for on 2026-11-21: "use icons/emojis as much as possible"): the option (or "#<section>") -> its icon's
