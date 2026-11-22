@@ -616,14 +616,28 @@ object Tournament {
                 case "ping" if rest == "waiting" => TurnPings.pingWaiting() + " pinged"
                 // every table's progress and spectator link, posted (2026-11-22)
                 case "status" => status()
+                // the claimed ranking names with no Discord given, and those whose Discord is a username no user ID was found for, so
+                // nobody can be pinged (2026-11-22; Play Online asks those players once, discordAsk in hrf.scala)
+                case "no-discord" => noDiscord()
                 // only those games (2026-11-21)
                 case "ping" if rest.startsWith("waiting ") => TurnPings.pingWaitingIn(rest.drop(8).split("[ ,]+").toList.filter(_.nonEmpty)).mkString("; ")
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, bot, guild, discord, ping waiting, status, lfg-key, lfg-commands or invite)"
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, bot, guild, discord, ping waiting, status, no-discord, lfg-key, lfg-commands or invite)"
             }
 
             (if (word == "webhook" || word == "forum" || word == "turns" || word == "nort-turns" || word == "bot") word else line) + ": " + result
         }
     }
+
+    // the names with no Discord to ping, each with how many seats play under it, the most played first
+    def noDiscord() : String = {
+        val claimed = Ranking.claims().keySet
+        val seats = Ranking.seatsOf(claimed).groupBy(_._2).view.mapValues(_.size).toMap
+        def line(k : String) = display(k) + " (" + seats.getOrElse(k, 0) + " seats)"
+        val none = claimed.toList.filter(k => discordOf(k).isEmpty).sortBy(k => (-seats.getOrElse(k, 0), k))
+        val noId = claimed.toList.filter(k => discordOf(k).nonEmpty && storedId(k).isEmpty && discordId(k).isEmpty).sortBy(k => (-seats.getOrElse(k, 0), k))
+        (none.size + " of " + claimed.size + " names have no Discord" :: none.map("  " + line(_))) ++
+            (if (noId.isEmpty) Nil else (noId.size + " gave a username no member of the server has, so they can't be pinged" :: noId.map(k => "  " + line(k) + ": " + discordOf(k).getOrElse(""))))
+    }.mkString("\n")
 
     // DISCORD: a message to the channel of the webhook, if one is set up
     def hook(env : String, file : String) : Option[String] =
