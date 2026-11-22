@@ -1107,8 +1107,8 @@ server. No session can reach the server, and none needs to.
   `discord-forum-webhook`, set by the `forum <url>` change), else in the announcements' channel; a forum channel gets every post in
   a thread, a text channel in the channel itself (2026-11-20).
   The tournament change `status` posts the running tournament's tables (else the last one's) to the announcements' webhook (the owner's
-  "Royal Claim"; asked for on 2026-11-22): each table's round, every player's faction and VP, whose turn it is or its winner, and its
-  spectator link (`Tournament.status`). The round and scores come from the clients' turn reports, a sixth line (`Meta.status`, Root's
+  "Royal Claim"; asked for on 2026-11-22): each table's round, every player's faction and VP in seat order (`game.ordering`; 2026-11-22), whose turn it is or its winner, and its
+  spectator link (`Tournament.status`); a table with no status reported lists its players and whoever its last turn report waits on. The round and scores come from the clients' turn reports, a sixth line (`Meta.status`, Root's
   `statusOf`: "r<round>" then "<seat>:<faction>:<VP>"), kept in `statuses.tsv` (`Turns.setStatus`); a table nobody has opened since
   says "no progress reported yet".
   `Tournament.start` takes the server's URL argument for the link. The games have the hidden `TournamentDraft` (`root/tournament.scala`):
