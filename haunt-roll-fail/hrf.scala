@@ -2449,7 +2449,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             shown.none.?(Break : Elem).|(Div(shown./(i => Image(i, $(ExternalStyle(i.startsWith("lfg:").?("hrf-overview-map").|("hrf-overview-faction"))), None) : Elem).merge, $(ExternalStyle("hrf-overview"))))
         }
 
-        // the game has fan content and counts toward no rating (the server's tenth field: its result, or the last turn report)
+        // the game has a bot or fan content and counts toward no rating (the server's tenth field: its result, or the last turn report)
         def unranked(r : $[String]) = r.lift(9).has("1")
 
         // a game of the player's own: its title, the game when it isn't this one, the name played under; it opens the seat;
@@ -2482,7 +2482,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             active./(r => myGame(("Your Active Games" + (names.num == 1).??(" · " + names.head)).hl, r)) ++
             (myGames.any && active.none).$(ZOption("Your Active Games".hl, Div("None right now.".txt, ZBasic.info))) ++
             fan.any.$(folder(fanOpen, "Unranked Games (" + fan.num + ")", fanTurns, () => onlineGame(tour, mine, doneOpen, held, false, |(fanOpen.not)))) ++
-            fanOpen.??(fan.any.$(ZOption(" ".spn, Div("Games with fan content count toward no ranking.".txt, ZBasic.info))) ++ fan./(r => myGame(" ".spn, r))) ++
+            fanOpen.??(fan.any.$(ZOption(" ".spn, Div("Games with bots or fan content count toward no ranking.".txt, ZBasic.info))) ++ fan./(r => myGame(" ".spn, r))) ++
             done.any.$(folder(doneOpen, "Completed Games (" + done.num + ")", 0, () => onlineGame(tour, mine, doneOpen.not, held, false, unrankedOpen))) ++
             doneOpen.??(done./(r => myGame(" ".spn, r)))
 
