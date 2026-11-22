@@ -1386,6 +1386,11 @@ server. No session can reach the server, and none needs to.
   empty `<title>` and no `og:title` (`gameIndex` in `GoodGame.scala`), so
   Discord and other chat apps show no "Chronicles" preview card under each
   shared link. The client sets the real title when it loads.
+- An online game's page reloads itself when a new client is deployed (2026-11-22: a page open since before a deploy kept sending turn
+  reports from the old code, so a ping named no attacker): it asks the server for the client build's fingerprint (`/client-version`,
+  a hash of `hrf-opt.js`, `clientVersion` in `GoodGame.scala`) when the game starts, and again before each turn report and each time the
+  page comes back into view, and reloads when it has changed, sending no report from the old code (`ClientVersion` in `journal.scala`).
+  Nothing is lost, as the moves are on the server; a server-only deploy changes no fingerprint, so it reloads nothing.
 - `good-game` wraps static files in `encodeResponse`, so the 8 MB client is
   sent gzipped (about 2.5 MB).
 - In a Northgard game the tab's icon is the player's clan emblem (`clan/<clan>.webp`, the clan picker's; in Adset the clan the seat
