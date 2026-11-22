@@ -141,6 +141,8 @@ case class CouncilAssembleDoneAction(self : Council, d : DeckCard, c : Clearing)
 
 case class CouncilConveneMainAction(f : Council) extends ForcedAction with Soft
 case class CouncilConveneCardAction(self : Council, d : DeckCard) extends BaseAction("Convene Woodfolk".styled(self), "return a card")(d.img) with ViewCard
+// Returns every revealed card left to hand at once, taking none of their actions (17.6.1: each returned card "may" act)
+case class CouncilConveneAllAction(self : Council) extends BaseAction("Convene Woodfolk".styled(self), "return a card")("Return all to hand", "(no actions)")
 case class CouncilBanishAction(self : Council, c : Clearing, e : Faction) extends ForcedAction
 case class CouncilAgitateAction(self : Council, d : DeckCard, c : Clearing) extends ForcedAction
 case class CouncilEmpowerAction(self : Council, c : Clearing) extends ForcedAction
@@ -564,7 +566,7 @@ object CouncilExpansion extends FactionExpansion[Council] {
 
         case CouncilConveneMainAction(f) =>
             if (f.revealed.any)
-                Ask(f).each(f.revealed.$)(d => CouncilConveneCardAction(f, d))
+                Ask(f).each(f.revealed.$)(d => CouncilConveneCardAction(f, d)).add(CouncilConveneAllAction(f))
             else
                 NoAsk(f)(Next)
 
@@ -596,6 +598,17 @@ object CouncilExpansion extends FactionExpansion[Council] {
             // With nothing to do but skip, the menu used to be skipped by itself, so the card went back to hand
             // without a word (2026-10-18); wait for the skip, which is soft, so no recorded moves change
             ask.needOkIf(ask.choice.not)
+
+        // Skips the rest of Convene Woodfolk: the cards go back to hand, as they must, and none of them act (asked for on 2026-11-22).
+        // Only adds a choice, so no option
+        case CouncilConveneAllAction(f) =>
+            val l = f.revealed.$
+
+            f.revealed --> l --> f.hand
+
+            f.log("returned", l./(_.elem).comma, "to hand")
+
+            Next
 
         case CouncilBanishAction(f, c, e) =>
             f.used :+= Banishing
