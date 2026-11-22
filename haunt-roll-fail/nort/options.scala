@@ -425,7 +425,7 @@ case object FirstSeatStarts extends GameOption with ToggleOption {
 
 // RANKED OR UNRANKED (asked for on 2026-11-22): an online game picks whether it counts toward the rankings; offered only online
 // (startSetup in hrf.scala). A ranked game can't be started with a fan clan (Meta.rankedCheck); fan modules and options are rated
-// (owner, 2026-11-21). An unranked game counts in neither the ratings nor the stats
+// (owner, 2026-11-21). An unranked game counts in the stats, not in the ratings or win rates
 trait RankingOption extends RankingChoice with OneOfGroup {
     val group = "Ranking".txt
     override def fold = |("Ranking")
@@ -444,7 +444,7 @@ case object UnrankedGame extends RankingOption {
     val ranked = false
     def valueOn = "Unranked".hlb
     override val explain = $(
-        "Counts toward neither the Elo ratings nor the stats, whatever is played.",
+        "Doesn't count toward the Elo ratings or win rates, whatever is played; the clan and turn order stats still count it.",
     )
 }
 

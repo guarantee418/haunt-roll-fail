@@ -66,8 +66,8 @@ case class ErrorResult(m : String) extends ValidationResult(false, m, xstyles.er
 trait GameOption extends BaseOption
 
 // RANKED OR UNRANKED (asked for on 2026-11-22): the setup choice of an online game of a meta with a ranking (Root's, Northgard's),
-// offered only online (startSetup in hrf.scala). An unranked game counts in neither the ratings nor the stats (good-game/Ranking.scala
-// drops it by the "UnrankedGame" in its lobby's options); games made before it have neither and count as before
+// offered only online (startSetup in hrf.scala). An unranked game is reported as a fan game: it counts in the stats, not in the
+// ratings or win rates (owner, 2026-11-22); games made before it have neither and count as before
 trait RankingChoice extends GameOption {
     val ranked : Boolean
 }

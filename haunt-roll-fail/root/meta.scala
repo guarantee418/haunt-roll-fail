@@ -33,7 +33,7 @@ case class UnknownOption(o : String) extends GameOption {
 
 // RANKED OR UNRANKED (asked for on 2026-11-22): an online game picks whether it counts toward the rankings. A ranked game can't be
 // started with anything not approved for ranked play (Meta.rankedCheck), and those options are marked "unranked" on the setup screen
-// (Meta.rankingUnapproved). An unranked game counts in neither the ratings nor the stats. Not offered in local games or Mirror
+// (Meta.rankingUnapproved). An unranked game counts in the stats, not in the ratings or win rates. Not offered in local games or Mirror
 trait RankingOption extends RankingChoice with OneOfGroup with FoldedOption {
     val group : Elem = "Ranking"
 }
@@ -52,7 +52,7 @@ case object UnrankedGame extends RankingOption {
     val ranked = false
     val valueOn = "Unranked".hlb
     override val explain = $(
-        "Counts toward neither the " ~ "Elo ratings".hh ~ " nor the stats, whatever is played.",
+        "Doesn't count toward the " ~ "Elo ratings".hh ~ " or win rates, whatever is played; the faction and turn order stats still count it.",
         "Anything may be played, approved for ranked play or not.",
     )
 }

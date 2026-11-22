@@ -47,7 +47,7 @@ object LfgSetup {
 
     // the post's line: Ranked, or Unranked and why; nothing for a game with neither (a catalog from before the choice)
     def rankingLine(c : Catalog, options : List[String]) : String =
-        if (options.contains(unranked)) "🎲 **Unranked**: counts toward no ranking\n"
+        if (options.contains(unranked)) "🎲 **Unranked**: no rating change, stats still kept\n"
         else if (options.contains(ranked)) c.unapproved(options) match {
             case Nil => "🏆 **Ranked**: counts toward the rankings\n"
             case l => "🎲 **Unranked**: not approved for ranked play: " + l.map(c.label).mkString(", ") + "\n"

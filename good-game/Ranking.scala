@@ -298,10 +298,7 @@ object Ranking {
             // a game with a bot in it counts nowhere, ratings or stats (owner, 2026-11-21): its lobby has a "bot <seat> <level>" line
             // (games before this were rated between their people, leaving the bots out); TurnPings.lobbyOf keeps the lobbies read
             val bot = scala.util.Try(TurnPings.lobbyOf(r(0)).exists(_.lines.exists(_.startsWith("bot ")))).getOrElse(false)
-            // nor a game picked as unranked at its creation (2026-11-22): "UnrankedGame" among its lobby's options
-            val unranked = scala.util.Try(TurnPings.lobbyOf(r(0)).exists(_.lines.exists(l => l.startsWith("options ") && l.split(' ').contains("UnrankedGame")))).getOrElse(false)
-
-            if (!bot && !unranked && sides.size >= 2 && sides.exists(_.startsWith("W:")) && sides.exists(_.startsWith("L:")))
+            if (!bot && sides.size >= 2 && sides.exists(_.startsWith("W:")) && sides.exists(_.startsWith("L:")))
                 Some(List(r(0), r(2), r(3), sides.mkString(";")).map(esc).mkString("\t"))
             else
                 None
