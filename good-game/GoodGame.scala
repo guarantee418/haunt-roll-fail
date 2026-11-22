@@ -546,7 +546,7 @@ object GoodGame {
                         else {
                             val ps = execute(plays.filter(_.userId inSet seated.map(_._1)).result)
                             val info = execute(entries.filter(_.journalId inSet ps.map(_.journalId).distinct)
-                                .filter(e => (e.text like "meta %") || (e.text like "title %") || (e.text like "server %") || (e.text like "user %") || (e.text like "seating %") || (e.text like "options %") || (e.text like "bot %"))
+                                .filter(e => (e.text like "meta %") || (e.text like "title %") || (e.text like "server %") || (e.text like "user %") || (e.text like "seating %") || (e.text like "options %") || (e.text like "bot %") || (e.text like "name %") || (e.text like "prename %"))
                                 .map(e => (e.journalId, e.text)).result)
                                 .groupBy(_._1).view.mapValues(_.map(_._2)).toMap
                             val metaOf = info.view.mapValues(_.map(_.split(" ", 2).toList).collect { case k :: v :: Nil if k != "user" => k -> v }.toMap).toMap
@@ -558,6 +558,18 @@ object GoodGame {
                             val dd = Ranking.displays()
                             // a game with a bot in it counts toward no rating either (Ranking.list; owner, 2026-11-22)
                             val botGames = info.filter(_._2.exists(_.startsWith("bot "))).keySet
+                            val seatNames = Ranking.seatNames()
+                            // the other players of a game, in seating order: a seat's ranking name, else the name typed for it, and the bots
+                            // by their level (asked for on 2026-11-22, as the tournament game had them)
+                            def othersOf(j : String, me : String, seats : List[String]) : String = {
+                                val lines = info.getOrElse(j, Nil)
+                                val typed = lines.reverse.map(_.split(' ').toList).collect { case ("name" | "prename") :: u :: n if n.nonEmpty => u -> n.mkString(" ") }
+                                def nameOf(u : String) = seatNames.get(u).map(k => dd.getOrElse(k, k)).orElse(typed.find(_._1 == u).map(_._2))
+                                val people = factionOf.getOrElse(j, Map()).toList.filter(_._1 != me).map { case (u, f) => f -> nameOf(u) }
+                                val bots = lines.map(_.split(' ').toList).collect { case "bot" :: f :: d => f -> Some(d.mkString(" ") match { case "Robotos" => "Robotos" ; case l => l + " bot" }) }
+                                val all = people ++ bots
+                                (seats.flatMap(f => all.filter(_._1 == f)) ++ all.filter(p => !seats.contains(p._1))).distinct.flatMap(_._2).map(_.replace("\t", " ").replace("\n", " ")).distinct.mkString(", ")
+                            }
                             plain(seated.flatMap { case (u, k) =>
                                 ps.filter(_.userId == u).flatMap { p =>
                                     metaOf.get(p.journalId).filter(m => m.contains("meta") && m.contains("server")).map { m =>
@@ -569,7 +581,8 @@ object GoodGame {
                                         val seats = m.get("seating").map(_.split(" ").toList).getOrElse(factionOf.get(p.journalId).map(_.values.toList.distinct).getOrElse(Nil))
                                         Backup.row(m("meta"), m.getOrElse("title", ""), p.secret, dd.getOrElse(k, k), if (over) "1" else "0", if (turn) "1" else "0",
                                             icons.mkString(" "), if (icons.isEmpty) seats.mkString(" ") else "", if (icons.isEmpty) m.getOrElse("options", "") else "",
-                                            if (botGames.contains(p.journalId) || (if (over) fanDone.contains(m("server")) else Turns.fan(m("server")))) "1" else "0")
+                                            if (botGames.contains(p.journalId) || (if (over) fanDone.contains(m("server")) else Turns.fan(m("server")))) "1" else "0",
+                                            othersOf(p.journalId, p.userId, m.get("seating").map(_.split(" ").toList).getOrElse(Nil)))
                                     }
                                 }
                             }.distinct.mkString("\n"))
