@@ -1129,7 +1129,7 @@ server. No session can reach the server, and none needs to.
   `good-game/Turns.scala`, which calls `TurnPings.report`) and the lobby's "user <faction> <user>" lines. A soft step inside a MultiAsk (a card picked before "Keep") still reports every seat it asks (`turnMulti` in `runner.scala`): one player's pick took the others off the list (2026-11-22). Only seats under a ranking name whose owner gave a Discord user
   ID (or a username the bot found, or one the owner set) and didn't turn pings off ("Discord turn pings" under Rankings, `discordPings` in `rankingsMenu`; `/discord/mine`, `/discord/pings`,
   `tournament/discord-pings.tsv`; on unless turned off since 2026-11-20, asked for) are mentioned, each by their own mention
-  (`allowed_mentions` lists only them, never @everyone). Each ping says why the seat is asked, with an emoji in the server's style (asked for on 2026-11-21; `TurnPings.reasonOf`): the
+  (`allowed_mentions` lists only them, never @everyone). Each ping leads with the seat's faction or clan emoji (the one its reason names, else the seat's own in a standard game; 2026-11-22, as some pings had none), as does the first-turn line, and says why the seat is asked, with an emoji in the server's style (asked for on 2026-11-21; `TurnPings.reasonOf`): the
   client adds a third line to its turn report, "<seat>=<reason>", from `Meta.turnReason` (`root/turn-reasons.scala` and
   `nort/turn-reasons.scala`, `TurnReasons`: the action that asked, `game.asker`, set in `internalPerform`, and the choices offered),
   kept in `turns.tsv`'s fourth column (`Turns.reason`): Root's under attack or a battle (the server's sword emoji), the cards kept

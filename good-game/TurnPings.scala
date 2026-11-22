@@ -325,7 +325,7 @@ object TurnPings {
         lobbyOf(game).filter(l => metas.contains(l.meta)).foreach { l =>
             if (introduced(game) || table(game).nonEmpty) {
                 val id = mentionOf(user, table(game).nonEmpty)
-                post(game, l, "**" + nameOf(l, user) + "** takes the first turn in **" + l.title + "**" + id.map(i => " (<@" + i + ">)").getOrElse("") + ".", id.toList)
+                post(game, l, reasonOf(game, l, user)._1 + "**" + nameOf(l, user) + "** takes the first turn in **" + l.title + "**" + id.map(i => " (<@" + i + ">)").getOrElse("") + ".", id.toList)
                 // the seat is told now: its first ping waits for its next turn
                 id.foreach { _ =>
                     sent = pings + ((game, user) -> (System.currentTimeMillis :: pings.getOrElse((game, user), Nil)))
@@ -375,7 +375,10 @@ object TurnPings {
             case _ => ("", None)
         }
         val nort = nortMetas.contains(lobby.meta)
-        def head = faction.map(f => if (nort) Lfg.clanIcon(f) else LfgSetup.emojiText("IncludeFaction(" + f + ")")).getOrElse("")
+        // the faction's (or clan's) emoji: the one the reason names, else the seat's own when the seat is a faction (Root's and
+        // Northgard's standard games; an Advanced Setup or Adset seat drafts its faction in the game, so only a reason names it)
+        def iconOf(f : String) = if (nort) Lfg.clanIcon(f) else LfgSetup.emojiText("IncludeFaction(" + f + ")")
+        val head = faction.map(iconOf).filter(_.nonEmpty).orElse(seat.map(iconOf).filter(_.nonEmpty)).getOrElse("")
         // (the server's are :sword-root: and :axe-ng:, seen on 2026-11-21)
         def sword = LfgSetup.serverNamed(List("swordroot", "sword", "swords", "battle", "attack")).getOrElse("⚔️ ")
         def axe = LfgSetup.serverNamed(List("axeng", "axe", "battleaxe", "fight")).getOrElse("🪓 ")
@@ -407,7 +410,9 @@ object TurnPings {
             case (_, "asked") => (head, "you're needed")
             case _ => (head, "it's your turn")
         }
-        (icon, words)
+        // every ping leads with the faction's emoji (2026-11-22: "the discord notifications don't consistently give the faction
+        // emoji"), then the reason's own (the sword, the cards ...) when it has another
+        (if (icon == head) head else head + icon, words)
     }
 
     // true when the ping went out
