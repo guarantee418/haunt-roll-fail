@@ -325,7 +325,7 @@ object TurnPings {
         lobbyOf(game).filter(l => metas.contains(l.meta)).foreach { l =>
             if (introduced(game) || table(game).nonEmpty) {
                 val id = mentionOf(user, table(game).nonEmpty)
-                post(game, l, "**" + nameOf(l, user) + "** takes the first turn in **" + l.title + "**" + id.map(i => " (<@" + i + ">)").getOrElse("") + ".", id.toList)
+                post(game, l, reasonOf(game, l, user)._1 + "**" + nameOf(l, user) + "** takes the first turn in **" + l.title + "**" + id.map(i => " (<@" + i + ">)").getOrElse("") + ".", id.toList)
                 // the seat is told now: its first ping waits for its next turn
                 id.foreach { _ =>
                     sent = pings + ((game, user) -> (System.currentTimeMillis :: pings.getOrElse((game, user), Nil)))
@@ -369,20 +369,35 @@ object TurnPings {
     def reasonOf(game : String, lobby : Lobby, user : String) : (String, String) = {
         val seat = lobby.lines.map(_.split(" ").toList).collectFirst { case "user" :: s :: u :: _ if u == user => s }
         val r = seat.flatMap(s => Turns.reason(game, s)).getOrElse("")
-        val (tag, faction) = r.split("/", 2).toList match {
-            case t :: f :: Nil => (t, Some(f))
-            case t :: _ => (t, None)
-            case _ => ("", None)
+        // "<tag>/<faction>", and for a battle or an Entreat "/<other faction>" too (who attacks whom, who entreated; 2026-11-22)
+        val (tag, faction, other) = r.split("/", 3).toList match {
+            case t :: f :: o :: _ => (t, Some(f), Some(o).filter(_.nonEmpty))
+            case t :: f :: Nil => (t, Some(f), None)
+            case t :: _ => (t, None, None)
+            case _ => ("", None, None)
         }
         val nort = nortMetas.contains(lobby.meta)
-        def head = faction.map(f => if (nort) Lfg.clanIcon(f) else LfgSetup.emojiText("IncludeFaction(" + f + ")")).getOrElse("")
+        // the faction's (or clan's) emoji: the one the reason names, else the seat's own when the seat is a faction (Root's and
+        // Northgard's standard games; an Advanced Setup or Adset seat drafts its faction in the game, so only a reason names it)
+        def iconOf(f : String) = if (nort) Lfg.clanIcon(f) else LfgSetup.emojiText("IncludeFaction(" + f + ")")
+        val head = faction.map(iconOf).filter(_.nonEmpty).orElse(seat.map(iconOf).filter(_.nonEmpty)).getOrElse("")
         // (the server's are :sword-root: and :axe-ng:, seen on 2026-11-21)
         def sword = LfgSetup.serverNamed(List("swordroot", "sword", "swords", "battle", "attack")).getOrElse("⚔️ ")
         def axe = LfgSetup.serverNamed(List("axeng", "axe", "battleaxe", "fight")).getOrElse("🪓 ")
         def e(key : String) = LfgSetup.emojiText(key)
+        def w(icon : String) = icon.trim
+        // the other faction as its emoji and name ("by <emoji>**Marquise de Cat**"), its name from the LFG catalog when it has one
+        // (a Northgard creature comes as "~<its name>": the Discord server's emoji of that name, if any, and the name)
+        def creature(n : String) = LfgSetup.serverNamed(List(LfgSetup.norm(n))).getOrElse("") + "the **" + n + "**"
+        val them = other.map { o => if (o.startsWith("~")) creature(o.drop(1)) else {
+            val key = "IncludeFaction(" + o + ")"
+            val name = if (nort) o else LfgSetup.catalog(Lfg.root.meta).map(_.label(key)).filter(_ != key).getOrElse(o)
+            iconOf(o) + "**" + name + "**"
+        } }
         val (icon, words) = (nort, tag) match {
-            case (false, "defend") => (sword, "you're under attack")
-            case (false, "battle") => (sword, "your battle needs you")
+            // (the sword or axe right after "attack", "battle" or "fight", 2026-11-22, asked for)
+            case (false, "defend") => (head, "you're under attack " + w(sword) + them.map(" by " + _).getOrElse(""))
+            case (false, "battle") => (head, "your battle " + w(sword) + them.map(" against " + _).getOrElse("") + " needs you")
             case (false, "keep") => (e("StandardDeck"), "pick the cards you keep")
             case (false, "handlimit") => (e("StandardDeck"), "discard down to your hand limit")
             case (false, "draft") => (e("title"), "your pick in the faction draft")
@@ -392,11 +407,11 @@ object TurnPings {
             case (false, "partisans") => (e("ExilesDeck"), "Partisans can join your battle")
             case (false, "prisoners") => (e("IncludeFaction(KD)"), "prisoners to deal with")
             case (false, "negotiate") => (e("IncludeFaction(LDvE)"), "a negotiation awaits you")
-            case (false, "entreat") => (e("IncludeFaction(TC)"), "you were entreated")
+            case (false, "entreat") => (e("IncludeFaction(TC)"), them.map(_ + " entreated you").getOrElse("you were entreated"))
             case (false, "hospitals") => (e("IncludeFaction(MC)"), "Field Hospitals: save your cats?")
             case (false, "setup") => (head, "time to set up")
-            case (true, "defend") => (axe, "you're under attack")
-            case (true, "fight") => (axe, "your fight needs you")
+            case (true, "defend") => (head, "you're under attack " + w(axe) + them.map(" by " + _).getOrElse(""))
+            case (true, "fight") => (head, "your fight " + w(axe) + them.map(" against " + _).getOrElse("") + " needs you")
             case (true, "trade") => (e("turn:trade"), "harvest trading")
             case (true, "winter") => (e("turn:winter"), "Winter is here")
             case (true, "cards") => (e("HorizonsDevelopments"), "pick a card")
@@ -407,7 +422,9 @@ object TurnPings {
             case (_, "asked") => (head, "you're needed")
             case _ => (head, "it's your turn")
         }
-        (icon, words)
+        // every ping leads with the faction's emoji (2026-11-22: "the discord notifications don't consistently give the faction
+        // emoji"), then the reason's own (the sword, the cards ...) when it has another
+        (if (icon == head) head else head + icon, words)
     }
 
     // true when the ping went out

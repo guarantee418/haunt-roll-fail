@@ -343,7 +343,7 @@ case object CapitalistsDeck extends DeckOption {
     val valueOn = "Capitalists and Anarchists".hh
     override val explain = $(
         "A playable version of the " ~ "Root".hh ~ " base game's deck, " ~ "Might and Right".hh ~ ", by the site's owner. Its items, ambushes and dominances are the base deck's, and some of its effect cards are changed:",
-        "Command Warren".hh ~ ", " ~ "Cobbler".hh ~ ", " ~ "Better Burrow Bank".hh ~ ", " ~ "Brutal Tactics".hh ~ " and " ~ "Scouting Party".hh ~ " cost one card; all but " ~ "Better Burrow Bank".hh ~ " are paid for each use with a card matching the clearing, or by discarding them, and " ~ "Brutal Tactics".hh ~ " gives the defender no point.",
+        "Command Warren".hh ~ ", " ~ "Cobbler".hh ~ ", " ~ "Better Burrow Bank".hh ~ ", " ~ "Brutal Tactics".hh ~ " and " ~ "Scouting Party".hh ~ " cost one card; they (but " ~ "Better Burrow Bank".hh ~ ") and " ~ "Sappers".hh ~ " are paid for each use with a card matching the clearing, or by discarding them, and " ~ "Brutal Tactics".hh ~ " gives the defender no point.",
         "Better Burrow Bank".hh ~ " goes back to hand when used. " ~ "Stand and Deliver!".hh ~ " is used once, at the next Birdsong. " ~ "Tax Collector".hh ~ " and " ~ "Codebreakers".hh ~ " are used once, when crafted.",
         "Scouting Party".hh ~ " cancels an ambush. " ~ "Royal Claim".hh ~ " must be used at the next Birdsong.",
         "The " ~ "Dawn and Dusk".hh ~ " deck's three " ~ "Service".styled(styles.FoxRabbitMouse) ~ " cards replace the " ~ "Favors".hh ~ ".",
@@ -2256,7 +2256,8 @@ object Meta extends MetaGame {
     // the tournament's status posts (MetaGame.status): the round and each faction's VP ("D" for a dominance), by its seat
     def statusOf(g : Game, seat : Faction => String) : $[String] = {
         implicit val game = g
-        val fs = g.factions.%(g.states.contains)
+        // seat order: game.factions turns with each turn, game.ordering keeps the order set up
+        val fs = g.ordering.toList.sortBy(_._1).map(_._2).some.|(g.factions).%(g.states.contains)
         $("r" + (if (g.turn > 0 && fs.any) (g.turn - 1) / fs.num + 1 else 0)) ++ fs./(f => seat(f) + ":" + f.name.replace(' ', '_') + ":" + (if (f.vp < 0) "D" else f.vp.toString))
     }
     override def status(g : G) = statusOf(g, f => writeFaction(f))
@@ -3875,6 +3876,7 @@ object Meta extends MetaGame {
         ImageAsset("ca-stand-and-deliver") ::
         ImageAsset("ca-tax-collector") ::
         ImageAsset("ca-scouting-party") ::
+        ImageAsset("ca-sappers") ::
         ImageAsset("ca-royal-claim") ::
         ImageAsset("ca-codebreakers") ::
     $) ::

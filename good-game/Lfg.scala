@@ -74,6 +74,9 @@ object Lfg {
     @volatile var assets = "."
     @volatile var clanEmojis : Map[String, String] = Map()
 
+    // the ids of the bot's own (application) emojis, which only the bot can post (Tournament.post)
+    def appEmojiIds : Set[String] = (clanEmojis.values ++ iconEmojis.values).toSet
+
     def emojiName(c : String) = "ng_" + c.toLowerCase
 
     // THE OPTIONS' ICONS (asked for on 2026-11-21: "use icons/emojis as much as possible"): the option (or "#<section>") -> its icon's
@@ -165,7 +168,7 @@ object Lfg {
 
     def kind(meta : String) = kinds.find(_.meta == meta).getOrElse(root)
 
-    def commands = kinds.map("/" + _.command).mkString(", ")
+    def commands = (kinds.map(_.command).distinct ++ BotCommands.all.map(_.name)).map("/" + _).mkString(", ")
 
     def publicKey = Tournament.hook("HRF_DISCORD_PUBLIC_KEY", "discord-public-key")
 
@@ -549,6 +552,9 @@ object Lfg {
             str(i.get("type")) match {
                 case "1" => "{\"type\":1}"
                 case "2" if uid.nonEmpty && kinds.exists(_.command == str(data.get("name"))) => command(str(data.get("name")), uid, name, data)
+                // the other commands (Lookup.scala: /card), and the suggestions while their options are typed
+                case "2" if uid.nonEmpty && BotCommands.of(str(data.get("name"))).nonEmpty => BotCommands.of(str(data.get("name"))).get.run(uid, name, data)
+                case "4" => BotCommands.of(str(data.get("name"))).map(_.autocomplete(data)).getOrElse("{\"type\":8,\"data\":{\"choices\":[]}}")
                 case "3" if uid.nonEmpty && str(data.get("custom_id")).startsWith("lfgs:") =>
                     LfgSetup.press(uid, str(data.get("custom_id")), data.get("values").collect { case l : List[_] => l.collect { case v : String => v } }.getOrElse(Nil), str(i.get("application_id")), str(i.get("token")))
                 case "3" if uid.nonEmpty => press(uid, name, str(data.get("custom_id")), str(i.get("application_id")), str(i.get("token")),
@@ -691,7 +697,7 @@ object Lfg {
         }
     }
 
-    // the commands (/root, /northgard) in the Discord server, with the bot's token; the application is the bot's own. A PUT sets every
+    // the commands (/root, /northgard, and BotCommands.all's: /card) in the Discord server, with the bot's token; the application is the bot's own. A PUT sets every
     // command the server has, so they all go together
     def register() : String = {
         (DiscordBot.token, DiscordBot.guild) match {
@@ -716,7 +722,7 @@ object Lfg {
                                     ",{\"type\":3,\"name\":" + json(n) + ",\"description\":" + json(d + " (the site's default if not given)") + ",\"required\":false,\"choices\":[" +
                                     cc.map { case (label, value) => "{\"name\":" + json(LfgSetup.cut(label, 100)) + ",\"value\":" + json(value) + "}" }.mkString(",") + "]}"
                                 }.mkString + "]}"
-                            }.mkString("[", ",", "]")
+                            }.++(BotCommands.all.map(_.registration)).mkString("[", ",", "]")
                             if (DiscordBot.send("PUT", "https://discord.com/api/v10/applications/" + a + "/guilds/" + g + "/commands", command, Some(t)).nonEmpty) "registered" else "not registered: Discord refused it"
                     }
                 }

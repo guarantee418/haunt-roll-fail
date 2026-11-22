@@ -816,9 +816,12 @@ object BattleExpansion extends MandatoryExpansion {
                         if (f == b.attacker && fh + fe < ot)
                             actions :+= NightTerrorsAction(f, BattlePostRollAction(b, fh, oh, fe + 1, oe, full))
 
-                    if (f.has(Sappers))
+                    if (f.can(Sappers))
                         if (f == b.defender && oh + oe < ft)
-                            actions :+= SappersAction(f, BattlePostRollAction(b, fh, oh, fe, oe + 1, full))
+                            if (options.has(CapitalistsDeck))
+                                actions :+= CapitalistsDeckExpansion.sappers(f, b, BattlePostRollAction(b, fh, oh, fe, oe + 1, full))
+                            else
+                                actions :+= SappersAction(f, BattlePostRollAction(b, fh, oh, fe, oe + 1, full))
 
                     if (f.can(TheFaithful)) {
                         if (f == b.attacker && fh + fe < ot)

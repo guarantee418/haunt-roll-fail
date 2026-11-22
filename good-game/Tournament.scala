@@ -309,12 +309,12 @@ object Tournament {
                     val waiting = Turns.asked(t.game).map(s => seatName(t, s)).distinct
                     val state = t.winner.map(w => "won by **" + display(w) + "**").getOrElse {
                         round match {
-                            case None => "no progress reported yet"
+                            case None => "no progress reported yet" + (if (waiting.nonEmpty) ", waiting on " + waiting.mkString(", ") else "")
                             case Some(0) => "drafting" + (if (waiting.nonEmpty) ", waiting on " + waiting.mkString(", ") else "")
                             case Some(r) => "round " + r + (if (waiting.nonEmpty) ", waiting on " + waiting.mkString(", ") else "")
                         }
                     }
-                    head + ": " + state + (if (players.nonEmpty) "\n" + players.mkString(" · ") else "") + "\n" + watch
+                    head + ": " + state + "\n" + (if (players.nonEmpty) players else t.names.map(display)).mkString(" · ") + "\n" + watch
                 }
                 announce("**Root Tournament " + c.n + "** status\n\n" + parts.mkString("\n\n"), c.n)
                 "posted " + c.tables.size + " tables"
@@ -616,14 +616,28 @@ object Tournament {
                 case "ping" if rest == "waiting" => TurnPings.pingWaiting() + " pinged"
                 // every table's progress and spectator link, posted (2026-11-22)
                 case "status" => status()
+                // the claimed ranking names with no Discord given, and those whose Discord is a username no user ID was found for, so
+                // nobody can be pinged (2026-11-22; Play Online asks those players once, discordAsk in hrf.scala)
+                case "no-discord" => noDiscord()
                 // only those games (2026-11-21)
                 case "ping" if rest.startsWith("waiting ") => TurnPings.pingWaitingIn(rest.drop(8).split("[ ,]+").toList.filter(_.nonEmpty)).mkString("; ")
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, bot, guild, discord, ping waiting, status, lfg-key, lfg-commands or invite)"
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, bot, guild, discord, ping waiting, status, no-discord, lfg-key, lfg-commands or invite)"
             }
 
             (if (word == "webhook" || word == "forum" || word == "turns" || word == "nort-turns" || word == "bot") word else line) + ": " + result
         }
     }
+
+    // the names with no Discord to ping, each with how many seats play under it, the most played first
+    def noDiscord() : String = {
+        val claimed = Ranking.claims().keySet
+        val seats = Ranking.seatsOf(claimed).groupBy(_._2).view.mapValues(_.size).toMap
+        def line(k : String) = display(k) + " (" + seats.getOrElse(k, 0) + " seats)"
+        val none = claimed.toList.filter(k => discordOf(k).isEmpty).sortBy(k => (-seats.getOrElse(k, 0), k))
+        val noId = claimed.toList.filter(k => discordOf(k).nonEmpty && storedId(k).isEmpty && discordId(k).isEmpty).sortBy(k => (-seats.getOrElse(k, 0), k))
+        (none.size + " of " + claimed.size + " names have no Discord" :: none.map("  " + line(_))) ++
+            (if (noId.isEmpty) Nil else (noId.size + " gave a username no member of the server has, so they can't be pinged" :: noId.map(k => "  " + line(k) + ": " + discordOf(k).getOrElse(""))))
+    }.mkString("\n")
 
     // DISCORD: a message to the channel of the webhook, if one is set up
     def hook(env : String, file : String) : Option[String] =
@@ -736,7 +750,26 @@ object Tournament {
     // the webhook's channel took a plain post after refusing a thread (Discord text channels do)
     @volatile var plainChannels = Set[String]()
 
-    def post(url : String, text : String, key : String, name : String, ids : List[String], file : Path = threads) {
+    // THE BOT'S OWN EMOJIS (2026-11-22: turn pings showed ":hrf_rt_tw:" as plain text): the bot's application emojis (hrf_<slug>,
+    // ng_<clan>, Lfg.syncClanEmojis) can be used only by the bot itself, never by a webhook, whatever the server's permissions. A post
+    // holding one goes out from the bot into its thread (it needs View Channel and Send Messages in Threads there); when it can't (no
+    // token, no thread yet, refused), the webhook posts it without them, rather than with their names as text
+    val customEmoji = "<a?:[A-Za-z0-9_]+:(\\d+)> ?".r
+
+    def appEmojis(text : String) = { val ids = Lfg.appEmojiIds ; customEmoji.findAllMatchIn(text).exists(m => ids.contains(m.group(1))) }
+
+    def withoutAppEmojis(text : String) = { val ids = Lfg.appEmojiIds ; customEmoji.replaceAllIn(text, m => if (ids.contains(m.group(1))) "" else scala.util.matching.Regex.quoteReplacement(m.matched)) }
+
+    def post(url : String, text0 : String, key : String, name : String, ids : List[String], file : Path = threads) {
+        val byBot = appEmojis(text0) && DiscordBot.token.exists(t => threadOf(key, file).exists { thread =>
+            DiscordBot.send("POST", "https://discord.com/api/v10/channels/" + thread + "/messages",
+                "{\"content\":" + json(text0.take(1900)) + ",\"allowed_mentions\":{\"parse\":[],\"users\":[" + ids.map(json).mkString(",") + "]}}", Some(t)).nonEmpty
+        })
+        if (byBot)
+            return
+
+        val text = withoutAppEmojis(text0)
+
         def send(fields : String, query : String) = {
             val body = "{\"content\":" + json(text.take(1900)) + ",\"allowed_mentions\":{\"parse\":[],\"users\":[" + ids.map(json).mkString(",") + "]}" + fields + "}"
             val request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(url + "?wait=true" + query))

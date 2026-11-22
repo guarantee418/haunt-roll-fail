@@ -52,6 +52,12 @@ package object elem {
         // The clan picker's grid
         object pickIcon extends CustomStyle(height("7ex"), display("block"), margin.left("auto"), margin.right("auto"))
         // Adset: the draft's clans, as in the clan picker's grid
+        // The turn choices on one row (turnButton in nort/ui.scala), six to a row, or three to a row (two rows) when a sixth
+        // of the pane is narrower than "Upgrade" (the clamp picks a third then, as its middle value is huge)
+        object turnButton extends CustomStyle(display("inline-flex"), width("clamp(calc(16.666% - 1.6ex), calc((4.8em - 16.666%) * 10000), calc(33.333% - 1.6ex))"), justify.content("center"), align.items("center"), vertical.align("top"), box.sizing("content-box"), min.height("4ex"))
+        object turnButtonText extends CustomStyle(text.align("center"), line.height("1.15"))
+        // The buttons under the action pane (Interface, Report a Bug, Main Menu ...) side by side
+        object menuRowButton extends CustomStyle(display("inline-flex"), width("calc(33.333% - 1.6ex)"), justify.content("center"), align.items("center"), vertical.align("top"))
         object draftTile extends CustomStyle(display("inline-flex"), vertical.align("top"))
         // The units counter of the figure picker (nort/figures.scala): "−", "3 of 5 units", "+" on one row
         object figureCount extends CustomStyle(display("inline-flex"), width("27%"), justify.content("center"), align.items("center"), vertical.align("middle"))
@@ -67,15 +73,16 @@ package object elem {
         object tutorialTip extends CustomStyle(text.align("left"), SimpleCSSRule("border-left", "0.5ex solid #8fbf6f"))
         object menuCard extends CustomStyle(display("inline-block"), width("30%"), max.width("15ex"), margin("0.5ex"), vertical.align("top"))
         object card extends CustomStyle(display("inline-block"), width("22ex"), max.width("90%"), margin("0.3ex"))
-        object handCard extends CustomStyle(display("block"), width("var(--nort-hand-card, 22ex)"))
+        // At most a fifth of the action pane (--nort-hand-five, handFive in ui.scala), less each card's frame and margins (2.4ex), so five fit on a line
+        object handCard extends CustomStyle(display("block"), width("var(--nort-hand-card, min(22ex, calc(var(--nort-hand-five, 100vw) - 2.4ex)))"))
         // Copies of the same card in hand, stacked (Card.handStack): each layer leaves room up and to the right for the copy behind
-        object stackLayer extends CustomStyle(display("block"), width("fit-content"), position("relative"), padding.top("calc(0.1 * var(--nort-hand-card, 22ex))"), padding.right("calc(0.1 * var(--nort-hand-card, 22ex))"))
+        object stackLayer extends CustomStyle(display("block"), width("fit-content"), position("relative"), padding.top("calc(0.1 * var(--nort-hand-card, min(22ex, calc(var(--nort-hand-five, 100vw) - 2.4ex))))"), padding.right("calc(0.1 * var(--nort-hand-card, min(22ex, calc(var(--nort-hand-five, 100vw) - 2.4ex))))"))
         // The copies behind: darker, with a light edge, so they don't blur into the card in front
         object stackBack extends CustomStyle(position("absolute"), top("0"), right("0"), filter("brightness(0.5)"), outline.color("#ffffffa0"), outline.style("solid"), outline.width("1px"), SimpleCSSRule("outline-offset", "-1px"))
         // The card in front casts a shadow up and to the right, onto the copies behind
         object stackFront extends CustomStyle(display("block"), width("fit-content"), position("relative"), filter("drop-shadow(0.25ex -0.25ex 0.4ex #000000e0)"))
         // How many copies, in the front card's bottom right corner (over the art, clear of the card's text at the top)
-        object stackCount extends CustomStyle(position("absolute"), right("4%"), bottom("3%"), padding("0.1em 0.5em"), border.radius("0.8em"), background.color("#000000c8"), SimpleCSSRule("border", "2px solid #e8b84a"), color("#ffffff"), font.weight("bold"), font.size("calc(0.17 * var(--nort-hand-card, 22ex))"), line.height("1.2"), SimpleCSSRule("pointer-events", "none"))
+        object stackCount extends CustomStyle(position("absolute"), right("4%"), bottom("3%"), padding("0.1em 0.5em"), border.radius("0.8em"), background.color("#000000c8"), SimpleCSSRule("border", "2px solid #e8b84a"), color("#ffffff"), font.weight("bold"), font.size("calc(0.17 * var(--nort-hand-card, min(22ex, calc(var(--nort-hand-five, 100vw) - 2.4ex))))"), line.height("1.2"), SimpleCSSRule("pointer-events", "none"))
         // Training Fields Action cards: seven of them, so smaller than hand cards outside the ultrawide layout
         object drillCard extends CustomStyle(display("block"), width("var(--nort-hand-card, 12ex)"))
         // Raid cards are landscape: twice a hand card's width
@@ -160,8 +167,9 @@ package object elem {
         object tappable extends CustomStyle(SimpleCSSRule("text-decoration", "underline dotted"), SimpleCSSRule("text-underline-offset", "0.3ex"))
         // The discard pile overlay, opened from the action pane
         object discardCards extends CustomStyle(display("flex"), SimpleCSSRule("flex-wrap", "wrap"), SimpleCSSRule("justify-content", "center"), SimpleCSSRule("gap", "1ex"), margin.top("1ex"), margin.bottom("1ex"))
-        // The cards in the discard pile, active cards and Lore Tree overlays, all one size whatever their number (sized by the screen, not the overlay, which shrinks to fit them)
-        object discardCard extends CustomStyle(width("min(28vh, 30vw)"), height("auto"))
+        // The cards in the discard pile, active cards and Lore Tree overlays, all one size whatever their number (sized by the screen, not the overlay, which shrinks to fit them),
+        // small enough that a pile of a dozen fits on the screen; tapping one shows it full screen
+        object discardCard extends CustomStyle(width("min(17vh, 18vw)"), height("auto"))
         object winterChart extends CustomStyle(display("grid"), SimpleCSSRule("grid-template-columns", "auto auto auto"), SimpleCSSRule("column-gap", "1ex"), SimpleCSSRule("row-gap", "0.4ex"), SimpleCSSRule("width", "max-content"), max.width("100%"), margin.left("auto"), margin.right("auto"), margin.top("1ex"), margin.bottom("1ex"))
         object winterCell extends CustomStyle(padding("0.4ex 1.5ex"), text.align("left"))
         object winterHere extends CustomStyle(background.color("#3a3320"), outline.color("#e8b84a"), outline.style("solid"), outline.width("1px"))

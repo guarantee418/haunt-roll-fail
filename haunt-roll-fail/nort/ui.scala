@@ -1767,15 +1767,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     }
 
     // A player's discard pile, newest card last
-    def discardPile(f : Faction) : Elem = cardPile(f, " discard pile", game.states(f).discard)
+    def discardPile(f : Faction) : Elem = cardPile(f, " discard pile", game.states(f).discard, DiscardPile(f))
 
-    def activeCards(f : Faction) : Elem = cardPile(f, " active cards (played this year)", game.states(f).active)
+    def activeCards(f : Faction) : Elem = cardPile(f, " active cards (played this year)", game.states(f).active, ActiveCards(f))
 
-    def loreTree(f : Faction) : Elem = cardPile(f, LionExpansion.faith(f).?(" Faith Tree").|(" Lore Tree"), game.states(f).upgrades)
+    def loreTree(f : Faction) : Elem = cardPile(f, LionExpansion.faith(f).?(" Faith Tree").|(" Lore Tree"), game.states(f).upgrades, LoreTree(f))
 
-    def cardPile(f : Faction, what : String, l : $[Card]) : Elem = {
+    // Tapping a card opens it full screen, and tapping again comes back to the pile (PileCard), as Root does
+    def cardPile(f : Faction, what : String, l : $[Card], back : Any) : Elem = {
         ((f.name.styled(colorOf(f)) ~ what).hlb.div ~
-            l.none.?("No cards".txt.div).|(Div(l./(c => Image(c.info.image, styles.discardCard)).merge, styles.discardCards)) ~
+            l.none.?("No cards".txt.div).|(Div(l./(c => OnClick(PileCard(c, back), Image(c.info.image, styles.discardCard, xlo.pointer))).merge, styles.discardCards)) ~
             "(tap to close)".spn(xstyles.smaller85).div
         ).div
     }
@@ -2914,6 +2915,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             l
     }
 
+    // Hand cards (styles.handCard) at most a fifth of the action pane, so five fit on a line (and a hand of five needs no
+    // scrolling); never larger than before (22ex). The ultrawide layout sizes them itself (--nort-hand-card)
+    def handFive(l : $[PanePlacement]) {
+        val root = dom.document.documentElement.asInstanceOf[dom.html.Element].style
+        l.find(_.name == "action") match {
+            // a fifth of the pane less its padding (about 24 px); styles.handCard takes off each card's frame and margins
+            case Some(p) => root.setProperty("--nort-hand-five", math.max(40, ((p.rect.width - 24) / 5.0).floor.toInt) + "px")
+            case None => root.removeProperty("--nort-hand-five")
+        }
+    }
+
     // Ultrawide screens (21:9 and wider): the layouter stretches the player panels to the full height
     // and leaves empty space around the map, so the hand gets a narrow column. Instead: the map on the
     // left, then short player panels in a row, the shared cards below them and the hand filling the
@@ -2930,6 +2942,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             if (foldBasePx == 0)
                 foldBasePx = rowFitPx
             val placed = foldLog(split(width, height, statusBottom(base))(grown))
+            handFive(placed)
             onLayout0(placed)
             placeHandles(placed)
             placeLogToggle()
@@ -3030,6 +3043,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             showOverlay(overlayFitX(Image(c.info.image, styles.zoomCard)).onClick, onClick)
 
         // A map tile shown in the action pane (Adset's drawn tiles, the tile being explored with) opens full screen too
+        // A card in a pile (discard pile, active cards, Lore Tree) full screen: tapping it goes back to the pile
+        case PileCard(c, back) =>
+            showOverlay(overlayFit(Image(c.info.image, styles.zoomCard))(styles.seeThroughInner).onClick.param(back), onClick)
+
         case TileRef(id) =>
             showOverlay(overlayFitX(Image("tile-" + id, styles.zoomCard)).onClick, onClick)
 
@@ -3216,11 +3233,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                     })
                 }).copy(clear = false)
             ) ++
-            tutorial.$(ZBasic(Break ~ Break, "Tutorial Lessons".spn, () => onClick(TutorialLessonView(0))).copy(clear = false)) ++
-            (tutorial && tutorialTipsHidden && currentGame.isOver.not).$(ZBasic(Break, "Show tutorial tips".spn, () => hideTutorialTips(false)).copy(clear = false)) ++
-            $(ZBasic(Break ~ Break, "Interface".spn, () => { callbacks.editSettings { updateStatus() } }).copy(clear = false)) ++
-            $(ZBasic(Break ~ Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug) ++
-            $(ZBasic(Break ~ Break, "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle)
+            // On one row, three to a row (menuRowButton), all under one heading so they aren't spaced apart
+            {
+                val row = $(xstyles.choice, xstyles.xx, xstyles.chm, xstyles.chp, styles.menuRowButton, xlo.pointer)
+                def b(t : String, click : () => Unit) = ZBasic(Break ~ Break, t.spn, click, row).copy(clear = false)
+                tutorial.$(b("Tutorial Lessons", () => onClick(TutorialLessonView(0)))) ++
+                (tutorial && tutorialTipsHidden && currentGame.isOver.not).$(b("Show tutorial tips", () => hideTutorialTips(false))) ++
+                $(b("Interface", () => { callbacks.editSettings { updateStatus() } })) ++
+                $(b("Report a Bug", () => { callbacks.reportBug() })).%(_ => callbacks.canReportBug) ++
+                $(b("Main Menu", () => { callbacks.returnToTitle() })).%(_ => callbacks.canReturnToTitle)
+            }
     }
 
     var shown : $[Notification] = $
@@ -3343,8 +3365,60 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         hideSwitches()
     }
 
-    // Adset: a clan's "i" button opens its info instead of choosing it
+    // The six turn choices (Play cards, Replace, Remove, Upgrade, Wait, Pass) on one row: a short name with its cost under it,
+    // the full text and why one can't be taken as a tooltip (asked for on Discord, 2026-11-22)
+    def turnChoice(a : UserAction) : Boolean = a @@ {
+        case UnavailableReasonAction(b, _) => b.is[TurnModeAction] || b.is[PassAction]
+        case b => b.is[TurnModeAction] || b.is[PassAction]
+    }
+
+    def turnRank(a : UserAction) : Int = (a @@ {
+        case UnavailableReasonAction(b, _) => b
+        case b => b
+    }) @@ {
+        case TurnModeAction(_, PlayMode) => 0
+        case TurnModeAction(_, ReplaceMode) => 1
+        case TurnModeAction(_, RemoveMode) => 2
+        case TurnModeAction(_, UpgradeMode) => 3
+        case TurnModeAction(_, WaitMode) => 4
+        case _ => 5
+    }
+
+    def turnButton(faction : |[F], actions : $[UserAction], a : UserAction, then : UserAction => Unit) : ZOption = {
+        val (b, reason) = a @@ {
+            case UnavailableReasonAction(b, r) => (b, |(r).%(_ != ""))
+            case b => (b, None)
+        }
+        val unavailable = a.is[UnavailableReasonAction]
+        val (name, cost, full) : (String, Elem, String) = b @@ {
+            case TurnModeAction(f, PlayMode) => ("Play", 1.hl ~ " + " ~ "⚡".hl, "Play cards: one card, and any Flash cards")
+            case TurnModeAction(f, ReplaceMode) => ("Replace", Amount(1.hl, LoreIcon()), "Replace a card from your hand for 1 lore")
+            case TurnModeAction(f, RemoveMode) => ("Remove", Amount(2.hl, LoreIcon()), "Remove a card from the game for 2 lore")
+            case TurnModeAction(f, UpgradeMode) => ("Upgrade", Amount(game.upgradeCost(f).hl, LionExpansion.upgradeResource(f).elem), "Take a clan upgrade for " + game.upgradeCost(f) + " " + LionExpansion.upgradeResource(f).name.toLowerCase)
+            case TurnModeAction(f, WaitMode) => ("Wait", Empty, "Wait: put a card from your hand with your played cards")
+            case _ => ("Pass", Empty, "Pass for the rest of the year")
+        }
+        val hint = full + reason./(" (" + _ + ")").|("")
+        val body = Hint(hint, Div(Div(name.txt) ~ Div((cost == Empty).?("·".spn(xstyles.hidden)).|(cost), xstyles.smaller85), styles.turnButtonText))
+        val ss = $(unavailable.?(xstyles.info).|(xstyles.choice), xstyles.chp, xstyles.chm, styles.turnButton) ++ unavailable.$(xstyles.unavailableText) ++
+            faction./~(f => f.as[Faction]./(elem.borders.get)) ++ unavailable.not.$(xlo.pointer)
+        val q = Div(fixActionElem(b.question(game)))(xlo.fullwidth)
+        if (unavailable || then == null)
+            ZOption(q, Div(body, ss))
+        else
+            ZOption(q, OnOverOut(OnClick(Div(body, ss))), _ => then(b.as[UserAction].get), true, _ => updateHighlight(Some(b.as[UserAction].get)), _ => updateHighlight(None))
+    }
+
     override def convertActions(faction : |[F], actions : $[UserAction], then : UserAction => Unit = null) : $[ZOption] =
+        if (actions.count(turnChoice) >= 2) {
+            val (tt, rest) = actions.partition(turnChoice)
+            tt.sortBy(turnRank)./(a => turnButton(faction, actions, a, then)) ++ convertActions0(faction, rest, then)
+        }
+        else
+            convertActions0(faction, actions, then)
+
+    // Adset: a clan's "i" button opens its info instead of choosing it
+    def convertActions0(faction : |[F], actions : $[UserAction], then : UserAction => Unit = null) : $[ZOption] =
         if (actions.exists(_.is[AdsetDraftChoice]).not || then == null)
             super.convertActions(faction, actions, then)
         else
