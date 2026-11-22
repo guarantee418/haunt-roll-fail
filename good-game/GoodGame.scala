@@ -354,8 +354,13 @@ object GoodGame {
                         val ok = execute(users.filter(_.id === userId).filter(_.secret === userSecret).exists.result)
                         if (!ok || l.size < 2)
                             complete(StatusCodes.Forbidden, "")
-                        else
-                            plain(Ranking.claim(userId, l(0).trim.safeplus, l(1).trim.ascii))
+                        else {
+                            val r = Ranking.claim(userId, l(0).trim.safeplus, l(1).trim.ascii)
+                            // an LFG seat's claim gives the name the player's Discord (Lfg.learnDiscord)
+                            if (r.startsWith("ok"))
+                                Lfg.learnDiscord(userId)
+                            plain(r)
+                        }
                     }
                 }
             } ~
