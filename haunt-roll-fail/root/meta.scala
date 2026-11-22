@@ -2248,6 +2248,12 @@ object Meta extends MetaGame {
 
     // the tournament's tables are Advanced Setup games with the tournament draft (root/tournament.scala)
     override def tournament = |("root-adset")
+    // the games list (overview in meta.scala): the map, then the factions in their seating order
+    override def overviewIcons = $(AutumnMap -> "rm_autumn", WinterMap -> "rm_winter", LakeMap -> "rm_lake", MountainMap -> "rm_mountain",
+        GorgeMap -> "rm_gorge", MarshMap -> "rm_marsh", TidalMap -> "rm_tidal", TundraMap -> "rm_tundra", GloomMap -> "rm_gloom",
+        UrbanMap -> "rm_urban", LegendsMap -> "rm_legendsmap", DeepWoodsMap -> "rm_deepwoods", WastelandsMap -> "rm_wastelands")./((o, i) => writeOption(o) -> i)
+    override def overview(g : G) = overviewOf(g)
+    def overviewOf(g : Game) : $[String] = overviewOptions(g.options./(writeOption)) ++ g.ordering.toList.sortBy(_._1).map(_._2).some.|(g.factions)./~(f => glyph(f)).distinct
     override def rankingSides(g : G, winners : $[Any]) = rankSides(g, winners)
     override def rankingSeat(g : G, f : F) = rankSeat(g, f)
     override def rankingFan(g : G) = rankFan(g)
