@@ -1172,6 +1172,13 @@ server. No session can reach the server, and none needs to.
   Northgard's options in a gold-ringed round badge with a ribbon naming them, like the server's clans and WILD and WASTE. And the Host, Players, seats and buttons; a changed picture needs a new slug, as an uploaded one is kept. The tournament change `emojis` lists the server's emojis and what each is shown for ("unused" for none). Northgard's
   online games get their posts and turn pings in their own forum (`TurnPings.webhookFor`: `HRF_DISCORD_NORT_TURNS_WEBHOOK` or the file
   `discord-nort-turns-webhook`, set by the tournament change `nort-turns <url>`); with none set they get none.
+- The bot's `/card <name> [game] [private]` (2026-11-22, asked for as a "bot to call cards and other art"): posts a Root or Northgard card,
+  faction or clan board, quest, landmark, hireling or creature with its picture, the name suggested as it is typed (autocomplete). The list
+  is `webp2/lfg/cards.tsv`, made from the games' cards and asset lists by `hrf.LookupIndex` (`haunt-roll-fail/lookup-index.scala`, JVM host
+  project): run it again and commit the file after adding or renaming cards. Discord fetches the pictures from `/art/<path>`, which serves
+  only the files that list names (`Lookup.artFile`). The bot's commands other than the LFG ones are `BotCommand`s in `BotCommands.all`
+  (`good-game/Lookup.scala`), registered with `/root` and `/northgard` and answered by `Lfg.interaction` (use and autocomplete); a new one
+  (a translator, a rules helper) is one more entry there.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.

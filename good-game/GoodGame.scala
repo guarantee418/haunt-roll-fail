@@ -594,6 +594,14 @@ object GoodGame {
                     }
                 }
             } ~
+            // the pictures the Discord bot's /card command posts (Lookup.scala): only the images its card list names, with no Referer
+            // needed, as Discord fetches them
+            (get & pathPrefix("art") & extractUnmatchedPath) { p =>
+                Lookup.artFile(p.toString.stripPrefix("/")) match {
+                    case Some(f) => respondWithHeader(`Cache-Control`(CacheDirectives.`max-age`(86400))) { getFromFile(f.toFile) }
+                    case None => complete(StatusCodes.NotFound, "")
+                }
+            } ~
             // Discord LFG games (Lfg.scala): the options the client gives them, "<meta>\n<version>\n<options>"
             (post & path("lfg" / "template")) {
                 decodeRequest {
