@@ -79,7 +79,12 @@ object Meta extends MetaGame { mmm =>
         "ModuleOption(Wastelands)" -> "ng_wastelands", "WastelandsTiles" -> "ng_wastelands", "WastePartsTiles" -> "ng_wastelands", "WastePartsBoth" -> "ng_wastelands", "LandsWastelands" -> "ng_wastelands",
         "HorizonsTiles" -> "ng_horizons")
     override def overview(g : G) = overviewOf(g)
-    def overviewOf(g : Game) : $[String] = overviewOptions(g.options./(writeOption)) ++ g.seating./~(f => glyph(f)).distinct
+    // and in Adset the drafted clans no seat took and those banned, grayed out ("off:" before their glyph, hrf.scala; 2026-11-22)
+    def overviewOf(g : Game) : $[String] = overviewOptions(g.options./(writeOption)) ++ g.seating./~(f => glyph(f)).distinct ++
+        (g.draft.diff(g.setup).diff(g.banned) ++ g.banned)./~(f => glyph(f))./("off:" + _).distinct
+
+    // the draft stats (MetaGame.rankingDraft, Adset): the clans drawn that no seat took, "U", and the one banned, "B"
+    def rankDraft(g : Game) : $[(String, String)] = g.draft.diff(g.setup).diff(g.banned)./(f => "U" -> factionName(f)) ++ g.banned./(f => "B" -> factionName(f))
     override def rankingFan(g : G) = Meta.rankFan(g)
 
     // the clan, its place in the first year's turn order, and its final fame

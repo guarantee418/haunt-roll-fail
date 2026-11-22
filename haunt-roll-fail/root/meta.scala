@@ -2262,7 +2262,17 @@ object Meta extends MetaGame {
     }
     override def status(g : G) = statusOf(g, f => writeFaction(f))
 
-    def overviewOf(g : Game) : $[String] = overviewOptions(g.options./(writeOption)) ++ g.ordering.toList.sortBy(_._1).map(_._2).some.|(g.factions)./~(f => glyph(f)).distinct
+    // and in Advanced Setup the drawn factions no seat took, grayed out ("off:" before their glyph, hrf.scala; 2026-11-22, asked for)
+    def overviewOf(g : Game) : $[String] = {
+        val picked = g.ordering.toList.sortBy(_._1).map(_._2).some.|(g.factions)
+        overviewOptions(g.options./(writeOption)) ++ picked./~(f => glyph(f)).distinct ++ undrafted(g)./~(f => glyph(f))./("off:" + _).distinct
+    }
+
+    // Advanced Setup's drawn factions no seat has taken (the one left once the draft is done)
+    def undrafted(g : Game) : $[Faction] = g.drawn.diff(g.ordering.values.$).diff(g.factions)
+
+    // the draft stats (MetaGame.rankingDraft): each faction left, named as rankSeat names it (a Vagabond with its character)
+    def rankDraft(g : Game) : $[(String, String)] = undrafted(g)./(f => "U" -> f.as[Hero]./~(h => g.chars.get(h))./(c => f.name + " (" + c.name + ")").|(f.name))
     override def rankingSides(g : G, winners : $[Any]) = rankSides(g, winners)
     override def rankingSeat(g : G, f : F) = rankSeat(g, f)
     override def rankingFan(g : G) = rankFan(g)
