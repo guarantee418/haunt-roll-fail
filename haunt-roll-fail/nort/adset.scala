@@ -433,6 +433,7 @@ object MetaAdset extends MetaGame {
     override def overviewIcons = Meta.overviewIcons
     override def overview(g : G) = Meta.overviewOf(g)
     override def rankingFan(g : G) = Meta.rankFan(g)
+    override def rankingDraft(g : G) = Meta.rankDraft(g)
 
     // Discord LFG games (good-game/Lfg.scala, /northgard; 2026-11-21, like Root's Advanced Setup): the site's defaults, as New
     // Online Game starts with them for four players, and two to six players
