@@ -386,11 +386,13 @@ object TurnPings {
         def axe = LfgSetup.serverNamed(List("axeng", "axe", "battleaxe", "fight")).getOrElse("🪓 ")
         def e(key : String) = LfgSetup.emojiText(key)
         // the other faction as its emoji and name ("by <emoji>**Marquise de Cat**"), its name from the LFG catalog when it has one
-        val them = other.map { o =>
+        // (a Northgard creature comes as "~<its name>": the Discord server's emoji of that name, if any, and the name)
+        def creature(n : String) = LfgSetup.serverNamed(List(LfgSetup.norm(n))).getOrElse("") + "the **" + n + "**"
+        val them = other.map { o => if (o.startsWith("~")) creature(o.drop(1)) else {
             val key = "IncludeFaction(" + o + ")"
             val name = if (nort) o else LfgSetup.catalog(Lfg.root.meta).map(_.label(key)).filter(_ != key).getOrElse(o)
             iconOf(o) + "**" + name + "**"
-        }
+        } }
         val (icon, words) = (nort, tag) match {
             case (false, "defend") => (sword, "you're under attack" + them.map(" by " + _).getOrElse(""))
             case (false, "battle") => (sword, them.map("your battle against " + _ + " needs you").getOrElse("your battle needs you"))
