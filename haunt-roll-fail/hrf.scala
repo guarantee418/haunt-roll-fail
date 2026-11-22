@@ -2441,8 +2441,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             val label = HRF.metas.find(_.name == r(0))./(_.label).|(r(0))
             val other = (r(0) != meta.name).??(label + " · ")
             val turn = myTurn(r)
-            // (a finished game in the Unranked Games folder says so)
-            val sub = turn.?(Span(Text("Your turn"), $(ExternalStyle("hrf-my-turn-tag"))) ~ " · ".txt).|(Empty) ~ ((r(4) == "1" && unranked(r)).??("Finished · ") + other + "as " + r(3)).txt
+            // (a finished unranked game in Completed Games says so)
+            val sub = turn.?(Span(Text("Your turn"), $(ExternalStyle("hrf-my-turn-tag"))) ~ " · ".txt).|(Empty) ~ ((r(4) == "1" && unranked(r)).??("Unranked · ") + other + "as " + r(3)).txt
             ZOption(group, (Link(HRF.server.get + "/play/" + r(0) + "/" + r(2), r(1).but("")./(_.hh).|(label.hh) ~ Break ~ sub.spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice ++ turn.$(ExternalStyle("hrf-my-turn"))))
         }
 
@@ -2450,9 +2450,10 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         val myGames = mine.|($).%(r => tourSecrets.contains(r(2)).not)
         // the games waiting on the player first, each part in the server's order (newest first)
         val active = myGames.%(_(4) != "1").%(r => unranked(r).not).sortBy(r => myTurn(r).?(0).|(1))
-        val done = myGames.%(_(4) == "1").%(r => unranked(r).not)
-        // the unranked ones, finished or not: those waiting on the player first, then the others still going, then the finished
-        val fan = myGames.%(unranked).sortBy(r => (r(4) == "1").?(2).|(myTurn(r).?(0).|(1)))
+        // every finished game, ranked or not (2026-11-21, asked for)
+        val done = myGames.%(_(4) == "1")
+        // the unranked ones still going, those waiting on the player first
+        val fan = myGames.%(_(4) != "1").%(unranked).sortBy(r => myTurn(r).?(0).|(1))
         val fanTurns = fan.%(myTurn).num
         val fanOpen = unrankedOpen.|(fanTurns > 0)
         val names = myGames./(_(3)).distinct
