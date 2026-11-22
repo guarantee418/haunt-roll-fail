@@ -340,7 +340,7 @@ cd haunt-roll-fail && sbt fullOptJS
   (`rankingsMenu`, URL `/play/nort/rankings`) gets every result (`/rankings/nort,nort-adset`, names resolved: the seat's claimed name,
   else the name typed for it) and works out Elo there (`Elo` in `hrf.scala`: start 1000, K 32 split over the other sides, a winning
   side beats each losing side, sides rated by their people's average; fewer than 5 games is "provisional", shown with "?"), only
-  games with people on two sides or more. The games that ended before are in `good-game/ranking-seed.tsv` (found with
+  games with people on two sides or more, and never a game with a bot in it, in ratings or stats (its lobby's `bot` line, checked by `Ranking.list` on the server, so games already reported drop out too; owner, 2026-11-21). The games that ended before are in `good-game/ranking-seed.tsv` (found with
   `LiveCheck <hrf-games> ranking`; their times only keep the order).
   Each seat reported also says what it played (`Meta.rankingSeat`, `RankingSeat.token`: "user/faction/seat/players/score", the clan
   and final fame, or the Root faction, a Vagabond with its character, and VP, "D" for a dominance), for the menu's "Faction stats"
@@ -350,7 +350,7 @@ cd haunt-roll-fail && sbt fullOptJS
   reported from 2026-11-18 (owner's ask); its finished games before then are in the seed with every seat (bots too) as "*", no one,
   so they count in the stats but in no rating (`Result.rated`; `STATS` lines of `LiveCheck <hrf-games> ranking`). When a game ends,
   the rating changes it made are added as a line at the end of its log (`showRatings` in `hrf.scala`). Games with fan content
-  (`Meta.rankingFan`: Northgard's fan clans, modules and variants, `rankFan` in `nort/meta.scala`; Root's fan, playtest and mirror
+  (`Meta.rankingFan`: Northgard's fan clans only, the Lion Kingdom and the Dragon and Bear variants, `rankFan` in `nort/meta.scala`, as its fan modules and options are rated since 2026-11-21 (owner: much modular content, few players); Root's fan, playtest and mirror
   factions, fan maps, decks, hirelings and scenarios, `rankFan` in `root/meta.scala`; asked for on 2026-11-18) are reported with an
   "X fan" line, kept as the side `X:fan`, and count in the stats but in no rating (`Result.fan`). Names are released or
   moved by committing `ranking-changes/<name>.txt` to `hrf-games` (`release <name>`, `rename <name> -> <new>`, `seat <user> <name>`;
@@ -367,6 +367,10 @@ cd haunt-roll-fail && sbt fullOptJS
   read the whole log and reached a question, posts the factions asked (`Journal.turn`, called from `Runner.run`'s `Ask` and `MultiAsk`
   cases; `/turn/<user>/<secret>/<game>`, kept in `turns.tsv` by `good-game/Turns.scala`), and `/my-games` matches them to the lobby's
   "user <faction> <user>" lines. A game nobody has opened since this was deployed shows no highlight until a player opens it. The tournament game ("Your Tournament Game", `/tournament/mine`, its seventh field from `Tournament.mine`) is highlighted the same way (2026-11-21). Each game in the list shows what's in it (2026-11-22, asked for): its map (Root's map, Northgard's central tile and expansion map tiles, the `webp2/lfg/emoji/` pictures, `Meta.overviewIcons`) and its factions' glyphs, in seating order (`overviewOf` in `hrf.scala`). A client reporting a turn adds the game's icons as a fourth line (`Meta.overview`, `Journal.turn`), kept in `overviews.tsv` (`Turns.setOverview`) and sent as `/my-games`' seventh field; for a game no client has reported, the server sends the lobby's seating and options instead and the client works them out (`Meta.overviewLobby`; Advanced Setup's seats draft their factions in the game, so those show the map only until someone opens it).
+  The games with a bot (the lobby's `bot` line, checked by `my-games`) or with fan content, which count toward no rating (`Meta.rankingFan`), are in an "Unranked Games" folder under them while they
+  go on (finished ones go to Completed Games, marked "Unranked"; open by default while one waits on the player; 2026-11-21): the turn report adds a fifth line "fan" (`Runner.run`'s
+  `unranked`), kept in `turns.tsv`'s fifth field (`Turns.fan`), and a finished game's result says it ("X:fan"); `/my-games` gives it as
+  the tenth field. A game nobody has opened since that was deployed stays under Your Active Games until a player opens it.
 - Fixing a running game: through the `hrf-games` repository (copy `games/<id>.tsv` to
   `fixes/<id>.tsv` and edit it; its README and `notes/server.md` say how).
 - The in-game "Report a Bug" button posts to `/report-bug`; the server saves the report,
@@ -1117,7 +1121,7 @@ server. No session can reach the server, and none needs to.
   (it waits), or after the game's end (`over`). Each seat's start is the time on its `turns/state.tsv` row, so restarts lose and repeat
   none; seats waited for since before that (2026-11-21, when the owner found the pings inconsistent: timers lost at restarts, and pings
   within 10 minutes dropped) are pinged only by the `ping waiting` changes, and from their next turn on. The server can't read a game: it takes the factions asked from the clients' turn reports (`/turn`,
-  `good-game/Turns.scala`, which calls `TurnPings.report`) and the lobby's "user <faction> <user>" lines. Only seats under a ranking name whose owner gave a Discord user
+  `good-game/Turns.scala`, which calls `TurnPings.report`) and the lobby's "user <faction> <user>" lines. A read of the log from a page hidden or not in front (`?away=1`, `ServerJournal.read`) doesn't count as the player having the game open, and a soft step inside a MultiAsk (a card picked before "Keep") still reports every seat it asks (`turnMulti` in `runner.scala`): a background tab kept its player from being pinged, and one player's pick took the others off the list (2026-11-22). Only seats under a ranking name whose owner gave a Discord user
   ID (or a username the bot found, or one the owner set) and didn't turn pings off ("Discord turn pings" under Rankings, `discordPings` in `rankingsMenu`; `/discord/mine`, `/discord/pings`,
   `tournament/discord-pings.tsv`; on unless turned off since 2026-11-20, asked for) are mentioned, each by their own mention
   (`allowed_mentions` lists only them, never @everyone). Each ping says why the seat is asked, with an emoji in the server's style (asked for on 2026-11-21; `TurnPings.reasonOf`): the

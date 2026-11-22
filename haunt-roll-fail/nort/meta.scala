@@ -88,11 +88,12 @@ object Meta extends MetaGame { mmm =>
         order.has(f).?(RankingSeat(factionName(f), order.indexOf(f) + 1, order.num, |(CommonExpansion.finalFame(f)(game).total.toString)))
     }
 
-    // fan content (rankingFan): a fan clan or module, or a fan option picked on the setup screen; the hidden options every new game
-    // gets (LionOwnDeck, NormalDevelopments, ...) don't count
+    // fan content (rankingFan): only a fan clan, the Lion Kingdom or a fan version of a clan (the lower skill floor Dragon, the
+    // Bear variant); fan modules and options are rated, as Northgard has much modular content and few players (owner,
+    // 2026-11-21; before, any fan module or option kept a game out of the ratings)
     def rankFan(game : Game) : Boolean = game.setup.has(Lion) || game.options.exists {
-        case ModuleOption(m) => m.fan
-        case o => ($[BaseOption](BalancedStartTiles, DominationVictory, DominationOnly, LionStartingDeck) ++ DevelopmentsChoice.fan).has(o)
+        case ModuleOption(DragonVariant) | ModuleOption(BearBorder) => true
+        case _ => false
     }
 
     def rankSides(game : Game, winners : $[Any]) : $[($[Faction], Boolean)] = {
