@@ -6171,6 +6171,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         case FaithfulRetainer =>
             showOverlay(overlayFitX(Image("artwork:" + "faithful-retainer", xstyles.artwork)), onClick)
 
+        case d : DeckCard if Deck.art(d.id) != d.id =>
+            // a card drawn with another deck's art (Capitalists' Sappers, the Frankendeck's and Dark Deck's ambushes and dominances)
+            showOverlay(overlayFitX(Image(Deck.art(d.id), xstyles.artwork)), onClick)
+
         case d : DeckCard =>
             if (resources.images.hasSource("artwork:" + d.id))
                 showOverlay(overlayFitX(Image("artwork:" + d.id, xstyles.artwork)), onClick)
