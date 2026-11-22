@@ -665,8 +665,12 @@ object GoodGame {
                 val log = execute(hasRight(userId, userSecret, journalId, "read") {
                     entries.filter(_.journalId === journalId).filter(_.index >= from).map(_.text).result
                 })
-                TurnPings.read(userId, journalId)
-                plain(log.mkString("\n"))
+                // (a client whose page is hidden or not in front says "away": that read doesn't keep its player's turn pings off)
+                parameterMap { ps =>
+                    if (!ps.contains("away"))
+                        TurnPings.read(userId, journalId)
+                    plain(log.mkString("\n"))
+                }
             } ~
             (post & path("append" / Segment / Segment / Segment / IntNumber)) { (userId, userSecret, journalId, from) =>
                 decodeRequest {

@@ -20,7 +20,8 @@ import scala.concurrent.duration.Duration
 //   - a minute after start, if its player hasn't read the game since (the client reads the log while it is open),
 //   - again 12 hours after its last ping (or its player's last read of the game), at most twice ("reminder"),
 // and pinged then if:
-//   - its player hasn't had the game open in the last 90 seconds,
+//   - its player hasn't had the game open in the last 90 seconds (a read from a page hidden or not in front, "?away=1",
+//     doesn't count: 2026-11-22, a background tab polled the log about once a minute, and its player was never pinged),
 //   - it wasn't pinged in that game in the last 5 minutes (it waits until then, as the sweep comes back),
 //   - its seat plays under a ranking name with a Discord (given, or set by the owner) and turn pings not turned off (Rankings,
 //     "Discord turn pings"; on unless turned off since 2026-11-20, asked for: "start pinging people whenever it is their turn").
