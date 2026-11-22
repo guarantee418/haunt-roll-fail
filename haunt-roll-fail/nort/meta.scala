@@ -69,6 +69,17 @@ object Meta extends MetaGame { mmm =>
     override def ranking = |("nort")
     override def rankingSides(g : G, winners : $[Any]) = Meta.rankSides(g, winners)
     override def rankingSeat(g : G, f : F) = Meta.rankSeat(g, f)
+    // the games list (overview in meta.scala): the central tile and the expansions' map tiles, then the clans in their seating order
+    override def overviewIcons = $(
+        "DenCentral" -> "ng_c_den", "GreatLakeCentral" -> "ng_c_lake", "WildLakeCentral" -> "ng_c_lake", "HelheimCentral" -> "ng_c_helheim",
+        "HrimgandrCentral" -> "ng_c_hrimgandr", "MagmaFlowCentral" -> "ng_c_magma", "MimirCentral" -> "ng_c_mimir", "RelicCentral" -> "ng_c_relic",
+        "VolcanoCentral" -> "ng_c_volcano", "YggdrasilCentral" -> "ng_c_yggdrasil",
+        "ModuleOption(PCVersion)" -> "ng_pc",
+        "ModuleOption(Wilderness)" -> "ng_wilderness", "WildernessTiles" -> "ng_wilderness", "WildPartsTiles" -> "ng_wilderness", "WildPartsBoth" -> "ng_wilderness", "LandsWilderness" -> "ng_wilderness",
+        "ModuleOption(Wastelands)" -> "ng_wastelands", "WastelandsTiles" -> "ng_wastelands", "WastePartsTiles" -> "ng_wastelands", "WastePartsBoth" -> "ng_wastelands", "LandsWastelands" -> "ng_wastelands",
+        "HorizonsTiles" -> "ng_horizons")
+    override def overview(g : G) = overviewOf(g)
+    def overviewOf(g : Game) : $[String] = overviewOptions(g.options./(writeOption)) ++ g.seating./~(f => glyph(f)).distinct
     override def rankingFan(g : G) = Meta.rankFan(g)
 
     // the clan, its place in the first year's turn order, and its final fame

@@ -429,6 +429,9 @@ object MetaAdset extends MetaGame {
     override def ranking = |("nort")
     override def rankingSides(g : G, winners : $[Any]) = Meta.rankSides(g, winners)./{ case (l, w) => (l./~(f => g.ftp.get(f))./~(_.as[Seat]), w) }
     override def rankingSeat(g : G, f : F) = g.ptf.get(f)./~(c => Meta.rankSeat(g, c))
+    // the games list (overview in meta.scala): the central tile and map tiles, then the clans once drafted
+    override def overviewIcons = Meta.overviewIcons
+    override def overview(g : G) = Meta.overviewOf(g)
     override def rankingFan(g : G) = Meta.rankFan(g)
 
     // Discord LFG games (good-game/Lfg.scala, /northgard; 2026-11-21, like Root's Advanced Setup): the site's defaults, as New

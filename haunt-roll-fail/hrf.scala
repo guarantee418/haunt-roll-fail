@@ -2430,6 +2430,23 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         // the game waits on the player (the server's sixth field, good-game/Turns.scala; 2026-11-20)
         def myTurn(r : $[String]) = r.lift(5).has("1")
 
+        // what's in each game (2026-11-22, asked for): its map and factions as icons, from the overview a client reported (the server's
+        // seventh field, Meta.overview), else worked out from its seats and options (the eighth and ninth, Meta.overviewLobby)
+        val overviewSources = HRF.metas./~{ m =>
+            val names = m.factions./~(f => m.glyph(f))./(_.toLowerCase).toSet
+            m.assets./~(_.get).%(a => a.name.endsWith("-glyph") || names.contains(a.name.toLowerCase))./(a => a.name.toLowerCase -> ("webp2/" + m.path + "/images/" + a.copy(ext = "webp").src)) ++
+            m.overviewIcons./((_, i) => ("lfg:" + i) -> ("webp2/lfg/emoji/" + i + ".png"))
+        }.toMap
+
+        implicit val resources : Resources = this.resources.copy(images = this.resources.images.copy(sources = overviewSources ++ this.resources.images.sources))
+
+        def overviewOf(r : $[String]) : Elem = {
+            def words(i : Int) = r.lift(i).|("").split(' ').$.but("")
+            val icons = words(6).some.|(HRF.metas.find(_.name == r(0))./(m => scala.util.Try(m.overviewLobby(words(7), words(8))).getOrElse(Nil)).getOrElse(Nil))
+            val shown = icons.%(i => overviewSources.contains(i.toLowerCase))
+            shown.none.?(Break : Elem).|(Div(shown./(i => Image(i, $(ExternalStyle(i.startsWith("lfg:").?("hrf-overview-map").|("hrf-overview-faction"))), None) : Elem).merge, $(ExternalStyle("hrf-overview"))))
+        }
+
         // a game of the player's own: its title, the game when it isn't this one, the name played under; it opens the seat;
         // highlighted in gold, with "Your turn", while it waits on the player
         def myGame(group : Elem, r : $[String]) = {
@@ -2437,7 +2454,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             val other = (r(0) != meta.name).??(label + " · ")
             val turn = myTurn(r)
             val sub = turn.?(Span(Text("Your turn"), $(ExternalStyle("hrf-my-turn-tag"))) ~ " · ".txt).|(Empty) ~ (other + "as " + r(3)).txt
-            ZOption(group, (Link(HRF.server.get + "/play/" + r(0) + "/" + r(2), r(1).but("")./(_.hh).|(label.hh) ~ Break ~ sub.spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice ++ turn.$(ExternalStyle("hrf-my-turn"))))
+            ZOption(group, (Link(HRF.server.get + "/play/" + r(0) + "/" + r(2), r(1).but("")./(_.hh).|(label.hh) ~ overviewOf(r) ~ sub.spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice ++ turn.$(ExternalStyle("hrf-my-turn"))))
         }
 
         val tourSecrets = tour.|($)./(_(3)).toSet
