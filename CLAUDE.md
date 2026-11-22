@@ -651,9 +651,9 @@ server. No session can reach the server, and none needs to.
   actions, Surrender and Seizure. The "Map Rules" button under the action pane (and tapping a barren trail) shows the rules and where
   the game stands (`"view-map-rules"` in `root/ui.scala`); it shows on both maps, saying so when their rules are off (2026-11-19). `ReplayCheck <games> deepwoods [settling]` or `wastelands [water]` plays them.
 - The Capitalists and Anarchists deck (`CapitalistsDeck`, among the Decks since 2026-11-21, a Fan Deck before; the owner's own variation of Might and Right, designed in a thread on
-  2026-11-19) keeps the base deck's items, ambushes, dominances, Armorers and Sappers, puts Dawn and Dusk's three Services in place of the
+  2026-11-19) keeps the base deck's items, ambushes, dominances and Armorers, puts Dawn and Dusk's three Services in place of the
   Favors, and changes the other effects (`Deck.capitalists`; rules in `root/deck-capitalists.scala`, `CapitalistsDeckExpansion`, its header
-  lists them): Command Warren, Cobbler, Brutal Tactics (no point for the defender) and Scouting Party (cancels one ambush; 1 mouse) cost one card and are paid for at each use with a card matching the clearing (a bird
+  lists them): Command Warren, Cobbler, Brutal Tactics (no point for the defender), Sappers (as printed, 1 mouse) and Scouting Party (cancels one ambush; 1 mouse) cost one card and are paid for at each use with a card matching the clearing (a bird
   matches) or by discarding them; Better Burrow Bank (1 rabbit) is optional and goes back to hand; Stand and Deliver! (1 mouse) must be used at the start of the next Birdsong
   and is discarded, the enemy drawing a card instead of scoring; Tax Collector (1 of any suit, draws two) and Codebreakers are used once when crafted; Royal Claim
   must be used at the next Birdsong. The effects are the base deck's objects, changed where `options.has(CapitalistsDeck)` (`turn.scala`,
