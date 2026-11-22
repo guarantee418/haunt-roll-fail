@@ -513,11 +513,13 @@ object GoodGame {
                         val n = l.headOption.map(_.trim).filter(s => s.nonEmpty && s.size < 9 && s.forall(_.isDigit)).map(_.toInt)
                         val ff = l.lift(1).getOrElse("").split(" ").toList.map(_.safe).filter(_.nonEmpty).take(12).map(_.take(40))
                         val why = l.lift(2).getOrElse("").split(" ").toList.map(_.split("=", 2).toList).collect { case s :: r :: Nil if s.nonEmpty && r.nonEmpty => s.safe.take(40) -> r.filter(c => c.isLetterOrDigit || c == '/').take(40) }.take(12).toMap
+                        // the fifth line, "fan": the game has fan content (MetaGame.rankingFan)
+                        val fan = l.lift(4).exists(_.trim == "fan")
                         val allowed = n.nonEmpty && scala.util.Try(execute(hasRight(userId, userSecret, journalId, "read") { journals.filter(_.id === journalId).result.head })).isSuccess
                         // the game's overview (2026-11-22), "<icon> <icon>...", for the games list
                         val icons = l.lift(3).getOrElse("").split(" ").toList.map(_.filter(c => c.isLetterOrDigit || c == '-' || c == '_' || c == ':').take(40)).filter(_.nonEmpty).distinct.take(16)
                         if (allowed)
-                            Turns.report(journalId, n.get, ff, execute(entries.filter(_.journalId === journalId).map(_.index).max.result).map(_ + 1).getOrElse(0), why)
+                            Turns.report(journalId, n.get, ff, execute(entries.filter(_.journalId === journalId).map(_.index).max.result).map(_ + 1).getOrElse(0), why, fan)
                         if (allowed)
                             Turns.setOverview(journalId, icons)
                         plain(if (allowed) "ok" else "")
@@ -525,8 +527,10 @@ object GoodGame {
                 }
             } ~
             // A player's own online games (2026-11-20): every seat a name the player code holds was claimed for, newest first, as
-            // "meta, title, the seat's secret (its link), name, done, turn" with done 1 once the game's result is in, and turn 1 while
-            // the game waits on that seat (Turns.scala; the "user <faction> <user>" lines of the lobby say which seat is whose)
+            // "meta, title, the seat's secret (its link), name, done, turn, unranked" with done 1 once the game's result is in, turn 1 while
+            // the game waits on that seat (Turns.scala; the "user <faction> <user>" lines of the lobby say which seat is whose), and
+            // unranked 1 for a game with a bot in it (its lobby's "bot" line) or with fan content, which counts toward no rating: its result says so ("X:fan"), or, before the end,
+            // the last turn report (2026-11-21)
             (post & path("my-games")) {
                 decodeRequest {
                     entity(as[String]) { body =>
@@ -537,14 +541,18 @@ object GoodGame {
                         else {
                             val ps = execute(plays.filter(_.userId inSet seated.map(_._1)).result)
                             val info = execute(entries.filter(_.journalId inSet ps.map(_.journalId).distinct)
-                                .filter(e => (e.text like "meta %") || (e.text like "title %") || (e.text like "server %") || (e.text like "user %") || (e.text like "seating %") || (e.text like "options %"))
+                                .filter(e => (e.text like "meta %") || (e.text like "title %") || (e.text like "server %") || (e.text like "user %") || (e.text like "seating %") || (e.text like "options %") || (e.text like "bot %"))
                                 .map(e => (e.journalId, e.text)).result)
                                 .groupBy(_._1).view.mapValues(_.map(_._2)).toMap
                             val metaOf = info.view.mapValues(_.map(_.split(" ", 2).toList).collect { case k :: v :: Nil if k != "user" => k -> v }.toMap).toMap
                             // the faction each seat (user) plays, from "user <faction> <user>"
                             val factionOf = info.view.mapValues(_.map(_.split(" ").toList).collect { case "user" :: f :: u :: Nil => u -> f }.toMap).toMap
-                            val done = Ranking.recorded().flatMap(_.headOption).toSet
+                            val recorded = Ranking.recorded()
+                            val done = recorded.flatMap(_.headOption).toSet
+                            val fanDone = recorded.filter(r => r.lift(4).exists(_.split(';').contains("X:fan"))).flatMap(_.headOption).toSet
                             val dd = Ranking.displays()
+                            // a game with a bot in it counts toward no rating either (Ranking.list; owner, 2026-11-22)
+                            val botGames = info.filter(_._2.exists(_.startsWith("bot "))).keySet
                             plain(seated.flatMap { case (u, k) =>
                                 ps.filter(_.userId == u).flatMap { p =>
                                     metaOf.get(p.journalId).filter(m => m.contains("meta") && m.contains("server")).map { m =>
@@ -555,7 +563,8 @@ object GoodGame {
                                         val icons = Turns.overview(m("server"))
                                         val seats = m.get("seating").map(_.split(" ").toList).getOrElse(factionOf.get(p.journalId).map(_.values.toList.distinct).getOrElse(Nil))
                                         Backup.row(m("meta"), m.getOrElse("title", ""), p.secret, dd.getOrElse(k, k), if (over) "1" else "0", if (turn) "1" else "0",
-                                            icons.mkString(" "), if (icons.isEmpty) seats.mkString(" ") else "", if (icons.isEmpty) m.getOrElse("options", "") else "")
+                                            icons.mkString(" "), if (icons.isEmpty) seats.mkString(" ") else "", if (icons.isEmpty) m.getOrElse("options", "") else "",
+                                            if (botGames.contains(p.journalId) || (if (over) fanDone.contains(m("server")) else Turns.fan(m("server")))) "1" else "0")
                                     }
                                 }
                             }.distinct.mkString("\n"))
@@ -658,8 +667,12 @@ object GoodGame {
                 val log = execute(hasRight(userId, userSecret, journalId, "read") {
                     entries.filter(_.journalId === journalId).filter(_.index >= from).map(_.text).result
                 })
-                TurnPings.read(userId, journalId)
-                plain(log.mkString("\n"))
+                // (a client whose page is hidden or not in front says "away": that read doesn't keep its player's turn pings off)
+                parameterMap { ps =>
+                    if (!ps.contains("away"))
+                        TurnPings.read(userId, journalId)
+                    plain(log.mkString("\n"))
+                }
             } ~
             (post & path("append" / Segment / Segment / Segment / IntNumber)) { (userId, userSecret, journalId, from) =>
                 decodeRequest {

@@ -55,12 +55,23 @@ object Runner {
 
         def newGame() = meta.createGame(seating, options)
 
+        // the game has fan content and counts toward no rating (MetaGame.rankingFan), told with each turn report for the
+        // Unranked Games folder of Play Online (2026-11-21)
+        def unranked(g : G) : Boolean = try { meta.rankingFan(g) } catch { case e : Throwable => false }
+
         var check : Option[meta.G] = None
         var game = newGame()
 
         ui.currentGame = game
 
         var actions : $[ExternalAction] = $
+
+        // the server's turn report for a MultiAsk: every seat it asks, each with why (Journal.turn)
+        def turnMulti(asks : $[Ask]) {
+            val ff = asks./(_.faction).%(_ != null).distinct
+            journal.turn(ff./(f => meta.turnSeat(game, f)).%(_.nonEmpty).distinct,
+                ff./(f => meta.turnSeat(game, f) + "=" + scala.util.Try(meta.turnReason(game, f, asks.%(_.faction == f)./~(_.actions))).getOrElse("")).%(r => r.startsWith("=").not && r.endsWith("=").not).distinct, scala.util.Try(meta.overview(game)).getOrElse($), unranked(game))
+        }
 
         def time() = (new scalajs.js.Date()).getTime()
 
@@ -583,7 +594,12 @@ object Runner {
                     UIRecord("#unchoice 3", c, a)
 
                 case UIContinue(c @ Ask(faction, actions), Nil) =>
-                    journal.turn((faction != null).$(meta.turnSeat(game, faction)).%(_.nonEmpty), (faction != null).$(meta.turnSeat(game, faction) + "=" + scala.util.Try(meta.turnReason(game, faction, actions)).getOrElse("")).%(r => r.startsWith("=").not && r.endsWith("=").not), scala.util.Try(meta.overview(game)).getOrElse($))
+                    // (a soft step inside a MultiAsk, a card picked before "Keep", still waits for every seat the MultiAsk asks:
+                    // reporting this seat alone took the others off the server's list, so their turn pings started over; 2026-11-22)
+                    game.continue.unwrap match {
+                        case MultiAsk(l, _) if l.exists(_.faction == faction) => turnMulti(l)
+                        case _ => journal.turn((faction != null).$(meta.turnSeat(game, faction)).%(_.nonEmpty), (faction != null).$(meta.turnSeat(game, faction) + "=" + scala.util.Try(meta.turnReason(game, faction, actions)).getOrElse("")).%(r => r.startsWith("=").not && r.endsWith("=").not), scala.util.Try(meta.overview(game)).getOrElse($), unranked(game))
+                    }
 
                     auto(game, faction) match {
                         case AskHuman => UIAsk(c, Some(faction), actions, $)
@@ -602,8 +618,7 @@ object Runner {
                         case _ => None
                     })
 
-                    journal.turn(asks./(_.faction).%(_ != null)./(f => meta.turnSeat(game, f)).%(_.nonEmpty).distinct,
-                        asks./(_.faction).%(_ != null)./(f => meta.turnSeat(game, f) + "=" + scala.util.Try(meta.turnReason(game, f, asks.%(_.faction == f)./~(_.actions))).getOrElse("")).%(r => r.startsWith("=").not && r.endsWith("=").not).distinct, scala.util.Try(meta.overview(game)).getOrElse($))
+                    turnMulti(as)
 
                     lazy val waits = asks./~(ask => auto(game, ask.faction) match {
                         case WaitRemote => Some(ask.faction)

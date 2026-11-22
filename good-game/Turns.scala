@@ -9,7 +9,9 @@ import java.nio.file.{Path, Paths}
 // the log has since been shortened by a fix.
 //
 // File turns.tsv in the server's working directory: game journal, entries, the factions asked (space-separated), and why each is
-// asked ("<faction>=<reason>", space-separated; 2026-11-21, the Discord turn pings' reasons, TurnPings.reasonOf).
+// asked ("<faction>=<reason>", space-separated; 2026-11-21, the Discord turn pings' reasons, TurnPings.reasonOf), and "fan" for a
+// game with fan content, which counts toward no rating (MetaGame.rankingFan; the report's fifth line), for the Unranked Games folder
+// of Play Online (2026-11-21).
 object Turns {
     import Backup.{rows, row, write, lines}
 
@@ -21,8 +23,11 @@ object Turns {
     private var reasons : Map[String, Map[String, String]] =
         rows(file).collect { case j :: _ :: _ :: rr :: _ => j -> rr.split(" ").toList.map(_.split("=", 2).toList).collect { case s :: r :: Nil => s -> r }.toMap }.toMap
 
+    private var fans : Set[String] =
+        rows(file).collect { case j :: _ :: _ :: _ :: "fan" :: _ => j }.toSet
+
     // entries: the number of entries the game's log has now
-    def report(journal : String, n : Int, factions : List[String], entries : => Int, why : Map[String, String] = Map()) : Unit = synchronized {
+    def report(journal : String, n : Int, factions : List[String], entries : => Int, why : Map[String, String] = Map(), fan : Boolean = false) : Unit = synchronized {
         val keep = turns.get(journal) match {
             case Some((m, _)) if m > n => m > entries
             case _ => true
@@ -30,12 +35,13 @@ object Turns {
 
         // (the reasons kept with the report they came with; a report of the same turn with reasons, from a newer client, adds them)
         val again = turns.get(journal).contains((n, factions))
-        if (keep && (!again || (why.nonEmpty && !reasons.get(journal).contains(why)))) {
+        if (keep && (!again || (why.nonEmpty && !reasons.get(journal).contains(why)) || fans.contains(journal) != fan)) {
             turns += journal -> (n, factions)
             reasons += journal -> why
+            fans = if (fan) fans + journal else fans - journal
             if (!again)
                 TurnPings.report(journal, n, factions)
-            write(file, lines(turns.toList.sortBy(_._1).map { case (j, (n, ff)) => row(j, n, ff.mkString(" "), reasons.getOrElse(j, Map()).toList.sorted.map { case (s, r) => s + "=" + r }.mkString(" ")) }))
+            write(file, lines(turns.toList.sortBy(_._1).map { case (j, (n, ff)) => row(j, n, ff.mkString(" "), reasons.getOrElse(j, Map()).toList.sorted.map { case (s, r) => s + "=" + r }.mkString(" "), if (fans.contains(j)) "fan" else "") }))
         }
     }
 
@@ -43,6 +49,9 @@ object Turns {
 
     // why a seat is asked in the last report kept ("defend/MC", ...), if its client said
     def reason(journal : String, seat : String) : Option[String] = synchronized { reasons.get(journal).flatMap(_.get(seat)) }
+
+    // the last report said the game has fan content
+    def fan(journal : String) : Boolean = synchronized { fans.contains(journal) }
 
     // the last report kept: the entries read and the factions asked
     def last(journal : String) : Option[(Int, List[String])] = synchronized { turns.get(journal) }
