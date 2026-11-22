@@ -52,6 +52,12 @@ package object elem {
         // The clan picker's grid
         object pickIcon extends CustomStyle(height("7ex"), display("block"), margin.left("auto"), margin.right("auto"))
         // Adset: the draft's clans, as in the clan picker's grid
+        // The turn choices on one row (turnButton in nort/ui.scala), six to a row, or three to a row (two rows) when a sixth
+        // of the pane is narrower than "Upgrade" (the clamp picks a third then, as its middle value is huge)
+        object turnButton extends CustomStyle(display("inline-flex"), width("clamp(calc(16.666% - 1.6ex), calc((4.8em - 16.666%) * 10000), calc(33.333% - 1.6ex))"), justify.content("center"), align.items("center"), vertical.align("top"), box.sizing("content-box"), min.height("4ex"))
+        object turnButtonText extends CustomStyle(text.align("center"), line.height("1.15"))
+        // The buttons under the action pane (Interface, Report a Bug, Main Menu ...) side by side
+        object menuRowButton extends CustomStyle(display("inline-flex"), width("calc(33.333% - 1.6ex)"), justify.content("center"), align.items("center"), vertical.align("top"))
         object draftTile extends CustomStyle(display("inline-flex"), vertical.align("top"))
         // The units counter of the figure picker (nort/figures.scala): "−", "3 of 5 units", "+" on one row
         object figureCount extends CustomStyle(display("inline-flex"), width("27%"), justify.content("center"), align.items("center"), vertical.align("middle"))
