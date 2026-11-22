@@ -259,6 +259,15 @@ trait MetaBase {
     // why that seat is asked, for its Discord turn ping (good-game/TurnPings.scala; asked for on 2026-11-21): a short tag ("defend",
     // "trade", ...), with "/<faction>" for a ping showing the faction's icon, or "" for none; never anything only the seat may know
     def turnReason(g : G, f : Any, actions : $[Any]) : String = ""
+    // Play Online's games list (2026-11-22): icons summing up a game, its map and then its factions. An icon is an image name: a
+    // faction's glyph (glyph(f)) or "lfg:<name>", a picture of webp2/lfg/emoji (the Discord emojis', lfg-emoji.py). overviewIcons
+    // names the options (as writeOption writes them) that have one, the map first. overview is reported by a client playing the game
+    // (with the turn, good-game/Turns.scala), overviewLobby worked out from the lobby's seats and options for a game nobody has
+    // reported yet (Advanced Setup's seats draft their factions in the game, so it gives none)
+    def overviewIcons : $[(String, String)] = $
+    def overviewOptions(options : $[String]) : $[String] = overviewIcons.%((o, _) => options.has(o))./((_, i) => "lfg:" + i).distinct
+    def overview(g : G) : $[String] = $
+    def overviewLobby(factions : $[String], options : $[String]) : $[String] = overviewOptions(options) ++ factions./~(parseFaction)./~(f => glyph(f)).distinct
     def rankingSides(g : G, winners : $[Any]) : $[($[F], Boolean)] = $
     // and, for the faction and turn order stats, what each seat played: its faction, its place in the turn order (from 1), the
     // number of players and its score (VP or fame, "D" for a Root dominance)
