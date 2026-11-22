@@ -369,10 +369,12 @@ object TurnPings {
     def reasonOf(game : String, lobby : Lobby, user : String) : (String, String) = {
         val seat = lobby.lines.map(_.split(" ").toList).collectFirst { case "user" :: s :: u :: _ if u == user => s }
         val r = seat.flatMap(s => Turns.reason(game, s)).getOrElse("")
-        val (tag, faction) = r.split("/", 2).toList match {
-            case t :: f :: Nil => (t, Some(f))
-            case t :: _ => (t, None)
-            case _ => ("", None)
+        // "<tag>/<faction>", and for a battle or an Entreat "/<other faction>" too (who attacks whom, who entreated; 2026-11-22)
+        val (tag, faction, other) = r.split("/", 3).toList match {
+            case t :: f :: o :: _ => (t, Some(f), Some(o).filter(_.nonEmpty))
+            case t :: f :: Nil => (t, Some(f), None)
+            case t :: _ => (t, None, None)
+            case _ => ("", None, None)
         }
         val nort = nortMetas.contains(lobby.meta)
         // the faction's (or clan's) emoji: the one the reason names, else the seat's own when the seat is a faction (Root's and
@@ -383,9 +385,15 @@ object TurnPings {
         def sword = LfgSetup.serverNamed(List("swordroot", "sword", "swords", "battle", "attack")).getOrElse("⚔️ ")
         def axe = LfgSetup.serverNamed(List("axeng", "axe", "battleaxe", "fight")).getOrElse("🪓 ")
         def e(key : String) = LfgSetup.emojiText(key)
+        // the other faction as its emoji and name ("by <emoji>**Marquise de Cat**"), its name from the LFG catalog when it has one
+        val them = other.map { o =>
+            val key = "IncludeFaction(" + o + ")"
+            val name = if (nort) o else LfgSetup.catalog(Lfg.root.meta).map(_.label(key)).filter(_ != key).getOrElse(o)
+            iconOf(o) + "**" + name + "**"
+        }
         val (icon, words) = (nort, tag) match {
-            case (false, "defend") => (sword, "you're under attack")
-            case (false, "battle") => (sword, "your battle needs you")
+            case (false, "defend") => (sword, "you're under attack" + them.map(" by " + _).getOrElse(""))
+            case (false, "battle") => (sword, them.map("your battle against " + _ + " needs you").getOrElse("your battle needs you"))
             case (false, "keep") => (e("StandardDeck"), "pick the cards you keep")
             case (false, "handlimit") => (e("StandardDeck"), "discard down to your hand limit")
             case (false, "draft") => (e("title"), "your pick in the faction draft")
@@ -395,11 +403,11 @@ object TurnPings {
             case (false, "partisans") => (e("ExilesDeck"), "Partisans can join your battle")
             case (false, "prisoners") => (e("IncludeFaction(KD)"), "prisoners to deal with")
             case (false, "negotiate") => (e("IncludeFaction(LDvE)"), "a negotiation awaits you")
-            case (false, "entreat") => (e("IncludeFaction(TC)"), "you were entreated")
+            case (false, "entreat") => (e("IncludeFaction(TC)"), them.map(_ + " entreated you").getOrElse("you were entreated"))
             case (false, "hospitals") => (e("IncludeFaction(MC)"), "Field Hospitals: save your cats?")
             case (false, "setup") => (head, "time to set up")
-            case (true, "defend") => (axe, "you're under attack")
-            case (true, "fight") => (axe, "your fight needs you")
+            case (true, "defend") => (axe, "you're under attack" + them.map(" by " + _).getOrElse(""))
+            case (true, "fight") => (axe, them.map("your fight against " + _ + " needs you").getOrElse("your fight needs you"))
             case (true, "trade") => (e("turn:trade"), "harvest trading")
             case (true, "winter") => (e("turn:winter"), "Winter is here")
             case (true, "cards") => (e("HorizonsDevelopments"), "pick a card")
