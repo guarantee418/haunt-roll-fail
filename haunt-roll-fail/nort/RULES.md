@@ -1183,8 +1183,16 @@ Check these against the rulebook when it is at hand.
     to its outer top corner (owner, 2026-10-06), joining the tiles placed
     beside the Port and beyond the wing like any tile side, so no border
     stops at the shore (a boundary never dead-ends). The Port territory has no resources.
-  - With two to four players the Beach goes straight out from the player's
-    first tile, beyond an empty space. With five or six players (the
+  - With two or four players the Beach goes straight out from the player's
+    first tile, beyond an empty space. With three players the Beaches are
+    where the rulebook's 3 PLAYER SETUP picture puts them (hidden
+    `ThreePlayerBeaches`, every new game; Discord, northgard-feedback,
+    2026-11-22; older games went straight out too): with the starting tile at
+    (0, 0) and the first tiles west, north and east of it, the west and north
+    Beaches straight out (Ports at (-3, 0) and (0, -3)) and the third one
+    south, under the east first tile, beyond an empty space (Port at (1, 2),
+    sea south). Each player gets the free Beach nearest their first tile
+    (`threePlayerBeaches` in `sea.scala`). With five or six players (the
     two-tile starting tile) the Beaches are where the rulebook's five-player
     picture puts them (`fivePlayerBeaches` in `sea.scala`; owner, 2026-10-10):
     with the starting tile at (0, 0) and (1, 0), a ring of empty spaces around

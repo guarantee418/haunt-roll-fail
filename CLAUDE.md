@@ -51,7 +51,7 @@ are in `nort/horizon-devs.scala`, and its 5 map tiles with The Bridge (option
 "Map tiles" in the setup's Uncharted Horizons section) are
 `Tiles.horizons` (`horizon-*`, made by `nort/tools/horizon-tiles.py`). Its Sea module (Raids: a Beach tile with a Port for each
 player, the Raid phase and the 24 Raid cards, from the TTS mod 3597126237,
-whose rulebook PDF has the rules) is in `nort/sea.scala`; Port to Port costs 2 moves and the figures may move on with the rest (hidden `SailOnFromPort`, every new game; Discord, 2026-11-08; older games used up every move left, `SailOnFromPortAction(X)` switches a running game); the Beach is four
+whose rulebook PDF has the rules) is in `nort/sea.scala`; Port to Port costs 2 moves and the figures may move on with the rest (hidden `SailOnFromPort`, every new game; Discord, 2026-11-08; older games used up every move left, `SailOnFromPortAction(X)` switches a running game); with three players the Beaches are where the rulebook's 3 PLAYER SETUP picture puts them, the third one south under the east first tile (hidden `ThreePlayerBeaches`, every new game; 2026-11-22; `threePlayerBeaches` in `nort/sea.scala`); the Beach is four
 map cells (`Tiles.beach`), and a tile side no area owns is sea. The Wastelands expansion (Environment tiles
 `waste-*`, the Central tiles `start-*` chosen with the "Central tile" option, which
 is offered in every game (standard tile, any of the nine, the Wilderness Great
@@ -889,6 +889,9 @@ server. No session can reach the server, and none needs to.
   only when the Captain can move and the Diaspora has a Peaceful enclave; a Nab move put first sets them off when it is done or skipped.
   The Fears always came first, during the battle's removal. New games get the hidden `NabFearsOrder`, in `RulesVersion4`; a running game
   can be switched over with `NabFearsOrderAction(X)`. `ReplayCheck <games> ldkd` takes Nab half the times it is offered and picks the order at random.
+- The Twilight Council's Convene Woodfolk (17.6.1) offers "Return all to hand" beside the revealed cards: every card left goes back
+  to hand at once and none of them acts, ending the step (`CouncilConveneAllAction` in `root/faction-council.scala`; 2026-11-22, asked
+  for in Right of Betrayal). It only adds a choice, so no option; the bots never take it.
 - An Entreat (17.2.4) asks the Twilight Council to gain a Loyalist or place some in the clearing only when it has Loyalists it could
   place there; otherwise it gains one without being asked, or nothing happens when it can't (`CouncilEntreatAction` in
   `root/faction-council.scala`; 2026-10-29: the Council was asked only to "place 0"). New games get the hidden default option

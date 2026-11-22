@@ -214,6 +214,11 @@ object SeaExpansion extends Expansion {
         $(((3, -2), East), ((3, 2), East)) ++
         six.?($(((0, -3), North), ((1, 3), South))).|($(((-1, -3), North), ((-1, 3), South)))
 
+    // The Beaches (Port spot, direction of its sea) around the starting tile at (0, 0) with three players, as in the rulebook's
+    // 3 PLAYER SETUP picture, where the first tiles are west, north and east of it: the west and north Beaches straight out from
+    // their first tiles beyond an empty space, the third one south, beyond the empty space under the east first tile
+    val threePlayerBeaches : $[((Int, Int), Side)] = $(((-3, 0), West), ((0, -3), North), ((1, 2), South))
+
     def toBottom(c : RaidCard)(implicit game : Game) {
         game.raidDeck :+= c
     }
@@ -249,6 +254,12 @@ object SeaExpansion extends Expansion {
                     // one on the west side (two with six players), two on the east side with one space between them,
                     // one north and one south; each player takes the free one nearest to their first tile
                     fivePlayerBeaches(game.arity >= 6).%{ case ((px, py), d) => cells(px, py, d).forall { case (x, y) => free(x, y) } }
+                        .sortBy { case ((px, py), _) => (px - spot.x).abs + (py - spot.y).abs }.starting
+                else
+                if (game.arity == 3 && game.options.has(ThreePlayerBeaches))
+                    // Three players (ThreePlayerBeaches): the Beaches of the rulebook's 3 PLAYER SETUP picture, each player taking
+                    // the free one nearest to their first tile
+                    threePlayerBeaches.%{ case ((px, py), d) => cells(px, py, d).forall { case (x, y) => free(x, y) } }
                         .sortBy { case ((px, py), _) => (px - spot.x).abs + (py - spot.y).abs }.starting
                 else
                     // Straight out from the first tile, beyond an empty space (further out if taken)
