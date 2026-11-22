@@ -2253,6 +2253,14 @@ object Meta extends MetaGame {
         GorgeMap -> "rm_gorge", MarshMap -> "rm_marsh", TidalMap -> "rm_tidal", TundraMap -> "rm_tundra", GloomMap -> "rm_gloom",
         UrbanMap -> "rm_urban", LegendsMap -> "rm_legendsmap", DeepWoodsMap -> "rm_deepwoods", WastelandsMap -> "rm_wastelands")./((o, i) => writeOption(o) -> i)
     override def overview(g : G) = overviewOf(g)
+    // the tournament's status posts (MetaGame.status): the round and each faction's VP ("D" for a dominance), by its seat
+    def statusOf(g : Game, seat : Faction => String) : $[String] = {
+        implicit val game = g
+        val fs = g.factions.%(g.states.contains)
+        $("r" + (if (g.turn > 0 && fs.any) (g.turn - 1) / fs.num + 1 else 0)) ++ fs./(f => seat(f) + ":" + f.name.replace(' ', '_') + ":" + (if (f.vp < 0) "D" else f.vp.toString))
+    }
+    override def status(g : G) = statusOf(g, f => writeFaction(f))
+
     def overviewOf(g : Game) : $[String] = overviewOptions(g.options./(writeOption)) ++ g.ordering.toList.sortBy(_._1).map(_._2).some.|(g.factions)./~(f => glyph(f)).distinct
     override def rankingSides(g : G, winners : $[Any]) = rankSides(g, winners)
     override def rankingSeat(g : G, f : F) = rankSeat(g, f)

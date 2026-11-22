@@ -1106,6 +1106,11 @@ server. No session can reach the server, and none needs to.
   ids in `tournament/threads.tsv`), in the forum channel of a second webhook (`HRF_DISCORD_FORUM_WEBHOOK` or the file
   `discord-forum-webhook`, set by the `forum <url>` change), else in the announcements' channel; a forum channel gets every post in
   a thread, a text channel in the channel itself (2026-11-20).
+  The tournament change `status` posts the running tournament's tables (else the last one's) to the announcements' webhook (the owner's
+  "Royal Claim"; asked for on 2026-11-22): each table's round, every player's faction and VP, whose turn it is or its winner, and its
+  spectator link (`Tournament.status`). The round and scores come from the clients' turn reports, a sixth line (`Meta.status`, Root's
+  `statusOf`: "r<round>" then "<seat>:<faction>:<VP>"), kept in `statuses.tsv` (`Turns.setStatus`); a table nobody has opened since
+  says "no progress reported yet".
   `Tournament.start` takes the server's URL argument for the link. The games have the hidden `TournamentDraft` (`root/tournament.scala`):
   the factions are drawn first (the flop), the first seat picks the deck (Capitalists and Anarchists, Exiles and Partisans or Squires and Disciples, in games with the hidden `TournamentCapitalists` every new tournament game gets, 2026-11-21; older ones offered Might and Right in its place), the second the map, on the Mountain the third the one
   landmark for the Tower's clearing (the Tower, a suited landmark or the Birdsong Tower), then the factions are picked as usual; the game starts with no

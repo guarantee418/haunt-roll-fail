@@ -73,4 +73,20 @@ object Turns {
     }
 
     def overview(journal : String) : List[String] = synchronized { overviews.getOrElse(journal, Nil) }
+
+    // Each game's progress (2026-11-22), for the tournament's status posts (Tournament.status): "r<round>" and "<seat>:<faction>:<score>"
+    // for each faction (Meta.status in the client), as the last client reporting a turn gave it. File statuses.tsv: game journal, the tokens
+    val statusFile : Path = Paths.get("statuses.tsv").toAbsolutePath
+
+    private var statuses : Map[String, List[String]] =
+        rows(statusFile).collect { case j :: ss :: _ => j -> ss.split(" ").toList.filter(_.nonEmpty) }.toMap
+
+    def setStatus(journal : String, tokens : List[String]) : Unit = synchronized {
+        if (tokens.nonEmpty && !statuses.get(journal).contains(tokens)) {
+            statuses += journal -> tokens
+            write(statusFile, lines(statuses.toList.sortBy(_._1).map { case (j, ss) => row(j, ss.mkString(" ")) }))
+        }
+    }
+
+    def status(journal : String) : List[String] = synchronized { statuses.getOrElse(journal, Nil) }
 }

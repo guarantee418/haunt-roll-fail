@@ -193,6 +193,7 @@ object MetaAdset extends MetaGame {
     // the games list (overview in meta.scala): the map, then the factions once drafted
     override def overviewIcons = Meta.overviewIcons
     override def overview(g : G) = Meta.overviewOf(g)
+    override def status(g : G) = Meta.statusOf(g, f => turnSeat(g, f))
     override def rankingFan(g : G) = Meta.rankFan(g)
 
     def getBots(f : F) = $("None")
