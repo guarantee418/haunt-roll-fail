@@ -255,7 +255,7 @@ object TrainingExpansion extends Expansion {
 
         Debug.summary(game)
 
-        CommonExpansion.victory($(f), $(f.elem ~ " reached " ~ f.fame.hl ~ " victory points first, in the " ~ "Training Fields".hl ~ "."))
+        CommonExpansion.victory($(f), $(f.elem ~ " reached " ~ f.fame.hl ~ " victory points first, in the " ~ "Training Fields".hl ~ "."), false)
     }
 
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {

@@ -304,7 +304,7 @@ object WastelandsExpansion extends Expansion {
     def harvest(f : Faction)(implicit game : Game) {
         val n = fame(f)
         if (n > 0) {
-            f.fame += n
+            f.addFame(n, FameHarvest)
             f.log("gained", n.hl, FameIcon(), "from", Waste.controller(Waste.yggdrasil, "c").has(f).?(Waste.elem(Waste.yggdrasil)).|(Waste.elem(Waste.den)))
         }
 
@@ -409,6 +409,11 @@ object WastelandsExpansion extends Expansion {
             case a if game.has(Creatures).not && game.creatureLine.any && creatureCombat(a) =>
                 CreaturesExpansion.perform(a, soft)
 
+            // Hrimgandr does nothing where he goes (Tamer moved him in games before TamerSparesHrimgandr, and with the Creatures
+            // module off nothing took the step, which stopped the game; 2026-11-21)
+            case CreatureEffectAction(c, then) if c.kind == Hrimgandr && game.has(Creatures).not =>
+                Then(then)
+
             // SETUP: the central tile, chosen or drawn
             case ShuffledTilesAction(tiles) if game.wasteSteps.has("central").not =>
                 game.wasteSteps :+= "central"
@@ -499,7 +504,7 @@ object WastelandsExpansion extends Expansion {
                 val lost = face.casualties + face.choice.??(1)
 
                 if (fame > 0) {
-                    g.fame += fame
+                    g.addFame(fame, FameOther)
                     g.log("gained", fame.hl, FameIcon())
                 }
 
@@ -616,7 +621,7 @@ object WastelandsExpansion extends Expansion {
                             o.log("paid", 1.hl, Wood, "to", c)
                         }
                         else {
-                            o.fame -= 2
+                            o.addFame(-2, FameCreatures)
                             o.log("could not pay", Wood, "to", c, "and lost", 2.hl, FameIcon())
                         }
                     }
@@ -752,7 +757,7 @@ object WastelandsExpansion extends Expansion {
                 f.gain(r, -1)
                 g match {
                     case Some(x) => f.gain(x, 1)
-                    case None => f.fame += 1
+                    case None => f.addFame(1, FameTrades)
                 }
                 game.note("kobold-camp")
                 f.log("exchanged", 1.hl, r, "for", g./(x => Amount(1.hl, x.elem)).|(1.hl ~ " fame"), "at the", Waste.elem(Waste.kobold))

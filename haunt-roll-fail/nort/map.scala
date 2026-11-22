@@ -656,7 +656,7 @@ object MapExpansion extends Expansion {
         }
 
         if (attacker == Stag) {
-            attacker.fame += 1
+            attacker.addFame(1, FameFights)
             attacker.log("gained", 1.hl, FameIcon(), "for conquering a territory")
             ClanPowers.note(PowerNote(attacker, |(a), attacker.elem ~ " gains 1 fame for each territory it conquers.", fame = 1))
         }
@@ -2027,7 +2027,7 @@ object MapExpansion extends Expansion {
 
                 // Sea module: Bold Maneuver gives 2 fame per combat won
                 if (e.special == BoldMove && winner.has(attacker)) {
-                    attacker.fame += 2
+                    attacker.addFame(2, FameFights)
                     attacker.log("gained", 2.hl, FameIcon(), "for winning with", RaidCard("bold-maneuver"))
                 }
 
@@ -2361,11 +2361,11 @@ object MapExpansion extends Expansion {
 
             closed.foreach { t =>
                 val n = game.board.tiles(t)
-                f.fame += n
+                f.addFame(n, FameExplore)
                 f.log("closed", t.anchor, "and gained", n.hl, FameIcon())
 
                 if (f == Stag) {
-                    f.fame += 1
+                    f.addFame(1, FameExplore)
                     f.log("gained", 1.hl, "more", FameIcon(), "for closing a territory")
                     ClanPowers.note(PowerNote(f, |(t.anchor), f.elem ~ " gains 1 fame for each territory it closes.", fame = 1))
                 }

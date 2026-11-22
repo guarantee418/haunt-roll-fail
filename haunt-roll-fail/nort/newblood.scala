@@ -1230,7 +1230,7 @@ object NewBloodExpansion extends Expansion {
             Then(then)
 
         case SquirrelFameAction(f, n, then) =>
-            f.fame += n
+            f.addFame(n, FameEffects)
             f.log("gained", n.hl, FameIcon())
             Then(then)
 
@@ -1329,7 +1329,7 @@ object NewBloodExpansion extends Expansion {
                     f.log("collected", 1.hl, Food)
                     Then(then)
                 case 1 =>
-                    f.fame += 2
+                    f.addFame(2, FameEffects)
                     f.log("gained", 2.hl, FameIcon())
                     Then(then)
                 case _ =>

@@ -2468,7 +2468,12 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             done.any.$(folder(doneOpen, "Completed Games (" + done.num + ")", 0, () => onlineGame(tour, mine, doneOpen.not, held, false, unrankedOpen))) ++
             doneOpen.??(done./(r => myGame(" ".spn, r)))
 
-        val tournamentGames = tour.|($)./(r => ZOption("Your Tournament Game".hl, (Link(HRF.server.get + "/play/" + meta.tournament.get + "/" + r(3), r(2).hh ~ Break ~ ("as " + r(4) + " against " + r(5)).spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice)))
+        // highlighted like the active games while it waits on the player (the server's seventh field; 2026-11-21)
+        val tournamentGames = tour.|($)./{ r =>
+            val turn = r.lift(6).has("1")
+            val sub = turn.?(Span(Text("Your turn"), $(ExternalStyle("hrf-my-turn-tag"))) ~ " · ".txt).|(Empty) ~ ("as " + r(4) + " against " + r(5)).txt
+            ZOption("Your Tournament Game".hl, (Link(HRF.server.get + "/play/" + meta.tournament.get + "/" + r(3), r(2).hh ~ Break ~ sub.spn(xstyles.smaller75), $(xstyles.link, xlo.fullwidth, xlo.fullheight)) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough)).div(ZBasic.choice ++ turn.$(ExternalStyle("hrf-my-turn"))))
+        }
 
         def accountMenu(n : $[String]) {
             val back = () => onlineGame()

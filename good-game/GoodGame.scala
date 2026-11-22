@@ -505,18 +505,19 @@ object GoodGame {
                 }
             } ~
             // Whose turn it is (Turns.scala): a client that can read the game posts the factions asked after the entries it has read,
-            // "<entries>\n<faction> <faction>..."
+            // "<entries>\n<faction> <faction>...", and from 2026-11-21 "\n<faction>=<reason> ..." (why each is asked, TurnPings.reasonOf)
             (post & path("turn" / Segment / Segment / Segment)) { (userId, userSecret, journalId) =>
                 decodeRequest {
                     entity(as[String]) { body =>
                         val l = body.split('\n').toList
                         val n = l.headOption.map(_.trim).filter(s => s.nonEmpty && s.size < 9 && s.forall(_.isDigit)).map(_.toInt)
-                        // the factions asked, then "fan" for a game with fan content (newer clients; older ones sent no third line)
-                        val ff = l.drop(1).take(1).mkString(" ").split(" ").toList.map(_.safe).filter(_.nonEmpty).take(12).map(_.take(40))
-                        val fan = l.drop(2).exists(_.trim == "fan")
+                        val ff = l.lift(1).getOrElse("").split(" ").toList.map(_.safe).filter(_.nonEmpty).take(12).map(_.take(40))
+                        val why = l.lift(2).getOrElse("").split(" ").toList.map(_.split("=", 2).toList).collect { case s :: r :: Nil if s.nonEmpty && r.nonEmpty => s.safe.take(40) -> r.filter(c => c.isLetterOrDigit || c == '/').take(40) }.take(12).toMap
+                        // the fourth line, "fan": the game has fan content (MetaGame.rankingFan)
+                        val fan = l.lift(3).exists(_.trim == "fan")
                         val allowed = n.nonEmpty && scala.util.Try(execute(hasRight(userId, userSecret, journalId, "read") { journals.filter(_.id === journalId).result.head })).isSuccess
                         if (allowed)
-                            Turns.report(journalId, n.get, ff, fan, execute(entries.filter(_.journalId === journalId).map(_.index).max.result).map(_ + 1).getOrElse(0))
+                            Turns.report(journalId, n.get, ff, execute(entries.filter(_.journalId === journalId).map(_.index).max.result).map(_ + 1).getOrElse(0), why, fan)
                         plain(if (allowed) "ok" else "")
                     }
                 }
@@ -726,7 +727,7 @@ object GoodGame {
 
         Tournament.start(db, url)
 
-        Lfg.start()
+        Lfg.start(directory)
 
         // the turn pings' sweep (TurnPings.scala)
         TurnPings.start()

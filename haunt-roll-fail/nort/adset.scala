@@ -53,6 +53,45 @@ object AdsetLands {
     val all : $[AdsetLands] = $(LandsSeatChooses, LandsWilderness, LandsWastelands, LandsNeither)
 }
 
+// WHAT THE EXPANSION IS PLAYED WITH (2026-11-21, asked for with the Discord LFG games, so Adset offers what the standard setup does):
+// Wilderness and Wastelands each with its Environment tiles, its creatures or both, when it is the one drafted or agreed. Both is the
+// default and what games without these options play (the whole module)
+trait AdsetParts extends GameOption with OneOfGroup with ImportantOption {
+    def module : Module
+    val group = (module.name + ", if played").txt
+    override def fold = |(module.name + ", if played")
+}
+
+trait PartsBoth extends AdsetParts {
+    def valueOn = "Environment tiles and creatures".txt
+}
+
+trait PartsTiles extends AdsetParts {
+    def valueOn = "Environment tiles only".txt
+}
+
+trait PartsCreatures extends AdsetParts {
+    def valueOn = "Creatures only".txt
+}
+
+case object WildPartsBoth extends PartsBoth { def module = Wilderness }
+case object WildPartsTiles extends PartsTiles { def module = Wilderness }
+case object WildPartsCreatures extends PartsCreatures { def module = Wilderness }
+case object WastePartsBoth extends PartsBoth { def module = Wastelands }
+case object WastePartsTiles extends PartsTiles { def module = Wastelands }
+case object WastePartsCreatures extends PartsCreatures { def module = Wastelands }
+
+object AdsetParts {
+    val all : $[AdsetParts] = $(WildPartsBoth, WildPartsTiles, WildPartsCreatures, WastePartsBoth, WastePartsTiles, WastePartsCreatures)
+
+    // the options that turn the expansion on, as its parts were picked
+    def options(m : Module, picked : $[Meta.O]) : $[Meta.O] = picked.of[AdsetParts].%(_.module == m).single match {
+        case Some(_ : PartsTiles) => $((m == Wilderness).?(WildernessTiles : Meta.O).|(WastelandsTiles))
+        case Some(_ : PartsCreatures) => $((m == Wilderness).?(WildernessCreatures : Meta.O).|(WastelandsCreatures))
+        case _ => $(ModuleOption(m))
+    }
+}
+
 
 // The random seat order, the clans drafted, the map tiles
 case class AdsetSeatingAction(shuffled : $[Player]) extends ShuffledAction[Player]
@@ -188,11 +227,11 @@ object AdsetExpansion extends Expansion {
                     val p = game.seats(1)
                     Ask(p).add(AdsetLandsAction(p, "wilderness")).add(AdsetLandsAction(p, "wastelands"))
                 case Some(LandsWilderness) =>
-                    game.addOption(ModuleOption(Wilderness))
+                    AdsetParts.options(Wilderness, options).foreach(game.addOption)
                     log("The game is played with", "Wilderness".hl)
                     Then(AdsetCentralStepAction)
                 case Some(LandsWastelands) =>
-                    game.addOption(ModuleOption(Wastelands))
+                    AdsetParts.options(Wastelands, options).foreach(game.addOption)
                     log("The game is played with", "Wastelands".hl)
                     Then(AdsetCentralStepAction)
                 case _ =>
@@ -200,7 +239,7 @@ object AdsetExpansion extends Expansion {
             }
 
         case AdsetLandsAction(p, lands) =>
-            game.addOption(ModuleOption((lands == "wilderness").?(Wilderness : Module).|(Wastelands)))
+            AdsetParts.options((lands == "wilderness").?(Wilderness : Module).|(Wastelands), options).foreach(game.addOption)
 
             log(p, "chose to play with", landsName(lands).hl)
 
@@ -341,11 +380,11 @@ object MetaAdset extends MetaGame {
     // The old combat report options do nothing now (the report is a setting); kept so the games that have them still load
     // Robotos (robotos.scala) comes from the bot chosen for a seat, as in Meta.botOptions
     // Chosen casualties, taking the Unrest card and the clan power report are on in every new game, as in Meta
-    override val hiddenOptions : $[O] = $(CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, PrintedSquirrelClan, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, ChiefMoveFromHeld, ChiefMoveAfterMove, MilitaryRerollCreatures, HorseTwoGuards, PickLoneLoss, GuardBeforeChief, ScorchedAfterEvents, PCChiefCampPays, FameRetreatKills, FameAltarClosed, GuardCasualtyAsked, SailOnFromPort, BuildOrUpgrade, NormalDevelopments, ModuleOption(DragonVariant), ModuleOption(BearBorder)) ++ RobotosSeatOption.all ++ BotSeatOption.all
+    override val hiddenOptions : $[O] = $(CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, TamerSparesHrimgandr, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, PrintedSquirrelClan, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, ChiefMoveFromHeld, ChiefMoveAfterMove, MilitaryRerollCreatures, HorseTwoGuards, PickLoneLoss, GuardBeforeChief, ScorchedAfterEvents, PCChiefCampPays, FameRetreatKills, FameAltarClosed, GuardCasualtyAsked, SailOnFromPort, BuildOrUpgrade, NormalDevelopments, ModuleOption(DragonVariant), ModuleOption(BearBorder)) ++ RobotosSeatOption.all ++ BotSeatOption.all
 
-    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, PrintedSquirrelClan, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, ChiefMoveFromHeld, ChiefMoveAfterMove, MilitaryRerollCreatures, HorseTwoGuards, PickLoneLoss, GuardBeforeChief, ScorchedAfterEvents, PCChiefCampPays, FameRetreatKills, FameAltarClosed, GuardCasualtyAsked, SailOnFromPort, BuildOrUpgrade)
+    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, TamerSparesHrimgandr, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, PrintedSquirrelClan, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, ChiefMoveFromHeld, ChiefMoveAfterMove, MilitaryRerollCreatures, HorseTwoGuards, PickLoneLoss, GuardBeforeChief, ScorchedAfterEvents, PCChiefCampPays, FameRetreatKills, FameAltarClosed, GuardCasualtyAsked, SailOnFromPort, BuildOrUpgrade)
 
-    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ WarchiefsChoice.all ++ $(NoDefensiveStrategy, ExtraAchievement) ++ BanDevelopment.all ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ $(BalancedStartTiles) ++ DevelopmentsChoice.fan ++ Module.all.%(_.fan).but(LionKingdom).but(DragonVariant).but(BearBorder).but(PCVersion).diff(FanVictories.modules)./(ModuleOption) ++ FanVictories.modules./(ModuleOption) ++ hiddenOptions
+    val options : $[O] = YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ WarchiefsChoice.all ++ $(NoDefensiveStrategy, ExtraAchievement) ++ BanDevelopment.all ++ $(ModuleOption(Sea)) ++ AdsetLands.all ++ AdsetParts.all ++ $(BalancedStartTiles) ++ DevelopmentsChoice.fan ++ Module.all.%(_.fan).but(LionKingdom).but(DragonVariant).but(BearBorder).but(PCVersion).diff(FanVictories.modules)./(ModuleOption) ++ FanVictories.modules./(ModuleOption) ++ hiddenOptions
 
     // With two players the second seat doesn't choose: an expansion is agreed on here, or none
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -362,7 +401,7 @@ object MetaAdset extends MetaGame {
         case o => Meta.optionShown(o, selected)
     }
 
-    override def defaultsFor(n : Int, l : $[F]) = $(YearsOption.standard, StandardVictory, VictoryModeOption(false), PrivateFame, UnlimitedUndo, EditionChoice.default, (n > 2).?(LandsSeatChooses).|(LandsNeither))
+    override def defaultsFor(n : Int, l : $[F]) = $(YearsOption.standard, StandardVictory, VictoryModeOption(false), PrivateFame, UnlimitedUndo, EditionChoice.default, (n > 2).?(LandsSeatChooses).|(LandsNeither), WildPartsBoth, WastePartsBoth)
 
     override def quickOptions = Map()
 
@@ -392,12 +431,29 @@ object MetaAdset extends MetaGame {
     override def rankingSeat(g : G, f : F) = g.ptf.get(f)./~(c => Meta.rankSeat(g, c))
     override def rankingFan(g : G) = Meta.rankFan(g)
 
+    // Discord LFG games (good-game/Lfg.scala, /northgard; 2026-11-21, like Root's Advanced Setup): the site's defaults, as New
+    // Online Game starts with them for four players, and two to six players
+    override def lfgOptions : $[O] = {
+        val four = factions.take(4)
+        (mandatoryFor(4, four) ++ completeSaved(4, four, defaultsFor(4, four))).distinct
+    }
+    override def lfgPlayers = $(2, 3, 4, 5, 6)
+
+    // the seat that drafted the clan asked (P1, P2...), as the lobby's "user" lines name the seats; a seat still drafting is asked itself
+    override def turnSeat(g : G, f : Any) : String = f match {
+        case s : Seat => s.short
+        case c : Faction => g.ftp.get(c).collect { case s : Seat => s.short }.|("")
+        case _ => ""
+    }
+
     override def botOptions(seating : $[F], bots : Map[F, String]) =
         seating.%(f => bots.get(f).has("Robotos"))./(RobotosSeatOption(_)) ++ seating.%(bots.contains)./(BotSeatOption(_))
 
     def getBot(f : F, b : String) = new BotAdset(f, b == "Hard" || b == "Robotos")
 
     def defaultBot(f : F) = "Easy"
+
+    override def turnReason(g : G, f : Any, actions : $[Any]) : String = TurnReasons.of(g, f, actions)
 
     def writeFaction(f : F) = f.short
     def parseFaction(s : String) : |[F] = factions.%(_.short == s).single

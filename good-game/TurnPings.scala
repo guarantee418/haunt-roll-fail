@@ -35,8 +35,13 @@ import scala.concurrent.duration.Duration
 //   threads.tsv   game, the Discord thread made for it
 //   pings.tsv     time, game, user: the pings sent
 //   created.tsv   game: the games whose post went out, so each goes out once
+//   firsts.tsv    game, watch or told: the games whose first player the thread is told of (announceFirst)
 // and in tournament/: discord-pings.tsv  name, on or off (the last row counts); on unless turned off
 // The tournament change "ping waiting" pings at once every seat the games wait for (the same checks but the minute's delay).
+//
+// NORTHGARD (2026-11-21, with its Discord LFG games, Lfg.scala): Northgard's online games (nort, nort-adset) get the same, in the
+// forum channel of their own webhook, HRF_DISCORD_NORT_TURNS_WEBHOOK or the file discord-nort-turns-webhook (the change
+// "nort-turns <url>"), their threads in threads-nort.tsv; with none set, they get no posts or pings (webhookFor).
 object TurnPings {
     import GoodGame._
     import Backup.{rows, row}
@@ -49,7 +54,14 @@ object TurnPings {
     val settings = Tournament.dir.resolve("discord-pings.tsv")
 
     // the games that get a thread and pings
-    val metas = Map("root" -> "Root", "root-adset" -> "Root Advanced Setup")
+    val metas = Map("root" -> "Root", "root-adset" -> "Root Advanced Setup", "nort" -> "Northgard", "nort-adset" -> "Northgard Adset")
+
+    val nortMetas = Set("nort", "nort-adset")
+    val nortThreads = dir.resolve("threads-nort.tsv")
+
+    // the channel a game's posts and pings go to, and the file its threads are kept in
+    def webhookFor(meta : String) = if (nortMetas.contains(meta)) nortWebhook else webhook
+    def threadsFor(meta : String) = if (nortMetas.contains(meta)) nortThreads else threads
 
     val delay = 60 * 1000L
     val watching = 90 * 1000L
@@ -59,6 +71,7 @@ object TurnPings {
     val every = 30L
 
     def webhook = Tournament.hook("HRF_DISCORD_TURNS_WEBHOOK", "discord-turns-webhook")
+    def nortWebhook = Tournament.hook("HRF_DISCORD_NORT_TURNS_WEBHOOK", "discord-nort-turns-webhook")
 
     def run[R](a : DBIOAction[R, NoStream, Nothing]) : R = Await.result(Tournament.db.run(a), Duration.Inf)
 
@@ -225,9 +238,9 @@ object TurnPings {
                     Tournament.poster.execute(() => Tournament.post(url, text, Tournament.threadKey(n, id), Tournament.threadName(n, id), ids))
                 }
             case None =>
-                webhook.foreach { url =>
+                webhookFor(lobby.meta).foreach { url =>
                     val name = (if (lobby.title.nonEmpty) lobby.title else "Game " + game.take(6)) + " · " + metas.getOrElse(lobby.meta, lobby.meta)
-                    Tournament.poster.execute(() => Tournament.post(url, text, game, name, ids, threads))
+                    Tournament.poster.execute(() => Tournament.post(url, text, game, name, ids, threadsFor(lobby.meta)))
                 }
         }
     }
@@ -237,7 +250,7 @@ object TurnPings {
         try {
             val game = lines.find(_.startsWith("server ")).map(_.drop(7).trim).getOrElse("")
             val meta = lines.find(_.startsWith("meta ")).map(_.drop(5).trim).getOrElse("")
-            if (game.nonEmpty && metas.contains(meta) && webhook.nonEmpty && !introduced(game)) {
+            if (game.nonEmpty && metas.contains(meta) && webhookFor(meta).nonEmpty && !introduced(game)) {
                 val l = Lobby(meta, lines.find(_.startsWith("title ")).map(_.drop(6)).getOrElse(""), lines, lobby)
                 lobbies.put(game, l)
                 introduce(game, l, "New")
@@ -293,6 +306,34 @@ object TurnPings {
         Files.createDirectories(dir)
         Ranking.append(state, row(game, index, waiting.toList.sorted.mkString(","), Ranking.now()))
         // (the sweep pings the seats newly waited for a minute from now)
+
+        // WHO GOES FIRST (2026-11-21: in an Advanced Setup game the seat order is drawn in the game, the first player opened the
+        // game before the minute was up, so the thread never said it was their turn): a game whose first report comes now is
+        // watched (firsts.tsv, "watch"), and the first time it waits for one seat alone the thread says who that is, mentioning
+        // them unless they have the game open ("told"); games reported before this keep their pings only
+        if (before.isEmpty)
+            Ranking.append(firsts, row(game, "watch"))
+        if (waiting.size == 1 && firstState(game).contains("watch"))
+            try announceFirst(game, waiting.head) catch { case e : Exception => println("Turn pings: first player not posted: " + e) }
+    }
+
+    val firsts = dir.resolve("firsts.tsv")
+
+    def firstState(game : String) : Option[String] = rows(firsts).filter(_.headOption.contains(game)).lastOption.flatMap(_.lift(1))
+
+    def announceFirst(game : String, user : String) {
+        Ranking.append(firsts, row(game, "told"))
+        lobbyOf(game).filter(l => metas.contains(l.meta)).foreach { l =>
+            if (introduced(game) || table(game).nonEmpty) {
+                val id = mentionOf(user, table(game).nonEmpty).filter(_ => !readSince(user, game, watching))
+                post(game, l, "**" + nameOf(l, user) + "** takes the first turn in **" + l.title + "**" + id.map(i => " (<@" + i + ">)").getOrElse("") + ".", id.toList)
+                // the seat is told now: its first ping waits for its next turn
+                id.foreach { _ =>
+                    sent = pings + ((game, user) -> (System.currentTimeMillis :: pings.getOrElse((game, user), Nil)))
+                    Ranking.append(pinged, row(Ranking.now(), game, user))
+                }
+            }
+        }
     }
 
     // every seat the games wait for, at once (the "ping waiting" change): how many were pinged
@@ -322,6 +363,54 @@ object TurnPings {
         }
     }
 
+    // WHY IT'S THEIR TURN (asked for on 2026-11-21): the reason the seat's client gave (Turns.reason; the client's Meta.turnReason,
+    // root/turn-reasons.scala and nort/turn-reasons.scala: a tag, maybe "/<faction>") as an emoji in the server's own style (the
+    // Discord server's sword or axe, its deck, map and faction emojis, else the bot's icons, LfgSetup.emojiText) and a few words;
+    // ("", "it's your turn") for a client that gave none
+    def reasonOf(game : String, lobby : Lobby, user : String) : (String, String) = {
+        val seat = lobby.lines.map(_.split(" ").toList).collectFirst { case "user" :: s :: u :: _ if u == user => s }
+        val r = seat.flatMap(s => Turns.reason(game, s)).getOrElse("")
+        val (tag, faction) = r.split("/", 2).toList match {
+            case t :: f :: Nil => (t, Some(f))
+            case t :: _ => (t, None)
+            case _ => ("", None)
+        }
+        val nort = nortMetas.contains(lobby.meta)
+        def head = faction.map(f => if (nort) Lfg.clanIcon(f) else LfgSetup.emojiText("IncludeFaction(" + f + ")")).getOrElse("")
+        // (the server's are :sword-root: and :axe-ng:, seen on 2026-11-21)
+        def sword = LfgSetup.serverNamed(List("swordroot", "sword", "swords", "battle", "attack")).getOrElse("⚔️ ")
+        def axe = LfgSetup.serverNamed(List("axeng", "axe", "battleaxe", "fight")).getOrElse("🪓 ")
+        def e(key : String) = LfgSetup.emojiText(key)
+        val (icon, words) = (nort, tag) match {
+            case (false, "defend") => (sword, "you're under attack")
+            case (false, "battle") => (sword, "your battle needs you")
+            case (false, "keep") => (e("StandardDeck"), "pick the cards you keep")
+            case (false, "handlimit") => (e("StandardDeck"), "discard down to your hand limit")
+            case (false, "draft") => (e("title"), "your pick in the faction draft")
+            case (false, "pickdeck") => (e("StandardDeck"), "pick the deck")
+            case (false, "pickmap") => (e("RandomOfficialMap"), "pick the map")
+            case (false, "picklandmark") => (e("TowerLandmark"), "pick the landmark for the Tower's clearing")
+            case (false, "partisans") => (e("ExilesDeck"), "Partisans can join your battle")
+            case (false, "prisoners") => (e("IncludeFaction(KD)"), "prisoners to deal with")
+            case (false, "negotiate") => (e("IncludeFaction(LDvE)"), "a negotiation awaits you")
+            case (false, "entreat") => (e("IncludeFaction(TC)"), "you were entreated")
+            case (false, "hospitals") => (e("IncludeFaction(MC)"), "Field Hospitals: save your cats?")
+            case (false, "setup") => (head, "time to set up")
+            case (true, "defend") => (axe, "you're under attack")
+            case (true, "fight") => (axe, "your fight needs you")
+            case (true, "trade") => (e("turn:trade"), "harvest trading")
+            case (true, "winter") => (e("turn:winter"), "Winter is here")
+            case (true, "cards") => (e("HorizonsDevelopments"), "pick a card")
+            case (true, "draft") => (e("title"), "your pick in the clan draft")
+            case (true, "setup") => (head, "time to place your clan")
+            case (true, "raid") => (e("ModuleOption(Sea)"), "your raid")
+            case (true, "event") => (e("ModuleOption(EventsModule)"), "an event needs you")
+            case (_, "asked") => (head, "you're needed")
+            case _ => (head, "it's your turn")
+        }
+        (icon, words)
+    }
+
     // true when the ping went out
     def ping(game : String, user : String) : Boolean = attempt(game, user) == "pinged"
 
@@ -334,22 +423,23 @@ object TurnPings {
             return "not pinged: has the game open"
         if (now - lastPing(game, user) < gap)
             return "not pinged: pinged in the last 5 minutes"
-        if (table(game).isEmpty && webhook.isEmpty)
-            return "not pinged: no turns webhook (the turns change)"
-        val id = mentionOf(user, table(game).nonEmpty).getOrElse(return "not pinged: no Discord, or turn pings off")
         val lobby = lobbyOf(game).getOrElse(return "not pinged: lobby not found")
         if (!metas.contains(lobby.meta))
-            return "not pinged: not a Root game"
+            return "not pinged: not a Root or Northgard game"
+        if (table(game).isEmpty && webhookFor(lobby.meta).isEmpty)
+            return "not pinged: no turns webhook (the " + (if (nortMetas.contains(lobby.meta)) "nort-turns" else "turns") + " change)"
+        val id = mentionOf(user, table(game).nonEmpty).getOrElse(return "not pinged: no Discord, or turn pings off")
 
         // a game with no thread of its own yet gets its post first (a tournament table's game uses its table's thread)
-        if (table(game).isEmpty && webhook.nonEmpty && !introduced(game))
+        if (table(game).isEmpty && webhookFor(lobby.meta).nonEmpty && !introduced(game))
             introduce(game, lobby, "Ongoing")
 
         sent = pings + ((game, user) -> (now :: pings.getOrElse((game, user), Nil)))
         Files.createDirectories(dir)
         Ranking.append(pinged, row(Ranking.now(), game, user))
 
-        post(game, lobby, "<@" + id + ">, " + (if (reminder) "a reminder: it's still your turn" else "it's your turn") + " in **" + lobby.title + "**" + " (" + nameOf(lobby, user) + ").", List(id))
+        val (icon, words) = reasonOf(game, lobby, user)
+        post(game, lobby, icon + "<@" + id + ">, " + (if (reminder) "a reminder: " + (if (words == "it's your turn") "it's still your turn" else words) else words) + " in **" + lobby.title + "**" + " (" + nameOf(lobby, user) + ").", List(id))
         "pinged"
     }
 }

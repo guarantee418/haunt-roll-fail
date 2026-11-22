@@ -100,7 +100,7 @@ object Meta extends MetaGame { mmm =>
     // Team play comes from the choice above the clan picker (pickerModes), the old fixed team variants are no longer offered
     // The Tutorial's practice game has its tips on
     // Chosen casualties are on in every new game (mandatoryFor), not in older ones
-    override val hiddenOptions = $(ModuleOption(VictoryModule), ModuleOption(Wilderness), ModuleOption(Wastelands), TrainingFieldsOption, TrainingExploreSides, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, PrintedSquirrelClan, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, ChiefMoveFromHeld, ChiefMoveAfterMove, MilitaryRerollCreatures, HorseTwoGuards, PickLoneLoss, GuardBeforeChief, ScorchedAfterEvents, PCChiefCampPays, FameRetreatKills, FameAltarClosed, GuardCasualtyAsked, TeamVictoryAllCards, SailOnFromPort, PCVersionUpdate, PCVedrfolnirReveal, PCVedrfolnirNoTile, PCMineChoice, PCRangersScout, PCSeenOnly, PCMinePerMine, PCOneUpgrade, BuildOrUpgrade, PCNavalPort, PCHallShield, PCHallSafe, PCArmyCap, PCTowerPoints, PCScoutFame, PCScorchedSeen, PCJotnarCamp, PCDominationChoice, DominationOnly, LionStartingDeck, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith, NormalDevelopments, ModuleOption(DragonVariant), ModuleOption(BearBorder)) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
+    override val hiddenOptions = $(ModuleOption(VictoryModule), ModuleOption(Wilderness), ModuleOption(Wastelands), TrainingFieldsOption, TrainingExploreSides, TutorialOption, TeamPlay, CombatReportAttackers, CombatReportDefenders, ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, TamerSparesHrimgandr, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, PrintedSquirrelClan, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, ChiefMoveFromHeld, ChiefMoveAfterMove, MilitaryRerollCreatures, HorseTwoGuards, PickLoneLoss, GuardBeforeChief, ScorchedAfterEvents, PCChiefCampPays, FameRetreatKills, FameAltarClosed, GuardCasualtyAsked, TeamVictoryAllCards, SailOnFromPort, PCVersionUpdate, PCVedrfolnirReveal, PCVedrfolnirNoTile, PCMineChoice, PCRangersScout, PCSeenOnly, PCMinePerMine, PCOneUpgrade, BuildOrUpgrade, PCNavalPort, PCHallShield, PCHallSafe, PCArmyCap, PCTowerPoints, PCScoutFame, PCScorchedSeen, PCJotnarCamp, PCDominationChoice, DominationOnly, LionStartingDeck, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith, NormalDevelopments, ModuleOption(DragonVariant), ModuleOption(BearBorder)) ++ RobotosOption.all ++ BotClanOption.all ++ Module.teams.keys.$./(ModuleOption)
 
     // Options no longer offered on the setup screen that games still have, and log at the start (the Dragon is picked as its
     // own clan in the picker since 2026-10-26, factionVariants)
@@ -178,7 +178,7 @@ object Meta extends MetaGame { mmm =>
     }
 
     // Chosen casualties, taking the Unrest card and the clan power report: every new game gets them; a loaded game keeps the options it was started with
-    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, PrintedSquirrelClan, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, ChiefMoveFromHeld, ChiefMoveAfterMove, MilitaryRerollCreatures, HorseTwoGuards, PickLoneLoss, GuardBeforeChief, ScorchedAfterEvents, PCChiefCampPays, FameRetreatKills, FameAltarClosed, GuardCasualtyAsked, TeamVictoryAllCards, SailOnFromPort, PCVersionUpdate, PCVedrfolnirReveal, PCVedrfolnirNoTile, PCMineChoice, PCRangersScout, PCSeenOnly, PCMinePerMine, PCOneUpgrade, BuildOrUpgrade, PCNavalPort, PCHallShield, PCHallSafe, PCArmyCap, PCTowerPoints, PCScoutFame, PCScorchedSeen, PCJotnarCamp, PCDominationChoice, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith)
+    override def mandatoryFor(n : Int, l : $[F]) = $(ChooseCasualties, TakeUnrestCard, ClanPowerReports, MendFigures, OxPicksSpace, JoinedTilesOnly, NastrondWood, SimultaneousCurse, KrakenFromTerritory, DragonExtraFromTerritory, KnowledgeEachTerritory, KrakenMovesTide, ReportsDontWait, FutureSightLastYear, TamerSparesHrimgandr, AchievementsAside, EndOfYearAfterGeysers, PrintedNewBlood, PrintedSquirrelClan, LynxBothAtSetup, LynxesCostWinter, LynxCampRecruitsLynx, MielikkiAgainstCreatures, ChiefMoveFromHeld, ChiefMoveAfterMove, MilitaryRerollCreatures, HorseTwoGuards, PickLoneLoss, GuardBeforeChief, ScorchedAfterEvents, PCChiefCampPays, FameRetreatKills, FameAltarClosed, GuardCasualtyAsked, TeamVictoryAllCards, SailOnFromPort, PCVersionUpdate, PCVedrfolnirReveal, PCVedrfolnirNoTile, PCMineChoice, PCRangersScout, PCSeenOnly, PCMinePerMine, PCOneUpgrade, BuildOrUpgrade, PCNavalPort, PCHallShield, PCHallSafe, PCArmyCap, PCTowerPoints, PCScoutFame, PCScorchedSeen, PCJotnarCamp, PCDominationChoice, LionOwnDeck, LordsWhileContested, LordsInEveryFight, LionOst, LionChapelPeers, LionChapelVow, LionChapelLore, LionFaith)
 
     // Quick games take only the selected options, not the mandatory ones
     override def randomQuickGame() = super.randomQuickGame() match { case (f, l, d, o) => (f, l, d, (o :+ ChooseCasualties :+ TakeUnrestCard :+ ClanPowerReports :+ ReportsDontWait :+ MendFigures :+ OxPicksSpace :+ JoinedTilesOnly :+ NastrondWood :+ DragonExtraFromTerritory).distinct) }
@@ -406,6 +406,14 @@ object Meta extends MetaGame { mmm =>
     // Robotos: the Hard bot, cheating (robotos.scala)
     def getBots(f : Faction) = (f == Automa).?($("Easy")).|($("Easy", "Hard", "Robotos"))
 
+    // Discord LFG games (good-game/Lfg.scala, /northgard; 2026-11-21): the site's defaults for four players, without the clans' colors
+    // and teams (the server gives each clan picked on Join its seat's color, as the setup screen does), and two to six players
+    override def lfgOptions : $[O] = {
+        val four = clans.take(4)
+        (mandatoryFor(4, four) ++ completeSaved(4, four, defaultsFor(4, four))).distinct.%{ case _ : ColorOption | _ : TeamOption => false ; case _ => true }
+    }
+    override def lfgPlayers = $(2, 3, 4, 5, 6)
+
     override def botOptions(seating : $[Faction], bots : Map[Faction, String]) =
         seating.%(f => bots.get(f).has("Robotos") && f != Automa)./(RobotosOption(_)) ++ seating.%(f => bots.contains(f) && f != Automa)./(BotClanOption(_))
 
@@ -416,6 +424,8 @@ object Meta extends MetaGame { mmm =>
     }
 
     def defaultBot(f : Faction) = "Easy"
+
+    override def turnReason(g : G, f : Any, actions : $[Any]) : String = TurnReasons.of(g, f, actions)
 
     def writeFaction(f : Faction) = f.short
     def parseFaction(s : String) : |[Faction] = factions.%(_.short == s).single

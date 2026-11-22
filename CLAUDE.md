@@ -20,7 +20,7 @@ known gaps, next steps and how to build and test it. So far: the 7 clans (14 wit
 play with any split into teams on the 2v2 rules ("Free-for-all" or "Teams" above the clan
 picker, `Meta.pickerModes`; each player's team on its setup row, `TeamOption`), the year loop with
 decks, Wait/Replace/Remove/Upgrade/Pass, Flash cards, harvest trading (every player at once, each until "Done trading", like Root's Advanced Setup discards: `TradePhaseAction`, a `MultiAsk`, in `nort/game.scala`; a player done trading can't be traded with any more; a 1:1 trade with a teammate is an offer the teammate accepts or declines, `TeamOfferAction`, `TeamAcceptAction`, `TeamDeclineAction`, with the pending offers in `game.tradeOffers`: the proposer waits for the answer, a player owing an answer can't make offers, and a declined offer isn't offered again that harvest), winter
-and Unrest, end-of-game scoring (the end screen shows the winner's clan card, "tames these lands and triumphs as the supreme Jarl", and how they won), and the real card list in `nort/cards.scala`
+and Unrest, end-of-game scoring (the end screen shows the winner's clan card, "tames these lands and triumphs as the supreme Jarl", how they won, and a table of every clan's fame by where it came from, exploring, harvests, fights, creatures, effects, events, trading, raids, then cards, resources, Unrest and the total, the winners' columns in gold: `fameTable` in `nort/game.scala`, the sources noted as fame is gained, `FactionState.addFame` and `game.fameFrom`, so replays of older games show it too; asked for on Discord, 2026-11-21; `nort.Host` prints `FAME UNTRACKED` for fame gained without `addFame`), and the real card list in `nort/cards.scala`
 (names, fame, text, images), the map: tile data in `nort/tiles.scala`
 (areas, borders, resources, spaces, checked against the art), territories
 and placement rules in `nort/board.scala`, and setup, Recruit, Move,
@@ -57,7 +57,9 @@ map cells (`Tiles.beach`), and a tile side no area owns is sea. The Wastelands e
 is offered in every game (standard tile, any of the nine, the Wilderness Great
 Lake, or random) and needs
 the module only for the rest of Wastelands,
-five more creatures, Hrimgandr and Jötunn Blainn) is in `nort/wastelands.scala`.
+five more creatures, Hrimgandr and Jötunn Blainn) is in `nort/wastelands.scala`. Tamer (Horizons) never moves Hrimgandr in games with
+the hidden `TamerSparesHrimgandr` every new game gets (2026-11-21: a bot game's Tamer moved him, and with the Creatures module off the
+step after stopped the game; `tamerCreatures` in `nort/horizon-devs.scala`), and his move does nothing in older games.
 The solo Automa (Uncharted Horizons' Solo module) is
 in `nort/automa.scala`, with its 15 cards transcribed from the Tabletopia
 module ("Solo vs Automa" on the main menu). Its Training Fields module, a two-player duel on
@@ -366,9 +368,9 @@ cd haunt-roll-fail && sbt fullOptJS
   cases; `/turn/<user>/<secret>/<game>`, kept in `turns.tsv` by `good-game/Turns.scala`), and `/my-games` matches them to the lobby's
   "user <faction> <user>" lines. A game nobody has opened since this was deployed shows no highlight until a player opens it.
   The games with fan content, which count toward no rating (`Meta.rankingFan`), are in an "Unranked Games" folder under them, finished
-  ones too (open by default while one waits on the player; 2026-11-21): the turn report adds a third line "fan" (`Runner.run`'s
-  `unranked`), kept in `turns.tsv`'s fourth field (`Turns.fan`), and a finished game's result says it ("X:fan"); `/my-games` gives it as
-  the seventh field. A game nobody has opened since that was deployed stays under Your Active Games until a player opens it.
+  ones too (open by default while one waits on the player; 2026-11-21): the turn report adds a fourth line "fan" (`Runner.run`'s
+  `unranked`), kept in `turns.tsv`'s fifth field (`Turns.fan`), and a finished game's result says it ("X:fan"); `/my-games` gives it as
+  the seventh field. A game nobody has opened since that was deployed stays under Your Active Games until a player opens it. The tournament game ("Your Tournament Game", `/tournament/mine`, its seventh field from `Tournament.mine`) is highlighted the same way (2026-11-21).
 - Fixing a running game: through the `hrf-games` repository (copy `games/<id>.tsv` to
   `fixes/<id>.tsv` and edit it; its README and `notes/server.md` say how).
 - The in-game "Report a Bug" button posts to `/report-bug`; the server saves the report,
@@ -1122,7 +1124,17 @@ server. No session can reach the server, and none needs to.
   `good-game/Turns.scala`, which calls `TurnPings.report`) and the lobby's "user <faction> <user>" lines. Only seats under a ranking name whose owner gave a Discord user
   ID (or a username the bot found, or one the owner set) and didn't turn pings off ("Discord turn pings" under Rankings, `discordPings` in `rankingsMenu`; `/discord/mine`, `/discord/pings`,
   `tournament/discord-pings.tsv`; on unless turned off since 2026-11-20, asked for) are mentioned, each by their own mention
-  (`allowed_mentions` lists only them, never @everyone). The tournament change `ping waiting` pings every seat the games wait
+  (`allowed_mentions` lists only them, never @everyone). Each ping says why the seat is asked, with an emoji in the server's style (asked for on 2026-11-21; `TurnPings.reasonOf`): the
+  client adds a third line to its turn report, "<seat>=<reason>", from `Meta.turnReason` (`root/turn-reasons.scala` and
+  `nort/turn-reasons.scala`, `TurnReasons`: the action that asked, `game.asker`, set in `internalPerform`, and the choices offered),
+  kept in `turns.tsv`'s fourth column (`Turns.reason`): Root's under attack or a battle (the server's sword emoji), the cards kept
+  at the start, the hand limit, the faction draft, the tournament picks, Partisans, prisoners, a Lilypad negotiation, an Entreat,
+  Field Hospitals, setup and the faction's own turn (its head); Northgard's fights (the axe), harvest trading and Winter (the bot's
+  `ng_trade` and `ng_winter` badges), card picks, setup, the Adset draft, raids, Events and the clan's own turn (its emblem). The
+  reasons say nothing only the seat may know (an ambush question and assigning hits are both "under attack"). `NORT_REASONS=1` in
+  `nort.Host` prints them. A game's thread also says who takes the first turn, the first time the game waits on one seat alone
+  (`announceFirst`, `turns/firsts.tsv`; mentioning them unless they have the game open; only games first reported since 2026-11-21, when
+  an Advanced Setup game's drawn first player opened it within the minute and the thread never said whose turn it was). The tournament change `ping waiting` pings every seat the games wait
   for at once (`TurnPings.pingWaiting`). `ping waiting <game> ...` pings only those games (their server ids, the `server` line of their lobbies), and its `.result` says for each
   who was pinged and why anyone wasn't (`TurnPings.pingWaitingIn`; 2026-11-21). A tournament table's game pings in its table's thread (the forum webhook's), with no
   turns webhook needed, every player who gave a user ID unless they turned pings off. A webhook can't ping a username, and the first tournament's players
@@ -1133,6 +1145,27 @@ server. No session can reach the server, and none needs to.
   used by the threads and the turn pings); without the bot only user IDs are taken ("nobot"). The owner can set a name's Discord for a player
   who didn't give it with the tournament change `discord <name> -> <username or user ID>` (`-> off` forgets it). The bot needs the Server Members
   Intent and only to be in the server. Keep its token out of this repository.
+- Discord LFG games (`good-game/Lfg.scala`, `LfgSetup.scala`; their headers have the rules and files): in the LFG channel `/root` (Root:
+  Advanced Setup, pinging the `root-lfg` role) and, since 2026-11-21, `/northgard` (pinging `ng-lfg`; its `mode` a standard game, the
+  default, whose players pick their clans on Join from a menu only they see, or a random one drawn at the start, and each clan gets its
+  seat's color and team; or Adset, the clan draft; in both, Wilderness and Wastelands as tiles, creatures or both: a standard game's
+  `WildernessTiles` ..., Adset's `WildPartsBoth` ... for the expansion drafted or agreed, `AdsetParts` in `nort/adset.scala`, whose absence
+  is the whole module; the clans shown with the Discord server's own clan emojis, found by name (`Lfg.serverEmoji`), or for a clan
+  it has none of, the bot's application emoji `ng_<clan>` uploaded at the server's start from `webp2/nort/images/clan/emoji/`, `Lfg.syncClanEmojis`) open a setup panel only the host sees, then post the game with Join, Leave, Start and Cancel; the server creates the game when the
+  seats fill (or the host starts it), the bot DMs each player their seat link (every player since 2026-11-21, `welcome`;
+  only players the site didn't know before) and Get my link gives it again. A player whose Discord is linked to a ranking name (given
+  on the Tournament page, set by the `discord` change, or an earlier LFG seat's) plays under it from the start, so the game is in
+  their Play Online (`rankingNameOf`, a `name` lobby line and a `seats.tsv` row, as the tournament does; 2026-11-21). Each game is an `Lfg.Kind`; its options come from
+  the client (`lfgOptions`, `lfgPlayers`, `lfgCatalog` in `meta.scala`, overridden in `root/meta-adset.scala` and `nort/adset.scala`,
+  sent by Play Online), kept per meta (`lfg-catalog-<meta>.tsv`, `lfg-template-<meta>.tsv`; Root's keep their first names). The posts and the panel's menus show an emoji wherever they can (asked for on 2026-11-21): each section and pick
+  (the Discord server's emoji of that name, else the server's emoji whose name matches the option's label, saved name or a word of
+  them or its section, `LfgSetup.serverMatch`, so the server's emojis are used first; else the bot's own `hrf_<slug>`, made from the game's art by `haunt-roll-fail/tools/lfg-emoji.py`
+  into `webp2/lfg/emoji/` with `icons.tsv` naming each option's icon and uploaded at the server's start, `Lfg.iconOf`, else a Unicode one,
+  `LfgSetup.unicode`; a map or deck takes only a server emoji named for it, `LfgSetup.themed`). The bot's icons follow the server's own
+  emojis' style (seen 2026-11-21): Root's factions as their heads, maps as a square of the map, decks as a card tilted in a white border,
+  Northgard's options in a gold-ringed round badge with a ribbon naming them, like the server's clans and WILD and WASTE. And the Host, Players, seats and buttons; a changed picture needs a new slug, as an uploaded one is kept. The tournament change `emojis` lists the server's emojis and what each is shown for ("unused" for none). Northgard's
+  online games get their posts and turn pings in their own forum (`TurnPings.webhookFor`: `HRF_DISCORD_NORT_TURNS_WEBHOOK` or the file
+  `discord-nort-turns-webhook`, set by the tournament change `nort-turns <url>`); with none set they get none.
 - Advanced Setup's default faction pool leaves out the Vagabond, Negabond
   and the fan factions (`defaultFactions` in `root/meta-adset.scala`); the
   "Official | Riverfolk ..." presets add the Vagabond back.

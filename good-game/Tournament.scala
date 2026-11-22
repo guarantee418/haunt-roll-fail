@@ -43,15 +43,17 @@ import scala.concurrent.duration.Duration
 //   invite                            posts the invitation to sign up again
 //   turns <url>                       the webhook of the channel for turn pings and new games (TurnPings.scala; the file
 //                                     discord-turns-webhook, "turns off" removes it); delete the change file once its .result says "set"
+//   nort-turns <url>                  the same for Northgard's games (the file discord-nort-turns-webhook, "nort-turns off")
 //   bot <token>                       the Discord bot's token, so a username given on the Tournament page pings (DiscordBot.scala;
 //                                     the file discord-bot-token, "bot off" removes it); delete the change file once its .result is read
 //   guild <id>                        the Discord server the bot looks usernames up in, if not the webhook's (the file discord-guild)
 //   ping waiting                      pings every seat the games wait for at once (TurnPings.pingWaiting)
 //   ping waiting <game> ...           pings the seats those games wait for (their server ids, the "server" line of their
 //                                     lobbies), saying for each who was pinged and why anyone wasn't (TurnPings.pingWaitingIn)
-//   lfg-key <public key>              the Discord application's public key, for /root and the LFG posts' buttons (Lfg.scala; the
-//                                     file discord-public-key, "lfg-key off" removes it); registers /root in the Discord server
-//   lfg-commands                      registers /root again
+//   lfg-key <public key>              the Discord application's public key, for /root, /northgard and the LFG posts' buttons (Lfg.scala;
+//                                     the file discord-public-key, "lfg-key off" removes it); registers the commands in the Discord server
+//   lfg-commands                      registers /root and /northgard again
+//   emojis                            lists the Discord server's emojis and the LFG options and sections each is shown for
 //   discord <name> -> <username>      a name's Discord, for a player who didn't give it (a username the bot finds, or a user ID;
 //                                     "-> off" forgets it)
 // The Discord channel of the webhook in HRF_DISCORD_WEBHOOK (or the file discord-webhook) is invited to sign up, with the link to
@@ -276,7 +278,10 @@ object Tournament {
         cups().filter(c => c.started && !c.done).flatMap { c =>
             c.tables.filter(_.winner.isEmpty).flatMap { t =>
                 t.names.zipWithIndex.filter(x => kk.contains(x._1)).map { case (k, i) =>
-                    row(c.n, t.id, t.title(c.n), t.secrets(i), display(k), t.names.filter(_ != k).map(display).mkString(", "))
+                    // the seventh field: "1" while the game waits on this seat (Turns.scala, the lobby's "user <faction> <user>"; 2026-11-21)
+                    val turn = TurnPings.lobbyOf(t.game).flatMap(_.lines.map(_.split(" ").toList).collectFirst { case "user" :: f :: u :: Nil if u == t.users(i) => f })
+                        .exists(f => Turns.asked(t.game).contains(f)) && !TurnPings.over(t.game)
+                    row(c.n, t.id, t.title(c.n), t.secrets(i), display(k), t.names.filter(_ != k).map(display).mkString(", "), if (turn) "1" else "0")
                 }
             }
         }.++(dd).mkString("\n")
@@ -483,6 +488,20 @@ object Tournament {
                     }
                     else
                         "not done: turns <https://discord.com/api/webhooks/...> or turns off"
+                // Northgard's (2026-11-21)
+                case "nort-turns" =>
+                    if (rest.startsWith("https://discord.com/api/webhooks/") || rest.startsWith("https://discordapp.com/api/webhooks/")) {
+                        Files.write(Paths.get("discord-nort-turns-webhook"), (rest + "\n").getBytes(UTF_8))
+                        Files.deleteIfExists(TurnPings.nortThreads)
+                        plainChannels = Set()
+                        "set"
+                    }
+                    else if (rest == "off") {
+                        Files.deleteIfExists(Paths.get("discord-nort-turns-webhook"))
+                        "removed"
+                    }
+                    else
+                        "not done: nort-turns <https://discord.com/api/webhooks/...> or nort-turns off"
                 // the Discord bot's token, so usernames can be pinged (DiscordBot.scala; the file discord-bot-token, never written
                 // back in the .result); "bot off" removes it
                 case "bot" =>
@@ -518,11 +537,13 @@ object Tournament {
                     if (rest == "off") { Files.deleteIfExists(Paths.get("discord-public-key")) ; "removed" }
                     else if (rest.length == 64 && rest.forall(c => "0123456789abcdefABCDEF".contains(c))) {
                         Files.write(Paths.get("discord-public-key"), (rest.toLowerCase + "\n").getBytes(UTF_8))
-                        "set; /root " + Lfg.register()
+                        "set; " + Lfg.commands + " " + Lfg.register()
                     }
                     else "not done: lfg-key <the application's public key from the Developer Portal> or lfg-key off"
+                // the server's emojis and what the LFG posts show each for (LfgSetup.serverEmojiUse; 2026-11-21)
+                case "emojis" => LfgSetup.serverEmojiUse()
                 // /root registered again (after the bot's token or the server changed)
-                case "lfg-commands" => "/root " + Lfg.register()
+                case "lfg-commands" => Lfg.syncClanEmojis() + "; " + Lfg.commands + " " + Lfg.register()
                 // a name's Discord, set by the owner for a player who didn't give it (2026-11-20, matched from the server's member
                 // list): discord <name> -> <username or user ID>, looked up by the Discord bot like one given on the Tournament page;
                 // discord <name> -> off forgets it
@@ -561,10 +582,10 @@ object Tournament {
                 case "ping" if rest == "waiting" => TurnPings.pingWaiting() + " pinged"
                 // only those games (2026-11-21)
                 case "ping" if rest.startsWith("waiting ") => TurnPings.pingWaitingIn(rest.drop(8).split("[ ,]+").toList.filter(_.nonEmpty)).mkString("; ")
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, bot, guild, discord, ping waiting, lfg-key, lfg-commands or invite)"
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, bot, guild, discord, ping waiting, lfg-key, lfg-commands or invite)"
             }
 
-            (if (word == "webhook" || word == "forum" || word == "turns" || word == "bot") word else line) + ": " + result
+            (if (word == "webhook" || word == "forum" || word == "turns" || word == "nort-turns" || word == "bot") word else line) + ": " + result
         }
     }
 

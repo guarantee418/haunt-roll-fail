@@ -111,7 +111,9 @@ object HorizonDevsExpansion extends Expansion {
     def creatureMoves(c : Creature)(implicit game : Game) : $[Territory] =
         game.board.adjacent(game.board.territory(game.creatureAt(c))).map(_._1).%(o => game.creaturesIn(o).none)
 
+    // (not Hrimgandr, who never moves, in games with TamerSparesHrimgandr)
     def tamerCreatures(implicit game : Game) = game.creatureLine.%(c => game.creatureAt.contains(c) && creatureMoves(c).any)
+        .%(c => c.kind != Hrimgandr || game.options.has(TamerSparesHrimgandr).not)
 
     // Small buildings that do something when used: Food Silo, Woodcutter Lodge, Carved Stone, Training Camp
     def prosperous(f : Faction)(implicit game : Game) : $[(SpaceRef, Building)] =

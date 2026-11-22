@@ -256,6 +256,9 @@ trait MetaBase {
     // the seat a turn report names (good-game/Turns.scala), as the lobby's "user <seat> <user>" lines write it: the faction asked,
     // unless the game's seats aren't its factions (Root's Advanced Setup: a seat drafts its faction in the game)
     def turnSeat(g : G, f : Any) : String = writeFaction(f.asInstanceOf[F])
+    // why that seat is asked, for its Discord turn ping (good-game/TurnPings.scala; asked for on 2026-11-21): a short tag ("defend",
+    // "trade", ...), with "/<faction>" for a ping showing the faction's icon, or "" for none; never anything only the seat may know
+    def turnReason(g : G, f : Any, actions : $[Any]) : String = ""
     def rankingSides(g : G, winners : $[Any]) : $[($[F], Boolean)] = $
     // and, for the faction and turn order stats, what each seat played: its faction, its place in the turn order (from 1), the
     // number of players and its score (VP or fame, "D" for a Root dominance)

@@ -583,6 +583,14 @@ case object FutureSightLastYear extends GameOption with ToggleOption {
     def valueOn = "Future Sight takes Achievements only in the last year".txt
 }
 
+// Tamer (Uncharted Horizons) never moves Hrimgandr, who never moves (2026-11-21: a bot game's Tamer moved him off his Lair, and
+// with the Creatures module off the move then stopped the game). Hidden, and given to every new game (Meta.mandatoryFor): older
+// games could move him, and replay that way
+case object TamerSparesHrimgandr extends GameOption with ToggleOption {
+    val group = "Development cards".txt
+    def valueOn = "Tamer doesn't move Hrimgandr".txt
+}
+
 // An Achievement taken by Future Sight or at Mimirsbrunn (the last year) is kept aside, face down, to score at the end, not put on
 // top of the draw pile, where a Replace, Remove or draw effect brought it into the hand in place of a card (Marzaus and Robotos,
 // relayed on 2026-10-28). Hidden, and given to every new game (Meta.mandatoryFor): older games replay the old way, and a

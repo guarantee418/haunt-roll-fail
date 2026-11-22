@@ -1834,6 +1834,9 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
 
     var highlightFaction : $[Faction] = $
 
+    // the last action that asked a question (display only: the Discord turn pings' reason, root/turn-reasons.scala)
+    var asker : Action = null
+
     // a tournament game has no map until its draft picks one (TournamentExpansion): the Autumn map stands in until then
     var board : Board = TournamentExpansion.boardOf(options).|(options./~{
         case AutumnMap => Some(AutumnBoard)
@@ -2276,7 +2279,10 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
 
                     return another.as[SelfPerform]./(_.perform(soft)).|(internalPerform(another, soft))
                 case TryAgain => return internalPerform(action, soft)
-                case c => return DoomedVagabondExpansion.anytime(action, InvasiveEEEExpansion.anytimeNegotiations(action, c)(this))(this)
+                case c =>
+                    // the action that asked (the Discord turn pings' reason, TurnReasons)
+                    c @@ { case _ : Ask | _ : MultiAsk => asker = action ; case _ => }
+                    return DoomedVagabondExpansion.anytime(action, InvasiveEEEExpansion.anytimeNegotiations(action, c)(this))(this)
             }
         }
 

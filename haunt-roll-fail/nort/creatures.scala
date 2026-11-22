@@ -700,7 +700,7 @@ object CreaturesExpansion extends Expansion {
 
                 // Sea module: Bold Maneuver gives 2 fame per combat won
                 if (won && attacking && e.special == BoldMove) {
-                    f.fame += 2
+                    f.addFame(2, FameCreatures)
                     f.log("gained", 2.hl, FameIcon(), "for winning with", RaidCard("bold-maneuver"))
                 }
 
@@ -715,7 +715,7 @@ object CreaturesExpansion extends Expansion {
                 else
                 if (won) {
                     removeCreature(c)
-                    f.fame += c.kind.fame
+                    f.addFame(c.kind.fame, FameCreatures)
                     game.note("creature-defeated")
                     game.advance(f, "hunting")
 
@@ -726,7 +726,7 @@ object CreaturesExpansion extends Expansion {
 
                     // Wastelands: a Giant Boar that attacked gives 2 more fame
                     if (c.kind == GiantBoar && attacking.not && game.noAbilities.not) {
-                        f.fame += 2
+                        f.addFame(2, FameCreatures)
                         f.log("gained", 2.hl, "more", FameIcon(), "for defeating", c, "as the defender")
                     }
 
@@ -738,7 +738,7 @@ object CreaturesExpansion extends Expansion {
 
                     // Beating a Fallen Valkyrie takes its territory
                     if (attacking && f == Stag && game.aggressive(c)) {
-                        f.fame += 1
+                        f.addFame(1, FameCreatures)
                         f.log("gained", 1.hl, FameIcon(), "for conquering a territory")
                         ClanPowers.note(PowerNote(f, |(a), f.elem ~ " gains 1 fame for each territory it conquers.", fame = 1))
                     }
