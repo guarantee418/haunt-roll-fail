@@ -44,7 +44,8 @@ object MetaMirror extends MetaGame {
 
     val options = Meta.options
 
-    override def optionsFor(n : Int, l : $[F]) = Meta.optionsFor(n, l)
+    // Mirror factions are never approved for ranked play, so Mirror games aren't offered the choice (and count as fan games)
+    override def optionsFor(n : Int, l : $[F]) = Meta.optionsFor(n, l).diff(Meta.rankingOptions)
 
     override val hiddenOptions = Meta.hiddenOptions
 
@@ -58,7 +59,7 @@ object MetaMirror extends MetaGame {
     // The random map is drawn here too, and options both mandatory and default are kept once
     override def startOptions(options : $[O]) : $[O] = Meta.startOptions(options)
 
-    override def defaultsFor(n : Int, l : $[F]) = Meta.defaultsFor(n, l).but(SetupOrderPriority).appended(SetupOrderReverse) ++ $(
+    override def defaultsFor(n : Int, l : $[F]) = Meta.defaultsFor(n, l).but(RankedGame).but(SetupOrderPriority).appended(SetupOrderReverse) ++ $(
         TheWoodMustFlow,
         OneTrueEmpire,
         Imprinting,

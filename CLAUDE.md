@@ -352,7 +352,17 @@ cd haunt-roll-fail && sbt fullOptJS
   the rating changes it made are added as a line at the end of its log (`showRatings` in `hrf.scala`). Games with fan content
   (`Meta.rankingFan`: Northgard's fan clans only, the Lion Kingdom and the Dragon and Bear variants, `rankFan` in `nort/meta.scala`, as its fan modules and options are rated since 2026-11-21 (owner: much modular content, few players); Root's fan, playtest and mirror
   factions, fan maps, decks, hirelings and scenarios, `rankFan` in `root/meta.scala`; asked for on 2026-11-18) are reported with an
-  "X fan" line, kept as the side `X:fan`, and count in the stats but in no rating (`Result.fan`). Names are released or
+  "X fan" line, kept as the side `X:fan`, and count in the stats but in no rating (`Result.fan`). Ranked or unranked (asked for on 2026-11-22): an online Root or Northgard game's setup starts with a "Ranking" choice, Ranked
+  (the default) or Unranked (`RankedGame`, `UnrankedGame`, each game's `RankingOption`, a core `RankingChoice` that `startSetup` in
+  `hrf.scala` offers only online; Mirror never, as its factions are never rated). An unranked game is reported as a fan game: it
+  counts in the stats, not in the ratings or win rates (owner, 2026-11-22). What isn't approved for ranked play is
+  `Meta.rankingUnapproved` (Root's `unapproved` and `unapprovedPick`, which adds fan factions in Advanced Setup's pool; Northgard's
+  fan clan variants, and the Lion Kingdom by faction): marked "unranked" beside the option on an online setup screen, and a Ranked game
+  with any of it can't be started (`rankedCheck`, in `validateFactionSeatingOptions`). Root's Tidal Flats, Tundra and Gloom maps and
+  the Dawn and Dusk deck are approved since 2026-11-22 (owner). A ranked game with a bot gets a warning. The Discord bot's `/root` and
+  `/northgard` take `ranked` (`LfgSetup.sections`), the catalog's tenth field marks each unapproved option (its menus say "makes the
+  game unranked"), the post says Ranked or Unranked and why (`rankingLine`), and a Ranked game with unapproved picks is created
+  Unranked (`rankedOptions`). Names are released or
   moved by committing `ranking-changes/<name>.txt` to `hrf-games` (`release <name>`, `rename <name> -> <new>`, `seat <user> <name>`, and `merge <name> -> <into>` for one player under two names, which gives `<into>` the first name's devices and seats and frees it, 2026-11-22;
   `Ranking.change`, applied once each by `Backup`, outcome in `<name>.result`).
   A name can have several player keys (each `names.tsv` row with a hash adds one, a row with an empty hash releases it), and

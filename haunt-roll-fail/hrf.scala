@@ -1902,7 +1902,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             () => player(p, all), css("rk-row", (i < 3 && p.provisional.not).?("rk-row-top").|("rk-row-plain")) ++ yours.$(ExternalStyle("rk-row-yours")) ++ $(xlo.pointer))
         }
 
-        def explainRatings : Elem = "Elo ratings from finished online games with people on two sides or more (teams count as one side; bots and local games don't count). Everyone starts at " ~ Elo.start.round.toString.hl ~ "; a " ~ "?".hl ~ " marks fewer than " ~ Elo.provisional.hl ~ " games." ~ meta.ranking.has("root").??(" Root ratings count the games played from 2026-11-18.") ~ " Games with fan content (" ~ meta.ranking.has("root").?("fan, playtest or mirror factions, fan maps, decks, hirelings or scenarios").|("fan clans, modules or variants") ~ ") don't count in the ratings. The stats count every game."
+        def explainRatings : Elem = "Elo ratings from finished online games with people on two sides or more (teams count as one side; bots and local games don't count). Everyone starts at " ~ Elo.start.round.toString.hl ~ "; a " ~ "?".hl ~ " marks fewer than " ~ Elo.provisional.hl ~ " games." ~ meta.ranking.has("root").??(" Root ratings count the games played from 2026-11-18.") ~ " Games with content not approved for ranked play (" ~ meta.ranking.has("root").?("fan, playtest or mirror factions, and fan maps, decks, hirelings or scenarios but Tidal Flats, Tundra, Gloom and Dawn and Dusk").|("the fan clans") ~ ") and games picked as Unranked don't count in the ratings; the stats count them."
 
         // Root's page, after rootelo: Leaderboard, Top Tables, Player's Journey, the stats and the Codex, as tabs
         def tabs(current : String, all : $[Elo.Player]) =
@@ -2722,7 +2722,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             active./(r => myGame(("Your Active Games" + (names.num == 1).??(" · " + names.head)).hl, r)) ++
             (myGames.any && active.none).$(ZOption("Your Active Games".hl, Div("None right now.".txt, ZBasic.info))) ++
             fan.any.$(folder(fanOpen, "Unranked Games (" + fan.num + ")", fanTurns, () => onlineGame(tour, mine, doneOpen, held, false, |(fanOpen.not)))) ++
-            fanOpen.??(fan.any.$(ZOption(" ".spn, Div("Games with bots or fan content count toward no ranking.".txt, ZBasic.info))) ++ fan./(r => myGame(" ".spn, r))) ++
+            fanOpen.??(fan.any.$(ZOption(" ".spn, Div("Games with bots, content not approved for ranked play, or picked as Unranked count toward no rating.".txt, ZBasic.info))) ++ fan./(r => myGame(" ".spn, r))) ++
             done.any.$(folder(doneOpen, "Completed Games (" + done.num + ")", 0, () => onlineGame(tour, mine, doneOpen.not, held, false, unrankedOpen))) ++
             doneOpen.??(done./(r => myGame(" ".spn, r)))
 
@@ -3213,12 +3213,14 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         val saved = hrf.web.Local.get(optionsSaveKey, "").split(' ').$./~(_.some)
         val provided = HRF.paramList("options")
         val preset = provided.some.|(saved)./~(meta.parseOption(_)).intersect(meta.options)
-        val matching = meta.optionsFor(factions.num, factions)
+        // Ranked or unranked (RankingChoice) only online: a local game is never ranked
+        def offered(l : $[meta.O]) = l.%(o => online || o.is[RankingChoice].not)
+        val matching = offered(meta.optionsFor(factions.num, factions))
         val unneeded = preset.diff(matching)
         val needed = preset.intersect(matching)
 
-        val defaults = meta.defaultsFor(factions.num, factions)
-        var options = OptionsState(meta.optionsFor(factions.num, factions), mandatory, $, needed.some./(o => meta.completeSaved(factions.num, factions, o ++ defaults.%(_.toggle.not))).|(defaults)).checkDimmed()
+        val defaults = offered(meta.defaultsFor(factions.num, factions))
+        var options = OptionsState(matching, mandatory, $, needed.some./(o => meta.completeSaved(factions.num, factions, o ++ defaults.%(_.toggle.not))).|(defaults)).checkDimmed()
 
         val pages = {
             val pages = meta.optionPages(factions.num, factions)./(_.intersect(options.all))
@@ -3227,7 +3229,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         }
 
         val presets = meta.presetsFor(factions.num, factions)./{ case (title, included, excluded) =>
-            val options = OptionsState(meta.optionsFor(factions.num, factions), mandatory, included ++ meta.defaultsFor(factions.num, factions).diff(excluded), $).checkDimmed()
+            val options = OptionsState(matching, mandatory, included ++ defaults.diff(excluded), $).checkDimmed()
             (title, included, excluded, options)
         }
 
@@ -3237,7 +3239,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         var notes = Map[meta.F, String]()
 
         def setupQuestions(page : Int) {
-            val v = meta.validateFactionSeatingOptions(seating, options.actual)
+            // a ranked game with a bot counts toward no ranking all the same (bots never count)
+            val v = meta.validateFactionSeatingOptions(seating, options.actual) &&
+                (options.actual.of[RankingChoice].exists(_.ranked) && seating.exists(f => difficulties(f) != Human)).?(WarningResult("A game with a bot is never ranked") : ValidationResult)
             // Factions drawn at random are shown only as random until the game starts
             def shownName(f : meta.F) = hidden.has(f).?(meta.randomName).|(names.get(f).|(meta.factionName(f)))
             val maxname = factions./(shownName(_).length).max
@@ -3360,7 +3364,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 // A foldable section shows only what is picked until its heading is tapped (Folds)
                 // and a folded section with nothing picked shows its heading over "None", so it can still be opened
                 {
-                val shown = meta.optionsFor(seating.num, seating).diff(meta.hiddenOptions).intersect(pages(page)).%(meta.optionShown(_, options.actual))
+                val shown = matching.diff(meta.hiddenOptions).intersect(pages(page)).%(meta.optionShown(_, options.actual))
                 val empty = shown./~(_.fold).distinct.%(s => foldOpen(s).not && shown.exists(o => o.fold.has(s) && options.selected.has(o)).not)
                 // A folder (BaseOption.folder) is one heading over several sections; folded, it shows only a line of what is picked in it
                 def folderKey(d : String) = "folder." + d
@@ -3401,6 +3405,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     val title = heading(o) ~ groupInfo.any.?(" ".txt ~ Parameter("group-info", OnClick(Image("question-mark")(xstyles.explain))))
                     ZOption(o.fold./(s => Folds.heading(title, foldOpen(s))).|(groupInfo.any.?(OnClick(title)).|(title)),
                         OnClick(Div(state.?(o.decorate(o.valueOn).styled(xstyles.bold)).|(o.decorate(o.valueOff))
+                        // not approved for ranked play (MetaGame.rankingUnapproved), marked in an online game's setup
+                        ~ (online && meta.ranking.any && meta.rankingUnapproved(o)).?(" unranked".styled(xstyles.warning))
                         ~ (o.explain.any).?(Parameter(o, OnClick(Image("question-mark")(xstyles.explain)))), (active || state).?(ZBasic.choice).|(ZBasic.info) ++ state.$(xstyles.optionOn) ++ $(xstyles.optionE))), {
                             case o : GameOption if o.explain.any =>
                                 showOverlay(o.explain./(ZBasic(o.group ~ " " ~ MDash ~ " " ~ o.valueOn, _)), o.grow)

@@ -304,7 +304,7 @@ object Lfg {
     // they type their own (a "prename", as New Online Game's notes)
     def create(p : Post) : Either[String, Started] = {
         val meta = p.meta
-        val (version, options) = (if (p.options.nonEmpty) LfgSetup.catalog(meta).map(c => (c.version, p.options)) else None).getOrElse(rows(p.kind.template).lastOption match {
+        val (version, options) = (if (p.options.nonEmpty) LfgSetup.catalog(meta).map(c => (c.version, LfgSetup.rankedOptions(Some(c), p.options))) else None).getOrElse(rows(p.kind.template).lastOption match {
             case Some(m :: v :: o :: _) if m == meta => (v, o.split(' ').toList.filter(_.nonEmpty))
             case _ => return Left("The server doesn't know the game's options yet: open Play Online on the site once, then press Start again.")
         })
@@ -440,7 +440,7 @@ object Lfg {
     def message(p : Post) : String = {
         val label = p.kind.label
         // the options its host chose
-        val picks = if (p.game.nonEmpty || p.cancelled || p.chosen.isEmpty) "" else LfgSetup.catalog(p.meta).map(c => LfgSetup.summary(c, p.chosen, p.options)).getOrElse("")
+        val picks = if (p.game.nonEmpty || p.cancelled) "" else LfgSetup.catalog(p.meta).map(c => LfgSetup.rankingLine(c, p.options) + (if (p.chosen.isEmpty) "" else LfgSetup.summary(c, p.chosen, p.options))).getOrElse("")
         val head = LfgSetup.emojiText(p.kind.emoji)
         val (text, bb) = p.game match {
             case Some(s) =>

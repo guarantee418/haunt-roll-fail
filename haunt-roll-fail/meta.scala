@@ -65,6 +65,13 @@ case class ErrorResult(m : String) extends ValidationResult(false, m, xstyles.er
 
 trait GameOption extends BaseOption
 
+// RANKED OR UNRANKED (asked for on 2026-11-22): the setup choice of an online game of a meta with a ranking (Root's, Northgard's),
+// offered only online (startSetup in hrf.scala). An unranked game is reported as a fan game: it counts in the stats, not in the
+// ratings or win rates (owner, 2026-11-22); games made before it have neither and count as before
+trait RankingChoice extends GameOption {
+    val ranked : Boolean
+}
+
 trait MetaBase {
     val gaming : Gaming
 
@@ -244,7 +251,7 @@ trait MetaBase {
         all./~{ o =>
             val n = writeOption(o)
             $("option\t" + n + "\t" + page(o) + "\t" + lfgPlayers.%(k => optionsFor(k, seats(k)).contains(o)).mkString(",") + "\t" + o.toggle.?(1).|(0) + "\t" +
-                optionShown(o, $).?(0).|(1) + "\t" + o.is[ImportantOption].?(1).|(0) + "\t" + clean(o.group.text) + "\t" + clean(o.valueOn.text),
+                optionShown(o, $).?(0).|(1) + "\t" + o.is[ImportantOption].?(1).|(0) + "\t" + clean(o.group.text) + "\t" + clean(o.valueOn.text) + "\t" + rankingUnapproved(o).?(1).|(0),
                 "required\t" + n + "\t" + alts(o.required(base)),
                 "blocked\t" + n + "\t" + alts(o.blocked(base)),
                 "on\t" + n + "\t" + w(o.forcedOn(base)),
@@ -277,6 +284,9 @@ trait MetaBase {
     def rankingSeat(g : G, f : F) : |[RankingSeat] = None
     // a game played with fan-made content: kept in the stats, left out of the ratings (asked for on 2026-11-18)
     def rankingFan(g : G) : Boolean = false
+    // an option not approved for ranked play (2026-11-22): marked "unranked" on the setup screen and in the Discord setup panel, and a
+    // ranked game can't be started with it (validateFactionSeatingOptions)
+    def rankingUnapproved(o : O) : Boolean = false
     // a draft's factions no seat took (2026-11-22, asked for: Advanced Setup's offered factions, for pick rates): "U" and the
     // faction, as rankingSeat names it, for one offered and not picked, "B" for one banned from the draft (Northgard's Adset)
     def rankingDraft(g : G) : $[(String, String)] = $

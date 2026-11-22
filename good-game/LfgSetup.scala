@@ -24,7 +24,8 @@ object LfgSetup {
 
     def file(meta : String) = TurnPings.dir.resolve(if (meta == Lfg.root.meta) "lfg-catalog.tsv" else "lfg-catalog-" + meta + ".tsv")
 
-    case class Opt(name : String, page : Int, ns : Set[Int], toggle : Boolean, cond : Boolean, important : Boolean, group : String, label : String)
+    // unranked: not approved for ranked play (MetaGame.rankingUnapproved; the catalog's tenth field, none in older catalogs)
+    case class Opt(name : String, page : Int, ns : Set[Int], toggle : Boolean, cond : Boolean, important : Boolean, group : String, label : String, unranked : Boolean = false)
 
     case class Catalog(meta : String, hash : String, version : String, players : List[Int], need : Option[(String, Int)],
         mandatory : Map[Int, List[String]], defaults : Map[Int, List[String]], presets : Map[Int, List[(String, List[String])]],
@@ -33,7 +34,29 @@ object LfgSetup {
         val byName = options.map(o => o.name -> o).toMap
         def all(n : Int) = options.filter(_.ns.contains(n)).map(_.name)
         def label(o : String) = byName.get(o).map(_.label).getOrElse(o)
+        // the options picked that aren't approved for ranked play
+        def unapproved(picked : List[String]) = picked.filter(o => byName.get(o).exists(_.unranked))
     }
+
+    // RANKED OR UNRANKED (asked for on 2026-11-22): the setup's Ranking section ("RankedGame", "UnrankedGame"), set with the command's
+    // `ranked` and on the post. A ranked game with something not approved for ranked play is made unranked when it's created
+    // (`rankedOptions`), as the setup screen refuses to start it, and the post says so
+    val rankingSection = "Ranking"
+    val ranked = "RankedGame"
+    val unranked = "UnrankedGame"
+
+    // the post's line: Ranked, or Unranked and why; nothing for a game with neither (a catalog from before the choice)
+    def rankingLine(c : Catalog, options : List[String]) : String =
+        if (options.contains(unranked)) "🎲 **Unranked**: no rating change, stats still kept\n"
+        else if (options.contains(ranked)) c.unapproved(options) match {
+            case Nil => "🏆 **Ranked**: counts toward the rankings\n"
+            case l => "🎲 **Unranked**: not approved for ranked play: " + l.map(c.label).mkString(", ") + "\n"
+        }
+        else ""
+
+    // the options a game is created with: a ranked one with something not approved for ranked play is unranked
+    def rankedOptions(c : Option[Catalog], options : List[String]) : List[String] =
+        if (options.contains(ranked) && c.exists(_.unapproved(options).nonEmpty)) options.map(o => if (o == ranked) unranked else o) else options
 
     val cached = new java.util.concurrent.ConcurrentHashMap[String, (Long, Option[Catalog])]()
 
@@ -63,8 +86,8 @@ object LfgSetup {
             rest.collectFirst { case "need" :: p :: k :: _ => (p, k.toIntOption.getOrElse(0)) },
             per("mandatory"), per("defaults"),
             rest.collect { case "preset" :: n :: t :: v :: _ => n.toInt -> (t, words(v)) }.groupBy(_._1).view.mapValues(_.map(_._2)).toMap,
-            rest.collect { case "option" :: n :: p :: ns :: t :: c :: i :: g :: l :: _ =>
-                Opt(n, p.toInt, ns.split(',').flatMap(_.toIntOption).toSet, t == "1", c == "1", i == "1", g, l) },
+            rest.collect { case "option" :: n :: p :: ns :: t :: c :: i :: g :: l :: more =>
+                Opt(n, p.toInt, ns.split(',').flatMap(_.toIntOption).toSet, t == "1", c == "1", i == "1", g, l, more.headOption.contains("1")) },
             rel2("required"), rel2("blocked"), rel("on"), rel("also"), rel("off"), rel("clear"))
     }.toOption
 
@@ -335,7 +358,7 @@ object LfgSetup {
         val mandatory = c.mandatory.values.flatten.toSet
         val picked = options.toSet ++ all
         val listed = c.options.filter(o => options.contains(o.name) && o.page >= 0 && !mandatory.contains(o.name))
-            .filterNot(o => o.name.startsWith("ColorOption(") || o.name.startsWith("TeamOption("))
+            .filterNot(o => o.name.startsWith("ColorOption(") || o.name.startsWith("TeamOption(") || o.group == rankingSection)
             .filter(o => c.required.getOrElse(o.name, List(Nil)).exists(_.forall(picked.contains)))
         val pool = c.need.map(_._1)
         val lines = listed.map(_.group).distinct.map { g =>
@@ -372,7 +395,7 @@ object LfgSetup {
     // game the expansion's parts (WildernessTiles ...), in Adset the parts of the expansion drafted or agreed (WildPartsBoth ...); a
     // standard game also takes the Creatures module (and More creatures!), which Adset always has. These sections ("@...") have the
     // same choices in both modes (`translate` turns them into each mode's options)
-    val nortCommand = List(("length", "The game's length", "Game length"), ("victory", "The victory conditions", "Victory conditions"),
+    val nortCommand = List(("ranked", "Ranked or unranked (ranked if not given)", rankingSection), ("length", "The game's length", "Game length"), ("victory", "The victory conditions", "Victory conditions"),
         ("wilderness", "Wilderness: tiles, creatures or both", "@wilderness"), ("wastelands", "Wastelands: tiles, creatures or both", "@wastelands"),
         ("warchiefs", "The Warchief expansion", "Warchief expansion"),
         ("fame", "Whether fame is public", "Fame"), ("undo", "How much undo is allowed", "Undo"))
@@ -380,9 +403,9 @@ object LfgSetup {
     // `creatures`, a standard game `lands`, as `sections` leaves them out; 2026-11-21)
     // and the central (starting) tile, standard only too, as Adset's seats draft it in the game (asked for on 2026-11-22); last, so the
     // modules picked before it let the Wyvern's Den and the Gate of Helheim in (`translate` adds the Creatures module they need)
-    val nortStdCommand = nortCommand.take(2) ++ List(("creatures", "Standard only (Adset always has it): the Creatures module", "@creatures")) ++ nortCommand.drop(2) ++
+    val nortStdCommand = nortCommand.take(3) ++ List(("creatures", "Standard only (Adset always has it): the Creatures module", "@creatures")) ++ nortCommand.drop(3) ++
         List(("central", "Standard only (Adset drafts it): the central, starting tile", "Central tile"))
-    val nortAdsetCommand = nortCommand.take(2) ++ List(("lands", "Adset only, standard games skip it: Wilderness or Wastelands", "Wilderness or Wastelands")) ++ nortCommand.drop(2)
+    val nortAdsetCommand = nortCommand.take(3) ++ List(("lands", "Adset only, standard games skip it: Wilderness or Wastelands", "Wilderness or Wastelands")) ++ nortCommand.drop(3)
     val nortPanel = List("Uncharted Horizons", "Development cards", "Fan content", "Fan victories")
 
     def isNort(meta : String) = meta == Lfg.nort.meta || meta == Lfg.nortStd.meta
@@ -418,7 +441,7 @@ object LfgSetup {
     def sections(k : Lfg.Kind) : List[(String, String, String)] =
         if (k == Lfg.nort) nortAdsetCommand
         else if (k == Lfg.nortStd) nortStdCommand
-        else List(("map", "The map", "#0"), ("deck", "The deck", "#1"), ("clearings", "How the clearings' suits are set", "Clearings"), ("hirelings", "The hirelings", "Hirelings"),
+        else List(("ranked", "Ranked or unranked (ranked if not given)", rankingSection), ("map", "The map", "#0"), ("deck", "The deck", "#1"), ("clearings", "How the clearings' suits are set", "Clearings"), ("hirelings", "The hirelings", "Hirelings"),
             ("landmarks", "A landmark", "Landmarks"), ("insurgent_lock", "Whether the last insurgent is locked", "Insurgent Lock"))
     // the panel's sections: the hits and ambushes (the section whose name starts so), and the hirelings in their draft, when the
     // hirelings picked aren't none
@@ -461,6 +484,9 @@ object LfgSetup {
 
     def cut(s : String, n : Int) = if (s.length <= n) s else s.take(n - 1) + "…"
 
+    // under an option not approved for ranked play, in the panel's menus
+    def unrankedNote(o : Opt) = if (o.unranked) " · ⚠️ makes the game unranked" else ""
+
     // a menu: each option's name, value, whether it's shown as picked, emoji and a line under it ("" for none)
     def select(id : String, placeholder : String, min : Int, max : Int, options : List[(String, String, Boolean, String, String)]) =
         "{\"type\":1,\"components\":[{\"type\":3,\"custom_id\":" + Lfg.json(id) + ",\"placeholder\":" + Lfg.json(cut(placeholder, 150)) +
@@ -489,13 +515,13 @@ object LfgSetup {
                 case "choices" =>
                     val now = m.options.filter(picked).map(o => o.group + ": " + o.label).mkString(" · ")
                     select(id, if (now.isEmpty) m.group else now, 0, m.options.size,
-                        m.options.map(o => (o.group + ": " + o.label, o.name, false, emojiField(o.name), if (picked(o)) "✅ Picked" else "Pick to switch to this")))
+                        m.options.map(o => (o.group + ": " + o.label, o.name, false, emojiField(o.name), (if (picked(o)) "✅ Picked" else "Pick to switch to this") + unrankedNote(o))))
                 case _ if m.many =>
                     val on = m.options.count(picked)
                     select(id, m.group + ": " + on + " of " + m.options.size + " · pick to change", 0, m.options.size,
-                        m.options.map(o => (o.label, o.name, false, emojiField(o.name), if (picked(o)) "✅ Picked · pick to take it out" else "Not picked · pick to add it")))
+                        m.options.map(o => (o.label, o.name, false, emojiField(o.name), (if (picked(o)) "✅ Picked · pick to take it out" else "Not picked · pick to add it") + unrankedNote(o))))
                 case _ =>
-                    select(id, m.group, 1, 1, m.options.map(o => (m.group + ": " + o.label, o.name, picked(o), emojiField(o.name), "")))
+                    select(id, m.group, 1, 1, m.options.map(o => (m.group + ": " + o.label, o.name, picked(o), emojiField(o.name), unrankedNote(o).stripPrefix(" · "))))
             }
         }
 
@@ -505,13 +531,14 @@ object LfgSetup {
 
         val kind = Lfg.kind(s.c.meta)
         val text = emojiText(kind.emoji) + "**" + kind.label + ": " + d.title + "**, " + d.n + " players\n" +
+            rankingLine(s.c, s.actual) +
             summary(s.c, d.picked, s.actual) +
             (if (d.note.nonEmpty) "**" + d.note + "**\n" else "") +
             (if (isNort(kind.meta))
-            "The game length, victory conditions, " + (if (kind.clans) "Creatures, " else "the expansion drafted, ") + "Wilderness and Wastelands parts, warchiefs, " + (if (kind.clans) "central tile, " else "") + "fame and undo are as given with /" + kind.command + " (or the site's defaults). " +
+            "Ranked or unranked, the game length, victory conditions, " + (if (kind.clans) "Creatures, " else "the expansion drafted, ") + "Wilderness and Wastelands parts, warchiefs, " + (if (kind.clans) "central tile, " else "") + "fame and undo are as given with /" + kind.command + " (or the site's defaults). " +
             "Pick the Uncharted Horizons modules, the Development cards and any fan content, then press **Open the game** to post it here for players to join. Only you see this."
             else
-            "The map, deck, clearings, hirelings, landmarks and insurgent lock are as given with /root (or the site's defaults). Pick the hits and ambushes, the factions in the draft" +
+            "Ranked or unranked, the map, deck, clearings, hirelings, landmarks and insurgent lock are as given with /root (or the site's defaults). Pick the hits and ambushes, the factions in the draft" +
             (if (menus.exists(m => hirelingDraft.contains(m.group))) " and the hirelings in their draft" else "") +
             ", then press **Open the game** to post it here for players to join. Only you see this.")
 

@@ -96,9 +96,19 @@ object Meta extends MetaGame { mmm =>
     // fan content (rankingFan): only a fan clan, the Lion Kingdom or a fan version of a clan (the lower skill floor Dragon, the
     // Bear variant); fan modules and options are rated, as Northgard has much modular content and few players (owner,
     // 2026-11-21; before, any fan module or option kept a game out of the ratings)
-    def rankFan(game : Game) : Boolean = game.setup.has(Lion) || game.options.exists {
+    // and a game picked as unranked (UnrankedGame, 2026-11-22)
+    def rankFan(game : Game) : Boolean = game.options.has(UnrankedGame) || game.setup.has(Lion) || game.options.exists(unapproved)
+
+    def unapproved(o : O) : Boolean = o match {
         case ModuleOption(DragonVariant) | ModuleOption(BearBorder) => true
         case _ => false
+    }
+    override def rankingUnapproved(o : O) = unapproved(o)
+
+    // a ranked game with a fan clan is refused (the setup screen's Start), naming it
+    def rankedCheck(factions : $[Faction], options : $[O]) : |[ValidationResult] = options.has(RankedGame).??{
+        val why = factions.has(Lion).$("the Lion Kingdom") ++ options.has(ModuleOption(DragonVariant)).$("the lower skill floor Dragon") ++ options.has(ModuleOption(BearBorder)).$("the Bear variant")
+        why.any.?(ErrorResult("Fan clans aren't approved for ranked play: pick Unranked to play " + why.mkString(" or ")))
     }
 
     def rankSides(game : Game, winners : $[Any]) : $[($[Faction], Boolean)] = {
@@ -126,7 +136,7 @@ object Meta extends MetaGame { mmm =>
     // New Blood has no option: picking one of its clans brings it in
     // The modules come in one section per box, as Robotos laid them out (2026-10-26): Base game, Warchief expansion, Wilderness and
     // Wastelands expansions (with their bans and the Central tile), Uncharted Horizons; Balanced starting tiles before them
-    val options : $[O] = ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ $(ModuleOption(Creatures), MoreCreatures) ++ WarchiefsChoice.all ++ $(WildernessTiles, WildernessCreatures, WastelandsTiles, WastelandsCreatures) ++ BanEnvironment.all ++ BanCreature.all ++ CentralChoice.all ++ $(ModuleOption(EventsModule), ModuleOption(Sea), HorizonsTiles) ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ AutomaLevelOption.all ++ $(BalancedStartTiles) ++ DevelopmentsChoice.fan ++ Module.all.%(_.fan).but(LionKingdom).but(DragonVariant).but(BearBorder).diff(FanVictories.modules)./(ModuleOption) ++ FanVictories.modules./(ModuleOption) ++ $(DominationVictory) ++ hiddenOptions
+    val options : $[O] = RankingOption.all ++ ColorOption.all ++ TeamOption.all ++ YearsOption.all ++ $(StandardVictory, FameOnly, AltVictoryRandom, AltVictoryChosen, VictoryModeOption(false), VictoryModeOption(true)) ++ VictoryCardOption.all ++ $(FirstSeatStarts) ++ FameChoice.all ++ UndoChoice.all ++ EditionChoice.all ++ $(ModuleOption(Creatures), MoreCreatures) ++ WarchiefsChoice.all ++ $(WildernessTiles, WildernessCreatures, WastelandsTiles, WastelandsCreatures) ++ BanEnvironment.all ++ BanCreature.all ++ CentralChoice.all ++ $(ModuleOption(EventsModule), ModuleOption(Sea), HorizonsTiles) ++ $(NoDrawDevelopments, NoDefensiveStrategy, ExtraAchievement, HorizonsDevelopments) ++ BanDevelopment.all ++ AutomaLevelOption.all ++ $(BalancedStartTiles) ++ DevelopmentsChoice.fan ++ Module.all.%(_.fan).but(LionKingdom).but(DragonVariant).but(BearBorder).diff(FanVictories.modules)./(ModuleOption) ++ FanVictories.modules./(ModuleOption) ++ $(DominationVictory) ++ hiddenOptions
 
     // Colors and teams only for the clans in the game, as many teams as players
     override def optionsFor(n : Int, l : $[F]) = options.%{
@@ -202,7 +212,7 @@ object Meta extends MetaGame { mmm =>
 
     // Colors by seat, as before colors could be chosen
     // Teams alternate by seat (two teams), as the old team variants did
-    override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } ++ l.zipWithIndex./{ case (f, i) => TeamOption(f, i % 2) : O } :+ (YearsOption.standard : O) :+ (StandardVictory : O) :+ (VictoryModeOption(false) : O) :+ (PrivateFame : O) :+ (UnlimitedUndo : O) :+ (EditionChoice.default : O) :+ (StandardCentral : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O)
+    override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } ++ l.zipWithIndex./{ case (f, i) => TeamOption(f, i % 2) : O } :+ (YearsOption.standard : O) :+ (StandardVictory : O) :+ (VictoryModeOption(false) : O) :+ (PrivateFame : O) :+ (UnlimitedUndo : O) :+ (EditionChoice.default : O) :+ (StandardCentral : O) :+ (RankedGame : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O)
 
     override def quickOptions = options./(o => o -> 0.0).toMap
 
@@ -238,6 +248,7 @@ object Meta extends MetaGame { mmm =>
                 (options.has(TeamPlay) && teams.num < 2).?(ErrorResult("Put the players in at least two teams")) ||
                 (factions.has(Automa) && options.has(ModuleOption(PCVersion))).?(ErrorResult("The PC version is not for the Automa")) ||
                 (factions.has(Automa) && options.of[AutomaLevelOption].exists(_.level >= 3) && has(options, Creatures).not).?(ErrorResult("Automa levels 3 and up need the Creatures module")) ||
+                rankedCheck(factions, options) ||
                 validateVictoryCards(factions, options) ||
                 missing.any.?(WarningResult(missing./(factionName).mkString(", ") + " will get a free color")) ||
                 tooManyBans(factions, options).?(WarningResult("The banned Development cards leave too few: some years will reveal fewer cards")) ||
