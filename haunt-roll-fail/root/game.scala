@@ -2049,6 +2049,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     val cards = new ValueTracker[Card]
     Deck.frankenArt = options.has(FrankenDeck)
     Deck.darkArt = options.has(DarkDeck)
+    Deck.capitalistsArt = options.has(CapitalistsDeck)
     // a tournament game's deck is dealt when its draft picks it (TournamentExpansion)
     val playingDeck = (options.has(TournamentDraft) && options.of[DeckOption].none).?($[DeckCard]()).|(Deck.fromOptions(options, players.num, players.of[Faction]))
     var frankenDealt = false
