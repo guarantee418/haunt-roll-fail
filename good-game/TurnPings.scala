@@ -407,7 +407,9 @@ object TurnPings {
             case (false, "picklandmark") => (e("TowerLandmark"), "pick the landmark for the Tower's clearing")
             case (false, "partisans") => (head, ("Partisans " + w(e("ExilesDeck"))).trim + " can join your battle")
             case (false, "prisoners") => (e("IncludeFaction(KD)"), "prisoners to deal with")
-            case (false, "negotiate") => (e("IncludeFaction(LDvE)"), "a negotiation awaits you")
+            // (a "negotiate" reason, from a page on the client before 2026-11-23, is just the seat's turn: negotiations are never owed,
+            // and the ping reminded the enemy of them)
+            case (false, "negotiate") => (head, "it's your turn")
             case (false, "entreat") => (e("IncludeFaction(TC)"), them.map(_ + " entreated you").getOrElse("you were entreated"))
             case (false, "hospitals") => (e("IncludeFaction(MC)"), "Field Hospitals: save your cats?")
             case (false, "setup") => (head, "time to set up")
