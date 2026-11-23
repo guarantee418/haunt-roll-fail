@@ -290,6 +290,8 @@ trait MetaBase {
     // a draft's factions no seat took (2026-11-22, asked for: Advanced Setup's offered factions, for pick rates): "U" and the
     // faction, as rankingSeat names it, for one offered and not picked, "B" for one banned from the draft (Northgard's Adset)
     def rankingDraft(g : G) : $[(String, String)] = $
+    // the game's landmarks and hirelings, for the stats (2026-11-23, asked for): "K" and a landmark's name, "H" and a hireling's
+    def rankingSetup(g : G) : $[(String, String)] = $
     // Other games on the main menu that are their own meta (Northgard's Adset): the menu label and the meta's name
     def linkedModes : $[(String, String)] = $
     // A tutorial on the main menu (Northgard's): a line about it, its lessons (each a title and its paragraphs), and the
@@ -441,8 +443,10 @@ case class RankingTier(name : String, min : |[Double], note : String, icon : |[S
 object RankingSeat {
     // a faction's name as a report writes it, spaces as "_" (also the draft's "U:" and "B:" lists, MetaGame.rankingDraft)
     def name(faction : String) = faction.replace(' ', '_').toList.filter(c => c.isLetterOrDigit || "_'().-!&".contains(c)).mkString.take(48)
-    // what a report adds for a draft: ";U:name,name;B:name"
-    def draft(l : $[(String, String)]) : String = $("U", "B")./{ k => val nn = l.filter(_._1 == k).map(x => name(x._2)).filter(_.nonEmpty) ; nn.any.??(";" + k + ":" + nn.mkString(",")) }.mkString
+    // the kinds of those lists: the draft's left (U) and banned (B), the landmarks (K) and the hirelings (H) (not "L", a losing side)
+    val kinds = $("U", "B", "K", "H")
+    // what a report adds for a draft and the setup: ";U:name,name;B:name;K:name;H:name"
+    def draft(l : $[(String, String)]) : String = kinds./{ k => val nn = l.filter(_._1 == k).map(x => name(x._2)).filter(_.nonEmpty) ; nn.any.??(";" + k + ":" + nn.mkString(",")) }.mkString
 }
 
 case class RankingSeat(faction : String, seat : Int, players : Int, score : |[String]) {

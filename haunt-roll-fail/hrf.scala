@@ -430,7 +430,9 @@ object Elo {
     // fan: played with fan-made content (MetaGame.rankingFan), counted only in the stats
     // undrafted, banned: a draft's factions no seat took, and those banned from it (MetaGame.rankingDraft; reported since
     // 2026-11-22, and for the games before from good-game/ranking-drafts.tsv); drafted: the game had a draft
-    case class Result(game : String, time : String, title : String, sides : $[Side], fan : Boolean = false, undrafted : $[String] = $, banned : $[String] = $) {
+    // landmarks, hirelings: those in the game (MetaGame.rankingSetup; reported since 2026-11-23, asked for, and for the games before from
+    // good-game/ranking-drafts.tsv)
+    case class Result(game : String, time : String, title : String, sides : $[Side], fan : Boolean = false, undrafted : $[String] = $, banned : $[String] = $, landmarks : $[String] = $, hirelings : $[String] = $) {
         def drafted = undrafted.any || banned.any
         // the tournament score of a winning side: the win shared between the winning sides (a coalition, ...)
         def share = 1.0 / sides.count(_.won)
@@ -466,7 +468,7 @@ object Elo {
                 val ss = sides.split(';').$.%(_.length > 2).%(s => s.startsWith("W:") || s.startsWith("L:"))./(s => Side(s.drop(2).split(',').$.%(_.nonEmpty)./(entry).distinctBy(e => (e.name == "*").?(e.seat.toString).|(e.name.toLowerCase)), s.startsWith("W:")))
                 val names = ss.flatMap(_.names).map(_.toLowerCase).but("*")
                 def draft(k : String) = sides.split(';').$.%(_.startsWith(k + ":"))./~(_.drop(2).split(',').$.%(_.nonEmpty)./(_.replace('_', ' ')))
-                (names.distinct.num == names.num).?(Result(game, time, title, ss, sides.split(';').$.has("X:fan"), draft("U"), draft("B")))
+                (names.distinct.num == names.num).?(Result(game, time, title, ss, sides.split(';').$.has("X:fan"), draft("U"), draft("B"), draft("K"), draft("H")))
             case _ => None
         }
     }.sortBy(_.time)
@@ -536,6 +538,24 @@ object Elo {
             val p = picks.filter(_._1 == k)
             Draft(k, p.num + left.count(_ == k) + banned.count(_ == k), p.num, banned.count(_ == k), p.map(_._2).sum)
         }.sortBy(d => (-d.pickRate, -d.offered))
+    }
+
+    // The landmark and hireling stats (2026-11-23, asked for): in the games that say what they had (setup), how many had each
+    // landmark or hireling, and which factions won those games (score as in the faction stats)
+    case class Setup(key : String, kind : String, games : Int, setup : Int, wins : $[(String, Double)]) {
+        def share = games.toDouble / setup
+    }
+
+    def setups(results : $[Result]) : $[Setup] = {
+        def base(f : String) = f.takeWhile(_ != '(').trim
+        // a game says what it had once it has either (a base game with neither landmark nor hireling then can't be told apart)
+        val rr = results.%(r => r.landmarks.any || r.hirelings.any)
+        def of(kind : String, items : Result => $[String]) = rr./~(items).distinct./{ k =>
+            val in = rr.%(r => items(r).has(k))
+            val wins = in./~(r => r.sides.%(_.won)./~(s => s.entries./~(_.seat)./(e => (base(e.faction), r.score(s))))).groupBy(_._1).toList.map { case (f, l) => (f, l.map(_._2).sum) }.sortBy(-_._2)
+            Setup(k, kind, in.num, rr.num, wins)
+        }.sortBy(x => (-x.games, x.key))
+        of("Landmarks", _.landmarks) ++ of("Hirelings", _.hirelings)
     }
 
     def seats(results : $[Result]) : $[(Result, Side, RankingSeat)] = results./~(r => r.sides./~(s => s.entries./~(_.seat)./(e => (r, s, e))))
@@ -1129,10 +1149,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         }(())
                     }
 
-                    // the draft's factions no seat took, "U <faction> ...", and those banned, "B <faction> ..." (MetaGame.rankingDraft; 2026-11-22)
+                    // the draft's factions no seat took, "U <faction> ...", and those banned, "B <faction> ..." (MetaGame.rankingDraft; 2026-11-22),
+                    // and the game's landmarks, "K <landmark> ...", and hirelings, "H <hireling> ..." (MetaGame.rankingSetup; 2026-11-23)
                     def draftLines(g : meta.G) : $[String] = {
-                        val d : $[(String, String)] = scala.util.Try(meta.rankingDraft(g)).getOrElse($)
-                        $("U", "B")./~{ k => val l = d.filter(_._1 == k).map(x => RankingSeat.name(x._2)).filter(_.nonEmpty) ; l.any.$((k +: l).join(" ")) }
+                        val d : $[(String, String)] = scala.util.Try(meta.rankingDraft(g) ++ meta.rankingSetup(g)).getOrElse(Nil)
+                        RankingSeat.kinds./~{ k => val l = d.filter(_._1 == k).map(x => RankingSeat.name(x._2)).filter(_.nonEmpty) ; l.any.$((k +: l).join(" ")) }
                     }
 
                     def reportResult(g : meta.G, winners : $[Any], note : Elem => Unit) {
@@ -1714,6 +1735,23 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             )
         }
 
+        // the landmark and hireling stats (2026-11-23, asked for): how many games had each, and who won them
+        def setups(all : $[Elo.Player]) {
+            val ss = Elo.setups(results)
+            val known = results.count(r => r.landmarks.any || r.hirelings.any)
+            ui.action.asker.zask(
+                $(ZOption((meta.label + " Landmark and Hireling Stats").hl.spn(xstyles.larger110), box("From the finished online games that had a landmark or a hireling (" ~ known.hl ~ "). The bar is the share of those games each was in; the factions are who won them (" ~ "1".hl ~ " for a win, shared between the winning sides).", "rk-note"))) ++
+                tabs("Landmarks & Hirelings", all) ++
+                ss./(x => ZOption(heading(x.kind + " · games"), box(
+                    tag(Text(x.key).spn(css("rk-fname")) ~ tag(Text("in " + x.games + " of " + x.setup) ~ x.wins.take(3).some./(l => " · won by " ~ l./{ case (f, n) => factionName(f) ~ " " ~ (n == n.round).?(n.round.toString).|((math.round(n * 10) / 10.0).toString) }.join(", ")).|(Empty), "rk-sub"), "rk-who") ~
+                    bar(x.share, None, $) ~
+                    num(percent(x.share))(css("rk-pct")),
+                "rk-stat"))) ++
+                ss.none.$(note(heading("Landmarks and hirelings"), "No finished games with a landmark or a hireling yet.".txt)) ++
+                $(ZBasic(" ", Div("Back"), () => show(all)))
+            )
+        }
+
         def turns(all : $[Elo.Player]) {
             val seats = Elo.seats(results)
             ui.action.asker.zask(
@@ -1919,6 +1957,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 "Factions" -> (() => factions(all, None)),
                 "Turn Order" -> (() => turns(all)),
                 "Draft" -> (() => drafts(all)),
+                "Landmarks & Hirelings" -> (() => setups(all)),
                 "Codex" -> (() => codex(all))
             ))./{ case (l, f) => ZBasic(Empty, tag(Text(l), "rk-chip-text"), f, css("rk-chip", "rk-tab") ++ (l == current).$(ExternalStyle("rk-chip-on")) ++ $(xlo.pointer)) })
 
@@ -2102,6 +2141,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 seats.any.$(ZBasic(" ", Div((factionStats.num > top).?("All " + factionStats.num + " factions, by player count").|("Faction stats by player count")), () => factions(all, None))) ++
                 seats.any.$(ZBasic(" ", Div("Turn order stats"), () => turns(all))) ++
                 results.exists(_.drafted).$(ZBasic(" ", Div("Draft stats"), () => drafts(all))) ++
+                results.exists(r => r.landmarks.any || r.hirelings.any).$(ZBasic(" ", Div("Landmark and hireling stats"), () => setups(all))) ++
                 $(ZOption(heading("Your player code"), box(you, "rk-note"))) ++
                 $(ZBasic(heading("Your player code"), Div("Show my player code"), () => showCode())) ++
                 $(ZBasic(heading("Your player code"), Div("Use a code from another device"), () => useCode())) ++
