@@ -1,6 +1,6 @@
 # Hex tactics: handoff
 
-A hex-based tactical war game, started on 2026-11-23. `tactics` is a working name, kept until the game has a
+A hex-based tactical war game of the owner's own design, started on 2026-11-23. `tactics` is its working name (owner, 2026-11-23), kept until the game has a
 name of its own. Built in steps; this is Step 1.
 
 ## State
