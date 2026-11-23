@@ -359,7 +359,7 @@ cd haunt-roll-fail && sbt fullOptJS
   `Meta.rankingUnapproved` (Root's `unapproved` and `unapprovedPick`, which adds fan factions in Advanced Setup's pool; Northgard's
   fan clan variants, and the Lion Kingdom by faction): marked "unranked" beside the option on an online setup screen, and a Ranked game
   with any of it can't be started (`rankedCheck`, in `validateFactionSeatingOptions`). Root's Tidal Flats, Tundra and Gloom maps and
-  the Dawn and Dusk deck are approved since 2026-11-22 (owner). A ranked game with a bot gets a warning. The Discord bot's `/root` and
+  the Dawn and Dusk deck are approved since 2026-11-22, and the Simple Landmarks and the Negabond (a second Vagabond, `approved`) since 2026-11-23 (owner). A ranked game with a bot gets a warning. The Discord bot's `/root` and
   `/northgard` take `ranked` (`LfgSetup.sections`), the catalog's tenth field marks each unapproved option (its menus say "makes the
   game unranked"), the post says Ranked or Unranked and why (`rankingLine`), and a Ranked game with unapproved picks is created
   Unranked (`rankedOptions`). Names are released or
@@ -385,7 +385,7 @@ cd haunt-roll-fail && sbt fullOptJS
   each its own page, `/play/my-games` and `/play/account` (served like a meta's page, `data-meta` naming them, and shown by a Root
   `HRFMetaUI` with `siteWide` set, whose Back loads `/play`). My Online Games is Play Online's list for every game (`onlineGame` with
   `siteWide`: the account row opens My Account, no New Online Game or Archived Games, "Start a new online game" buttons opening each
-  game's `/play/<meta>/online/new`). My Account (`myAccount`) gathers the names this device holds, each name's rating on every ladder
+  game's `/play/<meta>/online/new`, Root's being Root Adset's, 2026-11-23). My Account (`myAccount`) gathers the names this device holds, each name's rating on every ladder
   (from `/rankings/<metas>`, tapping opens that game's Rankings), Discord and turn pings, other devices and codes, Switch account and
   Sign out; Play Online's Account and the Rankings' player code section stay. Client only.
 - Fixing a running game: through the `hrf-games` repository (copy `games/<id>.tsv` to
@@ -1149,13 +1149,13 @@ server. No session can reach the server, and none needs to.
   `good-game/Turns.scala`, which calls `TurnPings.report`) and the lobby's "user <faction> <user>" lines. A soft step inside a MultiAsk (a card picked before "Keep") still reports every seat it asks (`turnMulti` in `runner.scala`): one player's pick took the others off the list (2026-11-22). Every open page reports the same turn, and for it a seat's reason only replaces a kept one it doesn't shorten (`Turns.report`): a page open since before a deploy reported "defend/LC" after a newer one's "defend/LC/KD", so the ping named no attacker (2026-11-23). Only seats under a ranking name whose owner gave a Discord user
   ID (or a username the bot found, or one the owner set) and didn't turn pings off ("Discord turn pings" under Rankings, `discordPings` in `rankingsMenu`; `/discord/mine`, `/discord/pings`,
   `tournament/discord-pings.tsv`; on unless turned off since 2026-11-20, asked for) are mentioned, each by their own mention
-  (`allowed_mentions` lists only them, never @everyone). Each ping leads with the seat's faction or clan emoji (the one its reason names, else the seat's own in a standard game; 2026-11-22, as some pings had none), as does the first-turn line; a battle, a fight or an Entreat also names the other side with its emoji and name, "you're under attack ⚔️ by X", "your battle ⚔️ against X", "X entreated you" (the sword or axe right after "attack", "battle" or "fight") (the reason's third part, "defend/<seat faction>/<other>", from the asking action's attacker and defender, else the clan whose turn it is or the other clan in the fought territory; 2026-11-22; a Northgard creature as "~<its name>", from the asking action's creature, else `game.creatureFights` or the fought territory, shown as "the **Brown Bear**" with the Discord server's emoji of that name if it has one), and says why the seat is asked, with an emoji in the server's style (asked for on 2026-11-21; `TurnPings.reasonOf`): the
+  (`allowed_mentions` lists only them, never @everyone). Each ping leads with the seat's faction or clan emoji (the one its reason names, else the seat's own in a standard game; 2026-11-22, as some pings had none), as does the first-turn line; a battle, a fight or an Entreat also names the other side with its emoji and name, "you're under attack ⚔️ by X", "your battle ⚔️ against X", "X entreated you" (the sword or axe right after "attack", "battle" or "fight", and the Partisans card right after "Partisans") (the reason's third part, "defend/<seat faction>/<other>", from the asking action's attacker and defender, else the clan whose turn it is or the other clan in the fought territory; 2026-11-22; a Northgard creature as "~<its name>", from the asking action's creature, else `game.creatureFights` or the fought territory, shown as "the **Brown Bear**" with the Discord server's emoji of that name if it has one), and says why the seat is asked, with an emoji in the server's style (asked for on 2026-11-21; `TurnPings.reasonOf`): the
   client adds a third line to its turn report, "<seat>=<reason>", from `Meta.turnReason` (`root/turn-reasons.scala` and
   `nort/turn-reasons.scala`, `TurnReasons`: the action that asked, `game.asker`, set in `internalPerform`, and the choices offered),
   kept in `turns.tsv`'s fourth column (`Turns.reason`): Root's under attack or a battle (the server's sword emoji), the cards kept
   at the start, the hand limit, the faction draft, the tournament picks, Partisans, prisoners, a Lilypad negotiation, an Entreat,
-  Field Hospitals, setup and the faction's own turn (its head); Northgard's fights (the axe), harvest trading and Winter (the bot's
-  `ng_trade` and `ng_winter` badges), card picks, setup, the Adset draft, raids, Events and the clan's own turn (its emblem). The
+  Field Hospitals, setup and the faction's own turn (its head); Northgard's fights (the axe), harvest trading and Winter (plain ⚖️
+  and ❄️ after the words, so the webhook can post them, not the bot's `ng_trade` and `ng_winter` badges; 2026-11-23), card picks, setup, the Adset draft, raids, Events and the clan's own turn (its emblem). The
   reasons say nothing only the seat may know (an ambush question and assigning hits are both "under attack"). `NORT_REASONS=1` in
   `nort.Host` prints them. A game's thread also says who takes the first turn, the first time the game waits on one seat alone
   (`announceFirst`, `turns/firsts.tsv`; mentioning them; only games first reported since 2026-11-21, when
@@ -1300,9 +1300,8 @@ server. No session can reach the server, and none needs to.
   it with any piece there, `treeRules` in `rules`), all in `root/simple-landmarks.scala` (its header lists the readings). They are placed at
   setup like the other landmark toggles, where the Landmarks Pack's setup cards put them, after the map's own landmarks. Their pieces are the
   Landmarks Pack's Legendary Forge, Black Market and Elder Treetop (`feature/simple-forge`, `simple-market`, `royal-tree`, cut from the Leder
-  Card Library cards by `root/tools/simple-landmarks-art.py`) and the Tower. They count as fan content for the rankings, except the Birdsong
-  Tower, which the owner made official for the site on 2026-11-20 (`rankFan`): it counts toward Elo (on the setup screen it stays with the
-  Simple Landmarks), and in the tournament draft it is one of the third seat's
+  Card Library cards by `root/tools/simple-landmarks-art.py`) and the Tower. They are approved for ranked play (`unapproved` in `root/meta.scala`): the Birdsong Tower since 2026-11-20, the other three since
+  2026-11-23 (owner); before, those three made a game fan content. In the tournament draft the Birdsong Tower is one of the third seat's
   choices for the Mountain's Tower clearing (`landmarks` in `root/tournament.scala`; the Tournament page says so). The draft keeps any
   Simple Landmark options when it sets the map's landmarks. `ReplayCheck <games> base simplelm` plays them, `birdsong` the Birdsong
   Tower alone.

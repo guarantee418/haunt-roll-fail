@@ -43,8 +43,8 @@ case object RankedGame extends RankingOption {
     val valueOn = "Ranked".hlb
     override val explain = $(
         "Counts toward the " ~ "Elo ratings".hh ~ " and the faction and turn order stats, when every seat is a person (a game with a bot never counts).",
-        "Approved for ranked play: the official factions (base, expansions and " ~ "Homeland".hh ~ "), the official maps and the fan maps " ~ "Tidal Flats".styled(ED) ~ ", " ~ "Tundra".styled(RF) ~ " and " ~ "Gloom".styled(styles.forest) ~ ", the decks " ~ "Capitalists and Anarchists".hh ~ ", " ~ "Exiles and Partisans".hh ~ ", " ~ "Squires and Disciples".hh ~ ", " ~ "Might and Right".hh ~ ", " ~ "Mixed".hh ~ " and " ~ "Dawn and Dusk".hh ~ ", the official landmarks and the " ~ "Birdsong Tower".hh ~ ", and the official hirelings.",
-        "Not approved: fan, playtest and mirror factions, the other fan maps and decks, the " ~ "Action! Deck Booster".hh ~ ", the other " ~ "Simple Landmarks".hh ~ ", " ~ "Turnlings".hh ~ ", " ~ "Doomed Vagabonds".hh ~ " and " ~ "Knave Captains".hh ~ ", and the " ~ "Legends Scenarios".hh ~ ". The setup screen marks each of them " ~ "unranked".styled(xstyles.warning) ~ ".",
+        "Approved for ranked play: the official factions (base, expansions and " ~ "Homeland".hh ~ ") and the " ~ "Negabond".styled(NB) ~ " as a second " ~ "Vagabond".styled(VB) ~ ", the official maps and the fan maps " ~ "Tidal Flats".styled(ED) ~ ", " ~ "Tundra".styled(RF) ~ " and " ~ "Gloom".styled(styles.forest) ~ ", the decks " ~ "Capitalists and Anarchists".hh ~ ", " ~ "Exiles and Partisans".hh ~ ", " ~ "Squires and Disciples".hh ~ ", " ~ "Might and Right".hh ~ ", " ~ "Mixed".hh ~ " and " ~ "Dawn and Dusk".hh ~ ", the official landmarks and the " ~ "Simple Landmarks".hh ~ ", and the official hirelings.",
+        "Not approved: fan, playtest and the other mirror factions, the other fan maps and decks, the " ~ "Action! Deck Booster".hh ~ ", " ~ "Turnlings".hh ~ ", " ~ "Doomed Vagabonds".hh ~ " and " ~ "Knave Captains".hh ~ ", and the " ~ "Legends Scenarios".hh ~ ". The setup screen marks each of them " ~ "unranked".styled(xstyles.warning) ~ ".",
     )
 }
 
@@ -1496,7 +1496,7 @@ trait SimpleLandmark extends Landmark {
 case object SimpleForgeLandmark extends SimpleLandmark {
     val name = "Forge"
     override val explain = $(
-        "Simple Landmarks".hh ~ " (house rules), with the " ~ "Legendary Forge".hh ~ " piece; placed in a clearing without a landmark, not next to one.",
+        "Simple Landmarks".hh ~ ", with the " ~ "Legendary Forge".hh ~ " piece; placed in a clearing without a landmark, not next to one.",
         "If your faction pieces are in its clearing, treat it as one of your crafting pieces."
     )
 }
@@ -1504,7 +1504,7 @@ case object SimpleForgeLandmark extends SimpleLandmark {
 case object SimpleMarketLandmark extends SimpleLandmark {
     val name = "Market"
     override val explain = $(
-        "Simple Landmarks".hh ~ " (house rules), with the " ~ "Black Market".hh ~ " piece; placed in a clearing with exactly one building slot and no ruin, without a landmark and not next to one.",
+        "Simple Landmarks".hh ~ ", with the " ~ "Black Market".hh ~ " piece; placed in a clearing with exactly one building slot and no ruin, without a landmark and not next to one.",
         "Once per turn, if your faction pieces are in its clearing, you may discard a card to draw a card."
     )
 }
@@ -1514,7 +1514,7 @@ case object SimpleMarketLandmark extends SimpleLandmark {
 case object BirdsongTowerLandmark extends SimpleLandmark {
     val name = "Birdsong Tower"
     override val explain = $(
-        "Simple Landmarks".hh ~ ", with the " ~ "Tower".hh ~ " piece; placed in a clearing with a ruin and no landmark. Official on this site: it counts toward the rankings.",
+        "Simple Landmarks".hh ~ ", with the " ~ "Tower".hh ~ " piece; placed in a clearing with a ruin and no landmark.",
         "If you rule its clearing at the start of your " ~ "Birdsong".hh ~ ", score a point."
     )
 }
@@ -1522,7 +1522,7 @@ case object BirdsongTowerLandmark extends SimpleLandmark {
 case object RoyalTreeLandmark extends SimpleLandmark {
     val name = "Royal Tree"
     override val explain = $(
-        "Simple Landmarks".hh ~ " (house rules), with the " ~ "Elder Treetop".hh ~ " piece; placed in a corner clearing without a landmark, not next to one.",
+        "Simple Landmarks".hh ~ ", with the " ~ "Elder Treetop".hh ~ " piece; placed in a corner clearing without a landmark, not next to one.",
         "Adds a building slot. While it's your turn, if your faction pieces are in its clearing, you rule its clearing."
     )
 }
@@ -2316,12 +2316,12 @@ object Meta extends MetaGame {
 
     // fan content (rankingFan): a faction that isn't an official one (fan, playtest and mirror factions), a fan map or deck, the
     // (Capitalists and Anarchists is among the official Decks since 2026-11-21, so it counts as official)
-    // Doomed Vagabonds, Knave Captains, Turnlings or Legends Scenarios, the Action! Deck Booster, or the Simple Landmarks (house rules) but the Birdsong Tower
+    // Doomed Vagabonds, Knave Captains, Turnlings or Legends Scenarios, or the Action! Deck Booster (the Simple Landmarks are rated since 2026-11-23)
     // and a game picked as unranked (UnrankedGame, 2026-11-22)
     def rankFan(game : Game) : Boolean = game.options.has(UnrankedGame) || game.factions.exists(approved(_).not) || game.options.exists(unapproved)
 
-    // approved for ranked play: the official factions, Homeland's too
-    def approved(f : Faction) = (official ++ homeland).has(f)
+    // approved for ranked play: the official factions, Homeland's too, and the Negabond, which plays as a second Vagabond (owner, 2026-11-23)
+    def approved(f : Faction) = (official ++ homeland ++ $(NB)).has(f)
 
     // an option not approved for ranked play
     def unapproved(o : GameOption) : Boolean = o match {
@@ -2330,9 +2330,8 @@ object Meta extends MetaGame {
         // the fan maps Tidal Flats, Tundra and Gloom are approved for ranked play (owner, 2026-11-22)
         case TidalMap | TundraMap | GloomMap => false
         case _ : FanMap | _ : FanDeck => true
-        // the Birdsong Tower is official for the site (2026-11-20), the other Simple Landmarks are house rules
-        case BirdsongTowerLandmark => false
-        case _ : SimpleLandmark => true
+        // the Simple Landmarks are approved for ranked play (the Birdsong Tower since 2026-11-20, the others since 2026-11-23, owner)
+        case _ : SimpleLandmark => false
         case IncludeHireling(h) => turnlings.has(h)
         case o => $[GameOption](ActionBooster, DoomedVagabonds, DoomedCaptains, TurnOverHirelings, DeepWoodsSettling, WastelandsWater).has(o) || legendsOptions.has(o)
     }
