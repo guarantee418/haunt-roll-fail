@@ -100,7 +100,8 @@ object TournamentExpansion extends Expansion {
             game.options = game.options.notOf[DeckOption] :+ d
             Deck.capitalistsArt = game.options.has(CapitalistsDeck)
 
-            game.cards.replace(game.pile, Deck.fromOptions(game.options, game.players.num, game.players.of[Faction]))
+            game.playingDeck = Deck.fromOptions(game.options, game.players.num, game.players.of[Faction])
+            game.cards.replace(game.pile, game.playingDeck)
             game.expansions = game.expansionsFor(game.candidates ++ game.options.of[IncludeFaction]./(_.faction))
 
             log(p, "picked the", d.valueOn, "deck")
