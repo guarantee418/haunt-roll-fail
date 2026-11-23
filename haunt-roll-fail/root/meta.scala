@@ -2167,6 +2167,10 @@ object Meta extends MetaGame {
         case _ => $
     }
 
+    // Quick Game is the site's defaults with random factions (as Northgard's): each option at random, retired ones too, took up to
+    // a minute to settle and made games that couldn't start
+    override def quickOptions = Map()
+
     val quickMin = 4
     val quickMax = 4
 
@@ -4920,6 +4924,9 @@ object Meta extends MetaGame {
     ConditionalAssetsList((factions, options) => factions.of[Expedition].any, "faction/expedition", lzy = Laziness.OnDemand)(ImageAsset("ki-board") :: $) ::
     ConditionalAssetsList((factions, options) => factions.of[Council].any, "faction/legal", lzy = Laziness.OnDemand)(ImageAsset("tc-board-h") :: $) ::
     ConditionalAssetsList((factions, options) => factions.of[Knaves].any, "faction/abduct", lzy = Laziness.OnDemand)(ImageAsset("kd-board-h") :: $)
+
+    val mapPaths = $("autumn", "winter", "lake", "mountain", "tidal", "tundra", "marsh", "gloom", "urban", "legends-map", "deep-woods", "wastelands", "gorge")
+    override def deferrable(a : ConditionalAssetsList) = mapPaths.has(a.path)
 
     override def intLinks = $(("Root: Advanced Setup".spn -> "root-adset"), ("Root: Mirror".spn -> "root-mirror"))
 }

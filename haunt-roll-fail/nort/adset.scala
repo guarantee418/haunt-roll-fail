@@ -403,6 +403,9 @@ object MetaAdset extends MetaGame {
 
     override def defaultsFor(n : Int, l : $[F]) = $(RankedGame, YearsOption.standard, StandardVictory, VictoryModeOption(false), PrivateFame, UnlimitedUndo, EditionChoice.default, (n > 2).?(LandsSeatChooses).|(LandsNeither), WildPartsBoth, WastePartsBoth)
 
+    // What some options or clans bring
+    override def deferrable(a : ConditionalAssetsList) = true
+
     override def quickOptions = Map()
 
     val quickMin = 3

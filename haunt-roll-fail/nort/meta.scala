@@ -217,6 +217,9 @@ object Meta extends MetaGame { mmm =>
     // Teams alternate by seat (two teams), as the old team variants did
     override def defaultsFor(n : Int, l : $[F]) = (l.zip(PlayerColor.all)./{ case (f, c) => ColorOption(f, c) : O } ++ l.zipWithIndex./{ case (f, i) => TeamOption(f, i % 2) : O } :+ (YearsOption.standard : O) :+ (StandardVictory : O) :+ (VictoryModeOption(false) : O) :+ (PrivateFame : O) :+ (UnlimitedUndo : O) :+ (EditionChoice.default : O) :+ (StandardCentral : O) :+ (RankedGame : O)) ++ l.has(Automa).$(AutomaLevelOption(2) : O)
 
+    // What some options or clans bring
+    override def deferrable(a : ConditionalAssetsList) = true
+
     override def quickOptions = options./(o => o -> 0.0).toMap
 
     def has(options : $[O], m : Module) = options.has(ModuleOption(m)) || (m == Warchiefs && options.has(WarchiefPawns)) || (m == TrainingFields && options.has(TrainingFieldsOption)) || (m == VictoryModule && VictoryChoice.alternative.exists(options.has)) || (m == Wastelands && CentralChoice.picked(options)) || (m == Wastelands && options.has(ModuleOption(PCVersion))) || (m == Wilderness && (options.has(WildernessTiles) || options.has(WildernessCreatures))) || (m == Wastelands && (options.has(WastelandsTiles) || options.has(WastelandsCreatures)))

@@ -23,10 +23,27 @@ package object html {
         def getStyles(l : Seq[Style]) : $[String] = StyleRegister.add(l.$)
     }
 
-    case class ImageResources(loaded : Map[String, hrf.loader.ImageWrapper], sources : Map[String, String], loader : hrf.loader.Loader[hrf.loader.ImageWrapper]) {
+    case class ImageResources(loaded : Map[String, hrf.loader.ImageWrapper], sources : Map[String, String], loader : hrf.loader.Loader[hrf.loader.ImageWrapper], deferred : Map[String, String] = Map()) {
+        // the deferred ones asked for, each an empty image until it has loaded
+        private var late = Map[String, dom.html.Image]()
+        private def getLate(key : String, url : String) : dom.html.Image = {
+            val img = late.getOrElse(key, {
+                val i = dom.document.createElement("img").asInstanceOf[dom.html.Image]
+                i.setAttribute("data-url", url)
+                late += key -> i
+                loader.wait($(url)) { i.src = loader.get(url).get.src }
+                i
+            })
+
+            if (img.complete.not || img.src == "")
+                incomplete :+= key
+
+            img
+        }
+
         var incomplete : $[String] = $
-        def has(key : String) = loaded.contains(key.toLowerCase)
-        def get(key : String) : dom.html.Image = {
+        def has(key : String) = loaded.contains(key.toLowerCase) || deferred.contains(key.toLowerCase)
+        def get(key : String) : dom.html.Image = if (loaded.contains(key.toLowerCase).not && deferred.contains(key.toLowerCase)) getLate(key.toLowerCase, deferred(key.toLowerCase)) else {
             val img = loaded.get(key.toLowerCase).|(throw new Error("asset " + key + " not found")).get
 
             if (img.complete.not)

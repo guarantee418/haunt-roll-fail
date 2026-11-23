@@ -36,6 +36,8 @@ package object elem {
     object Translation {
         var language : String = ""
         private var translate : String => String = identity
+        // the page says its language (hrf.scala)
+        var onLanguage : String => Unit = _ => {}
         var image : String => String = identity
 
         private val context = " \\[[^\\[\\]]*\\]$".r
@@ -49,6 +51,7 @@ package object elem {
             this.language = language
             this.translate = text
             this.image = image
+            onLanguage(language)
         }
     }
 

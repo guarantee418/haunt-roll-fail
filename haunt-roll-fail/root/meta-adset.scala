@@ -137,6 +137,10 @@ object MetaAdset extends MetaGame {
     override val indistinguishableFactions : Boolean = true
     override val gradualFactions : Boolean = true
 
+    // Quick Game is the site's defaults with random factions (as Northgard's): each option at random, retired ones too, took up to
+    // a minute to settle and made games that couldn't start
+    override def quickOptions = Map()
+
     val quickMin = 4
     val quickMax = 4
 
@@ -236,6 +240,8 @@ object MetaAdset extends MetaGame {
 
     override def bodyFont = Meta.bodyFont
 
-    val assets = Meta.assets./(m => ConditionalAssetsList((factions : $[F], options : $[O]) => m.condition(Meta.factions, options), m.path, m.prefix, m.ext)(m.list))
+    val assets = Meta.assets./(m => ConditionalAssetsList((factions : $[F], options : $[O]) => m.condition(Meta.factions, options), m.path, m.prefix, m.ext, m.lzy, m.scale, m.lossless)(m.list))
+
+    override def deferrable(a : ConditionalAssetsList) = Meta.mapPaths.has(a.path)
 
 }

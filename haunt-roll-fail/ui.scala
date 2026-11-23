@@ -238,7 +238,7 @@ class Asker(val body : AttachmentPoint, assets : String => dom.html.Image) {
                 g = Empty
 
             if (g != Empty)
-                cont.attach.append(g.div(xlo.fullwidth), resources, w.groupClick)
+                cont.attach.append(g.div(xlo.fullwidth)(ExternalStyle("menu-heading")), resources, w.groupClick)
 
             cont.attach.append(o, resources, l => {
                 if (w.clear) {

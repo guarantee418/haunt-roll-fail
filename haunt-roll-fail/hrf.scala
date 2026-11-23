@@ -322,6 +322,15 @@ object HRFR {
         "question-mark" -> "/hrf/question-mark.png",
         "external-link" -> "/hrf/external-link.png",
 
+        "home-mc" -> "/hrf/webp2/root/images/faction/feline/mc-glyph.webp",
+        "home-ed" -> "/hrf/webp2/root/images/faction/aviary/ed-glyph.webp",
+        "home-wa" -> "/hrf/webp2/root/images/faction/insurgent/wa-glyph.webp",
+        "home-vb" -> "/hrf/webp2/root/images/faction/hero/vb-glyph.webp",
+        "home-wolf" -> "/hrf/webp2/nort/images/clan/wolf.webp",
+        "home-stag" -> "/hrf/webp2/nort/images/clan/stag.webp",
+        "home-bear" -> "/hrf/webp2/nort/images/clan/bear.webp",
+        "home-raven" -> "/hrf/webp2/nort/images/clan/raven.webp",
+
         "battle" -> "/hrf/webp2/root/images/icon/battle.webp",
         "swap" -> "/hrf/webp2/root/images/icon/swap.webp",
 
@@ -371,10 +380,15 @@ object HRFR {
             onLoad(Resources(ImageResources(Map(), Map(), HRF.imageCache), () => Map()))
         }
         else
-        loader.wait(HRF.embedded.?(original.images.sources.keys.$).|(original.images.sources.values.$)) {
-            val loaded = original.images.sources.$./((key, url) => key -> loader.get(HRF.embedded.?(key).|(url))).toMap
+        {
+            // only the menus' own are waited for; the pictures behind the ?s come when they are opened
+            val needed = original.images.sources.$.%((_, url) => HRF.embedded || url.startsWith("/hrf/webp2/").not)
+
+            loader.wait(needed./((key, url) => HRF.embedded.?(key).|(url))) {
+            val loaded = needed./((key, url) => key -> loader.get(HRF.embedded.?(key).|(url))).toMap
 
             onLoad(Resources(ImageResources(loaded, original.images.sources, HRF.imageCache), () => Map()))
+            }
         }
     }
 }
@@ -614,28 +628,36 @@ class HRFUI(implicit resources : Resources) {
         hook.remove()
     }
 
+    hrf.elem.Translation.onLanguage = l => dom.document.documentElement.setAttribute("lang", (l == "").?("en").|(l))
+
     logger.alog(Empty ~ "John 3:16")
 
-    def topMenu() {
+    def topMenu(wrong : Boolean = false) {
         hrf.elem.Translation.set("", identity, identity)
 
-        def entry(m : MetaGame, label : Elem, onClick : () => Unit) = ZBasic("Kings and Chronicles".hh(xstyles.larger110)(ExternalStyle("consolas")), label, onClick, ZBasic.choice.but(xstyles.thumargin))
+        val title = "Kings and Chronicles".hh(xstyles.larger110)(ExternalStyle("consolas"))
 
-        action.asker.zask(HRF.menuMetas./~(m =>
-            if (m == root.Meta)
-                $(
-                    entry(m, metaLabel(m), () => { rootLanguage(root.EnglishLanguage) ; rootMenu() }),
-                    entry(m, (m.label + " en français").spn(xstyles.larger110)(ExternalStyle(m.titleFont.|(""))), () => { rootLanguage(root.FrenchLanguage) ; rootMenu() })
-                )
-            else
-                $(entry(m, metaLabel(m), () => new HRFMetaUI(this, m, 0)(resources).withMeta()))
-        ) ++
+        def emblems(l : $[String]) : Elem = Div(l./(i => Image(i, $(ExternalStyle("home-emblem")), |("")) : Elem).merge, ExternalStyle("home-emblems"))
+
+        def card(m : MetaGame, l : $[String], about : String, onClick : () => Unit) =
+            ZBasic(title, Div(emblems(l) ~ Div(metaLabel(m), ExternalStyle("home-name")) ~ Div(about, ExternalStyle("home-about")), ExternalStyle("home-in")), onClick, ZBasic.choice.but(xstyles.thumargin) :+ ExternalStyle("home-card"))
+
+        action.asker.zask(
+            wrong.$(ZOption(title, Div("There is no page at that address. Pick a game below.", ZBasic.info :+ xstyles.warning))) ++
+            $(ZOption(title, Div("Board games to play here online with friends, against bots, or around one device.", ExternalStyle("home-lead")))) ++
+            HRF.menuMetas./(m =>
+                if (m == root.Meta)
+                    card(m, $("home-mc", "home-ed", "home-wa", "home-vb"), "Woodland factions fight for the forest", () => { rootLanguage(root.EnglishLanguage) ; rootMenu() })
+                else
+                    card(m, $("home-wolf", "home-stag", "home-bear", "home-raven"), "Viking clans explore, build and conquer", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
+            ) ++
+            $(ZBasic(title, (root.Meta.label + " en français").spn(ExternalStyle(root.Meta.titleFont.|(""))), () => { rootLanguage(root.FrenchLanguage) ; rootMenu() })) ++
             // the player's online games of every game, and their account (names, ratings, Discord, codes), above About (2026-11-22, asked for)
             (HRF.server.any && HRF.offline.not).??($(
-                ZBasic(" ", "My Online Games", () => dom.document.location.assign("/play/my-games")),
-                ZBasic(" ", "My Account", () => dom.document.location.assign("/play/account"))
+                ZBasic("You", "My Online Games".hh, () => dom.document.location.assign("/play/my-games")),
+                ZBasic("You", "My Account".hh, () => dom.document.location.assign("/play/account"))
             )) :+
-            ZBasic(" ", "About", () => creditsMenu())
+            ZBasic(" ", "About".hh, () => creditsMenu())
         )
     }
 
@@ -690,7 +712,7 @@ class HRFUI(implicit resources : Resources) {
                     dom.document.title = "My Online Games"
                     site.onlineGame()
                 }
-            case None => topMenu()
+            case None => topMenu(HRF.param("meta").exists(_ != ""))
         }
     }
 
@@ -1268,6 +1290,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
     def metaMenu() {
         val title = meta.label.hl.spn(xstyles.larger110)(ExternalStyle(meta.titleFont.|("")))
 
+        // the last row's three, side by side
+        val third = ZBasic.choice :+ ExternalStyle("menu-third")
+
         def goQuickGame() {
             history.pushState("/play/" + meta.name + "/quick", () => metaMenu())
             savedGamesMenu("quick", "New Quick Game", () => quickGame())
@@ -1323,25 +1348,25 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     }.|(throw new Error("meta not found " + l))
                 }) } ++
                 $(ZBasic(title, "Play Online".hlb, (HRF.server.any && HRF.offline.not).??(() => goOnline()))) ++
-                (meta.ranking.any && HRF.server.any && HRF.offline.not).$(ZBasic(title, "Rankings".hhb, () => goRankings())) ++
+                (meta.ranking.any && HRF.server.any && HRF.offline.not).$(ZBasic("Players", "Rankings".hhb, () => goRankings())) ++
                 // the site's tournament, on the menu of the game whose tournament it is (Root's, played in Advanced Setup), and on
                 // the menu of the meta its games use (Root's Adset, 2026-11-20), where it opens that game's Tournament page
-                (meta.tournament.exists(_ != meta.name) && HRF.server.any && HRF.offline.not).$(ZBasic(title, "Tournament".hhb, () => goTournament())) ++
+                (meta.tournament.exists(_ != meta.name) && HRF.server.any && HRF.offline.not).$(ZBasic("Players", "Tournament".hhb, () => goTournament())) ++
                 (meta.tournament.has(meta.name) && HRF.server.any && HRF.offline.not).??(
-                    HRF.metas.%(m => m.name != meta.name && m.tournament.has(meta.name)).take(1)./(m => ZBasic(title, "Tournament".hhb, () => dom.document.location.assign("/play/" + m.name + "/tournament"))))
+                    HRF.metas.%(m => m.name != meta.name && m.tournament.has(meta.name)).take(1)./(m => ZBasic("Players", "Tournament".hhb, () => dom.document.location.assign("/play/" + m.name + "/tournament"))))
             ) ++
-            meta.intLinks./((t, l) => ZBasic("Other", t, () => {
+            meta.intLinks./((t, l) => ZBasic("Other ways to play", t, () => {
                 HRF.metas.%(_.name == l).single./{ m =>
                     new HRFMetaUI(ui, m, 800)(baseResources).withMeta()
                 }.|(throw new Error("meta not found " + l))
             })) ++
             meta.extLinks./((t, l) => ZOption(Div(meta.extLinksName), Link(l, t.div(xstyles.divint) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough), ZBasic.infoch ++ $(xstyles.link)))) ++
             // $(ZOption(Div(Empty, xlo.grow6), Empty)) ++
-            $(ZBasic(" ", Div("Settings"), () => miscellaneous())) ++
-            meta.showAbout.$(ZBasic(" ", Div("About"), () => aboutMenu())) ++
+            $(ZBasic(" ", Div("Settings"), () => miscellaneous(), third)) ++
+            meta.showAbout.$(ZBasic(" ", Div("About"), () => aboutMenu(), third)) ++
             // Back to the site's main screen (/play), or to the game whose menu links here (Northgard for its Adset);
             // loaded afresh, so nothing of this game's menus is left over
-            HRF.offline.not.$(ZBasic(" ", Div("Back"), () => dom.document.location.assign("/play" + HRF.metas.%(_.linkedModes.exists(_._2 == meta.name)).single./("/" + _.name).|(""))))
+            HRF.offline.not.$(ZBasic(" ", Div("Back"), () => dom.document.location.assign("/play" + HRF.metas.%(_.linkedModes.exists(_._2 == meta.name)).single./("/" + _.name).|("")), third))
         )
 
         if (HRF.segments.startsWith($("tutorial")) && meta.tutorialLessons.any)
@@ -1475,7 +1500,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             HRF.segments = $
     }
 
-    def miscellaneous(download : Boolean = false) {
+    def miscellaneous(download : Boolean = false, clearing : Boolean = false) {
         val versions = $("0.8.125")
 
         ui.action.asker.zask(
@@ -1509,8 +1534,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         ui.logger.alog("*".spn)
                 }
 
-                loader.wait(preload.rights) {
-                    val loaded = preload./((key, url) => key -> loader.get(url)).toMap
+                // and the menus' pictures, which an offline copy shows without the site
+                val menus = HRF.embedded.not.??(resources.images.sources.$.%((key, url) => resources.images.loaded.contains(key).not && HRFR.original.images.sources.contains(key)))
+
+                loader.wait(preload.rights ++ menus.rights) {
+                    val loaded = (menus ++ preload)./((key, url) => key -> loader.get(url)).toMap
 
                     val combined = Resources(ImageResources(loaded ++ resources.images.loaded, sources ++ resources.images.sources, HRF.imageCache), () => Map())
 
@@ -1521,11 +1549,17 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
                 miscellaneous(true)
             }), ZBasic.choice ++ $(xlo.fullwidth))) ++
-            $(ZBasic("Local Storage", "Clear All Data".styled(xstyles.error), () => {
-                hrf.web.Local.clear()
-                settings = $
-                applySettings(settings)
-                miscellaneous()
+            clearing.$(ZOption("Local Storage", Div("This erases the local games, settings and player key kept in this browser. Without the key this device no longer holds your names: sign in again with a code.", ZBasic.info))) ++
+            clearing.$(ZBasic("Local Storage", "Keep My Data".hh, () => miscellaneous(), ZBasic.choice ++ $(xlo.fullwidth))) ++
+            $(ZBasic("Local Storage", clearing.?("Yes, Erase Everything").|("Clear All Data").styled(xstyles.error), () => {
+                if (clearing) {
+                    hrf.web.Local.clear()
+                    settings = $
+                    applySettings(settings)
+                    miscellaneous()
+                }
+                else
+                    miscellaneous(clearing = true)
             }, ZBasic.choice ++ $(xlo.fullwidth))) ++
             $(ZBasic(" ", "Done".hh, () => {
                 metaMenu()
@@ -1655,9 +1689,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         def statRow(st : Elo.Stat, icon : Elem, label : Elem, colours : $[Style], expected : |[Double]) =
             box(
                 icon ~
-                tag(label ~ tag(Text(plural(st.games, "game") + " · score " + (math.round(st.score * 100) / 100.0) + st.average./(a => " · avg " + (math.round(a * 10) / 10.0) + " " + unit).|("") + expected./(e => " · " + percent0(e) + " expected").|("")), "rk-sub"), "rk-who") ~
+                tag(label ~ tag(Text(plural(st.games, "game") + " · score " + (math.round(st.score * 100) / 100.0) + st.average./(a => " · avg " + (math.round(a * 10) / 10.0) + " " + unit).|("") + expected./(e => " · " + percent0(e) + " expected").|("") + few(st.games)), "rk-sub"), "rk-who") ~
                 bar(st.relative, expected, colours) ~
-                num(percent(st.relative))(css("rk-pct")),
+                num(percent(st.relative))(fewCss(st.games)),
             "rk-stat")
 
         def factionRows(group : Elem, l : $[Elo.Stat], expected : String => |[Double]) =
@@ -1707,17 +1741,25 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         def unit = meta.ranking.has("root").?("VP").|("fame")
 
+        // what the numbers count comes after them
+        def counted = heading("How this is counted")
+
+        // too few games to say much
+        def few(n : Int) = (n < 5).??(" · few games")
+        def fewCss(n : Int) = css("rk-pct") ++ (n < 5).$(ExternalStyle("rk-few"))
+
         def explainStats = "From the finished online games" ~ meta.ranking.has("root").?(" (bots too, before 2026-11-18)").|(" with people on two sides or more") ~ ". Score: " ~ "1".hl ~ " for a win, shared between the winning sides (a coalition, a shared win); relative score: score per game; average score: the " ~ unit ~ " at the end" ~ meta.ranking.has("root").??(" (a dominance not counted)") ~ "."
 
         def factions(all : $[Elo.Player], n : |[Int]) {
             val seats = Elo.seats(results.%(r => n.forall(_ == r.players) && (modes.not || mode.forall(_ == modeOf(r)))))
             ui.action.asker.zask(
-                $(ZOption((meta.label + " Faction Stats").hl.spn(xstyles.larger110), box(explainStats ~ n./(k => " The tick on each bar is what a seat would expect in a " + k + " player game (" + percent0(1.0 / k) + ").").|(""), "rk-note"))) ++
+                $(ZOption((meta.label + modes.?(" Clan Stats").|(" Faction Stats")).hl.spn(xstyles.larger110), Empty)) ++
                 tabs(modes.?("Clans").|("Factions"), all) ++
                 modeChips(heading("Mode"), () => factions(all, n)) ++
                 filterOptions(heading("Players"), n, factions(all, _)) ++
-                factionRows(heading("Factions"), Elo.stats(seats, _.faction), _ => n./(1.0 / _)) ++
-                seats.none.$(note(heading("Factions"), "No games yet.".txt)) ++
+                factionRows(heading(modes.?("Clans").|("Factions")), Elo.stats(seats, _.faction), _ => n./(1.0 / _)) ++
+                seats.none.$(note(heading(modes.?("Clans").|("Factions")), "No games yet.".txt)) ++
+                $(ZOption(counted, box(explainStats ~ n./(k => " The tick on each bar is what a seat would expect in a " + k + " player game (" + percent0(1.0 / k) + ").").|(""), "rk-note"))) ++
                 $(ZBasic(" ", Div("Back"), () => show(all)))
             )
         }
@@ -1728,15 +1770,16 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             val dd = Elo.drafts(results)
             val banning = dd.exists(_.banned > 0)
             ui.action.asker.zask(
-                $(ZOption((meta.label + " Draft Stats").hl.spn(xstyles.larger110), box("From the finished online games with a draft (" ~ results.count(_.drafted).hl ~ "). Pick rate: how often a " ~ modes.?("clan").|("faction") ~ " drawn for the draft was picked" ~ banning.??(" (banned ones count as not picked)") ~ "; score: " ~ "1".hl ~ " for a win, shared between the winning sides, per game it was picked.", "rk-note"))) ++
+                $(ZOption((meta.label + " Draft Stats").hl.spn(xstyles.larger110), Empty)) ++
                 tabs("Draft", all) ++
                 dd./(d => ZOption(heading(modes.?("Clans").|("Factions") + " · pick rate"), box(
                     glyph(d.key) ~
-                    tag(factionName(d.key) ~ tag(Text("picked " + d.picked + " of " + d.offered + banning.??(" · banned " + d.banned) + d.relative./(r => " · score " + percent(r)).|("")), "rk-sub"), "rk-who") ~
+                    tag(factionName(d.key) ~ tag(Text("picked " + d.picked + " of " + d.offered + banning.??(" · banned " + d.banned) + d.relative./(r => " · score " + percent(r)).|("") + few(d.offered)), "rk-sub"), "rk-who") ~
                     bar(d.pickRate, None, colour(d.key)) ~
-                    num(percent(d.pickRate))(css("rk-pct")),
+                    num(percent(d.pickRate))(fewCss(d.offered)),
                 "rk-stat"))) ++
                 dd.none.$(note(heading("Drafts"), "No finished games with a draft yet.".txt)) ++
+                $(ZOption(counted, box("From the finished online games with a draft (" ~ results.count(_.drafted).hl ~ "). Pick rate: how often a " ~ modes.?("clan").|("faction") ~ " drawn for the draft was picked" ~ banning.??(" (banned ones count as not picked)") ~ "; score: " ~ "1".hl ~ " for a win, shared between the winning sides, per game it was picked.", "rk-note"))) ++
                 $(ZBasic(" ", Div("Back"), () => show(all)))
             )
         }
@@ -1748,16 +1791,17 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             val maps = results.count(_.maps.any)
             val known = results.count(r => r.landmarks.any || r.hirelings.any)
             ui.action.asker.zask(
-                $(ZOption((meta.label + modes.?(" Map Stats").|(" Map, Landmark and Hireling Stats")).hl.spn(xstyles.larger110), box(
-                    modes.?("From the finished online games whose central tile is known (" ~ maps.hl ~ "). The bar is the share of those games each was in; the clans are who won them (" ~ "1".hl ~ " for a win, shared between the winning sides).").|(
-                    "Maps from the finished online games whose map is known (" ~ maps.hl ~ "), landmarks and hirelings from those that had one (" ~ known.hl ~ "). The bar is the share of those games each was in; the factions are who won them (" ~ "1".hl ~ " for a win, shared between the winning sides)."), "rk-note"))) ++
+                $(ZOption((meta.label + modes.?(" Map Stats").|(" Map, Landmark and Hireling Stats")).hl.spn(xstyles.larger110), Empty)) ++
                 tabs(modes.?("Maps").|("Maps & Setup"), all) ++
                 ss./(x => ZOption(heading(x.kind + " · games"), box(
                     tag(Text(x.key).spn(css("rk-fname")) ~ tag(Text("in " + x.games + " of " + x.setup) ~ x.wins.take(3).some./(l => " · won by " ~ l./{ case (f, n) => factionName(f) ~ " " ~ (n == n.round).?(n.round.toString).|((math.round(n * 10) / 10.0).toString) }.join(", ")).|(Empty), "rk-sub"), "rk-who") ~
                     bar(x.share, None, $) ~
-                    num(percent(x.share))(css("rk-pct")),
+                    num(percent(x.share))(fewCss(x.setup)),
                 "rk-stat"))) ++
                 ss.none.$(note(heading("Maps"), "No finished games with a known map yet.".txt)) ++
+                $(ZOption(counted, box(
+                    modes.?("From the finished online games whose central tile is known (" ~ maps.hl ~ "). The bar is the share of those games each was in; the clans are who won them (" ~ "1".hl ~ " for a win, shared between the winning sides).").|(
+                    "Maps from the finished online games whose map is known (" ~ maps.hl ~ "), landmarks and hirelings from those that had one (" ~ known.hl ~ "). The bar is the share of those games each was in; the factions are who won them (" ~ "1".hl ~ " for a win, shared between the winning sides)."), "rk-note"))) ++
                 $(ZBasic(" ", Div("Back"), () => show(all)))
             )
         }
@@ -1765,12 +1809,13 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         def turns(all : $[Elo.Player]) {
             val seats = Elo.seats(results)
             ui.action.asker.zask(
-                $(ZOption((meta.label + " Turn Order Stats").hl.spn(xstyles.larger110), box(explainStats ~ " Seat " ~ "1".hl ~ " is the first player; the tick on each bar is what a seat would expect.", "rk-note"))) ++
+                $(ZOption((meta.label + " Turn Order Stats").hl.spn(xstyles.larger110), Empty)) ++
                 tabs("Turn Order", all) ++
                 seats./(_._3.players).distinct.sorted./~{ k =>
                     seatRows(heading(k + " players"), Elo.stats(seats.%(_._3.players == k), _.seat.toString).sortBy(_.key.toInt), _ => |(1.0 / k))
                 } ++
                 seats.none.$(note(heading("Seats"), "No games yet.".txt)) ++
+                $(ZOption(counted, box(explainStats ~ " Seat " ~ "1".hl ~ " is the first player; the tick on each bar is what a seat would expect.", "rk-note"))) ++
                 $(ZBasic(" ", Div("Back"), () => show(all)))
             )
         }
@@ -1970,7 +2015,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 "Draft" -> (() => drafts(all)),
                 "Maps & Setup" -> (() => setups(all)),
                 "Codex" -> (() => codex(all))
-            ))./{ case (l, f) => ZBasic(Empty, tag(Text(l), "rk-chip-text"), f, css("rk-chip", "rk-tab") ++ (l == current).$(ExternalStyle("rk-chip-on")) ++ $(xlo.pointer)) })
+            )).use(l => $(ZOption(Empty, Div(l./{ case (l, _) => Parameter(l, OnClick(Div(tag(Text(l), "rk-chip-text"), css("rk-chip", "rk-tab") ++ (l == current).$(ExternalStyle("rk-chip-on")) ++ $(xlo.pointer)))) : Elem }.merge, css("rk-tabs")), {
+                case p => l.find(_._1 == p).foreach(_._2())
+            }))))
 
         def tierIcon(t : RankingTier) : Elem =
             t.icon.filter(i => glyphSources.contains(i.toLowerCase)).map(i => Image(i, css("rk-tier-icon"), |(t.name)) : Elem).getOrElse(tag(Text(t.name.take(1)), "rk-tier-icon", "rk-tier-letter"))
@@ -2270,7 +2317,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             val signed = owned.%(n => signups.exists(_.toLowerCase == n.toLowerCase))
 
             ui.action.asker.zask(
-                $(note(title, "Sign up with your ranking name. The tournament starts by itself when " ~ size.hl ~ " players have signed up: four tables of four, each an " ~ "Advanced Setup".hh ~ " game. Each table's winner goes to the final, and the final's winner is the champion, whose name is golden until the next champion." ~ Break ~ "The draft: the flop of five factions, then the first seat picks the deck (" ~ "Capitalists and Anarchists".hh ~ ", " ~ "Exiles and Partisans".hh ~ " or " ~ "Squires and Disciples".hh ~ ") and the second the map. On the " ~ "Mountain".hh ~ ", the third seat picks the one landmark for " ~ "Pass".hh ~ ", where the " ~ "Tower".hh ~ " usually stands: the " ~ "Tower".hh ~ ", or instead " ~ "Lost City".hh ~ ", " ~ "Mousehold".hh ~ ", " ~ "Foxburrow".hh ~ ", " ~ "Rabbittown".hh ~ " or the " ~ "Birdsong Tower".hh ~ " (rule its clearing at the start of your Birdsong to score 1). Then the factions are picked, last seat first. Official factions, decks and maps, no " ~ "Vagabond".hh ~ ".")) ++
+                $(ZOption(title, Empty)) ++
                 champion./(c => note("Champion".hl, golden(c) ~ " won the last tournament.")).$ ++
                 mine./(r => ZOption("Your Tournament Game".hl, linked(url(r(3)), r(2).hh ~ Break ~ ("as " + r(4) + " against " + r(5)).spn(xstyles.smaller75)))) ++
                 open./(_ => note(signGroup, signups.any.?(names(signups)).|("No one has signed up yet.".txt))).$ ++
@@ -2287,6 +2334,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         ZOption(group, linked(url(t(3)), label.hh ~ ": " ~ names(t.drop(5)) ~ Break ~ (winner.nonEmpty.?("Won by " ~ name(winner) ~ " · ").|(Empty) ~ "Spectate").spn(xstyles.smaller75)))
                     }
                 } ++
+                $(note("How it works".hl, "Sign up with your ranking name. The tournament starts by itself when " ~ size.hl ~ " players have signed up: four tables of four, each an " ~ "Advanced Setup".hh ~ " game. Each table's winner goes to the final, and the final's winner is the champion, whose name is golden until the next champion." ~ Break ~ "The draft: the flop of five factions, then the first seat picks the deck (" ~ "Capitalists and Anarchists".hh ~ ", " ~ "Exiles and Partisans".hh ~ " or " ~ "Squires and Disciples".hh ~ ") and the second the map. On the " ~ "Mountain".hh ~ ", the third seat picks the one landmark for " ~ "Pass".hh ~ ", where the " ~ "Tower".hh ~ " usually stands: the " ~ "Tower".hh ~ ", or instead " ~ "Lost City".hh ~ ", " ~ "Mousehold".hh ~ ", " ~ "Foxburrow".hh ~ ", " ~ "Rabbittown".hh ~ " or the " ~ "Birdsong Tower".hh ~ " (rule its clearing at the start of your Birdsong to score 1). Then the factions are picked, last seat first. Official factions, decks and maps, no " ~ "Vagabond".hh ~ ".")) ++
                 $(note("Your player code".hl, owned.any.?("Your names on this device: " ~ owned./(_.hlb).join(", ") ~ ". On another device, use your player code under " ~ "Rankings".hl ~ " to play there under the same names.").|(Empty ~ "No name is claimed on this device yet. Signing up claims one; if you have one on another device, use its player code under " ~ "Rankings".hl ~ " first."))) ++
                 $(back)
             )
@@ -2608,9 +2656,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
             val group = "Devices and Codes".hl
             val codeRows : $[ZOption] =
-                signed.$(ZBasic(group, "Sign in on another device".hh ~ Break ~ "Shows the codes to enter there".spn(xstyles.smaller75), () => otherDevice(names, again))) ++
+                signed.$(ZBasic(group, ("Sign in on another device".hh ~ Break ~ "Shows the codes to enter there".spn(xstyles.smaller75)).div($(xlo.fullwidth, xlo.fullheight)), () => otherDevice(names, again))) ++
                 signed.$(ZBasic(group, (own.any.?("Change my own code").|("Pick my own code")).hh ~ Break ~ (own.any.?("Set for " + own.join(", ")).|("Easier to type than the player code")).spn(xstyles.smaller75), () => setOwnCode(names, () => says("Your code is set for " ~ names./(_.hlb).join(", ") ~ ". On another device, sign in with your name and this code."), again))) ++
-                $(ZBasic(group, signed.?("Use a code from another device").|("Sign in").hh ~ Break ~ "Your name, then your own code or a player code".spn(xstyles.smaller75), () => signInAs(None, _ => myAccount(), again))) ++
+                $(ZBasic(group, (signed.?("Use a code from another device").|("Sign in").hh ~ Break ~ "Your name, then your own code or a player code".spn(xstyles.smaller75)).div($(xlo.fullwidth, xlo.fullheight)), () => signInAs(None, _ => myAccount(), again))) ++
                 $(ZBasic(group, "Lost my code".hh, () => lostCode()))
 
             val leave : $[ZOption] = signed.??($(
@@ -2742,7 +2790,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             val short = r(0) @@ {
                 case "nort" => "NGUL"
                 case "nort-adset" => "NGUL Adset"
-                case "root-adset" => "Root Adset"
+                case "root-adset" => "Root: Advanced Setup"
                 case _ => label
             }
             val other = (siteWide || r(0) != meta.name).??(short + " · ")
@@ -2864,7 +2912,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             (held.exists(_.none) && mine.forall(_.none)).$(ZOption("My Online Games".hl, Div(("This device isn't signed in, so it has no games to list. The name you type when you join an online game is claimed for this device; played on another device? " ~ "Sign in".hl ~ " above.").spn, ZBasic.info))) ++
             (held.exists(_.any) && mine.forall(_.none) && tour.none).$(ZOption("Your Active Games".hl, Div("No online games yet.".txt, ZBasic.info))) ++
             // (Root's is an Advanced Setup game, as players start (owner, 2026-11-23))
-            HRF.menuMetas./(m => (m == root.Meta).?((root.MetaAdset : MetaGame, "Root Adset")).|((m, m.label)))./{ case (m, label) => ZBasic("Start a new online game".hl, label.hh, () => dom.document.location.assign("/play/" + m.name + "/online/new")) })
+            HRF.menuMetas./(m => (m == root.Meta).?((root.MetaAdset : MetaGame, "Root: Advanced Setup")).|((m, m.label)))./{ case (m, label) => ZBasic("Start a new online game".hl, label.hh, () => dom.document.location.assign("/play/" + m.name + "/online/new")) })
 
         ui.action.asker.zask(
             siteWide.not.??(meta.recommendedVersion.but("")./(v => ZBasic("This version is currently under development or testing.".styled(xstyles.error) ~ Break ~ "If you are not feeling adventurous, please use the following version instead:".styled(xstyles.warning), v.styled(xstyles.link).styled(xstyles.larger125), () => {
@@ -3297,7 +3345,13 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
     // keep: the kind of local game to save it as (savedGamesMenu), if it is saved
     // extra: options picked before the setup screen (Meta.pickerModes), always on like the mode's
     // picked: the factions were picked on the screen before, which the first page's Back returns to (the caller pushed it)
+    // The art every game needs starts loading while the game is set up
+    lazy val prefetch : Unit = if (HRF.embedded.not)
+        meta.assets.%(meta.deferrable(_).not)./~(_.get).%(_.lzy == Laziness.Immediate).foreach(a => HRF.imageCache.queue("webp2/" + meta.path + "/images/" + a.copy(ext = "webp").src))
+
     def startSetup(factions : $[meta.F], online : Boolean, keep : |[String] = None, mode : |[String] = None, hidden : $[meta.F] = $, extra : $[meta.O] = $, picked : Boolean = false, names : Map[meta.F, String] = Map()) {
+        prefetch
+
         val optionsSaveKey = meta.name + mode./("." + _).|("") + "." + online.?("online").|("offline") + ".options." + factions.num + "p"
         val mandatory = meta.mandatoryFor(factions.num, factions) ++ mode./~(meta.modeOptions) ++ extra
         val saved = hrf.web.Local.get(optionsSaveKey, "").split(' ').$./~(_.some)
@@ -3596,6 +3650,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         }
         gameStarted = true
 
+        // the menus can be pinched larger; a game has its own zoom
+        dom.document.querySelector("meta[name=viewport]").setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no")
+
         history.nuke()
 
         // Bots that play by other rules (Northgard's Robotos) add their options; every client derives them the same way
@@ -3603,27 +3660,49 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
         val seating = seatingX.%(f => difficulties(f) != Off)
 
-        val assets = meta.assets.%(_.condition(seating, options) || true)./~(_.get)
+        val assets = meta.assets./~(_.get)
 
         val sources = assets./(a => a.name -> ("webp2/" + meta.path + "/images/" + a.copy(ext = "webp").src)).toMap
-        val preload = HRF.embedded.?(assets./(a => a.name -> a.name)).|(assets.%(_.lzy == Laziness.Immediate)./(a => a.name -> sources(a.name)))
+        val wanted = meta.assets.%(a => meta.deferrable(a).not || a.condition(seating, options))./~(_.get)./(_.name).toSet
+        val immediate = assets.%(_.lzy == Laziness.Immediate)./(a => a.name -> sources(a.name))
+        val preload = HRF.embedded.?(assets./(a => a.name -> a.name)).|(immediate.%((name, _) => wanted(name)))
+        val deferred = HRF.embedded.?(Map[String, String]()).|(immediate.%!((name, _) => wanted(name))./((name, url) => name.toLowerCase -> url).toMap)
         val loader = HRF.embedded.?(new WrappedEmbeddedImageLoader(s => "asset-" + s)).|(HRF.imageCache)
 
-        ui.logger.alog("Loading assets".spn.div)
-
+        // how far, in place of the menu
+        val missing = preload.rights.%(loader.has(_).not)
         var i = 0
+        var shown = -1
+
+        def progress() {
+            val n = i * 100 / max(1, missing.num)
+
+            if (n != shown && n <= 100) {
+                shown = n
+                ui.action.asker.zask($(
+                    ZOption(title.hl.spn(xstyles.larger110), Div(Div(("Loading the game's art: " + n + "%").txt) ~ Span(Span(Empty, ExternalStyle("rk-fill"), ExternalStyle("rk-w" + n)), ExternalStyle("rk-track"), ExternalStyle("menu-progress")), ZBasic.info))
+                ))
+            }
+        }
+
+        if (missing.num > 20)
+            progress()
 
         loader.onLoad = (url, result) => {
-            i += 1
+            if (missing.has(url)) {
+                i += 1
 
-            if (i % (preload.num / 23 + 1) == 0)
-                ui.logger.alog("*".spn)
+                if (missing.num > 20)
+                    progress()
+            }
         }
 
         loader.wait(preload.rights) {
+            loader.onLoad = null
+
             val loaded = preload./((key, url) => key -> loader.get(url)).toMap
 
-            val resources = Resources(ImageResources(loaded, sources, HRF.imageCache), () => names().toMap)
+            val resources = Resources(ImageResources(loaded, sources, HRF.imageCache, deferred), () => names().toMap)
 
             import meta.gaming._
 
@@ -3635,7 +3714,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 def saveReplay(onSave : => Unit) = {
                     val filename = "hrf--" + meta.name + "--" + HRF.version + "--replay--" + HRF.startAt.toISOString().take(16).replace("T", "--")
 
-                    Quine.save(meta)(title, seating, options, resources, journal, filename, true, "", onSave)
+                    // (a replay file holds every image)
+                    loader.wait(deferred.values.$) {
+                        val all = resources.copy(images = resources.images.copy(loaded = resources.images.loaded ++ deferred.$./((name, url) => name -> loader.get(url)), deferred = Map()))
+                        Quine.save(meta)(title, seating, options, all, journal, filename, true, "", onSave)
+                    }
                 }
                 def saveSmallReplay(onSave : => Unit) = {
                     val filename = "hrf--" + meta.name + "--" + HRF.version + "--small-replay--" + HRF.startAt.toISOString().take(16).replace("T", "--")
