@@ -32,6 +32,22 @@ object Faction {
 }
 
 
+// ICONS (tools/icons): with a word on choices, alone where a number or a place makes them clear; the alt text says what they are
+
+object Icons {
+    val all = $("trade", "war-card", "war", "peace", "wax-seal", "build", "recruit", "company", "diplomacy", "end-turn", "move", "revive", "done",
+        "decline", "repair", "notifications", "interface", "bug", "home", "list", "hex", "boar")
+
+    // the cards' icon is the back of the cards
+    private def image(s : String) = (s == "cards").?("card:card-back").|("icon:" + (s == "seal").?("wax-seal").|(s))
+    def apply(s : String) : Elem = Image(image(s), (s == "cards").?(styles.cardIcon).|(styles.icon), "")
+    def only(s : String, alt : String) : Elem = Hint(alt, Image(image(s), (s == "cards").?(styles.cardIconOnly).|(styles.iconOnly), alt))
+    def piece(s : String, f : Faction) : Elem = Image("piece:" + s + "-" + f.id, styles.icon, "")
+    // a payment, as pictures of its cards
+    def paid(l : $[Resource]) : Elem = l./(_.pic : Elem).merge
+}
+
+
 // CARDS: six resources, each its own deck with one Maneuver card in it
 
 trait Card extends Record with Elementary {
@@ -44,7 +60,8 @@ sealed abstract class Resource(val name : String) extends Card with Named with S
     def resource = this
     def image = id
     def id = name.toLowerCase
-    override def elem = name.styled(this)
+    def pic : Elem = Hint(name, Image("die:" + id, styles.iconOnly, name))
+    override def elem = (Image("die:" + id, styles.icon, "") ~ name.styled(this)).spn(xlo.nowrap)
 }
 
 case object Wheat extends Resource("Wheat")
@@ -99,7 +116,7 @@ object Kind {
 }
 
 case class Figure(faction : Faction, kind : Kind, index : Int) extends Record with Elementary {
-    def elem = (faction.name + " " + kind.name).styled(faction)
+    def elem = (Image("piece:" + kind.id + "-" + faction.id, styles.icon, faction.name) ~ kind.name.styled(faction)).spn(xlo.nowrap)
     def land = kind.land
 }
 
@@ -252,20 +269,20 @@ case class DrawNextAction(draws : $[Draw], then : ForcedAction) extends ForcedAc
 case class ReshuffledAction(r : Resource, shuffled : $[Card], then : ForcedAction) extends ShuffledAction[Card]
 
 case class MainAction(f : Faction) extends ForcedAction
-case class EndTurnAction(self : Faction) extends BaseAction(None)("End turn")
+case class EndTurnAction(self : Faction) extends BaseAction(None)(Icons("end-turn") ~ "End turn")
 case class NextTurnAction(f : Faction) extends ForcedAction
 
 // units: an action is done one step at a time, and finished before another unit acts
 case class Counter(defender : Faction, active : Faction, ambush : Boolean) extends Record
 
 case class UnitMenuAction(self : Faction, figure : Figure) extends BaseAction("Units")(figure, "in", (g : Game) => g.at(figure).elem) with Soft with FigureKey
-case class StepAction(self : Faction, figure : Figure, hex : Hex, counter : |[Counter]) extends BaseAction(figure, "in", (g : Game) => g.at(figure).elem, (g : Game) => g.stepsNote(figure))("Move to", hex, (g : Game) => g.moveNote(figure, hex)) with HexKey
-case class AttackAction(self : Faction, unit : Figure, target : Figure, counter : |[Counter]) extends BaseAction(unit, "in", (g : Game) => g.at(unit).elem)("Attack", target, "in", (g : Game) => g.at(target).elem) with FigureKey { def figure = target }
-case class AttackFortAction(self : Faction, figure : Figure, hex : Hex, counter : |[Counter]) extends BaseAction(figure, "in", (g : Game) => g.at(figure).elem)("Attack", (g : Game) => g.forts(hex).owner.elem, "Fort in", hex) with HexKey
-case class ReviveAction(self : Faction, figure : Figure, paid : $[Resource], then : ForcedAction) extends BaseAction(figure, "in", (g : Game) => g.at(figure).elem)("Revive", "for", paid.intersperse(",")) with FigureKey
+case class StepAction(self : Faction, figure : Figure, hex : Hex, counter : |[Counter]) extends BaseAction(figure, "in", (g : Game) => g.at(figure).elem, (g : Game) => g.stepsNote(figure))(Icons("move") ~ "Move to", hex, (g : Game) => g.moveNote(figure, hex)) with HexKey
+case class AttackAction(self : Faction, unit : Figure, target : Figure, counter : |[Counter]) extends BaseAction(unit, "in", (g : Game) => g.at(unit).elem)(Icons("war") ~ "Attack", target, "in", (g : Game) => g.at(target).elem) with FigureKey { def figure = target }
+case class AttackFortAction(self : Faction, figure : Figure, hex : Hex, counter : |[Counter]) extends BaseAction(figure, "in", (g : Game) => g.at(figure).elem)(Icons("war") ~ "Attack", (g : Game) => g.forts(hex).owner.elem, "Fort in", hex) with HexKey
+case class ReviveAction(self : Faction, figure : Figure, paid : $[Resource], then : ForcedAction) extends BaseAction(figure, "in", (g : Game) => g.at(figure).elem)(Icons("revive") ~ "Revive", "for", Icons.paid(paid)) with FigureKey
 case class HideoutAction(self : Faction, figure : Figure, hex : Hex) extends BaseAction(figure, "in", (g : Game) => g.at(figure).elem)("Play", Hideout, "and enter", hex) with HexKey
 case class ExtraActionAction(self : Faction, figure : Figure, card : Maneuver) extends BaseAction(figure, "in", (g : Game) => g.at(figure).elem)("Play", card, "for one more move or attack")
-case class DoneUnitAction(self : Faction, figure : Figure, counter : |[Counter]) extends BaseAction(figure, "in", (g : Game) => g.at(figure).elem, (g : Game) => g.stepsNote(figure))("Done")
+case class DoneUnitAction(self : Faction, figure : Figure, counter : |[Counter]) extends BaseAction(figure, "in", (g : Game) => g.at(figure).elem, (g : Game) => g.stepsNote(figure))(Icons("done") ~ "Done")
 
 case class ContinueUnitAction(f : Faction, figure : Figure, counter : |[Counter]) extends ForcedAction
 case class FinishUnitAction(f : Faction, figure : Figure, counter : |[Counter]) extends ForcedAction
@@ -276,10 +293,10 @@ case class CounterAskAction(d : Faction, f : Faction, ambushed : Boolean) extend
 case class CounterUnitAction(self : Faction, figure : Figure, counter : Counter) extends BaseAction("Counter-Action against", counter.active)(figure, "in", (g : Game) => g.at(figure).elem) with Soft with FigureKey
 case class AmbushMenuAction(self : Faction, f : Faction) extends BaseAction("Counter-Action against", f)("Play", Ambush, "(another move or attack with a unit in a forest)") with Soft
 case class AmbushUnitAction(self : Faction, figure : Figure, counter : Counter) extends BaseAction(Ambush)(figure, "in", (g : Game) => g.at(figure).elem) with Soft with FigureKey
-case class CounterPassAction(self : Faction, f : Faction) extends BaseAction("Counter-Action against", f)("Pass")
-case class StonewallRepairAction(self : Faction, hex : Hex, paid : $[Resource], f : |[Faction]) extends BaseAction(StonewallSociety)("Repair Fort in", hex, "for", paid.intersperse(",")) with HexKey
-case class FrigateReviveNowAction(self : Faction, figure : Figure, paid : $[Resource], then : ForcedAction) extends BaseAction(NavalSupremacy)("Revive", figure, "now for", paid.intersperse(",")) with FigureKey
-case class FrigateReviveSkipAction(self : Faction, then : ForcedAction) extends BaseAction(NavalSupremacy)("Don't revive")
+case class CounterPassAction(self : Faction, f : Faction) extends BaseAction("Counter-Action against", f)(Icons("decline") ~ "Pass")
+case class StonewallRepairAction(self : Faction, hex : Hex, paid : $[Resource], f : |[Faction]) extends BaseAction(StonewallSociety)(Icons("repair") ~ "Repair Fort in", hex, "for", Icons.paid(paid)) with HexKey
+case class FrigateReviveNowAction(self : Faction, figure : Figure, paid : $[Resource], then : ForcedAction) extends BaseAction(NavalSupremacy)(Icons("revive") ~ "Revive", figure, "now for", Icons.paid(paid)) with FigureKey
+case class FrigateReviveSkipAction(self : Faction, then : ForcedAction) extends BaseAction(NavalSupremacy)(Icons("decline") ~ "Don't revive")
 
 // defensive maneuvers: asked on every attack on wheat or hills, so asking tells nothing of the hand
 case class DefendAskAction(f : Faction, figure : Figure, target : Figure, counter : |[Counter]) extends ForcedAction
@@ -290,41 +307,41 @@ case class HitAction(f : Faction, figure : Figure, target : Figure, counter : |[
 case class AfterAttackAction(f : Faction, figure : Figure, defender : Faction, counter : |[Counter]) extends ForcedAction
 
 // building
-case class BuildMenuAction(self : Faction) extends BaseAction(None)("Build") with Soft
-case class BuildColonyAction(self : Faction, hex : Hex, paid : $[Resource]) extends BaseAction("Build", ColonyBuild, "for", paid.intersperse(","))("Colony in", hex) with HexKey
-case class BuildRoadAction(self : Faction, a : Hex, b : Hex, paid : $[Resource]) extends BaseAction("Build", RoadBuild, "for", paid.intersperse(","))("Road between", a, "and", b) with HexKey { def hex = b }
-case class BuildBridgeAction(self : Faction, a : Hex, w : Hex, b : Hex, paid : $[Resource]) extends BaseAction("Build", BridgeBuild, "for", paid.intersperse(","))("Bridge from", a, "over", w, "to", b) with HexKey { def hex = w }
-case class BuildPortAction(self : Faction, hex : Hex, colony : Hex, paid : $[Resource]) extends BaseAction("Build", PortBuild, "for", paid.intersperse(","))("Port in", hex, "for the Colony in", colony) with HexKey
-case class BuildFortAction(self : Faction, hex : Hex, paid : $[Resource]) extends BaseAction("Build", FortBuild, "for", paid.intersperse(","))("Fort in", hex) with HexKey
-case class RepairFortAction(self : Faction, hex : Hex, paid : $[Resource]) extends BaseAction("Repair", "for", paid.intersperse(","))("Fort in", hex) with HexKey
+case class BuildMenuAction(self : Faction) extends BaseAction(None)(Icons("build") ~ "Build") with Soft
+case class BuildColonyAction(self : Faction, hex : Hex, paid : $[Resource]) extends BaseAction("Build", ColonyBuild, "for", Icons.paid(paid))(Icons.piece("colony", self) ~ "Colony in", hex) with HexKey
+case class BuildRoadAction(self : Faction, a : Hex, b : Hex, paid : $[Resource]) extends BaseAction("Build", RoadBuild, "for", Icons.paid(paid))("Road between", a, "and", b) with HexKey { def hex = b }
+case class BuildBridgeAction(self : Faction, a : Hex, w : Hex, b : Hex, paid : $[Resource]) extends BaseAction("Build", BridgeBuild, "for", Icons.paid(paid))("Bridge from", a, "over", w, "to", b) with HexKey { def hex = w }
+case class BuildPortAction(self : Faction, hex : Hex, colony : Hex, paid : $[Resource]) extends BaseAction("Build", PortBuild, "for", Icons.paid(paid))(Icons.piece("port", self) ~ "Port in", hex, "for the Colony in", colony) with HexKey
+case class BuildFortAction(self : Faction, hex : Hex, paid : $[Resource]) extends BaseAction("Build", FortBuild, "for", Icons.paid(paid))(Icons.piece("fort", self) ~ "Fort in", hex) with HexKey
+case class RepairFortAction(self : Faction, hex : Hex, paid : $[Resource]) extends BaseAction("Repair", "for", Icons.paid(paid))(Icons("repair") ~ "Fort in", hex) with HexKey
 
 // recruiting
-case class RecruitMenuAction(self : Faction) extends BaseAction(None)("Recruit") with Soft
-case class RecruitAction(self : Faction, kind : Kind, hex : Hex, paid : $[Resource]) extends BaseAction("Recruit", kind, "for", paid.intersperse(","))("in", hex) with HexKey
+case class RecruitMenuAction(self : Faction) extends BaseAction(None)(Icons("recruit") ~ "Recruit") with Soft
+case class RecruitAction(self : Faction, kind : Kind, hex : Hex, paid : $[Resource]) extends BaseAction("Recruit", Icons.piece(kind.id, self) ~ kind.elem, "for", Icons.paid(paid))("in", hex) with HexKey
 
 // trade
-case class TradeMenuAction(self : Faction) extends BaseAction(None)("Trade", (g : Game) => ("(" + g.rate(self) + ":1)").hl) with Soft
+case class TradeMenuAction(self : Faction) extends BaseAction(None)(Icons("trade") ~ "Trade", (g : Game) => ("(" + g.rate(self) + ":1)").hl) with Soft
 case class TradeForAction(self : Faction, r : Resource) extends BaseAction("Trade", (g : Game) => g.rate(self).hl, "cards for")(r, (g : Game) => g.tradeSource(self, r)./(e => " from " ~ Seal.company(r).elem ~ " (" ~ e.elem ~ ")").|(Empty)) with Soft
-case class TradePayAction(self : Faction, r : Resource, paid : $[Resource]) extends BaseAction("Trade for", r, "paying", paid.intersperse(","))("Add", (paid.lastOption : |[Card])./(_.elem).|(Empty)) with Soft
-case class TradeAction(self : Faction, r : Resource, paid : $[Resource]) extends BaseAction("Trade for", r)("Pay", paid.intersperse(","))
+case class TradePayAction(self : Faction, r : Resource, paid : $[Resource]) extends BaseAction("Trade for", r, "paying", Icons.paid(paid))("Add", (paid.lastOption : |[Card])./(_.elem).|(Empty)) with Soft
+case class TradeAction(self : Faction, r : Resource, paid : $[Resource]) extends BaseAction("Trade for", r)("Pay", Icons.paid(paid))
 
 // trading companies
-case class CompanyMenuAction(self : Faction) extends BaseAction(None)("Trading Companies") with Soft
+case class CompanyMenuAction(self : Faction) extends BaseAction(None)(Icons("company") ~ "Trading Companies") with Soft
 case class FoundCompanyAction(self : Faction, company : Company) extends BaseAction("Trading Companies")("Found", company, "with", 5.hl, company.resource, "cards")
 case class BuyoutAction(self : Faction, company : Company, n : Int) extends BaseAction("Trading Companies")("Forcible buyout of", company, "with", n.hl, company.resource, "cards")
 case class DepositAction(self : Faction, company : Company, card : Card) extends BaseAction(company, "stockpile")("Deposit", card)
-case class WithdrawAction(self : Faction, company : Company) extends BaseAction(company, "stockpile")("Take the top card")
+case class WithdrawAction(self : Faction, company : Company) extends BaseAction(company, "stockpile")(Icons("cards") ~ "Take the top card")
 
 // diplomacy
 case class Terms(give : $[Card], demand : $[Resource], release : $[Figure], ransom : $[Figure]) extends Record
 
-case class DiplomacyMenuAction(self : Faction) extends BaseAction(None)("Diplomacy") with Soft
-case class DeclareWarAction(self : Faction, e : Faction, boar : Boolean) extends BaseAction("Declare War on", e)(boar.?("Boar's War".hl ~ " (attack at once)").|("Gentleman's War".hl ~ " (attack from your next turn)"))
+case class DiplomacyMenuAction(self : Faction) extends BaseAction(None)(Icons("diplomacy") ~ "Diplomacy") with Soft
+case class DeclareWarAction(self : Faction, e : Faction, boar : Boolean) extends BaseAction("Declare War on", e)(boar.?(Icons("boar")).|(Icons("war")) ~ boar.?("Boar's War".hl ~ " (attack at once)").|("Gentleman's War".hl ~ " (attack from your next turn)"))
 case class PeaceTermsAction(self : Faction, e : Faction, now : Terms, terms : Terms, last : Elem) extends BaseAction("Peace terms for", e, (g : Game) => g.termsElem(self, e, now))(last) with SelfExplode {
     // the terms can't be listed in full: the bots offer none, and the plain offer validates every step of them
     def explode(withSoft : Boolean)(implicit g : Game) = withSoft.$(this) ++ $(OfferPeaceAction(self, e, Terms($, $, $, $)))
 }
-case class OfferPeaceAction(self : Faction, e : Faction, terms : Terms) extends BaseAction("Peace terms for", e, (g : Game) => g.termsElem(self, e, terms))("Offer peace") with SelfValidate {
+case class OfferPeaceAction(self : Faction, e : Faction, terms : Terms) extends BaseAction("Peace terms for", e, (g : Game) => g.termsElem(self, e, terms))(Icons("peace") ~ "Offer peace") with SelfValidate {
     def validate(a : Action) = a @@ {
         case OfferPeaceAction(f, x, _) => f == self && x == e
         case PeaceTermsAction(f, x, _, _, _) => f == self && x == e
@@ -332,13 +349,13 @@ case class OfferPeaceAction(self : Faction, e : Faction, terms : Terms) extends 
     }
 }
 case class PeaceAskAction(e : Faction, f : Faction, terms : Terms) extends ForcedAction
-case class AcceptPeaceAction(self : Faction, f : Faction, terms : Terms) extends BaseAction(f, "offers peace", (g : Game) => g.termsElem(f, self, terms))("Accept")
-case class DeclinePeaceAction(self : Faction, f : Faction, terms : Terms) extends BaseAction(f, "offers peace")("Decline")
+case class AcceptPeaceAction(self : Faction, f : Faction, terms : Terms) extends BaseAction(f, "offers peace", (g : Game) => g.termsElem(f, self, terms))(Icons("done") ~ "Accept")
+case class DeclinePeaceAction(self : Faction, f : Faction, terms : Terms) extends BaseAction(f, "offers peace")(Icons("decline") ~ "Decline")
 case class PlaceReturnedAction(l : $[Figure], then : ForcedAction) extends ForcedAction
 case class PlacePrisonerAction(self : Faction, figure : Figure, hex : Hex, l : $[Figure], then : ForcedAction) extends BaseAction(figure, "returned")("Place in", hex) with HexKey
 case class SupplyPrisonerAction(self : Faction, figure : Figure, l : $[Figure], then : ForcedAction) extends BaseAction(figure, "returned")("Keep in the supply")
 
-case class SurrenderAction(self : Faction) extends BaseAction("Every Colony annexed")("Surrender".hl)
+case class SurrenderAction(self : Faction) extends BaseAction("Every Colony annexed")(Icons("peace") ~ "Surrender".hl)
 case class SurrenderColoniesAction(f : Faction, left : $[Faction]) extends ForcedAction
 case class KeepColonyAction(self : Faction, f : Faction, hex : Hex, left : $[Faction]) extends BaseAction("Too few Colonies to replace all of", f, "annexed")("Replace the Colony in", hex) with HexKey
 
@@ -1376,17 +1393,17 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         val c = stockpiles(r).head
                         stockpiles += r -> stockpiles(r).drop(1)
                         f.hand :+= c
-                        log(f, "traded", paid.intersperse(","), "to", e, "for the top card of", Seal.company(r))
+                        log(f, "traded", Icons.paid(paid), "to", e, "for the top card of", Seal.company(r))
                         if (c.is[Maneuver])
                             this.notify(f, $(DrewCardInfoAction(f, c)))
                     case None =>
                         pay(f, paid)
                         if (takeFromBank(r)) {
                             f.hand :+= r
-                            log(f, "traded", paid.intersperse(","), "for", r)
+                            log(f, "traded", Icons.paid(paid), "for", r)
                         }
                         else
-                            log(f, "traded", paid.intersperse(","), "but the bank had no", r)
+                            log(f, "traded", Icons.paid(paid), "but the bank had no", r)
                 }
                 MainAction(f)
 

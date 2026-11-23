@@ -37,6 +37,10 @@ object Meta extends MetaGame { mmm =>
         "The art is from the Tabletop Simulator mod \"Pincer: A Gentleman's War (Updated for First Draft)\".",
     )
 
+    // a plain face for the controls, the log and the numbers; Luminari for the title only (index.html)
+    override def bodyFont = |("pincer-ui")
+    override def titleFont = |("luminari")
+
     def randomGameName() = {
         val n = $("Empire", "Colonies", "Muskets", "Frigates", "Forts", "Trade", "Crowns", "Seals", "Honour", "Powder").shuffle
         val c = $("for", "against", "versus", "through", "and", "of", "in", "as").shuffle
@@ -94,6 +98,9 @@ object Meta extends MetaGame { mmm =>
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "die", "die:", "webp")(
         Resource.all./(_.id)./(ImageAsset(_))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "icon", "icon:", "webp")(
+        Icons.all./(ImageAsset(_))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "war", "war:", "webp")(
         Faction.all./~(f => $("gentleman", "boar")./(n => ImageAsset(n + "-" + f.id)))

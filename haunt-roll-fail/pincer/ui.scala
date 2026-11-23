@@ -35,6 +35,9 @@ object UI extends BaseUI {
 class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resources, callbacks : hrf.Callbacks) extends MapGUI {
     def factionElem(f : Faction) = f.name.styled(f)
 
+    // on a phone the player panels are taller, for text of a readable size (index.html)
+    lazy val narrow = dom.window.innerWidth < 700
+
     val statuses = 1.to(arity)./(i => newPane("status-" + i, Content, styles.status, styles.fstatus, ExternalStyle("hide-scrollbar")))
     val statusGame = newOuterPane("status-game", Content)
 
@@ -58,6 +61,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     lazy val units = new OrderedLayer
     lazy val structures = new OrderedLayer
     lazy val highlighted = new OrderedLayer
+    lazy val labels = new OrderedLayer
 
     val width = Board.width
     val height = Board.height
@@ -71,7 +75,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
         val areas = new HitLayer(regions)
 
-        new Scene($(background, highlighted, structures, areas, units), mp.width, mp.height, margins)
+        new Scene($(background, highlighted, structures, areas, units, labels), mp.width, mp.height, margins)
     }
 
     override def adjustCenterZoomX() {
@@ -88,6 +92,64 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     var lastThen : UserAction => Unit = null
 
     var highlightHex : |[Hex] = None
+
+    // the hexes of the choice the mouse is over in the list, and of the code it is over in the log
+    var listedHexes = $[Hex]()
+    var loggedHex : |[Hex] = None
+
+    // the hexes a choice names
+    def hexesOf(a : UserAction) : $[Hex] = a.unwrap match {
+        case a : BuildRoadAction => $(a.a, a.b)
+        case a : BuildBridgeAction => $(a.a, a.w, a.b)
+        case a : HexKey => $(a.hex)
+        case a : FigureKey => game.pos.get(a.figure).$
+        case _ => $
+    }
+
+    // the codes of the hexes (D4) aren't on the board: they show on the hex the mouse is over, on those the listed choices name,
+    // and on one whose code the mouse is over (or a tap is on) in the log
+    var labelImages = Map[String, CanvasImage]()
+
+    def labelImage(s : String) = labelImages.getOrElse(s, {
+        val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+        canvas.width = 128
+        canvas.height = 72
+        val g = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+        g.font = "bold 46px 'Avenir Next', 'Segoe UI', Roboto, Arial, sans-serif"
+        g.textAlign = "center"
+        g.textBaseline = "middle"
+        g.fillStyle = "#14181f"
+        val w = g.measureText(s).width + 32
+        g.fillRect(64 - w / 2, 6, w, 60)
+        g.fillStyle = "#f3eee2"
+        g.fillText(s, 64, 38)
+        val i = new CanvasImage(canvas)
+        labelImages += s -> i
+        i
+    })
+
+    def locate(h : |[Hex]) {
+        if (h != loggedHex) {
+            loggedHex = h
+            drawMap()
+        }
+    }
+
+    dom.document.addEventListener("pointerover", (e : dom.PointerEvent) => {
+        val hex = e.target @@ {
+            case t : dom.Element =>
+                // (the code is in a span of its own in the styled one)
+                val code = t.asInstanceOf[scalajs.js.Dynamic].closest("[class*=hrf-hanging] .pincer-hex").asInstanceOf[dom.Element]
+                if (code != null) Board.hexes.find(_.name == code.textContent.trim) else None
+            case _ => None
+        }
+        locate(hex)
+    })
+
+    override def updateHighlight(a : |[UserAction]) {
+        listedHexes = a./~(hexesOf)
+        drawMap()
+    }
 
     def hexActions(h : Hex) = lastActions.%(_.unwrap @@ {
         case a : HexKey => a.hex == h
@@ -158,6 +220,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         units.clear()
         structures.clear()
         highlighted.clear()
+        labels.clear()
 
         def at(h : Hex, i : ImageRect, dx : Double = 0, dy : Double = 0) = structures.add(Sprite($(i), $))(Board.x(h) + dx, Board.y(h) + dy)
 
@@ -173,8 +236,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             case _ => $()
         }).distinct
 
+        // a quiet outline on every choice, a strong one where the mouse is (on the map or in the list)
+        val many = hexes.num > 8
         hexes.foreach { h =>
-            highlighted.add(Sprite($(ImageRect(new RawImage(img("hex-select")), Rectangle(-60, -69, 120, 138), 1.0)), $))(Board.x(h), Board.y(h))
+            val strong = highlightHex.has(h) || listedHexes.has(h)
+            val select = ImageRect(new RawImage(img("hex-select")), Rectangle(-60, -69, 120, 138), (strong || many.not).?(1.0).|(0.8))
+            // drawn over itself it is brighter and fills the hex
+            highlighted.add(Sprite(strong.?($(select, select, select)).|($(select)), $))(Board.x(h), Board.y(h))
         }
 
         lastActions.collect { case a : AttackAction => a.target }.distinct.foreach { u =>
@@ -226,7 +294,26 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             }
         }
 
+        val listed = folded.?(lastActions.%(_.unwrap.is[HexKey].not)).|(lastActions)
+
+        (highlightHex.$ ++ listedHexes ++ loggedHex.$ ++ listed./~(hexesOf)).distinct.foreach { h =>
+            labels.add(Sprite($(ImageRect(labelImage(h.name), Rectangle(-32, -18, 64, 36), 0.92)), $))(Board.x(h), Board.y(h) + 40)
+        }
+
+        // a hex found from the log, marked too
+        loggedHex.foreach { h =>
+            val select = ImageRect(new RawImage(img("hex-select")), Rectangle(-60, -69, 120, 138), 1.0)
+            highlighted.add(Sprite($(select, select, select), $))(Board.x(h), Board.y(h))
+        }
+
         |(scene)
+    }
+
+    def factionColor(f : Faction) = f match {
+        case Red => "#e0453c"
+        case Green => "#3fae4f"
+        case Blue => "#6f8dff"
+        case Yellow => "#e8c42e"
     }
 
     def factionStatus(f : Faction) {
@@ -234,7 +321,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
         val name = resources.getName(f).|(f.name)
 
-        val title = Div(Div(name).styled(f), styles.name, xlo.pointer)
+        val badge = (f == game.current).?("Turn".styled(styles.badge)).|((game.highlightFaction.has(f)).?("Choosing".styled(styles.badge)).|(Empty))
+
+        val title = Div(Span(name).styled(f) ~ badge, styles.name, styles.title)
 
         if (game.factions.has(f).not && game.current != null) {
             container.replace(Div(title ~ Div("Surrendered".hl)), resources)
@@ -245,38 +334,44 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
         val seals = game.sealsOf(f)
 
-        val sealRow = Div((seals.num.hlb ~ "/8 " ~ "Seals".txt) ~ " " ~ seals./(s => OnClick(s, Image("seal:" + s.image, styles.sealSmall, xlo.pointer))).merge)
+        val sealRow = Div(Icons.only("seal", "Royal Seals (8 win)") ~ (seals.num.hlb ~ "/8".txt) ~ " " ~ seals./(s => OnClick(s, Image("seal:" + s.image, styles.sealSmall, xlo.pointer))).merge)
 
-        val hand = Div(p.hand.num.hlb ~ " cards" ~ " · trade " ~ (game.rate(f) + ":1").hl ~ " · " ~ p.warCards.hl ~ " war cards")
+        val hand = Div(Span(Icons.only("cards", "Cards in hand") ~ p.hand.num.hlb, styles.stat) ~ Span(Icons.only("trade", "Trade rate") ~ (game.rate(f) + ":1").hlb, styles.stat) ~ Span(Icons.only("war-card", "War cards left") ~ p.warCards.hlb, styles.stat))(styles.small)
 
-        val wars = game.wars.%(w => w.declarer == f || w.target == f)./{ w =>
-            val e = (w.declarer == f).?(w.target).|(w.declarer)
-            e.elem ~ w.boar.?(" (Boar's)").|("") ~ game.gentleman.has((f, e)).?(" (next turn)").|("")
+        // swords, then the enemies in Gentleman's Wars; a flame, then those in Boar's Wars
+        val wars = game.wars.%(w => w.declarer == f || w.target == f)
+
+        val warGroups = $(false, true)./~{ boar =>
+            wars.%(_.boar == boar)./{ w =>
+                val e = (w.declarer == f).?(w.target).|(w.declarer)
+                val later = game.gentleman.has((f, e))
+                Hint("At war with " + e.name + boar.?(" (Boar's War)").|(" (Gentleman's War)") + later.?(" (from the next turn)").|(""),
+                    Image("piece:colony-" + e.id, styles.iconOnly, e.name) ~ e.short.styled(e) ~ later.?(Image("icon:end-turn", styles.piece, "from the next turn")).|(Empty), xlo.nowrap) : Elem
+            }.some./(l => Icons.only(boar.?("boar").|("war"), boar.?("Boar's War").|("Gentleman's War")) ~ l.merge)
         }
 
-        val warRow = Div("At war with ".txt ~ wars.some./(_.join(", ")).|("nobody".txt))(styles.small)
+        val warRow = Div(warGroups.some./(_.join(" ")).|(Icons.only("peace", "At peace")))
 
         val units = game.units(f)
 
         val pieceRow = Div(
-            (Image("piece:colony-" + f.id, styles.piece) ~ game.colonyOf(f).num.hl ~ " ") ~
+            Span(Image("piece:colony-" + f.id, styles.piece) ~ game.colonyOf(f).num.hlb, styles.stat) ~
             Kind.all./{ k =>
                 val l = units.%(_.kind == k)
                 val inj = l.count(game.isInjured)
-                Image("piece:" + k.id + "-" + f.id, styles.piece) ~ l.num.hl ~ (inj > 0).?(("(" + inj + " injured)").txt).|(Empty) ~ " "
+                Span(Image("piece:" + k.id + "-" + f.id, styles.piece) ~ l.num.hlb ~ (inj > 0).?((" (" + inj + " injured)").txt).|(Empty), styles.stat)
             }.merge
         )(styles.row)
 
         val captured = p.captured.num
-        val capRow = (captured > 0).?(Div(("Captured " ~ captured.hl ~ ": " ~ Kind.all./~(k => p.captured.count(_._1 == k).use(n => (n > 0).?(k.name + " " + n))).join(", ").txt))(styles.small)).|(Empty)
+        // every prisoner, in its own color
+        val capRow = (captured > 0).?(Div(Span("Captured ") ~ p.captured.map(_._2).map(u => Hint(u.faction.name + " " + u.kind.name, Image("piece:" + u.kind.id + "-" + u.faction.id, styles.piece, u.faction.name + " " + u.kind.name)) : Elem).merge)(styles.small)).|(Empty)
 
-        container.replace((title ~ sealRow ~ hand ~ pieceRow ~ warRow ~ capRow).div(xstyles.fillHeight), resources, onClick)
+        container.replace((title ~ sealRow ~ warRow ~ hand ~ pieceRow ~ capRow).div(xstyles.fillHeight), resources, onClick)
 
-        if (f == game.current)
-            container.attach.parent.style.outline = "2px solid #aaaaaa"
-        else
-        if (game.highlightFaction.has(f))
-            container.attach.parent.style.outline = "2px dashed #aaaaaa"
+        if (f == game.current || game.highlightFaction.has(f)) {
+            container.attach.parent.style.outline = "3px " + (f == game.current).?("solid").|("dashed") + " " + factionColor(f)
+        }
         else
             container.attach.parent.style.outline = ""
     }
@@ -284,12 +379,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     def gameStatus() {
         val dice = game.rolled./(r => Image("die:" + r.id, styles.die)).merge
 
-        val decks = Div(Resource.all./(r => (Image("die:" + r.id, styles.die) ~ game.decks(r).num.hl ~ " ")).merge)(styles.small)
+        val decks = Div(Resource.all./(r => Span(Image("die:" + r.id, styles.die) ~ " " ~ game.decks(r).num.hlb, styles.deck)).merge)(styles.small)
 
         val companies = Seal.companies.%(c => game.seals.contains(c))./(c => Div(c.elem ~ " " ~ game.seals(c).elem ~ " (" ~ game.stockpiles(c.resource).num.hl ~ ")")(styles.small))
 
         statusGame.replace(overlayFit(Div(Div("Turn " ~ game.turn.hl ~ " " ~ dice) ~ decks ~ companies.merge ~
-            "Royal Seals".hh.div(xlo.pointer).onClick.param("seals"), styles.gstatus)), resources, onClick)
+            (Icons("seal") ~ "Royal Seals".hh).div(xlo.pointer).onClick.param("seals"), styles.gstatus)), resources, onClick)
     }
 
     def updateStatus() {
@@ -311,7 +406,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
     val layouts = $(Layout("base",
         $(
-            BasicPane("status", 14, 9, Priorities(top = 3, right = 2, maxXscale = 1.8, maxYscale = 1.8)),
+            BasicPane("status", 14, narrow.?(21.0).|(10.6), Priorities(top = 3, right = 2, maxXscale = 1.8, maxYscale = 1.8)),
             BasicPane("status-game", 16, 12, Priorities(maxXscale = 1.2, maxYscale = 1.2)),
             BasicPane("log", 30, 13, Priorities(right = 1)),
             BasicPane("map-small", 60, 60, Priorities(top = 2, left = 1, grow = -1)),
@@ -357,7 +452,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
     val settingsKey = Meta.settingsKey
 
-    val layoutKey = "v" + 1 + "." + "arity-" + arity
+    val layoutKey = "v" + 2 + "." + "arity-" + arity + narrow.??(".narrow")
 
     def overlayScrollX(e : Elem) = overlayScroll(e)(styles.seeThroughInner).onClick
     def overlayFitX(e : Elem) = overlayFit(e)(styles.seeThroughInner).onClick
@@ -387,6 +482,22 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
                     Div(OnClick(s, Image("seal:" + s.image, styles.sealImg, xlo.pointer)) ~ " " ~ s.elem ~ " " ~ game.seals.get(s)./(f => "held by " ~ f.elem).|("unclaimed".txt) ~ Break ~ SealText.of(s).spn(styles.small))
                 }.merge), onClick)
 
+        // touch screens have no tooltips: what every icon on the panels means (the Icons button)
+        case "legend" =>
+            def line(i : Elem, s : String) = Div(i ~ " " ~ s.txt)
+            showOverlay(overlayScrollX(Div("Icons".hlb) ~ Div(
+                line(Icons("seal"), "Royal Seals held; eight win") ~
+                line(Icons("cards"), "Cards in hand") ~
+                line(Icons("trade"), "Cards paid for one in trade") ~
+                line(Icons("war-card"), "War cards left") ~
+                line(Icons("peace"), "At peace") ~
+                line(Icons("war"), "Gentleman's War, with the player shown after it") ~
+                line(Icons("boar"), "Boar's War, with the player shown after it") ~
+                line(Icons("end-turn"), "Beside a war: attacks from the next turn") ~
+                line(Icons.piece("colony", game.setup.head), "Colonies") ~
+                Kind.all./(k => line(Icons.piece(k.id, game.setup.head), k.name)).merge ~
+                Resource.all./(r => line(Image("die:" + r.id, styles.icon), r.name)).merge, styles.legend)), onClick)
+
         case s : Seal =>
             showOverlay(overlayFitX(Image("seal:" + s.image, styles.artwork) ~ Div(s.elem ~ Break ~ SealText.of(s))), onClick)
 
@@ -414,7 +525,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     override def info(self : |[Faction], aa : $[UserAction]) = {
         val ii = currentGame.info($, self, aa)
         ii.any.??($(ZOption(Empty, Break)) ++ convertActions(self.of[Faction], ii)) ++
-            $(ZBasic(Break ~ Break, "Royal Seals".hh, () => { onClick("seals") }).copy(clear = false)) ++
+            $(ZBasic(Break ~ Break, Icons("seal") ~ "Royal Seals".hh, () => { onClick("seals") }).copy(clear = false)) ++
+            $(ZBasic(Break ~ Break, Icons("list") ~ "Icons".hh, () => { onClick("legend") }).copy(clear = false)) ++
             (currentGame.isOver && hrf.HRF.flag("replay").not).$(
                 ZBasic(Break ~ Break ~ Break, "Save Replay As File".hh, () => {
                     showOverlay(overlayScrollX("Saving Replay...".hl.div).onClick, null)
@@ -425,10 +537,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
                     }
                 }).copy(clear = false)
             ) ++
-            $(ZBasic(Break ~ Break, "Notifications".spn, () => { onClick("notifications", self) }).copy(clear = false)).%(_ => self.any || game.isOver) ++
-            $(ZBasic(Break ~ Break, "Interface".spn, () => { callbacks.editSettings { updateStatus() } }).copy(clear = false)) ++
-            $(ZBasic(Break ~ Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug) ++
-            $(ZBasic(Break ~ Break, "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle)
+            $(ZBasic(Break ~ Break, Icons("notifications") ~ "Notifications".spn, () => { onClick("notifications", self) }).copy(clear = false)).%(_ => self.any || game.isOver) ++
+            $(ZBasic(Break ~ Break, Icons("interface") ~ "Interface".spn, () => { callbacks.editSettings { updateStatus() } }).copy(clear = false)) ++
+            $(ZBasic(Break ~ Break, Icons("bug") ~ "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug) ++
+            $(ZBasic(Break ~ Break, Icons("home") ~ "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle)
     }
 
     var shown : $[Notification] = $
@@ -471,17 +583,53 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         super.wait(self, factions, message)
     }
 
+    // a long list of hexes is folded, as they are all highlighted on the map, until it is asked for
+    val foldFrom = 9
+    var unfolded = false
+    var folded = false
+    var unfold : () => Unit = () => {}
+
+    override def convertActions(faction : |[F], actions : $[UserAction], then : UserAction => Unit = null) : $[ZOption] = {
+        val l = actions.%(a => a.unwrap.is[HexKey] && a.is[Unavailable].not && a.is[Hidden].not)
+
+        val fold = then != null && unfolded.not && l./(_.unwrap.as[HexKey].get.hex).distinct.num >= foldFrom
+
+        if (then != null && fold != folded) {
+            folded = fold
+            drawMap()
+        }
+
+        if (fold.not)
+            super.convertActions(faction, actions, then)
+        else
+            ZOption(Div(l.head.question(currentGame))(xlo.fullwidth), Div(Icons("hex") ~ "Tap a highlighted hex on the map", xstyles.info, xstyles.xx, xstyles.thu, xlo.fullwidth)) ::
+            ZOption(Div(l.head.question(currentGame))(xlo.fullwidth), OnClick(Div(Icons("list") ~ "Show the " ~ l.num.hl ~ " choices as a list", $(xstyles.choice, xstyles.xx, xstyles.thu, xlo.pointer, xlo.fullwidth) ++ faction./(f => elem.borders.get(f)).$)), _ => {
+                unfolded = true
+                unfold()
+            }, false) ::
+            super.convertActions(faction, actions.diff(l), then)
+    }
+
     override def ask(faction : |[F], actions : $[UserAction], then : UserAction => Unit) {
         lastActions = actions
         lastThen = then
+        listedHexes = $
+        highlightHex = None
+        unfolded = false
+        unfold = () => ask2(faction, actions, then)
 
         showNotifications(faction.$)
 
         updateStatus()
 
+        ask2(faction, actions, then)
+    }
+
+    def ask2(faction : |[F], actions : $[UserAction], then : UserAction => Unit) {
         super.ask(faction, actions, a => {
             clearOverlay()
             lastActions = $
+            listedHexes = $
             then(a)
         })
     }
