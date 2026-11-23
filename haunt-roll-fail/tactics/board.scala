@@ -1,12 +1,11 @@
 package tactics
 
 // The board: the tiles by their coordinates, so the map can be any shape, and the queries on them.
+// Immutable: `add` gives a new board.
 
-class Board(initial : Iterable[HexTile] = Nil) {
-    private var tiles : Map[Hex, HexTile] = initial.map(t => t.hex -> t).toMap
-
-    // Adds a tile, replacing any already at its coordinate
-    def add(t : HexTile) : Unit = tiles += t.hex -> t
+case class Board(tiles : Map[Hex, HexTile] = Map()) {
+    // A board with the tile added, replacing any already at its coordinate
+    def add(t : HexTile) = copy(tiles = tiles + (t.hex -> t))
 
     def get(h : Hex) : Option[HexTile] = tiles.get(h)
     def contains(h : Hex) = tiles.contains(h)
@@ -37,8 +36,10 @@ class Board(initial : Iterable[HexTile] = Nil) {
 }
 
 object Board {
+    def of(tiles : Iterable[HexTile]) = Board(tiles.map(t => t.hex -> t).toMap)
+
     // A hexagon of tiles around (0, 0)
-    def hexagon(radius : Int, terrain : Terrain = Plains) : Board = new Board(
+    def hexagon(radius : Int, terrain : Terrain = Plains) : Board = of(
         for {
             q <- (-radius).to(radius)
             r <- (-radius).max(-q - radius).to(radius.min(-q + radius))
