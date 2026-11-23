@@ -33,6 +33,7 @@ object HexCheck {
         movement()
         combat()
         matches()
+        skirmish()
 
         println(passed.toString + " passed, " + failed + " failed")
         if (failed > 0)
@@ -503,6 +504,51 @@ object HexCheck {
         }
         check("applyAll stops at the first refused action") {
             Turns.applyAll(opening, List(end("red"), end("blue"), end("red"))).swap.toOption.get.contains("red's turn")
+        }
+    }
+    // The starter skirmish map (scenario.scala)
+    def skirmish() : Unit = {
+        import Skirmish.{rows, columns, turned, axial, column, name, middle, sectors, westZone, eastZone}
+
+        val b = Skirmish.board
+
+        check("skirmish: 9 rows of 13 and 12 hexes") {
+            b.size == 5 * 13 + 4 * 12 && 0.until(rows).forall(r => b.all.count(_.r == r) == columns(r))
+        }
+        check("skirmish: turning half round gives the same map") {
+            b.all.forall(t => b.get(turned(t.hex)).exists(u => u.terrain == t.terrain && u.cover == t.cover && u.income == t.income && u.vp == t.vp))
+        }
+        check("skirmish: hex names") {
+            name(axial(0, 0)) == "A1" && name(axial(12, 8)) == "M9" && name(middle) == "G5" && column(axial(7, 3)) == 7
+        }
+        check("skirmish: 9 sectors, the town in the middle") {
+            b.all.count(_.sector) == 9 && b.get(middle).exists(t => t.terrain == Building && t.vp == Some(2)) && sectors.map(_._1).distinct.size == 9 &&
+            sectors.forall(s => b.get(s._1).exists(_.sector))
+        }
+        check("skirmish: zones mirror each other, on ground infantry can stand on, with no sector") {
+            westZone.size == eastZone.size && westZone.size >= 15 && westZone.intersect(eastZone).isEmpty &&
+            (westZone ++ eastZone).forall(h => b.get(h).exists(t => t.terrain.passable(Infantry) && !t.sector))
+        }
+        check("skirmish: every sector reachable by infantry from both zones") {
+            val walker = Roster.riflemen.make("w", "x", westZone.head)
+            sectors.forall { case (h, _) =>
+                List(westZone, eastZone).forall(z => z.exists(from => Movement.path(GameState(b), walker.at(from), h).isDefined))
+            }
+        }
+        check("skirmish: a match starts, Red first with its income in") {
+            val s = Skirmish.start("Red", "Blue").toOption.get
+            s.current == Some("Red") && s.phase == IncomePhase && s.units.size == 2 &&
+            s.player("Red").resources == Resources(manpower = 8, munitions = 3) && s.player("Blue").resources == Resources(manpower = 6, munitions = 2) &&
+            s.unit("Red-A").exists(u => westZone.contains(u.hex)) && s.unit("Blue-A").exists(u => eastZone.contains(u.hex))
+        }
+        check("skirmish: Red deploys, moves toward the town, and Blue gets its turn") {
+            val s = Skirmish.start("Red", "Blue").toOption.get
+            val zone = westZone.toList.filter(h => !s.occupied(h)).sortBy(h => (h.r, h.q))
+            val t = Turns.applyAll(s, List(DeployUnit("Red", "Riflemen", zone.head), EndPhaseAction("Red"))).toOption.get
+            val step = t.reachable("Red-A").keys.minBy(h => (h.distance(middle), h.r, h.q))
+            val u = Turns.applyAll(t, List(MoveUnit("Red", "Red-A", step), EndPhaseAction("Red"), EndPhaseAction("Red"))).toOption.get
+            u.current == Some("Blue") && u.unit("Red-1").isDefined && step.distance(middle) < axial(1, 4).distance(middle) &&
+            u.player("Blue").resources == Resources(manpower = 8, munitions = 3)
         }
     }
 }
