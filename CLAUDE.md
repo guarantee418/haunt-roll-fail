@@ -385,7 +385,7 @@ cd haunt-roll-fail && sbt fullOptJS
   each its own page, `/play/my-games` and `/play/account` (served like a meta's page, `data-meta` naming them, and shown by a Root
   `HRFMetaUI` with `siteWide` set, whose Back loads `/play`). My Online Games is Play Online's list for every game (`onlineGame` with
   `siteWide`: the account row opens My Account, no New Online Game or Archived Games, "Start a new online game" buttons opening each
-  game's `/play/<meta>/online/new`). My Account (`myAccount`) gathers the names this device holds, each name's rating on every ladder
+  game's `/play/<meta>/online/new`, Root's being Root Adset's, 2026-11-23). My Account (`myAccount`) gathers the names this device holds, each name's rating on every ladder
   (from `/rankings/<metas>`, tapping opens that game's Rankings), Discord and turn pings, other devices and codes, Switch account and
   Sign out; Play Online's Account and the Rankings' player code section stay. Client only.
 - Fixing a running game: through the `hrf-games` repository (copy `games/<id>.tsv` to

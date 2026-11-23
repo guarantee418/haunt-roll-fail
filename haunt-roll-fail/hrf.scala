@@ -2812,7 +2812,8 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         val siteRows : $[ZOption] = siteWide.??(
             (held.exists(_.none) && mine.forall(_.none)).$(ZOption("My Online Games".hl, Div(("This device isn't signed in, so it has no games to list. The name you type when you join an online game is claimed for this device; played on another device? " ~ "Sign in".hl ~ " above.").spn, ZBasic.info))) ++
             (held.exists(_.any) && mine.forall(_.none) && tour.none).$(ZOption("Your Active Games".hl, Div("No online games yet.".txt, ZBasic.info))) ++
-            HRF.menuMetas./(m => ZBasic("Start a new online game".hl, m.label.hh, () => dom.document.location.assign("/play/" + m.name + "/online/new"))))
+            // (Root's is an Advanced Setup game, as players start (owner, 2026-11-23))
+            HRF.menuMetas./(m => (m == root.Meta).?((root.MetaAdset : MetaGame, "Root Adset")).|((m, m.label)))./{ case (m, label) => ZBasic("Start a new online game".hl, label.hh, () => dom.document.location.assign("/play/" + m.name + "/online/new")) })
 
         ui.action.asker.zask(
             siteWide.not.??(meta.recommendedVersion.but("")./(v => ZBasic("This version is currently under development or testing.".styled(xstyles.error) ~ Break ~ "If you are not feeling adventurous, please use the following version instead:".styled(xstyles.warning), v.styled(xstyles.link).styled(xstyles.larger125), () => {
