@@ -1031,6 +1031,134 @@
             .rk-x100{left:100%}
 
             /* )} /* */
+
+            /* Pincer (body[data-meta] is set in hrf.scala): a plain face, readable text, larger touch targets, clear states */
+            .pincer-ui {
+                font-family: "Avenir Next", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                font-size: 19px;
+                font-size: 1.9vh;
+                font-variant-numeric: tabular-nums;
+            }
+
+            body[data-meta=pincer] {
+                color: #b9b4a8;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            body[data-meta=pincer] [class*="hrf-inner"] {
+                background-color: #1c2129;
+                border-color: #1c2129;
+            }
+
+            body[data-meta=pincer] [class*="hrf-outer"] {
+                border-color: #10131a;
+                outline-color: #10131a;
+            }
+
+            body[data-meta=pincer] [class*="hrf-log"] {
+                padding-left: 1.2ex;
+                padding-right: 1.2ex;
+                font-size: 100%;
+                line-height: 1.4;
+            }
+
+            body[data-meta=pincer] [class*="hrf-highlight"] {
+                color: #f3eee2;
+            }
+
+            body[data-meta=pincer] [class*="hrf-halfhigh"] {
+                color: #d6d0c2;
+            }
+
+            body[data-meta=pincer] [class*="hrf-choice"] {
+                box-sizing: border-box;
+                min-height: 36px;
+                padding: 0.5ex 1.2ex;
+                border-radius: 6px;
+                outline-width: 1px;
+                background-color: #10131a;
+                color: #e4dece;
+                transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1), background-color 140ms ease;
+            }
+
+            body[data-meta=pincer] [class*="hrf-info"] {
+                border-radius: 6px;
+                outline-color: #39414e;
+                background-color: #232a34;
+                color: #d6d0c2;
+            }
+
+            @media (pointer: coarse), (max-width: 700px) {
+                body[data-meta=pincer] [class*="hrf-choice"] {
+                    min-height: 44px;
+                }
+
+                body[data-meta=pincer] [class*="hrf-choice"][class*="hrf-thu"] {
+                    margin-left: 1.6ex;
+                    margin-right: 1.6ex;
+                }
+            }
+
+            @media (max-width: 700px) {
+                body[data-meta=pincer] [class*="pincer-status"],
+                body[data-meta=pincer] [class*="pincer-status"] [class*="pincer-small"],
+                body[data-meta=pincer] [class*="pincer-status"] [class*="pincer-row"] {
+                    font-size: 11px;
+                    line-height: 1.3;
+                }
+
+                body[data-meta=pincer] [class*="pincer-status"] [class*="pincer-title"] {
+                    font-size: 13px;
+                }
+
+                body[data-meta=pincer] [class*="pincer-status"] [class*="pincer-badge"] {
+                    font-size: 10px;
+                }
+            }
+
+            @media (hover: hover) and (pointer: fine) {
+                body[data-meta=pincer] [class*="hrf-choice"]:hover {
+                    background-color: #2b3340;
+                }
+            }
+
+            body[data-meta=pincer] [class*="hrf-choice"][data-onclick]:active {
+                transform: scale(0.97);
+            }
+
+            body[data-meta=pincer] [data-onclick]:focus-visible {
+                outline: 3px solid #f0c040;
+                outline-offset: 2px;
+            }
+
+            /* the menus: the game's name, one main choice, the rest quieter */
+            body[data-meta=pincer] [class*="hrf-larger110"]:has(> [class="hrf-highlight"]) {
+                display: inline-block;
+                margin-bottom: 0.5ex;
+                font-size: 42px;
+                font-size: clamp(30px, 5vh, 52px);
+                line-height: 1.1;
+            }
+
+            body[data-meta=pincer] [class*="hrf-thuc"][class*="hrf-choice"]:has(> [class*="hrf-highlight---hrf-bold"]):not([class*="hrf-choice"]:has(> [class*="hrf-highlight---hrf-bold"]) ~ *) {
+                min-height: 52px;
+                outline-color: #e8c871;
+                background-color: #e8c871;
+            }
+
+            body[data-meta=pincer] [class*="hrf-thuc"][class*="hrf-choice"]:not([class*="hrf-choice"]:has(> [class*="hrf-highlight---hrf-bold"]) ~ *) > [class*="hrf-highlight---hrf-bold"] {
+                color: #14181f;
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                body[data-meta=pincer] [class*="hrf-choice"] {
+                    transition: none;
+                }
+
+                body[data-meta=pincer] [class*="hrf-choice"][data-onclick]:active {
+                    transform: none;
+                }
+            }
         </style>
 
         <link id="icon" type="image/x-icon" rel="shortcut icon" comment="drop icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAE9klEQVR42u3bW4hVVRjA8Z8z08xkmZlpUWlXM7uYdB+NrvQgRRA9RJeH6CEkKLqA0EPUQwRFSUVF93uRQRTUQ0IXym7QlczCLjTaPVIzzRyT2T1867SHoak5Z87Z6xj+4TAMe+/1XfZa31rrW99mG9vIwQL8gQIbcEFuhapkLvqT8bXfChyRW7EqmI63ktE/YhFWp/9fxu65FWwlO+ChZOwmXIbtcDU2YxB3oje3oq1gHC7HQDL0Xmyfru2Ix5JjNuLidP//ipNFly+wFHsOu74v3k3Xv0FfboWbyV7Kcf8t5o1w36n4Kd33KnbLrXgz6MEdottvwiVG7t4duEoZD24WMWKr5jwxzxd4BOP/4/4JWJzu/w1n5zZgLByEz5IxH+OAUT43a9hz++c2pBG2x6Maf5NDe879tsKp8UKx1B3Ebeofyz24Ozngd5yb26B6mKHswu9jWoPt7CuGQIFl2C+3YaOhG/ckpdfjrDG2d47oAYWYTdp+VjhTjPkiOaJ7jO31KpfPv2J+bgP/jal4U7m7O7BJ7c7Cl6nd1zA5t6H/xDgsxBaxkFnQ5PYvxZ+p/Su04V5hFr4Wb2kJJja5/Uliu1yI3jAzt8FD6RIBqjZOT2uRnPlYl+Tcis7chteYi1+Ui5axBr6R6MbDSc7PODa34cSC5Ymk1HeY02J5R+KHJO9RrXP2qDlFdPsCN4kdXSvpxC1J3lqclNP4HjyVlOkXm58qOBgrk9wnkx5ZOEG8hQI3qG5q6sCNyl5wfA7ju/CAMoV1cMXyDxHZpQL3JX0qZbYyGN2u9WN/OJ3Kqfd7HFal8HG4Lglfg+MqNr5GX5Jf4NoqBU/FR0nws/IFoV48l/T4EFOqEnyWyO9vFpmbnJyX9Bgw9q33qOhUBr9PsUdmB+yR9CiSXnUvj+sNXtOV084rIhDm5Mekh6TX9FY7YC72Fl1uifB8TgaTHgNJr3n1NlCvA04TQW8VPshsfI0Pkj49WrcT/ZtaZmaxDIuPEehSHqZ8Ve/D9faAfdLf90R2ph3YIg5WiWHQUgd0ivG2LLfVw1iW9Gr5LEBkZVbltngYq8S2vG4accBasQRtJ9YkvSpxwDpRydFObEx6VeKATdonANbYkvSqxAHtSkOLskYc0N3gc62kU4MJ0kYMmaD9zut7kl6VOGBS+rUTExvVqVEH1L3rajHTsEsVDhgU5S/tVtc7J+lVdyCs1wFfpL8naZ840I0TRa6yv9UOeEF4+VgcmtvyxExlZemLrRZ2nLLkdZH80+E4XC+G5moVHJUNPaH9HkdldsAhym8PnlYWYLeUPnE8XeAZDc6/TWC8ssp8rTiorYROcRY4KFLS16g+O9SBK8X6v9BYLeKYmIqXlJWgl6iuYqMDFykPZt8QFemVc7jIxBRiK7rQfxdDj5Ve8eFFzfgVOCaH8TXmYXlSZgAPGn1RdL3sL06Ca1+bfa7Ccf9vHInXlV+ALRdlcrs2qf0pqb1Phsh4S75D2X9kGu4S5bGFSFC8Ler7Zqg/SHaJnnQp3knt1b4xvEcD2d+RaGZVRzfOEGO0b4jRK5MRS0Xx87ciZtQ+oOoQ29mJIpjNFsdcfUMMrTn0NrEaHWhHB9SYLGqGz8fR2GnItQ3KBOb6ZFiXWEtMEju6HYfc/5vI+T+O58Vqb6thIk4XtYP94m0Xo/gNpvvvT8/vnNuQbfyf+QtabD7ASyKDhAAAAABJRU5ErkJggg==" />
@@ -1070,6 +1198,37 @@
                 });
                 window.addEventListener("error", e => add("uncaught", [e.error || (e.message + " at " + e.filename + ":" + e.lineno)]));
                 window.addEventListener("unhandledrejection", e => add("unhandled", [e.reason]));
+            })();
+        </script>
+
+        <script id="pincer-keyboard">
+            // Pincer's choices by keyboard: Tab to one, Enter or Space to take it
+            (function () {
+                const on = () => document.body.dataset.meta === "pincer";
+                const mark = () => {
+                    if (on())
+                        document.querySelectorAll("[data-onclick]:not([tabindex])").forEach(e => {
+                            // the log's lines and the pictures stay out of the tab order
+                            if (!/hrf-choice/.test(e.className))
+                                return;
+                            e.tabIndex = 0;
+                            e.setAttribute("role", "button");
+                        });
+                };
+                let queued = false;
+                new MutationObserver(() => {
+                    if (!queued) {
+                        queued = true;
+                        requestAnimationFrame(() => { queued = false; mark() });
+                    }
+                }).observe(document.body, { childList: true, subtree: true });
+                document.addEventListener("keydown", e => {
+                    if (on() && (e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[role=button][data-onclick]")) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.target.click();
+                    }
+                }, true);
             })();
         </script>
 

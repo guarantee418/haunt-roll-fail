@@ -38,7 +38,7 @@ package object elem {
         object sealImg extends CustomStyle(width("6ex"), margin("0.15ex"))
         object sealSmall extends CustomStyle(width("3.6ex"), margin("0.1ex"), vertical.align("middle"))
         object die extends CustomStyle(width("4.2ex"), vertical.align("middle"))
-        object piece extends CustomStyle(height("3ex"), vertical.align("middle"))
+        object piece extends CustomStyle(height("2.6ex"), vertical.align("middle"))
         object injuredPiece extends CustomStyle(height("3ex"), vertical.align("middle"), filter("opacity(45%)"))
 
         object name extends CustomStyle()
@@ -52,7 +52,13 @@ package object elem {
         object group extends CustomStyle()
         object selected extends CustomStyle()
         object cardS extends CustomStyle()
-        object row extends CustomStyle(white.space("nowrap"))
+        object title extends CustomStyle(font.size("115%"), font.weight("bold"))
+        object badge extends CustomStyle(font.size("75%"), font.weight("bold"), color("#14181f"), background.color("#e8dcc0"), border.radius("0.5ex"), padding.left("0.7ex"), padding.right("0.7ex"), margin.left("0.8ex"), white.space("nowrap"))
+        object stat extends CustomStyle(display("inline-block"), white.space("nowrap"), margin.left("0.5ex"), margin.right("0.5ex"))
+        object deck extends CustomStyle(display("inline-block"), white.space("nowrap"), width("30%"), text.align("center"))
+        object atWar extends CustomStyle(color("#ff9a8c"), font.weight("bold"))
+
+        object row extends CustomStyle(font.size("90%"))
         object small extends CustomStyle(font.size("85%"))
 
         object status extends CustomStyle(
