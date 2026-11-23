@@ -183,11 +183,12 @@ zones, that every sector can be reached from both zones, and an opening).
 The HRF game: headless bot games on the JVM like `pincer.Host` (see `pincer/HANDOFF.md`, Testing: a project with
 `common.sbt` with `%%` and only `tactics` as a game directory, `host.xsbt` as its `build.sbt`, the engine's sources
 linked, `base.scala` without its `arcs` line, and without `convert-images.scala`, `live-check.scala` and
-`lookup-index.scala`): `TACTICS_GAMES=10 sbt "runMain tactics.Host"`. On 2026-11-23 ten games of two Easy bots each
-ended with a winner in 200 to 280 steps, every action written and parsed back.
+`lookup-index.scala`): `TACTICS_GAMES=20 sbt "runMain tactics.Host"`. On 2026-11-23 twenty games of two Easy bots each
+ended with a winner in 200 to 350 steps, every action written and parsed back.
 
 In a browser: serve `/play/tactics` from `index.html` (see "Browser driving" in `nort/HANDOFF.md`) and start a
-Quick Game or a Local Game.
+Quick Game or a Local Game. On 2026-11-23 a Quick Game against the bot was played in Chromium through four turns:
+deploying, moving, capturing the Town and attacking, by taps on the map and in the lists, with no errors.
 
 ## Next
 

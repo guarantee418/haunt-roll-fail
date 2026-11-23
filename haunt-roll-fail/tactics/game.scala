@@ -56,7 +56,7 @@ case class TurnAction() extends ForcedAction
 case class PlayerTurnAction(f : Faction) extends ForcedAction
 
 // Income phase
-case class DeployAction(self : Faction, unitType : String, cell : Cell) extends BaseAction("Deploy in", cell)((g : Game) => g.typeElem(unitType), "for", (g : Game) => g.costElem(unitType)) with HexKey
+case class DeployAction(self : Faction, unitType : String, cell : Cell) extends BaseAction("Deploy")((g : Game) => g.typeElem(unitType), "in", cell, "for", (g : Game) => g.costElem(unitType)) with HexKey
 case class ToActionPhaseAction(self : Faction) extends BaseAction(None)("Go to the", "Action".hl, "phase")
 
 // Action phase
@@ -112,7 +112,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def moveNote(id : String, c : Cell) : Elem = {
         val cost = state.reachable(id).get(c.hex)
         val sector = Skirmish.sectorName(c.hex)
-        (cost./(n => "(" + n + " moves)").|("") + sector./(s => " " + s).|("")).txt
+        (cost./(n => "(" + n + (n == 1).?(" move").|(" moves") + ")").|("") + sector./(s => " " + s).|("")).txt
     }
 
     def attackNote(attacker : String, target : String) : Elem = (for {
@@ -168,17 +168,22 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         c
     }
 
-    def report(r : CombatReport) {
-        log(unitElem(r.attacker), "fired", r.weapon.hl, "at", r.target.hl, "(" + r.distance + " hexes, " + r.cover.name.toLowerCase + " cover):",
+    // the attack's log; `target` is the target's name, worked out before the attack, as it may be destroyed
+    def report(r : CombatReport, target : Elem) {
+        val hexes = (r.distance == 1).?("1 hex").|(r.distance + " hexes")
+        val cover = (r.cover == NoCover).?("no cover").|(r.cover.name.toLowerCase + " cover")
+        log(unitElem(r.attacker), "fired", r.weapon.hl, "at", target, "(" + hexes + ", " + cover + "):",
             "rolled", r.rolls.mkString(" ").hl, "needing", (r.needed + "+").hl)
+
+        val hits = r.hits.hl ~ " " ~ (r.hits == 1).?("hit").|("hits").txt
 
         if (r.hits == 0)
             log("No hits")
         else
         if (r.destroyed)
-            log(r.hits.hl, (r.hits == 1).?("hit").|("hits"), "for", r.damage.hl, "damage,", r.target.hl, "destroyed")
+            log(hits, "for", r.damage.hl, "damage,", target, "destroyed")
         else
-            log(r.hits.hl, (r.hits == 1).?("hit").|("hits"), "for", r.damage.hl, "damage,", r.target.hl, "has", r.health.hl, "health left", r.suppressed.?("and is suppressed"))
+            log(hits, "for", r.damage.hl, "damage,", target, "has", r.health.hl, "health left", r.suppressed.?("and is suppressed"))
     }
 
     def performInternal(a : Action, soft : Void) : Continue = {
@@ -269,8 +274,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 Roll[Int](List.fill(dice)(Die.range((1, Combat.sides))), r => AttackRolledAction(f, a, t, r))
 
             case AttackRolledAction(f, a, t, rolls) =>
+                val target = unitElem(t)
                 apply(AttackUnit(f.name, a, t, rolls))
-                state.lastReport.foreach(report)
+                state.lastReport.foreach(report(_, target))
                 TurnAction()
 
             case EndActionsAction(f) =>

@@ -212,7 +212,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
                 1.to(t.cover.level).foreach(i => g.fillRect(sx - 5, sy - 8 + i * 5, 10, 2.5))
             }
 
-            // sectors: their name, then their VP and income
+            // sectors: their name, then their VP and income, under the hex name, above where the unit stands
             Skirmish.sectorName(t.hex).foreach { name =>
                 val gives = t.vp./(v => "★" + v).$ ++
                     List((t.income.manpower, "MP"), (t.income.munitions, "MU"), (t.income.fuel, "FU")).filter(_._1 > 0).map { case (n, s) => "+" + n + " " + s }
@@ -222,11 +222,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
                 val l2 = gives.mkString(" ")
                 val w = max(g.measureText(l1).width, g.measureText(l2).width) + 12
                 g.fillStyle = "rgba(20, 24, 31, 0.82)"
-                g.fillRect(cx - w / 2, cy + S - 50, w, 34)
+                g.fillRect(cx - w / 2, cy - 36, w, 32)
                 g.fillStyle = "#f0c040"
-                g.fillText(l1, cx, cy + S - 41)
+                g.fillText(l1, cx, cy - 28)
                 g.fillStyle = "#f3eee2"
-                g.fillText(l2, cx, cy + S - 25)
+                g.fillText(l2, cx, cy - 13)
             }
         }
 
@@ -450,6 +450,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
             highlighted.add(Sprite($(outline("#ff4040", strong.?(8).|(5), 2)), $))(x(c), y(c))
         }
 
+        lastActions./~(_.unwrap @@ {
+            case a : UnitMenuAction => $(a.unit)
+            case _ => $()
+        })./~(s.unit).foreach { u =>
+            val c = Cell(u.hex)
+            val strong = highlightCell.has(c) || listedCells.has(c)
+            highlighted.add(Sprite($(outline(strong.?("#ffe070").|("rgba(255, 224, 112, 0.75)"), strong.?(7).|(4), 2)), $))(x(c), y(c))
+        }
+
         selected./~(s.unit).foreach { u =>
             highlighted.add(Sprite($(outline("#ffffff", 6, 1)), $))(x(Cell(u.hex)), y(Cell(u.hex)))
         }
@@ -459,9 +468,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
             val f = game.faction(u.owner)
             val c = Cell(u.hex)
             val done = u.attacked || (u.movesLeft == 0 && s.current.has(u.owner))
-            val i = ImageRect(token(u, f, maxHealth(u.id), done), Rectangle(-40, -36, 80, 80), 1.0)
-            val box = Rectangle(-36, -32, 72, 72)
-            units.add(Sprite($(i), $(box), $(UnitTag(c, u.id))))(x(c), y(c) + 4)
+            val i = ImageRect(token(u, f, maxHealth(u.id), done), Rectangle(-30, -30, 60, 60), 1.0)
+            val box = Rectangle(-30, -30, 60, 60)
+            units.add(Sprite($(i), $(box), $(UnitTag(c, u.id))))(x(c), y(c) + 22)
         }
 
         |(scene)
@@ -536,8 +545,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
 
     val layouts = $(Layout("base",
         $(
-            BasicPane("status", 14, narrow.?(18.0).|(9.0), Priorities(top = 3, right = 2, maxXscale = 1.8, maxYscale = 1.8)),
-            BasicPane("status-game", 16, 8, Priorities(maxXscale = 1.2, maxYscale = 1.2)),
+            BasicPane("status", 14, narrow.?(22.0).|(13.0), Priorities(top = 3, right = 2, maxXscale = 1.8, maxYscale = 1.8)),
+            BasicPane("status-game", 16, 10, Priorities(maxXscale = 1.2, maxYscale = 1.2)),
             BasicPane("log", 30, 13, Priorities(right = 1)),
             BasicPane("map-small", 60, 40, Priorities(top = 2, left = 1, grow = -1)),
             BasicPane("action-a", 64, 26, Priorities(bottom = 1, right = 3, grow = 1)),
