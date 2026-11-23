@@ -59,9 +59,12 @@ case class HexTile(q : Int, r : Int, terrain : Terrain = Plains, cover : Cover =
 // Called CombatUnit, not Unit, as a class named Unit would hide Scala's own Unit type in this package.
 // `movement` is the unit's movement points each turn and `spent` how many it has used this turn.
 // `weapon` is what it attacks with (None: it can't attack), `suppressed` whether fire has pinned it down,
-// and `attacked` whether it has attacked this turn.
-case class CombatUnit(id : String, owner : String, health : Int, movement : Int, armor : Int, q : Int, r : Int, kind : MoveKind = Infantry, spent : Int = 0, weapon : Option[Weapon] = None, suppressed : Boolean = false, attacked : Boolean = false) {
+// and `attacked` whether it has attacked this turn (a retreat uses it up too).
+// `maxHealth` is its full health; 0 stands for its health now, so a unit made with no maxHealth is unhurt
+// (UnitType.make sets it, and Combat sets it when a unit is first hurt).
+case class CombatUnit(id : String, owner : String, health : Int, movement : Int, armor : Int, q : Int, r : Int, kind : MoveKind = Infantry, spent : Int = 0, weapon : Option[Weapon] = None, suppressed : Boolean = false, attacked : Boolean = false, maxHealth : Int = 0) {
     require(health >= 0, "health must be at least 0, got " + health)
+    require(maxHealth == 0 || maxHealth >= health, "health " + health + " is above the unit's full health " + maxHealth)
     require(movement >= 0, "movement must be at least 0, got " + movement)
     require(armor >= 0, "armor must be at least 0, got " + armor)
     require(spent >= 0 && spent <= movement, "spent must be 0 to " + movement + ", got " + spent)
@@ -72,4 +75,7 @@ case class CombatUnit(id : String, owner : String, health : Int, movement : Int,
     def at(h : Hex) = copy(q = h.q, r = h.r)
     def alive = health > 0
     def movesLeft = movement - spent
+
+    def fullHealth = maxHealth.max(health)
+    def damaged = health < fullHealth
 }

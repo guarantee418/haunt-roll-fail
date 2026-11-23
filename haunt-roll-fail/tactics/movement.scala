@@ -79,6 +79,48 @@ object Movement {
             }
         }
 
+    // RETREAT: a hurt infantry unit falls back up to rules.retreatHexes hexes toward its deployment zone,
+    // whatever the terrain costs (only terrain it can't enter stops it), passing its own side's units but not
+    // the enemy's, to the free hex nearest the zone (then the fewest hexes, then by r and q); it must end nearer
+    // the zone than it started. The path found, start and end included, its cost the hexes gone.
+    def retreatPath(s : GameState, u : CombatUnit) : Option[Path] = {
+        def step(h : Hex) = h.neighbors.filter(n => s.board.get(n).exists(_.terrain.passable(u.kind)) && s.at(n).forall(_.owner == u.owner))
+
+        // breadth first, each hex reached by its first path in (r, q) order, so the same every time
+        val paths = 1.to(s.rules.retreatHexes).foldLeft(List(List(u.hex))) { (found, _) =>
+            val seen = found.map(_.head).toSet
+            val next = found.filter(_.size == found.map(_.size).max).flatMap(p => step(p.head).sortBy(n => (n.r, n.q)).map(_ :: p))
+            found ++ next.filter(p => !seen.contains(p.head)).groupBy(_.head).values.map(_.head).toList.sortBy(p => (p.head.r, p.head.q))
+        }
+
+        val here = s.zoneDistance(u.owner, u.hex)
+
+        here.flatMap { d =>
+            paths.filter(p => p.head != u.hex && !s.occupied(p.head))
+                .map(p => (s.zoneDistance(u.owner, p.head).get, p))
+                .filter(_._1 < d)
+                .sortBy { case (z, p) => (z, p.size, p.head.r, p.head.q) }
+                .headOption.map { case (_, p) => Path(p.reverse, p.size - 1) }
+        }
+    }
+
+    // Why the unit can't retreat now, or its path if it can
+    def canRetreat(s : GameState, u : CombatUnit) : Either[String, Path] =
+        for {
+            _ <- Either.cond(u.alive, (), u.id + " is out of action")
+            _ <- Either.cond(u.kind == Infantry, (), "only infantry retreats")
+            _ <- Either.cond(u.damaged, (), u.id + " isn't hurt")
+            _ <- Either.cond(!u.attacked, (), u.id + " has attacked or retreated this turn")
+            _ <- Either.cond(!s.inZone(u.owner, u.hex), (), u.id + " is already in its zone")
+            p <- retreatPath(s, u).toRight(u.id + " has no way back toward its zone")
+        } yield p
+
+    // The state after the unit retreats: it can't move or attack again this turn
+    def retreat(s : GameState, id : String) : Either[String, GameState] =
+        s.unit(id).toRight("no unit " + id).flatMap(u => canRetreat(s, u).map { p =>
+            s.copy(units = s.units + (id -> u.at(p.end).copy(spent = u.movement, attacked = true)))
+        })
+
     // The state after the unit moves to the hex along the cheapest path, spending its cost
     def move(s : GameState, id : String, to : Hex) : Either[String, GameState] =
         s.unit(id) match {

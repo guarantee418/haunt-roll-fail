@@ -34,6 +34,7 @@ object HexCheck {
         combat()
         matches()
         skirmish()
+        operations()
 
         println(passed.toString + " passed, " + failed + " failed")
         if (failed > 0)
@@ -544,11 +545,164 @@ object HexCheck {
         check("skirmish: Red deploys, moves toward the town, and Blue gets its turn") {
             val s = Skirmish.start("Red", "Blue").toOption.get
             val zone = westZone.toList.filter(h => !s.occupied(h)).sortBy(h => (h.r, h.q))
-            val t = Turns.applyAll(s, List(DeployUnit("Red", "Riflemen", zone.head), EndPhaseAction("Red"))).toOption.get
+            val t = Turns.applyAll(s, List(DrawOrders("Red", 4), DeployUnit("Red", "Riflemen", zone.head), EndPhaseAction("Red"))).toOption.get
             val step = t.reachable("Red-A").keys.minBy(h => (h.distance(middle), h.r, h.q))
             val u = Turns.applyAll(t, List(MoveUnit("Red", "Red-A", step), EndPhaseAction("Red"), EndPhaseAction("Red"))).toOption.get
             u.current == Some("Blue") && u.unit("Red-1").isDefined && step.distance(middle) < axial(1, 4).distance(middle) &&
             u.player("Blue").resources == Resources(manpower = 8, munitions = 3)
+        }
+    }
+    // Step 6: order limits, retreats, reinforcements and the kill bounty
+    def operations() : Unit = {
+        import Roster._
+
+        // A radius 4 board: red deploys on the west edge, blue on the east; a fuel depot at (-2, 0), a forest at (-1, 0)
+        val depot = Hex(-2, 0)
+        val map = Board.hexagon(4).add(HexTile(-2, 0, income = Resources(fuel = 1))).add(HexTile(-1, 0, Forest, LightCover))
+        val zones = Map("red" -> Set(Hex(-4, 0), Hex(-4, 1), Hex(-4, 2)), "blue" -> Set(Hex(4, 0), Hex(4, -1), Hex(4, -2)))
+        val rules = Rules(vpTarget = 20, orders = Some((3, 5)))
+
+        def ok(s : GameState, as : TacticsAction*) = as.foldLeft(s)((s, a) => s.applyAction(a).fold(e => throw new Exception(a.toString + ": " + e), identity))
+        def refused(s : GameState, a : TacticsAction) = s.applyAction(a).swap.toOption.get
+        def end(p : String) = EndPhaseAction(p)
+
+        def start(units : CombatUnit*) = GameState.start(map, List("red", "blue"), zones, units.toList, rules).toOption.get
+
+        // red's Action phase with an order limit of n
+        def acting(n : Int, units : CombatUnit*) = ok(start(units : _*), DrawOrders("red", n), end("red"))
+
+        val r1 = riflemen.make("r1", "red", Hex(1, 0))
+        val r2 = riflemen.make("r2", "red", Hex(0, 1))
+        val b1 = riflemen.make("b1", "blue", Hex(3, 0))
+
+        // Orders
+        check("orders: drawn in the Income phase, within the range, once") {
+            val s = start(r1, b1)
+            s.exactOrderLimit == 0 && s.ordersLeft.isEmpty && !s.ordersDrawn &&
+            refused(s, end("red")).contains("drawn") &&
+            refused(s, DrawOrders("red", 2)).contains("3 to 5") && refused(s, DrawOrders("red", 6)).contains("3 to 5") &&
+            refused(ok(s, DrawOrders("red", 4)), DrawOrders("red", 5)).contains("already") &&
+            ok(s, DrawOrders("red", 4)).ordersLeft == Some(4) &&
+            refused(ok(s, DrawOrders("red", 4), end("red")), DrawOrders("red", 4)).contains("Income")
+        }
+        check("orders: none in rules without them, and nothing to draw") {
+            val s = GameState.start(map, List("red", "blue"), zones, List(r1, b1), Rules()).toOption.get
+            s.ordersLeft.isEmpty && s.ordersDrawn && refused(s, DrawOrders("red", 3)).contains("no order limit") &&
+            ok(s, end("red"), MoveUnit("red", "r1", Hex(2, -1)), MoveUnit("red", "r1", Hex(1, 0)), MoveUnit("red", "r1", Hex(2, -1))).phase == ActionPhase
+        }
+        check("orders: each move and attack spends one") {
+            val s = ok(acting(5, r1, r2, b1), MoveUnit("red", "r1", Hex(2, -1)), AttackUnit("red", "r1", "b1", List(1, 1, 1)))
+            s.ordersUsed == 2 && s.ordersLeft == Some(3) && s.phase == ActionPhase
+        }
+        check("orders: the last one ends the Action phase") {
+            val s = ok(acting(3, r1, r2, b1), MoveUnit("red", "r1", Hex(2, -1)), MoveUnit("red", "r2", Hex(1, 1)), MoveUnit("red", "r1", Hex(2, 0)))
+            s.ordersLeft == Some(0) && s.phase == EndPhase && refused(s, MoveUnit("red", "r2", Hex(0, 1))).contains("Action")
+        }
+        check("orders: a refused move spends none") {
+            val s = acting(3, r1, b1)
+            s.applyAction(MoveUnit("red", "r1", Hex(4, 0))).isLeft && s.ordersUsed == 0
+        }
+        check("orders: the next player draws their own") {
+            val s = ok(acting(3, r1, b1), MoveUnit("red", "r1", Hex(2, -1)), end("red"), end("red"))
+            s.current == Some("blue") && s.phase == IncomePhase && s.exactOrderLimit == 0 && s.ordersUsed == 0 &&
+            ok(s, DrawOrders("blue", 5)).ordersLeft == Some(5)
+        }
+
+        // Kill VP
+        check("kill VP: destroying an enemy unit scores 1, hurting it none") {
+            val weak = b1.copy(health = 2)
+            val hurt = ok(acting(5, r1, b1), AttackUnit("red", "r1", "b1", List(6, 1, 1)))
+            val killed = ok(acting(5, r1, weak), AttackUnit("red", "r1", "b1", List(6, 6, 1)))
+            hurt.player("red").vp == 0 && hurt.unit("b1").isDefined && killed.player("red").vp == 1 && killed.unit("b1").isEmpty
+        }
+        check("kill VP: set by the rules, and can win at once") {
+            val s = GameState.start(map, List("red", "blue"), zones, List(r1, b1.copy(health = 2)), Rules(vpTarget = 2, killVP = 2)).toOption.get
+            val t = ok(s, end("red"), AttackUnit("red", "r1", "b1", List(6, 6, 1)))
+            t.player("red").vp == 2 && t.winner == Some("red")
+        }
+
+        // Full health
+        check("full health: units made from a type know it, others learn it when first hurt") {
+            val raw = CombatUnit("x", "blue", 10, 3, 0, 3, 0, weapon = None)
+            val s = ok(acting(5, r1, raw), AttackUnit("red", "r1", "x", List(6, 1, 1)))
+            r1.maxHealth == 10 && !r1.damaged && !raw.damaged && s.unit("x").exists(u => u.health == 8 && u.fullHealth == 10 && u.damaged)
+        }
+
+        // Retreats
+        val hurt = r1.copy(health = 4)
+
+        check("retreat: a hurt unit falls back 3 hexes toward its zone, whatever the terrain costs") {
+            val s = acting(5, hurt, b1)
+            val p = Movement.canRetreat(s, hurt).toOption.get
+            val t = ok(s, RetreatUnit("red", "r1"))
+            val u = t.unit("r1").get
+            p.steps == 3 && contiguous(p) && p.start == Hex(1, 0) && p.end == u.hex &&
+            s.zoneDistance("red", Hex(1, 0)) == Some(5) && t.zoneDistance("red", u.hex) == Some(2) &&
+            u.attacked && u.movesLeft == 0 && t.ordersUsed == 1
+        }
+        check("retreat: through forest at no extra cost") {
+            // straight west from (1, 0) is (0, 0), the forest (-1, 0), then (-2, 0): 3 hexes, though the forest costs 2 to move into
+            val s = acting(5, hurt, b1)
+            val p = Movement.canRetreat(s, hurt).toOption.get
+            p.end == Hex(-2, 0) && p.hexes == List(Hex(1, 0), Hex(0, 0), Hex(-1, 0), Hex(-2, 0))
+        }
+        check("retreat: never into water") {
+            val walled = map.add(HexTile(0, 0, Water)).add(HexTile(0, 1, Water)).add(HexTile(1, -1, Water)).add(HexTile(0, -1, Water)).add(HexTile(1, 1, Water))
+            val s = GameState.start(walled, List("red", "blue"), zones, List(hurt, b1), rules).toOption.get
+            val t = ok(s, DrawOrders("red", 5), end("red"))
+            // every way west is water; (2, -1) and (2, 0) lead no nearer
+            refused(t, RetreatUnit("red", "r1")).contains("no way back")
+        }
+        check("retreat: passes its own units, not the enemy's, and ends on a free hex") {
+            val s = acting(5, hurt, r2.copy(q = 0, r = 0), b1)
+            val p = Movement.canRetreat(s, s.unit("r1").get).toOption.get
+            val enemyIn = acting(5, hurt, b1, riflemen.make("b2", "blue", Hex(0, 0)), riflemen.make("b3", "blue", Hex(0, 1)), riflemen.make("b4", "blue", Hex(1, -1)), riflemen.make("b5", "blue", Hex(0, -1)) )
+            val q = Movement.retreatPath(enemyIn, enemyIn.unit("r1").get)
+            p.end != Hex(0, 0) && !s.occupied(p.end) && p.hexes.drop(1).dropRight(1).forall(h => s.at(h).forall(_.owner == "red")) &&
+            q.forall(_.hexes.forall(h => enemyIn.at(h).forall(_.owner == "red")))
+        }
+        check("retreat: refused for the unhurt, vehicles, units in their zone, after attacking, and outside the Action phase") {
+            val s = acting(5, r1, b1)
+            val home = acting(5, riflemen.make("r3", "red", Hex(-4, 1)).copy(health = 3), b1)
+            val armor = acting(5, Roster.tank.make("t1", "red", Hex(1, 0)).copy(health = 5), b1)
+            val fired = ok(acting(5, hurt, b1), AttackUnit("red", "r1", "b1", List(1, 1, 1)))
+            refused(s, RetreatUnit("red", "r1")).contains("isn't hurt") &&
+            refused(home, RetreatUnit("red", "r3")).contains("already in its zone") &&
+            refused(armor, RetreatUnit("red", "t1")).contains("only infantry") &&
+            refused(fired, RetreatUnit("red", "r1")).contains("attacked") &&
+            refused(ok(start(hurt, b1), DrawOrders("red", 5)), RetreatUnit("red", "r1")).contains("Action") &&
+            refused(acting(5, hurt, b1), RetreatUnit("red", "b1")).contains("isn't red's")
+        }
+        check("retreat: can't move or attack after, and it's the same every time") {
+            val t = ok(acting(5, hurt, b1), RetreatUnit("red", "r1"))
+            val u = t.unit("r1").get
+            t.applyAction(MoveUnit("red", "r1", u.hex.neighbors.find(h => t.board.contains(h) && !t.occupied(h)).get)).isLeft &&
+            ok(acting(5, hurt, b1), RetreatUnit("red", "r1")) == t
+        }
+        check("retreat: ending on a sector captures it") {
+            val s = acting(5, riflemen.make("r1", "red", Hex(1, 0)).copy(health = 4), b1)
+            val p = Movement.canRetreat(s, s.unit("r1").get).toOption.get
+            val t = ok(s, RetreatUnit("red", "r1"))
+            map.get(p.end).exists(_.sector) == t.control.get(p.end).contains("red")
+        }
+
+        // Reinforcements
+        val home = riflemen.make("r3", "red", Hex(-4, 1)).copy(health = 3)
+
+        check("reinforce: in the zone in the Income phase, for 2 manpower, 5 health back, up to full") {
+            val s = ok(start(home, b1))
+            val t = ok(s, ReinforceUnit("red", "r3"))
+            val u = ok(t, ReinforceUnit("red", "r3")).unit("r3").get
+            t.unit("r3").get.health == 8 && t.player("red").resources == s.player("red").resources - Resources(manpower = 2) &&
+            u.health == 10 && !u.damaged && refused(ok(t, ReinforceUnit("red", "r3")), ReinforceUnit("red", "r3")).contains("isn't hurt")
+        }
+        check("reinforce: refused outside the zone, outside the Income phase, for vehicles, and without the manpower") {
+            val s = start(hurt, home, Roster.tank.make("t1", "red", Hex(-4, 2)).copy(health = 5), b1)
+            val poor = GameState.start(map, List("red", "blue"), zones, List(home, b1), rules.copy(start = Resources.none, base = Resources(manpower = 1))).toOption.get
+            refused(s, ReinforceUnit("red", "r1")).contains("zone") &&
+            refused(ok(s, DrawOrders("red", 3), end("red")), ReinforceUnit("red", "r3")).contains("Income") &&
+            refused(s, ReinforceUnit("red", "t1")).contains("only infantry") &&
+            refused(poor, ReinforceUnit("red", "r3")).contains("costs")
         }
     }
 }

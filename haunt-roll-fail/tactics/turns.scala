@@ -13,6 +13,15 @@ package tactics
 //   player's next turn), and the next player's units get their movement and attack back.
 // A unit ending a move on a sector, or deployed on one, captures it: it is its owner's until another player's unit
 // ends a move there. A player at the rules' VP target wins; after that every action is refused.
+//
+// With an order range in the rules (Rules.orders):
+// - In their Income phase the player draws their order limit for the turn (DrawOrders, the number rolled outside,
+//   as attack dice are), before leaving the phase; only the player sees it on the screen.
+// - Every move, attack and retreat in the Action phase spends an order; on spending the last, the Action phase
+//   ends by itself.
+// Retreats: a hurt infantry unit falls back toward its zone (Movement.retreatPath) and can't move or attack again
+// that turn. In the Income phase an infantry unit in its owner's zone can be reinforced: the rules' reinforcement
+// cost buys back its reinforcement health, up to full. Destroying an enemy unit scores the rules' kill VP.
 
 sealed trait TacticsAction {
     def player : String
@@ -22,6 +31,9 @@ case class DeployUnit(player : String, unitType : String, at : Hex) extends Tact
 case class MoveUnit(player : String, unit : String, to : Hex) extends TacticsAction
 case class AttackUnit(player : String, attacker : String, target : String, rolls : List[Int]) extends TacticsAction
 case class EndPhaseAction(player : String) extends TacticsAction
+case class DrawOrders(player : String, limit : Int) extends TacticsAction
+case class RetreatUnit(player : String, unit : String) extends TacticsAction
+case class ReinforceUnit(player : String, unit : String) extends TacticsAction
 
 object Turns {
     def applyAction(s : GameState, a : TacticsAction) : Either[String, GameState] =
@@ -58,19 +70,53 @@ object Turns {
                 _ <- inPhase(s, ActionPhase, "units move")
                 u <- own(s, p, id)
                 _ <- Either.cond(!u.attacked, (), id + " has attacked this turn and can't move")
+                _ <- hasOrders(s)
                 moved <- Movement.move(s, id, h)
-            } yield capture(moved, h)
+            } yield spendOrder(capture(moved, h))
 
         case AttackUnit(p, attacker, target, rolls) =>
             for {
                 _ <- inPhase(s, ActionPhase, "units attack")
                 u <- own(s, p, attacker)
                 _ <- Either.cond(!u.attacked, (), attacker + " has already attacked this turn")
+                _ <- hasOrders(s)
                 result <- Combat.attack(s, attacker, target, rolls)
             } yield {
                 val (t, report) = result
-                t.copy(units = t.units + (attacker -> t.units(attacker).copy(attacked = true)), lastReport = Some(report))
+                val bounty = if (report.destroyed) s.rules.killVP else 0
+                val e = t.player(p)
+                spendOrder(t.copy(units = t.units + (attacker -> t.units(attacker).copy(attacked = true)), lastReport = Some(report),
+                    economy = t.economy + (p -> e.copy(vp = e.vp + bounty))))
             }
+
+        case RetreatUnit(p, id) =>
+            for {
+                _ <- inPhase(s, ActionPhase, "units retreat")
+                u <- own(s, p, id)
+                _ <- hasOrders(s)
+                moved <- Movement.retreat(s, id)
+            } yield spendOrder(capture(moved, moved.units(id).hex))
+
+        case ReinforceUnit(p, id) =>
+            for {
+                _ <- inPhase(s, IncomePhase, "units are reinforced")
+                u <- own(s, p, id)
+                _ <- Either.cond(u.kind == Infantry, (), "only infantry is reinforced")
+                _ <- Either.cond(u.damaged, (), id + " isn't hurt")
+                _ <- Either.cond(s.inZone(p, u.hex), (), id + " isn't in " + p + "'s deployment zone")
+                _ <- Either.cond(s.player(p).resources.covers(s.rules.reinforceCost), (), "reinforcing costs " + s.rules.reinforceCost + "; " + p + " has " + s.player(p).resources)
+            } yield pay(s.copy(units = s.units + (id -> u.copy(health = (u.health + s.rules.reinforceHealth).min(u.fullHealth), maxHealth = u.fullHealth))), p, s.rules.reinforceCost)
+
+        case DrawOrders(p, n) =>
+            for {
+                _ <- inPhase(s, IncomePhase, "orders are drawn")
+                range <- s.rules.orders.toRight("these rules have no order limit")
+                _ <- Either.cond(s.exactOrderLimit == 0, (), p + " has already drawn their orders")
+                _ <- Either.cond(n >= range._1 && n <= range._2, (), "the order limit is " + range._1 + " to " + range._2 + ", not " + n)
+            } yield s.copy(exactOrderLimit = n)
+
+        case EndPhaseAction(p) if s.phase == IncomePhase && !s.ordersDrawn =>
+            Left(p + " hasn't drawn their orders")
 
         case EndPhaseAction(p) =>
             Right(s.phase match {
@@ -79,6 +125,17 @@ object Turns {
                 case EndPhase => beginTurn(nextPlayer(recover(s, p)))
             })
     }
+
+    private def hasOrders(s : GameState) = Either.cond(s.ordersLeft.forall(_ > 0), (), s.current.get + " has no orders left")
+
+    // An order is spent; on the last, the Action phase ends
+    private def spendOrder(s : GameState) =
+        if (s.rules.orders.isEmpty)
+            s
+        else {
+            val t = s.copy(ordersUsed = s.ordersUsed + 1)
+            if (t.ordersLeft.contains(0)) t.copy(phase = EndPhase) else t
+        }
 
     private def pay(s : GameState, p : String, cost : Resources) =
         s.copy(economy = s.economy + (p -> s.player(p).copy(resources = s.player(p).resources - cost)))
@@ -112,7 +169,7 @@ object Turns {
         val ready = s.units.map { case (id, u) => id -> (if (u.owner == p) u.copy(spent = 0, attacked = false) else u) }
         val e = s.player(p)
 
-        checkWinner(s.copy(phase = IncomePhase, units = ready, economy = s.economy + (p -> e.copy(resources = e.resources + gain, vp = e.vp + vp))))
+        checkWinner(s.copy(phase = IncomePhase, units = ready, economy = s.economy + (p -> e.copy(resources = e.resources + gain, vp = e.vp + vp)), exactOrderLimit = 0, ordersUsed = 0))
     }
 
     // The first player, in turn order, at the VP target wins

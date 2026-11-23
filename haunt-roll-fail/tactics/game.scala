@@ -54,9 +54,12 @@ trait UnitKey { self : UserAction =>
 case class StartAction(version : String) extends StartGameAction with GameVersion
 case class TurnAction() extends ForcedAction
 case class PlayerTurnAction(f : Faction) extends ForcedAction
+// the turn's order limit, rolled at the start of the player's turn; the log doesn't say it, the player's own panel does
+case class OrdersRolledAction(f : Faction, rolled : $[Int]) extends RolledAction[Int]
 
 // Income phase
 case class DeployAction(self : Faction, unitType : String, cell : Cell) extends BaseAction("Deploy")((g : Game) => g.typeElem(unitType), "in", cell, "for", (g : Game) => g.costElem(unitType)) with HexKey
+case class ReinforceAction(self : Faction, unit : String) extends BaseAction("Reinforce in the zone, for", (g : Game) => g.state.rules.reinforceCost.toString.hl)((g : Game) => g.unitElem(unit), "in", (g : Game) => g.cellOf(unit), (g : Game) => g.unitNote(unit)) with UnitKey
 case class ToActionPhaseAction(self : Faction) extends BaseAction(None)("Go to the", "Action".hl, "phase")
 
 // Action phase
@@ -64,6 +67,8 @@ case class UnitMenuAction(self : Faction, unit : String) extends BaseAction("Uni
 case class MoveAction(self : Faction, unit : String, cell : Cell) extends BaseAction((g : Game) => g.unitElem(unit), "in", (g : Game) => g.cellOf(unit))("Move to", cell, (g : Game) => g.moveNote(unit, cell)) with HexKey
 case class AttackAction(self : Faction, attacker : String, target : String) extends BaseAction((g : Game) => g.unitElem(attacker), "in", (g : Game) => g.cellOf(attacker))("Attack", (g : Game) => g.unitElem(target), "in", (g : Game) => g.cellOf(target), (g : Game) => g.attackNote(attacker, target)) with UnitKey { def unit = target }
 case class AttackRolledAction(self : Faction, attacker : String, target : String, rolled : $[Int]) extends RolledAction[Int]
+// a hurt infantry unit falls back toward its zone; the choice is on the hex it ends in
+case class RetreatAction(self : Faction, unit : String, cell : Cell) extends BaseAction((g : Game) => g.unitElem(unit), "in", (g : Game) => g.cellOf(unit))("Retreat".hl, "to", cell, "(can't move or attack again this turn)") with HexKey
 case class EndActionsAction(self : Faction) extends BaseAction(None)("End the", "Action".hl, "phase")
 
 // End phase
@@ -106,8 +111,10 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def cellOf(id : String) : Elem = state.unit(id)./(u => Cell(u.hex).elem).|(Empty)
 
     def unitNote(id : String) : Elem = state.unit(id)./{ u =>
-        ("(" + u.health + " health, " + u.movesLeft + " moves left" + u.suppressed.??(", suppressed") + u.attacked.??(", attacked") + ")").txt
+        ("(" + u.health + "/" + u.fullHealth + " health, " + u.movesLeft + " moves left" + u.suppressed.??(", suppressed") + u.attacked.??(", done") + ")").txt
     }.|(Empty)
+
+    def ordersRange : |[String] = state.rules.orders./{ case (lo, hi) => lo + "–" + hi }
 
     def moveNote(id : String, c : Cell) : Elem = {
         val cost = state.reachable(id).get(c.hex)
@@ -135,10 +142,23 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     def targets(id : String) : $[CombatUnit] = state.unit(id).%(_.attacked.not)./~(_ => Combat.targets(state, id))
 
-    def unitActions(f : Faction, id : String) : $[UserAction] =
-        moves(id)./(h => MoveAction(f, id, Cell(h))) ++ targets(id)./(t => AttackAction(f, id, t.id))
+    def retreat(id : String) : |[Hex] = state.unit(id)./~(u => Movement.canRetreat(state, u).toOption)./(_.end)
 
-    def ready(f : Faction) : $[CombatUnit] = state.unitsOf(f.name).%(u => unitActions(f, u.id).any)
+    def unitActions(f : Faction, id : String) : $[UserAction] =
+        moves(id)./(h => MoveAction(f, id, Cell(h))) ++ targets(id)./(t => AttackAction(f, id, t.id)) ++ retreat(id)./(h => RetreatAction(f, id, Cell(h))).$
+
+    // no orders left, nothing to do
+    def ready(f : Faction) : $[CombatUnit] = state.ordersLeft.forall(_ > 0).??(state.unitsOf(f.name).%(u => unitActions(f, u.id).any))
+
+    def reinforceActions(f : Faction) : $[UserAction] =
+        state.player(f.name).resources.covers(state.rules.reinforceCost).??(
+            state.unitsOf(f.name).%(u => u.kind == Infantry && u.damaged && state.inZone(f.name, u.hex))./(u => ReinforceAction(f, u.id)))
+
+    // after an action that spends an order: the log says when the last one ended the Action phase
+    def ordered(f : Faction) {
+        if (state.ordersLeft.has(0))
+            log(f, "used the last of", state.exactOrderLimit.hl, "orders")
+    }
 
     // INFO
 
@@ -222,6 +242,14 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 val (gain, vp) = Turns.income(state, f.name)
                 log(f, "got", gain.toString.hl, vp.>(0).??(" and " + vp + " VP"), "and has", p.resources.toString.hl, "and", p.vp.hl, "VP")
 
+                state.rules.orders match {
+                    case Some((lo, hi)) if state.winner.none => Roll[Int]($(Die.range((lo, hi))), r => OrdersRolledAction(f, r))
+                    case _ => TurnAction()
+                }
+
+            case OrdersRolledAction(f, l) =>
+                apply(DrawOrders(f.name, l.only))
+                log(f, "drew their orders for the turn,", ordersRange.|("").hl)
                 TurnAction()
 
             // what the current player may do in this phase
@@ -233,7 +261,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
                         state.phase match {
                             case IncomePhase =>
-                                Ask(f).add(deployActions(f)).add(ToActionPhaseAction(f))
+                                Ask(f).add(reinforceActions(f)).add(deployActions(f)).add(ToActionPhaseAction(f))
 
                             case ActionPhase =>
                                 Ask(f).each(ready(f))(u => UnitMenuAction(f, u.id)).add(EndActionsAction(f))
@@ -253,6 +281,23 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     captured(f, c)
                 TurnAction()
 
+            case ReinforceAction(f, id) =>
+                val before = state.unit(id).get.health
+                apply(ReinforceUnit(f.name, id))
+                val u = state.unit(id).get
+                log(unitElem(id), "was reinforced in", Cell(u.hex), "for", state.rules.reinforceCost.toString.hl, "and is back to", u.health.hl, "health (+" + (u.health - before) + ")")
+                TurnAction()
+
+            case RetreatAction(f, id, c) =>
+                val from = state.unit(id).get.hex
+                val held = state.control.get(c.hex)
+                apply(RetreatUnit(f.name, id))
+                log(unitElem(id), "retreated from", Cell(from), "to", Cell(state.unit(id).get.hex))
+                if (held.has(f.name).not)
+                    captured(f, Cell(state.unit(id).get.hex))
+                ordered(f)
+                TurnAction()
+
             case ToActionPhaseAction(f) =>
                 apply(EndPhaseAction(f.name))
                 TurnAction()
@@ -267,6 +312,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 log(unitElem(id), "moved from", Cell(from), "to", c)
                 if (held.has(f.name).not)
                     captured(f, c)
+                ordered(f)
                 TurnAction()
 
             case AttackAction(f, a, t) =>
@@ -277,6 +323,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 val target = unitElem(t)
                 apply(AttackUnit(f.name, a, t, rolls))
                 state.lastReport.foreach(report(_, target))
+                if (state.lastReport.exists(_.destroyed) && state.rules.killVP > 0)
+                    log(f, "scored", state.rules.killVP.hl, "VP for the kill and has", state.player(f.name).vp.hl, "VP")
+                ordered(f)
                 TurnAction()
 
             case EndActionsAction(f) =>

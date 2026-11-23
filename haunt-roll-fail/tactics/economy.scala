@@ -40,7 +40,7 @@ object Phase {
 case class UnitType(name : String, cost : Resources, health : Int, movement : Int, armor : Int, kind : MoveKind = Infantry, weapon : Option[Weapon] = None) {
     require(!cost.negative, "a unit's cost can't be negative")
 
-    def make(id : String, owner : String, at : Hex) = CombatUnit(id, owner, health, movement, armor, at.q, at.r, kind, weapon = weapon)
+    def make(id : String, owner : String, at : Hex) = CombatUnit(id, owner, health, movement, armor, at.q, at.r, kind, weapon = weapon, maxHealth = health)
 }
 
 // Sample unit types, for checks and a start on the real ones
@@ -57,9 +57,15 @@ object Roster {
 }
 
 // `vpTarget`: the VP that wins; `start`: each player's resources at the start; `base`: the income every
-// player gets each turn on top of their sectors'; `roster`: what can be deployed
-case class Rules(vpTarget : Int = 10, start : Resources = Resources(manpower = 6), base : Resources = Resources(manpower = 2), roster : List[UnitType] = Roster.all) {
+// player gets each turn on top of their sectors'; `roster`: what can be deployed.
+// `orders`: the range a player's order limit is drawn from each turn (None: no limit); `killVP`: the VP for
+// destroying an enemy unit; `retreatHexes`: how far a retreat goes; `reinforceCost` and `reinforceHealth`: what
+// reinforcing an infantry unit in its zone costs and the health it gives back.
+case class Rules(vpTarget : Int = 10, start : Resources = Resources(manpower = 6), base : Resources = Resources(manpower = 2), roster : List[UnitType] = Roster.all,
+        orders : Option[(Int, Int)] = None, killVP : Int = 1, retreatHexes : Int = 3, reinforceCost : Resources = Resources(manpower = 2), reinforceHealth : Int = 5) {
     require(vpTarget > 0, "the VP target must be above 0")
+    require(orders.forall { case (lo, hi) => lo >= 1 && hi >= lo }, "the order range must be 1 or more, lowest first")
+    require(killVP >= 0 && retreatHexes >= 1 && reinforceHealth >= 1 && !reinforceCost.negative, "kill VP, retreat hexes, reinforcement health and cost can't be negative")
     require(roster.map(_.name).distinct.size == roster.size, "two unit types with one name")
 
     def unitType(name : String) = roster.find(_.name == name)

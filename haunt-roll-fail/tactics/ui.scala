@@ -347,6 +347,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
     var lastThen : UserAction => Unit = null
 
     var highlightCell : |[Cell] = None
+
+    // the players this screen is for: the one asked, or those waiting here; only they see their exact orders
+    var viewers : $[Faction] = $
     var listedCells = $[Cell]()
 
     def cellsOf(a : UserAction) : $[Cell] = a.unwrap match {
@@ -436,6 +439,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
         val selected = lastActions./~(_.unwrap @@ {
             case a : MoveAction => $(a.unit)
             case a : AttackAction => $(a.attacker)
+            case a : RetreatAction => $(a.unit)
             case _ => $()
         }).distinct.single
 
@@ -452,6 +456,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
 
         lastActions./~(_.unwrap @@ {
             case a : UnitMenuAction => $(a.unit)
+            case a : ReinforceAction => $(a.unit)
             case _ => $()
         })./~(s.unit).foreach { u =>
             val c = Cell(u.hex)
@@ -504,6 +509,23 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
             Span("Fuel ".txt ~ p.resources.fuel.hlb, styles.stat)
         )(styles.row)
 
+        // orders: the exact number left only for the player whose turn it is, on their own screen; the others see the range
+        val orders = game.ordersRange./{ range =>
+            val mine = viewers.has(f) || game.isOver
+            val line =
+                if (turn.not)
+                    "Orders " + range + " a turn"
+                else
+                if (s.exactOrderLimit == 0)
+                    "Orders " + range + ", not drawn yet"
+                else
+                if (mine)
+                    "Orders left " + s.ordersLeft.|(0) + " of " + s.exactOrderLimit
+                else
+                    "Orders " + range + ", " + s.ordersUsed + " used"
+            Div(line.txt)(styles.row)
+        }.|(Empty)
+
         val (gain, gvp) = Turns.income(s, f.name)
         val income = Div(("Each turn " + gain.toString + (gvp > 0).??(", " + gvp + " VP")).txt)(styles.small)
 
@@ -513,7 +535,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
         val sectors = s.sectorsOf(f.name)./(t => Skirmish.sectorName(t.hex).|("?") + " " + Skirmish.name(t.hex))
         val sectorRow = Div(("Sectors " + sectors.some./(_.mkString(", ")).|("none")).txt)(styles.small)
 
-        container.replace((title ~ vp ~ stock ~ income ~ unitRow ~ sectorRow).div(xstyles.fillHeight), resources, onClick)
+        container.replace((title ~ vp ~ orders ~ stock ~ income ~ unitRow ~ sectorRow).div(xstyles.fillHeight), resources, onClick)
 
         if (turn || game.highlightFaction.has(f))
             container.attach.parent.style.outline = "3px " + turn.?("solid").|("dashed") + " " + color(f)
@@ -626,9 +648,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
         Div("Each player's turn has three phases.", styles.legend) ~
         Div(
             line("Income: you get " + r.base + " and what your sectors give, and score their VP; deploy units on the free hexes of your zone (dashed border), paying their cost.") ~
+            line("Orders: at the start of your turn you draw your order limit, " + game.ordersRange.|("") + " (only you see the number). Every move, attack and retreat spends an order; the Action phase ends when they run out.") ~
             line("Action: each unit may move, in as many moves as its movement points allow, and then attack once; it can't move after attacking.") ~
+            line("Retreat: hurt infantry may fall back up to " + r.retreatHexes + " hexes toward your zone, whatever the terrain costs (not through water, mountains or enemy units); it can't move or attack again that turn. In your Income phase, hurt infantry in your zone can be reinforced: " + r.reinforceCost + " for " + r.reinforceHealth + " health back.") ~
             line("End: your suppressed units recover.") ~
-            line("A unit ending a move on a sector (named on the map) captures it; it stays yours until an enemy unit ends a move there. The first player at " + r.vpTarget + " VP wins.") ~
+            line("A unit ending a move on a sector (named on the map) captures it; it stays yours until an enemy unit ends a move there. Destroying an enemy unit scores " + r.killVP + " VP. The first player at " + r.vpTarget + " VP wins.") ~
             line("Attacks need range and line of sight (mountains and buildings between block it). Each die hits on the weapon's number or more: +1 for light cover (one bar on the shield), +2 for heavy, +1 if the attacker is suppressed; a 1 always misses and a 6 always hits. Each hit deals the weapon's damage less the armor beyond its penetration. Infantry hit and left standing is suppressed (S) until the end of its side's next turn."),
             styles.legend) ~
         Div("Units".hlb) ~ Div(roster, styles.legend) ~
@@ -718,6 +742,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
     override def wait(self : $[F], factions : $[F], message : Elem) {
         lastActions = $
         lastThen = null
+        viewers = self
 
         showNotifications(self)
 
@@ -748,6 +773,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
     override def ask(faction : |[F], actions : $[UserAction], then : UserAction => Unit) {
         lastActions = actions
         lastThen = then
+        viewers = faction.$
         listedCells = $
         highlightCell = None
         unfolded = false

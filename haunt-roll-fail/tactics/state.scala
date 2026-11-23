@@ -21,7 +21,9 @@ case class GameState(
     phase : Phase = IncomePhase,
     deployed : Int = 0,                           // units deployed so far, for their ids
     winner : Option[String] = None,
-    lastReport : Option[CombatReport] = None      // the last action's attack, if it was one
+    lastReport : Option[CombatReport] = None,     // the last action's attack, if it was one
+    exactOrderLimit : Int = 0,                    // the current player's order limit this turn, drawn in their Income phase; 0 before
+    ordersUsed : Int = 0                          // the orders they have spent this turn
 ) {
     units.foreach { case (id, u) => require(id == u.id, "unit " + u.id + " is kept under id " + id) }
 
@@ -35,6 +37,7 @@ case class GameState(
     require(players.isEmpty || (active >= 0 && active < players.size), "active must be a player")
     control.foreach { case (h, p) => require(players.contains(p) && board.get(h).exists(_.sector), p + " holds " + h + ", which isn't a sector or isn't theirs") }
     economy.values.foreach(e => require(!e.resources.negative, "resources can't be negative"))
+    require(exactOrderLimit >= 0 && ordersUsed >= 0, "orders can't be negative")
 
     def unit(id : String) : Option[CombatUnit] = units.get(id)
     def at(h : Hex) : Option[CombatUnit] = occupants.get(h)
@@ -45,6 +48,14 @@ case class GameState(
     def unitsOf(p : String) : List[CombatUnit] = units.values.filter(_.owner == p).toList.sortBy(_.id)
     def sectorsOf(p : String) : List[HexTile] = control.toList.filter(_._2 == p).flatMap(c => board.get(c._1)).sortBy(t => (t.q, t.r))
     def over = winner.isDefined
+
+    // The current player's orders left this turn: None when the rules have no order limit, or before it is drawn
+    def ordersLeft : Option[Int] = rules.orders.filter(_ => exactOrderLimit > 0).map(_ => (exactOrderLimit - ordersUsed).max(0))
+    def ordersDrawn = rules.orders.isEmpty || exactOrderLimit > 0
+
+    // The nearest the hex is to the player's deployment zone, in hexes (0 in it); None with no zone
+    def zoneDistance(p : String, h : Hex) : Option[Int] = zones.get(p).filter(_.nonEmpty).map(_.map(_.distance(h)).min)
+    def inZone(p : String, h : Hex) = zones.get(p).exists(_.contains(h))
 
     // Places a new unit, on an empty hex its kind can enter
     def place(u : CombatUnit) : Either[String, GameState] =

@@ -107,7 +107,7 @@ object Combat {
                     if (destroyed)
                         s.units - t.id
                     else
-                        s.units + (t.id -> t.copy(health = health, suppressed = t.suppressed || suppressed))
+                        s.units + (t.id -> t.copy(health = health, maxHealth = t.fullHealth, suppressed = t.suppressed || suppressed))
 
                 Right((s.copy(units = units), CombatReport(a.id, t.id, w.name, a.hex.distance(t.hex), coverOf(s, t), need, rolls.toList, hits, each, damage, health, destroyed, suppressed)))
             }

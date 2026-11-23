@@ -12,6 +12,8 @@ name of its own. Built in steps.
 - Step 5, the HRF game: meta `tactics`, URL `/play/tactics`, the starter two-player skirmish map, recorded actions with
   the attack dice rolled by a `Roll`, an Easy bot, headless bot games and a map drawn in code (2026-11-23). Playable
   as Local (hotseat), Quick Game (against the bot) and Play Online.
+- Step 6, operations orders, infantry retreats, reinforcements and the kill bounty (2026-11-23). Saved games from
+  before it don't load, as each turn now starts with the orders roll.
 - In the site's build (`common.sbt`; `hex-check.scala` is in `build.sbt`'s `excludeFilter`) and in `HRF.metaUIs`
   (`hrf.scala`), but not on the main `/play` menu: add `tactics.Meta` to `HRF.menuMetas` to list it. No ranking.
 
@@ -167,6 +169,37 @@ or why the action is refused, changing nothing. Every action names its player, w
 The phases, the income and scoring at the start of a player's turn, the attack and move limits, suppression lasting
 through the next turn, and the sample roster and its costs were picked on 2026-11-23.
 
+## Orders, retreats, reinforcements and kills (Step 6)
+
+Chosen on 2026-11-23 from the owner's request (rules in `Rules`: `orders`, `killVP`, `retreatHexes`, `reinforceCost`,
+`reinforceHealth`; the skirmish plays 3 to 5 orders, 1 kill VP, 3 retreat hexes, 2 manpower for 5 health):
+
+- Orders: drawn for each player's turn, not once a round for both, so the second player can't tell the cap from the
+  first player's turn. In HRF the start of the turn rolls it (`OrdersRolledAction`, a `Roll` of one die, 3 to 5), and
+  the engine's `DrawOrders(player, limit)` sets `GameState.exactOrderLimit` (0 until drawn; leaving the Income phase
+  without it is refused); `ordersUsed` counts them, and `beginTurn` sets both back to 0. Every `MoveUnit`, `AttackUnit`
+  and `RetreatUnit` spends one (a refused one none); spending the last puts the player in the End phase, so the Action
+  phase ends by itself. Deploying and reinforcing spend none. Rules without `orders` have no limit (the Step 4 checks).
+- Hidden: the log says only that the orders were drawn and the range; the player panel shows the exact orders left
+  only on the screen of the player whose turn it is (`viewers` in `ui.scala`: the faction asked, or those waiting on
+  this screen), the others "3–5, 2 used". The number is in the recorded actions all the same, as every client runs
+  the whole game: anyone reading the saved moves (or the browser's memory) can find it.
+- Full health: `CombatUnit.maxHealth` (0 stands for the health now; `UnitType.make` sets it, and `Combat` when a unit
+  is first hurt), `fullHealth`, `damaged`.
+- Retreat (`RetreatUnit`, `Movement.retreatPath`, `canRetreat`, `retreat`): hurt infantry, not yet attacked this turn
+  and not in its zone, goes up to 3 hexes, whatever the terrain costs (only terrain its kind can't enter stops it),
+  through its own side's units but never the enemy's (there are no zones of control in the engine yet, so nothing
+  else to ignore), to the free hex nearest its zone (then fewest hexes, then by r and q), which must be nearer the zone
+  than where it was; the player doesn't pick the hex. It uses up the unit's movement and attack for the turn
+  (`spent`, `attacked`), and captures a sector it ends on, as a move does. In HRF the choice is on the hex it ends in
+  (`RetreatAction`, in the unit's menu).
+- Reinforce (`ReinforceUnit`, HRF `ReinforceAction`): in the Income phase, hurt infantry in its owner's zone gets 5
+  health back, up to full, for 2 manpower, as often as it is paid for. Vehicles aren't reinforced.
+- Kill bounty: destroying an enemy unit scores `killVP` (1) at once, which can win mid-turn.
+- The Easy bot reinforces hurt infantry in its zone, retreats infantry at half health or less when an enemy could
+  reach it next turn (its movement plus its weapon's range), keeps hurt infantry from moving toward the enemy, and
+  moves less on its last order.
+
 ## Testing
 
 The package has no HRF dependencies, so it compiles on its own with the Scala 2.13.16 compiler
@@ -177,14 +210,18 @@ java -cp <jars> scala.tools.nsc.Main -usejavacp -d out tactics/*.scala
 java -cp scala-library-2.13.16.jar:out tactics.HexCheck
 ```
 
-On 2026-11-23: 123 passed, 0 failed, a full match among them, and the skirmish map (its symmetry, names, sectors,
-zones, that every sector can be reached from both zones, and an opening).
+On 2026-11-23: 141 passed, 0 failed, a full match among them, the skirmish map (its symmetry, names, sectors,
+zones, that every sector can be reached from both zones, and an opening), and Step 6 (`operations`: drawing and
+spending orders and the Action phase ending on the last, kill VP and a win by it, full health, retreats through
+forest, never into water or through the enemy, refused when they can't, and reinforcements).
 
 The HRF game: headless bot games on the JVM like `pincer.Host` (see `pincer/HANDOFF.md`, Testing: a project with
 `common.sbt` with `%%` and only `tactics` as a game directory, `host.xsbt` as its `build.sbt`, the engine's sources
 linked, `base.scala` without its `arcs` line, and without `convert-images.scala`, `live-check.scala` and
 `lookup-index.scala`): `TACTICS_GAMES=20 sbt "runMain tactics.Host"`. On 2026-11-23 twenty games of two Easy bots each
-ended with a winner in 200 to 350 steps, every action written and parsed back.
+ended with a winner in 200 to 350 steps, every action written and parsed back; after Step 6, thirty games ended in
+120 to 240 steps, the bots retreating 85 times and reinforcing 42 times, the order limits drawn 3, 4 and 5 about
+equally.
 
 In a browser: serve `/play/tactics` from `index.html` (see "Browser driving" in `nort/HANDOFF.md`) and start a
 Quick Game or a Local Game. On 2026-11-23 a Quick Game against the bot was played in Chromium through four turns:

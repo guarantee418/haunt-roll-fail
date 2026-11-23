@@ -86,7 +86,7 @@ object Skirmish {
     val westZone : Set[Hex] = 0.until(rows).flatMap(r => List(axial(0, r), axial(1, r))).filter(h => board.get(h).exists(_.terrain.passable(Infantry))).toSet
     val eastZone : Set[Hex] = westZone.map(turned)
 
-    val rules = Rules(vpTarget = 10, start = Resources(manpower = 6, munitions = 2), base = Resources(manpower = 2, munitions = 1))
+    val rules = Rules(vpTarget = 10, start = Resources(manpower = 6, munitions = 2), base = Resources(manpower = 2, munitions = 1), orders = Some((3, 5)))
 
     // each side starts with a squad of riflemen in the middle of its zone
     def startingUnits(west : String, east : String) = List(
