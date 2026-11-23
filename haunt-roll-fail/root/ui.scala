@@ -6563,6 +6563,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         SkipAmbushSuit(Fox),
         SkipAmbushSuit(Rabbit),
         SkipAmbushSuit(Mouse),
+        SkipAmbushSuit(Frog),
         SkipFieldHospitalsCount(1),
         SkipFieldHospitalsSuit(Fox),
         SkipFieldHospitalsSuit(Rabbit),
@@ -6593,6 +6594,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case AutoSkipAmbushIfNone => options.has(BluffMode).not && game.autoSkipAmbush.not
             case UseAutoAssignHits => game.autoAssignHits.not && game.autoHits.not
             case _ if callbacks.settings.has(NoOutOfTurn) => false
+            // frog clearings come only with a frog faction (asked for on 2026-11-23, Tournament 1)
+            case SkipAmbushSuit(Frog) if factions.of[CommonInvasive].none => false
             case SkipAmbushSuit(_) if f.hand.none => false
             case SkipAmbushSuit(s) if callbacks.settings.has(BasicOutOfTurn) && (f.hand.has(Ambush(Bird)) || f.hand.has(Ambush(s))) => false
             case SkipAmbushSuit(s) if f.is[Hero] => f.as[Hero]./~(_.region.as[Clearing]).?(_.cost.matched(s))
