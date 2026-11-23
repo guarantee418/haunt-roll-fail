@@ -2050,8 +2050,9 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     Deck.frankenArt = options.has(FrankenDeck)
     Deck.darkArt = options.has(DarkDeck)
     Deck.capitalistsArt = options.has(CapitalistsDeck)
-    // a tournament game's deck is dealt when its draft picks it (TournamentExpansion)
-    val playingDeck = (options.has(TournamentDraft) && options.of[DeckOption].none).?($[DeckCard]()).|(Deck.fromOptions(options, players.num, players.of[Faction]))
+    // a tournament game's deck is dealt when its draft picks it (TournamentExpansion), which sets this too: left empty, the
+    // ambush checks in battle.scala deduced no ambush could be in play and skipped every ambush (Tournament 1, 2026-11-23)
+    var playingDeck = (options.has(TournamentDraft) && options.of[DeckOption].none).?($[DeckCard]()).|(Deck.fromOptions(options, players.num, players.of[Faction]))
     var frankenDealt = false
     val predrafts = players./(p => p -> cards.another[DeckCard]("draft-" + p)).toMap
     val pile = cards.another[DeckCard]("pile", playingDeck)
