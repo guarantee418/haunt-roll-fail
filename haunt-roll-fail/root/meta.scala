@@ -2130,7 +2130,7 @@ object Meta extends MetaGame {
         ("Site Defaults".spn, hirelings./(IncludeHireling), $),
         ("Official".hl ~ " Rules", $(
             AllRandomClearings,
-            StandardDeck,
+            SquiresDeck,
             AdSetBuffOff
         ), $),
     )
@@ -2142,7 +2142,7 @@ object Meta extends MetaGame {
         ),
         $(
             "The rules as Leder Games prints them:",
-            &("All Random".hh ~ " clearings, ") ~ &("the " ~ "Might and Right".hh ~ " deck, ") ~ &("and the " ~ "AdSet".hh ~ " setup buffs " ~ "Off".hh ~ "."),
+            &("All Random".hh ~ " clearings, ") ~ &("the " ~ "Squires and Disciples".hh ~ " deck, ") ~ &("and the " ~ "AdSet".hh ~ " setup buffs " ~ "Off".hh ~ "."),
             "Nothing else changes.",
         ),
     )

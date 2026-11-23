@@ -118,7 +118,7 @@ object MetaAdset extends MetaGame {
         ("Site Defaults".spn, $, $),
         ("Official".hl ~ " Rules", $(
             AllRandomClearings,
-            StandardDeck,
+            SquiresDeck,
         ), $),
     )
 
@@ -129,7 +129,7 @@ object MetaAdset extends MetaGame {
         ),
         $(
             "The rules as Leder Games prints them:",
-            &("All Random".hh ~ " clearings") ~ " " ~ &("and the " ~ "Might and Right".hh ~ " deck."),
+            &("All Random".hh ~ " clearings") ~ " " ~ &("and the " ~ "Squires and Disciples".hh ~ " deck."),
             "Nothing else changes.",
         ),
     )
