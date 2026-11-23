@@ -618,6 +618,9 @@
                 border-bottom: 1px solid #242424;
             }
 
+            /* a stat without an icon (the maps): its name has the icon's column too */
+            .rk-stat > .rk-who:first-child { grid-column: 1 / 3; }
+
             .rk-fname {
                 color: #d3d3d3;
             }
@@ -992,6 +995,7 @@
                 .rk-stat > .rk-who { grid-area: who; }
                 .rk-stat > .rk-track { grid-area: bar; }
                 .rk-stat > .rk-pct { grid-area: pct; }
+                .rk-stat > .rk-who:first-child ~ .rk-track { grid-column: 1 / -1; }
 
                 .rk-game {
                     grid-template-columns: 2.3em minmax(0, 1fr) auto;
