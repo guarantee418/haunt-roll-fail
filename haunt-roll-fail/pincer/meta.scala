@@ -99,6 +99,9 @@ object Meta extends MetaGame { mmm =>
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "die", "die:", "webp")(
         Resource.all./(_.id)./(ImageAsset(_))
     ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "icon", "icon:", "webp")(
+        Icons.all./(ImageAsset(_))
+    ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "war", "war:", "webp")(
         Faction.all./~(f => $("gentleman", "boar")./(n => ImageAsset(n + "-" + f.id)))
     ) ::

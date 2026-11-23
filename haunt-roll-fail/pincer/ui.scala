@@ -35,6 +35,9 @@ object UI extends BaseUI {
 class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resources, callbacks : hrf.Callbacks) extends MapGUI {
     def factionElem(f : Faction) = f.name.styled(f)
 
+    // on a phone the player panels are taller, for text of a readable size (index.html)
+    lazy val narrow = dom.window.innerWidth < 700
+
     val statuses = 1.to(arity)./(i => newPane("status-" + i, Content, styles.status, styles.fstatus, ExternalStyle("hide-scrollbar")))
     val statusGame = newOuterPane("status-game", Content)
 
@@ -270,16 +273,23 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
         val seals = game.sealsOf(f)
 
-        val sealRow = Div((seals.num.hlb ~ "/8 Seals".txt) ~ " " ~ seals./(s => OnClick(s, Image("seal:" + s.image, styles.sealSmall, xlo.pointer))).merge)
+        val sealRow = Div(Icons.only("seal", "Royal Seals (8 win)") ~ (seals.num.hlb ~ "/8".txt) ~ " " ~ seals./(s => OnClick(s, Image("seal:" + s.image, styles.sealSmall, xlo.pointer))).merge)
 
-        val hand = Div(Span(p.hand.num.hlb ~ " cards", styles.stat) ~ Span((game.rate(f) + ":1").hlb ~ " trade", styles.stat) ~ Span(p.warCards.hlb ~ " war", styles.stat))(styles.small)
+        val hand = Div(Span(Icons.only("cards", "Cards in hand") ~ p.hand.num.hlb, styles.stat) ~ Span(Icons.only("trade", "Trade rate") ~ (game.rate(f) + ":1").hlb, styles.stat) ~ Span(Icons.only("war-card", "War cards left") ~ p.warCards.hlb, styles.stat))(styles.small)
 
-        val wars = game.wars.%(w => w.declarer == f || w.target == f)./{ w =>
-            val e = (w.declarer == f).?(w.target).|(w.declarer)
-            e.elem ~ w.boar.?(" (Boar's)").|("") ~ game.gentleman.has((f, e)).?(" (next turn)").|("")
+        // swords, then the enemies in Gentleman's Wars; a flame, then those in Boar's Wars
+        val wars = game.wars.%(w => w.declarer == f || w.target == f)
+
+        val warGroups = $(false, true)./~{ boar =>
+            wars.%(_.boar == boar)./{ w =>
+                val e = (w.declarer == f).?(w.target).|(w.declarer)
+                val later = game.gentleman.has((f, e))
+                Hint("At war with " + e.name + boar.?(" (Boar's War)").|(" (Gentleman's War)") + later.?(" (from the next turn)").|(""),
+                    Image("piece:colony-" + e.id, styles.iconOnly, e.name) ~ e.short.styled(e) ~ later.?(Image("icon:end-turn", styles.piece, "from the next turn")).|(Empty), xlo.nowrap) : Elem
+            }.some./(l => Icons.only(boar.?("boar").|("war"), boar.?("Boar's War").|("Gentleman's War")) ~ l.merge)
         }
 
-        val warRow = Div(wars.some./(l => "War: ".styled(styles.atWar) ~ l.join(", ")).|("At peace".txt))(styles.small)
+        val warRow = Div(warGroups.some./(_.join(" ")).|(Icons.only("peace", "At peace")))
 
         val units = game.units(f)
 
@@ -293,7 +303,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         )(styles.row)
 
         val captured = p.captured.num
-        val capRow = (captured > 0).?(Div(("Captured " ~ captured.hl ~ ": " ~ Kind.all./~(k => p.captured.count(_._1 == k).use(n => (n > 0).?(k.name + " " + n))).join(", ").txt))(styles.small)).|(Empty)
+        // every prisoner, in its own color
+        val capRow = (captured > 0).?(Div(Span("Captured ") ~ p.captured.map(_._2).map(u => Hint(u.faction.name + " " + u.kind.name, Image("piece:" + u.kind.id + "-" + u.faction.id, styles.piece, u.faction.name + " " + u.kind.name)) : Elem).merge)(styles.small)).|(Empty)
 
         container.replace((title ~ sealRow ~ warRow ~ hand ~ pieceRow ~ capRow).div(xstyles.fillHeight), resources, onClick)
 
@@ -312,7 +323,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         val companies = Seal.companies.%(c => game.seals.contains(c))./(c => Div(c.elem ~ " " ~ game.seals(c).elem ~ " (" ~ game.stockpiles(c.resource).num.hl ~ ")")(styles.small))
 
         statusGame.replace(overlayFit(Div(Div("Turn " ~ game.turn.hl ~ " " ~ dice) ~ decks ~ companies.merge ~
-            "Royal Seals".hh.div(xlo.pointer).onClick.param("seals"), styles.gstatus)), resources, onClick)
+            (Icons("seal") ~ "Royal Seals".hh).div(xlo.pointer).onClick.param("seals"), styles.gstatus)), resources, onClick)
     }
 
     def updateStatus() {
@@ -331,9 +342,6 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     }
 
     val layoutZoom = 0.49
-
-    // on a phone the player panels are taller, for text of a readable size (index.html)
-    val narrow = dom.window.innerWidth < 700
 
     val layouts = $(Layout("base",
         $(
@@ -383,7 +391,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
     val settingsKey = Meta.settingsKey
 
-    val layoutKey = "v" + 1 + "." + "arity-" + arity
+    val layoutKey = "v" + 2 + "." + "arity-" + arity + narrow.??(".narrow")
 
     def overlayScrollX(e : Elem) = overlayScroll(e)(styles.seeThroughInner).onClick
     def overlayFitX(e : Elem) = overlayFit(e)(styles.seeThroughInner).onClick
@@ -413,6 +421,22 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
                     Div(OnClick(s, Image("seal:" + s.image, styles.sealImg, xlo.pointer)) ~ " " ~ s.elem ~ " " ~ game.seals.get(s)./(f => "held by " ~ f.elem).|("unclaimed".txt) ~ Break ~ SealText.of(s).spn(styles.small))
                 }.merge), onClick)
 
+        // touch screens have no tooltips: what every icon on the panels means (the Icons button)
+        case "legend" =>
+            def line(i : Elem, s : String) = Div(i ~ " " ~ s.txt)
+            showOverlay(overlayScrollX(Div("Icons".hlb) ~ Div(
+                line(Icons("seal"), "Royal Seals held; eight win") ~
+                line(Icons("cards"), "Cards in hand") ~
+                line(Icons("trade"), "Cards paid for one in trade") ~
+                line(Icons("war-card"), "War cards left") ~
+                line(Icons("peace"), "At peace") ~
+                line(Icons("war"), "Gentleman's War, with the player shown after it") ~
+                line(Icons("boar"), "Boar's War, with the player shown after it") ~
+                line(Icons("end-turn"), "Beside a war: attacks from the next turn") ~
+                line(Icons.piece("colony", game.setup.head), "Colonies") ~
+                Kind.all./(k => line(Icons.piece(k.id, game.setup.head), k.name)).merge ~
+                Resource.all./(r => line(Image("die:" + r.id, styles.icon), r.name)).merge, styles.legend)), onClick)
+
         case s : Seal =>
             showOverlay(overlayFitX(Image("seal:" + s.image, styles.artwork) ~ Div(s.elem ~ Break ~ SealText.of(s))), onClick)
 
@@ -440,7 +464,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     override def info(self : |[Faction], aa : $[UserAction]) = {
         val ii = currentGame.info($, self, aa)
         ii.any.??($(ZOption(Empty, Break)) ++ convertActions(self.of[Faction], ii)) ++
-            $(ZBasic(Break ~ Break, "Royal Seals".hh, () => { onClick("seals") }).copy(clear = false)) ++
+            $(ZBasic(Break ~ Break, Icons("seal") ~ "Royal Seals".hh, () => { onClick("seals") }).copy(clear = false)) ++
+            $(ZBasic(Break ~ Break, Icons("list") ~ "Icons".hh, () => { onClick("legend") }).copy(clear = false)) ++
             (currentGame.isOver && hrf.HRF.flag("replay").not).$(
                 ZBasic(Break ~ Break ~ Break, "Save Replay As File".hh, () => {
                     showOverlay(overlayScrollX("Saving Replay...".hl.div).onClick, null)
@@ -451,10 +476,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
                     }
                 }).copy(clear = false)
             ) ++
-            $(ZBasic(Break ~ Break, "Notifications".spn, () => { onClick("notifications", self) }).copy(clear = false)).%(_ => self.any || game.isOver) ++
-            $(ZBasic(Break ~ Break, "Interface".spn, () => { callbacks.editSettings { updateStatus() } }).copy(clear = false)) ++
-            $(ZBasic(Break ~ Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug) ++
-            $(ZBasic(Break ~ Break, "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle)
+            $(ZBasic(Break ~ Break, Icons("notifications") ~ "Notifications".spn, () => { onClick("notifications", self) }).copy(clear = false)).%(_ => self.any || game.isOver) ++
+            $(ZBasic(Break ~ Break, Icons("interface") ~ "Interface".spn, () => { callbacks.editSettings { updateStatus() } }).copy(clear = false)) ++
+            $(ZBasic(Break ~ Break, Icons("bug") ~ "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug) ++
+            $(ZBasic(Break ~ Break, Icons("home") ~ "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle)
     }
 
     var shown : $[Notification] = $
@@ -508,8 +533,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         if (then == null || unfolded || l./(_.unwrap.as[HexKey].get.hex).distinct.num < foldFrom)
             super.convertActions(faction, actions, then)
         else
-            ZOption(Div(l.head.question(currentGame))(xlo.fullwidth), Div("Tap a highlighted hex on the map", xstyles.info, xstyles.xx, xstyles.thu, xlo.fullwidth)) ::
-            ZOption(Div(l.head.question(currentGame))(xlo.fullwidth), OnClick(Div("Show the " ~ l.num.hl ~ " choices as a list", $(xstyles.choice, xstyles.xx, xstyles.thu, xlo.pointer, xlo.fullwidth) ++ faction./(f => elem.borders.get(f)).$)), _ => {
+            ZOption(Div(l.head.question(currentGame))(xlo.fullwidth), Div(Icons("hex") ~ "Tap a highlighted hex on the map", xstyles.info, xstyles.xx, xstyles.thu, xlo.fullwidth)) ::
+            ZOption(Div(l.head.question(currentGame))(xlo.fullwidth), OnClick(Div(Icons("list") ~ "Show the " ~ l.num.hl ~ " choices as a list", $(xstyles.choice, xstyles.xx, xstyles.thu, xlo.pointer, xlo.fullwidth) ++ faction./(f => elem.borders.get(f)).$)), _ => {
                 unfolded = true
                 unfold()
             }, false) ::

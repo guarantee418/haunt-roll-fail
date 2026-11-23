@@ -58,6 +58,10 @@ package object elem {
         object deck extends CustomStyle(display("inline-block"), white.space("nowrap"), width("30%"), text.align("center"))
         object atWar extends CustomStyle(color("#ff9a8c"), font.weight("bold"))
 
+        object icon extends CustomStyle(height("1.3em"), vertical.align("middle"), margin.right("0.35em"))
+        object iconOnly extends CustomStyle(height("1.45em"), vertical.align("middle"), margin.left("0.1em"), margin.right("0.1em"))
+        object legend extends CustomStyle(text.align("left"), padding("0.6ex"))
+
         object row extends CustomStyle(font.size("90%"))
         object small extends CustomStyle(font.size("85%"))
 
