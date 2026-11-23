@@ -1389,7 +1389,7 @@
                 new MutationObserver(() => {
                     if (!queued) {
                         queued = true;
-                        requestAnimationFrame(() => { queued = false; mark() });
+                        setTimeout(() => { queued = false; mark() }, 0);
                     }
                 }).observe(document.body, { childList: true, subtree: true });
                 document.addEventListener("keydown", e => {
