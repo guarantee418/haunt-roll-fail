@@ -18,7 +18,7 @@ object Host extends hrf.host.BaseHost {
 
     type W = Faction
 
-    override val limit = 20000
+    override val limit = 60000
 
     def askBot(g : G, f : F, actions : $[UserAction]) = new BotXX(f).ask(actions, 0)(g)
 

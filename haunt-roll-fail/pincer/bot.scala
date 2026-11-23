@@ -44,7 +44,6 @@ class GameEvaluation(val game : Game, val self : Faction) {
             case BuildBridgeAction(_, _, _, _, _) => true |=> 150 -> "bridge"
             case RepairFortAction(_, _, _) => true |=> 600 -> "repair"
             case StonewallRepairAction(_, _, _, _) => true |=> 600 -> "repair"
-            case RemoveFortAction(_, _) => true |=> 800 -> "remove fort"
             case RecruitAction(_, k, _, _) => (units(self).num < 6 + colonyOf(self).num * 2) |=> (400 + Kind.all.indexOf(k) * 30) -> "recruit"
             case ReviveAction(_, _, _, _) => true |=> 650 -> "revive"
             case FrigateReviveNowAction(_, _, _, _) => true |=> 650 -> "revive"
@@ -55,15 +54,20 @@ class GameEvaluation(val game : Game, val self : Faction) {
             case DeclareWarAction(_, e, boar) =>
                 (e == leader && turn > 6 && boar.not) |=> 350 -> "war on the leader"
                 true |=> -300 -> "peace is fine"
-            case OfferPeaceAction(_, e) => (e != leader) |=> 100 -> "peace"
-            case AcceptPeaceAction(_, e) => (e != leader) |=> 300 -> "accept peace"
-            case DeclinePeaceAction(_, e) => (e == leader) |=> 300 -> "decline"
-            case GiveCardAction(_, _, _) => true |=> -1000 -> "keep cards"
-            case ReturnPrisonerAction(_, _) => true |=> -1000 -> "keep prisoners"
+            case OfferPeaceAction(_, e, _) =>
+                (units(self).num < units(e).num - 2) |=> 100 -> "peace when weaker"
+                true |=> -100 -> "keep the war"
+            case AcceptPeaceAction(_, e, t) => (units(self).num < units(e).num && t.demand.none) |=> 300 -> "accept peace when weaker"
+            case DeclinePeaceAction(_, e, t) => true |=> 100 -> "decline"
+            case DepositAction(_, _, _) => true |=> -500 -> "keep cards"
+            case WithdrawAction(_, _) => true |=> -500 -> "leave the stockpile"
+            case PlacePrisonerAction(_, _, _, _, _) => true |=> 200 -> "place"
+            case KeepColonyAction(_, _, _, _) => true |=> 100 -> "colony"
+            case DoneUnitAction(_, _, _) => true |=> 60 -> "done"
             case SurrenderAction(_) => true |=> -2000 -> "never"
             case AttackAction(_, _, v, _) => true |=> (750 + (v.kind == Cannon).??(50)) -> "attack"
             case AttackFortAction(_, _, _, _) => true |=> 720 -> "attack fort"
-            case MoveAction(_, u, h, c) =>
+            case StepAction(_, u, h, c) =>
                 val capture = others(self, h).any
                 val annex = colonies.get(h).%(_ != self).any
                 val enemy = colonies.toList.filter(_._2 != self).map(_._1)

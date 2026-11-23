@@ -255,20 +255,23 @@ case class MainAction(f : Faction) extends ForcedAction
 case class EndTurnAction(self : Faction) extends BaseAction(None)("End turn")
 case class NextTurnAction(f : Faction) extends ForcedAction
 
-// units
+// units: an action is done one step at a time, and finished before another unit acts
+case class Counter(defender : Faction, active : Faction, ambush : Boolean) extends Record
+
 case class UnitMenuAction(self : Faction, figure : Figure) extends BaseAction("Units")(figure, "in", (g : Game) => g.at(figure).elem) with Soft with FigureKey
-case class MoveAction(self : Faction, figure : Figure, hex : Hex, counter : |[Counter]) extends BaseAction(figure, "in", (g : Game) => g.at(figure).elem)("Move to", hex, (g : Game) => g.moveNote(figure, hex)) with HexKey
+case class StepAction(self : Faction, figure : Figure, hex : Hex, counter : |[Counter]) extends BaseAction(figure, "in", (g : Game) => g.at(figure).elem, (g : Game) => g.stepsNote(figure))("Move to", hex, (g : Game) => g.moveNote(figure, hex)) with HexKey
 case class AttackAction(self : Faction, unit : Figure, target : Figure, counter : |[Counter]) extends BaseAction(unit, "in", (g : Game) => g.at(unit).elem)("Attack", target, "in", (g : Game) => g.at(target).elem) with FigureKey { def figure = target }
 case class AttackFortAction(self : Faction, figure : Figure, hex : Hex, counter : |[Counter]) extends BaseAction(figure, "in", (g : Game) => g.at(figure).elem)("Attack", (g : Game) => g.forts(hex).owner.elem, "Fort in", hex) with HexKey
 case class ReviveAction(self : Faction, figure : Figure, paid : $[Resource], then : ForcedAction) extends BaseAction(figure, "in", (g : Game) => g.at(figure).elem)("Revive", "for", paid.intersperse(",")) with FigureKey
 case class HideoutAction(self : Faction, figure : Figure, hex : Hex) extends BaseAction(figure, "in", (g : Game) => g.at(figure).elem)("Play", Hideout, "and enter", hex) with HexKey
 case class ExtraActionAction(self : Faction, figure : Figure, card : Maneuver) extends BaseAction(figure, "in", (g : Game) => g.at(figure).elem)("Play", card, "for one more move or attack")
+case class DoneUnitAction(self : Faction, figure : Figure, counter : |[Counter]) extends BaseAction(figure, "in", (g : Game) => g.at(figure).elem, (g : Game) => g.stepsNote(figure))("Done")
 
-case class ExtraNextAction(f : Faction, figure : Figure) extends ForcedAction
+case class ContinueUnitAction(f : Faction, figure : Figure, counter : |[Counter]) extends ForcedAction
+case class FinishUnitAction(f : Faction, figure : Figure, counter : |[Counter]) extends ForcedAction
 case class ResolveCountersAction(f : Faction) extends ForcedAction
 
 // counter-actions
-case class Counter(defender : Faction, active : Faction, ambush : Boolean) extends Record
 case class CounterAskAction(d : Faction, f : Faction, ambushed : Boolean) extends ForcedAction
 case class CounterUnitAction(self : Faction, figure : Figure, counter : Counter) extends BaseAction("Counter-Action against", counter.active)(figure, "in", (g : Game) => g.at(figure).elem) with Soft with FigureKey
 case class AmbushMenuAction(self : Faction, f : Faction) extends BaseAction("Counter-Action against", f)("Play", Ambush, "(another move or attack with a unit in a forest)") with Soft
@@ -278,7 +281,7 @@ case class StonewallRepairAction(self : Faction, hex : Hex, paid : $[Resource], 
 case class FrigateReviveNowAction(self : Faction, figure : Figure, paid : $[Resource], then : ForcedAction) extends BaseAction(NavalSupremacy)("Revive", figure, "now for", paid.intersperse(",")) with FigureKey
 case class FrigateReviveSkipAction(self : Faction, then : ForcedAction) extends BaseAction(NavalSupremacy)("Don't revive")
 
-// defensive maneuvers
+// defensive maneuvers: asked on every attack on wheat or hills, so asking tells nothing of the hand
 case class DefendAskAction(f : Faction, figure : Figure, target : Figure, counter : |[Counter]) extends ForcedAction
 case class RetreatAction(self : Faction, target : Figure, hex : Hex, f : Faction, figure : Figure, counter : |[Counter]) extends BaseAction(figure, "attacks", target)("Play", Retreat, "and move to", hex) with HexKey
 case class FortifyAction(self : Faction, target : Figure, f : Faction, figure : Figure, counter : |[Counter]) extends BaseAction(figure, "attacks", target)("Play", Fortify, "and deflect the attack")
@@ -294,7 +297,6 @@ case class BuildBridgeAction(self : Faction, a : Hex, w : Hex, b : Hex, paid : $
 case class BuildPortAction(self : Faction, hex : Hex, colony : Hex, paid : $[Resource]) extends BaseAction("Build", PortBuild, "for", paid.intersperse(","))("Port in", hex, "for the Colony in", colony) with HexKey
 case class BuildFortAction(self : Faction, hex : Hex, paid : $[Resource]) extends BaseAction("Build", FortBuild, "for", paid.intersperse(","))("Fort in", hex) with HexKey
 case class RepairFortAction(self : Faction, hex : Hex, paid : $[Resource]) extends BaseAction("Repair", "for", paid.intersperse(","))("Fort in", hex) with HexKey
-case class RemoveFortAction(self : Faction, hex : Hex) extends BaseAction("Annexed Colonies")("Remove", (g : Game) => g.forts(hex).owner.elem, "damaged Fort in", hex) with HexKey
 
 // recruiting
 case class RecruitMenuAction(self : Faction) extends BaseAction(None)("Recruit") with Soft
@@ -308,21 +310,37 @@ case class TradeAction(self : Faction, r : Resource, paid : $[Resource]) extends
 
 // trading companies
 case class CompanyMenuAction(self : Faction) extends BaseAction(None)("Trading Companies") with Soft
-case class FoundCompanyAction(self : Faction, company : Company) extends BaseAction("Trading Companies")("Found", company, "with", 5.hl, company.resource)
-case class BuyoutAction(self : Faction, company : Company, n : Int) extends BaseAction("Trading Companies")("Forcible buyout of", company, "with", n.hl, company.resource)
+case class FoundCompanyAction(self : Faction, company : Company) extends BaseAction("Trading Companies")("Found", company, "with", 5.hl, company.resource, "cards")
+case class BuyoutAction(self : Faction, company : Company, n : Int) extends BaseAction("Trading Companies")("Forcible buyout of", company, "with", n.hl, company.resource, "cards")
+case class DepositAction(self : Faction, company : Company, card : Card) extends BaseAction(company, "stockpile")("Deposit", card)
+case class WithdrawAction(self : Faction, company : Company) extends BaseAction(company, "stockpile")("Take the top card")
 
 // diplomacy
+case class Terms(give : $[Card], demand : $[Resource], release : $[Figure], ransom : $[Figure]) extends Record
+
 case class DiplomacyMenuAction(self : Faction) extends BaseAction(None)("Diplomacy") with Soft
 case class DeclareWarAction(self : Faction, e : Faction, boar : Boolean) extends BaseAction("Declare War on", e)(boar.?("Boar's War".hl ~ " (attack at once)").|("Gentleman's War".hl ~ " (attack from your next turn)"))
-case class OfferPeaceAction(self : Faction, e : Faction) extends BaseAction("Diplomacy")("Offer peace to", e)
-case class PeaceAskAction(e : Faction, f : Faction) extends ForcedAction
-case class AcceptPeaceAction(self : Faction, f : Faction) extends BaseAction(f, "offers peace")("Accept")
-case class DeclinePeaceAction(self : Faction, f : Faction) extends BaseAction(f, "offers peace")("Decline")
-case class GiveMenuAction(self : Faction, e : Faction) extends BaseAction("Diplomacy")("Give cards to", e) with Soft
-case class GiveCardAction(self : Faction, e : Faction, card : Card) extends BaseAction("Give", e)(card)
-case class ReturnPrisonerAction(self : Faction, figure : Figure) extends BaseAction("Return captured units")(figure)
-case class PlacePrisonerAction(self : Faction, figure : Figure, hex : Hex, f : Faction) extends BaseAction(figure, "returned")("Place in", hex) with HexKey
+case class PeaceTermsAction(self : Faction, e : Faction, now : Terms, terms : Terms, last : Elem) extends BaseAction("Peace terms for", e, (g : Game) => g.termsElem(self, e, now))(last) with SelfExplode {
+    // the terms can't be listed in full: the bots offer none, and the plain offer validates every step of them
+    def explode(withSoft : Boolean)(implicit g : Game) = withSoft.$(this) ++ $(OfferPeaceAction(self, e, Terms($, $, $, $)))
+}
+case class OfferPeaceAction(self : Faction, e : Faction, terms : Terms) extends BaseAction("Peace terms for", e, (g : Game) => g.termsElem(self, e, terms))("Offer peace") with SelfValidate {
+    def validate(a : Action) = a @@ {
+        case OfferPeaceAction(f, x, _) => f == self && x == e
+        case PeaceTermsAction(f, x, _, _, _) => f == self && x == e
+        case _ => false
+    }
+}
+case class PeaceAskAction(e : Faction, f : Faction, terms : Terms) extends ForcedAction
+case class AcceptPeaceAction(self : Faction, f : Faction, terms : Terms) extends BaseAction(f, "offers peace", (g : Game) => g.termsElem(f, self, terms))("Accept")
+case class DeclinePeaceAction(self : Faction, f : Faction, terms : Terms) extends BaseAction(f, "offers peace")("Decline")
+case class PlaceReturnedAction(l : $[Figure], then : ForcedAction) extends ForcedAction
+case class PlacePrisonerAction(self : Faction, figure : Figure, hex : Hex, l : $[Figure], then : ForcedAction) extends BaseAction(figure, "returned")("Place in", hex) with HexKey
+case class SupplyPrisonerAction(self : Faction, figure : Figure, l : $[Figure], then : ForcedAction) extends BaseAction(figure, "returned")("Keep in the supply")
+
 case class SurrenderAction(self : Faction) extends BaseAction("Every Colony annexed")("Surrender".hl)
+case class SurrenderColoniesAction(f : Faction, left : $[Faction]) extends ForcedAction
+case class KeepColonyAction(self : Faction, f : Faction, hex : Hex, left : $[Faction]) extends BaseAction("Too few Colonies to replace all of", f, "annexed")("Replace the Colony in", hex) with HexKey
 
 case class GameOverAction(winners : $[Faction]) extends ForcedAction
 case class GameOverWonAction(self : Faction, f : Faction) extends BaseInfo("Game Over")(f, "won")
@@ -353,6 +371,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     var embarked = Map[Figure, Figure]()
     var colonies = Map[Hex, Faction]()
     var annexedAt = Map[Hex, (Faction, Int)]()
+    var fortRemovedAt = Map[Hex, Int]()
     var forts = Map[Hex, Fort]()
     var ports = Map[Hex, Port]()
     var roads = $[Road]()
@@ -373,33 +392,41 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     var rolled = $[Resource]()
     var acted = Set[Figure]()
     var fresh = Set[Figure]()
-    var movedOne = Set[Figure]()
+    var moved = Map[Figure, Int]()
+    var stopped = Set[Figure]()
     var attacks = Map[Figure, Int]()
     var extra = Map[Figure, Maneuver]()
     var counterUsed = Set[Figure]()
     var pendingCounters = $[Faction]()
     var peaceOffered = $[Faction]()
+    var declared = $[Faction]()
     var trades = 0
 
     var highlightFaction = $[Faction]()
 
-    // where a figure is: its own hex, or for one embarked, its frigate's
+    // FIGURES: one unit a hex, but for a frigate's passenger
+
     def at(u : Figure) : Hex = pos(u)
     def on(h : Hex) : $[Figure] = pos.toList.filter(_._2 == h).map(_._1).sortBy(u => (setup.indexOf(u.faction), Kind.all.indexOf(u.kind), u.index))
+    def landOn(h : Hex) : |[Figure] = on(h).%(u => u.land && embarked.contains(u).not).starting
     def units(f : Faction) : $[Figure] = pos.keys.$.%(_.faction == f).sortBy(u => (Kind.all.indexOf(u.kind), u.index))
     def isInjured(u : Figure) = injured.contains(u)
+    def passenger(v : Figure) : |[Figure] = embarked.toList.find(_._2 == v).map(_._1)
 
     def supply(f : Faction, k : Kind) : $[Figure] = 1.to(k.count).$./(Figure(f, k, _)).%(u => pos.contains(u).not && factions./~(_.captured.map(_._2)).has(u).not)
 
     def colonyOf(f : Faction) : $[Hex] = colonies.toList.filter(_._2 == f).map(_._1).sortBy(x => (x.r, x.c))
 
-    // the player whose land unit stands in another player's colony
-    def occupier(h : Hex) : |[Faction] = colonies.get(h)./~(o => on(h).%(u => u.land && embarked.contains(u).not && u.faction != o)./(_.faction).distinct.single)
+    // CONTROL: a colony is controlled by another player's land unit in it, else by another player's fort around it, else by its owner
 
-    def annexed(h : Hex) = occupier(h).any
+    def controller(h : Hex) : Faction = {
+        val o = colonies(h)
+        landOn(h).map(_.faction).%(_ != o).||(forts.get(h).map(_.owner).%(_ != o)).|(o)
+    }
 
-    // who collects from a colony: its owner, or the player annexing it
-    def controller(h : Hex) : Faction = occupier(h).|(colonies(h))
+    def annexer(h : Hex) : |[Faction] = colonies.get(h).%(_ => controller(h) != colonies(h)).map(_ => controller(h))
+
+    def annexed(h : Hex) = annexer(h).any
 
     def ownColonies(f : Faction) = colonyOf(f).%(annexed(_).not)
 
@@ -413,30 +440,41 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     def sealsOf(f : Faction) = Seal.all.%(s => seals.get(s).has(f))
 
-    def ruleFigures = factions
+    // ROADS: a road or bridge is cut off while another player has a land unit at each of its ends
 
-    // ROADS
+    def cutBy(a : Hex, b : Hex, owner : Faction) : |[Faction] = (landOn(a), landOn(b)) match {
+        case (Some(x), Some(y)) if x.faction == y.faction && x.faction != owner => |(x.faction)
+        case _ => None
+    }
 
-    def links(f : Faction) : $[(Hex, Hex)] = roads.%(_.owner == f)./(r => (r.a, r.b)) ++ bridges.%(_.owner == f)./(b => (b.a, b.b))
+    def allLinks(f : Faction) : $[(Hex, Hex)] = roads.%(_.owner == f)./(r => (r.a, r.b)) ++ bridges.%(_.owner == f)./(b => (b.a, b.b))
 
-    def networkOf(f : Faction, start : Hex) : Set[Hex] = {
+    def links(f : Faction) : $[(Hex, Hex)] = allLinks(f).%{ case (a, b) => cutBy(a, b, f).none }
+
+    def linked(l : $[(Hex, Hex)], x : Hex) = l.flatMap { case (a, b) => if (a == x) $(b) else if (b == x) $(a) else $() }
+
+    // the player's own colonies joined to a colony by its roads and bridges without passing through another colony
+    def joined(f : Faction, start : Hex) : $[Hex] = {
         val l = links(f)
         var seen = Set(start)
         var front = $(start)
+        var result = $[Hex]()
         while (front.any) {
-            front = front./~(x => l./~ { case (a, b) => if (a == x) $(b) else if (b == x) $(a) else $() }).distinct.%(x => seen.contains(x).not)
-            seen ++= front
+            val next = front./~(x => linked(l, x)).distinct.%(x => seen.contains(x).not)
+            seen ++= next
+            result ++= next.%(colonies.contains)
+            front = next.%(x => colonies.contains(x).not)
         }
-        seen
+        result.%(c => colonies.get(c).has(f) && annexed(c).not).distinct
     }
 
-    // each pair of the player's own (not annexed) colonies joined by its roads and bridges is a road network
+    // a road network joins two of the player's own colonies: three in a row are two networks
     def networks(f : Faction) : Int = {
         val cc = ownColonies(f)
-        cc.combinations(2).$.count { case $(a, b) => networkOf(f, a).contains(b) ; case _ => false }
+        cc./(c => joined(f, c).%(cc.has).num).sum / 2
     }
 
-    def inNetwork(f : Faction, h : Hex) = ownColonies(f).but(h).exists(c => networkOf(f, h).contains(c))
+    def inNetwork(f : Faction, h : Hex) = joined(f, h).any
 
     def portBonus(f : Faction) = ports.toList.count { case (h, p) => p.owner == f && annexed(p.colony).not && (blockaded(h).none || hasSeal(f, MaritimeExchange)) }
 
@@ -448,92 +486,90 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     def bankHas(r : Resource) = decks(r).has(r) || discards(r).has(r)
 
-    // MOVEMENT
+    def matching(f : Faction, r : Resource) = f.hand.%(_.resource == r).sortBy(_.is[Maneuver])
 
-    def landPassable(f : Faction, h : Hex) = Board.terrain(h) match {
-        case Water => false
-        case Mountain => colonies.get(h).has(f)
-        case _ => true
+    // MOVEMENT, one step at a time
+
+    def range(u : Figure) = u.kind match {
+        case Cavalry if hasSeal(u.faction, MountedVanguard) => 3
+        case Cavalry => 2
+        case Frigate => 2
+        case _ => 1
     }
 
-    // other players' figures in a hex: units may not move through them, and enter them only to capture or annex
+    // the hexes one step away: neighbors, the far end of a bridge, and for a land unit in the player's own colony, the colonies its roads join
+    def stepsFrom(u : Figure, x : Hex) : $[Hex] =
+        if (u.kind == Frigate)
+            Board.neighbors(x).%(h => Board.terrain(h) == Water)
+        else
+            (Board.neighbors(x) ++ bridges./~(b => (b.a == x).?(b.b) ++ (b.b == x).?(b.a)) ++
+                (colonies.get(x).has(u.faction) && annexed(x).not).??(joined(u.faction, x))).distinct
+
+    // other players' figures in a hex
     def others(f : Faction, h : Hex) = on(h).%(_.faction != f)
 
-    def enterable(f : Faction, u : Figure, h : Hex) : Boolean = {
-        val o = others(f, h)
-        val fort = forts.get(h).%(_.owner != f)
-        val colony = colonies.get(h).%(_ != f)
-        if (u.land) {
-            if (fort.exists(_.damaged.not))
-                false
-            else
-            if (o.any)
-                o.forall(v => v.land && isInjured(v) && embarked.contains(v).not && canAttack(f, v.faction))
-            else
-            if (colony.any)
-                canAttack(f, colony.get)
-            else
-                true
-        }
-        else
-            o.forall(v => v.kind == Frigate && isInjured(v) && canAttack(f, v.faction)) && o.%(_.kind == Frigate).any.?(true).|(o.none)
-    }
+    def boatFor(u : Figure, h : Hex) : |[Figure] = on(h).%(v => v.faction == u.faction && v.kind == Frigate && passenger(v).none && isInjured(v).not).starting
 
-    // where a figure can move this action, with how far
-    def moves(u : Figure) : $[Hex] = {
+    // whether a step into h is allowed (capturing, annexing or embarking), the other players' units it captures being all of only's, if given
+    def canEnter(u : Figure, h : Hex, only : |[Faction]) : Boolean = {
         val f = u.faction
-        val start = at(u)
-        val range = u.kind match {
-            case Cavalry if hasSeal(f, MountedVanguard) => 3
-            case Cavalry => 2
-            case Frigate => 2
-            case _ => 1
-        }
-
-        if (u.kind == Frigate) {
-            var seen = Set(start)
-            var front = $(start)
-            var result = $[Hex]()
-            1.to(range).foreach { _ =>
-                front = front./~(Board.neighbors).distinct.%(x => seen.contains(x).not && Board.terrain(x) == Water)
-                seen ++= front
-                val ok = front.%(x => enterable(f, u, x))
-                result ++= ok
-                front = ok.%(x => others(f, x).none)
-            }
-            result.distinct
-        }
-        else {
-            def step(x : Hex) : $[Hex] = {
-                val n = Board.neighbors(x) ++ bridges./~(b => (b.a == x).?(b.b) ++ (b.b == x).?(b.a)) ++
-                    (colonies.get(x).has(f) && annexed(x).not).??(ownColonies(f).but(x).%(c => networkOf(f, x).contains(c)))
-                n.distinct
-            }
-
-            var seen = Set(start)
-            var front = $(start)
-            var result = $[Hex]()
-            1.to(range).foreach { _ =>
-                val next = front./~(step).distinct.%(x => seen.contains(x).not)
-                seen ++= next
-                // embarking: onto a water hex with the player's frigate that carries nobody
-                val boats = next.%(x => Board.terrain(x) == Water && on(x).exists(v => v.faction == f && v.kind == Frigate && embarked.values.$.has(v).not && isInjured(v).not))
-                val land = next.%(x => landPassable(f, x) && enterable(f, u, x))
-                result ++= land ++ boats
-                // a capture, an annexation or an embarkation ends the move
-                front = land.%(x => others(f, x).none && colonies.get(x).%(_ != f).none)
-            }
-            result.distinct.but(start)
-        }
+        val o = others(f, h)
+        val ok = only.%(_ => o.any).forall(e => o.forall(_.faction == e))
+        if (u.kind == Frigate)
+            Board.terrain(h) == Water && ok && o.forall(v => v.kind == Frigate && isInjured(v) && canAttack(f, v.faction))
+        else
+        if (Board.terrain(h) == Water)
+            boatFor(u, h).any && o.none
+        else
+        if (Board.terrain(h) == Mountain && colonies.get(h).has(f).not)
+            false
+        else
+        if (forts.get(h).exists(t => t.owner != f && t.damaged.not))
+            false
+        else
+        if (o.any)
+            ok && o.forall(v => v.land && isInjured(v) && embarked.contains(v).not && canAttack(f, v.faction))
+        else
+            colonies.get(h).%(_ != f).forall(e => canAttack(f, e) && only.forall(_ == e))
     }
+
+    // a unit may end a step in a hex with none of the player's other units (or on its own empty frigate)
+    def canStop(u : Figure, h : Hex) = (u.land && Board.terrain(h) == Water) || on(h).%(v => v != u && v.faction == u.faction).none
+
+    // embarking and entering another player's colony end the move
+    def endsMove(u : Figure, h : Hex) = (u.land && Board.terrain(h) == Water) || colonies.get(h).%(_ != u.faction).any
+
+    def canSettle(u : Figure, from : Hex, h : Hex, left : Int, only : |[Faction]) : Boolean =
+        canStop(u, h) || (left > 0 && endsMove(u, h).not && stepsFrom(u, h).but(from).exists(n => canEnter(u, n, only) && canSettle(u, h, n, left - 1, only)))
+
+    def stepTargets(u : Figure, only : |[Faction]) : $[Hex] = {
+        val from = at(u)
+        val left = range(u) - moved.getOrElse(u, 0)
+        (left > 0 && stopped.contains(u).not).??(stepsFrom(u, from).%(h => canEnter(u, h, only) && canSettle(u, from, h, left - 1, only)))
+    }
+
+    // the empty hexes a unit could reach, for Retreat
+    def reachableEmpty(u : Figure) : $[Hex] = {
+        var seen = Set(at(u))
+        var front = $(at(u))
+        var result = $[Hex]()
+        1.to(range(u)).foreach { _ =>
+            val next = front./~(x => stepsFrom(u, x)).distinct.%(x => seen.contains(x).not)
+            seen ++= next
+            val ok = next.%(x => (u.kind == Frigate).?(Board.terrain(x) == Water).|(Board.terrain(x).land && (Board.terrain(x) != Mountain || colonies.get(x).has(u.faction))))
+                .%(x => others(u.faction, x).none && colonies.get(x).%(_ != u.faction).none && forts.get(x).%(_.owner != u.faction).none)
+            result ++= ok.%(x => on(x).none)
+            front = ok
+        }
+        result.distinct
+    }
+
+    def stepsNote(u : Figure) : Elem = moved.get(u).%(_ > 0)./(n => ("(moved " + n + " of " + range(u) + ")").spn(styles.small)).|(Empty)
 
     def moveNote(u : Figure, h : Hex) : Elem = {
         val f = u.faction
         val o = others(f, h)
-        if (o.any && u.land && Board.terrain(h) != Water)
-            " (capture " ~ o./(_.elem).comma ~ ")"
-        else
-        if (o.any && u.kind == Frigate)
+        if (o.any)
             " (capture " ~ o./(_.elem).comma ~ ")"
         else
         if (u.land && Board.terrain(h) == Water)
@@ -541,6 +577,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         else
         if (colonies.get(h).%(_ != f).any)
             " (annex)".txt
+        else
+        if (on(h).exists(_.faction == f))
+            " (passing)".txt
         else
             Empty
     }
@@ -554,57 +593,70 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // a unit in a colony is safe from attack behind the colony owner's undamaged fort, and behind a damaged one from all but cannons and frigates
     def shielded(u : Figure, v : Figure) = {
-        val h = at(v)
-        forts.get(h).%(_.owner == v.faction) match {
+        forts.get(at(v)).%(_.owner == v.faction) match {
             case Some(Fort(_, false)) => true
             case Some(Fort(_, true)) => u.kind != Cannon && u.kind != Frigate
             case None => false
         }
     }
 
-    def targets(u : Figure) : $[Figure] = {
+    // passengers can't be attacked; a counter-attack only hits the player whose turn it is
+    def targets(u : Figure, only : |[Faction]) : $[Figure] = {
         val f = u.faction
-        val hexes = Board.within(at(u), attackRange(u), false)
-        hexes./~(on).%(v => v.faction != f && canAttack(f, v.faction) && isInjured(v).not && embarked.contains(v).not).%{ v =>
-            u.kind match {
-                case Musketeer | Cavalry | Cannon => v.land || u.kind == Cannon
-                case Frigate => true
-            }
-        }.%(v => shielded(u, v).not)
+        Board.within(at(u), attackRange(u), false)./~(on).%(v => v.faction != f && only.forall(_ == v.faction) && canAttack(f, v.faction) && isInjured(v).not && embarked.contains(v).not)
+            .%(v => v.land || u.kind == Cannon || u.kind == Frigate)
+            .%(v => shielded(u, v).not)
     }
 
-    def fortTargets(u : Figure) : $[Hex] = (u.kind == Cannon || u.kind == Frigate).??(Board.within(at(u), attackRange(u), false).%(h => forts.get(h).exists(t => t.damaged.not && canAttack(u.faction, t.owner))))
+    def fortTargets(u : Figure, only : |[Faction]) : $[Hex] = (u.kind == Cannon || u.kind == Frigate).??(Board.within(at(u), attackRange(u), false).%(h => forts.get(h).exists(t => t.damaged.not && only.forall(_ == t.owner) && canAttack(u.faction, t.owner))))
 
-    def mayAct(u : Figure) = acted.contains(u).not && fresh.contains(u).not
+    def healthyEnough(u : Figure) = isInjured(u).not || (u.kind == Musketeer && hasSeal(u.faction, RoyalMusket))
 
-    def mayAttack(u : Figure) = {
-        val f = u.faction
-        fresh.contains(u).not && embarked.contains(u).not && (isInjured(u).not || (u.kind == Musketeer && hasSeal(f, RoyalMusket))) &&
-        (acted.contains(u).not || movedOne.contains(u) || (u.kind == Cannon && hasSeal(f, BlackPowderVolley) && attacks.get(u).has(1)))
+    // on its owner's turn a unit moves, or attacks, or (cavalry) moves up to one less than its range and attacks;
+    // cannons with Black Powder Volley attack twice
+    def mayMoveNow(u : Figure) = acted.contains(u).not && fresh.contains(u).not && attacks.getOrElse(u, 0) == 0
+
+    def mayAttackNow(u : Figure) = {
+        val m = moved.getOrElse(u, 0)
+        val a = attacks.getOrElse(u, 0)
+        acted.contains(u).not && fresh.contains(u).not && embarked.contains(u).not && healthyEnough(u) && (
+            (m == 0 && a == 0) ||
+            (u.kind == Cavalry && a == 0 && m < range(u)) ||
+            (u.kind == Cannon && a == 1 && m == 0 && hasSeal(u.faction, BlackPowderVolley))
+        )
     }
 
-    def mayMove(u : Figure) = mayAct(u)
+    def started(u : Figure) = moved.getOrElse(u, 0) > 0 || attacks.getOrElse(u, 0) > 0
 
-    def revivable(u : Figure) = isInjured(u) && fresh.contains(u).not && acted.contains(u).not && (injured(u) < turn || (u.kind == Frigate && hasSeal(u.faction, NavalSupremacy)))
+    def revivable(u : Figure) = isInjured(u) && fresh.contains(u).not && acted.contains(u).not && started(u).not && (injured(u) < turn || (u.kind == Frigate && hasSeal(u.faction, NavalSupremacy)))
 
     def reviveCost(u : Figure) : $[$[Resource]] = hasSeal(u.faction, CrossroadsGuild).?(Costs.revive(u.kind)./(_ => Resource.all)).|(Costs.revive(u.kind))
 
-    def unitActions(f : Faction, u : Figure, counter : |[Counter]) : $[UserAction] = {
-        val m = (counter.any || mayMove(u)).??(moves(u)./(h => MoveAction(f, u, h, counter)))
-        val a = (counter.any.?(embarked.contains(u).not && (isInjured(u).not || (u.kind == Musketeer && hasSeal(f, RoyalMusket)))).|(mayAttack(u))).??(targets(u)./(v => AttackAction(f, u, v, counter)) ++ fortTargets(u)./(h => AttackFortAction(f, u, h, counter)))
-        val r = counter.none.??(revivable(u).??(Costs.ways(f.hand, reviveCost(u))./(p => ReviveAction(f, u, p, MainAction(f)))))
-        val e = (counter.none && mayAct(u) && extra.contains(u).not).??(
-            (f.hand.has(Outflank) && u.land && Board.terrain(at(u)) == Rocks).$(ExtraActionAction(f, u, Outflank)) ++
-            (f.hand.has(Broadside) && u.kind == Frigate).$(ExtraActionAction(f, u, Broadside))
-        )
-        val hide = (counter.none && mayMove(u) && f.hand.has(Hideout) && u.land && embarked.contains(u).not).??(Board.neighbors(at(u)).%(h => Board.terrain(h) == Mountain && others(f, h).none && colonies.get(h).forall(c => c == f || canAttack(f, c)))./(h => HideoutAction(f, u, h)))
-        m ++ a ++ r ++ e ++ hide
+    def unitActions(f : Faction, u : Figure, counter : |[Counter]) : $[UserAction] = counter match {
+        case Some(c) =>
+            val m = (started(u).not || moved.getOrElse(u, 0) > 0).??(stepTargets(u, |(c.active))./(h => StepAction(f, u, h, counter)))
+            val a = (started(u).not && embarked.contains(u).not && healthyEnough(u)).??(targets(u, |(c.active))./(v => AttackAction(f, u, v, counter)) ++ fortTargets(u, |(c.active))./(h => AttackFortAction(f, u, h, counter)))
+            m ++ a
+        case None =>
+            val m = mayMoveNow(u).??(stepTargets(u, None)./(h => StepAction(f, u, h, None)))
+            val a = mayAttackNow(u).??(targets(u, None)./(v => AttackAction(f, u, v, None)) ++ fortTargets(u, None)./(h => AttackFortAction(f, u, h, None)))
+            val r = revivable(u).??(Costs.ways(f.hand, reviveCost(u))./(p => ReviveAction(f, u, p, MainAction(f))))
+            val fresh = mayMoveNow(u) && started(u).not
+            val e = (fresh && extra.contains(u).not).??(
+                (f.hand.has(Outflank) && u.land && Board.terrain(at(u)) == Rocks).$(ExtraActionAction(f, u, Outflank)) ++
+                (f.hand.has(Broadside) && u.kind == Frigate).$(ExtraActionAction(f, u, Broadside))
+            )
+            val hide = (fresh && f.hand.has(Hideout) && u.land && embarked.contains(u).not).??(Board.neighbors(at(u)).%(h => Board.terrain(h) == Mountain && on(h).none && colonies.get(h).forall(c => c == f || canAttack(f, c)))./(h => HideoutAction(f, u, h)))
+            m ++ a ++ r ++ e ++ hide
     }
 
     // BUILDING
 
+    def touchesRoad(h : Hex) = roads.exists(r => r.a == h || r.b == h) || bridges.exists(b => b.a == h || b.b == h)
+
+    // a colony is founded where the player's land unit stands, with no road on the hex's edges, 3 hexes from any colony over land
     def colonySites(f : Faction) : $[Hex] = (colonyOf(f).num < Pieces.colonies).??(units(f).%(_.land).%(u => embarked.contains(u).not)./(at).distinct.%{ h =>
-        colonies.contains(h).not && Board.edge(h).not && Board.terrain(h).land && others(f, h).none &&
+        colonies.contains(h).not && Board.edge(h).not && Board.terrain(h).land && touchesRoad(h).not &&
         colonies.keys.forall(c => Board.landDistance(c, h, 2).none)
     })
 
@@ -613,29 +665,31 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         colonies.keys.forall(c => Board.landDistance(c, h, 2).none)
     }
 
-    // a road joins two neighboring land hexes; it starts at the player's colony or at the end of one of its roads or bridges
+    def roadEnds(f : Faction) = (ownColonies(f) ++ allLinks(f).flatMap { case (a, b) => $(a, b) }).distinct
+
+    // a road joins two neighboring land hexes, continuing the player's path from its colony
     def roadSites(f : Faction) : $[(Hex, Hex)] = (roads.count(_.owner == f) < Pieces.roads).??{
-        val ends = ownColonies(f) ++ links(f).flatMap { case (a, b) => $(a, b) }
-        ends.distinct./~(a => Board.neighbors(a).%(b => Board.terrain(a).land && Board.terrain(b).land)./(b => (a, b)))
+        roadEnds(f)./~(a => Board.neighbors(a).%(b => Board.terrain(a).land && Board.terrain(b).land)./(b => (a, b)))
             ./{ case (a, b) => if (Board.hexes.indexOf(a) < Board.hexes.indexOf(b)) (a, b) else (b, a) }.distinct
             .%{ case (a, b) => roads.exists(r => r.a == a && r.b == b).not }
+            .%{ case (a, b) => colonies.get(a).%(_ != f).none && colonies.get(b).%(_ != f).none }
     }
 
     def bridgeSites(f : Faction) : $[(Hex, Hex, Hex)] = (bridges.count(_.owner == f) < Pieces.bridges).??{
-        val ends = ownColonies(f) ++ links(f).flatMap { case (a, b) => $(a, b) }
-        ends.distinct./~(a => Board.neighbors(a).%(w => Board.terrain(w) == Water)./~(w => Board.across(a, w).%(b => Board.terrain(b).land)./(b => (a, w, b))))
-            .%{ case (a, w, b) => bridges.exists(_.water == w).not }
+        roadEnds(f)./~(a => Board.neighbors(a).%(w => Board.terrain(w) == Water)./~(w => Board.across(a, w).%(b => Board.terrain(b).land)./(b => (a, w, b))))
+            .%{ case (a, w, b) => bridges.exists(_.water == w).not && colonies.get(b).%(_ != f).none }
     }
 
-    def portSites(f : Faction) : $[(Hex, Hex)] = (ports.values.count(_.owner == f) < Pieces.ports).??(ownColonies(f).%(c => ports.values.exists(_.colony == c).not)./~(c => Board.neighbors(c).%(h => Board.terrain(h) == Water && ports.contains(h).not)./(h => (h, c))))
+    def portSites(f : Faction) : $[(Hex, Hex)] = (ports.values.count(_.owner == f) < Pieces.ports).??(ownColonies(f).%(c => ports.values.exists(_.colony == c).not)./~(c => Board.neighbors(c).%(h => Board.terrain(h) == Water && ports.contains(h).not && on(h).none)./(h => (h, c))))
 
+    // the annexing player builds a fort from its next turn, and not the turn it removed the owner's
     def fortSites(f : Faction) : $[Hex] = (forts.values.count(_.owner == f) < Pieces.forts).??(
-        (ownColonies(f) ++ colonies.keys.$.%(h => occupier(h).has(f) && annexedAt.get(h).exists { case (e, t) => e == f && t < turn })).%(h => forts.contains(h).not)
+        (ownColonies(f) ++ colonies.keys.$.%(h => annexer(h).has(f) && annexedAt.get(h).exists { case (e, t) => e == f && t < turn } && fortRemovedAt.get(h).forall(_ < turn)))
+            .distinct.%(h => forts.contains(h).not)
     )
 
-    def repairSites(f : Faction) : $[Hex] = forts.toList.filter(_._2.owner == f).filter(_._2.damaged).map(_._1)
-
-    def removableForts(f : Faction) : $[Hex] = forts.toList.%{ case (h, t) => t.owner != f && t.damaged && occupier(h).has(f) && annexedAt.get(h).exists { case (e, n) => e == f && n < turn } }.map(_._1)
+    // a fort is repaired only while no other player's unit stands in it
+    def repairSites(f : Faction) : $[Hex] = forts.toList.filter(_._2.owner == f).filter(_._2.damaged).map(_._1).%(h => others(f, h).none)
 
     // RECRUITING
 
@@ -653,10 +707,21 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // COMPANIES
 
-    // a player qualifies for a company with a colony it owns or annexes on that terrain (a port, for fish)
+    // a player qualifies for a company with a colony it controls on that terrain (a port, for fish)
     def companyBases(f : Faction, r : Resource) : $[Hex] = r match {
         case Fish => ports.toList.filter(_._2.owner == f).map(_._1)
         case _ => colonies.keys.$.%(h => Board.terrain(h).resource == r && controller(h) == f)
+    }
+
+    // DIPLOMACY
+
+    def termsElem(f : Faction, e : Faction, t : Terms) : Elem = {
+        val l = $[Elem]() ++
+            t.give.any.$(f.elem ~ " gives " ~ t.give./(_.elem).comma) ++
+            t.demand.any.$(e.elem ~ " gives " ~ t.demand./(_.elem).comma) ++
+            t.release.any.$(f.elem ~ " returns " ~ t.release./(_.elem).comma) ++
+            t.ransom.any.$(e.elem ~ " returns " ~ t.ransom./(_.elem).comma)
+        Break ~ l.some./(_.join(Break)).|("no terms".txt)
     }
 
     // INFO
@@ -665,8 +730,6 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     def info(waiting : $[Faction], self : |[Faction], actions : $[UserAction]) : $[Info] =
         self.%(states.contains)./~(f => f.hand./(ViewCardInfoAction(f, _)))
-
-    implicit def descCard(g : Game, d : Card) = d.img
 
     // HAND
 
@@ -699,8 +762,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // PIECES
 
     def capture(f : Faction, by : Kind, v : Figure) {
-        val passengers = embarked.toList.filter(_._2 == v).map(_._1)
-        (v +: passengers).foreach { x =>
+        (v +: passenger(v).$).foreach { x =>
             pos -= x
             injured -= x
             embarked -= x
@@ -711,7 +773,13 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     def moveFigure(u : Figure, h : Hex) {
         pos += u -> h
-        embarked.toList.filter(_._2 == u).foreach { case (p, _) => pos += p -> h }
+        passenger(u).foreach(p => pos += p -> h)
+    }
+
+    def removeFigure(u : Figure) {
+        pos -= u
+        injured -= u
+        embarked -= u
     }
 
     // SEALS
@@ -729,9 +797,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def checkSeals() {
         // annexations: when they started
         colonies.keys.foreach { h =>
-            occupier(h) match {
+            annexer(h) match {
                 case Some(e) => if (annexedAt.get(h).map(_._1).has(e).not) { annexedAt += h -> (e, turn) ; log(e, "annexed", colonies(h), "Colony in", h) }
-                case None => if (annexedAt.contains(h)) { annexedAt -= h ; log("Colony in", h, "is no longer annexed") }
+                case None => if (annexedAt.contains(h)) { annexedAt -= h ; log(colonies(h), "Colony in", h, "is no longer annexed") }
             }
         }
 
@@ -747,7 +815,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         seals.get(FoundersOath).foreach { h =>
             val cc = colonyOf(h)
             if (cc.any)
-                cc./(occupier).distinct.single.foreach(_.foreach(e => claim(FoundersOath, e)))
+                cc./(annexer).distinct.single.foreach(_.foreach(e => claim(FoundersOath, e)))
         }
 
         seals.get(MaritimeExchange).foreach { h =>
@@ -762,8 +830,10 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         }
 
         seals.get(CrossroadsGuild).foreach { h =>
-            if (networks(h) == 0 && links(h).any)
-                colonyOf(h)./~(occupier).distinct.single.foreach(e => claim(CrossroadsGuild, e))
+            if (networks(h) == 0 && allLinks(h).any) {
+                val culprits = allLinks(h)./~{ case (a, b) => cutBy(a, b, h) } ++ colonyOf(h)./~(annexer)
+                culprits.distinct.single.foreach(e => claim(CrossroadsGuild, e))
+            }
         }
 
         // military achievements: the most captures by each kind of unit; ties keep the holder
@@ -771,15 +841,13 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             val counts = factions./(f => f -> f.captured.count(_._1 == b.kind))
             val best = counts.map(_._2).maxOr(0)
             if (best > 0) {
-                val holder = seals.get(b)
-                val held = holder./~(h => counts.find(_._1 == h).map(_._2)).|(0)
+                val held = seals.get(b)./~(h => counts.find(_._1 == h).map(_._2)).|(0)
                 if (best > held)
                     claim(b, counts.filter(_._2 == best).head._1)
             }
         }
     }
 
-    // a seal held by a player who surrendered goes back
     def winners = factions.%(f => sealsOf(f).num >= Seal.toWin)
 
     def loggedPerform(action : Action, soft : Void) : Continue = {
@@ -814,6 +882,13 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         }
     }
 
+    // the cards matching a company's resource, plain ones first
+    def takeMatching(f : Faction, r : Resource, n : Int) : $[Card] = {
+        val l = matching(f, r).take(n)
+        l.foreach(c => f.hand = f.hand :- c)
+        l
+    }
+
     def performInternal(a : Action, soft : Void) : Continue = {
         implicit val action = a
 
@@ -831,7 +906,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 // the starting hands are one card of each resource, taken out before the decks are shuffled
                 setup.foreach { f => f.hand = Resource.all }
 
-                Resource.all.foreach { r => decks += r -> (Deck.of(r) ++ $()).diff(setup.num.times(r)) }
+                Resource.all.foreach { r => decks += r -> Deck.of(r).diff(setup.num.times(r)) }
 
                 ShuffleDecksAction(Resource.all)
 
@@ -870,23 +945,35 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 current = f
                 acted = Set()
                 fresh = Set()
-                movedOne = Set()
+                moved = Map()
+                stopped = Set()
                 attacks = Map()
                 extra = Map()
                 counterUsed = Set()
                 pendingCounters = $
                 peaceOffered = $
+                declared = $
                 trades = 0
                 gentleman = gentleman.filter(_._1 != f)
 
                 log(DoubleLine)
                 log("Turn", ("#" + turn).hl, f)
 
+                // a player whose unit stands in a colony removes another player's damaged fort there
+                forts.toList.foreach { case (h, t) =>
+                    if (t.owner != f && t.damaged && landOn(h).exists(_.faction == f)) {
+                        forts -= h
+                        fortRemovedAt += h -> turn
+                        t.owner.fortDestroyer = |(f)
+                        log(f, "removed", t.owner, "damaged Fort in", h)
+                    }
+                }
+
                 // trading companies change hands at the start of the turn of a player who annexes or blockades all their owner's bases
                 Seal.companies.foreach { c =>
                     seals.get(c).%(_ != f).foreach { e =>
                         val bases = companyBases(e, c.resource) ++ colonies.keys.$.%(h => colonies(h) == e && Board.terrain(h).resource == c.resource && controller(h) != e)
-                        val ok = bases.any && bases.forall(h => occupier(h).has(f) || blockaded(h).has(f))
+                        val ok = bases.any && bases.forall(h => annexer(h).has(f) || blockaded(h).has(f))
                         if (ok)
                             claim(c, f)
                     }
@@ -985,49 +1072,76 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             case UnitMenuAction(f, u) =>
                 Ask(f).add(unitActions(f, u, None)).cancel
 
-            case MoveAction(f, u, h, counter) =>
-                ambushPlayed(f, counter)
+            case StepAction(f, u, h, counter) =>
+                counter.%(_.ambush).foreach { c => if (counterUsed.contains(u).not) ambushPlayed(f) }
+                counter.foreach(_ => counterUsed += u)
+
                 val from = at(u)
-                val wasEmbarked = embarked.contains(u)
-                val path = Board.distance(from, h)
                 val captives = others(f, h).%(v => (u.land && v.land) || (u.kind == Frigate && v.kind == Frigate))
 
                 if (u.land && Board.terrain(h) == Water) {
-                    val boat = on(h).%(v => v.faction == f && v.kind == Frigate).head
+                    val boat = boatFor(u, h).get
                     embarked += u -> boat
                     log(u, "embarked on", boat, "in", h)
                 }
-                else {
-                    if (wasEmbarked) {
-                        embarked -= u
-                        log(u, "disembarked to", h)
-                    }
-                    else
-                        log(u, "moved from", from, "to", h)
+                else
+                if (embarked.contains(u)) {
+                    embarked -= u
+                    log(u, "disembarked to", h)
                 }
+                else
+                    log(u, "moved from", from, "to", h)
 
                 moveFigure(u, h)
+                moved += u -> (moved.getOrElse(u, 0) + 1)
+
+                if (endsMove(u, h))
+                    stopped += u
 
                 captives.foreach(v => capture(f, u.kind, v))
 
+                // a capture gives its victims a Counter-Action, once the unit's action is over
+                if (counter.none)
+                    pendingCounters = (pendingCounters ++ captives./(_.faction)).distinct.%(factions.has)
+
+                ContinueUnitAction(f, u, counter)
+
+            case ContinueUnitAction(f, u, counter) =>
+                val l = counter match {
+                    case Some(c) => stepTargets(u, |(c.active))./(h => StepAction(f, u, h, counter))
+                    case None =>
+                        mayMoveNow(u).??(stepTargets(u, None)./(h => StepAction(f, u, h, None))) ++
+                        mayAttackNow(u).??(targets(u, None)./(v => AttackAction(f, u, v, None)) ++ fortTargets(u, None)./(h => AttackFortAction(f, u, h, None)))
+                }
+
+                if (l.none)
+                    FinishUnitAction(f, u, counter)
+                else
+                    Ask(f).add(l).when(canStop(u, at(u)))(DoneUnitAction(f, u, counter))
+
+            case DoneUnitAction(f, u, counter) =>
+                FinishUnitAction(f, u, counter)
+
+            case FinishUnitAction(f, u, counter) =>
                 counter match {
                     case Some(c) =>
-                        counterUsed += u
-                        log(f, "used a Counter-Action", c.ambush.??(" with Ambush"))
                         if (c.ambush)
-                            CounterAskAction(f, c.active, true)
+                            CounterAskAction(c.defender, c.active, true)
                         else
                             ResolveCountersAction(c.active)
                     case None =>
-                        if (u.kind == Cavalry && path == 1 && movedOne.contains(u).not && acted.contains(u).not && embarked.contains(u).not)
-                            movedOne += u
-                        else
-                            movedOne -= u
-
-                        acted += u
-
-                        pendingCounters ++= captives./(_.faction).distinct
-                        afterOwnAction(f, u)
+                        if (extra.contains(u)) {
+                            // Outflank and Broadside: one more move or attack, before any Counter-Action
+                            extra -= u
+                            moved -= u
+                            attacks -= u
+                            stopped -= u
+                            ContinueUnitAction(f, u, None)
+                        }
+                        else {
+                            acted += u
+                            ResolveCountersAction(f)
+                        }
                 }
 
             case HideoutAction(f, u, h) =>
@@ -1035,32 +1149,22 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 log(f, "played", Hideout)
                 log(u, "moved from", at(u), "to", h)
                 moveFigure(u, h)
-                acted += u
-                afterOwnAction(f, u)
+                moved += u -> range(u)
+                FinishUnitAction(f, u, None)
 
             case ExtraActionAction(f, u, card) =>
                 discard(f, card)
                 extra += u -> card
                 log(f, "played", card, "for", u)
-                Ask(f).add(unitActions(f, u, None))
-
-            case ExtraNextAction(f, u) =>
-                extra -= u
-                acted -= u
-                movedOne -= u
-                val l = unitActions(f, u, None).%(a => a.is[MoveAction] || a.is[AttackAction] || a.is[AttackFortAction])
-                Ask(f).add(l).skip(ResolveCountersAction(f))
+                ContinueUnitAction(f, u, None)
 
             case AttackAction(f, u, v, counter) =>
-                ambushPlayed(f, counter)
+                counter.%(_.ambush).foreach { c => if (counterUsed.contains(u).not) ambushPlayed(f) }
                 log(u, "attacked", v, "in", at(v))
 
                 counter match {
                     case Some(_) => counterUsed += u
-                    case None =>
-                        acted += u
-                        movedOne -= u
-                        attacks += u -> (attacks.getOrElse(u, 0) + 1)
+                    case None => attacks += u -> (attacks.getOrElse(u, 0) + 1)
                 }
 
                 DefendAskAction(f, u, v, counter)
@@ -1068,14 +1172,15 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             case DefendAskAction(f, u, v, counter) =>
                 val e = v.faction
                 val t = Board.terrain(at(v))
-                val retreat = (t == Field && e.hand.has(Retreat)).??(moves(v).%(h => on(h).none && Board.terrain(h) != Water && colonies.get(h).%(_ != e).none))
+                val retreat = (t == Field && e.hand.has(Retreat)).??(reachableEmpty(v))
                 val fortify = t == Hills && e.hand.has(Fortify)
 
-                if (retreat.any || fortify)
+                if (t == Field || t == Hills)
                     Ask(e)
                         .each(retreat)(h => RetreatAction(e, v, h, f, u, counter))
                         .when(fortify)(FortifyAction(e, v, f, u, counter))
                         .add(TakeHitAction(e, v, f, u, counter))
+                        .needOk
                 else
                     HitAction(f, u, v, counter)
 
@@ -1118,29 +1223,25 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 then
 
             case AttackFortAction(f, u, h, counter) =>
-                ambushPlayed(f, counter)
+                counter.%(_.ambush).foreach { c => if (counterUsed.contains(u).not) ambushPlayed(f) }
                 val t = forts(h)
                 forts += h -> t.copy(damaged = true)
                 log(u, "attacked", t.owner, "Fort in", h, "and damaged it")
 
                 counter match {
                     case Some(_) => counterUsed += u
-                    case None =>
-                        acted += u
-                        movedOne -= u
-                        attacks += u -> (attacks.getOrElse(u, 0) + 1)
+                    case None => attacks += u -> (attacks.getOrElse(u, 0) + 1)
                 }
 
                 AfterAttackAction(f, u, t.owner, counter)
 
             case AfterAttackAction(f, u, e, counter) =>
                 counter match {
-                    case Some(c) if c.ambush => CounterAskAction(c.defender, c.active, true)
-                    case Some(c) => ResolveCountersAction(c.active)
+                    case Some(c) => FinishUnitAction(f, u, counter)
                     case None =>
                         if (factions.has(e))
-                            pendingCounters :+= e
-                        afterOwnAction(f, u)
+                            pendingCounters = (pendingCounters :+ e).distinct
+                        ContinueUnitAction(f, u, None)
                 }
 
             case ResolveCountersAction(f) =>
@@ -1204,7 +1305,6 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     .add(portSites(f).flatMap { case (h, c) => ways(PortBuild).map(p => BuildPortAction(f, h, c, p)) })
                     .add(fortSites(f).flatMap(h => ways(FortBuild).map(p => BuildFortAction(f, h, p))))
                     .add(repairSites(f).flatMap(h => ways(RepairBuild).map(p => RepairFortAction(f, h, p))))
-                    .each(removableForts(f))(h => RemoveFortAction(f, h))
                     .cancel
 
             case BuildColonyAction(f, h, p) =>
@@ -1246,13 +1346,6 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 log(f, "repaired the Fort in", h)
                 MainAction(f)
 
-            case RemoveFortAction(f, h) =>
-                val e = forts(h).owner
-                forts -= h
-                e.fortDestroyer = |(f)
-                log(f, "removed", e, "Fort in", h)
-                MainAction(f)
-
             // RECRUITING
             case RecruitMenuAction(f) =>
                 Ask(f).add(Kind.all.%(k => supply(f, k).any).flatMap(k => recruitSites(f, k).flatMap(h => Costs.ways(f.hand, Costs.recruit(k)).map(p => RecruitAction(f, k, h, p))))).cancel
@@ -1280,9 +1373,12 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 tradeSource(f, r) match {
                     case Some(e) =>
                         paid.foreach { x => f.hand = f.hand :- x ; e.hand :+= x }
+                        val c = stockpiles(r).head
                         stockpiles += r -> stockpiles(r).drop(1)
-                        f.hand :+= r
-                        log(f, "traded", paid.intersperse(","), "to", e, "for", r, "from", Seal.company(r))
+                        f.hand :+= c
+                        log(f, "traded", paid.intersperse(","), "to", e, "for the top card of", Seal.company(r))
+                        if (c.is[Maneuver])
+                            this.notify(f, $(DrewCardInfoAction(f, c)))
                     case None =>
                         pay(f, paid)
                         if (takeFromBank(r)) {
@@ -1297,24 +1393,38 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             // COMPANIES
             case CompanyMenuAction(f) =>
                 Ask(f)
-                    .each(Seal.companies.%(c => seals.contains(c).not && companyBases(f, c.resource).any && f.hand.count(c.resource) >= 5))(c => FoundCompanyAction(f, c))
-                    .add(Seal.companies.%(c => seals.get(c).%(_ != f).any && companyBases(f, c.resource).any).flatMap(c => (stockpiles(c.resource).num + 1).to(f.hand.count(c.resource)).toList.map(n => BuyoutAction(f, c, n))))
+                    .each(Seal.companies.%(c => seals.contains(c).not && companyBases(f, c.resource).any && matching(f, c.resource).num >= 5))(c => FoundCompanyAction(f, c))
+                    .add(Seal.companies.%(c => seals.get(c).%(_ != f).any && companyBases(f, c.resource).any).flatMap(c => (stockpiles(c.resource).num + 1).to(matching(f, c.resource).num).toList.map(n => BuyoutAction(f, c, n))))
+                    .add(Seal.companies.%(c => seals.get(c).has(f)).flatMap(c => matching(f, c.resource).distinct.map(x => DepositAction(f, c, x))))
+                    .add(Seal.companies.%(c => seals.get(c).has(f) && stockpiles(c.resource).any).map(c => WithdrawAction(f, c)))
                     .cancel
 
             case FoundCompanyAction(f, c) =>
-                5.times(c.resource).foreach(r => f.hand = f.hand :- r)
-                stockpiles += c.resource -> 5.times(c.resource)
-                log(f, "founded", c, "with", 5.hl, c.resource)
+                val l = takeMatching(f, c.resource, 5)
+                stockpiles += c.resource -> l
+                log(f, "founded", c, "with", 5.hl, c.resource, "cards")
                 claim(c, f)
                 MainAction(f)
 
             case BuyoutAction(f, c, n) =>
                 val e = seals(c)
                 e.hand ++= stockpiles(c.resource)
-                n.times(c.resource).foreach(r => f.hand = f.hand :- r)
-                log(f, "bought out", c, "from", e, "with", n.hl, c.resource, ";", e, "took the", stockpiles(c.resource).num.hl, "cards of its stockpile")
-                stockpiles += c.resource -> n.times(c.resource)
+                log(f, "bought out", c, "from", e, "with", n.hl, c.resource, "cards;", e, "took the", stockpiles(c.resource).num.hl, "cards of its stockpile")
+                stockpiles += c.resource -> takeMatching(f, c.resource, n)
                 claim(c, f)
+                MainAction(f)
+
+            case DepositAction(f, c, x) =>
+                f.hand = f.hand :- x
+                stockpiles += c.resource -> (x +: stockpiles(c.resource))
+                log(f, "deposited a card in", c)
+                MainAction(f)
+
+            case WithdrawAction(f, c) =>
+                val x = stockpiles(c.resource).head
+                stockpiles += c.resource -> stockpiles(c.resource).drop(1)
+                f.hand :+= x
+                log(f, "took a card from", c)
                 MainAction(f)
 
             // DIPLOMACY
@@ -1322,14 +1432,13 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 val others = factions.but(f)
                 Ask(f)
                     .add(others.%(e => isAtWar(f, e).not && f.warCards > 0).flatMap(e => $(DeclareWarAction(f, e, false), DeclareWarAction(f, e, true))))
-                    .each(others.%(e => isAtWar(f, e) && peaceOffered.has(e).not))(e => OfferPeaceAction(f, e))
-                    .each(others.%(_ => f.hand.any))(e => GiveMenuAction(f, e))
-                    .each(f.captured.map(_._2).%(u => factions.has(u.faction)))(u => ReturnPrisonerAction(f, u))
+                    .each(others.%(e => isAtWar(f, e) && peaceOffered.has(e).not && declared.has(e).not))(e => PeaceTermsAction(f, e, Terms($, $, $, $), Terms($, $, $, $), "Offer peace to " ~ e.elem))
                     .cancel
 
             case DeclareWarAction(f, e, boar) =>
                 f.warCards -= 1
                 wars :+= War(f, e, boar)
+                declared :+= e
                 if (boar) {
                     log(f, "declared a", "Boar's War".hl, "on", e)
                     log("The Boar's War penalty isn't in the rulebook's second draft yet, so none is applied")
@@ -1340,61 +1449,78 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 }
                 MainAction(f)
 
-            case OfferPeaceAction(f, e) =>
+            // the terms are built a piece at a time: cards each side gives and captured units each side returns
+            case PeaceTermsAction(f, e, _, t, _) =>
+                Ask(f)
+                    .add(OfferPeaceAction(f, e, t))
+                    .each(f.hand.diff(t.give).distinct)(c => PeaceTermsAction(f, e, t, t.copy(give = t.give :+ c), "Give " ~ c.elem))
+                    .each((t.demand.num < 10).??(Resource.all))(r => PeaceTermsAction(f, e, t, t.copy(demand = t.demand :+ r), "Ask for " ~ r.elem))
+                    .each(f.captured.map(_._2).%(_.faction == e).diff(t.release))(u => PeaceTermsAction(f, e, t, t.copy(release = t.release :+ u), "Return " ~ u.elem))
+                    .each(e.captured.map(_._2).%(_.faction == f).diff(t.ransom))(u => PeaceTermsAction(f, e, t, t.copy(ransom = t.ransom :+ u), "Ask for the return of " ~ u.elem))
+                    .cancel
+
+            case OfferPeaceAction(f, e, t) =>
                 peaceOffered :+= e
-                log(f, "offered peace to", e)
-                PeaceAskAction(e, f)
+                log(f, "offered peace to", e, termsElem(f, e, t))
+                PeaceAskAction(e, f, t)
 
-            case PeaceAskAction(e, f) =>
-                Ask(e).add(AcceptPeaceAction(e, f)).add(DeclinePeaceAction(e, f))
+            case PeaceAskAction(e, f, t) =>
+                val can = t.demand.diff(e.hand).none
+                Ask(e).add(AcceptPeaceAction(e, f, t).!(can.not, "you don't have the cards")).add(DeclinePeaceAction(e, f, t))
 
-            case AcceptPeaceAction(e, f) =>
+            case AcceptPeaceAction(e, f, t) =>
+                log(e, "accepted peace with", f)
+
+                // the cards change hands at once
+                val give = t.give.%(f.hand.has)
+                give.foreach { c => f.hand = f.hand :- c ; e.hand :+= c }
+                t.demand.foreach { r => e.hand = e.hand :- r ; f.hand :+= r }
+                give.foreach(c => this.notify(e, $(DrewCardInfoAction(e, c))))
+
+                // a prisoner exchange returns units to the supply; units returned one way may be placed in their owner's empty colony or port
+                val release = t.release.%(u => f.captured.exists(_._2 == u))
+                val ransom = t.ransom.%(u => e.captured.exists(_._2 == u))
+                f.captured = f.captured.filter(x => release.has(x._2).not)
+                e.captured = e.captured.filter(x => ransom.has(x._2).not)
+                (release ++ ransom).foreach(u => log(u, "was returned"))
+
                 wars.%(_.between(e, f)).foreach { w => w.declarer.warCards += 1 }
                 wars = wars.%(_.between(e, f).not)
                 gentleman = gentleman.%!{ case (a, b) => (a == e && b == f) || (a == f && b == e) }
-                log(e, "accepted peace with", f)
-                MainAction(f)
 
-            case DeclinePeaceAction(e, f) =>
+                if (release.any && ransom.any)
+                    MainAction(f)
+                else
+                    PlaceReturnedAction(release ++ ransom, MainAction(f))
+
+            case DeclinePeaceAction(e, f, t) =>
                 log(e, "declined peace with", f)
                 MainAction(f)
 
-            case GiveMenuAction(f, e) =>
-                Ask(f).each(f.hand.distinct)(c => GiveCardAction(f, e, c)).cancel
+            case PlaceReturnedAction(Nil, then) =>
+                then
 
-            case GiveCardAction(f, e, c) =>
-                f.hand = f.hand :- c
-                e.hand :+= c
-                log(f, "gave a card to", e)
-                this.notify(e, $(DrewCardInfoAction(e, c)))
-                MainAction(f)
-
-            case ReturnPrisonerAction(f, u) =>
-                f.captured = f.captured.filter(_._2 != u)
-                log(f, "returned", u)
+            case PlaceReturnedAction(u :: rest, then) =>
                 val e = u.faction
-                val sites = ownColonies(e) ++ ports.toList.filter(_._2.owner == e).map(_._1).%(h => u.kind == Frigate)
-                val ok = sites.%(h => u.land != (Board.terrain(h) == Water))
-                if (ok.none) {
-                    log(u, "has nowhere to go and waits in", e, "supply")
-                    MainAction(f)
-                }
+                val sites = (u.kind == Frigate).?(ports.toList.filter(_._2.owner == e).map(_._1)).|(ownColonies(e)).%(h => on(h).none)
+                if (sites.none || factions.has(e).not)
+                    PlaceReturnedAction(rest, then)
                 else
-                    Ask(e).each(ok)(h => PlacePrisonerAction(e, u, h, f))
+                    Ask(e).each(sites)(h => PlacePrisonerAction(e, u, h, rest, then)).add(SupplyPrisonerAction(e, u, rest, then))
 
-            case PlacePrisonerAction(e, u, h, f) =>
+            case PlacePrisonerAction(e, u, h, rest, then) =>
                 pos += u -> h
                 fresh += u
                 log(u, "was placed in", h)
-                MainAction(f)
+                PlaceReturnedAction(rest, then)
+
+            case SupplyPrisonerAction(e, u, rest, then) =>
+                PlaceReturnedAction(rest, then)
 
             case SurrenderAction(f) =>
                 log(f, "surrendered")
-                units(f).foreach { u => pos -= u ; injured -= u ; embarked -= u }
+                units(f).foreach(removeFigure)
                 embarked = embarked.filter(_._2.faction != f)
-                colonyOf(f).foreach { h =>
-                    occupier(h).foreach { e => colonies += h -> e }
-                }
                 roads = roads.%(_.owner != f)
                 bridges = bridges.%(_.owner != f)
                 ports = ports.filter(_._2.owner != f)
@@ -1404,16 +1530,43 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     seals -= s
                     s match {
                         case c : Company =>
-                            discards += c.resource -> (discards(c.resource) ++ stockpiles(c.resource))
+                            stockpiles(c.resource).foreach(x => discards += x.resource -> (discards(x.resource) :+ x))
                             stockpiles += c.resource -> $
                         case _ =>
                     }
                 }
                 factions = factions.but(f)
+                SurrenderColoniesAction(f, factions)
+
+            // each annexing player's colony replaces the surrendering player's; with too few colonies left, it picks which
+            case SurrenderColoniesAction(f, Nil) =>
+                colonyOf(f).foreach { h =>
+                    colonies -= h
+                    forts -= h
+                    log(f, "Colony in", h, "was removed")
+                }
                 if (factions.num == 1)
                     GameOverAction(factions)
                 else
                     NextTurnAction(f)
+
+            case SurrenderColoniesAction(f, e :: rest) =>
+                val l = colonyOf(f).%(h => annexer(h).has(e))
+                val room = Pieces.colonies - colonyOf(e).num
+                if (l.none || room <= 0)
+                    SurrenderColoniesAction(f, rest)
+                else
+                if (l.num <= room) {
+                    l.foreach { h => colonies += h -> e ; log(e, "took the Colony in", h) }
+                    SurrenderColoniesAction(f, rest)
+                }
+                else
+                    Ask(e).each(l)(h => KeepColonyAction(e, f, h, e :: rest))
+
+            case KeepColonyAction(e, f, h, left) =>
+                colonies += h -> e
+                log(e, "took the Colony in", h)
+                SurrenderColoniesAction(f, left)
 
             case GameOverAction(w) =>
                 isOver = true
@@ -1437,17 +1590,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         }
     }
 
-    def ambushPlayed(f : Faction, counter : |[Counter]) {
-        if (counter.exists(_.ambush)) {
-            discard(f, Ambush)
-            log(f, "played", Ambush)
-        }
+    def ambushPlayed(f : Faction) {
+        discard(f, Ambush)
+        log(f, "played", Ambush)
     }
-
-    def afterOwnAction(f : Faction, u : Figure) : Continue =
-        if (extra.contains(u))
-            ExtraNextAction(f, u)
-        else
-            ResolveCountersAction(f)
 }
-

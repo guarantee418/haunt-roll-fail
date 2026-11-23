@@ -53,31 +53,43 @@ means. Change a rule in `game.scala` and note it here.
 ## Units
 
 Each unit has one action a turn: move, attack, or be revived. New and revived units do nothing until
-their owner's next turn.
+their owner's next turn. A move is made one hex at a time (one movement point each); a unit finishes its
+action before another acts. **One unit a hex**, except a frigate's passenger: units pass through their
+own player's units but never stop on them, and never pass through other players'.
 
 - **Musketeer**: move 1 or attack 1; attacks and captures land units only.
 - **Cavalry**: move up to 2, or move 1 and then attack 1 (also after capturing with that move).
 - **Cannon**: move 1 or attack up to 2; attacks land units, frigates and forts; captures land units only.
 - **Frigate**: move up to 2 water hexes or attack up to 2; attacks frigates, land units and forts;
   captures frigates only; carries one land unit.
-- Land units never enter water or mountains (a mountain only with Hideout, or one with their own colony),
-  and never move through other players' units. Cannons and frigates don't shoot over mountains.
+- Land units never enter water or mountains (a mountain only with Hideout, or one with their own colony).
+  Cannons and frigates don't shoot over mountains.
+- A road network lets a land unit move from one of its player's colonies to a colony it joins for one
+  movement point; a bridge joins its two land hexes for one point. Neither lets a unit attack across it.
+- **Frigates**: a land unit embarks by moving onto its own frigate, which ends its action; it disembarks
+  on a later turn. A passenger can't attack or be attacked, and is captured with its frigate.
 
 ## Combat
 
 - Only players at war attack each other. An attack injures the target (drawn on its side). A unit moving
-  into a hex where every enemy unit is injured captures them; captured units go to the capturer, counted
-  for the unit type that captured them. A captured frigate's passenger is captured too.
+  into a hex where every enemy unit is injured captures them, as part of the move, which goes on;
+  captured units go to the capturer, counted for the unit type that captured them. Entering another
+  player's colony ends the move.
 - Injured units can't attack (musketeers can with the Royal Musket Badge) but can move and capture.
   They are revived on their owner's turn, never the turn they were injured.
-- **Counter-Action**: after each attack or capture by the active player, the player hit may move or attack
-  with one unit not used that turn. A Counter-Action gets no Counter-Action back.
+- **Counter-Action**: after a unit's action that attacked or captured (forts included; moving into an empty
+  colony doesn't count), each player hit may move or attack with one unit not used that turn, once for
+  that unit's action however many attacks or captures it made. A counter-attack (or capture) can only hit
+  the player whose turn it is. A Counter-Action gets no Counter-Action back.
 - **Forts**: an undamaged fort keeps enemies from attacking or entering its colony. Cannons and frigates
   damage it (drawn upside down); then only cannons and frigates can attack the units inside, and once
   they're all injured, enemy land units enter, capture them and annex the colony.
-- **Annexation**: an enemy land unit in a colony annexes it while it stays. The annexing player collects
-  its harvest, its roads and port give no trade bonus, and from the annexer's next turn they may remove
-  the owner's damaged fort and build their own. A player whose colonies are all annexed may surrender.
+- **Annexation**: an enemy land unit in a colony annexes it while it stays, and so does another player's
+  fort around it. The annexing player collects its harvest; its roads and port give no trade bonus or
+  movement. At the start of a turn, a player's unit standing in a colony removes another player's damaged
+  fort there; the annexing player may build their own fort from the following turn. A fort is repaired
+  only while no other player's unit stands in it. A player whose colonies are all annexed may surrender;
+  an annexing player with too few colony pieces left picks which of them to replace.
 
 ## Maneuver cards
 
@@ -88,6 +100,9 @@ Played from the hand, then discarded:
 - **Broadside** (Fish): the same for a frigate.
 - **Retreat** (Wheat): when a unit on a wheat field is attacked, it moves to an empty hex within its
   movement range instead of being hit.
+
+Maneuver cards may be played without being at war. Hands are hidden, so every attack on a wheat field or
+hills asks the defender, whether or not they hold Retreat or Fortify.
 - **Fortify** (Mustang): when a unit on hills is attacked, the attack is deflected.
 - **Hideout** (Iron): a unit next to a mountain enters it.
 
@@ -95,14 +110,22 @@ Played from the hand, then discarded:
 
 A player declares war by giving a Declare War card (three each): a **Gentleman's War** lets the declarer
 attack from their next turn (the other player may attack at once); a **Boar's War** attacks at once, with
-a penalty. Peace needs both: one offers on their turn, the other accepts. Players may give cards to
-each other and return captured units, which go back into one of their owner's colonies or ports.
+a penalty. The declarer can't offer peace until their next turn. Peace needs both: one offers terms on
+their turn, the other accepts or declines. Terms may give and ask for cards and return captured units;
+cards change hands at once. A prisoner exchange (units returned both ways) sends them to their owners'
+supplies; units returned one way may be placed in one of their owner's empty colonies (or ports, for
+frigates). Other promises are only words. **Cards change hands only in peace terms and trading company
+trades.**
 
 ## Trade
 
 Any cards for one card of a chosen resource from the bank, at 5:1, one less for each road network and
-each port (never below 1:1). If another player owns that resource's Trading Company, the cards go to
-them and the card comes from its stockpile.
+each port (never below 1:1). If another player owns that resource's Trading Company, the cards (at the
+player's own rate) go to them and the top card of its stockpile to the player.
+
+A road or bridge is **cut off** while another player has a land unit at each of its two ends: it then joins
+nothing, for networks, trade, recruiting cavalry and movement. A colony can't be founded on a hex with a
+road or bridge at its edge. Roads and bridges continue a path from the player's colony.
 
 ## Royal Seals
 
@@ -116,39 +139,45 @@ them and the card comes from its stockpile.
   your road networks are cut off.
 - **Trading Companies** (Golden Grain, Neptune's Bounty, Colonial Equine, Northern Axe, Crown & Chisel,
   Iron Mark): founded with 5 matching cards (the stockpile) by a player owning or annexing a colony on
-  that terrain (a port, for Fish). Bought out by paying more matching cards than the stockpile. A company
-  passes to a player who annexes all its owner's matching colonies or blockades all its matching ports,
-  at the start of that player's turn.
+  that terrain (a port, for Fish). The resource's Maneuver card counts as a matching card. On their turn
+  the owner may put matching cards on the stockpile or take its top card. Bought out by paying more
+  matching cards than the stockpile. A company passes to a player who annexes all its owner's matching
+  colonies or blockades all its matching ports, at the start of that player's turn.
 - **Military Badges** (Royal Musket, Mounted Vanguard, Black Powder Volley, Naval Supremacy): the most
   captures by musketeers, cavalry, cannons or frigates; ties keep the holder. Musketeers attack while
-  injured; cavalry move 3; cannons attack twice a turn; frigates are revived at once.
+  injured; cavalry move 3 (or 2 and attack); cannons attack twice a turn; frigates are revived at once,
+  which isn't a Counter-Action, so the frigate may still counter-attack.
+
+## Rulings
+
+The answers to the playtest questions of 2026-11-23 are in the rules above, the ones marked unofficial
+too, and the two given as opinions (returned prisoners, Mounted Vanguard capturing during its move).
 
 ## Interpretations
 
-Where the second draft is silent or unclear, this is what the site does (to be checked with the designer):
+Where the draft and the rulings are silent, this is what the site does (to be checked with the designer):
 
 1. **Boar's War penalty**: the draft names it but doesn't say what it is; no penalty is applied yet, and
    the log says so.
 2. **Harvest**: only the six hexes around a colony count, not its own hex.
 3. **"2 of Either"** (musketeer): any two cards that are each Wheat or Fish, mixed or not.
-4. **Maneuver cards aren't resources**: they can't pay costs or trades.
+4. **Maneuver cards aren't resources**: they can't pay costs or trades (they can go on a company stockpile).
 5. **The bank** gives a resource card of the asked type from the deck (or its discard pile), never the
    Maneuver card.
 6. **Roads** join two neighboring land hexes (drawn on the edge between them); a road network is a pair
-   of the player's colonies joined by its roads and bridges, so three colonies in a row are two networks.
-   A road starts at the player's colony or the end of its road or bridge. Units move along their own
-   networks only, from colony to colony in one step.
+   of the player's colonies joined by its roads and bridges without passing through a third colony, so
+   three colonies in a row are two networks, and moving from the first to the third takes two points.
 7. **Bridges** span one water hex in a straight line between two land hexes; every player's land units
    may cross them.
-8. **Units of players at peace** don't share hexes.
-9. **Ambush** is offered when the player is asked for a Counter-Action, in addition to it.
-10. **Retreat and Fortify** are offered only to a player holding the card, so asking shows they hold it.
-11. **Counter-Actions** may target any player the defender is at war with.
-12. **Stonewall Society** is stolen by the player who removed the holder's last fort; **Crossroads Guild**
-    by the single player annexing the holder's colonies when its networks are all cut.
-13. **Naval Supremacy**: a frigate hit on another player's turn may be revived at once (paying); on its
+8. **Ambush** is offered when the player is asked for a Counter-Action, in addition to it.
+9. **Stonewall Society** is stolen by the player who removed the holder's last fort; **Crossroads Guild**
+   by the single player whose cuts and annexations left the holder with no network.
+10. **Naval Supremacy**: a frigate hit on another player's turn may be revived at once (paying); on its
     owner's turn it may be revived the turn it was injured.
-14. **Buyout**: the buyer's cards become the new stockpile and the old stockpile goes to the old owner's hand.
-15. **Surrender**: the player's units, roads, bridges, ports and forts leave the board, its annexed colonies
-    become the annexer's, and its seals go back to the box (a company's stockpile to the discards).
-16. **Gifts and peace terms** are free: the site enforces only giving cards and returning captured units.
+11. **Buyout**: the buyer's cards become the new stockpile and the old stockpile goes to the old owner's hand.
+12. **Surrender**: the player's units, roads, bridges, ports and forts leave the board, its annexed colonies
+    become the annexers', the ones not replaced are removed, and its seals go back to the box (a company's
+    stockpile to the discards).
+13. **Outflank and Broadside**: after the unit's action, it gets a whole second one (a cavalry may move and
+    attack again).
+14. **Peace terms** may ask for up to 10 cards; a player who can't pay them can only decline.

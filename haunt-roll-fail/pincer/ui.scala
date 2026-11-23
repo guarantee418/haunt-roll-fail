@@ -186,7 +186,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         game.bridges.foreach { b =>
             val x = (Board.x(b.a) + Board.x(b.b)) / 2
             val y = (Board.y(b.a) + Board.y(b.b)) / 2
-            structures.add(Sprite($(scaled("piece:bridge-" + b.owner.id + "-" + Board.direction(b.a, b.b), 210)), $))(x, y)
+            structures.add(Sprite($(scaled("piece:bridge-" + b.owner.id + "-" + Board.direction(b.a, b.b), 180)), $))(x, y)
         }
 
         game.ports.foreach { case (h, p) =>

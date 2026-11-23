@@ -46,8 +46,18 @@ A6 and L10, are mountains the colors missed).
   can be put in `localStorage` as `pincer.hotseat.game.<time>` (header: version, title, seating) and
   `pincer.hotseat.moves.<time>` to open a game at that point from Local Game.
 
+## Rulings
+
+The playtest questions answered on 2026-11-23 changed: one unit a hex, moves one step at a time (capturing
+along the way, passing through the player's own units), one Counter-Action per unit's action and only
+against the active player, cut-off roads, colonies only on hexes without roads at their edges, peace
+terms (cards and prisoners) as the only way cards change hands outside trading companies, deposits and
+withdrawals on a company's stockpile, fort control and automatic removal of damaged forts, surrender
+with too few colony pieces, Retreat and Fortify always asked. Saved games from before don't load.
+
 ## Next
 
 - Ask the designer about the open questions in `RULES.md` (Boar's War penalty first).
-- A better bot; the Easy one wanders and rarely wins before turn 150.
+- A better bot; the Easy one wanders, and since the rulings about half its two-player games stall
+  (no building) until the host's 60,000-step cap.
 - Rulebook diagrams the draft refers to ("fig. x", "pg. X") may change rules when they appear.
