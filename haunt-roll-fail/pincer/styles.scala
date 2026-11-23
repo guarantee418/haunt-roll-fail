@@ -60,6 +60,8 @@ package object elem {
 
         object icon extends CustomStyle(height("1.3em"), vertical.align("middle"), margin.right("0.35em"))
         object iconOnly extends CustomStyle(height("1.45em"), vertical.align("middle"), margin.left("0.1em"), margin.right("0.1em"))
+        object cardIcon extends CustomStyle(height("1.5em"), vertical.align("middle"), margin.right("0.35em"), filter("brightness(1.6)"))
+        object cardIconOnly extends CustomStyle(height("1.6em"), vertical.align("middle"), margin.left("0.1em"), margin.right("0.25em"), filter("brightness(1.6)"))
         object legend extends CustomStyle(text.align("left"), padding("0.6ex"))
 
         object row extends CustomStyle(font.size("90%"))

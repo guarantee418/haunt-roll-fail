@@ -61,6 +61,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     lazy val units = new OrderedLayer
     lazy val structures = new OrderedLayer
     lazy val highlighted = new OrderedLayer
+    lazy val labels = new OrderedLayer
 
     val width = Board.width
     val height = Board.height
@@ -74,7 +75,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
         val areas = new HitLayer(regions)
 
-        new Scene($(background, highlighted, structures, areas, units), mp.width, mp.height, margins)
+        new Scene($(background, highlighted, structures, areas, units, labels), mp.width, mp.height, margins)
     }
 
     override def adjustCenterZoomX() {
@@ -92,14 +93,61 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
     var highlightHex : |[Hex] = None
 
-    // the hex of the choice the mouse is over in the list
-    var listedHex : |[Hex] = None
+    // the hexes of the choice the mouse is over in the list, and of the code it is over in the log
+    var listedHexes = $[Hex]()
+    var loggedHex : |[Hex] = None
 
-    override def updateHighlight(a : |[UserAction]) {
-        listedHex = a./(_.unwrap)./~{
-            case a : HexKey => |(a.hex)
+    // the hexes a choice names
+    def hexesOf(a : UserAction) : $[Hex] = a.unwrap match {
+        case a : BuildRoadAction => $(a.a, a.b)
+        case a : BuildBridgeAction => $(a.a, a.w, a.b)
+        case a : HexKey => $(a.hex)
+        case a : FigureKey => game.pos.get(a.figure).$
+        case _ => $
+    }
+
+    // the codes of the hexes (D4) aren't on the board: they show on the hex the mouse is over, on those the listed choices name,
+    // and on one whose code the mouse is over (or a tap is on) in the log
+    var labelImages = Map[String, CanvasImage]()
+
+    def labelImage(s : String) = labelImages.getOrElse(s, {
+        val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+        canvas.width = 128
+        canvas.height = 72
+        val g = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+        g.font = "bold 46px 'Avenir Next', 'Segoe UI', Roboto, Arial, sans-serif"
+        g.textAlign = "center"
+        g.textBaseline = "middle"
+        g.fillStyle = "#14181f"
+        val w = g.measureText(s).width + 32
+        g.fillRect(64 - w / 2, 6, w, 60)
+        g.fillStyle = "#f3eee2"
+        g.fillText(s, 64, 38)
+        val i = new CanvasImage(canvas)
+        labelImages += s -> i
+        i
+    })
+
+    def locate(h : |[Hex]) {
+        if (h != loggedHex) {
+            loggedHex = h
+            drawMap()
+        }
+    }
+
+    dom.document.addEventListener("pointerover", (e : dom.PointerEvent) => {
+        val hex = e.target @@ {
+            case t : dom.Element =>
+                // (the code is in a span of its own in the styled one)
+                val code = t.asInstanceOf[scalajs.js.Dynamic].closest("[class*=hrf-hanging] .pincer-hex").asInstanceOf[dom.Element]
+                if (code != null) Board.hexes.find(_.name == code.textContent.trim) else None
             case _ => None
         }
+        locate(hex)
+    })
+
+    override def updateHighlight(a : |[UserAction]) {
+        listedHexes = a./~(hexesOf)
         drawMap()
     }
 
@@ -172,6 +220,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         units.clear()
         structures.clear()
         highlighted.clear()
+        labels.clear()
 
         def at(h : Hex, i : ImageRect, dx : Double = 0, dy : Double = 0) = structures.add(Sprite($(i), $))(Board.x(h) + dx, Board.y(h) + dy)
 
@@ -190,7 +239,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         // a quiet outline on every choice, a strong one where the mouse is (on the map or in the list)
         val many = hexes.num > 8
         hexes.foreach { h =>
-            val strong = highlightHex.has(h) || listedHex.has(h)
+            val strong = highlightHex.has(h) || listedHexes.has(h)
             val select = ImageRect(new RawImage(img("hex-select")), Rectangle(-60, -69, 120, 138), (strong || many.not).?(1.0).|(0.8))
             // drawn over itself it is brighter and fills the hex
             highlighted.add(Sprite(strong.?($(select, select, select)).|($(select)), $))(Board.x(h), Board.y(h))
@@ -243,6 +292,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
                 val dy = (row == 0).?(18).|(-20) + colony.?(8).|(0) + game.embarked.contains(u).?(-10).|(0)
                 units.add(Sprite(mark :+ i, $(box), $((h, u))), 1.0, 3 - row)(Board.x(h) + dx, Board.y(h) + dy)
             }
+        }
+
+        val listed = folded.?(lastActions.%(_.unwrap.is[HexKey].not)).|(lastActions)
+
+        (highlightHex.$ ++ listedHexes ++ loggedHex.$ ++ listed./~(hexesOf)).distinct.foreach { h =>
+            labels.add(Sprite($(ImageRect(labelImage(h.name), Rectangle(-32, -18, 64, 36), 0.92)), $))(Board.x(h), Board.y(h) + 40)
+        }
+
+        // a hex found from the log, marked too
+        loggedHex.foreach { h =>
+            val select = ImageRect(new RawImage(img("hex-select")), Rectangle(-60, -69, 120, 138), 1.0)
+            highlighted.add(Sprite($(select, select, select), $))(Board.x(h), Board.y(h))
         }
 
         |(scene)
@@ -525,12 +586,20 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     // a long list of hexes is folded, as they are all highlighted on the map, until it is asked for
     val foldFrom = 9
     var unfolded = false
+    var folded = false
     var unfold : () => Unit = () => {}
 
     override def convertActions(faction : |[F], actions : $[UserAction], then : UserAction => Unit = null) : $[ZOption] = {
         val l = actions.%(a => a.unwrap.is[HexKey] && a.is[Unavailable].not && a.is[Hidden].not)
 
-        if (then == null || unfolded || l./(_.unwrap.as[HexKey].get.hex).distinct.num < foldFrom)
+        val fold = then != null && unfolded.not && l./(_.unwrap.as[HexKey].get.hex).distinct.num >= foldFrom
+
+        if (then != null && fold != folded) {
+            folded = fold
+            drawMap()
+        }
+
+        if (fold.not)
             super.convertActions(faction, actions, then)
         else
             ZOption(Div(l.head.question(currentGame))(xlo.fullwidth), Div(Icons("hex") ~ "Tap a highlighted hex on the map", xstyles.info, xstyles.xx, xstyles.thu, xlo.fullwidth)) ::
@@ -544,7 +613,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     override def ask(faction : |[F], actions : $[UserAction], then : UserAction => Unit) {
         lastActions = actions
         lastThen = then
-        listedHex = None
+        listedHexes = $
+        highlightHex = None
         unfolded = false
         unfold = () => ask2(faction, actions, then)
 
@@ -559,7 +629,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         super.ask(faction, actions, a => {
             clearOverlay()
             lastActions = $
-            listedHex = None
+            listedHexes = $
             then(a)
         })
     }

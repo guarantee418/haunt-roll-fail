@@ -35,11 +35,13 @@ object Faction {
 // ICONS (tools/icons): with a word on choices, alone where a number or a place makes them clear; the alt text says what they are
 
 object Icons {
-    val all = $("cards", "trade", "war-card", "war", "peace", "seal", "build", "recruit", "company", "diplomacy", "end-turn", "move", "revive", "done",
+    val all = $("trade", "war-card", "war", "peace", "wax-seal", "build", "recruit", "company", "diplomacy", "end-turn", "move", "revive", "done",
         "decline", "repair", "notifications", "interface", "bug", "home", "list", "hex", "boar")
 
-    def apply(s : String) : Elem = Image("icon:" + s, styles.icon, "")
-    def only(s : String, alt : String) : Elem = Hint(alt, Image("icon:" + s, styles.iconOnly, alt))
+    // the cards' icon is the back of the cards
+    private def image(s : String) = (s == "cards").?("card:card-back").|("icon:" + (s == "seal").?("wax-seal").|(s))
+    def apply(s : String) : Elem = Image(image(s), (s == "cards").?(styles.cardIcon).|(styles.icon), "")
+    def only(s : String, alt : String) : Elem = Hint(alt, Image(image(s), (s == "cards").?(styles.cardIconOnly).|(styles.iconOnly), alt))
     def piece(s : String, f : Faction) : Elem = Image("piece:" + s + "-" + f.id, styles.icon, "")
     // a payment, as pictures of its cards
     def paid(l : $[Resource]) : Elem = l./(_.pic : Elem).merge
