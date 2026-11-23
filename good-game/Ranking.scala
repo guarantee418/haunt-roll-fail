@@ -265,8 +265,8 @@ object Ranking {
     // ranking-drafts.tsv in the working directory (committed in the repository): game journal, then "U:faction,faction" and maybe
     // "B:faction", the draft of a game reported before reports said it (2026-11-22; LiveCheck <hrf-games> ranking, its DRAFT lines)
     // (and since 2026-11-23 "K:landmark,..." and "H:hireling,...", the game's landmarks and hirelings)
-    // the lists a report may hold besides its sides: a draft's left (U) and banned (B), the landmarks (K) and hirelings (H)
-    val listKinds = List("U", "B", "K", "H")
+    // the lists a report may hold besides its sides: a draft's left (U) and banned (B), the landmarks (K) and hirelings (H), the map (M)
+    val listKinds = List("U", "B", "K", "H", "M")
     def isList(s : String) = listKinds.exists(k => s.startsWith(k + ":"))
     lazy val drafts : Map[String, List[String]] = rows(Paths.get("ranking-drafts.tsv")).collect { case g :: rest if rest.nonEmpty => g -> rest.filter(isList) }.toMap
 
