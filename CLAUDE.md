@@ -292,6 +292,12 @@ Adset seats can be set to Robotos too: `MetaAdset.botOptions` adds a hidden
 `RobotosSeatOption(seat)`, and the clan that seat drafts cheats (`game.cheaters`,
 recomputed in `AdsetExpansion.assign`).
 
+Pincer: A Gentleman's War (Julian Birke, a work in progress the owner's team playtests; asked for on 2026-11-23) is in
+`haunt-roll-fail/pincer/` (meta `pincer`, URL `/play/pincer`, not on the main menu yet: `HRF.menuMetas`), played from the
+rulebook's second draft with the art of the Tabletop Simulator mod 3778939778 (`pincer/tools/pincer-art.py`, images in
+`webp2/pincer/images/`). `pincer/RULES.md` has the rules as played and the draft's open questions (the Boar's War penalty
+isn't in it yet), `pincer/HANDOFF.md` the state, files and testing (`pincer.Host` bot games, `pincer.Dump`).
+
 ## Building
 
 ```
