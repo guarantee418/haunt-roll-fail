@@ -415,7 +415,9 @@ object Runner {
 
                 if (line > 0) {
                     if (lines(line - 1).action != lines(line).action) {
-                        ui.overrideGame = ui.overrideGame./(g => advanceGame(g, lines(line - 1).action, lines(line).action))./(_.as[arcs.Game]./(_.cloned()).get.asInstanceOf[meta.gaming.G])
+                        // (a game that can't be cloned is made anew, as when its log line is tapped: advancing it in place drew nothing new,
+                        // and cloning it as if it were Arcs stopped "Replay from here" in every other game)
+                        ui.overrideGame = ui.overrideGame./(g => g.as[arcs.Game]./(_ => advanceGame(g, lines(line - 1).action, lines(line).action).as[arcs.Game].get.cloned().asInstanceOf[meta.gaming.G]).|(generateGameVoid(lines(line).action)))
                         ui.updateStatus()
                     }
                 }
@@ -986,6 +988,10 @@ object Runner {
 
                 case UIAsk(c, f, aa, w) =>
                     setTimeout(0) { hrf.web.timed(0)("scrollActionToLatest()") { scrollActionToLatest() } }
+
+                    // (at once: the choices are worked out in the game shown, and an earlier state from the log has none of them)
+                    if (ui.overrideGame.any)
+                        scrollActionToLatest()
 
                     if (conflicted.any && !game.validate(game.continue, conflicted.get)) {
                         +++("conflicted invalid", conflicted.get)
