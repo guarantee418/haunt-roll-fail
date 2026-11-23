@@ -1154,8 +1154,8 @@ server. No session can reach the server, and none needs to.
   `nort/turn-reasons.scala`, `TurnReasons`: the action that asked, `game.asker`, set in `internalPerform`, and the choices offered),
   kept in `turns.tsv`'s fourth column (`Turns.reason`): Root's under attack or a battle (the server's sword emoji), the cards kept
   at the start, the hand limit, the faction draft, the tournament picks, Partisans, prisoners, a Lilypad negotiation, an Entreat,
-  Field Hospitals, setup and the faction's own turn (its head); Northgard's fights (the axe), harvest trading and Winter (the bot's
-  `ng_trade` and `ng_winter` badges), card picks, setup, the Adset draft, raids, Events and the clan's own turn (its emblem). The
+  Field Hospitals, setup and the faction's own turn (its head); Northgard's fights (the axe), harvest trading and Winter (plain ⚖️
+  and ❄️ after the words, so the webhook can post them, not the bot's `ng_trade` and `ng_winter` badges; 2026-11-23), card picks, setup, the Adset draft, raids, Events and the clan's own turn (its emblem). The
   reasons say nothing only the seat may know (an ambush question and assigning hits are both "under attack"). `NORT_REASONS=1` in
   `nort.Host` prints them. A game's thread also says who takes the first turn, the first time the game waits on one seat alone
   (`announceFirst`, `turns/firsts.tsv`; mentioning them; only games first reported since 2026-11-21, when

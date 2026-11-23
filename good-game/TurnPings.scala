@@ -395,7 +395,8 @@ object TurnPings {
             iconOf(o) + "**" + name + "**"
         } }
         val (icon, words) = (nort, tag) match {
-            // (the sword or axe right after "attack", "battle" or "fight", 2026-11-22, asked for; the Partisans card right after "Partisans", 2026-11-23)
+            // (the sword or axe right after "attack", "battle" or "fight", 2026-11-22, asked for; the Partisans card right after "Partisans", 2026-11-23; trading and Winter with plain Unicode ⚖️ and ❄️ after
+            // the words, not the bot's badges, so the Northgard webhook can post them itself, 2026-11-23)
             case (false, "defend") => (head, "you're under attack " + w(sword) + them.map(" by " + _).getOrElse(""))
             case (false, "battle") => (head, "your battle " + w(sword) + them.map(" against " + _).getOrElse("") + " needs you")
             case (false, "keep") => (e("StandardDeck"), "pick the cards you keep")
@@ -412,8 +413,8 @@ object TurnPings {
             case (false, "setup") => (head, "time to set up")
             case (true, "defend") => (head, "you're under attack " + w(axe) + them.map(" by " + _).getOrElse(""))
             case (true, "fight") => (head, "your fight " + w(axe) + them.map(" against " + _).getOrElse("") + " needs you")
-            case (true, "trade") => (e("turn:trade"), "harvest trading")
-            case (true, "winter") => (e("turn:winter"), "Winter is here")
+            case (true, "trade") => (head, "harvest trading ⚖️")
+            case (true, "winter") => (head, "Winter ❄️ is here")
             case (true, "cards") => (e("HorizonsDevelopments"), "pick a card")
             case (true, "draft") => (e("title"), "your pick in the clan draft")
             case (true, "setup") => (head, "time to place your clan")
