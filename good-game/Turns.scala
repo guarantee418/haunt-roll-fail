@@ -35,9 +35,16 @@ object Turns {
 
         // (the reasons kept with the report they came with; a report of the same turn with reasons, from a newer client, adds them)
         val again = turns.get(journal).contains((n, factions))
-        if (keep && (!again || (why.nonEmpty && !reasons.get(journal).contains(why)) || fans.contains(journal) != fan)) {
+        // (every open page reports the same turn, and a page left open since before a deploy gives a reason with less in it:
+        // "defend/LC" where a newer one gave "defend/LC/KD", and the last report used to win, so a ping named no attacker
+        // (2026-11-23). For the same turn, a seat's reason that the kept one extends doesn't replace it)
+        val merged = if (!again) why else {
+            val old = reasons.getOrElse(journal, Map())
+            old ++ why.filter { case (s, w) => !old.get(s).exists(_.startsWith(w + "/")) }
+        }
+        if (keep && (!again || (merged.nonEmpty && !reasons.get(journal).contains(merged)) || fans.contains(journal) != fan)) {
             turns += journal -> (n, factions)
-            reasons += journal -> why
+            reasons += journal -> merged
             fans = if (fan) fans + journal else fans - journal
             if (!again)
                 TurnPings.report(journal, n, factions)
