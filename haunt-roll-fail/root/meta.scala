@@ -2130,7 +2130,7 @@ object Meta extends MetaGame {
         ("Site Defaults".spn, hirelings./(IncludeHireling), $),
         ("Official".hl ~ " Rules", $(
             AllRandomClearings,
-            StandardDeck,
+            SquiresDeck,
             AdSetBuffOff
         ), $),
     )
@@ -2142,7 +2142,7 @@ object Meta extends MetaGame {
         ),
         $(
             "The rules as Leder Games prints them:",
-            &("All Random".hh ~ " clearings, ") ~ &("the " ~ "Might and Right".hh ~ " deck, ") ~ &("and the " ~ "AdSet".hh ~ " setup buffs " ~ "Off".hh ~ "."),
+            &("All Random".hh ~ " clearings, ") ~ &("the " ~ "Squires and Disciples".hh ~ " deck, ") ~ &("and the " ~ "AdSet".hh ~ " setup buffs " ~ "Off".hh ~ "."),
             "Nothing else changes.",
         ),
     )
@@ -2254,6 +2254,14 @@ object Meta extends MetaGame {
     def factionName(f : Faction) = f.name
     def factionElem(f : Faction) = f.elem
     override def factionNote(f : Faction) : Elem = f.note
+
+    override def setupDesign = true
+    private lazy val glyphs : Map[String, String] = assets./~(_.get).%(_.name.endsWith("-glyph"))./(a => a.name -> ("/hrf/webp2/" + path + "/images/" + a.copy(ext = "webp").src)).toMap
+    override def menuImages = glyphs
+    private def icon(f : Faction, s : Style) : Elem = glyphs.contains(f.style.toLowerCase + "-glyph").?(Image(f.style.toLowerCase + "-glyph", s, "") : Elem).|(Empty)
+    override def factionTile(f : Faction) = |(Div(icon(f, elem.styles.pickIcon), elem.styles.pickIconBox) ~ Div(f.name.hlb) ~ homeland.has(f).?(Div("Homeland".spn(xstyles.smaller85))).|(Empty))
+    override def factionRowIcon(f : Faction) : Elem = icon(f, elem.styles.menuIcon)
+    override def factionChosenElem(f : Faction) : Elem = factionRowIcon(f) ~ f.name.hlb
 
     // The picker's ? for the fan, playtest and mirror factions: who made it, what it does and how it plays (FanInfo)
     override def factionInfo(f : Faction) = FanInfo.about(f).some./(l => ("?".txt, f.elem, l))

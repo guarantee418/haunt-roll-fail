@@ -164,6 +164,17 @@ trait MetaBase {
     // The faction picker shows the factions as a grid of tiles when this gives one (Northgard: the clan's emblem
     // and name), each with the factionInfo button, instead of rows with factionElem and factionNote
     def factionTile(f : F) : |[Elem] = None
+    // The reworked setup screens (Root, its Advanced Setup, Northgard): tiles, sections folded to a line each, the buttons kept in view
+    def setupDesign : Boolean = false
+    // what the picker and the setup rows call the factions
+    def factionsWord : String = "factions"
+    def setupRowsLabel : String = "Factions"
+    // the faction's icon on its setup row
+    def factionRowIcon(f : F) : Elem = Empty
+    // an option shown as a tile in a grid (Advanced Setup's factions)
+    def optionTile(o : O) : |[Elem] = None
+    // a line under the setup rows about the seating order
+    def seatingNote(selected : $[O]) : Elem = Empty
     // Random picks offered in the faction picker: the label (or tile) and the factions to pick from. The faction is drawn when
     // the pick is made, among those not already in the game, and stays hidden (shown as randomName) until the game starts.
     def randomFactions : $[(Elem, $[F])] = $

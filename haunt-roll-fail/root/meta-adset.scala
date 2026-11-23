@@ -47,6 +47,15 @@ object MetaAdset extends MetaGame {
 
     override def translation(settings : $[hrf.Setting]) = Meta.translation(settings)
 
+    override def setupDesign = true
+    override def menuImages = Meta.menuImages
+    override def setupRowsLabel = "Players"
+    override def optionTile(o : O) = o match {
+        case IncludeFaction(f) => Meta.factionTile(f)
+        case _ => None
+    }
+    override def seatingNote(selected : $[O]) : Elem = selected.has(SeatingRandom).?("Seats are drawn at random when the game starts.".txt : Elem).|("Seats are in the order listed.".txt)
+
     val factions = $(PlayerN(1), PlayerN(2), PlayerN(3), PlayerN(4), PlayerN(5), PlayerN(6), PlayerN(7), PlayerN(8))
 
     val minPlayers = 2
@@ -109,7 +118,7 @@ object MetaAdset extends MetaGame {
         ("Site Defaults".spn, $, $),
         ("Official".hl ~ " Rules", $(
             AllRandomClearings,
-            StandardDeck,
+            SquiresDeck,
         ), $),
     )
 
@@ -120,7 +129,7 @@ object MetaAdset extends MetaGame {
         ),
         $(
             "The rules as Leder Games prints them:",
-            &("All Random".hh ~ " clearings") ~ " " ~ &("and the " ~ "Might and Right".hh ~ " deck."),
+            &("All Random".hh ~ " clearings") ~ " " ~ &("and the " ~ "Squires and Disciples".hh ~ " deck."),
             "Nothing else changes.",
         ),
     )
