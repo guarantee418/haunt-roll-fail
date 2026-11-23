@@ -264,7 +264,11 @@ object Ranking {
 
     // ranking-drafts.tsv in the working directory (committed in the repository): game journal, then "U:faction,faction" and maybe
     // "B:faction", the draft of a game reported before reports said it (2026-11-22; LiveCheck <hrf-games> ranking, its DRAFT lines)
-    lazy val drafts : Map[String, List[String]] = rows(Paths.get("ranking-drafts.tsv")).collect { case g :: rest if rest.nonEmpty => g -> rest.filter(x => x.startsWith("U:") || x.startsWith("B:")) }.toMap
+    // (and since 2026-11-23 "K:landmark,..." and "H:hireling,...", the game's landmarks and hirelings)
+    // the lists a report may hold besides its sides: a draft's left (U) and banned (B), the landmarks (K) and hirelings (H)
+    val listKinds = List("U", "B", "K", "H")
+    def isList(s : String) = listKinds.exists(k => s.startsWith(k + ":"))
+    lazy val drafts : Map[String, List[String]] = rows(Paths.get("ranking-drafts.tsv")).collect { case g :: rest if rest.nonEmpty => g -> rest.filter(isList) }.toMap
 
     // every name as claimed, released ones too
     def displays() : Map[String, String] = rows(names).collect { case k :: d :: _ => k -> d }.toMap
@@ -292,7 +296,7 @@ object Ranking {
         rr.flatMap { r =>
             val sides = r(4).split(';').toList.filter(_.length > 2).map { s =>
                 // "X:fan", a game with fan content, and a draft's "U:" and "B:" factions, as they are
-                if (s.startsWith("X:") || s.startsWith("U:") || s.startsWith("B:")) s else
+                if (s.startsWith("X:") || isList(s)) s else
                 s.take(2) + s.drop(2).split(',').toList.flatMap { t =>
                     val u = t.takeWhile(_ != '/')
                     (if (u == "*") Some("*") else nameOf(u)).map(_.replace(",", " ").replace(";", " ").replace("/", " ") + t.drop(u.length))
@@ -304,7 +308,9 @@ object Ranking {
             val bot = scala.util.Try(TurnPings.lobbyOf(r(0)).exists(_.lines.exists(_.startsWith("bot ")))).getOrElse(false)
 
             // a game reported before drafts were (2026-11-22): its draft from ranking-drafts.tsv, worked out from its log by LiveCheck
-            val draft = if (sides.exists(x => x.startsWith("U:") || x.startsWith("B:"))) Nil else drafts.getOrElse(r(0), Nil)
+            // (each kind of list the report hasn't: a game reported before the landmarks were still gets them from there)
+            val reported = sides.filter(isList).map(_.take(1)).toSet
+            val draft = drafts.getOrElse(r(0), Nil).filterNot(x => reported.contains(x.take(1)))
 
             if (!bot && sides.size >= 2 && sides.exists(_.startsWith("W:")) && sides.exists(_.startsWith("L:")))
                 Some(List(r(0), r(2), r(3), (sides ++ draft).mkString(";")).map(esc).mkString("\t"))

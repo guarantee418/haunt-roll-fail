@@ -183,8 +183,9 @@ object LiveCheck {
                 val all = meta.rankingSides(g, w).map { case (l, won) => (l.flatMap(f => meta.rankingSeat(g, f).map("*" + _.token)), won) }.filter(_._1.nonEmpty)
                 // a game with fan content, kept in the stats and left out of the ratings
                 val fan = if (meta.rankingFan(g)) ";X:fan" else ""
-                // the draft's factions no seat took and those banned, a line of good-game/ranking-drafts.tsv (2026-11-22)
-                val draft = RankingSeat.draft(meta.rankingDraft(g))
+                // the draft's factions no seat took and those banned, and the landmarks and hirelings, a line of good-game/ranking-drafts.tsv
+                // (2026-11-22, 2026-11-23)
+                val draft = RankingSeat.draft(meta.rankingDraft(g) ++ meta.rankingSetup(g))
                 if (draft.nonEmpty)
                     println("DRAFT\t" + gid + "\t" + draft.drop(1).split(';').mkString("\t"))
                 if (all.exists(_._2) && all.exists(!_._2))
