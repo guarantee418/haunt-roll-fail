@@ -37,23 +37,27 @@ object Phase {
 }
 
 // A kind of unit players can deploy, and what it costs
-case class UnitType(name : String, cost : Resources, health : Int, movement : Int, armor : Int, kind : MoveKind = Infantry, weapon : Option[Weapon] = None) {
+case class UnitType(name : String, cost : Resources, health : Int, movement : Int, armor : Int, kind : MoveKind = Infantry, weapon : Option[Weapon] = None, sightRange : Int = 2, camouflaged : Boolean = false) {
     require(!cost.negative, "a unit's cost can't be negative")
+    require(sightRange >= 0, "sight range can't be negative")
 
-    def make(id : String, owner : String, at : Hex) = CombatUnit(id, owner, health, movement, armor, at.q, at.r, kind, weapon = weapon, maxHealth = health)
+    def make(id : String, owner : String, at : Hex) = CombatUnit(id, owner, health, movement, armor, at.q, at.r, kind, weapon = weapon, maxHealth = health, sightRange = sightRange, camouflaged = camouflaged)
 }
 
 // Sample unit types, for checks and a start on the real ones
 object Roster {
     import Weapons._
 
-    val riflemen = UnitType("Riflemen", Resources(manpower = 3), 10, 3, 1, Infantry, Some(rifle))
-    val machineGunTeam = UnitType("Machine gun team", Resources(manpower = 3, munitions = 1), 8, 2, 1, Infantry, Some(machineGun))
-    val antiTankGun = UnitType("Anti-tank gun", Resources(manpower = 3, munitions = 2), 8, 1, 2, Infantry, Some(antiTank))
-    val mortarTeam = UnitType("Mortar team", Resources(manpower = 2, munitions = 2), 6, 2, 0, Infantry, Some(mortar))
-    val tank = UnitType("Tank", Resources(manpower = 4, fuel = 3), 20, 4, 3, Vehicle, Some(antiTank.copy(name = "Tank gun", dice = 3, infantryDamage = 2)))
+    // sight: riflemen and machine gunners 3, the guns' crews and the tank (buttoned up) 2, so the mortar and the guns
+    // reach further than they see and need spotters; the anti-tank gun is camouflaged; scouts see 4, enough to find it
+    val riflemen = UnitType("Riflemen", Resources(manpower = 3), 10, 3, 1, Infantry, Some(rifle), sightRange = 3)
+    val machineGunTeam = UnitType("Machine gun team", Resources(manpower = 3, munitions = 1), 8, 2, 1, Infantry, Some(machineGun), sightRange = 3)
+    val antiTankGun = UnitType("Anti-tank gun", Resources(manpower = 3, munitions = 2), 8, 1, 2, Infantry, Some(antiTank), sightRange = 2, camouflaged = true)
+    val mortarTeam = UnitType("Mortar team", Resources(manpower = 2, munitions = 2), 6, 2, 0, Infantry, Some(mortar), sightRange = 2)
+    val tank = UnitType("Tank", Resources(manpower = 4, fuel = 3), 20, 4, 3, Vehicle, Some(antiTank.copy(name = "Tank gun", dice = 3, infantryDamage = 2)), sightRange = 2)
+    val scouts = UnitType("Scouts", Resources(manpower = 2), 6, 4, 0, Infantry, Some(rifle.copy(name = "Carbine", range = 2, dice = 2)), sightRange = 4)
 
-    val all = List(riflemen, machineGunTeam, antiTankGun, mortarTeam, tank)
+    val all = List(riflemen, machineGunTeam, antiTankGun, mortarTeam, tank, scouts)
 }
 
 // `vpTarget`: the VP that wins; `start`: each player's resources at the start; `base`: the income every
@@ -61,8 +65,10 @@ object Roster {
 // `orders`: the range a player's order limit is drawn from each turn (None: no limit); `killVP`: the VP for
 // destroying an enemy unit; `retreatHexes`: how far a retreat goes; `reinforceCost` and `reinforceHealth`: what
 // reinforcing an infantry unit in its zone costs and the health it gives back.
+// `fog`: units attack only what their side has spotted (vision.scala), and the screen hides the rest.
 case class Rules(vpTarget : Int = 10, start : Resources = Resources(manpower = 6), base : Resources = Resources(manpower = 2), roster : List[UnitType] = Roster.all,
-        orders : Option[(Int, Int)] = None, killVP : Int = 1, retreatHexes : Int = 3, reinforceCost : Resources = Resources(manpower = 2), reinforceHealth : Int = 5) {
+        orders : Option[(Int, Int)] = None, killVP : Int = 1, retreatHexes : Int = 3, reinforceCost : Resources = Resources(manpower = 2), reinforceHealth : Int = 5,
+        fog : Boolean = false) {
     require(vpTarget > 0, "the VP target must be above 0")
     require(orders.forall { case (lo, hi) => lo >= 1 && hi >= lo }, "the order range must be 1 or more, lowest first")
     require(killVP >= 0 && retreatHexes >= 1 && reinforceHealth >= 1 && !reinforceCost.negative, "kill VP, retreat hexes, reinforcement health and cost can't be negative")

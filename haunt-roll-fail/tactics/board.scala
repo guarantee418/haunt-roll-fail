@@ -32,6 +32,12 @@ case class Board(tiles : Map[Hex, HexTile] = Map()) {
         List(1e-6, -1e-6).exists(n => clear(Hex.line(a, b, n)))
     }
 
+    // Every hex any of the living units sees: within its sight range and in its line of sight (its own hex too)
+    def visibleHexes(units : Iterable[CombatUnit]) : Set[Hex] =
+        units.filter(u => u.alive && contains(u.hex)).flatMap { u =>
+            tiles.keys.filter(h => h.distance(u.hex) <= u.sightRange && lineOfSight(u.hex, h))
+        }.toSet
+
     private def clear(line : List[Hex]) = line.drop(1).dropRight(1).forall(h => !tiles.get(h).exists(_.blocksSight))
 }
 

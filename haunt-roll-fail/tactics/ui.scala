@@ -259,6 +259,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
         case "Anti-tank gun" => "AT"
         case "Mortar team" => "MT"
         case "Tank" => "TK"
+        case "Scouts" => "SC"
         case s => s.split(' ').map(_.take(1)).mkString.take(2).toUpperCase
     }
 
@@ -266,7 +267,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
 
     def token(u : CombatUnit, f : Faction, full : Int, done : Boolean) : CanvasImage = {
         val label = short(game.unitType(u.id))
-        val key = f.name + "/" + label + "/" + u.health + "/" + full + "/" + u.suppressed + "/" + done + "/" + u.kind.name
+        val key = f.name + "/" + label + "/" + u.health + "/" + full + "/" + u.suppressed + "/" + done + "/" + u.kind.name + "/" + u.camouflaged
         tokens.getOrElse(key, {
             val (canvas, g) = newCanvas(96, 96)
             g.globalAlpha = done.?(0.6).|(1.0)
@@ -301,6 +302,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
             g.fillStyle = (u.health * 3 > full).?("#7ed36a").|("#f0a030")
             g.fillRect(16, 80, 64.0 * u.health / max(1, full), 8)
 
+            // camouflaged: a green badge at the top left
+            if (u.camouflaged) {
+                g.beginPath()
+                g.arc(18, 16, 13, 0, 2 * math.Pi)
+                g.fillStyle = "#5f8f3a"
+                g.fill()
+                g.font = "bold 17px " + font
+                g.fillStyle = "#f3eee2"
+                g.fillText("C", 18, 17)
+            }
+
             // suppressed: an orange badge
             if (u.suppressed) {
                 g.beginPath()
@@ -323,6 +335,21 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
     lazy val units = new OrderedLayer
     lazy val highlighted = new OrderedLayer
     lazy val control = new OrderedLayer
+    lazy val fogLayer = new OrderedLayer
+
+    // a hex the viewer doesn't see: darkened
+    lazy val fogImage : CanvasImage = {
+        val size = (2 * S + 8).toInt
+        val (canvas, g) = newCanvas(size, size)
+        hexPath(g, size / 2, size / 2, S - 1)
+        g.fillStyle = "rgba(10, 12, 16, 0.55)"
+        g.fill()
+        new CanvasImage(canvas)
+    }
+
+    // whose eyes the map is drawn through: with the fog of war, the one player this screen is for, until the game
+    // is over; None shows everything (no fog, a spectator, or several players on one screen)
+    def fogFor : |[Faction] = (game.state != null && game.state.rules.fog && game.isOver.not).??(viewers.single)
 
     lazy val scene = {
         val background = new OrderedLayer
@@ -330,7 +357,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
 
         val areas = new HitLayer(regions)
 
-        new Scene($(background, control, highlighted, areas, units), width, height, margins)
+        new Scene($(background, fogLayer, control, highlighted, areas, units), width, height, margins)
     }
 
     override def adjustCenterZoomX() {
@@ -418,6 +445,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
         units.clear()
         highlighted.clear()
         control.clear()
+        fogLayer.clear()
+
+        // the fog of war: the hexes the viewer's side doesn't see are darkened, and the enemy units it hasn't spotted aren't drawn
+        val seen = fogFor./(f => s.visibleHexes(f.name))
+        val hidden = fogFor./(f => s.units.values.%(_.owner != f.name).map(_.id).toSet -- s.spottedBy(f.name).map(_.id)).|(Set[String]())
+
+        seen.foreach { v =>
+            cells.%(c => v.contains(c.hex).not).foreach { c =>
+                fogLayer.add(Sprite($(ImageRect(fogImage, Rectangle(-(S + 4), -(S + 4), 2 * S + 8, 2 * S + 8), 1.0)), $))(x(c), y(c))
+            }
+        }
 
         // who holds each sector: a ring in their color
         s.control.foreach { case (h, p) =>
@@ -469,7 +507,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
         }
 
         // units that have nothing left to do this turn are dimmed
-        s.units.values.toList.sortBy(_.id).foreach { u =>
+        s.units.values.toList.sortBy(_.id).%(u => hidden.contains(u.id).not).foreach { u =>
             val f = game.faction(u.owner)
             val c = Cell(u.hex)
             val done = u.attacked || (u.movesLeft == 0 && s.current.has(u.owner))
@@ -530,7 +568,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
         val income = Div(("Each turn " + gain.toString + (gvp > 0).??(", " + gvp + " VP")).txt)(styles.small)
 
         val l = s.unitsOf(f.name)
-        val unitRow = Div(("Units " + l.num + l.any.??(": " + l.groupBy(u => game.unitType(u.id)).toList.sortBy(_._1)./{ case (t, us) => us.num + " " + short(t) }.mkString(", "))).txt)(styles.small)
+        // with the fog of war the other side's panel says only how many units it has
+        val secret = fogFor.exists(_ != f)
+        val unitRow = Div(("Units " + l.num + (l.any && secret.not).??(": " + l.groupBy(u => game.unitType(u.id)).toList.sortBy(_._1)./{ case (t, us) => us.num + " " + short(t) }.mkString(", "))).txt)(styles.small)
 
         val sectors = s.sectorsOf(f.name)./(t => Skirmish.sectorName(t.hex).|("?") + " " + Skirmish.name(t.hex))
         val sectorRow = Div(("Sectors " + sectors.some./(_.mkString(", ")).|("none")).txt)(styles.small)
@@ -636,7 +676,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
 
         val roster = r.roster./{ t =>
             val w = t.weapon./(w => w.name + ": range " + (w.minRange > 1).??(w.minRange + "-") + w.range + ", " + w.dice + " dice hitting on " + w.accuracy + "+, " + w.infantryDamage + " damage to infantry, " + w.vehicleDamage + " to vehicles" + (w.penetration > 0).??(", penetration " + w.penetration)).|("no weapon")
-            Div(t.name.hlb ~ (" (" + short(t.name) + ", " + t.kind.name.toLowerCase + "): costs " + t.cost + "; health " + t.health + ", movement " + t.movement + ", armor " + t.armor).txt ~ Break ~ w.txt)(styles.small)
+            Div(t.name.hlb ~ (" (" + short(t.name) + ", " + t.kind.name.toLowerCase + "): costs " + t.cost + "; health " + t.health + ", movement " + t.movement + ", armor " + t.armor + ", sight " + t.sightRange + t.camouflaged.??(", camouflaged")).txt ~ Break ~ w.txt)(styles.small)
         }.merge
 
         val terrain = tactics.Terrain.all./{ t =>
@@ -653,6 +693,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : hrf.html
             line("Retreat: hurt infantry may fall back up to " + r.retreatHexes + " hexes toward your zone, whatever the terrain costs (not through water, mountains or enemy units); it can't move or attack again that turn. In your Income phase, hurt infantry in your zone can be reinforced: " + r.reinforceCost + " for " + r.reinforceHealth + " health back.") ~
             line("End: your suppressed units recover.") ~
             line("A unit ending a move on a sector (named on the map) captures it; it stays yours until an enemy unit ends a move there. Destroying an enemy unit scores " + r.killVP + " VP. The first player at " + r.vpTarget + " VP wins.") ~
+            line("Fog of war: you see what your units see, " + "their sight range in hexes and in their line of sight; the rest of the map is darkened, and enemy units there are hidden. A camouflaged unit (C) is spotted only from next to it, or by a unit that sees 4 hexes or more (scouts). A unit may fire at any enemy your side has spotted, beyond its own sight, but still within its range and its own line of sight. The log doesn't say where units go.") ~
             line("Attacks need range and line of sight (mountains and buildings between block it). Each die hits on the weapon's number or more: +1 for light cover (one bar on the shield), +2 for heavy, +1 if the attacker is suppressed; a 1 always misses and a 6 always hits. Each hit deals the weapon's damage less the armor beyond its penetration. Infantry hit and left standing is suppressed (S) until the end of its side's next turn."),
             styles.legend) ~
         Div("Units".hlb) ~ Div(roster, styles.legend) ~

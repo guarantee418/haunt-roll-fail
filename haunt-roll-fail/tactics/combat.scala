@@ -16,6 +16,8 @@ package tactics
 //   target's armor beyond the weapon's penetration (armor - penetration, never below 0); never below 0.
 // - Damage beyond the target's health is lost. A target at 0 health is destroyed and taken off the board.
 // - Infantry hit at least once (even for 0 damage) and still standing is suppressed until newTurn.
+// - With the rules' fog, the target must also be spotted by the attacker's side (Vision.spotted): a unit can fire
+//   beyond its own sight range at what a friend sees, but it still needs its own line of sight.
 
 case class Weapon(name : String, range : Int, dice : Int, accuracy : Int, infantryDamage : Int, vehicleDamage : Int, penetration : Int = 0, minRange : Int = 1) {
     require(minRange >= 1 && range >= minRange, "range must be " + minRange + " or more, got " + range)
@@ -70,6 +72,7 @@ object Combat {
             d = a.hex.distance(t.hex)
             _ <- Either.cond(w.inRange(d), (), targetId + " is " + d + " hexes away; " + w.name + " reaches " + (if (w.minRange > 1) w.minRange.toString + " to " else "") + w.range)
             _ <- Either.cond(s.board.lineOfSight(a.hex, t.hex), (), attackerId + " can't see " + targetId)
+            _ <- Either.cond(!s.rules.fog || Vision.spotted(s, a.owner, t), (), targetId + " hasn't been spotted")
         } yield (a, t, w)
 
     def canAttack(s : GameState, attackerId : String, targetId : String) : Boolean = validate(s, attackerId, targetId).isRight

@@ -35,6 +35,7 @@ object HexCheck {
         matches()
         skirmish()
         operations()
+        fog()
 
         println(passed.toString + " passed, " + failed + " failed")
         if (failed > 0)
@@ -703,6 +704,102 @@ object HexCheck {
             refused(ok(s, DrawOrders("red", 3), end("red")), ReinforceUnit("red", "r3")).contains("Income") &&
             refused(s, ReinforceUnit("red", "t1")).contains("only infantry") &&
             refused(poor, ReinforceUnit("red", "r3")).contains("costs")
+        }
+    }
+    // Step 7: sight, shared spotting, camouflage and the fog of war
+    def fog() : Unit = {
+        import Roster._
+
+        // a radius 5 plains hexagon; a mountain at (2, 0)
+        val open = Board.hexagon(5)
+        val ridge = open.add(HexTile(2, 0, Mountain))
+        val zones = Map("red" -> Set(Hex(-5, 0)), "blue" -> Set(Hex(5, 0)))
+        val foggy = Rules(vpTarget = 20, fog = true)
+
+        def scout(id : String, h : Hex, owner : String = "red", sight : Int = 2) = riflemen.make(id, owner, h).copy(sightRange = sight)
+        def at(id : String, h : Hex, owner : String = "blue") = antiTankGun.make(id, owner, h)
+        def onBoard(b : Board, rules : Rules, us : CombatUnit*) = GameState(b, us.map(u => u.id -> u).toMap, rules = rules)
+
+        // Sight and shared vision
+        check("vision: a unit sees its own hex and every hex within its sight range") {
+            val v = open.visibleHexes(List(scout("r1", Hex(0, 0))))
+            v == open.tiles.keys.filter(_.distance(Hex(0, 0)) <= 2).toSet && v.size == 19
+        }
+        check("vision: blocking terrain hides what is behind it, not itself") {
+            val v = ridge.visibleHexes(List(scout("r1", Hex(0, 0), sight = 4)))
+            v.contains(Hex(2, 0)) && !v.contains(Hex(3, 0)) && !v.contains(Hex(4, 0)) && v.contains(Hex(3, -1)) && v.contains(Hex(1, 0))
+        }
+        check("vision: a side sees what any of its units sees, the dead and the off-board seeing nothing") {
+            val a = scout("r1", Hex(-3, 0))
+            val b = scout("r2", Hex(3, 0))
+            val both = open.visibleHexes(List(a, b))
+            both == open.visibleHexes(List(a)) ++ open.visibleHexes(List(b)) &&
+            open.visibleHexes(List(a, b.copy(health = 0))) == open.visibleHexes(List(a)) &&
+            open.visibleHexes(List(a.copy(q = 9))).isEmpty && open.visibleHexes(Nil).isEmpty
+        }
+        check("vision: GameState.visibleHexes is the player's units' vision") {
+            val s = onBoard(open, foggy, scout("r1", Hex(0, 0)), scout("b1", Hex(4, 0), "blue"))
+            s.visibleHexes("red") == open.visibleHexes(List(s.unit("r1").get)) && !s.visibleHexes("red").contains(Hex(4, 0))
+        }
+        check("unit types: sight and camouflage carried to the units") {
+            val r = riflemen.make("r", "red", Hex(0, 0))
+            val g = antiTankGun.make("g", "red", Hex(0, 0))
+            val c = scouts.make("c", "red", Hex(0, 0))
+            r.sightRange == 3 && !r.camouflaged && g.sightRange == 2 && g.camouflaged && c.sightRange == 4 &&
+            CombatUnit("x", "red", 5, 2, 0, 0, 0).sightRange == 2 && !CombatUnit("x", "red", 5, 2, 0, 0, 0).camouflaged
+        }
+
+        // Spotting
+        check("spotting: an enemy in a hex the side sees is spotted, one beyond isn't") {
+            val s = onBoard(open, foggy, scout("r1", Hex(0, 0)), scout("b1", Hex(2, 0), "blue"), scout("b2", Hex(3, 0), "blue"))
+            s.spottedBy("red").map(_.id) == List("b1") && Vision.spotted(s, "red", s.unit("r1").get)
+        }
+        check("spotting: camouflage hides a unit from ordinary sight, not from next to it") {
+            val near = onBoard(open, foggy, scout("r1", Hex(0, 0), sight = 3), at("g1", Hex(1, 0)))
+            val far = onBoard(open, foggy, scout("r1", Hex(0, 0), sight = 3), at("g1", Hex(2, 0)))
+            near.spottedBy("red").map(_.id) == List("g1") && far.spottedBy("red").isEmpty
+        }
+        check("spotting: a unit seeing 4 hexes finds camouflage within its sight, with line of sight") {
+            val s = onBoard(open, foggy, scouts.make("c1", "red", Hex(0, 0)), at("g1", Hex(4, 0)), at("g2", Hex(0, 5)))
+            val hidden = onBoard(ridge, foggy, scouts.make("c1", "red", Hex(0, 0)), at("g1", Hex(4, 0)))
+            s.spottedBy("red").map(_.id) == List("g1") && hidden.spottedBy("red").isEmpty
+        }
+
+        // Targeting
+        val mortar = mortarTeam.make("m1", "red", Hex(-3, 0))
+        val target = riflemen.make("b1", "blue", Hex(2, 0))
+
+        check("targeting: a mortar fires beyond its own sight at what a friend has spotted") {
+            val alone = onBoard(open, foggy, mortar, target)
+            val spotter = onBoard(open, foggy, mortar, scout("r1", Hex(0, 0)), target)
+            alone.canAttack("m1", "b1") == false && Combat.validate(alone, "m1", "b1").swap.toOption.get.contains("spotted") &&
+            spotter.canAttack("m1", "b1") && Combat.targets(spotter, "m1").map(_.id) == List("b1")
+        }
+        check("targeting: still within the weapon's range and the attacker's own line of sight") {
+            val blocked = onBoard(open.add(HexTile(-1, 0, Mountain)), foggy, mortar, scout("r1", Hex(1, -1), sight = 3), target)
+            val tooFar = onBoard(open, foggy, mortar.copy(q = -5), scout("r1", Hex(0, 0)), target)
+            Vision.spotted(blocked, "red", blocked.unit("b1").get) && !blocked.canAttack("m1", "b1") &&
+            Vision.spotted(tooFar, "red", tooFar.unit("b1").get) && Combat.validate(tooFar, "m1", "b1").swap.toOption.get.contains("reaches")
+        }
+        check("targeting: a camouflaged gun is safe until spotted") {
+            val s = onBoard(open, foggy, riflemen.make("r1", "red", Hex(0, 0)), at("g1", Hex(2, 0)))
+            val adjacent = onBoard(open, foggy, riflemen.make("r1", "red", Hex(0, 0)), scout("r2", Hex(3, -1)), at("g1", Hex(2, 0)))
+            val keen = onBoard(open, foggy, riflemen.make("r1", "red", Hex(0, 0)), scouts.make("c1", "red", Hex(-2, 0)), at("g1", Hex(2, 0)))
+            !s.canAttack("r1", "g1") && adjacent.canAttack("r1", "g1") && keen.canAttack("r1", "g1")
+        }
+        check("targeting: without the rules' fog, line of sight and range are enough") {
+            val s = onBoard(open, Rules(), mortar, target)
+            s.canAttack("m1", "b1")
+        }
+        check("targeting: in a match, an unspotted unit can't be attacked, and spotting it makes it fair game") {
+            val s = GameState.start(open, List("red", "blue"), zones, List(mortar, target), foggy).toOption.get
+            val t = s.applyAction(EndPhaseAction("red")).toOption.get
+            t.applyAction(AttackUnit("red", "m1", "b1", List(6, 6))).swap.toOption.get.contains("spotted") &&
+            GameState.start(open, List("red", "blue"), zones, List(mortar, scout("r1", Hex(0, 0)), target), foggy).toOption.get
+                .applyAction(EndPhaseAction("red")).flatMap(_.applyAction(AttackUnit("red", "m1", "b1", List(6, 6)))).isRight
+        }
+        check("skirmish: played with fog, and the roster has a unit that sees through camouflage") {
+            Skirmish.rules.fog && Skirmish.rules.roster.exists(_.sightRange >= Vision.keenSight) && Skirmish.rules.roster.exists(_.camouflaged)
         }
     }
 }

@@ -53,6 +53,10 @@ case class GameState(
     def ordersLeft : Option[Int] = rules.orders.filter(_ => exactOrderLimit > 0).map(_ => (exactOrderLimit - ordersUsed).max(0))
     def ordersDrawn = rules.orders.isEmpty || exactOrderLimit > 0
 
+    // What the player's side sees, and the enemy units it has spotted (vision.scala)
+    def visibleHexes(p : String) : Set[Hex] = board.visibleHexes(unitsOf(p))
+    def spottedBy(p : String) : List[CombatUnit] = Vision.spottedUnits(this, p)
+
     // The nearest the hex is to the player's deployment zone, in hexes (0 in it); None with no zone
     def zoneDistance(p : String, h : Hex) : Option[Int] = zones.get(p).filter(_.nonEmpty).map(_.map(_.distance(h)).min)
     def inZone(p : String, h : Hex) = zones.get(p).exists(_.contains(h))

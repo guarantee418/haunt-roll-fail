@@ -32,13 +32,16 @@ class GameEvaluation(val game : Game, val self : Faction) {
 
         val s = game.state
 
+        // the enemy units it knows of: with the fog of war, only those its side has spotted
+        val enemies = if (s.rules.fog) s.spottedBy(self.name) else s.units.values.toList.%(_.owner != self.name)
+
         // the sectors it doesn't hold
         val wanted = s.board.all.%(_.sector).%(t => s.control.get(t.hex).has(self.name).not)./(_.hex)
 
         def nearest(h : Hex) = wanted./(w => Hex.distance(h, w)).minOption.|(0)
 
         // enemy units that could reach the hex with their weapons next turn (their movement, then their range)
-        def threats(h : Hex) = s.units.values.toList.%(e => e.owner != self.name && e.weapon.exists(w => Hex.distance(e.hex, h) <= e.movement + w.range))
+        def threats(h : Hex) = enemies.%(e => e.weapon.exists(w => Hex.distance(e.hex, h) <= e.movement + w.range))
 
         a.unwrap match {
             case DeployAction(_, t, c) =>
@@ -53,10 +56,13 @@ class GameEvaluation(val game : Game, val self : Faction) {
                 val from = s.unit(id).get.hex
                 val sector = wanted.has(c.hex)
                 val closer = nearest(c.hex) < nearest(from)
-                val enemy = s.units.values.exists(u => u.owner != self.name && Hex.distance(u.hex, c.hex) <= 2)
+                val enemy = enemies.exists(u => Hex.distance(u.hex, c.hex) <= 2)
+                // with the fog, a move that shows its side 3 hexes or more it doesn't see now is worth something
+                val sees = s.rules.fog && s.unit(id).exists(u => (s.board.visibleHexes(List(u.at(c.hex))) -- s.visibleHexes(self.name)).size >= 3)
                 val u = s.unit(id).get
                 val hurt = u.kind == Infantry && u.health * 2 <= u.fullHealth
                 sector |=> 900 -> "capture"
+                (sees && hurt.not) |=> 120 -> "look around"
                 closer |=> 400 -> "closer to a sector"
                 (enemy && hurt.not) |=> 150 -> "toward the enemy"
                 (enemy && hurt) |=> -300 -> "hurt, keep away"

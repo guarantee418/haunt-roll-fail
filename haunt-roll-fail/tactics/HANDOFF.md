@@ -14,6 +14,7 @@ name of its own. Built in steps.
   as Local (hotseat), Quick Game (against the bot) and Play Online.
 - Step 6, operations orders, infantry retreats, reinforcements and the kill bounty (2026-11-23). Saved games from
   before it don't load, as each turn now starts with the orders roll.
+- Step 7, sight ranges, shared spotting, camouflage and the fog of war (2026-11-23).
 - In the site's build (`common.sbt`; `hex-check.scala` is in `build.sbt`'s `excludeFilter`) and in `HRF.metaUIs`
   (`hrf.scala`), but not on the main `/play` menu: add `tactics.Meta` to `HRF.menuMetas` to list it. No ranking.
 
@@ -53,6 +54,8 @@ name of its own. Built in steps.
   a Farm, 1 manpower, and a Ridge, 1 VP); the zones (each side's two edge columns, on ground infantry can stand on),
   the rules (10 VP, starting 6 manpower and 2 munitions, 2 manpower and 1 munition a turn) and one squad of riflemen
   each at the start (`<player>-A`).
+- `vision.scala`: `Vision`, what each side sees and which enemy units it has spotted (`spots`, `spotted`,
+  `spottedUnits`, `seenUnits`); `Board.visibleHexes(units)` and `GameState.visibleHexes(player)`, `spottedBy(player)`.
 - `hex-check.scala`: `tactics.HexCheck`, the checks.
 
 HRF (these need the rest of the site to compile):
@@ -200,6 +203,34 @@ Chosen on 2026-11-23 from the owner's request (rules in `Rules`: `orders`, `kill
   reach it next turn (its movement plus its weapon's range), keeps hurt infantry from moving toward the enemy, and
   moves less on its last order.
 
+## Sight, spotting and the fog of war (Step 7)
+
+Chosen on 2026-11-23 from the owner's request:
+
+- `CombatUnit.sightRange` (default 2) and `camouflaged` (default false), set from `UnitType` by `make`. The roster's
+  sight: Riflemen and the Machine gun team 3, the Anti-tank gun (camouflaged), the Mortar team and the Tank 2, and
+  the new Scouts 4 (2 manpower, 6 health, 4 movement, a 2-hex carbine), the unit that finds camouflage from afar.
+- `Board.visibleHexes(units)`: every hex within a living unit's sight range and in its line of sight, its own hex
+  included, for all the units given (a side's shared vision).
+- Spotting (`Vision.spots`): an enemy unit in a hex a unit sees, unless camouflaged: then only from next to it
+  (1 hex) or by a unit with sight 4 or more (`Vision.keenSight`) that sees its hex. A side has spotted what any of its
+  units spots.
+- `Rules.fog` (off by default, so the earlier checks keep their meaning; on in the skirmish): an attack also needs the
+  target spotted by the attacker's side (`Combat.validate`), so the mortar and guns fire beyond their own sight at
+  what a friend sees. The attacker still needs its own line of sight and its weapon's range: there is no indirect
+  fire yet.
+- The screen (`fogFor` in `ui.scala`): for the one player it is drawn for (the asked player, or the one waiting on
+  this screen), the hexes their side doesn't see are darkened and the enemy units it hasn't spotted aren't drawn, and
+  the other side's panel gives only its number of units. Spectators, a screen shared by several players and a
+  finished game see everything. Camouflaged units have a green C on their token.
+- The log, which every player reads, doesn't say where units go with the fog: "Red moved a unit", "deployed a unit",
+  "pulled a unit back", "reinforced a unit". Attacks are logged in full, as firing gives a unit away.
+- The Easy bot plays on what its side has spotted (its threats and the enemies it moves toward) and likes moves that
+  show it 3 or more hexes it doesn't see.
+- Known gaps: as with the orders, every client runs the whole game, so the hidden units are in the browser's memory
+  and the saved moves. And a unit can't move into or through a hidden enemy's hex, so the hexes offered for a move
+  can give a hidden unit away; a move stopped by a hidden enemy (bumping into it) would close that.
+
 ## Testing
 
 The package has no HRF dependencies, so it compiles on its own with the Scala 2.13.16 compiler
@@ -213,7 +244,10 @@ java -cp scala-library-2.13.16.jar:out tactics.HexCheck
 On 2026-11-23: 141 passed, 0 failed, a full match among them, the skirmish map (its symmetry, names, sectors,
 zones, that every sector can be reached from both zones, and an opening), and Step 6 (`operations`: drawing and
 spending orders and the Action phase ending on the last, kill VP and a win by it, full health, retreats through
-forest, never into water or through the enemy, refused when they can't, and reinforcements).
+forest, never into water or through the enemy, refused when they can't, and reinforcements). After Step 7, 155
+(`fog`: sight ranges and blocking terrain, shared vision, the unit types' sight and camouflage, spotting and
+camouflage, attacks on spotted targets beyond the attacker's own sight, still needing range and line of sight, and
+no change without the fog).
 
 The HRF game: headless bot games on the JVM like `pincer.Host` (see `pincer/HANDOFF.md`, Testing: a project with
 `common.sbt` with `%%` and only `tactics` as a game directory, `host.xsbt` as its `build.sbt`, the engine's sources
@@ -221,7 +255,7 @@ linked, `base.scala` without its `arcs` line, and without `convert-images.scala`
 `lookup-index.scala`): `TACTICS_GAMES=20 sbt "runMain tactics.Host"`. On 2026-11-23 twenty games of two Easy bots each
 ended with a winner in 200 to 350 steps, every action written and parsed back; after Step 6, thirty games ended in
 120 to 240 steps, the bots retreating 85 times and reinforcing 42 times, the order limits drawn 3, 4 and 5 about
-equally.
+equally. After Step 7, thirty games with the fog ended in 110 to 200 steps.
 
 In a browser: serve `/play/tactics` from `index.html` (see "Browser driving" in `nort/HANDOFF.md`) and start a
 Quick Game or a Local Game. On 2026-11-23 a Quick Game against the bot was played in Chromium through four turns:

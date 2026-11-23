@@ -62,9 +62,12 @@ case class HexTile(q : Int, r : Int, terrain : Terrain = Plains, cover : Cover =
 // and `attacked` whether it has attacked this turn (a retreat uses it up too).
 // `maxHealth` is its full health; 0 stands for its health now, so a unit made with no maxHealth is unhurt
 // (UnitType.make sets it, and Combat sets it when a unit is first hurt).
-case class CombatUnit(id : String, owner : String, health : Int, movement : Int, armor : Int, q : Int, r : Int, kind : MoveKind = Infantry, spent : Int = 0, weapon : Option[Weapon] = None, suppressed : Boolean = false, attacked : Boolean = false, maxHealth : Int = 0) {
+// `sightRange` is how far it sees (vision.scala), and a `camouflaged` unit is spotted only from next to it or by a
+// unit that sees 4 hexes or more.
+case class CombatUnit(id : String, owner : String, health : Int, movement : Int, armor : Int, q : Int, r : Int, kind : MoveKind = Infantry, spent : Int = 0, weapon : Option[Weapon] = None, suppressed : Boolean = false, attacked : Boolean = false, maxHealth : Int = 0, sightRange : Int = 2, camouflaged : Boolean = false) {
     require(health >= 0, "health must be at least 0, got " + health)
     require(maxHealth == 0 || maxHealth >= health, "health " + health + " is above the unit's full health " + maxHealth)
+    require(sightRange >= 0, "sight range can't be negative, got " + sightRange)
     require(movement >= 0, "movement must be at least 0, got " + movement)
     require(armor >= 0, "armor must be at least 0, got " + armor)
     require(spent >= 0 && spent <= movement, "spent must be 0 to " + movement + ", got " + spent)

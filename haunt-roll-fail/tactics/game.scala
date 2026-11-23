@@ -154,6 +154,10 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         state.player(f.name).resources.covers(state.rules.reinforceCost).??(
             state.unitsOf(f.name).%(u => u.kind == Infantry && u.damaged && state.inZone(f.name, u.hex))./(u => ReinforceAction(f, u.id)))
 
+    // With the fog of war the log, which every player reads, doesn't say which unit went where: the map shows each
+    // player what they see. Attacks are logged in full, as firing gives a unit away.
+    def fog = state.rules.fog
+
     // after an action that spends an order: the log says when the last one ended the Action phase
     def ordered(f : Faction) {
         if (state.ordersLeft.has(0))
@@ -276,7 +280,10 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 val held = state.control.get(c.hex)
                 apply(DeployUnit(f.name, t, c.hex))
                 types += id -> t
-                log(f, "deployed", typeElem(t), "in", c, "for", state.rules.unitType(t).get.cost.toString.hl)
+                if (fog)
+                    log(f, "deployed a unit")
+                else
+                    log(f, "deployed", typeElem(t), "in", c, "for", state.rules.unitType(t).get.cost.toString.hl)
                 if (held.has(f.name).not)
                     captured(f, c)
                 TurnAction()
@@ -285,14 +292,20 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 val before = state.unit(id).get.health
                 apply(ReinforceUnit(f.name, id))
                 val u = state.unit(id).get
-                log(unitElem(id), "was reinforced in", Cell(u.hex), "for", state.rules.reinforceCost.toString.hl, "and is back to", u.health.hl, "health (+" + (u.health - before) + ")")
+                if (fog)
+                    log(f, "reinforced a unit for", state.rules.reinforceCost.toString.hl)
+                else
+                    log(unitElem(id), "was reinforced in", Cell(u.hex), "for", state.rules.reinforceCost.toString.hl, "and is back to", u.health.hl, "health (+" + (u.health - before) + ")")
                 TurnAction()
 
             case RetreatAction(f, id, c) =>
                 val from = state.unit(id).get.hex
                 val held = state.control.get(c.hex)
                 apply(RetreatUnit(f.name, id))
-                log(unitElem(id), "retreated from", Cell(from), "to", Cell(state.unit(id).get.hex))
+                if (fog)
+                    log(f, "pulled a unit back")
+                else
+                    log(unitElem(id), "retreated from", Cell(from), "to", Cell(state.unit(id).get.hex))
                 if (held.has(f.name).not)
                     captured(f, Cell(state.unit(id).get.hex))
                 ordered(f)
@@ -309,7 +322,10 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 val from = state.unit(id).get.hex
                 val held = state.control.get(c.hex)
                 apply(MoveUnit(f.name, id, c.hex))
-                log(unitElem(id), "moved from", Cell(from), "to", c)
+                if (fog)
+                    log(f, "moved a unit")
+                else
+                    log(unitElem(id), "moved from", Cell(from), "to", c)
                 if (held.has(f.name).not)
                     captured(f, c)
                 ordered(f)
