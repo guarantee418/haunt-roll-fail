@@ -395,7 +395,7 @@ object TurnPings {
             iconOf(o) + "**" + name + "**"
         } }
         val (icon, words) = (nort, tag) match {
-            // (the sword or axe right after "attack", "battle" or "fight", 2026-11-22, asked for)
+            // (the sword or axe right after "attack", "battle" or "fight", 2026-11-22, asked for; the Partisans card right after "Partisans", 2026-11-23)
             case (false, "defend") => (head, "you're under attack " + w(sword) + them.map(" by " + _).getOrElse(""))
             case (false, "battle") => (head, "your battle " + w(sword) + them.map(" against " + _).getOrElse("") + " needs you")
             case (false, "keep") => (e("StandardDeck"), "pick the cards you keep")
@@ -404,7 +404,7 @@ object TurnPings {
             case (false, "pickdeck") => (e("StandardDeck"), "pick the deck")
             case (false, "pickmap") => (e("RandomOfficialMap"), "pick the map")
             case (false, "picklandmark") => (e("TowerLandmark"), "pick the landmark for the Tower's clearing")
-            case (false, "partisans") => (e("ExilesDeck"), "Partisans can join your battle")
+            case (false, "partisans") => (head, ("Partisans " + w(e("ExilesDeck"))).trim + " can join your battle")
             case (false, "prisoners") => (e("IncludeFaction(KD)"), "prisoners to deal with")
             case (false, "negotiate") => (e("IncludeFaction(LDvE)"), "a negotiation awaits you")
             case (false, "entreat") => (e("IncludeFaction(TC)"), them.map(_ + " entreated you").getOrElse("you were entreated"))
