@@ -31,6 +31,7 @@ object HexCheck {
     def main(args : Array[String]) : Unit = {
         hexMath()
         movement()
+        combat()
 
         println(passed.toString + " passed, " + failed + " failed")
         if (failed > 0)
@@ -214,6 +215,134 @@ object HexCheck {
         check("every reachable hex can be moved to for its cost") {
             val s = state(board((1, 0, Forest), (0, 1, Hills), (-1, 0, Water), (1, -1, Building)), soldier("a", 0, 0, mp = 4), soldier("f", 0, -1), soldier("e", -1, 1, owner = "blue"))
             s.reachable("a").forall { case (h, c) => s.move("a", h).toOption.flatMap(_.unit("a")).map(u => u.hex == h && u.spent == c) == Some(true) }
+        }
+    }
+
+    def combat() : Unit = {
+        import Weapons._
+
+        // A red rifleman at (0, 0) and a blue target
+        def duel(target : CombatUnit, b : Board = board(), w : Weapon = rifle) = state(b, soldier("a", 0, 0).armed(w), target)
+        def enemy(q : Int, r : Int, health : Int = 10, armor : Int = 0) = CombatUnit("e", "blue", health, 3, armor, q, r)
+        def enemyTank(q : Int, r : Int, armor : Int = 3) = CombatUnit("e", "blue", 20, 4, armor, q, r, Vehicle)
+        val wide = Board.hexagon(6)
+        def report(s : GameState, rolls : Int*) = s.attack("a", "e", rolls).toOption.get._2
+        def error(s : GameState, rolls : Int*) = s.attack("a", "e", rolls).swap.toOption.get
+
+        // Range
+        check("in range at 1 and at the weapon's range") { duel(enemy(1, 0)).canAttack("a", "e") && duel(enemy(3, 0)).canAttack("a", "e") }
+        check("out of range") { !duel(enemy(4, 0), wide).canAttack("a", "e") && error(duel(enemy(3, 1), wide), 6, 6, 6).contains("4 hexes away") }
+        check("mortar can't fire at an adjacent hex") {
+            !duel(enemy(1, 0), w = mortar).canAttack("a", "e") && duel(enemy(2, 0), w = mortar).canAttack("a", "e")
+        }
+
+        // Line of sight
+        check("mountain between blocks the attack") {
+            val s = duel(enemy(2, 0), board((1, 0, Mountain)))
+            !s.canAttack("a", "e") && error(s, 6, 6, 6).contains("can't see")
+        }
+        check("a unit between doesn't block") { state(board(), soldier("a", 0, 0).armed(rifle), soldier("f", 1, 0), enemy(2, 0)).canAttack("a", "e") }
+        check("target in a building can be seen") { duel(enemy(2, 0), board((2, 0, Building))).canAttack("a", "e") }
+
+        // Hitting
+        check("each die hits on the accuracy or more") {
+            val r = report(duel(enemy(1, 0)), 4, 3, 6)
+            r.needed == 4 && r.hits == 2 && r.damagePerHit == 2 && r.damage == 4 && r.health == 6
+        }
+        check("rolls are kept in the report") { report(duel(enemy(1, 0)), 1, 5, 2).rolls == List(1, 5, 2) }
+
+        // Cover
+        def covered(c : Cover) = duel(enemy(2, 0), Board.hexagon(3).add(HexTile(2, 0, Plains, c)))
+        check("light cover needs 1 more") { val r = report(covered(LightCover), 4, 4, 5) ; r.needed == 5 && r.hits == 1 && r.cover == LightCover }
+        check("heavy cover needs 2 more") { val r = report(covered(HeavyCover), 4, 5, 5) ; r.needed == 6 && r.hits == 0 && r.damage == 0 }
+        check("a 6 hits whatever the cover") {
+            val s = state(Board.hexagon(3).add(HexTile(2, 0, Forest, HeavyCover)), soldier("a", 0, 0).armed(machineGun).copy(suppressed = true), enemy(2, 0))
+            val r = report(s, 6, 5, 5, 5, 5)
+            r.needed == 6 && r.hits == 1
+        }
+        check("a 1 always misses") { report(duel(enemy(1, 0), w = rifle.copy(accuracy = 2)), 1, 1, 2).hits == 1 }
+        check("suppressed attacker needs 1 more") { report(state(board(), soldier("a", 0, 0).armed(rifle).copy(suppressed = true), enemy(1, 0)), 4, 4, 5).needed == 5 }
+
+        // Armor
+        check("armor takes off damage") { val r = report(duel(enemy(1, 0, armor = 1)), 6, 6, 6) ; r.damagePerHit == 1 && r.damage == 3 }
+        check("armor can stop all damage") { val r = report(duel(enemy(1, 0, armor = 2)), 6, 6, 6) ; r.hits == 3 && r.damage == 0 && r.health == 10 }
+        check("rifle does nothing to a tank") { report(duel(enemyTank(2, 0)), 6, 6, 6).damage == 0 }
+        check("anti-tank gun goes through tank armor") {
+            val r = report(duel(enemyTank(2, 0), w = antiTank), 5, 6)
+            r.damagePerHit == 6 && r.damage == 12 && r.health == 8
+        }
+        check("armor beyond penetration still counts") { report(duel(enemyTank(2, 0, armor = 5), w = antiTank), 6, 6).damagePerHit == 4 }
+        check("anti-tank gun is poor against infantry") { report(duel(enemy(2, 0), w = antiTank), 6, 6).damage == 2 }
+
+        // Destruction
+        check("unit at 0 health is destroyed and taken off") {
+            val (s, r) = duel(enemy(1, 0, health = 3)).attack("a", "e", Seq(6, 6, 1)).toOption.get
+            r.destroyed && r.health == 0 && r.damage == 3 && s.unit("e").isEmpty && !s.occupied(Hex(1, 0))
+        }
+        check("exactly enough damage destroys") { duel(enemy(1, 0, health = 4)).attack("a", "e", Seq(6, 6, 1)).toOption.get._2.destroyed }
+        check("one short leaves it standing") {
+            val (s, r) = duel(enemy(1, 0, health = 5)).attack("a", "e", Seq(6, 6, 1)).toOption.get
+            !r.destroyed && s.unit("e").get.health == 1
+        }
+        check("destroyed unit's hex can be moved into") {
+            val s = duel(enemy(1, 0, health = 1)).attack("a", "e", Seq(6, 1, 1)).toOption.get._1
+            s.move("a", Hex(1, 0)).isRight
+        }
+
+        // Suppression
+        check("infantry hit is suppressed until the new turn") {
+            val (s, r) = duel(enemy(1, 0, armor = 2)).attack("a", "e", Seq(6, 1, 1)).toOption.get
+            r.suppressed && s.unit("e").get.suppressed && !s.newTurn.unit("e").get.suppressed
+        }
+        check("no hit, no suppression") { !report(duel(enemy(1, 0)), 1, 2, 3).suppressed }
+        check("vehicles aren't suppressed") { !report(duel(enemyTank(2, 0)), 6, 6, 6).suppressed }
+        check("already suppressed isn't reported again") {
+            val s = state(board(), soldier("a", 0, 0).armed(rifle), enemy(1, 0).copy(suppressed = true))
+            val (t, r) = s.attack("a", "e", Seq(6, 1, 1)).toOption.get
+            !r.suppressed && t.unit("e").get.suppressed
+        }
+
+        // State
+        check("attack gives a new state and leaves the old one") {
+            val s = duel(enemy(1, 0))
+            val t = s.attack("a", "e", Seq(6, 6, 6)).toOption.get._1
+            s.unit("e").get.health == 10 && t.unit("e").get.health == 4 && t.unit("a") == s.unit("a")
+        }
+        check("other units are left alone") {
+            val s = state(board(), soldier("a", 0, 0).armed(rifle), enemy(1, 0), soldier("o", 0, 1, owner = "blue"))
+            s.attack("a", "e", Seq(6, 6, 6)).toOption.get._1.unit("o") == s.unit("o")
+        }
+        check("same rolls, same result") {
+            val s = duel(enemy(2, 0), board((2, 0, Hills)))
+            1.to(5).map(_ => s.attack("a", "e", Seq(5, 3, 6))).toSet.size == 1
+        }
+        check("targets lists who can be attacked") {
+            val s = state(wide.add(HexTile(0, 2, Mountain)), soldier("a", 0, 0).armed(rifle), soldier("f", 1, 0),
+                soldier("b1", 2, 0, owner = "blue"), soldier("b2", 0, 3, owner = "blue"), soldier("b3", -4, 2, owner = "blue"))
+            // f is a friend, b2 is behind the mountain, b3 is out of range
+            Combat.targets(s, "a").map(_.id) == List("b1")
+        }
+
+        // Invalid attacks
+        check("unknown attacker or target") { duel(enemy(1, 0)).attack("x", "e", Seq(6, 6, 6)).isLeft && duel(enemy(1, 0)).attack("a", "x", Seq(6, 6, 6)).isLeft }
+        check("own side can't be attacked") {
+            val s = state(board(), soldier("a", 0, 0).armed(rifle), soldier("f", 1, 0))
+            !s.canAttack("a", "f") && !s.canAttack("a", "a") && s.attack("a", "f", Seq(6, 6, 6)).swap.toOption.get.contains("same side")
+        }
+        check("unarmed unit can't attack") { state(board(), soldier("a", 0, 0), enemy(1, 0)).attack("a", "e", Seq(6, 6, 6)).swap.toOption.get.contains("no weapon") }
+        check("out of action can't attack or be attacked") {
+            !state(board(), soldier("a", 0, 0).armed(rifle).copy(health = 0), enemy(1, 0)).canAttack("a", "e") &&
+            !duel(enemy(1, 0, health = 0)).canAttack("a", "e")
+        }
+        check("wrong number of dice") { error(duel(enemy(1, 0)), 6, 6).contains("3 dice") && error(duel(enemy(1, 0)), 6, 6, 6, 6).contains("3 dice") }
+        check("rolls must be 1 to 6") { error(duel(enemy(1, 0)), 0, 6, 6).contains("1 to 6") && error(duel(enemy(1, 0)), 7, 6, 6).contains("1 to 6") }
+        check("a refused attack changes nothing") {
+            val s = duel(enemy(5, 0), wide)
+            s.attack("a", "e", Seq(6, 6, 6)).isLeft && s.unit("e").get.health == 10
+        }
+        check("bad weapons can't be made") {
+            throws[IllegalArgumentException](rifle.copy(range = 0)) && throws[IllegalArgumentException](rifle.copy(accuracy = 7)) &&
+            throws[IllegalArgumentException](rifle.copy(dice = 0)) && throws[IllegalArgumentException](mortar.copy(range = 1))
         }
     }
 }

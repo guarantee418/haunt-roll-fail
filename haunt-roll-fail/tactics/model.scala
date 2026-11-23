@@ -53,11 +53,14 @@ case class HexTile(q : Int, r : Int, terrain : Terrain = Plains, cover : Cover =
 
 // Called CombatUnit, not Unit, as a class named Unit would hide Scala's own Unit type in this package.
 // `movement` is the unit's movement points each turn and `spent` how many it has used this turn.
-case class CombatUnit(id : String, owner : String, health : Int, movement : Int, armor : Int, q : Int, r : Int, kind : MoveKind = Infantry, spent : Int = 0) {
+// `weapon` is what it attacks with (None: it can't attack), `suppressed` whether fire has pinned it down.
+case class CombatUnit(id : String, owner : String, health : Int, movement : Int, armor : Int, q : Int, r : Int, kind : MoveKind = Infantry, spent : Int = 0, weapon : Option[Weapon] = None, suppressed : Boolean = false) {
     require(health >= 0, "health must be at least 0, got " + health)
     require(movement >= 0, "movement must be at least 0, got " + movement)
     require(armor >= 0, "armor must be at least 0, got " + armor)
     require(spent >= 0 && spent <= movement, "spent must be 0 to " + movement + ", got " + spent)
+
+    def armed(w : Weapon) = copy(weapon = Some(w))
 
     def hex = Hex(q, r)
     def at(h : Hex) = copy(q = h.q, r = h.r)

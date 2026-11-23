@@ -41,6 +41,10 @@ case class GameState(board : Board, units : Map[String, CombatUnit] = Map()) {
 
     def move(id : String, to : Hex) : Either[String, GameState] = Movement.move(this, id, to)
 
-    // Every unit gets its movement points back
-    def newTurn = copy(units = units.map { case (id, u) => id -> u.copy(spent = 0) })
+    def canAttack(attacker : String, target : String) = Combat.canAttack(this, attacker, target)
+
+    def attack(attacker : String, target : String, rolls : Seq[Int]) : Either[String, (GameState, CombatReport)] = Combat.attack(this, attacker, target, rolls)
+
+    // Every unit gets its movement points back and is no longer suppressed
+    def newTurn = copy(units = units.map { case (id, u) => id -> u.copy(spent = 0, suppressed = false) })
 }
