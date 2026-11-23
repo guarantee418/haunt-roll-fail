@@ -456,7 +456,7 @@ object GoodGame {
                         {
                             // "X fan": played with fan-made content, left out of the ratings (MetaGame.rankingFan)
                             // "U <faction> ..." and "B <faction> ...": the draft's factions no seat took and those banned (MetaGame.rankingDraft;
-                            // 2026-11-22), for the draft stats, and "K <landmark> ..." and "H <hireling> ...", the game's landmarks and hirelings
+                            // 2026-11-22), for the draft stats, and "K <landmark> ..." and "H <hireling> ...", the game's landmarks and hirelings, and "M <map>"
                             // (MetaGame.rankingSetup; 2026-11-23)
                             val draft = l.drop(2).filter(s => Ranking.listKinds.exists(k => s.startsWith(k + " "))).map(s => s.take(1) + ":" + s.drop(2).split(' ').filter(_.nonEmpty).map(Ranking.cleanToken).map(_.replace("/", "")).filter(_.nonEmpty).take(24).mkString(",")).filter(_.length > 2).distinctBy(_.take(1))
                             val all = (sides ++ (if (l.drop(2).contains("X fan")) List("X:fan") else Nil) ++ draft).mkString(";")

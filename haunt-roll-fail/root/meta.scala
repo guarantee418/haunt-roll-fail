@@ -2305,7 +2305,9 @@ object Meta extends MetaGame {
     // the draft stats (MetaGame.rankingDraft): each faction left, named as rankSeat names it (a Vagabond with its character)
     def rankDraft(g : Game) : $[(String, String)] = undrafted(g)./(f => "U" -> f.as[Hero]./~(h => g.chars.get(h))./(c => f.name + " (" + c.name + ")").|(f.name))
     // the landmark and hireling stats (MetaGame.rankingSetup; 2026-11-23, asked for): the landmarks on the map and the hirelings in the game
+    // and the map (2026-11-23, asked for): the tournament's picked one, else the game's map option (Random Official is drawn before the game)
     def rankSetup(g : Game) : $[(String, String)] =
+        (g.tournamentMap.$ ++ g.options.of[MapOption]).take(1).map(m => "M" -> m.valueOn.text) ++
         $("Ferry" -> g.ferry, "Tower" -> g.tower, "Lost City" -> g.lostCity, "Mousehold" -> g.mousehold, "Foxburrow" -> g.foxburrow, "Rabbittown" -> g.rabbittown,
             "Forge" -> g.simpleForge, "Market" -> g.simpleMarket, "Birdsong Tower" -> g.birdsongTower, "Royal Tree" -> g.royalTree).filter(_._2.nonEmpty).map(x => "K" -> x._1) ++
         g.hirelings./(h => "H" -> h.name)

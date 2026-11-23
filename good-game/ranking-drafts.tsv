@@ -1,47 +1,59 @@
-# the draft of each game reported before reports said it (2026-11-22), and its landmarks and hirelings (2026-11-23): game journal, then U:<factions no seat took>, maybe B:<banned>, K:<landmarks>, H:<hirelings>
+# the draft of each game reported before reports said it (2026-11-22), and its landmarks and hirelings and its map (2026-11-23): game journal, then U:<factions no seat took>, maybe B:<banned>, K:<landmarks>, H:<hirelings>, M:<map or central tile>
 # made from the DRAFT lines of LiveCheck <hrf-games> ranking; Ranking.drafts
-dtzebaxiwvjuqrrr	U:Marquise_de_Cat
-scfdyvkskwupijpk	U:Eyrie_Dynasties	K:Mousehold,Foxburrow,Rabbittown
-ekuvtorvwaladeox	U:Eyrie_Dynasties	K:Mousehold
-yczgspvmnmxedehj	U:Twilight_Council
-muhjdyhaaqeakebd	U:Riverfolk_Company
-ffmjaovlgdibytby	U:Marquise_de_Cat
-vujkjxjrzxwpwsri	U:Corvid_Conspiracy
-pcbuwlpcoqbgusba	U:Riverfolk_Company	K:Ferry
-rftarckzumhzvrwx	U:Underground_Duchy
-ygnrdveujrkqdzdw	U:Riverfolk_Company
-oyjqvsqoyltzqpzj	U:Rat_Clan	B:Snake_Clan,Stag_Clan
-eiwyhntxtvvsrchn	U:The_Lizard_Cult
-wsvnfdyrbqfgzgbe	U:Corvid_Conspiracy
-hwsttpuuzmqyxvjy	U:Squirrel_Clan	B:Raven_Clan
-qnquwspfntuidkmj	U:The_Lizard_Cult
-jdbienhzzhcdgskp	U:Vagabond_(Harrier)
-vbsjcatzhhsuhkkl	U:Corvid_Conspiracy	K:Tower
-xbgeznbiixfjrdpl	U:Twilight_Council
-mwbiufgrbzwmjcrv	U:Keepers_in_Iron
-nuxlcewoahwgfizz	U:Corvid_Conspiracy
-ifatkfufjbyepfrw	U:The_Lizard_Cult
-ucavvdzfiahoocbh	U:Boar_Clan	B:Raven_Clan,Snake_Clan
-xdahvsaxhnrkgysd	U:Marquise_de_Cat
-dqvelkvoiwnbhitg	U:Underground_Duchy	K:Ferry
-lmbjpgltkrjtgqci	U:Corvid_Conspiracy
-edtuohsiesnttrlh	K:Mousehold,Foxburrow,Rabbittown
-nrwvxixxxhvvgzvm	U:Eyrie_Dynasties
-yjtmsynywpzrhkzs	U:The_Lizard_Cult
-bymeupscxjkbniuh	U:Corvid_Conspiracy	K:Ferry
-btecweuvqbxchfbc	U:Marquise_de_Cat	K:Ferry
-bwxkuaeqypznlwef	K:Mousehold,Foxburrow,Rabbittown
-ewfkchftdqfnzvrj	U:The_Lizard_Cult
-rjqksklftlzropan	U:The_Lizard_Cult
-obtnpieonsfqpyys	U:Eyrie_Dynasties
-xnsistntxeapjxub	U:Marquise_de_Cat	K:Ferry
-ctkcyfegmpklbvgw	U:The_Lizard_Cult	K:Tower
-niyljxzgyiztrcqn	U:Corvid_Conspiracy
-iyvxqshxfeghzlfl	U:Marquise_de_Cat
-tkpcbovxawlgsbaa	U:Marquise_de_Cat
-mbgvzrxiusmqfmio	U:Keepers_in_Iron
-yftqcvifylbnnehd	U:Woodland_Alliance	K:Foxburrow
-nizxgtpsatcbhrto	U:Riverfolk_Company
-sojxyxbxinbmkmto	U:Riverfolk_Company
-wfjqpwrcmfxgpnys	U:The_Lizard_Cult
-pbqarbwhurnzrekj	U:Marquise_de_Cat
+dpfzpibrfywsglmm	M:Marsh
+wghkvveeuihrnyns	M:Standard_starting_tile
+dtzebaxiwvjuqrrr	U:Marquise_de_Cat	M:Gorge
+scfdyvkskwupijpk	U:Eyrie_Dynasties	K:Mousehold,Foxburrow,Rabbittown	M:Marsh
+ekuvtorvwaladeox	U:Eyrie_Dynasties	K:Mousehold	M:Mountain
+yczgspvmnmxedehj	U:Twilight_Council	M:Autumn
+muhjdyhaaqeakebd	U:Riverfolk_Company	M:Autumn
+ffmjaovlgdibytby	U:Marquise_de_Cat	M:Gorge
+zpyzmfaqdlsghvur	M:Autumn
+vujkjxjrzxwpwsri	U:Corvid_Conspiracy	M:Gorge
+pcbuwlpcoqbgusba	U:Riverfolk_Company	K:Ferry	M:Lake
+rftarckzumhzvrwx	U:Underground_Duchy	M:Winter
+ygnrdveujrkqdzdw	U:Riverfolk_Company	M:Marsh
+gcksignbyinizhgh	M:Mimirsbrunn
+oyjqvsqoyltzqpzj	U:Rat_Clan	B:Snake_Clan,Stag_Clan	M:Standard_starting_tile
+eiwyhntxtvvsrchn	U:The_Lizard_Cult	M:Tidal_Flats
+atmtpyplxdfabjxu	M:Winter
+wsvnfdyrbqfgzgbe	U:Corvid_Conspiracy	M:Gorge
+iomacqeobizbkelr	M:Standard_starting_tile
+hwsttpuuzmqyxvjy	U:Squirrel_Clan	B:Raven_Clan	M:Great_Lake_(Wilderness)
+qnquwspfntuidkmj	U:The_Lizard_Cult	M:Gloom
+ityxgmdxhzkyrosx	M:Relic_of_the_Gods
+jdbienhzzhcdgskp	U:Vagabond_(Harrier)	M:Marsh
+vbsjcatzhhsuhkkl	U:Corvid_Conspiracy	K:Tower	M:Mountain
+qniomqakjpztmmok	M:Yggdrasil
+zablhtnvuucizerb	M:Standard_starting_tile
+xbgeznbiixfjrdpl	U:Twilight_Council	M:Gorge
+mwbiufgrbzwmjcrv	U:Keepers_in_Iron	M:Tidal_Flats
+nuxlcewoahwgfizz	U:Corvid_Conspiracy	M:Winter
+ifatkfufjbyepfrw	U:The_Lizard_Cult	M:Autumn
+ucavvdzfiahoocbh	U:Boar_Clan	B:Raven_Clan,Snake_Clan	M:Standard_starting_tile
+xdahvsaxhnrkgysd	U:Marquise_de_Cat	M:Gorge
+dqvelkvoiwnbhitg	U:Underground_Duchy	K:Ferry	M:Lake
+lmbjpgltkrjtgqci	U:Corvid_Conspiracy	M:Gloom
+edtuohsiesnttrlh	K:Mousehold,Foxburrow,Rabbittown	M:Marsh
+nrwvxixxxhvvgzvm	U:Eyrie_Dynasties	M:Autumn
+dgttzwxyaasssudw	M:Marsh
+cybxijyumnpovazg	M:Volcano
+yjtmsynywpzrhkzs	U:The_Lizard_Cult	M:Marsh
+bymeupscxjkbniuh	U:Corvid_Conspiracy	K:Ferry	M:Lake
+btecweuvqbxchfbc	U:Marquise_de_Cat	K:Ferry	M:Lake
+bwxkuaeqypznlwef	K:Mousehold,Foxburrow,Rabbittown	M:Autumn
+ewfkchftdqfnzvrj	U:The_Lizard_Cult	M:Marsh
+rjqksklftlzropan	U:The_Lizard_Cult	M:Winter
+obtnpieonsfqpyys	U:Eyrie_Dynasties	M:Tundra
+xnsistntxeapjxub	U:Marquise_de_Cat	K:Ferry	M:Lake
+ctkcyfegmpklbvgw	U:The_Lizard_Cult	K:Tower	M:Mountain
+niyljxzgyiztrcqn	U:Corvid_Conspiracy	M:Marsh
+iyvxqshxfeghzlfl	U:Marquise_de_Cat	M:Gorge
+tkpcbovxawlgsbaa	U:Marquise_de_Cat	M:Marsh
+hphiucdzpuishobo	M:Standard_starting_tile
+mbgvzrxiusmqfmio	U:Keepers_in_Iron	M:Marsh
+yftqcvifylbnnehd	U:Woodland_Alliance	K:Foxburrow	M:Mountain
+nizxgtpsatcbhrto	U:Riverfolk_Company	M:Mountain
+sojxyxbxinbmkmto	U:Riverfolk_Company	M:Gorge
+wfjqpwrcmfxgpnys	U:The_Lizard_Cult	M:Gorge
+pbqarbwhurnzrekj	U:Marquise_de_Cat	M:Autumn
