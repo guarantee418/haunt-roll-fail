@@ -6563,6 +6563,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         SkipAmbushSuit(Fox),
         SkipAmbushSuit(Rabbit),
         SkipAmbushSuit(Mouse),
+        SkipAmbushSuit(Frog),
         SkipFieldHospitalsCount(1),
         SkipFieldHospitalsSuit(Fox),
         SkipFieldHospitalsSuit(Rabbit),
@@ -6593,6 +6594,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             case AutoSkipAmbushIfNone => options.has(BluffMode).not && game.autoSkipAmbush.not
             case UseAutoAssignHits => game.autoAssignHits.not && game.autoHits.not
             case _ if callbacks.settings.has(NoOutOfTurn) => false
+            // a skip set beforehand doesn't pause the game, which shows the player held an ambush: none in Bluff Mode or a Live Game (2026-11-23)
+            case SkipAmbushSuit(_) if options.has(BluffMode) || options.has(LiveGameMode) => false
+            // frog clearings come only with a frog faction (asked for on 2026-11-23, Tournament 1)
+            case SkipAmbushSuit(Frog) if factions.of[CommonInvasive].none => false
             case SkipAmbushSuit(_) if f.hand.none => false
             case SkipAmbushSuit(s) if callbacks.settings.has(BasicOutOfTurn) && (f.hand.has(Ambush(Bird)) || f.hand.has(Ambush(s))) => false
             case SkipAmbushSuit(s) if f.is[Hero] => f.as[Hero]./~(_.region.as[Clearing]).?(_.cost.matched(s))
@@ -6709,7 +6714,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
         val r = random() / test.?(8).|(1)
 
         if (r < 0.02)
-            if (actions.has(HiddenAmbush) && clearing.exists(c => c.suits.forall(s => isEnabled(f, SkipAmbushSuit(s))))) {
+            if (actions.has(HiddenAmbush) && options.has(BluffMode).not && options.has(LiveGameMode).not && clearing.exists(c => c.suits.forall(s => isEnabled(f, SkipAmbushSuit(s))))) {
                 if (test) alog("auto skip ambush".hl, 0, _ => {})
 
                 return Some(choice.last)
