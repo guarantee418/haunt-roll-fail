@@ -32,6 +32,7 @@ object HexCheck {
         hexMath()
         movement()
         combat()
+        matches()
 
         println(passed.toString + " passed, " + failed + " failed")
         if (failed > 0)
@@ -343,6 +344,165 @@ object HexCheck {
         check("bad weapons can't be made") {
             throws[IllegalArgumentException](rifle.copy(range = 0)) && throws[IllegalArgumentException](rifle.copy(accuracy = 7)) &&
             throws[IllegalArgumentException](rifle.copy(dice = 0)) && throws[IllegalArgumentException](mortar.copy(range = 1))
+        }
+    }
+
+    def matches() : Unit = {
+        import Roster._
+
+        // A radius 4 board: the Crossroads in the middle (2 VP, 1 munitions), a fuel depot that red starts on,
+        // a manpower village that blue starts on; red deploys on the west edge, blue on the east
+        val crossroads = Hex(0, 0)
+        val depot = Hex(-2, 0)
+        val village = Hex(2, 0)
+        val map = Board.hexagon(4)
+            .add(HexTile(0, 0, income = Resources(munitions = 1), vp = Some(2)))
+            .add(HexTile(-2, 0, income = Resources(fuel = 1)))
+            .add(HexTile(2, 0, income = Resources(manpower = 1)))
+            .add(HexTile(-4, 2, income = Resources(fuel = 2)))
+        val zones = Map("red" -> Set(Hex(-4, 0), Hex(-4, 1), Hex(-4, 2)), "blue" -> Set(Hex(4, 0), Hex(4, -1), Hex(4, -2)))
+        val rules = Rules(vpTarget = 6)
+
+        def opening = GameState.start(map, List("red", "blue"), zones, List(riflemen.make("r1", "red", depot), riflemen.make("b1", "blue", village)), rules).toOption.get
+
+        def ok(s : GameState, as : TacticsAction*) = as.foldLeft(s)((s, a) => s.applyAction(a).fold(e => throw new Exception(a.toString + ": " + e), identity))
+        def refused(s : GameState, a : TacticsAction) = s.applyAction(a).swap.toOption.get
+        def end(p : String) = EndPhaseAction(p)
+        def pass(s : GameState, p : String) = ok(s, end(p), end(p), end(p))
+
+        // Starting
+        check("match starts at red's turn 1 Income, red's income in") {
+            val s = opening
+            s.turn == 1 && s.current == Some("red") && s.phase == IncomePhase &&
+            s.player("red").resources == Resources(manpower = 8, fuel = 1) && s.player("blue").resources == Resources(manpower = 6)
+        }
+        check("starting units hold the sectors they stand on") { opening.control == Map(depot -> "red", village -> "blue") }
+        check("bad matches can't start") {
+            GameState.start(map, List("red"), zones).isLeft && GameState.start(map, List("red", "red"), zones).isLeft &&
+            GameState.start(map, List("red", "green"), zones).isLeft &&
+            GameState.start(map, List("red", "blue"), zones + ("red" -> Set(Hex(9, 0)))).isLeft &&
+            GameState.start(map, List("red", "blue"), zones, List(riflemen.make("x", "green", depot))).isLeft &&
+            GameState.start(map, List("red", "blue"), zones, List(riflemen.make("x", "red", depot), riflemen.make("y", "blue", depot))).isLeft
+        }
+        check("no match, no actions") { GameState(map).applyAction(end("red")).isLeft }
+
+        // Turn order and phases
+        check("only the current player acts") { refused(opening, end("blue")).contains("red's turn") && refused(opening, end("green")).contains("no player") }
+        check("phases go Income, Action, End, then the next player's Income") {
+            val s = opening
+            val a = ok(s, end("red"))
+            val e = ok(a, end("red"))
+            val b = ok(e, end("red"))
+            a.phase == ActionPhase && e.phase == EndPhase && b.phase == IncomePhase && b.current == Some("blue") && b.turn == 1 &&
+            pass(b, "blue").turn == 2 && pass(b, "blue").current == Some("red")
+        }
+        check("each action in its own phase") {
+            val s = opening
+            refused(s, MoveUnit("red", "r1", Hex(-1, 0))).contains("Action phase") &&
+            refused(s, AttackUnit("red", "r1", "b1", List(6, 6, 6))).contains("Action phase") &&
+            refused(ok(s, end("red")), DeployUnit("red", "Riflemen", Hex(-4, 0))).contains("Income phase") &&
+            refused(ok(s, end("red"), end("red")), MoveUnit("red", "r1", Hex(-1, 0))).contains("Action phase")
+        }
+
+        // Deploying
+        check("deploying pays the cost and names the unit") {
+            val s = ok(opening, DeployUnit("red", "Riflemen", Hex(-4, 0)))
+            s.unit("red-1").map(u => u.owner == "red" && u.hex == Hex(-4, 0) && u.weapon == Some(Weapons.rifle)) == Some(true) &&
+            s.player("red").resources == Resources(manpower = 5, fuel = 1) &&
+            ok(s, DeployUnit("red", "Riflemen", Hex(-4, 1))).unit("red-2").isDefined
+        }
+        check("deploying on a sector captures it") { ok(opening, DeployUnit("red", "Riflemen", Hex(-4, 2))).control.get(Hex(-4, 2)) == Some("red") }
+        check("deploying refused: too dear, outside the zone, taken, unknown type") {
+            val s = opening
+            refused(s, DeployUnit("red", "Tank", Hex(-4, 0))).contains("costs") &&
+            refused(s, DeployUnit("red", "Riflemen", Hex(-3, 0))).contains("deployment zone") &&
+            refused(s, DeployUnit("red", "Riflemen", Hex(4, 0))).contains("deployment zone") &&
+            refused(ok(s, DeployUnit("red", "Riflemen", Hex(-4, 0))), DeployUnit("red", "Riflemen", Hex(-4, 0))).contains("taken") &&
+            refused(s, DeployUnit("red", "Dragon", Hex(-4, 0))).contains("no unit type")
+        }
+        check("can't spend what you haven't got") {
+            val s = ok(opening, DeployUnit("red", "Riflemen", Hex(-4, 0)), DeployUnit("red", "Riflemen", Hex(-4, 1)))
+            s.player("red").resources.manpower == 2 && refused(s, DeployUnit("red", "Riflemen", Hex(-4, 2))).contains("costs")
+        }
+
+        // Moving, attacking and their limits
+        val redAct = ok(opening, end("red"))
+
+        check("moving onto a sector captures it, and the one left stays held") {
+            val s = ok(redAct, MoveUnit("red", "r1", crossroads))
+            s.control.get(crossroads) == Some("red") && s.control.get(depot) == Some("red")
+        }
+        check("can't move or attack with another player's unit") {
+            refused(redAct, MoveUnit("red", "b1", Hex(3, 0))).contains("isn't red's") && refused(redAct, AttackUnit("red", "b1", "r1", List(6, 6, 6))).contains("isn't red's")
+        }
+        check("move, move again, then attack") {
+            val s = ok(redAct, MoveUnit("red", "r1", Hex(-1, 0)), MoveUnit("red", "r1", crossroads), AttackUnit("red", "r1", "b1", List(6, 1, 1)))
+            s.unit("r1").get.attacked && s.lastReport.map(_.hits) == Some(1)
+        }
+        check("one attack a turn, and no moving after it") {
+            val s = ok(redAct, MoveUnit("red", "r1", crossroads), AttackUnit("red", "r1", "b1", List(1, 1, 1)))
+            refused(s, AttackUnit("red", "r1", "b1", List(6, 6, 6))).contains("already attacked") &&
+            refused(s, MoveUnit("red", "r1", Hex(0, 1))).contains("can't move")
+        }
+        check("a refused attack doesn't use up the unit's attack") {
+            val s = ok(redAct, MoveUnit("red", "r1", crossroads))
+            s.applyAction(AttackUnit("red", "r1", "b1", List(6, 6))).isLeft && !s.unit("r1").get.attacked &&
+            ok(s, AttackUnit("red", "r1", "b1", List(6, 6, 6))).unit("b1").get.health == 7
+        }
+        check("lastReport only holds the last action's attack") {
+            val s = ok(redAct, MoveUnit("red", "r1", crossroads), AttackUnit("red", "r1", "b1", List(1, 1, 1)))
+            s.lastReport.isDefined && ok(s, end("red")).lastReport.isEmpty
+        }
+        check("an enemy unit ending its move on a sector takes it") {
+            val s = GameState.start(map, List("red", "blue"), zones, List(riflemen.make("r1", "red", depot), riflemen.make("b1", "blue", Hex(-1, 0))), rules).toOption.get
+            // b1 steps beside the depot, r1 leaves it, b1 moves in
+            val t = ok(pass(s, "red"), end("blue"), MoveUnit("blue", "b1", Hex(-2, 1)), end("blue"), end("blue"))
+            val u = ok(t, end("red"), MoveUnit("red", "r1", Hex(-3, 0)), end("red"), end("red"))
+            val v = ok(u, end("blue"), MoveUnit("blue", "b1", depot))
+            s.control.get(depot) == Some("red") && v.control.get(depot) == Some("blue")
+        }
+
+        // A full match
+        check("full match: capture, income, suppression, VP win") {
+            val s0 = opening
+
+            // Red's turn 1: a rifleman deployed, r1 takes the Crossroads and hits b1 once
+            val s1 = ok(s0, DeployUnit("red", "Riflemen", Hex(-4, 0)), end("red"), MoveUnit("red", "r1", crossroads), AttackUnit("red", "r1", "b1", List(6, 1, 1)))
+            val hit = s1.lastReport.get
+            val s2 = ok(s1, end("red"), end("red"))
+
+            // Blue's turn 1: base income and the village; b1 is still suppressed, so it needs a 5
+            val blueIncome = s2.player("blue").resources == Resources(manpower = 9) && s2.unit("b1").get.suppressed
+            val s3 = ok(s2, end("blue"), AttackUnit("blue", "b1", "r1", List(5, 4, 1)))
+            val back = s3.lastReport.get
+            val s4 = ok(s3, end("blue"), end("blue"))
+
+            // Red's turn 2: the Crossroads scores 2 VP and a munition; b1 recovered at the end of blue's turn
+            val turn2 = s4.turn == 2 && s4.current == Some("red") && s4.player("red").vp == 2 &&
+                s4.player("red").resources == Resources(manpower = 7, munitions = 1, fuel = 2) && !s4.unit("b1").get.suppressed &&
+                !s4.unit("r1").get.attacked && s4.unit("r1").get.spent == 0
+
+            // Turns 2 and 3 go by; red scores at the start of turns 3 and 4 and wins
+            val s5 = pass(pass(s4, "red"), "blue")
+            val s6 = pass(pass(s5, "red"), "blue")
+
+            hit.damage == 1 && hit.suppressed && blueIncome && back.needed == 5 && back.hits == 1 && turn2 &&
+            s5.player("red").vp == 4 && s5.winner.isEmpty &&
+            s6.turn == 4 && s6.phase == IncomePhase && s6.player("red").vp == 6 && s6.winner == Some("red") && s6.over &&
+            refused(s6, end("red")).contains("game is over") && refused(s6, end("blue")).contains("game is over")
+        }
+        check("destroying a unit leaves its sector held") {
+            val s = GameState.start(map, List("red", "blue"), zones, List(riflemen.make("r1", "red", Hex(1, 0)), riflemen.make("b1", "blue", village).copy(health = 1)), rules).toOption.get
+            val t = ok(s, end("red"), AttackUnit("red", "r1", "b1", List(6, 1, 1)))
+            t.unit("b1").isEmpty && t.control.get(village) == Some("blue")
+        }
+        check("the same actions give the same match") {
+            val actions = List(DeployUnit("red", "Riflemen", Hex(-4, 0)), end("red"), MoveUnit("red", "r1", crossroads),
+                AttackUnit("red", "r1", "b1", List(6, 4, 2)), end("red"), end("red"), end("blue"), MoveUnit("blue", "b1", Hex(1, 1)))
+            Turns.applyAll(opening, actions) == Turns.applyAll(opening, actions) && Turns.applyAll(opening, actions).isRight
+        }
+        check("applyAll stops at the first refused action") {
+            Turns.applyAll(opening, List(end("red"), end("blue"), end("red"))).swap.toOption.get.contains("red's turn")
         }
     }
 }

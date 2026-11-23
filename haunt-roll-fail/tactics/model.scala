@@ -46,15 +46,21 @@ object Cover {
     val all : List[Cover] = List(NoCover, LightCover, HeavyCover)
 }
 
-case class HexTile(q : Int, r : Int, terrain : Terrain = Plains, cover : Cover = NoCover, resources : Option[Int] = None, vp : Option[Int] = None) {
+// `income` is what the tile gives its controller at the start of each of their turns, and `vp` the victory
+// points it scores them then; a tile with either is a sector, which units capture
+case class HexTile(q : Int, r : Int, terrain : Terrain = Plains, cover : Cover = NoCover, income : Resources = Resources.none, vp : Option[Int] = None) {
+    require(!income.negative && vp.forall(_ >= 0), "a tile's income and VP can't be negative")
+
     def hex = Hex(q, r)
     def blocksSight = terrain.blocking
+    def sector = income != Resources.none || vp.exists(_ > 0)
 }
 
 // Called CombatUnit, not Unit, as a class named Unit would hide Scala's own Unit type in this package.
 // `movement` is the unit's movement points each turn and `spent` how many it has used this turn.
-// `weapon` is what it attacks with (None: it can't attack), `suppressed` whether fire has pinned it down.
-case class CombatUnit(id : String, owner : String, health : Int, movement : Int, armor : Int, q : Int, r : Int, kind : MoveKind = Infantry, spent : Int = 0, weapon : Option[Weapon] = None, suppressed : Boolean = false) {
+// `weapon` is what it attacks with (None: it can't attack), `suppressed` whether fire has pinned it down,
+// and `attacked` whether it has attacked this turn.
+case class CombatUnit(id : String, owner : String, health : Int, movement : Int, armor : Int, q : Int, r : Int, kind : MoveKind = Infantry, spent : Int = 0, weapon : Option[Weapon] = None, suppressed : Boolean = false, attacked : Boolean = false) {
     require(health >= 0, "health must be at least 0, got " + health)
     require(movement >= 0, "movement must be at least 0, got " + movement)
     require(armor >= 0, "armor must be at least 0, got " + armor)

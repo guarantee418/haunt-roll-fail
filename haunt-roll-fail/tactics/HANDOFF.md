@@ -8,7 +8,8 @@ name of its own. Built in steps.
 - Step 1, data models and hex grid math (2026-11-23).
 - Step 2, movement and pathfinding over an immutable game state (2026-11-23).
 - Step 3, combat and damage, from dice rolls passed in (2026-11-23).
-- No turn or phase order, economy, dice rolling, meta, UI or rendering yet.
+- Step 4, turns, phases, the economy, sector control and the VP win, through one action reducer (2026-11-23).
+- No dice rolling, meta, UI or rendering yet.
 - Not in `build.sbt` yet, so the site's build doesn't include it. Add
   `Compile / unmanagedSourceDirectories += baseDirectory.value / "tactics"` to `common.sbt` and
   `"hex-check.scala"` to `build.sbt`'s `excludeFilter` when the meta is added.
@@ -18,19 +19,29 @@ name of its own. Built in steps.
 - `hex.scala`: `Hex(q, r)` axial coordinates (`s` worked out), the six directions, distance, cube rounding
   and `Hex.line` (the hexes on a straight line, nudged to pick a side of an edge).
 - `model.scala`: `MoveKind` (Infantry, Vehicle), `Terrain` (sight blocking and the movement cost for each kind),
-  `Cover` (None, Light, Heavy, ordered), `HexTile` (q, r, terrain, cover, optional resources and VP) and
+  `Cover` (None, Light, Heavy, ordered), `HexTile` (q, r, terrain, cover, `income` (Resources; a single
+  optional number until Step 4) and optional VP; a tile with either is a sector) and
   `CombatUnit` (id, owner, health, movement, armor, q, r, kind, `spent`, the movement used this turn,
-  `weapon` and `suppressed`; not `Unit`, which would hide Scala's `Unit` in the package).
+  `weapon`, `suppressed` and `attacked`; not `Unit`, which would hide Scala's `Unit` in the package).
 - `board.scala`: `Board`, immutable (`add` gives a new board; it changed the board in place in Step 1), the
   tiles by coordinate (any shape), `distance`, `neighbors` (tiles on the board) and `lineOfSight`;
   `Board.of(tiles)`, and `Board.hexagon(radius)` for a test board.
-- `state.scala`: `GameState(board, units)`, immutable, with `occupants` (who is where), `place`, `reachable`,
-  `path`, `move`, `canAttack`, `attack` and `newTurn`. Making a state with two units in a hex, or a unit off the board, throws.
+- `state.scala`: `GameState`, immutable: the board and units, and for a match the players in turn order, their
+  `economy` (`PlayerState`: resources and VP), `control` (who holds each sector), deployment `zones`, `rules`, `turn`,
+  `active` player, `phase`, `deployed` (for unit ids), `winner` and `lastReport`. The match fields have defaults, so
+  a state of a board and units works for movement and combat alone. `GameState.start` makes a match. Making a state
+  with two units in a hex, or a unit off the board, throws.
 - `movement.scala`: `Movement`, the pure functions (`enterCost`, `canEnd`, `reachable`, `path`, `move`, by Dijkstra),
   and `Path` (the hexes, start and end included, and the cost).
 - `combat.scala`: `Weapon` (range, minimum range, dice, accuracy, damage against infantry and vehicles,
   penetration), sample `Weapons` (rifle, machine gun, anti-tank gun, mortar), `CombatReport`, and `Combat`,
   the pure functions (`validate`, `canAttack`, `targets`, `needed`, `damagePerHit`, `attack`).
+- `economy.scala`: `Resources` (manpower, munitions, fuel), `PlayerState`, `Phase` (`IncomePhase`, `ActionPhase`,
+  `EndPhase`), `UnitType` (a deployable unit and its cost), sample `Roster`, and `Rules` (VP target, starting
+  resources, base income each turn, roster).
+- `turns.scala`: `TacticsAction` (`DeployUnit`, `MoveUnit`, `AttackUnit`, `EndPhaseAction`; not `EndPhase`, the
+  phase's name) and `Turns`, the reducer (`applyAction`, `applyAll`) and its parts (`capture`, `income`,
+  `beginTurn`, `checkWinner`).
 - `hex-check.scala`: `tactics.HexCheck`, the checks.
 
 ## Line of sight
@@ -83,6 +94,30 @@ client, replay and check; in HRF they will be rolled by a random action and reco
 
 These rules (d6 hits, the cover and suppression numbers, the sample weapons) were picked on 2026-11-23.
 
+## Turns and the economy
+
+`Turns.applyAction(state, action)` (or `state.applyAction(action)`) gives `Either[String, GameState]`: the new state,
+or why the action is refused, changing nothing. Every action names its player, who must be the current one.
+
+- A turn is every player's turn once, in `players` order. Each player's turn has three phases, left with `EndPhaseAction`:
+  - Income: on entering it, the player's units get their movement and attack back, and the player gets the rules'
+    base income plus each held sector's income, and scores each held sector's VP. `DeployUnit` puts a unit of a
+    roster type on an empty hex of the player's zone it can stand on, paying its cost; its id is `<player>-<n>`.
+  - Action: `MoveUnit` and `AttackUnit`. Each unit attacks once a turn, and can move before it (in several moves,
+    up to its movement points) but not after. A refused attack doesn't use it up.
+  - End: on leaving it, the player's units stop being suppressed, so suppression lasts through the suppressed
+    side's next turn (its attacks need 1 more then).
+- A unit ending a move on a sector, deployed on one or starting the match on one, captures it for its owner; it stays
+  theirs, even with nobody on it, until another player's unit ends a move there. A destroyed unit's sector stays held.
+- A player at `rules.vpTarget` VP wins (checked after every action, so at the start of their turn, when VP come in);
+  after that every action is refused. There is no other way to win yet.
+- `lastReport` holds the combat report of the last action if it was an attack, for the log to come.
+- In HRF each action will be a recorded action, the dice rolled by a random action before `AttackUnit`; replaying the
+  actions through `applyAction` rebuilds the same game.
+
+The phases, the income and scoring at the start of a player's turn, the attack and move limits, suppression lasting
+through the next turn, and the sample roster and its costs were picked on 2026-11-23.
+
 ## Testing
 
 The package has no HRF dependencies, so it compiles on its own with the Scala 2.13.16 compiler
@@ -93,4 +128,4 @@ java -cp <jars> scala.tools.nsc.Main -usejavacp -d out tactics/*.scala
 java -cp scala-library-2.13.16.jar:out tactics.HexCheck
 ```
 
-On 2026-11-23: 93 passed, 0 failed.
+On 2026-11-23: 115 passed, 0 failed, a full match among them.

@@ -1,0 +1,66 @@
+package tactics
+
+// The economy and the rules a match is played with: resources, players' stock and VP, the phases of a
+// turn, the unit types players deploy, and the Rules that tie them together. Data only; the reducer is in turns.scala.
+
+case class Resources(manpower : Int = 0, munitions : Int = 0, fuel : Int = 0) {
+    def +(o : Resources) = Resources(manpower + o.manpower, munitions + o.munitions, fuel + o.fuel)
+    def -(o : Resources) = Resources(manpower - o.manpower, munitions - o.munitions, fuel - o.fuel)
+    def *(n : Int) = Resources(manpower * n, munitions * n, fuel * n)
+
+    def negative = manpower < 0 || munitions < 0 || fuel < 0
+    def covers(cost : Resources) = !(this - cost).negative
+
+    override def toString = List(manpower -> "manpower", munitions -> "munitions", fuel -> "fuel").filter(_._1 != 0).map { case (n, s) => n.toString + " " + s } match {
+        case Nil => "nothing"
+        case l => l.mkString(", ")
+    }
+}
+
+object Resources {
+    val none = Resources()
+
+    def sum(l : Iterable[Resources]) = l.foldLeft(none)(_ + _)
+}
+
+case class PlayerState(resources : Resources = Resources.none, vp : Int = 0)
+
+// A turn is one player's: Income, then Action, then End, then the next player's Income
+sealed abstract class Phase(val name : String)
+
+case object IncomePhase extends Phase("Income")   // income and VP come in on entering; units can be deployed
+case object ActionPhase extends Phase("Action")   // units move and attack
+case object EndPhase extends Phase("End")         // the player's suppressed units recover on leaving
+
+object Phase {
+    val all : List[Phase] = List(IncomePhase, ActionPhase, EndPhase)
+}
+
+// A kind of unit players can deploy, and what it costs
+case class UnitType(name : String, cost : Resources, health : Int, movement : Int, armor : Int, kind : MoveKind = Infantry, weapon : Option[Weapon] = None) {
+    require(!cost.negative, "a unit's cost can't be negative")
+
+    def make(id : String, owner : String, at : Hex) = CombatUnit(id, owner, health, movement, armor, at.q, at.r, kind, weapon = weapon)
+}
+
+// Sample unit types, for checks and a start on the real ones
+object Roster {
+    import Weapons._
+
+    val riflemen = UnitType("Riflemen", Resources(manpower = 3), 10, 3, 1, Infantry, Some(rifle))
+    val machineGunTeam = UnitType("Machine gun team", Resources(manpower = 3, munitions = 1), 8, 2, 1, Infantry, Some(machineGun))
+    val antiTankGun = UnitType("Anti-tank gun", Resources(manpower = 3, munitions = 2), 8, 1, 2, Infantry, Some(antiTank))
+    val mortarTeam = UnitType("Mortar team", Resources(manpower = 2, munitions = 2), 6, 2, 0, Infantry, Some(mortar))
+    val tank = UnitType("Tank", Resources(manpower = 4, fuel = 3), 20, 4, 3, Vehicle, Some(antiTank.copy(name = "Tank gun", dice = 3, infantryDamage = 2)))
+
+    val all = List(riflemen, machineGunTeam, antiTankGun, mortarTeam, tank)
+}
+
+// `vpTarget`: the VP that wins; `start`: each player's resources at the start; `base`: the income every
+// player gets each turn on top of their sectors'; `roster`: what can be deployed
+case class Rules(vpTarget : Int = 10, start : Resources = Resources(manpower = 6), base : Resources = Resources(manpower = 2), roster : List[UnitType] = Roster.all) {
+    require(vpTarget > 0, "the VP target must be above 0")
+    require(roster.map(_.name).distinct.size == roster.size, "two unit types with one name")
+
+    def unitType(name : String) = roster.find(_.name == name)
+}
