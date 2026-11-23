@@ -255,7 +255,8 @@ linked, `base.scala` without its `arcs` line, and without `convert-images.scala`
 `lookup-index.scala`): `TACTICS_GAMES=20 sbt "runMain tactics.Host"`. On 2026-11-23 twenty games of two Easy bots each
 ended with a winner in 200 to 350 steps, every action written and parsed back; after Step 6, thirty games ended in
 120 to 240 steps, the bots retreating 85 times and reinforcing 42 times, the order limits drawn 3, 4 and 5 about
-equally. After Step 7, thirty games with the fog ended in 110 to 200 steps.
+equally. After Step 7, thirty games with the fog ended in 110 to 200 steps. In Chromium a Quick Game with the fog showed only the hexes Blue's units see, Red's units
+hidden in the rest, and the log saying only that Red moved or deployed units.
 
 In a browser: serve `/play/tactics` from `index.html` (see "Browser driving" in `nort/HANDOFF.md`) and start a
 Quick Game or a Local Game. On 2026-11-23 a Quick Game against the bot was played in Chromium through four turns:
