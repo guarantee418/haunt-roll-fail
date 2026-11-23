@@ -53,7 +53,9 @@ object TurnReasons {
                 case OpportunityDiscardCardAction(_, ToHeal(_, _), _, _, _) => "hospitals"
                 case _ if name.startsWith("FieldHospitals") || name.startsWith("HospitalPlan") => "hospitals"
                 case _ if name.startsWith("KnavesFreePrisoners") || name.contains("Prisoner") => "prisoners"
-                case _ if name.startsWith("InvasiveEEENegotiate") => "negotiate"
+                // (no "negotiate": a Lilypad Diaspora negotiation is never owed, its menus are ones the seat opened on its own turn,
+                // and a ping saying "a negotiation awaits you" reminded the enemy of what the Diaspora hopes it forgets; 2026-11-23,
+                // asked for. It is the seat's turn, or it's needed, like any other menu)
                 case a if holds[Battle](a) => f.has(game.current).?("battle").|("defend")
                 case _ if name.startsWith("Starting") || name.startsWith("Setup") || name.startsWith("FactionSetup") => "setup"
                 case _ if f.has(game.current) => "turn"
