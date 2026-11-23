@@ -874,6 +874,9 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
     }
 
     def withMeta() {
+        // lets index.html style one game's pages (body[data-meta=pincer])
+        dom.document.body.dataset("meta") = meta.name
+
         ui.logger.alog(meta.label.spn.div)
 
         if (meta.name == "cthw" && false.not) {
