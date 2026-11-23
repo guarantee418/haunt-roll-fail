@@ -1223,6 +1223,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 val z = 220
                 val (x, y) = freeSpot(t, z / T / 2, taken, |(board.point(t.anchor)), 0.5)
                 pieces.add(Sprite($(at(c.token, z)), $(Rectangle(-z / 2, -z / 2, z, z)), tag :+ c))(sx(x), sy(y))
+                // its place in the creature line (1 moves first), a square badge at the top left corner
+                // (nort/tools/order-badges.py; asked for on Discord on 2026-11-23)
+                val n = game.creatureLine.indexOf(c) + 1
+                if (n >= 1 && n <= 30)
+                    pieces.add(Sprite($(at("ui-order-" + n, 110)), $))(sx(x) - 80, sy(y) - 80)
                 taken :+= ((x, y, z / T / 2))
             }
 
@@ -1434,7 +1439,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
         val achievements = $(("Achievements" ~ last.not.?(", year " ~ game.lastYear.hl).|(Empty)) -> last.?(game.display).|(game.achievements))
 
         // Creatures module: the creature line, in activation order
-        val creatures = (game.has(Creatures) || game.creatureLine.any).$(("Creatures" ~ " (left to right)".spn(xstyles.smaller85)) -> game.creatureLine)
+        val creatures = (game.has(Creatures) || game.creatureLine.any).$(("Creatures" ~ " (left to right, numbered on the map)".spn(xstyles.smaller85)) -> game.creatureLine)
 
         // Wastelands: Jötunn Blainn's card once the Jötnar Camp is on the map, with where he is
         val blainn = game.jotnarCamp.any.$(("Jötunn Blainn" ~ game.blainn./{ case (f, _) => " (" ~ f.elem ~ ")" }.|(" (at his camp)".txt).spn(xstyles.smaller85)) -> $(BlainnCard))
