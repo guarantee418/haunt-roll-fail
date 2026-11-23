@@ -443,9 +443,9 @@ case class RankingTier(name : String, min : |[Double], note : String, icon : |[S
 object RankingSeat {
     // a faction's name as a report writes it, spaces as "_" (also the draft's "U:" and "B:" lists, MetaGame.rankingDraft)
     def name(faction : String) = faction.replace(' ', '_').toList.filter(c => c.isLetterOrDigit || "_'().-!&".contains(c)).mkString.take(48)
-    // the kinds of those lists: the draft's left (U) and banned (B), the landmarks (K) and the hirelings (H) (not "L", a losing side)
-    val kinds = $("U", "B", "K", "H")
-    // what a report adds for a draft and the setup: ";U:name,name;B:name;K:name;H:name"
+    // the kinds of those lists: the draft's left (U) and banned (B), the landmarks (K), the hirelings (H) and the map (M; 2026-11-23) (not "L", a losing side)
+    val kinds = $("U", "B", "K", "H", "M")
+    // what a report adds for a draft and the setup: ";U:name,name;B:name;K:name;H:name;M:map"
     def draft(l : $[(String, String)]) : String = kinds./{ k => val nn = l.filter(_._1 == k).map(x => name(x._2)).filter(_.nonEmpty) ; nn.any.??(";" + k + ":" + nn.mkString(",")) }.mkString
 }
 

@@ -86,6 +86,9 @@ object Meta extends MetaGame { mmm =>
     // the draft stats (MetaGame.rankingDraft, Adset): the clans drawn that no seat took, "U", and the one banned, "B"
     def rankDraft(g : Game) : $[(String, String)] = g.draft.diff(g.setup).diff(g.banned)./(f => "U" -> factionName(f)) ++ g.banned./(f => "B" -> factionName(f))
     override def rankingFan(g : G) = Meta.rankFan(g)
+    // the map stats (MetaGame.rankingSetup; 2026-11-23, asked for): the central tile, picked or drawn ("Standard starting tile" when none)
+    def rankSetup(g : Game) : $[(String, String)] = $("M" -> Waste.name(g.central))
+    override def rankingSetup(g : G) = rankSetup(g)
 
     // the clan, its place in the first year's turn order, and its final fame
     def rankSeat(game : Game, f : Faction) : |[RankingSeat] = {
