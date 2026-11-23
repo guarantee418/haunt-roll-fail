@@ -359,7 +359,7 @@ cd haunt-roll-fail && sbt fullOptJS
   `Meta.rankingUnapproved` (Root's `unapproved` and `unapprovedPick`, which adds fan factions in Advanced Setup's pool; Northgard's
   fan clan variants, and the Lion Kingdom by faction): marked "unranked" beside the option on an online setup screen, and a Ranked game
   with any of it can't be started (`rankedCheck`, in `validateFactionSeatingOptions`). Root's Tidal Flats, Tundra and Gloom maps and
-  the Dawn and Dusk deck are approved since 2026-11-22 (owner). A ranked game with a bot gets a warning. The Discord bot's `/root` and
+  the Dawn and Dusk deck are approved since 2026-11-22, and the Simple Landmarks and the Negabond (a second Vagabond, `approved`) since 2026-11-23 (owner). A ranked game with a bot gets a warning. The Discord bot's `/root` and
   `/northgard` take `ranked` (`LfgSetup.sections`), the catalog's tenth field marks each unapproved option (its menus say "makes the
   game unranked"), the post says Ranked or Unranked and why (`rankingLine`), and a Ranked game with unapproved picks is created
   Unranked (`rankedOptions`). Names are released or
@@ -1300,9 +1300,8 @@ server. No session can reach the server, and none needs to.
   it with any piece there, `treeRules` in `rules`), all in `root/simple-landmarks.scala` (its header lists the readings). They are placed at
   setup like the other landmark toggles, where the Landmarks Pack's setup cards put them, after the map's own landmarks. Their pieces are the
   Landmarks Pack's Legendary Forge, Black Market and Elder Treetop (`feature/simple-forge`, `simple-market`, `royal-tree`, cut from the Leder
-  Card Library cards by `root/tools/simple-landmarks-art.py`) and the Tower. They count as fan content for the rankings, except the Birdsong
-  Tower, which the owner made official for the site on 2026-11-20 (`rankFan`): it counts toward Elo (on the setup screen it stays with the
-  Simple Landmarks), and in the tournament draft it is one of the third seat's
+  Card Library cards by `root/tools/simple-landmarks-art.py`) and the Tower. They are approved for ranked play (`unapproved` in `root/meta.scala`): the Birdsong Tower since 2026-11-20, the other three since
+  2026-11-23 (owner); before, those three made a game fan content. In the tournament draft the Birdsong Tower is one of the third seat's
   choices for the Mountain's Tower clearing (`landmarks` in `root/tournament.scala`; the Tournament page says so). The draft keeps any
   Simple Landmark options when it sets the map's landmarks. `ReplayCheck <games> base simplelm` plays them, `birdsong` the Birdsong
   Tower alone.
