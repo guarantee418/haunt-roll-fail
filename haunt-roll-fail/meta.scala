@@ -380,6 +380,9 @@ trait MetaBase {
 
     def path = name
 
+    // Assets a game may well not need (Root's other maps): loaded at once only if their condition holds, otherwise when first drawn
+    def deferrable(a : ConditionalAssetsList) : Boolean = false
+
     val assets : $[ConditionalAssetsList]
 
     def intLinks : $[(Elem, String)] = $
@@ -424,20 +427,24 @@ trait MetaBots extends MetaBase {
     def randomQuickGame() : (F, $[F], Map[F, String], $[O]) = {
         1000.timesDo { () =>
             val n = randomInRange(quickMin, quickMax)
-            val l = quickFactions.shuffle.take(n)
+            // (a combination that fits, before the options, which take far longer)
+            val l = Iterator.continually(quickFactions.shuffle.take(n)).take(200).find(x => validateFactionCombination(x).is[ErrorResult].not).getOrElse(quickFactions.shuffle.take(n))
             val f = l.shuffle.first
-            val all = optionsFor(n, l)
-            val defaults = defaultsFor(n, l)
+            // (a local game is never ranked)
+            val all = optionsFor(n, l).%(_.is[RankingChoice].not)
+            val defaults = defaultsFor(n, l).%(_.is[RankingChoice].not)
             val mandatory = mandatoryFor(n, l)
 
             val o = all./~(o => quickOptions.get(o).%(_ > random())./(_ => o))
-            val r = OptionsState(all, mandatory, o.shuffle, defaults).checkDimmed().selected
+            val state = OptionsState(all, mandatory, o.shuffle, defaults).checkDimmed()
+            val r = state.selected
 
             validateFactionSeatingOptions(l, r) @@ {
                 case ErrorResult(_) =>
                 case _ =>
                     val d = l.but(f)./(e => e -> defaultBot(e)).toMap
-                    return (f, l, d, r)
+                    // as New Local Game starts (without startOptions a random map stayed unpicked, and the game failed to start)
+                    return (f, l, d, startOptions(state.actual))
             }
         }
 

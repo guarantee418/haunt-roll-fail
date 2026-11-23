@@ -169,8 +169,8 @@ object GoodGame {
         // chat apps like Discord show no "Chronicles" preview card under each
         // shared link. The client sets the real title once it loads.
         def gameIndex = index
-            .replace(">Chronicles</title>", "></title>")
-            .replace("<meta property=\"og:title\" content=\"Chronicles\" />", "")
+            .replace(">Kings and Chronicles</title>", "></title>")
+            .replace("<meta property=\"og:title\" content=\"Kings and Chronicles\" />", "")
 
         // the client build's fingerprint (2026-11-22): open game pages ask for it and reload when it changes, so a page loaded before a
         // deploy doesn't keep running old code (it sent turn reports without the attacker after the turn pings were changed);

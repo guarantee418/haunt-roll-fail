@@ -1,17 +1,17 @@
 <!doctype html>
-<html>
+<html lang="en">
     <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
         <!-- { | BASE HREF | { -->
         <base href="" />
         <!-- } | BASE HREF | } -->
 
         <!-- { | SETTINGS | { -->
-        <title id="settings" data-server="" data-user="" data-secret="" data-meta="" data-lobby="" >Chronicles</title>
+        <title id="settings" data-server="" data-user="" data-secret="" data-meta="" data-lobby="" >Kings and Chronicles</title>
         <!-- } | SETTINGS | } -->
-        <meta property="og:title" content="Chronicles" />
-        <meta name="apple-mobile-web-app-title" content="Chronicles" />
+        <meta property="og:title" content="Kings and Chronicles" />
+        <meta name="apple-mobile-web-app-title" content="Kings and Chronicles" />
 
         <style>
             html {
@@ -329,7 +329,7 @@
 
             .black-clouds {
                 background-image:
-                    url("background.png");
+                    url("background.webp");
             }
 
 
@@ -1244,7 +1244,60 @@
                 :has(> .setup-page) [class*="hrf-player"] > [class*="hrf-outlined"] { min-height: 32px; display: inline-flex; align-items: center; }
             }
 
+            /* The menus: brighter text, larger buttons, one look (the panes of the menus only; a game's own are elsewhere) */
+            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-pane---hrf-action"], body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-pane-action"] { color: #b4b4b4; }
+            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-middle-scroll-in"] { color: #b4b4b4; }
+            body:not([data-meta=pincer]) #root-attachment-point .menu-heading { color: #c4c4c4; }
+            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"], body:not([data-meta=pincer]) #root-attachment-point [class^="hrf-info---"] { box-sizing: border-box; border-radius: 6px; color: #cfcfcf; }
+            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"]:not([class*="hrf-player"]) { min-height: 38px; } body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"] { outline-width: 1px; outline-color: #777777; transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1), background-color 140ms ease; }
+            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"][data-onclick]:active { transform: scale(0.97); }
+            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-halfhigh"] { color: #c4c4c4; }
+            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-normal"] { color: #b4b4b4; }
+            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-error"] { color: #ff6b81; }
+            body:not([data-meta=pincer]) #root-attachment-point [class^="hrf-info---"] { padding: 1ex 1.4ex; text-wrap: pretty; }
+            body:not([data-meta=pincer]) #root-attachment-point [data-onclick]:focus-visible, body:not([data-meta=pincer]) #root-attachment-point a:focus-visible { outline: 3px solid #f0c040 !important; outline-offset: 2px; }
+            body:not([data-meta=pincer]) #root-attachment-point ::placeholder { color: #8a8a8a; }
+            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"][class*="hrf-link"] { color: #87ceeb; }
+            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"]:has(> [class*="hrf-highlight---hrf-bold"]) { outline-color: #e0b54a; }
+            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"]:has(> a ~ img[class*="hrf-explain"]) { position: relative; padding-left: 4.5ex; padding-right: 4.5ex; } body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"] > a ~ img[class*="hrf-explain"] { right: 1.2ex; }
+            body:not([data-meta=pincer]) #root-attachment-point .menu-third { flex: 1 1 0; margin-left: 0.8ex; margin-right: 0.8ex; } body:not([data-meta=pincer]) #root-attachment-point .menu-third:not(.menu-third + .menu-third) { margin-left: 4ex; } body:not([data-meta=pincer]) #root-attachment-point .menu-third:not(:has(+ .menu-third)) { margin-right: 4ex; }
+            body:not([data-meta=pincer]) #root-attachment-point .menu-progress { display: block; width: 100%; margin-top: 1ex; }
+            body:not([data-meta=pincer]) #root-attachment-point .menu-progress .rk-fill { background-color: #e0b54a; }
+            .home-lead { color: #b4b4b4; width: calc(100% - 8ex); margin: 0.6ex 4ex 1ex 4ex; text-wrap: balance; }
+            .home-card { padding: 1.2ex 1ex !important; width: calc(50% - 5ex) !important; margin: 0.6ex 1ex !important; align-self: stretch; }
+            .home-in { display: flex; flex-direction: column; align-items: center; gap: 0.6ex; }
+            .home-emblems { display: flex; gap: 1.2ex; }
+            .home-emblem { height: 5ex; width: 5ex; object-fit: contain; }
+            .home-name { color: #f2f2f2; font-size: 125%; }
+            .home-about { color: #b4b4b4; font-size: 90%; }
+            .rk-tabs { display: flex; flex-wrap: wrap; justify-content: center; width: 100%; }
+            body:not([data-meta=pincer]) #root-attachment-point .rk-chip { min-height: 32px; display: inline-flex; align-items: center; color: #c4c4c4; }
+            body:not([data-meta=pincer]) #root-attachment-point .rk-chip-on { color: #f3e7c6; }
+            body:not([data-meta=pincer]) #root-attachment-point .rk-note, body:not([data-meta=pincer]) #root-attachment-point .rk-counts, body:not([data-meta=pincer]) #root-attachment-point .rk-sub, body:not([data-meta=pincer]) #root-attachment-point .rk-chip-n, body:not([data-meta=pincer]) #root-attachment-point .rk-lb-h { color: #a8a8a8; }
+            /* (the glyph and the bar carry the colour; some are too dark to read as text) */
+            body:not([data-meta=pincer]) #root-attachment-point .rk-fname { color: #e6e0d4; }
+            body:not([data-meta=pincer]) #root-attachment-point .rk-pct.rk-few { color: #a8a8a8; }
+
+            @media (hover: hover) and (pointer: fine) {
+                body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"][data-onclick]:hover { background-color: #303030; }
+                body:not([data-meta=pincer]) #root-attachment-point .setup-bar .setup-go:hover { background-color: #f0c860 !important; }
+            }
+
+            @media (pointer: coarse), (max-width: 700px) {
+                body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"]:not([class*="hrf-player"]) { min-height: 44px; }
+            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"][class*="hrf-thuc"], body:not([data-meta=pincer]) #root-attachment-point [class^="hrf-info---"] { margin-left: 1ex; margin-right: 1ex; }
+                .home-lead { width: calc(100% - 2ex); margin-left: 1ex; margin-right: 1ex; }
+                .home-card { width: 100% !important; }
+                body:not([data-meta=pincer]) #root-attachment-point .menu-third.menu-third:not(.menu-third + .menu-third) { margin-left: 1ex; }
+                body:not([data-meta=pincer]) #root-attachment-point .menu-third.menu-third:not(:has(+ .menu-third)) { margin-right: 1ex; }
+                body:not([data-meta=pincer]) #root-attachment-point .rk-chip { min-height: 44px; }
+                .rk-tabs { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 28px), transparent 100%); mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 28px), transparent 100%); padding: 0 16px; box-sizing: border-box; }
+                .rk-tabs .rk-tab { flex: none; white-space: nowrap; }
+            }
+
             @media (prefers-reduced-motion: reduce) {
+                body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"] { transition: none; }
+                body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"][data-onclick]:active { transform: none; }
                 :has(> .setup-page) [class*="hrf-choice"] { transition: none; }
                 :has(> .setup-page) [class*="hrf-choice"][data-onclick]:active { transform: none; }
             }
@@ -1296,7 +1349,7 @@
                 const on = () => document.body.dataset.meta === "pincer";
                 // and the setup screens (Meta.setupDesign), only while they are the page
                 const setup = e => { const p = e.closest("[class*=hrf-middle-scroll-in]"); return p && p.querySelector(".setup-page") };
-                const take = e => on() || setup(e);
+                const take = e => on() || setup(e) || e.closest("#root-attachment-point");
                 const mark = () => {
                     document.querySelectorAll(".setup-page").forEach(m => {
                         const p = m.closest("[class*=hrf-middle-scroll-in]");
@@ -1306,6 +1359,22 @@
                                 e.setAttribute("role", "button");
                             }
                         });
+                    });
+                    // and the menus: every choice, and their headings
+                    document.querySelectorAll("#root-attachment-point [data-onclick]:not([tabindex])").forEach(e => {
+                        e.tabIndex = 0;
+                        e.setAttribute("role", "button");
+                    });
+                    document.querySelectorAll("#root-attachment-point .menu-heading:not([role])").forEach((e, i) => {
+                        if (e.textContent.trim()) {
+                            e.setAttribute("role", "heading");
+                            e.setAttribute("aria-level", i ? "2" : "1");
+                        }
+                    });
+                    document.querySelectorAll("#root-attachment-point .rk-tabs .rk-chip-on:not([data-seen])").forEach(e => {
+                        e.dataset.seen = "1";
+                        const t = e.parentElement;
+                        t.scrollLeft = e.offsetLeft - t.offsetLeft - (t.clientWidth - e.offsetWidth) / 2;
                     });
                     if (on())
                         document.querySelectorAll("[data-onclick]:not([tabindex])").forEach(e => {
@@ -1340,6 +1409,8 @@
                 const broken = window.hrfBrokenImages = [];
                 const draw = CanvasRenderingContext2D.prototype.drawImage;
                 CanvasRenderingContext2D.prototype.drawImage = function (img) {
+                    if (img instanceof HTMLImageElement && !img.src)
+                        return; // not loaded yet (ImageResources.getLate), drawn once it is
                     if (img instanceof HTMLImageElement && img.complete && img.naturalWidth === 0) {
                         const name = (img.getAttribute("data-url") || img.src || "?").replace(/^.*\//, "");
                         if (broken.indexOf(name) < 0) {
@@ -1476,7 +1547,7 @@
             <div id="game-attachment-point">
             </div>
 
-            <div id="root-attachment-point" >
+            <div id="root-attachment-point" role="main" >
                 <div id="blurred-background" class="hrf-pane black-clouds" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; width: 100vw; height: 100vh; width: 100dvw; height: 100dvh; opacity: 0.80; z-index: 400;">
                 </div>
 
