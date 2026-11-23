@@ -367,6 +367,10 @@ object Meta extends MetaGame { mmm =>
         else
             Div(Image("clan-" + f.style, styles.pickIcon)) ~ Div(f.name.hlb)
     )
+    override def setupDesign = true
+    override def factionsWord = "clans"
+    override def setupRowsLabel = "Clans"
+    override def factionRowIcon(f : Faction) : Elem = (f == Automa).?(Empty : Elem).|(Image("clan-" + f.style, styles.menuIcon))
     // Once picked, just the clan's emblem
     override def factionChosenElem(f : Faction) = (f == Automa).?(factionElem(f).spn(xstyles.bold)).|(Image("clan-" + f.style, styles.menuIcon) ~ factionElem(f).spn(xstyles.bold))
 

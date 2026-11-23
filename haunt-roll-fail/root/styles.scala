@@ -65,6 +65,11 @@ package object elem {
 
         import rules._
 
+        // the setup's faction tiles and rows
+        object pickIconBox extends CustomStyle(height("7ex"), display("flex"), align.items("center"), justify.content("center"))
+        object pickIcon extends CustomStyle(height("7ex"), display("block"))
+        object menuIcon extends CustomStyle(height("2.2em"), vertical.align("middle"), margin.right("1ex"))
+
         object dt extends BaseStyleMapping("root-dt") {
             object building extends CustomStyle(width("3.0ex"), vertical.align("middle"), padding.left("0.10ex"), padding.right("0.10ex"))
             object token    extends CustomStyle(width("2.7ex"), vertical.align("middle"), padding.left("0.10ex"), padding.right("0.10ex"))

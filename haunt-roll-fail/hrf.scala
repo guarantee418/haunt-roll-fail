@@ -3088,6 +3088,21 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         }
     }
 
+    // The reworked setup screens (Meta.setupDesign): index.html styles the pages with this mark, and only them
+    def setupMark : $[ZOption] = meta.setupDesign.$(ZOption(Empty, Span(Empty, ExternalStyle("setup-page"))))
+
+    // their buttons, kept in view at the bottom of the page
+    def setupBar(message : Elem, back : Elem, goBack : () => Unit, next : Elem, go : |[() => Unit]) : ZOption =
+        ZOption(Empty, Div(
+            (message == Empty).?(Empty : Elem).|(Div(message, ExternalStyle("setup-message"))) ~
+            Parameter("back", OnClick(Div(back, ZBasic.choice :+ xstyles.halfbutton))) ~
+            go.any.?(Parameter("go", OnClick(Div(next, ZBasic.choice :+ xstyles.halfbutton :+ ExternalStyle("setup-go")))) : Elem).|(Div(next, ZBasic.info :+ xstyles.halfbutton)),
+            xlo.fullwidth, ExternalStyle("setup-bar")), {
+                case "back" => goBack()
+                case "go" => go.foreach(g => g())
+                case _ =>
+            })
+
     def randomPick(label : Elem) : Elem = Div(label, meta.factions.exists(meta.factionTile(_).any).?(ZBasic.tile).|(ZBasic.choice))
 
     // A local game against the solo opponent: pick a faction, then the usual setup screen
@@ -3100,6 +3115,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         // Each faction with its info button (Northgard's Info), as in the custom game's picker
         def ask() {
             ui.action.asker.zask(
+                setupMark ++
                 $(ZOption(t, Div("Against the " ~ meta.factionName(solo).hl, ZBasic.info))) ++
                 meta.randomFactions.map { case (label, pool) => ZOption(Div("Play as".txt), OnClick(randomPick(label)), _ => {
                     val f = pool.but(solo).shuffle.head
@@ -3137,22 +3153,36 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         val ff = meta.factions
 
         if (meta.gradualFactions) {
-            def askCount() : Unit = ui.action.asker.zask(
-                ff.drop(meta.minPlayers - 1)./(f => ZOption(meta.label.hl, OnClick(Div((ff.indexOf(f) + 1).hlb(xstyles.larger125) ~ " Players", ZBasic.choice)), _ => {
-                    val n = ff.indexOf(f) + 1
-                    val fff =
-                        if (meta.indistinguishableFactions)
-                            ff.take(n).shuffle
-                        else
-                            ff.combinations(n)
-                                .flatMap(_.permutations)
-                                .filter(c => meta.validateFactionCombination(c).is[ErrorResult].not)
-                                .$.shuffle
-                                .sortBy(c => meta.validateFactionCombination(c).is[WarningResult])
-                                .first
+            var count = min(4, ff.num)
 
-                    history.pushState(null, () => askCount())
-                    startSetup(fff, online, online.not.?("hotseat"), picked = true)
+            def startCount(n : Int) {
+                val fff =
+                    if (meta.indistinguishableFactions)
+                        ff.take(n).shuffle
+                    else
+                        ff.combinations(n)
+                            .flatMap(_.permutations)
+                            .filter(c => meta.validateFactionCombination(c).is[ErrorResult].not)
+                            .$.shuffle
+                            .sortBy(c => meta.validateFactionCombination(c).is[WarningResult])
+                            .first
+
+                history.pushState(null, () => askCount())
+                startSetup(fff, online, online.not.?("hotseat"), picked = true)
+            }
+
+            def askCount() : Unit = if (meta.setupDesign) ui.action.asker.zask(
+                setupMark ++
+                $(ZOption(meta.label.hl, Empty)) ++
+                ff.drop(meta.minPlayers - 1)./(f => ff.indexOf(f) + 1)./(n => ZOption("Players".styled(xstyles.larger125), OnClick(Div(n.hlb(xstyles.larger125), ZBasic.choice ++ (n == count).$(xstyles.optionOn) ++ $(ExternalStyle("setup-count")))), _ => {
+                    count = n
+                    askCount()
+                })) :+
+                setupBar(Empty, "Cancel".txt, () => history.popState(), "Continue with ".hl ~ count.hlb ~ " players".hl, |(() => startCount(count)))
+            )
+            else ui.action.asker.zask(
+                ff.drop(meta.minPlayers - 1)./(f => ZOption(meta.label.hl, OnClick(Div((ff.indexOf(f) + 1).hlb(xstyles.larger125) ~ " Players", ZBasic.choice)), _ => {
+                    startCount(ff.indexOf(f) + 1)
                 })) ++
                 ZBasic(" " ~ HorizontalBreak, "                                              Cancel                                              ", () => {
                     // metaMenu()
@@ -3200,7 +3230,14 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 val t = "Play " ~ meta.label.hl ~ " " ~ (online).?("Online").|("Hotseat")
                 val v = meta.validateFactionCombination(opponents)
 
+                def goOn() {
+                    // The setup screen's Back comes back here with the picks kept
+                    history.pushState(null, () => askAdd())
+                    startSetup(opponents, online, online.not.?("hotseat"), hidden = hidden.keys.$, extra = modeOptions ++ opponents./~(variants.get(_)./~(_.options)), picked = true, names = variants.view.mapValues(_.name).toMap)
+                }
+
                 ui.action.asker.zask(
+                    setupMark ++
                     $(ZOption(t, Empty)) ++
                     opponents./(f => ZBasic(t, chosenElem(f), () => {
                         opponents :-= f
@@ -3208,11 +3245,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                         variants -= f
                         askAdd()
                     }, ZBasic.infoch ++ $(xstyles.optionOn))) ++
-                    ZBasic(t, v.ok.?("Start Setup".hl ~ v.message.any.??(" | ")).|(Empty) ~ v.message.styled(v.style), (v.ok).??(() => {
-                        // The setup screen's Back comes back here with the picks kept
-                        history.pushState(null, () => askAdd())
-                        startSetup(opponents, online, online.not.?("hotseat"), hidden = hidden.keys.$, extra = modeOptions ++ opponents./~(variants.get(_)./~(_.options)), picked = true, names = variants.view.mapValues(_.name).toMap)
-                    })).? ++
+                    meta.setupDesign.not.??(ZBasic(t, v.ok.?("Start Setup".hl ~ v.message.any.??(" | ")).|(Empty) ~ v.message.styled(v.style), (v.ok).??(() => goOn())).?) ++
                     meta.pickerModes.zipWithIndex./{ case ((label, _), i) =>
                         ZOption("Game type".styled(xstyles.larger125), OnClick(Div(label, ZBasic.choice ++ (i == mode).$(xstyles.optionOn, xstyles.bold) ++ $(xstyles.optionE, xstyles.halfbutton))), _ => {
                             mode = i
@@ -3244,10 +3277,15 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                             variants += v.faction -> v
                             askAdd()
                     }))), () => askAdd()) ++
-                    ZBasic(" ", "Cancel", () => {
+                    meta.setupDesign.$(setupBar(
+                        // nothing picked yet is no mistake
+                        (v.message.any && v.message != meta.label).?(v.message.styled((opponents.num < meta.minPlayers).?(xstyles.halfhigh).|(v.style)) : Elem).|(Empty),
+                        "Cancel".txt, () => history.popState(),
+                        v.ok.?("Continue with ".hl ~ opponents.num.hlb ~ (" " + meta.factionsWord).hl).|("Continue".txt), v.ok.?(() => goOn()))) ++
+                    meta.setupDesign.not.??(ZBasic(" ", "Cancel", () => {
                         // metaMenu()
                         history.popState()
-                    }).?
+                    }).?)
                 )
             }
 
@@ -3281,7 +3319,13 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         }
 
         val presets = meta.presetsFor(factions.num, factions)./{ case (title, included, excluded) =>
-            val options = OptionsState(matching, mandatory, included ++ defaults.diff(excluded), $).checkDimmed()
+            val options =
+                if (meta.setupDesign)
+                    // on top of the defaults, as if picked: with both at once neither of two choices of a section
+                    // was the preset's (Official Rules kept the default deck)
+                    included.foldLeft(OptionsState(matching, mandatory, defaults.diff(excluded), $).checkDimmed())((s, o) => (matching.has(o) && s.selected.has(o).not && s.enabled(o)).?(s.click(o)).|(s))
+                else
+                    OptionsState(matching, mandatory, included ++ defaults.diff(excluded), $).checkDimmed()
             (title, included, excluded, options)
         }
 
@@ -3304,6 +3348,32 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
 
             def foldOpen(s : String) = Folds.isOpen(s) || meta.optionFoldOpen(s, seating, options.actual)
 
+            def goStart() {
+                history.destroy(pages.length - 1 + picked.??(1))
+
+                val started = meta.startOptions(options.actual)
+
+                if (online)
+                    arrangeOnlineGame(seating, difficulties, started, Map(), notes, false, meta.randomGameName(), HRF.now(), $(meta.start), None, g => {})
+                else {
+                    val title = meta.randomGameName()
+                    val journal = keep./(newLocalGame(_, seating, difficulties, started, title)).|(new MemoryJournal[meta.gaming.ExternalAction](meta))
+
+                    startGame(seating, difficulties, started, $, journal, title, () => Map(), NoSwitches)
+                }
+            }
+
+            def goNext() {
+                ui.action.scroll.scrollTop = 0
+                history.pushState(null, () => setupQuestions(page))
+                setupQuestions(page + 1)
+            }
+
+            def goBack() {
+                ui.action.scroll.scrollTop = 0
+                history.popState()
+            }
+
             // Back (or Cancel) and Start (or Next), at the top of the page and again at the bottom
             def buttons =
                 (page == 0).$(
@@ -3322,20 +3392,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 ) ++
                 v.ok.??(
                     (page == pages.length - 1).$(
-                        ZOption(vm, "Start".hlb.div(ZBasic.choice)(xstyles.halfbutton).onClick, _ => {
-                            history.destroy(pages.length - 1 + picked.??(1))
-
-                            val started = meta.startOptions(options.actual)
-
-                        if (online)
-                            arrangeOnlineGame(seating, difficulties, started, Map(), notes, false, meta.randomGameName(), HRF.now(), $(meta.start), None, g => {})
-                        else {
-                            val title = meta.randomGameName()
-                            val journal = keep./(newLocalGame(_, seating, difficulties, started, title)).|(new MemoryJournal[meta.gaming.ExternalAction](meta))
-
-                            startGame(seating, difficulties, started, $, journal, title, () => Map(), NoSwitches)
-                        }
-                    })
+                        ZOption(vm, "Start".hlb.div(ZBasic.choice)(xstyles.halfbutton).onClick, _ => goStart())
                 ) ++
                 (page < pages.length - 1).$(
                     ZOption(vm, "Next".hh.div(ZBasic.choice)(xstyles.halfbutton).onClick, _ => {
@@ -3354,10 +3411,23 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                 )
             )
 
+            def bar = {
+                val last = page == pages.length - 1
+                setupBar((v.message.any && v.message != meta.label).?(vm : Elem).|(Empty), (page == 0 && picked.not).?("Cancel").|("Back").txt, () => goBack(), last.?("Start").|("Next").hlb, v.ok.?(() => last.?(goStart()).|(goNext())))
+            }
+
+            // the faction's name on its row, with its icon on the reworked screens
+            def rowName(f : meta.F) : Elem =
+                if (meta.setupDesign)
+                    (hidden.has(f).?(meta.randomName.hl : Elem).|(meta.factionRowIcon(f) ~ names.get(f).|(meta.factionName(f)).hl)).div(ExternalStyle("setup-name"))
+                else
+                    (padding(f) ~ hidden.has(f).?(meta.randomName.txt).|(names.get(f)./(_.txt).|(meta.factionElem(f))) ~ padding(f)).div(xstyles.width18ch)
+
             ui.action.asker.zask(
-                buttons ++
+                setupMark ++
+                meta.setupDesign.not.??(buttons) ++
                 (page == 0).?? {
-                    seating./(f => ZOption("Setup Factions".styled(xstyles.larger125), Div(Empty ~ online.?(Input(notes.get(f).|(""), "Player #" + (seating.indexOf(f) + 1), s => notes += f -> s.sanitize(32), 9, 16, ZBasic.inputT, ZBasic.inputD)) ~ " " ~ (padding(f) ~ hidden.has(f).?(meta.randomName.txt).|(names.get(f)./(_.txt).|(meta.factionElem(f))) ~ padding(f)).div(xstyles.width18ch) ~ " " ~
+                    seating./(f => ZOption(meta.setupDesign.?(meta.setupRowsLabel).|("Setup Factions").styled(xstyles.larger125), Div(Empty ~ online.?(Input(notes.get(f).|(""), "Player #" + (seating.indexOf(f) + 1), s => notes += f -> s.sanitize(32), 9, 16, ZBasic.inputT, ZBasic.inputD)) ~ " " ~ rowName(f) ~ " " ~
                         Parameter("difficulty", OnClick(Span((difficulties(f) match {
                             case Human  => " Human ".pre.hl
                             case Bot(s) => " Bot / ".pre ~ (s + " ").pre.hl
@@ -3400,8 +3470,12 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                             seating = a ++ b.drop(1).take(1) ++ b.take(1) ++ b.drop(2)
                             setupQuestions(page)
                     })) ++
-                    presets.zipWithIndex./{ case ((title, included, excluded, neu), i) =>
-                        val matches = meta.options.intersect(neu.selected) == meta.options.intersect(options.selected)
+                    (meta.setupDesign && meta.seatingNote(options.selected) != Empty).$(ZOption(Empty, Div(meta.seatingNote(options.selected), ExternalStyle("setup-message")))) ++
+                    presets.zipWithIndex./{ case ((title0, included, excluded, neu), i) =>
+                        // a preset that sets the same as one before it says so, and only the first shows as picked
+                        val same = meta.setupDesign.??(presets.take(i).find(p => meta.options.intersect(p._4.selected) == meta.options.intersect(neu.selected)))
+                        val title : Elem = same./(p => title0 ~ " (same as " ~ p._1 ~ ")").|(title0)
+                        val matches = same.none && meta.options.intersect(neu.selected) == meta.options.intersect(options.selected)
                         val info = meta.presetsInfo(seating.num, seating).lift(i).|($)
                         ZOption("Presets".styled(xstyles.larger125), OnClick(Div(title ~ info.any.?(Parameter("preset-info", OnClick(Image("question-mark")(xstyles.explain)))), ZBasic.choice ++ matches.$(xstyles.optionOn, xstyles.bold) ++ $(xstyles.optionE))), {
                             case "preset-info" =>
@@ -3430,6 +3504,15 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     case g : OneOfGroup => shown.drop(shown.indexOf(o) + 1).%(options.selected.has).%{ case q : OneOfGroup => q.oneOf == g.oneOf ; case _ => false }.headOption./(q => q.valueOn ~ " (" ~ q.group ~ ")").|("None".txt)
                     case _ => "None".txt
                 }
+                // On the reworked screens every section of two options or more folds, each to one line
+                def foldKey(o : meta.O) : |[String] = o.fold || (meta.setupDesign && o.folder.none && meta.optionTile(o).none && shown.count(_.group.text == o.group.text) > 1).?("setup." + meta.name + "." + o.group.text)
+                def foldLine(o : meta.O, s : String) : ZOption = {
+                    val section = shown.%(foldKey(_).has(s))
+                    val on = section.%(options.selected.has)
+                    val label : Elem = (section./(_.group.text).distinct.num == 1).?(o.group).|(s.split('.').last.txt)
+                    val value : Elem = on.take(3)./(_.valueOn).reduceOption((a, b) => a ~ ", " ~ b)./(e => (on.num > 3).?(e ~ ", +" ~ (on.num - 3).toString).|(e)).|(noneOf(o))
+                    ZOption(Empty, OnClick(Div(Span(label, ExternalStyle("setup-fold-label")) ~ Span(value ~ " ▸", ExternalStyle("setup-fold-value")), ZBasic.choice :+ ExternalStyle("setup-fold"))), _ => { Folds.toggle(s) ; setupQuestions(page) })
+                }
                 val entries : $[Either[ZOption, meta.O]] = shown./~{ o =>
                   o.folder.%(d => shown.find(_.folder.has(d)).has(o))./{ d =>
                     val open = folderOpen(d)
@@ -3437,7 +3520,10 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     Left(ZOption(Folds.heading(d.txt.styled(xstyles.larger125), open), open.?(Empty).|(OnClick(Div(picked./(_.valueOn).reduceOption((a, b) => a ~ " · " ~ b).|("None".txt), ZBasic.choice ++ $(xstyles.optionE)))),
                         toggleFolder(d), clear = false, groupClick = toggleFolder(d))) : Either[ZOption, meta.O]
                   }.$ ++
-                  o.folder.forall(folderOpen).$(Right(o) : Either[ZOption, meta.O])
+                  o.folder.forall(folderOpen).??(foldKey(o).%(s => meta.setupDesign && foldOpen(s).not) match {
+                      case Some(s) => shown.find(foldKey(_).has(s)).has(o).$(Left(foldLine(o, s)) : Either[ZOption, meta.O])
+                      case None => $(Right(o) : Either[ZOption, meta.O])
+                  })
                 }
                 entries.%{
                     case Left(_) => true
@@ -3454,16 +3540,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     val active = enabled
                     // A section with groupInfo has a ? on its heading; tapping the ? shows it instead of folding or unfolding the section
                     val groupInfo = meta.groupInfo(o)
-                    val title = heading(o) ~ groupInfo.any.?(" ".txt ~ Parameter("group-info", OnClick(Image("question-mark")(xstyles.explain))))
-                    ZOption(o.fold./(s => Folds.heading(title, foldOpen(s))).|(groupInfo.any.?(OnClick(title)).|(title)),
-                        OnClick(Div(state.?(o.decorate(o.valueOn).styled(xstyles.bold)).|(o.decorate(o.valueOff))
-                        // not approved for ranked play (MetaGame.rankingUnapproved), marked in an online game's setup
-                        ~ (online && meta.ranking.any && meta.rankingUnapproved(o)).?(" unranked".styled(xstyles.warning))
-                        ~ (o.explain.any).?(Parameter(o, OnClick(Image("question-mark")(xstyles.explain)))), (active || state).?(ZBasic.choice).|(ZBasic.info) ++ state.$(xstyles.optionOn) ++ $(xstyles.optionE))), {
+                    val click : Any => Unit = {
                             case o : GameOption if o.explain.any =>
                                 showOverlay(o.explain./(ZBasic(o.group ~ " " ~ MDash ~ " " ~ o.valueOn, _)), o.grow)
                                 setTimeout(0) { setupQuestions(page) }
-                            case Nil =>
+                            case _ =>
                                 if (active || state) {
                                     if (active) {
                                         val next = options.click(o)
@@ -3472,21 +3553,28 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                                     }
                                 }
                                 setupQuestions(page)
-                        },
+                        }
+                    val title = heading(o) ~ groupInfo.any.?(" ".txt ~ Parameter("group-info", OnClick(Image("question-mark")(xstyles.explain))))
+                    ZOption(foldKey(o)./(s => Folds.heading(title, foldOpen(s))).|(groupInfo.any.?(OnClick(title)).|(title)),
+                        meta.optionTile(o)./(tile => OnClick(Div(Div(tile) ~ o.explain.any.?(Div(Parameter(o, OnClick(Span("?", $(xstyles.outlined, xstyles.tileButton))))) : Elem).|(Empty), ZBasic.tile ++ state.$(xstyles.optionOn) ++ state.not.$(ExternalStyle("setup-off")))) : Elem).|(
+                        OnClick(Div(state.?(o.decorate(o.valueOn).styled(xstyles.bold)).|(o.decorate(o.valueOff))
+                        // not approved for ranked play (MetaGame.rankingUnapproved), marked in an online game's setup
+                        ~ (online && meta.ranking.any && meta.rankingUnapproved(o)).?(" unranked".styled(xstyles.warning))
+                        ~ (o.explain.any).?(Parameter(o, OnClick(Image("question-mark")(xstyles.explain)))), (active || state).?(ZBasic.choice).|(ZBasic.info) ++ state.$(xstyles.optionOn) ++ $(xstyles.optionE)))), click,
                         // the heading's own parameter comes first when the ? inside it is tapped
                         groupClick = {
                             case p if p == "group-info" || (p match { case l : Seq[_] => l.contains("group-info") ; case _ => false }) =>
                                 showOverlay(groupInfo./(ZBasic(o.group, _)), xlo.grow4)
                                 setTimeout(0) { setupQuestions(page) }
                             case _ =>
-                                o.fold.foreach(s => if (meta.optionFoldOpen(s, seating, options.actual).not) Folds.toggle(s))
+                                foldKey(o).foreach(s => if (meta.optionFoldOpen(s, seating, options.actual).not) Folds.toggle(s))
                                 setupQuestions(page)
                         }
                     )
                   }
                 })
                 } ++
-                buttons ++
+                meta.setupDesign.?($(bar)).|(buttons) ++
                 $
 
             )

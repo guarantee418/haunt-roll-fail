@@ -1163,6 +1163,91 @@
                     transform: none;
                 }
             }
+
+            /* The setup screens of Root, Advanced Setup and Northgard (Meta.setupDesign): everything here needs the page's mark */
+            [class*="hrf-middle-scroll-in"]:has(.setup-page) { overflow: visible !important; }
+            :has(> .setup-page) { color: #b4b4b4; }
+            :has(> .setup-page) [class*="hrf-halfhigh"] { color: #c4c4c4; }
+            :has(> .setup-page) [class*="hrf-choice"], :has(> .setup-page) [class*="hrf-info"] {
+                box-sizing: border-box;
+                border-radius: 6px;
+                color: #cfcfcf;
+                transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1), background-color 140ms ease;
+            }
+            :has(> .setup-page) [class*="hrf-choice"] { min-height: 38px; outline-width: 1px; outline-color: #777777; position: relative; }
+            :has(> .setup-page) [class*="hrf-choice"][data-onclick]:active { transform: scale(0.97); }
+            :has(> .setup-page) [class*="hrf-option-on"] { background: #2a2518 !important; outline: 2px solid #e0b54a !important; }
+            /* a drawn check on what is picked */
+            :has(> .setup-page) [class*="hrf-option-on"]:not(.setup-count)::before {
+                content: "";
+                position: absolute;
+                left: 12px;
+                top: 50%;
+                width: 6px;
+                height: 11px;
+                margin-top: -8px;
+                border: solid #e0b54a;
+                border-width: 0 2.5px 2.5px 0;
+                transform: rotate(45deg);
+            }
+            :has(> .setup-page) [class*="hrf-faction-tile"][class*="hrf-option-on"]::before { top: 14px; }
+            :has(> .setup-page) [class*="hrf-info"][class*="hrf-option-on"] { position: relative; min-height: 38px; }
+            :has(> .setup-page) .setup-off img { opacity: 0.45; filter: grayscale(0.6); }
+            :has(> .setup-page) [class*="hrf-player"] { min-height: 8.4ex; padding-right: 9ex; }
+            :has(> .setup-page) [class*="hrf-updown"] { right: 1.6ex; top: 50%; height: auto; margin: 0; gap: 2px; transform: translateY(-50%); }
+            :has(> .setup-page) [class*="hrf-faction-tile"] { width: 13ex; align-self: stretch; justify-content: flex-start; }
+            :has(> .setup-page) [data-onclick]:focus-visible { outline: 3px solid #f0c040 !important; outline-offset: 2px; }
+            .setup-name { width: 24ex; text-align: left; }
+            .setup-count { width: 6ex !important; margin: 0.6ex !important; min-width: 44px; }
+            .setup-message { width: 100%; text-align: center; color: #c4c4c4; font-size: 90%; padding: 0.4ex 0; }
+            .setup-fold { justify-content: space-between !important; flex-wrap: nowrap !important; padding-left: 1.6ex !important; padding-right: 1.6ex !important; gap: 1.5ex; }
+            .setup-fold-label { color: #f0f0f0; text-align: left; }
+            .setup-fold-value { text-align: right; }
+            .setup-bar {
+                position: sticky;
+                /* (the pane's own padding is under it) */
+                bottom: calc(-1vmin - 3px);
+                z-index: 5;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                box-sizing: border-box;
+                margin-top: 1.5ex;
+                padding: 0.8ex 4ex 1ex 4ex;
+                gap: 0 1.2ex;
+                background-color: #222222;
+                border-top: 1px solid #4a4a4a;
+            }
+            /* (images are layers of their own, which showed through under the bar) */
+            :has(> .setup-page) img { transform: none; }
+            .setup-bar [class*="hrf-halfbutton"] { width: auto !important; flex: 1 1 0; min-height: 44px !important; margin: 0.4ex 0 !important; }
+            .setup-bar .setup-go { background-color: #e0b54a !important; outline-color: #e0b54a !important; color: #1a1a1a !important; }
+            .setup-bar .setup-go span { color: #1a1a1a !important; }
+
+            @media (hover: hover) and (pointer: fine) {
+                :has(> .setup-page) [class*="hrf-choice"][data-onclick]:hover { background-color: #303030; }
+                .setup-bar .setup-go:hover { background-color: #f0c860 !important; }
+            }
+
+            @media (pointer: coarse), (max-width: 700px) {
+                :has(> .setup-page) [class*="hrf-choice"] { min-height: 44px; }
+                :has(> .setup-page) [class*="hrf-choice"][class*="hrf-thuc"] { margin-left: 1ex; margin-right: 1ex; }
+                :has(> .setup-page) [class*="hrf-faction-tile"] { width: calc(33.3% - 1.4ex); margin: 0.45ex; padding: 0.4ex 0; font-size: 88%; }
+                :has(> .setup-page) [class*="hrf-faction-tile"] [class*="tile-button"] { min-width: 40px; min-height: 30px; }
+                .setup-bar { padding-left: 1ex; padding-right: 1ex; }
+                .setup-name { width: 100%; text-align: center; }
+                .setup-name + * { margin-top: 0.4ex; }
+                :has(> .setup-page) > [class*="hrf-halfbutton"] { width: 40%; margin-left: 1ex; margin-right: 1ex; }
+                :has(> .setup-page) > [class*="hrf-halfbutton"][class*="hrf-option-e"] { padding-left: 2.6ex; padding-right: 0.6ex; }
+                :has(> .setup-page) [class*="hrf-player"] { min-height: 11ex; padding-left: 2ex; padding-top: 0.8ex; padding-bottom: 0.8ex; row-gap: 0.6ex; }
+                :has(> .setup-page) [class*="hrf-updown"] [class*="hrf-outlined"] { min-width: 40px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; }
+                :has(> .setup-page) [class*="hrf-player"] > [class*="hrf-outlined"] { min-height: 32px; display: inline-flex; align-items: center; }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                :has(> .setup-page) [class*="hrf-choice"] { transition: none; }
+                :has(> .setup-page) [class*="hrf-choice"][data-onclick]:active { transform: none; }
+            }
         </style>
 
         <link id="icon" type="image/x-icon" rel="shortcut icon" comment="drop icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAE9klEQVR42u3bW4hVVRjA8Z8z08xkmZlpUWlXM7uYdB+NrvQgRRA9RJeH6CEkKLqA0EPUQwRFSUVF93uRQRTUQ0IXym7QlczCLjTaPVIzzRyT2T1867SHoak5Z87Z6xj+4TAMe+/1XfZa31rrW99mG9vIwQL8gQIbcEFuhapkLvqT8bXfChyRW7EqmI63ktE/YhFWp/9fxu65FWwlO+ChZOwmXIbtcDU2YxB3oje3oq1gHC7HQDL0Xmyfru2Ix5JjNuLidP//ipNFly+wFHsOu74v3k3Xv0FfboWbyV7Kcf8t5o1w36n4Kd33KnbLrXgz6MEdottvwiVG7t4duEoZD24WMWKr5jwxzxd4BOP/4/4JWJzu/w1n5zZgLByEz5IxH+OAUT43a9hz++c2pBG2x6Maf5NDe879tsKp8UKx1B3Ebeofyz24Ozngd5yb26B6mKHswu9jWoPt7CuGQIFl2C+3YaOhG/ckpdfjrDG2d47oAYWYTdp+VjhTjPkiOaJ7jO31KpfPv2J+bgP/jal4U7m7O7BJ7c7Cl6nd1zA5t6H/xDgsxBaxkFnQ5PYvxZ+p/Su04V5hFr4Wb2kJJja5/Uliu1yI3jAzt8FD6RIBqjZOT2uRnPlYl+Tcis7chteYi1+Ui5axBr6R6MbDSc7PODa34cSC5Ymk1HeY02J5R+KHJO9RrXP2qDlFdPsCN4kdXSvpxC1J3lqclNP4HjyVlOkXm58qOBgrk9wnkx5ZOEG8hQI3qG5q6sCNyl5wfA7ju/CAMoV1cMXyDxHZpQL3JX0qZbYyGN2u9WN/OJ3Kqfd7HFal8HG4Lglfg+MqNr5GX5Jf4NoqBU/FR0nws/IFoV48l/T4EFOqEnyWyO9vFpmbnJyX9Bgw9q33qOhUBr9PsUdmB+yR9CiSXnUvj+sNXtOV084rIhDm5Mekh6TX9FY7YC72Fl1uifB8TgaTHgNJr3n1NlCvA04TQW8VPshsfI0Pkj49WrcT/ZtaZmaxDIuPEehSHqZ8Ve/D9faAfdLf90R2ph3YIg5WiWHQUgd0ivG2LLfVw1iW9Gr5LEBkZVbltngYq8S2vG4accBasQRtJ9YkvSpxwDpRydFObEx6VeKATdonANbYkvSqxAHtSkOLskYc0N3gc62kU4MJ0kYMmaD9zut7kl6VOGBS+rUTExvVqVEH1L3rajHTsEsVDhgU5S/tVtc7J+lVdyCs1wFfpL8naZ840I0TRa6yv9UOeEF4+VgcmtvyxExlZemLrRZ2nLLkdZH80+E4XC+G5moVHJUNPaH9HkdldsAhym8PnlYWYLeUPnE8XeAZDc6/TWC8ssp8rTiorYROcRY4KFLS16g+O9SBK8X6v9BYLeKYmIqXlJWgl6iuYqMDFykPZt8QFemVc7jIxBRiK7rQfxdDj5Ve8eFFzfgVOCaH8TXmYXlSZgAPGn1RdL3sL06Ca1+bfa7Ccf9vHInXlV+ALRdlcrs2qf0pqb1Phsh4S75D2X9kGu4S5bGFSFC8Ler7Zqg/SHaJnnQp3knt1b4xvEcD2d+RaGZVRzfOEGO0b4jRK5MRS0Xx87ciZtQ+oOoQ29mJIpjNFsdcfUMMrTn0NrEaHWhHB9SYLGqGz8fR2GnItQ3KBOb6ZFiXWEtMEju6HYfc/5vI+T+O58Vqb6thIk4XtYP94m0Xo/gNpvvvT8/vnNuQbfyf+QtabD7ASyKDhAAAAABJRU5ErkJggg==" />
@@ -1209,7 +1294,19 @@
             // Pincer's choices by keyboard: Tab to one, Enter or Space to take it
             (function () {
                 const on = () => document.body.dataset.meta === "pincer";
+                // and the setup screens (Meta.setupDesign), only while they are the page
+                const setup = e => { const p = e.closest("[class*=hrf-middle-scroll-in]"); return p && p.querySelector(".setup-page") };
+                const take = e => on() || setup(e);
                 const mark = () => {
+                    document.querySelectorAll(".setup-page").forEach(m => {
+                        const p = m.closest("[class*=hrf-middle-scroll-in]");
+                        p && p.querySelectorAll("[data-onclick]:not([tabindex])").forEach(e => {
+                            if (/hrf-choice|hrf-outlined|hrf-option-on/.test(e.className)) {
+                                e.tabIndex = 0;
+                                e.setAttribute("role", "button");
+                            }
+                        });
+                    });
                     if (on())
                         document.querySelectorAll("[data-onclick]:not([tabindex])").forEach(e => {
                             // the log's lines and the pictures stay out of the tab order
@@ -1227,7 +1324,7 @@
                     }
                 }).observe(document.body, { childList: true, subtree: true });
                 document.addEventListener("keydown", e => {
-                    if (on() && (e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[role=button][data-onclick]")) {
+                    if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[role=button][data-onclick]") && take(e.target)) {
                         e.preventDefault();
                         e.stopPropagation();
                         e.target.click();
