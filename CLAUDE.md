@@ -1214,6 +1214,14 @@ server. No session can reach the server, and none needs to.
   only the files that list names (`Lookup.artFile`). The bot's commands other than the LFG ones are `BotCommand`s in `BotCommands.all`
   (`good-game/Lookup.scala`), registered with `/root` and `/northgard` and answered by `Lfg.interaction` (use and autocomplete); a new one
   (a translator, a rules helper) is one more entry there.
+- The Discord server's roles and channels are managed through the bot by tournament changes (2026-11-24, asked for so a Claude
+  session, which can't reach Discord, can do it): `roles`, `role <name> [| color #rrggbb] [| hoist] [| mentionable]`, `rename-role`,
+  `give-role <user> -> <role>`, `take-role`, `channels`, `category <name> [| private] [| see <roles>] [| read-only <roles>]`,
+  `channel <name> [| in <category>] [| text|voice|forum|announcement|stage] [| topic <text>] [| private] [| see ...] [| read-only ...] [| synced]`,
+  `rename-channel`, `move-channel <name> -> <category>|none` (`good-game/DiscordServer.scala`, its header has the forms). Creating
+  changes the one of that name if there is one. On purpose nothing is deleted, nobody kicked or banned, and a role is never given
+  server permissions; every request carries the audit log reason "HRF server change". The bot needs Manage Roles and Manage Channels,
+  and its role above the roles it manages.
 - The bot's `/rule <rule> [game] [private]` (2026-11-22, asked for as a bot "to help cite the rules", not to interpret them): Root's
   rules by their Law of Root number (`4.3.2`, `H.1`, a section lists the rules under it) or name, with the rule's text and the link to
   it on the Root Database (`webp2/lfg/rules-root.tsv`, made by `haunt-roll-fail/tools/law-index.py` from the Root Database's copy, kept up
