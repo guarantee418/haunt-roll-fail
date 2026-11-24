@@ -57,6 +57,9 @@ object Turns {
     // why a seat is asked in the last report kept ("defend/MC", ...), if its client said
     def reason(journal : String, seat : String) : Option[String] = synchronized { reasons.get(journal).flatMap(_.get(seat)) }
 
+    // every seat's reason in the last report kept, as "<seat>=<reason>" (the "pings" change)
+    def reasonsOf(journal : String) : String = synchronized { reasons.getOrElse(journal, Map()).toList.sorted.map { case (s, r) => s + "=" + r }.mkString(" ") }
+
     // the last report said the game has fan content
     def fan(journal : String) : Boolean = synchronized { fans.contains(journal) }
 
