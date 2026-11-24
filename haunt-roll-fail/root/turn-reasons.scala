@@ -48,6 +48,9 @@ object TurnReasons {
             else if (actions.exists(_.isInstanceOf[TournamentMapAction])) "pickmap"
             else if (actions.exists(_.isInstanceOf[TournamentLandmarkAction])) "picklandmark"
             else if (actions.exists(_.isInstanceOf[PartisansAction])) "partisans"
+            // a draw the Lilypad Diaspora's Pond offers in place of the deck (2026-11-24, asked for: an Outrage's supporter waited on
+            // the Woodland Alliance and the ping only said it was needed)
+            else if (actions.exists { case WrapAction(_ : InvasiveEEEPondDrawAction) => true ; case _ : InvasiveEEEPondDrawAction => true ; case _ => false }) "pond"
             else asker @@ {
                 case SetupNextFactionAction(_, _) => "draft"
                 case SetupDoneAction => "keep"
