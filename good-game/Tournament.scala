@@ -64,6 +64,8 @@ import scala.concurrent.duration.Duration
 //                                     "-> off" forgets it)
 //   roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order
 //                                     the Discord server's roles and channels, through the bot (DiscordServer.scala has the forms)
+//   self-roles, self-role, self-role-off, role-picker
+//                                     the roles members may pick for themselves with /roles or the role picker post (SelfRoles.scala)
 // The Discord channel of the webhook in HRF_DISCORD_WEBHOOK (or the file discord-webhook) is invited to sign up, with the link to
 // the Tournament page, once for each tournament as soon as its sign-ups open and a webhook is set (at the server's start, when the
 // webhook is set, when a final starts or a tournament is cancelled; asked for on 2026-11-20, as nobody could find the page), told
@@ -605,7 +607,9 @@ object Tournament {
                 case "ping" if rest.startsWith("waiting ") => TurnPings.pingWaitingIn(rest.drop(8).split("[ ,]+").toList.filter(_.nonEmpty)).mkString("; ")
                 // the Discord server's roles and channels, through the bot (DiscordServer.scala; 2026-11-24)
                 case w if DiscordServer.words(w) => DiscordServer.change(w, rest)
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, pincer-turns, tactics-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order, webhooks, make-webhook, rename-webhook and test-ping)"
+                // the roles members pick for themselves, and the role picker post (SelfRoles.scala; 2026-11-24)
+                case w if SelfRoles.words(w) => SelfRoles.change(w, rest)
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, pincer-turns, tactics-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order, webhooks, make-webhook, rename-webhook, test-ping, self-roles, self-role, self-role-off and role-picker)"
             }
 
             (if (word == "webhook" || word == "forum" || TurnPings.slot(word).nonEmpty || word == "bot") word else line) + ": " + result
