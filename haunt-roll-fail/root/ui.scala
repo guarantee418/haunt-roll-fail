@@ -6491,7 +6491,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
             $(ZBasic(Break ~ Break, "Hirelings".spn, () => { onClick("view-hirelings") }).copy(clear = false)).%(_ => game.hirelings.but(InfectedHorde).but(TrapLayer).but(LegendBeast).but(GuanoMess).any || game.unhired.any) ++
             $(ZBasic(Break ~ Break, "Interface".spn, () => { callbacks.editSettings { updateStatus() } }).copy(clear = false)) ++
             $(ZBasic(Break ~ Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug) ++
-            $(ZBasic(Break ~ Break, "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle)
+            $(ZBasic(Break ~ Break, "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle) ++
+            $(ZBasic(Break ~ Break, "My Online Games".spn, () => { callbacks.myGames() }).copy(clear = false)).%(_ => callbacks.canMyGames)
     }
 
     override def preinfo(self : |[Player], aa : $[UserAction]) = {

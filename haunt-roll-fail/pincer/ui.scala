@@ -540,7 +540,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             $(ZBasic(Break ~ Break, Icons("notifications") ~ "Notifications".spn, () => { onClick("notifications", self) }).copy(clear = false)).%(_ => self.any || game.isOver) ++
             $(ZBasic(Break ~ Break, Icons("interface") ~ "Interface".spn, () => { callbacks.editSettings { updateStatus() } }).copy(clear = false)) ++
             $(ZBasic(Break ~ Break, Icons("bug") ~ "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug) ++
-            $(ZBasic(Break ~ Break, Icons("home") ~ "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle)
+            $(ZBasic(Break ~ Break, Icons("home") ~ "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle) ++
+            $(ZBasic(Break ~ Break, "My Online Games".spn, () => { callbacks.myGames() }).copy(clear = false)).%(_ => callbacks.canMyGames)
     }
 
     var shown : $[Notification] = $
