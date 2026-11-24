@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Face-down relics as drawn on the Root map (Keepers in Iron, ki-*, and the old
+# Face-down and flipped relics as drawn on the Root map (Keepers in Iron, ki-*, and the old
 # Keepers, ok-*): the board tokens are half-transparent grey discs that vanish on
 # the green forest art, so the map draws <name>-map instead: the same picture on
 # an opaque disc, a little more contrast, a gold rim and a dark shadow around it.
@@ -35,3 +35,7 @@ def make(path):
 for style, folder in (("ki", "expedition"), ("ok", "old-expedition")):
     for rt in ("tablet", "jewel", "idol"):
         make(folder + "/" + style + "-" + rt + "-hidden")
+    # the flipped (face-up) relics get the same look
+    for rt in ("tablet", "jewel", "idol"):
+        for v in (("-1", "-2", "-3") if style == "ki" else ("",)):
+            make(folder + "/" + style + "-" + rt + v)

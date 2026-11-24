@@ -3764,20 +3764,29 @@ object Meta extends MetaGame {
         ImageAsset("ki-badger-x5") ::
         ImageAsset("ki-badger") ::
         ImageAsset("ki-idol-1") ::
+        ImageAsset("ki-idol-1-map") ::
         ImageAsset("ki-idol-2") ::
+        ImageAsset("ki-idol-2-map") ::
         ImageAsset("ki-idol-3") ::
+        ImageAsset("ki-idol-3-map") ::
         ImageAsset("ki-idol-hidden") ::
         ImageAsset("ki-idol-hidden-map") ::
         ImageAsset("ki-idol-empty") ::
         ImageAsset("ki-jewel-1") ::
+        ImageAsset("ki-jewel-1-map") ::
         ImageAsset("ki-jewel-2") ::
+        ImageAsset("ki-jewel-2-map") ::
         ImageAsset("ki-jewel-3") ::
+        ImageAsset("ki-jewel-3-map") ::
         ImageAsset("ki-jewel-hidden") ::
         ImageAsset("ki-jewel-hidden-map") ::
         ImageAsset("ki-jewel-empty") ::
         ImageAsset("ki-tablet-1") ::
+        ImageAsset("ki-tablet-1-map") ::
         ImageAsset("ki-tablet-2") ::
+        ImageAsset("ki-tablet-2-map") ::
         ImageAsset("ki-tablet-3") ::
+        ImageAsset("ki-tablet-3-map") ::
         ImageAsset("ki-tablet-hidden") ::
         ImageAsset("ki-tablet-hidden-map") ::
         ImageAsset("ki-tablet-empty") ::
@@ -3813,8 +3822,11 @@ object Meta extends MetaGame {
         ImageAsset("ok-caravan"         ) ::
         ImageAsset("ok-station"         ) ::
         ImageAsset("ok-tablet"          ) ::
+        ImageAsset("ok-tablet-map") ::
         ImageAsset("ok-jewel"           ) ::
+        ImageAsset("ok-jewel-map") ::
         ImageAsset("ok-idol"            ) ::
+        ImageAsset("ok-idol-map") ::
         ImageAsset("ok-tablet-hidden"   ) ::
         ImageAsset("ok-tablet-hidden-map") ::
         ImageAsset("ok-jewel-hidden"    ) ::
