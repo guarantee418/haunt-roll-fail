@@ -52,6 +52,8 @@ import scala.concurrent.duration.Duration
 //                                     factions and scores, whose turn it is, or its winner, and its spectator link (Tournament.status)
 //   ping waiting <game> ...           pings the seats those games wait for (their server ids, the "server" line of their
 //                                     lobbies), saying for each who was pinged and why anyone wasn't (TurnPings.pingWaitingIn)
+//   pings <game> ...                  what the server knows of those games' turn pings: each turn report's row (log index, seats
+//                                     waited for, time) and each ping sent, last 40 lines (TurnPings.history), to check a missed ping
 //   lfg-key <public key>              the Discord application's public key, for /root, /northgard and the LFG posts' buttons (Lfg.scala;
 //                                     the file discord-public-key, "lfg-key off" removes it); registers the commands in the Discord server
 //   lfg-commands                      registers /root and /northgard again
@@ -622,10 +624,11 @@ object Tournament {
                 // nobody can be pinged (2026-11-22; Play Online asks those players once, discordAsk in hrf.scala)
                 case "no-discord" => noDiscord()
                 // only those games (2026-11-21)
+                case "pings" => TurnPings.history(rest.split("[ ,]+").toList.filter(_.nonEmpty)).mkString("\n")
                 case "ping" if rest.startsWith("waiting ") => TurnPings.pingWaitingIn(rest.drop(8).split("[ ,]+").toList.filter(_.nonEmpty)).mkString("; ")
                 // the Discord server's roles and channels, through the bot (DiscordServer.scala; 2026-11-24)
                 case w if DiscordServer.words(w) => DiscordServer.change(w, rest)
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, bot, guild, discord, ping waiting, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel and order)"
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel and order)"
             }
 
             (if (word == "webhook" || word == "forum" || word == "turns" || word == "nort-turns" || word == "bot") word else line) + ": " + result

@@ -14,10 +14,10 @@ import scala.concurrent.duration.Duration
 // is created, with its players and spectator link, and a player is @mentioned there when it becomes their turn.
 //
 // The server can't read a game, so the clients tell it which factions the game asks (/turn, Turns.scala), and the lobby's
-// "user <faction> <user>" lines say whose seats they are. Every 30 seconds a sweep (started with the server) pings the seats due
+// "user <faction> <user>" lines say whose seats they are. Every 10 seconds a sweep (started with the server) pings the seats due
 // (2026-11-21: the owner found the pings inconsistent; a ping was a timer a restart lost, and one within 10 minutes of the last was
 // dropped, so a seat pinged for an ambush wasn't for the turn that followed). A seat waited for since <start> is due:
-//   - a minute after start,
+//   - a minute after start (30 seconds when asked about a battle on another's turn, an ambush or its hits; 2026-11-24),
 //   - again 12 hours after its last ping, at most twice ("reminder"),
 // whether or not its player has the game open (2026-11-22, owner: "Always ping players even if their tab is open"; a player
 // with the game open was skipped, and one who didn't see it was never pinged), and pinged then if:
@@ -64,11 +64,15 @@ object TurnPings {
     def threadsFor(meta : String) = if (nortMetas.contains(meta)) nortThreads else threads
 
     val delay = 60 * 1000L
+    // a seat asked about a battle on another's turn (an ambush, its hits: the "defend" reason) holds up that player's turn
+    // with them watching, so it is pinged sooner (2026-11-24, Tournament 1 Table A: the Hundreds waited about a minute and a half for
+    // the Duchy's ambush, the Duchy answered the player's own Discord ping first, and the bot, due 60 to 90 seconds in, never pinged)
+    val battleDelay = 30 * 1000L
     val watching = 90 * 1000L
     val gap = 2 * 60 * 1000L
     val remind = 12 * 60 * 60 * 1000L
     val reminders = 2
-    val every = 30L
+    val every = 10L
 
     def webhook = Tournament.hook("HRF_DISCORD_TURNS_WEBHOOK", "discord-turns-webhook")
     def nortWebhook = Tournament.hook("HRF_DISCORD_NORT_TURNS_WEBHOOK", "discord-nort-turns-webhook")
@@ -127,7 +131,7 @@ object TurnPings {
 
     lazy val timer = java.util.concurrent.Executors.newSingleThreadScheduledExecutor()
 
-    // at the server's start: the games Turns knows of and this file doesn't, then the sweep every 30 seconds
+    // at the server's start: the games Turns knows of and this file doesn't, then the sweep every 10 seconds
     def start() {
         try {
             Turns.all.foreach { case (g, (n, factions)) => if (!latest.contains(g)) seed(g, n, factions) }
@@ -170,12 +174,29 @@ object TurnPings {
                 val mine = pings.getOrElse((g, u), Nil).filter(_ >= start)
                 val due =
                     if (mine.isEmpty)
-                        now - start >= delay
+                        now - start >= (if (inBattle(g, u)) battleDelay else delay)
                     else
                         mine.size <= reminders && now - (start +: mine).max >= remind
                 if (start > 0 && due && now - lastPing(g, u) >= gap && !over(g))
                     try attempt(g, u, reminder = mine.nonEmpty) catch { case e : Exception => println("Turn ping failed: " + e) }
             }
+        }
+    }
+
+    // the seat is asked about a battle on another's turn: its client's reason is "defend" (Root's ambushes and hits, Northgard's fights)
+    def inBattle(game : String, user : String) : Boolean = lobbyOf(game).exists { l =>
+        l.lines.map(_.split(" ").toList).collectFirst { case "user" :: s :: u :: _ if u == user => s }.flatMap(s => Turns.reason(game, s)).exists(_.startsWith("defend"))
+    }
+
+    // what the server knows of the given games' pings (the "pings <game> ..." change; 2026-11-24, to check a missed ping): each
+    // report's row of state.tsv (log index, the users waited for, the time), then the pings sent, with the seats' names, last 40 lines
+    def history(games : List[String]) : List[String] = synchronized {
+        games.flatMap { g =>
+            val l = lobbyOf(g)
+            def who(us : String) = us.split(',').filter(_.nonEmpty).map(u => l.map(nameOf(_, u)).getOrElse(u)).mkString(",")
+            val reports = rows(state).filter(_.headOption.contains(g)).map { case _ :: i :: us :: rest => rest.headOption.getOrElse("?") + " waits " + i + " " + who(us) ; case r => r.mkString(" ") }
+            val sent = rows(pinged).filter(_.lift(1).contains(g)).map(r => r.headOption.getOrElse("?") + " pinged " + who(r.lift(2).getOrElse("")))
+            (g + ": " + l.map(_.title).getOrElse("lobby not found") + ", reason now: " + Turns.reasonsOf(g)) +: (reports ++ sent).sorted.takeRight(40).map("  " + _)
         }
     }
 
