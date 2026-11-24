@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # The Commander cards and the tokens of the units they bring (webp2/tactics/images/commander/, token/), cut from the 2nd Edition
 # Faction Guide (the PDF in the Tabletop Simulator mod "Company of Heroes - 2nd Edition", Steam workshop 2314664989): its pages 11
-# (US core Commanders) and 17 (Wehrmacht), 12 and 13 (the US expansion Commanders), 18 and 19 (the Wehrmacht's), rendered at 220 dpi with `pdftoppm -f 11 -l 11 -r 220 -png guide.pdf <dir>/hi` (and 17;
+# (US core Commanders) and 17 (Wehrmacht), 12 and 13 (the US expansion Commanders), 18 and 19 (the Wehrmacht's), 24 and 25 (the British), 30 and 31 (the Soviets), rendered at 220 dpi with `pdftoppm -f 11 -l 11 -r 220 -png guide.pdf <dir>/hi` (and 17;
 # 23, 29 and 36 for the British, Soviet and OKW, saved as hi-23.png and so on),
 # and the mod's US and Wehrmacht Lost Brigades sheets for two portraits (Assault Engineers, MG Bunker; `tactics-art.py fetch` names).
 #
@@ -26,7 +26,12 @@ LAYOUT['hi-13'] = ([(0.114, 0.374), (0.4, 0.659), (0.688, 0.947)], [(0.045, 0.47
 # the Wehrmacht expansion Commanders: pages 18 and 19 (printed 17 and 18)
 LAYOUT['hi-18'] = ([(0.112, 0.371), (0.397, 0.656), (0.683, 0.943)], [(0.043, 0.475), (0.524, 0.955)])
 LAYOUT['hi-19'] = ([(0.114, 0.373), (0.399, 0.658), (0.686, 0.946)], [(0.045, 0.477), (0.533, 0.947)])
-EXPANSION = ('hi-12', 'hi-13', 'hi-18', 'hi-19')
+# the British expansion Commanders: pages 24 and 25 (printed 23 and 24)
+LAYOUT['hi-24'] = ([(0.109, 0.369), (0.397, 0.656), (0.685, 0.945)], [(0.045, 0.477), (0.522, 0.954)])
+LAYOUT['hi-25'] = ([(0.107, 0.367), (0.397, 0.656), (0.685, 0.945)], [(0.045, 0.477), (0.531, 0.945)])
+# the Soviet expansion Commanders: pages 30 and 31 (printed 29 and 30)
+LAYOUT['hi-30'] = LAYOUT['hi-31'] = ([(0.076, 0.336), (0.37, 0.63), (0.664, 0.923)], [(0.045, 0.477), (0.522, 0.955)])
+EXPANSION = ('hi-12', 'hi-13', 'hi-18', 'hi-19', 'hi-24', 'hi-25', 'hi-30', 'hi-31')
 
 # page, column, row -> the Commander's id (as `Commander.id` in game.scala)
 CARDS = {
@@ -47,6 +52,13 @@ CARDS = {
     ('hi-18', 0, 0): 'stug-assault', ('hi-18', 0, 1): 'stug-tactics',
     ('hi-18', 1, 0): 'terror', ('hi-18', 1, 1): 'tank-destroyer', ('hi-18', 1, 2): 'assault-support',
     ('hi-19', 0, 0): 'infantry-storm', ('hi-19', 0, 1): 'festung-support', ('hi-19', 0, 2): 'lightning-war',
+    ('hi-24', 0, 0): 'hammer', ('hi-24', 0, 1): 'royal-artillery', ('hi-24', 0, 2): 'royal-armored',
+    ('hi-24', 1, 0): 'tank-hunter', ('hi-24', 1, 1): 'special-service',
+    ('hi-25', 0, 0): 'assault-infantry', ('hi-25', 0, 1): 'assault-officer', ('hi-25', 0, 2): 'vanguard',
+    ('hi-30', 0, 0): 'frontal-assault', ('hi-30', 0, 1): 'guards-motor', ('hi-30', 0, 2): 'urban-defense',
+    ('hi-30', 1, 0): 'urban-assault-tactics', ('hi-30', 1, 1): 'counterattack', ('hi-30', 1, 2): 'stalingrad',
+    ('hi-31', 0, 0): 'siege-militia', ('hi-31', 0, 1): 'frontline', ('hi-31', 0, 2): 'spetsnaz',
+    ('hi-31', 1, 0): 'terror-tactics', ('hi-31', 1, 1): 'shock-rifle', ('hi-31', 1, 2): 'soviet-industry',
 }
 
 # a panel's portrait in a card crop (about 1016 x 620): panel 0 to 3 from the left
@@ -95,6 +107,21 @@ UNITS = [
     ('jagdpanther', 'tank-destroyer', 3, 'R', 'wehrmacht'),
     ('elefant', 'assault-support', 3, 'R', 'wehrmacht'),
     ('sdkfz251', 'infantry-storm', 1, 'Y', 'wehrmacht'),
+    ('sexton', 'hammer', 1, 'R', 'british'),
+    ('comet', 'hammer', 3, 'R', 'british'),
+    ('firefly', 'tank-hunter', 3, 'R', 'british'),
+    ('valentine', 'assault-infantry', 1, 'R', 'british'),
+    ('commandos', 'special-service', 0, 'G', 'british'),
+    ('shock-troops', 'frontal-assault', 1, 'G', 'soviet'),
+    ('is2', 'frontal-assault', 2, 'R', 'soviet'),
+    ('guards-rifle', 'guards-motor', 1, 'G', 'soviet'),
+    ('ai-partisans', 'urban-defense', 1, 'G', 'soviet'),
+    ('at-partisans', 'urban-assault-tactics', 2, 'G', 'soviet'),
+    ('forward-station', 'urban-defense', 2, 'P', 'soviet'),
+    ('kv2', 'urban-defense', 3, 'R', 'soviet'),
+    ('penal', 'counterattack', 0, 'G', 'soviet'),
+    ('isu152', 'counterattack', 2, 'R', 'soviet'),
+    ('kv8', 'terror-tactics', 2, 'R', 'soviet'),
 ]
 
 def main(d, out):

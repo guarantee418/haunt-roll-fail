@@ -297,7 +297,7 @@ plays rulebook 8.0 and 8.2 with the thirty core Commander cards (six a faction, 
 
 The setup's **Expansion Commanders** toggle (`ExpansionCommanders`, only with Draw three Commanders; 2026-11-24) adds the expansion
 packs' Commanders to the ones each player draws three from (`Commander.pool`; games without it, and every game made before it, draw
-from the core six). So far the US Forces' nine, from the Faction Guide's pages 11 and 12, and the Wehrmacht's eight (Elite Commanders Collection: Light Cavalry,
+from the core six). So far the US Forces' nine, from the Faction Guide's pages 11 and 12, the Wehrmacht's eight, the British Forces' eight and the Soviet Forces' twelve (Elite Commanders Collection: Light Cavalry,
 Heavy Cavalry, Tactical Support, Motor Pool; Pathfinder Pack: Pathfinder Company; StuG Pack: Devil's Brigade; Lost Brigades Pack: Cavalry
 Rifle, Urban Assault, Engineer Assault Companies). Their units were read off the cards' call-in panels (health, range, a die for each
 figure, turreted for curved arrows): M5 Stuart (heavy vehicle, health 3, range 2, AI and AP, two Speed Dice, 2 Manpower 3 Fuel), M26
@@ -319,6 +319,32 @@ Readings:
 - Assault Support Doctrine gives the Kubelwagen the Scout Car's No-Fire collection (1 more of the point's first non-VP resource).
 - Breakthrough Tactics (Terror Doctrine) is the US Step on it; Tactical Movement is Combat Group Advance; the Stuka strafe is the P-47
   strike's 2 AP a hex; Recon Plane is Recon Sweep.
+- The British Forces' eight (pages 23 and 24; Elite Commanders Collection: Hammer Doctrine, Royal Artillery Regiment, Royal Armored Corps,
+  Tank Hunter Regiment; StuG Pack: Special Service Brigade; Lost Brigades Pack: Assault Infantry, Assault Officer, Vanguard Operations
+  Regiments) bring the Sexton Gun Carriage (heavy vehicle, health 2, range 3, 2 fixed indirect HE with Splash, 1/4), Comet (6, range 2, 2 AP
+  1 AI, a Speed Die, 3/5), Sherman Firefly (4, range 4, 3 AP, 2/5), Valentine Mk. XI (3, range 3, 2 fixed AI and 1 AP, a Defense Die
+  Assaulting, 2/3) and Commandos (infantry, 3, range 2, 1 AI, Close Range Firepower, dropped like Paratroopers, 5 Manpower 1 Munitions).
+  The Firefly's Tulip and the Commandos' Gammon Bombs are other target choices: 3 HE in place of the unit's whole attack (Tulip paying 2
+  Munitions, Gammon only at an adjacent target). English Industry is a trade of 2 Munitions for 1 Fuel in the purchases, as often as wanted.
+- The Soviet Forces' twelve (pages 29 and 30; Elite Commanders Collection: Frontal Assault Doctrine, Guards Motor, Urban Defense, Urban
+  Assault Tactics; Eastern Reinforcements Pack: Counterattack Tactics, Heroes of Stalingrad; Lost Brigades Pack: Siege Militia, Frontline
+  Tactics; StuG Pack: Soviet Spetsnaz Brigade, Terror, Shock Rifle and Soviet Industry Tactics) bring Shock Troops (infantry, 5, range 2, 1
+  AI, Close Range Firepower, a Defense Die, 4/1), the IS-2 (7, range 2, 1 AI 2 AP, 3/5), Guards Rifle Infantry (4, range 3 only, 2 AI or 2
+  AP, 4/1), Anti-Infantry and Anti-Tank Partisans (2, range 2, 1 AI or 1 AP, Heroic Sacrifice, spawned next to an empty Building like
+  Stormtroopers, Slow, 1 Manpower 4 Munitions, one a round), the Forward Station (an Emplacement Conscripts make of an empty Building next
+  to them, 3 health, a Wrench; Vehicles may spawn next to it; one at a time), the KV-2 (5, range 3, 2 indirect HE with Splash, 2/5), the
+  Penal Battalion (5, a Defense Die, 2 AI at range 2 or 2 HE at range 1, never Pinned, 4/1), the ISU-152 (7, range 4, Slow, 3 fixed AP or
+  3 HE, 3/5) and the KV-8 (5, range 3, Slow, 3 fixed AI and a Flame, 1 more Flame Assaulting or at a unit in a Building; 3 Manpower 2
+  Fuel as printed).
+  - "Picks either damage type each attack" is another target choice; it uses up the unit's whole attack, so it is offered only before the
+    unit has assigned any damage.
+  - The IS-2's shells: its AP damage at Infantry in a Building also hurts the Building, and the Infantry get 1 less Defense Die there.
+  - Soviet Architecture: +1 Defense Die for the Soviets' Infantry in any Building (Assaulting into one too), and 1 less damage to a Building
+    with their Infantry in it.
+  - Decoy: on the third CP of a round, a Sniper or Guards Rifle Infantry moves 3 hexes and can't fire that round.
+  - Battlefield Promotions: the Conscripts become a new unit of the other type in the same hex, 2 more health (5 at most), keeping their
+    Flame upgrade; it is a purchase.
+  - Siege Militia's free Partisans and the free Anti-Tank Partisans count toward their one a round.
 - A panel naming a call-in with no "one spawns for free" brings no free unit (`...Plain` abilities).
 - Strategic Maneuvers is the Scout Car's No-Fire mode for Stuarts; Combined Arms counts a unit next to another of the same player's;
   Requisition Officer takes 1 Manpower off every Sherman and Wolverine chassis (Easy Eight, Dozer, Jackson too).
