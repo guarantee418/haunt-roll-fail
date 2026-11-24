@@ -3307,6 +3307,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     def keys = keysDirect ++ keysExplode
 
     override def ask(faction : |[F], actions : $[UserAction], then : UserAction => Unit) {
+        CardPreview.hide()
+
         lastActions = actions
         lastThen = then
 
@@ -3424,17 +3426,107 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             convertActions0(faction, actions, then)
 
     // Adset: a clan's "i" button opens its info instead of choosing it
+    // A card that can be chosen shows large while the mouse is over it (CardPreview)
     def convertActions0(faction : |[F], actions : $[UserAction], then : UserAction => Unit = null) : $[ZOption] =
-        if (actions.exists(_.is[AdsetDraftChoice]).not || then == null)
+        if (then == null)
             super.convertActions(faction, actions, then)
-        else
+        else {
+            val draft = actions.exists(_.is[AdsetDraftChoice])
             actions./~(a => super.convertActions(faction, $(a), then)./(z => a @@ {
-                case d : AdsetDraftChoice => z.copy(clear = false, click = {
+                case d : AdsetDraftChoice if draft => z.copy(clear = false, click = {
                     case AdsetClanInfo(f) => onClick(AdsetClanInfo(f))
                     case x => z.click(x)
                 })
-                case _ => z
+                case _ => CardPreview.wrap(a, z)
             }))
+        }
+
+    // Hovering a card that can be chosen (a card to play, wait with, replace, remove, take...) shows it large over the half of
+    // the window away from the mouse, until the mouse leaves it or it is chosen; asked for on 2026-11-24. Only with a mouse
+    // (a touch screen keeps tapping), only for choices (ViewObject[Card] actions that can be taken, not the cards shown for
+    // information), and the "Card Preview" setting under Interface turns it off
+    object CardPreview {
+        lazy val mouse = try { dom.window.matchMedia("(hover: hover) and (pointer: fine)").matches } catch { case _ : Throwable => false }
+
+        var box : dom.html.Div = null
+        var mouseX = 0.0
+        var tracking = false
+
+        // Where the mouse is, to show the card on the other half of the window
+        def track() {
+            if (tracking.not && mouse) {
+                tracking = true
+                // mouseover comes before mousemove when the mouse enters a card; caught on the way down, before the card's own
+                dom.window.addEventListener("mouseover", (e : dom.MouseEvent) => { mouseX = e.clientX }, true)
+                dom.window.addEventListener("mousemove", (e : dom.MouseEvent) => { mouseX = e.clientX }, true)
+            }
+        }
+
+        def on = mouse && callbacks.settings.has(NoCardPreview).not
+
+        def wrap(a : UserAction, z : ZOption) : ZOption = (a @@ {
+            case v : ViewObject[_] => v.obj @@ {
+                case c : Card => Some(c)
+                case _ => None
+            }
+            case _ => None
+        }) match {
+            case Some(c) if z.over != null && z.out != null && z.click != null =>
+                track()
+                z.copy(
+                    over = x => { z.over(x) ; show(c) },
+                    out = x => { z.out(x) ; hide() },
+                    click = x => { hide() ; z.click(x) })
+            case _ => z
+        }
+
+        def show(c : Card) {
+            if (on.not)
+                return
+
+            if (box == null) {
+                box = dom.document.createElement("div").asInstanceOf[dom.html.Div]
+                box.style.position = "fixed"
+                box.style.top = "0"
+                box.style.height = "100vh"
+                box.style.width = "50vw"
+                box.style.display = "none"
+                box.style.setProperty("align-items", "center")
+                box.style.setProperty("justify-content", "center")
+                box.style.setProperty("pointer-events", "none")
+                box.style.zIndex = "100000"
+                dom.document.body.appendChild(box)
+            }
+
+            val img = dom.document.createElement("img").asInstanceOf[dom.html.Image]
+            img.style.maxHeight = "92vh"
+            img.style.maxWidth = "46vw"
+            img.style.setProperty("border-radius", "2.5vmin")
+            img.style.setProperty("box-shadow", "0 0 3vmin 1vmin #000000e0")
+            img.alt = c.name
+            resources.images.getBlobSource(c.info.image) { url => img.src = url }
+
+            while (box.firstChild != null)
+                box.removeChild(box.firstChild)
+            box.appendChild(img)
+
+            if (mouseX > dom.window.innerWidth / 2) {
+                box.style.left = "0"
+                box.style.right = ""
+            }
+            else {
+                box.style.left = ""
+                box.style.right = "0"
+            }
+
+            box.style.display = "flex"
+        }
+
+        def hide() {
+            if (box != null)
+                box.style.display = "none"
+        }
+    }
 
     override def styleAction(faction : |[F], actions : $[UserAction], a : UserAction, unavailable : Boolean, view : |[Any]) : $[Style] =
         if (a.is[AdsetDraftChoice])
