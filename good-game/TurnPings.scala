@@ -21,7 +21,7 @@ import scala.concurrent.duration.Duration
 //   - again 12 hours after its last ping, at most twice ("reminder"),
 // whether or not its player has the game open (2026-11-22, owner: "Always ping players even if their tab is open"; a player
 // with the game open was skipped, and one who didn't see it was never pinged), and pinged then if:
-//   - it wasn't pinged in that game in the last 2 minutes (it waits until then, as the sweep comes back),
+//   - it wasn't pinged in that game in the last minute (2 minutes before 2026-11-24; it waits until then, as the sweep comes back),
 //   - its seat plays under a ranking name with a Discord (given, or set by the owner) and turn pings not turned off (Rankings,
 //     "Discord turn pings"; on unless turned off since 2026-11-20, asked for: "start pinging people whenever it is their turn").
 // Several prompts in a row (a whole turn) are one ping, as the seat stays waited for between them; but a seat still waited for
@@ -120,7 +120,7 @@ object TurnPings {
     val delay = 10 * 1000L
     val battleDelay = delay
     val watching = 90 * 1000L
-    val gap = 2 * 60 * 1000L
+    val gap = 60 * 1000L
     val remind = 12 * 60 * 60 * 1000L
     val reminders = 2
     val every = 10L
@@ -538,7 +538,7 @@ object TurnPings {
         if (!latest.get(game).exists(_.users.contains(user)))
             return "not waited for"
         if (now - lastPing(game, user) < gap)
-            return "not pinged: pinged in the last 2 minutes"
+            return "not pinged: pinged in the last minute"
         val lobby = lobbyOf(game).getOrElse(return "not pinged: lobby not found")
         if (!metas.contains(lobby.meta))
             return "not pinged: not a game with turn pings"
