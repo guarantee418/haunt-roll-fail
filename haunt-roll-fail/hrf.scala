@@ -291,6 +291,9 @@ trait Callbacks {
     def reportBug() : Unit
     def canReturnToTitle : Boolean
     def returnToTitle() : Unit
+    // "My Online Games" after "Main Menu": loads /play/my-games, the main page's list of the player's online games
+    def canMyGames : Boolean = false
+    def myGames() : Unit = {}
     // A local game (hotseat) with more than one human player on this device
     def hotseat : Boolean
     // The bot playing a seat (its name: "Easy", "Hard", ...), from the seats the game was started with (an online game's lobby
@@ -744,7 +747,21 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         history.init()
 
     def loadSettings() : $[Setting] = {
-        val saved = Local.get(meta.settingsKey + ".settings", "").split(' ').$
+        val key = meta.settingsKey + ".settings"
+
+        // a saved setting moved once to another (meta.settingsMoves), as a new default would leave the old one saved by every browser that ever saved its settings
+        val saved = meta.settingsMoves.foldLeft(Local.get(key, "").split(' ').$) { case (s, (name, from, to)) =>
+            val done = meta.settingsKey + ".moved." + name
+
+            if (Local.get(done, "") != "")
+                s
+            else {
+                val moved = s./(x => (x == from).?(to).|(x))
+                Local.set(key, moved.mkString(" "))
+                Local.set(done, "1")
+                moved
+            }
+        }
 
         val preset = HRF.paramList("settings")
 
@@ -1331,6 +1348,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             tutorialMenu()
         }
 
+        def goHowToPlay() {
+            history.pushState("/play/" + meta.name + "/how-to-play", () => metaMenu())
+            howToPlayMenu()
+        }
+
         def goMode(mode : String) {
             history.pushState("/play/" + meta.name + "/" + mode, () => metaMenu())
             modeMenu(mode)
@@ -1351,6 +1373,7 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             meta.menuAbout./(e => ZOption(title, Div(e, ZBasic.info))).$ ++
             (
                 meta.tutorialLessons.any.$(ZBasic(title, "Tutorial".hlb, () => goTutorial())) ++
+                (meta.howToPlay.any || meta.howToPlayLinks.any).$(ZBasic(title, "How to Play".hlb, () => goHowToPlay())) ++
                 $(ZBasic(title, "Quick Game".hlb, meta.factions.%(f => meta.getBots(f).has(meta.defaultBot(f))).any.??(() => goQuickGame()))) ++
                 $(ZBasic(title, "Local Game".hhb, () => goHotseat())) ++
                 meta.soloFaction./(s => ZBasic(title, ("Solo vs " + meta.factionName(s).split(' ').head).hhb, () => goSolo())).$ ++
@@ -1385,6 +1408,11 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         if (HRF.segments.startsWith($("tutorial")) && meta.tutorialLessons.any)
             goTutorial()
         else
+        if (HRF.segments.startsWith($("how-to-play")) && (meta.howToPlay.any || meta.howToPlayLinks.any)) {
+            HRF.segments = $
+            goHowToPlay()
+        }
+        else
         // (the segments used up, so that their pages' Back, which shows this menu again, doesn't open them again: a page opened
         // from its link, as the Tournament's from Discord, couldn't be left, 2026-11-20)
         if (HRF.segments.startsWith($("rankings")) && meta.ranking.any && HRF.server.any && HRF.offline.not) {
@@ -1413,6 +1441,20 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
             goMode(HRF.segments.head)
         else
             HRF.segments = $
+    }
+
+    // The menu's How to Play (Pincer's and Company of Heroes', 2026-11-24): the publisher's pages for the rules, then how to play
+    // the game on this site, one section a heading
+    def howToPlayMenu() {
+        val label = "How to Play".hlb
+
+        ui.action.asker.zask(
+            meta.howToPlayLinks./((t, l) => ZOption(Div("Official rules"), Link(l, t.div(xstyles.divint) ~ Image("external-link")(xstyles.explain)(xstyles.clickThrough), ZBasic.infoch ++ $(xstyles.link)))) ++
+            meta.howToPlay./{ case (t, body) => ZOption(t.hlb.div, Div(body./(e => Div(e, xstyles.paragraph)).merge, ZBasic.info)) } ++
+            $(ZBasic(" ", "Back", () => history.popState()))
+        )
+
+        ui.action.scroll.scrollTop = 0
     }
 
     // The main menu's Tutorial (Northgard's): its lessons, each on its own page with the next one a tap away, and a practice game
@@ -3781,6 +3823,12 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     val unsaved = journal.is[MemoryJournal[_]] && HRF.lobby.none
                     if (unsaved.not || dom.window.confirm("This game isn't saved and will be lost. Leave it for the main menu?"))
                         dom.document.location.assign("/play/" + meta.name)
+                }
+                override def canMyGames = HRF.server.any && HRF.offline.not
+                override def myGames() = {
+                    val unsaved = journal.is[MemoryJournal[_]] && HRF.lobby.none
+                    if (unsaved.not || dom.window.confirm("This game isn't saved and will be lost. Leave it for My Online Games?"))
+                        dom.document.location.assign("/play/my-games")
                 }
                 def hotseat = (journal.is[MemoryJournal[_]] || journal.is[LocalStorageJournal[_]]) && seating.count(f => difficulties(f) == Human) > 1
                 def canReportBug = HRF.server.any && HRF.offline.not

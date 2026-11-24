@@ -44,6 +44,8 @@ import scala.concurrent.duration.Duration
 //   turns <url>                       the webhook of the channel for turn pings and new games (TurnPings.scala; the file
 //                                     discord-turns-webhook, "turns off" removes it); delete the change file once its .result says "set"
 //   nort-turns <url>                  the same for Northgard's games (the file discord-nort-turns-webhook, "nort-turns off")
+//   pincer-turns <url>                the same for Pincer's (discord-pincer-turns-webhook) and Company of Heroes' (tactics-turns,
+//   tactics-turns <url>               discord-tactics-turns-webhook); the bot's make-webhook change can make and set them itself
 //   bot <token>                       the Discord bot's token, so a username given on the Tournament page pings (DiscordBot.scala;
 //                                     the file discord-bot-token, "bot off" removes it); delete the change file once its .result is read
 //   guild <id>                        the Discord server the bot looks usernames up in, if not the webhook's (the file discord-guild)
@@ -52,6 +54,8 @@ import scala.concurrent.duration.Duration
 //                                     factions and scores, whose turn it is, or its winner, and its spectator link (Tournament.status)
 //   ping waiting <game> ...           pings the seats those games wait for (their server ids, the "server" line of their
 //                                     lobbies), saying for each who was pinged and why anyone wasn't (TurnPings.pingWaitingIn)
+//   pings <game> ...                  what the server knows of those games' turn pings: each turn report's row (log index, seats
+//                                     waited for, time) and each ping sent, last 40 lines (TurnPings.history), to check a missed ping
 //   lfg-key <public key>              the Discord application's public key, for /root, /northgard and the LFG posts' buttons (Lfg.scala;
 //                                     the file discord-public-key, "lfg-key off" removes it); registers the commands in the Discord server
 //   lfg-commands                      registers /root and /northgard again
@@ -60,6 +64,8 @@ import scala.concurrent.duration.Duration
 //                                     "-> off" forgets it)
 //   roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order
 //                                     the Discord server's roles and channels, through the bot (DiscordServer.scala has the forms)
+//   self-roles, self-role, self-role-off, role-picker
+//                                     the roles members may pick for themselves with /roles or the role picker post (SelfRoles.scala)
 // The Discord channel of the webhook in HRF_DISCORD_WEBHOOK (or the file discord-webhook) is invited to sign up, with the link to
 // the Tournament page, once for each tournament as soon as its sign-ups open and a webhook is set (at the server's start, when the
 // webhook is set, when a final starts or a tournament is cancelled; asked for on 2026-11-20, as nobody could find the page), told
@@ -510,34 +516,9 @@ object Tournament {
                     else
                         "not done: forum <https://discord.com/api/webhooks/...> or forum off"
                 case "invite" => invite(true)
-                // the channel (a forum: a post for each game) for the turn pings and new games (TurnPings.scala; 2026-11-20)
-                case "turns" =>
-                    if (rest.startsWith("https://discord.com/api/webhooks/") || rest.startsWith("https://discordapp.com/api/webhooks/")) {
-                        Files.write(Paths.get("discord-turns-webhook"), (rest + "\n").getBytes(UTF_8))
-                        Files.deleteIfExists(TurnPings.threads)
-                        plainChannels = Set()
-                        "set"
-                    }
-                    else if (rest == "off") {
-                        Files.deleteIfExists(Paths.get("discord-turns-webhook"))
-                        "removed"
-                    }
-                    else
-                        "not done: turns <https://discord.com/api/webhooks/...> or turns off"
-                // Northgard's (2026-11-21)
-                case "nort-turns" =>
-                    if (rest.startsWith("https://discord.com/api/webhooks/") || rest.startsWith("https://discordapp.com/api/webhooks/")) {
-                        Files.write(Paths.get("discord-nort-turns-webhook"), (rest + "\n").getBytes(UTF_8))
-                        Files.deleteIfExists(TurnPings.nortThreads)
-                        plainChannels = Set()
-                        "set"
-                    }
-                    else if (rest == "off") {
-                        Files.deleteIfExists(Paths.get("discord-nort-turns-webhook"))
-                        "removed"
-                    }
-                    else
-                        "not done: nort-turns <https://discord.com/api/webhooks/...> or nort-turns off"
+                // the channel (a forum: a post for each game) for the turn pings and new games (TurnPings.scala; 2026-11-20), Northgard's
+                // (2026-11-21), Pincer's and Company of Heroes' (2026-11-24)
+                case w if TurnPings.slot(w).nonEmpty => TurnPings.setHook(TurnPings.slot(w).get, rest)
                 // the Discord bot's token, so usernames can be pinged (DiscordBot.scala; the file discord-bot-token, never written
                 // back in the .result); "bot off" removes it
                 case "bot" =>
@@ -622,13 +603,16 @@ object Tournament {
                 // nobody can be pinged (2026-11-22; Play Online asks those players once, discordAsk in hrf.scala)
                 case "no-discord" => noDiscord()
                 // only those games (2026-11-21)
+                case "pings" => TurnPings.history(rest.split("[ ,]+").toList.filter(_.nonEmpty)).mkString("\n")
                 case "ping" if rest.startsWith("waiting ") => TurnPings.pingWaitingIn(rest.drop(8).split("[ ,]+").toList.filter(_.nonEmpty)).mkString("; ")
                 // the Discord server's roles and channels, through the bot (DiscordServer.scala; 2026-11-24)
                 case w if DiscordServer.words(w) => DiscordServer.change(w, rest)
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, bot, guild, discord, ping waiting, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel and order)"
+                // the roles members pick for themselves, and the role picker post (SelfRoles.scala; 2026-11-24)
+                case w if SelfRoles.words(w) => SelfRoles.change(w, rest)
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, pincer-turns, tactics-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order, webhooks, make-webhook, rename-webhook, test-ping, self-roles, self-role, self-role-off and role-picker)"
             }
 
-            (if (word == "webhook" || word == "forum" || word == "turns" || word == "nort-turns" || word == "bot") word else line) + ": " + result
+            (if (word == "webhook" || word == "forum" || TurnPings.slot(word).nonEmpty || word == "bot") word else line) + ": " + result
         }
     }
 

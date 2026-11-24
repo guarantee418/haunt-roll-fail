@@ -573,6 +573,10 @@ object Lfg {
                 // the other commands (Lookup.scala: /card), and the suggestions while their options are typed
                 case "2" if uid.nonEmpty && BotCommands.of(str(data.get("name"))).nonEmpty => BotCommands.of(str(data.get("name"))).get.run(uid, name, data)
                 case "4" => BotCommands.of(str(data.get("name"))).map(_.autocomplete(data)).getOrElse("{\"type\":8,\"data\":{\"choices\":[]}}")
+                // the role picker (SelfRoles.scala): the button under its post and the menu only the member sees
+                case "3" if uid.nonEmpty && str(data.get("custom_id")).startsWith("roles:") =>
+                    SelfRoles.press(uid, member.get("roles").collect { case l : List[_] => l.collect { case v : String => v } }.getOrElse(Nil), str(data.get("custom_id")),
+                        data.get("values").collect { case l : List[_] => l.collect { case v : String => v } }.getOrElse(Nil))
                 case "3" if uid.nonEmpty && str(data.get("custom_id")).startsWith("lfgs:") =>
                     LfgSetup.press(uid, str(data.get("custom_id")), data.get("values").collect { case l : List[_] => l.collect { case v : String => v } }.getOrElse(Nil), str(i.get("application_id")), str(i.get("token")))
                 case "3" if uid.nonEmpty => press(uid, name, str(data.get("custom_id")), str(i.get("application_id")), str(i.get("token")),

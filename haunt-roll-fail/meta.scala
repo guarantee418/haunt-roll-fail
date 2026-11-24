@@ -97,6 +97,10 @@ trait MetaBase {
         $(hrf.AlwaysFullScreen, hrf.TripleClickFullScreen, hrf.NeverFullScreen) ++
         $(hrf.SlowestScrollSpeed, hrf.SlowerScrollSpeed, hrf.SlowScrollSpeed, hrf.NormalScrollSpeed, hrf.FastScrollSpeed, hrf.FasterScrollSpeed, hrf.FastestScrollSpeed)
 
+    // (name, saved setting, its replacement): each browser swaps the saved setting once, remembering it as <settingsKey>.moved.<name>,
+    // for a default that changed after players had saved the old one
+    def settingsMoves : $[(String, String, String)] = $
+
     def settingsDefaults : $[hrf.Setting] = $(hrf.ShowTips, hrf.NormalSpacing, hrf.GameFontFace, hrf.NormalFontSize, hrf.TripleClickFullScreen, hrf.NormalScrollSpeed)
 
     // the display language: (name, text, image id), see hrf.elem.Translation
@@ -312,6 +316,10 @@ trait MetaBase {
     def tutorialGame : |[($[F], Map[F, String], $[O])] = None
     // A note at the top of the main menu (Northgard's Adset: its rules in short)
     def menuAbout : |[Elem] = None
+    // A "How to Play" page on the game's menu (Pincer and Company of Heroes, 2026-11-24): links to the publisher's own pages for
+    // the rules (label and URL), then how the game is played on this site, a heading and its paragraphs each; never the rules
+    def howToPlayLinks : $[(Elem, String)] = $
+    def howToPlay : $[(Elem, $[Elem])] = $
 
     // Image name -> URL for images used in the menus (faction notes, option explanations), before the game's assets load
     def menuImages : Map[String, String] = Map()

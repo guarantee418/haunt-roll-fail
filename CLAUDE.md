@@ -295,7 +295,7 @@ recomputed in `AdsetExpansion.assign`).
 Pincer: A Gentleman's War (Julian Birke, a work in progress the owner's team playtests; asked for on 2026-11-23) is in
 `haunt-roll-fail/pincer/` (meta `pincer`, URL `/play/pincer`, on the main menu since 2026-11-24: `HRF.menuMetas`), played from the
 rulebook's second draft with the art of the Tabletop Simulator mod 3778939778 (`pincer/tools/pincer-art.py`, images in
-`webp2/pincer/images/`). On the main menu since 2026-11-24 (`HRF.menuMetas`). `pincer/RULES.md` has the rules as played and the draft's open questions (the Boar's War penalty
+`webp2/pincer/images/`). On the main menu since 2026-11-24 (`HRF.menuMetas`). "How to Play" on its menu (and Company of Heroes') links the publisher's own pages and explains the site's controls, never the rules (`Meta.howToPlay`, `howToPlayLinks`, `howToPlayMenu` in `hrf.scala`, URL `/play/<meta>/how-to-play`; 2026-11-24). `pincer/RULES.md` has the rules as played and the draft's open questions (the Boar's War penalty
 isn't in it yet), `pincer/HANDOFF.md` the state, files and testing (`pincer.Host` bot games, `pincer.Dump`).
 
 Company of Heroes: The Board Game, 2nd Edition (Bad Crow Games; a work in progress the owner's team helps test; asked for on
@@ -420,6 +420,8 @@ cd haunt-roll-fail && sbt fullOptJS
 - Under "Report a Bug", every game's in-game menu has a "Main Menu" button (asked for on
   2026-10-13): it loads `/play/<meta>` afresh (`returnToTitle` in `hrf.scala`), where online and saved
   local games can be picked up again; a game kept only in memory (Training Grounds) asks first.
+  After it, every game's in-game menu has "My Online Games" (asked for on 2026-11-24), which loads `/play/my-games`
+  (`canMyGames` and `myGames` in `Callbacks`, `hrf.scala`), asking first the same way.
 
 ## Several sessions or accounts
 
@@ -1165,8 +1167,8 @@ server. No session can reach the server, and none needs to.
   (`root`, `root-adset`; `TurnPings.metas`) gets a post (a thread) in the forum channel of the webhook `HRF_DISCORD_TURNS_WEBHOOK` or
   the file `discord-turns-webhook` (set by the tournament change `turns <url>`; the owner's "Command Warren" webhook, forum #root-games)
   when its lobby is written, naming its players and its spectator link, and a seat is @mentioned there a minute after the game starts waiting for
-  it, and reminded 12 hours after its last ping, twice at most, whether or not its player has the game open (owner, 2026-11-22: "Always ping
-  players even if their tab is open"); a sweep every 30 seconds (`TurnPings.start`, `sweep`) sends them, never within 2 minutes of their last
+  it (30 seconds when asked about a battle on another's turn, an ambush or its hits, the "defend" reason; 2026-11-24, as a Table A ambush was answered before the ping came), and reminded 12 hours after its last ping, twice at most, whether or not its player has the game open (owner, 2026-11-22: "Always ping
+  players even if their tab is open"); a sweep every 10 seconds (`TurnPings.start`, `sweep`) sends them, never within 2 minutes of their last
   ping in that game (it waits), or after the game's end (`over`). Each seat's start is the time on its `turns/state.tsv` row, so restarts lose and repeat
   none; seats waited for since before that (2026-11-21, when the owner found the pings inconsistent: timers lost at restarts, and pings
   within 10 minutes dropped) are pinged only by the `ping waiting` changes, and from their next turn on. The server can't read a game: it takes the factions asked from the clients' turn reports (`/turn`,
@@ -1176,14 +1178,14 @@ server. No session can reach the server, and none needs to.
   (`allowed_mentions` lists only them, never @everyone). Each ping leads with the seat's faction or clan emoji (the one its reason names, else the seat's own in a standard game; 2026-11-22, as some pings had none), as does the first-turn line; a battle, a fight or an Entreat also names the other side with its emoji and name, "you're under attack ⚔️ by X", "your battle ⚔️ against X", "X entreated you" (the sword or axe right after "attack", "battle" or "fight", and the Partisans card right after "Partisans") (the reason's third part, "defend/<seat faction>/<other>", from the asking action's attacker and defender, else the clan whose turn it is or the other clan in the fought territory; 2026-11-22; a Northgard creature as "~<its name>", from the asking action's creature, else `game.creatureFights` or the fought territory, shown as "the **Brown Bear**" with the Discord server's emoji of that name if it has one), and says why the seat is asked, with an emoji in the server's style (asked for on 2026-11-21; `TurnPings.reasonOf`): the
   client adds a third line to its turn report, "<seat>=<reason>", from `Meta.turnReason` (`root/turn-reasons.scala` and
   `nort/turn-reasons.scala`, `TurnReasons`: the action that asked, `game.asker`, set in `internalPerform`, and the choices offered),
-  kept in `turns.tsv`'s fourth column (`Turns.reason`): Root's under attack or a battle (the server's sword emoji), the cards kept
+  kept in `turns.tsv`'s fourth column (`Turns.reason`): Root's under attack or a battle (the server's sword emoji), a Twilight Council Banish as "you're being banished 💨 by" or "your banish 💨 of" (the tags `banished` and `banish`; 2026-11-24, asked for), the cards kept
   at the start, the hand limit, the faction draft, the tournament picks, Partisans, prisoners, an Entreat,
   Field Hospitals, setup and the faction's own turn (its head); Northgard's fights (the axe), harvest trading and Winter (plain ⚖️
-  and ❄️ after the words, so the webhook can post them, not the bot's `ng_trade` and `ng_winter` badges; 2026-11-23), card picks, setup, the Adset draft, raids, Events and the clan's own turn (its emblem). A Lilypad Diaspora negotiation is never a reason (2026-11-23, asked for: it is never owed, and the ping reminded the enemy of it): its menus report the seat's turn. The
+  and ❄️ after the words, so the webhook can post them, not the bot's `ng_trade` and `ng_winter` badges; 2026-11-23), card picks ("pick a card" then the server's Northgard card back emoji, `ng_cardback`, else the cards badge; 2026-11-24), setup, the Adset draft, raids, Events and the clan's own turn (its emblem). A Lilypad Diaspora negotiation is never a reason (2026-11-23, asked for: it is never owed, and the ping reminded the enemy of it): its menus report the seat's turn. The
   reasons say nothing only the seat may know (an ambush question and assigning hits are both "under attack"). `NORT_REASONS=1` in
   `nort.Host` prints them. A game's thread also says who takes the first turn, the first time the game waits on one seat alone
   (`announceFirst`, `turns/firsts.tsv`; mentioning them; only games first reported since 2026-11-21, when
-  an Advanced Setup game's drawn first player opened it within the minute and the thread never said whose turn it was). Only the bot can post its own (application) emojis, `hrf_*` and `ng_*`, never a webhook (2026-11-22: pings showed ":hrf_rt_tw:" as text): a post holding one goes out from the bot into its thread, and when the bot can't post there the webhook posts it without them (`Tournament.post`, `Lfg.appEmojiIds`); the bot needs View Channel and Send Messages in Threads in the forum. The tournament change `no-discord` lists the claimed ranking names with no Discord to ping (none given, or a username no member has), most seats first (`Tournament.noDiscord`), and Play Online asks a device holding such a name, once, to add it ("Add my Discord" or "Not now", remembered per name as `hrf.discord-asked.<name>`; `discordRows` in `onlineGame`, `HRF.discordMissing`; 2026-11-22). The tournament change `ping waiting` pings every seat the games wait
+  an Advanced Setup game's drawn first player opened it within the minute and the thread never said whose turn it was). Only the bot can post its own (application) emojis, `hrf_*` and `ng_*`, never a webhook (2026-11-22: pings showed ":hrf_rt_tw:" as text): a post holding one goes out from the bot into its thread, and when the bot can't post there the webhook posts it without them (`Tournament.post`, `Lfg.appEmojiIds`); the bot needs View Channel and Send Messages in Threads in the forum. The tournament change `no-discord` lists the claimed ranking names with no Discord to ping (none given, or a username no member has), most seats first (`Tournament.noDiscord`), and Play Online asks a device holding such a name, once, to add it ("Add my Discord" or "Not now", remembered per name as `hrf.discord-asked.<name>`; `discordRows` in `onlineGame`, `HRF.discordMissing`; 2026-11-22). The tournament change `pings <game> ...` lists what the server knows of those games' pings, each turn report (log index, seats waited for, time) and each ping sent (`TurnPings.history`), to check a missed one. The tournament change `ping waiting` pings every seat the games wait
   for at once (`TurnPings.pingWaiting`). `ping waiting <game> ...` pings only those games (their server ids, the `server` line of their lobbies), and its `.result` says for each
   who was pinged and why anyone wasn't (`TurnPings.pingWaitingIn`; 2026-11-21). A tournament table's game pings in its table's thread (the forum webhook's), with no
   turns webhook needed, every player who gave a user ID unless they turned pings off. A webhook can't ping a username, and the first tournament's players
@@ -1216,7 +1218,13 @@ server. No session can reach the server, and none needs to.
   emojis' style (seen 2026-11-21): Root's factions as their heads, maps as a square of the map, decks as a card tilted in a white border,
   Northgard's options in a gold-ringed round badge with a ribbon naming them, like the server's clans and WILD and WASTE. And the Host, Players, seats and buttons; a changed picture needs a new slug, as an uploaded one is kept. The tournament change `emojis` lists the server's emojis and what each is shown for ("unused" for none). Northgard's
   online games get their posts and turn pings in their own forum (`TurnPings.webhookFor`: `HRF_DISCORD_NORT_TURNS_WEBHOOK` or the file
-  `discord-nort-turns-webhook`, set by the tournament change `nort-turns <url>`); with none set they get none.
+  `discord-nort-turns-webhook`, set by the tournament change `nort-turns <url>`); with none set they get none. Pincer and Company of Heroes
+  (`pincer`, `tactics`) get theirs the same way in their own forums (`pincer-turns <url>`, `tactics-turns <url>`; `TurnPings.slots`;
+  2026-11-24), their pings led by a drum or a field radio emoji, as their clients give no reasons. The bot makes those webhooks itself,
+  with original personas, "Drum and Fife" and "Field Wireless" (avatars in `webp2/lfg/webhooks/`, drawn by
+  `haunt-roll-fail/tools/webhook-avatars.py`): the tournament changes `webhooks`, `make-webhook <name> | in <channel> | avatar <file> |
+  for <turns channel>` (sets it as that turns channel without anyone copying its URL), `rename-webhook` and `test-ping <turns channel> | role <role>` (a "Test ping" thread through that webhook, mentioning the role) (`DiscordServer.scala`;
+  the bot needs Manage Webhooks).
 - The bot's `/card <name> [game] [private]` (2026-11-22, asked for as a "bot to call cards and other art"): posts a Root or Northgard card,
   faction or clan board, quest, landmark, hireling or creature with its picture, the name suggested as it is typed (autocomplete). The list
   is `webp2/lfg/cards.tsv`, made from the games' cards and asset lists by `hrf.LookupIndex` (`haunt-roll-fail/lookup-index.scala`, JVM host
@@ -1232,6 +1240,12 @@ server. No session can reach the server, and none needs to.
   changes the one of that name if there is one. On purpose nothing is deleted, nobody kicked or banned, and a role is never given
   server permissions; every request carries the audit log reason "HRF server change". The bot needs Manage Roles and Manage Channels,
   and its role above the roles it manages.
+- Members give and take the game and ping roles themselves (2026-11-24, asked for): `/roles`, or the "Pick my roles" button under the
+  bot's role picker post, opens a menu only they see with their roles ticked (`good-game/SelfRoles.scala`, a `BotCommand`; its button and
+  menu go through `Lfg.interaction`). Only the roles the owner lists are offered (`tournament/self-roles.tsv`, set by the tournament changes
+  `self-roles`, `self-role <role>, ...`, `self-role-off <role>, ...`; `role-picker <channel> [| text <text>]` posts the button), and only
+  while each gives no server permission, isn't a bot's and sits under the bot's role, checked again at every pick, so Manager or any
+  moderating role is never handed out.
 - The bot's `/rule <rule> [game] [private]` (2026-11-22, asked for as a bot "to help cite the rules", not to interpret them): Root's
   rules by their Law of Root number (`4.3.2`, `H.1`, a section lists the rules under it) or name, with the rule's text and the link to
   it on the Root Database (`webp2/lfg/rules-root.tsv`, made by `haunt-roll-fail/tools/law-index.py` from the Root Database's copy, kept up
@@ -1267,6 +1281,10 @@ server. No session can reach the server, and none needs to.
   "More Info" toggle with short rule notes. Panes are tappable before a
   faction is set up too (`factionStatus` and `updateStatus`); a faction
   without state yet shows just its board ("Not set up yet").
+- Root's "Card Piles" setting (`CardPilesInPanel`, `CardPilesOnMap` in `root/meta.scala`) defaults to the map (deck, discard, Pond, Lost Souls
+  and the available Dominances drawn there). A browser that saved its settings while the side panel was the default kept it, so each
+  browser moves a saved side panel to the map once (2026-11-24, owner; `Meta.settingsMoves`, applied by `loadSettings` in `hrf.scala` and
+  remembered as `root.moved.card-piles-on-map`), after which the setting is the player's again. A later default change can add an entry there.
 - Once play starts, the Root map draws the ruins only when someone can use them (`ruinsHidden` in `root/ui.scala`): the
   Vagabond, the Hundreds, the Brigand hireling, or the Knaves with the Adventurer as a Captain, who draws a card for acclaim
   at a ruin (added 2026-10-31: Air of Conquest showed none). Display only, so no game records change.

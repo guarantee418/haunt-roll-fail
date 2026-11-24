@@ -1636,6 +1636,7 @@ object French {
         "Graveyard" -> "Cimetière",
         "Nukes" -> "Dévastations",
         "Main Menu" -> "Menu principal",
+        "My Online Games" -> "Mes parties en ligne",
         "Save Replay As File" -> "Enregistrer la partie (accès hors-ligne)",
         "Save Small Replay File" -> "Enregistrer la partie",
         "Saving Replay..." -> "Enregistrement de la partie...",

@@ -37,6 +37,38 @@ object Meta extends MetaGame { mmm =>
         "The art is from the Tabletop Simulator mod \"Pincer: A Gentleman's War (Updated for First Draft)\".",
     )
 
+    // How to Play on the menu (2026-11-24): the designer's page, and how the site is used, never the rules themselves
+    override def howToPlayLinks = $[(Elem, String)](
+        ("Pincer: A Gentleman's War".hh ~ " on Kickstarter, by Julian Birke") -> "https://www.kickstarter.com/projects/juilanbirke/pincer-a-gentlemans-war",
+    )
+
+    override def howToPlay = $[(Elem, $[Elem])](
+        ("The rules".txt, $[Elem](
+            "This site doesn't teach the rules: they are Julian Birke's, and the rulebook is still a draft. Learn them from the game's own rulebook or from someone who plays it; the site keeps to them for you, offering only the moves the rules allow.",
+        )),
+        ("Starting a game".txt, $[Elem](
+            "Quick Game".hh ~ " starts at once against Easy bots.",
+            "Local Game".hh ~ " lets you pick 2 to 4 players and make each one a person or a bot; people take turns on this device.",
+            "Play Online".hh ~ " makes a game with a link for each player, so everyone plays from their own device, whenever they like.",
+            "Local games are kept in this browser, so you can leave and pick them up again from the same button.",
+        )),
+        ("Making your moves".txt, $[Elem](
+            "When it's your turn, your choices are listed in the action pane on the right, and the hexes and units they concern are outlined on the map.",
+            "Tap a choice in the list, or tap an outlined hex or unit on the map. If that hex or unit has several choices, they open over the map: pick one, or Cancel.",
+            "With many hexes to choose from, the list folds into \"Tap a highlighted hex on the map\"; \"Show the choices as a list\" unfolds it.",
+            "Zoom the map with the mouse wheel or by pinching, and drag it to look around.",
+        )),
+        ("Seeing what's going on".txt, $[Elem](
+            "The player panels show each player's cards, Royal Seals, wars and pieces; the panel under them shows the turn and the last dice.",
+            "Under the action pane, " ~ "Royal Seals".hh ~ " lists every seal and who holds it (tap one to read it), and " ~ "Icons".hh ~ " says what each icon on the panels means.",
+            "Tap a card or a seal anywhere to see it large; tap again to close it.",
+        )),
+        ("Undo, replays and help".txt, $[Elem](
+            "Tap a line in the log to see the game as it was then: from there you can replay the game from that point, or undo back to it. In an online game, undo only what the other players agree to.",
+            "Interface".hh ~ " under the action pane has the display settings, " ~ "Report a Bug".hh ~ " sends a report to the site, and " ~ "Main Menu".hh ~ " goes back to this menu.",
+        )),
+    )
+
     // a plain face for the controls, the log and the numbers; Luminari for the title only (index.html)
     override def bodyFont = |("pincer-ui")
     override def titleFont = |("luminari")
