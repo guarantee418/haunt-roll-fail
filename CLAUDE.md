@@ -1266,6 +1266,10 @@ server. No session can reach the server, and none needs to.
   "More Info" toggle with short rule notes. Panes are tappable before a
   faction is set up too (`factionStatus` and `updateStatus`); a faction
   without state yet shows just its board ("Not set up yet").
+- Root's "Card Piles" setting (`CardPilesInPanel`, `CardPilesOnMap` in `root/meta.scala`) defaults to the map (deck, discard, Pond, Lost Souls
+  and the available Dominances drawn there). A browser that saved its settings while the side panel was the default kept it, so each
+  browser moves a saved side panel to the map once (2026-11-24, owner; `Meta.settingsMoves`, applied by `loadSettings` in `hrf.scala` and
+  remembered as `root.moved.card-piles-on-map`), after which the setting is the player's again. A later default change can add an entry there.
 - Once play starts, the Root map draws the ruins only when someone can use them (`ruinsHidden` in `root/ui.scala`): the
   Vagabond, the Hundreds, the Brigand hireling, or the Knaves with the Adventurer as a Captain, who draws a card for acclaim
   at a ruin (added 2026-10-31: Air of Conquest showed none). Display only, so no game records change.
