@@ -489,7 +489,8 @@ object TurnPings {
             case (true, "fight") => (head, "your fight " + w(axe) + them.map(" against " + _).getOrElse("") + " needs you")
             case (true, "trade") => (head, "harvest trading ⚖️")
             case (true, "winter") => (head, "Winter ❄️ is here")
-            case (true, "cards") => (e("HorizonsDevelopments"), "pick a card")
+            // the Discord server's Northgard card back emoji (ng_cardback, 2026-11-24, asked for) right after "card", else the cards badge
+            case (true, "cards") => (head, "pick a card " + w(LfgSetup.serverNamed(List("cardback", "cardbacks")).getOrElse(e("HorizonsDevelopments"))))
             case (true, "draft") => (e("title"), "your pick in the clan draft")
             case (true, "setup") => (head, "time to place your clan")
             case (true, "raid") => (e("ModuleOption(Sea)"), "your raid")
