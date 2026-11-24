@@ -25,6 +25,8 @@ trait Faction extends BasePlayer with Named with Styling with Record {
     def short : String
     def id : String
     def color : String
+    // the side in a team game (2026-11-24): US, British and Soviet are Allies, the Wehrmacht and OKW Axis
+    def axis : Boolean = false
 }
 
 case object US extends Faction {
@@ -38,6 +40,7 @@ case object Wehrmacht extends Faction {
     def name = "Wehrmacht"
     def short = "WM"
     def id = "wehrmacht"
+    override def axis = true
     def color = "#c9423b"
 }
 
@@ -60,6 +63,7 @@ case object OKW extends Faction {
     def name = "Oberkommando West"
     def short = "OKW"
     def id = "okw"
+    override def axis = true
     def color = "#5d7a99"
 }
 
@@ -761,9 +765,10 @@ case object BetweenTwoRiversMap extends MapChoice(BetweenTwoRivers, "MR2 and MR1
 case object ArdennesForestMap extends MapChoice(ArdennesForest, "AF1 and AF2, the backs of the Moro River panels: a snowy forest, the Cathedral (a multi-hex Special Building), multi-hex Buildings and Ice tiles on the frozen lake, split at both edges. Spawn Areas at the top and bottom. Starting stockpile 6 Manpower, 2 Munitions, 3 Fuel.")
 case object FrozenLakeMap extends MapChoice(FrozenLake, "AF2 and AF1: the frozen lake's Ice tiles in the middle, the Cathedral on the right. Spawn Areas at the top and bottom. Starting stockpile 6 Manpower, 4 Munitions, 3 Fuel.")
 case object RoadToMoscowMap extends MapChoice(RoadToMoscow, "AF1 and AF2, played across: the Spawn Areas are the left and right edges. Starting stockpile 6 Manpower, 4 Munitions, 4 Fuel.")
+case object MoroRiverFFAMap extends MapChoice(MoroRiverFFA, "Three players, each on their own: MR1 and MR2 with other Control Points and three Spawn Areas (top left, top right, bottom). Every player who assigned Damage to a destroyed unit gains a VP; the game ends at 15 VP. Starting stockpile 6 Manpower, 4 Munitions, 2 Fuel.")
 
 object MapChoice {
-    val all = $[MapChoice](MoroRiverMap, AcrossTheDonMap, BetweenTwoRiversMap, ArdennesForestMap, FrozenLakeMap, RoadToMoscowMap)
+    val all = $[MapChoice](MoroRiverMap, AcrossTheDonMap, BetweenTwoRiversMap, ArdennesForestMap, FrozenLakeMap, RoadToMoscowMap, MoroRiverFFAMap)
 }
 
 // THE ICE MATRIX (Full Game Rules 10.4): how many dice a unit attacked on an Ice tile rolls for each damage type assigned to it
@@ -961,9 +966,59 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     implicit def faction2player(f : Faction) : Player = states(f)
 
-    def team(f : Faction) = setup.indexOf(f)
+    // TEAMS (2026-11-24): two players are two teams; three to five play Allies against Axis (rulebook p. 6 and 11.0, uneven teams
+    // allowed), the team of the first seat being team 1 (its Spawn Area the first). Teammates share VPs, sight and their Control Points
+    // a free-for-all mission (the Mission Booklet's 3 Way FFA, 8.0) plays every player as a team of their own
+    lazy val freeForAll = map.areas.num > 2
 
-    def enemy(f : Faction) = setup.but(f).only
+    lazy val teamGame = setup.num > 2 && freeForAll.not
+
+    lazy val teams : $[$[Faction]] =
+        if (teamGame) {
+            val (a, b) = setup.partition(_.axis == setup(0).axis)
+            $(a, b)
+        }
+        else
+            setup./(f => $(f))
+
+    def team(f : Faction) = teams.indexWhere(_.has(f))
+
+    def mates(f : Faction) : $[Faction] = teams(team(f))
+
+    def enemies(f : Faction) : $[Faction] = setup.%(e => foe(e, f))
+
+    def foe(a : Faction, b : Faction) = team(a) != team(b)
+
+    def teamVP(i : Int) = teams(i)./(_.stock(VP)).sum
+
+    // the VPs that end the game: 3 more in team games (p. 6), the mission's own in a free-for-all
+    def endVP = map.trigger.|(length.vp + teamGame.??(3))
+
+    // the teams in turn order from team i
+    def rotation(i : Int) : $[$[Faction]] = teams.drop(i) ++ teams.take(i)
+
+    // the order teams alternate in, teammates in seating order: A1, B1, A2, B2...
+    def interleaved(f : Faction) : $[Faction] = {
+        val r = rotation(team(f))
+        (0 until r./(_.num).max).toList./~(i => r./~(_.lift(i).toList))
+    }
+
+    // a destroyed unit's VP: to the other team, or in a free-for-all to every player who assigned it Damage (11.0)
+    def killed(x : Squad, by : $[Faction]) {
+        if (has(x, HeroicSacrifice).not) {
+            if (freeForAll)
+                by.distinct.%(e => foe(e, x.faction)).foreach { e =>
+                    gain(e, VP, 1)
+                    log(e, "gained", 1.hl, "VP for", x)
+                }
+            else
+                gain(other(x.faction), VP, 1)
+        }
+    }
+
+    // who assigned Damage to a unit in this Damage Phase
+    def damagers(t : Squad) : $[Faction] = (assignments.%(_.target == t)./(_.attacker.faction) ++
+        splashes.%(s => splashed(s.attacker, s.hex).has(t))./(_.attacker.faction) ++ strikes.%(s => pos.get(t).exists(s.hexes.has))./(_.faction)).distinct
 
     val length : Length = options.of[Length].single.|(ShortGame)
 
@@ -1264,7 +1319,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def eyed(f : Faction, h : Hex) = eyes.getOrElse(f, Set()).exists(e => e == h || Board.adjacent(e, h))
 
     // (a Retreating unit doesn't spot, in the Full Game Rules)
-    def visible(f : Faction, t : Squad) = isPassenger(t).not && (units(f).exists(s => sees(s, t) && (full && retreating.contains(s)).not) || (pos.contains(t) && eyed(f, where(t))))
+    def visible(f : Faction, t : Squad) = isPassenger(t).not && (mates(f)./~(units).exists(s => sees(s, t) && (full && retreating.contains(s)).not) || (pos.contains(t) && mates(f).exists(eyed(_, where(t)))))
 
     // ATTACKS
 
@@ -1282,7 +1337,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             attacksOf(u).%(_.indirect)
     }
 
-    def targetsOf(u : Squad) : $[(Squad, $[Attack])] = canFire(u).??(units(enemy(u.faction)).map(t => (t, diceOn(u, t))).filter(_._2.nonEmpty))
+    def targetsOf(u : Squad) : $[(Squad, $[Attack])] = canFire(u).??(enemies(u.faction)./~(units).map(t => (t, diceOn(u, t))).filter(_._2.nonEmpty))
 
     // the target choices of a unit: in the Full Game Rules a Heavy Vehicle may put each damage type on a target of its own
     def targetChoices(u : Squad) : $[(Squad, $[Attack])] = targetsOf(u)./~{ case (t, d) =>
@@ -1320,9 +1375,13 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // TURN ORDER
 
-    def other(f : Faction) = enemy(f)
+    // the next team's first player
+    def other(f : Faction) = teams((team(f) + 1) % teams.num).head
 
-    def turnOrder = $(first, other(first))
+    def turnOrder = rotation(team(first)).flatten
+
+    // the next player in a round's turn: a teammate still to play this turn, else the other team's first player
+    def nextTurn(f : Faction) : (Faction, Boolean) = mates(f).dropWhile(_ != f).drop(1).starting./(m => (m, false)).|((other(f), true))
 
     def spawnHexes(f : Faction, t : UnitType) : $[Hex] = {
         val area = Board.spawn(team(f)).%(occupant(_).none)
@@ -1512,7 +1571,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // ASSAULTS: moving into an adjacent hex held by an enemy, where no other Assault is
     def assaultAt(h : Hex) = assaults.exists { case (_, d) => pos.get(d).has(h) }
 
-    def assaultable(u : Squad, h : Hex) = full && isPassenger(u).not && mayMove(u) && pointsLeft(u) >= 1 && canEnter(u, h) && assaultAt(h).not && occupant(h).exists(_.faction != u.faction)
+    def assaultable(u : Squad, h : Hex) = full && isPassenger(u).not && mayMove(u) && pointsLeft(u) >= 1 && canEnter(u, h) && assaultAt(h).not && occupant(h).exists(v => foe(v.faction, u.faction))
 
     def assaultHexes(u : Squad) : $[Hex] = stepsFrom(u, where(u)).%(assaultable(u, _))
 
@@ -1602,7 +1661,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 log(u, "left the vehicle in", h, "for", x)
             case None =>
                 log(u, "had nowhere to go and was destroyed")
-                if (has(u, HeroicSacrifice).not) gain(other(u.faction), VP, 1)
+                killed(u, damagers(u))
                 gain(u.faction, XP, 1)
                 removeSquad(u)
         }
@@ -1629,13 +1688,13 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         d <= rangeOf(m) && inArc(m, h) && (d == 0 || Board.clear(where(m), h))
     }
 
-    def spottedIn(f : Faction, u : Squad, h : Hex) = camouflaged(u).not || units(f).exists(s => retreating.contains(s).not && (Board.distance(where(s), h) <= 1 || (spotsCamo(s) && Board.distance(where(s), h) <= sightOf(s) && Board.clear(where(s), h))))
+    def spottedIn(f : Faction, u : Squad, h : Hex) = camouflaged(u).not || mates(f)./~(units).exists(s => retreating.contains(s).not && (Board.distance(where(s), h) <= 1 || (spotsCamo(s) && Board.distance(where(s), h) <= sightOf(s) && Board.clear(where(s), h))))
 
     def overwatch(u : Squad, h : Hex, assaulted : |[Squad]) : Boolean = {
         if (full.not || u.kind != Infantry || retreating.contains(u) || pos.contains(u).not)
             return pos.contains(u)
 
-        val mgs = units(enemy(u.faction)).%(m => m.utype.machineGun && setUp.contains(m) && isPassenger(m).not && retreating.contains(m).not)
+        val mgs = enemies(u.faction)./~(units).%(m => m.utype.machineGun && setUp.contains(m) && isPassenger(m).not && retreating.contains(m).not)
         val by = inBuilding(h).?(mgs.%(m => assaulted.has(m))).|(mgs).%(m => covers(m, h) && spottedIn(m.faction, u, h))
 
         if (by.none)
@@ -1649,7 +1708,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             return true
 
         log(u, "was destroyed")
-        if (has(u, HeroicSacrifice).not) gain(enemy(u.faction), VP, 1)
+        killed(u, by./(_.faction))
         removeSquad(u)
         false
     }
@@ -1657,14 +1716,14 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // HE SPLASH: on a hex in range and sight, hitting every unit in it and around it that the attacker's team sees (its own always)
     def area(h : Hex) : $[Hex] = h +: Board.neighbors(h)
 
-    def seesHex(f : Faction, h : Hex) = eyed(f, h) || units(f).exists(s => retreating.contains(s).not && Board.distance(where(s), h) <= sightOf(s) && lineClear(where(s), h) && (smoke.contains(where(s)).not || Board.distance(where(s), h) <= 1))
+    def seesHex(f : Faction, h : Hex) = mates(f).exists(eyed(_, h)) || mates(f)./~(units).exists(s => retreating.contains(s).not && Board.distance(where(s), h) <= sightOf(s) && lineClear(where(s), h) && (smoke.contains(where(s)).not || Board.distance(where(s), h) <= 1))
 
-    def splashed(a : Squad, h : Hex) : $[Squad] = area(h)./~(standing).%(t => t.faction == a.faction || visible(a.faction, t))
+    def splashed(a : Squad, h : Hex) : $[Squad] = area(h)./~(standing).%(t => foe(t.faction, a.faction).not || visible(a.faction, t))
 
     def splashNote(u : Squad, h : Hex) : Elem = {
         val l = splashed(u, h)
-        val own = l.%(_.faction == u.faction).num
-        ("(" + l.%(_.faction != u.faction).num + " enemy" + (own > 0).??(", " + own + " friendly") + ")").spn(styles.small)
+        val own = l.%(v => foe(v.faction, u.faction).not).num
+        ("(" + l.%(v => foe(v.faction, u.faction)).num + " enemy" + (own > 0).??(", " + own + " friendly") + ")").spn(styles.small)
     }
 
     def splashHexes(u : Squad) : $[Hex] = {
@@ -1674,7 +1733,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             d >= max(1, u.utype.minRange) && d <= rangeOf(u) && seesHex(u.faction, h) &&
             dice.forall(a => (a.indirect || lineClear(where(u), h)) && (fixedGun(u, a).not || inArc(u, h))) && (smoke.contains(where(u)).not || d <= 1) &&
             (u.utype.setsUp.not || inArc(u, h)) &&
-            splashed(u, h).exists(_.faction != u.faction)
+            splashed(u, h).exists(v => foe(v.faction, u.faction))
         })
     }
 
@@ -1682,7 +1741,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def shotChoices(u : Squad) : $[(Hex, $[Attack])] = (full && canFire(u) && hasSplash(u).not).??(Board.hexes.%(h => terrainAt(h) == Building)./~{ h =>
         val d = Board.distance(where(u), h)
         val dice = remaining(u).%(a => a.dmg == HE || a.dmg == Flame).%(a => a.indirect || lineClear(where(u), h)).%(a => fixedGun(u, a).not || inArc(u, h)).%(_ => smoke.contains(where(u)).not || d <= 1)
-        val empty = standing(h).%(t => t.faction == u.faction || visible(u.faction, t)).none
+        val empty = standing(h).%(t => foe(t.faction, u.faction).not || visible(u.faction, t)).none
         (d >= max(1, u.utype.minRange) && d <= rangeOf(u) && seesHex(u.faction, h) && empty && dice.any && (u.utype.setsUp.not || inArc(u, h))).?((h, dice)).$
     })
 
@@ -1777,7 +1836,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             val flame = dice.count(_.dmg == Flame)
             val resisted = dice.count(a => (a.dmg == AI || a.dmg == AP) && Matrix.resist(t.kind, a.dmg).has(true)) + Matrix.resist(t.kind, AP).has(true).??(strikeAP) + Matrix.resist(t.kind, HE).has(true).??(faces.count(_.success))
             val others = l./(a => where(a.attacker)).distinct.%(_ != h)
-            val enemySplash = splash.exists(_._1.attacker.faction != t.faction) || struck.exists(_._1.faction != t.faction)
+            val enemySplash = splash.exists(x => foe(x._1.attacker.faction, t.faction)) || struck.exists(x => foe(x._1.faction, t.faction))
             val base =
                 if (t.kind != Infantry || assaults.contains(t)) 0
                 else if (inBuilding(h)) (others.%(x => sameBuilding(x, h).not).any || enemySplash).??(staticCover(t, $))
@@ -2071,13 +2130,13 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     log("Saved game version", version.hlb)
 
                 log("Players", setup./(_.elem).comma)
-                log("The game ends at", length.vp.hlb, "Victory Points")
+                log("The game ends at", endVP.hlb, "Victory Points", teamGame.?("(a team's together)").|(""))
 
                 if (full)
                     Shuffle[OpCard](Operations.deck, OpsShuffledAction(_))
                 else
                     // each team rolls three Damage Dice; the most green, then black, symbols goes first
-                    Roll[Face](6.times(Face.die), FirstRolledAction(_))
+                    Roll[Face]((3 * teams.num).times(Face.die), FirstRolledAction(_))
 
             case OpsShuffledAction(l) =>
                 opsDeck = l
@@ -2085,7 +2144,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 if (commanders)
                     Shuffle[Commander](Commander.of(setup(0)), CommandersShuffledAction(setup(0), _))
                 else
-                    Roll[Face](6.times(Face.die), FirstRolledAction(_))
+                    Roll[Face]((3 * teams.num).times(Face.die), FirstRolledAction(_))
 
             // each player draws three Commanders of their faction's six
             case CommandersShuffledAction(f, l) =>
@@ -2093,31 +2152,43 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 log(f, "drew three Commanders")
                 setup.dropWhile(_ != f).drop(1).starting match {
                     case Some(e) => Shuffle[Commander](Commander.of(e), CommandersShuffledAction(e, _))
-                    case None => Roll[Face](6.times(Face.die), FirstRolledAction(_))
+                    case None => Roll[Face]((3 * teams.num).times(Face.die), FirstRolledAction(_))
                 }
 
             case FirstRolledAction(l) =>
                 lastRolls = l
-                val a = l.take(3)
-                val b = l.drop(3)
                 def score(x : $[Face]) = x.count(_.crit) * 10 + x.count(f => f.success && f.crit.not)
-                log(setup(0), "rolled", a./(_.elem).merge, "and", setup(1), "rolled", b./(_.elem).merge)
-                if (score(a) == score(b)) {
+                // a player of each team rolls three; the team going last in turn order places its starting Infantry first
+                val rolled = teams.indices.toList./(i => (teams(i).head, l.drop(3 * i).take(3)))
+                if (teams.num == 2)
+                    log(rolled(0)._1, "rolled", rolled(0)._2./(_.elem).merge, "and", rolled(1)._1, "rolled", rolled(1)._2./(_.elem).merge)
+                else
+                    rolled.foreach { case (f, x) => log(f, "rolled", x./(_.elem).merge) }
+                val best = rolled.map(x => score(x._2)).max
+                if (rolled.filter(x => score(x._2) == best).size > 1) {
                     log("A tie, rolling again")
-                    Roll[Face](6.times(Face.die), FirstRolledAction(_))
+                    Roll[Face]((3 * teams.num).times(Face.die), FirstRolledAction(_))
                 }
                 else {
-                    first = (score(a) > score(b)).?(setup(0)).|(setup(1))
+                    first = rolled.filter(x => score(x._2) == best).head._1
                     gameFirst = first
-                    log(first, "goes first;", other(first), "places its starting Infantry first")
-                    StartUnitsAction(other(first), 0)
+                    if (teamGame)
+                        log(mates(first)./(_.elem).comma, "go first;", enemies(first)./(_.elem).comma, "place their starting Infantry first")
+                    else
+                    if (freeForAll)
+                        log(first, "goes first, then", rotation(team(first)).drop(1)./(_.head.elem).comma, "(they place their starting Infantry in the reverse order)")
+                    else
+                        log(first, "goes first;", other(first), "places its starting Infantry first")
+                    StartUnitsAction(rotation(team(first)).last.head, 0)
                 }
 
-            case StartUnitsAction(f, 3) =>
-                if (f != first)
-                    StartUnitsAction(first, 0)
-                else
-                    Milestone(RoundStartAction(first))
+            // three starting Infantry each, two in team games, as the missions are 2-panel ones (p. 7); the team going second places first
+            case StartUnitsAction(f, n) if n >= teamGame.?(2).|(3) =>
+                nextTurn(f) match {
+                    case (m, false) => StartUnitsAction(m, 0)
+                    case _ if team(f) != team(first) => StartUnitsAction(teams((team(f) + teams.num - 1) % teams.num).head, 0)
+                    case _ => Milestone(RoundStartAction(first))
+                }
 
             case StartUnitsAction(f, n) =>
                 current = f
@@ -2178,7 +2249,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 TurnAction(f, 0)
 
             case TurnAction(f, k) =>
-                if (k >= (full.?(2 * opsTurns).|(8))) {
+                if (k >= (full.?(teams.num * opsTurns).|(4 * teams.num))) {
                     if (full) {
                         opsCard.foreach { c =>
                             log("The Operation card was", c.elem, "and", opsPicker, "picked", opsTurns.hl, "turns")
@@ -2195,9 +2266,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     cpLeft = 3
                     bonus = Map()
                     if (full)
-                        log("Turn", (k / 2 + 1).hl, "for", f)
+                        log("Turn", (k / teams.num + 1).hl, "for", f)
                     else
-                        log("Turn", (k / 2 + 1).hl, "of", 4.hl, "for", f)
+                        log("Turn", (k / teams.num + 1).hl, "of", 4.hl, "for", f)
                     ManeuverAction(f, k)
                 }
 
@@ -2205,7 +2276,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 settleAssaults()
                 val ready = units(f).%(u => unitActions(f, u, k).any || (cpLeft > 0 && mayRetreat(u) && retreatChoices(u).any))
                 if (cpLeft == 0 && ready.none)
-                    TurnAction(other(f), k + 1)
+                    nextTurn(f) match { case (m, last) => TurnAction(m, k + last.??(1)) }
                 else
                     Ask(f)
                         .group(cpNote(f))
@@ -2429,7 +2500,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             case EndTurnAction(f, k) =>
                 if (cpLeft > 0)
                     log(f, "forfeited", cpLeft.hl, "CP")
-                TurnAction(other(f), k + 1)
+                nextTurn(f) match { case (m, last) => TurnAction(m, k + last.??(1)) }
 
             // DAMAGE PHASE: machine guns pin first, then every unit picks one target; all damage is simultaneous
             case DamagePhaseAction(f) =>
@@ -2485,7 +2556,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
                 // units on the other team's Control Points neutralize them, unless pinned (or Retreating, or in an Assault)
                 control.toList.foreach { case (h, f) =>
-                    occupant(h).%(u => u.faction != f && pinned.contains(u).not && (full && (retreating.contains(u) || assaultAt(h))).not).foreach { u =>
+                    occupant(h).%(u => foe(u.faction, f) && pinned.contains(u).not && (full && (retreating.contains(u) || assaultAt(h))).not).foreach { u =>
                         control -= h
                         log(u, "neutralized", f, "Control Point in", h)
                     }
@@ -2528,7 +2599,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             case AssignedAction(_) =>
                 // experience: 1 for each player, and 1 for each enemy unit it assigned damage that can hurt it
                 setup.foreach { f =>
-                    val hit = (assignments.%(_.attacker.faction == f).%(a => relevant(a.target, a.dice) || (onIce(a.target) && a.dice.exists(d => IceMatrix.dice(a.target.kind, d.dmg) > 0)))./(_.target) ++ splashes.%(_.attacker.faction == f)./~(s => splashed(s.attacker, s.hex).%(_.faction != f))).distinct
+                    val hit = (assignments.%(_.attacker.faction == f).%(a => relevant(a.target, a.dice) || (onIce(a.target) && a.dice.exists(d => IceMatrix.dice(a.target.kind, d.dmg) > 0)))./(_.target) ++ splashes.%(_.attacker.faction == f)./~(s => splashed(s.attacker, s.hex).%(v => foe(v.faction, f)))).distinct
                     gain(f, XP, 1 + hit.num)
                     log(f, "gained", (1 + hit.num).hl, "XP")
                 }
@@ -2676,7 +2747,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     val lost = t +: passenger(t).$
                     lost.foreach { x =>
                         log(x, "was destroyed")
-                        if (has(x, HeroicSacrifice).not) gain(other(x.faction), VP, 1)
+                        killed(x, damagers(t))
                         gain(x.faction, XP, 1)
                     }
                     removeSquad(t)
@@ -2702,7 +2773,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                                     log(a, "failed the Assault and fell back to", x)
                                 case None =>
                                     log(a, "failed the Assault, had nowhere to fall back and was destroyed")
-                                    if (has(a, HeroicSacrifice).not) gain(other(a.faction), VP, 1)
+                                    killed(a, damagers(a))
                                     gain(a.faction, XP, 1)
                                     removeSquad(a)
                             }
@@ -2765,7 +2836,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     val lost = t +: passenger(t).$
                     lost.foreach { x =>
                         log(x, "was destroyed")
-                        if (has(x, HeroicSacrifice).not) gain(other(x.faction), VP, 1)
+                        killed(x, damagers(t))
                         gain(x.faction, XP, 1)
                     }
                     removeSquad(t)
@@ -2783,7 +2854,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 log("Supply Phase")
 
                 control.toList.foreach { case (h, e) =>
-                    occupant(h).%(u => u.faction != e && pinned.contains(u).not && (full && retreating.contains(u)).not).foreach { u =>
+                    occupant(h).%(u => foe(u.faction, e) && pinned.contains(u).not && (full && retreating.contains(u)).not).foreach { u =>
                         control -= h
                         log(u, "neutralized", e, "Control Point in", h)
                     }
@@ -2802,17 +2873,23 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     log(e, "collected", Res.points./(r => income(e, r).hl ~ r.icon).join(" "))
                 }
 
-                val ended = setup.%(_.stock(VP) >= length.vp)
+                // teams share VPs: a team's VPs are its players' together
+                val sides = teams.indices.toList
+                val ended = sides.%(i => teamVP(i) >= endVP)
 
                 if (ended.any) {
-                    val vps = setup./(e => e -> pointsOf(e).count(h => Board.points(h).has(VP)))
+                    val vps = sides./(i => i -> teams(i)./(e => pointsOf(e).count(h => Board.points(h).has(VP))).sum)
                     val most = vps.map(_._2).max
-                    vps.filter(_._2 == most).single.foreach { case (e, n) =>
+                    vps.filter(_._2 == most).single.foreach { case (i, n) =>
+                        val e = teams(i).head
                         gain(e, VP, 3)
-                        log(e, "gained", 3.hl, "VP for holding the most Victory Point Control Points")
+                        if (teamGame)
+                            log(teams(i)./(_.elem).comma, "gained", 3.hl, "VP for holding the most Victory Point Control Points")
+                        else
+                            log(e, "gained", 3.hl, "VP for holding the most Victory Point Control Points")
                     }
-                    val best = setup./(_.stock(VP)).max
-                    val winner = setup.%(_.stock(VP) == best).single.|(gameFirst)
+                    val best = sides./(teamVP).max
+                    val winner = sides.%(i => teamVP(i) == best).single./(teams(_).head).|(teams(team(gameFirst)).head)
                     GameOverAction(winner)
                 }
                 else {
@@ -3051,14 +3128,14 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 log(f, "passed")
                 PurchaseNextAction(f)
 
+            // the teams alternate purchases; teammates (simultaneous in the rulebook) take their turns one after another
             case PurchaseNextAction(f) =>
-                if (other(f).passed.not)
-                    PurchaseAction(other(f))
-                else
-                if (f.passed.not)
-                    PurchaseAction(f)
-                else
-                    SupplyEndAction(first)
+                val order = interleaved(first)
+                val i = order.indexOf(f)
+                (order.drop(i + 1) ++ order.take(i + 1)).%(_.passed.not).starting match {
+                    case Some(n) => PurchaseAction(n)
+                    case None => SupplyEndAction(first)
+                }
 
             case SupplyEndAction(f) =>
                 pinned = Map()
@@ -3080,7 +3157,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 setup./~(units).%(_.kind == Infantry).%(u => retreating.contains(u).not).foreach { u =>
                     val h = where(u)
                     val area = (isPassenger(u).not && Board.spawn(team(u.faction)).has(h)).??(1)
-                    val near = units(u.faction).%(v => v != u && reinforces(v) && Board.joined(h, where(v)) && isPassenger(v).not && retreating.contains(v).not).num
+                    val near = mates(u.faction)./~(units).%(v => v != u && reinforces(v) && Board.joined(h, where(v)) && isPassenger(v).not && retreating.contains(v).not).num
                     val ride = carrier(u).%(reinforces).any.??(1)
                     val heal = min(maxHealth(u) - health(u), area + near + ride)
                     if (heal > 0) {
@@ -3092,7 +3169,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 // repair: each Wrench repairs an adjacent allied vehicle or emplacement by 1 (the most damaged)
                 setup./~(units).%(wrenchesOf(_) > 0).%(u => retreating.contains(u).not).foreach { u =>
                     1.to(wrenchesOf(u)).foreach { _ =>
-                        units(u.faction).%(v => v != u && (v.utype.vehicle || v.kind == Emplacement) && carrier(u).has(v).not && health(v) < maxHealth(v) && Board.joined(where(u), where(v)))
+                        mates(u.faction)./~(units).%(v => v != u && (v.utype.vehicle || v.kind == Emplacement) && carrier(u).has(v).not && health(v) < maxHealth(v) && Board.joined(where(u), where(v)))
                             .sortBy(v => health(v) * 100 / maxHealth(v)).starting.foreach { v =>
                                 health += v -> (health(v) + 1)
                                 log(u, "repaired", v)
@@ -3113,8 +3190,15 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 isOver = true
                 current = null
                 setup.foreach(f => log(f, "finished with", f.stock(VP).hlb, "VP"))
-                log(w, "won")
-                GameOver($(w), "Game Over", $(GameOverWonAction(null, w)))
+                if (teamGame) {
+                    teams.foreach(t => log(t./(_.elem).comma, "together", teamVP(team(t.head)).hlb, "VP"))
+                    log(mates(w)./(_.elem).comma, "won")
+                    GameOver(mates(w), "Game Over", mates(w)./(m => GameOverWonAction(null, m)))
+                }
+                else {
+                    log(w, "won")
+                    GameOver($(w), "Game Over", $(GameOverWonAction(null, w)))
+                }
         }
     }
 }

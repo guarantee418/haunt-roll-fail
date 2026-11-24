@@ -44,7 +44,7 @@ object Meta extends MetaGame { mmm =>
 
     override val about = $[Elem](
         "Company of Heroes: The Board Game".hlb ~ ", 2nd Edition, by Bad Crow Games, licensed from SEGA and Relic Entertainment: a work in progress played here by a team helping to test it.",
-        "The rules are the core rulebook's Full Game Rules with its thirty core Commanders (or its First Game Rules, a setup choice), the five factions' Building Boards (US Forces, Wehrmacht, British Forces, Soviet Forces, Oberkommando West) and the Mission Booklet's six 2-panel core missions; the art is from the Tabletop Simulator mod \"Company of Heroes - 2nd Edition\".",
+        "The rules are the core rulebook's Full Game Rules with its thirty core Commanders (or its First Game Rules, a setup choice), the five factions' Building Boards (US Forces, Wehrmacht, British Forces, Soviet Forces, Oberkommando West) and the Mission Booklet's six 2-panel core missions, two players or teams of up to five; the art is from the Tabletop Simulator mod \"Company of Heroes - 2nd Edition\".",
         "© SEGA. Developed by Relic Entertainment Inc. SEGA, the SEGA logo, Relic Entertainment and Company of Heroes are either registered trademarks or trademarks of SEGA Corporation or its affiliates.",
     )
 
@@ -57,7 +57,8 @@ object Meta extends MetaGame { mmm =>
     override def howToPlay = $[(Elem, $[Elem])](
         ("The rules".txt, $[Elem](
             "This site doesn't teach the rules: they are Bad Crow Games', in the Rulebook linked above (the First Game Rules first, then the Full Game Rules). The site keeps to them for you, offering only the moves the rules allow.",
-            "Played here: US Forces against the Wehrmacht on Moro River, without Commanders yet. The setup's " ~ "Rules".hh ~ " choice picks the Full Game Rules or the First Game Rules.",
+            "Played here: any two of the five factions against each other, or team games of three to five players, Allies (US, British, Soviet) against Axis (Wehrmacht, OKW), on the six core missions. The setup's " ~ "Rules".hh ~ " choice picks the Full Game Rules or the First Game Rules, " ~ "Commanders".hh ~ " whether they are drawn, " ~ "Map".hh ~ " the mission.",
+            "In a team game teammates share their VPs (the game ends at 3 more), their sight and their Control Points; each starts with 2 Infantry, the missions being 2-panel ones. Teams alternate turns and purchases; teammates, who play at the same time in the rulebook, take theirs one after another.",
         )),
         ("Starting a game".txt, $[Elem](
             "Quick Game".hh ~ " starts at once against an Easy bot.",
@@ -88,11 +89,31 @@ object Meta extends MetaGame { mmm =>
         "The " + n.head + " " + c.head + " the " + n.last
     }
 
-    def validateFactionCombination(factions : $[Faction]) = None ||
-        (factions.num != 2).?(ErrorResult("Select two players")) |
-        InfoResult("Company of Heroes")
+    // two players, any two factions; three to five play Allies (US, British, Soviet) against Axis (Wehrmacht, OKW), or three a
+    // free-for-all (2026-11-24)
+    def validateFactionCombination(factions : $[Faction]) =
+        if (factions.num < 2)
+            ErrorResult("Select two players or more")
+        else
+            InfoResult("Company of Heroes")
 
-    def validateFactionSeatingOptions(factions : $[Faction], options : $[O]) = InfoResult("Company of Heroes")
+    // the free-for-all mission takes three players; three or more on another map play Allies against Axis
+    def validateFactionSeatingOptions(factions : $[Faction], options : $[O]) = {
+        val ffa = options.has(MoroRiverFFAMap)
+        if (ffa && factions.num != 3)
+            ErrorResult("The 3 Way Free-for-all takes three players")
+        else
+        if (ffa)
+            InfoResult("Free-for-all: " + factions./(_.short).mkString(", "))
+        else
+        if (factions.num > 2 && (factions.exists(_.axis).not || factions.exists(_.axis.not).not))
+            ErrorResult("Team games: Allies (US, British, Soviet) against Axis (Wehrmacht, OKW), or three players on the 3 Way Free-for-all")
+        else
+        if (factions.num > 2)
+            InfoResult("Team game: " + factions.%(_.axis.not)./(_.short).mkString(" + ") + " against " + factions.%(_.axis)./(_.short).mkString(" + "))
+        else
+            InfoResult("Company of Heroes")
+    }
 
     def factionName(f : Faction) = f.name
     def factionElem(f : Faction) = f.name.styled(f)

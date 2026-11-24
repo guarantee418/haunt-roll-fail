@@ -12,7 +12,7 @@ import hrf.logger._
 
 // Headless bot games on the JVM (see HANDOFF.md): `sbt "runMain tactics.Host"`, TACTICS_GAMES games of two Easy bots
 // (default 20), each checking that every recorded action writes and parses back. TACTICS_RULES=first plays the First Game Rules,
-// anything else the Full Game Rules (here, in Dump and in Replay), with Commanders unless TACTICS_COMMANDERS=0; TACTICS_MAP=<id> plays that mission's map (moro, don, rivers, ardennes, frozen, moscow); TACTICS_FACTIONS=BR,OKW (US, WM, BR, SU, OKW) the factions.
+// anything else the Full Game Rules (here, in Dump and in Replay), with Commanders unless TACTICS_COMMANDERS=0; TACTICS_MAP=<id> plays that mission's map (moro, don, rivers, ardennes, frozen, moscow, moroffa); TACTICS_FACTIONS=BR,OKW (US, WM, BR, SU, OKW) the factions.
 object Rules {
     // TACTICS_FACTIONS=BR,OKW plays those two (the first goes first in the seating); US and Wehrmacht by default
     def factions : $[Faction] = sys.env.get("TACTICS_FACTIONS")./(_.split(",").toList./(x => Meta.parseFaction(x).get)).|($(US, Wehrmacht))
