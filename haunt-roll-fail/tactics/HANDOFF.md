@@ -11,7 +11,10 @@ played and the choices made.
 - Playable: two players, US Forces against the Wehrmacht, on Moro River; Local (hotseat), Quick Game and Play Online, with
   an Easy bot. The setup's Rules choice: the Full Game Rules (every new game since 2026-11-24: Operations deck, Retreats,
   Assaults, Overwatch, firing arcs and Heavy Vehicle facing, multi-target Heavy Vehicles, HE Splash, Frontal Armor,
-  destructible Buildings, Moro River's tank traps) or the First Game Rules (and every game made before the choice).
+  destructible Buildings, Moro River's tank traps) or the First Game Rules (and every game made before the choice). With the
+  Full Game Rules, the twelve core Commanders (the Commanders choice, `DrawCommanders`, every new game since 2026-11-24): three drawn
+  a player, tiers unlocked with XP, their call-ins (Priest, Easy Eight, Tiger, Assault Engineers, Osttruppen, Stormtroopers),
+  Emplacements (MG Bunker, Pak 43), opening abilities and strikes, Smoke, drops and upgrades.
 - On the main `/play` menu since 2026-11-24 (`HRF.menuMetas`, its card in `topMenu` in `hrf.scala`). Its images are in
   `haunt-roll-fail/webp2/tactics/images/`, which the server serves as `/hrf/webp2/`; they were first committed to the repository root's
   `webp2/`, where the live site couldn't find them (404).
@@ -29,9 +32,13 @@ played and the choices made.
   final state). New First Game actions keep their old shape; full-only choices are new actions (`SetUpFacingAction`,
   `HeavyMoveAction`, `AssaultAction`, ...). The US Mortar's XP Splash upgrade is a second slot after the Munitions one,
   so recorded slot numbers keep their meaning.
+- `commanders.scala`: the Commander cards (`Commander`, their `Tier`s and `Ability`s), the free units, the strikes and the setup
+  choice; their rules are in `game.scala`'s "COMMANDERS" section (`unlocked`, `freeEffects`, `commanderSlots`, `commanderPurchases`,
+  `openings`, `queueFree`) and the cases after the "COMMANDER PURCHASES" comment.
 - `ui.scala`: the map (tokens with health and status, Control Points and their flags, Sandbags, Spawn Areas), panels,
   the Building Boards and unit overlays.
 - `bot.scala`: the Easy bot. `host.scala`: headless bot games (`tactics.Host`) and `tactics.Dump`.
+- `tools/commander-art.py`: the Commander cards (`commander/`) and the Commander units' tokens, from the Faction Guide's pages.
 - `tools/tactics-art.py`: every image in `webp2/tactics/images/` from the mod (`fetch`, then `make`), the Operations cards
   (`ops/`) and the Retreat and HE Splash status icons too.
 - `tools/map-edges.py`, `tools/map-data.py`: read the cover and impassable lines off the full-size panels and write the
@@ -54,6 +61,8 @@ Mission Booklet's Moro River picture (page 9).
   final state as `Dump` does, to compare. `TACTICS_RULES=first` makes all three play the First Game Rules (else Full).
   On 2026-11-24 Full Game bot games finished in 6 to 8 rounds with every action written and parsed back, their dumps
   replayed valid, and four First Game games recorded with the code before the Full Game Rules replayed to the same final
+  state; with the Commanders, every pairing of the two factions' cards played through (each card's tiers unlocked), and the
+  games recorded before them still replay
   state. sbt can't fetch from Maven Central here at times (HTTP 429): `~/.sbt/repositories` pointing at Google's mirror
   (`https://maven-central.storage-download.googleapis.com/maven2/`) with `-Dsbt.override.build.repos=true` works.
 - Browser: see "Browser driving" in `nort/HANDOFF.md`. A dump goes into `localStorage` as `tactics.hotseat.game.<time>`
@@ -63,9 +72,9 @@ Mission Booklet's Moro River picture (page 9).
 
 ## Next
 
-- Commanders (their cards are in the mod: 8.0, three drawn, tiers bought with XP), then the other factions (British,
-  Soviet, OKW) with their buildable barbed wire, tank traps and Emplacements, and the other maps (Bunkers, the Cathedral,
-  Ice). Smoke comes with the Commanders.
+- Ardennes Forest (the other core map: Bunker, Cathedral, Ice) and the Mission Booklet's missions, then the other factions
+  (British, Soviet, OKW; their Building Boards, Commanders and Lost Brigades are in the mod) with their buildable barbed wire and
+  tank traps.
 - Full Game readings to confirm with the team (RULES.md, Interpretations 7 to 12): the Firing Arc's width, Retreat paths,
   Overwatch on a hex passed through.
 - 2 vs 2 team games and the other missions of the Mission Booklet.

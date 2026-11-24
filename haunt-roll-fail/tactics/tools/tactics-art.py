@@ -103,11 +103,11 @@ def token(portrait, kind, color):
         r.ellipse((4, 4, size - 4, size - 4), outline=color + (255,), width=18)
         r.ellipse((0, 0, size - 1, size - 1), outline=(20, 20, 20, 255), width=4)
     else:
-        rad = 60 if kind == 'Y' else 14
+        rad = {'Y': 60, 'P': 36}.get(kind, 14)
         d.rounded_rectangle((8, 8, size - 8, size - 8), radius=rad, fill=255)
         r.rounded_rectangle((4, 4, size - 4, size - 4), radius=rad, outline=color + (255,), width=18)
         r.rounded_rectangle((0, 0, size - 1, size - 1), radius=rad, outline=(20, 20, 20, 255), width=4)
-        heart = {'Y': (245, 196, 30), 'R': (210, 40, 40)}[kind]
+        heart = {'Y': (245, 196, 30), 'R': (210, 40, 40), 'P': (140, 70, 170)}[kind]
         r.rounded_rectangle((size // 2 - 40, size - 26, size // 2 + 40, size - 10), radius=6, fill=heart + (255,), outline=(20, 20, 20, 255), width=2)
     out = Image.new('RGBA', (size, size), (0, 0, 0, 0))
     out.paste(p, (0, 0), mask)

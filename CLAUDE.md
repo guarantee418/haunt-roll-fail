@@ -302,12 +302,14 @@ Company of Heroes: The Board Game, 2nd Edition (Bad Crow Games; a work in progre
 2026-11-23) is in `haunt-roll-fail/tactics/`, listed as "Company of Heroes" (once "Tactics"; 2026-11-24) (meta `tactics`, URL `/play/tactics`, on the main menu since
 2026-11-24): the core rulebook (RulesPal's copy), US Forces against the Wehrmacht on Moro River, its Full Game Rules in every new game
 (the setup's Rules choice, `FullGameRules`, 2026-11-24: Operations deck, Retreats, Assaults, Overwatch, firing arcs and Heavy Vehicle
-facing, HE Splash, Frontal Armor, destructible Buildings, Moro River's tank traps; `game.full`) or its First Game Rules (`FirstGameRules`,
+facing, HE Splash, Frontal Armor, destructible Buildings, Moro River's tank traps; `game.full`) with its twelve core Commanders (the
+setup's Commanders choice, `DrawCommanders`, 2026-11-24: `tactics/commanders.scala`, cards cut from the Faction Guide by
+`tactics/tools/commander-art.py`) or its First Game Rules (`FirstGameRules`,
 and every game made before the choice, which replay unchanged), with the Building
 Boards, map panels and books of the Tabletop Simulator mod 2314664989 (`tactics/tools/tactics-art.py`, images in
 `webp2/tactics/images/`; the map's lines read off the art by `tactics/tools/map-edges.py` and `map-data.py` into `Board.data`).
 `tactics/RULES.md` has the rules as played and the readings, `tactics/HANDOFF.md` the state, files, testing (`tactics.Host`,
-`tactics.Dump`, `tactics.Replay`; `TACTICS_RULES=first` for the First Game Rules) and what is next (Commanders, the other factions and maps).
+`tactics.Dump`, `tactics.Replay`; `TACTICS_RULES=first` for the First Game Rules) and what is next (Ardennes Forest and the missions, the other factions).
 
 ## Building
 

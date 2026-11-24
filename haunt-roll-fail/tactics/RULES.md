@@ -7,7 +7,7 @@ workshop 2314664989: Rulebook, Faction Guide, Mission Booklet, Solo Rulebook), U
 **Moro River**, one player each. The setup's **Rules** choice picks the **Full Game Rules** (every new game since
 2026-11-24, `FullGameRules`) or the **First Game Rules** (`FirstGameRules`; games made before the choice have neither and
 play these). The First Game Rules are below; the Full Game Rules add to them (**Full Game Rules**, further down).
-Commanders aren't in yet (see HANDOFF.md). Where the rules leave something open, the choice made is under
+With the Full Game Rules come the twelve core Commanders (**Commanders**, further down). Where the rules leave something open, the choice made is under
 **Interpretations**.
 
 ## Setup
@@ -102,6 +102,48 @@ What the rulebook's grey boxes add (`full` in `game.scala`), and Moro River's ow
 - **Tank traps**: Moro River's A and B hexes (the "T" hexes of `Board.data`) are permanent tank traps: Vehicles can't
   enter them; they can't be destroyed or assaulted.
 
+## Commanders
+
+With the Full Game Rules, the setup's **Commanders** choice (`DrawCommanders`, every new game since 2026-11-24, or `NoCommanders`)
+plays rulebook 8.0 and 8.2 with the twelve core Commander cards (six a faction, read off the 2nd Edition Faction Guide's pages 11
+and 17; `commanders.scala`):
+
+- At setup each player draws three of their faction's six (a shuffle each). A player takes one when unlocking its first tier and keeps
+  it. Tiers are unlocked left to right in the purchases (each a purchase, alternating as usual), for the XP printed at their top left,
+  some only after a Tier Building. With all four, 2 XP trade for 1 Manpower, Munitions or Fuel any number of times (not a purchase).
+- "One spawns for free" spawns that unit right after the tier is unlocked (in the Spawn Area; a Paratrooper on a visible hex), if there
+  is room; the free Paratrooper or Airdropped Group counts toward its once-a-round limit.
+- Call-ins: the M7 Priest (2 health, range 4, two indirect HE, fixed gun; 1 Manpower 3 Fuel), the Sherman Easy Eight (4 health, range 3,
+  three AI and two AP, turreted; 3 Manpower 4 Fuel; a Sherman for the limit of 2), the Tiger (6 health, range 2, three AP and an AI,
+  turreted, a Defense Die; 3 Manpower 5 Fuel), Assault Engineers (Riflemen with 2 Close Range Firepower, AI at range 1 only, and two
+  Wrenches; the Riflemen's upgrades), Osttruppen (3 health, range 2, AI, a Wrench and a Speed Die; two squads for 4 Manpower 1 Munitions),
+  Stormtroopers (4 health, range 2, AI and a Close Range Firepower; 5 Manpower 1 Munitions; next to an empty Building, Slow the first
+  round; one a round).
+- Emplacements (Festung Armor Doctrine): Grenadiers, Osttruppen and Panzer Grenadiers build MG Bunkers (2 health, range 2, AI, a machine
+  gun: pins and Overwatch; 2 Munitions) and Pak 43s (3 health, range 4, three AP; 4 Manpower) in the purchases, one a Wrench a Supply
+  Phase, not the round they spawned, on an adjacent empty open hex. They never move, set up with a facing like Weapon Teams, and capture
+  from the next round.
+- Opening abilities, at the start of a player's Maneuver Phase (their first turn, before any CP), each once a round: Recon Sweep (a hex
+  and the hexes around it visible to the team this round, Camouflage too), Panzerwerfer Light Barrage (1 HE on a hex), P-47 Rocket Strike
+  (2 AP on each of 3 hexes in a line), Fragmentation Bomb (2 HE on each of 3), Combat Group Advance and Armor Blitzkrieg (every Infantry,
+  or Vehicle, may move once for free that turn). Strikes hit in the Damage Phase every unit in those hexes, allies too, and Buildings; they
+  give no XP, need no sight and trigger no Cover but a Building's, nor Frontal Armor.
+- Smoke (Defensive Smoke, Smoke Canisters): at the start of the Damage Phase, in turn order, each vehicle may pay 2 Munitions to Smoke its
+  hex for the round: a unit in Smoke sees and attacks only next to it and is attacked only from next to it, and no one sees or fires (but
+  indirect fire) past a smoked hex.
+- Unit abilities: Defensive Stance (Riflemen, 1 CP: Heavy Cover this round even when assaulted, no more CP, moves or Retreats), Hull Down
+  (1 CP: an adjacent vehicle gets 2 Defense Dice until it moves), Raid Point (after an Infantry's first CP, 1 Munitions for a free move),
+  Armor Tactician (Infantry next to a Heavy Vehicle gets 2 Defense Dice as Cover, not in a Building).
+- Upgrades: the free ones (Veteran Greyhounds, Wolverines, Ostwinds, Panzer Grenadiers, West Point Reserves, MG42 Armored Cars, Elite AT
+  Crew's +1 Health and Speed Die) are on every such unit, present and future, and aren't offered for sale; the added ones (Camouflage,
+  Recon in Force, Mechanized Infantry, G43 Rifles) once a unit; Ranger and .50 cal Jeep Munitions upgrades cost 1 less, Incendiary
+  Mortars' Flame 1 XP; the LMGs add +1 Range to the Riflemen's AI and the Grenadiers' HE Munitions upgrades; Ranger Riflemen take 4 CP a
+  round; Elite Sturmpanzers have no Slow; German Industry takes 2 Fuel off the Panzer Korps; US Breakthrough (1 Fuel) takes 1 Manpower off
+  Infantry for the Supply Phase; West Point Reserves spawns a free Major in the purchases whenever there is none.
+- Paratroopers (Riflemen, 5 Manpower 1 Munitions), Paradrop Equipment (a Weapon Team, 1 Manpower 5 Munitions) and Airdropped Group (two
+  Weapon Teams on adjacent hexes, 3 Manpower 6 Munitions) spawn on any visible open empty hex, Double Slow the first round (1 CP), one of
+  each a round.
+
 ## Units
 
 From the Building Boards in the mod (`UnitType` in `game.scala`; the boards are in the game's "Building Boards" overlay):
@@ -142,5 +184,11 @@ Vehicles: 3 of each tier 1 and 2 vehicle, 2 of each tier 3 one, at a time.
 11. **Splash on Sandbags**: each splash die counts once for each unit it hits in the hex and once for the hex toward the
     two Damage that destroy Sandbags.
 12. **Not in the core box** (left out): barbed wire and tank traps that units build (the core units' Wrenches build only
-    Sandbags), Terrain Pack 3's foot bridges, Smoke and Commanders, Lost Brigades, Bunkers and other special Buildings,
-    Ice, Control Points in Buildings (Moro River has none).
+    Sandbags), Terrain Pack 3's foot bridges, Lost Brigades, Bunkers and other special Buildings, Ice, Control Points in
+    Buildings (Moro River has none).
+13. **Commander readings**: Osttruppen's two icons beside the Wrench (a veteran star and a Speed Die) are read as the squad's Speed Die;
+    the Paradrop and Airdropped Group costs are the whole cost of the units; Smoke "disrupting Pins" isn't modeled beyond the sight rules;
+    Combat Group Advance's and Armor Blitzkrieg's free move lasts the turn the ability is used; a drawn Commander's cards are shown to
+    both players.
+14. **Board differences**: the Faction Guide's Building Board pages give the Brummbar 6 health for 2 Manpower 5 Fuel; the mod's board
+    (played here) 5 health for 1 Manpower 5 Fuel.

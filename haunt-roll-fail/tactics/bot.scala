@@ -96,6 +96,33 @@ class GameEvaluation(val game : Game, val self : Faction) {
                 val l = splashed(u, h)
                 true |=> (500 + l.%(_.faction != self).num * 150 - l.%(_.faction == self).num * 250) -> "splash"
             case ShotAction(_, _, _, _, _, _) => true |=> -150 -> "an empty building"
+
+            // Commanders
+            case CommanderTierAction(_, c, i) => true |=> (700 + (math.random() * 100).toInt) -> "commander"
+            case TradeXPAction(_, r) =>
+                (self.stock(XP) >= 6) |=> 200 -> "trade"
+                (self.stock(XP) < 6) |=> -300 -> "keep xp"
+            case FreeMajorAction(_, _) => true |=> 900 -> "free major"
+            case BreakthroughAction(_) => (self.stock(Manpower) >= 3) |=> 300 -> "breakthrough"
+            case DropMenuAction(_, _) => true |=> 400 -> "drop"
+            case DropAction(_, _, t, h) => true |=> (500 - nearest(h) * 20) -> "drop near points"
+            case BuildMenuAction(_, _) => true |=> 350 -> "build"
+            case BuildAction(_, _, _, h) => true |=> (400 - nearest(h) * 20 + Board.points.contains(h).??(200)) -> "build on points"
+            case FreeSpawnAction(_, _, h) => true |=> (500 - nearest(h) * 10) -> "free"
+            case DefensiveStanceAction(_, u, _) => (Board.points.contains(where(u)) && units(enemy(self)).exists(e => Board.distance(where(e), where(u)) <= 3)) |=> 250 -> "hold the point"
+            case HullDownAction(_, _, _, _) => true |=> 100 -> "hull down"
+            case RaidPointAction(_, u, _) => (nearest(where(u)) > 1) |=> 150 -> "raid"
+            case OpeningAction(_, _, _) => true |=> 300 -> "advance"
+            case OpeningHexAction(_, a, h, _) =>
+                val n = game.area(h)./~(standing).count(_.faction != self)
+                (a == ReconSweep) |=> (100 + n * 100) -> "recon"
+                (a != ReconSweep) |=> (game.standing(h).count(_.faction != self) * 300 - game.standing(h).count(_.faction == self) * 400 - 100) -> "barrage"
+            case OpeningLineStartAction(_, _, h, _) => true |=> (Board.neighbors(h).%(n => standing(n).exists(_.faction != self)).num * 100 + standing(h).count(_.faction != self) * 200 - 150) -> "strike"
+            case OpeningLineAction(_, _, l, _) => true |=> (l./(h => standing(h).count(_.faction != self) * 300 - standing(h).count(_.faction == self) * 400).sum) -> "strike"
+            case SmokeAction(_, v, _) =>
+                (health(v) * 2 < maxHealth(v)) |=> 200 -> "smoke"
+                (health(v) * 2 >= maxHealth(v)) |=> -100 -> "no smoke"
+            case SmokeDoneAction(_, _) => true |=> 0 -> "done"
             case UnlockAction(_, t) => (units(self).num >= 4) |=> 800 -> "unlock"
             case PassAction(_) => true |=> 100 -> "pass"
             case _ =>
