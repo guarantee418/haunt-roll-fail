@@ -61,7 +61,8 @@ object Meta extends MetaGame { mmm =>
         ("Seeing what's going on".txt, $[Elem](
             "The player panels show each player's cards, Royal Seals, wars and pieces; the panel under them shows the turn and the last dice.",
             "Under the action pane, " ~ "Royal Seals".hh ~ " lists every seal and who holds it (tap one to read it), and " ~ "Icons".hh ~ " says what each icon on the panels means.",
-            "Tap a card or a seal anywhere to see it large; tap again to close it.",
+            "Tap a card or a seal anywhere to see it large; tap again to close it. Tap a player panel for the Player Reference: what everything costs, and how far each unit moves and attacks.",
+            "Tapping " ~ "Build".hh ~ " lists what each building costs above the choices.",
         )),
         ("Undo, replays and help".txt, $[Elem](
             "Tap a line in the log to see the game as it was then: from there you can replay the game from that point, or undo back to it. In an online game, undo only what the other players agree to.",
@@ -123,7 +124,7 @@ object Meta extends MetaGame { mmm =>
         )
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "card", "card:", "webp")(
-        (Resource.all./(_.image) ++ Maneuver.all./(_.image) :+ "card-back")./(ImageAsset(_))
+        (Resource.all./(_.image) ++ Maneuver.all./(_.image) :+ "card-back" :+ "reference")./(ImageAsset(_))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "seal", "seal:", "webp")(
         Seal.all./(_.image)./(ImageAsset(_))
