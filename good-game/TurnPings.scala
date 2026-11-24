@@ -24,7 +24,11 @@ import scala.concurrent.duration.Duration
 //   - it wasn't pinged in that game in the last 2 minutes (it waits until then, as the sweep comes back),
 //   - its seat plays under a ranking name with a Discord (given, or set by the owner) and turn pings not turned off (Rankings,
 //     "Discord turn pings"; on unless turned off since 2026-11-20, asked for: "start pinging people whenever it is their turn").
-// Several prompts in a row (a whole turn) are one ping, as the seat stays waited for between them. When a seat started being
+// Several prompts in a row (a whole turn) are one ping, as the seat stays waited for between them; but a seat that answered
+// since its last ping (its user wrote moves between two reports that both wait for it) and has then been asked for 5 minutes is
+// pinged again (2026-11-24: gg picked a Development card, the creature phase and harvest ran on, and the Kobold exchange that
+// followed asked Stag again with nobody else asked in between, so it was the same wait as the turn pinged earlier: no ping for 12 hours;
+// answered.tsv). When a seat started being
 // waited for is the time on its state.tsv row, so a restart neither loses nor repeats a ping. A seat waited for since before
 // that (rows with no time, and the games Turns.scala knows of but this file doesn't, reports from before the turns webhook was
 // set, added at the server's start) isn't pinged by the sweep, as an abandoned game can't be told from a live one: the
@@ -34,6 +38,7 @@ import scala.concurrent.duration.Duration
 //   state.tsv     game, log index, the users waited for (comma-separated), time: each game's reports (its last row counts)
 //   threads.tsv   game, the Discord thread made for it
 //   pings.tsv     time, game, user: the pings sent
+//   answered.tsv  time, game, user: a seat still waited for that answered after a ping (its last row counts)
 //   created.tsv   game: the games whose post went out, so each goes out once
 //   firsts.tsv    game, watch or told: the games whose first player the thread is told of (announceFirst)
 // and in tournament/: discord-pings.tsv  name, on or off (the last row counts); on unless turned off
@@ -118,6 +123,8 @@ object TurnPings {
     val watching = 90 * 1000L
     val gap = 2 * 60 * 1000L
     val remind = 12 * 60 * 60 * 1000L
+    // a seat that answered since its last ping and is asked again: pinged once it has been quiet this long
+    val idle = 5 * 60 * 1000L
     val reminders = 2
     val every = 10L
 
@@ -157,6 +164,17 @@ object TurnPings {
     }
 
     def lastPing(game : String, user : String) : Long = pings.get((game, user)).map(_.max).getOrElse(0L)
+
+    val answeredFile = dir.resolve("answered.tsv")
+
+    // the last time each seat answered while still waited for, since its last ping: (game, user) -> time
+    var answers : Map[(String, String), Long] = null
+
+    def answered : Map[(String, String), Long] = {
+        if (answers == null)
+            answers = rows(answeredFile).collect { case t :: g :: u :: _ => ((g, u), time(t).getOrElse(0L)) }.groupBy(_._1).map { case (k, l) => k -> l.map(_._2).max }
+        answers
+    }
 
     // since when each seat has been waited for: (game, user) -> time
     var waitedSince : Map[(String, String), Long] = null
@@ -219,13 +237,17 @@ object TurnPings {
             r.users.toList.sorted.foreach { u =>
                 val start = since.getOrElse((g, u), 0L)
                 val mine = pings.getOrElse((g, u), Nil).filter(_ >= start)
+                // answered since its last ping: asked again, not reminded
+                val again = answered.get((g, u)).filter(a => a > start && mine.nonEmpty && a > mine.max)
                 val due =
                     if (mine.isEmpty)
                         now - start >= (if (inBattle(g, u)) battleDelay else delay)
+                    else if (again.nonEmpty)
+                        now - again.get >= (if (inBattle(g, u)) battleDelay else idle)
                     else
-                        mine.size <= reminders && now - (start +: mine).max >= remind
+                        mine.filter(_ >= answered.get((g, u)).filter(_ > start).getOrElse(start)).size <= reminders && now - (start +: mine).max >= remind
                 if (start > 0 && due && now - lastPing(g, u) >= gap && !over(g))
-                    try attempt(g, u, reminder = mine.nonEmpty) catch { case e : Exception => println("Turn ping failed: " + e) }
+                    try attempt(g, u, reminder = mine.nonEmpty && again.isEmpty) catch { case e : Exception => println("Turn ping failed: " + e) }
             }
         }
     }
@@ -243,7 +265,8 @@ object TurnPings {
             def who(us : String) = us.split(',').filter(_.nonEmpty).map(u => l.map(nameOf(_, u)).getOrElse(u)).mkString(",")
             val reports = rows(state).filter(_.headOption.contains(g)).map { case _ :: i :: us :: rest => rest.headOption.getOrElse("?") + " waits " + i + " " + who(us) ; case r => r.mkString(" ") }
             val sent = rows(pinged).filter(_.lift(1).contains(g)).map(r => r.headOption.getOrElse("?") + " pinged " + who(r.lift(2).getOrElse("")))
-            (g + ": " + l.map(_.title).getOrElse("lobby not found") + ", reason now: " + Turns.reasonsOf(g)) +: (reports ++ sent).sorted.takeRight(40).map("  " + _)
+            val answer = rows(answeredFile).filter(_.lift(1).contains(g)).map(r => r.headOption.getOrElse("?") + " answered " + who(r.lift(2).getOrElse("")))
+            (g + ": " + l.map(_.title).getOrElse("lobby not found") + ", reason now: " + Turns.reasonsOf(g)) +: (reports ++ sent ++ answer).sorted.takeRight(40).map("  " + _)
         }
     }
 
@@ -368,6 +391,21 @@ object TurnPings {
 
         val now = System.currentTimeMillis
         val was = before.map(_.users).getOrElse(Set())
+        // the seats still waited for whose users wrote moves since the last report, after their last ping: they answered, and
+        // are asked again (the sweep pings them once they have been quiet for a while, counted from their latest answer)
+        before.filter(_.index < index).foreach { b =>
+            (was & waiting).foreach { u =>
+                val start = since.getOrElse((game, u), 0L)
+                val last = pings.getOrElse((game, u), Nil).filter(_ >= start)
+                if (start > 0 && last.nonEmpty &&
+                    run(entries.filter(_.journalId === game).filter(_.index >= b.index).filter(_.index < index).filter(_.userId === u).exists.result)) {
+                    answers = answered + ((game, u) -> now)
+                    Files.createDirectories(dir)
+                    Ranking.append(answeredFile, row(Ranking.now(), game, u))
+                }
+            }
+        }
+
         reports = latest + (game -> Report(index, waiting))
         waitedSince = since -- (was -- waiting).map(u => (game, u)) ++ (waiting -- was).map(u => (game, u) -> now)
         Files.createDirectories(dir)
@@ -489,6 +527,7 @@ object TurnPings {
             case (true, "fight") => (head, "your fight " + w(axe) + them.map(" against " + _).getOrElse("") + " needs you")
             case (true, "trade") => (head, "harvest trading ⚖️")
             case (true, "winter") => (head, "Winter ❄️ is here")
+            case (true, "kobold") => (head, "the Kobolds offer an exchange ⚖️")
             case (true, "cards") => (e("HorizonsDevelopments"), "pick a card")
             case (true, "draft") => (e("title"), "your pick in the clan draft")
             case (true, "setup") => (head, "time to place your clan")
