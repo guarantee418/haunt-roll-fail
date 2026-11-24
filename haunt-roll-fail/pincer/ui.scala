@@ -326,7 +326,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         val title = Div(Span(name).styled(f) ~ badge, styles.name, styles.title)
 
         if (game.factions.has(f).not && game.current != null) {
-            container.replace(Div(title ~ Div("Surrendered".hl)), resources)
+            container.replace(Div(title ~ Div("Surrendered".hl)).div(xstyles.fillHeight).pointer.onClick.param("reference"), resources, onClick)
             return
         }
 
@@ -367,7 +367,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         // every prisoner, in its own color
         val capRow = (captured > 0).?(Div(Span("Captured ") ~ p.captured.map(_._2).map(u => Hint(u.faction.name + " " + u.kind.name, Image("piece:" + u.kind.id + "-" + u.faction.id, styles.piece, u.faction.name + " " + u.kind.name)) : Elem).merge)(styles.small)).|(Empty)
 
-        container.replace((title ~ sealRow ~ warRow ~ hand ~ pieceRow ~ capRow).div(xstyles.fillHeight), resources, onClick)
+        // tapping the panel (but not a seal on it) opens the Player Reference
+        container.replace((title ~ sealRow ~ warRow ~ hand ~ pieceRow ~ capRow).div(xstyles.fillHeight).pointer.onClick.param("reference"), resources, onClick)
 
         if (f == game.current || game.highlightFaction.has(f)) {
             container.attach.parent.style.outline = "3px " + (f == game.current).?("solid").|("dashed") + " " + factionColor(f)
@@ -498,6 +499,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
                 Kind.all./(k => line(Icons.piece(k.id, game.setup.head), k.name)).merge ~
                 Resource.all./(r => line(Image("die:" + r.id, styles.icon), r.name)).merge, styles.legend)), onClick)
 
+        case "reference" =>
+            showOverlay(overlayFitX(Image("card:reference", styles.artwork)), onClick)
+
         case s : Seal =>
             showOverlay(overlayFitX(Image("seal:" + s.image, styles.artwork) ~ Div(s.elem ~ Break ~ SealText.of(s))), onClick)
 
@@ -520,6 +524,11 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
         case x =>
             clearOverlay()
+    }
+
+    override def preinfo(self : |[Faction], aa : $[UserAction]) = {
+        val ii = currentGame.preinfo($, self, aa)
+        ii.any.??(convertActions(self, ii))
     }
 
     override def info(self : |[Faction], aa : $[UserAction]) = {

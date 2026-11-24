@@ -12,6 +12,9 @@ playtests; `RULES.md` has the rules as played and the open questions.
   injuries and revives, Counter-Actions, forts, annexation, building, recruiting, trade (and trading
   companies), war and peace, gifts and returning prisoners, the six Maneuver cards, the 14 Royal Seals
   with their bonuses and steals, surrender, and the 8-seal win.
+- Tapping a player panel (not a seal on it) opens the mod's Player Reference card (`card/reference.webp`, `"reference"` in
+  `onClick` in `ui.scala`), and the Build menu lists every building's cost above its choices (`BuildCostInfoAction`, from
+  `Game.preinfo`, shown by `UI.preinfo`); asked for on 2026-11-24.
 - On the main `/play` menu since 2026-11-24 (`HRF.menuMetas`, its card in `topMenu` in `hrf.scala`). No ranking.
 
 ## Files
