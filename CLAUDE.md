@@ -298,6 +298,14 @@ rulebook's second draft with the art of the Tabletop Simulator mod 3778939778 (`
 `webp2/pincer/images/`). `pincer/RULES.md` has the rules as played and the draft's open questions (the Boar's War penalty
 isn't in it yet), `pincer/HANDOFF.md` the state, files and testing (`pincer.Host` bot games, `pincer.Dump`).
 
+Company of Heroes: The Board Game, 2nd Edition (Bad Crow Games; a work in progress the owner's team helps test; asked for on
+2026-11-23) is in `haunt-roll-fail/tactics/`, listed as "Tactics" (meta `tactics`, URL `/play/tactics`, not on the main menu
+yet): the core rulebook's First Game Rules (RulesPal's copy), US Forces against the Wehrmacht on Moro River, with the Building
+Boards, map panels and books of the Tabletop Simulator mod 2314664989 (`tactics/tools/tactics-art.py`, images in
+`webp2/tactics/images/`; the map's lines read off the art by `tactics/tools/map-edges.py` and `map-data.py` into `Board.data`).
+`tactics/RULES.md` has the rules as played and the readings, `tactics/HANDOFF.md` the state, files, testing (`tactics.Host`,
+`tactics.Dump`, `tactics.Replay`) and what is next (the Full Game Rules, Commanders, the other factions and maps).
+
 ## Building
 
 ```
