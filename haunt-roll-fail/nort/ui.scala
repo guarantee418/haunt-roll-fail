@@ -3307,7 +3307,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     def keys = keysDirect ++ keysExplode
 
     override def ask(faction : |[F], actions : $[UserAction], then : UserAction => Unit) {
-        CardPreview.hide()
+        CardPreview.reset()
 
         lastActions = actions
         lastThen = then
@@ -3441,28 +3441,20 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             }))
         }
 
-    // Hovering a card that can be chosen (a card to play, wait with, replace, remove, take...) shows it large over the half of
-    // the window away from the mouse, until the mouse leaves it or it is chosen; asked for on 2026-11-24. Only with a mouse
-    // (a touch screen keeps tapping), only for choices (ViewObject[Card] actions that can be taken, not the cards shown for
-    // information), and the "Card Preview" setting under Interface turns it off
+    // Hovering a card that can be chosen (a card to play, wait with, replace, remove, take...) with a mouse, or holding a finger on it
+    // on a touch screen, shows it full screen over the map, the view a tap on a card opens, until the mouse leaves it or the finger
+    // lifts; asked for on 2026-11-24. Only for choices (ViewObject[Card] actions that can be taken, not the cards shown for
+    // information); the "Card Preview" setting under Interface turns it off. A hold doesn't choose the card: its tap is swallowed
     object CardPreview {
         lazy val mouse = try { dom.window.matchMedia("(hover: hover) and (pointer: fine)").matches } catch { case _ : Throwable => false }
 
-        var box : dom.html.Div = null
-        var mouseX = 0.0
-        var tracking = false
+        // The overlay shows a previewed card (and not one the player opened, which hide leaves alone)
+        var shown = false
 
-        // Where the mouse is, to show the card on the other half of the window
-        def track() {
-            if (tracking.not && mouse) {
-                tracking = true
-                // mouseover comes before mousemove when the mouse enters a card; caught on the way down, before the card's own
-                dom.window.addEventListener("mouseover", (e : dom.MouseEvent) => { mouseX = e.clientX }, true)
-                dom.window.addEventListener("mousemove", (e : dom.MouseEvent) => { mouseX = e.clientX }, true)
-            }
-        }
+        // The cards that can be chosen now, by image, for a hold (the touch handlers find the card from the image touched)
+        var choosable = Map[String, Card]()
 
-        def on = mouse && callbacks.settings.has(NoCardPreview).not
+        def on = callbacks.settings.has(NoCardPreview).not
 
         def wrap(a : UserAction, z : ZOption) : ZOption = (a @@ {
             case v : ViewObject[_] => v.obj @@ {
@@ -3472,9 +3464,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             case _ => None
         }) match {
             case Some(c) if z.over != null && z.out != null && z.click != null =>
-                track()
+                listen()
+                choosable += c.info.image -> c
                 z.copy(
-                    over = x => { z.over(x) ; show(c) },
+                    over = x => { z.over(x) ; if (mouse) show(c) },
                     out = x => { z.out(x) ; hide() },
                     click = x => { hide() ; z.click(x) })
             case _ => z
@@ -3484,47 +3477,93 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             if (on.not)
                 return
 
-            if (box == null) {
-                box = dom.document.createElement("div").asInstanceOf[dom.html.Div]
-                box.style.position = "fixed"
-                box.style.top = "0"
-                box.style.height = "100vh"
-                box.style.width = "50vw"
-                box.style.display = "none"
-                box.style.setProperty("align-items", "center")
-                box.style.setProperty("justify-content", "center")
-                box.style.setProperty("pointer-events", "none")
-                box.style.zIndex = "100000"
-                dom.document.body.appendChild(box)
-            }
+            if (shown.not && overlayPane.visible)
+                return
 
-            val img = dom.document.createElement("img").asInstanceOf[dom.html.Image]
-            img.style.maxHeight = "92vh"
-            img.style.maxWidth = "46vw"
-            img.style.setProperty("border-radius", "2.5vmin")
-            img.style.setProperty("box-shadow", "0 0 3vmin 1vmin #000000e0")
-            img.alt = c.name
-            resources.images.getBlobSource(c.info.image) { url => img.src = url }
-
-            while (box.firstChild != null)
-                box.removeChild(box.firstChild)
-            box.appendChild(img)
-
-            if (mouseX > dom.window.innerWidth / 2) {
-                box.style.left = "0"
-                box.style.right = ""
-            }
-            else {
-                box.style.left = ""
-                box.style.right = "0"
-            }
-
-            box.style.display = "flex"
+            showOverlay(overlayFitX(Image(c.info.image, styles.zoomCard)).onClick, x => { hide() ; onClick(x) })
+            shown = true
         }
 
         def hide() {
-            if (box != null)
-                box.style.display = "none"
+            if (shown) {
+                shown = false
+                overlayPane.invis()
+                overlayPane.clear()
+            }
+        }
+
+        def reset() {
+            hide()
+            choosable = Map()
+        }
+
+        // Tap and hold
+        var timer : |[scalajs.js.timers.SetTimeoutHandle] = None
+        var held = false
+        var startX = 0.0
+        var startY = 0.0
+        var listening = false
+
+        def cancel() {
+            timer.foreach(scalajs.js.timers.clearTimeout)
+            timer = None
+        }
+
+        def listen() {
+            if (listening)
+                return
+
+            listening = true
+
+            val d = dom.document.asInstanceOf[scalajs.js.Dynamic]
+            val opts = scalajs.js.Dynamic.literal(capture = true, passive = false)
+
+            d.addEventListener("touchstart", ((e : dom.TouchEvent) => {
+                cancel()
+                held = false
+                val t = e.target.asInstanceOf[dom.Element]
+                if (on && e.touches.length == 1 && t != null && t.tagName == "IMG")
+                    choosable.get(t.getAttribute("data-source")).foreach { c =>
+                        startX = e.touches(0).clientX
+                        startY = e.touches(0).clientY
+                        timer = Some(scalajs.js.timers.setTimeout(450) {
+                            timer = None
+                            held = true
+                            show(c)
+                        })
+                    }
+            }) : scalajs.js.Function1[dom.TouchEvent, Unit], opts)
+
+            d.addEventListener("touchmove", ((e : dom.TouchEvent) => {
+                if (timer.any && e.touches.length > 0 && (math.abs(e.touches(0).clientX - startX) > 10 || math.abs(e.touches(0).clientY - startY) > 10))
+                    cancel()
+            }) : scalajs.js.Function1[dom.TouchEvent, Unit], opts)
+
+            val end = ((e : dom.TouchEvent) => {
+                cancel()
+                if (held) {
+                    hide()
+                    e.preventDefault()
+                    scalajs.js.timers.setTimeout(500) { held = false }
+                }
+            }) : scalajs.js.Function1[dom.TouchEvent, Unit]
+
+            d.addEventListener("touchend", end, opts)
+            d.addEventListener("touchcancel", end, opts)
+
+            // A hold isn't a tap: no click after it, and no long-press menu for the image
+            d.addEventListener("click", ((e : dom.Event) => {
+                if (held) {
+                    held = false
+                    e.preventDefault()
+                    e.stopPropagation()
+                }
+            }) : scalajs.js.Function1[dom.Event, Unit], opts)
+
+            d.addEventListener("contextmenu", ((e : dom.Event) => {
+                if (timer.any || held)
+                    e.preventDefault()
+            }) : scalajs.js.Function1[dom.Event, Unit], opts)
         }
     }
 

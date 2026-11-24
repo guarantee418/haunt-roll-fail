@@ -74,7 +74,7 @@ package object elem {
         object menuCard extends CustomStyle(display("inline-block"), width("30%"), max.width("15ex"), margin("0.5ex"), vertical.align("top"))
         object card extends CustomStyle(display("inline-block"), width("22ex"), max.width("90%"), margin("0.3ex"))
         // At most a fifth of the action pane (--nort-hand-five, handFive in ui.scala), less each card's frame and margins (2.4ex), so five fit on a line
-        object handCard extends CustomStyle(display("block"), width("var(--nort-hand-card, min(22ex, calc(var(--nort-hand-five, 100vw) - 2.4ex)))"))
+        object handCard extends CustomStyle(display("block"), SimpleCSSRule("-webkit-touch-callout", "none"), SimpleCSSRule("user-select", "none"), SimpleCSSRule("-webkit-user-select", "none"), width("var(--nort-hand-card, min(22ex, calc(var(--nort-hand-five, 100vw) - 2.4ex)))"))
         // Copies of the same card in hand, stacked (Card.handStack): each layer leaves room up and to the right for the copy behind
         object stackLayer extends CustomStyle(display("block"), width("fit-content"), position("relative"), padding.top("calc(0.1 * var(--nort-hand-card, min(22ex, calc(var(--nort-hand-five, 100vw) - 2.4ex))))"), padding.right("calc(0.1 * var(--nort-hand-card, min(22ex, calc(var(--nort-hand-five, 100vw) - 2.4ex))))"))
         // The copies behind: darker, with a light edge, so they don't blur into the card in front
