@@ -407,11 +407,15 @@ object Tournament {
             c.tables.find(t => t.game == game && t.winner.isEmpty).foreach { t =>
                 val won = sides.split(';').toList.filter(_.startsWith("W:")).flatMap(_.drop(2).split(',').toList).map(_.takeWhile(_ != '/')).filter(_.nonEmpty)
                 val ww = won.flatMap(u => t.users.indexOf(u) match { case -1 => None ; case i => Some(t.names(i)) }).distinct
+                val ff = finals(t, sides)
 
                 ww match {
-                    case w :: Nil => win(c.n, t.id, w)
+                    case w :: Nil => win(c.n, t.id, w, ff)
                     case _ =>
-                        val text = "Root Tournament " + c.n + ", " + t.title(c.n).split(' ').drop(2).mkString(" ") + " ended with " + (if (ww.isEmpty) "no winner" else "a shared win (" + ww.map(display).mkString(", ") + ")") + ": the organizer picks who goes on."
+                        val where = t.title(c.n).split(' ').drop(2).mkString(" ")
+                        val text = (if (ww.isEmpty) "Root Tournament " + c.n + ", " + where + " ended with no winner"
+                            else "🎉 **Congratulations to " + ww.map(tagged).mkString(" and ") + "** on a shared win at " + where + " of Root Tournament " + c.n) +
+                            ": the organizer picks who goes on." + scoresLine(ff)
                         announce(text, c.n)
                         announce(text, c.n, t.id)
                 }
@@ -419,19 +423,39 @@ object Tournament {
         }
     }
 
-    def win(n : Int, id : String, k : String) {
+    // CONGRATULATIONS (asked for on 2026-11-24): as each tournament game finishes, the announcements' webhook (the owner's "Royal Claim")
+    // congratulates its winner, mentioning them, with every player's faction and final score, from the result the game reported
+    // ("W:" and "L:" sides, each seat "<user>/<faction>/<seat>/<players>/<score>", RankingSeat.token), best first, in seat order on ties
+    case class Final(name : String, faction : String, seat : Int, score : String) {
+        def rank = if (score == "D") Int.MaxValue else score.toIntOption.getOrElse(-1)
+        def points = if (score == "D") "dominance" else if (score.isEmpty) "" else score + " VP"
+        override def toString = display(name) + " (" + faction + ")" + (if (points.nonEmpty) " " + points else "")
+    }
+
+    def finals(t : Table, sides : String) : List[Final] =
+        sides.split(';').toList.filter(s => s.startsWith("W:") || s.startsWith("L:")).flatMap(_.drop(2).split(',').toList).map(_.split("/", -1).toList).collect {
+            case u :: faction :: seat :: _ :: score :: _ if t.users.contains(u) => Final(t.names(t.users.indexOf(u)), faction.replace('_', ' '), seat.toIntOption.getOrElse(99), score)
+        }.sortBy(x => (-x.rank, x.seat))
+
+    def scoresLine(ff : List[Final]) = if (ff.isEmpty) "" else "\nFinal scores: " + ff.mkString(" · ")
+
+    // " playing the Marquise de Cat, 30 VP"
+    def winnerLine(k : String, ff : List[Final]) = ff.find(_.name == k).map(f => " playing the " + f.faction + (if (f.points.nonEmpty) ", " + f.points else "")).getOrElse("")
+
+    def win(n : Int, id : String, k : String, ff : List[Final] = Nil) {
         event("winner", n, id, k)
 
         val c = cups().find(_.n == n).get
+        val after = scoresLine(ff)
 
         if (id == finalId) {
             event("champion", n, k)
-            announce("**" + display(k) + " is the champion of Root Tournament " + n + "!**", n)
-            announce("**" + display(k) + " won the final and is the champion!**", n, id)
+            announce("🏆 **Congratulations to " + tagged(k) + ", the champion of Root Tournament " + n + "!** They won the final" + winnerLine(k, ff) + ", and their name is golden on the Rankings until the next champion." + after, n)
+            announce("**" + display(k) + " won the final and is the champion!**" + after, n, id)
         }
         else {
-            announce(display(k) + " won Table " + id + " of Root Tournament " + n + ".", n)
-            announce("**" + display(k) + " won this table** and goes to the final.", n, id)
+            announce("🎉 **Congratulations to " + tagged(k) + "**, winner of Table " + id + " of Root Tournament " + n + winnerLine(k, ff) + "! They go on to the final." + after, n)
+            announce("**" + display(k) + " won this table** and goes to the final." + after, n, id)
 
             if (c.heats.size == heatIds.size && c.heats.forall(_.winner.nonEmpty) && c.fin.isEmpty) {
                 val l = scala.util.Random.shuffle(c.heats.flatMap(_.winner))

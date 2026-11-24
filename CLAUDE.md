@@ -1148,7 +1148,7 @@ server. No session can reach the server, and none needs to.
   Vagabond, no hirelings). Each table's winner, as reported to the rankings, goes to the final; its winner's name is golden
   (`hrf-golden` in `index.html`) on the Tournament and Rankings pages until the next champion. Play Online lists the player's
   tournament game first (`/tournament/mine`). A Discord webhook (`HRF_DISCORD_WEBHOOK`, or the file `discord-webhook`) is told
-  of the start, each table's winner and the champion, and invited to sign up, with the Tournament page's link, once for each
+  of the start, each table's winner and the champion (as each game finishes, a congratulation mentioning the winner, with every player's faction and final score from the game's reported result, `finals` and `win` in `good-game/Tournament.scala`; 2026-11-24), and invited to sign up, with the Tournament page's link, once for each
   tournament as soon as its sign-ups open and a webhook is set (`invite` in `good-game/Tournament.scala`, `tournament/invited.tsv`;
   at the server's start, when the webhook is set, when a final starts or a tournament is cancelled; the `invite` change posts it
   again; asked for on 2026-11-20, as nobody could find the page, which is only on the Root menu), and at 8, 12 and 15 sign-ups. Each table (and the final) gets a Discord thread at its start naming its players, pinged by the Discord user ID each
