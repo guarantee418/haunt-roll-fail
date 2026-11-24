@@ -232,7 +232,7 @@ object TurnPings {
 
     // the seat is asked about a battle on another's turn: its client's reason is "defend" (Root's ambushes and hits, Northgard's fights)
     def inBattle(game : String, user : String) : Boolean = lobbyOf(game).exists { l =>
-        l.lines.map(_.split(" ").toList).collectFirst { case "user" :: s :: u :: _ if u == user => s }.flatMap(s => Turns.reason(game, s)).exists(_.startsWith("defend"))
+        l.lines.map(_.split(" ").toList).collectFirst { case "user" :: s :: u :: _ if u == user => s }.flatMap(s => Turns.reason(game, s)).exists(r => r.startsWith("defend") || r.startsWith("banished"))
     }
 
     // what the server knows of the given games' pings (the "pings <game> ..." change; 2026-11-24, to check a missed ping): each
@@ -467,6 +467,10 @@ object TurnPings {
             // the words, not the bot's badges, so the Northgard webhook can post them itself, 2026-11-23)
             case (false, "defend") => (head, "you're under attack " + w(sword) + them.map(" by " + _).getOrElse(""))
             case (false, "battle") => (head, "your battle " + w(sword) + them.map(" against " + _).getOrElse("") + " needs you")
+            // a Twilight Council Banish (2026-11-24, asked for: it said "under attack" with the sword): the dashing-away puff, as the
+            // Bats drive the warriors out rather than kill them
+            case (false, "banished") => (head, "you're being banished 💨" + them.map(" by " + _).getOrElse(""))
+            case (false, "banish") => (head, "your banish 💨" + them.map(" of " + _).getOrElse("") + " needs you")
             case (false, "keep") => (e("StandardDeck"), "pick the cards you keep")
             case (false, "handlimit") => (e("StandardDeck"), "discard down to your hand limit")
             case (false, "draft") => (e("title"), "your pick in the faction draft")
