@@ -44,7 +44,7 @@ object Meta extends MetaGame { mmm =>
 
     override val about = $[Elem](
         "Company of Heroes: The Board Game".hlb ~ ", 2nd Edition, by Bad Crow Games, licensed from SEGA and Relic Entertainment: a work in progress played here by a team helping to test it.",
-        "The rules are the core rulebook's Full Game Rules with its twelve US and Wehrmacht Commanders (or its First Game Rules, a setup choice), the five factions' Building Boards (US Forces, Wehrmacht, British Forces, Soviet Forces, Oberkommando West) and the Mission Booklet's six 2-panel core missions; the art is from the Tabletop Simulator mod \"Company of Heroes - 2nd Edition\".",
+        "The rules are the core rulebook's Full Game Rules with its thirty core Commanders (or its First Game Rules, a setup choice), the five factions' Building Boards (US Forces, Wehrmacht, British Forces, Soviet Forces, Oberkommando West) and the Mission Booklet's six 2-panel core missions; the art is from the Tabletop Simulator mod \"Company of Heroes - 2nd Edition\".",
         "© SEGA. Developed by Relic Entertainment Inc. SEGA, the SEGA logo, Relic Entertainment and Company of Heroes are either registered trademarks or trademarks of SEGA Corporation or its affiliates.",
     )
 

@@ -9,7 +9,7 @@ played and the choices made.
 ## State
 
 - Playable: two players, any two of the five core factions (US Forces, Wehrmacht, British Forces, Soviet Forces, Oberkommando West;
-  the British, Soviet and OKW without Commanders yet), on the Mission Booklet's six 2-panel core missions (the setup's
+  thirty core Commanders, six a faction), on the Mission Booklet's six 2-panel core missions (the setup's
   Map choice, `MapChoice`, Moro River by default: Moro River, Across the Don, Between Two Rivers, Ardennes Forest, Frozen Lake,
   Road to Moscow, with Ice, the Cathedral and multi-hex Buildings on the Ardennes panels); Local (hotseat), Quick Game and Play Online, with
   an Easy bot. The setup's Rules choice: the Full Game Rules (every new game since 2026-11-24: Operations deck, Retreats,
@@ -85,7 +85,9 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
   other Spawn Area can be reached, Ice and the Cathedral. With the British, Soviet and OKW (2026-11-24): bot games finished for each
   kind of pairing (`TACTICS_FACTIONS=BR,OKW`; US, WM, BR, SU, OKW), with trucks converted, Emplacements and Flak Guns built,
   flamethrower Carriers, Strafing Fire, the T-70's mode and Heroic Sacrifice taken; scenario checks for each; the US and Wehrmacht
-  games recorded before replay unchanged. sbt can't fetch from Maven Central here at times (HTTP 429): `~/.sbt/repositories` pointing at Google's mirror
+  games recorded before replay unchanged. With their eighteen Commanders: every ability unlocked in test games (`LogDump` with `PAIR=<n>`
+  forcing each card and `XP=25`), scenario checks for the rarer ones (Ramming, Thorough Salvage, Hold the Line, Crocodile, Thompsons,
+  the Emplacements, Assault Tactics' income), the older games still replaying unchanged. sbt can't fetch from Maven Central here at times (HTTP 429): `~/.sbt/repositories` pointing at Google's mirror
   (`https://maven-central.storage-download.googleapis.com/maven2/`) with `-Dsbt.override.build.repos=true` works.
 - Browser: see "Browser driving" in `nort/HANDOFF.md`. A dump goes into `localStorage` as `tactics.hotseat.game.<time>`
   ("version ...", "title ...", "seating US WM", "options ") and `tactics.hotseat.moves.<time>`, then Local Game opens it.
@@ -94,8 +96,8 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
 
 ## Next
 
-- The British, Soviet and OKW Commanders (the Faction Guide's pages 22, 28 and 35; their cards are CardCustom objects in the faction
-  bags of the mod), then the Lost Brigades and the buildable barbed wire and tank traps.
+- The Lost Brigades and the expansions' Commanders (ECC, StuG, ERP: the Faction Guide lists them), and the buildable barbed wire and
+  tank traps.
 - Full Game readings to confirm with the team (RULES.md, Interpretations 7 to 12): the Firing Arc's width, Retreat paths,
   Overwatch on a hex passed through.
 - 2 vs 2 team games and the Mission Booklet's other missions; the Lost Brigades and terrain packs' missions (4.1 ...)

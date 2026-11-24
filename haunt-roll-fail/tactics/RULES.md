@@ -139,8 +139,10 @@ its bag, which match the booklet's pictures):
 
 Any two different factions may play (the rulebook lets even the same faction play in team games). Each faction's units are its three
 Building Boards in the mod (`game.scala`, from "BRITISH HEADQUARTERS 1" on; `tactics-art.py` cuts the tokens), unlocked as before for
-1 Manpower 2 Fuel and 1 Manpower 3 Fuel (the boards' backs, the same for every faction). The British, Soviet and OKW Commanders
-aren't in yet: with them, the Commanders choice deals none.
+1 Manpower 2 Fuel and 1 Manpower 3 Fuel (the boards' backs, the same for every faction). Their Commanders are under **Commanders**.
+The Faction Guide's own copies of the British boards (its page 21) differ from the mod's in a few upgrades, the mod's being played, as
+with the Brummbar: the Mortar Emplacement there has a base Defense Die and only Camouflage for Munitions, the Bofors an XP +1 Sight and
+Range and a Munitions +1 AI, the Churchill only the Defense XP upgrade (no Remove Slow).
 
 - **Board icons** read as on the US and Wehrmacht boards; new ones: an eye is +1 Sight, an eye in a crosshair +1 Sight and +1
   Range (the Infantry Section), a tile of two soldiers two AI dice in one upgrade (the Centaur), Remove Slow, Heroic Sacrifice (the
@@ -169,8 +171,8 @@ aren't in yet: with them, the Commanders choice deals none.
 ## Commanders
 
 With the Full Game Rules, the setup's **Commanders** choice (`DrawCommanders`, every new game since 2026-11-24, or `NoCommanders`)
-plays rulebook 8.0 and 8.2 with the twelve core Commander cards (six a faction, read off the 2nd Edition Faction Guide's pages 11
-and 17; `commanders.scala`):
+plays rulebook 8.0 and 8.2 with the thirty core Commander cards (six a faction, read off the 2nd Edition Faction Guide's pages 11, 17,
+22, 28 and 35, with its Commander FAQ, pages 2 to 6; `commanders.scala`):
 
 - At setup each player draws three of their faction's six (a shuffle each). A player takes one when unlocking its first tier and keeps
   it. Tiers are unlocked left to right in the purchases (each a purchase, alternating as usual), for the XP printed at their top left,
@@ -207,6 +209,44 @@ and 17; `commanders.scala`):
 - Paratroopers (Riflemen, 5 Manpower 1 Munitions), Paradrop Equipment (a Weapon Team, 1 Manpower 5 Munitions) and Airdropped Group (two
   Weapon Teams on adjacent hexes, 3 Manpower 6 Munitions) spawn on any visible open empty hex, Double Slow the first round (1 CP), one of
   each a round.
+
+- **British, Soviet and OKW Commanders** (2026-11-24) reuse the rules above where their cards do (Covert Training is Ambush Training,
+  Elite Artillery Tactics a Recon Sweep, IL-2 a P-47 Strike, Breakthrough Tactics and Grand Assault the free moves, Smoke Ambush the
+  Smoke, Hit the Dirt Defensive Stance for Conscripts, Recon Mode a Raid Point for Vehicles at 2 Munitions). New:
+  - Call-ins, read off the cards: Staghound (Light Vehicle, 4 health, range 3, 2 AP; 2 Manpower 3 Fuel), .55 cal Armor Piercing Sniper (3
+    health, range 3 only, 2 AI and an AP, +1 Sight, Camouflaged; 3 Manpower 2 Munitions), Churchill AVRE (6 health, range 2, Slow, a
+    Defense Die, 2 turreted HE and a forward AI pair with a third HE, its HE HE Splash; 3 Manpower 5 Fuel; a Churchill for the limit),
+    Royal Engineers (Infantry Sections with 2 Close Range Firepower instead of their AI, 4 health, 2 Wrenches, the Section's upgrades;
+    they build the British Emplacements too), DShK 38 HMG (4 health, range 3, 2 AI, a machine gun, +1 Sight; 4 Manpower 1 Munitions),
+    T-34-85 (4 health, range 3, AI and 2 AP turreted; 3 Manpower 4 Fuel; a T-34 for the limit), Panzerfusiliers (4 health, range 2-3, 2 AP,
+    a Speed Die; 4 Manpower 1 Munitions), Jaeger Recon Squad (4 health, range 2, AI, Camouflage, +2 Sight and spots Camouflage; 3
+    Manpower), Puma (Light Vehicle, 3 health, range 3, 2 AP and an AI; 2 Manpower 3 Fuel), Kettenkrad (Light Vehicle, 1 health, 2 Speed
+    Dice, Camouflage, Heroic Sacrifice, captures, no attack; 2 Manpower 1 Fuel), StG44 Rifle Volksgrenadiers (2 AI, no Defense Die).
+  - Emplacements built like the British ones, one per Wrench a round: the Forward Emplacement (3 health, Reinforce, Retreat Point, Spots
+    Camouflage, Infantry may spawn next to it with Slow; 2 Manpower), the 17 Pounder (4 health, range 4, 4 AP, a Defense Die; 5
+    Manpower), the Soviet Forward HQ (an empty Building next to Conscripts becomes an Emplacement, 3 health, Reinforce, Retreat Point,
+    Infantry spawn next to it with Slow, one at a time; 2 Manpower), the LeFH 18 (3 health, range 5, 2 indirect HE; 4 Munitions; the
+    Veteran one +1 HE), the OKW's Veteran Pak 43 (3 health, range 4, 3 AP and +1; 4 Manpower). A free Emplacement goes next to one of its
+    builders and counts as that builder's for the round.
+  - Special spawns: Supply Recon (a Scout Car for 3 Munitions), NKVD (two Conscript squads for 5 Munitions), Infiltration Commandos (an
+    Infantry Section next to an empty Building, Slow the first round, 5 Manpower 1 Munitions, one a round), Commando Glider (a Forward
+    Emplacement on a visible open hex and a Tier the faction has Infantry next to it, Slow the first round, 5 Manpower 3 Munitions, one
+    a round). Thorough Salvage trades 2 Manpower for 1 Fuel or 2 Munitions in the purchases.
+  - In play: Advanced Emplacements (once the Damage is assigned, each targeted Emplacement may pay 1 Munitions for +1 Defense Die), Smoke
+    Emplacement (Emplacements Smoke for 1 Munitions), Vehicle Crew Repairs (Vehicles Smoke for 3 Munitions and Repair 1 in the Supply
+    Phase), Emergency War Speed (after a Vehicle's first CP, 1 Health for a free move; not at 1 Health), Hold the Line (Infantry within 1
+    hex of a Control Point its team holds has 2 Defense Dice as Heavy Cover, also Assaulting or Assaulted, not in a Building), Operation
+    Crocodile (the Churchill's AI becomes 2 forward Flame and it loses Slow; its AI upgrade is no longer offered), Ramming Maneuver (an
+    Assaulting T-34 or T-34-85 adds 2 AP on the unit it Assaults), Assault Tactics (the Scout Car's No-Fire mode, 1 CP; on a Control Point
+    it gives 1 more of the point's first resource other than VP, a reading of "the player chooses"), Rapid Conscription (2 CP 1 Munitions
+    at the start: 1 Manpower for each Damage the faction's Infantry takes that round, Overwatch too), Fortifications Doctrine (1 CP 1
+    Munitions: the faction's Emplacements are Camouflaged that round), Breakthrough Doctrine (Heroic Sacrifice for 3 Munitions on Infantry,
+    +1 Defense Die Assaulting), Conscript Support (new Conscripts spawn with both +1 Health upgrades).
+  - Free and cheaper upgrades as on the cards (Veteran Staghounds, Cromwells, SU-76s, SU-85s, Mortars, T-34 Wave, T-70 Infantry Tank, T-80,
+    Heavy and Scout Luchs, Rocket Support, Anti-Tank Ambush, Bolster Infantry Squads, WASP, Ranged Tactics, Panther and Sturmtiger
+    Reinforcements), and the added ones (Thompson SMGs, Infantry Support's Reinforce, Flammenwerfer, HEAT Shells). A Commander's +1 Health
+    adds the health at once.
+  - "Requires and spawns at Tier N": the OKW units spawn next to that Tier's Building or in the Spawn Area, as their tier's units do.
 
 ## Units
 

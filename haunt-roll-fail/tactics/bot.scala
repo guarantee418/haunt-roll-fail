@@ -135,6 +135,13 @@ class GameEvaluation(val game : Game, val self : Faction) {
             case EmplaceMenuAction(_, t) => true |=> (units(self).count(_.utype.builtBy.any) < 3).?(700).|(350) -> "emplace"
             case StrafeAction(_, _, t, _, _, _) => true |=> (400 - health(t) * 20) -> "strafe"
             case NoStrafeAction(_, _, _, _) => true |=> 0 -> "no strafe"
+            case ReconModeAction(_, u, _) => (nearest(where(u)) > 1) |=> 150 -> "recon mode"
+            case WarSpeedAction(_, u, _) => (nearest(where(u)) > 1 && health(u) * 2 > maxHealth(u)) |=> 120 -> "war speed"
+            case SalvageAction(_, r) =>
+                (self.stock(Manpower) >= 6 && self.stock(r) < 2) |=> 300 -> "salvage"
+                true |=> -50 -> "keep manpower"
+            case BraceAction(_, u, _) => true |=> 200 -> "brace"
+            case BraceDoneAction(_, _) => true |=> 0 -> "done"
             case NoFireModeAction(_, u, _) =>
                 val onPoint = Board.points.contains(where(u)) && control.get(where(u)).has(self).not
                 (onPoint && noFire.contains(u).not) |=> 600 -> "capture"
