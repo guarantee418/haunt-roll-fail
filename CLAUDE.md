@@ -413,6 +413,8 @@ cd haunt-roll-fail && sbt fullOptJS
 - Under "Report a Bug", every game's in-game menu has a "Main Menu" button (asked for on
   2026-10-13): it loads `/play/<meta>` afresh (`returnToTitle` in `hrf.scala`), where online and saved
   local games can be picked up again; a game kept only in memory (Training Grounds) asks first.
+  After it, every game's in-game menu has "My Online Games" (asked for on 2026-11-24), which loads `/play/my-games`
+  (`canMyGames` and `myGames` in `Callbacks`, `hrf.scala`), asking first the same way.
 
 ## Several sessions or accounts
 
@@ -1169,7 +1171,7 @@ server. No session can reach the server, and none needs to.
   (`allowed_mentions` lists only them, never @everyone). Each ping leads with the seat's faction or clan emoji (the one its reason names, else the seat's own in a standard game; 2026-11-22, as some pings had none), as does the first-turn line; a battle, a fight or an Entreat also names the other side with its emoji and name, "you're under attack ⚔️ by X", "your battle ⚔️ against X", "X entreated you" (the sword or axe right after "attack", "battle" or "fight", and the Partisans card right after "Partisans") (the reason's third part, "defend/<seat faction>/<other>", from the asking action's attacker and defender, else the clan whose turn it is or the other clan in the fought territory; 2026-11-22; a Northgard creature as "~<its name>", from the asking action's creature, else `game.creatureFights` or the fought territory, shown as "the **Brown Bear**" with the Discord server's emoji of that name if it has one), and says why the seat is asked, with an emoji in the server's style (asked for on 2026-11-21; `TurnPings.reasonOf`): the
   client adds a third line to its turn report, "<seat>=<reason>", from `Meta.turnReason` (`root/turn-reasons.scala` and
   `nort/turn-reasons.scala`, `TurnReasons`: the action that asked, `game.asker`, set in `internalPerform`, and the choices offered),
-  kept in `turns.tsv`'s fourth column (`Turns.reason`): Root's under attack or a battle (the server's sword emoji), the cards kept
+  kept in `turns.tsv`'s fourth column (`Turns.reason`): Root's under attack or a battle (the server's sword emoji), a Twilight Council Banish as "you're being banished 💨 by" or "your banish 💨 of" (the tags `banished` and `banish`; 2026-11-24, asked for), the cards kept
   at the start, the hand limit, the faction draft, the tournament picks, Partisans, prisoners, an Entreat,
   Field Hospitals, setup and the faction's own turn (its head); Northgard's fights (the axe), harvest trading and Winter (plain ⚖️
   and ❄️ after the words, so the webhook can post them, not the bot's `ng_trade` and `ng_winter` badges; 2026-11-23), card picks, setup, the Adset draft, raids, Events and the clan's own turn (its emblem). A Lilypad Diaspora negotiation is never a reason (2026-11-23, asked for: it is never owed, and the ping reminded the enemy of it): its menus report the seat's turn. The
@@ -1231,6 +1233,12 @@ server. No session can reach the server, and none needs to.
   changes the one of that name if there is one. On purpose nothing is deleted, nobody kicked or banned, and a role is never given
   server permissions; every request carries the audit log reason "HRF server change". The bot needs Manage Roles and Manage Channels,
   and its role above the roles it manages.
+- Members give and take the game and ping roles themselves (2026-11-24, asked for): `/roles`, or the "Pick my roles" button under the
+  bot's role picker post, opens a menu only they see with their roles ticked (`good-game/SelfRoles.scala`, a `BotCommand`; its button and
+  menu go through `Lfg.interaction`). Only the roles the owner lists are offered (`tournament/self-roles.tsv`, set by the tournament changes
+  `self-roles`, `self-role <role>, ...`, `self-role-off <role>, ...`; `role-picker <channel> [| text <text>]` posts the button), and only
+  while each gives no server permission, isn't a bot's and sits under the bot's role, checked again at every pick, so Manager or any
+  moderating role is never handed out.
 - The bot's `/rule <rule> [game] [private]` (2026-11-22, asked for as a bot "to help cite the rules", not to interpret them): Root's
   rules by their Law of Root number (`4.3.2`, `H.1`, a section lists the rules under it) or name, with the rule's text and the link to
   it on the Root Database (`webp2/lfg/rules-root.tsv`, made by `haunt-roll-fail/tools/law-index.py` from the Root Database's copy, kept up

@@ -1902,7 +1902,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, title : String, val opti
                 }
             }).copy(clear = false)) ++
             $(ZBasic(Break, "Report a Bug".spn, () => { callbacks.reportBug() }).copy(clear = false)).%(_ => callbacks.canReportBug) ++
-            $(ZBasic(Break, "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle)
+            $(ZBasic(Break, "Main Menu".spn, () => { callbacks.returnToTitle() }).copy(clear = false)).%(_ => callbacks.canReturnToTitle) ++
+            $(ZBasic(Break, "My Online Games".spn, () => { callbacks.myGames() }).copy(clear = false)).%(_ => callbacks.canMyGames)
     }
 
     var shown : $[Notification] = $

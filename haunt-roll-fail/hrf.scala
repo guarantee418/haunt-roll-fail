@@ -291,6 +291,9 @@ trait Callbacks {
     def reportBug() : Unit
     def canReturnToTitle : Boolean
     def returnToTitle() : Unit
+    // "My Online Games" after "Main Menu": loads /play/my-games, the main page's list of the player's online games
+    def canMyGames : Boolean = false
+    def myGames() : Unit = {}
     // A local game (hotseat) with more than one human player on this device
     def hotseat : Boolean
     // The bot playing a seat (its name: "Easy", "Hard", ...), from the seats the game was started with (an online game's lobby
@@ -3820,6 +3823,12 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
                     val unsaved = journal.is[MemoryJournal[_]] && HRF.lobby.none
                     if (unsaved.not || dom.window.confirm("This game isn't saved and will be lost. Leave it for the main menu?"))
                         dom.document.location.assign("/play/" + meta.name)
+                }
+                override def canMyGames = HRF.server.any && HRF.offline.not
+                override def myGames() = {
+                    val unsaved = journal.is[MemoryJournal[_]] && HRF.lobby.none
+                    if (unsaved.not || dom.window.confirm("This game isn't saved and will be lost. Leave it for My Online Games?"))
+                        dom.document.location.assign("/play/my-games")
                 }
                 def hotseat = (journal.is[MemoryJournal[_]] || journal.is[LocalStorageJournal[_]]) && seating.count(f => difficulties(f) == Human) > 1
                 def canReportBug = HRF.server.any && HRF.offline.not

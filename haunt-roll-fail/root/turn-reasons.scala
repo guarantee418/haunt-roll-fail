@@ -38,6 +38,9 @@ object TurnReasons {
             case CouncilEntreatAction(e, _, _, _) => Some(e)
             case _ => battle.map(b => if (f.exists(x => x == b.attacker || b.ally.has(x))) b.defender else b.attacker)
         }
+        // a Twilight Council Banish (its Bats driving the enemy out, 17.6.1.I) is a battle, but its pings say "banish" (2026-11-24,
+        // asked for): "banished" for the enemy, "banish" for the Council
+        val banishing = { implicit val g : Game = game; battle.exists(_.attacker.as[Council].?(_.used.has(Banishing))) }
         val versus = other.filterNot(o => f.has(o))./("/" + _.short).|("")
 
         val tag =
@@ -56,6 +59,7 @@ object TurnReasons {
                 // (no "negotiate": a Lilypad Diaspora negotiation is never owed, its menus are ones the seat opened on its own turn,
                 // and a ping saying "a negotiation awaits you" reminded the enemy of what the Diaspora hopes it forgets; 2026-11-23,
                 // asked for. It is the seat's turn, or it's needed, like any other menu)
+                case a if holds[Battle](a) && banishing => f.has(game.current).?("banish").|("banished")
                 case a if holds[Battle](a) => f.has(game.current).?("battle").|("defend")
                 case _ if name.startsWith("Starting") || name.startsWith("Setup") || name.startsWith("FactionSetup") => "setup"
                 case _ if f.has(game.current) => "turn"
@@ -64,7 +68,7 @@ object TurnReasons {
 
         tag @@ {
             case "draft" | "keep" | "pickdeck" | "pickmap" | "picklandmark" => tag
-            case "defend" | "battle" | "entreat" if head.nonEmpty => tag + head + versus
+            case "defend" | "battle" | "banish" | "banished" | "entreat" if head.nonEmpty => tag + head + versus
             case _ => tag + head
         }
     }

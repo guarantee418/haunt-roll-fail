@@ -3246,7 +3246,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
                 (tutorial && tutorialTipsHidden && currentGame.isOver.not).$(b("Show tutorial tips", () => hideTutorialTips(false))) ++
                 $(b("Interface", () => { callbacks.editSettings { updateStatus() } })) ++
                 $(b("Report a Bug", () => { callbacks.reportBug() })).%(_ => callbacks.canReportBug) ++
-                $(b("Main Menu", () => { callbacks.returnToTitle() })).%(_ => callbacks.canReturnToTitle)
+                $(b("Main Menu", () => { callbacks.returnToTitle() })).%(_ => callbacks.canReturnToTitle) ++
+                $(b("My Online Games", () => { callbacks.myGames() })).%(_ => callbacks.canMyGames)
             }
     }
 
