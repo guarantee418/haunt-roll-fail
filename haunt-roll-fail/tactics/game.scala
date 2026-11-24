@@ -275,7 +275,8 @@ object UnitType {
         StuG, KingTiger, JaegerSniper, Jagdpanther, Elefant, Halftrack,
         Sexton, Comet, Firefly, Valentine, Commandos,
         ShockTroops, IS2, GuardsRifle, AIPartisans, ATPartisans, ForwardStation, KV2, PenalBattalion, ISU152, KV8,
-        Hetzer)
+        Hetzer,
+        EliteGrenadiers, CommandPantherUS, CommandPantherWM, CommandPantherBR, CommandPantherSU, CommandPantherOKW)
 
     // the Wehrmacht units the OKW's expansion Commanders bring too (the StuG Pack's shared Commanders, and the ECC's King Tiger and
     // Jagdpanther): an OKW squad of the Wehrmacht's type, drawn with its own token
@@ -880,6 +881,26 @@ case object USMGBunker extends UnitType("MG Bunker", US, 1, Emplacement, 2, 1, 2
     override def builtBy = $(Riflemen, AssaultEngineers, DevilsBrigade, CavalryRiflemen)
 }
 
+// THE LOST BRIGADES' OWN UNITS (2026-11-24; brigades.scala): the Elite Grenadier Squad Leaders, and the universal Command Panther of
+// each faction (turreted AP and AI, Spots Camo, one at a time)
+case object EliteGrenadiers extends UnitType("Elite Grenadier Squad Leaders", Wehrmacht, 1, Infantry, 4, 1, 3, $(ai, ai, he), Cost(4, 3, 0), $) {
+    override def id = "elite-grenadiers"
+    override def commander = true
+    override def wrenches = 1
+    override def innate = $(Camouflage)
+}
+sealed abstract class CommandPanther(f : Faction, n : String) extends UnitType(n, f, 3, HeavyVehicle, 5, 1, 3, $(ap, ap, ai, ai), Cost(3, 0, 5), $) {
+    override def id = "command-panther"
+    override def commander = true
+    override def limit = 1
+    override def innate = $(SpotsCamo)
+}
+case object CommandPantherUS extends CommandPanther(US, "Captured Command Panther")
+case object CommandPantherWM extends CommandPanther(Wehrmacht, "Command Panther")
+case object CommandPantherBR extends CommandPanther(British, "Captured Command Panther")
+case object CommandPantherSU extends CommandPanther(Soviet, "Captured Command Panther")
+case object CommandPantherOKW extends CommandPanther(OKW, "Command Panther")
+
 // the cost of unlocking a Tier Building (on the back of its board), the same for every faction
 object Tiers {
     def cost(tier : Int) = tier @@ {
@@ -1094,6 +1115,11 @@ case class ShotAction(self : Faction, unit : Squad, hex : Hex, dice : $[Attack],
 
 // COMMANDERS
 case class CommandersShuffledAction(f : Faction, shuffled : $[Commander]) extends ShuffledAction[Commander]
+case class BrigadesShuffledAction(f : Faction, shuffled : $[Brigade]) extends ShuffledAction[Brigade]
+case class BrigadeOpeningAction(order : $[Faction]) extends ForcedAction
+case class BrigadeStartAction(self : Faction, b : Brigade, rest : $[Faction]) extends BaseAction("Lost Brigade", "(0 XP ones may be picked now, before the starting Infantry)".spn(styles.small))(b.elem, (b.starting > 0).?(("(" + (b.starting > 1).?("up to " + b.starting).|("one") + " as starting Infantry)").spn(styles.small) : Elem).|(Empty))
+case class BrigadeStartSkipAction(self : Faction, rest : $[Faction]) extends BaseAction(None)("Not now")
+case class BrigadePickAction(self : Faction, b : Brigade) extends BaseAction("Lost Brigade", "(you keep the one you pick)".spn(styles.small))(b.elem, "for", b.xp.hlb, XP.icon)
 case class CommanderTierAction(self : Faction, c : Commander, i : Int) extends BaseAction("Commander", (i == 0).?("(you keep the Commander you take)".spn(styles.small)).|(Empty))((i == 0).?(c.elem ~ ": ").|(Empty), c.tiers(i).ability, "for", c.tiers(i).xp.hlb, XP.icon, (c.tiers(i).needs > 0).?(("(needs Tier " + c.tiers(i).needs + ")").spn(styles.small)).|(Empty))
 case class TradeXPAction(self : Faction, r : Res) extends BaseAction("Commander")("Trade", 2.hlb, XP.icon, "for", 1.hlb, r.icon)
 case class FreeMajorAction(self : Faction, hex : Hex) extends BaseAction("West Point Reserves:", "a free", Major.elem)(hex) with HexKey
@@ -1300,7 +1326,12 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // COMMANDERS (commanders.scala)
     val commanders = full && options.has(DrawCommanders)
+    // the Lost Brigades (brigades.scala), and whether anything gives abilities: Commanders or brigades
+    val brigades = full && options.has(LostBrigades)
+    val abilities = commanders || brigades
     var drawn = Map[Faction, $[Commander]]()
+    var brigadesDrawn = Map[Faction, $[Brigade]]()
+    var brigadeOf = Map[Faction, Brigade]()
     var commanderOf = Map[Faction, Commander]()
     var tiersOf = Map[Faction, Int]()
     // the round each once-a-round ability (Paratroopers, a Paradrop, an Airdropped Group, Stormtroopers, an opening ability) was last used
@@ -1619,7 +1650,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         val transports = (t.kind == Infantry).??(Board.spawn(team(f))./~(occupant).%(v => v.faction == f && carries(v) && passenger(v).none)./(where))
         val major = (t.kind == Infantry).??(units(f).%(u => has(u, SpawnAdjacent) && isPassenger(u).not && (u.utype == Pathfinder && t == Pathfinder).not)./~(u => Board.neighbors(where(u)).%(n => Board.joined(where(u), n) && terrainAt(n) != Water && occupant(n).none)))
         // OKW: Tier 2 and 3 units next to their Tier Building
-        val building = ((t.tier >= 2).??(tierBuildingOf(f, t.tier).$) ++ (t == Obersoldaten && unlocked(f, TerrorWestOber)).??(tierBuildingOf(f, 2).$))./~(u => Board.neighbors(where(u)).%(n => Board.joined(where(u), n) && terrainAt(n) != Water && occupant(n).none))
+        val building = brigadeUnit(f, t).?($[Hex]()).|(((t.tier >= 2).??(tierBuildingOf(f, t.tier).$) ++ (t == Obersoldaten && unlocked(f, TerrorWestOber)).??(tierBuildingOf(f, 2).$))./~(u => Board.neighbors(where(u)).%(n => Board.joined(where(u), n) && terrainAt(n) != Water && occupant(n).none)))
         // the Soviet Forward Station: Vehicles next to it
         val station = t.vehicle.??(units(f).%(_.utype == ForwardStation)./~(u => Board.neighbors(where(u)).%(n => Board.joined(where(u), n) && terrainAt(n) != Water && occupant(n).none)))
         if (t == Stormtroopers || t == AIPartisans || t == ATPartisans)
@@ -1646,7 +1677,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         f.stock += r -> (f.stock(r) + n)
     }
 
-    def buyable(f : Faction) : $[UnitType] = (UnitType.of(f).%(t => t.tier <= f.tier && t.commander.not) ++ calledIn(f)).%(_.purchasable).%(t => affordable(f, costOf(f, t)) && onBoard(f, t) < t.limit && spawnHexes(f, t).any)
+    def buyable(f : Faction) : $[UnitType] = (UnitType.of(f).%(t => t.tier <= f.tier && t.commander.not) ++ calledIn(f)).distinct.%(_.purchasable).%(t => affordable(f, costOf(f, t)) && onBoard(f, t) < t.limit && spawnHexes(f, t).any)
 
     def slotCost(u : Squad, slot : Int) : Elem = {
         val s = slotAt(u, slot)
@@ -1657,7 +1688,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def upgrades(f : Faction) : $[(Squad, Int, Effect)] = units(f)./~{ u =>
         slotsOf(u)./~{ case (i, s) =>
             val n = bought.getOrElse(u, $[Bought]()).count(_.slot == i)
-            (n < s.times && f.stock(s.res) >= slotPrice(u, i)).??(s.options.%(e => s.times > 1 || n == 0).%(e => (u.utype == Churchill && e == AddAttack(UnitType.ai) && unlocked(f, OperationCrocodile)).not).%(e => e != SplashUp || full).%(e => freeEffects(u).has(e).not).%(e => i < 10 || has(u, e).not)./(e => (u, i, e)))
+            (n < s.times && f.stock(s.res) >= slotPrice(u, i)).??(s.options.%(e => s.times > 1 || n == 0).%(e => (u.utype == Churchill && e == AddAttack(UnitType.ai) && unlocked(f, OperationCrocodile)).not).%(e => e != SplashUp || full).%(e => freeEffects(u).has(e).not).%(e => i < 10 || has(u, e).not).%(e => (i < 2 && u.utype == DevilsBrigade && unlocked(f, VeteranDevils)).not)./(e => (u, i, e)))
         }
     }
 
@@ -2103,7 +2134,10 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // COMMANDERS
 
-    def unlocked(f : Faction, a : Ability) = commanders && commanderOf.get(f).exists(c => c.tiers.take(tiersOf.getOrElse(f, 0)).exists(_.ability == a))
+    def unlocked(f : Faction, a : Ability) = (commanders && commanderOf.get(f).exists(c => c.tiers.take(tiersOf.getOrElse(f, 0)).exists(_.ability == a))) || (brigades && brigadeOf.get(f).exists(_.abilities.has(a)))
+
+    // a unit a Lost Brigade brings (OKW: spawned from the Spawn Area only, not next to a Tier Building)
+    def brigadeUnit(f : Faction, t : UnitType) = brigades && brigadeOf.get(f).exists(_.unit.has(t))
 
     def riflemen(u : Squad) = u.utype == Riflemen || u.utype == AssaultEngineers || u.utype == DevilsBrigade
 
@@ -2122,7 +2156,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def boysAT(u : Squad) = u.utype == InfantrySection && unlocked(u.faction, BoysATRifles) && bought.getOrElse(u, $[Bought]()).exists(_.slot == 1)
 
     // the upgrades a Commander gives units
-    def freeEffects(u : Squad) : $[Effect] = commanders.??(u.utype @@ {
+    def freeEffects(u : Squad) : $[Effect] = abilities.??(u.utype @@ {
         case Major if unlocked(u.faction, WestPointReserves) => $(SpawnAdjacent, SpotsCamo)
         case Greyhound if unlocked(u.faction, VeteranGreyhounds) => $(DefenseUp)
         case Wolverine if unlocked(u.faction, VeteranWolverines) => $(AddAttack(UnitType.ap), SpeedUp)
@@ -2146,6 +2180,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         case Jeep if unlocked(u.faction, SupportJeeps) => $(ReinforceUp)
         case USMortar if unlocked(u.faction, Mortars81mm) && boughtEffects(u).has(SplashUp) => $(AddAttack(UnitType.heIndirect))
         case Pathfinder if unlocked(u.faction, AirdropBeacon) => $(SpawnAdjacent)
+        case DevilsBrigade if unlocked(u.faction, VeteranDevils) => $(AddAttack(UnitType.ap), AddAttack(UnitType.ap))
         case PenalBattalion | ShockTroops if unlocked(u.faction, BattlefieldPromotions) => $(SpeedUp)
         case Kettenkrad if unlocked(u.faction, VeteranKettenkrad) => $(HealthUp, Camouflage)
         case Volksgrenadiers if unlocked(u.faction, EncirclementVolks) => $(HealthUp, HealthUp)
@@ -2156,7 +2191,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     })
 
     // the upgrade slots a Commander adds (numbered from 10)
-    def commanderSlots(u : Squad) : $[(Int, Slot)] = commanders.??(
+    def commanderSlots(u : Squad) : $[(Int, Slot)] = abilities.??(
         (unlocked(u.faction, AmbushTraining) && u.kind == Infantry).$((10, Slot(false, 3, $(Camouflage)))) ++
         (unlocked(u.faction, ReconInForce) && u.kind == LightVehicle).$((11, Slot(false, 2, $(SpotsCamo)))) ++
         (unlocked(u.faction, MechanizedInfantry) && (u.utype == Grenadiers || u.utype == PanzerGrenadiers)).$((12, Slot(false, 2, $(SpeedUp)))) ++
@@ -2174,7 +2209,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         (unlocked(u.faction, StuGCloseRange) && u.kind == Infantry && u.utype.weaponTeam.not).$((24, Slot(false, 2, $(CloseFire)))) ++
         (unlocked(u.faction, BattlefieldPromotions) && (u.utype == PenalBattalion || u.utype == ShockTroops)).$((25, Slot(true, 2, $(AddAttack(UnitType.flame))))) ++
         (unlocked(u.faction, UrbanSharpshooters) && (u.utype == GuardsRifle || u.utype == SniperSquad)).$((26, Slot(false, 2, $(DefenseUp)))) ++
-        (unlocked(u.faction, ISUFactoryMods) && u.utype == ISU152).$((27, Slot(false, 3, $(RemoveSlow, DefenseUp))))
+        (unlocked(u.faction, ISUFactoryMods) && u.utype == ISU152).$((27, Slot(false, 3, $(RemoveSlow, DefenseUp)))) ++
+        (unlocked(u.faction, HalftrackConfigurable) && u.utype == Halftrack).$((28, Slot(false, 4, $(AddAttacks(UnitType.flame), AddAttacks(UnitType.ap)))))
     )
 
     def slotAt(u : Squad, i : Int) : Slot = (i < 10).?(u.utype.upgrades(i)).|(commanderSlots(u).find(_._1 == i).get._2)
@@ -2197,7 +2233,10 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // what a unit costs: US Breakthrough takes 1 Manpower off Infantry this Supply Phase
     def costOf(f : Faction, t : UnitType) : Cost = {
-        val c = (breakthrough.contains(f) && t.kind == Infantry).?(Cost(max(0, t.cost.mp - 1), t.cost.mun, t.cost.fuel)).|(t.cost)
+        // a Lost Brigade's unit at the card's price
+        val b = brigades.??(brigadeOf.get(f).%(_.unit.has(t))./~(_.price))
+        val base = b.|(t.cost)
+        val c = (breakthrough.contains(f) && t.kind == Infantry).?(Cost(max(0, base.mp - 1), base.mun, base.fuel)).|(base)
         if (t.vehicle && sovietIndustry.contains(f)) Cost(c.mp, c.mun, max(0, c.fuel - 1))
         else if ((t.chassis == Sherman || t.chassis == Wolverine) && unlocked(f, RequisitionOfficer)) Cost(max(0, c.mp - 1), c.mun, c.fuel)
         else if (t == Panther && unlocked(f, PantherReinforcements)) Cost(max(0, c.mp - 1), c.mun, max(0, c.fuel - 1))
@@ -2255,7 +2294,19 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         (unlocked(f, PanzerfusilierCallInPlain) && unlocked(f, PanzerfusilierCallIn).not).$(Panzerfusilier) ++
         (unlocked(f, JaegerCallInPlain) && unlocked(f, JaegerCallIn).not).$(JaegerRecon) ++
         (unlocked(f, OKWPak43Ability) && unlocked(f, VeteranPak43).not).$(OKWPak43) ++
-        (unlocked(f, VeteranKettenkrad) && unlocked(f, KettenkradCallIn).not && unlocked(f, KettenkradEngineers).not).$(Kettenkrad)
+        (unlocked(f, VeteranKettenkrad) && unlocked(f, KettenkradCallIn).not && unlocked(f, KettenkradEngineers).not).$(Kettenkrad) ++
+        // the Lost Brigades' own units
+        unlocked(f, EliteGrenadierLeaders).$(EliteGrenadiers) ++ unlocked(f, CrocodileCallIn).$(Churchill) ++
+        unlocked(f, CommandPantherCallIn).??(UnitType.all.%(t => t.faction == f && t.isInstanceOf[CommandPanther]))
+
+    // the Lost Brigade a player may pick now (once, for its XP)
+    def brigadePicks(f : Faction) : $[UserAction] = (brigades && brigadeOf.contains(f).not).??(brigadesDrawn.getOrElse(f, $[Brigade]()).%(b => f.stock(XP) >= b.xp)./(b => BrigadePickAction(f, b)))
+
+    // the starting Infantry a 0 XP Lost Brigade picked at the start gives, up to its number
+    def brigadeStart(f : Faction) : $[UnitType] = brigades.??(brigadeOf.get(f).$./~(b => Brigade.startUnit(b).%(t => units(f).count(_.utype == t) < b.starting).$))
+
+    // Commandos: 5 Manpower 1 Munitions, 2 Munitions for the Lost Brigade's Veteran Commandos
+    def commandosCost(f : Faction) = unlocked(f, VeteranCommandos).?(Cost(5, 2, 0)).|(Cost(5, 1, 0))
 
     def onceLeft(f : Faction, a : Ability) = unlocked(f, a) && usedIn.get((f, a)).has(round).not
 
@@ -2320,7 +2371,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         .distinct.%(h => terrainAt(h) != Water && standing(h).none).sortBy(h => (h.r, h.c))
 
     // the British, Soviet and OKW special spawns and the Scavenge Doctrine's trades
-    def commanderSpawns(f : Faction) : $[UserAction] = commanders.??(
+    def commanderSpawns(f : Faction) : $[UserAction] = abilities.??(
         (unlocked(f, SupplyRecon) && f.stock(Munitions) >= 3 && onBoard(f, ScoutCar) < ScoutCar.limit && spawnHexes(f, ScoutCar).any).$(DropMenuAction(f, SupplyRecon)) ++
         (unlocked(f, NKVDConscripts) && f.stock(Munitions) >= 5 && spawnHexes(f, Conscripts).any).$(DropMenuAction(f, NKVDConscripts)) ++
         (onceLeft(f, InfiltrationCommandos) && affordable(f, Cost(5, 1, 0)) && infiltrationHexes(f).any).$(DropMenuAction(f, InfiltrationCommandos)) ++
@@ -2329,7 +2380,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         (unlocked(f, MotorPool) && f.stock(Munitions) >= 5 && onBoard(f, Jeep) < Jeep.limit && spawnHexes(f, Jeep).any).$(DropMenuAction(f, MotorPool)) ++
         (onceLeft(f, AirdroppedCombatGroup) && affordable(f, Cost(5, 6, 0)) && beaconHexes(f).any).$(DropMenuAction(f, AirdroppedCombatGroup)) ++
         (unlocked(f, UniversalCarriers) && f.stock(Munitions) >= 5 && onBoard(f, UniversalCarrier) < UniversalCarrier.limit && spawnHexes(f, UniversalCarrier).any).$(DropMenuAction(f, UniversalCarriers)) ++
-        (onceLeft(f, CommandosSpawn) && affordable(f, Cost(5, 1, 0)) && dropHexes(f).any).$(DropMenuAction(f, CommandosSpawn)) ++
+        (onceLeft(f, CommandosSpawn) && affordable(f, commandosCost(f)) && dropHexes(f).any).$(DropMenuAction(f, CommandosSpawn)) ++
         (unlocked(f, EnglishIndustry) && f.stock(Munitions) >= 2).$(EnglishIndustryAction(f)) ++
         ((unlocked(f, SovietIndustryScout) || unlocked(f, SovietIndustryT70)) && sovietIndustry.contains(f).not && f.stock(Manpower) >= 1).$(SovietIndustryAction(f)) ++
         $(AIPartisansSpawn, ATPartisansSpawn, ATPartisansSpawnFree).%(a => onceLeft(f, a) && affordable(f, Cost(1, 4, 0)) && stormHexes(f).any)./(a => DropMenuAction(f, a)) ++
@@ -2352,7 +2403,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def weaponTeams(f : Faction) : $[UnitType] = UnitType.of(f).%(t => t.weaponTeam && t.commander.not && t.tier <= f.tier)
 
     // the actions a Commander adds to a unit in the Maneuver Phase: Defensive Stance, Hull Down, Raid Point
-    def commanderActions(f : Faction, u : Squad, k : Int) : $[UserAction] = commanders.??(
+    def commanderActions(f : Faction, u : Squad, k : Int) : $[UserAction] = abilities.??(
         ((riflemen(u) && unlocked(f, DefensiveStance)) || (u.utype == Conscripts && unlocked(f, HitTheDirt))).&&(onBuilding(u).not && paidLeft(u) >= 1 && isPassenger(u).not).$(DefensiveStanceAction(f, u, k)) ++
         // Armored Assault Tactics' Recon Mode, Emergency War Speed: a free move for a vehicle after its first CP
         (u.utype.vehicle && unlocked(f, ReconMode) && cp.getOrElse(u, 0) == 1 && raided.contains(u).not && f.stock(Munitions) >= 2).$(ReconModeAction(f, u, k)) ++
@@ -2368,7 +2419,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     )
 
     // the opening abilities: at the start of the faction's Maneuver Phase (its first turn, before any CP is spent)
-    def openings(f : Faction, k : Int) : $[UserAction] = (commanders && k < 2 && cpLeft == 3).??(
+    def openings(f : Faction, k : Int) : $[UserAction] = (abilities && k < 2 && cpLeft == 3).??(
         Commander.opening.keys.$.%(a => onceLeft(f, a)).%(a => cpLeft >= Commander.opening(a)._1 && f.stock(Munitions) >= Commander.opening(a)._2)./~{
             case a @ (ReconSweep | PanzerwerferBarrage | ArtilleryEye) => Board.hexes./(h => OpeningHexAction(f, a, h, k))
             case a @ (P47Strike | FragmentationBomb | IL2Strike | P47Strafing | StukaStrafe | PerimeterOverwatch | HawkerTyphoon | KatyushaStrike) => Board.hexes./(h => OpeningLineStartAction(f, a, h, k))
@@ -2405,7 +2456,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def openingNote(a : Ability) : Elem = Commander.opening.get(a)./{ case (c, m) => ("(" + c + " CP, " + m + " Munitions)").spn(styles.small) : Elem }.|(Empty)
 
     // the Supply Phase purchases a Commander adds
-    def commanderPurchases(f : Faction) : $[UserAction] = commanders.??(
+    def commanderPurchases(f : Faction) : $[UserAction] = abilities.??(
         commanderOf.get(f).$./~{ c =>
             val i = tiersOf.getOrElse(f, 0)
             (i < 4).??(c.tiers.lift(i).%(t => f.stock(XP) >= t.xp && f.tier >= t.needs)./(t => CommanderTierAction(f, c, i)).$)
@@ -2523,6 +2574,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 if (commanders)
                     Shuffle[Commander](Commander.pool(setup(0), options), CommandersShuffledAction(setup(0), _))
                 else
+                if (brigades)
+                    Shuffle[Brigade](Brigade.of(setup(0)), BrigadesShuffledAction(setup(0), _))
+                else
                     Roll[Face]((3 * teams.num).times(Face.die), FirstRolledAction(_))
 
             // each player draws three Commanders of their faction's six
@@ -2531,8 +2585,41 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 log(f, "drew three Commanders")
                 setup.dropWhile(_ != f).drop(1).starting match {
                     case Some(e) => Shuffle[Commander](Commander.pool(e, options), CommandersShuffledAction(e, _))
+                    case None if brigades => Shuffle[Brigade](Brigade.of(setup(0)), BrigadesShuffledAction(setup(0), _))
                     case None => Roll[Face]((3 * teams.num).times(Face.die), FirstRolledAction(_))
                 }
+
+            // each player draws three of their faction's Lost Brigades
+            case BrigadesShuffledAction(f, l) =>
+                brigadesDrawn += f -> l.take(3)
+                log(f, "drew three Lost Brigades")
+                setup.dropWhile(_ != f).drop(1).starting match {
+                    case Some(e) => Shuffle[Brigade](Brigade.of(e), BrigadesShuffledAction(e, _))
+                    case None => Roll[Face]((3 * teams.num).times(Face.die), FirstRolledAction(_))
+                }
+
+            // in turn order, a Lost Brigade of 0 XP may be picked before the starting Infantry
+            case BrigadeOpeningAction(order) =>
+                order match {
+                    case f :: rest if brigadeOf.contains(f).not && brigadesDrawn.getOrElse(f, $[Brigade]()).exists(_.xp == 0) =>
+                        Ask(f).each(brigadesDrawn(f).%(_.xp == 0))(b => BrigadeStartAction(f, b, rest)).add(BrigadeStartSkipAction(f, rest))
+                    case _ :: rest => BrigadeOpeningAction(rest)
+                    case Nil => StartUnitsAction(rotation(team(first)).last.head, 0)
+                }
+
+            case BrigadeStartAction(f, b, rest) =>
+                brigadeOf += f -> b
+                log(f, "picked the Lost Brigade", b)
+                BrigadeOpeningAction(rest)
+
+            case BrigadeStartSkipAction(f, rest) =>
+                BrigadeOpeningAction(rest)
+
+            case BrigadePickAction(f, b) =>
+                gain(f, XP, -b.xp)
+                brigadeOf += f -> b
+                log(f, "picked the Lost Brigade", b, "for", b.xp.hl, XP.icon)
+                PurchaseAction(f)
 
             case FirstRolledAction(l) =>
                 lastRolls = l
@@ -2558,7 +2645,10 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         log(first, "goes first, then", rotation(team(first)).drop(1)./(_.head.elem).comma, "(they place their starting Infantry in the reverse order)")
                     else
                         log(first, "goes first;", other(first), "places its starting Infantry first")
-                    StartUnitsAction(rotation(team(first)).last.head, 0)
+                    if (brigades)
+                        BrigadeOpeningAction(turnOrder)
+                    else
+                        StartUnitsAction(rotation(team(first)).last.head, 0)
                 }
 
             // three starting Infantry each, two in team games, as the missions are 2-panel ones (p. 7); the team going second places first
@@ -2571,7 +2661,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
             case StartUnitsAction(f, n) =>
                 current = f
-                Ask(f).each(UnitType.of(f).%(t => t.tier == 1 && t.kind == Infantry && t.commander.not))(t => StartPickAction(f, t, n))
+                Ask(f).each(UnitType.of(f).%(t => t.tier == 1 && t.kind == Infantry && t.commander.not) ++ brigadeStart(f))(t => StartPickAction(f, t, n))
 
             case StartPickAction(f, t, n) =>
                 Ask(f).each(Board.spawn(team(f)).%(occupant(_).none))(h => StartPlaceAction(f, t, h, n)).cancel
@@ -2957,7 +3047,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         log(u, "destroyed the Sandbags in", where(d))
                     }
                 }
-                if (commanders)
+                if (abilities)
                     SmokeStepAction(turnOrder)
                 else
                     AssignNextAction(1, turnOrder)
@@ -3374,6 +3464,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                         .add(upgrades(f).any.$(UpgradesMenuAction(f)))
                         .add(unlockable(f)./(t => UnlockAction(f, t)).$)
                         .add(commanderPurchases(f))
+                        .add(brigadePicks(f))
                         .add(emplacements(f))
                         .add(conversions(f))
                         .add(PassAction(f))
@@ -3459,7 +3550,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     case MotorPool => Cost(0, 5, 0)
                     case SupplyConvoy => Cost(0, 3, 0)
                     case UniversalCarriers => Cost(0, 5, 0)
-                    case CommandosSpawn => Cost(5, 1, 0)
+                    case CommandosSpawn => commandosCost(f)
                     case AIPartisansSpawn | ATPartisansSpawn | ATPartisansSpawnFree => Cost(1, 4, 0)
                     case AirdroppedCombatGroup => Cost(5, 6, 0)
                     case _ => Cost(3, 6, 0)

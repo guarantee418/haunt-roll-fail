@@ -286,6 +286,15 @@ case object SmokeCanistersStuka extends Ability("Smoke Canisters", "Vehicles may
 // a card: the Commander's name, its four abilities with their XP costs and the Tier Building each needs (0 for none)
 case class Tier(ability : Ability, xp : Int, needs : Int = 0) extends Record
 
+// the Lost Brigades' own abilities (brigades.scala): what a brigade gives that no Commander does
+case object VeteranDevils extends Ability("Veteran Devil's Brigade", "Riflemen may spawn as Devil's Brigade for 4 Manpower and 4 Munitions, with their AP XP and Munitions upgrades.")
+case object VeteranCommandos extends Ability("Veteran Commandos", "Commandos spawn on any visible non-Building hex, Double Slow the first round, for 5 Manpower and 2 Munitions; one a round. They may deal 3 HE to an adjacent target instead of their attack.")
+case object EliteGrenadierLeaders extends Ability("Elite Grenadier Squad Leaders", "Elite Grenadier Squad Leaders can be bought: 4 health, range 3, 2 AI and 1 HE, Camouflage, a Wrench.")
+case object CrocodileCallIn extends Ability("Churchill Crocodile", "The Churchill Crocodile can be bought: a Churchill with 2 forward Flame.")
+case object HalftrackConfigurable extends Ability("Configurable Half-track", "SdKfz 251s can upgrade to +2 Flame or +2 AP for 4 Munitions.")
+case object CommandPantherCallIn extends Ability("Command Panther", "The Command Panther can be bought: 5 health, range 3, 2 AP and 2 AI turreted, Spots Camo. One at a time.")
+
+
 sealed abstract class Commander(val id : String, val name : String, val faction : Faction, val tiers : $[Tier]) extends Record with Elementary {
     def elem = name.styled(faction)
     def image = "commander:" + id

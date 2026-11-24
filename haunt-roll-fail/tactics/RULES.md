@@ -365,6 +365,32 @@ Readings:
 - The Dozer destroys the Sandbags of the hex it Assaults (the field defenses this game has) at the start of the Damage Phase.
 - Urban Assault's Smoke is offered with the other Smoke at the start of the Damage Phase, for Riflemen in an Assault.
 
+## Lost Brigades
+
+The rulebook's 9.0 Lost Brigade Building Extensions, the setup's Lost Brigades option (Full Game Rules only; `brigades.scala`, 2026-11-24),
+with the Faction Guide's twelve cards of each faction (US 3.3, Wehrmacht 4.3, British 5.3, Soviet 6.3, OKW 7.3) and the universal Panther
+Lost Brigade (8.0), a Command Panther of each faction ("Captured" for the Allies), shuffled into each faction's deck (13 cards).
+
+- At setup each player draws three (after the Commanders, when both are played). Once, at any time of the purchases, a player may pick one
+  of the three for the XP at its top left, and keeps it. A brigade of 0 XP may be picked at the start, in turn order, before the starting
+  Infantry; then the Infantry it names may be among the starting Infantry, up to its number ("one", or Assault and Royal Engineers "up to
+  three"). The StG44 Rifle Volksgrenadiers' starting squad is an StG44 squad.
+- A brigade's units need no Tier Building and can be bought up to the usual limits. Its unit is bought at the card's price (`price`, over
+  the Commander's), and it gives no free unit. OKW brigade units spawn from the Spawn Area only, never next to a Tier Building.
+- Each brigade gives the abilities of the Commander tier with the same unit (`abilities`, which `unlocked` checks as for a Commander):
+  the call-in, the emplacement a squad builds (the bunkers, Pak 43s, 17 Pounder, Forward Emplacement, Forward HQ, LeFH 18), Paradrop
+  Equipment, the Partisans (one of each type a round), the G43 Stormtroopers (one a round).
+- Readings:
+  - The Repair Station is the Forward Station: Conscripts turn an empty Building next to them into it, it has a Wrench, and Vehicles
+    may spawn next to it, Slow, one at a time.
+  - Veteran Devil's Brigade: Devil's Brigade for 4 Manpower 4 Munitions, with both their AP upgrades (not offered as upgrades).
+  - Veteran Commandos: dropped as with the Commandos Commander, for 5 Manpower 2 Munitions, with Gammon Bombs and its Camouflage.
+  - The Churchill Crocodile is a Churchill with Operation Crocodile (2 forward Flame), for 2 Manpower 4 Fuel.
+  - The SdKfz 251's configuration is one upgrade, +2 Flame or +2 AP, for 4 Munitions.
+  - Elite Grenadier Squad Leaders: 4 health, range 3, 2 AI (the boxed figure read as a second AI die) and 1 HE (the green
+    explosion), Camouflage and a Wrench, 4 Manpower 3 Munitions.
+  - Command Panther: 5 health, range 3, 2 AP and 2 AI turreted, Spots Camo, 3 Manpower 5 Fuel, one at a time.
+
 ## Units
 
 From the Building Boards in the mod (`UnitType` in `game.scala`; the boards are in the game's "Building Boards" overlay):
@@ -405,7 +431,7 @@ Vehicles: 3 of each tier 1 and 2 vehicle, 2 of each tier 3 one, at a time.
 11. **Splash on Sandbags**: each splash die counts once for each unit it hits in the hex and once for the hex toward the
     two Damage that destroy Sandbags.
 12. **Not in the core box** (left out): barbed wire and tank traps that units build (the core units' Wrenches build only
-    Sandbags), Terrain Pack 3's foot bridges, Lost Brigades, Bunkers and the terrain packs' other special Buildings.
+    Sandbags), Terrain Pack 3's foot bridges, Bunkers and the terrain packs' other special Buildings.
 13. **Commander readings**: Osttruppen's two icons beside the Wrench (a veteran star and a Speed Die) are read as the squad's Speed Die;
     the Paradrop and Airdropped Group costs are the whole cost of the units; Smoke "disrupting Pins" isn't modeled beyond the sight rules;
     Combat Group Advance's and Armor Blitzkrieg's free move lasts the turn the ability is used; a drawn Commander's cards are shown to

@@ -318,9 +318,14 @@ Since 2026-11-24, three to five players play team games, Allies (US, British, So
 `nextTurn`, `interleaved` in `tactics/game.scala`; two players are two teams and play as before), and three the Mission Booklet's
 3 Way Free-for-all on Moro River (`MoroRiverFFA`, `MapData.areas` and `trigger`; VP to every player who damaged a destroyed unit).
 `tactics/RULES.md` has the rules as played and the readings, `tactics/HANDOFF.md` the state, files, testing (`tactics.Host`,
-`tactics.Dump`, `tactics.Replay`; `TACTICS_RULES=first` for the First Game Rules) and what is next (Commander abilities for teammates, the other factions' expansion Commanders, the Lost Brigades). The setup's Expansion
+`tactics.Dump`, `tactics.Replay`; `TACTICS_RULES=first` for the First Game Rules) and what is next (Commander abilities for teammates, barbed wire and tank traps). The setup's Expansion
 Commanders toggle (`ExpansionCommanders`, `Commander.pool` in `tactics/commanders.scala`, 2026-11-24) adds the expansion packs'
 Commanders to the draw: all 44 of the five factions (Faction Guide pages 11 and 12, 17 and 18, 23 and 24, 29 and 30, 36 and 37, cut by `tactics/tools/commander-art.py`).
+The setup's Lost Brigades toggle (`LostBrigades`, rulebook 9.0, Full Game Rules only; `tactics/brigades.scala`, 2026-11-24) deals each player
+three of their faction's thirteen Lost Brigade Building Extensions (its twelve and the universal Command Panther; cards cut by
+`tactics/tools/commander-art.py`): one may be picked, once, for its XP in the purchases (0 XP ones before the starting Infantry, some giving
+starting Infantry), and its units need no Tier Building; a brigade gives the matching Commander abilities through `unlocked` (`abilities`
+is Commanders or brigades), at the card's price (`Brigade.price` in `costOf`).
 
 ## Building
 

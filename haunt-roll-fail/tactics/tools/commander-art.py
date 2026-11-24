@@ -2,7 +2,7 @@
 # The Commander cards and the tokens of the units they bring (webp2/tactics/images/commander/, token/), cut from the 2nd Edition
 # Faction Guide (the PDF in the Tabletop Simulator mod "Company of Heroes - 2nd Edition", Steam workshop 2314664989): its pages 11
 # (US core Commanders) and 17 (Wehrmacht), 12 and 13 (the US expansion Commanders), 18 and 19 (the Wehrmacht's), 24 and 25 (the British), 30 and 31 (the Soviets), 37 and 38 (the OKW), rendered at 220 dpi with `pdftoppm -f 11 -l 11 -r 220 -png guide.pdf <dir>/hi` (and 17;
-# 23, 29 and 36 for the British, Soviet and OKW, saved as hi-23.png and so on),
+# 23, 29 and 36 for the British, Soviet and OKW, saved as hi-23.png and so on; 13, 14, 19, 20, 25, 26, 32, 38 and 39 for the Lost Brigades),
 # and the mod's US and Wehrmacht Lost Brigades sheets for two portraits (Assault Engineers, MG Bunker; `tactics-art.py fetch` names).
 #
 #   commander-art.py <dir with hi-11.png, hi-17.png, US-5420.png> <webp2/tactics/images>
@@ -161,5 +161,52 @@ def main(d, out):
     # the US MG Bunker (Tactical Support Company): the same portrait in the US colour
     art.webp(art.token(lb(0, 1), 'P', art.COLORS['us']), os.path.join(out, 'token', 'mg-bunker-us.webp'), q=90)
 
+# the Lost Brigades cards (brigade/, brigades.scala): the Faction Guide's x.3 pages and the universal Panther Lost Brigade, cut at 457 x 628
+# from the same 220 dpi renders (pages 13, 14, 19, 20, 25, 26, 32, 38 and 39), at the top left corners found by their black frames
+BRIGADES = [
+    ('hi-13', 1286, 276, 'lb-assault-engineers'), ('hi-13', 1832, 276, 'lb-cavalry-riflemen'), ('hi-13', 1286, 966, 'lb-veteran-devils'),
+    ('hi-13', 1832, 966, 'lb-us-mg-bunker'), ('hi-13', 1286, 1664, 'lb-paradrop'), ('hi-13', 1832, 1664, 'lb-easy-eight'),
+    ('hi-14', 134, 280, 'lb-priest'), ('hi-14', 674, 280, 'lb-stuart'), ('hi-14', 134, 980, 'lb-pershing'),
+    ('hi-14', 674, 980, 'lb-calliope'), ('hi-14', 134, 1682, 'lb-jackson'), ('hi-14', 674, 1682, 'lb-dozer'),
+    ('hi-19', 1290, 275, 'lb-elite-grenadiers'), ('hi-19', 1836, 275, 'lb-jaeger-sniper'), ('hi-19', 1302, 965, 'lb-mg42-bunker'),
+    ('hi-19', 1840, 965, 'lb-osttruppen'), ('hi-19', 1290, 1661, 'lb-pak43'), ('hi-19', 1830, 1661, 'lb-stormtroopers'),
+    ('hi-20', 134, 255, 'lb-tiger'), ('hi-20', 675, 255, 'lb-stug'), ('hi-20', 134, 981, 'lb-king-tiger'),
+    ('hi-20', 675, 981, 'lb-jagdpanther'), ('hi-20', 134, 1684, 'lb-elefant'), ('hi-20', 675, 1684, 'lb-halftrack'),
+    ('hi-25', 1286, 259, 'lb-17-pounder'), ('hi-25', 1832, 259, 'lb-ap-sniper'), ('hi-25', 1289, 960, 'lb-forward-emplacement'),
+    ('hi-25', 1832, 960, 'lb-commandos'), ('hi-25', 1286, 1658, 'lb-royal-engineers'), ('hi-25', 1832, 1658, 'lb-staghound'),
+    ('hi-26', 132, 275, 'lb-churchill-avre'), ('hi-26', 679, 275, 'lb-crocodile'), ('hi-26', 132, 978, 'lb-sexton'),
+    ('hi-26', 679, 978, 'lb-comet'), ('hi-26', 132, 1682, 'lb-firefly'), ('hi-26', 679, 1681, 'lb-valentine'),
+    ('hi-32', 131, 264, 'lb-dshk'), ('hi-32', 677, 264, 'lb-forward-hq'), ('hi-32', 131, 978, 'lb-guards-rifle'),
+    ('hi-32', 677, 978, 'lb-partisans'), ('hi-32', 131, 1683, 'lb-penal'), ('hi-32', 677, 1683, 'lb-repair-station'),
+    ('hi-32', 1286, 266, 'lb-shock-troops'), ('hi-32', 1832, 266, 'lb-t3485'), ('hi-32', 1286, 980, 'lb-is2'),
+    ('hi-32', 1832, 980, 'lb-kv2'), ('hi-32', 1286, 1683, 'lb-isu152'), ('hi-32', 1832, 1683, 'lb-kv8'),
+    ('hi-38', 1289, 260, 'lb-jaeger-recon'), ('hi-38', 1830, 260, 'lb-kettenkrad'), ('hi-38', 1289, 955, 'lb-lefh18'),
+    ('hi-38', 1830, 955, 'lb-stg44-volks'), ('hi-38', 1289, 1665, 'lb-stormtroopers-okw'), ('hi-38', 1830, 1665, 'lb-pak43-okw'),
+    ('hi-39', 134, 261, 'lb-panzerfusilier'), ('hi-39', 674, 261, 'lb-puma'), ('hi-39', 134, 957, 'lb-jagdpanther-okw'),
+    ('hi-39', 674, 960, 'lb-king-tiger-okw'), ('hi-39', 134, 1664, 'lb-stug-okw'), ('hi-39', 674, 1664, 'lb-hetzer'),
+    ('hi-39', 1288, 327, 'lb-command-panther-us'), ('hi-39', 1828, 327, 'lb-command-panther-wehrmacht'),
+    ('hi-39', 1288, 1001, 'lb-command-panther-british'), ('hi-39', 1829, 1001, 'lb-command-panther-soviet'),
+    ('hi-39', 1288, 1682, 'lb-command-panther-okw'),
+]
+
+# the tokens of the brigades' own units, from their cards' portraits: (token id, card id, kind, faction)
+BRIGADE_UNITS = [('elite-grenadiers', 'lb-elite-grenadiers', 'G', 'wehrmacht')] + \
+    [('command-panther', 'lb-command-panther-' + f, 'R', f) for f in ['us', 'wehrmacht', 'british', 'soviet', 'okw']]
+
+def brigades(d, out):
+    os.makedirs(os.path.join(out, 'brigade'), exist_ok=True)
+    os.makedirs(os.path.join(out, 'token'), exist_ok=True)
+    pages = {}
+    cards = {}
+    for page, x, y, bid in BRIGADES:
+        im = pages.setdefault(page, Image.open(os.path.join(d, page + '.png')).convert('RGB'))
+        card = im.crop((x, y, x + 457, y + 628))
+        cards[bid] = card
+        art.webp(card, os.path.join(out, 'brigade', bid + '.webp'), q=86)
+    for tid, bid, kind, f in BRIGADE_UNITS:
+        p = cards[bid].crop((150, 38, 310, 198) if kind == 'G' else (150, 70, 285, 205))
+        art.webp(art.token(p, kind, art.COLORS[f]), os.path.join(out, 'token', tid + '-' + f + '.webp'), q=90)
+
 if __name__ == '__main__':
     main(sys.argv[1], sys.argv[2])
+    brigades(sys.argv[1], sys.argv[2])
