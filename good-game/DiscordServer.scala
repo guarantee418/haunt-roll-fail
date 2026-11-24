@@ -31,6 +31,18 @@ import java.nio.charset.StandardCharsets.UTF_8
 //   move-channel <name> -> <category>         "-> none" takes it out of its category
 //   order <category> -> <channel>, <channel>, ...
 //                                             puts the category's channels in that order, top first; those left out follow, as they were
+//
+// WEBHOOKS (2026-11-24, asked for as "thematic webhooks for Pincer and CoH that the Cobbler bot can manage", like Northgard's Huginn
+// and Muninn): the bot makes a channel's webhook with a name and avatar of its own, and can hand its URL straight to a turns channel
+// (TurnPings.slots), so nobody copies a webhook URL by hand. Needs Manage Webhooks. A webhook's URL holds its token: no result shows it.
+//   webhooks                                  lists the server's webhooks: name, channel, ID, whether the bot made it, the turns
+//                                             channel it is set as
+//   make-webhook <name> | in <channel> [| avatar <file>] [| for <turns channel>]
+//                                             makes the channel's webhook, or renames and gives the avatar to the one of that name
+//                                             there; avatar is a picture in webp2/lfg/webhooks/ (made by tools/webhook-avatars.py:
+//                                             drum-and-fife.png, field-wireless.png); for sets it as turns, nort-turns, pincer-turns or
+//                                             tactics-turns, as that change would (only a webhook Discord gives the bot the token of)
+//   rename-webhook <name> -> <new name>       (in any channel; its ID works in place of its name)
 object DiscordServer {
     def api = sys.props.getOrElse("hrf.discord.api", "https://discord.com/api/v10")
 
@@ -75,7 +87,7 @@ object DiscordServer {
                 else {
                     val message = obj(r.body).get("message").collect { case s : String => s }.getOrElse(r.body.take(200))
                     val hint = r.statusCode match {
-                        case 403 => " (the bot lacks a permission, or the role is above the bot's own role)"
+                        case 403 => " (the bot lacks a permission, Manage Webhooks for a webhook, or the role is above the bot's own role)"
                         case _ => ""
                     }
                     Left("Discord answered " + r.statusCode + ": " + message + hint)
@@ -170,6 +182,10 @@ object DiscordServer {
             case "rename-channel" => arrow(rest).flatMap { case (a, b) => channels(g).flatMap(findChannel(_, a)).flatMap(c =>
                 call("PATCH", "/channels/" + c.id, "{\"name\":" + Tournament.json(b) + "}").map(_ => "renamed")) }
             case "order" => order(g, rest)
+            case "webhooks" => listWebhooks(g)
+            case "make-webhook" => makeWebhook(g, rest)
+            case "rename-webhook" => arrow(rest).flatMap { case (a, b) => webhooks(g).flatMap(findWebhook(_, a)).flatMap(w =>
+                call("PATCH", "/webhooks/" + w.id, "{\"name\":" + Tournament.json(b) + "}").map(_ => "renamed")) }
             case "move-channel" => arrow(rest).flatMap { case (a, b) => channels(g).flatMap { cc =>
                 findChannel(cc, a, _ != 4).flatMap { c =>
                     (if (norm(b) == "none") Right(None) else findChannel(cc, b, _ == 4).map(Some(_))).flatMap { p =>
@@ -325,5 +341,74 @@ object DiscordServer {
         } yield result
     }
 
-    val words = Set("roles", "role", "rename-role", "give-role", "take-role", "channels", "category", "channel", "rename-channel", "move-channel", "order")
+    case class Webhook(id : String, name : String, channel : String, token : String, application : String, kind : Int) {
+        def url = "https://discord.com/api/webhooks/" + id + "/" + token
+    }
+
+    def webhook(m : Map[String, Any]) = Webhook(str(m, "id"), str(m, "name"), str(m, "channel_id"), str(m, "token"), str(m, "application_id"), num(m, "type").toInt)
+
+    def webhooks(g : String) : Either[String, List[Webhook]] = call("GET", "/guilds/" + g + "/webhooks").map(b => list(b).map(webhook))
+
+    def findWebhook(ww : List[Webhook], v : String) : Either[String, Webhook] =
+        ww.find(_.id == v.trim).map(Right(_)).getOrElse {
+            ww.filter(w => norm(w.name) == norm(v)) match {
+                case w :: Nil => Right(w)
+                case Nil => Left("no webhook called " + v)
+                case l => Left(l.size + " webhooks are called " + v + "; give its ID (webhooks lists them)")
+            }
+        }
+
+    // the turns channel a webhook is set as, by the ID in the URL kept
+    def slotUsing(id : String) = TurnPings.slots.filter(s => TurnPings.hookOf(s).exists(_.split('/').contains(id))).map(_.name)
+
+    def listWebhooks(g : String) : Either[String, String] = for {
+        ww <- webhooks(g)
+        cc <- channels(g)
+        bot <- me
+    } yield ww.sortBy(w => (cc.find(_.id == w.channel).map(_.name).getOrElse(""), w.name)).map { w =>
+        w.name + " (" + w.id + ") in " + cc.find(_.id == w.channel).map(_.name).getOrElse(w.channel) +
+            (if (w.application == bot) ", made by the bot" else "") +
+            slotUsing(w.id).map(", set as " + _).mkString
+    }.mkString("\n") match { case "" => "no webhooks" ; case t => t }
+
+    // the picture a webhook's avatar is made from, as Discord takes it
+    def avatar(file : String) : Either[String, String] =
+        if (!file.matches("[a-z0-9-]+\\.png")) Left("an avatar is a .png file name in webp2/lfg/webhooks/")
+        else {
+            val f = java.nio.file.Paths.get(Lfg.assets, "webp2", "lfg", "webhooks", file)
+            if (!java.nio.file.Files.isRegularFile(f)) Left("no " + file + " in webp2/lfg/webhooks/")
+            else Right("data:image/png;base64," + java.util.Base64.getEncoder.encodeToString(java.nio.file.Files.readAllBytes(f)))
+        }
+
+    def makeWebhook(g : String, rest : String) : Either[String, String] = {
+        val (name, opts) = split(rest)
+        def opt(k : String) = opts.find(_._1 == k).map(_._2)
+        for {
+            _ <- if (name.isEmpty || name.length > 80 || norm(name).contains("discord") || norm(name).contains("clyde")) Left("a webhook's name is 1 to 80 characters, without \"discord\" or \"clyde\"") else Right(())
+            in <- opt("in").toRight("which channel? make-webhook <name> | in <channel>")
+            target <- opt("for") match {
+                case None => Right(None)
+                case Some(s) => TurnPings.slot(s.trim).map(Some(_)).toRight("for takes " + TurnPings.slots.map(_.name).mkString(", "))
+            }
+            picture <- opt("avatar") match { case None => Right(None) ; case Some(f) => avatar(f.trim).map(Some(_)) }
+            cc <- channels(g)
+            c <- findChannel(cc, in, k => k == 0 || k == 5 || k == 15)
+            there <- call("GET", "/channels/" + c.id + "/webhooks").map(b => list(b).map(webhook))
+            fields = ("\"name\":" + Tournament.json(name)) :: picture.map(p => "\"avatar\":" + Tournament.json(p)).toList
+            made <- there.filter(w => w.kind == 1 && norm(w.name) == norm(name)) match {
+                case Nil => call("POST", "/channels/" + c.id + "/webhooks", fields.mkString("{", ",", "}")).map(b => ("made", webhook(obj(b))))
+                case w :: Nil => call("PATCH", "/webhooks/" + w.id, fields.mkString("{", ",", "}")).map(b => ("updated", webhook(obj(b)).copy(token = w.token)))
+                case l => Left(l.size + " webhooks in " + c.name + " are called " + name + "; rename one (rename-webhook <its ID> -> ...)")
+            }
+        } yield {
+            val (what, w) = made
+            what + " " + w.name + " (" + w.id + ") in " + c.name + (if (picture.nonEmpty) ", with its avatar" else "") + target.map { s =>
+                if (w.token.isEmpty) "; not set as " + s.name + ": Discord didn't give the bot its URL (make one with another name)"
+                else "; " + s.name + ": " + TurnPings.setHook(s, w.url)
+            }.getOrElse("")
+        }
+    }
+
+    val words = Set("roles", "role", "rename-role", "give-role", "take-role", "channels", "category", "channel", "rename-channel", "move-channel", "order",
+        "webhooks", "make-webhook", "rename-webhook")
 }
