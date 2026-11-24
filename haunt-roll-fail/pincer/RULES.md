@@ -50,6 +50,9 @@ means. Change a rule in `game.scala` and note it here.
 | Cannon | 4 Iron (revive: 2 Iron) |
 | Frigate | 2 Iron, 2 Lumber (revive: Iron, Lumber) |
 
+A Musketeer costs two Wheat, two Fish, or one of each (owner, 2026-11-24). The mod's Player Reference card shows only
+"Wheat, Wheat or Fish, Fish", but the mixed payment is intended: don't change the game to match the card.
+
 ## Units
 
 Each unit has one action a turn: move, attack, or be revived. New and revived units do nothing until
