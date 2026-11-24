@@ -3767,16 +3767,19 @@ object Meta extends MetaGame {
         ImageAsset("ki-idol-2") ::
         ImageAsset("ki-idol-3") ::
         ImageAsset("ki-idol-hidden") ::
+        ImageAsset("ki-idol-hidden-map") ::
         ImageAsset("ki-idol-empty") ::
         ImageAsset("ki-jewel-1") ::
         ImageAsset("ki-jewel-2") ::
         ImageAsset("ki-jewel-3") ::
         ImageAsset("ki-jewel-hidden") ::
+        ImageAsset("ki-jewel-hidden-map") ::
         ImageAsset("ki-jewel-empty") ::
         ImageAsset("ki-tablet-1") ::
         ImageAsset("ki-tablet-2") ::
         ImageAsset("ki-tablet-3") ::
         ImageAsset("ki-tablet-hidden") ::
+        ImageAsset("ki-tablet-hidden-map") ::
         ImageAsset("ki-tablet-empty") ::
 
         ImageAsset("ki-waystation-idol-jewel") ::
@@ -3813,8 +3816,11 @@ object Meta extends MetaGame {
         ImageAsset("ok-jewel"           ) ::
         ImageAsset("ok-idol"            ) ::
         ImageAsset("ok-tablet-hidden"   ) ::
+        ImageAsset("ok-tablet-hidden-map") ::
         ImageAsset("ok-jewel-hidden"    ) ::
+        ImageAsset("ok-jewel-hidden-map") ::
         ImageAsset("ok-idol-hidden"     ) ::
+        ImageAsset("ok-idol-hidden-map") ::
     $) ::
     ConditionalAssetsList((factions, options) => factions.of[Hero].any, "faction/hero")(
         ImageAsset("vb-glyph"          ) ::

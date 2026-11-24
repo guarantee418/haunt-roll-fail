@@ -1270,6 +1270,9 @@ server. No session can reach the server, and none needs to.
   Discord): the seven spaces cut from its board (`cu-track-<v1|v3>-<n>`, `Utopia.trackBoard`, by `root/tools/utopia-track.py`), each
   space above the corruption with a morality token drawn on it (`-m`); space 1 never has one, so at corruption 1 no space is
   emptied but the first. Display only.
+- Face-down relics in the Root forests (the Keepers', and the old Keepers') are drawn on the map from `<style>-<type>-hidden-map`:
+  the token on an opaque disc with more contrast, a gold rim and a dark shadow, 120 px instead of 90, as the half-transparent board
+  tokens vanished on the green forest art (2026-11-24, asked for; `root/tools/relic-hidden-map.py`). The panels keep the board tokens. Display only.
 - The Twilight Council's Loyalists on its player panel are drawn head down, hanging like bats (`styles.hanging` in
   `root/styles.scala`; 2026-11-17). Display only.
 - Tapping a Root faction's status pane opens its overlay (`onFactionStatus` in
