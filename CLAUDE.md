@@ -293,14 +293,14 @@ Adset seats can be set to Robotos too: `MetaAdset.botOptions` adds a hidden
 recomputed in `AdsetExpansion.assign`).
 
 Pincer: A Gentleman's War (Julian Birke, a work in progress the owner's team playtests; asked for on 2026-11-23) is in
-`haunt-roll-fail/pincer/` (meta `pincer`, URL `/play/pincer`, not on the main menu yet: `HRF.menuMetas`), played from the
+`haunt-roll-fail/pincer/` (meta `pincer`, URL `/play/pincer`, on the main menu since 2026-11-24: `HRF.menuMetas`), played from the
 rulebook's second draft with the art of the Tabletop Simulator mod 3778939778 (`pincer/tools/pincer-art.py`, images in
-`webp2/pincer/images/`). `pincer/RULES.md` has the rules as played and the draft's open questions (the Boar's War penalty
+`webp2/pincer/images/`). On the main menu since 2026-11-24 (`HRF.menuMetas`). `pincer/RULES.md` has the rules as played and the draft's open questions (the Boar's War penalty
 isn't in it yet), `pincer/HANDOFF.md` the state, files and testing (`pincer.Host` bot games, `pincer.Dump`).
 
 Company of Heroes: The Board Game, 2nd Edition (Bad Crow Games; a work in progress the owner's team helps test; asked for on
-2026-11-23) is in `haunt-roll-fail/tactics/`, listed as "Tactics" (meta `tactics`, URL `/play/tactics`, not on the main menu
-yet): the core rulebook's First Game Rules (RulesPal's copy), US Forces against the Wehrmacht on Moro River, with the Building
+2026-11-23) is in `haunt-roll-fail/tactics/`, listed as "Tactics" (meta `tactics`, URL `/play/tactics`, on the main menu since
+2026-11-24): the core rulebook's First Game Rules (RulesPal's copy), US Forces against the Wehrmacht on Moro River, with the Building
 Boards, map panels and books of the Tabletop Simulator mod 2314664989 (`tactics/tools/tactics-art.py`, images in
 `webp2/tactics/images/`; the map's lines read off the art by `tactics/tools/map-edges.py` and `map-data.py` into `Board.data`).
 `tactics/RULES.md` has the rules as played and the readings, `tactics/HANDOFF.md` the state, files, testing (`tactics.Host`,

@@ -10,7 +10,9 @@ played and the choices made.
 
 - Playable: two players, US Forces against the Wehrmacht, First Game Rules, on Moro River; Local (hotseat), Quick Game
   and Play Online, with an Easy bot.
-- Not on the main `/play` menu: open `/play/tactics` (add `tactics.Meta` to `HRF.menuMetas` in `hrf.scala` to list it).
+- On the main `/play` menu since 2026-11-24 (`HRF.menuMetas`, its card in `topMenu` in `hrf.scala`). Its images are in
+  `haunt-roll-fail/webp2/tactics/images/`, which the server serves as `/hrf/webp2/`; they were first committed to the repository root's
+  `webp2/`, where the live site couldn't find them (404).
   No ranking.
 
 ## Files

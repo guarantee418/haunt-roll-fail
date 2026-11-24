@@ -12,8 +12,7 @@ playtests; `RULES.md` has the rules as played and the open questions.
   injuries and revives, Counter-Actions, forts, annexation, building, recruiting, trade (and trading
   companies), war and peace, gifts and returning prisoners, the six Maneuver cards, the 14 Royal Seals
   with their bonuses and steals, surrender, and the 8-seal win.
-- Not on the main `/play` menu: open `/play/pincer` (add `pincer.Meta` to `HRF.menuMetas` in `hrf.scala`
-  to list it). No ranking.
+- On the main `/play` menu since 2026-11-24 (`HRF.menuMetas`, its card in `topMenu` in `hrf.scala`). No ranking.
 
 ## Files
 
