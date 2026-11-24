@@ -293,6 +293,32 @@ plays rulebook 8.0 and 8.2 with the thirty core Commander cards (six a faction, 
     adds the health at once.
   - "Requires and spawns at Tier N": the OKW units spawn next to that Tier's Building or in the Spawn Area, as their tier's units do.
 
+### Expansion Commanders
+
+The setup's **Expansion Commanders** toggle (`ExpansionCommanders`, only with Draw three Commanders; 2026-11-24) adds the expansion
+packs' Commanders to the ones each player draws three from (`Commander.pool`; games without it, and every game made before it, draw
+from the core six). So far the US Forces' nine, from the Faction Guide's pages 11 and 12 (Elite Commanders Collection: Light Cavalry,
+Heavy Cavalry, Tactical Support, Motor Pool; Pathfinder Pack: Pathfinder Company; StuG Pack: Devil's Brigade; Lost Brigades Pack: Cavalry
+Rifle, Urban Assault, Engineer Assault Companies). Their units were read off the cards' call-in panels (health, range, a die for each
+figure, turreted for curved arrows): M5 Stuart (heavy vehicle, health 3, range 2, AI and AP, two Speed Dice, 2 Manpower 3 Fuel), M26
+Pershing (6, range 2, 2 AP 2 AI, 3/5), T34 Calliope (4, range 4, 2 indirect HE with Splash, 2/5), Sherman 105mm Dozer (6, range 2, 2 AI
+2 HE, a Defense Die, Sherman chassis, 3/5), M36 Jackson (3, range 4, 3 AP, a Speed Die, Wolverine chassis, 3/5), I.R. Pathfinder Squad
+(infantry, 3, range 3, 1 AI, spots Camouflage, Camouflage, 3 Manpower), Cavalry Riflemen (5, range 2, 1 AI, Close Range Firepower, a
+Defense Die, 4 Manpower 1 Munitions), Devil's Brigade (Riflemen with 5 health) and the US MG Bunker (the Wehrmacht's, built by Riflemen).
+Readings:
+
+- A panel naming a call-in with no "one spawns for free" brings no free unit (`...Plain` abilities).
+- Strategic Maneuvers is the Scout Car's No-Fire mode for Stuarts; Combined Arms counts a unit next to another of the same player's;
+  Requisition Officer takes 1 Manpower off every Sherman and Wolverine chassis (Easy Eight, Dozer, Jackson too).
+- Motor Pool's two Jeeps are one purchase of 5 Munitions, with no limit but the Jeeps' 3; Airdrop Beacon lets Infantry spawn next to a
+  Pathfinder Squad as next to a Major (Slow the first round), not Pathfinders; Airdropped Combat Group is three Tier Infantry, any mix,
+  next to Pathfinders, Slow (not Double Slow).
+- Devil's Brigade: Riflemen for every Riflemen ability; Water is passable for it. Demolition, once a Damage Phase for each Devil's Brigade,
+  destroys an adjacent standing Building at its very end (Full Game Rules only), the units inside falling back as from any destroyed Building.
+- Cavalry Riflemen's free Assault: once a round, after spending a CP, onto an adjacent enemy-held hex, with no CP.
+- The Dozer destroys the Sandbags of the hex it Assaults (the field defenses this game has) at the start of the Damage Phase.
+- Urban Assault's Smoke is offered with the other Smoke at the start of the Damage Phase, for Riflemen in an Assault.
+
 ## Units
 
 From the Building Boards in the mod (`UnitType` in `game.scala`; the boards are in the game's "Building Boards" overlay):

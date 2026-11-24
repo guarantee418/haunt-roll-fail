@@ -143,6 +143,44 @@ case object StG44Volks extends Ability("Grand Offense Doctrine", "Volksgrenadier
 case object KettenkradEngineers extends Ability("Kettenkrad Engineers", "Kettenkrads have a Wrench: they Repair and build Sandbags. One spawns for free.")
 case object HEATShells extends Ability("HEAT Shells", "Pumas and Panthers can upgrade to +1 AP for 3 Munitions. One Panther spawns for free.")
 
+// US expansion Commanders (2026-11-24; Faction Guide page 11 and 12: Elite Commanders Collection, Pathfinder Pack, StuG Pack, Lost
+// Brigades Pack). The panels saying "Call-In" with no free unit are the `...Plain` abilities
+case object LightInfantryTraining extends Ability("Light Infantry Training", "Riflemen can upgrade to +1 Speed Die for 2 Munitions.")
+case object StuartCallIn extends Ability("Stuart Call-In", "The M5 Stuart can be bought.")
+case object StuartCallInFree extends Ability("Stuart Call-In", "The M5 Stuart can be bought. One spawns for free.")
+case object StrategicManeuvers extends Ability("Strategic Maneuvers", "Stuarts may spend 1 CP to toggle a No-Fire mode in which they Capture, and 1 CP to go back. One Riflemen spawns for free.")
+case object BrowningM2 extends Ability("Browning M2 .50cal", "All Stuarts gain 1 AI die and +1 Range. One Stuart spawns for free.")
+case object RiflemenFieldDefenses extends Ability("Riflemen Field Defenses", "Riflemen gain +1 Defense Die when Sandbags give them cover.")
+case object CombinedArms extends Ability("Combined Arms", "At the start of your Maneuver Phase spend your very first 2 CP and 2 Munitions: your units next to another of yours get +1 Sight and Range this round.")
+case object RequisitionOfficer extends Ability("Requisition Officer", "Wolverines and Shermans (and the units on their chassis) cost 1 less Manpower. One Riflemen spawns for free.")
+case object PershingCallIn extends Ability("Pershing Call-In", "The M26 Pershing can be bought. One spawns for free.")
+case object PershingCallInPlain extends Ability("Pershing Call-In", "The M26 Pershing can be bought.")
+case object USMGBunkers extends Ability("MG Bunker", "Riflemen can build MG Bunkers for 2 Munitions.")
+case object P47Strafing extends Ability("P-47 Strafing Support", "At the start of your Maneuver Phase spend your very first 2 CP and 2 Munitions: 3 hexes in a line each take 2 HE in the Damage Phase.")
+case object CalliopeCallIn extends Ability("Calliope Call-In", "The T34 Calliope can be bought. One spawns for free.")
+case object CalliopeCallInPlain extends Ability("Calliope Call-In", "The T34 Calliope can be bought.")
+case object MotorPool extends Ability("Motor Pool", "Two Jeeps can spawn for 5 Munitions. One Jeep spawns for free.")
+case object Outmaneuver extends Ability("Outmaneuver", "At the start of your Maneuver Phase spend your very first 1 CP and 3 Munitions: every Vehicle may make a free move this turn. One Pershing spawns for free.")
+case object PathfinderSquads extends Ability("I.R. Pathfinder Squad", "Pathfinder Squads can be bought: 3 health, range 3, 1 AI, +2 Sight spotting Camouflage, Camouflage.")
+case object AirdropBeacon extends Ability("Airdrop Beacon", "Bought Infantry other than Pathfinders may spawn next to a Pathfinder Squad, Slow the first round. One Pathfinder spawns for free.")
+case object Mortars81mm extends Ability("81mm Mortars", "Mortar Teams with their Splash XP upgrade also gain 1 HE. One Mortar Team spawns for free.")
+case object AirdroppedCombatGroup extends Ability("Airdropped Combat Group", "Spawn 3 Infantry other than Pathfinders next to a Pathfinder Squad, Slow the first round, for 5 Manpower and 6 Munitions; one a round.")
+case object DevilsBrigadeSpawn extends Ability("Devil's Brigade", "Riflemen may spawn as Devil's Brigade: +1 Health, they may enter Water, and a Destroyed Building gives them 3 Defense Dice. One spawns for free.")
+case object DevilsAmbush extends Ability("Ambush", "Devil's Brigade can upgrade to Camouflage and Close Range Firepower for 4 Munitions.")
+case object Demolition extends Ability("Demolition", "At the very end of the Damage Phase, each Devil's Brigade may deal 4 HE to one adjacent Building (destroying it), but not to the units inside.")
+case object Sherman76 extends Ability("Sherman 76s", "Shermans have their XP and Munitions upgrades. One Sherman spawns for free.")
+case object StepOnIt extends Ability("Step on it", "After spending a first CP on a Vehicle, pay 2 Munitions to move it once more for free.")
+case object CavalryRiflemenCallIn extends Ability("Cavalry Riflemen", "Cavalry Riflemen can be bought: 5 health, range 2, 1 AI, Close Range Firepower, a Defense Die; after a move they may Assault an adjacent hex for free. One spawns for free.")
+case object EasyEightCallInPlain extends Ability("Sherman Easy Eight", "The Sherman Easy Eight can be bought (a Sherman for the limit).")
+case object DozerCallIn extends Ability("Sherman 105mm Dozer", "The Sherman Dozer can be bought (a Sherman for the limit); Assaulting, it destroys the hex's Sandbags at the start of the Damage Phase. One spawns for free.")
+case object DozerCallInPlain extends Ability("Sherman 105mm Dozer", "The Sherman Dozer can be bought (a Sherman for the limit); Assaulting, it destroys the hex's Sandbags at the start of the Damage Phase.")
+case object UrbanAssault extends Ability("Urban Assault", "When Assaulting, Riflemen may pay 1 Munitions to Smoke the Assaulted hex at the start of the Damage Phase. One Riflemen spawns for free.")
+case object HowitzerBarrage extends Ability("Howitzer Barrage", "At the start of your Maneuver Phase spend your very first 1 CP and 1 Munitions: a hex takes 1 HE in the Damage Phase.")
+case object JacksonCallIn extends Ability("M36 Jackson", "The M36 Jackson can be bought (a Wolverine for the limit). One spawns for free.")
+case object JacksonCallInPlain extends Ability("M36 Jackson", "The M36 Jackson can be bought (a Wolverine for the limit).")
+case object AssaultEngineerSpawnPlain extends Ability("Assault Engineers", "Riflemen may spawn as Assault Engineers.")
+case object SupportJeeps extends Ability("Support Jeeps", "Jeeps have their Reinforce XP upgrade. One Jeep spawns for free.")
+
 // a card: the Commander's name, its four abilities with their XP costs and the Tier Building each needs (0 for none)
 case class Tier(ability : Ability, xp : Int, needs : Int = 0) extends Record
 
@@ -179,6 +217,17 @@ case object ConscriptSupportTactics extends Commander("conscript-support", "Cons
 case object NKVDDisruptionTactics extends Commander("nkvd", "NKVD Disruption Tactics", Soviet, $(Tier(NKVDConscripts, 3), Tier(ForwardHQAbility, 2), Tier(IL2Strike, 1), Tier(VeteranSU85, 4, 3)))
 case object ArmoredAssaultTactics extends Commander("armored-assault", "Armored Assault Tactics", Soviet, $(Tier(ReconMode, 1), Tier(T70InfantryTank, 4, 2), Tier(SmokeAmbush, 2), Tier(T80Turret, 4, 2)))
 
+// the US expansion Commanders (Faction Guide pages 11 and 12)
+case object LightCavalryCompany extends Commander("light-cavalry", "Light Cavalry Company", US, $(Tier(LightInfantryTraining, 1), Tier(StuartCallIn, 1, 2), Tier(StrategicManeuvers, 3), Tier(BrowningM2, 4, 2)))
+case object HeavyCavalryCompany extends Commander("heavy-cavalry", "Heavy Cavalry Company", US, $(Tier(RiflemenFieldDefenses, 1), Tier(CombinedArms, 2), Tier(RequisitionOfficer, 3), Tier(PershingCallIn, 5, 3)))
+case object TacticalSupportCompany extends Commander("tactical-support", "Tactical Support Company", US, $(Tier(USMGBunkers, 1), Tier(StuartCallInFree, 4, 2), Tier(P47Strafing, 1), Tier(CalliopeCallIn, 4, 3)))
+case object MotorPoolCompany extends Commander("motor-pool", "Motor Pool", US, $(Tier(MotorPool, 3), Tier(CalliopeCallInPlain, 1, 3), Tier(PershingCallInPlain, 1, 3), Tier(Outmaneuver, 5, 3)))
+case object PathfinderCompany extends Commander("pathfinder", "Pathfinder Company", US, $(Tier(PathfinderSquads, 1), Tier(AirdropBeacon, 4), Tier(Mortars81mm, 3), Tier(AirdroppedCombatGroup, 3, 3)))
+case object DevilsBrigadeCompany extends Commander("devils-brigade", "Devil's Brigade", US, $(Tier(DevilsBrigadeSpawn, 3), Tier(DevilsAmbush, 1), Tier(Demolition, 1), Tier(Sherman76, 4, 3)))
+case object CavalryRifleCompany extends Commander("cavalry-rifle", "Cavalry Rifle Company", US, $(Tier(StepOnIt, 1), Tier(CavalryRiflemenCallIn, 3), Tier(EasyEightCallInPlain, 1, 3), Tier(DozerCallIn, 5, 3)))
+case object UrbanAssaultCompany extends Commander("urban-assault", "Urban Assault Company", US, $(Tier(UrbanAssault, 3), Tier(HowitzerBarrage, 1), Tier(JacksonCallInPlain, 2, 3), Tier(DozerCallIn, 5, 3)))
+case object EngineerAssaultCompany extends Commander("engineer-assault", "Engineer Assault Company", US, $(Tier(AssaultEngineerSpawnPlain, 1), Tier(SupportJeeps, 3), Tier(DozerCallInPlain, 2, 3), Tier(JacksonCallIn, 5, 3)))
+
 case object BreakthroughDoctrine extends Commander("breakthrough", "Breakthrough Doctrine", OKW, $(Tier(WillNotDieOld, 1), Tier(PanzerfusilierCallIn, 3), Tier(BreakthroughTactics, 3), Tier(PantherReinforcements, 2, 3)))
 case object ScavengeDoctrine extends Commander("scavenge", "Scavenge Doctrine", OKW, $(Tier(ThoroughSalvage, 1), Tier(JaegerCallIn, 3), Tier(PumaCallIn, 4, 2), Tier(VeteranLeFH, 2)))
 case object EliteArmoredDoctrine extends Commander("elite-armored", "Elite Armored Doctrine", OKW, $(Tier(KettenkradCallIn, 1), Tier(HeavyLuchs, 4, 2), Tier(GrandAssault, 4), Tier(SturmtigerReinforcements, 2, 3)))
@@ -191,13 +240,24 @@ object Commander {
         JaegerDoctrine, SpearheadDoctrine, MechanizedDoctrine, FestungDoctrine, PanzerkorpsDoctrine, EliteTroopsDoctrine,
         AdvancedEmplacementsCommander, RoyalEngineerRegiment, CommandoRegiment, LendLeaseTactics, SpecialWeaponsDoctrine, InfantrySupportRegiment,
         AssaultTactics, SovietRangedTactics, EliteArtilleryTactics, ConscriptSupportTactics, NKVDDisruptionTactics, ArmoredAssaultTactics,
-        BreakthroughDoctrine, ScavengeDoctrine, EliteArmoredDoctrine, FortificationsDoctrine, FirestormDoctrine, GrandOffenseDoctrine)
+        BreakthroughDoctrine, ScavengeDoctrine, EliteArmoredDoctrine, FortificationsDoctrine, FirestormDoctrine, GrandOffenseDoctrine,
+        LightCavalryCompany, HeavyCavalryCompany, TacticalSupportCompany, MotorPoolCompany, PathfinderCompany, DevilsBrigadeCompany,
+        CavalryRifleCompany, UrbanAssaultCompany, EngineerAssaultCompany)
 
-    def of(f : Faction) = all.%(_.faction == f)
+    // the expansion Commanders (the setup's Expansion Commanders option)
+    val expansion = $[Commander](LightCavalryCompany, HeavyCavalryCompany, TacticalSupportCompany, MotorPoolCompany, PathfinderCompany,
+        DevilsBrigadeCompany, CavalryRifleCompany, UrbanAssaultCompany, EngineerAssaultCompany)
+
+    // the core six of a faction (every game without the option, and every game made before it)
+    def of(f : Faction) = all.diff(expansion).%(_.faction == f)
+
+    // the Commanders a player draws from
+    def pool(f : Faction, options : $[BaseOption]) = options.has(ExpansionCommanders).?(all.%(_.faction == f)).|(of(f))
 
     // the abilities spent at the start of a Maneuver Phase: CP, Munitions
     val opening = Map[Ability, (Int, Int)](ReconSweep -> (1, 1), P47Strike -> (2, 2), CombatGroupAdvance -> (1, 3), PanzerwerferBarrage -> (1, 1), FragmentationBomb -> (2, 2), ArmorBlitzkrieg -> (1, 3),
-        ArtilleryEye -> (1, 1), IL2Strike -> (2, 2), BreakthroughTactics -> (1, 3), GrandAssault -> (1, 3), RapidConscription -> (2, 1), FortifiedCamo -> (1, 1))
+        ArtilleryEye -> (1, 1), IL2Strike -> (2, 2), BreakthroughTactics -> (1, 3), GrandAssault -> (1, 3), RapidConscription -> (2, 1), FortifiedCamo -> (1, 1),
+        CombinedArms -> (2, 2), P47Strafing -> (2, 2), Outmaneuver -> (1, 3), HowitzerBarrage -> (1, 1))
 
     // the units that spawn for free when a tier is unlocked
     def free(a : Ability, f : Faction) : $[UnitType] = a @@ {
@@ -240,6 +300,18 @@ object Commander {
         case GrandAssault | KettenkradEngineers => $(Kettenkrad)
         case RocketSupport => $(StukaHalftrack)
         case HEATShells => $(Panther)
+        case StuartCallInFree | BrowningM2 => $(Stuart)
+        case StrategicManeuvers | RequisitionOfficer | UrbanAssault => $(Riflemen)
+        case PershingCallIn | Outmaneuver => $(Pershing)
+        case CalliopeCallIn => $(Calliope)
+        case MotorPool | SupportJeeps => $(Jeep)
+        case AirdropBeacon => $(Pathfinder)
+        case Mortars81mm => $(USMortar)
+        case DevilsBrigadeSpawn => $(DevilsBrigade)
+        case Sherman76 => $(Sherman)
+        case CavalryRiflemenCallIn => $(CavalryRiflemen)
+        case DozerCallIn => $(Dozer)
+        case JacksonCallIn => $(Jackson)
         case _ => $[UnitType]()
     }
 }
@@ -253,7 +325,18 @@ sealed abstract class CommandersChoice(val name : String, val text : String) ext
 case object DrawCommanders extends CommandersChoice("Draw three Commanders", "Each player draws three of their faction's six core Commanders and plays one, unlocking its tiers with Experience (Full Game Rules only).")
 case object NoCommanders extends CommandersChoice("No Commanders", "No Commander cards.")
 
+// the expansion packs' Commanders (Elite Commanders Collection, Pathfinder, StuG, Eastern Reinforcements, Lost Brigades), drawn with the
+// core ones (2026-11-24); only with Draw three Commanders
+case object ExpansionCommanders extends GameOption with ToggleOption {
+    val group = CommandersChoice.group
+    def valueOn = "Expansion Commanders".hl
+    override val explain = $[Elem]("The players also draw from the expansion packs' Commanders (Elite Commanders Collection, Pathfinder, StuG and Lost Brigades packs, from the Faction Guide): so far the US Forces' nine.".txt)
+    override def required(all : $[BaseOption]) = $($(DrawCommanders))
+}
+
 object CommandersChoice {
+    val group = "Commanders".txt
+
     val all = $[CommandersChoice](DrawCommanders, NoCommanders)
 }
 
@@ -262,6 +345,8 @@ case class Strike(faction : Faction, ability : Ability, hexes : $[Hex]) extends 
     // the dice each hex takes
     def dice : $[Attack] = ability @@ {
         case P47Strike => $(Attack(AP), Attack(AP))
+        case P47Strafing => $(Attack(HE), Attack(HE))
+        case HowitzerBarrage => $(Attack(HE))
         case FragmentationBomb => $(Attack(HE), Attack(HE))
         case PanzerwerferBarrage => $(Attack(HE))
         case IL2Strike => $(Attack(AP), Attack(AP))
