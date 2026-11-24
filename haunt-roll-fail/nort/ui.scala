@@ -3307,6 +3307,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
     def keys = keysDirect ++ keysExplode
 
     override def ask(faction : |[F], actions : $[UserAction], then : UserAction => Unit) {
+        CardPreview.reset()
+
         lastActions = actions
         lastThen = then
 
@@ -3424,17 +3426,146 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val options : $[hrf.meta
             convertActions0(faction, actions, then)
 
     // Adset: a clan's "i" button opens its info instead of choosing it
+    // A card that can be chosen shows large while the mouse is over it (CardPreview)
     def convertActions0(faction : |[F], actions : $[UserAction], then : UserAction => Unit = null) : $[ZOption] =
-        if (actions.exists(_.is[AdsetDraftChoice]).not || then == null)
+        if (then == null)
             super.convertActions(faction, actions, then)
-        else
+        else {
+            val draft = actions.exists(_.is[AdsetDraftChoice])
             actions./~(a => super.convertActions(faction, $(a), then)./(z => a @@ {
-                case d : AdsetDraftChoice => z.copy(clear = false, click = {
+                case d : AdsetDraftChoice if draft => z.copy(clear = false, click = {
                     case AdsetClanInfo(f) => onClick(AdsetClanInfo(f))
                     case x => z.click(x)
                 })
-                case _ => z
+                case _ => CardPreview.wrap(a, z)
             }))
+        }
+
+    // Hovering a card that can be chosen (a card to play, wait with, replace, remove, take...) with a mouse, or holding a finger on it
+    // on a touch screen, shows it full screen over the map, the view a tap on a card opens, until the mouse leaves it or the finger
+    // lifts; asked for on 2026-11-24. Only for choices (ViewObject[Card] actions that can be taken, not the cards shown for
+    // information); the "Card Preview" setting under Interface turns it off. A hold doesn't choose the card: its tap is swallowed
+    object CardPreview {
+        lazy val mouse = try { dom.window.matchMedia("(hover: hover) and (pointer: fine)").matches } catch { case _ : Throwable => false }
+
+        // The overlay shows a previewed card (and not one the player opened, which hide leaves alone)
+        var shown = false
+
+        // The cards that can be chosen now, by image, for a hold (the touch handlers find the card from the image touched)
+        var choosable = Map[String, Card]()
+
+        def on = callbacks.settings.has(NoCardPreview).not
+
+        def wrap(a : UserAction, z : ZOption) : ZOption = (a @@ {
+            case v : ViewObject[_] => v.obj @@ {
+                case c : Card => Some(c)
+                case _ => None
+            }
+            case _ => None
+        }) match {
+            case Some(c) if z.over != null && z.out != null && z.click != null =>
+                listen()
+                choosable += c.info.image -> c
+                z.copy(
+                    over = x => { z.over(x) ; if (mouse) show(c) },
+                    out = x => { z.out(x) ; hide() },
+                    click = x => { hide() ; z.click(x) })
+            case _ => z
+        }
+
+        def show(c : Card) {
+            if (on.not)
+                return
+
+            if (shown.not && overlayPane.visible)
+                return
+
+            showOverlay(overlayFitX(Image(c.info.image, styles.zoomCard)).onClick, x => { hide() ; onClick(x) })
+            shown = true
+        }
+
+        def hide() {
+            if (shown) {
+                shown = false
+                overlayPane.invis()
+                overlayPane.clear()
+            }
+        }
+
+        def reset() {
+            hide()
+            choosable = Map()
+        }
+
+        // Tap and hold
+        var timer : |[scalajs.js.timers.SetTimeoutHandle] = None
+        var held = false
+        var startX = 0.0
+        var startY = 0.0
+        var listening = false
+
+        def cancel() {
+            timer.foreach(scalajs.js.timers.clearTimeout)
+            timer = None
+        }
+
+        def listen() {
+            if (listening)
+                return
+
+            listening = true
+
+            val d = dom.document.asInstanceOf[scalajs.js.Dynamic]
+            val opts = scalajs.js.Dynamic.literal(capture = true, passive = false)
+
+            d.addEventListener("touchstart", ((e : dom.TouchEvent) => {
+                cancel()
+                held = false
+                val t = e.target.asInstanceOf[dom.Element]
+                if (on && e.touches.length == 1 && t != null && t.tagName == "IMG")
+                    choosable.get(t.getAttribute("data-source")).foreach { c =>
+                        startX = e.touches(0).clientX
+                        startY = e.touches(0).clientY
+                        timer = Some(scalajs.js.timers.setTimeout(450) {
+                            timer = None
+                            held = true
+                            show(c)
+                        })
+                    }
+            }) : scalajs.js.Function1[dom.TouchEvent, Unit], opts)
+
+            d.addEventListener("touchmove", ((e : dom.TouchEvent) => {
+                if (timer.any && e.touches.length > 0 && (math.abs(e.touches(0).clientX - startX) > 10 || math.abs(e.touches(0).clientY - startY) > 10))
+                    cancel()
+            }) : scalajs.js.Function1[dom.TouchEvent, Unit], opts)
+
+            val end = ((e : dom.TouchEvent) => {
+                cancel()
+                if (held) {
+                    hide()
+                    e.preventDefault()
+                    scalajs.js.timers.setTimeout(500) { held = false }
+                }
+            }) : scalajs.js.Function1[dom.TouchEvent, Unit]
+
+            d.addEventListener("touchend", end, opts)
+            d.addEventListener("touchcancel", end, opts)
+
+            // A hold isn't a tap: no click after it, and no long-press menu for the image
+            d.addEventListener("click", ((e : dom.Event) => {
+                if (held) {
+                    held = false
+                    e.preventDefault()
+                    e.stopPropagation()
+                }
+            }) : scalajs.js.Function1[dom.Event, Unit], opts)
+
+            d.addEventListener("contextmenu", ((e : dom.Event) => {
+                if (timer.any || held)
+                    e.preventDefault()
+            }) : scalajs.js.Function1[dom.Event, Unit], opts)
+        }
+    }
 
     override def styleAction(faction : |[F], actions : $[UserAction], a : UserAction, unavailable : Boolean, view : |[Any]) : $[Style] =
         if (a.is[AdsetDraftChoice])
