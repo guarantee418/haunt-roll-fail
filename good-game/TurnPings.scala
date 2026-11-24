@@ -17,11 +17,11 @@ import scala.concurrent.duration.Duration
 // "user <faction> <user>" lines say whose seats they are. Every 10 seconds a sweep (started with the server) pings the seats due
 // (2026-11-21: the owner found the pings inconsistent; a ping was a timer a restart lost, and one within 10 minutes of the last was
 // dropped, so a seat pinged for an ambush wasn't for the turn that followed). A seat waited for since <start> is due:
-//   - a minute after start (30 seconds when asked about a battle on another's turn, an ambush or its hits; 2026-11-24),
+//   - 10 seconds after start, whatever it is asked (owner, 2026-11-24; it was a minute, 30 seconds for a battle on another's turn),
 //   - again 12 hours after its last ping, at most twice ("reminder"),
 // whether or not its player has the game open (2026-11-22, owner: "Always ping players even if their tab is open"; a player
 // with the game open was skipped, and one who didn't see it was never pinged), and pinged then if:
-//   - it wasn't pinged in that game in the last 2 minutes (it waits until then, as the sweep comes back),
+//   - it wasn't pinged in that game in the last minute (2 minutes before 2026-11-24; it waits until then, as the sweep comes back),
 //   - its seat plays under a ranking name with a Discord (given, or set by the owner) and turn pings not turned off (Rankings,
 //     "Discord turn pings"; on unless turned off since 2026-11-20, asked for: "start pinging people whenever it is their turn").
 // Several prompts in a row (a whole turn) are one ping, as the seat stays waited for between them; but a seat still waited for
@@ -42,7 +42,7 @@ import scala.concurrent.duration.Duration
 //   created.tsv   game: the games whose post went out, so each goes out once
 //   firsts.tsv    game, watch or told: the games whose first player the thread is told of (announceFirst)
 // and in tournament/: discord-pings.tsv  name, on or off (the last row counts); on unless turned off
-// The tournament change "ping waiting" pings at once every seat the games wait for (the same checks but the minute's delay).
+// The tournament change "ping waiting" pings at once every seat the games wait for (the same checks but the 10 seconds' delay).
 //
 // NORTHGARD (2026-11-21, with its Discord LFG games, Lfg.scala): Northgard's online games (nort, nort-adset) get the same, in the
 // forum channel of their own webhook, HRF_DISCORD_NORT_TURNS_WEBHOOK or the file discord-nort-turns-webhook (the change
@@ -115,13 +115,12 @@ object TurnPings {
     // the emoji a game with no faction emojis leads its pings with
     val gameIcon = Map("pincer" -> "🥁 ", "tactics" -> "📻 ")
 
-    val delay = 60 * 1000L
-    // a seat asked about a battle on another's turn (an ambush, its hits: the "defend" reason) holds up that player's turn
-    // with them watching, so it is pinged sooner (2026-11-24, Tournament 1 Table A: the Hundreds waited about a minute and a half for
-    // the Duchy's ambush, the Duchy answered the player's own Discord ping first, and the bot, due 60 to 90 seconds in, never pinged)
-    val battleDelay = 30 * 1000L
+    // 10 seconds for every wait (owner, 2026-11-24): it was a minute, and 30 seconds for a battle on another's turn (Tournament 1
+    // Table A: the Duchy answered an ambush before the bot's ping, due 60 to 90 seconds in, came)
+    val delay = 10 * 1000L
+    val battleDelay = delay
     val watching = 90 * 1000L
-    val gap = 2 * 60 * 1000L
+    val gap = 60 * 1000L
     val remind = 12 * 60 * 60 * 1000L
     val reminders = 2
     val every = 10L
@@ -539,7 +538,7 @@ object TurnPings {
         if (!latest.get(game).exists(_.users.contains(user)))
             return "not waited for"
         if (now - lastPing(game, user) < gap)
-            return "not pinged: pinged in the last 2 minutes"
+            return "not pinged: pinged in the last minute"
         val lobby = lobbyOf(game).getOrElse(return "not pinged: lobby not found")
         if (!metas.contains(lobby.meta))
             return "not pinged: not a game with turn pings"
