@@ -1164,6 +1164,134 @@
                 }
             }
 
+            /* Company of Heroes ("tactics"): the same as Pincer above: a plain face, readable text, larger touch targets, clear states */
+            .tactics-ui {
+                font-family: "Avenir Next", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                font-size: 19px;
+                font-size: 1.9vh;
+                font-variant-numeric: tabular-nums;
+            }
+
+            body[data-meta=tactics] {
+                color: #b9b4a8;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            body[data-meta=tactics] [class*="hrf-inner"] {
+                background-color: #1c2129;
+                border-color: #1c2129;
+            }
+
+            body[data-meta=tactics] [class*="hrf-outer"] {
+                border-color: #10131a;
+                outline-color: #10131a;
+            }
+
+            body[data-meta=tactics] [class*="hrf-log"] {
+                padding-left: 1.2ex;
+                padding-right: 1.2ex;
+                font-size: 100%;
+                line-height: 1.4;
+            }
+
+            body[data-meta=tactics] [class*="hrf-highlight"] {
+                color: #f3eee2;
+            }
+
+            body[data-meta=tactics] [class*="hrf-halfhigh"] {
+                color: #d6d0c2;
+            }
+
+            body[data-meta=tactics] [class*="hrf-choice"] {
+                box-sizing: border-box;
+                min-height: 36px;
+                padding: 0.5ex 1.2ex;
+                border-radius: 6px;
+                outline-width: 1px;
+                background-color: #10131a;
+                color: #e4dece;
+                transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1), background-color 140ms ease;
+            }
+
+            body[data-meta=tactics] [class*="hrf-info"] {
+                border-radius: 6px;
+                outline-color: #39414e;
+                background-color: #232a34;
+                color: #d6d0c2;
+            }
+
+            @media (pointer: coarse), (max-width: 700px) {
+                body[data-meta=tactics] [class*="hrf-choice"] {
+                    min-height: 44px;
+                }
+
+                body[data-meta=tactics] [class*="hrf-choice"][class*="hrf-thu"] {
+                    margin-left: 1.6ex;
+                    margin-right: 1.6ex;
+                }
+            }
+
+            @media (max-width: 700px) {
+                body[data-meta=tactics] [class*="tactics-status"],
+                body[data-meta=tactics] [class*="tactics-status"] [class*="tactics-small"],
+                body[data-meta=tactics] [class*="tactics-status"] [class*="tactics-row"] {
+                    font-size: 11px;
+                    line-height: 1.3;
+                }
+
+                body[data-meta=tactics] [class*="tactics-status"] [class*="tactics-title"] {
+                    font-size: 13px;
+                }
+
+                body[data-meta=tactics] [class*="tactics-status"] [class*="tactics-badge"] {
+                    font-size: 10px;
+                }
+            }
+
+            @media (hover: hover) and (pointer: fine) {
+                body[data-meta=tactics] [class*="hrf-choice"]:hover {
+                    background-color: #2b3340;
+                }
+            }
+
+            body[data-meta=tactics] [class*="hrf-choice"][data-onclick]:active {
+                transform: scale(0.97);
+            }
+
+            body[data-meta=tactics] [data-onclick]:focus-visible {
+                outline: 3px solid #f0c040;
+                outline-offset: 2px;
+            }
+
+            /* the menus: the game's name, one main choice, the rest quieter */
+            body[data-meta=tactics] [class*="hrf-larger110"]:has(> [class="hrf-highlight"]) {
+                display: inline-block;
+                margin-bottom: 0.5ex;
+                font-size: 42px;
+                font-size: clamp(30px, 5vh, 52px);
+                line-height: 1.1;
+            }
+
+            body[data-meta=tactics] [class*="hrf-thuc"][class*="hrf-choice"]:has(> [class*="hrf-highlight---hrf-bold"]):not([class*="hrf-choice"]:has(> [class*="hrf-highlight---hrf-bold"]) ~ *) {
+                min-height: 52px;
+                outline-color: #e8c871;
+                background-color: #e8c871;
+            }
+
+            body[data-meta=tactics] [class*="hrf-thuc"][class*="hrf-choice"]:not([class*="hrf-choice"]:has(> [class*="hrf-highlight---hrf-bold"]) ~ *) > [class*="hrf-highlight---hrf-bold"] {
+                color: #14181f;
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                body[data-meta=tactics] [class*="hrf-choice"] {
+                    transition: none;
+                }
+
+                body[data-meta=tactics] [class*="hrf-choice"][data-onclick]:active {
+                    transform: none;
+                }
+            }
+
             /* The setup screens of Root, Advanced Setup and Northgard (Meta.setupDesign): everything here needs the page's mark */
             [class*="hrf-middle-scroll-in"]:has(.setup-page) { overflow: visible !important; }
             :has(> .setup-page) { color: #b4b4b4; }
@@ -1245,24 +1373,24 @@
             }
 
             /* The menus: brighter text, larger buttons, one look (the panes of the menus only; a game's own are elsewhere) */
-            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-pane---hrf-action"], body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-pane-action"] { color: #b4b4b4; }
-            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-middle-scroll-in"] { color: #b4b4b4; }
-            body:not([data-meta=pincer]) #root-attachment-point .menu-heading { color: #c4c4c4; }
-            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"], body:not([data-meta=pincer]) #root-attachment-point [class^="hrf-info---"] { box-sizing: border-box; border-radius: 6px; color: #cfcfcf; }
-            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"]:not([class*="hrf-player"]) { min-height: 38px; } body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"] { outline-width: 1px; outline-color: #777777; transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1), background-color 140ms ease; }
-            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"][data-onclick]:active { transform: scale(0.97); }
-            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-halfhigh"] { color: #c4c4c4; }
-            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-normal"] { color: #b4b4b4; }
-            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-error"] { color: #ff6b81; }
-            body:not([data-meta=pincer]) #root-attachment-point [class^="hrf-info---"] { padding: 1ex 1.4ex; text-wrap: pretty; }
-            body:not([data-meta=pincer]) #root-attachment-point [data-onclick]:focus-visible, body:not([data-meta=pincer]) #root-attachment-point a:focus-visible { outline: 3px solid #f0c040 !important; outline-offset: 2px; }
-            body:not([data-meta=pincer]) #root-attachment-point ::placeholder { color: #8a8a8a; }
-            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"][class*="hrf-link"] { color: #87ceeb; }
-            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"]:has(> [class*="hrf-highlight---hrf-bold"]) { outline-color: #e0b54a; }
-            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"]:has(> a ~ img[class*="hrf-explain"]) { position: relative; padding-left: 4.5ex; padding-right: 4.5ex; } body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"] > a ~ img[class*="hrf-explain"] { right: 1.2ex; }
-            body:not([data-meta=pincer]) #root-attachment-point .menu-third { flex: 1 1 0; margin-left: 0.8ex; margin-right: 0.8ex; } body:not([data-meta=pincer]) #root-attachment-point .menu-third:not(.menu-third + .menu-third) { margin-left: 4ex; } body:not([data-meta=pincer]) #root-attachment-point .menu-third:not(:has(+ .menu-third)) { margin-right: 4ex; }
-            body:not([data-meta=pincer]) #root-attachment-point .menu-progress { display: block; width: 100%; margin-top: 1ex; }
-            body:not([data-meta=pincer]) #root-attachment-point .menu-progress .rk-fill { background-color: #e0b54a; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-pane---hrf-action"], body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-pane-action"] { color: #b4b4b4; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-middle-scroll-in"] { color: #b4b4b4; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .menu-heading { color: #c4c4c4; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-choice"], body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class^="hrf-info---"] { box-sizing: border-box; border-radius: 6px; color: #cfcfcf; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-choice"]:not([class*="hrf-player"]) { min-height: 38px; } body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-choice"] { outline-width: 1px; outline-color: #777777; transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1), background-color 140ms ease; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-choice"][data-onclick]:active { transform: scale(0.97); }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-halfhigh"] { color: #c4c4c4; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-normal"] { color: #b4b4b4; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-error"] { color: #ff6b81; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class^="hrf-info---"] { padding: 1ex 1.4ex; text-wrap: pretty; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [data-onclick]:focus-visible, body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point a:focus-visible { outline: 3px solid #f0c040 !important; outline-offset: 2px; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point ::placeholder { color: #8a8a8a; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-choice"][class*="hrf-link"] { color: #87ceeb; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-choice"]:has(> [class*="hrf-highlight---hrf-bold"]) { outline-color: #e0b54a; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-choice"]:has(> a ~ img[class*="hrf-explain"]) { position: relative; padding-left: 4.5ex; padding-right: 4.5ex; } body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-choice"] > a ~ img[class*="hrf-explain"] { right: 1.2ex; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .menu-third { flex: 1 1 0; margin-left: 0.8ex; margin-right: 0.8ex; } body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .menu-third:not(.menu-third + .menu-third) { margin-left: 4ex; } body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .menu-third:not(:has(+ .menu-third)) { margin-right: 4ex; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .menu-progress { display: block; width: 100%; margin-top: 1ex; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .menu-progress .rk-fill { background-color: #e0b54a; }
             .home-lead { color: #b4b4b4; width: calc(100% - 8ex); margin: 0.6ex 4ex 1ex 4ex; text-wrap: balance; }
             .home-card { padding: 1.2ex 1ex !important; width: calc(50% - 5ex) !important; margin: 0.6ex 1ex !important; align-self: stretch; }
             .home-in { display: flex; flex-direction: column; align-items: center; gap: 0.6ex; }
@@ -1271,33 +1399,33 @@
             .home-name { color: #f2f2f2; font-size: 125%; }
             .home-about { color: #b4b4b4; font-size: 90%; }
             .rk-tabs { display: flex; flex-wrap: wrap; justify-content: center; width: 100%; }
-            body:not([data-meta=pincer]) #root-attachment-point .rk-chip { min-height: 32px; display: inline-flex; align-items: center; color: #c4c4c4; }
-            body:not([data-meta=pincer]) #root-attachment-point .rk-chip-on { color: #f3e7c6; }
-            body:not([data-meta=pincer]) #root-attachment-point .rk-note, body:not([data-meta=pincer]) #root-attachment-point .rk-counts, body:not([data-meta=pincer]) #root-attachment-point .rk-sub, body:not([data-meta=pincer]) #root-attachment-point .rk-chip-n, body:not([data-meta=pincer]) #root-attachment-point .rk-lb-h { color: #a8a8a8; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .rk-chip { min-height: 32px; display: inline-flex; align-items: center; color: #c4c4c4; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .rk-chip-on { color: #f3e7c6; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .rk-note, body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .rk-counts, body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .rk-sub, body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .rk-chip-n, body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .rk-lb-h { color: #a8a8a8; }
             /* (the glyph and the bar carry the colour; some are too dark to read as text) */
-            body:not([data-meta=pincer]) #root-attachment-point .rk-fname { color: #e6e0d4; }
-            body:not([data-meta=pincer]) #root-attachment-point .rk-pct.rk-few { color: #a8a8a8; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .rk-fname { color: #e6e0d4; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .rk-pct.rk-few { color: #a8a8a8; }
 
             @media (hover: hover) and (pointer: fine) {
-                body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"][data-onclick]:hover { background-color: #303030; }
-                body:not([data-meta=pincer]) #root-attachment-point .setup-bar .setup-go:hover { background-color: #f0c860 !important; }
+                body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-choice"][data-onclick]:hover { background-color: #303030; }
+                body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .setup-bar .setup-go:hover { background-color: #f0c860 !important; }
             }
 
             @media (pointer: coarse), (max-width: 700px) {
-                body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"]:not([class*="hrf-player"]) { min-height: 44px; }
-            body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"][class*="hrf-thuc"], body:not([data-meta=pincer]) #root-attachment-point [class^="hrf-info---"] { margin-left: 1ex; margin-right: 1ex; }
+                body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-choice"]:not([class*="hrf-player"]) { min-height: 44px; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-choice"][class*="hrf-thuc"], body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class^="hrf-info---"] { margin-left: 1ex; margin-right: 1ex; }
                 .home-lead { width: calc(100% - 2ex); margin-left: 1ex; margin-right: 1ex; }
                 .home-card { width: 100% !important; }
-                body:not([data-meta=pincer]) #root-attachment-point .menu-third.menu-third:not(.menu-third + .menu-third) { margin-left: 1ex; }
-                body:not([data-meta=pincer]) #root-attachment-point .menu-third.menu-third:not(:has(+ .menu-third)) { margin-right: 1ex; }
-                body:not([data-meta=pincer]) #root-attachment-point .rk-chip { min-height: 44px; }
+                body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .menu-third.menu-third:not(.menu-third + .menu-third) { margin-left: 1ex; }
+                body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .menu-third.menu-third:not(:has(+ .menu-third)) { margin-right: 1ex; }
+                body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .rk-chip { min-height: 44px; }
                 .rk-tabs { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 28px), transparent 100%); mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 28px), transparent 100%); padding: 0 16px; box-sizing: border-box; }
                 .rk-tabs .rk-tab { flex: none; white-space: nowrap; }
             }
 
             @media (prefers-reduced-motion: reduce) {
-                body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"] { transition: none; }
-                body:not([data-meta=pincer]) #root-attachment-point [class*="hrf-choice"][data-onclick]:active { transform: none; }
+                body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-choice"] { transition: none; }
+                body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-choice"][data-onclick]:active { transform: none; }
                 :has(> .setup-page) [class*="hrf-choice"] { transition: none; }
                 :has(> .setup-page) [class*="hrf-choice"][data-onclick]:active { transform: none; }
             }

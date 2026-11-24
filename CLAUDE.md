@@ -298,6 +298,14 @@ rulebook's second draft with the art of the Tabletop Simulator mod 3778939778 (`
 `webp2/pincer/images/`). `pincer/RULES.md` has the rules as played and the draft's open questions (the Boar's War penalty
 isn't in it yet), `pincer/HANDOFF.md` the state, files and testing (`pincer.Host` bot games, `pincer.Dump`).
 
+Company of Heroes: The Board Game, 2nd Edition (Bad Crow Games; a work in progress the owner's team helps test; asked for on
+2026-11-23) is in `haunt-roll-fail/tactics/`, listed as "Tactics" (meta `tactics`, URL `/play/tactics`, not on the main menu
+yet): the core rulebook's First Game Rules (RulesPal's copy), US Forces against the Wehrmacht on Moro River, with the Building
+Boards, map panels and books of the Tabletop Simulator mod 2314664989 (`tactics/tools/tactics-art.py`, images in
+`webp2/tactics/images/`; the map's lines read off the art by `tactics/tools/map-edges.py` and `map-data.py` into `Board.data`).
+`tactics/RULES.md` has the rules as played and the readings, `tactics/HANDOFF.md` the state, files, testing (`tactics.Host`,
+`tactics.Dump`, `tactics.Replay`) and what is next (the Full Game Rules, Commanders, the other factions and maps).
+
 ## Building
 
 ```
@@ -1206,6 +1214,14 @@ server. No session can reach the server, and none needs to.
   only the files that list names (`Lookup.artFile`). The bot's commands other than the LFG ones are `BotCommand`s in `BotCommands.all`
   (`good-game/Lookup.scala`), registered with `/root` and `/northgard` and answered by `Lfg.interaction` (use and autocomplete); a new one
   (a translator, a rules helper) is one more entry there.
+- The Discord server's roles and channels are managed through the bot by tournament changes (2026-11-24, asked for so a Claude
+  session, which can't reach Discord, can do it): `roles`, `role <name> [| color #rrggbb] [| hoist] [| mentionable]`, `rename-role`,
+  `give-role <user> -> <role>`, `take-role`, `channels`, `category <name> [| private] [| see <roles>] [| read-only <roles>]`,
+  `channel <name> [| in <category>] [| text|voice|forum|announcement|stage] [| topic <text>] [| private] [| see ...] [| read-only ...] [| synced]`,
+  `rename-channel`, `move-channel <name> -> <category>|none` (`good-game/DiscordServer.scala`, its header has the forms). Creating
+  changes the one of that name if there is one. On purpose nothing is deleted, nobody kicked or banned, and a role is never given
+  server permissions; every request carries the audit log reason "HRF server change". The bot needs Manage Roles and Manage Channels,
+  and its role above the roles it manages.
 - The bot's `/rule <rule> [game] [private]` (2026-11-22, asked for as a bot "to help cite the rules", not to interpret them): Root's
   rules by their Law of Root number (`4.3.2`, `H.1`, a section lists the rules under it) or name, with the rule's text and the link to
   it on the Root Database (`webp2/lfg/rules-root.tsv`, made by `haunt-roll-fail/tools/law-index.py` from the Root Database's copy, kept up
