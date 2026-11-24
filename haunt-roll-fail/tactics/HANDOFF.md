@@ -8,8 +8,10 @@ played and the choices made.
 
 ## State
 
-- Playable: two players, US Forces against the Wehrmacht, First Game Rules, on Moro River; Local (hotseat), Quick Game
-  and Play Online, with an Easy bot.
+- Playable: two players, US Forces against the Wehrmacht, on Moro River; Local (hotseat), Quick Game and Play Online, with
+  an Easy bot. The setup's Rules choice: the Full Game Rules (every new game since 2026-11-24: Operations deck, Retreats,
+  Assaults, Overwatch, firing arcs and Heavy Vehicle facing, multi-target Heavy Vehicles, HE Splash, Frontal Armor,
+  destructible Buildings, Moro River's tank traps) or the First Game Rules (and every game made before the choice).
 - On the main `/play` menu since 2026-11-24 (`HRF.menuMetas`, its card in `topMenu` in `hrf.scala`). Its images are in
   `haunt-roll-fail/webp2/tactics/images/`, which the server serves as `/hrf/webp2/`; they were first committed to the repository root's
   `webp2/`, where the live site couldn't find them (404).
@@ -20,10 +22,18 @@ played and the choices made.
 - `board.scala`: the Moro River grid (`Board.data`, one line a hex: terrain, the six edges' lines, tank trap, Control
   Point), neighbors, distance, line of sight, the edges a line of fire crosses.
 - `game.scala`: factions, resources, damage dice, the 18 units and their upgrades (`UnitType`), actions and the rules (`Game`).
+  The Full Game Rules are `game.full` (the option `FullGameRules`): their state (`opsDeck`, `facing`, `assaults`, `retreating`,
+  `splashes`, `shots`, `ruined`, ...), helpers (the "FULL GAME RULES" section: `inArc`, `heavyOptions`, `retreatChoices`,
+  `overwatch`, `splashHexes`, `resolveFull`) and their own actions and `case ... if full` branches; the First Game Rules
+  paths are untouched, so older games replay the same (checked: games recorded with the code before replay to the same
+  final state). New First Game actions keep their old shape; full-only choices are new actions (`SetUpFacingAction`,
+  `HeavyMoveAction`, `AssaultAction`, ...). The US Mortar's XP Splash upgrade is a second slot after the Munitions one,
+  so recorded slot numbers keep their meaning.
 - `ui.scala`: the map (tokens with health and status, Control Points and their flags, Sandbags, Spawn Areas), panels,
   the Building Boards and unit overlays.
 - `bot.scala`: the Easy bot. `host.scala`: headless bot games (`tactics.Host`) and `tactics.Dump`.
-- `tools/tactics-art.py`: every image in `webp2/tactics/images/` from the mod (`fetch`, then `make`).
+- `tools/tactics-art.py`: every image in `webp2/tactics/images/` from the mod (`fetch`, then `make`), the Operations cards
+  (`ops/`) and the Retreat and HE Splash status icons too.
 - `tools/map-edges.py`, `tools/map-data.py`: read the cover and impassable lines off the full-size panels and write the
   rows of `Board.data` (with the corrections made by eye, the water, Buildings, tank traps and Control Points).
 
@@ -40,7 +50,12 @@ Mission Booklet's Moro River picture (page 9).
   `SBT_OPTS="-Xmx6G -Xss4M" sbt "runMain tactics.Host"` (`TACTICS_GAMES=n`): on 2026-11-23 two Easy bots finished games in
   about seven rounds, every action written and parsed back. `tactics.Dump <steps> [round]` prints a game's moves (as the
   browser records them, a Milestone's action included) and its final state, stopping at that round's damage assignment if
-  given; `tactics.Replay <file>` replays such moves as a browser loading the game does, validating each one.
+  given; `tactics.Replay <file>` replays such moves as a browser loading the game does, validating each one, and prints the
+  final state as `Dump` does, to compare. `TACTICS_RULES=first` makes all three play the First Game Rules (else Full).
+  On 2026-11-24 Full Game bot games finished in 6 to 8 rounds with every action written and parsed back, their dumps
+  replayed valid, and four First Game games recorded with the code before the Full Game Rules replayed to the same final
+  state. sbt can't fetch from Maven Central here at times (HTTP 429): `~/.sbt/repositories` pointing at Google's mirror
+  (`https://maven-central.storage-download.googleapis.com/maven2/`) with `-Dsbt.override.build.repos=true` works.
 - Browser: see "Browser driving" in `nort/HANDOFF.md`. A dump goes into `localStorage` as `tactics.hotseat.game.<time>`
   ("version ...", "title ...", "seating US WM", "options ") and `tactics.hotseat.moves.<time>`, then Local Game opens it.
   On 2026-11-24 a Quick Game (setup, moves, purchases) and a dumped game at a round 4 Damage Phase (assignments, the rolls,
@@ -48,8 +63,10 @@ Mission Booklet's Moro River picture (page 9).
 
 ## Next
 
-- The Full Game Rules: Operations deck, firing arcs and Heavy Vehicle facing, Overwatch, Retreat, Assault, HE Splash,
-  Frontal Armor, destructible Buildings, permanent tank traps and foot bridges on Moro River, barbed wire and tank traps,
-  then Commanders (their cards are in the mod) and the other factions (British, Soviet, OKW) and maps.
+- Commanders (their cards are in the mod: 8.0, three drawn, tiers bought with XP), then the other factions (British,
+  Soviet, OKW) with their buildable barbed wire, tank traps and Emplacements, and the other maps (Bunkers, the Cathedral,
+  Ice). Smoke comes with the Commanders.
+- Full Game readings to confirm with the team (RULES.md, Interpretations 7 to 12): the Firing Arc's width, Retreat paths,
+  Overwatch on a hex passed through.
 - 2 vs 2 team games and the other missions of the Mission Booklet.
 - A better bot.

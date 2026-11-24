@@ -154,6 +154,54 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         i
     })
 
+    // the side a Heavy Vehicle or set-up Weapon Team faces: a triangle on the token's edge, in its faction's color
+    var arrowImages = Map[(Int, String), CanvasImage]()
+
+    def arrowImage(e : Int, color : String) = arrowImages.getOrElse((e, color), {
+        val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+        canvas.width = 160
+        canvas.height = 160
+        val g = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+        val a = math.toRadians(Board.normals(e))
+        def at(r : Double, d : Double) = (80 + r * math.cos(a + math.toRadians(d)), 80 + r * math.sin(a + math.toRadians(d)))
+        val (x0, y0) = at(78, 0)
+        val (x1, y1) = at(58, -14)
+        val (x2, y2) = at(58, 14)
+        g.fillStyle = color
+        g.strokeStyle = "#14181f"
+        g.lineWidth = 4
+        g.beginPath()
+        g.moveTo(x0, y0)
+        g.lineTo(x1, y1)
+        g.lineTo(x2, y2)
+        g.closePath()
+        g.fill()
+        g.stroke()
+        val i = new CanvasImage(canvas)
+        arrowImages += (e, color) -> i
+        i
+    })
+
+    // a destroyed Building: the hex darkened
+    lazy val ruinImage = {
+        val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+        canvas.width = 200
+        canvas.height = 210
+        val g = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+        val w = Board.dx / 2
+        val sd = Board.side
+        val corners = $((0.0, -sd), (w, -sd / 2), (w, sd / 2), (0.0, sd), (-w, sd / 2), (-w, -sd / 2))
+        g.fillStyle = "rgba(40, 30, 30, 0.45)"
+        g.strokeStyle = "#8a5fb0"
+        g.lineWidth = 6
+        g.beginPath()
+        corners.zipWithIndex.foreach { case ((x, y), i) => if (i == 0) g.moveTo(100 + x * 0.96, 105 + y * 0.96) else g.lineTo(100 + x * 0.96, 105 + y * 0.96) }
+        g.closePath()
+        g.fill()
+        g.stroke()
+        new CanvasImage(canvas)
+    }
+
     def locate(h : |[Hex]) {
         if (h != loggedHex) {
             loggedHex = h
@@ -257,7 +305,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             highlighted.add(Sprite(strong.?($(select, select)).|($(select)), $))(Board.x(h), Board.y(h))
         }
 
-        // the targets on offer, and the damage already assigned
+        // the targets on offer, and the damage already assigned (an HE Splash hits the hexes around its own too)
+        val splashed = game.splashes./~(s => game.area(s.hex)) ++ game.shots./(_.hex)
+        splashed.distinct.foreach { h =>
+            highlighted.add(Sprite($(ImageRect(new RawImage(img("hex-target")), Rectangle(-90, -98, 180, 196), 0.55)), $))(Board.x(h), Board.y(h))
+        }
+
         val targeted = (lastActions.collect { case a : TargetAction => a.target } ++ game.assignments./(_.target)).distinct
         targeted.foreach { u =>
             game.pos.get(u).foreach { h =>
@@ -275,6 +328,16 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             }
         }
 
+        // destroyed Buildings, and the damage of damaged ones
+        game.ruined.foreach { h =>
+            structures.add(Sprite($(ImageRect(ruinImage, Rectangle(-100, -105, 200, 210), 1.0)), $))(Board.x(h), Board.y(h))
+        }
+
+        game.buildingDamage.foreach { case (h, n) =>
+            if (game.ruined.contains(h).not)
+                structures.add(Sprite($(ImageRect(textImage("Building " + (2 - n) + "/2", "#f3eee2", "#5a4a3a"), Rectangle(-50, -15, 100, 30), 0.95)), $))(Board.x(h), Board.y(h) - 84)
+        }
+
         game.sandbags.foreach { case (h, l) =>
             l.foreach { e =>
                 structures.add(Sprite($(ImageRect(bagImage(e), Rectangle(-100, -105, 200, 210), 1.0)), $))(Board.x(h), Board.y(h))
@@ -284,17 +347,21 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         // the units: a token, its health, and its status (set up, packed up, pinned); a passenger small on its vehicle
         game.pos.foreach { case (u, h) =>
             val passenger = game.isPassenger(u)
-            val size = passenger.?(66).|(116)
-            val x = Board.x(h) + passenger.?(46).|(0)
-            val y = Board.y(h) + passenger.?(-36).|(6)
+            // an assaulting unit is drawn smaller at the edge of the hex it assaults
+            val assaulting = game.assaults.contains(u)
+            val size = passenger.?(66).|(assaulting.?(84).|(116))
+            val x = Board.x(h) + passenger.?(46).|(assaulting.?(-46).|(0))
+            val y = Board.y(h) + passenger.?(-36).|(assaulting.?(40).|(6))
             val token = scaled("token:" + u.utype.id + "-" + u.faction.id, size)
             val box = Rectangle(token.rect.x, token.rect.y, token.rect.width, token.rect.height)
             val hp = ImageRect(textImage(game.health(u) + "/" + game.maxHealth(u), "#f3eee2", u.faction.color), Rectangle(-size * 0.28, size * 0.22, size * 0.56, size * 0.31), 0.95)
             val st = $[ImageRect]() ++
                 game.pinned.contains(u).$(ImageRect(new RawImage(img("status:pinned")), Rectangle(-size / 2, -size / 2, size * 0.32, size * 0.32), 1.0)) ++
                 (u.utype.weaponTeam && passenger.not).$(ImageRect(new RawImage(img(game.setUp.contains(u).?("status:setup").|("status:nofire"))), Rectangle(size * 0.18, -size / 2, size * 0.32, size * 0.32), 1.0)) ++
-                game.slowed.get(u).has(game.round).$(ImageRect(new RawImage(img("status:slow")), Rectangle(-size / 2, size * 0.18, size * 0.32, size * 0.32), 1.0))
-            units.add(Sprite($(token, hp) ++ st, $(box), $((h, u))), 1.0, passenger.?(2).|(1))(x, y)
+                game.slowed.get(u).has(game.round).$(ImageRect(new RawImage(img("status:slow")), Rectangle(-size / 2, size * 0.18, size * 0.32, size * 0.32), 1.0)) ++
+                game.retreating.contains(u).$(ImageRect(new RawImage(img("status:retreat")), Rectangle(size * 0.18, size * 0.18, size * 0.32, size * 0.32), 1.0)) ++
+                game.facing.get(u).toList.map(e => ImageRect(arrowImage(e, u.faction.color), Rectangle(-size * 0.8, -size * 0.8, size * 1.6, size * 1.6), 1.0))
+            units.add(Sprite($(token, hp) ++ st, $(box), $((h, u))), 1.0, passenger.?(2).|(assaulting.?(3).|(1)))(x, y)
         }
 
         val listed = folded.?(lastActions.%(_.unwrap.is[HexKey].not)).|(lastActions)
@@ -352,7 +419,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             case p => p.hl
         }
 
-        statusGame.replace(overlayFit(Div(Div("Round " ~ game.round.hl) ~ Div(phase) ~ Div(dice) ~
+        // the Operation picked: the other team knows only its side
+        val operation = (game.full && game.phase == "Maneuver" && game.opsCard.any).?(Div("Operation " ~ Operations.side(game.opsUpper).hl ~ " turns")).|(Empty)
+
+        statusGame.replace(overlayFit(Div(Div("Round " ~ game.round.hl) ~ Div(phase) ~ operation ~ Div(dice) ~
             ("Building Boards".hh).div(xlo.pointer).onClick.param(("board", game.setup.head)), styles.gstatus)), resources, onClick)
     }
 
@@ -442,8 +512,13 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         val ups = game.bought.getOrElse(u, $[Bought]())./(_.effect)
         Div(Image("token:" + t.id + "-" + u.faction.id, styles.icon) ~ u.elem) ~
         Div(t.kind.elem ~ ", health " ~ game.health.get(u)./(_.hl).|(t.health.hl) ~ "/" ~ t.health.hl ~ ", range " ~ ((t.minRange > 1).??(t.minRange + "-") + game.rangeOf(u)).hl ~ ", sight " ~ game.sightOf(u).hl) ~
-        Div("Attack " ~ game.attacksOf(u)./(_.icon).merge) ~
+        Div("Attack " ~ game.attacksOf(u)./(a => a.icon ~ (game.full && game.fixedGun(u, a)).?("(fixed)".spn(styles.small)).|(Empty)).merge) ~
         ups.any.?(Div("Upgrades: " ~ ups./(_.elem).comma)).|(Empty) ~
+        game.facing.get(u)./(e => Div("Facing " ~ Facing.elem(e))).|(Empty) ~
+        game.hasSplash(u).?(Div("HE Splash".hl ~ ": its HE hits the target hex and every hex around it")).|(Empty) ~
+        (game.full && t.retreatPoint).?(Div("Retreat Point".hl ~ ": Infantry may Retreat to the hexes next to it")).|(Empty) ~
+        game.retreating.contains(u).?(Div("Retreating".hl)).|(Empty) ~
+        game.assaults.get(u)./(d => Div("Assaulting " ~ d.elem)).|(Empty) ~
         Div(("Board: Tier " + t.tier + ", " + Tiers.name(u.faction, t.tier)).spn(styles.small))
     }
 
@@ -474,8 +549,14 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
                 line(Image("status:setup", styles.icon), "Set up: the weapon team can fire, not move") ~
                 line(Image("status:nofire", styles.icon), "Packed up: the weapon team can move, not fire") ~
                 line(Image("status:slow", styles.icon), "Slow: one CP less this round") ~
+                game.full.?(
+                    line(Image("status:retreat", styles.icon), "Retreating: moves up to six hexes toward a Retreat Point (a Spawn Area hex, or next to the Major), and can't attack, spot, capture or spend CP until the round ends there") ~
+                    line("▲".txt, "Facing: the side a Heavy Vehicle or set-up Weapon Team faces; a Weapon Team, and a fixed gun, fires only into the 120° in front, which is also a Heavy Vehicle's Frontal Armor (2 Defense Dice against AP from there)") ~
+                    line(Image("status:splash", styles.icon), "HE Splash: the HE dice hit every unit the attacker's team sees in the target hex and around it, allies too")
+                ).|(Empty) ~
                 line(Image("status:flag-us", styles.icon), "Control Point held") ~
-                Div("Yellow lines are Light Cover (1 Defense Die), green ones Heavy Cover (2), for Infantry in the hex when an attack crosses them. Infantry in a Building gets 3 Defense Dice, in a Destroyed Building 1. Red lines and water ringed in red can't be crossed. Buildings block sight and fire, except indirect fire.".txt), styles.legend)), onClick)
+                Div("Yellow lines are Light Cover (1 Defense Die), green ones Heavy Cover (2), for Infantry in the hex when an attack crosses them. Infantry in a Building gets 3 Defense Dice, in a Destroyed Building 1. Red lines and water ringed in red can't be crossed. Buildings block sight and fire, except indirect fire.".txt) ~
+                game.full.?(Div("Full Game Rules: tank traps keep Vehicles out of their hex; a Building has 2 health against HE and Flame and becomes a Destroyed Building (darkened); a unit moving into an enemy's hex Assaults it; a set-up machine gun deals 1 Overwatch damage to enemy Infantry moving onto a hex in its arc.".txt)).|(Empty), styles.legend)), onClick)
 
         case action : UserAction if lastThen != null =>
             clearOverlay()

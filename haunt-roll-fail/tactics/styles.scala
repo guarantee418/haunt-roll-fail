@@ -32,6 +32,7 @@ package object elem {
         object die extends CustomStyle(height("1.5em"), vertical.align("middle"), margin("0.05em"))
         object token extends CustomStyle(height("2.4ex"), vertical.align("middle"))
         object boardImg extends CustomStyle(max.width("100%"), max.height("100%"), margin("auto"))
+        object opCard extends CustomStyle(height("6em"), vertical.align("middle"), border.radius("0.4em"))
 
         object name extends CustomStyle()
         object username extends CustomStyle()

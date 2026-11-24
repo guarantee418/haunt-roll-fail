@@ -27,16 +27,20 @@ object Meta extends MetaGame { mmm =>
 
     val minPlayers = 2
 
-    val options = $[O]() ++ Length.all
+    val options = $[O]() ++ RulesChoice.all ++ Length.all
 
-    override def defaultsFor(n : Int, l : $[F]) = $(ShortGame)
+    // new games play the Full Game Rules (2026-11-24); a game with neither choice (made before) plays the First Game Rules
+    override def defaultsFor(n : Int, l : $[F]) = $(FullGameRules, ShortGame)
+
+    // a setup saved in the browser before the rules choice gets the Full Game Rules
+    override def completeSaved(n : Int, l : $[F], options : $[O]) : $[O] = options.of[RulesChoice].any.?(options).|(options :+ FullGameRules)
 
     val quickMin = 2
     val quickMax = 2
 
     override val about = $[Elem](
         "Company of Heroes: The Board Game".hlb ~ ", 2nd Edition, by Bad Crow Games, licensed from SEGA and Relic Entertainment: a work in progress played here by a team helping to test it.",
-        "The rules are the core rulebook's First Game Rules; the art is from the Tabletop Simulator mod \"Company of Heroes - 2nd Edition\".",
+        "The rules are the core rulebook's Full Game Rules (or its First Game Rules, a setup choice), without Commanders yet; the art is from the Tabletop Simulator mod \"Company of Heroes - 2nd Edition\".",
         "© SEGA. Developed by Relic Entertainment Inc. SEGA, the SEGA logo, Relic Entertainment and Company of Heroes are either registered trademarks or trademarks of SEGA Corporation or its affiliates.",
     )
 
@@ -100,7 +104,10 @@ object Meta extends MetaGame { mmm =>
         Face.all./(f => ImageAsset(f.toString.toLowerCase))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "status", "status:", "webp")(
-        $("pinned", "setup", "nofire", "slow", "flag-us", "flag-wehrmacht")./(ImageAsset(_))
+        $("pinned", "setup", "nofire", "slow", "retreat", "splash", "flag-us", "flag-wehrmacht")./(ImageAsset(_))
+    ) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => true, "ops", "ops:", "webp")(
+        (0.until(Operations.designs.num).$./("ops-" + _) :+ "ops-back")./(ImageAsset(_))
     ) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "board", "board:", "webp", lzy = Laziness.OnDemand)(
         Faction.all./~(f => 1.to(3)./(t => ImageAsset(Tiers.board(f, t))))

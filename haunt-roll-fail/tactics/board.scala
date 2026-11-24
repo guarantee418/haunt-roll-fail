@@ -344,5 +344,21 @@ object Board {
         }
     }
 
+    // the direction from one hex to another, in degrees (0 east, clockwise, as the edges' normals: north-east is -60)
+    def angle(from : Hex, to : Hex) : Double = {
+        val px = math.sqrt(3) * (to.q - from.q + (to.r - from.r) / 2.0)
+        val py = 1.5 * (to.r - from.r)
+        math.toDegrees(math.atan2(py, px))
+    }
+
+    val normals = $(-60.0, 0.0, 60.0, 120.0, 180.0, -120.0)
+
+    // a Firing Arc (Full Game Rules): the hexes within 60 degrees either side of the side a unit faces, those on the edge included
+    // (the rulebook's Heavy Vehicle picture draws the front arc's edge through the middle of the two neighboring sides)
+    def inCone(from : Hex, to : Hex, e : Int) : Boolean = {
+        val d = ((angle(from, to) - normals(e)) % 360 + 540) % 360 - 180
+        d.abs <= 60.0001
+    }
+
     def coverAgainst(target : Hex, from : Hex) : |[Cover] = (from != target).??(crossed(target, from)./~(e => cover.get((target, e)))).maxByOption(_.dice)
 }
