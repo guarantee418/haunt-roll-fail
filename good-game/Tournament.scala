@@ -33,6 +33,7 @@ import scala.concurrent.duration.Duration
 // Changes by hand go through the games backup (hrf-games) like the ranking's: each file tournament-changes/<name>.txt there is
 // applied once (Backup.scala), its outcome in tournament-changes/<name>.result. One change a line:
 //   remove <name>                     takes a name off the sign-ups
+//   congratulate [<n>] <table>        posts a won table's (or the final's, F) congratulation again, from its game's reported result
 //   winner <table> <name>             the table's winner (a shared win, or a table that won't finish), A to D or F
 //   replace <table> <name> -> <new>   a player at a table is replaced: the seat now plays (and is ranked) under the new name
 //   cancel                            the running tournament ends with no champion; sign-ups for the next one open
@@ -442,6 +443,13 @@ object Tournament {
     // " playing the Marquise de Cat, 30 VP"
     def winnerLine(k : String, ff : List[Final]) = ff.find(_.name == k).map(f => " playing the " + f.faction + (if (f.points.nonEmpty) ", " + f.points else "")).getOrElse("")
 
+    // the congratulation the announcements' webhook (Royal Claim) posts for a table's winner or the champion
+    def congratulation(n : Int, id : String, k : String, ff : List[Final]) =
+        if (id == finalId)
+            "🏆 **Congratulations to " + tagged(k) + ", the champion of Root Tournament " + n + "!** They won the final" + winnerLine(k, ff) + ", and their name is golden on the Rankings until the next champion." + scoresLine(ff)
+        else
+            "🎉 **Congratulations to " + tagged(k) + "**, winner of Table " + id + " of Root Tournament " + n + winnerLine(k, ff) + "! They go on to the final." + scoresLine(ff)
+
     def win(n : Int, id : String, k : String, ff : List[Final] = Nil) {
         event("winner", n, id, k)
 
@@ -450,11 +458,11 @@ object Tournament {
 
         if (id == finalId) {
             event("champion", n, k)
-            announce("🏆 **Congratulations to " + tagged(k) + ", the champion of Root Tournament " + n + "!** They won the final" + winnerLine(k, ff) + ", and their name is golden on the Rankings until the next champion." + after, n)
+            announce(congratulation(n, id, k, ff), n)
             announce("**" + display(k) + " won the final and is the champion!**" + after, n, id)
         }
         else {
-            announce("🎉 **Congratulations to " + tagged(k) + "**, winner of Table " + id + " of Root Tournament " + n + winnerLine(k, ff) + "! They go on to the final." + after, n)
+            announce(congratulation(n, id, k, ff), n)
             announce("**" + display(k) + " won this table** and goes to the final." + after, n, id)
 
             if (c.heats.size == heatIds.size && c.heats.forall(_.winner.nonEmpty) && c.fin.isEmpty) {
@@ -488,6 +496,25 @@ object Tournament {
                         case Some((_, t)) if t.winner.nonEmpty => "not done: the table has a winner"
                         case Some(_) => "not done: not at that table"
                         case None => "not done: no such table"
+                    }
+                // a won table's congratulation, posted again from the result its game reported (a table won before the
+                // congratulations were deployed, 2026-11-24: Table A of Tournament 1); "congratulate <n> <table>" for an earlier tournament
+                case "congratulate" =>
+                    val ww = rest.split(' ').toList.filter(_.nonEmpty)
+                    val (cup, id) = ww match {
+                        case n :: t :: Nil if n.toIntOption.nonEmpty => (cc.find(_.n == n.toInt), t.toUpperCase)
+                        case t :: Nil => (cc.filter(_.started).lastOption, t.toUpperCase)
+                        case _ => (None, "")
+                    }
+                    cup.flatMap(c => c.tables.find(_.id == id).map(t => (c, t))) match {
+                        case Some((c, t)) => t.winner match {
+                            case Some(k) =>
+                                val ff = Ranking.recorded().filter(_.headOption.contains(t.game)).lastOption.flatMap(_.lift(4)).map(finals(t, _)).getOrElse(Nil)
+                                announce(congratulation(c.n, id, k, ff), c.n)
+                                "posted" + (if (ff.isEmpty) ", with no scores: the game reported no result" else "")
+                            case None => "not done: the table has no winner yet"
+                        }
+                        case None => "not done: congratulate <table>, or congratulate <tournament> <table>"
                     }
                 case "replace" =>
                     val id = rest.takeWhile(_ != ' ').toUpperCase
@@ -633,7 +660,7 @@ object Tournament {
                 case w if DiscordServer.words(w) => DiscordServer.change(w, rest)
                 // the roles members pick for themselves, and the role picker post (SelfRoles.scala; 2026-11-24)
                 case w if SelfRoles.words(w) => SelfRoles.change(w, rest)
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, pincer-turns, tactics-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order, webhooks, make-webhook, rename-webhook, test-ping, self-roles, self-role, self-role-off and role-picker)"
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, congratulate, turns, nort-turns, pincer-turns, tactics-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order, webhooks, make-webhook, rename-webhook, test-ping, self-roles, self-role, self-role-off and role-picker)"
             }
 
             (if (word == "webhook" || word == "forum" || TurnPings.slot(word).nonEmpty || word == "bot") word else line) + ": " + result
