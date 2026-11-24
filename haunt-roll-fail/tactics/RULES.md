@@ -297,7 +297,7 @@ plays rulebook 8.0 and 8.2 with the thirty core Commander cards (six a faction, 
 
 The setup's **Expansion Commanders** toggle (`ExpansionCommanders`, only with Draw three Commanders; 2026-11-24) adds the expansion
 packs' Commanders to the ones each player draws three from (`Commander.pool`; games without it, and every game made before it, draw
-from the core six). So far the US Forces' nine, from the Faction Guide's pages 11 and 12 (Elite Commanders Collection: Light Cavalry,
+from the core six). So far the US Forces' nine, from the Faction Guide's pages 11 and 12, and the Wehrmacht's eight (Elite Commanders Collection: Light Cavalry,
 Heavy Cavalry, Tactical Support, Motor Pool; Pathfinder Pack: Pathfinder Company; StuG Pack: Devil's Brigade; Lost Brigades Pack: Cavalry
 Rifle, Urban Assault, Engineer Assault Companies). Their units were read off the cards' call-in panels (health, range, a die for each
 figure, turreted for curved arrows): M5 Stuart (heavy vehicle, health 3, range 2, AI and AP, two Speed Dice, 2 Manpower 3 Fuel), M26
@@ -305,8 +305,20 @@ Pershing (6, range 2, 2 AP 2 AI, 3/5), T34 Calliope (4, range 4, 2 indirect HE w
 2 HE, a Defense Die, Sherman chassis, 3/5), M36 Jackson (3, range 4, 3 AP, a Speed Die, Wolverine chassis, 3/5), I.R. Pathfinder Squad
 (infantry, 3, range 3, 1 AI, spots Camouflage, Camouflage, 3 Manpower), Cavalry Riflemen (5, range 2, 1 AI, Close Range Firepower, a
 Defense Die, 4 Manpower 1 Munitions), Devil's Brigade (Riflemen with 5 health) and the US MG Bunker (the Wehrmacht's, built by Riflemen).
+The Wehrmacht's eight (pages 17 and 18; StuG Pack: StuG Assault Doctrine, StuG Tactics; Elite Commanders Collection: Terror, Tank
+Destroyer, Assault Support Doctrines; Lost Brigades Pack: Infantry Storm, Festung Support, Lightning War Doctrines) bring the StuG III G
+(heavy vehicle, health 3, range 3, a fixed AI and AP, 2/3), King Tiger (8, range 3, Slow, 2 fixed AI and 2 AP, a Defense Die, 4/5), Jaeger
+Sniper (infantry, 3, range 3 only, 2 AI, a Speed Die, Sight 3 spotting Camouflage, Camouflage, 3 Manpower 2 Munitions), Jagdpanther (5,
+range 4, 3 fixed AP, a Defense Die, 3/4), Elefant (7, range 4, Slow, 3 fixed AP, 3/5) and the SdKfz 251 Half-track (light vehicle, 3,
+range 3, 1 AI, a Transport that Reinforces and is a Retreat Point; Infantry may spawn next to it, Slow the first round; 2/3).
 Readings:
 
+- The StuG Pack's two Commanders are also the OKW's (its page): they are drawn by the Wehrmacht here, and will be by the OKW too.
+- Tank Destroyer Doctrine marks an enemy Vehicle on the map (its hex in the opening), which then rolls no Defense Dice that round, not even
+  for Frontal Armor or the damage types it resists.
+- Assault Support Doctrine gives the Kubelwagen the Scout Car's No-Fire collection (1 more of the point's first non-VP resource).
+- Breakthrough Tactics (Terror Doctrine) is the US Step on it; Tactical Movement is Combat Group Advance; the Stuka strafe is the P-47
+  strike's 2 AP a hex; Recon Plane is Recon Sweep.
 - A panel naming a call-in with no "one spawns for free" brings no free unit (`...Plain` abilities).
 - Strategic Maneuvers is the Scout Car's No-Fire mode for Stuarts; Combined Arms counts a unit next to another of the same player's;
   Requisition Officer takes 1 Manpower off every Sherman and Wolverine chassis (Easy Eight, Dozer, Jackson too).

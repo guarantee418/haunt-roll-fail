@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # The Commander cards and the tokens of the units they bring (webp2/tactics/images/commander/, token/), cut from the 2nd Edition
 # Faction Guide (the PDF in the Tabletop Simulator mod "Company of Heroes - 2nd Edition", Steam workshop 2314664989): its pages 11
-# (US core Commanders) and 17 (Wehrmacht), 12 and 13 (the US expansion Commanders), rendered at 220 dpi with `pdftoppm -f 11 -l 11 -r 220 -png guide.pdf <dir>/hi` (and 17;
+# (US core Commanders) and 17 (Wehrmacht), 12 and 13 (the US expansion Commanders), 18 and 19 (the Wehrmacht's), rendered at 220 dpi with `pdftoppm -f 11 -l 11 -r 220 -png guide.pdf <dir>/hi` (and 17;
 # 23, 29 and 36 for the British, Soviet and OKW, saved as hi-23.png and so on),
 # and the mod's US and Wehrmacht Lost Brigades sheets for two portraits (Assault Engineers, MG Bunker; `tactics-art.py fetch` names).
 #
@@ -23,6 +23,10 @@ LAYOUT['hi-29'] = LAYOUT['hi-36'] = LAYOUT['hi-23']
 # the US expansion Commanders: the PDF's pages 12 and 13 (printed 11 and 12; page 13's right column is the Lost Brigades extensions)
 LAYOUT['hi-12'] = ([(0.11, 0.369), (0.4, 0.659), (0.688, 0.947)], [(0.045, 0.477), (0.522, 0.954)])
 LAYOUT['hi-13'] = ([(0.114, 0.374), (0.4, 0.659), (0.688, 0.947)], [(0.045, 0.477), (0.531, 0.945)])
+# the Wehrmacht expansion Commanders: pages 18 and 19 (printed 17 and 18)
+LAYOUT['hi-18'] = ([(0.112, 0.371), (0.397, 0.656), (0.683, 0.943)], [(0.043, 0.475), (0.524, 0.955)])
+LAYOUT['hi-19'] = ([(0.114, 0.373), (0.399, 0.658), (0.686, 0.946)], [(0.045, 0.477), (0.533, 0.947)])
+EXPANSION = ('hi-12', 'hi-13', 'hi-18', 'hi-19')
 
 # page, column, row -> the Commander's id (as `Commander.id` in game.scala)
 CARDS = {
@@ -40,6 +44,9 @@ CARDS = {
     ('hi-12', 0, 0): 'light-cavalry', ('hi-12', 0, 1): 'heavy-cavalry', ('hi-12', 0, 2): 'tactical-support',
     ('hi-12', 1, 0): 'motor-pool', ('hi-12', 1, 1): 'pathfinder', ('hi-12', 1, 2): 'devils-brigade',
     ('hi-13', 0, 0): 'cavalry-rifle', ('hi-13', 0, 1): 'urban-assault', ('hi-13', 0, 2): 'engineer-assault',
+    ('hi-18', 0, 0): 'stug-assault', ('hi-18', 0, 1): 'stug-tactics',
+    ('hi-18', 1, 0): 'terror', ('hi-18', 1, 1): 'tank-destroyer', ('hi-18', 1, 2): 'assault-support',
+    ('hi-19', 0, 0): 'infantry-storm', ('hi-19', 0, 1): 'festung-support', ('hi-19', 0, 2): 'lightning-war',
 }
 
 # a panel's portrait in a card crop (about 1016 x 620): panel 0 to 3 from the left
@@ -82,6 +89,12 @@ UNITS = [
     ('pathfinder', 'pathfinder', 0, 'G', 'us'),
     ('cavalry-riflemen', 'cavalry-rifle', 1, 'G', 'us'),
     ('devils-brigade', 'devils-brigade', 0, 'G', 'us'),
+    ('stug', 'stug-assault', 1, 'R', 'wehrmacht'),
+    ('king-tiger', 'terror', 3, 'R', 'wehrmacht'),
+    ('jaeger-sniper', 'tank-destroyer', 1, 'G', 'wehrmacht'),
+    ('jagdpanther', 'tank-destroyer', 3, 'R', 'wehrmacht'),
+    ('elefant', 'assault-support', 3, 'R', 'wehrmacht'),
+    ('sdkfz251', 'infantry-storm', 1, 'Y', 'wehrmacht'),
 ]
 
 def main(d, out):
@@ -97,7 +110,7 @@ def main(d, out):
         cards[cid] = card
         art.webp(card, os.path.join(out, 'commander', cid + '.webp'), q=86)
     # the expansion pages' crops have a wider black margin: their portraits are taken from the card trimmed to the core pages' frame
-    trimmed = {cid: c.crop((30, -24, 30 + 1016, -24 + 620)) for (page, _, _), cid in CARDS.items() if page in ('hi-12', 'hi-13') for c in [cards[cid]]}
+    trimmed = {cid: c.crop((30, -24, 30 + 1016, -24 + 620)) for (page, _, _), cid in CARDS.items() if page in EXPANSION for c in [cards[cid]]}
     for tid, cid, panel, kind, f in UNITS:
         p = portrait(trimmed.get(cid, cards[cid]), panel)
         art.webp(art.token(p, kind, art.COLORS[f]), os.path.join(out, 'token', tid + '-' + f + '.webp'), q=90)

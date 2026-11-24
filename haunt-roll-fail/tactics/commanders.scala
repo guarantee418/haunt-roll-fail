@@ -181,6 +181,33 @@ case object JacksonCallInPlain extends Ability("M36 Jackson", "The M36 Jackson c
 case object AssaultEngineerSpawnPlain extends Ability("Assault Engineers", "Riflemen may spawn as Assault Engineers.")
 case object SupportJeeps extends Ability("Support Jeeps", "Jeeps have their Reinforce XP upgrade. One Jeep spawns for free.")
 
+// Wehrmacht expansion Commanders (2026-11-24; Faction Guide pages 17 and 18: StuG Pack, Elite Commanders Collection, Pathfinder Pack,
+// Lost Brigades Pack)
+case object StuGCloseRange extends Ability("StuG Assault Doctrine", "All Regular Infantry can upgrade to Close Range Firepower for 2 Munitions.")
+case object StuGCallIn extends Ability("StuG III G Call-In", "The StuG III G can be bought.")
+case object StuGCallInFree extends Ability("StuG III G Call-In", "The StuG III G can be bought. One spawns for free.")
+case object TankDesant extends Ability("Tank Desant Tactics", "Infantry gain +2 Defense Dice next to a Heavy Vehicle (not in a Building, no stacking with other Cover). One Grenadier spawns for free.")
+case object TargetWeakPoint extends Ability("Target Weak Point", "StuG III Gs have +1 AP. One spawns for free.")
+case object TurretlessTerror extends Ability("Turretless Terror", "StuG III Gs have Camouflage. One Stormtrooper spawns for free (it counts toward the one a round).")
+case object LMG42Free extends Ability("LMG-42", "The Grenadiers' HE Munitions upgrade also gives +1 Range. One Grenadier spawns for free.")
+case object WMBreakthrough extends Ability("Breakthrough Tactics", "After spending a first CP on a Vehicle, pay 2 Munitions to move it once more for free.")
+case object StukaStrafe extends Ability("Stuka JU-87 Anti-Tank Strafe", "At the start of your Maneuver Phase spend your very first 2 CP and 2 Munitions: 3 hexes in a line each take 2 AP in the Damage Phase.")
+case object KingTigerCallIn extends Ability("King Tiger Call-In", "The King Tiger can be bought. One spawns for free.")
+case object MarkVehicle extends Ability("Tank Destroyer Doctrine", "At the start of your Maneuver Phase spend your very first 1 CP and 2 Munitions to mark an enemy Vehicle: it has no Defense Dice this round.")
+case object JaegerSniperFree extends Ability("Jaeger Sniper", "Jaeger Snipers can be bought: 3 health, range 3, 2 AI, a Speed Die, +3 Sight spotting Camouflage, Camouflage. One spawns for free.")
+case object JaegerSniperCallIn extends Ability("Jaeger Sniper", "Jaeger Snipers can be bought: 3 health, range 3, 2 AI, a Speed Die, +3 Sight spotting Camouflage, Camouflage.")
+case object JagdpantherCallIn extends Ability("Jagdpanther Call-In", "The Jagdpanther can be bought. One spawns for free.")
+case object AssaultSupport extends Ability("Assault Support Doctrine", "Kubelwagens may spend 1 CP to toggle a No-Fire mode; in it on a Control Point they collect 1 more of its resource.")
+case object SupplyConvoy extends Ability("Supply Convoy", "Kubelwagens can be bought for 3 Munitions. One spawns for free.")
+case object ReconPlane extends Ability("Recon Plane", "At the start of your Maneuver Phase spend your very first 1 CP and 1 Munitions: a hex and the hexes around it are visible to your team this round, Camouflage too.")
+case object ElefantCallIn extends Ability("Elefant Call-In", "The Elefant can be bought. One spawns for free.")
+case object HalftrackCallIn extends Ability("SdKfz 251 Half-track", "The SdKfz 251 can be bought; Infantry may spawn next to it, Slow the first round.")
+case object HalftrackCallInFree extends Ability("SdKfz 251 Half-track", "The SdKfz 251 can be bought; Infantry may spawn next to it, Slow the first round. One spawns for free.")
+case object FlameProjectors extends Ability("Flame Projectors", "SdKfz 251s can upgrade to 2 Flame for 4 Munitions. One spawns with it for free.")
+case object Pak251 extends Ability("Pak 251 Half-track", "SdKfz 251s can upgrade to +2 AP for 4 Munitions. One spawns with it for free.")
+case object OsttruppenSquadsPlain extends Ability("Osttruppen", "Osttruppen can be bought, two squads for each.")
+case object TacticalMovement extends Ability("Tactical Movement", "At the start of your Maneuver Phase spend your very first 1 CP and 3 Munitions: every Infantry may make a free move this turn.")
+
 // a card: the Commander's name, its four abilities with their XP costs and the Tier Building each needs (0 for none)
 case class Tier(ability : Ability, xp : Int, needs : Int = 0) extends Record
 
@@ -228,6 +255,16 @@ case object CavalryRifleCompany extends Commander("cavalry-rifle", "Cavalry Rifl
 case object UrbanAssaultCompany extends Commander("urban-assault", "Urban Assault Company", US, $(Tier(UrbanAssault, 3), Tier(HowitzerBarrage, 1), Tier(JacksonCallInPlain, 2, 3), Tier(DozerCallIn, 5, 3)))
 case object EngineerAssaultCompany extends Commander("engineer-assault", "Engineer Assault Company", US, $(Tier(AssaultEngineerSpawnPlain, 1), Tier(SupportJeeps, 3), Tier(DozerCallInPlain, 2, 3), Tier(JacksonCallIn, 5, 3)))
 
+// the Wehrmacht expansion Commanders (Faction Guide pages 17 and 18)
+case object StuGAssaultDoctrine extends Commander("stug-assault", "StuG Assault Doctrine", Wehrmacht, $(Tier(StuGCloseRange, 1), Tier(StuGCallIn, 1, 2), Tier(TankDesant, 3), Tier(TargetWeakPoint, 4, 2)))
+case object StuGTactics extends Commander("stug-tactics", "StuG Tactics", Wehrmacht, $(Tier(StormtrooperSpawn, 2), Tier(StuGCallInFree, 4, 2), Tier(FragmentationBomb, 1), Tier(TurretlessTerror, 3)))
+case object TerrorDoctrine extends Commander("terror", "Terror Doctrine", Wehrmacht, $(Tier(LMG42Free, 3), Tier(WMBreakthrough, 1), Tier(StukaStrafe, 1), Tier(KingTigerCallIn, 5, 3)))
+case object TankDestroyerDoctrine extends Commander("tank-destroyer", "Tank Destroyer Doctrine", Wehrmacht, $(Tier(MarkVehicle, 1), Tier(JaegerSniperFree, 3), Tier(Pak43Emplacement, 1), Tier(JagdpantherCallIn, 4, 3)))
+case object AssaultSupportDoctrine extends Commander("assault-support", "Assault Support Doctrine", Wehrmacht, $(Tier(AssaultSupport, 1), Tier(SupplyConvoy, 3), Tier(ReconPlane, 1), Tier(ElefantCallIn, 5, 3)))
+case object InfantryStormDoctrine extends Commander("infantry-storm", "Infantry Storm Doctrine", Wehrmacht, $(Tier(JaegerSniperCallIn, 1), Tier(HalftrackCallInFree, 4, 2), Tier(FlameProjectors, 4, 2), Tier(StukaStrafe, 1)))
+case object FestungSupportDoctrine extends Commander("festung-support", "Festung Support Doctrine", Wehrmacht, $(Tier(OsttruppenSquads, 3), Tier(HalftrackCallIn, 1, 2), Tier(HullDown, 1), Tier(Pak251, 4, 2)))
+case object LightningWarDoctrine extends Commander("lightning-war", "Lightning War Doctrine", Wehrmacht, $(Tier(OsttruppenSquadsPlain, 1), Tier(TacticalMovement, 1), Tier(HalftrackCallInFree, 4, 2), Tier(TigerCallIn, 5, 3)))
+
 case object BreakthroughDoctrine extends Commander("breakthrough", "Breakthrough Doctrine", OKW, $(Tier(WillNotDieOld, 1), Tier(PanzerfusilierCallIn, 3), Tier(BreakthroughTactics, 3), Tier(PantherReinforcements, 2, 3)))
 case object ScavengeDoctrine extends Commander("scavenge", "Scavenge Doctrine", OKW, $(Tier(ThoroughSalvage, 1), Tier(JaegerCallIn, 3), Tier(PumaCallIn, 4, 2), Tier(VeteranLeFH, 2)))
 case object EliteArmoredDoctrine extends Commander("elite-armored", "Elite Armored Doctrine", OKW, $(Tier(KettenkradCallIn, 1), Tier(HeavyLuchs, 4, 2), Tier(GrandAssault, 4), Tier(SturmtigerReinforcements, 2, 3)))
@@ -242,11 +279,15 @@ object Commander {
         AssaultTactics, SovietRangedTactics, EliteArtilleryTactics, ConscriptSupportTactics, NKVDDisruptionTactics, ArmoredAssaultTactics,
         BreakthroughDoctrine, ScavengeDoctrine, EliteArmoredDoctrine, FortificationsDoctrine, FirestormDoctrine, GrandOffenseDoctrine,
         LightCavalryCompany, HeavyCavalryCompany, TacticalSupportCompany, MotorPoolCompany, PathfinderCompany, DevilsBrigadeCompany,
-        CavalryRifleCompany, UrbanAssaultCompany, EngineerAssaultCompany)
+        CavalryRifleCompany, UrbanAssaultCompany, EngineerAssaultCompany,
+        StuGAssaultDoctrine, StuGTactics, TerrorDoctrine, TankDestroyerDoctrine, AssaultSupportDoctrine, InfantryStormDoctrine,
+        FestungSupportDoctrine, LightningWarDoctrine)
 
     // the expansion Commanders (the setup's Expansion Commanders option)
     val expansion = $[Commander](LightCavalryCompany, HeavyCavalryCompany, TacticalSupportCompany, MotorPoolCompany, PathfinderCompany,
-        DevilsBrigadeCompany, CavalryRifleCompany, UrbanAssaultCompany, EngineerAssaultCompany)
+        DevilsBrigadeCompany, CavalryRifleCompany, UrbanAssaultCompany, EngineerAssaultCompany,
+        StuGAssaultDoctrine, StuGTactics, TerrorDoctrine, TankDestroyerDoctrine, AssaultSupportDoctrine, InfantryStormDoctrine,
+        FestungSupportDoctrine, LightningWarDoctrine)
 
     // the core six of a faction (every game without the option, and every game made before it)
     def of(f : Faction) = all.diff(expansion).%(_.faction == f)
@@ -257,7 +298,8 @@ object Commander {
     // the abilities spent at the start of a Maneuver Phase: CP, Munitions
     val opening = Map[Ability, (Int, Int)](ReconSweep -> (1, 1), P47Strike -> (2, 2), CombatGroupAdvance -> (1, 3), PanzerwerferBarrage -> (1, 1), FragmentationBomb -> (2, 2), ArmorBlitzkrieg -> (1, 3),
         ArtilleryEye -> (1, 1), IL2Strike -> (2, 2), BreakthroughTactics -> (1, 3), GrandAssault -> (1, 3), RapidConscription -> (2, 1), FortifiedCamo -> (1, 1),
-        CombinedArms -> (2, 2), P47Strafing -> (2, 2), Outmaneuver -> (1, 3), HowitzerBarrage -> (1, 1))
+        CombinedArms -> (2, 2), P47Strafing -> (2, 2), Outmaneuver -> (1, 3), HowitzerBarrage -> (1, 1),
+        StukaStrafe -> (2, 2), MarkVehicle -> (1, 2), ReconPlane -> (1, 1), TacticalMovement -> (1, 3))
 
     // the units that spawn for free when a tier is unlocked
     def free(a : Ability, f : Faction) : $[UnitType] = a @@ {
@@ -312,6 +354,15 @@ object Commander {
         case CavalryRiflemenCallIn => $(CavalryRiflemen)
         case DozerCallIn => $(Dozer)
         case JacksonCallIn => $(Jackson)
+        case StuGCallInFree | TargetWeakPoint => $(StuG)
+        case TankDesant | LMG42Free => $(Grenadiers)
+        case TurretlessTerror => $(Stormtroopers)
+        case KingTigerCallIn => $(KingTiger)
+        case JaegerSniperFree => $(JaegerSniper)
+        case JagdpantherCallIn => $(Jagdpanther)
+        case SupplyConvoy => $(Kubelwagen)
+        case ElefantCallIn => $(Elefant)
+        case HalftrackCallInFree => $(Halftrack)
         case _ => $[UnitType]()
     }
 }
@@ -330,7 +381,7 @@ case object NoCommanders extends CommandersChoice("No Commanders", "No Commander
 case object ExpansionCommanders extends GameOption with ToggleOption {
     val group = CommandersChoice.group
     def valueOn = "Expansion Commanders".hl
-    override val explain = $[Elem]("The players also draw from the expansion packs' Commanders (Elite Commanders Collection, Pathfinder, StuG and Lost Brigades packs, from the Faction Guide): so far the US Forces' nine.".txt)
+    override val explain = $[Elem]("The players also draw from the expansion packs' Commanders (Elite Commanders Collection, Pathfinder, StuG and Lost Brigades packs, from the Faction Guide): so far the US Forces' nine and the Wehrmacht's eight.".txt)
     override def required(all : $[BaseOption]) = $($(DrawCommanders))
 }
 
@@ -346,6 +397,7 @@ case class Strike(faction : Faction, ability : Ability, hexes : $[Hex]) extends 
     def dice : $[Attack] = ability @@ {
         case P47Strike => $(Attack(AP), Attack(AP))
         case P47Strafing => $(Attack(HE), Attack(HE))
+        case StukaStrafe => $(Attack(AP), Attack(AP))
         case HowitzerBarrage => $(Attack(HE))
         case FragmentationBomb => $(Attack(HE), Attack(HE))
         case PanzerwerferBarrage => $(Attack(HE))
