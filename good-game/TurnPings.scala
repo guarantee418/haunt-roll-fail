@@ -42,6 +42,13 @@ import scala.concurrent.duration.Duration
 // NORTHGARD (2026-11-21, with its Discord LFG games, Lfg.scala): Northgard's online games (nort, nort-adset) get the same, in the
 // forum channel of their own webhook, HRF_DISCORD_NORT_TURNS_WEBHOOK or the file discord-nort-turns-webhook (the change
 // "nort-turns <url>"), their threads in threads-nort.tsv; with none set, they get no posts or pings (webhookFor).
+//
+// PINCER AND COMPANY OF HEROES (2026-11-24): the same again, each in its own forum (pincer-games, coh-games) through its own webhook,
+// HRF_DISCORD_PINCER_TURNS_WEBHOOK or the file discord-pincer-turns-webhook (the change "pincer-turns <url>"), and
+// HRF_DISCORD_TACTICS_TURNS_WEBHOOK or discord-tactics-turns-webhook ("tactics-turns <url>"), threads in threads-pincer.tsv and
+// threads-tactics.tsv. The bot can make those webhooks itself, with a name and avatar of their own, and set them in one go: the
+// change "make-webhook <name> | in <channel> | avatar <file> | for pincer-turns" (DiscordServer.scala). Their clients give no
+// reasons yet, so their pings say "it's your turn", led by the game's own emoji (a drum, a field radio).
 object TurnPings {
     import GoodGame._
     import Backup.{rows, row}
@@ -54,14 +61,54 @@ object TurnPings {
     val settings = Tournament.dir.resolve("discord-pings.tsv")
 
     // the games that get a thread and pings
-    val metas = Map("root" -> "Root", "root-adset" -> "Root Advanced Setup", "nort" -> "Northgard", "nort-adset" -> "Northgard Adset")
+    val metas = Map("root" -> "Root", "root-adset" -> "Root Advanced Setup", "nort" -> "Northgard", "nort-adset" -> "Northgard Adset",
+        "pincer" -> "Pincer", "tactics" -> "Company of Heroes")
 
+    val rootMetas = Set("root", "root-adset")
     val nortMetas = Set("nort", "nort-adset")
     val nortThreads = dir.resolve("threads-nort.tsv")
 
+    // each turns channel: its change's name, the environment variable and file its webhook's URL is kept in, its threads' file
+    case class Slot(name : String, env : String, file : String, threads : Path)
+
+    val slots = List(
+        Slot("turns", "HRF_DISCORD_TURNS_WEBHOOK", "discord-turns-webhook", threads),
+        Slot("nort-turns", "HRF_DISCORD_NORT_TURNS_WEBHOOK", "discord-nort-turns-webhook", nortThreads),
+        Slot("pincer-turns", "HRF_DISCORD_PINCER_TURNS_WEBHOOK", "discord-pincer-turns-webhook", dir.resolve("threads-pincer.tsv")),
+        Slot("tactics-turns", "HRF_DISCORD_TACTICS_TURNS_WEBHOOK", "discord-tactics-turns-webhook", dir.resolve("threads-tactics.tsv")))
+
+    def slot(name : String) : Option[Slot] = slots.find(_.name == name)
+
+    def slotOf(meta : String) : Slot = slot(meta match {
+        case m if nortMetas.contains(m) => "nort-turns"
+        case "pincer" => "pincer-turns"
+        case "tactics" => "tactics-turns"
+        case _ => "turns"
+    }).get
+
+    def hookOf(s : Slot) = Tournament.hook(s.env, s.file)
+
     // the channel a game's posts and pings go to, and the file its threads are kept in
-    def webhookFor(meta : String) = if (nortMetas.contains(meta)) nortWebhook else webhook
-    def threadsFor(meta : String) = if (nortMetas.contains(meta)) nortThreads else threads
+    def webhookFor(meta : String) = hookOf(slotOf(meta))
+    def threadsFor(meta : String) = slotOf(meta).threads
+
+    // a turns channel's webhook set (the threads made through the one before forgotten), or removed with "off"
+    def setHook(s : Slot, url : String) : String =
+        if (url.startsWith("https://discord.com/api/webhooks/") || url.startsWith("https://discordapp.com/api/webhooks/")) {
+            Files.write(Paths.get(s.file), (url + "\n").getBytes(UTF_8))
+            Files.deleteIfExists(s.threads)
+            Tournament.plainChannels = Set()
+            "set"
+        }
+        else if (url == "off") {
+            Files.deleteIfExists(Paths.get(s.file))
+            "removed"
+        }
+        else
+            "not done: " + s.name + " <https://discord.com/api/webhooks/...> or " + s.name + " off"
+
+    // the emoji a game with no faction emojis leads its pings with
+    val gameIcon = Map("pincer" -> "🥁 ", "tactics" -> "📻 ")
 
     val delay = 60 * 1000L
     // a seat asked about a battle on another's turn (an ambush, its hits: the "defend" reason) holds up that player's turn
@@ -74,8 +121,8 @@ object TurnPings {
     val reminders = 2
     val every = 10L
 
-    def webhook = Tournament.hook("HRF_DISCORD_TURNS_WEBHOOK", "discord-turns-webhook")
-    def nortWebhook = Tournament.hook("HRF_DISCORD_NORT_TURNS_WEBHOOK", "discord-nort-turns-webhook")
+    def webhook = hookOf(slots(0))
+    def nortWebhook = hookOf(slots(1))
 
     def run[R](a : DBIOAction[R, NoStream, Nothing]) : R = Await.result(Tournament.db.run(a), Duration.Inf)
 
@@ -401,7 +448,7 @@ object TurnPings {
         // the faction's (or clan's) emoji: the one the reason names, else the seat's own when the seat is a faction (Root's and
         // Northgard's standard games; an Advanced Setup or Adset seat drafts its faction in the game, so only a reason names it)
         def iconOf(f : String) = if (nort) Lfg.clanIcon(f) else LfgSetup.emojiText("IncludeFaction(" + f + ")")
-        val head = faction.map(iconOf).filter(_.nonEmpty).orElse(seat.map(iconOf).filter(_.nonEmpty)).getOrElse("")
+        val head = gameIcon.get(lobby.meta).getOrElse(faction.map(iconOf).filter(_.nonEmpty).orElse(seat.map(iconOf).filter(_.nonEmpty)).getOrElse(""))
         // (the server's are :sword-root: and :axe-ng:, seen on 2026-11-21)
         def sword = LfgSetup.serverNamed(List("swordroot", "sword", "swords", "battle", "attack")).getOrElse("⚔️ ")
         def axe = LfgSetup.serverNamed(List("axeng", "axe", "battleaxe", "fight")).getOrElse("🪓 ")
@@ -415,7 +462,7 @@ object TurnPings {
             val name = if (nort) o else LfgSetup.catalog(Lfg.root.meta).map(_.label(key)).filter(_ != key).getOrElse(o)
             iconOf(o) + "**" + name + "**"
         } }
-        val (icon, words) = (nort, tag) match {
+        val (icon, words) = if (gameIcon.contains(lobby.meta)) (head, if (tag == "asked") "you're needed" else "it's your turn") else (nort, tag) match {
             // (the sword or axe right after "attack", "battle" or "fight", 2026-11-22, asked for; the Partisans card right after "Partisans", 2026-11-23; a plain Unicode 🏥 after "Field Hospitals", 2026-11-23, asked for; trading and Winter with plain Unicode ⚖️ and ❄️ after
             // the words, not the bot's badges, so the Northgard webhook can post them itself, 2026-11-23)
             case (false, "defend") => (head, "you're under attack " + w(sword) + them.map(" by " + _).getOrElse(""))
@@ -463,9 +510,9 @@ object TurnPings {
             return "not pinged: pinged in the last 2 minutes"
         val lobby = lobbyOf(game).getOrElse(return "not pinged: lobby not found")
         if (!metas.contains(lobby.meta))
-            return "not pinged: not a Root or Northgard game"
+            return "not pinged: not a game with turn pings"
         if (table(game).isEmpty && webhookFor(lobby.meta).isEmpty)
-            return "not pinged: no turns webhook (the " + (if (nortMetas.contains(lobby.meta)) "nort-turns" else "turns") + " change)"
+            return "not pinged: no turns webhook (the " + slotOf(lobby.meta).name + " change)"
         val id = mentionOf(user, table(game).nonEmpty).getOrElse(return "not pinged: no Discord, or turn pings off")
 
         // a game with no thread of its own yet gets its post first (a tournament table's game uses its table's thread)
