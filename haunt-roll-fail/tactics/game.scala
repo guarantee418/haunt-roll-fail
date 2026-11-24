@@ -15,7 +15,7 @@ import hrf.options._
 import hrf.elem._
 import tactics.elem._
 
-// COMPANY OF HEROES: THE BOARD GAME, 2ND EDITION (Bad Crow Games), listed on the site as "Tactics" while it is played here for testing.
+// COMPANY OF HEROES: THE BOARD GAME, 2ND EDITION (Bad Crow Games), listed on the site as "Company of Heroes" (meta `tactics`) while it is played here for testing.
 // The rules are the core rulebook's First Game Rules (RULES.md has them as played and the choices made); the units are the US Forces'
 // and the Wehrmacht's three Building Boards, read off the Tabletop Simulator mod's images.
 

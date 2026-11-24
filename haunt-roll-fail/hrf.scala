@@ -658,9 +658,9 @@ class HRFUI(implicit resources : Resources) {
                 if (m == root.Meta)
                     card(m, $("home-mc", "home-ed", "home-wa", "home-vb"), "Woodland factions fight for the forest", () => { rootLanguage(root.EnglishLanguage) ; rootMenu() })
                 else if (m == pincer.Meta)
-                    card(m, $("home-musketeer", "home-cavalry", "home-cannon", "home-frigate"), "Colonial powers trade, build and wage a gentleman's war (playtest)", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
+                    card(m, $("home-musketeer", "home-cavalry", "home-cannon", "home-frigate"), "Colonial powers trade, build and wage a gentleman's war", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
                 else if (m == tactics.Meta)
-                    card(m, $("home-us", "home-sherman", "home-panzer", "home-wehrmacht"), "US Forces and the Wehrmacht fight for Moro River (playtest)", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
+                    card(m, $("home-us", "home-sherman", "home-panzer", "home-wehrmacht"), "US Forces and the Wehrmacht fight for Moro River", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
                 else
                     card(m, $("home-wolf", "home-stag", "home-bear", "home-raven"), "Viking clans explore, build and conquer", () => new HRFMetaUI(this, m, 0)(resources).withMeta())
             ) ++

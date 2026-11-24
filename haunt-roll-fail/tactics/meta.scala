@@ -21,7 +21,7 @@ object Meta extends MetaGame { mmm =>
     def tagF = implicitly
 
     val name = "tactics"
-    val label = "Tactics"
+    val label = "Company of Heroes"
 
     val factions = Faction.all
 
@@ -35,7 +35,7 @@ object Meta extends MetaGame { mmm =>
     val quickMax = 2
 
     override val about = $[Elem](
-        "Company of Heroes: The Board Game".hlb ~ ", 2nd Edition, by Bad Crow Games, licensed from SEGA and Relic Entertainment: a work in progress played here, as " ~ "Tactics".hl ~ ", by a team helping to test it.",
+        "Company of Heroes: The Board Game".hlb ~ ", 2nd Edition, by Bad Crow Games, licensed from SEGA and Relic Entertainment: a work in progress played here by a team helping to test it.",
         "The rules are the core rulebook's First Game Rules; the art is from the Tabletop Simulator mod \"Company of Heroes - 2nd Edition\".",
         "© SEGA. Developed by Relic Entertainment Inc. SEGA, the SEGA logo, Relic Entertainment and Company of Heroes are either registered trademarks or trademarks of SEGA Corporation or its affiliates.",
     )
