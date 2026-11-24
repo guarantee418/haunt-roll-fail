@@ -12,8 +12,11 @@ import hrf.logger._
 
 // Headless bot games on the JVM (see HANDOFF.md): `sbt "runMain tactics.Host"`, TACTICS_GAMES games of two Easy bots
 // (default 20), each checking that every recorded action writes and parses back. TACTICS_RULES=first plays the First Game Rules,
-// anything else the Full Game Rules (here, in Dump and in Replay), with Commanders unless TACTICS_COMMANDERS=0; TACTICS_MAP=<id> plays that mission's map (moro, don, rivers, ardennes, frozen, moscow).
+// anything else the Full Game Rules (here, in Dump and in Replay), with Commanders unless TACTICS_COMMANDERS=0; TACTICS_MAP=<id> plays that mission's map (moro, don, rivers, ardennes, frozen, moscow); TACTICS_FACTIONS=BR,OKW (US, WM, BR, SU, OKW) the factions.
 object Rules {
+    // TACTICS_FACTIONS=BR,OKW plays those two (the first goes first in the seating); US and Wehrmacht by default
+    def factions : $[Faction] = sys.env.get("TACTICS_FACTIONS")./(_.split(",").toList./(x => Meta.parseFaction(x).get)).|($(US, Wehrmacht))
+
     def options : $[Meta.O] = (sys.env.get("TACTICS_RULES") == Some("first")).?($[Meta.O]()).|($[Meta.O](FullGameRules) ++ (sys.env.get("TACTICS_COMMANDERS") != Some("0")).$(DrawCommanders)) ++ MapChoice.all.%(_.map.id == sys.env.getOrElse("TACTICS_MAP", ""))
 }
 
@@ -27,7 +30,7 @@ object Host extends hrf.host.BaseHost {
 
     def askBot(g : G, f : F, actions : $[UserAction]) = new BotXX(f).ask(actions, 0)(g)
 
-    def factions = Faction.all
+    def factions = Rules.factions
     def subjects = factions
 
     def batch = $(() => new G(factions.shuffle, Rules.options))
@@ -61,7 +64,7 @@ object State {
 object Dump {
     def main(args : Array[String]) {
         val steps = args.lift(0)./(_.toInt).|(1500)
-        val game = new Game(Faction.all, Rules.options)
+        val game = new Game(Rules.factions, Rules.options)
         var continue : Continue = StartContinue
         var a : Action = StartAction(gaming.version)
         var out = $[String]()
@@ -92,7 +95,7 @@ object Dump {
 object Replay {
     def main(args : Array[String]) {
         val moves = scala.io.Source.fromFile(args(0)).getLines().toList.filter(_.trim.nonEmpty)./(Serialize.parseAction)
-        val game = new Game(Faction.all, Rules.options)
+        val game = new Game(Rules.factions, Rules.options)
 
         def auto(c : Continue) : |[Action] = c match {
             case Force(a) => |(a)

@@ -8,7 +8,8 @@ played and the choices made.
 
 ## State
 
-- Playable: two players, US Forces against the Wehrmacht, on the Mission Booklet's six 2-panel core missions (the setup's
+- Playable: two players, any two of the five core factions (US Forces, Wehrmacht, British Forces, Soviet Forces, Oberkommando West;
+  the British, Soviet and OKW without Commanders yet), on the Mission Booklet's six 2-panel core missions (the setup's
   Map choice, `MapChoice`, Moro River by default: Moro River, Across the Don, Between Two Rivers, Ardennes Forest, Frozen Lake,
   Road to Moscow, with Ice, the Cathedral and multi-hex Buildings on the Ardennes panels); Local (hotseat), Quick Game and Play Online, with
   an Easy bot. The setup's Rules choice: the Full Game Rules (every new game since 2026-11-24: Operations deck, Retreats,
@@ -28,7 +29,10 @@ played and the choices made.
   Point), neighbors, distance, line of sight, the edges a line of fire crosses, the Spawn Areas; `MoroRiverFirst`, the rows of
   the games made before the Map choice. `Board` answers for the game's map (`Board.current`, set by `Game`).
 - `missions.scala`: the six missions' maps (`MoroRiver` ... `RoadToMoscow`), made by `tools/missions.py`.
-- `game.scala`: factions, resources, damage dice, the 18 units and their upgrades (`UnitType`), actions and the rules (`Game`).
+- `game.scala`: factions, resources, damage dice, the units and their upgrades (`UnitType`: the five factions' boards, then the
+  Commander units; new types go at the end of `UnitType.all`, which orders the units), actions and the rules (`Game`). The British,
+  Soviet and OKW rules are unit traits (`builtBy`, `tierBuilding`, `strafing`, `captureMode`, `innate`) and the helpers `emplacements`,
+  `conversions`, `buildersOf`, `carries`, `captures`, `evacuate`, `tierBuildingOf`.
   The Full Game Rules are `game.full` (the option `FullGameRules`): their state (`opsDeck`, `facing`, `assaults`, `retreating`,
   `splashes`, `shots`, `ruined`, ...), helpers (the "FULL GAME RULES" section: `inArc`, `heavyOptions`, `retreatChoices`,
   `overwatch`, `splashHexes`, `resolveFull`) and their own actions and `case ... if full` branches; the First Game Rules
@@ -44,7 +48,8 @@ played and the choices made.
 - `bot.scala`: the Easy bot. `host.scala`: headless bot games (`tactics.Host`) and `tactics.Dump`.
 - `tools/commander-art.py`: the Commander cards (`commander/`) and the Commander units' tokens, from the Faction Guide's pages.
 - `tools/tactics-art.py`: every image in `webp2/tactics/images/` from the mod (`fetch`, then `make`), the Operations cards
-  (`ops/`) and the Retreat and HE Splash status icons too.
+  (`ops/`) and the Retreat and HE Splash status icons too; `factions <dir> <out> british soviet okw` makes only those factions'
+  boards, tokens (the OKW Tier Buildings and the Flak 37 from `EXTRA`), emblems, flags and Spawn hexes.
 - `tools/map-edges.py`, `tools/map-data.py`: read the cover and impassable lines off the full-size panels and write the
   rows of `MoroRiverFirst` (with the corrections made by eye, the water, Buildings, tank traps and Control Points);
   `tools/ardennes-data.py` the same for the Ardennes panels (AF2 | AF1, the features found by their outline colours and checked by eye).
@@ -77,7 +82,10 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
   games recorded before them still replay
   state. With the missions (2026-11-24): bot games finished on all six maps (`TACTICS_MAP=<id>`), the old games replayed to the same
   state, and a scenario run checked each map's stockpile, 12 Control Points (6 VP), Spawn Areas, that every Control Point and the
-  other Spawn Area can be reached, Ice and the Cathedral. sbt can't fetch from Maven Central here at times (HTTP 429): `~/.sbt/repositories` pointing at Google's mirror
+  other Spawn Area can be reached, Ice and the Cathedral. With the British, Soviet and OKW (2026-11-24): bot games finished for each
+  kind of pairing (`TACTICS_FACTIONS=BR,OKW`; US, WM, BR, SU, OKW), with trucks converted, Emplacements and Flak Guns built,
+  flamethrower Carriers, Strafing Fire, the T-70's mode and Heroic Sacrifice taken; scenario checks for each; the US and Wehrmacht
+  games recorded before replay unchanged. sbt can't fetch from Maven Central here at times (HTTP 429): `~/.sbt/repositories` pointing at Google's mirror
   (`https://maven-central.storage-download.googleapis.com/maven2/`) with `-Dsbt.override.build.repos=true` works.
 - Browser: see "Browser driving" in `nort/HANDOFF.md`. A dump goes into `localStorage` as `tactics.hotseat.game.<time>`
   ("version ...", "title ...", "seating US WM", "options ") and `tactics.hotseat.moves.<time>`, then Local Game opens it.
@@ -86,8 +94,8 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
 
 ## Next
 
-- The other factions (British, Soviet, OKW; their Building Boards, Commanders and Lost Brigades are in the mod) with their buildable barbed wire and
-  tank traps.
+- The British, Soviet and OKW Commanders (the Faction Guide's pages 22, 28 and 35; their cards are CardCustom objects in the faction
+  bags of the mod), then the Lost Brigades and the buildable barbed wire and tank traps.
 - Full Game readings to confirm with the team (RULES.md, Interpretations 7 to 12): the Firing Arc's width, Retreat paths,
   Overwatch on a hex passed through.
 - 2 vs 2 team games and the Mission Booklet's other missions; the Lost Brigades and terrain packs' missions (4.1 ...)

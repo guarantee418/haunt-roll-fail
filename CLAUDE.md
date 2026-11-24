@@ -300,7 +300,9 @@ isn't in it yet), `pincer/HANDOFF.md` the state, files and testing (`pincer.Host
 
 Company of Heroes: The Board Game, 2nd Edition (Bad Crow Games; a work in progress the owner's team helps test; asked for on
 2026-11-23) is in `haunt-roll-fail/tactics/`, listed as "Company of Heroes" (once "Tactics"; 2026-11-24) (meta `tactics`, URL `/play/tactics`, on the main menu since
-2026-11-24): the core rulebook (RulesPal's copy), US Forces against the Wehrmacht on the Mission Booklet's six 2-panel core missions (the setup's
+2026-11-24): the core rulebook (RulesPal's copy), any two of its five factions (US Forces, Wehrmacht, and since 2026-11-24 British Forces, Soviet
+Forces and Oberkommando West, read off their Building Boards in the mod, no Commanders yet; the OKW's SWS truck converts into its Tier Buildings,
+the British and OKW build Emplacements; `tactics/RULES.md`, Factions) on the Mission Booklet's six 2-panel core missions (the setup's
 Map choice, `MapChoice`, 2026-11-24: Moro River, the default, Across the Don, Between Two Rivers, Ardennes Forest, Frozen Lake and Road to
 Moscow, maps in `tactics/missions.scala` made by `tactics/tools/missions.py`, with Ice, the Cathedral and multi-hex Buildings on the Ardennes
 panels; games made before the choice play `MoroRiverFirst`), its Full Game Rules in every new game
@@ -312,7 +314,7 @@ and every game made before the choice, which replay unchanged), with the Buildin
 Boards, map panels and books of the Tabletop Simulator mod 2314664989 (`tactics/tools/tactics-art.py`, images in
 `webp2/tactics/images/`; the map's lines read off the art by `tactics/tools/map-edges.py` and `map-data.py` into `Board.data`).
 `tactics/RULES.md` has the rules as played and the readings, `tactics/HANDOFF.md` the state, files, testing (`tactics.Host`,
-`tactics.Dump`, `tactics.Replay`; `TACTICS_RULES=first` for the First Game Rules) and what is next (the other factions, team games).
+`tactics.Dump`, `tactics.Replay`; `TACTICS_RULES=first` for the First Game Rules) and what is next (the new factions' Commanders, team games).
 
 ## Building
 

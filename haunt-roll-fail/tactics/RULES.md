@@ -3,7 +3,8 @@
 Company of Heroes: The Board Game, 2nd Edition (Bad Crow Games, licensed from SEGA and Relic Entertainment) is listed
 on the site as **Company of Heroes** (meta `tactics`, URL `/play/tactics`) while the owner's team helps test it. It plays the
 core rulebook (RulesPal's copy, and the four books in the Tabletop Simulator mod "Company of Heroes - 2nd Edition", Steam
-workshop 2314664989: Rulebook, Faction Guide, Mission Booklet, Solo Rulebook), US Forces against the Wehrmacht on
+workshop 2314664989: Rulebook, Faction Guide, Mission Booklet, Solo Rulebook), two of the five core factions (US Forces,
+Wehrmacht, British Forces, Soviet Forces, Oberkommando West: **Factions**, further down) on
 the Mission Booklet's six two-panel core missions (**Missions**, further down; Moro River by default), one player each. The setup's **Rules** choice picks the **Full Game Rules** (every new game since
 2026-11-24, `FullGameRules`) or the **First Game Rules** (`FirstGameRules`; games made before the choice have neither and
 play these). The First Game Rules are below; the Full Game Rules add to them (**Full Game Rules**, further down).
@@ -133,6 +134,37 @@ its bag, which match the booklet's pictures):
   and get no Building Cover against units in the same Building. The **Cathedral** (five hexes) is an indestructible
   multi-hex Building giving Infantry 3 Defense Dice, as a Building does. Bunkers are in the terrain packs, not the core
   missions, and aren't played. The Ardennes panels have no tank traps.
+
+## Factions
+
+Any two different factions may play (the rulebook lets even the same faction play in team games). Each faction's units are its three
+Building Boards in the mod (`game.scala`, from "BRITISH HEADQUARTERS 1" on; `tactics-art.py` cuts the tokens), unlocked as before for
+1 Manpower 2 Fuel and 1 Manpower 3 Fuel (the boards' backs, the same for every faction). The British, Soviet and OKW Commanders
+aren't in yet: with them, the Commanders choice deals none.
+
+- **Board icons** read as on the US and Wehrmacht boards; new ones: an eye is +1 Sight, an eye in a crosshair +1 Sight and +1
+  Range (the Infantry Section), a tile of two soldiers two AI dice in one upgrade (the Centaur), Remove Slow, Heroic Sacrifice (the
+  T-34's star: no VP for the enemy when it is destroyed, its owner still gains the XP), and the health upgrades, which add the health
+  at once (the Faction Guide says so of the SU-76's).
+- **British**: the Infantry Section builds the Mortar and Bofors Emplacements of the Platoon Command Post in the Supply Phase, paying
+  their board cost, one per Wrench a round, on an empty open hex next to it, not the round it spawned (the British Operating Manual on
+  the board's back); they aren't spawned. The Universal Carrier's two Munitions upgrades are a Flame die each; the first ends its
+  Transport and Capture, and its passenger falls back to the nearest empty hex toward a Retreat Point. The Centaur's **Strafing Fire**:
+  once its dice are on a target, the same dice may also go to one more enemy it could fire them at, next to that target, with full
+  damage to each. The Churchill is Slow.
+- **Soviet**: Conscripts have a Speed Die and a Wrench; the Sniper Squad fires only at range 3 (two gray range circles), and its
+  Camouflage is its XP upgrade, as the board shows (the Faction Guide says it spawns with it); the **T-70** toggles a No-Fire Capture
+  mode for 1 CP (it captures and can't fire, until switched back); the SU-85 is Slow.
+- **OKW**: the SWS Supply Truck converts into the Tier 2 (OKW Battlegroup) and Tier 3 (Schwerer Panzer HQ) Buildings: unlocking a tier
+  is a conversion of a truck on the map (not Retreating), paying the tier's cost; the truck becomes the Emplacement with its board's
+  stats and full health, and its passenger falls back as above. The Battlegroup (3 health, no attack) reinforces and spots
+  Camouflage, the Schwerer Panzer HQ (3 health) fires 1 AP at range 4. One of each at a time; a destroyed one is rebuilt by converting
+  another truck for the same cost, and the tier stays unlocked. Tier 2 and 3 units may spawn next to their Tier's Building, with Slow
+  the first round (Double Slow if already Slow). Sturmpioneers have a Close Range Firepower die and two Wrenches, and build Flak 37
+  Emplacements (2 health, range 3, 2 AI) for 4 Munitions, up to two a round; Obersoldaten are Camouflaged; the Stuka Halftrack sets
+  up and has a Firing Arc like a Weapon Team; the Raketenwerfer may set up in Buildings; the Sturmtiger's HE is HE Splash and it is Slow.
+- **Left out**: the anti-aircraft symbols and the "treat AP (HE) as AI against aircraft" notes (no aircraft in the core rules played
+  here).
 
 ## Commanders
 

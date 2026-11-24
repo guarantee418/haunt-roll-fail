@@ -64,6 +64,11 @@ class GameEvaluation(val game : Game, val self : Faction) {
             case SpawnAction(_, t, h) =>
                 val n = units(self).num
                 (n < 9) |=> (600 + t.tier * 120 + t.vehicle.??(60) - (t.weaponTeam && units(self).count(_.utype.weaponTeam) >= 2).??(500) - nearest(h) * 3) -> "spawn"
+                // OKW: a truck to convert into the next Tier Building
+                (t == SWSTruck && self.tier < 3 && units(self).exists(_.utype == SWSTruck).not && n >= 3) |=> 400 -> "truck"
+                (t == SWSTruck && units(self).count(_.utype == SWSTruck) >= 1) |=> -400 -> "one truck"
+                // British: Infantry Sections to build the Emplacements
+                (t == InfantrySection && units(self).count(_.utype == InfantrySection) < 2) |=> 400 -> "builders"
             case UpgradeAction(_, u, i, e) => true |=> (250 + u.utype.tier * 50) -> "upgrade"
 
             // Full Game Rules
@@ -124,6 +129,18 @@ class GameEvaluation(val game : Game, val self : Faction) {
                 (health(v) * 2 >= maxHealth(v)) |=> -100 -> "no smoke"
             case SmokeDoneAction(_, _) => true |=> 0 -> "done"
             case UnlockAction(_, t) => (units(self).num >= 4) |=> 800 -> "unlock"
+
+            // British, Soviet and OKW
+            case ConvertAction(_, t, v) => (units(self).num >= 4) |=> (850 - nearest(where(v)) * 10) -> "tier building"
+            case EmplaceMenuAction(_, t) => true |=> (units(self).count(_.utype.builtBy.any) < 3).?(700).|(350) -> "emplace"
+            case StrafeAction(_, _, t, _, _, _) => true |=> (400 - health(t) * 20) -> "strafe"
+            case NoStrafeAction(_, _, _, _) => true |=> 0 -> "no strafe"
+            case NoFireModeAction(_, u, _) =>
+                val onPoint = Board.points.contains(where(u)) && control.get(where(u)).has(self).not
+                (onPoint && noFire.contains(u).not) |=> 600 -> "capture"
+                (noFire.contains(u) && onPoint.not) |=> 500 -> "fire again"
+                (noFire.contains(u) && onPoint) |=> -300 -> "keep capturing"
+                (noFire.contains(u).not && onPoint.not) |=> -300 -> "keep firing"
             case PassAction(_) => true |=> 100 -> "pass"
             case _ =>
         }

@@ -5,6 +5,7 @@
 #   tactics-art.py fetch <dir>          downloads the mod's save (BSON) and the images used here into <dir>, named by
 #                                       the hash part of their Steam URL
 #   tactics-art.py make <dir> <out>     writes the images into <out> (webp2/tactics/images)
+#   tactics-art.py factions <dir> <out> british ...   only those factions' boards, tokens, emblems, flags and Spawn hexes
 #
 # The map is the two Moro River panels (MR1 and MR2, 6000x9000 each) side by side at a fifth of their size. The unit
 # tokens are the portraits on the Building Boards in a ring of the faction's color (a circle for Infantry, a rounded square
@@ -33,9 +34,19 @@ FILES = {
     'damage': 'CAB8FFB6A4AB01BF4032B4C709870E5136B0C4B7',
     'ops': '451C2F9A1352DD299B69AEC1FB30C16EB68F4149',
     'ops-back': '6E7EAE4C462BECAE0B39302F20024E468A260674',
+    # the British, Soviet and OKW Building Boards (2026-11-24)
+    'british-1': '156D1FA3195668036B8582EC87652A3D8EF13ADE',
+    'british-2': 'DB41F2BC320CEA36DDFA34513CDFA445C22603E8',
+    'british-3': 'CEF9B8A768041E2C0EEBBFFC7A39EEA8BED29DF4',
+    'soviet-1': '589860CCDAE2DCE85C7031752A49E29237A82C98',
+    'soviet-2': 'AEC71393CAE5B5904FB29144949BEF48DC9635E3',
+    'soviet-3': 'BCCCF75AD8DCC997E770CAC77EF652C717B92AAD',
+    'okw-1': 'F11D27745BE7AB692E122C87360F61B1EB44E6E0',
+    'okw-2': 'F7C015822C4DA14AF373455AD106470F3614670D',
+    'okw-3': 'F20C9C5483E9968B169BC3CC215D9E08579054C5',
 }
 
-COLORS = {'us': (111, 154, 62), 'wehrmacht': (201, 66, 59)}
+COLORS = {'us': (111, 154, 62), 'wehrmacht': (201, 66, 59), 'british': (200, 162, 74), 'soviet': (160, 32, 60), 'okw': (93, 122, 153)}
 
 # the units on each Building Board, top to bottom, with their kind
 BOARDS = {
@@ -45,7 +56,23 @@ BOARDS = {
     'wehrmacht-1': [('grenadiers', 'G'), ('mg42', 'G'), ('kubelwagen', 'Y')],
     'wehrmacht-2': [('panzer-grenadiers', 'G'), ('wm-mortar', 'G'), ('sdkfz-222', 'Y')],
     'wehrmacht-3': [('ostwind', 'R'), ('panzer-iv', 'R'), ('brummbar', 'R')],
+    'british-1': [('infantry-section', 'G'), ('vickers', 'G'), ('universal-carrier', 'Y')],
+    'british-2': [('six-pounder', 'G'), ('mortar-emplacement', 'P'), ('bofors', 'P')],
+    'british-3': [('cromwell', 'R'), ('centaur', 'R'), ('churchill', 'R')],
+    'soviet-1': [('conscripts', 'G'), ('sov-mortar', 'G'), ('scout-car', 'Y')],
+    'soviet-2': [('zis3', 'G'), ('sniper', 'G'), ('t70', 'R')],
+    'soviet-3': [('t34', 'R'), ('su76', 'R'), ('su85', 'R')],
+    'okw-1': [('sturmpioneers', 'G'), ('volksgrenadiers', 'G'), ('sws-truck', 'Y')],
+    'okw-2': [('raketenwerfer', 'G'), ('stuka-halftrack', 'Y'), ('luchs', 'R')],
+    'okw-3': [('obersoldaten', 'G'), ('panther', 'R'), ('sturmtiger', 'R')],
 }
+
+# tokens cut from elsewhere on a board (1350x1650 coordinates): the Flak Gun drawn in the Sturmpioneers' upgrade, the OKW Tier
+# Buildings with their board's emblem
+EXTRA = [('okw-1', (838, 500, 984, 632), 'flak', 'P', None), ('okw-2', (62, 62, 340, 300), 'battlegroup', 'P', 'II'), ('okw-3', (62, 62, 340, 300), 'schwerer-hq', 'P', 'III')]
+
+# the boards' rows differ a little: the Soviet and OKW boards' rows, where they aren't ROWS
+BOARD_ROWS = {'british-3': [300, 715, 1160], 'soviet-3': [300, 720, 1160], 'okw-2': [300, 690, 1065], 'okw-3': [300, 690, 1065]}
 
 # the portraits' top edges on a 1350x1650 board, row by row
 ROWS = [300, 725, 1160]
@@ -125,6 +152,55 @@ def white_to_alpha(img):
                 px[x, y] = (r, g, b, max(0, int(255 * (255 - m) / 105)))
     return img
 
+
+# a faction's images: its Spawn Area hexes, its control flag, its Building Boards, their units' tokens and its emblem
+# (tactics-art.py factions <dir> <out> british soviet okw: only those factions')
+def make_boards(d, out, factions):
+    def src(name):
+        return Image.open(os.path.join(d, FILES[name]))
+    W, H = 184.6, 200.4
+    os.makedirs(os.path.join(out, 'status'), exist_ok=True)
+    for f in factions:
+        c = COLORS[f]
+        webp(hexagon(W - 2, H - 2, c + (150,), c + (55,), 3), os.path.join(out, 'hex-spawn-' + f + '.webp'), lossless=True)
+        fl = Image.new('RGBA', (80, 96), (0, 0, 0, 0))
+        dr = ImageDraw.Draw(fl)
+        dr.rectangle((14, 8, 20, 92), fill=(60, 50, 40, 255))
+        dr.polygon([(20, 10), (74, 24), (20, 46)], fill=c + (255,), outline=(20, 20, 20, 255))
+        webp(fl, os.path.join(out, 'status', 'flag-' + f + '.webp'), lossless=True)
+    # tokens and the boards
+    os.makedirs(os.path.join(out, 'token'), exist_ok=True)
+    os.makedirs(os.path.join(out, 'board'), exist_ok=True)
+    os.makedirs(os.path.join(out, 'emblem'), exist_ok=True)
+    for board, units in BOARDS.items():
+        if board.rsplit('-', 1)[0] not in factions:
+            continue
+        img = src(board).convert('RGB')
+        k = img.size[0] / 1350
+        f = board.rsplit('-', 1)[0]
+        webp(img.resize((900, 1100), Image.LANCZOS), os.path.join(out, 'board', board + '.webp'), q=85)
+        for (unit, kind), top in zip(units, BOARD_ROWS.get(board, ROWS)):
+            p = img.crop((int(122 * k), int((top + 12) * k), int(316 * k), int((top + 206) * k)))
+            webp(token(p, kind, COLORS[f]), os.path.join(out, 'token', unit + '-' + f + '.webp'), lossless=False, q=90)
+        if board.endswith('-1'):
+            e = src(board).convert('RGBA').crop((int(62 * k), int(62 * k), int(340 * k), int(300 * k)))
+            webp(e.resize((160, 160), Image.LANCZOS), os.path.join(out, 'emblem', f + '.webp'), q=90)
+    for board, (x0, y0, x1, y1), unit, kind, label in EXTRA:
+        if board.rsplit('-', 1)[0] not in factions:
+            continue
+        img = src(board).convert('RGB')
+        k = img.size[0] / 1350
+        f = board.rsplit('-', 1)[0]
+        p = img.crop((int(x0 * k), int(y0 * k), int(x1 * k), int(y1 * k)))
+        t = token(p, kind, COLORS[f])
+        if label:
+            from PIL import ImageFont
+            dr = ImageDraw.Draw(t)
+            font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 34)
+            dr.text((80, 112), label, font=font, fill=(255, 255, 255, 255), anchor='mm', stroke_width=4, stroke_fill=(20, 20, 20, 255))
+        webp(t, os.path.join(out, 'token', unit + '-' + f + '.webp'), lossless=False, q=90)
+
+
 def make(d, out):
     os.makedirs(out, exist_ok=True)
     def src(name):
@@ -142,24 +218,8 @@ def make(d, out):
     W, H = 184.6, 200.4
     webp(hexagon(W - 6, H - 6, (255, 244, 200, 255), (255, 244, 200, 60), 6), os.path.join(out, 'hex-select.webp'), lossless=True)
     webp(hexagon(W - 6, H - 6, (255, 60, 40, 255), (255, 60, 40, 50), 6), os.path.join(out, 'hex-target.webp'), lossless=True)
-    for f, c in COLORS.items():
-        webp(hexagon(W - 2, H - 2, c + (150,), c + (55,), 3), os.path.join(out, 'hex-spawn-' + f + '.webp'), lossless=True)
 
-    # tokens and the boards
-    os.makedirs(os.path.join(out, 'token'), exist_ok=True)
-    os.makedirs(os.path.join(out, 'board'), exist_ok=True)
-    os.makedirs(os.path.join(out, 'emblem'), exist_ok=True)
-    for board, units in BOARDS.items():
-        img = src(board).convert('RGB')
-        k = img.size[0] / 1350
-        f = board.rsplit('-', 1)[0]
-        webp(img.resize((900, 1100), Image.LANCZOS), os.path.join(out, 'board', board + '.webp'), q=85)
-        for (unit, kind), top in zip(units, ROWS):
-            p = img.crop((int(122 * k), int((top + 12) * k), int(316 * k), int((top + 206) * k)))
-            webp(token(p, kind, COLORS[f]), os.path.join(out, 'token', unit + '-' + f + '.webp'), lossless=False, q=90)
-        if board.endswith('-1'):
-            e = src(board).convert('RGBA').crop((int(62 * k), int(62 * k), int(340 * k), int(300 * k)))
-            webp(e.resize((160, 160), Image.LANCZOS), os.path.join(out, 'emblem', f + '.webp'), q=90)
+    make_boards(d, out, COLORS)
 
     # resources: the mod's tokens, and a white cube for Experience
     os.makedirs(os.path.join(out, 'res'), exist_ok=True)
@@ -218,12 +278,6 @@ def make(d, out):
     d.rounded_rectangle((2, 2, 78, 78), radius=10, fill=(40, 120, 60, 255), outline=(20, 20, 20, 255), width=3)
     d.line([(18, 42), (34, 58), (62, 22)], fill=(255, 255, 255, 255), width=10, joint='curve')
     webp(s, os.path.join(out, 'status', 'setup.webp'), lossless=True)
-    for f, c in COLORS.items():
-        fl = Image.new('RGBA', (80, 96), (0, 0, 0, 0))
-        d = ImageDraw.Draw(fl)
-        d.rectangle((14, 8, 20, 92), fill=(60, 50, 40, 255))
-        d.polygon([(20, 10), (74, 24), (20, 46)], fill=c + (255,), outline=(20, 20, 20, 255))
-        webp(fl, os.path.join(out, 'status', 'flag-' + f + '.webp'), lossless=True)
 
     # the Operations deck (Full Game Rules): its seven cards, a 4x2 sheet of 600x825 cards, and its back
     os.makedirs(os.path.join(out, 'ops'), exist_ok=True)
@@ -236,5 +290,7 @@ def make(d, out):
 if __name__ == '__main__':
     if sys.argv[1] == 'fetch':
         fetch(sys.argv[2])
+    elif sys.argv[1] == 'factions':
+        make_boards(sys.argv[2], sys.argv[3], sys.argv[4:])
     else:
         make(sys.argv[2], sys.argv[3])

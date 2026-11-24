@@ -393,6 +393,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             val st = $[ImageRect]() ++
                 game.pinned.contains(u).$(ImageRect(new RawImage(img("status:pinned")), Rectangle(-size / 2, -size / 2, size * 0.32, size * 0.32), 1.0)) ++
                 (u.utype.setsUp && passenger.not).$(ImageRect(new RawImage(img(game.setUp.contains(u).?("status:setup").|("status:nofire"))), Rectangle(size * 0.18, -size / 2, size * 0.32, size * 0.32), 1.0)) ++
+                game.noFire.contains(u).$(ImageRect(new RawImage(img("status:nofire")), Rectangle(size * 0.18, -size / 2, size * 0.32, size * 0.32), 1.0)) ++
                 game.slowed.get(u).has(game.round).$(ImageRect(new RawImage(img("status:slow")), Rectangle(-size / 2, size * 0.18, size * 0.32, size * 0.32), 1.0)) ++
                 game.retreating.contains(u).$(ImageRect(new RawImage(img("status:retreat")), Rectangle(size * 0.18, size * 0.18, size * 0.32, size * 0.32), 1.0)) ++
                 game.facing.get(u).toList.map(e => ImageRect(arrowImage(e, u.faction.color), Rectangle(-size * 0.8, -size * 0.8, size * 1.6, size * 1.6), 1.0))
@@ -439,7 +440,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         val points = Div(("Control Points " + game.pointsOf(f).num).txt)(styles.small)
 
         // the Commander: its name and tiers unlocked (or how many are drawn), tapping shows the cards
-        val commander = game.commanders.?(Div(OnClick(("commander", f), Span(game.commanderOf.get(f)./(c => c.elem ~ " " ~ (game.tiersOf.getOrElse(f, 0) + "/4").hl).|(("Commander: " + game.drawn.getOrElse(f, $[Commander]()).num + " drawn").txt), xlo.pointer)))(styles.small)).|(Empty)
+        val commander = (game.commanders && Commander.all.exists(_.faction == f)).?(Div(OnClick(("commander", f), Span(game.commanderOf.get(f)./(c => c.elem ~ " " ~ (game.tiersOf.getOrElse(f, 0) + "/4").hl).|(("Commander: " + game.drawn.getOrElse(f, $[Commander]()).num + " drawn").txt), xlo.pointer)))(styles.small)).|(Empty)
 
         container.replace((title ~ vp ~ stock ~ tier ~ commander ~ points ~ unitRow).div(xstyles.fillHeight), resources, onClick)
 
@@ -549,7 +550,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         val t = u.utype
         val ups = game.bought.getOrElse(u, $[Bought]())./(_.effect)
         Div(Image("token:" + t.id + "-" + u.faction.id, styles.icon) ~ u.elem) ~
-        Div(t.kind.elem ~ ", health " ~ game.health.get(u)./(_.hl).|(t.health.hl) ~ "/" ~ t.health.hl ~ ", range " ~ ((t.minRange > 1).??(t.minRange + "-") + game.rangeOf(u)).hl ~ ", sight " ~ game.sightOf(u).hl) ~
+        Div(t.kind.elem ~ ", health " ~ game.health.get(u)./(_.hl).|(t.health.hl) ~ "/" ~ game.maxHealth(u).hl ~ ", range " ~ ((t.minRange > 1).??(t.minRange + "-") + game.rangeOf(u)).hl ~ ", sight " ~ game.sightOf(u).hl) ~
         Div("Attack " ~ game.attacksOf(u)./(a => a.icon ~ (game.full && game.fixedGun(u, a)).?("(fixed)".spn(styles.small)).|(Empty)).merge) ~
         ups.any.?(Div("Upgrades: " ~ ups./(_.elem).comma)).|(Empty) ~
         game.facing.get(u)./(e => Div("Facing " ~ Facing.elem(e))).|(Empty) ~
@@ -557,6 +558,9 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         (game.full && t.retreatPoint).?(Div("Retreat Point".hl ~ ": Infantry may Retreat to the hexes next to it")).|(Empty) ~
         game.retreating.contains(u).?(Div("Retreating".hl)).|(Empty) ~
         game.stance.contains(u).?(Div("Defensive Stance".hl ~ ": Heavy Cover this round")).|(Empty) ~
+        game.noFire.contains(u).?(Div("No-Fire Capture mode".hl ~ ": captures, doesn't fire (1 CP to switch back)")).|(Empty) ~
+        u.utype.strafing.?(Div("Strafing Fire".hl ~ ": its damage may also go, in full, to a second unit next to its target")).|(Empty) ~
+        (u.utype.tierBuilding > 0).?(Div("Tier Building".hl ~ ": its Tier's units may spawn next to it, with Slow (Double Slow if already Slow) their first round")).|(Empty) ~
         game.hullDown.contains(u).?(Div("Hull Down".hl ~ ": 2 Defense Dice until it moves")).|(Empty) ~
         game.assaults.get(u)./(d => Div("Assaulting " ~ d.elem)).|(Empty) ~
         Div(("Board: Tier " + t.tier + ", " + Tiers.name(u.faction, t.tier)).spn(styles.small))
