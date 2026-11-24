@@ -52,6 +52,8 @@ Compile / unmanagedSourceDirectories += baseDirectory.value / "bsg"
 
 Compile / unmanagedSourceDirectories += baseDirectory.value / "pincer"
 
+Compile / unmanagedSourceDirectories += baseDirectory.value / "tactics"
+
 libraryDependencies += "com.lihaoyi" %%% "fastparse" % "3.0.2"
 
 libraryDependencies += "com.lihaoyi" %%% "pprint" % "0.7.0"

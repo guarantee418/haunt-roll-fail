@@ -126,6 +126,7 @@ object HRF {
         nort.Meta -> nort.UI,
         nort.MetaAdset -> nort.UI,
         pincer.Meta -> pincer.UI,
+        tactics.Meta -> tactics.UI,
     )
 
     val metas = metaUIs.lefts
