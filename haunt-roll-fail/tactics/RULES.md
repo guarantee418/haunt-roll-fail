@@ -5,7 +5,8 @@ on the site as **Company of Heroes** (meta `tactics`, URL `/play/tactics`) while
 core rulebook (RulesPal's copy, and the four books in the Tabletop Simulator mod "Company of Heroes - 2nd Edition", Steam
 workshop 2314664989: Rulebook, Faction Guide, Mission Booklet, Solo Rulebook), two of the five core factions (US Forces,
 Wehrmacht, British Forces, Soviet Forces, Oberkommando West: **Factions**, further down) on
-the Mission Booklet's six two-panel core missions (**Missions**, further down; Moro River by default), one player each. The setup's **Rules** choice picks the **Full Game Rules** (every new game since
+the Mission Booklet's six two-panel core missions (**Missions**, further down; Moro River by default), one player each, or
+three to five players in teams (**Team games**, further down). The setup's **Rules** choice picks the **Full Game Rules** (every new game since
 2026-11-24, `FullGameRules`) or the **First Game Rules** (`FirstGameRules`; games made before the choice have neither and
 play these). The First Game Rules are below; the Full Game Rules add to them (**Full Game Rules**, further down).
 With the Full Game Rules come the twelve core Commanders (**Commanders**, further down). Where the rules leave something open, the choice made is under
@@ -24,6 +25,50 @@ With the Full Game Rules come the twelve core Commanders (**Commanders**, furthe
 - Each team rolls three Damage Dice; the most green symbols, then black, goes first (a tie rolls again). The team going
   second places its three starting Infantry first: any of its Tier 1 Infantry (US: Riflemen, Mortar Team; Wehrmacht:
   Grenadiers, MG42 Team), each in an empty hex of its Spawn Area.
+
+## Team games
+
+Since 2026-11-24, three to five players play in two teams on any mission but the free-for-all (rulebook p. 6, Team Game End Game Conditions, and 11.0, uneven
+teams allowed): the Allies (US Forces, British Forces, Soviet Forces) against the Axis (Wehrmacht, Oberkommando West), so the
+setup refuses three players or more on one side (`validateFactionCombination` in `meta.scala`). Two players are two teams as
+before, any two factions, and play as they did (`teamGame` in `game.scala` is false, every helper below gives the old answer).
+
+- The team of the first seat is team 1 (the first Spawn Area); teammates share their team's Spawn Area (`teams`, `team`, `mates`,
+  `enemies`, `foe`).
+- Teammates share VPs: a team's VPs are its players' together (`teamVP`), and the game ends at 3 more than the game length, 21,
+  24 or 27 (`endVP`, p. 6). The 3 bonus VPs for the most Victory Point Control Points go to the team holding the most; a tie in
+  VPs goes to the team that went first in the game. A unit destroyed gives its VP to the other team's first player (shared
+  anyway).
+- Each player starts with **2** Infantry, the rulebook's note for a team game on a smaller than recommended map (p. 7: 2 vs 2
+  is for 3-panel maps, the missions here are 2-panel). One player of each team rolls for first (the teams' first players); the team going
+  second places all its starting Infantry first, in seating order.
+- Maneuver: the teams alternate turns; in a team's turn each player spends their own 3 CP, one after another in seating order
+  (the rulebook has them play at the same time). The Operations card is drawn and picked by the first team's first player,
+  and gives every player that many turns.
+- Purchases: the teams alternate each purchase; teammates, simultaneous in the rulebook, take their purchases in turn, in the
+  order A1, B1, A2, B2... (`interleaved`), skipping those who passed.
+- Teammates are not enemies: they don't neutralize each other's Control Points, Assault each other or take each other's HE
+  Splash as enemies (an ally in the splash is hit as one's own unit), and a team sees what any of its units sees, Recon Sweeps
+  and spotting Camouflage too (`visible`, `seesHex`, `spottedIn`).
+- Reinforce and Wrench repairs help teammates' units too (rulebook p. 25-26: "all sources of this ability may also benefit your
+  teammates"). Not done: Commander abilities that help "allied" units still help only the player's own.
+
+### Free-for-all
+
+The Mission Booklet's 8.0, **Moro River, 3 Way Free-for-all** (`MoroRiverFFA` in `missions.scala`, the Map choice
+`MoroRiverFFAMap`), takes exactly three players, any factions, each a team of their own (`freeForAll`; rulebook 11.0):
+
+- MR1 and MR2 with Moro River's terrain, cover and tank traps, and the mission's own twelve Control Points (from the mod's bag
+  "6VP 3FFA Moro River", the same as the booklet's picture; six with Victory Points). Starting stockpile 6 Manpower, 4 Munitions,
+  2 Fuel (the booklet; the bag's name says 4/2/3, Moro River's); the game ends at **15** VP, whatever the Game length (`trigger`).
+- Three Spawn Areas of four hexes, read off the booklet's picture: the first seat's at the top left, the second's at the top
+  right, the third's at the bottom middle (`areas`). Three starting Infantry each.
+- Each player rolls three Damage Dice; the best goes first, a tie for the best rolls again. Turns go round in turn order, and the
+  first player passes to the next each round. Starting Infantry are placed in the reverse order.
+- A destroyed unit gives 1 VP to every player who assigned it Damage that Damage Phase (direct, HE Splash, strikes; 11.0), or who
+  hit it with Overwatch. A unit destroyed with no Damage assigned to it (a passenger left with nowhere to go, a failed Assault with
+  nowhere to fall back) gives none.
+- Purchases go round one at a time in turn order. The 3 bonus VPs go to the player holding the most Victory Point Control Points.
 
 ## A round
 

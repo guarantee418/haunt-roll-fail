@@ -44,7 +44,7 @@ case class Hex(c : Int, r : Int) extends Record with Elementary {
 
 // a map: its rows (see MoroRiver), its picture, the starting stockpile (Manpower, Munitions, Fuel), and whether adjacent Buildings
 // are multi-hex Buildings (Full Game Rules 10.2: units see and fire inside one, and get no Cover from units in the same Building)
-class MapData(val id : String, val name : String, val image : String, val stock : (Int, Int, Int), val multiHex : Boolean, val data : $[String], val x0 : Double = 185.2, val sides : Boolean = false) {
+class MapData(val id : String, val name : String, val image : String, val stock : (Int, Int, Int), val multiHex : Boolean, val data : $[String], val x0 : Double = 185.2, val sides : Boolean = false, val areas : $[$[Hex]] = $(), val trigger : |[Int] = None) {
     val width = 2400
     val height = 1800
 
@@ -124,7 +124,8 @@ class MapData(val id : String, val name : String, val image : String, val stock 
 
     // the Spawn Areas: the back rows, or with `sides` the hexes along the left (Team 1) and right (Team 2) edges, as the Mission Booklet's
     // Across the Don and Road to Moscow put them (its numbered badges mark the full hexes of that column; the half hexes there are taken too)
-    def spawn(team : Int) : $[Hex] = sides.?(hexes.%(h => (team == 0).?(x(h) < dx * 0.75).|(x(h) > width - dx * 0.75))).|(hexes.%(h => h.r == (team == 0).?(0).|(12))).%(h => terrain(h) != Water)
+    // a free-for-all mission's numbered Spawn Areas, one a player; else the back rows (or the left and right edges)
+    def spawn(team : Int) : $[Hex] = if (areas.any) areas(team) else sides.?(hexes.%(h => (team == 0).?(x(h) < dx * 0.75).|(x(h) > width - dx * 0.75))).|(hexes.%(h => h.r == (team == 0).?(0).|(12))).%(h => terrain(h) != Water)
 
     // LINE OF SIGHT: Buildings and Destroyed Buildings between two hexes block it; a line running along an edge isn't blocked,
     // so it is drawn twice, nudged to either side, and blocked only if both are

@@ -23,6 +23,27 @@ object MoroRiver extends MapData("moro", "Moro River", "map", (4, 2, 3), false, 
     case l => l
 })
 
+// Moro River, 3 Way Free-for-all (Mission Booklet 8.0, 2026-11-24): MR1 | MR2 with its own Control Points (from the mod's bag
+// "6VP 3FFA Moro River", the same as the booklet's picture), stockpile 6/4/2, the game ending at 15 VP, and three numbered Spawn
+// Areas of four hexes read off the booklet's picture: 1 top left, 2 top right, 3 at the bottom
+object MoroRiverFFA extends MapData("moroffa", "Moro River, 3 Way Free-for-all", "map", (6, 4, 2), false, MoroRiverFFARows.rows,
+    areas = $($(Hex(1, 1), Hex(0, 2), Hex(1, 2), Hex(1, 3)), $(Hex(11, 1), Hex(12, 1), Hex(11, 2), Hex(12, 2)), $(Hex(5, 11), Hex(6, 11), Hex(7, 11), Hex(8, 11))),
+    trigger = |(15))
+
+object MoroRiverFFARows {
+    val points = Map("1 6" -> "MF", "1 7" -> "VU", "3 4" -> "MU", "3 9" -> "MU", "4 6" -> "VF", "6 5" -> "VF", "6 7" -> "VF",
+        "8 0" -> "VU", "8 12" -> "MF", "8 6" -> "MU", "9 1" -> "MF", "9 12" -> "VU")
+
+    // Moro River's terrain, cover and tank traps, its Control Points replaced by these
+    val rows = MoroRiver.data.map { l =>
+        val p = l.split(" ")
+        val key = p(0) + " " + p(1)
+        val trap = p(4).startsWith("T").??("T")
+        val extra = trap + points.getOrElse(key, "")
+        $(p(0), p(1), p(2), p(3), extra.isEmpty.?("-").|(extra)).mkString(" ")
+    }
+}
+
 // Across the Don (MR1 | MR2): the Spawn Areas are the left and right edges
 object AcrossTheDon extends MapData("don", "Across the Don", "map", (5, 3, 3), false, AcrossTheDonRows.rows, sides = true)
 

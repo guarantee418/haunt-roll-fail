@@ -313,8 +313,12 @@ setup's Commanders choice, `DrawCommanders`, 2026-11-24: `tactics/commanders.sca
 and every game made before the choice, which replay unchanged), with the Building
 Boards, map panels and books of the Tabletop Simulator mod 2314664989 (`tactics/tools/tactics-art.py`, images in
 `webp2/tactics/images/`; the map's lines read off the art by `tactics/tools/map-edges.py` and `map-data.py` into `Board.data`).
+Since 2026-11-24, three to five players play team games, Allies (US, British, Soviet) against Axis (Wehrmacht, OKW), sharing VPs
+(3 more to end), sight and Control Points, 2 starting Infantry each, teams alternating turns and purchases (`teams`, `mates`, `foe`,
+`nextTurn`, `interleaved` in `tactics/game.scala`; two players are two teams and play as before), and three the Mission Booklet's
+3 Way Free-for-all on Moro River (`MoroRiverFFA`, `MapData.areas` and `trigger`; VP to every player who damaged a destroyed unit).
 `tactics/RULES.md` has the rules as played and the readings, `tactics/HANDOFF.md` the state, files, testing (`tactics.Host`,
-`tactics.Dump`, `tactics.Replay`; `TACTICS_RULES=first` for the First Game Rules) and what is next (team games, the Lost Brigades).
+`tactics.Dump`, `tactics.Replay`; `TACTICS_RULES=first` for the First Game Rules) and what is next (Commander abilities for teammates, the Lost Brigades).
 
 ## Building
 
