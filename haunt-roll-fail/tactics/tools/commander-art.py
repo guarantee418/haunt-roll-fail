@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # The Commander cards and the tokens of the units they bring (webp2/tactics/images/commander/, token/), cut from the 2nd Edition
 # Faction Guide (the PDF in the Tabletop Simulator mod "Company of Heroes - 2nd Edition", Steam workshop 2314664989): its pages 11
-# (US core Commanders) and 17 (Wehrmacht), 12 and 13 (the US expansion Commanders), 18 and 19 (the Wehrmacht's), 24 and 25 (the British), 30 and 31 (the Soviets), rendered at 220 dpi with `pdftoppm -f 11 -l 11 -r 220 -png guide.pdf <dir>/hi` (and 17;
+# (US core Commanders) and 17 (Wehrmacht), 12 and 13 (the US expansion Commanders), 18 and 19 (the Wehrmacht's), 24 and 25 (the British), 30 and 31 (the Soviets), 37 and 38 (the OKW), rendered at 220 dpi with `pdftoppm -f 11 -l 11 -r 220 -png guide.pdf <dir>/hi` (and 17;
 # 23, 29 and 36 for the British, Soviet and OKW, saved as hi-23.png and so on),
 # and the mod's US and Wehrmacht Lost Brigades sheets for two portraits (Assault Engineers, MG Bunker; `tactics-art.py fetch` names).
 #
@@ -31,7 +31,10 @@ LAYOUT['hi-24'] = ([(0.109, 0.369), (0.397, 0.656), (0.685, 0.945)], [(0.045, 0.
 LAYOUT['hi-25'] = ([(0.107, 0.367), (0.397, 0.656), (0.685, 0.945)], [(0.045, 0.477), (0.531, 0.945)])
 # the Soviet expansion Commanders: pages 30 and 31 (printed 29 and 30)
 LAYOUT['hi-30'] = LAYOUT['hi-31'] = ([(0.076, 0.336), (0.37, 0.63), (0.664, 0.923)], [(0.045, 0.477), (0.522, 0.955)])
-EXPANSION = ('hi-12', 'hi-13', 'hi-18', 'hi-19', 'hi-24', 'hi-25', 'hi-30', 'hi-31')
+# the OKW expansion Commanders: pages 37 and 38 (printed 36 and 37)
+LAYOUT['hi-37'] = ([(0.104, 0.363), (0.388, 0.647), (0.675, 0.934)], [(0.045, 0.477), (0.523, 0.954)])
+LAYOUT['hi-38'] = ([(0.107, 0.367), (0.4, 0.659), (0.688, 0.947)], [(0.046, 0.478), (0.533, 0.945)])
+EXPANSION = ('hi-12', 'hi-13', 'hi-18', 'hi-19', 'hi-24', 'hi-25', 'hi-30', 'hi-31', 'hi-37', 'hi-38')
 
 # page, column, row -> the Commander's id (as `Commander.id` in game.scala)
 CARDS = {
@@ -59,6 +62,9 @@ CARDS = {
     ('hi-30', 1, 0): 'urban-assault-tactics', ('hi-30', 1, 1): 'counterattack', ('hi-30', 1, 2): 'stalingrad',
     ('hi-31', 0, 0): 'siege-militia', ('hi-31', 0, 1): 'frontline', ('hi-31', 0, 2): 'spetsnaz',
     ('hi-31', 1, 0): 'terror-tactics', ('hi-31', 1, 1): 'shock-rifle', ('hi-31', 1, 2): 'soviet-industry',
+    ('hi-37', 0, 0): 'terror-west', ('hi-37', 0, 1): 'tank-destroyer-west', ('hi-37', 0, 2): 'stug-assault-okw',
+    ('hi-37', 1, 0): 'stug-tactics-okw', ('hi-37', 1, 1): 'storm', ('hi-37', 1, 2): 'encirclement',
+    ('hi-38', 0, 0): 'joint-operations',
 }
 
 # a panel's portrait in a card crop (about 1016 x 620): panel 0 to 3 from the left
@@ -122,6 +128,11 @@ UNITS = [
     ('penal', 'counterattack', 0, 'G', 'soviet'),
     ('isu152', 'counterattack', 2, 'R', 'soviet'),
     ('kv8', 'terror-tactics', 2, 'R', 'soviet'),
+    ('hetzer', 'storm', 3, 'R', 'okw'),
+    ('stug', 'stug-assault-okw', 1, 'R', 'okw'),
+    ('king-tiger', 'terror-west', 3, 'R', 'okw'),
+    ('jagdpanther', 'tank-destroyer-west', 3, 'R', 'okw'),
+    ('stormtroopers', 'stug-tactics-okw', 0, 'G', 'okw'),
 ]
 
 def main(d, out):

@@ -320,7 +320,7 @@ Since 2026-11-24, three to five players play team games, Allies (US, British, So
 `tactics/RULES.md` has the rules as played and the readings, `tactics/HANDOFF.md` the state, files, testing (`tactics.Host`,
 `tactics.Dump`, `tactics.Replay`; `TACTICS_RULES=first` for the First Game Rules) and what is next (Commander abilities for teammates, the other factions' expansion Commanders, the Lost Brigades). The setup's Expansion
 Commanders toggle (`ExpansionCommanders`, `Commander.pool` in `tactics/commanders.scala`, 2026-11-24) adds the expansion packs'
-Commanders to the draw: so far the US Forces' nine, the Wehrmacht's eight, the British Forces' eight and the Soviet Forces' twelve (Faction Guide pages 11 and 12, 17 and 18, 23 and 24, 29 and 30, cut by `tactics/tools/commander-art.py`).
+Commanders to the draw: all 44 of the five factions (Faction Guide pages 11 and 12, 17 and 18, 23 and 24, 29 and 30, 36 and 37, cut by `tactics/tools/commander-art.py`).
 
 ## Building
 

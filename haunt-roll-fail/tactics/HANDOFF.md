@@ -9,7 +9,7 @@ played and the choices made.
 ## State
 
 - Playable: two players, any two of the five core factions, or team games of three to five, Allies against Axis, or three on the 3 Way Free-for-all (RULES.md, Team games) (US Forces, Wehrmacht, British Forces, Soviet Forces, Oberkommando West;
-  thirty core Commanders, six a faction, and the US, Wehrmacht, British and Soviet expansion Commanders (37) with the Expansion Commanders option), on the Mission Booklet's six 2-panel core missions (the setup's
+  thirty core Commanders, six a faction, and the 44 expansion Commanders of the five factions with the Expansion Commanders option), on the Mission Booklet's six 2-panel core missions (the setup's
   Map choice, `MapChoice`, Moro River by default: Moro River, Across the Don, Between Two Rivers, Ardennes Forest, Frozen Lake,
   Road to Moscow, with Ice, the Cathedral and multi-hex Buildings on the Ardennes panels); Local (hotseat), Quick Game and Play Online, with
   an Easy bot. The setup's Rules choice: the Full Game Rules (every new game since 2026-11-24: Operations deck, Retreats,
@@ -96,9 +96,7 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
 
 ## Next
 
-- The expansion Commanders of the OKW (the PDF's pages 37 and 38), the same way as the US
-  ones (RULES.md, Expansion Commanders; `commander-art.py` cuts the cards), then the Lost Brigades building extensions, and the buildable
-  barbed wire and tank traps.
+- The Lost Brigades building extensions (the Faction Guide's Building Extensions pages), and the buildable barbed wire and tank traps.
 - Full Game readings to confirm with the team (RULES.md, Interpretations 7 to 12): the Firing Arc's width, Retreat paths,
   Overwatch on a hex passed through.
 - Team games: allied abilities for teammates (Reinforce, repairs), the 4-panel missions (the mod has only the four core panels,

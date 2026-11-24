@@ -297,7 +297,7 @@ plays rulebook 8.0 and 8.2 with the thirty core Commander cards (six a faction, 
 
 The setup's **Expansion Commanders** toggle (`ExpansionCommanders`, only with Draw three Commanders; 2026-11-24) adds the expansion
 packs' Commanders to the ones each player draws three from (`Commander.pool`; games without it, and every game made before it, draw
-from the core six). So far the US Forces' nine, from the Faction Guide's pages 11 and 12, the Wehrmacht's eight, the British Forces' eight and the Soviet Forces' twelve (Elite Commanders Collection: Light Cavalry,
+from the core six). So far the US Forces' nine, from the Faction Guide's pages 11 and 12, the Wehrmacht's eight, the British Forces' eight, the Soviet Forces' twelve and the OKW's seven (44 in all) (Elite Commanders Collection: Light Cavalry,
 Heavy Cavalry, Tactical Support, Motor Pool; Pathfinder Pack: Pathfinder Company; StuG Pack: Devil's Brigade; Lost Brigades Pack: Cavalry
 Rifle, Urban Assault, Engineer Assault Companies). Their units were read off the cards' call-in panels (health, range, a die for each
 figure, turreted for curved arrows): M5 Stuart (heavy vehicle, health 3, range 2, AI and AP, two Speed Dice, 2 Manpower 3 Fuel), M26
@@ -345,6 +345,14 @@ Readings:
   - Battlefield Promotions: the Conscripts become a new unit of the other type in the same hex, 2 more health (5 at most), keeping their
     Flame upgrade; it is a purchase.
   - Siege Militia's free Partisans and the free Anti-Tank Partisans count toward their one a round.
+- The OKW's seven (pages 36 and 37; Elite Commanders Collection: Terror Doctrine West, Tank Destroyer West; StuG Pack: StuG Assault
+  Doctrine and StuG Tactics, the Wehrmacht's cards in the OKW's colors; Lost Brigades Pack: Storm, Encirclement and Joint Operations
+  Doctrines) bring the Flammpanzer 38 Hetzer (heavy vehicle, 3, range 3, a Flame and 3 fixed AI, a Defense Die, 3 Manpower 2 Fuel; Assaulting,
+  its damage may also go to a second target next to the first, like the Centaur's Strafing Fire), and the Wehrmacht's StuG III G, King
+  Tiger, Jagdpanther and Stormtroopers as OKW units (their types shared, `UnitType.shared`, with OKW tokens); OKW units of Tier 2 and 3 spawn
+  next to their Tier Buildings as the cards say ("Requires and spawns at Tier 2/3"). Ober Defense is bought with Advanced Emplacements'
+  brace step, up to 4 Munitions; Tank Desant Tactics' free Infantry is a Volksgrenadier squad for the OKW; Veteran Kettenkrad is +1 health
+  and Camouflage.
 - A panel naming a call-in with no "one spawns for free" brings no free unit (`...Plain` abilities).
 - Strategic Maneuvers is the Scout Car's No-Fire mode for Stuarts; Combined Arms counts a unit next to another of the same player's;
   Requisition Officer takes 1 Manpower off every Sherman and Wolverine chassis (Easy Eight, Dozer, Jackson too).

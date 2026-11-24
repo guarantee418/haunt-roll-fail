@@ -269,6 +269,20 @@ case object T3485CallInPlain extends Ability("T-34-85 Medium Tank", "The T-34-85
 case object DShKCallInPlain extends Ability("DShK 38 Machine Gun", "The DShK 38 can be bought.")
 case object ML20Barrage extends Ability("ML-20 152mm Light Barrage", "At the start of your Maneuver Phase spend your very first 1 CP and 1 Munitions: a hex takes 1 HE in the Damage Phase.")
 
+// OKW expansion Commanders (2026-11-24; Faction Guide pages 36 and 37: Elite Commanders Collection, StuG Pack, Lost Brigades Pack)
+case object TerrorWestOber extends Ability("Terror Doctrine West", "Obersoldaten may also spawn next to the Tier 2 Building (still needing Tier 3). Tier 3 costs 1 less Manpower.")
+case object RecoupLosses extends Ability("Recoup Losses", "At the start of your Maneuver Phase spend your very first 2 CP and 1 Munitions: this round each Damage to your Infantry gives you 1 Manpower.")
+case object OberDefense extends Ability("Ober Defense", "Once Damage is assigned, each targeted Obersoldaten squad may pay X Munitions for +X Defense Dice this round. One Obersoldaten spawns for free.")
+case object PanzerfusilierCallInPlain extends Ability("Panzerfusiliers", "Panzerfusiliers can be bought.")
+case object VeteranKettenkrad extends Ability("Storm Doctrine", "Kettenkrads can be bought, Veteran: 2 health and Camouflage. One spawns for free.")
+case object HetzerCallIn extends Ability("Flammpanzer 38 Hetzer", "The Hetzer can be bought; Assaulting, it may deal its damage to two targets. One spawns for free.")
+case object HetzerCallInPlain extends Ability("Flammpanzer 38 Hetzer", "The Hetzer can be bought; Assaulting, it may deal its damage to two targets.")
+case object EncirclementVolks extends Ability("Encirclement Doctrine", "Volksgrenadiers have their 2 extra squad members upgrade (+2 health). One spawns for free.")
+case object OKWBreakthrough extends Ability("Breakthrough Tactics", "After spending a first CP on a Vehicle, pay 2 Munitions to move it once more for free. One Volksgrenadier and one Hetzer spawn for free.")
+case object JaegerCallInPlain extends Ability("Jaeger Recon Squad", "Jaeger Recon Squads can be bought.")
+case object OKWPak43Ability extends Ability("Pak 43 Emplacement", "Sturmpioneers can build a Pak 43 Emplacement for 4 Manpower.")
+case object SmokeCanistersStuka extends Ability("Smoke Canisters", "Vehicles may pay 2 Munitions to Smoke their hex at the start of the Damage Phase. One Stuka Halftrack spawns for free.")
+
 // a card: the Commander's name, its four abilities with their XP costs and the Tier Building each needs (0 for none)
 case class Tier(ability : Ability, xp : Int, needs : Int = 0) extends Record
 
@@ -350,6 +364,15 @@ case object TerrorTactics extends Commander("terror-tactics", "Terror Tactics", 
 case object ShockRifleTactics extends Commander("shock-rifle", "Shock Rifle Tactics", Soviet, $(Tier(DShKCallInPlain, 1), Tier(ML20Barrage, 1), Tier(ATAmbushTactics, 4, 2), Tier(KV8CallInFree, 4, 3)))
 case object SovietIndustryTactics extends Commander("soviet-industry", "Soviet Industry Tactics", Soviet, $(Tier(DShKCallIn, 3), Tier(ForwardStationAbility, 2), Tier(T3485CallInPlain, 1, 3), Tier(KV8CallInFree, 4, 3)))
 
+// the OKW expansion Commanders (Faction Guide pages 36 and 37); the StuG Pack's two are the Wehrmacht's cards
+case object TerrorDoctrineWest extends Commander("terror-west", "Terror Doctrine West", OKW, $(Tier(TerrorWestOber, 1), Tier(RecoupLosses, 2), Tier(OberDefense, 4, 3), Tier(KingTigerCallIn, 5, 3)))
+case object TankDestroyerWest extends Commander("tank-destroyer-west", "Tank Destroyer West", OKW, $(Tier(MarkVehicle, 1), Tier(PanzerfusilierCallInPlain, 1), Tier(PumaCallIn, 4, 2), Tier(JagdpantherCallIn, 4, 3)))
+case object StuGAssaultDoctrineOKW extends Commander("stug-assault-okw", "StuG Assault Doctrine", OKW, StuGAssaultDoctrine.tiers)
+case object StuGTacticsOKW extends Commander("stug-tactics-okw", "StuG Tactics", OKW, StuGTactics.tiers)
+case object StormDoctrine extends Commander("storm", "Storm Doctrine", OKW, $(Tier(VeteranKettenkrad, 3), Tier(LeFH18Ability, 1), Tier(StukaStrafe, 1), Tier(HetzerCallIn, 4, 3)))
+case object EncirclementDoctrine extends Commander("encirclement", "Encirclement Doctrine", OKW, $(Tier(EncirclementVolks, 3), Tier(FragmentationBomb, 1), Tier(HetzerCallInPlain, 1, 3), Tier(OKWBreakthrough, 5)))
+case object JointOperationsDoctrine extends Commander("joint-operations", "Joint Operations Doctrine", OKW, $(Tier(JaegerCallInPlain, 1), Tier(OKWPak43Ability, 1), Tier(SmokeCanistersStuka, 4, 2), Tier(HetzerCallIn, 4, 3)))
+
 case object BreakthroughDoctrine extends Commander("breakthrough", "Breakthrough Doctrine", OKW, $(Tier(WillNotDieOld, 1), Tier(PanzerfusilierCallIn, 3), Tier(BreakthroughTactics, 3), Tier(PantherReinforcements, 2, 3)))
 case object ScavengeDoctrine extends Commander("scavenge", "Scavenge Doctrine", OKW, $(Tier(ThoroughSalvage, 1), Tier(JaegerCallIn, 3), Tier(PumaCallIn, 4, 2), Tier(VeteranLeFH, 2)))
 case object EliteArmoredDoctrine extends Commander("elite-armored", "Elite Armored Doctrine", OKW, $(Tier(KettenkradCallIn, 1), Tier(HeavyLuchs, 4, 2), Tier(GrandAssault, 4), Tier(SturmtigerReinforcements, 2, 3)))
@@ -370,7 +393,8 @@ object Commander {
         HammerDoctrine, RoyalArtilleryRegiment, RoyalArmoredCorps, TankHunterRegiment, SpecialServiceBrigade, AssaultInfantryRegiment,
         AssaultOfficerRegiment, VanguardOperationsRegiment,
         FrontalAssaultDoctrine, GuardsMotorTactics, UrbanDefenseTactics, UrbanAssaultTactics, CounterattackTactics, HeroesOfStalingrad,
-        SiegeMilitia, FrontlineTactics, SpetsnazBrigade, TerrorTactics, ShockRifleTactics, SovietIndustryTactics)
+        SiegeMilitia, FrontlineTactics, SpetsnazBrigade, TerrorTactics, ShockRifleTactics, SovietIndustryTactics,
+        TerrorDoctrineWest, TankDestroyerWest, StuGAssaultDoctrineOKW, StuGTacticsOKW, StormDoctrine, EncirclementDoctrine, JointOperationsDoctrine)
 
     // the expansion Commanders (the setup's Expansion Commanders option)
     val expansion = $[Commander](LightCavalryCompany, HeavyCavalryCompany, TacticalSupportCompany, MotorPoolCompany, PathfinderCompany,
@@ -380,7 +404,8 @@ object Commander {
         HammerDoctrine, RoyalArtilleryRegiment, RoyalArmoredCorps, TankHunterRegiment, SpecialServiceBrigade, AssaultInfantryRegiment,
         AssaultOfficerRegiment, VanguardOperationsRegiment,
         FrontalAssaultDoctrine, GuardsMotorTactics, UrbanDefenseTactics, UrbanAssaultTactics, CounterattackTactics, HeroesOfStalingrad,
-        SiegeMilitia, FrontlineTactics, SpetsnazBrigade, TerrorTactics, ShockRifleTactics, SovietIndustryTactics)
+        SiegeMilitia, FrontlineTactics, SpetsnazBrigade, TerrorTactics, ShockRifleTactics, SovietIndustryTactics,
+        TerrorDoctrineWest, TankDestroyerWest, StuGAssaultDoctrineOKW, StuGTacticsOKW, StormDoctrine, EncirclementDoctrine, JointOperationsDoctrine)
 
     // the core six of a faction (every game without the option, and every game made before it)
     def of(f : Faction) = all.diff(expansion).%(_.faction == f)
@@ -394,7 +419,8 @@ object Commander {
         CombinedArms -> (2, 2), P47Strafing -> (2, 2), Outmaneuver -> (1, 3), HowitzerBarrage -> (1, 1),
         StukaStrafe -> (2, 2), MarkVehicle -> (1, 2), ReconPlane -> (1, 1), TacticalMovement -> (1, 3),
         PerimeterOverwatch -> (2, 2), ConcentrationBarrage -> (1, 1), HawkerTyphoon -> (2, 2), HeroicCharge -> (1, 3),
-        ReconOverflight -> (1, 1), ForMotherRussia -> (1, 3), RapidConscriptionPenal -> (2, 1), KatyushaStrike -> (2, 2), ML20Barrage -> (1, 1))
+        ReconOverflight -> (1, 1), ForMotherRussia -> (1, 3), RapidConscriptionPenal -> (2, 1), KatyushaStrike -> (2, 2), ML20Barrage -> (1, 1),
+        RecoupLosses -> (2, 1))
 
     // the units that spawn for free when a tier is unlocked
     def free(a : Ability, f : Faction) : $[UnitType] = a @@ {
@@ -450,7 +476,14 @@ object Commander {
         case DozerCallIn => $(Dozer)
         case JacksonCallIn => $(Jackson)
         case StuGCallInFree | TargetWeakPoint => $(StuG)
-        case TankDesant | LMG42Free => $(Grenadiers)
+        case TankDesant => $((f == OKW).?(Volksgrenadiers : UnitType).|(Grenadiers))
+        case LMG42Free => $(Grenadiers)
+        case OberDefense => $(Obersoldaten)
+        case VeteranKettenkrad => $(Kettenkrad)
+        case HetzerCallIn => $(Hetzer)
+        case EncirclementVolks => $(Volksgrenadiers)
+        case OKWBreakthrough => $(Volksgrenadiers, Hetzer)
+        case SmokeCanistersStuka => $(StukaHalftrack)
         case TurretlessTerror => $(Stormtroopers)
         case KingTigerCallIn => $(KingTiger)
         case JaegerSniperFree => $(JaegerSniper)
@@ -494,7 +527,7 @@ case object NoCommanders extends CommandersChoice("No Commanders", "No Commander
 case object ExpansionCommanders extends GameOption with ToggleOption {
     val group = CommandersChoice.group
     def valueOn = "Expansion Commanders".hl
-    override val explain = $[Elem]("The players also draw from the expansion packs' Commanders (Elite Commanders Collection, Pathfinder, StuG and Lost Brigades packs, from the Faction Guide): so far the US Forces', the Wehrmacht's, the British Forces' and the Soviet Forces'.".txt)
+    override val explain = $[Elem]("The players also draw from the expansion packs' Commanders (Elite Commanders Collection, Pathfinder, StuG and Lost Brigades packs, from the Faction Guide): every faction's (44).".txt)
     override def required(all : $[BaseOption]) = $($(DrawCommanders))
 }
 
