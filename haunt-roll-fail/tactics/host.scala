@@ -11,7 +11,12 @@ import hrf.logger._
 //
 
 // Headless bot games on the JVM (see HANDOFF.md): `sbt "runMain tactics.Host"`, TACTICS_GAMES games of two Easy bots
-// (default 20), each checking that every recorded action writes and parses back.
+// (default 20), each checking that every recorded action writes and parses back. TACTICS_RULES=first plays the First Game Rules,
+// anything else the Full Game Rules (here, in Dump and in Replay).
+object Rules {
+    def options : $[Meta.O] = (sys.env.get("TACTICS_RULES") == Some("first")).?($[Meta.O]()).|($[Meta.O](FullGameRules))
+}
+
 object Host extends hrf.host.BaseHost {
     val gaming = tactics.gaming
     val path = "tactics"
@@ -25,7 +30,7 @@ object Host extends hrf.host.BaseHost {
     def factions = Faction.all
     def subjects = factions
 
-    def batch = $(() => new G(factions.shuffle, $))
+    def batch = $(() => new G(factions.shuffle, Rules.options))
 
     def factionName(f : F) = f.name
     def nameWinner(f : F) = f.name
@@ -42,13 +47,21 @@ object Host extends hrf.host.BaseHost {
     def times = sys.env.get("TACTICS_GAMES")./(_.toInt).|(20)
 }
 
+// a game's state in two lines (Dump prints it after the moves' game, Replay after replaying them, to compare)
+object State {
+    def print(game : Game) {
+        println("ROUND " + game.round + " OVER " + game.isOver + " " + game.setup.map(f => f.name + " " + game.states(f).stock.toList.sortBy(_._1.name).map(x => x._1.name + "=" + x._2).mkString(",") + " tier " + game.states(f).tier + " units " + game.units(f).map(u => u.utype.name + "@" + game.where(u).name + ":" + game.health(u)).mkString("/")).mkString(" | "))
+        println("CONTROL " + game.control.toList.sortBy(_._1.name).map(x => x._1.name + ":" + x._2.short).mkString(" "))
+    }
+}
+
 // `sbt "runMain tactics.Dump <steps> [round]"` plays one bot game for that many steps (or, given a round, until damage is being
 // assigned in that round) and prints its recorded moves, one a line, as a browser's local game journal holds them (to load a game
 // in mid-play and look at it)
 object Dump {
     def main(args : Array[String]) {
         val steps = args.lift(0)./(_.toInt).|(1500)
-        val game = new Game(Faction.all, $)
+        val game = new Game(Faction.all, Rules.options)
         var continue : Continue = StartContinue
         var a : Action = StartAction(gaming.version)
         var out = $[String]()
@@ -67,8 +80,7 @@ object Dump {
             continue = game.performContinue(|(continue), a, false).continue
             a = Host.askFaction(game, continue)
         }
-        println("ROUND " + game.round + " OVER " + game.isOver + " " + game.setup.map(f => f.name + " " + game.states(f).stock.toList.map(x => x._1.name + "=" + x._2).mkString(",") + " tier " + game.states(f).tier + " units " + game.units(f).map(_.utype.name).mkString("/")).mkString(" | "))
-        println("CONTROL " + game.control.toList.map(x => x._1.name + ":" + x._2.short).mkString(" "))
+        State.print(game)
         println("DUMP-BEGIN")
         out.foreach(println)
         println("DUMP-END")
@@ -80,7 +92,7 @@ object Dump {
 object Replay {
     def main(args : Array[String]) {
         val moves = scala.io.Source.fromFile(args(0)).getLines().toList.filter(_.trim.nonEmpty)./(Serialize.parseAction)
-        val game = new Game(Faction.all, $)
+        val game = new Game(Faction.all, Rules.options)
 
         def auto(c : Continue) : |[Action] = c match {
             case Force(a) => |(a)
@@ -110,5 +122,6 @@ object Replay {
             }
         }
         println("ALL " + moves.num + " MOVES VALID, round " + game.round + ", " + game.phase)
+        State.print(game)
     }
 }

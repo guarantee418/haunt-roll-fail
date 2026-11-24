@@ -34,6 +34,12 @@ class GameEvaluation(val game : Game, val self : Faction) {
 
         def nearest(h : Hex) = wanted./(Board.distance(h, _)).minOr(99)
 
+        // how far a side turns away from the nearest enemy (or the enemy's Spawn Area), in degrees
+        def facingAway(h : Hex, e : Int) = {
+            val goal = units(enemy(self))./(where).sortBy(Board.distance(h, _)).starting.|(Board.spawn(1 - team(self)).sortBy(Board.distance(h, _)).head)
+            if (goal == h) 0 else (((Board.angle(h, goal) - Board.normals(e)) % 360 + 540) % 360 - 180).abs.round.toInt
+        }
+
         a.unwrap match {
             case StartPlaceAction(_, _, h, _) => true |=> (100 - nearest(h) * 5) -> "near points"
             case StartPickAction(_, t, _) => (t.weaponTeam.not) |=> 50 -> "rifles"
@@ -59,6 +65,37 @@ class GameEvaluation(val game : Game, val self : Faction) {
                 val n = units(self).num
                 (n < 9) |=> (600 + t.tier * 120 + t.vehicle.??(60) - (t.weaponTeam && units(self).count(_.utype.weaponTeam) >= 2).??(500) - nearest(h) * 3) -> "spawn"
             case UpgradeAction(_, u, i, e) => true |=> (250 + u.utype.tier * 50) -> "upgrade"
+
+            // Full Game Rules
+            case OpPickAction(_, c, upper) => true |=> (100 + c.turns(upper) * 20) -> "turns"
+            case SpawnFaceAction(_, u, e) => true |=> (200 - facingAway(where(u), e) * 3) -> "face the enemy"
+            case SetUpFacingAction(_, u, e, _) =>
+                (nearest(where(u)) <= 4) |=> 400 -> "set up"
+                true |=> -(facingAway(where(u), e) * 3) -> "face the enemy"
+            case HeavyMoveAction(_, u, p, e, _) =>
+                val from = nearest(where(u))
+                val to = nearest(p.last)
+                (to < from) |=> 250 -> "closer"
+                (to > from) |=> -150 -> "away"
+                true |=> -(facingAway(p.last, e) * 3) -> "face the enemy"
+                (Board.points.contains(where(u)) && control.get(where(u)).has(self).not) |=> -500 -> "stay on point"
+            case AssaultAction(_, u, h, _, _) =>
+                val d = occupant(h)
+                (d.exists(x => health(x) <= 2 && x.kind == Infantry)) |=> 350 -> "assault the weak"
+                (Board.points.contains(h)) |=> 200 -> "assault a point"
+                true |=> -100 -> "risky"
+            case RetreatAction(_, u, _, _, _) =>
+                (health(u) <= 1) |=> 300 -> "save it"
+                (health(u) > 1) |=> -400 -> "stay"
+            case FinalRetreatAction(_, u, _, e, _) =>
+                (retreating.contains(u)) |=> (500 - Board.distance(e, where(u))) -> "go on"
+                (retreating.contains(u).not && health(u) <= 1) |=> 300 -> "save it"
+                (retreating.contains(u).not) |=> -400 -> "stay"
+            case RetreatDoneAction(_, _) => true |=> 0 -> "done"
+            case SplashAction(_, u, h, _, _, _) =>
+                val l = splashed(u, h)
+                true |=> (500 + l.%(_.faction != self).num * 150 - l.%(_.faction == self).num * 250) -> "splash"
+            case ShotAction(_, _, _, _, _, _) => true |=> -150 -> "an empty building"
             case UnlockAction(_, t) => (units(self).num >= 4) |=> 800 -> "unlock"
             case PassAction(_) => true |=> 100 -> "pass"
             case _ =>

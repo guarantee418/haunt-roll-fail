@@ -31,6 +31,8 @@ FILES = {
     'status-a': 'D3729401FF851DE0635B70E7DDB6853D900D0368',
     'status-b': '8D1EAD98080546BF5BB7D8E679E286B6FDD2FFEE',
     'damage': 'CAB8FFB6A4AB01BF4032B4C709870E5136B0C4B7',
+    'ops': '451C2F9A1352DD299B69AEC1FB30C16EB68F4149',
+    'ops-back': '6E7EAE4C462BECAE0B39302F20024E468A260674',
 }
 
 COLORS = {'us': (111, 154, 62), 'wehrmacht': (201, 66, 59)}
@@ -206,10 +208,10 @@ def make(d, out):
                     px[xx, yy] = (int(r + (255 - r) * 0.35), int(g + (255 - g) * 0.35), int(b + (255 - b) * 0.35), a)
         webp(f, os.path.join(out, 'dmg', name + '.webp'), lossless=True)
 
-    # status icons: pinned, slow and no fire from the status die, set up drawn here; the control flags
+    # status icons: pinned, slow, no fire, retreat (the white flag) and HE Splash from the status die, set up drawn here; the control flags
     os.makedirs(os.path.join(out, 'status'), exist_ok=True)
     st = src('status-b').convert('RGB')
-    for name, x, y in [('pinned', 0, 0), ('slow', 1, 0), ('nofire', 0, 1)]:
+    for name, x, y in [('pinned', 0, 0), ('slow', 1, 0), ('nofire', 0, 1), ('retreat', 1, 1), ('splash', 2, 1)]:
         webp(cell(st, x, y).resize((80, 80), Image.LANCZOS), os.path.join(out, 'status', name + '.webp'), q=90)
     s = Image.new('RGBA', (80, 80), (0, 0, 0, 0))
     d = ImageDraw.Draw(s)
@@ -222,6 +224,14 @@ def make(d, out):
         d.rectangle((14, 8, 20, 92), fill=(60, 50, 40, 255))
         d.polygon([(20, 10), (74, 24), (20, 46)], fill=c + (255,), outline=(20, 20, 20, 255))
         webp(fl, os.path.join(out, 'status', 'flag-' + f + '.webp'), lossless=True)
+
+    # the Operations deck (Full Game Rules): its seven cards, a 4x2 sheet of 600x825 cards, and its back
+    os.makedirs(os.path.join(out, 'ops'), exist_ok=True)
+    ops = src('ops').convert('RGB')
+    for i in range(7):
+        c = ops.crop(((i % 4) * 600, (i // 4) * 825, (i % 4 + 1) * 600, (i // 4 + 1) * 825))
+        webp(c.resize((300, 412), Image.LANCZOS), os.path.join(out, 'ops', 'ops-%d.webp' % i), q=85)
+    webp(src('ops-back').convert('RGB').resize((300, 412), Image.LANCZOS), os.path.join(out, 'ops', 'ops-back.webp'), q=85)
 
 if __name__ == '__main__':
     if sys.argv[1] == 'fetch':

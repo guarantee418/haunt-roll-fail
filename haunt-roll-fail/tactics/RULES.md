@@ -1,11 +1,14 @@
 # Company of Heroes (2nd Edition) — rules as played here
 
 Company of Heroes: The Board Game, 2nd Edition (Bad Crow Games, licensed from SEGA and Relic Entertainment) is listed
-on the site as **Tactics** (meta `tactics`, URL `/play/tactics`) while the owner's team helps test it. This first
-version plays the core rulebook's **First Game Rules** (RulesPal's copy of the rulebook, and the four books in the
-Tabletop Simulator mod "Company of Heroes - 2nd Edition", Steam workshop 2314664989: Rulebook, Faction Guide, Mission
-Booklet, Solo Rulebook), US Forces against the Wehrmacht on **Moro River**, one player each. The Full Game Rules are
-not in yet (see HANDOFF.md). Where the rules leave something open, the choice made is under **Interpretations**.
+on the site as **Company of Heroes** (meta `tactics`, URL `/play/tactics`) while the owner's team helps test it. It plays the
+core rulebook (RulesPal's copy, and the four books in the Tabletop Simulator mod "Company of Heroes - 2nd Edition", Steam
+workshop 2314664989: Rulebook, Faction Guide, Mission Booklet, Solo Rulebook), US Forces against the Wehrmacht on
+**Moro River**, one player each. The setup's **Rules** choice picks the **Full Game Rules** (every new game since
+2026-11-24, `FullGameRules`) or the **First Game Rules** (`FirstGameRules`; games made before the choice have neither and
+play these). The First Game Rules are below; the Full Game Rules add to them (**Full Game Rules**, further down).
+Commanders aren't in yet (see HANDOFF.md). Where the rules leave something open, the choice made is under
+**Interpretations**.
 
 ## Setup
 
@@ -47,6 +50,58 @@ not in yet (see HANDOFF.md). Where the rules leave something open, the choice ma
    end, Infantry in the Spawn Area, next to an ally that Reinforces or carried by one heals 1 for each, and each Wrench
    repairs an adjacent allied vehicle by 1.
 
+## Full Game Rules
+
+What the rulebook's grey boxes add (`full` in `game.scala`), and Moro River's own features from the Mission Booklet:
+
+- **Operations deck** (4.0.1): the 14 cards of the mod (seven designs: 2/3, 2/4 twice, 2/5, 3/4 three times, 4/3 three times,
+  3/5 twice, 4/5 twice; `Operations`) are shuffled at the start. Each round the first team draws the top card and picks its
+  top (2 to 4 turns) or bottom (3 to 5) Operation; the other team learns only which side (the log and the status pane say
+  "top (2-4)" or "bottom (3-5)") until the turns are done, when the card is revealed and discarded. An empty deck is
+  reshuffled from the discards. Each team then has that many turns of 3 CP.
+- **Retreat** (4.2): on its own turn, at any time and whatever CP it spent, an Infantry unit (not in a transport, not
+  assaulting) may Retreat: free, up to six hexes toward a Retreat Point the player picks: a hex of the team's Spawn Area,
+  or a non-Building hex next to the Major (the Retreat Point icon on its board). A set-up Weapon Team packs up for free.
+  After the turns, each team in turn order has its **final Retreats**: it may start more, and its Retreating units not
+  yet on a Retreat Point go on (those it doesn't move go toward the nearest one). A Retreating unit spends no CP and
+  can't attack, spot, neutralize, capture, build, reinforce or be reinforced; it keeps its Cover. The status ends at the
+  end of the Supply Phase (before Reinforcing) for units on a Retreat Point.
+- **Assault** (6.0): any unit may move (1 CP, normal movement) into an adjacent hex held by an enemy unit where no other
+  Assault is; both stand in the hex. The assaulting unit spends no more CP (its passenger may still leave). The Assault
+  ends when the assaulted unit leaves the hex (the assaulting unit holds it) or in the Damage Phase's last step: if the
+  assaulted unit was destroyed and the assaulting one survived, it holds the hex; if both survived, the assaulting unit
+  falls back to the nearest empty hex toward a Retreat Point (Infantry Retreating until the round ends). In the hex the two
+  may attack each other (only units that fire at range 1), with no Cover and no Frontal Armor; the assaulting Infantry
+  gets none of the hex's Cover; other attacks on the assaulted unit trigger Cover as usual. No neutralization happens in
+  the Damage Phase on a hex with an Assault. A Heavy Vehicle assaulting a hex with Sandbags destroys them only when it
+  wins it. Infantry assaulting into a Building can be pinned.
+- **Overwatch** (4.1.4): enemy Infantry moving onto a hex in a set-up machine gun's range, line of sight and Firing Arc
+  takes 1 Damage at once, nothing saved (2 from two machine guns, ...); each hex moved onto counts, also a hex passed
+  through and the hex an Infantry leaves a transport to. Not for Retreats, boarding a transport, or entering a Building
+  (unless assaulting a machine gun there: only that one fires). A Camouflaged unit must be spotted (an enemy next to it,
+  or a "spots Camouflage" unit in sight). A unit destroyed this way gives the machine gun's team 1 VP, and its owner no XP.
+- **Firing Arcs and facing** (4.1.3, 4.1.7): a Weapon Team setting up picks one of the six hex sides to face, and fires
+  only into its arc; packing up drops it. Heavy Vehicles always face a hex side (picked when spawned): each CP moves one
+  forward or backward, turning one side before or after, or turns one side in place; through an occupied hex it goes
+  straight on to the next for 2 CP. Fixed guns (straight arrows on the board) fire only into the arc: the Panzer IV's AI
+  (and its AI upgrade), the Brummbar's HE; the others are turreted. A Heavy Vehicle may put each damage type on a target of
+  its own (5.0.2).
+- **Frontal Armor** (5.7): a Heavy Vehicle hit by AP from a unit in its frontal arc (not from its own hex) rolls 2 more
+  Defense Dice, once.
+- **HE Splash** (5.3.1): the Major's HE (always), the US Mortar's XP upgrade (1 XP) and the Brummbar's XP upgrade's other
+  choice turn a unit's HE into HE Splash: it targets a hex (in range, sight and arc, with a visible enemy in or around it)
+  and hits every unit in it and the six hexes around it that the attacker's team sees, its own units always, and the
+  Buildings there. All the splash dice are rolled with the other HE dice, before them, and each die's result hits every
+  unit. Splash doesn't trigger non-Building Cover, and a team's own splash doesn't trigger Building Cover for its units.
+  Each visible enemy unit hit gives 1 XP, as damage assigned.
+- **Buildings** (5.6.1): a Building has 2 health. HE (its result) and Flame assigned to Infantry inside also damage it, and
+  units may fire HE and Flame at a visible Building with no visible enemy (and none of their own units) in it. A destroyed
+  Building is a Destroyed Building for the rest of the game (darkened on the map); the units in it retreat to the nearest
+  empty hex at the end of the Damage Phase, Infantry Retreating until the round ends. Destroyed Buildings can't be
+  destroyed.
+- **Tank traps**: Moro River's A and B hexes (the "T" hexes of `Board.data`) are permanent tank traps: Vehicles can't
+  enter them; they can't be destroyed or assaulted.
+
 ## Units
 
 From the Building Boards in the mod (`UnitType` in `game.scala`; the boards are in the game's "Building Boards" overlay):
@@ -71,7 +126,21 @@ Vehicles: 3 of each tier 1 and 2 vehicle, 2 of each tier 3 one, at a time.
 4. **Sandbags**: one Sandbags token covers two neighboring edges of its hex (Heavy Cover), the player picks which; a
    Heavy Vehicle moving in destroys them.
 5. **Repair** picks the most damaged adjacent allied vehicle; Reinforce stacks as the rulebook says.
-6. **Full Game Rules left out**: firing arcs and facing, Overwatch, Assaults, Retreats, HE Splash (the Major's attack is
-   plain indirect HE; the Mortar's XP Splash upgrade isn't offered, and the Brummbar's XP upgrade is only +1 HE),
-   Operations deck (always 4 turns), tank traps and foot bridges on Moro River, barbed wire and tank traps, destructible
-   Buildings, Commanders, Lost Brigades, Frontal Armor.
+6. **First Game Rules**: the Major's attack is plain indirect HE, the Mortar's XP Splash upgrade isn't offered and the
+   Brummbar's XP upgrade is only +1 HE.
+7. **Firing Arc shape**: the rulebook says a cone from the hex in front; its Heavy Vehicle picture draws the front arc's
+   edge through the middle of the two sides next to the front one, so the arc is 120 degrees wide: the hexes within 60
+   degrees either side of the faced side, those on the edge included (at distance 1 the three hexes in front). The same
+   arc is used for Weapon Teams, fixed guns, machine gun Overwatch and Frontal Armor.
+8. **Retreat paths**: the player picks the Retreat Point; the unit goes along a shortest way to it (the first in reading
+   order where there are several) and stops in the last empty hex of its six. The final Retreats move a Retreating unit
+   the player doesn't move toward the nearest Retreat Point. A unit may Retreat on its turn only while its team has CP left
+   that turn (the turn ends by itself at 0 CP); the final Retreats come after every turn anyway.
+9. **Forced Retreats** (a failed Assault, a destroyed Building) go to the nearest empty hex, the one nearest a Retreat Point
+   among them; a unit with nowhere to go is destroyed.
+10. **Overwatch** counts each hex moved onto, the hex passed through by a 2 CP move too (it is moved onto).
+11. **Splash on Sandbags**: each splash die counts once for each unit it hits in the hex and once for the hex toward the
+    two Damage that destroy Sandbags.
+12. **Not in the core box** (left out): barbed wire and tank traps that units build (the core units' Wrenches build only
+    Sandbags), Terrain Pack 3's foot bridges, Smoke and Commanders, Lost Brigades, Bunkers and other special Buildings,
+    Ice, Control Points in Buildings (Moro River has none).
