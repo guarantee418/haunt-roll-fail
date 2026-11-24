@@ -12,9 +12,9 @@ import hrf.logger._
 
 // Headless bot games on the JVM (see HANDOFF.md): `sbt "runMain tactics.Host"`, TACTICS_GAMES games of two Easy bots
 // (default 20), each checking that every recorded action writes and parses back. TACTICS_RULES=first plays the First Game Rules,
-// anything else the Full Game Rules (here, in Dump and in Replay), with Commanders unless TACTICS_COMMANDERS=0.
+// anything else the Full Game Rules (here, in Dump and in Replay), with Commanders unless TACTICS_COMMANDERS=0; TACTICS_MAP=<id> plays that mission's map (moro, don, rivers, ardennes, frozen, moscow).
 object Rules {
-    def options : $[Meta.O] = (sys.env.get("TACTICS_RULES") == Some("first")).?($[Meta.O]()).|($[Meta.O](FullGameRules) ++ (sys.env.get("TACTICS_COMMANDERS") != Some("0")).$(DrawCommanders))
+    def options : $[Meta.O] = (sys.env.get("TACTICS_RULES") == Some("first")).?($[Meta.O]()).|($[Meta.O](FullGameRules) ++ (sys.env.get("TACTICS_COMMANDERS") != Some("0")).$(DrawCommanders)) ++ MapChoice.all.%(_.map.id == sys.env.getOrElse("TACTICS_MAP", ""))
 }
 
 object Host extends hrf.host.BaseHost {

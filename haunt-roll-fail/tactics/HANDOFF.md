@@ -8,7 +8,9 @@ played and the choices made.
 
 ## State
 
-- Playable: two players, US Forces against the Wehrmacht, on Moro River; Local (hotseat), Quick Game and Play Online, with
+- Playable: two players, US Forces against the Wehrmacht, on the Mission Booklet's six 2-panel core missions (the setup's
+  Map choice, `MapChoice`, Moro River by default: Moro River, Across the Don, Between Two Rivers, Ardennes Forest, Frozen Lake,
+  Road to Moscow, with Ice, the Cathedral and multi-hex Buildings on the Ardennes panels); Local (hotseat), Quick Game and Play Online, with
   an Easy bot. The setup's Rules choice: the Full Game Rules (every new game since 2026-11-24: Operations deck, Retreats,
   Assaults, Overwatch, firing arcs and Heavy Vehicle facing, multi-target Heavy Vehicles, HE Splash, Frontal Armor,
   destructible Buildings, Moro River's tank traps) or the First Game Rules (and every game made before the choice). With the
@@ -22,8 +24,10 @@ played and the choices made.
 
 ## Files
 
-- `board.scala`: the Moro River grid (`Board.data`, one line a hex: terrain, the six edges' lines, tank trap, Control
-  Point), neighbors, distance, line of sight, the edges a line of fire crosses.
+- `board.scala`: `MapData`, a map's grid (its rows, one line a hex: terrain, the six edges' lines, tank trap, Control
+  Point), neighbors, distance, line of sight, the edges a line of fire crosses, the Spawn Areas; `MoroRiverFirst`, the rows of
+  the games made before the Map choice. `Board` answers for the game's map (`Board.current`, set by `Game`).
+- `missions.scala`: the six missions' maps (`MoroRiver` ... `RoadToMoscow`), made by `tools/missions.py`.
 - `game.scala`: factions, resources, damage dice, the 18 units and their upgrades (`UnitType`), actions and the rules (`Game`).
   The Full Game Rules are `game.full` (the option `FullGameRules`): their state (`opsDeck`, `facing`, `assaults`, `retreating`,
   `splashes`, `shots`, `ruined`, ...), helpers (the "FULL GAME RULES" section: `inArc`, `heavyOptions`, `retreatChoices`,
@@ -42,14 +46,22 @@ played and the choices made.
 - `tools/tactics-art.py`: every image in `webp2/tactics/images/` from the mod (`fetch`, then `make`), the Operations cards
   (`ops/`) and the Retreat and HE Splash status icons too.
 - `tools/map-edges.py`, `tools/map-data.py`: read the cover and impassable lines off the full-size panels and write the
-  rows of `Board.data` (with the corrections made by eye, the water, Buildings, tank traps and Control Points).
+  rows of `MoroRiverFirst` (with the corrections made by eye, the water, Buildings, tank traps and Control Points);
+  `tools/ardennes-data.py` the same for the Ardennes panels (AF2 | AF1, the features found by their outline colours and checked by eye).
+- `tools/missions.py <dir> <out>`: the missions' maps (`map-mr2mr1`, `map-af1af2`, `map-af2af1`; Moro River and Across the Don use
+  `map`) and their rows: the panels joined as each mission's bag in the mod's save lays them, the cover lines read by `map-edges.py`,
+  the features and corrections of the two hand-read layouts carried over with their panels, the Control Points from the bag's
+  resource tokens. Reproduces `MoroRiverFirst` (but the bridge point) and the Frozen Lake rows exactly.
 
 ## Map data
 
 The two panels are 6000x9000 each; joined (12000x9000) the hex centers are at `x = 926 + 923 * col + 461.5 * (odd row)`,
 `y = 741 + 751.5 * row` in the original grid (`map-edges.py`), a fifth of that on `map.webp`. In `Board`, row 0 is the
-original row -1 (the half row at the top) and column 0 the original column -1. Control Point positions were read off the
-Mission Booklet's Moro River picture (page 9).
+original row -1 (the half row at the top) and column 0 the original column -1. When AF1 or MR2 is the left panel, its hexes
+sit half a hex further left: `X0` 464.5 (`map-edges.py`'s fourth argument), `x0` 92.9 in `MapData`, and the rows with an even
+number keep their half-hex shift. The missions' Control Points are the bags' resource tokens: a bag's panel (a `Custom_Tile`
+26.35 units wide, 39.5 tall) is 6000x9000 pixels, and each pair of tokens is a Control Point at their midpoint; they match the
+booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge point a hex off (I4, not I5).
 
 ## Testing
 
@@ -63,7 +75,9 @@ Mission Booklet's Moro River picture (page 9).
   replayed valid, and four First Game games recorded with the code before the Full Game Rules replayed to the same final
   state; with the Commanders, every pairing of the two factions' cards played through (each card's tiers unlocked), and the
   games recorded before them still replay
-  state. sbt can't fetch from Maven Central here at times (HTTP 429): `~/.sbt/repositories` pointing at Google's mirror
+  state. With the missions (2026-11-24): bot games finished on all six maps (`TACTICS_MAP=<id>`), the old games replayed to the same
+  state, and a scenario run checked each map's stockpile, 12 Control Points (6 VP), Spawn Areas, that every Control Point and the
+  other Spawn Area can be reached, Ice and the Cathedral. sbt can't fetch from Maven Central here at times (HTTP 429): `~/.sbt/repositories` pointing at Google's mirror
   (`https://maven-central.storage-download.googleapis.com/maven2/`) with `-Dsbt.override.build.repos=true` works.
 - Browser: see "Browser driving" in `nort/HANDOFF.md`. A dump goes into `localStorage` as `tactics.hotseat.game.<time>`
   ("version ...", "title ...", "seating US WM", "options ") and `tactics.hotseat.moves.<time>`, then Local Game opens it.
@@ -72,10 +86,10 @@ Mission Booklet's Moro River picture (page 9).
 
 ## Next
 
-- Ardennes Forest (the other core map: Bunker, Cathedral, Ice) and the Mission Booklet's missions, then the other factions
-  (British, Soviet, OKW; their Building Boards, Commanders and Lost Brigades are in the mod) with their buildable barbed wire and
+- The other factions (British, Soviet, OKW; their Building Boards, Commanders and Lost Brigades are in the mod) with their buildable barbed wire and
   tank traps.
 - Full Game readings to confirm with the team (RULES.md, Interpretations 7 to 12): the Firing Arc's width, Retreat paths,
   Overwatch on a hex passed through.
-- 2 vs 2 team games and the other missions of the Mission Booklet.
+- 2 vs 2 team games and the Mission Booklet's other missions; the Lost Brigades and terrain packs' missions (4.1 ...)
+  need the packs' panels and Bunkers.
 - A better bot.

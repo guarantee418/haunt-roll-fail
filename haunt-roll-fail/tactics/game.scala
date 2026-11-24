@@ -418,6 +418,36 @@ object RulesChoice {
     val all = $[RulesChoice](FullGameRules, FirstGameRules)
 }
 
+// the map: the Mission Booklet's two-panel core missions (missions.scala); games made before the choice play Moro River as first read (MoroRiverFirst)
+sealed abstract class MapChoice(val map : MapData, val text : String) extends GameOption with OneOfGroup with ImportantOption {
+    val group = "Map".txt
+    def valueOn = map.name.hl
+    override val explain = $[Elem](text.txt)
+}
+case object MoroRiverMap extends MapChoice(MoroRiver, "MR1 and MR2: a river with fords, tank traps and Buildings. Spawn Areas at the top and bottom. Starting stockpile 4 Manpower, 2 Munitions, 3 Fuel.")
+case object AcrossTheDonMap extends MapChoice(AcrossTheDon, "MR1 and MR2, played across: the Spawn Areas are the left and right edges, the Control Points elsewhere. Starting stockpile 5 Manpower, 3 Munitions, 3 Fuel.")
+case object BetweenTwoRiversMap extends MapChoice(BetweenTwoRivers, "MR2 and MR1 the other way round: the two rivers at the edges. Spawn Areas at the top and bottom. Starting stockpile 4 Manpower, 4 Munitions, 4 Fuel.")
+case object ArdennesForestMap extends MapChoice(ArdennesForest, "AF1 and AF2, the backs of the Moro River panels: a snowy forest, the Cathedral (a multi-hex Special Building), multi-hex Buildings and Ice tiles on the frozen lake, split at both edges. Spawn Areas at the top and bottom. Starting stockpile 6 Manpower, 2 Munitions, 3 Fuel.")
+case object FrozenLakeMap extends MapChoice(FrozenLake, "AF2 and AF1: the frozen lake's Ice tiles in the middle, the Cathedral on the right. Spawn Areas at the top and bottom. Starting stockpile 6 Manpower, 4 Munitions, 3 Fuel.")
+case object RoadToMoscowMap extends MapChoice(RoadToMoscow, "AF1 and AF2, played across: the Spawn Areas are the left and right edges. Starting stockpile 6 Manpower, 4 Munitions, 4 Fuel.")
+
+object MapChoice {
+    val all = $[MapChoice](MoroRiverMap, AcrossTheDonMap, BetweenTwoRiversMap, ArdennesForestMap, FrozenLakeMap, RoadToMoscowMap)
+}
+
+// THE ICE MATRIX (Full Game Rules 10.4): how many dice a unit attacked on an Ice tile rolls for each damage type assigned to it
+object IceMatrix {
+    def dice(k : Kind, d : Dmg) : Int = (k, d) match {
+        case (_, AI) => 0
+        case (_, AP) => 1
+        case (HeavyVehicle, HE) => 2
+        case (_, HE) => 1
+        case (Infantry, Flame) => 0
+        case (Emplacement, Flame) => 1
+        case (_, Flame) => 2
+    }
+}
+
 
 // THE OPERATIONS DECK (Full Game Rules): 14 cards, each with a top Operation of 2 to 4 turns and a bottom one of 3 to 5, from the
 // mod's deck: its seven designs, card `n` showing design `Operations.art(n)`
@@ -548,6 +578,9 @@ case class OpeningAction(self : Faction, a : Ability, k : Int) extends BaseActio
 case class OpeningHexAction(self : Faction, a : Ability, hex : Hex, k : Int) extends BaseAction("Start of the Maneuver Phase:", a, (g : Game) => g.openingNote(a))(hex) with HexKey
 case class OpeningLineStartAction(self : Faction, a : Ability, hex : Hex, k : Int) extends BaseAction("Start of the Maneuver Phase:", a, (g : Game) => g.openingNote(a), "from")(hex) with HexKey with Soft
 case class OpeningLineAction(self : Faction, a : Ability, hexes : $[Hex], k : Int) extends BaseAction(a, "on three hexes")(hexes./(_.elem).join(", ")) with HexKey { def hex = hexes.last }
+// Ice (Full Game Rules 10.4): the checks of the units attacked on Ice tiles
+case class IceCheckAction(f : Faction) extends ForcedAction
+case class IceRolledAction(f : Faction, rolled : $[Face]) extends RolledAction[Face]
 case class SmokeStepAction(order : $[Faction]) extends ForcedAction
 case class SmokeAction(self : Faction, vehicle : Squad, order : $[Faction]) extends BaseAction("Smoke for", 2.hlb, Munitions.icon)(vehicle, "in", (g : Game) => g.where(vehicle).elem) with SquadKey { def squad = vehicle }
 case class SmokeDoneAction(self : Faction, order : $[Faction]) extends BaseAction(None)("No more Smoke")
@@ -590,6 +623,16 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def enemy(f : Faction) = setup.but(f).only
 
     val length : Length = options.of[Length].single.|(ShortGame)
+
+    // the map: Board answers for it
+    val map : MapData = options.of[MapChoice].single./(_.map).|(MoroRiverFirst)
+    Board.current = map
+    setup.foreach { f =>
+        val (m, u, l) = map.stock
+        states(f).stock += Manpower -> m
+        states(f).stock += Munitions -> u
+        states(f).stock += Fuel -> l
+    }
 
     // the map
     var pos = Map[Squad, Hex]()
@@ -639,6 +682,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     var shots = $[Shot]()
     var buildingDamage = Map[Hex, Int]()
     var ruined = Set[Hex]()
+    // units that fell through the Ice this Damage Phase
+    var sunk = Set[Squad]()
 
     // COMMANDERS (commanders.scala)
     val commanders = full && options.has(DrawCommanders)
@@ -696,7 +741,13 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     def maxHealth(u : Squad) = u.utype.health + effects(u).count(HealthUp)
     // a Building destroyed in the Full Game Rules is a Destroyed Building
     def terrainAt(h : Hex) : Terrain = ruined.contains(h).?(Ruin : Terrain).|(Board.terrain(h))
-    def inBuilding(h : Hex) = terrainAt(h) == Building || terrainAt(h) == Ruin
+    def inBuilding(h : Hex) = terrainAt(h) == Building || terrainAt(h) == Ruin || terrainAt(h) == Cathedral
+    // open ground, Ice too
+    def isOpen(h : Hex) = terrainAt(h) == Open || terrainAt(h) == Ice
+    // Ice tiles (Full Game Rules)
+    def onIce(u : Squad) = full && pos.contains(u) && terrainAt(where(u)) == Ice
+    // a hex of a multi-hex Building that is still standing
+    def sameBuilding(a : Hex, b : Hex) = Board.sameBuilding(a, b) && ruined.contains(a).not && ruined.contains(b).not
     def onBuilding(u : Squad) = inBuilding(where(u))
 
     // the most CP a unit may take a round (Slow takes one away)
@@ -842,7 +893,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     }
 
     // a line not blocked by Buildings, Destroyed Buildings or Smoke (Commanders) between its ends
-    def lineClear(a : Hex, b : Hex) = Board.lineBlocked(a, b, h => Board.blocks(h) || smoke.contains(h)).not
+    def lineClear(a : Hex, b : Hex) = Board.lineBlocked(a, b, h => (Board.blocks(h) && sameBuilding(h, a).not && sameBuilding(h, b).not) || smoke.contains(h)).not
 
     // a Recon Sweep shows its hex and the hexes around it to the team, Camouflage too
     def eyed(f : Faction, h : Hex) = eyes.getOrElse(f, Set()).exists(e => e == h || Board.adjacent(e, h))
@@ -889,7 +940,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         else {
             val h = where(t)
             terrainAt(h) @@ {
-                case Building => 3
+                case Building | Cathedral => 3
                 case Ruin => 1
                 case _ =>
                     from./{ x =>
@@ -1095,7 +1146,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     }
 
     // RETREATS: a Retreat Point is a hex of the team's Spawn Area, or a hex next to an ally that is one (the Major), not a Building
-    def retreatPoints(f : Faction) : $[Hex] = (Board.spawn(team(f)) ++ units(f).%(v => v.utype.retreatPoint && isPassenger(v).not && retreating.contains(v).not)./~(v => Board.neighbors(where(v)).%(n => Board.joined(where(v), n)))).distinct.%(h => terrainAt(h) == Open)
+    def retreatPoints(f : Faction) : $[Hex] = (Board.spawn(team(f)) ++ units(f).%(v => v.utype.retreatPoint && isPassenger(v).not && retreating.contains(v).not)./~(v => Board.neighbors(where(v)).%(n => Board.joined(where(v), n)))).distinct.%(h => isOpen(h))
 
     def onRetreatPoint(u : Squad) = retreatPoints(u.faction).has(where(u))
 
@@ -1258,11 +1309,19 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         dice.%(a => clear || a.indirect).%(a => fixedGun(u, a).not || inArc(u, where(t))).%(a => a.dmg != HE || hasSplash(u).not)
     }
 
+    // the Ice checks: each unit attacked on an Ice tile rolls the most dice the Ice Matrix gives any damage type assigned to it
+    def iceChecks : $[(Squad, Int)] = full.??(all.%(onIce).%(t => isPassenger(t).not)./{ t =>
+        val types = assignments.%(_.target == t)./~(_.dice)./(_.dmg) ++
+            splashes.%(s => area(s.hex).has(where(t)) && splashed(s.attacker, s.hex).has(t)).map(_ => HE : Dmg) ++
+            strikes.%(_.hexes.has(where(t)))./~(_.dice)./(_.dmg)
+        (t, types./(d => IceMatrix.dice(t.kind, d)).maxOr(0))
+    }.filter(_._2 > 0))
+
     def value(x : $[Face]) = x./(f => f.crit.?(2).|(f.success.??(1))).sum
 
     // the HE dice rolled in the Full Game Rules, in this order: the splashes', the shots', then each target's
     def heNeeded : Int = splashes./(_.n).sum + strikes./(s => s.hexes.num * s.dice.count(_.dmg == HE)).sum + shots./(_.dice.count(_.dmg == HE)).sum +
-        assignments./(_.target).distinct.%(pos.contains)./(t => assignments.%(_.target == t)./~(_.dice).count(a => a.dmg == HE && Matrix.resist(t.kind, HE).any)).sum
+        assignments./(_.target).distinct.%(pos.contains).%(t => sunk.contains(t).not)./(t => assignments.%(_.target == t)./~(_.dice).count(a => a.dmg == HE && Matrix.resist(t.kind, HE).any)).sum
 
     // the damage each unit takes (and each Building), from the HE dice rolled and the Defense Dice rolled (None to count the Defense Dice):
     // the Defense Matrix, Cover (not against an attack from the same hex, nor for the assaulting unit; non-Building Cover not against
@@ -1293,7 +1352,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         shotFaces.foreach { case (s, x) => hurt(s.hex, value(x) + s.dice.count(_.dmg == Flame)) }
         strikeFaces.foreach { case (_, h, x) => hurt(h, value(x)) }
 
-        val targets = (assignments./(_.target) ++ splashFaces./~{ case (s, _) => splashed(s.attacker, s.hex) } ++ strikeFaces./~{ case (_, h, _) => standing(h) }).distinct.%(pos.contains)
+        val targets = (assignments./(_.target) ++ splashFaces./~{ case (s, _) => splashed(s.attacker, s.hex) } ++ strikeFaces./~{ case (_, h, _) => standing(h) }).distinct.%(pos.contains).%(t => sunk.contains(t).not)
 
         val hits = targets./{ t =>
             val h = where(t)
@@ -1312,7 +1371,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             val enemySplash = splash.exists(_._1.attacker.faction != t.faction) || struck.exists(_._1.faction != t.faction)
             val base =
                 if (t.kind != Infantry || assaults.contains(t)) 0
-                else if (inBuilding(h)) (others.any || enemySplash).??(staticCover(t, $))
+                else if (inBuilding(h)) (others.%(x => sameBuilding(x, h).not).any || enemySplash).??(staticCover(t, $))
                 else staticCover(t, others)
             // Commanders: Defensive Stance is Heavy Cover even in an Assault; Armor Tactician 2 dice next to a Heavy Vehicle (not in a
             // Building, no stacking with other Cover)
@@ -1400,9 +1459,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // where units spawn off the Spawn Area: a visible non-Building empty hex (Paratroopers, Paradrops, Airdropped Groups), next to an
     // empty Building (Stormtroopers)
-    def dropHexes(f : Faction) : $[Hex] = Board.hexes.%(h => terrainAt(h) == Open && standing(h).none && seesHex(f, h))
+    def dropHexes(f : Faction) : $[Hex] = Board.hexes.%(h => isOpen(h) && standing(h).none && seesHex(f, h))
 
-    def stormHexes(f : Faction) : $[Hex] = Board.hexes.%(h => inBuilding(h) && standing(h).none)./~(b => Board.neighbors(b).%(n => Board.joined(b, n)))
+    def stormHexes(f : Faction) : $[Hex] = Board.hexes.%(h => (terrainAt(h) == Building || terrainAt(h) == Ruin) && standing(h).none)./~(b => Board.neighbors(b).%(n => Board.joined(b, n)))
         .distinct.%(h => terrainAt(h) != Water && standing(h).none).sortBy(h => (h.r, h.c))
 
     def weaponTeams(f : Faction) : $[UnitType] = UnitType.of(f).%(t => t.weaponTeam && t.commander.not && t.tier <= f.tier)
@@ -1460,7 +1519,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // the units that may build an Emplacement now: Grenadiers, Osttruppen and Panzer Grenadiers with a Wrench left this Supply Phase, not
     // spawned this round; each with the adjacent hexes it may build on
     def builders(f : Faction) : $[(Squad, $[Hex])] = units(f).%(u => (u.utype == Grenadiers || u.utype == Osttruppen || u.utype == PanzerGrenadiers) && retreating.contains(u).not && spawnRound.get(u).has(round).not && built.getOrElse(u, 0) < u.utype.wrenches)
-        ./(u => (u, Board.neighbors(where(u)).%(h => Board.joined(where(u), h) && terrainAt(h) == Open && standing(h).none))).filter(_._2.any)
+        ./(u => (u, Board.neighbors(where(u)).%(h => Board.joined(where(u), h) && isOpen(h) && standing(h).none))).filter(_._2.any)
 
     // the hexes a dropped unit may take, for each type
     def dropChoices(f : Faction, a : Ability) : $[(UnitType, Hex)] = a @@ {
@@ -1504,7 +1563,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             // SETUP
             case StartAction(version) =>
                 log("HRF".hl, "version", gaming.version.hlb)
-                log("Company of Heroes".hlb, full.?("(2nd Edition, Full Game Rules)").|("(2nd Edition, First Game Rules)"), "on", "Moro River".hl)
+                log("Company of Heroes".hlb, full.?("(2nd Edition, Full Game Rules)").|("(2nd Edition, First Game Rules)"), "on", map.name.hl)
 
                 if (version != gaming.version)
                     log("Saved game version", version.hlb)
@@ -1891,11 +1950,35 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
             case AssignNextAction(2, Nil) =>
                 // experience: 1 for each player, and 1 for each enemy unit it assigned damage that can hurt it
                 setup.foreach { f =>
-                    val hit = (assignments.%(_.attacker.faction == f).%(a => relevant(a.target, a.dice))./(_.target) ++ splashes.%(_.attacker.faction == f)./~(s => splashed(s.attacker, s.hex).%(_.faction != f))).distinct
+                    val hit = (assignments.%(_.attacker.faction == f).%(a => relevant(a.target, a.dice) || (onIce(a.target) && a.dice.exists(d => IceMatrix.dice(a.target.kind, d.dmg) > 0)))./(_.target) ++ splashes.%(_.attacker.faction == f)./~(s => splashed(s.attacker, s.hex).%(_.faction != f))).distinct
                     gain(f, XP, 1 + hit.num)
                     log(f, "gained", (1 + hit.num).hl, "XP")
                 }
-                ResolveDamageAction(first)
+                if (full)
+                    IceCheckAction(first)
+                else
+                    ResolveDamageAction(first)
+
+            case IceCheckAction(f) =>
+                val n = iceChecks.map(_._2).sum
+                if (n > 0)
+                    Roll[Face](n.times(Face.die), IceRolledAction(f, _))
+                else
+                    ResolveDamageAction(f)
+
+            case IceRolledAction(f, rolled) =>
+                var left = rolled
+                iceChecks.foreach { case (t, n) =>
+                    val x = left.take(n)
+                    left = left.drop(n)
+                    if (x.exists(_.success.not)) {
+                        sunk += t
+                        log(t, "fell through the Ice in", where(t), x./(_.elem).merge)
+                    }
+                    else
+                        log(t, "held on the Ice in", where(t), x./(_.elem).merge)
+                }
+                ResolveDamageAction(f)
 
             case AssignNextAction(step, f :: rest) =>
                 current = f
@@ -1996,8 +2079,8 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     }
                 }
 
-                // destroyed units: a VP to the other team, an XP to their owner
-                hits./(_.target).%(t => pos.contains(t) && health(t) <= 0).foreach { t =>
+                // destroyed units (and those that fell through the Ice): a VP to the other team, an XP to their owner
+                (sunk.$ ++ hits./(_.target).%(t => pos.contains(t) && health(t) <= 0)).distinct.%(pos.contains).foreach { t =>
                     val lost = t +: passenger(t).$
                     lost.foreach { x =>
                         log(x, "was destroyed")
@@ -2059,6 +2142,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 splashes = $
                 shots = $
                 strikes = $
+                sunk = Set()
                 used = Map()
 
                 SupplyPhaseAction(first)

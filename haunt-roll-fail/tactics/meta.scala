@@ -27,15 +27,16 @@ object Meta extends MetaGame { mmm =>
 
     val minPlayers = 2
 
-    val options = $[O]() ++ RulesChoice.all ++ CommandersChoice.all ++ Length.all
+    val options = $[O]() ++ RulesChoice.all ++ CommandersChoice.all ++ MapChoice.all ++ Length.all
 
     // new games play the Full Game Rules (2026-11-24); a game with neither choice (made before) plays the First Game Rules
-    override def defaultsFor(n : Int, l : $[F]) = $(FullGameRules, DrawCommanders, ShortGame)
+    override def defaultsFor(n : Int, l : $[F]) = $(FullGameRules, DrawCommanders, MoroRiverMap, ShortGame)
 
     // a setup saved in the browser before the rules choice gets the Full Game Rules
     override def completeSaved(n : Int, l : $[F], options : $[O]) : $[O] = {
         val o = options.of[RulesChoice].any.?(options).|(options :+ FullGameRules)
-        o.of[CommandersChoice].any.?(o).|(o :+ DrawCommanders)
+        val p = o.of[CommandersChoice].any.?(o).|(o :+ DrawCommanders)
+        p.of[MapChoice].any.?(p).|(p :+ MoroRiverMap)
     }
 
     val quickMin = 2
@@ -85,11 +86,22 @@ object Meta extends MetaGame { mmm =>
 
     val assets =
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "", "", "webp")(
-        ImageAsset("map") ::
         ImageAsset("hex-select") ::
         ImageAsset("hex-target") ::
         ImageAsset("hex-spawn-us") ::
         ImageAsset("hex-spawn-wehrmacht") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => (options.of[MapChoice].single./(_.map.image).|("map") == "map"), "", "", "webp")(
+        ImageAsset("map") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => (options.of[MapChoice].single./(_.map.image).|("map") == "map-mr2mr1"), "", "", "webp")(
+        ImageAsset("map-mr2mr1") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => (options.of[MapChoice].single./(_.map.image).|("map") == "map-af1af2"), "", "", "webp")(
+        ImageAsset("map-af1af2") ::
+    $) ::
+    ConditionalAssetsList((factions : $[F], options : $[O]) => (options.of[MapChoice].single./(_.map.image).|("map") == "map-af2af1"), "", "", "webp")(
+        ImageAsset("map-af2af1") ::
     $) ::
     ConditionalAssetsList((factions : $[F], options : $[O]) => true, "token", "token:", "webp")(
         UnitType.all./(t => ImageAsset(t.id + "-" + t.faction.id))

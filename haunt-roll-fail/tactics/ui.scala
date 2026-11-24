@@ -62,7 +62,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     val margins = Margins(0, 0, 0, 0)
 
     lazy val scene = {
-        val mp = img("map")
+        val mp = img(game.map.image)
 
         val background = new OrderedLayer
         background.add(Sprite($(ImageRect(new RawImage(mp), Rectangle(0, 0, mp.width, mp.height), 1.0)), $))(0, 0)
@@ -309,7 +309,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     }
 
     def makeScene() : |[Scene] = {
-        if (img("map").complete.not)
+        if (img(game.map.image).complete.not)
             return None
 
         units.clear()

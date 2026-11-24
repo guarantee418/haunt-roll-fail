@@ -4,7 +4,7 @@ Company of Heroes: The Board Game, 2nd Edition (Bad Crow Games, licensed from SE
 on the site as **Company of Heroes** (meta `tactics`, URL `/play/tactics`) while the owner's team helps test it. It plays the
 core rulebook (RulesPal's copy, and the four books in the Tabletop Simulator mod "Company of Heroes - 2nd Edition", Steam
 workshop 2314664989: Rulebook, Faction Guide, Mission Booklet, Solo Rulebook), US Forces against the Wehrmacht on
-**Moro River**, one player each. The setup's **Rules** choice picks the **Full Game Rules** (every new game since
+the Mission Booklet's six two-panel core missions (**Missions**, further down; Moro River by default), one player each. The setup's **Rules** choice picks the **Full Game Rules** (every new game since
 2026-11-24, `FullGameRules`) or the **First Game Rules** (`FirstGameRules`; games made before the choice have neither and
 play these). The First Game Rules are below; the Full Game Rules add to them (**Full Game Rules**, further down).
 With the Full Game Rules come the twelve core Commanders (**Commanders**, further down). Where the rules leave something open, the choice made is under
@@ -12,11 +12,13 @@ With the Full Game Rules come the twelve core Commanders (**Commanders**, furthe
 
 ## Setup
 
-- Map: Moro River (MR1 and MR2 side by side, the Mission Booklet's 2-panel core mission). Twelve Control Points, where the
-  booklet puts them, all dual: six Victory Point ones (two with Manpower, two with Munitions, two with Fuel) and two each
-  of Manpower and Fuel, Fuel and Munitions, Munitions and Manpower (`Board.data`).
-- The Spawn Areas are the back rows: the first player in the seating (team 1) at the top, the second at the bottom.
-- Income 1 Manpower, 1 Munitions, 1 Fuel; stockpile 4 Manpower, 2 Munitions, 3 Fuel; 0 VP and XP.
+- Map: the setup's **Map** choice, one of the Mission Booklet's 2-panel core missions (**Missions**); games made before the
+  choice play Moro River (MR1 and MR2 side by side). Twelve Control Points, where the booklet puts them, all dual: on Moro
+  River six Victory Point ones (two with Manpower, two with Munitions, two with Fuel) and two each of Manpower and Fuel, Fuel
+  and Munitions, Munitions and Manpower (`Board.data`).
+- The Spawn Areas are the back rows: the first player in the seating (team 1) at the top, the second at the bottom (on
+  Across the Don and Road to Moscow, the left and right edges).
+- Income 1 Manpower, 1 Munitions, 1 Fuel; stockpile 4 Manpower, 2 Munitions, 3 Fuel (the mission's own on the others); 0 VP and XP.
 - Game length (setup option): Short 18 VP (default, the rulebook's suggestion for a first game), Medium 21, Long 24.
 - Each team rolls three Damage Dice; the most green symbols, then black, goes first (a tie rolls again). The team going
   second places its three starting Infantry first: any of its Tier 1 Infantry (US: Riflemen, Mortar Team; Wehrmacht:
@@ -102,6 +104,36 @@ What the rulebook's grey boxes add (`full` in `game.scala`), and Moro River's ow
 - **Tank traps**: Moro River's A and B hexes (the "T" hexes of `Board.data`) are permanent tank traps: Vehicles can't
   enter them; they can't be destroyed or assaulted.
 
+## Missions
+
+The setup's **Map** choice (`MapChoice` in `game.scala`, the maps in `missions.scala`; every new game since 2026-11-24 has one,
+Moro River by default) plays one of the Mission Booklet's six 2-panel core missions (4.0), each two of the four core panels side by
+side as the mission's bag in the Tabletop Simulator mod lays them, with its stockpile and Control Points (the resource tokens in
+its bag, which match the booklet's pictures):
+
+| Mission | Panels | Stockpile (Manpower, Munitions, Fuel) | Spawn Areas |
+|---|---|---|---|
+| Moro River | MR1, MR2 | 4, 2, 3 | top and bottom |
+| Across the Don | MR1, MR2 | 5, 3, 3 | left and right edges |
+| Between Two Rivers | MR2, MR1 | 4, 4, 4 | top and bottom |
+| Ardennes Forest | AF1, AF2 | 6, 2, 3 | top and bottom |
+| Frozen Lake | AF2, AF1 | 6, 4, 3 | top and bottom |
+| Road to Moscow | AF1, AF2 | 6, 4, 4 | left and right edges |
+
+- **Side Spawn Areas**: the booklet's numbered badges mark the full hexes of the edge column; the half hexes cut by the edge
+  beside them are taken too (`MapData.spawn`). Team 1 (the first player in the seating) is on the left.
+- **Control Points in Buildings**: Across the Don and Road to Moscow have two each (Road to Moscow one in the Cathedral);
+  Infantry holds them as on open ground, Vehicles can't enter them.
+- **Moro River's bridge point**: the Control Point beside the bridge was a hex off (I4); new games have it in I5, where the booklet
+  and the mod put it (`MoroRiver`); games made before the Map choice keep I4 (`MoroRiverFirst`).
+- **Ardennes Forest panels** (AF1, AF2; Full Game Rules 10.2, 10.4): **Ice** tiles on the frozen lake: a unit attacked on Ice
+  rolls Damage Dice by the Ice Matrix (the most for any damage type assigned to it: AI none; AP 1; HE 2 on a Heavy Vehicle,
+  else 1; Flame none on Infantry, 1 on an Emplacement, else 2), and falls through, destroyed, if any die misses; units on Ice
+  count as on open ground. **Multi-hex Buildings**: adjacent Buildings are one Building: units inside see and fire across it,
+  and get no Building Cover against units in the same Building. The **Cathedral** (five hexes) is an indestructible
+  multi-hex Building giving Infantry 3 Defense Dice, as a Building does. Bunkers are in the terrain packs, not the core
+  missions, and aren't played. The Ardennes panels have no tank traps.
+
 ## Commanders
 
 With the Full Game Rules, the setup's **Commanders** choice (`DrawCommanders`, every new game since 2026-11-24, or `NoCommanders`)
@@ -184,8 +216,7 @@ Vehicles: 3 of each tier 1 and 2 vehicle, 2 of each tier 3 one, at a time.
 11. **Splash on Sandbags**: each splash die counts once for each unit it hits in the hex and once for the hex toward the
     two Damage that destroy Sandbags.
 12. **Not in the core box** (left out): barbed wire and tank traps that units build (the core units' Wrenches build only
-    Sandbags), Terrain Pack 3's foot bridges, Lost Brigades, Bunkers and other special Buildings, Ice, Control Points in
-    Buildings (Moro River has none).
+    Sandbags), Terrain Pack 3's foot bridges, Lost Brigades, Bunkers and the terrain packs' other special Buildings.
 13. **Commander readings**: Osttruppen's two icons beside the Wrench (a veteran star and a Speed Die) are read as the squad's Speed Die;
     the Paradrop and Airdropped Group costs are the whole cost of the units; Smoke "disrupting Pins" isn't modeled beyond the sight rules;
     Combat Group Advance's and Armor Blitzkrieg's free move lasts the turn the ability is used; a drawn Commander's cards are shown to
