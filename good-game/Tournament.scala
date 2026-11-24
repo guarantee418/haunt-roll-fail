@@ -41,6 +41,9 @@ import scala.concurrent.duration.Duration
 //   forum <url>                       a forum channel's webhook for the tables' threads (the file discord-forum-webhook;
 //                                     "forum off" removes it); delete the change file once its .result says "set"
 //   invite                            posts the invitation to sign up again
+//   congrats <url>                    the webhook the congratulations go to as each tournament game finishes (the owner's "Royal
+//                                     Claim" in the Root announcements channel; the file discord-congrats-webhook, "congrats off"
+//                                     removes it, and they go to the announcements' webhook); delete the change file once its .result says "set"
 //   turns <url>                       the webhook of the channel for turn pings and new games (TurnPings.scala; the file
 //                                     discord-turns-webhook, "turns off" removes it); delete the change file once its .result says "set"
 //   nort-turns <url>                  the same for Northgard's games (the file discord-nort-turns-webhook, "nort-turns off")
@@ -407,31 +410,55 @@ object Tournament {
             c.tables.find(t => t.game == game && t.winner.isEmpty).foreach { t =>
                 val won = sides.split(';').toList.filter(_.startsWith("W:")).flatMap(_.drop(2).split(',').toList).map(_.takeWhile(_ != '/')).filter(_.nonEmpty)
                 val ww = won.flatMap(u => t.users.indexOf(u) match { case -1 => None ; case i => Some(t.names(i)) }).distinct
+                val ff = finals(t, sides)
 
                 ww match {
-                    case w :: Nil => win(c.n, t.id, w)
+                    case w :: Nil => win(c.n, t.id, w, ff)
                     case _ =>
-                        val text = "Root Tournament " + c.n + ", " + t.title(c.n).split(' ').drop(2).mkString(" ") + " ended with " + (if (ww.isEmpty) "no winner" else "a shared win (" + ww.map(display).mkString(", ") + ")") + ": the organizer picks who goes on."
-                        announce(text, c.n)
+                        val where = t.title(c.n).split(' ').drop(2).mkString(" ")
+                        val text = (if (ww.isEmpty) "Root Tournament " + c.n + ", " + where + " ended with no winner"
+                            else "🎉 **Congratulations to " + ww.map(tagged).mkString(" and ") + "** on a shared win at " + where + " of Root Tournament " + c.n) +
+                            ": the organizer picks who goes on." + scoresLine(ff)
+                        if (ww.isEmpty) announce(text, c.n) else congratulate(text, c.n)
                         announce(text, c.n, t.id)
                 }
             }
         }
     }
 
-    def win(n : Int, id : String, k : String) {
+    // CONGRATULATIONS (asked for on 2026-11-24): as each tournament game finishes, the announcements' webhook (the owner's "Royal Claim")
+    // congratulates its winner, mentioning them, with every player's faction and final score, from the result the game reported
+    // ("W:" and "L:" sides, each seat "<user>/<faction>/<seat>/<players>/<score>", RankingSeat.token), best first, in seat order on ties
+    case class Final(name : String, faction : String, seat : Int, score : String) {
+        def rank = if (score == "D") Int.MaxValue else score.toIntOption.getOrElse(-1)
+        def points = if (score == "D") "dominance" else if (score.isEmpty) "" else score + " VP"
+        override def toString = display(name) + " (" + faction + ")" + (if (points.nonEmpty) " " + points else "")
+    }
+
+    def finals(t : Table, sides : String) : List[Final] =
+        sides.split(';').toList.filter(s => s.startsWith("W:") || s.startsWith("L:")).flatMap(_.drop(2).split(',').toList).map(_.split("/", -1).toList).collect {
+            case u :: faction :: seat :: _ :: score :: _ if t.users.contains(u) => Final(t.names(t.users.indexOf(u)), faction.replace('_', ' '), seat.toIntOption.getOrElse(99), score)
+        }.sortBy(x => (-x.rank, x.seat))
+
+    def scoresLine(ff : List[Final]) = if (ff.isEmpty) "" else "\nFinal scores: " + ff.mkString(" · ")
+
+    // " playing the Marquise de Cat, 30 VP"
+    def winnerLine(k : String, ff : List[Final]) = ff.find(_.name == k).map(f => " playing the " + f.faction + (if (f.points.nonEmpty) ", " + f.points else "")).getOrElse("")
+
+    def win(n : Int, id : String, k : String, ff : List[Final] = Nil) {
         event("winner", n, id, k)
 
         val c = cups().find(_.n == n).get
+        val after = scoresLine(ff)
 
         if (id == finalId) {
             event("champion", n, k)
-            announce("**" + display(k) + " is the champion of Root Tournament " + n + "!**", n)
-            announce("**" + display(k) + " won the final and is the champion!**", n, id)
+            congratulate("🏆 **Congratulations to " + tagged(k) + ", the champion of Root Tournament " + n + "!** They won the final" + winnerLine(k, ff) + ", and their name is golden on the Rankings until the next champion." + after, n)
+            announce("**" + display(k) + " won the final and is the champion!**" + after, n, id)
         }
         else {
-            announce(display(k) + " won Table " + id + " of Root Tournament " + n + ".", n)
-            announce("**" + display(k) + " won this table** and goes to the final.", n, id)
+            congratulate("🎉 **Congratulations to " + tagged(k) + "**, winner of Table " + id + " of Root Tournament " + n + winnerLine(k, ff) + "! They go on to the final." + after, n)
+            announce("**" + display(k) + " won this table** and goes to the final." + after, n, id)
 
             if (c.heats.size == heatIds.size && c.heats.forall(_.winner.nonEmpty) && c.fin.isEmpty) {
                 val l = scala.util.Random.shuffle(c.heats.flatMap(_.winner))
@@ -516,6 +543,21 @@ object Tournament {
                     else
                         "not done: forum <https://discord.com/api/webhooks/...> or forum off"
                 case "invite" => invite(true)
+                // the congratulations' webhook (the file discord-congrats-webhook; 2026-11-24); "congrats off" sends them to the
+                // announcements' webhook again
+                case "congrats" =>
+                    if (rest.startsWith("https://discord.com/api/webhooks/") || rest.startsWith("https://discordapp.com/api/webhooks/")) {
+                        Files.write(Paths.get("discord-congrats-webhook"), (rest + "\n").getBytes(UTF_8))
+                        Files.deleteIfExists(congratsThreads)
+                        plainChannels = Set()
+                        "set"
+                    }
+                    else if (rest == "off") {
+                        Files.deleteIfExists(Paths.get("discord-congrats-webhook"))
+                        "removed"
+                    }
+                    else
+                        "not done: congrats <https://discord.com/api/webhooks/...> or congrats off"
                 // the channel (a forum: a post for each game) for the turn pings and new games (TurnPings.scala; 2026-11-20), Northgard's
                 // (2026-11-21), Pincer's and Company of Heroes' (2026-11-24)
                 case w if TurnPings.slot(w).nonEmpty => TurnPings.setHook(TurnPings.slot(w).get, rest)
@@ -609,10 +651,10 @@ object Tournament {
                 case w if DiscordServer.words(w) => DiscordServer.change(w, rest)
                 // the roles members pick for themselves, and the role picker post (SelfRoles.scala; 2026-11-24)
                 case w if SelfRoles.words(w) => SelfRoles.change(w, rest)
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, pincer-turns, tactics-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order, webhooks, make-webhook, rename-webhook, test-ping, self-roles, self-role, self-role-off and role-picker)"
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, congrats, turns, nort-turns, pincer-turns, tactics-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order, webhooks, make-webhook, rename-webhook, test-ping, self-roles, self-role, self-role-off and role-picker)"
             }
 
-            (if (word == "webhook" || word == "forum" || TurnPings.slot(word).nonEmpty || word == "bot") word else line) + ": " + result
+            (if (word == "webhook" || word == "forum" || word == "congrats" || TurnPings.slot(word).nonEmpty || word == "bot") word else line) + ": " + result
         }
     }
 
@@ -639,6 +681,9 @@ object Tournament {
 
     // a forum channel's webhook for the tables' threads, if they go to a channel of their own (2026-11-20)
     def forumWebhook = hook("HRF_DISCORD_FORUM_WEBHOOK", "discord-forum-webhook")
+
+    // the congratulations' webhook, if they go to a channel of their own (the owner's "Royal Claim" in the Root announcements; 2026-11-24)
+    def congratsWebhook = hook("HRF_DISCORD_CONGRATS_WEBHOOK", "discord-congrats-webhook")
 
     lazy val client = java.net.http.HttpClient.newHttpClient()
 
@@ -732,6 +777,22 @@ object Tournament {
             val ids = "<@(\\d{17,20})>".r.findAllMatchIn(text).map(_.group(1)).toList.distinct
 
             poster.execute(() => post(url, text, key, name, ids))
+        }
+    }
+
+    // a congratulation as a tournament game finishes: to the congratulations' webhook, posted in its channel (an announcement or text
+    // channel takes no thread; a forum gets one thread for each tournament, kept in congrats-threads.tsv), else to the announcements'
+    // webhook, like announce
+    val congratsThreads = dir.resolve("congrats-threads.tsv")
+
+    def congratulate(text : String, n : Int) {
+        congratsWebhook match {
+            case None => announce(text, n)
+            case Some(url) =>
+                println("Tournament: " + text.replace("\n", "; "))
+                Ranking.append(dir.resolve("announcements.tsv"), row(Ranking.now(), text))
+                val ids = "<@(\\d{17,20})>".r.findAllMatchIn(text).map(_.group(1)).toList.distinct
+                poster.execute(() => post(url, text, threadKey(n), threadName(n), ids, congratsThreads))
         }
     }
 
