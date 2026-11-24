@@ -295,7 +295,7 @@ recomputed in `AdsetExpansion.assign`).
 Pincer: A Gentleman's War (Julian Birke, a work in progress the owner's team playtests; asked for on 2026-11-23) is in
 `haunt-roll-fail/pincer/` (meta `pincer`, URL `/play/pincer`, on the main menu since 2026-11-24: `HRF.menuMetas`), played from the
 rulebook's second draft with the art of the Tabletop Simulator mod 3778939778 (`pincer/tools/pincer-art.py`, images in
-`webp2/pincer/images/`). On the main menu since 2026-11-24 (`HRF.menuMetas`). `pincer/RULES.md` has the rules as played and the draft's open questions (the Boar's War penalty
+`webp2/pincer/images/`). On the main menu since 2026-11-24 (`HRF.menuMetas`). "How to Play" on its menu (and Company of Heroes') links the publisher's own pages and explains the site's controls, never the rules (`Meta.howToPlay`, `howToPlayLinks`, `howToPlayMenu` in `hrf.scala`, URL `/play/<meta>/how-to-play`; 2026-11-24). `pincer/RULES.md` has the rules as played and the draft's open questions (the Boar's War penalty
 isn't in it yet), `pincer/HANDOFF.md` the state, files and testing (`pincer.Host` bot games, `pincer.Dump`).
 
 Company of Heroes: The Board Game, 2nd Edition (Bad Crow Games; a work in progress the owner's team helps test; asked for on
