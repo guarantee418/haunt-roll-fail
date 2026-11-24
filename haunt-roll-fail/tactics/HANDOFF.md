@@ -8,7 +8,7 @@ played and the choices made.
 
 ## State
 
-- Playable: two players, any two of the five core factions (US Forces, Wehrmacht, British Forces, Soviet Forces, Oberkommando West;
+- Playable: two players, any two of the five core factions, or team games of three to five, Allies against Axis, or three on the 3 Way Free-for-all (RULES.md, Team games) (US Forces, Wehrmacht, British Forces, Soviet Forces, Oberkommando West;
   thirty core Commanders, six a faction), on the Mission Booklet's six 2-panel core missions (the setup's
   Map choice, `MapChoice`, Moro River by default: Moro River, Across the Don, Between Two Rivers, Ardennes Forest, Frozen Lake,
   Road to Moscow, with Ice, the Cathedral and multi-hex Buildings on the Ardennes panels); Local (hotseat), Quick Game and Play Online, with
@@ -100,6 +100,7 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
   tank traps.
 - Full Game readings to confirm with the team (RULES.md, Interpretations 7 to 12): the Firing Arc's width, Retreat paths,
   Overwatch on a hex passed through.
-- 2 vs 2 team games and the Mission Booklet's other missions; the Lost Brigades and terrain packs' missions (4.1 ...)
+- Team games: allied abilities for teammates (Reinforce, repairs), the 4-panel missions (the mod has only the four core panels,
+  so the 2 vs 2 missions on 3 or 4 panels need their layouts). The other free-for-all missions need LMP panels. The Lost Brigades and terrain packs' missions (4.1 ...)
   need the packs' panels and Bunkers.
 - A better bot.

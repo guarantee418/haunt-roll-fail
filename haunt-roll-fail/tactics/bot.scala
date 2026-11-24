@@ -36,7 +36,7 @@ class GameEvaluation(val game : Game, val self : Faction) {
 
         // how far a side turns away from the nearest enemy (or the enemy's Spawn Area), in degrees
         def facingAway(h : Hex, e : Int) = {
-            val goal = units(enemy(self))./(where).sortBy(Board.distance(h, _)).starting.|(Board.spawn(1 - team(self)).sortBy(Board.distance(h, _)).head)
+            val goal = enemies(self)./~(units)./(where).sortBy(Board.distance(h, _)).starting.|(enemies(self)./(team).distinct./~(Board.spawn).sortBy(Board.distance(h, _)).head)
             if (goal == h) 0 else (((Board.angle(h, goal) - Board.normals(e)) % 360 + 540) % 360 - 180).abs.round.toInt
         }
 
@@ -114,7 +114,7 @@ class GameEvaluation(val game : Game, val self : Faction) {
             case BuildMenuAction(_, _) => true |=> 350 -> "build"
             case BuildAction(_, _, _, h) => true |=> (400 - nearest(h) * 20 + Board.points.contains(h).??(200)) -> "build on points"
             case FreeSpawnAction(_, _, h) => true |=> (500 - nearest(h) * 10) -> "free"
-            case DefensiveStanceAction(_, u, _) => (Board.points.contains(where(u)) && units(enemy(self)).exists(e => Board.distance(where(e), where(u)) <= 3)) |=> 250 -> "hold the point"
+            case DefensiveStanceAction(_, u, _) => (Board.points.contains(where(u)) && enemies(self)./~(units).exists(e => Board.distance(where(e), where(u)) <= 3)) |=> 250 -> "hold the point"
             case HullDownAction(_, _, _, _) => true |=> 100 -> "hull down"
             case RaidPointAction(_, u, _) => (nearest(where(u)) > 1) |=> 150 -> "raid"
             case OpeningAction(_, _, _) => true |=> 300 -> "advance"

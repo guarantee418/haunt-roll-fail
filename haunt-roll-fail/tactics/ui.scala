@@ -427,7 +427,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
         def stat(r : Res) = Span(r.icon ~ p.stock(r).hlb ~ (r != XP).?(("+" + game.income(f, r)).spn(styles.small) : Elem).|(Empty), styles.stat)
 
-        val vp = Div(stat(VP) ~ " / " ~ game.length.vp.hl ~ " " ~ stat(XP))
+        // in team games, the team's VPs together after the player's own (2026-11-24)
+        val vp = Div(stat(VP) ~ game.teamGame.?((" (team " + game.teamVP(game.team(f)) + ")").spn(styles.small) : Elem).|(Empty) ~ " / " ~ game.endVP.hl ~ " " ~ stat(XP))
 
         val stock = Div(Res.spent./(stat).merge)(styles.row)
 
@@ -576,7 +577,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             showNotifications(game.setup)
 
         case ("board", f : Faction) =>
-            val e = game.enemy(f)
+            val e = (game.setup.dropWhile(_ != f).drop(1) ++ game.setup).head
             showOverlay(overlayScrollX(Div(f.elem ~ " Building Boards " ~ OnClick(("board", e), Span(("(" + e.name + "'s)").txt, styles.small, xlo.pointer))) ~
                 1.to(3)./(t => Div(Image("board:" + Tiers.board(f, t), styles.boardImg) ~ Div(("Tier " + t + ", " + Tiers.name(f, t) + (t > 1).??(" (unlock: " + Tiers.cost(t).mp + " Manpower, " + Tiers.cost(t).fuel + " Fuel)") + (t <= game.states(f).tier).?(" - unlocked").|("")).txt))).merge), onClick)
 
