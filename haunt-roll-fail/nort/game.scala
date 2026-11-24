@@ -1414,8 +1414,8 @@ class Game(val players : $[Player], val initialOptions : $[Meta.O]) extends Base
         (year > 0).$(Info("Year", year.hlb, (year > lastYear).?("(past the last, " ~ lastYear.hl ~ ")").|("of " ~ lastYear.hl))) ++
         self.%(states.contains)./~(f =>
             (choosing || inLoreTree).not.??(f.hand.distinct./(c => turn.?(HandInfoAction(f, "Your hand".styled(colors(f)), c, f.hand.count(c)) : Info).|(CardInfoAction(f, "Your hand".styled(colors(f)), c, f.hand.count(c))))) ++
-            f.active.distinct./(c => CardInfoAction(f, "Played".styled(colors(f)), c, f.active.count(c))) ++
-            $(Info("Fame", f.fame.hlb))
+            // Fame isn't repeated here: the player panel shows it (Discord, 2026-11-23)
+            f.active.distinct./(c => CardInfoAction(f, "Played".styled(colors(f)), c, f.active.count(c)))
         )
     }
 
