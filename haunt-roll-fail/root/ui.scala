@@ -236,12 +236,15 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, options : $[Meta.O], val
 
             case Caravan => { DrawRect(pr + "caravan", -45, -45, 90, 90) }
             case Station => { DrawRect(pr + "station", -50, -50, 100, 100) }
-            case OldTablet => { DrawRect(pr + "tablet" + forest.??("-hidden"), -45, -45, 90, 90) }
-            case OldJewel => { DrawRect(pr + "jewel" + forest.??("-hidden"), -45, -45, 90, 90) }
-            case OldIdol => { DrawRect(pr + "idol" + forest.??("-hidden"), -45, -45, 90, 90) }
+            case OldTablet if forest => { DrawRect(pr + "tablet-hidden-map", -60, -60, 120, 120) }
+            case OldTablet => { DrawRect(pr + "tablet-map", -60, -60, 120, 120) }
+            case OldJewel if forest => { DrawRect(pr + "jewel-hidden-map", -60, -60, 120, 120) }
+            case OldJewel => { DrawRect(pr + "jewel-map", -60, -60, 120, 120) }
+            case OldIdol if forest => { DrawRect(pr + "idol-hidden-map", -60, -60, 120, 120) }
+            case OldIdol => { DrawRect(pr + "idol-map", -60, -60, 120, 120) }
 
-            case Relic(r, value) => { DrawRect(pr + r + "-" + value.toString, -45, -45, 90, 90) }
-            case HiddenRelic(r) => { DrawRect(pr + r + "-" + "hidden", -45, -45, 90, 90) }
+            case Relic(r, value) => { DrawRect(pr + r + "-" + value.toString + "-map", -60, -60, 120, 120) }
+            case HiddenRelic(r) => { DrawRect(pr + r + "-" + "hidden-map", -60, -60, 120, 120) }
 
             case WayStation(a, p) => { DrawRect(pr + "waystation-" + a + "-" + p, -50, -50, 100, 100) }
 
