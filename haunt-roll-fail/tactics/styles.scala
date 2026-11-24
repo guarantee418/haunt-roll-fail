@@ -19,6 +19,9 @@ package object elem {
 
         US --> color("#9fcf6a")
         Wehrmacht --> color("#ff7a70")
+        British --> color("#e8c86e")
+        Soviet --> color("#f2708a")
+        OKW --> color("#9fbde3")
 
         Manpower --> color("#d8d26a")
         Munitions --> color("#ff8a50")
@@ -75,5 +78,8 @@ package object elem {
 
         US --> outline.color("#6f9a3e")
         Wehrmacht --> outline.color("#c9423b")
+        British --> outline.color("#c8a24a")
+        Soviet --> outline.color("#a0203c")
+        OKW --> outline.color("#5d7a99")
     }
 }
