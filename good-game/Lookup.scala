@@ -27,7 +27,7 @@ trait BotCommand {
 }
 
 object BotCommands {
-    val all : List[BotCommand] = List(CardLookup, RuleLookup)
+    val all : List[BotCommand] = List(CardLookup, RuleLookup, SelfRoles)
 
     def of(name : String) = all.find(_.name == name)
 }
