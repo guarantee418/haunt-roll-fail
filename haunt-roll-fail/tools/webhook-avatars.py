@@ -10,7 +10,7 @@ import os
 from PIL import Image, ImageDraw
 
 S = 1024          # drawn at 4x, saved at 256
-OUT = "webp2/lfg/webhooks"
+OUT = "haunt-roll-fail/webp2/lfg/webhooks"
 GOLD = (214, 172, 74)
 GOLD_DARK = (140, 104, 34)
 
