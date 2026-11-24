@@ -128,6 +128,8 @@ object xstyles {
 
     object hiddenLink extends CustomStyle(color("#a0a0a0"), text.decoration.line("none"))
 
+    // a paragraph of a page of text (How to Play): left-aligned, a little apart from the next
+    object paragraph extends CustomStyle(text.align("left"), width("100%"), margin("0.5ex 0"))
     object xx extends CustomStyle(display("flex"), align.items("center"), justify.content("center"), white.space("pre-wrap"), flex.wrap("wrap"))
 
     object thu extends CustomStyle(min.height("3ex"), margin.left("4ex"), margin.right("4ex"), margin.top("0.8ex"), margin.bottom("0.8ex")) {

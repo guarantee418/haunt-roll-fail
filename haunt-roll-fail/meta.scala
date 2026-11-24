@@ -312,6 +312,10 @@ trait MetaBase {
     def tutorialGame : |[($[F], Map[F, String], $[O])] = None
     // A note at the top of the main menu (Northgard's Adset: its rules in short)
     def menuAbout : |[Elem] = None
+    // A "How to Play" page on the game's menu (Pincer and Company of Heroes, 2026-11-24): links to the publisher's own pages for
+    // the rules (label and URL), then how the game is played on this site, a heading and its paragraphs each; never the rules
+    def howToPlayLinks : $[(Elem, String)] = $
+    def howToPlay : $[(Elem, $[Elem])] = $
 
     // Image name -> URL for images used in the menus (faction notes, option explanations), before the game's assets load
     def menuImages : Map[String, String] = Map()
