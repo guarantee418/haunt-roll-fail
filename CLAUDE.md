@@ -413,6 +413,8 @@ cd haunt-roll-fail && sbt fullOptJS
 - Under "Report a Bug", every game's in-game menu has a "Main Menu" button (asked for on
   2026-10-13): it loads `/play/<meta>` afresh (`returnToTitle` in `hrf.scala`), where online and saved
   local games can be picked up again; a game kept only in memory (Training Grounds) asks first.
+  After it, every game's in-game menu has "My Online Games" (asked for on 2026-11-24), which loads `/play/my-games`
+  (`canMyGames` and `myGames` in `Callbacks`, `hrf.scala`), asking first the same way.
 
 ## Several sessions or accounts
 
