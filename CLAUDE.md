@@ -1214,7 +1214,7 @@ server. No session can reach the server, and none needs to.
   2026-11-24), their pings led by a drum or a field radio emoji, as their clients give no reasons. The bot makes those webhooks itself,
   with original personas, "Drum and Fife" and "Field Wireless" (avatars in `webp2/lfg/webhooks/`, drawn by
   `haunt-roll-fail/tools/webhook-avatars.py`): the tournament changes `webhooks`, `make-webhook <name> | in <channel> | avatar <file> |
-  for <turns channel>` (sets it as that turns channel without anyone copying its URL) and `rename-webhook` (`DiscordServer.scala`;
+  for <turns channel>` (sets it as that turns channel without anyone copying its URL), `rename-webhook` and `test-ping <turns channel> | role <role>` (a "Test ping" thread through that webhook, mentioning the role) (`DiscordServer.scala`;
   the bot needs Manage Webhooks).
 - The bot's `/card <name> [game] [private]` (2026-11-22, asked for as a "bot to call cards and other art"): posts a Root or Northgard card,
   faction or clan board, quest, landmark, hireling or creature with its picture, the name suggested as it is typed (autocomplete). The list

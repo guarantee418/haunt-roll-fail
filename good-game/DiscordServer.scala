@@ -43,6 +43,9 @@ import java.nio.charset.StandardCharsets.UTF_8
 //                                             drum-and-fife.png, field-wireless.png); for sets it as turns, nort-turns, pincer-turns or
 //                                             tactics-turns, as that change would (only a webhook Discord gives the bot the token of)
 //   rename-webhook <name> -> <new name>       (in any channel; its ID works in place of its name)
+//   test-ping <turns channel> [| role <role>] [| text <text>]
+//                                             posts a new thread, "Test ping", through that turns channel's webhook, mentioning the
+//                                             role (2026-11-24, asked for to try the new webhooks); a forum's thread, else the channel
 object DiscordServer {
     def api = sys.props.getOrElse("hrf.discord.api", "https://discord.com/api/v10")
 
@@ -184,6 +187,7 @@ object DiscordServer {
             case "order" => order(g, rest)
             case "webhooks" => listWebhooks(g)
             case "make-webhook" => makeWebhook(g, rest)
+            case "test-ping" => testPing(g, rest)
             case "rename-webhook" => arrow(rest).flatMap { case (a, b) => webhooks(g).flatMap(findWebhook(_, a)).flatMap(w =>
                 call("PATCH", "/webhooks/" + w.id, "{\"name\":" + Tournament.json(b) + "}").map(_ => "renamed")) }
             case "move-channel" => arrow(rest).flatMap { case (a, b) => channels(g).flatMap { cc =>
@@ -409,6 +413,33 @@ object DiscordServer {
         }
     }
 
+    def testPing(g : String, rest : String) : Either[String, String] = {
+        val (name, opts) = split(rest)
+        def opt(k : String) = opts.find(_._1 == k).map(_._2)
+        for {
+            s <- TurnPings.slot(name).toRight("test-ping takes " + TurnPings.slots.map(_.name).mkString(", "))
+            url <- TurnPings.hookOf(s).toRight("no webhook set as " + s.name)
+            role <- opt("role") match { case None => Right(None) ; case Some(r) => roles(g).flatMap(findRole(_, r)).map(Some(_)) }
+            r <- {
+                val text = role.map(r => "<@&" + r.id + "> ").getOrElse("") + opt("text").getOrElse("This is a test ping from the " + s.name + " webhook. Turn pings for these games will be posted in threads like this one.")
+                def send(thread : Boolean) = {
+                    val body = "{\"content\":" + Tournament.json(text.take(1900)) + ",\"allowed_mentions\":{\"parse\":[],\"roles\":[" + role.map(r => Tournament.json(r.id)).mkString + "]}" +
+                        (if (thread) ",\"thread_name\":\"Test ping\"" else "") + "}"
+                    val request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(url + "?wait=true")).timeout(java.time.Duration.ofSeconds(15))
+                        .header("Content-Type", "application/json").POST(java.net.http.HttpRequest.BodyPublishers.ofString(body, UTF_8)).build()
+                    DiscordBot.client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString(UTF_8))
+                }
+                try {
+                    val a = send(true)
+                    val b = if (a.statusCode / 100 == 4) send(false) else a
+                    if (b.statusCode / 100 == 2) Right("posted" + (if (b eq a) " in a new thread" else " in the channel") + role.map(" mentioning @" + _.name).getOrElse(""))
+                    else Left("Discord answered " + b.statusCode + ": " + obj(b.body).get("message").getOrElse(b.body.take(200)))
+                }
+                catch { case e : Exception => Left("Discord couldn't be asked: " + e.getMessage) }
+            }
+        } yield r
+    }
+
     val words = Set("roles", "role", "rename-role", "give-role", "take-role", "channels", "category", "channel", "rename-channel", "move-channel", "order",
-        "webhooks", "make-webhook", "rename-webhook")
+        "webhooks", "make-webhook", "rename-webhook", "test-ping")
 }
