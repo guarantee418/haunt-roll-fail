@@ -24,11 +24,12 @@ import scala.concurrent.duration.Duration
 //   - it wasn't pinged in that game in the last 2 minutes (it waits until then, as the sweep comes back),
 //   - its seat plays under a ranking name with a Discord (given, or set by the owner) and turn pings not turned off (Rankings,
 //     "Discord turn pings"; on unless turned off since 2026-11-20, asked for: "start pinging people whenever it is their turn").
-// Several prompts in a row (a whole turn) are one ping, as the seat stays waited for between them; but a seat that answered
-// (its user wrote moves since the last report) and is then asked something of another kind (its reason's tag changed: a card
-// pick, then the Kobold exchange) starts a new wait, pinged like any other (2026-11-24, owner: "it's a log issue": gg picked a
-// Development card, the harvest ran on and the Kobold exchange asked Stag again with nobody else asked in between, so it was
-// counted as the wait already pinged, and no ping came for 12 hours). The new wait is two state.tsv rows, without the seat then with it. When a seat started being
+// Several prompts in a row (a whole turn) are one ping, as the seat stays waited for between them; but a seat still waited for
+// after the log passed a turn or phase boundary since the last report (`boundaries`: a turn ended or began, a Northgard year's
+// phase) starts a new wait, pinged like any other (2026-11-24, owner: "it was complete separate turns": gg picked a Development
+// card, his turn ended, the creature phase and harvest ran on and the Kobold exchange asked Stag again with nobody else asked in
+// between, so it was counted as the wait already pinged, and no ping came for 12 hours). The new wait is two state.tsv rows, without
+// the seat then with it. When a seat started being
 // waited for is the time on its state.tsv row, so a restart neither loses nor repeats a ping. A seat waited for since before
 // that (rows with no time, and the games Turns.scala knows of but this file doesn't, reports from before the turns webhook was
 // set, added at the server's start) isn't pinged by the sweep, as an abandoned game can't be told from a live one: the
@@ -352,23 +353,28 @@ object TurnPings {
     }
 
     // a client's report (Turns.report): the game asks these factions after the log's first index entries
-    // (before: each seat's reason in the report kept before this one, Turns.reason)
-    def report(game : String, index : Int, factions : List[String], before : Map[String, String] = Map(), why : Map[String, String] = Map()) : Unit =
+    def report(game : String, index : Int, factions : List[String]) : Unit =
         try {
             // kept whether or not a webhook is set yet, so the pings can start as soon as one is
             lobbyOf(game).filter(l => metas.contains(l.meta)).foreach { l =>
                     val seats = l.lines.map(_.split(' ').toList).collect { case "user" :: f :: u :: _ => f -> u }.toMap
-                    // the seats asked something of another kind than before (the tag, a reason's first part)
-                    def tag(r : String) = r.takeWhile(_ != '/')
-                    val changed = seats.collect { case (s, u) if before.get(s).exists(b => why.get(s).exists(w => tag(w) != tag(b))) => u }.toSet
-                    waiting(game, index, factions.flatMap(seats.get).toSet, changed)
+                    waiting(game, index, factions.flatMap(seats.get).toSet)
                 }
         }
         catch {
             case e : Exception => println("Turn pings: report failed: " + e)
         }
 
-    def waiting(game : String, index : Int, waiting : Set[String], changed : Set[String] = Set()) : Unit = synchronized {
+    // the log entries that end one turn or phase and start another (Root's turns, Northgard's turns and the year's phases): a seat
+    // waited for on both sides of one is asked again in a new wait
+    val boundaries = List("StartPlayerTurnAction", "EndTurnAction", "NextTurnAction", "StartYearAction", "ActionsPhaseAction",
+        "CreaturePhaseAction", "HarvestAction", "WinterAction")
+
+    def crossed(game : String, from : Int, to : Int) : Boolean =
+        run(entries.filter(_.journalId === game).filter(_.index >= from).filter(_.index < to).map(_.text).result)
+            .exists(t => boundaries.exists(b => t.startsWith(b + "(") || t == b))
+
+    def waiting(game : String, index : Int, waiting : Set[String]) : Unit = synchronized {
         // (Turns.report has already dropped stale reports, and kept those after a fix shortened the log)
         val before = latest.get(game)
         if (before.exists(b => b.index == index && b.users == waiting))
@@ -377,10 +383,8 @@ object TurnPings {
         val now = System.currentTimeMillis
         val all = before.map(_.users).getOrElse(Set())
 
-        // a seat still waited for that answered since the last report and is now asked something of another kind: a new wait
-        val fresh = before.filter(_.index < index).toList.flatMap { b =>
-            (all & waiting & changed).filter(u => run(entries.filter(_.journalId === game).filter(_.index >= b.index).filter(_.index < index).filter(_.userId === u).exists.result))
-        }.toSet
+        // seats still waited for after the log passed a turn or phase boundary: a new wait
+        val fresh = if (before.exists(_.index < index) && (all & waiting).nonEmpty && crossed(game, before.get.index, index)) all & waiting else Set[String]()
         if (fresh.nonEmpty) {
             Files.createDirectories(dir)
             Ranking.append(state, row(game, index, (all -- fresh).toList.sorted.mkString(","), Ranking.now()))
@@ -509,7 +513,8 @@ object TurnPings {
             case (true, "trade") => (head, "harvest trading ⚖️")
             case (true, "winter") => (head, "Winter ❄️ is here")
             case (true, "kobold") => (head, "the Kobolds offer an exchange ⚖️")
-            case (true, "cards") => (e("HorizonsDevelopments"), "pick a card")
+            // the Discord server's Northgard card back emoji (ng_cardback, 2026-11-24, asked for) right after "card", else the cards badge
+            case (true, "cards") => (head, "pick a card " + w(LfgSetup.serverNamed(List("cardback", "cardbacks")).getOrElse(e("HorizonsDevelopments"))))
             case (true, "draft") => (e("title"), "your pick in the clan draft")
             case (true, "setup") => (head, "time to place your clan")
             case (true, "raid") => (e("ModuleOption(Sea)"), "your raid")

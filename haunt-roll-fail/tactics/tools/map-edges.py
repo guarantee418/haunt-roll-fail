@@ -8,7 +8,10 @@ Image.MAX_IMAGE_PIXELS=None
 img=Image.open(sys.argv[1]).convert('RGB')
 im=np.asarray(img).astype(np.int32)
 H,W,_=im.shape
-X0,Y0,DX,S=926,741,923.0,501.0
+# X0: the first column's center in even rows (926 for Moro River's MR1 + MR2; 464.5 when the panels lie the other way, as their
+# hexes then sit half a hex further left); map-edges.py <map.png> <edges.json> <overlay.png> [X0]
+X0=float(sys.argv[4]) if len(sys.argv) > 4 else 926
+Y0,DX,S=741,923.0,501.0
 DY=1.5*S
 def center(r,c): return (X0+c*DX+(r%2)*DX/2, Y0+r*DY)
 def corners(cx,cy):

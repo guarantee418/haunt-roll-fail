@@ -26,6 +26,9 @@ case object Open extends Terrain("Open ground")
 case object Water extends Terrain("Water")
 case object Building extends Terrain("Building")
 case object Ruin extends Terrain("Destroyed Building")
+// Ardennes Forest: the Cathedral, an indestructible multi-hex Special Building, and the frozen lake's Ice tiles (Full Game Rules 10.2, 10.4)
+case object Cathedral extends Terrain("Cathedral")
+case object Ice extends Terrain("Ice")
 
 sealed abstract class Cover(val name : String, val dice : Int) extends Record
 case object LightCover extends Cover("Light Cover", 1)
@@ -39,11 +42,12 @@ case class Hex(c : Int, r : Int) extends Record with Elementary {
     def q = c - (r + 1) / 2
 }
 
-object Board {
+// a map: its rows (see MoroRiver), its picture, the starting stockpile (Manpower, Munitions, Fuel), and whether adjacent Buildings
+// are multi-hex Buildings (Full Game Rules 10.2: units see and fire inside one, and get no Cover from units in the same Building)
+class MapData(val id : String, val name : String, val image : String, val stock : (Int, Int, Int), val multiHex : Boolean, val data : $[String], val x0 : Double = 185.2, val sides : Boolean = false) {
     val width = 2400
     val height = 1800
 
-    val x0 = 185.2
     val dx = 184.6
     val y0 = 148.2
     val dy = 150.3
@@ -55,7 +59,165 @@ object Board {
     // "row column terrain edges extras": terrain W water, B building, D destroyed building; the six edges from the north-east
     // clockwise, H heavy cover, L light cover, X impassable; extras T a tank trap (Full Game Rules), then the Control Point's
     // resources, V Victory Points, M Manpower, U Munitions, F Fuel
-    val data = $(
+
+    val parsed = data./(_.split(" ").$)./(l => (Hex(l(1).toInt, l(0).toInt), l(2), l(3), l(4)))
+
+    val hexes : $[Hex] = parsed./(_._1).sortBy(h => (h.r, h.c))
+
+    val terrain : Map[Hex, Terrain] = parsed./{ case (h, t, _, _) => h -> (t match {
+        case "W" => Water
+        case "B" => Building
+        case "D" => Ruin
+        case "C" => Cathedral
+        case "I" => Ice
+        case _ => Open
+    }) }.toMap
+
+    // edges: 0 north-east, 1 east, 2 south-east, 3 south-west, 4 west, 5 north-west
+    val directions = $((1, -1), (1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1))
+
+    val byAxial = hexes./(h => (h.q, h.r) -> h).toMap
+
+    def at(q : Int, r : Int) : |[Hex] = byAxial.get((q, r))
+
+    def toward(h : Hex, e : Int) : |[Hex] = at(h.q + directions(e)._1, h.r + directions(e)._2)
+
+    val cover : Map[(Hex, Int), Cover] = parsed./~{ case (h, _, e, _) => e.zipWithIndex./~{
+        case ('H', i) => $((h, i) -> HeavyCover)
+        case ('L', i) => $((h, i) -> LightCover)
+        case _ => $()
+    } }.toMap
+
+    // an impassable line on either side of an edge closes it both ways, and so does a water hex
+    val closed : Set[(Hex, Hex)] = parsed./~{ case (h, _, e, _) => e.zipWithIndex./~{
+        case ('X', i) => toward(h, i)./~(n => $((h, n), (n, h)))
+        case _ => $()
+    } }.toSet
+
+    val traps : $[Hex] = parsed.%(_._4.contains('T'))./(_._1)
+
+    val points : Map[Hex, $[Res]] = parsed./~{ case (h, _, _, x) =>
+        val l = x.toList./~{
+            case 'V' => $(VP)
+            case 'M' => $(Manpower)
+            case 'U' => $(Munitions)
+            case 'F' => $(Fuel)
+            case _ => $()
+        }
+        l.any.$(h -> l)
+    }.toMap
+
+    val neighbors : Map[Hex, $[Hex]] = hexes./(h => h -> 0.until(6).$./~(e => toward(h, e))).toMap
+
+    def adjacent(a : Hex, b : Hex) = neighbors(a).has(b)
+
+    // adjacent with no impassable line between them
+    def joined(a : Hex, b : Hex) = adjacent(a, b) && closed.contains((a, b)).not
+
+    def distance(a : Hex, b : Hex) = {
+        val dq = a.q - b.q
+        val dr = a.r - b.r
+        (dq.abs + dr.abs + (dq + dr).abs) / 2
+    }
+
+    def within(a : Hex, n : Int) = hexes.%(b => distance(a, b) <= n)
+
+    // the Spawn Areas: the back rows, or with `sides` the hexes along the left (Team 1) and right (Team 2) edges, as the Mission Booklet's
+    // Across the Don and Road to Moscow put them (its numbered badges mark the full hexes of that column; the half hexes there are taken too)
+    def spawn(team : Int) : $[Hex] = sides.?(hexes.%(h => (team == 0).?(x(h) < dx * 0.75).|(x(h) > width - dx * 0.75))).|(hexes.%(h => h.r == (team == 0).?(0).|(12))).%(h => terrain(h) != Water)
+
+    // LINE OF SIGHT: Buildings and Destroyed Buildings between two hexes block it; a line running along an edge isn't blocked,
+    // so it is drawn twice, nudged to either side, and blocked only if both are
+    def cube(h : Hex) = (h.q.toDouble, h.r.toDouble, (-h.q - h.r).toDouble)
+
+    def round(x : Double, y : Double, z : Double) : |[Hex] = {
+        var rx = math.round(x).toDouble
+        var ry = math.round(y).toDouble
+        var rz = math.round(z).toDouble
+        val ex = (rx - x).abs
+        val ey = (ry - y).abs
+        val ez = (rz - z).abs
+        if (ex > ey && ex > ez)
+            rx = -ry - rz
+        else
+        if (ey > ez)
+            ry = -rx - rz
+        at(rx.toInt, ry.toInt)
+    }
+
+    def between(a : Hex, b : Hex, nudge : Double) : $[Hex] = {
+        val n = distance(a, b)
+        val (ax, ay, az) = cube(a)
+        val (bx, by, bz) = cube(b)
+        1.until(n).$./~{ i =>
+            val t = i.toDouble / n
+            round(ax + (bx - ax) * t + nudge, ay + (by - ay) * t + nudge, az + (bz - az) * t - 2 * nudge)
+        }
+    }
+
+    def blocks(h : Hex) = terrain(h) == Building || terrain(h) == Ruin || terrain(h) == Cathedral
+
+    // the multi-hex Buildings: each group of adjacent Buildings (and the Cathedral), on maps that have them
+    val buildingGroup : Map[Hex, Int] = {
+        var g = Map[Hex, Int]()
+        if (multiHex)
+            hexes.%(h => terrain(h) == Building || terrain(h) == Cathedral).foreach { h =>
+                if (g.contains(h).not) {
+                    val id = g.size
+                    var front = $(h)
+                    while (front.any) {
+                        front.foreach(x => g += x -> id)
+                        front = front./~(x => neighbors(x).%(n => (terrain(n) == Building || terrain(n) == Cathedral) && g.contains(n).not)).distinct
+                    }
+                }
+            }
+        g
+    }
+
+    def sameBuilding(a : Hex, b : Hex) = buildingGroup.get(a).any && buildingGroup.get(a) == buildingGroup.get(b)
+
+    def lineBlocked(a : Hex, b : Hex, block : Hex => Boolean) : Boolean =
+        between(a, b, 1e-6).exists(block) && between(a, b, -1e-6).exists(block)
+
+    // (a hex of a multi-hex Building at either end doesn't block the line: it crosses only one of its outer lines)
+    def clear(a : Hex, b : Hex) = lineBlocked(a, b, h => blocks(h) && sameBuilding(h, a).not && sameBuilding(h, b).not).not
+
+    // the edges of the target hex a line from the attacker's hex crosses (two when it runs through a corner)
+    def crossed(target : Hex, from : Hex) : $[Int] = {
+        val px = math.sqrt(3) * (from.q - target.q + (from.r - target.r) / 2.0)
+        val py = 1.5 * (from.r - target.r)
+        val angle = math.toDegrees(math.atan2(py, px))
+        val normals = $(-60.0, 0.0, 60.0, 120.0, 180.0, -120.0)
+        0.until(6).$.%{ e =>
+            val d = ((angle - normals(e)) % 360 + 540) % 360 - 180
+            d.abs <= 30.0001
+        }
+    }
+
+    // the direction from one hex to another, in degrees (0 east, clockwise, as the edges' normals: north-east is -60)
+    def angle(from : Hex, to : Hex) : Double = {
+        val px = math.sqrt(3) * (to.q - from.q + (to.r - from.r) / 2.0)
+        val py = 1.5 * (to.r - from.r)
+        math.toDegrees(math.atan2(py, px))
+    }
+
+    val normals = $(-60.0, 0.0, 60.0, 120.0, 180.0, -120.0)
+
+    // a Firing Arc (Full Game Rules): the hexes within 60 degrees either side of the side a unit faces, those on the edge included
+    // (the rulebook's Heavy Vehicle picture draws the front arc's edge through the middle of the two neighboring sides)
+    def inCone(from : Hex, to : Hex, e : Int) : Boolean = {
+        val d = ((angle(from, to) - normals(e)) % 360 + 540) % 360 - 180
+        d.abs <= 60.0001
+    }
+
+    def coverAgainst(target : Hex, from : Hex) : |[Cover] = (from != target).??(crossed(target, from)./~(e => cover.get((target, e)))).maxByOption(_.dice)
+}
+
+// the games made before the map choice: the Moro River rows as first read, with the Control Point beside the bridge one hex off
+object MoroRiverFirst extends MapData("moro", "Moro River", "map", (4, 2, 3), false, MoroRiverRows.rows)
+
+object MoroRiverRows {
+    val rows = $(
         "0 0 . ...... -",
         "0 1 . ...... -",
         "0 2 . ...... -",
@@ -232,133 +394,50 @@ object Board {
         "12 11 . ...... -",
         "12 12 W XX..XX -"
     )
+}
 
-    private val parsed = data./(_.split(" ").$)./(l => (Hex(l(1).toInt, l(0).toInt), l(2), l(3), l(4)))
+// Ardennes Forest: the back of the Moro River panels, AF2 on the left and AF1 on the right as the Mission Booklet lays them; read by
+// tools/map-edges.py and tools/ardennes-data.py (the cover lines are all Light Cover; no impassable lines or water)
+object Maps {
+    val all = $[MapData](MoroRiverFirst, MoroRiver, AcrossTheDon, BetweenTwoRivers, ArdennesForest, FrozenLake, RoadToMoscow)
+}
 
-    val hexes : $[Hex] = parsed./(_._1).sortBy(h => (h.r, h.c))
+// the map of the game being played (set by Game; one game a page, and the JVM checks play one at a time)
+object Board {
+    var current : MapData = MoroRiverFirst
 
-    val terrain : Map[Hex, Terrain] = parsed./{ case (h, t, _, _) => h -> (t match {
-        case "W" => Water
-        case "B" => Building
-        case "D" => Ruin
-        case _ => Open
-    }) }.toMap
-
-    // edges: 0 north-east, 1 east, 2 south-east, 3 south-west, 4 west, 5 north-west
-    val directions = $((1, -1), (1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1))
-
-    private val byAxial = hexes./(h => (h.q, h.r) -> h).toMap
-
-    def at(q : Int, r : Int) : |[Hex] = byAxial.get((q, r))
-
-    def toward(h : Hex, e : Int) : |[Hex] = at(h.q + directions(e)._1, h.r + directions(e)._2)
-
-    val cover : Map[(Hex, Int), Cover] = parsed./~{ case (h, _, e, _) => e.zipWithIndex./~{
-        case ('H', i) => $((h, i) -> HeavyCover)
-        case ('L', i) => $((h, i) -> LightCover)
-        case _ => $()
-    } }.toMap
-
-    // an impassable line on either side of an edge closes it both ways, and so does a water hex
-    val closed : Set[(Hex, Hex)] = parsed./~{ case (h, _, e, _) => e.zipWithIndex./~{
-        case ('X', i) => toward(h, i)./~(n => $((h, n), (n, h)))
-        case _ => $()
-    } }.toSet
-
-    val traps : $[Hex] = parsed.%(_._4.contains('T'))./(_._1)
-
-    val points : Map[Hex, $[Res]] = parsed./~{ case (h, _, _, x) =>
-        val l = x.toList./~{
-            case 'V' => $(VP)
-            case 'M' => $(Manpower)
-            case 'U' => $(Munitions)
-            case 'F' => $(Fuel)
-            case _ => $()
-        }
-        l.any.$(h -> l)
-    }.toMap
-
-    val neighbors : Map[Hex, $[Hex]] = hexes./(h => h -> 0.until(6).$./~(e => toward(h, e))).toMap
-
-    def adjacent(a : Hex, b : Hex) = neighbors(a).has(b)
-
-    // adjacent with no impassable line between them
-    def joined(a : Hex, b : Hex) = adjacent(a, b) && closed.contains((a, b)).not
-
-    def distance(a : Hex, b : Hex) = {
-        val dq = a.q - b.q
-        val dr = a.r - b.r
-        (dq.abs + dr.abs + (dq + dr).abs) / 2
-    }
-
-    def within(a : Hex, n : Int) = hexes.%(b => distance(a, b) <= n)
-
-    // the Spawn Areas: the back rows
-    def spawn(team : Int) : $[Hex] = hexes.%(h => h.r == (team == 0).?(0).|(12)).%(h => terrain(h) != Water)
-
-    // LINE OF SIGHT: Buildings and Destroyed Buildings between two hexes block it; a line running along an edge isn't blocked,
-    // so it is drawn twice, nudged to either side, and blocked only if both are
-    private def cube(h : Hex) = (h.q.toDouble, h.r.toDouble, (-h.q - h.r).toDouble)
-
-    private def round(x : Double, y : Double, z : Double) : |[Hex] = {
-        var rx = math.round(x).toDouble
-        var ry = math.round(y).toDouble
-        var rz = math.round(z).toDouble
-        val ex = (rx - x).abs
-        val ey = (ry - y).abs
-        val ez = (rz - z).abs
-        if (ex > ey && ex > ez)
-            rx = -ry - rz
-        else
-        if (ey > ez)
-            ry = -rx - rz
-        at(rx.toInt, ry.toInt)
-    }
-
-    def between(a : Hex, b : Hex, nudge : Double) : $[Hex] = {
-        val n = distance(a, b)
-        val (ax, ay, az) = cube(a)
-        val (bx, by, bz) = cube(b)
-        1.until(n).$./~{ i =>
-            val t = i.toDouble / n
-            round(ax + (bx - ax) * t + nudge, ay + (by - ay) * t + nudge, az + (bz - az) * t - 2 * nudge)
-        }
-    }
-
-    def blocks(h : Hex) = terrain(h) == Building || terrain(h) == Ruin
-
-    def lineBlocked(a : Hex, b : Hex, block : Hex => Boolean) : Boolean =
-        between(a, b, 1e-6).exists(block) && between(a, b, -1e-6).exists(block)
-
-    def clear(a : Hex, b : Hex) = lineBlocked(a, b, blocks).not
-
-    // the edges of the target hex a line from the attacker's hex crosses (two when it runs through a corner)
-    def crossed(target : Hex, from : Hex) : $[Int] = {
-        val px = math.sqrt(3) * (from.q - target.q + (from.r - target.r) / 2.0)
-        val py = 1.5 * (from.r - target.r)
-        val angle = math.toDegrees(math.atan2(py, px))
-        val normals = $(-60.0, 0.0, 60.0, 120.0, 180.0, -120.0)
-        0.until(6).$.%{ e =>
-            val d = ((angle - normals(e)) % 360 + 540) % 360 - 180
-            d.abs <= 30.0001
-        }
-    }
-
-    // the direction from one hex to another, in degrees (0 east, clockwise, as the edges' normals: north-east is -60)
-    def angle(from : Hex, to : Hex) : Double = {
-        val px = math.sqrt(3) * (to.q - from.q + (to.r - from.r) / 2.0)
-        val py = 1.5 * (to.r - from.r)
-        math.toDegrees(math.atan2(py, px))
-    }
-
-    val normals = $(-60.0, 0.0, 60.0, 120.0, 180.0, -120.0)
-
-    // a Firing Arc (Full Game Rules): the hexes within 60 degrees either side of the side a unit faces, those on the edge included
-    // (the rulebook's Heavy Vehicle picture draws the front arc's edge through the middle of the two neighboring sides)
-    def inCone(from : Hex, to : Hex, e : Int) : Boolean = {
-        val d = ((angle(from, to) - normals(e)) % 360 + 540) % 360 - 180
-        d.abs <= 60.0001
-    }
-
-    def coverAgainst(target : Hex, from : Hex) : |[Cover] = (from != target).??(crossed(target, from)./~(e => cover.get((target, e)))).maxByOption(_.dice)
+    def width = current.width
+    def height = current.height
+    def x0 = current.x0
+    def dx = current.dx
+    def y0 = current.y0
+    def dy = current.dy
+    def side = current.side
+    def x(h : Hex) = current.x(h)
+    def y(h : Hex) = current.y(h)
+    def hexes = current.hexes
+    def terrain = current.terrain
+    def directions = current.directions
+    def at(q : Int, r : Int) = current.at(q, r)
+    def toward(h : Hex, e : Int) = current.toward(h, e)
+    def cover = current.cover
+    def closed = current.closed
+    def traps = current.traps
+    def points = current.points
+    def neighbors = current.neighbors
+    def adjacent(a : Hex, b : Hex) = current.adjacent(a, b)
+    def joined(a : Hex, b : Hex) = current.joined(a, b)
+    def distance(a : Hex, b : Hex) = current.distance(a, b)
+    def within(a : Hex, n : Int) = current.within(a, n)
+    def spawn(team : Int) = current.spawn(team)
+    def between(a : Hex, b : Hex, nudge : Double) = current.between(a, b, nudge)
+    def blocks(h : Hex) = current.blocks(h)
+    def sameBuilding(a : Hex, b : Hex) = current.sameBuilding(a, b)
+    def lineBlocked(a : Hex, b : Hex, block : Hex => Boolean) = current.lineBlocked(a, b, block)
+    def clear(a : Hex, b : Hex) = current.clear(a, b)
+    def crossed(target : Hex, from : Hex) = current.crossed(target, from)
+    def coverAgainst(target : Hex, from : Hex) = current.coverAgainst(target, from)
+    def angle(from : Hex, to : Hex) = current.angle(from, to)
+    def normals = current.normals
+    def inCone(from : Hex, to : Hex, e : Int) = current.inCone(from, to, e)
 }

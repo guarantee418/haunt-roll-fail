@@ -300,14 +300,21 @@ isn't in it yet), `pincer/HANDOFF.md` the state, files and testing (`pincer.Host
 
 Company of Heroes: The Board Game, 2nd Edition (Bad Crow Games; a work in progress the owner's team helps test; asked for on
 2026-11-23) is in `haunt-roll-fail/tactics/`, listed as "Company of Heroes" (once "Tactics"; 2026-11-24) (meta `tactics`, URL `/play/tactics`, on the main menu since
-2026-11-24): the core rulebook (RulesPal's copy), US Forces against the Wehrmacht on Moro River, its Full Game Rules in every new game
+2026-11-24): the core rulebook (RulesPal's copy), any two of its five factions (US Forces, Wehrmacht, and since 2026-11-24 British Forces, Soviet
+Forces and Oberkommando West, read off their Building Boards in the mod, with their eighteen core Commanders; the OKW's SWS truck converts into its Tier Buildings,
+the British and OKW build Emplacements; `tactics/RULES.md`, Factions) on the Mission Booklet's six 2-panel core missions (the setup's
+Map choice, `MapChoice`, 2026-11-24: Moro River, the default, Across the Don, Between Two Rivers, Ardennes Forest, Frozen Lake and Road to
+Moscow, maps in `tactics/missions.scala` made by `tactics/tools/missions.py`, with Ice, the Cathedral and multi-hex Buildings on the Ardennes
+panels; games made before the choice play `MoroRiverFirst`), its Full Game Rules in every new game
 (the setup's Rules choice, `FullGameRules`, 2026-11-24: Operations deck, Retreats, Assaults, Overwatch, firing arcs and Heavy Vehicle
-facing, HE Splash, Frontal Armor, destructible Buildings, Moro River's tank traps; `game.full`) or its First Game Rules (`FirstGameRules`,
+facing, HE Splash, Frontal Armor, destructible Buildings, Moro River's tank traps; `game.full`) with its thirty core Commanders (the
+setup's Commanders choice, `DrawCommanders`, 2026-11-24: `tactics/commanders.scala`, cards cut from the Faction Guide by
+`tactics/tools/commander-art.py`) or its First Game Rules (`FirstGameRules`,
 and every game made before the choice, which replay unchanged), with the Building
 Boards, map panels and books of the Tabletop Simulator mod 2314664989 (`tactics/tools/tactics-art.py`, images in
 `webp2/tactics/images/`; the map's lines read off the art by `tactics/tools/map-edges.py` and `map-data.py` into `Board.data`).
 `tactics/RULES.md` has the rules as played and the readings, `tactics/HANDOFF.md` the state, files, testing (`tactics.Host`,
-`tactics.Dump`, `tactics.Replay`; `TACTICS_RULES=first` for the First Game Rules) and what is next (Commanders, the other factions and maps).
+`tactics.Dump`, `tactics.Replay`; `TACTICS_RULES=first` for the First Game Rules) and what is next (team games, the Lost Brigades).
 
 ## Building
 
@@ -1160,7 +1167,7 @@ server. No session can reach the server, and none needs to.
   (`root`, `root-adset`; `TurnPings.metas`) gets a post (a thread) in the forum channel of the webhook `HRF_DISCORD_TURNS_WEBHOOK` or
   the file `discord-turns-webhook` (set by the tournament change `turns <url>`; the owner's "Command Warren" webhook, forum #root-games)
   when its lobby is written, naming its players and its spectator link, and a seat is @mentioned there a minute after the game starts waiting for
-  it (30 seconds when asked about a battle on another's turn, an ambush or its hits, the "defend" reason; 2026-11-24, as a Table A ambush was answered before the ping came), a new wait, pinged the same way, when it answered (its user wrote moves since the last report) and is then asked something of another kind (its reason's tag changed; `TurnPings.waiting`, from `Turns.report`'s previous reasons; owner, 2026-11-24: gg picked a Development card, the harvest ran on and the Kobold exchange asked Stag again with no other seat asked in between, counted as the wait already pinged, so no ping came; the Kobold exchanges are their own reason, "kobold"), and reminded 12 hours after its last ping, twice at most, whether or not its player has the game open (owner, 2026-11-22: "Always ping
+  it (30 seconds when asked about a battle on another's turn, an ambush or its hits, the "defend" reason; 2026-11-24, as a Table A ambush was answered before the ping came), a new wait, pinged the same way, when the log passed a turn or phase boundary since the last report that waited for it (`TurnPings.boundaries`: Root's turn start and end, Northgard's turns and year phases; owner, 2026-11-24: gg picked a Development card, his turn ended, the creature phase and harvest ran on and the Kobold exchange asked Stag again with no other seat asked in between, counted as the wait already pinged, so no ping came; the Kobold exchanges are their own reason, "kobold"), and reminded 12 hours after its last ping, twice at most, whether or not its player has the game open (owner, 2026-11-22: "Always ping
   players even if their tab is open"); a sweep every 10 seconds (`TurnPings.start`, `sweep`) sends them, never within 2 minutes of their last
   ping in that game (it waits), or after the game's end (`over`). Each seat's start is the time on its `turns/state.tsv` row, so restarts lose and repeat
   none; seats waited for since before that (2026-11-21, when the owner found the pings inconsistent: timers lost at restarts, and pings
@@ -1174,7 +1181,7 @@ server. No session can reach the server, and none needs to.
   kept in `turns.tsv`'s fourth column (`Turns.reason`): Root's under attack or a battle (the server's sword emoji), a Twilight Council Banish as "you're being banished 💨 by" or "your banish 💨 of" (the tags `banished` and `banish`; 2026-11-24, asked for), the cards kept
   at the start, the hand limit, the faction draft, the tournament picks, Partisans, prisoners, an Entreat,
   Field Hospitals, setup and the faction's own turn (its head); Northgard's fights (the axe), harvest trading and Winter (plain ⚖️
-  and ❄️ after the words, so the webhook can post them, not the bot's `ng_trade` and `ng_winter` badges; 2026-11-23), card picks, setup, the Adset draft, raids, Events and the clan's own turn (its emblem). A Lilypad Diaspora negotiation is never a reason (2026-11-23, asked for: it is never owed, and the ping reminded the enemy of it): its menus report the seat's turn. The
+  and ❄️ after the words, so the webhook can post them, not the bot's `ng_trade` and `ng_winter` badges; 2026-11-23), card picks ("pick a card" then the server's Northgard card back emoji, `ng_cardback`, else the cards badge; 2026-11-24), setup, the Adset draft, raids, Events and the clan's own turn (its emblem). A Lilypad Diaspora negotiation is never a reason (2026-11-23, asked for: it is never owed, and the ping reminded the enemy of it): its menus report the seat's turn. The
   reasons say nothing only the seat may know (an ambush question and assigning hits are both "under attack"). `NORT_REASONS=1` in
   `nort.Host` prints them. A game's thread also says who takes the first turn, the first time the game waits on one seat alone
   (`announceFirst`, `turns/firsts.tsv`; mentioning them; only games first reported since 2026-11-21, when
@@ -1274,6 +1281,10 @@ server. No session can reach the server, and none needs to.
   "More Info" toggle with short rule notes. Panes are tappable before a
   faction is set up too (`factionStatus` and `updateStatus`); a faction
   without state yet shows just its board ("Not set up yet").
+- Root's "Card Piles" setting (`CardPilesInPanel`, `CardPilesOnMap` in `root/meta.scala`) defaults to the map (deck, discard, Pond, Lost Souls
+  and the available Dominances drawn there). A browser that saved its settings while the side panel was the default kept it, so each
+  browser moves a saved side panel to the map once (2026-11-24, owner; `Meta.settingsMoves`, applied by `loadSettings` in `hrf.scala` and
+  remembered as `root.moved.card-piles-on-map`), after which the setting is the player's again. A later default change can add an entry there.
 - Once play starts, the Root map draws the ruins only when someone can use them (`ruinsHidden` in `root/ui.scala`): the
   Vagabond, the Hundreds, the Brigand hireling, or the Knaves with the Adventurer as a Captain, who draws a card for acclaim
   at a ruin (added 2026-10-31: Air of Conquest showed none). Display only, so no game records change.
