@@ -42,12 +42,13 @@ object Turns {
             val old = reasons.getOrElse(journal, Map())
             old ++ why.filter { case (s, w) => !old.get(s).exists(_.startsWith(w + "/")) }
         }
+        val previous = reasons.getOrElse(journal, Map())
         if (keep && (!again || (merged.nonEmpty && !reasons.get(journal).contains(merged)) || fans.contains(journal) != fan)) {
             turns += journal -> (n, factions)
             reasons += journal -> merged
             fans = if (fan) fans + journal else fans - journal
             if (!again)
-                TurnPings.report(journal, n, factions)
+                TurnPings.report(journal, n, factions, previous, merged)
             write(file, lines(turns.toList.sortBy(_._1).map { case (j, (n, ff)) => row(j, n, ff.mkString(" "), reasons.getOrElse(j, Map()).toList.sorted.map { case (s, r) => s + "=" + r }.mkString(" "), if (fans.contains(j)) "fan" else "") }))
         }
     }
