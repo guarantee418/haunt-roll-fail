@@ -115,12 +115,12 @@ object DiscordServer {
     def num(m : Map[String, Any], k : String) = m.get(k).collect { case s : String => s.toLongOption.getOrElse(0L) }.getOrElse(0L)
     def bool(m : Map[String, Any], k : String) = m.get(k).contains(true)
 
-    case class Role(id : String, name : String, color : Long, position : Long, hoist : Boolean, mentionable : Boolean, managed : Boolean)
+    case class Role(id : String, name : String, color : Long, position : Long, hoist : Boolean, mentionable : Boolean, managed : Boolean, permissions : Long)
     case class Overwrite(id : String, kind : Int, allow : Long, deny : Long)
     case class Channel(id : String, name : String, kind : Int, parent : String, position : Long, overwrites : List[Overwrite])
 
     def roles(g : String) : Either[String, List[Role]] = call("GET", "/guilds/" + g + "/roles").map(b => list(b).map(m =>
-        Role(str(m, "id"), str(m, "name"), num(m, "color"), num(m, "position"), bool(m, "hoist"), bool(m, "mentionable"), bool(m, "managed"))))
+        Role(str(m, "id"), str(m, "name"), num(m, "color"), num(m, "position"), bool(m, "hoist"), bool(m, "mentionable"), bool(m, "managed"), num(m, "permissions"))))
 
     def channels(g : String) : Either[String, List[Channel]] = call("GET", "/guilds/" + g + "/channels").map(b => list(b).map { m =>
         val ow = m.get("permission_overwrites").collect { case l : List[_] => l.collect { case o : Map[_, _] =>
