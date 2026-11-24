@@ -58,6 +58,8 @@ import scala.concurrent.duration.Duration
 //   emojis                            lists the Discord server's emojis and the LFG options and sections each is shown for
 //   discord <name> -> <username>      a name's Discord, for a player who didn't give it (a username the bot finds, or a user ID;
 //                                     "-> off" forgets it)
+//   roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel
+//                                     the Discord server's roles and channels, through the bot (DiscordServer.scala has the forms)
 // The Discord channel of the webhook in HRF_DISCORD_WEBHOOK (or the file discord-webhook) is invited to sign up, with the link to
 // the Tournament page, once for each tournament as soon as its sign-ups open and a webhook is set (at the server's start, when the
 // webhook is set, when a final starts or a tournament is cancelled; asked for on 2026-11-20, as nobody could find the page), told
@@ -621,7 +623,9 @@ object Tournament {
                 case "no-discord" => noDiscord()
                 // only those games (2026-11-21)
                 case "ping" if rest.startsWith("waiting ") => TurnPings.pingWaitingIn(rest.drop(8).split("[ ,]+").toList.filter(_.nonEmpty)).mkString("; ")
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, bot, guild, discord, ping waiting, status, no-discord, lfg-key, lfg-commands or invite)"
+                // the Discord server's roles and channels, through the bot (DiscordServer.scala; 2026-11-24)
+                case w if DiscordServer.words(w) => DiscordServer.change(w, rest)
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, bot, guild, discord, ping waiting, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel and move-channel)"
             }
 
             (if (word == "webhook" || word == "forum" || word == "turns" || word == "nort-turns" || word == "bot") word else line) + ": " + result
