@@ -61,9 +61,8 @@ Vehicles: 3 of each tier 1 and 2 vehicle, 2 of each tier 3 one, at a time.
 
 ## Interpretations
 
-1. **Grid**: the panels show 13 full rows and a half row at the top and part of a 14th at the bottom; the compass marks
-   the bottom row, so the playable rows are the half row through the compass row, and the half hexes at the ends of the
-   shifted rows are playable. The Spawn Areas are the first and last of those rows (back rows).
+1. **Grid**: the panels show 11 full rows between a half row at the top and one at the bottom, and every other row has
+   half hexes at both ends; all of them are played. The Spawn Areas are the half rows (the back rows).
 2. **Lines**: a Cover line drawn inside a hex covers that hex; Infantry gets it when the line from the attacker's hex
    center to its own crosses that edge (both edges when it passes a corner). A red line on either side of an edge
    closes it both ways. Water hexes ringed in red can't be entered; the river elsewhere (unringed) can.

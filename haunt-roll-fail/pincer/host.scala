@@ -52,10 +52,16 @@ object Dump {
         var continue : Continue = StartContinue
         var a : Action = StartAction(gaming.version)
         var out = $[String]()
+        def milestone(c : Continue) : Boolean = c match {
+            case _ : Milestone => true
+            case Log(_, _, c) => milestone(c)
+            case _ => false
+        }
         var i = 0
         while (i < steps && game.isOver.not) {
             i += 1
-            if (a.isSoft.not && a.is[ExternalAction])
+            // the browser records the moves, and a Milestone's action too
+            if ((a.isSoft.not && a.is[ExternalAction]) || milestone(continue))
                 out :+= Serialize.write(a.unwrap)
             continue = game.performContinue(|(continue), a, false).continue
             a = Host.askFaction(game, continue)

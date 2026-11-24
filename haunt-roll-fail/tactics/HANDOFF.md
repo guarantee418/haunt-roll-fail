@@ -36,9 +36,13 @@ Mission Booklet's Moro River picture (page 9).
 
 - JVM: the same project as Pincer's (see `pincer/HANDOFF.md`), with `tactics/` linked in.
   `SBT_OPTS="-Xmx6G -Xss4M" sbt "runMain tactics.Host"` (`TACTICS_GAMES=n`): on 2026-11-23 two Easy bots finished games in
-  about seven rounds, every action written and parsed back. `tactics.Dump <steps>` prints a game's moves and its final
-  state.
-- Browser: see "Browser driving" in `nort/HANDOFF.md`.
+  about seven rounds, every action written and parsed back. `tactics.Dump <steps> [round]` prints a game's moves (as the
+  browser records them, a Milestone's action included) and its final state, stopping at that round's damage assignment if
+  given; `tactics.Replay <file>` replays such moves as a browser loading the game does, validating each one.
+- Browser: see "Browser driving" in `nort/HANDOFF.md`. A dump goes into `localStorage` as `tactics.hotseat.game.<time>`
+  ("version ...", "title ...", "seating US WM", "options ") and `tactics.hotseat.moves.<time>`, then Local Game opens it.
+  On 2026-11-24 a Quick Game (setup, moves, purchases) and a dumped game at a round 4 Damage Phase (assignments, the rolls,
+  a unit destroyed, Sandbags lost, capture) played through in Chromium with no errors.
 
 ## Next
 

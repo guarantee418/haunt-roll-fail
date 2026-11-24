@@ -42,8 +42,9 @@ object Host extends hrf.host.BaseHost {
     def times = sys.env.get("TACTICS_GAMES")./(_.toInt).|(20)
 }
 
-// `sbt "runMain tactics.Dump <steps>"` plays one bot game for that many steps and prints its recorded moves, one a line,
-// as a browser's local game journal holds them (to load a game in mid-play and look at it)
+// `sbt "runMain tactics.Dump <steps> [round]"` plays one bot game for that many steps (or, given a round, until damage is being
+// assigned in that round) and prints its recorded moves, one a line, as a browser's local game journal holds them (to load a game
+// in mid-play and look at it)
 object Dump {
     def main(args : Array[String]) {
         val steps = args.lift(0)./(_.toInt).|(1500)
@@ -51,10 +52,17 @@ object Dump {
         var continue : Continue = StartContinue
         var a : Action = StartAction(gaming.version)
         var out = $[String]()
+        val until = args.lift(1)./(_.toInt)
+        def milestone(c : Continue) : Boolean = c match {
+            case _ : Milestone => true
+            case Log(_, _, c) => milestone(c)
+            case _ => false
+        }
         var i = 0
-        while (i < steps && game.isOver.not) {
+        while (i < steps && game.isOver.not && until.forall(r => (game.round >= r && game.phase == "Damage" && game.assignments.any).not)) {
             i += 1
-            if (a.isSoft.not && a.is[ExternalAction])
+            // the browser records the moves, and a Milestone's action too
+            if ((a.isSoft.not && a.is[ExternalAction]) || milestone(continue))
                 out :+= Serialize.write(a.unwrap)
             continue = game.performContinue(|(continue), a, false).continue
             a = Host.askFaction(game, continue)
@@ -64,5 +72,43 @@ object Dump {
         println("DUMP-BEGIN")
         out.foreach(println)
         println("DUMP-END")
+    }
+}
+
+// `sbt "runMain tactics.Replay <file>"` replays recorded moves (one a line, as `Dump` prints them) as a browser loading the game
+// does: the forced steps go on by themselves, and each recorded move is validated against what the game expects at that point
+object Replay {
+    def main(args : Array[String]) {
+        val moves = scala.io.Source.fromFile(args(0)).getLines().toList.filter(_.trim.nonEmpty)./(Serialize.parseAction)
+        val game = new Game(Faction.all, $)
+
+        def auto(c : Continue) : |[Action] = c match {
+            case Force(a) => |(a)
+            case Then(a) => |(a)
+            case Log(_, _, c) => auto(c)
+            case DelayedContinue(_, c) => auto(c)
+            case _ => None
+        }
+
+        var continue : Continue = game.performContinue(None, moves.head, false).continue
+        var rest = moves.drop(1)
+        var n = 1
+        while (rest.any) {
+            auto(continue) match {
+                case Some(a) =>
+                    continue = game.performContinue(|(continue), a, false).continue
+                case None =>
+                    val a = rest.head
+                    if (game.validate(continue, a).not) {
+                        println("MOVE " + n + " NOT VALID: " + Serialize.write(a))
+                        println("ON: " + continue)
+                        sys.exit(1)
+                    }
+                    continue = game.performContinue(|(continue), a, false).continue
+                    rest = rest.drop(1)
+                    n += 1
+            }
+        }
+        println("ALL " + moves.num + " MOVES VALID, round " + game.round + ", " + game.phase)
     }
 }

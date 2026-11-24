@@ -67,16 +67,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         val background = new OrderedLayer
         background.add(Sprite($(ImageRect(new RawImage(mp), Rectangle(0, 0, mp.width, mp.height), 1.0)), $))(0, 0)
 
-        // the Spawn Areas, tinted in their team's color
+        // the Spawn Areas, tinted in their team's color (a layer of their own, as a layer draws its sprites by their height)
+        val spawns = new OrderedLayer
         game.setup.foreach { f =>
             Board.spawn(game.team(f)).foreach { h =>
-                background.add(Sprite($(ImageRect(new RawImage(img("hex-spawn-" + f.id)), Rectangle(-93, -101, 186, 202), 1.0)), $))(Board.x(h), Board.y(h))
+                spawns.add(Sprite($(ImageRect(new RawImage(img("hex-spawn-" + f.id)), Rectangle(-93, -101, 186, 202), 1.0)), $))(Board.x(h), Board.y(h))
             }
         }
 
         val areas = new HitLayer(regions)
 
-        new Scene($(background, highlighted, structures, areas, units, labels), mp.width, mp.height, margins)
+        new Scene($(background, spawns, highlighted, structures, areas, units, labels), mp.width, mp.height, margins)
     }
 
     override def adjustCenterZoomX() {
@@ -270,7 +271,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
                 structures.add(Sprite($(scaled("res:" + r.id, 50)), $))(Board.x(h) - 36 + (l.num == 1).?(36).|(i * 36 * 2 / (l.num - 1)) - (l.num == 1).?(0).|(0), Board.y(h) - 70)
             }
             game.control.get(h).foreach { f =>
-                structures.add(Sprite($(scaled("status:flag-" + f.id, 58)), $))(Board.x(h) + 58, Board.y(h) - 56)
+                structures.add(Sprite($(scaled("status:flag-" + f.id, 92)), $))(Board.x(h) + 70, Board.y(h) - 30)
             }
         }
 

@@ -386,7 +386,9 @@ case class TargetAction(self : Faction, unit : Squad, target : Squad, dice : $[A
 case class HoldFireAction(self : Faction, squad : Squad, step : Int, order : $[Faction]) extends BaseAction(squad, "in", (g : Game) => g.where(squad).elem, (g : Game) => g.assignNote(squad))("Hold fire")
 case class ResolveDamageAction(f : Faction) extends ForcedAction
 case class HERolledAction(f : Faction, rolled : $[Face]) extends RolledAction[Face]
+case class DefenseRollAction(f : Faction, he : $[Face]) extends ForcedAction
 case class DefenseRolledAction(f : Faction, he : $[Face], rolled : $[Face]) extends RolledAction[Face]
+case class ApplyDamageAction(f : Faction, he : $[Face], defense : $[Face]) extends ForcedAction
 
 // supply
 case class SupplyPhaseAction(f : Faction) extends ForcedAction
@@ -926,18 +928,24 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 if (n > 0)
                     Roll[Face](n.times(Face.die), HERolledAction(f, _))
                 else
-                    Force(HERolledAction(f, $))
+                    DefenseRollAction(f, $)
 
+            // (no oracle action without its roll: a replay only finds them where something was rolled)
             case HERolledAction(f, he) =>
-                if (he.any)
-                    log("High Explosive dice rolled", he./(_.elem).merge)
+                log("High Explosive dice rolled", he./(_.elem).merge)
+                DefenseRollAction(f, he)
+
+            case DefenseRollAction(f, he) =>
                 val n = resolve(he, None)./(_.defense).sum
                 if (n > 0)
                     Roll[Face](n.times(Face.die), DefenseRolledAction(f, he, _))
                 else
-                    Force(DefenseRolledAction(f, he, $))
+                    ApplyDamageAction(f, he, $)
 
             case DefenseRolledAction(f, he, defense) =>
+                ApplyDamageAction(f, he, defense)
+
+            case ApplyDamageAction(f, he, defense) =>
                 lastRolls = he ++ defense
                 if (defense.any)
                     log("Defense dice rolled", defense./(_.elem).merge)

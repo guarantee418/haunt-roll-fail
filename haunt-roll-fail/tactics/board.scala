@@ -15,7 +15,7 @@ import tactics.elem._
 
 // THE MAP: Moro River, the two panels MR1 and MR2 of the 2nd Edition core set side by side, from the Tabletop Simulator mod
 // "Company of Heroes - 2nd Edition" (map.webp is the two panels at a fifth of their size, 2400x1800). Pointy-top hexes in 13 rows:
-// the first (a half row cut by the top edge) and the last are the Spawn Areas. The rows with an even number (counting from 0)
+// the first and the last are half rows cut by the map's edges, and are the Spawn Areas. The rows with an even number (counting from 0)
 // are shifted half a hex right, and have 14 hexes, cut in half at both ends; the others have 13.
 // The lines along the hex edges were read off the art by tactics/tools/map-data.py and checked by eye (see HANDOFF.md):
 // yellow Light Cover and green Heavy Cover inside a hex give its Infantry cover against attacks crossing that edge,
