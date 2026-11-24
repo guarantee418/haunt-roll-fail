@@ -33,6 +33,7 @@ import scala.concurrent.duration.Duration
 // Changes by hand go through the games backup (hrf-games) like the ranking's: each file tournament-changes/<name>.txt there is
 // applied once (Backup.scala), its outcome in tournament-changes/<name>.result. One change a line:
 //   remove <name>                     takes a name off the sign-ups
+//   congratulate [<n>] <table>        posts a won table's (or the final's, F) congratulation again, from its game's reported result
 //   winner <table> <name>             the table's winner (a shared win, or a table that won't finish), A to D or F
 //   replace <table> <name> -> <new>   a player at a table is replaced: the seat now plays (and is ranked) under the new name
 //   cancel                            the running tournament ends with no champion; sign-ups for the next one open
@@ -407,11 +408,15 @@ object Tournament {
             c.tables.find(t => t.game == game && t.winner.isEmpty).foreach { t =>
                 val won = sides.split(';').toList.filter(_.startsWith("W:")).flatMap(_.drop(2).split(',').toList).map(_.takeWhile(_ != '/')).filter(_.nonEmpty)
                 val ww = won.flatMap(u => t.users.indexOf(u) match { case -1 => None ; case i => Some(t.names(i)) }).distinct
+                val ff = finals(t, sides)
 
                 ww match {
-                    case w :: Nil => win(c.n, t.id, w)
+                    case w :: Nil => win(c.n, t.id, w, ff)
                     case _ =>
-                        val text = "Root Tournament " + c.n + ", " + t.title(c.n).split(' ').drop(2).mkString(" ") + " ended with " + (if (ww.isEmpty) "no winner" else "a shared win (" + ww.map(display).mkString(", ") + ")") + ": the organizer picks who goes on."
+                        val where = t.title(c.n).split(' ').drop(2).mkString(" ")
+                        val text = (if (ww.isEmpty) "Root Tournament " + c.n + ", " + where + " ended with no winner"
+                            else "🎉 **Congratulations to " + ww.map(tagged).mkString(" and ") + "** on a shared win at " + where + " of Root Tournament " + c.n) +
+                            ": the organizer picks who goes on." + scoresLine(ff)
                         announce(text, c.n)
                         announce(text, c.n, t.id)
                 }
@@ -419,19 +424,46 @@ object Tournament {
         }
     }
 
-    def win(n : Int, id : String, k : String) {
+    // CONGRATULATIONS (asked for on 2026-11-24): as each tournament game finishes, the announcements' webhook (the owner's "Royal Claim")
+    // congratulates its winner, mentioning them, with every player's faction and final score, from the result the game reported
+    // ("W:" and "L:" sides, each seat "<user>/<faction>/<seat>/<players>/<score>", RankingSeat.token), best first, in seat order on ties
+    case class Final(name : String, faction : String, seat : Int, score : String) {
+        def rank = if (score == "D") Int.MaxValue else score.toIntOption.getOrElse(-1)
+        def points = if (score == "D") "dominance" else if (score.isEmpty) "" else score + " VP"
+        override def toString = display(name) + " (" + faction + ")" + (if (points.nonEmpty) " " + points else "")
+    }
+
+    def finals(t : Table, sides : String) : List[Final] =
+        sides.split(';').toList.filter(s => s.startsWith("W:") || s.startsWith("L:")).flatMap(_.drop(2).split(',').toList).map(_.split("/", -1).toList).collect {
+            case u :: faction :: seat :: _ :: score :: _ if t.users.contains(u) => Final(t.names(t.users.indexOf(u)), faction.replace('_', ' '), seat.toIntOption.getOrElse(99), score)
+        }.sortBy(x => (-x.rank, x.seat))
+
+    def scoresLine(ff : List[Final]) = if (ff.isEmpty) "" else "\nFinal scores: " + ff.mkString(" · ")
+
+    // " playing the Marquise de Cat, 30 VP"
+    def winnerLine(k : String, ff : List[Final]) = ff.find(_.name == k).map(f => " playing the " + f.faction + (if (f.points.nonEmpty) ", " + f.points else "")).getOrElse("")
+
+    // the congratulation the announcements' webhook (Royal Claim) posts for a table's winner or the champion
+    def congratulation(n : Int, id : String, k : String, ff : List[Final]) =
+        if (id == finalId)
+            "🏆 **Congratulations to " + tagged(k) + ", the champion of Root Tournament " + n + "!** They won the final" + winnerLine(k, ff) + ", and their name is golden on the Rankings until the next champion." + scoresLine(ff)
+        else
+            "🎉 **Congratulations to " + tagged(k) + "**, winner of Table " + id + " of Root Tournament " + n + winnerLine(k, ff) + "! They go on to the final." + scoresLine(ff)
+
+    def win(n : Int, id : String, k : String, ff : List[Final] = Nil) {
         event("winner", n, id, k)
 
         val c = cups().find(_.n == n).get
+        val after = scoresLine(ff)
 
         if (id == finalId) {
             event("champion", n, k)
-            announce("**" + display(k) + " is the champion of Root Tournament " + n + "!**", n)
-            announce("**" + display(k) + " won the final and is the champion!**", n, id)
+            announce(congratulation(n, id, k, ff), n)
+            announce("**" + display(k) + " won the final and is the champion!**" + after, n, id)
         }
         else {
-            announce(display(k) + " won Table " + id + " of Root Tournament " + n + ".", n)
-            announce("**" + display(k) + " won this table** and goes to the final.", n, id)
+            announce(congratulation(n, id, k, ff), n)
+            announce("**" + display(k) + " won this table** and goes to the final." + after, n, id)
 
             if (c.heats.size == heatIds.size && c.heats.forall(_.winner.nonEmpty) && c.fin.isEmpty) {
                 val l = scala.util.Random.shuffle(c.heats.flatMap(_.winner))
@@ -464,6 +496,25 @@ object Tournament {
                         case Some((_, t)) if t.winner.nonEmpty => "not done: the table has a winner"
                         case Some(_) => "not done: not at that table"
                         case None => "not done: no such table"
+                    }
+                // a won table's congratulation, posted again from the result its game reported (a table won before the
+                // congratulations were deployed, 2026-11-24: Table A of Tournament 1); "congratulate <n> <table>" for an earlier tournament
+                case "congratulate" =>
+                    val ww = rest.split(' ').toList.filter(_.nonEmpty)
+                    val (cup, id) = ww match {
+                        case n :: t :: Nil if n.toIntOption.nonEmpty => (cc.find(_.n == n.toInt), t.toUpperCase)
+                        case t :: Nil => (cc.filter(_.started).lastOption, t.toUpperCase)
+                        case _ => (None, "")
+                    }
+                    cup.flatMap(c => c.tables.find(_.id == id).map(t => (c, t))) match {
+                        case Some((c, t)) => t.winner match {
+                            case Some(k) =>
+                                val ff = Ranking.recorded().filter(_.headOption.contains(t.game)).lastOption.flatMap(_.lift(4)).map(finals(t, _)).getOrElse(Nil)
+                                announce(congratulation(c.n, id, k, ff), c.n)
+                                "posted" + (if (ff.isEmpty) ", with no scores: the game reported no result" else "")
+                            case None => "not done: the table has no winner yet"
+                        }
+                        case None => "not done: congratulate <table>, or congratulate <tournament> <table>"
                     }
                 case "replace" =>
                     val id = rest.takeWhile(_ != ' ').toUpperCase
@@ -609,7 +660,7 @@ object Tournament {
                 case w if DiscordServer.words(w) => DiscordServer.change(w, rest)
                 // the roles members pick for themselves, and the role picker post (SelfRoles.scala; 2026-11-24)
                 case w if SelfRoles.words(w) => SelfRoles.change(w, rest)
-                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, turns, nort-turns, pincer-turns, tactics-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order, webhooks, make-webhook, rename-webhook, test-ping, self-roles, self-role, self-role-off and role-picker)"
+                case _ => "not done: not a change (remove, winner, replace, cancel, webhook, forum, congratulate, turns, nort-turns, pincer-turns, tactics-turns, bot, guild, discord, ping waiting, pings, status, no-discord, lfg-key, lfg-commands, invite, or the server changes roles, role, rename-role, give-role, take-role, channels, category, channel, rename-channel, move-channel, order, webhooks, make-webhook, rename-webhook, test-ping, self-roles, self-role, self-role-off and role-picker)"
             }
 
             (if (word == "webhook" || word == "forum" || TurnPings.slot(word).nonEmpty || word == "bot") word else line) + ": " + result

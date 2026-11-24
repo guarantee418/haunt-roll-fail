@@ -17,14 +17,19 @@ import scala.concurrent.duration.Duration
 // "user <faction> <user>" lines say whose seats they are. Every 10 seconds a sweep (started with the server) pings the seats due
 // (2026-11-21: the owner found the pings inconsistent; a ping was a timer a restart lost, and one within 10 minutes of the last was
 // dropped, so a seat pinged for an ambush wasn't for the turn that followed). A seat waited for since <start> is due:
-//   - a minute after start (30 seconds when asked about a battle on another's turn, an ambush or its hits; 2026-11-24),
+//   - 10 seconds after start, whatever it is asked (owner, 2026-11-24; it was a minute, 30 seconds for a battle on another's turn),
 //   - again 12 hours after its last ping, at most twice ("reminder"),
 // whether or not its player has the game open (2026-11-22, owner: "Always ping players even if their tab is open"; a player
 // with the game open was skipped, and one who didn't see it was never pinged), and pinged then if:
-//   - it wasn't pinged in that game in the last 2 minutes (it waits until then, as the sweep comes back),
+//   - it wasn't pinged in that game in the last minute (2 minutes before 2026-11-24; it waits until then, as the sweep comes back),
 //   - its seat plays under a ranking name with a Discord (given, or set by the owner) and turn pings not turned off (Rankings,
 //     "Discord turn pings"; on unless turned off since 2026-11-20, asked for: "start pinging people whenever it is their turn").
-// Several prompts in a row (a whole turn) are one ping, as the seat stays waited for between them. When a seat started being
+// Several prompts in a row (a whole turn) are one ping, as the seat stays waited for between them; but a seat still waited for
+// after the log passed a turn or phase boundary since the last report (`boundaries`: a turn ended or began, a Northgard year's
+// phase) starts a new wait, pinged like any other (2026-11-24, owner: "it was complete separate turns": gg picked a Development
+// card, his turn ended, the creature phase and harvest ran on and the Kobold exchange asked Stag again with nobody else asked in
+// between, so it was counted as the wait already pinged, and no ping came for 12 hours). The new wait is two state.tsv rows, without
+// the seat then with it. When a seat started being
 // waited for is the time on its state.tsv row, so a restart neither loses nor repeats a ping. A seat waited for since before
 // that (rows with no time, and the games Turns.scala knows of but this file doesn't, reports from before the turns webhook was
 // set, added at the server's start) isn't pinged by the sweep, as an abandoned game can't be told from a live one: the
@@ -37,7 +42,7 @@ import scala.concurrent.duration.Duration
 //   created.tsv   game: the games whose post went out, so each goes out once
 //   firsts.tsv    game, watch or told: the games whose first player the thread is told of (announceFirst)
 // and in tournament/: discord-pings.tsv  name, on or off (the last row counts); on unless turned off
-// The tournament change "ping waiting" pings at once every seat the games wait for (the same checks but the minute's delay).
+// The tournament change "ping waiting" pings at once every seat the games wait for (the same checks but the 10 seconds' delay).
 //
 // NORTHGARD (2026-11-21, with its Discord LFG games, Lfg.scala): Northgard's online games (nort, nort-adset) get the same, in the
 // forum channel of their own webhook, HRF_DISCORD_NORT_TURNS_WEBHOOK or the file discord-nort-turns-webhook (the change
@@ -110,13 +115,12 @@ object TurnPings {
     // the emoji a game with no faction emojis leads its pings with
     val gameIcon = Map("pincer" -> "🥁 ", "tactics" -> "📻 ")
 
-    val delay = 60 * 1000L
-    // a seat asked about a battle on another's turn (an ambush, its hits: the "defend" reason) holds up that player's turn
-    // with them watching, so it is pinged sooner (2026-11-24, Tournament 1 Table A: the Hundreds waited about a minute and a half for
-    // the Duchy's ambush, the Duchy answered the player's own Discord ping first, and the bot, due 60 to 90 seconds in, never pinged)
-    val battleDelay = 30 * 1000L
+    // 10 seconds for every wait (owner, 2026-11-24): it was a minute, and 30 seconds for a battle on another's turn (Tournament 1
+    // Table A: the Duchy answered an ambush before the bot's ping, due 60 to 90 seconds in, came)
+    val delay = 10 * 1000L
+    val battleDelay = delay
     val watching = 90 * 1000L
-    val gap = 2 * 60 * 1000L
+    val gap = 60 * 1000L
     val remind = 12 * 60 * 60 * 1000L
     val reminders = 2
     val every = 10L
@@ -360,6 +364,15 @@ object TurnPings {
             case e : Exception => println("Turn pings: report failed: " + e)
         }
 
+    // the log entries that end one turn or phase and start another (Root's turns, Northgard's turns and the year's phases): a seat
+    // waited for on both sides of one is asked again in a new wait
+    val boundaries = List("StartPlayerTurnAction", "EndTurnAction", "NextTurnAction", "StartYearAction", "ActionsPhaseAction",
+        "CreaturePhaseAction", "HarvestAction", "WinterAction")
+
+    def crossed(game : String, from : Int, to : Int) : Boolean =
+        run(entries.filter(_.journalId === game).filter(_.index >= from).filter(_.index < to).map(_.text).result)
+            .exists(t => boundaries.exists(b => t.startsWith(b + "(") || t == b))
+
     def waiting(game : String, index : Int, waiting : Set[String]) : Unit = synchronized {
         // (Turns.report has already dropped stale reports, and kept those after a fix shortened the log)
         val before = latest.get(game)
@@ -367,7 +380,16 @@ object TurnPings {
             return
 
         val now = System.currentTimeMillis
-        val was = before.map(_.users).getOrElse(Set())
+        val all = before.map(_.users).getOrElse(Set())
+
+        // seats still waited for after the log passed a turn or phase boundary: a new wait
+        val fresh = if (before.exists(_.index < index) && (all & waiting).nonEmpty && crossed(game, before.get.index, index)) all & waiting else Set[String]()
+        if (fresh.nonEmpty) {
+            Files.createDirectories(dir)
+            Ranking.append(state, row(game, index, (all -- fresh).toList.sorted.mkString(","), Ranking.now()))
+        }
+        val was = all -- fresh
+
         reports = latest + (game -> Report(index, waiting))
         waitedSince = since -- (was -- waiting).map(u => (game, u)) ++ (waiting -- was).map(u => (game, u) -> now)
         Files.createDirectories(dir)
@@ -492,6 +514,7 @@ object TurnPings {
             case (true, "fight") => (head, "your fight " + w(axe) + them.map(" against " + _).getOrElse("") + " needs you")
             case (true, "trade") => (head, "harvest trading ⚖️")
             case (true, "winter") => (head, "Winter ❄️ is here")
+            case (true, "kobold") => (head, "the Kobolds offer an exchange ⚖️")
             // the Discord server's Northgard card back emoji (ng_cardback, 2026-11-24, asked for) right after "card", else the cards badge
             case (true, "cards") => (head, "pick a card " + w(LfgSetup.serverNamed(List("cardback", "cardbacks")).getOrElse(e("HorizonsDevelopments"))))
             case (true, "draft") => (e("title"), "your pick in the clan draft")
@@ -515,7 +538,7 @@ object TurnPings {
         if (!latest.get(game).exists(_.users.contains(user)))
             return "not waited for"
         if (now - lastPing(game, user) < gap)
-            return "not pinged: pinged in the last 2 minutes"
+            return "not pinged: pinged in the last minute"
         val lobby = lobbyOf(game).getOrElse(return "not pinged: lobby not found")
         if (!metas.contains(lobby.meta))
             return "not pinged: not a game with turn pings"

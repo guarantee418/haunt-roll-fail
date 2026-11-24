@@ -677,8 +677,8 @@ object Meta extends MetaGame { mmm =>
     $
 
     // Map display settings, chosen by each player under "Interface" (like Root's Clearing Rule)
-    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, CustomTerritoryColor, FightsTerritoryColor, HideTerritoryColor) ++ TerritoryOpacity.all ++ $(ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels, ReverseStackedPanels, ShowCombatReport, SkipCombatReport, ShowClanPowerReport, SkipClanPowerReport, ShowPassScreen, NoPassScreen)
-    override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, StackedPanels, ShowCombatReport, ShowClanPowerReport, ShowPassScreen) ++ PlayerColor.all./(TerritoryOpacity(_, 50))
+    override def settingsList = super.settingsList ++ $(ShowTerritoryColor, CustomTerritoryColor, FightsTerritoryColor, HideTerritoryColor) ++ TerritoryOpacity.all ++ $(ShowBorderColor, HideBorderColor, CompactPanels, StackedPanels, ReverseStackedPanels, ShowCombatReport, SkipCombatReport, ShowClanPowerReport, SkipClanPowerReport, ShowPassScreen, NoPassScreen, ShowCardPreview, NoCardPreview)
+    override def settingsDefaults = super.settingsDefaults ++ $(ShowTerritoryColor, ShowBorderColor, StackedPanels, ShowCombatReport, ShowClanPowerReport, ShowPassScreen, ShowCardPreview) ++ PlayerColor.all./(TerritoryOpacity(_, 50))
 }
 
 
@@ -721,6 +721,19 @@ case object ShowPassScreen extends PassScreenSetting {
 }
 
 case object NoPassScreen extends PassScreenSetting {
+    val valueOn = "Off".hlb
+}
+
+// Hovering a card that can be chosen shows it large (CardPreview in ui.scala; mouse only), or not
+trait CardPreviewSetting extends hrf.Setting with OneOfGroup {
+    val group = "Card Preview"
+}
+
+case object ShowCardPreview extends CardPreviewSetting {
+    val valueOn = "On Hover".hlb ~ " (Cards You Can Choose, Mouse Only)".hl
+}
+
+case object NoCardPreview extends CardPreviewSetting {
     val valueOn = "Off".hlb
 }
 
