@@ -27,6 +27,8 @@ COLORS = {
 # image files in the mod, by the unique part of their Steam URL
 URLS = {
     'board': '98AF02B9BA786538B0A2A25B29086B07549A3746',
+    # the Player Reference card (four copies in the mod), opened by tapping a player panel
+    'reference': 'C69BAD98C70225CDE79AC87ABFB5C95B869E6257',
 }
 
 # a part of each piece mesh's URL
@@ -194,6 +196,9 @@ def make(src, out):
     hexes(out)
     board = Image.open(find(src, URLS['board'])).convert('RGB')
     save(board, os.path.join(out, 'map.webp'))
+
+    reference = Image.open(find(src, URLS['reference'])).convert('RGB')
+    save(reference, os.path.join(out, 'card', 'reference.webp'))
 
     for name, n in CARDS.items():
         im = Image.open(os.path.join(src, '%d.bin' % n)).convert('RGB')

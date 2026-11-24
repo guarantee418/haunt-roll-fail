@@ -747,7 +747,21 @@ class HRFMetaUI(val ui : HRFUI, val meta : MetaGame, delayMainMenu : Int)(baseRe
         history.init()
 
     def loadSettings() : $[Setting] = {
-        val saved = Local.get(meta.settingsKey + ".settings", "").split(' ').$
+        val key = meta.settingsKey + ".settings"
+
+        // a saved setting moved once to another (meta.settingsMoves), as a new default would leave the old one saved by every browser that ever saved its settings
+        val saved = meta.settingsMoves.foldLeft(Local.get(key, "").split(' ').$) { case (s, (name, from, to)) =>
+            val done = meta.settingsKey + ".moved." + name
+
+            if (Local.get(done, "") != "")
+                s
+            else {
+                val moved = s./(x => (x == from).?(to).|(x))
+                Local.set(key, moved.mkString(" "))
+                Local.set(done, "1")
+                moved
+            }
+        }
 
         val preset = HRF.paramList("settings")
 

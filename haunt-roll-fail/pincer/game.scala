@@ -313,6 +313,8 @@ case class BuildRoadAction(self : Faction, a : Hex, b : Hex, paid : $[Resource])
 case class BuildBridgeAction(self : Faction, a : Hex, w : Hex, b : Hex, paid : $[Resource]) extends BaseAction("Build", BridgeBuild, "for", Icons.paid(paid))("Bridge from", a, "over", w, "to", b) with HexKey { def hex = w }
 case class BuildPortAction(self : Faction, hex : Hex, colony : Hex, paid : $[Resource]) extends BaseAction("Build", PortBuild, "for", Icons.paid(paid))(Icons.piece("port", self) ~ "Port in", hex, "for the Colony in", colony) with HexKey
 case class BuildFortAction(self : Faction, hex : Hex, paid : $[Resource]) extends BaseAction("Build", FortBuild, "for", Icons.paid(paid))(Icons.piece("fort", self) ~ "Fort in", hex) with HexKey
+// what each building costs, shown above the Build choices
+case class BuildCostInfoAction(self : Faction, build : Build) extends BaseInfo("Costs")(build, Icons.paid(build.cost))
 case class RepairFortAction(self : Faction, hex : Hex, paid : $[Resource]) extends BaseAction("Repair", "for", Icons.paid(paid))(Icons("repair") ~ "Fort in", hex) with HexKey
 
 // recruiting
@@ -743,7 +745,11 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // INFO
 
-    def preinfo(waiting : $[Faction], self : |[Faction], actions : $[UserAction]) : $[Info] = $
+    def preinfo(waiting : $[Faction], self : |[Faction], actions : $[UserAction]) : $[Info] =
+        self.%(_ => actions.exists(_.unwrap @@ {
+            case _ : BuildColonyAction | _ : BuildRoadAction | _ : BuildBridgeAction | _ : BuildPortAction | _ : BuildFortAction | _ : RepairFortAction => true
+            case _ => false
+        }))./~(f => $(ColonyBuild, PortBuild, FortBuild, RepairBuild, RoadBuild, BridgeBuild)./(BuildCostInfoAction(f, _)))
 
     def info(waiting : $[Faction], self : |[Faction], actions : $[UserAction]) : $[Info] =
         self.%(states.contains)./~(f => f.hand./(ViewCardInfoAction(f, _)))

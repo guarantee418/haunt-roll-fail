@@ -62,7 +62,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     val margins = Margins(0, 0, 0, 0)
 
     lazy val scene = {
-        val mp = img("map")
+        val mp = img(game.map.image)
 
         val background = new OrderedLayer
         background.add(Sprite($(ImageRect(new RawImage(mp), Rectangle(0, 0, mp.width, mp.height), 1.0)), $))(0, 0)
@@ -182,6 +182,30 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         i
     })
 
+    // a hex filled with a color (Smoke gray, a strike red, a Recon Sweep blue)
+    var fillImages = Map[String, CanvasImage]()
+
+    def fillImage(fill : String, stroke : String) = fillImages.getOrElse(fill + stroke, {
+        val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+        canvas.width = 200
+        canvas.height = 210
+        val g = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+        val w = Board.dx / 2
+        val sd = Board.side
+        val corners = $((0.0, -sd), (w, -sd / 2), (w, sd / 2), (0.0, sd), (-w, sd / 2), (-w, -sd / 2))
+        g.fillStyle = fill
+        g.strokeStyle = stroke
+        g.lineWidth = 5
+        g.beginPath()
+        corners.zipWithIndex.foreach { case ((x, y), i) => if (i == 0) g.moveTo(100 + x * 0.92, 105 + y * 0.92) else g.lineTo(100 + x * 0.92, 105 + y * 0.92) }
+        g.closePath()
+        g.fill()
+        g.stroke()
+        val i = new CanvasImage(canvas)
+        fillImages += (fill + stroke) -> i
+        i
+    })
+
     // a destroyed Building: the hex darkened
     lazy val ruinImage = {
         val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
@@ -285,7 +309,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
     }
 
     def makeScene() : |[Scene] = {
-        if (img("map").complete.not)
+        if (img(game.map.image).complete.not)
             return None
 
         units.clear()
@@ -338,6 +362,17 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
                 structures.add(Sprite($(ImageRect(textImage("Building " + (2 - n) + "/2", "#f3eee2", "#5a4a3a"), Rectangle(-50, -15, 100, 30), 0.95)), $))(Board.x(h), Board.y(h) - 84)
         }
 
+        // Commanders: Smoke, the strikes to come, the hexes a Recon Sweep shows
+        game.smoke.foreach { h =>
+            structures.add(Sprite($(ImageRect(fillImage("rgba(220, 220, 220, 0.55)", "#f0f0f0"), Rectangle(-100, -105, 200, 210), 1.0)), $))(Board.x(h), Board.y(h))
+        }
+        game.strikes./~(_.hexes).distinct.foreach { h =>
+            structures.add(Sprite($(ImageRect(fillImage("rgba(220, 40, 30, 0.25)", "#ff5030"), Rectangle(-100, -105, 200, 210), 1.0)), $))(Board.x(h), Board.y(h))
+        }
+        game.eyes.values.toList.flatMap(_.toList).distinct.foreach { h =>
+            structures.add(Sprite($(ImageRect(fillImage("rgba(60, 120, 230, 0.18)", "#5a8cff"), Rectangle(-100, -105, 200, 210), 1.0)), $))(Board.x(h), Board.y(h))
+        }
+
         game.sandbags.foreach { case (h, l) =>
             l.foreach { e =>
                 structures.add(Sprite($(ImageRect(bagImage(e), Rectangle(-100, -105, 200, 210), 1.0)), $))(Board.x(h), Board.y(h))
@@ -357,7 +392,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             val hp = ImageRect(textImage(game.health(u) + "/" + game.maxHealth(u), "#f3eee2", u.faction.color), Rectangle(-size * 0.28, size * 0.22, size * 0.56, size * 0.31), 0.95)
             val st = $[ImageRect]() ++
                 game.pinned.contains(u).$(ImageRect(new RawImage(img("status:pinned")), Rectangle(-size / 2, -size / 2, size * 0.32, size * 0.32), 1.0)) ++
-                (u.utype.weaponTeam && passenger.not).$(ImageRect(new RawImage(img(game.setUp.contains(u).?("status:setup").|("status:nofire"))), Rectangle(size * 0.18, -size / 2, size * 0.32, size * 0.32), 1.0)) ++
+                (u.utype.setsUp && passenger.not).$(ImageRect(new RawImage(img(game.setUp.contains(u).?("status:setup").|("status:nofire"))), Rectangle(size * 0.18, -size / 2, size * 0.32, size * 0.32), 1.0)) ++
+                game.noFire.contains(u).$(ImageRect(new RawImage(img("status:nofire")), Rectangle(size * 0.18, -size / 2, size * 0.32, size * 0.32), 1.0)) ++
                 game.slowed.get(u).has(game.round).$(ImageRect(new RawImage(img("status:slow")), Rectangle(-size / 2, size * 0.18, size * 0.32, size * 0.32), 1.0)) ++
                 game.retreating.contains(u).$(ImageRect(new RawImage(img("status:retreat")), Rectangle(size * 0.18, size * 0.18, size * 0.32, size * 0.32), 1.0)) ++
                 game.facing.get(u).toList.map(e => ImageRect(arrowImage(e, u.faction.color), Rectangle(-size * 0.8, -size * 0.8, size * 1.6, size * 1.6), 1.0))
@@ -391,7 +427,8 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
         def stat(r : Res) = Span(r.icon ~ p.stock(r).hlb ~ (r != XP).?(("+" + game.income(f, r)).spn(styles.small) : Elem).|(Empty), styles.stat)
 
-        val vp = Div(stat(VP) ~ " / " ~ game.length.vp.hl ~ " " ~ stat(XP))
+        // in team games, the team's VPs together after the player's own (2026-11-24)
+        val vp = Div(stat(VP) ~ game.teamGame.?((" (team " + game.teamVP(game.team(f)) + ")").spn(styles.small) : Elem).|(Empty) ~ " / " ~ game.endVP.hl ~ " " ~ stat(XP))
 
         val stock = Div(Res.spent./(stat).merge)(styles.row)
 
@@ -403,7 +440,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
         val points = Div(("Control Points " + game.pointsOf(f).num).txt)(styles.small)
 
-        container.replace((title ~ vp ~ stock ~ tier ~ points ~ unitRow).div(xstyles.fillHeight), resources, onClick)
+        // the Commander: its name and tiers unlocked (or how many are drawn), tapping shows the cards
+        val commander = (game.commanders && Commander.all.exists(_.faction == f)).?(Div(OnClick(("commander", f), Span(game.commanderOf.get(f)./(c => c.elem ~ " " ~ (game.tiersOf.getOrElse(f, 0) + "/4").hl).|(("Commander: " + game.drawn.getOrElse(f, $[Commander]()).num + " drawn").txt), xlo.pointer)))(styles.small)).|(Empty)
+
+        container.replace((title ~ vp ~ stock ~ tier ~ commander ~ points ~ unitRow).div(xstyles.fillHeight), resources, onClick)
 
         if (f == game.current || game.highlightFaction.has(f))
             container.attach.parent.style.outline = "3px " + (f == game.current).?("solid").|("dashed") + " " + f.color
@@ -511,13 +551,18 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         val t = u.utype
         val ups = game.bought.getOrElse(u, $[Bought]())./(_.effect)
         Div(Image("token:" + t.id + "-" + u.faction.id, styles.icon) ~ u.elem) ~
-        Div(t.kind.elem ~ ", health " ~ game.health.get(u)./(_.hl).|(t.health.hl) ~ "/" ~ t.health.hl ~ ", range " ~ ((t.minRange > 1).??(t.minRange + "-") + game.rangeOf(u)).hl ~ ", sight " ~ game.sightOf(u).hl) ~
+        Div(t.kind.elem ~ ", health " ~ game.health.get(u)./(_.hl).|(t.health.hl) ~ "/" ~ game.maxHealth(u).hl ~ ", range " ~ ((t.minRange > 1).??(t.minRange + "-") + game.rangeOf(u)).hl ~ ", sight " ~ game.sightOf(u).hl) ~
         Div("Attack " ~ game.attacksOf(u)./(a => a.icon ~ (game.full && game.fixedGun(u, a)).?("(fixed)".spn(styles.small)).|(Empty)).merge) ~
         ups.any.?(Div("Upgrades: " ~ ups./(_.elem).comma)).|(Empty) ~
         game.facing.get(u)./(e => Div("Facing " ~ Facing.elem(e))).|(Empty) ~
         game.hasSplash(u).?(Div("HE Splash".hl ~ ": its HE hits the target hex and every hex around it")).|(Empty) ~
         (game.full && t.retreatPoint).?(Div("Retreat Point".hl ~ ": Infantry may Retreat to the hexes next to it")).|(Empty) ~
         game.retreating.contains(u).?(Div("Retreating".hl)).|(Empty) ~
+        game.stance.contains(u).?(Div("Defensive Stance".hl ~ ": Heavy Cover this round")).|(Empty) ~
+        game.noFire.contains(u).?(Div("No-Fire Capture mode".hl ~ ": captures, doesn't fire (1 CP to switch back)")).|(Empty) ~
+        u.utype.strafing.?(Div("Strafing Fire".hl ~ ": its damage may also go, in full, to a second unit next to its target")).|(Empty) ~
+        (u.utype.tierBuilding > 0).?(Div("Tier Building".hl ~ ": its Tier's units may spawn next to it, with Slow (Double Slow if already Slow) their first round")).|(Empty) ~
+        game.hullDown.contains(u).?(Div("Hull Down".hl ~ ": 2 Defense Dice until it moves")).|(Empty) ~
         game.assaults.get(u)./(d => Div("Assaulting " ~ d.elem)).|(Empty) ~
         Div(("Board: Tier " + t.tier + ", " + Tiers.name(u.faction, t.tier)).spn(styles.small))
     }
@@ -532,12 +577,22 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             showNotifications(game.setup)
 
         case ("board", f : Faction) =>
-            val e = game.enemy(f)
+            val e = (game.setup.dropWhile(_ != f).drop(1) ++ game.setup).head
             showOverlay(overlayScrollX(Div(f.elem ~ " Building Boards " ~ OnClick(("board", e), Span(("(" + e.name + "'s)").txt, styles.small, xlo.pointer))) ~
                 1.to(3)./(t => Div(Image("board:" + Tiers.board(f, t), styles.boardImg) ~ Div(("Tier " + t + ", " + Tiers.name(f, t) + (t > 1).??(" (unlock: " + Tiers.cost(t).mp + " Manpower, " + Tiers.cost(t).fuel + " Fuel)") + (t <= game.states(f).tier).?(" - unlocked").|("")).txt))).merge), onClick)
 
         case u : Squad =>
             showOverlay(overlayFitX(squadInfo(u)), onClick)
+
+        // a player's Commander card (or the three drawn), its tiers marked as unlocked
+        case ("commander", f : Faction) =>
+            val l = game.commanderOf.get(f).$ ++ game.commanderOf.get(f).none.??(game.drawn.getOrElse(f, $[Commander]()))
+            def card(c : Commander) = Div(Image(c.image, styles.boardImg)) ~ Div(c.elem) ~ c.tiers.zipWithIndex./{ case (t, i) =>
+                val on = game.commanderOf.get(f).has(c) && i < game.tiersOf.getOrElse(f, 0)
+                Div((on.?("✔ ").|("") + t.xp + " XP" + (t.needs > 0).??(", Tier " + t.needs)).spn(styles.small) ~ " " ~ t.ability.elem ~ ": " ~ t.ability.text.txt)
+            }.merge
+            showOverlay(overlayScrollX(Div(f.elem ~ " Commander" ~ (l.num > 1).?(" (three drawn, one to take)".txt).|(Empty)) ~ l./(card).merge ~
+                (game.tiersOf.getOrElse(f, 0) >= 4).?(Div("All tiers unlocked: 2 XP trade for 1 Manpower, Munitions or Fuel in the purchases.".txt)).|(Empty)), onClick)
 
         case "legend" =>
             def line(i : Elem, s : String) = Div(i ~ " " ~ s.txt)

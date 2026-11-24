@@ -11,7 +11,7 @@ import hrf.colmat._
 
 // WHY A SEAT IS ASKED, for its Discord turn ping (good-game/TurnPings.scala; asked for on 2026-11-21, like Root's,
 // root/turn-reasons.scala): a fight ("fight" for the clan whose turn it is, "defend" for the others), harvest trading, Winter,
-// a card pick, setup, the Adset draft, a Sea raid, an Event, or the clan's own turn; "/<clan>" names the clan whose emblem the ping shows. Worked out from
+// the Kobold exchanges, a card pick, setup, the Adset draft, a Sea raid, an Event, or the clan's own turn; "/<clan>" names the clan whose emblem the ping shows. Worked out from
 // the action that asked (game.asker) and the choices offered, the same on every client. Display only: no game records change.
 object TurnReasons {
     def tagOf(game : Game, f : |[Faction], actions : $[Any]) : String = {
@@ -34,6 +34,8 @@ object TurnReasons {
             else if (actions.exists(_.isInstanceOf[PickCardAction])) "cards"
             else if (name.startsWith("Trade") || name.startsWith("TeamOffer") || name.startsWith("TeamAccept") || name.startsWith("TeamDecline")) "trade"
             else if (name.startsWith("Winter") || name.contains("Unrest")) "winter"
+            // the Wastelands Kobolds' and Kobold Camp's exchanges at the harvest (2026-11-24: the ping said only "you're needed")
+            else if (name.startsWith("WasteTrade") || name.startsWith("KoboldSwap") || name.startsWith("CampTrade")) "kobold"
             else if (creature.nonEmpty && attacking.nonEmpty) attacking.has(true).?("fight").|("defend")
             else if (Seq("Combat", "Fight", "Casualt", "Retreat", "Reroll").exists(name.contains)) mine.?("fight").|("defend")
             else if (name.startsWith("Setup")) "setup"

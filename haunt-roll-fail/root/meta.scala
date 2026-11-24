@@ -1845,6 +1845,9 @@ object Meta extends MetaGame {
     val label = "Root"
 
     override def settingsList = super.settingsList ++ $(PromptAssignHits, AutoAssignHits, PromptAmbush, AutoAmbush, ShowRule, FlagRule, HideRule, StackWarriors, SeparateWarriors, ShowBoardTrackers, HideBoardTrackers, CardPilesInPanel, CardPilesOnMap, NoOutOfTurn, BasicOutOfTurn, DetailedOutOfTurn, HighlightClearings, HighlightNone, ShowPassScreen, NoPassScreen, EnglishLanguage, FrenchLanguage)
+    // the card piles on the map are the default (2026-11-24, owner), so the side panel saved while it was the default is moved there once
+    override def settingsMoves = $(("card-piles-on-map", CardPilesInPanel.toString, CardPilesOnMap.toString))
+
     override def settingsDefaults = super.settingsDefaults ++ $(AutoAssignHits, AutoAmbush, FlagRule, StackWarriors, ShowBoardTrackers, CardPilesOnMap, NoOutOfTurn, HighlightNone, ShowPassScreen, EnglishLanguage)
 
     override def translation(settings : $[hrf.Setting]) =
