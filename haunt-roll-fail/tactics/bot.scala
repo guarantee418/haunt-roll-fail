@@ -104,6 +104,9 @@ class GameEvaluation(val game : Game, val self : Faction) {
 
             // Commanders
             case CommanderTierAction(_, c, i) => true |=> (700 + (math.random() * 100).toInt) -> "commander"
+            case BrigadePickAction(_, b) => true |=> (650 + (math.random() * 100).toInt) -> "lost brigade"
+            case BrigadeStartAction(_, b, _) => true |=> (300 + b.starting * 50) -> "lost brigade"
+            case BrigadeStartSkipAction(_, _) => true |=> 200 -> "later"
             case TradeXPAction(_, r) =>
                 (self.stock(XP) >= 6) |=> 200 -> "trade"
                 (self.stock(XP) < 6) |=> -300 -> "keep xp"

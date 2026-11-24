@@ -293,6 +293,104 @@ plays rulebook 8.0 and 8.2 with the thirty core Commander cards (six a faction, 
     adds the health at once.
   - "Requires and spawns at Tier N": the OKW units spawn next to that Tier's Building or in the Spawn Area, as their tier's units do.
 
+### Expansion Commanders
+
+The setup's **Expansion Commanders** toggle (`ExpansionCommanders`, only with Draw three Commanders; 2026-11-24) adds the expansion
+packs' Commanders to the ones each player draws three from (`Commander.pool`; games without it, and every game made before it, draw
+from the core six). So far the US Forces' nine, from the Faction Guide's pages 11 and 12, the Wehrmacht's eight, the British Forces' eight, the Soviet Forces' twelve and the OKW's seven (44 in all) (Elite Commanders Collection: Light Cavalry,
+Heavy Cavalry, Tactical Support, Motor Pool; Pathfinder Pack: Pathfinder Company; StuG Pack: Devil's Brigade; Lost Brigades Pack: Cavalry
+Rifle, Urban Assault, Engineer Assault Companies). Their units were read off the cards' call-in panels (health, range, a die for each
+figure, turreted for curved arrows): M5 Stuart (heavy vehicle, health 3, range 2, AI and AP, two Speed Dice, 2 Manpower 3 Fuel), M26
+Pershing (6, range 2, 2 AP 2 AI, 3/5), T34 Calliope (4, range 4, 2 indirect HE with Splash, 2/5), Sherman 105mm Dozer (6, range 2, 2 AI
+2 HE, a Defense Die, Sherman chassis, 3/5), M36 Jackson (3, range 4, 3 AP, a Speed Die, Wolverine chassis, 3/5), I.R. Pathfinder Squad
+(infantry, 3, range 3, 1 AI, spots Camouflage, Camouflage, 3 Manpower), Cavalry Riflemen (5, range 2, 1 AI, Close Range Firepower, a
+Defense Die, 4 Manpower 1 Munitions), Devil's Brigade (Riflemen with 5 health) and the US MG Bunker (the Wehrmacht's, built by Riflemen).
+The Wehrmacht's eight (pages 17 and 18; StuG Pack: StuG Assault Doctrine, StuG Tactics; Elite Commanders Collection: Terror, Tank
+Destroyer, Assault Support Doctrines; Lost Brigades Pack: Infantry Storm, Festung Support, Lightning War Doctrines) bring the StuG III G
+(heavy vehicle, health 3, range 3, a fixed AI and AP, 2/3), King Tiger (8, range 3, Slow, 2 fixed AI and 2 AP, a Defense Die, 4/5), Jaeger
+Sniper (infantry, 3, range 3 only, 2 AI, a Speed Die, Sight 3 spotting Camouflage, Camouflage, 3 Manpower 2 Munitions), Jagdpanther (5,
+range 4, 3 fixed AP, a Defense Die, 3/4), Elefant (7, range 4, Slow, 3 fixed AP, 3/5) and the SdKfz 251 Half-track (light vehicle, 3,
+range 3, 1 AI, a Transport that Reinforces and is a Retreat Point; Infantry may spawn next to it, Slow the first round; 2/3).
+Readings:
+
+- The StuG Pack's two Commanders are also the OKW's (its page): they are drawn by the Wehrmacht here, and will be by the OKW too.
+- Tank Destroyer Doctrine marks an enemy Vehicle on the map (its hex in the opening), which then rolls no Defense Dice that round, not even
+  for Frontal Armor or the damage types it resists.
+- Assault Support Doctrine gives the Kubelwagen the Scout Car's No-Fire collection (1 more of the point's first non-VP resource).
+- Breakthrough Tactics (Terror Doctrine) is the US Step on it; Tactical Movement is Combat Group Advance; the Stuka strafe is the P-47
+  strike's 2 AP a hex; Recon Plane is Recon Sweep.
+- The British Forces' eight (pages 23 and 24; Elite Commanders Collection: Hammer Doctrine, Royal Artillery Regiment, Royal Armored Corps,
+  Tank Hunter Regiment; StuG Pack: Special Service Brigade; Lost Brigades Pack: Assault Infantry, Assault Officer, Vanguard Operations
+  Regiments) bring the Sexton Gun Carriage (heavy vehicle, health 2, range 3, 2 fixed indirect HE with Splash, 1/4), Comet (6, range 2, 2 AP
+  1 AI, a Speed Die, 3/5), Sherman Firefly (4, range 4, 3 AP, 2/5), Valentine Mk. XI (3, range 3, 2 fixed AI and 1 AP, a Defense Die
+  Assaulting, 2/3) and Commandos (infantry, 3, range 2, 1 AI, Close Range Firepower, dropped like Paratroopers, 5 Manpower 1 Munitions).
+  The Firefly's Tulip and the Commandos' Gammon Bombs are other target choices: 3 HE in place of the unit's whole attack (Tulip paying 2
+  Munitions, Gammon only at an adjacent target). English Industry is a trade of 2 Munitions for 1 Fuel in the purchases, as often as wanted.
+- The Soviet Forces' twelve (pages 29 and 30; Elite Commanders Collection: Frontal Assault Doctrine, Guards Motor, Urban Defense, Urban
+  Assault Tactics; Eastern Reinforcements Pack: Counterattack Tactics, Heroes of Stalingrad; Lost Brigades Pack: Siege Militia, Frontline
+  Tactics; StuG Pack: Soviet Spetsnaz Brigade, Terror, Shock Rifle and Soviet Industry Tactics) bring Shock Troops (infantry, 5, range 2, 1
+  AI, Close Range Firepower, a Defense Die, 4/1), the IS-2 (7, range 2, 1 AI 2 AP, 3/5), Guards Rifle Infantry (4, range 3 only, 2 AI or 2
+  AP, 4/1), Anti-Infantry and Anti-Tank Partisans (2, range 2, 1 AI or 1 AP, Heroic Sacrifice, spawned next to an empty Building like
+  Stormtroopers, Slow, 1 Manpower 4 Munitions, one a round), the Forward Station (an Emplacement Conscripts make of an empty Building next
+  to them, 3 health, a Wrench; Vehicles may spawn next to it; one at a time), the KV-2 (5, range 3, 2 indirect HE with Splash, 2/5), the
+  Penal Battalion (5, a Defense Die, 2 AI at range 2 or 2 HE at range 1, never Pinned, 4/1), the ISU-152 (7, range 4, Slow, 3 fixed AP or
+  3 HE, 3/5) and the KV-8 (5, range 3, Slow, 3 fixed AI and a Flame, 1 more Flame Assaulting or at a unit in a Building; 3 Manpower 2
+  Fuel as printed).
+  - "Picks either damage type each attack" is another target choice; it uses up the unit's whole attack, so it is offered only before the
+    unit has assigned any damage.
+  - The IS-2's shells: its AP damage at Infantry in a Building also hurts the Building, and the Infantry get 1 less Defense Die there.
+  - Soviet Architecture: +1 Defense Die for the Soviets' Infantry in any Building (Assaulting into one too), and 1 less damage to a Building
+    with their Infantry in it.
+  - Decoy: on the third CP of a round, a Sniper or Guards Rifle Infantry moves 3 hexes and can't fire that round.
+  - Battlefield Promotions: the Conscripts become a new unit of the other type in the same hex, 2 more health (5 at most), keeping their
+    Flame upgrade; it is a purchase.
+  - Siege Militia's free Partisans and the free Anti-Tank Partisans count toward their one a round.
+- The OKW's seven (pages 36 and 37; Elite Commanders Collection: Terror Doctrine West, Tank Destroyer West; StuG Pack: StuG Assault
+  Doctrine and StuG Tactics, the Wehrmacht's cards in the OKW's colors; Lost Brigades Pack: Storm, Encirclement and Joint Operations
+  Doctrines) bring the Flammpanzer 38 Hetzer (heavy vehicle, 3, range 3, a Flame and 3 fixed AI, a Defense Die, 3 Manpower 2 Fuel; Assaulting,
+  its damage may also go to a second target next to the first, like the Centaur's Strafing Fire), and the Wehrmacht's StuG III G, King
+  Tiger, Jagdpanther and Stormtroopers as OKW units (their types shared, `UnitType.shared`, with OKW tokens); OKW units of Tier 2 and 3 spawn
+  next to their Tier Buildings as the cards say ("Requires and spawns at Tier 2/3"). Ober Defense is bought with Advanced Emplacements'
+  brace step, up to 4 Munitions; Tank Desant Tactics' free Infantry is a Volksgrenadier squad for the OKW; Veteran Kettenkrad is +1 health
+  and Camouflage.
+- A panel naming a call-in with no "one spawns for free" brings no free unit (`...Plain` abilities).
+- Strategic Maneuvers is the Scout Car's No-Fire mode for Stuarts; Combined Arms counts a unit next to another of the same player's;
+  Requisition Officer takes 1 Manpower off every Sherman and Wolverine chassis (Easy Eight, Dozer, Jackson too).
+- Motor Pool's two Jeeps are one purchase of 5 Munitions, with no limit but the Jeeps' 3; Airdrop Beacon lets Infantry spawn next to a
+  Pathfinder Squad as next to a Major (Slow the first round), not Pathfinders; Airdropped Combat Group is three Tier Infantry, any mix,
+  next to Pathfinders, Slow (not Double Slow).
+- Devil's Brigade: Riflemen for every Riflemen ability; Water is passable for it. Demolition, once a Damage Phase for each Devil's Brigade,
+  destroys an adjacent standing Building at its very end (Full Game Rules only), the units inside falling back as from any destroyed Building.
+- Cavalry Riflemen's free Assault: once a round, after spending a CP, onto an adjacent enemy-held hex, with no CP.
+- The Dozer destroys the Sandbags of the hex it Assaults (the field defenses this game has) at the start of the Damage Phase.
+- Urban Assault's Smoke is offered with the other Smoke at the start of the Damage Phase, for Riflemen in an Assault.
+
+## Lost Brigades
+
+The rulebook's 9.0 Lost Brigade Building Extensions, the setup's Lost Brigades option (Full Game Rules only; `brigades.scala`, 2026-11-24),
+with the Faction Guide's twelve cards of each faction (US 3.3, Wehrmacht 4.3, British 5.3, Soviet 6.3, OKW 7.3) and the universal Panther
+Lost Brigade (8.0), a Command Panther of each faction ("Captured" for the Allies), shuffled into each faction's deck (13 cards).
+
+- At setup each player draws three (after the Commanders, when both are played). Once, at any time of the purchases, a player may pick one
+  of the three for the XP at its top left, and keeps it. A brigade of 0 XP may be picked at the start, in turn order, before the starting
+  Infantry; then the Infantry it names may be among the starting Infantry, up to its number ("one", or Assault and Royal Engineers "up to
+  three"). The StG44 Rifle Volksgrenadiers' starting squad is an StG44 squad.
+- A brigade's units need no Tier Building and can be bought up to the usual limits. Its unit is bought at the card's price (`price`, over
+  the Commander's), and it gives no free unit. OKW brigade units spawn from the Spawn Area only, never next to a Tier Building.
+- Each brigade gives the abilities of the Commander tier with the same unit (`abilities`, which `unlocked` checks as for a Commander):
+  the call-in, the emplacement a squad builds (the bunkers, Pak 43s, 17 Pounder, Forward Emplacement, Forward HQ, LeFH 18), Paradrop
+  Equipment, the Partisans (one of each type a round), the G43 Stormtroopers (one a round).
+- Readings:
+  - The Repair Station is the Forward Station: Conscripts turn an empty Building next to them into it, it has a Wrench, and Vehicles
+    may spawn next to it, Slow, one at a time.
+  - Veteran Devil's Brigade: Devil's Brigade for 4 Manpower 4 Munitions, with both their AP upgrades (not offered as upgrades).
+  - Veteran Commandos: dropped as with the Commandos Commander, for 5 Manpower 2 Munitions, with Gammon Bombs and its Camouflage.
+  - The Churchill Crocodile is a Churchill with Operation Crocodile (2 forward Flame), for 2 Manpower 4 Fuel.
+  - The SdKfz 251's configuration is one upgrade, +2 Flame or +2 AP, for 4 Munitions.
+  - Elite Grenadier Squad Leaders: 4 health, range 3, 2 AI (the boxed figure read as a second AI die) and 1 HE (the green
+    explosion), Camouflage and a Wrench, 4 Manpower 3 Munitions.
+  - Command Panther: 5 health, range 3, 2 AP and 2 AI turreted, Spots Camo, 3 Manpower 5 Fuel, one at a time.
+
 ## Units
 
 From the Building Boards in the mod (`UnitType` in `game.scala`; the boards are in the game's "Building Boards" overlay):
@@ -333,7 +431,7 @@ Vehicles: 3 of each tier 1 and 2 vehicle, 2 of each tier 3 one, at a time.
 11. **Splash on Sandbags**: each splash die counts once for each unit it hits in the hex and once for the hex toward the
     two Damage that destroy Sandbags.
 12. **Not in the core box** (left out): barbed wire and tank traps that units build (the core units' Wrenches build only
-    Sandbags), Terrain Pack 3's foot bridges, Lost Brigades, Bunkers and the terrain packs' other special Buildings.
+    Sandbags), Terrain Pack 3's foot bridges, Bunkers and the terrain packs' other special Buildings.
 13. **Commander readings**: Osttruppen's two icons beside the Wrench (a veteran star and a Speed Die) are read as the squad's Speed Die;
     the Paradrop and Airdropped Group costs are the whole cost of the units; Smoke "disrupting Pins" isn't modeled beyond the sight rules;
     Combat Group Advance's and Armor Blitzkrieg's free move lasts the turn the ability is used; a drawn Commander's cards are shown to

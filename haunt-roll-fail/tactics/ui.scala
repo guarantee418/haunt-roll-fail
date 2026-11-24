@@ -441,7 +441,10 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
         val points = Div(("Control Points " + game.pointsOf(f).num).txt)(styles.small)
 
         // the Commander: its name and tiers unlocked (or how many are drawn), tapping shows the cards
-        val commander = (game.commanders && Commander.all.exists(_.faction == f)).?(Div(OnClick(("commander", f), Span(game.commanderOf.get(f)./(c => c.elem ~ " " ~ (game.tiersOf.getOrElse(f, 0) + "/4").hl).|(("Commander: " + game.drawn.getOrElse(f, $[Commander]()).num + " drawn").txt), xlo.pointer)))(styles.small)).|(Empty)
+        val commanderSpan = (game.commanders && Commander.all.exists(_.faction == f)).?(OnClick(("commander", f), Span(game.commanderOf.get(f)./(c => c.elem ~ " " ~ (game.tiersOf.getOrElse(f, 0) + "/4").hl).|(("Commander: " + game.drawn.getOrElse(f, $[Commander]()).num + " drawn").txt), xlo.pointer)) : Elem).|(Empty)
+        // the Lost Brigade, on the same line: its name once picked (or how many are drawn), tapping shows the cards
+        val brigadeSpan = game.brigades.?(OnClick(("brigade", f), Span(game.brigadeOf.get(f)./(b => b.elem).|(("Lost Brigades: " + game.brigadesDrawn.getOrElse(f, $[Brigade]()).num + " drawn").txt), xlo.pointer)) : Elem).|(Empty)
+        val commander = (game.commanders || game.brigades).?(Div(commanderSpan ~ (game.commanders && game.brigades).?(" · ".txt : Elem).|(Empty) ~ brigadeSpan)(styles.small)).|(Empty)
 
         container.replace((title ~ vp ~ stock ~ tier ~ commander ~ points ~ unitRow).div(xstyles.fillHeight), resources, onClick)
 
@@ -593,6 +596,12 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
             }.merge
             showOverlay(overlayScrollX(Div(f.elem ~ " Commander" ~ (l.num > 1).?(" (three drawn, one to take)".txt).|(Empty)) ~ l./(card).merge ~
                 (game.tiersOf.getOrElse(f, 0) >= 4).?(Div("All tiers unlocked: 2 XP trade for 1 Manpower, Munitions or Fuel in the purchases.".txt)).|(Empty)), onClick)
+
+        // a player's Lost Brigade (or the three drawn)
+        case ("brigade", f : Faction) =>
+            val l = game.brigadeOf.get(f).$ ++ game.brigadeOf.get(f).none.??(game.brigadesDrawn.getOrElse(f, $[Brigade]()))
+            def card(b : Brigade) = Div(Image(b.image, styles.boardImg)) ~ Div(b.elem ~ " " ~ ("(" + b.xp + " XP)").spn(styles.small) ~ ": " ~ b.text.txt)
+            showOverlay(overlayScrollX(Div(f.elem ~ " Lost Brigade" ~ (l.num > 1).?(" (three drawn, one to pick)".txt).|(Empty)) ~ l./(card).merge), onClick)
 
         case "legend" =>
             def line(i : Elem, s : String) = Div(i ~ " " ~ s.txt)
