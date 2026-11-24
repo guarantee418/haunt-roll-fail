@@ -484,6 +484,9 @@ object TurnPings {
             case (false, "negotiate") => (head, "it's your turn")
             case (false, "entreat") => (e("IncludeFaction(TC)"), them.map(_ + " entreated you").getOrElse("you were entreated"))
             case (false, "hospitals") => (e("IncludeFaction(MC)"), "Field Hospitals 🏥: save your cats?")
+            // a draw from the deck or the Lilypad Diaspora's Pond (2026-11-24, asked for): the deck's card emoji and a lilypad (the
+            // Discord server's emoji of that name, else the Unicode lotus)
+            case (false, "pond") => (head, "draw from the deck " + w(e("StandardDeck")) + " or the Pond " + w(LfgSetup.serverNamed(List("lilypad", "lilypads", "lilypond", "pond")).getOrElse("🪷")))
             case (false, "setup") => (head, "time to set up")
             case (true, "defend") => (head, "you're under attack " + w(axe) + them.map(" by " + _).getOrElse(""))
             case (true, "fight") => (head, "your fight " + w(axe) + them.map(" against " + _).getOrElse("") + " needs you")
