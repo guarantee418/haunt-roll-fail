@@ -395,7 +395,7 @@ object TurnPings {
             iconOf(o) + "**" + name + "**"
         } }
         val (icon, words) = (nort, tag) match {
-            // (the sword or axe right after "attack", "battle" or "fight", 2026-11-22, asked for; the Partisans card right after "Partisans", 2026-11-23; trading and Winter with plain Unicode ⚖️ and ❄️ after
+            // (the sword or axe right after "attack", "battle" or "fight", 2026-11-22, asked for; the Partisans card right after "Partisans", 2026-11-23; a plain Unicode 🏥 after "Field Hospitals", 2026-11-23, asked for; trading and Winter with plain Unicode ⚖️ and ❄️ after
             // the words, not the bot's badges, so the Northgard webhook can post them itself, 2026-11-23)
             case (false, "defend") => (head, "you're under attack " + w(sword) + them.map(" by " + _).getOrElse(""))
             case (false, "battle") => (head, "your battle " + w(sword) + them.map(" against " + _).getOrElse("") + " needs you")
@@ -411,7 +411,7 @@ object TurnPings {
             // and the ping reminded the enemy of them)
             case (false, "negotiate") => (head, "it's your turn")
             case (false, "entreat") => (e("IncludeFaction(TC)"), them.map(_ + " entreated you").getOrElse("you were entreated"))
-            case (false, "hospitals") => (e("IncludeFaction(MC)"), "Field Hospitals: save your cats?")
+            case (false, "hospitals") => (e("IncludeFaction(MC)"), "Field Hospitals 🏥: save your cats?")
             case (false, "setup") => (head, "time to set up")
             case (true, "defend") => (head, "you're under attack " + w(axe) + them.map(" by " + _).getOrElse(""))
             case (true, "fight") => (head, "your fight " + w(axe) + them.map(" against " + _).getOrElse("") + " needs you")
