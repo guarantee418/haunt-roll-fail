@@ -29,6 +29,8 @@ import java.nio.charset.StandardCharsets.UTF_8
 //                                             channel's permissions become exactly those (and the bot's), else they are left as they are
 //   rename-channel <name> -> <new name>       a category too
 //   move-channel <name> -> <category>         "-> none" takes it out of its category
+//   order <category> -> <channel>, <channel>, ...
+//                                             puts the category's channels in that order, top first; those left out follow, as they were
 object DiscordServer {
     def api = sys.props.getOrElse("hrf.discord.api", "https://discord.com/api/v10")
 
@@ -167,6 +169,7 @@ object DiscordServer {
             case "channel" => channel(g, rest, false)
             case "rename-channel" => arrow(rest).flatMap { case (a, b) => channels(g).flatMap(findChannel(_, a)).flatMap(c =>
                 call("PATCH", "/channels/" + c.id, "{\"name\":" + Tournament.json(b) + "}").map(_ => "renamed")) }
+            case "order" => order(g, rest)
             case "move-channel" => arrow(rest).flatMap { case (a, b) => channels(g).flatMap { cc =>
                 findChannel(cc, a, _ != 4).flatMap { c =>
                     (if (norm(b) == "none") Right(None) else findChannel(cc, b, _ == 4).map(Some(_))).flatMap { p =>
@@ -176,6 +179,22 @@ object DiscordServer {
                 }
             } }
         }).fold("not done: " + _, x => x)
+    }
+
+    // Discord sorts a category's channels by position (voice channels after the others), so the ones named get 0, 1, 2, ... and the
+    // others the positions after them, all sent at once (Modify Guild Channel Positions)
+    def order(g : String, rest : String) : Either[String, String] = arrow(rest).flatMap { case (k, l) =>
+        channels(g).flatMap { cc =>
+            findChannel(cc, k, _ == 4).flatMap { cat =>
+                val in = cc.filter(_.parent == cat.id)
+                names(l).map(n => findChannel(in, n)).collectFirst { case Left(e) => Left(e + " in " + cat.name) }.getOrElse {
+                    val named = names(l).map(n => findChannel(in, n).toOption.get).distinctBy(_.id)
+                    val all = named ++ in.filterNot(c => named.exists(_.id == c.id)).sortBy(_.position)
+                    call("PATCH", "/guilds/" + g + "/channels", all.zipWithIndex.map { case (c, i) => "{\"id\":" + Tournament.json(c.id) + ",\"position\":" + i + "}" }.mkString("[", ",", "]"))
+                        .map(_ => "ordered: " + all.map(_.name).mkString(", "))
+                }
+            }
+        }
     }
 
     def arrow(rest : String) : Either[String, (String, String)] = rest.split(" -> ").toList.map(_.trim) match {
@@ -306,5 +325,5 @@ object DiscordServer {
         } yield result
     }
 
-    val words = Set("roles", "role", "rename-role", "give-role", "take-role", "channels", "category", "channel", "rename-channel", "move-channel")
+    val words = Set("roles", "role", "rename-role", "give-role", "take-role", "channels", "category", "channel", "rename-channel", "move-channel", "order")
 }
