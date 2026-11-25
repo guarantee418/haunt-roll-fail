@@ -1666,6 +1666,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     var banishAfterIgnoredHits = false
     var banishCaptainsLast = false
     var nabFearsOrder = false
+    var charismaticPlaces = false
     var featherRufflersOnCraft = false
     var counterMiceInABush = false
     var forcedAsyncChooseHits = false

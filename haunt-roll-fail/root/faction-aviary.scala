@@ -251,8 +251,26 @@ case class TurmoilAction(self : Aviary) extends ForcedAction
 case class DecreeDoneAction(self : Aviary, cost : SuitCost, suits : $[Suit], then : ForcedAction) extends ForcedAction
 
 
+// A one-time fix for games started before CharismaticPlacesWhatItCan, added to a live game's log by hand: from here a Charismatic
+// Recruit with one warrior left places it (game.charismaticPlaces), then goes on with then
+case class CharismaticPlacesWhatItCanAction(then : ForcedAction) extends ForcedAction with SkipValidate
+
 object AviaryExpansion extends FactionExpansion[Aviary] {
+    def charismaticPlaces(implicit game : Game) = game.options.has(CharismaticPlacesWhatItCan) || game.charismaticPlaces
+
+    // the suits of the cards of the decree's column still to do, as AviaryMainAction works them out
+    def left(f : Aviary, d : Decree)(implicit game : Game) : $[Suit] = {
+        val t = f.todo(d)
+        val o = f.done(d)
+        t.diff(o).diff(o.diff(t)./(_ => Bird))
+    }
+
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
+        case CharismaticPlacesWhatItCanAction(then) =>
+            game.charismaticPlaces = true
+
+            then
+
         // SETUP
         case CreatePlayerAction(f : Aviary) =>
             game.states += f -> new AviaryPlayer(f)
@@ -412,7 +430,11 @@ object AviaryExpansion extends FactionExpansion[Aviary] {
         case AviaryMainDecreeAction(f, d @ Decree.Recruit, r) =>
             val l = f.all(Roost).%(f.canPlace).%(c => r.exists(c.cost.matched))
 
-            if (l.any && (f.pooled(Hawk) > f.has(Charismatic).??(1) || f.totalWar))
+            // CharismaticPlacesWhatItCan: a Charismatic Recruit with one warrior left places it (Law of Root 7.8.3, FAQ), before
+            // Turmoil if its card can't be done
+            val need = AviaryExpansion.charismaticPlaces.?(0).|(f.has(Charismatic).??(1))
+
+            if (l.any && (f.pooled(Hawk) > need || f.totalWar))
                 Ask(f).add(AviaryRecruitMainAction(f, l, r)).daylight(f)
             else
                 TurmoilLoomingAction(f, d, r)
@@ -469,7 +491,10 @@ object AviaryExpansion extends FactionExpansion[Aviary] {
             if (n > m && f.totalWar)
                 f.oscore(n - m)("recruiting")
 
-            DecreeDoneAction(f, s, r, Repeat)
+            if (n > m && f.totalWar.not && AviaryExpansion.charismaticPlaces)
+                TurmoilLoomingAction(f, Decree.Recruit, AviaryExpansion.left(f, Decree.Recruit))
+            else
+                DecreeDoneAction(f, s, r, Repeat)
 
 
         case AviaryMoveMainAction(f, l, r) =>
