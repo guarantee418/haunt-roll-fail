@@ -161,6 +161,7 @@ case class CouncilBanishDestinationAction(self : Council, b : Battle, e : Factio
 // A one-time fix for games started before CouncilEveningClearPath, added to a live game's log by hand: from here the Council may
 // clear a mountain path in Evening (game.councilEveningClearPath), then goes on with then
 case class CouncilEveningClearPathAction(then : ForcedAction) extends ForcedAction with SkipValidate
+case class CouncilNoEveningClearPathAction(then : ForcedAction) extends ForcedAction with SkipValidate
 
 case class CouncilInspireAction(f : Council) extends ForcedAction
 case class CouncilAdjournMainAction(f : Council) extends ForcedAction with Soft
@@ -676,7 +677,7 @@ object CouncilExpansion extends FactionExpansion[Council] {
         // Clear Path (Mountain map) after Convene Woodfolk: the Council reveals its cards in Birdsong and gets them back only in
         // Evening, so its Daylight has an empty hand and the path could never be cleared (2026-11-04; CouncilEveningClearPath).
         // Once a turn, as in Daylight; then goes on to Craft
-        case EveningNAction(30, f : Council) if (options.has(CouncilEveningClearPath) || game.councilEveningClearPath) && Council.clearPathWanted(f) =>
+        case EveningNAction(30, f : Council) if (options.has(CouncilEveningClearPath) || game.councilEveningClearPath) && game.councilNoEveningClearPath.not && Council.clearPathWanted(f) =>
             soft()
 
             Ask(f).group(ClearPath, "in", Evening)
@@ -685,6 +686,12 @@ object CouncilExpansion extends FactionExpansion[Council] {
 
         case CouncilEveningClearPathAction(then) =>
             game.councilEveningClearPath = true
+
+            then
+
+        // Clearing a path is Daylight only (2026-11-25): switches a running game that has CouncilEveningClearPath back
+        case CouncilNoEveningClearPathAction(then) =>
+            game.councilNoEveningClearPath = true
 
             then
 

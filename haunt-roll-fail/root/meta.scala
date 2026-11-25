@@ -690,6 +690,8 @@ case object SuitedLandmarkAnySuit extends GameOption with ToggleOption {
 // are revealed in Birdsong and come back to hand only in Evening, so its Daylight had none to discard (Discord,
 // 2026-11-04). Hidden and on by default for new games; older games keep their Evening so their replays don't change
 // (CouncilEveningClearPathAction switches a running one over).
+// Taken out again in RulesVersion8 (2026-11-25, Discord root-feedback: clearing a path is Daylight only, Law of Root's Mountain
+// map rules); the games that have it keep it unless CouncilNoEveningClearPathAction switches it off.
 case object CouncilEveningClearPath extends GameOption with ToggleOption {
     val group = "Card Draft"
     val valueOn = "Twilight Council".hh ~ " may clear a path in Evening"
@@ -5025,9 +5027,14 @@ case object RulesVersion7 extends RulesVersion(7) {
     def fixes = RulesVersion6.fixes ++ $[Meta.O](LizardsOutcastOnly)
 }
 
+// The Twilight Council no longer clears a Mountain path in Evening, as clearing is Daylight only (2026-11-25)
+case object RulesVersion8 extends RulesVersion(8) {
+    def fixes = RulesVersion7.fixes.diff($[Meta.O](CouncilEveningClearPath))
+}
+
 object RulesVersion {
-    val all : $[RulesVersion] = $(RulesVersion1, RulesVersion2, RulesVersion3, RulesVersion4, RulesVersion5, RulesVersion6, RulesVersion7)
-    def latest : RulesVersion = RulesVersion7
+    val all : $[RulesVersion] = $(RulesVersion1, RulesVersion2, RulesVersion3, RulesVersion4, RulesVersion5, RulesVersion6, RulesVersion7, RulesVersion8)
+    def latest : RulesVersion = RulesVersion8
     def implied : $[Meta.O] = all./~(_.fixes).distinct
 
     def expand(l : $[Meta.O]) : $[Meta.O] = l ++ l.of[RulesVersion]./~(_.fixes).distinct.diff(l)
