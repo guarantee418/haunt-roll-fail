@@ -481,6 +481,6 @@ object DiscordServer {
         } yield r
     }
 
-    val words = Set("roles", "role", "rename-role", "give-role", "take-role", "channels", "category", "channel", "rename-channel", "move-channel", "order",
+    val words = Set("roles", "role", "rename-role", "merge-role", "give-role", "take-role", "channels", "category", "channel", "rename-channel", "move-channel", "order",
         "webhooks", "make-webhook", "rename-webhook", "test-ping")
 }
