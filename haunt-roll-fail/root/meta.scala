@@ -670,6 +670,15 @@ case object CharismaticPlacesWhatItCan extends GameOption with ToggleOption {
     val valueOn = "Charismatic".hh ~ " places what it can"
 }
 
+// A Silver-Tongue clearing counts as ruled for the Keepers' whole Recover, every relic recovered in it, not only the first
+// (2026-11-25, Right of Betrayal: a Jewel 2 after a Jewel 1 discarded the Faithful Retainer). The Recover counts the ruled clearings
+// once, when it starts. Hidden, in RulesVersion6; older games keep counting again for each relic (SilverTongueWholeRecoverAction
+// switches a running one over).
+case object SilverTongueWholeRecover extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Silver-Tongue".hh ~ " for a whole " ~ "Recover".hh
+}
+
 // With MountainSuitedLandmark, the landmark drawn for the Mountain's Tower clearing may be of that clearing's own suit (owner,
 // 2026-11-19): older games left those out. Hidden, in RulesVersion3; it only changes a setup draw, so running games need no switch.
 case object SuitedLandmarkAnySuit extends GameOption with ToggleOption {
@@ -2074,7 +2083,7 @@ object Meta extends MetaGame {
 
     // The hidden options of rules fixes, each gating a fix so the games started before it replay the same (most new games get through
     // their RulesVersion); not listed in a game's log (OptionsAction)
-    lazy val fixes : $[O] = $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes, BanishCaptainsLast, SuitedLandmarkAnySuit, NabFearsOrder, CharismaticPlacesWhatItCan)
+    lazy val fixes : $[O] = $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes, BanishCaptainsLast, SuitedLandmarkAnySuit, NabFearsOrder, CharismaticPlacesWhatItCan, SilverTongueWholeRecover)
 
     def unlisted : $[O] = fixes ++ settled ++ RulesVersion.all
 
@@ -4998,9 +5007,14 @@ case object RulesVersion5 extends RulesVersion(5) {
     def fixes = RulesVersion4.fixes ++ $[Meta.O](CharismaticPlacesWhatItCan)
 }
 
+// A Silver-Tongue clearing counts for the Keepers' whole Recover (2026-11-25)
+case object RulesVersion6 extends RulesVersion(6) {
+    def fixes = RulesVersion5.fixes ++ $[Meta.O](SilverTongueWholeRecover)
+}
+
 object RulesVersion {
-    val all : $[RulesVersion] = $(RulesVersion1, RulesVersion2, RulesVersion3, RulesVersion4, RulesVersion5)
-    def latest : RulesVersion = RulesVersion5
+    val all : $[RulesVersion] = $(RulesVersion1, RulesVersion2, RulesVersion3, RulesVersion4, RulesVersion5, RulesVersion6)
+    def latest : RulesVersion = RulesVersion6
     def implied : $[Meta.O] = all./~(_.fixes).distinct
 
     def expand(l : $[Meta.O]) : $[Meta.O] = l ++ l.of[RulesVersion]./~(_.fixes).distinct.diff(l)

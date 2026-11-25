@@ -206,7 +206,7 @@ case class RetinueDelveRelicAction(self : Expedition, d : Card, c : Clearing, r 
 case class RetinueMoveOrRecoverAction(self : Expedition, d : Card) extends BaseAction("Move".hl, "or", "Recover".hl)(d.img) with Soft with ViewCard
 case class RetinueMoveOrRecoverDoneAction(self : Expedition, d : Card, then : ForcedAction) extends ForcedAction
 case class RetinueRecoverAction(self : Expedition, d : Card, c : Clearing, then : ForcedAction) extends BaseAction("Recover".hl, "with", d, "in")(c) with Soft with PreMove
-case class RetinueRecoverContinueAction(self : Expedition, d : Card, c : Clearing, then : ForcedAction) extends ForcedAction with Soft
+case class RetinueRecoverContinueAction(self : Expedition, d : Card, c : Clearing, v : Int, then : ForcedAction) extends ForcedAction with Soft
 case class RetinueRecoverDiscardAction(self : Expedition, d : Card, then : ForcedAction) extends ForcedAction
 case class RetinueRecoverRelicAction(self : Expedition, d : Card, c : Clearing, r : Relic, v : Int, first : Boolean, then : ForcedAction)
     extends BaseAction("Recover".hl, "in", c, "(" ~ (v == 0).?("no".spn).|(v.hl) ~ " ruled clearing" ~ (v != 1).??("s") ~ ")")(Image(r.imgid(self))(styles.iii))
@@ -254,11 +254,21 @@ case class RetinueAction(self : Expedition, h : $[Card], m : ListMap[Int, Retinu
 
 case class ReturnToWoodAction(self : Faction, c : Clearing, e : Expedition, p : Relic, q : Forest, then : ForcedAction) extends BaseAction("Return", p.of(e), "to forest")(implicit g => board.forestName(q))
 
+// A one-time fix for games started before SilverTongueWholeRecover, added to a live game's log by hand: from here a Recover counts
+// the ruled clearings once for all its relics (game.silverTongueWholeRecover), then goes on with then
+case class SilverTongueWholeRecoverAction(then : ForcedAction) extends ForcedAction with SkipValidate
 
 object ExpeditionExpansion extends FactionExpansion[Expedition] {
     val OrderingDie = Die.range(0 -> 999999)
 
+    def silverTongueWholeRecover(implicit game : Game) = game.options.has(SilverTongueWholeRecover) || game.silverTongueWholeRecover
+
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
+        case SilverTongueWholeRecoverAction(then) =>
+            game.silverTongueWholeRecover = true
+
+            then
+
         // SETUP
         case CreatePlayerAction(f : Expedition) =>
             game.states += f -> new ExpeditionPlayer(f)
@@ -597,8 +607,10 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
 
             Ask(f).each(r)(RetinueRecoverRelicAction(f, d, c, _, q, true, then)).cancel
 
-        case RetinueRecoverContinueAction(f, d, c, then) =>
-            val q = clearings.%(o => c.asset.matches(o.cost)).%(f.rules).num
+        case RetinueRecoverContinueAction(f, d, c, v, then) =>
+            // SilverTongueWholeRecover: the ruled clearings are counted once for the whole Recover, so a Silver-Tongue clearing
+            // counts for every relic recovered with it (its one effect is the Recover); older games count them again for each relic
+            val q = if (silverTongueWholeRecover) v else clearings.%(o => c.asset.matches(o.cost)).%(f.rules).num
 
             val t = f.at(c).of[WayStation]./(_.active)
             val r = f.at(c).of[Relic].%(r => t.has(r.rtype))
@@ -618,7 +630,7 @@ object ExpeditionExpansion extends FactionExpansion[Expedition] {
             q = if (r.value > v)
                 RetinueRecoverDiscardAction(f, d, q)
             else
-                RetinueRecoverContinueAction(f, d, c, q)
+                RetinueRecoverContinueAction(f, d, c, v, q)
 
             val column = Relic.types.but(r.rtype)./(t => f.recovered(t).num).min >= f.recovered(r.rtype).num
 
