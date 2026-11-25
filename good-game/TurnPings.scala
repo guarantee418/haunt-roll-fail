@@ -339,6 +339,19 @@ object TurnPings {
             if (seats.nonEmpty) {
                 val unit = if (rootMetas.contains(lobby.meta)) "VP" else if (lobby.meta.startsWith("nort")) "fame" else "points"
                 def points(s : S) = if (s.score == "D") "dominance" else if (s.score.isEmpty) "" else s.score + " " + unit
+                // each seat's faction (or clan) emoji before its name (2026-11-25, asked for): the report names the faction as the game
+                // shows it, so a Root faction is found by its label in the LFG catalog ("Vagabond (Thief)" by "Vagabond"), a clan by its
+                // first word ("Stag Clan"); none for a faction with no emoji
+                def icon(s : S) : String = try {
+                    if (nortMetas.contains(lobby.meta))
+                        (Lfg.coreClans ++ Lfg.bloodClans).find(c => s.faction.toLowerCase.startsWith(c.toLowerCase + " ") || s.faction.equalsIgnoreCase(c)).map(Lfg.clanIcon).getOrElse("")
+                    else if (rootMetas.contains(lobby.meta)) {
+                        val name = s.faction.takeWhile(_ != '(').trim
+                        LfgSetup.catalog(Lfg.root.meta).flatMap(_.options.find(o => o.name.startsWith("IncludeFaction(") && o.label.trim.equalsIgnoreCase(name)))
+                            .map(o => LfgSetup.emojiText(o.name)).getOrElse("")
+                    }
+                    else ""
+                } catch { case _ : Exception => "" }
                 val winners = seats.filter(_.won)
                 val ids = winners.flatMap(w => mentionOf(w.user))
                 def who(s : S) = "**" + nameOf(lobby, s.user) + "**" + mentionOf(s.user).map(i => " (<@" + i + ">)").getOrElse("")
@@ -348,7 +361,7 @@ object TurnPings {
                     case w :: Nil => "🎉 Congratulations to " + who(w) + " on winning " + title + " as the **" + w.faction + "**" + (if (points(w).nonEmpty) ", with " + points(w) else "") + "!"
                     case ww => "🎉 Congratulations to " + ww.map(who).mkString(" and ") + " on winning " + title + " together!"
                 }
-                val lines = seats.sortBy(s => (!s.won, -s.rank, s.seat)).map(s => (if (s.won) "🏆 " else "▫️ ") + nameOf(lobby, s.user) + " (" + s.faction + ")" + (if (points(s).nonEmpty) " · " + points(s) else ""))
+                val lines = seats.sortBy(s => (!s.won, -s.rank, s.seat)).map(s => (if (s.won) "🏆 " else "▫️ ") + icon(s) + nameOf(lobby, s.user) + " (" + s.faction + ")" + (if (points(s).nonEmpty) " · " + points(s) else ""))
                 post(game, lobby, head + "\n**Final scores**\n" + lines.mkString("\n"), ids)
             }
         }

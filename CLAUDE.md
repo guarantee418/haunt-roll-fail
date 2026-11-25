@@ -1302,7 +1302,7 @@ server. No session can reach the server, and none needs to.
 - Final scores (owner, 2026-11-25: "when a game ends, always have Command Warren post the final scores with a congratulation message"): the
   first result a finished game reports (`/report-result`) is posted in its thread by its turns webhook (Command Warren for Root, and the
   Northgard, Pincer and Company of Heroes forums' own): the winners congratulated and mentioned when they can be pinged, then every seat's
-  faction and final score, winners first (`TurnPings.finished`); the tournament change `final-scores <game> ...` posts it again, or for a game that ended before. A tournament table's game is left out, as `Tournament.reported`
+  faction and final score, winners first, each led by its faction's or clan's emoji (2026-11-25, asked for) (`TurnPings.finished`); the tournament change `final-scores <game> ...` posts it again, or for a game that ended before. A tournament table's game is left out, as `Tournament.reported`
   congratulates it.
 - The bot's `/rule <rule> [game] [private]` (2026-11-22, asked for as a bot "to help cite the rules", not to interpret them): Root's
   rules by their Law of Root number (`4.3.2`, `H.1`, a section lists the rules under it) or name, with the rule's text and the link to
