@@ -150,7 +150,7 @@ object Heckler {
     def embed(url : String) = ",\"embeds\":[{\"color\":8798896,\"image\":{\"url\":" + Tournament.json(url) + "}}]"
 
     // A GIF only when it says something about the line (owner, 2026-11-25: "you don't need to send GIFs for no reason, but you should
-    // have used the 3-0 GIF when saying 3-0"): a 3-0 or 0-3 roll always gets the crow's dice, a game lost on 29 VP always Vegeta; under
+    // have used the 3-0 GIF when saying 3-0"): a 3-0 or 0-3 roll always gets the crow's dice, a game lost on 29 VP always Vegeta, the Faithful's lucky draw always a laugh; under
     // attack or banished, the otters' own turns, an ambush and the harshest things get theirs one time in three; a plain turn ping, a
     // reminder or anything else none
     def gifFor(tag : String) : Option[String] = {
@@ -160,9 +160,10 @@ object Heckler {
             case _ if Tournament.site.isEmpty => None
             case "lost29" => Some(art + "vegeta-rain.gif")
             case "rolled30" | "whiffed" => Some(art + "crow-dice.gif")
-            case _ if r.nextInt(3) != 0 => None
+            case _ if tag != "faithful" && r.nextInt(3) != 0 => None
             case t if scared.contains(t) => Some(art + "terrified.gif")
             case "otters" => Some(art + "milhouse-flirt.gif")
+            case "faithful" => Some(if (r.nextBoolean()) klipyLaughs(r.nextInt(klipyLaughs.size)) else art + "crow-laugh.gif")
             case "ambushed" => Some(if (r.nextBoolean()) klipyLaughs(r.nextInt(klipyLaughs.size)) else art + "crow-laugh.gif")
             case t if harsh.contains(t) => Some(art + (if (r.nextBoolean()) "emotional-damage.gif" else "crow-can.gif"))
             case _ => None
@@ -245,6 +246,11 @@ object Heckler {
     }
 
     val crowJests = Map(
+        "faithful" -> List(
+            "HA! {other}'s Faithful hit {name} in {where} AND drew the matching card. The deck is in on it, {name}.",
+            "Caw! The Faithful hit {name} at {where}, flipped the top card, and of course it matched. Of course it did.",
+            "{name}, {other} took an extra swing at you in {where} and the deck said \"keep it\". Even the cards are against you.",
+            "The top card of the deck had one job, {name}: not to match {where}. It matched. {other} keeps The Faithful."),
         "rolled30" -> List(
             "HA! {other} rolled 3-0 against {name} in {where}. The dice have chosen a side, and it isn't yours.",
             "Caw caw caw! A 3-0 roll at {where}. {name}, your warriors didn't even get to swing.",

@@ -1269,13 +1269,13 @@ server. No session can reach the server, and none needs to.
   carries the eagle's insults down Yggdrasil), Pincer's Pamphleteer and Company of Heroes' Sergeant Major (`good-game/Heckler.scala`, its
   lines there; the jabs mock the play, never the person). The Court Crow also mocks, in the game's thread, what happens to a
   player with the role on anyone's turn (asked for the same day): a 3-0 roll against them, their own 0-3, an ambush, a Raze, a Revolt, a
-  Lizard Convert or Sanctify, the Eyrie's Turmoil, a Corvid bomb. The Root game notes each event with its victim as it plays out, before the
+  Lizard Convert or Sanctify, the Eyrie's Turmoil, a Corvid bomb, The Faithful's extra hit against them drawing the card that keeps it. The Root game notes each event with its victim as it plays out, before the
   board changes (`Jests` in `root/jests.scala`, from `internalPerform`; `game.jests`, display only, numbered in order, so every client numbers
   them alike, which `ReplayCheck` checks), the clients send the last 12 with their turn reports (the seventh line, `Meta.jests`), and the
   server takes each number once (`Heckler.jests`, `turns/jests.tsv`; a game's first report only sets where it starts). A Court Crow post carries one of its animated GIFs under the line only when the line gives it a reason (asked for:
   "sometimes the crow just sends a trolling gif, with some context"; owner, 2026-11-25: "you don't need to send GIFs for no reason", and
   a 3-0 needs the 3-0 GIF): a 3-0 or 0-3 roll always the crow's dice (`webp2/lfg/gifs/crow-dice.gif`, made by `heckler-art.py`, served
-  by `/art/`), and one time in three: under attack or banished, a terrified Rick Moranis (`terrified.gif`, `Heckler.scared`); an ambush,
+  by `/art/`), The Faithful's extra hit drawing the matching card always a laugh, and one time in three: under attack or banished, a terrified Rick Moranis (`terrified.gif`, `Heckler.scared`); an ambush,
   the crow laughing or one of 18 laughing GIFs from Klipy (the library Discord's GIF picker searches, the first results of its "lol"
   search, picked by the owner and linked from Klipy's servers, `Heckler.klipyLaughs`); the harshest events (a Raze, a Revolt, Turmoil, a
   bomb, a Sanctify, last place), Emotional Damage (a Klipy video made a GIF, `emotional-damage.gif`, `Heckler.harsh`) or the crow popping
