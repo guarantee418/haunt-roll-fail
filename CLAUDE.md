@@ -507,6 +507,10 @@ server. No session can reach the server, and none needs to.
     Negotiations there asks no card for the clearing's other ruler. Older games keep it until the end of the current phase,
     and their Negotiations still asks a card for the other faction that rules the clearing; a running game can be switched over
     with `SilverTongueOneEffectAction(X)` (done for Destiny in Right on 2026-10-30).
+    The Keepers' whole Recover is that one effect: the ruled clearings are counted once when it starts, so a Silver-Tongue clearing
+    counts for every relic recovered (`RetinueRecoverContinueAction` in `root/faction-expedition.scala` carries the count). It ended
+    after the first relic, so in Right of Betrayal (2026-11-25) a Jewel 2 after a Jewel 1 discarded the Faithful Retainer. New games
+    get the hidden `SilverTongueWholeRecover`, in `RulesVersion6`; a running game can be switched over with `SilverTongueWholeRecoverAction(X)`.
   - Brazen Demagogue: the dominance can be activated only right when it is
     taken; the player keeps scoring (`demagogue` flag in `FactionState`).
   - Feather Rufflers, Spy Network, Silver-Tongue and Friend are usable from
