@@ -989,10 +989,14 @@ case object BetweenTwoRiversMap extends MapChoice(BetweenTwoRivers, "MR2 and MR1
 case object ArdennesForestMap extends MapChoice(ArdennesForest, "AF1 and AF2, the backs of the Moro River panels: a snowy forest, the Cathedral (a multi-hex Special Building), multi-hex Buildings and Ice tiles on the frozen lake, split at both edges. Spawn Areas at the top and bottom. Starting stockpile 6 Manpower, 2 Munitions, 3 Fuel.")
 case object FrozenLakeMap extends MapChoice(FrozenLake, "AF2 and AF1: the frozen lake's Ice tiles in the middle, the Cathedral on the right. Spawn Areas at the top and bottom. Starting stockpile 6 Manpower, 4 Munitions, 3 Fuel.")
 case object RoadToMoscowMap extends MapChoice(RoadToMoscow, "AF1 and AF2, played across: the Spawn Areas are the left and right edges. Starting stockpile 6 Manpower, 4 Munitions, 4 Fuel.")
+case object TheRiverMap extends MapChoice(TheRiver, "Skirmish, two players: MR1 alone, the river and its bridge at the top. Each player starts with 2 Infantry; the game ends at 11 VP. Starting stockpile 4 Manpower, 2 Munitions, 2 Fuel.")
+case object FrozenPondMap extends MapChoice(FrozenPond, "Skirmish, two players: AF2 alone, the frozen pond's Ice tiles on the right. Each player starts with 2 Infantry; the game ends at 11 VP. Starting stockpile 4 Manpower, 2 Munitions, 4 Fuel.")
+case object BetweenTwoRiversWideMap extends MapChoice(BetweenTwoRiversWide, "Three panels (MR2, MR1, MR2), for team games: the Spawn Areas are the left and right edges; highly asymmetrical. Each player starts with 2 Infantry. Starting stockpile 4 Manpower, 2 Munitions, 6 Fuel.")
+case object ArdennesForestWideMap extends MapChoice(ArdennesForestWide, "Three panels (AF2, AF1, AF2), for team games: the airfield in the middle, Spawn Areas at the top and bottom; highly asymmetrical. Each player starts with 2 Infantry. Starting stockpile 1 Manpower, 2 Munitions, 3 Fuel.")
 case object MoroRiverFFAMap extends MapChoice(MoroRiverFFA, "Three players, each on their own: MR1 and MR2 with other Control Points and three Spawn Areas (top left, top right, bottom). Every player who assigned Damage to a destroyed unit gains a VP; the game ends at 15 VP. Starting stockpile 6 Manpower, 4 Munitions, 2 Fuel.")
 
 object MapChoice {
-    val all = $[MapChoice](MoroRiverMap, AcrossTheDonMap, BetweenTwoRiversMap, ArdennesForestMap, FrozenLakeMap, RoadToMoscowMap, MoroRiverFFAMap)
+    val all = $[MapChoice](MoroRiverMap, AcrossTheDonMap, BetweenTwoRiversMap, ArdennesForestMap, FrozenLakeMap, RoadToMoscowMap, MoroRiverFFAMap, TheRiverMap, FrozenPondMap, BetweenTwoRiversWideMap, ArdennesForestWideMap)
 }
 
 // THE ICE MATRIX (Full Game Rules 10.4): how many dice a unit attacked on an Ice tile rolls for each damage type assigned to it
@@ -1056,7 +1060,7 @@ case class StartAction(version : String) extends StartGameAction with GameVersio
 case class FirstRolledAction(rolled : $[Face]) extends RolledAction[Face]
 
 case class StartUnitsAction(f : Faction, n : Int) extends ForcedAction
-case class StartPickAction(self : Faction, t : UnitType, n : Int) extends BaseAction("Starting Infantry", (n + 1).hlb, "of", 3.hlb)(Images.token(Squad(self, t, 0)) ~ t.elem) with Soft
+case class StartPickAction(self : Faction, t : UnitType, n : Int) extends BaseAction("Starting Infantry", (n + 1).hlb, "of", (g : Game) => g.startInfantry.hlb)(Images.token(Squad(self, t, 0)) ~ t.elem) with Soft
 case class StartPlaceAction(self : Faction, t : UnitType, hex : Hex, n : Int) extends BaseAction("Place", t.elem, "in the Spawn Area")(hex) with HexKey
 
 case class RoundStartAction(f : Faction) extends ForcedAction
@@ -1234,6 +1238,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
 
     // the VPs that end the game: 3 more in team games (p. 6), the mission's own in a free-for-all
     def endVP = map.trigger.|(length.vp + teamGame.??(3))
+
+    // the starting Infantry each player places: 3, 2 in team games (2-panel missions), or the map's own number
+    def startInfantry = map.infantry.|(teamGame.?(2).|(3))
 
     // the teams in turn order from team i
     def rotation(i : Int) : $[$[Faction]] = teams.drop(i) ++ teams.take(i)
@@ -2698,7 +2705,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                 }
 
             // three starting Infantry each, two in team games, as the missions are 2-panel ones (p. 7); the team going second places first
-            case StartUnitsAction(f, n) if n >= teamGame.?(2).|(3) =>
+            case StartUnitsAction(f, n) if n >= startInfantry =>
                 nextTurn(f) match {
                     case (m, false) => StartUnitsAction(m, 0)
                     case _ if team(f) != team(first) => StartUnitsAction(teams((team(f) + teams.num - 1) % teams.num).head, 0)

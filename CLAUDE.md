@@ -305,7 +305,7 @@ Forces and Oberkommando West, read off their Building Boards in the mod, with th
 the British and OKW build Emplacements; `tactics/RULES.md`, Factions) on the Mission Booklet's six 2-panel core missions (the setup's
 Map choice, `MapChoice`, 2026-11-24: Moro River, the default, Across the Don, Between Two Rivers, Ardennes Forest, Frozen Lake and Road to
 Moscow, maps in `tactics/missions.scala` made by `tactics/tools/missions.py`, with Ice, the Cathedral and multi-hex Buildings on the Ardennes
-panels; games made before the choice play `MoroRiverFirst`), its Full Game Rules in every new game
+panels; games made before the choice play `MoroRiverFirst`; since 2026-11-25 also the booklet's 1-panel skirmishes The River and Frozen Pond and its 3-panel team maps Between Two Rivers and Ardennes Forest, `MapData.panels`, made by `tactics/tools/missions-panels.py`), its Full Game Rules in every new game
 (the setup's Rules choice, `FullGameRules`, 2026-11-24: Operations deck, Retreats, Assaults, Overwatch, firing arcs and Heavy Vehicle
 facing, HE Splash, Frontal Armor, destructible Buildings, Moro River's tank traps; `game.full`) with its thirty core Commanders (the
 setup's Commanders choice, `DrawCommanders`, 2026-11-24: `tactics/commanders.scala`, cards cut from the Faction Guide by
@@ -318,7 +318,7 @@ Since 2026-11-24, three to five players play team games, Allies (US, British, So
 `nextTurn`, `interleaved` in `tactics/game.scala`; two players are two teams and play as before), and three the Mission Booklet's
 3 Way Free-for-all on Moro River (`MoroRiverFFA`, `MapData.areas` and `trigger`; VP to every player who damaged a destroyed unit).
 `tactics/RULES.md` has the rules as played and the readings, `tactics/HANDOFF.md` the state, files, testing (`tactics.Host`,
-`tactics.Dump`, `tactics.Replay`; `TACTICS_RULES=first` for the First Game Rules) and what is next (the bigger missions). Teammates share Retreat Points in new games (hidden `TeamRetreatPoints`, `Meta.mandatoryFor`; Reinforce, Repair and sight were already shared). Units with a Wrench build barbed wire and tank traps (Full Game Rules, 2026-11-25; `defenseChoices`, `canAssault`, `destroyDefenses` in `tactics/game.scala`). The setup's Expansion
+`tactics.Dump`, `tactics.Replay`; `TACTICS_RULES=first` for the First Game Rules) and what is next (the LMP missions, which need their panels read by hand). Teammates share Retreat Points in new games (hidden `TeamRetreatPoints`, `Meta.mandatoryFor`; Reinforce, Repair and sight were already shared). Units with a Wrench build barbed wire and tank traps (Full Game Rules, 2026-11-25; `defenseChoices`, `canAssault`, `destroyDefenses` in `tactics/game.scala`). The setup's Expansion
 Commanders toggle (`ExpansionCommanders`, `Commander.pool` in `tactics/commanders.scala`, 2026-11-24) adds the expansion packs'
 Commanders to the draw: all 44 of the five factions (Faction Guide pages 11 and 12, 17 and 18, 23 and 24, 29 and 30, 36 and 37, cut by `tactics/tools/commander-art.py`).
 The setup's Lost Brigades toggle (`LostBrigades`, rulebook 9.0, Full Game Rules only; `tactics/brigades.scala`, 2026-11-24) deals each player

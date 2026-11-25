@@ -180,6 +180,21 @@ its bag, which match the booklet's pictures):
 | Frozen Lake | AF2, AF1 | 6, 4, 3 | top and bottom |
 | Road to Moscow | AF1, AF2 | 6, 4, 4 | left and right edges |
 
+Four more use only the core panels (2026-11-25; `tools/missions-panels.py`): the 3.0 Skirmish Core Missions on one panel, two
+players with 2 starting Infantry each and the game ending at 11 VP, and the 5.1 3 Panel Core (x2) Missions on three panels (two core
+sets), for team games, every player starting with 2 Infantry. The mod has no bags for them, so their Control Points were read off the
+booklet's pictures (pages 6 and 18), each token's centre mapped to its hex:
+
+| Mission | Panels | Stockpile | Spawn Areas |
+|---|---|---|---|
+| The River (skirmish) | MR1 | 4, 2, 2 | top and bottom |
+| Frozen Pond (skirmish) | AF2 | 4, 2, 4 | top and bottom |
+| Between Two Rivers (3 panels) | MR2, MR1, MR2 | 4, 2, 6 | left and right edges |
+| Ardennes Forest (3 panels) | AF2, AF1, AF2 | 1, 2, 3 | top and bottom |
+
+The 3-panel Between Two Rivers' badges mark the first full column and the half hexes beside it at each edge (`MapData.edge` 1.1).
+The 3-panel missions may be played by two players too, each with 2 starting Infantry.
+
 - **Side Spawn Areas**: the booklet's numbered badges mark the full hexes of the edge column; the half hexes cut by the edge
   beside them are taken too (`MapData.spawn`). Team 1 (the first player in the seating) is on the left.
 - **Control Points in Buildings**: Across the Don and Road to Moscow have two each (Road to Moscow one in the Cathedral);
