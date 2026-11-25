@@ -562,8 +562,8 @@ object TurnPings {
         // a player with the troll role (Heckler.scala; 2026-11-25) gets one message from the game's heckler, the ping with its jab under
         // it, in place of the turns webhook's own ping and a second message (asked for: "don't have them get double pinged, the Court Crow
         // should replace Command Warren"); everyone else gets the plain ping
-        val tag = lobby.lines.map(_.split(" ").toList).collectFirst { case "user" :: s :: u :: _ if u == user => s }.flatMap(s => Turns.reason(game, s)).map(_.split("/").head).getOrElse("")
-        Heckler.ping(lobby.meta, tag, id, text, reminder, (t, persona) => post(game, lobby, t, List(id), persona, now = true))
+        val why = lobby.lines.map(_.split(" ").toList).collectFirst { case "user" :: s :: u :: _ if u == user => s }.flatMap(s => Turns.reason(game, s)).getOrElse("")
+        Heckler.ping(lobby.meta, why.split("/").head, why.split("/").lift(1).getOrElse(""), id, text, reminder, (t, persona) => post(game, lobby, t, List(id), persona, now = true))
         "pinged"
     }
 }

@@ -1278,8 +1278,9 @@ server. No session can reach the server, and none needs to.
   `heckler-art.py`, served by `/art/`). Half of those GIFs are instead one of 18 laughing GIFs from Klipy (the library Discord's GIF picker searches),
   the first results of its "lol" search, picked by the owner on 2026-11-25 and linked from Klipy's servers (`Heckler.klipyLaughs`). For the harshest events (a 3-0 roll against them, a Raze, a Revolt, Turmoil, a bomb, a Sanctify, last place) half the
   GIFs are Emotional Damage instead, the owner's pick, a Klipy video made a GIF (`webp2/lfg/gifs/emotional-damage.gif`, `Heckler.harsh`). When they're under attack or banished, half are a terrified Rick Moranis, another owner's pick
-  (`terrified.gif`, `Heckler.scared`). For the gloomy ones (their attack whiffing, an ambush, a conversion, a reminder, a lost game, far
-  behind), half are Vegeta in the rain (`vegeta-rain.gif`, `Heckler.gloomy`). The role is called @troll on the server since 2026-11-25 (`roast-role troll`). The tournament change `troll-intro`
+  (`terrified.gif`, `Heckler.scared`). A troll member who loses a Root game on exactly 29 VP gets the crow in its thread with Vegeta in the
+  rain (`vegeta-rain.gif`, `Heckler.gameOver`, from `/report-result`). On the Riverfolk's own turns the crow has its own lines (`otterLines`),
+  half its GIFs Milhouse flirting (`milhouse-flirt.gif`; "otters trying to sell"). The role is called @troll on the server since 2026-11-25 (`roast-role troll`). The tournament change `troll-intro`
   gives every member with the role one first jab at once, in the thread of the game it is about, for the first thing found in their games:
   a game waiting on them (and for how long), last on VP in a Root game, last place in a finished game (`ranking/results.tsv`), a game that
   needed 4 or more turn pings, 8 VP or more behind the leader, or a lost game; nothing found, nothing posted (no welcome, owner's ask;
