@@ -87,16 +87,56 @@ object Heckler {
     }
 
     // THE CROW'S GIFS (2026-11-25, asked for: "sometimes the crow just sends a trolling gif, with some context"): about one Court
-    // Crow post in three carries one of its animated GIFs (webp2/lfg/gifs/, by haunt-roll-fail/tools/heckler-art.py, served from
-    // /art/) under its line, which gives the context: the dice for a 3-0 roll, the crow popping out of its trash can for something
-    // trashed, else the crow rocking with laughter
+    // Crow post in three carries a GIF under its line, which gives the context. Half of those are the crow's own (webp2/lfg/gifs/, by
+    // haunt-roll-fail/tools/heckler-art.py, served from /art/): the dice for a 3-0 roll, the crow popping out of its trash can for something
+    // trashed, else the crow rocking with laughter; the other half a laugh from Klipy, the GIF library Discord's own picker searches: the
+    // first 18 results of its "lol" search, which the owner picked by screen recording ("use any or all of these", 2026-11-25), linked from
+    // Klipy's own servers (the smaller copy of each, under 4 MB, so Discord shows them quickly), as the picker's links are:
+    //   prince-shirleytemple           Prince Shirleytemple
+    //   simpsons-laugh-1               Simpsons Laugh
+    //   haha-117                       Haha
+    //   lmfao-too-funny                Lmfao Too Funny
+    //   big-lol                        Big Lol
+    //   baby-laughing-43               Baby Laughing
+    //   blchota-hillary                Hilary Duff Texts LOL
+    //   lol-cute-6                     Lol Cute
+    //   laughing-218                   Spongebob and Patrick Star Laughing
+    //   laugh-out-loud-ridiculous      Laugh Out Loud Ridiculous
+    //   lol-6531                       Lol
+    //   tom-and-jerry-jerry-mouse-1    Tom And Jerry Jerry Mouse
+    //   lol-laugh-out-loud-20          Lol Laugh Out Loud
+    //   kitty-forman-debra-jo-rupp-1   Kitty Forman (Debra Jo Rupp) Laughing Hysterically
+    //   laughing-pikachu               Pikachu Laughing on a Branch
+    //   lol-lmao-100                   Lol Lmao
+    //   lmao-lmao-meme                 Lmao Lmao Meme
+    //   little-pills-39                Little Pills LOL Animation
+    val klipyLaughs = List(
+        "https://static.klipy.com/ii/c3a19a0b747a76e98651f2b9a3cca5ff/8a/b1/uAaLRrFA.gif",
+        "https://static.klipy.com/ii/4e7bea9f7a3371424e6c16ebc93252fe/18/38/UyPdecHVR8SBPz1.gif",
+        "https://static.klipy.com/ii/e293a233a303a98e471f78d04e13a1b0/ac/4d/KZ3vBWqp.gif",
+        "https://static.klipy.com/ii/935d7ab9d8c6202580a668421940ec81/c2/4a/2uJzYSWJ.gif",
+        "https://static.klipy.com/ii/ce286d05b8e1a47cd4f32b0e1b6dec0e/5e/4c/9jR1Jwnr.gif",
+        "https://static.klipy.com/ii/f87f46a2c5aeaeed4c68910815f73eaf/ef/d0/lmB9Dbkn.gif",
+        "https://static.klipy.com/ii/c3a19a0b747a76e98651f2b9a3cca5ff/e0/31/40SwAR5S.gif",
+        "https://static.klipy.com/ii/e293a233a303a98e471f78d04e13a1b0/da/ba/6bDDB3x4.gif",
+        "https://static.klipy.com/ii/e293a233a303a98e471f78d04e13a1b0/1c/a3/McmeX2Fb.gif",
+        "https://static.klipy.com/ii/935d7ab9d8c6202580a668421940ec81/a6/72/bJ8ezmXB.gif",
+        "https://static.klipy.com/ii/35ccce3d852f7995dd2da910f2abd795/7d/2e/fIZpx06J.gif",
+        "https://static.klipy.com/ii/d7aec6f6f171607374b2065c836f92f4/6c/f5/Cgrc4DeB.gif",
+        "https://static.klipy.com/ii/e1b92bb53e0c9e442408bc677a56c789/81/e6/RPl8NLhOqZHx.gif",
+        "https://static.klipy.com/ii/d6b0ce929193df3c242ac34b5654d2ce/79/f2/OfDbEjjb.gif",
+        "https://static.klipy.com/ii/f87f46a2c5aeaeed4c68910815f73eaf/40/4b/DxYVYtuU.gif",
+        "https://static.klipy.com/ii/4e7bea9f7a3371424e6c16ebc93252fe/ed/03/qbL0FdsbeUhFelt6bnnA.gif",
+        "https://static.klipy.com/ii/4e7bea9f7a3371424e6c16ebc93252fe/ad/4c/dUMUAjdqCO3Y.gif",
+        "https://static.klipy.com/ii/925f17378dd1893b674a723c07535afe/4c/63/EBINH69p.gif")
+
     def gifFor(tag : String) : Option[String] =
         if (Tournament.site.isEmpty || scala.util.Random.nextInt(3) != 0) None
-        else Some(tag match {
+        else Some(if (scala.util.Random.nextBoolean()) klipyLaughs(scala.util.Random.nextInt(klipyLaughs.size)) else Tournament.site + "/art/lfg/gifs/" + (tag match {
             case "rolled30" | "whiffed" | "defend" | "battle" => "crow-dice.gif"
             case "raze" | "revolt" | "sanctify" | "bomb" | "turmoil" | "handlimit" | "banished" => "crow-can.gif"
             case _ => "crow-laugh.gif"
-        }).map(g => ",\"embeds\":[{\"color\":8798896,\"image\":{\"url\":" + Tournament.json(Tournament.site + "/art/lfg/gifs/" + g) + "}}]")
+        })).map(g => ",\"embeds\":[{\"color\":8798896,\"image\":{\"url\":" + Tournament.json(g) + "}}]")
 
     // the webhook post's own name and picture for a heckler (Tournament.post's persona)
     def persona(v : Voice) : String =
