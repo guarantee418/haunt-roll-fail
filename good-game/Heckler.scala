@@ -86,8 +86,8 @@ object Heckler {
         }
     }
 
-    // THE CROW'S GIFS (2026-11-25, asked for: "sometimes the crow just sends a trolling gif, with some context"): about one Court
-    // Crow post in three carries a GIF under its line, which gives the context. Half of those are the crow's own (webp2/lfg/gifs/, by
+    // THE CROW'S GIFS (2026-11-25, asked for: "sometimes the crow just sends a trolling gif, with some context"): a Court Crow
+    // post may carry a GIF under its line, only when the line gives it a reason (gifFor below). They are the crow's own (webp2/lfg/gifs/, by
     // haunt-roll-fail/tools/heckler-art.py, served from /art/): the dice for a 3-0 roll, the crow popping out of its trash can for something
     // trashed, else the crow rocking with laughter; the other half a laugh from Klipy, the GIF library Discord's own picker searches: the
     // first 18 results of its "lol" search, which the owner picked by screen recording ("use any or all of these", 2026-11-25), linked from
@@ -149,17 +149,26 @@ object Heckler {
 
     def embed(url : String) = ",\"embeds\":[{\"color\":8798896,\"image\":{\"url\":" + Tournament.json(url) + "}}]"
 
-    def gifFor(tag : String) : Option[String] =
-        if (tag == "lost29" && Tournament.site.nonEmpty) Some(embed(Tournament.site + "/art/lfg/gifs/vegeta-rain.gif"))
-        else if (Tournament.site.isEmpty || scala.util.Random.nextInt(3) != 0) None
-        else Some(if (scared.contains(tag) && scala.util.Random.nextBoolean()) Tournament.site + "/art/lfg/gifs/terrified.gif"
-        else if (tag == "otters" && scala.util.Random.nextBoolean()) Tournament.site + "/art/lfg/gifs/milhouse-flirt.gif"
-        else if (harsh.contains(tag) && scala.util.Random.nextBoolean()) Tournament.site + "/art/lfg/gifs/emotional-damage.gif"
-        else if (scala.util.Random.nextBoolean()) klipyLaughs(scala.util.Random.nextInt(klipyLaughs.size)) else Tournament.site + "/art/lfg/gifs/" + (tag match {
-            case "rolled30" | "whiffed" | "defend" | "battle" => "crow-dice.gif"
-            case "raze" | "revolt" | "sanctify" | "bomb" | "turmoil" | "handlimit" | "banished" => "crow-can.gif"
-            case _ => "crow-laugh.gif"
-        })).map(g => ",\"embeds\":[{\"color\":8798896,\"image\":{\"url\":" + Tournament.json(g) + "}}]")
+    // A GIF only when it says something about the line (owner, 2026-11-25: "you don't need to send GIFs for no reason, but you should
+    // have used the 3-0 GIF when saying 3-0"): a 3-0 or 0-3 roll always gets the crow's dice, a game lost on 29 VP always Vegeta; under
+    // attack or banished, the otters' own turns, an ambush and the harshest things get theirs one time in three; a plain turn ping, a
+    // reminder or anything else none
+    def gifFor(tag : String) : Option[String] = {
+        val art = Tournament.site + "/art/lfg/gifs/"
+        def r = scala.util.Random
+        val gif = tag match {
+            case _ if Tournament.site.isEmpty => None
+            case "lost29" => Some(art + "vegeta-rain.gif")
+            case "rolled30" | "whiffed" => Some(art + "crow-dice.gif")
+            case _ if r.nextInt(3) != 0 => None
+            case t if scared.contains(t) => Some(art + "terrified.gif")
+            case "otters" => Some(art + "milhouse-flirt.gif")
+            case "ambushed" => Some(if (r.nextBoolean()) klipyLaughs(r.nextInt(klipyLaughs.size)) else art + "crow-laugh.gif")
+            case t if harsh.contains(t) => Some(art + (if (r.nextBoolean()) "emotional-damage.gif" else "crow-can.gif"))
+            case _ => None
+        }
+        gif.map(embed)
+    }
 
     // the webhook post's own name and picture for a heckler (Tournament.post's persona)
     def persona(v : Voice) : String =
