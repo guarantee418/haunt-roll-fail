@@ -1262,10 +1262,10 @@ server. No session can reach the server, and none needs to.
   `self-roles`, `self-role <role>, ...`, `self-role-off <role>, ...`; `role-picker <channel> [| text <text>]` posts the button), and only
   while each gives no server permission, isn't a bot's and sits under the bot's role, checked again at every pick, so Manager or any
   moderating role is never handed out.
-- The "Roast Me" role (2026-11-25, asked for: a notification role that makes fun of you while you play): a member with it gets, under
-  each of their turn pings, a jab from the game's heckler, posted by the same webhook in the same thread under the heckler's own name and
-  picture (a webhook post's `username` and `avatar_url`, `persona` in `Tournament.post`), naming them without pinging them again, and
-  fitting the ping's reason: Root's Court Crow (the Corvid character art in a jester's cap, peeking out of a trash can), Northgard's Ratatoskr (the Norse squirrel who
+- The "Roast Me" role (2026-11-25, asked for: a notification role that makes fun of you while you play): a member with it gets each of their
+  turn pings from the game's heckler instead of the turns webhook's plain ping: one message, the ping with a jab on its second line, posted
+  by the same webhook in the same thread under the heckler's own name and picture (a webhook post's `username` and `avatar_url`, `persona` in
+  `Tournament.post`; `Heckler.ping`; asked for on 2026-11-25: no double pings), the jab fitting the ping's reason: Root's Court Crow (the Corvid character art in a jester's cap, peeking out of a trash can), Northgard's Ratatoskr (the Norse squirrel who
   carries the eagle's insults down Yggdrasil), Pincer's Pamphleteer and Company of Heroes' Sergeant Major (`good-game/Heckler.scala`, its
   lines there; the jabs mock the play, never the person). The Court Crow also mocks, in the game's thread, what happens to a
   player with the role on anyone's turn (asked for the same day): a 3-0 roll against them, their own 0-3, an ambush, a Raze, a Revolt, a
@@ -1275,7 +1275,12 @@ server. No session can reach the server, and none needs to.
   server takes each number once (`Heckler.jests`, `turns/jests.tsv`; a game's first report only sets where it starts). About one Court Crow post in three carries one of its animated GIFs under the line (asked for:
   "sometimes the crow just sends a trolling gif, with some context"): the 3-0 dice for a roll or a battle, the crow popping out of its
   trash can for something trashed, else the crow laughing (`Heckler.gifFor`, a webhook embed; `webp2/lfg/gifs/`, made by
-  `heckler-art.py`, served by `/art/`). The role is called @troll on the server since 2026-11-25 (`roast-role troll`). The tournament change `troll-intro`
+  `heckler-art.py`, served by `/art/`). Half of those GIFs are instead one of 18 laughing GIFs from Klipy (the library Discord's GIF picker searches),
+  the first results of its "lol" search, picked by the owner on 2026-11-25 and linked from Klipy's servers (`Heckler.klipyLaughs`). For the harshest events (a 3-0 roll against them, a Raze, a Revolt, Turmoil, a bomb, a Sanctify, last place) half the
+  GIFs are Emotional Damage instead, the owner's pick, a Klipy video made a GIF (`webp2/lfg/gifs/emotional-damage.gif`, `Heckler.harsh`). When they're under attack or banished, half are a terrified Rick Moranis, another owner's pick
+  (`terrified.gif`, `Heckler.scared`). A troll member who loses a Root game on exactly 29 VP gets the crow in its thread with Vegeta in the
+  rain (`vegeta-rain.gif`, `Heckler.gameOver`, from `/report-result`). On the Riverfolk's own turns the crow has its own lines (`otterLines`),
+  half its GIFs Milhouse flirting (`milhouse-flirt.gif`; "otters trying to sell"). The role is called @troll on the server since 2026-11-25 (`roast-role troll`). The tournament change `troll-intro`
   gives every member with the role one first jab at once, in the thread of the game it is about, for the first thing found in their games:
   a game waiting on them (and for how long), last on VP in a Root game, last place in a finished game (`ranking/results.tsv`), a game that
   needed 4 or more turn pings, 8 VP or more behind the leader, or a lost game; nothing found, nothing posted (no welcome, owner's ask;
