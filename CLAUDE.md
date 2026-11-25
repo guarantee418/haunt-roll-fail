@@ -1271,8 +1271,10 @@ server. No session can reach the server, and none needs to.
   "sometimes the crow just sends a trolling gif, with some context"): the 3-0 dice for a roll or a battle, the crow popping out of its
   trash can for something trashed, else the crow laughing (`Heckler.gifFor`, a webhook embed; `webp2/lfg/gifs/`, made by
   `heckler-art.py`, served by `/art/`). The role is called @troll on the server since 2026-11-25 (`roast-role troll`). The tournament change `troll-intro`
-  gives every member with the role one first jab at once, in a game of theirs, for the best reason it finds: a game waiting on them (and
-  for how long), last place on VP in a Root game (to the leader), else a welcome (`Heckler.intro`, once each, `turns/troll-intros.tsv`). The bot checks the role on each ping. The owner makes it with the server changes
+  gives every member with the role one first jab at once, in the thread of the game it is about, for the first thing found in their games:
+  a game waiting on them (and for how long), last on VP in a Root game, last place in a finished game (`ranking/results.tsv`), a game that
+  needed 4 or more turn pings, 8 VP or more behind the leader, or a lost game; nothing found, nothing posted (no welcome, owner's ask;
+  `Heckler.intro`, once each, `turns/troll-intros.tsv`). The bot checks the role on each ping. The owner makes it with the server changes
   `role Roast Me` and `self-role Roast Me`; `roast-role <role>` picks another (`off`: none), `roasts` says how it stands. The pictures are
   `webp2/lfg/webhooks/heckler-*.png`, served by `/art/` (`Lookup.artFile` serves that folder), and the crow as a Discord server emoji,
   `webp2/lfg/server-emoji/root_crowjester.png`, and peeking out of a trash can, `root_jestercan.png`, both uploaded to the server by hand; `haunt-roll-fail/tools/heckler-art.py` makes them.
