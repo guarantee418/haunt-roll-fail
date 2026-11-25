@@ -212,7 +212,7 @@ object Heckler {
             "{name}, that plot in {where}? It was a bomb. It's always a bomb."))
 
     // the tournament changes
-    val words = Set("roast-role", "roasts")
+    val words = Set("roast-role", "roasts", "troll-intro")
 
     def change(word : String, rest : String) : String = word match {
         case "roast-role" =>
@@ -224,6 +224,102 @@ object Heckler {
                 if (rest.trim == "off") "no jabs" else "set; " + status
             }
         case "roasts" => status
+        case "troll-intro" => intro()
+    }
+
+    // FIRST TROLL PINGS (2026-11-25, asked for: "look for a reason to give each troll member their first troll ping"): the "troll-intro"
+    // change gives every member with the role one jab, at once, in the thread of a game they are in, with the best reason found:
+    //   waiting   a game has been waiting on them (TurnPings' wait, how long)
+    //   last      a Root game where they're last on VP (the clients' status reports, Turns.status), to the leader
+    //   welcome   any other game of theirs still going
+    // Each member gets it once (turns/troll-intros.tsv, their Discord user ID); the result says what each got, or why nothing (no game
+    // the site knows them in, or no turns webhook for it). Running it again only reaches members who got nothing before.
+    val intros = TurnPings.dir.resolve("troll-intros.tsv")
+
+    // the server's members with the role (Discord gives 1000 a page)
+    def roleMembers(g : String, role : String) : List[String] = {
+        var out = List[String]()
+        var after = "0"
+        var more = true
+        while (more) {
+            val page = DiscordServer.call("GET", "/guilds/" + g + "/members?limit=1000&after=" + after).toOption.map(DiscordServer.list).getOrElse(Nil)
+            page.foreach { m =>
+                val id = m.get("user").collect { case u : Map[_, _] => u.asInstanceOf[Map[String, Any]] }.map(DiscordServer.str(_, "id")).getOrElse("")
+                val roles = m.get("roles").collect { case l : List[_] => l.collect { case s : String => s } }.getOrElse(Nil)
+                if (id.nonEmpty && roles.contains(role))
+                    out :+= id
+                if (id.nonEmpty) after = id
+            }
+            more = page.size == 1000
+        }
+        out
+    }
+
+    case class Seat(game : String, lobby : TurnPings.Lobby, seat : String, user : String)
+
+    def intro() : String = {
+        val g = DiscordBot.guild.getOrElse(return "not done: no Discord server known")
+        cached = (0L, None)
+        val role = roleId.getOrElse(return "not done: " + status)
+        val done = Backup.rows(intros).flatMap(_.headOption).toSet
+        val members = roleMembers(g, role)
+        if (members.isEmpty)
+            return "no member has the role"
+        val now = System.currentTimeMillis
+
+        // every seat of every game still going that the site has turn reports for, by the Discord user ID it pings
+        val seats : Map[String, List[Seat]] = Turns.all.keys.toList.sorted.flatMap { game =>
+            TurnPings.lobbyOf(game).filter(l => TurnPings.metas.contains(l.meta)).toList.flatMap { l =>
+                l.lines.map(_.split(' ').toList).collect { case "user" :: s :: u :: _ => (s, u) }.flatMap { case (s, u) =>
+                    TurnPings.mentionOf(u, TurnPings.table(game).nonEmpty).map(_ -> Seat(game, l, s, u))
+                }
+            }
+        }.groupBy(_._1).map { case (k, l) => k -> l.map(_._2) }
+
+        def going(s : Seat) = !TurnPings.over(s.game) && (TurnPings.table(s.game).nonEmpty || TurnPings.webhookFor(s.lobby.meta).nonEmpty)
+
+        def vp(t : String) = t.split(":").toList match { case _ :: f :: v :: _ => Some((f.replace('_', ' '), if (v == "D") 999 else v.toIntOption.getOrElse(0))) ; case _ => None }
+
+        members.map { id =>
+            if (done.contains(id))
+                "<@" + id + ">: had their first one already"
+            else {
+                val mine = seats.getOrElse(id, Nil).filter(going)
+                val waiting = mine.flatMap { s =>
+                    TurnPings.latest.get(s.game).filter(_.users.contains(s.user)).map(_ => s -> TurnPings.since.getOrElse((s.game, s.user), 0L))
+                }.sortBy(_._2).headOption
+                val last = mine.filter(s => TurnPings.rootMetas.contains(s.lobby.meta)).flatMap { s =>
+                    val st = Turns.status(s.game)
+                    val all = st.filter(_.contains(":")).flatMap(t => t.split(":").headOption.flatMap(seat => vp(t).map(seat -> _)))
+                    for {
+                        (_, (faction, mineVp)) <- all.find(_._1 == s.seat)
+                        (_, (leader, top)) <- all.maxByOption(_._2._2)
+                        if all.size > 1 && all.forall(_._2._2 >= mineVp) && top > mineVp
+                    } yield (s, faction, mineVp, leader, top)
+                }.headOption
+
+                val v = (s : Seat) => voiceOf(s.lobby.meta)
+                def fill(line : String, s : Seat) = line.replace("{name}", "<@" + id + ">").replace("{game}", "**" + s.lobby.title + "**")
+
+                val chosen : Option[(Seat, String, String)] = waiting.map { case (s, since) =>
+                    val hours = if (since > 0) ((now - since) / (60 * 60 * 1000L)).toInt else -1
+                    val how = if (hours < 0) "a while" else if (hours < 1) "a few minutes" else if (hours == 1) "an hour" else if (hours < 48) hours + " hours" else (hours / 24) + " days"
+                    (s, "waiting", fill(pick(id, v(s).lines("intro-waiting")), s).replace("{time}", how))
+                }.orElse(last.map { case (s, faction, mv, leader, top) =>
+                    (s, "last", fill(pick(id, v(s).lines("intro-last")), s).replace("{faction}", "**" + faction + "**").replace("{vp}", mv.toString)
+                        .replace("{leader}", "**" + leader + "**").replace("{top}", if (top == 999) "a dominance" else top + " VP"))
+                }).orElse(mine.headOption.map(s => (s, "welcome", fill(pick(id, v(s).lines("intro")), s))))
+
+                chosen match {
+                    case None => "<@" + id + ">: nothing yet (in no game the site has turn reports for, or none with a turns webhook)"
+                    case Some((s, why, line)) =>
+                        val voice = v(s)
+                        TurnPings.post(s.game, s.lobby, line, Nil, persona(voice) + (if (voice == crow) gifFor("intro").getOrElse("") else ""))
+                        Ranking.append(intros, Backup.row(id, s.game, why, Ranking.now()))
+                        "<@" + id + "> (" + TurnPings.nameOf(s.lobby, s.user) + "): " + why + " in " + s.lobby.title + " (" + s.game + ")"
+                }
+            }
+        }.mkString("\n  ", "\n  ", "")
     }
 
     def status : String = roleName match {
@@ -283,6 +379,15 @@ object Heckler {
         "hospitals" -> List("{name}, Field Hospitals: is that cat worth a card? Be honest."),
         "pond" -> List("{name}, the deck or the Pond? Either way, the frogs are judging you."),
         "setup" -> List("Set up, {name}. Every great disaster starts with a single warrior."),
+        "intro-waiting" -> List(
+            "Caw! Welcome to the trolls, {name}. I've been watching {game}. It's been waiting on you for {time}. The whole Woodland has aged.",
+            "{name}, you joined the trolls! Lovely. Meanwhile {game} has been waiting on you for {time}. I've started nesting in it."),
+        "intro-last" -> List(
+            "Welcome to the trolls, {name}! I see your {faction} sits on {vp} VP in {game}, dead last. {leader} has {top}. I'll be here all game.",
+            "{name}, a troll at last! Let's look at {game}... {faction}, {vp} VP, last place. {leader} on {top}. Oh, this will be fun."),
+        "intro" -> List(
+            "Caw! {name} has joined the trolls. I'll be watching your every move in {game}. Especially the bad ones.",
+            "Welcome, {name}! I'm the Court Crow. From now on, every blunder you make in {game} gets my full attention."),
         "reminder" -> List(
             "Still waiting, {name}. The crows have started a betting pool on when you'll move.",
             "{name}, a reminder: the game hasn't moved. I checked. Twice.",
@@ -321,6 +426,12 @@ object Heckler {
         "setup" -> List("{name}, place your clan. Somewhere with food this time, the eagle suggests."),
         "raid" -> List("{name}, your raid! The longships are ready. Are you?"),
         "event" -> List("{name}, an event! Even the Norns had to look twice at your luck."),
+        "intro-waiting" -> List(
+            "Welcome to the trolls, {name}! The eagle says {game} has been waiting on you for {time}. The eagle has a lot to say about that.",
+            "{name}! Ratatoskr here, your new heckler. {game} has waited {time} for you. I've run up Yggdrasil and back a dozen times since."),
+        "intro" -> List(
+            "Welcome to the trolls, {name}! The eagle at the top of Yggdrasil will be watching {game}. So will I. Closely.",
+            "{name} has joined the trolls! Every insult the eagle has about your clan in {game}, I'll carry down to you personally."),
         "reminder" -> List(
             "{name}, I've run up and down the World Tree twice waiting for you. My legs are tired.",
             "Still your turn, {name}! The eagle has started composing a poem about you. It is not flattering.",
@@ -335,6 +446,8 @@ object Heckler {
             "{name}, your move. The gentlemen of the coffee house have wagered against you. Heavily.",
             "Your turn, {name}. The press awaits your next blunder with the keenest interest.",
             "{name}, your colonies are in the papers again. Not the good pages."),
+        "intro-waiting" -> List("EXTRA! {name} joins the trolls, while {game} has waited on them for {time}. Readers are advised to bring a book."),
+        "intro" -> List("EXTRA! EXTRA! {name} joins the trolls! The press will now report on every move in {game}. Especially the foolish ones."),
         "reminder" -> List(
             "STILL WAITING: a second edition on {name}'s turn, which has not yet occurred.",
             "{name}, the ink has dried on three pamphlets about your absence. Your move.")))
@@ -348,6 +461,8 @@ object Heckler {
             "{name}, I've seen better tactics from a ration tin. Your turn. Prove me wrong.",
             "Your turn, {name}. And if I see one more unit stood in the open, I'll be writing to your mother."),
         "asked" -> List("{name}, you're needed on the line. Double time!"),
+        "intro-waiting" -> List("Welcome to the trolls, {name}! {game} has been waiting on you for {time}. On your feet, soldier!"),
+        "intro" -> List("Listen up, {name}! You're a troll now, and I'll be watching every move you make in {game}. Don't disappoint me. More than usual."),
         "reminder" -> List(
             "{name}! Are you still asleep in that foxhole? It's STILL your turn!",
             "This is the Sergeant Major, {name}. The war is waiting. On YOU.")))
