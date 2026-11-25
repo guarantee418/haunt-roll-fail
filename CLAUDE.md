@@ -933,6 +933,11 @@ server. No session can reach the server, and none needs to.
   only when the Captain can move and the Diaspora has a Peaceful enclave; a Nab move put first sets them off when it is done or skipped.
   The Fears always came first, during the battle's removal. New games get the hidden `NabFearsOrder`, in `RulesVersion4`; a running game
   can be switched over with `NabFearsOrderAction(X)`. `ReplayCheck <games> ldkd` takes Nab half the times it is offered and picks the order at random.
+- The Eyrie's Charismatic leader recruiting with one warrior left in its supply places it, then falls into Turmoil, as the card
+  wasn't fully done (Law of Root 7.7 and 7.8.3; the Leder FAQ: "you must place as many as possible"; reported 2026-11-25): it went
+  into Turmoil placing none, as the Recruit needed two warriors (`AviaryMainDecreeAction` and `AviaryRecruitAction` in
+  `root/faction-aviary.scala`, Eyrie's End's in `root/faction-eyries-end.scala`). New games get the hidden `CharismaticPlacesWhatItCan`,
+  in `RulesVersion5`; a running game can be switched over with `CharismaticPlacesWhatItCanAction(X)`.
 - The Twilight Council's Convene Woodfolk (17.6.1) offers "Return all to hand" beside the revealed cards: every card left goes back
   to hand at once and none of them acts, ending the step (`CouncilConveneAllAction` in `root/faction-council.scala`; 2026-11-22, asked
   for in Right of Betrayal). It only adds a choice, so no option; the bots never take it.
