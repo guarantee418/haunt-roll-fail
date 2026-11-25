@@ -101,9 +101,8 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
 
 - Full Game readings to confirm with the team (RULES.md, Interpretations 7 to 12): the Firing Arc's width, Retreat paths,
   Overwatch on a hex passed through.
-- More missions: the Mission Booklet's LMP missions (2-, 3- and 4-panel, the other free-for-alls) need the Large Map Pack panels.
-  The mod has about 30 more panel images in its mission bags (Stalingrad, Hill 331, Cologne, Trois Ponts, Monastery, ...; their
-  `Custom_Tile` URLs in save.json), but each panel's terrain, Buildings and Water must be read by hand, as `map-data.py` and
-  `ardennes-data.py` did for the core four, and some need Bunkers (Full Game Rules 10.1). The four missions on one or three core
-  panels are in (`tools/missions-panels.py`, 2026-11-25).
+- Missions: every mission of the Mission Booklet is in (`tools/missions.py`, `missions-panels.py`, `missions-lmp.py`,
+  `missions-bags.py`, `missions-grid.py`; 2026-11-25), with the optional Modular Bunkers as a setup toggle. A new booklet mission
+  goes in `missions-bags.py` (it has a bag) or `missions-grid.py` (read off the booklet's picture with `booklet-tokens.py`: check its
+  points against the picture and correct any in `FIX`).
 - A better bot.

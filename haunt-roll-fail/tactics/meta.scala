@@ -27,7 +27,7 @@ object Meta extends MetaGame { mmm =>
 
     val minPlayers = 2
 
-    val options = $[O]() ++ RulesChoice.all ++ CommandersChoice.all ++ $(ExpansionCommanders) ++ $(LostBrigades) ++ MapChoice.all ++ Length.all ++ hiddenOptions
+    val options = $[O]() ++ RulesChoice.all ++ CommandersChoice.all ++ $(ExpansionCommanders) ++ $(LostBrigades) ++ MapChoice.all ++ $(OptionalMapFeatures) ++ Length.all ++ hiddenOptions
 
     // hidden rules fixes every new game gets, so games made before keep their rules
     override def hiddenOptions = $[O](TeamRetreatPoints)
@@ -49,7 +49,7 @@ object Meta extends MetaGame { mmm =>
 
     override val about = $[Elem](
         "Company of Heroes: The Board Game".hlb ~ ", 2nd Edition, by Bad Crow Games, licensed from SEGA and Relic Entertainment: a work in progress played here by a team helping to test it.",
-        "The rules are the core rulebook's Full Game Rules with its thirty core Commanders, the five factions' 44 expansion Commanders and their Lost Brigade Building Extensions as setup options (or its First Game Rules, a setup choice), the five factions' Building Boards (US Forces, Wehrmacht, British Forces, Soviet Forces, Oberkommando West) and the Mission Booklet's ten core missions (six on 2 panels, two skirmishes on 1, two team maps on 3), two players or teams of up to five; the art is from the Tabletop Simulator mod \"Company of Heroes - 2nd Edition\".",
+        "The rules are the core rulebook's Full Game Rules with its thirty core Commanders, the five factions' 44 expansion Commanders and their Lost Brigade Building Extensions as setup options (or its First Game Rules, a setup choice), the five factions' Building Boards (US Forces, Wehrmacht, British Forces, Soviet Forces, Oberkommando West) and the Mission Booklet's ten core missions (six on 2 panels, two skirmishes on 1, two team maps on 3) and every one of its Large Map Pack missions (on 2, 3 and 4 panels, in a row or square, four of them free-for-alls), two players, teams of up to five or a free-for-all of three to five; the art is from the Tabletop Simulator mod \"Company of Heroes - 2nd Edition\".",
         "© SEGA. Developed by Relic Entertainment Inc. SEGA, the SEGA logo, Relic Entertainment and Company of Heroes are either registered trademarks or trademarks of SEGA Corporation or its affiliates.",
     )
 
@@ -62,7 +62,7 @@ object Meta extends MetaGame { mmm =>
     override def howToPlay = $[(Elem, $[Elem])](
         ("The rules".txt, $[Elem](
             "This site doesn't teach the rules: they are Bad Crow Games', in the Rulebook linked above (the First Game Rules first, then the Full Game Rules). The site keeps to them for you, offering only the moves the rules allow.",
-            "Played here: any two of the five factions against each other, or team games of three to five players, Allies (US, British, Soviet) against Axis (Wehrmacht, OKW), on the ten core missions (two of them 1-panel skirmishes for two players, two 3-panel maps for teams). The setup's " ~ "Rules".hh ~ " choice picks the Full Game Rules or the First Game Rules, " ~ "Commanders".hh ~ " whether they are drawn, " ~ "Map".hh ~ " the mission.",
+            "Played here: any two of the five factions against each other, or team games of three to five players, Allies (US, British, Soviet) against Axis (Wehrmacht, OKW), on the ten core missions (two of them 1-panel skirmishes for two players, two 3-panel maps for teams) and all 53 Large Map Pack missions on 2, 3 and 4 panels, in a row or square (Hill 331, Trois Ponts, Stalingrad and Monastery panels), four of them free-for-alls for three to five players. " ~ "Optional Modular Bunkers".hh ~ " adds the bunkers some missions mark. The setup's " ~ "Rules".hh ~ " choice picks the Full Game Rules or the First Game Rules, " ~ "Commanders".hh ~ " whether they are drawn, " ~ "Map".hh ~ " the mission.",
             "In a team game teammates share their VPs (the game ends at 3 more), their sight and their Control Points; each starts with 2 Infantry, the missions being 2-panel ones. Teams alternate turns and purchases; teammates, who play at the same time in the rulebook, take theirs one after another.",
         )),
         ("Starting a game".txt, $[Elem](
@@ -102,21 +102,18 @@ object Meta extends MetaGame { mmm =>
         else
             InfoResult("Company of Heroes")
 
-    // the free-for-all mission takes three players; three or more on another map play Allies against Axis
+    // a free-for-all mission takes its number of players (3 or 4); three or more on another map play Allies against Axis
     def validateFactionSeatingOptions(factions : $[Faction], options : $[O]) = {
-        val ffa = options.has(MoroRiverFFAMap)
+        val ffa = options.of[MapChoice].single.exists(_.map.areas.num > 2)
         val players = options.of[MapChoice].single./~(_.map.players)
         if (players.exists(_ != factions.num))
             ErrorResult(options.of[MapChoice].single.get.map.name + " takes " + players.get + " players")
-        else
-        if (ffa && factions.num != 3)
-            ErrorResult("The 3 Way Free-for-all takes three players")
         else
         if (ffa)
             InfoResult("Free-for-all: " + factions./(_.short).mkString(", "))
         else
         if (factions.num > 2 && (factions.exists(_.axis).not || factions.exists(_.axis.not).not))
-            ErrorResult("Team games: Allies (US, British, Soviet) against Axis (Wehrmacht, OKW), or three players on the 3 Way Free-for-all")
+            ErrorResult("Team games: Allies (US, British, Soviet) against Axis (Wehrmacht, OKW), or a free-for-all mission")
         else
         if (factions.num > 2)
             InfoResult("Team game: " + factions.%(_.axis.not)./(_.short).mkString(" + ") + " against " + factions.%(_.axis)./(_.short).mkString(" + "))

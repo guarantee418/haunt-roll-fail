@@ -993,10 +993,73 @@ case object TheRiverMap extends MapChoice(TheRiver, "Skirmish, two players: MR1 
 case object FrozenPondMap extends MapChoice(FrozenPond, "Skirmish, two players: AF2 alone, the frozen pond's Ice tiles on the right. Each player starts with 2 Infantry; the game ends at 11 VP. Starting stockpile 4 Manpower, 2 Munitions, 4 Fuel.")
 case object BetweenTwoRiversWideMap extends MapChoice(BetweenTwoRiversWide, "Three panels (MR2, MR1, MR2), for team games: the Spawn Areas are the left and right edges; highly asymmetrical. Each player starts with 2 Infantry. Starting stockpile 4 Manpower, 2 Munitions, 6 Fuel.")
 case object ArdennesForestWideMap extends MapChoice(ArdennesForestWide, "Three panels (AF2, AF1, AF2), for team games: the airfield in the middle, Spawn Areas at the top and bottom; highly asymmetrical. Each player starts with 2 Infantry. Starting stockpile 1 Manpower, 2 Munitions, 3 Fuel.")
+case object HillThreeThirtyOneMap extends MapChoice(HillThreeThirtyOne, "Large Map Pack, HL1, HL2: the hill and its Bunker in the middle; the Spawn Areas are the left and right edges. Starting stockpile 6 Manpower, 4 Munitions, 2 Fuel.")
+case object PloiestiOutskirtsMap extends MapChoice(PloiestiOutskirts, "Large Map Pack, HL2, HL1: two multi-hex Buildings (not printed on the panels) either side of the middle. Starting stockpile 4 Manpower, 4 Munitions, 4 Fuel.")
+case object VerrieresRidgeMap extends MapChoice(VerrieresRidge, "Large Map Pack, HL1, HL2: the ridge and its Bunker. Starting stockpile 4 Manpower, 2 Munitions, 4 Fuel.")
+case object TroisPontsMap extends MapChoice(TroisPonts, "Large Map Pack, TP1, TP2: the river town and its bridges. Starting stockpile 4 Manpower, 2 Munitions, 3 Fuel.")
+case object CaenMap extends MapChoice(Caen, "Large Map Pack, TP2, TP1: the river in the middle; highly asymmetrical. Starting stockpile 2 Manpower, 6 Munitions, 0 Fuel.")
+case object CarentanMap extends MapChoice(Carentan, "Large Map Pack, TP1, TP2: the Spawn Areas are the left and right edges; highly asymmetrical. Starting stockpile 6 Manpower, 4 Munitions, 4 Fuel.")
+case object StalingradMap extends MapChoice(Stalingrad, "Large Map Pack, SG1, SG2: the frozen Volga (Ice) and the railway bridge. Starting stockpile 2 Manpower, 4 Munitions, 0 Fuel.")
+case object BulgeMap extends MapChoice(Bulge, "Large Map Pack, SG2, SG1: the frozen river through the middle. Starting stockpile 4 Manpower, 1 Munitions, 6 Fuel.")
+case object LeningradMap extends MapChoice(Leningrad, "Large Map Pack, SG1, SG2: the Spawn Areas are the left and right edges. Starting stockpile 4 Manpower, 6 Munitions, 1 Fuel.")
+case object MongolianTrainStationMap extends MapChoice(MongolianTrainStation, "Large Map Pack, SG2, SG1: Team 2 spawns at both bottom corners; highly asymmetrical. Starting stockpile 3 Manpower, 2 Munitions, 2 Fuel.")
 case object MoroRiverFFAMap extends MapChoice(MoroRiverFFA, "Three players, each on their own: MR1 and MR2 with other Control Points and three Spawn Areas (top left, top right, bottom). Every player who assigned Damage to a destroyed unit gains a VP; the game ends at 15 VP. Starting stockpile 6 Manpower, 4 Munitions, 2 Fuel.")
+case object CathedralMissionMap extends MapChoice(CathedralMission, "Large Map Pack, MO1, MO2: The Monastery's two churches, a Bunker between them. Starting stockpile 4 Manpower, 4 Munitions, 2 Fuel.")
+case object CologneMissionMap extends MapChoice(CologneMission, "Large Map Pack, MO1, TP2r: The town and the river on the left, the Monastery turned round; Spawn Areas on the left half. Starting stockpile 4 Manpower, 4 Munitions, 6 Fuel.")
+case object DesertOasisMap extends MapChoice(DesertOasis, "Large Map Pack, HL1, TP1: The hill, its Bunker, and the river town. Starting stockpile 6 Manpower, 2 Munitions, 2 Fuel.")
+case object NoMansLandMap extends MapChoice(NoMansLand, "Large Map Pack, HL2, MO2r: The hills and the Monastery turned round. Starting stockpile 2 Manpower, 5 Munitions, 0 Fuel.")
+case object MoscowOutskirtsMap extends MapChoice(MoscowOutskirts, "Large Map Pack, SG1r, AF1: Stalingrad turned round and the snowy forest; Spawn Areas at opposite corners. Starting stockpile 5 Manpower, 4 Munitions, 4 Fuel.")
+case object OpposingFaithsMap extends MapChoice(OpposingFaiths, "Large Map Pack, MO2, MO1: The Monastery; a multi-hex Cathedral on the left. Starting stockpile 7 Manpower, 4 Munitions, 1 Fuel.")
+case object SemoisMap extends MapChoice(Semois, "Large Map Pack, MR2, MO1: Moro River and the Monastery; Team 2 spawns in the bottom left corner, among tank traps; highly asymmetrical. Starting stockpile 5 Manpower, 3 Munitions, 4 Fuel.")
+case object HinderdamMap extends MapChoice(Hinderdam, "Large Map Pack, MO2, MR1: The Monastery and the Moro River with its fords. Starting stockpile 4 Manpower, 4 Munitions, 3 Fuel.")
+case object AncientFieldsMap extends MapChoice(AncientFields, "Large Map Pack, MO2, HL1, HL2: The Monastery and Hill 331, a Bunker and two Buildings added. Starting stockpile 2 Manpower, 6 Munitions, 2 Fuel.")
+case object AirfieldMissionMap extends MapChoice(AirfieldMission, "Large Map Pack, TP1, TP2, MO2: Trois Ponts and the Monastery with its airstrip. Starting stockpile 4 Manpower, 3 Munitions, 3 Fuel.")
+case object HilltopMonasteryMap extends MapChoice(HilltopMonastery, "Large Map Pack, HL2, MO1, MO2: Hill 331 and both Monastery panels. Starting stockpile 6 Manpower, 6 Munitions, 4 Fuel.")
+case object BudapestMap extends MapChoice(Budapest, "Large Map Pack, MR1, MR2, MO1: Moro River and the Monastery. Starting stockpile 4 Manpower, 2 Munitions, 3 Fuel.")
+case object SiegeOfLeningradMap extends MapChoice(SiegeOfLeningrad, "Large Map Pack, SG2r, SG1r, AF1: Stalingrad turned round and the snowy forest; Team 2 spawns at both bottom corners; highly asymmetrical. Starting stockpile 6 Manpower, 4 Munitions, 0 Fuel.")
+case object OpposingFaithsThreeMap extends MapChoice(OpposingFaithsThree, "Large Map Pack, MO1, MO2, MO1: The Monastery and another MO1, a Bunker in the middle. Starting stockpile 6 Manpower, 4 Munitions, 2 Fuel.")
+case object TheWideFrontMap extends MapChoice(TheWideFront, "Large Map Pack, HL2, HL1, HL2: Three Hill 331 panels. Starting stockpile 4 Manpower, 6 Munitions, 4 Fuel.")
+case object TroisPontsThreeMap extends MapChoice(TroisPontsThree, "Large Map Pack, TP1, TP2, TP1: Trois Ponts and another TP1; each team spawns at both ends. Starting stockpile 6 Manpower, 6 Munitions, 2 Fuel.")
+case object TwoIslandsMap extends MapChoice(TwoIslands, "Large Map Pack, SG1, SG2, SG1: Stalingrad and another SG1: the frozen Volga twice. Starting stockpile 3 Manpower, 2 Munitions, 2 Fuel.")
+case object CologneFourMap extends MapChoice(CologneFour, "Large Map Pack, TP1, TP2, MO1r, MO2r: Trois Ponts and both Monastery panels turned round. Starting stockpile 4 Manpower, 4 Munitions, 6 Fuel.")
+case object TroisPontsMonasteryMap extends MapChoice(TroisPontsMonastery, "Large Map Pack, TP1, TP2, MO1r, MO2r: Trois Ponts and both Monastery panels turned round. Starting stockpile 6 Manpower, 6 Munitions, 4 Fuel.")
+case object HillMonasteryMap extends MapChoice(HillMonastery, "Large Map Pack, HL1, HL2, MO1, MO2: Hill 331 and the Monastery. Starting stockpile 3 Manpower, 2 Munitions, 1 Fuel.")
+case object VengeanceMap extends MapChoice(Vengeance, "Large Map Pack, MO2r, MO1r, MO1, MO2: Four Monastery panels; Team 1 spawns at the top and bottom, Team 2 at the left and right edges. Starting stockpile 6 Manpower, 4 Munitions, 4 Fuel.")
+case object OpposingFaithsFourMap extends MapChoice(OpposingFaithsFour, "Large Map Pack, MO1, MO2, MO2r, MO1r: Four Monastery panels. Starting stockpile 4 Manpower, 2 Munitions, 2 Fuel.")
+case object TwoHilltopsMap extends MapChoice(TwoHilltops, "Large Map Pack, HL1, HL2, HL2r, HL1r: Four Hill 331 panels; each team spawns along its edge and on one side. Starting stockpile 4 Manpower, 4 Munitions, 6 Fuel.")
+case object FrozenForkMap extends MapChoice(FrozenFork, "Large Map Pack, SG2, SG1, SG2, SG1: Four Stalingrad panels. Starting stockpile 3 Manpower, 3 Munitions, 3 Fuel.")
+case object SixBridgesMap extends MapChoice(SixBridges, "Large Map Pack, TP2r, TP1r, TP1, TP2: Four Trois Ponts panels, the river crossed six times. Starting stockpile 5 Manpower, 4 Munitions, 3 Fuel.")
+case object HillThreeThirtyOneFFAMap extends MapChoice(HillThreeThirtyOneFFA, "Large Map Pack, HL1, HL2: Three players, each on their own; the Bunker is a Destroyed Building, three Buildings below it. Starting stockpile 6 Manpower, 2 Munitions, 4 Fuel.")
+case object CologneFFAMap extends MapChoice(CologneFFA, "Large Map Pack, TP1, TP2, MO1r: Four players, each on their own, one in each corner. Starting stockpile 6 Manpower, 4 Munitions, 4 Fuel.")
+case object LorraineMap extends MapChoice(Lorraine, "Large Map Pack, MR1, MR2 / HL1, HL2: Moro River above Hill 331; the Spawn Areas are the left and right edges. Starting stockpile 5 Manpower, 4 Munitions, 3 Fuel.")
+case object RailsAndMetalMap extends MapChoice(RailsAndMetal, "Large Map Pack, AF2, AF1 / SG1r, SG2r: The snowy forest above Stalingrad turned round; the Spawn Areas are the left and right edges. Starting stockpile 4 Manpower, 4 Munitions, 4 Fuel.")
+case object StHilaireMap extends MapChoice(StHilaire, "Large Map Pack, TP1r, TP2r / MO1, MO2: Trois Ponts turned round above the Monastery; Team 1 spawns along the upper left edge, Team 2 the lower right. Starting stockpile 4 Manpower, 4 Munitions, 4 Fuel.")
+case object WinterStormMap extends MapChoice(WinterStorm, "Large Map Pack, SG1, SG2 / AF1, AF2: Stalingrad above the snowy forest; the Spawn Areas are the left and right edges. Starting stockpile 6 Manpower, 4 Munitions, 2 Fuel.")
+case object TheVolgaMap extends MapChoice(TheVolga, "Large Map Pack, TP1, TP2 / MR1, MR2: Trois Ponts above Moro River, the lower row shifted right; each team spawns along both rows' edges. Starting stockpile 6 Manpower, 4 Munitions, 2 Fuel.")
+case object RaceToRomeMap extends MapChoice(RaceToRome, "Large Map Pack, MR1, MR2 / MO1, MO2: Moro River above the Monastery; the Spawn Areas are the upper left and right edges. Starting stockpile 6 Manpower, 4 Munitions, 2 Fuel.")
+case object StMarieDuMontMap extends MapChoice(StMarieDuMont, "Large Map Pack, MO2r, TP1 / TP2, MO1r: The Monastery and Trois Ponts crosswise; the Spawn Areas are the upper left and right edges. Starting stockpile 6 Manpower, 4 Munitions, 3 Fuel.")
+case object CologneFiveFFAMap extends MapChoice(CologneFiveFFA, "Large Map Pack, TP1r, TP2r / MO1, MO2: Five players, each on their own: Trois Ponts turned round above the Monastery. Starting stockpile 5 Manpower, 4 Munitions, 3 Fuel.")
+case object HillSixSixTwoFFAMap extends MapChoice(HillSixSixTwoFFA, "Large Map Pack, HL1, HL2 / HL1, HL2: Five players, each on their own: two Hill 331s, one above the other. Starting stockpile 3 Manpower, 4 Munitions, 5 Fuel.")
+case object ARiverTooFarMap extends MapChoice(ARiverTooFar, "Large Map Pack, MO2, MR1, MR2: The Monastery and Moro River; Team 1 spawns at both top corners. Starting stockpile 1 Manpower, 2 Munitions, 5 Fuel.")
+case object RaceAcrossTheRhineMap extends MapChoice(RaceAcrossTheRhine, "Large Map Pack, HL2, MR1, MR2: Hill 331 and Moro River; the Spawn Areas are the left and right edges; every player starts with 2 Infantry. Starting stockpile 7 Manpower, 1 Munitions, 0 Fuel.")
+case object FrozenRiverMap extends MapChoice(FrozenRiver, "Large Map Pack, SG1, AF2, AF1: Stalingrad and the snowy forest, its frozen river. Starting stockpile 4 Manpower, 4 Munitions, 4 Fuel.")
+case object FrozenRiverFourMap extends MapChoice(FrozenRiverFour, "Large Map Pack, SG2, SG1, AF2, AF1: Stalingrad and the snowy forest; 7 Victory Points on Ice. Starting stockpile 4 Manpower, 4 Munitions, 4 Fuel.")
+case object MudMap extends MapChoice(Mud, "Large Map Pack, HL2, MR1, MR2, HL1: Moro River between two Hill 331 panels; each team spawns at both ends. Starting stockpile 6 Manpower, 2 Munitions, 4 Fuel.")
+case object WinterSolsticeMap extends MapChoice(WinterSolstice, "Large Map Pack, SG1, SG2, AF1, AF2: Stalingrad and the snowy forest. Starting stockpile 3 Manpower, 5 Munitions, 1 Fuel.")
+case object SummerSolsticeMap extends MapChoice(SummerSolstice, "Large Map Pack, MO2, MR1, MR2, MO1: Moro River between two Monastery panels. Starting stockpile 2 Manpower, 3 Munitions, 4 Fuel.")
+
+// the booklet's optional Modular Bunkers (and the Hilltop Monastery's optional Victory Point), on the missions that mark them
+case object OptionalMapFeatures extends GameOption with ToggleOption {
+    val group = "Map".txt
+    def valueOn = "Optional Modular Bunkers".hl
+    override val explain = $[Elem]("The Mission Booklet's optional Modular Bunkers (its A and B hexes) become Bunkers on the missions that mark them, and the Hilltop Monastery's optional Victory Point is in its Cathedral tower.".txt)
+}
 
 object MapChoice {
-    val all = $[MapChoice](MoroRiverMap, AcrossTheDonMap, BetweenTwoRiversMap, ArdennesForestMap, FrozenLakeMap, RoadToMoscowMap, MoroRiverFFAMap, TheRiverMap, FrozenPondMap, BetweenTwoRiversWideMap, ArdennesForestWideMap)
+    val all = $[MapChoice](MoroRiverMap, AcrossTheDonMap, BetweenTwoRiversMap, ArdennesForestMap, FrozenLakeMap, RoadToMoscowMap, MoroRiverFFAMap, TheRiverMap, FrozenPondMap, BetweenTwoRiversWideMap, ArdennesForestWideMap,
+        HillThreeThirtyOneMap, PloiestiOutskirtsMap, VerrieresRidgeMap, TroisPontsMap, CaenMap, CarentanMap, StalingradMap, BulgeMap, LeningradMap, MongolianTrainStationMap,
+        CathedralMissionMap, CologneMissionMap, DesertOasisMap, NoMansLandMap, MoscowOutskirtsMap, OpposingFaithsMap, SemoisMap, HinderdamMap, AncientFieldsMap, AirfieldMissionMap, HilltopMonasteryMap, BudapestMap, SiegeOfLeningradMap, OpposingFaithsThreeMap, TheWideFrontMap, TroisPontsThreeMap, TwoIslandsMap, CologneFourMap, TroisPontsMonasteryMap, HillMonasteryMap, VengeanceMap, OpposingFaithsFourMap, TwoHilltopsMap, FrozenForkMap, SixBridgesMap, HillThreeThirtyOneFFAMap, CologneFFAMap,
+        LorraineMap, RailsAndMetalMap, StHilaireMap, WinterStormMap, TheVolgaMap, RaceToRomeMap, StMarieDuMontMap, CologneFiveFFAMap, HillSixSixTwoFFAMap, ARiverTooFarMap, RaceAcrossTheRhineMap, FrozenRiverMap, FrozenRiverFourMap, MudMap, WinterSolsticeMap, SummerSolsticeMap)
 }
 
 // THE ICE MATRIX (Full Game Rules 10.4): how many dice a unit attacked on an Ice tile rolls for each damage type assigned to it
@@ -1271,7 +1334,10 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     val length : Length = options.of[Length].single.|(ShortGame)
 
     // the map: Board answers for it
-    val map : MapData = options.of[MapChoice].single./(_.map).|(MoroRiverFirst)
+    val map : MapData = {
+        val m = options.of[MapChoice].single./(_.map).|(MoroRiverFirst)
+        (options.has(OptionalMapFeatures) && m.optional.any).?(m.withOptional).|(m)
+    }
     Board.current = map
     setup.foreach { f =>
         val (m, u, l) = map.stock
@@ -1403,7 +1469,9 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
     // what it bought, and what its Commander gives it (less what it already bought)
     def effects(u : Squad) : $[Effect] = { val b = boughtEffects(u) ; b ++ (freeEffects(u) ++ u.utype.innate).diff(b) }
     def attacksOf(u : Squad) : $[Attack] = {
-        val l = u.utype.attacks ++ effects(u)./~{ case AddAttack(a) => $(a) ; case AddAttacks(a) => $(a, a) ; case FlameRefit => $(UnitType.flame) ; case CloseFire => $(UnitType.ai, UnitType.ai) ; case _ => $ }
+        // a Bunker (Full Game Rules 10.1): its Infantry has an AP die (only against units outside it, `diceOnFull`)
+        val bunker = (full && u.kind == Infantry && pos.get(u).exists(h => Board.bunkers.has(h) && ruined.contains(h).not) && isPassenger(u).not).$(UnitType.ap)
+        val l = bunker ++ u.utype.attacks ++ effects(u)./~{ case AddAttack(a) => $(a) ; case AddAttacks(a) => $(a, a) ; case FlameRefit => $(UnitType.flame) ; case CloseFire => $(UnitType.ai, UnitType.ai) ; case _ => $ }
         // Operation Crocodile: the Churchill's AI becomes 2 forward Flame
         if (u.utype == Churchill && unlocked(u.faction, OperationCrocodile)) l.%(_.dmg != AI) ++ $(UnitType.flame, UnitType.flame) else l
     }
@@ -2092,7 +2160,10 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
         // Close Range Firepower only at range 1 (or in an Assault)
         val dice = (d > 1 && closeAttacks(u).any).?(remaining(u).diff(closeAttacks(u))).|(remaining(u))
 
-        dice.%(a => clear || a.indirect).%(a => fixedGun(u, a).not || inArc(u, where(t))).%(a => a.dmg != HE || hasSplash(u).not)
+        // the Bunker's AP die only against units outside it
+        val inside = (d == 0 && Board.bunkers.has(where(u))).?(dice.diff($(UnitType.ap))).|(dice)
+
+        inside.%(a => clear || a.indirect).%(a => fixedGun(u, a).not || inArc(u, where(t))).%(a => a.dmg != HE || hasSplash(u).not)
     }
 
     // the Ice checks: each unit attacked on an Ice tile rolls the most dice the Ice Matrix gives any damage type assigned to it
@@ -3334,7 +3405,7 @@ class Game(val setup : $[Faction], val options : $[Meta.O]) extends BaseGame wit
                     val n = standing(x).exists(u => u.kind == Infantry && unlocked(u.faction, SovietArchitecture)).?(max(0, n0 - 1)).|(n0)
                     buildingDamage += x -> (buildingDamage.getOrElse(x, 0) + n)
                     log("The Building in", x, "took", n.hl, "damage")
-                    if (buildingDamage(x) >= 2) {
+                    if (buildingDamage(x) >= Board.bunkers.has(x).?(4).|(2)) {
                         ruined += x
                         fallen :+= x
                         log("The Building in", x, "was destroyed")

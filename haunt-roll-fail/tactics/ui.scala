@@ -538,12 +538,19 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
     val layoutZoom = 0.49
 
+    def mapK = {
+        val ratio = Board.width * 1.0 / Board.height
+        (math.sqrt(4800 * ratio), math.sqrt(4800 / ratio))
+    }
+
     val layouts = $(Layout("base",
         $(
             BasicPane("status", 14, narrow.?(18.0).|(9.6), Priorities(top = 3, right = 2, maxXscale = 1.8, maxYscale = 1.8)),
             BasicPane("status-game", 16, 10, Priorities(maxXscale = 1.2, maxYscale = 1.2)),
             BasicPane("log", 30, 13, Priorities(right = 1)),
-            BasicPane("map-small", 80, 60, Priorities(top = 2, left = 1, grow = -1)),
+            // the map's pane has the map's shape, its area that of the two-panel maps' 80 by 60 (wider for 3 and 4 panels, taller for
+            // one panel or two rows of two)
+            BasicPane("map-small", mapK._1, mapK._2, Priorities(top = 2, left = 1, grow = -1)),
             BasicPane("action-a", 64, 26, Priorities(bottom = 1, right = 3, grow = 1)),
             BasicPane("action-b", 52, 47, Priorities(bottom = 1, right = 3, grow = 1, maxXscale = 1.2))
         )./(p => p.copy(kX = p.kX * layoutZoom, kY = p.kY * layoutZoom))
@@ -586,7 +593,7 @@ class UI(val uir : ElementAttachmentPoint, arity : Int, val resources : Resource
 
     val settingsKey = Meta.settingsKey
 
-    val layoutKey = "v" + 1 + "." + "arity-" + arity + narrow.??(".narrow")
+    val layoutKey = "v" + 1 + "." + "arity-" + arity + narrow.??(".narrow") + (Board.width != 2400 || Board.height != 1800).??(".map-" + Board.width + "x" + Board.height)
 
     def overlayScrollX(e : Elem) = overlayScroll(e)(styles.seeThroughInner).onClick
     def overlayFitX(e : Elem) = overlayFit(e)(styles.seeThroughInner).onClick
