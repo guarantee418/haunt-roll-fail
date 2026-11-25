@@ -1268,9 +1268,7 @@ server. No session can reach the server, and none needs to.
   menu go through `Lfg.interaction`). Only the roles the owner lists are offered (`tournament/self-roles.tsv`, set by the tournament changes
   `self-roles`, `self-role <role>, ...`, `self-role-off <role>, ...`; `role-picker <channel> [| text <text>]` posts the button), and only
   while each gives no server permission, isn't a bot's and sits under the bot's role, checked again at every pick, so Manager or any
-  moderating role is never handed out. A role can show in the menu under labels of its own, `self-role-entry <label> -> <role>` (`self-role-entry-off <label>`;
-  `tournament/self-role-entries.tsv`): any of its entries ticked gives it, none takes it (2026-11-25: the one spectator role offered as
-  Northgard spectator and Root spectator).
+  moderating role is never handed out.
 - The "Roast Me" role (2026-11-25, asked for: a notification role that makes fun of you while you play): a member with it gets each of their
   turn pings from the game's heckler instead of the turns webhook's plain ping: one message, the ping with a jab on its second line, posted
   by the same webhook in the same thread under the heckler's own name and picture (a webhook post's `username` and `avatar_url`, `persona` in
