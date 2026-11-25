@@ -1841,6 +1841,8 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
 
     // what happened to whom, for the Court Crow's jests (display only: root/jests.scala)
     var jests : $[String] = $
+    // each side's presence in the clearing when the current battle started (Jests, "wiped": pieces, a building counting 4)
+    var jestBattle : Map[Faction, Int] = Map()
 
     // a tournament game has no map until its draft picks one (TournamentExpansion): the Autumn map stands in until then
     var board : Board = TournamentExpansion.boardOf(options).|(options./~{
