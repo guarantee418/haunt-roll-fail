@@ -954,7 +954,9 @@ server. No session can reach the server, and none needs to.
   (`EveningNAction(30, f : Council)` and `Council.clearPathWanted` in `root/faction-council.scala`): it reveals its cards in
   Birdsong and gets them back only in Evening, so its Daylight hand was empty and the path never came up (Discord,
   2026-11-04). New games get the hidden default option `CouncilEveningClearPath`; older games keep their Evening so their replays
-  don't change, and a running game can be switched over with `CouncilEveningClearPathAction(X)`. `ReplayCheck <games> mountain`
+  don't change, and a running game can be switched over with `CouncilEveningClearPathAction(X)`. Taken out again on 2026-11-25
+  (Discord root-feedback: clearing a path is Daylight only): `RulesVersion8` is `RulesVersion7` without it, so new games don't offer it;
+  the games that have it keep it, and `CouncilNoEveningClearPathAction(X)` switches one off. `ReplayCheck <games> mountain`
   plays the Mountain map with the Council.
 - Governors (17.2.3) stop Lilypad Diaspora's enclaves and the Corvids' plots at an enemy Council's Governing assemblies from
   crafting until the Council is entreated (`Council.craftingIn` in `root/faction-council.scala`, used by `craftEnclaves` and

@@ -1655,6 +1655,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     var outragePeekNotifies = false
     var councilRevealOnce = false
     var councilEveningClearPath = false
+    var councilNoEveningClearPath = false
     var fearsAfterRemoval = false
     var silverTongueOneEffect = false
     var governorsStopCrafting = false
