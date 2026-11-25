@@ -12,7 +12,11 @@ import java.nio.file.Files
 //   self-role <role>, <role>, ...             adds roles to the list
 //   self-role-off <role>, ...                 takes roles off it (members keep them)
 //   role-picker <channel> [| text <text>]     posts a message there with a "Pick my roles" button (the bot needs to post there)
+//   self-role-entry <label> -> <role>         shows that role in the menu under one more label (2026-11-25: one spectator role, offered
+//                                             as "Northgard spectator" and "Root spectator"); with entries, a role shows only under them
+//   self-role-entry-off <label>               takes an entry away
 //
+// A role with entries is given when any of its entries is ticked, and taken only when none is; the member having it ticks them all.
 // A role goes on the list only if it gives no server permission at all, isn't a bot's or integration's, isn't @everyone and sits under
 // the bot's own role, and every one is checked again each time a member picks: a role given a permission since is never handed out.
 // So Manager, or any role that moderates, can't be self-assigned even by mistake. Discord's menus hold 25 options, so the list does too.
@@ -25,6 +29,28 @@ object SelfRoles extends BotCommand {
 
     def listed : List[String] = if (!Files.exists(file)) Nil else
         new String(Files.readAllBytes(file), UTF_8).split('\n').toList.map(_.split('\t').head.trim).filter(Tournament.isDiscordId).distinct
+
+    val entriesFile = Tournament.dir.resolve("self-role-entries.tsv")
+
+    // (label, role ID), in the order added
+    def entries : List[(String, String)] = if (!Files.exists(entriesFile)) Nil else
+        new String(Files.readAllBytes(entriesFile), UTF_8).split('\n').toList.map(_.split('\t')).collect { case Array(l, id) if l.trim.nonEmpty && Tournament.isDiscordId(id.trim) => (l.trim, id.trim) }
+
+    def saveEntries(l : List[(String, String)]) = synchronized {
+        Files.createDirectories(entriesFile.getParent)
+        Files.write(entriesFile, l.map(e => e._1.replace('\t', ' ') + "\t" + e._2 + "\n").mkString.getBytes(UTF_8))
+    }
+
+    // the menu's options for the roles offered: (label, value, role), a role with entries once for each, valued "<id>#<n>"
+    def options(rr : List[DiscordServer.Role]) : List[(String, String, DiscordServer.Role)] = {
+        val ee = entries
+        rr.flatMap { r => ee.filter(_._2 == r.id) match {
+            case Nil => List(("@" + r.name, r.id, r))
+            case l => l.zipWithIndex.map { case ((label, _), n) => (label, r.id + "#" + n, r) }
+        } }.take(max)
+    }
+
+    def wanted(values : List[String]) : Set[String] = values.map(_.takeWhile(_ != '#')).toSet
 
     def save(l : List[DiscordServer.Role]) = synchronized {
         Files.createDirectories(file.getParent)
@@ -69,7 +95,8 @@ object SelfRoles extends BotCommand {
         case Right(Nil) => Lfg.privately("There are no roles to pick yet.")
         case Right(rr) =>
             val text = (if (note.nonEmpty) note + "\n\n" else "") + "Tick the roles you want and untick the ones you don't. A role pings you when a game of it is looking for players or waiting on you."
-            val select = LfgSetup.select("roles:pick", "Your roles", 0, rr.size, rr.map(r => ("@" + r.name, r.id, have.contains(r.id), "", "")))
+            val oo = options(rr)
+            val select = LfgSetup.select("roles:pick", "Your roles", 0, oo.size, oo.map { case (label, value, r) => (label, value, have.contains(r.id), "", "") })
             Lfg.reply(kind, "{\"content\":" + Lfg.json(text) + ",\"flags\":64,\"components\":[" + select + "],\"allowed_mentions\":{\"parse\":[]}}")
     }
 
@@ -91,8 +118,9 @@ object SelfRoles extends BotCommand {
                 case Left(e) => println("Roles: " + e) ; Lfg.privately("The roles can't be changed right now.")
                 case Right(rr) =>
                     // only roles on offer are ever given or taken, whatever the menu sent
-                    val add = rr.filter(r => values.contains(r.id) && !have.contains(r.id))
-                    val take = rr.filter(r => !values.contains(r.id) && have.contains(r.id))
+                    val want = wanted(values)
+                    val add = rr.filter(r => want.contains(r.id) && !have.contains(r.id))
+                    val take = rr.filter(r => !want.contains(r.id) && have.contains(r.id))
                     val done = add.map(r => r -> DiscordServer.call("PUT", "/guilds/" + g + "/members/" + uid + "/roles/" + r.id)) ++
                         take.map(r => r -> DiscordServer.call("DELETE", "/guilds/" + g + "/members/" + uid + "/roles/" + r.id))
                     done.collect { case (r, Left(e)) => println("Roles: @" + r.name + " for " + uid + ": " + e) }
@@ -121,7 +149,7 @@ object SelfRoles extends BotCommand {
             r <- word match {
                 case "self-roles" =>
                     val ids = listed
-                    def line(r : DiscordServer.Role) = "@" + r.name + " (" + r.id + ")" + unsafe(r, top).map(": not offered, " + _).getOrElse("")
+                    def line(r : DiscordServer.Role) = "@" + r.name + " (" + r.id + ")" + (entries.filter(_._2 == r.id).map("\"" + _._1 + "\"") match { case Nil => "" ; case l => " as " + l.mkString(", ") }) + unsafe(r, top).map(": not offered, " + _).getOrElse("")
                     Right("\nmembers may pick: " + (rr.filter(r => ids.contains(r.id)).sortBy(-_.position).map(line) match { case Nil => "none" ; case l => l.mkString("\n  ", "\n  ", "") }) +
                         "\ncould be added: " + (rr.filter(r => !ids.contains(r.id) && unsafe(r, top).isEmpty).sortBy(-_.position).map(line) match { case Nil => "none" ; case l => l.mkString(", ") }) +
                         (ids.filterNot(id => rr.exists(_.id == id)) match { case Nil => "" ; case l => "\nno longer on the server: " + l.mkString(", ") }))
@@ -146,6 +174,21 @@ object SelfRoles extends BotCommand {
                         save(all)
                         Right("members may pick " + (if (all.isEmpty) "no roles" else all.map("@" + _.name).mkString(", ")))
                     }
+                case "self-role-entry" => rest.split("->", 2).map(_.trim) match {
+                    case Array(label, role) if label.nonEmpty && role.nonEmpty => DiscordServer.findRole(rr, role).flatMap { r =>
+                        if (!listed.contains(r.id)) Left("@" + r.name + " isn't one members may pick (self-role it first)")
+                        else {
+                            val all = entries.filterNot(_._1.equalsIgnoreCase(label)) :+ (label.take(100), r.id)
+                            saveEntries(all)
+                            Right("@" + r.name + " shows as " + all.filter(_._2 == r.id).map("\"" + _._1 + "\"").mkString(", "))
+                        }
+                    }
+                    case _ => Left("self-role-entry <label> -> <role>")
+                }
+                case "self-role-entry-off" =>
+                    val all = entries.filterNot(_._1.equalsIgnoreCase(rest.trim))
+                    if (all.size == entries.size) Left("no entry \"" + rest.trim + "\"")
+                    else { saveEntries(all) ; Right("entry \"" + rest.trim + "\" taken away") }
                 case "role-picker" =>
                     val (ch, opts) = DiscordServer.split(rest)
                     val text = opts.find(_._1 == "text").map(_._2).getOrElse("**Pick your roles**\nTap the button to get a menu only you see, tick the game and ping roles you want and untick the ones you don't. You can also type `/roles`.")
@@ -158,5 +201,5 @@ object SelfRoles extends BotCommand {
         } yield r
     }).fold("not done: " + _, x => x)
 
-    val words = Set("self-roles", "self-role", "self-role-off", "role-picker")
+    val words = Set("self-roles", "self-role", "self-role-off", "self-role-entry", "self-role-entry-off", "role-picker")
 }
