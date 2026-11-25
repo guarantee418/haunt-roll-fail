@@ -556,6 +556,11 @@ object GoodGame {
                         val status = l.lift(5).getOrElse("").split(" ").toList.map(_.filter(c => c.isLetterOrDigit || c == '_' || c == ':' || c == '-' || c == '\'').take(60)).filter(_.nonEmpty).take(16)
                         if (allowed)
                             Turns.setStatus(journalId, status)
+                        // the seventh, what happened to whom lately (2026-11-25): "<n>:<tag>/<seat>/<other>/<clearing> ...", for the Roast Me
+                        // heckler's jests (Heckler.jests; MetaGame.jests)
+                        val jests = l.lift(6).getOrElse("").split(" ").toList.map(_.filter(c => c.isLetterOrDigit || c == ':' || c == '/' || c == '_' || c == '-' || c == '#').take(80)).filter(_.nonEmpty).take(16)
+                        if (allowed)
+                            Heckler.jests(journalId, jests)
                         plain(if (allowed) "ok" else "")
                     }
                 }

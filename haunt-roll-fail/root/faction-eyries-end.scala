@@ -299,7 +299,7 @@ object EyriesEndExpansion extends FactionExpansion[EE.type] {
         case AviaryMainDecreeAction(f : EE.type, d @ Decree.Recruit, r) =>
             val l = f.all(Roost).distinct.%(f.canPlace).%(c => r.exists(c.cost.matched))
 
-            if (l.any && supply.num > f.has(Charismatic).??(1))
+            if (l.any && supply.num > AviaryExpansion.charismaticPlaces.?(0).|(f.has(Charismatic).??(1)))
                 Ask(f).add(AviaryRecruitMainAction(f, l, r)).daylight(f)
             else
                 TurmoilLoomingAction(f, d, r)
@@ -309,7 +309,11 @@ object EyriesEndExpansion extends FactionExpansion[EE.type] {
 
             f.log("recruited in", c)
 
-            place(c, n, DecreeDoneAction(f, s, r, Repeat))
+            // CharismaticPlacesWhatItCan: short of warriors, it places what it can and falls into Turmoil
+            if (supply.num < n && AviaryExpansion.charismaticPlaces)
+                place(c, n, TurmoilLoomingAction(f, Decree.Recruit, AviaryExpansion.left(f, Decree.Recruit)))
+            else
+                place(c, n, DecreeDoneAction(f, s, r, Repeat))
 
         case AviaryMainDecreeAction(f : EE.type, d @ Decree.Build, r) =>
             val roosts = f.pool(Roost).??(clearings.%(f.rules).%(f.canBuild).%(c => f.leader.has(Megalomaniac) || f.at(c).has(Roost).not).%(f.canPlace).%(c => r.exists(c.cost.matched)))

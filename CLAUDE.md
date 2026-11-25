@@ -396,7 +396,7 @@ cd haunt-roll-fail && sbt fullOptJS
   with any of it can't be started (`rankedCheck`, in `validateFactionSeatingOptions`). Root's Tidal Flats, Tundra and Gloom maps and
   the Dawn and Dusk deck are approved since 2026-11-22, and the Simple Landmarks and the Negabond (a second Vagabond, `approved`) since 2026-11-23 (owner). A ranked game with a bot gets a warning. The Discord bot's `/root` and
   `/northgard` take `ranked` (`LfgSetup.sections`), the catalog's tenth field marks each unapproved option (its menus say "makes the
-  game unranked"), the post says Ranked or Unranked and why (`rankingLine`), and a Ranked game with unapproved picks is created
+  game unranked"), the post says Ranked or Unranked and why (`rankingLine`), and a Root Advanced Setup post always lists the factions in the draft by their emojis, picked or left as the defaults (`summary` in `LfgSetup.scala`; 2026-11-25), and a Ranked game with unapproved picks is created
   Unranked (`rankedOptions`). Names are released or
   moved by committing `ranking-changes/<name>.txt` to `hrf-games` (`release <name>`, `rename <name> -> <new>`, `seat <user> <name>`, and `merge <name> -> <into>` for one player under two names, which gives `<into>` the first name's devices and seats and frees it, 2026-11-22;
   `Ranking.change`, applied once each by `Backup`, outcome in `<name>.result`).
@@ -933,6 +933,11 @@ server. No session can reach the server, and none needs to.
   only when the Captain can move and the Diaspora has a Peaceful enclave; a Nab move put first sets them off when it is done or skipped.
   The Fears always came first, during the battle's removal. New games get the hidden `NabFearsOrder`, in `RulesVersion4`; a running game
   can be switched over with `NabFearsOrderAction(X)`. `ReplayCheck <games> ldkd` takes Nab half the times it is offered and picks the order at random.
+- The Eyrie's Charismatic leader recruiting with one warrior left in its supply places it, then falls into Turmoil, as the card
+  wasn't fully done (Law of Root 7.7 and 7.8.3; the Leder FAQ: "you must place as many as possible"; reported 2026-11-25): it went
+  into Turmoil placing none, as the Recruit needed two warriors (`AviaryMainDecreeAction` and `AviaryRecruitAction` in
+  `root/faction-aviary.scala`, Eyrie's End's in `root/faction-eyries-end.scala`). New games get the hidden `CharismaticPlacesWhatItCan`,
+  in `RulesVersion5`; a running game can be switched over with `CharismaticPlacesWhatItCanAction(X)`.
 - The Twilight Council's Convene Woodfolk (17.6.1) offers "Return all to hand" beside the revealed cards: every card left goes back
   to hand at once and none of them acts, ending the step (`CouncilConveneAllAction` in `root/faction-council.scala`; 2026-11-22, asked
   for in Right of Betrayal). It only adds a choice, so no option; the bots never take it.
@@ -1257,6 +1262,27 @@ server. No session can reach the server, and none needs to.
   `self-roles`, `self-role <role>, ...`, `self-role-off <role>, ...`; `role-picker <channel> [| text <text>]` posts the button), and only
   while each gives no server permission, isn't a bot's and sits under the bot's role, checked again at every pick, so Manager or any
   moderating role is never handed out.
+- The "Roast Me" role (2026-11-25, asked for: a notification role that makes fun of you while you play): a member with it gets, under
+  each of their turn pings, a jab from the game's heckler, posted by the same webhook in the same thread under the heckler's own name and
+  picture (a webhook post's `username` and `avatar_url`, `persona` in `Tournament.post`), naming them without pinging them again, and
+  fitting the ping's reason: Root's Court Crow (the Corvid character art in a jester's cap, peeking out of a trash can), Northgard's Ratatoskr (the Norse squirrel who
+  carries the eagle's insults down Yggdrasil), Pincer's Pamphleteer and Company of Heroes' Sergeant Major (`good-game/Heckler.scala`, its
+  lines there; the jabs mock the play, never the person). The Court Crow also mocks, in the game's thread, what happens to a
+  player with the role on anyone's turn (asked for the same day): a 3-0 roll against them, their own 0-3, an ambush, a Raze, a Revolt, a
+  Lizard Convert or Sanctify, the Eyrie's Turmoil, a Corvid bomb. The Root game notes each event with its victim as it plays out, before the
+  board changes (`Jests` in `root/jests.scala`, from `internalPerform`; `game.jests`, display only, numbered in order, so every client numbers
+  them alike, which `ReplayCheck` checks), the clients send the last 12 with their turn reports (the seventh line, `Meta.jests`), and the
+  server takes each number once (`Heckler.jests`, `turns/jests.tsv`; a game's first report only sets where it starts). About one Court Crow post in three carries one of its animated GIFs under the line (asked for:
+  "sometimes the crow just sends a trolling gif, with some context"): the 3-0 dice for a roll or a battle, the crow popping out of its
+  trash can for something trashed, else the crow laughing (`Heckler.gifFor`, a webhook embed; `webp2/lfg/gifs/`, made by
+  `heckler-art.py`, served by `/art/`). The role is called @troll on the server since 2026-11-25 (`roast-role troll`). The tournament change `troll-intro`
+  gives every member with the role one first jab at once, in the thread of the game it is about, for the first thing found in their games:
+  a game waiting on them (and for how long), last on VP in a Root game, last place in a finished game (`ranking/results.tsv`), a game that
+  needed 4 or more turn pings, 8 VP or more behind the leader, or a lost game; nothing found, nothing posted (no welcome, owner's ask;
+  `Heckler.intro`, once each, `turns/troll-intros.tsv`). The bot checks the role on each ping. The owner makes it with the server changes
+  `role Roast Me` and `self-role Roast Me`; `roast-role <role>` picks another (`off`: none), `roasts` says how it stands. The pictures are
+  `webp2/lfg/webhooks/heckler-*.png`, served by `/art/` (`Lookup.artFile` serves that folder), and the crow as a Discord server emoji,
+  `webp2/lfg/server-emoji/root_crowjester.png`, and peeking out of a trash can, `root_jestercan.png`, both uploaded to the server by hand; `haunt-roll-fail/tools/heckler-art.py` makes them.
 - The bot's `/rule <rule> [game] [private]` (2026-11-22, asked for as a bot "to help cite the rules", not to interpret them): Root's
   rules by their Law of Root number (`4.3.2`, `H.1`, a section lists the rules under it) or name, with the rule's text and the link to
   it on the Root Database (`webp2/lfg/rules-root.tsv`, made by `haunt-roll-fail/tools/law-index.py` from the Root Database's copy, kept up

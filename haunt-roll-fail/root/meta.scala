@@ -661,6 +661,15 @@ case object NabFearsOrder extends GameOption with ToggleOption {
     val valueOn = "Nab".hh ~ " move or " ~ "Fears Come to Pass".hh ~ " first"
 }
 
+// The Eyrie's Charismatic leader recruiting with one warrior left in the supply places it, then goes into Turmoil if the card can't
+// be done (Law of Root 7.7, 7.8.3, the Leder FAQ: "you must place as many as possible"); it went into Turmoil placing none.
+// Hidden, in RulesVersion5; older games keep the old way so their replays don't change (CharismaticPlacesWhatItCanAction switches
+// a running one over).
+case object CharismaticPlacesWhatItCan extends GameOption with ToggleOption {
+    val group = "Card Draft"
+    val valueOn = "Charismatic".hh ~ " places what it can"
+}
+
 // With MountainSuitedLandmark, the landmark drawn for the Mountain's Tower clearing may be of that clearing's own suit (owner,
 // 2026-11-19): older games left those out. Hidden, in RulesVersion3; it only changes a setup draw, so running games need no switch.
 case object SuitedLandmarkAnySuit extends GameOption with ToggleOption {
@@ -2065,7 +2074,7 @@ object Meta extends MetaGame {
 
     // The hidden options of rules fixes, each gating a fix so the games started before it replay the same (most new games get through
     // their RulesVersion); not listed in a game's log (OptionsAction)
-    lazy val fixes : $[O] = $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes, BanishCaptainsLast, SuitedLandmarkAnySuit, NabFearsOrder)
+    lazy val fixes : $[O] = $(FrogCardsAfterStartingHands, FrogCardsSkipLostSouls, FrogsCraftByClearing, LizardsCraftByClearing, CompanionsUntilSpent, HirelingsByTheCard, GovernorsStopEnclaveFlips, OutragePeekNeedsOk, CounterMiceInABush, KnavesCaptainsInDraft, SkipIdleRallyReconcile, GovernorsStopDelve, FrogAmbushToPondBottom, FrogAmbushBottomOnlyAsAmbush, CouncilRevealOnce, EntreatGainUnasked, BanishNeedsWarriors, FeatherRufflersOnCraft, SilverTongueOneEffect, GovernorsStopCrafting, MouseholdFromSupply, BuyServicesAgain, BanishAfterIgnoredHits, CouncilEveningClearPath, ReconcileOneAtATime, FearsAfterRemoval, RiverfolkCraftUngoverned, PrisonersFromCodefenders, GovernorsStopExposure, FrogCardsAtDiasporaSetup, HitsAndAmbushesSetup, DuskDeckFixes, BanishCaptainsLast, SuitedLandmarkAnySuit, NabFearsOrder, CharismaticPlacesWhatItCan)
 
     def unlisted : $[O] = fixes ++ settled ++ RulesVersion.all
 
@@ -2177,7 +2186,7 @@ object Meta extends MetaGame {
     val quickMin = 4
     val quickMax = 4
 
-    override val quickFactions = official ++ $(XC) ++ $(CUv2) ++ $(FH)
+    override val quickFactions = official
 
     def randomGameName() = {
         val n = $("Power", "Victory", "Glory", "Destiny", "Might", "Fight", "Right", "Betrayal", "Wood", "Land", "Air", "Ground").shuffle
@@ -2397,6 +2406,7 @@ object Meta extends MetaGame {
     }
 
     override def turnReason(g : G, f : Any, actions : $[Any]) : String = TurnReasons.of(g, f, actions)
+    override def jests(g : G) = Jests.report(g, f => writeFaction(f))
 
     def writeFaction(f : Faction) = f.short
     def parseFaction(s : String) = (factions ++ retiredFactions ++ hirelings ++ turnlings).%(_.short == s).single || (s == "XCMDM").?(Mudmen(XC)) || $[Faction](InfectedHorde, TrapLayer, LegendBeast, GuanoMess).%(_.short == s).single || hirelings.%(_.toString == s).single
@@ -4983,9 +4993,14 @@ case object RulesVersion4 extends RulesVersion(4) {
     def fixes = RulesVersion3.fixes ++ $[Meta.O](NabFearsOrder)
 }
 
+// A Charismatic Recruit with one warrior left places it (2026-11-25)
+case object RulesVersion5 extends RulesVersion(5) {
+    def fixes = RulesVersion4.fixes ++ $[Meta.O](CharismaticPlacesWhatItCan)
+}
+
 object RulesVersion {
-    val all : $[RulesVersion] = $(RulesVersion1, RulesVersion2, RulesVersion3, RulesVersion4)
-    def latest : RulesVersion = RulesVersion4
+    val all : $[RulesVersion] = $(RulesVersion1, RulesVersion2, RulesVersion3, RulesVersion4, RulesVersion5)
+    def latest : RulesVersion = RulesVersion5
     def implied : $[Meta.O] = all./~(_.fixes).distinct
 
     def expand(l : $[Meta.O]) : $[Meta.O] = l ++ l.of[RulesVersion]./~(_.fixes).distinct.diff(l)

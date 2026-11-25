@@ -124,6 +124,16 @@ object Meta extends MetaGame { mmm =>
     def factionName(f : Faction) = f.name
     def factionElem(f : Faction) = f.name.styled(f)
 
+    // (its own plain face, not the storybook one)
+    override def bodyFont = |("tactics-ui")
+
+    // the reworked setup screens, with the factions' emblems
+    override def setupDesign = true
+    override def menuImages = Faction.all./(f => ("menu-" + f.id) -> ("/hrf/webp2/tactics/images/emblem/" + f.id + ".webp")).toMap
+    override def factionTile(f : Faction) = |(Div(Image("menu-" + f.id, ExternalStyle("setup-emblem"), "")) ~ Div(f.name.hlb))
+    override def factionRowIcon(f : Faction) : Elem = Image("menu-" + f.id, ExternalStyle("setup-row-emblem"), "")
+    override def factionChosenElem(f : Faction) = factionRowIcon(f) ~ factionElem(f).spn(xstyles.bold)
+
     override def glyph(f : F) : |[String] = |("emblem:" + f.id)
 
     def createGame(factions : $[Faction], options : $[O]) = new Game(factions, options)

@@ -1666,6 +1666,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     var banishAfterIgnoredHits = false
     var banishCaptainsLast = false
     var nabFearsOrder = false
+    var charismaticPlaces = false
     var featherRufflersOnCraft = false
     var counterMiceInABush = false
     var forcedAsyncChooseHits = false
@@ -1836,6 +1837,9 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
 
     // the last action that asked a question (display only: the Discord turn pings' reason, root/turn-reasons.scala)
     var asker : Action = null
+
+    // what happened to whom, for the Court Crow's jests (display only: root/jests.scala)
+    var jests : $[String] = $
 
     // a tournament game has no map until its draft picks one (TournamentExpansion): the Autumn map stands in until then
     var board : Board = TournamentExpansion.boardOf(options).|(options./~{
@@ -2267,6 +2271,12 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
     }
 
     def internalPerform(action : Action, soft : Void) : Continue = {
+        // (noted before the action changes the board: the Court Crow's jests, display only, root/jests.scala)
+        Jests.see(action)(this)
+        performOnce(action, soft)
+    }
+
+    def performOnce(action : Action, soft : Void) : Continue = {
         // +++(">", (action @@ {
         //     case root.Next => this.repeat.get.next
         //     case a => a
@@ -2280,7 +2290,7 @@ class Game(val players : $[Player], val candidates : $[Faction], val recorded : 
                         soft()
 
                     return another.as[SelfPerform]./(_.perform(soft)).|(internalPerform(another, soft))
-                case TryAgain => return internalPerform(action, soft)
+                case TryAgain => return performOnce(action, soft)
                 case c =>
                     // the action that asked (the Discord turn pings' reason, TurnReasons)
                     c @@ { case _ : Ask | _ : MultiAsk => asker = action ; case _ => }

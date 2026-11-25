@@ -70,7 +70,7 @@ object Runner {
         def turnMulti(asks : $[Ask]) {
             val ff = asks./(_.faction).%(_ != null).distinct
             journal.turn(ff./(f => meta.turnSeat(game, f)).%(_.nonEmpty).distinct,
-                ff./(f => meta.turnSeat(game, f) + "=" + scala.util.Try(meta.turnReason(game, f, asks.%(_.faction == f)./~(_.actions))).getOrElse("")).%(r => r.startsWith("=").not && r.endsWith("=").not).distinct, scala.util.Try(meta.overview(game)).getOrElse($), unranked(game), scala.util.Try(meta.status(game)).getOrElse($))
+                ff./(f => meta.turnSeat(game, f) + "=" + scala.util.Try(meta.turnReason(game, f, asks.%(_.faction == f)./~(_.actions))).getOrElse("")).%(r => r.startsWith("=").not && r.endsWith("=").not).distinct, scala.util.Try(meta.overview(game)).getOrElse($), unranked(game), scala.util.Try(meta.status(game)).getOrElse($), scala.util.Try(meta.jests(game)).getOrElse($))
         }
 
         def time() = (new scalajs.js.Date()).getTime()
@@ -207,6 +207,12 @@ object Runner {
         var dirty = false
         var logged = 0
         var conflicted : Option[ExternalAction] = None
+        // whether anyone here has been asked anything yet
+        var begun = false
+
+        val botMessage : Elem = Text("The bot is playing") ~ (meta.settingsList.has(hrf.FasterScrollSpeed)).?(Div(Text("Faster or slower: Interface, Scroll Speed"), xstyles.smaller75) : Elem).|(Empty)
+        var waitMessage : Elem = "Their turn to choose".txt
+
         var waitingFor : $[F] = $
 
         var softMaps = Map[Continue, Ask]()
@@ -600,14 +606,15 @@ object Runner {
                     // reporting this seat alone took the others off the server's list, so their turn pings started over; 2026-11-22)
                     game.continue.unwrap match {
                         case MultiAsk(l, _) if l.exists(_.faction == faction) => turnMulti(l)
-                        case _ => journal.turn((faction != null).$(meta.turnSeat(game, faction)).%(_.nonEmpty), (faction != null).$(meta.turnSeat(game, faction) + "=" + scala.util.Try(meta.turnReason(game, faction, actions)).getOrElse("")).%(r => r.startsWith("=").not && r.endsWith("=").not), scala.util.Try(meta.overview(game)).getOrElse($), unranked(game), scala.util.Try(meta.status(game)).getOrElse($))
+                        case _ => journal.turn((faction != null).$(meta.turnSeat(game, faction)).%(_.nonEmpty), (faction != null).$(meta.turnSeat(game, faction) + "=" + scala.util.Try(meta.turnReason(game, faction, actions)).getOrElse("")).%(r => r.startsWith("=").not && r.endsWith("=").not), scala.util.Try(meta.overview(game)).getOrElse($), unranked(game), scala.util.Try(meta.status(game)).getOrElse($), scala.util.Try(meta.jests(game)).getOrElse($))
                     }
 
                     auto(game, faction) match {
                         case AskHuman => UIAsk(c, Some(faction), actions, $)
                         case AskBot(q) =>
                             waitingFor = $(faction)
-                            ui.wait(self, waitingFor, "z... z... z...".txt)
+                            waitMessage = botMessage
+                            ui.wait(self, waitingFor, waitMessage)
                             UIRecordCompute("#bot " + faction, c, faction, q(actions))
                         case DebugBot(q) => UIAskDebugCompute(c, faction, q(actions))
                         case WaitRemote => UIWait(c, $(faction))
@@ -789,8 +796,9 @@ object Runner {
                 case UIWait(c, ff) =>
                     if (waitingFor != ff) {
                         waitingFor = ff
+                        waitMessage = "Their turn to choose".txt
 
-                        ui.wait(self, waitingFor, "z... z... z...".txt)
+                        ui.wait(self, waitingFor, waitMessage)
 
                         if (ui.overrideGame.none)
                             setTimeout(0) { hrf.web.timed(0)("scrollActionToLatest()") { scrollActionToLatest() } }
@@ -987,6 +995,8 @@ object Runner {
                     UIRecord("#retry", c, conflicted.get)
 
                 case UIAsk(c, f, aa, w) =>
+                    begun = true
+
                     setTimeout(0) { hrf.web.timed(0)("scrollActionToLatest()") { scrollActionToLatest() } }
 
                     // (at once: the choices are worked out in the game shown, and an earlier state from the log has none of them)
@@ -1061,12 +1071,13 @@ object Runner {
 
             state match {
                 case UIContinue(Log(_, _, _), Nil) if logged > 1 =>
-                    setTimeout(hrf.HRF.paramInt("speed").|(HRF.speed)) { continueHandleState() }
+                    // the setup up to the first choice isn't played out step by step: Root's took half a minute to watch
+                    setTimeout((begun || actions.num > 80).?(hrf.HRF.paramInt("speed").|(HRF.speed)).|(0)) { continueHandleState() }
                     false
 
                 case UIContinue(_, Nil) =>
                     if (dirty)
-                        ui.wait(self, waitingFor, "z... z... z...".txt)
+                        ui.wait(self, waitingFor, waitMessage)
                     redrawIfDirty()
                     true
 

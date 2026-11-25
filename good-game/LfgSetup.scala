@@ -354,13 +354,15 @@ object LfgSetup {
     // pick that has one (the factions in the draft by their emoji alone); left out are the options the setup screen doesn't list
     // (hidden, mandatory), those whose needs aren't picked in the game (`all`; Northgard's Thane with the standard victory), the clans'
     // colors and teams and, to fit a Discord message, the sections past `limit` characters
+    // The factions in the draft are always listed, picked or left as the defaults (asked for on 2026-11-25: a post showed none).
     def summary(c : Catalog, options : List[String], all : List[String] = Nil, limit : Int = 1300) : String = {
         val mandatory = c.mandatory.values.flatten.toSet
         val picked = options.toSet ++ all
-        val listed = c.options.filter(o => options.contains(o.name) && o.page >= 0 && !mandatory.contains(o.name))
+        val pool = c.need.map(_._1)
+        val shown = options ++ all.filter(o => pool.exists(o.startsWith))
+        val listed = c.options.filter(o => shown.contains(o.name) && o.page >= 0 && !mandatory.contains(o.name))
             .filterNot(o => o.name.startsWith("ColorOption(") || o.name.startsWith("TeamOption(") || o.group == rankingSection)
             .filter(o => c.required.getOrElse(o.name, List(Nil)).exists(_.forall(picked.contains)))
-        val pool = c.need.map(_._1)
         val lines = listed.map(_.group).distinct.map { g =>
             val oo = listed.filter(_.group == g)
             val emojiOnly = pool.exists(p => oo.forall(_.name.startsWith(p)))

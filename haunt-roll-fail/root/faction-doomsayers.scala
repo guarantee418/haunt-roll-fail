@@ -59,8 +59,8 @@ trait DemandFace extends Record with Elementary {
     def elem = name.styled(styles.hit)
 }
 
-case object DemandCrusade extends DemandFace { val name = "DemandCrusade" }
-case object DemandConsecrate extends DemandFace { val name = "DemandConsecrate" }
+case object DemandCrusade extends DemandFace { val name = "Crusade" }
+case object DemandConsecrate extends DemandFace { val name = "Consecrate" }
 case object DemandCraft extends DemandFace { val name = "Craft" }
 case object DemandStrike extends DemandFace { val name = "Strike" }
 
