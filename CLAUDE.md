@@ -1257,6 +1257,15 @@ server. No session can reach the server, and none needs to.
   `self-roles`, `self-role <role>, ...`, `self-role-off <role>, ...`; `role-picker <channel> [| text <text>]` posts the button), and only
   while each gives no server permission, isn't a bot's and sits under the bot's role, checked again at every pick, so Manager or any
   moderating role is never handed out.
+- The "Roast Me" role (2026-11-25, asked for: a notification role that makes fun of you while you play): a member with it gets, under
+  each of their turn pings, a jab from the game's heckler, posted by the same webhook in the same thread under the heckler's own name and
+  picture (a webhook post's `username` and `avatar_url`, `persona` in `Tournament.post`), naming them without pinging them again, and
+  fitting the ping's reason: Root's Court Crow (the Corvid character art in a jester's cap), Northgard's Ratatoskr (the Norse squirrel who
+  carries the eagle's insults down Yggdrasil), Pincer's Pamphleteer and Company of Heroes' Sergeant Major (`good-game/Heckler.scala`, its
+  lines there; the jabs mock the play, never the person). The bot checks the role on each ping. The owner makes it with the server changes
+  `role Roast Me` and `self-role Roast Me`; `roast-role <role>` picks another (`off`: none), `roasts` says how it stands. The pictures are
+  `webp2/lfg/webhooks/heckler-*.png`, served by `/art/` (`Lookup.artFile` serves that folder), and the crow as a Discord server emoji,
+  `webp2/lfg/server-emoji/root_crowjester.png`, uploaded to the server by hand; `haunt-roll-fail/tools/heckler-art.py` makes them.
 - The bot's `/rule <rule> [game] [private]` (2026-11-22, asked for as a bot "to help cite the rules", not to interpret them): Root's
   rules by their Law of Root number (`4.3.2`, `H.1`, a section lists the rules under it) or name, with the rule's text and the link to
   it on the Root Database (`webp2/lfg/rules-root.tsv`, made by `haunt-roll-fail/tools/law-index.py` from the Root Database's copy, kept up

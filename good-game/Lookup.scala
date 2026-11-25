@@ -250,7 +250,7 @@ object Lookup {
     // /art/<path>: the file, if the list names it
     def artFile(path : String) : Option[Path] = {
         val p = "webp2/" + path
-        if (path.contains("..") || !(CardLookup.served(p) || RuleLookup.served(p))) None
+        if (path.contains("..") || !(CardLookup.served(p) || RuleLookup.served(p) || p.startsWith("webp2/lfg/webhooks/"))) None
         else Some(Paths.get(Lfg.assets, p)).filter(Files.isRegularFile(_))
     }
 }

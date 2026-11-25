@@ -302,16 +302,18 @@ object TurnPings {
     // a tournament table's game: its table's own thread (Tournament.scala), which its players already follow
     def table(game : String) : Option[(Int, String)] = Tournament.cups().flatMap(c => c.tables.find(_.game == game).map(t => (c.n, t.id))).headOption
 
-    def post(game : String, lobby : Lobby, text : String, ids : List[String]) {
+    // (now: post on the calling thread, for a post already on the poster's, like the hecklers'; persona: Tournament.post's)
+    def post(game : String, lobby : Lobby, text : String, ids : List[String], persona : String = "", now : Boolean = false) {
+        def go(f : () => Unit) = if (now) f() else Tournament.poster.execute(() => f())
         table(game) match {
             case Some((n, id)) =>
                 Tournament.forumWebhook.orElse(Tournament.webhook).foreach { url =>
-                    Tournament.poster.execute(() => Tournament.post(url, text, Tournament.threadKey(n, id), Tournament.threadName(n, id), ids))
+                    go(() => Tournament.post(url, text, Tournament.threadKey(n, id), Tournament.threadName(n, id), ids, persona = persona))
                 }
             case None =>
                 webhookFor(lobby.meta).foreach { url =>
                     val name = (if (lobby.title.nonEmpty) lobby.title else "Game " + game.take(6)) + " · " + metas.getOrElse(lobby.meta, lobby.meta)
-                    Tournament.poster.execute(() => Tournament.post(url, text, game, name, ids, threadsFor(lobby.meta)))
+                    go(() => Tournament.post(url, text, game, name, ids, threadsFor(lobby.meta), persona))
                 }
         }
     }
@@ -556,6 +558,11 @@ object TurnPings {
 
         val (icon, words) = reasonOf(game, lobby, user)
         post(game, lobby, icon + "<@" + id + ">, " + (if (reminder) "a reminder: " + (if (words == "it's your turn") "it's still your turn" else words) else words) + " in **" + lobby.title + "**" + " (" + nameOf(lobby, user) + ").", List(id))
+
+        // a jab from the game's heckler under the ping, for a player with the Roast Me role (Heckler.scala; 2026-11-25), naming them
+        // with a mention that doesn't ping them again
+        val tag = lobby.lines.map(_.split(" ").toList).collectFirst { case "user" :: s :: u :: _ if u == user => s }.flatMap(s => Turns.reason(game, s)).map(_.split("/").head).getOrElse("")
+        Heckler.heckle(lobby.meta, tag, id, "<@" + id + ">", reminder, (text, persona) => post(game, lobby, text, Nil, persona, now = true))
         "pinged"
     }
 }
