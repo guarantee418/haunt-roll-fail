@@ -79,7 +79,8 @@ class FanaticPlayer(val faction : Fanatic)(implicit val game : Game) extends Fac
     // Gardens of the Outcast suit craft (house rule: the other gardens pay only for wild (Any suit) costs).
     // With LizardsCraftByClearing they pay for their clearing's suits, not their own: only frog at a Militant
     // enclave, either at a Peaceful one, any of the Lost City's, either at a double suited Mousehold, Foxburrow or Rabbittown.
-    def craft = FoxRabbitMouse./~(s => Council.governedFor(faction, all(Garden(s)))./(c => outcast.has(s).?[SuitAsset](FanaticExpansion.craftByClearing.?(c.asset).|(s)).|(WildOnly(s))))
+    // LizardsOutcastOnly: only Outcast gardens craft (Law of Root 10.2.1); older games let the others pay for any-suit costs (a house rule)
+    def craft = FoxRabbitMouse./~(s => Council.governedFor(faction, all(Garden(s)))./~(c => outcast.has(s).?[|[SuitAsset]](Some(FanaticExpansion.craftByClearing.?(c.asset).|(s))).|(FanaticExpansion.outcastOnly.not.?(WildOnly(s)))))
 }
 
 
@@ -151,10 +152,21 @@ case class FanaticRevealDiscardCardAction(self : Fanatic, s : BaseSuit, d : Deck
 // by clearing suit on from here (game.lizardsCraftByClearing), then goes on with then
 case class LizardsCraftByClearingAction(then : ForcedAction) extends ForcedAction with SkipValidate
 
+// A one-time fix for games started before LizardsOutcastOnly, added to a live game's log by hand: from here only the
+// Outcast's gardens craft (game.lizardsOutcastOnly), then goes on with then
+case class LizardsOutcastOnlyAction(then : ForcedAction) extends ForcedAction with SkipValidate
+
 object FanaticExpansion extends FactionExpansion[Fanatic] {
     def craftByClearing(implicit game : Game) = game.options.has(LizardsCraftByClearing) || game.lizardsCraftByClearing
 
+    def outcastOnly(implicit game : Game) = game.options.has(LizardsOutcastOnly) || game.lizardsOutcastOnly
+
     def perform(action : Action, soft : Void)(implicit game : Game) = action @@ {
+        case LizardsOutcastOnlyAction(then) =>
+            game.lizardsOutcastOnly = true
+
+            then
+
         case LizardsCraftByClearingAction(then) =>
             game.lizardsCraftByClearing = true
 
