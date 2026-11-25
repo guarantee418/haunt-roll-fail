@@ -134,9 +134,15 @@ object Heckler {
     // and last place
     val harsh = Set("rolled30", "raze", "revolt", "turmoil", "bomb", "sanctify", "last", "finishedlast")
 
+    // TERRIFIED (2026-11-25, the owner's pick for being "scared from a fight"): the Klipy video the owner linked
+    // (static.klipy.com/.../2W84h3Sw.mp4), made a GIF (webp2/lfg/gifs/terrified.gif): half of the GIFs when the player is under attack
+    // or being banished
+    val scared = Set("defend", "banished")
+
     def gifFor(tag : String) : Option[String] =
         if (Tournament.site.isEmpty || scala.util.Random.nextInt(3) != 0) None
-        else Some(if (harsh.contains(tag) && scala.util.Random.nextBoolean()) Tournament.site + "/art/lfg/gifs/emotional-damage.gif"
+        else Some(if (scared.contains(tag) && scala.util.Random.nextBoolean()) Tournament.site + "/art/lfg/gifs/terrified.gif"
+        else if (harsh.contains(tag) && scala.util.Random.nextBoolean()) Tournament.site + "/art/lfg/gifs/emotional-damage.gif"
         else if (scala.util.Random.nextBoolean()) klipyLaughs(scala.util.Random.nextInt(klipyLaughs.size)) else Tournament.site + "/art/lfg/gifs/" + (tag match {
             case "rolled30" | "whiffed" | "defend" | "battle" => "crow-dice.gif"
             case "raze" | "revolt" | "sanctify" | "bomb" | "turmoil" | "handlimit" | "banished" => "crow-can.gif"
