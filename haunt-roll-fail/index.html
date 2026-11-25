@@ -1361,16 +1361,39 @@
                 :has(> .setup-page) [class*="hrf-choice"] { min-height: 44px; }
                 :has(> .setup-page) [class*="hrf-choice"][class*="hrf-thuc"] { margin-left: 1ex; margin-right: 1ex; }
                 :has(> .setup-page) [class*="hrf-faction-tile"] { width: calc(33.3% - 1.4ex); margin: 0.45ex; padding: 0.4ex 0; font-size: 88%; }
-                :has(> .setup-page) [class*="hrf-faction-tile"] [class*="tile-button"] { min-width: 40px; min-height: 30px; }
+                :has(> .setup-page) [class*="hrf-faction-tile"] [class*="tile-button"] { min-width: 44px; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; }
                 .setup-bar { padding-left: 1ex; padding-right: 1ex; }
                 .setup-name { width: 100%; text-align: center; }
                 .setup-name + * { margin-top: 0.4ex; }
                 :has(> .setup-page) > [class*="hrf-halfbutton"] { width: 40%; margin-left: 1ex; margin-right: 1ex; }
                 :has(> .setup-page) > [class*="hrf-halfbutton"][class*="hrf-option-e"] { padding-left: 2.6ex; padding-right: 0.6ex; }
-                :has(> .setup-page) [class*="hrf-player"] { min-height: 11ex; padding-left: 2ex; padding-top: 0.8ex; padding-bottom: 0.8ex; row-gap: 0.6ex; }
-                :has(> .setup-page) [class*="hrf-updown"] [class*="hrf-outlined"] { min-width: 40px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; }
-                :has(> .setup-page) [class*="hrf-player"] > [class*="hrf-outlined"] { min-height: 32px; display: inline-flex; align-items: center; }
+                :has(> .setup-page) [class*="hrf-player"] { min-height: 104px; padding-left: 2ex; padding-top: 0.8ex; padding-bottom: 0.8ex; row-gap: 0.6ex; }
+                :has(> .setup-page) [class*="hrf-updown"] [class*="hrf-outlined"] { min-width: 44px; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; }
+                :has(> .setup-page) [class*="hrf-player"] > [class*="hrf-outlined"] { min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center; }
             }
+
+            /* In the games: the same readable text, press and focus (Pincer and Company of Heroes have their own colors) */
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #game-attachment-point { color: #ababab; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #game-attachment-point [class*="hrf-normal"] { color: #ababab; }
+            body:not([data-meta=pincer]):not([data-meta=tactics]) #game-attachment-point [class*="hrf-halfhigh"] { color: #c4c4c4; }
+            #game-attachment-point [class*="hrf-choice"][data-onclick] { transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1); }
+            #game-attachment-point [class*="hrf-choice"][data-onclick]:active { transform: scale(0.97); }
+            #game-attachment-point [data-onclick]:focus-visible { outline: 3px solid #f0c040 !important; outline-offset: 2px; }
+            .setup-emblem { height: 6ex; max-width: 9ex; object-fit: contain; }
+            .setup-row-emblem { height: 2.4em; vertical-align: middle; margin-right: 1ex; object-fit: contain; }
+            body[data-meta=pincer] .setup-bar, body[data-meta=tactics] .setup-bar { background-color: #1c2129; }
+            @media (prefers-reduced-motion: reduce) {
+                #game-attachment-point [class*="hrf-choice"][data-onclick] { transition: none; }
+                #game-attachment-point [class*="hrf-choice"][data-onclick]:active { transform: none !important; }
+            }
+            :has(> .setup-page) [class*="hrf-choice"][class*="hrf-player"][class] { min-height: 8.4ex; padding-right: 9ex; }
+            body[data-meta=tactics] :has(> .setup-page) [class*="hrf-faction-tile"] { width: 20ex; font-size: 86%; }
+            :has(> .setup-page) [class*="hrf-option-e"]:has(> img[class*="hrf-explain"]) { padding-left: 6ex; padding-right: 6ex; }
+            @media (pointer: coarse), (max-width: 700px) {
+                :has(> .setup-page) [class*="hrf-choice"][class*="hrf-player"][class] { min-height: 104px; }
+                body[data-meta=tactics] :has(> .setup-page) [class*="hrf-faction-tile"] { width: calc(50% - 1.6ex); }
+            }
+            .home-name span { font-family: "Luminari", serif !important; font-size: 100% !important; }
 
             /* The menus: brighter text, larger buttons, one look (the panes of the menus only; a game's own are elsewhere) */
             body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-pane---hrf-action"], body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-pane-action"] { color: #b4b4b4; }
@@ -1415,7 +1438,11 @@
                 body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-choice"]:not([class*="hrf-player"]) { min-height: 44px; }
             body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class*="hrf-choice"][class*="hrf-thuc"], body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point [class^="hrf-info---"] { margin-left: 1ex; margin-right: 1ex; }
                 .home-lead { width: calc(100% - 2ex); margin-left: 1ex; margin-right: 1ex; }
-                .home-card { width: 100% !important; }
+                .home-card { width: calc(50% - 1.6ex) !important; margin: 0.6ex 0.6ex !important; padding: 1ex 0.4ex !important; }
+                .home-emblems { gap: 0.4ex; }
+                .home-emblem { height: 3.4ex; width: 3.4ex; }
+                .home-name { font-size: 108%; }
+                .home-about { display: none; }
                 body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .menu-third.menu-third:not(.menu-third + .menu-third) { margin-left: 1ex; }
                 body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .menu-third.menu-third:not(:has(+ .menu-third)) { margin-right: 1ex; }
                 body:not([data-meta=pincer]):not([data-meta=tactics]) #root-attachment-point .rk-chip { min-height: 44px; }
@@ -1477,7 +1504,11 @@
                 const on = () => document.body.dataset.meta === "pincer";
                 // and the setup screens (Meta.setupDesign), only while they are the page
                 const setup = e => { const p = e.closest("[class*=hrf-middle-scroll-in]"); return p && p.querySelector(".setup-page") };
-                const take = e => on() || setup(e) || e.closest("#root-attachment-point");
+                const take = e => on() || setup(e) || e.closest("#root-attachment-point, #game-attachment-point");
+                // the keyboard was used last: once the choices are replaced, the first of the new ones is focused
+                let keyed = false;
+                document.addEventListener("pointerdown", () => { keyed = false }, true);
+                document.addEventListener("keydown", e => { if (e.key === "Tab" || e.key === "Enter" || e.key === " ") keyed = true }, true);
                 const mark = () => {
                     document.querySelectorAll(".setup-page").forEach(m => {
                         const p = m.closest("[class*=hrf-middle-scroll-in]");
@@ -1504,14 +1535,17 @@
                         const t = e.parentElement;
                         t.scrollLeft = e.offsetLeft - t.offsetLeft - (t.clientWidth - e.offsetWidth) / 2;
                     });
-                    if (on())
-                        document.querySelectorAll("[data-onclick]:not([tabindex])").forEach(e => {
-                            // the log's lines and the pictures stay out of the tab order
-                            if (!/hrf-choice/.test(e.className))
-                                return;
-                            e.tabIndex = 0;
-                            e.setAttribute("role", "button");
-                        });
+                    // and the games: the choices, cards and tiles of the action pane, not the log's lines or the player panels
+                    document.querySelectorAll('#game-attachment-point [class*="hrf-action"] [data-onclick]:not([tabindex])').forEach(e => {
+                        e.tabIndex = 0;
+                        e.setAttribute("role", "button");
+                        if (!e.textContent.trim() && !e.querySelector("img[alt]:not([alt=''])"))
+                            e.setAttribute("aria-label", (e.dataset.source || (e.querySelector("[data-source]") || { dataset: {} }).dataset.source || "choice").replace(/[-:]/g, " "));
+                    });
+                    if (keyed && document.activeElement === document.body) {
+                        const first = [...document.querySelectorAll('#game-attachment-point [class*="hrf-action"] [data-onclick][tabindex]')].find(e => e.offsetParent && getComputedStyle(e).visibility !== "hidden");
+                        first && first.focus();
+                    }
                 };
                 let queued = false;
                 new MutationObserver(() => {
