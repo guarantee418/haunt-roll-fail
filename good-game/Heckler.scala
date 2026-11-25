@@ -16,6 +16,8 @@ import java.nio.file.Files
 //   Pincer            the Pamphleteer, an 18th-century broadsheet satirist
 //   Company of Heroes the Sergeant Major, over the field radio
 // The jabs make fun of the play, never the person, and keep to what a ping already says (nothing only the player may know).
+// Root's Court Crow also mocks what happens to a player on anyone's turn (a 3-0 roll against them, a Raze, a Revolt, a Lizard
+// conversion ...; jests, below, and root/jests.scala).
 //
 // The tournament changes:
 //   roast-role <role>   the role that gets the jabs, if not "Roast Me" (roast-role off: no jabs at all)
@@ -75,8 +77,7 @@ object Heckler {
                     val v = voiceOf(meta)
                     val options = if (reminder) v.lines("reminder") else v.lines.getOrElse(tag, v.lines("turn"))
                     val line = pick(uid, options).replace("{name}", name)
-                    val avatar = if (v.avatar.nonEmpty && Tournament.site.nonEmpty) ",\"avatar_url\":" + Tournament.json(Tournament.site + "/art/" + v.avatar) else ""
-                    post(line, ",\"username\":" + Tournament.json(v.name) + avatar)
+                    post(line, persona(v))
                 }
             }
             catch {
@@ -84,6 +85,119 @@ object Heckler {
             }
         }
     }
+
+    // the webhook post's own name and picture for a heckler (Tournament.post's persona)
+    def persona(v : Voice) : String =
+        ",\"username\":" + Tournament.json(v.name) + (if (v.avatar.nonEmpty && Tournament.site.nonEmpty) ",\"avatar_url\":" + Tournament.json(Tournament.site + "/art/" + v.avatar) else "")
+
+    // OFF-TURN JESTS (2026-11-25, asked for: "have the crow do off turn things, like laugh at you being attacked and your opponent
+    // rolled 3-0, or laugh that a mob razed your buildings, a revolt wiped you out, or lizards converting"): Root's clients send what
+    // happened to whom lately with their turn reports (the seventh line, "<n>:<tag>/<seat>/<other faction>/<clearing>", numbered from
+    // the game's first event: root/jests.scala, MetaGame.jests). Each number is taken once (turns/jests.tsv: game, the last number
+    // taken); a game's first report only sets where it starts, so a game running before this, or a page reopened, mocks nothing old.
+    // An event whose victim has the Roast Me role gets the Court Crow's post in the game's thread, at most 3 a report.
+    val taken = TurnPings.dir.resolve("jests.tsv")
+
+    var lastTaken : Map[String, Int] = null
+
+    def takenOf : Map[String, Int] = {
+        if (lastTaken == null)
+            lastTaken = Backup.rows(taken).collect { case g :: n :: _ if n.toIntOption.nonEmpty => g -> n.toInt }.toMap
+        lastTaken
+    }
+
+    def jests(game : String, events : List[String]) : Unit = try {
+        val parsed = events.flatMap(e => e.split(":", 2).toList match {
+            case n :: rest :: Nil if n.toIntOption.nonEmpty => Some(n.toInt -> rest.split("/").toList)
+            case _ => None
+        })
+        val top = parsed.map(_._1).maxOption.getOrElse(0)
+        val fresh = synchronized {
+            takenOf.get(game) match {
+                case None =>
+                    lastTaken = takenOf + (game -> top)
+                    java.nio.file.Files.createDirectories(TurnPings.dir)
+                    Ranking.append(taken, Backup.row(game, top))
+                    Nil
+                case Some(was) if top > was =>
+                    lastTaken = takenOf + (game -> top)
+                    Ranking.append(taken, Backup.row(game, top))
+                    parsed.filter(_._1 > was)
+                case _ => Nil
+            }
+        }
+        if (fresh.nonEmpty && roleName.nonEmpty && DiscordBot.configured)
+            TurnPings.lobbyOf(game).filter(l => TurnPings.rootMetas.contains(l.meta)).foreach { lobby =>
+                val seats = lobby.lines.map(_.split(' ').toList).collect { case "user" :: f :: u :: _ => f -> u }.toMap
+                val table = TurnPings.table(game).nonEmpty
+                fresh.sortBy(_._1).take(3).foreach { case (_, tag :: seat :: rest) =>
+                    val other = rest.headOption.getOrElse("")
+                    val where = rest.lift(1).getOrElse("")
+                    for { lines <- crowJests.get(tag) ; user <- seats.get(seat) ; id <- TurnPings.mentionOf(user, table) }
+                        Tournament.poster.execute { () =>
+                            try {
+                                if (roasted(id)) {
+                                    val line = pick(id, lines).replace("{name}", "<@" + id + ">").replace("{other}", factionName(other)).replace("{where}", if (where.nonEmpty) where else "the woods")
+                                    TurnPings.post(game, lobby, line, Nil, persona(crow), now = true)
+                                }
+                            }
+                            catch {
+                                case e : Exception => println("Heckler: " + e)
+                            }
+                        }
+                case _ =>
+                }
+            }
+    }
+    catch {
+        case e : Exception => println("Heckler: jests not taken: " + e)
+    }
+
+    // a Root faction's name, as the LFG catalog has it (Lfg.root.meta), else its short name; the bot's own emojis are left out, as
+    // only the bot can post them and these go out through the webhook
+    def factionName(short : String) : String = if (short.isEmpty) "someone" else {
+        val key = "IncludeFaction(" + short + ")"
+        "**" + LfgSetup.catalog(Lfg.root.meta).map(_.label(key)).filter(_ != key).getOrElse(short) + "**"
+    }
+
+    val crowJests = Map(
+        "rolled30" -> List(
+            "HA! {other} rolled 3-0 against {name} in {where}. The dice have chosen a side, and it isn't yours.",
+            "Caw caw caw! A 3-0 roll at {where}. {name}, your warriors didn't even get to swing.",
+            "{other} rolled a 3, {name} rolled a 0. I'd call it a battle, but that would be generous.",
+            "3-0 at {where}! {name}, have you tried rolling the die the other way up?"),
+        "whiffed" -> List(
+            "{name} attacked {other} at {where} and rolled a 0. Bold strategy. Terrible dice.",
+            "Caw! {name} charged into {where} and rolled 0-3. {other} sends their thanks.",
+            "{name}'s attack at {where}: zero hits dealt, three taken. I've seen sparrows do better."),
+        "ambushed" -> List(
+            "AMBUSH! {name} walked right into {other}'s trap at {where}. The crows saw it coming. Everyone saw it coming.",
+            "{name} marched into {where} without checking the bushes. {other} was in the bushes.",
+            "Ambushed at {where}, {name}! Rule one of the Woodland: never trust a quiet clearing."),
+        "raze" -> List(
+            "The Mob just razed {name}'s buildings in {where}. Don't worry, rubble has a rustic charm.",
+            "{other}'s rats burned down {where}. {name}, I hope you weren't attached to anything there.",
+            "Raze! {name}'s things in {where} are now a nice open field. The crows thank you for the view.",
+            "{name}, the Mob came to {where}. The Mob left. Your buildings did not."),
+        "revolt" -> List(
+            "REVOLT in {where}! {name} has been wiped out of it by {other}. Viva la Woodland!",
+            "The {other} rose up in {where} and {name} went down. Should have listened to the people, {name}.",
+            "{name}, {where} has revolted. Everything you had there is now a very sympathetic base.",
+            "Caw! A Revolt in {where} cleared out {name}. Sympathy: one. {name}: zero."),
+        "convert" -> List(
+            "{other} converted one of {name}'s warriors in {where}. It looks happier already.",
+            "{name}, your warrior in {where} has found religion. Lizard religion.",
+            "Another of {name}'s warriors joins the Cult in {where}. They say the robes are very comfortable."),
+        "sanctify" -> List(
+            "{other} sanctified {name}'s building in {where}. It's a garden now. A lovely garden. Not yours.",
+            "{name}, your building in {where} has been redecorated by {other}. Very green. Very lizard."),
+        "turmoil" -> List(
+            "TURMOIL! {name}'s Eyrie tripped over its own Decree. The crows are crying with laughter.",
+            "{name}, the Decree collapsed. Your leader has been deposed. Your nobles are embarrassed. I'm delighted.",
+            "Caw! The Eyrie's Decree broke and {name} fell into Turmoil. Birds of a feather fall together."),
+        "bomb" -> List(
+            "BOOM! A Corvid bomb went off on {name}'s warriors in {where}. That was one of ours. You're welcome.",
+            "{name}, that plot in {where}? It was a bomb. It's always a bomb."))
 
     // the tournament changes
     val words = Set("roast-role", "roasts")
