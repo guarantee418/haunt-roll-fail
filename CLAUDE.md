@@ -1276,7 +1276,8 @@ server. No session can reach the server, and none needs to.
   "sometimes the crow just sends a trolling gif, with some context"): the 3-0 dice for a roll or a battle, the crow popping out of its
   trash can for something trashed, else the crow laughing (`Heckler.gifFor`, a webhook embed; `webp2/lfg/gifs/`, made by
   `heckler-art.py`, served by `/art/`). Half of those GIFs are instead one of 18 laughing GIFs from Klipy (the library Discord's GIF picker searches),
-  the first results of its "lol" search, picked by the owner on 2026-11-25 and linked from Klipy's servers (`Heckler.klipyLaughs`). The role is called @troll on the server since 2026-11-25 (`roast-role troll`). The tournament change `troll-intro`
+  the first results of its "lol" search, picked by the owner on 2026-11-25 and linked from Klipy's servers (`Heckler.klipyLaughs`). For the harshest events (a 3-0 roll against them, a Raze, a Revolt, Turmoil, a bomb, a Sanctify, last place) half the
+  GIFs are Emotional Damage instead, the owner's pick, a Klipy video made a GIF (`webp2/lfg/gifs/emotional-damage.gif`, `Heckler.harsh`). The role is called @troll on the server since 2026-11-25 (`roast-role troll`). The tournament change `troll-intro`
   gives every member with the role one first jab at once, in the thread of the game it is about, for the first thing found in their games:
   a game waiting on them (and for how long), last on VP in a Root game, last place in a finished game (`ranking/results.tsv`), a game that
   needed 4 or more turn pings, 8 VP or more behind the leader, or a lost game; nothing found, nothing posted (no welcome, owner's ask;

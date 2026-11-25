@@ -128,9 +128,16 @@ object Heckler {
         "https://static.klipy.com/ii/4e7bea9f7a3371424e6c16ebc93252fe/ad/4c/dUMUAjdqCO3Y.gif",
         "https://static.klipy.com/ii/925f17378dd1893b674a723c07535afe/4c/63/EBINH69p.gif")
 
+    // EMOTIONAL DAMAGE (2026-11-25, the owner's pick: "the emotional damage, just saying, great"): the Klipy video the owner linked
+    // (static.klipy.com/.../N9AZXRDopoEX.mp4), made a GIF, as a webhook embed shows no video (webp2/lfg/gifs/emotional-damage.gif, served
+    // from /art/). It is half of the GIFs for the harshest things: a 3-0 roll against them, a Raze, a Revolt, Turmoil, a bomb, a Sanctify,
+    // and last place
+    val harsh = Set("rolled30", "raze", "revolt", "turmoil", "bomb", "sanctify", "last", "finishedlast")
+
     def gifFor(tag : String) : Option[String] =
         if (Tournament.site.isEmpty || scala.util.Random.nextInt(3) != 0) None
-        else Some(if (scala.util.Random.nextBoolean()) klipyLaughs(scala.util.Random.nextInt(klipyLaughs.size)) else Tournament.site + "/art/lfg/gifs/" + (tag match {
+        else Some(if (harsh.contains(tag) && scala.util.Random.nextBoolean()) Tournament.site + "/art/lfg/gifs/emotional-damage.gif"
+        else if (scala.util.Random.nextBoolean()) klipyLaughs(scala.util.Random.nextInt(klipyLaughs.size)) else Tournament.site + "/art/lfg/gifs/" + (tag match {
             case "rolled30" | "whiffed" | "defend" | "battle" => "crow-dice.gif"
             case "raze" | "revolt" | "sanctify" | "bomb" | "turmoil" | "handlimit" | "banished" => "crow-can.gif"
             case _ => "crow-laugh.gif"
