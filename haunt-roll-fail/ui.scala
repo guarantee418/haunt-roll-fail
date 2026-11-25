@@ -176,6 +176,7 @@ object ZBasic {
     val infoch   = $(xstyles.info,   xstyles.xx, xstyles.chm, xstyles.chp, xstyles.thuc, xlo.fullwidth, xstyles.thumargin, xlo.pointer)
     // A tile in a grid of choices, like the faction picker's
     val tile     = $(xstyles.choice, xstyles.xx, xstyles.chp, xstyles.factionTile, xlo.pointer)
+    val wideTile = $(xstyles.choice, xstyles.xx, xstyles.chp, xstyles.wideTile, xlo.pointer)
 
     val inputD   = $(xstyles.choice, xstyles.chm, xstyles.chp)
     val inputT   = $(xstyles.choice, xstyles.chm, xstyles.chp, xstyles.fontSize100)

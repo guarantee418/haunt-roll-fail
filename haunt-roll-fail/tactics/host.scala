@@ -128,3 +128,17 @@ object Replay {
         State.print(game)
     }
 }
+
+// `sbt "runMain tactics.MapDump"` prints each Map choice's picture, size, Spawn Areas and Control Points (in the picture's pixels), one
+// line each, for tools/map-thumbs.py, which draws the setup screen's map thumbnails
+object MapDump {
+    def main(args : Array[String]) {
+        MapChoice.all.foreach { c =>
+            val m = c.map
+            val teams = m.areas.any.?(m.areas.num).|(2)
+            val spawns = 0.until(teams).$./(t => m.spawn(t)./(h => m.x(h).round + "," + m.y(h).round).mkString(";"))
+            val points = m.points.toList./{ case (h, l) => m.x(h).round + "," + m.y(h).round + "," + l./(_.id).mkString("+") }.mkString(";")
+            println("MAP\t" + c + "\t" + m.image + "\t" + m.width + "\t" + m.height + "\t" + spawns.mkString("|") + "\t" + points)
+        }
+    }
+}

@@ -153,6 +153,9 @@ object xstyles {
     // The info button of a faction in the picker's rows (Root's ?)
     object infoButton extends CustomStyle(padding.left("0.8ex"), padding.right("0.8ex"), margin.left("0.4ex"))
     object factionTile extends CustomStyle(width("11ex"), min.height("13ex"), flex.direction("column"), margin("0.6ex"), text.align("center"))
+    // a wider tile, for an option shown with a picture (MetaGame.optionTileWide: Company of Heroes' maps)
+    object wideTile extends CustomStyle(width("24ex"), min.height("13ex"), flex.direction("column"), margin("0.6ex"), text.align("center"))
+    object tilePicture extends CustomStyle(width("100%"), display("block"))
 
     object horbreak extends CustomStyle(width("100%"))
 

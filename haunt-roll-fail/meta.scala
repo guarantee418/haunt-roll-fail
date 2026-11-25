@@ -177,6 +177,8 @@ trait MetaBase {
     def factionRowIcon(f : F) : Elem = Empty
     // an option shown as a tile in a grid (Advanced Setup's factions)
     def optionTile(o : O) : |[Elem] = None
+    // a tile twice as wide, for an option shown with a picture
+    def optionTileWide(o : O) : Boolean = false
     // a line under the setup rows about the seating order
     def seatingNote(selected : $[O]) : Elem = Empty
     // Random picks offered in the faction picker: the label (or tile) and the factions to pick from. The faction is drawn when

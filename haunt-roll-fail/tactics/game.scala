@@ -978,10 +978,19 @@ object RulesChoice {
 }
 
 // the map: the Mission Booklet's two-panel core missions (missions.scala); games made before the choice play Moro River as first read (MoroRiverFirst)
+// the setup screen shows them in one Map folder (folded, it names the map picked), in sections by the booklet's chapters, each map a
+// tile with its picture (tools/map-thumbs.py), its Spawn Areas and Control Points marked, and how many play (Meta.optionTile); one
+// choice across the sections (oneOf)
 sealed abstract class MapChoice(val map : MapData, val text : String) extends GameOption with OneOfGroup with ImportantOption {
-    val group = "Map".txt
+    lazy val section : String = MapChoice.sectionOf(map)
+    lazy val group = ("Map: " + section).txt
+    override def oneOf : Any = "Map"
+    override def folder = |("Map")
     def valueOn = map.name.hl
     override val explain = $[Elem](text.txt)
+    // who plays it: the free-for-alls their number, the skirmishes two, the rest two to five (teams)
+    def playersText = (map.areas.num > 2).?(map.areas.num + " players, each on their own").|((map.panels == 1).?("2 players").|("2 to 5 players"))
+    def panelsText = (map.rows * map.panels > 1).?((map.rows * map.panels) + " panels" + (map.rows > 1).??(", square")).|("1 panel")
 }
 case object MoroRiverMap extends MapChoice(MoroRiver, "MR1 and MR2: a river with fords, tank traps and Buildings. Spawn Areas at the top and bottom. Starting stockpile 4 Manpower, 2 Munitions, 3 Fuel.")
 case object AcrossTheDonMap extends MapChoice(AcrossTheDon, "MR1 and MR2, played across: the Spawn Areas are the left and right edges, the Control Points elsewhere. Starting stockpile 5 Manpower, 3 Munitions, 3 Fuel.")
@@ -1050,12 +1059,29 @@ case object SummerSolsticeMap extends MapChoice(SummerSolstice, "Large Map Pack,
 
 // the booklet's optional Modular Bunkers (and the Hilltop Monastery's optional Victory Point), on the missions that mark them
 case object OptionalMapFeatures extends GameOption with ToggleOption {
-    val group = "Map".txt
+    val group = "Map: options".txt
+    override def folder = |("Map")
     def valueOn = "Optional Modular Bunkers".hl
     override val explain = $[Elem]("The Mission Booklet's optional Modular Bunkers (its A and B hexes) become Bunkers on the missions that mark them, and the Hilltop Monastery's optional Victory Point is in its Cathedral tower.".txt)
 }
 
 object MapChoice {
+    val core = $[MapData](MoroRiver, AcrossTheDon, BetweenTwoRivers, ArdennesForest, FrozenLake, RoadToMoscow, BetweenTwoRiversWide, ArdennesForestWide)
+
+    // the booklet's chapters, in its order
+    val sections = $("Core missions", "Skirmishes", "Core panels, 3 panels", "Large Map Pack, 2 panels", "Large Map Pack, 3 panels",
+        "Large Map Pack, 4 panels", "Large Map Pack, square", "Free-for-all")
+
+    def sectionOf(m : MapData) : String =
+        if (m.areas.num > 2) "Free-for-all"
+        else if (m.panels == 1) "Skirmishes"
+        else if (core.has(m)) (m.panels == 3).?("Core panels, 3 panels").|("Core missions")
+        else if (m.rows > 1) "Large Map Pack, square"
+        else "Large Map Pack, " + m.panels + " panels"
+
+    // the choices in the setup's order, section by section
+    lazy val ordered = sections./~(n => all.%(_.section == n))
+
     val all = $[MapChoice](MoroRiverMap, AcrossTheDonMap, BetweenTwoRiversMap, ArdennesForestMap, FrozenLakeMap, RoadToMoscowMap, MoroRiverFFAMap, TheRiverMap, FrozenPondMap, BetweenTwoRiversWideMap, ArdennesForestWideMap,
         HillThreeThirtyOneMap, PloiestiOutskirtsMap, VerrieresRidgeMap, TroisPontsMap, CaenMap, CarentanMap, StalingradMap, BulgeMap, LeningradMap, MongolianTrainStationMap,
         CathedralMissionMap, CologneMissionMap, DesertOasisMap, NoMansLandMap, MoscowOutskirtsMap, OpposingFaithsMap, SemoisMap, HinderdamMap, AncientFieldsMap, AirfieldMissionMap, HilltopMonasteryMap, BudapestMap, SiegeOfLeningradMap, OpposingFaithsThreeMap, TheWideFrontMap, TroisPontsThreeMap, TwoIslandsMap, CologneFourMap, TroisPontsMonasteryMap, HillMonasteryMap, VengeanceMap, OpposingFaithsFourMap, TwoHilltopsMap, FrozenForkMap, SixBridgesMap, HillThreeThirtyOneFFAMap, CologneFFAMap,
