@@ -249,6 +249,7 @@ def fit(im, size, margin):
 #   crow-laugh.gif   the capped crow rocking with laughter, "HA!" "HA!" "CAW!" popping up round it
 #   crow-can.gif     the crow popping up out of its trash can, laughing, and ducking back down
 #   crow-dice.gif    two Root dice tumbling to a 3 and a 0, then the crow popping up beside them, laughing
+# and each as a Discord sticker (webp2/lfg/stickers/, 320x320, under 512 KB), with the two still crows as PNG stickers
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 GW = 360           # the GIFs' size
 BG = (0, 0, 0, 0)
@@ -271,7 +272,14 @@ def word(d, text, x, y, size, fill, angle=0, im=None):
 
 
 def save_gif(frames, name, ms):
-    os.makedirs(os.path.join(BASE, "lfg/gifs"), exist_ok=True)
+    write_gif(frames, os.path.join(BASE, "lfg/gifs/" + name), ms)
+    # the same as a Discord sticker (2026-11-25, asked for: animated emojis need a boosted server, stickers don't): exactly 320x320,
+    # under 512 KB; uploaded by hand under Server Settings, Stickers
+    write_gif([f.resize((320, 320), Image.LANCZOS) for f in frames], os.path.join(BASE, "lfg/stickers/" + name), ms)
+
+
+def write_gif(frames, path, ms):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     # one palette for every frame, with a transparent index: alpha is cut at half (the sticker edge keeps the cut clean)
     out = []
     for f in frames:
@@ -283,7 +291,7 @@ def save_gif(frames, name, ms):
         q.putpalette(pal + [0, 0, 0] * (256 - len(pal) // 3))
         q.paste(255, mask=a.point(lambda v: 255 - v))
         out.append(q)
-    out[0].save(os.path.join(BASE, "lfg/gifs/" + name), save_all=True, append_images=out[1:], duration=ms, loop=0, transparency=255, disposal=2, optimize=False)
+    out[0].save(path, save_all=True, append_images=out[1:], duration=ms, loop=0, transparency=255, disposal=2, optimize=False)
 
 
 def laugh_gif(head):
@@ -375,6 +383,10 @@ def main():
     bare = crow(with_collar=False)
     bin_ = edged(fit(can(bare), 512, 12))
     bin_.resize((128, 128), Image.LANCZOS).save(os.path.join(BASE, "lfg/server-emoji/root_jestercan.png"), optimize=True)
+    # both as Discord stickers too (320x320)
+    os.makedirs(os.path.join(BASE, "lfg/stickers"), exist_ok=True)
+    emoji.resize((320, 320), Image.LANCZOS).save(os.path.join(BASE, "lfg/stickers/crow-jester.png"), optimize=True)
+    bin_.resize((320, 320), Image.LANCZOS).save(os.path.join(BASE, "lfg/stickers/crow-can.png"), optimize=True)
     # the crow in the can is the Court Crow's picture too (2026-11-25, liked best)
     badge(fit(bin_, 512, 0)).resize((256, 256), Image.LANCZOS).save(os.path.join(BASE, "lfg/webhooks/heckler-root.png"), optimize=True)
     head = emoji.resize((250, 250), Image.LANCZOS)
