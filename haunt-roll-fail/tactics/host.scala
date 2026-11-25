@@ -28,12 +28,26 @@ object Host extends hrf.host.BaseHost {
 
     override val limit = 60000
 
-    def askBot(g : G, f : F, actions : $[UserAction]) = new BotXX(f).ask(actions, 0)(g)
+    // TACTICS_TUTORIAL=1 plays the Tutorial's practice game (its seating and options) and prints the kinds of choices the US
+    // Forces were offered with no tip ("NO TIP"), and each tip once ("TIP")
+    val tutorial = sys.env.get("TACTICS_TUTORIAL") == Some("1")
+    var tipsSeen = Set[String]()
+
+    def askBot(g : G, f : F, actions : $[UserAction]) = {
+        if (tutorial && f == Tutorial.side && actions.any) {
+            val kinds = actions./(_.unwrap.getClass.getSimpleName).distinct.sorted.mkString(",")
+            Tutorial.tip(g, f, actions) match {
+                case Some(_) => if (tipsSeen.contains(kinds).not) { tipsSeen += kinds ; println("TIP " + kinds) }
+                case None => if (tipsSeen.contains("-" + kinds).not) { tipsSeen += "-" + kinds ; println("NO TIP " + kinds) }
+            }
+        }
+        new BotXX(f).ask(actions, 0)(g)
+    }
 
     def factions = Rules.factions
     def subjects = factions
 
-    def batch = $(() => new G(factions.shuffle, Rules.options))
+    def batch = $(() => tutorial.?(new G(Tutorial.seating, Tutorial.options)).|(new G(factions.shuffle, Rules.options)))
 
     def factionName(f : F) = f.name
     def nameWinner(f : F) = f.name
