@@ -264,10 +264,39 @@ Bunkers and Cathedrals the booklet adds come from its pictures (pages 11 to 25 a
 - **Monastery's church** is one multi-hex Building (5 hexes); the small roofless sheds around it are cover, not Buildings. Opposing
   Faiths' Cathedral is the "TP2 Cathedral / Tile" the booklet places over the round tower and four hexes beside it.
 - A Hill 331 Bunker that a layout cuts in half at the map's edge (No Man's Land, Hilltop Monastery, The Wide Front) stays a Bunker.
-- **Left out**: the optional Modular Bunkers and the optional Victory Points; the booklet's missions with no bag in the mod (A River Too
-  Far, Race Across the Rhine, Frozen River, Mud, Summer Solstice and the rest of pages 16 to 22), whose Control Points would have to be
-  read off the booklet's pictures; and the square 4-panel missions (7.0) and 5 Way free-for-alls (8.3, 8.4), whose panels turn a
-  quarter round into flat-topped hexes, which the board doesn't have.
+
+The rest of the booklet is in too (2026-11-25; `tools/missions-grid.py`): the missions the mod has no bag for, whose Control Points
+were read off the booklet's pictures (`tools/booklet-tokens.py` finds each token by its colour and groups them by hex; each map was then
+checked against its picture and a few tokens corrected by hand, `FIX`), and the 7.0 square 4-panel missions and 8.3 and 8.4 5 Way
+free-for-alls. The booklet draws the square maps with their panels upright, two rows of two (the mod's table turns them a quarter
+round), so they keep the pointy-topped hexes: they are maps of two rows (`MapData.rows`), the hexes past column Z named AA, AB, ....
+The square maps' bags put their tokens elsewhere than the booklet, whose pictures are followed.
+
+| Mission | Panels | Stockpile | Spawn Areas |
+|---|---|---|---|
+| A River Too Far | MO2, MR1, MR2 | 1, 2, 5 | both top corners; bottom middle |
+| Race Across the Rhine | HL2, MR1, MR2 | 7, 1, 0 | left and right edges; 2 starting Infantry each |
+| Frozen River | SG1, AF2, AF1 | 4, 4, 4 | top left, bottom right |
+| Frozen River (4 panels) | SG2, SG1, AF2, AF1 | 4, 4, 4 | two parts of the top and of the bottom row |
+| Mud | HL2, MR1, MR2, HL1 | 6, 2, 4 | both ends of the top and bottom rows |
+| Winter Solstice | SG1, SG2, AF1, AF2 | 3, 5, 1 | top left, bottom right |
+| Summer Solstice | MO2, MR1, MR2, MO1 | 2, 3, 4 | top and bottom |
+| Lorraine | MR1, MR2 / HL1, HL2 | 5, 4, 3 | left and right edges |
+| Rails and Metal | AF2, AF1 / SG1r, SG2r | 4, 4, 4 | left and right edges |
+| St. Hilaire | TP1r, TP2r / MO1, MO2 | 4, 4, 4 | upper left edge, lower right edge |
+| Winter Storm | SG1, SG2 / AF1, AF2 | 6, 4, 2 | left and right edges |
+| The Volga | TP1, TP2 / MR1, MR2 (the lower row 5.5 hexes right) | 6, 4, 2 | left and right edges of both rows |
+| Race to Rome | MR1, MR2 / MO1, MO2 | 6, 4, 2 | upper left and right edges |
+| St. Marie du Mont | MO2r, TP1 / TP2, MO1r | 6, 4, 3 | upper left and right edges |
+| Cologne, 5 Way Free-for-all | TP1r, TP2r / MO1, MO2 | 5, 4, 3 | five numbered areas; ends at 15 VP |
+| Hill 331, 5 Way Free-for-all | HL1, HL2 / HL1, HL2 | 3, 4, 5 | five numbered areas; ends at 15 VP |
+
+- **Optional Modular Bunkers** (the booklet's A and B hexes, "B hexes are not illustrated"): the setup toggle "Optional Modular
+  Bunkers" (`OptionalMapFeatures`) makes them Bunkers (Special Buildings, 4 health, Infantry inside gets an AP die attacking out) on
+  the missions that mark them (`MapData.optional`), and puts the Hilltop Monastery's optional Victory Point in its tower; off, the map
+  is as printed. A Control Point on a Bunker hex stays.
+- **The Volga**: the lower row starts where its hexes line up with the upper row's (the booklet's picture puts it 160 of 380 pixels in).
+- **Frozen River (4 panels)**: the booklet notes 7 Victory Points on Ice.
 
 The 3-panel Between Two Rivers' badges mark the first full column and the half hexes beside it at each edge (`MapData.edge` 1.1).
 The 3-panel missions may be played by two players too, each with 2 starting Infantry.

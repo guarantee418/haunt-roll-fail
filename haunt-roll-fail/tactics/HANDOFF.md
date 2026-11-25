@@ -101,9 +101,8 @@ booklet's pictures (pages 9 and 10). Moro River's first rows had the bridge poin
 
 - Full Game readings to confirm with the team (RULES.md, Interpretations 7 to 12): the Firing Arc's width, Retreat paths,
   Overwatch on a hex passed through.
-- More missions: every LMP mission with a bag in the mod is in (`tools/missions-lmp.py` for the first ten, `tools/missions-bags.py`
-  for the other 27, 2026-11-25: a panel's hand-read features go in its BASE, a mission in M with its bag's name, the booklet's
-  stockpile, spawn boxes and added features as fractions of its picture). Next: the booklet's missions with no bag (A River Too Far,
-  Race Across the Rhine, Frozen River, Mud, Summer Solstice, ...), whose Control Points must be read off the booklet's pictures as
-  `missions-panels.py` does; the square 4-panel missions and 5 Way free-for-alls need flat-topped hexes.
+- Missions: every mission of the Mission Booklet is in (`tools/missions.py`, `missions-panels.py`, `missions-lmp.py`,
+  `missions-bags.py`, `missions-grid.py`; 2026-11-25), with the optional Modular Bunkers as a setup toggle. A new booklet mission
+  goes in `missions-bags.py` (it has a bag) or `missions-grid.py` (read off the booklet's picture with `booklet-tokens.py`: check its
+  points against the picture and correct any in `FIX`).
 - A better bot.

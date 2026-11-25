@@ -13,7 +13,7 @@
 import sys, os, json, subprocess
 from PIL import Image
 Image.MAX_IMAGE_PIXELS = None
-D, OUT = sys.argv[1], sys.argv[2]
+D, OUT = (sys.argv + ['', ''])[1:3]
 ONLY = sys.argv[3:]
 HERE = os.path.dirname(os.path.abspath(__file__))
 PANEL = {'HL1': '43EC122398E918BD6063DC597F153B5595003E35', 'HL2': '05913A192FB9B46BDCC51CB41526E456944A4F96',
@@ -137,8 +137,10 @@ M = [
          pts(*[((x - 40) / 570, 263 / 286) for x in (520, 552, 583)]), pts(*[((x - 40) / 570, 263 / 286) for x in (55, 85, 117)])],
         [], 4, 15, None, 'four players, each on their own, one in each corner'),
 ]
-save = json.load(open(os.path.join(D, 'save.json')))
+_save = []
 def bag(name):
+    if not _save: _save.append(json.load(open(os.path.join(D, 'save.json'))))
+    save = _save[0]
     out = []
     def walk(o):
         if isinstance(o, dict):
@@ -164,6 +166,20 @@ def layout(name, flip):
         elif u in RES: toks.append((RES[u], s * t['posX'], s * t['posZ']))
     ps = [panels[k] for k in sorted(panels)]
     return ps, toks
+# the booklet's optional Modular Bunkers (A, B and C hexes; setup option OptionalMapFeatures) and the Hilltop Monastery's optional Victory
+# Point in its Cathedral tower: (kind, x, y) as fractions of the map, K a Bunker, V a Victory Point
+def opt(box, *ps, kind='K'): return [(kind, (x - box[0]) / (box[2] - box[0]), (y - box[1]) / (box[3] - box[1])) for x, y in ps]
+OPT = {
+    'nomansland': opt((40, 165, 420, 440), (333, 295), (125, 295), (153, 295), (303, 295)),
+    'oasis': opt((460, 430, 840, 715), (635, 548), (665, 548), (635, 598), (665, 598)),
+    'hinderdam': opt((40, 463, 420, 748), (127, 606), (155, 606), (185, 606), (215, 606), (113, 630)),
+    'ancientfields': opt((327, 42, 840, 298), (670, 168), (655, 145), (685, 145), (655, 190), (685, 190)),
+    'airfield': opt((327, 320, 840, 576), (748, 448), (405, 448), (432, 448), (722, 448)),
+    'hilltop': opt((327, 590, 840, 845), (748, 717), (405, 717), (392, 740), (762, 695)) + opt((327, 590, 840, 845), (628, 717), kind='V'),
+    'widefront': opt((327, 42, 840, 298), (670, 168), (655, 145), (685, 145), (655, 190), (685, 190), (485, 168), (512, 168)),
+    'hillmonastery': opt((80, 130, 840, 415), (240, 272), (268, 272), (296, 272), (738, 272), (766, 272)),
+    'twohilltops': opt((80, 450, 840, 737), (270, 592), (298, 592), (620, 592), (650, 592)),
+}
 # the bags whose panels the booklet has otherwise (by its pictures' printed compass marks), where the mod's don't line up: Hilltop
 # Monastery's bag has HL1 on the left, the booklet HL2; The Wide Front's turns its first HL2 round, the booklet doesn't; Opposing
 # Faiths on 4 panels has MO2, MO1 first, the booklet MO1, MO2. The tokens stay where the bag has them.
@@ -184,70 +200,6 @@ def points(ps, toks, x0):
         k = '%d,%d' % (r, c)
         out[k] = ''.join(sorted(out.get(k, '') + ''.join(t[0] for t in ts), key='VMUF'.index))
     return out
-out = []
-for mid, name, bagname, stock, spawn, extra, players, trigger, infantry, text in M:
-    if ONLY and mid not in ONLY: continue
-    ps, toks = layout(bagname, mid in FLIP)
-    ps = [SWAP.get(mid, {}).get(i, p[:2]) + p[2:] for i, p in enumerate(ps)]
-    n = len(ps)
-    left, lturn = ps[0][0], ps[0][1]
-    x0 = 926 if (left in FIRST) != lturn else 464.5
-    for i, (p, turned, _, _) in enumerate(ps):
-        assert (926 if (p in FIRST) != turned else 464.5) == (x0 if i % 2 == 0 else (1390.5 - x0)), (mid, ps)
-    img = 'map-' + ''.join(p.lower() + ('r' if t else '') for p, t, _, _ in ps)
-    full = os.path.join(D, 'mission-' + mid + '.png')
-    MW = 6000 * n
-    if not os.path.exists(full) or not os.path.exists(os.path.join(OUT, img + '.webp')):
-        m = Image.new('RGB', (MW, 9000))
-        for i, (p, turned, _, _) in enumerate(ps):
-            im = Image.open(os.path.join(D, PANEL[p])).convert('RGB')
-            if turned: im = im.rotate(180)
-            m.paste(im, (6000 * i, 0))
-        if not os.path.exists(full): m.save(full)
-        m.resize((MW // 5, 1800), Image.LANCZOS).save(os.path.join(OUT, img + '.webp'), 'WEBP', quality=82, method=6)
-    ej = os.path.join(D, 'edges-' + mid + '.json')
-    if not os.path.exists(ej): subprocess.run([sys.executable, os.path.join(HERE, 'map-edges.py'), full, ej, os.path.join(D, 'overlay-' + mid + '.png'), str(x0)], check=True)
-    edges = json.load(open(ej))
-    feats = {}; drops = set()
-    for i, (p, turned, _, _) in enumerate(ps):
-        for kind, x, y, e in LOCAL.get(p, []):
-            if turned: x, y, e = 6000 - x, 9000 - y, None if e is None else (e + 3) % 6
-            r, c = hexat(x + 6000 * i, y, x0)
-            if e is None: feats['%d,%d' % (r, c)] = kind
-            else: drops.add(('%d,%d' % (r, c), e))
-    for kind, fx, fy in extra:
-        r, c = hexat(fx * MW, fy * 9000, x0)
-        feats['%d,%d' % (r, c)] = kind
-    cps = points(ps, toks, x0)
-    rows = []; hexes = []
-    for r in range(-1, 12):
-        for c in range(-2, int(MW / DX) + 2):
-            x, y = center(r, c, x0)
-            if not (-50 < x < MW + 50): continue
-            k = '%d,%d' % (r, c)
-            kind = feats.get(k, '.')
-            e = [None if (k, i) in drops else v for i, v in enumerate(edges.get(k, [None] * 6))]
-            s = ''.join({'red': 'X', 'green': 'H', 'yellow': 'L', None: '.', 'purple': '.'}[v] for v in e)
-            if kind in 'BCDK': s = '......'
-            t = 'B' if kind == 'K' else (kind if kind in 'WBCDI' else '.')
-            ex = ('K' if kind == 'K' else '') + ('T' if kind == 'T' else '') + cps.get(k, '')
-            rows.append('"%d %d %s %s %s"' % (r + 1, c + 1, t, s, ex or '-'))
-            hexes.append((r, c, x, y, t))
-    lost = [k for k in cps if not any(('%d,%d' % (h[0], h[1])) == k for h in hexes)]
-    def area(parts):
-        hs = []
-        for p in parts:
-            for (r, c, x, y, t) in hexes:
-                if t == 'W': continue
-                ok = (p[0] == 'T' and r == -1 and p[1] * MW <= x <= p[2] * MW) or (p[0] == 'B' and r == 11 and p[1] * MW <= x <= p[2] * MW) or \
-                     (p[0] == 'L' and x < DX * 0.75) or (p[0] == 'R' and x > MW - DX * 0.75) or \
-                     (p[0] == 'P' and (r, c) == hexat(p[1] * MW, p[2] * 9000, x0))
-                if ok and (c, r) not in hs: hs.append((c, r))
-        return hs
-    areas = None if spawn is FULL else [area(a) for a in spawn]
-    print(mid, [p + ('r' if t else '') for p, t, _, _ in ps], 'x0', x0, len(rows), 'rows', len(cps), 'points', sorted(cps.items()), 'lost', lost,
-          'areas', areas and [len(a) for a in areas], 'feats', {k: v for k, v in feats.items() if v in 'KC'})
-    out.append((mid, name, ps, x0, rows, areas, img, stock, players, trigger, infantry, text, n))
 OBJ = {'cathedral': 'CathedralMission', 'cologne': 'CologneMission', 'oasis': 'DesertOasis', 'nomansland': 'NoMansLand',
        'moscowout': 'MoscowOutskirts', 'faith': 'OpposingFaiths', 'semois': 'Semois', 'hinderdam': 'Hinderdam', 'ancientfields': 'AncientFields',
        'airfield': 'AirfieldMission', 'hilltop': 'HilltopMonastery', 'budapest': 'Budapest', 'siege': 'SiegeOfLeningrad',
@@ -256,27 +208,108 @@ OBJ = {'cathedral': 'CathedralMission', 'cologne': 'CologneMission', 'oasis': 'D
        'faith4': 'OpposingFaithsFour', 'twohilltops': 'TwoHilltops', 'frozenfork': 'FrozenFork', 'sixbridges': 'SixBridges',
        'hill331ffa': 'HillThreeThirtyOneFFA', 'cologneffa': 'CologneFFA'}
 def cls(mid): return OBJ[mid]
-with open(os.path.join(OUT, 'missions-bags.scala.txt'), 'w') as f:
-    for mid, name, ps, x0, rows, areas, img, stock, players, trigger, infantry, text, n in out:
-        o = cls(mid)
-        args = []
-        if x0 != 926: args.append('x0 = 92.9')
-        if areas: args.append('areas = %sRows.areas' % o)
-        if n != 2: args.append('panels = %d' % n)
-        if players: args.append('players = |(%d)' % players)
-        if trigger: args.append('trigger = |(%d)' % trigger)
-        bs = set((int(x.strip('"').split(' ')[0]) - 1, int(x.strip('"').split(' ')[1]) - 1) for x in rows if x.strip('"').split(' ')[2] in ('B', 'C'))
-        def nb(r, c): return [(r, c - 1), (r, c + 1)] + [(r + d, c + e) for d in (-1, 1) for e in ((-1, 0) if r % 2 == 0 else (0, 1))]
-        multi = any(q in bs for (r, c) in bs for q in nb(r, c))
-        f.write('// %s: %s (the bag "%s")\n' % (name, ' | '.join(p + (' turned round' if t else '') for p, t, _, _ in ps), mid))
-        f.write('object %s extends MapData("%s", "%s", "%s", (%d, %d, %d), %s, %sRows.rows%s)\n\n' % (o, mid, name, img, stock[0], stock[1], stock[2],
-            'true' if multi else 'false', o, ''.join(', ' + a for a in args)))
-        f.write('object %sRows {\n' % o)
-        if areas: f.write('    val areas = $(%s)\n\n' % ', '.join('$(' + ', '.join('Hex(%d, %d)' % (c + 1, r + 1) for c, r in a) + ')' for a in areas))
-        f.write('    val rows = $(\n        %s\n    )\n}\n\n' % ',\n        '.join(rows))
-    f.write('// choices\n')
-    for mid, name, ps, x0, rows, areas, img, stock, players, trigger, infantry, text, n in out:
-        lbl = ', '.join(p + ('r' if t else '') for p, t, _, _ in ps)
-        f.write('case object %sMap extends MapChoice(%s, "Large Map Pack, %s: %s. Starting stockpile %d Manpower, %d Munitions, %d Fuel.")\n' % (
-            cls(mid), cls(mid), lbl, text[0].upper() + text[1:], stock[0], stock[1], stock[2]))
-    f.write('// all: ' + ', '.join(cls(m[0]) + 'Map' for m in out) + '\n')
+if __name__ == '__main__':
+
+    out = []
+    for mid, name, bagname, stock, spawn, extra, players, trigger, infantry, text in M:
+        if ONLY and mid not in ONLY: continue
+        ps, toks = layout(bagname, mid in FLIP)
+        ps = [SWAP.get(mid, {}).get(i, p[:2]) + p[2:] for i, p in enumerate(ps)]
+        n = len(ps)
+        left, lturn = ps[0][0], ps[0][1]
+        x0 = 926 if (left in FIRST) != lturn else 464.5
+        for i, (p, turned, _, _) in enumerate(ps):
+            assert (926 if (p in FIRST) != turned else 464.5) == (x0 if i % 2 == 0 else (1390.5 - x0)), (mid, ps)
+        img = 'map-' + ''.join(p.lower() + ('r' if t else '') for p, t, _, _ in ps)
+        full = os.path.join(D, 'mission-' + mid + '.png')
+        MW = 6000 * n
+        if not os.path.exists(full) or not os.path.exists(os.path.join(OUT, img + '.webp')):
+            m = Image.new('RGB', (MW, 9000))
+            for i, (p, turned, _, _) in enumerate(ps):
+                im = Image.open(os.path.join(D, PANEL[p])).convert('RGB')
+                if turned: im = im.rotate(180)
+                m.paste(im, (6000 * i, 0))
+            if not os.path.exists(full): m.save(full)
+            m.resize((MW // 5, 1800), Image.LANCZOS).save(os.path.join(OUT, img + '.webp'), 'WEBP', quality=82, method=6)
+        ej = os.path.join(D, 'edges-' + mid + '.json')
+        if not os.path.exists(ej): subprocess.run([sys.executable, os.path.join(HERE, 'map-edges.py'), full, ej, os.path.join(D, 'overlay-' + mid + '.png'), str(x0)], check=True)
+        edges = json.load(open(ej))
+        feats = {}; drops = set()
+        for i, (p, turned, _, _) in enumerate(ps):
+            for kind, x, y, e in LOCAL.get(p, []):
+                if turned: x, y, e = 6000 - x, 9000 - y, None if e is None else (e + 3) % 6
+                r, c = hexat(x + 6000 * i, y, x0)
+                if e is None: feats['%d,%d' % (r, c)] = kind
+                else: drops.add(('%d,%d' % (r, c), e))
+        for kind, fx, fy in extra:
+            r, c = hexat(fx * MW, fy * 9000, x0)
+            feats['%d,%d' % (r, c)] = kind
+        cps = points(ps, toks, x0)
+        rows = []; hexes = []
+        for r in range(-1, 12):
+            for c in range(-2, int(MW / DX) + 2):
+                x, y = center(r, c, x0)
+                if not (-50 < x < MW + 50): continue
+                k = '%d,%d' % (r, c)
+                kind = feats.get(k, '.')
+                e = [None if (k, i) in drops else v for i, v in enumerate(edges.get(k, [None] * 6))]
+                s = ''.join({'red': 'X', 'green': 'H', 'yellow': 'L', None: '.', 'purple': '.'}[v] for v in e)
+                if kind in 'BCDK': s = '......'
+                t = 'B' if kind == 'K' else (kind if kind in 'WBCDI' else '.')
+                ex = ('K' if kind == 'K' else '') + ('T' if kind == 'T' else '') + cps.get(k, '')
+                rows.append('"%d %d %s %s %s"' % (r + 1, c + 1, t, s, ex or '-'))
+                hexes.append((r, c, x, y, t))
+        lost = [k for k in cps if not any(('%d,%d' % (h[0], h[1])) == k for h in hexes)]
+        def area(parts):
+            hs = []
+            for p in parts:
+                for (r, c, x, y, t) in hexes:
+                    if t == 'W': continue
+                    ok = (p[0] == 'T' and r == -1 and p[1] * MW <= x <= p[2] * MW) or (p[0] == 'B' and r == 11 and p[1] * MW <= x <= p[2] * MW) or \
+                         (p[0] == 'L' and x < DX * 0.75) or (p[0] == 'R' and x > MW - DX * 0.75) or \
+                         (p[0] == 'P' and (r, c) == hexat(p[1] * MW, p[2] * 9000, x0))
+                    if ok and (c, r) not in hs: hs.append((c, r))
+            return hs
+        areas = None if spawn is FULL else [area(a) for a in spawn]
+        optional = []
+        for kind, fx, fy in OPT.get(mid, []):
+            rr, c = hexat(fx * MW, fy * 9000, x0)
+            i = [j for j, x in enumerate(rows) if x.startswith('"%d %d ' % (rr + 1, c + 1))][0]
+            l = rows[i].strip('"').split(' ')
+            ex = l[4].replace('-', '').replace('K', '')
+            if kind == 'V' and 'V' in ex:
+                # the bag has the optional Victory Point among its tokens: the map leaves it out, the option puts it back
+                rest = ex.replace('V', '', 1)
+                rows[i] = '"%s %s %s %s %s"' % (l[0], l[1], l[2], l[3], ('K' if 'K' in l[4] else '') + rest or '-')
+                ex = rest
+            optional.append('"%d %d %s %s"' % (rr + 1, c + 1, 'B' if kind == 'K' else l[2], ('K' + ex) if kind == 'K' else (ex + 'V')))
+        print('   optional', optional)
+        print(mid, [p + ('r' if t else '') for p, t, _, _ in ps], 'x0', x0, len(rows), 'rows', len(cps), 'points', sorted(cps.items()), 'lost', lost,
+              'areas', areas and [len(a) for a in areas], 'feats', {k: v for k, v in feats.items() if v in 'KC'})
+        out.append((mid, name, ps, x0, rows, areas, img, stock, players, trigger, infantry, text, n, optional))
+    with open(os.path.join(OUT, 'missions-bags.scala.txt'), 'w') as f:
+        for mid, name, ps, x0, rows, areas, img, stock, players, trigger, infantry, text, n, optional in out:
+            o = cls(mid)
+            args = []
+            if x0 != 926: args.append('x0 = 92.9')
+            if areas: args.append('areas = %sRows.areas' % o)
+            if n != 2: args.append('panels = %d' % n)
+            if players: args.append('players = |(%d)' % players)
+            if trigger: args.append('trigger = |(%d)' % trigger)
+            if optional: args.append('optional = %sRows.optional' % cls(mid))
+            bs = set((int(x.strip('"').split(' ')[0]) - 1, int(x.strip('"').split(' ')[1]) - 1) for x in rows if x.strip('"').split(' ')[2] in ('B', 'C'))
+            def nb(r, c): return [(r, c - 1), (r, c + 1)] + [(r + d, c + e) for d in (-1, 1) for e in ((-1, 0) if r % 2 == 0 else (0, 1))]
+            multi = any(q in bs for (r, c) in bs for q in nb(r, c))
+            f.write('// %s: %s (the bag "%s")\n' % (name, ' | '.join(p + (' turned round' if t else '') for p, t, _, _ in ps), mid))
+            f.write('object %s extends MapData("%s", "%s", "%s", (%d, %d, %d), %s, %sRows.rows%s)\n\n' % (o, mid, name, img, stock[0], stock[1], stock[2],
+                'true' if multi else 'false', o, ''.join(', ' + a for a in args)))
+            f.write('object %sRows {\n' % o)
+            if optional: f.write('    val optional = $(%s)\n\n' % ', '.join(optional))
+            if areas: f.write('    val areas = $(%s)\n\n' % ', '.join('$(' + ', '.join('Hex(%d, %d)' % (c + 1, r + 1) for c, r in a) + ')' for a in areas))
+            f.write('    val rows = $(\n        %s\n    )\n}\n\n' % ',\n        '.join(rows))
+        f.write('// choices\n')
+        for mid, name, ps, x0, rows, areas, img, stock, players, trigger, infantry, text, n, optional in out:
+            lbl = ', '.join(p + ('r' if t else '') for p, t, _, _ in ps)
+            f.write('case object %sMap extends MapChoice(%s, "Large Map Pack, %s: %s. Starting stockpile %d Manpower, %d Munitions, %d Fuel.")\n' % (
+                cls(mid), cls(mid), lbl, text[0].upper() + text[1:], stock[0], stock[1], stock[2]))
+        f.write('// all: ' + ', '.join(cls(m[0]) + 'Map' for m in out) + '\n')

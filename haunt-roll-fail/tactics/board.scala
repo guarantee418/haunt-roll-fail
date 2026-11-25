@@ -36,7 +36,8 @@ case object HeavyCover extends Cover("Heavy Cover", 2)
 
 // a hex by column (0 at the left) and row (0 at the top)
 case class Hex(c : Int, r : Int) extends Record with Elementary {
-    def name = ('A' + c).toChar.toString + (r + 1)
+    // past Z (four panels wide), two letters: AA, AB, ...
+    def name = ((c >= 26).??("A") + ('A' + c % 26).toChar.toString) + (r + 1)
     def elem = name.styled(styles.hex)
     // axial coordinates: the even rows are shifted right
     def q = c - (r + 1) / 2
@@ -46,9 +47,19 @@ case class Hex(c : Int, r : Int) extends Record with Elementary {
 // are multi-hex Buildings (Full Game Rules 10.2: units see and fire inside one, and get no Cover from units in the same Building)
 // (and how many panels wide it is, 1200 px a panel; the starting Infantry each player places, else 3, 2 in team games; how many
 // players it takes, if not any; how far from the edge, in hexes, its side Spawn Areas reach)
-class MapData(val id : String, val name : String, val image : String, val stock : (Int, Int, Int), val multiHex : Boolean, val data : $[String], val x0 : Double = 185.2, val sides : Boolean = false, val areas : $[$[Hex]] = $(), val trigger : |[Int] = None, val panels : Int = 2, val infantry : |[Int] = None, val players : |[Int] = None, val edge : Double = 0.75) {
+class MapData(val id : String, val name : String, val image : String, val stock : (Int, Int, Int), val multiHex : Boolean, val data : $[String], val x0 : Double = 185.2, val sides : Boolean = false, val areas : $[$[Hex]] = $(), val trigger : |[Int] = None, val panels : Int = 2, val infantry : |[Int] = None, val players : |[Int] = None, val edge : Double = 0.75, val rows : Int = 1, val optional : $[String] = $()) {
     val width = 1200 * panels
-    val height = 1800
+    val height = 1800 * rows
+
+    // the booklet's optional Modular Bunkers and Victory Points (setup option OptionalMapFeatures): rows "row column terrain extras"
+    // that replace the map's own for those hexes (a Bunker "B K", an optional Victory Point added to the extras)
+    def withOptional : MapData = {
+        val o = optional./(_.split(" ").$)./(l => (l(0) + " " + l(1)) -> l).toMap
+        new MapData(id, name, image, stock, multiHex, data./{ l =>
+            val p = l.split(" ")
+            o.get(p(0) + " " + p(1))./(n => $(p(0), p(1), n(2), (n(2) == "B").?("......").|(p(3)), n(3)).mkString(" ")).|(l)
+        }, x0, sides, areas, trigger, panels, infantry, players, edge, rows, $())
+    }
 
     val dx = 184.6
     val y0 = 148.2

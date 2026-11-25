@@ -24,7 +24,7 @@ def cls(p):
     if b>g+25 and r>g+25: return 'purple'
     return None
 out={}
-for r in range(-1,13):
+for r in range(-1,int(H/DY)+2):
     for c in range(-1,int(W/DX)+2):
         cx,cy=center(r,c)
         if not (-S*0.3<cx<W+S*0.3 and -S*0.3<cy<H+S*0.3): continue
