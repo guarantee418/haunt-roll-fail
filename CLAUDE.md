@@ -1267,7 +1267,10 @@ server. No session can reach the server, and none needs to.
   Lizard Convert or Sanctify, the Eyrie's Turmoil, a Corvid bomb. The Root game notes each event with its victim as it plays out, before the
   board changes (`Jests` in `root/jests.scala`, from `internalPerform`; `game.jests`, display only, numbered in order, so every client numbers
   them alike, which `ReplayCheck` checks), the clients send the last 12 with their turn reports (the seventh line, `Meta.jests`), and the
-  server takes each number once (`Heckler.jests`, `turns/jests.tsv`; a game's first report only sets where it starts). The bot checks the role on each ping. The owner makes it with the server changes
+  server takes each number once (`Heckler.jests`, `turns/jests.tsv`; a game's first report only sets where it starts). About one Court Crow post in three carries one of its animated GIFs under the line (asked for:
+  "sometimes the crow just sends a trolling gif, with some context"): the 3-0 dice for a roll or a battle, the crow popping out of its
+  trash can for something trashed, else the crow laughing (`Heckler.gifFor`, a webhook embed; `webp2/lfg/gifs/`, made by
+  `heckler-art.py`, served by `/art/`). The bot checks the role on each ping. The owner makes it with the server changes
   `role Roast Me` and `self-role Roast Me`; `roast-role <role>` picks another (`off`: none), `roasts` says how it stands. The pictures are
   `webp2/lfg/webhooks/heckler-*.png`, served by `/art/` (`Lookup.artFile` serves that folder), and the crow as a Discord server emoji,
   `webp2/lfg/server-emoji/root_crowjester.png`, and peeking out of a trash can, `root_jestercan.png`, both uploaded to the server by hand; `haunt-roll-fail/tools/heckler-art.py` makes them.

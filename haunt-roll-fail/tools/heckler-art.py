@@ -165,7 +165,7 @@ STEEL_LIGHT = (196, 204, 210, 255)
 STEEL_DARK = (98, 106, 116, 255)
 
 
-def can(c, size=1024):
+def can(c, size=1024, rise=1.0):
     """The capped crow's head peeking out of a galvanized trash can, its lid propped up behind."""
     im = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
@@ -189,7 +189,13 @@ def can(c, size=1024):
     head = c.crop((x0, y0, x1, y1))
     k = 0.56
     head = head.resize((int(head.width * k), int(head.height * k)), Image.LANCZOS)
-    im.alpha_composite(head, (int(cx - (40 + 800) * k), int(rim_y + 75 - (440 + 560) * k)))
+    hx, hy = int(cx - (40 + 800) * k), int(rim_y + 75 - (440 + 560) * k + (1 - rise) * head.height * 0.95)
+    # (only what has risen out of the opening shows: the rest is down in the can)
+    keep = Image.new("L", head.size, 0)
+    if rim_y + 20 - hy > 0:
+        ImageDraw.Draw(keep).rectangle((0, 0, head.width, rim_y + 20 - hy), fill=255)
+    head.putalpha(Image.composite(head.getchannel("A"), Image.new("L", head.size, 0), keep))
+    im.alpha_composite(head, (hx, hy))
     # the can's body over the neck: from the opening's middle line down, ribbed
     body = [(cx - rx, rim_y), (cx + rx, rim_y), (cx + brx, bottom_y), (cx - brx, bottom_y)]
     d.polygon(body, fill=STEEL)
@@ -212,6 +218,12 @@ def can(c, size=1024):
     return im
 
 
+def pad(im):
+    out = Image.new("RGBA", (GW, GW), (0, 0, 0, 0))
+    out.alpha_composite(im, ((GW - im.width) // 2, (GW - im.height) // 2))
+    return out
+
+
 def edged(im, grow=13):
     # a light sticker edge, so the dark crow shows on Discord's dark theme
     edge = im.getchannel("A").filter(ImageFilter.MaxFilter(grow))
@@ -231,6 +243,121 @@ def fit(im, size, margin):
     return out
 
 
+
+# THE CROW'S GIFS (2026-11-25, asked for: "sometimes the crow just sends a trolling gif, with some context"): animated, made from the
+# same crow, served from /art/ (webp2/lfg/gifs/) and posted under a jab now and then (Heckler.gifFor)
+#   crow-laugh.gif   the capped crow rocking with laughter, "HA!" "HA!" "CAW!" popping up round it
+#   crow-can.gif     the crow popping up out of its trash can, laughing, and ducking back down
+#   crow-dice.gif    two Root dice tumbling to a 3 and a 0, then the crow popping up beside them, laughing
+FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+GW = 360           # the GIFs' size
+BG = (0, 0, 0, 0)
+
+
+def font(size):
+    from PIL import ImageFont
+    return ImageFont.truetype(FONT, size)
+
+
+def word(d, text, x, y, size, fill, angle=0, im=None):
+    # a word in thick ink-outlined letters, turned by angle
+    f = font(size)
+    box = d.textbbox((0, 0), text, font=f, stroke_width=max(3, size // 9))
+    w, h = box[2] - box[0] + 20, box[3] - box[1] + 20
+    layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    ImageDraw.Draw(layer).text((10 - box[0], 10 - box[1]), text, font=f, fill=fill, stroke_width=max(3, size // 9), stroke_fill=INK)
+    layer = layer.rotate(angle, resample=Image.BICUBIC, expand=True)
+    im.alpha_composite(layer, (int(x - layer.width / 2), int(y - layer.height / 2)))
+
+
+def save_gif(frames, name, ms):
+    os.makedirs(os.path.join(BASE, "lfg/gifs"), exist_ok=True)
+    # one palette for every frame, with a transparent index: alpha is cut at half (the sticker edge keeps the cut clean)
+    out = []
+    for f in frames:
+        a = f.getchannel("A").point(lambda v: 255 if v > 127 else 0)
+        rgb = Image.new("RGB", f.size, (54, 57, 63))
+        rgb.paste(f.convert("RGB"), mask=a)
+        q = rgb.quantize(colors=255, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+        pal = q.getpalette()[:765]
+        q.putpalette(pal + [0, 0, 0] * (256 - len(pal) // 3))
+        q.paste(255, mask=a.point(lambda v: 255 - v))
+        out.append(q)
+    out[0].save(os.path.join(BASE, "lfg/gifs/" + name), save_all=True, append_images=out[1:], duration=ms, loop=0, transparency=255, disposal=2, optimize=False)
+
+
+def laugh_gif(head):
+    frames = []
+    n = 16
+    words = [("HA!", 70, 60, -14, (236, 190, 62, 255)), ("HA!", 290, 80, 12, (126, 184, 98, 255)), ("CAW!", 280, 300, -8, (190, 120, 230, 255)), ("HA!", 75, 290, 10, (236, 190, 62, 255))]
+    for i in range(n):
+        t = i / n
+        im = Image.new("RGBA", (GW, GW), BG)
+        a = 7 * math.sin(2 * math.pi * t * 2)
+        dy = -10 * abs(math.sin(2 * math.pi * t * 2))
+        h = head.rotate(a, resample=Image.BICUBIC, center=(head.width / 2, head.height * 0.7))
+        im.alpha_composite(h, (int((GW - h.width) / 2), int((GW - h.height) / 2 + 20 + dy)))
+        d = ImageDraw.Draw(im)
+        for k, (w, x, y, ang, col) in enumerate(words):
+            if (i // 2 + k) % 4 < 3 and i >= k * 2:
+                pop = 1 + 0.15 * math.sin(2 * math.pi * (t * 2 + k / 4))
+                word(d, w, x, y, int(46 * pop), col, ang, im)
+        frames.append(im)
+    save_gif(frames, "crow-laugh.gif", 90)
+
+
+def can_gif(scene_of):
+    # scene_of(rise): the can scene with the crow risen by rise (0 hidden, 1 all the way up)
+    rises = [0, 0, 0.25, 0.6, 0.9, 1.05, 1, 1, 1, 1, 1, 1, 1, 1, 0.7, 0.3, 0, 0]
+    frames = []
+    for i, r in enumerate(rises):
+        im = scene_of(r).copy()
+        if r >= 1 and 6 <= i <= 13:
+            d = ImageDraw.Draw(im)
+            word(d, "HA HA!" if i % 4 < 2 else "CAW!", GW * 0.3, GW * 0.12, 44, (236, 190, 62, 255), -10 if i % 4 < 2 else 8, im)
+        frames.append(im)
+    save_gif(frames, "crow-can.gif", 110)
+
+
+def die(value, angle, size=120):
+    # a Root battle die seen as a box with its number, turned
+    im = Image.new("RGBA", (size + 40, size + 40), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    o = 20
+    d.rounded_rectangle((o, o, o + size, o + size), radius=22, fill=(244, 236, 214, 255), outline=INK, width=8)
+    if value is not None:
+        f = font(int(size * 0.62))
+        b = d.textbbox((0, 0), str(value), font=f)
+        d.text((o + size / 2 - (b[2] + b[0]) / 2, o + size / 2 - (b[3] + b[1]) / 2), str(value), font=f, fill=(150, 30, 34, 255) if value == 3 else INK)
+    return im.rotate(angle, resample=Image.BICUBIC, expand=True)
+
+
+def dice_gif(head):
+    frames = []
+    finals = [(40, 155, 3, -6), (190, 165, 0, 8)]
+    for i in range(22):
+        im = Image.new("RGBA", (GW, GW), BG)
+        for j, (fx, fy, v, ang) in enumerate(finals):
+            if i < 8:
+                # tumbling in from the left, faces flicking, bouncing
+                k = 8 - i
+                x = fx - k * 22
+                y = fy - 50 * abs(math.sin(k * 0.8 + j))
+                im.alpha_composite(die((i * 7 + j * 2) % 4, (i * 41 + j * 77) % 360), (int(x), int(y)))
+            else:
+                im.alpha_composite(die(v, ang), (fx, fy))
+        if i >= 11:
+            k = min(1, (i - 11) / 3)
+            h = head.resize((int(head.width * 0.72), int(head.height * 0.72)), Image.LANCZOS)
+            h = h.rotate(5 * math.sin(i * 1.3), resample=Image.BICUBIC)
+            im.alpha_composite(h, (int((GW - h.width) / 2), int(-h.height + (h.height + 6) * k)))
+        if i >= 13:
+            d = ImageDraw.Draw(im)
+            word(d, "3 - 0!", GW / 2, GW - 24, 38, (236, 190, 62, 255), 4 if i % 2 else -4, im)
+        frames.append(im)
+    save_gif(frames, "crow-dice.gif", 110)
+
+
 def main():
     c = crow()
     emoji = square(c, 512, 12)
@@ -245,10 +372,22 @@ def main():
     os.makedirs(os.path.join(BASE, "lfg/webhooks"), exist_ok=True)
     sq = Image.open(os.path.join(BASE, "nort/images/clan/squirrel.webp")).convert("RGBA")
     sq.resize((256, 256), Image.LANCZOS).save(os.path.join(BASE, "lfg/webhooks/heckler-nort.png"), optimize=True)
-    bin_ = edged(fit(can(crow(with_collar=False)), 512, 12))
+    bare = crow(with_collar=False)
+    bin_ = edged(fit(can(bare), 512, 12))
     bin_.resize((128, 128), Image.LANCZOS).save(os.path.join(BASE, "lfg/server-emoji/root_jestercan.png"), optimize=True)
     # the crow in the can is the Court Crow's picture too (2026-11-25, liked best)
     badge(fit(bin_, 512, 0)).resize((256, 256), Image.LANCZOS).save(os.path.join(BASE, "lfg/webhooks/heckler-root.png"), optimize=True)
+    head = emoji.resize((250, 250), Image.LANCZOS)
+    laugh_gif(head)
+    dice_gif(head)
+    # the can scene at each rise, framed the same (the head hidden below the rim is cut off by drawing the can's body over it, so the
+    # opening's top shows only what has risen)
+    def scene(r):
+        sc = can(bare, rise=r)
+        sc = sc.crop((40, 20, 1000, 1004))
+        return edged(sc.resize((GW - 20, GW - 20), Image.LANCZOS).crop((0, 0, GW - 20, GW - 20)), 7).crop((0, 0, GW - 20, GW - 20))
+    cache = {}
+    can_gif(lambda r: cache.setdefault(r, pad(scene(r))))
 
 
 if __name__ == "__main__":

@@ -77,7 +77,7 @@ object Heckler {
                     val v = voiceOf(meta)
                     val options = if (reminder) v.lines("reminder") else v.lines.getOrElse(tag, v.lines("turn"))
                     val line = pick(uid, options).replace("{name}", name)
-                    post(line, persona(v))
+                    post(line, persona(v) + (if (v == crow) gifFor(tag).getOrElse("") else ""))
                 }
             }
             catch {
@@ -85,6 +85,18 @@ object Heckler {
             }
         }
     }
+
+    // THE CROW'S GIFS (2026-11-25, asked for: "sometimes the crow just sends a trolling gif, with some context"): about one Court
+    // Crow post in three carries one of its animated GIFs (webp2/lfg/gifs/, by haunt-roll-fail/tools/heckler-art.py, served from
+    // /art/) under its line, which gives the context: the dice for a 3-0 roll, the crow popping out of its trash can for something
+    // trashed, else the crow rocking with laughter
+    def gifFor(tag : String) : Option[String] =
+        if (Tournament.site.isEmpty || scala.util.Random.nextInt(3) != 0) None
+        else Some(tag match {
+            case "rolled30" | "whiffed" | "defend" | "battle" => "crow-dice.gif"
+            case "raze" | "revolt" | "sanctify" | "bomb" | "turmoil" | "handlimit" | "banished" => "crow-can.gif"
+            case _ => "crow-laugh.gif"
+        }).map(g => ",\"embeds\":[{\"color\":8798896,\"image\":{\"url\":" + Tournament.json(Tournament.site + "/art/lfg/gifs/" + g) + "}}]")
 
     // the webhook post's own name and picture for a heckler (Tournament.post's persona)
     def persona(v : Voice) : String =
@@ -138,7 +150,7 @@ object Heckler {
                             try {
                                 if (roasted(id)) {
                                     val line = pick(id, lines).replace("{name}", "<@" + id + ">").replace("{other}", factionName(other)).replace("{where}", if (where.nonEmpty) where else "the woods")
-                                    TurnPings.post(game, lobby, line, Nil, persona(crow), now = true)
+                                    TurnPings.post(game, lobby, line, Nil, persona(crow) + gifFor(tag).getOrElse(""), now = true)
                                 }
                             }
                             catch {
