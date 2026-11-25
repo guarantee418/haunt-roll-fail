@@ -1277,16 +1277,19 @@ server. No session can reach the server, and none needs to.
   Lizard Convert or Sanctify, the Eyrie's Turmoil, a Corvid bomb, The Faithful's extra hit against them drawing the card that keeps it. The Root game notes each event with its victim as it plays out, before the
   board changes (`Jests` in `root/jests.scala`, from `internalPerform`; `game.jests`, display only, numbered in order, so every client numbers
   them alike, which `ReplayCheck` checks), the clients send the last 12 with their turn reports (the seventh line, `Meta.jests`), and the
-  server takes each number once (`Heckler.jests`, `turns/jests.tsv`; a game's first report only sets where it starts). A Court Crow post carries one of its animated GIFs under the line only when the line gives it a reason (asked for:
-  "sometimes the crow just sends a trolling gif, with some context"; owner, 2026-11-25: "you don't need to send GIFs for no reason", and
-  a 3-0 needs the 3-0 GIF): a 3-0 or 0-3 roll always the crow's dice (`webp2/lfg/gifs/crow-dice.gif`, made by `heckler-art.py`, served
-  by `/art/`), The Faithful's extra hit drawing the matching card always a laugh, and one time in three: under attack or banished, a terrified Rick Moranis (`terrified.gif`, `Heckler.scared`); an ambush,
-  the crow laughing or one of 18 laughing GIFs from Klipy (the library Discord's GIF picker searches, the first results of its "lol"
-  search, picked by the owner and linked from Klipy's servers, `Heckler.klipyLaughs`); the harshest events (a Raze, a Revolt, Turmoil, a
-  bomb, a Sanctify, last place), Emotional Damage (a Klipy video made a GIF, `emotional-damage.gif`, `Heckler.harsh`) or the crow popping
-  out of its trash can; a plain turn ping or a reminder none (`Heckler.gifFor`, a webhook embed). A troll member who loses a Root game on exactly 29 VP gets the crow in its thread with Vegeta in the
+  server takes each number once (`Heckler.jests`, `turns/jests.tsv`; a game's first report only sets where it starts). A Court Crow post carries one of its animated GIFs under the line only when the line gives it a reason, and sparingly (asked for:
+  "sometimes the crow just sends a trolling gif, with some context"; owner, 2026-11-25: "you don't need to send GIFs for no reason", then
+  "GIFs should be used sparingly ... too frequently and they become annoying from cluttering the thread"): a game lost on 29 VP always gets
+  Vegeta, anything else with a GIF of its own one time in four and never within half an hour of the last GIF in that game's thread
+  (`Heckler.gifFor`, `lastGif`, a webhook embed): a 3-0 or 0-3 roll the crow's dice (`webp2/lfg/gifs/crow-dice.gif`, made by
+  `heckler-art.py`, served by `/art/`), a Lizard Cult conversion an unmasking lizard (`convert.gif`, the owner's Klipy pick), under attack or
+  banished a terrified Rick Moranis (`terrified.gif`, `Heckler.scared`), an ambush or The Faithful's lucky draw the crow laughing or one of 18
+  laughing GIFs from Klipy (the library Discord's GIF picker searches, the first results of its "lol" search, picked by the owner and linked
+  from Klipy's servers, `Heckler.klipyLaughs`), the harshest events (a Raze, a Revolt, Turmoil, a bomb, a Sanctify, last place) Emotional
+  Damage (a Klipy video made a GIF, `emotional-damage.gif`, `Heckler.harsh`) or the crow popping out of its trash can; a plain turn ping or
+  a reminder none. A troll member who loses a Root game on exactly 29 VP gets the crow in its thread with Vegeta in the
   rain (`vegeta-rain.gif`, `Heckler.gameOver`, from `/report-result`). On the Riverfolk's own turns the crow has its own lines (`otterLines`),
-  and one time in three Milhouse flirting (`milhouse-flirt.gif`; "otters trying to sell"). The role is called @troll on the server since 2026-11-25 (`roast-role troll`). The tournament change `troll-intro`
+  and sometimes Milhouse flirting (`milhouse-flirt.gif`; "otters trying to sell"). The role is called @troll on the server since 2026-11-25 (`roast-role troll`). The tournament change `troll-intro`
   gives every member with the role one first jab at once, in the thread of the game it is about, for the first thing found in their games:
   a game waiting on them (and for how long), last on VP in a Root game, last place in a finished game (`ranking/results.tsv`), a game that
   needed 4 or more turn pings, 8 VP or more behind the leader, or a lost game; nothing found, nothing posted (no welcome, owner's ask;
@@ -1294,6 +1297,11 @@ server. No session can reach the server, and none needs to.
   `role Roast Me` and `self-role Roast Me`; `roast-role <role>` picks another (`off`: none), `roasts` says how it stands. The pictures are
   `webp2/lfg/webhooks/heckler-*.png`, served by `/art/` (`Lookup.artFile` serves that folder), and the crow as a Discord server emoji,
   `webp2/lfg/server-emoji/root_crowjester.png`, and peeking out of a trash can, `root_jestercan.png`, both uploaded to the server by hand; `haunt-roll-fail/tools/heckler-art.py` makes them.
+- Final scores (owner, 2026-11-25: "when a game ends, always have Command Warren post the final scores with a congratulation message"): the
+  first result a finished game reports (`/report-result`) is posted in its thread by its turns webhook (Command Warren for Root, and the
+  Northgard, Pincer and Company of Heroes forums' own): the winners congratulated and mentioned when they can be pinged, then every seat's
+  faction and final score, winners first (`TurnPings.finished`). A tournament table's game is left out, as `Tournament.reported`
+  congratulates it.
 - The bot's `/rule <rule> [game] [private]` (2026-11-22, asked for as a bot "to help cite the rules", not to interpret them): Root's
   rules by their Law of Root number (`4.3.2`, `H.1`, a section lists the rules under it) or name, with the rule's text and the link to
   it on the Root Database (`webp2/lfg/rules-root.tsv`, made by `haunt-roll-fail/tools/law-index.py` from the Root Database's copy, kept up
